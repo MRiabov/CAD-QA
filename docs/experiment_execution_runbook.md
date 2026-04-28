@@ -27,3 +27,8 @@ rtk uv run python -m scripts.experiments.run_experiment_suite \
 
 Do not start GPU training until dataset validation passes, leakage audit passes,
 SFT JSONL smoke passes, and live GPU price/account state are known.
+
+The overnight manifest routes canary training through
+`scripts.experiments.check_stop_gates`. The local smoke manifest also writes a
+retention package with `scripts.experiments.package_run_artifacts`; keep the
+manifest and archive before deleting rented-instance storage.

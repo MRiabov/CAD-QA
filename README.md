@@ -48,6 +48,20 @@ uv run python -m scripts.experiments.compare_experiment_runs \
   --output-dir runs/compare_smoke_experiments
 ```
 
+Check canary stop gates and package retained artifacts:
+
+```bash
+uv run python -m scripts.experiments.check_stop_gates \
+  --dataset-stats runs/validate_smoke_dataset/dataset_stats.json \
+  --sft-smoke-report runs/text_sft_format_smoke/text_sft_smoke_report.json \
+  --experiment-comparison runs/compare_smoke_experiments/experiment_comparison.json \
+  --output runs/check_smoke_stop_gates/stop_gate_report.json
+
+uv run python -m scripts.experiments.package_run_artifacts \
+  runs/smoke_dataset runs/validate_smoke_dataset runs/smoke_baselines \
+  --output-dir runs/package_smoke_artifacts
+```
+
 Prepare answer-only SFT JSONL:
 
 ```bash

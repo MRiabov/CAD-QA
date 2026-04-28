@@ -46,6 +46,10 @@ specs.
 - Zero-shot and few-shot provider-agnostic prediction request export.
 - Answer-only SFT JSONL preparation and local format smoke validation.
 - Restartable manifest runner and local orchestration configs.
+- Canary stop-gate reports for dataset validation, SFT smoke checks, experiment
+  comparisons, and trace failure rates.
+- Artifact retention packaging with checksum manifests and optional `tar.gz`
+  archives.
 - Draft paper scaffold covering abstract, introduction, related work, dataset
   construction, task families, experiments, limitations, and conclusion, with
   explicit placeholders for final release results.

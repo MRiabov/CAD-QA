@@ -110,3 +110,51 @@ runs:
     artifacts:
       - logs/stdout.log
       - text_sft_smoke_report.json
+
+  - name: check_smoke_stop_gates
+    kind: stop_gate
+    depends_on: [compare_smoke_experiments, text_sft_format_smoke]
+    command:
+      - uv
+      - run
+      - python
+      - -m
+      - scripts.experiments.check_stop_gates
+      - --dataset-stats
+      - runs/validate_smoke_dataset/dataset_stats.json
+      - --sft-smoke-report
+      - runs/text_sft_format_smoke/text_sft_smoke_report.json
+      - --experiment-comparison
+      - runs/compare_smoke_experiments/experiment_comparison.json
+      - --output
+      - runs/check_smoke_stop_gates/stop_gate_report.json
+      - --min-rows
+      - "1"
+    output_dir: runs/check_smoke_stop_gates
+    artifacts:
+      - logs/stdout.log
+      - stop_gate_report.json
+
+  - name: package_smoke_artifacts
+    kind: artifact_retention
+    depends_on: [check_smoke_stop_gates]
+    command:
+      - uv
+      - run
+      - python
+      - -m
+      - scripts.experiments.package_run_artifacts
+      - runs/smoke_dataset
+      - runs/validate_smoke_dataset
+      - runs/smoke_baselines
+      - runs/prepare_answer_sft_smoke
+      - runs/text_sft_format_smoke
+      - runs/compare_smoke_experiments
+      - runs/check_smoke_stop_gates
+      - --output-dir
+      - runs/package_smoke_artifacts
+    output_dir: runs/package_smoke_artifacts
+    artifacts:
+      - logs/stdout.log
+      - artifact_manifest.json
+      - cadqa_artifacts.tar.gz
