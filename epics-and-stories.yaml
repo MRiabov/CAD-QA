@@ -34,7 +34,7 @@ ordering:
   rule: Epics follow the implementation order and research structure described in specs/useful-implementation-optimization.md, specs/extracting-cadevolve-features.md, specs/paper-spec.md, specs/research-experiment-spec.md, and the CADEditQA specs.
 current_snapshot:
   date: "2026-04-28"
-  codebase_state: CAD-QA now has a working Python package, CLI, source ingestion, AST operation graphs, isolated optional CadQuery tracing, scalar/topology snapshots, per-snapshot entity IDs, best-effort adjacent topology matching, conservative point/provenance records, MVP public-row materialization, random and protected split assignment, near-boundary hard split routing, leakage validation, task-balanced subset export, JSONL export, optional Parquet export, trace caching, resumable sharded generation, grouped numeric counterfactual source generation, dataset cards, baselines, trace-label oracle upper bound, zero-shot and few-shot prediction request export, SFT data preparation, experiment orchestration, experiment comparison reports, canary stop gates, artifact retention packages, manual audit sampling, failure taxonomy reports, reproducibility audits, paper draft scaffolding, smoke fixtures, tests, and validated smoke/CADEvolve-probe artifacts. Exact OpenCascade builder-history provenance, richer near-boundary sampling, verified counterfactual labels, real GPU SFT, CADEditQA verifier tasks, and multimodal/rendering extensions remain open or partial.
+  codebase_state: CAD-QA now has a working Python package, CLI, source ingestion, AST operation graphs, isolated optional CadQuery tracing, scalar/topology snapshots, per-snapshot entity IDs, best-effort adjacent topology matching, conservative point/provenance records, MVP public-row materialization, random and protected split assignment, near-boundary hard split routing, leakage validation, task-balanced subset export, JSONL export, optional Parquet export, trace caching, resumable sharded generation, grouped numeric counterfactual source generation, dataset cards, baselines, trace-label oracle upper bound, zero-shot and few-shot prediction request export, closed-book prediction response grading, SFT data preparation, experiment orchestration, experiment comparison reports, canary stop gates, artifact retention packages, manual audit sampling, failure taxonomy reports, reproducibility audits, paper draft scaffolding, smoke fixtures, tests, and validated smoke/CADEvolve-probe artifacts. Exact OpenCascade builder-history provenance, richer near-boundary sampling, verified counterfactual labels, real GPU SFT, CADEditQA verifier tasks, and multimodal/rendering extensions remain open or partial.
   stable_features:
     - cadqa_research_framing
     - cadqa_mvp_task_family_spec
@@ -68,6 +68,7 @@ current_snapshot:
     - cadqa_artifact_retention_packages
     - cadqa_near_boundary_hard_split
     - cadqa_trace_label_upper_bound
+    - cadqa_closed_book_prediction_evaluation
 
 epics:
   - id: epic-1
@@ -480,7 +481,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build after export
-        status: work-in-progress
+        status: implemented
         stable: false
       - id: "7.5"
         title: Few-shot prompting evaluation
@@ -488,7 +489,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build after train split
-        status: work-in-progress
+        status: implemented
         stable: false
       - id: "7.6"
         title: Answer-only SFT

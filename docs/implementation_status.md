@@ -46,7 +46,8 @@ specs.
 - Grouped numeric counterfactual source variant generation with a manifest.
 - Answer parsing/grading for strict integer, enum, numeric four-significant
   figure, and JSON bounding-box policies.
-- Zero-shot and few-shot provider-agnostic prediction request export.
+- Zero-shot and few-shot provider-agnostic prediction request export, response
+  normalization, and closed-book prediction grading.
 - Answer-only SFT JSONL preparation and local format smoke validation.
 - Restartable manifest runner and local orchestration configs.
 - Canary stop-gate reports for dataset validation, SFT smoke checks, experiment

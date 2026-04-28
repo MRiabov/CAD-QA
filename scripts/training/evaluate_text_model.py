@@ -7,7 +7,8 @@ import json
 from pathlib import Path
 
 from cad_qa.baselines import evaluate_predictions
-from cad_qa.jsonio import read_json, read_jsonl, write_json
+from cad_qa.jsonio import read_jsonl, write_json
+from cad_qa.predictions import read_prediction_artifact
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -18,8 +19,8 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     rows = read_jsonl(args.rows)
-    predictions = read_json(args.predictions)
-    metrics = evaluate_predictions(rows, {str(key): str(value) for key, value in predictions.items()})
+    predictions = read_prediction_artifact(args.predictions)
+    metrics = evaluate_predictions(rows, predictions)
     write_json(args.output, metrics)
     print(json.dumps(metrics, indent=2, sort_keys=True))
 

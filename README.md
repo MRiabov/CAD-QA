@@ -126,6 +126,16 @@ uv run python -m scripts.evaluation.build_fewshot_prompts \
   --shots 3
 ```
 
+Normalize and grade closed-book model responses:
+
+```bash
+uv run python -m scripts.evaluation.evaluate_prediction_responses \
+  --rows data/cadqa_smoke/jsonl/validation.jsonl \
+  --responses runs/eval/model_responses.jsonl \
+  --output-dir runs/eval/model_eval \
+  --label zero_shot
+```
+
 CadQuery execution is optional. Without CadQuery, the app still supports source
 records, operation graphs, static task rows, smoke fixtures, validation, splits,
 and baseline evaluation. With CadQuery installed, `cadqa trace` can emit scalar
