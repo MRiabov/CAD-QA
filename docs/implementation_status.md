@@ -29,6 +29,7 @@ specs.
   failure manifests, and dataset-card generation.
 - Manual audit sample export, trace failure taxonomy reports, and two-export
   reproducibility audits.
+- Optional SVG audit render bundles with per-render manifest metadata.
 - Protected split routing for generator, source-subtree, operation-signature,
   topology-signature, and point-sampling groups when enough groups exist.
 - Explicit near-boundary point-membership tagging and protected

@@ -124,6 +124,15 @@ uv run python -m scripts.dataset.reproducibility_audit \
   --output runs/reproducibility_audit.json
 ```
 
+Export optional SVG audit renders:
+
+```bash
+uv run --extra cadquery python -m scripts.dataset.export_audit_renders \
+  data/cadqa_smoke \
+  --output-dir runs/audit_renders \
+  --limit 16
+```
+
 Generate grouped numeric counterfactual source variants:
 
 ```bash
