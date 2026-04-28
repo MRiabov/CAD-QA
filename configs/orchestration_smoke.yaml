@@ -1,0 +1,92 @@
+version: 1
+runs:
+  - name: smoke_dataset
+    kind: data_prep
+    command:
+      - uv
+      - run
+      - cadqa
+      - smoke
+      - --output-dir
+      - runs/smoke_dataset/dataset
+    output_dir: runs/smoke_dataset
+    artifacts:
+      - logs/stdout.log
+      - dataset/metadata.json
+      - dataset/split_manifest.json
+
+  - name: validate_smoke_dataset
+    kind: dataset_report
+    depends_on: [smoke_dataset]
+    command:
+      - uv
+      - run
+      - python
+      - -m
+      - scripts.dataset.dataset_stats
+      - runs/smoke_dataset/dataset
+      - --output
+      - runs/validate_smoke_dataset/dataset_stats.json
+    output_dir: runs/validate_smoke_dataset
+    artifacts:
+      - logs/stdout.log
+      - dataset_stats.json
+
+  - name: smoke_baselines
+    kind: baseline
+    depends_on: [validate_smoke_dataset]
+    command:
+      - uv
+      - run
+      - python
+      - -m
+      - scripts.evaluation.evaluate_baseline
+      - runs/smoke_dataset/dataset/jsonl/train.jsonl
+      - --output-dir
+      - runs/smoke_baselines
+    output_dir: runs/smoke_baselines
+    artifacts:
+      - logs/stdout.log
+      - baseline_metrics.json
+
+  - name: prepare_answer_sft_smoke
+    kind: data_prep
+    depends_on: [validate_smoke_dataset]
+    command:
+      - uv
+      - run
+      - python
+      - -m
+      - scripts.training.prepare_answer_sft_dataset
+      - --dataset-dir
+      - runs/smoke_dataset/dataset
+      - --output-dir
+      - runs/prepare_answer_sft_smoke/sft
+      - --max-train-rows
+      - "512"
+      - --max-eval-rows
+      - "128"
+    output_dir: runs/prepare_answer_sft_smoke
+    artifacts:
+      - logs/stdout.log
+      - sft/sft_dataset_report.json
+      - sft/train.jsonl
+      - sft/validation.jsonl
+
+  - name: text_sft_format_smoke
+    kind: local_smoke
+    depends_on: [prepare_answer_sft_smoke]
+    command:
+      - uv
+      - run
+      - python
+      - -m
+      - scripts.training.text_sft_smoke
+      - --sft-dir
+      - runs/prepare_answer_sft_smoke/sft
+      - --output
+      - runs/text_sft_format_smoke/text_sft_smoke_report.json
+    output_dir: runs/text_sft_format_smoke
+    artifacts:
+      - logs/stdout.log
+      - text_sft_smoke_report.json

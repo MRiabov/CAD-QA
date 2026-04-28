@@ -34,19 +34,26 @@ ordering:
   rule: Epics follow the implementation order and research structure described in specs/useful-implementation-optimization.md, specs/extracting-cadevolve-features.md, specs/paper-spec.md, specs/research-experiment-spec.md, and the CADEditQA specs.
 current_snapshot:
   date: "2026-04-28"
-  codebase_state: CAD-QA is specified as a CADEvolve-backed, code-plus-label benchmark for closed-book reasoning over executable CadQuery construction programs. The specs define task families, label rules, public row schema, generation policy, CADEvolve handling, feature extraction policy, answer parse policy, experiment plans, CADEditQA extensions, and reviewer-readiness checks. This repository snapshot exposes specs and docs only, so backlog implementation statuses are conservative.
+  codebase_state: CAD-QA now has a working Python package, CLI, source ingestion, AST operation graphs, isolated optional CadQuery tracing, scalar/topology snapshots, conservative point/provenance records, MVP public-row materialization, split manifests, leakage validation, JSONL export, dataset cards, baselines, SFT data preparation, experiment orchestration, smoke fixtures, tests, and validated smoke/CADEvolve-probe artifacts. Exact topology entity IDs, robust adjacent topology matching, full held-out split families, Parquet export, real GPU SFT, counterfactual generation, CADEditQA verifier tasks, and multimodal/rendering extensions remain open or partial.
   stable_features:
     - cadqa_research_framing
     - cadqa_mvp_task_family_spec
     - cadqa_label_rule_spec
     - cadqa_public_schema_spec
     - cadevolve_source_policy
+    - adjacent_cadevolve_source_reuse_policy
     - cadevolve_feature_extraction_policy
     - cadqa_generation_policy
     - cadqa_answer_parse_policy
     - cadqa_experiment_plan
     - cadeditqa_task_direction
     - reviewer_readiness_checklist
+    - cadqa_python_package_and_cli
+    - cadqa_source_ingestion_and_operation_graphs
+    - cadqa_isolated_trace_worker
+    - cadqa_mvp_public_row_materialization
+    - cadqa_jsonl_export_and_validation
+    - cadqa_baseline_and_sft_data_artifacts
 
 epics:
   - id: epic-1
@@ -81,7 +88,7 @@ epics:
         implementation_complexity: Low
         debugging_difficulty: Low
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
       - id: "1.4"
         title: Paper success metrics
@@ -89,7 +96,7 @@ epics:
         implementation_complexity: Low
         debugging_difficulty: Low
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
 
   - id: epic-2
@@ -99,7 +106,7 @@ epics:
     implementation_complexity: Medium
     debugging_difficulty: Medium
     recommendation: Build now
-    status: planned
+    status: implemented
     stable: false
     stories:
       - id: "2.1"
@@ -116,7 +123,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
       - id: "2.3"
         title: Normalize CadQuery scripts
@@ -124,7 +131,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: High
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
       - id: "2.4"
         title: Validate source executability
@@ -132,7 +139,7 @@ epics:
         implementation_complexity: High
         debugging_difficulty: High
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
       - id: "2.5"
         title: CADEvolve materialization workflow
@@ -140,7 +147,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
       - id: "2.6"
         title: Scoped synthetic fixtures
@@ -148,7 +155,7 @@ epics:
         implementation_complexity: Low
         debugging_difficulty: Low
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
 
   - id: epic-3
@@ -158,7 +165,7 @@ epics:
     implementation_complexity: High
     debugging_difficulty: High
     recommendation: Build now
-    status: planned
+    status: work-in-progress
     stable: false
     stories:
       - id: "3.1"
@@ -167,7 +174,7 @@ epics:
         implementation_complexity: High
         debugging_difficulty: High
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
       - id: "3.2"
         title: Isolated trace execution
@@ -175,7 +182,7 @@ epics:
         implementation_complexity: High
         debugging_difficulty: High
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
       - id: "3.3"
         title: Intermediate snapshots
@@ -183,7 +190,7 @@ epics:
         implementation_complexity: High
         debugging_difficulty: High
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
       - id: "3.4"
         title: Selector result tables
@@ -191,7 +198,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: High
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
       - id: "3.5"
         title: Stable entity IDs
@@ -217,7 +224,7 @@ epics:
     implementation_complexity: High
     debugging_difficulty: High
     recommendation: Build now
-    status: planned
+    status: work-in-progress
     stable: false
     stories:
       - id: "4.1"
@@ -234,7 +241,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
       - id: "4.3"
         title: Volume and bounding-box labels
@@ -242,7 +249,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: High
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
       - id: "4.4"
         title: Topology count labels
@@ -250,7 +257,7 @@ epics:
         implementation_complexity: High
         debugging_difficulty: High
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
       - id: "4.5"
         title: Point membership labels
@@ -258,7 +265,7 @@ epics:
         implementation_complexity: High
         debugging_difficulty: High
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
       - id: "4.6"
         title: Feature provenance labels
@@ -266,7 +273,7 @@ epics:
         implementation_complexity: High
         debugging_difficulty: High
         recommendation: Build after topology matching
-        status: planned
+        status: work-in-progress
         stable: false
       - id: "4.7"
         title: Label consistency validation
@@ -274,7 +281,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: High
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
 
   - id: epic-5
@@ -284,7 +291,7 @@ epics:
     implementation_complexity: Medium
     debugging_difficulty: Medium
     recommendation: Build after labels
-    status: planned
+    status: work-in-progress
     stable: false
     stories:
       - id: "5.1"
@@ -293,7 +300,7 @@ epics:
         implementation_complexity: Low
         debugging_difficulty: Low
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
       - id: "5.2"
         title: Selector-count prompt generator
@@ -301,7 +308,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build after selector tables
-        status: planned
+        status: implemented
         stable: false
       - id: "5.3"
         title: Bounding-box prompt generator
@@ -309,7 +316,7 @@ epics:
         implementation_complexity: Low
         debugging_difficulty: Medium
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
       - id: "5.4"
         title: Signed-volume-delta prompt generator
@@ -317,7 +324,7 @@ epics:
         implementation_complexity: Low
         debugging_difficulty: Medium
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
       - id: "5.5"
         title: Topology-count prompt generator
@@ -325,7 +332,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build after topology labels
-        status: planned
+        status: implemented
         stable: false
       - id: "5.6"
         title: Point-membership prompt generator
@@ -333,7 +340,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: High
         recommendation: Build after point labels
-        status: planned
+        status: implemented
         stable: false
       - id: "5.7"
         title: Feature-provenance-choice prompt generator
@@ -341,7 +348,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: High
         recommendation: Build after provenance labels
-        status: planned
+        status: implemented
         stable: false
       - id: "5.8"
         title: Reserved later task prompt generators
@@ -359,7 +366,7 @@ epics:
     implementation_complexity: Medium
     debugging_difficulty: Medium
     recommendation: Build before release
-    status: planned
+    status: work-in-progress
     stable: false
     stories:
       - id: "6.1"
@@ -368,7 +375,7 @@ epics:
         implementation_complexity: Low
         debugging_difficulty: Low
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
       - id: "6.2"
         title: Generator-held-out split
@@ -376,7 +383,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build now
-        status: planned
+        status: work-in-progress
         stable: false
       - id: "6.3"
         title: Source-subtree and source-family holdouts
@@ -384,7 +391,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build now
-        status: planned
+        status: work-in-progress
         stable: false
       - id: "6.4"
         title: Operation-held-out split
@@ -392,7 +399,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build now
-        status: planned
+        status: work-in-progress
         stable: false
       - id: "6.5"
         title: Topology-held-out split
@@ -400,7 +407,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: High
         recommendation: Build after topology labels
-        status: planned
+        status: work-in-progress
         stable: false
       - id: "6.6"
         title: Near-boundary hard split
@@ -408,7 +415,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build after point labels
-        status: planned
+        status: work-in-progress
         stable: false
       - id: "6.7"
         title: Task-family class balancing
@@ -426,7 +433,7 @@ epics:
     implementation_complexity: Medium
     debugging_difficulty: Medium
     recommendation: Build after MVP export
-    status: planned
+    status: work-in-progress
     stable: false
     stories:
       - id: "7.1"
@@ -435,7 +442,7 @@ epics:
         implementation_complexity: Low
         debugging_difficulty: Low
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
       - id: "7.2"
         title: Static operation-count baselines
@@ -443,7 +450,7 @@ epics:
         implementation_complexity: Low
         debugging_difficulty: Low
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
       - id: "7.3"
         title: Selector and geometry heuristic baselines
@@ -451,7 +458,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
       - id: "7.4"
         title: Closed-book LLM evaluation
@@ -475,7 +482,7 @@ epics:
         implementation_complexity: High
         debugging_difficulty: Medium
         recommendation: Build after baseline evaluation
-        status: planned
+        status: work-in-progress
         stable: false
       - id: "7.7"
         title: Trace-grounded reasoning SFT
@@ -509,7 +516,7 @@ epics:
     implementation_complexity: High
     debugging_difficulty: High
     recommendation: Build after MVP diagnostic tasks
-    status: planned
+    status: work-in-progress
     stable: false
     stories:
       - id: "8.1"
@@ -603,7 +610,7 @@ epics:
     implementation_complexity: Medium
     debugging_difficulty: Medium
     recommendation: Build before paper experiments
-    status: planned
+    status: work-in-progress
     stable: false
     stories:
       - id: "10.1"
@@ -620,7 +627,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build after row generation
-        status: planned
+        status: work-in-progress
         stable: false
       - id: "10.3"
         title: Dataset card
@@ -628,7 +635,7 @@ epics:
         implementation_complexity: Low
         debugging_difficulty: Low
         recommendation: Build before release
-        status: planned
+        status: implemented
         stable: false
       - id: "10.4"
         title: Reproducibility scripts
@@ -636,7 +643,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build before release
-        status: planned
+        status: implemented
         stable: false
       - id: "10.5"
         title: Versioning
@@ -644,7 +651,7 @@ epics:
         implementation_complexity: Low
         debugging_difficulty: Low
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
 
   - id: epic-11
@@ -654,7 +661,7 @@ epics:
     implementation_complexity: Medium
     debugging_difficulty: Medium
     recommendation: Build after release candidate
-    status: planned
+    status: work-in-progress
     stable: false
     stories:
       - id: "11.1"
@@ -663,7 +670,7 @@ epics:
         implementation_complexity: Low
         debugging_difficulty: Low
         recommendation: Build after export
-        status: planned
+        status: implemented
         stable: false
       - id: "11.2"
         title: Baseline comparison table
@@ -671,7 +678,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Low
         recommendation: Build after baselines
-        status: planned
+        status: implemented
         stable: false
       - id: "11.3"
         title: Task-family comparison
@@ -679,7 +686,7 @@ epics:
         implementation_complexity: Low
         debugging_difficulty: Low
         recommendation: Build after evaluations
-        status: planned
+        status: work-in-progress
         stable: false
       - id: "11.4"
         title: Split-generalization analysis
@@ -687,7 +694,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build after split manifests
-        status: planned
+        status: work-in-progress
         stable: false
       - id: "11.5"
         title: Prompting and training ablations
@@ -703,7 +710,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build after model predictions
-        status: planned
+        status: work-in-progress
         stable: false
 
   - id: epic-12
@@ -788,7 +795,7 @@ epics:
     implementation_complexity: Medium
     debugging_difficulty: Medium
     recommendation: Build now
-    status: planned
+    status: work-in-progress
     stable: false
     stories:
       - id: "13.1"
@@ -797,7 +804,7 @@ epics:
         implementation_complexity: Low
         debugging_difficulty: Low
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
       - id: "13.2"
         title: Configuration system
@@ -805,7 +812,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Low
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
       - id: "13.3"
         title: Logging and failure tracking
@@ -813,7 +820,7 @@ epics:
         implementation_complexity: Low
         debugging_difficulty: Medium
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
       - id: "13.4"
         title: Expensive artifact caches
@@ -837,7 +844,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
       - id: "13.7"
         title: Smoke dataset generation
@@ -845,7 +852,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build now
-        status: planned
+        status: implemented
         stable: false
 
   - id: epic-14
@@ -855,7 +862,7 @@ epics:
     implementation_complexity: Medium
     debugging_difficulty: Medium
     recommendation: Build before release
-    status: planned
+    status: work-in-progress
     stable: false
     stories:
       - id: "14.1"
@@ -872,7 +879,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build before release
-        status: planned
+        status: work-in-progress
         stable: false
       - id: "14.3"
         title: Leakage audit
@@ -880,7 +887,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build before release
-        status: planned
+        status: implemented
         stable: false
       - id: "14.4"
         title: Reviewer-readiness checklist
@@ -889,6 +896,89 @@ epics:
         debugging_difficulty: Low
         recommendation: Build before release
         status: implemented
+        stable: false
+
+  - id: epic-15
+    title: Experiment orchestration and run artifacts
+    scope: Make CAD-QA baselines, model evaluations, SFT runs, canaries, and analysis runs reproducible through manifests, prediction artifacts, and stop gates.
+    priority: P0
+    implementation_complexity: Medium
+    debugging_difficulty: Medium
+    recommendation: Build before serious model experiments
+    status: work-in-progress
+    stable: false
+    stories:
+      - id: "15.1"
+        title: Run artifact contract
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Low
+        recommendation: Build before baseline runs
+        status: implemented
+        stable: false
+      - id: "15.2"
+        title: Experiment manifest format
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build before orchestration script
+        status: implemented
+        stable: false
+      - id: "15.3"
+        title: Experiment orchestration runner
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build before overnight runs
+        status: implemented
+        stable: false
+      - id: "15.4"
+        title: Standard prediction output contract
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Build before closed-book model evaluation
+        status: implemented
+        stable: false
+      - id: "15.5"
+        title: Canary and stop-gate policy
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build before SFT or RL runs
+        status: work-in-progress
+        stable: false
+      - id: "15.6"
+        title: Overnight experiment subset manifest
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Medium
+        recommendation: Build before first rented-GPU run
+        status: implemented
+        stable: false
+      - id: "15.7"
+        title: Local orchestration smoke suite
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Medium
+        recommendation: Build with orchestration runner
+        status: implemented
+        stable: false
+      - id: "15.8"
+        title: Artifact upload and retention
+        priority: P1
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build before destroying rented instances
+        status: planned
+        stable: false
+      - id: "15.9"
+        title: Experiment comparison reports
+        priority: P1
+        implementation_complexity: Medium
+        debugging_difficulty: Low
+        recommendation: Build after prediction contract
+        status: work-in-progress
         stable: false
 
 milestones:
@@ -929,17 +1019,26 @@ milestones:
     title: Baseline evaluation
     required_epics:
       - epic-7
+    required_stories:
+      - "15.1"
+      - "15.4"
   - id: milestone-7
     title: Training experiments
     required_stories:
       - "7.6"
       - "7.7"
       - "7.8"
+      - "15.2"
+      - "15.3"
+      - "15.5"
+      - "15.6"
+      - "15.7"
   - id: milestone-8
     title: Paper draft
     required_epics:
       - epic-11
       - epic-12
+      - epic-15
   - id: milestone-9
     title: Release candidate
     required_epics:
@@ -987,6 +1086,9 @@ backlog_priority:
     - leakage_safe_splits
     - dataset_export
     - baseline_evaluation
+    - experiment_orchestration
+    - run_artifact_contract
+    - prediction_output_contract
     - paper_core_sections
   P1:
     - counterfactual_groups
@@ -994,6 +1096,8 @@ backlog_priority:
     - data_scaling_experiments
     - failure_taxonomy
     - audit_renders
+    - bounded_rl_or_rejection_sampling
+    - experiment_artifact_upload
     - cadeditqa_first_repair_slices
   P2:
     - multimodal_prompt_variants

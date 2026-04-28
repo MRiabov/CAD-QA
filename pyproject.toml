@@ -1,0 +1,22 @@
+[project]
+name = "cad-qa"
+version = "0.1.0"
+description = "Trace-derived CAD-QA dataset generation and evaluation tools."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["PyYAML>=6.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+cadquery = ["cadquery>=2.4"]
+
+[project.scripts]
+cadqa = "cad_qa.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
