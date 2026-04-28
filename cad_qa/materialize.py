@@ -229,10 +229,11 @@ def _point_rows(source: SourceRecord, trace: TraceRecord, *, config: DatasetConf
                 unit=None,
                 numeric_tolerance=None,
                 requires=["cadquery_syntax", "point_membership"],
-                difficulty_tags=["point_membership"],
+                difficulty_tags=_point_membership_tags(query, str(answer)),
                 labels={"point_query": query, "answer_status": "ok", "failure_reason": None},
                 diagnostics={"answer_status": "ok", "failure_reason": None},
                 parse_policy="strict_enum_v1",
+                provenance_overrides={"point_sampling_group_id": _point_sampling_group_id(source, query, str(answer))},
             )
         )
     return rows
@@ -304,9 +305,12 @@ def _row(
     labels: dict[str, Any],
     diagnostics: dict[str, Any],
     parse_policy: str,
+    provenance_overrides: dict[str, Any] | None = None,
 ) -> PublicTaskRow:
     prompt_hash = sha256_json({"task_type": task_type, "target": target_feature_id, "prompt": prompt})
     provenance = _provenance(source, trace)
+    if provenance_overrides:
+        provenance.update(provenance_overrides)
     row_payload = {
         "dataset_version": config.dataset_version,
         "task_type": task_type,
@@ -386,6 +390,25 @@ def _volume_tags(delta: float) -> list[str]:
     if delta > 0:
         return ["symbolic_arithmetic"]
     return ["kernel_sensitive"]
+
+
+def _point_membership_tags(query: dict[str, Any], answer: str) -> list[str]:
+    tags = ["point_membership"]
+    if _is_near_boundary_query(query, answer):
+        tags.append("near_boundary")
+    return tags
+
+
+def _point_sampling_group_id(source: SourceRecord, query: dict[str, Any], answer: str) -> str:
+    stratum = str(query.get("sampling_stratum") or query.get("sample_source") or "unknown")
+    if _is_near_boundary_query(query, answer):
+        return f"near_boundary:{source.source_id}:{stratum}"
+    return f"point_sample:{source.source_id}:{stratum}"
+
+
+def _is_near_boundary_query(query: dict[str, Any], answer: str) -> bool:
+    stratum = f"{query.get('sampling_stratum')} {query.get('sample_source')}".lower()
+    return answer in {"on_boundary", "ambiguous"} or "boundary" in stratum
 
 
 def rows_to_dicts(rows: list[PublicTaskRow]) -> list[dict[str, Any]]:

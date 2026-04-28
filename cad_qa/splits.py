@@ -59,7 +59,7 @@ def split_group(row: dict[str, Any]) -> str:
 def assign_row_splits(rows: list[dict[str, Any]], seed: int) -> list[dict[str, Any]]:
     groups = sorted({split_group(row) for row in rows})
     group_metadata = _group_metadata(rows)
-    protected_values = _protected_holdout_values(group_metadata, seed)
+    protected_values = _protected_holdout_values(group_metadata, seed, total_group_count=len(groups))
     assignments = {
         group: _protected_split_for_group(group_metadata[group], protected_values)
         or assign_split_for_group(group, seed)
@@ -101,6 +101,7 @@ def _group_metadata(rows: list[dict[str, Any]]) -> dict[str, dict[str, set[str]]
 def _protected_holdout_values(
     group_metadata: dict[str, dict[str, set[str]]],
     seed: int,
+    total_group_count: int,
 ) -> dict[str, set[str]]:
     split_by_key = {
         "generator_id": "test_generator_heldout",
@@ -112,6 +113,10 @@ def _protected_holdout_values(
     selected: dict[str, set[str]] = {split: set() for split in split_by_key.values()}
     for key, split in split_by_key.items():
         values = sorted({value for metadata in group_metadata.values() for value in metadata.get(key, set())})
+        if key == "point_sampling_group_id":
+            if total_group_count >= 3:
+                selected[split].update(value for value in values if value.startswith("near_boundary:"))
+            continue
         if len(values) < 3:
             continue
         target_count = max(1, round(len(values) * PROTECTED_HOLDOUT_FRACTION))

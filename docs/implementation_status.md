@@ -31,6 +31,8 @@ specs.
   reproducibility audits.
 - Protected split routing for generator, source-subtree, operation-signature,
   topology-signature, and point-sampling groups when enough groups exist.
+- Explicit near-boundary point-membership tagging and protected
+  `test_near_boundary` routing for datasets with enough source groups.
 - Optional Parquet export when `pyarrow` is installed, with an explicit marker
   when the `parquet` extra is unavailable.
 - Trace caching and a resumable sharded generation script for bounded scale
