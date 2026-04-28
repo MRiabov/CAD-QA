@@ -39,6 +39,7 @@ specs.
   runs.
 - Baselines for majority, random, static operation count, regex operation
   count, selector heuristic, and oracle.
+- Trace-label oracle upper-bound export for parser and metric sanity checks.
 - Experiment comparison reports with headline, per-task, and per-split JSON,
   CSV, and Markdown tables.
 - Deterministic task-balanced subset export for train/validation rows.

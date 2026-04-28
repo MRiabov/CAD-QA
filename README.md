@@ -26,6 +26,14 @@ Run baselines:
 uv run cadqa baseline data/cadqa_smoke/jsonl/train.jsonl --output-dir runs/smoke_baselines
 ```
 
+Run the trace-label oracle upper bound:
+
+```bash
+uv run python -m scripts.evaluation.tool_assisted_upper_bound \
+  data/cadqa_smoke/jsonl/validation.jsonl \
+  --output-dir runs/smoke_upper_bound
+```
+
 Load a CADEvolve source directory, or auto-detect an adjacent one, and generate
 rows:
 
