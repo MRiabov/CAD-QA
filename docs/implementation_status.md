@@ -14,7 +14,7 @@ specs.
 - Static source safety checks before execution.
 - Isolated, bounded CadQuery trace workers with scalar snapshots, topology
   counts, selector count tables when selectors are present, point samples, and
-  conservative adjacent-volume provenance records.
+  conservative adjacent-volume and adjacent-topology-match provenance records.
 - Per-snapshot entity IDs and best-effort adjacent topology matching for small
   snapshots using lightweight geometry signatures.
 - Public row materialization for:
@@ -91,9 +91,9 @@ specs.
 ## Still Gated
 
 - Exact OpenCascade builder-history provenance is not implemented; current
-  provenance rows are conservative adjacent-volume labels. Adjacent topology
-  matching exists but is best-effort and intentionally skips heavy signatures on
-  large snapshots.
+  provenance rows are conservative adjacent-volume and adjacent-topology-match
+  labels. Adjacent topology matching is best-effort and intentionally skips
+  heavy signatures on large snapshots.
 - Full selector coverage depends on selectors appearing in traced sources.
 - Counterfactual source variants exist, but verified counterfactual labels and
   public counterfactual task rows are not implemented.

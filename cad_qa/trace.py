@@ -276,7 +276,10 @@ def _trace_worker_payload(code: str) -> dict[str, Any]:
                     selector_tables.append(selector)
         point_queries = _point_queries_for_final_state(namespace, snapshots)
         topology_matches = _adjacent_topology_matches(snapshots)
-        provenance_records = _conservative_provenance_records(snapshots)
+        provenance_records = [
+            *_conservative_provenance_records(snapshots),
+            *_topology_match_provenance_records(topology_matches),
+        ]
     except Exception as exc:
         return {
             "status": "error",
@@ -594,6 +597,28 @@ def _conservative_provenance_records(snapshots: list[dict[str, Any]]) -> list[di
                 "answer_feature_id": current.get("feature_id"),
                 "matching_method": "adjacent_snapshot_volume_delta",
                 "provenance_confidence": 0.6,
+            }
+        )
+    return records
+
+
+def _topology_match_provenance_records(topology_matches: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    for match in topology_matches:
+        to_feature = match.get("to_feature_id")
+        from_feature = match.get("from_feature_id")
+        if not isinstance(to_feature, str) or not isinstance(from_feature, str):
+            continue
+        entity_type = match.get("entity_type") or "entity"
+        records.append(
+            {
+                "target_description": f"{entity_type} `{match.get('to_entity_id')}` inherited from adjacent snapshot",
+                "target_feature_id": to_feature,
+                "provenance_relation": "inherited_from",
+                "answer_feature_id": from_feature,
+                "matching_method": match.get("matching_method") or "adjacent_topology_match",
+                "provenance_confidence": match.get("confidence", 0.5),
+                "topology_match": match,
             }
         )
     return records
