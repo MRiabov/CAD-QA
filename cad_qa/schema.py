@@ -21,6 +21,8 @@ TASK_TYPES = {
     "counterfactual_parameter",
     "parameter_edit_direction",
     "feature_to_edit",
+    "selector_repair",
+    "workplane_offset_repair",
     "ambiguous_question_detection",
 }
 

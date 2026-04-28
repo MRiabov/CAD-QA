@@ -167,6 +167,14 @@ uv run python -m scripts.dataset.materialize_cadedit_feature_tasks \
   --output-dir runs/cadedit_feature_tasks
 ```
 
+Materialize conservative CADEditQA selector-repair rows:
+
+```bash
+uv run python -m scripts.dataset.materialize_cadedit_repair_tasks \
+  data/cadqa_smoke \
+  --output-dir runs/cadedit_repair_tasks
+```
+
 Export closed-book model requests:
 
 ```bash
