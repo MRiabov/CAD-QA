@@ -1,0 +1,1009 @@
+schema_version: 1
+project: CAD-QA
+tracks:
+  - shared_core
+  - cadqa
+  - cadeditqa
+source_documents:
+  - epics-and-stories.md
+  - specs/benchmark-family.md
+  - specs/benchmark-task-spec.md
+  - specs/label_rules.md
+  - specs/schema.md
+  - specs/generation_policy.md
+  - specs/paper-spec.md
+  - specs/research-experiment-spec.md
+  - specs/cadedit-task-spec.md
+  - specs/cadedit-full-spec.md
+  - specs/extracting-cadevolve-features.md
+  - specs/using-cadevolve-dataset-export.md
+  - specs/dataset-spec.md
+  - specs/useful-implementation-optimization.md
+  - specs/reviewer-readiness-checklist.md
+status_values:
+  - planned
+  - work-in-progress
+  - implemented
+status_definitions:
+  planned: Specified in docs, but no concrete implementation or completed artifact is present in this repo snapshot.
+  work-in-progress: Partially specified or partially built, with remaining acceptance criteria open.
+  implemented: A concrete artifact exists for the story, but it is not necessarily final-pipeline verified.
+stable_definition: true only after the feature has been confirmed to work in the final dataset pipeline.
+ordering:
+  source: specs
+  rule: Epics follow the implementation order and research structure described in specs/useful-implementation-optimization.md, specs/extracting-cadevolve-features.md, specs/paper-spec.md, specs/research-experiment-spec.md, and the CADEditQA specs.
+current_snapshot:
+  date: "2026-04-28"
+  codebase_state: CAD-QA is specified as a CADEvolve-backed, code-plus-label benchmark for closed-book reasoning over executable CadQuery construction programs. The specs define task families, label rules, public row schema, generation policy, CADEvolve handling, feature extraction policy, answer parse policy, experiment plans, CADEditQA extensions, and reviewer-readiness checks. This repository snapshot exposes specs and docs only, so backlog implementation statuses are conservative.
+  stable_features:
+    - cadqa_research_framing
+    - cadqa_mvp_task_family_spec
+    - cadqa_label_rule_spec
+    - cadqa_public_schema_spec
+    - cadevolve_source_policy
+    - cadevolve_feature_extraction_policy
+    - cadqa_generation_policy
+    - cadqa_answer_parse_policy
+    - cadqa_experiment_plan
+    - cadeditqa_task_direction
+    - reviewer_readiness_checklist
+
+epics:
+  - id: epic-1
+    title: Research scope and paper framing
+    scope: Freeze the CAD-QA contribution, benchmark boundary, reviewer-facing claims, and paper narrative.
+    priority: P0
+    implementation_complexity: Low
+    debugging_difficulty: Low
+    recommendation: Build now
+    status: implemented
+    stable: false
+    stories:
+      - id: "1.1"
+        title: Benchmark thesis
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Build now
+        status: implemented
+        stable: false
+      - id: "1.2"
+        title: Task tiers
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Build now
+        status: implemented
+        stable: false
+      - id: "1.3"
+        title: Evaluation regimes
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "1.4"
+        title: Paper success metrics
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Build now
+        status: planned
+        stable: false
+
+  - id: epic-2
+    title: Dataset source ingestion
+    scope: Ingest CADEvolve CadQuery programs as primary source records and keep synthetic rows fixture-only.
+    priority: P0
+    implementation_complexity: Medium
+    debugging_difficulty: Medium
+    recommendation: Build now
+    status: planned
+    stable: false
+    stories:
+      - id: "2.1"
+        title: Select initial CAD program sources
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Medium
+        recommendation: Build now
+        status: implemented
+        stable: false
+      - id: "2.2"
+        title: Source record loader
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "2.3"
+        title: Normalize CadQuery scripts
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: High
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "2.4"
+        title: Validate source executability
+        priority: P0
+        implementation_complexity: High
+        debugging_difficulty: High
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "2.5"
+        title: CADEvolve materialization workflow
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "2.6"
+        title: Scoped synthetic fixtures
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Build now
+        status: planned
+        stable: false
+
+  - id: epic-3
+    title: Operation graph and trace generation
+    scope: Convert normalized source programs into operation graphs, isolated execution traces, and reusable intermediate-state snapshots.
+    priority: P0
+    implementation_complexity: High
+    debugging_difficulty: High
+    recommendation: Build now
+    status: planned
+    stable: false
+    stories:
+      - id: "3.1"
+        title: AST-backed operation graphs
+        priority: P0
+        implementation_complexity: High
+        debugging_difficulty: High
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "3.2"
+        title: Isolated trace execution
+        priority: P0
+        implementation_complexity: High
+        debugging_difficulty: High
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "3.3"
+        title: Intermediate snapshots
+        priority: P0
+        implementation_complexity: High
+        debugging_difficulty: High
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "3.4"
+        title: Selector result tables
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: High
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "3.5"
+        title: Stable entity IDs
+        priority: P1
+        implementation_complexity: High
+        debugging_difficulty: High
+        recommendation: Build after scalar tasks
+        status: planned
+        stable: false
+      - id: "3.6"
+        title: Adjacent-snapshot topology matching
+        priority: P1
+        implementation_complexity: High
+        debugging_difficulty: High
+        recommendation: Build after entity IDs
+        status: planned
+        stable: false
+
+  - id: epic-4
+    title: Geometry topology and provenance labeling
+    scope: Compute official labels from precomputed trace metadata under explicit tolerance and ambiguity policies.
+    priority: P0
+    implementation_complexity: High
+    debugging_difficulty: High
+    recommendation: Build now
+    status: planned
+    stable: false
+    stories:
+      - id: "4.1"
+        title: Label policy object
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Build now
+        status: implemented
+        stable: false
+      - id: "4.2"
+        title: Operation count labels
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "4.3"
+        title: Volume and bounding-box labels
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: High
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "4.4"
+        title: Topology count labels
+        priority: P0
+        implementation_complexity: High
+        debugging_difficulty: High
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "4.5"
+        title: Point membership labels
+        priority: P0
+        implementation_complexity: High
+        debugging_difficulty: High
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "4.6"
+        title: Feature provenance labels
+        priority: P0
+        implementation_complexity: High
+        debugging_difficulty: High
+        recommendation: Build after topology matching
+        status: planned
+        stable: false
+      - id: "4.7"
+        title: Label consistency validation
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: High
+        recommendation: Build now
+        status: planned
+        stable: false
+
+  - id: epic-5
+    title: Prompt and task generation
+    scope: Materialize public task rows from trace metadata without recomputing CadQuery geometry during prompt formatting.
+    priority: P0
+    implementation_complexity: Medium
+    debugging_difficulty: Medium
+    recommendation: Build after labels
+    status: planned
+    stable: false
+    stories:
+      - id: "5.1"
+        title: Operation-count prompt generator
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "5.2"
+        title: Selector-count prompt generator
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build after selector tables
+        status: planned
+        stable: false
+      - id: "5.3"
+        title: Bounding-box prompt generator
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Medium
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "5.4"
+        title: Signed-volume-delta prompt generator
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Medium
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "5.5"
+        title: Topology-count prompt generator
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build after topology labels
+        status: planned
+        stable: false
+      - id: "5.6"
+        title: Point-membership prompt generator
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: High
+        recommendation: Build after point labels
+        status: planned
+        stable: false
+      - id: "5.7"
+        title: Feature-provenance-choice prompt generator
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: High
+        recommendation: Build after provenance labels
+        status: planned
+        stable: false
+      - id: "5.8"
+        title: Reserved later task prompt generators
+        priority: P2
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Defer
+        status: planned
+        stable: false
+
+  - id: epic-6
+    title: Dataset splits and balancing
+    scope: Create leakage-resistant split manifests and task-family balance policies.
+    priority: P0
+    implementation_complexity: Medium
+    debugging_difficulty: Medium
+    recommendation: Build before release
+    status: planned
+    stable: false
+    stories:
+      - id: "6.1"
+        title: Random split
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "6.2"
+        title: Generator-held-out split
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "6.3"
+        title: Source-subtree and source-family holdouts
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "6.4"
+        title: Operation-held-out split
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "6.5"
+        title: Topology-held-out split
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: High
+        recommendation: Build after topology labels
+        status: planned
+        stable: false
+      - id: "6.6"
+        title: Near-boundary hard split
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build after point labels
+        status: planned
+        stable: false
+      - id: "6.7"
+        title: Task-family class balancing
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build before release
+        status: planned
+        stable: false
+
+  - id: epic-7
+    title: Baselines and model evaluation
+    scope: Measure shortcut baselines, closed-book model performance, training gains, and split-specific failures.
+    priority: P0
+    implementation_complexity: Medium
+    debugging_difficulty: Medium
+    recommendation: Build after MVP export
+    status: planned
+    stable: false
+    stories:
+      - id: "7.1"
+        title: Majority and random baselines
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "7.2"
+        title: Static operation-count baselines
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "7.3"
+        title: Selector and geometry heuristic baselines
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "7.4"
+        title: Closed-book LLM evaluation
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build after export
+        status: planned
+        stable: false
+      - id: "7.5"
+        title: Few-shot prompting evaluation
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build after train split
+        status: planned
+        stable: false
+      - id: "7.6"
+        title: Answer-only SFT
+        priority: P0
+        implementation_complexity: High
+        debugging_difficulty: Medium
+        recommendation: Build after baseline evaluation
+        status: planned
+        stable: false
+      - id: "7.7"
+        title: Trace-grounded reasoning SFT
+        priority: P0
+        implementation_complexity: High
+        debugging_difficulty: High
+        recommendation: Build after rationale templates
+        status: planned
+        stable: false
+      - id: "7.8"
+        title: Data scaling experiments
+        priority: P0
+        implementation_complexity: High
+        debugging_difficulty: Medium
+        recommendation: Build after first SFT
+        status: planned
+        stable: false
+      - id: "7.9"
+        title: Tool-assisted upper bound
+        priority: P1
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build after closed-book baseline
+        status: planned
+        stable: false
+
+  - id: epic-8
+    title: Counterfactual and CADEditQA extensions
+    scope: Extend diagnostic CAD-QA into controlled counterfactual and edit-prediction tasks while reusing shared core.
+    priority: P1
+    implementation_complexity: High
+    debugging_difficulty: High
+    recommendation: Build after MVP diagnostic tasks
+    status: planned
+    stable: false
+    stories:
+      - id: "8.1"
+        title: Counterfactual groups
+        priority: P1
+        implementation_complexity: High
+        debugging_difficulty: High
+        recommendation: Build after trace stability
+        status: planned
+        stable: false
+      - id: "8.2"
+        title: CADEditQA task boundary
+        priority: P1
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Build after CAD-QA core
+        status: implemented
+        stable: false
+      - id: "8.3"
+        title: Parameter edit direction
+        priority: P1
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build after verifier core
+        status: planned
+        stable: false
+      - id: "8.4"
+        title: Feature to edit
+        priority: P1
+        implementation_complexity: Medium
+        debugging_difficulty: High
+        recommendation: Build after provenance labels
+        status: planned
+        stable: false
+      - id: "8.5"
+        title: Selector and workplane repair slices
+        priority: P1
+        implementation_complexity: High
+        debugging_difficulty: High
+        recommendation: Build after candidate verifier
+        status: planned
+        stable: false
+      - id: "8.6"
+        title: Reserved numeric and multi-step edit tasks
+        priority: P3
+        implementation_complexity: High
+        debugging_difficulty: High
+        recommendation: Defer
+        status: planned
+        stable: false
+
+  - id: epic-9
+    title: Rendering and multimodal extensions
+    scope: Support audit renders and optional multimodal variants without making geometry artifacts required for the default dataset.
+    priority: P2
+    implementation_complexity: Medium
+    debugging_difficulty: Medium
+    recommendation: Defer until code-only release is healthy
+    status: planned
+    stable: false
+    stories:
+      - id: "9.1"
+        title: Audit renders
+        priority: P1
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build for audit
+        status: planned
+        stable: false
+      - id: "9.2"
+        title: Orthographic views
+        priority: P2
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Defer
+        status: planned
+        stable: false
+      - id: "9.3"
+        title: Multimodal prompt variant
+        priority: P2
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Defer
+        status: planned
+        stable: false
+
+  - id: epic-10
+    title: Dataset packaging and release
+    scope: Package rows, metadata, manifests, validation reports, and optional artifacts in a reproducible release layout.
+    priority: P0
+    implementation_complexity: Medium
+    debugging_difficulty: Medium
+    recommendation: Build before paper experiments
+    status: planned
+    stable: false
+    stories:
+      - id: "10.1"
+        title: Final public row schema
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build now
+        status: implemented
+        stable: false
+      - id: "10.2"
+        title: JSONL and Parquet export
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build after row generation
+        status: planned
+        stable: false
+      - id: "10.3"
+        title: Dataset card
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Build before release
+        status: planned
+        stable: false
+      - id: "10.4"
+        title: Reproducibility scripts
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build before release
+        status: planned
+        stable: false
+      - id: "10.5"
+        title: Versioning
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Build now
+        status: planned
+        stable: false
+
+  - id: epic-11
+    title: Paper experiments
+    scope: Run analyses needed to support CAD-QA paper claims with transparent task mix, split mix, and failure reporting.
+    priority: P0
+    implementation_complexity: Medium
+    debugging_difficulty: Medium
+    recommendation: Build after release candidate
+    status: planned
+    stable: false
+    stories:
+      - id: "11.1"
+        title: Dataset characterization
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Build after export
+        status: planned
+        stable: false
+      - id: "11.2"
+        title: Baseline comparison table
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Low
+        recommendation: Build after baselines
+        status: planned
+        stable: false
+      - id: "11.3"
+        title: Task-family comparison
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Build after evaluations
+        status: planned
+        stable: false
+      - id: "11.4"
+        title: Split-generalization analysis
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build after split manifests
+        status: planned
+        stable: false
+      - id: "11.5"
+        title: Prompting and training ablations
+        priority: P0
+        implementation_complexity: High
+        debugging_difficulty: Medium
+        recommendation: Build after baseline harness
+        status: planned
+        stable: false
+      - id: "11.6"
+        title: Failure-case analysis
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build after model predictions
+        status: planned
+        stable: false
+
+  - id: epic-12
+    title: Paper writing
+    scope: Write CAD-QA as a controlled, trace-derived CAD program reasoning benchmark paper.
+    priority: P0
+    implementation_complexity: Low
+    debugging_difficulty: Low
+    recommendation: Build alongside experiments
+    status: planned
+    stable: false
+    stories:
+      - id: "12.1"
+        title: Abstract
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Build after first results
+        status: planned
+        stable: false
+      - id: "12.2"
+        title: Introduction
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "12.3"
+        title: Related work
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "12.4"
+        title: Dataset construction section
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Build after pipeline
+        status: planned
+        stable: false
+      - id: "12.5"
+        title: Task section
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Build from specs
+        status: planned
+        stable: false
+      - id: "12.6"
+        title: Experiments section
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Build after evaluations
+        status: planned
+        stable: false
+      - id: "12.7"
+        title: Discussion and limitations
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Build after audits
+        status: planned
+        stable: false
+      - id: "12.8"
+        title: Conclusion
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Build after results
+        status: planned
+        stable: false
+
+  - id: epic-13
+    title: Repository and engineering infrastructure
+    scope: Build shared core needed to generate, validate, evaluate, and audit CAD-QA releases.
+    priority: P0
+    implementation_complexity: Medium
+    debugging_difficulty: Medium
+    recommendation: Build now
+    status: planned
+    stable: false
+    stories:
+      - id: "13.1"
+        title: Repository structure
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "13.2"
+        title: Configuration system
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Low
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "13.3"
+        title: Logging and failure tracking
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Medium
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "13.4"
+        title: Expensive artifact caches
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build before scale runs
+        status: planned
+        stable: false
+      - id: "13.5"
+        title: Sharded resumable generation
+        priority: P1
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build before long runs
+        status: planned
+        stable: false
+      - id: "13.6"
+        title: Unit and golden tests
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build now
+        status: planned
+        stable: false
+      - id: "13.7"
+        title: Smoke dataset generation
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build now
+        status: planned
+        stable: false
+
+  - id: epic-14
+    title: Quality assurance and review
+    scope: Audit labels, splits, reproducibility, schema, leakage, and release readiness before public claims.
+    priority: P0
+    implementation_complexity: Medium
+    debugging_difficulty: Medium
+    recommendation: Build before release
+    status: planned
+    stable: false
+    stories:
+      - id: "14.1"
+        title: Manual audit sample
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Medium
+        recommendation: Build before release
+        status: planned
+        stable: false
+      - id: "14.2"
+        title: Reproducibility audit
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build before release
+        status: planned
+        stable: false
+      - id: "14.3"
+        title: Leakage audit
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build before release
+        status: planned
+        stable: false
+      - id: "14.4"
+        title: Reviewer-readiness checklist
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Build before release
+        status: implemented
+        stable: false
+
+milestones:
+  - id: milestone-1
+    title: Specification freeze
+    required_epics:
+      - epic-1
+      - epic-4
+      - epic-5
+      - epic-10
+  - id: milestone-2
+    title: Source and trace prototype
+    required_epics:
+      - epic-2
+      - epic-3
+  - id: milestone-3
+    title: MVP scalar task prototype
+    required_stories:
+      - "5.1"
+      - "5.3"
+      - "5.4"
+      - "10.1"
+  - id: milestone-4
+    title: Selector topology and point tasks
+    required_stories:
+      - "5.2"
+      - "5.5"
+      - "5.6"
+      - "6.6"
+  - id: milestone-5
+    title: Provenance and counterfactuals
+    required_stories:
+      - "3.5"
+      - "3.6"
+      - "4.6"
+      - "8.1"
+  - id: milestone-6
+    title: Baseline evaluation
+    required_epics:
+      - epic-7
+  - id: milestone-7
+    title: Training experiments
+    required_stories:
+      - "7.6"
+      - "7.7"
+      - "7.8"
+  - id: milestone-8
+    title: Paper draft
+    required_epics:
+      - epic-11
+      - epic-12
+  - id: milestone-9
+    title: Release candidate
+    required_epics:
+      - epic-10
+      - epic-14
+
+mvp_scope:
+  dataset:
+    - cadevolve_backed_single_script_code_only_rows
+    - normalized_source_records
+    - operation_graphs
+    - isolated_execution_traces
+    - intermediate_snapshots
+    - operation_count
+    - selector_count
+    - bbox_after_step
+    - signed_volume_delta
+    - topology_count_after_step
+    - point_membership
+    - feature_provenance_choice
+    - split_manifests
+    - dataset_metadata
+    - failure_manifests
+  baselines:
+    - random_and_majority
+    - regex_operation_count
+    - static_operation_count
+    - selector_name_heuristic
+    - primitive_symbolic_volume
+    - aabb_point_membership
+    - closed_book_zero_shot
+    - closed_book_few_shot
+    - answer_only_sft
+  paper_claim: CAD-QA provides trace-derived structured supervision and evaluation for closed-book reasoning about executable CAD construction programs.
+
+backlog_priority:
+  P0:
+    - research_scope_and_task_definitions
+    - cadevolve_source_ingestion
+    - source_normalization
+    - operation_graph_extraction
+    - isolated_trace_execution
+    - mvp_labels_and_prompts
+    - public_row_schema_and_validation
+    - leakage_safe_splits
+    - dataset_export
+    - baseline_evaluation
+    - paper_core_sections
+  P1:
+    - counterfactual_groups
+    - reasoning_sft
+    - data_scaling_experiments
+    - failure_taxonomy
+    - audit_renders
+    - cadeditqa_first_repair_slices
+  P2:
+    - multimodal_prompt_variants
+    - tool_assisted_execution_setting
+    - parquet_release_package
+    - extended_symbolic_baselines
+    - candidate_edit_ranking
+  P3:
+    - unrestricted_cad_code_repair
+    - multi_step_edit_planning
+    - natural_language_explanations_as_official_labels
+    - verifier_guided_rl_primary_result
+    - geometry_artifact_default_release

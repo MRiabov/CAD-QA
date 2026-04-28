@@ -269,6 +269,38 @@ Free-form prose is not a primary answer format for v0.1. Explanations may be
 stored as optional auxiliary supervision, but official metrics grade structured
 answers.
 
+### Parse policies
+
+`parse_policy` is a versioned grading contract. The MVP uses:
+
+| Policy | Applies to | Rule |
+| --- | --- | --- |
+| `strict_integer_v1` | integer count tasks | Answer candidate must be exactly one non-negative base-10 integer. |
+| `strict_enum_v1` | enum and choice tasks | Answer candidate must exactly match one allowed token after surrounding whitespace is stripped. |
+| `strict_json_bbox_v1` | bounding boxes | Answer candidate must be JSON with `min` and `max` arrays of three finite numbers. |
+| `numeric_4_sigfig_v1` | scalar numeric answers | Answer candidate must contain exactly one finite number and pass four-significant-figure tolerance. |
+
+For `numeric_4_sigfig_v1`, compare against:
+
+```text
+effective_tolerance = max(row.numeric_tolerance or 0,
+                          half_unit_of_fourth_significant_digit(answer))
+```
+
+For a nonzero canonical answer `x`:
+
+```text
+half_unit = 0.5 * 10 ** (floor(log10(abs(x))) - 3)
+```
+
+For canonical zero, use `row.numeric_tolerance` when present, otherwise the
+task's absolute zero tolerance from `specs/label_rules.md`.
+
+For `strict_json_bbox_v1`, apply the same four-significant-figure numeric rule
+independently to each coordinate unless the row declares a stricter coordinate
+tolerance. The exported answer may contain more precision; the parse policy
+defines accepted model output precision.
+
 ## 7. Metrics
 
 Report:
