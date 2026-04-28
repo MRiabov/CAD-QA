@@ -43,7 +43,8 @@ specs.
 - Trace caching and a resumable sharded generation script for bounded scale
   runs.
 - Baselines for majority, random, static operation count, regex operation
-  count, selector heuristic, and oracle.
+  count, selector heuristic, primitive symbolic volume,
+  AABB point-membership, and oracle.
 - Trace-label oracle upper-bound export for parser and metric sanity checks.
 - Experiment comparison reports with headline, per-task, and per-split JSON,
   CSV, and Markdown tables.

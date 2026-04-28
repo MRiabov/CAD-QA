@@ -26,6 +26,10 @@ Run baselines:
 uv run cadqa baseline data/cadqa_smoke/jsonl/train.jsonl --output-dir runs/smoke_baselines
 ```
 
+The default baseline suite includes majority, random, static and regex
+operation-count, selector heuristic, primitive symbolic volume, AABB
+point-membership, and oracle baselines.
+
 Run the trace-label oracle upper bound:
 
 ```bash
