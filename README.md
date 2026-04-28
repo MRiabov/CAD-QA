@@ -66,6 +66,20 @@ uv run python -m scripts.dataset.generate_counterfactual_sources \
   --limit 10
 ```
 
+Export closed-book model requests:
+
+```bash
+uv run python -m scripts.evaluation.export_prediction_requests \
+  data/cadqa_smoke/jsonl/validation.jsonl \
+  --output runs/eval/zero_shot_requests.jsonl
+
+uv run python -m scripts.evaluation.build_fewshot_prompts \
+  --train-rows data/cadqa_smoke/jsonl/train.jsonl \
+  --eval-rows data/cadqa_smoke/jsonl/validation.jsonl \
+  --output runs/eval/fewshot_requests.jsonl \
+  --shots 3
+```
+
 CadQuery execution is optional. Without CadQuery, the app still supports source
 records, operation graphs, static task rows, smoke fixtures, validation, splits,
 and baseline evaluation. With CadQuery installed, `cadqa trace` can emit scalar
