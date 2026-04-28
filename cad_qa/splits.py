@@ -13,6 +13,8 @@ DEFAULT_SPLIT_THRESHOLDS = (
     (100, "test_random"),
 )
 
+PROTECTED_HOLDOUT_FRACTION = 0.1
+
 PROTECTED_SPLIT_KEYS = (
     "source_id",
     "generator_id",
@@ -24,6 +26,14 @@ PROTECTED_SPLIT_KEYS = (
     "point_sampling_group_id",
     "split_group",
 )
+
+PROTECTED_SPLIT_AUDIT_KEYS = {
+    "test_generator_heldout": {"source_id", "normalized_source_code_hash", "generator_id", "split_group"},
+    "test_source_subtree_heldout": {"source_id", "normalized_source_code_hash", "source_subtree", "split_group"},
+    "test_operation_heldout": {"source_id", "normalized_source_code_hash", "operation_signature_hash", "split_group"},
+    "test_topology_heldout": {"source_id", "normalized_source_code_hash", "topology_signature_hash", "split_group"},
+    "test_near_boundary": {"source_id", "normalized_source_code_hash", "point_sampling_group_id", "split_group"},
+}
 
 
 def assign_split_for_group(group_id: str, seed: int) -> str:
@@ -48,7 +58,13 @@ def split_group(row: dict[str, Any]) -> str:
 
 def assign_row_splits(rows: list[dict[str, Any]], seed: int) -> list[dict[str, Any]]:
     groups = sorted({split_group(row) for row in rows})
-    assignments = {group: assign_split_for_group(group, seed) for group in groups}
+    group_metadata = _group_metadata(rows)
+    protected_values = _protected_holdout_values(group_metadata, seed)
+    assignments = {
+        group: _protected_split_for_group(group_metadata[group], protected_values)
+        or assign_split_for_group(group, seed)
+        for group in groups
+    }
     if len(groups) > 1 and "validation" not in set(assignments.values()):
         train_groups = [group for group in groups if assignments[group] == "train"]
         candidate_groups = train_groups or groups
@@ -62,6 +78,63 @@ def assign_row_splits(rows: list[dict[str, Any]], seed: int) -> list[dict[str, A
         copy["provenance"] = provenance
         updated.append(copy)
     return updated
+
+
+def _group_metadata(rows: list[dict[str, Any]]) -> dict[str, dict[str, set[str]]]:
+    metadata: dict[str, dict[str, set[str]]] = defaultdict(lambda: defaultdict(set))
+    for row in rows:
+        group = split_group(row)
+        provenance = row.get("provenance") if isinstance(row.get("provenance"), dict) else {}
+        for key in (
+            "generator_id",
+            "source_subtree",
+            "operation_signature_hash",
+            "topology_signature_hash",
+            "point_sampling_group_id",
+        ):
+            value = provenance.get(key)
+            if value not in (None, ""):
+                metadata[group][key].add(str(value))
+    return metadata
+
+
+def _protected_holdout_values(
+    group_metadata: dict[str, dict[str, set[str]]],
+    seed: int,
+) -> dict[str, set[str]]:
+    split_by_key = {
+        "generator_id": "test_generator_heldout",
+        "source_subtree": "test_source_subtree_heldout",
+        "operation_signature_hash": "test_operation_heldout",
+        "topology_signature_hash": "test_topology_heldout",
+        "point_sampling_group_id": "test_near_boundary",
+    }
+    selected: dict[str, set[str]] = {split: set() for split in split_by_key.values()}
+    for key, split in split_by_key.items():
+        values = sorted({value for metadata in group_metadata.values() for value in metadata.get(key, set())})
+        if len(values) < 3:
+            continue
+        target_count = max(1, round(len(values) * PROTECTED_HOLDOUT_FRACTION))
+        ordered = sorted(values, key=lambda value: _stable_bucket(f"{key}:{value}", seed))
+        selected[split].update(ordered[:target_count])
+    return selected
+
+
+def _protected_split_for_group(
+    metadata: dict[str, set[str]],
+    protected_values: dict[str, set[str]],
+) -> str | None:
+    checks = (
+        ("point_sampling_group_id", "test_near_boundary"),
+        ("topology_signature_hash", "test_topology_heldout"),
+        ("operation_signature_hash", "test_operation_heldout"),
+        ("generator_id", "test_generator_heldout"),
+        ("source_subtree", "test_source_subtree_heldout"),
+    )
+    for key, split in checks:
+        if metadata.get(key, set()) & protected_values.get(split, set()):
+            return split
+    return None
 
 
 def _stable_bucket(group_id: str, seed: int) -> int:
@@ -80,16 +153,14 @@ def leakage_audit(rows: Iterable[dict[str, Any]]) -> dict[str, Any]:
             if value not in (None, ""):
                 values[key][str(value)].add(split)
     violations = []
-    protected_tests = {
-        "test_generator_heldout",
-        "test_source_subtree_heldout",
-        "test_operation_heldout",
-        "test_topology_heldout",
-        "test_near_boundary",
-    }
     for key, value_splits in values.items():
         for value, splits in sorted(value_splits.items()):
-            if len(splits & protected_tests) and len(splits) > 1:
+            protected_splits = {
+                split
+                for split in splits
+                if key in PROTECTED_SPLIT_AUDIT_KEYS.get(split, set())
+            }
+            if protected_splits and len(splits) > 1:
                 violations.append({"key": key, "value": value, "splits": sorted(splits)})
     return {
         "status": "pass" if not violations else "fail",
