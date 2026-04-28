@@ -86,6 +86,19 @@ uv run python -m scripts.training.prepare_reasoning_sft_dataset \
   --output-dir runs/reasoning_sft/sft
 ```
 
+Prepare SFT ablation and scaling subsets:
+
+```bash
+uv run python -m scripts.training.prepare_sft_ablation_datasets \
+  --dataset-dir data/cadqa_smoke \
+  --output-dir runs/sft_ablations
+
+uv run python -m scripts.training.prepare_sft_scaling_datasets \
+  --dataset-dir data/cadqa_smoke \
+  --output-dir runs/sft_scaling \
+  --sizes 1000 5000 15000 50000
+```
+
 Write a task-balanced subset for training canaries:
 
 ```bash

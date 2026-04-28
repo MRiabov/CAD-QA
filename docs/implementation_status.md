@@ -51,6 +51,8 @@ specs.
 - Answer-only SFT JSONL preparation and local format smoke validation.
 - Trace-grounded reasoning SFT JSONL preparation with template rationales
   derived from stored labels and diagnostics.
+- Deterministic answer-only SFT ablation and row-count scaling subset
+  preparation.
 - Restartable manifest runner and local orchestration configs.
 - Canary stop-gate reports for dataset validation, SFT smoke checks, experiment
   comparisons, and trace failure rates.
