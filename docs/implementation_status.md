@@ -36,6 +36,7 @@ specs.
 - Baselines for majority, random, static operation count, regex operation
   count, selector heuristic, and oracle.
 - Deterministic task-balanced subset export for train/validation rows.
+- Grouped numeric counterfactual source variant generation with a manifest.
 - Answer parsing/grading for strict integer, enum, numeric four-significant
   figure, and JSON bounding-box policies.
 - Answer-only SFT JSONL preparation and local format smoke validation.
@@ -60,6 +61,8 @@ specs.
   matching exists but is best-effort and intentionally skips heavy signatures on
   large snapshots.
 - Full selector coverage depends on selectors appearing in traced sources.
+- Counterfactual source variants exist, but verified counterfactual labels and
+  public counterfactual task rows are not implemented.
 - Large CADEvolve generation still needs runtime tuning and larger-source
   validation before public release, though cache-backed shard generation exists.
 - Real Qwen3.5 4B SFT is gated on GPU environment, live pricing/account state,

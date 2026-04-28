@@ -57,6 +57,15 @@ uv run python -m scripts.dataset.balance_dataset_classes \
   --max-rows-per-task 200
 ```
 
+Generate grouped numeric counterfactual source variants:
+
+```bash
+uv run python -m scripts.dataset.generate_counterfactual_sources \
+  --source-dir /path/to/cadevolve_sources \
+  --output-dir runs/counterfactual_sources \
+  --limit 10
+```
+
 CadQuery execution is optional. Without CadQuery, the app still supports source
 records, operation graphs, static task rows, smoke fixtures, validation, splits,
 and baseline evaluation. With CadQuery installed, `cadqa trace` can emit scalar
