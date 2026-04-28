@@ -150,6 +150,14 @@ uv run python -m scripts.dataset.materialize_cadedit_parameter_tasks \
   --output-dir runs/cadedit_parameter_tasks
 ```
 
+Materialize conservative CADEditQA feature-to-edit rows:
+
+```bash
+uv run python -m scripts.dataset.materialize_cadedit_feature_tasks \
+  data/cadqa_smoke \
+  --output-dir runs/cadedit_feature_tasks
+```
+
 Export closed-book model requests:
 
 ```bash

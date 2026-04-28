@@ -20,6 +20,7 @@ TASK_TYPES = {
     "coordinate_frame",
     "counterfactual_parameter",
     "parameter_edit_direction",
+    "feature_to_edit",
     "ambiguous_question_detection",
 }
 

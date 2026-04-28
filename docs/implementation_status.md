@@ -47,6 +47,8 @@ specs.
 - Grouped numeric counterfactual source variant generation with a manifest.
 - Conservative CADEditQA `parameter_edit_direction` row materialization from
   grouped numeric counterfactual manifests.
+- Conservative CADEditQA `feature_to_edit` row materialization from validated
+  feature-provenance QA rows.
 - Answer parsing/grading for strict integer, enum, numeric four-significant
   figure, and JSON bounding-box policies.
 - Zero-shot and few-shot provider-agnostic prediction request export, response
