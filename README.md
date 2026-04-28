@@ -133,6 +133,15 @@ uv run --extra cadquery python -m scripts.dataset.export_audit_renders \
   --limit 16
 ```
 
+Export optional render-backed prediction requests:
+
+```bash
+uv run python -m scripts.evaluation.export_multimodal_prediction_requests \
+  data/cadqa_smoke/jsonl/validation.jsonl \
+  --render-manifest runs/audit_renders/audit_render_manifest.json \
+  --output runs/eval/multimodal_requests.jsonl
+```
+
 Generate grouped numeric counterfactual source variants:
 
 ```bash
