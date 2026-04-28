@@ -11,9 +11,10 @@ def test_audit_render_dry_run_manifest(tmp_path: Path):
     output_dir = tmp_path / "renders"
     export_smoke_dataset(output_dir=dataset_dir, config=DatasetConfig())
 
-    report = export_audit_renders(dataset_dir, output_dir=output_dir, limit=1, dry_run=True)
+    report = export_audit_renders(dataset_dir, output_dir=output_dir, limit=1, views=["front", "top"], dry_run=True)
 
     manifest = read_json(output_dir / "audit_render_manifest.json")
     assert report["dry_run"] is True
-    assert manifest["render_count"] == 1
+    assert manifest["render_count"] == 2
+    assert {item["view"] for item in manifest["items"]} == {"front", "top"}
     assert manifest["items"][0]["status"] == "planned"

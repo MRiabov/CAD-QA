@@ -15,12 +15,21 @@ from cad_qa.safety import safety_issues
 from cad_qa.trace import _safe_builtins  # Reuse the trace worker execution sandbox.
 
 
+ORTHOGRAPHIC_VIEWS = {
+    "isometric": {"projection": "orthographic", "direction": [1, -1, 1], "up": [0, 0, 1]},
+    "front": {"projection": "orthographic", "direction": [0, -1, 0], "up": [0, 0, 1]},
+    "right": {"projection": "orthographic", "direction": [1, 0, 0], "up": [0, 0, 1]},
+    "top": {"projection": "orthographic", "direction": [0, 0, 1], "up": [0, 1, 0]},
+}
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("dataset_dir", type=Path)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--limit", type=int, default=16)
     parser.add_argument("--timeout-seconds", type=float, default=15.0)
+    parser.add_argument("--views", nargs="+", default=["isometric"], choices=sorted(ORTHOGRAPHIC_VIEWS))
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
 
@@ -29,6 +38,7 @@ def main(argv: list[str] | None = None) -> None:
         output_dir=args.output_dir,
         limit=args.limit,
         timeout_seconds=args.timeout_seconds,
+        views=args.views,
         dry_run=args.dry_run,
     )
     print(report)
@@ -40,8 +50,10 @@ def export_audit_renders(
     output_dir: Path,
     limit: int = 16,
     timeout_seconds: float = 15.0,
+    views: list[str] | None = None,
     dry_run: bool = False,
 ) -> dict[str, Any]:
+    views = views or ["isometric"]
     output_dir.mkdir(parents=True, exist_ok=True)
     svg_dir = output_dir / "svg"
     svg_dir.mkdir(exist_ok=True)
@@ -50,20 +62,31 @@ def export_audit_renders(
     render_items = []
     for source_id, source in sorted(sources.items())[:limit]:
         trace = traces.get(source_id, {})
-        render_id = "render_" + sha256_text(f"{source_id}:{trace.get('trace_id')}").removeprefix("sha256:")[:16]
-        svg_path = svg_dir / f"{render_id}.svg"
-        if dry_run:
-            item = _item(source, trace, render_id, svg_path, status="planned", failure_reason=None)
-        else:
-            result = _render_with_timeout(source.get("normalized_code", ""), trace.get("result_variable"), svg_path, timeout_seconds)
-            item = _item(source, trace, render_id, svg_path, status=result["status"], failure_reason=result.get("failure_reason"))
-        render_items.append(item)
+        for view in views:
+            render_id = "render_" + sha256_text(f"{source_id}:{trace.get('trace_id')}:{view}").removeprefix("sha256:")[:16]
+            svg_path = svg_dir / f"{render_id}_{view}.svg"
+            if dry_run:
+                item = _item(source, trace, render_id, svg_path, view=view, status="planned", failure_reason=None)
+            else:
+                result = _render_with_timeout(source.get("normalized_code", ""), trace.get("result_variable"), svg_path, timeout_seconds)
+                item = _item(
+                    source,
+                    trace,
+                    render_id,
+                    svg_path,
+                    view=view,
+                    status=result["status"],
+                    failure_reason=result.get("failure_reason"),
+                )
+            render_items.append(item)
     report = {
         "schema": "cadqa_audit_render_manifest_v1",
         "dataset_dir": str(dataset_dir),
         "output_dir": str(output_dir),
         "dry_run": dry_run,
         "requested_limit": limit,
+        "views": views,
+        "view_metadata": {view: ORTHOGRAPHIC_VIEWS[view] for view in views},
         "render_count": len(render_items),
         "rendered_count": sum(1 for item in render_items if item["status"] == "rendered"),
         "items": render_items,
@@ -84,6 +107,7 @@ def _item(
     render_id: str,
     svg_path: Path,
     *,
+    view: str,
     status: str,
     failure_reason: str | None,
 ) -> dict[str, Any]:
@@ -92,10 +116,11 @@ def _item(
         "source_id": source.get("source_id"),
         "trace_id": trace.get("trace_id"),
         "result_variable": trace.get("result_variable"),
+        "view": view,
         "status": status,
         "failure_reason": failure_reason,
         "svg_path": str(Path("svg") / svg_path.name),
-        "camera": {"projection": "cadquery_default_svg"},
+        "camera": ORTHOGRAPHIC_VIEWS[view],
     }
 
 

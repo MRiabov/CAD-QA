@@ -29,7 +29,8 @@ specs.
   failure manifests, and dataset-card generation.
 - Manual audit sample export, trace failure taxonomy reports, and two-export
   reproducibility audits.
-- Optional SVG audit render bundles with per-render manifest metadata.
+- Optional SVG audit render bundles with per-render manifest metadata and named
+  orthographic view metadata.
 - Optional render-backed prediction request export using audit render manifests.
 - Protected split routing for generator, source-subtree, operation-signature,
   topology-signature, and point-sampling groups when enough groups exist.

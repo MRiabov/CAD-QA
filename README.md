@@ -130,7 +130,8 @@ Export optional SVG audit renders:
 uv run --extra cadquery python -m scripts.dataset.export_audit_renders \
   data/cadqa_smoke \
   --output-dir runs/audit_renders \
-  --limit 16
+  --limit 16 \
+  --views isometric front right top
 ```
 
 Export optional render-backed prediction requests:
