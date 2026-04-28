@@ -62,6 +62,8 @@ specs.
   figure, and JSON bounding-box policies.
 - Zero-shot and few-shot provider-agnostic prediction request export, response
   normalization, and closed-book prediction grading.
+- P1 research report scripts for counterfactual sensitivity, task-transfer
+  matrices, and CADEditQA verifier-derived evaluation metrics.
 - Answer-only SFT JSONL preparation and local format smoke validation.
 - Trace-grounded reasoning SFT JSONL preparation with template rationales
   derived from stored labels and diagnostics.

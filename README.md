@@ -218,6 +218,24 @@ uv run python -m scripts.evaluation.evaluate_prediction_responses \
   --label zero_shot
 ```
 
+Evaluate P1 research reports:
+
+```bash
+uv run python -m scripts.evaluation.evaluate_counterfactual_sensitivity \
+  --rows runs/counterfactual_eval/rows.jsonl \
+  --predictions runs/counterfactual_eval/predictions.jsonl \
+  --output-dir runs/counterfactual_sensitivity
+
+uv run python -m scripts.experiments.build_task_transfer_matrix \
+  --metric static=runs/smoke_baselines/static_operation_count_graded.json \
+  --output-dir runs/task_transfer_matrix
+
+uv run python -m scripts.evaluation.evaluate_cadedit_predictions \
+  --rows runs/cadedit_eval/rows.jsonl \
+  --responses runs/cadedit_eval/responses.jsonl \
+  --output-dir runs/cadedit_eval/report
+```
+
 CadQuery execution is optional. Without CadQuery, the app still supports source
 records, operation graphs, static task rows, smoke fixtures, validation, splits,
 and baseline evaluation. With CadQuery installed, `cadqa trace` can emit scalar

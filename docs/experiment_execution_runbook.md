@@ -41,3 +41,8 @@ The overnight manifest routes canary training through
 package with `scripts.experiments.package_run_artifacts` and can stage it with
 `scripts.experiments.upload_artifact_package`; keep the manifest, archive, and
 upload manifest before deleting rented-instance storage.
+
+After SFT or closed-book prediction artifacts exist, build P1 analysis reports
+with `scripts.evaluation.evaluate_counterfactual_sensitivity`,
+`scripts.experiments.build_task_transfer_matrix`, and
+`scripts.evaluation.evaluate_cadedit_predictions`.
