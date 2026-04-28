@@ -38,5 +38,6 @@ SFT JSONL smoke passes, and live GPU price/account state are known.
 The overnight manifest routes canary training through
 `scripts.experiments.check_stop_gates` and invokes the trainer with
 `uv run --extra training`. The local smoke manifest also writes a retention
-package with `scripts.experiments.package_run_artifacts`; keep the manifest and
-archive before deleting rented-instance storage.
+package with `scripts.experiments.package_run_artifacts` and can stage it with
+`scripts.experiments.upload_artifact_package`; keep the manifest, archive, and
+upload manifest before deleting rented-instance storage.

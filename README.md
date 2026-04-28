@@ -72,6 +72,10 @@ uv run python -m scripts.experiments.check_stop_gates \
 uv run python -m scripts.experiments.package_run_artifacts \
   runs/smoke_dataset runs/validate_smoke_dataset runs/smoke_baselines \
   --output-dir runs/package_smoke_artifacts
+
+uv run python -m scripts.experiments.upload_artifact_package \
+  runs/package_smoke_artifacts \
+  --destination-dir runs/upload_smoke_artifacts/staged
 ```
 
 Prepare answer-only SFT JSONL:
@@ -101,6 +105,16 @@ uv run python -m scripts.training.prepare_sft_scaling_datasets \
   --dataset-dir data/cadqa_smoke \
   --output-dir runs/sft_scaling \
   --sizes 1000 5000 15000 50000
+```
+
+Score bounded rejection-sampling candidates with parser-backed verifier
+rewards:
+
+```bash
+uv run python -m scripts.training.score_rejection_sampling_candidates \
+  --rows data/cadqa_smoke/jsonl/validation.jsonl \
+  --candidates runs/model_candidates.jsonl \
+  --output-dir runs/rejection_sampling_rewards
 ```
 
 Write a task-balanced subset for training canaries:

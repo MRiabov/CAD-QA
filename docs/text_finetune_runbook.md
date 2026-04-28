@@ -43,3 +43,17 @@ fresh environment installs the training extra before launching Unsloth/TRL. If
 the canary completes, promote manually with the same trainer and a larger
 `--max-steps` in a new run directory after checking loss, invalid-output rate,
 GPU utilization, disk, and adapter artifacts.
+
+Candidate completions from a trained model can be scored before any bounded
+rejection-sampling or RL experiment:
+
+```bash
+rtk uv run python -m scripts.training.score_rejection_sampling_candidates \
+  --rows runs/smoke_dataset/dataset/jsonl/validation.jsonl \
+  --candidates runs/model_candidates.jsonl \
+  --output-dir runs/rejection_sampling_rewards \
+  --max-candidates-per-row 16
+```
+
+The scorer writes `candidate_rewards.jsonl`, `selected_candidates.jsonl`, and
+`reward_report.json` using the same strict parsers as evaluation.

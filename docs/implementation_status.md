@@ -67,13 +67,15 @@ specs.
   derived from stored labels and diagnostics.
 - Deterministic answer-only SFT ablation and row-count scaling subset
   preparation.
+- Bounded parser-backed rejection-sampling reward scoring for candidate
+  completions, with best-candidate selection artifacts.
 - Guarded answer-only Unsloth/TRL SFT entrypoint with dry-run and
   missing-dependency gates.
 - Restartable manifest runner and local orchestration configs.
 - Canary stop-gate reports for dataset validation, SFT smoke checks, experiment
   comparisons, and trace failure rates.
-- Artifact retention packaging with checksum manifests and optional `tar.gz`
-  archives.
+- Artifact retention packaging with checksum manifests, optional `tar.gz`
+  archives, and checksum-verified upload/staging manifests.
 - Draft paper scaffold covering abstract, introduction, related work, dataset
   construction, task families, experiments, limitations, and conclusion, with
   explicit placeholders for final release results.

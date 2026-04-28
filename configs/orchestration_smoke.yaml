@@ -158,3 +158,20 @@ runs:
       - logs/stdout.log
       - artifact_manifest.json
       - cadqa_artifacts.tar.gz
+
+  - name: upload_smoke_artifacts
+    kind: artifact_upload
+    depends_on: [package_smoke_artifacts]
+    command:
+      - uv
+      - run
+      - python
+      - -m
+      - scripts.experiments.upload_artifact_package
+      - runs/package_smoke_artifacts
+      - --destination-dir
+      - runs/upload_smoke_artifacts/staged
+    output_dir: runs/upload_smoke_artifacts
+    artifacts:
+      - logs/stdout.log
+      - staged/upload_manifest.json
