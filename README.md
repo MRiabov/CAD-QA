@@ -40,6 +40,14 @@ Run the local orchestration smoke:
 uv run python -m scripts.experiments.run_experiment_suite configs/orchestration_smoke.yaml --resume
 ```
 
+Build experiment comparison tables from metric artifacts:
+
+```bash
+uv run python -m scripts.experiments.compare_experiment_runs \
+  runs/smoke_baselines \
+  --output-dir runs/compare_smoke_experiments
+```
+
 Prepare answer-only SFT JSONL:
 
 ```bash

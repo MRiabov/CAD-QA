@@ -37,6 +37,8 @@ specs.
   runs.
 - Baselines for majority, random, static operation count, regex operation
   count, selector heuristic, and oracle.
+- Experiment comparison reports with headline, per-task, and per-split JSON,
+  CSV, and Markdown tables.
 - Deterministic task-balanced subset export for train/validation rows.
 - Grouped numeric counterfactual source variant generation with a manifest.
 - Answer parsing/grading for strict integer, enum, numeric four-significant

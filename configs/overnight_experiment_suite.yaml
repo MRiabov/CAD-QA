@@ -73,6 +73,26 @@ runs:
       - sft/train.jsonl
       - sft/validation.jsonl
 
+  - name: compare_heuristic_experiments
+    kind: report
+    depends_on: [heuristic_baselines]
+    command:
+      - uv
+      - run
+      - python
+      - -m
+      - scripts.experiments.compare_experiment_runs
+      - runs/heuristic_baselines
+      - --output-dir
+      - runs/compare_heuristic_experiments
+    output_dir: runs/compare_heuristic_experiments
+    artifacts:
+      - logs/stdout.log
+      - experiment_comparison.json
+      - headline_comparison.csv
+      - task_family_comparison.csv
+      - split_comparison.csv
+
   - name: text_sft_format_smoke
     kind: local_smoke
     depends_on: [prepare_answer_sft_canary]
