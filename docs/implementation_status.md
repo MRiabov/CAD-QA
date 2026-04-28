@@ -19,6 +19,8 @@ specs.
   snapshots using lightweight geometry signatures.
 - Public row materialization for:
   - `operation_count`
+  - `coordinate_frame`
+  - `workplane_state`
   - `selector_count`
   - `bbox_after_step`
   - `signed_volume_delta`

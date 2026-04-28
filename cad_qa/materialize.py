@@ -20,10 +20,84 @@ def materialize_rows(
     nodes = [_node_from_dict(item) for item in trace.operation_nodes]
     rows: list[PublicTaskRow] = []
     rows.extend(_operation_count_rows(source, trace, nodes, config=config))
+    rows.extend(_workplane_rows(source, trace, nodes, config=config))
     rows.extend(_snapshot_rows(source, trace, config=config))
     rows.extend(_selector_rows(source, trace, config=config))
     rows.extend(_point_rows(source, trace, config=config))
     rows.extend(_provenance_rows(source, trace, nodes, config=config))
+    return rows
+
+
+def _workplane_rows(
+    source: SourceRecord,
+    trace: TraceRecord,
+    nodes: list[OperationNode],
+    *,
+    config: DatasetConfig,
+) -> list[PublicTaskRow]:
+    rows: list[PublicTaskRow] = []
+    for node in nodes:
+        if node.status != "ok" or node.operation not in {"Workplane", "workplane"}:
+            continue
+        frame = _coordinate_frame(node)
+        choices = ["XY", "YZ", "XZ", "front", "back", "left", "right", "top", "bottom", "inherited", "unknown"]
+        if frame not in choices:
+            choices.append(frame)
+        rows.append(
+            _row(
+                source,
+                trace,
+                config=config,
+                task_type="coordinate_frame",
+                target_feature_id=node.feature_id,
+                prompt=(
+                    "Given the CadQuery script below, what coordinate frame or workplane name is established "
+                    f"by feature `{node.feature_id}`? Answer with exactly one listed token.\n\n"
+                    f"Choices: {', '.join(choices)}\n\n"
+                    f"```python\n{source.normalized_code}```"
+                ),
+                answer_type="enum",
+                answer=frame,
+                choices=choices,
+                unit=None,
+                numeric_tolerance=None,
+                requires=["cadquery_syntax", "workplane_reasoning"],
+                difficulty_tags=["coordinate_frame"],
+                labels={"operation_node": asdict(node), "coordinate_frame": frame, "answer_status": "ok", "failure_reason": None},
+                diagnostics={"answer_status": "ok", "failure_reason": None},
+                parse_policy="strict_enum_v1",
+            )
+        )
+        state = {
+            "feature_id": node.feature_id,
+            "operation": node.operation,
+            "base": node.base,
+            "coordinate_frame": frame,
+        }
+        rows.append(
+            _row(
+                source,
+                trace,
+                config=config,
+                task_type="workplane_state",
+                target_feature_id=node.feature_id,
+                prompt=(
+                    "Given the CadQuery script below, return the workplane state for "
+                    f"feature `{node.feature_id}` as JSON with keys feature_id, operation, base, and coordinate_frame.\n\n"
+                    f"```python\n{source.normalized_code}```"
+                ),
+                answer_type="json",
+                answer=state,
+                choices=None,
+                unit=None,
+                numeric_tolerance=None,
+                requires=["cadquery_syntax", "workplane_reasoning"],
+                difficulty_tags=["workplane_state"],
+                labels={"operation_node": asdict(node), "workplane_state": state, "answer_status": "ok", "failure_reason": None},
+                diagnostics={"answer_status": "ok", "failure_reason": None},
+                parse_policy="strict_json_v1",
+            )
+        )
     return rows
 
 
@@ -390,6 +464,17 @@ def _volume_tags(delta: float) -> list[str]:
     if delta > 0:
         return ["symbolic_arithmetic"]
     return ["kernel_sensitive"]
+
+
+def _coordinate_frame(node: OperationNode) -> str:
+    if node.operation == "workplane":
+        return "inherited"
+    if not node.args_repr:
+        return "unknown"
+    first = node.args_repr[0].strip()
+    if (first.startswith("'") and first.endswith("'")) or (first.startswith('"') and first.endswith('"')):
+        return first[1:-1]
+    return first
 
 
 def _point_membership_tags(query: dict[str, Any], answer: str) -> list[str]:

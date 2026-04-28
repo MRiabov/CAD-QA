@@ -24,6 +24,9 @@ def grade_candidate(row: dict[str, Any], candidate: str) -> dict[str, Any]:
         elif policy == "strict_json_bbox_v1":
             parsed = parse_bbox(candidate)
             correct = bbox_close(parsed, answer, float(row.get("numeric_tolerance") or 0.0))
+        elif policy == "strict_json_v1":
+            parsed = parse_json(candidate)
+            correct = parsed == answer
         elif policy == "numeric_4_sigfig_v1":
             parsed = parse_single_number(candidate)
             correct = number_close(parsed, float(answer), row.get("numeric_tolerance"))
@@ -61,6 +64,13 @@ def parse_bbox(candidate: str) -> dict[str, list[float]]:
         raise ValueError("bbox must contain min and max")
     parsed = {"min": _triplet(value["min"]), "max": _triplet(value["max"])}
     return parsed
+
+
+def parse_json(candidate: str) -> Any:
+    try:
+        return json.loads(candidate)
+    except json.JSONDecodeError as exc:
+        raise ValueError("expected JSON") from exc
 
 
 def number_close(parsed: float, answer: float, numeric_tolerance: Any) -> bool:

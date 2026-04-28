@@ -16,7 +16,7 @@ def test_smoke_export_is_valid(tmp_path: Path):
 
     assert report["status"] == "pass"
     assert metadata["row_count"] == len(rows)
-    assert {"operation_count", "bbox_after_step", "signed_volume_delta", "topology_count_after_step", "point_membership", "feature_provenance_choice"} <= {
+    assert {"operation_count", "bbox_after_step", "signed_volume_delta", "topology_count_after_step", "point_membership", "feature_provenance_choice", "workplane_state", "coordinate_frame"} <= {
         row["task_type"] for row in rows
     }
     assert (tmp_path / "metadata.json").exists()

@@ -20,6 +20,16 @@ def test_bbox_policy_accepts_json_bbox():
     assert not grade_candidate(row, '{"min":[0,0,0],"max":[10,20,29]}')["correct"]
 
 
+def test_strict_json_policy_accepts_exact_json():
+    row = {
+        "parse_policy": "strict_json_v1",
+        "answer": {"feature_id": "wp0", "operation": "Workplane"},
+    }
+
+    assert grade_candidate(row, '{"operation":"Workplane","feature_id":"wp0"}')["correct"]
+    assert not grade_candidate(row, '{"feature_id":"wp1","operation":"Workplane"}')["correct"]
+
+
 def test_oracle_baseline_scores_perfect():
     rows = [
         {
