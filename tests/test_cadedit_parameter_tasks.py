@@ -31,6 +31,7 @@ def test_materialize_cadedit_parameter_edit_direction_rows(tmp_path: Path):
         assert validate_record_file(path, "row")["status"] == "pass"
         rows.extend(read_jsonl(path))
     metadata = read_json(output_dir / "metadata.json")
-    assert metadata["row_count"] == 4
+    assert metadata["row_count"] == 6
     assert {row["answer"] for row in rows if row["task_type"] == "parameter_edit_direction"} == {"increase", "decrease"}
-    assert {row["task_type"] for row in rows} == {"parameter_edit_direction", "counterfactual_parameter"}
+    assert {row["task_type"] for row in rows} == {"parameter_edit_direction", "counterfactual_parameter", "multi_step_edit_plan"}
+    assert all("steps" in row["answer"] for row in rows if row["task_type"] == "multi_step_edit_plan")

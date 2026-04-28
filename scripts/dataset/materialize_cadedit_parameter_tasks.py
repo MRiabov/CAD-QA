@@ -188,6 +188,81 @@ def materialize_parameter_edit_rows(manifest: dict[str, Any], *, dataset_version
                 "parse_policy": "numeric_4_sigfig_v1",
             }
         )
+        plan = {
+            "steps": [
+                {
+                    "action": "set_numeric_literal",
+                    "source_line": source_line,
+                    "source_column": variant.get("source_column"),
+                    "value": new_value,
+                }
+            ]
+        }
+        plan_prompt = (
+            "Given the CadQuery script below, return a JSON edit plan that applies the counterfactual numeric change "
+            f"at source line `{source_line}`. The JSON must contain a `steps` list; each step must include action, "
+            "source_line, source_column, and value.\n\n"
+            f"```python\n{original_code}```"
+        )
+        plan_prompt_hash = sha256_json({"task_type": "multi_step_edit_plan", "variant_id": variant_id, "prompt": plan_prompt})
+        plan_payload = {
+            "dataset_version": dataset_version,
+            "task_type": "multi_step_edit_plan",
+            "source_id": source_id,
+            "trace_id": group_id,
+            "target_feature_id": f"line:{source_line}",
+            "answer": plan,
+            "prompt_hash": plan_prompt_hash,
+        }
+        rows.append(
+            {
+                "id": "cadedit_multi_step_edit_plan_" + sha256_json(plan_payload).removeprefix("sha256:")[:16],
+                "dataset_version": dataset_version,
+                "task_type": "multi_step_edit_plan",
+                "source_id": source_id,
+                "trace_id": group_id,
+                "target_feature_id": f"line:{source_line}",
+                "split": "train",
+                "prompt": plan_prompt,
+                "answer_type": "json",
+                "answer": plan,
+                "choices": None,
+                "unit": None,
+                "numeric_tolerance": None,
+                "requires": ["cadquery_syntax", "counterfactual_edit", "edit_plan"],
+                "difficulty_tags": ["cadeditqa", "multi_step_edit_plan"],
+                "labels": {
+                    "answer_status": "ok",
+                    "failure_reason": None,
+                    "old_value": old_value,
+                    "new_value": new_value,
+                    "edit_direction": direction,
+                    "source_line": source_line,
+                    "source_column": variant.get("source_column"),
+                },
+                "diagnostics": {
+                    "answer_status": "ok",
+                    "failure_reason": None,
+                    "variant_id": variant_id,
+                    "original_relative_path": variant.get("original_relative_path"),
+                    "variant_relative_path": variant.get("variant_relative_path"),
+                },
+                "provenance": {
+                    "source": "cadevolve_counterfactual",
+                    "source_id": source_id,
+                    "generator_id": None,
+                    "source_subtree": None,
+                    "normalized_archive_member_path": variant.get("original_relative_path"),
+                    "normalized_source_code_hash": sha256_json(original_code),
+                    "operation_signature_hash": None,
+                    "topology_signature_hash": None,
+                    "counterfactual_group_id": group_id,
+                    "point_sampling_group_id": None,
+                },
+                "hashes": {"prompt_hash": plan_prompt_hash, "variant_hash": sha256_json(variant)},
+                "parse_policy": "strict_json_v1",
+            }
+        )
     return rows
 
 

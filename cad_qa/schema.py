@@ -23,6 +23,7 @@ TASK_TYPES = {
     "feature_to_edit",
     "selector_repair",
     "workplane_offset_repair",
+    "multi_step_edit_plan",
     "ambiguous_question_detection",
 }
 
