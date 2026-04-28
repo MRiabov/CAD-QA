@@ -53,8 +53,8 @@ specs.
   grouped numeric counterfactual manifests.
 - Conservative CADEditQA `feature_to_edit` row materialization from validated
   feature-provenance QA rows.
-- Conservative CADEditQA `selector_repair` row materialization from validated
-  selector-count QA rows.
+- Conservative CADEditQA `selector_repair` and `workplane_offset_repair` row
+  materialization from validated selector-count and coordinate-frame QA rows.
 - Answer parsing/grading for strict integer, enum, numeric four-significant
   figure, and JSON bounding-box policies.
 - Zero-shot and few-shot provider-agnostic prediction request export, response

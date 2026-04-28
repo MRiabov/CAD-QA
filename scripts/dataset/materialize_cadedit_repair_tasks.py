@@ -1,4 +1,4 @@
-"""Materialize conservative CADEditQA selector repair rows from CAD-QA labels."""
+"""Materialize conservative CADEditQA selector/workplane repair rows from CAD-QA labels."""
 
 from __future__ import annotations
 
@@ -44,65 +44,131 @@ def main(argv: list[str] | None = None) -> None:
 def materialize_selector_repair_rows(rows: list[dict[str, Any]], *, dataset_version: str) -> list[dict[str, Any]]:
     output = []
     for row in rows:
-        if row.get("task_type") != "selector_count":
-            continue
-        labels = row.get("labels") if isinstance(row.get("labels"), dict) else {}
-        selector = labels.get("selector_result") if isinstance(labels.get("selector_result"), dict) else {}
-        expression = selector.get("selector_expression")
-        selected_count = selector.get("selected_count")
-        if not isinstance(expression, str) or not isinstance(selected_count, int):
-            continue
-        choices = _selector_choices(expression)
-        prompt = (
-            "Given the CadQuery script below, choose the selector expression that repairs the selection "
-            f"to match the recorded target count `{selected_count}` for the same target feature. "
-            "Answer with exactly one listed selector expression.\n\n"
-            f"Choices: {', '.join(choices)}\n\n"
-            f"{_code_block(row.get('prompt'))}"
-        )
-        prompt_hash = sha256_json({"task_type": "selector_repair", "source_row_id": row.get("id"), "prompt": prompt})
-        row_payload = {
-            "dataset_version": dataset_version,
-            "task_type": "selector_repair",
-            "source_id": row.get("source_id"),
-            "trace_id": row.get("trace_id"),
-            "target_feature_id": row.get("target_feature_id"),
-            "answer": expression,
-            "prompt_hash": prompt_hash,
-        }
-        provenance = dict(row.get("provenance") if isinstance(row.get("provenance"), dict) else {})
-        provenance["source_cadqa_row_id"] = row.get("id")
-        output.append(
-            {
-                "id": "cadedit_selector_repair_" + sha256_json(row_payload).removeprefix("sha256:")[:16],
-                "dataset_version": dataset_version,
-                "task_type": "selector_repair",
-                "source_id": row.get("source_id"),
-                "trace_id": row.get("trace_id"),
-                "target_feature_id": row.get("target_feature_id"),
-                "split": row.get("split", "train"),
-                "prompt": prompt,
-                "answer_type": "choice",
-                "answer": expression,
-                "choices": choices,
-                "unit": None,
-                "numeric_tolerance": None,
-                "requires": ["cadquery_syntax", "selector_semantics", "edit_repair"],
-                "difficulty_tags": ["cadeditqa", "selector_repair"],
-                "labels": {
-                    "answer_status": "ok",
-                    "failure_reason": None,
-                    "source_cadqa_row_id": row.get("id"),
-                    "target_selected_count": selected_count,
-                    "selector_result": selector,
-                },
-                "diagnostics": {"answer_status": "ok", "failure_reason": None, "source_task_type": row.get("task_type")},
-                "provenance": provenance,
-                "hashes": {**(row.get("hashes") if isinstance(row.get("hashes"), dict) else {}), "prompt_hash": prompt_hash},
-                "parse_policy": "strict_enum_v1",
-            }
-        )
+        if row.get("task_type") == "selector_count":
+            item = _selector_repair_row(row, dataset_version=dataset_version)
+        elif row.get("task_type") == "coordinate_frame":
+            item = _workplane_repair_row(row, dataset_version=dataset_version)
+        else:
+            item = None
+        if item is not None:
+            output.append(item)
     return output
+
+
+def _selector_repair_row(row: dict[str, Any], *, dataset_version: str) -> dict[str, Any] | None:
+    labels = row.get("labels") if isinstance(row.get("labels"), dict) else {}
+    selector = labels.get("selector_result") if isinstance(labels.get("selector_result"), dict) else {}
+    expression = selector.get("selector_expression")
+    selected_count = selector.get("selected_count")
+    if not isinstance(expression, str) or not isinstance(selected_count, int):
+        return None
+    choices = _selector_choices(expression)
+    prompt = (
+        "Given the CadQuery script below, choose the selector expression that repairs the selection "
+        f"to match the recorded target count `{selected_count}` for the same target feature. "
+        "Answer with exactly one listed selector expression.\n\n"
+        f"Choices: {', '.join(choices)}\n\n"
+        f"{_code_block(row.get('prompt'))}"
+    )
+    prompt_hash = sha256_json({"task_type": "selector_repair", "source_row_id": row.get("id"), "prompt": prompt})
+    return _repair_row(
+        row,
+        dataset_version=dataset_version,
+        task_type="selector_repair",
+        answer=expression,
+        choices=choices,
+        prompt=prompt,
+        prompt_hash=prompt_hash,
+        requires=["cadquery_syntax", "selector_semantics", "edit_repair"],
+        difficulty_tags=["cadeditqa", "selector_repair"],
+        labels={
+            "answer_status": "ok",
+            "failure_reason": None,
+            "source_cadqa_row_id": row.get("id"),
+            "target_selected_count": selected_count,
+            "selector_result": selector,
+        },
+    )
+
+
+def _workplane_repair_row(row: dict[str, Any], *, dataset_version: str) -> dict[str, Any] | None:
+    answer = row.get("answer")
+    choices = row.get("choices")
+    if not isinstance(answer, str) or not isinstance(choices, list):
+        return None
+    prompt = (
+        "Given the CadQuery script below, choose the workplane or coordinate-frame setting that repairs the "
+        f"target feature `{row.get('target_feature_id')}` to use the recorded frame. "
+        "Answer with exactly one listed token.\n\n"
+        f"Choices: {', '.join(str(choice) for choice in choices)}\n\n"
+        f"{_code_block(row.get('prompt'))}"
+    )
+    prompt_hash = sha256_json({"task_type": "workplane_offset_repair", "source_row_id": row.get("id"), "prompt": prompt})
+    return _repair_row(
+        row,
+        dataset_version=dataset_version,
+        task_type="workplane_offset_repair",
+        answer=answer,
+        choices=[str(choice) for choice in choices],
+        prompt=prompt,
+        prompt_hash=prompt_hash,
+        requires=["cadquery_syntax", "workplane_reasoning", "edit_repair"],
+        difficulty_tags=["cadeditqa", "workplane_offset_repair"],
+        labels={
+            "answer_status": "ok",
+            "failure_reason": None,
+            "source_cadqa_row_id": row.get("id"),
+            "coordinate_frame": answer,
+        },
+    )
+
+
+def _repair_row(
+    row: dict[str, Any],
+    *,
+    dataset_version: str,
+    task_type: str,
+    answer: str,
+    choices: list[str],
+    prompt: str,
+    prompt_hash: str,
+    requires: list[str],
+    difficulty_tags: list[str],
+    labels: dict[str, Any],
+) -> dict[str, Any]:
+    row_payload = {
+        "dataset_version": dataset_version,
+        "task_type": task_type,
+        "source_id": row.get("source_id"),
+        "trace_id": row.get("trace_id"),
+        "target_feature_id": row.get("target_feature_id"),
+        "answer": answer,
+        "prompt_hash": prompt_hash,
+    }
+    provenance = dict(row.get("provenance") if isinstance(row.get("provenance"), dict) else {})
+    provenance["source_cadqa_row_id"] = row.get("id")
+    return {
+        "id": f"cadedit_{task_type}_" + sha256_json(row_payload).removeprefix("sha256:")[:16],
+        "dataset_version": dataset_version,
+        "task_type": task_type,
+        "source_id": row.get("source_id"),
+        "trace_id": row.get("trace_id"),
+        "target_feature_id": row.get("target_feature_id"),
+        "split": row.get("split", "train"),
+        "prompt": prompt,
+        "answer_type": "choice",
+        "answer": answer,
+        "choices": choices,
+        "unit": None,
+        "numeric_tolerance": None,
+        "requires": requires,
+        "difficulty_tags": difficulty_tags,
+        "labels": labels,
+        "diagnostics": {"answer_status": "ok", "failure_reason": None, "source_task_type": row.get("task_type")},
+        "provenance": provenance,
+        "hashes": {**(row.get("hashes") if isinstance(row.get("hashes"), dict) else {}), "prompt_hash": prompt_hash},
+        "parse_policy": "strict_enum_v1",
+    }
 
 
 def _load_rows(dataset_dir: Path) -> list[dict[str, Any]]:
