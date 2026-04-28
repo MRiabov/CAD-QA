@@ -19,6 +19,7 @@ TASK_TYPES = {
     "workplane_state",
     "coordinate_frame",
     "counterfactual_parameter",
+    "parameter_edit_direction",
     "ambiguous_question_detection",
 }
 

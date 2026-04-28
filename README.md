@@ -133,6 +133,14 @@ uv run python -m scripts.dataset.generate_counterfactual_sources \
   --limit 10
 ```
 
+Materialize conservative CADEditQA parameter-edit-direction rows:
+
+```bash
+uv run python -m scripts.dataset.materialize_cadedit_parameter_tasks \
+  runs/counterfactual_sources/counterfactual_manifest.json \
+  --output-dir runs/cadedit_parameter_tasks
+```
+
 Export closed-book model requests:
 
 ```bash
