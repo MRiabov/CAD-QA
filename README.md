@@ -78,6 +78,14 @@ uv run python -m scripts.training.prepare_answer_sft_dataset \
   --output-dir runs/answer_sft/sft
 ```
 
+Prepare trace-grounded reasoning SFT JSONL:
+
+```bash
+uv run python -m scripts.training.prepare_reasoning_sft_dataset \
+  --dataset-dir data/cadqa_smoke \
+  --output-dir runs/reasoning_sft/sft
+```
+
 Write a task-balanced subset for training canaries:
 
 ```bash
