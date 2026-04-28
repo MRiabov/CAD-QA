@@ -34,7 +34,7 @@ ordering:
   rule: Epics follow the implementation order and research structure described in specs/useful-implementation-optimization.md, specs/extracting-cadevolve-features.md, specs/paper-spec.md, specs/research-experiment-spec.md, and the CADEditQA specs.
 current_snapshot:
   date: "2026-04-28"
-  codebase_state: CAD-QA now has a working Python package, CLI, source ingestion, AST operation graphs, isolated optional CadQuery tracing, scalar/topology snapshots, conservative point/provenance records, MVP public-row materialization, split manifests, leakage validation, JSONL export, dataset cards, baselines, SFT data preparation, experiment orchestration, smoke fixtures, tests, and validated smoke/CADEvolve-probe artifacts. Exact topology entity IDs, robust adjacent topology matching, full held-out split families, Parquet export, real GPU SFT, counterfactual generation, CADEditQA verifier tasks, and multimodal/rendering extensions remain open or partial.
+  codebase_state: CAD-QA now has a working Python package, CLI, source ingestion, AST operation graphs, isolated optional CadQuery tracing, scalar/topology snapshots, conservative point/provenance records, MVP public-row materialization, split manifests, leakage validation, JSONL export, optional Parquet export, trace caching, resumable sharded generation, dataset cards, baselines, SFT data preparation, experiment orchestration, smoke fixtures, tests, and validated smoke/CADEvolve-probe artifacts. Exact topology entity IDs, robust adjacent topology matching, full held-out split families, real GPU SFT, counterfactual generation, CADEditQA verifier tasks, and multimodal/rendering extensions remain open or partial.
   stable_features:
     - cadqa_research_framing
     - cadqa_mvp_task_family_spec
@@ -54,6 +54,8 @@ current_snapshot:
     - cadqa_mvp_public_row_materialization
     - cadqa_jsonl_export_and_validation
     - cadqa_baseline_and_sft_data_artifacts
+    - cadqa_optional_parquet_export
+    - cadqa_trace_cache_and_resumable_shards
 
 epics:
   - id: epic-1
@@ -627,7 +629,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build after row generation
-        status: work-in-progress
+        status: implemented
         stable: false
       - id: "10.3"
         title: Dataset card
@@ -828,7 +830,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build before scale runs
-        status: planned
+        status: implemented
         stable: false
       - id: "13.5"
         title: Sharded resumable generation
@@ -836,7 +838,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build before long runs
-        status: planned
+        status: implemented
         stable: false
       - id: "13.6"
         title: Unit and golden tests

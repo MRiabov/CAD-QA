@@ -13,6 +13,7 @@ import time
 from typing import Any
 
 from cad_qa.config import DatasetConfig
+from cad_qa.cache import load_cached_trace, store_cached_trace
 from cad_qa.hashing import sha256_json
 from cad_qa.operation_graph import (
     extract_operation_graph,
@@ -113,14 +114,28 @@ def trace_source_records_bounded(
     *,
     config: DatasetConfig,
     worker_count: int | None = None,
+    cache_dir: Any | None = None,
 ) -> list[TraceRecord]:
     """Trace sources in bounded worker processes, preserving input order."""
+    cached_results: list[TraceRecord | None] = [load_cached_trace(cache_dir, source, config) for source in sources]
+    uncached: list[tuple[int, SourceRecord]] = [
+        (index, source)
+        for index, (source, cached) in enumerate(zip(sources, cached_results, strict=True))
+        if cached is None
+    ]
+    if not uncached:
+        return [trace for trace in cached_results if trace is not None]
+
     worker_count = max(1, worker_count or config.worker_count)
     if worker_count <= 1:
-        return [trace_source_record(source, config=config, isolated=True) for source in sources]
+        for index, source in uncached:
+            trace = trace_source_record(source, config=config, isolated=True)
+            store_cached_trace(cache_dir, source, config, trace)
+            cached_results[index] = trace
+        return [trace for trace in cached_results if trace is not None]
 
     context = mp.get_context("spawn")
-    pending = list(enumerate(sources))
+    pending = list(uncached)
     running: list[dict[str, Any]] = []
     results: list[TraceRecord | None] = [None] * len(sources)
 
@@ -152,13 +167,17 @@ def trace_source_records_bounded(
                 process.join()
                 result = _trace_from_worker_queue(source, config, job["queue"], process.exitcode)
             running.remove(job)
+            store_cached_trace(cache_dir, source, config, result)
             results[int(job["index"])] = result
             made_progress = True
             start_next()
         if not made_progress:
             time.sleep(0.05)
 
-    return [trace for trace in results if trace is not None]
+    for index, trace in enumerate(results):
+        if trace is not None:
+            cached_results[index] = trace
+    return [trace for trace in cached_results if trace is not None]
 
 
 def _trace_record_worker(source: SourceRecord, config: DatasetConfig, queue: mp.Queue) -> None:

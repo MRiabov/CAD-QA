@@ -52,6 +52,7 @@ def build_parser() -> argparse.ArgumentParser:
     generate.add_argument("--offset", type=int, default=0)
     generate.add_argument("--workers", type=int)
     generate.add_argument("--trace-timeout-seconds", type=float)
+    generate.add_argument("--cache-dir", type=Path)
     generate.set_defaults(func=_cmd_generate)
 
     trace = subparsers.add_parser("trace", help="write source and trace records from CADEvolve sources")
@@ -64,6 +65,7 @@ def build_parser() -> argparse.ArgumentParser:
     trace.add_argument("--offset", type=int, default=0)
     trace.add_argument("--workers", type=int)
     trace.add_argument("--trace-timeout-seconds", type=float)
+    trace.add_argument("--cache-dir", type=Path)
     trace.set_defaults(func=_cmd_trace)
 
     materialize = subparsers.add_parser("materialize-smoke", help="write public rows for smoke traces only")
@@ -93,7 +95,7 @@ def _cmd_smoke(args: argparse.Namespace) -> dict[str, object]:
 def _cmd_generate(args: argparse.Namespace) -> dict[str, object]:
     config = _config_from_args(args)
     sources = _load_sources_from_args(args, config)
-    traces = trace_source_records_bounded(sources, config=config, worker_count=args.workers)
+    traces = trace_source_records_bounded(sources, config=config, worker_count=args.workers, cache_dir=args.cache_dir)
     pairs = list(zip(sources, traces, strict=True))
     return export_dataset(pairs, output_dir=args.output_dir, config=config)
 
@@ -101,7 +103,7 @@ def _cmd_generate(args: argparse.Namespace) -> dict[str, object]:
 def _cmd_trace(args: argparse.Namespace) -> dict[str, object]:
     config = _config_from_args(args)
     sources = _load_sources_from_args(args, config)
-    traces = trace_source_records_bounded(sources, config=config, worker_count=args.workers)
+    traces = trace_source_records_bounded(sources, config=config, worker_count=args.workers, cache_dir=args.cache_dir)
     args.output_dir.mkdir(parents=True, exist_ok=True)
     write_jsonl(args.output_dir / "sources.jsonl", sources)
     write_jsonl(args.output_dir / "traces.jsonl", traces)

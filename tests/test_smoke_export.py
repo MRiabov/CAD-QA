@@ -22,6 +22,7 @@ def test_smoke_export_is_valid(tmp_path: Path):
     assert (tmp_path / "metadata.json").exists()
     assert (tmp_path / "split_manifest.json").exists()
     assert (tmp_path / "failure_manifest.jsonl").exists()
+    assert metadata["parquet_export"]["status"] in {"skipped", "written"}
 
 
 def test_public_rows_do_not_leak_local_paths(tmp_path: Path):

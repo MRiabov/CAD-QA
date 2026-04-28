@@ -37,6 +37,7 @@ def export_dataset(
     write_jsonl(output_dir / "sources.jsonl", sources)
     write_jsonl(output_dir / "traces.jsonl", traces)
     _write_split_jsonl(output_dir / "jsonl", row_dicts)
+    parquet_report = _write_parquet_files(output_dir / "parquet", row_dicts)
     manifest = split_manifest(row_dicts)
     write_json(output_dir / "split_manifest.json", manifest)
     failure_rows = [
@@ -51,7 +52,7 @@ def export_dataset(
         if trace.execution_status != "ok" or trace.failure_reason
     ]
     write_jsonl(output_dir / "failure_manifest.jsonl", failure_rows)
-    metadata = _metadata(row_dicts, sources, traces, config=config)
+    metadata = _metadata(row_dicts, sources, traces, config=config, parquet_report=parquet_report)
     write_json(output_dir / "metadata.json", metadata)
     return metadata
 
@@ -74,6 +75,7 @@ def _metadata(
     traces: list[TraceRecord],
     *,
     config: DatasetConfig,
+    parquet_report: dict[str, object],
 ) -> dict[str, object]:
     return {
         "schema": "cadqa_dataset_metadata_v1",
@@ -102,6 +104,7 @@ def _metadata(
             "Smoke fixtures are for golden validation and do not replace CADEvolve release data.",
         ],
         "leakage_audit": leakage_audit(rows),
+        "parquet_export": parquet_report,
     }
 
 
@@ -110,3 +113,28 @@ def _list_field(row: dict[str, object], key: str) -> list[str]:
     if not isinstance(value, list):
         return []
     return [str(item) for item in value]
+
+
+def _write_parquet_files(parquet_dir: Path, rows: list[dict[str, object]]) -> dict[str, object]:
+    parquet_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        import pyarrow as pa  # type: ignore[import-not-found]
+        import pyarrow.parquet as pq  # type: ignore[import-not-found]
+    except ModuleNotFoundError:
+        marker = parquet_dir / "PARQUET_NOT_WRITTEN.md"
+        marker.write_text(
+            "Parquet export requires the optional `parquet` extra: `uv run --extra parquet ...`.\n",
+            encoding="utf-8",
+        )
+        return {"status": "skipped", "reason": "pyarrow_unavailable", "files": []}
+
+    by_split: dict[str, list[dict[str, object]]] = defaultdict(list)
+    for row in rows:
+        by_split[str(row["split"])].append(row)
+    files = []
+    for split, split_rows in sorted(by_split.items()):
+        path = parquet_dir / f"{split}.parquet"
+        table = pa.Table.from_pylist(sorted(split_rows, key=lambda row: str(row["id"])))
+        pq.write_table(table, path)
+        files.append(str(path.name))
+    return {"status": "written", "files": files}

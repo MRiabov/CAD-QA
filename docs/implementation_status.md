@@ -25,6 +25,10 @@ specs.
   - `feature_provenance_choice`
 - Group-safe split assignment, split manifests, leakage audits, metadata,
   failure manifests, and dataset-card generation.
+- Optional Parquet export when `pyarrow` is installed, with an explicit marker
+  when the `parquet` extra is unavailable.
+- Trace caching and a resumable sharded generation script for bounded scale
+  runs.
 - Baselines for majority, random, static operation count, regex operation
   count, selector heuristic, and oracle.
 - Answer parsing/grading for strict integer, enum, numeric four-significant
@@ -50,8 +54,8 @@ specs.
   matching are not implemented; current provenance rows are conservative
   adjacent-volume labels.
 - Full selector coverage depends on selectors appearing in traced sources.
-- Large CADEvolve generation needs runtime tuning, sharding, and cache policy
-  before scaling beyond bounded probes.
+- Large CADEvolve generation still needs runtime tuning and larger-source
+  validation before public release, though cache-backed shard generation exists.
 - Real Qwen3.5 4B SFT is gated on GPU environment, live pricing/account state,
   and training dependencies. The local entrypoint records a structured gated
   result when dependencies are absent.

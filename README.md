@@ -60,5 +60,20 @@ uv run --extra cadquery cadqa generate --auto-source-dir \
   --output-dir data/cadqa_cadevolve_rc \
   --limit 10 \
   --workers 1 \
-  --trace-timeout-seconds 30
+  --trace-timeout-seconds 30 \
+  --cache-dir data/cache
+```
+
+Run a resumable sharded generation probe:
+
+```bash
+uv run python -m scripts.dataset.generate_resumable_dataset \
+  --output-dir runs/cadqa_resumable \
+  --auto-source-dir \
+  --total-limit 10 \
+  --shard-size 2 \
+  --workers 1 \
+  --trace-timeout-seconds 30 \
+  --extra-cadquery \
+  --resume
 ```
