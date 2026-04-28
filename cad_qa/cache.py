@@ -67,4 +67,5 @@ def trace_record_from_dict(data: dict[str, Any]) -> TraceRecord:
         selector_tables=list(data.get("selector_tables") or []),
         point_queries=list(data.get("point_queries") or []),
         provenance_records=list(data.get("provenance_records") or []),
+        topology_matches=list(data.get("topology_matches") or []),
     )

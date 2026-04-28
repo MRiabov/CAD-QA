@@ -15,6 +15,8 @@ specs.
 - Isolated, bounded CadQuery trace workers with scalar snapshots, topology
   counts, selector count tables when selectors are present, point samples, and
   conservative adjacent-volume provenance records.
+- Per-snapshot entity IDs and best-effort adjacent topology matching for small
+  snapshots using lightweight geometry signatures.
 - Public row materialization for:
   - `operation_count`
   - `selector_count`
@@ -50,9 +52,10 @@ specs.
 
 ## Still Gated
 
-- Exact OpenCascade builder-history provenance and cross-snapshot entity
-  matching are not implemented; current provenance rows are conservative
-  adjacent-volume labels.
+- Exact OpenCascade builder-history provenance is not implemented; current
+  provenance rows are conservative adjacent-volume labels. Adjacent topology
+  matching exists but is best-effort and intentionally skips heavy signatures on
+  large snapshots.
 - Full selector coverage depends on selectors appearing in traced sources.
 - Large CADEvolve generation still needs runtime tuning and larger-source
   validation before public release, though cache-backed shard generation exists.

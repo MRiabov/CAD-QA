@@ -100,6 +100,7 @@ class TraceRecord:
     selector_tables: list[dict[str, Any]] = field(default_factory=list)
     point_queries: list[dict[str, Any]] = field(default_factory=list)
     provenance_records: list[dict[str, Any]] = field(default_factory=list)
+    topology_matches: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass(frozen=True)

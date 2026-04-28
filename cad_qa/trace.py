@@ -76,6 +76,7 @@ def trace_source_record(
     selector_tables = _attach_table_feature_ids(result.get("selector_tables", []), nodes)
     point_queries = _attach_table_feature_ids(result.get("point_queries", []), nodes)
     provenance_records = _attach_table_feature_ids(result.get("provenance_records", []), nodes)
+    topology_matches = _attach_table_feature_ids(result.get("topology_matches", []), nodes)
     trace_payload = {
         "source_id": source.source_id,
         "graph_hash": graph_hash,
@@ -83,6 +84,7 @@ def trace_source_record(
         "selector_tables": selector_tables,
         "point_queries": point_queries,
         "provenance_records": provenance_records,
+        "topology_matches": topology_matches,
         "label_policy": asdict(config.label_policy),
         "environment": result["environment"],
     }
@@ -106,6 +108,7 @@ def trace_source_record(
         selector_tables=selector_tables,
         point_queries=point_queries,
         provenance_records=provenance_records,
+        topology_matches=topology_matches,
     )
 
 
@@ -255,6 +258,7 @@ def _trace_worker_payload(code: str) -> dict[str, Any]:
     selector_tables: list[dict[str, Any]] = []
     point_queries: list[dict[str, Any]] = []
     provenance_records: list[dict[str, Any]] = []
+    topology_matches: list[dict[str, Any]] = []
     try:
         tree = ast.parse(code)
         for statement_index, statement in enumerate(tree.body):
@@ -271,6 +275,7 @@ def _trace_worker_payload(code: str) -> dict[str, Any]:
                 if selector is not None:
                     selector_tables.append(selector)
         point_queries = _point_queries_for_final_state(namespace, snapshots)
+        topology_matches = _adjacent_topology_matches(snapshots)
         provenance_records = _conservative_provenance_records(snapshots)
     except Exception as exc:
         return {
@@ -281,6 +286,7 @@ def _trace_worker_payload(code: str) -> dict[str, Any]:
             "selector_tables": selector_tables,
             "point_queries": point_queries,
             "provenance_records": provenance_records,
+            "topology_matches": topology_matches,
         }
     environment["elapsed_seconds"] = round(time.monotonic() - started, 6)
     return {
@@ -289,6 +295,7 @@ def _trace_worker_payload(code: str) -> dict[str, Any]:
         "selector_tables": selector_tables,
         "point_queries": point_queries,
         "provenance_records": provenance_records,
+        "topology_matches": topology_matches,
         "environment": environment,
     }
 
@@ -300,6 +307,7 @@ def _snapshot_for_object(obj: Any, target: str, step_index: int) -> dict[str, An
     volume = _call_number(shape, "Volume")
     bbox = _bbox(shape)
     topology = _topology(shape)
+    entity_ids, entity_signatures = _entity_ids_and_signatures(shape, topology)
     return {
         "snapshot_id": f"snap_{target}_{step_index:04d}",
         "feature_id": target,
@@ -308,8 +316,8 @@ def _snapshot_for_object(obj: Any, target: str, step_index: int) -> dict[str, An
         "volume": volume,
         "bbox": bbox,
         "topology": topology,
-        "entity_ids": None,
-        "diagnostics": {"snapshot_target": target},
+        "entity_ids": entity_ids,
+        "diagnostics": {"snapshot_target": target, "entity_signatures": entity_signatures},
     }
 
 
@@ -368,6 +376,73 @@ def _count(shape: Any, method_name: str) -> int:
     method = getattr(shape, method_name, None)
     if method is None:
         return 0
+
+
+def _entity_ids_and_signatures(
+    shape: Any,
+    topology: dict[str, int | None],
+) -> tuple[dict[str, list[str]], dict[str, list[dict[str, Any]]]]:
+    ids = {
+        "faces": [f"face_{index:04d}" for index in range(int(topology.get("face_count") or 0))],
+        "edges": [f"edge_{index:04d}" for index in range(int(topology.get("edge_count") or 0))],
+        "vertices": [f"vertex_{index:04d}" for index in range(int(topology.get("vertex_count") or 0))],
+    }
+    signatures: dict[str, list[dict[str, Any]]] = {}
+    total_entities = sum(len(values) for values in ids.values())
+    if total_entities > 24:
+        return ids, signatures
+    for entity_type, method_name in (("face", "Faces"), ("edge", "Edges"), ("vertex", "Vertices")):
+        entities = _entities(shape, method_name)
+        signatures[entity_type] = [
+            {
+                "entity_id": f"{entity_type}_{index:04d}",
+                "entity_type": entity_type,
+                "geometry_type": _geometry_type(entity),
+                "center": _center(entity),
+                "measure": _entity_measure(entity),
+            }
+            for index, entity in enumerate(entities)
+        ]
+    return ids, signatures
+
+
+def _entities(shape: Any, method_name: str) -> list[Any]:
+    method = getattr(shape, method_name, None)
+    if method is None:
+        return []
+    try:
+        return list(method())
+    except Exception:
+        return []
+
+
+def _geometry_type(entity: Any) -> str | None:
+    method = getattr(entity, "geomType", None)
+    if method is None:
+        return None
+    try:
+        return str(method())
+    except Exception:
+        return None
+
+
+def _center(entity: Any) -> list[float] | None:
+    method = getattr(entity, "Center", None)
+    if method is None:
+        return None
+    try:
+        center = method()
+        return [float(center.x), float(center.y), float(center.z)]
+    except Exception:
+        return None
+
+
+def _entity_measure(entity: Any) -> float | None:
+    for method_name in ("Area", "Length", "Volume"):
+        value = _call_number(entity, method_name)
+        if value is not None:
+            return value
+    return None
     try:
         return len(method())
     except Exception:
@@ -522,6 +597,90 @@ def _conservative_provenance_records(snapshots: list[dict[str, Any]]) -> list[di
             }
         )
     return records
+
+
+def _adjacent_topology_matches(snapshots: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    for previous, current in zip(snapshots, snapshots[1:], strict=False):
+        previous_signatures = _snapshot_entity_signatures(previous)
+        current_signatures = _snapshot_entity_signatures(current)
+        for entity_type in ("face", "edge", "vertex"):
+            records.extend(
+                _match_entity_type(
+                    previous,
+                    current,
+                    previous_signatures.get(entity_type, []),
+                    current_signatures.get(entity_type, []),
+                )
+            )
+    return records
+
+
+def _snapshot_entity_signatures(snapshot: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
+    diagnostics = snapshot.get("diagnostics")
+    if not isinstance(diagnostics, dict):
+        return {}
+    signatures = diagnostics.get("entity_signatures")
+    return signatures if isinstance(signatures, dict) else {}
+
+
+def _match_entity_type(
+    previous: dict[str, Any],
+    current: dict[str, Any],
+    previous_entities: list[dict[str, Any]],
+    current_entities: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    unmatched_current = list(current_entities)
+    matches: list[dict[str, Any]] = []
+    for previous_entity in previous_entities:
+        best = _best_entity_match(previous_entity, unmatched_current)
+        if best is None:
+            continue
+        current_entity, score = best
+        if score > 1e-4:
+            continue
+        unmatched_current.remove(current_entity)
+        matches.append(
+            {
+                "from_feature_id": previous.get("feature_id"),
+                "to_feature_id": current.get("feature_id"),
+                "from_entity_id": previous_entity.get("entity_id"),
+                "to_entity_id": current_entity.get("entity_id"),
+                "entity_type": current_entity.get("entity_type"),
+                "matching_method": "geometry_signature_nearest",
+                "confidence": max(0.0, 1.0 - min(score * 10000.0, 1.0)),
+                "score": score,
+            }
+        )
+    return matches
+
+
+def _best_entity_match(
+    previous_entity: dict[str, Any],
+    current_entities: list[dict[str, Any]],
+) -> tuple[dict[str, Any], float] | None:
+    candidates = [
+        (current_entity, _entity_signature_distance(previous_entity, current_entity))
+        for current_entity in current_entities
+        if current_entity.get("geometry_type") == previous_entity.get("geometry_type")
+    ]
+    if not candidates:
+        return None
+    return min(candidates, key=lambda item: item[1])
+
+
+def _entity_signature_distance(left: dict[str, Any], right: dict[str, Any]) -> float:
+    distance = 0.0
+    left_center = left.get("center")
+    right_center = right.get("center")
+    if _finite_triplet(left_center) and _finite_triplet(right_center):
+        distance += sum((float(a) - float(b)) ** 2 for a, b in zip(left_center, right_center, strict=True)) ** 0.5
+    left_measure = left.get("measure")
+    right_measure = right.get("measure")
+    if isinstance(left_measure, (int, float)) and isinstance(right_measure, (int, float)):
+        scale = max(abs(float(left_measure)), abs(float(right_measure)), 1.0)
+        distance += abs(float(left_measure) - float(right_measure)) / scale
+    return distance
 
 
 def _finite_triplet(value: Any) -> bool:
