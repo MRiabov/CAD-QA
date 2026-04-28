@@ -27,6 +27,8 @@ specs.
   - `feature_provenance_choice`
 - Group-safe split assignment, split manifests, leakage audits, metadata,
   failure manifests, and dataset-card generation.
+- Manual audit sample export, trace failure taxonomy reports, and two-export
+  reproducibility audits.
 - Protected split routing for generator, source-subtree, operation-signature,
   topology-signature, and point-sampling groups when enough groups exist.
 - Optional Parquet export when `pyarrow` is installed, with an explicit marker

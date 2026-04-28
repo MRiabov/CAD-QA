@@ -57,6 +57,22 @@ uv run python -m scripts.dataset.balance_dataset_classes \
   --max-rows-per-task 200
 ```
 
+Create release QA reports:
+
+```bash
+uv run python -m scripts.dataset.manual_audit_sample \
+  data/cadqa_smoke \
+  --output-dir runs/manual_audit_sample
+
+uv run python -m scripts.dataset.failure_report \
+  data/cadqa_smoke \
+  --output runs/failure_report.json
+
+uv run python -m scripts.dataset.reproducibility_audit \
+  data/cadqa_smoke data/cadqa_smoke_rerun \
+  --output runs/reproducibility_audit.json
+```
+
 Generate grouped numeric counterfactual source variants:
 
 ```bash
