@@ -33,6 +33,7 @@ specs.
   runs.
 - Baselines for majority, random, static operation count, regex operation
   count, selector heuristic, and oracle.
+- Deterministic task-balanced subset export for train/validation rows.
 - Answer parsing/grading for strict integer, enum, numeric four-significant
   figure, and JSON bounding-box policies.
 - Answer-only SFT JSONL preparation and local format smoke validation.

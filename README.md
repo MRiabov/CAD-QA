@@ -48,6 +48,15 @@ uv run python -m scripts.training.prepare_answer_sft_dataset \
   --output-dir runs/answer_sft/sft
 ```
 
+Write a task-balanced subset for training canaries:
+
+```bash
+uv run python -m scripts.dataset.balance_dataset_classes \
+  data/cadqa_smoke \
+  --output-dir runs/cadqa_balanced \
+  --max-rows-per-task 200
+```
+
 CadQuery execution is optional. Without CadQuery, the app still supports source
 records, operation graphs, static task rows, smoke fixtures, validation, splits,
 and baseline evaluation. With CadQuery installed, `cadqa trace` can emit scalar
