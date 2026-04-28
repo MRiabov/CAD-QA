@@ -23,10 +23,11 @@ rtk uv run python -m scripts.experiments.run_experiment_suite configs/overnight_
 ## Current Status
 
 - Implementation: local CAD-QA package, CLI, scripts, configs, and tests are
-  present.
-- Tests: `compileall` passes and `pytest -q` reports 10 passing tests.
-- Dataset: smoke generation produces 47 validated code-plus-label rows across
-  the MVP task families, with 31 train rows and 16 validation rows.
+  present. `epics-and-stories.yaml` has no remaining `planned` or
+  `work-in-progress` implementation stories.
+- Tests: `compileall` passes and `pytest -q` reports 38 passing tests.
+- Dataset: current smoke generation produces 53 validated code-plus-label rows
+  across the implemented task families.
 - Local orchestration: `configs/orchestration_smoke.yaml` completed all runs and
   wrote dataset, validation, baseline, SFT JSONL, and SFT-format smoke
   artifacts under `runs/`.
@@ -48,14 +49,14 @@ rtk uv run python -m scripts.experiments.run_experiment_suite configs/overnight_
   static operation-count rows are still emitted for failed traces. Baselines are
   under `runs/cadqa_cadevolve_rc_10_baselines`, and answer-only SFT JSONL is
   under `runs/cadqa_cadevolve_rc_10_sft`.
-- Training: real SFT is gated unless GPU dependencies and pricing/account state
-  are confirmed. A local direct canary invocation wrote
-  `runs/answer_sft_canary/train_result.json` with status `gated` and reason
-  `missing_training_dependencies:torch,transformers,trl,unsloth`. The manifest
-  includes `answer_sft_canary_dry_run` for local artifact checks.
+- Training: real SFT is gated unless GPU dependencies, CUDA, and
+  pricing/account state are confirmed. The `answer_sft_canary` manifest entry
+  now launches through `uv run --extra training`; `answer_sft_canary_dry_run`
+  remains available for local artifact checks.
 
 ## Next Command
 
 ```bash
-rtk uv run --extra cadquery cadqa generate --auto-source-dir --output-dir data/cadqa_cadevolve_rc_10 --limit 10 --workers 1 --trace-timeout-seconds 30
+rtk uv run python -m scripts.experiments.run_experiment_suite \
+  configs/overnight_experiment_suite.yaml --run answer_sft_canary --with-dependencies --dry-run
 ```

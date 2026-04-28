@@ -79,8 +79,8 @@ specs.
 
 ## Validated Artifacts
 
-- `runs/smoke_dataset/dataset`: 47 validated smoke rows across MVP task
-  families.
+- Current smoke generator: 53 validated smoke rows across implemented task
+  families when rerun from the latest code.
 - `runs/cadevolve_trace_probe_t30/dataset`: 921 validated rows from 3 adjacent
   CADEvolve-style sources, no failures.
 - `data/cadqa_cadevolve_rc_10`: 1,419 validated rows from 10 adjacent
@@ -100,8 +100,10 @@ specs.
   public counterfactual task rows are not implemented.
 - Large CADEvolve generation still needs runtime tuning and larger-source
   validation before public release, though cache-backed shard generation exists.
-- Real Qwen3.5 4B SFT is gated on GPU environment, live pricing/account state,
-  and training dependencies. The local entrypoint records structured dry-run or
-  gated results when training should not launch.
-- CADEditQA edit-verifier tasks are not yet implemented beyond shared CAD-QA
-  infrastructure.
+- Real Qwen3.5 4B SFT is gated on GPU environment, CUDA availability, and live
+  pricing/account state. The manifest canary uses `uv run --extra training`;
+  the local entrypoint records structured dry-run or gated results when
+  training should not launch.
+- CADEditQA edit-verifier tasks remain partial beyond the conservative
+  parameter, feature, selector, workplane, and bounded edit-plan rows listed
+  above.
