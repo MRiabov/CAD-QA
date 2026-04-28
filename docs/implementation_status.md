@@ -50,7 +50,8 @@ specs.
 - Deterministic task-balanced subset export for train/validation rows.
 - Grouped numeric counterfactual source variant generation with a manifest.
 - Conservative CADEditQA `parameter_edit_direction` row materialization from
-  grouped numeric counterfactual manifests.
+  grouped numeric counterfactual manifests, plus numeric
+  `counterfactual_parameter` value rows.
 - Conservative CADEditQA `feature_to_edit` row materialization from validated
   feature-provenance QA rows.
 - Conservative CADEditQA `selector_repair` and `workplane_offset_repair` row

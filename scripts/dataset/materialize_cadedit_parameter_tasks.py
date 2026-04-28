@@ -122,6 +122,72 @@ def materialize_parameter_edit_rows(manifest: dict[str, Any], *, dataset_version
                 "parse_policy": "strict_enum_v1",
             }
         )
+        value_prompt = (
+            "Given the CadQuery script below, predict the edited numeric value for the literal "
+            f"at source line `{source_line}` after the counterfactual change. "
+            "Answer with exactly one finite number.\n\n"
+            f"Original value: {old_value}\n\n"
+            f"```python\n{original_code}```"
+        )
+        value_prompt_hash = sha256_json({"task_type": "counterfactual_parameter", "variant_id": variant_id, "prompt": value_prompt})
+        value_payload = {
+            "dataset_version": dataset_version,
+            "task_type": "counterfactual_parameter",
+            "source_id": source_id,
+            "trace_id": group_id,
+            "target_feature_id": f"line:{source_line}",
+            "answer": new_value,
+            "prompt_hash": value_prompt_hash,
+        }
+        rows.append(
+            {
+                "id": "cadedit_counterfactual_parameter_" + sha256_json(value_payload).removeprefix("sha256:")[:16],
+                "dataset_version": dataset_version,
+                "task_type": "counterfactual_parameter",
+                "source_id": source_id,
+                "trace_id": group_id,
+                "target_feature_id": f"line:{source_line}",
+                "split": "train",
+                "prompt": value_prompt,
+                "answer_type": "number",
+                "answer": new_value,
+                "choices": None,
+                "unit": None,
+                "numeric_tolerance": 1e-9,
+                "requires": ["cadquery_syntax", "counterfactual_edit", "numeric_parameter"],
+                "difficulty_tags": ["cadeditqa", "counterfactual_parameter"],
+                "labels": {
+                    "answer_status": "ok",
+                    "failure_reason": None,
+                    "old_value": old_value,
+                    "new_value": new_value,
+                    "edit_direction": direction,
+                    "source_line": source_line,
+                    "source_column": variant.get("source_column"),
+                },
+                "diagnostics": {
+                    "answer_status": "ok",
+                    "failure_reason": None,
+                    "variant_id": variant_id,
+                    "original_relative_path": variant.get("original_relative_path"),
+                    "variant_relative_path": variant.get("variant_relative_path"),
+                },
+                "provenance": {
+                    "source": "cadevolve_counterfactual",
+                    "source_id": source_id,
+                    "generator_id": None,
+                    "source_subtree": None,
+                    "normalized_archive_member_path": variant.get("original_relative_path"),
+                    "normalized_source_code_hash": sha256_json(original_code),
+                    "operation_signature_hash": None,
+                    "topology_signature_hash": None,
+                    "counterfactual_group_id": group_id,
+                    "point_sampling_group_id": None,
+                },
+                "hashes": {"prompt_hash": value_prompt_hash, "variant_hash": sha256_json(variant)},
+                "parse_policy": "numeric_4_sigfig_v1",
+            }
+        )
     return rows
 
 
