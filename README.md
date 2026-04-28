@@ -196,6 +196,16 @@ records, operation graphs, static task rows, smoke fixtures, validation, splits,
 and baseline evaluation. With CadQuery installed, `cadqa trace` can emit scalar
 snapshots for supported scripts in an isolated worker.
 
+GPU answer-only SFT uses the optional training extra:
+
+```bash
+uv run --extra training python -m scripts.training.text_sft_train_unsloth \
+  --dataset-dir data/cadqa_smoke \
+  --sft-dir runs/answer_sft/sft \
+  --output-dir runs/answer_sft_train \
+  --model unsloth/Qwen3.5-4B
+```
+
 To run trace-backed generation in a local environment:
 
 ```bash

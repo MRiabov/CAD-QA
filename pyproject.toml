@@ -10,6 +10,7 @@ dependencies = ["PyYAML>=6.0"]
 dev = ["pytest>=8.0"]
 cadquery = ["cadquery>=2.4"]
 parquet = ["pyarrow>=15.0"]
+training = ["datasets>=2.18", "torch>=2.2", "transformers>=4.40", "trl>=0.8", "unsloth"]
 
 [project.scripts]
 cadqa = "cad_qa.cli:main"

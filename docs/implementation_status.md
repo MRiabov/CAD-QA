@@ -59,6 +59,8 @@ specs.
   derived from stored labels and diagnostics.
 - Deterministic answer-only SFT ablation and row-count scaling subset
   preparation.
+- Guarded answer-only Unsloth/TRL SFT entrypoint with dry-run and
+  missing-dependency gates.
 - Restartable manifest runner and local orchestration configs.
 - Canary stop-gate reports for dataset validation, SFT smoke checks, experiment
   comparisons, and trace failure rates.
@@ -92,7 +94,7 @@ specs.
 - Large CADEvolve generation still needs runtime tuning and larger-source
   validation before public release, though cache-backed shard generation exists.
 - Real Qwen3.5 4B SFT is gated on GPU environment, live pricing/account state,
-  and training dependencies. The local entrypoint records a structured gated
-  result when dependencies are absent.
+  and training dependencies. The local entrypoint records structured dry-run or
+  gated results when training should not launch.
 - CADEditQA edit-verifier tasks are not yet implemented beyond shared CAD-QA
   infrastructure.
