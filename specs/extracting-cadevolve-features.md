@@ -300,6 +300,38 @@ Preferred matching signals:
 Low-confidence many-to-many matches are not forced into single-feature labels.
 They are stored as `ambiguous_or_merged` or filtered from single-choice tasks.
 
+### 6.3 Point provenance
+
+For a point-grounded provenance row, run the point classifier at each relevant
+snapshot. A feature is a candidate:
+
+- `created_by` when the point changes from outside or ambiguous to inside;
+- `deleted_by` when it changes from inside to outside or ambiguous;
+- `modified_by` when it remains inside but the nearest containing/bounding
+  entity changes with adequate confidence;
+- `inherited_from` when it remains inside and nearest-entity matching is stable;
+- `bounded_by` when the point lies on a boundary induced by multiple features;
+- `ambiguous_or_merged` when the above cannot be defended.
+
+This avoids full shape boolean diffs for most point questions.
+
+### 6.4 Boolean-gated confirmation
+
+Use OpenCascade Boolean differences only when all of these are true:
+
+- the candidate task needs material-region evidence that cheap signals cannot
+  provide;
+- pre/post bounding boxes overlap or a volume delta indicates possible material
+  change;
+- the operation type is high-value for provenance, such as cut, fuse, intersect,
+  hole, shell, fillet, chamfer, loft, sweep, or revolve;
+- the source already passed scalar snapshot validation;
+- the worker has budget left under the configured timeout.
+
+Boolean diff failures must not invalidate the whole trace when scalar labels
+are otherwise valid. They invalidate only provenance rows that require the
+failed evidence.
+
 ## 7. Graph, Spatial, And Validity Extensions
 
 These extensions are not required for the MVP rows, but their extraction policy
@@ -355,39 +387,7 @@ kernel status, failure stage, failure type, searched parameter range, and
 threshold value when a stable threshold exists. Repeated probes should agree
 before a public row is emitted.
 
-### 6.3 Point provenance
-
-For a point-grounded provenance row, run the point classifier at each relevant
-snapshot. A feature is a candidate:
-
-- `created_by` when the point changes from outside or ambiguous to inside;
-- `deleted_by` when it changes from inside to outside or ambiguous;
-- `modified_by` when it remains inside but the nearest containing/bounding
-  entity changes with adequate confidence;
-- `inherited_from` when it remains inside and nearest-entity matching is stable;
-- `bounded_by` when the point lies on a boundary induced by multiple features;
-- `ambiguous_or_merged` when the above cannot be defended.
-
-This avoids full shape boolean diffs for most point questions.
-
-### 6.4 Boolean-gated confirmation
-
-Use OpenCascade Boolean differences only when all of these are true:
-
-- the candidate task needs material-region evidence that cheap signals cannot
-  provide;
-- pre/post bounding boxes overlap or a volume delta indicates possible material
-  change;
-- the operation type is high-value for provenance, such as cut, fuse, intersect,
-  hole, shell, fillet, chamfer, loft, sweep, or revolve;
-- the source already passed scalar snapshot validation;
-- the worker has budget left under the configured timeout.
-
-Boolean diff failures must not invalidate the whole trace when scalar labels
-are otherwise valid. They invalidate only provenance rows that require the
-failed evidence.
-
-## 7. Selector Tables
+## 8. Selector Tables
 
 Selectors are CadQuery semantics, not natural-language geometry descriptions.
 
@@ -405,7 +405,7 @@ For each source selector expression, store:
 Selector tasks use stored selector tables. They do not reevaluate selectors in
 prompt generation.
 
-## 8. Split And Leakage Metadata
+## 9. Split And Leakage Metadata
 
 Every public row must carry:
 
@@ -417,6 +417,9 @@ Every public row must carry:
 - `topology_signature_hash` when available;
 - `counterfactual_group_id` when applicable;
 - `point_sampling_group_id` when applicable;
+- `graph_query_group_id` when applicable;
+- `spatial_reference_group_id` when applicable;
+- `validity_probe_group_id` when applicable;
 - `split_group`.
 
 Protected split assignment priority:
@@ -440,7 +443,7 @@ Leakage audit must check overlaps across protected splits for:
 - `point_sampling_group_id`;
 - `split_group`.
 
-## 9. Numeric Answer Parsing
+## 10. Numeric Answer Parsing
 
 Numeric answers use a four-significant-figure parse policy unless the row
 declares a stricter task-specific tolerance.
@@ -481,7 +484,7 @@ coordinate, then require every coordinate to pass.
 The exported label may keep more precision than four significant figures. The
 parse policy defines accepted model output precision, not trace precision.
 
-## 10. Initial Build Order
+## 11. Initial Build Order
 
 Implement in this order:
 
