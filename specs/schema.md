@@ -161,7 +161,6 @@ ambiguous_or_unstable
 inside
 outside
 on_boundary
-ambiguous
 ```
 
 `provenance_relation`:

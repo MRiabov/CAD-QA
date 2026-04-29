@@ -103,7 +103,7 @@ CAD-QA currently implements these public task families:
 | `bbox_after_step` | bbox JSON | Intermediate geometric state. |
 | `signed_volume_delta` | number | Additive and subtractive operation effects. |
 | `topology_count_after_step` | integer | Face, edge, vertex, and solid counts. |
-| `point_membership` | enum | Inside, outside, boundary, or ambiguous classification. |
+| `point_membership` | enum | Inside, outside, or boundary classification. |
 | `feature_provenance_choice` | choice | Conservative source feature attribution. |
 
 The answer contract is intentionally structured. Integers must parse as

@@ -316,9 +316,8 @@ Generate points in categories:
 ```text
 deep_inside
 deep_outside
-near_face
-near_edge
-near_vertex
+near_boundary_inside
+near_boundary_outside
 on_boundary
 inside_removed_cut
 inside_added_feature

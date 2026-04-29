@@ -157,16 +157,17 @@ Allowed labels:
 inside
 outside
 on_boundary
-ambiguous
 ```
 
-Use the kernel point classifier when available. A point within
-`point_boundary_tolerance_mm` of a face, edge, or vertex is `on_boundary` for
-boundary tasks and `ambiguous` for ordinary inside/outside tasks unless the
-generation policy explicitly sampled it as a boundary case.
+Use the kernel point classifier when available. Point membership rows are crisp:
+do not emit `ambiguous`. Near-boundary samples must be generated far enough from
+the boundary that the exported 4-significant-figure point remains stable under
+the classifier. A point within `point_boundary_tolerance_mm` of a face, edge, or
+vertex is `on_boundary` only for explicitly boundary-aware rows; otherwise the
+descriptor must be rejected.
 
-Near-boundary samples must store the nearest entity ID, nearest distance, and
-classification status.
+Near-boundary samples must store the nearest entity ID, nearest distance,
+adaptive boundary margin, exported point precision, and classification status.
 
 ## 9. Provenance Rules
 

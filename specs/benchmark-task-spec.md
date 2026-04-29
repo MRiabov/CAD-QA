@@ -66,7 +66,7 @@ labels or diagnostics.
 | `spatial_query` | object or null | Point, axis, centerline, or bounding-box region query inputs. |
 | `graph_query` | object or null | Typed query IR for multi-hop feature/entity reasoning. |
 | `validity_result` | object or null | Operation, candidate edit, or full-script validity outcome. |
-| `point_classification` | string or null | `inside`, `outside`, `on_boundary`, or `ambiguous`. |
+| `point_classification` | string or null | `inside`, `outside`, or `on_boundary`. |
 | `provenance_relation` | string or null | `created_by`, `modified_by`, `deleted_by`, `inherited_from`, `bounded_by`, or `ambiguous_or_merged`. |
 | `answer_status` | string | `ok` or `invalid`. |
 | `failure_reason` | string or null | Machine-readable failure reason. Null when labels are valid. |
@@ -264,24 +264,24 @@ boundary at a target state.
 inside
 outside
 on_boundary
-ambiguous
 ```
 
 **Label derivation**
 
-Use the kernel point classifier with the dataset tolerance policy. Near-boundary
-points inside the ambiguity band are labeled `ambiguous` unless the row is part
-of an explicit boundary task.
+Use the kernel point classifier with the dataset tolerance policy. Point
+membership rows are crisp: do not emit `ambiguous`. Near-boundary points must be
+sampled at an adaptive distance, by default 1% of the snapshot max AABB side
+length, and classified after 4-significant-figure coordinate rounding.
 
 **Descriptor expansion**
 
 Point descriptors are generated from final and intermediate snapshots by
-sampling the object AABB, an expanded AABB shell, topology neighborhoods,
-boundary bands, removed-material regions, added-material regions, and stable
-entity neighborhoods. The kernel classifier should run only for scheduled
-descriptors. The exported dataset should balance inside, outside, on-boundary,
-ambiguous, near-boundary, added-region, and removed-region strata instead of
-relying on uniform AABB samples alone.
+sampling the object AABB, an expanded AABB shell, adaptive near-boundary bands,
+removed-material regions, added-material regions, and stable entity
+neighborhoods. The kernel classifier should run only for scheduled descriptors.
+The exported dataset should balance inside, outside, on-boundary,
+near-boundary, added-region, and removed-region strata instead of relying on
+uniform AABB samples alone.
 
 ### 4.7 `feature_provenance_choice`
 

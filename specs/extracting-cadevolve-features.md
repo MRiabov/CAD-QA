@@ -342,8 +342,8 @@ They are stored as `ambiguous_or_merged` or filtered from single-choice tasks.
 For a point-grounded provenance row, run the point classifier at each relevant
 snapshot. A feature is a candidate:
 
-- `created_by` when the point changes from outside or ambiguous to inside;
-- `deleted_by` when it changes from inside to outside or ambiguous;
+- `created_by` when the point changes from outside or on_boundary to inside;
+- `deleted_by` when it changes from inside to outside or on_boundary;
 - `modified_by` when it remains inside but the nearest containing/bounding
   entity changes with adequate confidence;
 - `inherited_from` when it remains inside and nearest-entity matching is stable;

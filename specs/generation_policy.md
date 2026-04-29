@@ -240,9 +240,8 @@ deep_inside
 deep_outside
 aabb_uniform_inside
 expanded_aabb_outside
-near_face
-near_edge
-near_vertex
+near_boundary_inside
+near_boundary_outside
 on_boundary
 inside_removed_cut
 inside_added_feature
@@ -256,9 +255,11 @@ run only for descriptors selected by the scheduler. The exported dataset should
 be stratified so it does not collapse into easy outside points.
 
 Store nearest entity diagnostics, source snapshot, coordinate frame, sampling
-method, RNG seed, and point classification confidence. Do not mix ordinary
-inside/outside rows with ambiguous near-boundary rows unless the task is
-explicitly boundary-aware.
+method, RNG seed, adaptive boundary margin, exported point precision, and point
+classification confidence. Do not emit `ambiguous` point-membership rows.
+Near-boundary inside/outside rows must be sampled at an adaptive margin, by
+default 1% of the snapshot max AABB side length, so the rounded exported point
+has a crisp classifier label.
 
 ## 7. Counterfactual Groups
 
@@ -340,7 +341,7 @@ Reject or quarantine rows when:
 - labels contain non-finite numeric values;
 - topology count is kernel-unstable across repeated runs;
 - provenance confidence is below the task threshold;
-- point classification is ambiguous but the task expects a crisp label;
+- point classification is not one of the crisp labels allowed by the task;
 - a graph query has ambiguous references, empty candidates, or unstable
   tie-breaking;
 - a point, axis, centerline, or bounding-box spatial reference cannot be
