@@ -101,7 +101,7 @@ epics:
     implementation_complexity: Low
     debugging_difficulty: Low
     recommendation: Build now
-    status: implemented
+    status: work-in-progress
     stable: false
     stories:
       - id: "1.1"
@@ -126,16 +126,22 @@ epics:
         implementation_complexity: Low
         debugging_difficulty: Low
         recommendation: Build now
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Closed-book, tool-assisted, and optional multimodal settings are discussed across specs and the paper draft."
+            missing: "Dedicated Evaluation Settings artifact called for by the story is not present."
       - id: "1.4"
         title: Paper success metrics
         priority: P0
         implementation_complexity: Low
         debugging_difficulty: Low
         recommendation: Build now
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Reviewer-readiness checklist and paper framing exist."
+            missing: "Dedicated paper-ready success-metrics artifact/report is not present, and final result criteria remain pending."
 
   - id: epic-2
     title: Dataset source ingestion
@@ -144,7 +150,7 @@ epics:
     implementation_complexity: Medium
     debugging_difficulty: Medium
     recommendation: Build now
-    status: implemented
+    status: work-in-progress
     stable: false
     stories:
       - id: "2.1"
@@ -185,8 +191,11 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build now
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Source directory/archive loading and dataset generation from already extracted sources exist."
+            missing: "Deterministic CADEvolve extraction/materialization command and extracted-source manifest are not implemented."
       - id: "2.6"
         title: Scoped synthetic fixtures
         priority: P0
@@ -203,7 +212,7 @@ epics:
     implementation_complexity: High
     debugging_difficulty: High
     recommendation: Build now
-    status: implemented
+    status: work-in-progress
     stable: false
     stories:
       - id: "3.1"
@@ -295,16 +304,22 @@ epics:
         implementation_complexity: High
         debugging_difficulty: High
         recommendation: Build now
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Basic topology counts for solids, faces, edges, vertices, and wires are traced/materialized."
+            missing: "Planar face, cylindrical face, circular edge, and axis-parallel edge counts are not computed in the live trace path."
       - id: "4.5"
         title: Point membership labels
         priority: P0
         implementation_complexity: High
         debugging_difficulty: High
         recommendation: Build now
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Point-membership rows exist for conservative inside/outside samples and smoke fixtures."
+            missing: "Robust point strata such as near-face, near-edge, near-vertex, inside-added-feature, and nearest-entity diagnostics are not implemented."
       - id: "4.6"
         title: Feature provenance labels
         priority: P0
@@ -319,8 +334,11 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: High
         recommendation: Build now
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Schema validation, duplicate row checks, and split leakage validation exist."
+            missing: "Story-specific label validation for missing snapshots, unstable topology, low-confidence provenance, and prompt label leakage is not implemented."
 
   - id: epic-5
     title: Prompt and task generation
@@ -329,7 +347,7 @@ epics:
     implementation_complexity: Medium
     debugging_difficulty: Medium
     recommendation: Build after labels
-    status: implemented
+    status: work-in-progress
     stable: false
     stories:
       - id: "5.1"
@@ -504,16 +522,22 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build after export
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Provider-agnostic prediction request export, response normalization, and grading harnesses exist."
+            missing: "Concrete closed-book LLM evaluation result artifact is not present in this snapshot."
       - id: "7.5"
         title: Few-shot prompting evaluation
         priority: P0
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build after train split
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Few-shot request builder using train rows exists."
+            missing: "Concrete few-shot model result and zero-shot comparison artifact are not present."
       - id: "7.6"
         title: Answer-only SFT
         priority: P0
@@ -528,16 +552,22 @@ epics:
         implementation_complexity: High
         debugging_difficulty: High
         recommendation: Build after rationale templates
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Trace-grounded reasoning SFT JSONL preparation exists."
+            missing: "Reasoning SFT training/evaluation artifact with format-compliance and hard-task metrics is not present."
       - id: "7.8"
         title: Data scaling experiments
         priority: P0
         implementation_complexity: High
         debugging_difficulty: Medium
         recommendation: Build after first SFT
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Deterministic scaling subset preparation exists, with smoke-sized subsets."
+            missing: "1k, 5k, 15k, 50k, full scaling runs and learning-curve reports are not present."
       - id: "7.9"
         title: Tool-assisted upper bound
         priority: P1
@@ -554,7 +584,7 @@ epics:
     implementation_complexity: High
     debugging_difficulty: High
     recommendation: Build after MVP diagnostic tasks
-    status: implemented
+    status: work-in-progress
     stable: false
     stories:
       - id: "8.1"
@@ -563,8 +593,11 @@ epics:
         implementation_complexity: High
         debugging_difficulty: High
         recommendation: Build after trace stability
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Grouped numeric parameter counterfactual source variants and protected split grouping exist."
+            missing: "Operation removal, selector change, workplane offset, fillet/chamfer radius, extrusion height, cut-depth variants, and verified public counterfactual labels are not implemented."
       - id: "8.2"
         title: CADEditQA task boundary
         priority: P1
@@ -579,24 +612,33 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build after verifier core
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Conservative parameter edit direction rows are materialized from grouped numeric counterfactual manifests."
+            missing: "Full verifier-backed target satisfaction and no_valid_edit coverage are incomplete."
       - id: "8.4"
         title: Feature to edit
         priority: P1
         implementation_complexity: Medium
         debugging_difficulty: High
         recommendation: Build after provenance labels
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Feature-to-edit rows are materialized from validated feature-provenance QA rows."
+            missing: "Verifier-derived target satisfaction and complete deterministic tie-breaking coverage are not implemented."
       - id: "8.5"
         title: Selector and workplane repair slices
         priority: P1
         implementation_complexity: High
         debugging_difficulty: High
         recommendation: Build after candidate verifier
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Conservative selector_repair and workplane_offset_repair candidate rows exist."
+            missing: "Official live verifier-backed scoring for repair candidates is not implemented."
       - id: "8.6"
         title: Reserved numeric and multi-step edit tasks
         priority: P3
@@ -613,7 +655,7 @@ epics:
     implementation_complexity: Medium
     debugging_difficulty: Medium
     recommendation: Defer until code-only release is healthy
-    status: implemented
+    status: work-in-progress
     stable: false
     stories:
       - id: "9.1"
@@ -630,16 +672,22 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Defer
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Audit render manifests can record front, top, right, and isometric view metadata."
+            missing: "Literal side view support and render-time camera/view application are incomplete."
       - id: "9.3"
         title: Multimodal prompt variant
         priority: P2
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Defer
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Render-backed prediction request export exists as a separate optional artifact."
+            missing: "Explicit multimodal track marker and metrics-level separation guard are not implemented."
 
   - id: epic-10
     title: Dataset packaging and release
@@ -648,7 +696,7 @@ epics:
     implementation_complexity: Medium
     debugging_difficulty: Medium
     recommendation: Build before paper experiments
-    status: implemented
+    status: work-in-progress
     stable: false
     stories:
       - id: "10.1"
@@ -665,8 +713,11 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build after row generation
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "JSONL export, metadata, split manifest, failure manifest, and optional Parquet writer exist."
+            missing: "Current artifacts skip Parquet when pyarrow/schema support is unavailable and do not always include the full ideal release layout."
       - id: "10.3"
         title: Dataset card
         priority: P0
@@ -681,16 +732,22 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build before release
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Reproducibility audit and resumable generation scripts exist."
+            missing: "Release metadata does not yet record all requested reproducibility fields such as code commit and validation report paths."
       - id: "10.5"
         title: Versioning
         priority: P0
         implementation_complexity: Low
         debugging_difficulty: Low
         recommendation: Build now
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Dataset version is configured and emitted in public rows; label-policy versioning is documented."
+            missing: "Schema migration artifacts and relabel-audit workflow for threshold changes are not implemented."
 
   - id: epic-11
     title: Paper experiments
@@ -699,7 +756,7 @@ epics:
     implementation_complexity: Medium
     debugging_difficulty: Medium
     recommendation: Build after release candidate
-    status: implemented
+    status: work-in-progress
     stable: false
     stories:
       - id: "11.1"
@@ -732,8 +789,11 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build after split manifests
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Protected split routing and experiment comparison tables exist."
+            missing: "Concrete split-generalization analysis covering random, generator, source-subtree, operation, topology, near-boundary, and counterfactual-heldout splits is not present."
       - id: "11.5"
         title: Prompting and training ablations
         priority: P0
@@ -748,8 +808,11 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build after model predictions
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Trace/dataset failure taxonomy reports exist."
+            missing: "Model-failure taxonomy for syntax, selector, workplane, arithmetic, topology, provenance, format, and shortcut errors is not present."
 
   - id: epic-12
     title: Paper writing
@@ -758,7 +821,7 @@ epics:
     implementation_complexity: Low
     debugging_difficulty: Low
     recommendation: Build alongside experiments
-    status: implemented
+    status: work-in-progress
     stable: false
     stories:
       - id: "12.1"
@@ -767,48 +830,66 @@ epics:
         implementation_complexity: Low
         debugging_difficulty: Low
         recommendation: Build after first results
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Draft abstract exists in the paper scaffold."
+            missing: "Headline findings remain placeholders until final results are available."
       - id: "12.2"
         title: Introduction
         priority: P0
         implementation_complexity: Low
         debugging_difficulty: Low
         recommendation: Build now
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Draft introduction exists and motivates CAD program reasoning."
+            missing: "Contribution framing still needs final result-backed tightening."
       - id: "12.3"
         title: Related work
         priority: P0
         implementation_complexity: Low
         debugging_difficulty: Low
         recommendation: Build now
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Draft related-work section exists."
+            missing: "Citation placeholders and some explicit comparison wording remain unresolved."
       - id: "12.4"
         title: Dataset construction section
         priority: P0
         implementation_complexity: Low
         debugging_difficulty: Low
         recommendation: Build after pipeline
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Draft dataset-construction section exists."
+            missing: "Final dataset statistics and tables remain placeholders."
       - id: "12.5"
         title: Task section
         priority: P0
         implementation_complexity: Low
         debugging_difficulty: Low
         recommendation: Build from specs
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Draft task-family and answer-format section exists."
+            missing: "Per-MVP example prompt/answer pairs are incomplete."
       - id: "12.6"
         title: Experiments section
         priority: P0
         implementation_complexity: Low
         debugging_difficulty: Low
         recommendation: Build after evaluations
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Draft experiments section exists."
+            missing: "Final baseline/model/training result tables remain placeholders."
       - id: "12.7"
         title: Discussion and limitations
         priority: P0
@@ -823,8 +904,11 @@ epics:
         implementation_complexity: Low
         debugging_difficulty: Low
         recommendation: Build after results
-        status: implemented
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "Draft conclusion exists."
+            missing: "Strongest final result cannot be summarized until final experiments are complete."
 
   - id: epic-13
     title: Repository and engineering infrastructure
