@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 
+SPLITS = ("train", "validation", "test_random", "test_operation_heldout")
 SUMMARY_FIELDS = (
     "id",
     "task_type",
@@ -19,7 +20,7 @@ SUMMARY_FIELDS = (
 )
 
 
-def read_jsonl(path: Path) -> list[dict[str, Any]]:
+def read_jsonl(path: Path, *, limit: int | None = None) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
     with path.open(encoding="utf-8") as handle:
         for line_number, line in enumerate(handle, start=1):
@@ -33,6 +34,8 @@ def read_jsonl(path: Path) -> list[dict[str, Any]]:
             if not isinstance(record, dict):
                 raise SystemExit(f"{path}:{line_number}: expected a JSON object")
             records.append(record)
+            if limit is not None and len(records) >= limit:
+                break
     return records
 
 
@@ -70,8 +73,15 @@ def write_markdown(records: list[dict[str, Any]], path: Path, prompt_field: str)
                 handle.write("\n")
 
 
-def expand_jsonl_paths(paths: list[Path]) -> list[Path]:
+def expand_jsonl_paths(
+    paths: list[Path], *, dataset_dir: Path | None, splits: list[str] | None
+) -> list[Path]:
     jsonl_paths: list[Path] = []
+    if dataset_dir is not None:
+        split_names = splits or list(SPLITS)
+        jsonl_paths.extend(
+            dataset_dir / "jsonl" / f"{split}.jsonl" for split in split_names
+        )
     for path in paths:
         if path.is_dir():
             jsonl_paths.extend(sorted(path.glob("*.jsonl")))
@@ -80,8 +90,14 @@ def expand_jsonl_paths(paths: list[Path]) -> list[Path]:
     return jsonl_paths
 
 
-def pretty_print_jsonl(path: Path, output_dir: Path | None, prompt_field: str) -> None:
-    records = read_jsonl(path)
+def pretty_print_jsonl(
+    path: Path,
+    output_dir: Path | None,
+    prompt_field: str,
+    *,
+    limit: int | None = None,
+) -> None:
+    records = read_jsonl(path, limit=limit)
     resolved_output_dir = output_dir or path.parent / "pretty-print"
     json_path = resolved_output_dir / f"{path.stem}.json"
     markdown_path = resolved_output_dir / f"{path.stem}.md"
@@ -95,30 +111,75 @@ def pretty_print_jsonl(path: Path, output_dir: Path | None, prompt_field: str) -
 
 
 def main(argv: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        epilog=(
+            "Examples:\n"
+            "  python -m scripts.dataset.pretty_print_jsonl --dataset-dir data/cadqa_smoke\n"
+            "  python -m scripts.dataset.pretty_print_jsonl --dataset-dir data/cadqa_smoke "
+            "--split validation --limit 25\n"
+            "  python -m scripts.dataset.pretty_print_jsonl data/cadqa_smoke/jsonl/train.jsonl"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     parser.add_argument(
         "jsonl_paths",
-        nargs="+",
+        nargs="*",
         type=Path,
         help="Input JSONL file(s), or directories containing JSONL files",
     )
     parser.add_argument(
+        "--dataset-dir",
+        type=Path,
+        help="Dataset export directory containing a jsonl/ split directory",
+    )
+    parser.add_argument(
+        "--split",
+        action="append",
+        choices=SPLITS,
+        help="Dataset split to pretty-print when --dataset-dir is used; repeat for multiple splits",
+    )
+    parser.add_argument(
         "--output-dir",
         type=Path,
-        help="Directory for generated files; defaults to <input-dir>/pretty-print",
+        help="Directory for generated files; defaults to <dataset-dir>/pretty-print or <input-dir>/pretty-print",
     )
     parser.add_argument(
         "--prompt-field",
         default="prompt",
         help="String field to render with real newlines in Markdown",
     )
+    parser.add_argument(
+        "--limit",
+        type=_positive_int,
+        help="Maximum records to read from each JSONL file",
+    )
     args = parser.parse_args(argv)
 
-    jsonl_paths = expand_jsonl_paths(args.jsonl_paths)
+    if args.dataset_dir is None and not args.jsonl_paths:
+        parser.error("provide --dataset-dir or at least one JSONL path")
+    if args.split and args.dataset_dir is None:
+        parser.error("--split requires --dataset-dir")
+
+    output_dir = args.output_dir
+    if output_dir is None and args.dataset_dir is not None:
+        output_dir = args.dataset_dir / "pretty-print"
+    jsonl_paths = expand_jsonl_paths(
+        args.jsonl_paths, dataset_dir=args.dataset_dir, splits=args.split
+    )
     if not jsonl_paths:
         raise SystemExit("No JSONL files found")
     for path in jsonl_paths:
-        pretty_print_jsonl(path, args.output_dir, args.prompt_field)
+        if not path.exists():
+            raise SystemExit(f"JSONL file does not exist: {path}")
+        pretty_print_jsonl(path, output_dir, args.prompt_field, limit=args.limit)
+
+
+def _positive_int(value: str) -> int:
+    parsed = int(value)
+    if parsed <= 0:
+        raise argparse.ArgumentTypeError("must be a positive integer")
+    return parsed
 
 
 if __name__ == "__main__":

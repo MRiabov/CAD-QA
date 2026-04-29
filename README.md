@@ -126,6 +126,15 @@ uv run python -m scripts.dataset.balance_dataset_classes \
   --max-rows-per-task 200
 ```
 
+Pretty-print split JSONL into JSON and prompt-readable Markdown:
+
+```bash
+uv run python -m scripts.dataset.pretty_print_jsonl \
+  --dataset-dir data/cadqa_smoke \
+  --split validation \
+  --limit 25
+```
+
 Create release QA reports:
 
 ```bash
