@@ -17,10 +17,48 @@ from cad_qa.graph_query import (
 )
 from cad_qa.hashing import sha256_json
 from cad_qa.operation_graph import operation_signature_hash
+from cad_qa.scheduler import exported_row_manifest, schedule_descriptors
 from cad_qa.schema import OperationNode, PublicTaskRow, SourceRecord, TraceRecord
 
 
 def materialize_rows(
+    source: SourceRecord,
+    trace: TraceRecord,
+    *,
+    config: DatasetConfig,
+) -> list[PublicTaskRow]:
+    rows, _ = materialize_rows_with_manifest(source, trace, config=config)
+    return rows
+
+
+def materialize_rows_with_manifest(
+    source: SourceRecord,
+    trace: TraceRecord,
+    *,
+    config: DatasetConfig,
+) -> tuple[list[PublicTaskRow], dict[str, Any]]:
+    row_descriptors = _public_row_descriptors(
+        _materialize_all_rows(source, trace, config=config)
+    )
+    scheduled = schedule_descriptors(
+        row_descriptors,
+        seed=config.seed,
+        max_per_source=config.max_rows_per_source,
+        max_per_task_type=config.max_rows_per_source_task_type,
+        scope=f"public_rows:{source.source_id}:{trace.trace_id}",
+    )
+    selected_ids = {
+        str(descriptor["descriptor_id"]) for descriptor in scheduled.selected_descriptors
+    }
+    selected_rows = [
+        descriptor["payload"]
+        for descriptor in row_descriptors
+        if str(descriptor["descriptor_id"]) in selected_ids
+    ]
+    return selected_rows, exported_row_manifest(row_descriptors, scheduled.selected_descriptors)
+
+
+def _materialize_all_rows(
     source: SourceRecord,
     trace: TraceRecord,
     *,
@@ -39,6 +77,41 @@ def materialize_rows(
     rows.extend(_bbox_region_rows(source, trace, config=config))
     rows.extend(_validity_failure_rows(source, trace, config=config))
     return rows
+
+
+def _public_row_descriptors(rows: list[PublicTaskRow]) -> list[dict[str, Any]]:
+    descriptors: list[dict[str, Any]] = []
+    for index, row in enumerate(rows):
+        descriptors.append(
+            {
+                "descriptor_id": f"public_row_{row.id}",
+                "task_type": row.task_type,
+                "stratum": _row_scheduling_stratum(row),
+                "target_feature_id": row.target_feature_id,
+                "label_cost": 1,
+                "payload": row,
+                "row_index": index,
+            }
+        )
+    return descriptors
+
+
+def _row_scheduling_stratum(row: PublicTaskRow) -> str:
+    if row.task_type == "graph_query":
+        ir = row.labels.get("graph_query", {}).get("ir", {})
+        if isinstance(ir, dict):
+            return str(ir.get("query_type") or ir.get("query_id") or "graph_query")
+    if row.task_type == "selector_count":
+        selector = row.labels.get("selector_result", {})
+        if isinstance(selector, dict):
+            return str(selector.get("selector_origin") or "source")
+    if row.task_type == "point_membership":
+        query = row.labels.get("point_query", {})
+        if isinstance(query, dict):
+            return str(query.get("sampling_stratum") or query.get("sample_source"))
+    if row.difficulty_tags:
+        return str(row.difficulty_tags[0])
+    return row.task_type
 
 
 def _workplane_rows(
@@ -323,6 +396,19 @@ def _selector_rows(
         if not isinstance(count, int) or count < 0:
             continue
         target = table.get("target_feature_id")
+        origin = str(table.get("selector_origin") or "source")
+        selector_expression = table.get("selector_expression")
+        if origin == "generated" and target:
+            selector_question = (
+                "Given the CadQuery script below, if selector "
+                f"`{selector_expression}` were evaluated after feature `{target}`, "
+                "how many entities would it select?"
+            )
+        else:
+            selector_question = (
+                "Given the CadQuery script below, how many entities are selected by "
+                f"`{selector_expression}`?"
+            )
         rows.append(
             _row(
                 source,
@@ -331,8 +417,7 @@ def _selector_rows(
                 task_type="selector_count",
                 target_feature_id=str(target) if target else None,
                 prompt=(
-                    "Given the CadQuery script below, how many entities are selected by "
-                    f"`{table.get('selector_expression')}`? Answer with exactly one non-negative integer.\n\n"
+                    f"{selector_question} Answer with exactly one non-negative integer.\n\n"
                     f"```python\n{source.normalized_code}```"
                 ),
                 answer_type="integer",
@@ -341,7 +426,10 @@ def _selector_rows(
                 unit=None,
                 numeric_tolerance=None,
                 requires=["cadquery_syntax", "selector_semantics"],
-                difficulty_tags=["selector_semantics"],
+                difficulty_tags=[
+                    "selector_semantics",
+                    "hypothetical_selector" if origin == "generated" else "source_selector",
+                ],
                 labels={
                     "selector_result": table,
                     "answer_status": "ok",

@@ -19,6 +19,12 @@ def test_smoke_export_is_valid(tmp_path: Path):
 
     assert report["status"] == "pass"
     assert metadata["row_count"] == len(rows)
+    assert metadata["row_counts_by_task_type"] == metadata[
+        "exported_row_counts_by_task_type"
+    ]
+    assert metadata["descriptor_counts_by_task_type"]
+    assert metadata["scheduled_label_counts_by_task_type"]
+    assert "label_failure_counts_by_task_type" in metadata
     assert {
         "operation_count",
         "bbox_after_step",

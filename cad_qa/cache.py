@@ -85,4 +85,6 @@ def trace_record_from_dict(data: dict[str, Any]) -> TraceRecord:
         spatial_queries=list(data.get("spatial_queries") or []),
         bbox_region_queries=list(data.get("bbox_region_queries") or []),
         validity_probes=list(data.get("validity_probes") or []),
+        candidate_descriptors=list(data.get("candidate_descriptors") or []),
+        sampling_manifest=dict(data.get("sampling_manifest") or {}),
     )

@@ -10,7 +10,8 @@ from typing import Iterable
 from cad_qa.config import DatasetConfig
 from cad_qa.fixtures import smoke_traces
 from cad_qa.jsonio import write_json, write_jsonl
-from cad_qa.materialize import materialize_rows, rows_to_dicts
+from cad_qa.materialize import materialize_rows_with_manifest, rows_to_dicts
+from cad_qa.scheduler import merge_manifests
 from cad_qa.schema import SourceRecord, TraceRecord
 from cad_qa.source import source_manifest_hash
 from cad_qa.splits import assign_row_splits, leakage_audit, split_manifest
@@ -25,13 +26,15 @@ def export_dataset(
     pairs = list(pairs)
     sources = [source for source, _ in pairs]
     traces = [trace for _, trace in pairs]
-    row_dicts = rows_to_dicts(
-        [
-            row
-            for source, trace in pairs
-            for row in materialize_rows(source, trace, config=config)
-        ]
-    )
+    rows = []
+    public_row_manifests = []
+    for source, trace in pairs:
+        materialized_rows, manifest = materialize_rows_with_manifest(
+            source, trace, config=config
+        )
+        rows.extend(materialized_rows)
+        public_row_manifests.append(manifest)
+    row_dicts = rows_to_dicts(rows)
     row_dicts = assign_row_splits(row_dicts, config.seed)
     output_dir.mkdir(parents=True, exist_ok=True)
     write_jsonl(output_dir / "sources.jsonl", sources)
@@ -53,7 +56,12 @@ def export_dataset(
     ]
     write_jsonl(output_dir / "failure_manifest.jsonl", failure_rows)
     metadata = _metadata(
-        row_dicts, sources, traces, config=config, parquet_report=parquet_report
+        row_dicts,
+        sources,
+        traces,
+        config=config,
+        parquet_report=parquet_report,
+        public_row_manifests=public_row_manifests,
     )
     write_json(output_dir / "metadata.json", metadata)
     return metadata
@@ -83,7 +91,14 @@ def _metadata(
     *,
     config: DatasetConfig,
     parquet_report: dict[str, object],
+    public_row_manifests: list[dict[str, object]],
 ) -> dict[str, object]:
+    scheduling_manifest = merge_manifests(
+        [
+            *[dict(trace.sampling_manifest or {}) for trace in traces],
+            *[dict(manifest) for manifest in public_row_manifests],
+        ]
+    )
     return {
         "schema": "cadqa_dataset_metadata_v1",
         "dataset_name": config.dataset_name,
@@ -95,6 +110,18 @@ def _metadata(
         "row_counts_by_task_type": dict(
             Counter(str(row.get("task_type")) for row in rows)
         ),
+        "descriptor_counts_by_task_type": scheduling_manifest[
+            "descriptor_counts_by_task_type"
+        ],
+        "scheduled_label_counts_by_task_type": scheduling_manifest[
+            "scheduled_label_counts_by_task_type"
+        ],
+        "label_failure_counts_by_task_type": scheduling_manifest[
+            "label_failure_counts_by_task_type"
+        ],
+        "exported_row_counts_by_task_type": scheduling_manifest[
+            "exported_row_counts_by_task_type"
+        ],
         "row_counts_by_requires": dict(
             Counter(tag for row in rows for tag in _list_field(row, "requires"))
         ),

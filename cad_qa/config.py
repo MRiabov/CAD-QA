@@ -34,6 +34,10 @@ class DatasetConfig:
     label_policy: LabelPolicy = field(default_factory=LabelPolicy)
     trace_timeout_seconds: float = 10.0
     worker_count: int = 1
+    max_rows_per_source: int = 192
+    max_rows_per_source_task_type: int = 32
+    max_runtime_probe_labels_per_source: int = 64
+    max_runtime_probe_labels_per_task_type: int = 32
 
     @property
     def config_hash(self) -> str:

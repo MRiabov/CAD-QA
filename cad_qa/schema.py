@@ -114,6 +114,8 @@ class TraceRecord:
     spatial_queries: list[dict[str, Any]] = field(default_factory=list)
     bbox_region_queries: list[dict[str, Any]] = field(default_factory=list)
     validity_probes: list[dict[str, Any]] = field(default_factory=list)
+    candidate_descriptors: list[dict[str, Any]] = field(default_factory=list)
+    sampling_manifest: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
