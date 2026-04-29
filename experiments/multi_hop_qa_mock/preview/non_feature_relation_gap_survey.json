@@ -1,0 +1,2187 @@
+{
+  "schema_version": "cadqa_non_feature_relation_gap_survey_v0",
+  "seed": 20260429,
+  "source_count": 10,
+  "entities_per_source": 5,
+  "current_relations": [
+    "after",
+    "before",
+    "bounded_by",
+    "created_by",
+    "deleted_by",
+    "has_measurement",
+    "input_to",
+    "modified_by",
+    "parameter_of",
+    "selected_by"
+  ],
+  "spec_only_relations": [
+    "adds_material_to",
+    "adjacent_to",
+    "coaxial_with",
+    "combines",
+    "contained_in",
+    "distance_to",
+    "has_centroid",
+    "has_coordinate",
+    "has_normal",
+    "intersects",
+    "located_on",
+    "nearest_tangent_to",
+    "not_parallel_to",
+    "opposite_to",
+    "orthogonal_to",
+    "parallel_to",
+    "perpendicular_to",
+    "removes_material_from",
+    "rotated_by",
+    "scaled_by",
+    "translated_by",
+    "used_by",
+    "uses_profile"
+  ],
+  "missing_but_necessary_relation_families": [
+    "has_material_region_geometry",
+    "has_path_tangent",
+    "has_profile_application_effect",
+    "has_profile_geometry",
+    "has_sketch_center",
+    "has_stable_edge_id",
+    "has_stable_face_id",
+    "has_stable_vertex_id",
+    "has_void_region_geometry",
+    "has_workplane_frame",
+    "matches_profile_metric",
+    "nearest_point_on_path",
+    "same_selected_face_as"
+  ],
+  "summary": {
+    "sampled_entity_type_counts": {
+      "face": 3,
+      "material_region": 7,
+      "measurement": 1,
+      "operation": 1,
+      "parameter": 1,
+      "path": 5,
+      "profile": 9,
+      "selector": 4,
+      "solid": 10,
+      "workplane": 9
+    },
+    "observed_relation_counts": {
+      "adds_material_to": 5,
+      "after": 23,
+      "before": 24,
+      "combines": 5,
+      "created_by": 5,
+      "has_centroid": 10,
+      "has_material_region_geometry": 5,
+      "has_measurement": 10,
+      "has_normal": 5,
+      "has_path_tangent": 5,
+      "has_profile_geometry": 9,
+      "has_workplane_frame": 5,
+      "input_to": 30,
+      "located_on": 11,
+      "parameter_of": 1,
+      "selected_by": 3,
+      "used_by": 9,
+      "uses_profile": 1
+    },
+    "support_counts": {
+      "current": 96,
+      "missing_needed": 24,
+      "spec_only": 46
+    },
+    "missing_needed_counts": {
+      "has_material_region_geometry": 10,
+      "has_profile_geometry": 9,
+      "has_sketch_center": 9,
+      "has_workplane_frame": 6,
+      "has_path_tangent": 5,
+      "nearest_point_on_path": 5,
+      "has_stable_face_id": 5,
+      "same_selected_face_as": 5,
+      "has_profile_application_effect": 3,
+      "has_void_region_geometry": 3
+    }
+  },
+  "surveys": [
+    {
+      "source_id": "src_34c0838fa7a13794",
+      "path": "CADEvolve-C/CADEvolve-C-core/ArrayBossHelixWire__01_25_emitted_centered_scaled_binarized/source_cadquery.py",
+      "family": "cadevolve_cadevolve_c_cadevolve_c_core",
+      "line_count": 40,
+      "visible_ops": [
+        "Plane",
+        "Vector",
+        "Workplane",
+        "circle",
+        "extrude",
+        "moveTo",
+        "splineApprox",
+        "sweep",
+        "union"
+      ],
+      "sampled_entities": [
+        {
+          "entity_id": "src_34c0838fa7a13794:wp20:circle:21",
+          "entity_type": "profile",
+          "source_id": "src_34c0838fa7a13794",
+          "label": "wp20 = circle(...)",
+          "line": 21,
+          "op": "circle"
+        },
+        {
+          "entity_id": "src_34c0838fa7a13794:wp15:Workplane:16",
+          "entity_type": "workplane",
+          "source_id": "src_34c0838fa7a13794",
+          "label": "wp15 = Workplane(...)",
+          "line": 16,
+          "op": "Workplane"
+        },
+        {
+          "entity_id": "src_34c0838fa7a13794:wp10:union:11",
+          "entity_type": "solid",
+          "source_id": "src_34c0838fa7a13794",
+          "label": "wp10 = union(...)",
+          "line": 11,
+          "op": "union"
+        },
+        {
+          "entity_id": "src_34c0838fa7a13794:wp4:moveTo:5",
+          "entity_type": "path",
+          "source_id": "src_34c0838fa7a13794",
+          "label": "wp4 = moveTo(...)",
+          "line": 5,
+          "op": "moveTo"
+        },
+        {
+          "entity_id": "src_34c0838fa7a13794:material_region:added_material:7",
+          "entity_type": "material_region",
+          "source_id": "src_34c0838fa7a13794",
+          "label": "added material",
+          "line": 7,
+          "op": null
+        }
+      ],
+      "relation_opportunities": [
+        {
+          "relation": "has_path_tangent",
+          "source": "src_34c0838fa7a13794:wp4:moveTo:5",
+          "target": "src_34c0838fa7a13794:direction:path_tangent:5",
+          "support": "missing_needed",
+          "evidence": "needed for sweep path tangent questions"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_34c0838fa7a13794:wp4:moveTo:5",
+          "target": "src_34c0838fa7a13794:wp5:circle:6",
+          "support": "current",
+          "evidence": "wp4 = moveTo(...) -> wp5 = circle(...)"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_34c0838fa7a13794:wp4:moveTo:5",
+          "target": "src_34c0838fa7a13794:wp6:sweep:7",
+          "support": "current",
+          "evidence": "wp4 = moveTo(...) -> wp6 = sweep(...)"
+        },
+        {
+          "relation": "after",
+          "source": "src_34c0838fa7a13794:wp10:union:11",
+          "target": "src_34c0838fa7a13794:wp9:extrude:10",
+          "support": "current",
+          "evidence": "wp10 = union(...) -> wp9 = extrude(...)"
+        },
+        {
+          "relation": "combines",
+          "source": "src_34c0838fa7a13794:wp10:union:11",
+          "target": "src_34c0838fa7a13794:wp10:union:11",
+          "support": "spec_only",
+          "evidence": "wp10 = union(...) -> wp10 = union(...)"
+        },
+        {
+          "relation": "adds_material_to",
+          "source": "src_34c0838fa7a13794:wp10:union:11",
+          "target": "src_34c0838fa7a13794:wp10:union:11",
+          "support": "spec_only",
+          "evidence": "wp10 = union(...) -> wp10 = union(...)"
+        },
+        {
+          "relation": "has_measurement",
+          "source": "src_34c0838fa7a13794:wp10:union:11",
+          "target": "src_34c0838fa7a13794:measurement:volume_bbox_topology_delta:11",
+          "support": "current",
+          "evidence": "wp10 = union(...) -> volume bbox topology delta"
+        },
+        {
+          "relation": "has_centroid",
+          "source": "src_34c0838fa7a13794:wp10:union:11",
+          "target": "src_34c0838fa7a13794:centroid:feature_centroid:11",
+          "support": "spec_only",
+          "evidence": "wp10 = union(...) -> feature centroid"
+        },
+        {
+          "relation": "before",
+          "source": "src_34c0838fa7a13794:wp10:union:11",
+          "target": "src_34c0838fa7a13794:wp11:Workplane:12",
+          "support": "current",
+          "evidence": "wp10 = union(...) -> wp11 = Workplane(...)"
+        },
+        {
+          "relation": "before",
+          "source": "src_34c0838fa7a13794:wp10:union:11",
+          "target": "src_34c0838fa7a13794:wp12:circle:13",
+          "support": "current",
+          "evidence": "wp10 = union(...) -> wp12 = circle(...)"
+        },
+        {
+          "relation": "before",
+          "source": "src_34c0838fa7a13794:wp10:union:11",
+          "target": "src_34c0838fa7a13794:wp13:extrude:14",
+          "support": "current",
+          "evidence": "wp10 = union(...) -> wp13 = extrude(...)"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_34c0838fa7a13794:wp10:union:11",
+          "target": "src_34c0838fa7a13794:wp14:union:15",
+          "support": "current",
+          "evidence": "wp10 = union(...) -> wp14 = union(...)"
+        },
+        {
+          "relation": "after",
+          "source": "src_34c0838fa7a13794:wp15:Workplane:16",
+          "target": "src_34c0838fa7a13794:wp14:union:15",
+          "support": "current",
+          "evidence": "wp15 = Workplane(...) -> wp14 = union(...)"
+        },
+        {
+          "relation": "has_normal",
+          "source": "src_34c0838fa7a13794:wp15:Workplane:16",
+          "target": "src_34c0838fa7a13794:direction:plane_normal:16",
+          "support": "spec_only",
+          "evidence": "explicit cq.Plane normal"
+        },
+        {
+          "relation": "has_workplane_frame",
+          "source": "src_34c0838fa7a13794:wp15:Workplane:16",
+          "target": "src_34c0838fa7a13794:measurement:workplane_frame:16",
+          "support": "missing_needed",
+          "evidence": "frame extraction needed for profile/world geometry"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_34c0838fa7a13794:wp15:Workplane:16",
+          "target": "src_34c0838fa7a13794:wp16:circle:17",
+          "support": "current",
+          "evidence": "wp15 = Workplane(...) -> wp16 = circle(...)"
+        },
+        {
+          "relation": "after",
+          "source": "src_34c0838fa7a13794:wp20:circle:21",
+          "target": "src_34c0838fa7a13794:wp18:union:19",
+          "support": "current",
+          "evidence": "wp20 = circle(...) -> wp18 = union(...)"
+        },
+        {
+          "relation": "located_on",
+          "source": "src_34c0838fa7a13794:wp20:circle:21",
+          "target": "src_34c0838fa7a13794:wp19:Workplane:20",
+          "support": "spec_only",
+          "evidence": "wp20 = circle(...) -> wp19 = Workplane(...)"
+        },
+        {
+          "relation": "has_profile_geometry",
+          "source": "src_34c0838fa7a13794:wp20:circle:21",
+          "target": "src_34c0838fa7a13794:measurement:profile_intrinsic_geometry:21",
+          "support": "missing_needed",
+          "evidence": "area/perimeter/centroid/bbox/edge-count extraction"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_34c0838fa7a13794:wp20:circle:21",
+          "target": "src_34c0838fa7a13794:wp21:extrude:22",
+          "support": "current",
+          "evidence": "wp20 = circle(...) -> wp21 = extrude(...)"
+        },
+        {
+          "relation": "used_by",
+          "source": "src_34c0838fa7a13794:wp20:circle:21",
+          "target": "src_34c0838fa7a13794:wp21:extrude:22",
+          "support": "spec_only",
+          "evidence": "wp20 = circle(...) -> wp21 = extrude(...)"
+        }
+      ],
+      "all_relation_types_observed": [
+        "adds_material_to",
+        "after",
+        "before",
+        "combines",
+        "created_by",
+        "has_centroid",
+        "has_material_region_geometry",
+        "has_measurement",
+        "has_normal",
+        "has_path_tangent",
+        "has_profile_geometry",
+        "has_workplane_frame",
+        "input_to",
+        "located_on",
+        "parameter_of",
+        "used_by",
+        "uses_profile"
+      ],
+      "missing_needed_relations": [
+        "has_material_region_geometry",
+        "has_path_tangent",
+        "has_profile_geometry",
+        "has_sketch_center",
+        "has_workplane_frame",
+        "nearest_point_on_path"
+      ]
+    },
+    {
+      "source_id": "src_1eb8170a79e73e2a",
+      "path": "CADEvolve-P/ShapeNet-P/02924116+dca406daf4b48e6760a4e5b4a0135038+models+model_normalized+r09+s85+t170+p95+k00/source_cadquery.py",
+      "family": "cadevolve_cadevolve_p_shapenet_p",
+      "line_count": 27,
+      "visible_ops": [
+        "Workplane",
+        "append",
+        "box",
+        "center",
+        "close",
+        "cos",
+        "cutBlind",
+        "cutThruAll",
+        "faces",
+        "polyline",
+        "rect",
+        "sin",
+        "workplane"
+      ],
+      "sampled_entities": [
+        {
+          "entity_id": "src_1eb8170a79e73e2a:base:rect:25",
+          "entity_type": "profile",
+          "source_id": "src_1eb8170a79e73e2a",
+          "label": "base = rect(...)",
+          "line": 25,
+          "op": "rect"
+        },
+        {
+          "entity_id": "src_1eb8170a79e73e2a:base:workplane:19",
+          "entity_type": "workplane",
+          "source_id": "src_1eb8170a79e73e2a",
+          "label": "base = workplane(...)",
+          "line": 19,
+          "op": "workplane"
+        },
+        {
+          "entity_id": "src_1eb8170a79e73e2a:base:faces:26",
+          "entity_type": "selector",
+          "source_id": "src_1eb8170a79e73e2a",
+          "label": "base = faces(...)",
+          "line": 26,
+          "op": "faces"
+        },
+        {
+          "entity_id": "src_1eb8170a79e73e2a:face:face_face:19",
+          "entity_type": "face",
+          "source_id": "src_1eb8170a79e73e2a",
+          "label": "face face",
+          "line": 19,
+          "op": null
+        },
+        {
+          "entity_id": "src_1eb8170a79e73e2a:base:box:9",
+          "entity_type": "solid",
+          "source_id": "src_1eb8170a79e73e2a",
+          "label": "base = box(...)",
+          "line": 9,
+          "op": "box"
+        }
+      ],
+      "relation_opportunities": [
+        {
+          "relation": "created_by",
+          "source": "src_1eb8170a79e73e2a:base:box:9",
+          "target": "src_1eb8170a79e73e2a:base:box:9",
+          "support": "current",
+          "evidence": "base = box(...) -> base = box(...)"
+        },
+        {
+          "relation": "has_material_region_geometry",
+          "source": "src_1eb8170a79e73e2a:base:box:9",
+          "target": "src_1eb8170a79e73e2a:material_region:added_material:9",
+          "support": "missing_needed",
+          "evidence": "added-material geometry"
+        },
+        {
+          "relation": "has_measurement",
+          "source": "src_1eb8170a79e73e2a:base:box:9",
+          "target": "src_1eb8170a79e73e2a:measurement:volume_bbox_topology_delta:9",
+          "support": "current",
+          "evidence": "base = box(...) -> volume bbox topology delta"
+        },
+        {
+          "relation": "has_centroid",
+          "source": "src_1eb8170a79e73e2a:base:box:9",
+          "target": "src_1eb8170a79e73e2a:centroid:feature_centroid:9",
+          "support": "spec_only",
+          "evidence": "base = box(...) -> feature centroid"
+        },
+        {
+          "relation": "selected_by",
+          "source": "src_1eb8170a79e73e2a:face:face_face:19",
+          "target": "src_1eb8170a79e73e2a:base:faces:19",
+          "support": "current",
+          "evidence": "face face -> base = faces(...)"
+        },
+        {
+          "relation": "after",
+          "source": "src_1eb8170a79e73e2a:base:workplane:19",
+          "target": "src_1eb8170a79e73e2a:base:box:9",
+          "support": "current",
+          "evidence": "base = workplane(...) -> base = box(...)"
+        },
+        {
+          "relation": "before",
+          "source": "src_1eb8170a79e73e2a:base:box:9",
+          "target": "src_1eb8170a79e73e2a:base:workplane:19",
+          "support": "current",
+          "evidence": "base = box(...) -> base = workplane(...)"
+        },
+        {
+          "relation": "before",
+          "source": "src_1eb8170a79e73e2a:base:box:9",
+          "target": "src_1eb8170a79e73e2a:base:polyline:19",
+          "support": "current",
+          "evidence": "base = box(...) -> base = polyline(...)"
+        },
+        {
+          "relation": "before",
+          "source": "src_1eb8170a79e73e2a:base:box:9",
+          "target": "src_1eb8170a79e73e2a:base:cutThruAll:19",
+          "support": "current",
+          "evidence": "base = box(...) -> base = cutThruAll(...)"
+        },
+        {
+          "relation": "located_on",
+          "source": "src_1eb8170a79e73e2a:base:workplane:19",
+          "target": "src_1eb8170a79e73e2a:face:face_>Y:25",
+          "support": "spec_only",
+          "evidence": "base = workplane(...) -> face >Y"
+        },
+        {
+          "relation": "after",
+          "source": "src_1eb8170a79e73e2a:base:rect:25",
+          "target": "src_1eb8170a79e73e2a:base:cutThruAll:19",
+          "support": "current",
+          "evidence": "base = rect(...) -> base = cutThruAll(...)"
+        },
+        {
+          "relation": "located_on",
+          "source": "src_1eb8170a79e73e2a:base:rect:25",
+          "target": "src_1eb8170a79e73e2a:base:workplane:25",
+          "support": "spec_only",
+          "evidence": "base = rect(...) -> base = workplane(...)"
+        },
+        {
+          "relation": "has_profile_geometry",
+          "source": "src_1eb8170a79e73e2a:base:rect:25",
+          "target": "src_1eb8170a79e73e2a:measurement:profile_intrinsic_geometry:25",
+          "support": "missing_needed",
+          "evidence": "area/perimeter/centroid/bbox/edge-count extraction"
+        },
+        {
+          "relation": "used_by",
+          "source": "src_1eb8170a79e73e2a:base:rect:25",
+          "target": "src_1eb8170a79e73e2a:base:cutBlind:25",
+          "support": "spec_only",
+          "evidence": "base = rect(...) -> base = cutBlind(...)"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_1eb8170a79e73e2a:base:faces:26",
+          "target": "src_1eb8170a79e73e2a:base:cutBlind:26",
+          "support": "current",
+          "evidence": "base = faces(...) -> base = cutBlind(...)"
+        }
+      ],
+      "all_relation_types_observed": [
+        "after",
+        "before",
+        "created_by",
+        "has_centroid",
+        "has_material_region_geometry",
+        "has_measurement",
+        "has_profile_geometry",
+        "has_void_region_geometry",
+        "input_to",
+        "located_on",
+        "parameter_of",
+        "removes_material_from",
+        "selected_by",
+        "used_by",
+        "uses_profile"
+      ],
+      "missing_needed_relations": [
+        "has_material_region_geometry",
+        "has_profile_application_effect",
+        "has_profile_geometry",
+        "has_sketch_center",
+        "has_stable_face_id",
+        "has_void_region_geometry",
+        "same_selected_face_as"
+      ]
+    },
+    {
+      "source_id": "src_faadee5616191d2f",
+      "path": "CADEvolve-C/CADEvolve-C-core/ArrayBossHelixWire__05_25_emitted_centered_scaled_binarized/source_cadquery.py",
+      "family": "cadevolve_cadevolve_c_cadevolve_c_core",
+      "line_count": 24,
+      "visible_ops": [
+        "Plane",
+        "Vector",
+        "Workplane",
+        "circle",
+        "extrude",
+        "moveTo",
+        "splineApprox",
+        "sweep",
+        "union"
+      ],
+      "sampled_entities": [
+        {
+          "entity_id": "src_faadee5616191d2f:wp20:circle:21",
+          "entity_type": "profile",
+          "source_id": "src_faadee5616191d2f",
+          "label": "wp20 = circle(...)",
+          "line": 21,
+          "op": "circle"
+        },
+        {
+          "entity_id": "src_faadee5616191d2f:wp19:Workplane:20",
+          "entity_type": "workplane",
+          "source_id": "src_faadee5616191d2f",
+          "label": "wp19 = Workplane(...)",
+          "line": 20,
+          "op": "Workplane"
+        },
+        {
+          "entity_id": "src_faadee5616191d2f:wp10:union:11",
+          "entity_type": "solid",
+          "source_id": "src_faadee5616191d2f",
+          "label": "wp10 = union(...)",
+          "line": 11,
+          "op": "union"
+        },
+        {
+          "entity_id": "src_faadee5616191d2f:wp2:splineApprox:3",
+          "entity_type": "path",
+          "source_id": "src_faadee5616191d2f",
+          "label": "wp2 = splineApprox(...)",
+          "line": 3,
+          "op": "splineApprox"
+        },
+        {
+          "entity_id": "src_faadee5616191d2f:material_region:added_material:18",
+          "entity_type": "material_region",
+          "source_id": "src_faadee5616191d2f",
+          "label": "added material",
+          "line": 18,
+          "op": null
+        }
+      ],
+      "relation_opportunities": [
+        {
+          "relation": "has_path_tangent",
+          "source": "src_faadee5616191d2f:wp2:splineApprox:3",
+          "target": "src_faadee5616191d2f:direction:path_tangent:3",
+          "support": "missing_needed",
+          "evidence": "needed for sweep path tangent questions"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_faadee5616191d2f:wp2:splineApprox:3",
+          "target": "src_faadee5616191d2f:wp6:sweep:7",
+          "support": "current",
+          "evidence": "wp2 = splineApprox(...) -> wp6 = sweep(...)"
+        },
+        {
+          "relation": "after",
+          "source": "src_faadee5616191d2f:wp10:union:11",
+          "target": "src_faadee5616191d2f:wp9:extrude:10",
+          "support": "current",
+          "evidence": "wp10 = union(...) -> wp9 = extrude(...)"
+        },
+        {
+          "relation": "combines",
+          "source": "src_faadee5616191d2f:wp10:union:11",
+          "target": "src_faadee5616191d2f:wp10:union:11",
+          "support": "spec_only",
+          "evidence": "wp10 = union(...) -> wp10 = union(...)"
+        },
+        {
+          "relation": "adds_material_to",
+          "source": "src_faadee5616191d2f:wp10:union:11",
+          "target": "src_faadee5616191d2f:wp10:union:11",
+          "support": "spec_only",
+          "evidence": "wp10 = union(...) -> wp10 = union(...)"
+        },
+        {
+          "relation": "has_measurement",
+          "source": "src_faadee5616191d2f:wp10:union:11",
+          "target": "src_faadee5616191d2f:measurement:volume_bbox_topology_delta:11",
+          "support": "current",
+          "evidence": "wp10 = union(...) -> volume bbox topology delta"
+        },
+        {
+          "relation": "has_centroid",
+          "source": "src_faadee5616191d2f:wp10:union:11",
+          "target": "src_faadee5616191d2f:centroid:feature_centroid:11",
+          "support": "spec_only",
+          "evidence": "wp10 = union(...) -> feature centroid"
+        },
+        {
+          "relation": "before",
+          "source": "src_faadee5616191d2f:wp10:union:11",
+          "target": "src_faadee5616191d2f:wp11:Workplane:12",
+          "support": "current",
+          "evidence": "wp10 = union(...) -> wp11 = Workplane(...)"
+        },
+        {
+          "relation": "before",
+          "source": "src_faadee5616191d2f:wp10:union:11",
+          "target": "src_faadee5616191d2f:wp12:circle:13",
+          "support": "current",
+          "evidence": "wp10 = union(...) -> wp12 = circle(...)"
+        },
+        {
+          "relation": "before",
+          "source": "src_faadee5616191d2f:wp10:union:11",
+          "target": "src_faadee5616191d2f:wp13:extrude:14",
+          "support": "current",
+          "evidence": "wp10 = union(...) -> wp13 = extrude(...)"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_faadee5616191d2f:wp10:union:11",
+          "target": "src_faadee5616191d2f:wp14:union:15",
+          "support": "current",
+          "evidence": "wp10 = union(...) -> wp14 = union(...)"
+        },
+        {
+          "relation": "after",
+          "source": "src_faadee5616191d2f:wp19:Workplane:20",
+          "target": "src_faadee5616191d2f:wp18:union:19",
+          "support": "current",
+          "evidence": "wp19 = Workplane(...) -> wp18 = union(...)"
+        },
+        {
+          "relation": "has_normal",
+          "source": "src_faadee5616191d2f:wp19:Workplane:20",
+          "target": "src_faadee5616191d2f:direction:plane_normal:20",
+          "support": "spec_only",
+          "evidence": "explicit cq.Plane normal"
+        },
+        {
+          "relation": "has_workplane_frame",
+          "source": "src_faadee5616191d2f:wp19:Workplane:20",
+          "target": "src_faadee5616191d2f:measurement:workplane_frame:20",
+          "support": "missing_needed",
+          "evidence": "frame extraction needed for profile/world geometry"
+        },
+        {
+          "relation": "after",
+          "source": "src_faadee5616191d2f:wp20:circle:21",
+          "target": "src_faadee5616191d2f:wp18:union:19",
+          "support": "current",
+          "evidence": "wp20 = circle(...) -> wp18 = union(...)"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_faadee5616191d2f:wp19:Workplane:20",
+          "target": "src_faadee5616191d2f:wp20:circle:21",
+          "support": "current",
+          "evidence": "wp19 = Workplane(...) -> wp20 = circle(...)"
+        },
+        {
+          "relation": "located_on",
+          "source": "src_faadee5616191d2f:wp20:circle:21",
+          "target": "src_faadee5616191d2f:wp19:Workplane:20",
+          "support": "spec_only",
+          "evidence": "wp20 = circle(...) -> wp19 = Workplane(...)"
+        },
+        {
+          "relation": "has_profile_geometry",
+          "source": "src_faadee5616191d2f:wp20:circle:21",
+          "target": "src_faadee5616191d2f:measurement:profile_intrinsic_geometry:21",
+          "support": "missing_needed",
+          "evidence": "area/perimeter/centroid/bbox/edge-count extraction"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_faadee5616191d2f:wp20:circle:21",
+          "target": "src_faadee5616191d2f:wp21:extrude:22",
+          "support": "current",
+          "evidence": "wp20 = circle(...) -> wp21 = extrude(...)"
+        },
+        {
+          "relation": "used_by",
+          "source": "src_faadee5616191d2f:wp20:circle:21",
+          "target": "src_faadee5616191d2f:wp21:extrude:22",
+          "support": "spec_only",
+          "evidence": "wp20 = circle(...) -> wp21 = extrude(...)"
+        }
+      ],
+      "all_relation_types_observed": [
+        "adds_material_to",
+        "after",
+        "before",
+        "combines",
+        "created_by",
+        "has_centroid",
+        "has_material_region_geometry",
+        "has_measurement",
+        "has_normal",
+        "has_path_tangent",
+        "has_profile_geometry",
+        "has_workplane_frame",
+        "input_to",
+        "located_on",
+        "parameter_of",
+        "used_by",
+        "uses_profile"
+      ],
+      "missing_needed_relations": [
+        "has_material_region_geometry",
+        "has_path_tangent",
+        "has_profile_geometry",
+        "has_sketch_center",
+        "has_workplane_frame",
+        "nearest_point_on_path"
+      ]
+    },
+    {
+      "source_id": "src_4381883289a33860",
+      "path": "CADEvolve-C/CADEvolve-C-core/ArrayBossHelixWire__02_25_emitted_centered_scaled_binarized/source_cadquery.py",
+      "family": "cadevolve_cadevolve_c_cadevolve_c_core",
+      "line_count": 56,
+      "visible_ops": [
+        "Plane",
+        "Vector",
+        "Workplane",
+        "circle",
+        "extrude",
+        "moveTo",
+        "splineApprox",
+        "sweep",
+        "union"
+      ],
+      "sampled_entities": [
+        {
+          "entity_id": "src_4381883289a33860:wp16:circle:17",
+          "entity_type": "profile",
+          "source_id": "src_4381883289a33860",
+          "label": "wp16 = circle(...)",
+          "line": 17,
+          "op": "circle"
+        },
+        {
+          "entity_id": "src_4381883289a33860:wp19:Workplane:20",
+          "entity_type": "workplane",
+          "source_id": "src_4381883289a33860",
+          "label": "wp19 = Workplane(...)",
+          "line": 20,
+          "op": "Workplane"
+        },
+        {
+          "entity_id": "src_4381883289a33860:wp18:union:19",
+          "entity_type": "solid",
+          "source_id": "src_4381883289a33860",
+          "label": "wp18 = union(...)",
+          "line": 19,
+          "op": "union"
+        },
+        {
+          "entity_id": "src_4381883289a33860:wp2:splineApprox:3",
+          "entity_type": "path",
+          "source_id": "src_4381883289a33860",
+          "label": "wp2 = splineApprox(...)",
+          "line": 3,
+          "op": "splineApprox"
+        },
+        {
+          "entity_id": "src_4381883289a33860:material_region:added_material:10",
+          "entity_type": "material_region",
+          "source_id": "src_4381883289a33860",
+          "label": "added material",
+          "line": 10,
+          "op": null
+        }
+      ],
+      "relation_opportunities": [
+        {
+          "relation": "has_path_tangent",
+          "source": "src_4381883289a33860:wp2:splineApprox:3",
+          "target": "src_4381883289a33860:direction:path_tangent:3",
+          "support": "missing_needed",
+          "evidence": "needed for sweep path tangent questions"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_4381883289a33860:wp2:splineApprox:3",
+          "target": "src_4381883289a33860:wp6:sweep:7",
+          "support": "current",
+          "evidence": "wp2 = splineApprox(...) -> wp6 = sweep(...)"
+        },
+        {
+          "relation": "after",
+          "source": "src_4381883289a33860:wp16:circle:17",
+          "target": "src_4381883289a33860:wp14:union:15",
+          "support": "current",
+          "evidence": "wp16 = circle(...) -> wp14 = union(...)"
+        },
+        {
+          "relation": "located_on",
+          "source": "src_4381883289a33860:wp16:circle:17",
+          "target": "src_4381883289a33860:wp15:Workplane:16",
+          "support": "spec_only",
+          "evidence": "wp16 = circle(...) -> wp15 = Workplane(...)"
+        },
+        {
+          "relation": "has_profile_geometry",
+          "source": "src_4381883289a33860:wp16:circle:17",
+          "target": "src_4381883289a33860:measurement:profile_intrinsic_geometry:17",
+          "support": "missing_needed",
+          "evidence": "area/perimeter/centroid/bbox/edge-count extraction"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_4381883289a33860:wp16:circle:17",
+          "target": "src_4381883289a33860:wp17:extrude:18",
+          "support": "current",
+          "evidence": "wp16 = circle(...) -> wp17 = extrude(...)"
+        },
+        {
+          "relation": "used_by",
+          "source": "src_4381883289a33860:wp16:circle:17",
+          "target": "src_4381883289a33860:wp17:extrude:18",
+          "support": "spec_only",
+          "evidence": "wp16 = circle(...) -> wp17 = extrude(...)"
+        },
+        {
+          "relation": "after",
+          "source": "src_4381883289a33860:wp18:union:19",
+          "target": "src_4381883289a33860:wp17:extrude:18",
+          "support": "current",
+          "evidence": "wp18 = union(...) -> wp17 = extrude(...)"
+        },
+        {
+          "relation": "combines",
+          "source": "src_4381883289a33860:wp18:union:19",
+          "target": "src_4381883289a33860:wp18:union:19",
+          "support": "spec_only",
+          "evidence": "wp18 = union(...) -> wp18 = union(...)"
+        },
+        {
+          "relation": "adds_material_to",
+          "source": "src_4381883289a33860:wp18:union:19",
+          "target": "src_4381883289a33860:wp18:union:19",
+          "support": "spec_only",
+          "evidence": "wp18 = union(...) -> wp18 = union(...)"
+        },
+        {
+          "relation": "has_measurement",
+          "source": "src_4381883289a33860:wp18:union:19",
+          "target": "src_4381883289a33860:measurement:volume_bbox_topology_delta:19",
+          "support": "current",
+          "evidence": "wp18 = union(...) -> volume bbox topology delta"
+        },
+        {
+          "relation": "has_centroid",
+          "source": "src_4381883289a33860:wp18:union:19",
+          "target": "src_4381883289a33860:centroid:feature_centroid:19",
+          "support": "spec_only",
+          "evidence": "wp18 = union(...) -> feature centroid"
+        },
+        {
+          "relation": "after",
+          "source": "src_4381883289a33860:wp19:Workplane:20",
+          "target": "src_4381883289a33860:wp18:union:19",
+          "support": "current",
+          "evidence": "wp19 = Workplane(...) -> wp18 = union(...)"
+        },
+        {
+          "relation": "before",
+          "source": "src_4381883289a33860:wp18:union:19",
+          "target": "src_4381883289a33860:wp19:Workplane:20",
+          "support": "current",
+          "evidence": "wp18 = union(...) -> wp19 = Workplane(...)"
+        },
+        {
+          "relation": "has_normal",
+          "source": "src_4381883289a33860:wp19:Workplane:20",
+          "target": "src_4381883289a33860:direction:plane_normal:20",
+          "support": "spec_only",
+          "evidence": "explicit cq.Plane normal"
+        },
+        {
+          "relation": "has_workplane_frame",
+          "source": "src_4381883289a33860:wp19:Workplane:20",
+          "target": "src_4381883289a33860:measurement:workplane_frame:20",
+          "support": "missing_needed",
+          "evidence": "frame extraction needed for profile/world geometry"
+        },
+        {
+          "relation": "before",
+          "source": "src_4381883289a33860:wp18:union:19",
+          "target": "src_4381883289a33860:wp20:circle:21",
+          "support": "current",
+          "evidence": "wp18 = union(...) -> wp20 = circle(...)"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_4381883289a33860:wp19:Workplane:20",
+          "target": "src_4381883289a33860:wp20:circle:21",
+          "support": "current",
+          "evidence": "wp19 = Workplane(...) -> wp20 = circle(...)"
+        },
+        {
+          "relation": "before",
+          "source": "src_4381883289a33860:wp18:union:19",
+          "target": "src_4381883289a33860:wp21:extrude:22",
+          "support": "current",
+          "evidence": "wp18 = union(...) -> wp21 = extrude(...)"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_4381883289a33860:wp18:union:19",
+          "target": "src_4381883289a33860:wp22:union:23",
+          "support": "current",
+          "evidence": "wp18 = union(...) -> wp22 = union(...)"
+        }
+      ],
+      "all_relation_types_observed": [
+        "adds_material_to",
+        "after",
+        "before",
+        "combines",
+        "created_by",
+        "has_centroid",
+        "has_material_region_geometry",
+        "has_measurement",
+        "has_normal",
+        "has_path_tangent",
+        "has_profile_geometry",
+        "has_workplane_frame",
+        "input_to",
+        "located_on",
+        "parameter_of",
+        "used_by",
+        "uses_profile"
+      ],
+      "missing_needed_relations": [
+        "has_material_region_geometry",
+        "has_path_tangent",
+        "has_profile_geometry",
+        "has_sketch_center",
+        "has_workplane_frame",
+        "nearest_point_on_path"
+      ]
+    },
+    {
+      "source_id": "src_ba38136d03fe7cbc",
+      "path": "CADEvolve-P/ShapeNet-P/02924116+dd21b1599951d4bcb84877c61813ddb3+models+model_normalized+r09+s95+t170+p95+k00/source_cadquery.py",
+      "family": "cadevolve_cadevolve_p_shapenet_p",
+      "line_count": 28,
+      "visible_ops": [
+        "Workplane",
+        "append",
+        "box",
+        "center",
+        "close",
+        "cos",
+        "cutBlind",
+        "cutThruAll",
+        "faces",
+        "polyline",
+        "rect",
+        "sin",
+        "workplane"
+      ],
+      "sampled_entities": [
+        {
+          "entity_id": "src_ba38136d03fe7cbc:body:rect:27",
+          "entity_type": "profile",
+          "source_id": "src_ba38136d03fe7cbc",
+          "label": "body = rect(...)",
+          "line": 27,
+          "op": "rect"
+        },
+        {
+          "entity_id": "src_ba38136d03fe7cbc:body:workplane:27",
+          "entity_type": "workplane",
+          "source_id": "src_ba38136d03fe7cbc",
+          "label": "body = workplane(...)",
+          "line": 27,
+          "op": "workplane"
+        },
+        {
+          "entity_id": "src_ba38136d03fe7cbc:body:faces:20",
+          "entity_type": "selector",
+          "source_id": "src_ba38136d03fe7cbc",
+          "label": "body = faces(...)",
+          "line": 20,
+          "op": "faces"
+        },
+        {
+          "entity_id": "src_ba38136d03fe7cbc:face:face_>X:27",
+          "entity_type": "face",
+          "source_id": "src_ba38136d03fe7cbc",
+          "label": "face >X",
+          "line": 27,
+          "op": null
+        },
+        {
+          "entity_id": "src_ba38136d03fe7cbc:body:box:9",
+          "entity_type": "solid",
+          "source_id": "src_ba38136d03fe7cbc",
+          "label": "body = box(...)",
+          "line": 9,
+          "op": "box"
+        }
+      ],
+      "relation_opportunities": [
+        {
+          "relation": "created_by",
+          "source": "src_ba38136d03fe7cbc:body:box:9",
+          "target": "src_ba38136d03fe7cbc:body:box:9",
+          "support": "current",
+          "evidence": "body = box(...) -> body = box(...)"
+        },
+        {
+          "relation": "has_material_region_geometry",
+          "source": "src_ba38136d03fe7cbc:body:box:9",
+          "target": "src_ba38136d03fe7cbc:material_region:added_material:9",
+          "support": "missing_needed",
+          "evidence": "added-material geometry"
+        },
+        {
+          "relation": "has_measurement",
+          "source": "src_ba38136d03fe7cbc:body:box:9",
+          "target": "src_ba38136d03fe7cbc:measurement:volume_bbox_topology_delta:9",
+          "support": "current",
+          "evidence": "body = box(...) -> volume bbox topology delta"
+        },
+        {
+          "relation": "has_centroid",
+          "source": "src_ba38136d03fe7cbc:body:box:9",
+          "target": "src_ba38136d03fe7cbc:centroid:feature_centroid:9",
+          "support": "spec_only",
+          "evidence": "body = box(...) -> feature centroid"
+        },
+        {
+          "relation": "before",
+          "source": "src_ba38136d03fe7cbc:body:box:9",
+          "target": "src_ba38136d03fe7cbc:body:workplane:18",
+          "support": "current",
+          "evidence": "body = box(...) -> body = workplane(...)"
+        },
+        {
+          "relation": "before",
+          "source": "src_ba38136d03fe7cbc:body:box:9",
+          "target": "src_ba38136d03fe7cbc:body:polyline:18",
+          "support": "current",
+          "evidence": "body = box(...) -> body = polyline(...)"
+        },
+        {
+          "relation": "before",
+          "source": "src_ba38136d03fe7cbc:body:box:9",
+          "target": "src_ba38136d03fe7cbc:body:cutThruAll:18",
+          "support": "current",
+          "evidence": "body = box(...) -> body = cutThruAll(...)"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_ba38136d03fe7cbc:body:faces:20",
+          "target": "src_ba38136d03fe7cbc:body:cutThruAll:20",
+          "support": "current",
+          "evidence": "body = faces(...) -> body = cutThruAll(...)"
+        },
+        {
+          "relation": "selected_by",
+          "source": "src_ba38136d03fe7cbc:face:face_>X:27",
+          "target": "src_ba38136d03fe7cbc:body:faces:27",
+          "support": "current",
+          "evidence": "face >X -> body = faces(...)"
+        },
+        {
+          "relation": "after",
+          "source": "src_ba38136d03fe7cbc:body:workplane:27",
+          "target": "src_ba38136d03fe7cbc:body:cutBlind:26",
+          "support": "current",
+          "evidence": "body = workplane(...) -> body = cutBlind(...)"
+        },
+        {
+          "relation": "after",
+          "source": "src_ba38136d03fe7cbc:body:rect:27",
+          "target": "src_ba38136d03fe7cbc:body:cutBlind:26",
+          "support": "current",
+          "evidence": "body = rect(...) -> body = cutBlind(...)"
+        },
+        {
+          "relation": "located_on",
+          "source": "src_ba38136d03fe7cbc:body:rect:27",
+          "target": "src_ba38136d03fe7cbc:body:workplane:27",
+          "support": "spec_only",
+          "evidence": "body = rect(...) -> body = workplane(...)"
+        },
+        {
+          "relation": "has_profile_geometry",
+          "source": "src_ba38136d03fe7cbc:body:rect:27",
+          "target": "src_ba38136d03fe7cbc:measurement:profile_intrinsic_geometry:27",
+          "support": "missing_needed",
+          "evidence": "area/perimeter/centroid/bbox/edge-count extraction"
+        },
+        {
+          "relation": "used_by",
+          "source": "src_ba38136d03fe7cbc:body:rect:27",
+          "target": "src_ba38136d03fe7cbc:body:cutBlind:27",
+          "support": "spec_only",
+          "evidence": "body = rect(...) -> body = cutBlind(...)"
+        }
+      ],
+      "all_relation_types_observed": [
+        "after",
+        "before",
+        "created_by",
+        "has_centroid",
+        "has_material_region_geometry",
+        "has_measurement",
+        "has_profile_geometry",
+        "has_void_region_geometry",
+        "input_to",
+        "located_on",
+        "parameter_of",
+        "removes_material_from",
+        "selected_by",
+        "used_by",
+        "uses_profile"
+      ],
+      "missing_needed_relations": [
+        "has_material_region_geometry",
+        "has_profile_application_effect",
+        "has_profile_geometry",
+        "has_sketch_center",
+        "has_stable_face_id",
+        "has_void_region_geometry",
+        "same_selected_face_as"
+      ]
+    },
+    {
+      "source_id": "src_f795fa559cb38da1",
+      "path": "CADEvolve-C/CADEvolve-C-core/ArrayBossHelixWire__03_25_emitted_centered_scaled_binarized/source_cadquery.py",
+      "family": "cadevolve_cadevolve_c_cadevolve_c_core",
+      "line_count": 44,
+      "visible_ops": [
+        "Plane",
+        "Vector",
+        "Workplane",
+        "circle",
+        "extrude",
+        "moveTo",
+        "splineApprox",
+        "sweep",
+        "union"
+      ],
+      "sampled_entities": [
+        {
+          "entity_id": "src_f795fa559cb38da1:wp16:circle:17",
+          "entity_type": "profile",
+          "source_id": "src_f795fa559cb38da1",
+          "label": "wp16 = circle(...)",
+          "line": 17,
+          "op": "circle"
+        },
+        {
+          "entity_id": "src_f795fa559cb38da1:wp23:Workplane:24",
+          "entity_type": "workplane",
+          "source_id": "src_f795fa559cb38da1",
+          "label": "wp23 = Workplane(...)",
+          "line": 24,
+          "op": "Workplane"
+        },
+        {
+          "entity_id": "src_f795fa559cb38da1:wp6:sweep:7",
+          "entity_type": "solid",
+          "source_id": "src_f795fa559cb38da1",
+          "label": "wp6 = sweep(...)",
+          "line": 7,
+          "op": "sweep"
+        },
+        {
+          "entity_id": "src_f795fa559cb38da1:wp4:moveTo:5",
+          "entity_type": "path",
+          "source_id": "src_f795fa559cb38da1",
+          "label": "wp4 = moveTo(...)",
+          "line": 5,
+          "op": "moveTo"
+        },
+        {
+          "entity_id": "src_f795fa559cb38da1:material_region:added_material:18",
+          "entity_type": "material_region",
+          "source_id": "src_f795fa559cb38da1",
+          "label": "added material",
+          "line": 18,
+          "op": null
+        }
+      ],
+      "relation_opportunities": [
+        {
+          "relation": "has_path_tangent",
+          "source": "src_f795fa559cb38da1:wp4:moveTo:5",
+          "target": "src_f795fa559cb38da1:direction:path_tangent:5",
+          "support": "missing_needed",
+          "evidence": "needed for sweep path tangent questions"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_f795fa559cb38da1:wp4:moveTo:5",
+          "target": "src_f795fa559cb38da1:wp5:circle:6",
+          "support": "current",
+          "evidence": "wp4 = moveTo(...) -> wp5 = circle(...)"
+        },
+        {
+          "relation": "uses_profile",
+          "source": "src_f795fa559cb38da1:wp6:sweep:7",
+          "target": "src_f795fa559cb38da1:wp5:circle:6",
+          "support": "spec_only",
+          "evidence": "wp6 = sweep(...) -> wp5 = circle(...)"
+        },
+        {
+          "relation": "created_by",
+          "source": "src_f795fa559cb38da1:wp6:sweep:7",
+          "target": "src_f795fa559cb38da1:wp6:sweep:7",
+          "support": "current",
+          "evidence": "wp6 = sweep(...) -> wp6 = sweep(...)"
+        },
+        {
+          "relation": "has_material_region_geometry",
+          "source": "src_f795fa559cb38da1:wp6:sweep:7",
+          "target": "src_f795fa559cb38da1:material_region:added_material:7",
+          "support": "missing_needed",
+          "evidence": "added-material geometry"
+        },
+        {
+          "relation": "has_measurement",
+          "source": "src_f795fa559cb38da1:wp6:sweep:7",
+          "target": "src_f795fa559cb38da1:measurement:volume_bbox_topology_delta:7",
+          "support": "current",
+          "evidence": "wp6 = sweep(...) -> volume bbox topology delta"
+        },
+        {
+          "relation": "has_centroid",
+          "source": "src_f795fa559cb38da1:wp6:sweep:7",
+          "target": "src_f795fa559cb38da1:centroid:feature_centroid:7",
+          "support": "spec_only",
+          "evidence": "wp6 = sweep(...) -> feature centroid"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_f795fa559cb38da1:wp4:moveTo:5",
+          "target": "src_f795fa559cb38da1:wp6:sweep:7",
+          "support": "current",
+          "evidence": "wp4 = moveTo(...) -> wp6 = sweep(...)"
+        },
+        {
+          "relation": "before",
+          "source": "src_f795fa559cb38da1:wp6:sweep:7",
+          "target": "src_f795fa559cb38da1:wp7:Workplane:8",
+          "support": "current",
+          "evidence": "wp6 = sweep(...) -> wp7 = Workplane(...)"
+        },
+        {
+          "relation": "before",
+          "source": "src_f795fa559cb38da1:wp6:sweep:7",
+          "target": "src_f795fa559cb38da1:wp8:circle:9",
+          "support": "current",
+          "evidence": "wp6 = sweep(...) -> wp8 = circle(...)"
+        },
+        {
+          "relation": "before",
+          "source": "src_f795fa559cb38da1:wp6:sweep:7",
+          "target": "src_f795fa559cb38da1:wp9:extrude:10",
+          "support": "current",
+          "evidence": "wp6 = sweep(...) -> wp9 = extrude(...)"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_f795fa559cb38da1:wp6:sweep:7",
+          "target": "src_f795fa559cb38da1:wp10:union:11",
+          "support": "current",
+          "evidence": "wp6 = sweep(...) -> wp10 = union(...)"
+        },
+        {
+          "relation": "after",
+          "source": "src_f795fa559cb38da1:wp16:circle:17",
+          "target": "src_f795fa559cb38da1:wp14:union:15",
+          "support": "current",
+          "evidence": "wp16 = circle(...) -> wp14 = union(...)"
+        },
+        {
+          "relation": "located_on",
+          "source": "src_f795fa559cb38da1:wp16:circle:17",
+          "target": "src_f795fa559cb38da1:wp15:Workplane:16",
+          "support": "spec_only",
+          "evidence": "wp16 = circle(...) -> wp15 = Workplane(...)"
+        },
+        {
+          "relation": "has_profile_geometry",
+          "source": "src_f795fa559cb38da1:wp16:circle:17",
+          "target": "src_f795fa559cb38da1:measurement:profile_intrinsic_geometry:17",
+          "support": "missing_needed",
+          "evidence": "area/perimeter/centroid/bbox/edge-count extraction"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_f795fa559cb38da1:wp16:circle:17",
+          "target": "src_f795fa559cb38da1:wp17:extrude:18",
+          "support": "current",
+          "evidence": "wp16 = circle(...) -> wp17 = extrude(...)"
+        },
+        {
+          "relation": "used_by",
+          "source": "src_f795fa559cb38da1:wp16:circle:17",
+          "target": "src_f795fa559cb38da1:wp17:extrude:18",
+          "support": "spec_only",
+          "evidence": "wp16 = circle(...) -> wp17 = extrude(...)"
+        },
+        {
+          "relation": "after",
+          "source": "src_f795fa559cb38da1:wp23:Workplane:24",
+          "target": "src_f795fa559cb38da1:wp22:union:23",
+          "support": "current",
+          "evidence": "wp23 = Workplane(...) -> wp22 = union(...)"
+        },
+        {
+          "relation": "has_normal",
+          "source": "src_f795fa559cb38da1:wp23:Workplane:24",
+          "target": "src_f795fa559cb38da1:direction:plane_normal:24",
+          "support": "spec_only",
+          "evidence": "explicit cq.Plane normal"
+        },
+        {
+          "relation": "has_workplane_frame",
+          "source": "src_f795fa559cb38da1:wp23:Workplane:24",
+          "target": "src_f795fa559cb38da1:measurement:workplane_frame:24",
+          "support": "missing_needed",
+          "evidence": "frame extraction needed for profile/world geometry"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_f795fa559cb38da1:wp23:Workplane:24",
+          "target": "src_f795fa559cb38da1:wp24:circle:25",
+          "support": "current",
+          "evidence": "wp23 = Workplane(...) -> wp24 = circle(...)"
+        }
+      ],
+      "all_relation_types_observed": [
+        "adds_material_to",
+        "after",
+        "before",
+        "combines",
+        "created_by",
+        "has_centroid",
+        "has_material_region_geometry",
+        "has_measurement",
+        "has_normal",
+        "has_path_tangent",
+        "has_profile_geometry",
+        "has_workplane_frame",
+        "input_to",
+        "located_on",
+        "parameter_of",
+        "used_by",
+        "uses_profile"
+      ],
+      "missing_needed_relations": [
+        "has_material_region_geometry",
+        "has_path_tangent",
+        "has_profile_geometry",
+        "has_sketch_center",
+        "has_workplane_frame",
+        "nearest_point_on_path"
+      ]
+    },
+    {
+      "source_id": "src_bb1d614881c83f67",
+      "path": "CADEvolve-P/ShapeNet-P/02924116+dc9c640221f58021c08550bf6ec9e732+models+model_normalized+r09+s75+t170+p95+k00/source_cadquery.py",
+      "family": "cadevolve_cadevolve_p_shapenet_p",
+      "line_count": 38,
+      "visible_ops": [
+        "Workplane",
+        "append",
+        "box",
+        "center",
+        "close",
+        "cos",
+        "cutBlind",
+        "cutThruAll",
+        "faces",
+        "polyline",
+        "rect",
+        "sin",
+        "workplane"
+      ],
+      "sampled_entities": [
+        {
+          "entity_id": "src_bb1d614881c83f67:base:polyline:25",
+          "entity_type": "profile",
+          "source_id": "src_bb1d614881c83f67",
+          "label": "base = polyline(...)",
+          "line": 25,
+          "op": "polyline"
+        },
+        {
+          "entity_id": "src_bb1d614881c83f67:base:workplane:25",
+          "entity_type": "workplane",
+          "source_id": "src_bb1d614881c83f67",
+          "label": "base = workplane(...)",
+          "line": 25,
+          "op": "workplane"
+        },
+        {
+          "entity_id": "src_bb1d614881c83f67:base:faces:27",
+          "entity_type": "selector",
+          "source_id": "src_bb1d614881c83f67",
+          "label": "base = faces(...)",
+          "line": 27,
+          "op": "faces"
+        },
+        {
+          "entity_id": "src_bb1d614881c83f67:face:face_>X:36",
+          "entity_type": "face",
+          "source_id": "src_bb1d614881c83f67",
+          "label": "face >X",
+          "line": 36,
+          "op": null
+        },
+        {
+          "entity_id": "src_bb1d614881c83f67:base:box:10",
+          "entity_type": "solid",
+          "source_id": "src_bb1d614881c83f67",
+          "label": "base = box(...)",
+          "line": 10,
+          "op": "box"
+        }
+      ],
+      "relation_opportunities": [
+        {
+          "relation": "created_by",
+          "source": "src_bb1d614881c83f67:base:box:10",
+          "target": "src_bb1d614881c83f67:base:box:10",
+          "support": "current",
+          "evidence": "base = box(...) -> base = box(...)"
+        },
+        {
+          "relation": "has_material_region_geometry",
+          "source": "src_bb1d614881c83f67:base:box:10",
+          "target": "src_bb1d614881c83f67:material_region:added_material:10",
+          "support": "missing_needed",
+          "evidence": "added-material geometry"
+        },
+        {
+          "relation": "has_measurement",
+          "source": "src_bb1d614881c83f67:base:box:10",
+          "target": "src_bb1d614881c83f67:measurement:volume_bbox_topology_delta:10",
+          "support": "current",
+          "evidence": "base = box(...) -> volume bbox topology delta"
+        },
+        {
+          "relation": "has_centroid",
+          "source": "src_bb1d614881c83f67:base:box:10",
+          "target": "src_bb1d614881c83f67:centroid:feature_centroid:10",
+          "support": "spec_only",
+          "evidence": "base = box(...) -> feature centroid"
+        },
+        {
+          "relation": "after",
+          "source": "src_bb1d614881c83f67:base:workplane:25",
+          "target": "src_bb1d614881c83f67:base:box:10",
+          "support": "current",
+          "evidence": "base = workplane(...) -> base = box(...)"
+        },
+        {
+          "relation": "before",
+          "source": "src_bb1d614881c83f67:base:box:10",
+          "target": "src_bb1d614881c83f67:base:workplane:25",
+          "support": "current",
+          "evidence": "base = box(...) -> base = workplane(...)"
+        },
+        {
+          "relation": "after",
+          "source": "src_bb1d614881c83f67:base:polyline:25",
+          "target": "src_bb1d614881c83f67:base:box:10",
+          "support": "current",
+          "evidence": "base = polyline(...) -> base = box(...)"
+        },
+        {
+          "relation": "before",
+          "source": "src_bb1d614881c83f67:base:box:10",
+          "target": "src_bb1d614881c83f67:base:polyline:25",
+          "support": "current",
+          "evidence": "base = box(...) -> base = polyline(...)"
+        },
+        {
+          "relation": "located_on",
+          "source": "src_bb1d614881c83f67:base:polyline:25",
+          "target": "src_bb1d614881c83f67:base:workplane:25",
+          "support": "spec_only",
+          "evidence": "base = polyline(...) -> base = workplane(...)"
+        },
+        {
+          "relation": "has_profile_geometry",
+          "source": "src_bb1d614881c83f67:base:polyline:25",
+          "target": "src_bb1d614881c83f67:measurement:profile_intrinsic_geometry:25",
+          "support": "missing_needed",
+          "evidence": "area/perimeter/centroid/bbox/edge-count extraction"
+        },
+        {
+          "relation": "before",
+          "source": "src_bb1d614881c83f67:base:box:10",
+          "target": "src_bb1d614881c83f67:base:cutThruAll:25",
+          "support": "current",
+          "evidence": "base = box(...) -> base = cutThruAll(...)"
+        },
+        {
+          "relation": "used_by",
+          "source": "src_bb1d614881c83f67:base:polyline:25",
+          "target": "src_bb1d614881c83f67:base:cutThruAll:25",
+          "support": "spec_only",
+          "evidence": "base = polyline(...) -> base = cutThruAll(...)"
+        },
+        {
+          "relation": "located_on",
+          "source": "src_bb1d614881c83f67:base:workplane:25",
+          "target": "src_bb1d614881c83f67:face:face_face_tag:27",
+          "support": "spec_only",
+          "evidence": "base = workplane(...) -> face face tag"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_bb1d614881c83f67:base:faces:27",
+          "target": "src_bb1d614881c83f67:base:cutThruAll:27",
+          "support": "current",
+          "evidence": "base = faces(...) -> base = cutThruAll(...)"
+        },
+        {
+          "relation": "selected_by",
+          "source": "src_bb1d614881c83f67:face:face_>X:36",
+          "target": "src_bb1d614881c83f67:base:faces:36",
+          "support": "current",
+          "evidence": "face >X -> base = faces(...)"
+        }
+      ],
+      "all_relation_types_observed": [
+        "after",
+        "before",
+        "created_by",
+        "has_centroid",
+        "has_material_region_geometry",
+        "has_measurement",
+        "has_profile_geometry",
+        "has_void_region_geometry",
+        "input_to",
+        "located_on",
+        "parameter_of",
+        "removes_material_from",
+        "selected_by",
+        "used_by",
+        "uses_profile"
+      ],
+      "missing_needed_relations": [
+        "has_material_region_geometry",
+        "has_profile_application_effect",
+        "has_profile_geometry",
+        "has_sketch_center",
+        "has_stable_face_id",
+        "has_void_region_geometry",
+        "same_selected_face_as"
+      ]
+    },
+    {
+      "source_id": "src_50f6c097f59d60cb",
+      "path": "CADEvolve-P/ShapeNet-P/02924116+e299444f1a4c7457fa9ee9b3a7eba069+models+model_normalized+r12+s90+t170+p95+k00/source_cadquery.py",
+      "family": "cadevolve_cadevolve_p_shapenet_p",
+      "line_count": 18,
+      "visible_ops": [
+        "Plane",
+        "Workplane",
+        "box",
+        "chamfer",
+        "edges",
+        "extrude",
+        "rect",
+        "union"
+      ],
+      "sampled_entities": [
+        {
+          "entity_id": "src_50f6c097f59d60cb:tab:rect:16",
+          "entity_type": "profile",
+          "source_id": "src_50f6c097f59d60cb",
+          "label": "tab = rect(...)",
+          "line": 16,
+          "op": "rect"
+        },
+        {
+          "entity_id": "src_50f6c097f59d60cb:tab:Workplane:16",
+          "entity_type": "workplane",
+          "source_id": "src_50f6c097f59d60cb",
+          "label": "tab = Workplane(...)",
+          "line": 16,
+          "op": "Workplane"
+        },
+        {
+          "entity_id": "src_50f6c097f59d60cb:body:edges:10",
+          "entity_type": "selector",
+          "source_id": "src_50f6c097f59d60cb",
+          "label": "body = edges(...)",
+          "line": 10,
+          "op": "edges"
+        },
+        {
+          "entity_id": "src_50f6c097f59d60cb:body:union:17",
+          "entity_type": "solid",
+          "source_id": "src_50f6c097f59d60cb",
+          "label": "body = union(...)",
+          "line": 17,
+          "op": "union"
+        },
+        {
+          "entity_id": "src_50f6c097f59d60cb:material_region:added_material:10",
+          "entity_type": "material_region",
+          "source_id": "src_50f6c097f59d60cb",
+          "label": "added material",
+          "line": 10,
+          "op": null
+        }
+      ],
+      "relation_opportunities": [
+        {
+          "relation": "input_to",
+          "source": "src_50f6c097f59d60cb:body:edges:10",
+          "target": "src_50f6c097f59d60cb:body:chamfer:10",
+          "support": "current",
+          "evidence": "body = edges(...) -> body = chamfer(...)"
+        },
+        {
+          "relation": "after",
+          "source": "src_50f6c097f59d60cb:tab:Workplane:16",
+          "target": "src_50f6c097f59d60cb:body:chamfer:10",
+          "support": "current",
+          "evidence": "tab = Workplane(...) -> body = chamfer(...)"
+        },
+        {
+          "relation": "after",
+          "source": "src_50f6c097f59d60cb:tab:rect:16",
+          "target": "src_50f6c097f59d60cb:body:chamfer:10",
+          "support": "current",
+          "evidence": "tab = rect(...) -> body = chamfer(...)"
+        },
+        {
+          "relation": "located_on",
+          "source": "src_50f6c097f59d60cb:tab:rect:16",
+          "target": "src_50f6c097f59d60cb:tab:Workplane:16",
+          "support": "spec_only",
+          "evidence": "tab = rect(...) -> tab = Workplane(...)"
+        },
+        {
+          "relation": "has_profile_geometry",
+          "source": "src_50f6c097f59d60cb:tab:rect:16",
+          "target": "src_50f6c097f59d60cb:measurement:profile_intrinsic_geometry:16",
+          "support": "missing_needed",
+          "evidence": "area/perimeter/centroid/bbox/edge-count extraction"
+        },
+        {
+          "relation": "used_by",
+          "source": "src_50f6c097f59d60cb:tab:rect:16",
+          "target": "src_50f6c097f59d60cb:tab:extrude:16",
+          "support": "spec_only",
+          "evidence": "tab = rect(...) -> tab = extrude(...)"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_50f6c097f59d60cb:body:edges:10",
+          "target": "src_50f6c097f59d60cb:tab:extrude:16",
+          "support": "current",
+          "evidence": "body = edges(...) -> tab = extrude(...)"
+        },
+        {
+          "relation": "after",
+          "source": "src_50f6c097f59d60cb:body:union:17",
+          "target": "src_50f6c097f59d60cb:tab:extrude:16",
+          "support": "current",
+          "evidence": "body = union(...) -> tab = extrude(...)"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_50f6c097f59d60cb:body:edges:10",
+          "target": "src_50f6c097f59d60cb:body:union:17",
+          "support": "current",
+          "evidence": "body = edges(...) -> body = union(...)"
+        },
+        {
+          "relation": "combines",
+          "source": "src_50f6c097f59d60cb:body:union:17",
+          "target": "src_50f6c097f59d60cb:body:union:17",
+          "support": "spec_only",
+          "evidence": "body = union(...) -> body = union(...)"
+        },
+        {
+          "relation": "adds_material_to",
+          "source": "src_50f6c097f59d60cb:body:union:17",
+          "target": "src_50f6c097f59d60cb:body:union:17",
+          "support": "spec_only",
+          "evidence": "body = union(...) -> body = union(...)"
+        },
+        {
+          "relation": "has_measurement",
+          "source": "src_50f6c097f59d60cb:body:union:17",
+          "target": "src_50f6c097f59d60cb:measurement:volume_bbox_topology_delta:17",
+          "support": "current",
+          "evidence": "body = union(...) -> volume bbox topology delta"
+        },
+        {
+          "relation": "has_centroid",
+          "source": "src_50f6c097f59d60cb:body:union:17",
+          "target": "src_50f6c097f59d60cb:centroid:feature_centroid:17",
+          "support": "spec_only",
+          "evidence": "body = union(...) -> feature centroid"
+        }
+      ],
+      "all_relation_types_observed": [
+        "adds_material_to",
+        "after",
+        "before",
+        "combines",
+        "created_by",
+        "has_centroid",
+        "has_material_region_geometry",
+        "has_measurement",
+        "has_profile_geometry",
+        "input_to",
+        "located_on",
+        "parameter_of",
+        "used_by",
+        "uses_profile"
+      ],
+      "missing_needed_relations": [
+        "has_material_region_geometry",
+        "has_profile_geometry",
+        "has_sketch_center",
+        "has_stable_face_id",
+        "has_workplane_frame",
+        "same_selected_face_as"
+      ]
+    },
+    {
+      "source_id": "src_07b5ee0b6d93a6cb",
+      "path": "CADEvolve-C/CADEvolve-C-core/ArrayBossHelixWire__01_50_emitted_centered_scaled_binarized/source_cadquery.py",
+      "family": "cadevolve_cadevolve_c_cadevolve_c_core",
+      "line_count": 40,
+      "visible_ops": [
+        "Plane",
+        "Vector",
+        "Workplane",
+        "circle",
+        "extrude",
+        "moveTo",
+        "splineApprox",
+        "sweep",
+        "union"
+      ],
+      "sampled_entities": [
+        {
+          "entity_id": "src_07b5ee0b6d93a6cb:wp20:circle:21",
+          "entity_type": "profile",
+          "source_id": "src_07b5ee0b6d93a6cb",
+          "label": "wp20 = circle(...)",
+          "line": 21,
+          "op": "circle"
+        },
+        {
+          "entity_id": "src_07b5ee0b6d93a6cb:wp7:Workplane:8",
+          "entity_type": "workplane",
+          "source_id": "src_07b5ee0b6d93a6cb",
+          "label": "wp7 = Workplane(...)",
+          "line": 8,
+          "op": "Workplane"
+        },
+        {
+          "entity_id": "src_07b5ee0b6d93a6cb:wp22:union:23",
+          "entity_type": "solid",
+          "source_id": "src_07b5ee0b6d93a6cb",
+          "label": "wp22 = union(...)",
+          "line": 23,
+          "op": "union"
+        },
+        {
+          "entity_id": "src_07b5ee0b6d93a6cb:wp4:moveTo:5",
+          "entity_type": "path",
+          "source_id": "src_07b5ee0b6d93a6cb",
+          "label": "wp4 = moveTo(...)",
+          "line": 5,
+          "op": "moveTo"
+        },
+        {
+          "entity_id": "src_07b5ee0b6d93a6cb:material_region:added_material:22",
+          "entity_type": "material_region",
+          "source_id": "src_07b5ee0b6d93a6cb",
+          "label": "added material",
+          "line": 22,
+          "op": null
+        }
+      ],
+      "relation_opportunities": [
+        {
+          "relation": "has_path_tangent",
+          "source": "src_07b5ee0b6d93a6cb:wp4:moveTo:5",
+          "target": "src_07b5ee0b6d93a6cb:direction:path_tangent:5",
+          "support": "missing_needed",
+          "evidence": "needed for sweep path tangent questions"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_07b5ee0b6d93a6cb:wp4:moveTo:5",
+          "target": "src_07b5ee0b6d93a6cb:wp5:circle:6",
+          "support": "current",
+          "evidence": "wp4 = moveTo(...) -> wp5 = circle(...)"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_07b5ee0b6d93a6cb:wp4:moveTo:5",
+          "target": "src_07b5ee0b6d93a6cb:wp6:sweep:7",
+          "support": "current",
+          "evidence": "wp4 = moveTo(...) -> wp6 = sweep(...)"
+        },
+        {
+          "relation": "after",
+          "source": "src_07b5ee0b6d93a6cb:wp7:Workplane:8",
+          "target": "src_07b5ee0b6d93a6cb:wp6:sweep:7",
+          "support": "current",
+          "evidence": "wp7 = Workplane(...) -> wp6 = sweep(...)"
+        },
+        {
+          "relation": "has_normal",
+          "source": "src_07b5ee0b6d93a6cb:wp7:Workplane:8",
+          "target": "src_07b5ee0b6d93a6cb:direction:plane_normal:8",
+          "support": "spec_only",
+          "evidence": "explicit cq.Plane normal"
+        },
+        {
+          "relation": "has_workplane_frame",
+          "source": "src_07b5ee0b6d93a6cb:wp7:Workplane:8",
+          "target": "src_07b5ee0b6d93a6cb:measurement:workplane_frame:8",
+          "support": "missing_needed",
+          "evidence": "frame extraction needed for profile/world geometry"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_07b5ee0b6d93a6cb:wp7:Workplane:8",
+          "target": "src_07b5ee0b6d93a6cb:wp8:circle:9",
+          "support": "current",
+          "evidence": "wp7 = Workplane(...) -> wp8 = circle(...)"
+        },
+        {
+          "relation": "after",
+          "source": "src_07b5ee0b6d93a6cb:wp20:circle:21",
+          "target": "src_07b5ee0b6d93a6cb:wp18:union:19",
+          "support": "current",
+          "evidence": "wp20 = circle(...) -> wp18 = union(...)"
+        },
+        {
+          "relation": "located_on",
+          "source": "src_07b5ee0b6d93a6cb:wp20:circle:21",
+          "target": "src_07b5ee0b6d93a6cb:wp19:Workplane:20",
+          "support": "spec_only",
+          "evidence": "wp20 = circle(...) -> wp19 = Workplane(...)"
+        },
+        {
+          "relation": "has_profile_geometry",
+          "source": "src_07b5ee0b6d93a6cb:wp20:circle:21",
+          "target": "src_07b5ee0b6d93a6cb:measurement:profile_intrinsic_geometry:21",
+          "support": "missing_needed",
+          "evidence": "area/perimeter/centroid/bbox/edge-count extraction"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_07b5ee0b6d93a6cb:wp20:circle:21",
+          "target": "src_07b5ee0b6d93a6cb:wp21:extrude:22",
+          "support": "current",
+          "evidence": "wp20 = circle(...) -> wp21 = extrude(...)"
+        },
+        {
+          "relation": "used_by",
+          "source": "src_07b5ee0b6d93a6cb:wp20:circle:21",
+          "target": "src_07b5ee0b6d93a6cb:wp21:extrude:22",
+          "support": "spec_only",
+          "evidence": "wp20 = circle(...) -> wp21 = extrude(...)"
+        },
+        {
+          "relation": "after",
+          "source": "src_07b5ee0b6d93a6cb:wp22:union:23",
+          "target": "src_07b5ee0b6d93a6cb:wp21:extrude:22",
+          "support": "current",
+          "evidence": "wp22 = union(...) -> wp21 = extrude(...)"
+        },
+        {
+          "relation": "combines",
+          "source": "src_07b5ee0b6d93a6cb:wp22:union:23",
+          "target": "src_07b5ee0b6d93a6cb:wp22:union:23",
+          "support": "spec_only",
+          "evidence": "wp22 = union(...) -> wp22 = union(...)"
+        },
+        {
+          "relation": "adds_material_to",
+          "source": "src_07b5ee0b6d93a6cb:wp22:union:23",
+          "target": "src_07b5ee0b6d93a6cb:wp22:union:23",
+          "support": "spec_only",
+          "evidence": "wp22 = union(...) -> wp22 = union(...)"
+        },
+        {
+          "relation": "has_measurement",
+          "source": "src_07b5ee0b6d93a6cb:wp22:union:23",
+          "target": "src_07b5ee0b6d93a6cb:measurement:volume_bbox_topology_delta:23",
+          "support": "current",
+          "evidence": "wp22 = union(...) -> volume bbox topology delta"
+        },
+        {
+          "relation": "has_centroid",
+          "source": "src_07b5ee0b6d93a6cb:wp22:union:23",
+          "target": "src_07b5ee0b6d93a6cb:centroid:feature_centroid:23",
+          "support": "spec_only",
+          "evidence": "wp22 = union(...) -> feature centroid"
+        },
+        {
+          "relation": "before",
+          "source": "src_07b5ee0b6d93a6cb:wp22:union:23",
+          "target": "src_07b5ee0b6d93a6cb:wp23:Workplane:24",
+          "support": "current",
+          "evidence": "wp22 = union(...) -> wp23 = Workplane(...)"
+        },
+        {
+          "relation": "before",
+          "source": "src_07b5ee0b6d93a6cb:wp22:union:23",
+          "target": "src_07b5ee0b6d93a6cb:wp24:circle:25",
+          "support": "current",
+          "evidence": "wp22 = union(...) -> wp24 = circle(...)"
+        },
+        {
+          "relation": "before",
+          "source": "src_07b5ee0b6d93a6cb:wp22:union:23",
+          "target": "src_07b5ee0b6d93a6cb:wp25:extrude:26",
+          "support": "current",
+          "evidence": "wp22 = union(...) -> wp25 = extrude(...)"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_07b5ee0b6d93a6cb:wp22:union:23",
+          "target": "src_07b5ee0b6d93a6cb:wp26:union:27",
+          "support": "current",
+          "evidence": "wp22 = union(...) -> wp26 = union(...)"
+        }
+      ],
+      "all_relation_types_observed": [
+        "adds_material_to",
+        "after",
+        "before",
+        "combines",
+        "created_by",
+        "has_centroid",
+        "has_material_region_geometry",
+        "has_measurement",
+        "has_normal",
+        "has_path_tangent",
+        "has_profile_geometry",
+        "has_workplane_frame",
+        "input_to",
+        "located_on",
+        "parameter_of",
+        "used_by",
+        "uses_profile"
+      ],
+      "missing_needed_relations": [
+        "has_material_region_geometry",
+        "has_path_tangent",
+        "has_profile_geometry",
+        "has_sketch_center",
+        "has_workplane_frame",
+        "nearest_point_on_path"
+      ]
+    },
+    {
+      "source_id": "src_76925f7c6dc8a7c0",
+      "path": "CADEvolve-P/ShapeNet-P/02924116+e0275ff6dfb3de5ae550942ea36e5443+models+model_normalized+r20+s80+t170+p95+k00/source_cadquery.py",
+      "family": "cadevolve_cadevolve_p_shapenet_p",
+      "line_count": 11,
+      "visible_ops": [
+        "Workplane",
+        "box",
+        "center",
+        "edges",
+        "extrude",
+        "faces",
+        "fillet",
+        "rect",
+        "union",
+        "workplane"
+      ],
+      "sampled_entities": [
+        {
+          "entity_id": "src_76925f7c6dc8a7c0:body:box:6",
+          "entity_type": "solid",
+          "source_id": "src_76925f7c6dc8a7c0",
+          "label": "body = box(...)",
+          "line": 6,
+          "op": "box"
+        },
+        {
+          "entity_id": "src_76925f7c6dc8a7c0:material_region:added_material:6",
+          "entity_type": "material_region",
+          "source_id": "src_76925f7c6dc8a7c0",
+          "label": "added material",
+          "line": 6,
+          "op": null
+        },
+        {
+          "entity_id": "src_76925f7c6dc8a7c0:measurement:volume_bbox_topology_delta:6",
+          "entity_type": "measurement",
+          "source_id": "src_76925f7c6dc8a7c0",
+          "label": "volume bbox topology delta",
+          "line": 6,
+          "op": null
+        },
+        {
+          "entity_id": "src_76925f7c6dc8a7c0:parameter:a:11",
+          "entity_type": "parameter",
+          "source_id": "src_76925f7c6dc8a7c0",
+          "label": "parameter `a` used by result",
+          "line": 11,
+          "op": null
+        },
+        {
+          "entity_id": "src_76925f7c6dc8a7c0:result:reduce:11",
+          "entity_type": "operation",
+          "source_id": "src_76925f7c6dc8a7c0",
+          "label": "result = reduce(...)",
+          "line": 11,
+          "op": "reduce"
+        }
+      ],
+      "relation_opportunities": [
+        {
+          "relation": "created_by",
+          "source": "src_76925f7c6dc8a7c0:body:box:6",
+          "target": "src_76925f7c6dc8a7c0:body:box:6",
+          "support": "current",
+          "evidence": "body = box(...) -> body = box(...)"
+        },
+        {
+          "relation": "has_material_region_geometry",
+          "source": "src_76925f7c6dc8a7c0:body:box:6",
+          "target": "src_76925f7c6dc8a7c0:material_region:added_material:6",
+          "support": "missing_needed",
+          "evidence": "added-material geometry"
+        },
+        {
+          "relation": "has_measurement",
+          "source": "src_76925f7c6dc8a7c0:body:box:6",
+          "target": "src_76925f7c6dc8a7c0:measurement:volume_bbox_topology_delta:6",
+          "support": "current",
+          "evidence": "body = box(...) -> volume bbox topology delta"
+        },
+        {
+          "relation": "has_centroid",
+          "source": "src_76925f7c6dc8a7c0:body:box:6",
+          "target": "src_76925f7c6dc8a7c0:centroid:feature_centroid:6",
+          "support": "spec_only",
+          "evidence": "body = box(...) -> feature centroid"
+        },
+        {
+          "relation": "input_to",
+          "source": "src_76925f7c6dc8a7c0:body:box:6",
+          "target": "src_76925f7c6dc8a7c0:result:reduce:11",
+          "support": "current",
+          "evidence": "body = box(...) -> result = reduce(...)"
+        },
+        {
+          "relation": "parameter_of",
+          "source": "src_76925f7c6dc8a7c0:parameter:a:11",
+          "target": "src_76925f7c6dc8a7c0:result:reduce:11",
+          "support": "current",
+          "evidence": "parameter `a` used by result -> result = reduce(...)"
+        }
+      ],
+      "all_relation_types_observed": [
+        "created_by",
+        "has_centroid",
+        "has_material_region_geometry",
+        "has_measurement",
+        "input_to",
+        "parameter_of"
+      ],
+      "missing_needed_relations": [
+        "has_material_region_geometry",
+        "has_stable_face_id",
+        "same_selected_face_as"
+      ]
+    }
+  ],
+  "recommendations": [
+    {
+      "relation_family": "has_profile_geometry",
+      "observed_need_count": "9",
+      "recommendation": "Implement AST/CadQuery profile extraction for circle, rect, polyline, and bounded helper point lists."
+    },
+    {
+      "relation_family": "has_profile_application_effect",
+      "observed_need_count": "3",
+      "recommendation": "Link profiles to operation deltas so profile clues can refer to the effect of the cut/extrude."
+    },
+    {
+      "relation_family": "has_workplane_frame",
+      "observed_need_count": "6",
+      "recommendation": "Persist workplane origin, axes, normal, and frame transforms for every profile."
+    },
+    {
+      "relation_family": "has_stable_face_id",
+      "observed_need_count": "5",
+      "recommendation": "Persist selector-result face IDs and conservative adjacent-snapshot face matching."
+    },
+    {
+      "relation_family": "has_material_region_geometry",
+      "observed_need_count": "10",
+      "recommendation": "Represent added material regions from extrude/sweep/union with centroid, bbox, volume, and adjacency hooks."
+    },
+    {
+      "relation_family": "has_void_region_geometry",
+      "observed_need_count": "3",
+      "recommendation": "Represent removed void regions from cutBlind/cutThruAll/hole with volume, bbox, intersections, and selected face."
+    },
+    {
+      "relation_family": "has_path_tangent",
+      "observed_need_count": "5",
+      "recommendation": "Extract source-defined or fitted path tangents for sweep/helix questions."
+    },
+    {
+      "relation_family": "same_selected_face_as",
+      "observed_need_count": "5",
+      "recommendation": "Add equality joins over selector-result entities across operations."
+    }
+  ]
+}

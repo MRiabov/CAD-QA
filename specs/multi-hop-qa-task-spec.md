@@ -98,8 +98,13 @@ face
 edge
 vertex
 axis
+direction
+point
+centroid
 centerline
+path
 material_region
+void_region
 selector
 measurement
 ```
@@ -112,16 +117,22 @@ after
 immediately_before
 immediately_after
 input_to
+combines
 created_by
 modified_by
 deleted_by
 bounded_by
 selected_by
 located_on
+uses_profile
+used_by
 parallel_to
+not_parallel_to
 perpendicular_to
+orthogonal_to
 coaxial_with
 adjacent_to
+opposite_to
 contained_in
 intersects
 translated_by
@@ -129,6 +140,11 @@ rotated_by
 scaled_by
 parameter_of
 has_measurement
+has_normal
+has_centroid
+has_coordinate
+distance_to
+nearest_tangent_to
 adds_material_to
 removes_material_from
 ```
@@ -144,6 +160,8 @@ radius, diameter, length, height, width, depth
 signed and absolute volume delta
 bounding-box extents and deltas
 topology counts and topology deltas
+profile area, perimeter, centroid, local bounding box, edge count, vertex count,
+and primitive segment count
 centroid, normal, centerline, and orientation
 selector expression and selector result
 provenance confidence
@@ -153,7 +171,185 @@ kernel stability status
 The graph may be partially available in early versions, but every released row
 must declare which node and relation families it depends on.
 
-## 5. Query Program And Prompt Shape
+The relation names above are canonical enough for generation, but public
+question drafts may use near-synonyms. Normalize them before verification:
+
+- `path` may be represented by a `centerline` when the path has a stable fitted
+  or source-defined curve.
+- `normal`, `tangent`, and axis-like values should resolve to `direction` or
+  `axis` nodes with explicit frame and extraction method.
+- `orthogonal_to` and `perpendicular_to` are equivalent after direction
+  normalization.
+- `not_parallel_to` must store the angular threshold used for the negative
+  relation.
+- `void_region` is a specialization of `material_region` for removed material
+  or through-cut empty space.
+- `centroid` is a point node with a `has_coordinate` relation.
+
+## 5. Non-Feature Multi-Hop Semantics
+
+The interesting version of Multi-Hop CAD-QA should not collapse everything back
+to feature nodes. Features remain useful public answers, but the hidden query
+graph should allow intermediate reasoning over sketches, profiles, workplanes,
+faces, edges, vertices, solids, axes, centerlines, material regions, and
+measurements.
+
+### 5.1 Sketch And Profile Nodes
+
+A `sketch` node represents a visible sketch-building chain or helper output in
+the source program. A `profile` node represents a closed or open 2D geometric
+profile that can be used by an operation such as `.extrude(...)`,
+`.cutBlind(...)`, `.cutThruAll()`, `.sweep(...)`, `.loft(...)`, or
+`.revolve(...)`.
+
+Profile extraction should be AST-backed and CadQuery-semantics-aware. Supported
+profile builders should start conservative:
+
+- `.circle(radius)`;
+- `.rect(width, height)`;
+- `.polyline(points).close()`;
+- `.moveTo(...)`, `.lineTo(...)`, `.threePointArc(...)`, and `.sagittaArc(...)`
+  when the chain is statically recoverable;
+- helper-returned point lists when the helper is bounded, deterministic, and
+  evaluated inside the same trace sandbox;
+- transformed profiles after `.center(...)`, `.translate(...)`, `.rotate(...)`,
+  or workplane-local offsets when the transform is deterministic.
+
+Each profile should store both local-workplane and world-frame data when
+available:
+
+```text
+profile_id
+source_span
+builder_chain
+workplane_id
+is_closed
+local_points_or_segments
+world_points_or_segments
+area
+perimeter
+centroid
+local_bbox
+world_bbox
+edge_count
+vertex_count
+circular_segment_count
+line_segment_count
+orientation
+label_status
+```
+
+Profile geometry is allowed to be computed directly from the source expression
+when exact enough, or from CadQuery/OCP geometry after the workplane chain is
+executed. The row must record which method produced the label.
+
+### 5.2 Intrinsic Metrics Vs Application-Effect Metrics
+
+Profile geometry has two different measurement scopes:
+
+```text
+profile_intrinsic
+feature_application_effect
+```
+
+`profile_intrinsic` metrics describe the sketch/profile itself:
+
+- area;
+- perimeter;
+- centroid;
+- local or world bounding box;
+- edge count;
+- vertex count;
+- circular segment count;
+- line segment count;
+- orientation and normal inherited from the workplane.
+
+`feature_application_effect` metrics describe what happened when a feature used
+that profile:
+
+- signed volume delta;
+- removed or added volume;
+- bounding-box delta;
+- topology delta after the operation;
+- new circular edges;
+- deleted faces or edges;
+- material region added or removed.
+
+This distinction matters. A phrase like "the profile with the largest
+perimeter" can be a `profile_intrinsic` comparison. A phrase like "the profile
+whose cut creates the largest edge-count increase" must resolve through the
+feature application:
+
+```text
+profile --used_by--> cut feature
+cut feature --has_measurement(feature_application_effect.edge_count_delta)--> n
+```
+
+Do not store post-operation topology deltas as intrinsic profile measurements
+unless the task explicitly defines a derived view such as
+`profile_application_effect.edge_count_delta`.
+
+### 5.3 Profile Ownership And Projection
+
+Every non-feature node used in a row must have a projection path to the answer
+type. For feature-answer rows, a profile clue is valid only when the graph can
+project it back to one or more candidate features:
+
+```text
+feature --uses_profile--> profile
+profile --located_on--> workplane
+workplane --selected_by--> face
+profile --has_measurement(profile_intrinsic.perimeter)--> value
+feature --has_measurement(feature_application_effect.volume_delta)--> value
+```
+
+For profile-answer rows, the profile itself may be the answer:
+
+```text
+answer_type = entity_id
+target_entity_type = profile
+```
+
+Public answer formats must make this clear. If public stable profile IDs are
+not available, profile-answer rows should be kept internal until the entity-ID
+policy supports them.
+
+### 5.4 Face, Edge, Vertex, And Region Nodes
+
+Face, edge, vertex, and material-region nodes are valid intermediate nodes only
+when their identity is stable enough for the row's label policy. Each node must
+declare its extraction method:
+
+- selector result from CadQuery selector tables;
+- topology match across adjacent snapshots;
+- shape-signature match;
+- boolean-diff material region;
+- sampled point or centroid region evidence;
+- exact OCP geometry query.
+
+Relations such as `adjacent_to`, `opposite_to`, `contained_in`, `intersects`,
+`adds_material_to`, and `removes_material_from` should require explicit
+geometry evidence. AABB overlap alone is a heuristic and is not sufficient for
+release rows unless the row is explicitly marked as approximate or diagnostic.
+
+### 5.5 Non-Feature Row Acceptance
+
+Non-feature multi-hop rows must pass these extra checks:
+
+- every non-feature node has a stable ID or a stable projection to the public
+  answer;
+- every profile metric declares whether it is intrinsic or application-effect;
+- every face/edge/vertex/material-region relation declares its extraction
+  method and confidence;
+- every clue can be evaluated against a candidate set of the requested target
+  type;
+- the full clue set resolves uniquely without using private entity IDs in the
+  public prompt;
+- the public wording grounds non-feature concepts in visible code or geometry,
+  for example `.polyline(...)`, `.circle(...)`, `.faces(">Y")`, or "the selected
+  face used by the cut".
+
+## 6. Query Program And Prompt Shape
 
 Multi-Hop CAD-QA can afford typed internal data. The public task should not
 expose a query DSL, but the dataset row should store a hidden typed query
@@ -265,7 +461,7 @@ The exact query schema can change. The required property is that every public
 clue is recoverable from a stored deterministic query program and that the
 official answer can be independently revalidated from graph and trace labels.
 
-## 6. Generation Method
+## 7. Generation Method
 
 Generation should be answer-first and graph-grounded.
 
@@ -285,7 +481,7 @@ This is different from enumerating a fixed list of hardcoded templates. The
 template may render language, but the task structure should come from sampled
 graph query programs and verifier-backed uniqueness checks.
 
-## 7. Obfuscation Policy
+## 8. Obfuscation Policy
 
 Obfuscation should increase reasoning difficulty without making labels vague.
 
@@ -310,9 +506,9 @@ Disallowed obfuscations:
 Every obfuscated clue must map back to a concrete graph predicate, threshold,
 or relation in the hidden query program.
 
-## 8. Task Families
+## 9. Task Families
 
-### 8.1 Entity Identification
+### 9.1 Entity Identification
 
 Identify a feature, face, edge, vertex, workplane, selector, axis, or material
 region from a composed description.
@@ -324,7 +520,7 @@ Which feature has the largest positive volume delta among operations after the
 second box?
 ```
 
-### 8.2 Attribute Lookup After Resolution
+### 9.2 Attribute Lookup After Resolution
 
 First resolve an entity, then return one of its attributes.
 
@@ -334,7 +530,7 @@ Example:
 What is the axis length of the feature that added the most volume?
 ```
 
-### 8.3 Comparative Reasoning
+### 9.3 Comparative Reasoning
 
 Resolve two or more entities, compute comparable attributes, and choose or
 return the comparison result.
@@ -346,7 +542,7 @@ Which of the two boxes with parameter triples (1, 2, 3) and (4, 5, 6) changed
 the bounding box more along Y?
 ```
 
-### 8.4 Relation Existence
+### 9.4 Relation Existence
 
 Determine whether a composed relation holds between two resolved entities.
 
@@ -357,7 +553,7 @@ Did the feature selected before the final fillet remove material from the
 solid created by the first extrusion?
 ```
 
-### 8.5 Chain Completion
+### 9.5 Chain Completion
 
 Follow a relation path and return the final entity or value.
 
@@ -368,7 +564,7 @@ Which cut modified the face selected by the workplane operation immediately
 after the first cylindrical feature?
 ```
 
-### 8.6 Spatial-Graph Reasoning
+### 9.6 Spatial-Graph Reasoning
 
 Combine graph references with point, axis, centerline, or region measurements.
 
@@ -379,7 +575,7 @@ What is the shortest distance between the centerline of the first through-hole
 and the cylinder that removed the most volume?
 ```
 
-### 8.7 Ambiguity Detection
+### 9.7 Ambiguity Detection
 
 Detect when a natural-language question is under-specified or maps to multiple
 valid answers.
@@ -393,7 +589,7 @@ Which small hole is closest to the box?
 This family is optional but important. It prevents the benchmark from teaching
 models to invent a unique answer when the CAD graph does not support one.
 
-## 9. Answer Formats
+## 10. Answer Formats
 
 Allowed answer types:
 
@@ -413,7 +609,7 @@ Numeric answers must include units and tolerance. Entity answers must be stable
 under the dataset's entity-ID policy. Multi-part answers should use structured
 JSON only when all fields are independently validated.
 
-## 10. Difficulty Metadata
+## 11. Difficulty Metadata
 
 Each row should record measurable difficulty fields:
 
@@ -448,7 +644,7 @@ strong closed-book models. Level 5 should be deliberately hard enough that
 humans may struggle without tool support, which is part of the intended
 research value.
 
-## 11. Hop Composition Policy
+## 12. Hop Composition Policy
 
 Multi-Hop CAD-QA should not reward long questions whose reasoning chain is
 mostly recoverable from source text. Operation order, variable names, literal
@@ -511,12 +707,30 @@ Rows that exceed the static-hop ratio should be demoted to CAD-QA Core,
 feature-level graph diagnostics, or static-code comprehension, even if the
 question sounds complex.
 
-## 12. Realistic Target Examples
+## 13. Realistic Target Examples
 
 The examples below are shaped by CADEvolve-style scripts with roughly 15-30
 operations: repeated face selectors, workplanes, sketch profiles,
 through-cuts, blind rectangular cuts, sweeps, extruded bosses, unions, and
 custom planes.
+
+These examples are supported by the intended non-feature schema after relation
+normalization. They are not all supported by the current implementation. When a
+draft chain says that a `profile` has an application-effect metric such as
+`edge_count_delta` or `volume_delta`, the verifier must normalize that through
+the feature that used the profile:
+
+```text
+profile --used_by--> feature
+feature --has_measurement(feature_application_effect.<metric>)--> value
+```
+
+Intrinsic profile metrics such as perimeter, area, centroid, local bounding
+box, and profile edge count stay on the profile:
+
+```text
+profile --has_measurement(profile_intrinsic.<metric>)--> value
+```
 
 ### Example 1
 
@@ -531,13 +745,14 @@ faces?
 Evidence chain:
 
 ```text
-cut feature --selected_by--> face                  G
-face --has_normal--> normal                        G
-cut feature --uses_profile--> profile              G
-profile --has_measurement(edge_count_delta)--> n   G
+cut feature --selected_by--> face                                  G
+face --has_normal--> normal                                        G
+cut feature --uses_profile--> profile                              G
+profile --used_by--> cut feature                                   G
+cut feature --has_measurement(feature_application_effect.edge_count_delta)--> n G
 ```
 
-Hop count: 4 total, 0 S, 4 G.
+Hop count: 5 total, 0 S, 5 G.
 
 ### Example 2
 
@@ -552,11 +767,11 @@ largest perimeter?
 Evidence chain:
 
 ```text
-through-cut --uses_profile--> profile              G
-profile --has_measurement(perimeter)--> value      G
-through-cut --selected_by--> face                  G
-blind-cut --selected_by--> same face               G
-blind-cut --has_measurement(volume_delta)--> value G
+through-cut --uses_profile--> profile                              G
+profile --has_measurement(profile_intrinsic.perimeter)--> value    G
+through-cut --selected_by--> face                                  G
+blind-cut --selected_by--> same face                               G
+blind-cut --has_measurement(feature_application_effect.volume_delta)--> v G
 ```
 
 Hop count: 5 total, 0 S, 5 G.
@@ -648,7 +863,7 @@ cut feature --has_measurement(bbox_delta)          G
 
 Hop count: 4 total, 0 S, 4 G.
 
-## 13. Evaluation Modes
+## 14. Evaluation Modes
 
 Scores must not mix modes that expose different information.
 
@@ -664,7 +879,7 @@ The primary closed-book benchmark should be `code_only`. Tool-allowed modes are
 useful for CAD agents, but they measure search, tool use, and verifier
 strategy in addition to internal CAD reasoning.
 
-## 14. Rejection Rules
+## 15. Rejection Rules
 
 Reject or quarantine rows when:
 
@@ -682,7 +897,7 @@ Reject or quarantine rows when:
 - the row depends on bounding-box overlap where exact geometry evidence is
   required.
 
-## 15. Baselines
+## 16. Baselines
 
 Report baselines that expose shortcuts:
 
@@ -703,7 +918,7 @@ For Level 3 rows, also report a cheap decomposition baseline that attempts to
 turn the question into subquestions. This helps distinguish real graph
 reasoning from memorized prompt patterns.
 
-## 16. Dataset Split Rules
+## 17. Dataset Split Rules
 
 Multi-Hop CAD-QA must inherit CAD-QA leakage controls:
 
@@ -720,7 +935,7 @@ Questions generated from the same source graph or counterfactual group must
 stay in the same split. Near-duplicate query programs over the same source
 family should also stay together.
 
-## 17. MVP Prototype
+## 18. MVP Prototype
 
 A credible prototype should target 50-100 hand-audited generated rows, not a
 large release.
@@ -743,7 +958,7 @@ typed query programs, controlled checklist renderers, and verifier rejection.
 Natural language diversity can be added after the labels and difficulty
 controls are stable.
 
-## 18. Non-Goals
+## 19. Non-Goals
 
 This track does not require:
 

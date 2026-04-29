@@ -4,6 +4,7 @@ tracks:
   - shared_core
   - cadqa
   - advanced_cadqa
+  - multi_hop_cadqa
   - cadeditqa
 source_documents:
   - epics-and-stories.md
@@ -19,6 +20,8 @@ source_documents:
   - specs/extracting-cadevolve-features.md
   - specs/using-cadevolve-dataset-export.md
   - specs/dataset-spec.md
+  - specs/multi-hop-qa-task-spec.md
+  - docs/multi-hop-qa-architecture.md
   - specs/useful-implementation-optimization.md
   - specs/reviewer-readiness-checklist.md
 status_values:
@@ -35,7 +38,7 @@ ordering:
   rule: Epics follow the implementation order and research structure described in specs/useful-implementation-optimization.md, specs/extracting-cadevolve-features.md, specs/paper-spec.md, specs/research-experiment-spec.md, and the CADEditQA specs.
 current_snapshot:
   date: "2026-04-29"
-  codebase_state: CAD-QA now has a working Python package, CLI, source ingestion, AST operation graphs, isolated optional CadQuery tracing, scalar/topology snapshots, per-snapshot entity IDs, best-effort adjacent topology matching, conservative point/provenance records from adjacent volume deltas and adjacent topology matches, MVP public-row materialization including coordinate-frame and workplane-state tasks, feature-level typed graph-query graph/IR resolution, advanced trace-backed diagnostic row materialization for graph-query, spatial-distance, bbox-region, and validity/failure-mode QA, random and protected split assignment, near-boundary hard split routing, leakage validation, task-balanced subset export, JSONL export, optional Parquet export, trace caching, resumable sharded generation, grouped numeric counterfactual source generation, conservative CADEditQA parameter-edit, counterfactual-parameter, feature-to-edit, selector-repair, workplane-repair, and bounded multi-step edit-plan row materialization, optional multi-view SVG audit render bundles and render-backed request export, dataset cards, baselines including primitive symbolic volume, AABB point membership, and advanced diagnostic naive baselines, trace-label oracle upper bound, zero-shot and few-shot prediction request export, closed-book prediction response grading, P1 counterfactual sensitivity, task-transfer, and CADEditQA evaluation reports, answer-only and trace-grounded SFT data preparation, bounded parser-backed rejection-sampling reward scoring, guarded answer-only Unsloth SFT entrypoint, SFT ablation and scaling subset preparation, experiment orchestration, experiment comparison reports, canary stop gates, artifact retention and upload staging packages, manual audit sampling, failure taxonomy reports, reproducibility audits, paper draft scaffolding, smoke fixtures, tests, and validated smoke/CADEvolve-probe artifacts. Exact OpenCascade builder-history provenance, broader B-rep/sketch graph-query coverage, richer near-boundary sampling, verified counterfactual labels, and live GPU SFT execution remain open or partial.
+  codebase_state: CAD-QA now has a working Python package, CLI, source ingestion, AST operation graphs, isolated optional CadQuery tracing, scalar/topology snapshots, per-snapshot entity IDs, best-effort adjacent topology matching, conservative point/provenance records from adjacent volume deltas and adjacent topology matches, MVP public-row materialization including coordinate-frame and workplane-state tasks, advanced trace-backed diagnostic row materialization for spatial-distance, bbox-region, and validity/failure-mode QA, random and protected split assignment, near-boundary hard split routing, leakage validation, task-balanced subset export, JSONL export, optional Parquet export, trace caching, resumable sharded generation, grouped numeric counterfactual source generation, conservative CADEditQA parameter-edit, counterfactual-parameter, feature-to-edit, selector-repair, workplane-repair, and bounded multi-step edit-plan row materialization, optional multi-view SVG audit render bundles and render-backed request export, dataset cards, baselines including primitive symbolic volume, AABB point membership, and advanced diagnostic naive baselines, trace-label oracle upper bound, zero-shot and few-shot prediction request export, closed-book prediction response grading, P1 counterfactual sensitivity, task-transfer, and CADEditQA evaluation reports, answer-only and trace-grounded SFT data preparation, bounded parser-backed rejection-sampling reward scoring, guarded answer-only Unsloth SFT entrypoint, SFT ablation and scaling subset preparation, experiment orchestration, experiment comparison reports, canary stop gates, artifact retention and upload staging packages, manual audit sampling, failure taxonomy reports, reproducibility audits, paper draft scaffolding, smoke fixtures, tests, and validated smoke/CADEvolve-probe artifacts. Multi-Hop CAD-QA has a current rule-based architecture/spec and mock relation-gap survey, but the non-feature ontology implementation is open. Exact OpenCascade builder-history provenance, richer B-rep/sketch/profile/material-region coverage, richer near-boundary sampling, verified counterfactual labels, and live GPU SFT execution remain open or partial.
   stable_features:
     - cadqa_research_framing
     - cadqa_mvp_task_family_spec
@@ -88,8 +91,6 @@ current_snapshot:
     - cadeditqa_counterfactual_parameter_rows
     - cadqa_topology_match_provenance_records
     - cadeditqa_bounded_multistep_edit_plan_rows
-    - cadqa_typed_feature_graph_query_ir
-    - cadqa_graph_query_diagnostics
     - cadqa_spatial_distance_diagnostics
     - cadqa_bbox_region_diagnostics
     - cadqa_validity_failure_diagnostics
@@ -213,7 +214,7 @@ epics:
     implementation_complexity: High
     debugging_difficulty: High
     recommendation: Build now
-    status: implemented
+    status: work-in-progress
     stable: false
     stories:
       - id: "3.1"
@@ -264,6 +265,17 @@ epics:
         recommendation: Build after entity IDs
         status: implemented
         stable: false
+      - id: "3.7"
+        title: Sketch profile and workplane-frame extraction
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: High
+        recommendation: Build before non-feature multi-hop row generation
+        status: work-in-progress
+        stable: false
+        notes:
+          - present: "The multi-hop architecture and relation-gap survey identify profile geometry and workplane frames as P0 prerequisites."
+            missing: "Trace/source extraction does not yet emit stable profile nodes, intrinsic profile geometry, sketch centers, or local-to-world workplane frames."
 
   - id: epic-4
     title: Geometry topology and provenance labeling
@@ -340,6 +352,17 @@ epics:
         notes:
           - present: "Schema validation, duplicate row checks, and split leakage validation exist."
             missing: "Story-specific label validation for missing snapshots, unstable topology, low-confidence provenance, and prompt label leakage is not implemented."
+      - id: "4.8"
+        title: Non-feature geometry relation labels
+        priority: P0
+        implementation_complexity: High
+        debugging_difficulty: High
+        recommendation: Build after profile/workplane extraction
+        status: work-in-progress
+        stable: false
+        notes:
+          - present: "The spec defines `profile_intrinsic` and `feature_application_effect` measurement scopes."
+            missing: "Profile application effects, stable selector face IDs, same-face joins, path tangents, nearest path points, material-region geometry, and void-region geometry are not implemented."
 
   - id: epic-5
     title: Prompt and task generation
@@ -348,7 +371,7 @@ epics:
     implementation_complexity: Medium
     debugging_difficulty: Medium
     recommendation: Build after labels
-    status: implemented
+    status: work-in-progress
     stable: false
     stories:
       - id: "5.1"
@@ -448,6 +471,17 @@ epics:
         notes:
           - present: "The live trace path creates deterministic AABB, expanded-AABB, and entity-center near-face/edge/vertex point descriptors for each traced snapshot instead of only the final state; scheduled labels store nearest-entity center diagnostics when entity signatures exist."
             missing: "Exact added/removed-region sampling and exact nearest-surface diagnostics remain open."
+      - id: "5.12"
+        title: Rule-based multi-hop checklist generator
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: High
+        recommendation: Build after non-feature ontology labels
+        status: work-in-progress
+        stable: false
+        notes:
+          - present: "The architecture specifies deterministic ontology atoms, candidate-count gates, projection paths, and versioned checklist templates."
+            missing: "No production generator emits verifier-backed non-feature multi-hop rows with `profile_intrinsic` and `feature_application_effect` wording gates."
 
   - id: epic-6
     title: Dataset splits and balancing
@@ -1138,58 +1172,114 @@ epics:
         stable: false
 
   - id: epic-16
-    title: Graph-like multi-hop QA
-    scope: Add typed graph-query CAD-QA rows where questions compose operation order, feature/entity references, measured attributes, and deterministic aggregation.
-    priority: P2
+    title: Non-feature Multi-Hop CAD-QA
+    scope: Replace the legacy feature-level relation-diagnostic plan with rule-based Multi-Hop CAD-QA over profiles, workplanes, selector faces, paths, material regions, void regions, and deterministic projection paths back to public answer types.
+    priority: P0
     implementation_complexity: High
     debugging_difficulty: High
-    recommendation: Build after MVP traces, topology/provenance labels, and query-IR validation are stable
-    status: implemented
+    recommendation: Build P0 profile/workplane support before broad multi-hop prompt generation, then expand to face/path/material-region relations.
+    status: work-in-progress
     stable: false
     stories:
       - id: "16.1"
-        title: Typed CAD query graph
-        priority: P2
-        implementation_complexity: High
+        title: Non-feature ontology schema and relation normalization
+        priority: P0
+        implementation_complexity: Medium
         debugging_difficulty: High
-        recommendation: Build after operation graphs and topology IDs are stable
-        status: implemented
+        recommendation: Build now
+        status: work-in-progress
         stable: false
+        notes:
+          - present: "The task spec now defines non-feature nodes, relation aliases, measurement scopes, and normalization rules."
+            missing: "The production schema/resolver does not yet enforce these names or relation-normalization rules."
       - id: "16.2"
-        title: Graph query IR and resolver
+        title: Profile intrinsic geometry labels
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: High
+        recommendation: Build first
+        status: work-in-progress
+        stable: false
+        notes:
+          - present: "The relation-gap survey identifies `has_profile_geometry` as a P0 prerequisite."
+            missing: "No production labels exist yet for profile area, perimeter, centroid, local/world bounds, edge count, vertex count, or primitive segment counts."
+      - id: "16.3"
+        title: Workplane frame and profile projection paths
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: High
+        recommendation: Build with profile geometry
+        status: work-in-progress
+        stable: false
+        notes:
+          - present: "The architecture requires every non-feature clue to project to the requested answer type."
+            missing: "Workplane origin/axes/normal transforms and `feature -> uses_profile -> profile` projection paths are not production labels."
+      - id: "16.4"
+        title: Profile application-effect labels
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: High
+        recommendation: Build before using profile-effect public clues
+        status: work-in-progress
+        stable: false
+        notes:
+          - present: "The spec distinguishes `profile_intrinsic` from `feature_application_effect`."
+            missing: "Operation deltas are not yet linked back through the profile used by a cut, extrude, sweep, loft, or revolve."
+      - id: "16.5"
+        title: Rule-based hidden query and checklist renderer
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: High
+        recommendation: Build after P0 ontology labels
+        status: work-in-progress
+        stable: false
+        notes:
+          - present: "The architecture specifies answer-first sampling, atomic clue breadth gates, deterministic templates, clue maps, and verifier rejection."
+            missing: "No production row materializer emits non-feature multi-hop checklist rows or rejection manifests."
+      - id: "16.6"
+        title: Stable selector face IDs and same-face joins
+        priority: P1
+        implementation_complexity: High
+        debugging_difficulty: High
+        recommendation: Build after P0 profile/workplane support
+        status: work-in-progress
+        stable: false
+        notes:
+          - present: "Selector tables and per-snapshot entity IDs exist."
+            missing: "Selector-result face identity, stable face matching, non-top/side-face predicates, and `same_selected_face_as` joins are not implemented for multi-hop rows."
+      - id: "16.7"
+        title: Sweep path tangent and nearest-point relations
+        priority: P1
+        implementation_complexity: Medium
+        debugging_difficulty: High
+        recommendation: Build after workplane/profile world geometry
+        status: work-in-progress
+        stable: false
+        notes:
+          - present: "Source paths such as `splineApprox(...)` are visible in operation graphs."
+            missing: "`has_path_tangent`, `nearest_point_on_path`, and direction-comparison labels are not implemented."
+      - id: "16.8"
+        title: Material and void region geometry relations
         priority: P2
         implementation_complexity: High
         debugging_difficulty: High
-        recommendation: Build after typed graph extraction
-        status: implemented
+        recommendation: Build after profile/face/path P0-P1 relations are credible
+        status: work-in-progress
         stable: false
-      - id: "16.3"
-        title: Multi-hop prompt generator
-        priority: P2
-        implementation_complexity: Medium
-        debugging_difficulty: High
-        recommendation: Build after query resolver validation
-        status: implemented
-        stable: false
-      - id: "16.4"
-        title: Graph-query baselines and audits
-        priority: P2
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build before reporting graph-query scores
-        status: implemented
-        stable: false
-      - id: "16.5"
-        title: Feature-pair relation graph-query expansion
-        priority: P2
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build after typed graph extraction
+        notes:
+          - present: "Conservative adjacent-volume provenance records exist."
+            missing: "Added-material regions, removed void regions, region centroids, bounds, intersections, containment, and adjacency are not production-grade labels."
+      - id: "16.9"
+        title: Non-feature multi-hop survey and coverage reports
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Low
+        recommendation: Keep current while building ontology slices
         status: implemented
         stable: false
         notes:
-          - present: "Default graph-query generation now emits bounded yes/no feature-pair relation questions for operation ordering and input-to edges."
-            missing: "It does not yet exhaustively sample all feature pairs, B-rep entity interactions, or balanced rare relation templates."
+          - present: "Mock survey artifacts exist under `experiments/multi_hop_qa_mock/preview/non_feature_relation_gap_survey.*`."
+            missing: "The survey is static and not yet integrated as a generation acceptance report."
 
   - id: epic-17
     title: Spatial distance QA
@@ -1384,7 +1474,7 @@ milestones:
       - epic-10
       - epic-14
   - id: milestone-10
-    title: Advanced CAD-QA diagnostics
+    title: Advanced CAD-QA and Multi-Hop diagnostics
     required_epics:
       - epic-16
       - epic-17
@@ -1436,6 +1526,10 @@ backlog_priority:
     - run_artifact_contract
     - prediction_output_contract
     - paper_core_sections
+    - non_feature_multi_hop_profile_geometry
+    - non_feature_multi_hop_workplane_frames
+    - non_feature_multi_hop_profile_application_effects
+    - non_feature_multi_hop_rule_based_checklist_generation
   P1:
     - counterfactual_groups
     - reasoning_sft
@@ -1445,8 +1539,13 @@ backlog_priority:
     - bounded_rl_or_rejection_sampling
     - experiment_artifact_upload
     - cadeditqa_first_repair_slices
+    - non_feature_multi_hop_stable_face_ids
+    - non_feature_multi_hop_same_face_joins
+    - non_feature_multi_hop_path_tangents
   P2:
-    - graph_like_multi_hop_qa
+    - non_feature_multi_hop_material_regions
+    - non_feature_multi_hop_void_regions
+    - non_feature_multi_hop_region_adjacency_and_intersections
     - spatial_distance_qa
     - bounding_box_region_qa
     - validity_failure_mode_qa

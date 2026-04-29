@@ -60,10 +60,24 @@ Useful graph families:
   workplane-changing steps;
 - selector usage, such as `.faces(">Z")`, `.edges("|Z")`, or `.vertices(...)`;
 - parameter and expression usage;
+- sketch and profile nodes from `.circle(...)`, `.rect(...)`, `.polyline(...)`,
+  `.close()`, helper-returned point lists, and recoverable sketch chains;
+- intrinsic profile geometry, such as area, perimeter, centroid, local bounding
+  box, edge count, vertex count, circular segment count, and line segment count;
 - volume and bounding-box deltas;
 - topology deltas, such as face, edge, circular-edge, or vertex count changes;
-- relation edges between operations, workplanes, selected entities, parameters,
-  and derived geometry labels.
+- relation edges between operations, workplanes, profiles, selected entities,
+  parameters, material regions, and derived geometry labels.
+
+Profile metrics have two scopes:
+
+- `profile_intrinsic`: measurements of the sketch/profile itself;
+- `feature_application_effect`: measurements of what happened when a feature
+  used the profile.
+
+The generator should keep these scopes separate. For example, profile perimeter
+belongs to `profile_intrinsic`, while edge-count delta after a cut belongs to
+the cut feature's application effect.
 
 ### Hidden Query Program
 
@@ -75,9 +89,11 @@ models.
   "query_version": "cadqa_multihop_query_v1",
   "answer_type": "feature_id",
   "target_entity_type": "feature",
+  "intermediate_entity_types": ["profile", "workplane", "face"],
   "public_prompt_style": "constraint_checklist",
   "target_id": "f17",
   "clauses": [],
+  "projection_paths": [],
   "candidate_set_trace": [],
   "rejected_clues": [],
   "difficulty": {},
@@ -135,7 +151,9 @@ For each source script:
 - identify feature-like operations and stable feature IDs;
 - collect selector calls and the call chain they affect;
 - collect parameter definitions and expression uses;
+- extract sketch/profile chains and compute intrinsic profile geometry;
 - attach trace-derived metrics and topology deltas when available;
+- attach feature-application metrics to the operation that used each profile;
 - emit typed nodes and relations with label-source pointers.
 
 Rows should be rejected when a required graph family is missing or unstable.
@@ -175,6 +193,26 @@ Example atom:
 
 The atom should be evaluated against all candidates before it is verbalized.
 
+Non-feature atoms must also declare how they project to the requested answer
+type. A profile clue in a `feature_id` question is not enough by itself; it must
+include a path such as:
+
+```text
+feature --uses_profile--> profile
+profile --has_measurement(profile_intrinsic.perimeter)--> value
+```
+
+or:
+
+```text
+feature --uses_profile--> profile
+profile --used_by--> feature
+feature --has_measurement(feature_application_effect.edge_count_delta)--> value
+```
+
+This allows prompts to reason through profiles, faces, workplanes, and material
+regions while still returning a stable feature ID.
+
 ### 4. Apply Atomic Clue Gates
 
 Any single clue that narrows too much is a leak. Apply these gates before
@@ -187,6 +225,8 @@ composing the question:
 - reject rare selectors or one-off provenance facts when they identify fewer
   than five candidates;
 - reject clues whose target type is incompatible with the requested answer.
+- reject non-feature clues that do not have a stable projection path to the
+  requested answer type.
 
 This intentionally discards many correct facts. A clue can be true and still be
 bad for the hard track if it selects one or two entities by itself.
@@ -210,6 +250,10 @@ Good public clue wording is grounded in visible code:
 - "uses `.faces(\">Z\")` before creating a workplane";
 - "is made by a `.cutBlind(...)` call that removes material";
 - "uses a radius expression also used by another circular sketch operation";
+- "uses the closed point list later passed to `.polyline(...)`";
+- "uses the profile with the largest computed perimeter among the repeated
+  `.polyline(...).close()` cuts";
+- "uses a profile whose resulting cut creates the largest edge-count increase";
 - "comes after at least five earlier feature operations";
 - "changes the final object's volume while leaving its outer bounding box
   unchanged";
@@ -235,7 +279,7 @@ The accepted set must satisfy:
 - each individual clue passes the breadth gate;
 - partial combinations leave plausible distractors;
 - the full combination resolves to exactly one target;
-- the clues share a compatible target type;
+- every non-feature clue has a projection path to the requested target type;
 - the set covers at least two constraint types;
 - the hidden evidence chain is long enough for the target difficulty bucket;
 - no clue contains a private ID or private diagnostic field.
@@ -301,6 +345,16 @@ Accepted rows should produce:
 Creates typed nodes, relations, source spans, label-source pointers, and
 stability flags from each script and trace artifact.
 
+### Sketch/Profile Extractor
+
+Builds sketch and profile nodes from recoverable CadQuery chains and bounded
+helper outputs. It computes local and world profile geometry, including area,
+perimeter, centroid, bounding boxes, edge count, vertex count, and primitive
+segment counts.
+
+The extractor must record whether a measurement is `profile_intrinsic` or
+`feature_application_effect`.
+
 ### Target Sampler
 
 Selects answer-first targets under quotas for answer type, operation family,
@@ -314,12 +368,14 @@ public prose.
 ### Candidate Counter
 
 Evaluates each atom against all candidate targets and records the candidate set
-left by that atom alone.
+left by that atom alone. For non-feature atoms, counting is performed after
+projecting the atom back to the requested target type.
 
 ### Gate Evaluator
 
 Applies breadth, temporal side-range, wording-eligibility, target-type, and
-label-stability gates.
+label-stability gates. It also rejects non-feature clues without stable
+projection paths.
 
 ### Rule-Based Verbalizer
 
@@ -395,9 +451,13 @@ Each template family should declare:
 - supported `constraint_type`;
 - supported relation names;
 - supported target entity types;
+- supported intermediate entity types;
+- supported measurement scopes, such as `profile_intrinsic` or
+  `feature_application_effect`;
 - required public arguments;
 - banned argument shapes;
 - candidate-count requirements;
+- required projection path shape for non-feature clues;
 - examples of acceptable output;
 - examples of rejected output.
 
@@ -409,8 +469,11 @@ Example:
   "constraint_type": "selector",
   "relations": ["uses_selector_before_workplane"],
   "target_entity_types": ["feature"],
+  "intermediate_entity_types": ["face", "workplane"],
+  "measurement_scopes": [],
   "required_public_args": ["selector_literal"],
   "minimum_candidate_count": 5,
+  "projection_path": "feature -> selected_by -> face -> located_on -> workplane",
   "text": "uses `{selector_literal}` before creating a workplane"
 }
 ```
@@ -468,6 +531,36 @@ Reject wording that depends on private benchmark terminology.
 Verify that every clue in a prompt can resolve to the requested answer type.
 This should catch prompts that accidentally combine feature, face, vertex,
 parameter, and profile clues without a clear shared target.
+
+### Non-Feature Relation Gap Survey
+
+Sample real CadEvolve scripts, choose mixed non-feature entities, and record
+which relation opportunities are current, spec-only, or missing but necessary.
+The current survey artifact is
+[`experiments/multi_hop_qa_mock/preview/non_feature_relation_gap_survey.md`](../experiments/multi_hop_qa_mock/preview/non_feature_relation_gap_survey.md).
+
+The first observed priority and complexity matrix is:
+
+| Priority | Capability | Complexity | Why First | Enables |
+|---|---|---|---|---|
+| P0 | `has_profile_geometry` | M | Most non-feature questions need real profile facts, and this is mostly AST/CadQuery chain extraction. | Profile perimeter/area/centroid/bounds, profile comparisons, sketch-shape clues. |
+| P0 | `has_workplane_frame` | M | Profile geometry is not useful without local-to-world frame, origin, axes, and normal. | Workplane-normal clues, profile world coordinates, selector-to-profile grounding. |
+| P0 | `has_profile_application_effect` | M | Connects intrinsic profile facts to operation deltas; prevents fake `profile.edge_count_delta` labels. | "Profile whose cut creates..." and cut/extrude effect clues. |
+| P0 | Profile projection paths | S | Required so non-feature clues resolve back to `feature_id` answers. | `feature -> uses_profile -> profile -> metric` rows. |
+| P0 | Template and gate support for measurement scopes | S | The verbalizer must distinguish `profile_intrinsic` from `feature_application_effect`. | Public wording that is precise and auditable. |
+| P1 | `has_stable_face_id` | H | Selector-rich scripts need face identity, but stable topology matching is harder than profile extraction. | Face-selector clues, same-face joins, non-top/side-face reasoning. |
+| P1 | `same_selected_face_as` | M | Once face IDs exist, equality joins are cheap and unlock many multi-hop rows. | "same selected face as..." and repeated selector patterns. |
+| P1 | `has_sketch_center` | S | Easy for circle/rect/polyline profiles after profile geometry exists. | Center-offset clues, positive/negative side clues, coordinate lookup rows. |
+| P1 | `has_path_tangent` | M | Needed for sweep/helix questions; can start from source-defined spline points. | Sweep tangent, normal-vs-path, nearest-direction comparisons. |
+| P1 | `nearest_point_on_path` | M | Pairs with path tangent and profile/solid centroids. | Closest boss to sweep path, tangent at nearest point. |
+| P2 | `has_material_region_geometry` | H | High value but depends on robust boolean/provenance evidence. | Added-volume centroid/bbox/adjacency/intersection rows. |
+| P2 | `has_void_region_geometry` | H | Similar to material regions, but for cuts and through-voids. | Removed-volume, through-cut void, cut-intersection rows. |
+| P2 | `adjacent_to` / `opposite_to` over faces and regions | H | Requires stable B-rep identity and geometry relation checks. | Face adjacency, opposite side face, material-region adjacency. |
+| P2 | `intersects` / `contained_in` over material and void regions | H | Needs exact or conservative region evidence, not AABB-only heuristics. | Region intersection, containment, through-void questions. |
+
+P0 should be implemented before broad prompt generation. P1 makes the questions
+look substantially more like the target benchmark. P2 is where the benchmark
+starts depending on heavier B-rep and boolean-diff infrastructure.
 
 ## Main Risks
 
