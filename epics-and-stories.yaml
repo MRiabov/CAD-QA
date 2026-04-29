@@ -34,8 +34,8 @@ ordering:
   source: specs
   rule: Epics follow the implementation order and research structure described in specs/useful-implementation-optimization.md, specs/extracting-cadevolve-features.md, specs/paper-spec.md, specs/research-experiment-spec.md, and the CADEditQA specs.
 current_snapshot:
-  date: "2026-04-28"
-  codebase_state: CAD-QA now has a working Python package, CLI, source ingestion, AST operation graphs, isolated optional CadQuery tracing, scalar/topology snapshots, per-snapshot entity IDs, best-effort adjacent topology matching, conservative point/provenance records from adjacent volume deltas and adjacent topology matches, MVP public-row materialization including coordinate-frame and workplane-state tasks, random and protected split assignment, near-boundary hard split routing, leakage validation, task-balanced subset export, JSONL export, optional Parquet export, trace caching, resumable sharded generation, grouped numeric counterfactual source generation, conservative CADEditQA parameter-edit, counterfactual-parameter, feature-to-edit, selector-repair, workplane-repair, and bounded multi-step edit-plan row materialization, optional multi-view SVG audit render bundles and render-backed request export, dataset cards, baselines including primitive symbolic volume and AABB point membership, trace-label oracle upper bound, zero-shot and few-shot prediction request export, closed-book prediction response grading, P1 counterfactual sensitivity, task-transfer, and CADEditQA evaluation reports, answer-only and trace-grounded SFT data preparation, bounded parser-backed rejection-sampling reward scoring, guarded answer-only Unsloth SFT entrypoint, SFT ablation and scaling subset preparation, experiment orchestration, experiment comparison reports, canary stop gates, artifact retention and upload staging packages, manual audit sampling, failure taxonomy reports, reproducibility audits, paper draft scaffolding, smoke fixtures, tests, and validated smoke/CADEvolve-probe artifacts. Exact OpenCascade builder-history provenance, richer near-boundary sampling, verified counterfactual labels, and live GPU SFT execution remain open or partial.
+  date: "2026-04-29"
+  codebase_state: CAD-QA now has a working Python package, CLI, source ingestion, AST operation graphs, isolated optional CadQuery tracing, scalar/topology snapshots, per-snapshot entity IDs, best-effort adjacent topology matching, conservative point/provenance records from adjacent volume deltas and adjacent topology matches, MVP public-row materialization including coordinate-frame and workplane-state tasks, advanced trace-backed diagnostic row materialization for graph-query, spatial-distance, bbox-region, and validity/failure-mode QA, random and protected split assignment, near-boundary hard split routing, leakage validation, task-balanced subset export, JSONL export, optional Parquet export, trace caching, resumable sharded generation, grouped numeric counterfactual source generation, conservative CADEditQA parameter-edit, counterfactual-parameter, feature-to-edit, selector-repair, workplane-repair, and bounded multi-step edit-plan row materialization, optional multi-view SVG audit render bundles and render-backed request export, dataset cards, baselines including primitive symbolic volume, AABB point membership, and advanced diagnostic naive baselines, trace-label oracle upper bound, zero-shot and few-shot prediction request export, closed-book prediction response grading, P1 counterfactual sensitivity, task-transfer, and CADEditQA evaluation reports, answer-only and trace-grounded SFT data preparation, bounded parser-backed rejection-sampling reward scoring, guarded answer-only Unsloth SFT entrypoint, SFT ablation and scaling subset preparation, experiment orchestration, experiment comparison reports, canary stop gates, artifact retention and upload staging packages, manual audit sampling, failure taxonomy reports, reproducibility audits, paper draft scaffolding, smoke fixtures, tests, and validated smoke/CADEvolve-probe artifacts. Exact OpenCascade builder-history provenance, richer near-boundary sampling, verified counterfactual labels, and live GPU SFT execution remain open or partial.
   stable_features:
     - cadqa_research_framing
     - cadqa_mvp_task_family_spec
@@ -88,6 +88,10 @@ current_snapshot:
     - cadeditqa_counterfactual_parameter_rows
     - cadqa_topology_match_provenance_records
     - cadeditqa_bounded_multistep_edit_plan_rows
+    - cadqa_graph_query_diagnostics
+    - cadqa_spatial_distance_diagnostics
+    - cadqa_bbox_region_diagnostics
+    - cadqa_validity_failure_diagnostics
 
 epics:
   - id: epic-1
@@ -1022,7 +1026,7 @@ epics:
     implementation_complexity: High
     debugging_difficulty: High
     recommendation: Build after MVP traces, topology/provenance labels, and query-IR validation are stable
-    status: planned
+    status: work-in-progress
     stable: false
     stories:
       - id: "16.1"
@@ -1031,7 +1035,7 @@ epics:
         implementation_complexity: High
         debugging_difficulty: High
         recommendation: Build after operation graphs and topology IDs are stable
-        status: planned
+        status: work-in-progress
         stable: false
       - id: "16.2"
         title: Graph query IR and resolver
@@ -1039,7 +1043,7 @@ epics:
         implementation_complexity: High
         debugging_difficulty: High
         recommendation: Build after typed graph extraction
-        status: planned
+        status: work-in-progress
         stable: false
       - id: "16.3"
         title: Multi-hop prompt generator
@@ -1047,7 +1051,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: High
         recommendation: Build after query resolver validation
-        status: planned
+        status: work-in-progress
         stable: false
       - id: "16.4"
         title: Graph-query baselines and audits
@@ -1055,7 +1059,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build before reporting graph-query scores
-        status: planned
+        status: work-in-progress
         stable: false
 
   - id: epic-17
@@ -1065,7 +1069,7 @@ epics:
     implementation_complexity: High
     debugging_difficulty: High
     recommendation: Build after workplane/frame metadata and topology entity IDs are stable
-    status: planned
+    status: implemented
     stable: false
     stories:
       - id: "17.1"
@@ -1074,7 +1078,7 @@ epics:
         implementation_complexity: High
         debugging_difficulty: High
         recommendation: Build after snapshot entity IDs
-        status: planned
+        status: implemented
         stable: false
       - id: "17.2"
         title: Axis and centerline fitting policy
@@ -1082,7 +1086,7 @@ epics:
         implementation_complexity: High
         debugging_difficulty: High
         recommendation: Build before centerline distance rows
-        status: planned
+        status: implemented
         stable: false
       - id: "17.3"
         title: Spatial-distance labels and prompts
@@ -1090,7 +1094,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: High
         recommendation: Build after spatial references validate
-        status: planned
+        status: implemented
         stable: false
       - id: "17.4"
         title: Spatial-distance baselines and audits
@@ -1098,7 +1102,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build before reporting distance scores
-        status: planned
+        status: implemented
         stable: false
 
   - id: epic-18
@@ -1108,7 +1112,7 @@ epics:
     implementation_complexity: High
     debugging_difficulty: High
     recommendation: Build after spatial indexes and material-region evidence are available
-    status: planned
+    status: implemented
     stable: false
     stories:
       - id: "18.1"
@@ -1117,7 +1121,7 @@ epics:
         implementation_complexity: High
         debugging_difficulty: High
         recommendation: Build after topology and sampled material records
-        status: planned
+        status: implemented
         stable: false
       - id: "18.2"
         title: Region predicate label policy
@@ -1125,7 +1129,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: High
         recommendation: Build before region prompt generation
-        status: planned
+        status: implemented
         stable: false
       - id: "18.3"
         title: Bounding-box region prompt generator
@@ -1133,7 +1137,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: High
         recommendation: Build after predicate labels validate
-        status: planned
+        status: implemented
         stable: false
       - id: "18.4"
         title: Region-query baselines and audits
@@ -1141,7 +1145,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build before reporting region-query scores
-        status: planned
+        status: implemented
         stable: false
 
   - id: epic-19
@@ -1151,7 +1155,7 @@ epics:
     implementation_complexity: High
     debugging_difficulty: High
     recommendation: Build after isolated workers, failure manifests, and repeated-probe stability checks are reliable
-    status: planned
+    status: implemented
     stable: false
     stories:
       - id: "19.1"
@@ -1160,7 +1164,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: High
         recommendation: Build before failure-mode rows
-        status: planned
+        status: implemented
         stable: false
       - id: "19.2"
         title: Failure-type taxonomy
@@ -1168,7 +1172,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: Medium
         recommendation: Build before public failure labels
-        status: planned
+        status: implemented
         stable: false
       - id: "19.3"
         title: Threshold-search validity labels
@@ -1176,7 +1180,7 @@ epics:
         implementation_complexity: High
         debugging_difficulty: High
         recommendation: Build after probe repeatability is proven
-        status: planned
+        status: implemented
         stable: false
       - id: "19.4"
         title: Failure-mode prompts and baselines
@@ -1184,7 +1188,7 @@ epics:
         implementation_complexity: Medium
         debugging_difficulty: High
         recommendation: Build before reporting validity scores
-        status: planned
+        status: implemented
         stable: false
 
 milestones:
@@ -1250,6 +1254,13 @@ milestones:
     required_epics:
       - epic-10
       - epic-14
+  - id: milestone-10
+    title: Advanced CAD-QA diagnostics
+    required_epics:
+      - epic-16
+      - epic-17
+      - epic-18
+      - epic-19
 
 mvp_scope:
   dataset:
@@ -1306,6 +1317,10 @@ backlog_priority:
     - experiment_artifact_upload
     - cadeditqa_first_repair_slices
   P2:
+    - graph_like_multi_hop_qa
+    - spatial_distance_qa
+    - bounding_box_region_qa
+    - validity_failure_mode_qa
     - multimodal_prompt_variants
     - tool_assisted_execution_setting
     - parquet_release_package

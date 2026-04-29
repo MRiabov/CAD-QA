@@ -28,7 +28,7 @@ uv run cadqa baseline data/cadqa_smoke/jsonl/train.jsonl --output-dir runs/smoke
 
 The default baseline suite includes majority, random, static and regex
 operation-count, selector heuristic, primitive symbolic volume, AABB
-point-membership, and oracle baselines.
+point-membership, advanced diagnostic naive, and oracle baselines.
 
 Run the trace-label oracle upper bound:
 
@@ -160,6 +160,14 @@ uv run python -m scripts.evaluation.export_multimodal_prediction_requests \
   --render-manifest runs/audit_renders/audit_render_manifest.json \
   --output runs/eval/multimodal_requests.jsonl
 ```
+
+The smoke generator also emits conservative advanced diagnostic rows when
+trace metadata is available or safely derivable:
+
+- `graph_query`
+- `spatial_distance`
+- `bbox_region_query`
+- `validity_failure_prediction`
 
 Generate grouped numeric counterfactual source variants:
 

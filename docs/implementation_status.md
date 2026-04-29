@@ -27,6 +27,10 @@ specs.
   - `topology_count_after_step`
   - `point_membership`
   - `feature_provenance_choice`
+  - `graph_query`
+  - `spatial_distance`
+  - `bbox_region_query`
+  - `validity_failure_prediction`
 - Group-safe split assignment, split manifests, leakage audits, metadata,
   failure manifests, and dataset-card generation.
 - Manual audit sample export, trace failure taxonomy reports, and two-export
@@ -44,7 +48,7 @@ specs.
   runs.
 - Baselines for majority, random, static operation count, regex operation
   count, selector heuristic, primitive symbolic volume,
-  AABB point-membership, and oracle.
+  AABB point-membership, advanced diagnostic naive, and oracle.
 - Trace-label oracle upper-bound export for parser and metric sanity checks.
 - Experiment comparison reports with headline, per-task, and per-split JSON,
   CSV, and Markdown tables.
@@ -84,7 +88,7 @@ specs.
 
 ## Validated Artifacts
 
-- Current smoke generator: 53 validated smoke rows across implemented task
+- Current smoke generator: 60 validated smoke rows across implemented task
   families when rerun from the latest code.
 - `runs/cadevolve_trace_probe_t30/dataset`: 921 validated rows from 3 adjacent
   CADEvolve-style sources, no failures.
