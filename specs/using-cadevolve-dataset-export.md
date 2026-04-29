@@ -136,6 +136,12 @@ From successful traces, materialize structured rows for operation, selector,
 volume, topology, point, and provenance tasks. Prompt generation should not
 load CadQuery or execute code.
 
+Later complex CAD-QA builds may also materialize graph-like multi-hop rows,
+spatial-distance rows, bounding-box region rows, and validity/failure-mode rows.
+Those rows require extra trace artifacts: query IR resolution tables, point or
+axis/centerline references, spatial-window indexes, and isolated validity probe
+results.
+
 ## What to Expect From the Code
 
 CADEvolve code is favorable for CAD-QA because many files are machine-generated
@@ -154,6 +160,10 @@ and single-assignment. A typical operation can often be represented as:
 This makes operation graphs and trace-backed QA practical. It does not by
 itself solve exact face/edge/vertex provenance; that still requires execution,
 topology matching, and, where possible, OpenCascade operation history.
+It also does not by itself solve graph-like, spatial-distance, region-query, or
+failure-mode labels; those require the later-stage machinery defined in
+`specs/benchmark-task-spec.md`, `specs/schema.md`, and
+`specs/generation_policy.md`.
 
 ## Safety Notes
 

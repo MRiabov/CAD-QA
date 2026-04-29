@@ -61,6 +61,11 @@ rtk uv run python -m compileall -q .
   - fillet/chamfer;
   - near-boundary points;
   - provenance relations.
+- For complex task builds, manually inspect a sample covering:
+  - graph-like multi-hop query resolution;
+  - point, axis, and centerline distance references;
+  - bounding-box region predicates;
+  - validity and failure-mode probes.
 - Recompute labels for a deterministic sample and compare against exported
   labels.
 
@@ -75,6 +80,9 @@ rtk uv run python -m compileall -q .
   - topology signature;
   - counterfactual group;
   - point sampling group.
+  - graph query group;
+  - spatial reference group;
+  - validity probe group.
 - Confirm all counterfactual variants stay in the same split.
 - Confirm held-out test splits match their advertised isolation rule.
 
@@ -88,6 +96,9 @@ rtk uv run python -m compileall -q .
 - Confirm invalid output rate is reported.
 - Confirm per-task and per-split metrics are reported, not only a single
   headline number.
+- For complex task builds, confirm graph-reference resolution failures,
+  spatial-reference ambiguity, region-query ambiguity, and validity-probe
+  instability are reported separately.
 
 ## Release Notes
 
@@ -96,6 +107,8 @@ rtk uv run python -m compileall -q .
 - Document CADEvolve source version and license.
 - Document label policy and known kernel sensitivities.
 - Document known limitations of feature provenance.
+- Document whether graph-query, spatial-distance, bounding-box region, and
+  validity/failure-mode task families are included or explicitly deferred.
 - Include citation text and intended use.
 - Include a clear statement that public task evaluation does not require CAD
   execution.
