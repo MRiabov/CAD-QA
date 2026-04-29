@@ -5,7 +5,8 @@ from cad_qa.config import DatasetConfig
 from cad_qa.export import export_smoke_dataset
 from cad_qa.fixtures import smoke_traces
 from cad_qa.jsonio import read_jsonl
-from cad_qa.materialize import materialize_rows
+from cad_qa.materialize import materialize_rows, materialize_rows_with_manifest
+from cad_qa.schema import validate_public_row
 from cad_qa.validation import validate_dataset_dir
 
 
@@ -54,6 +55,57 @@ def test_public_rows_do_not_leak_local_paths(tmp_path: Path):
             assert "cache_path" not in row["provenance"]
 
 
+def test_point_membership_rows_are_crisp_only():
+    config = DatasetConfig()
+    source, trace = smoke_traces(config)[0]
+    ambiguous_query = {
+        **trace.point_queries[0],
+        "point": [4.99999, 0, 0],
+        "point_classification": "ambiguous",
+        "sampling_stratum": "near_boundary_inside",
+    }
+
+    rows = materialize_rows(
+        source,
+        replace(trace, point_queries=[*trace.point_queries, ambiguous_query]),
+        config=config,
+    )
+    point_rows = [row for row in rows if row.task_type == "point_membership"]
+
+    assert point_rows
+    assert all(row.answer != "ambiguous" for row in point_rows)
+    assert all("ambiguous" not in row.choices for row in point_rows if row.choices)
+    assert all("ambiguous" not in row.prompt for row in point_rows)
+
+
+def test_schema_rejects_ambiguous_point_membership_answer():
+    errors = validate_public_row(
+        {
+            "id": "row",
+            "dataset_version": "cadqa-v0.1",
+            "task_type": "point_membership",
+            "source_id": "src",
+            "trace_id": "trace",
+            "target_feature_id": "wp1",
+            "split": "train",
+            "prompt": "prompt",
+            "answer_type": "enum",
+            "answer": "ambiguous",
+            "choices": ["inside", "outside", "on_boundary", "ambiguous"],
+            "unit": None,
+            "numeric_tolerance": None,
+            "requires": [],
+            "difficulty_tags": [],
+            "labels": {},
+            "diagnostics": {},
+            "provenance": {"source_id": "src", "split_group": "src"},
+            "parse_policy": "strict_enum_v1",
+        }
+    )
+
+    assert "point_membership answer must be a point classification" in errors
+
+
 def test_public_numeric_answers_are_rounded_but_raw_labels_are_preserved():
     config = DatasetConfig()
     source, trace = smoke_traces(config)[0]
@@ -64,12 +116,19 @@ def test_public_numeric_answers_are_rounded_but_raw_labels_are_preserved():
     snapshots = [{**trace.snapshots[0], "bbox": raw_bbox}]
     rows = materialize_rows(source, replace(trace, snapshots=snapshots), config=config)
     bbox_row = next(row for row in rows if row.task_type == "bbox_after_step")
+    first_delta_row = next(
+        row
+        for row in rows
+        if row.task_type == "signed_volume_delta" and row.target_feature_id == "wp1"
+    )
 
     assert bbox_row.answer == {
         "min": [-89.24, -46.47, 36.0],
         "max": [-84.76, -37.53, 46.0],
     }
     assert bbox_row.labels["bbox_after"] == raw_bbox
+    assert first_delta_row.answer == 6000
+    assert first_delta_row.labels["volume_before"] == 0.0
 
     hole_source, hole_trace = smoke_traces(config)[1]
     hole_rows = materialize_rows(hole_source, hole_trace, config=config)
@@ -81,3 +140,25 @@ def test_public_numeric_answers_are_rounded_but_raw_labels_are_preserved():
 
     assert delta_row.answer == -31.42
     assert delta_row.labels["signed_volume_delta"] == -31.41592653589794
+
+
+def test_materialization_dedupes_public_row_ids_after_scheduling():
+    config = DatasetConfig()
+    source, trace = smoke_traces(config)[0]
+    duplicate_query = {
+        **trace.point_queries[0],
+        "sampling_stratum": "near_boundary_inside",
+        "sample_source": "near_boundary_inside_max_x",
+    }
+
+    rows, manifest = materialize_rows_with_manifest(
+        source,
+        replace(trace, point_queries=[*trace.point_queries, duplicate_query]),
+        config=config,
+    )
+    row_ids = [row.id for row in rows]
+
+    assert len(row_ids) == len(set(row_ids))
+    assert manifest["exported_row_counts_by_task_type"]["point_membership"] == len(
+        [row for row in rows if row.task_type == "point_membership"]
+    )

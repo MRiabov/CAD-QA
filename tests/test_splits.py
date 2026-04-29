@@ -39,7 +39,7 @@ def test_near_boundary_rows_route_whole_source_group_to_hard_split():
             "provenance": {
                 "source_id": "src_a",
                 "normalized_source_code_hash": "hash_a",
-                "point_sampling_group_id": "near_boundary:src_a:on_boundary",
+                "point_sampling_group_id": "near_boundary:src_a:near_boundary_inside",
                 "split_group": "src_a",
             },
         },

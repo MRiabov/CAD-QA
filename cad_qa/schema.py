@@ -53,7 +53,7 @@ SPLITS = {
     "test_near_boundary",
 }
 
-POINT_CLASSIFICATIONS = {"inside", "outside", "on_boundary", "ambiguous"}
+POINT_CLASSIFICATIONS = {"inside", "outside", "on_boundary"}
 PROVENANCE_RELATIONS = {
     "created_by",
     "modified_by",

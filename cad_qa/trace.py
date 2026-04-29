@@ -73,6 +73,9 @@ GENERATED_SELECTOR_PROBES: tuple[tuple[str, str | None], ...] = (
     ("vertices", '"<Z"'),
 )
 
+POINT_MEMBERSHIP_SIGFIGS = 4
+NEAR_BOUNDARY_AABB_MARGIN_RATIO = 0.01
+
 
 def trace_source_record(
     source: SourceRecord,
@@ -864,7 +867,11 @@ def _point_query_descriptors_for_snapshot(
     min_values = [float(value) for value in minimum]
     max_values = [float(value) for value in maximum]
     center = [(min_values[i] + max_values[i]) / 2.0 for i in range(3)]
-    spans = [max(max_values[i] - min_values[i], 1.0) for i in range(3)]
+    side_lengths = [max_values[i] - min_values[i] for i in range(3)]
+    max_side_length = max(side_lengths)
+    if max_side_length <= 0.0:
+        return []
+    spans = [max(side_lengths[i], 1.0) for i in range(3)]
     span = max(spans)
     quarter = [min_values[i] + 0.25 * spans[i] for i in range(3)]
     outside_x = [max_values[0] + 0.25 * span, center[1], center[2]]
@@ -875,11 +882,21 @@ def _point_query_descriptors_for_snapshot(
         ("expanded_aabb_outside_x", outside_x, "expanded_aabb_outside"),
         ("expanded_aabb_outside_diagonal", outside_diagonal, "expanded_aabb_outside"),
     ]
-    candidates.extend(_entity_center_point_candidates(snapshot))
+    adaptive_margin = max_side_length * NEAR_BOUNDARY_AABB_MARGIN_RATIO
+    candidates.extend(
+        _adaptive_near_boundary_point_candidates(
+            min_values,
+            max_values,
+            center,
+            side_lengths,
+            adaptive_margin,
+        )
+    )
     descriptors: list[dict[str, Any]] = []
     for sample_source, point, intended_stratum in candidates:
+        rounded_point = _round_point_sigfig(point)
         payload = {
-            "point": point,
+            "point": rounded_point,
             "target_feature_id": target,
             "intended_sampling_stratum": intended_stratum,
             "sample_source": sample_source,
@@ -887,8 +904,11 @@ def _point_query_descriptors_for_snapshot(
             "step_index": snapshot.get("step_index"),
             "coordinate_frame": "world",
             "nearest_entity_diagnostics": _nearest_entity_diagnostics(
-                snapshot, point
+                snapshot, rounded_point
             ),
+            "point_export_sigfigs": POINT_MEMBERSHIP_SIGFIGS,
+            "adaptive_boundary_margin_mm": adaptive_margin,
+            "max_aabb_side_length_mm": max_side_length,
         }
         descriptors.append(
             {
@@ -926,7 +946,7 @@ def _evaluate_point_descriptor(
     shape = _shape_from_object(namespace.get(target))
     if shape is None:
         return None
-    point_values = [float(value) for value in point]
+    point_values = _round_point_sigfig([float(value) for value in point])
     classification = _classify_point(shape, point_values, namespace)
     if classification is None:
         return None
@@ -945,27 +965,58 @@ def _evaluate_point_descriptor(
         "step_index": payload.get("step_index"),
         "coordinate_frame": payload.get("coordinate_frame", "world"),
         "nearest_entity_diagnostics": payload.get("nearest_entity_diagnostics"),
+        "point_export_sigfigs": payload.get("point_export_sigfigs"),
+        "adaptive_boundary_margin_mm": payload.get("adaptive_boundary_margin_mm"),
+        "max_aabb_side_length_mm": payload.get("max_aabb_side_length_mm"),
     }
 
 
-def _entity_center_point_candidates(
-    snapshot: dict[str, Any],
+def _adaptive_near_boundary_point_candidates(
+    minimum: list[float],
+    maximum: list[float],
+    center: list[float],
+    side_lengths: list[float],
+    margin: float,
 ) -> list[tuple[str, list[float], str]]:
+    if margin <= 0.0:
+        return []
+    axis = max(range(3), key=lambda index: side_lengths[index])
+    if side_lengths[axis] <= 2.0 * margin:
+        return []
+    axis_name = "xyz"[axis]
     candidates: list[tuple[str, list[float], str]] = []
-    signatures = _snapshot_entity_signatures(snapshot)
-    for entity_type in ("face", "edge", "vertex"):
-        for entity in signatures.get(entity_type, [])[:2]:
-            center = entity.get("center")
-            entity_id = entity.get("entity_id")
-            if not _finite_triplet(center) or not isinstance(entity_id, str):
-                continue
-            candidates.append(
-                (
-                    f"{entity_type}_center_{entity_id}",
-                    [float(value) for value in center],
-                    f"near_{entity_type}",
-                )
-            )
+    near_min_inside = list(center)
+    near_min_inside[axis] = minimum[axis] + margin
+    near_max_inside = list(center)
+    near_max_inside[axis] = maximum[axis] - margin
+    near_min_outside = list(center)
+    near_min_outside[axis] = minimum[axis] - margin
+    near_max_outside = list(center)
+    near_max_outside[axis] = maximum[axis] + margin
+    candidates.extend(
+        [
+            (
+                f"near_boundary_inside_min_{axis_name}",
+                near_min_inside,
+                "near_boundary_inside",
+            ),
+            (
+                f"near_boundary_inside_max_{axis_name}",
+                near_max_inside,
+                "near_boundary_inside",
+            ),
+            (
+                f"near_boundary_outside_min_{axis_name}",
+                near_min_outside,
+                "near_boundary_outside",
+            ),
+            (
+                f"near_boundary_outside_max_{axis_name}",
+                near_max_outside,
+                "near_boundary_outside",
+            ),
+        ]
+    )
     return candidates
 
 
@@ -1004,8 +1055,10 @@ def _nearest_entity_diagnostics(
 def _point_sampling_stratum(intended_stratum: str, classification: str) -> str:
     if intended_stratum == "expanded_aabb_outside":
         return "expanded_aabb_outside"
-    if intended_stratum in {"near_face", "near_edge", "near_vertex"}:
-        return intended_stratum
+    if intended_stratum.startswith("near_boundary_"):
+        if classification in {"inside", "outside"}:
+            return f"near_boundary_{classification}"
+        return "near_boundary"
     if classification == "inside":
         return "deep_inside"
     if classification == "outside":
@@ -1204,6 +1257,25 @@ def _finite_triplet(value: Any) -> bool:
             for item in value
         )
     )
+
+
+def _round_point_sigfig(point: list[float]) -> list[float]:
+    return [
+        float(_round_sigfig_number(coordinate, POINT_MEMBERSHIP_SIGFIGS))
+        for coordinate in point
+    ]
+
+
+def _round_sigfig_number(value: float, digits: int) -> float | int:
+    if value == 0:
+        return 0.0
+    places = digits - math.floor(math.log10(abs(value))) - 1
+    rounded = round(value, places)
+    if rounded == 0:
+        return 0.0
+    if places <= 0 and float(rounded).is_integer():
+        return int(rounded)
+    return rounded
 
 
 def _attach_feature_ids(

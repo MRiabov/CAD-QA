@@ -114,14 +114,23 @@ def test_point_queries_are_generated_for_each_snapshot_aabb():
     assert {"deep_inside", "expanded_aabb_outside"} <= {
         row["sampling_stratum"] for row in rows
     }
-    assert {"near_face", "near_edge", "near_vertex"} <= {
+    assert {"near_boundary_inside", "near_boundary_outside"} <= {
         row["sampling_stratum"] for row in rows
     }
-    face_row = next(row for row in rows if row["sampling_stratum"] == "near_face")
-    assert face_row["nearest_entity_diagnostics"]["entity_id"] == "face_0000"
+    near_row = next(
+        row for row in rows if row["sampling_stratum"] == "near_boundary_inside"
+    )
+    assert near_row["adaptive_boundary_margin_mm"] == 0.02
+    assert near_row["max_aabb_side_length_mm"] == 2.0
+    assert near_row["point_export_sigfigs"] == 4
+    assert near_row["nearest_entity_diagnostics"]["entity_id"] in {
+        "face_0000",
+        "edge_0000",
+        "vertex_0000",
+    }
 
 
-def test_point_descriptors_exist_for_aabb_and_entity_center_strata():
+def test_point_descriptors_exist_for_aabb_and_adaptive_near_boundary_strata():
     snapshots = [
         {
             "snapshot_id": "snap_wp1_0001",
@@ -148,9 +157,17 @@ def test_point_descriptors_exist_for_aabb_and_entity_center_strata():
     assert {
         "aabb_uniform_inside",
         "expanded_aabb_outside",
-        "near_face",
+        "near_boundary_inside",
+        "near_boundary_outside",
     } <= {descriptor["stratum"] for descriptor in descriptors}
     assert {descriptor["task_type"] for descriptor in descriptors} == {
         "point_membership"
     }
     assert all("point_classification" not in descriptor["payload"] for descriptor in descriptors)
+    near_payload = next(
+        descriptor["payload"]
+        for descriptor in descriptors
+        if descriptor["stratum"] == "near_boundary_inside"
+    )
+    assert near_payload["adaptive_boundary_margin_mm"] == 0.02
+    assert near_payload["point_export_sigfigs"] == 4

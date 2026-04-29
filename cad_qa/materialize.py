@@ -20,6 +20,8 @@ from cad_qa.operation_graph import operation_signature_hash
 from cad_qa.scheduler import exported_row_manifest, schedule_descriptors
 from cad_qa.schema import OperationNode, PublicTaskRow, SourceRecord, TraceRecord
 
+POINT_MEMBERSHIP_CHOICES = ["inside", "outside", "on_boundary"]
+
 
 def materialize_rows(
     source: SourceRecord,
@@ -47,15 +49,11 @@ def materialize_rows_with_manifest(
         max_per_task_type=config.max_rows_per_source_task_type,
         scope=f"public_rows:{source.source_id}:{trace.trace_id}",
     )
-    selected_ids = {
-        str(descriptor["descriptor_id"]) for descriptor in scheduled.selected_descriptors
-    }
-    selected_rows = [
-        descriptor["payload"]
-        for descriptor in row_descriptors
-        if str(descriptor["descriptor_id"]) in selected_ids
-    ]
-    return selected_rows, exported_row_manifest(row_descriptors, scheduled.selected_descriptors)
+    kept_descriptors = _dedupe_scheduled_public_row_descriptors(
+        scheduled.selected_descriptors
+    )
+    selected_rows = [descriptor["payload"] for descriptor in kept_descriptors]
+    return selected_rows, exported_row_manifest(row_descriptors, kept_descriptors)
 
 
 def _materialize_all_rows(
@@ -84,7 +82,7 @@ def _public_row_descriptors(rows: list[PublicTaskRow]) -> list[dict[str, Any]]:
     for index, row in enumerate(rows):
         descriptors.append(
             {
-                "descriptor_id": f"public_row_{row.id}",
+                "descriptor_id": f"public_row_{index}_{row.id}",
                 "task_type": row.task_type,
                 "stratum": _row_scheduling_stratum(row),
                 "target_feature_id": row.target_feature_id,
@@ -94,6 +92,24 @@ def _public_row_descriptors(rows: list[PublicTaskRow]) -> list[dict[str, Any]]:
             }
         )
     return descriptors
+
+
+def _dedupe_scheduled_public_row_descriptors(
+    descriptors: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    kept: list[dict[str, Any]] = []
+    seen_row_ids: set[str] = set()
+    for descriptor in descriptors:
+        row = descriptor.get("payload")
+        row_id = getattr(row, "id", None)
+        if not isinstance(row_id, str) or not row_id:
+            kept.append(descriptor)
+            continue
+        if row_id in seen_row_ids:
+            continue
+        seen_row_ids.add(row_id)
+        kept.append(descriptor)
+    return kept
 
 
 def _row_scheduling_stratum(row: PublicTaskRow) -> str:
@@ -296,12 +312,10 @@ def _snapshot_rows(
                     parse_policy="strict_json_bbox_v1",
                 )
             )
-        if (
-            snapshot.get("volume") is not None
-            and previous
-            and previous.get("volume") is not None
+        if snapshot.get("volume") is not None and (
+            previous is None or previous.get("volume") is not None
         ):
-            before = float(previous["volume"])
+            before = 0.0 if previous is None else float(previous["volume"])
             after = float(snapshot["volume"])
             delta = after - before
             answer_delta = _round_sigfig_number(delta)
@@ -448,7 +462,7 @@ def _point_rows(
     rows: list[PublicTaskRow] = []
     for query in trace.point_queries:
         answer = query.get("point_classification")
-        if answer not in {"inside", "outside", "on_boundary", "ambiguous"}:
+        if answer not in POINT_MEMBERSHIP_CHOICES:
             continue
         point = query.get("point")
         target = query.get("target_feature_id")
@@ -461,13 +475,13 @@ def _point_rows(
                 target_feature_id=str(target) if target else None,
                 prompt=(
                     "Given the CadQuery script below, classify point "
-                    f"`{point}` as one of inside, outside, on_boundary, or ambiguous at the target state. "
+                    f"`{point}` as one of inside, outside, or on_boundary at the target state. "
                     "Answer with exactly one allowed token.\n\n"
                     f"```python\n{source.normalized_code}```"
                 ),
                 answer_type="enum",
                 answer=answer,
-                choices=["inside", "outside", "on_boundary", "ambiguous"],
+                choices=POINT_MEMBERSHIP_CHOICES,
                 unit=None,
                 numeric_tolerance=None,
                 requires=["cadquery_syntax", "point_membership"],
@@ -1063,7 +1077,7 @@ def _point_sampling_group_id(
 
 def _is_near_boundary_query(query: dict[str, Any], answer: str) -> bool:
     stratum = f"{query.get('sampling_stratum')} {query.get('sample_source')}".lower()
-    return answer in {"on_boundary", "ambiguous"} or "boundary" in stratum
+    return answer == "on_boundary" or "boundary" in stratum
 
 
 def _optional_str(value: Any) -> str | None:
