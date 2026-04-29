@@ -3,6 +3,7 @@ project: CAD-QA
 tracks:
   - shared_core
   - cadqa
+  - advanced_cadqa
   - cadeditqa
 source_documents:
   - epics-and-stories.md
@@ -1012,6 +1013,178 @@ epics:
         debugging_difficulty: Low
         recommendation: Build after prediction contract
         status: implemented
+        stable: false
+
+  - id: epic-16
+    title: Graph-like multi-hop QA
+    scope: Add typed graph-query CAD-QA rows where questions compose operation order, feature/entity references, measured attributes, and deterministic aggregation.
+    priority: P2
+    implementation_complexity: High
+    debugging_difficulty: High
+    recommendation: Build after MVP traces, topology/provenance labels, and query-IR validation are stable
+    status: planned
+    stable: false
+    stories:
+      - id: "16.1"
+        title: Typed CAD query graph
+        priority: P2
+        implementation_complexity: High
+        debugging_difficulty: High
+        recommendation: Build after operation graphs and topology IDs are stable
+        status: planned
+        stable: false
+      - id: "16.2"
+        title: Graph query IR and resolver
+        priority: P2
+        implementation_complexity: High
+        debugging_difficulty: High
+        recommendation: Build after typed graph extraction
+        status: planned
+        stable: false
+      - id: "16.3"
+        title: Multi-hop prompt generator
+        priority: P2
+        implementation_complexity: Medium
+        debugging_difficulty: High
+        recommendation: Build after query resolver validation
+        status: planned
+        stable: false
+      - id: "16.4"
+        title: Graph-query baselines and audits
+        priority: P2
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build before reporting graph-query scores
+        status: planned
+        stable: false
+
+  - id: epic-17
+    title: Spatial distance QA
+    scope: Add point-to-point, feature-to-feature, axis, hole centerline, and cylinder centerline distance tasks over stable spatial references.
+    priority: P2
+    implementation_complexity: High
+    debugging_difficulty: High
+    recommendation: Build after workplane/frame metadata and topology entity IDs are stable
+    status: planned
+    stable: false
+    stories:
+      - id: "17.1"
+        title: Spatial reference extraction
+        priority: P2
+        implementation_complexity: High
+        debugging_difficulty: High
+        recommendation: Build after snapshot entity IDs
+        status: planned
+        stable: false
+      - id: "17.2"
+        title: Axis and centerline fitting policy
+        priority: P2
+        implementation_complexity: High
+        debugging_difficulty: High
+        recommendation: Build before centerline distance rows
+        status: planned
+        stable: false
+      - id: "17.3"
+        title: Spatial-distance labels and prompts
+        priority: P2
+        implementation_complexity: Medium
+        debugging_difficulty: High
+        recommendation: Build after spatial references validate
+        status: planned
+        stable: false
+      - id: "17.4"
+        title: Spatial-distance baselines and audits
+        priority: P2
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build before reporting distance scores
+        status: planned
+        stable: false
+
+  - id: epic-18
+    title: Bounding-box region QA
+    scope: Treat explicit bounding boxes as spatial query windows for entity counts, feature lists, and conservative material added/removed evidence.
+    priority: P2
+    implementation_complexity: High
+    debugging_difficulty: High
+    recommendation: Build after spatial indexes and material-region evidence are available
+    status: planned
+    stable: false
+    stories:
+      - id: "18.1"
+        title: Spatial-window index
+        priority: P2
+        implementation_complexity: High
+        debugging_difficulty: High
+        recommendation: Build after topology and sampled material records
+        status: planned
+        stable: false
+      - id: "18.2"
+        title: Region predicate label policy
+        priority: P2
+        implementation_complexity: Medium
+        debugging_difficulty: High
+        recommendation: Build before region prompt generation
+        status: planned
+        stable: false
+      - id: "18.3"
+        title: Bounding-box region prompt generator
+        priority: P2
+        implementation_complexity: Medium
+        debugging_difficulty: High
+        recommendation: Build after predicate labels validate
+        status: planned
+        stable: false
+      - id: "18.4"
+        title: Region-query baselines and audits
+        priority: P2
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build before reporting region-query scores
+        status: planned
+        stable: false
+
+  - id: epic-19
+    title: Validity and failure-mode QA
+    scope: Add operation and candidate-edit validity tasks, failure-type labels, and bounded threshold-search questions such as maximum valid fillet radius.
+    priority: P2
+    implementation_complexity: High
+    debugging_difficulty: High
+    recommendation: Build after isolated workers, failure manifests, and repeated-probe stability checks are reliable
+    status: planned
+    stable: false
+    stories:
+      - id: "19.1"
+        title: Validity probe contract
+        priority: P2
+        implementation_complexity: Medium
+        debugging_difficulty: High
+        recommendation: Build before failure-mode rows
+        status: planned
+        stable: false
+      - id: "19.2"
+        title: Failure-type taxonomy
+        priority: P2
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build before public failure labels
+        status: planned
+        stable: false
+      - id: "19.3"
+        title: Threshold-search validity labels
+        priority: P2
+        implementation_complexity: High
+        debugging_difficulty: High
+        recommendation: Build after probe repeatability is proven
+        status: planned
+        stable: false
+      - id: "19.4"
+        title: Failure-mode prompts and baselines
+        priority: P2
+        implementation_complexity: Medium
+        debugging_difficulty: High
+        recommendation: Build before reporting validity scores
+        status: planned
         stable: false
 
 milestones:
