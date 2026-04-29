@@ -162,6 +162,8 @@ runs:
       - "128"
       - --max-steps
       - "20"
+      - --pack-tokenized
+      - --no-assistant-only-loss
     output_dir: runs/answer_sft_canary
     artifacts:
       - logs/stdout.log
@@ -186,6 +188,8 @@ runs:
       - unsloth/Qwen3.5-4B
       - --max-steps
       - "20"
+      - --pack-tokenized
+      - --no-assistant-only-loss
       - --dry-run
     output_dir: runs/answer_sft_canary_dry_run
     artifacts:

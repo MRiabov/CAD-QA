@@ -4,7 +4,10 @@ version = "0.1.0"
 description = "Trace-derived CAD-QA dataset generation and evaluation tools."
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = ["PyYAML>=6.0"]
+dependencies = [
+    "PyYAML>=6.0",
+    "vastai>=1.0.7",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
@@ -22,3 +25,9 @@ build-backend = "hatchling.build"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.12",
+    "vastai>=1.0.7",
+]
