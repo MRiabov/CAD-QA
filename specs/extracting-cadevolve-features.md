@@ -244,7 +244,11 @@ Snapshot scalar labels include:
 - world-coordinate bounding box;
 - topology counts;
 - coarse geometry type counts;
-- selector result tables when the statement includes a selector;
+- workplane origin, normal, axes, and parent frame when recoverable;
+- selector result tables for source selectors and configured generated selector
+  probes;
+- adjacent-step deltas for volume, bounding box, topology counts, workplane
+  state, selector results, and point classifications;
 - diagnostics and kernel status.
 
 Task materialization must consume stored trace metadata only. It must not load
@@ -257,6 +261,39 @@ Optional later-stage trace metadata includes:
 - stable point, centroid, axis, and centerline references;
 - entity and material-region bounding boxes for spatial-window queries;
 - validity probe results for bounded operation or candidate-edit checks.
+
+### 5.1 Trace feature inventory
+
+The trace is the reusable substrate for labels and descriptors. It should
+preserve cheap reusable facts broadly, but expensive labels should be computed
+only for descriptors selected by the scheduler. Preserve these feature classes:
+
+- operation nodes, dependencies, argument summaries, source locations, and
+  prefix scopes;
+- every supported intermediate snapshot with volume, bounding box, topology,
+  entity IDs, and shape diagnostics;
+- adjacent-step deltas, including zero deltas, for volume, bounding box,
+  topology, selector counts, and point classifications;
+- workplane and coordinate-frame state before and after workplane-affecting
+  operations;
+- source selector expressions plus generated selector descriptors over common
+  `.faces(...)`, `.edges(...)`, and `.vertices(...)` calls; evaluate generated
+  selectors only when scheduled;
+- point-probe descriptors from object AABBs, expanded AABB shells, boundary
+  neighborhoods, added regions, removed regions, and stable entity
+  neighborhoods; classify points only when scheduled;
+- provenance evidence over points, entities, and material regions, including
+  relation type and confidence;
+- graph nodes and edges for feature-feature, feature-entity, selector-entity,
+  parameter-feature, and measured-attribute relations;
+- stable spatial references such as centroids, axes, centerlines, entity
+  bounds, and region boxes;
+- bounded validity probes and counterfactual variants when enabled.
+
+This inventory distinguishes trace coverage, descriptor coverage, scheduled
+labels, and exported dataset size. A single script may legitimately describe
+thousands of possible rows; the scheduler decides which descriptors become
+labels before prompt materialization.
 
 ## 6. Diff And Provenance Policy
 
@@ -391,9 +428,13 @@ before a public row is emitted.
 
 Selectors are CadQuery semantics, not natural-language geometry descriptions.
 
-For each source selector expression, store:
+For each source selector expression, store the evaluated selector table. For
+configured generated selector probes, store lightweight descriptors first and
+evaluate only scheduled probes. Each evaluated selector table stores:
 
 - expression text;
+- whether the expression came from source code or from the generated selector
+  universe;
 - target feature/state;
 - entity type requested;
 - raw selected entity IDs;
@@ -402,8 +443,17 @@ For each source selector expression, store:
 - CadQuery/OCP/OpenCascade versions;
 - dedup tolerance and failure status.
 
-Selector tasks use stored selector tables. They do not reevaluate selectors in
-prompt generation.
+Selector tasks use stored selector tables. Prompt generation does not
+reevaluate selectors; any generated selector probe must have been scheduled and
+evaluated during labeling.
+
+The generated selector universe is configurable, but the default should cover
+common CadQuery selector forms for `.faces(...)`, `.edges(...)`, and
+`.vertices(...)`, including axis selectors such as `">X"`, `"<X"`, `"|X"`,
+`">Y"`, `"<Y"`, `"|Y"`, `">Z"`, `"<Z"`, `"|Z"`, index selectors such as
+`"#0"`, and empty selectors where CadQuery semantics are well-defined. This
+supports hypothetical selector-count questions such as: if the script called
+`feature.edges("|Z")` after this step, how many entities would be selected?
 
 ## 9. Split And Leakage Metadata
 

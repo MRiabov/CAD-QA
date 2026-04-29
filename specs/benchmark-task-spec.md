@@ -76,7 +76,7 @@ family or assigned the task-specific invalid answer where explicitly defined.
 
 ## 4. MVP Task Families
 
-The MVP implementation targets exactly these task families:
+The MVP implementation targets these stable public task families first:
 
 - `operation_count`
 - `selector_count`
@@ -89,6 +89,11 @@ The MVP implementation targets exactly these task families:
 CADEvolve-derived scripts are the primary source for released benchmark rows.
 Synthetic primitives are allowed for golden tests, smoke tests, debugging, and
 label edge cases; they should not dominate public benchmark counts.
+
+Experimental candidate descriptors for later families may be generated in the
+same run, but they are scheduled, labeled, and promoted to public rows only
+after their labels, prompt formats, and leakage behavior satisfy the task
+contract.
 
 ### 4.1 `operation_count`
 
@@ -117,18 +122,27 @@ counting. Comments and dead text do not count.
 
 Exact integer accuracy.
 
+**Descriptor expansion**
+
+Generate descriptors for full-script counts, prefix counts after a selected
+step, and operation-family counts when the normalization table defines the
+family. Exported rows are sampled by operation type and source complexity so
+cheap static counts do not dominate the release.
+
 ### 4.2 `selector_count`
 
 **Task purpose**
 
-Given a selector expression at a particular step, predict how many entities it
-selects.
+Given an existing or hypothetical selector expression at a particular step,
+predict how many entities it selects.
 
 **Input shown to model**
 
 - Normalized source code.
-- Target source line or feature ID containing a selector expression.
+- Target source line, feature ID, or snapshot where the selector would run.
 - Entity type: `face`, `edge`, `vertex`, `wire`, or `solid`.
+- Selector expression, including generated common selectors that do not appear
+  in the original source.
 - Answer format.
 
 **Allowed answer**
@@ -138,10 +152,21 @@ unanswerable.
 
 **Label derivation**
 
-Execute the script trace offline. Evaluate the selector against the target
-intermediate workplane or shape under the recorded CadQuery/OCP environment.
-The official label is the selected entity count after deduplication by the
-dataset topology policy.
+Execute the script trace offline. Evaluate source selectors and configured
+generated selector probes against the target intermediate workplane or shape
+under the recorded CadQuery/OCP environment. The official label is the selected
+entity count after deduplication by the dataset topology policy.
+
+**Descriptor expansion**
+
+The default generated selector universe covers common `.faces(...)`,
+`.edges(...)`, and `.vertices(...)` calls over axis, direction, and index
+selectors such as `">X"`, `"<X"`, `"|X"`, `">Y"`, `"<Y"`, `"|Y"`, `">Z"`,
+`"<Z"`, `"|Z"`, and `"#0"`, subject to CadQuery validity for the target entity
+type. Source selectors are one sampling stratum; hypothetical generated
+selectors are another. Generated selector descriptors should be scheduled before
+evaluation. The scheduler should balance entity type, selector family,
+empty/non-empty result when known, and source-vs-generated origin.
 
 **Edge cases**
 
@@ -170,6 +195,14 @@ Use the precomputed trace snapshot after the target step. Round only at export
 time according to the numeric policy. Evaluation uses tolerance from
 `label_rules.md`.
 
+**Descriptor expansion**
+
+Every valid intermediate snapshot is a descriptor backed by an eager snapshot
+label. Additional prompt variants
+may ask for full bounding boxes, a single axis extent, a changed dimension, or
+which step first/last changed a bounding-box component, as long as the answer is
+stored in trace metadata.
+
 ### 4.4 `signed_volume_delta`
 
 **Task purpose**
@@ -186,6 +219,14 @@ negative means material was removed, and zero means no measurable volume change.
 `volume_after - volume_before` using kernel-computed volumes for the target
 step. Labels must store both raw volumes and the signed delta.
 
+**Descriptor expansion**
+
+Every geometry-producing step with finite pre/post volumes is a descriptor,
+including steps whose signed delta is zero under tolerance. Sampling must
+stratify by positive, negative, and zero delta; operation family; magnitude
+bucket; and whether the step is a primitive, boolean, selector-driven
+operation, transform, or topology-only operation.
+
 ### 4.5 `topology_count_after_step`
 
 **Task purpose**
@@ -201,6 +242,14 @@ A non-negative integer.
 
 Use the topology snapshot after the target step. Geometry-type classifications
 use the tolerance policy in `label_rules.md`.
+
+**Descriptor expansion**
+
+Every valid intermediate snapshot is a descriptor for each supported topology
+field. Additional descriptors may ask for deltas before/after a step, first/last
+step where a count changes, or axis/geometry-type subcounts when the trace has
+stable classifications. Sampling must balance entity type and zero/nonzero
+change buckets.
 
 ### 4.6 `point_membership`
 
@@ -224,6 +273,16 @@ Use the kernel point classifier with the dataset tolerance policy. Near-boundary
 points inside the ambiguity band are labeled `ambiguous` unless the row is part
 of an explicit boundary task.
 
+**Descriptor expansion**
+
+Point descriptors are generated from final and intermediate snapshots by
+sampling the object AABB, an expanded AABB shell, topology neighborhoods,
+boundary bands, removed-material regions, added-material regions, and stable
+entity neighborhoods. The kernel classifier should run only for scheduled
+descriptors. The exported dataset should balance inside, outside, on-boundary,
+ambiguous, near-boundary, added-region, and removed-region strata instead of
+relying on uniform AABB samples alone.
+
 ### 4.7 `feature_provenance_choice`
 
 **Task purpose**
@@ -241,6 +300,15 @@ Use trace-backed topology matching and operation histories where available.
 When exact OpenCascade builder history is unavailable, use the documented
 provenance approximation and store `provenance_confidence`. Low-confidence
 many-to-many cases must not be forced into a single feature label.
+
+**Descriptor expansion**
+
+Generate provenance descriptors from point probes, stable topology entities,
+material-region evidence, and adjacent-step deltas. Balance relation types
+(`created_by`, `deleted_by`, `modified_by`, `inherited_from`, and `bounded_by`),
+not just feature IDs. Choice sets should include hard negatives from nearby
+steps, same-operation-family steps, and features with overlapping spatial
+evidence when those negatives are label-stable.
 
 ## 5. Later Task Families
 
@@ -269,7 +337,66 @@ their prompt formats are frozen, and their leakage behavior is audited.
 These task families are explicitly out of MVP scope. They are included here so
 their required machinery is specified at the same level as other task families.
 
-### 6.1 `graph_query`
+### 6.1 `workplane_state`
+
+**Task purpose**
+
+Report the active workplane origin, normal, x/y axes, plane name, or pending
+object context before or after a specified operation.
+
+**Allowed answer**
+
+One of:
+
+- a coordinate;
+- an axis or plane enum;
+- a structured JSON frame description;
+- `invalid_or_ambiguous` when the target state cannot be recovered.
+
+**Label derivation**
+
+Use trace-captured CadQuery workplane state, not natural-language inference.
+Rows are valid only when the origin and axes can be expressed in a declared
+frame with tolerance-versioned numeric labels.
+
+**Descriptor expansion**
+
+Every operation boundary with a recoverable workplane state is a descriptor.
+Scheduling should emphasize operations that create or transform workplanes,
+selectors followed by `.workplane()`, offsets, rotations, local-to-world
+conversions, and steps where the workplane remains unchanged despite nearby
+geometry changes.
+
+### 6.2 `coordinate_frame`
+
+**Task purpose**
+
+Resolve whether a point, vector, axis, selector, sketch, or operation argument
+is expressed in world coordinates or in a named local workplane frame, and
+convert between those frames when requested.
+
+**Allowed answer**
+
+One of:
+
+- `world`;
+- a local frame/workplane ID;
+- a coordinate or vector in the requested frame;
+- `invalid_or_ambiguous` when the frame reference cannot be recovered.
+
+**Label derivation**
+
+Use stored workplane transforms, operation arguments, and spatial references.
+Rows requiring local-to-world conversion must store both source and target
+frame IDs plus the transform used for the label.
+
+**Descriptor expansion**
+
+Every workplane-affecting operation and every stable spatial reference is a
+descriptor. Balance unchanged-frame rows, transformed-frame rows, offset rows,
+rotated-frame rows, selector-derived workplanes, and world-frame references.
+
+### 6.3 `graph_query`
 
 **Task purpose**
 
@@ -315,7 +442,25 @@ gross/net material-operation fields, and spatial-distance fields. The public
 prompt must not expose the query IR unless the evaluation mode is explicitly
 `code_plus_symbolic_trace`.
 
-### 6.2 `spatial_distance`
+**Descriptor expansion**
+
+Graph queries should be generated from two complementary pools:
+
+- random feature/entity pairs plus an interaction predicate such as
+  `before`, `after`, `input_to`, `selected_by`, `created_by`, `deleted_by`,
+  `modified_by`, `adjacent_to`, `parallel_to`, `coaxial_with`,
+  `contained_in`, or `subtracted_from`;
+- existing graph interactions sampled first, then rendered into balanced
+  question templates so rare but important relations are not drowned out by
+  common temporal edges.
+
+The second pool is preferred for balanced releases. The first pool is useful
+for contrastive negatives and invalid/empty relation questions. Sampling must
+track hop count, relation type, answer type, empty/non-empty status,
+tie-breaking rule, and whether the answer is a feature, entity, scalar metric,
+or comparison.
+
+### 6.4 `spatial_distance`
 
 **Task purpose**
 
@@ -343,7 +488,14 @@ workplane frame. Axis and centerline labels must store origin, direction,
 reference feature/entity IDs, fit method, and confidence. Rows with ambiguous
 or unstable references must be excluded or labeled invalid.
 
-### 6.3 `bbox_region_query`
+**Descriptor expansion**
+
+Generate descriptors from stable pairs of points, centroids, axes, and
+centerlines, with caps by reference type and feature distance in the operation
+graph. Balance axis-aligned component distances, Euclidean point distances,
+axis-to-axis distances, and feature-to-feature measurements.
+
+### 6.5 `bbox_region_query`
 
 **Task purpose**
 
@@ -375,7 +527,14 @@ The row must specify the spatial predicate: `inside`, `intersects`,
 cannot distinguish exact overlap from a bounding-box false positive, the row is
 diagnostic-only or invalid for public evaluation.
 
-### 6.4 `validity_failure_prediction`
+**Descriptor expansion**
+
+Generate region-box descriptors from object AABBs, subregions of final and
+intermediate AABBs, entity bounds, added/removed material evidence, and random
+boxes snapped to stable coordinates. Balance predicates, region sizes,
+empty/non-empty answers, and target entity types.
+
+### 6.6 `validity_failure_prediction`
 
 **Task purpose**
 
@@ -407,6 +566,16 @@ recorded execution environment. Store `valid_before`, `valid_after`,
 `failure_stage`, `failure_type`, kernel status, and any searched parameter
 range. Numeric threshold labels require monotonicity or a documented search
 contract. Kernel-unstable failures must be quarantined from public metrics.
+
+**Descriptor expansion**
+
+Generate descriptors for high-risk operations and candidate edits:
+fillet/chamfer radius sweeps, shell thickness sweeps, cut depth changes,
+workplane offsets that may miss or overcut the object, selector changes that
+may produce empty selections, and boolean operations that may produce empty or
+non-manifold results. Run probes only for scheduled descriptors. Balance valid,
+invalid, threshold, and unstable/quarantined outcomes in private diagnostics;
+public rows should use only stable labels.
 
 ## 7. Answer Formats
 

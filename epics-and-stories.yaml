@@ -319,8 +319,8 @@ epics:
         status: work-in-progress
         stable: false
         notes:
-          - present: "Point-membership rows exist for conservative inside/outside samples and smoke fixtures."
-            missing: "Robust point strata such as near-face, near-edge, near-vertex, inside-added-feature, and nearest-entity diagnostics are not implemented."
+          - present: "Point-membership rows exist for smoke fixtures; the live trace path now creates deterministic AABB, expanded-AABB, and entity-center near-face/edge/vertex descriptors for every traced snapshot with entity signatures, then classifies only scheduled descriptors."
+            missing: "Inside-added-feature, exact removed-material regions, exact nearest-surface distances, and robust boundary classification are not implemented."
       - id: "4.6"
         title: Feature provenance labels
         priority: P0
@@ -415,6 +415,39 @@ epics:
         recommendation: Defer
         status: implemented
         stable: false
+      - id: "5.9"
+        title: Hypothetical selector-count expansion
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: High
+        recommendation: Build after selector tables
+        status: implemented
+        stable: false
+        notes:
+          - present: "The live trace path creates generated selector descriptors for a common faces/edges/vertices probe set at every traced snapshot, then evaluates only scheduler-selected descriptors and materializes successful selector_count labels."
+            missing: "The generated selector universe is still not the full CadQuery selector grammar, and empty/non-empty result balancing can only happen after selected labels are evaluated."
+      - id: "5.10"
+        title: All-step signed-volume-delta expansion
+        priority: P0
+        implementation_complexity: Low
+        debugging_difficulty: Medium
+        recommendation: Build now
+        status: implemented
+        stable: false
+        notes:
+          - present: "The prompt generator emits signed_volume_delta rows for every adjacent traced snapshot pair with finite pre/post volume, including zero-delta operations."
+            missing: "No magnitude-bucket or per-source balancing is enforced during default materialization."
+      - id: "5.11"
+        title: Per-snapshot AABB point-membership expansion
+        priority: P0
+        implementation_complexity: Medium
+        debugging_difficulty: High
+        recommendation: Build after point labels
+        status: implemented
+        stable: false
+        notes:
+          - present: "The live trace path creates deterministic AABB, expanded-AABB, and entity-center near-face/edge/vertex point descriptors for each traced snapshot instead of only the final state; scheduled labels store nearest-entity center diagnostics when entity signatures exist."
+            missing: "Exact added/removed-region sampling and exact nearest-surface diagnostics remain open."
 
   - id: epic-6
     title: Dataset splits and balancing
@@ -1146,6 +1179,17 @@ epics:
         recommendation: Build before reporting graph-query scores
         status: implemented
         stable: false
+      - id: "16.5"
+        title: Feature-pair relation graph-query expansion
+        priority: P2
+        implementation_complexity: Medium
+        debugging_difficulty: Medium
+        recommendation: Build after typed graph extraction
+        status: implemented
+        stable: false
+        notes:
+          - present: "Default graph-query generation now emits bounded yes/no feature-pair relation questions for operation ordering and input-to edges."
+            missing: "It does not yet exhaustively sample all feature pairs, B-rep entity interactions, or balanced rare relation templates."
 
   - id: epic-17
     title: Spatial distance QA

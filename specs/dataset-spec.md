@@ -531,6 +531,34 @@ Which feature increased face count the most?
 
 The dataset becomes scalable and auditable.
 
+The generator should be label-led: decide what labels are needed, then compute
+only those labels. The trace should expose cheap reusable facts and lightweight
+candidate descriptors, not a one-row-per-obvious-label export. For a single
+moderately complex script, descriptors may include:
+
+```text
+all operation and prefix counts
+all intermediate bounding boxes and topology counts
+all signed volume deltas, including zero-delta operations
+generated selector-count probes over common faces/edges/vertices selectors
+point-membership probes from the object AABB and expanded AABB shell
+point probes near faces, edges, vertices, added regions, and removed regions
+workplane and coordinate-frame states at every operation boundary
+feature/entity provenance choices with hard negatives
+graph queries over feature-feature and feature-entity interactions
+region queries over bounding boxes and material-change evidence
+counterfactual parameter, selector, workplane, and operation variants
+```
+
+Do not label or export all of this. The generator should use a round-robin or
+weighted round-robin scheduler across task families and strata, then compute
+labels only for the selected descriptors. Cheap labels already present in the
+trace, such as volume deltas and bounding boxes, can be used broadly; expensive
+labels, such as point classifications, generated selector evaluations,
+boolean-region evidence, validity probes, and counterfactual traces, should be
+lazy. Descriptor counts, scheduled-label counts, label-failure counts, and
+exported-row counts should be reported separately so imbalance is visible.
+
 ## 16. Pin down the execution environment
 
 The ground truth should not depend on an implicit local CAD stack. B-Rep topology, fillet behavior, boolean cleanup, and tolerance-sensitive classifications can change across CadQuery/OpenCascade versions.

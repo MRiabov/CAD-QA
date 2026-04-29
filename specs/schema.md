@@ -23,8 +23,8 @@ diagnostics, provenance, or split assignment.
 ## 1. Design Principles
 
 - Store raw geometry values and derived task answers separately.
-- Compute expensive geometry once per trace and derive multiple task rows from
-  that trace.
+- Compute cheap reusable trace labels once, and compute expensive geometry
+  labels only for scheduled candidate descriptors.
 - Use stable IDs and hashes.
 - Include provenance and split metadata in every public row.
 - Keep public rows code-plus-label by default; heavyweight artifacts belong in
@@ -246,6 +246,8 @@ Optional fields for later complex task families:
 | `operation_graph` | object or null | Typed graph view derived from operation nodes, entities, parameters, and measured attributes. |
 | `spatial_index` | object or null | Queryable indexes over points, axes, centerlines, topology entity bounds, and region evidence. |
 | `validity_probes` | array | Operation or candidate-edit validity results from isolated execution probes. |
+| `candidate_descriptors` | object or null | Private lightweight candidate descriptors by task type and stratum before scheduled labeling. |
+| `sampling_manifest` | object or null | Private descriptor, scheduled-label, label-failure, and exported-row counts plus sampler configuration for this source. |
 
 ## 6. Snapshot Record
 
@@ -261,6 +263,9 @@ Required fields:
 | `bbox` | object or null | Bounding box. |
 | `topology` | object or null | TopologyCounts. |
 | `entity_ids` | object or null | Stable IDs for faces/edges/vertices. |
+| `workplane_state` | object or null | Active workplane origin, axes, normal, plane ID, and recovery status when available. |
+| `coordinate_frame` | object or null | Transform from local workplane coordinates to world coordinates when available. |
+| `deltas_from_previous` | object or null | Volume, bbox, topology, selector, workplane, and point-label deltas from the previous snapshot. |
 | `diagnostics` | object | Kernel and validation details. |
 
 ## 7. Later Query Records
@@ -269,6 +274,22 @@ These records are optional until the corresponding complex task family is
 implemented. They must live under internal trace metadata or public row
 `labels`, never inside prompts unless a non-code-only evaluation mode declares
 that symbolic metadata is visible.
+
+### `CandidateDescriptorSummary`
+
+Required fields:
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `task_type` | string | Task type represented by the descriptor set. |
+| `descriptor_count` | integer | Number of lightweight descriptors available before scheduled labeling. |
+| `scheduled_count` | integer | Number of descriptors selected for labeling. |
+| `label_success_count` | integer | Number of scheduled descriptors with valid labels. |
+| `label_failure_count` | integer | Number of scheduled descriptors rejected by labeling, stability, ambiguity, or budget checks. |
+| `exported_count` | integer | Number of scheduled labels rendered into public rows. |
+| `strata_counts` | object | Counts by task-specific stratum, such as selector family or point sampling mode. |
+| `sampler_config_hash` | string | Hash of the sampler configuration used for this pool. |
+| `rng_seed` | integer or string | Seed used for deterministic descriptor scheduling. |
 
 ### `GraphQuery`
 
@@ -409,10 +430,13 @@ The release metadata file must include:
 - row counts by split and task type;
 - source manifest hash;
 - generation config hash;
+- sampler config hash;
 - code commit;
 - label policy;
 - execution environment;
 - CADEvolve source metadata and license;
+- descriptor counts, scheduled-label counts, label-failure counts, and
+  exported-row counts by task type and stratum;
 - known limitations;
 - validation command outputs or report paths.
 
