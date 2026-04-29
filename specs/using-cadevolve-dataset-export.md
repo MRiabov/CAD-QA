@@ -24,7 +24,13 @@ should treat the executable CadQuery code as the primary input.
 
 ## Suggested Environment
 
-For archive inspection:
+For source loading, prefer an adjacent/local extracted CADEvolve source tree
+instead of redownloading the upstream dataset or copying a large archive into
+this repository. A sibling repository cache is acceptable as long as the loader
+records the source-relative path and preserves upstream provenance when
+available.
+
+For optional archive inspection:
 
 - Python;
 - `tarfile`;
@@ -35,7 +41,8 @@ For execution:
 - `cadquery`;
 - a working CadQuery/OCP/OpenCascade backend;
 - isolated worker support;
-- enough disk space for a bounded extracted source subset.
+- read access to an adjacent/local CADEvolve source tree or enough disk space
+  for a bounded extracted source subset when the tree is missing.
 
 ## Archive Layout
 
@@ -69,10 +76,11 @@ both forms.
   selectors.
 - `CADEvolve-G`, `CADEvolve-P`, and `CADEvolve-C` are different kinds of
   content, not interchangeable subsets of the same representation.
-- Repeated local generation should use a deterministic extracted source
+- Repeated local generation should use a deterministic adjacent/local source
   directory, not the tar archive as the hot path.
-- Do not extract the entire upstream archive by default. Extract a bounded
-  configured subset or source shard for the intended run.
+- Do not redownload CADEvolve or extract the entire upstream archive by default.
+  Reuse an adjacent source tree when available; otherwise extract only a
+  bounded configured subset or source shard for the intended run.
 
 ## Basic Workflow
 
@@ -83,17 +91,21 @@ paths, and license metadata.
 
 ### 2. Materialize a Local Source Subset
 
-Create a deterministic source directory preserving archive member paths. Record:
+Prefer a configured adjacent source directory that already contains
+`CADEvolve-P/` and/or `CADEvolve-C/`. If one is available, do not materialize a
+new copy. Record:
 
-- source archive path;
-- extraction command;
-- extraction config;
+- source directory path in private run manifests;
+- source-relative paths used for records;
+- upstream archive or dataset metadata when available;
 - selected prefixes;
 - file count;
 - manifest hash.
 
-The extracted directory is a local generation artifact. Public rows should
-preserve archive provenance, not local cache paths.
+If no adjacent source tree is available, create a deterministic bounded source
+directory preserving archive member paths and record the extraction command and
+config. Local source directories are generation artifacts. Public rows should
+preserve upstream/source-relative provenance, not local cache paths.
 
 ### 3. Normalize Sources
 
@@ -150,8 +162,8 @@ topology matching, and, where possible, OpenCascade operation history.
   workers.
 - Use explicit timeouts.
 - Store failures in a manifest instead of dropping them silently.
-- Avoid publishing local paths, downloaded archive paths, or cache directory
-  paths in released rows.
+- Avoid publishing local paths, adjacent repository paths, downloaded archive
+  paths, or cache directory paths in released rows.
 
 ## References
 

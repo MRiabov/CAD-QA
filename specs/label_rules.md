@@ -22,6 +22,9 @@ bbox_tolerance_mm = 1e-6
 point_boundary_tolerance_mm = 1e-5
 selector_dedup_tolerance_mm = 1e-7
 near_boundary_sampling_band_mm = 1e-3
+spatial_distance_tolerance_mm = 1e-5
+axis_parallel_tolerance_rad = 1e-6
+bbox_region_overlap_tolerance_mm = 1e-6
 ```
 
 Thresholds are part of the label policy. Each dataset version must store them
@@ -48,6 +51,9 @@ Each trace-backed label record should contain these fields when applicable:
 | `selector_result` | Selector target entity IDs and counts. |
 | `point_query` | Coordinate, target state, and classifier details. |
 | `provenance` | Entity or point provenance relation details. |
+| `graph_query` | Typed graph-query IR, resolved inputs, and resolution status. |
+| `spatial_query` | Point, axis, centerline, or region query details. |
+| `validity_result` | Operation or candidate validity probe result. |
 | `answer_status` | `ok` when all task-required fields are valid; otherwise `invalid`. |
 | `failure_reason` | Machine-readable invalid reason. |
 
@@ -195,7 +201,94 @@ OpenCascade builder history, when captured, wins over topology matching
 heuristics. When builder history is unavailable, provenance rows must store the
 matching method and confidence.
 
-## 10. Invalid and Failure Handling
+## 10. Graph Query Rules
+
+Graph-like QA labels must be derived from a stored query IR, not ad hoc prompt
+text parsing. Query resolution must record:
+
+- graph version;
+- query type;
+- target entity type;
+- filters and ordinals;
+- metric or attribute used;
+- candidate IDs;
+- resolved IDs;
+- measured values used to choose the answer;
+- resolution status.
+
+Allowed graph metrics include scalar trace values such as signed volume delta,
+gross swept/tool volume when available, net added or removed material, bounding
+box deltas, topology deltas, axis length, centerline distance, and material mass
+derived from an explicit density. A public row may use one of these metrics only
+when every referenced feature/entity resolves uniquely and every metric source
+has an `ok` label status.
+
+Rows that rely on natural-language aliases such as "the second box" must store
+the exact resolved feature ID. If the ordinal, relation, or target is ambiguous,
+the row must be excluded or labeled with an explicit invalid/ambiguous answer.
+
+## 11. Spatial Distance Rules
+
+All spatial-distance labels are in millimetres and world coordinates unless the
+task explicitly names a local workplane frame.
+
+Point references must store their coordinate, source feature/entity, and frame.
+Axis and centerline references must store origin, unit direction, source
+feature/entity, extraction method, and confidence. Distances between skew or
+parallel centerlines use the standard shortest line-to-line distance; component
+distance questions must name the component axis.
+
+Rows are invalid when a referenced point, axis, or centerline cannot be derived
+stably, when multiple entities satisfy the reference without a deterministic
+tie-break, or when the distance is below tolerance and the intended distinction
+is ambiguous.
+
+## 12. Bounding-Box Region Query Rules
+
+Bounding-box-as-selector labels use an explicit world-coordinate region and one
+of these predicates:
+
+```text
+inside
+intersects
+contains_centroid
+added_material_in_region
+removed_material_in_region
+```
+
+Entity queries may use exact geometry tests, entity centroids, or entity
+bounding boxes, but the method must be stored. Feature material-region queries
+must use conservative evidence from pre/post snapshots, provenance, boolean
+intersections, or sampled material deltas. Bounding-box false positives must not
+be emitted as exact public labels.
+
+Answer lists must be sorted by stable feature/entity ID unless the prompt
+explicitly requests another deterministic order.
+
+## 13. Validity and Failure-Mode Rules
+
+Validity labels must come from isolated execution probes under the recorded
+environment. Store:
+
+- target feature or candidate edit;
+- prior state validity;
+- post-probe validity;
+- execution or kernel status;
+- failure stage;
+- failure type;
+- searched parameter and range for threshold tasks;
+- threshold value and search tolerance when applicable.
+
+Allowed validity answers are `valid`, `invalid`, or
+`ambiguous_or_unstable`. Failure-type answers must use a versioned enum.
+Numeric threshold tasks, such as maximum valid fillet radius, require a bounded
+search policy and either monotonic behavior over the search range or an
+explicit statement that the row is diagnostic-only.
+
+Kernel-unstable failures, timeout-sensitive failures, and failures that depend
+on local machine resources must be quarantined from public metrics.
+
+## 14. Invalid and Failure Handling
 
 Common failure reasons:
 
@@ -214,6 +307,11 @@ selector_eval_failed
 point_classifier_failed
 topology_matching_failed
 provenance_low_confidence
+graph_query_ambiguous
+spatial_reference_ambiguous
+bbox_region_query_ambiguous
+validity_probe_unstable
+failure_threshold_unstable
 kernel_error
 non_finite_geometry_value
 ambiguous_question
@@ -223,7 +321,7 @@ Rows with `answer_status != "ok"` must not be included in ordinary task
 metrics. Invalid/ambiguous detection tasks may include them only when the
 allowed answer set and scoring rule explicitly support invalid labels.
 
-## 11. Golden Test Cases
+## 15. Golden Test Cases
 
 The golden fixture suite should include:
 
@@ -237,3 +335,7 @@ The golden fixture suite should include:
 - point inside, outside, boundary, and near-boundary cases;
 - provenance of a cylindrical hole wall, circular edge, inherited side face,
   and fillet-modified edge.
+- one deterministic graph query using an ordinal feature reference;
+- one point-to-point distance and one centerline-to-centerline distance;
+- one bounding-box region query with `inside` and one with `intersects`;
+- one validity/failure-mode probe with a stable failure type.

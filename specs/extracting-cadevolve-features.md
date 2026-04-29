@@ -6,7 +6,9 @@ source regularity described in
 [`docs/cad_qa_feature_provenance.md`](../docs/cad_qa_feature_provenance.md)
 into executable rules for source normalization, operation graphs,
 statement-by-statement tracing, provenance approximation, split metadata, and
-answer parsing.
+answer parsing. Later complex task families also require graph-query
+resolution, spatial references, region indexes, and validity probes built from
+the same trace records.
 
 The intent is not to support arbitrary Python CAD code first. The first release
 targets the programmatically normalized CADEvolve shape: mostly assignments of
@@ -92,20 +94,26 @@ CADEvolve-C/
 Treat `CADEvolve-G/` as generator or family metadata unless a later policy
 explicitly supports generator execution.
 
-Normalize archive paths by removing one leading `./`. Preserve the original
-archive member path separately when it exists.
+Do not redownload or duplicate CADEvolve by default. Prefer a configured
+adjacent/local source tree, including an extracted source cache owned by a
+sibling repository. Normalize source-relative paths by removing one leading
+`./`. Preserve the original archive member path separately when it exists, but
+do not require an archive for ordinary generation.
 
 Derive source metadata as follows:
 
 | Field | Rule |
 | --- | --- |
-| `source_id` | Deterministic ID from normalized archive path plus normalized source hash. |
+| `source_id` | Deterministic ID from normalized source-relative path plus normalized source hash. |
 | `source_subtree` | First path component, for example `CADEvolve-P`. |
 | `source_subset` | First two path components when present. |
 | `generator_id` | `cadevolve_` plus a sanitized first-two-component path prefix, matching IntersectionQA's conservative fallback. |
 | `normalized_source_code_hash` | SHA-256 over canonical normalized source text. |
 | `operation_signature_hash` | SHA-256 over the canonical ordered operation names and normalized argument classes. |
 | `topology_signature_hash` | SHA-256 over final snapshot topology counts and coarse geometry tags, when final trace succeeds. |
+
+Local absolute source roots are private run-manifest data. They must not appear
+in public rows.
 
 When exact upstream generator IDs are later recoverable from `CADEvolve-G`, they
 may be stored as `generator_ids`; the path-derived `generator_id` remains the
@@ -242,6 +250,14 @@ Snapshot scalar labels include:
 Task materialization must consume stored trace metadata only. It must not load
 CadQuery or rerun source code while formatting prompts.
 
+Optional later-stage trace metadata includes:
+
+- typed graph nodes and edges over features, parameters, workplanes, topology
+  entities, material regions, and measured attributes;
+- stable point, centroid, axis, and centerline references;
+- entity and material-region bounding boxes for spatial-window queries;
+- validity probe results for bounded operation or candidate-edit checks.
+
 ## 6. Diff And Provenance Policy
 
 The default diff unit is adjacent snapshots: compare state before and after one
@@ -283,6 +299,61 @@ Preferred matching signals:
 
 Low-confidence many-to-many matches are not forced into single-feature labels.
 They are stored as `ambiguous_or_merged` or filtered from single-choice tasks.
+
+## 7. Graph, Spatial, And Validity Extensions
+
+These extensions are not required for the MVP rows, but their extraction policy
+must remain compatible with the same source records and trace snapshots.
+
+### 7.1 Graph query inputs
+
+Build a typed graph from existing trace records:
+
+- feature nodes from operation graph nodes;
+- parameter nodes from normalized arguments when they can be resolved without
+  executing arbitrary Python outside the trace worker;
+- workplane, solid, face, edge, vertex, and material-region nodes from
+  snapshots and topology maps;
+- edges such as `before`, `after`, `input_to`, `selected_by`, `created_by`,
+  `modified_by`, `deleted_by`, `adjacent_to`, `parallel_to`, `coaxial_with`,
+  and `contained_in`.
+
+Store graph-query IR separately from natural-language prompts. Query resolution
+must produce resolved feature/entity IDs, measured values, tie-break evidence,
+and a resolution status. Rows with ambiguous ordinal references such as "the
+second box" are invalid unless the exact operation node resolves uniquely.
+
+### 7.2 Spatial references
+
+Derive stable references only when the geometry supports them:
+
+- points from explicit coordinates, centroids, or sampled point queries;
+- axes from cylindrical/conical entities or operation parameters with a stable
+  workplane frame;
+- centerlines from holes, cylinders, or circular edge sets with a documented fit
+  method;
+- bounding-box regions from explicit world-coordinate min/max values.
+
+Every reference stores source feature/entity IDs, frame, extraction method, and
+confidence. Distance rows are valid only when both references resolve with
+confidence above the task threshold.
+
+### 7.3 Bounding-box region indexes
+
+Build region indexes from topology entity bounds, centroids, sampled material
+points, and conservative pre/post material-change evidence. Region-query rows
+must declare whether they use `inside`, `intersects`, `contains_centroid`,
+`added_material_in_region`, or `removed_material_in_region`. AABB overlap alone
+is a heuristic baseline unless exact or conservative geometry evidence confirms
+the answer.
+
+### 7.4 Validity probes
+
+Validity and failure-mode tasks execute bounded probes in isolated workers.
+Each probe records target operation or candidate edit, pre/post validity,
+kernel status, failure stage, failure type, searched parameter range, and
+threshold value when a stable threshold exists. Repeated probes should agree
+before a public row is emitted.
 
 ### 6.3 Point provenance
 

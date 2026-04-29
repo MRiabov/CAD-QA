@@ -102,6 +102,10 @@ feature_provenance_choice
 workplane_state
 coordinate_frame
 counterfactual_parameter
+graph_query
+spatial_distance
+bbox_region_query
+validity_failure_prediction
 ambiguous_question_detection
 ```
 
@@ -116,6 +120,39 @@ enum
 coordinate
 json
 invalid_or_ambiguous
+```
+
+`spatial_predicate`:
+
+```text
+inside
+intersects
+contains_centroid
+added_material_in_region
+removed_material_in_region
+```
+
+`validity_status`:
+
+```text
+valid
+invalid
+ambiguous_or_unstable
+```
+
+`failure_type`:
+
+```text
+none
+source_error
+kernel_error
+timeout
+radius_too_large
+self_intersection
+empty_shape
+non_solid_result
+non_manifold
+ambiguous_or_unstable
 ```
 
 `point_classification`:
@@ -202,6 +239,14 @@ Required fields:
 | `hashes` | object | Hashes object. |
 | `failure_reason` | string or null | Failure reason. |
 
+Optional fields for later complex task families:
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `operation_graph` | object or null | Typed graph view derived from operation nodes, entities, parameters, and measured attributes. |
+| `spatial_index` | object or null | Queryable indexes over points, axes, centerlines, topology entity bounds, and region evidence. |
+| `validity_probes` | array | Operation or candidate-edit validity results from isolated execution probes. |
+
 ## 6. Snapshot Record
 
 Required fields:
@@ -218,7 +263,80 @@ Required fields:
 | `entity_ids` | object or null | Stable IDs for faces/edges/vertices. |
 | `diagnostics` | object | Kernel and validation details. |
 
-## 7. Public Task Row
+## 7. Later Query Records
+
+These records are optional until the corresponding complex task family is
+implemented. They must live under internal trace metadata or public row
+`labels`, never inside prompts unless a non-code-only evaluation mode declares
+that symbolic metadata is visible.
+
+### `GraphQuery`
+
+Required fields:
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `query_id` | string | Stable query ID. |
+| `query_type` | string | Query operation such as `argmax`, `compare`, `count`, `lookup`, or `aggregate`. |
+| `entity_type` | string | Primary entity type, such as `feature`, `edge`, `face`, `axis`, or `material_region`. |
+| `filters` | array | Deterministic graph filters with relation, target, and optional ordinal. |
+| `metric` | string or null | Measured attribute such as `net_added_volume`, `bbox_volume_delta`, `axis_length`, or `distance_mm`. |
+| `return_type` | string | Expected return shape: `feature_id`, `entity_id`, `number`, `choice`, `coordinate`, or `json`. |
+| `resolved_inputs` | object | IDs and measured values used after query resolution. |
+| `resolution_status` | string | `ok`, `empty`, `ambiguous`, or `unsupported`. |
+
+### `SpatialReference`
+
+Required fields:
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `reference_id` | string | Stable reference ID. |
+| `reference_type` | string | `point`, `axis`, `centerline`, `centroid`, `bbox`, or `entity`. |
+| `feature_id` | string or null | Source feature that defines the reference. |
+| `entity_id` | string or null | Topology entity that defines the reference. |
+| `frame` | string | `world` or a named local workplane frame. |
+| `point` | array or null | Point coordinate for point-like references. |
+| `direction` | array or null | Unit direction for axis or centerline references. |
+| `bbox` | object or null | BoundingBox for region references. |
+| `fit_method` | string or null | Method used to derive an axis or centerline. |
+| `confidence` | number or null | Derivation confidence when heuristic extraction is used. |
+
+### `BBoxRegionQuery`
+
+Required fields:
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `region_id` | string | Stable region query ID. |
+| `bbox` | object | World-coordinate spatial window. |
+| `predicate` | string | Spatial predicate enum. |
+| `target_entity_type` | string | `feature`, `face`, `edge`, `vertex`, `material_region`, or `point`. |
+| `candidate_ids` | array | Deterministically ordered candidate feature/entity IDs. |
+| `matched_ids` | array | Deterministically ordered answer IDs. |
+| `count` | integer | Number of matched IDs. |
+| `resolution_status` | string | `ok`, `ambiguous`, or `unsupported`. |
+
+### `ValidityProbe`
+
+Required fields:
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `probe_id` | string | Stable probe ID. |
+| `target_feature_id` | string or null | Operation or feature being probed. |
+| `candidate_edit_id` | string or null | Candidate edit when the probe mutates source. |
+| `valid_before` | boolean or null | Whether the prior state was valid. |
+| `valid_after` | boolean | Whether the probed result is valid. |
+| `validity_status` | string | Validity status enum. |
+| `failure_stage` | string or null | Parse, trace, operation, cleanup, or export stage. |
+| `failure_type` | string | Failure type enum. |
+| `searched_parameter` | string or null | Parameter name for threshold-search probes. |
+| `searched_range` | array or null | Numeric range searched for validity threshold. |
+| `threshold_value` | number or null | Boundary value when a stable threshold exists. |
+| `kernel_status` | string | Raw kernel/verifier status. |
+
+## 8. Public Task Row
 
 Required fields:
 
@@ -283,7 +401,7 @@ Example:
 }
 ```
 
-## 8. Dataset Metadata File
+## 9. Dataset Metadata File
 
 The release metadata file must include:
 
@@ -298,7 +416,7 @@ The release metadata file must include:
 - known limitations;
 - validation command outputs or report paths.
 
-## 9. Split Manifest
+## 10. Split Manifest
 
 The split manifest must record row IDs and group IDs used for leakage audits:
 
@@ -310,11 +428,14 @@ The split manifest must record row IDs and group IDs used for leakage audits:
 - `topology_signature_hash`;
 - `counterfactual_group_id`;
 - `point_sampling_group_id`.
+- `graph_query_group_id`;
+- `spatial_reference_group_id`;
+- `validity_probe_group_id`.
 
 No group may appear in both train and held-out test splits unless the split
 explicitly permits that leakage for a sanity check.
 
-## 10. Export Layout
+## 11. Export Layout
 
 Recommended layout:
 
@@ -337,7 +458,7 @@ dataset/
     manifest.json
 ```
 
-## 11. Validation Requirements
+## 12. Validation Requirements
 
 Validation must check:
 

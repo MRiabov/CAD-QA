@@ -32,10 +32,16 @@ fixture suite.
 
 ## 2. CADEvolve Source Policy
 
-Use the downloaded `cadevolve.tar` archive as the canonical CADEvolve input and
-provenance root. For local generation, materialize the configured executable
-source subset into an extracted directory and load repeated runs from that
-directory instead of treating the tar archive as the hot path.
+Do not redownload or duplicate CADEvolve by default. CAD-QA generation should
+prefer an already available adjacent/local CADEvolve source tree, such as an
+extracted source cache from a sibling repository, and read repeated runs from
+that directory.
+
+An upstream archive such as `cadevolve.tar` may be used to inspect metadata,
+validate provenance, or materialize a missing bounded subset, but it is not a
+required hot path and should not be copied into this repository. If both an
+adjacent source tree and an archive are configured, the source tree is the
+execution input and archive metadata is provenance/audit context.
 
 Prefer executable CadQuery program trees:
 
@@ -50,8 +56,10 @@ For every source record, store:
 
 - `source: "cadevolve"`;
 - deterministic `source_id`;
-- archive member path exactly as seen in `cadevolve.tar`;
-- normalized archive member path with any leading `./` removed;
+- archive member path exactly as seen upstream when available;
+- normalized archive member path or source-relative path with any leading `./`
+  removed;
+- local source root identifier in private manifests only, not public rows;
 - source subtree;
 - generator or family ID if derivable;
 - license metadata;
@@ -102,7 +110,11 @@ For each accepted source:
 7. Match topology across adjacent snapshots.
 8. Capture OpenCascade operation history where practical before CadQuery drops
    builder objects.
-9. Store failures and partial traces instead of silently skipping them.
+9. Build optional spatial references and indexes for stable points, axes,
+   centerlines, entity bounding boxes, and sampled material regions.
+10. Run optional validity probes for bounded operation or candidate-edit
+    failure tasks.
+11. Store failures and partial traces instead of silently skipping them.
 
 ## 5. Task Row Materialization
 
@@ -121,6 +133,16 @@ High-value row sources:
   removed cuts, and inside added features;
 - final entities with stable provenance labels;
 - counterfactual parameter variants with shared group IDs.
+
+Later complex row sources:
+
+- graph-query templates over operation, topology, provenance, parameter, and
+  measured-attribute graphs;
+- stable point, axis, and centerline references for distance questions;
+- bounding-box region queries over topology entities and conservative material
+  change evidence;
+- validity probes and bounded threshold searches for operation failure-mode
+  questions.
 
 ## 6. Point Sampling
 
@@ -178,6 +200,11 @@ point_membership
 near_boundary
 feature_provenance
 counterfactual
+graph_query
+multi_hop
+spatial_distance
+bbox_region_query
+validity_failure
 multi_solid
 kernel_sensitive
 ```
@@ -212,6 +239,14 @@ Reject or quarantine rows when:
 - topology count is kernel-unstable across repeated runs;
 - provenance confidence is below the task threshold;
 - point classification is ambiguous but the task expects a crisp label;
+- a graph query has ambiguous references, empty candidates, or unstable
+  tie-breaking;
+- a point, axis, centerline, or bounding-box spatial reference cannot be
+  resolved with the required confidence;
+- a region query relies only on bounding-box false positives where exact
+  geometry evidence is required;
+- a validity probe or threshold search is kernel-unstable, timeout-sensitive,
+  or non-monotonic under the declared search contract;
 - the prompt leaks the answer through diagnostics or comments.
 
 ## 11. Smoke Dataset Requirements
@@ -227,6 +262,14 @@ A smoke dataset must include at least:
 - one point-membership boundary case;
 - one provenance case with `created_by`, `modified_by`, `inherited_from`, and
   `bounded_by`.
+
+Later smoke suites for complex task families should add:
+
+- one graph-like query with an ordinal feature reference;
+- one point-to-point distance query;
+- one hole/cylinder centerline distance query;
+- one bounding-box region query over vertices or affected features;
+- one stable invalid-operation or failure-mode query.
 
 ## 12. Determinism and Reproducibility
 
@@ -255,3 +298,9 @@ or a reproducibility audit explaining any differences.
 - Forcing single-feature provenance labels for fillet, shell, cleanup, or merge
   cases that are genuinely many-to-many.
 - Letting synthetic primitives dominate the benchmark.
+- Treating graph-like questions as free-form natural language without storing
+  the query IR and resolved references.
+- Treating bounding-box region overlap as exact material evidence without
+  conservative confirmation.
+- Publishing failure-mode labels that are not stable across repeated isolated
+  probes.

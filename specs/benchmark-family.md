@@ -13,10 +13,14 @@ with sibling task families:
   workplanes, point membership, volumes, and feature provenance.
 - **CADEditQA**: constrained edit and repair tasks over the same source
   programs, traces, label policies, and verifier infrastructure.
+- **Advanced CAD-QA diagnostics**: later-stage complex QA families over the
+  same traces, including graph-like multi-hop queries, point/axis/centerline
+  distance questions, bounding-box spatial-window selectors, and operation
+  validity or failure-mode prediction.
 - **Shared core**: CADEvolve ingestion, source normalization, isolated CadQuery
   execution, operation graph extraction, intermediate-state capture, topology
-  measurement, provenance approximation, split assignment, leakage audits,
-  export, evaluation, and verifier/reward logic.
+  measurement, spatial indexes, provenance approximation, split assignment,
+  leakage audits, export, evaluation, and verifier/reward logic.
 
 QA and edit tasks should share source IDs, operation IDs, trace IDs,
 counterfactual groups, leakage rules, geometry snapshots, and label policies
@@ -35,6 +39,9 @@ they should not fork source provenance or split semantics.
    execution and intermediate-state capture are reliable.
 5. Add CADEditQA slices after the shared verifier can apply bounded edits and
    remeasure the affected scripts.
+6. Add advanced CAD-QA diagnostics only after the graph/query IR, spatial
+   indexes, and failure-label policies are stable enough for deterministic
+   structured answers.
 
 ## Boundary With IntersectionQA
 
