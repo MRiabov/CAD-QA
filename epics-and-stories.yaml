@@ -212,7 +212,7 @@ epics:
     implementation_complexity: High
     debugging_difficulty: High
     recommendation: Build now
-    status: work-in-progress
+    status: implemented
     stable: false
     stories:
       - id: "3.1"
@@ -271,7 +271,7 @@ epics:
     implementation_complexity: High
     debugging_difficulty: High
     recommendation: Build now
-    status: implemented
+    status: work-in-progress
     stable: false
     stories:
       - id: "4.1"
@@ -347,7 +347,7 @@ epics:
     implementation_complexity: Medium
     debugging_difficulty: Medium
     recommendation: Build after labels
-    status: work-in-progress
+    status: implemented
     stable: false
     stories:
       - id: "5.1"
@@ -489,7 +489,7 @@ epics:
     implementation_complexity: Medium
     debugging_difficulty: Medium
     recommendation: Build after MVP export
-    status: implemented
+    status: work-in-progress
     stable: false
     stories:
       - id: "7.1"
