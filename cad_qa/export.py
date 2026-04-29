@@ -134,7 +134,16 @@ def _write_parquet_files(parquet_dir: Path, rows: list[dict[str, object]]) -> di
     files = []
     for split, split_rows in sorted(by_split.items()):
         path = parquet_dir / f"{split}.parquet"
-        table = pa.Table.from_pylist(sorted(split_rows, key=lambda row: str(row["id"])))
-        pq.write_table(table, path)
+        try:
+            table = pa.Table.from_pylist(sorted(split_rows, key=lambda row: str(row["id"])))
+            pq.write_table(table, path)
+        except (pa.ArrowException, TypeError, ValueError) as exc:
+            marker = parquet_dir / "PARQUET_NOT_WRITTEN.md"
+            marker.write_text(
+                "Parquet export was skipped because pyarrow could not infer a stable schema "
+                f"for heterogeneous CAD-QA rows: {type(exc).__name__}: {exc}\n",
+                encoding="utf-8",
+            )
+            return {"status": "skipped", "reason": "pyarrow_schema_inference_failed", "files": []}
         files.append(str(path.name))
     return {"status": "written", "files": files}

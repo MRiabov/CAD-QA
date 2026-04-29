@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import asdict
+import math
 from typing import Any
 
 from cad_qa.config import DatasetConfig
@@ -144,13 +145,11 @@ def _operation_count_rows(
 def _snapshot_rows(source: SourceRecord, trace: TraceRecord, *, config: DatasetConfig) -> list[PublicTaskRow]:
     rows: list[PublicTaskRow] = []
     snapshots = sorted(trace.snapshots, key=lambda item: int(item.get("step_index", 0)))
-    previous_by_index: dict[int, dict[str, Any]] = {}
-    for snapshot in snapshots:
-        index = int(snapshot.get("step_index", 0))
-        previous = snapshots[index - 1] if index > 0 and index - 1 < len(snapshots) else None
-        previous_by_index[index] = previous or {}
+    for position, snapshot in enumerate(snapshots):
+        previous = snapshots[position - 1] if position > 0 else None
         feature_id = str(snapshot.get("feature_id"))
         if snapshot.get("bbox") is not None:
+            answer_bbox = _round_bbox(snapshot["bbox"])
             rows.append(
                 _row(
                     source,
@@ -164,7 +163,7 @@ def _snapshot_rows(source: SourceRecord, trace: TraceRecord, *, config: DatasetC
                         f"```python\n{source.normalized_code}```"
                     ),
                     answer_type="bbox",
-                    answer=snapshot["bbox"],
+                    answer=answer_bbox,
                     choices=None,
                     unit="mm",
                     numeric_tolerance=config.label_policy.bbox_tolerance_mm,
@@ -179,6 +178,7 @@ def _snapshot_rows(source: SourceRecord, trace: TraceRecord, *, config: DatasetC
             before = float(previous["volume"])
             after = float(snapshot["volume"])
             delta = after - before
+            answer_delta = _round_sigfig_number(delta)
             rows.append(
                 _row(
                     source,
@@ -193,7 +193,7 @@ def _snapshot_rows(source: SourceRecord, trace: TraceRecord, *, config: DatasetC
                         f"```python\n{source.normalized_code}```"
                     ),
                     answer_type="number",
-                    answer=delta,
+                    answer=answer_delta,
                     choices=None,
                     unit="mm^3",
                     numeric_tolerance=config.label_policy.volume_tolerance_abs_mm3,
@@ -494,6 +494,35 @@ def _point_sampling_group_id(source: SourceRecord, query: dict[str, Any], answer
 def _is_near_boundary_query(query: dict[str, Any], answer: str) -> bool:
     stratum = f"{query.get('sampling_stratum')} {query.get('sample_source')}".lower()
     return answer in {"on_boundary", "ambiguous"} or "boundary" in stratum
+
+
+def _round_bbox(value: Any) -> Any:
+    if not isinstance(value, dict):
+        return value
+    rounded: dict[str, Any] = {}
+    for key, coordinates in value.items():
+        if key in {"min", "max"} and isinstance(coordinates, list):
+            rounded[key] = [_round_sigfig_number(item) for item in coordinates]
+        else:
+            rounded[key] = coordinates
+    return rounded
+
+
+def _round_sigfig_number(value: Any, digits: int = 4) -> Any:
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return value
+    numeric = float(value)
+    if not math.isfinite(numeric):
+        return value
+    if numeric == 0:
+        return 0.0
+    places = digits - math.floor(math.log10(abs(numeric))) - 1
+    rounded = round(numeric, places)
+    if rounded == 0:
+        return 0.0
+    if places <= 0 and float(rounded).is_integer():
+        return int(rounded)
+    return rounded
 
 
 def rows_to_dicts(rows: list[PublicTaskRow]) -> list[dict[str, Any]]:
