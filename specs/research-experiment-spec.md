@@ -7,8 +7,8 @@ program reasoning more broadly.
 
 Canonical task, label, schema, and generation semantics remain in
 `benchmark-task-spec.md`, `label_rules.md`, `schema.md`, `generation_policy.md`,
-and `cadedit-task-spec.md`. If this document conflicts with those
-specifications, the canonical specifications win.
+`cadedit-task-spec.md`, and `multi-hop-qa-task-spec.md`. If this document
+conflicts with those specifications, the canonical specifications win.
 
 ## Goals
 
@@ -233,7 +233,7 @@ Use verifier-derived metrics, not natural-language judgment.
 
 Evaluate complex later task families separately from MVP CAD-QA scores:
 
-- graph-like multi-hop QA;
+- feature-level graph diagnostics;
 - point-to-point, feature-to-feature, axis, and centerline distance QA;
 - bounding-box-as-selector region QA;
 - validity and failure-mode QA.
@@ -251,6 +251,31 @@ Recommended baselines:
 - AABB-only region-overlap baseline for bounding-box region tasks;
 - majority failure-type and kernel-status heuristic baselines for validity
   tasks.
+
+## P2: Multi-Hop CAD-QA Track
+
+Evaluate BrowseComp-style Multi-Hop CAD-QA as a separate track once
+graph-sampled constraint records, evidence-chain storage, obfuscation policy, and
+uniqueness rejection are available.
+
+Report separately from CAD-QA Core:
+
+- graph hop counts;
+- static/text-derived hop counts;
+- geometry/trace-derived hop counts;
+- static-hop ratio;
+- distractor counts;
+- obfuscation type;
+- answer uniqueness and ambiguity margins;
+- reference-resolution failure rates;
+- performance by `mhqa_level_1_direct_0_1_hops`,
+  `mhqa_level_2_bridge_2_hops`, `mhqa_level_3_complex_4_5_hops`,
+  `mhqa_level_4_hard_6_8_hops`, and
+  `mhqa_level_5_extreme_9_10_hops`;
+- closed-book, graph-summary, and tool-allowed modes.
+
+Do not merge this track into a single CAD-QA headline number until shortcut
+baselines and human audit pass rates are stable.
 
 ## P1: Bounded RL Or Rejection Sampling
 

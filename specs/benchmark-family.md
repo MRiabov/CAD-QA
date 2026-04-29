@@ -13,8 +13,12 @@ with sibling task families:
   workplanes, point membership, volumes, and feature provenance.
 - **CADEditQA**: constrained edit and repair tasks over the same source
   programs, traces, label policies, and verifier infrastructure.
+- **Multi-Hop CAD-QA**: a future BrowseComp-style CAD reasoning track for
+  graph-sampled, answer-first questions that compose operation order,
+  parameters, selectors, topology, spatial relations, and provenance. See
+  `specs/multi-hop-qa-task-spec.md`.
 - **Advanced CAD-QA diagnostics**: later-stage complex QA families over the
-  same traces, including graph-like multi-hop queries, point/axis/centerline
+  same traces, including feature-level graph diagnostics, point/axis/centerline
   distance questions, bounding-box spatial-window selectors, and operation
   validity or failure-mode prediction.
 - **Shared core**: CADEvolve ingestion, source normalization, isolated CadQuery
@@ -42,6 +46,9 @@ they should not fork source provenance or split semantics.
 6. Add advanced CAD-QA diagnostics only after the graph/query IR, spatial
    indexes, and failure-label policies are stable enough for deterministic
    structured answers.
+7. Add Multi-Hop CAD-QA only after graph-sampled query programs, evidence-chain
+   storage, obfuscation policy, and uniqueness rejection are stable enough to
+   avoid hardcoded template expansion.
 
 ## Boundary With IntersectionQA
 

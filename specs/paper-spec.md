@@ -3,7 +3,9 @@
 This document captures the paper ambition and research narrative for CAD-QA.
 For implementation, the canonical specifications are
 `specs/benchmark-task-spec.md`, `specs/label_rules.md`, `specs/schema.md`, and
-`specs/generation_policy.md`.
+`specs/generation_policy.md`. The desired future BrowseComp-style complex
+multi-hop CAD benchmark track is specified separately in
+`specs/multi-hop-qa-task-spec.md`.
 
 ## 1. Core Claim
 
@@ -33,7 +35,8 @@ CAD agents need more than final shape similarity. They need to reason about:
 | Point membership | Needed for collision, fit, supports, and material queries. |
 | Feature provenance | Needed to explain and edit model regions. |
 | Counterfactual edits | Needed for design assistance rather than passive recognition. |
-| Graph-like multi-hop reasoning | Needed to answer questions that compose operation order, feature attributes, and topology references. |
+| Graph-like diagnostics | Needed to answer deterministic questions that compose operation order, feature attributes, and topology references. |
+| BrowseComp-style multi-hop CAD reasoning | Needed for high-uncertainty questions where the model must resolve indirect CAD references, traverse a sampled graph, compare distractors, and produce a unique verifier-backed answer. |
 | Spatial distance reasoning | Needed for fit, clearance, centerline, and feature-spacing questions. |
 | Region queries | Needed to reason about what changed inside a bounded spatial window. |
 | Validity and failure prediction | Needed to anticipate kernel failures and invalid CAD operations. |
@@ -99,7 +102,7 @@ Examples:
 
 These tasks connect QA to edit ability.
 
-### Tier F: Graph-Like Multi-Hop CAD Reasoning
+### Tier F: Graph-Like CAD Diagnostics
 
 Examples:
 
@@ -109,6 +112,23 @@ Examples:
 
 These are later-stage tasks because they require a typed query graph, stable
 feature/entity resolution, and deterministic aggregation labels.
+
+The broader BrowseComp-style version of this tier should be treated as a
+separate Multi-Hop CAD-QA track rather than as a small extension of template
+diagnostics. See `specs/multi-hop-qa-task-spec.md`.
+
+For the paper, Multi-Hop CAD-QA rows should emphasize geometry-derived
+reasoning chains rather than long static-code chains. A release-quality row
+should usually fall between Level 3 and Level 5: Level 3 is 4-5 logical hops,
+Level 4 is 6-8 hops, and Level 5 is 9-10 hops. Level 1 covers 0-1 hops and
+Level 2 covers 2 hops for curriculum and calibration only. Fewer than 3 hops is
+not useful as a release row for this track. No more than one third of the
+counted hops should be recoverable from text alone, such as operation order,
+literal arguments, or variable order. At least two thirds should require trace
+or geometry labels, such as selector resolution, face adjacency, topology
+deltas, material provenance, volume/bounding-box measurements, centroids,
+centerlines, or profile geometry. Level 5 should be hard enough that humans may
+struggle without tool support, which is part of the research goal.
 
 ### Tier G: Spatial Distance And Region Reasoning
 

@@ -15,9 +15,11 @@ benchmark asks whether a model can infer what the program does: which operations
 exist, which selectors bind which entities, what intermediate geometry states
 look like, how topology changes, whether points are inside the final solid, and
 which feature last created, removed, or bounded a region of material.
-Later complex task families extend this to multi-hop graph queries, spatial
-distance queries, bounding-box region queries, and validity/failure-mode
-prediction while keeping the same trace-derived labeling discipline.
+Later complex task families extend this to feature-level graph diagnostics,
+spatial distance queries, bounding-box region queries, and
+validity/failure-mode prediction while keeping the same trace-derived labeling
+discipline. A separate desired future track for BrowseComp-style complex
+multi-hop CAD questions is specified in `specs/multi-hop-qa-task-spec.md`.
 
 Official labels come from precomputed trace and geometry metadata produced
 offline. Labels must not come from model execution during evaluation. Public
@@ -402,9 +404,14 @@ rotated-frame rows, selector-derived workplanes, and world-frame references.
 
 **Task purpose**
 
-Answer multi-hop questions over a typed construction graph where the model must
-identify referenced features or entities before computing or selecting the
-answer.
+Answer deterministic feature/entity graph diagnostic questions over a typed
+construction graph where the model must identify referenced features or
+entities before computing or selecting the answer.
+
+This task family is not the full BrowseComp-style Multi-Hop CAD-QA track. The
+larger goal, including graph-sampled query programs, obfuscated anchors,
+evidence chains, and high-uncertainty question generation, is specified in
+`specs/multi-hop-qa-task-spec.md`.
 
 Examples:
 

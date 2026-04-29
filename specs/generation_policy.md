@@ -171,6 +171,11 @@ Later complex row sources:
 - validity probes and bounded threshold searches for operation failure-mode
   questions.
 
+BrowseComp-style Multi-Hop CAD-QA generation is a separate future track. It
+should be answer-first and graph-sampled, with obfuscation and uniqueness
+rejection as specified in `specs/multi-hop-qa-task-spec.md`, rather than an
+exhaustive expansion of hardcoded graph-query templates.
+
 Descriptor counts, scheduled-label counts, label-failure counts, and
 exported-row counts are separate statistics. Generation reports must record all
 four where available so imbalance is visible without requiring all possible
@@ -403,6 +408,8 @@ or a reproducibility audit explaining any differences.
 - Letting synthetic primitives dominate the benchmark.
 - Treating graph-like questions as free-form natural language without storing
   the query IR and resolved references.
+- Treating BrowseComp-style multi-hop QA as a larger set of hardcoded
+  templates instead of answer-first graph sampling with verifier rejection.
 - Treating bounding-box region overlap as exact material evidence without
   conservative confirmation.
 - Publishing failure-mode labels that are not stable across repeated isolated

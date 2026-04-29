@@ -771,6 +771,12 @@ This lets evaluation report generalization across source families, operation ord
 
 The graph-like questions in the human notes should become a first-class generation mode, not just hand-written examples.
 
+For the ambitious BrowseComp-style version of this idea, see
+`specs/multi-hop-qa-task-spec.md`. That document separates complex Multi-Hop
+CAD-QA from the current feature-level graph diagnostics and describes the
+answer-first graph sampling, obfuscation, evidence-chain, and uniqueness
+requirements.
+
 Represent each script as a typed graph:
 
 ```text
