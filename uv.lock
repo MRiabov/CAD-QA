@@ -280,6 +280,7 @@ training = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "hf" },
     { name = "ruff" },
     { name = "vastai" },
 ]
@@ -301,6 +302,7 @@ provides-extras = ["dev", "cadquery", "parquet", "training"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "hf", specifier = ">=1.12.2" },
     { name = "ruff", specifier = ">=0.15.12" },
     { name = "vastai", specifier = ">=1.0.7" },
 ]
@@ -1061,6 +1063,18 @@ wheels = [
 ]
 
 [[package]]
+name = "hf"
+version = "1.12.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "huggingface-hub" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d8/f6/d50a4280aeda08552df656352fdb903b85c452fc6b0ab004c9ce5f901502/hf-1.12.2.tar.gz", hash = "sha256:dde1431e9f093f83fd0e4fa1ca6a1d9c41c7d4bb89b778b482070d34955c7e4d", size = 2495, upload-time = "2026-04-29T09:45:11.121Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a1/a3/cbaabdf231b913ae61f4abf4266094ec058672beb4065223df938b6d1cb7/hf-1.12.2-py3-none-any.whl", hash = "sha256:db9e13e9bd27d292a39c244e575bee1f43ecf2935f9eee79bddcaa070782d6b4", size = 2417, upload-time = "2026-04-29T09:45:09.976Z" },
+]
+
+[[package]]
 name = "hf-transfer"
 version = "0.1.9"
 source = { registry = "https://pypi.org/simple" }
@@ -1154,7 +1168,7 @@ wheels = [
 
 [[package]]
 name = "huggingface-hub"
-version = "1.12.0"
+version = "1.12.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "filelock" },
@@ -1167,9 +1181,9 @@ dependencies = [
     { name = "typer" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/56/52/1b54cb569509c725a32c1315261ac9fd0e6b91bbbf74d86fca10d3376164/huggingface_hub-1.12.0.tar.gz", hash = "sha256:7c3fe85e24b652334e5d456d7a812cd9a071e75630fac4365d9165ab5e4a34b6", size = 763091, upload-time = "2026-04-24T13:32:08.674Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3e/9f/3fda8b014db3ae239addc9b48b35c2cf7d318950b430712f34a2473ef81d/huggingface_hub-1.12.2.tar.gz", hash = "sha256:282c4999e641c89affdc4c02c265eddea944c1390dc19e89dac8ad3ae76dbdaf", size = 763393, upload-time = "2026-04-29T09:45:09.202Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7e/2b/ef03ddb96bd1123503c2bd6932001020292deea649e9bf4caa2cb65a85bf/huggingface_hub-1.12.0-py3-none-any.whl", hash = "sha256:d74939969585ee35748bd66de09baf84099d461bda7287cd9043bfb99b0e424d", size = 646806, upload-time = "2026-04-24T13:32:06.717Z" },
+    { url = "https://files.pythonhosted.org/packages/71/c1/1fa4162f6dd53259daf2ad31385273341821fa0acce164cd03971937a60e/huggingface_hub-1.12.2-py3-none-any.whl", hash = "sha256:7968e897fdbc6343c871c240d87d4434efe0ad9f80d57daa1cc5678c6d148529", size = 647757, upload-time = "2026-04-29T09:45:07.63Z" },
 ]
 
 [[package]]

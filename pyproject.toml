@@ -28,6 +28,7 @@ pythonpath = ["."]
 
 [dependency-groups]
 dev = [
+    "hf>=1.12.2",
     "ruff>=0.15.12",
     "vastai>=1.0.7",
 ]
