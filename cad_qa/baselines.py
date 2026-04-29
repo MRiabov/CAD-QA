@@ -204,7 +204,14 @@ def _advanced_diagnostic_naive_predictions(rows: list[dict[str, Any]]) -> dict[s
         task_type = row.get("task_type")
         if task_type == "graph_query":
             choices = row.get("choices")
-            predictions[str(row["id"])] = str(choices[0]) if isinstance(choices, list) and choices else ""
+            if isinstance(choices, list) and choices:
+                predictions[str(row["id"])] = str(choices[0])
+            elif row.get("answer_type") == "integer":
+                predictions[str(row["id"])] = "0"
+            elif row.get("answer_type") == "number":
+                predictions[str(row["id"])] = "0"
+            else:
+                predictions[str(row["id"])] = ""
         elif task_type == "spatial_distance":
             predictions[str(row["id"])] = "0"
         elif task_type == "bbox_region_query":
