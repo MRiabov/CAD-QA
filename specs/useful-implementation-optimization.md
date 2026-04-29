@@ -16,11 +16,13 @@ Store in public rows:
 - structured answer;
 - target feature, selector, entity, or point;
 - raw labels such as volume, bounding box, topology counts, point
-  classification, and provenance relation;
+  classification, provenance relation, graph-query resolution, spatial
+  reference, region-query, and validity-probe metadata;
 - diagnostics such as label status, confidence, kernel status, and failure
   reason;
 - provenance such as source ID, generator ID, operation signature,
-  counterfactual group ID, config hash, code hash, and dataset version.
+  counterfactual group ID, graph query group ID, spatial reference group ID,
+  validity probe group ID, config hash, code hash, and dataset version.
 
 Do not store by default:
 
@@ -51,7 +53,7 @@ CADEvolve source programs
   -> normalized source records
   -> operation graphs
   -> isolated execution traces
-  -> snapshot geometry/topology/provenance metadata
+  -> snapshot geometry/topology/provenance/spatial metadata
   -> task rows and prompts
   -> split-safe JSONL/Parquet exports
 ```
@@ -80,6 +82,9 @@ Cache these artifacts separately:
 - selector result tables;
 - point classification tables;
 - provenance match tables;
+- graph query IR and resolution tables;
+- spatial reference and region indexes;
+- validity probe and threshold-search results;
 - rendered/debug artifacts.
 
 Cache keys should include source hash, operation graph hash, execution
@@ -120,6 +125,11 @@ use selector result tables generated during trace execution.
 
 Topology matching should be best-effort but explicit. Store matching method and
 confidence so provenance labels can be filtered instead of overclaimed.
+
+Graph-like, spatial-distance, bounding-box-region, and validity/failure-mode
+tasks should consume stored graph/query IR, spatial indexes, and validity probe
+tables. Task materialization must not infer multi-hop references by parsing the
+prompt text.
 
 ## Broad Phase Before Expensive Work
 
@@ -201,6 +211,10 @@ Before publishing a dataset build:
 8. Point membership task rows.
 9. Provenance task rows.
 10. Counterfactual and edit task rows.
+11. Graph-query task rows.
+12. Spatial-distance task rows.
+13. Bounding-box region task rows.
+14. Validity/failure-mode task rows.
 
 ## Anti-Patterns To Avoid
 
@@ -210,3 +224,8 @@ Before publishing a dataset build:
 - Overfitting the schema to one prompt style.
 - Treating feature provenance as single-label when the geometry is many-to-many.
 - Using comments or source variable names that leak answers in public prompts.
+- Letting complex task prompts be the only source of truth for graph or spatial
+  references.
+- Reusing AABB-only overlap as an exact spatial-window label without
+  conservative geometry confirmation.
+- Publishing failure labels without repeated-probe stability checks.

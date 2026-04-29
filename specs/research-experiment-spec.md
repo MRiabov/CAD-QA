@@ -20,6 +20,8 @@ The experiment suite should answer:
 4. Does CAD-QA training improve counterfactual and edit-oriented CAD behavior?
 5. Which labels are robust enough for public benchmarks and which belong only
    in diagnostic research artifacts?
+6. Which later complex task families need separate treatment because their
+   graph, spatial, or failure labels introduce new shortcut risks?
 
 ## Compute Budgets
 
@@ -77,6 +79,10 @@ Measure and publish:
 - volume delta distribution;
 - point sampling strata;
 - provenance relation counts;
+- graph-query template and resolution-status counts;
+- spatial-reference type counts;
+- bounding-box region predicate counts;
+- validity failure-type counts;
 - failure reasons and rejection rates;
 - duplicate and leakage audit results.
 
@@ -108,6 +114,8 @@ Report separately for:
 - topology tasks;
 - point membership;
 - feature provenance.
+- graph-like multi-hop tasks, spatial-distance tasks, bounding-box region
+  tasks, and validity/failure-mode tasks when those later families are present.
 
 ## P0: Prompting Ablation
 
@@ -202,6 +210,10 @@ Train on one family or family subset and evaluate across all families:
 - selector -> workplane;
 - point membership -> provenance;
 - QA -> edit.
+- scalar/topology/provenance -> graph-query;
+- point/workplane -> spatial-distance;
+- provenance/topology -> bounding-box region;
+- topology/selector -> validity/failure prediction.
 
 The key research question is whether trace-derived supervision transfers beyond
 the exact answer type.
@@ -216,6 +228,29 @@ After edit rows exist, evaluate whether CAD-QA-trained models improve:
 - satisfying verifier constraints.
 
 Use verifier-derived metrics, not natural-language judgment.
+
+## P2: Complex CAD-QA Diagnostics
+
+Evaluate complex later task families separately from MVP CAD-QA scores:
+
+- graph-like multi-hop QA;
+- point-to-point, feature-to-feature, axis, and centerline distance QA;
+- bounding-box-as-selector region QA;
+- validity and failure-mode QA.
+
+Report each family with its own row counts, parse rates, reference-resolution
+failure rates, and ambiguity/quarantine rates. Do not merge these scores into a
+single CAD-QA headline number until their task mix and shortcut baselines are
+stable.
+
+Recommended baselines:
+
+- graph-query oracle over stored IR as an upper bound;
+- shallow operation-order and keyword baselines for graph queries;
+- centroid/AABB distance baselines for spatial-distance tasks;
+- AABB-only region-overlap baseline for bounding-box region tasks;
+- majority failure-type and kernel-status heuristic baselines for validity
+  tasks.
 
 ## P1: Bounded RL Or Rejection Sampling
 
@@ -247,6 +282,11 @@ Annotate or automatically classify errors:
 - topology count error;
 - boundary tolerance error;
 - provenance over-attribution;
+- graph-reference resolution error;
+- multi-hop aggregation error;
+- spatial-reference or centerline extraction error;
+- bounding-box region predicate error;
+- validity/failure-mode overgeneralization;
 - invalid answer format;
 - shortcut reliance.
 

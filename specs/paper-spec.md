@@ -33,6 +33,10 @@ CAD agents need more than final shape similarity. They need to reason about:
 | Point membership | Needed for collision, fit, supports, and material queries. |
 | Feature provenance | Needed to explain and edit model regions. |
 | Counterfactual edits | Needed for design assistance rather than passive recognition. |
+| Graph-like multi-hop reasoning | Needed to answer questions that compose operation order, feature attributes, and topology references. |
+| Spatial distance reasoning | Needed for fit, clearance, centerline, and feature-spacing questions. |
+| Region queries | Needed to reason about what changed inside a bounded spatial window. |
+| Validity and failure prediction | Needed to anticipate kernel failures and invalid CAD operations. |
 
 The stronger paper claim is that exact trace-derived supervision can improve
 LLM reasoning about CAD programs, and that capability should transfer to
@@ -95,6 +99,39 @@ Examples:
 
 These tasks connect QA to edit ability.
 
+### Tier F: Graph-Like Multi-Hop CAD Reasoning
+
+Examples:
+
+- Which feature after the second box added the most net volume?
+- What is the length of the feature that added the most volume?
+- How much volume did cylinder A subtract from box B?
+
+These are later-stage tasks because they require a typed query graph, stable
+feature/entity resolution, and deterministic aggregation labels.
+
+### Tier G: Spatial Distance And Region Reasoning
+
+Examples:
+
+- What is the X distance between the first and third holes?
+- What is the shortest distance between the first hole centerline and the
+  second cylinder centerline?
+- Which features added or removed material inside a specified bounding box?
+
+These tasks require stable point, axis, centerline, and spatial-window labels.
+
+### Tier H: Validity And Failure-Mode Reasoning
+
+Examples:
+
+- Will this fillet operation succeed?
+- What is the largest valid fillet radius for the selected edges?
+- Will this shell thickness produce a valid solid?
+
+These tasks should be treated as a distinct complex family because labels
+depend on bounded execution probes and kernel-stability policy.
+
 ## 4. CADEvolve As Primary Source
 
 CADEvolve is the practical first source because it provides executable
@@ -145,6 +182,10 @@ Report at least:
 - regex/static-code baselines for operation count tasks;
 - simple symbolic baselines for primitive volume tasks;
 - AABB-only baseline for point membership;
+- AABB-only region-overlap baseline for bounding-box region tasks;
+- centroid or AABB distance baselines for spatial-distance tasks;
+- operation-order heuristics for graph-like multi-hop tasks;
+- majority and kernel-status heuristics for validity/failure tasks;
 - selector-name heuristics;
 - closed-book LLM zero-shot;
 - closed-book LLM few-shot;
