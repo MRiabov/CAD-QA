@@ -185,6 +185,49 @@ evidence and verifier hooks. This query program is not a public task language.
 It is an audit artifact used to regenerate the prompt, validate the answer,
 measure hops, and detect ambiguity.
 
+Each hidden clause should declare one primary `constraint_type` from this enum:
+
+```text
+temporal
+metric
+topological
+selector
+provenance
+spatial
+comparative
+parameter
+operation_semantics
+relation
+```
+
+The enum is for generation, balancing, validation, and difficulty diagnostics.
+It should not be exposed in public prompts. A clause may depend on multiple
+evidence families, but the primary type should describe the reasoning operation
+the public clue asks the model to perform:
+
+- `temporal`: operation order, ordinal references, before/after, immediately
+  before/after, first/last, or relative construction history.
+- `metric`: scalar or vector measurements such as signed volume delta,
+  bounding-box delta, axis length, centroid, centerline distance, or mass.
+- `topological`: topology counts or topology deltas, including faces, edges,
+  vertices, wires, cylindrical faces, circular edges, or classified edge sets.
+- `selector`: selector expressions, selector result entities, selected counts,
+  or natural-language references to selected faces, edges, vertices, or solids.
+- `provenance`: created, modified, deleted, inherited, bounded, added-material,
+  or removed-material relations over features, entities, or material regions.
+- `spatial`: orientation, adjacency, containment, intersection, parallelism,
+  perpendicularity, coaxiality, point membership, region membership, or local vs
+  world frame relations.
+- `comparative`: choosing or ranking entities by a comparable attribute,
+  including argmax, argmin, greater-than, smaller-than, equality, or tie checks.
+- `parameter`: literal argument values, parameter reuse, parameter-derived
+  dimensions, ranges, comparisons, or transformed parameter values.
+- `operation_semantics`: operation class or effect, such as additive,
+  subtractive, transform-only, selector-driven, workplane-changing, fillet,
+  chamfer, shell, sweep, loft, or boolean behavior.
+- `relation`: generic graph relation existence or path-following when no more
+  specific type above is dominant.
+
 Conceptual hidden query program:
 
 ```json
@@ -196,6 +239,7 @@ Conceptual hidden query program:
   "clauses": [
     {
       "public_text": "It acts on a face selected by a side-face selector.",
+      "constraint_type": "selector",
       "predicate": "selected_face.normal_axis in ['X', 'Y']",
       "hop_type": "G",
       "evidence_chain": [
@@ -205,6 +249,7 @@ Conceptual hidden query program:
     },
     {
       "public_text": "It does not change the global bounding box.",
+      "constraint_type": "metric",
       "predicate": "feature.measurements.bbox_delta == [0, 0, 0]",
       "hop_type": "G",
       "evidence_chain": [
@@ -382,8 +427,7 @@ Each row should record measurable difficulty fields:
 - number of relation types involved;
 - whether obfuscation was used;
 - whether comparison or aggregation is required;
-- whether spatial geometry, topology, provenance, or selector semantics are
-  required;
+- whether spatial geometry, topology, provenance, or selector semantics are required;
 - whether the row is code-only, trace-assisted, or tool-allowed;
 - ambiguity margin between the correct answer and nearest distractor.
 

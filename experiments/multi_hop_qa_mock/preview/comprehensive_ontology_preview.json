@@ -1,0 +1,999 @@
+{
+  "schema_version": "cadqa_comprehensive_ontology_preview_v0",
+  "source_selection": [
+    {
+      "source_id": "src_4381883289a33860",
+      "source_family": "cadevolve_cadevolve_c_cadevolve_c_core",
+      "path": "CADEvolve-C/CADEvolve-C-core/ArrayBossHelixWire__02_25_emitted_centered_scaled_binarized/source_cadquery.py",
+      "line_count": 56,
+      "code": "import cadquery as cq\nwp1 = cq.Workplane('XY', origin=(0, 0, -72))\nwp2 = wp1.splineApprox([[88, 0, 0], [77, 42, 6], [47, 74, 12], [6, 88, 17], [-37, 80, 23], [-71, 52, 29], [-87, 11, 35], [-82, -32, 40], [-56, -68, 46], [-16, -86, 52], [27, -84, 58], [64, -60, 63], [85, -22, 69], [85, 22, 75], [64, 60, 81], [27, 84, 86], [-16, 86, 92], [-56, 68, 98], [-82, 32, 104], [-87, -11, 109], [-71, -52, 115], [-37, -80, 121], [6, -88, 127], [47, -74, 133], [77, -42, 138], [88, 0, 144]], makeWire=1)\nwp3 = cq.Workplane('XZ', origin=(0, 0, -72))\nwp4 = wp3.moveTo(88, 0)\nwp5 = wp4.circle(8)\nwp6 = wp5.sweep(wp2)\nwp7 = cq.Workplane(cq.Plane(origin=cq.Vector(60, 75, -62), xDir=cq.Vector(2, -2, 0), normal=cq.Vector(2, 2, 0)))\nwp8 = wp7.circle(5)\nwp9 = wp8.extrude(5)\nwp10 = wp6.union(wp9)\nwp11 = cq.Workplane(cq.Plane(origin=cq.Vector(-21, 94, -51), xDir=cq.Vector(3, 1, 0), normal=cq.Vector(-1, 3, 0)))\nwp12 = wp11.circle(5)\nwp13 = wp12.extrude(5)\nwp14 = wp10.union(wp13)\nwp15 = cq.Workplane(cq.Plane(origin=cq.Vector(-87, 42, -41), xDir=cq.Vector(-1, -2, 0), normal=cq.Vector(-2, 1, 0)))\nwp16 = wp15.circle(5)\nwp17 = wp16.extrude(5)\nwp18 = wp14.union(wp17)\nwp19 = cq.Workplane(cq.Plane(origin=cq.Vector(-87, -42, -31), xDir=cq.Vector(1, -2, 0), normal=cq.Vector(-2, -1, 0)))\nwp20 = wp19.circle(5)\nwp21 = wp20.extrude(5)\nwp22 = wp18.union(wp21)\nwp23 = cq.Workplane(cq.Plane(origin=cq.Vector(-21, -94, -21), xDir=cq.Vector(-3, 1, 0), normal=cq.Vector(-1, -3, 0)))\nwp24 = wp23.circle(5)\nwp25 = wp24.extrude(5)\nwp26 = wp22.union(wp25)\nwp27 = cq.Workplane(cq.Plane(origin=cq.Vector(60, -75, -10), xDir=cq.Vector(-2, -2, 0), normal=cq.Vector(2, -2, 0)))\nwp28 = wp27.circle(5)\nwp29 = wp28.extrude(5)\nwp30 = wp26.union(wp29)\nwp31 = cq.Workplane(cq.Plane(origin=cq.Vector(60, 75, 10), xDir=cq.Vector(2, -2, 0), normal=cq.Vector(2, 2, 0)))\nwp32 = wp31.circle(5)\nwp33 = wp32.extrude(5)\nwp34 = wp30.union(wp33)\nwp35 = cq.Workplane(cq.Plane(origin=cq.Vector(-21, 94, 21), xDir=cq.Vector(3, 1, 0), normal=cq.Vector(-1, 3, 0)))\nwp36 = wp35.circle(5)\nwp37 = wp36.extrude(5)\nwp38 = wp34.union(wp37)\nwp39 = cq.Workplane(cq.Plane(origin=cq.Vector(-87, 42, 31), xDir=cq.Vector(-1, -2, 0), normal=cq.Vector(-2, 1, 0)))\nwp40 = wp39.circle(5)\nwp41 = wp40.extrude(5)\nwp42 = wp38.union(wp41)\nwp43 = cq.Workplane(cq.Plane(origin=cq.Vector(-87, -42, 41), xDir=cq.Vector(1, -2, 0), normal=cq.Vector(-2, -1, 0)))\nwp44 = wp43.circle(5)\nwp45 = wp44.extrude(5)\nwp46 = wp42.union(wp45)\nwp47 = cq.Workplane(cq.Plane(origin=cq.Vector(-21, -94, 51), xDir=cq.Vector(-3, 1, 0), normal=cq.Vector(-1, -3, 0)))\nwp48 = wp47.circle(5)\nwp49 = wp48.extrude(5)\nwp50 = wp46.union(wp49)\nwp51 = cq.Workplane(cq.Plane(origin=cq.Vector(60, -75, 62), xDir=cq.Vector(-2, -2, 0), normal=cq.Vector(2, -2, 0)))\nwp52 = wp51.circle(5)\nwp53 = wp52.extrude(5)\nwp54 = wp50.union(wp53)\nresult = wp54\n",
+      "has_selector_cuts": false,
+      "has_repeated_bosses": true
+    },
+    {
+      "source_id": "src_bb1d614881c83f67",
+      "source_family": "cadevolve_cadevolve_p_shapenet_p",
+      "path": "CADEvolve-P/ShapeNet-P/02924116+dc9c640221f58021c08550bf6ec9e732+models+model_normalized+r09+s75+t170+p95+k00/source_cadquery.py",
+      "line_count": 38,
+      "code": "import cadquery as cq\nimport math\nA = 14.0\nB = 26.0\nC = 89.0\nR_out = 4.0\nR_in = 0.27\nside_scale = 1.0\n\nbase = cq.Workplane(\"XY\").box(A, B, C)\n\ndef star_points(n=5, inner=R_in, scale=1.0):\n    pts = []\n    total = n * 2\n    for k in range(total):\n        ang = 2 * math.pi * k / total\n        rad = 1.0 if (k % 2 == 0) else inner\n        pts.append((math.cos(ang) * rad * scale, math.sin(ang) * rad * scale))\n    return pts\n\nfront_shape = star_points()\nside_shape = star_points()\n\nfor face_tag in (\">Y\", \"<Y\"):\n    base = base.faces(face_tag).workplane().polyline(front_shape).close().cutThruAll()\nfor face_tag in (\">X\", \"<X\"):\n    base = base.faces(face_tag).workplane().polyline(side_shape).close().cutThruAll()\n\nth = R_out * R_in\ndY = min(R_out, B / 2.0)\ndX = min(R_out, A / 2.0)\nzpos = R_out + th / 2.0\n\nfor z in (zpos, -zpos):\n    base = base.faces(\">Y\").workplane().center(0, z).rect(A, th).cutBlind(-dY)\n    base = base.faces(\">X\").workplane().center(0, z).rect(B, th).cutBlind(-dX)\n\nresult = base\n",
+      "has_selector_cuts": true,
+      "has_repeated_bosses": false
+    }
+  ],
+  "source_pattern_survey": [
+    {
+      "pattern_id": "array_boss_helix_wire",
+      "visible_code_shapes": [
+        "`splineApprox(...)` path wire",
+        "repeated `cq.Workplane(cq.Plane(...))` calls",
+        "repeated `.circle(...).extrude(...)` bosses",
+        "repeated `.union(...)` accumulation"
+      ],
+      "wording_implications": [
+        "Use 'path wire' instead of centerline unless a centerline label exists.",
+        "Use 'running object produced by repeated `.union(...)` calls' instead of accumulated body.",
+        "Avoid final-union clues unless the individual candidate gate passes."
+      ]
+    },
+    {
+      "pattern_id": "box_star_slots",
+      "visible_code_shapes": [
+        "box dimensions assigned to variables",
+        "point lists built by trigonometry",
+        "face selectors such as `.faces(\">Y\")` and `.faces(\">X\")`",
+        "polyline through-cuts",
+        "rectangular blind cuts at `zpos` and `-zpos`"
+      ],
+      "wording_implications": [
+        "Use 'points later passed to `.polyline(...)`' instead of star profile.",
+        "Use selector text only when enough matching selectors exist.",
+        "Use `zpos`/`-zpos` wording only when the repeated pair has enough candidates."
+      ]
+    },
+    {
+      "pattern_id": "tabs_fillets_chamfers",
+      "visible_code_shapes": [
+        "box base",
+        "selected faces used to place tabs",
+        "rectangular `.extrude(..., combine=False)` tabs",
+        "`.edges(...)` followed by `.fillet(...)`",
+        "`.edges().chamfer(...)` on a base body"
+      ],
+      "wording_implications": [
+        "Use 'the object created with `combine=False` and later joined' for tab solids.",
+        "Use explicit `.edges(...)` selector wording for fillet/chamfer clues.",
+        "Do not assume the model knows topology terms like rim, side face, or material region unless tied to visible calls."
+      ]
+    }
+  ],
+  "coverage_summary": {
+    "node_type_count": 16,
+    "relation_type_count": 24,
+    "min_individual_candidate_count": 5,
+    "covered_node_types": [
+      "source",
+      "feature",
+      "operation",
+      "parameter",
+      "workplane",
+      "sketch",
+      "profile",
+      "solid",
+      "face",
+      "edge",
+      "vertex",
+      "axis",
+      "centerline",
+      "material_region",
+      "selector",
+      "measurement"
+    ],
+    "covered_relation_types": [
+      "before",
+      "after",
+      "immediately_before",
+      "immediately_after",
+      "input_to",
+      "created_by",
+      "modified_by",
+      "deleted_by",
+      "bounded_by",
+      "selected_by",
+      "located_on",
+      "parallel_to",
+      "perpendicular_to",
+      "coaxial_with",
+      "adjacent_to",
+      "contained_in",
+      "intersects",
+      "translated_by",
+      "rotated_by",
+      "scaled_by",
+      "parameter_of",
+      "has_measurement",
+      "adds_material_to",
+      "removes_material_from"
+    ]
+  },
+  "node_type_clues": [
+    {
+      "node_type": "source",
+      "mock_node_id": "source:primary",
+      "source_id": "src_4381883289a33860",
+      "canonical_clue": "The target is the selected CadEvolve source script.",
+      "preview_question_fragment": "the the selected CadEvolve source script",
+      "candidate_count": 2,
+      "passes_individual_candidate_gate": false
+    },
+    {
+      "node_type": "feature",
+      "mock_node_id": "feature:wp37",
+      "source_id": "src_4381883289a33860",
+      "canonical_clue": "The target is the variable assigned by one of the repeated `.extrude(...)` calls.",
+      "preview_question_fragment": "the the variable assigned by one of the repeated `.extrude(...)` calls",
+      "candidate_count": 12,
+      "passes_individual_candidate_gate": true
+    },
+    {
+      "node_type": "operation",
+      "mock_node_id": "operation:extrude",
+      "source_id": "src_4381883289a33860",
+      "canonical_clue": "The target is an `.extrude(...)` call that follows a `.circle(...)` call.",
+      "preview_question_fragment": "the an `.extrude(...)` call that follows a `.circle(...)` call",
+      "candidate_count": 11,
+      "passes_individual_candidate_gate": true
+    },
+    {
+      "node_type": "parameter",
+      "mock_node_id": "parameter:radius_5",
+      "source_id": "src_4381883289a33860",
+      "canonical_clue": "The target is the numeric `5` passed to a repeated `.circle(5)` call.",
+      "preview_question_fragment": "the the numeric `5` passed to a repeated `.circle(5)` call",
+      "candidate_count": 14,
+      "passes_individual_candidate_gate": true
+    },
+    {
+      "node_type": "workplane",
+      "mock_node_id": "workplane:boss_plane_high_z",
+      "source_id": "src_4381883289a33860",
+      "canonical_clue": "The target is the `cq.Workplane(cq.Plane(...))` call whose plane origin has the largest Z value among the repeated boss planes.",
+      "preview_question_fragment": "the the `cq.Workplane(cq.Plane(...))` call whose plane origin has the largest Z value among the repeated boss planes",
+      "candidate_count": 12,
+      "passes_individual_candidate_gate": true
+    },
+    {
+      "node_type": "sketch",
+      "mock_node_id": "sketch:star_points",
+      "source_id": "src_bb1d614881c83f67",
+      "canonical_clue": "The target is the list of 2D points returned by `star_points(...)` and then passed to `.polyline(...)`.",
+      "preview_question_fragment": "the the list of 2D points returned by `star_points(...)` and then passed to `.polyline(...)`",
+      "candidate_count": 2,
+      "passes_individual_candidate_gate": false
+    },
+    {
+      "node_type": "profile",
+      "mock_node_id": "profile:circle_r5",
+      "source_id": "src_4381883289a33860",
+      "canonical_clue": "The target is a circle made by `.circle(5)` immediately before an `.extrude(...)` call.",
+      "preview_question_fragment": "the a circle made by `.circle(5)` immediately before an `.extrude(...)` call",
+      "candidate_count": 12,
+      "passes_individual_candidate_gate": true
+    },
+    {
+      "node_type": "solid",
+      "mock_node_id": "solid:accumulated_body",
+      "source_id": "src_4381883289a33860",
+      "canonical_clue": "The target is the running object produced by repeatedly calling `.union(...)`.",
+      "preview_question_fragment": "the the running object produced by repeatedly calling `.union(...)`",
+      "candidate_count": 5,
+      "passes_individual_candidate_gate": true
+    },
+    {
+      "node_type": "face",
+      "mock_node_id": "face:+Y",
+      "source_id": "src_bb1d614881c83f67",
+      "canonical_clue": "The target is a face selected by `.faces(\">Y\")` before a cut.",
+      "preview_question_fragment": "the a face selected by `.faces(\">Y\")` before a cut",
+      "candidate_count": 4,
+      "passes_individual_candidate_gate": false
+    },
+    {
+      "node_type": "edge",
+      "mock_node_id": "edge:circular_boss_rim",
+      "source_id": "src_4381883289a33860",
+      "canonical_clue": "The target is an edge selected by `.edges(...)` or created around a `.circle(...).extrude(...)` feature.",
+      "preview_question_fragment": "the an edge selected by `.edges(...)` or created around a `.circle(...).extrude(...)` feature",
+      "candidate_count": 12,
+      "passes_individual_candidate_gate": true
+    },
+    {
+      "node_type": "vertex",
+      "mock_node_id": "vertex:profile_start",
+      "source_id": "src_4381883289a33860",
+      "canonical_clue": "The target is a point on the circular profile made by `.circle(5)`.",
+      "preview_question_fragment": "the a point on the circular profile made by `.circle(5)`",
+      "candidate_count": 12,
+      "passes_individual_candidate_gate": true
+    },
+    {
+      "node_type": "axis",
+      "mock_node_id": "axis:global_Z",
+      "source_id": "src_4381883289a33860",
+      "canonical_clue": "The target is the Z coordinate used in the `cq.Vector(..., ..., z)` plane origins.",
+      "preview_question_fragment": "the the Z coordinate used in the `cq.Vector(..., ..., z)` plane origins",
+      "candidate_count": 6,
+      "passes_individual_candidate_gate": true
+    },
+    {
+      "node_type": "centerline",
+      "mock_node_id": "centerline:swept_wire",
+      "source_id": "src_4381883289a33860",
+      "canonical_clue": "The target is the path wire created by `splineApprox(...)` and used by `.sweep(...)`.",
+      "preview_question_fragment": "the the path wire created by `splineApprox(...)` and used by `.sweep(...)`",
+      "candidate_count": 6,
+      "passes_individual_candidate_gate": true
+    },
+    {
+      "node_type": "material_region",
+      "mock_node_id": "material_region:boss_added",
+      "source_id": "src_4381883289a33860",
+      "canonical_clue": "The target is the new solid volume introduced by an `.extrude(...)` that is later joined with `.union(...)`.",
+      "preview_question_fragment": "the the new solid volume introduced by an `.extrude(...)` that is later joined with `.union(...)`",
+      "candidate_count": 12,
+      "passes_individual_candidate_gate": true
+    },
+    {
+      "node_type": "selector",
+      "mock_node_id": "selector:faces_pos_y",
+      "source_id": "src_bb1d614881c83f67",
+      "canonical_clue": "The target is the `.faces(\">Y\")` selector used before a cut operation.",
+      "preview_question_fragment": "the the `.faces(\">Y\")` selector used before a cut operation",
+      "candidate_count": 4,
+      "passes_individual_candidate_gate": false
+    },
+    {
+      "node_type": "measurement",
+      "mock_node_id": "measurement:bbox_delta",
+      "source_id": "src_bb1d614881c83f67",
+      "canonical_clue": "The target is whether a cut changes the final object's outer bounding box.",
+      "preview_question_fragment": "the whether a cut changes the final object's outer bounding box",
+      "candidate_count": 8,
+      "passes_individual_candidate_gate": true
+    }
+  ],
+  "relation_clues": [
+    {
+      "relation_type": "before",
+      "source_id": "src_4381883289a33860",
+      "source_node": "feature:early_boss_extrude",
+      "target_node": "wp9",
+      "canonical_clue": "The target occurs before the first extrude operation.",
+      "preview_question_fragment": "target occurs before the first extrude operation",
+      "leakage_risk": "normal",
+      "candidate_count": 8,
+      "passes_individual_candidate_gate": true,
+      "diagnostics": {
+        "side_range": 8,
+        "min_side_range": 5,
+        "guard": "reject if fewer than min_side_range operations exist before anchor"
+      }
+    },
+    {
+      "relation_type": "after",
+      "source_id": "src_4381883289a33860",
+      "source_node": "feature:late_boss_extrude",
+      "target_node": "wp49",
+      "canonical_clue": "The target occurs after the 11th extrude operation.",
+      "preview_question_fragment": "target occurs after the 11th extrude operation",
+      "leakage_risk": "normal",
+      "candidate_count": 5,
+      "passes_individual_candidate_gate": true,
+      "diagnostics": {
+        "side_range": 5,
+        "min_side_range": 5,
+        "guard": "reject if fewer than min_side_range operations exist after anchor"
+      }
+    },
+    {
+      "relation_type": "immediately_before",
+      "source_id": "src_4381883289a33860",
+      "source_node": "wp53",
+      "target_node": "wp54",
+      "canonical_clue": "The target is the operation immediately before the final union operation.",
+      "preview_question_fragment": "target is the operation immediately before the final union operation",
+      "leakage_risk": "high",
+      "candidate_count": 1,
+      "passes_individual_candidate_gate": false,
+      "diagnostics": {}
+    },
+    {
+      "relation_type": "immediately_after",
+      "source_id": "src_4381883289a33860",
+      "source_node": "wp17",
+      "target_node": "wp16",
+      "canonical_clue": "The target is the operation immediately after the fourth circle operation.",
+      "preview_question_fragment": "target is the operation immediately after the fourth circle operation",
+      "leakage_risk": "normal",
+      "candidate_count": 1,
+      "passes_individual_candidate_gate": false,
+      "diagnostics": {}
+    },
+    {
+      "relation_type": "input_to",
+      "source_id": "src_4381883289a33860",
+      "source_node": "feature:wp37",
+      "target_node": "operation:final_union",
+      "canonical_clue": "The target is one of the objects passed into a later `.union(...)` call.",
+      "preview_question_fragment": "target is one of the objects passed into a later `.union(...)` call",
+      "leakage_risk": "high",
+      "candidate_count": 1,
+      "passes_individual_candidate_gate": false,
+      "diagnostics": {}
+    },
+    {
+      "relation_type": "created_by",
+      "source_id": "src_4381883289a33860",
+      "source_node": "material_region:boss_added",
+      "target_node": "feature:wp37",
+      "canonical_clue": "The target is an `.extrude(...)` call that creates a new solid before that solid is joined with `.union(...)`.",
+      "preview_question_fragment": "target is an `.extrude(...)` call that creates a new solid before that solid is joined with `.union(...)`",
+      "leakage_risk": "normal",
+      "candidate_count": 12,
+      "passes_individual_candidate_gate": true,
+      "diagnostics": {}
+    },
+    {
+      "relation_type": "modified_by",
+      "source_id": "src_bb1d614881c83f67",
+      "source_node": "face:+Y",
+      "target_node": "feature:slot_cut",
+      "canonical_clue": "The target is a cut made from a `.faces(\">Y\")` workplane, so it changes that side of the box.",
+      "preview_question_fragment": "target is a cut made from a `.faces(\">Y\")` workplane, so it changes that side of the box",
+      "leakage_risk": "normal",
+      "candidate_count": 4,
+      "passes_individual_candidate_gate": false,
+      "diagnostics": {}
+    },
+    {
+      "relation_type": "deleted_by",
+      "source_id": "src_bb1d614881c83f67",
+      "source_node": "material_region:slot_removed",
+      "target_node": "feature:slot_cut",
+      "canonical_clue": "The target is a `.cutBlind(...)` or `.cutThruAll()` call that removes material from the box.",
+      "preview_question_fragment": "target is a `.cutBlind(...)` or `.cutThruAll()` call that removes material from the box",
+      "leakage_risk": "normal",
+      "candidate_count": 4,
+      "passes_individual_candidate_gate": false,
+      "diagnostics": {}
+    },
+    {
+      "relation_type": "bounded_by",
+      "source_id": "src_4381883289a33860",
+      "source_node": "edge:circular_boss_rim",
+      "target_node": "face:boss_side",
+      "canonical_clue": "The target creates a boundary visible from a preceding shape call, such as `.circle(...)` before `.extrude(...)` or `.rect(...)` before a cut.",
+      "preview_question_fragment": "target creates a boundary visible from a preceding shape call, such as `.circle(...)` before `.extrude(...)` or `.rect(...)` before a cut",
+      "leakage_risk": "normal",
+      "candidate_count": 12,
+      "passes_individual_candidate_gate": true,
+      "diagnostics": {}
+    },
+    {
+      "relation_type": "selected_by",
+      "source_id": "src_bb1d614881c83f67",
+      "source_node": "face:+Y",
+      "target_node": "selector:faces_pos_y",
+      "canonical_clue": "The target uses `.faces(\">Y\")` before making a workplane or cut.",
+      "preview_question_fragment": "target uses `.faces(\">Y\")` before making a workplane or cut",
+      "leakage_risk": "normal",
+      "candidate_count": 2,
+      "passes_individual_candidate_gate": false,
+      "diagnostics": {}
+    },
+    {
+      "relation_type": "located_on",
+      "source_id": "src_4381883289a33860",
+      "source_node": "profile:circle_r5",
+      "target_node": "workplane:boss_plane_high_z",
+      "canonical_clue": "The target is a `.circle(...)` call made on one of the repeated `cq.Workplane(cq.Plane(...))` planes.",
+      "preview_question_fragment": "target is a `.circle(...)` call made on one of the repeated `cq.Workplane(cq.Plane(...))` planes",
+      "leakage_risk": "normal",
+      "candidate_count": 12,
+      "passes_individual_candidate_gate": true,
+      "diagnostics": {}
+    },
+    {
+      "relation_type": "parallel_to",
+      "source_id": "src_4381883289a33860",
+      "source_node": "axis:boss_plane_normal",
+      "target_node": "axis:global_Z",
+      "canonical_clue": "The target uses a direction vector that is parallel to one of the script's coordinate axes, such as a `normal=(..., ..., z)` or an edge selector like `\"|Z\"`.",
+      "preview_question_fragment": "target uses a direction vector that is parallel to one of the script's coordinate axes, such as a `normal=(..., ..., z)` or an edge selector like `\"|Z\"`",
+      "leakage_risk": "normal",
+      "candidate_count": 8,
+      "passes_individual_candidate_gate": true,
+      "diagnostics": {}
+    },
+    {
+      "relation_type": "perpendicular_to",
+      "source_id": "src_4381883289a33860",
+      "source_node": "axis:boss_plane_xdir",
+      "target_node": "axis:boss_plane_normal",
+      "canonical_clue": "The target's plane uses an `xDir` vector perpendicular to its `normal` vector.",
+      "preview_question_fragment": "target's plane uses an `xDir` vector perpendicular to its `normal` vector",
+      "leakage_risk": "normal",
+      "candidate_count": 8,
+      "passes_individual_candidate_gate": true,
+      "diagnostics": {}
+    },
+    {
+      "relation_type": "coaxial_with",
+      "source_id": "src_4381883289a33860",
+      "source_node": "centerline:boss",
+      "target_node": "axis:boss_plane_normal",
+      "canonical_clue": "The target extrusion follows the normal direction of the workplane where its circle was drawn.",
+      "preview_question_fragment": "target extrusion follows the normal direction of the workplane where its circle was drawn",
+      "leakage_risk": "normal",
+      "candidate_count": 8,
+      "passes_individual_candidate_gate": true,
+      "diagnostics": {}
+    },
+    {
+      "relation_type": "adjacent_to",
+      "source_id": "src_bb1d614881c83f67",
+      "source_node": "face:+Y",
+      "target_node": "edge:slot_boundary",
+      "canonical_clue": "The target cut is made on the same side face that contains the boundary of the resulting slot.",
+      "preview_question_fragment": "target cut is made on the same side face that contains the boundary of the resulting slot",
+      "leakage_risk": "normal",
+      "candidate_count": 4,
+      "passes_individual_candidate_gate": false,
+      "diagnostics": {}
+    },
+    {
+      "relation_type": "contained_in",
+      "source_id": "src_bb1d614881c83f67",
+      "source_node": "vertex:slot_corner",
+      "target_node": "face:+Y",
+      "canonical_clue": "The target cut produces slot-corner points on the selected side face.",
+      "preview_question_fragment": "target cut produces slot-corner points on the selected side face",
+      "leakage_risk": "normal",
+      "candidate_count": 4,
+      "passes_individual_candidate_gate": false,
+      "diagnostics": {}
+    },
+    {
+      "relation_type": "intersects",
+      "source_id": "src_bb1d614881c83f67",
+      "source_node": "profile:slot_rect",
+      "target_node": "face:+Y",
+      "canonical_clue": "The target's rectangle is drawn on a selected side face before the cut is applied.",
+      "preview_question_fragment": "target's rectangle is drawn on a selected side face before the cut is applied",
+      "leakage_risk": "normal",
+      "candidate_count": 4,
+      "passes_individual_candidate_gate": false,
+      "diagnostics": {}
+    },
+    {
+      "relation_type": "translated_by",
+      "source_id": "src_bb1d614881c83f67",
+      "source_node": "profile:slot_rect",
+      "target_node": "parameter:zpos",
+      "canonical_clue": "The target rectangle is centered at either `zpos` or `-zpos` before the cut.",
+      "preview_question_fragment": "target rectangle is centered at either `zpos` or `-zpos` before the cut",
+      "leakage_risk": "normal",
+      "candidate_count": 4,
+      "passes_individual_candidate_gate": false,
+      "diagnostics": {}
+    },
+    {
+      "relation_type": "rotated_by",
+      "source_id": "src_4381883289a33860",
+      "source_node": "workplane:boss_plane",
+      "target_node": "parameter:plane_normal",
+      "canonical_clue": "The target uses a `cq.Plane(...)` with an explicit `normal=...` vector rather than a default XY workplane.",
+      "preview_question_fragment": "target uses a `cq.Plane(...)` with an explicit `normal=...` vector rather than a default XY workplane",
+      "leakage_risk": "normal",
+      "candidate_count": 12,
+      "passes_individual_candidate_gate": true,
+      "diagnostics": {}
+    },
+    {
+      "relation_type": "scaled_by",
+      "source_id": "src_bb1d614881c83f67",
+      "source_node": "profile:star_shape",
+      "target_node": "parameter:R_out",
+      "canonical_clue": "The target uses a size variable such as `R_out`, `R`, or `tab_w` to scale geometry before a `.polyline(...)`, `.rect(...)`, or `.extrude(...)` call.",
+      "preview_question_fragment": "target uses a size variable such as `R_out`, `R`, or `tab_w` to scale geometry before a `.polyline(...)`, `.rect(...)`, or `.extrude(...)` call",
+      "leakage_risk": "normal",
+      "candidate_count": 6,
+      "passes_individual_candidate_gate": true,
+      "diagnostics": {}
+    },
+    {
+      "relation_type": "parameter_of",
+      "source_id": "src_bb1d614881c83f67",
+      "source_node": "parameter:R_out",
+      "target_node": "profile:star_shape",
+      "canonical_clue": "The target uses a named size parameter in a later geometry call such as `.polyline(...)`, `.rect(...)`, `.box(...)`, or `.extrude(...)`.",
+      "preview_question_fragment": "target uses a named size parameter in a later geometry call such as `.polyline(...)`, `.rect(...)`, `.box(...)`, or `.extrude(...)`",
+      "leakage_risk": "normal",
+      "candidate_count": 8,
+      "passes_individual_candidate_gate": true,
+      "diagnostics": {}
+    },
+    {
+      "relation_type": "has_measurement",
+      "source_id": "src_bb1d614881c83f67",
+      "source_node": "feature:slot_cut",
+      "target_node": "measurement:bbox_delta",
+      "canonical_clue": "The target is a cut whose effect can be checked by comparing the outer bounding box before and after the operation.",
+      "preview_question_fragment": "target is a cut whose effect can be checked by comparing the outer bounding box before and after the operation",
+      "leakage_risk": "normal",
+      "candidate_count": 8,
+      "passes_individual_candidate_gate": true,
+      "diagnostics": {}
+    },
+    {
+      "relation_type": "adds_material_to",
+      "source_id": "src_4381883289a33860",
+      "source_node": "feature:wp37",
+      "target_node": "solid:accumulated_body",
+      "canonical_clue": "The target is an `.extrude(...)` result that is later added to the running object with `.union(...)`.",
+      "preview_question_fragment": "target is an `.extrude(...)` result that is later added to the running object with `.union(...)`",
+      "leakage_risk": "normal",
+      "candidate_count": 12,
+      "passes_individual_candidate_gate": true,
+      "diagnostics": {}
+    },
+    {
+      "relation_type": "removes_material_from",
+      "source_id": "src_bb1d614881c83f67",
+      "source_node": "feature:slot_cut",
+      "target_node": "solid:base_box",
+      "canonical_clue": "The target is a cut operation that removes material from the original box.",
+      "preview_question_fragment": "target is a cut operation that removes material from the original box",
+      "leakage_risk": "normal",
+      "candidate_count": 4,
+      "passes_individual_candidate_gate": false,
+      "diagnostics": {}
+    }
+  ],
+  "parameter_entry_exit_clues": [
+    {
+      "case_id": "parameter_as_entry_node_to_profile",
+      "source_id": "src_bb1d614881c83f67",
+      "entry_node": "parameter:R_out",
+      "exit_node": "profile:star_shape",
+      "relation_type": "parameter_of",
+      "canonical_clue": "The target uses the outer radius parameter in points that are later passed to `.polyline(...)`.",
+      "candidate_count": 4
+    },
+    {
+      "case_id": "parameter_as_entry_node_to_operation",
+      "source_id": "src_4381883289a33860",
+      "entry_node": "parameter:extrude_distance_8",
+      "exit_node": "operation:extrude",
+      "relation_type": "parameter_of",
+      "canonical_clue": "The target operation uses extrusion distance 8 as an input parameter.",
+      "candidate_count": 12
+    },
+    {
+      "case_id": "parameter_as_exit_node_from_operation",
+      "source_id": "src_4381883289a33860",
+      "entry_node": "operation:circle",
+      "exit_node": "parameter:radius_5",
+      "relation_type": "parameter_of",
+      "canonical_clue": "The target parameter is the radius emitted by the circle operation descriptor.",
+      "candidate_count": 12
+    },
+    {
+      "case_id": "parameter_as_exit_node_from_measurement",
+      "source_id": "src_bb1d614881c83f67",
+      "entry_node": "measurement:bbox_delta",
+      "exit_node": "parameter:bbox_delta_zero",
+      "relation_type": "has_measurement",
+      "canonical_clue": "The target parameter is derived from a zero bounding-box delta measurement.",
+      "candidate_count": 8
+    }
+  ],
+  "individual_prompt_previews": {
+    "node_type_prompts": [
+      {
+        "id": "node_prompt__source",
+        "coverage": "source",
+        "candidate_count": 2,
+        "passes_individual_candidate_gate": false,
+        "canonical_prompt": "Given the CadQuery script, identify the entity described by this clue: The target is the selected CadEvolve source script.\nReturn exactly one entity ID."
+      },
+      {
+        "id": "node_prompt__feature",
+        "coverage": "feature",
+        "candidate_count": 12,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the entity described by this clue: The target is the variable assigned by one of the repeated `.extrude(...)` calls.\nReturn exactly one entity ID."
+      },
+      {
+        "id": "node_prompt__operation",
+        "coverage": "operation",
+        "candidate_count": 11,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the entity described by this clue: The target is an `.extrude(...)` call that follows a `.circle(...)` call.\nReturn exactly one entity ID."
+      },
+      {
+        "id": "node_prompt__parameter",
+        "coverage": "parameter",
+        "candidate_count": 14,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the entity described by this clue: The target is the numeric `5` passed to a repeated `.circle(5)` call.\nReturn exactly one entity ID."
+      },
+      {
+        "id": "node_prompt__workplane",
+        "coverage": "workplane",
+        "candidate_count": 12,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the entity described by this clue: The target is the `cq.Workplane(cq.Plane(...))` call whose plane origin has the largest Z value among the repeated boss planes.\nReturn exactly one entity ID."
+      },
+      {
+        "id": "node_prompt__sketch",
+        "coverage": "sketch",
+        "candidate_count": 2,
+        "passes_individual_candidate_gate": false,
+        "canonical_prompt": "Given the CadQuery script, identify the entity described by this clue: The target is the list of 2D points returned by `star_points(...)` and then passed to `.polyline(...)`.\nReturn exactly one entity ID."
+      },
+      {
+        "id": "node_prompt__profile",
+        "coverage": "profile",
+        "candidate_count": 12,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the entity described by this clue: The target is a circle made by `.circle(5)` immediately before an `.extrude(...)` call.\nReturn exactly one entity ID."
+      },
+      {
+        "id": "node_prompt__solid",
+        "coverage": "solid",
+        "candidate_count": 5,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the entity described by this clue: The target is the running object produced by repeatedly calling `.union(...)`.\nReturn exactly one entity ID."
+      },
+      {
+        "id": "node_prompt__face",
+        "coverage": "face",
+        "candidate_count": 4,
+        "passes_individual_candidate_gate": false,
+        "canonical_prompt": "Given the CadQuery script, identify the entity described by this clue: The target is a face selected by `.faces(\">Y\")` before a cut.\nReturn exactly one entity ID."
+      },
+      {
+        "id": "node_prompt__edge",
+        "coverage": "edge",
+        "candidate_count": 12,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the entity described by this clue: The target is an edge selected by `.edges(...)` or created around a `.circle(...).extrude(...)` feature.\nReturn exactly one entity ID."
+      },
+      {
+        "id": "node_prompt__vertex",
+        "coverage": "vertex",
+        "candidate_count": 12,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the entity described by this clue: The target is a point on the circular profile made by `.circle(5)`.\nReturn exactly one entity ID."
+      },
+      {
+        "id": "node_prompt__axis",
+        "coverage": "axis",
+        "candidate_count": 6,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the entity described by this clue: The target is the Z coordinate used in the `cq.Vector(..., ..., z)` plane origins.\nReturn exactly one entity ID."
+      },
+      {
+        "id": "node_prompt__centerline",
+        "coverage": "centerline",
+        "candidate_count": 6,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the entity described by this clue: The target is the path wire created by `splineApprox(...)` and used by `.sweep(...)`.\nReturn exactly one entity ID."
+      },
+      {
+        "id": "node_prompt__material_region",
+        "coverage": "material_region",
+        "candidate_count": 12,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the entity described by this clue: The target is the new solid volume introduced by an `.extrude(...)` that is later joined with `.union(...)`.\nReturn exactly one entity ID."
+      },
+      {
+        "id": "node_prompt__selector",
+        "coverage": "selector",
+        "candidate_count": 4,
+        "passes_individual_candidate_gate": false,
+        "canonical_prompt": "Given the CadQuery script, identify the entity described by this clue: The target is the `.faces(\">Y\")` selector used before a cut operation.\nReturn exactly one entity ID."
+      },
+      {
+        "id": "node_prompt__measurement",
+        "coverage": "measurement",
+        "candidate_count": 8,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the entity described by this clue: The target is whether a cut changes the final object's outer bounding box.\nReturn exactly one entity ID."
+      }
+    ],
+    "relation_prompts": [
+      {
+        "id": "relation_prompt__before",
+        "coverage": "before",
+        "leakage_risk": "normal",
+        "candidate_count": 8,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the feature or entity that satisfies this relation clue:\n- The target occurs before the first extrude operation.\nReturn exactly one ID."
+      },
+      {
+        "id": "relation_prompt__after",
+        "coverage": "after",
+        "leakage_risk": "normal",
+        "candidate_count": 5,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the feature or entity that satisfies this relation clue:\n- The target occurs after the 11th extrude operation.\nReturn exactly one ID."
+      },
+      {
+        "id": "relation_prompt__immediately_before",
+        "coverage": "immediately_before",
+        "leakage_risk": "high",
+        "candidate_count": 1,
+        "passes_individual_candidate_gate": false,
+        "canonical_prompt": "Given the CadQuery script, identify the feature or entity that satisfies this relation clue:\n- The target is the operation immediately before the final union operation.\nReturn exactly one ID."
+      },
+      {
+        "id": "relation_prompt__immediately_after",
+        "coverage": "immediately_after",
+        "leakage_risk": "normal",
+        "candidate_count": 1,
+        "passes_individual_candidate_gate": false,
+        "canonical_prompt": "Given the CadQuery script, identify the feature or entity that satisfies this relation clue:\n- The target is the operation immediately after the fourth circle operation.\nReturn exactly one ID."
+      },
+      {
+        "id": "relation_prompt__input_to",
+        "coverage": "input_to",
+        "leakage_risk": "high",
+        "candidate_count": 1,
+        "passes_individual_candidate_gate": false,
+        "canonical_prompt": "Given the CadQuery script, identify the feature or entity that satisfies this relation clue:\n- The target is one of the objects passed into a later `.union(...)` call.\nReturn exactly one ID."
+      },
+      {
+        "id": "relation_prompt__created_by",
+        "coverage": "created_by",
+        "leakage_risk": "normal",
+        "candidate_count": 12,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the feature or entity that satisfies this relation clue:\n- The target is an `.extrude(...)` call that creates a new solid before that solid is joined with `.union(...)`.\nReturn exactly one ID."
+      },
+      {
+        "id": "relation_prompt__modified_by",
+        "coverage": "modified_by",
+        "leakage_risk": "normal",
+        "candidate_count": 4,
+        "passes_individual_candidate_gate": false,
+        "canonical_prompt": "Given the CadQuery script, identify the feature or entity that satisfies this relation clue:\n- The target is a cut made from a `.faces(\">Y\")` workplane, so it changes that side of the box.\nReturn exactly one ID."
+      },
+      {
+        "id": "relation_prompt__deleted_by",
+        "coverage": "deleted_by",
+        "leakage_risk": "normal",
+        "candidate_count": 4,
+        "passes_individual_candidate_gate": false,
+        "canonical_prompt": "Given the CadQuery script, identify the feature or entity that satisfies this relation clue:\n- The target is a `.cutBlind(...)` or `.cutThruAll()` call that removes material from the box.\nReturn exactly one ID."
+      },
+      {
+        "id": "relation_prompt__bounded_by",
+        "coverage": "bounded_by",
+        "leakage_risk": "normal",
+        "candidate_count": 12,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the feature or entity that satisfies this relation clue:\n- The target creates a boundary visible from a preceding shape call, such as `.circle(...)` before `.extrude(...)` or `.rect(...)` before a cut.\nReturn exactly one ID."
+      },
+      {
+        "id": "relation_prompt__selected_by",
+        "coverage": "selected_by",
+        "leakage_risk": "normal",
+        "candidate_count": 2,
+        "passes_individual_candidate_gate": false,
+        "canonical_prompt": "Given the CadQuery script, identify the feature or entity that satisfies this relation clue:\n- The target uses `.faces(\">Y\")` before making a workplane or cut.\nReturn exactly one ID."
+      },
+      {
+        "id": "relation_prompt__located_on",
+        "coverage": "located_on",
+        "leakage_risk": "normal",
+        "candidate_count": 12,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the feature or entity that satisfies this relation clue:\n- The target is a `.circle(...)` call made on one of the repeated `cq.Workplane(cq.Plane(...))` planes.\nReturn exactly one ID."
+      },
+      {
+        "id": "relation_prompt__parallel_to",
+        "coverage": "parallel_to",
+        "leakage_risk": "normal",
+        "candidate_count": 8,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the feature or entity that satisfies this relation clue:\n- The target uses a direction vector that is parallel to one of the script's coordinate axes, such as a `normal=(..., ..., z)` or an edge selector like `\"|Z\"`.\nReturn exactly one ID."
+      },
+      {
+        "id": "relation_prompt__perpendicular_to",
+        "coverage": "perpendicular_to",
+        "leakage_risk": "normal",
+        "candidate_count": 8,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the feature or entity that satisfies this relation clue:\n- The target's plane uses an `xDir` vector perpendicular to its `normal` vector.\nReturn exactly one ID."
+      },
+      {
+        "id": "relation_prompt__coaxial_with",
+        "coverage": "coaxial_with",
+        "leakage_risk": "normal",
+        "candidate_count": 8,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the feature or entity that satisfies this relation clue:\n- The target extrusion follows the normal direction of the workplane where its circle was drawn.\nReturn exactly one ID."
+      },
+      {
+        "id": "relation_prompt__adjacent_to",
+        "coverage": "adjacent_to",
+        "leakage_risk": "normal",
+        "candidate_count": 4,
+        "passes_individual_candidate_gate": false,
+        "canonical_prompt": "Given the CadQuery script, identify the feature or entity that satisfies this relation clue:\n- The target cut is made on the same side face that contains the boundary of the resulting slot.\nReturn exactly one ID."
+      },
+      {
+        "id": "relation_prompt__contained_in",
+        "coverage": "contained_in",
+        "leakage_risk": "normal",
+        "candidate_count": 4,
+        "passes_individual_candidate_gate": false,
+        "canonical_prompt": "Given the CadQuery script, identify the feature or entity that satisfies this relation clue:\n- The target cut produces slot-corner points on the selected side face.\nReturn exactly one ID."
+      },
+      {
+        "id": "relation_prompt__intersects",
+        "coverage": "intersects",
+        "leakage_risk": "normal",
+        "candidate_count": 4,
+        "passes_individual_candidate_gate": false,
+        "canonical_prompt": "Given the CadQuery script, identify the feature or entity that satisfies this relation clue:\n- The target's rectangle is drawn on a selected side face before the cut is applied.\nReturn exactly one ID."
+      },
+      {
+        "id": "relation_prompt__translated_by",
+        "coverage": "translated_by",
+        "leakage_risk": "normal",
+        "candidate_count": 4,
+        "passes_individual_candidate_gate": false,
+        "canonical_prompt": "Given the CadQuery script, identify the feature or entity that satisfies this relation clue:\n- The target rectangle is centered at either `zpos` or `-zpos` before the cut.\nReturn exactly one ID."
+      },
+      {
+        "id": "relation_prompt__rotated_by",
+        "coverage": "rotated_by",
+        "leakage_risk": "normal",
+        "candidate_count": 12,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the feature or entity that satisfies this relation clue:\n- The target uses a `cq.Plane(...)` with an explicit `normal=...` vector rather than a default XY workplane.\nReturn exactly one ID."
+      },
+      {
+        "id": "relation_prompt__scaled_by",
+        "coverage": "scaled_by",
+        "leakage_risk": "normal",
+        "candidate_count": 6,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the feature or entity that satisfies this relation clue:\n- The target uses a size variable such as `R_out`, `R`, or `tab_w` to scale geometry before a `.polyline(...)`, `.rect(...)`, or `.extrude(...)` call.\nReturn exactly one ID."
+      },
+      {
+        "id": "relation_prompt__parameter_of",
+        "coverage": "parameter_of",
+        "leakage_risk": "normal",
+        "candidate_count": 8,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the feature or entity that satisfies this relation clue:\n- The target uses a named size parameter in a later geometry call such as `.polyline(...)`, `.rect(...)`, `.box(...)`, or `.extrude(...)`.\nReturn exactly one ID."
+      },
+      {
+        "id": "relation_prompt__has_measurement",
+        "coverage": "has_measurement",
+        "leakage_risk": "normal",
+        "candidate_count": 8,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the feature or entity that satisfies this relation clue:\n- The target is a cut whose effect can be checked by comparing the outer bounding box before and after the operation.\nReturn exactly one ID."
+      },
+      {
+        "id": "relation_prompt__adds_material_to",
+        "coverage": "adds_material_to",
+        "leakage_risk": "normal",
+        "candidate_count": 12,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the feature or entity that satisfies this relation clue:\n- The target is an `.extrude(...)` result that is later added to the running object with `.union(...)`.\nReturn exactly one ID."
+      },
+      {
+        "id": "relation_prompt__removes_material_from",
+        "coverage": "removes_material_from",
+        "leakage_risk": "normal",
+        "candidate_count": 4,
+        "passes_individual_candidate_gate": false,
+        "canonical_prompt": "Given the CadQuery script, identify the feature or entity that satisfies this relation clue:\n- The target is a cut operation that removes material from the original box.\nReturn exactly one ID."
+      }
+    ],
+    "parameter_entry_exit_prompts": [
+      {
+        "id": "parameter_prompt__parameter_as_entry_node_to_profile",
+        "coverage": "parameter_as_entry_node_to_profile",
+        "candidate_count": 4,
+        "passes_individual_candidate_gate": false,
+        "canonical_prompt": "Given the CadQuery script, identify the parameter or entity described by this clue:\n- The target uses the outer radius parameter in points that are later passed to `.polyline(...)`.\nReturn exactly one ID."
+      },
+      {
+        "id": "parameter_prompt__parameter_as_entry_node_to_operation",
+        "coverage": "parameter_as_entry_node_to_operation",
+        "candidate_count": 12,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the parameter or entity described by this clue:\n- The target operation uses extrusion distance 8 as an input parameter.\nReturn exactly one ID."
+      },
+      {
+        "id": "parameter_prompt__parameter_as_exit_node_from_operation",
+        "coverage": "parameter_as_exit_node_from_operation",
+        "candidate_count": 12,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the parameter or entity described by this clue:\n- The target parameter is the radius emitted by the circle operation descriptor.\nReturn exactly one ID."
+      },
+      {
+        "id": "parameter_prompt__parameter_as_exit_node_from_measurement",
+        "coverage": "parameter_as_exit_node_from_measurement",
+        "candidate_count": 8,
+        "passes_individual_candidate_gate": true,
+        "canonical_prompt": "Given the CadQuery script, identify the parameter or entity described by this clue:\n- The target parameter is derived from a zero bounding-box delta measurement.\nReturn exactly one ID."
+      }
+    ]
+  },
+  "question_preview_sets": [
+    {
+      "set_id": "temporal_and_input",
+      "relation_types": [
+        "before",
+        "immediately_before",
+        "input_to"
+      ],
+      "passes_individual_candidate_gate": false,
+      "failing_relation_types": [
+        "immediately_before",
+        "input_to"
+      ],
+      "canonical_prompt": "Given the CadQuery script, identify the feature that satisfies all of these constraints:\n- The target occurs before the first extrude operation.\n- The target is the operation immediately before the final union operation.\n- The target is one of the objects passed into a later `.union(...)` call.\nReturn exactly one feature ID."
+    },
+    {
+      "set_id": "geometry_and_selector",
+      "relation_types": [
+        "selected_by",
+        "located_on",
+        "adjacent_to",
+        "contained_in"
+      ],
+      "passes_individual_candidate_gate": false,
+      "failing_relation_types": [
+        "selected_by",
+        "adjacent_to",
+        "contained_in"
+      ],
+      "canonical_prompt": "Given the CadQuery script, identify the feature that satisfies all of these constraints:\n- The target uses `.faces(\">Y\")` before making a workplane or cut.\n- The target is a `.circle(...)` call made on one of the repeated `cq.Workplane(cq.Plane(...))` planes.\n- The target cut is made on the same side face that contains the boundary of the resulting slot.\n- The target cut produces slot-corner points on the selected side face.\nReturn exactly one feature ID."
+    },
+    {
+      "set_id": "metric_and_material",
+      "relation_types": [
+        "has_measurement",
+        "adds_material_to",
+        "removes_material_from"
+      ],
+      "passes_individual_candidate_gate": false,
+      "failing_relation_types": [
+        "removes_material_from"
+      ],
+      "canonical_prompt": "Given the CadQuery script, identify the feature that satisfies all of these constraints:\n- The target is a cut whose effect can be checked by comparing the outer bounding box before and after the operation.\n- The target is an `.extrude(...)` result that is later added to the running object with `.union(...)`.\n- The target is a cut operation that removes material from the original box.\nReturn exactly one feature ID."
+    },
+    {
+      "set_id": "transform_and_parameter",
+      "relation_types": [
+        "translated_by",
+        "rotated_by",
+        "scaled_by",
+        "parameter_of"
+      ],
+      "passes_individual_candidate_gate": false,
+      "failing_relation_types": [
+        "translated_by"
+      ],
+      "canonical_prompt": "Given the CadQuery script, identify the feature that satisfies all of these constraints:\n- The target rectangle is centered at either `zpos` or `-zpos` before the cut.\n- The target uses a `cq.Plane(...)` with an explicit `normal=...` vector rather than a default XY workplane.\n- The target uses a size variable such as `R_out`, `R`, or `tab_w` to scale geometry before a `.polyline(...)`, `.rect(...)`, or `.extrude(...)` call.\n- The target uses a named size parameter in a later geometry call such as `.polyline(...)`, `.rect(...)`, `.box(...)`, or `.extrude(...)`.\nReturn exactly one feature ID."
+    }
+  ]
+}
