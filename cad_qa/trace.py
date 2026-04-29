@@ -22,6 +22,56 @@ from cad_qa.operation_graph import (
 )
 from cad_qa.safety import safety_issues
 from cad_qa.schema import SourceRecord, TraceRecord
+from cad_qa.scheduler import schedule_and_label_descriptors
+
+GENERATED_SELECTOR_PROBES: tuple[tuple[str, str | None], ...] = (
+    ("faces", None),
+    ("faces", '">X"'),
+    ("faces", '"<X"'),
+    ("faces", '"+X"'),
+    ("faces", '"-X"'),
+    ("faces", '"#X"'),
+    ("faces", '">Y"'),
+    ("faces", '"<Y"'),
+    ("faces", '"+Y"'),
+    ("faces", '"-Y"'),
+    ("faces", '"#Y"'),
+    ("faces", '">Z"'),
+    ("faces", '"<Z"'),
+    ("faces", '"+Z"'),
+    ("faces", '"-Z"'),
+    ("faces", '"#Z"'),
+    ("faces", '"%PLANE"'),
+    ("faces", '"%CYLINDER"'),
+    ("edges", None),
+    ("edges", '"|X"'),
+    ("edges", '"|Y"'),
+    ("edges", '"|Z"'),
+    ("edges", '">X"'),
+    ("edges", '"<X"'),
+    ("edges", '"+X"'),
+    ("edges", '"-X"'),
+    ("edges", '"#X"'),
+    ("edges", '">Y"'),
+    ("edges", '"<Y"'),
+    ("edges", '"+Y"'),
+    ("edges", '"-Y"'),
+    ("edges", '"#Y"'),
+    ("edges", '">Z"'),
+    ("edges", '"<Z"'),
+    ("edges", '"+Z"'),
+    ("edges", '"-Z"'),
+    ("edges", '"#Z"'),
+    ("edges", '"%LINE"'),
+    ("edges", '"%CIRCLE"'),
+    ("vertices", None),
+    ("vertices", '">X"'),
+    ("vertices", '"<X"'),
+    ("vertices", '">Y"'),
+    ("vertices", '"<Y"'),
+    ("vertices", '">Z"'),
+    ("vertices", '"<Z"'),
+)
 
 
 def trace_source_record(
@@ -62,10 +112,12 @@ def trace_source_record(
 
     if isolated:
         result = _trace_isolated(
-            source.normalized_code, timeout_seconds=config.trace_timeout_seconds
+            source.normalized_code,
+            config=config,
+            timeout_seconds=config.trace_timeout_seconds,
         )
     else:
-        result = _trace_worker_payload(source.normalized_code)
+        result = _trace_worker_payload(source.normalized_code, config=config)
     if result["status"] != "ok":
         return _failed_trace(
             source,
@@ -99,12 +151,18 @@ def trace_source_record(
     validity_probes = _attach_table_feature_ids(
         result.get("validity_probes", []), nodes
     )
+    candidate_descriptors = _attach_descriptor_feature_ids(
+        result.get("candidate_descriptors", []), nodes
+    )
+    sampling_manifest = dict(result.get("sampling_manifest") or {})
     trace_payload = {
         "source_id": source.source_id,
         "graph_hash": graph_hash,
         "snapshots": snapshots,
         "selector_tables": selector_tables,
         "point_queries": point_queries,
+        "candidate_descriptors": candidate_descriptors,
+        "sampling_manifest": sampling_manifest,
         "provenance_records": provenance_records,
         "topology_matches": topology_matches,
         "graph_queries": graph_queries,
@@ -139,6 +197,8 @@ def trace_source_record(
         spatial_queries=spatial_queries,
         bbox_region_queries=bbox_region_queries,
         validity_probes=validity_probes,
+        candidate_descriptors=candidate_descriptors,
+        sampling_manifest=sampling_manifest,
     )
 
 
@@ -266,10 +326,12 @@ def _timeout_trace(
     )
 
 
-def _trace_isolated(code: str, *, timeout_seconds: float) -> dict[str, Any]:
+def _trace_isolated(
+    code: str, *, config: DatasetConfig, timeout_seconds: float
+) -> dict[str, Any]:
     context = mp.get_context("spawn")
     queue: mp.Queue = context.Queue(maxsize=1)
-    process = context.Process(target=_worker_main, args=(code, queue))
+    process = context.Process(target=_worker_main, args=(code, config, queue))
     process.start()
     process.join(timeout_seconds)
     if process.is_alive():
@@ -296,9 +358,9 @@ def _trace_isolated(code: str, *, timeout_seconds: float) -> dict[str, Any]:
         }
 
 
-def _worker_main(code: str, queue: mp.Queue) -> None:
+def _worker_main(code: str, config: DatasetConfig, queue: mp.Queue) -> None:
     try:
-        queue.put(_trace_worker_payload(code))
+        queue.put(_trace_worker_payload(code, config=config))
     except Exception as exc:
         queue.put(
             {
@@ -309,8 +371,11 @@ def _worker_main(code: str, queue: mp.Queue) -> None:
         )
 
 
-def _trace_worker_payload(code: str) -> dict[str, Any]:
+def _trace_worker_payload(
+    code: str, *, config: DatasetConfig | None = None
+) -> dict[str, Any]:
     started = time.monotonic()
+    config = config or DatasetConfig()
     try:
         import cadquery as cq  # type: ignore[import-not-found]
     except ModuleNotFoundError:
@@ -337,6 +402,8 @@ def _trace_worker_payload(code: str) -> dict[str, Any]:
     snapshots: list[dict[str, Any]] = []
     selector_tables: list[dict[str, Any]] = []
     point_queries: list[dict[str, Any]] = []
+    candidate_descriptors: list[dict[str, Any]] = []
+    sampling_manifest: dict[str, Any] = {}
     provenance_records: list[dict[str, Any]] = []
     topology_matches: list[dict[str, Any]] = []
     try:
@@ -362,13 +429,34 @@ def _trace_worker_payload(code: str) -> dict[str, Any]:
                                 statement, snapshot, namespace
                             )
                         )
+                        candidate_descriptors.extend(
+                            _generated_selector_descriptors_for_snapshot(snapshot)
+                        )
             elif isinstance(statement, ast.Expr):
                 selector = _selector_table_for_expr(
                     statement, namespace, statement_index
                 )
                 if selector is not None:
                     selector_tables.append(selector)
-        point_queries = _point_queries_for_final_state(namespace, snapshots)
+        candidate_descriptors.extend(_point_query_descriptors_for_snapshots(snapshots))
+        scheduled = schedule_and_label_descriptors(
+            candidate_descriptors,
+            labeler=lambda descriptor: _evaluate_runtime_descriptor(
+                descriptor, namespace
+            ),
+            seed=config.seed,
+            max_per_source=config.max_runtime_probe_labels_per_source,
+            max_per_task_type=config.max_runtime_probe_labels_per_task_type,
+            scope=sha256_json({"runtime_probe_schedule": code}),
+        )
+        sampling_manifest = scheduled.manifest
+        for descriptor, payload in zip(
+            scheduled.selected_descriptors, scheduled.labeled_payloads, strict=True
+        ):
+            if descriptor.get("task_type") == "selector_count":
+                selector_tables.append(payload)
+            elif descriptor.get("task_type") == "point_membership":
+                point_queries.append(payload)
         topology_matches = _adjacent_topology_matches(snapshots)
         provenance_records = [
             *_conservative_provenance_records(snapshots),
@@ -382,6 +470,8 @@ def _trace_worker_payload(code: str) -> dict[str, Any]:
             "snapshots": snapshots,
             "selector_tables": selector_tables,
             "point_queries": point_queries,
+            "candidate_descriptors": candidate_descriptors,
+            "sampling_manifest": sampling_manifest,
             "provenance_records": provenance_records,
             "topology_matches": topology_matches,
         }
@@ -391,6 +481,8 @@ def _trace_worker_payload(code: str) -> dict[str, Any]:
         "snapshots": snapshots,
         "selector_tables": selector_tables,
         "point_queries": point_queries,
+        "candidate_descriptors": candidate_descriptors,
+        "sampling_manifest": sampling_manifest,
         "provenance_records": provenance_records,
         "topology_matches": topology_matches,
         "environment": environment,
@@ -597,21 +689,113 @@ def _selector_table_for_expr(
     return None
 
 
+def _generated_selector_tables_for_snapshot(
+    snapshot: dict[str, Any],
+    namespace: dict[str, Any],
+) -> list[dict[str, Any]]:
+    tables: list[dict[str, Any]] = []
+    for descriptor in _generated_selector_descriptors_for_snapshot(snapshot):
+        table = _evaluate_generated_selector_descriptor(descriptor, namespace)
+        if table.get("status") == "ok":
+            tables.append(table)
+    return tables
+
+
+def _generated_selector_descriptors_for_snapshot(
+    snapshot: dict[str, Any],
+) -> list[dict[str, Any]]:
+    target = snapshot.get("feature_id")
+    if not isinstance(target, str):
+        return []
+    descriptors: list[dict[str, Any]] = []
+    for method_name, selector_arg in GENERATED_SELECTOR_PROBES:
+        expression = (
+            f"{target}.{method_name}()"
+            if selector_arg is None
+            else f"{target}.{method_name}({selector_arg})"
+        )
+        entity_type = _selector_entity_type(method_name)
+        payload = {
+            "selector_expression": expression,
+            "target_feature_id": target,
+            "entity_type": entity_type,
+            "selector_origin": "generated",
+            "snapshot_id": snapshot.get("snapshot_id"),
+            "step_index": snapshot.get("step_index"),
+        }
+        descriptors.append(
+            {
+                "descriptor_id": "runtime_selector_"
+                + sha256_json(payload).removeprefix("sha256:")[:16],
+                "task_type": "selector_count",
+                "stratum": f"generated_{entity_type}",
+                "target_feature_id": target,
+                "label_cost": 1,
+                "payload": payload,
+            }
+        )
+    return descriptors
+
+
 def _selector_table_from_call(
     call: ast.Call, target_feature_id: Any, namespace: dict[str, Any]
 ) -> dict[str, Any]:
     expression = ast.unparse(call)
     entity_type = (
-        call.func.attr.removesuffix("s")
+        _selector_entity_type(call.func.attr)
         if isinstance(call.func, ast.Attribute)
         else "entity"
     )
+    return _selector_table_from_expression(
+        expression,
+        target_feature_id,
+        namespace,
+        selector_origin="source",
+        entity_type=entity_type,
+    )
+
+
+def _evaluate_generated_selector_descriptor(
+    descriptor: dict[str, Any], namespace: dict[str, Any]
+) -> dict[str, Any]:
+    payload = dict(descriptor.get("payload") or {})
+    expression = str(payload.get("selector_expression") or "")
+    target_feature_id = payload.get("target_feature_id")
+    entity_type = str(payload.get("entity_type") or "entity")
+    table = _selector_table_from_expression(
+        expression,
+        target_feature_id,
+        namespace,
+        selector_origin="generated",
+        entity_type=entity_type,
+    )
+    table["descriptor_id"] = descriptor.get("descriptor_id")
+    table["snapshot_id"] = payload.get("snapshot_id")
+    table["step_index"] = payload.get("step_index")
+    return table
+
+
+def _selector_entity_type(method_name: str) -> str:
+    if method_name == "vertices":
+        return "vertex"
+    return method_name.removesuffix("s")
+
+
+def _selector_table_from_expression(
+    expression: str,
+    target_feature_id: Any,
+    namespace: dict[str, Any],
+    *,
+    selector_origin: str,
+    entity_type: str,
+) -> dict[str, Any]:
     selected_count: int | None = None
     raw_entity_ids: list[str] = []
     status = "recorded_expression"
     try:
         selected = eval(
-            compile(ast.Expression(call), "<cadqa-selector>", "eval"), namespace
+            compile(ast.parse(expression, mode="eval"), "<cadqa-selector>", "eval"),
+            namespace,
         )  # noqa: S307
         selected_count = _selected_count(selected)
         raw_entity_ids = [
@@ -628,6 +812,7 @@ def _selector_table_from_call(
         "dedup_entity_ids": raw_entity_ids,
         "selected_count": selected_count,
         "status": status,
+        "selector_origin": selector_origin,
     }
 
 
@@ -645,51 +830,198 @@ def _selected_count(selected: Any) -> int:
     return 1 if selected is not None else 0
 
 
-def _point_queries_for_final_state(
+def _point_queries_for_snapshots(
     namespace: dict[str, Any], snapshots: list[dict[str, Any]]
 ) -> list[dict[str, Any]]:
-    if not snapshots:
-        return []
-    final_snapshot = snapshots[-1]
-    bbox = final_snapshot.get("bbox")
-    if not isinstance(bbox, dict):
-        return []
-    final_object = _final_object(namespace, str(final_snapshot.get("feature_id")))
-    shape = _shape_from_object(final_object)
-    if shape is None:
+    rows: list[dict[str, Any]] = []
+    for descriptor in _point_query_descriptors_for_snapshots(snapshots):
+        query = _evaluate_point_descriptor(descriptor, namespace)
+        if query is not None:
+            rows.append(query)
+    return rows
+
+
+def _point_query_descriptors_for_snapshots(
+    snapshots: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    descriptors: list[dict[str, Any]] = []
+    for snapshot in snapshots:
+        descriptors.extend(_point_query_descriptors_for_snapshot(snapshot))
+    return descriptors
+
+
+def _point_query_descriptors_for_snapshot(
+    snapshot: dict[str, Any],
+) -> list[dict[str, Any]]:
+    bbox = snapshot.get("bbox")
+    target = snapshot.get("feature_id")
+    if not isinstance(bbox, dict) or not isinstance(target, str):
         return []
     minimum = bbox.get("min")
     maximum = bbox.get("max")
     if not (_finite_triplet(minimum) and _finite_triplet(maximum)):
         return []
-    center = [(float(minimum[i]) + float(maximum[i])) / 2.0 for i in range(3)]
-    span = max(max(float(maximum[i]) - float(minimum[i]), 1.0) for i in range(3))
-    outside = [float(maximum[0]) + 0.25 * span, center[1], center[2]]
-    candidates = [("bbox_center", center), ("bbox_outside_x", outside)]
-    rows: list[dict[str, Any]] = []
-    for stratum, point in candidates:
-        classification = _classify_point(shape, point, namespace)
-        if classification is None:
-            continue
-        rows.append(
+    min_values = [float(value) for value in minimum]
+    max_values = [float(value) for value in maximum]
+    center = [(min_values[i] + max_values[i]) / 2.0 for i in range(3)]
+    spans = [max(max_values[i] - min_values[i], 1.0) for i in range(3)]
+    span = max(spans)
+    quarter = [min_values[i] + 0.25 * spans[i] for i in range(3)]
+    outside_x = [max_values[0] + 0.25 * span, center[1], center[2]]
+    outside_diagonal = [max_values[i] + 0.10 * span for i in range(3)]
+    candidates = [
+        ("aabb_center", center, "aabb_uniform_inside"),
+        ("aabb_quarter", quarter, "aabb_uniform_inside"),
+        ("expanded_aabb_outside_x", outside_x, "expanded_aabb_outside"),
+        ("expanded_aabb_outside_diagonal", outside_diagonal, "expanded_aabb_outside"),
+    ]
+    candidates.extend(_entity_center_point_candidates(snapshot))
+    descriptors: list[dict[str, Any]] = []
+    for sample_source, point, intended_stratum in candidates:
+        payload = {
+            "point": point,
+            "target_feature_id": target,
+            "intended_sampling_stratum": intended_stratum,
+            "sample_source": sample_source,
+            "snapshot_id": snapshot.get("snapshot_id"),
+            "step_index": snapshot.get("step_index"),
+            "coordinate_frame": "world",
+            "nearest_entity_diagnostics": _nearest_entity_diagnostics(
+                snapshot, point
+            ),
+        }
+        descriptors.append(
             {
-                "point": point,
-                "target_feature_id": final_snapshot.get("feature_id"),
-                "point_classification": classification,
-                "sampling_stratum": "deep_inside"
-                if classification == "inside"
-                else "deep_outside",
-                "classifier": "cadquery_shape_isInside",
-                "sample_source": stratum,
+                "descriptor_id": "runtime_point_"
+                + sha256_json(payload).removeprefix("sha256:")[:16],
+                "task_type": "point_membership",
+                "stratum": intended_stratum,
+                "target_feature_id": target,
+                "label_cost": 1,
+                "payload": payload,
             }
         )
+    return descriptors
+
+
+def _point_queries_for_snapshot(
+    namespace: dict[str, Any], snapshot: dict[str, Any]
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for descriptor in _point_query_descriptors_for_snapshot(snapshot):
+        query = _evaluate_point_descriptor(descriptor, namespace)
+        if query is not None:
+            rows.append(query)
     return rows
 
 
-def _final_object(namespace: dict[str, Any], fallback_name: str) -> Any:
-    for name in ("result", "shape", "solid", "part", fallback_name):
-        if name in namespace:
-            return namespace[name]
+def _evaluate_point_descriptor(
+    descriptor: dict[str, Any], namespace: dict[str, Any]
+) -> dict[str, Any] | None:
+    payload = dict(descriptor.get("payload") or {})
+    target = payload.get("target_feature_id")
+    point = payload.get("point")
+    if not isinstance(target, str) or not _finite_triplet(point):
+        return None
+    shape = _shape_from_object(namespace.get(target))
+    if shape is None:
+        return None
+    point_values = [float(value) for value in point]
+    classification = _classify_point(shape, point_values, namespace)
+    if classification is None:
+        return None
+    intended_stratum = str(payload.get("intended_sampling_stratum") or "unknown")
+    return {
+        "descriptor_id": descriptor.get("descriptor_id"),
+        "point": point_values,
+        "target_feature_id": target,
+        "point_classification": classification,
+        "sampling_stratum": _point_sampling_stratum(
+            intended_stratum, classification
+        ),
+        "classifier": "cadquery_shape_isInside",
+        "sample_source": payload.get("sample_source"),
+        "snapshot_id": payload.get("snapshot_id"),
+        "step_index": payload.get("step_index"),
+        "coordinate_frame": payload.get("coordinate_frame", "world"),
+        "nearest_entity_diagnostics": payload.get("nearest_entity_diagnostics"),
+    }
+
+
+def _entity_center_point_candidates(
+    snapshot: dict[str, Any],
+) -> list[tuple[str, list[float], str]]:
+    candidates: list[tuple[str, list[float], str]] = []
+    signatures = _snapshot_entity_signatures(snapshot)
+    for entity_type in ("face", "edge", "vertex"):
+        for entity in signatures.get(entity_type, [])[:2]:
+            center = entity.get("center")
+            entity_id = entity.get("entity_id")
+            if not _finite_triplet(center) or not isinstance(entity_id, str):
+                continue
+            candidates.append(
+                (
+                    f"{entity_type}_center_{entity_id}",
+                    [float(value) for value in center],
+                    f"near_{entity_type}",
+                )
+            )
+    return candidates
+
+
+def _nearest_entity_diagnostics(
+    snapshot: dict[str, Any], point: list[float]
+) -> dict[str, Any] | None:
+    signatures = _snapshot_entity_signatures(snapshot)
+    best: tuple[dict[str, Any], float] | None = None
+    for entities in signatures.values():
+        for entity in entities:
+            center = entity.get("center")
+            if not _finite_triplet(center):
+                continue
+            distance = (
+                sum(
+                    (float(left) - float(right)) ** 2
+                    for left, right in zip(point, center, strict=True)
+                )
+                ** 0.5
+            )
+            if best is None or distance < best[1]:
+                best = (entity, distance)
+    if best is None:
+        return None
+    entity, distance = best
+    return {
+        "entity_id": entity.get("entity_id"),
+        "entity_type": entity.get("entity_type"),
+        "geometry_type": entity.get("geometry_type"),
+        "center": entity.get("center"),
+        "distance_to_center": distance,
+        "method": "entity_signature_center_distance",
+    }
+
+
+def _point_sampling_stratum(intended_stratum: str, classification: str) -> str:
+    if intended_stratum == "expanded_aabb_outside":
+        return "expanded_aabb_outside"
+    if intended_stratum in {"near_face", "near_edge", "near_vertex"}:
+        return intended_stratum
+    if classification == "inside":
+        return "deep_inside"
+    if classification == "outside":
+        return "deep_outside"
+    return classification
+
+
+def _evaluate_runtime_descriptor(
+    descriptor: dict[str, Any], namespace: dict[str, Any]
+) -> dict[str, Any] | None:
+    task_type = descriptor.get("task_type")
+    if task_type == "selector_count":
+        table = _evaluate_generated_selector_descriptor(descriptor, namespace)
+        return table if table.get("status") == "ok" else None
+    if task_type == "point_membership":
+        return _evaluate_point_descriptor(descriptor, namespace)
     return None
 
 
@@ -902,6 +1234,32 @@ def _attach_table_feature_ids(
             value = copy.get(key)
             if value in target_to_feature:
                 copy[key] = target_to_feature[value]
+        updated.append(copy)
+    return updated
+
+
+def _attach_descriptor_feature_ids(
+    descriptors: list[dict[str, Any]], nodes: list[Any]
+) -> list[dict[str, Any]]:
+    target_to_feature = {node.target: node.feature_id for node in nodes if node.target}
+    updated: list[dict[str, Any]] = []
+    for descriptor in descriptors:
+        copy = dict(descriptor)
+        value = copy.get("target_feature_id")
+        if value in target_to_feature:
+            copy["target_feature_id"] = target_to_feature[value]
+        payload = copy.get("payload")
+        if isinstance(payload, dict):
+            payload_copy = dict(payload)
+            payload_value = payload_copy.get("target_feature_id")
+            if payload_value in target_to_feature:
+                payload_copy["target_feature_id"] = target_to_feature[payload_value]
+                expression = payload_copy.get("selector_expression")
+                if isinstance(expression, str) and isinstance(payload_value, str):
+                    payload_copy["selector_expression"] = expression.replace(
+                        payload_value, payload_copy["target_feature_id"], 1
+                    )
+            copy["payload"] = payload_copy
         updated.append(copy)
     return updated
 
