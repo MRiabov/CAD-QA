@@ -69,13 +69,13 @@ Each example contains:
 
 1. A normalized CadQuery script.
 2. A hidden CAD knowledge graph derived from trace and geometry labels.
-3. A hidden constraint record over that graph.
-4. A natural-language question rendered from the constraint record.
+3. A hidden typed query program over that graph.
+4. A natural-language question rendered from the query program.
 5. A verifier-backed answer and resolved evidence chain.
 6. Difficulty metadata and ambiguity diagnostics.
 
 Public prompts should show the source code, the question, and the required
-answer format. They should not expose the hidden constraint record, resolved
+answer format. They should not expose the hidden query program, resolved
 entity IDs, graph paths, diagnostic labels, or verifier outputs unless the
 evaluation mode explicitly includes symbolic trace metadata.
 
@@ -153,12 +153,15 @@ kernel stability status
 The graph may be partially available in early versions, but every released row
 must declare which node and relation families it depends on.
 
-## 5. Prompt And Constraint Shape
+## 5. Query Program And Prompt Shape
 
-The public task should not expose a query DSL. SailorFog-QA publishes ordinary
-`question`/`answer` rows, and its difficulty comes from graph sampling and
-obfuscated clues rather than from asking the model to read a formal language.
-Multi-Hop CAD-QA should follow the same principle.
+Multi-Hop CAD-QA can afford typed internal data. The public task should not
+expose a query DSL, but the dataset row should store a hidden typed query
+program for audit, regeneration, validation, hop accounting, and ambiguity
+detection. SailorFog-QA publishes ordinary `question`/`answer` rows, and its
+difficulty comes from graph sampling and obfuscated clues rather than from
+asking the model to read a formal language. Multi-Hop CAD-QA should follow the
+same public-facing principle while keeping stronger typed internals.
 
 For the MVP, the default public prompt should be a natural-language constraint
 checklist:
@@ -177,20 +180,20 @@ following constraints:
 Return exactly one feature ID.
 ```
 
-Internally, each bullet should map to a hidden constraint record with evidence
-and verifier hooks. This record is not a public task language. It is an audit
-artifact used to regenerate the prompt, validate the answer, measure hops, and
-detect ambiguity.
+Internally, each bullet should map to a clause in the hidden query program with
+evidence and verifier hooks. This query program is not a public task language.
+It is an audit artifact used to regenerate the prompt, validate the answer,
+measure hops, and detect ambiguity.
 
-Conceptual hidden record:
+Conceptual hidden query program:
 
 ```json
 {
-  "constraint_version": "cadqa_multihop_constraints_v1",
+  "query_version": "cadqa_multihop_query_v1",
   "answer_type": "feature_id",
   "target_entity_type": "feature",
   "public_prompt_style": "constraint_checklist",
-  "constraints": [
+  "clauses": [
     {
       "public_text": "It acts on a face selected by a side-face selector.",
       "predicate": "selected_face.normal_axis in ['X', 'Y']",
@@ -213,9 +216,9 @@ Conceptual hidden record:
 }
 ```
 
-The exact schema can change. The required property is that every public clue is
-recoverable from stored deterministic constraints and that the official answer
-can be independently revalidated from graph and trace labels.
+The exact query schema can change. The required property is that every public
+clue is recoverable from a stored deterministic query program and that the
+official answer can be independently revalidated from graph and trace labels.
 
 ## 6. Generation Method
 
@@ -226,16 +229,16 @@ Generation should be answer-first and graph-grounded.
 3. Sample a connected subgraph that uniquely identifies or computes that
    answer.
 4. Add distractor entities with overlapping attributes.
-5. Render a natural-language question from the constraint record.
+5. Render a natural-language question from the query program.
 6. Optionally obfuscate direct anchors, such as replacing a feature ID with a
    description of its parameters, position, order, or provenance.
-7. Resolve the constraints against the graph.
+7. Resolve the query program against the graph.
 8. Reject the row unless the answer is unique, stable, and not leaked by the
    prompt.
 
 This is different from enumerating a fixed list of hardcoded templates. The
 template may render language, but the task structure should come from sampled
-graph constraints and verifier-backed uniqueness checks.
+graph query programs and verifier-backed uniqueness checks.
 
 ## 7. Obfuscation Policy
 
@@ -260,7 +263,7 @@ Disallowed obfuscations:
   labels.
 
 Every obfuscated clue must map back to a concrete graph predicate, threshold,
-or relation in the hidden constraint record.
+or relation in the hidden query program.
 
 ## 8. Task Families
 
@@ -670,7 +673,7 @@ Multi-Hop CAD-QA must inherit CAD-QA leakage controls:
 - answer entity family.
 
 Questions generated from the same source graph or counterfactual group must
-stay in the same split. Near-duplicate constraint records over the same source
+stay in the same split. Near-duplicate query programs over the same source
 family should also stay together.
 
 ## 17. MVP Prototype
@@ -688,13 +691,13 @@ Prototype scope:
 - Level 3 to Level 5 release rows, spanning 4-10 logical hops;
 - static/text-derived hops at no more than one third of the chain;
 - code-only prompts;
-- stored hidden constraint records and evidence chains;
+- stored hidden query programs and evidence chains;
 - strict uniqueness rejection.
 
 Do not start with unrestricted natural-language question generation. Start with
-structured hidden constraints, controlled checklist renderers, and verifier
-rejection. Natural language diversity can be added after the labels and
-difficulty controls are stable.
+typed query programs, controlled checklist renderers, and verifier rejection.
+Natural language diversity can be added after the labels and difficulty
+controls are stable.
 
 ## 18. Non-Goals
 

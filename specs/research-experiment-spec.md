@@ -255,7 +255,7 @@ Recommended baselines:
 ## P2: Multi-Hop CAD-QA Track
 
 Evaluate BrowseComp-style Multi-Hop CAD-QA as a separate track once
-graph-sampled constraint records, evidence-chain storage, obfuscation policy, and
+graph-sampled query programs, evidence-chain storage, obfuscation policy, and
 uniqueness rejection are available.
 
 Report separately from CAD-QA Core:
