@@ -43,6 +43,8 @@ def test_typed_graph_query_resolver_supports_filters_and_aggregation():
 
 def test_advanced_diagnostic_rows_are_materialized_from_smoke_traces():
     config = DatasetConfig()
+    advanced_source, advanced_trace = smoke_traces(config)[2]
+    advanced_source_id = advanced_source.source_id
     rows = [
         row
         for source, trace in smoke_traces(config)
@@ -108,7 +110,57 @@ def test_advanced_diagnostic_rows_are_materialized_from_smoke_traces():
         "default_box_bbox_volume_argmax",
         "default_box_bbox_y_extent_argmax",
         "default_axis_length_of_largest_positive_volume_delta",
+        "signed_volume_delta_value__adds__114",
+        "zero_signed_volume_delta_ordinal__5",
+        "default_zero_signed_volume_delta_last",
     } <= human_note_query_ids
+    zero_delta_row = next(
+        row
+        for row in rows
+        if row.task_type == "graph_query"
+        and row.source_id == advanced_source_id
+        and row.labels["graph_query"]["ir"]["query_id"]
+        == "zero_signed_volume_delta_ordinal__5"
+    )
+    assert zero_delta_row.answer == "hole_1_wp"
+    assert "zero-volume operation #5" in zero_delta_row.prompt
+    last_zero_delta_row = next(
+        row
+        for row in rows
+        if row.task_type == "graph_query"
+        and row.source_id == advanced_source_id
+        and row.labels["graph_query"]["ir"]["query_id"]
+        == "default_zero_signed_volume_delta_last"
+    )
+    assert last_zero_delta_row.answer == "hole_3_wp"
+    assert "last operation" in last_zero_delta_row.prompt
+    advanced_nodes = [_node_from_dict(item) for item in advanced_trace.operation_nodes]
+    advanced_graph = build_typed_query_graph(advanced_nodes, advanced_trace)
+    advanced_queries = {
+        query["query_id"]: query for query in default_graph_query_irs(advanced_graph)
+    }
+    most_added_resolution = resolve_graph_query(
+        advanced_graph,
+        advanced_queries["default_signed_volume_delta_positive_argmax"],
+        config=config,
+    )
+    assert most_added_resolution.answer == "box_b"
+    assert "adds the most volume" in graph_query_prompt(
+        advanced_queries["default_signed_volume_delta_positive_argmax"],
+        most_added_resolution,
+        advanced_source.normalized_code,
+    )
+    removed_value_resolution = resolve_graph_query(
+        advanced_graph,
+        advanced_queries["signed_volume_delta_value__removes__neg_6p283185"],
+        config=config,
+    )
+    assert removed_value_resolution.answer == "hole_3"
+    assert "removes 6.283185 mm^3" in graph_query_prompt(
+        advanced_queries["signed_volume_delta_value__removes__neg_6p283185"],
+        removed_value_resolution,
+        advanced_source.normalized_code,
+    )
     relation_row = next(
         row
         for row in rows
@@ -144,6 +196,9 @@ def test_advanced_diagnostic_rows_are_materialized_from_smoke_traces():
             or row.diagnostics.get("query_id")
             or ""
         )
+        if public_query_id == "default_zero_signed_volume_delta_last":
+            assert "last operation" in row.prompt.lower()
+            continue
         assert not any(word in public_query_id for word in ordinal_words)
         assert not any(word in row.prompt.lower() for word in ordinal_words)
 

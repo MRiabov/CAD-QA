@@ -196,6 +196,8 @@ def default_graph_query_irs(graph: dict[str, Any]) -> list[dict[str, Any]]:
                 "prompt_template": "largest_abs_signed_volume_delta_feature",
             }
         )
+    if _feature_nodes_with_metric(graph, "metrics.signed_volume_delta"):
+        queries.extend(_signed_volume_delta_query_irs(graph))
     queries.extend(
         _operation_metric_after_ordinal_irs(
             graph,
@@ -298,6 +300,16 @@ def graph_query_prompt(
     elif template == "axis_length_of_largest_positive_volume_delta":
         question = (
             "Given the CadQuery script below, what is the axis length of the feature that adds the most volume?"
+        )
+    elif template == "signed_volume_delta_extreme_feature":
+        question = _signed_volume_delta_extreme_question(ir)
+    elif template == "feature_with_signed_volume_delta_value":
+        question = _feature_with_signed_volume_delta_value_question(ir)
+    elif template == "zero_signed_volume_delta_ordinal_feature":
+        question = _zero_signed_volume_delta_ordinal_question(ir)
+    elif template == "last_zero_signed_volume_delta_feature":
+        question = (
+            "Given the CadQuery script below, which feature is the last operation that adds 0 volume to the part?"
         )
     elif template == "largest_face_count_increase_feature":
         question = (
@@ -452,6 +464,214 @@ def _operation_metric_after_ordinal_question(ir: dict[str, Any]) -> str:
         f"how much {metric_label} is caused by the feature immediately after "
         f"{operation} #{ordinal}?"
     )
+
+
+def _signed_volume_delta_query_irs(graph: dict[str, Any]) -> list[dict[str, Any]]:
+    queries: list[dict[str, Any]] = []
+    positive_values = _signed_volume_values(graph, lambda value: value > 0.0)
+    negative_values = _signed_volume_values(graph, lambda value: value < 0.0)
+    zero_values = _signed_volume_values(graph, lambda value: value == 0.0)
+    if positive_values:
+        queries.append(
+            _signed_volume_delta_extreme_ir(
+                query_id="default_signed_volume_delta_positive_argmax",
+                direction="adds",
+                aggregate_op="argmax",
+                predicate="gt",
+                predicate_value=0.0,
+            )
+        )
+        for value in _representative_metric_values(positive_values):
+            queries.append(
+                _signed_volume_delta_value_ir(
+                    direction="adds", value=value, query_id_prefix="adds"
+                )
+            )
+    if negative_values:
+        queries.append(
+            _signed_volume_delta_extreme_ir(
+                query_id="default_signed_volume_delta_negative_argmin",
+                direction="removes",
+                aggregate_op="argmin",
+                predicate="lt",
+                predicate_value=0.0,
+            )
+        )
+        for value in _representative_metric_values(negative_values):
+            queries.append(
+                _signed_volume_delta_value_ir(
+                    direction="removes", value=value, query_id_prefix="removes"
+                )
+            )
+    if zero_values:
+        queries.extend(_zero_signed_volume_delta_ordinal_irs(graph))
+        if len(zero_values) > 1:
+            queries.append(
+                {
+                    "ir_version": QUERY_IR_VERSION,
+                    "query_id": "default_zero_signed_volume_delta_last",
+                    "query_type": "feature_select",
+                    "target_node_type": "feature",
+                    "filters": [
+                        {
+                            "field": "metrics.signed_volume_delta",
+                            "op": "eq",
+                            "value": 0.0,
+                        },
+                    ],
+                    "aggregate": {"op": "argmax", "metric": "step_index"},
+                    "return": {"field": "feature_id"},
+                    "prompt_template": "last_zero_signed_volume_delta_feature",
+                }
+            )
+    return queries
+
+
+def _signed_volume_delta_extreme_ir(
+    *,
+    query_id: str,
+    direction: str,
+    aggregate_op: str,
+    predicate: str,
+    predicate_value: float,
+) -> dict[str, Any]:
+    return {
+        "ir_version": QUERY_IR_VERSION,
+        "query_id": query_id,
+        "query_type": "feature_select",
+        "target_node_type": "feature",
+        "volume_delta_direction": direction,
+        "filters": [
+            {"field": "metrics.signed_volume_delta", "op": "exists"},
+            {
+                "field": "metrics.signed_volume_delta",
+                "op": predicate,
+                "value": predicate_value,
+            },
+        ],
+        "aggregate": {"op": aggregate_op, "metric": "metrics.signed_volume_delta"},
+        "return": {"field": "feature_id"},
+        "prompt_template": "signed_volume_delta_extreme_feature",
+    }
+
+
+def _signed_volume_delta_value_ir(
+    *, direction: str, value: float, query_id_prefix: str
+) -> dict[str, Any]:
+    rounded_value = _round_for_query_id(value)
+    return {
+        "ir_version": QUERY_IR_VERSION,
+        "query_id": (
+            "signed_volume_delta_value"
+            f"__{query_id_prefix}__{rounded_value.replace('-', 'neg_')}"
+        ),
+        "query_type": "feature_select",
+        "target_node_type": "feature",
+        "volume_delta_direction": direction,
+        "volume_delta_value": value,
+        "filters": [
+            {"field": "metrics.signed_volume_delta", "op": "eq", "value": value},
+        ],
+        "return": {"field": "feature_id"},
+        "prompt_template": "feature_with_signed_volume_delta_value",
+    }
+
+
+def _zero_signed_volume_delta_ordinal_irs(graph: dict[str, Any]) -> list[dict[str, Any]]:
+    zero_nodes = [
+        node
+        for node in _sorted_feature_nodes(graph)
+        if float(_field_value(node, "metrics.signed_volume_delta") or 0.0) == 0.0
+        and _finite_number(_field_value(node, "metrics.signed_volume_delta"))
+    ]
+    queries: list[dict[str, Any]] = []
+    for ordinal, _node in enumerate(zero_nodes, start=1):
+        queries.append(
+            {
+                "ir_version": QUERY_IR_VERSION,
+                "query_id": f"zero_signed_volume_delta_ordinal__{ordinal}",
+                "query_type": "feature_select",
+                "target_node_type": "feature",
+                "zero_volume_ordinal": ordinal,
+                "filters": [
+                    {
+                        "op": "ordinal_metric_value",
+                        "field": "metrics.signed_volume_delta",
+                        "value": 0.0,
+                        "ordinal": ordinal,
+                    },
+                ],
+                "return": {"field": "feature_id"},
+                "prompt_template": "zero_signed_volume_delta_ordinal_feature",
+            }
+        )
+    return queries
+
+
+def _signed_volume_delta_extreme_question(ir: dict[str, Any]) -> str:
+    direction = str(ir.get("volume_delta_direction") or "changes")
+    if direction == "removes":
+        return (
+            "Given the CadQuery script below, which feature removes the most volume from the part?"
+        )
+    return (
+        "Given the CadQuery script below, which feature adds the most volume to the part?"
+    )
+
+
+def _zero_signed_volume_delta_ordinal_question(ir: dict[str, Any]) -> str:
+    ordinal = int(ir.get("zero_volume_ordinal") or 1)
+    return (
+        "Given the CadQuery script below, which feature is zero-volume operation "
+        f"#{ordinal}?"
+    )
+
+
+def _feature_with_signed_volume_delta_value_question(ir: dict[str, Any]) -> str:
+    direction = str(ir.get("volume_delta_direction") or "changes")
+    value = _format_volume_value(ir.get("volume_delta_value"))
+    if direction == "removes":
+        return (
+            "Given the CadQuery script below, which feature removes "
+            f"{value} mm^3 of volume from the part?"
+        )
+    return (
+        "Given the CadQuery script below, which feature adds "
+        f"{value} mm^3 of volume to the part?"
+    )
+
+
+def _signed_volume_values(
+    graph: dict[str, Any], predicate: Any
+) -> list[float]:
+    values: list[float] = []
+    for node in graph.get("nodes", []):
+        if not isinstance(node, dict) or node.get("node_type") != "feature":
+            continue
+        value = _field_value(node, "metrics.signed_volume_delta")
+        if _finite_number(value) and predicate(float(value)):
+            values.append(float(value))
+    return values
+
+
+def _representative_metric_values(values: list[float]) -> list[float]:
+    unique = sorted(set(values))
+    if len(unique) <= 2:
+        return unique
+    return [unique[0], unique[-1]]
+
+
+def _format_volume_value(value: Any) -> str:
+    if not _finite_number(value):
+        return "the requested"
+    rounded = round(float(value), 6)
+    text = f"{abs(rounded):.6f}".rstrip("0").rstrip(".")
+    return text or "0"
+
+
+def _round_for_query_id(value: float) -> str:
+    text = f"{round(value, 6):.6f}".rstrip("0").rstrip(".")
+    return text.replace(".", "p") or "0"
 
 
 def _bbox_metrics(bbox: Any) -> dict[str, Any]:
@@ -704,6 +924,25 @@ def _matches_filter(
         return anchor is not None and int(node.get("step_index", -1)) == int(
             anchor.get("step_index", -1)
         ) + 1
+    if op == "ordinal_metric_value":
+        field = str(filter_spec.get("field", ""))
+        expected = filter_spec.get("value")
+        ordinal = int(filter_spec.get("ordinal", 1))
+        matches = [
+            candidate
+            for candidate in _sorted_feature_nodes(graph)
+            if _finite_number(_field_value(candidate, field))
+            and _finite_number(expected)
+            and math.isclose(
+                float(_field_value(candidate, field)),
+                float(expected),
+                rel_tol=0.0,
+                abs_tol=0.0,
+            )
+        ]
+        if ordinal < 1 or ordinal > len(matches):
+            return False
+        return node.get("feature_id") == matches[ordinal - 1].get("feature_id")
     if op == "before_ordinal":
         anchor = _ordinal_feature(
             graph, str(filter_spec.get("operation")), int(filter_spec.get("ordinal", 1))
