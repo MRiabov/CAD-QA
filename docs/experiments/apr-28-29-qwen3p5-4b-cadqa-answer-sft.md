@@ -54,9 +54,88 @@ rtk uv run python -m scripts.experiments.run_experiment_suite configs/overnight_
   now launches through `uv run --extra training`; `answer_sft_canary_dry_run`
   remains available for local artifact checks.
 
+## Apr 29 Vast RC Canary
+
+Ran the first GPU answer-only SFT canary on Vast instance `35803130`
+(`A100-SXM4-80GB`, listed price `$0.8411/hr`) using the 10-source RC dataset
+already present on the instance at `data/cadqa_cadevolve_rc_10`.
+
+Command:
+
+```bash
+cd /root/CAD-QA
+uv run python -m scripts.experiments.run_experiment_suite \
+  configs/rc_answer_sft_canary_vast.yaml \
+  --run answer_sft_rc_canary \
+  --with-dependencies \
+  --resume
+```
+
+Local gates before launch:
+
+```bash
+rtk scripts/experiments/run_cadqa_experiment.sh preflight
+rtk uv run python -m scripts.experiments.run_experiment_suite \
+  configs/rc_answer_sft_canary_vast.yaml --run answer_sft_rc_canary --with-dependencies --dry-run
+rtk uv run python -m scripts.dataset.dataset_stats \
+  data/cadqa_cadevolve_rc_10 --output /tmp/cadqa_rc_dataset_stats.json
+```
+
+Stop-gate dependencies all completed on the instance:
+
+- `runs/validate_rc_dataset`
+- `runs/rc_heuristic_baselines`
+- `runs/prepare_answer_sft_rc_canary`
+- `runs/text_sft_rc_format_smoke`
+- `runs/compare_rc_heuristic_experiments`
+- `runs/check_rc_canary_stop_gates`
+
+Training result:
+
+- Model: `unsloth/Qwen3.5-4B`
+- Train rows: 958 public `train` rows
+- Eval rows staged: 128 public `validation` rows
+- Steps: 20
+- Adapter: `runs/answer_sft_rc_canary/adapter`
+- Status: completed
+- Runtime: 884.8166 seconds for trainer loop; manifest elapsed time
+  928.958 seconds
+- Final train loss: 1.1522146046161652
+- Throughput: 0.181 samples/sec, 0.023 steps/sec
+- Loss masking: `packed_assistant_tokens_only`
+- `--pack-tokenized`, `--no-assistant-only-loss`
+
+Monitoring notes:
+
+- Live GPU was `NVIDIA A100-SXM4-80GB`, CUDA available.
+- Training used only about 9.6 GB of 80 GB VRAM.
+- Step time was about 43.7 seconds after the first step.
+- GPU utilization sampled around 73-75% during steady training, with lower
+  samples during monitoring. This is acceptable for a tiny canary artifact but
+  too underutilized for a longer run.
+- Warnings: Flash Attention 2 was unavailable and Unsloth used Xformers; Unsloth
+  also warned about import order and a missing fast path. Fix the runtime/kernel
+  path and raise per-device batch size before promoting to a longer run.
+
+Artifacts:
+
+- Remote run directory: `/root/CAD-QA/runs/answer_sft_rc_canary`
+- Remote package: `/root/CAD-QA/runs/package_rc_canary_artifacts`
+- HF bucket upload:
+  `hf://buckets/MRiabov/cadqa-qwen3p5-4b-sft-artifacts/cadqa-overnight-2026-04-29/vast-35803130/rc-answer-sft-canary`
+- Uploaded files: `cadqa_artifacts.tar.gz`, `artifact_manifest.json`
+- The initial upload was mistakenly placed under the IntersectionQA artifact
+  bucket. The files were copied server-side into the CAD-QA bucket above and
+  removed from the IntersectionQA bucket path.
+
+Decision: keep this as the first successful RC canary. Do not launch a longer
+run until data transport is converted to HF dataset/bucket pull, the stale
+remote `HF_TOKEN` is replaced, and the SFT config is tuned for materially higher
+A100 utilization.
+
 ## Next Command
 
 ```bash
 rtk uv run python -m scripts.experiments.run_experiment_suite \
-  configs/overnight_experiment_suite.yaml --run answer_sft_canary --with-dependencies --dry-run
+  configs/rc_answer_sft_canary_vast.yaml --run answer_sft_rc_canary --with-dependencies --dry-run
 ```

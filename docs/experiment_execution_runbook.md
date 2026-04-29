@@ -3,6 +3,14 @@
 Run experiments through manifest entries so artifacts and stop conditions are
 visible.
 
+Convenience wrapper for the common local gates:
+
+```bash
+rtk scripts/experiments/run_cadqa_experiment.sh preflight
+rtk scripts/experiments/run_cadqa_experiment.sh smoke
+rtk scripts/experiments/run_cadqa_experiment.sh canary-dry-run
+```
+
 Local preflight:
 
 ```bash
