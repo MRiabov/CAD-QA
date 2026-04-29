@@ -339,8 +339,7 @@ def _feature_graph_node(
         metrics["topology"] = snapshot.get("topology")
         metrics.update(_bbox_metrics(snapshot.get("bbox")))
     metrics.update(_operation_metrics(node))
-    if snapshot and previous_snapshot:
-        metrics.update(_delta_metrics(snapshot, previous_snapshot))
+    metrics.update(_delta_metrics(snapshot, previous_snapshot))
     return {
         "id": f"feature:{node.feature_id}",
         "node_type": "feature",
@@ -370,17 +369,20 @@ def _previous_snapshots(snapshots: list[dict[str, Any]]) -> dict[str, dict[str, 
 
 
 def _delta_metrics(
-    snapshot: dict[str, Any], previous_snapshot: dict[str, Any]
+    snapshot: dict[str, Any] | None, previous_snapshot: dict[str, Any] | None
 ) -> dict[str, Any]:
-    metrics: dict[str, Any] = {}
-    if _finite_number(snapshot.get("volume")) and _finite_number(
-        previous_snapshot.get("volume")
-    ):
-        delta = float(snapshot["volume"]) - float(previous_snapshot["volume"])
-        metrics["signed_volume_delta"] = delta
-        metrics["abs_signed_volume_delta"] = abs(delta)
-    topology = snapshot.get("topology")
-    previous_topology = previous_snapshot.get("topology")
+    current_volume = snapshot.get("volume") if snapshot else None
+    previous_volume = previous_snapshot.get("volume") if previous_snapshot else 0.0
+    if _finite_number(current_volume) and _finite_number(previous_volume):
+        delta = float(current_volume) - float(previous_volume)
+    else:
+        delta = 0.0
+    metrics: dict[str, Any] = {
+        "signed_volume_delta": delta,
+        "abs_signed_volume_delta": abs(delta),
+    }
+    topology = snapshot.get("topology") if snapshot else None
+    previous_topology = previous_snapshot.get("topology") if previous_snapshot else None
     if isinstance(topology, dict) and isinstance(previous_topology, dict):
         topology_delta: dict[str, int] = {}
         for key, value in topology.items():

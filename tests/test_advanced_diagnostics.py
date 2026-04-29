@@ -25,6 +25,7 @@ def test_typed_graph_query_resolver_supports_filters_and_aggregation():
         "filters": [
             {"op": "after_ordinal", "operation": "box", "ordinal": 1},
             {"field": "metrics.abs_signed_volume_delta", "op": "exists"},
+            {"field": "metrics.abs_signed_volume_delta", "op": "gt", "value": 0.0},
         ],
         "aggregate": {"op": "argmax", "metric": "metrics.abs_signed_volume_delta"},
         "return": {"field": "feature_id"},
@@ -34,8 +35,8 @@ def test_typed_graph_query_resolver_supports_filters_and_aggregation():
 
     assert resolution.status == "ok"
     assert resolution.answer == "wp3"
-    assert resolution.choices == ["wp2", "wp3"]
-    assert resolution.graph_query["candidate_ids"] == ["wp2", "wp3"]
+    assert resolution.choices == ["wp3"]
+    assert resolution.graph_query["candidate_ids"] == ["wp3"]
     assert resolution.graph_query["resolved_ids"] == ["wp3"]
     assert resolution.graph_query["measured_values"][0]["feature_id"] == "wp3"
 
@@ -63,7 +64,7 @@ def test_advanced_diagnostic_rows_are_materialized_from_smoke_traces():
         and row.labels["graph_query"]["ir"]["query_id"]
         == "default_abs_volume_delta_argmax"
     )
-    assert graph_row.answer == "wp3"
+    assert graph_row.answer == "wp1"
     assert graph_row.labels["graph_query"]["aggregation"] == "argmax"
     assert (
         graph_row.labels["graph_query"]["ir"]["ir_version"] == "cadqa_graph_query_ir_v1"
@@ -228,7 +229,7 @@ def test_numeric_ordinal_graph_query_defaults_support_fifth_box():
     assert "fifth" not in prompt.lower()
 
 
-def test_relation_graph_query_defaults_do_not_require_volume_metrics():
+def test_relation_graph_query_defaults_include_all_zero_volume_delta_graph():
     graph = {
         "graph_version": "cadqa_typed_graph_v1",
         "source_id": "synthetic",
@@ -240,7 +241,10 @@ def test_relation_graph_query_defaults_do_not_require_volume_metrics():
                 "feature_id": "wp0",
                 "operation": "Workplane",
                 "step_index": 0,
-                "metrics": {},
+                "metrics": {
+                    "signed_volume_delta": 0.0,
+                    "abs_signed_volume_delta": 0.0,
+                },
             },
             {
                 "id": "feature:wp1",
@@ -248,7 +252,10 @@ def test_relation_graph_query_defaults_do_not_require_volume_metrics():
                 "feature_id": "wp1",
                 "operation": "box",
                 "step_index": 1,
-                "metrics": {},
+                "metrics": {
+                    "signed_volume_delta": 0.0,
+                    "abs_signed_volume_delta": 0.0,
+                },
             },
         ],
         "edges": [
@@ -266,7 +273,13 @@ def test_relation_graph_query_defaults_do_not_require_volume_metrics():
     ]
 
     assert relation_queries
-    assert not any(query["query_id"] == "default_abs_volume_delta_argmax" for query in queries)
+    abs_query = next(
+        query
+        for query in queries
+        if query["query_id"] == "default_abs_volume_delta_argmax"
+    )
+    resolution = resolve_graph_query(graph, abs_query, config=DatasetConfig())
+    assert resolution.status == "empty_candidate_set"
 
 
 def test_advanced_diagnostic_naive_baseline_is_available():
