@@ -67,7 +67,7 @@ labels or diagnostics.
 | `graph_query` | object or null | Typed query IR for multi-hop feature/entity reasoning. |
 | `validity_result` | object or null | Operation, candidate edit, or full-script validity outcome. |
 | `point_classification` | string or null | `inside`, `outside`, or `on_boundary`. |
-| `provenance_relation` | string or null | `created_by`, `modified_by`, `deleted_by`, `inherited_from`, `bounded_by`, or `ambiguous_or_merged`. |
+| `provenance_relation` | string or null | `created_by`, `modified_by`, `deleted_by`, `inherited_from`, or `bounded_by`. |
 | `answer_status` | string | `ok` or `invalid`. |
 | `failure_reason` | string or null | Machine-readable failure reason. Null when labels are valid. |
 
@@ -287,19 +287,21 @@ uniform AABB samples alone.
 
 **Task purpose**
 
-Given a point or final entity, choose which feature most recently created,
-removed, modified, inherited, or bounded the relevant material or topology.
+Given a point or final entity, choose which feature first contributed to the
+target's creation or existence.
 
 **Allowed answer**
 
-One `feature_id` from the provided choices, or `ambiguous_or_merged`.
+One `feature_id` from the provided choices.
 
 **Label derivation**
 
 Use trace-backed topology matching and operation histories where available.
 When exact OpenCascade builder history is unavailable, use the documented
-provenance approximation and store `provenance_confidence`. Low-confidence
-many-to-many cases must not be forced into a single feature label.
+provenance approximation and store `provenance_confidence`. Many-to-many cases
+store contributor sets and answer with the earliest contributor by source
+execution order. Low-confidence cases without a defensible contributor set are
+filtered.
 
 **Descriptor expansion**
 

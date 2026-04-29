@@ -27,8 +27,11 @@ small provenance ontology:
 - `inherited_from`: the entity survived unchanged from an earlier state.
 - `bounded_by`: the entity is a boundary induced by multiple contributing
   features.
-- `ambiguous_or_merged`: cleanup, unification, or topology merging prevents a
-  single-source attribution.
+
+Single-choice provenance rows store all defensible contributing features and
+answer with the earliest contributor in source execution order. Cleanup,
+unification, topology merging, or kernel history loss is represented in
+diagnostics; rows are filtered when no contributor set can be defended.
 
 For example, after cutting a cylindrical hole through a box:
 

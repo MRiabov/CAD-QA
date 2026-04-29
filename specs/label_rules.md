@@ -179,12 +179,12 @@ modified_by
 deleted_by
 inherited_from
 bounded_by
-ambiguous_or_merged
 ```
 
 Feature provenance is many-to-many. A row may store multiple contributing
-features, but a single-choice task may be emitted only when the primary answer
-is stable under the label policy.
+features. A single-choice task answers with the earliest contributing feature by
+source execution order and may be emitted only when the contributor set is
+stable under the label policy.
 
 Default interpretation:
 
@@ -195,12 +195,10 @@ Default interpretation:
   matching.
 - `bounded_by`: the final entity exists at the boundary between multiple
   contributing features.
-- `ambiguous_or_merged`: cleanup, unification, kernel history loss, or
-  topology merging prevents a defensible single-source attribution.
 
 OpenCascade builder history, when captured, wins over topology matching
 heuristics. When builder history is unavailable, provenance rows must store the
-matching method and confidence.
+matching method, contributor feature IDs, first-contributor rule, and confidence.
 
 ## 10. Graph Query Rules
 

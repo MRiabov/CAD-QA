@@ -400,11 +400,11 @@ modified_by
 deleted_by
 inherited_from
 bounded_by
-ambiguous_or_merged
 ```
 
-* Single-choice rows are emitted only when the primary answer is stable.
-* Multiple contributors can be stored in diagnostics.
+* Single-choice rows answer with the earliest contributing feature by source execution order.
+* Multiple contributors are stored in diagnostics.
+* Rows without a defensible contributor set are filtered.
 * Confidence and matching method are stored.
 
 ---
@@ -522,9 +522,9 @@ ambiguous
 **Acceptance criteria**
 
 * Prompt provides candidate feature IDs.
-* Answer is one candidate ID or `ambiguous_or_merged`.
+* Answer is one candidate ID.
 * Low-confidence labels are excluded.
-* Diagnostics include matching method and provenance confidence.
+* Diagnostics include contributor feature IDs, first-contributor rule, matching method, and provenance confidence.
 
 ---
 

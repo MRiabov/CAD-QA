@@ -171,7 +171,6 @@ modified_by
 deleted_by
 inherited_from
 bounded_by
-ambiguous_or_merged
 ```
 
 `split`:

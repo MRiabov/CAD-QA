@@ -334,8 +334,10 @@ Preferred matching signals:
 - adjacency signatures;
 - tolerance-versioned hash of the above.
 
-Low-confidence many-to-many matches are not forced into single-feature labels.
-They are stored as `ambiguous_or_merged` or filtered from single-choice tasks.
+Many-to-many matches are represented as contributor sets. Single-choice rows
+answer with the earliest contributor by source execution order. Low-confidence
+cases without a defensible contributor set are filtered from single-choice
+tasks.
 
 ### 6.3 Point provenance
 
@@ -348,7 +350,7 @@ snapshot. A feature is a candidate:
   entity changes with adequate confidence;
 - `inherited_from` when it remains inside and nearest-entity matching is stable;
 - `bounded_by` when the point lies on a boundary induced by multiple features;
-- `ambiguous_or_merged` when the above cannot be defended.
+- filter the row when no contributor set can be defended.
 
 This avoids full shape boolean diffs for most point questions.
 
