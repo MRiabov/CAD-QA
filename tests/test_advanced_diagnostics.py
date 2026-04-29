@@ -56,7 +56,13 @@ def test_advanced_diagnostic_rows_are_materialized_from_smoke_traces():
         "validity_failure_prediction",
     } <= task_types
 
-    graph_row = next(row for row in rows if row.task_type == "graph_query")
+    graph_row = next(
+        row
+        for row in rows
+        if row.task_type == "graph_query"
+        and row.labels["graph_query"]["ir"]["query_id"]
+        == "default_abs_volume_delta_argmax"
+    )
     assert graph_row.answer == "wp3"
     assert graph_row.labels["graph_query"]["aggregation"] == "argmax"
     assert (
@@ -102,6 +108,17 @@ def test_advanced_diagnostic_rows_are_materialized_from_smoke_traces():
         "default_box_bbox_y_extent_argmax",
         "default_axis_length_of_largest_positive_volume_delta",
     } <= human_note_query_ids
+    relation_row = next(
+        row
+        for row in rows
+        if row.task_type == "graph_query"
+        and row.labels["graph_query"]["ir"]["query_id"].startswith(
+            "relation_exists__before__"
+        )
+    )
+    assert relation_row.answer in {"yes", "no"}
+    assert relation_row.choices == ["yes", "no"]
+    assert "occur before" in relation_row.prompt
 
     second_box_delta = next(
         row
@@ -209,6 +226,47 @@ def test_numeric_ordinal_graph_query_defaults_support_fifth_box():
     assert fifth_box_query["filters"][0]["ordinal"] == 5
     assert "box #5" in prompt
     assert "fifth" not in prompt.lower()
+
+
+def test_relation_graph_query_defaults_do_not_require_volume_metrics():
+    graph = {
+        "graph_version": "cadqa_typed_graph_v1",
+        "source_id": "synthetic",
+        "trace_id": "trace",
+        "nodes": [
+            {
+                "id": "feature:wp0",
+                "node_type": "feature",
+                "feature_id": "wp0",
+                "operation": "Workplane",
+                "step_index": 0,
+                "metrics": {},
+            },
+            {
+                "id": "feature:wp1",
+                "node_type": "feature",
+                "feature_id": "wp1",
+                "operation": "box",
+                "step_index": 1,
+                "metrics": {},
+            },
+        ],
+        "edges": [
+            {
+                "source": "feature:wp0",
+                "target": "feature:wp1",
+                "edge_type": "input_to",
+            }
+        ],
+    }
+
+    queries = default_graph_query_irs(graph)
+    relation_queries = [
+        query for query in queries if query["query_type"] == "relation_exists"
+    ]
+
+    assert relation_queries
+    assert not any(query["query_id"] == "default_abs_volume_delta_argmax" for query in queries)
 
 
 def test_advanced_diagnostic_naive_baseline_is_available():

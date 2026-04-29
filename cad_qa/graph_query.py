@@ -11,6 +11,7 @@ from cad_qa.schema import OperationNode, TraceRecord
 
 GRAPH_VERSION = "cadqa_typed_graph_v1"
 QUERY_IR_VERSION = "cadqa_graph_query_ir_v1"
+MAX_DEFAULT_RELATION_QUERIES = 32
 
 
 @dataclass(frozen=True)
@@ -120,6 +121,8 @@ def resolve_graph_query(
     config: DatasetConfig,
 ) -> GraphQueryResolution:
     normalized_ir = _normalize_ir(ir)
+    if normalized_ir.get("query_type") == "relation_exists":
+        return _resolve_relation_exists(normalized_ir, graph)
     candidates = _candidate_feature_nodes(graph, normalized_ir)
     if not candidates:
         return _failed_resolution(normalized_ir, "empty_candidate_set", candidates=[])
@@ -169,23 +172,30 @@ def resolve_graph_query(
 
 
 def default_graph_query_irs(graph: dict[str, Any]) -> list[dict[str, Any]]:
-    if not _feature_nodes_with_metric(graph, "metrics.abs_signed_volume_delta"):
-        return []
-    queries = [
-        {
-            "ir_version": QUERY_IR_VERSION,
-            "query_id": "default_abs_volume_delta_argmax",
-            "query_type": "feature_select",
-            "target_node_type": "feature",
-            "filters": [
-                {"field": "metrics.abs_signed_volume_delta", "op": "exists"},
-                {"field": "metrics.abs_signed_volume_delta", "op": "gt", "value": 0.0},
-            ],
-            "aggregate": {"op": "argmax", "metric": "metrics.abs_signed_volume_delta"},
-            "return": {"field": "feature_id"},
-            "prompt_template": "largest_abs_signed_volume_delta_feature",
-        },
-    ]
+    queries = []
+    if _feature_nodes_with_metric(graph, "metrics.abs_signed_volume_delta"):
+        queries.append(
+            {
+                "ir_version": QUERY_IR_VERSION,
+                "query_id": "default_abs_volume_delta_argmax",
+                "query_type": "feature_select",
+                "target_node_type": "feature",
+                "filters": [
+                    {"field": "metrics.abs_signed_volume_delta", "op": "exists"},
+                    {
+                        "field": "metrics.abs_signed_volume_delta",
+                        "op": "gt",
+                        "value": 0.0,
+                    },
+                ],
+                "aggregate": {
+                    "op": "argmax",
+                    "metric": "metrics.abs_signed_volume_delta",
+                },
+                "return": {"field": "feature_id"},
+                "prompt_template": "largest_abs_signed_volume_delta_feature",
+            }
+        )
     queries.extend(
         _operation_metric_after_ordinal_irs(
             graph,
@@ -263,6 +273,7 @@ def default_graph_query_irs(graph: dict[str, Any]) -> list[dict[str, Any]]:
                 "prompt_template": f"largest_{topology_key}_increase_feature",
             }
         )
+    queries.extend(_default_relation_exists_irs(graph))
     return queries
 
 
@@ -300,6 +311,8 @@ def graph_query_prompt(
         question = (
             "Given the CadQuery script below, which feature increases the vertex count the most?"
         )
+    elif template == "relation_exists":
+        question = _relation_exists_question(ir)
     else:
         question = str(
             ir.get("question")
@@ -494,6 +507,160 @@ def _normalize_ir(ir: dict[str, Any]) -> dict[str, Any]:
     return normalized
 
 
+def _default_relation_exists_irs(graph: dict[str, Any]) -> list[dict[str, Any]]:
+    feature_nodes = _sorted_feature_nodes(graph)
+    if len(feature_nodes) < 2:
+        return []
+    queries: list[dict[str, Any]] = []
+    for left, right in zip(feature_nodes, feature_nodes[1:], strict=False):
+        queries.append(
+            _relation_exists_ir(
+                relation="before",
+                source_feature_id=str(left["feature_id"]),
+                target_feature_id=str(right["feature_id"]),
+                expected="yes",
+            )
+        )
+        queries.append(
+            _relation_exists_ir(
+                relation="before",
+                source_feature_id=str(right["feature_id"]),
+                target_feature_id=str(left["feature_id"]),
+                expected="no",
+            )
+        )
+    for edge in graph.get("edges", []):
+        if not isinstance(edge, dict) or edge.get("edge_type") != "input_to":
+            continue
+        source = _feature_id_from_graph_ref(edge.get("source"))
+        target = _feature_id_from_graph_ref(edge.get("target"))
+        if source is None or target is None:
+            continue
+        queries.append(
+            _relation_exists_ir(
+                relation="input_to",
+                source_feature_id=source,
+                target_feature_id=target,
+                expected="yes",
+            )
+        )
+    deduped: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for query in queries:
+        key = str(query["query_id"])
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(query)
+        if len(deduped) >= MAX_DEFAULT_RELATION_QUERIES:
+            break
+    return deduped
+
+
+def _relation_exists_ir(
+    *,
+    relation: str,
+    source_feature_id: str,
+    target_feature_id: str,
+    expected: str,
+) -> dict[str, Any]:
+    return {
+        "ir_version": QUERY_IR_VERSION,
+        "query_id": (
+            f"relation_exists__{relation}__{source_feature_id}__{target_feature_id}"
+        ),
+        "query_type": "relation_exists",
+        "target_node_type": "feature_pair",
+        "relation": relation,
+        "source_feature_id": source_feature_id,
+        "target_feature_id": target_feature_id,
+        "expected_answer": expected,
+        "return": {"field": "relation_exists"},
+        "prompt_template": "relation_exists",
+    }
+
+
+def _resolve_relation_exists(
+    ir: dict[str, Any], graph: dict[str, Any]
+) -> GraphQueryResolution:
+    relation = str(ir.get("relation"))
+    source = str(ir.get("source_feature_id"))
+    target = str(ir.get("target_feature_id"))
+    exists = _graph_relation_exists(graph, relation, source, target)
+    answer = "yes" if exists else "no"
+    graph_query = {
+        "graph_version": GRAPH_VERSION,
+        "ir": ir,
+        "query_type": "relation_exists",
+        "target_entity_type": "feature_pair",
+        "filters": [],
+        "aggregation": None,
+        "metric": None,
+        "candidate_ids": [source, target],
+        "resolved_ids": [source, target] if exists else [],
+        "measured_values": [],
+        "relation": relation,
+        "resolution_status": "ok",
+    }
+    return GraphQueryResolution(
+        status="ok",
+        answer=answer,
+        answer_type="enum",
+        choices=["yes", "no"],
+        target_feature_id=target,
+        graph_query=graph_query,
+        diagnostics={
+            "resolver_status": "ok",
+            "candidate_count": 2,
+            "resolved_ids": graph_query["resolved_ids"],
+            "relation": relation,
+        },
+    )
+
+
+def _graph_relation_exists(
+    graph: dict[str, Any], relation: str, source: str, target: str
+) -> bool:
+    if relation == "before":
+        source_node = _feature_node_by_id(graph, source)
+        target_node = _feature_node_by_id(graph, target)
+        return (
+            source_node is not None
+            and target_node is not None
+            and int(source_node.get("step_index", -1))
+            < int(target_node.get("step_index", -1))
+        )
+    source_ref = f"feature:{source}"
+    target_ref = f"feature:{target}"
+    return any(
+        isinstance(edge, dict)
+        and edge.get("edge_type") == relation
+        and edge.get("source") == source_ref
+        and edge.get("target") == target_ref
+        for edge in graph.get("edges", [])
+    )
+
+
+def _relation_exists_question(ir: dict[str, Any]) -> str:
+    relation = str(ir.get("relation", "related_to")).replace("_", " ")
+    source = str(ir.get("source_feature_id"))
+    target = str(ir.get("target_feature_id"))
+    if ir.get("relation") == "before":
+        return (
+            "Given the CadQuery script below, does feature "
+            f"`{source}` occur before feature `{target}` in the operation graph?"
+        )
+    if ir.get("relation") == "input_to":
+        return (
+            "Given the CadQuery script below, is feature "
+            f"`{source}` an input to feature `{target}` in the operation graph?"
+        )
+    return (
+        "Given the CadQuery script below, does feature "
+        f"`{source}` have relation `{relation}` to feature `{target}`?"
+    )
+
+
 def _candidate_feature_nodes(
     graph: dict[str, Any], ir: dict[str, Any]
 ) -> list[dict[str, Any]]:
@@ -605,6 +772,38 @@ def _operation_count(graph: dict[str, Any], operation: str) -> int:
         and node.get("node_type") == "feature"
         and node.get("operation") == operation
     )
+
+
+def _sorted_feature_nodes(graph: dict[str, Any]) -> list[dict[str, Any]]:
+    return sorted(
+        [
+            node
+            for node in graph.get("nodes", [])
+            if isinstance(node, dict) and node.get("node_type") == "feature"
+        ],
+        key=lambda item: (
+            int(item.get("step_index", 0)),
+            str(item.get("feature_id", "")),
+        ),
+    )
+
+
+def _feature_node_by_id(graph: dict[str, Any], feature_id: str) -> dict[str, Any] | None:
+    for node in graph.get("nodes", []):
+        if (
+            isinstance(node, dict)
+            and node.get("node_type") == "feature"
+            and node.get("feature_id") == feature_id
+        ):
+            return node
+    return None
+
+
+def _feature_id_from_graph_ref(value: Any) -> str | None:
+    if not isinstance(value, str) or not value.startswith("feature:"):
+        return None
+    feature_id = value.removeprefix("feature:")
+    return feature_id or None
 
 
 def _immediately_after_ordinal_feature_with_metric(
@@ -820,6 +1019,8 @@ def _answer_instruction(answer_type: str | None) -> str:
         return "Answer with exactly one non-negative integer."
     if answer_type == "number":
         return "Answer with exactly one finite number."
+    if answer_type == "enum":
+        return "Answer with exactly one allowed token."
     return "Answer with exactly one listed feature ID."
 
 
