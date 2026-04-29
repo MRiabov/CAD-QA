@@ -9,6 +9,7 @@ import math
 from typing import Any
 
 from cad_qa.config import DatasetConfig
+from cad_qa.graph_query import build_typed_query_graph, default_graph_query_irs, graph_query_prompt, resolve_graph_query
 from cad_qa.hashing import sha256_json
 from cad_qa.operation_graph import operation_signature_hash
 from cad_qa.schema import OperationNode, PublicTaskRow, SourceRecord, TraceRecord
@@ -373,10 +374,37 @@ def _graph_query_rows(
     *,
     config: DatasetConfig,
 ) -> list[PublicTaskRow]:
-    records = list(trace.graph_queries) or _default_graph_queries(trace, nodes, config=config)
+    graph = build_typed_query_graph(nodes, trace)
+    records = list(trace.graph_queries) or default_graph_query_irs(graph)
     rows: list[PublicTaskRow] = []
     for record in records:
         if record.get("status", "ok") != "ok":
+            continue
+        if _is_graph_query_ir(record):
+            resolution = resolve_graph_query(graph, record, config=config)
+            if resolution.status != "ok" or resolution.answer_type is None:
+                continue
+            answer = _round_sigfig_number(resolution.answer) if resolution.answer_type == "number" else resolution.answer
+            rows.append(
+                _row(
+                    source,
+                    trace,
+                    config=config,
+                    task_type="graph_query",
+                    target_feature_id=resolution.target_feature_id,
+                    prompt=graph_query_prompt(record, resolution, source.normalized_code),
+                    answer_type=resolution.answer_type,
+                    answer=answer,
+                    choices=resolution.choices,
+                    unit=resolution.unit,
+                    numeric_tolerance=resolution.numeric_tolerance,
+                    requires=["cadquery_syntax", "operation_graph", "graph_query"],
+                    difficulty_tags=["graph_query", "multi_hop"],
+                    labels={"graph_query": resolution.graph_query, "answer_status": "ok", "failure_reason": None},
+                    diagnostics={"answer_status": "ok", "failure_reason": None, **resolution.diagnostics},
+                    parse_policy=_parse_policy_for_answer_type(resolution.answer_type),
+                )
+            )
             continue
         answer = record.get("answer")
         if not isinstance(answer, str):
@@ -416,45 +444,6 @@ def _graph_query_rows(
             )
         )
     return rows
-
-
-def _default_graph_queries(trace: TraceRecord, nodes: list[OperationNode], *, config: DatasetConfig) -> list[dict[str, Any]]:
-    snapshots = sorted(trace.snapshots, key=lambda item: int(item.get("step_index", 0)))
-    deltas: list[dict[str, Any]] = []
-    for previous, current in zip(snapshots, snapshots[1:], strict=False):
-        if previous.get("volume") is None or current.get("volume") is None:
-            continue
-        feature_id = current.get("feature_id")
-        if not isinstance(feature_id, str):
-            continue
-        delta = float(current["volume"]) - float(previous["volume"])
-        deltas.append({"feature_id": feature_id, "signed_volume_delta": delta, "abs_signed_volume_delta": abs(delta)})
-    if not deltas:
-        return []
-    nonzero = [item for item in deltas if item["abs_signed_volume_delta"] > config.label_policy.volume_tolerance_abs_mm3]
-    if not nonzero:
-        return []
-    winner = max(nonzero, key=lambda item: (float(item["abs_signed_volume_delta"]), str(item["feature_id"])))
-    choices = [str(item["feature_id"]) for item in deltas]
-    graph_query = {
-        "query_kind": "aggregate_feature_by_measure",
-        "graph_version": "cadqa_typed_graph_v1",
-        "candidate_feature_ids": choices,
-        "measure": "abs_signed_volume_delta",
-        "aggregation": "argmax",
-        "resolved_measure_values": deltas,
-        "operation_nodes": [asdict(node) for node in nodes],
-    }
-    return [
-        {
-            "query_id": "default_abs_volume_delta_argmax",
-            "question": "Given the CadQuery script below, which feature has the largest absolute signed volume delta among traced adjacent steps?",
-            "answer": str(winner["feature_id"]),
-            "choices": choices,
-            "graph_query": graph_query,
-            "resolver_status": "ok",
-        }
-    ]
 
 
 def _spatial_distance_rows(source: SourceRecord, trace: TraceRecord, *, config: DatasetConfig) -> list[PublicTaskRow]:
@@ -716,6 +705,15 @@ def _parse_policy_for_answer_type(answer_type: str) -> str:
     if answer_type == "number":
         return "numeric_4_sigfig_v1"
     return "strict_enum_v1"
+
+
+def _is_graph_query_ir(record: dict[str, Any]) -> bool:
+    return (
+        record.get("ir_version") == "cadqa_graph_query_ir_v1"
+        or "query_type" in record
+        or "aggregate" in record
+        or "filters" in record
+    )
 
 
 def _row(
