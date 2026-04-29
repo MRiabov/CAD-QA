@@ -3,7 +3,11 @@ from cad_qa.parse import grade_candidate
 
 
 def test_numeric_four_sigfig_policy_accepts_rounded_answer():
-    row = {"parse_policy": "numeric_4_sigfig_v1", "answer": 1234.567, "numeric_tolerance": 0.0}
+    row = {
+        "parse_policy": "numeric_4_sigfig_v1",
+        "answer": 1234.567,
+        "numeric_tolerance": 0.0,
+    }
 
     assert grade_candidate(row, "1235")["correct"]
     assert not grade_candidate(row, "1200")["correct"]
@@ -26,8 +30,12 @@ def test_strict_json_policy_accepts_exact_json():
         "answer": {"feature_id": "wp0", "operation": "Workplane"},
     }
 
-    assert grade_candidate(row, '{"operation":"Workplane","feature_id":"wp0"}')["correct"]
-    assert not grade_candidate(row, '{"feature_id":"wp1","operation":"Workplane"}')["correct"]
+    assert grade_candidate(row, '{"operation":"Workplane","feature_id":"wp0"}')[
+        "correct"
+    ]
+    assert not grade_candidate(row, '{"feature_id":"wp1","operation":"Workplane"}')[
+        "correct"
+    ]
 
 
 def test_oracle_baseline_scores_perfect():
@@ -105,7 +113,7 @@ def test_aabb_point_membership_uses_bbox_rows():
 
 
 def test_primitive_symbolic_volume_estimates_hole_delta_from_bbox():
-    prompt = '''Given the CadQuery script below.
+    prompt = """Given the CadQuery script below.
 
 ```python
 import cadquery as cq
@@ -115,7 +123,7 @@ wp1 = wp0.box(10, 10, 10)
 wp2 = wp1.faces(">Z").workplane()
 wp3 = wp2.hole(2)
 result = wp3
-```'''
+```"""
     rows = [
         {
             "id": "bbox",

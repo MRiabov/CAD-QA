@@ -21,5 +21,7 @@ def test_materialize_selector_repair_rows(tmp_path: Path):
     metadata = read_json(output_dir / "metadata.json")
     assert metadata["row_count"] == len(rows)
     assert rows
-    assert {"selector_repair", "workplane_offset_repair"} <= {row["task_type"] for row in rows}
+    assert {"selector_repair", "workplane_offset_repair"} <= {
+        row["task_type"] for row in rows
+    }
     assert all(row["answer"] in row["choices"] for row in rows)

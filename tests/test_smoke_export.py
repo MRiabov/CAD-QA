@@ -19,9 +19,20 @@ def test_smoke_export_is_valid(tmp_path: Path):
 
     assert report["status"] == "pass"
     assert metadata["row_count"] == len(rows)
-    assert {"operation_count", "bbox_after_step", "signed_volume_delta", "topology_count_after_step", "point_membership", "feature_provenance_choice", "workplane_state", "coordinate_frame", "graph_query", "spatial_distance", "bbox_region_query", "validity_failure_prediction"} <= {
-        row["task_type"] for row in rows
-    }
+    assert {
+        "operation_count",
+        "bbox_after_step",
+        "signed_volume_delta",
+        "topology_count_after_step",
+        "point_membership",
+        "feature_provenance_choice",
+        "workplane_state",
+        "coordinate_frame",
+        "graph_query",
+        "spatial_distance",
+        "bbox_region_query",
+        "validity_failure_prediction",
+    } <= {row["task_type"] for row in rows}
     assert (tmp_path / "metadata.json").exists()
     assert (tmp_path / "split_manifest.json").exists()
     assert (tmp_path / "failure_manifest.jsonl").exists()
@@ -48,12 +59,19 @@ def test_public_numeric_answers_are_rounded_but_raw_labels_are_preserved():
     rows = materialize_rows(source, replace(trace, snapshots=snapshots), config=config)
     bbox_row = next(row for row in rows if row.task_type == "bbox_after_step")
 
-    assert bbox_row.answer == {"min": [-89.24, -46.47, 36.0], "max": [-84.76, -37.53, 46.0]}
+    assert bbox_row.answer == {
+        "min": [-89.24, -46.47, 36.0],
+        "max": [-84.76, -37.53, 46.0],
+    }
     assert bbox_row.labels["bbox_after"] == raw_bbox
 
     hole_source, hole_trace = smoke_traces(config)[1]
     hole_rows = materialize_rows(hole_source, hole_trace, config=config)
-    delta_row = next(row for row in hole_rows if row.task_type == "signed_volume_delta" and row.target_feature_id == "wp3")
+    delta_row = next(
+        row
+        for row in hole_rows
+        if row.task_type == "signed_volume_delta" and row.target_feature_id == "wp3"
+    )
 
     assert delta_row.answer == -31.42
     assert delta_row.labels["signed_volume_delta"] == -31.41592653589794

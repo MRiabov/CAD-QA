@@ -30,13 +30,19 @@ def main(argv: list[str] | None = None) -> None:
     }
     for split in args.splits:
         rows = _load_split(args.dataset_dir, split)
-        balanced = _balanced_rows(rows, max_rows_per_task=args.max_rows_per_task, seed=args.seed)
+        balanced = _balanced_rows(
+            rows, max_rows_per_task=args.max_rows_per_task, seed=args.seed
+        )
         write_jsonl(args.output_dir / f"{split}.jsonl", balanced)
         report["splits"][split] = {
             "input_count": len(rows),
             "output_count": len(balanced),
-            "input_task_counts": dict(Counter(str(row.get("task_type")) for row in rows)),
-            "output_task_counts": dict(Counter(str(row.get("task_type")) for row in balanced)),
+            "input_task_counts": dict(
+                Counter(str(row.get("task_type")) for row in rows)
+            ),
+            "output_task_counts": dict(
+                Counter(str(row.get("task_type")) for row in balanced)
+            ),
         }
     write_json(args.output_dir / "balance_report.json", report)
     print(report)
@@ -47,7 +53,9 @@ def _load_split(dataset_dir: Path, split: str) -> list[dict[str, Any]]:
     return read_jsonl(path) if path.exists() else []
 
 
-def _balanced_rows(rows: list[dict[str, Any]], *, max_rows_per_task: int, seed: int) -> list[dict[str, Any]]:
+def _balanced_rows(
+    rows: list[dict[str, Any]], *, max_rows_per_task: int, seed: int
+) -> list[dict[str, Any]]:
     by_task: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for row in rows:
         by_task[str(row.get("task_type"))].append(row)
@@ -55,7 +63,14 @@ def _balanced_rows(rows: list[dict[str, Any]], *, max_rows_per_task: int, seed: 
     for task, task_rows in sorted(by_task.items()):
         ordered = sorted(task_rows, key=lambda row: _stable_order_key(row, seed))
         selected.extend(ordered[:max_rows_per_task])
-    return sorted(selected, key=lambda row: (str(row.get("split")), str(row.get("task_type")), str(row.get("id"))))
+    return sorted(
+        selected,
+        key=lambda row: (
+            str(row.get("split")),
+            str(row.get("task_type")),
+            str(row.get("id")),
+        ),
+    )
 
 
 def _stable_order_key(row: dict[str, Any], seed: int) -> str:

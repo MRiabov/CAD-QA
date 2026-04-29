@@ -58,7 +58,9 @@ def build_audit_sample(
     selected = sorted(selected, key=lambda item: str(item["audit_id"]))[:max_rows]
     failure_sample = [
         _failure_row(failure)
-        for failure in sorted(failures, key=lambda row: _stable_order_key(seed, row))[:failure_rows]
+        for failure in sorted(failures, key=lambda row: _stable_order_key(seed, row))[
+            :failure_rows
+        ]
     ]
     sample = selected + failure_sample
     report = {
@@ -74,13 +76,20 @@ def build_audit_sample(
         "label_sample_count": len(selected),
         "failure_sample_count": len(failure_sample),
         "input_counts_by_split": dict(Counter(str(row.get("split")) for row in rows)),
-        "input_counts_by_task_type": dict(Counter(str(row.get("task_type")) for row in rows)),
-        "sample_counts_by_kind": dict(Counter(str(row.get("audit_kind")) for row in sample)),
-        "sample_counts_by_split": dict(Counter(str(row.get("split")) for row in selected)),
-        "sample_counts_by_task_type": dict(Counter(str(row.get("task_type")) for row in selected)),
+        "input_counts_by_task_type": dict(
+            Counter(str(row.get("task_type")) for row in rows)
+        ),
+        "sample_counts_by_kind": dict(
+            Counter(str(row.get("audit_kind")) for row in sample)
+        ),
+        "sample_counts_by_split": dict(
+            Counter(str(row.get("split")) for row in selected)
+        ),
+        "sample_counts_by_task_type": dict(
+            Counter(str(row.get("task_type")) for row in selected)
+        ),
         "sampled_buckets": [
-            {"split": split, "task_type": task}
-            for split, task in sorted(buckets)
+            {"split": split, "task_type": task} for split, task in sorted(buckets)
         ],
     }
     return sample, report
@@ -146,7 +155,9 @@ def _failure_row(row: dict[str, Any]) -> dict[str, Any]:
 
 
 def _stable_order_key(seed: int, row: dict[str, Any]) -> str:
-    return sha256_text(f"{seed}:{row.get('id')}:{row.get('source_id')}:{row.get('trace_id')}")
+    return sha256_text(
+        f"{seed}:{row.get('id')}:{row.get('source_id')}:{row.get('trace_id')}"
+    )
 
 
 if __name__ == "__main__":

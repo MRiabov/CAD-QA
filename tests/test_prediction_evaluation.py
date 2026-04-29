@@ -3,19 +3,31 @@ from pathlib import Path
 from cad_qa.config import DatasetConfig
 from cad_qa.export import export_smoke_dataset
 from cad_qa.jsonio import read_json, read_jsonl, write_json, write_jsonl
-from cad_qa.predictions import normalize_prediction_artifact, normalize_prediction_records
-from scripts.evaluation.evaluate_prediction_responses import main as evaluate_predictions_main
+from cad_qa.predictions import (
+    normalize_prediction_artifact,
+    normalize_prediction_records,
+)
+from scripts.evaluation.evaluate_prediction_responses import (
+    main as evaluate_predictions_main,
+)
 
 
 def test_prediction_normalizer_accepts_mapping_and_records():
     assert normalize_prediction_artifact({"row_a": 3}) == {"row_a": "3"}
-    assert normalize_prediction_artifact({"predictions": {"row_a": "inside"}}) == {"row_a": "inside"}
-    assert normalize_prediction_records([{"row_id": "row_a", "prediction": "2"}]) == {"row_a": "2"}
+    assert normalize_prediction_artifact({"predictions": {"row_a": "inside"}}) == {
+        "row_a": "inside"
+    }
+    assert normalize_prediction_records([{"row_id": "row_a", "prediction": "2"}]) == {
+        "row_a": "2"
+    }
 
 
 def test_prediction_normalizer_accepts_provider_shapes():
     records = [
-        {"custom_id": "row_a", "response": {"body": {"choices": [{"message": {"content": "4"}}]}}},
+        {
+            "custom_id": "row_a",
+            "response": {"body": {"choices": [{"message": {"content": "4"}}]}},
+        },
         {"row_id": "row_b", "output_text": "outside"},
     ]
 

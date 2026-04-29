@@ -14,7 +14,15 @@ def test_score_candidate_rewards_parse_pass_and_failures():
 
 
 def test_score_candidate_records_selects_best_bounded_candidate():
-    rows = [{"id": "r1", "task_type": "operation_count", "split": "train", "parse_policy": "strict_integer_v1", "answer": 2}]
+    rows = [
+        {
+            "id": "r1",
+            "task_type": "operation_count",
+            "split": "train",
+            "parse_policy": "strict_integer_v1",
+            "answer": 2,
+        }
+    ]
     candidates = [
         {"row_id": "r1", "candidate_id": "bad", "candidate": "1"},
         {"row_id": "r1", "candidate_id": "good", "candidate": "2"},
@@ -32,10 +40,31 @@ def test_reward_scoring_script_writes_artifacts(tmp_path: Path):
     rows = tmp_path / "rows.jsonl"
     candidates = tmp_path / "candidates.jsonl"
     output_dir = tmp_path / "rewards"
-    write_jsonl(rows, [{"id": "r1", "task_type": "point_membership", "split": "validation", "parse_policy": "strict_enum_v1", "answer": "inside", "choices": ["inside", "outside"]}])
+    write_jsonl(
+        rows,
+        [
+            {
+                "id": "r1",
+                "task_type": "point_membership",
+                "split": "validation",
+                "parse_policy": "strict_enum_v1",
+                "answer": "inside",
+                "choices": ["inside", "outside"],
+            }
+        ],
+    )
     write_jsonl(candidates, [{"row_id": "r1", "candidate": "inside"}])
 
-    reward_main(["--rows", str(rows), "--candidates", str(candidates), "--output-dir", str(output_dir)])
+    reward_main(
+        [
+            "--rows",
+            str(rows),
+            "--candidates",
+            str(candidates),
+            "--output-dir",
+            str(output_dir),
+        ]
+    )
 
     assert read_json(output_dir / "reward_report.json")["selected_accuracy"] == 1.0
     assert read_jsonl(output_dir / "selected_candidates.jsonl")[0]["reward"] == 1.0

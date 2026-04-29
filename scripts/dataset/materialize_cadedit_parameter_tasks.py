@@ -24,7 +24,9 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     manifest = read_json(args.counterfactual_manifest)
-    rows = materialize_parameter_edit_rows(manifest, dataset_version=args.dataset_version)
+    rows = materialize_parameter_edit_rows(
+        manifest, dataset_version=args.dataset_version
+    )
     rows = assign_row_splits(rows, args.seed)
     args.output_dir.mkdir(parents=True, exist_ok=True)
     _write_split_jsonl(args.output_dir / "jsonl", rows)
@@ -36,13 +38,17 @@ def main(argv: list[str] | None = None) -> None:
         "row_count": len(rows),
         "row_counts_by_split": dict(Counter(str(row.get("split")) for row in rows)),
         "row_counts_by_answer": dict(Counter(str(row.get("answer")) for row in rows)),
-        "row_counts_by_source": dict(Counter(str(row.get("source_id")) for row in rows)),
+        "row_counts_by_source": dict(
+            Counter(str(row.get("source_id")) for row in rows)
+        ),
     }
     write_json(args.output_dir / "metadata.json", report)
     print(report)
 
 
-def materialize_parameter_edit_rows(manifest: dict[str, Any], *, dataset_version: str) -> list[dict[str, Any]]:
+def materialize_parameter_edit_rows(
+    manifest: dict[str, Any], *, dataset_version: str
+) -> list[dict[str, Any]]:
     rows = []
     for variant in manifest.get("variants", []):
         if not isinstance(variant, dict):
@@ -55,7 +61,10 @@ def materialize_parameter_edit_rows(manifest: dict[str, Any], *, dataset_version
         original_code = str(variant.get("original_code") or "")
         source_id = _source_id(variant)
         group_id = str(variant.get("group_id") or source_id)
-        variant_id = str(variant.get("variant_id") or sha256_json(variant).removeprefix("sha256:")[:16])
+        variant_id = str(
+            variant.get("variant_id")
+            or sha256_json(variant).removeprefix("sha256:")[:16]
+        )
         source_line = variant.get("source_line")
         prompt = (
             "Given the CadQuery script below, choose the edit direction for the numeric literal "
@@ -63,7 +72,13 @@ def materialize_parameter_edit_rows(manifest: dict[str, Any], *, dataset_version
             "Answer with exactly one of increase, decrease, unchanged, or no_valid_edit.\n\n"
             f"```python\n{original_code}```"
         )
-        prompt_hash = sha256_json({"task_type": "parameter_edit_direction", "variant_id": variant_id, "prompt": prompt})
+        prompt_hash = sha256_json(
+            {
+                "task_type": "parameter_edit_direction",
+                "variant_id": variant_id,
+                "prompt": prompt,
+            }
+        )
         row_payload = {
             "dataset_version": dataset_version,
             "task_type": "parameter_edit_direction",
@@ -75,7 +90,8 @@ def materialize_parameter_edit_rows(manifest: dict[str, Any], *, dataset_version
         }
         rows.append(
             {
-                "id": "cadedit_parameter_edit_direction_" + sha256_json(row_payload).removeprefix("sha256:")[:16],
+                "id": "cadedit_parameter_edit_direction_"
+                + sha256_json(row_payload).removeprefix("sha256:")[:16],
                 "dataset_version": dataset_version,
                 "task_type": "parameter_edit_direction",
                 "source_id": source_id,
@@ -88,7 +104,11 @@ def materialize_parameter_edit_rows(manifest: dict[str, Any], *, dataset_version
                 "choices": CHOICES,
                 "unit": None,
                 "numeric_tolerance": None,
-                "requires": ["cadquery_syntax", "counterfactual_edit", "numeric_parameter"],
+                "requires": [
+                    "cadquery_syntax",
+                    "counterfactual_edit",
+                    "numeric_parameter",
+                ],
                 "difficulty_tags": ["cadeditqa", "parameter_edit_direction"],
                 "labels": {
                     "answer_status": "ok",
@@ -111,14 +131,19 @@ def materialize_parameter_edit_rows(manifest: dict[str, Any], *, dataset_version
                     "source_id": source_id,
                     "generator_id": None,
                     "source_subtree": None,
-                    "normalized_archive_member_path": variant.get("original_relative_path"),
+                    "normalized_archive_member_path": variant.get(
+                        "original_relative_path"
+                    ),
                     "normalized_source_code_hash": sha256_json(original_code),
                     "operation_signature_hash": None,
                     "topology_signature_hash": None,
                     "counterfactual_group_id": group_id,
                     "point_sampling_group_id": None,
                 },
-                "hashes": {"prompt_hash": prompt_hash, "variant_hash": sha256_json(variant)},
+                "hashes": {
+                    "prompt_hash": prompt_hash,
+                    "variant_hash": sha256_json(variant),
+                },
                 "parse_policy": "strict_enum_v1",
             }
         )
@@ -129,7 +154,13 @@ def materialize_parameter_edit_rows(manifest: dict[str, Any], *, dataset_version
             f"Original value: {old_value}\n\n"
             f"```python\n{original_code}```"
         )
-        value_prompt_hash = sha256_json({"task_type": "counterfactual_parameter", "variant_id": variant_id, "prompt": value_prompt})
+        value_prompt_hash = sha256_json(
+            {
+                "task_type": "counterfactual_parameter",
+                "variant_id": variant_id,
+                "prompt": value_prompt,
+            }
+        )
         value_payload = {
             "dataset_version": dataset_version,
             "task_type": "counterfactual_parameter",
@@ -141,7 +172,8 @@ def materialize_parameter_edit_rows(manifest: dict[str, Any], *, dataset_version
         }
         rows.append(
             {
-                "id": "cadedit_counterfactual_parameter_" + sha256_json(value_payload).removeprefix("sha256:")[:16],
+                "id": "cadedit_counterfactual_parameter_"
+                + sha256_json(value_payload).removeprefix("sha256:")[:16],
                 "dataset_version": dataset_version,
                 "task_type": "counterfactual_parameter",
                 "source_id": source_id,
@@ -154,7 +186,11 @@ def materialize_parameter_edit_rows(manifest: dict[str, Any], *, dataset_version
                 "choices": None,
                 "unit": None,
                 "numeric_tolerance": 1e-9,
-                "requires": ["cadquery_syntax", "counterfactual_edit", "numeric_parameter"],
+                "requires": [
+                    "cadquery_syntax",
+                    "counterfactual_edit",
+                    "numeric_parameter",
+                ],
                 "difficulty_tags": ["cadeditqa", "counterfactual_parameter"],
                 "labels": {
                     "answer_status": "ok",
@@ -177,14 +213,19 @@ def materialize_parameter_edit_rows(manifest: dict[str, Any], *, dataset_version
                     "source_id": source_id,
                     "generator_id": None,
                     "source_subtree": None,
-                    "normalized_archive_member_path": variant.get("original_relative_path"),
+                    "normalized_archive_member_path": variant.get(
+                        "original_relative_path"
+                    ),
                     "normalized_source_code_hash": sha256_json(original_code),
                     "operation_signature_hash": None,
                     "topology_signature_hash": None,
                     "counterfactual_group_id": group_id,
                     "point_sampling_group_id": None,
                 },
-                "hashes": {"prompt_hash": value_prompt_hash, "variant_hash": sha256_json(variant)},
+                "hashes": {
+                    "prompt_hash": value_prompt_hash,
+                    "variant_hash": sha256_json(variant),
+                },
                 "parse_policy": "numeric_4_sigfig_v1",
             }
         )
@@ -204,7 +245,13 @@ def materialize_parameter_edit_rows(manifest: dict[str, Any], *, dataset_version
             "source_line, source_column, and value.\n\n"
             f"```python\n{original_code}```"
         )
-        plan_prompt_hash = sha256_json({"task_type": "multi_step_edit_plan", "variant_id": variant_id, "prompt": plan_prompt})
+        plan_prompt_hash = sha256_json(
+            {
+                "task_type": "multi_step_edit_plan",
+                "variant_id": variant_id,
+                "prompt": plan_prompt,
+            }
+        )
         plan_payload = {
             "dataset_version": dataset_version,
             "task_type": "multi_step_edit_plan",
@@ -216,7 +263,8 @@ def materialize_parameter_edit_rows(manifest: dict[str, Any], *, dataset_version
         }
         rows.append(
             {
-                "id": "cadedit_multi_step_edit_plan_" + sha256_json(plan_payload).removeprefix("sha256:")[:16],
+                "id": "cadedit_multi_step_edit_plan_"
+                + sha256_json(plan_payload).removeprefix("sha256:")[:16],
                 "dataset_version": dataset_version,
                 "task_type": "multi_step_edit_plan",
                 "source_id": source_id,
@@ -252,14 +300,19 @@ def materialize_parameter_edit_rows(manifest: dict[str, Any], *, dataset_version
                     "source_id": source_id,
                     "generator_id": None,
                     "source_subtree": None,
-                    "normalized_archive_member_path": variant.get("original_relative_path"),
+                    "normalized_archive_member_path": variant.get(
+                        "original_relative_path"
+                    ),
                     "normalized_source_code_hash": sha256_json(original_code),
                     "operation_signature_hash": None,
                     "topology_signature_hash": None,
                     "counterfactual_group_id": group_id,
                     "point_sampling_group_id": None,
                 },
-                "hashes": {"prompt_hash": plan_prompt_hash, "variant_hash": sha256_json(variant)},
+                "hashes": {
+                    "prompt_hash": plan_prompt_hash,
+                    "variant_hash": sha256_json(variant),
+                },
                 "parse_policy": "strict_json_v1",
             }
         )
@@ -271,7 +324,10 @@ def _write_split_jsonl(jsonl_dir: Path, rows: list[dict[str, Any]]) -> None:
     for row in rows:
         by_split.setdefault(str(row["split"]), []).append(row)
     for split, split_rows in sorted(by_split.items()):
-        write_jsonl(jsonl_dir / f"{split}.jsonl", sorted(split_rows, key=lambda row: str(row["id"])))
+        write_jsonl(
+            jsonl_dir / f"{split}.jsonl",
+            sorted(split_rows, key=lambda row: str(row["id"])),
+        )
 
 
 def _number(value: Any) -> float | None:
@@ -289,7 +345,11 @@ def _direction(old_value: float, new_value: float) -> str:
 
 
 def _source_id(variant: dict[str, Any]) -> str:
-    key = variant.get("original_relative_path") or variant.get("group_id") or variant.get("original_code")
+    key = (
+        variant.get("original_relative_path")
+        or variant.get("group_id")
+        or variant.get("original_code")
+    )
     return "cadedit_src_" + sha256_json(str(key)).removeprefix("sha256:")[:16]
 
 

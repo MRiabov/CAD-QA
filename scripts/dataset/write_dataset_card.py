@@ -18,15 +18,28 @@ def main(argv: list[str] | None = None) -> None:
 
     metadata = read_json(args.dataset_dir / "metadata.json")
     validation = validate_dataset_dir(args.dataset_dir)
-    failures = read_jsonl(args.dataset_dir / "failure_manifest.jsonl") if (args.dataset_dir / "failure_manifest.jsonl").exists() else []
-    baselines = read_json(args.baseline_metrics) if args.baseline_metrics and args.baseline_metrics.exists() else None
+    failures = (
+        read_jsonl(args.dataset_dir / "failure_manifest.jsonl")
+        if (args.dataset_dir / "failure_manifest.jsonl").exists()
+        else []
+    )
+    baselines = (
+        read_json(args.baseline_metrics)
+        if args.baseline_metrics and args.baseline_metrics.exists()
+        else None
+    )
     card = _card(metadata, validation, failures, baselines)
     output = args.output or args.dataset_dir / "DATASET_CARD.md"
     output.write_text(card, encoding="utf-8")
     print(output)
 
 
-def _card(metadata: dict[str, object], validation: dict[str, object], failures: list[dict[str, object]], baselines: object) -> str:
+def _card(
+    metadata: dict[str, object],
+    validation: dict[str, object],
+    failures: list[dict[str, object]],
+    baselines: object,
+) -> str:
     lines = [
         "# CAD-QA Dataset Card",
         "",
@@ -60,7 +73,11 @@ def _card(metadata: dict[str, object], validation: dict[str, object], failures: 
         "## Known Limitations",
         "",
     ]
-    for item in metadata.get("known_limitations", []) if isinstance(metadata.get("known_limitations"), list) else []:
+    for item in (
+        metadata.get("known_limitations", [])
+        if isinstance(metadata.get("known_limitations"), list)
+        else []
+    ):
         lines.append(f"- {item}")
     if baselines is not None:
         lines.extend(["", "## Baselines", "", "```json", _jsonish(baselines), "```"])

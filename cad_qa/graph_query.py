@@ -26,10 +26,15 @@ class GraphQueryResolution:
     numeric_tolerance: float | None = None
 
 
-def build_typed_query_graph(nodes: list[OperationNode], trace: TraceRecord) -> dict[str, Any]:
+def build_typed_query_graph(
+    nodes: list[OperationNode], trace: TraceRecord
+) -> dict[str, Any]:
     """Build a public-safe typed graph from operation nodes and trace metadata."""
 
-    sorted_nodes = sorted((node for node in nodes if node.status == "ok"), key=lambda node: node.step_index)
+    sorted_nodes = sorted(
+        (node for node in nodes if node.status == "ok"),
+        key=lambda node: node.step_index,
+    )
     snapshots_by_feature = {
         str(snapshot["feature_id"]): snapshot
         for snapshot in trace.snapshots
@@ -42,7 +47,11 @@ def build_typed_query_graph(nodes: list[OperationNode], trace: TraceRecord) -> d
     for node in sorted_nodes:
         snapshot = snapshots_by_feature.get(node.feature_id)
         previous_snapshot = previous_snapshot_by_feature.get(node.feature_id)
-        graph_nodes.append(_feature_graph_node(node, snapshot=snapshot, previous_snapshot=previous_snapshot))
+        graph_nodes.append(
+            _feature_graph_node(
+                node, snapshot=snapshot, previous_snapshot=previous_snapshot
+            )
+        )
         for input_feature in node.input_features:
             graph_edges.append(
                 {
@@ -53,8 +62,20 @@ def build_typed_query_graph(nodes: list[OperationNode], trace: TraceRecord) -> d
             )
 
     for before, after in zip(sorted_nodes, sorted_nodes[1:], strict=False):
-        graph_edges.append({"source": f"feature:{before.feature_id}", "target": f"feature:{after.feature_id}", "edge_type": "before"})
-        graph_edges.append({"source": f"feature:{after.feature_id}", "target": f"feature:{before.feature_id}", "edge_type": "after"})
+        graph_edges.append(
+            {
+                "source": f"feature:{before.feature_id}",
+                "target": f"feature:{after.feature_id}",
+                "edge_type": "before",
+            }
+        )
+        graph_edges.append(
+            {
+                "source": f"feature:{after.feature_id}",
+                "target": f"feature:{before.feature_id}",
+                "edge_type": "after",
+            }
+        )
 
     for table in trace.selector_tables:
         target = table.get("target_feature_id")
@@ -103,13 +124,19 @@ def resolve_graph_query(
     if not candidates:
         return _failed_resolution(normalized_ir, "empty_candidate_set", candidates=[])
 
-    aggregate = normalized_ir.get("aggregate") if isinstance(normalized_ir.get("aggregate"), dict) else {}
+    aggregate = (
+        normalized_ir.get("aggregate")
+        if isinstance(normalized_ir.get("aggregate"), dict)
+        else {}
+    )
     aggregate_op = aggregate.get("op")
     if aggregate_op in {"argmax", "argmin"}:
         return _resolve_arg_extreme(normalized_ir, candidates, aggregate, config=config)
     if aggregate_op == "count":
         resolved_ids = [str(node["feature_id"]) for node in candidates]
-        graph_query = _resolved_query_payload(normalized_ir, candidates, resolved_ids=resolved_ids, measured_values=[])
+        graph_query = _resolved_query_payload(
+            normalized_ir, candidates, resolved_ids=resolved_ids, measured_values=[]
+        )
         return GraphQueryResolution(
             status="ok",
             answer=len(candidates),
@@ -117,14 +144,28 @@ def resolve_graph_query(
             choices=None,
             target_feature_id=None,
             graph_query=graph_query,
-            diagnostics={"resolver_status": "ok", "candidate_count": len(candidates), "resolved_ids": resolved_ids},
+            diagnostics={
+                "resolver_status": "ok",
+                "candidate_count": len(candidates),
+                "resolved_ids": resolved_ids,
+            },
         )
 
     if len(candidates) != 1:
-        return _failed_resolution(normalized_ir, "ambiguous_candidate_set", candidates=candidates)
+        return _failed_resolution(
+            normalized_ir, "ambiguous_candidate_set", candidates=candidates
+        )
     node = candidates[0]
-    answer = _field_value(node, str(normalized_ir.get("return", {}).get("field", "feature_id")))
-    return _resolution_from_answer(normalized_ir, candidates, answer, target_feature_id=str(node["feature_id"]), config=config)
+    answer = _field_value(
+        node, str(normalized_ir.get("return", {}).get("field", "feature_id"))
+    )
+    return _resolution_from_answer(
+        normalized_ir,
+        candidates,
+        answer,
+        target_feature_id=str(node["feature_id"]),
+        config=config,
+    )
 
 
 def default_graph_query_irs(graph: dict[str, Any]) -> list[dict[str, Any]]:
@@ -157,7 +198,9 @@ def default_graph_query_irs(graph: dict[str, Any]) -> list[dict[str, Any]]:
     ]
 
 
-def graph_query_prompt(ir: dict[str, Any], resolution: GraphQueryResolution, code: str) -> str:
+def graph_query_prompt(
+    ir: dict[str, Any], resolution: GraphQueryResolution, code: str
+) -> str:
     template = ir.get("prompt_template")
     if template == "snapshot_feature_count":
         question = "Given the CadQuery script below, how many traced features have an intermediate geometry snapshot?"
@@ -169,7 +212,10 @@ def graph_query_prompt(ir: dict[str, Any], resolution: GraphQueryResolution, cod
             "among features with measured adjacent snapshots?"
         )
     else:
-        question = str(ir.get("question") or "Given the CadQuery script below, resolve the stored graph query.")
+        question = str(
+            ir.get("question")
+            or "Given the CadQuery script below, resolve the stored graph query."
+        )
 
     choices = resolution.choices or []
     choices_text = f"\n\nChoices: {', '.join(choices)}" if choices else ""
@@ -208,7 +254,9 @@ def _feature_graph_node(
 
 
 def _previous_snapshots(snapshots: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
-    sorted_snapshots = sorted(snapshots, key=lambda item: int(item.get("step_index", 0)))
+    sorted_snapshots = sorted(
+        snapshots, key=lambda item: int(item.get("step_index", 0))
+    )
     previous_by_feature: dict[str, dict[str, Any]] = {}
     for previous, current in zip(sorted_snapshots, sorted_snapshots[1:], strict=False):
         feature_id = current.get("feature_id")
@@ -217,9 +265,13 @@ def _previous_snapshots(snapshots: list[dict[str, Any]]) -> dict[str, dict[str, 
     return previous_by_feature
 
 
-def _delta_metrics(snapshot: dict[str, Any], previous_snapshot: dict[str, Any]) -> dict[str, Any]:
+def _delta_metrics(
+    snapshot: dict[str, Any], previous_snapshot: dict[str, Any]
+) -> dict[str, Any]:
     metrics: dict[str, Any] = {}
-    if _finite_number(snapshot.get("volume")) and _finite_number(previous_snapshot.get("volume")):
+    if _finite_number(snapshot.get("volume")) and _finite_number(
+        previous_snapshot.get("volume")
+    ):
         delta = float(snapshot["volume"]) - float(previous_snapshot["volume"])
         metrics["signed_volume_delta"] = delta
         metrics["abs_signed_volume_delta"] = abs(delta)
@@ -245,26 +297,47 @@ def _normalize_ir(ir: dict[str, Any]) -> dict[str, Any]:
     return normalized
 
 
-def _candidate_feature_nodes(graph: dict[str, Any], ir: dict[str, Any]) -> list[dict[str, Any]]:
+def _candidate_feature_nodes(
+    graph: dict[str, Any], ir: dict[str, Any]
+) -> list[dict[str, Any]]:
     nodes = [
         dict(node)
         for node in graph.get("nodes", [])
-        if isinstance(node, dict) and node.get("node_type") == ir.get("target_node_type", "feature")
+        if isinstance(node, dict)
+        and node.get("node_type") == ir.get("target_node_type", "feature")
     ]
     for filter_spec in ir.get("filters", []):
         if isinstance(filter_spec, dict):
-            nodes = [node for node in nodes if _matches_filter(node, filter_spec, graph)]
-    return sorted(nodes, key=lambda item: (int(item.get("step_index", 0)), str(item.get("feature_id", ""))))
+            nodes = [
+                node for node in nodes if _matches_filter(node, filter_spec, graph)
+            ]
+    return sorted(
+        nodes,
+        key=lambda item: (
+            int(item.get("step_index", 0)),
+            str(item.get("feature_id", "")),
+        ),
+    )
 
 
-def _matches_filter(node: dict[str, Any], filter_spec: dict[str, Any], graph: dict[str, Any]) -> bool:
+def _matches_filter(
+    node: dict[str, Any], filter_spec: dict[str, Any], graph: dict[str, Any]
+) -> bool:
     op = filter_spec.get("op")
     if op == "after_ordinal":
-        anchor = _ordinal_feature(graph, str(filter_spec.get("operation")), int(filter_spec.get("ordinal", 1)))
-        return anchor is not None and int(node.get("step_index", -1)) > int(anchor.get("step_index", -1))
+        anchor = _ordinal_feature(
+            graph, str(filter_spec.get("operation")), int(filter_spec.get("ordinal", 1))
+        )
+        return anchor is not None and int(node.get("step_index", -1)) > int(
+            anchor.get("step_index", -1)
+        )
     if op == "before_ordinal":
-        anchor = _ordinal_feature(graph, str(filter_spec.get("operation")), int(filter_spec.get("ordinal", 1)))
-        return anchor is not None and int(node.get("step_index", -1)) < int(anchor.get("step_index", -1))
+        anchor = _ordinal_feature(
+            graph, str(filter_spec.get("operation")), int(filter_spec.get("ordinal", 1))
+        )
+        return anchor is not None and int(node.get("step_index", -1)) < int(
+            anchor.get("step_index", -1)
+        )
 
     field = str(filter_spec.get("field", ""))
     value = _field_value(node, field)
@@ -278,21 +351,41 @@ def _matches_filter(node: dict[str, Any], filter_spec: dict[str, Any], graph: di
     if op == "in":
         return isinstance(expected, list) and value in expected
     if op == "gt":
-        return _finite_number(value) and _finite_number(expected) and float(value) > float(expected)
+        return (
+            _finite_number(value)
+            and _finite_number(expected)
+            and float(value) > float(expected)
+        )
     if op == "gte":
-        return _finite_number(value) and _finite_number(expected) and float(value) >= float(expected)
+        return (
+            _finite_number(value)
+            and _finite_number(expected)
+            and float(value) >= float(expected)
+        )
     if op == "lt":
-        return _finite_number(value) and _finite_number(expected) and float(value) < float(expected)
+        return (
+            _finite_number(value)
+            and _finite_number(expected)
+            and float(value) < float(expected)
+        )
     if op == "lte":
-        return _finite_number(value) and _finite_number(expected) and float(value) <= float(expected)
+        return (
+            _finite_number(value)
+            and _finite_number(expected)
+            and float(value) <= float(expected)
+        )
     return False
 
 
-def _ordinal_feature(graph: dict[str, Any], operation: str, ordinal: int) -> dict[str, Any] | None:
+def _ordinal_feature(
+    graph: dict[str, Any], operation: str, ordinal: int
+) -> dict[str, Any] | None:
     matches = [
         node
         for node in graph.get("nodes", [])
-        if isinstance(node, dict) and node.get("node_type") == "feature" and node.get("operation") == operation
+        if isinstance(node, dict)
+        and node.get("node_type") == "feature"
+        and node.get("operation") == operation
     ]
     matches = sorted(matches, key=lambda item: int(item.get("step_index", 0)))
     if ordinal < 1 or ordinal > len(matches):
@@ -318,12 +411,22 @@ def _resolve_arg_extreme(
     reverse = aggregate.get("op") == "argmax"
     measured = sorted(measured, key=lambda item: float(item["value"]), reverse=reverse)
     best_value = float(measured[0]["value"])
-    ties = [item for item in measured if math.isclose(float(item["value"]), best_value, rel_tol=0.0, abs_tol=0.0)]
+    ties = [
+        item
+        for item in measured
+        if math.isclose(float(item["value"]), best_value, rel_tol=0.0, abs_tol=0.0)
+    ]
     if len(ties) > 1:
-        return _failed_resolution(ir, "ambiguous_metric_tie", candidates=candidates, measured_values=measured)
+        return _failed_resolution(
+            ir, "ambiguous_metric_tie", candidates=candidates, measured_values=measured
+        )
     answer_feature_id = str(measured[0]["feature_id"])
-    selected = next(node for node in candidates if node.get("feature_id") == answer_feature_id)
-    answer = _field_value(selected, str(ir.get("return", {}).get("field", "feature_id")))
+    selected = next(
+        node for node in candidates if node.get("feature_id") == answer_feature_id
+    )
+    answer = _field_value(
+        selected, str(ir.get("return", {}).get("field", "feature_id"))
+    )
     return _resolution_from_answer(
         ir,
         candidates,
@@ -345,8 +448,14 @@ def _resolution_from_answer(
 ) -> GraphQueryResolution:
     answer_type = _answer_type(answer)
     resolved_ids = [target_feature_id] if target_feature_id else []
-    graph_query = _resolved_query_payload(ir, candidates, resolved_ids=resolved_ids, measured_values=measured_values or [])
-    choices = [str(node["feature_id"]) for node in candidates] if answer_type == "choice" else None
+    graph_query = _resolved_query_payload(
+        ir, candidates, resolved_ids=resolved_ids, measured_values=measured_values or []
+    )
+    choices = (
+        [str(node["feature_id"]) for node in candidates]
+        if answer_type == "choice"
+        else None
+    )
     return GraphQueryResolution(
         status="ok",
         answer=answer,
@@ -361,7 +470,9 @@ def _resolution_from_answer(
             "measured_value_count": len(measured_values or []),
         },
         unit=str(ir.get("unit")) if isinstance(ir.get("unit"), str) else None,
-        numeric_tolerance=config.label_policy.linear_tolerance_mm if answer_type == "number" else None,
+        numeric_tolerance=config.label_policy.linear_tolerance_mm
+        if answer_type == "number"
+        else None,
     )
 
 
@@ -378,8 +489,12 @@ def _resolved_query_payload(
         "query_type": ir.get("query_type"),
         "target_entity_type": ir.get("target_node_type"),
         "filters": ir.get("filters", []),
-        "aggregation": ir.get("aggregate", {}).get("op") if isinstance(ir.get("aggregate"), dict) else None,
-        "metric": ir.get("aggregate", {}).get("metric") if isinstance(ir.get("aggregate"), dict) else None,
+        "aggregation": ir.get("aggregate", {}).get("op")
+        if isinstance(ir.get("aggregate"), dict)
+        else None,
+        "metric": ir.get("aggregate", {}).get("metric")
+        if isinstance(ir.get("aggregate"), dict)
+        else None,
         "candidate_ids": [str(node["feature_id"]) for node in candidates],
         "resolved_ids": [item for item in resolved_ids if item is not None],
         "measured_values": measured_values,
@@ -394,7 +509,9 @@ def _failed_resolution(
     candidates: list[dict[str, Any]],
     measured_values: list[dict[str, Any]] | None = None,
 ) -> GraphQueryResolution:
-    graph_query = _resolved_query_payload(ir, candidates, resolved_ids=[], measured_values=measured_values or [])
+    graph_query = _resolved_query_payload(
+        ir, candidates, resolved_ids=[], measured_values=measured_values or []
+    )
     graph_query["resolution_status"] = reason
     return GraphQueryResolution(
         status=reason,
@@ -407,11 +524,15 @@ def _failed_resolution(
     )
 
 
-def _feature_nodes_with_metric(graph: dict[str, Any], metric: str) -> list[dict[str, Any]]:
+def _feature_nodes_with_metric(
+    graph: dict[str, Any], metric: str
+) -> list[dict[str, Any]]:
     return [
         node
         for node in graph.get("nodes", [])
-        if isinstance(node, dict) and node.get("node_type") == "feature" and _finite_number(_field_value(node, metric))
+        if isinstance(node, dict)
+        and node.get("node_type") == "feature"
+        and _finite_number(_field_value(node, metric))
     ]
 
 
@@ -427,7 +548,11 @@ def _field_value(node: dict[str, Any], path: str) -> Any:
 def _answer_type(answer: Any) -> str | None:
     if isinstance(answer, int) and not isinstance(answer, bool):
         return "integer"
-    if isinstance(answer, (int, float)) and not isinstance(answer, bool) and math.isfinite(float(answer)):
+    if (
+        isinstance(answer, (int, float))
+        and not isinstance(answer, bool)
+        and math.isfinite(float(answer))
+    ):
         return "number"
     if isinstance(answer, str):
         return "choice"
@@ -443,4 +568,8 @@ def _answer_instruction(answer_type: str | None) -> str:
 
 
 def _finite_number(value: Any) -> bool:
-    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(float(value))
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(float(value))
+    )

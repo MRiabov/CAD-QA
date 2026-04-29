@@ -4,7 +4,9 @@ from cad_qa.config import DatasetConfig
 from cad_qa.export import export_smoke_dataset
 from cad_qa.jsonio import read_json, read_jsonl
 from scripts.dataset.export_audit_renders import export_audit_renders
-from scripts.evaluation.export_multimodal_prediction_requests import main as multimodal_main
+from scripts.evaluation.export_multimodal_prediction_requests import (
+    main as multimodal_main,
+)
 
 
 def test_export_multimodal_prediction_requests(tmp_path: Path):

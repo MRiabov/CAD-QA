@@ -9,10 +9,16 @@ import math
 from typing import Any
 
 from cad_qa.config import DatasetConfig
-from cad_qa.graph_query import build_typed_query_graph, default_graph_query_irs, graph_query_prompt, resolve_graph_query
+from cad_qa.graph_query import (
+    build_typed_query_graph,
+    default_graph_query_irs,
+    graph_query_prompt,
+    resolve_graph_query,
+)
 from cad_qa.hashing import sha256_json
 from cad_qa.operation_graph import operation_signature_hash
 from cad_qa.schema import OperationNode, PublicTaskRow, SourceRecord, TraceRecord
+
 
 def materialize_rows(
     source: SourceRecord,
@@ -47,7 +53,19 @@ def _workplane_rows(
         if node.status != "ok" or node.operation not in {"Workplane", "workplane"}:
             continue
         frame = _coordinate_frame(node)
-        choices = ["XY", "YZ", "XZ", "front", "back", "left", "right", "top", "bottom", "inherited", "unknown"]
+        choices = [
+            "XY",
+            "YZ",
+            "XZ",
+            "front",
+            "back",
+            "left",
+            "right",
+            "top",
+            "bottom",
+            "inherited",
+            "unknown",
+        ]
         if frame not in choices:
             choices.append(frame)
         rows.append(
@@ -70,7 +88,12 @@ def _workplane_rows(
                 numeric_tolerance=None,
                 requires=["cadquery_syntax", "workplane_reasoning"],
                 difficulty_tags=["coordinate_frame"],
-                labels={"operation_node": asdict(node), "coordinate_frame": frame, "answer_status": "ok", "failure_reason": None},
+                labels={
+                    "operation_node": asdict(node),
+                    "coordinate_frame": frame,
+                    "answer_status": "ok",
+                    "failure_reason": None,
+                },
                 diagnostics={"answer_status": "ok", "failure_reason": None},
                 parse_policy="strict_enum_v1",
             )
@@ -100,7 +123,12 @@ def _workplane_rows(
                 numeric_tolerance=None,
                 requires=["cadquery_syntax", "workplane_reasoning"],
                 difficulty_tags=["workplane_state"],
-                labels={"operation_node": asdict(node), "workplane_state": state, "answer_status": "ok", "failure_reason": None},
+                labels={
+                    "operation_node": asdict(node),
+                    "workplane_state": state,
+                    "answer_status": "ok",
+                    "failure_reason": None,
+                },
                 diagnostics={"answer_status": "ok", "failure_reason": None},
                 parse_policy="strict_json_v1",
             )
@@ -120,7 +148,12 @@ def _operation_count_rows(
     rows: list[PublicTaskRow] = []
     for operation in operations:
         answer = counts.get(operation, 0)
-        labels = {"operation": operation, "operation_count": answer, "answer_status": "ok", "failure_reason": None}
+        labels = {
+            "operation": operation,
+            "operation_count": answer,
+            "answer_status": "ok",
+            "failure_reason": None,
+        }
         rows.append(
             _row(
                 source,
@@ -148,7 +181,9 @@ def _operation_count_rows(
     return rows
 
 
-def _snapshot_rows(source: SourceRecord, trace: TraceRecord, *, config: DatasetConfig) -> list[PublicTaskRow]:
+def _snapshot_rows(
+    source: SourceRecord, trace: TraceRecord, *, config: DatasetConfig
+) -> list[PublicTaskRow]:
     rows: list[PublicTaskRow] = []
     snapshots = sorted(trace.snapshots, key=lambda item: int(item.get("step_index", 0)))
     for position, snapshot in enumerate(snapshots):
@@ -175,12 +210,24 @@ def _snapshot_rows(source: SourceRecord, trace: TraceRecord, *, config: DatasetC
                     numeric_tolerance=config.label_policy.bbox_tolerance_mm,
                     requires=["cadquery_syntax", "bbox_reasoning"],
                     difficulty_tags=["symbolic_arithmetic"],
-                    labels={"bbox_after": snapshot["bbox"], "answer_status": "ok", "failure_reason": None},
-                    diagnostics={"answer_status": "ok", "failure_reason": None, "snapshot_id": snapshot.get("snapshot_id")},
+                    labels={
+                        "bbox_after": snapshot["bbox"],
+                        "answer_status": "ok",
+                        "failure_reason": None,
+                    },
+                    diagnostics={
+                        "answer_status": "ok",
+                        "failure_reason": None,
+                        "snapshot_id": snapshot.get("snapshot_id"),
+                    },
                     parse_policy="strict_json_bbox_v1",
                 )
             )
-        if snapshot.get("volume") is not None and previous and previous.get("volume") is not None:
+        if (
+            snapshot.get("volume") is not None
+            and previous
+            and previous.get("volume") is not None
+        ):
             before = float(previous["volume"])
             after = float(snapshot["volume"])
             delta = after - before
@@ -212,13 +259,23 @@ def _snapshot_rows(source: SourceRecord, trace: TraceRecord, *, config: DatasetC
                         "answer_status": "ok",
                         "failure_reason": None,
                     },
-                    diagnostics={"answer_status": "ok", "failure_reason": None, "snapshot_id": snapshot.get("snapshot_id")},
+                    diagnostics={
+                        "answer_status": "ok",
+                        "failure_reason": None,
+                        "snapshot_id": snapshot.get("snapshot_id"),
+                    },
                     parse_policy="numeric_4_sigfig_v1",
                 )
             )
         topology = snapshot.get("topology")
         if isinstance(topology, dict):
-            for key in ("solid_count", "face_count", "edge_count", "vertex_count", "wire_count"):
+            for key in (
+                "solid_count",
+                "face_count",
+                "edge_count",
+                "vertex_count",
+                "wire_count",
+            ):
                 value = topology.get(key)
                 if isinstance(value, int) and value >= 0:
                     rows.append(
@@ -240,15 +297,26 @@ def _snapshot_rows(source: SourceRecord, trace: TraceRecord, *, config: DatasetC
                             numeric_tolerance=None,
                             requires=["cadquery_syntax", "topology_count"],
                             difficulty_tags=["topology_count"],
-                            labels={"topology_after": topology, "topology_key": key, "answer_status": "ok", "failure_reason": None},
-                            diagnostics={"answer_status": "ok", "failure_reason": None, "snapshot_id": snapshot.get("snapshot_id")},
+                            labels={
+                                "topology_after": topology,
+                                "topology_key": key,
+                                "answer_status": "ok",
+                                "failure_reason": None,
+                            },
+                            diagnostics={
+                                "answer_status": "ok",
+                                "failure_reason": None,
+                                "snapshot_id": snapshot.get("snapshot_id"),
+                            },
                             parse_policy="strict_integer_v1",
                         )
                     )
     return rows
 
 
-def _selector_rows(source: SourceRecord, trace: TraceRecord, *, config: DatasetConfig) -> list[PublicTaskRow]:
+def _selector_rows(
+    source: SourceRecord, trace: TraceRecord, *, config: DatasetConfig
+) -> list[PublicTaskRow]:
     rows: list[PublicTaskRow] = []
     for table in trace.selector_tables:
         count = table.get("selected_count")
@@ -274,7 +342,11 @@ def _selector_rows(source: SourceRecord, trace: TraceRecord, *, config: DatasetC
                 numeric_tolerance=None,
                 requires=["cadquery_syntax", "selector_semantics"],
                 difficulty_tags=["selector_semantics"],
-                labels={"selector_result": table, "answer_status": "ok", "failure_reason": None},
+                labels={
+                    "selector_result": table,
+                    "answer_status": "ok",
+                    "failure_reason": None,
+                },
                 diagnostics={"answer_status": "ok", "failure_reason": None},
                 parse_policy="strict_integer_v1",
             )
@@ -282,7 +354,9 @@ def _selector_rows(source: SourceRecord, trace: TraceRecord, *, config: DatasetC
     return rows
 
 
-def _point_rows(source: SourceRecord, trace: TraceRecord, *, config: DatasetConfig) -> list[PublicTaskRow]:
+def _point_rows(
+    source: SourceRecord, trace: TraceRecord, *, config: DatasetConfig
+) -> list[PublicTaskRow]:
     rows: list[PublicTaskRow] = []
     for query in trace.point_queries:
         answer = query.get("point_classification")
@@ -310,10 +384,18 @@ def _point_rows(source: SourceRecord, trace: TraceRecord, *, config: DatasetConf
                 numeric_tolerance=None,
                 requires=["cadquery_syntax", "point_membership"],
                 difficulty_tags=_point_membership_tags(query, str(answer)),
-                labels={"point_query": query, "answer_status": "ok", "failure_reason": None},
+                labels={
+                    "point_query": query,
+                    "answer_status": "ok",
+                    "failure_reason": None,
+                },
                 diagnostics={"answer_status": "ok", "failure_reason": None},
                 parse_policy="strict_enum_v1",
-                provenance_overrides={"point_sampling_group_id": _point_sampling_group_id(source, query, str(answer))},
+                provenance_overrides={
+                    "point_sampling_group_id": _point_sampling_group_id(
+                        source, query, str(answer)
+                    )
+                },
             )
         )
     return rows
@@ -359,7 +441,11 @@ def _provenance_rows(
                 numeric_tolerance=None,
                 requires=["cadquery_syntax", "feature_provenance"],
                 difficulty_tags=["feature_provenance"],
-                labels={"provenance": record, "answer_status": "ok", "failure_reason": None},
+                labels={
+                    "provenance": record,
+                    "answer_status": "ok",
+                    "failure_reason": None,
+                },
                 diagnostics={"answer_status": "ok", "failure_reason": None},
                 parse_policy="strict_enum_v1",
             )
@@ -384,7 +470,11 @@ def _graph_query_rows(
             resolution = resolve_graph_query(graph, record, config=config)
             if resolution.status != "ok" or resolution.answer_type is None:
                 continue
-            answer = _round_sigfig_number(resolution.answer) if resolution.answer_type == "number" else resolution.answer
+            answer = (
+                _round_sigfig_number(resolution.answer)
+                if resolution.answer_type == "number"
+                else resolution.answer
+            )
             rows.append(
                 _row(
                     source,
@@ -392,7 +482,9 @@ def _graph_query_rows(
                     config=config,
                     task_type="graph_query",
                     target_feature_id=resolution.target_feature_id,
-                    prompt=graph_query_prompt(record, resolution, source.normalized_code),
+                    prompt=graph_query_prompt(
+                        record, resolution, source.normalized_code
+                    ),
                     answer_type=resolution.answer_type,
                     answer=answer,
                     choices=resolution.choices,
@@ -400,8 +492,16 @@ def _graph_query_rows(
                     numeric_tolerance=resolution.numeric_tolerance,
                     requires=["cadquery_syntax", "operation_graph", "graph_query"],
                     difficulty_tags=["graph_query", "multi_hop"],
-                    labels={"graph_query": resolution.graph_query, "answer_status": "ok", "failure_reason": None},
-                    diagnostics={"answer_status": "ok", "failure_reason": None, **resolution.diagnostics},
+                    labels={
+                        "graph_query": resolution.graph_query,
+                        "answer_status": "ok",
+                        "failure_reason": None,
+                    },
+                    diagnostics={
+                        "answer_status": "ok",
+                        "failure_reason": None,
+                        **resolution.diagnostics,
+                    },
                     parse_policy=_parse_policy_for_answer_type(resolution.answer_type),
                 )
             )
@@ -433,7 +533,11 @@ def _graph_query_rows(
                 numeric_tolerance=None,
                 requires=["cadquery_syntax", "operation_graph", "graph_query"],
                 difficulty_tags=["graph_query", "multi_hop"],
-                labels={"graph_query": graph_query, "answer_status": "ok", "failure_reason": None},
+                labels={
+                    "graph_query": graph_query,
+                    "answer_status": "ok",
+                    "failure_reason": None,
+                },
                 diagnostics={
                     "answer_status": "ok",
                     "failure_reason": None,
@@ -446,7 +550,9 @@ def _graph_query_rows(
     return rows
 
 
-def _spatial_distance_rows(source: SourceRecord, trace: TraceRecord, *, config: DatasetConfig) -> list[PublicTaskRow]:
+def _spatial_distance_rows(
+    source: SourceRecord, trace: TraceRecord, *, config: DatasetConfig
+) -> list[PublicTaskRow]:
     records = list(trace.spatial_queries) or _default_spatial_queries(trace)
     rows: list[PublicTaskRow] = []
     for record in records:
@@ -478,11 +584,17 @@ def _spatial_distance_rows(source: SourceRecord, trace: TraceRecord, *, config: 
                 choices=None,
                 unit="mm",
                 numeric_tolerance=config.label_policy.spatial_distance_tolerance_mm,
-                requires=["cadquery_syntax", "spatial_references", "distance_reasoning"],
+                requires=[
+                    "cadquery_syntax",
+                    "spatial_references",
+                    "distance_reasoning",
+                ],
                 difficulty_tags=["spatial_distance"],
                 labels={
                     "spatial_query": {
-                        "query_kind": record.get("query_kind", "point_to_point_distance"),
+                        "query_kind": record.get(
+                            "query_kind", "point_to_point_distance"
+                        ),
                         "reference_a": reference_a,
                         "reference_b": reference_b,
                         "raw_distance": answer,
@@ -521,8 +633,16 @@ def _default_spatial_queries(trace: TraceRecord) -> list[dict[str, Any]]:
                 "query_id": f"default_point_distance_{target}",
                 "target_feature_id": target,
                 "query_kind": "point_to_point_distance",
-                "reference_a": {"name": "point_a", "point": first_point, "source": first.get("sampling_stratum")},
-                "reference_b": {"name": "point_b", "point": second_point, "source": second.get("sampling_stratum")},
+                "reference_a": {
+                    "name": "point_a",
+                    "point": first_point,
+                    "source": first.get("sampling_stratum"),
+                },
+                "reference_b": {
+                    "name": "point_b",
+                    "point": second_point,
+                    "source": second.get("sampling_stratum"),
+                },
                 "answer": _point_distance(first_point, second_point),
                 "reference_status": "ok",
             }
@@ -531,7 +651,9 @@ def _default_spatial_queries(trace: TraceRecord) -> list[dict[str, Any]]:
     return records
 
 
-def _bbox_region_rows(source: SourceRecord, trace: TraceRecord, *, config: DatasetConfig) -> list[PublicTaskRow]:
+def _bbox_region_rows(
+    source: SourceRecord, trace: TraceRecord, *, config: DatasetConfig
+) -> list[PublicTaskRow]:
     records = list(trace.bbox_region_queries) or _default_bbox_region_queries(trace)
     rows: list[PublicTaskRow] = []
     for record in records:
@@ -563,11 +685,15 @@ def _bbox_region_rows(source: SourceRecord, trace: TraceRecord, *, config: Datas
                 difficulty_tags=["bbox_region_query"],
                 labels={
                     "spatial_query": {
-                        "query_kind": record.get("query_kind", "bbox_region_entity_count"),
+                        "query_kind": record.get(
+                            "query_kind", "bbox_region_entity_count"
+                        ),
                         "region": region,
                         "predicate": record.get("predicate", "inside"),
                         "entity_type": record.get("entity_type", "vertex"),
-                        "label_method": record.get("label_method", "topology_count_for_full_snapshot_bbox"),
+                        "label_method": record.get(
+                            "label_method", "topology_count_for_full_snapshot_bbox"
+                        ),
                     },
                     "answer_status": "ok",
                     "failure_reason": None,
@@ -586,11 +712,17 @@ def _bbox_region_rows(source: SourceRecord, trace: TraceRecord, *, config: Datas
 
 def _default_bbox_region_queries(trace: TraceRecord) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
-    for snapshot in sorted(trace.snapshots, key=lambda item: int(item.get("step_index", 0))):
+    for snapshot in sorted(
+        trace.snapshots, key=lambda item: int(item.get("step_index", 0))
+    ):
         topology = snapshot.get("topology")
         bbox = snapshot.get("bbox")
         feature_id = snapshot.get("feature_id")
-        if not isinstance(topology, dict) or not isinstance(bbox, dict) or not isinstance(feature_id, str):
+        if (
+            not isinstance(topology, dict)
+            or not isinstance(bbox, dict)
+            or not isinstance(feature_id, str)
+        ):
             continue
         vertex_count = topology.get("vertex_count")
         if not isinstance(vertex_count, int) or vertex_count < 0:
@@ -610,8 +742,12 @@ def _default_bbox_region_queries(trace: TraceRecord) -> list[dict[str, Any]]:
     return records
 
 
-def _validity_failure_rows(source: SourceRecord, trace: TraceRecord, *, config: DatasetConfig) -> list[PublicTaskRow]:
-    records = list(trace.validity_probes) or [_default_validity_probe(trace, config=config)]
+def _validity_failure_rows(
+    source: SourceRecord, trace: TraceRecord, *, config: DatasetConfig
+) -> list[PublicTaskRow]:
+    records = list(trace.validity_probes) or [
+        _default_validity_probe(trace, config=config)
+    ]
     rows: list[PublicTaskRow] = []
     for record in records:
         if record.get("status", "ok") != "ok":
@@ -620,9 +756,15 @@ def _validity_failure_rows(source: SourceRecord, trace: TraceRecord, *, config: 
         answer_type = _infer_advanced_answer_type(answer)
         if answer_type is None:
             continue
-        numeric_tolerance = config.label_policy.linear_tolerance_mm if answer_type == "number" else None
-        choices = [str(item) for item in record.get("choices") or []] or (["valid", "invalid", "inconclusive"] if answer_type == "enum" else None)
-        if answer_type == "enum" and (not isinstance(answer, str) or (choices and answer not in choices)):
+        numeric_tolerance = (
+            config.label_policy.linear_tolerance_mm if answer_type == "number" else None
+        )
+        choices = [str(item) for item in record.get("choices") or []] or (
+            ["valid", "invalid", "inconclusive"] if answer_type == "enum" else None
+        )
+        if answer_type == "enum" and (
+            not isinstance(answer, str) or (choices and answer not in choices)
+        ):
             continue
         row_answer = _round_sigfig_number(answer) if answer_type == "number" else answer
         rows.append(
@@ -639,16 +781,23 @@ def _validity_failure_rows(source: SourceRecord, trace: TraceRecord, *, config: 
                 answer_type=answer_type,
                 answer=row_answer,
                 choices=choices,
-                unit=record.get("unit") if isinstance(record.get("unit"), str) else None,
+                unit=record.get("unit")
+                if isinstance(record.get("unit"), str)
+                else None,
                 numeric_tolerance=numeric_tolerance,
                 requires=["cadquery_syntax", "validity_reasoning"],
-                difficulty_tags=["validity_failure_prediction", str(record.get("question_kind", "validity"))],
+                difficulty_tags=[
+                    "validity_failure_prediction",
+                    str(record.get("question_kind", "validity")),
+                ],
                 labels={
                     "validity_result": {
                         "question_kind": record.get("question_kind", "script_validity"),
                         "probe_target": record.get("probe_target"),
                         "prior_state_validity": record.get("prior_state_validity"),
-                        "post_probe_validity": record.get("post_probe_validity", answer),
+                        "post_probe_validity": record.get(
+                            "post_probe_validity", answer
+                        ),
                         "failure_stage": record.get("failure_stage"),
                         "failure_type": record.get("failure_type"),
                         "threshold": record.get("threshold"),
@@ -660,7 +809,9 @@ def _validity_failure_rows(source: SourceRecord, trace: TraceRecord, *, config: 
                     "answer_status": "ok",
                     "failure_reason": None,
                     "query_id": record.get("query_id"),
-                    "repeat_count": record.get("repeat_count", config.label_policy.validity_probe_repeat_count),
+                    "repeat_count": record.get(
+                        "repeat_count", config.label_policy.validity_probe_repeat_count
+                    ),
                     "probe_status": record.get("probe_status", "stable"),
                 },
                 parse_policy=_parse_policy_for_answer_type(answer_type),
@@ -669,8 +820,14 @@ def _validity_failure_rows(source: SourceRecord, trace: TraceRecord, *, config: 
     return rows
 
 
-def _default_validity_probe(trace: TraceRecord, *, config: DatasetConfig) -> dict[str, Any]:
-    answer = "valid" if trace.execution_status == "ok" and trace.failure_reason is None else "invalid"
+def _default_validity_probe(
+    trace: TraceRecord, *, config: DatasetConfig
+) -> dict[str, Any]:
+    answer = (
+        "valid"
+        if trace.execution_status == "ok" and trace.failure_reason is None
+        else "invalid"
+    )
     return {
         "query_id": "default_script_validity",
         "question_kind": "script_validity",
@@ -692,7 +849,11 @@ def _default_validity_probe(trace: TraceRecord, *, config: DatasetConfig) -> dic
 def _infer_advanced_answer_type(answer: Any) -> str | None:
     if isinstance(answer, int) and not isinstance(answer, bool):
         return "integer"
-    if isinstance(answer, (int, float)) and not isinstance(answer, bool) and math.isfinite(float(answer)):
+    if (
+        isinstance(answer, (int, float))
+        and not isinstance(answer, bool)
+        and math.isfinite(float(answer))
+    ):
         return "number"
     if isinstance(answer, str):
         return "enum"
@@ -736,7 +897,9 @@ def _row(
     parse_policy: str,
     provenance_overrides: dict[str, Any] | None = None,
 ) -> PublicTaskRow:
-    prompt_hash = sha256_json({"task_type": task_type, "target": target_feature_id, "prompt": prompt})
+    prompt_hash = sha256_json(
+        {"task_type": task_type, "target": target_feature_id, "prompt": prompt}
+    )
     provenance = _provenance(source, trace)
     if provenance_overrides:
         provenance.update(provenance_overrides)
@@ -750,7 +913,10 @@ def _row(
         "prompt_hash": prompt_hash,
     }
     return PublicTaskRow(
-        id="cadqa_" + task_type + "_" + sha256_json(row_payload).removeprefix("sha256:")[:16],
+        id="cadqa_"
+        + task_type
+        + "_"
+        + sha256_json(row_payload).removeprefix("sha256:")[:16],
         dataset_version=config.dataset_version,
         task_type=task_type,
         source_id=source.source_id,
@@ -827,7 +993,9 @@ def _coordinate_frame(node: OperationNode) -> str:
     if not node.args_repr:
         return "unknown"
     first = node.args_repr[0].strip()
-    if (first.startswith("'") and first.endswith("'")) or (first.startswith('"') and first.endswith('"')):
+    if (first.startswith("'") and first.endswith("'")) or (
+        first.startswith('"') and first.endswith('"')
+    ):
         return first[1:-1]
     return first
 
@@ -839,8 +1007,12 @@ def _point_membership_tags(query: dict[str, Any], answer: str) -> list[str]:
     return tags
 
 
-def _point_sampling_group_id(source: SourceRecord, query: dict[str, Any], answer: str) -> str:
-    stratum = str(query.get("sampling_stratum") or query.get("sample_source") or "unknown")
+def _point_sampling_group_id(
+    source: SourceRecord, query: dict[str, Any], answer: str
+) -> str:
+    stratum = str(
+        query.get("sampling_stratum") or query.get("sample_source") or "unknown"
+    )
     if _is_near_boundary_query(query, answer):
         return f"near_boundary:{source.source_id}:{stratum}"
     return f"point_sample:{source.source_id}:{stratum}"
@@ -858,11 +1030,19 @@ def _optional_str(value: Any) -> str | None:
 
 
 def _finite_number(value: Any) -> bool:
-    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(float(value))
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(float(value))
+    )
 
 
 def _valid_point(value: Any) -> bool:
-    return isinstance(value, list) and len(value) == 3 and all(_finite_number(item) for item in value)
+    return (
+        isinstance(value, list)
+        and len(value) == 3
+        and all(_finite_number(item) for item in value)
+    )
 
 
 def _point_distance(first: list[float], second: list[float]) -> float:

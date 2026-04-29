@@ -32,7 +32,10 @@ def main(argv: list[str] | None = None) -> None:
     for name in baselines:
         predictions = baseline_predictions(rows, name=name, seed=args.seed)
         write_json(args.output_dir / f"{name}_predictions.json", predictions)
-        write_json(args.output_dir / f"{name}_graded.json", evaluate_predictions(rows, predictions))
+        write_json(
+            args.output_dir / f"{name}_graded.json",
+            evaluate_predictions(rows, predictions),
+        )
     print(metrics)
 
 

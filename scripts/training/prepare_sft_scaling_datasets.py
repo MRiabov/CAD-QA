@@ -47,10 +47,17 @@ def main(argv: list[str] | None = None) -> None:
             "requested_train_rows": size,
             "train_row_count": len(train_examples),
             "eval_row_count": len(eval_examples),
-            "train_task_counts": dict(Counter(example["task_type"] for example in train_examples)),
-            "eval_task_counts": dict(Counter(example["task_type"] for example in eval_examples)),
+            "train_task_counts": dict(
+                Counter(example["task_type"] for example in train_examples)
+            ),
+            "eval_task_counts": dict(
+                Counter(example["task_type"] for example in eval_examples)
+            ),
         }
-        write_json(scale_dir / "sft_dataset_report.json", {"schema": "cadqa_sft_scaling_report_v1", "name": name, **item})
+        write_json(
+            scale_dir / "sft_dataset_report.json",
+            {"schema": "cadqa_sft_scaling_report_v1", "name": name, **item},
+        )
         report["sizes"][name] = item
     write_json(args.output_dir / "sft_scaling_manifest.json", report)
     print(json.dumps(report, indent=2, sort_keys=True))
@@ -65,7 +72,9 @@ def _load_splits(dataset_dir: Path, splits: list[str]) -> list[dict[str, Any]]:
     return sorted(rows, key=lambda row: str(row["id"]))
 
 
-def _stratified_rows(rows: list[dict[str, Any]], *, target_count: int, seed: int) -> list[dict[str, Any]]:
+def _stratified_rows(
+    rows: list[dict[str, Any]], *, target_count: int, seed: int
+) -> list[dict[str, Any]]:
     if target_count >= len(rows):
         return sorted(rows, key=lambda row: str(row["id"]))
     by_task: dict[str, list[dict[str, Any]]] = defaultdict(list)

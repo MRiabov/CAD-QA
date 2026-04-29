@@ -18,7 +18,9 @@ ALIAS_OPERATIONS = {
 NON_OPERATION_METHODS = {"val", "vals", "objects", "all"}
 
 
-def extract_operation_graph(code: str) -> tuple[list[OperationNode], str | None, list[str]]:
+def extract_operation_graph(
+    code: str,
+) -> tuple[list[OperationNode], str | None, list[str]]:
     try:
         tree = ast.parse(code)
     except SyntaxError as exc:
@@ -69,11 +71,15 @@ class _GraphExtractor:
                 self._visit_assignment(target, statement.value, statement.lineno)
                 return
         if isinstance(statement, ast.Expr) and isinstance(statement.value, ast.Call):
-            self._add_call_node(None, statement.value, statement.lineno, status="partial")
+            self._add_call_node(
+                None, statement.value, statement.lineno, status="partial"
+            )
             return
         if isinstance(statement, (ast.Pass,)):
             return
-        self.issues.append(f"unsupported_statement:{type(statement).__name__}:{getattr(statement, 'lineno', None)}")
+        self.issues.append(
+            f"unsupported_statement:{type(statement).__name__}:{getattr(statement, 'lineno', None)}"
+        )
 
     def detect_result_variable(self) -> str | None:
         for name in FINAL_RESULT_NAMES:
@@ -99,17 +105,27 @@ class _GraphExtractor:
             if len(calls) > 1:
                 previous_target: str | None = None
                 for index, call in enumerate(calls):
-                    node_target = target if index == len(calls) - 1 else f"{target}__chain_{index:02d}"
+                    node_target = (
+                        target
+                        if index == len(calls) - 1
+                        else f"{target}__chain_{index:02d}"
+                    )
                     node = self._add_call_node(node_target, call, lineno)
-                    previous_target = node.feature_id if node is not None else previous_target
+                    previous_target = (
+                        node.feature_id if node is not None else previous_target
+                    )
                 if previous_target:
                     self.feature_by_variable[target] = previous_target
                 return
             self._add_call_node(target, value, lineno)
             return
-        if isinstance(value, (ast.Constant, ast.List, ast.Tuple, ast.Dict, ast.UnaryOp, ast.BinOp)):
+        if isinstance(
+            value, (ast.Constant, ast.List, ast.Tuple, ast.Dict, ast.UnaryOp, ast.BinOp)
+        ):
             return
-        self.issues.append(f"unsupported_assignment_value:{type(value).__name__}:{lineno}")
+        self.issues.append(
+            f"unsupported_assignment_value:{type(value).__name__}:{lineno}"
+        )
 
     def _add_call_node(
         self,
@@ -135,7 +151,10 @@ class _GraphExtractor:
             target=target,
             base=base,
             operation=operation,
-            args_repr=[_safe_unparse(arg) for arg in [*call.args, *[kw.value for kw in call.keywords]]],
+            args_repr=[
+                _safe_unparse(arg)
+                for arg in [*call.args, *[kw.value for kw in call.keywords]]
+            ],
             input_features=inputs,
             status=status,
         )
@@ -185,7 +204,9 @@ def _target_name(target: ast.AST) -> str | None:
     return target.id if isinstance(target, ast.Name) else None
 
 
-def _input_features(call: ast.Call, base: str | None, feature_by_variable: dict[str, str]) -> list[str]:
+def _input_features(
+    call: ast.Call, base: str | None, feature_by_variable: dict[str, str]
+) -> list[str]:
     inputs: list[str] = []
     if base in feature_by_variable:
         inputs.append(feature_by_variable[base])

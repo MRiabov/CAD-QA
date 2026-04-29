@@ -10,7 +10,14 @@ from cad_qa.jsonio import read_json, read_jsonl
 
 
 ROW_ID_KEYS = ("row_id", "id", "custom_id")
-PREDICTION_KEYS = ("prediction", "answer", "content", "output_text", "completion", "text")
+PREDICTION_KEYS = (
+    "prediction",
+    "answer",
+    "content",
+    "output_text",
+    "completion",
+    "text",
+)
 
 
 def read_prediction_artifact(path: Path) -> dict[str, str]:
@@ -27,11 +34,16 @@ def normalize_prediction_artifact(value: Any) -> dict[str, str]:
         if "predictions" in value:
             return normalize_prediction_artifact(value["predictions"])
         if _looks_like_prediction_mapping(value):
-            return {str(key): _prediction_text(prediction) for key, prediction in value.items()}
+            return {
+                str(key): _prediction_text(prediction)
+                for key, prediction in value.items()
+            }
         return normalize_prediction_records([value])
     if isinstance(value, list):
         return normalize_prediction_records(value)
-    raise ValueError("prediction artifact must be a JSON object, list, or JSONL object stream")
+    raise ValueError(
+        "prediction artifact must be a JSON object, list, or JSONL object stream"
+    )
 
 
 def normalize_prediction_records(records: list[Any]) -> dict[str, str]:
@@ -54,7 +66,14 @@ def normalize_prediction_records(records: list[Any]) -> dict[str, str]:
 def _looks_like_prediction_mapping(value: dict[str, Any]) -> bool:
     if not value:
         return True
-    reserved = {"schema", "metadata", "model", "created_at", "request_count", "predictions"}
+    reserved = {
+        "schema",
+        "metadata",
+        "model",
+        "created_at",
+        "request_count",
+        "predictions",
+    }
     if set(value) & reserved:
         return False
     return not any(key in value for key in ROW_ID_KEYS + PREDICTION_KEYS)
@@ -114,7 +133,9 @@ def _openai_body_text(body: dict[str, Any]) -> str | None:
             content = item.get("content")
             if isinstance(content, list):
                 for content_item in content:
-                    if isinstance(content_item, dict) and isinstance(content_item.get("text"), str):
+                    if isinstance(content_item, dict) and isinstance(
+                        content_item.get("text"), str
+                    ):
                         parts.append(content_item["text"])
         if parts:
             return "\n".join(parts)

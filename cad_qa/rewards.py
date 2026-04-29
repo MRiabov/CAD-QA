@@ -61,7 +61,9 @@ def score_candidate_records(
         scored.append(
             {
                 "row_id": row_id,
-                "candidate_id": str(record.get("candidate_id") or f"{row_id}:{seen_by_row[row_id] - 1}"),
+                "candidate_id": str(
+                    record.get("candidate_id") or f"{row_id}:{seen_by_row[row_id] - 1}"
+                ),
                 "candidate": candidate,
                 "rank_input": index,
                 "task_type": row.get("task_type"),
@@ -70,7 +72,13 @@ def score_candidate_records(
             }
         )
     selected = select_best_candidates(scored)
-    report = reward_report(rows, scored, selected, skipped=dict(skipped), max_candidates_per_row=max_candidates_per_row)
+    report = reward_report(
+        rows,
+        scored,
+        selected,
+        skipped=dict(skipped),
+        max_candidates_per_row=max_candidates_per_row,
+    )
     return scored, report
 
 
@@ -80,7 +88,14 @@ def select_best_candidates(scored: list[dict[str, Any]]) -> list[dict[str, Any]]
         by_row[str(item["row_id"])].append(item)
     selected = []
     for row_id, items in sorted(by_row.items()):
-        best = max(items, key=lambda item: (float(item["reward"]), bool(item["valid"]), -int(item["rank_input"])))
+        best = max(
+            items,
+            key=lambda item: (
+                float(item["reward"]),
+                bool(item["valid"]),
+                -int(item["rank_input"]),
+            ),
+        )
         selected.append({**best, "selection": "best_of_candidates"})
     return selected
 
@@ -116,7 +131,9 @@ def reward_report(
     }
 
 
-def _group_report(items: list[dict[str, Any]], field: str) -> dict[str, dict[str, float | int]]:
+def _group_report(
+    items: list[dict[str, Any]], field: str
+) -> dict[str, dict[str, float | int]]:
     groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for item in items:
         groups[str(item.get(field))].append(item)
@@ -136,7 +153,11 @@ def _rate(items: list[dict[str, Any]], field: str) -> float:
 
 
 def _mean_reward(items: list[dict[str, Any]]) -> float:
-    return sum(float(item.get("reward", 0.0)) for item in items) / len(items) if items else 0.0
+    return (
+        sum(float(item.get("reward", 0.0)) for item in items) / len(items)
+        if items
+        else 0.0
+    )
 
 
 def _row_id(record: dict[str, Any]) -> str | None:
@@ -148,7 +169,14 @@ def _row_id(record: dict[str, Any]) -> str | None:
 
 
 def _candidate_text(record: dict[str, Any]) -> str:
-    for key in ("candidate", "prediction", "answer", "completion", "text", "output_text"):
+    for key in (
+        "candidate",
+        "prediction",
+        "answer",
+        "completion",
+        "text",
+        "output_text",
+    ):
         value = record.get(key)
         if value is not None:
             return str(value)

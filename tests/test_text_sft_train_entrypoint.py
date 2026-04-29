@@ -12,9 +12,30 @@ def test_text_sft_train_dry_run_writes_result(tmp_path: Path):
     sft_dir = tmp_path / "sft"
     output_dir = tmp_path / "train"
     export_smoke_dataset(output_dir=dataset_dir, config=DatasetConfig())
-    prepare_sft_main(["--dataset-dir", str(dataset_dir), "--output-dir", str(sft_dir), "--max-train-rows", "4", "--max-eval-rows", "2"])
+    prepare_sft_main(
+        [
+            "--dataset-dir",
+            str(dataset_dir),
+            "--output-dir",
+            str(sft_dir),
+            "--max-train-rows",
+            "4",
+            "--max-eval-rows",
+            "2",
+        ]
+    )
 
-    train_main(["--dataset-dir", str(dataset_dir), "--sft-dir", str(sft_dir), "--output-dir", str(output_dir), "--dry-run"])
+    train_main(
+        [
+            "--dataset-dir",
+            str(dataset_dir),
+            "--sft-dir",
+            str(sft_dir),
+            "--output-dir",
+            str(output_dir),
+            "--dry-run",
+        ]
+    )
 
     result = read_json(output_dir / "train_result.json")
     assert result["status"] == "dry_run"

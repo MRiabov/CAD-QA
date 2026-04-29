@@ -6,7 +6,11 @@ from dataclasses import asdict
 
 from cad_qa.config import DatasetConfig
 from cad_qa.hashing import sha256_json
-from cad_qa.operation_graph import extract_operation_graph, operation_graph_hash, operation_nodes_to_dicts
+from cad_qa.operation_graph import (
+    extract_operation_graph,
+    operation_graph_hash,
+    operation_nodes_to_dicts,
+)
 from cad_qa.schema import SourceRecord, TraceRecord
 from cad_qa.source import source_record_from_code
 
@@ -32,14 +36,21 @@ result = wp3
 
 def smoke_source_records(config: DatasetConfig) -> list[SourceRecord]:
     return [
-        source_record_from_code("synthetic/box.py", BOX_CODE, source="synthetic", config=config),
-        source_record_from_code("synthetic/hole.py", HOLE_CODE, source="synthetic", config=config),
+        source_record_from_code(
+            "synthetic/box.py", BOX_CODE, source="synthetic", config=config
+        ),
+        source_record_from_code(
+            "synthetic/hole.py", HOLE_CODE, source="synthetic", config=config
+        ),
     ]
 
 
 def smoke_traces(config: DatasetConfig) -> list[tuple[SourceRecord, TraceRecord]]:
     records = smoke_source_records(config)
-    return [(records[0], _box_trace(records[0], config)), (records[1], _hole_trace(records[1], config))]
+    return [
+        (records[0], _box_trace(records[0], config)),
+        (records[1], _hole_trace(records[1], config)),
+    ]
 
 
 def _box_trace(source: SourceRecord, config: DatasetConfig) -> TraceRecord:
@@ -48,7 +59,11 @@ def _box_trace(source: SourceRecord, config: DatasetConfig) -> TraceRecord:
     snapshots = [
         _snapshot("wp1", 1, 10 * 20 * 30, [-5, -10, -15], [5, 10, 15], 6, 12, 8),
     ]
-    payload = {"source_id": source.source_id, "graph_hash": graph_hash, "snapshots": snapshots}
+    payload = {
+        "source_id": source.source_id,
+        "graph_hash": graph_hash,
+        "snapshots": snapshots,
+    }
     return TraceRecord(
         trace_id="trace_" + sha256_json(payload).removeprefix("sha256:")[:16],
         source_id=source.source_id,
@@ -58,19 +73,40 @@ def _box_trace(source: SourceRecord, config: DatasetConfig) -> TraceRecord:
         operation_nodes=operation_nodes_to_dicts(nodes),
         snapshots=snapshots,
         label_policy=asdict(config.label_policy),
-        environment={"python_version": "synthetic", "cadquery_version": "synthetic", "ocp_version": "synthetic"},
+        environment={
+            "python_version": "synthetic",
+            "cadquery_version": "synthetic",
+            "ocp_version": "synthetic",
+        },
         hashes={
             **source.hashes,
             "operation_graph_hash": graph_hash,
             "trace_hash": sha256_json(payload),
-            "geometry_hash": sha256_json({"snapshots": snapshots, "label_policy": asdict(config.label_policy)}),
+            "geometry_hash": sha256_json(
+                {"snapshots": snapshots, "label_policy": asdict(config.label_policy)}
+            ),
             "config_hash": config.config_hash,
         },
         failure_reason=None,
         point_queries=[
-            {"point": [0, 0, 0], "target_feature_id": "wp1", "point_classification": "inside", "sampling_stratum": "deep_inside"},
-            {"point": [6, 0, 0], "target_feature_id": "wp1", "point_classification": "outside", "sampling_stratum": "deep_outside"},
-            {"point": [5, 0, 0], "target_feature_id": "wp1", "point_classification": "on_boundary", "sampling_stratum": "on_boundary"},
+            {
+                "point": [0, 0, 0],
+                "target_feature_id": "wp1",
+                "point_classification": "inside",
+                "sampling_stratum": "deep_inside",
+            },
+            {
+                "point": [6, 0, 0],
+                "target_feature_id": "wp1",
+                "point_classification": "outside",
+                "sampling_stratum": "deep_outside",
+            },
+            {
+                "point": [5, 0, 0],
+                "target_feature_id": "wp1",
+                "point_classification": "on_boundary",
+                "sampling_stratum": "on_boundary",
+            },
         ],
         provenance_records=[
             {
@@ -106,7 +142,12 @@ def _hole_trace(source: SourceRecord, config: DatasetConfig) -> TraceRecord:
             "status": "ok",
         }
     ]
-    payload = {"source_id": source.source_id, "graph_hash": graph_hash, "snapshots": snapshots, "selector_tables": selector_tables}
+    payload = {
+        "source_id": source.source_id,
+        "graph_hash": graph_hash,
+        "snapshots": snapshots,
+        "selector_tables": selector_tables,
+    }
     return TraceRecord(
         trace_id="trace_" + sha256_json(payload).removeprefix("sha256:")[:16],
         source_id=source.source_id,
@@ -116,19 +157,35 @@ def _hole_trace(source: SourceRecord, config: DatasetConfig) -> TraceRecord:
         operation_nodes=operation_nodes_to_dicts(nodes),
         snapshots=snapshots,
         label_policy=asdict(config.label_policy),
-        environment={"python_version": "synthetic", "cadquery_version": "synthetic", "ocp_version": "synthetic"},
+        environment={
+            "python_version": "synthetic",
+            "cadquery_version": "synthetic",
+            "ocp_version": "synthetic",
+        },
         hashes={
             **source.hashes,
             "operation_graph_hash": graph_hash,
             "trace_hash": sha256_json(payload),
-            "geometry_hash": sha256_json({"snapshots": snapshots, "label_policy": asdict(config.label_policy)}),
+            "geometry_hash": sha256_json(
+                {"snapshots": snapshots, "label_policy": asdict(config.label_policy)}
+            ),
             "config_hash": config.config_hash,
         },
         failure_reason=None,
         selector_tables=selector_tables,
         point_queries=[
-            {"point": [0, 0, 0], "target_feature_id": "wp3", "point_classification": "outside", "sampling_stratum": "inside_removed_cut"},
-            {"point": [4, 4, 0], "target_feature_id": "wp3", "point_classification": "inside", "sampling_stratum": "deep_inside"},
+            {
+                "point": [0, 0, 0],
+                "target_feature_id": "wp3",
+                "point_classification": "outside",
+                "sampling_stratum": "inside_removed_cut",
+            },
+            {
+                "point": [4, 4, 0],
+                "target_feature_id": "wp3",
+                "point_classification": "inside",
+                "sampling_stratum": "deep_inside",
+            },
         ],
         provenance_records=[
             {

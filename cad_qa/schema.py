@@ -266,7 +266,9 @@ def _validate_answer(row: dict[str, Any], errors: list[str]) -> None:
     if task_type == "feature_provenance_choice" and answer != "ambiguous_or_merged":
         choices = row.get("choices")
         if not isinstance(choices, list) or answer not in choices:
-            errors.append("feature_provenance_choice answer must be in choices or ambiguous_or_merged")
+            errors.append(
+                "feature_provenance_choice answer must be in choices or ambiguous_or_merged"
+            )
 
 
 def _valid_bbox(value: Any) -> bool:
@@ -284,7 +286,11 @@ def _finite_triplet(value: Any) -> bool:
 
 
 def _finite_number(value: Any) -> bool:
-    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(value)
+    )
 
 
 def _require_keys(record: dict[str, Any], keys: set[str]) -> list[str]:

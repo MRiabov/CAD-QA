@@ -43,8 +43,16 @@ def main(argv: list[str] | None = None) -> None:
                 summaries.append(status)
                 continue
         started = time.time()
-        command = _generate_command(args, shard_dir / "dataset", cache_dir, offset, limit)
-        result = subprocess.run(command, check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        command = _generate_command(
+            args, shard_dir / "dataset", cache_dir, offset, limit
+        )
+        result = subprocess.run(
+            command,
+            check=False,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
         shard_dir.mkdir(parents=True, exist_ok=True)
         (shard_dir / "stdout.log").write_text(result.stdout, encoding="utf-8")
         (shard_dir / "stderr.log").write_text(result.stderr, encoding="utf-8")
@@ -64,7 +72,9 @@ def main(argv: list[str] | None = None) -> None:
             metadata = read_json(metadata_path)
             status["row_count"] = metadata.get("row_count")
             status["source_count"] = metadata.get("source_count")
-            status["failure_count"] = _line_count(shard_dir / "dataset" / "failure_manifest.jsonl")
+            status["failure_count"] = _line_count(
+                shard_dir / "dataset" / "failure_manifest.jsonl"
+            )
         write_json(status_path, status)
         summaries.append(status)
         if result.returncode != 0:
@@ -83,18 +93,44 @@ def main(argv: list[str] | None = None) -> None:
         raise SystemExit(1)
 
 
-def _generate_command(args: argparse.Namespace, dataset_dir: Path, cache_dir: Path, offset: int, limit: int) -> list[str]:
+def _generate_command(
+    args: argparse.Namespace,
+    dataset_dir: Path,
+    cache_dir: Path,
+    offset: int,
+    limit: int,
+) -> list[str]:
     command = ["uv", "run"]
     if args.extra_cadquery:
         command.extend(["--extra", "cadquery"])
-    command.extend(["cadqa", "generate", "--output-dir", str(dataset_dir), "--offset", str(offset), "--limit", str(limit)])
+    command.extend(
+        [
+            "cadqa",
+            "generate",
+            "--output-dir",
+            str(dataset_dir),
+            "--offset",
+            str(offset),
+            "--limit",
+            str(limit),
+        ]
+    )
     if args.source_dir is not None:
         command.extend(["--source-dir", str(args.source_dir)])
     if args.source_archive is not None:
         command.extend(["--source-archive", str(args.source_archive)])
     if args.auto_source_dir:
         command.append("--auto-source-dir")
-    command.extend(["--workers", str(args.workers), "--trace-timeout-seconds", str(args.trace_timeout_seconds), "--cache-dir", str(cache_dir)])
+    command.extend(
+        [
+            "--workers",
+            str(args.workers),
+            "--trace-timeout-seconds",
+            str(args.trace_timeout_seconds),
+            "--cache-dir",
+            str(cache_dir),
+        ]
+    )
     return command
 
 

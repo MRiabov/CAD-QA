@@ -14,17 +14,28 @@ from cad_qa.operation_graph import extract_operation_graph
 from cad_qa.parse import grade_candidate
 
 
-def evaluate_predictions(rows: list[dict[str, Any]], predictions: dict[str, str]) -> dict[str, Any]:
+def evaluate_predictions(
+    rows: list[dict[str, Any]], predictions: dict[str, str]
+) -> dict[str, Any]:
     results = []
     for row in rows:
         row_id = str(row["id"])
         candidate = predictions.get(row_id, "")
         grade = grade_candidate(row, candidate)
-        results.append({"row_id": row_id, "task_type": row["task_type"], "split": row["split"], **grade})
+        results.append(
+            {
+                "row_id": row_id,
+                "task_type": row["task_type"],
+                "split": row["split"],
+                **grade,
+            }
+        )
     return aggregate_results(results)
 
 
-def baseline_predictions(rows: list[dict[str, Any]], *, name: str, seed: int = 1234) -> dict[str, str]:
+def baseline_predictions(
+    rows: list[dict[str, Any]], *, name: str, seed: int = 1234
+) -> dict[str, str]:
     if name == "oracle":
         return {str(row["id"]): _answer_to_text(row["answer"]) for row in rows}
     if name == "majority":
@@ -48,7 +59,9 @@ def baseline_predictions(rows: list[dict[str, Any]], *, name: str, seed: int = 1
 
 def run_baselines(rows: list[dict[str, Any]], *, seed: int = 1234) -> dict[str, Any]:
     return {
-        name: evaluate_predictions(rows, baseline_predictions(rows, name=name, seed=seed))
+        name: evaluate_predictions(
+            rows, baseline_predictions(rows, name=name, seed=seed)
+        )
         for name in (
             "majority",
             "random",
@@ -137,7 +150,11 @@ def _selector_heuristic_predictions(rows: list[dict[str, Any]]) -> dict[str, str
             predictions[str(row["id"])] = "0"
             continue
         labels = row.get("labels") if isinstance(row.get("labels"), dict) else {}
-        selector_result = labels.get("selector_result") if isinstance(labels.get("selector_result"), dict) else {}
+        selector_result = (
+            labels.get("selector_result")
+            if isinstance(labels.get("selector_result"), dict)
+            else {}
+        )
         expression = str(selector_result.get("selector_expression", ""))
         entity_type = str(selector_result.get("entity_type", ""))
         predictions[str(row["id"])] = str(_selector_guess(expression, entity_type))
@@ -158,7 +175,9 @@ def _selector_guess(expression: str, entity_type: str) -> int:
     return 1
 
 
-def _primitive_symbolic_volume_predictions(rows: list[dict[str, Any]]) -> dict[str, str]:
+def _primitive_symbolic_volume_predictions(
+    rows: list[dict[str, Any]],
+) -> dict[str, str]:
     predictions: dict[str, str] = {}
     bbox_by_target = _bbox_by_target(rows)
     graph_by_code: dict[str, Any] = {}
@@ -178,7 +197,9 @@ def _primitive_symbolic_volume_predictions(rows: list[dict[str, Any]]) -> dict[s
             args=getattr(node, "args_repr", []),
             bbox=bbox_by_target.get((str(row.get("source_id")), target)),
         )
-        predictions[str(row["id"])] = _number_to_text(guess if guess is not None else 0.0)
+        predictions[str(row["id"])] = _number_to_text(
+            guess if guess is not None else 0.0
+        )
     return predictions
 
 
@@ -190,15 +211,23 @@ def _aabb_point_membership_predictions(rows: list[dict[str, Any]]) -> dict[str, 
             predictions[str(row["id"])] = "outside"
             continue
         labels = row.get("labels") if isinstance(row.get("labels"), dict) else {}
-        query = labels.get("point_query") if isinstance(labels.get("point_query"), dict) else {}
+        query = (
+            labels.get("point_query")
+            if isinstance(labels.get("point_query"), dict)
+            else {}
+        )
         point = query.get("point")
-        target = str(query.get("target_feature_id") or row.get("target_feature_id") or "")
+        target = str(
+            query.get("target_feature_id") or row.get("target_feature_id") or ""
+        )
         bbox = bbox_by_target.get((str(row.get("source_id")), target))
         predictions[str(row["id"])] = _classify_point_in_bbox(point, bbox)
     return predictions
 
 
-def _advanced_diagnostic_naive_predictions(rows: list[dict[str, Any]]) -> dict[str, str]:
+def _advanced_diagnostic_naive_predictions(
+    rows: list[dict[str, Any]],
+) -> dict[str, str]:
     predictions: dict[str, str] = {}
     for row in rows:
         task_type = row.get("task_type")
@@ -218,13 +247,19 @@ def _advanced_diagnostic_naive_predictions(rows: list[dict[str, Any]]) -> dict[s
             predictions[str(row["id"])] = "0"
         elif task_type == "validity_failure_prediction":
             choices = row.get("choices")
-            predictions[str(row["id"])] = "valid" if not isinstance(choices, list) or "valid" in choices else str(choices[0])
+            predictions[str(row["id"])] = (
+                "valid"
+                if not isinstance(choices, list) or "valid" in choices
+                else str(choices[0])
+            )
         else:
             predictions[str(row["id"])] = "0"
     return predictions
 
 
-def _bbox_by_target(rows: list[dict[str, Any]]) -> dict[tuple[str, str], dict[str, list[float]]]:
+def _bbox_by_target(
+    rows: list[dict[str, Any]],
+) -> dict[tuple[str, str], dict[str, list[float]]]:
     result: dict[tuple[str, str], dict[str, list[float]]] = {}
     for row in rows:
         if row.get("task_type") != "bbox_after_step":
@@ -238,9 +273,15 @@ def _bbox_by_target(rows: list[dict[str, Any]]) -> dict[tuple[str, str], dict[st
     return result
 
 
-def _symbolic_volume_delta(operation: str, args: list[str], bbox: dict[str, list[float]] | None) -> float | None:
+def _symbolic_volume_delta(
+    operation: str, args: list[str], bbox: dict[str, list[float]] | None
+) -> float | None:
     values = [_literal_number(arg) for arg in args]
-    if operation == "box" and len(values) >= 3 and all(value is not None for value in values[:3]):
+    if (
+        operation == "box"
+        and len(values) >= 3
+        and all(value is not None for value in values[:3])
+    ):
         return float(values[0]) * float(values[1]) * float(values[2])
     if operation == "hole" and values and values[0] is not None:
         height = _bbox_extent(bbox, axis=2)
@@ -260,10 +301,16 @@ def _classify_point_in_bbox(point: Any, bbox: dict[str, list[float]] | None) -> 
     minimum = bbox["min"]
     maximum = bbox["max"]
     tolerance = 1e-9
-    outside = any(float(coord) < lo - tolerance or float(coord) > hi + tolerance for coord, lo, hi in zip(point, minimum, maximum, strict=True))
+    outside = any(
+        float(coord) < lo - tolerance or float(coord) > hi + tolerance
+        for coord, lo, hi in zip(point, minimum, maximum, strict=True)
+    )
     if outside:
         return "outside"
-    boundary = any(abs(float(coord) - lo) <= tolerance or abs(float(coord) - hi) <= tolerance for coord, lo, hi in zip(point, minimum, maximum, strict=True))
+    boundary = any(
+        abs(float(coord) - lo) <= tolerance or abs(float(coord) - hi) <= tolerance
+        for coord, lo, hi in zip(point, minimum, maximum, strict=True)
+    )
     return "on_boundary" if boundary else "inside"
 
 
@@ -294,14 +341,20 @@ def _is_bbox(value: Any) -> bool:
 
 
 def _is_point(value: Any) -> bool:
-    return isinstance(value, list) and len(value) == 3 and all(isinstance(item, int | float) for item in value)
+    return (
+        isinstance(value, list)
+        and len(value) == 3
+        and all(isinstance(item, int | float) for item in value)
+    )
 
 
 def _number_to_text(value: float) -> str:
     return format(value, ".12g")
 
 
-def _group_accuracy(results: list[dict[str, Any]], field: str) -> dict[str, dict[str, float | int]]:
+def _group_accuracy(
+    results: list[dict[str, Any]], field: str
+) -> dict[str, dict[str, float | int]]:
     groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for result in results:
         groups[str(result[field])].append(result)
@@ -309,7 +362,8 @@ def _group_accuracy(results: list[dict[str, Any]], field: str) -> dict[str, dict
         group: {
             "row_count": len(items),
             "accuracy": sum(1 for item in items if item["correct"]) / len(items),
-            "invalid_output_rate": sum(1 for item in items if not item["valid"]) / len(items),
+            "invalid_output_rate": sum(1 for item in items if not item["valid"])
+            / len(items),
         }
         for group, items in sorted(groups.items())
     }

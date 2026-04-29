@@ -17,6 +17,10 @@ specs.
   conservative adjacent-volume and adjacent-topology-match provenance records.
 - Per-snapshot entity IDs and best-effort adjacent topology matching for small
   snapshots using lightweight geometry signatures.
+- Feature-level typed graph-query construction and IR resolution over operation
+  nodes, before/after/input/provenance/selector edges, snapshot metrics,
+  volume deltas, topology deltas, deterministic filters, counts, and argmin or
+  argmax aggregations.
 - Public row materialization for:
   - `operation_count`
   - `coordinate_frame`
@@ -88,7 +92,7 @@ specs.
 
 ## Validated Artifacts
 
-- Current smoke generator: 60 validated smoke rows across implemented task
+- Current smoke generator: 61 validated smoke rows across implemented task
   families when rerun from the latest code.
 - `runs/cadevolve_trace_probe_t30/dataset`: 921 validated rows from 3 adjacent
   CADEvolve-style sources, no failures.
@@ -116,3 +120,5 @@ specs.
 - CADEditQA edit-verifier tasks remain partial beyond the conservative
   parameter, feature, selector, workplane, and bounded edit-plan rows listed
   above.
+- Graph-query support is currently feature-level and trace-backed; broad
+  B-rep/sketch graph coverage remains future work.

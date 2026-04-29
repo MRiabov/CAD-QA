@@ -15,7 +15,10 @@ def test_manual_audit_sample_covers_task_buckets(tmp_path: Path):
 
     label_rows = [row for row in sample if row["audit_kind"] == "label"]
     assert report["label_sample_count"] == len(label_rows)
-    assert {row["task_type"] for row in label_rows} >= {"operation_count", "bbox_after_step"}
+    assert {row["task_type"] for row in label_rows} >= {
+        "operation_count",
+        "bbox_after_step",
+    }
     assert all("audit_fields" in row for row in sample)
 
 

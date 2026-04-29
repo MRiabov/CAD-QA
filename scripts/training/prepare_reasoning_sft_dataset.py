@@ -40,10 +40,26 @@ def main(argv: list[str] | None = None) -> None:
         "eval_row_count": len(eval_examples),
         "train_splits": args.train_splits,
         "eval_splits": args.eval_splits,
-        "train_task_counts": dict(Counter(example["task_type"] for example in train_examples)),
-        "eval_task_counts": dict(Counter(example["task_type"] for example in eval_examples)),
-        "max_prompt_chars": max([len(example["messages"][0]["content"]) for example in train_examples + eval_examples] or [0]),
-        "max_answer_chars": max([len(example["messages"][1]["content"]) for example in train_examples + eval_examples] or [0]),
+        "train_task_counts": dict(
+            Counter(example["task_type"] for example in train_examples)
+        ),
+        "eval_task_counts": dict(
+            Counter(example["task_type"] for example in eval_examples)
+        ),
+        "max_prompt_chars": max(
+            [
+                len(example["messages"][0]["content"])
+                for example in train_examples + eval_examples
+            ]
+            or [0]
+        ),
+        "max_answer_chars": max(
+            [
+                len(example["messages"][1]["content"])
+                for example in train_examples + eval_examples
+            ]
+            or [0]
+        ),
     }
     write_json(args.output_dir / "reasoning_sft_dataset_report.json", report)
     print(json.dumps(report, indent=2, sort_keys=True))
@@ -72,7 +88,10 @@ def _reasoning_example(row: dict[str, Any]) -> dict[str, Any]:
         "rationale_policy": "trace_grounded_template_v1",
         "messages": [
             {"role": "user", "content": row["prompt"]},
-            {"role": "assistant", "content": f"Reasoning:\n{rationale}\n\nFinal answer:\n{answer_text}"},
+            {
+                "role": "assistant",
+                "content": f"Reasoning:\n{rationale}\n\nFinal answer:\n{answer_text}",
+            },
         ],
     }
 
@@ -80,7 +99,9 @@ def _reasoning_example(row: dict[str, Any]) -> dict[str, Any]:
 def _rationale(row: dict[str, Any]) -> str:
     task_type = str(row.get("task_type"))
     labels = row.get("labels") if isinstance(row.get("labels"), dict) else {}
-    diagnostics = row.get("diagnostics") if isinstance(row.get("diagnostics"), dict) else {}
+    diagnostics = (
+        row.get("diagnostics") if isinstance(row.get("diagnostics"), dict) else {}
+    )
     if task_type == "operation_count":
         return f"The operation graph records {labels.get('operation_count')} occurrences of `{labels.get('operation')}`."
     if task_type == "bbox_after_step":
@@ -93,13 +114,25 @@ def _rationale(row: dict[str, Any]) -> str:
     if task_type == "topology_count_after_step":
         return f"The trace topology table gives `{labels.get('topology_key')}` for the target feature."
     if task_type == "selector_count":
-        selector = labels.get("selector_result") if isinstance(labels.get("selector_result"), dict) else {}
+        selector = (
+            labels.get("selector_result")
+            if isinstance(labels.get("selector_result"), dict)
+            else {}
+        )
         return f"The selector trace for `{selector.get('selector_expression')}` selected {selector.get('selected_count')} entities."
     if task_type == "point_membership":
-        query = labels.get("point_query") if isinstance(labels.get("point_query"), dict) else {}
+        query = (
+            labels.get("point_query")
+            if isinstance(labels.get("point_query"), dict)
+            else {}
+        )
         return f"The point classifier `{query.get('classifier')}` labels point {query.get('point')} as {query.get('point_classification')}."
     if task_type == "feature_provenance_choice":
-        provenance = labels.get("provenance") if isinstance(labels.get("provenance"), dict) else {}
+        provenance = (
+            labels.get("provenance")
+            if isinstance(labels.get("provenance"), dict)
+            else {}
+        )
         return (
             f"The conservative provenance record has relation `{provenance.get('provenance_relation')}` "
             f"for target `{provenance.get('target_description')}`."

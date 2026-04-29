@@ -39,10 +39,26 @@ def main(argv: list[str] | None = None) -> None:
         "eval_row_count": len(eval_examples),
         "train_splits": args.train_splits,
         "eval_splits": args.eval_splits,
-        "train_task_counts": dict(Counter(example["task_type"] for example in train_examples)),
-        "eval_task_counts": dict(Counter(example["task_type"] for example in eval_examples)),
-        "max_prompt_chars": max([len(example["messages"][0]["content"]) for example in train_examples + eval_examples] or [0]),
-        "max_answer_chars": max([len(example["messages"][1]["content"]) for example in train_examples + eval_examples] or [0]),
+        "train_task_counts": dict(
+            Counter(example["task_type"] for example in train_examples)
+        ),
+        "eval_task_counts": dict(
+            Counter(example["task_type"] for example in eval_examples)
+        ),
+        "max_prompt_chars": max(
+            [
+                len(example["messages"][0]["content"])
+                for example in train_examples + eval_examples
+            ]
+            or [0]
+        ),
+        "max_answer_chars": max(
+            [
+                len(example["messages"][1]["content"])
+                for example in train_examples + eval_examples
+            ]
+            or [0]
+        ),
     }
     write_json(args.output_dir / "sft_dataset_report.json", report)
     print(json.dumps(report, indent=2, sort_keys=True))

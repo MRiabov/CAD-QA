@@ -29,8 +29,14 @@ def main(argv: list[str] | None = None) -> None:
     print(json.dumps(report, indent=2, sort_keys=True))
 
 
-def cadedit_report(rows: list[dict[str, Any]], predictions: dict[str, str], metrics: dict[str, Any]) -> dict[str, Any]:
-    task_metrics = metrics.get("by_task_type") if isinstance(metrics.get("by_task_type"), dict) else {}
+def cadedit_report(
+    rows: list[dict[str, Any]], predictions: dict[str, str], metrics: dict[str, Any]
+) -> dict[str, Any]:
+    task_metrics = (
+        metrics.get("by_task_type")
+        if isinstance(metrics.get("by_task_type"), dict)
+        else {}
+    )
     return {
         "schema": "cadeditqa_prediction_evaluation_report_v1",
         "row_count": len(rows),
@@ -60,7 +66,9 @@ def _failure_rate(rows: list[dict[str, Any]]) -> float:
         return 0.0
     failures = 0
     for row in rows:
-        diagnostics = row.get("diagnostics") if isinstance(row.get("diagnostics"), dict) else {}
+        diagnostics = (
+            row.get("diagnostics") if isinstance(row.get("diagnostics"), dict) else {}
+        )
         if diagnostics.get("failure_reason") not in (None, ""):
             failures += 1
     return failures / len(rows)

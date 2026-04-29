@@ -16,7 +16,11 @@ from cad_qa.trace import _safe_builtins  # Reuse the trace worker execution sand
 
 
 ORTHOGRAPHIC_VIEWS = {
-    "isometric": {"projection": "orthographic", "direction": [1, -1, 1], "up": [0, 0, 1]},
+    "isometric": {
+        "projection": "orthographic",
+        "direction": [1, -1, 1],
+        "up": [0, 0, 1],
+    },
     "front": {"projection": "orthographic", "direction": [0, -1, 0], "up": [0, 0, 1]},
     "right": {"projection": "orthographic", "direction": [1, 0, 0], "up": [0, 0, 1]},
     "top": {"projection": "orthographic", "direction": [0, 0, 1], "up": [0, 1, 0]},
@@ -29,7 +33,9 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--limit", type=int, default=16)
     parser.add_argument("--timeout-seconds", type=float, default=15.0)
-    parser.add_argument("--views", nargs="+", default=["isometric"], choices=sorted(ORTHOGRAPHIC_VIEWS))
+    parser.add_argument(
+        "--views", nargs="+", default=["isometric"], choices=sorted(ORTHOGRAPHIC_VIEWS)
+    )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
 
@@ -63,12 +69,30 @@ def export_audit_renders(
     for source_id, source in sorted(sources.items())[:limit]:
         trace = traces.get(source_id, {})
         for view in views:
-            render_id = "render_" + sha256_text(f"{source_id}:{trace.get('trace_id')}:{view}").removeprefix("sha256:")[:16]
+            render_id = (
+                "render_"
+                + sha256_text(
+                    f"{source_id}:{trace.get('trace_id')}:{view}"
+                ).removeprefix("sha256:")[:16]
+            )
             svg_path = svg_dir / f"{render_id}_{view}.svg"
             if dry_run:
-                item = _item(source, trace, render_id, svg_path, view=view, status="planned", failure_reason=None)
+                item = _item(
+                    source,
+                    trace,
+                    render_id,
+                    svg_path,
+                    view=view,
+                    status="planned",
+                    failure_reason=None,
+                )
             else:
-                result = _render_with_timeout(source.get("normalized_code", ""), trace.get("result_variable"), svg_path, timeout_seconds)
+                result = _render_with_timeout(
+                    source.get("normalized_code", ""),
+                    trace.get("result_variable"),
+                    svg_path,
+                    timeout_seconds,
+                )
                 item = _item(
                     source,
                     trace,
@@ -88,7 +112,9 @@ def export_audit_renders(
         "views": views,
         "view_metadata": {view: ORTHOGRAPHIC_VIEWS[view] for view in views},
         "render_count": len(render_items),
-        "rendered_count": sum(1 for item in render_items if item["status"] == "rendered"),
+        "rendered_count": sum(
+            1 for item in render_items if item["status"] == "rendered"
+        ),
         "items": render_items,
     }
     write_json(output_dir / "audit_render_manifest.json", report)
@@ -124,9 +150,14 @@ def _item(
     }
 
 
-def _render_with_timeout(code: str, result_variable: Any, svg_path: Path, timeout_seconds: float) -> dict[str, Any]:
+def _render_with_timeout(
+    code: str, result_variable: Any, svg_path: Path, timeout_seconds: float
+) -> dict[str, Any]:
     queue: Queue = Queue()
-    process = Process(target=_render_worker, args=(code, str(result_variable or "result"), str(svg_path), queue))
+    process = Process(
+        target=_render_worker,
+        args=(code, str(result_variable or "result"), str(svg_path), queue),
+    )
     process.start()
     process.join(timeout_seconds)
     if process.is_alive():
@@ -141,10 +172,14 @@ def _render_with_timeout(code: str, result_variable: Any, svg_path: Path, timeou
         return {"status": "failed", "failure_reason": "render_worker_no_result"}
 
 
-def _render_worker(code: str, result_variable: str, svg_path: str, queue: Queue) -> None:
+def _render_worker(
+    code: str, result_variable: str, svg_path: str, queue: Queue
+) -> None:
     issues = safety_issues(code)
     if issues:
-        queue.put({"status": "failed", "failure_reason": "safety_issues:" + ",".join(issues)})
+        queue.put(
+            {"status": "failed", "failure_reason": "safety_issues:" + ",".join(issues)}
+        )
         return
     try:
         import cadquery as cq  # type: ignore[import-not-found]
@@ -152,18 +187,27 @@ def _render_worker(code: str, result_variable: str, svg_path: str, queue: Queue)
     except ModuleNotFoundError:
         queue.put({"status": "failed", "failure_reason": "cadquery_unavailable"})
         return
-    namespace: dict[str, Any] = {"cq": cq, "cadquery": cq, "__builtins__": _safe_builtins()}
+    namespace: dict[str, Any] = {
+        "cq": cq,
+        "cadquery": cq,
+        "__builtins__": _safe_builtins(),
+    }
     try:
         tree = ast.parse(code)
         for statement in tree.body:
-            exec(compile(ast.Module([statement], []), "<cadqa-render>", "exec"), namespace)
+            exec(
+                compile(ast.Module([statement], []), "<cadqa-render>", "exec"),
+                namespace,
+            )
         obj = namespace.get(result_variable) or namespace.get("result")
         if obj is None:
             queue.put({"status": "failed", "failure_reason": "missing_result_variable"})
             return
         exporters.export(obj, svg_path)
     except Exception as exc:
-        queue.put({"status": "failed", "failure_reason": f"render_error:{type(exc).__name__}"})
+        queue.put(
+            {"status": "failed", "failure_reason": f"render_error:{type(exc).__name__}"}
+        )
         return
     queue.put({"status": "rendered", "failure_reason": None})
 

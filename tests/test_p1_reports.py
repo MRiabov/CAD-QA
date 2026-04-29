@@ -2,8 +2,13 @@ from pathlib import Path
 
 from cad_qa.jsonio import read_json, write_json, write_jsonl
 from scripts.evaluation.evaluate_cadedit_predictions import cadedit_report
-from scripts.evaluation.evaluate_counterfactual_sensitivity import evaluate_counterfactual_sensitivity
-from scripts.experiments.build_task_transfer_matrix import build_transfer_matrix, main as transfer_main
+from scripts.evaluation.evaluate_counterfactual_sensitivity import (
+    evaluate_counterfactual_sensitivity,
+)
+from scripts.experiments.build_task_transfer_matrix import (
+    build_transfer_matrix,
+    main as transfer_main,
+)
 
 
 def test_counterfactual_sensitivity_reports_prediction_flips():
@@ -33,7 +38,13 @@ def test_cadedit_report_exposes_verifier_metrics():
     metrics = {
         "accuracy": 1.0,
         "invalid_output_rate": 0.0,
-        "by_task_type": {"parameter_edit_direction": {"accuracy": 1.0, "row_count": 1, "invalid_output_rate": 0.0}},
+        "by_task_type": {
+            "parameter_edit_direction": {
+                "accuracy": 1.0,
+                "row_count": 1,
+                "invalid_output_rate": 0.0,
+            }
+        },
     }
 
     report = cadedit_report(rows, {"edit1": "increase"}, metrics)
@@ -49,8 +60,16 @@ def test_task_transfer_matrix_writes_json_and_csv(tmp_path: Path):
         metrics,
         {
             "by_task_type": {
-                "operation_count": {"row_count": 2, "accuracy": 0.5, "invalid_output_rate": 0.0},
-                "point_membership": {"row_count": 1, "accuracy": 1.0, "invalid_output_rate": 0.0},
+                "operation_count": {
+                    "row_count": 2,
+                    "accuracy": 0.5,
+                    "invalid_output_rate": 0.0,
+                },
+                "point_membership": {
+                    "row_count": 1,
+                    "accuracy": 1.0,
+                    "invalid_output_rate": 0.0,
+                },
             }
         },
     )

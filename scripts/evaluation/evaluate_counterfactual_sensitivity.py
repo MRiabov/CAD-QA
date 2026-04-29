@@ -29,7 +29,9 @@ def main(argv: list[str] | None = None) -> None:
     print(json.dumps(report, indent=2, sort_keys=True))
 
 
-def evaluate_counterfactual_sensitivity(rows: list[dict[str, Any]], predictions: dict[str, str]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+def evaluate_counterfactual_sensitivity(
+    rows: list[dict[str, Any]], predictions: dict[str, str]
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     grouped = _group_rows(rows)
     pairs = []
     for group_key, group_rows in grouped.items():
@@ -46,31 +48,56 @@ def evaluate_counterfactual_sensitivity(rows: list[dict[str, Any]], predictions:
         "pair_count": len(pairs),
         "answer_changed_pair_count": len(changed),
         "answer_unchanged_pair_count": len(unchanged),
-        "answer_flip_accuracy": _rate(changed, "prediction_changed") if changed else 0.0,
-        "false_invariance_rate": _rate(changed, "prediction_unchanged") if changed else 0.0,
-        "false_sensitivity_rate": _rate(unchanged, "prediction_changed") if unchanged else 0.0,
-        "numeric_pair_count": sum(1 for pair in pairs if pair.get("numeric_magnitude_error") is not None),
+        "answer_flip_accuracy": _rate(changed, "prediction_changed")
+        if changed
+        else 0.0,
+        "false_invariance_rate": _rate(changed, "prediction_unchanged")
+        if changed
+        else 0.0,
+        "false_sensitivity_rate": _rate(unchanged, "prediction_changed")
+        if unchanged
+        else 0.0,
+        "numeric_pair_count": sum(
+            1 for pair in pairs if pair.get("numeric_magnitude_error") is not None
+        ),
         "mean_numeric_magnitude_error": _mean(
-            [float(pair["numeric_magnitude_error"]) for pair in pairs if pair.get("numeric_magnitude_error") is not None]
+            [
+                float(pair["numeric_magnitude_error"])
+                for pair in pairs
+                if pair.get("numeric_magnitude_error") is not None
+            ]
         ),
         "by_task_type": _by_task_type(pairs),
     }
     return pairs, report
 
 
-def _group_rows(rows: list[dict[str, Any]]) -> dict[tuple[str, str, str], list[dict[str, Any]]]:
+def _group_rows(
+    rows: list[dict[str, Any]],
+) -> dict[tuple[str, str, str], list[dict[str, Any]]]:
     grouped: dict[tuple[str, str, str], list[dict[str, Any]]] = defaultdict(list)
     for row in rows:
-        provenance = row.get("provenance") if isinstance(row.get("provenance"), dict) else {}
+        provenance = (
+            row.get("provenance") if isinstance(row.get("provenance"), dict) else {}
+        )
         group_id = provenance.get("counterfactual_group_id") or row.get("trace_id")
         if not group_id:
             continue
-        key = (str(group_id), str(row.get("task_type")), str(row.get("target_feature_id")))
+        key = (
+            str(group_id),
+            str(row.get("task_type")),
+            str(row.get("target_feature_id")),
+        )
         grouped[key].append(row)
     return {key: items for key, items in grouped.items() if len(items) > 1}
 
 
-def _pair_result(group_key: tuple[str, str, str], left: dict[str, Any], right: dict[str, Any], predictions: dict[str, str]) -> dict[str, Any] | None:
+def _pair_result(
+    group_key: tuple[str, str, str],
+    left: dict[str, Any],
+    right: dict[str, Any],
+    predictions: dict[str, str],
+) -> dict[str, Any] | None:
     left_id = str(left["id"])
     right_id = str(right["id"])
     if left_id not in predictions or right_id not in predictions:
@@ -92,11 +119,18 @@ def _pair_result(group_key: tuple[str, str, str], left: dict[str, Any], right: d
         "right_valid": right_grade["valid"],
         "left_correct": left_grade["correct"],
         "right_correct": right_grade["correct"],
-        "numeric_magnitude_error": _numeric_magnitude_error(left, right, left_grade, right_grade),
+        "numeric_magnitude_error": _numeric_magnitude_error(
+            left, right, left_grade, right_grade
+        ),
     }
 
 
-def _numeric_magnitude_error(left: dict[str, Any], right: dict[str, Any], left_grade: dict[str, Any], right_grade: dict[str, Any]) -> float | None:
+def _numeric_magnitude_error(
+    left: dict[str, Any],
+    right: dict[str, Any],
+    left_grade: dict[str, Any],
+    right_grade: dict[str, Any],
+) -> float | None:
     if left.get("answer_type") != "number" or right.get("answer_type") != "number":
         return None
     if not left_grade["valid"] or not right_grade["valid"]:
@@ -113,9 +147,17 @@ def _by_task_type(pairs: list[dict[str, Any]]) -> dict[str, dict[str, float | in
     return {
         task_type: {
             "pair_count": len(items),
-            "answer_flip_accuracy": _rate([item for item in items if item["answer_changed"]], "prediction_changed"),
-            "false_invariance_rate": _rate([item for item in items if item["answer_changed"]], "prediction_unchanged"),
-            "false_sensitivity_rate": _rate([item for item in items if not item["answer_changed"]], "prediction_changed"),
+            "answer_flip_accuracy": _rate(
+                [item for item in items if item["answer_changed"]], "prediction_changed"
+            ),
+            "false_invariance_rate": _rate(
+                [item for item in items if item["answer_changed"]],
+                "prediction_unchanged",
+            ),
+            "false_sensitivity_rate": _rate(
+                [item for item in items if not item["answer_changed"]],
+                "prediction_changed",
+            ),
         }
         for task_type, items in sorted(grouped.items())
     }

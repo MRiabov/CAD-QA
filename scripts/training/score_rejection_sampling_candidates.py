@@ -20,7 +20,9 @@ def main(argv: list[str] | None = None) -> None:
 
     rows = read_jsonl(args.rows)
     candidates = read_jsonl(args.candidates)
-    scored, report = score_candidate_records(rows, candidates, max_candidates_per_row=args.max_candidates_per_row)
+    scored, report = score_candidate_records(
+        rows, candidates, max_candidates_per_row=args.max_candidates_per_row
+    )
     selected = select_best_candidates(scored)
     args.output_dir.mkdir(parents=True, exist_ok=True)
     write_jsonl(args.output_dir / "candidate_rewards.jsonl", scored)

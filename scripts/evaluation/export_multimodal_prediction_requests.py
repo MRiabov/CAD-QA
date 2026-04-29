@@ -14,7 +14,10 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("rows", type=Path)
     parser.add_argument("--render-manifest", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--system-prompt", default="Answer the CAD-QA question using the code and optional render. Return only the requested structured answer.")
+    parser.add_argument(
+        "--system-prompt",
+        default="Answer the CAD-QA question using the code and optional render. Return only the requested structured answer.",
+    )
     args = parser.parse_args(argv)
 
     rows = read_jsonl(args.rows)
@@ -37,7 +40,13 @@ def main(argv: list[str] | None = None) -> None:
                 "parse_policy": row["parse_policy"],
                 "choices": row.get("choices"),
                 "render_id": render["render_id"],
-                "media": [{"type": "image/svg+xml", "path": render["svg_path"], "render_id": render["render_id"]}],
+                "media": [
+                    {
+                        "type": "image/svg+xml",
+                        "path": render["svg_path"],
+                        "render_id": render["render_id"],
+                    }
+                ],
                 "messages": [
                     {"role": "system", "content": args.system_prompt},
                     {"role": "user", "content": row["prompt"]},
@@ -60,7 +69,10 @@ def main(argv: list[str] | None = None) -> None:
 def _renders_by_source(manifest: dict[str, Any]) -> dict[str, dict[str, Any]]:
     result = {}
     for item in manifest.get("items", []):
-        if not isinstance(item, dict) or item.get("status") not in {"rendered", "planned"}:
+        if not isinstance(item, dict) or item.get("status") not in {
+            "rendered",
+            "planned",
+        }:
             continue
         source_id = item.get("source_id")
         if source_id:

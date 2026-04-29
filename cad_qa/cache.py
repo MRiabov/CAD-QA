@@ -16,19 +16,25 @@ def trace_cache_key(source: SourceRecord, config: DatasetConfig) -> str:
     return sha256_json(
         {
             "source_id": source.source_id,
-            "normalized_source_code_hash": source.hashes.get("normalized_source_code_hash"),
+            "normalized_source_code_hash": source.hashes.get(
+                "normalized_source_code_hash"
+            ),
             "config_hash": config.config_hash,
             "trace_timeout_seconds": config.trace_timeout_seconds,
         }
     ).removeprefix("sha256:")
 
 
-def trace_cache_path(cache_dir: Path, source: SourceRecord, config: DatasetConfig) -> Path:
+def trace_cache_path(
+    cache_dir: Path, source: SourceRecord, config: DatasetConfig
+) -> Path:
     key = trace_cache_key(source, config)
     return cache_dir / "traces" / key[:2] / f"{key}.json"
 
 
-def load_cached_trace(cache_dir: Path | None, source: SourceRecord, config: DatasetConfig) -> TraceRecord | None:
+def load_cached_trace(
+    cache_dir: Path | None, source: SourceRecord, config: DatasetConfig
+) -> TraceRecord | None:
     if cache_dir is None:
         return None
     path = trace_cache_path(cache_dir, source, config)
@@ -41,13 +47,20 @@ def load_cached_trace(cache_dir: Path | None, source: SourceRecord, config: Data
         return None
 
 
-def store_cached_trace(cache_dir: Path | None, source: SourceRecord, config: DatasetConfig, trace: TraceRecord) -> None:
+def store_cached_trace(
+    cache_dir: Path | None,
+    source: SourceRecord,
+    config: DatasetConfig,
+    trace: TraceRecord,
+) -> None:
     if cache_dir is None:
         return
     path = trace_cache_path(cache_dir, source, config)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = path.with_suffix(".tmp")
-    tmp_path.write_text(json.dumps(asdict(trace), sort_keys=True) + "\n", encoding="utf-8")
+    tmp_path.write_text(
+        json.dumps(asdict(trace), sort_keys=True) + "\n", encoding="utf-8"
+    )
     tmp_path.replace(path)
 
 

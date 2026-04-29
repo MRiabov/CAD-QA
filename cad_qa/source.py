@@ -46,8 +46,14 @@ def load_source_dir(
     selected = files[max(0, offset) : None if limit is None else max(0, offset) + limit]
     records: list[SourceRecord] = []
     for relative_path in selected:
-        code = (source_dir / relative_path).read_text(encoding="utf-8", errors="replace")
-        records.append(source_record_from_code(relative_path, code, source="cadevolve", config=config))
+        code = (source_dir / relative_path).read_text(
+            encoding="utf-8", errors="replace"
+        )
+        records.append(
+            source_record_from_code(
+                relative_path, code, source="cadevolve", config=config
+            )
+        )
     return records
 
 
@@ -67,7 +73,8 @@ def load_source_archive(
         members = [
             member
             for member in archive.getmembers()
-            if member.isfile() and _is_executable_cadevolve_path(normalize_archive_path(member.name))
+            if member.isfile()
+            and _is_executable_cadevolve_path(normalize_archive_path(member.name))
         ]
         members.sort(key=lambda member: normalize_archive_path(member.name))
         end = None if limit is None else offset + limit
@@ -103,13 +110,17 @@ def discover_cadevolve_sources(source_dir: Path) -> list[Path]:
     for prefix in EXECUTABLE_PREFIXES:
         root = source_dir / prefix
         if root.exists():
-            candidates.extend(path.relative_to(source_dir) for path in root.rglob("*.py"))
+            candidates.extend(
+                path.relative_to(source_dir) for path in root.rglob("*.py")
+            )
     return sorted(candidates, key=lambda path: normalize_archive_path(path))
 
 
 def _is_executable_cadevolve_path(path: str) -> bool:
     normalized = normalize_archive_path(path)
-    return normalized.endswith(".py") and any(normalized.startswith(prefix) for prefix in EXECUTABLE_PREFIXES)
+    return normalized.endswith(".py") and any(
+        normalized.startswith(prefix) for prefix in EXECUTABLE_PREFIXES
+    )
 
 
 def source_record_from_code(
@@ -124,14 +135,22 @@ def source_record_from_code(
     normalized_code = normalize_source_text(code)
     raw_hash = sha256_text(code)
     normalized_hash = sha256_text(normalized_code)
-    source_id = "src_" + short_hash({"path": normalized_path, "hash": normalized_hash}, 16)
+    source_id = "src_" + short_hash(
+        {"path": normalized_path, "hash": normalized_hash}, 16
+    )
     return SourceRecord(
         source_id=source_id,
         source=source,
         archive_member_path=normalized_path if source == "cadevolve" else None,
-        normalized_archive_member_path=normalized_path if source == "cadevolve" else None,
-        source_subtree=_source_subtree(normalized_path) if source == "cadevolve" else "synthetic",
-        generator_id=_generator_id(normalized_path) if source == "cadevolve" else "synthetic_golden",
+        normalized_archive_member_path=normalized_path
+        if source == "cadevolve"
+        else None,
+        source_subtree=_source_subtree(normalized_path)
+        if source == "cadevolve"
+        else "synthetic",
+        generator_id=_generator_id(normalized_path)
+        if source == "cadevolve"
+        else "synthetic_golden",
         license=license_value or config.license,
         raw_code=code,
         normalized_code=normalized_code,

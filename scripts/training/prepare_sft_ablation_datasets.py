@@ -16,7 +16,9 @@ ABLATIONS: dict[str, Callable[[dict[str, Any]], bool]] = {
     "no_static": lambda row: row.get("task_type") != "operation_count",
     "no_provenance": lambda row: row.get("task_type") != "feature_provenance_choice",
     "numeric_only": lambda row: row.get("answer_type") in {"integer", "number", "bbox"},
-    "topology_selector": lambda row: row.get("task_type") in {"topology_count_after_step", "selector_count"},
+    "topology_selector": lambda row: (
+        row.get("task_type") in {"topology_count_after_step", "selector_count"}
+    ),
 }
 
 
@@ -56,10 +58,17 @@ def main(argv: list[str] | None = None) -> None:
         item = {
             "train_row_count": len(train_examples),
             "eval_row_count": len(eval_examples),
-            "train_task_counts": dict(Counter(example["task_type"] for example in train_examples)),
-            "eval_task_counts": dict(Counter(example["task_type"] for example in eval_examples)),
+            "train_task_counts": dict(
+                Counter(example["task_type"] for example in train_examples)
+            ),
+            "eval_task_counts": dict(
+                Counter(example["task_type"] for example in eval_examples)
+            ),
         }
-        write_json(ablation_dir / "sft_dataset_report.json", {"schema": "cadqa_sft_ablation_report_v1", "name": name, **item})
+        write_json(
+            ablation_dir / "sft_dataset_report.json",
+            {"schema": "cadqa_sft_ablation_report_v1", "name": name, **item},
+        )
         report["ablations"][name] = item
     write_json(args.output_dir / "sft_ablation_manifest.json", report)
     print(json.dumps(report, indent=2, sort_keys=True))

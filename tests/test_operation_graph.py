@@ -28,7 +28,9 @@ result = wp3
 
 
 def test_records_unsupported_dynamic_statement():
-    nodes, result_variable, issues = extract_operation_graph("for i in range(3):\n    pass\n")
+    nodes, result_variable, issues = extract_operation_graph(
+        "for i in range(3):\n    pass\n"
+    )
 
     assert nodes == []
     assert result_variable is None

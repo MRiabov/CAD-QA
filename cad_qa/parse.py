@@ -23,7 +23,9 @@ def grade_candidate(row: dict[str, Any], candidate: str) -> dict[str, Any]:
             correct = parsed == answer and (not choices or parsed in choices)
         elif policy == "strict_json_bbox_v1":
             parsed = parse_bbox(candidate)
-            correct = bbox_close(parsed, answer, float(row.get("numeric_tolerance") or 0.0))
+            correct = bbox_close(
+                parsed, answer, float(row.get("numeric_tolerance") or 0.0)
+            )
         elif policy == "strict_json_v1":
             parsed = parse_json(candidate)
             correct = parsed == answer
@@ -78,7 +80,9 @@ def number_close(parsed: float, answer: float, numeric_tolerance: Any) -> bool:
     return abs(parsed - answer) <= tolerance
 
 
-def bbox_close(parsed: dict[str, list[float]], answer: Any, numeric_tolerance: float) -> bool:
+def bbox_close(
+    parsed: dict[str, list[float]], answer: Any, numeric_tolerance: float
+) -> bool:
     if not isinstance(answer, dict):
         return False
     for key in ("min", "max"):

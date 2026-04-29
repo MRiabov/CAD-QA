@@ -29,20 +29,38 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     manifest = _load_manifest(args.manifest)
-    runs = _select_runs(manifest["runs"], names=args.run or [], with_dependencies=args.with_dependencies)
+    runs = _select_runs(
+        manifest["runs"], names=args.run or [], with_dependencies=args.with_dependencies
+    )
     if args.list:
-        print(json.dumps({"runs": [_planned_run(run, args.runs_dir) for run in runs]}, indent=2, sort_keys=True))
+        print(
+            json.dumps(
+                {"runs": [_planned_run(run, args.runs_dir) for run in runs]},
+                indent=2,
+                sort_keys=True,
+            )
+        )
         return
     summary = []
     for run in runs:
         run_dir = Path(run.get("output_dir") or args.runs_dir / run["name"])
         if args.dry_run:
-            summary.append({"name": run["name"], "status": "dry_run", "command": run.get("command", [])})
+            summary.append(
+                {
+                    "name": run["name"],
+                    "status": "dry_run",
+                    "command": run.get("command", []),
+                }
+            )
             continue
         if not args.skip_dependencies:
             missing = _missing_dependencies(run, manifest["runs"], args.runs_dir)
             if missing:
-                item = {"name": run["name"], "status": "incomplete", "reason": f"missing_dependencies:{','.join(missing)}"}
+                item = {
+                    "name": run["name"],
+                    "status": "incomplete",
+                    "reason": f"missing_dependencies:{','.join(missing)}",
+                }
                 summary.append(item)
                 if not args.no_fail_fast:
                     break
@@ -63,7 +81,9 @@ def _load_manifest(path: Path) -> dict[str, Any]:
     return data
 
 
-def _select_runs(runs: list[dict[str, Any]], *, names: list[str], with_dependencies: bool) -> list[dict[str, Any]]:
+def _select_runs(
+    runs: list[dict[str, Any]], *, names: list[str], with_dependencies: bool
+) -> list[dict[str, Any]]:
     ordered = _topological_runs(runs)
     if not names:
         return ordered
@@ -102,7 +122,9 @@ def _topological_runs(runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [by_name[name] for name in ordered_names]
 
 
-def _missing_dependencies(run: dict[str, Any], all_runs: list[dict[str, Any]], runs_dir: Path) -> list[str]:
+def _missing_dependencies(
+    run: dict[str, Any], all_runs: list[dict[str, Any]], runs_dir: Path
+) -> list[str]:
     by_name = {item["name"]: item for item in all_runs}
     missing = []
     for dep in run.get("depends_on", []) or []:
@@ -124,8 +146,13 @@ def _execute_run(run: dict[str, Any], run_dir: Path, *, resume: bool) -> dict[st
     logs_dir.mkdir(exist_ok=True)
     command = [str(item) for item in run.get("command", [])]
     started = time.time()
-    with (logs_dir / "stdout.log").open("w", encoding="utf-8") as stdout, (logs_dir / "stderr.log").open("w", encoding="utf-8") as stderr:
-        process = subprocess.run(command, stdout=stdout, stderr=stderr, text=True, check=False)
+    with (
+        (logs_dir / "stdout.log").open("w", encoding="utf-8") as stdout,
+        (logs_dir / "stderr.log").open("w", encoding="utf-8") as stderr,
+    ):
+        process = subprocess.run(
+            command, stdout=stdout, stderr=stderr, text=True, check=False
+        )
     status = {
         "name": run["name"],
         "kind": run.get("kind"),

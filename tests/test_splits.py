@@ -77,5 +77,7 @@ def test_near_boundary_rows_route_whole_source_group_to_hard_split():
 
     assigned = assign_row_splits(rows, seed=1234)
 
-    assert {row["split"] for row in assigned if row["source_id"] == "src_a"} == {"test_near_boundary"}
+    assert {row["split"] for row in assigned if row["source_id"] == "src_a"} == {
+        "test_near_boundary"
+    }
     assert leakage_audit(assigned)["status"] == "pass"

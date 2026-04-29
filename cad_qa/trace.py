@@ -30,8 +30,12 @@ def trace_source_record(
     config: DatasetConfig,
     isolated: bool = True,
 ) -> TraceRecord:
-    nodes, result_variable, graph_issues = extract_operation_graph(source.normalized_code)
-    graph_status = "ok" if nodes and not graph_issues else ("partial" if nodes else "failed")
+    nodes, result_variable, graph_issues = extract_operation_graph(
+        source.normalized_code
+    )
+    graph_status = (
+        "ok" if nodes and not graph_issues else ("partial" if nodes else "failed")
+    )
     graph_hash = operation_graph_hash(nodes)
     if graph_status == "failed":
         return _failed_trace(
@@ -57,7 +61,9 @@ def trace_source_record(
         )
 
     if isolated:
-        result = _trace_isolated(source.normalized_code, timeout_seconds=config.trace_timeout_seconds)
+        result = _trace_isolated(
+            source.normalized_code, timeout_seconds=config.trace_timeout_seconds
+        )
     else:
         result = _trace_worker_payload(source.normalized_code)
     if result["status"] != "ok":
@@ -73,10 +79,26 @@ def trace_source_record(
         )
 
     snapshots = _attach_feature_ids(result["snapshots"], nodes)
-    selector_tables = _attach_table_feature_ids(result.get("selector_tables", []), nodes)
+    selector_tables = _attach_table_feature_ids(
+        result.get("selector_tables", []), nodes
+    )
     point_queries = _attach_table_feature_ids(result.get("point_queries", []), nodes)
-    provenance_records = _attach_table_feature_ids(result.get("provenance_records", []), nodes)
-    topology_matches = _attach_table_feature_ids(result.get("topology_matches", []), nodes)
+    provenance_records = _attach_table_feature_ids(
+        result.get("provenance_records", []), nodes
+    )
+    topology_matches = _attach_table_feature_ids(
+        result.get("topology_matches", []), nodes
+    )
+    graph_queries = _attach_table_feature_ids(result.get("graph_queries", []), nodes)
+    spatial_queries = _attach_table_feature_ids(
+        result.get("spatial_queries", []), nodes
+    )
+    bbox_region_queries = _attach_table_feature_ids(
+        result.get("bbox_region_queries", []), nodes
+    )
+    validity_probes = _attach_table_feature_ids(
+        result.get("validity_probes", []), nodes
+    )
     trace_payload = {
         "source_id": source.source_id,
         "graph_hash": graph_hash,
@@ -85,6 +107,10 @@ def trace_source_record(
         "point_queries": point_queries,
         "provenance_records": provenance_records,
         "topology_matches": topology_matches,
+        "graph_queries": graph_queries,
+        "spatial_queries": spatial_queries,
+        "bbox_region_queries": bbox_region_queries,
+        "validity_probes": validity_probes,
         "label_policy": asdict(config.label_policy),
         "environment": result["environment"],
     }
@@ -109,6 +135,10 @@ def trace_source_record(
         point_queries=point_queries,
         provenance_records=provenance_records,
         topology_matches=topology_matches,
+        graph_queries=graph_queries,
+        spatial_queries=spatial_queries,
+        bbox_region_queries=bbox_region_queries,
+        validity_probes=validity_probes,
     )
 
 
@@ -120,10 +150,14 @@ def trace_source_records_bounded(
     cache_dir: Any | None = None,
 ) -> list[TraceRecord]:
     """Trace sources in bounded worker processes, preserving input order."""
-    cached_results: list[TraceRecord | None] = [load_cached_trace(cache_dir, source, config) for source in sources]
+    cached_results: list[TraceRecord | None] = [
+        load_cached_trace(cache_dir, source, config) for source in sources
+    ]
     uncached: list[tuple[int, SourceRecord]] = [
         (index, source)
-        for index, (source, cached) in enumerate(zip(sources, cached_results, strict=True))
+        for index, (source, cached) in enumerate(
+            zip(sources, cached_results, strict=True)
+        )
         if cached is None
     ]
     if not uncached:
@@ -147,9 +181,19 @@ def trace_source_records_bounded(
             return
         index, source = pending.pop(0)
         queue: mp.Queue = context.Queue(maxsize=1)
-        process = context.Process(target=_trace_record_worker, args=(source, config, queue))
+        process = context.Process(
+            target=_trace_record_worker, args=(source, config, queue)
+        )
         process.start()
-        running.append({"index": index, "source": source, "queue": queue, "process": process, "started_at": time.monotonic()})
+        running.append(
+            {
+                "index": index,
+                "source": source,
+                "queue": queue,
+                "process": process,
+                "started_at": time.monotonic(),
+            }
+        )
 
     for _ in range(min(worker_count, len(pending))):
         start_next()
@@ -168,7 +212,9 @@ def trace_source_records_bounded(
                 result = _timeout_trace(source, config)
             else:
                 process.join()
-                result = _trace_from_worker_queue(source, config, job["queue"], process.exitcode)
+                result = _trace_from_worker_queue(
+                    source, config, job["queue"], process.exitcode
+                )
             running.remove(job)
             store_cached_trace(cache_dir, source, config, result)
             results[int(job["index"])] = result
@@ -183,11 +229,15 @@ def trace_source_records_bounded(
     return [trace for trace in cached_results if trace is not None]
 
 
-def _trace_record_worker(source: SourceRecord, config: DatasetConfig, queue: mp.Queue) -> None:
+def _trace_record_worker(
+    source: SourceRecord, config: DatasetConfig, queue: mp.Queue
+) -> None:
     queue.put(trace_source_record(source, config=config, isolated=False))
 
 
-def _trace_from_worker_queue(source: SourceRecord, config: DatasetConfig, queue: mp.Queue, exitcode: int | None) -> TraceRecord:
+def _trace_from_worker_queue(
+    source: SourceRecord, config: DatasetConfig, queue: mp.Queue, exitcode: int | None
+) -> TraceRecord:
     if exitcode != 0:
         return _timeout_trace(source, config, failure_reason="worker_crash")
     try:
@@ -199,7 +249,11 @@ def _trace_from_worker_queue(source: SourceRecord, config: DatasetConfig, queue:
     return _timeout_trace(source, config, failure_reason="worker_crash")
 
 
-def _timeout_trace(source: SourceRecord, config: DatasetConfig, failure_reason: str = "execution_timeout") -> TraceRecord:
+def _timeout_trace(
+    source: SourceRecord,
+    config: DatasetConfig,
+    failure_reason: str = "execution_timeout",
+) -> TraceRecord:
     nodes, result_variable, _ = extract_operation_graph(source.normalized_code)
     return _failed_trace(
         source,
@@ -221,20 +275,38 @@ def _trace_isolated(code: str, *, timeout_seconds: float) -> dict[str, Any]:
     if process.is_alive():
         process.terminate()
         process.join(1.0)
-        return {"status": "error", "failure_reason": "execution_timeout", "environment": _base_environment()}
+        return {
+            "status": "error",
+            "failure_reason": "execution_timeout",
+            "environment": _base_environment(),
+        }
     if process.exitcode != 0:
-        return {"status": "error", "failure_reason": "worker_crash", "environment": _base_environment()}
+        return {
+            "status": "error",
+            "failure_reason": "worker_crash",
+            "environment": _base_environment(),
+        }
     try:
         return queue.get_nowait()
     except Empty:
-        return {"status": "error", "failure_reason": "worker_crash", "environment": _base_environment()}
+        return {
+            "status": "error",
+            "failure_reason": "worker_crash",
+            "environment": _base_environment(),
+        }
 
 
 def _worker_main(code: str, queue: mp.Queue) -> None:
     try:
         queue.put(_trace_worker_payload(code))
     except Exception as exc:
-        queue.put({"status": "error", "failure_reason": f"unknown_error:{type(exc).__name__}", "environment": _base_environment()})
+        queue.put(
+            {
+                "status": "error",
+                "failure_reason": f"unknown_error:{type(exc).__name__}",
+                "environment": _base_environment(),
+            }
+        )
 
 
 def _trace_worker_payload(code: str) -> dict[str, Any]:
@@ -242,7 +314,11 @@ def _trace_worker_payload(code: str) -> dict[str, Any]:
     try:
         import cadquery as cq  # type: ignore[import-not-found]
     except ModuleNotFoundError:
-        return {"status": "error", "failure_reason": "cadquery_unavailable", "environment": _base_environment()}
+        return {
+            "status": "error",
+            "failure_reason": "cadquery_unavailable",
+            "environment": _base_environment(),
+        }
 
     environment = _base_environment()
     environment["cadquery_version"] = getattr(cq, "__version__", None)
@@ -253,7 +329,11 @@ def _trace_worker_payload(code: str) -> dict[str, Any]:
     except Exception:
         environment["ocp_version"] = None
 
-    namespace: dict[str, Any] = {"cq": cq, "cadquery": cq, "__builtins__": _safe_builtins()}
+    namespace: dict[str, Any] = {
+        "cq": cq,
+        "cadquery": cq,
+        "__builtins__": _safe_builtins(),
+    }
     snapshots: list[dict[str, Any]] = []
     selector_tables: list[dict[str, Any]] = []
     point_queries: list[dict[str, Any]] = []
@@ -262,16 +342,30 @@ def _trace_worker_payload(code: str) -> dict[str, Any]:
     try:
         tree = ast.parse(code)
         for statement_index, statement in enumerate(tree.body):
-            exec(compile(ast.Module([statement], []), "<cadqa-trace>", "exec"), namespace)
-            if isinstance(statement, ast.Assign) and len(statement.targets) == 1 and isinstance(statement.targets[0], ast.Name):
+            exec(
+                compile(ast.Module([statement], []), "<cadqa-trace>", "exec"), namespace
+            )
+            if (
+                isinstance(statement, ast.Assign)
+                and len(statement.targets) == 1
+                and isinstance(statement.targets[0], ast.Name)
+            ):
                 target = statement.targets[0].id
                 if target in namespace:
-                    snapshot = _snapshot_for_object(namespace[target], target, statement_index)
+                    snapshot = _snapshot_for_object(
+                        namespace[target], target, statement_index
+                    )
                     if snapshot is not None:
                         snapshots.append(snapshot)
-                        selector_tables.extend(_selector_tables_for_statement(statement, snapshot, namespace))
+                        selector_tables.extend(
+                            _selector_tables_for_statement(
+                                statement, snapshot, namespace
+                            )
+                        )
             elif isinstance(statement, ast.Expr):
-                selector = _selector_table_for_expr(statement, namespace, statement_index)
+                selector = _selector_table_for_expr(
+                    statement, namespace, statement_index
+                )
                 if selector is not None:
                     selector_tables.append(selector)
         point_queries = _point_queries_for_final_state(namespace, snapshots)
@@ -303,7 +397,9 @@ def _trace_worker_payload(code: str) -> dict[str, Any]:
     }
 
 
-def _snapshot_for_object(obj: Any, target: str, step_index: int) -> dict[str, Any] | None:
+def _snapshot_for_object(
+    obj: Any, target: str, step_index: int
+) -> dict[str, Any] | None:
     shape = _shape_from_object(obj)
     if shape is None:
         return None
@@ -320,7 +416,10 @@ def _snapshot_for_object(obj: Any, target: str, step_index: int) -> dict[str, An
         "bbox": bbox,
         "topology": topology,
         "entity_ids": entity_ids,
-        "diagnostics": {"snapshot_target": target, "entity_signatures": entity_signatures},
+        "diagnostics": {
+            "snapshot_target": target,
+            "entity_signatures": entity_signatures,
+        },
     }
 
 
@@ -386,15 +485,26 @@ def _entity_ids_and_signatures(
     topology: dict[str, int | None],
 ) -> tuple[dict[str, list[str]], dict[str, list[dict[str, Any]]]]:
     ids = {
-        "faces": [f"face_{index:04d}" for index in range(int(topology.get("face_count") or 0))],
-        "edges": [f"edge_{index:04d}" for index in range(int(topology.get("edge_count") or 0))],
-        "vertices": [f"vertex_{index:04d}" for index in range(int(topology.get("vertex_count") or 0))],
+        "faces": [
+            f"face_{index:04d}" for index in range(int(topology.get("face_count") or 0))
+        ],
+        "edges": [
+            f"edge_{index:04d}" for index in range(int(topology.get("edge_count") or 0))
+        ],
+        "vertices": [
+            f"vertex_{index:04d}"
+            for index in range(int(topology.get("vertex_count") or 0))
+        ],
     }
     signatures: dict[str, list[dict[str, Any]]] = {}
     total_entities = sum(len(values) for values in ids.values())
     if total_entities > 24:
         return ids, signatures
-    for entity_type, method_name in (("face", "Faces"), ("edge", "Edges"), ("vertex", "Vertices")):
+    for entity_type, method_name in (
+        ("face", "Faces"),
+        ("edge", "Edges"),
+        ("vertex", "Vertices"),
+    ):
         entities = _entities(shape, method_name)
         signatures[entity_type] = [
             {
@@ -446,10 +556,6 @@ def _entity_measure(entity: Any) -> float | None:
         if value is not None:
             return value
     return None
-    try:
-        return len(method())
-    except Exception:
-        return 0
 
 
 def _selector_tables_for_statement(
@@ -460,29 +566,57 @@ def _selector_tables_for_statement(
     calls = [node for node in ast.walk(statement.value) if isinstance(node, ast.Call)]
     tables: list[dict[str, Any]] = []
     for call in calls:
-        if isinstance(call.func, ast.Attribute) and call.func.attr in {"faces", "edges", "vertices", "wires", "solids"}:
-            tables.append(_selector_table_from_call(call, snapshot.get("feature_id"), namespace))
+        if isinstance(call.func, ast.Attribute) and call.func.attr in {
+            "faces",
+            "edges",
+            "vertices",
+            "wires",
+            "solids",
+        }:
+            tables.append(
+                _selector_table_from_call(call, snapshot.get("feature_id"), namespace)
+            )
     return tables
 
 
-def _selector_table_for_expr(statement: ast.Expr, namespace: dict[str, Any], statement_index: int) -> dict[str, Any] | None:
+def _selector_table_for_expr(
+    statement: ast.Expr, namespace: dict[str, Any], statement_index: int
+) -> dict[str, Any] | None:
     del statement_index
-    if isinstance(statement.value, ast.Call) and isinstance(statement.value.func, ast.Attribute):
-        if statement.value.func.attr in {"faces", "edges", "vertices", "wires", "solids"}:
+    if isinstance(statement.value, ast.Call) and isinstance(
+        statement.value.func, ast.Attribute
+    ):
+        if statement.value.func.attr in {
+            "faces",
+            "edges",
+            "vertices",
+            "wires",
+            "solids",
+        }:
             return _selector_table_from_call(statement.value, None, namespace)
     return None
 
 
-def _selector_table_from_call(call: ast.Call, target_feature_id: Any, namespace: dict[str, Any]) -> dict[str, Any]:
+def _selector_table_from_call(
+    call: ast.Call, target_feature_id: Any, namespace: dict[str, Any]
+) -> dict[str, Any]:
     expression = ast.unparse(call)
-    entity_type = call.func.attr.removesuffix("s") if isinstance(call.func, ast.Attribute) else "entity"
+    entity_type = (
+        call.func.attr.removesuffix("s")
+        if isinstance(call.func, ast.Attribute)
+        else "entity"
+    )
     selected_count: int | None = None
     raw_entity_ids: list[str] = []
     status = "recorded_expression"
     try:
-        selected = eval(compile(ast.Expression(call), "<cadqa-selector>", "eval"), namespace)  # noqa: S307
+        selected = eval(
+            compile(ast.Expression(call), "<cadqa-selector>", "eval"), namespace
+        )  # noqa: S307
         selected_count = _selected_count(selected)
-        raw_entity_ids = [f"{entity_type}_{index:04d}" for index in range(selected_count)]
+        raw_entity_ids = [
+            f"{entity_type}_{index:04d}" for index in range(selected_count)
+        ]
         status = "ok"
     except Exception as exc:
         status = f"selector_eval_failed:{type(exc).__name__}"
@@ -511,7 +645,9 @@ def _selected_count(selected: Any) -> int:
     return 1 if selected is not None else 0
 
 
-def _point_queries_for_final_state(namespace: dict[str, Any], snapshots: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _point_queries_for_final_state(
+    namespace: dict[str, Any], snapshots: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
     if not snapshots:
         return []
     final_snapshot = snapshots[-1]
@@ -540,7 +676,9 @@ def _point_queries_for_final_state(namespace: dict[str, Any], snapshots: list[di
                 "point": point,
                 "target_feature_id": final_snapshot.get("feature_id"),
                 "point_classification": classification,
-                "sampling_stratum": "deep_inside" if classification == "inside" else "deep_outside",
+                "sampling_stratum": "deep_inside"
+                if classification == "inside"
+                else "deep_outside",
                 "classifier": "cadquery_shape_isInside",
                 "sample_source": stratum,
             }
@@ -555,7 +693,9 @@ def _final_object(namespace: dict[str, Any], fallback_name: str) -> Any:
     return None
 
 
-def _classify_point(shape: Any, point: list[float], namespace: dict[str, Any]) -> str | None:
+def _classify_point(
+    shape: Any, point: list[float], namespace: dict[str, Any]
+) -> str | None:
     vector = point
     cq = namespace.get("cq") or namespace.get("cadquery")
     if cq is not None and hasattr(cq, "Vector"):
@@ -578,7 +718,9 @@ def _classify_point(shape: Any, point: list[float], namespace: dict[str, Any]) -
     return "inside" if inside else "outside"
 
 
-def _conservative_provenance_records(snapshots: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _conservative_provenance_records(
+    snapshots: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
     for previous, current in zip(snapshots, snapshots[1:], strict=False):
         before = previous.get("volume")
@@ -602,7 +744,9 @@ def _conservative_provenance_records(snapshots: list[dict[str, Any]]) -> list[di
     return records
 
 
-def _topology_match_provenance_records(topology_matches: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _topology_match_provenance_records(
+    topology_matches: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
     for match in topology_matches:
         to_feature = match.get("to_feature_id")
@@ -616,7 +760,8 @@ def _topology_match_provenance_records(topology_matches: list[dict[str, Any]]) -
                 "target_feature_id": to_feature,
                 "provenance_relation": "inherited_from",
                 "answer_feature_id": from_feature,
-                "matching_method": match.get("matching_method") or "adjacent_topology_match",
+                "matching_method": match.get("matching_method")
+                or "adjacent_topology_match",
                 "provenance_confidence": match.get("confidence", 0.5),
                 "topology_match": match,
             }
@@ -641,7 +786,9 @@ def _adjacent_topology_matches(snapshots: list[dict[str, Any]]) -> list[dict[str
     return records
 
 
-def _snapshot_entity_signatures(snapshot: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
+def _snapshot_entity_signatures(
+    snapshot: dict[str, Any],
+) -> dict[str, list[dict[str, Any]]]:
     diagnostics = snapshot.get("diagnostics")
     if not isinstance(diagnostics, dict):
         return {}
@@ -699,20 +846,37 @@ def _entity_signature_distance(left: dict[str, Any], right: dict[str, Any]) -> f
     left_center = left.get("center")
     right_center = right.get("center")
     if _finite_triplet(left_center) and _finite_triplet(right_center):
-        distance += sum((float(a) - float(b)) ** 2 for a, b in zip(left_center, right_center, strict=True)) ** 0.5
+        distance += (
+            sum(
+                (float(a) - float(b)) ** 2
+                for a, b in zip(left_center, right_center, strict=True)
+            )
+            ** 0.5
+        )
     left_measure = left.get("measure")
     right_measure = right.get("measure")
-    if isinstance(left_measure, (int, float)) and isinstance(right_measure, (int, float)):
+    if isinstance(left_measure, (int, float)) and isinstance(
+        right_measure, (int, float)
+    ):
         scale = max(abs(float(left_measure)), abs(float(right_measure)), 1.0)
         distance += abs(float(left_measure) - float(right_measure)) / scale
     return distance
 
 
 def _finite_triplet(value: Any) -> bool:
-    return isinstance(value, list) and len(value) == 3 and all(isinstance(item, (int, float)) and math.isfinite(float(item)) for item in value)
+    return (
+        isinstance(value, list)
+        and len(value) == 3
+        and all(
+            isinstance(item, (int, float)) and math.isfinite(float(item))
+            for item in value
+        )
+    )
 
 
-def _attach_feature_ids(snapshots: list[dict[str, Any]], nodes: list[Any]) -> list[dict[str, Any]]:
+def _attach_feature_ids(
+    snapshots: list[dict[str, Any]], nodes: list[Any]
+) -> list[dict[str, Any]]:
     target_to_node = {node.target: node for node in nodes if node.target}
     updated: list[dict[str, Any]] = []
     for snapshot in snapshots:
@@ -727,7 +891,9 @@ def _attach_feature_ids(snapshots: list[dict[str, Any]], nodes: list[Any]) -> li
     return updated
 
 
-def _attach_table_feature_ids(records: list[dict[str, Any]], nodes: list[Any]) -> list[dict[str, Any]]:
+def _attach_table_feature_ids(
+    records: list[dict[str, Any]], nodes: list[Any]
+) -> list[dict[str, Any]]:
     target_to_feature = {node.target: node.feature_id for node in nodes if node.target}
     updated: list[dict[str, Any]] = []
     for record in records:
@@ -762,11 +928,19 @@ def _safe_builtins() -> dict[str, Any]:
         "zip",
         "__import__",
     }
-    return {name: getattr(builtins, name) for name in allowed_names if hasattr(builtins, name)}
+    return {
+        name: getattr(builtins, name)
+        for name in allowed_names
+        if hasattr(builtins, name)
+    }
 
 
 def _base_environment() -> dict[str, Any]:
-    return {"python_version": sys.version.split()[0], "cadquery_version": None, "ocp_version": None}
+    return {
+        "python_version": sys.version.split()[0],
+        "cadquery_version": None,
+        "ocp_version": None,
+    }
 
 
 def _failed_trace(

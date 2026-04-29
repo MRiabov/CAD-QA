@@ -10,7 +10,17 @@ def test_cli_smoke_validate_and_baseline(tmp_path: Path):
 
     assert cadqa_main(["smoke", "--output-dir", str(dataset_dir)]) == 0
     assert cadqa_main(["validate", str(dataset_dir)]) == 0
-    assert cadqa_main(["baseline", str(dataset_dir / "jsonl" / "train.jsonl"), "--output-dir", str(baseline_dir)]) == 0
+    assert (
+        cadqa_main(
+            [
+                "baseline",
+                str(dataset_dir / "jsonl" / "train.jsonl"),
+                "--output-dir",
+                str(baseline_dir),
+            ]
+        )
+        == 0
+    )
     assert (baseline_dir / "baseline_metrics.json").exists()
 
 
@@ -33,7 +43,9 @@ runs:
         encoding="utf-8",
     )
 
-    experiment_main([str(manifest), "--run", "second", "--with-dependencies", "--dry-run"])
+    experiment_main(
+        [str(manifest), "--run", "second", "--with-dependencies", "--dry-run"]
+    )
     output = capsys.readouterr().out
     assert '"first"' in output
     assert '"second"' in output

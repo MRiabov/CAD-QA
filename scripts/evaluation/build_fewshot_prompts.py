@@ -57,7 +57,9 @@ def main(argv: list[str] | None = None) -> None:
     print({"request_count": len(requests), "output": str(args.output)})
 
 
-def _examples_by_task(rows: list[dict[str, Any]], shots: int) -> dict[str, list[dict[str, Any]]]:
+def _examples_by_task(
+    rows: list[dict[str, Any]], shots: int
+) -> dict[str, list[dict[str, Any]]]:
     result: dict[str, list[dict[str, Any]]] = {}
     for row in rows:
         result.setdefault(str(row["task_type"]), [])
@@ -69,7 +71,9 @@ def _examples_by_task(rows: list[dict[str, Any]], shots: int) -> dict[str, list[
 def _fewshot_prompt(examples: list[dict[str, Any]], row: dict[str, Any]) -> str:
     parts = ["Examples:"]
     for example in examples:
-        parts.append(f"Question:\n{example['prompt']}\nAnswer:\n{_answer_text(example['answer'])}")
+        parts.append(
+            f"Question:\n{example['prompt']}\nAnswer:\n{_answer_text(example['answer'])}"
+        )
     parts.append(f"Question:\n{row['prompt']}\nAnswer:")
     return "\n\n".join(parts)
 

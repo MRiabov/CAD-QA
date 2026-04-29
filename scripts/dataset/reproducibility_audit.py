@@ -70,11 +70,17 @@ def _load_records_by_key(path: Path, key: str) -> dict[str, dict[str, Any]]:
     return {str(row.get(key)): row for row in read_jsonl(path)}
 
 
-def _diff_record_maps(left: dict[str, dict[str, Any]], right: dict[str, dict[str, Any]]) -> dict[str, Any]:
+def _diff_record_maps(
+    left: dict[str, dict[str, Any]], right: dict[str, dict[str, Any]]
+) -> dict[str, Any]:
     left_ids = set(left)
     right_ids = set(right)
     common = left_ids & right_ids
-    changed = sorted(item_id for item_id in common if sha256_json(left[item_id]) != sha256_json(right[item_id]))
+    changed = sorted(
+        item_id
+        for item_id in common
+        if sha256_json(left[item_id]) != sha256_json(right[item_id])
+    )
     return {
         "changed": bool(left_ids ^ right_ids or changed),
         "left_count": len(left),
@@ -104,9 +110,7 @@ def _metadata_diff(left_dir: Path, right_dir: Path) -> dict[str, Any]:
     left = _read_json_if_exists(left_dir / "metadata.json")
     right = _read_json_if_exists(right_dir / "metadata.json")
     mismatches = [
-        key
-        for key in sorted(comparable_keys)
-        if left.get(key) != right.get(key)
+        key for key in sorted(comparable_keys) if left.get(key) != right.get(key)
     ]
     return {
         "changed": bool(mismatches),
@@ -144,8 +148,12 @@ def _read_json_if_exists(path: Path) -> dict[str, Any]:
 def _dataset_counts(rows: dict[str, dict[str, Any]]) -> dict[str, Any]:
     return {
         "row_count": len(rows),
-        "row_counts_by_split": dict(Counter(str(row.get("split")) for row in rows.values())),
-        "row_counts_by_task_type": dict(Counter(str(row.get("task_type")) for row in rows.values())),
+        "row_counts_by_split": dict(
+            Counter(str(row.get("split")) for row in rows.values())
+        ),
+        "row_counts_by_task_type": dict(
+            Counter(str(row.get("task_type")) for row in rows.values())
+        ),
     }
 
 

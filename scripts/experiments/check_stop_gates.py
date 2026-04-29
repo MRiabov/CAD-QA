@@ -47,11 +47,23 @@ def evaluate_stop_gates(
         _dataset_gate(dataset_stats_path, min_rows=min_rows),
     ]
     if failure_report_path is not None:
-        gates.append(_failure_gate(failure_report_path, max_trace_failure_rate=max_trace_failure_rate))
+        gates.append(
+            _failure_gate(
+                failure_report_path, max_trace_failure_rate=max_trace_failure_rate
+            )
+        )
     if sft_smoke_report_path is not None:
-        gates.append(_status_gate("sft_smoke", sft_smoke_report_path, passing_statuses={"pass"}))
+        gates.append(
+            _status_gate("sft_smoke", sft_smoke_report_path, passing_statuses={"pass"})
+        )
     if experiment_comparison_path is not None:
-        gates.append(_status_gate("experiment_comparison", experiment_comparison_path, passing_statuses={"pass"}))
+        gates.append(
+            _status_gate(
+                "experiment_comparison",
+                experiment_comparison_path,
+                passing_statuses={"pass"},
+            )
+        )
     return {
         "schema": "cadqa_stop_gate_report_v1",
         "status": "pass" if all(gate["status"] == "pass" for gate in gates) else "fail",
@@ -90,7 +102,9 @@ def _failure_gate(path: Path, *, max_trace_failure_rate: float) -> dict[str, Any
     }
 
 
-def _status_gate(name: str, path: Path, *, passing_statuses: set[str]) -> dict[str, Any]:
+def _status_gate(
+    name: str, path: Path, *, passing_statuses: set[str]
+) -> dict[str, Any]:
     payload = read_json(path)
     observed = str(payload.get("status"))
     return {

@@ -24,21 +24,30 @@ def main(argv: list[str] | None = None) -> None:
     source_files = discover_cadevolve_sources(args.source_dir)[: args.limit]
     manifest_rows = []
     for relative_path in source_files:
-        code = (args.source_dir / relative_path).read_text(encoding="utf-8", errors="replace")
+        code = (args.source_dir / relative_path).read_text(
+            encoding="utf-8", errors="replace"
+        )
         variants = numeric_parameter_variants(
             code,
             relative_delta=args.relative_delta,
             max_variants=args.max_variants_per_source,
         )
         for variant in variants:
-            output_path = args.output_dir / "sources" / variant.variant_id / normalize_archive_path(relative_path)
+            output_path = (
+                args.output_dir
+                / "sources"
+                / variant.variant_id
+                / normalize_archive_path(relative_path)
+            )
             output_path.parent.mkdir(parents=True, exist_ok=True)
             output_path.write_text(variant.variant_code, encoding="utf-8")
             manifest_rows.append(
                 {
                     **asdict(variant),
                     "original_relative_path": normalize_archive_path(relative_path),
-                    "variant_relative_path": str(output_path.relative_to(args.output_dir)).replace("\\", "/"),
+                    "variant_relative_path": str(
+                        output_path.relative_to(args.output_dir)
+                    ).replace("\\", "/"),
                 }
             )
     manifest = {

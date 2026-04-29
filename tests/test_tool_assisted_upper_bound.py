@@ -11,7 +11,9 @@ def test_tool_assisted_upper_bound_is_oracle(tmp_path: Path):
     output_dir = tmp_path / "upper_bound"
     export_smoke_dataset(output_dir=dataset_dir, config=DatasetConfig())
 
-    upper_bound_main([str(dataset_dir / "jsonl" / "train.jsonl"), "--output-dir", str(output_dir)])
+    upper_bound_main(
+        [str(dataset_dir / "jsonl" / "train.jsonl"), "--output-dir", str(output_dir)]
+    )
 
     report = read_json(output_dir / "tool_assisted_upper_bound.json")
     assert report["mode"] == "trace_label_oracle"

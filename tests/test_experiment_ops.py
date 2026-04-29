@@ -42,7 +42,9 @@ def test_package_run_artifacts_writes_manifest_and_archive(tmp_path: Path):
     (run_dir / "logs").mkdir()
     (run_dir / "logs" / "stdout.log").write_text("ok\n", encoding="utf-8")
 
-    report = package_artifacts([run_dir], output_dir=output_dir, archive_name="bundle.tar.gz")
+    report = package_artifacts(
+        [run_dir], output_dir=output_dir, archive_name="bundle.tar.gz"
+    )
 
     manifest = read_json(output_dir / "artifact_manifest.json")
     assert report["file_count"] == 2

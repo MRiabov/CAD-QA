@@ -52,12 +52,16 @@ def export_dataset(
         if trace.execution_status != "ok" or trace.failure_reason
     ]
     write_jsonl(output_dir / "failure_manifest.jsonl", failure_rows)
-    metadata = _metadata(row_dicts, sources, traces, config=config, parquet_report=parquet_report)
+    metadata = _metadata(
+        row_dicts, sources, traces, config=config, parquet_report=parquet_report
+    )
     write_json(output_dir / "metadata.json", metadata)
     return metadata
 
 
-def export_smoke_dataset(*, output_dir: Path, config: DatasetConfig) -> dict[str, object]:
+def export_smoke_dataset(
+    *, output_dir: Path, config: DatasetConfig
+) -> dict[str, object]:
     return export_dataset(smoke_traces(config), output_dir=output_dir, config=config)
 
 
@@ -66,7 +70,10 @@ def _write_split_jsonl(jsonl_dir: Path, rows: list[dict[str, object]]) -> None:
     for row in rows:
         by_split[str(row["split"])].append(row)
     for split, split_rows in sorted(by_split.items()):
-        write_jsonl(jsonl_dir / f"{split}.jsonl", sorted(split_rows, key=lambda row: str(row["id"])))
+        write_jsonl(
+            jsonl_dir / f"{split}.jsonl",
+            sorted(split_rows, key=lambda row: str(row["id"])),
+        )
 
 
 def _metadata(
@@ -85,9 +92,15 @@ def _metadata(
         "source_count": len(sources),
         "trace_count": len(traces),
         "row_counts_by_split": dict(Counter(str(row.get("split")) for row in rows)),
-        "row_counts_by_task_type": dict(Counter(str(row.get("task_type")) for row in rows)),
-        "row_counts_by_requires": dict(Counter(tag for row in rows for tag in _list_field(row, "requires"))),
-        "row_counts_by_difficulty_tag": dict(Counter(tag for row in rows for tag in _list_field(row, "difficulty_tags"))),
+        "row_counts_by_task_type": dict(
+            Counter(str(row.get("task_type")) for row in rows)
+        ),
+        "row_counts_by_requires": dict(
+            Counter(tag for row in rows for tag in _list_field(row, "requires"))
+        ),
+        "row_counts_by_difficulty_tag": dict(
+            Counter(tag for row in rows for tag in _list_field(row, "difficulty_tags"))
+        ),
         "source_manifest_hash": source_manifest_hash(sources),
         "generation_config_hash": config.config_hash,
         "label_policy": asdict(config.label_policy),
@@ -115,7 +128,9 @@ def _list_field(row: dict[str, object], key: str) -> list[str]:
     return [str(item) for item in value]
 
 
-def _write_parquet_files(parquet_dir: Path, rows: list[dict[str, object]]) -> dict[str, object]:
+def _write_parquet_files(
+    parquet_dir: Path, rows: list[dict[str, object]]
+) -> dict[str, object]:
     parquet_dir.mkdir(parents=True, exist_ok=True)
     try:
         import pyarrow as pa  # type: ignore[import-not-found]
@@ -135,7 +150,9 @@ def _write_parquet_files(parquet_dir: Path, rows: list[dict[str, object]]) -> di
     for split, split_rows in sorted(by_split.items()):
         path = parquet_dir / f"{split}.parquet"
         try:
-            table = pa.Table.from_pylist(sorted(split_rows, key=lambda row: str(row["id"])))
+            table = pa.Table.from_pylist(
+                sorted(split_rows, key=lambda row: str(row["id"]))
+            )
             pq.write_table(table, path)
         except (pa.ArrowException, TypeError, ValueError) as exc:
             marker = parquet_dir / "PARQUET_NOT_WRITTEN.md"
@@ -144,6 +161,10 @@ def _write_parquet_files(parquet_dir: Path, rows: list[dict[str, object]]) -> di
                 f"for heterogeneous CAD-QA rows: {type(exc).__name__}: {exc}\n",
                 encoding="utf-8",
             )
-            return {"status": "skipped", "reason": "pyarrow_schema_inference_failed", "files": []}
+            return {
+                "status": "skipped",
+                "reason": "pyarrow_schema_inference_failed",
+                "files": [],
+            }
         files.append(str(path.name))
     return {"status": "written", "files": files}

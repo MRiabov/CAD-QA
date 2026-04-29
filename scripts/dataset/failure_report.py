@@ -36,8 +36,12 @@ def build_failure_report(dataset_dir: Path) -> dict[str, Any]:
     row_counts_by_source = Counter(str(row.get("source_id")) for row in rows)
     failure_items = [_summarize_failure(row, row_counts_by_source) for row in failures]
     categories = Counter(str(item["category"]) for item in failure_items)
-    execution_statuses = Counter(str(item.get("execution_status")) for item in failure_items)
-    operation_statuses = Counter(str(item.get("operation_graph_status")) for item in failure_items)
+    execution_statuses = Counter(
+        str(item.get("execution_status")) for item in failure_items
+    )
+    operation_statuses = Counter(
+        str(item.get("operation_graph_status")) for item in failure_items
+    )
 
     return {
         "schema": "cadqa_failure_report_v1",
@@ -50,7 +54,8 @@ def build_failure_report(dataset_dir: Path) -> dict[str, Any]:
         "failure_counts_by_execution_status": dict(execution_statuses),
         "failure_counts_by_operation_graph_status": dict(operation_statuses),
         "row_counts_by_source_for_failed_traces": {
-            str(item["source_id"]): item["public_rows_for_source"] for item in failure_items
+            str(item["source_id"]): item["public_rows_for_source"]
+            for item in failure_items
         },
         "failures": failure_items,
     }
@@ -82,7 +87,9 @@ def _trace_failure_row(trace: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _summarize_failure(row: dict[str, Any], row_counts_by_source: Counter[str]) -> dict[str, Any]:
+def _summarize_failure(
+    row: dict[str, Any], row_counts_by_source: Counter[str]
+) -> dict[str, Any]:
     reason = str(row.get("failure_reason") or "")
     source_id = str(row.get("source_id"))
     return {

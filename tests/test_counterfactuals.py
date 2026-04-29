@@ -2,7 +2,9 @@ from cad_qa.counterfactuals import numeric_parameter_variants
 
 
 def test_numeric_parameter_variants_are_grouped():
-    code = "import cadquery as cq\nwp = cq.Workplane('XY').box(10, 20, 30)\nresult = wp\n"
+    code = (
+        "import cadquery as cq\nwp = cq.Workplane('XY').box(10, 20, 30)\nresult = wp\n"
+    )
 
     variants = numeric_parameter_variants(code, max_variants=1)
 

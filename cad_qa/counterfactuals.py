@@ -39,7 +39,10 @@ def numeric_parameter_variants(
     variants = []
     group_id = "cfgrp_" + sha256_text(code).removeprefix("sha256:")[:16]
     for index, node in enumerate(constants[:max_variants]):
-        for direction, factor in (("increase", 1.0 + relative_delta), ("decrease", 1.0 - relative_delta)):
+        for direction, factor in (
+            ("increase", 1.0 + relative_delta),
+            ("decrease", 1.0 - relative_delta),
+        ):
             new_value = float(node.value) * factor
             transformer = _ReplaceConstant(node.lineno, node.col_offset, new_value)
             variant_tree = transformer.visit(ast.parse(code))

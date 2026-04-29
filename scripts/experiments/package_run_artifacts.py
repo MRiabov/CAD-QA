@@ -79,7 +79,10 @@ def _collect_files(inputs: list[Path], *, excludes: list[str]) -> list[Path]:
             candidates = [path for path in input_path.rglob("*") if path.is_file()]
         for path in candidates:
             rel = _display_path(path, inputs)
-            if not any(fnmatch.fnmatch(rel, pattern) or fnmatch.fnmatch(path.name, pattern) for pattern in excludes):
+            if not any(
+                fnmatch.fnmatch(rel, pattern) or fnmatch.fnmatch(path.name, pattern)
+                for pattern in excludes
+            ):
                 files.append(path)
     return sorted(set(files), key=lambda path: str(path))
 
@@ -93,7 +96,9 @@ def _manifest_entry(path: Path, inputs: list[Path]) -> dict[str, Any]:
     }
 
 
-def _write_archive(archive_path: Path, files: list[Path], inputs: list[Path], manifest_path: Path) -> None:
+def _write_archive(
+    archive_path: Path, files: list[Path], inputs: list[Path], manifest_path: Path
+) -> None:
     with tarfile.open(archive_path, "w:gz") as archive:
         for path in files:
             archive.add(path, arcname=_display_path(path, inputs))

@@ -169,6 +169,10 @@ trace metadata is available or safely derivable:
 - `bbox_region_query`
 - `validity_failure_prediction`
 
+`graph_query` rows are resolved through a feature-level typed graph IR over
+operation nodes, before/after/input/provenance/selector edges, and snapshot
+metrics. Broader B-rep and sketch graph coverage is intentionally not claimed.
+
 Generate grouped numeric counterfactual source variants:
 
 ```bash

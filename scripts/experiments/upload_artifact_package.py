@@ -30,7 +30,9 @@ def main(argv: list[str] | None = None) -> None:
     print(json.dumps(report, indent=2, sort_keys=True))
 
 
-def upload_artifact_package(package_dir: Path, *, destination_dir: Path, patterns: list[str] | None = None) -> dict[str, Any]:
+def upload_artifact_package(
+    package_dir: Path, *, destination_dir: Path, patterns: list[str] | None = None
+) -> dict[str, Any]:
     """Copy package files to a destination and verify their checksums."""
 
     patterns = patterns or list(DEFAULT_PATTERNS)
@@ -59,7 +61,9 @@ def upload_artifact_package(package_dir: Path, *, destination_dir: Path, pattern
     source_manifest = package_dir / "artifact_manifest.json"
     report = {
         "schema": "cadqa_artifact_upload_manifest_v1",
-        "status": "pass" if copied and all(item["verified"] for item in copied) else "fail",
+        "status": "pass"
+        if copied and all(item["verified"] for item in copied)
+        else "fail",
         "package_dir": str(package_dir),
         "destination_dir": str(destination_dir),
         "file_count": len(copied),

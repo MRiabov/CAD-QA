@@ -12,7 +12,10 @@ def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("rows", type=Path)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--system-prompt", default="Answer the CAD-QA question without executing code. Return only the requested structured answer.")
+    parser.add_argument(
+        "--system-prompt",
+        default="Answer the CAD-QA question without executing code. Return only the requested structured answer.",
+    )
     args = parser.parse_args(argv)
 
     rows = read_jsonl(args.rows)

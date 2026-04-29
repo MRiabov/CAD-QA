@@ -13,7 +13,12 @@ from cad_qa.jsonio import read_json, write_json
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--metric", action="append", required=True, help="TRAIN_FAMILY=path/to/prediction_metrics.json")
+    parser.add_argument(
+        "--metric",
+        action="append",
+        required=True,
+        help="TRAIN_FAMILY=path/to/prediction_metrics.json",
+    )
     parser.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args(argv)
 
@@ -29,7 +34,11 @@ def build_transfer_matrix(metric_specs: list[str]) -> dict[str, Any]:
     for spec in metric_specs:
         train_family, path = _parse_spec(spec)
         metrics = read_json(path)
-        by_task = metrics.get("by_task_type") if isinstance(metrics.get("by_task_type"), dict) else {}
+        by_task = (
+            metrics.get("by_task_type")
+            if isinstance(metrics.get("by_task_type"), dict)
+            else {}
+        )
         for eval_family, item in sorted(by_task.items()):
             if not isinstance(item, dict):
                 continue
@@ -66,7 +75,14 @@ def _write_csv(path: Path, cells: list[dict[str, Any]]) -> None:
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(
             handle,
-            fieldnames=["train_family", "eval_family", "row_count", "accuracy", "invalid_output_rate", "metric_path"],
+            fieldnames=[
+                "train_family",
+                "eval_family",
+                "row_count",
+                "accuracy",
+                "invalid_output_rate",
+                "metric_path",
+            ],
         )
         writer.writeheader()
         writer.writerows(cells)
