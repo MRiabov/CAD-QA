@@ -171,7 +171,7 @@ def resolve_graph_query(
 def default_graph_query_irs(graph: dict[str, Any]) -> list[dict[str, Any]]:
     if not _feature_nodes_with_metric(graph, "metrics.abs_signed_volume_delta"):
         return []
-    return [
+    queries = [
         {
             "ir_version": QUERY_IR_VERSION,
             "query_id": "default_abs_volume_delta_argmax",
@@ -185,31 +185,120 @@ def default_graph_query_irs(graph: dict[str, Any]) -> list[dict[str, Any]]:
             "return": {"field": "feature_id"},
             "prompt_template": "largest_abs_signed_volume_delta_feature",
         },
-        {
-            "ir_version": QUERY_IR_VERSION,
-            "query_id": "default_snapshot_feature_count",
-            "query_type": "feature_count",
-            "target_node_type": "feature",
-            "filters": [{"field": "metrics.snapshot_id", "op": "exists"}],
-            "aggregate": {"op": "count"},
-            "return": {"field": "count"},
-            "prompt_template": "snapshot_feature_count",
-        },
     ]
+    queries.extend(
+        _operation_metric_after_ordinal_irs(
+            graph,
+            operation="box",
+            metric="metrics.signed_volume_delta",
+            return_field="metrics.signed_volume_delta",
+            unit="mm^3",
+        )
+    )
+    if _operation_count(graph, "box") >= 2:
+        queries.extend(
+            [
+                {
+                    "ir_version": QUERY_IR_VERSION,
+                    "query_id": "default_box_bbox_volume_argmax",
+                    "query_type": "feature_select",
+                    "target_node_type": "feature",
+                    "filters": [
+                        {"field": "operation", "op": "eq", "value": "box"},
+                        {"field": "metrics.bbox_volume", "op": "exists"},
+                    ],
+                    "aggregate": {"op": "argmax", "metric": "metrics.bbox_volume"},
+                    "return": {"field": "feature_id"},
+                    "prompt_template": "box_largest_bbox_volume_feature",
+                },
+                {
+                    "ir_version": QUERY_IR_VERSION,
+                    "query_id": "default_box_bbox_y_extent_argmax",
+                    "query_type": "feature_select",
+                    "target_node_type": "feature",
+                    "filters": [
+                        {"field": "operation", "op": "eq", "value": "box"},
+                        {"field": "metrics.bbox_extent_y", "op": "exists"},
+                    ],
+                    "aggregate": {"op": "argmax", "metric": "metrics.bbox_extent_y"},
+                    "return": {"field": "feature_id"},
+                    "prompt_template": "box_largest_bbox_y_extent_feature",
+                },
+            ]
+        )
+    if _feature_nodes_with_metric(graph, "metrics.axis_length"):
+        queries.append(
+            {
+                "ir_version": QUERY_IR_VERSION,
+                "query_id": "default_axis_length_of_largest_positive_volume_delta",
+                "query_type": "feature_metric",
+                "target_node_type": "feature",
+                "filters": [
+                    {"field": "metrics.signed_volume_delta", "op": "exists"},
+                    {"field": "metrics.signed_volume_delta", "op": "gt", "value": 0.0},
+                    {"field": "metrics.axis_length", "op": "exists"},
+                ],
+                "aggregate": {"op": "argmax", "metric": "metrics.signed_volume_delta"},
+                "return": {"field": "metrics.axis_length"},
+                "unit": "mm",
+                "prompt_template": "axis_length_of_largest_positive_volume_delta",
+            }
+        )
+    for topology_key in ("face_count", "edge_count", "vertex_count"):
+        metric = f"metrics.topology_delta.{topology_key}"
+        if not _feature_nodes_with_metric(graph, metric):
+            continue
+        queries.append(
+            {
+                "ir_version": QUERY_IR_VERSION,
+                "query_id": f"default_{topology_key}_delta_argmax",
+                "query_type": "feature_select",
+                "target_node_type": "feature",
+                "filters": [
+                    {"field": metric, "op": "exists"},
+                    {"field": metric, "op": "gt", "value": 0},
+                ],
+                "aggregate": {"op": "argmax", "metric": metric},
+                "return": {"field": "feature_id"},
+                "prompt_template": f"largest_{topology_key}_increase_feature",
+            }
+        )
+    return queries
 
 
 def graph_query_prompt(
     ir: dict[str, Any], resolution: GraphQueryResolution, code: str
 ) -> str:
     template = ir.get("prompt_template")
-    if template == "snapshot_feature_count":
-        question = "Given the CadQuery script below, how many traced features have an intermediate geometry snapshot?"
-        return f"{question} Answer with exactly one non-negative integer.\n\n```python\n{code}```"
-
     if template == "largest_abs_signed_volume_delta_feature":
         question = (
-            "Given the CadQuery script below, which traced feature has the largest absolute signed volume delta "
-            "among features with measured adjacent snapshots?"
+            "Given the CadQuery script below, which feature causes the largest absolute volume change?"
+        )
+    elif template == "operation_metric_immediately_after_ordinal":
+        question = _operation_metric_after_ordinal_question(ir)
+    elif template == "box_largest_bbox_volume_feature":
+        question = (
+            "Given the CadQuery script below, of the box features, which one has the larger bounding-box volume?"
+        )
+    elif template == "box_largest_bbox_y_extent_feature":
+        question = (
+            "Given the CadQuery script below, of the box features, which one changes the bounding box more on the Y axis?"
+        )
+    elif template == "axis_length_of_largest_positive_volume_delta":
+        question = (
+            "Given the CadQuery script below, what is the axis length of the feature that adds the most volume?"
+        )
+    elif template == "largest_face_count_increase_feature":
+        question = (
+            "Given the CadQuery script below, which feature increases the face count the most?"
+        )
+    elif template == "largest_edge_count_increase_feature":
+        question = (
+            "Given the CadQuery script below, which feature increases the edge count the most?"
+        )
+    elif template == "largest_vertex_count_increase_feature":
+        question = (
+            "Given the CadQuery script below, which feature increases the vertex count the most?"
         )
     else:
         question = str(
@@ -235,6 +324,8 @@ def _feature_graph_node(
         metrics["volume"] = snapshot.get("volume")
         metrics["bbox"] = snapshot.get("bbox")
         metrics["topology"] = snapshot.get("topology")
+        metrics.update(_bbox_metrics(snapshot.get("bbox")))
+    metrics.update(_operation_metrics(node))
     if snapshot and previous_snapshot:
         metrics.update(_delta_metrics(snapshot, previous_snapshot))
     return {
@@ -287,6 +378,112 @@ def _delta_metrics(
     return metrics
 
 
+def _operation_metric_after_ordinal_irs(
+    graph: dict[str, Any],
+    *,
+    operation: str,
+    metric: str,
+    return_field: str,
+    unit: str | None,
+) -> list[dict[str, Any]]:
+    queries: list[dict[str, Any]] = []
+    for ordinal in range(1, _operation_count(graph, operation) + 1):
+        if _immediately_after_ordinal_feature_with_metric(
+            graph, operation=operation, ordinal=ordinal, metric=metric
+        ) is None:
+            continue
+        metric_name = metric.rsplit(".", 1)[-1]
+        queries.append(
+            {
+                "ir_version": QUERY_IR_VERSION,
+                "query_id": (
+                    "operation_metric_immediately_after_ordinal"
+                    f"__{operation}__{ordinal}__{metric_name}"
+                ),
+                "query_type": "feature_metric",
+                "target_node_type": "feature",
+                "filters": [
+                    {
+                        "op": "immediately_after_ordinal",
+                        "operation": operation,
+                        "ordinal": ordinal,
+                    },
+                    {"field": metric, "op": "exists"},
+                ],
+                "return": {"field": return_field},
+                "unit": unit,
+                "prompt_template": "operation_metric_immediately_after_ordinal",
+            }
+        )
+    return queries
+
+
+def _operation_metric_after_ordinal_question(ir: dict[str, Any]) -> str:
+    ordinal_filter = next(
+        (
+            item
+            for item in ir.get("filters", [])
+            if isinstance(item, dict)
+            and item.get("op") == "immediately_after_ordinal"
+        ),
+        {},
+    )
+    operation = str(ordinal_filter.get("operation", "operation"))
+    ordinal = int(ordinal_filter.get("ordinal", 1))
+    metric = str(ir.get("return", {}).get("field", "metric"))
+    metric_label = _metric_question_label(metric)
+    return (
+        "Given the CadQuery script below, "
+        f"how much {metric_label} is caused by the feature immediately after "
+        f"{operation} #{ordinal}?"
+    )
+
+
+def _bbox_metrics(bbox: Any) -> dict[str, Any]:
+    if not isinstance(bbox, dict):
+        return {}
+    minimum = bbox.get("min")
+    maximum = bbox.get("max")
+    if not _finite_triplet(minimum) or not _finite_triplet(maximum):
+        return {}
+    extents = [
+        float(high) - float(low)
+        for low, high in zip(minimum, maximum, strict=True)
+    ]
+    return {
+        "bbox_extent_x": extents[0],
+        "bbox_extent_y": extents[1],
+        "bbox_extent_z": extents[2],
+        "bbox_volume": extents[0] * extents[1] * extents[2],
+        "length": max(extents),
+    }
+
+
+def _operation_metrics(node: OperationNode) -> dict[str, Any]:
+    numeric_args = [_literal_number(arg) for arg in node.args_repr]
+    metrics: dict[str, Any] = {"numeric_args": numeric_args}
+    if node.operation == "box" and len(numeric_args) >= 3 and all(
+        value is not None for value in numeric_args[:3]
+    ):
+        x, y, z = (float(value) for value in numeric_args[:3])
+        metrics.update(
+            {
+                "parameter_x": x,
+                "parameter_y": y,
+                "parameter_z": z,
+                "parameter_volume": x * y * z,
+                "axis_length": max(abs(x), abs(y), abs(z)),
+            }
+        )
+    if (
+        node.operation in {"extrude", "cut_blind"}
+        and numeric_args
+        and numeric_args[0] is not None
+    ):
+        metrics["axis_length"] = abs(float(numeric_args[0]))
+    return metrics
+
+
 def _normalize_ir(ir: dict[str, Any]) -> dict[str, Any]:
     normalized = dict(ir)
     normalized.setdefault("ir_version", QUERY_IR_VERSION)
@@ -331,6 +528,13 @@ def _matches_filter(
         return anchor is not None and int(node.get("step_index", -1)) > int(
             anchor.get("step_index", -1)
         )
+    if op == "immediately_after_ordinal":
+        anchor = _ordinal_feature(
+            graph, str(filter_spec.get("operation")), int(filter_spec.get("ordinal", 1))
+        )
+        return anchor is not None and int(node.get("step_index", -1)) == int(
+            anchor.get("step_index", -1)
+        ) + 1
     if op == "before_ordinal":
         anchor = _ordinal_feature(
             graph, str(filter_spec.get("operation")), int(filter_spec.get("ordinal", 1))
@@ -391,6 +595,33 @@ def _ordinal_feature(
     if ordinal < 1 or ordinal > len(matches):
         return None
     return matches[ordinal - 1]
+
+
+def _operation_count(graph: dict[str, Any], operation: str) -> int:
+    return sum(
+        1
+        for node in graph.get("nodes", [])
+        if isinstance(node, dict)
+        and node.get("node_type") == "feature"
+        and node.get("operation") == operation
+    )
+
+
+def _immediately_after_ordinal_feature_with_metric(
+    graph: dict[str, Any], *, operation: str, ordinal: int, metric: str
+) -> dict[str, Any] | None:
+    anchor = _ordinal_feature(graph, operation, ordinal)
+    if anchor is None:
+        return None
+    target_step = int(anchor.get("step_index", -1)) + 1
+    for node in graph.get("nodes", []):
+        if not isinstance(node, dict) or node.get("node_type") != "feature":
+            continue
+        if int(node.get("step_index", -1)) != target_step:
+            continue
+        if _field_value(node, metric) is not None:
+            return node
+    return None
 
 
 def _resolve_arg_extreme(
@@ -543,6 +774,31 @@ def _field_value(node: dict[str, Any], path: str) -> Any:
             return None
         current = current[part]
     return current
+
+
+def _metric_question_label(metric: str) -> str:
+    labels = {
+        "metrics.signed_volume_delta": "signed volume delta",
+        "metrics.abs_signed_volume_delta": "absolute signed volume delta",
+        "metrics.axis_length": "axis length",
+    }
+    return labels.get(metric, metric.removeprefix("metrics.").replace("_", " "))
+
+
+def _literal_number(value: str) -> float | None:
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return None
+    return parsed if math.isfinite(parsed) else None
+
+
+def _finite_triplet(value: Any) -> bool:
+    return (
+        isinstance(value, list)
+        and len(value) == 3
+        and all(_finite_number(item) for item in value)
+    )
 
 
 def _answer_type(answer: Any) -> str | None:

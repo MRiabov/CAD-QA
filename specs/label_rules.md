@@ -223,9 +223,10 @@ derived from an explicit density. A public row may use one of these metrics only
 when every referenced feature/entity resolves uniquely and every metric source
 has an `ok` label status.
 
-Rows that rely on natural-language aliases such as "the second box" must store
-the exact resolved feature ID. If the ordinal, relation, or target is ambiguous,
-the row must be excluded or labeled with an explicit invalid/ambiguous answer.
+Rows that rely on ordinal references such as `box #2` must store the numeric
+ordinal in query IR and the exact resolved feature ID. If the ordinal, relation,
+or target is ambiguous, the row must be excluded or labeled with an explicit
+invalid/ambiguous answer.
 
 ## 11. Spatial Distance Rules
 

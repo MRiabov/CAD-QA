@@ -103,7 +103,7 @@ These tasks connect QA to edit ability.
 
 Examples:
 
-- Which feature after the second box added the most net volume?
+- Which feature after box #2 added the most net volume?
 - What is the length of the feature that added the most volume?
 - How much volume did cylinder A subtract from box B?
 
@@ -114,9 +114,9 @@ feature/entity resolution, and deterministic aggregation labels.
 
 Examples:
 
-- What is the X distance between the first and third holes?
-- What is the shortest distance between the first hole centerline and the
-  second cylinder centerline?
+- What is the X distance between hole #1 and hole #3?
+- What is the shortest distance between the hole #1 centerline and the
+  cylinder #2 centerline?
 - Which features added or removed material inside a specified bounding box?
 
 These tasks require stable point, axis, centerline, and spatial-window labels.

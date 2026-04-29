@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from cad_qa.jsonio import read_json, write_json, write_jsonl
+from cad_qa.jsonio import read_json, write_json
 from scripts.evaluation.evaluate_cadedit_predictions import cadedit_report
 from scripts.evaluation.evaluate_counterfactual_sensitivity import (
     evaluate_counterfactual_sensitivity,

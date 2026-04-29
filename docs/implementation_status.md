@@ -19,8 +19,8 @@ specs.
   snapshots using lightweight geometry signatures.
 - Feature-level typed graph-query construction and IR resolution over operation
   nodes, before/after/input/provenance/selector edges, snapshot metrics,
-  volume deltas, topology deltas, deterministic filters, counts, and argmin or
-  argmax aggregations.
+  volume deltas, topology deltas, numeric ordinal references such as `box #2`,
+  deterministic filters, counts, and argmin or argmax aggregations.
 - Public row materialization for:
   - `operation_count`
   - `coordinate_frame`
@@ -92,8 +92,10 @@ specs.
 
 ## Validated Artifacts
 
-- Current smoke generator: 61 validated smoke rows across implemented task
+- Current smoke generator: 134 validated smoke rows across implemented task
   families when rerun from the latest code.
+- `data/cadqa_advanced_smoke_demo`: 27 validated rows containing only the new
+  advanced diagnostic task families.
 - `runs/cadevolve_trace_probe_t30/dataset`: 921 validated rows from 3 adjacent
   CADEvolve-style sources, no failures.
 - `data/cadqa_cadevolve_rc_10`: 1,419 validated rows from 10 adjacent

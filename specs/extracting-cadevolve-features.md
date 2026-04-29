@@ -352,8 +352,8 @@ Build a typed graph from existing trace records:
 
 Store graph-query IR separately from natural-language prompts. Query resolution
 must produce resolved feature/entity IDs, measured values, tie-break evidence,
-and a resolution status. Rows with ambiguous ordinal references such as "the
-second box" are invalid unless the exact operation node resolves uniquely.
+and a resolution status. Rows with ordinal references such as `box #2` are
+invalid unless the exact operation node resolves uniquely.
 
 ### 7.2 Spatial references
 

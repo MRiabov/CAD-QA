@@ -553,7 +553,7 @@ def _graph_query_rows(
 def _spatial_distance_rows(
     source: SourceRecord, trace: TraceRecord, *, config: DatasetConfig
 ) -> list[PublicTaskRow]:
-    records = list(trace.spatial_queries) or _default_spatial_queries(trace)
+    records = list(trace.spatial_queries)
     rows: list[PublicTaskRow] = []
     for record in records:
         if record.get("status", "ok") != "ok":
@@ -572,13 +572,7 @@ def _spatial_distance_rows(
                 config=config,
                 task_type="spatial_distance",
                 target_feature_id=_optional_str(record.get("target_feature_id")),
-                prompt=(
-                    "Given the CadQuery script below, what is the world-coordinate distance in millimetres "
-                    f"between {_spatial_reference_description(reference_a)} "
-                    f"and {_spatial_reference_description(reference_b)}? "
-                    "Answer with exactly one finite number.\n\n"
-                    f"```python\n{source.normalized_code}```"
-                ),
+                prompt=_spatial_distance_prompt(source.normalized_code, record, reference_a, reference_b),
                 answer_type="number",
                 answer=_round_sigfig_number(answer),
                 choices=None,
@@ -591,10 +585,8 @@ def _spatial_distance_rows(
                 ],
                 difficulty_tags=["spatial_distance"],
                 labels={
-                    "spatial_query": {
-                        "query_kind": record.get(
-                            "query_kind", "point_to_point_distance"
-                        ),
+                "spatial_query": {
+                    "query_kind": record.get("query_kind"),
                         "reference_a": reference_a,
                         "reference_b": reference_b,
                         "raw_distance": answer,
@@ -612,43 +604,6 @@ def _spatial_distance_rows(
             )
         )
     return rows
-
-
-def _default_spatial_queries(trace: TraceRecord) -> list[dict[str, Any]]:
-    by_target: dict[str, list[dict[str, Any]]] = {}
-    for query in trace.point_queries:
-        point = query.get("point")
-        target = query.get("target_feature_id")
-        if isinstance(target, str) and _valid_point(point):
-            by_target.setdefault(target, []).append(query)
-    records: list[dict[str, Any]] = []
-    for target, queries in sorted(by_target.items()):
-        if len(queries) < 2:
-            continue
-        first, second = queries[0], queries[1]
-        first_point = [float(item) for item in first["point"]]
-        second_point = [float(item) for item in second["point"]]
-        records.append(
-            {
-                "query_id": f"default_point_distance_{target}",
-                "target_feature_id": target,
-                "query_kind": "point_to_point_distance",
-                "reference_a": {
-                    "name": "point_a",
-                    "point": first_point,
-                    "source": first.get("sampling_stratum"),
-                },
-                "reference_b": {
-                    "name": "point_b",
-                    "point": second_point,
-                    "source": second.get("sampling_stratum"),
-                },
-                "answer": _point_distance(first_point, second_point),
-                "reference_status": "ok",
-            }
-        )
-        break
-    return records
 
 
 def _bbox_region_rows(
@@ -1045,10 +1000,6 @@ def _valid_point(value: Any) -> bool:
     )
 
 
-def _point_distance(first: list[float], second: list[float]) -> float:
-    return math.sqrt(sum((a - b) ** 2 for a, b in zip(first, second, strict=True)))
-
-
 def _json_compact(value: Any) -> str:
     return json.dumps(value, separators=(",", ":"), sort_keys=True)
 
@@ -1063,6 +1014,32 @@ def _spatial_reference_description(reference: dict[str, Any]) -> str:
         kind = str(reference.get("reference_kind") or "axis")
         return f"`{name}` {kind} with point `{_json_compact(point)}` and direction `{_json_compact(direction)}`"
     return f"`{name}` reference `{_json_compact(reference)}`"
+
+
+def _spatial_distance_prompt(
+    code: str,
+    record: dict[str, Any],
+    reference_a: dict[str, Any],
+    reference_b: dict[str, Any],
+) -> str:
+    query_kind = record.get("query_kind")
+    if query_kind == "axis_component_distance":
+        axis = str(record.get("component_axis", "X")).upper()
+        question = (
+            f"Given the CadQuery script below, what is the world-coordinate {axis} distance in millimetres "
+            f"between {_spatial_reference_description(reference_a)} and {_spatial_reference_description(reference_b)}?"
+        )
+    elif query_kind == "centerline_to_centerline_distance":
+        question = (
+            "Given the CadQuery script below, what is the shortest distance in millimetres "
+            f"between {_spatial_reference_description(reference_a)} and {_spatial_reference_description(reference_b)}?"
+        )
+    else:
+        question = (
+            "Given the CadQuery script below, what is the world-coordinate distance in millimetres "
+            f"between {_spatial_reference_description(reference_a)} and {_spatial_reference_description(reference_b)}?"
+        )
+    return f"{question} Answer with exactly one finite number.\n\n```python\n{code}```"
 
 
 def _round_bbox(value: Any) -> Any:

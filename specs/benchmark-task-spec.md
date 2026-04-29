@@ -279,7 +279,7 @@ answer.
 
 Examples:
 
-- Which feature after the second `box` added the most net volume?
+- Which feature after `box` #2 added the most net volume?
 - What is the length of the feature that added the most volume?
 - Which of two parameterized boxes changed the bounding-box volume more?
 - How much volume did cylinder A subtract from box B?
@@ -325,9 +325,9 @@ script trace.
 
 Examples:
 
-- What is the X distance between the first hole and the third hole?
-- What is the shortest distance between the centerlines of the first hole and
-  the second cylinder?
+- What is the X distance between hole #1 and hole #3?
+- What is the shortest distance between the centerlines of hole #1 and
+  cylinder #2?
 - How far apart are point A and point B?
 
 **Allowed answer**

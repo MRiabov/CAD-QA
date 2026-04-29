@@ -65,8 +65,13 @@ def export_audit_renders(
     svg_dir.mkdir(exist_ok=True)
     sources = _records_by_key(dataset_dir / "sources.jsonl", "source_id")
     traces = _records_by_key(dataset_dir / "traces.jsonl", "source_id")
+    priority_source_ids = _split_source_ids(dataset_dir / "jsonl" / "validation.jsonl")
     render_items = []
-    for source_id, source in sorted(sources.items())[:limit]:
+    source_items = sorted(
+        sources.items(),
+        key=lambda item: (0 if item[0] in priority_source_ids else 1, item[0]),
+    )
+    for source_id, source in source_items[:limit]:
         trace = traces.get(source_id, {})
         for view in views:
             render_id = (
@@ -125,6 +130,12 @@ def _records_by_key(path: Path, key: str) -> dict[str, dict[str, Any]]:
     if not path.exists():
         return {}
     return {str(row.get(key)): row for row in read_jsonl(path)}
+
+
+def _split_source_ids(path: Path) -> set[str]:
+    if not path.exists():
+        return set()
+    return {str(row.get("source_id")) for row in read_jsonl(path) if row.get("source_id")}
 
 
 def _item(

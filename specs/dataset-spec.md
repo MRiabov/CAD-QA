@@ -760,7 +760,7 @@ Then represent a QA item with a query IR:
   "entity": "feature",
   "metric": "net_added_volume",
   "filters": [
-    {"relation": "after", "target": "second_feature_of_type:box"}
+    {"relation": "after", "target": {"operation": "box", "ordinal": 2}}
   ],
   "return": "feature_id"
 }
@@ -769,9 +769,9 @@ Then represent a QA item with a query IR:
 Example natural-language questions derived from graph queries:
 
 ```text
-Which feature after the second box added the most net volume?
-How much volume did the cylinder selected by the third cut remove from box B?
-What is the X distance between the first hole and the third hole?
+Which feature after box #2 added the most net volume?
+How much volume did the cylinder selected by cut #3 remove from box B?
+What is the X distance between hole #1 and hole #3?
 Which of box(1,2,3) and box(4,5,6) changed the bounding box more along Y?
 What feature has the largest positive volume delta, and what is its length?
 ```
@@ -841,12 +841,12 @@ This would make the dataset much more useful for training and also more defensib
 
 Additional notes are graph-like reasoning:
 
-* "How much volume does the feature that comes after the second box contribute to the volume?"
+* "How much volume does the feature that comes after box #2 contribute to the volume?"
 * "What is the length of the axis for the feature that has 8 parallel edges?"
 * "Of boxes with parameters (1,2,3) and (4,5,6), which changed the bounding-box volume more?"
 * "Of boxes with parameters (1,2,3) and (4,5,6), which has changed the bounding box more on the Y axis?"
 * "How much volume did the cylinder A subtract from box B?"
-* "How much X distance is between the first hole and the third hole in the script?"
+* "How much X distance is between hole #1 and hole #3 in the script?"
 * "What is the length of the feature that added the most volume?"
 
 
@@ -854,7 +854,7 @@ Additional notes are graph-like reasoning:
 
 * "Given this script we intend to add feature box(1,2,3)."
 * "What is the weight added by feature A, provided the material has density 8.27 g/cm^3?"
-* "What is the shortest distance between the centerlines of the first hole and the second cylinder in the script?"
+* "What is the shortest distance between the centerlines of hole #1 and cylinder #2 in the script?"
 
 ### Bounding box as selectors
 

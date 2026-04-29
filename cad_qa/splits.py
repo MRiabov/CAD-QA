@@ -98,6 +98,19 @@ def assign_row_splits(rows: list[dict[str, Any]], seed: int) -> list[dict[str, A
         assignments[
             max(candidate_groups, key=lambda group: _stable_bucket(group, seed))
         ] = "validation"
+    if groups and "train" not in set(assignments.values()):
+        candidate_groups = [
+            group for group in groups if assignments[group] == "validation"
+        ] or groups
+        assignments[
+            min(candidate_groups, key=lambda group: _stable_bucket(group, seed))
+        ] = "train"
+    if len(groups) > 1 and "validation" not in set(assignments.values()):
+        candidate_groups = [group for group in groups if assignments[group] != "train"]
+        if candidate_groups:
+            assignments[
+                max(candidate_groups, key=lambda group: _stable_bucket(group, seed))
+            ] = "validation"
     updated: list[dict[str, Any]] = []
     for row in rows:
         copy = dict(row)
