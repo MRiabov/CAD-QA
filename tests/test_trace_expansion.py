@@ -1,4 +1,9 @@
+import math
+
+import pytest
+
 from cad_qa.trace import (
+    _classify_point,
     _generated_selector_descriptors_for_snapshot,
     _generated_selector_tables_for_snapshot,
     _point_query_descriptors_for_snapshots,
@@ -171,3 +176,42 @@ def test_point_descriptors_exist_for_aabb_and_adaptive_near_boundary_strata():
     )
     assert near_payload["adaptive_boundary_margin_mm"] == 0.02
     assert near_payload["point_export_sigfigs"] == 4
+
+
+def test_point_classifier_labels_sphere_surface_as_boundary():
+    cq = pytest.importorskip("cadquery")
+    sphere = cq.Workplane("XY").sphere(1).val()
+    namespace = _classifier_namespace(cq)
+
+    assert _classify_point(sphere, [1.0, 0.0, 0.0], namespace) == "on_boundary"
+    assert _classify_point(sphere, [0.99, 0.0, 0.0], namespace) == "inside"
+    assert _classify_point(sphere, [1.01, 0.0, 0.0], namespace) == "outside"
+
+
+def test_point_classifier_labels_two_sphere_intersection_curve_as_boundary():
+    cq = pytest.importorskip("cadquery")
+    pytest.importorskip("OCP")
+    from OCP.BRepAlgoAPI import BRepAlgoAPI_Common
+
+    left = cq.Workplane("XY").sphere(1).val()
+    right = cq.Workplane("XY").sphere(1).translate((1, 0, 0)).val()
+    common = BRepAlgoAPI_Common(left.wrapped, right.wrapped)
+    common.Build()
+    lens = cq.Shape.cast(common.Shape())
+    namespace = _classifier_namespace(cq)
+    intersection_y = math.sqrt(1.0 - 0.5**2)
+
+    assert (
+        _classify_point(lens, [0.5, intersection_y, 0.0], namespace)
+        == "on_boundary"
+    )
+    assert _classify_point(lens, [0.5, 0.0, 0.0], namespace) == "inside"
+    assert _classify_point(lens, [0.5, 0.99, 0.0], namespace) == "outside"
+
+
+def _classifier_namespace(cq):
+    return {
+        "cq": cq,
+        "cadquery": cq,
+        "__cadqa_label_policy": {"point_boundary_tolerance_mm": 1e-5},
+    }

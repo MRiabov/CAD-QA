@@ -401,6 +401,7 @@ def _trace_worker_payload(
     namespace: dict[str, Any] = {
         "cq": cq,
         "cadquery": cq,
+        "__cadqa_label_policy": asdict(config.label_policy),
         "__builtins__": _safe_builtins(),
     }
     snapshots: list[dict[str, Any]] = []
@@ -960,7 +961,7 @@ def _evaluate_point_descriptor(
         "sampling_stratum": _point_sampling_stratum(
             intended_stratum, classification
         ),
-        "classifier": "cadquery_shape_isInside",
+        "classifier": "occ_face_distance_then_cadquery_shape_isInside",
         "sample_source": payload.get("sample_source"),
         "snapshot_id": payload.get("snapshot_id"),
         "step_index": payload.get("step_index"),
@@ -1082,6 +1083,10 @@ def _evaluate_runtime_descriptor(
 def _classify_point(
     shape: Any, point: list[float], namespace: dict[str, Any]
 ) -> str | None:
+    boundary_tolerance = _point_boundary_tolerance(namespace)
+    boundary_distance = _point_boundary_distance(shape, point)
+    if boundary_distance is not None and boundary_distance <= boundary_tolerance:
+        return "on_boundary"
     vector = point
     cq = namespace.get("cq") or namespace.get("cadquery")
     if cq is not None and hasattr(cq, "Vector"):
@@ -1102,6 +1107,54 @@ def _classify_point(
     except Exception:
         return None
     return "inside" if inside else "outside"
+
+
+def _point_boundary_tolerance(namespace: dict[str, Any]) -> float:
+    policy = namespace.get("__cadqa_label_policy")
+    if isinstance(policy, dict):
+        value = policy.get("point_boundary_tolerance_mm")
+        if isinstance(value, (int, float)) and math.isfinite(float(value)):
+            return float(value)
+    return 1e-5
+
+
+def _point_boundary_distance(shape: Any, point: list[float]) -> float | None:
+    try:
+        from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeVertex  # type: ignore[import-not-found]
+        from OCP.BRepExtrema import BRepExtrema_DistShapeShape  # type: ignore[import-not-found]
+        from OCP.gp import gp_Pnt  # type: ignore[import-not-found]
+    except Exception:
+        return None
+    try:
+        vertex = BRepBuilderAPI_MakeVertex(gp_Pnt(*point)).Vertex()
+    except Exception:
+        return None
+    boundary_shapes = _boundary_shapes(shape)
+    distances: list[float] = []
+    for boundary_shape in boundary_shapes:
+        wrapped = getattr(boundary_shape, "wrapped", boundary_shape)
+        try:
+            distance = BRepExtrema_DistShapeShape(vertex, wrapped)
+            distance.Perform()
+            if distance.IsDone():
+                value = float(distance.Value())
+                if math.isfinite(value):
+                    distances.append(value)
+        except Exception:
+            continue
+    return min(distances) if distances else None
+
+
+def _boundary_shapes(shape: Any) -> list[Any]:
+    faces = getattr(shape, "Faces", None)
+    if callable(faces):
+        try:
+            face_values = list(faces())
+        except Exception:
+            face_values = []
+        if face_values:
+            return face_values
+    return [shape]
 
 
 def _conservative_provenance_records(
