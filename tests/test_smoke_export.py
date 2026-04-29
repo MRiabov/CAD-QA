@@ -106,6 +106,34 @@ def test_schema_rejects_ambiguous_point_membership_answer():
     assert "point_membership answer must be a point classification" in errors
 
 
+def test_schema_rejects_ambiguous_provenance_answer():
+    errors = validate_public_row(
+        {
+            "id": "row",
+            "dataset_version": "cadqa-v0.1",
+            "task_type": "feature_provenance_choice",
+            "source_id": "src",
+            "trace_id": "trace",
+            "target_feature_id": "wp1",
+            "split": "train",
+            "prompt": "prompt",
+            "answer_type": "choice",
+            "answer": "ambiguous" + "_or_merged",
+            "choices": ["wp1", "wp2"],
+            "unit": None,
+            "numeric_tolerance": None,
+            "requires": [],
+            "difficulty_tags": [],
+            "labels": {},
+            "diagnostics": {},
+            "provenance": {"source_id": "src", "split_group": "src"},
+            "parse_policy": "strict_enum_v1",
+        }
+    )
+
+    assert "feature_provenance_choice answer must be in choices" in errors
+
+
 def test_public_numeric_answers_are_rounded_but_raw_labels_are_preserved():
     config = DatasetConfig()
     source, trace = smoke_traces(config)[0]

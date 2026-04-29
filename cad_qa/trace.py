@@ -8,6 +8,7 @@ from dataclasses import asdict
 import math
 import multiprocessing as mp
 from queue import Empty
+import re
 import sys
 import time
 from typing import Any
@@ -463,7 +464,7 @@ def _trace_worker_payload(
         topology_matches = _adjacent_topology_matches(snapshots)
         provenance_records = [
             *_conservative_provenance_records(snapshots),
-            *_topology_match_provenance_records(topology_matches),
+            *_lineage_provenance_records(snapshots, topology_matches),
         ]
     except Exception as exc:
         return {
@@ -1122,6 +1123,9 @@ def _conservative_provenance_records(
                 "target_feature_id": current.get("feature_id"),
                 "provenance_relation": relation,
                 "answer_feature_id": current.get("feature_id"),
+                "contributor_feature_ids": [current.get("feature_id")],
+                "first_contributor_feature_id": current.get("feature_id"),
+                "first_contributor_rule": "min_step_index",
                 "matching_method": "adjacent_snapshot_volume_delta",
                 "provenance_confidence": 0.6,
             }
@@ -1129,29 +1133,222 @@ def _conservative_provenance_records(
     return records
 
 
+def _lineage_provenance_records(
+    snapshots: list[dict[str, Any]],
+    topology_matches: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    feature_order = _feature_order_from_snapshots(snapshots)
+    matches_by_target = _topology_matches_by_target(topology_matches)
+    lineage: dict[tuple[str, str, str], list[str]] = {}
+    for snapshot_index, snapshot in enumerate(snapshots):
+        feature_id = snapshot.get("feature_id")
+        if not isinstance(feature_id, str):
+            continue
+        signatures = _snapshot_entity_signatures(snapshot)
+        for entity_type, entities in signatures.items():
+            for entity in entities:
+                entity_id = entity.get("entity_id")
+                if not isinstance(entity_id, str):
+                    continue
+                entity_key = (feature_id, entity_type, entity_id)
+                matches = matches_by_target.get(entity_key, [])
+                previous_contributors: list[str] = []
+                for match in matches:
+                    from_feature = match.get("from_feature_id")
+                    from_entity = match.get("from_entity_id")
+                    if not isinstance(from_feature, str) or not isinstance(
+                        from_entity, str
+                    ):
+                        continue
+                    from_key = (from_feature, entity_type, from_entity)
+                    previous_contributors.extend(
+                        lineage.get(from_key) or [from_feature]
+                    )
+
+                contributors = _ordered_unique([*previous_contributors, feature_id])
+                lineage[entity_key] = contributors
+                if snapshot_index == 0:
+                    continue
+                first = _first_feature_id(contributors, feature_order)
+                if first is None:
+                    continue
+                relation = _lineage_relation(matches, previous_contributors)
+                confidence_values = [
+                    float(match.get("confidence"))
+                    for match in matches
+                    if isinstance(match.get("confidence"), (int, float))
+                ]
+                records.append(
+                    {
+                        "target_description": (
+                            f"{entity_type} `{entity_id}` in snapshot `{feature_id}`"
+                        ),
+                        "target_feature_id": feature_id,
+                        "provenance_relation": relation,
+                        "answer_feature_id": first,
+                        "contributor_feature_ids": contributors,
+                        "first_contributor_feature_id": first,
+                        "first_contributor_rule": "min_step_index",
+                        "matching_method": (
+                            "entity_lineage_contributor_set"
+                            if matches
+                            else "unmatched_adjacent_entity"
+                        ),
+                        "provenance_confidence": (
+                            min(confidence_values) if confidence_values else 0.6
+                        ),
+                        "topology_matches": matches,
+                    }
+                )
+    return records
+
+
 def _topology_match_provenance_records(
     topology_matches: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
-    for match in topology_matches:
-        to_feature = match.get("to_feature_id")
-        from_feature = match.get("from_feature_id")
-        if not isinstance(to_feature, str) or not isinstance(from_feature, str):
+    feature_order = _feature_order_from_matches(topology_matches)
+    for target_key, matches in _topology_matches_by_target(topology_matches).items():
+        to_feature, entity_type, to_entity_id = target_key
+        from_contributors = [
+            str(match.get("from_feature_id"))
+            for match in matches
+            if isinstance(match.get("from_feature_id"), str)
+        ]
+        contributors = _ordered_unique(
+            [
+                *from_contributors,
+                to_feature,
+            ]
+        )
+        first = _first_feature_id(contributors, feature_order)
+        if first is None:
             continue
-        entity_type = match.get("entity_type") or "entity"
+        confidence_values = [
+            float(match.get("confidence"))
+            for match in matches
+            if isinstance(match.get("confidence"), (int, float))
+        ]
+        relation = _lineage_relation(matches, from_contributors)
+        representative = matches[0]
         records.append(
             {
-                "target_description": f"{entity_type} `{match.get('to_entity_id')}` inherited from adjacent snapshot",
+                "target_description": (
+                    f"{entity_type} `{to_entity_id}` inherited from adjacent snapshot"
+                ),
                 "target_feature_id": to_feature,
-                "provenance_relation": "inherited_from",
-                "answer_feature_id": from_feature,
-                "matching_method": match.get("matching_method")
+                "provenance_relation": relation,
+                "answer_feature_id": first,
+                "contributor_feature_ids": contributors,
+                "first_contributor_feature_id": first,
+                "first_contributor_rule": "min_step_index",
+                "matching_method": representative.get("matching_method")
                 or "adjacent_topology_match",
-                "provenance_confidence": match.get("confidence", 0.5),
-                "topology_match": match,
+                "provenance_confidence": (
+                    min(confidence_values) if confidence_values else 0.5
+                ),
+                "topology_matches": matches,
             }
         )
     return records
+
+
+def _feature_order_from_snapshots(
+    snapshots: list[dict[str, Any]],
+) -> dict[str, int]:
+    order: dict[str, int] = {}
+    for fallback_index, snapshot in enumerate(snapshots):
+        feature_id = snapshot.get("feature_id")
+        if not isinstance(feature_id, str):
+            continue
+        step_index = snapshot.get("step_index")
+        order[feature_id] = (
+            int(step_index) if isinstance(step_index, int) else fallback_index
+        )
+    return order
+
+
+def _feature_order_from_matches(
+    topology_matches: list[dict[str, Any]],
+) -> dict[str, int]:
+    feature_ids: list[str] = []
+    for match in topology_matches:
+        for key in ("from_feature_id", "to_feature_id"):
+            feature_id = match.get(key)
+            if isinstance(feature_id, str):
+                feature_ids.append(feature_id)
+    return {
+        feature_id: index
+        for index, feature_id in enumerate(
+            sorted(_ordered_unique(feature_ids), key=_feature_sort_key)
+        )
+    }
+
+
+def _topology_matches_by_target(
+    topology_matches: list[dict[str, Any]],
+) -> dict[tuple[str, str, str], list[dict[str, Any]]]:
+    grouped: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
+    for match in topology_matches:
+        to_feature = match.get("to_feature_id")
+        entity_type = match.get("entity_type") or "entity"
+        to_entity = match.get("to_entity_id")
+        if not (
+            isinstance(to_feature, str)
+            and isinstance(entity_type, str)
+            and isinstance(to_entity, str)
+        ):
+            continue
+        grouped.setdefault((to_feature, entity_type, to_entity), []).append(match)
+    return grouped
+
+
+def _lineage_relation(
+    matches: list[dict[str, Any]], previous_contributors: list[str]
+) -> str:
+    if not matches:
+        return "created_by"
+    previous_entities = {
+        (match.get("from_feature_id"), match.get("from_entity_id"))
+        for match in matches
+    }
+    if len(previous_entities) > 1 or len(set(previous_contributors)) > 1:
+        return "bounded_by"
+    return "inherited_from"
+
+
+def _first_feature_id(
+    feature_ids: list[str], feature_order: dict[str, int]
+) -> str | None:
+    valid = [feature_id for feature_id in feature_ids if isinstance(feature_id, str)]
+    if not valid:
+        return None
+    return min(
+        valid,
+        key=lambda feature_id: (
+            feature_order.get(feature_id, 10**9),
+            _feature_sort_key(feature_id),
+        ),
+    )
+
+
+def _feature_sort_key(feature_id: str) -> tuple[str, int, str]:
+    match = re.search(r"(\d+)$", feature_id)
+    if match:
+        return (feature_id[: match.start()], int(match.group(1)), feature_id)
+    return (feature_id, -1, feature_id)
+
+
+def _ordered_unique(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    output: list[str] = []
+    for value in values:
+        if not isinstance(value, str) or value in seen:
+            continue
+        seen.add(value)
+        output.append(value)
+    return output
 
 
 def _adjacent_topology_matches(snapshots: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -1302,12 +1499,44 @@ def _attach_table_feature_ids(
     updated: list[dict[str, Any]] = []
     for record in records:
         copy = dict(record)
-        for key in ("target_feature_id", "answer_feature_id", "feature_id"):
+        for key in (
+            "target_feature_id",
+            "answer_feature_id",
+            "feature_id",
+            "first_contributor_feature_id",
+        ):
             value = copy.get(key)
             if value in target_to_feature:
                 copy[key] = target_to_feature[value]
+        contributors = copy.get("contributor_feature_ids")
+        if isinstance(contributors, list):
+            copy["contributor_feature_ids"] = [
+                target_to_feature.get(value, value) for value in contributors
+            ]
+        for key in ("topology_match", "topology_matches"):
+            value = copy.get(key)
+            if isinstance(value, dict):
+                copy[key] = _attach_match_feature_ids(value, target_to_feature)
+            elif isinstance(value, list):
+                copy[key] = [
+                    _attach_match_feature_ids(item, target_to_feature)
+                    if isinstance(item, dict)
+                    else item
+                    for item in value
+                ]
         updated.append(copy)
     return updated
+
+
+def _attach_match_feature_ids(
+    record: dict[str, Any], target_to_feature: dict[str, str]
+) -> dict[str, Any]:
+    copy = dict(record)
+    for key in ("from_feature_id", "to_feature_id", "target_feature_id"):
+        value = copy.get(key)
+        if value in target_to_feature:
+            copy[key] = target_to_feature[value]
+    return copy
 
 
 def _attach_descriptor_feature_ids(

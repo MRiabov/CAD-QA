@@ -513,13 +513,14 @@ def _provenance_rows(
     rows: list[PublicTaskRow] = []
     feature_choices = [node.feature_id for node in nodes if node.status == "ok"]
     for record in trace.provenance_records:
-        answer = record.get("answer_feature_id") or record.get("feature_id")
-        relation = record.get("provenance_relation")
-        if relation == "ambiguous_or_merged":
-            answer = "ambiguous_or_merged"
+        answer = (
+            record.get("first_contributor_feature_id")
+            or record.get("answer_feature_id")
+            or record.get("feature_id")
+        )
         if not isinstance(answer, str):
             continue
-        choices = [*feature_choices, "ambiguous_or_merged"]
+        choices = [*feature_choices]
         if answer not in choices:
             continue
         rows.append(
@@ -531,7 +532,8 @@ def _provenance_rows(
                 target_feature_id=record.get("target_feature_id"),
                 prompt=(
                     "Given the CadQuery script below and the described target, choose the feature ID "
-                    "that best matches the recorded provenance, or answer ambiguous_or_merged. "
+                    "that first contributed to the target's creation or existence. "
+                    "Answer with exactly one listed feature ID. "
                     f"Target: {record.get('target_description', 'unspecified')}.\n\n"
                     f"Choices: {', '.join(choices)}\n\n"
                     f"```python\n{source.normalized_code}```"

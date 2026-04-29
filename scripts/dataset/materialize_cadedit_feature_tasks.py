@@ -51,11 +51,7 @@ def materialize_feature_to_edit_rows(
             continue
         answer = row.get("answer")
         choices = row.get("choices")
-        if (
-            answer == "ambiguous_or_merged"
-            or not isinstance(answer, str)
-            or not isinstance(choices, list)
-        ):
+        if not isinstance(answer, str) or not isinstance(choices, list):
             continue
         provenance_label = (
             row.get("labels") if isinstance(row.get("labels"), dict) else {}
@@ -75,12 +71,10 @@ def materialize_feature_to_edit_rows(
             "to affect the target region with the smallest provenance-consistent change. "
             "Answer with exactly one listed feature ID.\n\n"
             f"Target: {target}\n\n"
-            f"Choices: {', '.join(str(choice) for choice in choices if choice != 'ambiguous_or_merged')}\n\n"
+            f"Choices: {', '.join(str(choice) for choice in choices)}\n\n"
             f"{_code_block(row.get('prompt'))}"
         )
-        valid_choices = [
-            str(choice) for choice in choices if choice != "ambiguous_or_merged"
-        ]
+        valid_choices = [str(choice) for choice in choices]
         prompt_hash = sha256_json(
             {
                 "task_type": "feature_to_edit",

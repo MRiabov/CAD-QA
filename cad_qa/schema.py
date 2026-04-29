@@ -60,7 +60,6 @@ PROVENANCE_RELATIONS = {
     "deleted_by",
     "inherited_from",
     "bounded_by",
-    "ambiguous_or_merged",
 }
 
 HASH_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
@@ -265,11 +264,11 @@ def _validate_answer(row: dict[str, Any], errors: list[str]) -> None:
             errors.append("choice answer is not listed in choices")
     if task_type == "point_membership" and answer not in POINT_CLASSIFICATIONS:
         errors.append("point_membership answer must be a point classification")
-    if task_type == "feature_provenance_choice" and answer != "ambiguous_or_merged":
+    if task_type == "feature_provenance_choice":
         choices = row.get("choices")
         if not isinstance(choices, list) or answer not in choices:
             errors.append(
-                "feature_provenance_choice answer must be in choices or ambiguous_or_merged"
+                "feature_provenance_choice answer must be in choices"
             )
 
 
