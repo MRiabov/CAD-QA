@@ -1,136 +1,113 @@
-# Multi-Hop CAD-QA Architecture Notes
+# Multi-Hop CAD-QA Architecture
 
-This document is an exploratory architecture note for the BrowseComp-style
-Multi-Hop CAD-QA track described in
-[`specs/multi-hop-qa-task-spec.md`](../specs/multi-hop-qa-task-spec.md). It is
-not an implementation contract. The goal is to make the generation pipeline
-concrete enough to debate, prototype, and reject bad ideas early.
+This note describes the proposed generation architecture for the BrowseComp-like
+Multi-Hop CAD-QA track in
+[`specs/multi-hop-qa-task-spec.md`](../specs/multi-hop-qa-task-spec.md).
 
-The core design thesis is:
+The current design is intentionally simple:
 
 ```text
-deterministic hidden query skeleton
-+ graph-grounded answer-first sampling
-+ LLM surface rendering
-+ deterministic verifier
-+ LLM judges and adversarial solvers
-= natural-looking hard questions with auditable labels
+CadQuery script
+-> trace and typed ontology graph
+-> answer-first target sampling
+-> broad clue mining
+-> candidate-count gates
+-> deterministic text templates
+-> checklist prompt
+-> deterministic verifier and audit report
 ```
 
-The public benchmark should look like ordinary CAD questions over code. The
-private dataset row should keep enough structure to regenerate the question,
-validate the answer, measure difficulty, and explain why a row was accepted.
+There is no public DSL and no required LLM generation step. The public question
+is a natural-language checklist produced from typed ontology atoms by a
+rule-based verbalizer. External models may still be used later for evaluation,
+but they are not part of the trusted generation path.
 
 ## Design Goals
 
-- Generate genuine-looking, obfuscated multi-hop CAD questions.
-- Keep every official answer deterministic and verifier-backed.
-- Make questions hard to solve but easy to verify after a candidate answer is
-  proposed.
-- Avoid exposing a query DSL to benchmarked models.
-- Avoid relying on LLMs for truth, uniqueness, or geometry labels.
-- Use inexpensive LLMs where possible by limiting them to bounded generation,
-  critique, and adversarial solving roles.
-- Record enough hidden structure to support audits, regeneration, balancing,
-  and difficulty analysis.
+- Generate genuine-looking, obfuscated multi-hop questions over CadQuery code.
+- Keep every accepted answer deterministic and verifier-backed.
+- Make individual clues broad enough that no single clue acts like a direct
+  reference.
+- Keep public wording understandable from the shown script alone, including for
+  small models that know CadQuery but not this benchmark's private ontology.
+- Produce enough private structure to audit, regenerate, balance, and debug each
+  row.
+- Prefer boring, inspectable templates over clever surface variation.
 
 ## Non-Goals
 
-- Do not make a public formal query language.
-- Do not ask an LLM to invent CAD facts.
-- Do not accept rows whose uniqueness depends only on model judgment.
-- Do not treat vague design intent as a label source.
-- Do not optimize first for maximum linguistic diversity. Natural language
-  diversity should come after label correctness and ambiguity control.
+- Do not expose a formal query language to benchmarked models.
+- Do not ask an LLM to invent facts, choose the answer, or judge uniqueness.
+- Do not accept rare one-off clues that identify the target by themselves.
+- Do not use private ontology terms in public prompts unless grounded directly
+  in visible CadQuery code.
+- Do not optimize for paragraph naturalness before correctness, breadth, and
+  auditability are solved.
 
-## Relevant Design Patterns
+## Core Artifacts
 
-BrowseComp is useful as a design analogy because it starts from an answer and
-builds an inverted question that is hard to discover but short and easy to
-verify. For CAD-QA, the verifier is stronger than in open-web QA because the
-answer can be checked against trace and graph labels.
+### Ontology Graph
 
-SailorFog-style generation is useful because difficulty comes from graph
-sampling, uncertainty, and distractors rather than from a fixed template list.
-The CAD analogue should sample connected CAD subgraphs, then render their
-constraints into natural language.
+The private graph is built from the normalized CadQuery script, trace snapshots,
+and static parse information. It can be partial, but each row must declare which
+families it relies on.
 
-WebShaper is useful because it separates the formal reasoning structure from
-surface question text. The CAD analogue should use hidden typed query programs,
-not public DSL prompts.
+Useful graph families:
 
-## High-Level Pipeline
+- operation nodes and source spans;
+- temporal order between operations;
+- operation semantics, such as additive, subtractive, transform, selector, or
+  workplane-changing steps;
+- selector usage, such as `.faces(">Z")`, `.edges("|Z")`, or `.vertices(...)`;
+- parameter and expression usage;
+- volume and bounding-box deltas;
+- topology deltas, such as face, edge, circular-edge, or vertex count changes;
+- relation edges between operations, workplanes, selected entities, parameters,
+  and derived geometry labels.
 
-### 1. Trace And Graph Construction
+### Hidden Query Program
 
-Input:
-
-- normalized CadQuery script;
-- operation graph;
-- trace snapshots;
-- selector tables;
-- topology counts and topology deltas;
-- volume and bounding-box metrics;
-- provenance records when available;
-- spatial indexes when available.
-
-Output:
-
-- hidden CAD knowledge graph;
-- node and relation family coverage metadata;
-- label status for every metric or relation family.
-
-The graph may be partial. Every candidate row must declare which graph
-families it uses, and the row should be rejected when any required family is
-missing, unstable, or below confidence thresholds.
-
-### 2. Answer-First Target Sampling
-
-Sample a target before generating the question. Candidate answer types:
-
-- `feature_id`;
-- `entity_id`;
-- `integer`;
-- `number`;
-- `coordinate`;
-- `axis_id`;
-- `enum`;
-- `json`;
-- `invalid_or_ambiguous`.
-
-For the initial release, prioritize `feature_id`, `number`, and `enum` because
-they are easier to grade and audit.
-
-Target sampling should be balanced by:
-
-- operation family;
-- answer type;
-- graph relation family;
-- constraint type;
-- difficulty bucket;
-- source group;
-- trace label confidence.
-
-### 3. Constraint Mining
-
-For the sampled answer, mine true facts from the graph. Each fact becomes a
-candidate hidden clause. Each clause must include:
+The hidden query program is the private canonical row. It is not shown to
+models.
 
 ```json
 {
-  "clause_id": "c03",
-  "constraint_type": "metric",
+  "query_version": "cadqa_multihop_query_v1",
+  "answer_type": "feature_id",
   "target_entity_type": "feature",
-  "predicate": "feature.measurements.bbox_delta == [0, 0, 0]",
-  "public_text_seed": "It does not change the global bounding box.",
-  "evidence_chain": ["feature --has_measurement--> bbox_delta"],
-  "label_sources": ["trace.snapshots", "operation_node"],
-  "stability_status": "ok"
+  "public_prompt_style": "constraint_checklist",
+  "target_id": "f17",
+  "clauses": [],
+  "candidate_set_trace": [],
+  "rejected_clues": [],
+  "difficulty": {},
+  "required_graph_families": []
 }
 ```
 
-The `constraint_type` enum is defined in the task spec and should be used for
-generation, balancing, validation, and diagnostics:
+The hidden program stores enough information to rerun the resolver, explain why
+the row was accepted, and diagnose rejected alternatives.
+
+### Public Prompt
+
+The first public format should stay as a checklist:
+
+```text
+Given the CadQuery script, identify the feature that satisfies all of these
+constraints:
+- ...
+- ...
+- ...
+Return exactly one feature ID.
+```
+
+Checklist prompts are less natural than paragraphs, but they are easier to
+verify and audit. They also make it obvious which public sentence corresponds
+to which private clause.
+
+## Constraint Types
+
+The task spec defines the explicit `constraint_type` enum:
 
 ```text
 temporal
@@ -145,547 +122,400 @@ operation_semantics
 relation
 ```
 
-Useful mined constraints include:
+Each mined clue must have one primary constraint type. The type is used for
+coverage, balancing, template selection, and failure analysis.
 
-- temporal: after the second box, before the final fillet, immediately after a
-  cylindrical feature;
-- metric: largest positive volume delta, zero bounding-box change, shortest
-  centerline distance;
-- topological: largest circular-edge increase, no face-count change,
-  cylindrical-face count;
-- selector: face selected by a side-face selector, entity selected by `">Z"`,
-  selector result count;
-- provenance: modifies a previously selected face, removes material from a
-  region created by an earlier feature;
-- spatial: adjacent to the deepest blind cut, coaxial with a hole, contained in
-  a region;
-- comparative: changed Y extent more than another feature, smaller volume
-  delta among matching candidates;
-- parameter: dimensions in a range, parameter reused from a prior feature,
-  transformed offset;
-- operation semantics: subtractive feature, transform-only operation,
-  workplane-changing operation;
-- relation: existence of a path or relation when no more specific type is
-  dominant.
+## Pipeline
 
-### 4. Distractor-Aware Clause Selection
+### 1. Build The Private Graph
 
-A clause is useful only in relation to the candidate set it leaves behind.
+For each source script:
 
-For each clause, compute:
+- parse CadQuery call chains and source spans;
+- identify feature-like operations and stable feature IDs;
+- collect selector calls and the call chain they affect;
+- collect parameter definitions and expression uses;
+- attach trace-derived metrics and topology deltas when available;
+- emit typed nodes and relations with label-source pointers.
 
-- candidate set after applying the clause alone;
-- entropy or ambiguity reduction;
-- whether it leaks the answer directly;
-- whether it depends on stable labels;
-- how many distractors remain;
-- which distractor attributes overlap the answer.
+Rows should be rejected when a required graph family is missing or unstable.
 
-Apply an atomic clue breadth gate before composing clauses:
+### 2. Sample The Answer First
 
-- each individual public clue should leave at least a configured minimum number
-  of candidates, initially `min_individual_candidate_count = 5`;
-- temporal before/after anchors should also require at least a configured side
-  range, initially `min_temporal_side_range = 5`, so prompts do not use anchors
-  like "before feature #4" or "after feature #11" in a small feature set;
-- immediately-before, immediately-after, final-step, rare-selector, and
-  one-off provenance clues should be rejected as standalone clues unless the
-  source has enough repeated structure for the clue to retain at least the
-  minimum candidate count;
-- the full clause set must still resolve to exactly one answer after all
-  accepted broad clues are combined.
+Sample the target before writing any question. Initial answer types should be:
 
-This gate will reject many interesting rare facts. That is intentional for the
-hard track: a clue that selects only one or two entities is a disguised direct
-reference, even when it sounds natural.
+- `feature_id`;
+- `number`;
+- `enum`.
 
-Apply a public wording gate after canonical clue compilation:
+For the first generator spike, focus on `feature_id`. Balance target sampling
+by operation family, script family, constraint mix, and difficulty bucket.
 
-- public clues must be understandable from the shown CadQuery script alone by a
-  small model that knows no CAD-QA ontology;
-- internal terms such as `material_region`, `measurement`, `profile`,
-  `accumulated body`, `provenance`, or `graph node` should not appear in public
-  prompts unless immediately grounded in visible code such as `.extrude(...)`,
-  `.union(...)`, `.faces(...)`, `.polyline(...)`, `.cutBlind(...)`,
-  `.cutThruAll()`, or an explicit before/after measurement;
-- if a clue refers to a derived concept, the wording should explain what the
-  model can inspect in the code, for example "the object later added with
-  `.union(...)`" rather than "the material region";
-- candidate grouped prompts should be rejected when their clues mix
-  incompatible target types, such as asking for one feature while combining
-  face, vertex, profile, and parameter clues that do not share a resolvable
-  target.
+### 3. Mine Atomic Ontology Clues
 
-Then select a clause set that satisfies:
+For a sampled target, enumerate true ontology atoms. Each atom is an internal
+structured fact, not public prose.
 
-- individual clues are not all trivially identifying;
-- partial clue sets leave plausible distractors;
-- the full clue set resolves to exactly one answer;
-- at least two thirds of counted hops are geometry/trace-derived for release
-  rows;
-- the public text can omit direct IDs without becoming ambiguous.
-
-This step should be deterministic or mostly deterministic. The LLM should not
-choose the accepted answer.
-
-### 5. Hidden Query Program Assembly
-
-The hidden query program is the canonical artifact. It should include:
+Example atom:
 
 ```json
 {
-  "query_version": "cadqa_multihop_query_v1",
-  "answer_type": "feature_id",
+  "clause_id": "c03",
+  "constraint_type": "selector",
   "target_entity_type": "feature",
-  "public_prompt_style": "constraint_checklist",
-  "clauses": [],
-  "candidate_set_trace": [],
-  "distractors": [],
-  "tie_break": "reject_unless_unique",
-  "difficulty": {},
-  "required_graph_families": []
+  "relation": "uses_selector",
+  "arguments": {
+    "selector": ".faces(\">Z\")",
+    "call_context": "workplane creation"
+  },
+  "candidate_count": 12,
+  "label_sources": ["static_call_chain", "trace.selector_table"]
 }
 ```
 
-The query program is not public. It exists for:
+The atom should be evaluated against all candidates before it is verbalized.
 
-- regeneration;
-- validation;
-- ambiguity detection;
-- hop accounting;
-- row audit;
-- difficulty balancing;
-- debugging model failures.
+### 4. Apply Atomic Clue Gates
 
-### 6. Natural-Language Rendering
+Any single clue that narrows too much is a leak. Apply these gates before
+composing the question:
 
-Rendering should be LLM-assisted, but heavily constrained.
+- `min_individual_candidate_count = 5`;
+- `min_temporal_side_range = 5` for before/after clues;
+- reject `immediately_before`, `immediately_after`, `final_step`, and
+  `only_feature_with_X` unless the candidate count still passes;
+- reject rare selectors or one-off provenance facts when they identify fewer
+  than five candidates;
+- reject clues whose target type is incompatible with the requested answer.
 
-Inputs to the renderer:
+This intentionally discards many correct facts. A clue can be true and still be
+bad for the hard track if it selects one or two entities by itself.
 
-- hidden clauses;
-- allowed public facts;
-- forbidden leaks;
-- desired style;
-- answer format;
-- examples of acceptable phrasing;
-- examples of unacceptable phrasing.
+### 5. Verbalize With Rule Templates
 
-Renderer output:
+The verbalizer maps accepted atoms to public clue text. It is deterministic:
+
+```text
+(constraint_type, relation, target_entity_type, argument_shape)
+-> template family
+-> grounded public sentence
+```
+
+The template has access only to safe public fields, such as visible CadQuery
+calls, source-local variable names, operation classes, ranges, and broad
+relations.
+
+Good public clue wording is grounded in visible code:
+
+- "uses `.faces(\">Z\")` before creating a workplane";
+- "is made by a `.cutBlind(...)` call that removes material";
+- "uses a radius expression also used by another circular sketch operation";
+- "comes after at least five earlier feature operations";
+- "changes the final object's volume while leaving its outer bounding box
+  unchanged";
+- "is joined into the running object by a later `.union(...)` call".
+
+Avoid ontology-only wording:
+
+- "has a bounding-box delta measurement";
+- "feeds the accumulated-body union";
+- "creates a material region";
+- "is associated with the selected CadEvolve source script";
+- "has provenance from the profile node".
+
+If a concept cannot be explained using script-visible language, that clue
+should not be public.
+
+### 6. Search For A Clause Set
+
+After atomic gates, search combinations of broad clues.
+
+The accepted set must satisfy:
+
+- each individual clue passes the breadth gate;
+- partial combinations leave plausible distractors;
+- the full combination resolves to exactly one target;
+- the clues share a compatible target type;
+- the set covers at least two constraint types;
+- the hidden evidence chain is long enough for the target difficulty bucket;
+- no clue contains a private ID or private diagnostic field.
+
+The search can be deterministic with a seed. Tie-breaking should prefer broader
+individual clues, stronger graph evidence, and better constraint-type coverage.
+
+### 7. Render The Checklist
+
+The renderer only assembles text from approved clauses. It does not invent new
+facts.
+
+Required output:
 
 ```json
 {
-  "question": "Given the CadQuery script below, identify ...",
-  "style": "constraint_checklist",
+  "question": "Given the CadQuery script, identify ...",
+  "answer_format": "feature_id",
   "clue_map": [
-    {"clause_id": "c01", "text_span": "..."},
-    {"clause_id": "c02", "text_span": "..."}
-  ],
-  "notes": {
-    "possible_leaks": [],
-    "ambiguous_phrases": []
-  }
+    {
+      "clause_id": "c01",
+      "public_text": "..."
+    }
+  ]
 }
 ```
 
-Recommended prompt styles:
+The `clue_map` is required so auditors can trace every public sentence back to
+the ontology atom and candidate-count gate that allowed it.
 
-- `constraint_checklist`: safest MVP style;
-- `single_paragraph`: more natural, higher ambiguity risk;
-- `comparative_question`: useful for pairwise or ranked tasks;
-- `chain_completion`: useful for relation-path tasks;
-- `yes_no_relation`: useful for relation existence;
-- `invalid_or_ambiguous`: optional calibration family.
+### 8. Re-Resolve And Audit
 
-The renderer may propose variants, but the verifier and judges decide which
-variants survive.
+Run the deterministic resolver after rendering.
 
-### 7. Deterministic Re-Resolution
+Reject if:
 
-After rendering, re-resolve the hidden query program against the graph. Reject
-if:
+- the full clue set returns zero or multiple candidates;
+- any clue cannot be evaluated;
+- any clue's individual candidate count is below the configured threshold;
+- a temporal clue violates the side-range threshold;
+- the public text includes private IDs or banned ontology jargon;
+- the clue set mixes incompatible target types;
+- the answer changes after rendering.
 
-- answer is not unique;
-- any clause cannot be evaluated;
-- any required label source is unstable;
-- tie-breaking is required but not explicitly allowed;
-- answer changed after prompt rendering adjustments;
-- prompt leaks a private ID or diagnostic field;
-- public text references a concept not backed by the query program.
+Record rejected clues and rejected clause sets. These failure records are useful
+for improving graph coverage and template wording.
 
-This stage should not depend on LLM judgment.
+### 9. Materialize Rows
 
-### 8. LLM Judge Stack
+Accepted rows should produce:
 
-Use cheap LLM judges as rejection and ranking tools. They should not define
-truth.
-
-Potential judges:
-
-- naturalness judge: does the question sound like a real CAD reasoning task?
-- ambiguity judge: can the wording plausibly describe more than one answer?
-- leakage judge: does the prompt expose the answer or hidden program too
-  directly?
-- CAD semantics judge: are CAD terms used correctly?
-- clue alignment judge: does each public clue correspond to the intended
-  hidden clause?
-- difficulty judge: estimate whether the prompt requires multi-hop reasoning.
-- answer-format judge: is the requested answer format clear and short?
-
-Each judge should return structured output:
-
-```json
-{
-  "pass": true,
-  "score": 0.82,
-  "failure_reason": null,
-  "actionable_revision": null
-}
-```
-
-Rows should require either unanimous pass from critical judges or a conservative
-threshold. Critical judges are ambiguity, leakage, and clue alignment.
-
-### 9. Adversarial Solver Filter
-
-Run one or more inexpensive solver models on the public prompt only.
-
-Use solver outputs to estimate:
-
-- triviality: weak models solve too often;
-- ambiguity: solvers produce multiple plausible answers;
-- leakage: solvers identify the answer for the wrong reason;
-- difficulty: pass rate across N attempts;
-- answer-format clarity.
-
-A useful acceptance shape:
-
-- deterministic verifier says the answer is unique;
-- weak solver pass rate is low for release-hard rows;
-- stronger solver sometimes succeeds with coherent evidence;
-- wrong solver answers mostly correspond to planned distractors.
-
-If solvers invent many answers that are not in the planned candidate set, the
-question wording may be too vague or the answer format may be underspecified.
-
-### 10. Final Row Acceptance
-
-Accept only when all gates pass:
-
-1. Graph labels stable.
-2. Hidden query resolves uniquely.
-3. Candidate/distractor analysis satisfies target difficulty.
-4. Public prompt has no forbidden leak.
-5. Deterministic re-resolution passes.
-6. Critical LLM judges pass.
-7. Solver pass-rate band matches target bucket.
-8. Public row validates under schema and grading policy.
-
-Rejected candidates should be retained in an internal failure manifest with
-machine-readable reasons. Failure manifests are useful for improving the
-generator.
+- public JSONL row;
+- private hidden query JSONL row;
+- candidate-set trace;
+- rejected-clue manifest;
+- difficulty report;
+- source-family and constraint-type coverage report.
 
 ## Architecture Components
 
 ### Graph Builder
 
-Owns graph construction from trace artifacts. It should produce a normalized
-private graph with node IDs, relation IDs, label source pointers, and stability
-flags.
+Creates typed nodes, relations, source spans, label-source pointers, and
+stability flags from each script and trace artifact.
 
-### Candidate Target Sampler
+### Target Sampler
 
-Owns answer-first selection. It should know quotas and avoid repeatedly
-sampling the cheapest or most common answer types.
+Selects answer-first targets under quotas for answer type, operation family,
+source family, and constraint mix.
 
-### Constraint Miner
+### Atom Miner
 
-Owns clause discovery. It should expose candidate clauses with their predicate,
-constraint type, evidence chain, candidate-set effect, and label dependencies.
+Enumerates true structured clues for the sampled target. It does not write
+public prose.
+
+### Candidate Counter
+
+Evaluates each atom against all candidate targets and records the candidate set
+left by that atom alone.
+
+### Gate Evaluator
+
+Applies breadth, temporal side-range, wording-eligibility, target-type, and
+label-stability gates.
+
+### Rule-Based Verbalizer
+
+Maps approved atoms to canonical public clue sentences. This is the core
+wording component for the generation path.
 
 ### Clause Set Searcher
 
-Owns distractor-aware selection of clause combinations. This is the heart of
-the generator. It should optimize for uniqueness, difficulty, and clue
-diversity while rejecting brittle or leaky combinations.
+Combines broad clues until the full set uniquely identifies the answer while
+preserving plausible distractors for partial sets.
 
-### Prompt Renderer
+### Checklist Renderer
 
-Owns LLM-assisted wording. It should be stateless and reproducible given a
-seed, model, prompt version, and hidden query program.
+Formats the public prompt and emits the `clue_map`.
 
 ### Verifier
 
-Owns deterministic query resolution. It should support exact failure reasons:
+Re-evaluates the hidden program and rendered clue set. It should return exact
+failure reasons, such as:
 
 - `empty_candidate_set`;
 - `ambiguous_candidate_set`;
+- `individual_clue_too_narrow`;
+- `temporal_side_range_too_small`;
 - `missing_label_family`;
 - `unstable_label`;
 - `unsupported_predicate`;
-- `tie_break_required`;
+- `target_type_mismatch`;
 - `prompt_leak_detected`;
-- `render_alignment_failed`.
-
-### Judge Orchestrator
-
-Owns LLM judge calls, structured parsing, retry policy, and cost controls.
-
-### Solver Harness
-
-Owns adversarial and calibration solver runs. It should record raw responses,
-parsed answers, correctness, confidence when available, and error taxonomy.
+- `public_wording_not_grounded`.
 
 ### Row Materializer
 
-Owns final public row creation and private label payloads.
+Writes public rows, private labels, rejection manifests, and coverage reports.
 
 ## Difficulty Accounting
 
-Difficulty should be computed, not guessed. Suggested fields:
+Difficulty should be computed from graph and candidate-set properties, not
+estimated from wording.
+
+Suggested fields:
 
 ```json
 {
   "constraint_type_counts": {
     "temporal": 1,
-    "metric": 2,
-    "selector": 1
+    "metric": 1,
+    "selector": 1,
+    "operation_semantics": 1
   },
-  "static_hops": 2,
-  "geometry_trace_hops": 5,
-  "shortest_evidence_hops": 6,
-  "distractor_count": 4,
-  "min_clauses_for_uniqueness": 4,
+  "individual_candidate_counts": {
+    "c01": 11,
+    "c02": 8,
+    "c03": 6,
+    "c04": 7
+  },
+  "min_individual_candidate_count": 6,
   "full_clause_candidate_count": 1,
-  "nearest_distractor_margin": 0.12,
-  "weak_solver_pass_at_1": 0.0,
-  "strong_solver_pass_at_3": 0.33
+  "min_temporal_side_range": 5,
+  "partial_clause_min_candidate_count": 3,
+  "shortest_evidence_hops": 5,
+  "required_graph_families": ["selector", "metric", "temporal"]
 }
 ```
 
-Difficulty buckets should combine graph structure and empirical solver
-behavior. Solver pass rates should never override deterministic correctness,
-but they are useful for release balancing.
+External solver pass rates can be added later for release calibration, but they
+should not be required for row correctness.
 
-## Obfuscation Strategy
+## Template Contract
 
-Obfuscation should be a controlled transform over valid clauses, not free-form
-rewriting.
+Each template family should declare:
 
-Useful transforms:
+- supported `constraint_type`;
+- supported relation names;
+- supported target entity types;
+- required public arguments;
+- banned argument shapes;
+- candidate-count requirements;
+- examples of acceptable output;
+- examples of rejected output.
 
-- feature ID to operation description;
-- exact step index to ordinal or relative order;
-- exact parameter to comparison or safe range;
-- entity ID to selector result;
-- face ID to orientation or adjacency relation;
-- operation name to material effect;
-- direct metric value to argmax or threshold;
-- source-line reference to construction-history clue.
+Example:
 
-Bad transforms:
+```json
+{
+  "template_id": "selector.face_before_workplane.v1",
+  "constraint_type": "selector",
+  "relations": ["uses_selector_before_workplane"],
+  "target_entity_types": ["feature"],
+  "required_public_args": ["selector_literal"],
+  "minimum_candidate_count": 5,
+  "text": "uses `{selector_literal}` before creating a workplane"
+}
+```
 
-- vague adjectives without thresholds;
-- hidden world knowledge;
-- ambiguous coordinate frames;
-- design-intent language;
-- references to visual salience not present in labels;
-- phrases that imply topology/provenance precision the trace does not support.
-
-## Suggested MVP
-
-The first prototype should stay narrow.
-
-Scope:
-
-- answer types: `feature_id`, `number`, `enum`;
-- prompt style: `constraint_checklist`;
-- graph substrate: current feature-level graph plus trace metrics;
-- constraint types: `temporal`, `metric`, `topological`, `selector`,
-  `comparative`, `operation_semantics`;
-- generation: deterministic clause mining plus LLM rendering;
-- validation: deterministic resolver plus ambiguity/leakage/alignment judges;
-- solver filter: one cheap weak model and one stronger model, small N.
-
-MVP output:
-
-- internal JSONL of hidden query programs;
-- public JSONL rows;
-- rejection manifest;
-- difficulty report;
-- judge report;
-- solver calibration report;
-- small manual audit sample.
-
-MVP non-scope:
-
-- broad B-rep face/edge relation graph;
-- full provenance over material regions;
-- paragraph-style prompts;
-- Level 5 extreme rows;
-- public invalid/ambiguous family.
+Templates should be versioned. Changing wording can change model behavior even
+when the hidden predicate is unchanged.
 
 ## Experiments To Run
 
-### Template vs LLM Rendering
+### Template Coverage Preview
 
-Compare:
+Exercise every ontology node and relation family against one or two longer
+CadEvolve scripts. Emit:
 
-- fixed checklist templates;
-- unusual Jinja templates with synonym slots;
-- LLM-rendered checklist;
-- LLM-rendered paragraph.
+- accepted public clue examples;
+- rejected clue examples with gate reasons;
+- candidate counts for every clue;
+- relation and parameter coverage summaries.
 
-Metrics:
+The current prototype lives under
+[`experiments/multi_hop_qa_mock/`](../experiments/multi_hop_qa_mock/), especially
+`build_comprehensive_ontology_preview.py` and
+`preview/comprehensive_ontology_preview.md`.
 
-- verifier pass rate;
-- judge ambiguity rate;
-- weak solver pass rate;
-- human naturalness rating;
-- manual audit defect rate.
+### Candidate-Count Gate Sweep
 
-### Clause Count Sweep
-
-Generate rows with 2, 3, 4, 5, and 6 clauses.
+Run the same sources with thresholds such as 3, 5, and 8.
 
 Measure:
 
-- uniqueness rate;
-- prompt length;
-- solver pass rate;
-- ambiguity judge failure rate;
-- manual readability.
+- yield;
+- constraint-type imbalance;
+- average candidate count per accepted clue;
+- number of unique full clause sets;
+- manual readability defects.
 
-### Constraint Mix Sweep
+### Source-Family Coverage Audit
 
-Hold clause count fixed and vary constraint type mixes.
+Sample additional random CadEvolve scripts and compare which templates still
+produce valid public clues. This catches overfitting to one script shape, such
+as repeated bosses, selector-heavy chains, or star/slot sketches.
 
-Example mixes:
+### Wording Audit
 
-- temporal + metric + comparative;
-- temporal + selector + topology;
-- operation semantics + metric + topology;
-- selector + provenance + spatial.
+Manually review generated prompts as if the reader has only:
 
-Measure which mixes produce the best hard-but-natural questions.
+- the CadQuery script;
+- the public checklist;
+- general programming/CAD knowledge.
 
-### Judge Ablation
+Reject wording that depends on private benchmark terminology.
 
-Run with and without each judge:
+### Target-Type Compatibility Audit
 
-- ambiguity;
-- leakage;
-- clue alignment;
-- CAD semantics;
-- naturalness.
-
-Measure downstream manual audit failures. Keep only judges that catch real
-defects at acceptable false-positive rates.
-
-### Solver-Based Difficulty Calibration
-
-For a candidate batch, run repeated attempts from cheap and stronger solvers.
-
-Use pass-rate distributions to tune:
-
-- release difficulty thresholds;
-- minimum distractor count;
-- minimum clauses for uniqueness;
-- acceptable prompt styles.
+Verify that every clue in a prompt can resolve to the requested answer type.
+This should catch prompts that accidentally combine feature, face, vertex,
+parameter, and profile clues without a clear shared target.
 
 ## Main Risks
 
-### LLM Surface Text Changes Semantics
+### Templates Become Too Mechanical
 
-The renderer may subtly convert an exact predicate into a vague or stronger
-claim.
+Checklist prompts will look templated. That is acceptable for the first
+generation path. Naturalness can be improved later by adding more template
+variants after the verifier is reliable.
 
-Mitigation:
+### Gates Reduce Yield
 
-- require `clue_map`;
-- use clue alignment judge;
-- keep checklist style for MVP;
-- reject when public text introduces unsupported concepts.
+The `min_individual_candidate_count` rule will reject many rare but interesting
+facts. This is intentional. A rare clue is often a disguised direct reference.
 
-### Deterministic Graph Is Too Thin
+### Public Wording Leaks Private Ontology
 
-Current graph coverage may not support enough genuine multi-hop diversity.
+Terms like `material_region`, `measurement`, `profile`, `provenance`, and
+`accumulated body` can be meaningful internally but confusing publicly.
+Templates should ground every derived concept in visible code.
 
-Mitigation:
+### Graph Coverage Is Too Thin
 
-- start with feature-level metric/temporal/topology/selector rows;
-- record required graph families;
-- report limitations clearly;
-- add richer face/edge/provenance graph support incrementally.
+If the graph lacks enough relation families, clause sets may be repetitive.
+The rejection manifest should show which missing graph families block better
+questions.
 
-### Questions Become Template-Looking
+### Mixed Target Types Create Fake Multi-Hop Prompts
 
-Checklist prompts may feel mechanical.
+A prompt can sound rich while combining unrelated facts about faces, vertices,
+parameters, and operations. The verifier must require a clear target projection
+for every clue.
 
-Mitigation:
+### Obfuscation Creates Ambiguity
 
-- accept this for MVP;
-- use multiple checklist variants;
-- add paragraph rendering only after validation is robust.
-
-### Judges Are Noisy
-
-Cheap LLM judges can reject good rows or miss subtle defects.
-
-Mitigation:
-
-- treat judges as filters, not sources of truth;
-- require deterministic verifier first;
-- calibrate against manual audits;
-- keep raw judge rationales in internal artifacts.
-
-### Solver Pass Rate Is Misleading
-
-A solver might fail due to formatting or succeed through leakage.
-
-Mitigation:
-
-- parse solver rationale when available;
-- compare wrong answers against planned distractors;
-- use pass rates as a balancing signal, not a correctness signal.
-
-### Over-Obfuscation Creates Ambiguity
-
-Hard questions can become under-specified.
-
-Mitigation:
-
-- compute full candidate set after every transform;
-- keep ambiguity margin diagnostics;
-- reject vague public text;
-- add more precise clauses rather than looser wording.
-
-## Open Questions
-
-- Should `comparative` be a primary constraint type or an operator layered over
-  metric/topological/spatial constraints?
-- Should the hidden query program store executable predicates, structured
-  predicate objects, or both?
-- How much paragraph-style naturalness is worth the added ambiguity risk?
-- What pass-rate band should define release-hard rows?
-- Should solver traces be stored as training data, or only as generation
-  diagnostics?
-- Should invalid/ambiguous rows be part of the benchmark or only an internal
-  quality-control tool?
-- What is the minimum graph substrate needed before calling this BrowseComp-like
-  rather than advanced `graph_query`?
+Hard questions can become under-specified. The resolver should compute the
+candidate set after every clue and reject any prompt whose full clue set is not
+unique.
 
 ## Recommended Next Step
 
-Implement a small generator spike that never calls an LLM at first:
+Turn the mock preview into the first deterministic generator spike:
 
-1. Sample answer-first feature targets from current typed graphs.
-2. Mine deterministic `temporal`, `metric`, `topological`, and
-   `operation_semantics` clauses.
-3. Search for clause sets that uniquely identify the answer with distractors.
-4. Render rigid checklist prompts.
-5. Produce a rejection manifest and difficulty report.
+1. Build ontology atoms from a small set of CadEvolve scripts.
+2. Apply `min_individual_candidate_count = 5` and temporal side-range gates.
+3. Verbalize accepted atoms with versioned templates.
+4. Search broad clue sets that uniquely identify one feature.
+5. Emit public checklist rows, private hidden queries, and rejection manifests.
 
-Only after this deterministic spine produces credible hidden query programs
-should LLM rendering and LLM judges be added. This keeps the expensive and noisy
-parts downstream of the thing that matters most: graph-grounded uniqueness.
+Only after this rule-based path produces credible rows should optional model
+calls be reconsidered, and then only for external evaluation or controlled
+wording experiments.
