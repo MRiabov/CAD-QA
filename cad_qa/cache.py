@@ -68,4 +68,8 @@ def trace_record_from_dict(data: dict[str, Any]) -> TraceRecord:
         point_queries=list(data.get("point_queries") or []),
         provenance_records=list(data.get("provenance_records") or []),
         topology_matches=list(data.get("topology_matches") or []),
+        graph_queries=list(data.get("graph_queries") or []),
+        spatial_queries=list(data.get("spatial_queries") or []),
+        bbox_region_queries=list(data.get("bbox_region_queries") or []),
+        validity_probes=list(data.get("validity_probes") or []),
     )

@@ -25,6 +25,10 @@ TASK_TYPES = {
     "workplane_offset_repair",
     "multi_step_edit_plan",
     "ambiguous_question_detection",
+    "graph_query",
+    "spatial_distance",
+    "bbox_region_query",
+    "validity_failure_prediction",
 }
 
 ANSWER_TYPES = {
@@ -106,6 +110,10 @@ class TraceRecord:
     point_queries: list[dict[str, Any]] = field(default_factory=list)
     provenance_records: list[dict[str, Any]] = field(default_factory=list)
     topology_matches: list[dict[str, Any]] = field(default_factory=list)
+    graph_queries: list[dict[str, Any]] = field(default_factory=list)
+    spatial_queries: list[dict[str, Any]] = field(default_factory=list)
+    bbox_region_queries: list[dict[str, Any]] = field(default_factory=list)
+    validity_probes: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass(frozen=True)

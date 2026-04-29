@@ -41,6 +41,8 @@ def baseline_predictions(rows: list[dict[str, Any]], *, name: str, seed: int = 1
         return _primitive_symbolic_volume_predictions(rows)
     if name == "aabb_point_membership":
         return _aabb_point_membership_predictions(rows)
+    if name == "advanced_diagnostic_naive":
+        return _advanced_diagnostic_naive_predictions(rows)
     raise ValueError(f"unknown baseline: {name}")
 
 
@@ -55,6 +57,7 @@ def run_baselines(rows: list[dict[str, Any]], *, seed: int = 1234) -> dict[str, 
             "selector_heuristic",
             "primitive_symbolic_volume",
             "aabb_point_membership",
+            "advanced_diagnostic_naive",
             "oracle",
         )
     }
@@ -192,6 +195,25 @@ def _aabb_point_membership_predictions(rows: list[dict[str, Any]]) -> dict[str, 
         target = str(query.get("target_feature_id") or row.get("target_feature_id") or "")
         bbox = bbox_by_target.get((str(row.get("source_id")), target))
         predictions[str(row["id"])] = _classify_point_in_bbox(point, bbox)
+    return predictions
+
+
+def _advanced_diagnostic_naive_predictions(rows: list[dict[str, Any]]) -> dict[str, str]:
+    predictions: dict[str, str] = {}
+    for row in rows:
+        task_type = row.get("task_type")
+        if task_type == "graph_query":
+            choices = row.get("choices")
+            predictions[str(row["id"])] = str(choices[0]) if isinstance(choices, list) and choices else ""
+        elif task_type == "spatial_distance":
+            predictions[str(row["id"])] = "0"
+        elif task_type == "bbox_region_query":
+            predictions[str(row["id"])] = "0"
+        elif task_type == "validity_failure_prediction":
+            choices = row.get("choices")
+            predictions[str(row["id"])] = "valid" if not isinstance(choices, list) or "valid" in choices else str(choices[0])
+        else:
+            predictions[str(row["id"])] = "0"
     return predictions
 
 

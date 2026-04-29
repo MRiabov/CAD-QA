@@ -17,9 +17,12 @@ class LabelPolicy:
     volume_tolerance_abs_mm3: float = 1e-6
     volume_tolerance_ratio: float = 1e-8
     bbox_tolerance_mm: float = 1e-6
+    spatial_distance_tolerance_mm: float = 1e-5
+    bbox_region_overlap_tolerance_mm: float = 1e-6
     point_boundary_tolerance_mm: float = 1e-5
     selector_dedup_tolerance_mm: float = 1e-7
     near_boundary_sampling_band_mm: float = 1e-3
+    validity_probe_repeat_count: int = 3
 
 
 @dataclass(frozen=True)
