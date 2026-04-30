@@ -1,1 +1,0 @@
-"""CAD-QA helper scripts."""

@@ -9,8 +9,6 @@ matches the desired benchmark:
 
 - "CAD-QA Core"
 - old `graph_query`
-- spatial distance QA
-- bounding-box region QA
 - separate "multi-hop" ideas
 
 This split is now wrong. The codebase should revolve around one concept:
@@ -84,6 +82,11 @@ Required documentation direction:
 - LLM calls, if any, are only optional external evaluation or wording
   experiments, not trusted generation or judging.
 
+>- Multi-Hop CAD-QA is the high-hop, obfuscated, distractor-gated subset.
+  explicit note: Let me define this better: see BrowseComp dataset, and see https://huggingface.co/papers/2507.02592
+
+In addition, we have *already detailed well in experiments/multi_hop_qa_mock" In particular, /home/maksym/Work/proj/Problemologist/CAD-QA/experiments/multi_hop_qa_mock/preview/comprehensive_ontology_preview.md and the script that generated it defined more or less how I want the features to look like. I have also reviewed and corrected that experiment doc in a few places too.
+
 ### Documents To Rewrite Or Replace
 
 At minimum inspect and update:
@@ -118,7 +121,7 @@ Rules:
 - Keep separate epics only for real implementation layers, such as source
   ingestion, tracing, graph extraction, query resolution, row materialization,
   evaluation, and training.
-- Mark every epic touched by the rewrite as `work-in-progress`.
+- Mark every epic touched by the rewrite as `planned` or `work-in-progress` - the latter being in rarer cases of something you don't need to remove completely.
 - It is fine to replace the entire file if that is clearer.
 
 The preferred epic structure is roughly:
@@ -214,7 +217,7 @@ cad_qa/
 ```
 
 This layout is guidance, not a requirement. The real requirement is that the
-code expresses one graph/query system.
+code expresses one graph/query system and is worthy of being publishable, and would train CAD LLM agent models better, just like "WebSailor: Navigating Super-human Reasoning for Web Agent" trained better web search agents.
 
 ### Core Data Model
 
@@ -333,6 +336,10 @@ feature -> has_measurement(feature_application_effect.edge_count_delta)
 
 Build P0 first. Do not start with material regions or advanced boolean diff.
 
+Delivery expectation: **all P0 items are required**. If a P0 item is not
+implemented, the final report must treat the overnight task as incomplete and
+state the exact blocker.
+
 ### P0.1 Minimal Source And Operation Graph
 
 Implement:
@@ -446,6 +453,11 @@ Acceptance:
 
 P1 makes the dataset look like the intended benchmark.
 
+Delivery expectation: **all P1 items are also required**. Do not treat P1 as a
+nice-to-have bucket. The goal is not merely to rebuild low-hop rows; the goal is
+to get enough non-feature graph relations working that the dataset resembles the
+intended BrowseComp/WebSailor-style CAD reasoning benchmark.
+
 - stable selector face IDs;
 - same-face joins;
 - non-top/side-face predicates;
@@ -462,6 +474,15 @@ Acceptance:
 ## P2 Implementation Slices
 
 P2 depends on heavier geometry/provenance work.
+
+Delivery expectation: implement the easy P2 items too. In practice this means:
+
+- implement any P2 relation that can be done conservatively from existing
+  snapshots, source geometry, or simple exact geometry checks;
+- emit diagnostic/quarantine labels when evidence is useful but not yet
+  release-grade;
+- defer only the genuinely heavy pieces, such as robust boolean-diff material
+  regions or fragile B-rep adjacency, and document the blocker precisely.
 
 - added material-region geometry;
 - removed void-region geometry;
@@ -590,6 +611,10 @@ Leave the repo with:
 - rewritten `epics-and-stories.yaml`;
 - deleted/restarted implementation;
 - new graph-first package skeleton;
+- all P0 functionality implemented;
+- all P1 functionality implemented;
+- easy P2 functionality implemented or explicitly quarantined with blocker
+  reasons;
 - focused tests;
 - passing compile/test smoke if feasible;
 - a tiny graph smoke dataset or a documented blocker manifest;
@@ -610,4 +635,3 @@ CAD-QA is typed graph reasoning over executable CAD programs.
 Low-hop rows are curriculum and calibration.
 High-hop rows are the benchmark target.
 ```
-

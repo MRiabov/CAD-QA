@@ -1,1562 +1,223 @@
-schema_version: 1
+schema_version: 2
 project: CAD-QA
-tracks:
-  - shared_core
-  - cadqa
-  - advanced_cadqa
-  - multi_hop_cadqa
-  - cadeditqa
-source_documents:
-  - epics-and-stories.md
-  - specs/benchmark-family.md
-  - specs/benchmark-task-spec.md
-  - specs/label_rules.md
-  - specs/schema.md
-  - specs/generation_policy.md
-  - specs/paper-spec.md
-  - specs/research-experiment-spec.md
-  - specs/cadedit-task-spec.md
-  - specs/cadedit-full-spec.md
-  - specs/extracting-cadevolve-features.md
-  - specs/using-cadevolve-dataset-export.md
-  - specs/dataset-spec.md
-  - specs/multi-hop-qa-task-spec.md
-  - docs/multi-hop-qa-architecture.md
-  - specs/useful-implementation-optimization.md
-  - specs/reviewer-readiness-checklist.md
+current_snapshot:
+  date: "2026-04-30"
+  codebase_state: >
+    The repository has been reset around one graph-first CAD-QA architecture:
+    source records, optional trace/snapshot evidence, typed ontology graphs,
+    deterministic query programs, rule-rendered prompts, dataset rows, and
+    verifier-backed validation. Earlier separate task-family and graph-query
+    framing is obsolete.
 status_values:
   - planned
   - work-in-progress
   - implemented
-status_definitions:
-  planned: Specified in docs, but no concrete implementation or completed artifact is present in this repo snapshot.
-  work-in-progress: Partially specified or partially built, with remaining acceptance criteria open.
-  implemented: A concrete artifact exists for the story, but it is not necessarily final-pipeline verified.
-stable_definition: true only after the feature has been confirmed to work in the final dataset pipeline.
-ordering:
-  source: specs
-  rule: Epics follow the implementation order and research structure described in specs/useful-implementation-optimization.md, specs/extracting-cadevolve-features.md, specs/paper-spec.md, specs/research-experiment-spec.md, and the CADEditQA specs.
-current_snapshot:
-  date: "2026-04-29"
-  codebase_state: CAD-QA now has a working Python package, CLI, source ingestion, AST operation graphs, isolated optional CadQuery tracing, scalar/topology snapshots, per-snapshot entity IDs, best-effort adjacent topology matching, conservative point/provenance records from adjacent volume deltas and adjacent topology matches, MVP public-row materialization including coordinate-frame and workplane-state tasks, advanced trace-backed diagnostic row materialization for spatial-distance, bbox-region, and validity/failure-mode QA, random and protected split assignment, near-boundary hard split routing, leakage validation, task-balanced subset export, JSONL export, optional Parquet export, trace caching, resumable sharded generation, grouped numeric counterfactual source generation, conservative CADEditQA parameter-edit, counterfactual-parameter, feature-to-edit, selector-repair, workplane-repair, and bounded multi-step edit-plan row materialization, optional multi-view SVG audit render bundles and render-backed request export, dataset cards, baselines including primitive symbolic volume, AABB point membership, and advanced diagnostic naive baselines, trace-label oracle upper bound, zero-shot and few-shot prediction request export, closed-book prediction response grading, P1 counterfactual sensitivity, task-transfer, and CADEditQA evaluation reports, answer-only and trace-grounded SFT data preparation, bounded parser-backed rejection-sampling reward scoring, guarded answer-only Unsloth SFT entrypoint, SFT ablation and scaling subset preparation, experiment orchestration, experiment comparison reports, canary stop gates, artifact retention and upload staging packages, manual audit sampling, failure taxonomy reports, reproducibility audits, paper draft scaffolding, smoke fixtures, tests, and validated smoke/CADEvolve-probe artifacts. Multi-Hop CAD-QA has a current rule-based architecture/spec and mock relation-gap survey, but the non-feature ontology implementation is open. Exact OpenCascade builder-history provenance, richer B-rep/sketch/profile/material-region coverage, richer near-boundary sampling, verified counterfactual labels, and live GPU SFT execution remain open or partial.
-  stable_features:
-    - cadqa_research_framing
-    - cadqa_mvp_task_family_spec
-    - cadqa_label_rule_spec
-    - cadqa_public_schema_spec
-    - cadevolve_source_policy
-    - adjacent_cadevolve_source_reuse_policy
-    - cadevolve_feature_extraction_policy
-    - cadqa_generation_policy
-    - cadqa_answer_parse_policy
-    - cadqa_experiment_plan
-    - cadeditqa_task_direction
-    - reviewer_readiness_checklist
-    - cadqa_python_package_and_cli
-    - cadqa_source_ingestion_and_operation_graphs
-    - cadqa_isolated_trace_worker
-    - cadqa_mvp_public_row_materialization
-    - cadqa_jsonl_export_and_validation
-    - cadqa_baseline_and_sft_data_artifacts
-    - cadqa_primitive_volume_and_aabb_baselines
-    - cadqa_optional_parquet_export
-    - cadqa_trace_cache_and_resumable_shards
-    - cadqa_snapshot_entity_ids_and_topology_matching
-    - cadqa_task_balanced_subset_export
-    - cadqa_protected_split_assignment
-    - cadqa_grouped_numeric_counterfactual_sources
-    - cadqa_prediction_request_export
-    - cadqa_release_audit_reports
-    - cadqa_experiment_comparison_reports
-    - cadqa_paper_draft_scaffold
-    - cadqa_canary_stop_gates
-    - cadqa_artifact_retention_packages
-    - cadqa_artifact_upload_staging
-    - cadqa_near_boundary_hard_split
-    - cadqa_trace_label_upper_bound
-    - cadqa_closed_book_prediction_evaluation
-    - cadqa_p1_research_analysis_reports
-    - cadqa_trace_grounded_reasoning_sft_data
-    - cadqa_sft_ablation_and_scaling_subsets
-    - cadqa_bounded_rejection_sampling_rewards
-    - cadeditqa_parameter_edit_direction_rows
-    - cadqa_svg_audit_render_bundles
-    - cadeditqa_feature_to_edit_rows
-    - cadqa_render_backed_prediction_requests
-    - cadqa_answer_only_sft_entrypoint
-    - cadeditqa_selector_repair_rows
-    - cadqa_orthographic_render_views
-    - cadqa_later_workplane_prompt_generators
-    - cadeditqa_workplane_repair_rows
-    - cadeditqa_counterfactual_parameter_rows
-    - cadqa_topology_match_provenance_records
-    - cadeditqa_bounded_multistep_edit_plan_rows
-    - cadqa_spatial_distance_diagnostics
-    - cadqa_bbox_region_diagnostics
-    - cadqa_validity_failure_diagnostics
-
+source_documents:
+  - README.md
+  - specs/benchmark-family.md
+  - specs/benchmark-task-spec.md
+  - specs/schema.md
+  - specs/label_rules.md
+  - specs/generation_policy.md
+  - specs/dataset-spec.md
+  - specs/extracting-cadevolve-features.md
+  - specs/multi-hop-qa-task-spec.md
+  - docs/multi-hop-qa-architecture.md
+  - specs/paper-spec.md
 epics:
   - id: epic-1
-    title: Research scope and paper framing
-    scope: Freeze the CAD-QA contribution, benchmark boundary, reviewer-facing claims, and paper narrative.
-    priority: P0
-    implementation_complexity: Low
-    debugging_difficulty: Low
-    recommendation: Build now
+    title: Project framing and graph-first spec
     status: implemented
-    stable: false
+    priority: P0
     stories:
       - id: "1.1"
-        title: Benchmark thesis
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Build now
+        title: Replace split task-family framing with one ontology-query system
         status: implemented
-        stable: false
       - id: "1.2"
-        title: Task tiers
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Build now
+        title: Define low-hop and high-hop rows as hop-count slices
         status: implemented
-        stable: false
       - id: "1.3"
-        title: Evaluation regimes
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Build now
+        title: "Paper narrative: CAD-QA as BrowseComp for CAD"
         status: implemented
-        stable: false
-        notes:
-          - present: "Closed-book, tool-assisted, and optional multimodal settings are discussed across specs and the paper draft."
-            missing: "Dedicated Evaluation Settings artifact called for by the story is not present."
-      - id: "1.4"
-        title: Paper success metrics
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Build now
-        status: implemented
-        stable: false
-        notes:
-          - present: "Reviewer-readiness checklist and paper framing exist."
-            missing: "Dedicated paper-ready success-metrics artifact/report is not present, and final result criteria remain pending."
-
   - id: epic-2
-    title: Dataset source ingestion
-    scope: Ingest CADEvolve CadQuery programs as primary source records and keep synthetic rows fixture-only.
-    priority: P0
-    implementation_complexity: Medium
-    debugging_difficulty: Medium
-    recommendation: Build now
+    title: Source ingestion and normalization
     status: work-in-progress
-    stable: false
+    priority: P0
     stories:
       - id: "2.1"
-        title: Select initial CAD program sources
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Medium
-        recommendation: Build now
+        title: JSONL SourceRecord loader
         status: implemented
-        stable: false
       - id: "2.2"
-        title: Source record loader
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build now
+        title: Stable source IDs and normalized code hashes
         status: implemented
-        stable: false
       - id: "2.3"
-        title: Normalize CadQuery scripts
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: High
-        recommendation: Build now
-        status: implemented
-        stable: false
-      - id: "2.4"
-        title: Validate source executability
-        priority: P0
-        implementation_complexity: High
-        debugging_difficulty: High
-        recommendation: Build now
-        status: implemented
-        stable: false
-      - id: "2.5"
-        title: CADEvolve materialization workflow
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build now
-        status: implemented
-        stable: false
-        notes:
-          - present: "Source directory/archive loading and dataset generation from already extracted sources exist."
-            missing: "Deterministic CADEvolve extraction/materialization command and extracted-source manifest are not implemented."
-      - id: "2.6"
-        title: Scoped synthetic fixtures
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Build now
-        status: implemented
-        stable: false
-
+        title: CADEvolve source manifests and audits
+        status: planned
   - id: epic-3
-    title: Operation graph and trace generation
-    scope: Convert normalized source programs into operation graphs, isolated execution traces, and reusable intermediate-state snapshots.
-    priority: P0
-    implementation_complexity: High
-    debugging_difficulty: High
-    recommendation: Build now
+    title: Trace and snapshot execution
     status: work-in-progress
-    stable: false
+    priority: P0
     stories:
       - id: "3.1"
-        title: AST-backed operation graphs
-        priority: P0
-        implementation_complexity: High
-        debugging_difficulty: High
-        recommendation: Build now
+        title: TraceRecord schema
         status: implemented
-        stable: false
       - id: "3.2"
-        title: Isolated trace execution
-        priority: P0
-        implementation_complexity: High
-        debugging_difficulty: High
-        recommendation: Build now
-        status: implemented
-        stable: false
+        title: Isolated CadQuery execution worker
+        status: planned
       - id: "3.3"
-        title: Intermediate snapshots
-        priority: P0
-        implementation_complexity: High
-        debugging_difficulty: High
-        recommendation: Build now
-        status: implemented
-        stable: false
-      - id: "3.4"
-        title: Selector result tables
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: High
-        recommendation: Build now
-        status: implemented
-        stable: false
-      - id: "3.5"
-        title: Stable entity IDs
-        priority: P1
-        implementation_complexity: High
-        debugging_difficulty: High
-        recommendation: Build after scalar tasks
-        status: implemented
-        stable: false
-      - id: "3.6"
-        title: Adjacent-snapshot topology matching
-        priority: P1
-        implementation_complexity: High
-        debugging_difficulty: High
-        recommendation: Build after entity IDs
-        status: implemented
-        stable: false
-      - id: "3.7"
-        title: Sketch profile and workplane-frame extraction
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: High
-        recommendation: Build before non-feature multi-hop row generation
+        title: Snapshot-derived feature application effects
         status: work-in-progress
-        stable: false
-        notes:
-          - present: "The multi-hop architecture and relation-gap survey identify profile geometry and workplane frames as P0 prerequisites."
-            missing: "Trace/source extraction does not yet emit stable profile nodes, intrinsic profile geometry, sketch centers, or local-to-world workplane frames."
-
   - id: epic-4
-    title: Geometry topology and provenance labeling
-    scope: Compute official labels from precomputed trace metadata under explicit tolerance and ambiguity policies.
-    priority: P0
-    implementation_complexity: High
-    debugging_difficulty: High
-    recommendation: Build now
+    title: CAD ontology graph extraction
     status: work-in-progress
-    stable: false
+    priority: P0
     stories:
       - id: "4.1"
-        title: Label policy object
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Build now
+        title: AST assignment and call-chain extraction
         status: implemented
-        stable: false
       - id: "4.2"
-        title: Operation count labels
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build now
+        title: Feature, operation, and parameter nodes
         status: implemented
-        stable: false
       - id: "4.3"
-        title: Volume and bounding-box labels
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: High
-        recommendation: Build now
+        title: Profile geometry nodes for circle, rect, and polyline
         status: implemented
-        stable: false
       - id: "4.4"
-        title: Topology count labels
-        priority: P0
-        implementation_complexity: High
-        debugging_difficulty: High
-        recommendation: Build now
+        title: Workplane frame nodes and profile projection links
         status: implemented
-        stable: false
-        notes:
-          - present: "Basic topology counts for solids, faces, edges, vertices, and wires are traced/materialized."
-            missing: "Planar face, cylindrical face, circular edge, and axis-parallel edge counts are not computed in the live trace path."
       - id: "4.5"
-        title: Point membership labels
-        priority: P0
-        implementation_complexity: High
-        debugging_difficulty: High
-        recommendation: Build now
+        title: Material and void region geometry
         status: work-in-progress
-        stable: false
-        notes:
-          - present: "Point-membership rows exist for smoke fixtures; the live trace path now creates deterministic AABB, expanded-AABB, and entity-center near-face/edge/vertex descriptors for every traced snapshot with entity signatures, then classifies only scheduled descriptors."
-            missing: "Inside-added-feature, exact removed-material regions, exact nearest-surface distances, and robust boundary classification are not implemented."
-      - id: "4.6"
-        title: Feature provenance labels
-        priority: P0
-        implementation_complexity: High
-        debugging_difficulty: High
-        recommendation: Build after topology matching
-        status: implemented
-        stable: false
-      - id: "4.7"
-        title: Label consistency validation
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: High
-        recommendation: Build now
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "Schema validation, duplicate row checks, and split leakage validation exist."
-            missing: "Story-specific label validation for missing snapshots, unstable topology, low-confidence provenance, and prompt label leakage is not implemented."
-      - id: "4.8"
-        title: Non-feature geometry relation labels
-        priority: P0
-        implementation_complexity: High
-        debugging_difficulty: High
-        recommendation: Build after profile/workplane extraction
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "The spec defines `profile_intrinsic` and `feature_application_effect` measurement scopes."
-            missing: "Profile application effects, stable selector face IDs, same-face joins, path tangents, nearest path points, material-region geometry, and void-region geometry are not implemented."
-
   - id: epic-5
-    title: Prompt and task generation
-    scope: Materialize public task rows from trace metadata without recomputing CadQuery geometry during prompt formatting.
+    title: Query program and deterministic resolver
+    status: implemented
     priority: P0
-    implementation_complexity: Medium
-    debugging_difficulty: Medium
-    recommendation: Build after labels
-    status: work-in-progress
-    stable: false
     stories:
       - id: "5.1"
-        title: Operation-count prompt generator
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Build now
+        title: QueryProgram and Clause IR
         status: implemented
-        stable: false
       - id: "5.2"
-        title: Selector-count prompt generator
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build after selector tables
+        title: Candidate-set trace and failure reasons
         status: implemented
-        stable: false
       - id: "5.3"
-        title: Bounding-box prompt generator
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Medium
-        recommendation: Build now
+        title: Argmax/argmin aggregation
         status: implemented
-        stable: false
       - id: "5.4"
-        title: Signed-volume-delta prompt generator
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Medium
-        recommendation: Build now
+        title: Reject-unless-unique policy
         status: implemented
-        stable: false
-      - id: "5.5"
-        title: Topology-count prompt generator
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build after topology labels
-        status: implemented
-        stable: false
-      - id: "5.6"
-        title: Point-membership prompt generator
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: High
-        recommendation: Build after point labels
-        status: implemented
-        stable: false
-      - id: "5.7"
-        title: Feature-provenance-choice prompt generator
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: High
-        recommendation: Build after provenance labels
-        status: implemented
-        stable: false
-      - id: "5.8"
-        title: Reserved later task prompt generators
-        priority: P2
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Defer
-        status: implemented
-        stable: false
-      - id: "5.9"
-        title: Hypothetical selector-count expansion
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: High
-        recommendation: Build after selector tables
-        status: implemented
-        stable: false
-        notes:
-          - present: "The live trace path creates generated selector descriptors for a common faces/edges/vertices probe set at every traced snapshot, then evaluates only scheduler-selected descriptors and materializes successful selector_count labels."
-            missing: "The generated selector universe is still not the full CadQuery selector grammar, and empty/non-empty result balancing can only happen after selected labels are evaluated."
-      - id: "5.10"
-        title: All-step signed-volume-delta expansion
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Medium
-        recommendation: Build now
-        status: implemented
-        stable: false
-        notes:
-          - present: "The prompt generator emits signed_volume_delta rows for every adjacent traced snapshot pair with finite pre/post volume, including zero-delta operations."
-            missing: "No magnitude-bucket or per-source balancing is enforced during default materialization."
-      - id: "5.11"
-        title: Per-snapshot AABB point-membership expansion
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: High
-        recommendation: Build after point labels
-        status: implemented
-        stable: false
-        notes:
-          - present: "The live trace path creates deterministic AABB, expanded-AABB, and entity-center near-face/edge/vertex point descriptors for each traced snapshot instead of only the final state; scheduled labels store nearest-entity center diagnostics when entity signatures exist."
-            missing: "Exact added/removed-region sampling and exact nearest-surface diagnostics remain open."
-      - id: "5.12"
-        title: Rule-based multi-hop checklist generator
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: High
-        recommendation: Build after non-feature ontology labels
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "The architecture specifies deterministic ontology atoms, candidate-count gates, projection paths, and versioned checklist templates."
-            missing: "No production generator emits verifier-backed non-feature multi-hop rows with `profile_intrinsic` and `feature_application_effect` wording gates."
-
   - id: epic-6
-    title: Dataset splits and balancing
-    scope: Create leakage-resistant split manifests and task-family balance policies.
+    title: Label and relation families
+    status: work-in-progress
     priority: P0
-    implementation_complexity: Medium
-    debugging_difficulty: Medium
-    recommendation: Build before release
-    status: implemented
-    stable: false
     stories:
       - id: "6.1"
-        title: Random split
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Build now
+        title: Relation registry
         status: implemented
-        stable: false
       - id: "6.2"
-        title: Generator-held-out split
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build now
+        title: Measurement-scope registry
         status: implemented
-        stable: false
       - id: "6.3"
-        title: Source-subtree and source-family holdouts
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build now
-        status: implemented
-        stable: false
+        title: Selector face identity and same-face joins
+        status: work-in-progress
       - id: "6.4"
-        title: Operation-held-out split
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build now
+        title: Path tangents and nearest path points
         status: implemented
-        stable: false
-      - id: "6.5"
-        title: Topology-held-out split
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: High
-        recommendation: Build after topology labels
-        status: implemented
-        stable: false
-      - id: "6.6"
-        title: Near-boundary hard split
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build after point labels
-        status: implemented
-        stable: false
-      - id: "6.7"
-        title: Task-family class balancing
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build before release
-        status: implemented
-        stable: false
-
   - id: epic-7
-    title: Baselines and model evaluation
-    scope: Measure shortcut baselines, closed-book model performance, training gains, and split-specific failures.
-    priority: P0
-    implementation_complexity: Medium
-    debugging_difficulty: Medium
-    recommendation: Build after MVP export
+    title: Rule-based prompt rendering
     status: work-in-progress
-    stable: false
+    priority: P0
     stories:
       - id: "7.1"
-        title: Majority and random baselines
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Build now
+        title: Versioned templates from query clauses
         status: implemented
-        stable: false
       - id: "7.2"
-        title: Static operation-count baselines
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Build now
+        title: Clue map from public wording to hidden clauses
         status: implemented
-        stable: false
       - id: "7.3"
-        title: Selector and geometry heuristic baselines
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build now
+        title: Banned ontology-jargon wording gate
         status: implemented
-        stable: false
       - id: "7.4"
-        title: Closed-book LLM evaluation
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build after export
+        title: Individual clue breadth gate
         status: work-in-progress
-        stable: false
-        notes:
-          - present: "Provider-agnostic prediction request export, response normalization, and grading harnesses exist."
-            missing: "Concrete closed-book LLM evaluation result artifact is not present in this snapshot."
-      - id: "7.5"
-        title: Few-shot prompting evaluation
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build after train split
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "Few-shot request builder using train rows exists."
-            missing: "Concrete few-shot model result and zero-shot comparison artifact are not present."
-      - id: "7.6"
-        title: Answer-only SFT
-        priority: P0
-        implementation_complexity: High
-        debugging_difficulty: Medium
-        recommendation: Build after baseline evaluation
-        status: implemented
-        stable: false
-      - id: "7.7"
-        title: Trace-grounded reasoning SFT
-        priority: P0
-        implementation_complexity: High
-        debugging_difficulty: High
-        recommendation: Build after rationale templates
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "Trace-grounded reasoning SFT JSONL preparation exists."
-            missing: "Reasoning SFT training/evaluation artifact with format-compliance and hard-task metrics is not present."
-      - id: "7.8"
-        title: Data scaling experiments
-        priority: P0
-        implementation_complexity: High
-        debugging_difficulty: Medium
-        recommendation: Build after first SFT
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "Deterministic scaling subset preparation exists, with smoke-sized subsets."
-            missing: "1k, 5k, 15k, 50k, full scaling runs and learning-curve reports are not present."
-      - id: "7.9"
-        title: Tool-assisted upper bound
-        priority: P1
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build after closed-book baseline
-        status: implemented
-        stable: false
-
   - id: epic-8
-    title: Counterfactual and CADEditQA extensions
-    scope: Extend diagnostic CAD-QA into controlled counterfactual and edit-prediction tasks while reusing shared core.
-    priority: P1
-    implementation_complexity: High
-    debugging_difficulty: High
-    recommendation: Build after MVP diagnostic tasks
+    title: Dataset materialization, splits, and validation
     status: work-in-progress
-    stable: false
+    priority: P0
     stories:
       - id: "8.1"
-        title: Counterfactual groups
-        priority: P1
-        implementation_complexity: High
-        debugging_difficulty: High
-        recommendation: Build after trace stability
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "Grouped numeric parameter counterfactual source variants and protected split grouping exist."
-            missing: "Operation removal, selector change, workplane offset, fillet/chamfer radius, extrusion height, cut-depth variants, and verified public counterfactual labels are not implemented."
+        title: DatasetRow schema
+        status: implemented
       - id: "8.2"
-        title: CADEditQA task boundary
-        priority: P1
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Build after CAD-QA core
+        title: JSONL materialization
         status: implemented
-        stable: false
       - id: "8.3"
-        title: Parameter edit direction
-        priority: P1
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build after verifier core
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "Conservative parameter edit direction rows are materialized from grouped numeric counterfactual manifests."
-            missing: "Full verifier-backed target satisfaction and no_valid_edit coverage are incomplete."
-      - id: "8.4"
-        title: Feature to edit
-        priority: P1
-        implementation_complexity: Medium
-        debugging_difficulty: High
-        recommendation: Build after provenance labels
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "Feature-to-edit rows are materialized from validated feature-provenance QA rows."
-            missing: "Verifier-derived target satisfaction and complete deterministic tie-breaking coverage are not implemented."
-      - id: "8.5"
-        title: Selector and workplane repair slices
-        priority: P1
-        implementation_complexity: High
-        debugging_difficulty: High
-        recommendation: Build after candidate verifier
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "Conservative selector_repair and workplane_offset_repair candidate rows exist."
-            missing: "Official live verifier-backed scoring for repair candidates is not implemented."
-      - id: "8.6"
-        title: Reserved numeric and multi-step edit tasks
-        priority: P3
-        implementation_complexity: High
-        debugging_difficulty: High
-        recommendation: Defer
+        title: Row validation
         status: implemented
-        stable: false
-
+      - id: "8.4"
+        title: Group-safe release splits
+        status: work-in-progress
+      - id: "8.5"
+        title: Leakage audit reports
+        status: implemented
+      - id: "8.6"
+        title: Public/private release views with hidden-field audits
+        status: implemented
+      - id: "8.7"
+        title: Release export filtering to release-ready rows
+        status: implemented
   - id: epic-9
-    title: Rendering and multimodal extensions
-    scope: Support audit renders and optional multimodal variants without making geometry artifacts required for the default dataset.
-    priority: P2
-    implementation_complexity: Medium
-    debugging_difficulty: Medium
-    recommendation: Defer until code-only release is healthy
+    title: Baselines and evaluation
     status: work-in-progress
-    stable: false
+    priority: P1
     stories:
       - id: "9.1"
-        title: Audit renders
-        priority: P1
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build for audit
-        status: implemented
-        stable: false
+        title: Static shortcut baselines by hop slice
+        status: work-in-progress
       - id: "9.2"
-        title: Orthographic views
-        priority: P2
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Defer
+        title: Closed-book model evaluation
         status: work-in-progress
-        stable: false
-        notes:
-          - present: "Audit render manifests can record front, top, right, and isometric view metadata."
-            missing: "Literal side view support and render-time camera/view application are incomplete."
+      - id: "9.4"
+        title: Zero-shot and few-shot model request export
+        status: implemented
       - id: "9.3"
-        title: Multimodal prompt variant
-        priority: P2
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Defer
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "Render-backed prediction request export exists as a separate optional artifact."
-            missing: "Explicit multimodal track marker and metrics-level separation guard are not implemented."
-
+        title: Tool-assisted upper-bound evaluation
+        status: planned
+      - id: "9.5"
+        title: Private-key grading with response hygiene metrics
+        status: implemented
+      - id: "9.6"
+        title: Oracle response export and public/private key checks
+        status: implemented
   - id: epic-10
-    title: Dataset packaging and release
-    scope: Package rows, metadata, manifests, validation reports, and optional artifacts in a reproducible release layout.
-    priority: P0
-    implementation_complexity: Medium
-    debugging_difficulty: Medium
-    recommendation: Build before paper experiments
-    status: work-in-progress
-    stable: false
+    title: Training and SFT artifacts
+    status: implemented
+    priority: P1
     stories:
       - id: "10.1"
-        title: Final public row schema
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build now
+        title: Answer-only SFT exports
         status: implemented
-        stable: false
       - id: "10.2"
-        title: JSONL and Parquet export
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build after row generation
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "JSONL export, metadata, split manifest, failure manifest, and optional Parquet writer exist."
-            missing: "Current artifacts skip Parquet when pyarrow/schema support is unavailable and do not always include the full ideal release layout."
-      - id: "10.3"
-        title: Dataset card
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Build before release
+        title: Candidate-trace reasoning SFT exports
         status: implemented
-        stable: false
-      - id: "10.4"
-        title: Reproducibility scripts
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build before release
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "Reproducibility audit and resumable generation scripts exist."
-            missing: "Release metadata does not yet record all requested reproducibility fields such as code commit and validation report paths."
-      - id: "10.5"
-        title: Versioning
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Build now
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "Dataset version is configured and emitted in public rows; label-policy versioning is documented."
-            missing: "Schema migration artifacts and relabel-audit workflow for threshold changes are not implemented."
-
+      - id: "10.3"
+        title: SFT ablation and scaling exports
+        status: implemented
   - id: epic-11
-    title: Paper experiments
-    scope: Run analyses needed to support CAD-QA paper claims with transparent task mix, split mix, and failure reporting.
-    priority: P0
-    implementation_complexity: Medium
-    debugging_difficulty: Medium
-    recommendation: Build after release candidate
+    title: Experiment orchestration and reports
     status: work-in-progress
-    stable: false
+    priority: P1
     stories:
       - id: "11.1"
-        title: Dataset characterization
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Build after export
+        title: Smoke graph dataset report
         status: implemented
-        stable: false
       - id: "11.2"
-        title: Baseline comparison table
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Low
-        recommendation: Build after baselines
-        status: implemented
-        stable: false
+        title: Release-scale verifier and quarantine reports
+        status: planned
       - id: "11.3"
-        title: Task-family comparison
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Build after evaluations
+        title: One-command smoke experiment orchestration
         status: implemented
-        stable: false
       - id: "11.4"
-        title: Split-generalization analysis
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build after split manifests
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "Protected split routing and experiment comparison tables exist."
-            missing: "Concrete split-generalization analysis covering random, generator, source-subtree, operation, topology, near-boundary, and counterfactual-heldout splits is not present."
+        title: Run summaries, paper-results snapshot, and artifact manifest
+        status: implemented
       - id: "11.5"
-        title: Prompting and training ablations
-        priority: P0
-        implementation_complexity: High
-        debugging_difficulty: Medium
-        recommendation: Build after baseline harness
+        title: Local experiment artifact packaging with checksums
         status: implemented
-        stable: false
-      - id: "11.6"
-        title: Failure-case analysis
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build after model predictions
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "Trace/dataset failure taxonomy reports exist."
-            missing: "Model-failure taxonomy for syntax, selector, workplane, arithmetic, topology, provenance, format, and shortcut errors is not present."
-
-  - id: epic-12
-    title: Paper writing
-    scope: Write CAD-QA as a controlled, trace-derived CAD program reasoning benchmark paper.
-    priority: P0
-    implementation_complexity: Low
-    debugging_difficulty: Low
-    recommendation: Build alongside experiments
-    status: work-in-progress
-    stable: false
-    stories:
-      - id: "12.1"
-        title: Abstract
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Build after first results
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "Draft abstract exists in the paper scaffold."
-            missing: "Headline findings remain placeholders until final results are available."
-      - id: "12.2"
-        title: Introduction
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Build now
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "Draft introduction exists and motivates CAD program reasoning."
-            missing: "Contribution framing still needs final result-backed tightening."
-      - id: "12.3"
-        title: Related work
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Build now
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "Draft related-work section exists."
-            missing: "Citation placeholders and some explicit comparison wording remain unresolved."
-      - id: "12.4"
-        title: Dataset construction section
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Build after pipeline
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "Draft dataset-construction section exists."
-            missing: "Final dataset statistics and tables remain placeholders."
-      - id: "12.5"
-        title: Task section
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Build from specs
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "Draft task-family and answer-format section exists."
-            missing: "Per-MVP example prompt/answer pairs are incomplete."
-      - id: "12.6"
-        title: Experiments section
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Build after evaluations
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "Draft experiments section exists."
-            missing: "Final baseline/model/training result tables remain placeholders."
-      - id: "12.7"
-        title: Discussion and limitations
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Build after audits
-        status: implemented
-        stable: false
-      - id: "12.8"
-        title: Conclusion
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Build after results
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "Draft conclusion exists."
-            missing: "Strongest final result cannot be summarized until final experiments are complete."
-
-  - id: epic-13
-    title: Repository and engineering infrastructure
-    scope: Build shared core needed to generate, validate, evaluate, and audit CAD-QA releases.
-    priority: P0
-    implementation_complexity: Medium
-    debugging_difficulty: Medium
-    recommendation: Build now
-    status: implemented
-    stable: false
-    stories:
-      - id: "13.1"
-        title: Repository structure
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Build now
-        status: implemented
-        stable: false
-      - id: "13.2"
-        title: Configuration system
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Low
-        recommendation: Build now
-        status: implemented
-        stable: false
-      - id: "13.3"
-        title: Logging and failure tracking
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Medium
-        recommendation: Build now
-        status: implemented
-        stable: false
-      - id: "13.4"
-        title: Expensive artifact caches
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build before scale runs
-        status: implemented
-        stable: false
-      - id: "13.5"
-        title: Sharded resumable generation
-        priority: P1
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build before long runs
-        status: implemented
-        stable: false
-      - id: "13.6"
-        title: Unit and golden tests
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build now
-        status: implemented
-        stable: false
-      - id: "13.7"
-        title: Smoke dataset generation
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build now
-        status: implemented
-        stable: false
-
-  - id: epic-14
-    title: Quality assurance and review
-    scope: Audit labels, splits, reproducibility, schema, leakage, and release readiness before public claims.
-    priority: P0
-    implementation_complexity: Medium
-    debugging_difficulty: Medium
-    recommendation: Build before release
-    status: implemented
-    stable: false
-    stories:
-      - id: "14.1"
-        title: Manual audit sample
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Medium
-        recommendation: Build before release
-        status: implemented
-        stable: false
-      - id: "14.2"
-        title: Reproducibility audit
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build before release
-        status: implemented
-        stable: false
-      - id: "14.3"
-        title: Leakage audit
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build before release
-        status: implemented
-        stable: false
-      - id: "14.4"
-        title: Reviewer-readiness checklist
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Build before release
-        status: implemented
-        stable: false
-
-  - id: epic-15
-    title: Experiment orchestration and run artifacts
-    scope: Make CAD-QA baselines, model evaluations, SFT runs, canaries, and analysis runs reproducible through manifests, prediction artifacts, and stop gates.
-    priority: P0
-    implementation_complexity: Medium
-    debugging_difficulty: Medium
-    recommendation: Build before serious model experiments
-    status: implemented
-    stable: false
-    stories:
-      - id: "15.1"
-        title: Run artifact contract
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Low
-        recommendation: Build before baseline runs
-        status: implemented
-        stable: false
-      - id: "15.2"
-        title: Experiment manifest format
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build before orchestration script
-        status: implemented
-        stable: false
-      - id: "15.3"
-        title: Experiment orchestration runner
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build before overnight runs
-        status: implemented
-        stable: false
-      - id: "15.4"
-        title: Standard prediction output contract
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Build before closed-book model evaluation
-        status: implemented
-        stable: false
-      - id: "15.5"
-        title: Canary and stop-gate policy
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build before SFT or RL runs
-        status: implemented
-        stable: false
-      - id: "15.6"
-        title: Overnight experiment subset manifest
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Medium
-        recommendation: Build before first rented-GPU run
-        status: implemented
-        stable: false
-      - id: "15.7"
-        title: Local orchestration smoke suite
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Medium
-        recommendation: Build with orchestration runner
-        status: implemented
-        stable: false
-      - id: "15.8"
-        title: Artifact upload and retention
-        priority: P1
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build before destroying rented instances
-        status: implemented
-        stable: false
-      - id: "15.9"
-        title: Experiment comparison reports
-        priority: P1
-        implementation_complexity: Medium
-        debugging_difficulty: Low
-        recommendation: Build after prediction contract
-        status: implemented
-        stable: false
-
-  - id: epic-16
-    title: Non-feature Multi-Hop CAD-QA
-    scope: Replace the legacy feature-level relation-diagnostic plan with rule-based Multi-Hop CAD-QA over profiles, workplanes, selector faces, paths, material regions, void regions, and deterministic projection paths back to public answer types.
-    priority: P0
-    implementation_complexity: High
-    debugging_difficulty: High
-    recommendation: Build P0 profile/workplane support before broad multi-hop prompt generation, then expand to face/path/material-region relations.
-    status: work-in-progress
-    stable: false
-    stories:
-      - id: "16.1"
-        title: Non-feature ontology schema and relation normalization
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: High
-        recommendation: Build now
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "The task spec now defines non-feature nodes, relation aliases, measurement scopes, and normalization rules."
-            missing: "The production schema/resolver does not yet enforce these names or relation-normalization rules."
-      - id: "16.2"
-        title: Profile intrinsic geometry labels
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: High
-        recommendation: Build first
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "The relation-gap survey identifies `has_profile_geometry` as a P0 prerequisite."
-            missing: "No production labels exist yet for profile area, perimeter, centroid, local/world bounds, edge count, vertex count, or primitive segment counts."
-      - id: "16.3"
-        title: Workplane frame and profile projection paths
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: High
-        recommendation: Build with profile geometry
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "The architecture requires every non-feature clue to project to the requested answer type."
-            missing: "Workplane origin/axes/normal transforms and `feature -> uses_profile -> profile` projection paths are not production labels."
-      - id: "16.4"
-        title: Profile application-effect labels
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: High
-        recommendation: Build before using profile-effect public clues
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "The spec distinguishes `profile_intrinsic` from `feature_application_effect`."
-            missing: "Operation deltas are not yet linked back through the profile used by a cut, extrude, sweep, loft, or revolve."
-      - id: "16.5"
-        title: Rule-based hidden query and checklist renderer
-        priority: P0
-        implementation_complexity: Medium
-        debugging_difficulty: High
-        recommendation: Build after P0 ontology labels
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "The architecture specifies answer-first sampling, atomic clue breadth gates, deterministic templates, clue maps, and verifier rejection."
-            missing: "No production row materializer emits non-feature multi-hop checklist rows or rejection manifests."
-      - id: "16.6"
-        title: Stable selector face IDs and same-face joins
-        priority: P1
-        implementation_complexity: High
-        debugging_difficulty: High
-        recommendation: Build after P0 profile/workplane support
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "Selector tables and per-snapshot entity IDs exist."
-            missing: "Selector-result face identity, stable face matching, non-top/side-face predicates, and `same_selected_face_as` joins are not implemented for multi-hop rows."
-      - id: "16.7"
-        title: Sweep path tangent and nearest-point relations
-        priority: P1
-        implementation_complexity: Medium
-        debugging_difficulty: High
-        recommendation: Build after workplane/profile world geometry
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "Source paths such as `splineApprox(...)` are visible in operation graphs."
-            missing: "`has_path_tangent`, `nearest_point_on_path`, and direction-comparison labels are not implemented."
-      - id: "16.8"
-        title: Material and void region geometry relations
-        priority: P2
-        implementation_complexity: High
-        debugging_difficulty: High
-        recommendation: Build after profile/face/path P0-P1 relations are credible
-        status: work-in-progress
-        stable: false
-        notes:
-          - present: "Conservative adjacent-volume provenance records exist."
-            missing: "Added-material regions, removed void regions, region centroids, bounds, intersections, containment, and adjacency are not production-grade labels."
-      - id: "16.9"
-        title: Non-feature multi-hop survey and coverage reports
-        priority: P0
-        implementation_complexity: Low
-        debugging_difficulty: Low
-        recommendation: Keep current while building ontology slices
-        status: implemented
-        stable: false
-        notes:
-          - present: "Mock survey artifacts exist under `experiments/multi_hop_qa_mock/preview/non_feature_relation_gap_survey.*`."
-            missing: "The survey is static and not yet integrated as a generation acceptance report."
-
-  - id: epic-17
-    title: Spatial distance QA
-    scope: Add point-to-point, feature-to-feature, axis, hole centerline, and cylinder centerline distance tasks over stable spatial references.
-    priority: P2
-    implementation_complexity: High
-    debugging_difficulty: High
-    recommendation: Build after workplane/frame metadata and topology entity IDs are stable
-    status: implemented
-    stable: false
-    stories:
-      - id: "17.1"
-        title: Spatial reference extraction
-        priority: P2
-        implementation_complexity: High
-        debugging_difficulty: High
-        recommendation: Build after snapshot entity IDs
-        status: implemented
-        stable: false
-      - id: "17.2"
-        title: Axis and centerline fitting policy
-        priority: P2
-        implementation_complexity: High
-        debugging_difficulty: High
-        recommendation: Build before centerline distance rows
-        status: implemented
-        stable: false
-      - id: "17.3"
-        title: Spatial-distance labels and prompts
-        priority: P2
-        implementation_complexity: Medium
-        debugging_difficulty: High
-        recommendation: Build after spatial references validate
-        status: implemented
-        stable: false
-      - id: "17.4"
-        title: Spatial-distance baselines and audits
-        priority: P2
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build before reporting distance scores
-        status: implemented
-        stable: false
-
-  - id: epic-18
-    title: Bounding-box region QA
-    scope: Treat explicit bounding boxes as spatial query windows for entity counts, feature lists, and conservative material added/removed evidence.
-    priority: P2
-    implementation_complexity: High
-    debugging_difficulty: High
-    recommendation: Build after spatial indexes and material-region evidence are available
-    status: implemented
-    stable: false
-    stories:
-      - id: "18.1"
-        title: Spatial-window index
-        priority: P2
-        implementation_complexity: High
-        debugging_difficulty: High
-        recommendation: Build after topology and sampled material records
-        status: implemented
-        stable: false
-      - id: "18.2"
-        title: Region predicate label policy
-        priority: P2
-        implementation_complexity: Medium
-        debugging_difficulty: High
-        recommendation: Build before region prompt generation
-        status: implemented
-        stable: false
-      - id: "18.3"
-        title: Bounding-box region prompt generator
-        priority: P2
-        implementation_complexity: Medium
-        debugging_difficulty: High
-        recommendation: Build after predicate labels validate
-        status: implemented
-        stable: false
-      - id: "18.4"
-        title: Region-query baselines and audits
-        priority: P2
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build before reporting region-query scores
-        status: implemented
-        stable: false
-
-  - id: epic-19
-    title: Validity and failure-mode QA
-    scope: Add operation and candidate-edit validity tasks, failure-type labels, and bounded threshold-search questions such as maximum valid fillet radius.
-    priority: P2
-    implementation_complexity: High
-    debugging_difficulty: High
-    recommendation: Build after isolated workers, failure manifests, and repeated-probe stability checks are reliable
-    status: implemented
-    stable: false
-    stories:
-      - id: "19.1"
-        title: Validity probe contract
-        priority: P2
-        implementation_complexity: Medium
-        debugging_difficulty: High
-        recommendation: Build before failure-mode rows
-        status: implemented
-        stable: false
-      - id: "19.2"
-        title: Failure-type taxonomy
-        priority: P2
-        implementation_complexity: Medium
-        debugging_difficulty: Medium
-        recommendation: Build before public failure labels
-        status: implemented
-        stable: false
-      - id: "19.3"
-        title: Threshold-search validity labels
-        priority: P2
-        implementation_complexity: High
-        debugging_difficulty: High
-        recommendation: Build after probe repeatability is proven
-        status: implemented
-        stable: false
-      - id: "19.4"
-        title: Failure-mode prompts and baselines
-        priority: P2
-        implementation_complexity: Medium
-        debugging_difficulty: High
-        recommendation: Build before reporting validity scores
-        status: implemented
-        stable: false
-
-milestones:
-  - id: milestone-1
-    title: Specification freeze
-    required_epics:
-      - epic-1
-      - epic-4
-      - epic-5
-      - epic-10
-  - id: milestone-2
-    title: Source and trace prototype
-    required_epics:
-      - epic-2
-      - epic-3
-  - id: milestone-3
-    title: MVP scalar task prototype
-    required_stories:
-      - "5.1"
-      - "5.3"
-      - "5.4"
-      - "10.1"
-  - id: milestone-4
-    title: Selector topology and point tasks
-    required_stories:
-      - "5.2"
-      - "5.5"
-      - "5.6"
-      - "6.6"
-  - id: milestone-5
-    title: Provenance and counterfactuals
-    required_stories:
-      - "3.5"
-      - "3.6"
-      - "4.6"
-      - "8.1"
-  - id: milestone-6
-    title: Baseline evaluation
-    required_epics:
-      - epic-7
-    required_stories:
-      - "15.1"
-      - "15.4"
-  - id: milestone-7
-    title: Training experiments
-    required_stories:
-      - "7.6"
-      - "7.7"
-      - "7.8"
-      - "15.2"
-      - "15.3"
-      - "15.5"
-      - "15.6"
-      - "15.7"
-  - id: milestone-8
-    title: Paper draft
-    required_epics:
-      - epic-11
-      - epic-12
-      - epic-15
-  - id: milestone-9
-    title: Release candidate
-    required_epics:
-      - epic-10
-      - epic-14
-  - id: milestone-10
-    title: Advanced CAD-QA and Multi-Hop diagnostics
-    required_epics:
-      - epic-16
-      - epic-17
-      - epic-18
-      - epic-19
-
-mvp_scope:
-  dataset:
-    - cadevolve_backed_single_script_code_only_rows
-    - normalized_source_records
-    - operation_graphs
-    - isolated_execution_traces
-    - intermediate_snapshots
-    - operation_count
-    - selector_count
-    - bbox_after_step
-    - signed_volume_delta
-    - topology_count_after_step
-    - point_membership
-    - feature_provenance_choice
-    - split_manifests
-    - dataset_metadata
-    - failure_manifests
-  baselines:
-    - random_and_majority
-    - regex_operation_count
-    - static_operation_count
-    - selector_name_heuristic
-    - primitive_symbolic_volume
-    - aabb_point_membership
-    - closed_book_zero_shot
-    - closed_book_few_shot
-    - answer_only_sft
-  paper_claim: CAD-QA provides trace-derived structured supervision and evaluation for closed-book reasoning about executable CAD construction programs.
-
-backlog_priority:
-  P0:
-    - research_scope_and_task_definitions
-    - cadevolve_source_ingestion
-    - source_normalization
-    - operation_graph_extraction
-    - isolated_trace_execution
-    - mvp_labels_and_prompts
-    - public_row_schema_and_validation
-    - leakage_safe_splits
-    - dataset_export
-    - baseline_evaluation
-    - experiment_orchestration
-    - run_artifact_contract
-    - prediction_output_contract
-    - paper_core_sections
-    - non_feature_multi_hop_profile_geometry
-    - non_feature_multi_hop_workplane_frames
-    - non_feature_multi_hop_profile_application_effects
-    - non_feature_multi_hop_rule_based_checklist_generation
-  P1:
-    - counterfactual_groups
-    - reasoning_sft
-    - data_scaling_experiments
-    - failure_taxonomy
-    - audit_renders
-    - bounded_rl_or_rejection_sampling
-    - experiment_artifact_upload
-    - cadeditqa_first_repair_slices
-    - non_feature_multi_hop_stable_face_ids
-    - non_feature_multi_hop_same_face_joins
-    - non_feature_multi_hop_path_tangents
-  P2:
-    - non_feature_multi_hop_material_regions
-    - non_feature_multi_hop_void_regions
-    - non_feature_multi_hop_region_adjacency_and_intersections
-    - spatial_distance_qa
-    - bounding_box_region_qa
-    - validity_failure_mode_qa
-    - multimodal_prompt_variants
-    - tool_assisted_execution_setting
-    - parquet_release_package
-    - extended_symbolic_baselines
-    - candidate_edit_ranking
-  P3:
-    - unrestricted_cad_code_repair
-    - multi_step_edit_planning
-    - natural_language_explanations_as_official_labels
-    - verifier_guided_rl_primary_result
-    - geometry_artifact_default_release

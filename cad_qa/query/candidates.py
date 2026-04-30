@@ -1,0 +1,13 @@
+"""Candidate utilities."""
+
+from __future__ import annotations
+
+from cad_qa.ontology.nodes import Node, OntologyGraph
+
+
+def initial_candidates(graph: OntologyGraph, target_type: str) -> list[Node]:
+    return graph.nodes_by_type(target_type)
+
+
+def candidate_ids(candidates: list[Node]) -> list[str]:
+    return [candidate.id for candidate in candidates]

@@ -1,169 +1,309 @@
-# CAD-QA: A Trace-Derived Benchmark for CAD Program Reasoning
+# CAD-QA: BrowseComp for CAD Program Reasoning
 
 ## Abstract
 
-Language models increasingly generate CAD scripts, yet they often fail to
-mentally execute the geometry implied by those scripts. CAD-QA is a
-code-only benchmark for closed-book reasoning over executable CadQuery
-construction programs. The benchmark asks models to answer structured questions
-about operation order, selector semantics, bounding boxes, signed volume
-changes, topology counts, point membership, and conservative feature
-provenance. Rows are derived from normalized source programs, static operation
-graphs, isolated CadQuery traces when available, split-safe manifests, and
-deterministic answer parsers. In the current implementation, smoke and
-release-candidate probes validate the generation, schema, leakage audit, and
-baseline pipeline; release-scale model numbers remain `[RESULT: pending]`.
-CAD-QA is intended to measure whether models internalize CAD program semantics
-without calling a CAD kernel at evaluation time.
+BrowseComp showed that short-answer questions can expose a large missing
+capability in browsing agents: persistent reasoning through entangled,
+hard-to-find evidence. CAD-QA targets the analogous gap for CAD agents. Given
+an executable CadQuery script, a model must identify or compute a short,
+verifier-backed answer by resolving a hidden typed CAD ontology graph. The
+public prompt contains only the source program and rule-rendered clues; the
+private label path contains source normalization, trace or snapshot evidence,
+ontology nodes, relation families, measurement scopes, a deterministic query
+program, candidate-set traces, and a verifier decision.
+
+The benchmark unifies simple and hard CAD questions under one graph-first
+design. Low-hop rows ask for direct statistics or one-relation measurements.
+High-hop rows are BrowseComp-style CAD questions: obfuscated, distractor-rich
+checklists that require resolving profiles, workplanes, selectors, paths,
+material changes, topology, and metric comparisons before producing one
+structured answer. Unlike web browsing benchmarks, CAD-QA does not rely on an
+LLM judge in the trusted generation path; answers are produced and checked by a
+deterministic resolver over CadQuery-derived evidence. Release-scale model
+numbers remain `[RESULT: pending]`, but the intended claim is clear: CAD-QA is
+a compact, verifiable benchmark and training source for the reasoning pattern
+CAD agents need before they can reliably edit geometry.
 
 ## Introduction
 
-CAD assistance requires more than producing plausible code. A useful design
-model must understand how operations compose, how selectors bind to topology,
-how workplanes and coordinate frames evolve, and how edits affect downstream
-geometry. These requirements expose a gap between syntactic code fluency and
-geometric reasoning: a model can write a CadQuery script that looks reasonable
-while still misunderstanding which face is selected, whether a point is inside
-the final solid, or how many topology entities remain after a cut.
+CAD agents increasingly write plausible CadQuery programs, but plausible code
+is not the same as geometric understanding. A useful CAD model must know which
+profile a feature used, how a workplane frame projects local sketch coordinates
+into world coordinates, which selected face received a cut, whether a path
+tangent is parallel to an extrusion direction, and which operation introduced
+or removed a region of material. These facts are rarely stated in one line of
+source code. They emerge from a construction graph.
 
-CAD-QA frames this gap as controlled CAD program reasoning. Given one CadQuery
-script, the model answers a structured question without running CadQuery. This
-setting isolates the model's internal understanding of the construction history
-and generated geometry. Tool-using CAD agents remain important, but closed-book
-reasoning is a distinct capability: it supports planning, debugging,
-explanation, and training-time supervision when a kernel is unavailable,
-expensive, or intentionally withheld.
+This paper frames CAD-QA as the CAD analogue of BrowseComp. BrowseComp asks
+browsing agents to persist through sparse, entangled web evidence and return a
+short answer. CAD-QA asks CAD agents to persist through sparse, entangled CAD
+program evidence and return a short answer. The important difference is that
+CAD-QA's evidence is not the open web; it is a typed ontology graph extracted
+from source, execution traces, geometry snapshots, and verifier policy.
 
-The benchmark design follows three constraints. First, source rows should come
-from executable CAD programs rather than isolated trivia. Second, labels should
-be trace-derived or statically derived with explicit label policy, so that
-evaluation is reproducible. Third, public evaluation should use structured
-answers and deterministic parsers rather than natural-language judgment.
+The central research question is:
+
+> Given a CadQuery script, can a model reduce uncertainty over the implied CAD
+> ontology graph and recover the unique verifier-backed answer without running
+> a CAD kernel at evaluation time?
+
+The benchmark should not be organized as separate low-hop diagnostics and
+high-hop reasoning tracks. Those are difficulty slices of the same system. A
+0-hop row may ask for a source statistic. A 1-hop row may resolve one entity
+and read one measurement. A 2-hop row may traverse from a feature to a profile
+or workplane before comparing a metric. A 3+ hop row becomes the real
+BrowseComp-style CAD challenge: several individually broad clues jointly
+identify one answer while distractors remain plausible.
+
+## Contributions
+
+CAD-QA makes four contributions.
+
+1. A graph-first benchmark formulation for CAD program reasoning. Every row is
+   generated from a hidden query program over a typed CAD ontology graph, so
+   low-hop calibration rows and high-hop CAD BrowseComp rows share one
+   architecture.
+2. A deterministic data-generation path. Source normalization, AST extraction,
+   optional CadQuery traces, ontology extraction, query resolution, prompt
+   rendering, and validation are explicit artifacts rather than opaque LLM
+   generation.
+3. A relation and measurement vocabulary for CAD reasoning. The benchmark
+   covers operation order, inputs, parameters, profiles, workplanes, selectors,
+   topology, paths, centroids, distances, material additions, material
+   removals, and scoped measurements such as profile geometry and feature
+   application effects.
+4. An evaluation and training target for CAD agents. Short structured answers
+   support exact grading, invalid-output measurement, calibration analysis, and
+   answer or reasoning SFT data in the same spirit that hard web-search tasks
+   motivate post-training for browsing agents.
 
 ## Related Work
 
-CAD-QA is positioned between code reasoning, CAD program synthesis, geometric
-learning, and tool-use evaluation.
+BrowseComp evaluates browsing agents with short-answer questions that are
+challenging because the evidence is hard to find and entangled. CAD-QA imports
+that benchmark shape but replaces web access with source-visible CAD evidence
+and hidden verifier traces. The analogy is useful because both settings test
+uncertainty reduction rather than fluent summarization.
 
-Program reasoning benchmarks test whether models can infer the behavior of
-code without executing it. CAD-QA shares that goal but adds geometric and
-topological state that is not visible in ordinary text traces.
+WebSailor argues that strong deep-research agents need training data that
+requires structured sampling, information obfuscation, and persistent
+reasoning. CAD-QA uses the same high-level recipe for CAD: sample subgraphs
+from an ontology, hide the target behind public clues, preserve enough
+distractors for each individual clue, and require the full clue set to resolve
+a unique answer.
 
-CAD synthesis systems evaluate whether generated code or geometry matches a
-target. CAD-QA instead evaluates diagnostic understanding of a given program:
-operation counts, intermediate states, selector results, topology, point
-membership, and provenance.
+CAD synthesis and reverse-engineering benchmarks usually evaluate whether a
+model can generate code or reconstruct geometry. CAD-QA instead evaluates
+diagnostic understanding of a given construction program: what entities exist,
+how they relate, what measurements they have, and which operation caused a
+geometric effect.
 
-Geometry and shape benchmarks often operate on meshes, point clouds, images,
-or final solids. CAD-QA keeps the construction program as the primary object so
-questions can target history, edit locality, and feature semantics.
+Geometry benchmarks over meshes, point clouds, images, or final solids often
+discard the procedural history. CAD-QA keeps the program as the primary object,
+because CAD editing depends on history, selectors, workplanes, feature
+provenance, and parameter sensitivity.
 
-Tool-use benchmarks measure whether a model can call an external solver. CAD-QA
-defaults to a closed-book setting and treats tool-assisted evaluation as a
-separate upper-bound regime.
+Citation placeholders: `[CITE: BrowseComp]`, `[CITE: WebSailor]`,
+`[CITE: CadQuery]`, `[CITE: CADEvolve]`, `[CITE: CAD synthesis]`,
+`[CITE: geometric learning]`, `[CITE: CAD agents]`.
 
-Citation placeholders: `[CITE: code reasoning]`, `[CITE: CAD synthesis]`,
-`[CITE: CADEvolve]`, `[CITE: geometric learning]`, `[CITE: tool use]`.
+## Benchmark Design
+
+CAD-QA rows are generated by a single pipeline:
+
+```text
+CadQuery source
+-> source normalization
+-> trace/snapshot extraction
+-> typed CAD ontology graph
+-> deterministic query program
+-> verifier-backed answer
+-> rule-based public prompt renderer
+-> public row grouped by hop count and relation/metric families
+```
+
+The ontology contains nodes for sources, features, operations, parameters,
+workplanes, sketches, profiles, solids, faces, edges, vertices, axes,
+directions, points, centroids, centerlines, paths, selectors, measurements,
+material regions, and void regions. Relations include temporal order,
+`input_to`, `parameter_of`, `uses_profile`, `located_on`, `selected_by`,
+`bounded_by`, `has_measurement`, `has_centroid`, `has_normal`, `distance_to`,
+`parallel_to`, `perpendicular_to`, `coaxial_with`, `adjacent_to`,
+`contained_in`, `intersects`, `adds_material_to`, and
+`removes_material_from`.
+
+Measurements are scoped to avoid category errors. A profile has intrinsic
+measurements such as area, perimeter, centroid, local bounding box, edge count,
+and vertex count. A feature application has effects such as signed volume
+delta, topology delta, circular-edge delta, and bounding-box delta. Entity
+geometry, snapshot state, and relation metrics are separate scopes.
+
+This design turns earlier "core" tasks into low-hop graph rows:
+
+| Hop slice | Example | Purpose |
+| --- | --- | --- |
+| 0-hop | Count `.extrude(...)` calls. | Source-statistic calibration. |
+| 1-hop | Resolve one feature and read its signed volume delta. | Entity and metric grounding. |
+| 2-hop | Resolve a feature, traverse to its profile, compare profile area. | Short relation reasoning. |
+| 3+ hops | Combine profile, workplane, selector, path, material, and metric clues to identify one entity. | CAD BrowseComp. |
+
+## CAD BrowseComp Rows
+
+A release-quality high-hop row should be short-answer, verifier-backed, and
+hard because of uncertainty, not because of vague wording. A public prompt is a
+checklist of clues rendered from hidden clauses. Each clue must be understandable
+from the visible script, but no single clue should collapse the candidate set
+unless the row is intentionally low-hop. The full clue set must resolve one
+answer under a reject-unless-unique policy.
+
+Example prompt shape:
+
+```text
+Given the CadQuery script, identify the feature that satisfies all constraints:
+- It creates a circular profile on one of the explicit `cq.Plane(...)`
+  workplanes rather than on the default XY plane.
+- Its workplane origin has a larger Z coordinate than at least five other
+  repeated boss workplanes.
+- The resulting extrusion is later added to the running object with `.union(...)`.
+- The profile's feature-application effect has the largest circular-edge
+  increase among the candidates that pass the previous clues.
+Return exactly one feature ID.
+```
+
+The hidden query program for this row records the target entity type, answer
+type, relation paths, metric filters, aggregation, candidate-set trace, hop
+counts, failure reasons if any, and verifier status. Public wording is
+rule-based. LLMs may be used for optional wording experiments or external
+evaluation, but not for trusted generation or judging.
+
+The local ontology preview already shows the intended clue vocabulary:
+profiles from `.circle(...)`, `.rect(...)`, and `.polyline(...).close()`;
+workplanes from `cq.Workplane(...)` and `cq.Plane(...)`; selectors from
+`.faces(...)`; paths from `splineApprox(...)` and sweep inputs; material
+regions from extrude/union and cut operations; and measurements from profile
+geometry, bounding-box deltas, topology deltas, centroids, and distances.
 
 ## Dataset Construction
 
-The pipeline ingests CADEvolve-style CadQuery programs and synthetic smoke
-fixtures. Synthetic rows are reserved for golden validation and edge cases; the
-intended release rows are CADEvolve-derived. Each source record stores a source
-identifier, normalized code, source grouping metadata when available, and
-stable hashes.
+The primary source is CADEvolve-style executable CadQuery code. Synthetic
+fixtures remain useful for golden tests, smoke tests, and didactic examples,
+but release rows should be CADEvolve-derived and split by source family or
+counterfactual group to reduce leakage.
 
-The generator extracts an AST-backed operation graph from each script. When
-CadQuery execution is enabled, an isolated worker executes the source with a
-timeout and records scalar snapshots after supported steps. Snapshots include
-bounding boxes, volume, center, topology counts, optional selector count
-tables, sampled point membership queries, conservative provenance records, and
-best-effort per-snapshot entity identifiers. Failures are kept in
-`failure_manifest.jsonl` rather than silently dropped.
+For each source, the pipeline stores normalized code, source metadata, stable
+hashes, and extraction diagnostics. Static extraction builds an operation graph
+from assignments and call chains. Trace extraction, when enabled, executes the
+source in an isolated worker and records snapshot-level measurements: volume,
+bounding boxes, centers, topology counts, selector results, point membership,
+and conservative provenance. Failures are not silently dropped; they are
+written to a failure manifest and used to define benchmark coverage.
 
-Public rows are materialized from the source and trace records, assigned to
-group-safe splits, validated against the public schema, and exported as JSONL
-with optional Parquet. Split manifests and leakage audits are release
-artifacts. Manual audit samples, failure taxonomy reports, reproducibility
-reports, and dataset cards are generated from the same export directory.
+Ontology extraction then creates typed nodes and relations. The P0 release
+target is profile geometry, workplane frames, profile-to-feature application
+effects, deterministic query resolution, and rule-based prompt rendering. P1
+adds selector face IDs, same-face joins, sketch centers, path tangents, nearest
+path points, and centroid/coordinate relations. P2 adds conservative material
+and void-region geometry, adjacency, containment, and intersection where the
+evidence is release-grade.
+
+Every internal construction row should include:
+
+- `row_id`;
+- `source_id`;
+- public source code;
+- public prompt;
+- answer format;
+- gold answer;
+- hidden query program;
+- candidate-set trace;
+- relation families used;
+- measurement scopes used;
+- logical, static, and geometry hop counts;
+- difficulty bucket;
+- verifier status.
+
+Release artifacts split those fields into answer-free `public.jsonl` rows for
+model input and `private.jsonl` rows for grading, hidden query programs,
+candidate traces, clue maps, and audit.
 
 Release statistics should be filled from the release artifact:
-`[TABLE: dataset row counts by split and task]`,
-`[TABLE: trace failures by category]`,
+`[TABLE: row counts by hop slice, relation family, and split]`,
+`[TABLE: verifier failures and quarantine reasons]`,
 `[RESULT: source count]`, `[RESULT: public row count]`.
 
-## Task Families
+## Evaluation
 
-CAD-QA currently implements these public task families:
+The main setting is closed-book CAD reasoning: the model receives the source
+and prompt but cannot call CadQuery. This isolates whether the model has
+internalized enough CAD semantics to reduce uncertainty from the visible
+program. A tool-assisted setting can be reported as an upper bound, but it is
+not the primary benchmark.
 
-| Task family | Answer type | Signal |
-| --- | --- | --- |
-| `operation_count` | integer | Static CadQuery syntax and construction ordering. |
-| `selector_count` | integer | Selector semantics when selector traces exist. |
-| `bbox_after_step` | bbox JSON | Intermediate geometric state. |
-| `signed_volume_delta` | number | Additive and subtractive operation effects. |
-| `topology_count_after_step` | integer | Face, edge, vertex, and solid counts. |
-| `point_membership` | enum | Inside, outside, or boundary classification. |
-| `feature_provenance_choice` | choice | Conservative source feature attribution. |
+Scoring uses deterministic parsers whenever possible. Entity IDs, integers,
+choices, booleans, finite numeric values, bounding boxes, and short structured
+records are parsed into typed answers and compared against verifier labels with
+task-specific tolerances. Invalid output rate is a first-class metric.
+Missing-response rate is reported separately from parser failures, and response
+files are audited for duplicate or extra row IDs. Confidence can be requested to
+report calibration, matching BrowseComp's emphasis on short-answer accuracy and
+uncertainty.
 
-The answer contract is intentionally structured. Integers must parse as
-non-negative integers, numeric answers use finite values with task-specific
-tolerances, bounding boxes use JSON with `min` and `max` vectors, and choices
-must match the row choices unless the label policy marks provenance as
-ambiguous or merged.
+Baselines should include:
 
-Counterfactual source generation is implemented for grouped numeric parameter
-variants, but verified counterfactual public labels are not yet part of the
-benchmark release. CADEditQA tasks are planned as sibling edit-verification
-tasks over the same shared sources and traces.
-
-## Experiments
-
-The evaluation protocol reports exact structured-answer accuracy and invalid
-output rate. Results must be broken down by split and task family. Baselines
-include majority, random, static operation-count, regex operation-count,
-selector heuristic, and oracle systems. Closed-book LLM requests can be
-exported in zero-shot and few-shot forms; answer-only SFT data can be prepared
-from the same dataset export.
-
-Current local artifacts include smoke validation, release-candidate generation
-probes, baseline metrics, SFT data preparation, and experiment comparison
-tables. Full model results are gated on release-scale generation, GPU
-availability, provider/runtime setup, and final audit completion.
+- random and majority baselines by answer type;
+- static syntax and regex baselines;
+- symbolic primitive-geometry baselines;
+- selector-name and operation-order heuristics;
+- AABB-only baselines for region, distance, and point queries;
+- graph resolver oracle;
+- closed-book LLM zero-shot and few-shot;
+- answer-only SFT;
+- reasoning or trace-distillation SFT when hidden query traces are available.
 
 Required final tables:
 
-- `[TABLE: headline baseline and model comparison]`
-- `[TABLE: per-task accuracy and invalid output rate]`
-- `[TABLE: per-split generalization]`
-- `[TABLE: failure-case taxonomy]`
-- `[TABLE: ablations for zero-shot, few-shot, and SFT when available]`
+- `[TABLE: headline model comparison by hop slice]`;
+- `[TABLE: accuracy, invalid output rate, and calibration]`;
+- `[TABLE: relation-family breakdown]`;
+- `[TABLE: static-hop versus geometry-hop breakdown]`;
+- `[TABLE: shortcut baseline gap]`;
+- `[TABLE: SFT and reasoning-trace ablations]`.
 
-## Discussion And Limitations
+## Training Signal
 
-CAD-QA's central benefit is controlled supervision over CAD program semantics.
-The benchmark separates static code comprehension from geometry and topology
-reasoning, exposes invalid answer formats, and keeps label policy visible.
-Because public rows are code-plus-label, evaluation does not require shipping
-OpenCascade artifacts or asking every benchmark user to run CadQuery.
+CAD-QA is not only an evaluation set. The same hidden query programs and
+candidate-set traces can train CAD agents to perform uncertainty reduction over
+program-derived geometry. Answer-only SFT teaches final labels; trace SFT can
+teach candidate filtering, relation traversal, metric comparison, and
+reject-unless-unique behavior. The research hypothesis is that this training
+will improve downstream CAD editing, debugging, and planning more than generic
+CAD-code finetuning, because it supervises the reasoning path that links source
+edits to geometric consequences.
 
-The current implementation still has important limits. Feature provenance is
-conservative rather than exact OpenCascade builder-history provenance.
-Adjacent topology matching is best-effort and intentionally bounded for large
-snapshots. Selector coverage depends on selectors appearing in traced source
-programs. Kernel-sensitive labels require environment metadata and release
-audits. Counterfactual public labels and CADEditQA verifier rows remain open.
+## Limitations
 
-The paper should not claim solved CAD reasoning. It should claim a reproducible
-benchmark and pipeline for measuring specific CAD reasoning abilities, with
-transparent failures and room for tool-assisted upper bounds.
+CAD-QA should not claim solved CAD reasoning. It measures a precise capability:
+short-answer reasoning over executable CadQuery programs and verifier-derived
+ontology evidence. Some labels are kernel-sensitive and must carry CadQuery,
+OCP, and OpenCascade version metadata. Feature provenance is conservative
+unless exact builder-history evidence is available. B-Rep adjacency and
+opposite-face relations require careful stability policy. Material and
+void-region labels should be quarantined when the evidence is only an AABB
+guess. Counterfactual edit labels require separate verification before they
+become public benchmark rows.
+
+The benchmark also intentionally sidesteps long-form design assistance. A
+model that scores well on CAD-QA may still fail to design a useful part. The
+claim is narrower and more useful: CAD-QA tests whether a model can recover
+hard, entangled facts about a CAD program's implied geometry.
 
 ## Conclusion
 
-CAD-QA turns executable CadQuery programs into structured questions about CAD
-construction history, geometry, topology, selectors, point membership, and
-provenance. The benchmark is designed for closed-book evaluation, deterministic
-parsing, split hygiene, and trace-derived labels. The current repository
-implements the pipeline needed to generate, validate, audit, and compare
-baseline results. Final paper claims should be filled only after release-scale
-generation, audits, and model evaluations are complete.
+CAD-QA should be the BrowseComp of CAD: compact public prompts, short
+verifiable answers, high uncertainty, and a benchmark shape that exposes a core
+missing capability in agents. Its CAD-specific contribution is the hidden
+typed ontology graph and deterministic verifier path. Low-hop rows calibrate
+source and metric grounding; high-hop rows test the reasoning pattern needed to
+resolve profiles, workplanes, selectors, topology, paths, and material effects
+under distractors. Final claims should be filled only after release-scale graph
+generation, validation, audits, and model evaluations are complete.

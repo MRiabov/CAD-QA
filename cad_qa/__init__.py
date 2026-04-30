@@ -1,5 +1,3 @@
-"""CAD-QA dataset generation package."""
+"""Graph-first CAD-QA package."""
 
-from cad_qa.config import DatasetConfig, LabelPolicy
-
-__all__ = ["DatasetConfig", "LabelPolicy"]
+__version__ = "0.2.0"

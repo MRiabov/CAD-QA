@@ -1,298 +1,207 @@
 # CAD-QA
 
-CAD-QA is a code-plus-label benchmark pipeline for questions over executable
-CadQuery construction programs. The implementation in this repository follows
-the staged design in `specs/`: source ingestion, AST operation graph extraction,
-optional isolated CadQuery tracing, task-row materialization from stored trace
-metadata, split-safe export, validation, and simple baselines.
+CAD-QA is a graph-first benchmark pipeline for CadQuery program reasoning. The
+project is organized around one concept:
+
+```text
+typed CAD ontology graph + deterministic query/verifier + hop-counted prompts
+```
+
+Low-hop rows and high-hop rows are slices of the same machinery. There is no
+separate simple-QA pipeline and no separate graph-query task family.
+
+## Architecture
+
+```text
+CadQuery source
+-> source normalization
+-> trace/snapshot extraction
+-> typed CAD ontology graph
+-> deterministic query program
+-> verifier-backed answer
+-> rule-based public prompt renderer
+-> public rows grouped by hop count and relation/metric families
+```
+
+The current implementation is intentionally small after the graph-first reset.
+It supports:
+
+- JSONL source loading;
+- AST-backed assignment and call-chain extraction;
+- bounded unrolling for simple `for` loops over literal iterables;
+- feature, operation, parameter, profile, workplane, path, selector, solid, and
+  measurement nodes;
+- stable selector-derived face nodes and same-face joins;
+- `before`, `after`, `input_to`, `parameter_of`, `uses_profile`, `used_by`,
+  `located_on`, `has_measurement`, `selected_by`, `same_selected_face_as`,
+  `has_path_tangent`, `nearest_point_on_path`, `adds_material_to`, and
+  `removes_material_from` relations;
+- profile geometry for `.circle(...)`, `.rect(...)`, and
+  `.polyline(...).close()`;
+- workplane frame extraction for default planes and explicit `cq.Plane(...)`
+  calls;
+- sketch-center, path-tangent, nearest-path-point, and conservative
+  material/void-region measurements;
+- deterministic query programs with candidate-set traces, argmax/argmin, and
+  reject-unless-unique policy;
+- rule-based prompt rendering from query clauses;
+- dataset row materialization, quarantine tagging, smoke validation, and release
+  validation.
 
 ## Quick Start
 
-Generate a deterministic smoke dataset:
+Inspect source records:
 
 ```bash
-uv run cadqa smoke --output-dir data/cadqa_smoke
+uv run cadqa sources inspect --sources-jsonl data/cadqa_cadevolve_rc_10/sources.jsonl
 ```
 
-Validate exported rows:
+Build ontology graphs:
 
 ```bash
-uv run cadqa validate data/cadqa_smoke
-```
-
-Run baselines:
-
-```bash
-uv run cadqa baseline data/cadqa_smoke/jsonl/train.jsonl --output-dir runs/smoke_baselines
-```
-
-The default baseline suite includes majority, random, static and regex
-operation-count, selector heuristic, primitive symbolic volume, AABB
-point-membership, advanced diagnostic naive, and oracle baselines.
-
-Run the trace-label oracle upper bound:
-
-```bash
-uv run python -m scripts.evaluation.tool_assisted_upper_bound \
-  data/cadqa_smoke/jsonl/validation.jsonl \
-  --output-dir runs/smoke_upper_bound
-```
-
-Load a CADEvolve source directory, or auto-detect an adjacent one, and generate
-rows:
-
-```bash
-uv run cadqa generate --source-dir /path/to/cadevolve_sources --output-dir data/cadqa_run --limit 100
-uv run cadqa generate --auto-source-dir --output-dir data/cadqa_auto --limit 100 --workers 2
-```
-
-Run the local orchestration smoke:
-
-```bash
-uv run python -m scripts.experiments.run_experiment_suite configs/orchestration_smoke.yaml --resume
-```
-
-Build experiment comparison tables from metric artifacts:
-
-```bash
-uv run python -m scripts.experiments.compare_experiment_runs \
-  runs/smoke_baselines \
-  --output-dir runs/compare_smoke_experiments
-```
-
-Check canary stop gates and package retained artifacts:
-
-```bash
-uv run python -m scripts.experiments.check_stop_gates \
-  --dataset-stats runs/validate_smoke_dataset/dataset_stats.json \
-  --sft-smoke-report runs/text_sft_format_smoke/text_sft_smoke_report.json \
-  --experiment-comparison runs/compare_smoke_experiments/experiment_comparison.json \
-  --output runs/check_smoke_stop_gates/stop_gate_report.json
-
-uv run python -m scripts.experiments.package_run_artifacts \
-  runs/smoke_dataset runs/validate_smoke_dataset runs/smoke_baselines \
-  --output-dir runs/package_smoke_artifacts
-
-uv run python -m scripts.experiments.upload_artifact_package \
-  runs/package_smoke_artifacts \
-  --destination-dir runs/upload_smoke_artifacts/staged
-```
-
-Prepare answer-only SFT JSONL:
-
-```bash
-uv run python -m scripts.training.prepare_answer_sft_dataset \
-  --dataset-dir data/cadqa_smoke \
-  --output-dir runs/answer_sft/sft
-```
-
-Prepare trace-grounded reasoning SFT JSONL:
-
-```bash
-uv run python -m scripts.training.prepare_reasoning_sft_dataset \
-  --dataset-dir data/cadqa_smoke \
-  --output-dir runs/reasoning_sft/sft
-```
-
-Prepare SFT ablation and scaling subsets:
-
-```bash
-uv run python -m scripts.training.prepare_sft_ablation_datasets \
-  --dataset-dir data/cadqa_smoke \
-  --output-dir runs/sft_ablations
-
-uv run python -m scripts.training.prepare_sft_scaling_datasets \
-  --dataset-dir data/cadqa_smoke \
-  --output-dir runs/sft_scaling \
-  --sizes 1000 5000 15000 50000
-```
-
-Score bounded rejection-sampling candidates with parser-backed verifier
-rewards:
-
-```bash
-uv run python -m scripts.training.score_rejection_sampling_candidates \
-  --rows data/cadqa_smoke/jsonl/validation.jsonl \
-  --candidates runs/model_candidates.jsonl \
-  --output-dir runs/rejection_sampling_rewards
-```
-
-Write a task-balanced subset for training canaries:
-
-```bash
-uv run python -m scripts.dataset.balance_dataset_classes \
-  data/cadqa_smoke \
-  --output-dir runs/cadqa_balanced \
-  --max-rows-per-task 200
-```
-
-Pretty-print split JSONL into JSON and prompt-readable Markdown:
-
-```bash
-uv run python -m scripts.dataset.pretty_print_jsonl \
-  --dataset-dir data/cadqa_smoke \
-  --split validation \
-  --limit 25
-```
-
-Create release QA reports:
-
-```bash
-uv run python -m scripts.dataset.manual_audit_sample \
-  data/cadqa_smoke \
-  --output-dir runs/manual_audit_sample
-
-uv run python -m scripts.dataset.failure_report \
-  data/cadqa_smoke \
-  --output runs/failure_report.json
-
-uv run python -m scripts.dataset.reproducibility_audit \
-  data/cadqa_smoke data/cadqa_smoke_rerun \
-  --output runs/reproducibility_audit.json
-```
-
-Export optional SVG audit renders:
-
-```bash
-uv run --extra cadquery python -m scripts.dataset.export_audit_renders \
-  data/cadqa_smoke \
-  --output-dir runs/audit_renders \
-  --limit 16 \
-  --views isometric front right top
-```
-
-Export optional render-backed prediction requests:
-
-```bash
-uv run python -m scripts.evaluation.export_multimodal_prediction_requests \
-  data/cadqa_smoke/jsonl/validation.jsonl \
-  --render-manifest runs/audit_renders/audit_render_manifest.json \
-  --output runs/eval/multimodal_requests.jsonl
-```
-
-The smoke generator also emits conservative advanced diagnostic rows when
-trace metadata is available or safely derivable:
-
-- `graph_query`
-- `spatial_distance`
-- `bbox_region_query`
-- `validity_failure_prediction`
-
-`graph_query` rows are resolved through a feature-level typed graph IR over
-operation nodes, before/after/input/provenance/selector edges, and snapshot
-metrics. Broader B-rep and sketch graph coverage is intentionally not claimed.
-
-Generate grouped numeric counterfactual source variants:
-
-```bash
-uv run python -m scripts.dataset.generate_counterfactual_sources \
-  --source-dir /path/to/cadevolve_sources \
-  --output-dir runs/counterfactual_sources \
-  --limit 10
-```
-
-Materialize conservative CADEditQA parameter-edit-direction rows:
-
-```bash
-uv run python -m scripts.dataset.materialize_cadedit_parameter_tasks \
-  runs/counterfactual_sources/counterfactual_manifest.json \
-  --output-dir runs/cadedit_parameter_tasks
-```
-
-Materialize conservative CADEditQA feature-to-edit rows:
-
-```bash
-uv run python -m scripts.dataset.materialize_cadedit_feature_tasks \
-  data/cadqa_smoke \
-  --output-dir runs/cadedit_feature_tasks
-```
-
-Materialize conservative CADEditQA selector-repair rows:
-
-```bash
-uv run python -m scripts.dataset.materialize_cadedit_repair_tasks \
-  data/cadqa_smoke \
-  --output-dir runs/cadedit_repair_tasks
-```
-
-Export closed-book model requests:
-
-```bash
-uv run python -m scripts.evaluation.export_prediction_requests \
-  data/cadqa_smoke/jsonl/validation.jsonl \
-  --output runs/eval/zero_shot_requests.jsonl
-
-uv run python -m scripts.evaluation.build_fewshot_prompts \
-  --train-rows data/cadqa_smoke/jsonl/train.jsonl \
-  --eval-rows data/cadqa_smoke/jsonl/validation.jsonl \
-  --output runs/eval/fewshot_requests.jsonl \
-  --shots 3
-```
-
-Normalize and grade closed-book model responses:
-
-```bash
-uv run python -m scripts.evaluation.evaluate_prediction_responses \
-  --rows data/cadqa_smoke/jsonl/validation.jsonl \
-  --responses runs/eval/model_responses.jsonl \
-  --output-dir runs/eval/model_eval \
-  --label zero_shot
-```
-
-Evaluate P1 research reports:
-
-```bash
-uv run python -m scripts.evaluation.evaluate_counterfactual_sensitivity \
-  --rows runs/counterfactual_eval/rows.jsonl \
-  --predictions runs/counterfactual_eval/predictions.jsonl \
-  --output-dir runs/counterfactual_sensitivity
-
-uv run python -m scripts.experiments.build_task_transfer_matrix \
-  --metric static=runs/smoke_baselines/static_operation_count_graded.json \
-  --output-dir runs/task_transfer_matrix
-
-uv run python -m scripts.evaluation.evaluate_cadedit_predictions \
-  --rows runs/cadedit_eval/rows.jsonl \
-  --responses runs/cadedit_eval/responses.jsonl \
-  --output-dir runs/cadedit_eval/report
-```
-
-CadQuery execution is optional. Without CadQuery, the app still supports source
-records, operation graphs, static task rows, smoke fixtures, validation, splits,
-and baseline evaluation. With CadQuery installed, `cadqa trace` can emit scalar
-snapshots for supported scripts in an isolated worker.
-
-GPU answer-only SFT uses the optional training extra:
-
-```bash
-uv run --extra training python -m scripts.training.text_sft_train_unsloth \
-  --dataset-dir data/cadqa_smoke \
-  --sft-dir runs/answer_sft/sft \
-  --output-dir runs/answer_sft_train \
-  --model unsloth/Qwen3.5-4B
-```
-
-To run trace-backed generation in a local environment:
-
-```bash
-uv run --extra cadquery cadqa generate --auto-source-dir \
-  --output-dir data/cadqa_cadevolve_rc \
+uv run cadqa graph build \
+  --sources-jsonl data/cadqa_cadevolve_rc_10/sources.jsonl \
   --limit 10 \
-  --workers 1 \
-  --trace-timeout-seconds 30 \
-  --cache-dir data/cache
+  --out runs/graph_smoke
 ```
 
-Run a resumable sharded generation probe:
+Generate deterministic smoke queries:
 
 ```bash
-uv run python -m scripts.dataset.generate_resumable_dataset \
-  --output-dir runs/cadqa_resumable \
-  --auto-source-dir \
-  --total-limit 10 \
-  --shard-size 2 \
-  --workers 1 \
-  --trace-timeout-seconds 30 \
-  --extra-cadquery \
-  --resume
+uv run cadqa query smoke \
+  --graph runs/graph_smoke/graphs.jsonl \
+  --out runs/query_smoke
 ```
+
+Materialize and validate public rows:
+
+```bash
+uv run cadqa dataset materialize \
+  --queries runs/query_smoke/queries.jsonl \
+  --out data/cadqa_graph_smoke
+
+uv run cadqa dataset validate data/cadqa_graph_smoke
+
+uv run cadqa dataset audit data/cadqa_graph_smoke
+
+uv run cadqa dataset quarantine data/cadqa_graph_smoke
+
+uv run cadqa dataset card data/cadqa_graph_smoke
+
+uv run cadqa dataset export-public-private data/cadqa_graph_smoke
+
+uv run cadqa dataset validate data/cadqa_graph_smoke --release
+
+uv run cadqa dataset export-release \
+  data/cadqa_graph_smoke \
+  --out data/cadqa_graph_release_smoke
+```
+
+The release validation command is expected to report `valid: false` while smoke
+rows still include conservative region projections or selector-surrogate
+identities. Use `cadqa dataset quarantine` to inspect those rows before deciding
+whether to upgrade, exclude, or keep them as training-only artifacts.
+`cadqa dataset export-release` writes only `release_ready=true` rows.
+
+Run simple baselines, grade release-style model responses, and export SFT rows:
+
+```bash
+uv run cadqa evaluation baseline \
+  --rows data/cadqa_graph_smoke/rows.jsonl \
+  --out runs/baseline_smoke
+
+uv run cadqa evaluation grade-private \
+  --public data/cadqa_graph_release_smoke/public.jsonl \
+  --private data/cadqa_graph_release_smoke/private.jsonl \
+  --responses runs/model_responses.jsonl \
+  --out runs/model_eval
+
+uv run cadqa evaluation export-oracle-responses \
+  --private data/cadqa_graph_release_smoke/private.jsonl \
+  --out runs/model_eval/oracle_responses.jsonl
+
+uv run cadqa evaluation export-requests \
+  --rows data/cadqa_graph_smoke/rows.jsonl \
+  --out runs/eval_requests/zero_shot_requests.jsonl \
+  --mode zero-shot
+
+uv run cadqa training export-sft \
+  --rows data/cadqa_graph_smoke/rows.jsonl \
+  --out runs/sft_smoke \
+  --scaling-sizes 8 16 32
+```
+
+Run the full smoke workflow as one command:
+
+```bash
+uv run cadqa experiment smoke \
+  --sources-jsonl data/cadqa_cadevolve_rc_10/sources.jsonl \
+  --limit 10 \
+  --out runs/experiment_smoke
+
+uv run cadqa experiment package \
+  --run runs/experiment_smoke \
+  --out runs/experiment_smoke.tar.gz
+
+uv run cadqa experiment paper-results \
+  --run runs/experiment_smoke
+```
+
+The smoke experiment writes graph/query/dataset/baseline/SFT artifacts plus a
+full smoke dataset, filtered `release_dataset/`, public/private row views,
+dataset cards, query failure report, quarantine reports, leakage audits,
+validation reports, full-smoke and release-subset baselines, full-smoke and
+release-subset public/private oracle-grade sanity checks, full-smoke and
+release-subset request exports, full-smoke and release-subset SFT exports, run
+summary, generated paper-results snapshot, and artifact manifest.
+
+Run tests:
+
+```bash
+rtk uv run python -m compileall -q cad_qa
+rtk uv run pytest -q
+```
+
+## Row Contract
+
+Every internal row is generated from a hidden query program and includes:
+
+- `row_id`;
+- `source_id`;
+- public source code;
+- public prompt;
+- answer format;
+- gold answer;
+- hidden query program;
+- candidate-set trace;
+- relation families used;
+- measurement scopes used;
+- logical, static, and geometry hop counts;
+- difficulty bucket;
+- verifier status.
+- evidence tier;
+- release readiness flag;
+- quarantine reasons for rows backed by conservative projections or surrogate
+  identities.
+
+Release directories also include `public.jsonl` and `private.jsonl`.
+`public.jsonl` is answer-free and contains model inputs plus public metadata.
+`private.jsonl` contains gold answers, hidden query programs, candidate traces,
+and clue maps for grading and audit. `public_private_report.json` records row
+counts, field splits, row-ID parity, and hidden-field leak checks.
+
+Prediction metrics include accuracy, response coverage, missing-response rate,
+invalid-output rate, duplicate/extra response counters, optional confidence
+calibration when responses include `confidence`, and breakdowns by difficulty,
+hop count, relation family, and measurement scope.
+
+## BrowseComp-Style CAD Reasoning
+
+The hard CAD-QA rows should resemble BrowseComp in benchmark shape: short
+verifiable answers, high uncertainty, distractor-rich clues, and persistent
+reasoning over entangled evidence. CAD-QA differs from web browsing benchmarks
+because the trusted evidence is a CadQuery-derived ontology graph and verifier,
+not an LLM judge.
+
+LLM calls are allowed only for optional external evaluation or wording
+experiments. They are not part of trusted generation or grading.

@@ -6,18 +6,18 @@ records, traces, label policies, split groups, and verifier infrastructure.
 
 ## Purpose
 
-CADEditQA should test whether a model can propose constrained edits to a
+Edit rows should test whether a model can propose constrained edits to a
 CadQuery script after diagnosing a construction, topology, placement, or feature
-problem. The task family moves from answering what the script does to choosing a
-small, auditable action that changes the script or a parameter in a verifier
-checked way.
+problem. The row moves from answering what the script does to choosing a small,
+auditable action that changes the script or a parameter in a verifier-checked
+way.
 
 ## Naming and Framing
 
-The task family name is `CADEditQA` for now. It is a sibling task family built
-on CAD-QA trace, provenance, split, export, and verifier core. The paper
-framing should describe CAD-QA as diagnostic CAD program reasoning, and
-CADEditQA as verified edit prediction.
+The working label `CADEditQA` refers to edit-verification rows over the same
+source records, ontology graph, query programs, split metadata, and verifier
+core. The paper framing should describe these as graph-first CAD edit
+prediction rows.
 
 CADEditQA rows are not free-form design tasks. Public rows should use
 constrained answer formats, target metadata, and verifier-oriented structured
@@ -26,10 +26,11 @@ consistently.
 
 ## Relationship to CAD-QA
 
-CADEditQA must reuse the same source programs, operation graphs, isolated
+Edit rows must reuse the same source programs, operation graphs, isolated
 execution traces, raw labels, provenance records, split grouping, and verifier
-infrastructure used by CAD-QA wherever possible. CAD-QA remains the canonical
-diagnostic task family; edit semantics are separate unless explicitly stated.
+infrastructure used by the graph-first benchmark. Edit semantics should be
+represented as query programs over source variants, feature effects, and target
+measurements.
 
 ## Likely Task Families
 

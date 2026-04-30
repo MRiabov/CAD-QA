@@ -1,249 +1,285 @@
 # CAD-QA Paper Specification
 
-This document captures the paper ambition and research narrative for CAD-QA.
-For implementation, the canonical specifications are
-`specs/benchmark-task-spec.md`, `specs/label_rules.md`, `specs/schema.md`, and
-`specs/generation_policy.md`. The desired future BrowseComp-style complex
-multi-hop CAD benchmark track is specified separately in
-`specs/multi-hop-qa-task-spec.md`.
+This document captures the research narrative for making CAD-QA the
+BrowseComp-style benchmark for CAD program reasoning. The implementation specs
+must align with this frame: one typed CAD ontology graph, one deterministic
+query/verifier path, and public rows grouped by hop count and relation/metric
+families.
 
 ## 1. Core Claim
 
-Current language models can often produce plausible CAD code, but they remain
-weak at mentally executing the geometry induced by CAD programs. CAD-QA tests
-whether models understand construction history, intermediate state, topology,
-selectors, coordinate frames, point membership, and feature provenance from
-executable CadQuery code.
+CAD-QA is the BrowseComp of CAD. BrowseComp tests whether browsing agents can
+persist through entangled, hard-to-find evidence and return a short verifiable
+answer. CAD-QA tests whether CAD agents can persist through entangled CadQuery
+program evidence and return a short verifier-backed answer without running a
+CAD kernel at evaluation time.
 
-The benchmark should be framed as controlled CAD program reasoning, not generic
-CAD trivia. The central question is:
+The central question is:
 
-> Given a CadQuery script, can a model infer the geometry, topology, and
-> construction provenance implied by the program without running a CAD kernel?
+> Given a CadQuery script, can a model reduce uncertainty over the implied CAD
+> ontology graph and recover the unique verifier-backed answer?
 
-## 2. Why CAD-QA Is Useful
+Low-hop diagnostics, graph-specific rows, and high-hop checklist rows are
+hop-count and difficulty slices of the same system:
 
-CAD agents need more than final shape similarity. They need to reason about:
+- 0 hops: direct source or statistic lookup;
+- 1 hop: resolve one entity and read one metric;
+- 2 hops: traverse one relation and read or compare a metric;
+- 3+ hops: BrowseComp-style CAD rows with obfuscated, distractor-rich clues.
+
+## 2. Paper Positioning
+
+The paper should argue that CAD agents need a benchmark for uncertainty
+reduction over program-derived geometry, not merely final-shape similarity or
+code fluency. The benchmark measures whether models understand:
 
 | Capability | Why it matters |
 | --- | --- |
 | Operation order | Determines construction history and edit locality. |
-| Selector semantics | CadQuery modeling heavily depends on selectors. |
-| Workplane tracking | Many CAD bugs are coordinate-frame mistakes. |
-| Volume and bounding boxes | Basic quantitative geometry reasoning. |
-| Topology counts | Faces, edges, vertices, holes, and loops affect manufacturability. |
-| Point membership | Needed for collision, fit, supports, and material queries. |
-| Feature provenance | Needed to explain and edit model regions. |
-| Counterfactual edits | Needed for design assistance rather than passive recognition. |
-| Graph-like diagnostics | Needed to answer deterministic questions that compose operation order, feature attributes, and topology references. |
-| BrowseComp-style multi-hop CAD reasoning | Needed for high-uncertainty questions where the model must resolve indirect CAD references, traverse a sampled graph, compare distractors, and produce a unique verifier-backed answer. |
-| Spatial distance reasoning | Needed for fit, clearance, centerline, and feature-spacing questions. |
-| Region queries | Needed to reason about what changed inside a bounded spatial window. |
-| Validity and failure prediction | Needed to anticipate kernel failures and invalid CAD operations. |
+| Selector semantics | CadQuery modeling heavily depends on selector binding. |
+| Workplane frames | Many CAD bugs are coordinate-frame mistakes. |
+| Profile geometry | Sketches are the source of many downstream solids and cuts. |
+| Volume, bounding boxes, and centroids | Basic quantitative geometry reasoning. |
+| Topology counts and deltas | Faces, edges, vertices, holes, and loops affect manufacturability. |
+| Paths and tangents | Sweep and trajectory features require non-local geometric reasoning. |
+| Material and void regions | Editing requires knowing what was added or removed. |
+| Feature provenance | Explanations and edits need operation-to-geometry attribution. |
+| Validity and failure modes | Useful agents must anticipate invalid operations. |
 
-The stronger paper claim is that exact trace-derived supervision can improve
-LLM reasoning about CAD programs, and that capability should transfer to
-better CAD editing and debugging.
+The strongest eventual claim is that trace-derived CAD-QA training improves CAD
+editing, debugging, and planning because it supervises the reasoning path from
+source code to geometric effect.
 
-## 3. Task Tiers
+## 3. Unified Graph-First Pipeline
 
-### Tier A: Static Code Comprehension
+The canonical pipeline is:
 
-Examples:
+```text
+CadQuery source
+-> source normalization
+-> trace/snapshot extraction
+-> typed CAD ontology graph
+-> deterministic query program
+-> verifier-backed answer
+-> rule-based public prompt renderer
+-> public rows grouped by hop count and relation/metric families
+```
 
-- How many `.extrude()` operations are in the script?
-- Which operation creates the first solid body?
-- Which selector is used before the final fillet?
-- How many named parameters affect the hole diameter?
+The paper should emphasize that public prompts are not LLM-translated
+questions. They are rule-rendered from hidden query programs. Every clue maps
+to a hidden clause, and every row carries a candidate-set trace plus a
+reject-unless-unique verifier decision.
 
-These tasks test CadQuery syntax and operation ordering without requiring B-Rep
-execution.
+LLM calls, if any, are optional external evaluation or wording experiments.
+They are not trusted generation or grading.
 
-### Tier B: Symbolic Geometry
+## 4. CAD Ontology Vocabulary
 
-Examples:
+The benchmark should start small but use the right ontology shape from the
+beginning.
 
-- What volume does this rectangular extrusion add?
-- What is the bounding box after this translation?
-- What is the center of the primitive before subtraction?
+Node families:
 
-These are the cleanest early training signal because labels can often be exact
-or kernel-verified.
+- `source`;
+- `feature`;
+- `operation`;
+- `parameter`;
+- `workplane`;
+- `sketch`;
+- `profile`;
+- `solid`;
+- `face`;
+- `edge`;
+- `vertex`;
+- `axis`;
+- `direction`;
+- `point`;
+- `centroid`;
+- `centerline`;
+- `path`;
+- `material_region`;
+- `void_region`;
+- `selector`;
+- `measurement`.
 
-### Tier C: Topology
+Relation families:
 
-Examples:
+- temporal and dataflow: `before`, `after`, `input_to`, `combines`;
+- provenance: `created_by`, `modified_by`, `deleted_by`, `adds_material_to`,
+  `removes_material_from`;
+- construction links: `uses_profile`, `used_by`, `parameter_of`,
+  `selected_by`, `located_on`, `bounded_by`;
+- measurements: `has_measurement`, `has_centroid`, `has_coordinate`,
+  `has_normal`;
+- geometry relations: `distance_to`, `nearest_tangent_to`, `parallel_to`,
+  `not_parallel_to`, `perpendicular_to`, `orthogonal_to`, `coaxial_with`,
+  `adjacent_to`, `opposite_to`, `contained_in`, `intersects`.
 
-- How many faces are present after the through-hole cut?
-- How many circular edges does the final part contain?
-- Which faces share an edge with the top face?
+Measurement scopes:
 
-These expose common model weaknesses in B-Rep reasoning.
+- `profile_intrinsic`;
+- `feature_application_effect`;
+- `entity_geometry`;
+- `snapshot_state`;
+- `relation_metric`.
 
-### Tier D: Feature Provenance
+The paper should explain these scopes because they prevent misleading labels.
+For example, edge-count delta is not intrinsic to a profile; it is an effect of
+the feature that used the profile.
 
-Examples:
+## 5. CAD BrowseComp Row Criteria
 
-- At coordinate `(x, y, z)`, which feature last made this point material?
-- Which feature removed material from this region?
-- Which feature created the cylindrical wall face of the hole?
-- Was this edge inherited, modified, or bounded by a later cut?
+A high-hop row is release-quality only if it satisfies all of these:
 
-This is the most distinctive CAD-QA capability, but it needs careful
-many-to-many labels.
+- The answer is short and typed: entity ID, integer, choice, boolean, finite
+  numeric value, bounding box, or compact structured record.
+- The hidden query resolves uniquely under deterministic policy.
+- Each public clue maps to one hidden clause.
+- Individual clues preserve enough distractors unless the row is a low-hop
+  calibration item.
+- The row uses visible CadQuery wording rather than private ontology jargon.
+- The row records logical hop count, static hop count, geometry hop count,
+  relation families, measurement scopes, candidate-set trace, and verifier
+  status.
+- The row is rejected or quarantined when labels depend on unsupported topology,
+  unstable face identity, or AABB-only material-region guesses.
 
-### Tier E: Counterfactual CAD Reasoning
+Target difficulty:
 
-Examples:
+| Slice | Intended use |
+| --- | --- |
+| 0-1 hops | Calibration, curriculum, parser checks, low-hop training. |
+| 2 hops | Short relation reasoning and bridge rows. |
+| 3-5 hops | Main benchmark rows for early release. |
+| 6-8 hops | Hard CAD BrowseComp rows once P1 relations are stable. |
+| 9-10 hops | Aspirational rows for expert/tool-assisted comparison. |
 
-- If the hole radius changes from 2 mm to 3 mm, how does final volume change?
-- If this fillet is removed, how many sharp vertical edges remain?
-- Which bounding-box dimension changes if extrusion height doubles?
+The hard rows should emphasize geometry-derived hops over static-code hops.
+Static operation order and literal argument lookup are useful, but the
+benchmark's identity comes from selector resolution, workplane frames, profile
+geometry, topology deltas, paths, centroids, distances, and material effects.
 
-These tasks connect QA to edit ability.
+## 6. Example Paper Questions
 
-### Tier F: Graph-Like CAD Diagnostics
+Use examples like these in the paper:
 
-Examples:
+- Which `.circle(5)` profile is drawn on the explicit plane whose origin has
+  the largest Z value, is later extruded, and then contributes the largest
+  circular-edge increase among the repeated unioned bosses?
+- Which rectangular cut uses the selector that appears on both sides of the
+  box, is centered at `-zpos`, and leaves the outer bounding box unchanged?
+- Which sweep path point is nearest to the workplane origin of the boss whose
+  extrusion is added immediately after the first union that changes the solid
+  centroid upward?
+- Which feature removed the void region whose centroid lies closest to the
+  side-face selector reused by the final blind cut?
 
-- Which feature after box #2 added the most net volume?
-- What is the length of the feature that added the most volume?
-- How much volume did cylinder A subtract from box B?
+These examples should be presented as illustrative until the corresponding
+relations are implemented and verifier-backed.
 
-These are later-stage tasks because they require a typed query graph, stable
-feature/entity resolution, and deterministic aggregation labels.
+## 7. Dataset Artifact Strategy
 
-The broader BrowseComp-style version of this tier should be treated as a
-separate Multi-Hop CAD-QA track rather than as a small extension of template
-diagnostics. See `specs/multi-hop-qa-task-spec.md`.
+The internal construction rows are code-plus-label. Release artifacts split the
+benchmark surface from verifier data.
 
-For the paper, Multi-Hop CAD-QA rows should emphasize geometry-derived
-reasoning chains rather than long static-code chains. A release-quality row
-should usually fall between Level 3 and Level 5: Level 3 is 4-5 logical hops,
-Level 4 is 6-8 hops, and Level 5 is 9-10 hops. Level 1 covers 0-1 hops and
-Level 2 covers 2 hops for curriculum and calibration only. Fewer than 3 hops is
-not useful as a release row for this track. No more than one third of the
-counted hops should be recoverable from text alone, such as operation order,
-literal arguments, or variable order. At least two thirds should require trace
-or geometry labels, such as selector resolution, face adjacency, topology
-deltas, material provenance, volume/bounding-box measurements, centroids,
-centerlines, or profile geometry. Level 5 should be hard enough that humans may
-struggle without tool support, which is part of the research goal.
+Public model-input rows should include:
 
-### Tier G: Spatial Distance And Region Reasoning
+- normalized source code;
+- prompt;
+- answer format;
+- public relation-family, measurement-scope, hop-count, split, hash,
+  evidence-tier, and release-readiness metadata.
 
-Examples:
+Private verifier rows should include:
 
-- What is the X distance between hole #1 and hole #3?
-- What is the shortest distance between the hole #1 centerline and the
-  cylinder #2 centerline?
-- Which features added or removed material inside a specified bounding box?
+- gold answer;
+- hidden query program;
+- candidate-set trace;
+- verifier status;
+- private clue map and audit fields.
 
-These tasks require stable point, axis, centerline, and spatial-window labels.
+Rows with failure or quarantine reasons should remain available for smoke
+diagnostics and training ablations, but final release benchmark rows must be
+`release_ready=true`.
 
-### Tier H: Validity And Failure-Mode Reasoning
+It should not require STEP, mesh, render, or OpenCascade object artifacts for
+default training and evaluation. Optional artifacts may support audit,
+visualization, or multimodal extensions.
 
-Examples:
+CADEvolve is the practical primary source because it provides executable
+CadQuery programs at scale. Synthetic fixtures remain necessary for tests,
+smoke datasets, and exact didactic examples, but they should not dominate the
+released benchmark.
 
-- Will this fillet operation succeed?
-- What is the largest valid fillet radius for the selected edges?
-- Will this shell thickness produce a valid solid?
+## 8. Evaluation And Baselines
 
-These tasks should be treated as a distinct complex family because labels
-depend on bounded execution probes and kernel-stability policy.
+Report:
 
-## 4. CADEvolve As Primary Source
+- exact structured-answer accuracy;
+- invalid output rate;
+- missing-response rate;
+- duplicate and extra response counts;
+- calibration when confidence is requested;
+- accuracy by hop slice;
+- accuracy by relation family;
+- accuracy by measurement scope;
+- static-hop versus geometry-hop breakdown;
+- split generalization;
+- failure taxonomy.
 
-CADEvolve is the practical first source because it provides executable
-CadQuery programs at scale. CAD-QA should derive real benchmark examples from
-CADEvolve `P` and `C` executable trees, with `G` used for family metadata and
-leakage-safe grouping.
+Baselines:
 
-Synthetic examples remain necessary for:
-
-- golden tests;
-- smoke tests;
-- known topology/provenance edge cases;
-- exact didactic examples in the paper.
-
-They should not dominate released benchmark counts.
-
-## 5. Dataset Artifact Strategy
-
-The public dataset should be code-plus-label. It should include normalized
-source code, prompts, structured answers, raw trace labels, diagnostics,
-provenance, split metadata, and hashes. It should not require STEP, mesh,
-render, or OpenCascade object artifacts for default training and evaluation.
-
-Optional artifacts may support audit, visualization, or multimodal extensions.
-
-## 6. Counterfactual Groups
-
-Counterfactual examples are central to the paper. They prevent models from
-solving tasks by shallow memorization and directly test sensitivity to relevant
-source edits.
-
-Useful groups:
-
-- extrusion height perturbations;
-- hole radius perturbations;
-- selector changes;
-- fillet/chamfer radius perturbations;
-- operation removal;
-- workplane offset changes.
-
-All variants in a counterfactual group must stay in the same split.
-
-## 7. Baselines
-
-Report at least:
-
-- random/majority baselines;
-- regex/static-code baselines for operation count tasks;
-- simple symbolic baselines for primitive volume tasks;
-- AABB-only baseline for point membership;
-- AABB-only region-overlap baseline for bounding-box region tasks;
-- centroid or AABB distance baselines for spatial-distance tasks;
-- operation-order heuristics for graph-like multi-hop tasks;
-- majority and kernel-status heuristics for validity/failure tasks;
-- selector-name heuristics;
+- random and majority;
+- regex/static syntax;
+- selector-name heuristic;
+- operation-order heuristic;
+- symbolic primitive geometry;
+- AABB-only point, distance, and region baselines;
+- graph resolver oracle;
 - closed-book LLM zero-shot;
 - closed-book LLM few-shot;
-- trained answer-only SFT;
-- trained reasoning SFT when traces are available.
+- answer-only SFT;
+- reasoning or trace-distillation SFT.
 
-The paper should separate tasks that static analysis can solve from tasks that
-require geometry execution or topology reasoning.
+The paper must separate closed-book CAD reasoning from tool-assisted CAD
+execution. Tool-assisted results are useful upper bounds, not the main score.
 
-## 8. Reviewer Risks
+## 9. Reviewer Risks
 
 Likely critiques and responses:
 
-- "Why not just run CadQuery?" The benchmark measures whether models internalize
-  CAD program semantics for closed-book reasoning and training; tool use can be
-  a separate setting.
-- "Feature provenance is not exact." CAD-QA should distinguish exact builder
-  history, topology-matched provenance, and ambiguous merged cases instead of
-  overclaiming.
-- "Topology is kernel-sensitive." Store CadQuery/OCP/OpenCascade versions and
-  label policy with every release.
-- "Synthetic data may not transfer." Use CADEvolve as the primary source and
-  reserve synthetic rows for fixtures and audits.
-- "Models can exploit shortcuts." Use held-out generator, operation, topology,
-  and counterfactual splits plus shortcut baselines.
+- "Why not just run CadQuery?" The benchmark measures whether models
+  internalize CAD program semantics for reasoning and training. Tool use is a
+  separate upper-bound setting.
+- "This is not BrowseComp because there is no web." Correct: it is BrowseComp
+  by benchmark shape, not by domain. It uses short verifiable answers,
+  entangled evidence, high uncertainty, and distractor-rich resolution over a
+  CAD ontology graph.
+- "Feature provenance is not exact." Distinguish exact builder history,
+  topology-matched provenance, conservative source attribution, and ambiguous
+  merged cases.
+- "Topology is kernel-sensitive." Store CadQuery, OCP, and OpenCascade versions
+  and include release audits.
+- "Models can exploit shortcuts." Report shortcut baselines and group-safe
+  splits by source family, generator, operation pattern, and counterfactual
+  group.
+- "Synthetic data may not transfer." Use CADEvolve as the main source and
+  reserve synthetic rows for tests and audits.
 
-## 9. Minimal First Paper
+## 10. Minimal First Paper
 
-The best first version is:
+The first credible paper should include:
 
-- CADEvolve-backed code-only CAD-QA;
-- exact operation, selector, volume, bbox, topology, point membership, and
-  conservative provenance tasks;
+- the graph-first CAD BrowseComp thesis;
+- CADEvolve-backed source ingestion;
+- deterministic ontology/query/verifier artifacts;
+- low-hop calibration and 3+ hop high-uncertainty rows;
+- profile geometry, workplane frames, selector/path/material relation slices
+  according to implemented coverage;
 - structured answers with deterministic parsing;
-- strong split hygiene;
+- split hygiene and leakage audits;
 - baseline and SFT experiments;
-- a clear error taxonomy showing where models fail.
+- an error taxonomy showing where models fail to reduce CAD uncertainty.
 
-The highest-value result would be evidence that trace-derived CAD-QA training
-improves hard subsets such as selector semantics, workplane tracking, topology,
-and point/provenance reasoning more than generic CAD-code training.
+Final quantitative claims should be filled only after release-scale graph
+generation, validation, audits, and model evaluations are complete.

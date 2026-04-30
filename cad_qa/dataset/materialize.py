@@ -1,0 +1,107 @@
+"""Dataset row materialization."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any
+
+from cad_qa.ontology.nodes import OntologyGraph
+from cad_qa.prompts.render import render_prompt
+from cad_qa.query.ir import QueryResolution
+
+
+@dataclass(frozen=True)
+class DatasetRow:
+    row_id: str
+    source_id: str
+    source_code: str
+    prompt: str
+    answer_format: str
+    gold_answer: Any
+    query_program: dict[str, Any]
+    candidate_trace: dict[str, Any]
+    relation_families: list[str]
+    measurement_scopes: list[str]
+    logical_hop_count: int
+    static_hop_count: int
+    geometry_hop_count: int
+    difficulty_bucket: str
+    verifier_status: str
+    prompt_version: str
+    clue_map: list[dict[str, Any]]
+    evidence_tier: str
+    release_ready: bool
+    quarantine_reasons: list[str]
+
+
+def materialize_row(graph: OntologyGraph, resolution: QueryResolution) -> DatasetRow:
+    rendered = render_prompt(graph.source["source_code"], resolution.query_program)
+    source_id = graph.source["source_id"]
+    query = resolution.query_program
+    static_hops = sum(
+        1
+        for clause in query.clauses
+        if clause.kind in {"property_equals"} or clause.relation in {"before", "after", "input_to", "parameter_of"}
+    )
+    geometry_hops = max(0, query.hop_count - static_hops)
+    evidence_tier, quarantine_reasons = _evidence_policy(resolution)
+    return DatasetRow(
+        row_id=f"row:{source_id}:{query.query_id.split(':')[-1]}",
+        source_id=source_id,
+        source_code=graph.source["source_code"],
+        prompt=rendered.prompt,
+        answer_format=query.answer_type,
+        gold_answer=resolution.gold_answer,
+        query_program=_query_to_dict(query),
+        candidate_trace={
+            "query_id": resolution.candidate_trace.query_id,
+            "steps": resolution.candidate_trace.steps,
+            "final_candidates": resolution.candidate_trace.final_candidates,
+            "status": resolution.candidate_trace.status,
+            "failure_reason": resolution.candidate_trace.failure_reason,
+        },
+        relation_families=resolution.relation_families,
+        measurement_scopes=resolution.measurement_scopes,
+        logical_hop_count=query.hop_count,
+        static_hop_count=static_hops,
+        geometry_hop_count=geometry_hops,
+        difficulty_bucket=query.difficulty,
+        verifier_status=resolution.verifier_status,
+        prompt_version=rendered.prompt_version,
+        clue_map=rendered.clue_map,
+        evidence_tier=evidence_tier,
+        release_ready=not quarantine_reasons,
+        quarantine_reasons=quarantine_reasons,
+    )
+
+
+def _query_to_dict(query: Any) -> dict[str, Any]:
+    return {
+        "query_id": query.query_id,
+        "target_type": query.target_type,
+        "answer_type": query.answer_type,
+        "clauses": [clause.__dict__ for clause in query.clauses],
+        "aggregation": query.aggregation,
+        "aggregation_metric": query.aggregation_metric,
+        "hop_count": query.hop_count,
+        "difficulty": query.difficulty,
+        "reject_unless_unique": query.reject_unless_unique,
+        "min_individual_clause_candidates": query.min_individual_clause_candidates,
+    }
+
+
+def _evidence_policy(resolution: QueryResolution) -> tuple[str, list[str]]:
+    reasons: list[str] = []
+    families = set(resolution.relation_families)
+    query = resolution.query_program
+    if families & {"has_material_region_geometry", "has_void_region_geometry"}:
+        reasons.append("conservative_region_projection")
+    if query.target_type in {"face", "selector"} or families & {"selected_by", "same_selected_face_as", "has_stable_face_id"}:
+        reasons.append("selector_identity_surrogate")
+    if resolution.verifier_status != "resolved":
+        reasons.append("unresolved_verifier")
+    if not reasons:
+        return "source_static_or_analytic", []
+    if "unresolved_verifier" in reasons:
+        return "unresolved", sorted(set(reasons))
+    return "quarantine", sorted(set(reasons))

@@ -1,56 +1,88 @@
 # Experiment Execution Runbook
 
-Run experiments through manifest entries so artifacts and stop conditions are
-visible.
-
-Convenience wrapper for the common local gates:
+The active smoke workflow is graph-first:
 
 ```bash
-rtk scripts/experiments/run_cadqa_experiment.sh preflight
-rtk scripts/experiments/run_cadqa_experiment.sh smoke
-rtk scripts/experiments/run_cadqa_experiment.sh canary-dry-run
+rtk uv run cadqa sources inspect --sources-jsonl data/cadqa_cadevolve_rc_10/sources.jsonl
+rtk uv run cadqa graph build --sources-jsonl data/cadqa_cadevolve_rc_10/sources.jsonl --limit 10 --out runs/graph_smoke
+rtk uv run cadqa query smoke --graph runs/graph_smoke/graphs.jsonl --out runs/query_smoke
+rtk uv run cadqa dataset materialize --queries runs/query_smoke/queries.jsonl --out data/cadqa_graph_smoke
+rtk uv run cadqa dataset validate data/cadqa_graph_smoke
+rtk uv run cadqa dataset audit data/cadqa_graph_smoke
+rtk uv run cadqa dataset quarantine data/cadqa_graph_smoke
+rtk uv run cadqa dataset card data/cadqa_graph_smoke
+rtk uv run cadqa dataset validate data/cadqa_graph_smoke --release
+rtk uv run cadqa dataset export-release data/cadqa_graph_smoke --out data/cadqa_graph_release_smoke
+rtk uv run cadqa evaluation baseline --rows data/cadqa_graph_smoke/rows.jsonl --out runs/baseline_smoke
+rtk uv run cadqa training export-sft --rows data/cadqa_graph_smoke/rows.jsonl --out runs/sft_smoke
 ```
 
-Local preflight:
+To grade release-style model responses, provide JSONL records with `row_id` and
+`answer`. Use the public rows as the model input and the private rows as the
+answer key. Responses may also include numeric `confidence`; when present,
+grading reports calibration metrics. The grader also reports response coverage,
+missing responses, invalid outputs, duplicate response IDs, and extra response
+IDs that do not match public rows.
 
 ```bash
-rtk uv run python -m compileall -q cad_qa scripts tests
-rtk uv run pytest -q
-rtk uv run python -m scripts.experiments.run_experiment_suite configs/orchestration_smoke.yaml --list
-rtk uv run python -m scripts.experiments.run_experiment_suite configs/orchestration_smoke.yaml --dry-run
+rtk uv run cadqa evaluation grade-private \
+  --public data/cadqa_graph_release_smoke/public.jsonl \
+  --private data/cadqa_graph_release_smoke/private.jsonl \
+  --responses runs/model_responses.jsonl \
+  --out runs/model_eval
 ```
 
-Local smoke execution:
+To sanity-check a public/private release key, export oracle-formatted responses
+from `private.jsonl` and grade them through the same public/private path:
 
 ```bash
-rtk uv run python -m scripts.experiments.run_experiment_suite configs/orchestration_smoke.yaml --resume
+rtk uv run cadqa evaluation export-oracle-responses \
+  --private data/cadqa_graph_release_smoke/private.jsonl \
+  --out runs/model_eval/oracle_responses.jsonl
+
+rtk uv run cadqa evaluation grade-private \
+  --public data/cadqa_graph_release_smoke/public.jsonl \
+  --private data/cadqa_graph_release_smoke/private.jsonl \
+  --responses runs/model_eval/oracle_responses.jsonl \
+  --out runs/model_eval/oracle_key_check
 ```
 
-Overnight manifest dry run:
+To export model requests:
 
 ```bash
-rtk uv run python -m scripts.experiments.run_experiment_suite \
-  configs/overnight_experiment_suite.yaml --run answer_sft_canary --with-dependencies --dry-run
+rtk uv run cadqa evaluation export-requests \
+  --rows data/cadqa_graph_smoke/rows.jsonl \
+  --out runs/request_smoke/zero_shot_requests.jsonl \
+  --mode zero-shot
 ```
 
-GPU canary launch after `scripts/devops/bootstrap_vast_instance.sh`:
+The same workflow can be run as one smoke experiment:
 
 ```bash
-tmux new -d -s cadqa-sft \
-  'cd /root/CAD-QA && python -m scripts.experiments.run_experiment_suite configs/overnight_experiment_suite.yaml --run answer_sft_canary --with-dependencies > overnight.log 2>&1'
+rtk uv run cadqa experiment smoke \
+  --sources-jsonl data/cadqa_cadevolve_rc_10/sources.jsonl \
+  --limit 10 \
+  --out runs/experiment_smoke
 ```
 
-Do not start GPU training until dataset validation passes, leakage audit passes,
-SFT JSONL smoke passes, and live GPU price/account state are known.
+The smoke experiment writes full `dataset/` and filtered `release_dataset/`
+trees, public/private row views, dataset cards, query failure report,
+quarantine reports, smoke and release validation reports, leakage audits,
+full-smoke and release-subset baseline outputs, full-smoke and release-subset
+public/private oracle-grade sanity checks, full-smoke and release-subset
+request exports, full-smoke and release-subset SFT artifacts,
+`run_summary.json`, `RUN_SUMMARY.md`, and an artifact manifest. Package the run
+for sharing with:
 
-The overnight manifest routes canary training through
-`scripts.experiments.check_stop_gates` and invokes the trainer with
-`uv run --extra training`. The local smoke manifest also writes a retention
-package with `scripts.experiments.package_run_artifacts` and can stage it with
-`scripts.experiments.upload_artifact_package`; keep the manifest, archive, and
-upload manifest before deleting rented-instance storage.
+```bash
+rtk uv run cadqa experiment package \
+  --run runs/experiment_smoke \
+  --out runs/experiment_smoke.tar.gz
 
-After SFT or closed-book prediction artifacts exist, build P1 analysis reports
-with `scripts.evaluation.evaluate_counterfactual_sensitivity`,
-`scripts.experiments.build_task_transfer_matrix`, and
-`scripts.evaluation.evaluate_cadedit_predictions`.
+rtk uv run cadqa experiment paper-results \
+  --run runs/experiment_smoke
+```
+
+GPU training and provider submission are planned follow-up layers. Rebuild them
+against the graph-first `DatasetRow` schema rather than restoring the removed
+legacy scripts.
