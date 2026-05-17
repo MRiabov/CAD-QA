@@ -43,6 +43,23 @@ candidate traces, and clue maps.
   quarantine reasons, request/SFT counts, paper-table-ready composition, and
   baseline numbers for quick release review.
 
+## Dataset Quality Gates
+
+Schema-valid and release-ready are not sufficient for fine-tuning readiness.
+Main benchmark and training exports must additionally pass geometry-first
+quality gates:
+
+- syntax-only calibration rows are excluded or capped;
+- prompt-family quotas prevent one template from dominating;
+- rows report nonzero geometry-derived evidence for main benchmark slices;
+- static shortcut baselines are reported separately from geometry reasoning
+  baselines;
+- release reports include template distribution, static-hop/geometry-hop
+  distribution, and answer-entropy checks.
+
+Until these gates are implemented, SFT artifacts are export-format smoke
+artifacts, not recommended training sets.
+
 ## Splits
 
 Release splits must be group-safe by source family, generator, and

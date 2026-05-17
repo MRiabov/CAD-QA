@@ -141,6 +141,10 @@ A high-hop row is release-quality only if it satisfies all of these:
 - The row records logical hop count, static hop count, geometry hop count,
   relation families, measurement scopes, candidate-set trace, and verifier
   status.
+- Main benchmark and fine-tuning rows require geometry-derived evidence. Rows
+  solved by assignment names, operation order, literal arguments, or simple
+  syntax patterns are calibration rows and must be capped or excluded from
+  default training exports.
 - The row is rejected or quarantined when labels depend on unsupported topology,
   unstable face identity, or AABB-only material-region guesses.
 
@@ -158,6 +162,9 @@ The hard rows should emphasize geometry-derived hops over static-code hops.
 Static operation order and literal argument lookup are useful, but the
 benchmark's identity comes from selector resolution, workplane frames, profile
 geometry, topology deltas, paths, centroids, distances, and material effects.
+Release reports must include prompt-family quotas and syntax-only shortcut
+baselines so a schema-valid dataset cannot be mistaken for a useful CAD
+reasoning dataset.
 
 ## 6. Example Paper Questions
 

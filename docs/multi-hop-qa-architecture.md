@@ -23,6 +23,10 @@ OntologyGraph
 - Every clue maps to a hidden clause.
 - Public clues mention visible CadQuery constructs instead of private ontology
   jargon.
+- Main benchmark clues should require geometry-derived ontology evidence. Clues
+  answerable by assignment names, operation order, literal arguments, or source
+  syntax alone are calibration-only and must be quota-limited outside smoke
+  tests.
 - No LLM translator is used in the trusted path.
 - Rows that fail candidate-breadth or uniqueness gates go to the failure
   manifest.

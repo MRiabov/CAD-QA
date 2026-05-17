@@ -17,6 +17,13 @@ rtk uv run cadqa evaluation baseline --rows data/cadqa_graph_smoke/rows.jsonl --
 rtk uv run cadqa training export-sft --rows data/cadqa_graph_smoke/rows.jsonl --out runs/sft_smoke
 ```
 
+The SFT command above is part of the smoke workflow only. A real training run
+must use rows that pass geometry-first dataset quality gates: syntax-only
+calibration templates must be excluded or capped, prompt-family balance must be
+reported, and geometry-derived clauses must be necessary for the main answers.
+Until those gates are implemented, smoke/release SFT artifacts are useful for
+format and grading checks, not for meaningful fine-tuning.
+
 To grade release-style model responses, provide JSONL records with `row_id` and
 `answer`. Use the public rows as the model input and the private rows as the
 answer key. Responses may also include numeric `confidence`; when present,

@@ -13,6 +13,11 @@ Closed-book CAD reasoning:
 
 Tool-assisted execution is an upper-bound setting, not the main score.
 
+The primary benchmark/training setting must be geometry-first. Rows that can be
+answered from assignment names, operation order, literal arguments, or simple
+source-pattern matching are calibration rows. They may be reported separately,
+but they must not dominate headline fine-tuning or benchmark numbers.
+
 ## Metrics
 
 - exact structured-answer accuracy;
@@ -22,6 +27,7 @@ Tool-assisted execution is an upper-bound setting, not the main score.
 - accuracy by relation family;
 - accuracy by measurement scope;
 - static-hop versus geometry-hop breakdown;
+- prompt-family distribution and syntax-only calibration quota;
 - verifier failure and quarantine taxonomy.
 
 ## Baselines
@@ -37,10 +43,10 @@ Tool-assisted execution is an upper-bound setting, not the main score.
 ## Model Runs
 
 Report closed-book zero-shot, few-shot, answer-only SFT, and candidate-trace
-reasoning SFT when artifacts exist. The central hypothesis is that graph-derived
-CAD-QA supervision improves CAD editing and debugging by teaching models to
-resolve entities, traverse relations, compare metrics, and reject ambiguous
-answers.
+reasoning SFT when artifacts exist and pass geometry-first quality gates. The
+central hypothesis is that graph-derived CAD-QA supervision improves CAD
+editing and debugging by teaching models to resolve entities, traverse
+relations, compare metrics, and reject ambiguous answers.
 
 The current CLI supports parser-backed grading for response JSONL records with
 `row_id` and `answer`, simple oracle, first-candidate, and null baselines,

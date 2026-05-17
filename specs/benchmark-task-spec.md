@@ -48,6 +48,24 @@ defines:
 - candidate-set trace;
 - reject-unless-unique policy.
 
+## Geometry-First Benchmark Policy
+
+CAD-QA's benchmark and fine-tuning value comes from geometry-derived reasoning,
+not from syntactic lookup. Rows whose answer is inferable from assignment names,
+operation order, literal arguments, or simple source-code pattern matching are
+allowed only as low-hop calibration and parser checks.
+
+Main release rows should require evidence that is produced by the CAD ontology
+and, where appropriate, CadQuery execution: profile geometry, workplane frames,
+selector results, path geometry, feature effects, topology deltas, centroids,
+distances, material regions, void regions, containment, or adjacency. A row's
+metadata must make this auditable through `static_hop_count`,
+`geometry_hop_count`, relation families, measurement scopes, and candidate
+traces.
+
+Training exports must either exclude syntax-only calibration rows by default or
+enforce a small quota for them.
+
 ## Prompt Requirements
 
 Prompts are rendered from approved templates. Every public clue maps to a

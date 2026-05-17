@@ -193,15 +193,30 @@ def object_to_shape(value: Any) -> Any:
         values = value.vals()
         if not values:
             raise CadQueryTraceError("missing_result", "CadQuery Workplane produced no values")
+        non_shape_types = [
+            type(selected).__name__
+            for selected in values
+            if not _is_shape_like(selected)
+        ]
+        if non_shape_types:
+            raise CadQueryTraceError(
+                "invalid_cadquery_type",
+                "CadQuery Workplane produced non-shape values: "
+                + ", ".join(sorted(set(non_shape_types))),
+            )
         if len(values) == 1:
             return values[0]
         return cq.Compound.makeCompound(values)
-    if all(hasattr(value, name) for name in ("Volume", "BoundingBox", "ShapeType")):
+    if _is_shape_like(value):
         return value
     raise CadQueryTraceError(
         "invalid_cadquery_type",
         f"unsupported result type: {type(value).__name__}",
     )
+
+
+def _is_shape_like(value: Any) -> bool:
+    return all(hasattr(value, name) for name in ("Volume", "BoundingBox", "ShapeType"))
 
 
 def measure_shape(shape: Any) -> dict[str, Any]:

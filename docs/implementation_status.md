@@ -4,6 +4,11 @@ Date: 2026-05-17
 
 The repository has been reset around the graph-first CAD-QA architecture.
 
+The current surface is a smoke-test implementation, not a fine-tuning-ready
+benchmark release. Core schema, graph, resolver, release, evaluation, and SFT
+export mechanisms exist, but geometry-first dataset quality gates, template
+diversity quotas, and syntax-shortcut rejection are still open work.
+
 ## Implemented In Current Surface
 
 - Source JSONL loading and normalized source records.
@@ -131,7 +136,9 @@ Result on 2026-04-29:
   smoke dataset and the 31-row release dataset, with zero invalid outputs and
   zero missing, duplicate, or extra responses.
 - SFT exports: 45 full answer/reasoning rows and 31 release answer/reasoning
-  rows, plus hop/difficulty ablations and scaling subsets.
+  rows, plus hop/difficulty ablations and scaling subsets. These artifacts
+  validate export format only; they should not be treated as useful training
+  data until geometry-first quality gates and prompt-family quotas pass.
 - Run summary artifacts: `runs/experiment_smoke/run_summary.json`,
   `runs/experiment_smoke/RUN_SUMMARY.md`, and
   `runs/experiment_smoke/PAPER_RESULTS.md`.
@@ -142,6 +149,13 @@ Result on 2026-04-29:
 
 ## Open Work
 
+- Geometry-first release gates that reject or cap rows answerable from source
+  syntax, assignment names, operation order, or literal arguments alone.
+- Prompt-family, answer-entropy, and static-hop/geometry-hop quality reports
+  that block release and training exports when the dataset collapses to a few
+  shortcut templates.
+- Training-export defaults that exclude syntax-only calibration rows unless an
+  explicit calibration export is requested.
 - Broader kernel snapshot association for chained features, in-place mutation
   patterns, non-assignment feature effects, and chained selector expressions
   whose `.faces(...)` result is consumed before assignment.

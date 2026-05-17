@@ -190,6 +190,27 @@ def test_trace_sources_bounded_preserves_order_and_reports_timeouts() -> None:
     assert report["failure_reasons"]["timeout"] == 1
 
 
+def test_trace_skips_non_shape_workplane_cursor_values() -> None:
+    if not cadquery_available():
+        return
+    source = source_record_from_mapping(
+        {
+            "source_id": "src_trace_cursor",
+            "normalized_code": (
+                "import cadquery as cq\n"
+                "wp1 = cq.Workplane('XY')\n"
+                "wp2 = wp1.moveTo(1, 1)\n"
+                "result = cq.Workplane('XY').box(1, 1, 1)\n"
+            ),
+        }
+    )
+    trace = trace_source(source, timeout_seconds=5.0)
+    assert trace.execution_status == "ok"
+    assert trace.failure_reason is None
+    assert trace.snapshots[-1]["target"] == "result"
+    assert all(snapshot["target"] != "wp2" for snapshot in trace.snapshots)
+
+
 def test_graph_build_integrates_trace_feature_effects(tmp_path: Path) -> None:
     source = source_record_from_mapping({"source_id": "src_trace_graph", "normalized_code": SOURCE})
     trace_record = {
@@ -922,12 +943,18 @@ def test_release_export_helper_writes_reports(tmp_path: Path) -> None:
         for resolution in (resolve_query(graph, query) for query in smoke_queries(graph))
         if resolution.verifier_status == "resolved"
     ]
+    duplicate = next(dict(row) for row in rows if row["release_ready"])
+    duplicate["row_id"] = duplicate["row_id"] + ":duplicate"
+    rows.append(duplicate)
     result = export_release_dataset(rows, out=tmp_path / "release")
     assert result["valid"]
     assert result["excluded_quarantine_count"] > 0
+    assert result["excluded_duplicate_prompt_count"] == 1
+    assert result["leakage_audit"]["valid"]
     assert result["public_private"]["public_row_count"] == result["row_count"]
     assert (tmp_path / "release" / "split_manifest.json").exists()
     assert (tmp_path / "release" / "DATASET_CARD.md").exists()
+    assert (tmp_path / "release" / "release_exclusions.json").exists()
     assert (tmp_path / "release" / "public.jsonl").exists()
     assert (tmp_path / "release" / "private.jsonl").exists()
 

@@ -48,6 +48,11 @@ It supports:
 - dataset row materialization, quarantine tagging, smoke validation, and release
   validation.
 
+This surface is suitable for smoke testing the pipeline. It is not yet a
+fine-tuning-ready benchmark surface: current smoke/release rows can be
+dominated by syntax-only calibration prompts unless geometry-first quality
+gates and prompt-family quotas are applied.
+
 ## Quick Start
 
 Inspect source records:
@@ -131,6 +136,12 @@ uv run cadqa training export-sft \
   --scaling-sizes 8 16 32
 ```
 
+The SFT export command is currently a format/export smoke check. Do not treat
+its output as a model-training dataset unless the input rows have passed
+geometry-first quality gates: syntax-only calibration rows must be excluded or
+strictly capped, prompt families must be balanced, and geometry-derived clauses
+must be necessary for the main benchmark answers.
+
 Run the full smoke workflow as one command:
 
 ```bash
@@ -202,6 +213,13 @@ verifiable answers, high uncertainty, distractor-rich clues, and persistent
 reasoning over entangled evidence. CAD-QA differs from web browsing benchmarks
 because the trusted evidence is a CadQuery-derived ontology graph and verifier,
 not an LLM judge.
+
+Main benchmark and fine-tuning rows must require geometry-derived evidence such
+as profile geometry, workplane frames, selector results, path geometry, feature
+effects, topology deltas, centroids, distances, material regions, or void
+regions. Rows answerable from assignment names, operation order, literal
+arguments, or source syntax alone are calibration rows and should not dominate
+release or training exports.
 
 LLM calls are allowed only for optional external evaluation or wording
 experiments. They are not part of trusted generation or grading.

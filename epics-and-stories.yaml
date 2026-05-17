@@ -6,8 +6,11 @@ current_snapshot:
     The repository has been reset around one graph-first CAD-QA architecture:
     source records, optional trace/snapshot evidence, typed ontology graphs,
     deterministic query programs, rule-rendered prompts, dataset rows, and
-    verifier-backed validation. Earlier separate task-family and graph-query
-    framing is obsolete.
+    verifier-backed validation. Core mechanisms exist, but release-grade
+    question-family coverage, template diversity, split quality, and
+    fine-tuning readiness remain incomplete. Main benchmark rows must require
+    geometry-derived evidence rather than syntax-only source lookup. Earlier
+    separate task-family and graph-query framing is obsolete.
 status_values:
   - planned
   - work-in-progress
@@ -72,7 +75,7 @@ epics:
         status: implemented
   - id: epic-4
     title: CAD ontology graph extraction
-    status: implemented
+    status: work-in-progress
     priority: P0
     stories:
       - id: "4.1"
@@ -89,7 +92,7 @@ epics:
         status: implemented
       - id: "4.5"
         title: Material and void region geometry
-        status: implemented
+        status: work-in-progress
   - id: epic-5
     title: Query program and deterministic resolver
     status: implemented
@@ -109,7 +112,7 @@ epics:
         status: implemented
   - id: epic-6
     title: Label and relation families
-    status: implemented
+    status: work-in-progress
     priority: P0
     stories:
       - id: "6.1"
@@ -120,18 +123,18 @@ epics:
         status: implemented
       - id: "6.3"
         title: Selector face identity and same-face joins
-        status: implemented
+        status: work-in-progress
       - id: "6.4"
         title: Path tangents and nearest path points
-        status: implemented
+        status: work-in-progress
   - id: epic-7
     title: Rule-based prompt rendering
-    status: implemented
+    status: work-in-progress
     priority: P0
     stories:
       - id: "7.1"
         title: Versioned templates from query clauses
-        status: implemented
+        status: work-in-progress
       - id: "7.2"
         title: Clue map from public wording to hidden clauses
         status: implemented
@@ -140,10 +143,13 @@ epics:
         status: implemented
       - id: "7.4"
         title: Individual clue breadth gate
-        status: implemented
+        status: work-in-progress
+      - id: "7.5"
+        title: Geometry-first prompt policy and syntax-shortcut gate
+        status: planned
   - id: epic-8
     title: Dataset materialization, splits, and validation
-    status: implemented
+    status: work-in-progress
     priority: P0
     stories:
       - id: "8.1"
@@ -157,7 +163,7 @@ epics:
         status: implemented
       - id: "8.4"
         title: Group-safe release splits
-        status: implemented
+        status: work-in-progress
       - id: "8.5"
         title: Leakage audit reports
         status: implemented
@@ -166,10 +172,13 @@ epics:
         status: implemented
       - id: "8.7"
         title: Release export filtering to release-ready rows
-        status: implemented
+        status: work-in-progress
+      - id: "8.8"
+        title: Geometry-first dataset quality gates for release blocking
+        status: planned
   - id: epic-9
     title: Baselines and evaluation
-    status: implemented
+    status: work-in-progress
     priority: P1
     stories:
       - id: "9.1"
@@ -190,37 +199,46 @@ epics:
       - id: "9.6"
         title: Oracle response export and public/private key checks
         status: implemented
+      - id: "9.7"
+        title: Shortcut-resistance reports by prompt family and geometry-hop coverage
+        status: planned
   - id: epic-10
     title: Training and SFT artifacts
-    status: implemented
+    status: work-in-progress
     priority: P1
     stories:
       - id: "10.1"
         title: Answer-only SFT exports
-        status: implemented
+        status: work-in-progress
       - id: "10.2"
         title: Candidate-trace reasoning SFT exports
-        status: implemented
+        status: work-in-progress
       - id: "10.3"
         title: SFT ablation and scaling exports
-        status: implemented
+        status: work-in-progress
+      - id: "10.4"
+        title: Training export quotas that exclude syntax-only calibration rows by default
+        status: planned
   - id: epic-11
     title: Experiment orchestration and reports
-    status: implemented
+    status: work-in-progress
     priority: P1
     stories:
       - id: "11.1"
         title: Smoke graph dataset report
-        status: implemented
+        status: work-in-progress
       - id: "11.2"
         title: Release-scale verifier and quarantine reports
-        status: implemented
+        status: work-in-progress
       - id: "11.3"
         title: One-command smoke experiment orchestration
-        status: implemented
+        status: work-in-progress
       - id: "11.4"
         title: Run summaries, paper-results snapshot, and artifact manifest
-        status: implemented
+        status: work-in-progress
       - id: "11.5"
         title: Local experiment artifact packaging with checksums
-        status: implemented
+        status: work-in-progress
+      - id: "11.6"
+        title: Release readiness report with template quotas and answer entropy
+        status: planned
