@@ -12,6 +12,7 @@ from cad_qa.dataset.audit import leakage_audit
 from cad_qa.dataset.public import write_public_private_artifacts
 from cad_qa.dataset.quarantine import quarantine_report
 from cad_qa.dataset.release import export_release_dataset
+from cad_qa.dataset.release_report import write_release_verifier_report
 from cad_qa.dataset.report import dataset_card_markdown, dataset_report, failure_report
 from cad_qa.dataset.sft import (
     ablation_sft_groups,
@@ -23,15 +24,18 @@ from cad_qa.dataset.split import assign_splits, split_manifest
 from cad_qa.dataset.materialize import materialize_row
 from cad_qa.dataset.validate import validate_dataset_dir
 from cad_qa.evaluation.baselines import run_baselines
+from cad_qa.evaluation.closed_book import run_closed_book_evaluation
 from cad_qa.evaluation.grade import grade_public_private, grade_responses
 from cad_qa.evaluation.requests import few_shot_requests, oracle_responses, zero_shot_requests
+from cad_qa.evaluation.tool_assisted import run_tool_assisted_upper_bound
 from cad_qa.experiment import package_run_artifacts, run_smoke_experiment, run_artifact_manifest, write_paper_results
 from cad_qa.io import read_jsonl, write_json, write_jsonl
 from cad_qa.ontology import build_graph
 from cad_qa.ontology.nodes import OntologyGraph, graph_from_dict
 from cad_qa.query.ir import query_from_dict
 from cad_qa.query.resolver import resolve_query, smoke_queries
-from cad_qa.source import load_sources_jsonl
+from cad_qa.source import load_sources_jsonl, source_audit, source_manifest
+from cad_qa.trace import trace_report, trace_sources_bounded
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -57,6 +61,16 @@ def build_parser() -> argparse.ArgumentParser:
     inspect.add_argument("--sources-jsonl", type=Path, required=True)
     inspect.add_argument("--limit", type=int)
     inspect.set_defaults(func=_cmd_sources_inspect)
+    source_manifest_cmd = sources_sub.add_parser("manifest")
+    source_manifest_cmd.add_argument("--sources-jsonl", type=Path, required=True)
+    source_manifest_cmd.add_argument("--limit", type=int)
+    source_manifest_cmd.add_argument("--out", type=Path, required=True)
+    source_manifest_cmd.set_defaults(func=_cmd_sources_manifest)
+    source_audit_cmd = sources_sub.add_parser("audit")
+    source_audit_cmd.add_argument("--sources-jsonl", type=Path, required=True)
+    source_audit_cmd.add_argument("--limit", type=int)
+    source_audit_cmd.add_argument("--out", type=Path, required=True)
+    source_audit_cmd.set_defaults(func=_cmd_sources_audit)
 
     graph = subparsers.add_parser("graph")
     graph_sub = graph.add_subparsers(required=True)
@@ -64,7 +78,18 @@ def build_parser() -> argparse.ArgumentParser:
     build.add_argument("--sources-jsonl", type=Path, required=True)
     build.add_argument("--limit", type=int)
     build.add_argument("--out", type=Path, required=True)
+    build.add_argument("--traces-jsonl", type=Path)
     build.set_defaults(func=_cmd_graph_build)
+
+    trace = subparsers.add_parser("trace")
+    trace_sub = trace.add_subparsers(required=True)
+    trace_run = trace_sub.add_parser("run")
+    trace_run.add_argument("--sources-jsonl", type=Path, required=True)
+    trace_run.add_argument("--limit", type=int)
+    trace_run.add_argument("--out", type=Path, required=True)
+    trace_run.add_argument("--timeout-seconds", type=float, default=10.0)
+    trace_run.add_argument("--workers", type=int, default=1)
+    trace_run.set_defaults(func=_cmd_trace_run)
 
     query = subparsers.add_parser("query")
     query_sub = query.add_subparsers(required=True)
@@ -100,6 +125,10 @@ def build_parser() -> argparse.ArgumentParser:
     card.add_argument("path", type=Path)
     card.add_argument("--out", type=Path)
     card.set_defaults(func=_cmd_dataset_card)
+    release_report = dataset_sub.add_parser("release-report")
+    release_report.add_argument("path", type=Path)
+    release_report.add_argument("--out", type=Path)
+    release_report.set_defaults(func=_cmd_dataset_release_report)
 
     evaluation = subparsers.add_parser("evaluation")
     evaluation_sub = evaluation.add_subparsers(required=True)
@@ -118,6 +147,15 @@ def build_parser() -> argparse.ArgumentParser:
     grade_private.add_argument("--responses", type=Path, required=True)
     grade_private.add_argument("--out", type=Path, required=True)
     grade_private.set_defaults(func=_cmd_evaluation_grade_private)
+    closed_book = evaluation_sub.add_parser("closed-book")
+    closed_book.add_argument("--public", type=Path, required=True)
+    closed_book.add_argument("--private", type=Path, required=True)
+    closed_book.add_argument("--requests", type=Path, required=True)
+    closed_book.add_argument("--responses", type=Path, required=True)
+    closed_book.add_argument("--out", type=Path, required=True)
+    closed_book.add_argument("--model-id", required=True)
+    closed_book.add_argument("--setting", default="zero-shot")
+    closed_book.set_defaults(func=_cmd_evaluation_closed_book)
     export_requests = evaluation_sub.add_parser("export-requests")
     export_requests.add_argument("--rows", type=Path, required=True)
     export_requests.add_argument("--out", type=Path, required=True)
@@ -129,6 +167,11 @@ def build_parser() -> argparse.ArgumentParser:
     export_oracle_responses.add_argument("--private", type=Path, required=True)
     export_oracle_responses.add_argument("--out", type=Path, required=True)
     export_oracle_responses.set_defaults(func=_cmd_evaluation_export_oracle_responses)
+    tool_assisted = evaluation_sub.add_parser("tool-assisted-upper-bound")
+    tool_assisted.add_argument("--public", type=Path, required=True)
+    tool_assisted.add_argument("--private", type=Path, required=True)
+    tool_assisted.add_argument("--out", type=Path, required=True)
+    tool_assisted.set_defaults(func=_cmd_evaluation_tool_assisted_upper_bound)
 
     training = subparsers.add_parser("training")
     training_sub = training.add_subparsers(required=True)
@@ -160,16 +203,44 @@ def build_parser() -> argparse.ArgumentParser:
 
 def _cmd_sources_inspect(args: argparse.Namespace) -> dict[str, Any]:
     sources = load_sources_jsonl(args.sources_jsonl, limit=args.limit)
+    audit = source_audit(sources)
     return {
         "source_count": len(sources),
         "first_source_id": sources[0].source_id if sources else None,
         "paths": [source.source_path for source in sources[:5]],
+        "audit_valid": audit["valid"],
+        "audit_warning_count": audit["warning_count"],
+    }
+
+
+def _cmd_sources_manifest(args: argparse.Namespace) -> dict[str, Any]:
+    sources = load_sources_jsonl(args.sources_jsonl, limit=args.limit)
+    manifest = source_manifest(sources)
+    write_json(args.out, manifest)
+    return {
+        "source_count": manifest["source_count"],
+        "unique_source_id_count": manifest["unique_source_id_count"],
+        "unique_source_hash_count": manifest["unique_source_hash_count"],
+        "group_keys": sorted(manifest["groups"]),
+    }
+
+
+def _cmd_sources_audit(args: argparse.Namespace) -> dict[str, Any]:
+    sources = load_sources_jsonl(args.sources_jsonl, limit=args.limit)
+    report = source_audit(sources)
+    write_json(args.out, report)
+    return {
+        "valid": report["valid"],
+        "source_count": report["source_count"],
+        "error_count": report["error_count"],
+        "warning_count": report["warning_count"],
     }
 
 
 def _cmd_graph_build(args: argparse.Namespace) -> dict[str, Any]:
     sources = load_sources_jsonl(args.sources_jsonl, limit=args.limit)
-    graphs = [build_graph(source) for source in sources]
+    traces_by_source = _trace_records_by_source(args.traces_jsonl)
+    graphs = [build_graph(source, trace=traces_by_source.get(source.source_id)) for source in sources]
     args.out.mkdir(parents=True, exist_ok=True)
     write_jsonl(args.out / "graphs.jsonl", graphs)
     report = {
@@ -180,6 +251,30 @@ def _cmd_graph_build(args: argparse.Namespace) -> dict[str, Any]:
         "diagnostic_count": sum(len(graph.diagnostics) for graph in graphs),
     }
     write_json(args.out / "graph_report.json", report)
+    return report
+
+
+def _trace_records_by_source(path: Path | None) -> dict[str, dict[str, Any]]:
+    if path is None:
+        return {}
+    return {
+        str(record["source_id"]): record
+        for record in read_jsonl(path)
+        if record.get("source_id")
+    }
+
+
+def _cmd_trace_run(args: argparse.Namespace) -> dict[str, Any]:
+    sources = load_sources_jsonl(args.sources_jsonl, limit=args.limit)
+    traces = trace_sources_bounded(
+        sources,
+        timeout_seconds=args.timeout_seconds,
+        worker_count=args.workers,
+    )
+    args.out.mkdir(parents=True, exist_ok=True)
+    write_jsonl(args.out / "traces.jsonl", traces)
+    report = trace_report(traces)
+    write_json(args.out / "trace_report.json", report)
     return report
 
 
@@ -318,6 +413,10 @@ def _cmd_dataset_card(args: argparse.Namespace) -> dict[str, Any]:
     return {"dataset_card": str(out), "failure_report": str(args.path / "failure_report.json")}
 
 
+def _cmd_dataset_release_report(args: argparse.Namespace) -> dict[str, Any]:
+    return write_release_verifier_report(args.path, out=args.out)
+
+
 def _cmd_evaluation_baseline(args: argparse.Namespace) -> dict[str, Any]:
     rows = read_jsonl(args.rows)
     results = run_baselines(rows)
@@ -355,6 +454,27 @@ def _cmd_evaluation_grade_private(args: argparse.Namespace) -> dict[str, Any]:
     return metrics
 
 
+def _cmd_evaluation_closed_book(args: argparse.Namespace) -> dict[str, Any]:
+    public_rows = read_jsonl(args.public)
+    private_rows = read_jsonl(args.private)
+    requests = read_jsonl(args.requests)
+    responses = read_jsonl(args.responses)
+    result = run_closed_book_evaluation(
+        public_rows,
+        private_rows,
+        requests,
+        responses,
+        model_id=args.model_id,
+        setting=args.setting,
+    )
+    args.out.mkdir(parents=True, exist_ok=True)
+    report = {key: value for key, value in result.items() if key != "graded"}
+    write_json(args.out / "closed_book_report.json", report)
+    write_json(args.out / "prediction_metrics.json", result["metrics"])
+    write_jsonl(args.out / "graded_responses.jsonl", result["graded"])
+    return report
+
+
 def _cmd_evaluation_export_requests(args: argparse.Namespace) -> dict[str, Any]:
     rows = read_jsonl(args.rows)
     if args.mode == "few-shot":
@@ -380,6 +500,19 @@ def _cmd_evaluation_export_oracle_responses(args: argparse.Namespace) -> dict[st
         "output": str(args.out),
     }
     write_json(args.out.with_suffix(".report.json"), report)
+    return report
+
+
+def _cmd_evaluation_tool_assisted_upper_bound(args: argparse.Namespace) -> dict[str, Any]:
+    public_rows = read_jsonl(args.public)
+    private_rows = read_jsonl(args.private)
+    result = run_tool_assisted_upper_bound(public_rows, private_rows)
+    args.out.mkdir(parents=True, exist_ok=True)
+    write_jsonl(args.out / "tool_assisted_responses.jsonl", result["responses"])
+    write_json(args.out / "prediction_metrics.json", result["metrics"])
+    write_jsonl(args.out / "graded_responses.jsonl", result["graded"])
+    report = {key: value for key, value in result.items() if key not in {"responses", "graded"}}
+    write_json(args.out / "tool_assisted_report.json", report)
     return report
 
 

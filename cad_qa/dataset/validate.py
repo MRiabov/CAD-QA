@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from cad_qa.io import read_jsonl, write_json
-from cad_qa.prompts.wording_gates import banned_terms
+from cad_qa.prompts.wording_gates import banned_terms, clue_breadth_violations, clue_map_traceability_errors
 
 REQUIRED_ROW_FIELDS = {
     "row_id",
@@ -43,6 +43,10 @@ def validate_rows(rows: list[dict[str, Any]], *, release: bool = False) -> dict[
             errors.append({"index": index, "row_id": row.get("row_id"), "error": "empty_candidate_trace"})
         if len(row.get("clue_map", [])) == 0:
             errors.append({"index": index, "row_id": row.get("row_id"), "error": "missing_clue_map"})
+        for clue_error in clue_map_traceability_errors(row):
+            errors.append({"index": index, "row_id": row.get("row_id"), **clue_error})
+        for violation in clue_breadth_violations(row):
+            errors.append({"index": index, "row_id": row.get("row_id"), "error": "clue_too_narrow", **violation})
         terms = banned_terms(str(row.get("prompt", "")))
         if terms:
             errors.append({"index": index, "row_id": row.get("row_id"), "error": "banned_prompt_terms", "terms": terms})

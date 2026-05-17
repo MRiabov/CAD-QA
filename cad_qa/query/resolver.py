@@ -196,6 +196,11 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
     if faces:
         first_face = sorted(faces, key=lambda node: node.properties.get("stable_selector", ""))[0]
         selector_text = first_face.properties.get("stable_selector")
+        selector_relation = (
+            "has_kernel_stable_face_id"
+            if any(relation.type == "has_kernel_stable_face_id" for relation in graph.relations)
+            else "selected_by"
+        )
         queries.append(
             QueryProgram(
                 query_id=f"{graph.graph_id}:q2:selected_face",
@@ -211,9 +216,9 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
                     Clause(
                         id="has_selector",
                         kind="has_relation",
-                        relation="selected_by",
+                        relation=selector_relation,
                         target_type="selector",
-                        text="The target has a stable selector node extracted from the script.",
+                        text="The target has a stable selector result extracted from the script.",
                     ),
                 ],
                 hop_count=2,
@@ -274,6 +279,9 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
             )
         )
     if material_regions:
+        has_kernel_material = any(relation.type == "has_kernel_material_region_geometry" for relation in graph.relations)
+        material_relation = "has_kernel_material_region_geometry" if has_kernel_material else "has_material_region_geometry"
+        material_metric = "volume" if has_kernel_material else "centroid_z"
         queries.append(
             QueryProgram(
                 query_id=f"{graph.graph_id}:q3:largest_added_region",
@@ -282,24 +290,28 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
                     Clause(
                         id="has_region_geometry",
                         kind="has_relation",
-                        relation="has_material_region_geometry",
+                        relation=material_relation,
                         target_type="material_region",
-                        text="The target is a conservative added-volume region from an `.extrude(...)` or `.sweep(...)` feature.",
+                        text="The target is an added-volume region from an `.extrude(...)` or `.sweep(...)` feature.",
                     ),
                     Clause(
-                        id="has_region_centroid_z",
+                        id=f"has_region_{material_metric}",
                         kind="has_measurement",
-                        metric="centroid_z",
-                        text="The target has a conservative region centroid whose Z coordinate can be compared.",
+                        metric=material_metric,
+                        text="The target has an added-volume measurement that can be compared.",
                     ),
                 ],
                 aggregation="argmax",
-                aggregation_metric="centroid_z",
+                aggregation_metric=material_metric,
                 hop_count=3,
                 difficulty="cad_browsecomp",
+                min_individual_clause_candidates=1 if has_kernel_material else 3,
             )
         )
     if void_regions:
+        has_kernel_void = any(relation.type == "has_kernel_void_region_geometry" for relation in graph.relations)
+        void_relation = "has_kernel_void_region_geometry" if has_kernel_void else "has_void_region_geometry"
+        void_metric = "volume" if has_kernel_void else "operation_index"
         queries.append(
             QueryProgram(
                 query_id=f"{graph.graph_id}:q3:largest_removed_region",
@@ -308,21 +320,22 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
                     Clause(
                         id="has_void_geometry",
                         kind="has_relation",
-                        relation="has_void_region_geometry",
+                        relation=void_relation,
                         target_type="void_region",
-                        text="The target is a conservative removed-volume region from a visible cut operation.",
+                        text="The target is a removed-volume region from a visible cut operation.",
                     ),
                     Clause(
-                        id="has_void_operation_index",
+                        id=f"has_void_{void_metric}",
                         kind="has_measurement",
-                        metric="operation_index",
-                        text="The target cut appears later in the visible operation order than other removed-volume candidates.",
+                        metric=void_metric,
+                        text="The target has a removed-volume discriminator that can be compared.",
                     ),
                 ],
                 aggregation="argmax",
-                aggregation_metric="operation_index",
+                aggregation_metric=void_metric,
                 hop_count=3,
                 difficulty="cad_browsecomp",
+                min_individual_clause_candidates=1 if has_kernel_void else 3,
             )
         )
     return queries

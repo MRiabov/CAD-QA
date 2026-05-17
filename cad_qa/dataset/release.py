@@ -8,6 +8,7 @@ from typing import Any
 from cad_qa.dataset.audit import leakage_audit
 from cad_qa.dataset.public import write_public_private_artifacts
 from cad_qa.dataset.quarantine import quarantine_report
+from cad_qa.dataset.release_report import write_release_verifier_report
 from cad_qa.dataset.report import dataset_card_markdown, dataset_report, failure_report
 from cad_qa.dataset.split import split_manifest
 from cad_qa.dataset.validate import validate_dataset_dir
@@ -53,6 +54,7 @@ def export_release_dataset(rows: list[dict[str, Any]], *, out: Path, source_data
         ),
         encoding="utf-8",
     )
+    verifier_report = write_release_verifier_report(out)
     return {
         "row_count": len(release_rows),
         "excluded_quarantine_count": len(rows) - len(release_rows),
@@ -63,4 +65,5 @@ def export_release_dataset(rows: list[dict[str, Any]], *, out: Path, source_data
         "leakage_audit": audit,
         "quarantine": quarantine,
         "public_private": public_private,
+        "verifier_report": verifier_report,
     }

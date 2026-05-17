@@ -7,13 +7,16 @@ from cad_qa.dataset.audit import leakage_audit
 from cad_qa.dataset.public import private_rows, public_private_audit, public_rows, write_public_private_artifacts
 from cad_qa.dataset.quarantine import quarantine_report
 from cad_qa.dataset.release import export_release_dataset
+from cad_qa.dataset.release_report import release_verifier_markdown, release_verifier_report
 from cad_qa.dataset.report import dataset_card_markdown, dataset_report, failure_report
 from cad_qa.dataset.sft import ablation_sft_groups, answer_sft_rows, reasoning_sft_rows, scaling_sft_groups
 from cad_qa.dataset.split import assign_splits, split_manifest
 from cad_qa.dataset.validate import validate_rows
 from cad_qa.evaluation.baselines import run_baselines
+from cad_qa.evaluation.closed_book import closed_book_request_audit, run_closed_book_evaluation
 from cad_qa.evaluation.grade import grade_public_private, grade_responses
 from cad_qa.evaluation.requests import few_shot_requests, oracle_responses, zero_shot_requests
+from cad_qa.evaluation.tool_assisted import run_tool_assisted_upper_bound, tool_assisted_responses
 from cad_qa.experiment import (
     experiment_summary,
     experiment_summary_markdown,
@@ -22,15 +25,17 @@ from cad_qa.experiment import (
     run_artifact_manifest,
     run_smoke_experiment,
 )
-from cad_qa.io import to_jsonable, write_jsonl
+from cad_qa.io import read_jsonl, to_jsonable, write_jsonl
 from cad_qa.ontology import build_graph
+from cad_qa.ontology.nodes import graph_from_dict
 from cad_qa.ontology.profile_geometry import circle_profile, polyline_profile, rect_profile
 from cad_qa.ontology.relations import RELATION_FAMILIES
 from cad_qa.ontology.workplane_frames import project_local_point
 from cad_qa.prompts.render import render_prompt
 from cad_qa.query.ir import Clause, QueryProgram
 from cad_qa.query.resolver import resolve_query, smoke_queries
-from cad_qa.source import load_sources_jsonl, source_record_from_mapping
+from cad_qa.source import load_sources_jsonl, source_audit, source_family_from_path, source_manifest, source_record_from_mapping
+from cad_qa.trace import cadquery_available, trace_report, trace_source, trace_sources_bounded
 from cad_qa.cli import main as cli_main
 
 
@@ -67,6 +72,238 @@ def test_source_loading(tmp_path: Path) -> None:
     sources = load_sources_jsonl(path)
     assert sources[0].source_id == "src_fixture"
     assert sources[0].source_code.endswith("\n")
+
+
+def test_cadevolve_source_manifest_and_audit_cli(tmp_path: Path) -> None:
+    sources_path = tmp_path / "sources.jsonl"
+    manifest_path = tmp_path / "source_manifest.json"
+    audit_path = tmp_path / "source_audit.json"
+    write_jsonl(
+        sources_path,
+        [
+            {
+                "source_id": "src_a",
+                "normalized_code": "import cadquery as cq\nresult = cq.Workplane('XY').box(1, 1, 1)\n",
+                "normalized_archive_member_path": "cadquery/train/bracket__001.py",
+                "generator_id": "gen_box",
+            },
+            {
+                "source_id": "src_b",
+                "normalized_code": "import cadquery as cq\nresult = cq.Workplane('XY').box(2, 1, 1)\n",
+                "normalized_archive_member_path": "cadquery/train/bracket__002.py",
+                "generator_id": "gen_box",
+            },
+            {
+                "source_id": "src_dup",
+                "normalized_code": "import cadquery as cq\nresult = cq.Workplane('XY').box(3, 1, 1)\n",
+                "source_family": "manual_family",
+            },
+            {
+                "source_id": "src_dup",
+                "normalized_code": "import cadquery as cq\nresult = cq.Workplane('XY').box(4, 1, 1)\n",
+                "source_family": "manual_family",
+            },
+        ],
+    )
+    sources = load_sources_jsonl(sources_path)
+    assert sources[0].metadata["path_family"] == "cadquery/train/bracket"
+    assert source_family_from_path("cadquery/train/bracket+r12.py") == "cadquery/train/bracket"
+
+    manifest = source_manifest(sources)
+    audit = source_audit(sources)
+    assert manifest["source_count"] == 4
+    assert manifest["groups"]["path_family"]["groups"]["cadquery/train/bracket"] == ["src_a", "src_b"]
+    assert manifest["groups"]["generator_id"]["groups"]["gen_box"] == ["src_a", "src_b"]
+    assert manifest["duplicate_source_ids"] == {"src_dup": 2}
+    assert not audit["valid"]
+    assert audit["errors"][0]["error"] == "duplicate_source_id"
+
+    assert cli_main(["sources", "manifest", "--sources-jsonl", str(sources_path), "--out", str(manifest_path)]) == 0
+    assert cli_main(["sources", "audit", "--sources-jsonl", str(sources_path), "--out", str(audit_path)]) == 0
+    assert manifest_path.exists()
+    assert audit_path.exists()
+
+
+def test_trace_worker_executes_cadquery_source_or_reports_unavailable(tmp_path: Path) -> None:
+    source = source_record_from_mapping({"source_id": "src_trace", "normalized_code": SOURCE})
+    trace = trace_source(source, timeout_seconds=5.0)
+
+    sources_path = tmp_path / "sources.jsonl"
+    out_dir = tmp_path / "trace"
+    write_jsonl(sources_path, [{"source_id": "src_trace", "normalized_code": SOURCE}])
+    assert cli_main(
+        [
+            "trace",
+            "run",
+            "--sources-jsonl",
+            str(sources_path),
+            "--out",
+            str(out_dir),
+            "--timeout-seconds",
+            "5",
+        ]
+    ) == 0
+    assert (out_dir / "traces.jsonl").exists()
+    assert (out_dir / "trace_report.json").exists()
+
+    if not cadquery_available():
+        assert trace.execution_status == "failed"
+        assert trace.failure_reason == "cadquery_unavailable"
+        return
+
+    assert trace.execution_status == "ok"
+    assert trace.failure_reason is None
+    assert trace.snapshots
+    assert trace.snapshots[-1]["step"] == "final"
+    assert trace.snapshots[-1]["volume"] > 0
+    assert trace.snapshots[-1]["bbox"]["min"][2] <= 0
+    assert trace.snapshots[-1]["topology"]["faces"] is not None
+    assert trace.operation_effects
+    assert any(
+        effect["evidence"] == "cadquery_assignment_snapshot_delta"
+        for effect in trace.operation_effects
+    )
+
+
+def test_trace_sources_bounded_preserves_order_and_reports_timeouts() -> None:
+    if not cadquery_available():
+        return
+    ok = source_record_from_mapping(
+        {
+            "source_id": "src_trace_ok",
+            "normalized_code": "import cadquery as cq\nresult = cq.Workplane('XY').box(1, 1, 1)\n",
+        }
+    )
+    infinite = source_record_from_mapping(
+        {
+            "source_id": "src_trace_timeout",
+            "normalized_code": "import cadquery as cq\nwhile True:\n    pass\n",
+        }
+    )
+    traces = trace_sources_bounded([ok, infinite], timeout_seconds=5.0, worker_count=2)
+    assert [trace.source_id for trace in traces] == ["src_trace_ok", "src_trace_timeout"]
+    assert traces[0].execution_status == "ok"
+    assert traces[1].execution_status == "failed"
+    assert traces[1].failure_reason == "timeout"
+    report = trace_report(traces)
+    assert report["trace_count"] == 2
+    assert report["failure_reasons"]["timeout"] == 1
+
+
+def test_graph_build_integrates_trace_feature_effects(tmp_path: Path) -> None:
+    source = source_record_from_mapping({"source_id": "src_trace_graph", "normalized_code": SOURCE})
+    trace_record = {
+        "source_id": "src_trace_graph",
+        "execution_status": "ok",
+        "snapshots": [
+            {"target": "wp2", "source_line": 4, "operation_index": 0, "volume": 1.0, "bbox": {"min": [0, 0, 0], "max": [1, 1, 0]}, "topology": {"faces": 0}},
+            {"target": "wp3", "source_line": 5, "operation_index": 1, "volume": 62.8, "bbox": {"min": [-2, -2, 0], "max": [2, 2, 5]}, "topology": {"faces": 3}},
+        ],
+        "operation_effects": [
+            {
+                "from_target": "wp2",
+                "to_target": "wp3",
+                "source_line": 5,
+                "signed_volume_delta": 61.8,
+                "bbox_delta": {"min": [-2, -2, 0], "max": [1, 1, 5]},
+                "topology_delta": {"faces": 3},
+                "evidence": "cadquery_assignment_snapshot_delta",
+            }
+        ],
+        "environment": {"cadquery_available": True},
+        "failure_reason": None,
+    }
+
+    graph = build_graph(source, trace=trace_record)
+    exact_regions = [
+        node
+        for node in graph.nodes_by_type("material_region")
+        if node.properties.get("conservative") is False
+    ]
+    assert exact_regions
+    region = exact_regions[0]
+    assert any(relation.type == "has_kernel_material_region_geometry" for relation in graph.relations)
+    assert graph.measurements_for(region.id, "volume")[0].value == 61.8
+    assert graph.measurements_for("feature:wp3", "signed_volume_delta")
+
+    query = next(query for query in smoke_queries(graph) if query.query_id.endswith("largest_added_region"))
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+    assert resolution.verifier_status == "resolved"
+    assert "has_kernel_material_region_geometry" in resolution.relation_families
+    assert row.release_ready
+    assert "conservative_region_projection" not in row.quarantine_reasons
+
+    sources_path = tmp_path / "sources.jsonl"
+    traces_path = tmp_path / "traces.jsonl"
+    graph_dir = tmp_path / "graph"
+    write_jsonl(sources_path, [{"source_id": "src_trace_graph", "normalized_code": SOURCE}])
+    write_jsonl(traces_path, [trace_record])
+    assert cli_main(
+        [
+            "graph",
+            "build",
+            "--sources-jsonl",
+            str(sources_path),
+            "--traces-jsonl",
+            str(traces_path),
+            "--out",
+            str(graph_dir),
+        ]
+    ) == 0
+    persisted = graph_from_dict(read_jsonl(graph_dir / "graphs.jsonl")[0])
+    assert any(relation.type == "has_kernel_material_region_geometry" for relation in persisted.relations)
+
+
+def test_kernel_selector_trace_produces_release_grade_face_identity() -> None:
+    source_code = (
+        "import cadquery as cq\n"
+        "base = cq.Workplane('XY').box(2, 2, 2)\n"
+        "sel = base.faces('>Z')\n"
+    )
+    trace_record = {
+        "source_id": "src_selector_kernel",
+        "execution_status": "ok",
+        "snapshots": [
+            {"target": "base", "source_line": 2, "operation_index": 0, "volume": 8.0, "bbox": {"min": [-1, -1, -1], "max": [1, 1, 1]}, "topology": {"faces": 6}},
+        ],
+        "operation_effects": [],
+        "selector_results": [
+            {
+                "target": "sel",
+                "selector": ">Z",
+                "source_line": 3,
+                "selector_index": 0,
+                "selected_count": 1,
+                "shape_types": ["Face"],
+                "bbox_signatures": [{"min": [-1, -1, 1], "max": [1, 1, 1]}],
+                "evidence": "cadquery_selector_result",
+            }
+        ],
+        "environment": {"cadquery_available": True},
+        "failure_reason": None,
+    }
+    graph = build_graph(
+        source_record_from_mapping({"source_id": "src_selector_kernel", "normalized_code": source_code}),
+        trace=trace_record,
+    )
+    kernel_faces = [node for node in graph.nodes_by_type("face") if node.properties.get("kernel_backed")]
+    assert len(kernel_faces) == 1
+    assert any(relation.type == "has_kernel_stable_face_id" for relation in graph.relations)
+    assert graph.measurements_for(kernel_faces[0].id, "bbox")
+    selector = graph.nodes_by_type("selector")[0]
+    assert graph.measurements_for(selector.id, "selected_count")[0].value == 1
+
+    resolution = next(
+        resolve_query(graph, query)
+        for query in smoke_queries(graph)
+        if query.query_id.endswith("q2:selected_face")
+    )
+    row = materialize_row(graph, resolution)
+    assert resolution.verifier_status == "resolved"
+    assert "has_kernel_stable_face_id" in resolution.relation_families
+    assert row.release_ready
+    assert "selector_identity_surrogate" not in row.quarantine_reasons
 
 
 def test_operation_graph_extraction_covers_assignments_and_chains() -> None:
@@ -175,7 +412,11 @@ def test_loop_unrolling_extracts_selectors_faces_sketches_and_void_regions() -> 
 
 def test_material_region_projection_and_path_metrics() -> None:
     graph = build_graph(source_record_from_mapping({"source_id": "src_fixture", "normalized_code": SOURCE}))
-    assert graph.nodes_by_type("material_region")
+    material_region = graph.nodes_by_type("material_region")[0]
+    assert graph.measurements_for(material_region.id, "bbox")
+    assert graph.measurements_for(material_region.id, "height")
+    assert graph.measurements_for(material_region.id, "start_centroid")
+    assert graph.measurements_for(material_region.id, "end_centroid")
     assert graph.measurements_for("path:wp7", "initial_tangent") == []
     path_source = """
 import cadquery as cq
@@ -211,6 +452,33 @@ def test_high_hop_clue_breadth_gate_rejects_narrow_clue() -> None:
     resolution = resolve_query(graph, query)
     assert resolution.verifier_status == "failed"
     assert resolution.candidate_trace.failure_reason == "clue_too_narrow"
+
+
+def test_materialized_rows_audit_clue_traceability_and_breadth() -> None:
+    graph = build_graph(source_record_from_mapping({"source_id": "src_fixture", "normalized_code": SOURCE}))
+    resolution = next(
+        resolution
+        for resolution in (resolve_query(graph, query) for query in smoke_queries(graph))
+        if resolution.verifier_status == "resolved" and resolution.query_program.hop_count >= 3
+    )
+    row = to_jsonable(materialize_row(graph, resolution))
+    assert validate_rows([row])["valid"]
+    assert any("candidate_count_after" in clue for clue in row["clue_map"] if clue["clause_id"] != "aggregation")
+
+    narrow = {**row, "candidate_trace": {**row["candidate_trace"], "steps": [dict(step) for step in row["candidate_trace"]["steps"]]}}
+    clause_id = row["query_program"]["clauses"][0]["id"]
+    for step in narrow["candidate_trace"]["steps"]:
+        if step.get("step") == clause_id:
+            step["after"] = [step["after"][0]]
+            break
+    report = validate_rows([narrow])
+    assert not report["valid"]
+    assert any(error["error"] == "clue_too_narrow" for error in report["errors"])
+
+    unmapped = {**row, "clue_map": row["clue_map"][1:]}
+    traceability = validate_rows([unmapped])
+    assert not traceability["valid"]
+    assert any(error["error"] == "missing_clue_clause_map" for error in traceability["errors"])
 
 
 def test_path_and_repeated_selector_queries_use_cad_relations() -> None:
@@ -256,11 +524,31 @@ def test_split_report_baseline_and_sft_exports() -> None:
     assert manifest["source_count"] == 1
     assert report["row_count"] == len(rows)
     assert baselines["oracle"]["accuracy"] == 1.0
+    assert baselines["first_candidate"]["by_hop"]
+    assert baselines["first_static_filter"]["by_static_hop"]
+    assert "majority" in baselines
     assert len(answer_sft_rows(row_dicts)) == len(rows)
     assert "answer:" in reasoning_sft_rows(row_dicts)[0]["messages"][1]["content"]
     assert leakage_audit(row_dicts, manifest)["valid"]
     assert ablation_sft_groups(row_dicts)
     assert scaling_sft_groups(row_dicts, [1, 100])["size_1"]
+
+
+def test_group_safe_splits_use_source_family_metadata() -> None:
+    rows = [
+        {"row_id": "row:a1", "source_id": "src_a1", "source_metadata": {"source_family": "family_a"}},
+        {"row_id": "row:a2", "source_id": "src_a2", "source_metadata": {"source_family": "family_a"}},
+        {"row_id": "row:b", "source_id": "src_b"},
+        {"row_id": "row:c", "source_id": "src_c"},
+        {"row_id": "row:d", "source_id": "src_d"},
+    ]
+    splits = assign_splits(rows)
+    manifest = split_manifest(rows)
+    source_splits = manifest["sources"]
+    assert source_splits["src_a1"] == source_splits["src_a2"]
+    assert manifest["source_count"] == 5
+    assert manifest["group_count"] == 4
+    assert sum(len(items) for items in splits.values()) == len(rows)
 
 
 def test_quarantine_policy_marks_non_release_ready_rows() -> None:
@@ -402,6 +690,44 @@ def test_public_private_grading_uses_private_key_without_public_gold(tmp_path: P
     assert oracle_path.exists()
 
 
+def test_tool_assisted_upper_bound_exports_and_grades_private_artifacts(tmp_path: Path) -> None:
+    graph = build_graph(source_record_from_mapping({"source_id": "src_fixture", "normalized_code": SOURCE}))
+    rows = [
+        to_jsonable(materialize_row(graph, resolution))
+        for resolution in (resolve_query(graph, query) for query in smoke_queries(graph))
+        if resolution.verifier_status == "resolved"
+    ]
+    public = public_rows(rows)
+    private = private_rows(rows)
+    responses = tool_assisted_responses(public, private)
+    assert len(responses) == len(public)
+    assert responses[0]["tool"] == "private_graph_resolver"
+    assert responses[0]["provenance"]["query_id"]
+    result = run_tool_assisted_upper_bound(public, private)
+    assert result["setting"] == "tool_assisted_upper_bound"
+    assert result["coverage"] == 1.0
+    assert result["metrics"]["accuracy"] == 1.0
+    assert result["metrics"]["invalid_output_rate"] == 0.0
+
+    dataset_dir = tmp_path / "dataset"
+    out_dir = tmp_path / "tool"
+    write_public_private_artifacts(rows, dataset_dir)
+    assert cli_main(
+        [
+            "evaluation",
+            "tool-assisted-upper-bound",
+            "--public",
+            str(dataset_dir / "public.jsonl"),
+            "--private",
+            str(dataset_dir / "private.jsonl"),
+            "--out",
+            str(out_dir),
+        ]
+    ) == 0
+    assert (out_dir / "tool_assisted_responses.jsonl").exists()
+    assert (out_dir / "tool_assisted_report.json").exists()
+
+
 def test_request_exports_do_not_include_gold_answers() -> None:
     graph = build_graph(source_record_from_mapping({"source_id": "src_fixture", "normalized_code": SOURCE}))
     rows = [
@@ -415,6 +741,59 @@ def test_request_exports_do_not_include_gold_answers() -> None:
     assert "gold_answer" not in zero[0]
     assert len(few[0]["messages"]) == 5
     assert few[0]["metadata"]["shots"] == 2
+
+
+def test_closed_book_evaluation_audits_requests_and_grades_private_key(tmp_path: Path) -> None:
+    graph = build_graph(source_record_from_mapping({"source_id": "src_fixture", "normalized_code": SOURCE}))
+    rows = [
+        to_jsonable(materialize_row(graph, resolution))
+        for resolution in (resolve_query(graph, query) for query in smoke_queries(graph))
+        if resolution.verifier_status == "resolved"
+    ]
+    public = public_rows(rows)
+    private = private_rows(rows)
+    requests = zero_shot_requests(rows)
+    responses = [{"row_id": row["row_id"], "answer": key["gold_answer"]} for row, key in zip(public, private, strict=True)]
+    audit = closed_book_request_audit(public, requests)
+    assert audit["valid"]
+    result = run_closed_book_evaluation(public, private, requests, responses, model_id="fixture-model", setting="zero-shot")
+    assert result["valid"]
+    assert result["closed_book"]
+    assert result["metrics"]["accuracy"] == 1.0
+    assert result["response_coverage"] == 1.0
+
+    leaked = [{**requests[0], "gold_answer": private[0]["gold_answer"]}, *requests[1:]]
+    leaked_report = run_closed_book_evaluation(public, private, leaked, responses, model_id="fixture-model")
+    assert not leaked_report["valid"]
+    assert leaked_report["request_audit"]["errors"][0]["error"] == "request_hidden_field_leak"
+
+    dataset_dir = tmp_path / "dataset"
+    request_path = tmp_path / "requests.jsonl"
+    response_path = tmp_path / "responses.jsonl"
+    out_dir = tmp_path / "closed_book"
+    write_public_private_artifacts(rows, dataset_dir)
+    write_jsonl(request_path, requests)
+    write_jsonl(response_path, responses)
+    assert cli_main(
+        [
+            "evaluation",
+            "closed-book",
+            "--public",
+            str(dataset_dir / "public.jsonl"),
+            "--private",
+            str(dataset_dir / "private.jsonl"),
+            "--requests",
+            str(request_path),
+            "--responses",
+            str(response_path),
+            "--model-id",
+            "fixture-model",
+            "--out",
+            str(out_dir),
+        ]
+    ) == 0
+    assert (out_dir / "closed_book_report.json").exists()
+    assert (out_dir / "prediction_metrics.json").exists()
 
 
 def test_smoke_experiment_orchestrates_artifacts(tmp_path: Path) -> None:
@@ -438,6 +817,8 @@ def test_smoke_experiment_orchestrates_artifacts(tmp_path: Path) -> None:
     assert report["release_sft"]["answer_sft_rows"] == report["release_dataset"]["row_count"]
     assert report["grade"]["metrics"]["accuracy"] == 1.0
     assert report["release_grade"]["metrics"]["accuracy"] == 1.0
+    assert report["tool_assisted"]["metrics"]["accuracy"] == 1.0
+    assert report["release_tool_assisted"]["metrics"]["accuracy"] == 1.0
     assert report["public_private"]["public_row_count"] == report["dataset"]["row_count"]
     assert report["release_dataset"]["public_private"]["public_row_count"] == report["release_dataset"]["row_count"]
     summary = experiment_summary(report)
@@ -445,6 +826,7 @@ def test_smoke_experiment_orchestrates_artifacts(tmp_path: Path) -> None:
     assert summary["smoke_release_validation_valid"] is False
     assert "Release rows" in experiment_summary_markdown(summary)
     assert "private-key oracle accuracy" in experiment_summary_markdown(summary)
+    assert "Tool-assisted upper-bound accuracy" in experiment_summary_markdown(summary)
     paper_results = write_paper_results(tmp_path / "run")
     assert "Release Composition" in Path(paper_results["paper_results"]).read_text(encoding="utf-8")
     assert (tmp_path / "run" / "experiment_report.json").exists()
@@ -459,13 +841,17 @@ def test_smoke_experiment_orchestrates_artifacts(tmp_path: Path) -> None:
     assert (tmp_path / "run" / "dataset" / "failure_report.json").exists()
     assert (tmp_path / "run" / "dataset" / "quarantine_report.json").exists()
     assert (tmp_path / "run" / "dataset" / "release_validation_report.json").exists()
+    assert (tmp_path / "run" / "dataset" / "release_verifier_report.json").exists()
     assert (tmp_path / "run" / "release_dataset" / "rows.jsonl").exists()
     assert (tmp_path / "run" / "release_dataset" / "public.jsonl").exists()
     assert (tmp_path / "run" / "release_dataset" / "private.jsonl").exists()
     assert (tmp_path / "run" / "release_dataset" / "release_validation_report.json").exists()
+    assert (tmp_path / "run" / "release_dataset" / "RELEASE_VERIFIER_REPORT.md").exists()
     assert (tmp_path / "run" / "release_baseline" / "baseline_metrics.json").exists()
     assert (tmp_path / "run" / "grade" / "oracle_responses.jsonl").exists()
     assert (tmp_path / "run" / "release_grade" / "prediction_metrics.json").exists()
+    assert (tmp_path / "run" / "tool_assisted" / "tool_assisted_report.json").exists()
+    assert (tmp_path / "run" / "release_tool_assisted" / "prediction_metrics.json").exists()
     assert (tmp_path / "run" / "requests" / "zero_shot_requests.jsonl").exists()
     assert (tmp_path / "run" / "release_requests" / "zero_shot_requests.jsonl").exists()
     assert (tmp_path / "run" / "sft" / "scaling" / "size_1.jsonl").exists()
@@ -544,6 +930,36 @@ def test_release_export_helper_writes_reports(tmp_path: Path) -> None:
     assert (tmp_path / "release" / "DATASET_CARD.md").exists()
     assert (tmp_path / "release" / "public.jsonl").exists()
     assert (tmp_path / "release" / "private.jsonl").exists()
+
+
+def test_release_verifier_report_stop_gates_and_cli(tmp_path: Path) -> None:
+    graph = build_graph(source_record_from_mapping({"source_id": "src_loop", "normalized_code": LOOP_SOURCE}))
+    rows = [
+        to_jsonable(materialize_row(graph, resolution))
+        for resolution in (resolve_query(graph, query) for query in smoke_queries(graph))
+        if resolution.verifier_status == "resolved"
+    ]
+    failures = [
+        {
+            "graph_id": "graph:src_loop",
+            "query_id": "q_failed",
+            "reason": "clue_too_narrow",
+            "candidate_trace": {"final_candidates": ["selector:a"]},
+        }
+    ]
+    report = release_verifier_report(rows, failures=failures)
+    assert not report["valid_for_release"]
+    assert "release_validation" in report["blocking_gates"]
+    assert report["quarantine"]["quarantine_count"] > 0
+    assert report["failure_report"]["reasons"] == {"clue_too_narrow": 1}
+    assert "Release Verifier Report" in release_verifier_markdown(report)
+
+    dataset_dir = tmp_path / "dataset"
+    write_jsonl(dataset_dir / "rows.jsonl", rows)
+    write_jsonl(dataset_dir / "failure_manifest.jsonl", failures)
+    assert cli_main(["dataset", "release-report", str(dataset_dir)]) == 0
+    assert (dataset_dir / "release_verifier_report.json").exists()
+    assert (dataset_dir / "RELEASE_VERIFIER_REPORT.md").exists()
 
 
 def test_public_private_exports_do_not_leak_hidden_fields(tmp_path: Path) -> None:

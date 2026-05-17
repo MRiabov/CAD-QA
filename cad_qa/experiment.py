@@ -13,6 +13,7 @@ from cad_qa.dataset.materialize import materialize_row
 from cad_qa.dataset.public import private_rows, public_rows, write_public_private_artifacts
 from cad_qa.dataset.quarantine import quarantine_report
 from cad_qa.dataset.release import export_release_dataset
+from cad_qa.dataset.release_report import write_release_verifier_report
 from cad_qa.dataset.report import dataset_card_markdown, dataset_report, failure_report
 from cad_qa.dataset.sft import ablation_sft_groups, answer_sft_rows, reasoning_sft_rows, scaling_sft_groups
 from cad_qa.dataset.split import assign_splits, split_manifest
@@ -20,6 +21,7 @@ from cad_qa.dataset.validate import validate_rows
 from cad_qa.evaluation.baselines import run_baselines
 from cad_qa.evaluation.grade import grade_public_private
 from cad_qa.evaluation.requests import few_shot_requests, oracle_responses, zero_shot_requests
+from cad_qa.evaluation.tool_assisted import run_tool_assisted_upper_bound
 from cad_qa.io import read_jsonl, write_json, write_jsonl
 from cad_qa.ontology import build_graph
 from cad_qa.query.resolver import resolve_query, smoke_queries
@@ -44,6 +46,8 @@ def run_smoke_experiment(
     release_request_dir = out / "release_requests"
     grade_dir = out / "grade"
     release_grade_dir = out / "release_grade"
+    tool_dir = out / "tool_assisted"
+    release_tool_dir = out / "release_tool_assisted"
     sft_dir = out / "sft"
     release_sft_dir = out / "release_sft"
 
@@ -122,6 +126,8 @@ def run_smoke_experiment(
         encoding="utf-8",
     )
     release_dataset = export_release_dataset(row_dicts, out=release_dataset_dir, source_dataset=dataset_dir)
+    release_verifier = write_release_verifier_report(dataset_dir)
+    release_dataset_verifier = write_release_verifier_report(release_dataset_dir)
 
     baselines = run_baselines(row_dicts)
     baseline_metrics = {
@@ -146,6 +152,8 @@ def run_smoke_experiment(
     release_request_report = _write_request_exports(release_rows, release_request_dir)
     grade_report = _write_private_oracle_grade(row_dicts, grade_dir)
     release_grade_report = _write_private_oracle_grade(release_rows, release_grade_dir)
+    tool_report = _write_tool_assisted_upper_bound(row_dicts, tool_dir)
+    release_tool_report = _write_tool_assisted_upper_bound(release_rows, release_tool_dir)
 
     sft_report = _write_sft_exports(row_dicts, sft_dir, scaling_sizes)
     release_sft_report = _write_sft_exports(release_rows, release_sft_dir, scaling_sizes)
@@ -163,18 +171,22 @@ def run_smoke_experiment(
             "leakage_audit": release_dataset["leakage_audit"],
             "quarantine": release_dataset["quarantine"],
             "public_private": release_dataset["public_private"],
+            "verifier_report": release_dataset_verifier,
         },
         "validation": validation,
         "release_validation": release_validation,
         "leakage_audit": audit,
         "quarantine": quarantine,
         "public_private": public_private,
+        "release_verifier": release_verifier,
         "baseline": baseline_metrics,
         "release_baseline": release_baseline_metrics,
         "requests": request_report,
         "release_requests": release_request_report,
         "grade": grade_report,
         "release_grade": release_grade_report,
+        "tool_assisted": tool_report,
+        "release_tool_assisted": release_tool_report,
         "sft": sft_report,
         "release_sft": release_sft_report,
     }
@@ -214,6 +226,8 @@ def experiment_summary(report: dict[str, Any]) -> dict[str, Any]:
         "release_first_candidate_accuracy": report["release_baseline"]["first_candidate"]["accuracy"],
         "smoke_private_oracle_accuracy": report["grade"]["metrics"]["accuracy"],
         "release_private_oracle_accuracy": report["release_grade"]["metrics"]["accuracy"],
+        "smoke_tool_assisted_accuracy": report["tool_assisted"]["metrics"]["accuracy"],
+        "release_tool_assisted_accuracy": report["release_tool_assisted"]["metrics"]["accuracy"],
         "smoke_zero_shot_requests": report["requests"]["zero_shot_request_count"],
         "release_zero_shot_requests": report["release_requests"]["zero_shot_request_count"],
         "smoke_few_shot_requests": report["requests"]["few_shot_request_count"],
@@ -276,6 +290,8 @@ def experiment_summary_markdown(summary: dict[str, Any]) -> str:
         f"- Release first-candidate accuracy: {summary['release_first_candidate_accuracy']:.3f}",
         f"- Smoke private-key oracle accuracy: {summary['smoke_private_oracle_accuracy']:.3f}",
         f"- Release private-key oracle accuracy: {summary['release_private_oracle_accuracy']:.3f}",
+        f"- Tool-assisted upper-bound accuracy (smoke): {summary['smoke_tool_assisted_accuracy']:.3f}",
+        f"- Tool-assisted upper-bound accuracy (release): {summary['release_tool_assisted_accuracy']:.3f}",
         "",
     ]
     return "\n".join(lines)
@@ -293,7 +309,6 @@ def write_paper_results(run_dir: Path, out: Path | None = None) -> dict[str, Any
 
 
 def paper_results_markdown(report: dict[str, Any]) -> str:
-    dataset = report["dataset"]
     release = report["release_dataset"]["dataset"]
     release_grade = report["release_grade"]["metrics"]
     summary = experiment_summary(report)
@@ -354,6 +369,11 @@ def paper_results_markdown(report: dict[str, Any]) -> str:
                     "Private-key oracle accuracy",
                     _format_float(summary["smoke_private_oracle_accuracy"]),
                     _format_float(summary["release_private_oracle_accuracy"]),
+                ],
+                [
+                    "Tool-assisted upper-bound accuracy",
+                    _format_float(summary["smoke_tool_assisted_accuracy"]),
+                    _format_float(summary["release_tool_assisted_accuracy"]),
                 ],
                 [
                     "Invalid output rate",
@@ -465,6 +485,18 @@ def _write_private_oracle_grade(rows: list[dict[str, Any]], out: Path) -> dict[s
         "oracle_response_count": len(responses),
         "metrics": metrics,
     }
+
+
+def _write_tool_assisted_upper_bound(rows: list[dict[str, Any]], out: Path) -> dict[str, Any]:
+    public = public_rows(rows)
+    private = private_rows(rows)
+    result = run_tool_assisted_upper_bound(public, private)
+    write_jsonl(out / "tool_assisted_responses.jsonl", result["responses"])
+    write_json(out / "prediction_metrics.json", result["metrics"])
+    write_jsonl(out / "graded_responses.jsonl", result["graded"])
+    report = {key: value for key, value in result.items() if key not in {"responses", "graded"}}
+    write_json(out / "tool_assisted_report.json", report)
+    return report
 
 
 def _write_sft_exports(rows: list[dict[str, Any]], out: Path, scaling_sizes: list[int]) -> dict[str, Any]:

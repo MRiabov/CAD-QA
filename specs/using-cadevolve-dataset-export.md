@@ -12,6 +12,8 @@ The smoke command path is:
 
 ```bash
 uv run cadqa sources inspect --sources-jsonl data/cadqa_cadevolve_rc_10/sources.jsonl
+uv run cadqa sources manifest --sources-jsonl data/cadqa_cadevolve_rc_10/sources.jsonl --out runs/source_manifest.json
+uv run cadqa sources audit --sources-jsonl data/cadqa_cadevolve_rc_10/sources.jsonl --out runs/source_audit.json
 uv run cadqa graph build --sources-jsonl data/cadqa_cadevolve_rc_10/sources.jsonl --limit 10 --out runs/graph_smoke
 uv run cadqa query smoke --graph runs/graph_smoke/graphs.jsonl --out runs/query_smoke
 uv run cadqa dataset materialize --queries runs/query_smoke/queries.jsonl --out data/cadqa_graph_smoke

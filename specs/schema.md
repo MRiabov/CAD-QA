@@ -74,5 +74,6 @@ Measurements have `entity_id`, `scope`, `name`, `value`, `unit`, and
 `release_ready=false` rows may be useful for smoke experiments, diagnostics, or
 training ablations, but they must not be exported as final benchmark labels.
 Current quarantine reasons include conservative material/void region
-projections and selector-derived face identities that are not yet backed by
-kernel selector traces.
+projections and selector-derived face identities when they are not backed by
+kernel trace evidence. Kernel-backed material/void deltas and directly traced
+selector results may be release-ready when the verifier resolves them uniquely.

@@ -1,41 +1,80 @@
 # Implementation Status
 
-Date: 2026-04-29
+Date: 2026-05-17
 
 The repository has been reset around the graph-first CAD-QA architecture.
 
 ## Implemented In Current Surface
 
 - Source JSONL loading and normalized source records.
+- CADEvolve-oriented source manifests and audits for stable IDs, normalized
+  source hashes, duplicate source IDs, source-ID/hash conflicts, duplicate
+  normalized code, missing source paths, and protected source grouping
+  coverage.
+- Isolated CadQuery trace execution worker with timeout, worker-crash, parse,
+  execution, missing-result, invalid-type, non-solid, volume, and bounding-box
+  failure accounting.
+- Trace snapshots for measurable top-level CadQuery assignments, final shape
+  metrics, topology counts, and adjacent snapshot-derived volume/bbox/topology
+  deltas when CadQuery is installed.
+- Trace CLI that writes `traces.jsonl` and `trace_report.json`.
+- Optional graph build integration for trace JSONL, including snapshot-state
+  measurements, feature application effect deltas, and exact
+  kernel-measured material/void region relations where an assignment delta can
+  be matched to a source feature.
 - AST assignment and call-chain extraction.
 - Bounded unrolling for simple `for` loops over literal iterables.
 - Typed ontology graph records with nodes, relations, and measurements.
 - Operation, feature, parameter, profile, workplane, path, selector, solid, and
   measurement node families.
 - Stable selector-derived face nodes and same-face joins.
+- Kernel selector-result summaries for directly assigned `.faces(...)`
+  workplanes, with selected counts, shape types, face bbox signatures,
+  kernel-backed stable face IDs, and release-ready selected-face rows when
+  private trace evidence is present.
 - Profile geometry for `.circle(...)`, `.rect(...)`, and
   `.polyline(...).close()`.
 - Workplane frame extraction for default planes and explicit `cq.Plane(...)`.
 - Sketch-center, path-tangent, nearest-path-point, material-region, and
   void-region evidence when conservatively derivable from source/profile data.
+- Conservative material/void region prism geometry from located profiles,
+  including volume, bbox, extrusion axis, height, start/end centroids, and
+  midpoint centroid.
+- Kernel trace-backed material/void regions are separated from conservative
+  source projections so release filtering does not quarantine exact snapshot
+  region labels solely for using region geometry.
 - Deterministic query IR with candidate-set trace, argmax/argmin, and
   reject-unless-unique policy.
-- Rule-based prompt rendering with clause-to-clue maps.
+- Rule-based prompt rendering with clause-to-clue maps, persisted
+  candidate-count annotations, hidden-clause traceability validation, and
+  row-level high-hop clue breadth audits.
 - Dataset row materialization and validation.
-- Deterministic group-safe smoke splits and split manifests.
+- Deterministic group-safe smoke and release splits over protected source
+  groups, including source family, generator, counterfactual group, explicit
+  split group, and path-derived CADEvolve families when available.
 - Leakage audit for source/split leaks, duplicate prompts, and query ID leaks.
-- Baseline metrics for oracle, first-candidate, and null baselines.
+- Baseline metrics for oracle, first-candidate, first-static-filter, majority,
+  and null baselines with hop-slice, static-hop, geometry-hop, and difficulty
+  breakdowns.
 - Prediction-response grading with hop, difficulty, relation-family,
   measurement-scope, static-hop, geometry-hop, invalid-output, missing-response,
   duplicate/extra response, response-coverage, and optional
   confidence-calibration breakdowns.
+- Closed-book model evaluation reports that pair answer-free request JSONL,
+  public rows, private keys, and response JSONL while auditing hidden-field
+  leaks, request coverage, duplicate requests, and public/private parity.
 - Private-key grading for release-style public/private row exports.
 - Oracle-response export and public/private key sanity grading for smoke and
   release artifacts.
+- Tool-assisted upper-bound exports and grading from private verifier artifacts,
+  including provenance-bearing responses and smoke/release experiment reports.
 - Zero-shot and few-shot model request export.
 - Answer-only, candidate-trace, ablation, and scaling SFT JSONL exports.
 - One-command smoke experiment orchestration.
 - Dataset card, query failure report, and run artifact manifest generation.
+- Release verifier reports with row validation, release validation, leakage,
+  public/private parity, verifier failure taxonomy, quarantine taxonomy, and
+  stop-gate summaries.
 - Compact machine-readable and Markdown run summaries.
 - Local experiment artifact packaging with SHA-256 package summary.
 - Per-row evidence tiering with quarantine reasons and release validation for
@@ -103,11 +142,11 @@ Result on 2026-04-29:
 
 ## Open Work
 
-- Isolated CadQuery trace worker in the new package surface.
-- Release-grade selector face identity backed by kernel selector results.
+- Broader kernel snapshot association for chained features, in-place mutation
+  patterns, non-assignment feature effects, and chained selector expressions
+  whose `.faces(...)` result is consumed before assignment.
 - Robust B-Rep adjacency and opposite-face relations.
 - Material-region and void-region geometry beyond source/profile projections.
-- Release-scale leakage audits beyond the smoke policy.
 - Provider submission adapters and remote/GPU experiment orchestration.
 
 ## Quarantine Policy

@@ -35,9 +35,12 @@ RELATION_FAMILIES = {
     "has_path_tangent",
     "nearest_point_on_path",
     "has_stable_face_id",
+    "has_kernel_stable_face_id",
     "has_sketch_center",
     "has_material_region_geometry",
     "has_void_region_geometry",
+    "has_kernel_material_region_geometry",
+    "has_kernel_void_region_geometry",
 }
 
 MEASUREMENT_SCOPES = {

@@ -1,7 +1,7 @@
 schema_version: 2
 project: CAD-QA
 current_snapshot:
-  date: "2026-04-30"
+  date: "2026-05-17"
   codebase_state: >
     The repository has been reset around one graph-first CAD-QA architecture:
     source records, optional trace/snapshot evidence, typed ontology graphs,
@@ -41,7 +41,7 @@ epics:
         status: implemented
   - id: epic-2
     title: Source ingestion and normalization
-    status: work-in-progress
+    status: implemented
     priority: P0
     stories:
       - id: "2.1"
@@ -52,10 +52,10 @@ epics:
         status: implemented
       - id: "2.3"
         title: CADEvolve source manifests and audits
-        status: planned
+        status: implemented
   - id: epic-3
     title: Trace and snapshot execution
-    status: work-in-progress
+    status: implemented
     priority: P0
     stories:
       - id: "3.1"
@@ -63,13 +63,16 @@ epics:
         status: implemented
       - id: "3.2"
         title: Isolated CadQuery execution worker
-        status: planned
+        status: implemented
       - id: "3.3"
         title: Snapshot-derived feature application effects
-        status: work-in-progress
+        status: implemented
+      - id: "3.4"
+        title: Trace CLI, trace reports, and timeout/crash accounting
+        status: implemented
   - id: epic-4
     title: CAD ontology graph extraction
-    status: work-in-progress
+    status: implemented
     priority: P0
     stories:
       - id: "4.1"
@@ -86,7 +89,7 @@ epics:
         status: implemented
       - id: "4.5"
         title: Material and void region geometry
-        status: work-in-progress
+        status: implemented
   - id: epic-5
     title: Query program and deterministic resolver
     status: implemented
@@ -106,7 +109,7 @@ epics:
         status: implemented
   - id: epic-6
     title: Label and relation families
-    status: work-in-progress
+    status: implemented
     priority: P0
     stories:
       - id: "6.1"
@@ -117,13 +120,13 @@ epics:
         status: implemented
       - id: "6.3"
         title: Selector face identity and same-face joins
-        status: work-in-progress
+        status: implemented
       - id: "6.4"
         title: Path tangents and nearest path points
         status: implemented
   - id: epic-7
     title: Rule-based prompt rendering
-    status: work-in-progress
+    status: implemented
     priority: P0
     stories:
       - id: "7.1"
@@ -137,10 +140,10 @@ epics:
         status: implemented
       - id: "7.4"
         title: Individual clue breadth gate
-        status: work-in-progress
+        status: implemented
   - id: epic-8
     title: Dataset materialization, splits, and validation
-    status: work-in-progress
+    status: implemented
     priority: P0
     stories:
       - id: "8.1"
@@ -154,7 +157,7 @@ epics:
         status: implemented
       - id: "8.4"
         title: Group-safe release splits
-        status: work-in-progress
+        status: implemented
       - id: "8.5"
         title: Leakage audit reports
         status: implemented
@@ -166,21 +169,21 @@ epics:
         status: implemented
   - id: epic-9
     title: Baselines and evaluation
-    status: work-in-progress
+    status: implemented
     priority: P1
     stories:
       - id: "9.1"
         title: Static shortcut baselines by hop slice
-        status: work-in-progress
+        status: implemented
       - id: "9.2"
         title: Closed-book model evaluation
-        status: work-in-progress
+        status: implemented
       - id: "9.4"
         title: Zero-shot and few-shot model request export
         status: implemented
       - id: "9.3"
         title: Tool-assisted upper-bound evaluation
-        status: planned
+        status: implemented
       - id: "9.5"
         title: Private-key grading with response hygiene metrics
         status: implemented
@@ -203,7 +206,7 @@ epics:
         status: implemented
   - id: epic-11
     title: Experiment orchestration and reports
-    status: work-in-progress
+    status: implemented
     priority: P1
     stories:
       - id: "11.1"
@@ -211,7 +214,7 @@ epics:
         status: implemented
       - id: "11.2"
         title: Release-scale verifier and quarantine reports
-        status: planned
+        status: implemented
       - id: "11.3"
         title: One-command smoke experiment orchestration
         status: implemented
