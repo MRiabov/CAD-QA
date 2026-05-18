@@ -192,6 +192,18 @@ Reviewed on 2026-05-17:
 - `runs/verify_cadevolve_20260517/selector_edge_trace_preview_v2.md`
 - `runs/verify_cadevolve_20260517/edge_selector_spatial_preview.md`
 - `runs/verify_cadevolve_20260517/edge_spatial_relation_preview.md`
+- `runs/verify_cadevolve_20260517/edge_adjacency_relation_preview.md`
+- `runs/verify_cadevolve_20260517/edge_endpoint_preview.md`
+- `runs/verify_cadevolve_20260517/edge_intersection_relation_preview.md`
+- `runs/verify_cadevolve_20260517/edge_endpoint_containment_preview.md`
+- `runs/verify_cadevolve_20260517/edge_opposite_relation_preview.md`
+- `runs/verify_cadevolve_20260517/edge_endpoint_distance_preview.md`
+- `runs/verify_cadevolve_20260517/edge_midpoint_distance_preview.md`
+- `runs/verify_cadevolve_20260517/edge_length_midpoint_preview.md`
+- `runs/verify_cadevolve_20260517/edge_length_ordering_preview.md`
+- `runs/verify_cadevolve_20260517/edge_same_length_ordering_preview.md`
+- `runs/verify_cadevolve_20260517/edge_shorter_than_preview.md`
+- `runs/verify_cadevolve_20260517/face_spatial_relation_preview.md`
 
 Conservatively checked as done:
 
@@ -270,6 +282,80 @@ Conservatively checked as done:
   on the 12 selected edge nodes, plus a release-ready row whose candidate trace
   preserves broad intermediate candidate sets before the final unique
   `bbox_max_z` aggregation.
+- The reviewed edge adjacency preview further requires `adjacent_to`, derived
+  only when two kernel-selected edge bounding boxes share an endpoint. The
+  reviewed graph contains 48 `adjacent_to` relations on the same real
+  CadEvolve `.edges()` source, and the single release-ready row is backed by
+  `has_kernel_stable_edge_id`, `perpendicular_to`, and `adjacent_to`.
+- The reviewed edge endpoint preview adds 8 deduplicated
+  `edge_endpoint` nodes from the same compiled selector-result edge boxes,
+  with 24 `endpoint_of` and 24 `has_endpoint` relations. It adds 1
+  release-ready, geometry-critical row that filters compiled endpoint
+  coordinates and selects the unique endpoint with the largest `coordinate_z`.
+- The reviewed edge intersection preview adds `intersects` relations only
+  when two kernel-selected edge boxes share a compiled endpoint. The reviewed
+  graph contains 48 `intersects` relations on the same real CadEvolve
+  `.edges()` source, and the single release-ready edge row is backed by
+  `has_kernel_stable_edge_id`, `perpendicular_to`, `adjacent_to`, and
+  `intersects`.
+- The reviewed edge endpoint containment preview adds `contained_in` for
+  compiled endpoint-to-edge membership from the same kernel-selected edge
+  geometry. The reviewed graph contains 24 `contained_in` relations, and the
+  release-ready endpoint row is backed by both `endpoint_of` and
+  `contained_in` before coordinate filtering.
+- The reviewed edge opposite preview adds `opposite_to` between
+  kernel-selected edges only when they are parallel, same compiled length, and
+  share no endpoint. The reviewed graph contains 36 `opposite_to` relations,
+  and the release-ready edge row is backed by `has_kernel_stable_edge_id`,
+  `perpendicular_to`, `adjacent_to`, `intersects`, and `opposite_to`.
+- The reviewed edge endpoint distance preview adds a typed global-origin node,
+  `distance_to` relations from compiled edge endpoints to that origin, and
+  `distance_to_origin` measurements. The RC10 preview contains one
+  release-ready, geometry-critical endpoint row backed by `endpoint_of`,
+  `contained_in`, and `distance_to`, with `entity_geometry` and
+  `relation_metric` measurement scopes.
+- The reviewed edge midpoint distance preview adds compiled midpoint
+  coordinates and `midpoint_distance_to_origin` measurements to kernel-selected
+  edges, plus `distance_to` relations from those edges to the global origin.
+  On the real RC10 CadEvolve slice, the new release-ready row keeps all 12
+  kernel-selected edge candidates through selector identity and distance
+  evidence, narrows to 4 X-spanning edges, then 2 positive-Z midpoint edges,
+  and resolves uniquely by `midpoint_y` aggregation.
+- The reviewed edge length midpoint preview adds compiled `edge_length`
+  measurements from kernel-selected edge endpoints and a resolver-side
+  metric-ratio comparison for geometry relations like edge length versus
+  midpoint distance. On the real RC10 CadEvolve slice, the new release-ready
+  row keeps all 12 kernel-selected edge candidates through selector identity
+  and length evidence, narrows to 4 positive-Z midpoint edges, then 2 edges
+  whose compiled length is less than their compiled midpoint distance to the
+  global origin, and resolves uniquely by `midpoint_x` aggregation.
+- The reviewed edge length ordering preview adds `longer_than` and
+  `shorter_than` relations between kernel-selected edges when their compiled
+  bbox endpoint lengths differ. On the real RC10 CadEvolve slice, the new
+  release-ready row keeps all 12 kernel-selected edge candidates through
+  selector identity, narrows to 8 edges with a `longer_than` relation, then 2
+  positive-Z midpoint edges, and resolves uniquely by `midpoint_y`
+  aggregation.
+- The reviewed edge same-length ordering preview adds `same_length_as`
+  relations between kernel-selected edges with equal compiled endpoint
+  lengths. On the real RC10 CadEvolve slice, the new release-ready row keeps
+  all 12 kernel-selected edge candidates through selector identity and
+  `same_length_as`, narrows to 8 edges with `longer_than`, then 2 positive-Z
+  midpoint edges, and resolves uniquely by `midpoint_y` aggregation.
+- The reviewed edge shorter-than preview demonstrates the complementary
+  `shorter_than` length-ordering relation on the real RC10 CadEvolve slice.
+  The new release-ready row keeps all 12 kernel-selected edge candidates
+  through selector identity, narrows to 8 edges with `shorter_than`, then 2
+  positive-Z midpoint edges, and resolves uniquely by `midpoint_x`
+  aggregation.
+- Face spatial extraction now derives face normal axes and conservative
+  `parallel_to`, `perpendicular_to`, `adjacent_to`, `intersects`, and
+  `opposite_to` relations from kernel-selected face bounding boxes. The
+  reviewed face-spatial Markdown preview is a manual review fixture because
+  the current RC10 CadEvolve slice does not contain a supported all-face
+  selector row that demonstrates the new family. The fixture row is
+  release-ready and geometry-critical, but this is not enough to close broader
+  face-relation coverage for story 12.5.
 - The reviewed path-geometry preview shows release-ready, geometry-critical
   rows for nearest visible spline path point to origin, highest visible spline
   path point, and longest visible spline path segment. The reviewed 8-source
@@ -301,14 +387,24 @@ Still not checked as done:
   nodes and 1 release-ready edge-selector spatial row, but this is not broad
   enough to close story 12.3.
 - Path/distance coverage is partial: path-point and path-segment distance rows
-  are demonstrated, and one kernel-edge perpendicularity row is demonstrated,
-  but containment, intersection, adjacency, opposite-face, broader
-  parallel/perpendicular, and coaxial spatial-relation rows remain open, so
-  story 12.5 is work-in-progress rather than implemented.
+  are demonstrated, and one kernel-edge perpendicularity/adjacency row plus
+  one kernel-edge endpoint containment/distance row plus one kernel-edge
+  midpoint distance row plus one kernel-edge length/midpoint row are
+  demonstrated, along with one kernel-edge length-ordering row and one
+  kernel-edge same-length ordering row plus one shorter-than length-ordering
+  row. A
+  face-spatial fixture demonstrates opposite, adjacent, intersecting, and
+  perpendicular face relations, but a real CadEvolve slice has not yet
+  demonstrated those face rows. Broader containment, broader intersection,
+  opposite-face coverage on real CadEvolve data, broader opposite-relation,
+  broader adjacency, broader parallel/perpendicular, and coaxial
+  spatial-relation rows remain open, so story 12.5 is work-in-progress rather
+  than implemented.
 - The preview does not establish prompt-family balance, answer entropy, or
   syntax shortcut resistance. Those remain open release blockers even though
   the default SFT geometry-critical dominance gate is now implemented.
-- Containment, intersection, adjacency, and stable spatial-relation question
+- Opposite-face on real CadEvolve data, broader containment, broader
+  intersection, broader adjacency, and broader stable spatial-relation question
   families are not demonstrated by this preview.
 
 ## Open Work
