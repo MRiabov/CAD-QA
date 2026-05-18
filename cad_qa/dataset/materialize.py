@@ -130,10 +130,22 @@ def _evidence_policy(resolution: QueryResolution) -> tuple[str, list[str]]:
     query = resolution.query_program
     if families & {"has_material_region_geometry", "has_void_region_geometry"}:
         reasons.append("conservative_region_projection")
-    has_kernel_selector_evidence = "has_kernel_stable_face_id" in families
-    has_selector_surrogate = families & {"selected_by", "same_selected_face_as", "has_stable_face_id"}
+    has_kernel_selector_evidence = bool(
+        families
+        & {
+            "has_kernel_stable_face_id",
+            "has_kernel_stable_edge_id",
+            "has_kernel_stable_vertex_id",
+        }
+    )
+    has_selector_surrogate = families & {
+        "selected_by",
+        "same_selected_face_as",
+        "same_selected_entity_as",
+        "has_stable_face_id",
+    }
     if (
-        (query.target_type in {"face", "selector"} and not has_kernel_selector_evidence)
+        (query.target_type in {"face", "edge", "vertex", "selector"} and not has_kernel_selector_evidence)
         or has_selector_surrogate
     ):
         reasons.append("selector_identity_surrogate")

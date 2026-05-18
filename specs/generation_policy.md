@@ -35,6 +35,34 @@ Release-quality high-hop rows should satisfy these shortcut-resistance gates:
 - static-only baselines are measured and reported;
 - prompt-family quotas prevent syntax-only templates from dominating the set.
 
+## Critical Training Subset
+
+The highest-priority implementation work is the subset of rows that teaches
+models CAD geometry, not source-code lookup. Do not treat broader prompt
+coverage, request export, or SFT formatting as training readiness until this
+subset is implemented and dominates the release set.
+
+Critical rows should exercise at least these geometry-backed task families:
+
+- final and intermediate solid measurements: volume, bbox, centroid, validity,
+  face/edge/vertex counts;
+- feature application effects: signed volume delta, bbox delta, topology delta,
+  circular-edge delta, centroid movement;
+- selector-result geometry: selected count, selected entity type, selected
+  bboxes, stable face/edge signatures, repeated selector identity;
+- material and void regions from kernel-backed operation deltas, not only
+  source-order projections;
+- profile-to-solid effects: which profile or workplane produced a measured
+  downstream geometry change;
+- path and sketch geometry: path tangents, nearest points, distances, centers,
+  axes, and coordinate comparisons;
+- spatial relations: distance, containment, intersection, adjacency, opposite
+  faces, parallel/perpendicular/coaxial relations when evidence is stable.
+
+Release and training reports should make the count of these critical geometry
+rows prominent. A dataset with mostly syntax-only or static-argument rows is a
+smoke dataset even if it is schema-valid.
+
 ## Rejection
 
 Reject or quarantine rows when:

@@ -9,6 +9,7 @@ import sys
 from typing import Any
 
 from cad_qa.dataset.audit import leakage_audit
+from cad_qa.dataset.preview import dataset_preview_markdown
 from cad_qa.dataset.public import write_public_private_artifacts
 from cad_qa.dataset.quarantine import quarantine_report
 from cad_qa.dataset.release import export_release_dataset
@@ -17,8 +18,10 @@ from cad_qa.dataset.report import dataset_card_markdown, dataset_report, failure
 from cad_qa.dataset.sft import (
     ablation_sft_groups,
     answer_sft_rows,
+    default_training_rows,
     reasoning_sft_rows,
     scaling_sft_groups,
+    training_readiness_report,
 )
 from cad_qa.dataset.split import assign_splits, split_manifest
 from cad_qa.dataset.materialize import materialize_row
@@ -129,6 +132,16 @@ def build_parser() -> argparse.ArgumentParser:
     release_report.add_argument("path", type=Path)
     release_report.add_argument("--out", type=Path)
     release_report.set_defaults(func=_cmd_dataset_release_report)
+    preview = dataset_sub.add_parser("preview")
+    preview.add_argument("path", type=Path, help="Dataset directory or rows.jsonl file.")
+    preview.add_argument("--graphs", type=Path, help="Optional graph directory or graphs.jsonl file for node samples.")
+    preview.add_argument("--out", type=Path, required=True)
+    preview.add_argument("--sample-per-family", type=int, default=1)
+    preview.add_argument("--family", action="append", dest="families")
+    preview.add_argument("--node-type", action="append", dest="node_types")
+    preview.add_argument("--seed", type=int, default=0)
+    preview.add_argument("--max-prompt-chars", type=int, default=12000)
+    preview.set_defaults(func=_cmd_dataset_preview)
 
     evaluation = subparsers.add_parser("evaluation")
     evaluation_sub = evaluation.add_subparsers(required=True)
@@ -179,6 +192,11 @@ def build_parser() -> argparse.ArgumentParser:
     export_sft.add_argument("--rows", type=Path, required=True)
     export_sft.add_argument("--out", type=Path, required=True)
     export_sft.add_argument("--scaling-sizes", type=int, nargs="*", default=[8, 16, 32])
+    export_sft.add_argument(
+        "--include-calibration",
+        action="store_true",
+        help="Include syntax-only calibration rows instead of the default geometry-critical training subset.",
+    )
     export_sft.set_defaults(func=_cmd_training_export_sft)
 
     experiment = subparsers.add_parser("experiment")
@@ -417,6 +435,34 @@ def _cmd_dataset_release_report(args: argparse.Namespace) -> dict[str, Any]:
     return write_release_verifier_report(args.path, out=args.out)
 
 
+def _cmd_dataset_preview(args: argparse.Namespace) -> dict[str, Any]:
+    rows_path = args.path / "rows.jsonl" if args.path.is_dir() else args.path
+    rows = read_jsonl(rows_path)
+    graphs = _load_graphs(args.graphs) if args.graphs else None
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(
+        dataset_preview_markdown(
+            rows,
+            graphs=graphs,
+            sample_per_family=args.sample_per_family,
+            families=args.families,
+            node_types=args.node_types,
+            seed=args.seed,
+            max_prompt_chars=args.max_prompt_chars,
+        ),
+        encoding="utf-8",
+    )
+    return {
+        "out": str(args.out),
+        "row_count": len(rows),
+        "graph_count": len(graphs) if graphs is not None else 0,
+        "sample_per_family": args.sample_per_family,
+        "families": args.families or [],
+        "node_types": args.node_types or [],
+        "seed": args.seed,
+    }
+
+
 def _cmd_evaluation_baseline(args: argparse.Namespace) -> dict[str, Any]:
     rows = read_jsonl(args.rows)
     results = run_baselines(rows)
@@ -517,7 +563,8 @@ def _cmd_evaluation_tool_assisted_upper_bound(args: argparse.Namespace) -> dict[
 
 
 def _cmd_training_export_sft(args: argparse.Namespace) -> dict[str, Any]:
-    rows = read_jsonl(args.rows)
+    input_rows = read_jsonl(args.rows)
+    rows = input_rows if args.include_calibration else default_training_rows(input_rows)
     args.out.mkdir(parents=True, exist_ok=True)
     answer_rows = answer_sft_rows(rows)
     reasoning_rows = reasoning_sft_rows(rows)
@@ -530,11 +577,21 @@ def _cmd_training_export_sft(args: argparse.Namespace) -> dict[str, Any]:
     for name, group_rows in scaling_groups.items():
         write_jsonl(args.out / "scaling" / f"{name}.jsonl", group_rows)
     report = {
+        "input_rows": len(input_rows),
+        "training_rows": len(rows),
+        "excluded_calibration_or_noncritical_rows": len(input_rows) - len(rows),
+        "excluded_calibration_noncritical_or_quarantined_rows": len(input_rows) - len(rows),
+        "include_calibration": bool(args.include_calibration),
         "answer_sft_rows": len(answer_rows),
         "reasoning_sft_rows": len(reasoning_rows),
         "ablation_groups": {name: len(group_rows) for name, group_rows in ablation_groups.items()},
         "scaling_groups": {name: len(group_rows) for name, group_rows in scaling_groups.items()},
     }
+    report["training_readiness"] = training_readiness_report(
+        input_rows,
+        rows,
+        include_calibration=bool(args.include_calibration),
+    )
     write_json(args.out / "sft_report.json", report)
     return report
 

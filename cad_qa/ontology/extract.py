@@ -59,7 +59,11 @@ class _Extractor:
         self.selector_ids_by_text: dict[str, list[str]] = {}
         self.trace_snapshots_by_target = _trace_snapshots_by_target(self.trace)
         self.trace_effects_by_target = _trace_effects_by_target(self.trace)
+        self.trace_selectors_by_line_text_kind = _trace_selectors_by_line_text_kind(self.trace)
         self.trace_selectors_by_line_text = _trace_selectors_by_line_text(self.trace)
+        self.trace_selectors_by_line = _trace_selectors_by_line(self.trace)
+        self.trace_effect_use_counts: dict[tuple[str, int | None], int] = {}
+        self.trace_selector_use_counts: dict[int, int] = {}
 
     def build(self) -> OntologyGraph:
         self.graph.add_node(
@@ -207,10 +211,11 @@ class _Extractor:
             self._extract_profile(record)
         if record.operation == "splineApprox":
             self._extract_path(record)
-        if record.operation == "faces":
+        if record.operation in {"faces", "edges", "vertices"}:
             self._extract_selector(record)
 
     def _add_feature(self, target: str, record: OperationRecord) -> None:
+        input_feature_ids = self._input_feature_ids(record)
         feature_id = self._unique_node_id(f"feature:{target}")
         self.variable_features[target] = feature_id
         self.graph.add_node(
@@ -228,7 +233,7 @@ class _Extractor:
             )
         )
         self.graph.add_relation(Relation(record.id, feature_id, "created_by"))
-        for input_id in self._input_feature_ids(record):
+        for input_id in input_feature_ids:
             self.graph.add_relation(Relation(input_id, feature_id, "input_to"))
         self._attach_trace_snapshot_state(feature_id, target, record)
         self._attach_trace_feature_effect(feature_id, target, record)
@@ -405,19 +410,81 @@ class _Extractor:
                 Measurement(path_id, "relation_metric", "nearest_point_distance_to_origin", nearest_distance, evidence={"source_line": record.source_line})
             )
             self.graph.add_relation(Relation(path_id, path_id, "nearest_point_on_path"))
+            point_vectors = [_coerce_point3(point) for point in points]
+            if all(point is not None for point in point_vectors):
+                coerced_points = [point for point in point_vectors if point is not None]
+                self._add_path_points(path_id, record, coerced_points)
+                self._add_path_segments(path_id, record, coerced_points)
+
+    def _add_path_points(self, path_id: str, record: OperationRecord, points: list[list[float]]) -> None:
+        for index, point in enumerate(points):
+            point_id = f"{path_id}:point:{index}"
+            self.graph.add_node(
+                Node(
+                    id=point_id,
+                    type="path_point",
+                    label=f"{record.target} point {index}",
+                    source_ref=str(record.source_line),
+                    properties={"path_id": path_id, "index": index, "coordinate": point},
+                )
+            )
+            self.graph.add_relation(Relation(point_id, path_id, "point_on_path", evidence={"source_line": record.source_line}))
+            distance = math.sqrt(sum(component * component for component in point))
+            self.graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate", point, "mm", {"path_id": path_id}))
+            self.graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_x", point[0], "mm", {"path_id": path_id}))
+            self.graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_y", point[1], "mm", {"path_id": path_id}))
+            self.graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_z", point[2], "mm", {"path_id": path_id}))
+            self.graph.add_measurement(Measurement(point_id, "relation_metric", "distance_to_origin", distance, "mm", {"path_id": path_id}))
+            self.graph.add_measurement(Measurement(point_id, "snapshot_state", "path_point_index", index, None, {"path_id": path_id}))
+
+    def _add_path_segments(self, path_id: str, record: OperationRecord, points: list[list[float]]) -> None:
+        for index, (start, end) in enumerate(zip(points, points[1:], strict=False)):
+            segment_id = f"{path_id}:segment:{index}"
+            vector = [end[axis] - start[axis] for axis in range(3)]
+            midpoint = [(start[axis] + end[axis]) / 2.0 for axis in range(3)]
+            length = math.sqrt(sum(component * component for component in vector))
+            self.graph.add_node(
+                Node(
+                    id=segment_id,
+                    type="path_segment",
+                    label=f"{record.target} segment {index}",
+                    source_ref=str(record.source_line),
+                    properties={
+                        "path_id": path_id,
+                        "index": index,
+                        "start": start,
+                        "end": end,
+                        "vector": vector,
+                        "midpoint": midpoint,
+                    },
+                )
+            )
+            self.graph.add_relation(Relation(segment_id, path_id, "segment_on_path", evidence={"source_line": record.source_line}))
+            self.graph.add_measurement(Measurement(segment_id, "entity_geometry", "segment_vector", vector, "mm", {"path_id": path_id}))
+            self.graph.add_measurement(Measurement(segment_id, "entity_geometry", "segment_midpoint", midpoint, "mm", {"path_id": path_id}))
+            self.graph.add_measurement(Measurement(segment_id, "relation_metric", "segment_length", length, "mm", {"path_id": path_id}))
+            self.graph.add_measurement(Measurement(segment_id, "relation_metric", "midpoint_distance_to_origin", math.sqrt(sum(component * component for component in midpoint)), "mm", {"path_id": path_id}))
+            self.graph.add_measurement(Measurement(segment_id, "snapshot_state", "path_segment_index", index, None, {"path_id": path_id}))
 
     def _extract_selector(self, record: OperationRecord) -> None:
-        selector_text = str(record.args[0]) if record.args else record.target
+        selector_text = str(record.args[0]) if record.args else ""
+        selector_label = _selector_label(record.operation, selector_text)
+        selector_kind = record.operation
         kernel_result = self._trace_selector_result(record, selector_text)
-        selector_id = self._unique_node_id(f"selector:{_slug(selector_text)}")
+        if kernel_result is not None:
+            selector_kind = str(kernel_result.get("selector_kind") or selector_kind)
+        selector_slug = _slug(selector_text) if selector_text else f"{_slug(record.target)}_{record.operation}_all"
+        selector_id = self._unique_node_id(f"selector:{selector_slug}")
         self.graph.add_node(
             Node(
                 id=selector_id,
                 type="selector",
-                label=selector_text,
+                label=selector_label,
                 source_ref=str(record.source_line),
                 properties={
                     "selector": record.args[0] if record.args else None,
+                    "selector_label": selector_label,
+                    "selector_kind": selector_kind,
                     "kernel_backed": kernel_result is not None,
                     "selected_count": kernel_result.get("selected_count") if kernel_result else None,
                 },
@@ -443,12 +510,15 @@ class _Extractor:
             self._add_kernel_selected_faces(selector_id, selector_text, kernel_result, record)
             self.selector_ids_by_text.setdefault(selector_text, []).append(selector_id)
             return
+        if selector_kind in {"edges", "vertices"}:
+            self.selector_ids_by_text.setdefault(selector_text, []).append(selector_id)
+            return
         face_id = f"face:{_slug(selector_text)}"
         self.graph.add_node(
             Node(
                 id=face_id,
                 type="face",
-                label=f"face selected by {selector_text}",
+                label=f"face selected by {selector_label}",
                 source_ref=str(record.source_line),
                 properties={"stable_selector": selector_text},
             )
@@ -467,6 +537,10 @@ class _Extractor:
         kernel_result: dict[str, Any],
         record: OperationRecord,
     ) -> None:
+        selector_kind = str(kernel_result.get("selector_kind") or record.operation)
+        if selector_kind != "faces":
+            self._add_kernel_selected_entities(selector_id, selector_text, kernel_result, record, selector_kind)
+            return
         bbox_signatures = kernel_result.get("bbox_signatures") or []
         shape_types = kernel_result.get("shape_types") or []
         selected_count = int(kernel_result.get("selected_count") or 0)
@@ -480,7 +554,7 @@ class _Extractor:
                 Node(
                     id=face_id,
                     type="face",
-                    label=f"kernel face {index} selected by {selector_text}",
+                    label=f"kernel face {index} selected by {_selector_label(record.operation, selector_text)}",
                     source_ref=str(record.source_line),
                     properties={
                         "stable_selector": selector_text,
@@ -507,10 +581,22 @@ class _Extractor:
                     evidence={"signature": signature},
                 )
             )
+            self.graph.add_relation(
+                Relation(
+                    selector_id,
+                    face_id,
+                    "has_kernel_stable_face_id",
+                    evidence={"signature": signature},
+                )
+            )
             if isinstance(bbox, dict):
                 self.graph.add_measurement(
                     Measurement(face_id, "entity_geometry", "bbox", bbox, evidence={"source": "cadquery_selector_result"})
                 )
+                for name, value in _bbox_scalar_measurements("bbox", bbox).items():
+                    self.graph.add_measurement(
+                        Measurement(face_id, "entity_geometry", name, value, evidence={"source": "cadquery_selector_result"})
+                    )
         for previous_selector_id in previous_selector_ids:
             self.graph.add_relation(
                 Relation(
@@ -528,6 +614,125 @@ class _Extractor:
                     evidence={"source": kernel_result.get("evidence", "cadquery_selector_result")},
                 )
             )
+
+    def _add_kernel_selected_entities(
+        self,
+        selector_id: str,
+        selector_text: str,
+        kernel_result: dict[str, Any],
+        record: OperationRecord,
+        selector_kind: str,
+    ) -> None:
+        entity_type = {"edges": "edge", "vertices": "vertex"}.get(selector_kind)
+        if entity_type is None:
+            return
+        bbox_signatures = kernel_result.get("bbox_signatures") or []
+        shape_types = kernel_result.get("shape_types") or []
+        selected_count = int(kernel_result.get("selected_count") or 0)
+        relation_type = f"has_kernel_stable_{entity_type}_id"
+        previous_selector_ids = self.selector_ids_by_text.get(selector_text, [])
+        selected_entity_ids: list[str] = []
+        selected_axes: dict[str, str] = {}
+        for index in range(selected_count):
+            bbox = bbox_signatures[index] if index < len(bbox_signatures) else None
+            shape_type = shape_types[index] if index < len(shape_types) else "unknown"
+            signature = _kernel_entity_signature(entity_type, selector_text, bbox, shape_type, index)
+            entity_id = f"{entity_type}:kernel:{signature}"
+            axis = _bbox_dominant_axis(bbox) if entity_type == "edge" else None
+            self.graph.add_node(
+                Node(
+                    id=entity_id,
+                    type=entity_type,
+                    label=f"kernel {entity_type} {index} selected by {_selector_label(record.operation, selector_text)}",
+                    source_ref=str(record.source_line),
+                    properties={
+                        "stable_selector": selector_text,
+                        "kernel_backed": True,
+                        "selector_index": index,
+                        "shape_type": shape_type,
+                        "bbox": bbox,
+                        "dominant_axis": axis,
+                    },
+                )
+            )
+            selected_entity_ids.append(entity_id)
+            if axis is not None:
+                selected_axes[entity_id] = axis
+            self.graph.add_relation(
+                Relation(
+                    entity_id,
+                    selector_id,
+                    "selected_by",
+                    evidence={"source": kernel_result.get("evidence", "cadquery_selector_result")},
+                )
+            )
+            self.graph.add_relation(
+                Relation(
+                    entity_id,
+                    selector_id,
+                    relation_type,
+                    evidence={"signature": signature},
+                )
+            )
+            self.graph.add_relation(
+                Relation(
+                    selector_id,
+                    entity_id,
+                    relation_type,
+                    evidence={"signature": signature},
+                )
+            )
+            if isinstance(bbox, dict):
+                self.graph.add_measurement(
+                    Measurement(entity_id, "entity_geometry", "bbox", bbox, evidence={"source": "cadquery_selector_result"})
+                )
+                for name, value in _bbox_scalar_measurements("bbox", bbox).items():
+                    self.graph.add_measurement(
+                        Measurement(entity_id, "entity_geometry", name, value, evidence={"source": "cadquery_selector_result"})
+                    )
+            if axis is not None:
+                self.graph.add_measurement(
+                    Measurement(entity_id, "entity_geometry", "dominant_axis", axis, evidence={"source": "cadquery_selector_result"})
+                )
+        if entity_type == "edge":
+            self._add_kernel_edge_axis_relations(selected_entity_ids, selected_axes, kernel_result)
+        for previous_selector_id in previous_selector_ids:
+            self.graph.add_relation(
+                Relation(
+                    selector_id,
+                    previous_selector_id,
+                    "same_selected_entity_as",
+                    evidence={"source": kernel_result.get("evidence", "cadquery_selector_result")},
+                )
+            )
+            self.graph.add_relation(
+                Relation(
+                    previous_selector_id,
+                    selector_id,
+                    "same_selected_entity_as",
+                    evidence={"source": kernel_result.get("evidence", "cadquery_selector_result")},
+                )
+            )
+
+    def _add_kernel_edge_axis_relations(
+        self,
+        edge_ids: list[str],
+        axes: dict[str, str],
+        kernel_result: dict[str, Any],
+    ) -> None:
+        evidence = {"source": kernel_result.get("evidence", "cadquery_selector_result")}
+        for source_id in edge_ids:
+            source_axis = axes.get(source_id)
+            if source_axis is None:
+                continue
+            for target_id in edge_ids:
+                if source_id == target_id:
+                    continue
+                target_axis = axes.get(target_id)
+                if target_axis is None:
+                    continue
+                relation_type = "parallel_to" if source_axis == target_axis else "perpendicular_to"
+                self.graph.add_relation(Relation(source_id, target_id, relation_type, evidence=evidence))
 
     def _attach_profile_application_effect(
         self, feature_id: str, profile_id: str, record: OperationRecord
@@ -564,9 +769,23 @@ class _Extractor:
                     },
                 )
             )
+        for name, value in _scalar_geometry_measurements(snapshot).items():
+            self.graph.add_measurement(
+                Measurement(
+                    feature_id,
+                    "snapshot_state",
+                    name,
+                    value,
+                    evidence={
+                        "source": "cadquery_trace_snapshot",
+                        "target": target,
+                        "source_line": snapshot.get("source_line"),
+                    },
+                )
+            )
 
     def _attach_trace_feature_effect(self, feature_id: str, target: str, record: OperationRecord) -> None:
-        effect = self._trace_effect_for_target(target, record)
+        effect = self._trace_effect_for_target(target, record, consume=False)
         if effect is None:
             return
         for name in ["signed_volume_delta", "bbox_delta", "topology_delta", "effect_index"]:
@@ -586,6 +805,21 @@ class _Extractor:
                     },
                 )
             )
+        for name, value in _scalar_effect_measurements(effect).items():
+            self.graph.add_measurement(
+                Measurement(
+                    feature_id,
+                    "feature_application_effect",
+                    name,
+                    value,
+                    evidence={
+                        "source": effect.get("evidence", "cadquery_assignment_snapshot_delta"),
+                        "from_target": effect.get("from_target"),
+                        "to_target": effect.get("to_target"),
+                        "source_line": effect.get("source_line"),
+                    },
+                )
+            )
 
     def _add_kernel_region_projection(
         self,
@@ -594,14 +828,13 @@ class _Extractor:
         target: str,
         record: OperationRecord,
     ) -> bool:
-        effect = self._trace_effect_for_target(target, record)
-        if effect is None:
+        region_measurement = self._kernel_region_measurement(target, record)
+        if region_measurement is None:
             return False
-        signed_delta = effect.get("signed_volume_delta")
-        if not isinstance(signed_delta, (int, float)) or not math.isfinite(float(signed_delta)) or signed_delta == 0:
-            return False
+        signed_delta = region_measurement["signed_volume_delta"]
         region_type = "void_region" if signed_delta < 0 else "material_region"
         region_id = self._unique_node_id(f"{region_type}:{record.target}")
+        evidence_source = region_measurement["evidence"]
         self.graph.add_node(
             Node(
                 id=region_id,
@@ -611,7 +844,7 @@ class _Extractor:
                 properties={
                     "conservative": False,
                     "operation": record.operation,
-                    "trace_evidence": effect.get("evidence", "cadquery_assignment_snapshot_delta"),
+                    "trace_evidence": evidence_source,
                 },
             )
         )
@@ -628,30 +861,75 @@ class _Extractor:
                 region_id,
                 region_id,
                 geometry_relation,
-                evidence={"source": effect.get("evidence", "cadquery_assignment_snapshot_delta")},
+                evidence={"source": evidence_source},
             )
         )
         evidence = {
-            "source": effect.get("evidence", "cadquery_assignment_snapshot_delta"),
+            "source": evidence_source,
             "profile_id": profile_id,
-            "from_target": effect.get("from_target"),
-            "to_target": effect.get("to_target"),
+            "from_target": region_measurement.get("from_target"),
+            "to_target": region_measurement.get("to_target"),
         }
         self.graph.add_measurement(Measurement(region_id, "entity_geometry", "volume", abs(float(signed_delta)), "mm^3", evidence))
         self.graph.add_measurement(Measurement(region_id, "feature_application_effect", "signed_volume_delta", float(signed_delta), "mm^3", evidence))
-        if "bbox_delta" in effect:
-            self.graph.add_measurement(Measurement(region_id, "entity_geometry", "bbox_delta", effect["bbox_delta"], None, evidence))
-        if "topology_delta" in effect:
-            self.graph.add_measurement(Measurement(region_id, "snapshot_state", "topology_delta", effect["topology_delta"], None, evidence))
+        if region_measurement.get("bbox") is not None:
+            self.graph.add_measurement(Measurement(region_id, "entity_geometry", "bbox", region_measurement["bbox"], None, evidence))
+        if region_measurement.get("bbox_delta") is not None:
+            self.graph.add_measurement(Measurement(region_id, "entity_geometry", "bbox_delta", region_measurement["bbox_delta"], None, evidence))
+        if region_measurement.get("topology") is not None:
+            self.graph.add_measurement(Measurement(region_id, "snapshot_state", "topology", region_measurement["topology"], None, evidence))
+        if region_measurement.get("topology_delta") is not None:
+            self.graph.add_measurement(Measurement(region_id, "snapshot_state", "topology_delta", region_measurement["topology_delta"], None, evidence))
+        for name, value in region_measurement.get("scalar_entity_geometry", {}).items():
+            self.graph.add_measurement(Measurement(region_id, "entity_geometry", name, value, None, evidence))
+        for name, value in region_measurement.get("scalar_feature_effect", {}).items():
+            self.graph.add_measurement(Measurement(region_id, "feature_application_effect", name, value, None, evidence))
         centroid_measurements = self.graph.measurements_for(profile_id, "world_centroid")
         centroid = centroid_measurements[0].value if centroid_measurements else None
         if isinstance(centroid, list):
             self.graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid", centroid, "mm", {"profile_id": profile_id}))
             if len(centroid) >= 3:
                 self.graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid_z", centroid[2], "mm", {"profile_id": profile_id}))
-        self.graph.add_measurement(Measurement(region_id, "snapshot_state", "source_line", record.source_line, None, evidence))
+        self.graph.add_measurement(Measurement(region_id, "snapshot_state", "source_line", region_measurement.get("source_line") or record.source_line, None, evidence))
         self.graph.add_measurement(Measurement(region_id, "snapshot_state", "operation_index", len(self.operations) - 1, None, evidence))
         return True
+
+    def _kernel_region_measurement(self, target: str, record: OperationRecord) -> dict[str, Any] | None:
+        is_cut = record.operation.startswith("cut")
+        is_additive = record.operation in {"extrude", "sweep"}
+        effect = self._trace_effect_for_target(target, record)
+        if effect is not None:
+            signed_delta = effect.get("signed_volume_delta")
+            if isinstance(signed_delta, (int, float)) and math.isfinite(float(signed_delta)):
+                if (is_cut and signed_delta < 0) or (is_additive and signed_delta > 0):
+                    return {
+                        "signed_volume_delta": float(signed_delta),
+                        "bbox_delta": effect.get("bbox_delta"),
+                        "topology_delta": effect.get("topology_delta"),
+                        "scalar_feature_effect": _scalar_effect_measurements(effect),
+                        "evidence": effect.get("evidence", "cadquery_assignment_snapshot_delta"),
+                        "from_target": effect.get("from_target"),
+                        "to_target": effect.get("to_target"),
+                        "source_line": effect.get("source_line"),
+                    }
+        if not is_additive:
+            return None
+        snapshot = self._trace_snapshot_for_target(target, record)
+        if snapshot is None:
+            return None
+        volume = snapshot.get("volume")
+        if not isinstance(volume, (int, float)) or not math.isfinite(float(volume)) or volume <= 0:
+            return None
+        return {
+            "signed_volume_delta": float(volume),
+            "bbox": snapshot.get("bbox"),
+            "topology": snapshot.get("topology"),
+            "scalar_entity_geometry": _scalar_geometry_measurements(snapshot),
+            "evidence": "cadquery_trace_snapshot",
+            "from_target": None,
+            "to_target": target,
+            "source_line": snapshot.get("source_line"),
+        }
 
     def _add_region_projection(self, feature_id: str, profile_id: str, record: OperationRecord) -> None:
         profile = self.graph.node(profile_id)
@@ -762,12 +1040,34 @@ class _Extractor:
         snapshots = self.trace_snapshots_by_target.get(target, [])
         return _best_trace_item(snapshots, record)
 
-    def _trace_effect_for_target(self, target: str, record: OperationRecord) -> dict[str, Any] | None:
+    def _trace_effect_for_target(self, target: str, record: OperationRecord, *, consume: bool = True) -> dict[str, Any] | None:
         effects = self.trace_effects_by_target.get(target, [])
+        line_matches = [
+            effect
+            for effect in effects
+            if effect.get("source_line") == record.source_line
+        ]
+        if line_matches:
+            key = (target, record.source_line)
+            index = self.trace_effect_use_counts.get(key, 0)
+            if consume:
+                self.trace_effect_use_counts[key] = index + 1
+            return line_matches[min(index, len(line_matches) - 1)]
         return _best_trace_item(effects, record)
 
     def _trace_selector_result(self, record: OperationRecord, selector_text: str) -> dict[str, Any] | None:
-        return self.trace_selectors_by_line_text.get((record.source_line, selector_text))
+        exact_kind = self.trace_selectors_by_line_text_kind.get((record.source_line, selector_text, record.operation))
+        if exact_kind is not None:
+            return exact_kind
+        exact = self.trace_selectors_by_line_text.get((record.source_line, selector_text))
+        if exact is not None and exact.get("selector_kind") in (None, record.operation):
+            return exact
+        line_matches = self.trace_selectors_by_line.get(record.source_line, [])
+        if not line_matches:
+            return None
+        index = self.trace_selector_use_counts.get(record.source_line, 0)
+        self.trace_selector_use_counts[record.source_line] = index + 1
+        return line_matches[min(index, len(line_matches) - 1)]
 
     def _unique_node_id(self, base: str) -> str:
         if self.graph.node(base) is None:
@@ -784,12 +1084,12 @@ class _Extractor:
 
     def _input_feature_ids(self, record: OperationRecord) -> list[str]:
         ids: list[str] = []
-        if isinstance(record.base, str) and record.base in self.assignment_exprs:
-            ids.append(self.variable_features.get(record.base, f"feature:{record.base}"))
+        if isinstance(record.base, str) and record.base in self.variable_features:
+            ids.append(self.variable_features[record.base])
         for arg in record.args:
-            if isinstance(arg, str) and arg in self.assignment_exprs:
-                ids.append(self.variable_features.get(arg, f"feature:{arg}"))
-        return ids
+            if isinstance(arg, str) and arg in self.variable_features:
+                ids.append(self.variable_features[arg])
+        return list(dict.fromkeys(ids))
 
 
 def _call_chain(call: ast.Call, env: dict[str, Any]) -> list[dict[str, Any]]:
@@ -897,6 +1197,20 @@ def _coerce_vector(value: Any) -> list[float] | None:
     return None
 
 
+def _coerce_point3(value: Any) -> list[float] | None:
+    if not isinstance(value, (list, tuple)) or len(value) < 2:
+        return None
+    try:
+        x = float(value[0])
+        y = float(value[1])
+        z = float(value[2]) if len(value) > 2 else 0.0
+    except Exception:
+        return None
+    if not all(math.isfinite(component) for component in [x, y, z]):
+        return None
+    return [x, y, z]
+
+
 def _is_public_parameter(value: Any) -> bool:
     return isinstance(value, (int, float, str, bool)) or (
         isinstance(value, list) and len(value) <= 8
@@ -916,6 +1230,12 @@ def _slug(value: str) -> str:
     return slug or "value"
 
 
+def _selector_label(operation: str, selector_text: str) -> str:
+    if selector_text:
+        return selector_text
+    return f".{operation}()"
+
+
 def _trace_mapping(trace: TraceRecord | Mapping[str, Any] | None) -> dict[str, Any] | None:
     if trace is None:
         return None
@@ -925,6 +1245,7 @@ def _trace_mapping(trace: TraceRecord | Mapping[str, Any] | None) -> dict[str, A
             "execution_status": trace.execution_status,
             "snapshots": trace.snapshots or [],
             "operation_effects": trace.operation_effects or [],
+            "selector_results": trace.selector_results or [],
             "environment": trace.environment or {},
             "failure_reason": trace.failure_reason,
         }
@@ -971,6 +1292,36 @@ def _trace_selectors_by_line_text(trace: dict[str, Any] | None) -> dict[tuple[in
     return grouped
 
 
+def _trace_selectors_by_line_text_kind(trace: dict[str, Any] | None) -> dict[tuple[int, str, str], dict[str, Any]]:
+    if not trace or trace.get("execution_status") != "ok":
+        return {}
+    grouped: dict[tuple[int, str, str], dict[str, Any]] = {}
+    for result in trace.get("selector_results") or []:
+        if not isinstance(result, dict):
+            continue
+        line = result.get("source_line")
+        selector_text = result.get("selector")
+        selector_kind = result.get("selector_kind")
+        if isinstance(line, int) and isinstance(selector_text, str) and isinstance(selector_kind, str):
+            grouped[(line, selector_text, selector_kind)] = result
+    return grouped
+
+
+def _trace_selectors_by_line(trace: dict[str, Any] | None) -> dict[int, list[dict[str, Any]]]:
+    if not trace or trace.get("execution_status") != "ok":
+        return {}
+    grouped: dict[int, list[dict[str, Any]]] = {}
+    for result in trace.get("selector_results") or []:
+        if not isinstance(result, dict):
+            continue
+        line = result.get("source_line")
+        if isinstance(line, int):
+            grouped.setdefault(line, []).append(result)
+    for items in grouped.values():
+        items.sort(key=lambda item: int(item.get("selector_index") or 0))
+    return grouped
+
+
 def _best_trace_item(items: list[dict[str, Any]], record: OperationRecord) -> dict[str, Any] | None:
     if not items:
         return None
@@ -979,11 +1330,136 @@ def _best_trace_item(items: list[dict[str, Any]], record: OperationRecord) -> di
         for item in items
         if item.get("source_line") in (None, record.source_line)
     ]
-    return (line_matches or items)[0]
+    if line_matches:
+        return line_matches[0]
+    if len(items) == 1:
+        return items[0]
+    return None
+
+
+def _scalar_geometry_measurements(snapshot: dict[str, Any]) -> dict[str, float]:
+    values: dict[str, float] = {}
+    centroid = snapshot.get("centroid")
+    if isinstance(centroid, list):
+        values.update(_vector_scalar_measurements("centroid", centroid))
+    topology = snapshot.get("topology")
+    if isinstance(topology, dict):
+        for key, value in topology.items():
+            if isinstance(value, (int, float)) and math.isfinite(float(value)):
+                values[f"topology_{key}"] = float(value)
+    bbox = snapshot.get("bbox")
+    if isinstance(bbox, dict):
+        values.update(_bbox_scalar_measurements("bbox", bbox))
+    return values
+
+
+def _scalar_effect_measurements(effect: dict[str, Any]) -> dict[str, float]:
+    values: dict[str, float] = {}
+    signed_volume_delta = effect.get("signed_volume_delta")
+    if isinstance(signed_volume_delta, (int, float)) and math.isfinite(float(signed_volume_delta)):
+        values["volume_delta_magnitude"] = abs(float(signed_volume_delta))
+    centroid_delta = effect.get("centroid_delta")
+    if isinstance(centroid_delta, list):
+        values.update(_vector_scalar_measurements("centroid_delta", centroid_delta))
+        magnitude = _vector_magnitude(centroid_delta)
+        if magnitude is not None:
+            values["centroid_delta_magnitude"] = magnitude
+    topology_delta = effect.get("topology_delta")
+    if isinstance(topology_delta, dict):
+        for key, value in topology_delta.items():
+            if isinstance(value, (int, float)) and math.isfinite(float(value)):
+                values[f"topology_delta_{key}"] = float(value)
+    bbox_delta = effect.get("bbox_delta")
+    if isinstance(bbox_delta, dict):
+        values.update(_bbox_scalar_measurements("bbox_delta", bbox_delta))
+    return values
+
+
+def _vector_magnitude(vector: list[Any]) -> float | None:
+    numeric = [
+        float(value)
+        for value in vector[:3]
+        if isinstance(value, (int, float)) and math.isfinite(float(value))
+    ]
+    if len(numeric) != min(3, len(vector)):
+        return None
+    return math.sqrt(sum(value * value for value in numeric))
+
+
+def _vector_scalar_measurements(prefix: str, vector: list[Any]) -> dict[str, float]:
+    values: dict[str, float] = {}
+    axis_names = ("x", "y", "z")
+    for index, axis in enumerate(axis_names):
+        if index >= len(vector):
+            break
+        value = vector[index]
+        if isinstance(value, (int, float)) and math.isfinite(float(value)):
+            values[f"{prefix}_{axis}"] = float(value)
+    return values
+
+
+def _bbox_scalar_measurements(prefix: str, bbox: dict[str, Any]) -> dict[str, float]:
+    values: dict[str, float] = {}
+    minimum = bbox.get("min")
+    maximum = bbox.get("max")
+    if not (
+        isinstance(minimum, list)
+        and isinstance(maximum, list)
+        and len(minimum) >= 3
+        and len(maximum) >= 3
+    ):
+        return values
+    axis_names = ("x", "y", "z")
+    spans: list[float] = []
+    for index, axis in enumerate(axis_names):
+        lo = minimum[index]
+        hi = maximum[index]
+        if isinstance(lo, (int, float)) and math.isfinite(float(lo)):
+            values[f"{prefix}_min_{axis}"] = float(lo)
+        if isinstance(hi, (int, float)) and math.isfinite(float(hi)):
+            values[f"{prefix}_max_{axis}"] = float(hi)
+        if (
+            isinstance(lo, (int, float))
+            and isinstance(hi, (int, float))
+            and math.isfinite(float(lo))
+            and math.isfinite(float(hi))
+        ):
+            span = abs(float(hi) - float(lo))
+            values[f"{prefix}_span_{axis}"] = span
+            spans.append(span)
+    if spans:
+        values[f"{prefix}_max_span"] = max(spans)
+    return values
+
+
+def _bbox_dominant_axis(bbox: Any) -> str | None:
+    if not isinstance(bbox, dict):
+        return None
+    spans = _bbox_scalar_measurements("bbox", bbox)
+    axis_spans = {
+        axis: float(spans[f"bbox_span_{axis}"])
+        for axis in ("x", "y", "z")
+        if isinstance(spans.get(f"bbox_span_{axis}"), (int, float))
+    }
+    if len(axis_spans) != 3:
+        return None
+    positive = [
+        (axis, span)
+        for axis, span in axis_spans.items()
+        if span > 1e-6
+    ]
+    if len(positive) != 1:
+        return None
+    return positive[0][0]
 
 
 def _kernel_face_signature(selector_text: str, bbox: Any, shape_type: Any, index: int) -> str:
+    return _kernel_entity_signature("face", selector_text, bbox, shape_type, index)
+
+
+def _kernel_entity_signature(entity_type: str, selector_text: str, bbox: Any, shape_type: Any, index: int) -> str:
     payload = {
+        "entity_type": entity_type,
         "selector": selector_text,
         "shape_type": shape_type,
         "bbox": _rounded_signature_value(bbox),

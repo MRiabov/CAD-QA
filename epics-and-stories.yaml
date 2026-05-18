@@ -9,8 +9,12 @@ current_snapshot:
     verifier-backed validation. Core mechanisms exist, but release-grade
     question-family coverage, template diversity, split quality, and
     fine-tuning readiness remain incomplete. Main benchmark rows must require
-    geometry-derived evidence rather than syntax-only source lookup. Earlier
-    separate task-family and graph-query framing is obsolete.
+    geometry-derived evidence rather than syntax-only source lookup. The
+    critical path is kernel/geometry-backed task coverage for the rows models
+    actually train on: volumes, bboxes, centroids, topology deltas,
+    selector-result geometry, material/void deltas, path distances, and stable
+    spatial relations. Earlier separate task-family and graph-query framing is
+    obsolete.
 status_values:
   - planned
   - work-in-progress
@@ -218,7 +222,7 @@ epics:
         status: work-in-progress
       - id: "10.4"
         title: Training export quotas that exclude syntax-only calibration rows by default
-        status: planned
+        status: work-in-progress
   - id: epic-11
     title: Experiment orchestration and reports
     status: work-in-progress
@@ -242,3 +246,29 @@ epics:
       - id: "11.6"
         title: Release readiness report with template quotas and answer entropy
         status: planned
+      - id: "11.7"
+        title: Generated Markdown previews for changed task families and ontology node types
+        status: implemented
+  - id: epic-12
+    title: Geometry-backed training-critical question families
+    status: work-in-progress
+    priority: P0
+    stories:
+      - id: "12.1"
+        title: "Solid measurement questions from compiled geometry: volume, bbox, centroid, topology counts"
+        status: implemented
+      - id: "12.2"
+        title: "Feature application effect questions from kernel deltas: volume, bbox, topology, centroid movement"
+        status: implemented
+      - id: "12.3"
+        title: Selector-result geometry questions with selected counts, bboxes, and stable face or edge signatures
+        status: work-in-progress
+      - id: "12.4"
+        title: Kernel-backed material and void region delta questions
+        status: implemented
+      - id: "12.5"
+        title: Path, distance, containment, intersection, adjacency, and stable spatial-relation questions
+        status: work-in-progress
+      - id: "12.6"
+        title: Training-release gate requiring geometry-backed critical rows to dominate exported SFT data
+        status: implemented

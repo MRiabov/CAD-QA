@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import math
 from pathlib import Path
 
 from cad_qa.dataset.materialize import materialize_row
@@ -9,7 +11,7 @@ from cad_qa.dataset.quarantine import quarantine_report
 from cad_qa.dataset.release import export_release_dataset
 from cad_qa.dataset.release_report import release_verifier_markdown, release_verifier_report
 from cad_qa.dataset.report import dataset_card_markdown, dataset_report, failure_report
-from cad_qa.dataset.sft import ablation_sft_groups, answer_sft_rows, reasoning_sft_rows, scaling_sft_groups
+from cad_qa.dataset.sft import ablation_sft_groups, answer_sft_rows, default_training_rows, reasoning_sft_rows, scaling_sft_groups
 from cad_qa.dataset.split import assign_splits, split_manifest
 from cad_qa.dataset.validate import validate_rows
 from cad_qa.evaluation.baselines import run_baselines
@@ -35,7 +37,7 @@ from cad_qa.prompts.render import render_prompt
 from cad_qa.query.ir import Clause, QueryProgram
 from cad_qa.query.resolver import resolve_query, smoke_queries
 from cad_qa.source import load_sources_jsonl, source_audit, source_family_from_path, source_manifest, source_record_from_mapping
-from cad_qa.trace import cadquery_available, trace_report, trace_source, trace_sources_bounded
+from cad_qa.trace import TraceRecord, cadquery_available, trace_report, trace_source, trace_sources_bounded
 from cad_qa.cli import main as cli_main
 
 
@@ -157,6 +159,7 @@ def test_trace_worker_executes_cadquery_source_or_reports_unavailable(tmp_path: 
     assert trace.snapshots[-1]["step"] == "final"
     assert trace.snapshots[-1]["volume"] > 0
     assert trace.snapshots[-1]["bbox"]["min"][2] <= 0
+    assert len(trace.snapshots[-1]["centroid"]) == 3
     assert trace.snapshots[-1]["topology"]["faces"] is not None
     assert trace.operation_effects
     assert any(
@@ -209,6 +212,60 @@ def test_trace_skips_non_shape_workplane_cursor_values() -> None:
     assert trace.failure_reason is None
     assert trace.snapshots[-1]["target"] == "result"
     assert all(snapshot["target"] != "wp2" for snapshot in trace.snapshots)
+
+
+def test_trace_measures_selector_subexpression_not_final_chained_solid() -> None:
+    if not cadquery_available():
+        return
+    source = source_record_from_mapping(
+        {
+            "source_id": "src_trace_selector_subexpr",
+            "normalized_code": (
+                "import cadquery as cq\n"
+                "base = cq.Workplane('XY').box(4, 4, 2)\n"
+                "result = base.faces('>Z').workplane().rect(1, 1).cutBlind(-1)\n"
+            ),
+        }
+    )
+    trace = trace_source(source, timeout_seconds=5.0)
+    assert trace.execution_status == "ok"
+    assert trace.selector_results
+    selector = trace.selector_results[0]
+    assert selector["selector_kind"] == "faces"
+    assert selector["selector"] == ">Z"
+    assert selector["shape_types"] == ["Face"]
+
+
+def test_trace_unrolls_simple_loop_body_snapshots() -> None:
+    if not cadquery_available():
+        return
+    source = source_record_from_mapping(
+        {
+            "source_id": "src_trace_loop_body",
+            "normalized_code": (
+                "import cadquery as cq\n"
+                "base = cq.Workplane('XY').box(10, 10, 10)\n"
+                "for z in (1, 2):\n"
+                "    base = base.faces('>Z').workplane().center(z, 0).circle(1).cutBlind(-1)\n"
+                "result = base\n"
+            ),
+        }
+    )
+    trace = trace_source(source, timeout_seconds=5.0)
+    assert trace.execution_status == "ok"
+    body_snapshots = [
+        snapshot
+        for snapshot in trace.snapshots or []
+        if snapshot.get("target") == "base" and snapshot.get("source_line") == 4
+    ]
+    assert len(body_snapshots) == 2
+    body_effects = [
+        effect
+        for effect in trace.operation_effects or []
+        if effect.get("to_target") == "base" and effect.get("source_line") == 4
+    ]
+    assert len(body_effects) == 2
+    assert all(effect["signed_volume_delta"] < 0 for effect in body_effects)
 
 
 def test_graph_build_integrates_trace_feature_effects(tmp_path: Path) -> None:
@@ -276,11 +333,615 @@ def test_graph_build_integrates_trace_feature_effects(tmp_path: Path) -> None:
     assert any(relation.type == "has_kernel_material_region_geometry" for relation in persisted.relations)
 
 
+def test_additive_trace_snapshot_does_not_become_false_void_region() -> None:
+    source = source_record_from_mapping(
+        {
+            "source_id": "src_negative_adjacent_delta",
+            "normalized_code": (
+                "import cadquery as cq\n"
+                "wp1 = cq.Workplane('XY').circle(5)\n"
+                "wp2 = wp1.extrude(10)\n"
+                "wp3 = cq.Workplane('XY').circle(1)\n"
+                "wp4 = wp3.extrude(1)\n"
+                "result = wp2\n"
+            ),
+        }
+    )
+    trace_record = {
+        "source_id": "src_negative_adjacent_delta",
+        "execution_status": "ok",
+        "snapshots": [
+            {
+                "target": "wp2",
+                "source_line": 3,
+                "operation_index": 0,
+                "volume": 785.398,
+                "bbox": {"min": [-5, -5, 0], "max": [5, 5, 10]},
+                "topology": {"faces": 3},
+            },
+            {
+                "target": "wp4",
+                "source_line": 5,
+                "operation_index": 1,
+                "volume": 3.14159,
+                "bbox": {"min": [-1, -1, 0], "max": [1, 1, 1]},
+                "topology": {"faces": 3},
+            },
+        ],
+        "operation_effects": [
+            {
+                "from_target": "wp2",
+                "to_target": "wp4",
+                "source_line": 5,
+                "signed_volume_delta": -782.25641,
+                "bbox_delta": {"min": [4, 4, 0], "max": [-4, -4, -9]},
+                "topology_delta": {"faces": 0},
+                "evidence": "cadquery_assignment_snapshot_delta",
+            }
+        ],
+        "environment": {"cadquery_available": True},
+        "failure_reason": None,
+    }
+
+    graph = build_graph(source, trace=trace_record)
+    material_region = graph.node("material_region:wp4")
+    assert material_region is not None
+    assert material_region.properties["conservative"] is False
+    assert material_region.properties["trace_evidence"] == "cadquery_trace_snapshot"
+    assert graph.measurements_for("material_region:wp4", "volume")[0].value == 3.14159
+    assert graph.measurements_for("material_region:wp4", "bbox")
+    assert graph.node("void_region:wp4") is None
+    assert not any(
+        relation.type == "has_kernel_void_region_geometry" and relation.source_id == "void_region:wp4"
+        for relation in graph.relations
+    )
+
+    query = next(query for query in smoke_queries(graph) if query.query_id.endswith("largest_added_region"))
+    resolution = resolve_query(graph, query)
+    assert resolution.verifier_status == "resolved"
+    assert resolution.gold_answer == "material_region:wp2"
+
+
+def test_cut_trace_effect_creates_kernel_void_region() -> None:
+    source = source_record_from_mapping(
+        {
+            "source_id": "src_kernel_void",
+            "normalized_code": (
+                "import cadquery as cq\n"
+                "base = cq.Workplane('XY').box(10, 10, 10)\n"
+                "wp1 = base.faces('>Z').workplane().circle(2).cutBlind(-5)\n"
+                "result = wp1\n"
+            ),
+        }
+    )
+    trace_record = {
+        "source_id": "src_kernel_void",
+        "execution_status": "ok",
+        "snapshots": [
+            {
+                "target": "base",
+                "source_line": 2,
+                "operation_index": 0,
+                "volume": 1000.0,
+                "bbox": {"min": [-5, -5, -5], "max": [5, 5, 5]},
+                "topology": {"faces": 6, "edges": 12, "vertices": 8},
+            },
+            {
+                "target": "wp1",
+                "source_line": 3,
+                "operation_index": 1,
+                "volume": 937.168,
+                "bbox": {"min": [-5, -5, -5], "max": [5, 5, 5]},
+                "topology": {"faces": 8, "edges": 18, "vertices": 12},
+            },
+        ],
+        "operation_effects": [
+            {
+                "from_target": "base",
+                "to_target": "wp1",
+                "source_line": 3,
+                "signed_volume_delta": -62.832,
+                "bbox_delta": {"min": [0, 0, 0], "max": [0, 0, 0]},
+                "topology_delta": {"faces": 2, "edges": 6, "vertices": 4},
+                "evidence": "cadquery_assignment_snapshot_delta",
+            }
+        ],
+        "environment": {"cadquery_available": True},
+        "failure_reason": None,
+    }
+
+    graph = build_graph(source, trace=trace_record)
+    void_region = graph.node("void_region:wp1")
+    assert void_region is not None
+    assert void_region.properties["conservative"] is False
+    assert void_region.properties["trace_evidence"] == "cadquery_assignment_snapshot_delta"
+    assert graph.measurements_for("void_region:wp1", "volume")[0].value == 62.832
+    assert graph.measurements_for("void_region:wp1", "signed_volume_delta")[0].value == -62.832
+    assert graph.measurements_for("void_region:wp1", "topology_delta_faces")[0].value == 2.0
+    assert any(
+        relation.type == "has_kernel_void_region_geometry" and relation.source_id == "void_region:wp1"
+        for relation in graph.relations
+    )
+    assert graph.node("material_region:wp1") is None
+
+    query = next(query for query in smoke_queries(graph) if query.query_id.endswith("largest_removed_region"))
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+    assert resolution.verifier_status == "resolved"
+    assert resolution.gold_answer == "void_region:wp1"
+    assert row.release_ready
+    assert "conservative_region_projection" not in row.quarantine_reasons
+
+
+def test_repeated_target_trace_effect_requires_source_line_match() -> None:
+    source = source_record_from_mapping(
+        {
+            "source_id": "src_repeated_target_trace",
+            "normalized_code": (
+                "import cadquery as cq\n"
+                "base = cq.Workplane('XY').box(10, 10, 10)\n"
+                "for z in (1, 2):\n"
+                "    base = base.faces('>Z').workplane().circle(z).cutBlind(-1)\n"
+                "result = base\n"
+            ),
+        }
+    )
+    trace_record = {
+        "source_id": "src_repeated_target_trace",
+        "execution_status": "ok",
+        "snapshots": [
+            {"target": "base", "source_line": 2, "operation_index": 0, "volume": 1000.0},
+            {"target": "base", "source_line": 3, "operation_index": 1, "volume": 990.0},
+            {"target": "base", "source_line": 3, "operation_index": 2, "volume": 970.0},
+        ],
+        "operation_effects": [
+            {
+                "from_target": "base",
+                "to_target": "base",
+                "source_line": 3,
+                "signed_volume_delta": -10.0,
+                "evidence": "cadquery_assignment_snapshot_delta",
+            },
+            {
+                "from_target": "base",
+                "to_target": "base",
+                "source_line": 3,
+                "signed_volume_delta": -20.0,
+                "evidence": "cadquery_assignment_snapshot_delta",
+            },
+        ],
+        "environment": {"cadquery_available": True},
+        "failure_reason": None,
+    }
+
+    graph = build_graph(source, trace=trace_record)
+    void_regions = graph.nodes_by_type("void_region")
+    assert void_regions
+    assert all(node.properties["conservative"] is True for node in void_regions)
+    assert not any(relation.type == "has_kernel_void_region_geometry" for relation in graph.relations)
+    assert any(relation.type == "has_void_region_geometry" for relation in graph.relations)
+
+
+def test_repeated_target_trace_effects_match_loop_iterations_by_line_order() -> None:
+    source = source_record_from_mapping(
+        {
+            "source_id": "src_repeated_target_line_order",
+            "normalized_code": (
+                "import cadquery as cq\n"
+                "base = cq.Workplane('XY').box(10, 10, 10)\n"
+                "for z in (1, 2):\n"
+                "    base = base.faces('>Z').workplane().circle(z).cutBlind(-1)\n"
+                "result = base\n"
+            ),
+        }
+    )
+    trace_record = {
+        "source_id": "src_repeated_target_line_order",
+        "execution_status": "ok",
+        "snapshots": [
+            {"target": "base", "source_line": 2, "operation_index": 0, "volume": 1000.0},
+            {"target": "base", "source_line": 4, "operation_index": 1, "volume": 990.0},
+            {"target": "base", "source_line": 4, "operation_index": 2, "volume": 970.0},
+        ],
+        "operation_effects": [
+            {
+                "from_target": "base",
+                "to_target": "base",
+                "source_line": 4,
+                "signed_volume_delta": -10.0,
+                "evidence": "cadquery_assignment_snapshot_delta",
+            },
+            {
+                "from_target": "base",
+                "to_target": "base",
+                "source_line": 4,
+                "signed_volume_delta": -20.0,
+                "evidence": "cadquery_assignment_snapshot_delta",
+            },
+        ],
+        "environment": {"cadquery_available": True},
+        "failure_reason": None,
+    }
+
+    graph = build_graph(source, trace=trace_record)
+    void_regions = graph.nodes_by_type("void_region")
+    assert len(void_regions) == 2
+    assert all(node.properties["conservative"] is False for node in void_regions)
+    assert [measurement.value for measurement in graph.measurements_for("void_region:base", "volume")] == [10.0]
+    assert [measurement.value for measurement in graph.measurements_for("void_region:base:1", "volume")] == [20.0]
+    assert any(relation.type == "has_kernel_void_region_geometry" for relation in graph.relations)
+
+
+def test_trace_backed_geometry_queries_target_compiled_measurements() -> None:
+    trace_record = {
+        "source_id": "src_geometry_queries",
+        "execution_status": "ok",
+        "snapshots": [
+            {
+                "target": "wp3",
+                "source_line": 4,
+                "operation_index": 0,
+                "volume": 62.8,
+                "bbox": {"min": [-2, -2, 0], "max": [2, 2, 5]},
+                "centroid": [0.0, 0.0, 2.5],
+                "topology": {"faces": 3, "edges": 6, "vertices": 4},
+            },
+            {
+                "target": "wp6",
+                "source_line": 7,
+                "operation_index": 1,
+                "volume": 24.0,
+                "bbox": {"min": [-2, -1.5, 10], "max": [2, 1.5, 12]},
+                "centroid": [0.0, 0.0, 11.0],
+                "topology": {"faces": 6, "edges": 12, "vertices": 8},
+            },
+            {
+                "target": "result",
+                "source_line": 10,
+                "operation_index": 2,
+                "volume": 86.8,
+                "bbox": {"min": [-2, -2, 0], "max": [2, 2, 12]},
+                "centroid": [0.0, 0.0, 5.0],
+                "topology": {"faces": 9, "edges": 18, "vertices": 12},
+            },
+        ],
+        "operation_effects": [
+            {
+                "from_target": "wp2",
+                "to_target": "wp3",
+                "source_line": 4,
+                "signed_volume_delta": 62.8,
+                "bbox_delta": {"min": [-2, -2, 0], "max": [2, 2, 5]},
+                "centroid_delta": [0.0, 0.0, 2.5],
+                "topology_delta": {"faces": 3, "edges": 6, "vertices": 4},
+                "evidence": "cadquery_assignment_snapshot_delta",
+            },
+            {
+                "from_target": "wp5",
+                "to_target": "wp6",
+                "source_line": 7,
+                "signed_volume_delta": 24.0,
+                "bbox_delta": {"min": [-2, -1.5, 10], "max": [2, 1.5, 12]},
+                "centroid_delta": [0.0, 0.0, 8.5],
+                "topology_delta": {"faces": 6, "edges": 12, "vertices": 8},
+                "evidence": "cadquery_assignment_snapshot_delta",
+            },
+            {
+                "from_target": "wp6",
+                "to_target": "result",
+                "source_line": 10,
+                "signed_volume_delta": 24.0,
+                "bbox_delta": {"min": [None, None, 0], "max": [None, None, 12]},
+                "centroid_delta": [0.0, 0.0, -6.0],
+                "topology_delta": {"faces": 1, "edges": 2, "vertices": 1},
+                "evidence": "cadquery_assignment_snapshot_delta",
+            },
+        ],
+        "environment": {"cadquery_available": True},
+        "failure_reason": None,
+    }
+    graph = build_graph(
+        source_record_from_mapping({"source_id": "src_geometry_queries", "normalized_code": SOURCE}),
+        trace=trace_record,
+    )
+    assert graph.measurements_for("feature:result", "bbox_span_z")[0].value == 12.0
+    assert graph.measurements_for("feature:result", "bbox_min_z")[0].value == 0.0
+    assert graph.measurements_for("feature:result", "bbox_max_z")[0].value == 12.0
+    assert graph.measurements_for("feature:wp6", "centroid_z")[0].value == 11.0
+    assert graph.measurements_for("feature:wp6", "centroid_delta_z")[0].value == 8.5
+    assert graph.measurements_for("feature:wp6", "centroid_delta_magnitude")[0].value == 8.5
+    assert graph.measurements_for("feature:result", "topology_faces")[0].value == 9.0
+    assert graph.measurements_for("feature:wp3", "bbox_delta_span_z")[0].value == 5.0
+    assert graph.measurements_for("feature:result", "bbox_delta_span_z")[0].value == 12.0
+    assert graph.measurements_for("feature:wp3", "volume_delta_magnitude")[0].value == 62.8
+    assert graph.measurements_for("feature:wp6", "topology_delta_faces")[0].value == 6.0
+    assert graph.measurements_for("feature:wp6", "topology_delta_edges")[0].value == 12.0
+    assert graph.measurements_for("feature:result", "bbox_delta_max_span")[0].value == 12.0
+
+    resolutions = {
+        query.query_id.split(":")[-1]: resolve_query(graph, query)
+        for query in smoke_queries(graph)
+    }
+    assert resolutions["largest_compiled_volume_feature"].gold_answer == "feature:result"
+    assert resolutions["highest_centroid_feature"].gold_answer == "feature:wp6"
+    assert resolutions["largest_compiled_face_count_feature"].gold_answer == "feature:result"
+    assert resolutions["largest_positive_volume_delta_feature"].gold_answer == "feature:wp3"
+    assert resolutions["largest_bbox_height_delta_feature"].gold_answer == "feature:result"
+    assert resolutions["largest_bbox_expansion_feature"].gold_answer == "feature:result"
+    assert resolutions["largest_upward_centroid_delta_feature"].gold_answer == "feature:wp6"
+    assert resolutions["largest_centroid_shift_feature"].gold_answer == "feature:wp6"
+    assert resolutions["largest_face_count_delta_feature"].gold_answer == "feature:wp6"
+    assert resolutions["largest_edge_count_delta_feature"].gold_answer == "feature:wp6"
+    for key in [
+        "largest_compiled_volume_feature",
+        "highest_centroid_feature",
+        "largest_compiled_face_count_feature",
+        "largest_positive_volume_delta_feature",
+        "largest_bbox_height_delta_feature",
+        "largest_bbox_expansion_feature",
+        "largest_upward_centroid_delta_feature",
+        "largest_centroid_shift_feature",
+        "largest_face_count_delta_feature",
+        "largest_edge_count_delta_feature",
+    ]:
+        row = materialize_row(graph, resolutions[key])
+        assert row.release_ready
+        assert row.geometry_hop_count > 0
+        assert row.measurement_scopes
+    report = dataset_report(
+        [
+            materialize_row(graph, resolution)
+            for resolution in resolutions.values()
+            if resolution.verifier_status == "resolved"
+        ]
+    )
+    assert report["quality_flags"]["geometry_critical"] >= 3
+    assert report["prompt_families"]["largest_compiled_volume_feature"] == 1
+    assert report["prompt_families"]["highest_centroid_feature"] == 1
+    assert report["prompt_families"]["largest_compiled_face_count_feature"] == 1
+    assert report["prompt_families"]["largest_positive_volume_delta_feature"] == 1
+    assert report["prompt_families"]["largest_bbox_height_delta_feature"] == 1
+    assert report["prompt_families"]["largest_bbox_expansion_feature"] == 1
+    assert report["prompt_families"]["largest_upward_centroid_delta_feature"] == 1
+    assert report["prompt_families"]["largest_centroid_shift_feature"] == 1
+    assert report["prompt_families"]["largest_face_count_delta_feature"] == 1
+    assert report["prompt_families"]["largest_edge_count_delta_feature"] == 1
+
+
+def test_removed_volume_delta_query_targets_largest_kernel_cut_effect() -> None:
+    source_code = (
+        "import cadquery as cq\n"
+        "base = cq.Workplane('XY').box(10, 10, 5)\n"
+        "base = base.faces('>Z').workplane().circle(1).cutBlind(-1)\n"
+        "base = base.faces('>Z').workplane().rect(3, 2).cutBlind(-2)\n"
+        "result = base\n"
+    )
+    trace_record = {
+        "source_id": "src_removed_volume_delta",
+        "execution_status": "ok",
+        "snapshots": [
+            {
+                "target": "base",
+                "source_line": 2,
+                "operation_index": 0,
+                "volume": 500.0,
+                "bbox": {"min": [-5, -5, -2.5], "max": [5, 5, 2.5]},
+                "centroid": [0.0, 0.0, 0.0],
+                "topology": {"faces": 6, "edges": 12, "vertices": 8},
+            },
+            {
+                "target": "base",
+                "source_line": 3,
+                "operation_index": 1,
+                "volume": 490.0,
+                "bbox": {"min": [-5, -5, -2.5], "max": [5, 5, 2.5]},
+                "centroid": [0.0, 0.0, -0.1],
+                "topology": {"faces": 8, "edges": 16, "vertices": 10},
+            },
+            {
+                "target": "base",
+                "source_line": 4,
+                "operation_index": 2,
+                "volume": 470.0,
+                "bbox": {"min": [-5, -5, -2.5], "max": [5, 5, 2.5]},
+                "centroid": [0.0, 0.0, -0.3],
+                "topology": {"faces": 10, "edges": 20, "vertices": 12},
+            },
+        ],
+        "operation_effects": [
+            {
+                "from_target": "base",
+                "to_target": "base",
+                "source_line": 3,
+                "signed_volume_delta": -10.0,
+                "bbox_delta": {"min": [None, None, None], "max": [None, None, None]},
+                "centroid_delta": [0.0, 0.0, -0.1],
+                "topology_delta": {"faces": 2, "edges": 4, "vertices": 2},
+                "evidence": "cadquery_assignment_snapshot_delta",
+            },
+            {
+                "from_target": "base",
+                "to_target": "base",
+                "source_line": 4,
+                "signed_volume_delta": -20.0,
+                "bbox_delta": {"min": [None, None, None], "max": [None, None, None]},
+                "centroid_delta": [0.0, 0.0, -0.2],
+                "topology_delta": {"faces": 2, "edges": 4, "vertices": 2},
+                "evidence": "cadquery_assignment_snapshot_delta",
+            },
+        ],
+        "environment": {"cadquery_available": True},
+        "failure_reason": None,
+    }
+    graph = build_graph(
+        source_record_from_mapping({"source_id": "src_removed_volume_delta", "normalized_code": source_code}),
+        trace=trace_record,
+    )
+
+    assert graph.measurements_for("feature:base:1", "volume_delta_magnitude")[0].value == 10.0
+    assert graph.measurements_for("feature:base:2", "volume_delta_magnitude")[0].value == 20.0
+    resolutions = {
+        query.query_id.split(":")[-1]: resolve_query(graph, query)
+        for query in smoke_queries(graph)
+    }
+    assert resolutions["largest_removed_volume_delta_feature"].gold_answer == "feature:base:2"
+    row = materialize_row(graph, resolutions["largest_removed_volume_delta_feature"])
+    assert row.release_ready
+    assert row.geometry_hop_count > 0
+    assert "feature_application_effect" in row.measurement_scopes
+
+
+def test_bbox_bound_delta_query_targets_largest_compiled_bbox_movement() -> None:
+    source_code = (
+        "import cadquery as cq\n"
+        "wp1 = cq.Workplane('XY').box(2, 2, 2)\n"
+        "wp2 = cq.Workplane('XY', origin=(0, 0, 4)).box(2, 2, 2)\n"
+        "wp3 = cq.Workplane('XY', origin=(0, 0, 9)).box(2, 2, 2)\n"
+        "result = wp1.union(wp2).union(wp3)\n"
+    )
+    trace_record = {
+        "source_id": "src_bbox_bound_delta",
+        "execution_status": "ok",
+        "snapshots": [
+            {
+                "target": "wp1",
+                "source_line": 2,
+                "operation_index": 0,
+                "volume": 8.0,
+                "bbox": {"min": [-1, -1, -1], "max": [1, 1, 1]},
+                "centroid": [0.0, 0.0, 0.0],
+                "topology": {"faces": 6, "edges": 12, "vertices": 8},
+            },
+            {
+                "target": "wp2",
+                "source_line": 3,
+                "operation_index": 1,
+                "volume": 8.0,
+                "bbox": {"min": [-1, -1, 3], "max": [1, 1, 5]},
+                "centroid": [0.0, 0.0, 4.0],
+                "topology": {"faces": 6, "edges": 12, "vertices": 8},
+            },
+            {
+                "target": "wp3",
+                "source_line": 4,
+                "operation_index": 2,
+                "volume": 8.0,
+                "bbox": {"min": [-1, -1, 8], "max": [1, 1, 10]},
+                "centroid": [0.0, 0.0, 9.0],
+                "topology": {"faces": 6, "edges": 12, "vertices": 8},
+            },
+            {
+                "target": "result",
+                "source_line": 5,
+                "operation_index": 3,
+                "volume": 24.0,
+                "bbox": {"min": [-1, -1, -1], "max": [1, 1, 10]},
+                "centroid": [0.0, 0.0, 4.3333333333],
+                "topology": {"faces": 18, "edges": 36, "vertices": 24},
+            },
+        ],
+        "operation_effects": [
+            {
+                "from_target": "wp1",
+                "to_target": "wp2",
+                "source_line": 3,
+                "signed_volume_delta": 8.0,
+                "bbox_delta": {"min": [0, 0, 4], "max": [0, 0, 4]},
+                "centroid_delta": [0.0, 0.0, 4.0],
+                "topology_delta": {"faces": 0, "edges": 0, "vertices": 0},
+                "evidence": "cadquery_assignment_snapshot_delta",
+            },
+            {
+                "from_target": "wp2",
+                "to_target": "wp3",
+                "source_line": 4,
+                "signed_volume_delta": 8.0,
+                "bbox_delta": {"min": [0, 0, 5], "max": [0, 0, 5]},
+                "centroid_delta": [0.0, 0.0, 5.0],
+                "topology_delta": {"faces": 0, "edges": 0, "vertices": 0},
+                "evidence": "cadquery_assignment_snapshot_delta",
+            },
+        ],
+        "environment": {"cadquery_available": True},
+        "failure_reason": None,
+    }
+    graph = build_graph(
+        source_record_from_mapping({"source_id": "src_bbox_bound_delta", "normalized_code": source_code}),
+        trace=trace_record,
+    )
+
+    resolutions = {
+        query.query_id.split(":")[-1]: resolve_query(graph, query)
+        for query in smoke_queries(graph)
+    }
+    assert resolutions["largest_bbox_min_z_delta_feature"].gold_answer == "feature:wp3"
+    row = materialize_row(graph, resolutions["largest_bbox_min_z_delta_feature"])
+    assert row.release_ready
+    assert row.geometry_hop_count > 0
+    assert "feature_application_effect" in row.measurement_scopes
+
+
+def test_centroid_queries_require_meaningful_geometry_margin() -> None:
+    trace_record = {
+        "source_id": "src_centroid_margin",
+        "execution_status": "ok",
+        "snapshots": [
+            {
+                "target": "wp3",
+                "source_line": 4,
+                "operation_index": 0,
+                "volume": 62.8,
+                "bbox": {"min": [-2, -2, 0], "max": [2, 2, 5]},
+                "centroid": [0.0, 0.0, 1e-12],
+                "topology": {"faces": 3},
+            },
+            {
+                "target": "wp6",
+                "source_line": 7,
+                "operation_index": 1,
+                "volume": 24.0,
+                "bbox": {"min": [-2, -1.5, 10], "max": [2, 1.5, 12]},
+                "centroid": [0.0, 0.0, 2e-12],
+                "topology": {"faces": 6},
+            },
+        ],
+        "operation_effects": [
+            {
+                "from_target": "wp2",
+                "to_target": "wp3",
+                "source_line": 4,
+                "signed_volume_delta": 62.8,
+                "centroid_delta": [0.0, 0.0, 1e-12],
+                "evidence": "cadquery_assignment_snapshot_delta",
+            },
+            {
+                "from_target": "wp5",
+                "to_target": "wp6",
+                "source_line": 7,
+                "signed_volume_delta": 24.0,
+                "centroid_delta": [0.0, 0.0, 2e-12],
+                "evidence": "cadquery_assignment_snapshot_delta",
+            },
+        ],
+        "environment": {"cadquery_available": True},
+        "failure_reason": None,
+    }
+    graph = build_graph(
+        source_record_from_mapping({"source_id": "src_centroid_margin", "normalized_code": SOURCE}),
+        trace=trace_record,
+    )
+    families = {query.query_id.rsplit(":", 1)[-1] for query in smoke_queries(graph)}
+    assert "highest_centroid_feature" not in families
+    assert "largest_upward_centroid_delta_feature" not in families
+
+
 def test_kernel_selector_trace_produces_release_grade_face_identity() -> None:
     source_code = (
         "import cadquery as cq\n"
         "base = cq.Workplane('XY').box(2, 2, 2)\n"
-        "sel = base.faces('>Z')\n"
+        "sel_top = base.faces('>Z')\n"
+        "sel_bottom = base.faces('<Z')\n"
+        "sel_all = base.faces()\n"
     )
     trace_record = {
         "source_id": "src_selector_kernel",
@@ -291,7 +952,7 @@ def test_kernel_selector_trace_produces_release_grade_face_identity() -> None:
         "operation_effects": [],
         "selector_results": [
             {
-                "target": "sel",
+                "target": "sel_top",
                 "selector": ">Z",
                 "source_line": 3,
                 "selector_index": 0,
@@ -299,7 +960,34 @@ def test_kernel_selector_trace_produces_release_grade_face_identity() -> None:
                 "shape_types": ["Face"],
                 "bbox_signatures": [{"min": [-1, -1, 1], "max": [1, 1, 1]}],
                 "evidence": "cadquery_selector_result",
-            }
+            },
+            {
+                "target": "sel_bottom",
+                "selector": "<Z",
+                "source_line": 4,
+                "selector_index": 1,
+                "selected_count": 1,
+                "shape_types": ["Face"],
+                "bbox_signatures": [{"min": [-1, -1, -1], "max": [1, 1, -1]}],
+                "evidence": "cadquery_selector_result",
+            },
+            {
+                "target": "sel_all",
+                "selector": "",
+                "source_line": 5,
+                "selector_index": 2,
+                "selected_count": 6,
+                "shape_types": ["Face", "Face", "Face", "Face", "Face", "Face"],
+                "bbox_signatures": [
+                    {"min": [-1, -1, -0.5], "max": [1, 1, -0.5]},
+                    {"min": [-1, -1, -0.4], "max": [1, 1, -0.4]},
+                    {"min": [-1, 1, -0.3], "max": [1, 1, -0.3]},
+                    {"min": [-1, -1, -0.2], "max": [1, -1, -0.2]},
+                    {"min": [1, -1, -0.1], "max": [1, 1, -0.1]},
+                    {"min": [-1, -1, 0.0], "max": [-1, 1, 0.0]},
+                ],
+                "evidence": "cadquery_selector_result",
+            },
         ],
         "environment": {"cadquery_available": True},
         "failure_reason": None,
@@ -309,22 +997,240 @@ def test_kernel_selector_trace_produces_release_grade_face_identity() -> None:
         trace=trace_record,
     )
     kernel_faces = [node for node in graph.nodes_by_type("face") if node.properties.get("kernel_backed")]
-    assert len(kernel_faces) == 1
+    assert len(kernel_faces) == 8
     assert any(relation.type == "has_kernel_stable_face_id" for relation in graph.relations)
     assert graph.measurements_for(kernel_faces[0].id, "bbox")
+    face_z_values = sorted({graph.measurements_for(face.id, "bbox_max_z")[0].value for face in kernel_faces})
+    assert face_z_values[0] == -1.0
+    assert face_z_values[-1] == 1.0
+    assert graph.measurements_for("selector:sel_all_faces_all", "selected_count")[0].value == 6
+    assert any(
+        relation.source_id == "selector:sel_all_faces_all"
+        and relation.type == "has_kernel_stable_face_id"
+        and relation.target_id.startswith("face:")
+        for relation in graph.relations
+    )
     selector = graph.nodes_by_type("selector")[0]
     assert graph.measurements_for(selector.id, "selected_count")[0].value == 1
 
-    resolution = next(
-        resolve_query(graph, query)
+    resolutions = {
+        query.query_id.split(":")[-1]: resolve_query(graph, query)
         for query in smoke_queries(graph)
-        if query.query_id.endswith("q2:selected_face")
+    }
+    selected_face = resolutions["selected_face"]
+    assert selected_face.verifier_status == "resolved"
+    assert "has_kernel_stable_face_id" in selected_face.relation_families
+    selected_face_row = materialize_row(graph, selected_face)
+    assert selected_face_row.release_ready
+    assert "selector_identity_surrogate" not in selected_face_row.quarantine_reasons
+
+    highest_face = resolutions["highest_kernel_selected_face"]
+    assert highest_face.verifier_status == "resolved"
+    highest_node = graph.node(highest_face.gold_answer)
+    assert highest_node is not None
+    assert highest_node.properties["stable_selector"] == ">Z"
+    highest_face_row = materialize_row(graph, highest_face)
+    assert highest_face_row.release_ready
+    assert highest_face_row.geometry_hop_count > 0
+    assert "entity_geometry" in highest_face_row.measurement_scopes
+    assert "has_kernel_stable_face_id" in highest_face_row.relation_families
+
+    largest_selector_count = resolutions["largest_kernel_selector_count"]
+    assert largest_selector_count.verifier_status == "resolved"
+    assert largest_selector_count.gold_answer == "selector:sel_all_faces_all"
+    selector_count_row = materialize_row(graph, largest_selector_count)
+    assert selector_count_row.release_ready
+    assert selector_count_row.geometry_hop_count > 0
+    assert "snapshot_state" in selector_count_row.measurement_scopes
+    assert "has_kernel_stable_face_id" in selector_count_row.relation_families
+    assert "selector_identity_surrogate" not in selector_count_row.quarantine_reasons
+
+
+def test_loop_variable_selectors_match_kernel_trace_by_source_line() -> None:
+    source_code = (
+        "import cadquery as cq\n"
+        "base = cq.Workplane('XY').box(2, 2, 2)\n"
+        "for tag in ('>Z', '<Z'):\n"
+        "    sel = base.faces(tag)\n"
     )
-    row = materialize_row(graph, resolution)
-    assert resolution.verifier_status == "resolved"
-    assert "has_kernel_stable_face_id" in resolution.relation_families
-    assert row.release_ready
-    assert "selector_identity_surrogate" not in row.quarantine_reasons
+    trace_record = {
+        "source_id": "src_selector_loop_trace",
+        "execution_status": "ok",
+        "snapshots": [
+            {"target": "base", "source_line": 2, "operation_index": 0, "volume": 8.0, "bbox": {"min": [-1, -1, -1], "max": [1, 1, 1]}, "topology": {"faces": 6}},
+        ],
+        "operation_effects": [],
+        "selector_results": [
+            {
+                "target": "sel",
+                "selector": "tag",
+                "source_line": 4,
+                "selector_index": 0,
+                "selected_count": 1,
+                "shape_types": ["Face"],
+                "bbox_signatures": [{"min": [-1, -1, 1], "max": [1, 1, 1]}],
+                "evidence": "cadquery_selector_result",
+            },
+            {
+                "target": "sel",
+                "selector": "tag",
+                "source_line": 4,
+                "selector_index": 1,
+                "selected_count": 1,
+                "shape_types": ["Face"],
+                "bbox_signatures": [{"min": [-1, -1, -1], "max": [1, 1, -1]}],
+                "evidence": "cadquery_selector_result",
+            },
+        ],
+        "environment": {"cadquery_available": True},
+        "failure_reason": None,
+    }
+    graph = build_graph(
+        source_record_from_mapping({"source_id": "src_selector_loop_trace", "normalized_code": source_code}),
+        trace=trace_record,
+    )
+
+    selectors = graph.nodes_by_type("selector")
+    assert [selector.properties["selector"] for selector in selectors] == [">Z", "<Z"]
+    assert all(selector.properties["kernel_backed"] for selector in selectors)
+    kernel_faces = [node for node in graph.nodes_by_type("face") if node.properties.get("kernel_backed")]
+    assert len(kernel_faces) == 2
+    assert sorted(graph.measurements_for(face.id, "bbox_max_z")[0].value for face in kernel_faces) == [-1.0, 1.0]
+
+
+def test_trace_record_selector_results_are_preserved_for_graph_extraction() -> None:
+    source_code = (
+        "import cadquery as cq\n"
+        "base = cq.Workplane('XY').box(2, 2, 2)\n"
+        "sel_top = base.faces('>Z')\n"
+    )
+    trace_record = TraceRecord(
+        source_id="src_trace_record_selector",
+        execution_status="ok",
+        snapshots=[
+            {"target": "base", "source_line": 2, "operation_index": 0, "volume": 8.0, "bbox": {"min": [-1, -1, -1], "max": [1, 1, 1]}, "topology": {"faces": 6}},
+        ],
+        operation_effects=[],
+        selector_results=[
+            {
+                "target": "sel_top",
+                "selector": ">Z",
+                "selector_kind": "faces",
+                "source_line": 3,
+                "selector_index": 0,
+                "selected_count": 1,
+                "shape_types": ["Face"],
+                "bbox_signatures": [{"min": [-1, -1, 1], "max": [1, 1, 1]}],
+                "evidence": "cadquery_selector_result",
+            }
+        ],
+    )
+    graph = build_graph(
+        source_record_from_mapping({"source_id": "src_trace_record_selector", "normalized_code": source_code}),
+        trace=trace_record,
+    )
+    selector = graph.nodes_by_type("selector")[0]
+    assert selector.properties["kernel_backed"]
+    assert any(relation.type == "has_kernel_stable_face_id" for relation in graph.relations)
+
+
+def test_kernel_edge_selector_trace_produces_release_grade_edge_identity() -> None:
+    source_code = (
+        "import cadquery as cq\n"
+        "base = cq.Workplane('XY').box(2, 2, 2)\n"
+        "top_edges = base.edges('|Z')\n"
+        "all_edges = base.edges()\n"
+    )
+    trace_record = {
+        "source_id": "src_selector_edges",
+        "execution_status": "ok",
+        "snapshots": [
+            {"target": "base", "source_line": 2, "operation_index": 0, "volume": 8.0, "bbox": {"min": [-1, -1, -1], "max": [1, 1, 1]}, "topology": {"edges": 12}},
+        ],
+        "operation_effects": [],
+        "selector_results": [
+            {
+                "target": "top_edges",
+                "selector": "|Z",
+                "selector_kind": "edges",
+                "source_line": 3,
+                "selector_index": 0,
+                "selected_count": 4,
+                "shape_types": ["Edge", "Edge", "Edge", "Edge"],
+                "bbox_signatures": [
+                    {"min": [-1, -1, -1], "max": [-1, -1, 1]},
+                    {"min": [-1, 1, -1], "max": [-1, 1, 1]},
+                    {"min": [1, -1, -1], "max": [1, -1, 1]},
+                    {"min": [1, 1, -1], "max": [1, 1, 2]},
+                ],
+                "evidence": "cadquery_selector_result",
+            },
+            {
+                "target": "all_edges",
+                "selector": "",
+                "selector_kind": "edges",
+                "source_line": 4,
+                "selector_index": 1,
+                "selected_count": 12,
+                "shape_types": ["Edge"] * 12,
+                "bbox_signatures": [
+                    {"min": [-1, -1, -1], "max": [1, -1, -1]},
+                    {"min": [-1, 1, -1], "max": [1, 1, -1]},
+                    {"min": [-1, -1, 1], "max": [1, -1, 1]},
+                    {"min": [-1, 1, 1], "max": [1, 1, 1]},
+                    {"min": [-1, -1, -1], "max": [-1, 1, -1]},
+                    {"min": [1, -1, -1], "max": [1, 1, -1]},
+                    {"min": [-1, -1, 1], "max": [-1, 1, 1]},
+                    {"min": [1, -1, 1], "max": [1, 1, 1]},
+                    {"min": [-1, -1, -1], "max": [-1, -1, 1]},
+                    {"min": [-1, 1, -1], "max": [-1, 1, 1]},
+                    {"min": [1, -1, -1], "max": [1, -1, 1]},
+                    {"min": [1, 1, -1], "max": [1, 1, 1]},
+                ],
+                "evidence": "cadquery_selector_result",
+            },
+        ],
+        "environment": {"cadquery_available": True},
+        "failure_reason": None,
+    }
+    graph = build_graph(
+        source_record_from_mapping({"source_id": "src_selector_edges", "normalized_code": source_code}),
+        trace=trace_record,
+    )
+    kernel_edges = [node for node in graph.nodes_by_type("edge") if node.properties.get("kernel_backed")]
+    assert len(kernel_edges) == 16
+    assert any(relation.type == "has_kernel_stable_edge_id" for relation in graph.relations)
+    assert graph.measurements_for(kernel_edges[0].id, "bbox")
+    assert graph.measurements_for(kernel_edges[0].id, "dominant_axis")
+    assert any(relation.type == "perpendicular_to" for relation in graph.relations)
+    assert any(relation.type == "parallel_to" for relation in graph.relations)
+
+    resolutions = {
+        query.query_id.split(":")[-1]: resolve_query(graph, query)
+        for query in smoke_queries(graph)
+    }
+    highest_edge = resolutions["highest_kernel_selected_edge"]
+    assert highest_edge.verifier_status == "resolved"
+    highest_edge_row = materialize_row(graph, highest_edge)
+    assert highest_edge_row.release_ready
+    assert "has_kernel_stable_edge_id" in highest_edge_row.relation_families
+    assert "selector_identity_surrogate" not in highest_edge_row.quarantine_reasons
+
+    selector_count = resolutions["largest_kernel_edge_selector_count"]
+    assert selector_count.verifier_status == "resolved"
+    assert selector_count.gold_answer == "selector:all_edges_edges_all"
+    selector_count_row = materialize_row(graph, selector_count)
+    assert selector_count_row.release_ready
+    assert "has_kernel_stable_edge_id" in selector_count_row.relation_families
+
+    spatial_edge = resolutions["highest_negative_y_x_span_perpendicular_kernel_edge"]
+    assert spatial_edge.verifier_status == "resolved"
+    spatial_edge_row = materialize_row(graph, spatial_edge)
+    assert spatial_edge_row.release_ready
+    assert spatial_edge_row.geometry_hop_count > 0
+    assert "has_kernel_stable_edge_id" in spatial_edge_row.relation_families
+    assert "perpendicular_to" in spatial_edge_row.relation_families
+    assert "entity_geometry" in spatial_edge_row.measurement_scopes
 
 
 def test_operation_graph_extraction_covers_assignments_and_chains() -> None:
@@ -357,7 +1263,7 @@ def test_profiles_and_workplanes_are_linked() -> None:
 
 
 def test_relation_registry_contains_required_families() -> None:
-    for relation in ["before", "after", "input_to", "parameter_of", "uses_profile", "located_on", "adds_material_to", "same_selected_face_as", "has_material_region_geometry"]:
+    for relation in ["before", "after", "input_to", "parameter_of", "uses_profile", "located_on", "adds_material_to", "same_selected_face_as", "has_material_region_geometry", "point_on_path", "segment_on_path"]:
         assert relation in RELATION_FAMILIES
 
 
@@ -446,10 +1352,17 @@ wp2 = wp1.splineApprox([(0, 0, 0), (1, 2, 3), (3, 2, 1)], makeWire=1)
 """
     path_graph = build_graph(source_record_from_mapping({"source_id": "src_path", "normalized_code": path_source}))
     assert path_graph.nodes_by_type("path")
+    assert path_graph.nodes_by_type("path_point")
+    assert path_graph.nodes_by_type("path_segment")
     assert path_graph.measurements_for("path:wp2", "initial_tangent")[0].value == [1.0, 2.0, 3.0]
     assert path_graph.measurements_for("path:wp2", "nearest_point_to_origin")
     assert path_graph.measurements_for("path:wp2", "nearest_point_distance_to_origin")
+    assert path_graph.measurements_for("path:wp2:point:1", "coordinate_z")[0].value == 3.0
+    assert path_graph.measurements_for("path:wp2:point:1", "distance_to_origin")[0].value == math.sqrt(14.0)
+    assert path_graph.measurements_for("path:wp2:segment:0", "segment_length")[0].value == math.sqrt(14.0)
     assert any(relation.type == "nearest_point_on_path" for relation in path_graph.relations)
+    assert any(relation.type == "point_on_path" for relation in path_graph.relations)
+    assert any(relation.type == "segment_on_path" for relation in path_graph.relations)
 
 
 def test_high_hop_clue_breadth_gate_rejects_narrow_clue() -> None:
@@ -518,6 +1431,17 @@ wp3 = wp1.splineApprox([(1, 0, 0), (4, 0, 0)], makeWire=1)
     assert path_resolution.verifier_status == "resolved"
     assert path_resolution.gold_answer == "path:wp3"
     assert "has_path_tangent" in path_resolution.relation_families
+    path_resolutions = {
+        query.query_id.split(":")[-1]: resolve_query(path_graph, query)
+        for query in smoke_queries(path_graph)
+    }
+    assert path_resolutions["nearest_path_point_to_origin"].gold_answer == "path:wp3:point:0"
+    assert path_resolutions["longest_path_segment"].gold_answer == "path:wp3:segment:0"
+    for key in ["nearest_path_point_to_origin", "longest_path_segment"]:
+        row = materialize_row(path_graph, path_resolutions[key])
+        assert row.release_ready
+        assert row.geometry_hop_count > 0
+        assert "relation_metric" in row.measurement_scopes
 
     selector_graph = build_graph(source_record_from_mapping({"source_id": "src_loop_queries", "normalized_code": LOOP_SOURCE}))
     selector_resolution = next(
@@ -544,15 +1468,107 @@ def test_split_report_baseline_and_sft_exports() -> None:
     assert sum(len(items) for items in splits.values()) == len(rows)
     assert manifest["source_count"] == 1
     assert report["row_count"] == len(rows)
+    assert report["prompt_families"]
+    assert report["quality_flags"]["syntax_only_calibration"] >= 1
     assert baselines["oracle"]["accuracy"] == 1.0
     assert baselines["first_candidate"]["by_hop"]
     assert baselines["first_static_filter"]["by_static_hop"]
     assert "majority" in baselines
     assert len(answer_sft_rows(row_dicts)) == len(rows)
+    assert all(row["geometry_hop_count"] > 0 for row in default_training_rows(row_dicts))
     assert "answer:" in reasoning_sft_rows(row_dicts)[0]["messages"][1]["content"]
     assert leakage_audit(row_dicts, manifest)["valid"]
     assert ablation_sft_groups(row_dicts)
     assert scaling_sft_groups(row_dicts, [1, 100])["size_1"]
+
+
+def test_training_export_cli_defaults_to_geometry_critical_rows(tmp_path: Path) -> None:
+    rows = [
+        {
+            "row_id": "row:syntax:first_operation",
+            "prompt": "syntax prompt",
+            "gold_answer": "operation:wp1",
+            "logical_hop_count": 0,
+            "geometry_hop_count": 0,
+            "difficulty_bucket": "low",
+            "measurement_scopes": [],
+            "relation_families": [],
+            "query_program": {"query_id": "graph:src:q0:first_operation"},
+        },
+        {
+            "row_id": "row:geometry:largest_compiled_volume_feature",
+            "prompt": "geometry prompt",
+            "gold_answer": "feature:result",
+            "logical_hop_count": 2,
+            "geometry_hop_count": 2,
+            "difficulty_bucket": "bridge",
+            "measurement_scopes": ["snapshot_state"],
+            "relation_families": [],
+            "query_program": {
+                "query_id": "graph:src:q2:largest_compiled_volume_feature",
+                "aggregation_metric": "volume",
+                "clauses": [{"metric": "bbox_span_z"}],
+            },
+        },
+        {
+            "row_id": "row:noncritical:profile_on_workplane",
+            "prompt": "profile prompt",
+            "gold_answer": "profile:wp2",
+            "logical_hop_count": 2,
+            "geometry_hop_count": 2,
+            "difficulty_bucket": "bridge",
+            "measurement_scopes": ["entity_geometry"],
+            "relation_families": ["located_on"],
+            "query_program": {"query_id": "graph:src:q2:profile_on_workplane"},
+        },
+        {
+            "row_id": "row:quarantine:largest_removed_region",
+            "prompt": "quarantined geometry prompt",
+            "gold_answer": "void_region:wp1",
+            "logical_hop_count": 3,
+            "geometry_hop_count": 3,
+            "difficulty_bucket": "cad_browsecomp",
+            "measurement_scopes": ["snapshot_state"],
+            "relation_families": ["has_void_region_geometry"],
+            "release_ready": False,
+            "quarantine_reasons": ["conservative_region_projection"],
+            "query_program": {"query_id": "graph:src:q3:largest_removed_region"},
+        },
+    ]
+    rows_path = tmp_path / "rows.jsonl"
+    default_out = tmp_path / "sft_default"
+    calibration_out = tmp_path / "sft_calibration"
+    write_jsonl(rows_path, rows)
+
+    assert cli_main(["training", "export-sft", "--rows", str(rows_path), "--out", str(default_out)]) == 0
+    default_report = read_jsonl(default_out / "answer_sft.jsonl")
+    default_sft_report = json.loads((default_out / "sft_report.json").read_text())
+    assert len(default_report) == 1
+    assert default_report[0]["messages"][1]["content"] == "feature:result"
+    assert default_sft_report["input_rows"] == 4
+    assert default_sft_report["training_rows"] == 1
+    assert default_sft_report["excluded_calibration_or_noncritical_rows"] == 3
+    assert default_sft_report["excluded_calibration_noncritical_or_quarantined_rows"] == 3
+    assert default_sft_report["training_readiness"]["passes_geometry_critical_dominance"]
+    assert default_sft_report["training_readiness"]["geometry_critical_training_rows"] == 1
+    assert default_sft_report["training_readiness"]["syntax_only_training_rows"] == 0
+
+    assert cli_main(
+        [
+            "training",
+            "export-sft",
+            "--rows",
+            str(rows_path),
+            "--out",
+            str(calibration_out),
+            "--include-calibration",
+        ]
+    ) == 0
+    calibration_sft_report = json.loads((calibration_out / "sft_report.json").read_text())
+    assert calibration_sft_report["training_rows"] == 4
+    assert calibration_sft_report["include_calibration"] is True
+    assert not calibration_sft_report["training_readiness"]["passes_geometry_critical_dominance"]
+    assert calibration_sft_report["training_readiness"]["syntax_only_training_rows"] == 1
 
 
 def test_group_safe_splits_use_source_family_metadata() -> None:
@@ -835,7 +1851,8 @@ def test_smoke_experiment_orchestrates_artifacts(tmp_path: Path) -> None:
     assert report["release_baseline"]["oracle"]["accuracy"] == 1.0
     assert report["requests"]["zero_shot_request_count"] == report["dataset"]["row_count"]
     assert report["release_requests"]["zero_shot_request_count"] == report["release_dataset"]["row_count"]
-    assert report["release_sft"]["answer_sft_rows"] == report["release_dataset"]["row_count"]
+    assert report["release_sft"]["answer_sft_rows"] == report["release_sft"]["training_rows"]
+    assert report["release_sft"]["answer_sft_rows"] <= report["release_dataset"]["row_count"]
     assert report["grade"]["metrics"]["accuracy"] == 1.0
     assert report["release_grade"]["metrics"]["accuracy"] == 1.0
     assert report["tool_assisted"]["metrics"]["accuracy"] == 1.0
@@ -856,6 +1873,7 @@ def test_smoke_experiment_orchestrates_artifacts(tmp_path: Path) -> None:
     assert (tmp_path / "run" / "PAPER_RESULTS.md").exists()
     assert (tmp_path / "run" / "artifact_manifest.json").exists()
     assert (tmp_path / "run" / "dataset" / "DATASET_CARD.md").exists()
+    assert (tmp_path / "run" / "dataset" / "GENERATED_PREVIEW.md").exists()
     assert (tmp_path / "run" / "dataset" / "public.jsonl").exists()
     assert (tmp_path / "run" / "dataset" / "private.jsonl").exists()
     assert (tmp_path / "run" / "dataset" / "public_private_report.json").exists()
@@ -919,6 +1937,80 @@ def test_dataset_card_failure_report_and_run_package(tmp_path: Path) -> None:
     assert (run_dir / "artifact_manifest.json").exists()
 
 
+def test_dataset_preview_cli_shows_task_and_node_samples(tmp_path: Path) -> None:
+    trace_record = {
+        "source_id": "src_preview",
+        "execution_status": "ok",
+        "snapshots": [
+            {"target": "wp3", "source_line": 4, "operation_index": 0, "volume": 62.8, "bbox": {"min": [-2, -2, 0], "max": [2, 2, 5]}, "topology": {"faces": 3}},
+            {"target": "result", "source_line": 10, "operation_index": 1, "volume": 86.8, "bbox": {"min": [-2, -2, 0], "max": [2, 2, 12]}, "topology": {"faces": 9}},
+        ],
+        "operation_effects": [
+            {
+                "from_target": "wp2",
+                "to_target": "wp3",
+                "source_line": 4,
+                "signed_volume_delta": 62.8,
+                "bbox_delta": {"min": [-2, -2, 0], "max": [2, 2, 5]},
+                "topology_delta": {"faces": 3},
+                "evidence": "cadquery_assignment_snapshot_delta",
+            },
+            {
+                "from_target": "wp6",
+                "to_target": "result",
+                "source_line": 10,
+                "signed_volume_delta": 24.0,
+                "bbox_delta": {"min": [None, None, 0], "max": [None, None, 12]},
+                "topology_delta": {"faces": 1},
+                "evidence": "cadquery_assignment_snapshot_delta",
+            },
+        ],
+        "selector_results": [],
+        "environment": {"cadquery_available": True},
+        "failure_reason": None,
+    }
+    graph = build_graph(source_record_from_mapping({"source_id": "src_preview", "normalized_code": SOURCE}), trace=trace_record)
+    rows = [
+        to_jsonable(materialize_row(graph, resolution))
+        for resolution in (resolve_query(graph, query) for query in smoke_queries(graph))
+        if resolution.verifier_status == "resolved"
+    ]
+    dataset_dir = tmp_path / "dataset"
+    graph_dir = tmp_path / "graph"
+    out = tmp_path / "preview.md"
+    write_jsonl(dataset_dir / "rows.jsonl", rows)
+    write_jsonl(graph_dir / "graphs.jsonl", [graph])
+
+    assert cli_main(
+        [
+            "dataset",
+            "preview",
+            str(dataset_dir),
+            "--graphs",
+            str(graph_dir),
+            "--out",
+            str(out),
+            "--family",
+            "largest_compiled_volume_feature",
+            "--node-type",
+            "feature",
+            "--node-type",
+            "void_region",
+            "--sample-per-family",
+            "1",
+            "--seed",
+            "0",
+        ]
+    ) == 0
+    text = out.read_text(encoding="utf-8")
+    assert "largest_compiled_volume_feature" in text
+    assert "geometry_critical" in text
+    assert "Node Samples" in text
+    assert "`feature`" in text
+    assert "### `void_region`" in text
+    assert "- Nodes: `0`" in text
+
+
 def test_release_export_cli_filters_quarantined_rows(tmp_path: Path) -> None:
     graph = build_graph(source_record_from_mapping({"source_id": "src_loop", "normalized_code": LOOP_SOURCE}))
     rows = [
@@ -977,6 +2069,8 @@ def test_release_verifier_report_stop_gates_and_cli(tmp_path: Path) -> None:
     report = release_verifier_report(rows, failures=failures)
     assert not report["valid_for_release"]
     assert "release_validation" in report["blocking_gates"]
+    assert "default_sft_geometry_critical_dominance" in report["stop_gates"]
+    assert "training_readiness" in report
     assert report["quarantine"]["quarantine_count"] > 0
     assert report["failure_report"]["reasons"] == {"clue_too_narrow": 1}
     assert "Release Verifier Report" in release_verifier_markdown(report)

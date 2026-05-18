@@ -10,6 +10,7 @@ from cad_qa.dataset.audit import leakage_audit
 from cad_qa.dataset.public import public_private_audit
 from cad_qa.dataset.quarantine import quarantine_report
 from cad_qa.dataset.report import dataset_report, failure_report
+from cad_qa.dataset.sft import training_readiness_report
 from cad_qa.dataset.split import split_manifest
 from cad_qa.dataset.validate import validate_rows
 from cad_qa.io import read_jsonl, write_json
@@ -31,6 +32,7 @@ def release_verifier_report(
     release_validation = validate_rows(rows, release=True)
     leakage = leakage_audit(rows, split)
     quarantine = quarantine_report(rows)
+    training_readiness = training_readiness_report(rows)
     failures_by_reason = failure_report(failures or [])
     public_private = public_private_audit(public_rows, private_rows) if public_rows is not None and private_rows is not None else None
     stop_gates = {
@@ -38,6 +40,7 @@ def release_verifier_report(
         "release_validation": release_validation["valid"],
         "leakage_audit": leakage["valid"],
         "no_quarantined_rows": quarantine["quarantine_count"] == 0,
+        "default_sft_geometry_critical_dominance": training_readiness["passes_geometry_critical_dominance"],
         "public_private_audit": public_private["valid"] if public_private is not None else None,
     }
     blocking = [name for name, passed in stop_gates.items() if passed is False]
@@ -51,6 +54,7 @@ def release_verifier_report(
         "release_validation": release_validation,
         "leakage_audit": leakage,
         "quarantine": quarantine,
+        "training_readiness": training_readiness,
         "failure_report": failures_by_reason,
         "split_manifest": split,
         "public_private_audit": public_private,
@@ -85,6 +89,10 @@ def release_verifier_markdown(report: dict[str, Any]) -> str:
         "## Quarantine",
         "",
         _json_block(report["quarantine"]),
+        "",
+        "## Training Readiness",
+        "",
+        _json_block(report["training_readiness"]),
         "",
         "## Verifier Failures",
         "",

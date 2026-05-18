@@ -5,6 +5,126 @@ from __future__ import annotations
 from typing import Any
 
 
+def default_training_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Rows exported by default for SFT: geometry-critical, not calibration-only."""
+
+    return [
+        row
+        for row in rows
+        if is_training_eligible_row(row)
+    ]
+
+
+def training_readiness_report(
+    input_rows: list[dict[str, Any]],
+    training_rows: list[dict[str, Any]] | None = None,
+    *,
+    include_calibration: bool = False,
+    dominance_threshold: float = 0.95,
+) -> dict[str, Any]:
+    exported_rows = training_rows if training_rows is not None else (
+        input_rows if include_calibration else default_training_rows(input_rows)
+    )
+    geometry_critical_training_rows = sum(1 for row in exported_rows if is_geometry_critical_row(row))
+    syntax_only_training_rows = sum(1 for row in exported_rows if is_syntax_only_calibration_row(row))
+    quarantined_training_rows = sum(
+        1
+        for row in exported_rows
+        if row.get("release_ready") is False or row.get("quarantine_reasons")
+    )
+    training_count = len(exported_rows)
+    geometry_share = geometry_critical_training_rows / training_count if training_count else 0.0
+    default_rows = default_training_rows(input_rows)
+    return {
+        "input_rows": len(input_rows),
+        "training_rows": training_count,
+        "default_training_rows": len(default_rows),
+        "excluded_calibration_noncritical_or_quarantined_rows": len(input_rows) - len(default_rows),
+        "geometry_critical_training_rows": geometry_critical_training_rows,
+        "syntax_only_training_rows": syntax_only_training_rows,
+        "quarantined_training_rows": quarantined_training_rows,
+        "geometry_critical_training_share": geometry_share,
+        "dominance_threshold": dominance_threshold,
+        "passes_geometry_critical_dominance": (
+            training_count > 0
+            and geometry_share >= dominance_threshold
+            and syntax_only_training_rows == 0
+            and quarantined_training_rows == 0
+        ),
+        "include_calibration": include_calibration,
+    }
+
+
+def is_training_eligible_row(row: dict[str, Any]) -> bool:
+    if row.get("release_ready") is False:
+        return False
+    if row.get("quarantine_reasons"):
+        return False
+    return is_geometry_critical_row(row) and not is_syntax_only_calibration_row(row)
+
+
+def is_syntax_only_calibration_row(row: dict[str, Any]) -> bool:
+    family = prompt_family(row)
+    if family == "first_operation":
+        return True
+    return int(row.get("geometry_hop_count") or 0) == 0
+
+
+def is_geometry_critical_row(row: dict[str, Any]) -> bool:
+    relation_families = set(row.get("relation_families") or [])
+    if relation_families & {
+        "has_kernel_stable_face_id",
+        "has_kernel_stable_edge_id",
+        "has_kernel_stable_vertex_id",
+        "has_kernel_material_region_geometry",
+        "has_kernel_void_region_geometry",
+    }:
+        return True
+    return any(_is_geometry_critical_metric(metric) for metric in _query_metrics(row))
+
+
+def _query_metrics(row: dict[str, Any]) -> set[str]:
+    query = row.get("query_program") or {}
+    metrics: set[str] = set()
+    aggregation_metric = query.get("aggregation_metric")
+    if isinstance(aggregation_metric, str):
+        metrics.add(aggregation_metric)
+    for clause in query.get("clauses") or []:
+        if isinstance(clause, dict) and isinstance(clause.get("metric"), str):
+            metrics.add(clause["metric"])
+    return metrics
+
+
+def _is_geometry_critical_metric(metric: str) -> bool:
+    if metric in {
+        "volume",
+        "volume_delta_magnitude",
+        "signed_volume_delta",
+        "centroid",
+        "centroid_delta_magnitude",
+        "centroid_x",
+        "centroid_y",
+        "centroid_z",
+        "coordinate_z",
+        "distance_to_origin",
+        "midpoint_distance_to_origin",
+        "nearest_point_distance_to_origin",
+        "segment_length",
+    }:
+        return True
+    return metric.startswith(("bbox", "topology", "centroid", "coordinate", "distance"))
+
+
+def prompt_family(row: dict[str, Any]) -> str:
+    query_id = row.get("query_program", {}).get("query_id")
+    if isinstance(query_id, str) and ":" in query_id:
+        return query_id.rsplit(":", 1)[-1]
+    row_id = row.get("row_id")
+    if isinstance(row_id, str) and ":" in row_id:
+        return row_id.rsplit(":", 1)[-1]
+    return "unknown"
+
+
 def answer_sft_rows(rows: list[dict[str, Any]]) -> list[dict[str, str]]:
     return [
         {

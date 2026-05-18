@@ -236,6 +236,7 @@ def measure_shape(shape: Any) -> dict[str, Any]:
                 f"shape volume is not positive finite: {volume}",
             )
         bbox = _bounding_box_from_shape(shape)
+        centroid = _centroid_from_shape(shape)
     except CadQueryTraceError:
         raise
     except Exception as exc:
@@ -244,6 +245,7 @@ def measure_shape(shape: Any) -> dict[str, Any]:
         "shape_type": shape_type,
         "volume": volume,
         "bbox": bbox,
+        "centroid": centroid,
         "topology": _topology_counts(shape),
     }
 
@@ -317,8 +319,14 @@ def _execute_source_trace(source: SourceRecord) -> dict[str, Any]:
     operation_index = 0
     selector_index = 0
 
-    for statement in tree.body:
+    def capture_statement(statement: ast.stmt) -> None:
+        nonlocal operation_index, selector_index
         before = set(namespace)
+        selector_observations = _selector_results_for_statement(
+            statement,
+            namespace,
+            source.source_path,
+        )
         try:
             module = ast.Module(body=[statement], type_ignores=[])
             ast.fix_missing_locations(module)
@@ -327,18 +335,17 @@ def _execute_source_trace(source: SourceRecord) -> dict[str, Any]:
         except Exception as exc:
             raise CadQueryTraceError("source_exec_error", str(exc)) from exc
         targets = _assigned_names(statement, namespace, before)
-        selector_text = _selector_text_for_statement(statement)
-        for target in targets:
-            selector_result = _selector_result_for_value(
-                namespace.get(target),
-                target=target,
-                selector_text=selector_text,
-                source_line=getattr(statement, "lineno", None),
-                selector_index=selector_index,
+        selector_target = targets[0] if targets else ast.unparse(statement)
+        for observation in selector_observations:
+            selector_results.append(
+                {
+                    **observation,
+                    "target": selector_target,
+                    "selector_index": selector_index,
+                }
             )
-            if selector_result is not None:
-                selector_results.append(selector_result)
-                selector_index += 1
+            selector_index += 1
+        for target in targets:
             snapshot = _snapshot_for_value(
                 namespace.get(target),
                 target=target,
@@ -349,6 +356,25 @@ def _execute_source_trace(source: SourceRecord) -> dict[str, Any]:
                 continue
             snapshots.append(snapshot)
             operation_index += 1
+
+    def execute_statement(statement: ast.stmt) -> None:
+        if isinstance(statement, ast.For) and _can_trace_unroll_for(statement):
+            try:
+                iterable = _eval_trace_expr(statement.iter, namespace, source.source_path)
+            except Exception:
+                capture_statement(statement)
+                return
+            for item in iterable:
+                _bind_loop_target(statement.target, item, namespace)
+                for body_statement in statement.body:
+                    execute_statement(body_statement)
+            for else_statement in statement.orelse:
+                execute_statement(else_statement)
+            return
+        capture_statement(statement)
+
+    for statement in tree.body:
+        execute_statement(statement)
 
     final_snapshot = _select_final_snapshot(namespace, snapshots)
     if final_snapshot is None:
@@ -389,6 +415,7 @@ def _selector_result_for_value(
     *,
     target: str,
     selector_text: str | None,
+    selector_kind: str | None,
     source_line: int | None,
     selector_index: int,
 ) -> dict[str, Any] | None:
@@ -408,6 +435,7 @@ def _selector_result_for_value(
         return {
             "target": target,
             "selector": selector_text,
+            "selector_kind": selector_kind,
             "source_line": source_line,
             "selector_index": selector_index,
             "selected_count": 0,
@@ -427,6 +455,7 @@ def _selector_result_for_value(
     return {
         "target": target,
         "selector": selector_text,
+        "selector_kind": selector_kind,
         "source_line": source_line,
         "selector_index": selector_index,
         "selected_count": len(values),
@@ -434,6 +463,30 @@ def _selector_result_for_value(
         "bbox_signatures": bbox_signatures,
         "evidence": "cadquery_selector_result",
     }
+
+
+def _selector_results_for_statement(
+    statement: ast.stmt,
+    namespace: dict[str, Any],
+    filename: str | None,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    for selector in _selectors_for_statement(statement):
+        try:
+            value = _eval_trace_expr(selector["node"], namespace, filename)
+        except Exception:
+            continue
+        result = _selector_result_for_value(
+            value,
+            target=ast.unparse(selector["node"]),
+            selector_text=selector["text"],
+            selector_kind=selector["kind"],
+            source_line=getattr(selector["node"], "lineno", getattr(statement, "lineno", None)),
+            selector_index=0,
+        )
+        if result is not None:
+            results.append(result)
+    return results
 
 
 def _select_final_snapshot(
@@ -453,6 +506,30 @@ def _select_final_snapshot(
             **measured,
         }
     return snapshots[-1] if snapshots else None
+
+
+def _can_trace_unroll_for(statement: ast.For) -> bool:
+    return not any(isinstance(node, (ast.Break, ast.Continue)) for node in ast.walk(statement))
+
+
+def _eval_trace_expr(expr: ast.AST, namespace: dict[str, Any], filename: str | None) -> Any:
+    module = ast.Expression(body=expr)
+    ast.fix_missing_locations(module)
+    return eval(compile(module, filename or "<cadqa-source>", "eval"), namespace)  # noqa: S307
+
+
+def _bind_loop_target(target: ast.AST, value: Any, namespace: dict[str, Any]) -> None:
+    if isinstance(target, ast.Name):
+        namespace[target.id] = value
+        return
+    if isinstance(target, (ast.Tuple, ast.List)):
+        values = list(value)
+        if len(values) != len(target.elts):
+            raise ValueError("loop target arity mismatch")
+        for child, item in zip(target.elts, values, strict=True):
+            _bind_loop_target(child, item, namespace)
+        return
+    raise ValueError("unsupported loop target")
 
 
 def _assigned_names(statement: ast.stmt, namespace: dict[str, Any], before: set[str]) -> list[str]:
@@ -502,19 +579,36 @@ def _body_assigned_names(statement: ast.stmt) -> list[str]:
 
 
 def _selector_text_for_statement(statement: ast.stmt) -> str | None:
+    selector = _selector_for_statement(statement)
+    return selector["text"] if selector else None
+
+
+def _selector_for_statement(statement: ast.stmt) -> dict[str, str] | None:
+    selectors = _selectors_for_statement(statement)
+    if not selectors:
+        return None
+    return {key: str(value) for key, value in selectors[0].items() if key != "node"}
+
+
+def _selectors_for_statement(statement: ast.stmt) -> list[dict[str, Any]]:
+    selectors: list[dict[str, Any]] = []
     for node in ast.walk(statement):
         if not isinstance(node, ast.Call):
             continue
-        if not isinstance(node.func, ast.Attribute) or node.func.attr != "faces":
+        if not isinstance(node.func, ast.Attribute) or node.func.attr not in {"faces", "edges", "vertices"}:
             continue
         if not node.args:
-            return ""
+            selectors.append({"kind": node.func.attr, "text": "", "node": node})
+            continue
+        text: str
         try:
             value = ast.literal_eval(node.args[0])
         except Exception:
-            return ast.unparse(node.args[0])
-        return str(value)
-    return None
+            text = ast.unparse(node.args[0])
+        else:
+            text = str(value)
+        selectors.append({"kind": node.func.attr, "text": text, "node": node})
+    return selectors
 
 
 def _snapshot_effects(snapshots: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -529,6 +623,7 @@ def _snapshot_effects(snapshots: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "source_line": after.get("source_line"),
                 "signed_volume_delta": float(after["volume"]) - float(before["volume"]),
                 "bbox_delta": _bbox_delta(before.get("bbox"), after.get("bbox")),
+                "centroid_delta": _vector_delta(before.get("centroid"), after.get("centroid")),
                 "topology_delta": _topology_delta(before.get("topology"), after.get("topology")),
                 "evidence": "cadquery_assignment_snapshot_delta",
             }
@@ -549,6 +644,12 @@ def _bbox_delta(before: Any, after: Any) -> dict[str, list[float | None]]:
             for index in range(3)
         ],
     }
+
+
+def _vector_delta(before: Any, after: Any) -> list[float | None]:
+    if not isinstance(before, list) or not isinstance(after, list):
+        return [None, None, None]
+    return [_optional_delta(before, after, index) for index in range(3)]
 
 
 def _topology_delta(before: Any, after: Any) -> dict[str, int | None]:
@@ -588,6 +689,17 @@ def _bounding_box_from_shape(shape: Any) -> dict[str, list[float]]:
     values = [*result["min"], *result["max"]]
     if not all(math.isfinite(value) for value in values):
         raise CadQueryTraceError("non_finite_bbox", f"bbox contains non-finite values: {result}")
+    return result
+
+
+def _centroid_from_shape(shape: Any) -> list[float]:
+    try:
+        center = shape.Center()
+        result = [float(center.x), float(center.y), float(center.z)]
+    except Exception as exc:
+        raise CadQueryTraceError("unknown_error", f"failed to measure centroid: {exc}") from exc
+    if not all(math.isfinite(value) for value in result):
+        raise CadQueryTraceError("unknown_error", f"centroid contains non-finite values: {result}")
     return result
 
 

@@ -10,12 +10,20 @@ from typing import Any
 
 from cad_qa.dataset.audit import leakage_audit
 from cad_qa.dataset.materialize import materialize_row
+from cad_qa.dataset.preview import dataset_preview_markdown
 from cad_qa.dataset.public import private_rows, public_rows, write_public_private_artifacts
 from cad_qa.dataset.quarantine import quarantine_report
 from cad_qa.dataset.release import export_release_dataset
 from cad_qa.dataset.release_report import write_release_verifier_report
 from cad_qa.dataset.report import dataset_card_markdown, dataset_report, failure_report
-from cad_qa.dataset.sft import ablation_sft_groups, answer_sft_rows, reasoning_sft_rows, scaling_sft_groups
+from cad_qa.dataset.sft import (
+    ablation_sft_groups,
+    answer_sft_rows,
+    default_training_rows,
+    reasoning_sft_rows,
+    scaling_sft_groups,
+    training_readiness_report,
+)
 from cad_qa.dataset.split import assign_splits, split_manifest
 from cad_qa.dataset.validate import validate_rows
 from cad_qa.evaluation.baselines import run_baselines
@@ -115,6 +123,17 @@ def run_smoke_experiment(
     write_json(dataset_dir / "quarantine_report.json", quarantine)
     failures_by_reason = failure_report(failures)
     write_json(dataset_dir / "failure_report.json", failures_by_reason)
+    preview_path = dataset_dir / "GENERATED_PREVIEW.md"
+    preview_path.write_text(
+        dataset_preview_markdown(
+            row_dicts,
+            graphs=graphs,
+            sample_per_family=1,
+            seed=0,
+            max_prompt_chars=5000,
+        ),
+        encoding="utf-8",
+    )
     (dataset_dir / "DATASET_CARD.md").write_text(
         dataset_card_markdown(
             dataset_path=dataset_dir,
@@ -179,6 +198,7 @@ def run_smoke_experiment(
         "quarantine": quarantine,
         "public_private": public_private,
         "release_verifier": release_verifier,
+        "preview": {"path": str(preview_path), "sample_per_family": 1, "seed": 0},
         "baseline": baseline_metrics,
         "release_baseline": release_baseline_metrics,
         "requests": request_report,
@@ -500,22 +520,29 @@ def _write_tool_assisted_upper_bound(rows: list[dict[str, Any]], out: Path) -> d
 
 
 def _write_sft_exports(rows: list[dict[str, Any]], out: Path, scaling_sizes: list[int]) -> dict[str, Any]:
-    answer_rows = answer_sft_rows(rows)
-    reasoning_rows = reasoning_sft_rows(rows)
+    training_rows = default_training_rows(rows)
+    answer_rows = answer_sft_rows(training_rows)
+    reasoning_rows = reasoning_sft_rows(training_rows)
     write_jsonl(out / "answer_sft.jsonl", answer_rows)
     write_jsonl(out / "reasoning_sft.jsonl", reasoning_rows)
-    ablations = ablation_sft_groups(rows)
-    scaling = scaling_sft_groups(rows, scaling_sizes)
+    ablations = ablation_sft_groups(training_rows)
+    scaling = scaling_sft_groups(training_rows, scaling_sizes)
     for name, group_rows in ablations.items():
         write_jsonl(out / "ablations" / f"{name}.jsonl", group_rows)
     for name, group_rows in scaling.items():
         write_jsonl(out / "scaling" / f"{name}.jsonl", group_rows)
     report = {
+        "input_rows": len(rows),
+        "training_rows": len(training_rows),
+        "excluded_calibration_or_noncritical_rows": len(rows) - len(training_rows),
+        "excluded_calibration_noncritical_or_quarantined_rows": len(rows) - len(training_rows),
+        "include_calibration": False,
         "answer_sft_rows": len(answer_rows),
         "reasoning_sft_rows": len(reasoning_rows),
         "ablation_groups": {name: len(group_rows) for name, group_rows in ablations.items()},
         "scaling_groups": {name: len(group_rows) for name, group_rows in scaling.items()},
     }
+    report["training_readiness"] = training_readiness_report(rows, training_rows)
     write_json(out / "sft_report.json", report)
     return report
 

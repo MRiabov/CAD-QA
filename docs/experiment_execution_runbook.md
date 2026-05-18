@@ -13,16 +13,23 @@ rtk uv run cadqa dataset quarantine data/cadqa_graph_smoke
 rtk uv run cadqa dataset card data/cadqa_graph_smoke
 rtk uv run cadqa dataset validate data/cadqa_graph_smoke --release
 rtk uv run cadqa dataset export-release data/cadqa_graph_smoke --out data/cadqa_graph_release_smoke
+rtk uv run cadqa dataset preview data/cadqa_graph_smoke --graphs runs/graph_smoke --out runs/feature_preview.md --sample-per-family 1 --seed 17
 rtk uv run cadqa evaluation baseline --rows data/cadqa_graph_smoke/rows.jsonl --out runs/baseline_smoke
 rtk uv run cadqa training export-sft --rows data/cadqa_graph_smoke/rows.jsonl --out runs/sft_smoke
 ```
 
-The SFT command above is part of the smoke workflow only. A real training run
-must use rows that pass geometry-first dataset quality gates: syntax-only
-calibration templates must be excluded or capped, prompt-family balance must be
-reported, and geometry-derived clauses must be necessary for the main answers.
-Until those gates are implemented, smoke/release SFT artifacts are useful for
-format and grading checks, not for meaningful fine-tuning.
+The SFT command above now exports only geometry-critical rows by default and
+excludes syntax-only calibration, noncritical, and quarantined rows. A real
+training run still must use rows that pass the broader geometry-first dataset
+quality gates: prompt-family balance must be reported, and geometry-derived
+clauses must be necessary for the main answers. Use `--include-calibration`
+only for explicit calibration exports.
+
+Run `cadqa dataset preview` whenever a task family, graph node type, or
+measurement extractor changes. Filter it with repeated `--family` and
+`--node-type` flags to produce a small review artifact for the exact feature
+under inspection. The preview includes prompts, query programs, candidate
+traces, gold answers, and optional graph node/measurement samples.
 
 To grade release-style model responses, provide JSONL records with `row_id` and
 `answer`. Use the public rows as the model input and the private rows as the
@@ -78,8 +85,8 @@ quarantine reports, smoke and release validation reports, leakage audits,
 full-smoke and release-subset baseline outputs, full-smoke and release-subset
 public/private oracle-grade sanity checks, full-smoke and release-subset
 request exports, full-smoke and release-subset SFT artifacts,
-`run_summary.json`, `RUN_SUMMARY.md`, and an artifact manifest. Package the run
-for sharing with:
+`dataset/GENERATED_PREVIEW.md`, `run_summary.json`, `RUN_SUMMARY.md`, and an
+artifact manifest. Package the run for sharing with:
 
 ```bash
 rtk uv run cadqa experiment package \

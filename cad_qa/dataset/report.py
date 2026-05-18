@@ -7,6 +7,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from cad_qa.dataset.sft import is_geometry_critical_row, is_syntax_only_calibration_row, prompt_family
+
 
 def dataset_report(rows: list[Any]) -> dict[str, Any]:
     hop_counts: Counter[str] = Counter()
@@ -19,6 +21,8 @@ def dataset_report(rows: list[Any]) -> dict[str, Any]:
     evidence_tiers: Counter[str] = Counter()
     quarantine_reasons: Counter[str] = Counter()
     release_ready: Counter[str] = Counter()
+    prompt_families: Counter[str] = Counter()
+    quality_flags: Counter[str] = Counter()
     for row in rows:
         item = row if isinstance(row, dict) else row.__dict__
         hop_counts[str(item["logical_hop_count"])] += 1
@@ -32,6 +36,12 @@ def dataset_report(rows: list[Any]) -> dict[str, Any]:
         quarantine_reasons.update(item.get("quarantine_reasons", []))
         relation_families.update(item.get("relation_families", []))
         measurement_scopes.update(item.get("measurement_scopes", []))
+        family = prompt_family(item)
+        prompt_families[family] += 1
+        if is_syntax_only_calibration_row(item):
+            quality_flags["syntax_only_calibration"] += 1
+        if is_geometry_critical_row(item):
+            quality_flags["geometry_critical"] += 1
     return {
         "row_count": len(rows),
         "hop_counts": dict(sorted(hop_counts.items())),
@@ -44,6 +54,8 @@ def dataset_report(rows: list[Any]) -> dict[str, Any]:
         "evidence_tiers": dict(sorted(evidence_tiers.items())),
         "release_ready": dict(sorted(release_ready.items())),
         "quarantine_reasons": dict(sorted(quarantine_reasons.items())),
+        "prompt_families": dict(sorted(prompt_families.items())),
+        "quality_flags": dict(sorted(quality_flags.items())),
     }
 
 
@@ -104,6 +116,8 @@ def dataset_card_markdown(
                 "evidence_tiers": report.get("evidence_tiers", {}),
                 "release_ready": report.get("release_ready", {}),
                 "quarantine_reasons": report.get("quarantine_reasons", {}),
+                "prompt_families": report.get("prompt_families", {}),
+                "quality_flags": report.get("quality_flags", {}),
             }
         ),
         "",

@@ -11,6 +11,9 @@ from cad_qa.query.difficulty import difficulty_for_hops
 from cad_qa.query.ir import CandidateSetTrace, Clause, QueryProgram, QueryResolution
 
 
+GEOMETRY_MARGIN_EPSILON = 1e-6
+
+
 def resolve_query(graph: OntologyGraph, query: QueryProgram) -> QueryResolution:
     query = replace(query, difficulty=query.difficulty or difficulty_for_hops(query.hop_count))
     candidates = initial_candidates(graph, query.target_type)
@@ -100,10 +103,14 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
     profiles = graph.nodes_by_type("profile")
     workplanes = graph.nodes_by_type("workplane")
     faces = graph.nodes_by_type("face")
+    edges = graph.nodes_by_type("edge")
     paths = graph.nodes_by_type("path")
+    path_points = graph.nodes_by_type("path_point")
+    path_segments = graph.nodes_by_type("path_segment")
     selectors = graph.nodes_by_type("selector")
     material_regions = graph.nodes_by_type("material_region")
     void_regions = graph.nodes_by_type("void_region")
+    features = graph.nodes_by_type("feature")
     if operations:
         first = min(operations, key=lambda node: node.properties.get("chain_index", 0))
         queries.append(
@@ -194,7 +201,8 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
             )
         )
     if faces:
-        first_face = sorted(faces, key=lambda node: node.properties.get("stable_selector", ""))[0]
+        selected_face_candidates = [face for face in faces if face.properties.get("stable_selector")]
+        first_face = sorted(selected_face_candidates or faces, key=lambda node: node.properties.get("stable_selector", ""))[0]
         selector_text = first_face.properties.get("stable_selector")
         selector_relation = (
             "has_kernel_stable_face_id"
@@ -225,6 +233,219 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
                 difficulty="bridge",
             )
         )
+    kernel_faces_with_bbox_z = [
+        face
+        for face in _nodes_with_numeric_measurement(graph, faces, "bbox_max_z")
+        if any(
+            relation.source_id == face.id and relation.type == "has_kernel_stable_face_id"
+            for relation in graph.relations
+        )
+    ]
+    if len(kernel_faces_with_bbox_z) >= 2 and _has_unique_extreme(graph, kernel_faces_with_bbox_z, "bbox_max_z", "argmax"):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q3:highest_kernel_selected_face",
+                target_type="face",
+                clauses=[
+                    Clause(
+                        id="has_kernel_selector_identity",
+                        kind="has_relation",
+                        relation="has_kernel_stable_face_id",
+                        target_type="selector",
+                        text="The target face has kernel-backed selector-result geometry from a visible `.faces(...)` call.",
+                    ),
+                    Clause(
+                        id="has_selected_face_bbox",
+                        kind="has_measurement",
+                        metric="bbox_max_z",
+                        text="The target face has a kernel-measured selected-face bounding box.",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="bbox_max_z",
+                hop_count=3,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
+    kernel_selectors_with_counts = [
+        selector
+        for selector in _nodes_with_numeric_measurement(graph, selectors, "selected_count")
+        if any(
+            relation.source_id == selector.id and relation.type == "has_kernel_stable_face_id"
+            for relation in graph.relations
+        )
+    ]
+    if (
+        len(kernel_selectors_with_counts) >= 2
+        and _has_unique_extreme(graph, kernel_selectors_with_counts, "selected_count", "argmax")
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q3:largest_kernel_selector_count",
+                target_type="selector",
+                clauses=[
+                    Clause(
+                        id="has_kernel_selected_faces",
+                        kind="has_relation",
+                        relation="has_kernel_stable_face_id",
+                        target_type="face",
+                        text="The target selector has kernel-backed selected-face geometry from a visible `.faces(...)` call.",
+                    ),
+                    Clause(
+                        id="has_selected_count",
+                        kind="has_measurement",
+                        metric="selected_count",
+                        text="The target selector has a kernel-measured selected entity count.",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="selected_count",
+                hop_count=3,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
+    kernel_edges_with_bbox_z = [
+        edge
+        for edge in _nodes_with_numeric_measurement(graph, edges, "bbox_max_z")
+        if any(
+            relation.source_id == edge.id and relation.type == "has_kernel_stable_edge_id"
+            for relation in graph.relations
+        )
+    ]
+    if len(kernel_edges_with_bbox_z) >= 2 and _has_unique_extreme(graph, kernel_edges_with_bbox_z, "bbox_max_z", "argmax"):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q3:highest_kernel_selected_edge",
+                target_type="edge",
+                clauses=[
+                    Clause(
+                        id="has_kernel_edge_selector_identity",
+                        kind="has_relation",
+                        relation="has_kernel_stable_edge_id",
+                        target_type="selector",
+                        text="The target edge has kernel-backed selector-result geometry from a visible `.edges(...)` call.",
+                    ),
+                    Clause(
+                        id="has_selected_edge_bbox",
+                        kind="has_measurement",
+                        metric="bbox_max_z",
+                        text="The target edge has a kernel-measured selected-edge bounding box.",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="bbox_max_z",
+                hop_count=3,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
+    negative_y_x_edges = [
+        edge
+        for edge in kernel_edges_with_bbox_z
+        if isinstance(_measurement_value(graph, edge.id, "bbox_span_x"), (int, float))
+        and _measurement_value(graph, edge.id, "bbox_span_x") > GEOMETRY_MARGIN_EPSILON
+        and isinstance(_measurement_value(graph, edge.id, "bbox_max_y"), (int, float))
+        and _measurement_value(graph, edge.id, "bbox_max_y") < -GEOMETRY_MARGIN_EPSILON
+    ]
+    if (
+        len(negative_y_x_edges) >= 2
+        and _has_unique_extreme(
+            graph,
+            negative_y_x_edges,
+            "bbox_max_z",
+            "argmax",
+            min_margin=GEOMETRY_MARGIN_EPSILON,
+        )
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q5:highest_negative_y_x_span_perpendicular_kernel_edge",
+                target_type="edge",
+                clauses=[
+                    Clause(
+                        id="has_kernel_edge_selector_identity",
+                        kind="has_relation",
+                        relation="has_kernel_stable_edge_id",
+                        target_type="selector",
+                        text="The target edge has kernel-backed selector-result geometry from a visible `.edges(...)` call.",
+                    ),
+                    Clause(
+                        id="has_perpendicular_edge_relation",
+                        kind="has_relation",
+                        relation="perpendicular_to",
+                        target_type="edge",
+                        text="The target edge is perpendicular to another kernel-selected edge, based on compiled edge bounding-box axes.",
+                    ),
+                    Clause(
+                        id="has_x_span",
+                        kind="metric_compare",
+                        metric="bbox_span_x",
+                        operator=">",
+                        value=GEOMETRY_MARGIN_EPSILON,
+                        text="The target edge has a kernel-measured bounding box that spans the global X direction.",
+                    ),
+                    Clause(
+                        id="on_negative_y_side",
+                        kind="metric_compare",
+                        metric="bbox_max_y",
+                        operator="<",
+                        value=-GEOMETRY_MARGIN_EPSILON,
+                        text="The target edge lies on the negative-Y side of the compiled selector-result bounding boxes.",
+                    ),
+                    Clause(
+                        id="has_edge_bbox_z",
+                        kind="has_measurement",
+                        metric="bbox_max_z",
+                        text="The target edge has a kernel-measured maximum Z coordinate.",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="bbox_max_z",
+                hop_count=5,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
+    kernel_edge_selectors_with_counts = [
+        selector
+        for selector in _nodes_with_numeric_measurement(graph, selectors, "selected_count")
+        if any(
+            relation.source_id == selector.id and relation.type == "has_kernel_stable_edge_id"
+            for relation in graph.relations
+        )
+    ]
+    if (
+        len(kernel_edge_selectors_with_counts) >= 2
+        and _has_unique_extreme(graph, kernel_edge_selectors_with_counts, "selected_count", "argmax")
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q3:largest_kernel_edge_selector_count",
+                target_type="selector",
+                clauses=[
+                    Clause(
+                        id="has_kernel_selected_edges",
+                        kind="has_relation",
+                        relation="has_kernel_stable_edge_id",
+                        target_type="edge",
+                        text="The target selector has kernel-backed selected-edge geometry from a visible `.edges(...)` call.",
+                    ),
+                    Clause(
+                        id="has_selected_edge_count",
+                        kind="has_measurement",
+                        metric="selected_count",
+                        text="The target selector has a kernel-measured selected edge count.",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="selected_count",
+                hop_count=3,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
     if paths:
         queries.append(
             QueryProgram(
@@ -251,6 +472,99 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
                 difficulty="bridge",
             )
         )
+    path_points_with_distance = _nodes_with_numeric_measurement(graph, path_points, "distance_to_origin")
+    if (
+        len(path_points_with_distance) >= 2
+        and _has_unique_extreme(graph, path_points_with_distance, "distance_to_origin", "argmin")
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q3:nearest_path_point_to_origin",
+                target_type="path_point",
+                clauses=[
+                    Clause(
+                        id="point_on_visible_path",
+                        kind="has_relation",
+                        relation="point_on_path",
+                        target_type="path",
+                        text="The target point belongs to a visible spline path.",
+                    ),
+                    Clause(
+                        id="has_distance_to_origin",
+                        kind="has_measurement",
+                        metric="distance_to_origin",
+                        text="The target point has a computed distance to the global origin.",
+                    ),
+                ],
+                aggregation="argmin",
+                aggregation_metric="distance_to_origin",
+                hop_count=3,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
+    path_points_with_z = _nodes_with_numeric_measurement(graph, path_points, "coordinate_z")
+    if (
+        len(path_points_with_z) >= 2
+        and _has_unique_extreme(graph, path_points_with_z, "coordinate_z", "argmax")
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q3:highest_path_point",
+                target_type="path_point",
+                clauses=[
+                    Clause(
+                        id="point_on_visible_path",
+                        kind="has_relation",
+                        relation="point_on_path",
+                        target_type="path",
+                        text="The target point belongs to a visible spline path.",
+                    ),
+                    Clause(
+                        id="has_path_point_z",
+                        kind="has_measurement",
+                        metric="coordinate_z",
+                        text="The target point has a computed global Z coordinate.",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="coordinate_z",
+                hop_count=3,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
+    path_segments_with_length = _nodes_with_numeric_measurement(graph, path_segments, "segment_length")
+    if (
+        len(path_segments_with_length) >= 2
+        and _has_unique_extreme(graph, path_segments_with_length, "segment_length", "argmax")
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q3:longest_path_segment",
+                target_type="path_segment",
+                clauses=[
+                    Clause(
+                        id="segment_on_visible_path",
+                        kind="has_relation",
+                        relation="segment_on_path",
+                        target_type="path",
+                        text="The target segment belongs to a visible spline path.",
+                    ),
+                    Clause(
+                        id="has_segment_length",
+                        kind="has_measurement",
+                        metric="segment_length",
+                        text="The target segment has a computed path-segment length.",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="segment_length",
+                hop_count=3,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
     if selectors and any(relation.type == "same_selected_face_as" for relation in graph.relations):
         queries.append(
             QueryProgram(
@@ -273,6 +587,460 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
                 ],
                 aggregation="argmax",
                 aggregation_metric="operation_index",
+                hop_count=3,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
+    if len(_nodes_with_numeric_measurement(graph, features, "volume")) >= 2:
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q2:largest_compiled_volume_feature",
+                target_type="feature",
+                clauses=[
+                    Clause(
+                        id="has_compiled_volume",
+                        kind="has_measurement",
+                        metric="volume",
+                        text="The target feature has a CadQuery-compiled snapshot volume.",
+                    ),
+                    Clause(
+                        id="has_compiled_bbox_height",
+                        kind="has_measurement",
+                        metric="bbox_span_z",
+                        text="The target feature has a compiled bounding-box height measurement.",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="volume",
+                hop_count=2,
+                difficulty="bridge",
+            )
+        )
+    centroid_features = _nodes_with_numeric_measurement(graph, features, "centroid_z")
+    if (
+        len(centroid_features) >= 2
+        and _has_unique_extreme(
+            graph,
+            centroid_features,
+            "centroid_z",
+            "argmax",
+            min_margin=GEOMETRY_MARGIN_EPSILON,
+        )
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q3:highest_centroid_feature",
+                target_type="feature",
+                clauses=[
+                    Clause(
+                        id="has_compiled_centroid",
+                        kind="has_measurement",
+                        metric="centroid_z",
+                        text="The target feature has a kernel-measured compiled solid centroid.",
+                    ),
+                    Clause(
+                        id="has_compiled_volume_for_centroid",
+                        kind="has_measurement",
+                        metric="volume",
+                        text="The target feature also has a CadQuery-compiled snapshot volume.",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="centroid_z",
+                hop_count=3,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
+    topology_face_features = _nodes_with_numeric_measurement(graph, features, "topology_faces")
+    if (
+        len(topology_face_features) >= 2
+        and _has_unique_extreme(graph, topology_face_features, "topology_faces", "argmax")
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q3:largest_compiled_face_count_feature",
+                target_type="feature",
+                clauses=[
+                    Clause(
+                        id="has_compiled_face_count",
+                        kind="has_measurement",
+                        metric="topology_faces",
+                        text="The target feature has a kernel-counted compiled face count.",
+                    ),
+                    Clause(
+                        id="has_volume_for_face_count",
+                        kind="has_measurement",
+                        metric="volume",
+                        text="The target feature also has a CadQuery-compiled snapshot volume.",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="topology_faces",
+                hop_count=3,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
+    positive_volume_delta_features = [
+        feature
+        for feature in _nodes_with_numeric_measurement(graph, features, "signed_volume_delta")
+        if _measurement_value(graph, feature.id, "signed_volume_delta") > GEOMETRY_MARGIN_EPSILON
+    ]
+    if (
+        len(positive_volume_delta_features) >= 2
+        and _has_unique_extreme(
+            graph,
+            positive_volume_delta_features,
+            "signed_volume_delta",
+            "argmax",
+            min_margin=GEOMETRY_MARGIN_EPSILON,
+        )
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q3:largest_positive_volume_delta_feature",
+                target_type="feature",
+                clauses=[
+                    Clause(
+                        id="has_positive_volume_delta",
+                        kind="metric_compare",
+                        metric="signed_volume_delta",
+                        operator=">",
+                        value=0.0,
+                        text="The target feature has a positive kernel-measured volume delta between adjacent CadQuery snapshots.",
+                    ),
+                    Clause(
+                        id="has_bbox_delta",
+                        kind="has_measurement",
+                        metric="bbox_delta_span_z",
+                        text="The target feature has a compiled bounding-box delta measurement.",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="signed_volume_delta",
+                hop_count=3,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
+    removed_volume_delta_features = [
+        feature
+        for feature in _nodes_with_numeric_measurement(graph, features, "signed_volume_delta")
+        if _measurement_value(graph, feature.id, "signed_volume_delta") < -GEOMETRY_MARGIN_EPSILON
+    ]
+    if (
+        len(removed_volume_delta_features) >= 2
+        and _has_unique_extreme(
+            graph,
+            removed_volume_delta_features,
+            "signed_volume_delta",
+            "argmin",
+            min_margin=GEOMETRY_MARGIN_EPSILON,
+        )
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q3:largest_removed_volume_delta_feature",
+                target_type="feature",
+                clauses=[
+                    Clause(
+                        id="has_negative_volume_delta",
+                        kind="metric_compare",
+                        metric="signed_volume_delta",
+                        operator="<",
+                        value=0.0,
+                        text="The target feature has a negative kernel-measured volume delta between adjacent CadQuery snapshots.",
+                    ),
+                    Clause(
+                        id="has_removed_volume_magnitude",
+                        kind="has_measurement",
+                        metric="volume_delta_magnitude",
+                        text="The target feature has a kernel-measured volume-change magnitude.",
+                    ),
+                ],
+                aggregation="argmin",
+                aggregation_metric="signed_volume_delta",
+                hop_count=3,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
+    bbox_delta_features = [
+        feature
+        for feature in _nodes_with_numeric_measurement(graph, features, "bbox_delta_span_z")
+        if _measurement_value(graph, feature.id, "bbox_delta_span_z") > GEOMETRY_MARGIN_EPSILON
+        and isinstance(_measurement_value(graph, feature.id, "signed_volume_delta"), (int, float))
+    ]
+    if (
+        len(bbox_delta_features) >= 2
+        and _has_unique_extreme(
+            graph,
+            bbox_delta_features,
+            "bbox_delta_span_z",
+            "argmax",
+            min_margin=GEOMETRY_MARGIN_EPSILON,
+        )
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q3:largest_bbox_height_delta_feature",
+                target_type="feature",
+                clauses=[
+                    Clause(
+                        id="has_positive_bbox_height_delta",
+                        kind="metric_compare",
+                        metric="bbox_delta_span_z",
+                        operator=">",
+                        value=0.0,
+                        text="The target feature changes the compiled solid bounding-box height between adjacent CadQuery snapshots.",
+                    ),
+                    Clause(
+                        id="has_volume_delta_for_bbox_delta",
+                        kind="has_measurement",
+                        metric="signed_volume_delta",
+                        text="The target feature also has a kernel-measured volume delta.",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="bbox_delta_span_z",
+                hop_count=3,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
+    bbox_expansion_features = [
+        feature
+        for feature in _nodes_with_numeric_measurement(graph, features, "bbox_delta_max_span")
+        if _measurement_value(graph, feature.id, "bbox_delta_max_span") > GEOMETRY_MARGIN_EPSILON
+        and isinstance(_measurement_value(graph, feature.id, "signed_volume_delta"), (int, float))
+    ]
+    if (
+        len(bbox_expansion_features) >= 2
+        and _has_unique_extreme(
+            graph,
+            bbox_expansion_features,
+            "bbox_delta_max_span",
+            "argmax",
+            min_margin=GEOMETRY_MARGIN_EPSILON,
+        )
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q3:largest_bbox_expansion_feature",
+                target_type="feature",
+                clauses=[
+                    Clause(
+                        id="has_bbox_expansion",
+                        kind="metric_compare",
+                        metric="bbox_delta_max_span",
+                        operator=">",
+                        value=0.0,
+                        text="The target feature changes at least one compiled solid bounding-box span between adjacent CadQuery snapshots.",
+                    ),
+                    Clause(
+                        id="has_volume_delta_for_bbox_expansion",
+                        kind="has_measurement",
+                        metric="signed_volume_delta",
+                        text="The target feature also has a kernel-measured volume delta.",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="bbox_delta_max_span",
+                hop_count=3,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
+    bbox_min_z_delta_features = [
+        feature
+        for feature in _nodes_with_numeric_measurement(graph, features, "bbox_delta_min_z")
+        if _measurement_value(graph, feature.id, "bbox_delta_min_z") > GEOMETRY_MARGIN_EPSILON
+        and isinstance(_measurement_value(graph, feature.id, "signed_volume_delta"), (int, float))
+    ]
+    if (
+        len(bbox_min_z_delta_features) >= 2
+        and _has_unique_extreme(
+            graph,
+            bbox_min_z_delta_features,
+            "bbox_delta_min_z",
+            "argmax",
+            min_margin=GEOMETRY_MARGIN_EPSILON,
+        )
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q3:largest_bbox_min_z_delta_feature",
+                target_type="feature",
+                clauses=[
+                    Clause(
+                        id="has_positive_bbox_min_z_delta",
+                        kind="metric_compare",
+                        metric="bbox_delta_min_z",
+                        operator=">",
+                        value=0.0,
+                        text="The target feature moves the compiled solid bounding-box minimum Z upward between adjacent CadQuery snapshots.",
+                    ),
+                    Clause(
+                        id="has_volume_delta_for_bbox_min_z_delta",
+                        kind="has_measurement",
+                        metric="signed_volume_delta",
+                        text="The target feature also has a kernel-measured volume delta.",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="bbox_delta_min_z",
+                hop_count=3,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
+    centroid_delta_features = [
+        feature
+        for feature in _nodes_with_numeric_measurement(graph, features, "centroid_delta_z")
+        if _measurement_value(graph, feature.id, "centroid_delta_z") > GEOMETRY_MARGIN_EPSILON
+    ]
+    if (
+        len(centroid_delta_features) >= 2
+        and _has_unique_extreme(
+            graph,
+            centroid_delta_features,
+            "centroid_delta_z",
+            "argmax",
+            min_margin=GEOMETRY_MARGIN_EPSILON,
+        )
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q3:largest_upward_centroid_delta_feature",
+                target_type="feature",
+                clauses=[
+                    Clause(
+                        id="has_positive_centroid_delta",
+                        kind="metric_compare",
+                        metric="centroid_delta_z",
+                        operator=">",
+                        value=0.0,
+                        text="The target feature moves the compiled solid centroid upward between adjacent CadQuery snapshots.",
+                    ),
+                    Clause(
+                        id="has_volume_delta_for_centroid_delta",
+                        kind="has_measurement",
+                        metric="signed_volume_delta",
+                        text="The target feature also has a kernel-measured volume delta.",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="centroid_delta_z",
+                hop_count=3,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
+    centroid_shift_features = [
+        feature
+        for feature in _nodes_with_numeric_measurement(graph, features, "centroid_delta_magnitude")
+        if _measurement_value(graph, feature.id, "centroid_delta_magnitude") > GEOMETRY_MARGIN_EPSILON
+        and isinstance(_measurement_value(graph, feature.id, "signed_volume_delta"), (int, float))
+    ]
+    if (
+        len(centroid_shift_features) >= 2
+        and _has_unique_extreme(
+            graph,
+            centroid_shift_features,
+            "centroid_delta_magnitude",
+            "argmax",
+            min_margin=GEOMETRY_MARGIN_EPSILON,
+        )
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q3:largest_centroid_shift_feature",
+                target_type="feature",
+                clauses=[
+                    Clause(
+                        id="has_centroid_shift",
+                        kind="metric_compare",
+                        metric="centroid_delta_magnitude",
+                        operator=">",
+                        value=0.0,
+                        text="The target feature moves the compiled solid centroid between adjacent CadQuery snapshots.",
+                    ),
+                    Clause(
+                        id="has_volume_delta_for_centroid_shift",
+                        kind="has_measurement",
+                        metric="signed_volume_delta",
+                        text="The target feature also has a kernel-measured volume delta.",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="centroid_delta_magnitude",
+                hop_count=3,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
+    if len(_nodes_with_numeric_measurement(graph, features, "topology_delta_faces")) >= 2:
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q3:largest_face_count_delta_feature",
+                target_type="feature",
+                clauses=[
+                    Clause(
+                        id="has_positive_face_delta",
+                        kind="metric_compare",
+                        metric="topology_delta_faces",
+                        operator=">",
+                        value=0.0,
+                        text="The target feature increases the compiled solid's face count.",
+                    ),
+                    Clause(
+                        id="has_volume_delta",
+                        kind="has_measurement",
+                        metric="signed_volume_delta",
+                        text="The target feature also has a kernel-measured volume delta.",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="topology_delta_faces",
+                hop_count=3,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
+    edge_delta_features = [
+        feature
+        for feature in _nodes_with_numeric_measurement(graph, features, "topology_delta_edges")
+        if _measurement_value(graph, feature.id, "topology_delta_edges") > 0
+        and isinstance(_measurement_value(graph, feature.id, "signed_volume_delta"), (int, float))
+    ]
+    if (
+        len(edge_delta_features) >= 2
+        and _has_unique_extreme(graph, edge_delta_features, "topology_delta_edges", "argmax")
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q3:largest_edge_count_delta_feature",
+                target_type="feature",
+                clauses=[
+                    Clause(
+                        id="has_positive_edge_delta",
+                        kind="metric_compare",
+                        metric="topology_delta_edges",
+                        operator=">",
+                        value=0.0,
+                        text="The target feature increases the compiled solid's edge count.",
+                    ),
+                    Clause(
+                        id="has_volume_delta_for_edge_delta",
+                        kind="has_measurement",
+                        metric="signed_volume_delta",
+                        text="The target feature also has a kernel-measured volume delta.",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="topology_delta_edges",
                 hop_count=3,
                 difficulty="cad_browsecomp",
                 min_individual_clause_candidates=2,
@@ -339,6 +1107,36 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
             )
         )
     return queries
+
+
+def _nodes_with_numeric_measurement(graph: OntologyGraph, nodes: list[Node], metric: str) -> list[Node]:
+    result: list[Node] = []
+    for node in nodes:
+        value = _measurement_value(graph, node.id, metric)
+        if isinstance(value, (int, float)):
+            result.append(node)
+    return result
+
+
+def _has_unique_extreme(
+    graph: OntologyGraph,
+    nodes: list[Node],
+    metric: str,
+    aggregation: str,
+    *,
+    min_margin: float = 0.0,
+) -> bool:
+    scores = [
+        float(value)
+        for node in nodes
+        if isinstance((value := _measurement_value(graph, node.id, metric)), (int, float))
+    ]
+    if not scores:
+        return False
+    ordered = sorted(scores, reverse=aggregation == "argmax")
+    if len(ordered) < 2:
+        return True
+    return abs(ordered[0] - ordered[1]) > min_margin
 
 
 def _apply_clause(graph: OntologyGraph, candidates: list[Node], clause: Clause) -> list[Node]:

@@ -8,6 +8,9 @@ The current surface is a smoke-test implementation, not a fine-tuning-ready
 benchmark release. Core schema, graph, resolver, release, evaluation, and SFT
 export mechanisms exist, but geometry-first dataset quality gates, template
 diversity quotas, and syntax-shortcut rejection are still open work.
+The critical missing implementation is not more syntax-readable prompts; it is
+release-grade CAD geometry task coverage for the rows models should actually
+train on.
 
 ## Implemented In Current Surface
 
@@ -20,8 +23,11 @@ diversity quotas, and syntax-shortcut rejection are still open work.
   execution, missing-result, invalid-type, non-solid, volume, and bounding-box
   failure accounting.
 - Trace snapshots for measurable top-level CadQuery assignments, final shape
-  metrics, topology counts, and adjacent snapshot-derived volume/bbox/topology
-  deltas when CadQuery is installed.
+  metrics, centroids, topology counts, and adjacent snapshot-derived
+  volume/bbox/centroid/topology deltas when CadQuery is installed.
+- Scalar trace-derived geometry measurements for resolver use, including bbox
+  spans, bbox extrema, centroid coordinates, topology counts, centroid deltas,
+  topology deltas, and bbox deltas.
 - Trace CLI that writes `traces.jsonl` and `trace_report.json`.
 - Optional graph build integration for trace JSONL, including snapshot-state
   measurements, feature application effect deltas, and exact
@@ -30,18 +36,23 @@ diversity quotas, and syntax-shortcut rejection are still open work.
 - AST assignment and call-chain extraction.
 - Bounded unrolling for simple `for` loops over literal iterables.
 - Typed ontology graph records with nodes, relations, and measurements.
-- Operation, feature, parameter, profile, workplane, path, selector, solid, and
-  measurement node families.
+- Operation, feature, parameter, profile, workplane, path, path-point,
+  path-segment, selector, solid, and measurement node families.
 - Stable selector-derived face nodes and same-face joins.
 - Kernel selector-result summaries for directly assigned `.faces(...)`
   workplanes, with selected counts, shape types, face bbox signatures,
   kernel-backed stable face IDs, and release-ready selected-face rows when
   private trace evidence is present.
+- Kernel selector-result association for simple loop-variable `.faces(...)`
+  calls when trace evidence can be matched by source line.
 - Profile geometry for `.circle(...)`, `.rect(...)`, and
   `.polyline(...).close()`.
 - Workplane frame extraction for default planes and explicit `cq.Plane(...)`.
 - Sketch-center, path-tangent, nearest-path-point, material-region, and
   void-region evidence when conservatively derivable from source/profile data.
+- Explicit path-point and path-segment geometry from visible spline points,
+  including point coordinates, point distance to origin, segment vectors,
+  segment midpoints, segment lengths, and midpoint distances.
 - Conservative material/void region prism geometry from located profiles,
   including volume, bbox, extrusion axis, height, start/end centroids, and
   midpoint centroid.
@@ -50,6 +61,14 @@ diversity quotas, and syntax-shortcut rejection are still open work.
   region labels solely for using region geometry.
 - Deterministic query IR with candidate-set trace, argmax/argmin, and
   reject-unless-unique policy.
+- Initial geometry-backed query families for compiled feature volume, compiled
+  feature centroid, compiled feature face count, positive kernel volume delta,
+  removed kernel volume delta, bbox-bound movement, centroid-shift magnitude,
+  upward centroid delta, and compiled face/edge-count deltas.
+- Initial selector-result geometry query families for kernel-selected face
+  identity, face bbox comparisons, and selected-count comparisons.
+- Initial path-geometry query families for nearest path point to origin,
+  highest path point, and longest path segment.
 - Rule-based prompt rendering with clause-to-clue maps, persisted
   candidate-count annotations, hidden-clause traceability validation, and
   row-level high-hop clue breadth audits.
@@ -77,6 +96,11 @@ diversity quotas, and syntax-shortcut rejection are still open work.
 - Answer-only, candidate-trace, ablation, and scaling SFT JSONL exports.
 - One-command smoke experiment orchestration.
 - Dataset card, query failure report, and run artifact manifest generation.
+- Generated Markdown dataset previews for reviewing sampled prompts, query
+  programs, candidate traces, gold answers, and ontology node/measurement
+  samples after task-family or node-type changes.
+- Dataset composition reports now include prompt-family counts and quality flags
+  for syntax-only calibration rows and geometry-critical rows.
 - Release verifier reports with row validation, release validation, leakage,
   public/private parity, verifier failure taxonomy, quarantine taxonomy, and
   stop-gate summaries.
@@ -92,6 +116,14 @@ diversity quotas, and syntax-shortcut rejection are still open work.
   release rows.
 - Zero-shot/few-shot request exports and answer/reasoning SFT exports are
   written for both full smoke rows and filtered release rows.
+- SFT export defaults now exclude syntax-only calibration, noncritical, and
+  quarantined rows, and write the geometry-critical training subset unless
+  calibration export is explicitly requested. SFT reports include a default
+  training-readiness summary.
+- Release verifier reports include a `default_sft_geometry_critical_dominance`
+  stop gate requiring the default exported training rows to be nonempty,
+  geometry-critical above threshold, syntax-calibration-free, and
+  quarantine-free.
 - Public/private row views separate answer-free benchmark inputs from private
   gold answers, query programs, candidate traces, and clue maps.
 - Public/private exports include row-ID parity and hidden-field leak audits.
@@ -147,8 +179,144 @@ Result on 2026-04-29:
 - Packaged artifact: `runs/experiment_smoke.tar.gz` with SHA-256
   `16fefe2a511f75ddef0a0f2cddad88245a9a1c436498ced5893f316d142752f8`.
 
+## Generated Preview Review
+
+Reviewed on 2026-05-17:
+
+- `runs/verify_cadevolve_20260517/material_region_fix_preview.md`
+- `runs/verify_cadevolve_20260517/void_region_loop_trace_preview.md`
+- `runs/verify_cadevolve_20260517/solid_measurement_feature_preview.md`
+- `runs/verify_cadevolve_20260517/feature_effect_delta_preview.md`
+- `runs/verify_cadevolve_20260517/selector_geometry_preview.md`
+- `runs/verify_cadevolve_20260517/path_geometry_preview.md`
+- `runs/verify_cadevolve_20260517/selector_edge_trace_preview_v2.md`
+- `runs/verify_cadevolve_20260517/edge_selector_spatial_preview.md`
+- `runs/verify_cadevolve_20260517/edge_spatial_relation_preview.md`
+
+Conservatively checked as done:
+
+- The preview generator itself works as a review artifact: it shows sampled
+  prompts, hidden query programs, candidate traces, gold answers, and graph
+  node samples with attached measurements.
+- The reviewed traced CadEvolve-derived artifact contains 9 rows, of which 4
+  are tagged geometry-critical and 1 is tagged syntax-only calibration.
+- The SFT default export for that artifact keeps the 4 geometry-critical rows
+  and excludes 5 calibration/noncritical/quarantined rows.
+- The sampled geometry-critical families are backed by compiled/kernel-derived
+  measurements rather than assignment-order-only syntax:
+  `largest_compiled_volume_feature`, `largest_positive_volume_delta_feature`,
+  `largest_face_count_delta_feature`, and `largest_added_region`.
+- The graph contains scalar resolver-ready measurements for snapshot volume,
+  bbox spans/extrema, centroid coordinates, topology counts,
+  feature-application volume deltas, bbox deltas, centroid deltas, and topology
+  deltas.
+- Kernel-measured material-region rows exist for additive `.extrude(...)` and
+  `.sweep(...)` features in the reviewed trace artifact, including the first
+  additive solid where no previous solid snapshot exists.
+- Additive features are no longer misclassified as void regions when an
+  adjacent trace snapshot delta is negative because the adjacent snapshot is an
+  unrelated standalone solid.
+- Simple `for` loops are traced body-statement by body-statement, so repeated
+  CadEvolve cut operations on the same assignment target can be aligned with
+  per-iteration kernel deltas.
+- Repeated-target trace effects require a source-line match and are consumed in
+  source-line order, preventing loop-body cut projections from being mislabeled
+  when trace evidence is missing while still allowing exact repeated cut
+  effects when trace evidence exists.
+- In the reviewed 8-source CadEvolve cut slice, `largest_removed_region` rows
+  are release-ready, geometry-critical rows backed by
+  `has_kernel_void_region_geometry`.
+- The reviewed 8-source CadEvolve cut slice contains 53 rows, 22
+  geometry-critical rows, and 8 syntax-only calibration rows. Default SFT keeps
+  19 rows and excludes 34 calibration/noncritical/quarantined rows.
+- The reviewed 8-source solid-measurement slice contains 61 rows, including 30
+  geometry-critical rows and 8 syntax-only calibration rows. Default SFT keeps
+  27 rows and excludes 34 calibration/noncritical/quarantined rows.
+- The reviewed solid-measurement preview demonstrates release-ready,
+  geometry-critical rows for compiled volume plus bbox height, highest compiled
+  centroid, largest compiled face count, and largest upward centroid delta.
+- Story 12.1 is checked as implemented because the reviewed rows cover compiled
+  solid volume, bbox, centroid, and topology-count measurements. This is not a
+  statement that the full release is balanced or quota-complete.
+- The reviewed feature-effect preview contains release-ready, geometry-critical
+  rows for positive and removed kernel volume deltas, bbox minimum-Z movement,
+  centroid-shift magnitude, upward centroid movement, face-count deltas, and
+  edge-count deltas.
+- The reviewed 8-source feature-effect slice contains 75 rows, including 44
+  geometry-critical rows and 8 syntax-only calibration rows. Default SFT keeps
+  41 rows and excludes 34 calibration/noncritical/quarantined rows.
+- Story 12.2 is checked as implemented because the reviewed rows cover
+  kernel-derived feature application effects for volume, bbox, topology, and
+  centroid movement. This remains an initial subset, not a balanced release.
+- The reviewed selector preview shows 3 release-ready, geometry-critical
+  `selected_face` rows backed by `has_kernel_stable_face_id`. After source-line
+  trace matching, all 16 selector nodes in the reviewed RC8 slice are
+  kernel-backed, including simple loop-variable selectors.
+- Selector tracing now evaluates selector subexpressions before executing the
+  containing statement, so a `.faces(...)` or `.edges(...)` call inside a longer
+  modeling chain is measured as the selector result rather than as the final
+  assigned solid. A 10-source RC10 review slice captures 25 selector results,
+  including 12 kernel-backed edge nodes from a real `.edges()` call; the
+  preview labels no-argument selectors as `.edges()` rather than as the
+  assignment variable name.
+- The reviewed edge-selector spatial preview adds 1 release-ready,
+  geometry-critical row backed by `has_kernel_stable_edge_id`. Its candidate
+  trace starts from 12 kernel-selected edges from a real CadEvolve `.edges()`
+  call, filters to X-spanning edges, filters to the negative-Y side, and then
+  uses kernel-measured `bbox_max_z` to select the unique answer.
+- The reviewed edge spatial-relation preview upgrades that row to require
+  `perpendicular_to`, derived from kernel-selected edge bounding-box axes. The
+  reviewed graph contains 36 `parallel_to` and 96 `perpendicular_to` relations
+  on the 12 selected edge nodes, plus a release-ready row whose candidate trace
+  preserves broad intermediate candidate sets before the final unique
+  `bbox_max_z` aggregation.
+- The reviewed path-geometry preview shows release-ready, geometry-critical
+  rows for nearest visible spline path point to origin, highest visible spline
+  path point, and longest visible spline path segment. The reviewed 8-source
+  path slice contains 87 rows overall, including 61 geometry-critical rows and
+  8 syntax-only calibration rows. Default SFT keeps 58 rows and excludes 29
+  calibration/noncritical/quarantined rows.
+- The reviewed path-geometry SFT report passes the default training geometry
+  dominance gate: 58 of 58 default training rows are geometry-critical, with
+  zero syntax-only and zero quarantined rows. The release verifier includes the
+  `default_sft_geometry_critical_dominance` stop gate and passes that gate for
+  this slice while still correctly blocking release on quarantined rows.
+- Story 12.6 is checked as implemented because the SFT export and release
+  verifier now enforce and report geometry-critical dominance for the default
+  training surface.
+
+Still not checked as done:
+
+- Solid measurement task coverage is still only an initial release-ready
+  subset: it has volume/bbox/centroid/topology-count rows, but not broad
+  variants, quotas, or answer-entropy guarantees.
+- Feature-application effect coverage is still an initial release-ready subset:
+  volume, bbox, topology, and centroid movement are demonstrated, but broader
+  variants, quotas, and answer-entropy guarantees remain incomplete.
+- Selector-result geometry remains partial: selected-count query support exists
+  and is unit-tested, but the reviewed RC8 CadEvolve slice has selected count
+  `1` for every kernel selector, so it does not yet demonstrate real
+  selected-count training rows or enough bbox/signature variants to close
+  story 12.3. The later RC10 review slice demonstrates kernel-backed edge
+  nodes and 1 release-ready edge-selector spatial row, but this is not broad
+  enough to close story 12.3.
+- Path/distance coverage is partial: path-point and path-segment distance rows
+  are demonstrated, and one kernel-edge perpendicularity row is demonstrated,
+  but containment, intersection, adjacency, opposite-face, broader
+  parallel/perpendicular, and coaxial spatial-relation rows remain open, so
+  story 12.5 is work-in-progress rather than implemented.
+- The preview does not establish prompt-family balance, answer entropy, or
+  syntax shortcut resistance. Those remain open release blockers even though
+  the default SFT geometry-critical dominance gate is now implemented.
+- Containment, intersection, adjacency, and stable spatial-relation question
+  families are not demonstrated by this preview.
+
 ## Open Work
 
+- Highest priority: implement geometry-backed training rows for volume, bbox,
+  centroid, topology counts/deltas, selector-result geometry, material/void
+  region deltas, feature application effects, path distances, containment,
+  intersection, adjacency, and stable spatial relations.
 - Geometry-first release gates that reject or cap rows answerable from source
   syntax, assignment names, operation order, or literal arguments alone.
 - Prompt-family, answer-entropy, and static-hop/geometry-hop quality reports
@@ -157,8 +325,9 @@ Result on 2026-04-29:
 - Training-export defaults that exclude syntax-only calibration rows unless an
   explicit calibration export is requested.
 - Broader kernel snapshot association for chained features, in-place mutation
-  patterns, non-assignment feature effects, and chained selector expressions
-  whose `.faces(...)` result is consumed before assignment.
+  patterns, non-assignment feature effects, and more complex chained selector
+  expressions beyond the current pre-execution `.faces(...)`/`.edges(...)`
+  subexpression tracing.
 - Robust B-Rep adjacency and opposite-face relations.
 - Material-region and void-region geometry beyond source/profile projections.
 - Provider submission adapters and remote/GPU experiment orchestration.

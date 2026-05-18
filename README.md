@@ -134,13 +134,29 @@ uv run cadqa training export-sft \
   --rows data/cadqa_graph_smoke/rows.jsonl \
   --out runs/sft_smoke \
   --scaling-sizes 8 16 32
+
+uv run cadqa dataset preview \
+  data/cadqa_graph_smoke \
+  --graphs runs/graph_smoke \
+  --out runs/feature_preview.md \
+  --family largest_compiled_volume_feature \
+  --node-type feature \
+  --sample-per-family 2 \
+  --seed 17
 ```
 
-The SFT export command is currently a format/export smoke check. Do not treat
-its output as a model-training dataset unless the input rows have passed
-geometry-first quality gates: syntax-only calibration rows must be excluded or
-strictly capped, prompt families must be balanced, and geometry-derived clauses
-must be necessary for the main benchmark answers.
+The SFT export command writes only geometry-critical rows by default and
+excludes syntax-only calibration, noncritical, and quarantined rows. Do not
+treat its output as a model-training dataset unless the input rows also pass the broader
+geometry-first quality gates: prompt families must be balanced, and
+geometry-derived clauses must be necessary for the main benchmark answers. Use
+`--include-calibration` only for explicit calibration exports.
+
+Use `cadqa dataset preview` after adding or changing a task family, graph node
+type, or measurement extractor. It writes a Markdown artifact containing
+sample prompts, query programs, candidate traces, gold answers, and optional
+graph node/measurement samples. The smoke experiment also writes
+`dataset/GENERATED_PREVIEW.md` automatically.
 
 Run the full smoke workflow as one command:
 
@@ -220,6 +236,13 @@ effects, topology deltas, centroids, distances, material regions, or void
 regions. Rows answerable from assignment names, operation order, literal
 arguments, or source syntax alone are calibration rows and should not dominate
 release or training exports.
+
+The critical path is kernel/geometry-backed task coverage: volumes, bounding
+boxes, centroids, topology counts and deltas, feature effects, selector-result
+geometry, material/void region deltas, path distances, containment,
+intersection, adjacency, and other stable spatial relations. Export plumbing is
+not enough; these geometry families must dominate the rows used for model
+training.
 
 LLM calls are allowed only for optional external evaluation or wording
 experiments. They are not part of trusted generation or grading.

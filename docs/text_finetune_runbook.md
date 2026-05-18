@@ -22,6 +22,11 @@ rtk uv run cadqa training export-sft \
   --scaling-sizes 8 16 32
 ```
 
+By default, `export-sft` writes only the geometry-critical training subset and
+excludes syntax-only calibration, noncritical, and quarantined rows. Use
+`--include-calibration` only when intentionally exporting calibration data for
+audits or ablations.
+
 The command writes:
 
 - `answer_sft.jsonl`;

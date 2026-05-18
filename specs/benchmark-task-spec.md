@@ -66,6 +66,14 @@ traces.
 Training exports must either exclude syntax-only calibration rows by default or
 enforce a small quota for them.
 
+The critical benchmark subset is CAD geometry itself. Release readiness must
+prioritize rows about compiled or ontology-derived geometry: solid volume and
+bbox, centroids, topology counts and deltas, selector-result geometry,
+material/void region deltas, profile application effects, path distances,
+containment/intersection/adjacency, and other stable spatial relations. These
+rows should be the main training surface; syntax-readable rows are supporting
+calibration only.
+
 ## Prompt Requirements
 
 Prompts are rendered from approved templates. Every public clue maps to a
