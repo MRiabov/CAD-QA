@@ -545,11 +545,14 @@ class _Extractor:
         shape_types = kernel_result.get("shape_types") or []
         selected_count = int(kernel_result.get("selected_count") or 0)
         previous_selector_ids = self.selector_ids_by_text.get(selector_text, [])
+        selected_face_ids: list[str] = []
+        normal_axes: dict[str, str] = {}
         for index in range(selected_count):
             bbox = bbox_signatures[index] if index < len(bbox_signatures) else None
             shape_type = shape_types[index] if index < len(shape_types) else "unknown"
             signature = _kernel_face_signature(selector_text, bbox, shape_type, index)
             face_id = f"face:kernel:{signature}"
+            normal_axis = _bbox_flat_axis(bbox)
             self.graph.add_node(
                 Node(
                     id=face_id,
@@ -562,9 +565,13 @@ class _Extractor:
                         "selector_index": index,
                         "shape_type": shape_type,
                         "bbox": bbox,
+                        "normal_axis": normal_axis,
                     },
                 )
             )
+            selected_face_ids.append(face_id)
+            if normal_axis is not None:
+                normal_axes[face_id] = normal_axis
             self.graph.add_relation(
                 Relation(
                     face_id,
@@ -597,6 +604,11 @@ class _Extractor:
                     self.graph.add_measurement(
                         Measurement(face_id, "entity_geometry", name, value, evidence={"source": "cadquery_selector_result"})
                     )
+            if normal_axis is not None:
+                self.graph.add_measurement(
+                    Measurement(face_id, "entity_geometry", "normal_axis", normal_axis, evidence={"source": "cadquery_selector_result"})
+                )
+        self._add_kernel_face_spatial_relations(selected_face_ids, normal_axes, kernel_result)
         for previous_selector_id in previous_selector_ids:
             self.graph.add_relation(
                 Relation(
@@ -614,6 +626,38 @@ class _Extractor:
                     evidence={"source": kernel_result.get("evidence", "cadquery_selector_result")},
                 )
             )
+
+    def _add_kernel_face_spatial_relations(
+        self,
+        face_ids: list[str],
+        normal_axes: dict[str, str],
+        kernel_result: dict[str, Any],
+    ) -> None:
+        evidence = {"source": kernel_result.get("evidence", "cadquery_selector_result")}
+        bboxes = {
+            face_id: face.properties.get("bbox")
+            for face_id in face_ids
+            if (face := self.graph.node(face_id)) is not None
+        }
+        for source_id in face_ids:
+            source_axis = normal_axes.get(source_id)
+            if source_axis is None:
+                continue
+            for target_id in face_ids:
+                if source_id == target_id:
+                    continue
+                target_axis = normal_axes.get(target_id)
+                if target_axis is None:
+                    continue
+                if source_axis == target_axis:
+                    self.graph.add_relation(Relation(source_id, target_id, "parallel_to", evidence=evidence))
+                    if _face_bboxes_opposite(bboxes.get(source_id), bboxes.get(target_id), source_axis):
+                        self.graph.add_relation(Relation(source_id, target_id, "opposite_to", evidence=evidence))
+                    continue
+                self.graph.add_relation(Relation(source_id, target_id, "perpendicular_to", evidence=evidence))
+                if _bboxes_touch_or_overlap(bboxes.get(source_id), bboxes.get(target_id)):
+                    self.graph.add_relation(Relation(source_id, target_id, "adjacent_to", evidence=evidence))
+                    self.graph.add_relation(Relation(source_id, target_id, "intersects", evidence=evidence))
 
     def _add_kernel_selected_entities(
         self,
@@ -695,7 +739,9 @@ class _Extractor:
                     Measurement(entity_id, "entity_geometry", "dominant_axis", axis, evidence={"source": "cadquery_selector_result"})
                 )
         if entity_type == "edge":
-            self._add_kernel_edge_axis_relations(selected_entity_ids, selected_axes, kernel_result)
+            self._add_kernel_edge_midpoint_metrics(selected_entity_ids, kernel_result)
+            self._add_kernel_edge_endpoints(selected_entity_ids, kernel_result)
+            self._add_kernel_edge_spatial_relations(selected_entity_ids, selected_axes, kernel_result)
         for previous_selector_id in previous_selector_ids:
             self.graph.add_relation(
                 Relation(
@@ -714,13 +760,22 @@ class _Extractor:
                 )
             )
 
-    def _add_kernel_edge_axis_relations(
+    def _add_kernel_edge_spatial_relations(
         self,
         edge_ids: list[str],
         axes: dict[str, str],
         kernel_result: dict[str, Any],
     ) -> None:
         evidence = {"source": kernel_result.get("evidence", "cadquery_selector_result")}
+        endpoints_by_edge = {
+            edge_id: endpoints
+            for edge_id in edge_ids
+            if (endpoints := _bbox_edge_endpoints(self.graph.node(edge_id).properties.get("bbox") if self.graph.node(edge_id) else None)) is not None
+        }
+        lengths_by_edge = {
+            edge_id: _point_distance(endpoints[0], endpoints[1])
+            for edge_id, endpoints in endpoints_by_edge.items()
+        }
         for source_id in edge_ids:
             source_axis = axes.get(source_id)
             if source_axis is None:
@@ -733,6 +788,94 @@ class _Extractor:
                     continue
                 relation_type = "parallel_to" if source_axis == target_axis else "perpendicular_to"
                 self.graph.add_relation(Relation(source_id, target_id, relation_type, evidence=evidence))
+                if (
+                    source_axis == target_axis
+                    and not _edge_endpoints_touch(endpoints_by_edge.get(source_id), endpoints_by_edge.get(target_id))
+                    and _edge_lengths_equal(endpoints_by_edge.get(source_id), endpoints_by_edge.get(target_id))
+                ):
+                    self.graph.add_relation(Relation(source_id, target_id, "opposite_to", evidence=evidence))
+                if _edge_endpoints_touch(endpoints_by_edge.get(source_id), endpoints_by_edge.get(target_id)):
+                    self.graph.add_relation(Relation(source_id, target_id, "adjacent_to", evidence=evidence))
+                    self.graph.add_relation(Relation(source_id, target_id, "intersects", evidence=evidence))
+                source_length = lengths_by_edge.get(source_id)
+                target_length = lengths_by_edge.get(target_id)
+                if source_length is None or target_length is None:
+                    continue
+                if abs(source_length - target_length) <= 1e-6:
+                    self.graph.add_relation(Relation(source_id, target_id, "same_length_as", evidence=evidence))
+                elif source_length > target_length + 1e-6:
+                    self.graph.add_relation(Relation(source_id, target_id, "longer_than", evidence=evidence))
+                else:
+                    self.graph.add_relation(Relation(source_id, target_id, "shorter_than", evidence=evidence))
+
+    def _add_kernel_edge_midpoint_metrics(self, edge_ids: list[str], kernel_result: dict[str, Any]) -> None:
+        evidence = {"source": kernel_result.get("evidence", "cadquery_selector_result")}
+        self._ensure_global_origin(evidence)
+        for edge_id in edge_ids:
+            edge = self.graph.node(edge_id)
+            if edge is None or self.graph.measurements_for(edge_id, "midpoint"):
+                continue
+            midpoint = _bbox_midpoint(edge.properties.get("bbox"))
+            endpoints = _bbox_edge_endpoints(edge.properties.get("bbox"))
+            if midpoint is None or endpoints is None:
+                continue
+            edge_length = _point_distance(endpoints[0], endpoints[1])
+            distance_to_origin = math.sqrt(sum(component * component for component in midpoint))
+            self.graph.add_relation(Relation(edge_id, "origin:global", "distance_to", evidence=evidence))
+            self.graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint", midpoint, "mm", evidence))
+            self.graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_x", midpoint[0], "mm", evidence))
+            self.graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint[1], "mm", evidence))
+            self.graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_z", midpoint[2], "mm", evidence))
+            self.graph.add_measurement(Measurement(edge_id, "relation_metric", "edge_length", edge_length, "mm", evidence))
+            self.graph.add_measurement(Measurement(edge_id, "relation_metric", "midpoint_distance_to_origin", distance_to_origin, "mm", evidence))
+
+    def _add_kernel_edge_endpoints(self, edge_ids: list[str], kernel_result: dict[str, Any]) -> None:
+        evidence = {"source": kernel_result.get("evidence", "cadquery_selector_result")}
+        self._ensure_global_origin(evidence)
+        for edge_id in edge_ids:
+            edge = self.graph.node(edge_id)
+            if edge is None:
+                continue
+            endpoints = _bbox_edge_endpoints(edge.properties.get("bbox"))
+            if endpoints is None:
+                continue
+            for endpoint in endpoints:
+                endpoint_id = f"edge_endpoint:kernel:{_point_signature(endpoint)}"
+                self.graph.add_node(
+                    Node(
+                        id=endpoint_id,
+                        type="edge_endpoint",
+                        label=f"kernel edge endpoint {_rounded_signature_value(endpoint)}",
+                        source_ref=edge.source_ref,
+                        properties={
+                            "coordinate": endpoint,
+                            "kernel_backed": True,
+                        },
+                    )
+                )
+                self.graph.add_relation(Relation(endpoint_id, edge_id, "endpoint_of", evidence=evidence))
+                self.graph.add_relation(Relation(endpoint_id, edge_id, "contained_in", evidence=evidence))
+                self.graph.add_relation(Relation(endpoint_id, "origin:global", "distance_to", evidence=evidence))
+                self.graph.add_relation(Relation(edge_id, endpoint_id, "has_endpoint", evidence=evidence))
+                if not self.graph.measurements_for(endpoint_id, "coordinate"):
+                    distance_to_origin = math.sqrt(sum(component * component for component in endpoint))
+                    self.graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate", endpoint, "mm", evidence))
+                    self.graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_x", endpoint[0], "mm", evidence))
+                    self.graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_y", endpoint[1], "mm", evidence))
+                    self.graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_z", endpoint[2], "mm", evidence))
+                    self.graph.add_measurement(Measurement(endpoint_id, "relation_metric", "distance_to_origin", distance_to_origin, "mm", evidence))
+
+    def _ensure_global_origin(self, evidence: dict[str, Any]) -> None:
+        self.graph.add_node(
+            Node(
+                id="origin:global",
+                type="origin",
+                label="global origin",
+                properties={"coordinate": [0.0, 0.0, 0.0]},
+            )
+        )
+        if not self.graph.measurements_for("origin:global", "coordinate"):
+            self.graph.add_measurement(Measurement("origin:global", "entity_geometry", "coordinate", [0.0, 0.0, 0.0], "mm", evidence))
 
     def _attach_profile_application_effect(
         self, feature_id: str, profile_id: str, record: OperationRecord
@@ -1451,6 +1594,139 @@ def _bbox_dominant_axis(bbox: Any) -> str | None:
     if len(positive) != 1:
         return None
     return positive[0][0]
+
+
+def _bbox_flat_axis(bbox: Any) -> str | None:
+    if not isinstance(bbox, dict):
+        return None
+    spans = _bbox_scalar_measurements("bbox", bbox)
+    axis_spans = {
+        axis: float(spans[f"bbox_span_{axis}"])
+        for axis in ("x", "y", "z")
+        if isinstance(spans.get(f"bbox_span_{axis}"), (int, float))
+    }
+    if len(axis_spans) != 3:
+        return None
+    flat = [(axis, span) for axis, span in axis_spans.items() if span <= 1e-6]
+    positive = [(axis, span) for axis, span in axis_spans.items() if span > 1e-6]
+    if len(flat) != 1 or len(positive) != 2:
+        return None
+    return flat[0][0]
+
+
+def _bbox_edge_endpoints(bbox: Any) -> list[list[float]] | None:
+    if _bbox_dominant_axis(bbox) is None or not isinstance(bbox, dict):
+        return None
+    minimum = bbox.get("min")
+    maximum = bbox.get("max")
+    if not (
+        isinstance(minimum, list)
+        and isinstance(maximum, list)
+        and len(minimum) >= 3
+        and len(maximum) >= 3
+    ):
+        return None
+    try:
+        return [
+            [float(minimum[0]), float(minimum[1]), float(minimum[2])],
+            [float(maximum[0]), float(maximum[1]), float(maximum[2])],
+        ]
+    except Exception:
+        return None
+
+
+def _edge_endpoints_touch(lhs: list[list[float]] | None, rhs: list[list[float]] | None) -> bool:
+    if lhs is None or rhs is None:
+        return False
+    return any(_points_close(left, right) for left in lhs for right in rhs)
+
+
+def _edge_lengths_equal(lhs: list[list[float]] | None, rhs: list[list[float]] | None, *, epsilon: float = 1e-6) -> bool:
+    if lhs is None or rhs is None or len(lhs) != 2 or len(rhs) != 2:
+        return False
+    return abs(_point_distance(lhs[0], lhs[1]) - _point_distance(rhs[0], rhs[1])) <= epsilon
+
+
+def _face_bboxes_opposite(lhs: Any, rhs: Any, normal_axis: str, *, epsilon: float = 1e-6) -> bool:
+    lhs_ranges = _bbox_ranges(lhs)
+    rhs_ranges = _bbox_ranges(rhs)
+    if lhs_ranges is None or rhs_ranges is None:
+        return False
+    axis_index = {"x": 0, "y": 1, "z": 2}[normal_axis]
+    if _ranges_touch_or_overlap(lhs_ranges[axis_index], rhs_ranges[axis_index], epsilon=epsilon):
+        return False
+    for index in range(3):
+        if index == axis_index:
+            continue
+        lhs_span = lhs_ranges[index][1] - lhs_ranges[index][0]
+        rhs_span = rhs_ranges[index][1] - rhs_ranges[index][0]
+        lhs_center = (lhs_ranges[index][0] + lhs_ranges[index][1]) / 2.0
+        rhs_center = (rhs_ranges[index][0] + rhs_ranges[index][1]) / 2.0
+        if abs(lhs_span - rhs_span) > epsilon or abs(lhs_center - rhs_center) > epsilon:
+            return False
+    return True
+
+
+def _bboxes_touch_or_overlap(lhs: Any, rhs: Any, *, epsilon: float = 1e-6) -> bool:
+    lhs_ranges = _bbox_ranges(lhs)
+    rhs_ranges = _bbox_ranges(rhs)
+    if lhs_ranges is None or rhs_ranges is None:
+        return False
+    return all(
+        _ranges_touch_or_overlap(lhs_ranges[index], rhs_ranges[index], epsilon=epsilon)
+        for index in range(3)
+    )
+
+
+def _bbox_midpoint(bbox: Any) -> list[float] | None:
+    ranges = _bbox_ranges(bbox)
+    if ranges is None:
+        return None
+    return [(lo + hi) / 2.0 for lo, hi in ranges]
+
+
+def _bbox_ranges(bbox: Any) -> list[tuple[float, float]] | None:
+    if not isinstance(bbox, dict):
+        return None
+    minimum = bbox.get("min")
+    maximum = bbox.get("max")
+    if not (
+        isinstance(minimum, list)
+        and isinstance(maximum, list)
+        and len(minimum) >= 3
+        and len(maximum) >= 3
+    ):
+        return None
+    ranges: list[tuple[float, float]] = []
+    for index in range(3):
+        lo = minimum[index]
+        hi = maximum[index]
+        if not (
+            isinstance(lo, (int, float))
+            and isinstance(hi, (int, float))
+            and math.isfinite(float(lo))
+            and math.isfinite(float(hi))
+        ):
+            return None
+        ranges.append((min(float(lo), float(hi)), max(float(lo), float(hi))))
+    return ranges
+
+
+def _ranges_touch_or_overlap(lhs: tuple[float, float], rhs: tuple[float, float], *, epsilon: float = 1e-6) -> bool:
+    return lhs[0] <= rhs[1] + epsilon and rhs[0] <= lhs[1] + epsilon
+
+
+def _point_distance(lhs: list[float], rhs: list[float]) -> float:
+    return math.sqrt(sum((float(lhs[index]) - float(rhs[index])) ** 2 for index in range(3)))
+
+
+def _points_close(lhs: list[float], rhs: list[float], *, epsilon: float = 1e-6) -> bool:
+    return len(lhs) >= 3 and len(rhs) >= 3 and all(abs(float(lhs[index]) - float(rhs[index])) <= epsilon for index in range(3))
+
+
+def _point_signature(point: list[float]) -> str:
+    digest = hashlib.sha256(json.dumps(_rounded_signature_value(point), sort_keys=True).encode("utf-8")).hexdigest()[:16]
+    return digest
 
 
 def _kernel_face_signature(selector_text: str, bbox: Any, shape_type: Any, index: int) -> str:

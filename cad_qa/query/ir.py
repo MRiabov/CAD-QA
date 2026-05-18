@@ -13,6 +13,7 @@ class Clause:
     relation: str | None = None
     target_type: str | None = None
     metric: str | None = None
+    reference_metric: str | None = None
     operator: str | None = None
     value: Any = None
     text: str | None = None

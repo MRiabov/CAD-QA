@@ -104,6 +104,7 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
     workplanes = graph.nodes_by_type("workplane")
     faces = graph.nodes_by_type("face")
     edges = graph.nodes_by_type("edge")
+    edge_endpoints = graph.nodes_by_type("edge_endpoint")
     paths = graph.nodes_by_type("path")
     path_points = graph.nodes_by_type("path_point")
     path_segments = graph.nodes_by_type("path_segment")
@@ -268,6 +269,90 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
                 min_individual_clause_candidates=2,
             )
         )
+    z_flat_positive_kernel_faces = [
+        face
+        for face in kernel_faces_with_bbox_z
+        if any(relation.source_id == face.id and relation.type == "opposite_to" for relation in graph.relations)
+        and any(relation.source_id == face.id and relation.type == "adjacent_to" for relation in graph.relations)
+        and any(relation.source_id == face.id and relation.type == "perpendicular_to" for relation in graph.relations)
+        and isinstance(_measurement_value(graph, face.id, "bbox_span_z"), (int, float))
+        and _measurement_value(graph, face.id, "bbox_span_z") < GEOMETRY_MARGIN_EPSILON
+        and isinstance(_measurement_value(graph, face.id, "bbox_max_x"), (int, float))
+        and _measurement_value(graph, face.id, "bbox_max_x") > GEOMETRY_MARGIN_EPSILON
+    ]
+    if (
+        len(z_flat_positive_kernel_faces) >= 2
+        and _has_unique_extreme(
+            graph,
+            z_flat_positive_kernel_faces,
+            "bbox_max_z",
+            "argmax",
+            min_margin=GEOMETRY_MARGIN_EPSILON,
+        )
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q7:highest_positive_x_flat_opposite_adjacent_perpendicular_kernel_face",
+                target_type="face",
+                clauses=[
+                    Clause(
+                        id="has_kernel_face_selector_identity",
+                        kind="has_relation",
+                        relation="has_kernel_stable_face_id",
+                        target_type="selector",
+                        text="The target face has kernel-backed selector-result geometry from a visible `.faces(...)` call.",
+                    ),
+                    Clause(
+                        id="has_opposite_face_relation",
+                        kind="has_relation",
+                        relation="opposite_to",
+                        target_type="face",
+                        text="The target face is opposite another parallel kernel-selected face with matching compiled in-plane span.",
+                    ),
+                    Clause(
+                        id="has_adjacent_face_relation",
+                        kind="has_relation",
+                        relation="adjacent_to",
+                        target_type="face",
+                        text="The target face is adjacent to another kernel-selected face whose compiled bounding box touches it.",
+                    ),
+                    Clause(
+                        id="has_perpendicular_face_relation",
+                        kind="has_relation",
+                        relation="perpendicular_to",
+                        target_type="face",
+                        text="The target face is perpendicular to another kernel-selected face based on compiled face normal axes.",
+                    ),
+                    Clause(
+                        id="flat_in_global_z",
+                        kind="metric_compare",
+                        metric="bbox_span_z",
+                        operator="<",
+                        value=GEOMETRY_MARGIN_EPSILON,
+                        text="The target face has near-zero compiled span in the global Z direction.",
+                    ),
+                    Clause(
+                        id="positive_x_extent",
+                        kind="metric_compare",
+                        metric="bbox_max_x",
+                        operator=">",
+                        value=GEOMETRY_MARGIN_EPSILON,
+                        text="The target face reaches positive global X according to its compiled bounding box.",
+                    ),
+                    Clause(
+                        id="has_face_bbox_z",
+                        kind="has_measurement",
+                        metric="bbox_max_z",
+                        text="The target face has a kernel-measured maximum Z coordinate.",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="bbox_max_z",
+                hop_count=6,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
     kernel_selectors_with_counts = [
         selector
         for selector in _nodes_with_numeric_measurement(graph, selectors, "selected_count")
@@ -361,7 +446,7 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
     ):
         queries.append(
             QueryProgram(
-                query_id=f"{graph.graph_id}:q5:highest_negative_y_x_span_perpendicular_kernel_edge",
+                query_id=f"{graph.graph_id}:q8:highest_negative_y_x_span_opposite_intersecting_adjacent_perpendicular_kernel_edge",
                 target_type="edge",
                 clauses=[
                     Clause(
@@ -377,6 +462,27 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
                         relation="perpendicular_to",
                         target_type="edge",
                         text="The target edge is perpendicular to another kernel-selected edge, based on compiled edge bounding-box axes.",
+                    ),
+                    Clause(
+                        id="has_adjacent_edge_relation",
+                        kind="has_relation",
+                        relation="adjacent_to",
+                        target_type="edge",
+                        text="The target edge is adjacent to another kernel-selected edge that shares a compiled selector-result endpoint.",
+                    ),
+                    Clause(
+                        id="has_intersection_edge_relation",
+                        kind="has_relation",
+                        relation="intersects",
+                        target_type="edge",
+                        text="The target edge intersects another kernel-selected edge at a compiled selector-result endpoint.",
+                    ),
+                    Clause(
+                        id="has_opposite_edge_relation",
+                        kind="has_relation",
+                        relation="opposite_to",
+                        target_type="edge",
+                        text="The target edge is opposite another parallel kernel-selected edge with the same compiled edge length and no shared endpoint.",
                     ),
                     Clause(
                         id="has_x_span",
@@ -403,6 +509,432 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
                 ],
                 aggregation="argmax",
                 aggregation_metric="bbox_max_z",
+                hop_count=6,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
+    positive_z_x_span_midpoint_edges = [
+        edge
+        for edge in _nodes_with_numeric_measurement(graph, kernel_edges_with_bbox_z, "midpoint_y")
+        if any(
+            relation.source_id == edge.id and relation.type == "distance_to"
+            for relation in graph.relations
+        )
+        and isinstance(_measurement_value(graph, edge.id, "midpoint_distance_to_origin"), (int, float))
+        and isinstance(_measurement_value(graph, edge.id, "bbox_span_x"), (int, float))
+        and _measurement_value(graph, edge.id, "bbox_span_x") > GEOMETRY_MARGIN_EPSILON
+        and isinstance(_measurement_value(graph, edge.id, "midpoint_z"), (int, float))
+        and _measurement_value(graph, edge.id, "midpoint_z") > GEOMETRY_MARGIN_EPSILON
+    ]
+    if (
+        len(positive_z_x_span_midpoint_edges) >= 2
+        and _has_unique_extreme(
+            graph,
+            positive_z_x_span_midpoint_edges,
+            "midpoint_y",
+            "argmax",
+            min_margin=GEOMETRY_MARGIN_EPSILON,
+        )
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q9:highest_y_positive_z_x_span_kernel_edge_midpoint",
+                target_type="edge",
+                clauses=[
+                    Clause(
+                        id="has_kernel_edge_selector_identity",
+                        kind="has_relation",
+                        relation="has_kernel_stable_edge_id",
+                        target_type="selector",
+                        text="The target edge has kernel-backed selector-result geometry from a visible `.edges(...)` call.",
+                    ),
+                    Clause(
+                        id="has_origin_distance_relation",
+                        kind="has_relation",
+                        relation="distance_to",
+                        target_type="origin",
+                        text="The target edge has a compiled midpoint distance relation to the global origin.",
+                    ),
+                    Clause(
+                        id="has_midpoint_distance",
+                        kind="has_measurement",
+                        metric="midpoint_distance_to_origin",
+                        text="The target edge has a compiled midpoint distance-to-origin measurement.",
+                    ),
+                    Clause(
+                        id="has_x_span",
+                        kind="metric_compare",
+                        metric="bbox_span_x",
+                        operator=">",
+                        value=GEOMETRY_MARGIN_EPSILON,
+                        text="The target edge has a kernel-measured bounding box that spans the global X direction.",
+                    ),
+                    Clause(
+                        id="positive_midpoint_z",
+                        kind="metric_compare",
+                        metric="midpoint_z",
+                        operator=">",
+                        value=GEOMETRY_MARGIN_EPSILON,
+                        text="The target edge midpoint has a positive compiled Z coordinate.",
+                    ),
+                    Clause(
+                        id="has_midpoint_y",
+                        kind="has_measurement",
+                        metric="midpoint_y",
+                        text="The target edge has a compiled midpoint Y coordinate.",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="midpoint_y",
+                hop_count=6,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
+    positive_z_short_edges = [
+        edge
+        for edge in _nodes_with_numeric_measurement(graph, kernel_edges_with_bbox_z, "edge_length")
+        if isinstance(_measurement_value(graph, edge.id, "midpoint_z"), (int, float))
+        and _measurement_value(graph, edge.id, "midpoint_z") > GEOMETRY_MARGIN_EPSILON
+        and isinstance(_measurement_value(graph, edge.id, "edge_length"), (int, float))
+        and isinstance(_measurement_value(graph, edge.id, "midpoint_distance_to_origin"), (int, float))
+        and _measurement_value(graph, edge.id, "edge_length")
+        < _measurement_value(graph, edge.id, "midpoint_distance_to_origin")
+        and isinstance(_measurement_value(graph, edge.id, "midpoint_x"), (int, float))
+    ]
+    if (
+        len(positive_z_short_edges) >= 2
+        and _has_unique_extreme(
+            graph,
+            positive_z_short_edges,
+            "midpoint_x",
+            "argmax",
+            min_margin=GEOMETRY_MARGIN_EPSILON,
+        )
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q10:rightmost_short_positive_z_kernel_edge",
+                target_type="edge",
+                clauses=[
+                    Clause(
+                        id="has_kernel_edge_selector_identity",
+                        kind="has_relation",
+                        relation="has_kernel_stable_edge_id",
+                        target_type="selector",
+                        text="The target edge has kernel-backed selector-result geometry from a visible `.edges(...)` call.",
+                    ),
+                    Clause(
+                        id="has_edge_length",
+                        kind="has_measurement",
+                        metric="edge_length",
+                        text="The target edge has a compiled edge-length measurement.",
+                    ),
+                    Clause(
+                        id="positive_midpoint_z",
+                        kind="metric_compare",
+                        metric="midpoint_z",
+                        operator=">",
+                        value=GEOMETRY_MARGIN_EPSILON,
+                        text="The target edge midpoint has a positive compiled Z coordinate.",
+                    ),
+                    Clause(
+                        id="edge_length_less_than_midpoint_distance",
+                        kind="metric_ratio_compare",
+                        metric="edge_length",
+                        operator="<",
+                        value=1.0,
+                        reference_metric="midpoint_distance_to_origin",
+                        text="The target edge length is less than its compiled midpoint distance to the global origin.",
+                    ),
+                    Clause(
+                        id="has_midpoint_x",
+                        kind="has_measurement",
+                        metric="midpoint_x",
+                        text="The target edge has a compiled midpoint X coordinate.",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="midpoint_x",
+                hop_count=6,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
+    longer_positive_z_edges = [
+        edge
+        for edge in _nodes_with_numeric_measurement(graph, kernel_edges_with_bbox_z, "midpoint_y")
+        if any(
+            relation.source_id == edge.id and relation.type == "longer_than"
+            for relation in graph.relations
+        )
+        and isinstance(_measurement_value(graph, edge.id, "midpoint_z"), (int, float))
+        and _measurement_value(graph, edge.id, "midpoint_z") > GEOMETRY_MARGIN_EPSILON
+    ]
+    if (
+        len(longer_positive_z_edges) >= 2
+        and _has_unique_extreme(
+            graph,
+            longer_positive_z_edges,
+            "midpoint_y",
+            "argmax",
+            min_margin=GEOMETRY_MARGIN_EPSILON,
+        )
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q11:frontmost_longer_positive_z_kernel_edge",
+                target_type="edge",
+                clauses=[
+                    Clause(
+                        id="has_kernel_edge_selector_identity",
+                        kind="has_relation",
+                        relation="has_kernel_stable_edge_id",
+                        target_type="selector",
+                        text="The target edge has kernel-backed selector-result geometry from a visible `.edges(...)` call.",
+                    ),
+                    Clause(
+                        id="longer_than_another_kernel_edge",
+                        kind="has_relation",
+                        relation="longer_than",
+                        target_type="edge",
+                        text="The target edge is longer than another kernel-selected edge according to compiled edge lengths.",
+                    ),
+                    Clause(
+                        id="positive_midpoint_z",
+                        kind="metric_compare",
+                        metric="midpoint_z",
+                        operator=">",
+                        value=GEOMETRY_MARGIN_EPSILON,
+                        text="The target edge midpoint has a positive compiled Z coordinate.",
+                    ),
+                    Clause(
+                        id="has_midpoint_y",
+                        kind="has_measurement",
+                        metric="midpoint_y",
+                        text="The target edge has a compiled midpoint Y coordinate.",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="midpoint_y",
+                hop_count=6,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
+    same_length_longer_positive_z_edges = [
+        edge
+        for edge in _nodes_with_numeric_measurement(graph, kernel_edges_with_bbox_z, "midpoint_y")
+        if any(
+            relation.source_id == edge.id and relation.type == "same_length_as"
+            for relation in graph.relations
+        )
+        and any(
+            relation.source_id == edge.id and relation.type == "longer_than"
+            for relation in graph.relations
+        )
+        and isinstance(_measurement_value(graph, edge.id, "midpoint_z"), (int, float))
+        and _measurement_value(graph, edge.id, "midpoint_z") > GEOMETRY_MARGIN_EPSILON
+    ]
+    if (
+        len(same_length_longer_positive_z_edges) >= 2
+        and _has_unique_extreme(
+            graph,
+            same_length_longer_positive_z_edges,
+            "midpoint_y",
+            "argmax",
+            min_margin=GEOMETRY_MARGIN_EPSILON,
+        )
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q12:frontmost_same_length_longer_positive_z_kernel_edge",
+                target_type="edge",
+                clauses=[
+                    Clause(
+                        id="has_kernel_edge_selector_identity",
+                        kind="has_relation",
+                        relation="has_kernel_stable_edge_id",
+                        target_type="selector",
+                        text="The target edge has kernel-backed selector-result geometry from a visible `.edges(...)` call.",
+                    ),
+                    Clause(
+                        id="same_length_as_another_kernel_edge",
+                        kind="has_relation",
+                        relation="same_length_as",
+                        target_type="edge",
+                        text="The target edge has the same compiled length as another kernel-selected edge.",
+                    ),
+                    Clause(
+                        id="longer_than_another_kernel_edge",
+                        kind="has_relation",
+                        relation="longer_than",
+                        target_type="edge",
+                        text="The target edge is longer than another kernel-selected edge according to compiled edge lengths.",
+                    ),
+                    Clause(
+                        id="positive_midpoint_z",
+                        kind="metric_compare",
+                        metric="midpoint_z",
+                        operator=">",
+                        value=GEOMETRY_MARGIN_EPSILON,
+                        text="The target edge midpoint has a positive compiled Z coordinate.",
+                    ),
+                    Clause(
+                        id="has_midpoint_y",
+                        kind="has_measurement",
+                        metric="midpoint_y",
+                        text="The target edge has a compiled midpoint Y coordinate.",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="midpoint_y",
+                hop_count=6,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
+    shorter_positive_z_edges = [
+        edge
+        for edge in _nodes_with_numeric_measurement(graph, kernel_edges_with_bbox_z, "midpoint_x")
+        if any(
+            relation.source_id == edge.id and relation.type == "shorter_than"
+            for relation in graph.relations
+        )
+        and isinstance(_measurement_value(graph, edge.id, "midpoint_z"), (int, float))
+        and _measurement_value(graph, edge.id, "midpoint_z") > GEOMETRY_MARGIN_EPSILON
+    ]
+    if (
+        len(shorter_positive_z_edges) >= 2
+        and _has_unique_extreme(
+            graph,
+            shorter_positive_z_edges,
+            "midpoint_x",
+            "argmax",
+            min_margin=GEOMETRY_MARGIN_EPSILON,
+        )
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q13:rightmost_shorter_positive_z_kernel_edge",
+                target_type="edge",
+                clauses=[
+                    Clause(
+                        id="has_kernel_edge_selector_identity",
+                        kind="has_relation",
+                        relation="has_kernel_stable_edge_id",
+                        target_type="selector",
+                        text="The target edge has kernel-backed selector-result geometry from a visible `.edges(...)` call.",
+                    ),
+                    Clause(
+                        id="shorter_than_another_kernel_edge",
+                        kind="has_relation",
+                        relation="shorter_than",
+                        target_type="edge",
+                        text="The target edge is shorter than another kernel-selected edge according to compiled edge lengths.",
+                    ),
+                    Clause(
+                        id="positive_midpoint_z",
+                        kind="metric_compare",
+                        metric="midpoint_z",
+                        operator=">",
+                        value=GEOMETRY_MARGIN_EPSILON,
+                        text="The target edge midpoint has a positive compiled Z coordinate.",
+                    ),
+                    Clause(
+                        id="has_midpoint_x",
+                        kind="has_measurement",
+                        metric="midpoint_x",
+                        text="The target edge has a compiled midpoint X coordinate.",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="midpoint_x",
+                hop_count=6,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
+    positive_x_negative_y_endpoints = [
+        endpoint
+        for endpoint in _nodes_with_numeric_measurement(graph, edge_endpoints, "coordinate_z")
+        if any(
+            relation.source_id == endpoint.id and relation.type == "endpoint_of"
+            for relation in graph.relations
+        )
+        and isinstance(_measurement_value(graph, endpoint.id, "coordinate_x"), (int, float))
+        and _measurement_value(graph, endpoint.id, "coordinate_x") > GEOMETRY_MARGIN_EPSILON
+        and isinstance(_measurement_value(graph, endpoint.id, "coordinate_y"), (int, float))
+        and _measurement_value(graph, endpoint.id, "coordinate_y") < -GEOMETRY_MARGIN_EPSILON
+    ]
+    if (
+        len(positive_x_negative_y_endpoints) >= 2
+        and _has_unique_extreme(
+            graph,
+            positive_x_negative_y_endpoints,
+            "coordinate_z",
+            "argmax",
+            min_margin=GEOMETRY_MARGIN_EPSILON,
+        )
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q5:highest_positive_x_negative_y_contained_kernel_edge_endpoint",
+                target_type="edge_endpoint",
+                clauses=[
+                    Clause(
+                        id="endpoint_of_kernel_selected_edge",
+                        kind="has_relation",
+                        relation="endpoint_of",
+                        target_type="edge",
+                        text="The target point is a compiled endpoint of a kernel-selected edge from a visible `.edges(...)` call.",
+                    ),
+                    Clause(
+                        id="contained_in_kernel_selected_edge",
+                        kind="has_relation",
+                        relation="contained_in",
+                        target_type="edge",
+                        text="The target endpoint is contained in a kernel-selected edge according to compiled selector-result geometry.",
+                    ),
+                    Clause(
+                        id="has_origin_distance_relation",
+                        kind="has_relation",
+                        relation="distance_to",
+                        target_type="origin",
+                        text="The target endpoint has a compiled distance relation to the global origin.",
+                    ),
+                    Clause(
+                        id="positive_x_endpoint",
+                        kind="metric_compare",
+                        metric="coordinate_x",
+                        operator=">",
+                        value=GEOMETRY_MARGIN_EPSILON,
+                        text="The target endpoint has a positive compiled X coordinate.",
+                    ),
+                    Clause(
+                        id="negative_y_endpoint",
+                        kind="metric_compare",
+                        metric="coordinate_y",
+                        operator="<",
+                        value=-GEOMETRY_MARGIN_EPSILON,
+                        text="The target endpoint has a negative compiled Y coordinate.",
+                    ),
+                    Clause(
+                        id="has_endpoint_z",
+                        kind="has_measurement",
+                        metric="coordinate_z",
+                        text="The target endpoint has a compiled Z coordinate.",
+                    ),
+                    Clause(
+                        id="has_endpoint_distance",
+                        kind="has_measurement",
+                        metric="distance_to_origin",
+                        text="The target endpoint also has a compiled distance-to-origin measurement.",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="coordinate_z",
                 hop_count=5,
                 difficulty="cad_browsecomp",
                 min_individual_clause_candidates=2,
@@ -1165,6 +1697,17 @@ def _apply_clause(graph: OntologyGraph, candidates: list[Node], clause: Clause) 
             for node in candidates
             if _compare(_measurement_value(graph, node.id, clause.metric), clause.operator, clause.value)
         ]
+    if clause.kind == "metric_ratio_compare" and clause.metric and clause.reference_metric and clause.operator:
+        return [
+            node
+            for node in candidates
+            if _compare_metric_ratio(
+                _measurement_value(graph, node.id, clause.metric),
+                clause.operator,
+                _measurement_value(graph, node.id, clause.reference_metric),
+                clause.value,
+            )
+        ]
     return candidates
 
 
@@ -1201,3 +1744,9 @@ def _compare(value: Any, operator: str, expected: Any) -> bool:
     if operator == "==":
         return value == expected
     return False
+
+
+def _compare_metric_ratio(value: Any, operator: str, reference: Any, ratio: Any) -> bool:
+    if not isinstance(reference, (int, float)) or not isinstance(ratio, (int, float)):
+        return False
+    return _compare(value, operator, float(reference) * float(ratio))

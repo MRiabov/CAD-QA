@@ -1046,6 +1046,73 @@ def test_kernel_selector_trace_produces_release_grade_face_identity() -> None:
     assert "selector_identity_surrogate" not in selector_count_row.quarantine_reasons
 
 
+def test_kernel_face_selector_trace_produces_release_grade_face_spatial_relations() -> None:
+    source_code = (
+        "import cadquery as cq\n"
+        "base = cq.Workplane('XY').box(2, 2, 2)\n"
+        "all_faces = base.faces()\n"
+    )
+    trace_record = {
+        "source_id": "src_selector_face_spatial",
+        "execution_status": "ok",
+        "snapshots": [
+            {"target": "base", "source_line": 2, "operation_index": 0, "volume": 8.0, "bbox": {"min": [-1, -1, -1], "max": [1, 1, 1]}, "topology": {"faces": 6}},
+        ],
+        "operation_effects": [],
+        "selector_results": [
+            {
+                "target": "all_faces",
+                "selector": "",
+                "source_line": 3,
+                "selector_index": 0,
+                "selected_count": 6,
+                "shape_types": ["Face", "Face", "Face", "Face", "Face", "Face"],
+                "bbox_signatures": [
+                    {"min": [-1, -1, -1], "max": [1, 1, -1]},
+                    {"min": [-1, -1, 1], "max": [1, 1, 1]},
+                    {"min": [-1, -1, -1], "max": [1, -1, 1]},
+                    {"min": [-1, 1, -1], "max": [1, 1, 1]},
+                    {"min": [-1, -1, -1], "max": [-1, 1, 1]},
+                    {"min": [1, -1, -1], "max": [1, 1, 1]},
+                ],
+                "evidence": "cadquery_selector_result",
+            },
+        ],
+        "environment": {"cadquery_available": True},
+        "failure_reason": None,
+    }
+    graph = build_graph(
+        source_record_from_mapping({"source_id": "src_selector_face_spatial", "normalized_code": source_code}),
+        trace=trace_record,
+    )
+    kernel_faces = [node for node in graph.nodes_by_type("face") if node.properties.get("kernel_backed")]
+    assert len(kernel_faces) == 6
+    assert {graph.measurements_for(face.id, "normal_axis")[0].value for face in kernel_faces} == {"x", "y", "z"}
+    assert any(relation.type == "parallel_to" for relation in graph.relations)
+    assert any(relation.type == "perpendicular_to" for relation in graph.relations)
+    assert any(relation.type == "adjacent_to" for relation in graph.relations)
+    assert any(relation.type == "intersects" for relation in graph.relations)
+    assert any(relation.type == "opposite_to" for relation in graph.relations)
+
+    resolutions = {
+        query.query_id.split(":")[-1]: resolve_query(graph, query)
+        for query in smoke_queries(graph)
+    }
+    spatial_face = resolutions["highest_positive_x_flat_opposite_adjacent_perpendicular_kernel_face"]
+    assert spatial_face.verifier_status == "resolved"
+    resolved_node = graph.node(spatial_face.gold_answer)
+    assert resolved_node is not None
+    assert graph.measurements_for(resolved_node.id, "bbox_max_z")[0].value == 1.0
+    assert graph.measurements_for(resolved_node.id, "bbox_span_z")[0].value == 0.0
+    spatial_face_row = materialize_row(graph, spatial_face)
+    assert spatial_face_row.release_ready
+    assert "has_kernel_stable_face_id" in spatial_face_row.relation_families
+    assert "opposite_to" in spatial_face_row.relation_families
+    assert "adjacent_to" in spatial_face_row.relation_families
+    assert "perpendicular_to" in spatial_face_row.relation_families
+    assert "entity_geometry" in spatial_face_row.measurement_scopes
+
+
 def test_loop_variable_selectors_match_kernel_trace_by_source_line() -> None:
     source_code = (
         "import cadquery as cq\n"
@@ -1198,12 +1265,32 @@ def test_kernel_edge_selector_trace_produces_release_grade_edge_identity() -> No
         trace=trace_record,
     )
     kernel_edges = [node for node in graph.nodes_by_type("edge") if node.properties.get("kernel_backed")]
+    kernel_endpoints = [node for node in graph.nodes_by_type("edge_endpoint") if node.properties.get("kernel_backed")]
     assert len(kernel_edges) == 16
+    assert len(kernel_endpoints) >= 8
+    assert graph.node("origin:global") is not None
     assert any(relation.type == "has_kernel_stable_edge_id" for relation in graph.relations)
+    assert any(relation.type == "endpoint_of" for relation in graph.relations)
+    assert any(relation.type == "contained_in" for relation in graph.relations)
+    assert any(
+        relation.type == "distance_to" and relation.target_id == "origin:global"
+        for relation in graph.relations
+    )
+    assert any(relation.type == "has_endpoint" for relation in graph.relations)
     assert graph.measurements_for(kernel_edges[0].id, "bbox")
+    assert graph.measurements_for(kernel_edges[0].id, "midpoint")
+    assert graph.measurements_for(kernel_edges[0].id, "midpoint_distance_to_origin")
+    assert graph.measurements_for(kernel_endpoints[0].id, "coordinate_z")
+    assert graph.measurements_for(kernel_endpoints[0].id, "distance_to_origin")
     assert graph.measurements_for(kernel_edges[0].id, "dominant_axis")
     assert any(relation.type == "perpendicular_to" for relation in graph.relations)
     assert any(relation.type == "parallel_to" for relation in graph.relations)
+    assert any(relation.type == "adjacent_to" for relation in graph.relations)
+    assert any(relation.type == "intersects" for relation in graph.relations)
+    assert any(relation.type == "opposite_to" for relation in graph.relations)
+    assert any(relation.type == "same_length_as" for relation in graph.relations)
+    assert any(relation.type == "longer_than" for relation in graph.relations)
+    assert any(relation.type == "shorter_than" for relation in graph.relations)
 
     resolutions = {
         query.query_id.split(":")[-1]: resolve_query(graph, query)
@@ -1223,14 +1310,145 @@ def test_kernel_edge_selector_trace_produces_release_grade_edge_identity() -> No
     assert selector_count_row.release_ready
     assert "has_kernel_stable_edge_id" in selector_count_row.relation_families
 
-    spatial_edge = resolutions["highest_negative_y_x_span_perpendicular_kernel_edge"]
+    spatial_edge = resolutions["highest_negative_y_x_span_opposite_intersecting_adjacent_perpendicular_kernel_edge"]
     assert spatial_edge.verifier_status == "resolved"
     spatial_edge_row = materialize_row(graph, spatial_edge)
     assert spatial_edge_row.release_ready
     assert spatial_edge_row.geometry_hop_count > 0
     assert "has_kernel_stable_edge_id" in spatial_edge_row.relation_families
     assert "perpendicular_to" in spatial_edge_row.relation_families
+    assert "adjacent_to" in spatial_edge_row.relation_families
+    assert "intersects" in spatial_edge_row.relation_families
+    assert "opposite_to" in spatial_edge_row.relation_families
     assert "entity_geometry" in spatial_edge_row.measurement_scopes
+
+    midpoint_edge = resolutions["highest_y_positive_z_x_span_kernel_edge_midpoint"]
+    assert midpoint_edge.verifier_status == "resolved"
+    midpoint_edge_row = materialize_row(graph, midpoint_edge)
+    assert midpoint_edge_row.release_ready
+    midpoint_edge_node = graph.node(midpoint_edge.gold_answer)
+    assert midpoint_edge_node is not None
+    assert graph.measurements_for(midpoint_edge_node.id, "midpoint_y")[0].value > 0
+    assert graph.measurements_for(midpoint_edge_node.id, "midpoint_z")[0].value > 0
+    assert "has_kernel_stable_edge_id" in midpoint_edge_row.relation_families
+    assert "distance_to" in midpoint_edge_row.relation_families
+    assert "relation_metric" in midpoint_edge_row.measurement_scopes
+    assert "entity_geometry" in midpoint_edge_row.measurement_scopes
+
+    endpoint_resolution = resolutions["highest_positive_x_negative_y_contained_kernel_edge_endpoint"]
+    assert endpoint_resolution.verifier_status == "resolved"
+    endpoint_row = materialize_row(graph, endpoint_resolution)
+    assert endpoint_row.release_ready
+    assert endpoint_row.gold_answer
+    assert "endpoint_of" in endpoint_row.relation_families
+    assert "contained_in" in endpoint_row.relation_families
+    assert "distance_to" in endpoint_row.relation_families
+    assert "relation_metric" in endpoint_row.measurement_scopes
+    assert "entity_geometry" in endpoint_row.measurement_scopes
+
+
+def test_kernel_edge_length_query_uses_compiled_midpoint_geometry() -> None:
+    source_code = (
+        "import cadquery as cq\n"
+        "body = cq.Workplane('XY').box(120, 33, 54).edges()\n"
+    )
+    edge_bboxes = [
+        {"min": [-60.0, -16.5, -27.0], "max": [-60.0, -16.5, 27.0]},
+        {"min": [-60.0, -16.5, 27.0], "max": [-60.0, 16.5, 27.0]},
+        {"min": [-60.0, 16.5, -27.0], "max": [-60.0, 16.5, 27.0]},
+        {"min": [-60.0, -16.5, -27.0], "max": [-60.0, 16.5, -27.0]},
+        {"min": [60.0, -16.5, -27.0], "max": [60.0, -16.5, 27.0]},
+        {"min": [60.0, -16.5, 27.0], "max": [60.0, 16.5, 27.0]},
+        {"min": [60.0, 16.5, -27.0], "max": [60.0, 16.5, 27.0]},
+        {"min": [60.0, -16.5, -27.0], "max": [60.0, 16.5, -27.0]},
+        {"min": [-60.0, -16.5, -27.0], "max": [60.0, -16.5, -27.0]},
+        {"min": [-60.0, -16.5, 27.0], "max": [60.0, -16.5, 27.0]},
+        {"min": [-60.0, 16.5, -27.0], "max": [60.0, 16.5, -27.0]},
+        {"min": [-60.0, 16.5, 27.0], "max": [60.0, 16.5, 27.0]},
+    ]
+    trace_record = {
+        "source_id": "src_edge_length_query",
+        "execution_status": "ok",
+        "snapshots": [
+            {"target": "body", "source_line": 2, "operation_index": 0, "volume": 213840.0, "bbox": {"min": [-60.0, -16.5, -27.0], "max": [60.0, 16.5, 27.0]}, "topology": {"edges": 12}},
+        ],
+        "operation_effects": [],
+        "selector_results": [
+            {
+                "target": "body",
+                "selector": "",
+                "selector_kind": "edges",
+                "source_line": 2,
+                "selector_index": 0,
+                "selected_count": 12,
+                "shape_types": ["Edge"] * 12,
+                "bbox_signatures": edge_bboxes,
+                "evidence": "cadquery_selector_result",
+            },
+        ],
+        "environment": {"cadquery_available": True},
+        "failure_reason": None,
+    }
+    graph = build_graph(
+        source_record_from_mapping({"source_id": "src_edge_length_query", "normalized_code": source_code}),
+        trace=trace_record,
+    )
+    queries = {
+        query.query_id.split(":")[-1]: query
+        for query in smoke_queries(graph)
+    }
+    resolution = resolve_query(graph, queries["rightmost_short_positive_z_kernel_edge"])
+    assert resolution.verifier_status == "resolved"
+    edge = graph.node(resolution.gold_answer)
+    assert edge is not None
+    assert graph.measurements_for(edge.id, "edge_length")[0].value == 33.0
+    assert graph.measurements_for(edge.id, "midpoint_x")[0].value == 60.0
+    assert graph.measurements_for(edge.id, "midpoint_z")[0].value == 27.0
+    row = materialize_row(graph, resolution)
+    assert row.release_ready
+    assert "has_kernel_stable_edge_id" in row.relation_families
+    assert "relation_metric" in row.measurement_scopes
+    assert "entity_geometry" in row.measurement_scopes
+
+    ordering_resolution = resolve_query(graph, queries["frontmost_longer_positive_z_kernel_edge"])
+    assert ordering_resolution.verifier_status == "resolved"
+    ordered_edge = graph.node(ordering_resolution.gold_answer)
+    assert ordered_edge is not None
+    assert graph.measurements_for(ordered_edge.id, "edge_length")[0].value == 120.0
+    assert graph.measurements_for(ordered_edge.id, "midpoint_y")[0].value == 16.5
+    assert graph.measurements_for(ordered_edge.id, "midpoint_z")[0].value == 27.0
+    ordering_row = materialize_row(graph, ordering_resolution)
+    assert ordering_row.release_ready
+    assert "has_kernel_stable_edge_id" in ordering_row.relation_families
+    assert "longer_than" in ordering_row.relation_families
+    assert "entity_geometry" in ordering_row.measurement_scopes
+
+    same_length_resolution = resolve_query(graph, queries["frontmost_same_length_longer_positive_z_kernel_edge"])
+    assert same_length_resolution.verifier_status == "resolved"
+    same_length_edge = graph.node(same_length_resolution.gold_answer)
+    assert same_length_edge is not None
+    assert graph.measurements_for(same_length_edge.id, "edge_length")[0].value == 120.0
+    assert graph.measurements_for(same_length_edge.id, "midpoint_y")[0].value == 16.5
+    assert graph.measurements_for(same_length_edge.id, "midpoint_z")[0].value == 27.0
+    same_length_row = materialize_row(graph, same_length_resolution)
+    assert same_length_row.release_ready
+    assert "has_kernel_stable_edge_id" in same_length_row.relation_families
+    assert "same_length_as" in same_length_row.relation_families
+    assert "longer_than" in same_length_row.relation_families
+    assert "entity_geometry" in same_length_row.measurement_scopes
+
+    shorter_resolution = resolve_query(graph, queries["rightmost_shorter_positive_z_kernel_edge"])
+    assert shorter_resolution.verifier_status == "resolved"
+    shorter_edge = graph.node(shorter_resolution.gold_answer)
+    assert shorter_edge is not None
+    assert graph.measurements_for(shorter_edge.id, "edge_length")[0].value == 33.0
+    assert graph.measurements_for(shorter_edge.id, "midpoint_x")[0].value == 60.0
+    assert graph.measurements_for(shorter_edge.id, "midpoint_z")[0].value == 27.0
+    shorter_row = materialize_row(graph, shorter_resolution)
+    assert shorter_row.release_ready
+    assert "has_kernel_stable_edge_id" in shorter_row.relation_families
+    assert "shorter_than" in shorter_row.relation_families
+    assert "entity_geometry" in shorter_row.measurement_scopes
 
 
 def test_operation_graph_extraction_covers_assignments_and_chains() -> None:
