@@ -60,6 +60,15 @@ families:
     target_type: face
     minimum_hops: 3
     maximum_hops: 3
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - extremum_direction
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - final_selector
     notes: Synthesized family that samples the measured face quantity and min/max selector instead of fixing a global axis.
   - id: highest_positive_x_flat_opposite_adjacent_perpendicular_kernel_face
     status: review_only
@@ -78,6 +87,18 @@ families:
     target_type: selector
     minimum_hops: 4
     maximum_hops: 4
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - selected_entity_type
+        - comparison_operator
+        - measurement_value_bucket
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - comparison_operator
+        - measurement_value_bucket
+      expected_values:
+        selected_entity_type: [face]
     notes: Synthesized selector-count family that narrows by selected-face geometry before sampling min/max count.
   - id: highest_kernel_selected_edge
     status: release
@@ -124,6 +145,15 @@ families:
     target_type: edge
     minimum_hops: 3
     maximum_hops: 3
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - extremum_direction
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - final_selector
     notes: Synthesized family that samples the measured edge quantity and min/max selector instead of fixing a global axis.
   - id: frontmost_equal_midpoint_distance_kernel_edge
     status: review_only
@@ -166,6 +196,18 @@ families:
     target_type: selector
     minimum_hops: 4
     maximum_hops: 4
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - selected_entity_type
+        - comparison_operator
+        - measurement_value_bucket
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - comparison_operator
+        - measurement_value_bucket
+      expected_values:
+        selected_entity_type: [edge]
     notes: Synthesized selector-count family that narrows by selected-edge geometry before sampling min/max count.
   - id: path_nearest_origin
     status: review_only

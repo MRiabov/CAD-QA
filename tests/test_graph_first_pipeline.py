@@ -2514,6 +2514,100 @@ def test_parameter_balance_report_blocks_collapsed_query_parameters(tmp_path: Pa
     assert legacy_report["sampled_parameter_metadata_missing_count"] == 1
 
 
+def test_parameter_balance_report_enforces_manifest_configured_narrowing_dimensions(tmp_path: Path) -> None:
+    manifest = tmp_path / "family_specs.yaml"
+    manifest.write_text(
+        "\n".join(
+            [
+                "schema_version: 1",
+                "families:",
+                "  - id: narrowed_family",
+                "    status: release",
+                "    parameter_balance:",
+                "      ignored_dimensions:",
+                "        - target_type",
+                "        - final_selector",
+                "        - aggregation_metric",
+                "        - extremum_direction",
+                "      required_dimensions:",
+                "        - narrowing_predicate_sequence",
+                "        - selected_entity_type",
+                "      enforced_dimensions:",
+                "        - narrowing_predicate_sequence",
+                "      expected_values:",
+                "        selected_entity_type: [edge, face]",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    rows = [
+        {
+            "row_id": f"row:src:{index}:narrowed_family",
+            "query_program": {
+                "query_id": f"graph:src:q{index}:narrowed_family",
+                "sampled_parameters": {
+                    "target_type": ["selector"],
+                    "final_selector": ["max:selected_count"],
+                    "aggregation_metric": ["selected_count"],
+                    "extremum_direction": ["max"],
+                    "narrowing_predicate_sequence": ["related_metric_compare:has_kernel_stable_edge_id:edge:midpoint_y:<"],
+                    "selected_entity_type": ["edge" if index < 2 else "face"],
+                },
+            },
+        }
+        for index in range(4)
+    ]
+
+    collapsed = parameter_balance_report(
+        rows,
+        family_manifest=manifest,
+        max_parameter_value_share=0.35,
+        min_axis_direction_share=0.20,
+        enforce=True,
+    )
+    assert not collapsed["valid"]
+    assert any(
+        violation["dimension"] == "narrowing_predicate_sequence"
+        and violation["reason"] == "parameter_value_dominates"
+        for violation in collapsed["violations"]
+    )
+
+    for index, row in enumerate(rows):
+        row["query_program"]["sampled_parameters"]["narrowing_predicate_sequence"] = [
+            f"predicate:{index % 3}"
+        ]
+    balanced = parameter_balance_report(
+        rows,
+        family_manifest=manifest,
+        max_parameter_value_share=0.60,
+        min_axis_direction_share=0.20,
+        enforce=True,
+    )
+    assert balanced["valid"]
+
+    missing_rows = [
+        {
+            "row_id": "row:src:0:narrowed_family",
+            "query_program": {
+                "query_id": "graph:src:q0:narrowed_family",
+                "sampled_parameters": {"narrowing_predicate_sequence": ["predicate:a"]},
+            },
+        }
+    ]
+    missing = parameter_balance_report(
+        missing_rows,
+        family_manifest=manifest,
+        max_parameter_value_share=0.60,
+        min_axis_direction_share=0.20,
+        enforce=True,
+    )
+    assert any(
+        violation["dimension"] == "selected_entity_type"
+        and violation["reason"] == "required_parameter_dimension_missing"
+        for violation in missing["violations"]
+    )
+
+
 def test_preview_evidence_gate_requires_sufficient_release_family_samples(tmp_path: Path) -> None:
     manifest = tmp_path / "family_specs.yaml"
     manifest.write_text(

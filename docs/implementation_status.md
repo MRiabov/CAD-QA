@@ -184,6 +184,12 @@ when those choices can be sampled and verified.
   metadata plus collapsed target type, final selector, aggregation metric/axis,
   extremum direction, clause metric/axis, comparison operator, reference metric,
   and value-bucket distributions for generated release families.
+- Family specs can now configure additional parameter-balance requirements:
+  required sampled dimensions, extra dimensions subject to the max-share rule,
+  and expected values for non-axis dimensions. The initial synthesized families
+  use this to make `narrowing_predicate_sequence`, selected entity type,
+  comparison operator, and narrowing value buckets release-gated rather than
+  merely serialized.
 - Initial query synthesis now exists outside `resolver.py`: reusable relation
   and measurement predicates feed a bounded deterministic synthesis pass that
   emits `parameterized_kernel_face_extreme` and
@@ -705,7 +711,8 @@ Checked as implemented with remaining scale caveats:
 - Extend sampled-parameter metadata from the synthesis layer to include
   predicate sequence, reference anchor, rank, tie-break metric, rendered wording,
   and geometry-limited exceptions. The current gate catches missing or collapsed
-  generated metadata, but it does not yet prove that every intended parameter
+  generated metadata, and family specs can now require/enforce specific
+  narrowing dimensions. It still does not prove every future intended parameter
   dimension was sampled whenever the verifier could support it.
 - Expand the intended-family manifest into full family specs with predicates,
   selectors, parameter dimensions, and geometry-limited exceptions.

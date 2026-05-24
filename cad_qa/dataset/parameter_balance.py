@@ -82,6 +82,7 @@ def parameter_balance_report(
         "release_family_count": len(rows_by_family),
         "max_parameter_value_share": max_parameter_value_share,
         "min_axis_direction_share": min_axis_direction_share,
+        "default_enforced_dimensions": sorted(DEFAULT_ENFORCED_DIMENSIONS),
         "enforced_dimensions": sorted(DEFAULT_ENFORCED_DIMENSIONS),
         "axis_direction_dimensions": sorted(AXIS_DIRECTION_DIMENSIONS),
         "sampled_parameter_metadata_missing_count": len(metadata_missing_rows),
@@ -112,9 +113,20 @@ def _family_parameter_report(
             for value in values:
                 counters[dimension][value] += 1
 
-    ignored_dimensions = _ignored_dimensions(spec)
+    balance = _balance_spec(spec)
+    ignored_dimensions = _ignored_dimensions(balance)
+    required_dimensions = _required_dimensions(balance)
+    enforced_dimensions = DEFAULT_ENFORCED_DIMENSIONS | _configured_enforced_dimensions(balance)
+    expected_values_by_dimension = _configured_expected_values(balance)
     dimension_reports = []
     violations = []
+    for dimension in sorted(required_dimensions - set(counters) - ignored_dimensions):
+        violations.append(
+            {
+                "dimension": dimension,
+                "reason": "required_parameter_dimension_missing",
+            }
+        )
     for dimension in sorted(counters):
         counts = counters[dimension]
         total = sum(counts.values())
@@ -128,9 +140,11 @@ def _family_parameter_report(
             "largest_value": largest_value,
             "largest_count": largest_count,
             "largest_share": largest_share,
+            "required": dimension in required_dimensions,
         }
-        if dimension in AXIS_DIRECTION_DIMENSIONS:
-            expected = EXPECTED_VALUES.get(dimension, ())
+        expected = expected_values_by_dimension.get(dimension)
+        if expected is not None or dimension in AXIS_DIRECTION_DIMENSIONS:
+            expected = expected or EXPECTED_VALUES.get(dimension, ())
             expected_shares = {
                 value: counts.get(value, 0) / total if total else 0.0
                 for value in expected
@@ -152,7 +166,7 @@ def _family_parameter_report(
                         "undercovered_expected_values": undercovered,
                     }
                 )
-        elif dimension in DEFAULT_ENFORCED_DIMENSIONS:
+        if dimension in enforced_dimensions:
             report["maximum_allowed_largest_share"] = max_parameter_value_share
             if (
                 max_parameter_value_share is not None
@@ -174,17 +188,44 @@ def _family_parameter_report(
         "prompt_family": family,
         "row_count": len(rows),
         "ignored_dimensions": sorted(ignored_dimensions),
+        "required_dimensions": sorted(required_dimensions),
+        "configured_enforced_dimensions": sorted(_configured_enforced_dimensions(balance)),
         "dimensions": dimension_reports,
         "violations": violations,
         "valid": not violations,
     }
 
 
-def _ignored_dimensions(spec: dict[str, Any]) -> set[str]:
-    balance = spec.get("parameter_balance") if isinstance(spec.get("parameter_balance"), dict) else {}
+def _balance_spec(spec: dict[str, Any]) -> dict[str, Any]:
+    balance = spec.get("parameter_balance")
+    return balance if isinstance(balance, dict) else {}
+
+
+def _ignored_dimensions(balance: dict[str, Any]) -> set[str]:
     ignored = set(balance.get("ignored_dimensions") or [])
     ignored.update(balance.get("geometry_limited_dimensions") or [])
     return {str(value) for value in ignored}
+
+
+def _required_dimensions(balance: dict[str, Any]) -> set[str]:
+    return {str(value) for value in balance.get("required_dimensions") or []}
+
+
+def _configured_enforced_dimensions(balance: dict[str, Any]) -> set[str]:
+    return {str(value) for value in balance.get("enforced_dimensions") or []}
+
+
+def _configured_expected_values(balance: dict[str, Any]) -> dict[str, list[str]]:
+    configured = balance.get("expected_values")
+    if not isinstance(configured, dict):
+        return {}
+    result: dict[str, list[str]] = {}
+    for dimension, values in configured.items():
+        value_list = values if isinstance(values, list) else [values]
+        normalized = [str(value) for value in value_list if value is not None and str(value)]
+        if normalized:
+            result[str(dimension)] = normalized
+    return result
 
 
 def _largest_counter_item(counts: Counter[str]) -> tuple[str | None, int]:
