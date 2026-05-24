@@ -34,8 +34,10 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_path_segment_rank",
     "parameterized_face_spatial_relation_extreme",
     "parameterized_face_spatial_relation_rank",
+    "parameterized_face_spatial_relation_chain_extreme",
     "parameterized_edge_spatial_relation_extreme",
     "parameterized_edge_spatial_relation_rank",
+    "parameterized_edge_spatial_relation_chain_extreme",
     "parameterized_equal_face_metric_extreme",
     "parameterized_equal_edge_metric_extreme",
     "parameterized_equal_feature_metric_extreme",
@@ -134,11 +136,13 @@ def synthesis_selfcheck_graphs() -> list[OntologyGraph]:
         _face_spatial_relation_graph("graph:selfcheck-face-spatial-relation-4"),
         _face_spatial_relation_graph("graph:selfcheck-face-spatial-relation-8"),
         _face_spatial_relation_rank_graph(),
+        _face_spatial_relation_chain_graph(),
         _edge_spatial_relation_graph("graph:selfcheck-edge-spatial-relation-0"),
         _edge_spatial_relation_graph("graph:selfcheck-edge-spatial-relation-1"),
         _edge_spatial_relation_graph("graph:selfcheck-edge-spatial-relation-2"),
         _edge_spatial_relation_graph("graph:selfcheck-edge-spatial-relation-4"),
         _edge_spatial_relation_rank_graph(),
+        _edge_spatial_relation_chain_graph(),
         _edge_same_length_relation_graph(),
         _edge_single_relation_graph("graph:selfcheck-edge-parallel-relation", "parallel_to"),
         _edge_single_relation_graph("graph:selfcheck-edge-coaxial-relation", "coaxial_with"),
@@ -503,6 +507,49 @@ def _edge_spatial_relation_rank_graph() -> OntologyGraph:
     return graph
 
 
+def _edge_spatial_relation_chain_graph() -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id="graph:selfcheck-edge-spatial-relation-chain",
+        source={
+            "source_id": "selfcheck-edge-spatial-relation-chain",
+            "source_code": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane(\"XY\").box(14, 8, 4).edges()\n"
+            ),
+        },
+    )
+    graph.add_node(Node("selector:edges", "selector", "edges"))
+    for edge_id, length, midpoint in [
+        ("edge:a", 14.0, [0.0, 0.0, 0.0]),
+        ("edge:b", 11.0, [2.0, 0.0, 1.0]),
+        ("edge:c", 8.0, [0.0, 3.0, 2.0]),
+        ("edge:d", 5.0, [4.0, 3.0, 3.0]),
+        ("edge:e", 2.0, [6.0, 3.0, 4.0]),
+    ]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint", midpoint, "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_x", midpoint[0], "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint[1], "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_z", midpoint[2], "mm"))
+        graph.add_measurement(Measurement(edge_id, "relation_metric", "midpoint_distance_to_origin", length / 2.0, "mm"))
+    for source_id, target_id in [
+        ("edge:a", "edge:b"),
+        ("edge:b", "edge:c"),
+        ("edge:c", "edge:d"),
+        ("edge:d", "edge:a"),
+    ]:
+        graph.add_relation(Relation(source_id, target_id, "adjacent_to"))
+    for source_id, target_id in [
+        ("edge:a", "edge:c"),
+        ("edge:b", "edge:d"),
+        ("edge:c", "edge:a"),
+    ]:
+        graph.add_relation(Relation(source_id, target_id, "perpendicular_to"))
+    return graph
+
+
 def _edge_same_length_relation_graph() -> OntologyGraph:
     graph = OntologyGraph(
         graph_id="graph:selfcheck-edge-same-length-relation",
@@ -649,6 +696,49 @@ def _face_spatial_relation_rank_graph() -> OntologyGraph:
         ("face:d", "face:a"),
     ]:
         graph.add_relation(Relation(source_id, target_id, "adjacent_to"))
+    return graph
+
+
+def _face_spatial_relation_chain_graph() -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id="graph:selfcheck-face-spatial-relation-chain",
+        source={
+            "source_id": "selfcheck-face-spatial-relation-chain",
+            "source_code": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane(\"XY\").box(12, 8, 4).faces()\n"
+            ),
+        },
+    )
+    graph.add_node(Node("selector:faces", "selector", "faces"))
+    for face_id, area, center in [
+        ("face:a", 72.0, [0.0, 0.0, 0.0]),
+        ("face:b", 56.0, [2.0, 0.0, 1.0]),
+        ("face:c", 40.0, [0.0, 3.0, 2.0]),
+        ("face:d", 24.0, [4.0, 3.0, 3.0]),
+        ("face:e", 8.0, [6.0, 3.0, 4.0]),
+    ]:
+        graph.add_node(Node(face_id, "face", face_id))
+        graph.add_relation(Relation(face_id, "selector:faces", "has_kernel_stable_face_id"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", area, "mm^2"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "center", center, "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_x", center[0], "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_y", center[1], "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_z", center[2], "mm"))
+        graph.add_measurement(Measurement(face_id, "relation_metric", "distance_to_origin", area / 10.0, "mm"))
+    for source_id, target_id in [
+        ("face:a", "face:b"),
+        ("face:b", "face:c"),
+        ("face:c", "face:d"),
+        ("face:d", "face:a"),
+    ]:
+        graph.add_relation(Relation(source_id, target_id, "adjacent_to"))
+    for source_id, target_id in [
+        ("face:a", "face:c"),
+        ("face:b", "face:d"),
+        ("face:c", "face:a"),
+    ]:
+        graph.add_relation(Relation(source_id, target_id, "perpendicular_to"))
     return graph
 
 

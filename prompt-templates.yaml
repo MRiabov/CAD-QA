@@ -114,6 +114,14 @@ clause_templates:
     - "The target face is {relation_label} another measured face."
     - "The target face has a measured face that is {relation_label} it."
     - "The target face has another measured face that is {relation_label} it."
+  has_parameterized_face_spatial_relation_1:
+    - "The target face is {relation_label} another measured face."
+    - "The target face has a measured face that is {relation_label} it."
+    - "The target face has another measured face that is {relation_label} it."
+  has_parameterized_face_spatial_relation_2:
+    - "The target face is {relation_label} another measured face."
+    - "The target face has a measured face that is {relation_label} it."
+    - "The target face has another measured face that is {relation_label} it."
   has_parameterized_equal_face_metric_value:
     - "The target face has {metric_label} equal to {value}."
     - "The target face's {metric_label} is {value}."
@@ -176,6 +184,14 @@ clause_templates:
     - "The target edge has a known {metric_label}."
     - "The target edge has a verified {metric_label}."
   has_parameterized_edge_spatial_relation:
+    - "The target edge is {relation_label} another measured edge."
+    - "The target edge is {relation_label} at least one other measured edge."
+    - "The target edge is {relation_label} a second measured edge."
+  has_parameterized_edge_spatial_relation_1:
+    - "The target edge is {relation_label} another measured edge."
+    - "The target edge is {relation_label} at least one other measured edge."
+    - "The target edge is {relation_label} a second measured edge."
+  has_parameterized_edge_spatial_relation_2:
     - "The target edge is {relation_label} another measured edge."
     - "The target edge is {relation_label} at least one other measured edge."
     - "The target edge is {relation_label} a second measured edge."

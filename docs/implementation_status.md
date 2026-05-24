@@ -947,6 +947,18 @@ Checked as implemented with remaining scale caveats:
   implements spatial-relation rank synthesis at the valid-row level; relation,
   rank, axis, and metric distribution still require release-scale review.
 - The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_spatial_relation_chain/PREVIEW.md`
+  adds valid release-ready rows for
+  `parameterized_face_spatial_relation_chain_extreme` and
+  `parameterized_edge_spatial_relation_chain_extreme`. The reviewed face and
+  edge rows apply a sampled two-relation chain, currently reviewed as adjacent
+  then perpendicular relation predicates, narrowing five candidates to three
+  before a measured coordinate selector resolves a single answer. Relation-chain
+  clauses use distinct prompt/template IDs so candidate traces and clue maps
+  preserve both narrowing steps. This implements the first graph-hop spatial
+  relation-chain slice at the valid-row level; broader chain lengths, relation
+  combinations, and release-scale balance remain open.
+- The synthesized selfcheck preview at
   `runs/parameterized_synthesis_selfcheck_endpoint_reference/PREVIEW.md`
   demonstrates the initial `parameterized_endpoint_reference_feature_distance`
   family. The reviewed row narrows edge endpoints by a repeated measured Z

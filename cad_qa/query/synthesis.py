@@ -154,6 +154,30 @@ class ViableRelationExtreme:
 
 
 @dataclass(frozen=True)
+class RelationChainFamilySpec:
+    family_id: str
+    target_type: str
+    base_relation: str
+    base_relation_clause_id: str
+    base_relation_target_type: str
+    relations: tuple[str, ...]
+    chain_lengths: tuple[int, ...]
+    relation_clause_id: str
+    measurement_clause_id: str
+    metrics: tuple[str, ...]
+    relation_target_type: str
+
+
+@dataclass(frozen=True)
+class ViableRelationChainExtreme:
+    spec: RelationChainFamilySpec
+    relation_chain: tuple[str, ...]
+    metric: str
+    aggregation: str
+    candidate_ids: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class FeatureEffectDeltaFamilySpec:
     family_id: str
     compare_clause_id: str
@@ -766,6 +790,64 @@ RELATION_RANK_FAMILY_SPECS = (
         ),
         relation_target_type="edge",
         selection_mode="rank",
+    ),
+)
+
+RELATION_CHAIN_EXTREME_FAMILY_SPECS = (
+    RelationChainFamilySpec(
+        family_id="parameterized_face_spatial_relation_chain_extreme",
+        target_type="face",
+        base_relation="has_kernel_stable_face_id",
+        base_relation_clause_id="has_parameterized_face_set",
+        base_relation_target_type="selector",
+        relations=(
+            "adjacent_to",
+            "coplanar_with",
+            "intersects",
+            "opposite_to",
+            "parallel_to",
+            "perpendicular_to",
+        ),
+        chain_lengths=(2,),
+        relation_clause_id="has_parameterized_face_spatial_relation",
+        measurement_clause_id="has_parameterized_face_metric",
+        metrics=(
+            "coordinate_x",
+            "coordinate_y",
+            "coordinate_z",
+            "distance_to_origin",
+            "face_area",
+        ),
+        relation_target_type="face",
+    ),
+    RelationChainFamilySpec(
+        family_id="parameterized_edge_spatial_relation_chain_extreme",
+        target_type="edge",
+        base_relation="has_kernel_stable_edge_id",
+        base_relation_clause_id="has_parameterized_edge_set",
+        base_relation_target_type="selector",
+        relations=(
+            "adjacent_to",
+            "coaxial_with",
+            "intersects",
+            "longer_than",
+            "opposite_to",
+            "parallel_to",
+            "perpendicular_to",
+            "same_length_as",
+            "shorter_than",
+        ),
+        chain_lengths=(2,),
+        relation_clause_id="has_parameterized_edge_spatial_relation",
+        measurement_clause_id="has_parameterized_edge_metric",
+        metrics=(
+            "midpoint_x",
+            "midpoint_y",
+            "midpoint_z",
+            "midpoint_distance_to_origin",
+            "edge_length",
+        ),
+        relation_target_type="edge",
     ),
 )
 
@@ -1408,6 +1490,14 @@ def synthesize_graph_hop_queries(graph: OntologyGraph) -> list[QueryProgram]:
             continue
         choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
         query = _query_for_relation_extreme(graph, choice)
+        if query is not None:
+            queries.append(query)
+    for spec in RELATION_CHAIN_EXTREME_FAMILY_SPECS:
+        viable = _viable_relation_chain_extremes(graph, spec)
+        if not viable:
+            continue
+        choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
+        query = _query_for_relation_chain_extreme(graph, choice)
         if query is not None:
             queries.append(query)
     for family_id, specs in _reference_distance_specs_by_family():
@@ -2369,6 +2459,151 @@ def _query_for_relation_extreme(graph: OntologyGraph, viable: ViableRelationExtr
     )
 
 
+def _viable_relation_chain_extremes(
+    graph: OntologyGraph,
+    spec: RelationChainFamilySpec,
+) -> list[ViableRelationChainExtreme]:
+    candidates = graph.nodes_by_type(spec.target_type)
+    base_relation = relation_predicate(
+        graph,
+        candidates,
+        clause_id=spec.base_relation_clause_id,
+        relation=spec.base_relation,
+        target_type=spec.base_relation_target_type,
+    )
+    if base_relation is None:
+        return []
+    base_candidates = _apply_relation_clause(graph, candidates, spec.base_relation)
+    viable: list[ViableRelationChainExtreme] = []
+    for relation_chain in _relation_chains(spec.relations, spec.chain_lengths):
+        chain_candidates = base_candidates
+        narrowed_by_chain = False
+        chain_is_viable = True
+        for relation_name in relation_chain:
+            relation = relation_predicate(
+                graph,
+                chain_candidates,
+                clause_id=spec.relation_clause_id,
+                relation=relation_name,
+                target_type=spec.relation_target_type,
+            )
+            if relation is None:
+                chain_is_viable = False
+                break
+            next_candidates = _apply_relation_clause(graph, chain_candidates, relation_name)
+            narrowed_by_chain = narrowed_by_chain or len(next_candidates) < len(chain_candidates)
+            chain_candidates = next_candidates
+        if not chain_is_viable or not narrowed_by_chain:
+            continue
+        for metric in spec.metrics:
+            measurement = measurement_predicate(
+                graph,
+                chain_candidates,
+                clause_id=spec.measurement_clause_id,
+                metric=metric,
+            )
+            if measurement is None:
+                continue
+            metric_candidates = _nodes_with_numeric_measurement(graph, chain_candidates, metric)
+            if len(metric_candidates) < 2:
+                continue
+            for aggregation in ("argmax", "argmin"):
+                if _has_unique_extreme(graph, metric_candidates, metric, aggregation):
+                    viable.append(
+                        ViableRelationChainExtreme(
+                            spec=spec,
+                            relation_chain=relation_chain,
+                            metric=metric,
+                            aggregation=aggregation,
+                            candidate_ids=tuple(node.id for node in metric_candidates),
+                        )
+                    )
+    return sorted(
+        viable,
+        key=lambda item: (
+            item.relation_chain,
+            item.metric,
+            item.aggregation,
+            item.candidate_ids,
+        ),
+    )
+
+
+def _query_for_relation_chain_extreme(
+    graph: OntologyGraph,
+    viable: ViableRelationChainExtreme,
+) -> QueryProgram | None:
+    spec = viable.spec
+    broad_candidates = graph.nodes_by_type(spec.target_type)
+    base_relation = relation_predicate(
+        graph,
+        broad_candidates,
+        clause_id=spec.base_relation_clause_id,
+        relation=spec.base_relation,
+        target_type=spec.base_relation_target_type,
+    )
+    if base_relation is None:
+        return None
+    relation_candidates = _apply_relation_clause(graph, broad_candidates, spec.base_relation)
+    relation_instances = []
+    for index, relation_name in enumerate(viable.relation_chain, start=1):
+        relation = relation_predicate(
+            graph,
+            relation_candidates,
+            clause_id=f"{spec.relation_clause_id}_{index}",
+            relation=relation_name,
+            target_type=spec.relation_target_type,
+        )
+        if relation is None:
+            return None
+        relation_instances.append(relation)
+        relation_candidates = _apply_relation_clause(graph, relation_candidates, relation_name)
+    measurement = measurement_predicate(
+        graph,
+        relation_candidates,
+        clause_id=spec.measurement_clause_id,
+        metric=viable.metric,
+    )
+    if measurement is None:
+        return None
+    direction = "max" if viable.aggregation == "argmax" else "min"
+    relation_chain = ">".join(viable.relation_chain)
+    sampled = merge_sampled_parameters(
+        {
+            "target_type": [spec.target_type],
+            "spatial_relation_chain": [relation_chain],
+            "spatial_relation_chain_length": [str(len(viable.relation_chain))],
+            "final_selector": [f"{direction}:{viable.metric}"],
+            "aggregation_metric": [viable.metric],
+            "extremum_direction": [direction],
+            "predicate_catalog_version": ["v1"],
+            "prompt_wording_variant": [_prompt_wording_variant(graph.graph_id, spec.family_id)],
+            "synthesis_strategy": ["spatial_relation_chain_extreme_v1"],
+        },
+        base_relation.sampled_parameters,
+        *(relation.sampled_parameters for relation in relation_instances),
+        measurement.sampled_parameters,
+    )
+    axis = metric_axis(viable.metric)
+    if axis is not None:
+        sampled = merge_sampled_parameters(sampled, {"aggregation_axis": [axis]})
+    return QueryProgram(
+        query_id=f"{graph.graph_id}:synth:{spec.family_id}",
+        target_type=spec.target_type,
+        clauses=[
+            base_relation.clause,
+            *(relation.clause for relation in relation_instances),
+            measurement.clause,
+        ],
+        aggregation=viable.aggregation,
+        aggregation_metric=viable.metric,
+        hop_count=3 + len(viable.relation_chain),
+        difficulty="cad_browsecomp",
+        min_individual_clause_candidates=2,
+        sampled_parameters=sampled,
+    )
+
+
 def _viable_reference_distances(
     graph: OntologyGraph,
     spec: ReferenceDistanceFamilySpec,
@@ -2559,6 +2794,30 @@ def _apply_relation_clause(graph: OntologyGraph, candidates: list[Node], relatio
         for node in candidates
         if any(edge.source_id == node.id and edge.type == relation_type for edge in graph.relations)
     ]
+
+
+def _relation_chains(relations: tuple[str, ...], chain_lengths: tuple[int, ...]) -> list[tuple[str, ...]]:
+    chains: list[tuple[str, ...]] = []
+    for chain_length in sorted(chain_lengths):
+        if chain_length < 2:
+            continue
+        chains.extend(_relation_chains_of_length(relations, chain_length, ()))
+    return chains
+
+
+def _relation_chains_of_length(
+    relations: tuple[str, ...],
+    chain_length: int,
+    prefix: tuple[str, ...],
+) -> list[tuple[str, ...]]:
+    if len(prefix) == chain_length:
+        return [prefix]
+    chains: list[tuple[str, ...]] = []
+    for relation in relations:
+        if relation in prefix:
+            continue
+        chains.extend(_relation_chains_of_length(relations, chain_length, (*prefix, relation)))
+    return chains
 
 
 def _related_metric_thresholds(
