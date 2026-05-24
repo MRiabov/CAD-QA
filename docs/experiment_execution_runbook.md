@@ -21,9 +21,11 @@ rtk uv run cadqa training export-sft --rows data/cadqa_graph_smoke/rows.jsonl --
 The SFT command above now exports only geometry-critical rows by default and
 excludes syntax-only calibration, noncritical, and quarantined rows. A real
 training run still must use rows that pass the broader geometry-first dataset
-quality gates: prompt-family balance must be reported, and geometry-derived
-clauses must be necessary for the main answers. Use `--include-calibration`
-only for explicit calibration exports.
+quality gates: prompt-family and prompt-template balance must pass,
+value-bearing and cross-feature coverage must pass, parameterized families must
+show healthy sampled distributions, and geometry-derived clauses must be
+necessary for the main answers. Use `--include-calibration` only for explicit
+calibration exports.
 
 Run `cadqa dataset preview` whenever a task family, graph node type, or
 measurement extractor changes. Filter it with repeated `--family` and

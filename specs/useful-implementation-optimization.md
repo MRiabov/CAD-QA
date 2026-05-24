@@ -23,9 +23,12 @@ Optimize for a small graph-first core before broad task coverage.
 - centroid and coordinate relations;
 - group-safe splits.
 
-The current reset implements source-derived selector face nodes, same-face
-joins, sketch centers, path tangents, nearest path points, and centroid
-relations. Kernel-backed selector IDs and group-safe release splits remain open.
+The current graph-first implementation includes source-derived and
+trace-backed selector face/edge nodes, same-face joins, sketch centers, path
+tangents, nearest path points, centroid/coordinate relations, and group-safe
+split machinery. Remaining work is not the existence of these mechanisms; it is
+coverage, stable distribution across CadEvolve source families, and avoiding
+hard-coded query-family choices.
 
 ## P2
 
@@ -34,9 +37,14 @@ relations. Kernel-backed selector IDs and group-safe release splits remain open.
 - containment and intersection relations;
 - validity/failure probes.
 
-The current reset implements conservative material/void region projections from
-profile geometry and operation order. Robust boolean-diff region geometry
-remains open.
+The current graph-first implementation includes conservative material/void
+region projections and trace-backed kernel material/void region associations
+where snapshot deltas can be matched to source features. Remaining work is
+broader boolean-diff association, in-place mutation and chained-feature
+coverage, and robust stable topology relations at release scale.
 
-Avoid task-specific generators. New capabilities should add nodes, relations,
-measurements, clauses, or templates to the shared graph/query system.
+Avoid task-specific one-off generators. New capabilities should add nodes,
+relations, measurements, clauses, parameterized query-family shapes, or prompt
+templates to the shared graph/query system. Any variable choice that can be
+sampled and verified should become a row parameter rather than a hard-coded
+family name.

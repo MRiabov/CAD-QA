@@ -15,6 +15,12 @@ High-hop CAD BrowseComp rows must keep distractors alive. Individual clues
 should not identify a unique candidate unless the row is marked as low-hop
 calibration. The full clue set must resolve uniquely.
 
+This includes value-bearing clues. A public clue such as "surface area of
+12.5", "solid volume of 48.0", or "edge length of 11.0" is acceptable only when
+its candidate breadth is audited. If the exact value alone identifies the
+answer, the row must be tagged as low-hop or calibration-style value grounding,
+not counted as high-hop distractor reasoning.
+
 ## Geometry-First Requirement
 
 The main training and benchmark rows must not be answerable from source syntax
@@ -100,9 +106,9 @@ Reject or quarantine rows when:
 - required relation families are unsupported;
 - a label depends on unstable face/edge/vertex identity;
 - material or void-region evidence is only an AABB guess;
-- the public prompt cannot be traced to hidden clauses.
+- the public prompt cannot be traced to hidden clauses;
 - a nominal training/benchmark row is solvable by syntax-only clues without
-  geometry-derived evidence.
+  geometry-derived evidence;
 - a nominal task family hard-codes avoidable constants or fixed choices instead
   of sampling explicit row parameters.
 

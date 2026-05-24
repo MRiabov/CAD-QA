@@ -171,10 +171,12 @@ reasoning dataset.
 Use examples like these in the paper:
 
 - Which `.circle(5)` profile is drawn on the explicit plane whose origin has
-  the largest Z value, is later extruded, and then contributes the largest
-  circular-edge increase among the repeated unioned bosses?
+  the most extreme coordinate along a sampled axis, is later extruded, and then
+  contributes the sampled maximum or minimum circular-edge change among the
+  repeated unioned bosses?
 - Which rectangular cut uses the selector that appears on both sides of the
-  box, is centered at `-zpos`, and leaves the outer bounding box unchanged?
+  box, is offset by a sampled visible parameter, and leaves the sampled
+  bounding-box span unchanged?
 - Which sweep path point is nearest to the workplane origin of the boss whose
   extrusion is added immediately after the first union that changes the solid
   centroid upward?

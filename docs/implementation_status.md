@@ -4,11 +4,12 @@ Date: 2026-05-24
 
 The repository has been reset around the graph-first CAD-QA architecture.
 
-The current surface is a smoke-test implementation, not a fine-tuning-ready
-benchmark release. Core schema, graph, resolver, release, evaluation, and SFT
-export mechanisms exist, but row/template-level geometry-first dataset quality
-gates, template diversity quotas, and release-grade geometry coverage still
-need substantial work.
+The current surface is an active dataset-builder implementation, not a finished
+fine-tuning-ready benchmark release. Core schema, graph, resolver, release,
+evaluation, and SFT export mechanisms exist, and several release/training gates
+are now implemented. The remaining risk is distribution quality: task-family
+coverage, maximal parameterization, source-family spread, and semantic
+shortcut-resistance still need substantial work.
 The critical missing implementation is not more syntax-readable prompts; it is
 release-grade CAD geometry task coverage for the rows models should actually
 train on.
@@ -614,6 +615,9 @@ Conservatively checked as done:
 
 Checked as implemented with remaining scale caveats:
 
+- In this document, "implemented" means that the mechanism exists and has been
+  demonstrated in reviewed artifacts. It does not mean the family is balanced,
+  fully parameterized, or sufficient for a headline benchmark/training release.
 - Solid measurement, feature-application effect, selector-result geometry,
   path/distance, material/void-region, and stable spatial-relation rows are
   implemented and demonstrated in reviewed smoke/RC10 artifacts, but larger

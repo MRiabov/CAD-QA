@@ -107,9 +107,9 @@ no_valid_edit
 Example:
 
 ```text
-The final part should have a larger Z bounding-box maximum. The editable
-parameter is `height` in feature `wp4.extrude(height)`. Which direction should
-the parameter change?
+The final part should have a larger bounding-box extent along a sampled axis.
+The editable parameter is `height` in feature `wp4.extrude(height)`. Which
+direction should the parameter change?
 ```
 
 ### `feature_to_edit`

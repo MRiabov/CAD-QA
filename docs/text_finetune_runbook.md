@@ -10,8 +10,10 @@ These exports currently prove that the row schema can be converted to SFT
 JSONL. They are not automatically suitable for model training. Before running a
 real fine-tune, use a dataset that has passed geometry-first quality gates:
 syntax-only calibration rows must be excluded or capped, prompt families must
-be balanced, and the main rows must require geometry-derived evidence rather
-than assignment-name, operation-order, or literal-argument lookup.
+be balanced, value-bearing and cross-feature coverage must pass thresholds,
+parameterized families must have healthy sampled distributions, and the main
+rows must require geometry-derived evidence rather than assignment-name,
+operation-order, or literal-argument lookup.
 
 Build the smoke SFT artifacts:
 

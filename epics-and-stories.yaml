@@ -1,7 +1,7 @@
 schema_version: 2
 project: CAD-QA
 current_snapshot:
-  date: "2026-05-17"
+  date: "2026-05-24"
   codebase_state: >
     The repository has been reset around one graph-first CAD-QA architecture:
     source records, optional trace/snapshot evidence, typed ontology graphs,
@@ -258,7 +258,7 @@ epics:
         status: implemented
   - id: epic-12
     title: Geometry-backed training-critical question families
-    status: implemented
+    status: work-in-progress
     priority: P0
     stories:
       - id: "12.1"
@@ -275,13 +275,13 @@ epics:
         status: implemented
       - id: "12.5"
         title: Path, distance, containment, intersection, adjacency, and stable spatial-relation questions
-        status: implemented
+        status: work-in-progress
       - id: "12.6"
         title: Training-release gate requiring geometry-backed critical rows to dominate exported SFT data
         status: implemented
   - id: epic-13
     title: Value-bearing measurement and equal-geometry multi-hop tasks
-    status: implemented
+    status: work-in-progress
     priority: P0
     stories:
       - id: "13.1"
@@ -289,13 +289,13 @@ epics:
         status: implemented
       - id: "13.2"
         title: Tolerance-equal measurement mining for distractor candidate sets
-        status: implemented
+        status: work-in-progress
       - id: "13.3"
         title: Cross-feature value-bearing tasks using distances between derived feature geometry
-        status: implemented
+        status: work-in-progress
       - id: "13.4"
         title: Release and SFT coverage gates for value-bearing measurement task families
-        status: implemented
+        status: work-in-progress
   - id: epic-14
     title: Maximally parameterized query sampling
     status: planned

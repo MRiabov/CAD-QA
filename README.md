@@ -48,10 +48,12 @@ It supports:
 - dataset row materialization, quarantine tagging, smoke validation, and release
   validation.
 
-This surface is suitable for smoke testing the pipeline. It is not yet a
-fine-tuning-ready benchmark surface: current smoke/release rows can be
-dominated by syntax-only calibration prompts unless geometry-first quality
-gates and prompt-family quotas are applied.
+This surface is suitable for smoke testing and controlled release-candidate
+exports. It is not automatically a fine-tuning-ready benchmark surface:
+release/SFT artifacts must pass the active geometry-first gates, and manual
+preview review must confirm that task families are not collapsed onto
+hard-coded generator choices such as one axis, one min/max direction, one value
+shape, one comparison relation, or one entity type.
 
 ## Quick Start
 
@@ -147,10 +149,12 @@ uv run cadqa dataset preview \
 
 The SFT export command writes only geometry-critical rows by default and
 excludes syntax-only calibration, noncritical, and quarantined rows. Do not
-treat its output as a model-training dataset unless the input rows also pass the broader
-geometry-first quality gates: prompt families must be balanced, and
-geometry-derived clauses must be necessary for the main benchmark answers. Use
-`--include-calibration` only for explicit calibration exports.
+treat its output as a model-training dataset unless the input rows also pass
+the broader geometry-first quality gates: prompt families must be balanced,
+value-bearing and cross-feature coverage must pass thresholds, parameterized
+families must have healthy sampled distributions, and geometry-derived clauses
+must be necessary for the main benchmark answers. Use `--include-calibration`
+only for explicit calibration exports.
 
 Use `cadqa dataset preview` after adding or changing a task family, graph node
 type, or measurement extractor. It writes a Markdown artifact containing
@@ -237,12 +241,23 @@ regions. Rows answerable from assignment names, operation order, literal
 arguments, or source syntax alone are calibration rows and should not dominate
 release or training exports.
 
+Task families should be maximally parameterized. Axes, signs, min/max
+direction, exact measurement values, comparison relations, aggregation metrics,
+target entity type, reference entity type, and rendered view words should be
+sampled row parameters whenever the verifier can support the variation. A
+schema-valid dataset that repeatedly asks the same hard-coded spatial/value
+pattern is still a weak training set.
+
 The critical path is kernel/geometry-backed task coverage: volumes, bounding
 boxes, centroids, topology counts and deltas, feature effects, selector-result
 geometry, material/void region deltas, path distances, containment,
 intersection, adjacency, and other stable spatial relations. Export plumbing is
 not enough; these geometry families must dominate the rows used for model
 training.
+
+CadEvolve source groups matter. If a generated artifact collapses all sources
+into one protected train-only group, it can still validate fine-tuning export
+format and training mechanics, but it is not a multi-split benchmark release.
 
 LLM calls are allowed only for optional external evaluation or wording
 experiments. They are not part of trusted generation or grading.

@@ -18,7 +18,8 @@ candidate traces, and clue maps.
   audit.
 - `public_private_report.json`: field split, row-count, row-ID parity, and
   hidden-field leak report for public/private views.
-- `failure_manifest.jsonl`: rejected or quarantined queries with reasons.
+- `failure_manifest.jsonl`: query-generation failures with resolver or
+  candidate-trace reasons. Quarantined resolved rows are reported separately.
 - `dataset_report.json`: counts by hop slice, relation family, measurement
   scope, and verifier status.
 - `quarantine_report.json`: counts and examples for rows that resolve
@@ -26,6 +27,14 @@ candidate traces, and clue maps.
   conservative or surrogate-backed.
 - `release_validation_report.json`: release-mode validation that rejects
   non-release-ready rows.
+- `release_exclusions.json`: rows filtered out by release export, including
+  release-validation failures, prompt-policy exclusions, duplicate prompts, and
+  syntax-only calibration rows beyond the cap.
+- `release_verifier_report.json` and `RELEASE_VERIFIER_REPORT.md`: aggregate
+  stop-gate report for release exports, including validation, leakage,
+  public/private parity when available, shortcut resistance, training
+  readiness, prompt balance, answer entropy, value-bearing coverage, and
+  geometry-hop coverage.
 - release export directories: filtered datasets containing only
   `release_ready=true` rows, with their own validation report, leakage audit,
   quarantine report, and dataset card.
@@ -52,19 +61,30 @@ quality gates:
 - syntax-only calibration rows are excluded or capped;
 - prompt-family quotas prevent one template from dominating;
 - rows report nonzero geometry-derived evidence for main benchmark slices;
+- value-bearing measurement rows and cross-feature value-bearing rows are
+  represented above the configured release thresholds;
+- parameterized families report coverage over sampled dimensions such as axis,
+  sign, min/max direction, comparison relation, value bucket, aggregation
+  metric, target type, and reference type;
 - static shortcut baselines are reported separately from geometry reasoning
   baselines;
 - release reports include template distribution, static-hop/geometry-hop
   distribution, and answer-entropy checks.
 
-Until these gates are implemented, SFT artifacts are export-format smoke
-artifacts, not recommended training sets.
+Some gates are already enforced by the release and SFT exporters. A dataset is
+still not recommended for model training unless every active gate passes and
+manual preview review confirms that the sampled prompts are not collapsed onto
+hard-coded generator choices.
 
 ## Splits
 
 Release splits must be group-safe by source family, generator, and
 counterfactual group when such metadata exists. Smoke datasets may use a single
 `rows.jsonl` file.
+
+If available source metadata collapses all rows into one protected split group,
+the artifact may still be useful as a fine-tuning-format export, but it is not a
+multi-split benchmark release. This limitation must be reported explicitly.
 
 ## Quarantine Policy
 
