@@ -182,6 +182,10 @@ when those choices can be sampled and verified.
 - Release export deterministically caps syntax-only calibration rows so
   calibration examples can remain reviewable without silently violating the
   aggregate release cap.
+- Release export deterministically caps overrepresented release-balance slices
+  when the verifier profile defines maximum shares. It can drop excess
+  value-bearing rows, cross-feature rows, prompt-family rows, and
+  prompt-template rows while writing explicit balance-cap exclusions.
 - One-command smoke experiments now emit both `dataset/` and filtered
   `release_dataset/` artifact trees.
 - Baseline metrics are written for both the full smoke rows and the filtered
@@ -450,9 +454,16 @@ Result reviewed on 2026-05-25:
   Reviewed samples use public clues such as reference feature volume plus
   bounding-box center coordinates, then resolve by closest/farthest target
   centroid or segment midpoint distance to that reference center.
+- A benchmark-tier export probe with failing gates allowed wrote
+  `runs/current_rc10_bbox_reference_balanced_export/`. The deterministic
+  release-balance cap reduced the 244-row artifact to 101 rows and wrote 143
+  balance-cap exclusions: 84 value-bearing, 23 cross-feature, 35 prompt-family,
+  and 1 prompt-template exclusions. The remaining export passes the
+  value-bearing band at 26/101 rows and the cross-feature band at 15/101 rows;
+  both gates were blocking before balance capping.
 - This is valid-row and RC10 coverage evidence only. Benchmark-release remains
   blocked on scale, split-group coverage, family distribution, parameter
-  balance, preview coverage, and value/cross-feature share tuning.
+  balance, intended-family coverage, and preview coverage.
 
 ## CadEvolve 50 Release-Candidate Snapshot
 

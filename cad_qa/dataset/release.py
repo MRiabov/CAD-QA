@@ -13,6 +13,8 @@ from cad_qa.dataset.public import write_public_private_artifacts
 from cad_qa.dataset.quarantine import quarantine_report
 from cad_qa.dataset.release_report import (
     DEFAULT_RELEASE_TIER,
+    _is_cross_feature_value_bearing_row,
+    _is_value_bearing_measurement_row,
     release_gate_profile,
     write_release_verifier_report,
 )
@@ -48,6 +50,7 @@ def export_release_dataset(
         deduped_rows,
         profile.max_syntax_only_calibration_share,
     )
+    release_rows, balance_cap_exclusions = _cap_release_balance_rows(release_rows, profile)
     if not release_rows:
         raise ValueError("no release-ready rows found")
     out.mkdir(parents=True, exist_ok=True)
@@ -83,6 +86,7 @@ def export_release_dataset(
     report["excluded_prompt_policy_count"] = excluded_prompt_policy_count
     report["excluded_duplicate_prompt_count"] = len(duplicate_exclusions)
     report["excluded_syntax_only_calibration_cap_count"] = len(calibration_cap_exclusions)
+    report["excluded_release_balance_cap_count"] = len(balance_cap_exclusions)
     write_json(out / "dataset_report.json", report)
     write_json(
         out / "release_exclusions.json",
@@ -93,10 +97,12 @@ def export_release_dataset(
             "excluded_prompt_policy_count": excluded_prompt_policy_count,
             "excluded_duplicate_prompt_count": len(duplicate_exclusions),
             "excluded_syntax_only_calibration_cap_count": len(calibration_cap_exclusions),
+            "excluded_release_balance_cap_count": len(balance_cap_exclusions),
             "release_validation_exclusions": validation_exclusions,
             "non_release_family_exclusions": non_release_family_exclusions,
             "duplicate_prompt_exclusions": duplicate_exclusions,
             "syntax_only_calibration_cap_exclusions": calibration_cap_exclusions,
+            "release_balance_cap_exclusions": balance_cap_exclusions,
         },
     )
 
@@ -135,6 +141,7 @@ def export_release_dataset(
         "excluded_prompt_policy_count": excluded_prompt_policy_count,
         "excluded_duplicate_prompt_count": len(duplicate_exclusions),
         "excluded_syntax_only_calibration_cap_count": len(calibration_cap_exclusions),
+        "excluded_release_balance_cap_count": len(balance_cap_exclusions),
         "valid": valid,
         "release_tier": profile.name,
         "blocking_release_gates": verifier_report["blocking_gates"],
@@ -264,6 +271,153 @@ def _allowed_calibration_count(main_count: int, max_share: float) -> int:
     return int((max_share * main_count) // (1 - max_share))
 
 
+def _cap_release_balance_rows(
+    rows: list[dict[str, Any]],
+    profile: Any,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Deterministically cap overrepresented release slices when alternatives exist."""
+
+    if len(rows) < profile.min_applicable_rows:
+        return rows, []
+    kept = list(rows)
+    exclusions: list[dict[str, Any]] = []
+    for _ in range(len(rows)):
+        before = len(kept)
+        kept, dropped = _cap_boolean_share_rows(
+            kept,
+            predicate=_is_cross_feature_value_bearing_row,
+            max_share=profile.max_cross_feature_value_bearing_share,
+            reason="cross_feature_value_bearing_cap",
+        )
+        exclusions.extend(dropped)
+        kept, dropped = _cap_boolean_share_rows(
+            kept,
+            predicate=_is_value_bearing_measurement_row,
+            max_share=profile.max_value_bearing_measurement_share,
+            reason="value_bearing_measurement_cap",
+            prefer_keep=_cross_feature_keep_priority,
+        )
+        exclusions.extend(dropped)
+        kept, dropped = _cap_group_share_rows(
+            kept,
+            group_key=_prompt_family,
+            max_share=profile.max_prompt_family_share,
+            reason="prompt_family_share_cap",
+        )
+        exclusions.extend(dropped)
+        kept, dropped = _cap_group_share_rows(
+            kept,
+            group_key=_prompt_template,
+            max_share=profile.max_prompt_template_share,
+            reason="prompt_template_share_cap",
+        )
+        exclusions.extend(dropped)
+        if len(kept) == before:
+            break
+    return kept, exclusions
+
+
+def _cap_boolean_share_rows(
+    rows: list[dict[str, Any]],
+    *,
+    predicate: Any,
+    max_share: float | None,
+    reason: str,
+    prefer_keep: Any | None = None,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    if max_share is None:
+        return rows, []
+    matched = [row for row in rows if predicate(row)]
+    other_count = len(rows) - len(matched)
+    allowed_count = _allowed_share_count(other_count, max_share)
+    if len(matched) <= allowed_count:
+        return rows, []
+    key = prefer_keep or _stable_row_key
+    kept_matched = sorted(matched, key=key)[:allowed_count]
+    kept_ids = {id(row) for row in kept_matched}
+    dropped = [row for row in matched if id(row) not in kept_ids]
+    exclusions = [
+        _balance_exclusion(row, reason=reason, maximum_share=max_share)
+        for row in sorted(dropped, key=_stable_row_key)
+    ]
+    return [row for row in rows if not predicate(row) or id(row) in kept_ids], exclusions
+
+
+def _cap_group_share_rows(
+    rows: list[dict[str, Any]],
+    *,
+    group_key: Any,
+    max_share: float,
+    reason: str,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    if max_share <= 0:
+        return rows, []
+    groups: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        groups.setdefault(group_key(row), []).append(row)
+    if len(groups) < _minimum_group_count_for_share(max_share):
+        return rows, []
+    kept = list(rows)
+    exclusions: list[dict[str, Any]] = []
+    for group, group_rows in sorted(groups.items(), key=lambda item: (-len(item[1]), item[0])):
+        current_group_rows = [row for row in kept if group_key(row) == group]
+        other_count = len(kept) - len(current_group_rows)
+        allowed_count = _allowed_share_count(other_count, max_share)
+        if len(current_group_rows) <= allowed_count:
+            continue
+        kept_group_rows = sorted(current_group_rows, key=_stable_row_key)[:allowed_count]
+        kept_group_ids = {id(row) for row in kept_group_rows}
+        dropped = [row for row in current_group_rows if id(row) not in kept_group_ids]
+        exclusions.extend(
+            _balance_exclusion(row, reason=reason, maximum_share=max_share, group=group)
+            for row in sorted(dropped, key=_stable_row_key)
+        )
+        kept = [row for row in kept if group_key(row) != group or id(row) in kept_group_ids]
+    return kept, exclusions
+
+
+def _allowed_share_count(other_count: int, max_share: float) -> int:
+    if max_share <= 0:
+        return 0
+    if max_share >= 1:
+        return 10**12
+    return int((max_share * other_count) // (1 - max_share))
+
+
+def _minimum_group_count_for_share(max_share: float) -> int:
+    if max_share <= 0:
+        return 1
+    return int((1 / max_share) + 0.999999)
+
+
+def _cross_feature_keep_priority(row: dict[str, Any]) -> tuple[int, str]:
+    return (0 if _is_cross_feature_value_bearing_row(row) else 1, _stable_row_key(row))
+
+
+def _stable_row_key(row: dict[str, Any]) -> str:
+    return str(row.get("row_id") or row.get("prompt") or row.get("query_program", {}).get("query_id") or "")
+
+
+def _balance_exclusion(
+    row: dict[str, Any],
+    *,
+    reason: str,
+    maximum_share: float,
+    group: str | None = None,
+) -> dict[str, Any]:
+    exclusion = {
+        "row_id": row.get("row_id"),
+        "source_id": row.get("source_id"),
+        "prompt_family": _prompt_family(row),
+        "prompt_template": _prompt_template(row),
+        "reason": reason,
+        "maximum_share": maximum_share,
+    }
+    if group is not None:
+        exclusion["group"] = group
+    return exclusion
+
+
 def _with_prompt_template_id(row: dict[str, Any]) -> dict[str, Any]:
     if row.get("prompt_template_id"):
         return row
@@ -281,3 +435,13 @@ def _prompt_family(row: dict[str, Any]) -> str:
     if isinstance(row_id, str) and ":" in row_id:
         return row_id.rsplit(":", 1)[-1]
     return "unknown"
+
+
+def _prompt_template(row: dict[str, Any]) -> str:
+    template_id = row.get("prompt_template_id")
+    if template_id:
+        return str(template_id)
+    query = row.get("query_program")
+    if isinstance(query, dict):
+        return prompt_template_id_from_mapping(query)
+    return str(row.get("prompt_version", "unknown"))

@@ -569,6 +569,7 @@ def _cmd_dataset_export_release(args: argparse.Namespace) -> dict[str, Any]:
         "excluded_syntax_only_calibration_cap_count": result[
             "excluded_syntax_only_calibration_cap_count"
         ],
+        "excluded_release_balance_cap_count": result["excluded_release_balance_cap_count"],
         "blocking_release_gates": result["blocking_release_gates"],
         "valid": result["valid"],
         "out": result["out"],

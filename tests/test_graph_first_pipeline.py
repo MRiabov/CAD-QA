@@ -16,7 +16,7 @@ from cad_qa.dataset.parameter_balance import parameter_balance_report
 from cad_qa.dataset.preview import dataset_preview_evidence_report, preview_evidence_gate_report
 from cad_qa.dataset.public import private_rows, public_private_audit, public_rows, write_public_private_artifacts
 from cad_qa.dataset.quarantine import quarantine_report
-from cad_qa.dataset.release import export_release_dataset
+from cad_qa.dataset.release import _cap_release_balance_rows, export_release_dataset
 from cad_qa.dataset.release_report import (
     intended_family_share_feasibility_report,
     release_balance_report,
@@ -7574,6 +7574,48 @@ def test_release_balance_report_checks_family_entropy_and_geometry_hops() -> Non
     assert value_report["passes_value_bearing_measurement_coverage"]
     assert value_report["passes_cross_feature_value_bearing_coverage"]
     assert value_report["cross_feature_value_bearing_count"] == 1
+
+
+def test_release_export_balance_caps_overrepresented_training_slices() -> None:
+    rows = []
+    for index in range(100):
+        clauses = []
+        aggregation_metric = "volume"
+        if index < 50:
+            clauses.append({"kind": "has_measurement", "metric": "volume", "value": float(index)})
+        if index < 20:
+            clauses.append({"kind": "reference_measurement", "metric": "distance_to_reference_feature_centroid"})
+            aggregation_metric = "distance_to_reference_feature_centroid"
+        rows.append(
+            {
+                "row_id": f"row:src:{index}:family_{index % 20}",
+                "source_id": f"src_{index}",
+                "prompt": f"geometry prompt {index}",
+                "prompt_template_id": f"template_{index % 20}",
+                "gold_answer": f"entity:{index}",
+                "logical_hop_count": 4,
+                "geometry_hop_count": 4,
+                "static_hop_count": 0,
+                "query_program": {
+                    "query_id": f"graph:src:q{index}:family_{index % 20}",
+                    "aggregation_metric": aggregation_metric,
+                    "clauses": clauses,
+                },
+            }
+        )
+
+    profile = release_gate_profile("benchmark-release")
+    capped, exclusions = _cap_release_balance_rows(rows, profile)
+    report = release_balance_report(capped, release_tier="benchmark-release")
+
+    assert len(capped) < len(rows)
+    assert {item["reason"] for item in exclusions} >= {
+        "cross_feature_value_bearing_cap",
+        "value_bearing_measurement_cap",
+    }
+    assert report["value_bearing_measurement_share"] <= profile.max_value_bearing_measurement_share
+    assert report["cross_feature_value_bearing_share"] <= profile.max_cross_feature_value_bearing_share
+    assert report["largest_prompt_family_share"] <= profile.max_prompt_family_share
 
 
 def test_benchmark_release_tier_applies_stricter_numeric_gates() -> None:
