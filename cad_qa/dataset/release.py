@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import hashlib
+import math
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -287,6 +289,7 @@ def _cap_release_balance_rows(
             kept,
             predicate=_is_cross_feature_value_bearing_row,
             max_share=profile.max_cross_feature_value_bearing_share,
+            min_prompt_family_share=profile.min_prompt_family_share,
             reason="cross_feature_value_bearing_cap",
             prefer_keep=_high_hop_keep_priority,
         )
@@ -295,6 +298,7 @@ def _cap_release_balance_rows(
             kept,
             predicate=_is_value_bearing_measurement_row,
             max_share=profile.max_value_bearing_measurement_share,
+            min_prompt_family_share=profile.min_prompt_family_share,
             reason="value_bearing_measurement_cap",
             prefer_keep=_cross_feature_keep_priority,
         )
@@ -303,6 +307,7 @@ def _cap_release_balance_rows(
             kept,
             predicate=_is_main_browsecomp_hop_row,
             min_share=profile.min_logical_hop_ge_3_share,
+            min_prompt_family_share=profile.min_prompt_family_share,
             reason="main_browsecomp_hop_cap",
         )
         exclusions.extend(dropped)
@@ -337,6 +342,7 @@ def _cap_boolean_share_rows(
     *,
     predicate: Any,
     max_share: float | None,
+    min_prompt_family_share: float | None = None,
     reason: str,
     prefer_keep: Any | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
@@ -348,7 +354,14 @@ def _cap_boolean_share_rows(
     if len(matched) <= allowed_count:
         return rows, []
     key = prefer_keep or _stable_row_key
-    kept_matched = _keep_rows_preserving_prompt_families(rows, matched, allowed_count, key=key)
+    kept_matched = _keep_rows_preserving_prompt_families(
+        rows,
+        matched,
+        allowed_count,
+        key=key,
+        min_family_share=min_prompt_family_share,
+        target_total=other_count + allowed_count,
+    )
     kept_ids = {id(row) for row in kept_matched}
     dropped = [row for row in matched if id(row) not in kept_ids]
     exclusions = [
@@ -363,6 +376,7 @@ def _cap_boolean_min_share_rows(
     *,
     predicate: Any,
     min_share: float | None,
+    min_prompt_family_share: float | None = None,
     reason: str,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     if min_share is None or min_share <= 0:
@@ -374,7 +388,14 @@ def _cap_boolean_min_share_rows(
     allowed_unmatched_count = int((len(matched) * (1 - min_share)) / min_share + 1e-12)
     if len(unmatched) <= allowed_unmatched_count:
         return rows, []
-    kept_unmatched = _keep_rows_preserving_prompt_families(rows, unmatched, allowed_unmatched_count, key=_stable_row_key)
+    kept_unmatched = _keep_rows_preserving_prompt_families(
+        rows,
+        unmatched,
+        allowed_unmatched_count,
+        key=_stable_row_key,
+        min_family_share=min_prompt_family_share,
+        target_total=len(matched) + allowed_unmatched_count,
+    )
     kept_unmatched_ids = {id(row) for row in kept_unmatched}
     dropped = [row for row in unmatched if id(row) not in kept_unmatched_ids]
     exclusions = [
@@ -478,21 +499,24 @@ def _keep_rows_preserving_prompt_families(
     keep_count: int,
     *,
     key: Any,
+    min_family_share: float | None = None,
+    target_total: int | None = None,
 ) -> list[dict[str, Any]]:
     if keep_count <= 0:
         return []
     candidates = sorted(candidate_rows, key=key)
     if len(candidates) <= keep_count:
         return candidates
-    families_in_all = {_prompt_family(row) for row in all_rows}
-    candidate_families = {_prompt_family(row) for row in candidates}
-    families_outside_candidates = families_in_all - candidate_families
-    required_families = candidate_families - families_outside_candidates
     kept: list[dict[str, Any]] = []
-    for family in sorted(required_families):
+    required_by_family = _minimum_candidate_rows_by_prompt_family(
+        all_rows,
+        candidates,
+        min_family_share=min_family_share,
+        target_total=target_total,
+    )
+    for family, required_count in sorted(required_by_family.items()):
         family_rows = [row for row in candidates if _prompt_family(row) == family]
-        if family_rows:
-            kept.append(family_rows[0])
+        kept.extend(family_rows[:required_count])
     if len(kept) > keep_count:
         return sorted(kept, key=key)[:keep_count]
     kept_ids = {id(row) for row in kept}
@@ -503,6 +527,31 @@ def _keep_rows_preserving_prompt_families(
             kept.append(row)
             kept_ids.add(id(row))
     return sorted(kept, key=key)
+
+
+def _minimum_candidate_rows_by_prompt_family(
+    all_rows: list[dict[str, Any]],
+    candidate_rows: list[dict[str, Any]],
+    *,
+    min_family_share: float | None,
+    target_total: int | None,
+) -> dict[str, int]:
+    candidates_by_family = _rows_by_group(candidate_rows, _prompt_family)
+    candidate_ids = {id(row) for row in candidate_rows}
+    noncandidate_counts = Counter(
+        _prompt_family(row)
+        for row in all_rows
+        if id(row) not in candidate_ids
+    )
+    minimum_rows = 1
+    if min_family_share and target_total:
+        minimum_rows = max(1, math.ceil(min_family_share * target_total - 1e-12))
+    required: dict[str, int] = {}
+    for family, family_candidates in candidates_by_family.items():
+        needed = minimum_rows - noncandidate_counts.get(family, 0)
+        if needed > 0:
+            required[family] = min(needed, len(family_candidates))
+    return required
 
 
 def _allowed_share_count(other_count: int, max_share: float) -> int:

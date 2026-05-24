@@ -460,18 +460,18 @@ Result reviewed on 2026-05-25:
   bounding-box center coordinates, then resolve by closest/farthest target
   centroid or segment midpoint distance to that reference center.
 - A benchmark-tier export probe with failing gates allowed wrote
-  `runs/current_rc10_bbox_reference_balanced_export_v4/`. The deterministic
-  release-balance cap reduced the 244-row artifact to 10 rows and wrote 234
-  balance-cap exclusions: 96 value-bearing, 31 cross-feature, 29 low-hop, 45
-  prompt-family maximum-share, 29 prompt-family minimum-share, and 4
-  prompt-template exclusions. The remaining export passes value-bearing,
-  cross-feature, main-hop, prompt-family, public/private, release-validation,
-  row-validation, candidate-breadth, and quarantine gates. It still fails
-  prompt-template balance because this partial RC10 slice cannot retain 20
-  templates while also satisfying the stricter benchmark distribution caps.
+  `runs/current_rc10_unique_rows_balanced_export/` after rematerializing the
+  existing RC10 query output with query-unique row IDs. The deterministic
+  release-balance cap reduced the 244-row artifact to 40 rows and wrote 204
+  balance-cap exclusions while preserving all 20 generated families and 37
+  prompt templates. The remaining export passes value-bearing, cross-feature,
+  main-hop, prompt-family, prompt-template, public/private,
+  release-validation, row-validation, candidate-breadth, and quarantine gates.
+  `public_private_audit` now passes on the rematerialized artifact because row
+  IDs include the full query ID rather than only source and family.
 - This is valid-row and RC10 coverage evidence only. Benchmark-release remains
-  blocked on scale, split-group coverage, family distribution, parameter
-  balance, intended-family coverage, and preview coverage.
+  blocked on scale, split-group coverage, answer entropy, parameter balance,
+  intended-family coverage, and preview coverage.
 
 ## CadEvolve 50 Release-Candidate Snapshot
 

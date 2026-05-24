@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -38,10 +39,16 @@ REQUIRED_ROW_FIELDS = {
 def validate_rows(rows: list[dict[str, Any]], *, release: bool = False) -> dict[str, Any]:
     errors: list[dict[str, Any]] = []
     warnings: list[dict[str, Any]] = []
+    row_id_counts = Counter(row.get("row_id") for row in rows)
     for index, row in enumerate(rows):
         missing = sorted(REQUIRED_ROW_FIELDS - set(row))
         if missing:
             errors.append({"index": index, "row_id": row.get("row_id"), "missing": missing})
+        row_id = row.get("row_id")
+        if row_id is None:
+            errors.append({"index": index, "row_id": row_id, "error": "missing_row_id"})
+        elif row_id_counts[row_id] > 1:
+            errors.append({"index": index, "row_id": row_id, "error": "duplicate_row_id"})
         if row.get("verifier_status") != "resolved":
             errors.append({"index": index, "row_id": row.get("row_id"), "error": "unresolved_row"})
         if not row.get("candidate_trace", {}).get("final_candidates"):

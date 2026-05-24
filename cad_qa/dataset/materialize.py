@@ -54,7 +54,7 @@ def materialize_row(graph: OntologyGraph, resolution: QueryResolution) -> Datase
     geometry_hops = max(0, query.hop_count - static_hops)
     evidence_tier, quarantine_reasons = _evidence_policy(resolution)
     return DatasetRow(
-        row_id=f"row:{source_id}:{query.query_id.split(':')[-1]}",
+        row_id=f"row:{query.query_id}",
         source_id=source_id,
         source_path=graph.source.get("source_path"),
         source_hash=graph.source.get("source_hash"),

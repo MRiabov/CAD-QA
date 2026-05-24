@@ -7402,6 +7402,10 @@ def test_materialized_rows_audit_clue_traceability_and_breadth() -> None:
     assert "rendered_clue_template_sequence" in row["query_program"]["sampled_parameters"]
     assert any("candidate_count_after" in clue for clue in row["clue_map"] if clue["clause_id"] != "aggregation")
 
+    duplicate_report = validate_rows([row, {**row}])
+    assert not duplicate_report["valid"]
+    assert any(error["error"] == "duplicate_row_id" for error in duplicate_report["errors"])
+
     narrow = {**row, "candidate_trace": {**row["candidate_trace"], "steps": [dict(step) for step in row["candidate_trace"]["steps"]]}}
     clause_id = row["query_program"]["clauses"][0]["id"]
     for step in narrow["candidate_trace"]["steps"]:
@@ -7651,6 +7655,46 @@ def test_release_export_balance_caps_to_satisfy_minimum_family_share() -> None:
     assert len(capped) == 100
     assert any(item["reason"] == "prompt_family_min_share_cap" for item in exclusions)
     assert not report["underrepresented_prompt_families"]
+
+
+def test_release_export_balance_caps_preserve_available_family_diversity() -> None:
+    rows = []
+    for family_index in range(20):
+        family = f"family_{family_index}"
+        for row_index in range(12):
+            index = family_index * 12 + row_index
+            is_value = row_index < 8
+            clauses = [{"kind": "has_measurement", "metric": "volume", "value": float(index)}] if is_value else []
+            rows.append(
+                {
+                    "row_id": f"row:src:{index}:{family}",
+                    "source_id": f"src_{index}",
+                    "prompt": f"geometry prompt {index}",
+                    "prompt_template_id": f"template_{index}",
+                    "gold_answer": f"entity:{index}",
+                    "logical_hop_count": 2 if row_index == 11 else 4,
+                    "geometry_hop_count": 2 if row_index == 11 else 4,
+                    "static_hop_count": 0,
+                    "query_program": {
+                        "query_id": f"graph:src:q{index}:{family}",
+                        "aggregation_metric": "volume",
+                        "clauses": clauses,
+                    },
+                }
+            )
+
+    profile = release_gate_profile("benchmark-release")
+    capped, exclusions = _cap_release_balance_rows(rows, profile)
+    report = release_balance_report(capped, release_tier="benchmark-release")
+
+    assert len(capped) >= 40
+    assert report["prompt_family_count"] == 20
+    assert report["prompt_template_count"] >= profile.min_prompt_template_count
+    assert report["passes_prompt_family_balance"]
+    assert report["passes_prompt_template_balance"]
+    assert report["passes_main_browsecomp_hop_coverage"]
+    assert report["passes_value_bearing_measurement_coverage"]
+    assert any(item["reason"] == "value_bearing_measurement_cap" for item in exclusions)
 
 
 def test_benchmark_release_tier_applies_stricter_numeric_gates() -> None:
