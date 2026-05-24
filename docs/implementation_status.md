@@ -619,6 +619,16 @@ Checked as implemented with remaining scale caveats:
   geometry-critical family coverage, and row-level geometry-first prompt-policy
   gates for release-scale artifacts. Future prompt families may still need
   additional semantic shortcut rules as new source patterns appear.
+- Value-bearing measurement and tolerance-equal distractor rows are implemented
+  for feature volume, centroid height, centroid X/Y coordinate, overall height,
+  selected-face area, selected-face center Z, selected-edge length,
+  selected-edge midpoint distance, endpoint Z, added-material region volume,
+  and selected-edge distance to a geometry-described reference feature. The
+  reviewed CadEvolve-50 check on 2026-05-24 generated 602 raw rows, 543
+  release-valid rows, and 494 default SFT rows, with release and SFT
+  value-bearing gates passing. Reports now surface the rounding/tolerance
+  policy used by these tasks: six decimal places and an absolute match
+  tolerance of 1e-6.
 - Opposite-face rows on broad real CadEvolve data, broader containment,
   broader intersection, broader adjacency, and broader stable spatial-relation
   distributions remain scale/coverage work rather than unchecked core
@@ -626,18 +636,12 @@ Checked as implemented with remaining scale caveats:
 
 ## Open Work
 
-- Add value-bearing measurement prompt families. Current domain-language
-  templates now cover initial equal-volume, equal-centroid-height,
-  equal-overall-height, equal-face-area, equal-edge-length, and
-  equal-edge-midpoint-distance rows, plus one cross-feature edge-to-reference
-  feature distance family; coverage still needs to broaden to direct
-  coordinates, radius/diameter, angle, derived region values, and additional
-  cross-feature distance forms.
-- Add tolerance-equal measurement mining for multi-hop distractor construction:
-  the current implementation groups feature volumes, feature centroid heights,
-  feature overall heights, selected-face areas, selected-edge lengths, and
-  selected-edge midpoint distances; it still needs broader entity/parameter
-  coverage and configurable tolerance policy surfaced in release reports.
+- Broaden value-bearing and tolerance-equal coverage beyond the implemented
+  core to radius/diameter/angle once those measurements are extracted broadly,
+  additional face/endpoint/material/void coordinate combinations, and larger
+  real CadEvolve distributions. Removed-region equal-volume mining is
+  implemented and unit-tested, but produced no rows in the reviewed CadEvolve-50
+  sample.
 - Broaden cross-feature value-bearing tasks beyond the implemented selected-edge
   midpoint to reference-feature centroid family. Additional target/reference
   combinations should include faces, endpoints, material/void regions, and

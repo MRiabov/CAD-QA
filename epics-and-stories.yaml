@@ -277,7 +277,7 @@ epics:
         status: implemented
   - id: epic-13
     title: Value-bearing measurement and equal-geometry multi-hop tasks
-    status: work-in-progress
+    status: implemented
     priority: P0
     stories:
       - id: "13.1"
@@ -285,7 +285,7 @@ epics:
         status: implemented
       - id: "13.2"
         title: Tolerance-equal measurement mining for distractor candidate sets
-        status: work-in-progress
+        status: implemented
       - id: "13.3"
         title: Cross-feature value-bearing tasks using distances between derived feature geometry
         status: implemented

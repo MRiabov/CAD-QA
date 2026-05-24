@@ -393,6 +393,47 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
                 min_individual_clause_candidates=2,
             )
         )
+    equal_center_z_faces = _largest_equal_value_group(graph, kernel_faces_with_center_distance, "coordinate_z")
+    if (
+        len(equal_center_z_faces) >= 2
+        and _has_unique_extreme(
+            graph,
+            equal_center_z_faces,
+            "distance_to_origin",
+            "argmin",
+            min_margin=GEOMETRY_MARGIN_EPSILON,
+        )
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q17:nearest_equal_center_z_kernel_selected_face",
+                target_type="face",
+                clauses=[
+                    Clause(
+                        id="has_kernel_face_selector_identity",
+                        kind="has_relation",
+                        relation="has_kernel_stable_face_id",
+                        target_type="selector",
+                    ),
+                    Clause(
+                        id="has_face_center_z_value",
+                        kind="has_measurement",
+                        metric="coordinate_z",
+                        value=_measurement_bucket_value(graph, equal_center_z_faces[0].id, "coordinate_z"),
+                    ),
+                    Clause(
+                        id="has_face_center_distance",
+                        kind="has_measurement",
+                        metric="distance_to_origin",
+                    ),
+                ],
+                aggregation="argmin",
+                aggregation_metric="distance_to_origin",
+                hop_count=4,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
     z_flat_positive_kernel_faces = [
         face
         for face in kernel_faces_with_bbox_z
@@ -1153,6 +1194,51 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
                 min_individual_clause_candidates=2,
             )
         )
+    equal_z_endpoints = _largest_equal_value_group(
+        graph,
+        _nodes_with_numeric_measurement(graph, edge_endpoints, "distance_to_origin"),
+        "coordinate_z",
+    )
+    if (
+        len(equal_z_endpoints) >= 2
+        and _has_unique_extreme(
+            graph,
+            equal_z_endpoints,
+            "distance_to_origin",
+            "argmax",
+            min_margin=GEOMETRY_MARGIN_EPSILON,
+        )
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q6:farthest_equal_z_kernel_edge_endpoint",
+                target_type="edge_endpoint",
+                clauses=[
+                    Clause(
+                        id="endpoint_of_kernel_selected_edge",
+                        kind="has_relation",
+                        relation="endpoint_of",
+                        target_type="edge",
+                    ),
+                    Clause(
+                        id="has_endpoint_z_value",
+                        kind="has_measurement",
+                        metric="coordinate_z",
+                        value=_measurement_bucket_value(graph, equal_z_endpoints[0].id, "coordinate_z"),
+                    ),
+                    Clause(
+                        id="has_endpoint_distance",
+                        kind="has_measurement",
+                        metric="distance_to_origin",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="distance_to_origin",
+                hop_count=4,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
     kernel_edge_selectors_with_counts = [
         selector
         for selector in _nodes_with_numeric_measurement(graph, selectors, "selected_count")
@@ -1458,6 +1544,92 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
                                 graph,
                                 equal_bbox_height_features[0].id,
                                 "bbox_span_z",
+                            ),
+                        ),
+                        Clause(
+                            id="has_compiled_volume",
+                            kind="has_measurement",
+                            metric="volume",
+                        ),
+                    ],
+                    aggregation="argmax",
+                    aggregation_metric="volume",
+                    hop_count=3,
+                    difficulty="cad_browsecomp",
+                    min_individual_clause_candidates=2,
+                )
+            )
+        equal_centroid_x_features = _largest_equal_value_group(
+            graph,
+            _nodes_with_numeric_measurement(graph, features, "volume"),
+            "centroid_x",
+        )
+        if (
+            len(equal_centroid_x_features) >= 2
+            and _has_unique_extreme(
+                graph,
+                equal_centroid_x_features,
+                "volume",
+                "argmax",
+                min_margin=GEOMETRY_MARGIN_EPSILON,
+            )
+        ):
+            queries.append(
+                QueryProgram(
+                    query_id=f"{graph.graph_id}:q7:largest_equal_centroid_x_feature",
+                    target_type="feature",
+                    clauses=[
+                        Clause(
+                            id="has_compiled_centroid_x_value",
+                            kind="has_measurement",
+                            metric="centroid_x",
+                            value=_measurement_bucket_value(
+                                graph,
+                                equal_centroid_x_features[0].id,
+                                "centroid_x",
+                            ),
+                        ),
+                        Clause(
+                            id="has_compiled_volume",
+                            kind="has_measurement",
+                            metric="volume",
+                        ),
+                    ],
+                    aggregation="argmax",
+                    aggregation_metric="volume",
+                    hop_count=3,
+                    difficulty="cad_browsecomp",
+                    min_individual_clause_candidates=2,
+                )
+            )
+        equal_centroid_y_features = _largest_equal_value_group(
+            graph,
+            _nodes_with_numeric_measurement(graph, features, "volume"),
+            "centroid_y",
+        )
+        if (
+            len(equal_centroid_y_features) >= 2
+            and _has_unique_extreme(
+                graph,
+                equal_centroid_y_features,
+                "volume",
+                "argmax",
+                min_margin=GEOMETRY_MARGIN_EPSILON,
+            )
+        ):
+            queries.append(
+                QueryProgram(
+                    query_id=f"{graph.graph_id}:q8:largest_equal_centroid_y_feature",
+                    target_type="feature",
+                    clauses=[
+                        Clause(
+                            id="has_compiled_centroid_y_value",
+                            kind="has_measurement",
+                            metric="centroid_y",
+                            value=_measurement_bucket_value(
+                                graph,
+                                equal_centroid_y_features[0].id,
+                                "centroid_y",
                             ),
                         ),
                         Clause(
@@ -1908,6 +2080,51 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
                 min_individual_clause_candidates=1 if has_kernel_material else 3,
             )
         )
+        equal_material_regions = _largest_equal_value_group(
+            graph,
+            _nodes_with_numeric_measurement(graph, material_regions, "centroid_z"),
+            "volume",
+        )
+        if (
+            len(equal_material_regions) >= 2
+            and _has_unique_extreme(
+                graph,
+                equal_material_regions,
+                "centroid_z",
+                "argmax",
+                min_margin=GEOMETRY_MARGIN_EPSILON,
+            )
+        ):
+            queries.append(
+                QueryProgram(
+                    query_id=f"{graph.graph_id}:q4:highest_equal_volume_added_region",
+                    target_type="material_region",
+                    clauses=[
+                        Clause(
+                            id="has_region_geometry",
+                            kind="has_relation",
+                            relation=material_relation,
+                            target_type="material_region",
+                        ),
+                        Clause(
+                            id="has_region_volume_value",
+                            kind="has_measurement",
+                            metric="volume",
+                            value=_measurement_bucket_value(graph, equal_material_regions[0].id, "volume"),
+                        ),
+                        Clause(
+                            id="has_region_centroid_z",
+                            kind="has_measurement",
+                            metric="centroid_z",
+                        ),
+                    ],
+                    aggregation="argmax",
+                    aggregation_metric="centroid_z",
+                    hop_count=4,
+                    difficulty="cad_browsecomp",
+                    min_individual_clause_candidates=2,
+                )
+            )
     if void_regions:
         has_kernel_void = any(relation.type == "has_kernel_void_region_geometry" for relation in graph.relations)
         void_relation = "has_kernel_void_region_geometry" if has_kernel_void else "has_void_region_geometry"
@@ -1936,6 +2153,51 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
                 min_individual_clause_candidates=1 if has_kernel_void else 3,
             )
         )
+        equal_void_regions = _largest_equal_value_group(
+            graph,
+            _nodes_with_numeric_measurement(graph, void_regions, "centroid_z"),
+            "volume",
+        )
+        if (
+            len(equal_void_regions) >= 2
+            and _has_unique_extreme(
+                graph,
+                equal_void_regions,
+                "centroid_z",
+                "argmax",
+                min_margin=GEOMETRY_MARGIN_EPSILON,
+            )
+        ):
+            queries.append(
+                QueryProgram(
+                    query_id=f"{graph.graph_id}:q4:highest_equal_volume_removed_region",
+                    target_type="void_region",
+                    clauses=[
+                        Clause(
+                            id="has_void_geometry",
+                            kind="has_relation",
+                            relation=void_relation,
+                            target_type="void_region",
+                        ),
+                        Clause(
+                            id="has_void_volume_value",
+                            kind="has_measurement",
+                            metric="volume",
+                            value=_measurement_bucket_value(graph, equal_void_regions[0].id, "volume"),
+                        ),
+                        Clause(
+                            id="has_void_centroid_z",
+                            kind="has_measurement",
+                            metric="centroid_z",
+                        ),
+                    ],
+                    aggregation="argmax",
+                    aggregation_metric="centroid_z",
+                    hop_count=4,
+                    difficulty="cad_browsecomp",
+                    min_individual_clause_candidates=2,
+                )
+            )
     return queries
 
 

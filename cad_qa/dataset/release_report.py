@@ -22,6 +22,7 @@ from cad_qa.dataset.split import split_audit, split_manifest
 from cad_qa.dataset.validate import validate_rows
 from cad_qa.io import read_jsonl, write_json
 from cad_qa.prompts.render import prompt_template_id_from_mapping
+from cad_qa.query.resolver import VALUE_BUCKET_DECIMALS, VALUE_MATCH_TOLERANCE
 
 MIN_RELEASE_BALANCE_ROWS = 20
 MIN_PROMPT_FAMILY_COUNT = 4
@@ -179,6 +180,10 @@ def release_balance_report(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "cross_feature_value_bearing_count": cross_feature_value_bearing_count,
         "cross_feature_value_bearing_share": cross_feature_value_bearing_share,
         "minimum_cross_feature_value_bearing_count": MIN_CROSS_FEATURE_VALUE_BEARING_COUNT,
+        "measurement_value_policy": {
+            "value_bucket_decimals": VALUE_BUCKET_DECIMALS,
+            "value_match_tolerance": VALUE_MATCH_TOLERANCE,
+        },
         "maximum_syntax_only_calibration_share": MAX_SYNTAX_ONLY_CALIBRATION_SHARE,
         "passes_geometry_hop_coverage": (
             None
@@ -227,6 +232,7 @@ def release_verifier_markdown(report: dict[str, Any]) -> str:
                 "prompt_families": report["dataset"].get("prompt_families", {}),
                 "prompt_template_ids": report["dataset"].get("prompt_template_ids", {}),
                 "quality_flags": report["dataset"].get("quality_flags", {}),
+                "measurement_value_policy": report["dataset"].get("measurement_value_policy", {}),
                 "release_ready": report["dataset"].get("release_ready", {}),
             }
         ),

@@ -9,6 +9,7 @@ from typing import Any
 
 from cad_qa.dataset.sft import is_geometry_critical_row, is_syntax_only_calibration_row, prompt_family
 from cad_qa.prompts.render import prompt_template_id_from_mapping
+from cad_qa.query.resolver import VALUE_BUCKET_DECIMALS, VALUE_MATCH_TOLERANCE
 
 
 def dataset_report(rows: list[Any]) -> dict[str, Any]:
@@ -64,7 +65,15 @@ def dataset_report(rows: list[Any]) -> dict[str, Any]:
         "prompt_families": dict(sorted(prompt_families.items())),
         "prompt_template_ids": dict(sorted(prompt_template_ids.items())),
         "quality_flags": dict(sorted(quality_flags.items())),
+        "measurement_value_policy": _measurement_value_policy(),
         "shortcut_resistance": shortcut_resistance_report(rows),
+    }
+
+
+def _measurement_value_policy() -> dict[str, Any]:
+    return {
+        "value_bucket_decimals": VALUE_BUCKET_DECIMALS,
+        "value_match_tolerance": VALUE_MATCH_TOLERANCE,
     }
 
 

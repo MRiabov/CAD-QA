@@ -1717,6 +1717,14 @@ def test_value_bearing_measurement_clause_resolves_and_renders() -> None:
     assert "greatest centroid height" in row.prompt
     assert row.candidate_trace["steps"][1]["after"] == ["feature:a", "feature:b"]
     assert dataset_report([row])["quality_flags"]["value_bearing_measurement"] == 1
+    assert dataset_report([row])["measurement_value_policy"] == {
+        "value_bucket_decimals": 6,
+        "value_match_tolerance": 1e-6,
+    }
+    assert release_balance_report([to_jsonable(row)])["measurement_value_policy"] == {
+        "value_bucket_decimals": 6,
+        "value_match_tolerance": 1e-6,
+    }
 
 
 def test_smoke_queries_mine_equal_value_measurement_distractors() -> None:
@@ -1768,6 +1776,111 @@ def test_smoke_queries_mine_equal_centroid_and_height_values() -> None:
     assert height_query.clauses[0].value == 5.0
     assert height_row.gold_answer == "feature:b"
     assert "overall height of 5.0" in height_row.prompt
+
+
+def test_smoke_queries_mine_equal_feature_axis_coordinate_values() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:equal_axis",
+        source={"source_id": "src_equal_axis", "source_code": "import cadquery as cq\n"},
+    )
+    for node_id, volume, centroid_x, centroid_y in [
+        ("feature:a", 10.0, 7.0, -2.0),
+        ("feature:b", 30.0, 7.0, -2.0),
+        ("feature:c", 25.0, 1.0, 9.0),
+    ]:
+        graph.add_node(Node(node_id, "feature", node_id))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "volume", volume))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "centroid_x", centroid_x))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "centroid_y", centroid_y))
+
+    queries = {query.query_id.rsplit(":", 1)[-1]: query for query in smoke_queries(graph)}
+    centroid_x_row = materialize_row(graph, resolve_query(graph, queries["largest_equal_centroid_x_feature"]))
+    centroid_y_row = materialize_row(graph, resolve_query(graph, queries["largest_equal_centroid_y_feature"]))
+
+    assert centroid_x_row.gold_answer == "feature:b"
+    assert "solid centroid X coordinate of 7.0" in centroid_x_row.prompt
+    assert "greatest volume" in centroid_x_row.prompt
+    assert centroid_y_row.gold_answer == "feature:b"
+    assert "solid centroid Y coordinate of -2.0" in centroid_y_row.prompt
+    assert "greatest volume" in centroid_y_row.prompt
+
+
+def test_smoke_queries_mine_equal_face_and_endpoint_coordinate_values() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:equal_coordinates",
+        source={"source_id": "src_equal_coordinates", "source_code": "import cadquery as cq\n"},
+    )
+    graph.add_node(Node("selector:faces", "selector", "selected faces"))
+    for node_id, coordinate_z, distance_to_origin in [
+        ("face:a", 5.0, 10.0),
+        ("face:b", 5.0, 2.0),
+        ("face:c", 9.0, 1.0),
+    ]:
+        graph.add_node(Node(node_id, "face", node_id))
+        graph.add_relation(Relation(node_id, "selector:faces", "has_kernel_stable_face_id"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "coordinate_z", coordinate_z))
+        graph.add_measurement(Measurement(node_id, "relation_metric", "distance_to_origin", distance_to_origin))
+
+    graph.add_node(Node("selector:edges", "selector", "selected edges"))
+    for node_id in ["edge:a", "edge:b", "edge:c"]:
+        graph.add_node(Node(node_id, "edge", node_id))
+        graph.add_relation(Relation(node_id, "selector:edges", "has_kernel_stable_edge_id"))
+    for node_id, edge_id, coordinate_z, distance_to_origin in [
+        ("endpoint:a", "edge:a", 3.0, 2.0),
+        ("endpoint:b", "edge:b", 3.0, 6.0),
+        ("endpoint:c", "edge:c", 8.0, 20.0),
+    ]:
+        graph.add_node(Node(node_id, "edge_endpoint", node_id))
+        graph.add_relation(Relation(node_id, edge_id, "endpoint_of"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "coordinate_z", coordinate_z))
+        graph.add_measurement(Measurement(node_id, "relation_metric", "distance_to_origin", distance_to_origin))
+
+    queries = {query.query_id.rsplit(":", 1)[-1]: query for query in smoke_queries(graph)}
+    face_row = materialize_row(graph, resolve_query(graph, queries["nearest_equal_center_z_kernel_selected_face"]))
+    endpoint_row = materialize_row(graph, resolve_query(graph, queries["farthest_equal_z_kernel_edge_endpoint"]))
+
+    assert face_row.gold_answer == "face:b"
+    assert "face center has a global Z coordinate of 5.0" in face_row.prompt
+    assert "smallest distance to the global origin" in face_row.prompt
+    assert endpoint_row.gold_answer == "endpoint:b"
+    assert "endpoint has a global Z coordinate of 3.0" in endpoint_row.prompt
+    assert "greatest distance to the global origin" in endpoint_row.prompt
+
+
+def test_smoke_queries_mine_equal_region_volume_values() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:equal_regions",
+        source={"source_id": "src_equal_regions", "source_code": "import cadquery as cq\n"},
+    )
+    for node_id, volume, centroid_z in [
+        ("material_region:a", 42.0, 1.0),
+        ("material_region:b", 42.0, 7.0),
+        ("material_region:c", 9.0, 20.0),
+    ]:
+        graph.add_node(Node(node_id, "material_region", node_id))
+        graph.add_relation(Relation(node_id, node_id, "has_kernel_material_region_geometry"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "volume", volume))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_z", centroid_z))
+    for node_id, volume, centroid_z in [
+        ("void_region:a", 8.0, 2.0),
+        ("void_region:b", 8.0, 6.0),
+        ("void_region:c", 3.0, 30.0),
+    ]:
+        graph.add_node(Node(node_id, "void_region", node_id))
+        graph.add_relation(Relation(node_id, node_id, "has_kernel_void_region_geometry"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "volume", volume))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_z", centroid_z))
+
+    queries = {query.query_id.rsplit(":", 1)[-1]: query for query in smoke_queries(graph)}
+    material_row = materialize_row(graph, resolve_query(graph, queries["highest_equal_volume_added_region"]))
+    void_row = materialize_row(graph, resolve_query(graph, queries["highest_equal_volume_removed_region"]))
+
+    assert material_row.gold_answer == "material_region:b"
+    assert "added-material region has a volume of 42.0" in material_row.prompt
+    assert "greatest centroid height" in material_row.prompt
+    assert void_row.gold_answer == "void_region:b"
+    assert "removed-material region has a volume of 8.0" in void_row.prompt
+    assert "greatest centroid height" in void_row.prompt
 
 
 def test_smoke_queries_generate_cross_feature_reference_distance_tasks() -> None:
