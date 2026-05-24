@@ -254,6 +254,7 @@ def _operator_label(operator: str) -> str:
 def relation_label(relation: str) -> str:
     return {
         "adjacent_to": "adjacent to",
+        "coaxial_with": "coaxial with",
         "coplanar_with": "coplanar with",
         "intersects": "intersecting",
         "opposite_to": "opposite to",

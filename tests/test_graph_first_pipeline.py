@@ -2591,6 +2591,51 @@ def test_synthesis_generates_comparative_edge_spatial_relation_query() -> None:
     assert len(row.candidate_trace["final_candidates"]) == 1
 
 
+def test_synthesis_generates_coaxial_edge_spatial_relation_query() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:edge-coaxial-spatial-synth",
+        source={"source_id": "synthetic", "source_code": ""},
+    )
+    graph.add_node(Node("selector:edges", "selector", "edges"))
+    for edge_id, length, midpoint in [
+        ("edge:a", 12.0, [0.0, 0.0, 0.0]),
+        ("edge:b", 6.0, [2.0, 0.0, 0.0]),
+        ("edge:c", 10.0, [0.0, 3.0, 0.0]),
+        ("edge:d", 4.0, [4.0, 3.0, 0.0]),
+    ]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint", midpoint, "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_x", midpoint[0], "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint[1], "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_z", midpoint[2], "mm"))
+        graph.add_measurement(Measurement(edge_id, "relation_metric", "midpoint_distance_to_origin", length / 2.0, "mm"))
+    for source_id, target_id in [
+        ("edge:a", "edge:b"),
+        ("edge:c", "edge:d"),
+    ]:
+        graph.add_relation(Relation(source_id, target_id, "coaxial_with"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_edge_spatial_relation_extreme")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+
+    assert resolution.verifier_status == "resolved"
+    assert query.clauses[1].relation == "coaxial_with"
+    assert query.sampled_parameters["spatial_relation"] == ["coaxial_with"]
+    assert "coaxial_with" in row.relation_families
+    assert row.logical_hop_count == 4
+    assert row.geometry_hop_count == 4
+    assert "coaxial with" in row.prompt
+    assert len(row.candidate_trace["steps"][2]["after"]) == 2
+    assert len(row.candidate_trace["final_candidates"]) == 1
+
+
 def test_synthesis_generates_parameterized_face_spatial_relation_query() -> None:
     graph = OntologyGraph(graph_id="graph:face-spatial-synth", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("selector:faces", "selector", "faces"))

@@ -914,6 +914,14 @@ Checked as implemented with remaining scale caveats:
   more of the old fixed longer/shorter edge fixtures, but release-scale
   relation balance remains open.
 - The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_coaxial_edge_relation/PREVIEW.md`
+  adds sampled edge `coaxial_with` rows to
+  `parameterized_edge_spatial_relation_extreme`. The reviewed row starts with
+  measured edge-set evidence, narrows to two coaxial edges, then resolves a
+  unique answer by measured midpoint distance to the global origin. This covers
+  one valid-row slice of the open axis/coaxiality relation gap; extraction
+  coverage and release-scale balance remain open.
+- The synthesized selfcheck preview at
   `runs/parameterized_synthesis_selfcheck_face_spatial/PREVIEW.md` demonstrates
   the initial `parameterized_face_spatial_relation_extreme` family. The reviewed
   rows require kernel-selected face evidence, then sample one of adjacent,
@@ -1038,9 +1046,9 @@ Checked as implemented with remaining scale caveats:
   Generic reference-entity distance families also sample reference type inside
   the family and cover added-material/removed-material reference anchors.
   Face spatial-relation synthesis now includes coplanar relations, and edge
-  spatial-relation synthesis now samples same-length, parallel, longer-than, and
-  shorter-than relations instead of relying on fixed longer/shorter view-word
-  fixtures. Remaining hard-coded release debt is mainly
+  spatial-relation synthesis now samples same-length, parallel, coaxial,
+  longer-than, and shorter-than relations instead of relying on fixed
+  longer/shorter view-word fixtures. Remaining hard-coded release debt is mainly
   selected-entity count variants, richer graph-hop predicate chains, broader
   reference-entity balance, and release-scale distribution review.
 - Rewrite sparse direct selector/count/extremum families as graph-hop narrowing

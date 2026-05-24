@@ -135,6 +135,7 @@ def synthesis_selfcheck_graphs() -> list[OntologyGraph]:
         _edge_spatial_relation_graph("graph:selfcheck-edge-spatial-relation-4"),
         _edge_same_length_relation_graph(),
         _edge_single_relation_graph("graph:selfcheck-edge-parallel-relation", "parallel_to"),
+        _edge_single_relation_graph("graph:selfcheck-edge-coaxial-relation", "coaxial_with"),
         _edge_single_relation_graph("graph:selfcheck-edge-longer-relation", "longer_than"),
         _edge_single_relation_graph("graph:selfcheck-edge-shorter-relation", "shorter_than"),
         _face_single_relation_graph("graph:selfcheck-face-parallel-relation", "parallel_to"),
