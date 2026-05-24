@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from pathlib import Path
 from typing import Any
 
@@ -49,8 +50,11 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_equal_edge_metric_extreme",
     "parameterized_equal_edge_metric_rank",
     "parameterized_equal_feature_metric_extreme",
+    "parameterized_equal_feature_metric_rank",
     "parameterized_equal_path_point_metric_extreme",
+    "parameterized_equal_path_point_metric_rank",
     "parameterized_equal_path_segment_metric_extreme",
+    "parameterized_equal_path_segment_metric_rank",
     "parameterized_feature_reference_feature_distance",
     "parameterized_feature_reference_face_distance",
     "parameterized_feature_reference_edge_distance",
@@ -72,7 +76,9 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_endpoint_reference_void_region_distance",
     "parameterized_endpoint_reference_entity_distance",
     "parameterized_equal_material_region_metric_extreme",
+    "parameterized_equal_material_region_metric_rank",
     "parameterized_equal_void_region_metric_extreme",
+    "parameterized_equal_void_region_metric_rank",
     "parameterized_material_region_reference_feature_distance",
     "parameterized_material_region_reference_face_distance",
     "parameterized_material_region_reference_edge_distance",
@@ -169,7 +175,9 @@ def synthesis_selfcheck_graphs() -> list[OntologyGraph]:
         _feature_effect_delta_graph("graph:selfcheck-feature-effect-delta-6"),
         _feature_effect_delta_graph("graph:selfcheck-feature-effect-delta-10"),
         _feature_equal_metric_graph(),
+        _feature_equal_metric_rank_graph(),
         _region_equal_metric_graph(),
+        _region_equal_metric_rank_graph(),
         _face_equal_metric_graph(),
         _face_equal_metric_rank_graph(),
         _edge_equal_metric_graph(),
@@ -177,6 +185,7 @@ def synthesis_selfcheck_graphs() -> list[OntologyGraph]:
         _endpoint_equal_metric_graph(),
         _endpoint_equal_metric_rank_graph(),
         _path_metric_graph(),
+        _path_equal_metric_rank_graph(),
         _face_selector_count_graph(),
         _edge_selector_count_graph(),
         _selector_count_rank_graph(),
@@ -1000,6 +1009,34 @@ def _feature_equal_metric_graph() -> OntologyGraph:
     return graph
 
 
+def _feature_equal_metric_rank_graph() -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id="graph:selfcheck-feature-equal-metric-rank",
+        source={
+            "source_id": "selfcheck-feature-equal-metric-rank",
+            "source_code": (
+                "import cadquery as cq\n"
+                "base = cq.Workplane(\"XY\").box(10, 6, 4)\n"
+                "result = base.union(base.translate((4, 0, 0))).union(base.translate((8, 0, 0)))\n"
+            ),
+        },
+    )
+    for feature_id, centroid, bbox_span_z in [
+        ("feature:a", [1.0, 0.0, 2.0], 4.0),
+        ("feature:b", [3.0, 1.0, 5.0], 5.0),
+        ("feature:c", [6.0, 2.0, 8.0], 6.0),
+        ("feature:d", [10.0, 3.0, 11.0], 7.0),
+    ]:
+        graph.add_node(Node(feature_id, "feature", feature_id))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", 240.0, "mm^3"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid", centroid, "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_x", centroid[0], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_y", centroid[1], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid[2], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "bbox_span_z", bbox_span_z, "mm"))
+    return graph
+
+
 def _feature_effect_delta_graph(graph_id: str) -> OntologyGraph:
     graph = OntologyGraph(
         graph_id=graph_id,
@@ -1120,6 +1157,39 @@ def _region_equal_metric_graph() -> OntologyGraph:
         ("void_region:b", "has_kernel_void_region_geometry", 8.0 + 1e-7, [7.0, 0.0, 6.0]),
         ("void_region:c", "has_kernel_void_region_geometry", 3.0, [30.0, 0.0, 30.0]),
         ("void_region:d", "has_kernel_void_region_geometry", 14.0, [35.0, 5.0, 12.0]),
+    ]:
+        node_type = node_id.split(":", 1)[0]
+        graph.add_node(Node(node_id, node_type, node_id))
+        graph.add_relation(Relation(node_id, node_id, relation))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid", centroid, "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_x", centroid[0], "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_y", centroid[1], "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_z", centroid[2], "mm"))
+    return graph
+
+
+def _region_equal_metric_rank_graph() -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id="graph:selfcheck-region-equal-metric-rank",
+        source={
+            "source_id": "selfcheck-region-equal-metric-rank",
+            "source_code": (
+                "import cadquery as cq\n"
+                "base = cq.Workplane(\"XY\").box(10, 10, 3)\n"
+                "result = base.faces(\">Z\").workplane().circle(1).extrude(4)\n"
+            ),
+        },
+    )
+    for node_id, relation, volume, centroid in [
+        ("material_region:a", "has_kernel_material_region_geometry", 42.0, [1.0, 0.0, 1.0]),
+        ("material_region:b", "has_kernel_material_region_geometry", 42.0, [4.0, 1.0, 4.0]),
+        ("material_region:c", "has_kernel_material_region_geometry", 42.0, [8.0, 2.0, 7.0]),
+        ("material_region:d", "has_kernel_material_region_geometry", 42.0, [12.0, 3.0, 10.0]),
+        ("void_region:a", "has_kernel_void_region_geometry", 8.0, [2.0, 0.0, 2.0]),
+        ("void_region:b", "has_kernel_void_region_geometry", 8.0, [5.0, 1.0, 5.0]),
+        ("void_region:c", "has_kernel_void_region_geometry", 8.0, [9.0, 2.0, 8.0]),
+        ("void_region:d", "has_kernel_void_region_geometry", 8.0, [13.0, 3.0, 11.0]),
     ]:
         node_type = node_id.split(":", 1)[0]
         graph.add_node(Node(node_id, node_type, node_id))
@@ -1436,6 +1506,61 @@ def _path_metric_graph() -> OntologyGraph:
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_z", midpoint[2], "mm"))
     _add_reference_endpoint_nodes(graph)
     _add_reference_region_nodes(graph)
+    return graph
+
+
+def _path_equal_metric_rank_graph() -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id="graph:selfcheck-path-equal-metric-rank",
+        source={
+            "source_id": "selfcheck-path-equal-metric-rank",
+            "source_code": (
+                "import cadquery as cq\n"
+                "path = cq.Workplane(\"XY\").spline([(0, 0), (2, 1), (5, 2), (9, 3)])\n"
+            ),
+        },
+    )
+    graph.add_node(Node("path:main", "path", "path"))
+    for point_id, coordinate in [
+        ("path:main:point:0", [0.0, 0.0, 0.0]),
+        ("path:main:point:1", [2.0, 1.0, 0.0]),
+        ("path:main:point:2", [5.0, 2.0, 0.0]),
+        ("path:main:point:3", [9.0, 3.0, 0.0]),
+    ]:
+        graph.add_node(Node(point_id, "path_point", point_id))
+        graph.add_relation(Relation(point_id, "path:main", "point_on_path"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate", coordinate, "mm"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_x", coordinate[0], "mm"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_y", coordinate[1], "mm"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
+        graph.add_measurement(
+            Measurement(
+                point_id,
+                "relation_metric",
+                "distance_to_origin",
+                math.sqrt(sum(component * component for component in coordinate)),
+                "mm",
+            )
+        )
+    for segment_id, midpoint in [
+        ("path:main:segment:0", [1.0, 0.0, 0.0]),
+        ("path:main:segment:1", [3.0, 1.0, 0.0]),
+        ("path:main:segment:2", [6.0, 2.0, 0.0]),
+        ("path:main:segment:3", [10.0, 3.0, 0.0]),
+    ]:
+        graph.add_node(Node(segment_id, "path_segment", segment_id))
+        graph.add_relation(Relation(segment_id, "path:main", "segment_on_path"))
+        graph.add_measurement(Measurement(segment_id, "entity_geometry", "segment_midpoint", midpoint, "mm"))
+        graph.add_measurement(Measurement(segment_id, "relation_metric", "segment_length", 3.0, "mm"))
+        graph.add_measurement(
+            Measurement(
+                segment_id,
+                "relation_metric",
+                "midpoint_distance_to_origin",
+                math.sqrt(sum(component * component for component in midpoint)),
+                "mm",
+            )
+        )
     return graph
 
 

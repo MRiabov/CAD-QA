@@ -252,6 +252,20 @@ when those choices can be sampled and verified.
   resolve uniquely by sampled rank over a separate measured quantity. This adds
   rank-based equal-measurement synthesis for faces and edges only; target-type,
   metric, and release-distribution expansion remain open.
+- The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_equal_rank_expansion/PREVIEW.md`
+  adds valid release-ready rows for
+  `parameterized_equal_feature_metric_rank`,
+  `parameterized_equal_material_region_metric_rank`,
+  `parameterized_equal_void_region_metric_rank`,
+  `parameterized_equal_path_point_metric_rank`, and
+  `parameterized_equal_path_segment_metric_rank`. The reviewed rows narrow by
+  concrete equal measurement values such as volume, centroid coordinate, path
+  point Z coordinate, or path-segment length, preserve at least three candidates
+  through the equal-measurement predicate, and resolve by sampled rank over a
+  separate measured quantity. This implements these families at the valid-row
+  level; benchmark-release distribution, parameter balance, and broader metric
+  coverage remain open.
 - Initial synthesized reference-distance rows now combine equal-measurement
   narrowing with a geometry-described reference feature anchor and nearest or
   farthest midpoint-distance selection. Rows serialize reference type, reference

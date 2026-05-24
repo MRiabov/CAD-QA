@@ -461,6 +461,34 @@ families:
         - aggregation_metric
         - final_selector
     notes: Synthesized value-bearing feature family that narrows by repeated compiled feature measurements before selecting by another measured feature quantity.
+  - id: parameterized_equal_feature_metric_rank
+    status: release
+    target_type: feature
+    minimum_hops: 3
+    maximum_hops: 3
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - aggregation_rank
+        - rank_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - aggregation_rank
+        - rank_direction
+        - final_selector
+      expected_values:
+        target_type: [feature]
+        aggregation_rank: [2, 3, 4, 5, 6]
+    notes: Synthesized value-bearing feature family that narrows by repeated compiled feature measurements before selecting a sampled rank by another measured feature quantity.
   - id: parameterized_feature_reference_feature_distance
     status: release
     target_type: feature
@@ -1698,6 +1726,35 @@ families:
         target_type: [path_point]
         equal_measurement_metric: [coordinate_x, coordinate_y, coordinate_z, distance_to_origin]
     notes: Synthesized value-bearing path-point family that narrows by repeated measured point coordinates or distances before selecting by another measured point quantity.
+  - id: parameterized_equal_path_point_metric_rank
+    status: release
+    target_type: path_point
+    minimum_hops: 4
+    maximum_hops: 4
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - aggregation_rank
+        - rank_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - aggregation_rank
+        - rank_direction
+        - final_selector
+      expected_values:
+        target_type: [path_point]
+        equal_measurement_metric: [coordinate_x, coordinate_y, coordinate_z, distance_to_origin]
+        aggregation_rank: [2, 3, 4, 5, 6]
+    notes: Synthesized value-bearing path-point family that narrows by repeated measured point coordinates or distances before selecting a sampled rank by another measured point quantity.
   - id: parameterized_equal_path_segment_metric_extreme
     status: release
     target_type: path_segment
@@ -1723,6 +1780,35 @@ families:
         target_type: [path_segment]
         equal_measurement_metric: [segment_length]
     notes: Synthesized value-bearing path-segment family that narrows by repeated measured segment length before selecting by another measured segment quantity.
+  - id: parameterized_equal_path_segment_metric_rank
+    status: release
+    target_type: path_segment
+    minimum_hops: 4
+    maximum_hops: 4
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - aggregation_rank
+        - rank_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - aggregation_rank
+        - rank_direction
+        - final_selector
+      expected_values:
+        target_type: [path_segment]
+        equal_measurement_metric: [segment_length, midpoint_distance_to_origin]
+        aggregation_rank: [2, 3, 4, 5, 6]
+    notes: Synthesized value-bearing path-segment family that narrows by repeated measured segment length or midpoint distance before selecting a sampled rank by another measured segment quantity.
   - id: parameterized_path_point_reference_entity_distance
     status: release
     target_type: path_point
@@ -2704,6 +2790,35 @@ families:
       expected_values:
         target_type: [material_region]
     notes: Synthesized value-bearing added-material region family that narrows by repeated region volume before selecting by measured centroid height.
+  - id: parameterized_equal_material_region_metric_rank
+    status: release
+    target_type: material_region
+    minimum_hops: 4
+    maximum_hops: 4
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - aggregation_rank
+        - rank_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - aggregation_rank
+        - rank_direction
+        - final_selector
+      expected_values:
+        target_type: [material_region]
+        equal_measurement_metric: [volume, centroid_x, centroid_y, centroid_z]
+        aggregation_rank: [2, 3, 4, 5, 6]
+    notes: Synthesized value-bearing added-material region family that narrows by repeated region volume or centroid coordinate before selecting a sampled rank by another measured region quantity.
   - id: parameterized_material_region_reference_feature_distance
     status: release
     target_type: material_region
@@ -2915,6 +3030,35 @@ families:
       expected_values:
         target_type: [void_region]
     notes: Synthesized value-bearing removed-material region family that narrows by repeated region volume before selecting by measured centroid height.
+  - id: parameterized_equal_void_region_metric_rank
+    status: release
+    target_type: void_region
+    minimum_hops: 4
+    maximum_hops: 4
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - aggregation_rank
+        - rank_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - aggregation_rank
+        - rank_direction
+        - final_selector
+      expected_values:
+        target_type: [void_region]
+        equal_measurement_metric: [volume, centroid_x, centroid_y, centroid_z]
+        aggregation_rank: [2, 3, 4, 5, 6]
+    notes: Synthesized value-bearing removed-material region family that narrows by repeated region volume or centroid coordinate before selecting a sampled rank by another measured region quantity.
   - id: parameterized_void_region_reference_feature_distance
     status: release
     target_type: void_region

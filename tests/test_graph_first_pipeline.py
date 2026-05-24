@@ -3527,6 +3527,50 @@ def test_synthesis_generates_equal_value_feature_query() -> None:
     assert "feature" in row.prompt.lower()
 
 
+def test_synthesis_generates_equal_value_feature_rank_query() -> None:
+    graph = OntologyGraph(graph_id="graph:equal-feature-rank-synth", source={"source_id": "synthetic", "source_code": ""})
+    for feature_id, centroid, bbox_span_z in [
+        ("feature:a", [1.0, 0.0, 2.0], 4.0),
+        ("feature:b", [3.0, 1.0, 5.0], 5.0),
+        ("feature:c", [6.0, 2.0, 8.0], 6.0),
+        ("feature:d", [10.0, 3.0, 11.0], 7.0),
+    ]:
+        graph.add_node(Node(feature_id, "feature", feature_id))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", 240.0, "mm^3"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid", centroid, "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_x", centroid[0], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_y", centroid[1], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid[2], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "bbox_span_z", bbox_span_z, "mm"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_equal_feature_metric_rank")
+    )
+    row = materialize_row(graph, resolve_query(graph, query))
+    equal_step = next(step for step in row.candidate_trace["steps"] if step["step"] == "has_parameterized_equal_feature_metric_value")
+    aggregation_step = next(step for step in row.candidate_trace["steps"] if step["step"] == "aggregation")
+
+    assert row.verifier_status == "resolved"
+    assert row.release_ready
+    assert query.target_type == "feature"
+    assert query.aggregation in {"rank_asc", "rank_desc"}
+    assert query.aggregation_rank in {2, 3, 4}
+    assert query.clauses[0].metric == "volume"
+    assert query.clauses[0].value == 240.0
+    assert query.aggregation_metric in {"centroid_x", "centroid_y", "centroid_z", "bbox_span_z"}
+    assert equal_step["after"] == ["feature:a", "feature:b", "feature:c", "feature:d"]
+    assert aggregation_step["rank"] == query.aggregation_rank
+    assert row.logical_hop_count == 3
+    assert row.geometry_hop_count == 3
+    assert row.query_program["sampled_parameters"]["synthesis_strategy"] == ["equal_measurement_rank_narrowing_v1"]
+    assert row.query_program["sampled_parameters"]["aggregation_rank"] == [str(query.aggregation_rank)]
+    assert row.query_program["sampled_parameters"]["measurement_value_bucket"] == ["volume:240"]
+    assert "240.0" in row.prompt
+    assert "candidate" in row.prompt
+
+
 def test_synthesis_generates_parameterized_feature_extreme_and_rank_queries() -> None:
     graph = OntologyGraph(graph_id="graph:feature-extreme-rank-synth", source={"source_id": "synthetic", "source_code": ""})
     for feature_id, volume, centroid, bbox_span_z, topology_faces in [
@@ -4349,6 +4393,7 @@ def test_synthesis_skips_equal_value_feature_family_without_repeated_value_distr
     families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
 
     assert "parameterized_equal_feature_metric_extreme" not in families
+    assert "parameterized_equal_feature_metric_rank" not in families
 
 
 def test_synthesis_skips_parameterized_feature_queries_without_measured_distractors() -> None:
@@ -4449,6 +4494,65 @@ def test_synthesis_generates_equal_value_region_queries() -> None:
     assert "removed-material region has a volume of 8.0" in void_row.prompt
 
 
+def test_synthesis_generates_equal_value_region_rank_queries() -> None:
+    graph = OntologyGraph(graph_id="graph:equal-region-rank-synth", source={"source_id": "synthetic", "source_code": ""})
+    for node_id, relation, volume, centroid in [
+        ("material_region:a", "has_kernel_material_region_geometry", 42.0, [1.0, 0.0, 1.0]),
+        ("material_region:b", "has_kernel_material_region_geometry", 42.0, [4.0, 1.0, 4.0]),
+        ("material_region:c", "has_kernel_material_region_geometry", 42.0, [8.0, 2.0, 7.0]),
+        ("material_region:d", "has_kernel_material_region_geometry", 42.0, [12.0, 3.0, 10.0]),
+        ("void_region:a", "has_kernel_void_region_geometry", 8.0, [2.0, 0.0, 2.0]),
+        ("void_region:b", "has_kernel_void_region_geometry", 8.0, [5.0, 1.0, 5.0]),
+        ("void_region:c", "has_kernel_void_region_geometry", 8.0, [9.0, 2.0, 8.0]),
+        ("void_region:d", "has_kernel_void_region_geometry", 8.0, [13.0, 3.0, 11.0]),
+    ]:
+        node_type = node_id.split(":", 1)[0]
+        graph.add_node(Node(node_id, node_type, node_id))
+        graph.add_relation(Relation(node_id, node_id, relation))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid", centroid, "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_x", centroid[0], "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_y", centroid[1], "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_z", centroid[2], "mm"))
+
+    queries = {query.query_id.rsplit(":", 1)[-1]: query for query in synthesize_graph_hop_queries(graph)}
+    expected = {
+        "parameterized_equal_material_region_metric_rank": (
+            "material_region",
+            "has_kernel_material_region_geometry",
+            "has_parameterized_equal_material_region_metric_value",
+            ["material_region:a", "material_region:b", "material_region:c", "material_region:d"],
+        ),
+        "parameterized_equal_void_region_metric_rank": (
+            "void_region",
+            "has_kernel_void_region_geometry",
+            "has_parameterized_equal_void_region_metric_value",
+            ["void_region:a", "void_region:b", "void_region:c", "void_region:d"],
+        ),
+    }
+    for family, (target_type, relation, equal_clause_id, expected_after) in expected.items():
+        query = queries[family]
+        row = materialize_row(graph, resolve_query(graph, query))
+        equal_step = next(step for step in row.candidate_trace["steps"] if step["step"] == equal_clause_id)
+        aggregation_step = next(step for step in row.candidate_trace["steps"] if step["step"] == "aggregation")
+
+        assert row.verifier_status == "resolved"
+        assert row.release_ready
+        assert query.target_type == target_type
+        assert query.clauses[0].relation == relation
+        assert query.clauses[1].metric == "volume"
+        assert query.aggregation in {"rank_asc", "rank_desc"}
+        assert query.aggregation_rank in {2, 3, 4}
+        assert query.aggregation_metric in {"centroid_x", "centroid_y", "centroid_z"}
+        assert equal_step["after"] == expected_after
+        assert aggregation_step["rank"] == query.aggregation_rank
+        assert row.logical_hop_count == 4
+        assert row.geometry_hop_count == 4
+        assert row.query_program["sampled_parameters"]["synthesis_strategy"] == ["equal_measurement_rank_narrowing_v1"]
+        assert row.query_program["sampled_parameters"]["aggregation_rank"] == [str(query.aggregation_rank)]
+        assert "candidate" in row.prompt
+
+
 def test_synthesis_generates_parameterized_region_extreme_and_rank_queries() -> None:
     graph = OntologyGraph(graph_id="graph:region-extreme-rank-synth", source={"source_id": "synthetic", "source_code": ""})
     for node_id, relation, volume, centroid in [
@@ -4516,7 +4620,9 @@ def test_synthesis_skips_equal_value_region_families_without_repeated_value_dist
     families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
 
     assert "parameterized_equal_material_region_metric_extreme" not in families
+    assert "parameterized_equal_material_region_metric_rank" not in families
     assert "parameterized_equal_void_region_metric_extreme" not in families
+    assert "parameterized_equal_void_region_metric_rank" not in families
 
 
 def test_synthesis_skips_parameterized_region_queries_without_kernel_region_relations() -> None:
@@ -6047,6 +6153,82 @@ def test_synthesis_generates_equal_value_path_queries() -> None:
         assert "path" in row.prompt.lower()
 
 
+def test_synthesis_generates_equal_value_path_rank_queries() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:equal-path-rank-synth",
+        source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
+    )
+    graph.add_node(Node("path:main", "path", "path"))
+    for point_id, coordinate in [
+        ("path:main:point:0", [0.0, 0.0, 0.0]),
+        ("path:main:point:1", [2.0, 1.0, 0.0]),
+        ("path:main:point:2", [5.0, 2.0, 0.0]),
+        ("path:main:point:3", [9.0, 3.0, 0.0]),
+    ]:
+        graph.add_node(Node(point_id, "path_point", point_id))
+        graph.add_relation(Relation(point_id, "path:main", "point_on_path"))
+        distance = math.sqrt(sum(component * component for component in coordinate))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate", coordinate, "mm"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_x", coordinate[0], "mm"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_y", coordinate[1], "mm"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
+        graph.add_measurement(Measurement(point_id, "relation_metric", "distance_to_origin", distance, "mm"))
+    for segment_id, midpoint in [
+        ("path:main:segment:0", [1.0, 0.0, 0.0]),
+        ("path:main:segment:1", [3.0, 1.0, 0.0]),
+        ("path:main:segment:2", [6.0, 2.0, 0.0]),
+        ("path:main:segment:3", [10.0, 3.0, 0.0]),
+    ]:
+        graph.add_node(Node(segment_id, "path_segment", segment_id))
+        graph.add_relation(Relation(segment_id, "path:main", "segment_on_path"))
+        graph.add_measurement(Measurement(segment_id, "entity_geometry", "segment_midpoint", midpoint, "mm"))
+        graph.add_measurement(Measurement(segment_id, "relation_metric", "segment_length", 3.0, "mm"))
+        graph.add_measurement(
+            Measurement(
+                segment_id,
+                "relation_metric",
+                "midpoint_distance_to_origin",
+                math.sqrt(sum(component * component for component in midpoint)),
+                "mm",
+            )
+        )
+
+    queries = {query.query_id.rsplit(":", 1)[-1]: query for query in synthesize_graph_hop_queries(graph)}
+    expected = {
+        "parameterized_equal_path_point_metric_rank": (
+            "path_point",
+            "has_parameterized_equal_path_point_metric_value",
+            "coordinate_z",
+            ["path:main:point:0", "path:main:point:1", "path:main:point:2", "path:main:point:3"],
+        ),
+        "parameterized_equal_path_segment_metric_rank": (
+            "path_segment",
+            "has_parameterized_equal_path_segment_metric_value",
+            "segment_length",
+            ["path:main:segment:0", "path:main:segment:1", "path:main:segment:2", "path:main:segment:3"],
+        ),
+    }
+    for family, (target_type, equal_clause_id, equal_metric, expected_after) in expected.items():
+        query = queries[family]
+        row = materialize_row(graph, resolve_query(graph, query))
+        equal_step = next(step for step in row.candidate_trace["steps"] if step["step"] == equal_clause_id)
+        aggregation_step = next(step for step in row.candidate_trace["steps"] if step["step"] == "aggregation")
+
+        assert row.verifier_status == "resolved"
+        assert row.release_ready
+        assert query.target_type == target_type
+        assert query.aggregation in {"rank_asc", "rank_desc"}
+        assert query.aggregation_rank in {2, 3, 4}
+        assert query.clauses[1].metric == equal_metric
+        assert equal_step["after"] == expected_after
+        assert aggregation_step["rank"] == query.aggregation_rank
+        assert row.logical_hop_count == 4
+        assert row.geometry_hop_count == 4
+        assert row.query_program["sampled_parameters"]["synthesis_strategy"] == ["equal_measurement_rank_narrowing_v1"]
+        assert row.query_program["sampled_parameters"]["aggregation_rank"] == [str(query.aggregation_rank)]
+        assert "candidate" in row.prompt
+
+
 def test_synthesis_skips_equal_value_path_queries_without_equal_distractors() -> None:
     graph = OntologyGraph(
         graph_id="graph:no-equal-path-synth",
@@ -6071,7 +6253,9 @@ def test_synthesis_skips_equal_value_path_queries_without_equal_distractors() ->
     families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
 
     assert "parameterized_equal_path_point_metric_extreme" not in families
+    assert "parameterized_equal_path_point_metric_rank" not in families
     assert "parameterized_equal_path_segment_metric_extreme" not in families
+    assert "parameterized_equal_path_segment_metric_rank" not in families
 
 
 def test_synthesis_skips_path_families_without_unique_geometry() -> None:

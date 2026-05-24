@@ -344,6 +344,10 @@ clause_templates:
   has_region_volume: "The target added-material region has a comparable volume."
   has_region_volume_value: "The target added-material region has a volume of {value}."
   has_region_centroid_z: "The target added-material region has a comparable centroid height."
+  has_parameterized_equal_material_region_metric_value:
+    - "The target added-material region has {metric_label} equal to {value}."
+    - "The target added-material region's {metric_label} is {value}."
+    - "The target added-material region matches the {metric_label} value {value}."
   has_parameterized_material_region_metric:
     - "The target added-material region has a measured {metric_label}."
     - "The target added-material region has a known {metric_label}."
@@ -353,6 +357,10 @@ clause_templates:
   has_void_volume: "The target removed-material region has a comparable volume."
   has_void_volume_value: "The target removed-material region has a volume of {value}."
   has_void_centroid_z: "The target removed-material region has a comparable centroid height."
+  has_parameterized_equal_void_region_metric_value:
+    - "The target removed-material region has {metric_label} equal to {value}."
+    - "The target removed-material region's {metric_label} is {value}."
+    - "The target removed-material region matches the {metric_label} value {value}."
   has_parameterized_void_region_metric:
     - "The target removed-material region has a measured {metric_label}."
     - "The target removed-material region has a known {metric_label}."
