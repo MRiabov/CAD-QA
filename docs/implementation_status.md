@@ -765,7 +765,11 @@ Checked as implemented with remaining scale caveats:
   feature entities by sampled solid measurements such as volume, centroid
   coordinates, overall height, and topology counts, including rank ordering and
   tie-break metadata where needed. This reduces reliance on fixed
-  `largest_*`/`highest_*` feature families, but release-scale metric/rank
+  `largest_*`/`highest_*` feature families. The intended-family manifest now
+  marks superseded fixed feature extrema/equal-measurement fixtures as
+  review-only when a parameterized feature replacement exists. Feature-effect
+  delta families remain release families because equivalent parameterized
+  replacements have not yet been implemented. Release-scale metric/rank
   distribution remains open.
 - The synthesized selfcheck preview at
   `runs/parameterized_synthesis_selfcheck_region_equal/PREVIEW.md`
@@ -783,8 +787,10 @@ Checked as implemented with remaining scale caveats:
   and `parameterized_void_region_rank` families. The reviewed rows require
   kernel-backed added/removed-region evidence, keep four region candidates
   through measured volume or centroid clauses, and resolve by sampled extrema or
-  rank selectors. This reduces reliance on fixed largest/highest region
-  families, but release-scale region metric/rank distribution remains open.
+  rank selectors. The intended-family manifest now marks superseded fixed
+  largest/highest material/void-region fixtures as review-only where
+  parameterized region replacements exist, but release-scale region metric/rank
+  distribution remains open.
 - The synthesized selfcheck preview at
   `runs/parameterized_synthesis_selfcheck_endpoint/PREVIEW.md` demonstrates
   the initial `parameterized_equal_endpoint_metric_extreme` family. The reviewed
@@ -856,6 +862,11 @@ Checked as implemented with remaining scale caveats:
   problem, but the rule is broader: axes, signs, min/max direction, comparison
   relation, exact values, target/reference entity type, and subtype choices
   should be sampled per row whenever the verifier supports the variation.
+  Superseded fixed face, edge, feature, and material/void region fixtures with
+  implemented parameterized replacements are now marked review-only in the
+  intended-family manifest, so benchmark-release reports block them if they
+  appear in release rows. Feature-effect delta families are still release
+  families and need parameterized replacements before they can be downgraded.
 - Rewrite sparse direct selector/count/extremum families as graph-hop narrowing
   programs instead of treating them as unusable when the whole model lacks a
   unique global largest/smallest candidate. These rows should use sampled

@@ -31,30 +31,35 @@ families:
     maximum_hops: 2
     notes: Selector identity fixture; useful for audits, not final benchmark rows.
   - id: highest_kernel_selected_face
-    status: release
+    status: review_only
     target_type: face
     minimum_hops: 3
     maximum_hops: 3
+    notes: Legacy fixed face extremum; benchmark-release replacement is parameterized_kernel_face_extreme.
   - id: nearest_kernel_selected_face_center_to_origin
-    status: release
+    status: review_only
     target_type: face
     minimum_hops: 3
     maximum_hops: 3
+    notes: Legacy fixed origin-distance fixture; benchmark-release rows should use sampled reference anchors.
   - id: largest_kernel_selected_face_area
-    status: release
+    status: review_only
     target_type: face
     minimum_hops: 3
     maximum_hops: 3
+    notes: Legacy fixed face-area extremum; benchmark-release replacement is parameterized_kernel_face_extreme.
   - id: highest_equal_area_kernel_selected_face
-    status: release
+    status: review_only
     target_type: face
     minimum_hops: 3
     maximum_hops: 3
+    notes: Legacy fixed equal-area selector; benchmark-release replacement is parameterized_equal_face_metric_extreme.
   - id: nearest_equal_center_z_kernel_selected_face
-    status: release
+    status: review_only
     target_type: face
     minimum_hops: 3
     maximum_hops: 3
+    notes: Legacy fixed center-Z/origin-distance selector; benchmark-release replacement is parameterized_equal_face_metric_extreme or parameterized_face_reference_feature_distance.
   - id: parameterized_kernel_face_extreme
     status: release
     target_type: face
@@ -299,10 +304,11 @@ families:
         selected_entity_type: [face]
     notes: Synthesized selector-count family that narrows by selected-face geometry before sampling min/max count.
   - id: highest_kernel_selected_edge
-    status: release
+    status: review_only
     target_type: edge
     minimum_hops: 3
     maximum_hops: 3
+    notes: Legacy fixed edge-height extremum; benchmark-release replacement is parameterized_kernel_edge_extreme.
   - id: highest_negative_y_x_span_opposite_intersecting_adjacent_perpendicular_kernel_edge
     status: review_only
     target_type: edge
@@ -334,7 +340,7 @@ families:
     maximum_hops: 3
     notes: Fixed view-word final selector; should become parameterized.
   - id: nearest_equal_length_edge_to_reference_feature_centroid
-    status: release
+    status: review_only
     target_type: edge
     minimum_hops: 5
     maximum_hops: 5
@@ -354,6 +360,7 @@ families:
         reference_type: [feature]
         reference_point_metric: [centroid]
         target_point_metric: [midpoint]
+    notes: Legacy fixed nearest-distance edge family; benchmark-release replacement is parameterized_edge_reference_feature_distance.
   - id: parameterized_edge_reference_feature_distance
     status: release
     target_type: edge
@@ -679,45 +686,53 @@ families:
     maximum_hops: 1
     notes: Source-order fixture, not geometry-critical benchmark data.
   - id: largest_compiled_volume_feature
-    status: release
+    status: review_only
     target_type: feature
     minimum_hops: 2
     maximum_hops: 2
+    notes: Legacy fixed feature-volume extremum; benchmark-release replacement is parameterized_feature_extreme.
   - id: highest_equal_volume_feature
-    status: release
+    status: review_only
     target_type: feature
     minimum_hops: 3
     maximum_hops: 3
+    notes: Legacy fixed equal-volume selector; benchmark-release replacement is parameterized_equal_feature_metric_extreme.
   - id: largest_equal_centroid_height_feature
-    status: release
+    status: review_only
     target_type: feature
     minimum_hops: 3
     maximum_hops: 3
+    notes: Legacy fixed equal-centroid-height selector; benchmark-release replacement is parameterized_equal_feature_metric_extreme.
   - id: largest_equal_bbox_height_feature
-    status: release
+    status: review_only
     target_type: feature
     minimum_hops: 3
     maximum_hops: 3
+    notes: Legacy fixed equal-bbox-height selector; benchmark-release replacement is parameterized_equal_feature_metric_extreme.
   - id: largest_equal_centroid_x_feature
-    status: release
+    status: review_only
     target_type: feature
     minimum_hops: 3
     maximum_hops: 3
+    notes: Legacy fixed centroid-X selector; benchmark-release replacement is parameterized_equal_feature_metric_extreme.
   - id: largest_equal_centroid_y_feature
-    status: release
+    status: review_only
     target_type: feature
     minimum_hops: 3
     maximum_hops: 3
+    notes: Legacy fixed centroid-Y selector; benchmark-release replacement is parameterized_equal_feature_metric_extreme.
   - id: highest_centroid_feature
-    status: release
+    status: review_only
     target_type: feature
     minimum_hops: 2
     maximum_hops: 2
+    notes: Legacy fixed feature-centroid-height extremum; benchmark-release replacement is parameterized_feature_extreme.
   - id: largest_compiled_face_count_feature
-    status: release
+    status: review_only
     target_type: feature
     minimum_hops: 2
     maximum_hops: 2
+    notes: Legacy fixed topology-count extremum; benchmark-release replacement is parameterized_feature_extreme.
   - id: largest_positive_volume_delta_feature
     status: release
     target_type: feature
@@ -764,15 +779,17 @@ families:
     minimum_hops: 3
     maximum_hops: 3
   - id: largest_added_region
-    status: release
+    status: review_only
     target_type: material_region
     minimum_hops: 3
     maximum_hops: 3
+    notes: Legacy fixed added-region volume extremum; benchmark-release replacement is parameterized_material_region_extreme.
   - id: highest_equal_volume_added_region
-    status: release
+    status: review_only
     target_type: material_region
     minimum_hops: 3
     maximum_hops: 3
+    notes: Legacy fixed equal-volume added-region selector; benchmark-release replacement is parameterized_equal_material_region_metric_extreme.
   - id: parameterized_material_region_extreme
     status: release
     target_type: material_region
@@ -874,15 +891,17 @@ families:
         target_point_metric: [centroid]
     notes: Synthesized cross-feature added-material region family that narrows to equal-volume regions and samples a measured reference feature before selecting nearest/farthest by region-centroid distance.
   - id: largest_removed_region
-    status: release
+    status: review_only
     target_type: void_region
     minimum_hops: 3
     maximum_hops: 3
+    notes: Legacy fixed removed-region volume extremum; benchmark-release replacement is parameterized_void_region_extreme.
   - id: highest_equal_volume_removed_region
-    status: release
+    status: review_only
     target_type: void_region
     minimum_hops: 3
     maximum_hops: 3
+    notes: Legacy fixed equal-volume removed-region selector; benchmark-release replacement is parameterized_equal_void_region_metric_extreme.
   - id: parameterized_void_region_extreme
     status: release
     target_type: void_region

@@ -52,7 +52,7 @@ from cad_qa.ontology.relations import RELATION_FAMILIES
 from cad_qa.ontology.workplane_frames import project_local_point
 from cad_qa.prompts.render import render_prompt
 from cad_qa.prompts.templates import prompt_template_registry
-from cad_qa.query.family_manifest import intended_family_coverage_report
+from cad_qa.query.family_manifest import intended_family_coverage_report, load_family_manifest
 from cad_qa.query.ir import Clause, QueryProgram, query_from_dict
 from cad_qa.query.parameters import sampled_parameters_from_query
 from cad_qa.query.resolver import resolve_query, smoke_queries
@@ -2088,13 +2088,11 @@ def test_smoke_queries_generate_cross_feature_reference_distance_tasks() -> None
         min_axis_direction_share=None,
         enforce=True,
     )
-    family_report = next(
-        family
+    assert all(
+        family["prompt_family"] != "nearest_equal_length_edge_to_reference_feature_centroid"
         for family in balance["families"]
-        if family["prompt_family"] == "nearest_equal_length_edge_to_reference_feature_centroid"
     )
-    assert family_report["valid"]
-    assert "reference_anchor_signature" in family_report["required_dimensions"]
+    assert balance["valid"]
 
     release_balance = parameter_balance_report(
         [to_jsonable(row)],
@@ -2102,11 +2100,7 @@ def test_smoke_queries_generate_cross_feature_reference_distance_tasks() -> None
         min_axis_direction_share=0.20,
         enforce=True,
     )
-    assert any(
-        violation["prompt_family"] == "nearest_equal_length_edge_to_reference_feature_centroid"
-        and violation["dimension"] == "extremum_direction"
-        for violation in release_balance["violations"]
-    )
+    assert release_balance["valid"]
 
 
 def test_generated_smoke_query_clauses_are_yaml_backed() -> None:
@@ -4058,6 +4052,61 @@ def test_intended_family_manifest_reports_zero_row_and_non_release_families(tmp_
     }
 
 
+def test_default_family_manifest_keeps_superseded_fixed_families_review_only() -> None:
+    manifest = load_family_manifest()
+    families = manifest["families"]
+
+    superseded_fixed_families = [
+        "highest_kernel_selected_face",
+        "nearest_kernel_selected_face_center_to_origin",
+        "largest_kernel_selected_face_area",
+        "highest_equal_area_kernel_selected_face",
+        "nearest_equal_center_z_kernel_selected_face",
+        "highest_kernel_selected_edge",
+        "nearest_equal_length_edge_to_reference_feature_centroid",
+        "largest_compiled_volume_feature",
+        "highest_equal_volume_feature",
+        "largest_equal_centroid_height_feature",
+        "largest_equal_bbox_height_feature",
+        "largest_equal_centroid_x_feature",
+        "largest_equal_centroid_y_feature",
+        "highest_centroid_feature",
+        "largest_compiled_face_count_feature",
+        "largest_added_region",
+        "highest_equal_volume_added_region",
+        "largest_removed_region",
+        "highest_equal_volume_removed_region",
+    ]
+    replacement_families = [
+        "parameterized_kernel_face_extreme",
+        "parameterized_equal_face_metric_extreme",
+        "parameterized_face_reference_feature_distance",
+        "parameterized_kernel_edge_extreme",
+        "parameterized_edge_reference_feature_distance",
+        "parameterized_feature_extreme",
+        "parameterized_equal_feature_metric_extreme",
+        "parameterized_material_region_extreme",
+        "parameterized_equal_material_region_metric_extreme",
+        "parameterized_void_region_extreme",
+        "parameterized_equal_void_region_metric_extreme",
+    ]
+    effect_families_without_parameterized_replacements = [
+        "largest_positive_volume_delta_feature",
+        "largest_removed_volume_delta_feature",
+        "largest_bbox_height_delta_feature",
+        "largest_bbox_expansion_feature",
+        "largest_bbox_min_z_delta_feature",
+        "largest_upward_centroid_delta_feature",
+        "largest_centroid_shift_feature",
+        "largest_face_count_delta_feature",
+        "largest_edge_count_delta_feature",
+    ]
+
+    assert all(families[family]["status"] == "review_only" for family in superseded_fixed_families)
+    assert all(families[family]["status"] == "release" for family in replacement_families)
+    assert all(families[family]["status"] == "release" for family in effect_families_without_parameterized_replacements)
+
+
 def test_parameter_balance_report_blocks_collapsed_query_parameters(tmp_path: Path) -> None:
     manifest = tmp_path / "family_specs.yaml"
     manifest.write_text(
@@ -4826,9 +4875,12 @@ def test_training_export_cli_defaults_to_geometry_critical_rows(tmp_path: Path) 
     assert "default_sft_row_count" in benchmark_sft_report["blocking_training_gates"]
     assert benchmark_sft_report["training_readiness"]["max_syntax_only_training_share"] == 0.0
     assert "intended_family_coverage" in benchmark_sft_report["blocking_training_gates"]
-    assert "parameter_balance" in benchmark_sft_report["blocking_training_gates"]
+    assert "parameter_balance" not in benchmark_sft_report["blocking_training_gates"]
+    assert benchmark_sft_report["intended_family_coverage"]["generated_non_release_families"] == [
+        "largest_compiled_volume_feature"
+    ]
     assert "preview_evidence" in benchmark_sft_report["blocking_training_gates"]
-    assert "family_test_evidence" in benchmark_sft_report["blocking_training_gates"]
+    assert "family_test_evidence" not in benchmark_sft_report["blocking_training_gates"]
     assert benchmark_sft_report["training_balance"]["release_gate_profile"]["min_default_sft_rows"] == 10000
 
     assert cli_main(
@@ -5813,9 +5865,10 @@ def test_release_verifier_report_stop_gates_and_cli(tmp_path: Path) -> None:
     assert "default_sft_row_count" in benchmark_report["blocking_gates"]
     assert "benchmark_split_group_coverage" in benchmark_report["blocking_gates"]
     assert "intended_family_coverage" in benchmark_report["blocking_gates"]
-    assert "parameter_balance" in benchmark_report["blocking_gates"]
+    assert "parameter_balance" not in benchmark_report["blocking_gates"]
+    assert "largest_removed_region" in benchmark_report["intended_family_coverage"]["generated_non_release_families"]
     assert "preview_evidence" in benchmark_report["blocking_gates"]
-    assert "family_test_evidence" in benchmark_report["blocking_gates"]
+    assert "family_test_evidence" not in benchmark_report["blocking_gates"]
 
 
 def test_public_private_exports_do_not_leak_hidden_fields(tmp_path: Path) -> None:
