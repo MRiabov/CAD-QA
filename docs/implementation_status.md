@@ -907,6 +907,16 @@ Checked as implemented with remaining scale caveats:
   implements a reusable containment-relation endpoint extrema family at the
   valid-row level; broader containment and adjacency predicates remain open.
 - The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_endpoint_containment_relation_rank/PREVIEW.md`
+  adds a valid release-ready row for
+  `parameterized_endpoint_containment_relation_rank`. The reviewed row requires
+  endpoint-of-edge evidence, contained-on-edge evidence, and measured endpoint
+  geometry, then resolves from the remaining endpoint candidates by a sampled
+  rank over endpoint coordinates. This extends containment-relation endpoint
+  synthesis from extrema to rank selectors at the valid-row level; broader
+  containment predicates, rank distribution, and release-scale balance remain
+  open.
+- The synthesized selfcheck preview at
   `runs/parameterized_synthesis_selfcheck_edge_spatial/PREVIEW.md` demonstrates
   the initial `parameterized_edge_spatial_relation_extreme` family. The reviewed
   rows require kernel-selected edge evidence, then sample one of adjacent,

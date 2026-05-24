@@ -848,6 +848,24 @@ RELATION_RANK_FAMILY_SPECS = (
         relation_target_type="edge",
         selection_mode="rank",
     ),
+    RelationExtremeFamilySpec(
+        family_id="parameterized_endpoint_containment_relation_rank",
+        target_type="edge_endpoint",
+        base_relation="endpoint_of",
+        base_relation_clause_id="has_parameterized_endpoint_set",
+        base_relation_target_type="edge",
+        relations=("contained_in",),
+        relation_clause_id="has_parameterized_contained_endpoint_set",
+        measurement_clause_id="has_parameterized_endpoint_metric",
+        metrics=(
+            "coordinate_x",
+            "coordinate_y",
+            "coordinate_z",
+            "distance_to_origin",
+        ),
+        relation_target_type="edge",
+        selection_mode="rank",
+    ),
 )
 
 RELATION_TIE_BREAK_FAMILY_SPECS = (

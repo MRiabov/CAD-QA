@@ -4053,6 +4053,63 @@ def test_synthesis_generates_endpoint_containment_relation_query() -> None:
     assert "edge" in row.prompt.lower()
 
 
+def test_synthesis_generates_endpoint_containment_relation_rank_query() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:endpoint-containment-relation-rank-synth",
+        source={"source_id": "synthetic", "source_code": ""},
+    )
+    for edge_id in ["edge:a", "edge:b", "edge:c", "edge:d"]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+    for endpoint_id, edge_id, coordinate, distance_to_origin in [
+        ("edge_endpoint:a", "edge:a", [0.0, 0.0, 3.0], 2.0),
+        ("edge_endpoint:b", "edge:b", [4.0, 1.0, 3.0], 6.0),
+        ("edge_endpoint:c", "edge:c", [8.0, 2.0, 9.0], 20.0),
+        ("edge_endpoint:d", "edge:d", [12.0, 3.0, 12.0], 30.0),
+    ]:
+        graph.add_node(Node(endpoint_id, "edge_endpoint", endpoint_id))
+        graph.add_relation(Relation(endpoint_id, edge_id, "endpoint_of"))
+        graph.add_relation(Relation(endpoint_id, edge_id, "contained_in"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate", coordinate, "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_x", coordinate[0], "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_y", coordinate[1], "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "relation_metric", "distance_to_origin", distance_to_origin, "mm"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_endpoint_containment_relation_rank")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+    relation_step = next(step for step in row.candidate_trace["steps"] if step["step"] == "has_parameterized_contained_endpoint_set")
+    aggregation_step = next(step for step in row.candidate_trace["steps"] if step["step"] == "aggregation")
+
+    assert resolution.verifier_status == "resolved"
+    assert query.target_type == "edge_endpoint"
+    assert query.clauses[0].relation == "endpoint_of"
+    assert query.clauses[1].relation == "contained_in"
+    assert query.aggregation in {"rank_asc", "rank_desc"}
+    assert query.aggregation_rank in {2, 3, 4}
+    assert query.sampled_parameters["aggregation_rank"] == [str(query.aggregation_rank)]
+    assert query.sampled_parameters["rank_direction"] in (["max"], ["min"])
+    assert query.sampled_parameters["synthesis_strategy"] == ["spatial_relation_rank_v1"]
+    assert query.sampled_parameters["spatial_relation"] == ["contained_in"]
+    assert query.sampled_parameters["final_selector"] == [
+        f"rank:{query.aggregation_rank}:{query.sampled_parameters['rank_direction'][0]}:{query.aggregation_metric}"
+    ]
+    assert relation_step["after"] == ["edge_endpoint:a", "edge_endpoint:b", "edge_endpoint:c", "edge_endpoint:d"]
+    assert aggregation_step["rank"] == query.aggregation_rank
+    assert len(row.candidate_trace["final_candidates"]) == 1
+    assert row.logical_hop_count == 4
+    assert row.geometry_hop_count == 4
+    assert "endpoint_of" in row.relation_families
+    assert "contained_in" in row.relation_families
+    assert row.query_program["sampled_parameters"]["target_type"] == ["edge_endpoint"]
+    assert "endpoint" in row.prompt.lower()
+    assert "candidate" in row.prompt
+
+
 def test_synthesis_skips_equal_value_endpoint_family_without_repeated_value_distractors() -> None:
     graph = OntologyGraph(graph_id="graph:no-equal-endpoint-synth", source={"source_id": "synthetic", "source_code": ""})
     for edge_id in ["edge:a", "edge:b", "edge:c"]:
@@ -4090,6 +4147,7 @@ def test_synthesis_skips_contained_endpoint_family_without_containment_evidence(
 
     assert "parameterized_contained_endpoint_metric_extreme" not in families
     assert "parameterized_endpoint_containment_relation_extreme" not in families
+    assert "parameterized_endpoint_containment_relation_rank" not in families
 
 
 def test_synthesis_generates_endpoint_and_path_rank_queries() -> None:

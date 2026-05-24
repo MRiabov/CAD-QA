@@ -199,6 +199,14 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Synthesized endpoint containment-relation family with measured endpoint selector.
+  - id: parameterized_endpoint_containment_relation_rank
+    positive_generation:
+      - test_synthesis_generates_endpoint_containment_relation_rank_query
+    failure_or_quarantine:
+      - test_synthesis_skips_contained_endpoint_family_without_containment_evidence
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Synthesized endpoint containment-relation family with sampled rank over measured endpoint geometry.
   - id: parameterized_endpoint_reference_feature_distance
     positive_generation:
       - test_synthesis_generates_endpoint_reference_feature_distance_query
