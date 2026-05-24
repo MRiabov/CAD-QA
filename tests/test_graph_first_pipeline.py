@@ -2754,6 +2754,87 @@ def test_synthesis_skips_equal_value_region_families_without_repeated_value_dist
     assert "parameterized_equal_void_region_metric_extreme" not in families
 
 
+def test_synthesis_generates_region_reference_feature_distance_queries() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:region-reference-distance-synth",
+        source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
+    )
+    for feature_id, volume, centroid in [
+        ("feature:ref", 100.0, [0.0, 0.0, 0.0]),
+        ("feature:far", 50.0, [100.0, 0.0, 1.0]),
+    ]:
+        graph.add_node(Node(feature_id, "feature", feature_id))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid", centroid))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid[2]))
+    for node_id, relation, volume, centroid in [
+        ("material_region:a", "has_kernel_material_region_geometry", 42.0, [1.0, 0.0, 1.0]),
+        ("material_region:b", "has_kernel_material_region_geometry", 42.0 + 1e-7, [6.0, 0.0, 7.0]),
+        ("material_region:c", "has_kernel_material_region_geometry", 9.0, [20.0, 0.0, 20.0]),
+        ("void_region:a", "has_kernel_void_region_geometry", 8.0, [2.0, 0.0, 2.0]),
+        ("void_region:b", "has_kernel_void_region_geometry", 8.0 + 1e-7, [7.0, 0.0, 6.0]),
+        ("void_region:c", "has_kernel_void_region_geometry", 3.0, [30.0, 0.0, 30.0]),
+    ]:
+        node_type = node_id.split(":", 1)[0]
+        graph.add_node(Node(node_id, node_type, node_id))
+        graph.add_relation(Relation(node_id, node_id, relation))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid", centroid, "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_z", centroid[2], "mm"))
+
+    queries = {query.query_id.rsplit(":", 1)[-1]: query for query in synthesize_graph_hop_queries(graph)}
+    for family_id, relation, value in [
+        ("parameterized_material_region_reference_feature_distance", "has_kernel_material_region_geometry", 42.0),
+        ("parameterized_void_region_reference_feature_distance", "has_kernel_void_region_geometry", 8.0),
+    ]:
+        query = queries[family_id]
+        resolution = resolve_query(graph, query)
+        row = materialize_row(graph, resolution)
+
+        assert resolution.verifier_status == "resolved"
+        assert query.aggregation in {"argmin", "argmax"}
+        assert query.aggregation_metric == "distance_to_reference_feature_centroid"
+        assert query.clauses[0].relation == relation
+        assert query.clauses[1].metric == "volume"
+        assert query.clauses[1].value == value
+        assert query.clauses[2].kind == "reference_measurement"
+        assert query.clauses[3].metric == "centroid"
+        assert row.logical_hop_count == 5
+        assert row.geometry_hop_count == 5
+        assert row.query_program["sampled_parameters"]["reference_type"] == ["feature"]
+        assert row.query_program["sampled_parameters"]["target_point_metric"] == ["centroid"]
+        assert row.query_program["sampled_parameters"]["reference_point_metric"] == ["centroid"]
+        assert row.query_program["sampled_parameters"]["measurement_value_bucket"] == [f"volume:{value:g}"]
+        assert "measured centroid" in row.prompt
+        assert any(phrase in row.prompt for phrase in ("closest to", "farthest from"))
+
+
+def test_synthesis_skips_region_reference_distance_without_region_centroids() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:no-region-reference-distance-synth",
+        source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
+    )
+    graph.add_node(Node("feature:ref", "feature", "feature:ref"))
+    graph.add_measurement(Measurement("feature:ref", "snapshot_state", "volume", 100.0))
+    graph.add_measurement(Measurement("feature:ref", "snapshot_state", "centroid", [0.0, 0.0, 0.0]))
+    graph.add_measurement(Measurement("feature:ref", "snapshot_state", "centroid_z", 0.0))
+    for node_id, relation, volume in [
+        ("material_region:a", "has_kernel_material_region_geometry", 42.0),
+        ("material_region:b", "has_kernel_material_region_geometry", 42.0 + 1e-7),
+        ("void_region:a", "has_kernel_void_region_geometry", 8.0),
+        ("void_region:b", "has_kernel_void_region_geometry", 8.0 + 1e-7),
+    ]:
+        node_type = node_id.split(":", 1)[0]
+        graph.add_node(Node(node_id, node_type, node_id))
+        graph.add_relation(Relation(node_id, node_id, relation))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "volume", volume, "mm^3"))
+
+    families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
+
+    assert "parameterized_material_region_reference_feature_distance" not in families
+    assert "parameterized_void_region_reference_feature_distance" not in families
+
+
 def test_synthesis_skips_equal_value_family_without_repeated_value_distractors() -> None:
     graph = OntologyGraph(graph_id="graph:no-equal-edge-synth", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("selector:edges", "selector", "edges"))

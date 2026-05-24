@@ -31,6 +31,8 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_endpoint_reference_feature_distance",
     "parameterized_equal_material_region_metric_extreme",
     "parameterized_equal_void_region_metric_extreme",
+    "parameterized_material_region_reference_feature_distance",
+    "parameterized_void_region_reference_feature_distance",
     "parameterized_face_reference_feature_distance",
     "parameterized_edge_reference_feature_distance",
     "parameterized_path_point_extreme",
@@ -334,19 +336,28 @@ def _region_equal_metric_graph() -> OntologyGraph:
             ),
         },
     )
-    for node_id, relation, volume, centroid_z in [
-        ("material_region:a", "has_kernel_material_region_geometry", 12.0, 1.0),
-        ("material_region:b", "has_kernel_material_region_geometry", 12.0 + 1e-7, 7.0),
-        ("material_region:c", "has_kernel_material_region_geometry", 5.0, 20.0),
-        ("void_region:a", "has_kernel_void_region_geometry", 8.0, 2.0),
-        ("void_region:b", "has_kernel_void_region_geometry", 8.0 + 1e-7, 6.0),
-        ("void_region:c", "has_kernel_void_region_geometry", 3.0, 30.0),
+    for feature_id, volume, centroid in [
+        ("feature:ref", 100.0, [0.0, 0.0, 0.0]),
+        ("feature:far", 50.0, [100.0, 0.0, 1.0]),
+    ]:
+        graph.add_node(Node(feature_id, "feature", feature_id))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid", centroid, "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid[2], "mm"))
+    for node_id, relation, volume, centroid in [
+        ("material_region:a", "has_kernel_material_region_geometry", 12.0, [1.0, 0.0, 1.0]),
+        ("material_region:b", "has_kernel_material_region_geometry", 12.0 + 1e-7, [6.0, 0.0, 7.0]),
+        ("material_region:c", "has_kernel_material_region_geometry", 5.0, [20.0, 0.0, 20.0]),
+        ("void_region:a", "has_kernel_void_region_geometry", 8.0, [2.0, 0.0, 2.0]),
+        ("void_region:b", "has_kernel_void_region_geometry", 8.0 + 1e-7, [7.0, 0.0, 6.0]),
+        ("void_region:c", "has_kernel_void_region_geometry", 3.0, [30.0, 0.0, 30.0]),
     ]:
         node_type = node_id.split(":", 1)[0]
         graph.add_node(Node(node_id, node_type, node_id))
         graph.add_relation(Relation(node_id, node_id, relation))
         graph.add_measurement(Measurement(node_id, "entity_geometry", "volume", volume, "mm^3"))
-        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_z", centroid_z, "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid", centroid, "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_z", centroid[2], "mm"))
     return graph
 
 
