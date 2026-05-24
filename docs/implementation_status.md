@@ -757,6 +757,14 @@ Checked as implemented with remaining scale caveats:
   uniquely by final centroid-height selectors. This adds initial material/void
   region equal-measurement synthesis; release-scale distribution and broader
   region metrics remain open.
+- The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_endpoint/PREVIEW.md` demonstrates
+  the initial `parameterized_equal_endpoint_metric_extreme` family. The reviewed
+  row narrows from three edge endpoints to two endpoints with the same measured
+  Z coordinate, keeps both through the distance-to-origin measurement clause,
+  and resolves uniquely by final distance selector. This adds endpoint-level
+  equal-measurement synthesis; broader endpoint relations, containment/adjacency
+  combinations, and release-scale distribution remain open.
 - Opposite-face rows on broad real CadEvolve data, broader containment,
   broader intersection, broader adjacency, and broader stable spatial-relation
   distributions remain scale/coverage work rather than unchecked core
@@ -780,9 +788,9 @@ Checked as implemented with remaining scale caveats:
   measurement bucket, containment, adjacency, or distance to a sampled reference
   entity to define a nontrivial candidate subset before the final selector.
   The current synthesis slice covers parameterized extrema over kernel-selected
-  face/edge geometry and measured path point/segment geometry, initial selected
-  face/edge selector-count narrowing, initial equal-value
-  face/edge/feature/material-region/void-region measurement groups, and initial
+  face/edge geometry and measured path point/segment/edge-endpoint geometry,
+  initial selected face/edge selector-count narrowing, initial equal-value
+  face/edge/edge-endpoint/feature/material-region/void-region measurement groups, and initial
   face/edge-to-feature reference-distance families. Broader
   selected-entity-count narrowing,
   face/endpoint/material/void reference anchors, containment/adjacency

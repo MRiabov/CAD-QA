@@ -326,6 +326,27 @@ EQUAL_VALUE_EXTREME_FAMILY_SPECS = (
             "edge_length",
         ),
     ),
+    EqualValueExtremeFamilySpec(
+        family_id="parameterized_equal_endpoint_metric_extreme",
+        target_type="edge_endpoint",
+        relation="endpoint_of",
+        relation_clause_id="has_parameterized_endpoint_set",
+        equal_value_clause_id="has_parameterized_equal_endpoint_metric_value",
+        selector_metric_clause_id="has_parameterized_endpoint_metric",
+        equal_metrics=(
+            "coordinate_x",
+            "coordinate_y",
+            "coordinate_z",
+            "distance_to_origin",
+        ),
+        selector_metrics=(
+            "coordinate_x",
+            "coordinate_y",
+            "coordinate_z",
+            "distance_to_origin",
+        ),
+        relation_target_type="edge",
+    ),
 )
 
 REFERENCE_DISTANCE_FAMILY_SPECS = (

@@ -384,6 +384,30 @@ families:
     minimum_hops: 3
     maximum_hops: 3
     notes: Fixed Z-equality family; should become parameterized.
+  - id: parameterized_equal_endpoint_metric_extreme
+    status: release
+    target_type: edge_endpoint
+    minimum_hops: 4
+    maximum_hops: 4
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - final_selector
+      expected_values:
+        target_type: [edge_endpoint]
+    notes: Synthesized value-bearing endpoint family that narrows by repeated endpoint coordinates or distances before selecting by another endpoint measurement.
   - id: largest_kernel_edge_selector_count
     status: review_only
     target_type: selector

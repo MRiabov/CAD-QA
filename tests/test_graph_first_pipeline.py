@@ -2454,6 +2454,66 @@ def test_synthesis_generates_equal_value_feature_query() -> None:
     assert "feature" in row.prompt.lower()
 
 
+def test_synthesis_generates_equal_value_endpoint_query() -> None:
+    graph = OntologyGraph(graph_id="graph:equal-endpoint-synth", source={"source_id": "synthetic", "source_code": ""})
+    for edge_id in ["edge:a", "edge:b", "edge:c"]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+    for endpoint_id, edge_id, coordinate_z, distance_to_origin in [
+        ("edge_endpoint:a", "edge:a", 3.0, 2.0),
+        ("edge_endpoint:b", "edge:b", 3.0 + 1e-7, 6.0),
+        ("edge_endpoint:c", "edge:c", 8.0, 20.0),
+    ]:
+        graph.add_node(Node(endpoint_id, "edge_endpoint", endpoint_id))
+        graph.add_relation(Relation(endpoint_id, edge_id, "endpoint_of"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_z", coordinate_z, "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "relation_metric", "distance_to_origin", distance_to_origin, "mm"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_equal_endpoint_metric_extreme")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+    equal_step = next(step for step in row.candidate_trace["steps"] if step["step"] == "has_parameterized_equal_endpoint_metric_value")
+
+    assert resolution.verifier_status == "resolved"
+    assert resolution.gold_answer in {"edge_endpoint:a", "edge_endpoint:b"}
+    assert query.target_type == "edge_endpoint"
+    assert query.clauses[0].relation == "endpoint_of"
+    assert query.clauses[1].metric == "coordinate_z"
+    assert query.clauses[1].value == 3.0
+    assert query.aggregation_metric == "distance_to_origin"
+    assert equal_step["after"] == ["edge_endpoint:a", "edge_endpoint:b"]
+    assert row.logical_hop_count == 4
+    assert row.geometry_hop_count == 4
+    assert row.query_program["sampled_parameters"]["target_type"] == ["edge_endpoint"]
+    assert row.query_program["sampled_parameters"]["equal_measurement_metric"] == ["coordinate_z"]
+    assert row.query_program["sampled_parameters"]["measurement_value_bucket"] == ["coordinate_z:3"]
+    assert dataset_report([row])["quality_flags"]["value_bearing_measurement"] == 1
+    assert "3.0" in row.prompt
+    assert "endpoint" in row.prompt.lower()
+
+
+def test_synthesis_skips_equal_value_endpoint_family_without_repeated_value_distractors() -> None:
+    graph = OntologyGraph(graph_id="graph:no-equal-endpoint-synth", source={"source_id": "synthetic", "source_code": ""})
+    for edge_id in ["edge:a", "edge:b", "edge:c"]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+    for endpoint_id, edge_id, coordinate_z, distance_to_origin in [
+        ("edge_endpoint:a", "edge:a", 3.0, 2.0),
+        ("edge_endpoint:b", "edge:b", 4.0, 6.0),
+        ("edge_endpoint:c", "edge:c", 8.0, 20.0),
+    ]:
+        graph.add_node(Node(endpoint_id, "edge_endpoint", endpoint_id))
+        graph.add_relation(Relation(endpoint_id, edge_id, "endpoint_of"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_z", coordinate_z, "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "relation_metric", "distance_to_origin", distance_to_origin, "mm"))
+
+    families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
+
+    assert "parameterized_equal_endpoint_metric_extreme" not in families
+
+
 def test_synthesis_skips_equal_value_feature_family_without_repeated_value_distractors() -> None:
     graph = OntologyGraph(graph_id="graph:no-equal-feature-synth", source={"source_id": "synthetic", "source_code": ""})
     for feature_id, volume, centroid_z in [

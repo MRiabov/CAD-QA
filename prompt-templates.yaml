@@ -198,6 +198,18 @@ clause_templates:
   has_endpoint_z: "The target endpoint has a measured Z coordinate."
   has_endpoint_z_value: "The target endpoint has a global Z coordinate of {value}."
   has_endpoint_distance: "The target endpoint also has a distance-to-origin measurement."
+  has_parameterized_endpoint_set:
+    - "The target point is an endpoint of a measured edge."
+    - "The target endpoint belongs to an edge with measured geometry."
+    - "The target point is one of the checked edge endpoints."
+  has_parameterized_equal_endpoint_metric_value:
+    - "The target endpoint has {metric_label} equal to {value}."
+    - "The target endpoint's {metric_label} is {value}."
+    - "The target endpoint matches the {metric_label} value {value}."
+  has_parameterized_endpoint_metric:
+    - "The target endpoint has a measured {metric_label}."
+    - "The target endpoint has a known {metric_label}."
+    - "The target endpoint has a verified {metric_label}."
 
   has_initial_tangent: "The target path has an initial tangent from its first two control points."
   has_nearest_origin_distance: "The target path has a nearest path point to the global origin."
