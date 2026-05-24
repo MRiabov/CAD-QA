@@ -259,6 +259,8 @@ def relation_label(relation: str) -> str:
         "perpendicular_to": "perpendicular to",
         "parallel_to": "parallel to",
         "same_length_as": "the same length as",
+        "longer_than": "longer than",
+        "shorter_than": "shorter than",
         "contained_in": "contained in",
         "endpoint_of": "an endpoint of",
     }.get(relation, relation.replace("_", " "))

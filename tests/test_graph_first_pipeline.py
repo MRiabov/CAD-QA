@@ -2453,6 +2453,49 @@ def test_synthesis_generates_same_length_edge_spatial_relation_query() -> None:
     assert len(row.candidate_trace["final_candidates"]) == 1
 
 
+def test_synthesis_generates_comparative_edge_spatial_relation_query() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:edge-comparative-spatial-synth",
+        source={"source_id": "synthetic", "source_code": ""},
+    )
+    graph.add_node(Node("selector:edges", "selector", "edges"))
+    for edge_id, length, midpoint in [
+        ("edge:a", 12.0, [0.0, 0.0, 0.0]),
+        ("edge:b", 6.0, [2.0, 0.0, 0.0]),
+        ("edge:c", 10.0, [0.0, 3.0, 0.0]),
+        ("edge:d", 4.0, [4.0, 3.0, 0.0]),
+    ]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint", midpoint, "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_x", midpoint[0], "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint[1], "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_z", midpoint[2], "mm"))
+        graph.add_measurement(Measurement(edge_id, "relation_metric", "midpoint_distance_to_origin", length / 2.0, "mm"))
+    for source_id, target_id in [
+        ("edge:a", "edge:b"),
+        ("edge:c", "edge:d"),
+    ]:
+        graph.add_relation(Relation(source_id, target_id, "longer_than"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_edge_spatial_relation_extreme")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+
+    assert resolution.verifier_status == "resolved"
+    assert query.clauses[1].relation == "longer_than"
+    assert query.sampled_parameters["spatial_relation"] == ["longer_than"]
+    assert "longer_than" in row.relation_families
+    assert "longer than" in row.prompt
+    assert "that is longer than it" not in row.prompt
+    assert len(row.candidate_trace["final_candidates"]) == 1
+
+
 def test_synthesis_generates_parameterized_face_spatial_relation_query() -> None:
     graph = OntologyGraph(graph_id="graph:face-spatial-synth", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("selector:faces", "selector", "faces"))
@@ -2512,6 +2555,48 @@ def test_synthesis_generates_parameterized_face_spatial_relation_query() -> None
     assert row.query_program["sampled_parameters"] == sampled_parameters_from_query(row.query_program)
     assert query.clauses[1].relation not in row.prompt
     assert "measured face" in row.prompt
+
+
+def test_synthesis_generates_parallel_face_spatial_relation_query() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:face-parallel-spatial-synth",
+        source={"source_id": "synthetic", "source_code": ""},
+    )
+    graph.add_node(Node("selector:faces", "selector", "faces"))
+    for face_id, area, center in [
+        ("face:a", 60.0, [0.0, 0.0, 0.0]),
+        ("face:b", 48.0, [2.0, 0.0, 1.0]),
+        ("face:c", 30.0, [0.0, 3.0, 2.0]),
+        ("face:d", 12.0, [4.0, 3.0, 3.0]),
+    ]:
+        graph.add_node(Node(face_id, "face", face_id))
+        graph.add_relation(Relation(face_id, "selector:faces", "has_kernel_stable_face_id"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", area, "mm^2"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "center", center, "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_x", center[0], "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_y", center[1], "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_z", center[2], "mm"))
+        graph.add_measurement(Measurement(face_id, "relation_metric", "distance_to_origin", area / 10.0, "mm"))
+    for source_id, target_id in [
+        ("face:a", "face:b"),
+        ("face:c", "face:d"),
+    ]:
+        graph.add_relation(Relation(source_id, target_id, "parallel_to"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_face_spatial_relation_extreme")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+
+    assert resolution.verifier_status == "resolved"
+    assert query.clauses[1].relation == "parallel_to"
+    assert query.sampled_parameters["spatial_relation"] == ["parallel_to"]
+    assert "parallel_to" in row.relation_families
+    assert "parallel to" in row.prompt
+    assert len(row.candidate_trace["final_candidates"]) == 1
 
 
 def test_synthesis_skips_edge_spatial_relation_family_without_viable_relation_subset() -> None:

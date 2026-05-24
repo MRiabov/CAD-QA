@@ -96,6 +96,10 @@ def synthesis_selfcheck_graphs() -> list[OntologyGraph]:
         _edge_spatial_relation_graph("graph:selfcheck-edge-spatial-relation-2"),
         _edge_spatial_relation_graph("graph:selfcheck-edge-spatial-relation-4"),
         _edge_same_length_relation_graph(),
+        _edge_single_relation_graph("graph:selfcheck-edge-parallel-relation", "parallel_to"),
+        _edge_single_relation_graph("graph:selfcheck-edge-longer-relation", "longer_than"),
+        _edge_single_relation_graph("graph:selfcheck-edge-shorter-relation", "shorter_than"),
+        _face_single_relation_graph("graph:selfcheck-face-parallel-relation", "parallel_to"),
         _feature_effect_delta_graph("graph:selfcheck-feature-effect-delta-0"),
         _feature_effect_delta_graph("graph:selfcheck-feature-effect-delta-6"),
         _feature_effect_delta_graph("graph:selfcheck-feature-effect-delta-10"),
@@ -354,6 +358,43 @@ def _edge_same_length_relation_graph() -> OntologyGraph:
     return graph
 
 
+def _edge_single_relation_graph(graph_id: str, relation: str) -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id=graph_id,
+        source={
+            "source_id": graph_id.rsplit(":", 1)[-1],
+            "source_code": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane(\"XY\").box(12, 8, 4).edges()\n"
+            ),
+        },
+    )
+    graph.add_node(Node("selector:edges", "selector", "edges"))
+    for edge_id, length, midpoint in [
+        ("edge:a", 12.0, [0.0, 0.0, 0.0]),
+        ("edge:b", 6.0, [2.0, 0.0, 0.0]),
+        ("edge:c", 10.0, [0.0, 3.0, 0.0]),
+        ("edge:d", 4.0, [4.0, 3.0, 0.0]),
+    ]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint", midpoint, "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_x", midpoint[0], "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint[1], "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_z", midpoint[2], "mm"))
+        graph.add_measurement(Measurement(edge_id, "relation_metric", "midpoint_distance_to_origin", length / 2.0, "mm"))
+    for source_id, target_id in _single_relation_pairs(relation):
+        graph.add_relation(Relation(source_id, target_id, relation))
+    return graph
+
+
+def _single_relation_pairs(relation: str) -> list[tuple[str, str]]:
+    if relation == "shorter_than":
+        return [("edge:b", "edge:a"), ("edge:d", "edge:c")]
+    return [("edge:a", "edge:b"), ("edge:c", "edge:d")]
+
+
 def _face_spatial_relation_graph(graph_id: str) -> OntologyGraph:
     graph = OntologyGraph(
         graph_id=graph_id,
@@ -390,6 +431,37 @@ def _face_spatial_relation_graph(graph_id: str) -> OntologyGraph:
         ("face:b", "face:d", "perpendicular_to"),
         ("face:d", "face:b", "perpendicular_to"),
     ]:
+        graph.add_relation(Relation(source_id, target_id, relation))
+    return graph
+
+
+def _face_single_relation_graph(graph_id: str, relation: str) -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id=graph_id,
+        source={
+            "source_id": graph_id.rsplit(":", 1)[-1],
+            "source_code": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane(\"XY\").box(10, 6, 4).faces()\n"
+            ),
+        },
+    )
+    graph.add_node(Node("selector:faces", "selector", "faces"))
+    for face_id, area, center in [
+        ("face:a", 60.0, [0.0, 0.0, 0.0]),
+        ("face:b", 48.0, [2.0, 0.0, 1.0]),
+        ("face:c", 30.0, [0.0, 3.0, 2.0]),
+        ("face:d", 12.0, [4.0, 3.0, 3.0]),
+    ]:
+        graph.add_node(Node(face_id, "face", face_id))
+        graph.add_relation(Relation(face_id, "selector:faces", "has_kernel_stable_face_id"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", area, "mm^2"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "center", center, "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_x", center[0], "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_y", center[1], "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_z", center[2], "mm"))
+        graph.add_measurement(Measurement(face_id, "relation_metric", "distance_to_origin", area / 10.0, "mm"))
+    for source_id, target_id in [("face:a", "face:b"), ("face:c", "face:d")]:
         graph.add_relation(Relation(source_id, target_id, relation))
     return graph
 

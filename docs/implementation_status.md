@@ -851,14 +851,22 @@ Checked as implemented with remaining scale caveats:
   relation/selector family, while release-scale same-length distribution and
   broader spatial relation balance remain open.
 - The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_spatial_relation_expansion/PREVIEW.md`
+  extends sampled spatial-relation synthesis to face `parallel_to` rows and
+  edge `parallel_to`, `longer_than`, and `shorter_than` rows. The reviewed
+  directed-comparison prompts phrase the target edge as longer or shorter than
+  another measured edge, preserving relation direction before the final
+  measured selector. This generalizes more of the old fixed longer/shorter
+  edge fixtures, but release-scale relation balance remains open.
+- The synthesized selfcheck preview at
   `runs/parameterized_synthesis_selfcheck_face_spatial/PREVIEW.md` demonstrates
   the initial `parameterized_face_spatial_relation_extreme` family. The reviewed
   rows require kernel-selected face evidence, then sample one of adjacent,
-  intersecting, opposite, or perpendicular face relations before resolving by a
-  measured face quantity. The preview covers all four relation parameters and
-  all reviewed rows are release-ready, but this is still an initial synthesized
-  face-spatial slice rather than proof of release-scale spatial-relation
-  distribution.
+  intersecting, opposite, parallel, or perpendicular face relations before
+  resolving by a measured face quantity. The preview covers the initial
+  relation parameters and all reviewed rows are release-ready, but this is
+  still an initial synthesized face-spatial slice rather than proof of
+  release-scale spatial-relation distribution.
 - The synthesized selfcheck preview at
   `runs/parameterized_synthesis_selfcheck_endpoint_reference/PREVIEW.md`
   demonstrates the initial `parameterized_endpoint_reference_feature_distance`
@@ -963,7 +971,9 @@ Checked as implemented with remaining scale caveats:
   for feature, edge, face, endpoint, material region, and void region targets.
   Generic reference-entity distance families now also sample reference type
   inside the family and cover added-material/removed-material reference anchors.
-  Remaining hard-coded release debt is mainly
+  Edge spatial-relation synthesis now samples same-length, parallel, longer-than,
+  and shorter-than relations instead of relying on fixed longer/shorter view-word
+  fixtures. Remaining hard-coded release debt is mainly
   selected-entity count variants, richer graph-hop predicate chains, broader
   reference-entity balance, and release-scale distribution review.
 - Rewrite sparse direct selector/count/extremum families as graph-hop narrowing
@@ -975,9 +985,9 @@ Checked as implemented with remaining scale caveats:
   The current synthesis slice covers parameterized extrema over kernel-selected
   feature, feature-effect delta, face/edge geometry, measured path
   point/segment/edge-endpoint geometry, and sampled face/edge spatial
-  relations including same-length edge relation rows, initial selected
-  face/edge selector-count narrowing with threshold and equal related-metric
-  predicates, initial equal-value
+  relations including parallel face/edge and directed same-length/longer/shorter
+  edge relation rows, initial selected face/edge selector-count narrowing with
+  threshold and equal related-metric predicates, initial equal-value
   face/edge/edge-endpoint/feature/material-region/void-region measurement
   groups, sampled material/void region extrema/ranks, contained-endpoint
   relation chains, and initial

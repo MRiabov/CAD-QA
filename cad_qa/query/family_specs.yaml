@@ -142,7 +142,7 @@ families:
         - aggregation_metric
         - final_selector
       expected_values:
-        clause_relation: [adjacent_to, intersects, opposite_to, perpendicular_to]
+        clause_relation: [adjacent_to, intersects, opposite_to, parallel_to, perpendicular_to]
     notes: Synthesized face family that samples the spatial relation before selecting by a measured face quantity.
   - id: parameterized_face_reference_feature_distance
     status: release
@@ -803,7 +803,7 @@ families:
         - aggregation_metric
         - final_selector
       expected_values:
-        clause_relation: [adjacent_to, intersects, opposite_to, perpendicular_to, same_length_as]
+        clause_relation: [adjacent_to, intersects, longer_than, opposite_to, parallel_to, perpendicular_to, same_length_as, shorter_than]
     notes: Synthesized edge family that samples the spatial relation before selecting by a measured edge quantity.
   - id: frontmost_same_length_longer_positive_z_kernel_edge
     status: review_only
