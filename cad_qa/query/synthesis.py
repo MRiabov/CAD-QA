@@ -116,6 +116,29 @@ class ViableReferenceDistance:
     candidate_ids: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class RelationExtremeFamilySpec:
+    family_id: str
+    target_type: str
+    base_relation: str
+    base_relation_clause_id: str
+    base_relation_target_type: str
+    relations: tuple[str, ...]
+    relation_clause_id: str
+    measurement_clause_id: str
+    metrics: tuple[str, ...]
+    relation_target_type: str
+
+
+@dataclass(frozen=True)
+class ViableRelationExtreme:
+    spec: RelationExtremeFamilySpec
+    relation: str
+    metric: str
+    aggregation: str
+    candidate_ids: tuple[str, ...]
+
+
 EXTREME_FAMILY_SPECS = (
     ExtremeFamilySpec(
         family_id="parameterized_kernel_face_extreme",
@@ -349,6 +372,32 @@ EQUAL_VALUE_EXTREME_FAMILY_SPECS = (
     ),
 )
 
+RELATION_EXTREME_FAMILY_SPECS = (
+    RelationExtremeFamilySpec(
+        family_id="parameterized_edge_spatial_relation_extreme",
+        target_type="edge",
+        base_relation="has_kernel_stable_edge_id",
+        base_relation_clause_id="has_parameterized_edge_set",
+        base_relation_target_type="selector",
+        relations=(
+            "adjacent_to",
+            "intersects",
+            "opposite_to",
+            "perpendicular_to",
+        ),
+        relation_clause_id="has_parameterized_edge_spatial_relation",
+        measurement_clause_id="has_parameterized_edge_metric",
+        metrics=(
+            "midpoint_x",
+            "midpoint_y",
+            "midpoint_z",
+            "midpoint_distance_to_origin",
+            "edge_length",
+        ),
+        relation_target_type="edge",
+    ),
+)
+
 REFERENCE_DISTANCE_FAMILY_SPECS = (
     ReferenceDistanceFamilySpec(
         family_id="parameterized_face_reference_feature_distance",
@@ -413,6 +462,14 @@ def synthesize_graph_hop_queries(graph: OntologyGraph) -> list[QueryProgram]:
             continue
         choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
         query = _query_for_equal_value_extreme(graph, choice)
+        if query is not None:
+            queries.append(query)
+    for spec in RELATION_EXTREME_FAMILY_SPECS:
+        viable = _viable_relation_extremes(graph, spec)
+        if not viable:
+            continue
+        choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
+        query = _query_for_relation_extreme(graph, choice)
         if query is not None:
             queries.append(query)
     for spec in REFERENCE_DISTANCE_FAMILY_SPECS:
@@ -889,6 +946,133 @@ def _query_for_equal_value_extreme(graph: OntologyGraph, viable: ViableEqualValu
         aggregation=viable.aggregation,
         aggregation_metric=viable.selector_metric,
         hop_count=4 if relation is not None else 3,
+        difficulty="cad_browsecomp",
+        min_individual_clause_candidates=2,
+        sampled_parameters=sampled,
+    )
+
+
+def _viable_relation_extremes(
+    graph: OntologyGraph,
+    spec: RelationExtremeFamilySpec,
+) -> list[ViableRelationExtreme]:
+    candidates = graph.nodes_by_type(spec.target_type)
+    base_relation = relation_predicate(
+        graph,
+        candidates,
+        clause_id=spec.base_relation_clause_id,
+        relation=spec.base_relation,
+        target_type=spec.base_relation_target_type,
+    )
+    if base_relation is None:
+        return []
+    base_candidates = _apply_relation_clause(graph, candidates, spec.base_relation)
+    viable: list[ViableRelationExtreme] = []
+    for relation_name in spec.relations:
+        relation = relation_predicate(
+            graph,
+            base_candidates,
+            clause_id=spec.relation_clause_id,
+            relation=relation_name,
+            target_type=spec.relation_target_type,
+        )
+        if relation is None:
+            continue
+        relation_candidates = _apply_relation_clause(graph, base_candidates, relation_name)
+        for metric in spec.metrics:
+            measurement = measurement_predicate(
+                graph,
+                relation_candidates,
+                clause_id=spec.measurement_clause_id,
+                metric=metric,
+            )
+            if measurement is None:
+                continue
+            metric_candidates = _nodes_with_numeric_measurement(graph, relation_candidates, metric)
+            if len(metric_candidates) < 2:
+                continue
+            for aggregation in ("argmax", "argmin"):
+                if _has_unique_extreme(graph, metric_candidates, metric, aggregation):
+                    viable.append(
+                        ViableRelationExtreme(
+                            spec=spec,
+                            relation=relation_name,
+                            metric=metric,
+                            aggregation=aggregation,
+                            candidate_ids=tuple(node.id for node in metric_candidates),
+                        )
+                    )
+    return sorted(
+        viable,
+        key=lambda item: (
+            item.relation,
+            item.metric,
+            item.aggregation,
+            item.candidate_ids,
+        ),
+    )
+
+
+def _query_for_relation_extreme(graph: OntologyGraph, viable: ViableRelationExtreme) -> QueryProgram | None:
+    spec = viable.spec
+    broad_candidates = graph.nodes_by_type(spec.target_type)
+    base_relation = relation_predicate(
+        graph,
+        broad_candidates,
+        clause_id=spec.base_relation_clause_id,
+        relation=spec.base_relation,
+        target_type=spec.base_relation_target_type,
+    )
+    if base_relation is None:
+        return None
+    base_candidates = _apply_relation_clause(graph, broad_candidates, spec.base_relation)
+    relation = relation_predicate(
+        graph,
+        base_candidates,
+        clause_id=spec.relation_clause_id,
+        relation=viable.relation,
+        target_type=spec.relation_target_type,
+    )
+    if relation is None:
+        return None
+    relation_candidates = _apply_relation_clause(graph, base_candidates, viable.relation)
+    measurement = measurement_predicate(
+        graph,
+        relation_candidates,
+        clause_id=spec.measurement_clause_id,
+        metric=viable.metric,
+    )
+    if measurement is None:
+        return None
+    direction = "max" if viable.aggregation == "argmax" else "min"
+    sampled = merge_sampled_parameters(
+        {
+            "target_type": [spec.target_type],
+            "spatial_relation": [viable.relation],
+            "final_selector": [f"{direction}:{viable.metric}"],
+            "aggregation_metric": [viable.metric],
+            "extremum_direction": [direction],
+            "predicate_catalog_version": ["v1"],
+            "prompt_wording_variant": [_prompt_wording_variant(graph.graph_id, spec.family_id)],
+            "synthesis_strategy": ["spatial_relation_extreme_v1"],
+        },
+        relation.sampled_parameters,
+        measurement.sampled_parameters,
+    )
+    axis = metric_axis(viable.metric)
+    if axis is not None:
+        sampled = merge_sampled_parameters(sampled, {"aggregation_axis": [axis]})
+    return QueryProgram(
+        query_id=f"{graph.graph_id}:synth:{spec.family_id}",
+        target_type=spec.target_type,
+        clauses=[
+            base_relation.clause,
+            relation.clause,
+            measurement.clause,
+        ],
+        aggregation=viable.aggregation,
+        aggregation_metric=viable.metric,
+        hop_count=4,
         difficulty="cad_browsecomp",
         min_individual_clause_candidates=2,
         sampled_parameters=sampled,

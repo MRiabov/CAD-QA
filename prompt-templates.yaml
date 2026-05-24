@@ -161,6 +161,10 @@ clause_templates:
     - "The target edge has a measured {metric_label}."
     - "The target edge has a known {metric_label}."
     - "The target edge has a verified {metric_label}."
+  has_parameterized_edge_spatial_relation:
+    - "The target edge is {relation_label} another measured edge."
+    - "The target edge has a measured edge that is {relation_label} it."
+    - "The target edge has another measured edge that is {relation_label} it."
   has_parameterized_equal_edge_metric_value:
     - "The target edge has {metric_label} equal to {value}."
     - "The target edge's {metric_label} is {value}."

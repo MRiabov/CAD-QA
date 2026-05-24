@@ -162,6 +162,8 @@ def _clause_format_values(clause: Any, query: Any | None) -> dict[str, Any]:
         values.update(values["value"])
     if isinstance(values["metric"], str):
         values["metric_label"] = metric_label(values["metric"])
+    if isinstance(values["relation"], str):
+        values["relation_label"] = relation_label(values["relation"])
     if isinstance(values["operator"], str):
         values["operator_label"] = _operator_label(values["operator"])
     if query is not None:
@@ -235,6 +237,18 @@ def _operator_label(operator: str) -> str:
         "<=": "at most",
         "==": "equal to",
     }.get(operator, operator)
+
+
+def relation_label(relation: str) -> str:
+    return {
+        "adjacent_to": "adjacent to",
+        "intersects": "intersecting",
+        "opposite_to": "opposite to",
+        "perpendicular_to": "perpendicular to",
+        "parallel_to": "parallel to",
+        "contained_in": "contained in",
+        "endpoint_of": "an endpoint of",
+    }.get(relation, relation.replace("_", " "))
 
 
 def _sampled_parameter_value(query: Any | None, key: str) -> str | None:

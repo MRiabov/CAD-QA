@@ -48,6 +48,14 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Initial synthesized value-bearing edge family with equal-measurement narrowing.
+  - id: parameterized_edge_spatial_relation_extreme
+    positive_generation:
+      - test_synthesis_generates_parameterized_edge_spatial_relation_query
+    failure_or_quarantine:
+      - test_synthesis_skips_edge_spatial_relation_family_without_viable_relation_subset
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Initial synthesized edge spatial-relation family with sampled relation and final measured selector.
   - id: parameterized_equal_endpoint_metric_extreme
     positive_generation:
       - test_synthesis_generates_equal_value_endpoint_query

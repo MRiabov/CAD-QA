@@ -2350,6 +2350,79 @@ def test_synthesis_skips_rank_family_when_all_rank_positions_are_tied() -> None:
     assert "parameterized_kernel_edge_rank" not in families
 
 
+def test_synthesis_generates_parameterized_edge_spatial_relation_query() -> None:
+    graph = OntologyGraph(graph_id="graph:edge-spatial-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph.add_node(Node("selector:edges", "selector", "edges"))
+    for edge_id, length, midpoint in [
+        ("edge:a", 10.0, [0.0, 0.0, 0.0]),
+        ("edge:b", 8.0, [2.0, 0.0, 0.0]),
+        ("edge:c", 5.0, [0.0, 3.0, 0.0]),
+        ("edge:d", 2.0, [4.0, 3.0, 0.0]),
+    ]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint", midpoint, "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_x", midpoint[0], "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint[1], "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_z", midpoint[2], "mm"))
+        graph.add_measurement(Measurement(edge_id, "relation_metric", "midpoint_distance_to_origin", length / 2.0, "mm"))
+    for source_id, target_id, relation in [
+        ("edge:a", "edge:b", "adjacent_to"),
+        ("edge:b", "edge:a", "adjacent_to"),
+        ("edge:a", "edge:c", "intersects"),
+        ("edge:c", "edge:a", "intersects"),
+        ("edge:c", "edge:d", "opposite_to"),
+        ("edge:d", "edge:c", "opposite_to"),
+        ("edge:b", "edge:d", "perpendicular_to"),
+        ("edge:d", "edge:b", "perpendicular_to"),
+    ]:
+        graph.add_relation(Relation(source_id, target_id, relation))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_edge_spatial_relation_extreme")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+
+    assert resolution.verifier_status == "resolved"
+    assert row.release_ready
+    assert query.target_type == "edge"
+    assert query.clauses[0].relation == "has_kernel_stable_edge_id"
+    assert query.clauses[1].relation in {"adjacent_to", "intersects", "opposite_to", "perpendicular_to"}
+    assert query.aggregation_metric in {
+        "midpoint_x",
+        "midpoint_y",
+        "midpoint_z",
+        "midpoint_distance_to_origin",
+        "edge_length",
+    }
+    assert row.candidate_trace["steps"][2]["after"]
+    assert len(row.candidate_trace["steps"][2]["after"]) >= 2
+    assert len(row.candidate_trace["final_candidates"]) == 1
+    assert query.sampled_parameters["spatial_relation"] == [query.clauses[1].relation]
+    assert query.clauses[1].relation in query.sampled_parameters["clause_relation"]
+    assert "has_kernel_stable_edge_id" in row.relation_families
+    assert query.clauses[1].relation in row.relation_families
+    assert row.query_program["sampled_parameters"] == sampled_parameters_from_query(row.query_program)
+    assert query.clauses[1].relation not in row.prompt
+    assert "measured edge" in row.prompt
+
+
+def test_synthesis_skips_edge_spatial_relation_family_without_viable_relation_subset() -> None:
+    graph = OntologyGraph(graph_id="graph:no-edge-spatial-synth", source={"source_id": "synthetic", "source_code": ""})
+    for edge_id, length in [("edge:a", 10.0), ("edge:b", 10.0), ("edge:c", 10.0)]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
+    graph.add_relation(Relation("edge:a", "edge:b", "adjacent_to"))
+
+    families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
+
+    assert "parameterized_edge_spatial_relation_extreme" not in families
+
+
 def test_synthesis_generates_equal_value_face_and_edge_queries() -> None:
     face_graph = OntologyGraph(graph_id="graph:equal-face-synth", source={"source_id": "synthetic", "source_code": ""})
     face_graph.add_node(Node("selector:faces", "selector", "faces"))

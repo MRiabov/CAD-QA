@@ -765,6 +765,15 @@ Checked as implemented with remaining scale caveats:
   and resolves uniquely by final distance selector. This adds endpoint-level
   equal-measurement synthesis; broader endpoint relations, containment/adjacency
   combinations, and release-scale distribution remain open.
+- The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_edge_spatial/PREVIEW.md` demonstrates
+  the initial `parameterized_edge_spatial_relation_extreme` family. The reviewed
+  rows require kernel-selected edge evidence, then sample one of adjacent,
+  intersecting, opposite, or perpendicular edge relations before resolving by a
+  measured edge quantity. The preview covers all four relation parameters and
+  all reviewed rows are release-ready, but this is still an initial synthesized
+  edge-spatial slice rather than proof of release-scale spatial-relation
+  distribution.
 - Opposite-face rows on broad real CadEvolve data, broader containment,
   broader intersection, broader adjacency, and broader stable spatial-relation
   distributions remain scale/coverage work rather than unchecked core
@@ -788,8 +797,9 @@ Checked as implemented with remaining scale caveats:
   measurement bucket, containment, adjacency, or distance to a sampled reference
   entity to define a nontrivial candidate subset before the final selector.
   The current synthesis slice covers parameterized extrema over kernel-selected
-  face/edge geometry and measured path point/segment/edge-endpoint geometry,
-  initial selected face/edge selector-count narrowing, initial equal-value
+  face/edge geometry, measured path point/segment/edge-endpoint geometry, and
+  sampled edge spatial relations, initial selected face/edge selector-count
+  narrowing, initial equal-value
   face/edge/edge-endpoint/feature/material-region/void-region measurement groups, and initial
   face/edge-to-feature reference-distance families. Broader
   selected-entity-count narrowing,
