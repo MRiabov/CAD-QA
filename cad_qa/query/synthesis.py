@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass
-from typing import Any
+from dataclasses import dataclass, replace
+from typing import Any, Callable, TypeVar
 
 from cad_qa.ontology.nodes import Node, OntologyGraph
 from cad_qa.query.ir import Clause, QueryProgram
@@ -26,6 +26,7 @@ from cad_qa.query.predicate_catalog import (
 GEOMETRY_MARGIN_EPSILON = 1e-6
 REFERENCE_FEATURE_DISTANCE_METRIC = "distance_to_reference_feature_centroid"
 MAX_SYNTHESIZED_RANK = 6
+T = TypeVar("T")
 
 
 @dataclass(frozen=True)
@@ -1925,127 +1926,105 @@ REFERENCE_DISTANCE_FAMILY_SPECS = (
 )
 
 
-def synthesize_graph_hop_queries(graph: OntologyGraph) -> list[QueryProgram]:
+def synthesize_graph_hop_queries(
+    graph: OntologyGraph,
+    *,
+    max_per_family: int = 1,
+) -> list[QueryProgram]:
     """Create deterministic parameterized graph-hop queries from graph evidence."""
 
     queries: list[QueryProgram] = []
     for spec in EXTREME_FAMILY_SPECS:
         viable = _viable_extremes(graph, spec)
-        if not viable:
-            continue
-        choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
-        query = _query_for_extreme(graph, choice)
-        if query is not None:
-            queries.append(query)
+        queries.extend(_queries_from_viable(graph, spec.family_id, viable, _query_for_extreme, max_per_family))
     for spec in RANK_FAMILY_SPECS:
         viable = _viable_ranks(graph, spec)
-        if not viable:
-            continue
-        choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
-        query = _query_for_extreme(graph, choice)
-        if query is not None:
-            queries.append(query)
+        queries.extend(_queries_from_viable(graph, spec.family_id, viable, _query_for_extreme, max_per_family))
     for spec in FEATURE_EFFECT_DELTA_FAMILY_SPECS:
         viable = _viable_feature_effect_delta_extremes(graph, spec)
-        if not viable:
-            continue
-        choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
-        query = _query_for_feature_effect_delta_extreme(graph, choice)
-        if query is not None:
-            queries.append(query)
+        queries.extend(
+            _queries_from_viable(
+                graph,
+                spec.family_id,
+                viable,
+                _query_for_feature_effect_delta_extreme,
+                max_per_family,
+            )
+        )
     for spec in SELECTOR_COUNT_FAMILY_SPECS:
         viable = _viable_selector_counts(graph, spec)
-        if not viable:
-            continue
-        choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
-        query = _query_for_selector_count(graph, choice)
-        if query is not None:
-            queries.append(query)
+        queries.extend(_queries_from_viable(graph, spec.family_id, viable, _query_for_selector_count, max_per_family))
     for spec in SELECTOR_COUNT_RANK_FAMILY_SPECS:
         viable = _viable_selector_counts(graph, spec)
-        if not viable:
-            continue
-        choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
-        query = _query_for_selector_count(graph, choice)
-        if query is not None:
-            queries.append(query)
+        queries.extend(_queries_from_viable(graph, spec.family_id, viable, _query_for_selector_count, max_per_family))
     for spec in EQUAL_VALUE_EXTREME_FAMILY_SPECS:
         viable = _viable_equal_value_extremes(graph, spec)
-        if not viable:
-            continue
-        choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
-        query = _query_for_equal_value_extreme(graph, choice)
-        if query is not None:
-            queries.append(query)
+        queries.extend(_queries_from_viable(graph, spec.family_id, viable, _query_for_equal_value_extreme, max_per_family))
     for spec in EQUAL_VALUE_RANK_FAMILY_SPECS:
         viable = _viable_equal_value_extremes(graph, spec)
-        if not viable:
-            continue
-        choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
-        query = _query_for_equal_value_extreme(graph, choice)
-        if query is not None:
-            queries.append(query)
+        queries.extend(_queries_from_viable(graph, spec.family_id, viable, _query_for_equal_value_extreme, max_per_family))
     for spec in RELATION_EXTREME_FAMILY_SPECS:
         viable = _viable_relation_extremes(graph, spec)
-        if not viable:
-            continue
-        choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
-        query = _query_for_relation_extreme(graph, choice)
-        if query is not None:
-            queries.append(query)
+        queries.extend(_queries_from_viable(graph, spec.family_id, viable, _query_for_relation_extreme, max_per_family))
     for spec in RELATION_RANK_FAMILY_SPECS:
         viable = _viable_relation_extremes(graph, spec)
-        if not viable:
-            continue
-        choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
-        query = _query_for_relation_extreme(graph, choice)
-        if query is not None:
-            queries.append(query)
+        queries.extend(_queries_from_viable(graph, spec.family_id, viable, _query_for_relation_extreme, max_per_family))
     for spec in RELATION_TIE_BREAK_FAMILY_SPECS:
         viable = _viable_relation_extremes(graph, spec)
-        if not viable:
-            continue
-        choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
-        query = _query_for_relation_extreme(graph, choice)
-        if query is not None:
-            queries.append(query)
+        queries.extend(_queries_from_viable(graph, spec.family_id, viable, _query_for_relation_extreme, max_per_family))
     for spec in RELATION_CHAIN_EXTREME_FAMILY_SPECS:
         viable = _viable_relation_chain_extremes(graph, spec)
-        if not viable:
-            continue
-        choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
-        query = _query_for_relation_chain_extreme(graph, choice)
-        if query is not None:
-            queries.append(query)
+        queries.extend(_queries_from_viable(graph, spec.family_id, viable, _query_for_relation_chain_extreme, max_per_family))
     for spec in RELATION_CHAIN_RANK_FAMILY_SPECS:
         viable = _viable_relation_chain_extremes(graph, spec)
-        if not viable:
-            continue
-        choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
-        query = _query_for_relation_chain_extreme(graph, choice)
-        if query is not None:
-            queries.append(query)
+        queries.extend(_queries_from_viable(graph, spec.family_id, viable, _query_for_relation_chain_extreme, max_per_family))
     for spec in RELATION_CHAIN_TIE_BREAK_FAMILY_SPECS:
         viable = _viable_relation_chain_extremes(graph, spec)
-        if not viable:
-            continue
-        choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
-        query = _query_for_relation_chain_extreme(graph, choice)
-        if query is not None:
-            queries.append(query)
+        queries.extend(_queries_from_viable(graph, spec.family_id, viable, _query_for_relation_chain_extreme, max_per_family))
     for family_id, specs in _reference_distance_specs_by_family():
         viable = [
             candidate
             for spec in specs
             for candidate in _viable_reference_distances(graph, spec)
         ]
-        if not viable:
-            continue
-        choice = viable[_stable_choice_index(graph.graph_id, family_id, len(viable))]
-        query = _query_for_reference_distance(graph, choice)
-        if query is not None:
-            queries.append(query)
+        queries.extend(_queries_from_viable(graph, family_id, viable, _query_for_reference_distance, max_per_family))
     return queries
+
+
+def _queries_from_viable(
+    graph: OntologyGraph,
+    family_id: str,
+    viable: list[T],
+    builder: Callable[[OntologyGraph, T], QueryProgram | None],
+    max_per_family: int,
+) -> list[QueryProgram]:
+    choices = _sample_viable_choices(graph.graph_id, family_id, viable, max_per_family)
+    queries: list[QueryProgram] = []
+    multi_variant = len(choices) > 1
+    for index, choice in enumerate(choices):
+        query = builder(graph, choice)
+        if query is not None:
+            queries.append(_with_query_variant(query, index) if multi_variant else query)
+    return queries
+
+
+def _sample_viable_choices(
+    graph_id: str,
+    family_id: str,
+    viable: list[T],
+    max_per_family: int,
+) -> list[T]:
+    if not viable:
+        return []
+    limit = max(1, max_per_family)
+    start = _stable_choice_index(graph_id, family_id, len(viable))
+    ordered = [viable[(start + offset) % len(viable)] for offset in range(len(viable))]
+    return ordered[:limit]
+
+
+def _with_query_variant(query: QueryProgram, index: int) -> QueryProgram:
+    prefix, family_id = query.query_id.rsplit(":", 1)
+    return replace(query, query_id=f"{prefix}:v{index}:{family_id}")
 
 
 def _reference_distance_specs_by_family() -> tuple[tuple[str, tuple[ReferenceDistanceFamilySpec, ...]], ...]:

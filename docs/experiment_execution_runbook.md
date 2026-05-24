@@ -7,6 +7,7 @@ rtk uv run cadqa sources from-cadevolve-tar --tar data/cadevolve.tar --out runs/
 rtk uv run cadqa sources inspect --sources-jsonl data/cadqa_cadevolve_rc_10/sources.jsonl
 rtk uv run cadqa graph build --sources-jsonl data/cadqa_cadevolve_rc_10/sources.jsonl --limit 10 --out runs/graph_smoke
 rtk uv run cadqa query smoke --graph runs/graph_smoke/graphs.jsonl --out runs/query_smoke
+rtk uv run cadqa query synthesize --graph runs/graph_smoke/graphs.jsonl --out runs/query_synth --max-per-family 3
 rtk uv run cadqa dataset materialize --queries runs/query_smoke/queries.jsonl --out data/cadqa_graph_smoke
 rtk uv run cadqa dataset validate data/cadqa_graph_smoke
 rtk uv run cadqa dataset audit data/cadqa_graph_smoke
@@ -22,6 +23,12 @@ rtk uv run cadqa training export-sft --rows data/cadqa_graph_smoke/rows.jsonl --
 The first command is optional when a prepared `sources.jsonl` already exists.
 Use it when starting from the local CADEvolve archive; it writes normalized
 source JSONL plus manifest/report sidecars before the usual graph build.
+
+Use `cadqa query smoke` for small plumbing checks that still include calibration
+and review rows. Use `cadqa query synthesize` for release-oriented graph-hop
+generation: it emits only manifest release families by default, can emit
+multiple deterministic viable variants per family, and is the path to use when
+checking sampled-parameter coverage.
 
 The SFT command above now exports only geometry-critical rows by default and
 excludes syntax-only calibration, noncritical, and quarantined rows. A real

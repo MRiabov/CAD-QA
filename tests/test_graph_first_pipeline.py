@@ -2290,6 +2290,56 @@ def test_synthesis_generates_parameterized_kernel_face_extreme_query() -> None:
     )
 
 
+def test_synthesis_can_emit_multiple_deterministic_variants_per_family(tmp_path: Path) -> None:
+    graph = OntologyGraph(graph_id="graph:synthetic-face-variants", source={"source_id": "synthetic", "source_code": ""})
+    graph.add_node(Node("selector:faces", "selector", "faces"))
+    for index, x_value in enumerate([0.0, 5.0, 11.0], start=1):
+        face_id = f"face:{index}"
+        graph.add_node(Node(face_id, "face", face_id))
+        graph.add_relation(Relation(face_id, "selector:faces", "has_kernel_stable_face_id"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_x", x_value, "mm"))
+
+    queries = [
+        query
+        for query in synthesize_graph_hop_queries(graph, max_per_family=2)
+        if query.query_id.endswith("parameterized_kernel_face_extreme")
+    ]
+
+    assert len(queries) == 2
+    assert len({query.query_id for query in queries}) == 2
+    assert all(query.query_id.rsplit(":", 1)[-1] == "parameterized_kernel_face_extreme" for query in queries)
+    assert {query.aggregation for query in queries} == {"argmax", "argmin"}
+    assert {resolve_query(graph, query).verifier_status for query in queries} == {"resolved"}
+
+    graph_dir = tmp_path / "graphs"
+    write_jsonl(graph_dir / "graphs.jsonl", [graph])
+    out = tmp_path / "queries"
+    assert cli_main(
+        [
+            "query",
+            "synthesize",
+            "--graph",
+            str(graph_dir),
+            "--out",
+            str(out),
+            "--max-per-family",
+            "2",
+        ]
+    ) == 0
+    records = read_jsonl(out / "queries.jsonl")
+    report = json.loads((out / "query_report.json").read_text(encoding="utf-8"))
+    emitted = [
+        record
+        for record in records
+        if record["query"]["query_id"].endswith("parameterized_kernel_face_extreme")
+    ]
+    assert len(emitted) == 2
+    assert report["query_count"] == len(records)
+    assert report["query_count"] > len(emitted)
+    assert report["release_families_only"]
+    assert report["skipped_review_only_count"] == 0
+
+
 def test_smoke_queries_include_parameterized_kernel_edge_synthesis() -> None:
     graph = OntologyGraph(graph_id="graph:synthetic-edge", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("selector:edges", "selector", "edges"))

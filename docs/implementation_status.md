@@ -124,6 +124,11 @@ when those choices can be sampled and verified.
   audits. Template entries may now define wording variants selected by sampled
   `prompt_wording_variant` metadata, with rendered variant IDs recorded in row
   sampled-parameter metadata.
+- Release-oriented graph-hop query synthesis via `cadqa query synthesize`.
+  Unlike the smoke query command, it filters to manifest release families by
+  default and can emit multiple deterministic viable variants per family so
+  sampled axes, ranks, directions, metrics, and template variants are not
+  collapsed to a single stable choice per source.
 - Dataset row materialization and validation.
 - Deterministic group-safe smoke and release splits over protected source
   groups, including source family, counterfactual group, explicit split group,

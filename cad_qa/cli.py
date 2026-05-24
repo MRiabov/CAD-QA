@@ -55,9 +55,15 @@ from cad_qa.experiment import package_run_artifacts, run_smoke_experiment, run_a
 from cad_qa.io import read_jsonl, write_json, write_jsonl
 from cad_qa.ontology import build_graph
 from cad_qa.ontology.nodes import OntologyGraph, graph_from_dict
-from cad_qa.query.family_manifest import DEFAULT_FAMILY_MANIFEST, intended_family_coverage_report
+from cad_qa.query.family_manifest import (
+    DEFAULT_FAMILY_MANIFEST,
+    RELEASE_STATUSES,
+    intended_family_coverage_report,
+    load_family_manifest,
+)
 from cad_qa.query.ir import query_from_dict
 from cad_qa.query.resolver import resolve_query, smoke_queries
+from cad_qa.query.synthesis import synthesize_graph_hop_queries
 from cad_qa.query.synthesis_selfcheck import write_synthesis_selfcheck
 from cad_qa.source import (
     cadevolve_tar_source_rows,
@@ -135,6 +141,17 @@ def build_parser() -> argparse.ArgumentParser:
     smoke.add_argument("--graph", type=Path, required=True)
     smoke.add_argument("--out", type=Path, required=True)
     smoke.set_defaults(func=_cmd_query_smoke)
+    synthesize = query_sub.add_parser("synthesize")
+    synthesize.add_argument("--graph", type=Path, required=True)
+    synthesize.add_argument("--out", type=Path, required=True)
+    synthesize.add_argument("--max-per-family", type=int, default=3)
+    synthesize.add_argument("--family-manifest", type=Path, default=DEFAULT_FAMILY_MANIFEST)
+    synthesize.add_argument(
+        "--include-review-only",
+        action="store_true",
+        help="Include synthesized review-only families instead of only release families.",
+    )
+    synthesize.set_defaults(func=_cmd_query_synthesize)
 
     dataset = subparsers.add_parser("dataset")
     dataset_sub = dataset.add_subparsers(required=True)
@@ -414,6 +431,62 @@ def _cmd_query_smoke(args: argparse.Namespace) -> dict[str, Any]:
     report = {"query_count": len(records), "failure_count": len(failures)}
     write_json(args.out / "query_report.json", report)
     return report
+
+
+def _cmd_query_synthesize(args: argparse.Namespace) -> dict[str, Any]:
+    graphs = _load_graphs(args.graph)
+    release_families = _release_family_ids(args.family_manifest) if not args.include_review_only else None
+    records: list[dict[str, Any]] = []
+    failures: list[dict[str, Any]] = []
+    skipped_review_only_count = 0
+    for graph in graphs:
+        for query in synthesize_graph_hop_queries(graph, max_per_family=args.max_per_family):
+            family_id = _query_family_id(query.query_id)
+            if release_families is not None and family_id not in release_families:
+                skipped_review_only_count += 1
+                continue
+            resolution = resolve_query(graph, query)
+            record = {
+                "graph": graph,
+                "query": resolution.query_program,
+                "resolution": resolution,
+            }
+            if resolution.verifier_status == "resolved":
+                records.append(record)
+            else:
+                failures.append(
+                    {
+                        "graph_id": graph.graph_id,
+                        "query_id": query.query_id,
+                        "reason": resolution.candidate_trace.failure_reason,
+                        "candidate_trace": resolution.candidate_trace,
+                    }
+                )
+    args.out.mkdir(parents=True, exist_ok=True)
+    write_jsonl(args.out / "queries.jsonl", records)
+    write_jsonl(args.out / "failure_manifest.jsonl", failures)
+    report = {
+        "query_count": len(records),
+        "failure_count": len(failures),
+        "skipped_review_only_count": skipped_review_only_count,
+        "max_per_family": max(1, args.max_per_family),
+        "release_families_only": release_families is not None,
+    }
+    write_json(args.out / "query_report.json", report)
+    return report
+
+
+def _release_family_ids(manifest_path: Path) -> set[str]:
+    manifest = load_family_manifest(manifest_path)
+    return {
+        family_id
+        for family_id, family in manifest["families"].items()
+        if family["status"] in RELEASE_STATUSES
+    }
+
+
+def _query_family_id(query_id: str) -> str:
+    return query_id.rsplit(":", 1)[-1]
 
 
 def _cmd_dataset_materialize(args: argparse.Namespace) -> dict[str, Any]:

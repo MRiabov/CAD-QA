@@ -446,6 +446,19 @@ epics:
       - id: "14.7"
         title: Bounded graph-hop query synthesis layer over ontology graphs
         status: work-in-progress
+        acceptance_criteria:
+          - Users can generate release-oriented graph-hop query records without
+            calibration or review-only families being mixed into the default
+            output.
+          - Users can keep more than one viable sampled variant per family when
+            a graph supports multiple valid axes, ranks, directions, metrics, or
+            wording variants.
+        technical_definition_of_done:
+          - "cadqa query synthesize resolves synthesized graph-hop queries, filters to manifest release families by default, and writes query/failure report artifacts."
+          - Synthesis keeps deterministic stable sampling while allowing a
+            configurable maximum number of viable variants per family and graph.
+          - Benchmark-scale family balance, full beam search, and broader real
+            CadEvolve family coverage remain work-in-progress.
       - id: "14.8"
         title: Sampled query metadata and prompt-template bindings for synthesized queries
         status: work-in-progress
