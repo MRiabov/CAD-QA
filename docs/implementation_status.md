@@ -1175,12 +1175,14 @@ Checked as implemented with remaining scale caveats:
   longer-than, and shorter-than relations instead of relying on fixed
   longer/shorter view-word fixtures. Selected face/edge count synthesis now
   includes sampled selected-count rank rows. Kernel vertex selector results now
-  expose coordinate/distance measurements and synthesized vertex extrema/rank
-  rows at the valid-row level; reviewed selfcheck evidence is in
-  `runs/parameterized_synthesis_selfcheck_vertex/PREVIEW.md`. Remaining
-  hard-coded release debt is mainly richer graph-hop predicate chains, broader
-  selected-entity count predicates, broader reference-entity balance, and
-  release-scale distribution review.
+  expose coordinate/distance measurements, synthesized vertex extrema/rank rows,
+  equal-coordinate vertex distractor rows, and vertex-to-reference-entity
+  distance/rank rows at the valid-row level; reviewed selfcheck evidence is in
+  `runs/parameterized_synthesis_selfcheck_vertex/PREVIEW.md` and
+  `runs/parameterized_synthesis_selfcheck_vertex_value_reference/PREVIEW.md`.
+  Remaining hard-coded release debt is mainly richer graph-hop predicate chains,
+  broader selected-entity count predicates, broader reference-entity balance,
+  and release-scale distribution review.
 - Rewrite sparse direct selector/count/extremum families as graph-hop narrowing
   programs instead of treating them as unusable when the whole model lacks a
   unique global largest/smallest candidate. These rows should use sampled
@@ -1194,7 +1196,7 @@ Checked as implemented with remaining scale caveats:
   edge relation rows, selected face/edge selector-count narrowing with
   threshold, equal related-metric, same-selection relation predicates, and
   selected-count rank rows, initial equal-value
-  face/edge/edge-endpoint/path-point/path-segment/feature/material-region/void-region measurement
+  face/edge/vertex/edge-endpoint/path-point/path-segment/feature/material-region/void-region measurement
   groups, sampled material/void region extrema/ranks, contained-endpoint
   relation chains, endpoint containment-relation extrema, and initial
   feature-to-feature, path-to-reference-feature, and
@@ -1204,7 +1206,7 @@ Checked as implemented with remaining scale caveats:
   reference-material-region, and reference-void-region distance families for
   feature, edge, face, endpoint, material-region, and void-region targets, plus
   generic reference-entity distance families for
-  feature/face/edge/endpoint/path-point/path-segment/material-region/void-region
+  feature/face/edge/vertex/endpoint/path-point/path-segment/material-region/void-region
   targets that sample feature/face/edge/endpoint/material-region/void-region
   reference types where graph evidence supports them. Broader
   selected-entity-count narrowing beyond face/edge selectors,

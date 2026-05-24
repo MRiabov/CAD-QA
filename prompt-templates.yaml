@@ -232,6 +232,11 @@ clause_templates:
     - "The target vertex has a measured {metric_label}."
     - "The target vertex has a known {metric_label}."
     - "The target vertex has a verified {metric_label}."
+  has_parameterized_equal_vertex_metric_value:
+    - "The target vertex has {metric_label} equal to {value}."
+    - "The target vertex's {metric_label} is {value}."
+    - "The target vertex matches the {metric_label} value {value}."
+  has_vertex_for_reference_distance: "The target vertex has a measured point location."
 
   endpoint_of_kernel_selected_edge: "The target point is an endpoint of a selected edge."
   contained_in_kernel_selected_edge: "The target endpoint lies on a selected edge."

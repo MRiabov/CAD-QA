@@ -4485,6 +4485,149 @@ def test_synthesis_skips_parameterized_kernel_vertex_without_unique_geometry() -
     assert "parameterized_kernel_vertex_rank" not in families
 
 
+def test_synthesis_generates_equal_value_vertex_queries() -> None:
+    graph = OntologyGraph(graph_id="graph:equal-vertex-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph.add_node(Node("selector:vertices", "selector", "vertices"))
+    for index, coordinate in enumerate(
+        [
+            [1.0, 0.0, 3.0],
+            [4.0, 1.0, 3.0],
+            [8.0, 2.0, 3.0],
+            [13.0, 3.0, 3.0],
+        ]
+    ):
+        vertex_id = f"vertex:{index}"
+        graph.add_node(Node(vertex_id, "vertex", vertex_id))
+        graph.add_relation(Relation(vertex_id, "selector:vertices", "has_kernel_stable_vertex_id"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate", coordinate, "mm"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_x", coordinate[0], "mm"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_y", coordinate[1], "mm"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
+        graph.add_measurement(
+            Measurement(
+                vertex_id,
+                "relation_metric",
+                "distance_to_origin",
+                math.sqrt(sum(component * component for component in coordinate)),
+                "mm",
+            )
+        )
+
+    queries = {query.query_id.rsplit(":", 1)[-1]: query for query in synthesize_graph_hop_queries(graph)}
+    for family, expected_hops in [
+        ("parameterized_equal_vertex_metric_extreme", 4),
+        ("parameterized_equal_vertex_metric_rank", 4),
+    ]:
+        query = queries[family]
+        resolution = resolve_query(graph, query)
+        row = materialize_row(graph, resolution)
+        equal_step = next(step for step in row.candidate_trace["steps"] if step["step"] == "has_parameterized_equal_vertex_metric_value")
+
+        assert resolution.verifier_status == "resolved"
+        assert row.release_ready
+        assert query.target_type == "vertex"
+        assert query.clauses[0].relation == "has_kernel_stable_vertex_id"
+        assert query.sampled_parameters["equal_measurement_metric"] == ["coordinate_z"]
+        assert query.sampled_parameters["measurement_value_bucket"] == ["coordinate_z:3"]
+        assert equal_step["after"] == ["vertex:0", "vertex:1", "vertex:2", "vertex:3"]
+        assert row.logical_hop_count == expected_hops
+        assert row.geometry_hop_count == expected_hops
+        assert "vertex" in row.prompt.lower()
+        if family.endswith("_rank"):
+            assert query.aggregation in {"rank_asc", "rank_desc"}
+            assert query.aggregation_rank in {2, 3, 4}
+            assert row.candidate_trace["steps"][-1]["rank"] == query.aggregation_rank
+
+
+def test_synthesis_skips_equal_value_vertex_family_without_repeated_value_distractors() -> None:
+    graph = OntologyGraph(graph_id="graph:no-equal-vertex-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph.add_node(Node("selector:vertices", "selector", "vertices"))
+    for index, coordinate_z in enumerate([1.0, 2.0, 3.0]):
+        vertex_id = f"vertex:{index}"
+        graph.add_node(Node(vertex_id, "vertex", vertex_id))
+        graph.add_relation(Relation(vertex_id, "selector:vertices", "has_kernel_stable_vertex_id"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_x", float(index), "mm"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_y", float(index), "mm"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_z", coordinate_z, "mm"))
+
+    families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
+
+    assert "parameterized_equal_vertex_metric_extreme" not in families
+    assert "parameterized_equal_vertex_metric_rank" not in families
+
+
+def test_synthesis_generates_parameterized_vertex_reference_entity_distance_queries() -> None:
+    graph = OntologyGraph(graph_id="graph:vertex-reference-entity-distance-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph.add_node(Node("selector:vertices", "selector", "vertices"))
+    for index, coordinate in enumerate(
+        [
+            [1.0, -3.0, 3.0],
+            [4.0, -3.0, 3.0],
+            [8.0, -3.0, 3.0],
+            [13.0, -3.0, 3.0],
+        ]
+    ):
+        vertex_id = f"vertex:{index}"
+        graph.add_node(Node(vertex_id, "vertex", vertex_id))
+        graph.add_relation(Relation(vertex_id, "selector:vertices", "has_kernel_stable_vertex_id"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate", coordinate, "mm"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_x", coordinate[0], "mm"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_y", coordinate[1], "mm"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
+
+    graph.add_node(Node("feature:ref", "feature", "reference feature"))
+    graph.add_measurement(Measurement("feature:ref", "snapshot_state", "volume", 100.0, "mm^3"))
+    graph.add_measurement(Measurement("feature:ref", "snapshot_state", "centroid", [40.0, 0.0, 0.0], "mm"))
+    graph.add_measurement(Measurement("feature:ref", "snapshot_state", "centroid_x", 40.0, "mm"))
+    graph.add_measurement(Measurement("feature:ref", "snapshot_state", "centroid_y", 0.0, "mm"))
+    graph.add_measurement(Measurement("feature:ref", "snapshot_state", "centroid_z", 0.0, "mm"))
+
+    queries = {query.query_id.rsplit(":", 1)[-1]: query for query in synthesize_graph_hop_queries(graph)}
+    for family in [
+        "parameterized_vertex_reference_entity_distance",
+        "parameterized_vertex_reference_entity_distance_rank",
+    ]:
+        query = queries[family]
+        resolution = resolve_query(graph, query)
+        row = materialize_row(graph, resolution)
+        equal_step = next(step for step in row.candidate_trace["steps"] if step["step"] == "has_parameterized_equal_vertex_metric_value")
+
+        assert resolution.verifier_status == "resolved"
+        assert row.release_ready
+        assert query.target_type == "vertex"
+        assert query.sampled_parameters["target_point_metric"] == ["coordinate"]
+        assert query.sampled_parameters["reference_type"] == ["feature"]
+        assert query.sampled_parameters["reference_point_metric"] == ["centroid"]
+        assert query.sampled_parameters["equal_measurement_metric"] == ["coordinate_z"]
+        assert equal_step["after"] == ["vertex:0", "vertex:1", "vertex:2", "vertex:3"]
+        assert row.logical_hop_count == 5
+        assert row.geometry_hop_count == 5
+        assert "reference" in row.prompt
+        if family.endswith("_rank"):
+            assert query.aggregation in {"rank_asc", "rank_desc"}
+            assert query.aggregation_rank in {2, 3, 4}
+            assert row.candidate_trace["steps"][-1]["rank"] == query.aggregation_rank
+
+
+def test_synthesis_skips_vertex_reference_distance_without_vertex_locations() -> None:
+    graph = OntologyGraph(graph_id="graph:no-vertex-reference-distance-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph.add_node(Node("selector:vertices", "selector", "vertices"))
+    for index in range(3):
+        vertex_id = f"vertex:{index}"
+        graph.add_node(Node(vertex_id, "vertex", vertex_id))
+        graph.add_relation(Relation(vertex_id, "selector:vertices", "has_kernel_stable_vertex_id"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_z", 3.0, "mm"))
+    graph.add_node(Node("feature:ref", "feature", "reference feature"))
+    graph.add_measurement(Measurement("feature:ref", "snapshot_state", "volume", 100.0, "mm^3"))
+    graph.add_measurement(Measurement("feature:ref", "snapshot_state", "centroid", [40.0, 0.0, 0.0], "mm"))
+    graph.add_measurement(Measurement("feature:ref", "snapshot_state", "centroid_z", 0.0, "mm"))
+
+    families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
+
+    assert "parameterized_vertex_reference_entity_distance" not in families
+    assert "parameterized_vertex_reference_entity_distance_rank" not in families
+
+
 def test_synthesis_skips_endpoint_and_path_rank_families_without_unique_rank_positions() -> None:
     graph = OntologyGraph(graph_id="graph:tied-endpoint-path-rank-synth", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("path:main", "path", "path"))

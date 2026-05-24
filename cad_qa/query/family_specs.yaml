@@ -1021,6 +1021,55 @@ families:
       expected_values:
         aggregation_rank: [2, 3, 4, 5, 6]
     notes: Synthesized family that selects a measured vertex by sampled rank, bounded to reviewed ranks 2-6.
+  - id: parameterized_equal_vertex_metric_extreme
+    status: release
+    target_type: vertex
+    minimum_hops: 4
+    maximum_hops: 4
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - final_selector
+    notes: Synthesized value-bearing vertex family that narrows to a repeated coordinate or distance value before selecting by another measured vertex quantity.
+  - id: parameterized_equal_vertex_metric_rank
+    status: release
+    target_type: vertex
+    minimum_hops: 4
+    maximum_hops: 4
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - aggregation_rank
+        - rank_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - aggregation_rank
+        - rank_direction
+        - final_selector
+      expected_values:
+        aggregation_rank: [2, 3, 4, 5, 6]
+    notes: Synthesized value-bearing vertex family that narrows to a repeated coordinate or distance value before selecting a sampled rank by another measured vertex quantity.
   - id: parameterized_equal_edge_metric_extreme
     status: release
     target_type: edge
@@ -3451,6 +3500,78 @@ families:
         target_point_metric: [midpoint]
         aggregation_rank: [2, 3, 4, 5, 6]
     notes: Parameterized edge reference-distance rank family that samples the reference entity type and anchor before selecting a sampled rank by measured target-point distance.
+  - id: parameterized_vertex_reference_entity_distance
+    status: release
+    target_type: vertex
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [feature, face, edge, edge_endpoint, material_region, void_region]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [centroid, face_center, midpoint, coordinate]
+        target_point_metric: [coordinate]
+    notes: Parameterized vertex reference-distance family that samples the reference entity type and anchor before selecting nearest/farthest by measured vertex-to-reference distance.
+  - id: parameterized_vertex_reference_entity_distance_rank
+    status: release
+    target_type: vertex
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - aggregation_rank
+        - rank_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_anchor_signature
+        - aggregation_rank
+        - rank_direction
+        - final_selector
+      expected_values:
+        reference_type: [feature, face, edge, edge_endpoint, material_region, void_region]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [centroid, face_center, midpoint, coordinate]
+        target_point_metric: [coordinate]
+        aggregation_rank: [2, 3, 4, 5, 6]
+    notes: Parameterized vertex reference-distance rank family that samples the reference entity type and anchor before selecting a sampled rank by measured vertex-to-reference distance.
   - id: parameterized_feature_reference_entity_distance
     status: release
     target_type: feature

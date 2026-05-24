@@ -32,6 +32,8 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_kernel_face_rank",
     "parameterized_kernel_edge_rank",
     "parameterized_kernel_vertex_rank",
+    "parameterized_equal_vertex_metric_extreme",
+    "parameterized_equal_vertex_metric_rank",
     "parameterized_endpoint_rank",
     "parameterized_path_point_rank",
     "parameterized_path_segment_rank",
@@ -65,6 +67,8 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_feature_reference_void_region_distance",
     "parameterized_feature_reference_entity_distance",
     "parameterized_feature_reference_entity_distance_rank",
+    "parameterized_vertex_reference_entity_distance",
+    "parameterized_vertex_reference_entity_distance_rank",
     "parameterized_equal_endpoint_metric_extreme",
     "parameterized_equal_endpoint_metric_rank",
     "parameterized_contained_endpoint_metric_extreme",
@@ -154,6 +158,7 @@ def synthesis_selfcheck_graphs() -> list[OntologyGraph]:
         _edge_deep_rank_graph("graph:rank-sample:7"),
         _vertex_metric_graph("graph:selfcheck-vertex-metric-0"),
         _vertex_metric_graph("graph:selfcheck-vertex-metric-1"),
+        _vertex_equal_metric_graph(),
         _feature_rank_graph("graph:feature-rank-sample:4"),
         _feature_rank_graph("graph:feature-rank-sample:0"),
         _region_rank_graph("graph:material-region-rank-sample:1"),
@@ -435,6 +440,38 @@ def _vertex_metric_graph(graph_id: str) -> OntologyGraph:
             [2.0, 4.0, 1.0],
             [5.0, 7.0, 3.0],
             [9.0, 11.0, 6.0],
+        ]
+    ):
+        vertex_id = f"vertex:{index}"
+        graph.add_node(Node(vertex_id, "vertex", vertex_id))
+        graph.add_relation(Relation(vertex_id, "selector:vertices", "has_kernel_stable_vertex_id"))
+        distance = math.sqrt(sum(component * component for component in coordinate))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate", coordinate, "mm"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_x", coordinate[0], "mm"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_y", coordinate[1], "mm"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
+        graph.add_measurement(Measurement(vertex_id, "relation_metric", "distance_to_origin", distance, "mm"))
+    return graph
+
+
+def _vertex_equal_metric_graph() -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id="graph:selfcheck-vertex-equal-metric",
+        source={
+            "source_id": "selfcheck-vertex-equal-metric",
+            "source_code": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane(\"XY\").box(10, 6, 4).vertices()\n"
+            ),
+        },
+    )
+    graph.add_node(Node("selector:vertices", "selector", "vertices"))
+    for index, coordinate in enumerate(
+        [
+            [1.0, 0.0, 3.0],
+            [4.0, 1.0, 3.0],
+            [8.0, 2.0, 3.0],
+            [13.0, 3.0, 3.0],
         ]
     ):
         vertex_id = f"vertex:{index}"
@@ -1666,6 +1703,19 @@ def _reference_entity_distance_rank_graph() -> OntologyGraph:
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_x", midpoint[0], "mm"))
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint[1], "mm"))
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_z", midpoint[2], "mm"))
+    graph.add_node(Node("selector:vertices", "selector", "selected vertices"))
+    for vertex_id, coordinate in [
+        ("vertex:a", [1.0, -3.0, 3.0]),
+        ("vertex:b", [4.0, -3.0, 3.0]),
+        ("vertex:c", [8.0, -3.0, 3.0]),
+        ("vertex:d", [13.0, -3.0, 3.0]),
+    ]:
+        graph.add_node(Node(vertex_id, "vertex", vertex_id))
+        graph.add_relation(Relation(vertex_id, "selector:vertices", "has_kernel_stable_vertex_id"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate", coordinate, "mm"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_x", coordinate[0], "mm"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_y", coordinate[1], "mm"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
     for endpoint_id, edge_id, coordinate in [
         ("edge_endpoint:a", "edge:a", [1.0, 0.0, 3.0]),
         ("edge_endpoint:b", "edge:b", [4.0, 0.0, 3.0]),

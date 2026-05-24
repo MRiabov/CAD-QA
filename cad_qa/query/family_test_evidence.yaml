@@ -116,6 +116,22 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Synthesized vertex rank family over kernel-backed selected vertices.
+  - id: parameterized_equal_vertex_metric_extreme
+    positive_generation:
+      - test_synthesis_generates_equal_value_vertex_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_equal_value_vertex_family_without_repeated_value_distractors
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Synthesized value-bearing vertex family with equal-measurement narrowing.
+  - id: parameterized_equal_vertex_metric_rank
+    positive_generation:
+      - test_synthesis_generates_equal_value_vertex_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_equal_value_vertex_family_without_repeated_value_distractors
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Synthesized value-bearing vertex family with equal-measurement narrowing and sampled rank selection.
   - id: parameterized_equal_edge_metric_extreme
     positive_generation:
       - test_synthesis_generates_equal_value_face_and_edge_queries
@@ -577,6 +593,19 @@ families:
     failure_or_quarantine: [test_synthesis_skips_reference_distance_without_unique_reference_anchor]
     release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
     notes: Parameterized edge reference-distance rank family with sampled reference entity type and sampled rank.
+  - id: parameterized_vertex_reference_entity_distance
+    positive_generation:
+      - test_synthesis_generates_parameterized_vertex_reference_entity_distance_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_vertex_reference_distance_without_vertex_locations
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Parameterized vertex reference-distance family with sampled reference entity type.
+  - id: parameterized_vertex_reference_entity_distance_rank
+    positive_generation: [test_synthesis_generates_parameterized_vertex_reference_entity_distance_queries]
+    failure_or_quarantine: [test_synthesis_skips_vertex_reference_distance_without_vertex_locations]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Parameterized vertex reference-distance rank family with sampled reference entity type and sampled rank.
   - id: parameterized_endpoint_reference_entity_distance
     positive_generation:
       - test_synthesis_generates_parameterized_reference_entity_distance_queries
