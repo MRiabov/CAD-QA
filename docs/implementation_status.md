@@ -887,6 +887,20 @@ Checked as implemented with remaining scale caveats:
   non-feature reference anchors across face, endpoint, added-material-region,
   and removed-material-region targets, but it is still selfcheck evidence rather
   than benchmark-release distribution evidence.
+- The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_reference_edges/PREVIEW.md`
+  demonstrates `parameterized_feature_reference_edge_distance`,
+  `parameterized_face_reference_edge_distance`,
+  `parameterized_edge_reference_edge_distance`,
+  `parameterized_endpoint_reference_edge_distance`,
+  `parameterized_material_region_reference_edge_distance`, and
+  `parameterized_void_region_reference_edge_distance`. The reviewed rows
+  describe reference edges by measured length and full midpoint coordinates,
+  keep equal-volume/equal-area/equal-length/equal-height target candidates
+  through measured target-point clauses, and resolve by nearest/farthest
+  distance to the reference edge midpoint. This adds a second non-feature
+  reference-anchor type across the current target slice, while release-scale
+  distribution remains open.
 - Opposite-face rows on broad real CadEvolve data, broader containment,
   broader intersection, broader adjacency, and broader stable spatial-relation
   distributions remain scale/coverage work rather than unchecked core
@@ -908,8 +922,8 @@ Checked as implemented with remaining scale caveats:
   intended-family manifest, so benchmark-release reports block them if they
   appear in release rows. The initial feature-effect delta fixtures are now
   covered by a parameterized effect-delta family; non-feature reference anchors
-  now cover reference-face distance rows for feature, edge, face, endpoint,
-  material region, and void region targets. Remaining hard-coded release debt is mainly
+  now cover reference-face and reference-edge distance rows for feature, edge,
+  face, endpoint, material region, and void region targets. Remaining hard-coded release debt is mainly
   selected-entity count variants, richer graph-hop predicate chains, broader
   reference-entity types, and release-scale distribution review.
 - Rewrite sparse direct selector/count/extremum families as graph-hop narrowing
@@ -926,8 +940,9 @@ Checked as implemented with remaining scale caveats:
   groups, sampled material/void region extrema/ranks, contained-endpoint
   relation chains, and initial
   feature-to-feature and face/edge/endpoint/material-region/void-region-to-feature
-  reference-distance families plus reference-face distance families for feature,
-  edge, face, endpoint, material-region, and void-region targets. Broader
+  reference-distance families plus reference-face and reference-edge distance
+  families for feature, edge, face, endpoint, material-region, and void-region
+  targets. Broader
   selected-entity-count narrowing,
   additional non-feature reference anchors, containment/adjacency
   predicates, and broader tie-break selectors
@@ -947,7 +962,7 @@ Checked as implemented with remaining scale caveats:
   point metric metadata.
   Synthesized extrema, rank, selector-count, equal-measurement, and
   reference-distance rows now sample prompt-wording variants from the centralized
-  YAML templates. Reference-distance rows now serialize feature and initial face
+  YAML templates. Reference-distance rows now serialize feature, face, and edge
   anchor metrics/value buckets. Broader synthesized reference-anchor sampling,
   rank values beyond 2-4, full entity/view-word randomization, and release-scale
   wording distribution review remain open. The gate still does not prove every
