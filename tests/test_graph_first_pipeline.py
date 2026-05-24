@@ -5536,6 +5536,77 @@ def test_synthesis_generates_relation_narrowed_edge_selector_count_query() -> No
     assert len(row.candidate_trace["final_candidates"]) == 1
 
 
+def test_synthesis_generates_ranked_selector_count_queries() -> None:
+    face_graph = OntologyGraph(
+        graph_id="graph:face-selector-count-rank",
+        source={"source_id": "synthetic", "source_code": ""},
+    )
+    for selector_id, selected_count, coordinate_x in [
+        ("selector:a", 2, -5.0),
+        ("selector:b", 4, -1.0),
+        ("selector:c", 6, 1.0),
+        ("selector:d", 8, 8.0),
+    ]:
+        face_id = f"face:{selector_id.rsplit(':', 1)[-1]}"
+        face_graph.add_node(Node(selector_id, "selector", selector_id))
+        face_graph.add_node(Node(face_id, "face", face_id))
+        face_graph.add_relation(Relation(selector_id, face_id, "has_kernel_stable_face_id"))
+        face_graph.add_measurement(Measurement(selector_id, "snapshot_state", "selected_count", selected_count))
+        face_graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_x", coordinate_x, "mm"))
+
+    edge_graph = OntologyGraph(
+        graph_id="graph:edge-selector-count-rank",
+        source={"source_id": "synthetic", "source_code": ""},
+    )
+    for selector_id, selected_count, midpoint_y in [
+        ("selector:a", 2, -5.0),
+        ("selector:b", 4, -1.0),
+        ("selector:c", 6, 1.0),
+        ("selector:d", 8, 8.0),
+    ]:
+        edge_id = f"edge:{selector_id.rsplit(':', 1)[-1]}"
+        edge_graph.add_node(Node(selector_id, "selector", selector_id))
+        edge_graph.add_node(Node(edge_id, "edge", edge_id))
+        edge_graph.add_relation(Relation(selector_id, edge_id, "has_kernel_stable_edge_id"))
+        edge_graph.add_measurement(Measurement(selector_id, "snapshot_state", "selected_count", selected_count))
+        edge_graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint_y, "mm"))
+
+    for graph, family, selected_type in [
+        (face_graph, "parameterized_kernel_face_selector_count_rank", "face"),
+        (edge_graph, "parameterized_kernel_edge_selector_count_rank", "edge"),
+    ]:
+        query = next(query for query in synthesize_graph_hop_queries(graph) if query.query_id.endswith(family))
+        resolution = resolve_query(graph, query)
+        row = materialize_row(graph, resolution)
+        related_step = next(
+            step
+            for step in row.candidate_trace["steps"]
+            if step["step"] in {
+                "has_parameterized_selected_face_metric_threshold",
+                "has_parameterized_selected_edge_metric_threshold",
+            }
+        )
+        aggregation_step = next(step for step in row.candidate_trace["steps"] if step["step"] == "aggregation")
+
+        assert resolution.verifier_status == "resolved"
+        assert row.release_ready
+        assert query.aggregation in {"rank_asc", "rank_desc"}
+        assert query.aggregation_metric == "selected_count"
+        assert query.aggregation_rank in {2, 3, 4}
+        assert query.sampled_parameters["selected_entity_type"] == [selected_type]
+        assert query.sampled_parameters["aggregation_rank"] == [str(query.aggregation_rank)]
+        assert query.sampled_parameters["rank_direction"] in (["max"], ["min"])
+        assert query.sampled_parameters["final_selector"] == [
+            f"rank:{query.aggregation_rank}:{query.sampled_parameters['rank_direction'][0]}:selected_count"
+        ]
+        assert len(related_step["after"]) >= 2
+        assert len(aggregation_step["before"]) >= 2
+        assert aggregation_step["rank"] == query.aggregation_rank
+        assert row.logical_hop_count == 4
+        assert row.geometry_hop_count == 4
+        assert "selected entities" in row.prompt or "item count" in row.prompt
+
+
 def test_synthesis_skips_selector_count_when_narrowing_has_no_unique_count() -> None:
     graph = OntologyGraph(graph_id="graph:tied-selector-count", source={"source_id": "synthetic", "source_code": ""})
     for selector_id, selected_count, midpoint_y in [
@@ -5553,6 +5624,7 @@ def test_synthesis_skips_selector_count_when_narrowing_has_no_unique_count() -> 
     families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
 
     assert "parameterized_kernel_edge_selector_count" not in families
+    assert "parameterized_kernel_edge_selector_count_rank" not in families
 
 
 def test_synthesis_uses_tie_break_metric_for_tied_extrema() -> None:

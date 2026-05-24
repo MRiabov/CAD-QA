@@ -220,6 +220,11 @@ when those choices can be sampled and verified.
   adds release-ready rows that first narrow selector candidates by same selected
   face/entity evidence, preserve two candidate selectors through an equal
   selected-geometry value, and then select by measured selected-entity count.
+  The reviewed selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_selector_count_rank/PREVIEW.md`
+  adds release-ready face and edge selector-count rank rows that use the same
+  graph-hop narrowing predicates, preserve multiple selector candidates after
+  narrowing, then choose a sampled rank by measured selected-entity count.
   This is still not the full predicate catalog or bounded beam-search
   implementation.
 - Initial synthesized rank families now exist for measured kernel faces and
@@ -1048,9 +1053,11 @@ Checked as implemented with remaining scale caveats:
   Face spatial-relation synthesis now includes coplanar relations, and edge
   spatial-relation synthesis now samples same-length, parallel, coaxial,
   longer-than, and shorter-than relations instead of relying on fixed
-  longer/shorter view-word fixtures. Remaining hard-coded release debt is mainly
-  selected-entity count variants, richer graph-hop predicate chains, broader
-  reference-entity balance, and release-scale distribution review.
+  longer/shorter view-word fixtures. Selected face/edge count synthesis now
+  includes sampled selected-count rank rows. Remaining hard-coded release debt
+  is mainly richer graph-hop predicate chains, broader selected-entity count
+  predicates, broader reference-entity balance, and release-scale distribution
+  review.
 - Rewrite sparse direct selector/count/extremum families as graph-hop narrowing
   programs instead of treating them as unusable when the whole model lacks a
   unique global largest/smallest candidate. These rows should use sampled
@@ -1062,8 +1069,8 @@ Checked as implemented with remaining scale caveats:
   point/segment/edge-endpoint geometry, and sampled face/edge spatial
   relations including parallel face/edge and directed same-length/longer/shorter
   edge relation rows, selected face/edge selector-count narrowing with
-  threshold, equal related-metric, and same-selection relation predicates,
-  initial equal-value
+  threshold, equal related-metric, same-selection relation predicates, and
+  selected-count rank rows, initial equal-value
   face/edge/edge-endpoint/path-point/path-segment/feature/material-region/void-region measurement
   groups, sampled material/void region extrema/ranks, contained-endpoint
   relation chains, endpoint containment-relation extrema, and initial

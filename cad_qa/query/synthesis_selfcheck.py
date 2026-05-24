@@ -102,6 +102,8 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_path_segment_reference_entity_distance",
     "parameterized_kernel_face_selector_count",
     "parameterized_kernel_edge_selector_count",
+    "parameterized_kernel_face_selector_count_rank",
+    "parameterized_kernel_edge_selector_count_rank",
 )
 
 
@@ -151,6 +153,7 @@ def synthesis_selfcheck_graphs() -> list[OntologyGraph]:
         _path_metric_graph(),
         _face_selector_count_graph(),
         _edge_selector_count_graph(),
+        _selector_count_rank_graph(),
         _face_selector_relation_count_graph(),
         _edge_selector_relation_count_graph(),
         _edge_selector_equal_metric_count_graph(),
@@ -1060,6 +1063,50 @@ def _edge_selector_count_graph() -> OntologyGraph:
         ("selector:a", 3, -5.0),
         ("selector:b", 4, -1.0),
         ("selector:c", 4, 8.0),
+    ]:
+        edge_id = f"edge:{selector_id.rsplit(':', 1)[-1]}"
+        graph.add_node(Node(selector_id, "selector", selector_id))
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(selector_id, edge_id, "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(selector_id, "snapshot_state", "selected_count", selected_count))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint_y, "mm"))
+    return graph
+
+
+def _selector_count_rank_graph() -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id="graph:selfcheck-selector-count-rank",
+        source={
+            "source_id": "selfcheck-selector-count-rank",
+            "source_code": (
+                "import cadquery as cq\n"
+                "box = cq.Workplane(\"XY\").box(10, 6, 4)\n"
+                "face_a = box.faces(\"<X\")\n"
+                "face_b = box.faces(\"|X\")\n"
+                "face_c = box.faces(\">X\")\n"
+                "edge_a = box.edges(\"<Y\")\n"
+                "edge_b = box.edges(\"|Y\")\n"
+                "edge_c = box.edges(\">Y\")\n"
+            ),
+        },
+    )
+    for selector_id, selected_count, coordinate_x in [
+        ("selector:face:a", 2, -5.0),
+        ("selector:face:b", 4, -1.0),
+        ("selector:face:c", 6, 1.0),
+        ("selector:face:d", 8, 8.0),
+    ]:
+        face_id = f"face:{selector_id.rsplit(':', 1)[-1]}"
+        graph.add_node(Node(selector_id, "selector", selector_id))
+        graph.add_node(Node(face_id, "face", face_id))
+        graph.add_relation(Relation(selector_id, face_id, "has_kernel_stable_face_id"))
+        graph.add_measurement(Measurement(selector_id, "snapshot_state", "selected_count", selected_count))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_x", coordinate_x, "mm"))
+    for selector_id, selected_count, midpoint_y in [
+        ("selector:edge:a", 2, -5.0),
+        ("selector:edge:b", 4, -1.0),
+        ("selector:edge:c", 6, 1.0),
+        ("selector:edge:d", 8, 8.0),
     ]:
         edge_id = f"edge:{selector_id.rsplit(':', 1)[-1]}"
         graph.add_node(Node(selector_id, "selector", selector_id))

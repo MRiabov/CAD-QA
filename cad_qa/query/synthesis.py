@@ -62,6 +62,7 @@ class SelectorCountFamilySpec:
     selected_count_clause_id: str
     related_metrics: tuple[str, ...]
     selector_relations: tuple[str, ...] = ()
+    allow_rank: bool = False
 
 
 @dataclass(frozen=True)
@@ -73,6 +74,7 @@ class ViableSelectorCount:
     aggregation: str
     candidate_ids: tuple[str, ...]
     selector_relation: str | None = None
+    aggregation_rank: int | None = None
 
 
 @dataclass(frozen=True)
@@ -423,6 +425,45 @@ SELECTOR_COUNT_FAMILY_SPECS = (
             "edge_length",
         ),
         selector_relations=("same_selected_entity_as",),
+    ),
+)
+
+SELECTOR_COUNT_RANK_FAMILY_SPECS = (
+    SelectorCountFamilySpec(
+        family_id="parameterized_kernel_face_selector_count_rank",
+        relation="has_kernel_stable_face_id",
+        selected_type="face",
+        relation_clause_id="has_parameterized_face_selection",
+        selector_relation_clause_id="has_parameterized_selector_relation",
+        related_metric_clause_id="has_parameterized_selected_face_metric_threshold",
+        selected_count_clause_id="has_parameterized_selected_count",
+        related_metrics=(
+            "coordinate_x",
+            "coordinate_y",
+            "coordinate_z",
+            "distance_to_origin",
+            "face_area",
+        ),
+        selector_relations=("same_selected_face_as", "same_selected_entity_as"),
+        allow_rank=True,
+    ),
+    SelectorCountFamilySpec(
+        family_id="parameterized_kernel_edge_selector_count_rank",
+        relation="has_kernel_stable_edge_id",
+        selected_type="edge",
+        relation_clause_id="has_parameterized_edge_selection",
+        selector_relation_clause_id="has_parameterized_selector_relation",
+        related_metric_clause_id="has_parameterized_selected_edge_metric_threshold",
+        selected_count_clause_id="has_parameterized_selected_count",
+        related_metrics=(
+            "midpoint_x",
+            "midpoint_y",
+            "midpoint_z",
+            "midpoint_distance_to_origin",
+            "edge_length",
+        ),
+        selector_relations=("same_selected_entity_as",),
+        allow_rank=True,
     ),
 )
 
@@ -1277,6 +1318,14 @@ def synthesize_graph_hop_queries(graph: OntologyGraph) -> list[QueryProgram]:
         query = _query_for_selector_count(graph, choice)
         if query is not None:
             queries.append(query)
+    for spec in SELECTOR_COUNT_RANK_FAMILY_SPECS:
+        viable = _viable_selector_counts(graph, spec)
+        if not viable:
+            continue
+        choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
+        query = _query_for_selector_count(graph, choice)
+        if query is not None:
+            queries.append(query)
     for spec in EQUAL_VALUE_EXTREME_FAMILY_SPECS:
         viable = _viable_equal_value_extremes(graph, spec)
         if not viable:
@@ -1700,19 +1749,36 @@ def _viable_selector_counts(graph: OntologyGraph, spec: SelectorCountFamilySpec)
                 )
                 if len(narrowed) < 2:
                     continue
-                for aggregation in ("argmax", "argmin"):
-                    if _has_unique_extreme(graph, narrowed, "selected_count", aggregation):
-                        viable.append(
-                            ViableSelectorCount(
-                                spec=spec,
-                                metric=metric,
-                                operator=operator,
-                                value=value,
-                                aggregation=aggregation,
-                                candidate_ids=tuple(node.id for node in narrowed),
-                                selector_relation=selector_relation,
+                if not spec.allow_rank:
+                    for aggregation in ("argmax", "argmin"):
+                        if _has_unique_extreme(graph, narrowed, "selected_count", aggregation):
+                            viable.append(
+                                ViableSelectorCount(
+                                    spec=spec,
+                                    metric=metric,
+                                    operator=operator,
+                                    value=value,
+                                    aggregation=aggregation,
+                                    candidate_ids=tuple(node.id for node in narrowed),
+                                    selector_relation=selector_relation,
+                                )
                             )
-                        )
+                if spec.allow_rank:
+                    for aggregation in ("rank_desc", "rank_asc"):
+                        for rank in range(2, min(len(narrowed), MAX_SYNTHESIZED_RANK) + 1):
+                            if _has_unique_rank(graph, narrowed, "selected_count", aggregation, rank):
+                                viable.append(
+                                    ViableSelectorCount(
+                                        spec=spec,
+                                        metric=metric,
+                                        operator=operator,
+                                        value=value,
+                                        aggregation=aggregation,
+                                        candidate_ids=tuple(node.id for node in narrowed),
+                                        selector_relation=selector_relation,
+                                        aggregation_rank=rank,
+                                    )
+                                )
     return sorted(
         viable,
         key=lambda item: (
@@ -1721,6 +1787,7 @@ def _viable_selector_counts(graph: OntologyGraph, spec: SelectorCountFamilySpec)
             item.operator,
             item.value,
             item.aggregation,
+            item.aggregation_rank or 0,
             item.candidate_ids,
         ),
     )
@@ -1814,17 +1881,26 @@ def _query_for_selector_count(graph: OntologyGraph, viable: ViableSelectorCount)
     )
     if related_metric is None or selected_count is None:
         return None
-    direction = "max" if viable.aggregation == "argmax" else "min"
+    direction = "max" if viable.aggregation in {"argmax", "rank_desc"} else "min"
+    final_selector = (
+        f"rank:{viable.aggregation_rank}:{direction}:selected_count"
+        if viable.aggregation_rank is not None
+        else f"{direction}:selected_count"
+    )
     sampled = merge_sampled_parameters(
         {
             "target_type": ["selector"],
             "selected_entity_type": [spec.selected_type],
-            "final_selector": [f"{direction}:selected_count"],
+            "final_selector": [final_selector],
             "aggregation_metric": ["selected_count"],
             "extremum_direction": [direction],
             "predicate_catalog_version": ["v1"],
             "prompt_wording_variant": [_prompt_wording_variant(graph.graph_id, spec.family_id)],
-            "synthesis_strategy": ["selector_count_narrowing_v1"],
+            "synthesis_strategy": [
+                "selector_count_rank_narrowing_v1"
+                if viable.aggregation_rank is not None
+                else "selector_count_narrowing_v1"
+            ],
         },
         relation.sampled_parameters,
         selector_relation.sampled_parameters if selector_relation is not None else {},
@@ -1842,6 +1918,14 @@ def _query_for_selector_count(graph: OntologyGraph, viable: ViableSelectorCount)
     axis = metric_axis(viable.metric)
     if axis is not None:
         sampled = merge_sampled_parameters(sampled, {"narrowing_axis": [axis]})
+    if viable.aggregation_rank is not None:
+        sampled = merge_sampled_parameters(
+            sampled,
+            {
+                "aggregation_rank": [str(viable.aggregation_rank)],
+                "rank_direction": [direction],
+            },
+        )
     return QueryProgram(
         query_id=f"{graph.graph_id}:synth:{spec.family_id}",
         target_type="selector",
@@ -1857,6 +1941,7 @@ def _query_for_selector_count(graph: OntologyGraph, viable: ViableSelectorCount)
         ],
         aggregation=viable.aggregation,
         aggregation_metric="selected_count",
+        aggregation_rank=viable.aggregation_rank,
         hop_count=4 + int(selector_relation is not None),
         difficulty="cad_browsecomp",
         min_individual_clause_candidates=2,
