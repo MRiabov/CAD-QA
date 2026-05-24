@@ -208,6 +208,10 @@ when those choices can be sampled and verified.
   `parameterized_kernel_edge_rank` use the same reusable relation/measurement
   predicate path as extrema, then apply a ranked measured selector with
   aggregation-rank and rank-direction metadata.
+- `cadqa dataset synthesis-selfcheck --out <dir>` now regenerates rows, graphs,
+  Markdown preview, and preview evidence for the currently implemented
+  synthesized release families. This gives reviewers a repeatable artifact for
+  extrema, rank, and selector-count synthesis changes.
 - Query programs now support deterministic tie-break aggregations. When a
   primary min/max aggregation leaves multiple candidates and a configured
   secondary metric resolves the tie, resolver traces include a
@@ -226,7 +230,9 @@ when those choices can be sampled and verified.
   generation, failure/quarantine behavior, and release-report accounting tests.
   The default evidence manifest now covers the currently implemented synthesized
   face/edge extrema, rank, and selector-count families; other generated release
-  families still need their own entries before they can pass this gate.
+  families still need their own entries before they can pass this gate. The
+  synthesized-family selfcheck command writes matching preview evidence for
+  manual review and benchmark-release preview gates on that implemented slice.
 - Public/private row views separate answer-free benchmark inputs from private
   gold answers, query programs, candidate traces, and clue maps.
 - Public/private exports include row-ID parity and hidden-field leak audits.

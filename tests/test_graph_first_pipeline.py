@@ -55,6 +55,7 @@ from cad_qa.query.ir import Clause, QueryProgram, query_from_dict
 from cad_qa.query.parameters import sampled_parameters_from_query
 from cad_qa.query.resolver import resolve_query, smoke_queries
 from cad_qa.query.synthesis import synthesize_graph_hop_queries
+from cad_qa.query.synthesis_selfcheck import SYNTHESIS_SELFCHECK_FAMILIES, write_synthesis_selfcheck
 from cad_qa.source import load_sources_jsonl, source_audit, source_family_from_path, source_manifest, source_record_from_mapping
 from cad_qa.trace import TraceRecord, cadquery_available, trace_report, trace_source, trace_sources_bounded
 from cad_qa.cli import main as cli_main
@@ -3174,6 +3175,44 @@ def test_default_family_test_evidence_covers_synthesized_release_families() -> N
     assert report["evidence_exists"]
     assert report["generated_release_family_count"] == len(families)
     assert report["violations"] == []
+
+
+def test_synthesis_selfcheck_writes_preview_evidence(tmp_path: Path) -> None:
+    result = write_synthesis_selfcheck(tmp_path / "synthesis_selfcheck", sample_per_family=20, seed=17)
+    rows = read_jsonl(tmp_path / "synthesis_selfcheck" / "dataset" / "rows.jsonl")
+    evidence = json.loads(
+        (tmp_path / "synthesis_selfcheck" / "dataset" / "preview_evidence.json").read_text(encoding="utf-8")
+    )
+    families = {row["query_program"]["query_id"].rsplit(":", 1)[-1] for row in rows}
+
+    assert result["failure_count"] == 0
+    assert families == set(SYNTHESIS_SELFCHECK_FAMILIES)
+    assert (tmp_path / "synthesis_selfcheck" / "PREVIEW.md").exists()
+    assert (tmp_path / "synthesis_selfcheck" / "PREVIEW.preview_evidence.json").exists()
+    assert all(
+        row["query_program"]["sampled_parameters"].get("rendered_clue_template_sequence")
+        for row in rows
+    )
+    assert preview_evidence_gate_report(
+        rows,
+        evidence=evidence,
+        min_samples_per_family=20,
+        enforce=True,
+    )["valid"]
+
+    assert cli_main(
+        [
+            "dataset",
+            "synthesis-selfcheck",
+            "--out",
+            str(tmp_path / "cli_selfcheck"),
+            "--sample-per-family",
+            "20",
+            "--seed",
+            "17",
+        ]
+    ) == 0
+    assert (tmp_path / "cli_selfcheck" / "dataset" / "preview_evidence.json").exists()
 
 
 def test_benchmark_release_verifier_blocks_intended_family_coverage_failures(tmp_path: Path) -> None:

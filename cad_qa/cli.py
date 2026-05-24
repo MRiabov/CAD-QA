@@ -57,6 +57,7 @@ from cad_qa.ontology.nodes import OntologyGraph, graph_from_dict
 from cad_qa.query.family_manifest import DEFAULT_FAMILY_MANIFEST, intended_family_coverage_report
 from cad_qa.query.ir import query_from_dict
 from cad_qa.query.resolver import resolve_query, smoke_queries
+from cad_qa.query.synthesis_selfcheck import write_synthesis_selfcheck
 from cad_qa.source import load_sources_jsonl, source_audit, source_manifest
 from cad_qa.trace import trace_report, trace_sources_bounded
 
@@ -179,6 +180,11 @@ def build_parser() -> argparse.ArgumentParser:
     preview.add_argument("--seed", type=int, default=0)
     preview.add_argument("--max-prompt-chars", type=int, default=12000)
     preview.set_defaults(func=_cmd_dataset_preview)
+    synthesis_selfcheck = dataset_sub.add_parser("synthesis-selfcheck")
+    synthesis_selfcheck.add_argument("--out", type=Path, required=True)
+    synthesis_selfcheck.add_argument("--sample-per-family", type=int, default=20)
+    synthesis_selfcheck.add_argument("--seed", type=int, default=0)
+    synthesis_selfcheck.set_defaults(func=_cmd_dataset_synthesis_selfcheck)
 
     evaluation = subparsers.add_parser("evaluation")
     evaluation_sub = evaluation.add_subparsers(required=True)
@@ -564,6 +570,14 @@ def _cmd_dataset_preview(args: argparse.Namespace) -> dict[str, Any]:
         "node_types": args.node_types or [],
         "seed": args.seed,
     }
+
+
+def _cmd_dataset_synthesis_selfcheck(args: argparse.Namespace) -> dict[str, Any]:
+    return write_synthesis_selfcheck(
+        args.out,
+        sample_per_family=args.sample_per_family,
+        seed=args.seed,
+    )
 
 
 def _cmd_evaluation_baseline(args: argparse.Namespace) -> dict[str, Any]:
