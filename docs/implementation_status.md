@@ -914,6 +914,16 @@ Checked as implemented with remaining scale caveats:
   measured target-point clauses, and resolve by nearest/farthest distance to
   the reference endpoint. This adds endpoint reference anchors across the
   current target slice, while release-scale distribution remains open.
+- The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_reference_entities/PREVIEW.md`
+  demonstrates the generic `parameterized_*_reference_entity_distance`
+  families for feature, face, edge, endpoint, added-material-region, and
+  removed-material-region targets. These families keep the target type fixed
+  but sample the reference entity type as row metadata, including added-material
+  and removed-material reference anchors described by measured volume and full
+  centroid coordinates. This is the first reference-distance slice where
+  reference type is a real sampled family parameter rather than only a family
+  suffix; release-scale reference-type balance remains open.
 - Opposite-face rows on broad real CadEvolve data, broader containment,
   broader intersection, broader adjacency, and broader stable spatial-relation
   distributions remain scale/coverage work rather than unchecked core
@@ -937,9 +947,11 @@ Checked as implemented with remaining scale caveats:
   covered by a parameterized effect-delta family; non-feature reference anchors
   now cover reference-face, reference-edge, and reference-endpoint distance rows
   for feature, edge, face, endpoint, material region, and void region targets.
+  Generic reference-entity distance families now also sample reference type
+  inside the family and cover added-material/removed-material reference anchors.
   Remaining hard-coded release debt is mainly
   selected-entity count variants, richer graph-hop predicate chains, broader
-  reference-entity types, and release-scale distribution review.
+  reference-entity balance, and release-scale distribution review.
 - Rewrite sparse direct selector/count/extremum families as graph-hop narrowing
   programs instead of treating them as unusable when the whole model lacks a
   unique global largest/smallest candidate. These rows should use sampled
@@ -956,9 +968,11 @@ Checked as implemented with remaining scale caveats:
   feature-to-feature and face/edge/endpoint/material-region/void-region-to-feature
   reference-distance families plus reference-face, reference-edge, and
   reference-endpoint distance families for feature, edge, face, endpoint,
-  material-region, and void-region targets. Broader
+  material-region, and void-region targets, plus generic reference-entity
+  distance families that sample feature/face/edge/endpoint/material-region/
+  void-region reference types where graph evidence supports them. Broader
   selected-entity-count narrowing,
-  additional reference entity types, containment/adjacency
+  release-scale reference-type balance, containment/adjacency
   predicates, and broader tie-break selectors
   remain open.
 - Extend sampled-parameter metadata from the synthesis layer to include
@@ -976,8 +990,9 @@ Checked as implemented with remaining scale caveats:
   point metric metadata.
   Synthesized extrema, rank, selector-count, equal-measurement, and
   reference-distance rows now sample prompt-wording variants from the centralized
-  YAML templates. Reference-distance rows now serialize feature, face, and edge
-  anchor metrics/value buckets. Broader synthesized reference-anchor sampling,
+  YAML templates. Reference-distance rows now serialize feature, face, edge,
+  endpoint, material-region, and void-region anchor metrics/value buckets.
+  Broader synthesized reference-anchor sampling,
   rank values beyond 2-4, full entity/view-word randomization, and release-scale
   wording distribution review remain open. The gate still does not prove every
   future intended parameter dimension was sampled whenever the verifier could

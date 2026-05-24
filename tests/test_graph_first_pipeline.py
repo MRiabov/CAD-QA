@@ -2752,6 +2752,19 @@ def _add_reference_endpoint_nodes(graph: OntologyGraph) -> None:
         graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
 
 
+def _add_reference_region_nodes(graph: OntologyGraph) -> None:
+    for region_id, region_type, volume, centroid in [
+        ("material_region:ref", "material_region", 33.0, [0.0, -6.0, 1.0]),
+        ("void_region:ref", "void_region", 11.0, [45.0, 3.0, 2.0]),
+    ]:
+        graph.add_node(Node(region_id, region_type, region_id))
+        graph.add_measurement(Measurement(region_id, "entity_geometry", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid", centroid, "mm"))
+        graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid_x", centroid[0], "mm"))
+        graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid_y", centroid[1], "mm"))
+        graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid_z", centroid[2], "mm"))
+
+
 def test_synthesis_generates_feature_reference_feature_distance_query() -> None:
     graph = OntologyGraph(
         graph_id="graph:feature-reference-distance-synth",
@@ -4179,6 +4192,137 @@ def test_synthesis_generates_endpoint_reference_endpoint_distance_query() -> Non
     assert any(phrase in row.prompt for phrase in ("closest to", "farthest from"))
 
 
+def test_synthesis_generates_parameterized_reference_entity_distance_queries() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:reference-entity-distance-synth",
+        source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
+    )
+    for feature_id, centroid in [
+        ("feature:a", [1.0, 0.0, 1.0]),
+        ("feature:b", [5.0, 0.0, 5.0]),
+    ]:
+        graph.add_node(Node(feature_id, "feature", feature_id))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", 240.0, "mm^3"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid", centroid, "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_x", centroid[0], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_y", centroid[1], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid[2], "mm"))
+    graph.add_node(Node("selector:faces", "selector", "selected faces"))
+    for face_id, center in [
+        ("face:a", [1.0, 0.0, 0.0]),
+        ("face:b", [5.0, 0.0, 0.0]),
+    ]:
+        graph.add_node(Node(face_id, "face", face_id))
+        graph.add_relation(Relation(face_id, "selector:faces", "has_kernel_stable_face_id"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", 12.0, "mm^2"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_center", center, "mm"))
+    graph.add_node(Node("selector:edges", "selector", "selected edges"))
+    for edge_id, midpoint in [
+        ("edge:a", [1.0, -3.0, 0.0]),
+        ("edge:b", [5.0, 7.0, 0.0]),
+    ]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", 10.0, "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint", midpoint, "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_x", midpoint[0], "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint[1], "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_z", midpoint[2], "mm"))
+    for endpoint_id, edge_id, coordinate in [
+        ("edge_endpoint:a", "edge:a", [1.0, 0.0, 3.0]),
+        ("edge_endpoint:b", "edge:b", [5.0, 0.0, 3.0]),
+    ]:
+        graph.add_node(Node(endpoint_id, "edge_endpoint", endpoint_id))
+        graph.add_relation(Relation(endpoint_id, edge_id, "endpoint_of"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate", coordinate, "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_x", coordinate[0], "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_y", coordinate[1], "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
+    for node_id, relation, volume, centroid in [
+        ("material_region:a", "has_kernel_material_region_geometry", 42.0, [1.0, 0.0, 1.0]),
+        ("material_region:b", "has_kernel_material_region_geometry", 42.0, [6.0, 0.0, 7.0]),
+        ("void_region:a", "has_kernel_void_region_geometry", 8.0, [2.0, 0.0, 2.0]),
+        ("void_region:b", "has_kernel_void_region_geometry", 8.0, [7.0, 0.0, 6.0]),
+    ]:
+        node_type = node_id.split(":", 1)[0]
+        graph.add_node(Node(node_id, node_type, node_id))
+        graph.add_relation(Relation(node_id, node_id, relation))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid", centroid, "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_x", centroid[0], "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_y", centroid[1], "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_z", centroid[2], "mm"))
+    _add_reference_region_nodes(graph)
+
+    queries = {query.query_id.rsplit(":", 1)[-1]: query for query in synthesize_graph_hop_queries(graph)}
+    for family_id, target_type, target_point_metric in [
+        ("parameterized_feature_reference_entity_distance", "feature", "centroid"),
+        ("parameterized_face_reference_entity_distance", "face", "face_center"),
+        ("parameterized_edge_reference_entity_distance", "edge", "midpoint"),
+        ("parameterized_endpoint_reference_entity_distance", "edge_endpoint", "coordinate"),
+        ("parameterized_material_region_reference_entity_distance", "material_region", "centroid"),
+        ("parameterized_void_region_reference_entity_distance", "void_region", "centroid"),
+    ]:
+        query = queries[family_id]
+        resolution = resolve_query(graph, query)
+        row = materialize_row(graph, resolution)
+        sampled = row.query_program["sampled_parameters"]
+        reference_type = sampled["reference_type"][0]
+
+        assert resolution.verifier_status == "resolved"
+        assert query.target_type == target_type
+        assert query.aggregation in {"argmin", "argmax"}
+        assert query.aggregation_metric == "distance_to_reference_feature_centroid"
+        assert query.clauses[-2].kind == "reference_measurement"
+        assert query.clauses[-1].metric == target_point_metric
+        assert row.logical_hop_count == 4 + int(target_type != "feature")
+        assert row.geometry_hop_count == row.logical_hop_count
+        assert sampled["target_type"] == [target_type]
+        assert sampled["target_point_metric"] == [target_point_metric]
+        assert reference_type in {"feature", "face", "edge", "edge_endpoint", "material_region", "void_region"}
+        assert sampled["reference_point_metric"][0] in {"centroid", "face_center", "midpoint", "coordinate"}
+        assert any(phrase in row.prompt for phrase in ("closest to", "farthest from"))
+
+
+def test_synthesis_generates_reference_entity_distance_with_region_reference() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:reference-entity-region-anchor-synth",
+        source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
+    )
+    for feature_id, centroid in [
+        ("feature:a", [1.0, 0.0, 1.0]),
+        ("feature:b", [5.0, 0.0, 5.0]),
+    ]:
+        graph.add_node(Node(feature_id, "feature", feature_id))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", 240.0, "mm^3"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid", centroid, "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_x", centroid[0], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_y", centroid[1], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid[2], "mm"))
+    _add_reference_region_nodes(graph)
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_feature_reference_entity_distance")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+    sampled = row.query_program["sampled_parameters"]
+
+    assert resolution.verifier_status == "resolved"
+    assert sampled["reference_type"][0] in {"material_region", "void_region"}
+    assert sampled["reference_point_metric"] == ["centroid"]
+    assert sampled["reference_anchor_metric"] == ["centroid_x", "centroid_y", "centroid_z", "volume"]
+    assert query.clauses[1].id in {
+        "reference_material_region_volume_and_centroid",
+        "reference_void_region_volume_and_centroid",
+    }
+    assert "centroid coordinates" in row.prompt
+    assert "reference added-material region" in row.prompt or "reference removed-material region" in row.prompt
+    assert any(phrase in row.prompt for phrase in ("closest to", "farthest from"))
+
+
 def test_synthesis_skips_face_reference_distance_without_face_centers() -> None:
     graph = OntologyGraph(
         graph_id="graph:no-face-reference-distance-synth",
@@ -4998,30 +5142,36 @@ def test_default_family_manifest_keeps_superseded_fixed_families_review_only() -
         "parameterized_face_reference_face_distance",
         "parameterized_face_reference_edge_distance",
         "parameterized_face_reference_endpoint_distance",
+        "parameterized_face_reference_entity_distance",
         "parameterized_kernel_edge_extreme",
         "parameterized_edge_reference_feature_distance",
         "parameterized_edge_reference_face_distance",
         "parameterized_edge_reference_edge_distance",
         "parameterized_edge_reference_endpoint_distance",
+        "parameterized_edge_reference_entity_distance",
         "parameterized_feature_extreme",
         "parameterized_equal_feature_metric_extreme",
         "parameterized_feature_effect_delta_extreme",
         "parameterized_feature_reference_face_distance",
         "parameterized_feature_reference_edge_distance",
         "parameterized_feature_reference_endpoint_distance",
+        "parameterized_feature_reference_entity_distance",
         "parameterized_material_region_extreme",
         "parameterized_equal_material_region_metric_extreme",
         "parameterized_material_region_reference_face_distance",
         "parameterized_material_region_reference_edge_distance",
         "parameterized_material_region_reference_endpoint_distance",
+        "parameterized_material_region_reference_entity_distance",
         "parameterized_void_region_extreme",
         "parameterized_equal_void_region_metric_extreme",
         "parameterized_void_region_reference_face_distance",
         "parameterized_void_region_reference_edge_distance",
         "parameterized_void_region_reference_endpoint_distance",
+        "parameterized_void_region_reference_entity_distance",
         "parameterized_endpoint_reference_face_distance",
         "parameterized_endpoint_reference_edge_distance",
         "parameterized_endpoint_reference_endpoint_distance",
+        "parameterized_endpoint_reference_entity_distance",
     ]
 
     assert all(families[family]["status"] == "review_only" for family in superseded_fixed_families)

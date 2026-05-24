@@ -132,6 +132,10 @@ def metric_label(metric: str) -> str:
 def _entity_type_label(entity_type: str) -> str:
     if entity_type == "edge_endpoint":
         return "endpoint"
+    if entity_type == "material_region":
+        return "added-material region"
+    if entity_type == "void_region":
+        return "removed-material region"
     return entity_type.replace("_", " ")
 
 
