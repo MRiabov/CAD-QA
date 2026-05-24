@@ -48,7 +48,7 @@ def checklist_prompt(source_code: str, clues: list[str], answer_format: str) -> 
 
 def clause_prompt(clause: Any, *, query: Any | None = None) -> str:
     templates = _template_mapping("clause_templates")
-    template_key = _clause_template_key(clause, query, templates)
+    template_key = clause_template_key(clause, query=query)
     if template_key is None:
         clause_id = getattr(clause, "id", None) or "<missing>"
         raise KeyError(f"missing prompt template for clause id: {clause_id}")
@@ -57,14 +57,36 @@ def clause_prompt(clause: Any, *, query: Any | None = None) -> str:
 
 def aggregation_prompt(aggregation: str, metric: str) -> str:
     templates = _template_mapping("aggregation_templates")
-    template = templates.get(f"{aggregation}.{metric}") or _string_template("aggregation_templates", aggregation)
+    template = templates[aggregation_template_key(aggregation, metric)]
     return template.format(metric=metric, metric_label=metric_label(metric))
 
 
 def tie_break_prompt(aggregation: str, metric: str) -> str:
     templates = _template_mapping("tie_break_templates")
-    template = templates.get(f"{aggregation}.{metric}") or _string_template("tie_break_templates", aggregation)
+    template = templates[tie_break_template_key(aggregation, metric)]
     return template.format(metric=metric, metric_label=metric_label(metric))
+
+
+def clause_template_key(clause: Any, *, query: Any | None = None) -> str | None:
+    """Return the YAML template key used for a rendered query clause."""
+
+    return _clause_template_key(clause, query, _template_mapping("clause_templates"))
+
+
+def aggregation_template_key(aggregation: str, metric: str) -> str:
+    """Return the YAML template key used for an aggregation clue."""
+
+    templates = _template_mapping("aggregation_templates")
+    key = f"{aggregation}.{metric}"
+    return key if key in templates else aggregation
+
+
+def tie_break_template_key(aggregation: str, metric: str) -> str:
+    """Return the YAML template key used for a tie-break clue."""
+
+    templates = _template_mapping("tie_break_templates")
+    key = f"{aggregation}.{metric}"
+    return key if key in templates else aggregation
 
 
 def metric_label(metric: str) -> str:

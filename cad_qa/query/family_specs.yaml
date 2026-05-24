@@ -65,6 +65,8 @@ families:
         - narrowing_predicate_sequence
         - aggregation_metric
         - extremum_direction
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
       enforced_dimensions:
         - narrowing_predicate_sequence
         - aggregation_metric
@@ -93,6 +95,8 @@ families:
         - selected_entity_type
         - comparison_operator
         - measurement_value_bucket
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
       enforced_dimensions:
         - narrowing_predicate_sequence
         - comparison_operator
@@ -150,6 +154,8 @@ families:
         - narrowing_predicate_sequence
         - aggregation_metric
         - extremum_direction
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
       enforced_dimensions:
         - narrowing_predicate_sequence
         - aggregation_metric
@@ -202,6 +208,8 @@ families:
         - selected_entity_type
         - comparison_operator
         - measurement_value_bucket
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
       enforced_dimensions:
         - narrowing_predicate_sequence
         - comparison_operator

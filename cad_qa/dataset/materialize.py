@@ -64,7 +64,7 @@ def materialize_row(graph: OntologyGraph, resolution: QueryResolution) -> Datase
         prompt=rendered.prompt,
         answer_format=query.answer_type,
         gold_answer=resolution.gold_answer,
-        query_program=_query_to_dict(query),
+        query_program=_query_to_dict(query, rendered),
         candidate_trace={
             "query_id": resolution.candidate_trace.query_id,
             "steps": resolution.candidate_trace.steps,
@@ -88,7 +88,7 @@ def materialize_row(graph: OntologyGraph, resolution: QueryResolution) -> Datase
     )
 
 
-def _query_to_dict(query: Any) -> dict[str, Any]:
+def _query_to_dict(query: Any, rendered: Any | None = None) -> dict[str, Any]:
     mapping = {
         "query_id": query.query_id,
         "target_type": query.target_type,
@@ -103,10 +103,40 @@ def _query_to_dict(query: Any) -> dict[str, Any]:
         "reject_unless_unique": query.reject_unless_unique,
         "min_individual_clause_candidates": query.min_individual_clause_candidates,
     }
-    mapping["sampled_parameters"] = normalize_sampled_parameters(
-        getattr(query, "sampled_parameters", None)
-    ) or sampled_parameters_from_query(mapping)
+    sampled = normalize_sampled_parameters(getattr(query, "sampled_parameters", None)) or sampled_parameters_from_query(
+        mapping
+    )
+    if rendered is not None:
+        rendered_parameters: dict[str, list[str]] = {
+            "rendered_prompt_template_id": [rendered.prompt_template_id],
+        }
+        clue_template_ids = [
+            str(clue["clue_template_id"])
+            for clue in getattr(rendered, "clue_map", [])
+            if isinstance(clue, dict) and clue.get("clue_template_id")
+        ]
+        if clue_template_ids:
+            rendered_parameters["rendered_clue_template_id"] = sorted(set(clue_template_ids))
+            rendered_parameters["rendered_clue_template_sequence"] = [" > ".join(clue_template_ids)]
+        sampled = _merge_sampled_parameter_values(sampled, rendered_parameters)
+    mapping["sampled_parameters"] = sampled
     return mapping
+
+
+def _merge_sampled_parameter_values(
+    base: dict[str, list[str]],
+    extra: dict[str, list[str]],
+) -> dict[str, list[str]]:
+    merged = {
+        str(dimension): [str(value) for value in values if value is not None and str(value)]
+        for dimension, values in base.items()
+    }
+    for dimension, values in extra.items():
+        current = set(merged.get(dimension, []))
+        current.update(str(value) for value in values if value is not None and str(value))
+        if current:
+            merged[dimension] = sorted(current)
+    return dict(sorted(merged.items()))
 
 
 def _clue_map_with_candidate_counts(

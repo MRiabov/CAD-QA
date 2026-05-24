@@ -1642,6 +1642,7 @@ def test_low_and_multi_hop_smoke_queries_render_and_materialize() -> None:
     assert prompt.prompt_version == "cadqa_prompt_v2"
     assert prompt.prompt_template_id.startswith("checklist_constraints_v1:")
     assert all(clue["template_id"] == prompt.prompt_template_id for clue in prompt.clue_map)
+    assert all(clue["clue_template_id"] for clue in prompt.clue_map)
     assert row.prompt_template_id.startswith("checklist_constraints_v1:")
     assert row.candidate_trace["final_candidates"]
     report = validate_rows([to_jsonable(row)])
@@ -1683,6 +1684,11 @@ def test_prompt_templates_yaml_controls_generated_prompt_wording() -> None:
         "checklist_constraints_v1:face:"
         "relation_has_kernel_stable_face_id_measurement_bbox_max_z:argmax_bbox_max_z:no_tie_break"
     )
+    assert [clue["clue_template_id"] for clue in rendered.clue_map] == [
+        "clause:has_kernel_selector_identity",
+        "clause:has_selected_face_bbox",
+        "aggregation:argmax",
+    ]
 
 
 def test_prompt_clause_templates_use_domain_wording() -> None:
@@ -2002,6 +2008,11 @@ def test_synthesis_generates_parameterized_kernel_face_extreme_query() -> None:
         "relation:has_kernel_stable_face_id:selector",
     ]
     assert row.query_program["sampled_parameters"] == sampled_parameters_from_query(row.query_program)
+    assert row.query_program["sampled_parameters"]["rendered_clue_template_id"] == [
+        f"aggregation:{query.aggregation}",
+        "clause:has_parameterized_face_metric",
+        "clause:has_parameterized_face_set",
+    ]
     assert "belongs to a measured face set" in row.prompt
     assert "measured X coordinate" in row.prompt
 
@@ -2212,6 +2223,8 @@ def test_materialized_rows_audit_clue_traceability_and_breadth() -> None:
     assert validate_rows([row])["valid"]
     assert row["query_program"]["sampled_parameters"]
     assert row["query_program"]["sampled_parameters"] == sampled_parameters_from_query(row["query_program"])
+    assert row["query_program"]["sampled_parameters"]["rendered_prompt_template_id"] == [row["prompt_template_id"]]
+    assert "rendered_clue_template_sequence" in row["query_program"]["sampled_parameters"]
     assert any("candidate_count_after" in clue for clue in row["clue_map"] if clue["clause_id"] != "aggregation")
 
     narrow = {**row, "candidate_trace": {**row["candidate_trace"], "steps": [dict(step) for step in row["candidate_trace"]["steps"]]}}
