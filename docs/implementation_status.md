@@ -224,6 +224,9 @@ when those choices can be sampled and verified.
 - Benchmark-release release and SFT reports include a family test-evidence gate.
   Generated release families must have machine-readable references for positive
   generation, failure/quarantine behavior, and release-report accounting tests.
+  The default evidence manifest now covers the currently implemented synthesized
+  face/edge extrema, rank, and selector-count families; other generated release
+  families still need their own entries before they can pass this gate.
 - Public/private row views separate answer-free benchmark inputs from private
   gold answers, query programs, candidate traces, and clue maps.
 - Public/private exports include row-ID parity and hidden-field leak audits.

@@ -7,7 +7,7 @@ from pathlib import Path
 
 from cad_qa.dataset.materialize import materialize_row
 from cad_qa.dataset.audit import leakage_audit
-from cad_qa.dataset.family_test_evidence import family_test_evidence_gate_report
+from cad_qa.dataset.family_test_evidence import family_test_evidence_gate_report, load_family_test_evidence
 from cad_qa.dataset.parameter_balance import parameter_balance_report
 from cad_qa.dataset.preview import dataset_preview_evidence_report, preview_evidence_gate_report
 from cad_qa.dataset.public import private_rows, public_private_audit, public_rows, write_public_private_artifacts
@@ -2203,7 +2203,47 @@ def test_synthesis_generates_ranked_kernel_edge_query() -> None:
     assert "2nd candidate when ordered" in row.prompt
 
 
+def test_synthesis_skips_rank_family_when_rank_is_tied() -> None:
+    graph = OntologyGraph(graph_id="graph:tied-rank", source={"source_id": "synthetic", "source_code": ""})
+    graph.add_node(Node("selector:edges", "selector", "edges"))
+    for edge_id, length in [
+        ("edge:a", 10.0),
+        ("edge:b", 8.0),
+        ("edge:c", 8.0),
+    ]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
+
+    families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
+
+    assert "parameterized_kernel_edge_rank" not in families
+
+
 def test_synthesis_generates_geometry_narrowed_selector_count_query() -> None:
+    face_graph = OntologyGraph(graph_id="graph:face-selector-count", source={"source_id": "synthetic", "source_code": ""})
+    for selector_id, selected_count, coordinate_x in [
+        ("selector:a", 3, -5.0),
+        ("selector:b", 4, -1.0),
+        ("selector:c", 4, 8.0),
+    ]:
+        face_id = f"face:{selector_id.rsplit(':', 1)[-1]}"
+        face_graph.add_node(Node(selector_id, "selector", selector_id))
+        face_graph.add_node(Node(face_id, "face", face_id))
+        face_graph.add_relation(Relation(selector_id, face_id, "has_kernel_stable_face_id"))
+        face_graph.add_measurement(Measurement(selector_id, "snapshot_state", "selected_count", selected_count))
+        face_graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_x", coordinate_x, "mm"))
+
+    face_query = next(
+        query
+        for query in synthesize_graph_hop_queries(face_graph)
+        if query.query_id.endswith("parameterized_kernel_face_selector_count")
+    )
+    face_resolution = resolve_query(face_graph, face_query)
+
+    assert face_resolution.verifier_status == "resolved"
+    assert face_query.sampled_parameters["selected_entity_type"] == ["face"]
+
     graph = OntologyGraph(graph_id="graph:selector-count", source={"source_id": "synthetic", "source_code": ""})
     selector_specs = [
         ("selector:a", 3, -5.0),
@@ -2239,6 +2279,25 @@ def test_synthesis_generates_geometry_narrowed_selector_count_query() -> None:
     assert query.sampled_parameters["selected_entity_type"] == ["edge"]
     assert query.sampled_parameters["narrowing_axis"] == ["y"]
     assert "At least one edge in the target selection has a midpoint Y coordinate" in row.prompt
+
+
+def test_synthesis_skips_selector_count_when_narrowing_has_no_unique_count() -> None:
+    graph = OntologyGraph(graph_id="graph:tied-selector-count", source={"source_id": "synthetic", "source_code": ""})
+    for selector_id, selected_count, midpoint_y in [
+        ("selector:a", 4, -5.0),
+        ("selector:b", 4, -1.0),
+        ("selector:c", 4, 8.0),
+    ]:
+        edge_id = f"edge:{selector_id.rsplit(':', 1)[-1]}"
+        graph.add_node(Node(selector_id, "selector", selector_id))
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(selector_id, edge_id, "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(selector_id, "snapshot_state", "selected_count", selected_count))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint_y, "mm"))
+
+    families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
+
+    assert "parameterized_kernel_edge_selector_count" not in families
 
 
 def test_synthesis_uses_tie_break_metric_for_tied_extrema() -> None:
@@ -3081,6 +3140,40 @@ def test_family_test_evidence_gate_requires_release_family_test_refs(tmp_path: P
         enforce=True,
     )
     assert complete_report["valid"]
+
+
+def test_default_family_test_evidence_covers_synthesized_release_families() -> None:
+    families = [
+        "parameterized_kernel_face_extreme",
+        "parameterized_kernel_edge_extreme",
+        "parameterized_kernel_face_rank",
+        "parameterized_kernel_edge_rank",
+        "parameterized_kernel_face_selector_count",
+        "parameterized_kernel_edge_selector_count",
+    ]
+    evidence = load_family_test_evidence()
+
+    assert evidence["exists"]
+    for family in families:
+        item = evidence["families"][family]
+        assert item["positive_generation"]
+        assert item["failure_or_quarantine"]
+        assert item["release_report_accounting"]
+
+    rows = [
+        {
+            "row_id": f"row:src:{index}:{family}",
+            "query_program": {"query_id": f"graph:src:synth:{family}"},
+        }
+        for index, family in enumerate(families)
+    ]
+
+    report = family_test_evidence_gate_report(rows, enforce=True)
+
+    assert report["valid"]
+    assert report["evidence_exists"]
+    assert report["generated_release_family_count"] == len(families)
+    assert report["violations"] == []
 
 
 def test_benchmark_release_verifier_blocks_intended_family_coverage_failures(tmp_path: Path) -> None:
