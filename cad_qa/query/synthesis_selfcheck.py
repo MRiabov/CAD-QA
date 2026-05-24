@@ -34,6 +34,8 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_equal_face_metric_extreme",
     "parameterized_equal_edge_metric_extreme",
     "parameterized_equal_feature_metric_extreme",
+    "parameterized_equal_path_point_metric_extreme",
+    "parameterized_equal_path_segment_metric_extreme",
     "parameterized_feature_reference_feature_distance",
     "parameterized_feature_reference_face_distance",
     "parameterized_feature_reference_edge_distance",
@@ -941,6 +943,15 @@ def _path_metric_graph() -> OntologyGraph:
         graph.add_relation(Relation(segment_id, "path:main", "segment_on_path"))
         graph.add_measurement(Measurement(segment_id, "entity_geometry", "segment_midpoint", midpoint, "mm"))
         graph.add_measurement(Measurement(segment_id, "relation_metric", "segment_length", length, "mm"))
+        graph.add_measurement(
+            Measurement(
+                segment_id,
+                "relation_metric",
+                "midpoint_distance_to_origin",
+                sum(component * component for component in midpoint) ** 0.5,
+                "mm",
+            )
+        )
     for feature_id, volume, centroid in [
         ("feature:path-ref", 100.0, [0.0, 5.0, 0.0]),
         ("feature:path-far", 50.0, [20.0, 5.0, 1.0]),

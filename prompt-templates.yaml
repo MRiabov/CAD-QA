@@ -74,6 +74,7 @@ metric_labels:
   midpoint_y: "midpoint Y coordinate"
   midpoint_z: "midpoint Z coordinate"
   midpoint: "midpoint"
+  midpoint_distance_to_origin: "midpoint distance to the global origin"
   nearest_point_distance_to_origin: "nearest-point distance to the global origin"
   operation_index: "modeling-sequence position"
   origin_z: "workplane origin height"

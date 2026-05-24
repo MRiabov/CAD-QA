@@ -614,6 +614,15 @@ Conservatively checked as done:
   distance to the reference feature centroid. This extends path coverage into
   value-bearing reference-distance tasks; broader reference-type balance and
   release-scale path distribution remain open.
+- The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_equal_path/PREVIEW.md` adds valid
+  release-ready rows for `parameterized_equal_path_point_metric_extreme` and
+  `parameterized_equal_path_segment_metric_extreme`. The reviewed rows narrow
+  path points by repeated measured Z coordinate and path segments by repeated
+  measured segment length, keep multiple candidates through the equal-value
+  clue, then resolve by another measured path quantity. These task families are
+  implemented at the valid-row level; benchmark-release distribution remains
+  open.
 - The reviewed path-geometry SFT report passes the default training geometry
   dominance gate: 58 of 58 default training rows are geometry-critical, with
   zero syntax-only and zero quarantined rows. The release verifier includes the
@@ -1005,7 +1014,7 @@ Checked as implemented with remaining scale caveats:
   edge relation rows, selected face/edge selector-count narrowing with
   threshold, equal related-metric, and same-selection relation predicates,
   initial equal-value
-  face/edge/edge-endpoint/feature/material-region/void-region measurement
+  face/edge/edge-endpoint/path-point/path-segment/feature/material-region/void-region measurement
   groups, sampled material/void region extrema/ranks, contained-endpoint
   relation chains, and initial
   feature-to-feature, path-to-reference-feature, and

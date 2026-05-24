@@ -1107,6 +1107,56 @@ families:
         - aggregation_metric
         - final_selector
     notes: Synthesized path-segment family that samples measured segment extrema through graph-hop synthesis.
+  - id: parameterized_equal_path_point_metric_extreme
+    status: release
+    target_type: path_point
+    minimum_hops: 4
+    maximum_hops: 4
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - final_selector
+      expected_values:
+        target_type: [path_point]
+        equal_measurement_metric: [coordinate_x, coordinate_y, coordinate_z, distance_to_origin]
+    notes: Synthesized value-bearing path-point family that narrows by repeated measured point coordinates or distances before selecting by another measured point quantity.
+  - id: parameterized_equal_path_segment_metric_extreme
+    status: release
+    target_type: path_segment
+    minimum_hops: 4
+    maximum_hops: 4
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - final_selector
+      expected_values:
+        target_type: [path_segment]
+        equal_measurement_metric: [segment_length]
+    notes: Synthesized value-bearing path-segment family that narrows by repeated measured segment length before selecting by another measured segment quantity.
   - id: parameterized_path_point_reference_entity_distance
     status: release
     target_type: path_point

@@ -424,6 +424,22 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Initial synthesized path-segment extremum family with sampled path-segment metric and direction.
+  - id: parameterized_equal_path_point_metric_extreme
+    positive_generation:
+      - test_synthesis_generates_equal_value_path_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_equal_value_path_queries_without_equal_distractors
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Synthesized value-bearing path-point family with equal-measurement narrowing.
+  - id: parameterized_equal_path_segment_metric_extreme
+    positive_generation:
+      - test_synthesis_generates_equal_value_path_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_equal_value_path_queries_without_equal_distractors
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Synthesized value-bearing path-segment family with equal-measurement narrowing.
   - id: parameterized_path_point_reference_entity_distance
     positive_generation:
       - test_synthesis_generates_parameterized_path_reference_distance_queries

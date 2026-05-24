@@ -4808,6 +4808,109 @@ def test_synthesis_skips_path_reference_distance_without_equal_distractors() -> 
     assert "parameterized_path_segment_reference_entity_distance" not in families
 
 
+def test_synthesis_generates_equal_value_path_queries() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:equal-path-synth",
+        source={
+            "source_id": "synthetic",
+            "source_code": (
+                "import cadquery as cq\n"
+                "path = cq.Workplane(\"XY\").spline([(0, 0), (2, 1), (5, 1), (6, 4)])\n"
+            ),
+        },
+    )
+    graph.add_node(Node("path:main", "path", "path"))
+    for point_id, coordinate in [
+        ("path:main:point:0", [0.0, 0.0, 0.0]),
+        ("path:main:point:1", [2.0, 1.0, 0.0]),
+        ("path:main:point:2", [5.0, 1.0, 0.0]),
+        ("path:main:point:3", [6.0, 4.0, 2.0]),
+    ]:
+        graph.add_node(Node(point_id, "path_point", point_id))
+        graph.add_relation(Relation(point_id, "path:main", "point_on_path"))
+        distance = math.sqrt(sum(component * component for component in coordinate))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate", coordinate, "mm"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_x", coordinate[0], "mm"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_y", coordinate[1], "mm"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
+        graph.add_measurement(Measurement(point_id, "relation_metric", "distance_to_origin", distance, "mm"))
+    for segment_id, length, midpoint in [
+        ("path:main:segment:0", 3.0, [1.0, 0.0, 0.0]),
+        ("path:main:segment:1", 3.0, [4.0, 1.0, 0.0]),
+        ("path:main:segment:2", 5.0, [6.0, 2.5, 0.0]),
+    ]:
+        graph.add_node(Node(segment_id, "path_segment", segment_id))
+        graph.add_relation(Relation(segment_id, "path:main", "segment_on_path"))
+        graph.add_measurement(Measurement(segment_id, "entity_geometry", "segment_midpoint", midpoint, "mm"))
+        graph.add_measurement(Measurement(segment_id, "relation_metric", "segment_length", length, "mm"))
+        graph.add_measurement(
+            Measurement(
+                segment_id,
+                "relation_metric",
+                "midpoint_distance_to_origin",
+                math.sqrt(sum(component * component for component in midpoint)),
+                "mm",
+            )
+        )
+
+    queries = {query.query_id.rsplit(":", 1)[-1]: query for query in synthesize_graph_hop_queries(graph)}
+    expected = {
+        "parameterized_equal_path_point_metric_extreme": (
+            "path_point",
+            "has_parameterized_equal_path_point_metric_value",
+            {"coordinate_x", "coordinate_y", "coordinate_z", "distance_to_origin"},
+        ),
+        "parameterized_equal_path_segment_metric_extreme": (
+            "path_segment",
+            "has_parameterized_equal_path_segment_metric_value",
+            {"segment_length"},
+        ),
+    }
+    for family, (target_type, equal_clause_id, equal_metrics) in expected.items():
+        query = queries[family]
+        resolution = resolve_query(graph, query)
+        row = materialize_row(graph, resolution)
+        equal_step = next(step for step in row.candidate_trace["steps"] if step["step"] == equal_clause_id)
+
+        assert resolution.verifier_status == "resolved"
+        assert query.target_type == target_type
+        assert query.clauses[1].id == equal_clause_id
+        assert query.clauses[1].metric in equal_metrics
+        assert row.logical_hop_count == 4
+        assert row.geometry_hop_count == 4
+        assert len(equal_step["after"]) >= 2
+        assert row.query_program["sampled_parameters"]["equal_measurement_metric"] == [query.clauses[1].metric]
+        assert "measurement_value_bucket" in row.query_program["sampled_parameters"]
+        assert "path" in row.prompt.lower()
+
+
+def test_synthesis_skips_equal_value_path_queries_without_equal_distractors() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:no-equal-path-synth",
+        source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
+    )
+    graph.add_node(Node("path:main", "path", "path"))
+    for index, coordinate in enumerate([[0.0, 0.0, 0.0], [2.0, 1.0, 1.0], [5.0, 2.0, 2.0]]):
+        point_id = f"path:main:point:{index}"
+        graph.add_node(Node(point_id, "path_point", point_id))
+        graph.add_relation(Relation(point_id, "path:main", "point_on_path"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_x", coordinate[0], "mm"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_y", coordinate[1], "mm"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
+        graph.add_measurement(Measurement(point_id, "relation_metric", "distance_to_origin", float(index + 1), "mm"))
+    for index, length in enumerate([1.0, 2.0, 3.0]):
+        segment_id = f"path:main:segment:{index}"
+        graph.add_node(Node(segment_id, "path_segment", segment_id))
+        graph.add_relation(Relation(segment_id, "path:main", "segment_on_path"))
+        graph.add_measurement(Measurement(segment_id, "relation_metric", "segment_length", length, "mm"))
+        graph.add_measurement(Measurement(segment_id, "relation_metric", "midpoint_distance_to_origin", float(index + 1), "mm"))
+
+    families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
+
+    assert "parameterized_equal_path_point_metric_extreme" not in families
+    assert "parameterized_equal_path_segment_metric_extreme" not in families
+
+
 def test_synthesis_skips_path_families_without_unique_geometry() -> None:
     graph = OntologyGraph(
         graph_id="graph:tied-path-synth",
