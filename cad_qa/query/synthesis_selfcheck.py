@@ -62,6 +62,7 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_feature_reference_material_region_distance",
     "parameterized_feature_reference_void_region_distance",
     "parameterized_feature_reference_entity_distance",
+    "parameterized_feature_reference_entity_distance_rank",
     "parameterized_equal_endpoint_metric_extreme",
     "parameterized_equal_endpoint_metric_rank",
     "parameterized_contained_endpoint_metric_extreme",
@@ -75,6 +76,7 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_endpoint_reference_material_region_distance",
     "parameterized_endpoint_reference_void_region_distance",
     "parameterized_endpoint_reference_entity_distance",
+    "parameterized_endpoint_reference_entity_distance_rank",
     "parameterized_equal_material_region_metric_extreme",
     "parameterized_equal_material_region_metric_rank",
     "parameterized_equal_void_region_metric_extreme",
@@ -86,6 +88,7 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_material_region_reference_material_region_distance",
     "parameterized_material_region_reference_void_region_distance",
     "parameterized_material_region_reference_entity_distance",
+    "parameterized_material_region_reference_entity_distance_rank",
     "parameterized_void_region_reference_feature_distance",
     "parameterized_void_region_reference_face_distance",
     "parameterized_void_region_reference_edge_distance",
@@ -93,6 +96,7 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_void_region_reference_material_region_distance",
     "parameterized_void_region_reference_void_region_distance",
     "parameterized_void_region_reference_entity_distance",
+    "parameterized_void_region_reference_entity_distance_rank",
     "parameterized_face_reference_feature_distance",
     "parameterized_face_reference_face_distance",
     "parameterized_face_reference_edge_distance",
@@ -100,6 +104,7 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_face_reference_material_region_distance",
     "parameterized_face_reference_void_region_distance",
     "parameterized_face_reference_entity_distance",
+    "parameterized_face_reference_entity_distance_rank",
     "parameterized_edge_reference_feature_distance",
     "parameterized_edge_reference_face_distance",
     "parameterized_edge_reference_edge_distance",
@@ -107,6 +112,7 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_edge_reference_material_region_distance",
     "parameterized_edge_reference_void_region_distance",
     "parameterized_edge_reference_entity_distance",
+    "parameterized_edge_reference_entity_distance_rank",
     "parameterized_path_point_extreme",
     "parameterized_path_segment_extreme",
     "parameterized_path_point_reference_face_distance",
@@ -115,12 +121,14 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_path_point_reference_material_region_distance",
     "parameterized_path_point_reference_void_region_distance",
     "parameterized_path_point_reference_entity_distance",
+    "parameterized_path_point_reference_entity_distance_rank",
     "parameterized_path_segment_reference_face_distance",
     "parameterized_path_segment_reference_edge_distance",
     "parameterized_path_segment_reference_endpoint_distance",
     "parameterized_path_segment_reference_material_region_distance",
     "parameterized_path_segment_reference_void_region_distance",
     "parameterized_path_segment_reference_entity_distance",
+    "parameterized_path_segment_reference_entity_distance_rank",
     "parameterized_kernel_face_selector_count",
     "parameterized_kernel_edge_selector_count",
     "parameterized_kernel_face_selector_count_rank",
@@ -186,6 +194,7 @@ def synthesis_selfcheck_graphs() -> list[OntologyGraph]:
         _endpoint_equal_metric_rank_graph(),
         _path_metric_graph(),
         _path_equal_metric_rank_graph(),
+        _reference_entity_distance_rank_graph(),
         _face_selector_count_graph(),
         _edge_selector_count_graph(),
         _selector_count_rank_graph(),
@@ -1561,6 +1570,120 @@ def _path_equal_metric_rank_graph() -> OntologyGraph:
                 "mm",
             )
         )
+    return graph
+
+
+def _reference_entity_distance_rank_graph() -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id="graph:selfcheck-reference-entity-distance-rank",
+        source={
+            "source_id": "selfcheck-reference-entity-distance-rank",
+            "source_code": (
+                "import cadquery as cq\n"
+                "base = cq.Workplane(\"XY\").box(10, 6, 4)\n"
+                "path = cq.Workplane(\"XY\").spline([(1, 2), (4, 2), (8, 2), (13, 2)])\n"
+            ),
+        },
+    )
+    for feature_id, volume, centroid in [
+        ("feature:a", 240.0, [1.0, 0.0, 1.0]),
+        ("feature:b", 240.0, [4.0, 0.0, 2.0]),
+        ("feature:c", 240.0, [8.0, 0.0, 3.0]),
+        ("feature:d", 240.0, [13.0, 0.0, 4.0]),
+        ("feature:ref", 100.0, [40.0, 0.0, 0.0]),
+    ]:
+        graph.add_node(Node(feature_id, "feature", feature_id))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid", centroid, "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_x", centroid[0], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_y", centroid[1], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid[2], "mm"))
+    graph.add_node(Node("selector:faces", "selector", "selected faces"))
+    for face_id, area, center in [
+        ("face:a", 12.0, [1.0, 1.0, 0.0]),
+        ("face:b", 12.0, [4.0, 1.0, 0.0]),
+        ("face:c", 12.0, [8.0, 1.0, 0.0]),
+        ("face:d", 12.0, [13.0, 1.0, 0.0]),
+        ("face:ref", 99.0, [40.0, 1.0, 0.0]),
+    ]:
+        graph.add_node(Node(face_id, "face", face_id))
+        if face_id != "face:ref":
+            graph.add_relation(Relation(face_id, "selector:faces", "has_kernel_stable_face_id"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", area, "mm^2"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_center", center, "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_z", center[2], "mm"))
+    graph.add_node(Node("selector:edges", "selector", "selected edges"))
+    for edge_id, length, midpoint in [
+        ("edge:a", 10.0, [1.0, -1.0, 0.0]),
+        ("edge:b", 10.0, [4.0, -1.0, 0.0]),
+        ("edge:c", 10.0, [8.0, -1.0, 0.0]),
+        ("edge:d", 10.0, [13.0, -1.0, 0.0]),
+        ("edge:ref", 99.0, [40.0, -1.0, 0.0]),
+    ]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        if edge_id != "edge:ref":
+            graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint", midpoint, "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_x", midpoint[0], "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint[1], "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_z", midpoint[2], "mm"))
+    for endpoint_id, edge_id, coordinate in [
+        ("edge_endpoint:a", "edge:a", [1.0, 0.0, 3.0]),
+        ("edge_endpoint:b", "edge:b", [4.0, 0.0, 3.0]),
+        ("edge_endpoint:c", "edge:c", [8.0, 0.0, 3.0]),
+        ("edge_endpoint:d", "edge:d", [13.0, 0.0, 3.0]),
+        ("edge_endpoint:ref", "edge:ref", [40.0, 0.0, 8.0]),
+    ]:
+        graph.add_node(Node(endpoint_id, "edge_endpoint", endpoint_id))
+        if endpoint_id != "edge_endpoint:ref":
+            graph.add_relation(Relation(endpoint_id, edge_id, "endpoint_of"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate", coordinate, "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_x", coordinate[0], "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_y", coordinate[1], "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
+    graph.add_node(Node("path:main", "path", "path"))
+    for point_id, coordinate in [
+        ("path:main:point:0", [1.0, 2.0, 0.0]),
+        ("path:main:point:1", [4.0, 2.0, 0.0]),
+        ("path:main:point:2", [8.0, 2.0, 0.0]),
+        ("path:main:point:3", [13.0, 2.0, 0.0]),
+    ]:
+        graph.add_node(Node(point_id, "path_point", point_id))
+        graph.add_relation(Relation(point_id, "path:main", "point_on_path"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate", coordinate, "mm"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
+    for segment_id, midpoint in [
+        ("path:main:segment:0", [1.0, -2.0, 0.0]),
+        ("path:main:segment:1", [4.0, -2.0, 0.0]),
+        ("path:main:segment:2", [8.0, -2.0, 0.0]),
+        ("path:main:segment:3", [13.0, -2.0, 0.0]),
+    ]:
+        graph.add_node(Node(segment_id, "path_segment", segment_id))
+        graph.add_relation(Relation(segment_id, "path:main", "segment_on_path"))
+        graph.add_measurement(Measurement(segment_id, "entity_geometry", "segment_midpoint", midpoint, "mm"))
+        graph.add_measurement(Measurement(segment_id, "relation_metric", "segment_length", 3.0, "mm"))
+    for node_id, relation, volume, centroid in [
+        ("material_region:a", "has_kernel_material_region_geometry", 42.0, [1.0, 0.0, 1.0]),
+        ("material_region:b", "has_kernel_material_region_geometry", 42.0, [4.0, 0.0, 2.0]),
+        ("material_region:c", "has_kernel_material_region_geometry", 42.0, [8.0, 0.0, 3.0]),
+        ("material_region:d", "has_kernel_material_region_geometry", 42.0, [13.0, 0.0, 4.0]),
+        ("material_region:ref", "reference_only", 99.0, [40.0, 0.0, 0.0]),
+        ("void_region:a", "has_kernel_void_region_geometry", 8.0, [1.0, 0.0, 1.0]),
+        ("void_region:b", "has_kernel_void_region_geometry", 8.0, [4.0, 0.0, 2.0]),
+        ("void_region:c", "has_kernel_void_region_geometry", 8.0, [8.0, 0.0, 3.0]),
+        ("void_region:d", "has_kernel_void_region_geometry", 8.0, [13.0, 0.0, 4.0]),
+        ("void_region:ref", "reference_only", 99.0, [45.0, 0.0, 0.0]),
+    ]:
+        node_type = node_id.split(":", 1)[0]
+        graph.add_node(Node(node_id, node_type, node_id))
+        if relation != "reference_only":
+            graph.add_relation(Relation(node_id, node_id, relation))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid", centroid, "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_x", centroid[0], "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_y", centroid[1], "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_z", centroid[2], "mm"))
     return graph
 
 

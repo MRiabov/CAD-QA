@@ -119,6 +119,7 @@ class ReferenceDistanceFamilySpec:
     target_point_metric: str
     reference_type: str
     reference_point_metric: str
+    selection_mode: str = "extreme"
 
 
 @dataclass(frozen=True)
@@ -128,6 +129,7 @@ class ViableReferenceDistance:
     reference_id: str
     aggregation: str
     candidate_ids: tuple[str, ...]
+    aggregation_rank: int | None = None
 
 
 @dataclass(frozen=True)
@@ -1779,22 +1781,27 @@ def _generic_reference_distance_family_specs() -> tuple[ReferenceDistanceFamilyS
     specs: list[ReferenceDistanceFamilySpec] = []
     for target in _GENERIC_REFERENCE_DISTANCE_TARGETS:
         for reference_type, reference_clause_id, reference_point_metric in _GENERIC_REFERENCE_DISTANCE_REFERENCES:
-            specs.append(
-                ReferenceDistanceFamilySpec(
-                    family_id=str(target["family_id"]),
-                    target_type=str(target["target_type"]),
-                    relation=target["relation"],
-                    relation_clause_id=target["relation_clause_id"],
-                    relation_target_type=target["relation_target_type"],
-                    equal_value_clause_id=str(target["equal_value_clause_id"]),
-                    reference_clause_id=reference_clause_id,
-                    target_point_clause_id=str(target["target_point_clause_id"]),
-                    equal_metric=str(target["equal_metric"]),
-                    target_point_metric=str(target["target_point_metric"]),
-                    reference_type=reference_type,
-                    reference_point_metric=reference_point_metric,
+            for family_id, selection_mode in (
+                (str(target["family_id"]), "extreme"),
+                (f"{str(target['family_id']).removesuffix('_distance')}_distance_rank", "rank"),
+            ):
+                specs.append(
+                    ReferenceDistanceFamilySpec(
+                        family_id=family_id,
+                        target_type=str(target["target_type"]),
+                        relation=target["relation"],
+                        relation_clause_id=target["relation_clause_id"],
+                        relation_target_type=target["relation_target_type"],
+                        equal_value_clause_id=str(target["equal_value_clause_id"]),
+                        reference_clause_id=reference_clause_id,
+                        target_point_clause_id=str(target["target_point_clause_id"]),
+                        equal_metric=str(target["equal_metric"]),
+                        target_point_metric=str(target["target_point_metric"]),
+                        reference_type=reference_type,
+                        reference_point_metric=reference_point_metric,
+                        selection_mode=selection_mode,
+                    )
                 )
-            )
     return tuple(specs)
 
 
@@ -3233,6 +3240,24 @@ def _viable_reference_distances(
                 _point_distance(_point_measurement(graph, target.id, spec.target_point_metric), reference_point)
                 for target in target_nodes
             ]
+            if spec.selection_mode == "rank":
+                scored = tuple(zip((node.id for node in target_nodes), distances, strict=True))
+                if len(scored) < 3:
+                    continue
+                for aggregation in ("rank_asc", "rank_desc"):
+                    for rank in range(2, min(len(scored), MAX_SYNTHESIZED_RANK) + 1):
+                        if _has_unique_scored_rank(scored, aggregation, rank):
+                            viable.append(
+                                ViableReferenceDistance(
+                                    spec=spec,
+                                    equal_value=equal_value,
+                                    reference_id=reference.id,
+                                    aggregation=aggregation,
+                                    candidate_ids=tuple(node.id for node in target_nodes),
+                                    aggregation_rank=rank,
+                                )
+                            )
+                continue
             ordered = sorted(distances)
             if len(ordered) >= 2 and abs(ordered[0] - ordered[1]) > GEOMETRY_MARGIN_EPSILON:
                 viable.append(
@@ -3261,6 +3286,7 @@ def _viable_reference_distances(
             item.equal_value,
             item.reference_id,
             item.aggregation,
+            item.aggregation_rank or 0,
             item.candidate_ids,
         ),
     )
@@ -3308,7 +3334,12 @@ def _query_for_reference_distance(graph: OntologyGraph, viable: ViableReferenceD
         return None
     reference_value = _reference_anchor_prompt_value(graph, reference, reference_type=spec.reference_type)
     reference_metrics = _reference_anchor_metrics(spec.reference_type)
-    direction = "min" if viable.aggregation == "argmin" else "max"
+    direction = "min" if viable.aggregation in {"argmin", "rank_asc"} else "max"
+    final_selector = (
+        f"rank:{viable.aggregation_rank}:{direction}:{REFERENCE_FEATURE_DISTANCE_METRIC}"
+        if viable.aggregation_rank is not None
+        else f"{direction}:{REFERENCE_FEATURE_DISTANCE_METRIC}"
+    )
     sampled = merge_sampled_parameters(
         {
             "target_type": [spec.target_type],
@@ -3323,17 +3354,29 @@ def _query_for_reference_distance(graph: OntologyGraph, viable: ViableReferenceD
                 f"{metric}:{_value_bucket(reference_value.get('reference_anchor_values', {}).get(metric))}"
                 for metric in reference_metrics
             ],
-            "final_selector": [f"{direction}:{REFERENCE_FEATURE_DISTANCE_METRIC}"],
+            "final_selector": [final_selector],
             "aggregation_metric": [REFERENCE_FEATURE_DISTANCE_METRIC],
             "equal_measurement_metric": [spec.equal_metric],
             "extremum_direction": [direction],
             "predicate_catalog_version": ["v1"],
             "prompt_wording_variant": [_prompt_wording_variant(graph.graph_id, spec.family_id)],
-            "synthesis_strategy": ["reference_distance_narrowing_v1"],
+            "synthesis_strategy": [
+                "reference_distance_rank_narrowing_v1"
+                if viable.aggregation_rank is not None
+                else "reference_distance_narrowing_v1"
+            ],
         },
         equal_value.sampled_parameters,
         target_point.sampled_parameters,
     )
+    if viable.aggregation_rank is not None:
+        sampled = merge_sampled_parameters(
+            sampled,
+            {
+                "aggregation_rank": [str(viable.aggregation_rank)],
+                "rank_direction": [direction],
+            },
+        )
     if relation is not None:
         sampled = merge_sampled_parameters(sampled, relation.sampled_parameters)
     return QueryProgram(
@@ -3356,6 +3399,7 @@ def _query_for_reference_distance(graph: OntologyGraph, viable: ViableReferenceD
         ],
         aggregation=viable.aggregation,
         aggregation_metric=REFERENCE_FEATURE_DISTANCE_METRIC,
+        aggregation_rank=viable.aggregation_rank,
         hop_count=4 + int(relation is not None),
         difficulty="cad_browsecomp",
         min_individual_clause_candidates=2,
@@ -3621,6 +3665,19 @@ def _has_unique_rank(
 ) -> bool:
     ranked = _rank_nodes(graph, candidates, metric, aggregation, rank)
     return len(ranked) == 1
+
+
+def _has_unique_scored_rank(
+    scored: tuple[tuple[str, float], ...],
+    aggregation: str,
+    rank: int,
+) -> bool:
+    if rank < 1 or rank > len(scored):
+        return False
+    descending = aggregation == "rank_desc"
+    ordered = sorted(scored, key=lambda item: (-item[1] if descending else item[1], item[0]))
+    target = ordered[rank - 1][1]
+    return sum(1 for _, score in scored if abs(score - target) <= GEOMETRY_MARGIN_EPSILON) == 1
 
 
 def _rank_nodes(

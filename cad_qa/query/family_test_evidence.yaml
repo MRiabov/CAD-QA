@@ -530,6 +530,11 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Parameterized feature reference-distance family with sampled reference entity type.
+  - id: parameterized_feature_reference_entity_distance_rank
+    positive_generation: [test_synthesis_generates_parameterized_reference_entity_distance_rank_queries]
+    failure_or_quarantine: [test_synthesis_skips_feature_reference_distance_without_feature_centroids]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Parameterized feature reference-distance rank family with sampled reference entity type and sampled rank.
   - id: parameterized_face_reference_entity_distance
     positive_generation:
       - test_synthesis_generates_parameterized_reference_entity_distance_queries
@@ -538,6 +543,11 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Parameterized face reference-distance family with sampled reference entity type.
+  - id: parameterized_face_reference_entity_distance_rank
+    positive_generation: [test_synthesis_generates_parameterized_reference_entity_distance_rank_queries]
+    failure_or_quarantine: [test_synthesis_skips_face_reference_distance_without_face_centers]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Parameterized face reference-distance rank family with sampled reference entity type and sampled rank.
   - id: parameterized_edge_reference_entity_distance
     positive_generation:
       - test_synthesis_generates_parameterized_reference_entity_distance_queries
@@ -546,6 +556,11 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Parameterized edge reference-distance family with sampled reference entity type.
+  - id: parameterized_edge_reference_entity_distance_rank
+    positive_generation: [test_synthesis_generates_parameterized_reference_entity_distance_rank_queries]
+    failure_or_quarantine: [test_synthesis_skips_reference_distance_without_unique_reference_anchor]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Parameterized edge reference-distance rank family with sampled reference entity type and sampled rank.
   - id: parameterized_endpoint_reference_entity_distance
     positive_generation:
       - test_synthesis_generates_parameterized_reference_entity_distance_queries
@@ -554,6 +569,11 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Parameterized endpoint reference-distance family with sampled reference entity type.
+  - id: parameterized_endpoint_reference_entity_distance_rank
+    positive_generation: [test_synthesis_generates_parameterized_reference_entity_distance_rank_queries]
+    failure_or_quarantine: [test_synthesis_skips_endpoint_reference_distance_without_endpoint_locations]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Parameterized endpoint reference-distance rank family with sampled reference entity type and sampled rank.
   - id: parameterized_material_region_reference_entity_distance
     positive_generation:
       - test_synthesis_generates_parameterized_reference_entity_distance_queries
@@ -562,6 +582,11 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Parameterized added-material-region reference-distance family with sampled reference entity type.
+  - id: parameterized_material_region_reference_entity_distance_rank
+    positive_generation: [test_synthesis_generates_parameterized_reference_entity_distance_rank_queries]
+    failure_or_quarantine: [test_synthesis_skips_region_reference_distance_without_region_centroids]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Parameterized added-material-region reference-distance rank family with sampled reference entity type and sampled rank.
   - id: parameterized_void_region_reference_entity_distance
     positive_generation:
       - test_synthesis_generates_parameterized_reference_entity_distance_queries
@@ -570,6 +595,11 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Parameterized removed-material-region reference-distance family with sampled reference entity type.
+  - id: parameterized_void_region_reference_entity_distance_rank
+    positive_generation: [test_synthesis_generates_parameterized_reference_entity_distance_rank_queries]
+    failure_or_quarantine: [test_synthesis_skips_region_reference_distance_without_region_centroids]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Parameterized removed-material-region reference-distance rank family with sampled reference entity type and sampled rank.
   - id: parameterized_feature_reference_material_region_distance
     positive_generation: [test_synthesis_generates_parameterized_reference_entity_distance_queries]
     failure_or_quarantine: [test_synthesis_skips_region_reference_distance_without_unique_region_anchor]
@@ -702,6 +732,11 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Synthesized path-point reference-distance family with repeated point-coordinate distractors and sampled reference entity type.
+  - id: parameterized_path_point_reference_entity_distance_rank
+    positive_generation: [test_synthesis_generates_parameterized_reference_entity_distance_rank_queries]
+    failure_or_quarantine: [test_synthesis_skips_path_reference_distance_without_equal_distractors]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Synthesized path-point reference-distance rank family with repeated point-coordinate distractors, sampled reference entity type, and sampled rank.
   - id: parameterized_path_segment_reference_entity_distance
     positive_generation:
       - test_synthesis_generates_parameterized_path_reference_distance_queries
@@ -710,6 +745,11 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Synthesized path-segment reference-distance family with repeated segment-length distractors and sampled reference entity type.
+  - id: parameterized_path_segment_reference_entity_distance_rank
+    positive_generation: [test_synthesis_generates_parameterized_reference_entity_distance_rank_queries]
+    failure_or_quarantine: [test_synthesis_skips_path_reference_distance_without_equal_distractors]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Synthesized path-segment reference-distance rank family with repeated segment-length distractors, sampled reference entity type, and sampled rank.
   - id: parameterized_path_point_reference_face_distance
     positive_generation: [test_synthesis_generates_parameterized_path_reference_distance_queries]
     failure_or_quarantine: [test_synthesis_skips_path_reference_distance_without_equal_distractors]

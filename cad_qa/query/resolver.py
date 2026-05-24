@@ -2394,6 +2394,12 @@ def _apply_reference_feature_distance_aggregation(
             scored.append((_point_distance(point, reference_point), node))
     if not scored:
         return []
+    if query.aggregation in {"rank_asc", "rank_desc"}:
+        return _ranked_nodes(
+            scored,
+            rank=query.aggregation_rank or 0,
+            descending=query.aggregation == "rank_desc",
+        )
     target = min(score for score, _ in scored) if query.aggregation == "argmin" else max(score for score, _ in scored)
     return [node for score, node in scored if abs(score - target) <= VALUE_MATCH_TOLERANCE]
 

@@ -1123,6 +1123,18 @@ Checked as implemented with remaining scale caveats:
   reference type is a real sampled family parameter rather than only a family
   suffix; release-scale reference-type balance remains open.
 - The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_reference_distance_rank/PREVIEW.md`
+  adds valid release-ready rows for generic
+  `parameterized_*_reference_entity_distance_rank` families across feature,
+  face, edge, endpoint, path-point, path-segment, added-material-region, and
+  removed-material-region targets. The reviewed rows keep equal-measurement
+  distractors, describe a sampled reference entity by concrete measured
+  geometry, preserve the target point/midpoint/centroid clause, and resolve by
+  sampled rank over distance to the reference entity rather than only
+  nearest/farthest. This implements reference-distance rank synthesis at the
+  valid-row level; benchmark-release distribution, reference-type balance, and
+  broader explicit reference-type rank families remain open.
+- The synthesized selfcheck preview at
   `runs/parameterized_synthesis_selfcheck_region_reference_types/PREVIEW.md`
   adds valid release-ready rows for explicit reference-material-region and
   reference-void-region distance families across feature, face, edge, endpoint,
