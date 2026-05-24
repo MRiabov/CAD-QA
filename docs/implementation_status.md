@@ -670,16 +670,21 @@ Checked as implemented with remaining scale caveats:
   review-only until the sampled distribution is healthy.
 - Add an intended-family manifest so planned release task families that generate
   zero rows block release instead of relying on manual review.
-- Implement explicit release-tier verifier profiles. Current enforced constants
-  are smoke/release-candidate gates, not the benchmark-release tier. The
-  benchmark-release profile should require at least 10,000 release rows, at least
-  10,000 default SFT rows, at least 95% geometry-hop-positive rows, at least 99%
-  geometry-critical default SFT rows, 0% syntax-only default SFT rows, at most 2%
-  syntax-only benchmark rows unless separated as calibration, 15%-30%
-  value-bearing rows, 5%-15% cross-feature value-bearing rows, prompt-template
-  max share of 5%, at least 1,000 unique answers, at least 8 answer-entropy bits,
-  benchmark candidate-breadth thresholds, parameter-balance thresholds, and
-  non-collapsed train/validation/test protected splits.
+- Complete benchmark-release gating. Explicit release-tier verifier profiles now
+  exist for `smoke`, `release-candidate`, and `benchmark-release`, and the
+  benchmark-release profile enforces row counts, default SFT row counts,
+  geometry-hop coverage, default SFT geometry-critical dominance, syntax-only
+  caps, value-bearing and cross-feature coverage bands, prompt-template share,
+  unique-answer count, answer entropy, candidate breadth, and non-collapsed split
+  group coverage. Remaining benchmark-release gates are sampled parameter
+  balance, intended-family zero-row coverage from a manifest, and machine-checked
+  preview/test evidence for changed release families.
+  Rechecking the current CadEvolve-50 release artifact with
+  `--release-tier benchmark-release` blocks release on row count, split group
+  coverage, default SFT row count, prompt-family balance, prompt-template
+  balance, answer entropy, geometry-hop coverage, main BrowseComp hop coverage,
+  syntax-only calibration cap, cross-feature value-bearing coverage, and
+  candidate breadth.
 - Broaden value-bearing and tolerance-equal coverage beyond the implemented
   core to radius/diameter/angle once those measurements are extracted broadly,
   additional face/endpoint/material/void coordinate combinations, and larger

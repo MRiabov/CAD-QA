@@ -171,6 +171,12 @@ sample prompts, query programs, candidate traces, gold answers, and optional
 graph node/measurement samples. The smoke experiment also writes
 `dataset/GENERATED_PREVIEW.md` automatically.
 
+Release and SFT reports accept `--release-tier smoke`,
+`--release-tier release-candidate`, or `--release-tier benchmark-release`.
+Use `benchmark-release` only when the artifact is meant to satisfy the numeric
+benchmark tier; it intentionally blocks small smoke datasets and train-only split
+collapses.
+
 Run the full smoke workflow as one command:
 
 ```bash

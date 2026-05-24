@@ -112,9 +112,11 @@ described as benchmark-release ready.
 | Manual preview | At least 20 sampled rows per changed release family, or all rows if fewer than 20 exist. |
 | New-family tests | Each new release family has positive generation coverage, failure/quarantine coverage, and release-report accounting coverage. |
 
-Current implementation gates are not yet equivalent to this benchmark-release
-tier. When code-enforced thresholds are lower, they should be treated as smoke or
-release-candidate gates until the benchmark-release tier is implemented.
+Current implementation gates now support an explicit `benchmark-release` tier for
+the row-count, hop-coverage, geometry-critical, syntax-only, value-bearing,
+cross-feature, prompt-template, answer-diversity, candidate-breadth, and split
+coverage targets above. Parameter-balance gates, intended-family zero-row gates,
+and machine-checked preview/test evidence gates remain open implementation work.
 
 ## Splits
 

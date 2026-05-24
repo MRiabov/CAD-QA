@@ -440,7 +440,7 @@ Technical definition of done:
 
 ## Epic 15: Benchmark-release numeric readiness tier (`epic-15`)
 
-Status: `planned`
+Status: `work-in-progress`
 Priority: `P0`
 
 Acceptance criteria:
@@ -472,10 +472,10 @@ Technical definition of done:
 | Story | Status | Acceptance criteria | Technical definition of done |
 | --- | --- | --- | --- |
 | 15.1 Document benchmark-release numeric gate tier | `implemented` | Users can see the actual benchmark-release target numbers instead of vague "healthy" thresholds. | Dataset spec, reviewer checklist, runbooks, README, and planning docs define the benchmark-release numeric tier and label lower gates as smoke/release-candidate. |
-| 15.2 Configurable release-tier verifier profiles for smoke, release-candidate, and benchmark-release | `planned` | Users can select the intended release tier and get the right thresholds. | CLI/reporting accepts explicit tier selection and uses tier-specific constants in verifier/SFT reports. |
-| 15.3 Benchmark-release gates for row counts, geometry-hop coverage, geometry-critical dominance, and syntax-only caps | `planned` | Users cannot label small or shortcut-heavy artifacts benchmark-release ready. | Verifier blocks artifacts below 10,000 release/default-SFT rows, below 95% geometry-hop-positive, below 99% default-SFT geometry-critical, above 0% default-SFT syntax-only, or above 2% benchmark syntax-only without separate calibration. |
-| 15.4 Benchmark-release gates for value-bearing, cross-feature, prompt-template, answer-diversity, and candidate-breadth targets | `planned` | Users get datasets with enough concrete measurement reasoning, cross-feature reasoning, prompt variety, answer diversity, and distractors. | Verifier blocks artifacts outside 15%-30% value-bearing, outside 5%-15% cross-feature, above 5% prompt-template share, below 1,000 unique answers, below 8 entropy bits, or below candidate-breadth targets. |
-| 15.5 Benchmark-release gates for parameter balance, intended-family coverage, split quality, and preview/test evidence | `planned` | Users can trust that parameterized families, intended-family coverage, splits, and manual review evidence are not collapsed. | Verifier blocks sampled parameter values above 35%, missing supported axis/direction coverage below 20%, zero-row intended release families, train-only split collapse, fewer than 3 protected groups per split, and missing preview/test evidence for changed release families. |
+| 15.2 Configurable release-tier verifier profiles for smoke, release-candidate, and benchmark-release | `implemented` | Users can select the intended release tier and get the right thresholds. | CLI/reporting accepts explicit tier selection and uses tier-specific constants in verifier/SFT reports. |
+| 15.3 Benchmark-release gates for row counts, geometry-hop coverage, geometry-critical dominance, and syntax-only caps | `implemented` | Users cannot label small or shortcut-heavy artifacts benchmark-release ready. | Verifier blocks artifacts below 10,000 release/default-SFT rows, below 95% geometry-hop-positive, below 99% default-SFT geometry-critical, above 0% default-SFT syntax-only, or above 2% benchmark syntax-only without separate calibration. |
+| 15.4 Benchmark-release gates for value-bearing, cross-feature, prompt-template, answer-diversity, and candidate-breadth targets | `implemented` | Users get datasets with enough concrete measurement reasoning, cross-feature reasoning, prompt variety, answer diversity, and distractors. | Verifier blocks artifacts outside 15%-30% value-bearing, outside 5%-15% cross-feature, above 5% prompt-template share, below 1,000 unique answers, below 8 entropy bits, or below candidate-breadth targets. |
+| 15.5 Benchmark-release gates for parameter balance, intended-family coverage, split quality, and preview/test evidence | `work-in-progress` | Users can trust that parameterized families, intended-family coverage, splits, and manual review evidence are not collapsed. | Verifier now blocks train-only split collapse and fewer than 3 protected groups per split for the benchmark-release tier; sampled parameter balance, intended-family coverage, and preview/test evidence gates remain to be implemented. |
 
 ## Manual Review Requirements Before Marking Implemented
 

@@ -34,6 +34,11 @@ rows, at least 10,000 default SFT rows, 95%+ geometry-hop-positive rows, 99%+
 geometry-critical default SFT rows, 0% syntax-only default SFT rows, and
 non-collapsed train/validation/test protected splits.
 
+Pass `--release-tier benchmark-release` to `cadqa dataset release-report`,
+`cadqa dataset export-release`, and `cadqa training export-sft` when validating a
+benchmark-release candidate. The default tier remains `release-candidate` for
+development runs.
+
 Run `cadqa dataset preview` whenever a task family, graph node type, or
 measurement extractor changes. Filter it with repeated `--family` and
 `--node-type` flags to produce a small review artifact for the exact feature

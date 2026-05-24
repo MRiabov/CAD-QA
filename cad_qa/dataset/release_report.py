@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import math
 from collections import Counter
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -24,18 +25,109 @@ from cad_qa.io import read_jsonl, write_json
 from cad_qa.prompts.render import prompt_template_id_from_mapping
 from cad_qa.query.resolver import VALUE_BUCKET_DECIMALS, VALUE_MATCH_TOLERANCE
 
-MIN_RELEASE_BALANCE_ROWS = 20
-MIN_PROMPT_FAMILY_COUNT = 4
-MIN_PROMPT_FAMILY_SHARE = 0.01
-MAX_PROMPT_FAMILY_SHARE = 0.10
-MIN_PROMPT_TEMPLATE_COUNT = 4
-MAX_PROMPT_TEMPLATE_SHARE = 0.35
-MIN_UNIQUE_ANSWER_COUNT = 8
-MIN_ANSWER_ENTROPY_BITS = 2.0
-MIN_GEOMETRY_HOP_POSITIVE_SHARE = 0.75
-MAX_SYNTAX_ONLY_CALIBRATION_SHARE = 0.10
-MIN_VALUE_BEARING_MEASUREMENT_SHARE = 0.05
-MIN_CROSS_FEATURE_VALUE_BEARING_COUNT = 1
+DEFAULT_RELEASE_TIER = "release-candidate"
+RELEASE_TIERS = ("smoke", "release-candidate", "benchmark-release")
+
+
+@dataclass(frozen=True)
+class ReleaseGateProfile:
+    name: str
+    min_applicable_rows: int
+    min_release_rows: int | None
+    min_default_sft_rows: int | None
+    min_prompt_family_count: int
+    min_prompt_family_share: float
+    max_prompt_family_share: float
+    min_prompt_template_count: int
+    max_prompt_template_share: float
+    min_unique_answer_count: int
+    min_answer_entropy_bits: float
+    min_geometry_hop_positive_share: float
+    max_syntax_only_calibration_share: float
+    min_geometry_critical_training_share: float
+    min_logical_hop_ge_3_share: float | None
+    min_value_bearing_measurement_share: float
+    max_value_bearing_measurement_share: float | None
+    min_cross_feature_value_bearing_count: int
+    min_cross_feature_value_bearing_share: float | None
+    max_cross_feature_value_bearing_share: float | None
+    min_pre_final_candidate_count: int | None
+    min_median_pre_final_candidate_count: float | None
+    min_split_groups_per_split: int | None
+
+
+SMOKE_RELEASE_PROFILE = ReleaseGateProfile(
+    name="smoke",
+    min_applicable_rows=20,
+    min_release_rows=None,
+    min_default_sft_rows=None,
+    min_prompt_family_count=4,
+    min_prompt_family_share=0.01,
+    max_prompt_family_share=0.10,
+    min_prompt_template_count=4,
+    max_prompt_template_share=0.35,
+    min_unique_answer_count=8,
+    min_answer_entropy_bits=2.0,
+    min_geometry_hop_positive_share=0.75,
+    max_syntax_only_calibration_share=0.10,
+    min_geometry_critical_training_share=0.95,
+    min_logical_hop_ge_3_share=None,
+    min_value_bearing_measurement_share=0.05,
+    max_value_bearing_measurement_share=None,
+    min_cross_feature_value_bearing_count=1,
+    min_cross_feature_value_bearing_share=None,
+    max_cross_feature_value_bearing_share=None,
+    min_pre_final_candidate_count=None,
+    min_median_pre_final_candidate_count=None,
+    min_split_groups_per_split=None,
+)
+
+RELEASE_CANDIDATE_PROFILE = replace(SMOKE_RELEASE_PROFILE, name="release-candidate")
+
+BENCHMARK_RELEASE_PROFILE = ReleaseGateProfile(
+    name="benchmark-release",
+    min_applicable_rows=1,
+    min_release_rows=10_000,
+    min_default_sft_rows=10_000,
+    min_prompt_family_count=4,
+    min_prompt_family_share=0.01,
+    max_prompt_family_share=0.10,
+    min_prompt_template_count=4,
+    max_prompt_template_share=0.05,
+    min_unique_answer_count=1_000,
+    min_answer_entropy_bits=8.0,
+    min_geometry_hop_positive_share=0.95,
+    max_syntax_only_calibration_share=0.02,
+    min_geometry_critical_training_share=0.99,
+    min_logical_hop_ge_3_share=0.90,
+    min_value_bearing_measurement_share=0.15,
+    max_value_bearing_measurement_share=0.30,
+    min_cross_feature_value_bearing_count=1,
+    min_cross_feature_value_bearing_share=0.05,
+    max_cross_feature_value_bearing_share=0.15,
+    min_pre_final_candidate_count=2,
+    min_median_pre_final_candidate_count=4.0,
+    min_split_groups_per_split=3,
+)
+
+RELEASE_GATE_PROFILES = {
+    "smoke": SMOKE_RELEASE_PROFILE,
+    "release-candidate": RELEASE_CANDIDATE_PROFILE,
+    "benchmark-release": BENCHMARK_RELEASE_PROFILE,
+}
+
+MIN_RELEASE_BALANCE_ROWS = RELEASE_CANDIDATE_PROFILE.min_applicable_rows
+MIN_PROMPT_FAMILY_COUNT = RELEASE_CANDIDATE_PROFILE.min_prompt_family_count
+MIN_PROMPT_FAMILY_SHARE = RELEASE_CANDIDATE_PROFILE.min_prompt_family_share
+MAX_PROMPT_FAMILY_SHARE = RELEASE_CANDIDATE_PROFILE.max_prompt_family_share
+MIN_PROMPT_TEMPLATE_COUNT = RELEASE_CANDIDATE_PROFILE.min_prompt_template_count
+MAX_PROMPT_TEMPLATE_SHARE = RELEASE_CANDIDATE_PROFILE.max_prompt_template_share
+MIN_UNIQUE_ANSWER_COUNT = RELEASE_CANDIDATE_PROFILE.min_unique_answer_count
+MIN_ANSWER_ENTROPY_BITS = RELEASE_CANDIDATE_PROFILE.min_answer_entropy_bits
+MIN_GEOMETRY_HOP_POSITIVE_SHARE = RELEASE_CANDIDATE_PROFILE.min_geometry_hop_positive_share
+MAX_SYNTAX_ONLY_CALIBRATION_SHARE = RELEASE_CANDIDATE_PROFILE.max_syntax_only_calibration_share
+MIN_VALUE_BEARING_MEASUREMENT_SHARE = RELEASE_CANDIDATE_PROFILE.min_value_bearing_measurement_share
+MIN_CROSS_FEATURE_VALUE_BEARING_COUNT = RELEASE_CANDIDATE_PROFILE.min_cross_feature_value_bearing_count
 
 
 def release_verifier_report(
@@ -45,9 +137,11 @@ def release_verifier_report(
     split: dict[str, Any] | None = None,
     public_rows: list[dict[str, Any]] | None = None,
     private_rows: list[dict[str, Any]] | None = None,
+    release_tier: str = DEFAULT_RELEASE_TIER,
 ) -> dict[str, Any]:
     """Aggregate release-readiness gates and verifier/quarantine taxonomy."""
 
+    profile = release_gate_profile(release_tier)
     split = split or split_manifest(rows)
     dataset = dataset_report(rows)
     validation = validate_rows(rows)
@@ -55,25 +149,39 @@ def release_verifier_report(
     leakage = leakage_audit(rows, split)
     split_quality = split_audit(rows, split)
     quarantine = quarantine_report(rows)
-    training_readiness = training_readiness_report(rows)
-    release_balance = release_balance_report(rows)
+    training_readiness = training_readiness_report(
+        rows,
+        dominance_threshold=profile.min_geometry_critical_training_share,
+    )
+    release_balance = release_balance_report(rows, release_tier=profile.name)
     shortcut_resistance = dataset["shortcut_resistance"]
     failures_by_reason = failure_report(failures or [])
     public_private = public_private_audit(public_rows, private_rows) if public_rows is not None and private_rows is not None else None
     stop_gates = {
+        "release_row_count": _passes_minimum_count(len(rows), profile.min_release_rows),
         "row_validation": validation["valid"],
         "release_validation": release_validation["valid"],
         "group_safe_split_audit": split_quality["valid"],
+        "benchmark_split_group_coverage": _passes_split_group_coverage(
+            split_quality,
+            profile.min_split_groups_per_split,
+        ),
         "leakage_audit": leakage["valid"],
         "no_quarantined_rows": quarantine["quarantine_count"] == 0,
         "default_sft_geometry_critical_dominance": training_readiness["passes_geometry_critical_dominance"],
+        "default_sft_row_count": _passes_minimum_count(
+            training_readiness["default_training_rows"],
+            profile.min_default_sft_rows,
+        ),
         "prompt_family_balance": release_balance["passes_prompt_family_balance"],
         "prompt_template_balance": release_balance["passes_prompt_template_balance"],
         "answer_entropy": release_balance["passes_answer_entropy"],
         "geometry_hop_coverage": release_balance["passes_geometry_hop_coverage"],
+        "main_browsecomp_hop_coverage": release_balance["passes_main_browsecomp_hop_coverage"],
         "syntax_only_calibration_cap": release_balance["passes_syntax_only_calibration_cap"],
         "value_bearing_measurement_coverage": release_balance["passes_value_bearing_measurement_coverage"],
         "cross_feature_value_bearing_coverage": release_balance["passes_cross_feature_value_bearing_coverage"],
+        "candidate_breadth": release_balance["passes_candidate_breadth"],
         "geometry_critical_prompt_family_coverage": _passes_geometry_critical_family_coverage(
             shortcut_resistance
         ),
@@ -82,6 +190,8 @@ def release_verifier_report(
     blocking = [name for name, passed in stop_gates.items() if passed is False]
     return {
         "row_count": len(rows),
+        "release_tier": profile.name,
+        "release_gate_profile": release_gate_profile_report(profile),
         "valid_for_release": not blocking,
         "blocking_gates": blocking,
         "stop_gates": stop_gates,
@@ -100,14 +210,20 @@ def release_verifier_report(
     }
 
 
-def release_balance_report(rows: list[dict[str, Any]]) -> dict[str, Any]:
+def release_balance_report(
+    rows: list[dict[str, Any]],
+    *,
+    release_tier: str = DEFAULT_RELEASE_TIER,
+) -> dict[str, Any]:
     """Summarize release composition checks that catch shortcut-heavy datasets."""
 
+    profile = release_gate_profile(release_tier)
     row_count = len(rows)
     prompt_family_counts = Counter(prompt_family(row) for row in rows)
     prompt_template_counts = Counter(_prompt_template_id(row) for row in rows)
     answer_counts = Counter(_answer_key(row.get("gold_answer")) for row in rows)
     geometry_hop_positive_count = sum(1 for row in rows if int(row.get("geometry_hop_count") or 0) > 0)
+    logical_hop_ge_3_count = sum(1 for row in rows if int(row.get("logical_hop_count") or 0) >= 3)
     geometry_critical_count = sum(1 for row in rows if is_geometry_critical_row(row))
     syntax_only_calibration_count = sum(1 for row in rows if is_syntax_only_calibration_row(row))
     value_bearing_measurement_count = sum(1 for row in rows if _is_value_bearing_measurement_row(row))
@@ -118,104 +234,151 @@ def release_balance_report(rows: list[dict[str, Any]]) -> dict[str, Any]:
     largest_prompt_template_share = largest_prompt_template_count / row_count if row_count else 0.0
     prompt_family_share_reports = _counter_share_reports(prompt_family_counts, row_count)
     underrepresented_prompt_families = [
-        report for report in prompt_family_share_reports if report["share"] < MIN_PROMPT_FAMILY_SHARE
+        report for report in prompt_family_share_reports if report["share"] < profile.min_prompt_family_share
     ]
     overrepresented_prompt_families = [
-        report for report in prompt_family_share_reports if report["share"] > MAX_PROMPT_FAMILY_SHARE
+        report for report in prompt_family_share_reports if report["share"] > profile.max_prompt_family_share
     ]
     geometry_hop_positive_share = geometry_hop_positive_count / row_count if row_count else 0.0
+    logical_hop_ge_3_share = logical_hop_ge_3_count / row_count if row_count else 0.0
     geometry_critical_share = geometry_critical_count / row_count if row_count else 0.0
     syntax_only_calibration_share = syntax_only_calibration_count / row_count if row_count else 0.0
     value_bearing_measurement_share = value_bearing_measurement_count / row_count if row_count else 0.0
     cross_feature_value_bearing_share = cross_feature_value_bearing_count / row_count if row_count else 0.0
-    applicable = row_count >= MIN_RELEASE_BALANCE_ROWS
+    pre_final_candidate_counts = _pre_final_candidate_counts(rows)
+    minimum_pre_final_candidate_count = min(pre_final_candidate_counts) if pre_final_candidate_counts else 0
+    median_pre_final_candidate_count = _median(pre_final_candidate_counts)
+    applicable = row_count >= profile.min_applicable_rows
     answer_entropy_bits = _entropy_bits(answer_counts)
     prompt_family_count = len(prompt_family_counts)
     prompt_template_count = len(prompt_template_counts)
     unique_answer_count = len(answer_counts)
     return {
         "row_count": row_count,
+        "release_tier": profile.name,
+        "release_gate_profile": release_gate_profile_report(profile),
         "applicable": applicable,
-        "minimum_applicable_rows": MIN_RELEASE_BALANCE_ROWS,
+        "minimum_applicable_rows": profile.min_applicable_rows,
         "prompt_family_counts": dict(sorted(prompt_family_counts.items())),
         "prompt_family_count": prompt_family_count,
-        "minimum_prompt_family_count": MIN_PROMPT_FAMILY_COUNT,
+        "minimum_prompt_family_count": profile.min_prompt_family_count,
         "largest_prompt_family": largest_prompt_family,
         "largest_prompt_family_count": largest_prompt_family_count,
         "largest_prompt_family_share": largest_prompt_family_share,
-        "minimum_prompt_family_share": MIN_PROMPT_FAMILY_SHARE,
-        "maximum_prompt_family_share": MAX_PROMPT_FAMILY_SHARE,
+        "minimum_prompt_family_share": profile.min_prompt_family_share,
+        "maximum_prompt_family_share": profile.max_prompt_family_share,
         "underrepresented_prompt_families": underrepresented_prompt_families,
         "overrepresented_prompt_families": overrepresented_prompt_families,
         "passes_prompt_family_balance": (
             None
             if not applicable
-            else prompt_family_count >= MIN_PROMPT_FAMILY_COUNT
+            else prompt_family_count >= profile.min_prompt_family_count
             and not underrepresented_prompt_families
             and not overrepresented_prompt_families
         ),
         "prompt_template_counts": dict(sorted(prompt_template_counts.items())),
         "prompt_template_count": prompt_template_count,
-        "minimum_prompt_template_count": MIN_PROMPT_TEMPLATE_COUNT,
+        "minimum_prompt_template_count": profile.min_prompt_template_count,
         "largest_prompt_template": largest_prompt_template,
         "largest_prompt_template_count": largest_prompt_template_count,
         "largest_prompt_template_share": largest_prompt_template_share,
-        "maximum_prompt_template_share": MAX_PROMPT_TEMPLATE_SHARE,
+        "maximum_prompt_template_share": profile.max_prompt_template_share,
         "passes_prompt_template_balance": (
             None
             if not applicable
-            else prompt_template_count >= MIN_PROMPT_TEMPLATE_COUNT
-            and largest_prompt_template_share <= MAX_PROMPT_TEMPLATE_SHARE
+            else prompt_template_count >= profile.min_prompt_template_count
+            and largest_prompt_template_share <= profile.max_prompt_template_share
         ),
         "unique_answer_count": unique_answer_count,
-        "minimum_unique_answer_count": MIN_UNIQUE_ANSWER_COUNT,
+        "minimum_unique_answer_count": profile.min_unique_answer_count,
         "answer_entropy_bits": answer_entropy_bits,
-        "minimum_answer_entropy_bits": MIN_ANSWER_ENTROPY_BITS,
+        "minimum_answer_entropy_bits": profile.min_answer_entropy_bits,
         "passes_answer_entropy": (
             None
             if not applicable
-            else unique_answer_count >= MIN_UNIQUE_ANSWER_COUNT
-            and answer_entropy_bits >= MIN_ANSWER_ENTROPY_BITS
+            else unique_answer_count >= profile.min_unique_answer_count
+            and answer_entropy_bits >= profile.min_answer_entropy_bits
         ),
         "static_hop_counts": _int_counter(rows, "static_hop_count"),
         "geometry_hop_counts": _int_counter(rows, "geometry_hop_count"),
+        "logical_hop_counts": _int_counter(rows, "logical_hop_count"),
         "geometry_hop_positive_count": geometry_hop_positive_count,
         "geometry_hop_positive_share": geometry_hop_positive_share,
-        "minimum_geometry_hop_positive_share": MIN_GEOMETRY_HOP_POSITIVE_SHARE,
+        "minimum_geometry_hop_positive_share": profile.min_geometry_hop_positive_share,
+        "logical_hop_ge_3_count": logical_hop_ge_3_count,
+        "logical_hop_ge_3_share": logical_hop_ge_3_share,
+        "minimum_logical_hop_ge_3_share": profile.min_logical_hop_ge_3_share,
         "geometry_critical_count": geometry_critical_count,
         "geometry_critical_share": geometry_critical_share,
         "syntax_only_calibration_count": syntax_only_calibration_count,
         "syntax_only_calibration_share": syntax_only_calibration_share,
         "value_bearing_measurement_count": value_bearing_measurement_count,
         "value_bearing_measurement_share": value_bearing_measurement_share,
-        "minimum_value_bearing_measurement_share": MIN_VALUE_BEARING_MEASUREMENT_SHARE,
+        "minimum_value_bearing_measurement_share": profile.min_value_bearing_measurement_share,
+        "maximum_value_bearing_measurement_share": profile.max_value_bearing_measurement_share,
         "cross_feature_value_bearing_count": cross_feature_value_bearing_count,
         "cross_feature_value_bearing_share": cross_feature_value_bearing_share,
-        "minimum_cross_feature_value_bearing_count": MIN_CROSS_FEATURE_VALUE_BEARING_COUNT,
+        "minimum_cross_feature_value_bearing_count": profile.min_cross_feature_value_bearing_count,
+        "minimum_cross_feature_value_bearing_share": profile.min_cross_feature_value_bearing_share,
+        "maximum_cross_feature_value_bearing_share": profile.max_cross_feature_value_bearing_share,
+        "pre_final_candidate_counts": _candidate_breadth_summary(pre_final_candidate_counts),
+        "minimum_pre_final_candidate_count": minimum_pre_final_candidate_count,
+        "minimum_required_pre_final_candidate_count": profile.min_pre_final_candidate_count,
+        "median_pre_final_candidate_count": median_pre_final_candidate_count,
+        "minimum_required_median_pre_final_candidate_count": profile.min_median_pre_final_candidate_count,
         "measurement_value_policy": {
             "value_bucket_decimals": VALUE_BUCKET_DECIMALS,
             "value_match_tolerance": VALUE_MATCH_TOLERANCE,
         },
-        "maximum_syntax_only_calibration_share": MAX_SYNTAX_ONLY_CALIBRATION_SHARE,
+        "maximum_syntax_only_calibration_share": profile.max_syntax_only_calibration_share,
         "passes_geometry_hop_coverage": (
             None
             if not applicable
-            else geometry_hop_positive_share >= MIN_GEOMETRY_HOP_POSITIVE_SHARE
+            else geometry_hop_positive_share >= profile.min_geometry_hop_positive_share
+        ),
+        "passes_main_browsecomp_hop_coverage": (
+            None
+            if not applicable
+            else True
+            if profile.min_logical_hop_ge_3_share is None
+            else logical_hop_ge_3_share >= profile.min_logical_hop_ge_3_share
         ),
         "passes_syntax_only_calibration_cap": (
             None
             if not applicable
-            else syntax_only_calibration_share <= MAX_SYNTAX_ONLY_CALIBRATION_SHARE
+            else syntax_only_calibration_share <= profile.max_syntax_only_calibration_share
         ),
         "passes_value_bearing_measurement_coverage": (
             None
             if not applicable
-            else value_bearing_measurement_share >= MIN_VALUE_BEARING_MEASUREMENT_SHARE
+            else value_bearing_measurement_share >= profile.min_value_bearing_measurement_share
+            and (
+                profile.max_value_bearing_measurement_share is None
+                or value_bearing_measurement_share <= profile.max_value_bearing_measurement_share
+            )
         ),
         "passes_cross_feature_value_bearing_coverage": (
             None
             if not applicable
-            else cross_feature_value_bearing_count >= MIN_CROSS_FEATURE_VALUE_BEARING_COUNT
+            else cross_feature_value_bearing_count >= profile.min_cross_feature_value_bearing_count
+            and (
+                profile.min_cross_feature_value_bearing_share is None
+                or cross_feature_value_bearing_share >= profile.min_cross_feature_value_bearing_share
+            )
+            and (
+                profile.max_cross_feature_value_bearing_share is None
+                or cross_feature_value_bearing_share <= profile.max_cross_feature_value_bearing_share
+            )
+        ),
+        "passes_candidate_breadth": (
+            None
+            if not applicable
+            else True
+            if profile.min_pre_final_candidate_count is None
+            and profile.min_median_pre_final_candidate_count is None
+            else bool(pre_final_candidate_counts)
+            and minimum_pre_final_candidate_count >= (profile.min_pre_final_candidate_count or 0)
+            and median_pre_final_candidate_count >= (profile.min_median_pre_final_candidate_count or 0.0)
         ),
     }
 
@@ -225,6 +388,7 @@ def release_verifier_markdown(report: dict[str, Any]) -> str:
         "# CAD-QA Release Verifier Report",
         "",
         f"- Rows: {report['row_count']}",
+        f"- Release tier: {report.get('release_tier', DEFAULT_RELEASE_TIER)}",
         f"- Valid for release: {str(report['valid_for_release']).lower()}",
         f"- Blocking gates: {report['blocking_gates']}",
         "",
@@ -314,6 +478,7 @@ def write_release_verifier_report(
     dataset_dir: Path,
     *,
     out: Path | None = None,
+    release_tier: str = DEFAULT_RELEASE_TIER,
 ) -> dict[str, Any]:
     rows = read_jsonl(dataset_dir / "rows.jsonl")
     failure_path = dataset_dir / "failure_manifest.jsonl"
@@ -330,12 +495,63 @@ def write_release_verifier_report(
         split=split,
         public_rows=public,
         private_rows=private,
+        release_tier=release_tier,
     )
     output_dir = out or dataset_dir
     output_dir.mkdir(parents=True, exist_ok=True)
     write_json(output_dir / "release_verifier_report.json", report)
     (output_dir / "RELEASE_VERIFIER_REPORT.md").write_text(release_verifier_markdown(report), encoding="utf-8")
     return report
+
+
+def release_gate_profile(release_tier: str | ReleaseGateProfile) -> ReleaseGateProfile:
+    if isinstance(release_tier, ReleaseGateProfile):
+        return release_tier
+    try:
+        return RELEASE_GATE_PROFILES[release_tier]
+    except KeyError as exc:
+        raise ValueError(f"unknown release tier: {release_tier}") from exc
+
+
+def release_gate_profile_report(profile: ReleaseGateProfile) -> dict[str, Any]:
+    return {
+        "name": profile.name,
+        "min_applicable_rows": profile.min_applicable_rows,
+        "min_release_rows": profile.min_release_rows,
+        "min_default_sft_rows": profile.min_default_sft_rows,
+        "min_prompt_family_count": profile.min_prompt_family_count,
+        "min_prompt_family_share": profile.min_prompt_family_share,
+        "max_prompt_family_share": profile.max_prompt_family_share,
+        "min_prompt_template_count": profile.min_prompt_template_count,
+        "max_prompt_template_share": profile.max_prompt_template_share,
+        "min_unique_answer_count": profile.min_unique_answer_count,
+        "min_answer_entropy_bits": profile.min_answer_entropy_bits,
+        "min_geometry_hop_positive_share": profile.min_geometry_hop_positive_share,
+        "max_syntax_only_calibration_share": profile.max_syntax_only_calibration_share,
+        "min_geometry_critical_training_share": profile.min_geometry_critical_training_share,
+        "min_logical_hop_ge_3_share": profile.min_logical_hop_ge_3_share,
+        "min_value_bearing_measurement_share": profile.min_value_bearing_measurement_share,
+        "max_value_bearing_measurement_share": profile.max_value_bearing_measurement_share,
+        "min_cross_feature_value_bearing_count": profile.min_cross_feature_value_bearing_count,
+        "min_cross_feature_value_bearing_share": profile.min_cross_feature_value_bearing_share,
+        "max_cross_feature_value_bearing_share": profile.max_cross_feature_value_bearing_share,
+        "min_pre_final_candidate_count": profile.min_pre_final_candidate_count,
+        "min_median_pre_final_candidate_count": profile.min_median_pre_final_candidate_count,
+        "min_split_groups_per_split": profile.min_split_groups_per_split,
+    }
+
+
+def _passes_minimum_count(count: int, minimum: int | None) -> bool:
+    if minimum is None:
+        return True
+    return count >= minimum
+
+
+def _passes_split_group_coverage(split_quality: dict[str, Any], minimum: int | None) -> bool:
+    if minimum is None:
+        return True
+    group_counts = split_quality.get("group_counts_by_split", {})
+    return all(int(group_counts.get(split, 0) or 0) >= minimum for split in ("train", "validation", "test"))
 
 
 def _json_block(value: Any) -> str:
@@ -402,6 +618,42 @@ def _counter_share_reports(counts: Counter[str], total: int) -> list[dict[str, A
         }
         for key, count in sorted(counts.items())
     ]
+
+
+def _pre_final_candidate_counts(rows: list[dict[str, Any]]) -> list[int]:
+    counts = []
+    for row in rows:
+        if int(row.get("logical_hop_count") or 0) < 3:
+            continue
+        trace = row.get("candidate_trace") or {}
+        steps = trace.get("steps") or []
+        for step in steps:
+            if step.get("step") == "aggregation":
+                before = step.get("before") or []
+                if isinstance(before, list):
+                    counts.append(len(before))
+                break
+    return counts
+
+
+def _candidate_breadth_summary(counts: list[int]) -> dict[str, Any]:
+    if not counts:
+        return {"count": 0, "min": 0, "median": 0.0}
+    return {
+        "count": len(counts),
+        "min": min(counts),
+        "median": _median(counts),
+    }
+
+
+def _median(values: list[int]) -> float:
+    if not values:
+        return 0.0
+    ordered = sorted(values)
+    midpoint = len(ordered) // 2
+    if len(ordered) % 2:
+        return float(ordered[midpoint])
+    return (ordered[midpoint - 1] + ordered[midpoint]) / 2
 
 
 def _int_counter(rows: list[dict[str, Any]], key: str) -> dict[str, int]:

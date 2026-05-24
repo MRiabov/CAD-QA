@@ -9,7 +9,11 @@ from typing import Any
 from cad_qa.dataset.audit import leakage_audit
 from cad_qa.dataset.public import write_public_private_artifacts
 from cad_qa.dataset.quarantine import quarantine_report
-from cad_qa.dataset.release_report import MAX_SYNTAX_ONLY_CALIBRATION_SHARE, write_release_verifier_report
+from cad_qa.dataset.release_report import (
+    DEFAULT_RELEASE_TIER,
+    release_gate_profile,
+    write_release_verifier_report,
+)
 from cad_qa.dataset.report import dataset_card_markdown, dataset_report, failure_report
 from cad_qa.dataset.sft import is_syntax_only_calibration_row
 from cad_qa.dataset.split import rows_with_assigned_splits, split_audit, split_manifest
@@ -24,10 +28,15 @@ def export_release_dataset(
     out: Path,
     source_dataset: Path | None = None,
     allow_failing_release_gates: bool = False,
+    release_tier: str = DEFAULT_RELEASE_TIER,
 ) -> dict[str, Any]:
+    profile = release_gate_profile(release_tier)
     release_valid_rows, validation_exclusions = _filter_release_valid_rows(rows)
     deduped_rows, duplicate_exclusions = _dedupe_release_prompts(release_valid_rows)
-    release_rows, calibration_cap_exclusions = _cap_syntax_only_calibration_rows(deduped_rows)
+    release_rows, calibration_cap_exclusions = _cap_syntax_only_calibration_rows(
+        deduped_rows,
+        profile.max_syntax_only_calibration_share,
+    )
     if not release_rows:
         raise ValueError("no release-ready rows found")
     out.mkdir(parents=True, exist_ok=True)
@@ -96,7 +105,7 @@ def export_release_dataset(
         ),
         encoding="utf-8",
     )
-    verifier_report = write_release_verifier_report(out)
+    verifier_report = write_release_verifier_report(out, release_tier=profile.name)
     valid = validation["valid"] and audit["valid"] and split_quality["valid"] and verifier_report["valid_for_release"]
     result = {
         "row_count": len(release_rows),
@@ -106,6 +115,7 @@ def export_release_dataset(
         "excluded_duplicate_prompt_count": len(duplicate_exclusions),
         "excluded_syntax_only_calibration_cap_count": len(calibration_cap_exclusions),
         "valid": valid,
+        "release_tier": profile.name,
         "blocking_release_gates": verifier_report["blocking_gates"],
         "out": str(out),
         "dataset": report,
@@ -164,12 +174,15 @@ def _dedupe_release_prompts(rows: list[dict[str, Any]]) -> tuple[list[dict[str, 
     return kept, exclusions
 
 
-def _cap_syntax_only_calibration_rows(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def _cap_syntax_only_calibration_rows(
+    rows: list[dict[str, Any]],
+    max_share: float,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     calibration_rows = [row for row in rows if is_syntax_only_calibration_row(row)]
     main_rows = [row for row in rows if not is_syntax_only_calibration_row(row)]
     if not calibration_rows or not main_rows:
         return rows, []
-    allowed_count = _allowed_calibration_count(len(main_rows), MAX_SYNTAX_ONLY_CALIBRATION_SHARE)
+    allowed_count = _allowed_calibration_count(len(main_rows), max_share)
     kept_calibration = sorted(calibration_rows, key=lambda row: str(row.get("row_id")))[:allowed_count]
     excluded_calibration = sorted(calibration_rows, key=lambda row: str(row.get("row_id")))[allowed_count:]
     kept_ids = {id(row) for row in kept_calibration}
@@ -180,7 +193,7 @@ def _cap_syntax_only_calibration_rows(rows: list[dict[str, Any]]) -> tuple[list[
             "source_id": row.get("source_id"),
             "prompt_family": _prompt_family(row),
             "reason": "syntax_only_calibration_cap",
-            "maximum_syntax_only_calibration_share": MAX_SYNTAX_ONLY_CALIBRATION_SHARE,
+            "maximum_syntax_only_calibration_share": max_share,
         }
         for row in excluded_calibration
     ]

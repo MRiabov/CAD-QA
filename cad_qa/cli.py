@@ -13,7 +13,13 @@ from cad_qa.dataset.preview import dataset_preview_markdown
 from cad_qa.dataset.public import write_public_private_artifacts
 from cad_qa.dataset.quarantine import quarantine_report
 from cad_qa.dataset.release import export_release_dataset
-from cad_qa.dataset.release_report import release_balance_report, write_release_verifier_report
+from cad_qa.dataset.release_report import (
+    DEFAULT_RELEASE_TIER,
+    RELEASE_TIERS,
+    release_balance_report,
+    release_gate_profile,
+    write_release_verifier_report,
+)
 from cad_qa.dataset.report import (
     dataset_card_markdown,
     dataset_report,
@@ -126,6 +132,7 @@ def build_parser() -> argparse.ArgumentParser:
     export_release = dataset_sub.add_parser("export-release")
     export_release.add_argument("path", type=Path)
     export_release.add_argument("--out", type=Path, required=True)
+    export_release.add_argument("--release-tier", choices=RELEASE_TIERS, default=DEFAULT_RELEASE_TIER)
     export_release.add_argument(
         "--allow-failing-release-gates",
         action="store_true",
@@ -142,6 +149,7 @@ def build_parser() -> argparse.ArgumentParser:
     release_report = dataset_sub.add_parser("release-report")
     release_report.add_argument("path", type=Path)
     release_report.add_argument("--out", type=Path)
+    release_report.add_argument("--release-tier", choices=RELEASE_TIERS, default=DEFAULT_RELEASE_TIER)
     release_report.set_defaults(func=_cmd_dataset_release_report)
     shortcut_report = dataset_sub.add_parser("shortcut-report")
     shortcut_report.add_argument("path", type=Path, help="Dataset directory or rows.jsonl file.")
@@ -207,6 +215,7 @@ def build_parser() -> argparse.ArgumentParser:
     export_sft.add_argument("--rows", type=Path, required=True)
     export_sft.add_argument("--out", type=Path, required=True)
     export_sft.add_argument("--scaling-sizes", type=int, nargs="*", default=[8, 16, 32])
+    export_sft.add_argument("--release-tier", choices=RELEASE_TIERS, default=DEFAULT_RELEASE_TIER)
     export_sft.add_argument(
         "--include-calibration",
         action="store_true",
@@ -413,9 +422,11 @@ def _cmd_dataset_export_release(args: argparse.Namespace) -> dict[str, Any]:
         out=args.out,
         source_dataset=args.path,
         allow_failing_release_gates=bool(args.allow_failing_release_gates),
+        release_tier=args.release_tier,
     )
     return {
         "row_count": result["row_count"],
+        "release_tier": result["release_tier"],
         "excluded_quarantine_count": result["excluded_quarantine_count"],
         "excluded_release_validation_count": result["excluded_release_validation_count"],
         "excluded_prompt_policy_count": result["excluded_prompt_policy_count"],
@@ -465,7 +476,7 @@ def _cmd_dataset_card(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _cmd_dataset_release_report(args: argparse.Namespace) -> dict[str, Any]:
-    return write_release_verifier_report(args.path, out=args.out)
+    return write_release_verifier_report(args.path, out=args.out, release_tier=args.release_tier)
 
 
 def _cmd_dataset_shortcut_report(args: argparse.Namespace) -> dict[str, Any]:
@@ -616,6 +627,7 @@ def _cmd_evaluation_tool_assisted_upper_bound(args: argparse.Namespace) -> dict[
 
 
 def _cmd_training_export_sft(args: argparse.Namespace) -> dict[str, Any]:
+    profile = release_gate_profile(args.release_tier)
     input_rows = read_jsonl(args.rows)
     rows = input_rows if args.include_calibration else default_training_rows(input_rows)
     args.out.mkdir(parents=True, exist_ok=True)
@@ -635,6 +647,7 @@ def _cmd_training_export_sft(args: argparse.Namespace) -> dict[str, Any]:
         "excluded_calibration_or_noncritical_rows": len(input_rows) - len(rows),
         "excluded_calibration_noncritical_or_quarantined_rows": len(input_rows) - len(rows),
         "include_calibration": bool(args.include_calibration),
+        "release_tier": profile.name,
         "answer_sft_rows": len(answer_rows),
         "reasoning_sft_rows": len(reasoning_rows),
         "ablation_groups": {name: len(group_rows) for name, group_rows in ablation_groups.items()},
@@ -644,12 +657,14 @@ def _cmd_training_export_sft(args: argparse.Namespace) -> dict[str, Any]:
         input_rows,
         rows,
         include_calibration=bool(args.include_calibration),
+        dominance_threshold=profile.min_geometry_critical_training_share,
     )
-    report["input_balance"] = release_balance_report(input_rows)
-    report["training_balance"] = release_balance_report(rows)
+    report["input_balance"] = release_balance_report(input_rows, release_tier=profile.name)
+    report["training_balance"] = release_balance_report(rows, release_tier=profile.name)
     report["training_stop_gates"] = _training_stop_gates(
         report["training_readiness"],
         report["training_balance"],
+        profile_name=profile.name,
     )
     report["blocking_training_gates"] = _blocking_gates(report["training_stop_gates"])
     report["valid_for_training"] = not report["blocking_training_gates"]
@@ -667,16 +682,26 @@ def _cmd_training_export_sft(args: argparse.Namespace) -> dict[str, Any]:
 def _training_stop_gates(
     training_readiness: dict[str, Any],
     training_balance: dict[str, Any],
+    *,
+    profile_name: str = DEFAULT_RELEASE_TIER,
 ) -> dict[str, Any]:
+    profile = release_gate_profile(profile_name)
     return {
         "geometry_critical_dominance": training_readiness["passes_geometry_critical_dominance"],
+        "default_sft_row_count": (
+            True
+            if profile.min_default_sft_rows is None
+            else training_readiness["training_rows"] >= profile.min_default_sft_rows
+        ),
         "prompt_family_balance": training_balance["passes_prompt_family_balance"],
         "prompt_template_balance": training_balance["passes_prompt_template_balance"],
         "answer_entropy": training_balance["passes_answer_entropy"],
         "geometry_hop_coverage": training_balance["passes_geometry_hop_coverage"],
+        "main_browsecomp_hop_coverage": training_balance["passes_main_browsecomp_hop_coverage"],
         "syntax_only_calibration_cap": training_balance["passes_syntax_only_calibration_cap"],
         "value_bearing_measurement_coverage": training_balance["passes_value_bearing_measurement_coverage"],
         "cross_feature_value_bearing_coverage": training_balance["passes_cross_feature_value_bearing_coverage"],
+        "candidate_breadth": training_balance["passes_candidate_breadth"],
     }
 
 

@@ -363,7 +363,7 @@ epics:
         status: planned
   - id: epic-15
     title: Benchmark-release numeric readiness tier
-    status: planned
+    status: work-in-progress
     priority: P0
     acceptance_criteria:
       - Benchmark-release artifacts contain at least 10,000 release rows and at
@@ -388,13 +388,13 @@ epics:
         status: implemented
       - id: "15.2"
         title: Configurable release-tier verifier profiles for smoke, release-candidate, and benchmark-release
-        status: planned
+        status: implemented
       - id: "15.3"
         title: Benchmark-release gates for row counts, geometry-hop coverage, geometry-critical dominance, and syntax-only caps
-        status: planned
+        status: implemented
       - id: "15.4"
         title: Benchmark-release gates for value-bearing, cross-feature, prompt-template, answer-diversity, and candidate-breadth targets
-        status: planned
+        status: implemented
       - id: "15.5"
         title: Benchmark-release gates for parameter balance, intended-family coverage, split quality, and preview/test evidence
-        status: planned
+        status: work-in-progress

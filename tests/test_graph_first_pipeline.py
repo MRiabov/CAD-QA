@@ -2212,6 +2212,64 @@ def test_release_balance_report_checks_family_entropy_and_geometry_hops() -> Non
     assert value_report["cross_feature_value_bearing_count"] == 1
 
 
+def test_benchmark_release_tier_applies_stricter_numeric_gates() -> None:
+    rows = [
+        {
+            "row_id": f"row:src:{index}:family_{index % 10}",
+            "source_id": f"src_{index}",
+            "prompt": f"geometry prompt {index}",
+            "prompt_template_id": f"template_{index % 10}",
+            "gold_answer": f"entity:{index}",
+            "logical_hop_count": 3,
+            "geometry_hop_count": 2,
+            "static_hop_count": 0,
+            "query_program": {
+                "query_id": f"graph:src:q{index}:family_{index % 10}",
+                "aggregation_metric": "volume",
+                "clauses": [{"kind": "has_measurement", "metric": "volume", "value": float(index)}],
+            },
+            "candidate_trace": {
+                "steps": [
+                    {"step": "initial", "candidate_ids": [f"entity:{i}" for i in range(8)]},
+                    {
+                        "step": "aggregation",
+                        "before": [f"entity:{i}" for i in range(4)],
+                        "after": [f"entity:{index}"],
+                    },
+                ],
+                "final_candidates": [f"entity:{index}"],
+            },
+        }
+        for index in range(100)
+    ]
+
+    release_candidate = release_balance_report(rows)
+    assert release_candidate["release_tier"] == "release-candidate"
+    assert release_candidate["passes_prompt_template_balance"]
+    assert release_candidate["passes_answer_entropy"]
+    assert release_candidate["passes_geometry_hop_coverage"]
+
+    benchmark = release_balance_report(rows, release_tier="benchmark-release")
+    assert benchmark["release_tier"] == "benchmark-release"
+    assert benchmark["maximum_prompt_template_share"] == 0.05
+    assert benchmark["minimum_unique_answer_count"] == 1000
+    assert benchmark["minimum_answer_entropy_bits"] == 8.0
+    assert benchmark["minimum_geometry_hop_positive_share"] == 0.95
+    assert benchmark["minimum_logical_hop_ge_3_share"] == 0.90
+    assert benchmark["minimum_value_bearing_measurement_share"] == 0.15
+    assert benchmark["maximum_value_bearing_measurement_share"] == 0.30
+    assert benchmark["minimum_cross_feature_value_bearing_share"] == 0.05
+    assert benchmark["minimum_required_pre_final_candidate_count"] == 2
+    assert benchmark["minimum_required_median_pre_final_candidate_count"] == 4.0
+    assert not benchmark["passes_prompt_template_balance"]
+    assert not benchmark["passes_answer_entropy"]
+    assert benchmark["passes_geometry_hop_coverage"]
+    assert benchmark["passes_main_browsecomp_hop_coverage"]
+    assert not benchmark["passes_value_bearing_measurement_coverage"]
+    assert not benchmark["passes_cross_feature_value_bearing_coverage"]
+    assert benchmark["passes_candidate_breadth"]
+
+
 def test_release_verifier_blocks_non_calibration_low_geometry_critical_families() -> None:
     rows = [
         {
@@ -2409,6 +2467,7 @@ def test_training_export_cli_defaults_to_geometry_critical_rows(tmp_path: Path) 
     rows_path = tmp_path / "rows.jsonl"
     default_out = tmp_path / "sft_default"
     calibration_out = tmp_path / "sft_calibration"
+    benchmark_out = tmp_path / "sft_benchmark"
     write_jsonl(rows_path, rows)
 
     assert cli_main(["training", "export-sft", "--rows", str(rows_path), "--out", str(default_out)]) == 0
@@ -2431,6 +2490,25 @@ def test_training_export_cli_defaults_to_geometry_critical_rows(tmp_path: Path) 
     assert default_sft_report["valid_for_training"]
     assert default_sft_report["blocking_training_gates"] == []
     assert default_sft_report["enforced_training_gates"]
+
+    assert cli_main(
+        [
+            "training",
+            "export-sft",
+            "--rows",
+            str(rows_path),
+            "--out",
+            str(benchmark_out),
+            "--release-tier",
+            "benchmark-release",
+            "--allow-failing-training-gates",
+        ]
+    ) == 0
+    benchmark_sft_report = json.loads((benchmark_out / "sft_report.json").read_text())
+    assert benchmark_sft_report["release_tier"] == "benchmark-release"
+    assert not benchmark_sft_report["valid_for_training"]
+    assert "default_sft_row_count" in benchmark_sft_report["blocking_training_gates"]
+    assert benchmark_sft_report["training_balance"]["release_gate_profile"]["min_default_sft_rows"] == 10000
 
     assert cli_main(
         [
@@ -3385,6 +3463,13 @@ def test_release_verifier_report_stop_gates_and_cli(tmp_path: Path) -> None:
     assert cli_main(["dataset", "release-report", str(dataset_dir)]) == 0
     assert (dataset_dir / "release_verifier_report.json").exists()
     assert (dataset_dir / "RELEASE_VERIFIER_REPORT.md").exists()
+    assert cli_main(["dataset", "release-report", str(dataset_dir), "--release-tier", "benchmark-release"]) == 0
+    benchmark_report = json.loads((dataset_dir / "release_verifier_report.json").read_text())
+    assert benchmark_report["release_tier"] == "benchmark-release"
+    assert benchmark_report["release_gate_profile"]["min_release_rows"] == 10000
+    assert "release_row_count" in benchmark_report["blocking_gates"]
+    assert "default_sft_row_count" in benchmark_report["blocking_gates"]
+    assert "benchmark_split_group_coverage" in benchmark_report["blocking_gates"]
 
 
 def test_public_private_exports_do_not_leak_hidden_fields(tmp_path: Path) -> None:

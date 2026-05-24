@@ -23,6 +23,10 @@ value-bearing rows in the 15%-30% band, cross-feature value-bearing rows in the
 parameter distributions. Current smoke/release-candidate gates are not enough for
 that claim.
 
+Use `--release-tier benchmark-release` to apply the benchmark numeric profile to
+SFT reports. The default tier is `release-candidate`, so benchmark claims should
+always pass the stricter tier explicitly.
+
 Build the smoke SFT artifacts:
 
 ```bash
