@@ -59,7 +59,13 @@ from cad_qa.query.family_manifest import DEFAULT_FAMILY_MANIFEST, intended_famil
 from cad_qa.query.ir import query_from_dict
 from cad_qa.query.resolver import resolve_query, smoke_queries
 from cad_qa.query.synthesis_selfcheck import write_synthesis_selfcheck
-from cad_qa.source import load_sources_jsonl, source_audit, source_manifest
+from cad_qa.source import (
+    cadevolve_tar_source_rows,
+    load_sources_jsonl,
+    source_audit,
+    source_manifest,
+    source_record_from_mapping,
+)
 from cad_qa.trace import trace_report, trace_sources_bounded
 
 
@@ -96,6 +102,13 @@ def build_parser() -> argparse.ArgumentParser:
     source_audit_cmd.add_argument("--limit", type=int)
     source_audit_cmd.add_argument("--out", type=Path, required=True)
     source_audit_cmd.set_defaults(func=_cmd_sources_audit)
+    source_from_cadevolve_tar = sources_sub.add_parser("from-cadevolve-tar")
+    source_from_cadevolve_tar.add_argument("--tar", type=Path, required=True)
+    source_from_cadevolve_tar.add_argument("--out", type=Path, required=True)
+    source_from_cadevolve_tar.add_argument("--limit", type=int)
+    source_from_cadevolve_tar.add_argument("--path-prefix", action="append", dest="path_prefixes")
+    source_from_cadevolve_tar.add_argument("--max-member-bytes", type=int, default=1_000_000)
+    source_from_cadevolve_tar.set_defaults(func=_cmd_sources_from_cadevolve_tar)
 
     graph = subparsers.add_parser("graph")
     graph_sub = graph.add_subparsers(required=True)
@@ -305,6 +318,29 @@ def _cmd_sources_audit(args: argparse.Namespace) -> dict[str, Any]:
         "source_count": report["source_count"],
         "error_count": report["error_count"],
         "warning_count": report["warning_count"],
+    }
+
+
+def _cmd_sources_from_cadevolve_tar(args: argparse.Namespace) -> dict[str, Any]:
+    rows, report = cadevolve_tar_source_rows(
+        args.tar,
+        limit=args.limit,
+        path_prefixes=args.path_prefixes,
+        max_member_bytes=args.max_member_bytes,
+    )
+    write_jsonl(args.out, rows)
+    manifest = source_manifest([source_record_from_mapping(row) for row in rows])
+    report = {**report, "source_manifest": manifest}
+    write_json(args.out.with_suffix(".manifest.json"), manifest)
+    write_json(args.out.with_suffix(".report.json"), report)
+    return {
+        "out": str(args.out),
+        "source_count": len(rows),
+        "member_count": report["member_count"],
+        "python_member_count": report["python_member_count"],
+        "skipped_non_cadquery_count": report["skipped_non_cadquery_count"],
+        "manifest": str(args.out.with_suffix(".manifest.json")),
+        "report": str(args.out.with_suffix(".report.json")),
     }
 
 

@@ -202,9 +202,12 @@ failure/quarantine, and release-report-accounting test evidence refs.
 
 ## Splits
 
-Release splits must be group-safe by source family, generator, and
-counterfactual group when such metadata exists. Smoke datasets may use a single
-`rows.jsonl` file.
+Release splits must be group-safe by true leakage groups such as source family,
+explicit split group, counterfactual group, family ID, template ID, and
+path-derived family when such metadata exists. Broad corpus provenance such as
+`generator_id` or `generator` must be reported for auditability but must not
+merge unrelated source families into one protected split group. Smoke datasets
+may use a single `rows.jsonl` file.
 
 If available source metadata collapses all rows into one protected split group,
 the artifact may still be useful as a fine-tuning-format export, but it is not a

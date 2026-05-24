@@ -147,6 +147,13 @@ epics:
       - id: "2.3"
         title: CADEvolve source manifests and audits
         status: implemented
+        acceptance_criteria:
+          - "Users can start from a CADEvolve tar archive or a prepared sources.jsonl and get stable normalized source records."
+          - Users can audit source counts, stable IDs, hashes, path families,
+            and broad CADEvolve provenance before graph construction.
+        technical_definition_of_done:
+          - "cadqa sources from-cadevolve-tar extracts CadQuery-looking Python members from CADEvolve archives into normalized source JSONL and writes manifest/report sidecars."
+          - "Source manifests distinguish protected leakage grouping metadata from reported provenance such as generator_id and generator."
   - id: epic-3
     title: Trace and snapshot execution
     status: implemented

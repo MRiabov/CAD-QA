@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import ast
+import io
 import json
 import math
+import tarfile
 from pathlib import Path
 
 import yaml
@@ -59,7 +61,14 @@ from cad_qa.query.parameters import sampled_parameters_from_query
 from cad_qa.query.resolver import resolve_query, smoke_queries
 from cad_qa.query.synthesis import synthesize_graph_hop_queries
 from cad_qa.query.synthesis_selfcheck import SYNTHESIS_SELFCHECK_FAMILIES, write_synthesis_selfcheck
-from cad_qa.source import load_sources_jsonl, source_audit, source_family_from_path, source_manifest, source_record_from_mapping
+from cad_qa.source import (
+    cadevolve_tar_source_rows,
+    load_sources_jsonl,
+    source_audit,
+    source_family_from_path,
+    source_manifest,
+    source_record_from_mapping,
+)
 from cad_qa.trace import TraceRecord, cadquery_available, trace_report, trace_source, trace_sources_bounded
 from cad_qa.cli import main as cli_main
 
@@ -185,6 +194,8 @@ def test_cadevolve_source_manifest_and_audit_cli(tmp_path: Path) -> None:
     assert manifest["source_count"] == 4
     assert manifest["groups"]["path_family"]["groups"]["cadquery/train/bracket"] == ["src_a", "src_b"]
     assert manifest["groups"]["generator_id"]["groups"]["gen_box"] == ["src_a", "src_b"]
+    assert "generator_id" not in manifest["protected_group_keys"]
+    assert "generator_id" in manifest["reported_provenance_keys"]
     assert manifest["duplicate_source_ids"] == {"src_dup": 2}
     assert not audit["valid"]
     assert audit["errors"][0]["error"] == "duplicate_source_id"
@@ -193,6 +204,60 @@ def test_cadevolve_source_manifest_and_audit_cli(tmp_path: Path) -> None:
     assert cli_main(["sources", "audit", "--sources-jsonl", str(sources_path), "--out", str(audit_path)]) == 0
     assert manifest_path.exists()
     assert audit_path.exists()
+
+
+def test_cadevolve_tar_import_writes_source_jsonl(tmp_path: Path) -> None:
+    tar_path = tmp_path / "cadevolve.tar"
+    with tarfile.open(tar_path, "w") as archive:
+        for name, text in {
+            "CADEvolve-C/ABC-C/part_a+r01.py": "import cadquery as cq\nresult = cq.Workplane('XY').box(1, 1, 1)\n",
+            "CADEvolve-C/ABC-C/part_b+r02.py": "import cadquery as cq\nresult = cq.Workplane('XY').sphere(1)\n",
+            "CADEvolve-C/ABC-C/not_cad.py": "print('not cad')\n",
+            "CADEvolve-C/ABC-C/readme.txt": "ignore me\n",
+            "CADEvolve-C/ABC-C-adjacent/part_c.py": "import cadquery as cq\nresult = cq.Workplane('XY').box(3, 3, 3)\n",
+            "CADEvolve-P/ShapeNet-P/other.py": "import cadquery as cq\nresult = cq.Workplane('XY').box(2, 2, 2)\n",
+        }.items():
+            payload = text.encode("utf-8")
+            info = tarfile.TarInfo(name)
+            info.size = len(payload)
+            archive.addfile(info, io.BytesIO(payload))
+
+    rows, report = cadevolve_tar_source_rows(
+        tar_path,
+        path_prefixes=["CADEvolve-C/ABC-C"],
+    )
+
+    assert report["included_count"] == 2
+    assert report["skipped_non_cadquery_count"] == 1
+    assert report["skipped_prefix_count"] == 2
+    assert {row["source_subtree"] for row in rows} == {"CADEvolve-C"}
+    assert {row["source_collection"] for row in rows} == {"ABC-C"}
+    assert all(row["normalized_archive_member_path"].startswith("CADEvolve-C/ABC-C/") for row in rows)
+    assert all(row["generator_id"] == "cadevolve_cadevolve_c_abc_c" for row in rows)
+    assert rows[0]["source_id"].startswith("src_")
+    assert rows[0]["normalized_code"].endswith("\n")
+    assert source_record_from_mapping(rows[0]).metadata["path_family"] == "CADEvolve-C/ABC-C/part_a"
+
+    out = tmp_path / "sources.jsonl"
+    assert cli_main(
+        [
+            "sources",
+            "from-cadevolve-tar",
+            "--tar",
+            str(tar_path),
+            "--out",
+            str(out),
+            "--path-prefix",
+            "CADEvolve-C/ABC-C",
+            "--limit",
+            "1",
+        ]
+    ) == 0
+    loaded = load_sources_jsonl(out)
+    assert len(loaded) == 1
+    assert loaded[0].metadata["source"] == "cadevolve"
+    assert out.with_suffix(".manifest.json").exists()
+    assert out.with_suffix(".report.json").exists()
 
 
 def test_trace_worker_executes_cadquery_source_or_reports_unavailable(tmp_path: Path) -> None:

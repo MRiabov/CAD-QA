@@ -11,6 +11,7 @@ The graph-first loader expects a JSONL file with at least:
 The smoke command path is:
 
 ```bash
+uv run cadqa sources from-cadevolve-tar --tar data/cadevolve.tar --out runs/cadevolve_sources.jsonl --path-prefix CADEvolve-P/ShapeNet-P --limit 100
 uv run cadqa sources inspect --sources-jsonl data/cadqa_cadevolve_rc_10/sources.jsonl
 uv run cadqa sources manifest --sources-jsonl data/cadqa_cadevolve_rc_10/sources.jsonl --out runs/source_manifest.json
 uv run cadqa sources audit --sources-jsonl data/cadqa_cadevolve_rc_10/sources.jsonl --out runs/source_audit.json
@@ -22,3 +23,10 @@ uv run cadqa dataset validate data/cadqa_graph_smoke
 
 Generated rows should be grouped by hop count, relation family, and measurement
 scope. Release splits must keep related source variants together.
+
+When the source corpus is available as a CADEvolve tar archive, use
+`cadqa sources from-cadevolve-tar` to create the normalized `sources.jsonl`
+before graph construction. The importer scans Python archive members, keeps
+CadQuery-looking source files, normalizes source text, assigns stable source
+IDs from archive path plus normalized hash, records `path_family` and
+CADEvolve subtree/collection metadata, and writes manifest/report sidecars.

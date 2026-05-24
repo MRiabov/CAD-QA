@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 import hashlib
+import tarfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -17,6 +18,8 @@ PROTECTED_SOURCE_GROUP_KEYS = (
     "source_family",
     "family_id",
     "template_id",
+)
+REPORTED_SOURCE_PROVENANCE_KEYS = (
     "generator_id",
     "generator",
 )
@@ -87,6 +90,79 @@ def load_sources_jsonl(path: Path, *, limit: int | None = None) -> list[SourceRe
     return records[:limit] if limit is not None else records
 
 
+def cadevolve_tar_source_rows(
+    tar_path: Path,
+    *,
+    limit: int | None = None,
+    path_prefixes: list[str] | None = None,
+    max_member_bytes: int = 1_000_000,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Extract normalized CadQuery source rows from a CADEvolve tar archive."""
+
+    prefixes = tuple(_normalize_archive_path(prefix) for prefix in path_prefixes or [] if prefix)
+    rows: list[dict[str, Any]] = []
+    stats = {
+        "archive_path": str(tar_path),
+        "member_count": 0,
+        "python_member_count": 0,
+        "included_count": 0,
+        "skipped_non_python_count": 0,
+        "skipped_prefix_count": 0,
+        "skipped_large_member_count": 0,
+        "skipped_non_cadquery_count": 0,
+        "limit": limit,
+        "max_member_bytes": max_member_bytes,
+        "path_prefixes": list(prefixes),
+    }
+    with tarfile.open(tar_path, "r:*") as archive:
+        for member in archive:
+            stats["member_count"] += 1
+            if limit is not None and len(rows) >= limit:
+                break
+            if not member.isfile():
+                continue
+            member_path = _normalize_archive_path(member.name)
+            if prefixes and not any(_archive_path_matches_prefix(member_path, prefix) for prefix in prefixes):
+                stats["skipped_prefix_count"] += 1
+                continue
+            if not member_path.endswith(".py"):
+                stats["skipped_non_python_count"] += 1
+                continue
+            stats["python_member_count"] += 1
+            if member.size > max_member_bytes:
+                stats["skipped_large_member_count"] += 1
+                continue
+            handle = archive.extractfile(member)
+            if handle is None:
+                continue
+            source_code = normalize_source_text(handle.read().decode("utf-8", errors="replace"))
+            if not _looks_like_cadquery_source(source_code):
+                stats["skipped_non_cadquery_count"] += 1
+                continue
+            source_hash = "sha256:" + hashlib.sha256(source_code.encode("utf-8")).hexdigest()
+            source_id = "src_" + short_hash(f"{member_path}\n{source_hash}")
+            source_subtree, source_collection = _cadevolve_path_parts(member_path)
+            rows.append(
+                {
+                    "source_id": source_id,
+                    "normalized_code": source_code,
+                    "normalized_archive_member_path": member_path,
+                    "source": "cadevolve",
+                    "source_subtree": source_subtree,
+                    "source_collection": source_collection,
+                    "path_family": source_family_from_path(member_path),
+                    "generator_id": "_".join(
+                        part.lower().replace("-", "_")
+                        for part in ("cadevolve", source_subtree, source_collection)
+                        if part
+                    ),
+                    "hashes": {"normalized_source_code_hash": source_hash},
+                }
+            )
+    stats["included_count"] = len(rows)
+    return rows, stats
+
+
 def source_to_dict(source: SourceRecord) -> dict[str, Any]:
     return {
         "source_id": source.source_id,
@@ -112,6 +188,28 @@ def source_family_from_path(path: str) -> str:
     return "/".join([*parts[:2], stem])
 
 
+def _normalize_archive_path(path: str) -> str:
+    return path.replace("\\", "/").lstrip("./")
+
+
+def _cadevolve_path_parts(path: str) -> tuple[str, str]:
+    parts = [part for part in _normalize_archive_path(path).split("/") if part]
+    source_subtree = parts[0] if parts else "unknown"
+    source_collection = parts[1] if len(parts) > 1 else "unknown"
+    return source_subtree, source_collection
+
+
+def _archive_path_matches_prefix(path: str, prefix: str) -> bool:
+    normalized_path = _normalize_archive_path(path)
+    normalized_prefix = _normalize_archive_path(prefix).rstrip("/")
+    return normalized_path == normalized_prefix or normalized_path.startswith(normalized_prefix + "/")
+
+
+def _looks_like_cadquery_source(source_code: str) -> bool:
+    lowered = source_code.lower()
+    return "cadquery" in lowered or "cq." in source_code
+
+
 def source_manifest(sources: list[SourceRecord]) -> dict[str, Any]:
     """Build an auditable manifest for normalized source records."""
 
@@ -120,10 +218,11 @@ def source_manifest(sources: list[SourceRecord]) -> dict[str, Any]:
     source_id_counts = Counter(source_ids)
     hash_to_sources: dict[str, list[str]] = defaultdict(list)
     source_id_to_hashes: dict[str, set[str]] = defaultdict(set)
+    grouped_metadata_keys = [*PROTECTED_SOURCE_GROUP_KEYS, *REPORTED_SOURCE_PROVENANCE_KEYS, "path_family"]
     group_members: dict[str, dict[str, list[str]]] = {
-        key: defaultdict(list) for key in [*PROTECTED_SOURCE_GROUP_KEYS, "path_family"]
+        key: defaultdict(list) for key in grouped_metadata_keys
     }
-    metadata_coverage = {key: 0 for key in [*PROTECTED_SOURCE_GROUP_KEYS, "path_family"]}
+    metadata_coverage = {key: 0 for key in grouped_metadata_keys}
     missing_path_source_ids: list[str] = []
     ungrouped_source_ids: list[str] = []
 
@@ -184,6 +283,7 @@ def source_manifest(sources: list[SourceRecord]) -> dict[str, Any]:
         "metadata_coverage": metadata_coverage,
         "groups": groups,
         "protected_group_keys": list(PROTECTED_SOURCE_GROUP_KEYS),
+        "reported_provenance_keys": list(REPORTED_SOURCE_PROVENANCE_KEYS),
     }
 
 

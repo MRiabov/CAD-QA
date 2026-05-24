@@ -26,6 +26,9 @@ when those choices can be sampled and verified.
 ## Implemented In Current Surface
 
 - Source JSONL loading and normalized source records.
+- Direct CADEvolve tar import to normalized `sources.jsonl`, including stable
+  IDs from archive path plus normalized source hash, path-family metadata, and
+  manifest/report sidecars.
 - CADEvolve-oriented source manifests and audits for stable IDs, normalized
   source hashes, duplicate source IDs, source-ID/hash conflicts, duplicate
   normalized code, missing source paths, and protected source grouping
@@ -123,8 +126,10 @@ when those choices can be sampled and verified.
   sampled-parameter metadata.
 - Dataset row materialization and validation.
 - Deterministic group-safe smoke and release splits over protected source
-  groups, including source family, generator, counterfactual group, explicit
-  split group, and path-derived CADEvolve families when available.
+  groups, including source family, counterfactual group, explicit split group,
+  family/template IDs, and path-derived CADEvolve families when available.
+  Broad generator provenance is reported but does not merge unrelated source
+  families into one split group.
 - Leakage audit for source/split leaks, duplicate prompts, and query ID leaks.
 - Baseline metrics for oracle, first-candidate, first-static-filter, majority,
   and null baselines with hop-slice, static-hop, geometry-hop, and difficulty

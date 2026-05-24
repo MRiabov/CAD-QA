@@ -3,6 +3,7 @@
 The active smoke workflow is graph-first:
 
 ```bash
+rtk uv run cadqa sources from-cadevolve-tar --tar data/cadevolve.tar --out runs/cadevolve_sources.jsonl --path-prefix CADEvolve-P/ShapeNet-P --limit 100
 rtk uv run cadqa sources inspect --sources-jsonl data/cadqa_cadevolve_rc_10/sources.jsonl
 rtk uv run cadqa graph build --sources-jsonl data/cadqa_cadevolve_rc_10/sources.jsonl --limit 10 --out runs/graph_smoke
 rtk uv run cadqa query smoke --graph runs/graph_smoke/graphs.jsonl --out runs/query_smoke
@@ -17,6 +18,10 @@ rtk uv run cadqa dataset preview data/cadqa_graph_smoke --graphs runs/graph_smok
 rtk uv run cadqa evaluation baseline --rows data/cadqa_graph_smoke/rows.jsonl --out runs/baseline_smoke
 rtk uv run cadqa training export-sft --rows data/cadqa_graph_smoke/rows.jsonl --out runs/sft_smoke
 ```
+
+The first command is optional when a prepared `sources.jsonl` already exists.
+Use it when starting from the local CADEvolve archive; it writes normalized
+source JSONL plus manifest/report sidecars before the usual graph build.
 
 The SFT command above now exports only geometry-critical rows by default and
 excludes syntax-only calibration, noncritical, and quarantined rows. A real

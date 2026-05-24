@@ -149,7 +149,7 @@ Technical definition of done:
 | --- | --- | --- | --- |
 | 2.1 JSONL SourceRecord loader | `implemented` | Users can load normalized source records from JSONL. | Loader validates required fields and feeds graph/dataset commands. |
 | 2.2 Stable source IDs and normalized code hashes | `implemented` | Repeated ingestion of the same code produces stable IDs. | Source ID/hash generation is deterministic and used by downstream rows. |
-| 2.3 CADEvolve source manifests and audits | `implemented` | Users can see which CadEvolve files were available and used. | Manifest/audit artifacts report source counts, IDs, and ingestion failures. |
+| 2.3 CADEvolve source manifests and audits | `implemented` | Users can see which CadEvolve files were available and used. | Manifest/audit artifacts report source counts, IDs, ingestion failures, and provenance; `cadqa sources from-cadevolve-tar` can build normalized source JSONL directly from a CADEvolve tar archive. |
 
 ## Epic 3: Trace and snapshot execution (`epic-3`)
 
