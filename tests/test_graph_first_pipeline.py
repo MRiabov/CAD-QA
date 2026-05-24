@@ -36,7 +36,7 @@ from cad_qa.experiment import (
 )
 from cad_qa.io import read_jsonl, to_jsonable, write_jsonl
 from cad_qa.ontology import build_graph
-from cad_qa.ontology.nodes import Measurement, OntologyGraph, Relation, graph_from_dict
+from cad_qa.ontology.nodes import Measurement, Node, OntologyGraph, Relation, graph_from_dict
 from cad_qa.ontology.profile_geometry import circle_profile, polyline_profile, rect_profile
 from cad_qa.ontology.relations import RELATION_FAMILIES
 from cad_qa.ontology.workplane_frames import project_local_point
@@ -1674,6 +1674,73 @@ def test_prompt_metric_labels_hide_internal_measurement_names() -> None:
 
     assert "greatest maximum Z height" in rendered.prompt
     assert "bbox_max_z" not in rendered.prompt
+
+
+def test_value_bearing_measurement_clause_resolves_and_renders() -> None:
+    graph = OntologyGraph(graph_id="graph:value", source={"source_id": "src_value", "source_code": "import cadquery as cq\n"})
+    for node_id, volume, centroid_z in [
+        ("feature:a", 12.0, 1.0),
+        ("feature:b", 12.0 + 1e-7, 3.0),
+        ("feature:c", 8.0, 9.0),
+    ]:
+        graph.add_node(Node(node_id, "feature", node_id))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "volume", volume))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "centroid_z", centroid_z))
+    query = QueryProgram(
+        query_id="graph:value:q4:highest_equal_volume_feature",
+        target_type="feature",
+        clauses=[
+            Clause(
+                id="has_compiled_volume_value",
+                kind="has_measurement",
+                metric="volume",
+                value=12.0,
+            ),
+            Clause(
+                id="has_compiled_centroid",
+                kind="has_measurement",
+                metric="centroid_z",
+            ),
+        ],
+        aggregation="argmax",
+        aggregation_metric="centroid_z",
+        hop_count=3,
+        min_individual_clause_candidates=2,
+    )
+
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+
+    assert resolution.verifier_status == "resolved"
+    assert resolution.gold_answer == "feature:b"
+    assert "solid volume of 12.0" in row.prompt
+    assert "greatest centroid height" in row.prompt
+    assert row.candidate_trace["steps"][1]["after"] == ["feature:a", "feature:b"]
+    assert dataset_report([row])["quality_flags"]["value_bearing_measurement"] == 1
+
+
+def test_smoke_queries_mine_equal_value_measurement_distractors() -> None:
+    graph = OntologyGraph(graph_id="graph:equal", source={"source_id": "src_equal", "source_code": "import cadquery as cq\n"})
+    for node_id, volume, centroid_z in [
+        ("feature:a", 20.0, 1.0),
+        ("feature:b", 20.0, 4.0),
+        ("feature:c", 5.0, 9.0),
+    ]:
+        graph.add_node(Node(node_id, "feature", node_id))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "volume", volume))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "centroid_z", centroid_z))
+
+    queries = {query.query_id.rsplit(":", 1)[-1]: query for query in smoke_queries(graph)}
+    query = queries["highest_equal_volume_feature"]
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+
+    assert query.clauses[0].value == 20.0
+    assert resolution.verifier_status == "resolved"
+    assert resolution.gold_answer == "feature:b"
+    assert "solid volume of 20.0" in row.prompt
+    assert row.logical_hop_count == 3
+    assert row.geometry_hop_count == 3
 
 
 def test_generated_smoke_query_clauses_are_yaml_backed() -> None:

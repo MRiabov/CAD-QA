@@ -67,6 +67,7 @@ clause_templates:
   face.has_origin_distance_relation: "The target face center has a measured distance to the global origin."
   has_face_center_distance: "The target face center has a distance-to-origin measurement."
   has_face_area: "The target face has a measured surface area."
+  has_face_area_value: "The target face has a surface area of {value}."
   has_opposite_face_relation: "The target face is opposite a parallel face with a matching in-plane span."
   has_adjacent_face_relation: "The target face is adjacent to another face that shares a boundary."
   has_perpendicular_face_relation: "The target face is perpendicular to another face."
@@ -95,6 +96,7 @@ clause_templates:
   positive_midpoint_z: "The target edge midpoint has a positive global Z coordinate."
   has_midpoint_y: "The target edge has a measured midpoint Y coordinate."
   has_edge_length: "The target edge has a measured length."
+  has_edge_length_value: "The target edge has a length of {value}."
   edge_length_less_than_midpoint_distance: "The target edge length is less than its midpoint distance to the global origin."
   has_midpoint_x: "The target edge has a measured midpoint X coordinate."
   longer_than_another_kernel_edge: "The target edge is longer than another selected edge."
@@ -118,6 +120,7 @@ clause_templates:
   has_segment_length: "The target segment has a measured path-segment length."
 
   has_compiled_volume: "The target feature has a measured solid volume."
+  has_compiled_volume_value: "The target feature has a solid volume of {value}."
   has_compiled_bbox_height: "The target feature has a measured overall height."
   has_compiled_centroid: "The target feature has a measured solid centroid."
   has_compiled_volume_for_centroid: "The target feature also has a measured solid volume."

@@ -12,6 +12,8 @@ from cad_qa.query.ir import CandidateSetTrace, Clause, QueryProgram, QueryResolu
 
 
 GEOMETRY_MARGIN_EPSILON = 1e-6
+VALUE_MATCH_TOLERANCE = 1e-6
+VALUE_BUCKET_DECIMALS = 6
 
 
 def resolve_query(graph: OntologyGraph, query: QueryProgram) -> QueryResolution:
@@ -344,6 +346,47 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
                 ],
                 aggregation="argmax",
                 aggregation_metric="face_area",
+                hop_count=4,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
+    equal_area_faces = _largest_equal_value_group(graph, kernel_faces_with_area, "face_area")
+    if (
+        len(equal_area_faces) >= 2
+        and _has_unique_extreme(
+            graph,
+            equal_area_faces,
+            "bbox_max_z",
+            "argmax",
+            min_margin=GEOMETRY_MARGIN_EPSILON,
+        )
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q6:highest_equal_area_kernel_selected_face",
+                target_type="face",
+                clauses=[
+                    Clause(
+                        id="has_kernel_face_selector_identity",
+                        kind="has_relation",
+                        relation="has_kernel_stable_face_id",
+                        target_type="selector",
+                    ),
+                    Clause(
+                        id="has_face_area_value",
+                        kind="has_measurement",
+                        metric="face_area",
+                        value=_measurement_bucket_value(graph, equal_area_faces[0].id, "face_area"),
+                    ),
+                    Clause(
+                        id="has_face_bbox_z",
+                        kind="has_measurement",
+                        metric="bbox_max_z",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="bbox_max_z",
                 hop_count=4,
                 difficulty="cad_browsecomp",
                 min_individual_clause_candidates=2,
@@ -769,6 +812,52 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
                 min_individual_clause_candidates=2,
             )
         )
+    equal_length_edges = _largest_equal_value_group(
+        graph,
+        _nodes_with_numeric_measurement(graph, kernel_edges_with_bbox_z, "edge_length"),
+        "edge_length",
+    )
+    if (
+        len(equal_length_edges) >= 2
+        and len(_nodes_with_numeric_measurement(graph, equal_length_edges, "midpoint_y")) >= 2
+        and _has_unique_extreme(
+            graph,
+            equal_length_edges,
+            "midpoint_y",
+            "argmax",
+            min_margin=GEOMETRY_MARGIN_EPSILON,
+        )
+    ):
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q14:frontmost_equal_length_kernel_edge",
+                target_type="edge",
+                clauses=[
+                    Clause(
+                        id="has_kernel_edge_selector_identity",
+                        kind="has_relation",
+                        relation="has_kernel_stable_edge_id",
+                        target_type="selector",
+                    ),
+                    Clause(
+                        id="has_edge_length_value",
+                        kind="has_measurement",
+                        metric="edge_length",
+                        value=_measurement_bucket_value(graph, equal_length_edges[0].id, "edge_length"),
+                    ),
+                    Clause(
+                        id="has_midpoint_y",
+                        kind="has_measurement",
+                        metric="midpoint_y",
+                    ),
+                ],
+                aggregation="argmax",
+                aggregation_metric="midpoint_y",
+                hop_count=4,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
     same_length_longer_positive_z_edges = [
         edge
         for edge in _nodes_with_numeric_measurement(graph, kernel_edges_with_bbox_z, "midpoint_y")
@@ -1165,6 +1254,45 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
                 difficulty="bridge",
             )
         )
+        equal_volume_features = _largest_equal_value_group(
+            graph,
+            _nodes_with_numeric_measurement(graph, features, "centroid_z"),
+            "volume",
+        )
+        if (
+            len(equal_volume_features) >= 2
+            and _has_unique_extreme(
+                graph,
+                equal_volume_features,
+                "centroid_z",
+                "argmax",
+                min_margin=GEOMETRY_MARGIN_EPSILON,
+            )
+        ):
+            queries.append(
+                QueryProgram(
+                    query_id=f"{graph.graph_id}:q4:highest_equal_volume_feature",
+                    target_type="feature",
+                    clauses=[
+                        Clause(
+                            id="has_compiled_volume_value",
+                            kind="has_measurement",
+                            metric="volume",
+                            value=_measurement_bucket_value(graph, equal_volume_features[0].id, "volume"),
+                        ),
+                        Clause(
+                            id="has_compiled_centroid",
+                            kind="has_measurement",
+                            metric="centroid_z",
+                        ),
+                    ],
+                    aggregation="argmax",
+                    aggregation_metric="centroid_z",
+                    hop_count=3,
+                    difficulty="cad_browsecomp",
+                    min_individual_clause_candidates=2,
+                )
+            )
     centroid_features = _nodes_with_numeric_measurement(graph, features, "centroid_z")
     if (
         len(centroid_features) >= 2
@@ -1680,7 +1808,13 @@ def _apply_clause(graph: OntologyGraph, candidates: list[Node], clause: Clause) 
             )
         ]
     if clause.kind == "has_measurement" and clause.metric:
-        return [node for node in candidates if graph.measurements_for(node.id, clause.metric)]
+        if clause.value is None:
+            return [node for node in candidates if graph.measurements_for(node.id, clause.metric)]
+        return [
+            node
+            for node in candidates
+            if _measurement_matches(graph, node.id, clause.metric, clause.value)
+        ]
     if clause.kind == "metric_compare" and clause.metric and clause.operator:
         return [
             node
@@ -1720,6 +1854,31 @@ def _measurement_value(graph: OntologyGraph, entity_id: str, metric: str) -> Any
     return measurements[0].value if measurements else None
 
 
+def _measurement_matches(graph: OntologyGraph, entity_id: str, metric: str, expected: Any) -> bool:
+    value = _measurement_value(graph, entity_id, metric)
+    if isinstance(value, (int, float)) and isinstance(expected, (int, float)):
+        return abs(float(value) - float(expected)) <= VALUE_MATCH_TOLERANCE
+    return value == expected
+
+
+def _largest_equal_value_group(graph: OntologyGraph, nodes: list[Node], metric: str) -> list[Node]:
+    groups: dict[float, list[Node]] = {}
+    for node in nodes:
+        bucket = _measurement_bucket_value(graph, node.id, metric)
+        if bucket is not None:
+            groups.setdefault(bucket, []).append(node)
+    if not groups:
+        return []
+    return max(groups.values(), key=lambda group: (len(group), candidate_ids(group)))
+
+
+def _measurement_bucket_value(graph: OntologyGraph, entity_id: str, metric: str) -> float | None:
+    value = _measurement_value(graph, entity_id, metric)
+    if not isinstance(value, (int, float)):
+        return None
+    return round(float(value), VALUE_BUCKET_DECIMALS)
+
+
 def _compare(value: Any, operator: str, expected: Any) -> bool:
     if not isinstance(value, (int, float)):
         return False
@@ -1732,6 +1891,8 @@ def _compare(value: Any, operator: str, expected: Any) -> bool:
     if operator == "<=":
         return value <= expected
     if operator == "==":
+        if isinstance(expected, (int, float)):
+            return abs(float(value) - float(expected)) <= VALUE_MATCH_TOLERANCE
         return value == expected
     return False
 

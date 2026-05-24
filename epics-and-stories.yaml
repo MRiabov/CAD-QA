@@ -277,15 +277,15 @@ epics:
         status: implemented
   - id: epic-13
     title: Value-bearing measurement and equal-geometry multi-hop tasks
-    status: planned
+    status: work-in-progress
     priority: P0
     stories:
       - id: "13.1"
         title: Prompt templates that expose stable rounded CAD measurement values
-        status: planned
+        status: implemented
       - id: "13.2"
         title: Tolerance-equal measurement mining for distractor candidate sets
-        status: planned
+        status: work-in-progress
       - id: "13.3"
         title: Cross-feature value-bearing tasks using distances between derived feature geometry
         status: planned

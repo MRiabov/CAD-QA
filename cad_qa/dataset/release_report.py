@@ -104,6 +104,7 @@ def release_balance_report(rows: list[dict[str, Any]]) -> dict[str, Any]:
     geometry_hop_positive_count = sum(1 for row in rows if int(row.get("geometry_hop_count") or 0) > 0)
     geometry_critical_count = sum(1 for row in rows if is_geometry_critical_row(row))
     syntax_only_calibration_count = sum(1 for row in rows if is_syntax_only_calibration_row(row))
+    value_bearing_measurement_count = sum(1 for row in rows if _is_value_bearing_measurement_row(row))
     largest_prompt_family, largest_prompt_family_count = _largest_counter_item(prompt_family_counts)
     largest_prompt_template, largest_prompt_template_count = _largest_counter_item(prompt_template_counts)
     largest_prompt_family_share = largest_prompt_family_count / row_count if row_count else 0.0
@@ -111,6 +112,7 @@ def release_balance_report(rows: list[dict[str, Any]]) -> dict[str, Any]:
     geometry_hop_positive_share = geometry_hop_positive_count / row_count if row_count else 0.0
     geometry_critical_share = geometry_critical_count / row_count if row_count else 0.0
     syntax_only_calibration_share = syntax_only_calibration_count / row_count if row_count else 0.0
+    value_bearing_measurement_share = value_bearing_measurement_count / row_count if row_count else 0.0
     applicable = row_count >= MIN_RELEASE_BALANCE_ROWS
     answer_entropy_bits = _entropy_bits(answer_counts)
     prompt_family_count = len(prompt_family_counts)
@@ -165,6 +167,8 @@ def release_balance_report(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "geometry_critical_share": geometry_critical_share,
         "syntax_only_calibration_count": syntax_only_calibration_count,
         "syntax_only_calibration_share": syntax_only_calibration_share,
+        "value_bearing_measurement_count": value_bearing_measurement_count,
+        "value_bearing_measurement_share": value_bearing_measurement_share,
         "maximum_syntax_only_calibration_share": MAX_SYNTAX_ONLY_CALIBRATION_SHARE,
         "passes_geometry_hop_coverage": (
             None
@@ -312,6 +316,19 @@ def _prompt_template_id(row: dict[str, Any]) -> str:
     if isinstance(query, dict):
         return prompt_template_id_from_mapping(query)
     return str(row.get("prompt_version", "unknown"))
+
+
+def _is_value_bearing_measurement_row(row: dict[str, Any]) -> bool:
+    query = row.get("query_program") or {}
+    for clause in query.get("clauses", []):
+        if (
+            isinstance(clause, dict)
+            and clause.get("kind") == "has_measurement"
+            and clause.get("metric")
+            and clause.get("value") is not None
+        ):
+            return True
+    return False
 
 
 def _entropy_bits(counts: Counter[str]) -> float:

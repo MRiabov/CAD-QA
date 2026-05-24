@@ -45,6 +45,8 @@ def dataset_report(rows: list[Any]) -> dict[str, Any]:
             quality_flags["syntax_only_calibration"] += 1
         if is_geometry_critical_row(item):
             quality_flags["geometry_critical"] += 1
+        if _is_value_bearing_measurement_row(item):
+            quality_flags["value_bearing_measurement"] += 1
     return {
         "row_count": len(rows),
         "hop_counts": dict(sorted(hop_counts.items())),
@@ -145,6 +147,19 @@ def _prompt_template_id(row: dict[str, Any]) -> str:
     if isinstance(query, dict):
         return prompt_template_id_from_mapping(query)
     return str(row.get("prompt_version", "unknown"))
+
+
+def _is_value_bearing_measurement_row(row: dict[str, Any]) -> bool:
+    query = row.get("query_program") or {}
+    for clause in query.get("clauses", []):
+        if (
+            isinstance(clause, dict)
+            and clause.get("kind") == "has_measurement"
+            and clause.get("metric")
+            and clause.get("value") is not None
+        ):
+            return True
+    return False
 
 
 def shortcut_resistance_markdown(report: dict[str, Any]) -> str:
