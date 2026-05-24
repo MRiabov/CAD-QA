@@ -583,6 +583,7 @@ def _write_sft_exports(rows: list[dict[str, Any]], out: Path, scaling_sizes: lis
     report["training_balance"] = release_balance_report(training_rows)
     report["training_stop_gates"] = {
         "geometry_critical_dominance": report["training_readiness"]["passes_geometry_critical_dominance"],
+        "default_sft_syntax_only_cap": report["training_readiness"]["passes_syntax_only_training_cap"],
         "prompt_family_balance": report["training_balance"]["passes_prompt_family_balance"],
         "prompt_template_balance": report["training_balance"]["passes_prompt_template_balance"],
         "answer_entropy": report["training_balance"]["passes_answer_entropy"],

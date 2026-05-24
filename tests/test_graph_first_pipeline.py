@@ -3428,6 +3428,7 @@ def test_benchmark_release_profile_matches_dataset_spec_numeric_contract() -> No
 
     assert profile.min_release_rows == 10_000
     assert profile.min_default_sft_rows == 10_000
+    assert profile.max_default_sft_syntax_only_share == 0.0
     assert profile.min_prompt_family_count == 10
     assert profile.min_prompt_family_share == 0.01
     assert profile.max_prompt_family_share == 0.10
@@ -3457,6 +3458,7 @@ def test_benchmark_release_profile_matches_dataset_spec_numeric_contract() -> No
     for required_fragment in [
         "At least 10,000 public/private release rows.",
         "At least 10,000 rows after default geometry-critical filtering.",
+        "0%.",
         "At least 10 generated release families",
         "every generated release family is between 1% and 10% of exported rows.",
         "At least 99%.",
@@ -4282,6 +4284,7 @@ def test_training_export_cli_defaults_to_geometry_critical_rows(tmp_path: Path) 
     assert benchmark_sft_report["release_tier"] == "benchmark-release"
     assert not benchmark_sft_report["valid_for_training"]
     assert "default_sft_row_count" in benchmark_sft_report["blocking_training_gates"]
+    assert benchmark_sft_report["training_readiness"]["max_syntax_only_training_share"] == 0.0
     assert "intended_family_coverage" in benchmark_sft_report["blocking_training_gates"]
     assert "parameter_balance" in benchmark_sft_report["blocking_training_gates"]
     assert "preview_evidence" in benchmark_sft_report["blocking_training_gates"]
@@ -4304,10 +4307,13 @@ def test_training_export_cli_defaults_to_geometry_critical_rows(tmp_path: Path) 
     assert calibration_sft_report["include_calibration"] is True
     assert not calibration_sft_report["training_readiness"]["passes_geometry_critical_dominance"]
     assert calibration_sft_report["training_readiness"]["syntax_only_training_rows"] == 1
+    assert not calibration_sft_report["training_readiness"]["passes_syntax_only_training_cap"]
     assert calibration_sft_report["training_balance"]["syntax_only_calibration_count"] == 1
     assert not calibration_sft_report["training_stop_gates"]["geometry_critical_dominance"]
+    assert not calibration_sft_report["training_stop_gates"]["default_sft_syntax_only_cap"]
     assert not calibration_sft_report["valid_for_training"]
     assert "geometry_critical_dominance" in calibration_sft_report["blocking_training_gates"]
+    assert "default_sft_syntax_only_cap" in calibration_sft_report["blocking_training_gates"]
     assert not calibration_sft_report["enforced_training_gates"]
 
 
@@ -5224,6 +5230,7 @@ def test_release_verifier_report_stop_gates_and_cli(tmp_path: Path) -> None:
     assert not report["valid_for_release"]
     assert "release_validation" in report["blocking_gates"]
     assert "default_sft_geometry_critical_dominance" in report["stop_gates"]
+    assert "default_sft_syntax_only_cap" in report["stop_gates"]
     assert "group_safe_split_audit" in report["stop_gates"]
     assert "prompt_family_balance" in report["stop_gates"]
     assert "prompt_template_balance" in report["stop_gates"]
@@ -5261,6 +5268,7 @@ def test_release_verifier_report_stop_gates_and_cli(tmp_path: Path) -> None:
     benchmark_report = json.loads((dataset_dir / "release_verifier_report.json").read_text())
     assert benchmark_report["release_tier"] == "benchmark-release"
     assert benchmark_report["release_gate_profile"]["min_release_rows"] == 10000
+    assert benchmark_report["release_gate_profile"]["max_default_sft_syntax_only_share"] == 0.0
     assert "release_row_count" in benchmark_report["blocking_gates"]
     assert "default_sft_row_count" in benchmark_report["blocking_gates"]
     assert "benchmark_split_group_coverage" in benchmark_report["blocking_gates"]

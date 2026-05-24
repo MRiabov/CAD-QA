@@ -833,7 +833,8 @@ Checked as implemented with remaining scale caveats:
   and `benchmark-release`; only the benchmark-release tier can support public
   benchmark or real fine-tuning claims. The benchmark-release profile enforces
   row counts, default SFT row counts, geometry-hop coverage, default SFT
-  geometry-critical dominance, syntax-only caps, value-bearing and
+  geometry-critical dominance, an explicit zero syntax-only default-SFT cap,
+  benchmark syntax-only caps, value-bearing and
   cross-feature coverage bands, prompt-template share, unique-answer count,
   answer entropy, candidate breadth, intended-family coverage,
   sampled-parameter balance, preview evidence, family test evidence, and
@@ -843,8 +844,9 @@ Checked as implemented with remaining scale caveats:
   `--release-tier benchmark-release` blocks release on row count, split group
   coverage, default SFT row count, prompt-family balance, prompt-template
   balance, answer entropy, geometry-hop coverage, main BrowseComp hop coverage,
-  syntax-only calibration cap, cross-feature value-bearing coverage, and
-  candidate breadth, intended-family coverage, sampled-parameter balance,
+  default SFT syntax-only cap, syntax-only calibration cap, cross-feature
+  value-bearing coverage, candidate breadth, intended-family coverage,
+  sampled-parameter balance,
   preview evidence, and family test evidence.
 - Broaden value-bearing and tolerance-equal coverage beyond the implemented
   core to radius/diameter/angle once those measurements are extracted broadly,

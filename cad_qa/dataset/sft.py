@@ -21,6 +21,7 @@ def training_readiness_report(
     *,
     include_calibration: bool = False,
     dominance_threshold: float = 0.95,
+    max_syntax_only_share: float = 0.0,
 ) -> dict[str, Any]:
     exported_rows = training_rows if training_rows is not None else (
         input_rows if include_calibration else default_training_rows(input_rows)
@@ -34,7 +35,9 @@ def training_readiness_report(
     )
     training_count = len(exported_rows)
     geometry_share = geometry_critical_training_rows / training_count if training_count else 0.0
+    syntax_only_share = syntax_only_training_rows / training_count if training_count else 0.0
     default_rows = default_training_rows(input_rows)
+    passes_syntax_only_cap = training_count > 0 and syntax_only_share <= max_syntax_only_share
     return {
         "input_rows": len(input_rows),
         "training_rows": training_count,
@@ -42,13 +45,16 @@ def training_readiness_report(
         "excluded_calibration_noncritical_or_quarantined_rows": len(input_rows) - len(default_rows),
         "geometry_critical_training_rows": geometry_critical_training_rows,
         "syntax_only_training_rows": syntax_only_training_rows,
+        "syntax_only_training_share": syntax_only_share,
+        "max_syntax_only_training_share": max_syntax_only_share,
         "quarantined_training_rows": quarantined_training_rows,
         "geometry_critical_training_share": geometry_share,
         "dominance_threshold": dominance_threshold,
+        "passes_syntax_only_training_cap": passes_syntax_only_cap,
         "passes_geometry_critical_dominance": (
             training_count > 0
             and geometry_share >= dominance_threshold
-            and syntax_only_training_rows == 0
+            and passes_syntax_only_cap
             and quarantined_training_rows == 0
         ),
         "include_calibration": include_calibration,

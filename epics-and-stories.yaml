@@ -405,6 +405,20 @@ epics:
       - id: "15.3"
         title: Benchmark-release gates for row counts, geometry-hop coverage, geometry-critical dominance, and syntax-only caps
         status: implemented
+        acceptance_criteria:
+          - Users cannot label small, low-hop, non-geometry-critical, or syntax-only
+            training artifacts as benchmark-release ready.
+          - Default SFT exports have an explicit 0% syntax-only cap separate from
+            the benchmark artifact's syntax-only calibration cap.
+        technical_definition_of_done:
+          - The benchmark-release verifier profile blocks artifacts below 10,000
+            release rows, below 10,000 default SFT rows, below 95%
+            geometry-hop-positive rows, below 99% default-SFT geometry-critical
+            rows, above 0% default-SFT syntax-only rows, or above 2% benchmark
+            syntax-only rows unless calibration is separated.
+          - Release and SFT reports expose the `default_sft_syntax_only_cap` stop
+            gate so failures are visible independently from geometry-critical
+            dominance.
       - id: "15.4"
         title: Benchmark-release gates for value-bearing, cross-feature, prompt-template, answer-diversity, and candidate-breadth targets
         status: implemented

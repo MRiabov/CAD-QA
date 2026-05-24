@@ -711,6 +711,7 @@ def _cmd_training_export_sft(args: argparse.Namespace) -> dict[str, Any]:
         rows,
         include_calibration=bool(args.include_calibration),
         dominance_threshold=profile.min_geometry_critical_training_share,
+        max_syntax_only_share=profile.max_default_sft_syntax_only_share,
     )
     report["input_balance"] = release_balance_report(input_rows, release_tier=profile.name)
     report["training_balance"] = release_balance_report(rows, release_tier=profile.name)
@@ -784,6 +785,7 @@ def _training_stop_gates(
             if profile.min_default_sft_rows is None
             else training_readiness["training_rows"] >= profile.min_default_sft_rows
         ),
+        "default_sft_syntax_only_cap": training_readiness["passes_syntax_only_training_cap"],
         "prompt_family_balance": training_balance["passes_prompt_family_balance"],
         "prompt_template_balance": training_balance["passes_prompt_template_balance"],
         "answer_entropy": training_balance["passes_answer_entropy"],

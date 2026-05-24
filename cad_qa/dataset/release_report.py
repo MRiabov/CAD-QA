@@ -39,6 +39,7 @@ class ReleaseGateProfile:
     min_applicable_rows: int
     min_release_rows: int | None
     min_default_sft_rows: int | None
+    max_default_sft_syntax_only_share: float
     min_prompt_family_count: int
     min_prompt_family_share: float
     max_prompt_family_share: float
@@ -72,6 +73,7 @@ SMOKE_RELEASE_PROFILE = ReleaseGateProfile(
     min_applicable_rows=20,
     min_release_rows=None,
     min_default_sft_rows=None,
+    max_default_sft_syntax_only_share=0.0,
     min_prompt_family_count=4,
     min_prompt_family_share=0.01,
     max_prompt_family_share=0.10,
@@ -107,6 +109,7 @@ BENCHMARK_RELEASE_PROFILE = ReleaseGateProfile(
     min_applicable_rows=1,
     min_release_rows=10_000,
     min_default_sft_rows=10_000,
+    max_default_sft_syntax_only_share=0.0,
     min_prompt_family_count=10,
     min_prompt_family_share=0.01,
     max_prompt_family_share=0.10,
@@ -180,6 +183,7 @@ def release_verifier_report(
     training_readiness = training_readiness_report(
         rows,
         dominance_threshold=profile.min_geometry_critical_training_share,
+        max_syntax_only_share=profile.max_default_sft_syntax_only_share,
     )
     release_balance = release_balance_report(rows, release_tier=profile.name)
     intended_family_coverage = intended_family_coverage_report(
@@ -226,6 +230,7 @@ def release_verifier_report(
             training_readiness["default_training_rows"],
             profile.min_default_sft_rows,
         ),
+        "default_sft_syntax_only_cap": training_readiness["passes_syntax_only_training_cap"],
         "prompt_family_balance": release_balance["passes_prompt_family_balance"],
         "prompt_template_balance": release_balance["passes_prompt_template_balance"],
         "answer_entropy": release_balance["passes_answer_entropy"],
@@ -608,6 +613,7 @@ def release_gate_profile_report(profile: ReleaseGateProfile) -> dict[str, Any]:
         "min_applicable_rows": profile.min_applicable_rows,
         "min_release_rows": profile.min_release_rows,
         "min_default_sft_rows": profile.min_default_sft_rows,
+        "max_default_sft_syntax_only_share": profile.max_default_sft_syntax_only_share,
         "min_prompt_family_count": profile.min_prompt_family_count,
         "min_prompt_family_share": profile.min_prompt_family_share,
         "max_prompt_family_share": profile.max_prompt_family_share,
