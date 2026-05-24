@@ -148,6 +148,28 @@ families:
         target_point_metric: [face_center]
         reference_point_metric: [centroid]
     notes: Synthesized cross-feature face family that narrows by repeated face area before selecting by distance from face center to a geometry-described feature centroid.
+  - id: parameterized_equal_feature_metric_extreme
+    status: release
+    target_type: feature
+    minimum_hops: 3
+    maximum_hops: 3
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - final_selector
+    notes: Synthesized value-bearing feature family that narrows by repeated compiled feature measurements before selecting by another measured feature quantity.
   - id: highest_positive_x_flat_opposite_adjacent_perpendicular_kernel_face
     status: review_only
     target_type: face

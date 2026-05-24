@@ -24,6 +24,7 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_kernel_edge_rank",
     "parameterized_equal_face_metric_extreme",
     "parameterized_equal_edge_metric_extreme",
+    "parameterized_equal_feature_metric_extreme",
     "parameterized_face_reference_feature_distance",
     "parameterized_edge_reference_feature_distance",
     "parameterized_path_point_extreme",
@@ -39,6 +40,7 @@ def synthesis_selfcheck_graphs() -> list[OntologyGraph]:
     return [
         _face_metric_graph(),
         _edge_metric_graph(),
+        _feature_equal_metric_graph(),
         _face_equal_metric_graph(),
         _edge_equal_metric_graph(),
         _path_metric_graph(),
@@ -151,6 +153,32 @@ def _edge_metric_graph() -> OntologyGraph:
     return graph
 
 
+def _feature_equal_metric_graph() -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id="graph:selfcheck-feature-equal-metric",
+        source={
+            "source_id": "selfcheck-feature-equal-metric",
+            "source_code": (
+                "import cadquery as cq\n"
+                "base = cq.Workplane(\"XY\").box(10, 6, 4)\n"
+                "upper = cq.Workplane(\"XY\").box(10, 6, 4).translate((0, 0, 8))\n"
+                "small = cq.Workplane(\"XY\").box(4, 4, 2)\n"
+                "result = base.union(upper).union(small)\n"
+            ),
+        },
+    )
+    for feature_id, volume, centroid_z, bbox_span_z in [
+        ("feature:base", 240.0, 2.0, 4.0),
+        ("feature:upper", 240.0 + 1e-7, 8.0, 5.0),
+        ("feature:small", 32.0, 1.0, 2.0),
+    ]:
+        graph.add_node(Node(feature_id, "feature", feature_id))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid_z, "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "bbox_span_z", bbox_span_z, "mm"))
+    return graph
+
+
 def _face_equal_metric_graph() -> OntologyGraph:
     graph = OntologyGraph(
         graph_id="graph:selfcheck-face-equal-metric",
@@ -165,7 +193,7 @@ def _face_equal_metric_graph() -> OntologyGraph:
     graph.add_node(Node("selector:faces", "selector", "faces"))
     for feature_id, volume, centroid in [
         ("feature:ref", 100.0, [0.0, 0.0, 0.0]),
-        ("feature:far", 50.0, [20.0, 0.0, 0.0]),
+        ("feature:far", 50.0, [20.0, 0.0, 1.0]),
     ]:
         graph.add_node(Node(feature_id, "feature", feature_id))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume))
@@ -198,7 +226,7 @@ def _edge_equal_metric_graph() -> OntologyGraph:
     graph.add_node(Node("selector:edges", "selector", "edges"))
     for feature_id, volume, centroid in [
         ("feature:ref", 100.0, [0.0, 0.0, 0.0]),
-        ("feature:far", 50.0, [100.0, 0.0, 0.0]),
+        ("feature:far", 50.0, [100.0, 0.0, 1.0]),
     ]:
         graph.add_node(Node(feature_id, "feature", feature_id))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume))

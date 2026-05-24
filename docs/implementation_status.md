@@ -740,6 +740,14 @@ Checked as implemented with remaining scale caveats:
   faces, keeps both through the reference-feature and face-center clauses, and
   resolves uniquely by face-center distance to a feature centroid. This remains
   an initial face-reference slice, not proof of benchmark-release distribution.
+- The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_feature_equal/PREVIEW.md`
+  demonstrates the initial `parameterized_equal_feature_metric_extreme` family.
+  The reviewed row narrows from three features to two equal-volume features,
+  keeps both through the centroid-height measurement clause, and resolves
+  uniquely by a final centroid-height selector. This adds feature-level
+  equal-measurement synthesis; region/material/void equal-measurement synthesis
+  and release-scale distribution remain open.
 - Opposite-face rows on broad real CadEvolve data, broader containment,
   broader intersection, broader adjacency, and broader stable spatial-relation
   distributions remain scale/coverage work rather than unchecked core
@@ -764,11 +772,12 @@ Checked as implemented with remaining scale caveats:
   entity to define a nontrivial candidate subset before the final selector.
   The current synthesis slice covers parameterized extrema over kernel-selected
   face/edge geometry and measured path point/segment geometry, initial selected
-  face/edge selector-count narrowing, initial equal-value face/edge measurement
-  groups, and initial face/edge-to-feature reference-distance families. Broader
+  face/edge selector-count narrowing, initial equal-value face/edge/feature
+  measurement groups, and initial face/edge-to-feature reference-distance
+  families. Broader
   selected-entity-count narrowing,
-  face/endpoint/material/void reference anchors, feature/region equal-value
-  synthesis, containment/adjacency predicates, and rank/tie-break selectors
+  face/endpoint/material/void reference anchors, region equal-value synthesis,
+  containment/adjacency predicates, and rank/tie-break selectors
   remain open.
 - Extend sampled-parameter metadata from the synthesis layer to include
   predicate sequence, reference anchor, rank, rendered wording,

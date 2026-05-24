@@ -234,6 +234,14 @@ clause_templates:
   has_compiled_centroid_x_value: "The target feature has a solid centroid X coordinate of {value}."
   has_compiled_centroid_y_value: "The target feature has a solid centroid Y coordinate of {value}."
   has_compiled_centroid_value: "The target feature has a solid centroid height of {value}."
+  has_parameterized_feature_metric:
+    - "The target feature has a measured {metric_label}."
+    - "The target feature has a known {metric_label}."
+    - "The target feature has a documented {metric_label}."
+  has_parameterized_equal_feature_metric_value:
+    - "The target feature has {metric_label} equal to {value}."
+    - "The target feature's {metric_label} is {value}."
+    - "The target feature matches the {metric_label} value {value}."
   reference_feature_volume_and_centroid: "Use as the reference the feature with solid volume {reference_volume} and centroid height {reference_centroid_z}."
   has_compiled_volume_for_centroid: "The target feature also has a measured solid volume."
   has_compiled_face_count: "The target feature has a measured face count."

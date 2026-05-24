@@ -73,12 +73,13 @@ class ViableSelectorCount:
 class EqualValueExtremeFamilySpec:
     family_id: str
     target_type: str
-    relation: str
-    relation_clause_id: str
+    relation: str | None
+    relation_clause_id: str | None
     equal_value_clause_id: str
     selector_metric_clause_id: str
     equal_metrics: tuple[str, ...]
     selector_metrics: tuple[str, ...]
+    relation_target_type: str | None = "selector"
 
 
 @dataclass(frozen=True)
@@ -257,6 +258,29 @@ EQUAL_VALUE_EXTREME_FAMILY_SPECS = (
             "distance_to_origin",
             "face_area",
         ),
+    ),
+    EqualValueExtremeFamilySpec(
+        family_id="parameterized_equal_feature_metric_extreme",
+        target_type="feature",
+        relation=None,
+        relation_clause_id=None,
+        equal_value_clause_id="has_parameterized_equal_feature_metric_value",
+        selector_metric_clause_id="has_parameterized_feature_metric",
+        equal_metrics=(
+            "volume",
+            "centroid_x",
+            "centroid_y",
+            "centroid_z",
+            "bbox_span_z",
+        ),
+        selector_metrics=(
+            "volume",
+            "centroid_x",
+            "centroid_y",
+            "centroid_z",
+            "bbox_span_z",
+        ),
+        relation_target_type=None,
     ),
     EqualValueExtremeFamilySpec(
         family_id="parameterized_equal_edge_metric_extreme",
@@ -682,16 +706,19 @@ def _viable_equal_value_extremes(
     spec: EqualValueExtremeFamilySpec,
 ) -> list[ViableEqualValueExtreme]:
     candidates = graph.nodes_by_type(spec.target_type)
-    relation = relation_predicate(
-        graph,
-        candidates,
-        clause_id=spec.relation_clause_id,
-        relation=spec.relation,
-        target_type="selector",
-    )
-    if relation is None:
-        return []
-    relation_candidates = _apply_relation_clause(graph, candidates, spec.relation)
+    if spec.relation is not None and spec.relation_clause_id is not None and spec.relation_target_type is not None:
+        relation = relation_predicate(
+            graph,
+            candidates,
+            clause_id=spec.relation_clause_id,
+            relation=spec.relation,
+            target_type=spec.relation_target_type,
+        )
+        if relation is None:
+            return []
+        relation_candidates = _apply_relation_clause(graph, candidates, spec.relation)
+    else:
+        relation_candidates = candidates
     viable: list[ViableEqualValueExtreme] = []
     for equal_metric in spec.equal_metrics:
         for equal_value, equal_nodes in _equal_measurement_groups(graph, relation_candidates, equal_metric):
@@ -745,16 +772,19 @@ def _viable_equal_value_extremes(
 def _query_for_equal_value_extreme(graph: OntologyGraph, viable: ViableEqualValueExtreme) -> QueryProgram | None:
     spec = viable.spec
     broad_candidates = graph.nodes_by_type(spec.target_type)
-    relation = relation_predicate(
-        graph,
-        broad_candidates,
-        clause_id=spec.relation_clause_id,
-        relation=spec.relation,
-        target_type="selector",
-    )
-    if relation is None:
-        return None
-    relation_candidates = _apply_relation_clause(graph, broad_candidates, spec.relation)
+    relation = None
+    relation_candidates = broad_candidates
+    if spec.relation is not None and spec.relation_clause_id is not None and spec.relation_target_type is not None:
+        relation = relation_predicate(
+            graph,
+            broad_candidates,
+            clause_id=spec.relation_clause_id,
+            relation=spec.relation,
+            target_type=spec.relation_target_type,
+        )
+        if relation is None:
+            return None
+        relation_candidates = _apply_relation_clause(graph, broad_candidates, spec.relation)
     equal_value = measurement_value_predicate(
         graph,
         relation_candidates,
@@ -790,10 +820,11 @@ def _query_for_equal_value_extreme(graph: OntologyGraph, viable: ViableEqualValu
             "prompt_wording_variant": [_prompt_wording_variant(graph.graph_id, spec.family_id)],
             "synthesis_strategy": ["equal_measurement_narrowing_v1"],
         },
-        relation.sampled_parameters,
         equal_value.sampled_parameters,
         selector_metric.sampled_parameters,
     )
+    if relation is not None:
+        sampled = merge_sampled_parameters(sampled, relation.sampled_parameters)
     selector_axis = metric_axis(viable.selector_metric)
     if selector_axis is not None:
         sampled = merge_sampled_parameters(sampled, {"aggregation_axis": [selector_axis]})
@@ -804,13 +835,17 @@ def _query_for_equal_value_extreme(graph: OntologyGraph, viable: ViableEqualValu
         query_id=f"{graph.graph_id}:synth:{spec.family_id}",
         target_type=spec.target_type,
         clauses=[
-            relation.clause,
-            equal_value.clause,
-            selector_metric.clause,
+            clause
+            for clause in (
+                relation.clause if relation is not None else None,
+                equal_value.clause,
+                selector_metric.clause,
+            )
+            if clause is not None
         ],
         aggregation=viable.aggregation,
         aggregation_metric=viable.selector_metric,
-        hop_count=4,
+        hop_count=4 if relation is not None else 3,
         difficulty="cad_browsecomp",
         min_individual_clause_candidates=2,
         sampled_parameters=sampled,

@@ -2362,6 +2362,59 @@ def test_synthesis_generates_equal_value_face_and_edge_queries() -> None:
     assert "10.0" in edge_row.prompt
 
 
+def test_synthesis_generates_equal_value_feature_query() -> None:
+    graph = OntologyGraph(graph_id="graph:equal-feature-synth", source={"source_id": "synthetic", "source_code": ""})
+    for feature_id, volume, centroid_z, bbox_span_z in [
+        ("feature:base", 240.0, 2.0, 4.0),
+        ("feature:upper", 240.0 + 1e-7, 8.0, 5.0),
+        ("feature:small", 32.0, 1.0, 2.0),
+    ]:
+        graph.add_node(Node(feature_id, "feature", feature_id))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid_z, "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "bbox_span_z", bbox_span_z, "mm"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_equal_feature_metric_extreme")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+    equal_step = next(step for step in row.candidate_trace["steps"] if step["step"] == "has_parameterized_equal_feature_metric_value")
+
+    assert resolution.verifier_status == "resolved"
+    assert query.target_type == "feature"
+    assert query.clauses[0].metric == "volume"
+    assert query.clauses[0].value == 240.0
+    assert query.clauses[1].metric in {"centroid_z", "bbox_span_z"}
+    assert query.aggregation_metric in {"centroid_z", "bbox_span_z"}
+    assert equal_step["after"] == ["feature:base", "feature:upper"]
+    assert row.logical_hop_count == 3
+    assert row.geometry_hop_count == 3
+    assert row.query_program["sampled_parameters"]["target_type"] == ["feature"]
+    assert row.query_program["sampled_parameters"]["equal_measurement_metric"] == ["volume"]
+    assert row.query_program["sampled_parameters"]["measurement_value_bucket"] == ["volume:240"]
+    assert "240.0" in row.prompt
+    assert "feature" in row.prompt.lower()
+
+
+def test_synthesis_skips_equal_value_feature_family_without_repeated_value_distractors() -> None:
+    graph = OntologyGraph(graph_id="graph:no-equal-feature-synth", source={"source_id": "synthetic", "source_code": ""})
+    for feature_id, volume, centroid_z in [
+        ("feature:base", 240.0, 2.0),
+        ("feature:upper", 180.0, 8.0),
+        ("feature:small", 32.0, 1.0),
+    ]:
+        graph.add_node(Node(feature_id, "feature", feature_id))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid_z, "mm"))
+
+    families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
+
+    assert "parameterized_equal_feature_metric_extreme" not in families
+
+
 def test_synthesis_skips_equal_value_family_without_repeated_value_distractors() -> None:
     graph = OntologyGraph(graph_id="graph:no-equal-edge-synth", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("selector:edges", "selector", "edges"))
