@@ -278,6 +278,37 @@ families:
         aggregation_rank: [2, 3, 4, 5, 6]
         clause_relation: [adjacent_to, coplanar_with, intersects, opposite_to, parallel_to, perpendicular_to]
     notes: Synthesized face family that applies a sampled chain of spatial-relation predicates before selecting a sampled rank by a measured face quantity.
+  - id: parameterized_face_spatial_relation_chain_tie_break_extreme
+    status: release
+    target_type: face
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - spatial_relation_chain
+        - spatial_relation_chain_length
+        - clause_relation
+        - aggregation_metric
+        - extremum_direction
+        - tie_break_metric
+        - tie_break_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - spatial_relation_chain
+        - spatial_relation_chain_length
+        - clause_relation
+        - aggregation_metric
+        - tie_break_metric
+        - tie_break_selector
+        - final_selector
+      expected_values:
+        spatial_relation_chain_length: [2]
+        clause_relation: [adjacent_to, coplanar_with, intersects, opposite_to, parallel_to, perpendicular_to]
+    notes: Synthesized face family that applies a sampled chain of spatial-relation predicates, allows a tied primary measured selector, and resolves by a sampled secondary measured selector.
   - id: parameterized_face_reference_feature_distance
     status: release
     target_type: face
@@ -1106,6 +1137,37 @@ families:
         aggregation_rank: [2, 3, 4, 5, 6]
         clause_relation: [adjacent_to, coaxial_with, intersects, longer_than, opposite_to, parallel_to, perpendicular_to, same_length_as, shorter_than]
     notes: Synthesized edge family that applies a sampled chain of spatial-relation predicates before selecting a sampled rank by a measured edge quantity.
+  - id: parameterized_edge_spatial_relation_chain_tie_break_extreme
+    status: release
+    target_type: edge
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - spatial_relation_chain
+        - spatial_relation_chain_length
+        - clause_relation
+        - aggregation_metric
+        - extremum_direction
+        - tie_break_metric
+        - tie_break_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - spatial_relation_chain
+        - spatial_relation_chain_length
+        - clause_relation
+        - aggregation_metric
+        - tie_break_metric
+        - tie_break_selector
+        - final_selector
+      expected_values:
+        spatial_relation_chain_length: [2]
+        clause_relation: [adjacent_to, coaxial_with, intersects, longer_than, opposite_to, parallel_to, perpendicular_to, same_length_as, shorter_than]
+    notes: Synthesized edge family that applies a sampled chain of spatial-relation predicates, allows a tied primary measured selector, and resolves by a sampled secondary measured selector.
   - id: frontmost_same_length_longer_positive_z_kernel_edge
     status: review_only
     target_type: edge

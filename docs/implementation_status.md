@@ -998,6 +998,18 @@ Checked as implemented with remaining scale caveats:
   level; broader relation combinations, rank distribution, and release-scale
   balance remain open.
 - The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_spatial_relation_chain_tie_break/PREVIEW.md`
+  adds valid release-ready rows for
+  `parameterized_face_spatial_relation_chain_tie_break_extreme` and
+  `parameterized_edge_spatial_relation_chain_tie_break_extreme`. The reviewed
+  rows apply two sampled spatial-relation predicates with distinct clause IDs,
+  narrow to three face/edge candidates, leave two candidates tied on the
+  primary measured selector, and resolve through `tie_break_aggregation` using
+  a secondary measured CAD quantity. This extends deterministic tie-break
+  synthesis to relation-chain families at the valid-row level; broader relation
+  combinations, tie-break selector distribution, and release-scale balance
+  remain open.
+- The synthesized selfcheck preview at
   `runs/parameterized_synthesis_selfcheck_endpoint_reference/PREVIEW.md`
   demonstrates the initial `parameterized_endpoint_reference_feature_distance`
   family. The reviewed row narrows edge endpoints by a repeated measured Z
