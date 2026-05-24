@@ -726,12 +726,20 @@ Checked as implemented with remaining scale caveats:
   for feature volume, centroid height, centroid X/Y coordinate, overall height,
   selected-face area, selected-face center Z, selected-edge length,
   selected-edge midpoint distance, endpoint Z, added-material region volume,
-  and selected-edge distance to a geometry-described reference feature. The
-  reviewed CadEvolve-50 check on 2026-05-24 generated 602 raw rows, 543
+  selected-edge distance to a geometry-described reference feature, and initial
+  synthesized selected-face distance to a geometry-described reference feature.
+  The reviewed CadEvolve-50 check on 2026-05-24 generated 602 raw rows, 543
   release-valid rows, and 494 default SFT rows, with release and SFT
   value-bearing gates passing. Reports now surface the rounding/tolerance
   policy used by these tasks: six decimal places and an absolute match
   tolerance of 1e-6.
+- The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_face_reference/PREVIEW.md`
+  demonstrates the initial `parameterized_face_reference_feature_distance`
+  family. The reviewed row narrows from three selected faces to two equal-area
+  faces, keeps both through the reference-feature and face-center clauses, and
+  resolves uniquely by face-center distance to a feature centroid. This remains
+  an initial face-reference slice, not proof of benchmark-release distribution.
 - Opposite-face rows on broad real CadEvolve data, broader containment,
   broader intersection, broader adjacency, and broader stable spatial-relation
   distributions remain scale/coverage work rather than unchecked core
@@ -757,7 +765,7 @@ Checked as implemented with remaining scale caveats:
   The current synthesis slice covers parameterized extrema over kernel-selected
   face/edge geometry and measured path point/segment geometry, initial selected
   face/edge selector-count narrowing, initial equal-value face/edge measurement
-  groups, and one edge-to-feature reference-distance family. Broader
+  groups, and initial face/edge-to-feature reference-distance families. Broader
   selected-entity-count narrowing,
   face/endpoint/material/void reference anchors, feature/region equal-value
   synthesis, containment/adjacency predicates, and rank/tie-break selectors
@@ -773,7 +781,8 @@ Checked as implemented with remaining scale caveats:
   serializes aggregation-rank/rank-direction metadata, and the synthesis layer
   emits an initial face/edge rank-family slice. Synthesized equal-measurement
   rows serialize equal metric and value-bucket metadata, and synthesized
-  reference-distance rows serialize sampled reference-anchor metadata.
+  reference-distance rows serialize sampled reference-anchor and target/reference
+  point metric metadata.
   Synthesized extrema, rank, selector-count, equal-measurement, and
   reference-distance rows now sample prompt-wording variants from the centralized
   YAML templates. Broader synthesized reference-anchor sampling, additional rank

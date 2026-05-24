@@ -2435,6 +2435,84 @@ def test_synthesis_generates_reference_feature_distance_query() -> None:
     assert str(reference_value["reference_volume"]) in row.prompt
 
 
+def test_synthesis_generates_face_reference_feature_distance_query() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:face-reference-distance-synth",
+        source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
+    )
+    for node_id, volume, centroid in [
+        ("feature:ref", 100.0, [0.0, 0.0, 0.0]),
+        ("feature:far", 50.0, [20.0, 0.0, 0.0]),
+    ]:
+        graph.add_node(Node(node_id, "feature", node_id))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "volume", volume))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "centroid", centroid))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "centroid_z", centroid[2]))
+    graph.add_node(Node("selector:faces", "selector", "selected faces"))
+    for node_id, area, center in [
+        ("face:a", 12.0, [1.0, 0.0, 0.0]),
+        ("face:b", 12.0 + 1e-7, [5.0, 0.0, 0.0]),
+        ("face:c", 8.0, [12.0, 0.0, 0.0]),
+    ]:
+        graph.add_node(Node(node_id, "face", node_id))
+        graph.add_relation(Relation(node_id, "selector:faces", "has_kernel_stable_face_id"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "face_area", area, "mm^2"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "face_center", center, "mm"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_face_reference_feature_distance")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+
+    assert resolution.verifier_status == "resolved"
+    assert query.target_type == "face"
+    assert query.aggregation in {"argmin", "argmax"}
+    assert query.aggregation_metric == "distance_to_reference_feature_centroid"
+    assert query.clauses[1].metric == "face_area"
+    assert query.clauses[1].value == 12.0
+    assert query.clauses[2].kind == "reference_measurement"
+    assert query.clauses[3].metric == "face_center"
+    assert row.logical_hop_count == 5
+    assert row.geometry_hop_count == 5
+    assert row.query_program["sampled_parameters"]["reference_type"] == ["feature"]
+    assert row.query_program["sampled_parameters"]["target_type"] == ["face"]
+    assert row.query_program["sampled_parameters"]["target_point_metric"] == ["face_center"]
+    assert row.query_program["sampled_parameters"]["reference_point_metric"] == ["centroid"]
+    assert row.query_program["sampled_parameters"]["measurement_value_bucket"] == ["face_area:12"]
+    assert "face center" in row.prompt
+    assert any(phrase in row.prompt for phrase in ("closest to", "farthest from"))
+
+
+def test_synthesis_skips_face_reference_distance_without_face_centers() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:no-face-reference-distance-synth",
+        source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
+    )
+    for node_id, volume, centroid in [
+        ("feature:ref", 100.0, [0.0, 0.0, 0.0]),
+        ("feature:far", 50.0, [20.0, 0.0, 0.0]),
+    ]:
+        graph.add_node(Node(node_id, "feature", node_id))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "volume", volume))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "centroid", centroid))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "centroid_z", centroid[2]))
+    graph.add_node(Node("selector:faces", "selector", "selected faces"))
+    for node_id, area in [
+        ("face:a", 12.0),
+        ("face:b", 12.0 + 1e-7),
+    ]:
+        graph.add_node(Node(node_id, "face", node_id))
+        graph.add_relation(Relation(node_id, "selector:faces", "has_kernel_stable_face_id"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "face_area", area, "mm^2"))
+
+    families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
+
+    assert "parameterized_face_reference_feature_distance" not in families
+
+
 def test_synthesis_skips_reference_distance_without_unique_reference_anchor() -> None:
     graph = OntologyGraph(
         graph_id="graph:no-reference-distance-synth",

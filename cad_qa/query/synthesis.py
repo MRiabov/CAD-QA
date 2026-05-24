@@ -284,6 +284,19 @@ EQUAL_VALUE_EXTREME_FAMILY_SPECS = (
 
 REFERENCE_DISTANCE_FAMILY_SPECS = (
     ReferenceDistanceFamilySpec(
+        family_id="parameterized_face_reference_feature_distance",
+        target_type="face",
+        relation="has_kernel_stable_face_id",
+        relation_clause_id="has_parameterized_face_set",
+        equal_value_clause_id="has_parameterized_equal_face_metric_value",
+        reference_clause_id="reference_feature_volume_and_centroid",
+        target_point_clause_id="has_face_center_for_reference_distance",
+        equal_metric="face_area",
+        target_point_metric="face_center",
+        reference_type="feature",
+        reference_point_metric="centroid",
+    ),
+    ReferenceDistanceFamilySpec(
         family_id="parameterized_edge_reference_feature_distance",
         target_type="edge",
         relation="has_kernel_stable_edge_id",

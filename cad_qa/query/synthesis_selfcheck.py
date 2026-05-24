@@ -24,6 +24,7 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_kernel_edge_rank",
     "parameterized_equal_face_metric_extreme",
     "parameterized_equal_edge_metric_extreme",
+    "parameterized_face_reference_feature_distance",
     "parameterized_edge_reference_feature_distance",
     "parameterized_path_point_extreme",
     "parameterized_path_segment_extreme",
@@ -162,15 +163,24 @@ def _face_equal_metric_graph() -> OntologyGraph:
         },
     )
     graph.add_node(Node("selector:faces", "selector", "faces"))
-    for face_id, area, coordinate_z in [
-        ("face:a", 12.0, 0.0),
-        ("face:b", 12.0 + 1e-7, 5.0),
-        ("face:c", 8.0, 9.0),
+    for feature_id, volume, centroid in [
+        ("feature:ref", 100.0, [0.0, 0.0, 0.0]),
+        ("feature:far", 50.0, [20.0, 0.0, 0.0]),
+    ]:
+        graph.add_node(Node(feature_id, "feature", feature_id))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid", centroid))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid[2]))
+    for face_id, area, coordinate_z, face_center in [
+        ("face:a", 12.0, 0.0, [1.0, 0.0, 0.0]),
+        ("face:b", 12.0 + 1e-7, 5.0, [5.0, 0.0, 0.0]),
+        ("face:c", 8.0, 9.0, [12.0, 0.0, 0.0]),
     ]:
         graph.add_node(Node(face_id, "face", face_id))
         graph.add_relation(Relation(face_id, "selector:faces", "has_kernel_stable_face_id"))
         graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", area, "mm^2"))
         graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_z", coordinate_z, "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_center", face_center, "mm"))
     return graph
 
 

@@ -59,7 +59,13 @@ def clause_prompt(clause: Any, *, query: Any | None = None) -> str:
 def aggregation_prompt(aggregation: str, metric: str, *, rank: int | None = None, query: Any | None = None) -> str:
     templates = _template_mapping("aggregation_templates")
     template = _select_template(templates[aggregation_template_key(aggregation, metric)], query=query)
-    return template.format(metric=metric, metric_label=metric_label(metric), rank=rank, rank_label=_rank_label(rank))
+    return template.format(
+        metric=metric,
+        metric_label=metric_label(metric),
+        rank=rank,
+        rank_label=_rank_label(rank),
+        target_point_label=metric_label(_sampled_parameter_value(query, "target_point_metric") or "midpoint"),
+    )
 
 
 def tie_break_prompt(aggregation: str, metric: str, *, query: Any | None = None) -> str:
@@ -229,6 +235,18 @@ def _operator_label(operator: str) -> str:
         "<=": "at most",
         "==": "equal to",
     }.get(operator, operator)
+
+
+def _sampled_parameter_value(query: Any | None, key: str) -> str | None:
+    sampled = getattr(query, "sampled_parameters", None)
+    if not isinstance(sampled, Mapping):
+        return None
+    raw = sampled.get(key)
+    values = raw if isinstance(raw, list) else [raw]
+    for value in values:
+        if value is not None:
+            return str(value)
+    return None
 
 
 def _rank_label(rank: int | None) -> str:

@@ -117,6 +117,37 @@ families:
         - aggregation_metric
         - final_selector
     notes: Synthesized value-bearing face family that narrows to a repeated measured value before selecting by another measured quantity.
+  - id: parameterized_face_reference_feature_distance
+    status: release
+    target_type: face
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - aggregation_metric
+        - final_selector
+      expected_values:
+        reference_type: [feature]
+        target_point_metric: [face_center]
+        reference_point_metric: [centroid]
+    notes: Synthesized cross-feature face family that narrows by repeated face area before selecting by distance from face center to a geometry-described feature centroid.
   - id: highest_positive_x_flat_opposite_adjacent_perpendicular_kernel_face
     status: review_only
     target_type: face

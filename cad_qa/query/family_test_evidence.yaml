@@ -56,6 +56,14 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Initial synthesized cross-feature edge family with sampled reference-feature anchor.
+  - id: parameterized_face_reference_feature_distance
+    positive_generation:
+      - test_synthesis_generates_face_reference_feature_distance_query
+    failure_or_quarantine:
+      - test_synthesis_skips_face_reference_distance_without_face_centers
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Initial synthesized cross-feature face family with equal-area distractors and a sampled reference-feature anchor.
   - id: parameterized_path_point_extreme
     positive_generation:
       - test_synthesis_generates_parameterized_path_queries

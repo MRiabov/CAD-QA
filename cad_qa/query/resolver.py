@@ -2386,9 +2386,10 @@ def _apply_reference_feature_distance_aggregation(
     reference_point = _reference_point_from_query(graph, query)
     if reference_point is None:
         return []
+    target_point_metric = _target_point_metric_from_query(query)
     scored: list[tuple[float, Node]] = []
     for node in candidates:
-        point = _point_measurement(graph, node.id, "midpoint")
+        point = _point_measurement(graph, node.id, target_point_metric)
         if point is not None:
             scored.append((_point_distance(point, reference_point), node))
     if not scored:
@@ -2515,11 +2516,25 @@ def _reference_feature_key(graph: OntologyGraph, feature_id: str) -> tuple[float
 
 
 def _reference_point_from_query(graph: OntologyGraph, query: QueryProgram) -> list[float] | None:
+    reference_point_metric = _sampled_parameter_value(query, "reference_point_metric") or "centroid"
     for clause in query.clauses:
         if clause.kind == "reference_measurement" and isinstance(clause.value, dict):
             reference_id = clause.value.get("reference_id")
             if isinstance(reference_id, str):
-                return _point_measurement(graph, reference_id, "centroid")
+                return _point_measurement(graph, reference_id, reference_point_metric)
+    return None
+
+
+def _target_point_metric_from_query(query: QueryProgram) -> str:
+    return _sampled_parameter_value(query, "target_point_metric") or "midpoint"
+
+
+def _sampled_parameter_value(query: QueryProgram, key: str) -> str | None:
+    raw = query.sampled_parameters.get(key)
+    values = raw if isinstance(raw, list) else [raw]
+    for value in values:
+        if value is not None:
+            return str(value)
     return None
 
 
