@@ -204,6 +204,11 @@ when those choices can be sampled and verified.
   such as `*_reference_face_distance` and `*_reference_edge_distance` to
   `review_only`. This keeps the intended benchmark family count feasible while
   preserving the explicit variants as implementation and preview evidence.
+- Group-safe release splits now treat broad corpus provenance such as
+  `generator_id` and `generator` as reported audit metadata, not protected
+  leakage labels. CadEvolve sources that share one generator can therefore
+  split by explicit source/path/counterfactual families instead of collapsing
+  the whole subtree into a single train-only group.
 - Materialized rows now serialize private `query_program.sampled_parameters`
   for the parameter dimensions currently inferable from each query program.
 - Benchmark-release release and SFT reports include an initial parameter-balance

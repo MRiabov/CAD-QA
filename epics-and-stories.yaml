@@ -490,3 +490,23 @@ epics:
       - id: "15.5"
         title: Benchmark-release gates for parameter balance, intended-family coverage, split quality, and preview/test evidence
         status: implemented
+        acceptance_criteria:
+          - Users cannot release nominally parameterized families whose sampled
+            values collapse to one axis, direction, value, or entity subtype.
+          - Users cannot release a benchmark artifact with missing intended
+            release families, stale manual-preview evidence, or absent family
+            test evidence.
+          - Users get train/validation/test splits over true leakage groups
+            without broad corpus provenance collapsing a CadEvolve subtree into
+            one train-only group.
+        technical_definition_of_done:
+          - Benchmark-release gates block collapsed parameter dimensions,
+            zero-row intended release families, infeasible intended family
+            counts for the 1%-10% family-share band, insufficient preview
+            samples, missing family-test evidence, and fewer than 3 protected
+            split groups per split.
+          - Split grouping protects explicit leakage labels such as
+            `split_group`, `counterfactual_group`, `source_family`, `family_id`,
+            and `template_id`, while `generator_id` and `generator` remain
+            reported provenance fields that do not merge unrelated source
+            families into one split group.

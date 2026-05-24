@@ -14,6 +14,8 @@ PROTECTED_GROUP_KEYS = (
     "source_family",
     "family_id",
     "template_id",
+)
+REPORTED_PROVENANCE_KEYS = (
     "generator_id",
     "generator",
 )
@@ -53,7 +55,7 @@ def split_manifest(rows: list[Any]) -> dict[str, Any]:
     for group in source_groups.values():
         group_counts[group["split"]] += 1
     return {
-        "policy": "deterministic 70/15/15 approximation over protected source groups; all rows sharing source family, generator, counterfactual group, split_group, or path-derived family stay together",
+        "policy": "deterministic 70/15/15 approximation over protected leakage/source groups; all rows sharing source family, counterfactual group, split_group, template/family id, or path-derived family stay together; broad generator provenance is reported but does not merge groups",
         "source_count": len(sources),
         "group_count": len(source_groups),
         "source_counts_by_split": counts,
@@ -61,6 +63,7 @@ def split_manifest(rows: list[Any]) -> dict[str, Any]:
         "sources": sources,
         "source_groups": source_groups,
         "protected_group_keys": list(PROTECTED_GROUP_KEYS),
+        "reported_provenance_keys": list(REPORTED_PROVENANCE_KEYS),
     }
 
 
@@ -125,6 +128,7 @@ def split_audit(rows: list[Any], manifest: dict[str, Any] | None = None) -> dict
         "source_count": len(row_sources),
         "group_count": group_count,
         "protected_group_keys": list(PROTECTED_GROUP_KEYS),
+        "reported_provenance_keys": list(REPORTED_PROVENANCE_KEYS),
         "source_counts_by_split": manifest.get("source_counts_by_split", {}),
         "group_counts_by_split": group_counts,
         "missing_manifest_sources": missing_manifest_sources,

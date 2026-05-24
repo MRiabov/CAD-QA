@@ -83,6 +83,12 @@ prose.
 | Manual preview | At least 20 sampled rows per changed release family, or all rows if fewer exist. |
 | New-family tests | Positive generation, failure/quarantine, and release-report accounting coverage. |
 
+Protected split groups are leakage groups, not broad corpus provenance. Labels
+such as counterfactual group, explicit split group, source family, family ID,
+and template ID may force sources to stay together. Broad provenance such as
+`generator_id`/`generator` must be reported for auditability but must not merge
+an entire CadEvolve subtree into one train-only group.
+
 A benchmark-release artifact is ready only when the benchmark-release verifier
 reports `valid_for_release=true`, has no blocking gates, and the default SFT
 export passes the same tier. Any missing intended family, collapsed sampled
@@ -493,7 +499,7 @@ Technical definition of done:
 | 15.2 Configurable release-tier verifier profiles for smoke, release-candidate, and benchmark-release | `implemented` | Users can select the intended release tier and get the right thresholds. | CLI/reporting accepts explicit tier selection and uses tier-specific constants in verifier/SFT reports. |
 | 15.3 Benchmark-release gates for row counts, geometry-hop coverage, geometry-critical dominance, and syntax-only caps | `implemented` | Users cannot label small or shortcut-heavy artifacts benchmark-release ready. | Verifier blocks artifacts below 10,000 release/default-SFT rows, below 95% geometry-hop-positive, below 99% default-SFT geometry-critical, above 0% default-SFT syntax-only through the explicit `default_sft_syntax_only_cap` stop gate, or above 2% benchmark syntax-only without separate calibration. |
 | 15.4 Benchmark-release gates for value-bearing, cross-feature, prompt-template, answer-diversity, and candidate-breadth targets | `implemented` | Users get datasets with enough concrete measurement reasoning, cross-feature reasoning, prompt variety, answer diversity, and distractors. | Verifier blocks artifacts outside 15%-30% value-bearing, outside 5%-15% cross-feature, below 20 prompt templates, above 5% prompt-template share, below 1,000 unique answers, below 8 entropy bits, or below candidate-breadth targets. |
-| 15.5 Benchmark-release gates for parameter balance, intended-family coverage, split quality, and preview/test evidence | `implemented` | Users can trust that parameterized families, intended-family coverage, splits, and manual review evidence are not collapsed or mathematically impossible to balance. | Verifier blocks train-only split collapse, fewer than 3 protected groups per split, collapsed sampled parameters, zero-row intended families, intended release-family counts outside the feasible 10-100 range for the 1%-10% family-share band, missing/stale/insufficient preview evidence, and missing family test-evidence refs for the benchmark-release tier; the default manifest is inside that feasible family-count range by keeping explicit fixed-reference variants review-only. |
+| 15.5 Benchmark-release gates for parameter balance, intended-family coverage, split quality, and preview/test evidence | `implemented` | Users can trust that parameterized families, intended-family coverage, splits, and manual review evidence are not collapsed or mathematically impossible to balance. | Verifier blocks train-only split collapse, fewer than 3 protected groups per split, collapsed sampled parameters, zero-row intended families, intended release-family counts outside the feasible 10-100 range for the 1%-10% family-share band, missing/stale/insufficient preview evidence, and missing family test-evidence refs for the benchmark-release tier; split grouping keeps true leakage groups together while reporting broad generator provenance without collapsing an entire corpus; the default manifest is inside that feasible family-count range by keeping explicit fixed-reference variants review-only. |
 
 ## Manual Review Requirements Before Marking Implemented
 

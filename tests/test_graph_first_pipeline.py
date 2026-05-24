@@ -8567,6 +8567,26 @@ def test_group_safe_splits_use_source_family_metadata() -> None:
     assert stale_audit["errors"][0]["error"] == "row_split_mismatch"
 
 
+def test_group_safe_splits_do_not_collapse_shared_generator_metadata() -> None:
+    rows = [
+        {
+            "row_id": f"row:{index}",
+            "source_id": f"src_{index}",
+            "source_path": f"CADEvolve-C/ABC-C/{index:08d}_part/model.py",
+            "source_metadata": {"generator_id": "cadevolve_cadevolve_c_abc_c"},
+        }
+        for index in range(6)
+    ]
+    manifest = split_manifest(rows)
+
+    assert manifest["group_count"] == 6
+    assert "generator_id" not in manifest["protected_group_keys"]
+    assert "generator_id" in manifest["reported_provenance_keys"]
+    assert set(manifest["group_counts_by_split"]) == {"train", "validation", "test"}
+    assert all(count > 0 for count in manifest["group_counts_by_split"].values())
+    assert split_audit(rows, manifest)["valid"]
+
+
 def test_quarantine_policy_marks_non_release_ready_rows() -> None:
     graph = build_graph(source_record_from_mapping({"source_id": "src_loop", "normalized_code": LOOP_SOURCE}))
     rows = [
