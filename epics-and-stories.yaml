@@ -31,7 +31,11 @@ current_snapshot:
     geometry-critical dominance, zero syntax-only default SFT rows,
     value-bearing and cross-feature coverage bands, parameter-balance limits,
     manual preview/test evidence, and non-collapsed train/validation/test
-    splits. Smoke and release-candidate tiers are development gates only.
+    splits. This benchmark-release level is a blocking functional contract:
+    code, specs, this epic plan, release reports, default SFT reports, preview
+    evidence, family-test evidence, and split audits must all agree before an
+    artifact can be called benchmark-ready or fine-tuning-ready. Smoke and
+    release-candidate tiers are development gates only.
     Earlier separate task-family and graph-query framing is obsolete.
 status_values:
   - planned

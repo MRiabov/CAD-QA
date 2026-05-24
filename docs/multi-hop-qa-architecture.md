@@ -179,6 +179,14 @@ A synthesized graph-hop narrowing family is release-ready only when:
   intended-family manifest and block release until moved to review-only status or
   supplied with enough valid rows.
 
+For benchmark-release artifacts, these gates are evaluated under the
+`benchmark-release` profile from `specs/dataset-spec.md`. A synthesized family
+is not considered complete merely because it can produce one reviewed row: it
+must also contribute to the benchmark-release distribution, sampled-parameter
+coverage, preview evidence, family-test evidence, and default SFT gates without
+collapsing onto one avoidable constant or starving other intended release
+families.
+
 ## Maximally Parameterized Tasks
 
 Main benchmark and default SFT rows must not encode avoidable constants or

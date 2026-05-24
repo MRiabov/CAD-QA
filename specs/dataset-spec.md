@@ -100,6 +100,34 @@ blocking gates, and the corresponding default SFT report passes the same tier.
 Passing smoke or release-candidate gates must never be described as
 benchmark-release readiness.
 
+## Benchmark-Release Contract
+
+`benchmark-release` is the normative dataset level for CAD-QA. It is not a
+larger smoke run, a best-effort release candidate, or a post-hoc paper label.
+It is the blocking contract for the public benchmark artifact and for any
+default SFT dataset that is claimed to be ready for real fine-tuning.
+
+The contract has three parts:
+
+- the executable profile in `BENCHMARK_RELEASE_PROFILE`;
+- the human-readable numeric requirements in this specification and
+  `epics-and-stories.md`;
+- release artifacts whose dataset report, release verifier report, default SFT
+  report, preview evidence, family-test evidence, and split audit all pass that
+  profile.
+
+All benchmark-release gates are functional requirements. A row set that passes
+schema validation, release filtering, or the `release-candidate` tier is still a
+development artifact if any benchmark-release gate fails. Missing intended
+families, collapsed sampled parameters, stale preview evidence, absent
+new-family tests, weak split groups, insufficient row counts, or insufficient
+geometry/value-bearing coverage are release blockers, not warnings.
+
+The docs and code must move together. Changes to benchmark-release thresholds,
+new blocking dimensions, or tier semantics require updating this spec,
+`epics-and-stories.md`, `epics-and-stories.yaml`, the executable profile, and
+the profile/spec consistency tests in the same change.
+
 ## Benchmark-Release Numeric Gates
 
 The benchmark-release tier is the target standard for public benchmark claims and

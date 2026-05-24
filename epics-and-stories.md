@@ -45,9 +45,12 @@ Recent policy updates:
   narrowing predicates, bounded clause-chain search, sampled final selectors, and
   normal resolver/verifier/rendering.
 
-Benchmark-release readiness is the canonical public benchmark and real
+The `benchmark-release` level is the canonical public benchmark and real
 fine-tuning bar. Smoke and release-candidate tiers are development gates; they
-can demonstrate mechanics, but they cannot support benchmark-release claims:
+can demonstrate mechanics, but they cannot support benchmark-release claims.
+The executable profile, this planning document, and `specs/dataset-spec.md`
+must stay synchronized; changing a threshold or blocking dimension requires
+updating all three plus the profile/spec consistency tests:
 
 | Gate | Benchmark-release requirement |
 | --- | --- |
