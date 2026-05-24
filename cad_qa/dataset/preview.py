@@ -100,8 +100,14 @@ def dataset_preview_markdown(
             for node in _sample(nodes, sample_per_family, rng):
                 payload = dict(node)
                 measurements = measurements_by_entity.get(str(node["id"]), [])
+                payload["measurement_count"] = len(measurements)
                 if measurements:
                     payload["measurements"] = measurements[:10]
+                    if len(measurements) > 10:
+                        payload["omitted_measurement_names"] = [
+                            str(measurement["name"])
+                            for measurement in measurements[10:]
+                        ]
                 lines.extend(["```json", json.dumps(payload, indent=2, sort_keys=True), "```", ""])
     return "\n".join(lines).rstrip() + "\n"
 
@@ -113,6 +119,8 @@ def _row_sample_markdown(row: dict[str, Any], *, index: int, max_prompt_chars: i
         "row_id": row.get("row_id"),
         "source_id": row.get("source_id"),
         "difficulty": row.get("difficulty_bucket"),
+        "prompt_version": row.get("prompt_version"),
+        "prompt_template_id": row.get("prompt_template_id"),
         "logical_hop_count": row.get("logical_hop_count"),
         "static_hop_count": row.get("static_hop_count"),
         "geometry_hop_count": row.get("geometry_hop_count"),

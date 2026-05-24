@@ -608,6 +608,7 @@ class _Extractor:
                 self.graph.add_measurement(
                     Measurement(face_id, "entity_geometry", "normal_axis", normal_axis, evidence={"source": "cadquery_selector_result"})
                 )
+        self._add_kernel_face_center_metrics(selected_face_ids, kernel_result)
         self._add_kernel_face_spatial_relations(selected_face_ids, normal_axes, kernel_result)
         for previous_selector_id in previous_selector_ids:
             self.graph.add_relation(
@@ -626,6 +627,27 @@ class _Extractor:
                     evidence={"source": kernel_result.get("evidence", "cadquery_selector_result")},
                 )
             )
+
+    def _add_kernel_face_center_metrics(self, face_ids: list[str], kernel_result: dict[str, Any]) -> None:
+        evidence = {"source": kernel_result.get("evidence", "cadquery_selector_result")}
+        self._ensure_global_origin(evidence)
+        for face_id in face_ids:
+            face = self.graph.node(face_id)
+            if face is None or self.graph.measurements_for(face_id, "face_center"):
+                continue
+            center = _bbox_midpoint(face.properties.get("bbox"))
+            if center is None:
+                continue
+            distance_to_origin = math.sqrt(sum(component * component for component in center))
+            self.graph.add_relation(Relation(face_id, "origin:global", "distance_to", evidence=evidence))
+            self.graph.add_measurement(Measurement(face_id, "entity_geometry", "face_center", center, "mm", evidence))
+            self.graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_x", center[0], "mm", evidence))
+            self.graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_y", center[1], "mm", evidence))
+            self.graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_z", center[2], "mm", evidence))
+            self.graph.add_measurement(Measurement(face_id, "relation_metric", "distance_to_origin", distance_to_origin, "mm", evidence))
+            face_area = _bbox_face_area(face.properties.get("bbox"))
+            if face_area is not None:
+                self.graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", face_area, "mm^2", evidence))
 
     def _add_kernel_face_spatial_relations(
         self,
@@ -1612,6 +1634,24 @@ def _bbox_flat_axis(bbox: Any) -> str | None:
     if len(flat) != 1 or len(positive) != 2:
         return None
     return flat[0][0]
+
+
+def _bbox_face_area(bbox: Any) -> float | None:
+    if not isinstance(bbox, dict):
+        return None
+    spans = _bbox_scalar_measurements("bbox", bbox)
+    axis_spans = [
+        float(spans[f"bbox_span_{axis}"])
+        for axis in ("x", "y", "z")
+        if isinstance(spans.get(f"bbox_span_{axis}"), (int, float))
+    ]
+    if len(axis_spans) != 3:
+        return None
+    flat = [span for span in axis_spans if span <= 1e-6]
+    positive = [span for span in axis_spans if span > 1e-6]
+    if len(flat) != 1 or len(positive) != 2:
+        return None
+    return positive[0] * positive[1]
 
 
 def _bbox_edge_endpoints(bbox: Any) -> list[list[float]] | None:

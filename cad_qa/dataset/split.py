@@ -32,6 +32,17 @@ def assign_splits(rows: list[Any]) -> dict[str, list[Any]]:
     return grouped
 
 
+def rows_with_assigned_splits(rows: list[Any], manifest: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    manifest = manifest or split_manifest(rows)
+    source_splits = manifest["sources"]
+    assigned = []
+    for row in rows:
+        item = row.__dict__.copy() if hasattr(row, "__dict__") else dict(row)
+        item["split"] = source_splits[str(_row_get(row, "source_id"))]
+        assigned.append(item)
+    return assigned
+
+
 def split_manifest(rows: list[Any]) -> dict[str, Any]:
     sources = _source_split_map(rows)
     source_groups = _source_groups(rows)
@@ -50,6 +61,78 @@ def split_manifest(rows: list[Any]) -> dict[str, Any]:
         "sources": sources,
         "source_groups": source_groups,
         "protected_group_keys": list(PROTECTED_GROUP_KEYS),
+    }
+
+
+def split_audit(rows: list[Any], manifest: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Check that concrete row splits match the group-safe split manifest."""
+
+    manifest = manifest or split_manifest(rows)
+    row_sources = {str(_row_get(row, "source_id")) for row in rows}
+    manifest_sources = {str(source_id): split for source_id, split in manifest.get("sources", {}).items()}
+    missing_manifest_sources = sorted(row_sources - set(manifest_sources))
+    orphan_manifest_sources = sorted(set(manifest_sources) - row_sources)
+    row_split_mismatches = []
+    for row in rows:
+        source_id = str(_row_get(row, "source_id"))
+        expected_split = manifest_sources.get(source_id)
+        actual_split = _row_get(row, "split")
+        if actual_split not in (None, "") and expected_split is not None and actual_split != expected_split:
+            row_split_mismatches.append(
+                {
+                    "row_id": _row_get(row, "row_id"),
+                    "source_id": source_id,
+                    "expected_split": expected_split,
+                    "actual_split": actual_split,
+                }
+            )
+
+    label_splits: dict[str, set[str]] = {}
+    for row in rows:
+        source_id = str(_row_get(row, "source_id"))
+        split = manifest_sources.get(source_id)
+        if split is None:
+            continue
+        for label in _protected_labels(row):
+            label_splits.setdefault(label, set()).add(split)
+    protected_label_split_leaks = {
+        label: sorted(splits)
+        for label, splits in sorted(label_splits.items())
+        if len(splits) > 1
+    }
+
+    errors = []
+    if missing_manifest_sources:
+        errors.append({"error": "missing_manifest_sources", "source_ids": missing_manifest_sources})
+    if orphan_manifest_sources:
+        errors.append({"error": "orphan_manifest_sources", "source_ids": orphan_manifest_sources})
+    if row_split_mismatches:
+        errors.append({"error": "row_split_mismatch", "rows": row_split_mismatches})
+    if protected_label_split_leaks:
+        errors.append({"error": "protected_label_split_leak", "labels": protected_label_split_leaks})
+
+    warnings = []
+    group_count = int(manifest.get("group_count") or 0)
+    group_counts = manifest.get("group_counts_by_split", {})
+    if group_count >= 3:
+        empty_splits = [split for split in SPLITS if int(group_counts.get(split, 0) or 0) == 0]
+        if empty_splits:
+            warnings.append({"warning": "empty_split_bucket", "splits": empty_splits})
+
+    return {
+        "valid": not errors,
+        "row_count": len(rows),
+        "source_count": len(row_sources),
+        "group_count": group_count,
+        "protected_group_keys": list(PROTECTED_GROUP_KEYS),
+        "source_counts_by_split": manifest.get("source_counts_by_split", {}),
+        "group_counts_by_split": group_counts,
+        "missing_manifest_sources": missing_manifest_sources,
+        "orphan_manifest_sources": orphan_manifest_sources,
+        "row_split_mismatches": row_split_mismatches,
+        "protected_label_split_leaks": protected_label_split_leaks,
+        "errors": errors,
+        "warnings": warnings,
     }
 
 

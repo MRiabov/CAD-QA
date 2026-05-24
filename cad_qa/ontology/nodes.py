@@ -54,9 +54,13 @@ class OntologyGraph:
             self.nodes.append(node)
 
     def add_relation(self, relation: Relation) -> None:
+        if relation in self.relations:
+            return
         self.relations.append(relation)
 
     def add_measurement(self, measurement: Measurement) -> None:
+        if measurement in self.measurements:
+            return
         self.measurements.append(measurement)
 
     def measurements_for(self, entity_id: str, name: str | None = None) -> list[Measurement]:

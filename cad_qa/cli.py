@@ -13,8 +13,14 @@ from cad_qa.dataset.preview import dataset_preview_markdown
 from cad_qa.dataset.public import write_public_private_artifacts
 from cad_qa.dataset.quarantine import quarantine_report
 from cad_qa.dataset.release import export_release_dataset
-from cad_qa.dataset.release_report import write_release_verifier_report
-from cad_qa.dataset.report import dataset_card_markdown, dataset_report, failure_report
+from cad_qa.dataset.release_report import release_balance_report, write_release_verifier_report
+from cad_qa.dataset.report import (
+    dataset_card_markdown,
+    dataset_report,
+    failure_report,
+    shortcut_resistance_markdown,
+    shortcut_resistance_report,
+)
 from cad_qa.dataset.sft import (
     ablation_sft_groups,
     answer_sft_rows,
@@ -23,7 +29,7 @@ from cad_qa.dataset.sft import (
     scaling_sft_groups,
     training_readiness_report,
 )
-from cad_qa.dataset.split import assign_splits, split_manifest
+from cad_qa.dataset.split import assign_splits, split_audit, split_manifest
 from cad_qa.dataset.materialize import materialize_row
 from cad_qa.dataset.validate import validate_dataset_dir
 from cad_qa.evaluation.baselines import run_baselines
@@ -120,6 +126,11 @@ def build_parser() -> argparse.ArgumentParser:
     export_release = dataset_sub.add_parser("export-release")
     export_release.add_argument("path", type=Path)
     export_release.add_argument("--out", type=Path, required=True)
+    export_release.add_argument(
+        "--allow-failing-release-gates",
+        action="store_true",
+        help="Write release artifacts even when verifier stop gates fail.",
+    )
     export_release.set_defaults(func=_cmd_dataset_export_release)
     export_public_private = dataset_sub.add_parser("export-public-private")
     export_public_private.add_argument("path", type=Path)
@@ -132,6 +143,10 @@ def build_parser() -> argparse.ArgumentParser:
     release_report.add_argument("path", type=Path)
     release_report.add_argument("--out", type=Path)
     release_report.set_defaults(func=_cmd_dataset_release_report)
+    shortcut_report = dataset_sub.add_parser("shortcut-report")
+    shortcut_report.add_argument("path", type=Path, help="Dataset directory or rows.jsonl file.")
+    shortcut_report.add_argument("--out", type=Path, help="Output directory. Defaults to the dataset directory.")
+    shortcut_report.set_defaults(func=_cmd_dataset_shortcut_report)
     preview = dataset_sub.add_parser("preview")
     preview.add_argument("path", type=Path, help="Dataset directory or rows.jsonl file.")
     preview.add_argument("--graphs", type=Path, help="Optional graph directory or graphs.jsonl file for node samples.")
@@ -196,6 +211,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--include-calibration",
         action="store_true",
         help="Include syntax-only calibration rows instead of the default geometry-critical training subset.",
+    )
+    export_sft.add_argument(
+        "--allow-failing-training-gates",
+        action="store_true",
+        help="Write SFT artifacts even when applicable default training gates fail.",
     )
     export_sft.set_defaults(func=_cmd_training_export_sft)
 
@@ -360,6 +380,8 @@ def _cmd_dataset_materialize(args: argparse.Namespace) -> dict[str, Any]:
     report = dataset_report(row_dicts)
     report["split_manifest"] = manifest
     report["leakage_audit"] = leakage_audit(row_dicts, manifest)
+    report["split_audit"] = split_audit(row_dicts, manifest)
+    write_json(args.out / "split_audit.json", report["split_audit"])
     write_json(args.out / "dataset_report.json", report)
     return report
 
@@ -386,10 +408,21 @@ def _cmd_dataset_quarantine(args: argparse.Namespace) -> dict[str, Any]:
 
 def _cmd_dataset_export_release(args: argparse.Namespace) -> dict[str, Any]:
     rows = read_jsonl(args.path / "rows.jsonl")
-    result = export_release_dataset(rows, out=args.out, source_dataset=args.path)
+    result = export_release_dataset(
+        rows,
+        out=args.out,
+        source_dataset=args.path,
+        allow_failing_release_gates=bool(args.allow_failing_release_gates),
+    )
     return {
         "row_count": result["row_count"],
         "excluded_quarantine_count": result["excluded_quarantine_count"],
+        "excluded_release_validation_count": result["excluded_release_validation_count"],
+        "excluded_prompt_policy_count": result["excluded_prompt_policy_count"],
+        "excluded_syntax_only_calibration_cap_count": result[
+            "excluded_syntax_only_calibration_cap_count"
+        ],
+        "blocking_release_gates": result["blocking_release_gates"],
         "valid": result["valid"],
         "out": result["out"],
     }
@@ -433,6 +466,26 @@ def _cmd_dataset_card(args: argparse.Namespace) -> dict[str, Any]:
 
 def _cmd_dataset_release_report(args: argparse.Namespace) -> dict[str, Any]:
     return write_release_verifier_report(args.path, out=args.out)
+
+
+def _cmd_dataset_shortcut_report(args: argparse.Namespace) -> dict[str, Any]:
+    rows_path = args.path / "rows.jsonl" if args.path.is_dir() else args.path
+    rows = read_jsonl(rows_path)
+    report = shortcut_resistance_report(rows)
+    out_dir = args.out or (args.path if args.path.is_dir() else args.path.parent)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    write_json(out_dir / "shortcut_resistance_report.json", report)
+    (out_dir / "SHORTCUT_RESISTANCE_REPORT.md").write_text(
+        shortcut_resistance_markdown(report),
+        encoding="utf-8",
+    )
+    return {
+        "row_count": report["row_count"],
+        "prompt_family_count": report["prompt_family_count"],
+        "geometry_hop_positive_share": report["geometry_hop_positive_share"],
+        "syntax_only_calibration_share": report["syntax_only_calibration_share"],
+        "out": str(out_dir),
+    }
 
 
 def _cmd_dataset_preview(args: argparse.Namespace) -> dict[str, Any]:
@@ -592,8 +645,41 @@ def _cmd_training_export_sft(args: argparse.Namespace) -> dict[str, Any]:
         rows,
         include_calibration=bool(args.include_calibration),
     )
+    report["input_balance"] = release_balance_report(input_rows)
+    report["training_balance"] = release_balance_report(rows)
+    report["training_stop_gates"] = _training_stop_gates(
+        report["training_readiness"],
+        report["training_balance"],
+    )
+    report["blocking_training_gates"] = _blocking_gates(report["training_stop_gates"])
+    report["valid_for_training"] = not report["blocking_training_gates"]
+    report["enforced_training_gates"] = not bool(args.include_calibration)
     write_json(args.out / "sft_report.json", report)
+    if (
+        report["blocking_training_gates"]
+        and report["enforced_training_gates"]
+        and not bool(args.allow_failing_training_gates)
+    ):
+        raise RuntimeError(f"training gates failed: {report['blocking_training_gates']}")
     return report
+
+
+def _training_stop_gates(
+    training_readiness: dict[str, Any],
+    training_balance: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "geometry_critical_dominance": training_readiness["passes_geometry_critical_dominance"],
+        "prompt_family_balance": training_balance["passes_prompt_family_balance"],
+        "prompt_template_balance": training_balance["passes_prompt_template_balance"],
+        "answer_entropy": training_balance["passes_answer_entropy"],
+        "geometry_hop_coverage": training_balance["passes_geometry_hop_coverage"],
+        "syntax_only_calibration_cap": training_balance["passes_syntax_only_calibration_cap"],
+    }
+
+
+def _blocking_gates(stop_gates: dict[str, Any]) -> list[str]:
+    return [name for name, passed in stop_gates.items() if passed is False]
 
 
 def _cmd_experiment_smoke(args: argparse.Namespace) -> dict[str, Any]:

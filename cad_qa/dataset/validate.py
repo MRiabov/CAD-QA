@@ -6,7 +6,12 @@ from pathlib import Path
 from typing import Any
 
 from cad_qa.io import read_jsonl, write_json
-from cad_qa.prompts.wording_gates import banned_terms, clue_breadth_violations, clue_map_traceability_errors
+from cad_qa.prompts.wording_gates import (
+    banned_terms,
+    clue_breadth_violations,
+    clue_map_traceability_errors,
+    geometry_first_prompt_policy_issues,
+)
 
 REQUIRED_ROW_FIELDS = {
     "row_id",
@@ -50,6 +55,17 @@ def validate_rows(rows: list[dict[str, Any]], *, release: bool = False) -> dict[
         terms = banned_terms(str(row.get("prompt", "")))
         if terms:
             errors.append({"index": index, "row_id": row.get("row_id"), "error": "banned_prompt_terms", "terms": terms})
+        for issue in geometry_first_prompt_policy_issues(row):
+            item = {
+                "index": index,
+                "row_id": row.get("row_id"),
+                "prompt_policy_issue": issue["issue"],
+                **issue,
+            }
+            if release and issue["severity"] == "error":
+                errors.append({**item, "error": "geometry_first_prompt_policy"})
+            else:
+                warnings.append({**item, "warning": "geometry_first_prompt_policy"})
         if row.get("release_ready") is False:
             item = {
                 "index": index,

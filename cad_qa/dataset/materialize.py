@@ -33,6 +33,7 @@ class DatasetRow:
     difficulty_bucket: str
     verifier_status: str
     prompt_version: str
+    prompt_template_id: str
     clue_map: list[dict[str, Any]]
     evidence_tier: str
     release_ready: bool
@@ -78,6 +79,7 @@ def materialize_row(graph: OntologyGraph, resolution: QueryResolution) -> Datase
         difficulty_bucket=query.difficulty,
         verifier_status=resolution.verifier_status,
         prompt_version=rendered.prompt_version,
+        prompt_template_id=rendered.prompt_template_id,
         clue_map=_clue_map_with_candidate_counts(rendered.clue_map, resolution.candidate_trace.steps),
         evidence_tier=evidence_tier,
         release_ready=not quarantine_reasons,

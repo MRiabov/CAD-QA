@@ -14,7 +14,7 @@ from cad_qa.dataset.preview import dataset_preview_markdown
 from cad_qa.dataset.public import private_rows, public_rows, write_public_private_artifacts
 from cad_qa.dataset.quarantine import quarantine_report
 from cad_qa.dataset.release import export_release_dataset
-from cad_qa.dataset.release_report import write_release_verifier_report
+from cad_qa.dataset.release_report import release_balance_report, write_release_verifier_report
 from cad_qa.dataset.report import dataset_card_markdown, dataset_report, failure_report
 from cad_qa.dataset.sft import (
     ablation_sft_groups,
@@ -24,7 +24,7 @@ from cad_qa.dataset.sft import (
     scaling_sft_groups,
     training_readiness_report,
 )
-from cad_qa.dataset.split import assign_splits, split_manifest
+from cad_qa.dataset.split import assign_splits, split_audit, split_manifest
 from cad_qa.dataset.validate import validate_rows
 from cad_qa.evaluation.baselines import run_baselines
 from cad_qa.evaluation.grade import grade_public_private
@@ -112,6 +112,7 @@ def run_smoke_experiment(
     report = dataset_report(row_dicts)
     report["split_manifest"] = manifest
     report["leakage_audit"] = leakage_audit(row_dicts, manifest)
+    report["split_audit"] = split_audit(row_dicts, manifest)
     write_json(dataset_dir / "dataset_report.json", report)
     validation = validate_rows(row_dicts)
     write_json(dataset_dir / "validation_report.json", validation)
@@ -119,6 +120,8 @@ def run_smoke_experiment(
     write_json(dataset_dir / "release_validation_report.json", release_validation)
     audit = leakage_audit(row_dicts, manifest)
     write_json(dataset_dir / "leakage_audit.json", audit)
+    split_quality = split_audit(row_dicts, manifest)
+    write_json(dataset_dir / "split_audit.json", split_quality)
     quarantine = quarantine_report(row_dicts)
     write_json(dataset_dir / "quarantine_report.json", quarantine)
     failures_by_reason = failure_report(failures)
@@ -144,7 +147,12 @@ def run_smoke_experiment(
         ),
         encoding="utf-8",
     )
-    release_dataset = export_release_dataset(row_dicts, out=release_dataset_dir, source_dataset=dataset_dir)
+    release_dataset = export_release_dataset(
+        row_dicts,
+        out=release_dataset_dir,
+        source_dataset=dataset_dir,
+        allow_failing_release_gates=True,
+    )
     release_verifier = write_release_verifier_report(dataset_dir)
     release_dataset_verifier = write_release_verifier_report(release_dataset_dir)
 
@@ -184,6 +192,12 @@ def run_smoke_experiment(
         "release_dataset": {
             "row_count": release_dataset["row_count"],
             "excluded_quarantine_count": release_dataset["excluded_quarantine_count"],
+            "excluded_release_validation_count": release_dataset["excluded_release_validation_count"],
+            "excluded_prompt_policy_count": release_dataset["excluded_prompt_policy_count"],
+            "excluded_syntax_only_calibration_cap_count": release_dataset[
+                "excluded_syntax_only_calibration_cap_count"
+            ],
+            "blocking_release_gates": release_dataset["blocking_release_gates"],
             "valid": release_dataset["valid"],
             "dataset": release_dataset["dataset"],
             "validation": release_dataset["validation"],
@@ -232,6 +246,13 @@ def experiment_summary(report: dict[str, Any]) -> dict[str, Any]:
         "smoke_row_count": dataset["row_count"],
         "release_row_count": release_dataset["row_count"],
         "excluded_quarantine_count": release_dataset["excluded_quarantine_count"],
+        "excluded_release_validation_count": release_dataset.get("excluded_release_validation_count", 0),
+        "excluded_prompt_policy_count": release_dataset.get("excluded_prompt_policy_count", 0),
+        "excluded_syntax_only_calibration_cap_count": release_dataset.get(
+            "excluded_syntax_only_calibration_cap_count",
+            0,
+        ),
+        "release_blocking_gates": release_dataset.get("blocking_release_gates", []),
         "smoke_validation_valid": report["validation"]["valid"],
         "smoke_release_validation_valid": report["release_validation"]["valid"],
         "release_validation_valid": release_dataset["valid"],
@@ -280,6 +301,11 @@ def experiment_summary_markdown(summary: dict[str, Any]) -> str:
         f"- Smoke rows: {summary['smoke_row_count']}",
         f"- Release rows: {summary['release_row_count']}",
         f"- Quarantined rows excluded from release: {summary['excluded_quarantine_count']}",
+        f"- Release-validation rows excluded from release: {summary['excluded_release_validation_count']}",
+        f"- Prompt-policy rows excluded from release: {summary['excluded_prompt_policy_count']}",
+        "- Syntax-only calibration rows excluded by cap: "
+        f"{summary['excluded_syntax_only_calibration_cap_count']}",
+        f"- Release blocking gates: {summary['release_blocking_gates']}",
         "",
         "## Release Readiness",
         "",
@@ -346,6 +372,16 @@ def paper_results_markdown(report: dict[str, Any]) -> str:
                 ["Smoke rows", str(summary["smoke_row_count"])],
                 ["Release rows", str(summary["release_row_count"])],
                 ["Quarantined smoke rows excluded from release", str(summary["excluded_quarantine_count"])],
+                [
+                    "Release-validation rows excluded from release",
+                    str(summary["excluded_release_validation_count"]),
+                ],
+                ["Prompt-policy rows excluded from release", str(summary["excluded_prompt_policy_count"])],
+                [
+                    "Syntax-only calibration rows excluded by cap",
+                    str(summary["excluded_syntax_only_calibration_cap_count"]),
+                ],
+                ["Release blocking gates", str(summary["release_blocking_gates"])],
                 ["Release public rows", str(summary["release_public_row_count"])],
                 ["Release validation", "pass" if summary["release_validation_valid"] else "fail"],
                 ["Release leakage audit", "pass" if summary["release_leakage_audit_valid"] else "fail"],
@@ -543,6 +579,23 @@ def _write_sft_exports(rows: list[dict[str, Any]], out: Path, scaling_sizes: lis
         "scaling_groups": {name: len(group_rows) for name, group_rows in scaling.items()},
     }
     report["training_readiness"] = training_readiness_report(rows, training_rows)
+    report["input_balance"] = release_balance_report(rows)
+    report["training_balance"] = release_balance_report(training_rows)
+    report["training_stop_gates"] = {
+        "geometry_critical_dominance": report["training_readiness"]["passes_geometry_critical_dominance"],
+        "prompt_family_balance": report["training_balance"]["passes_prompt_family_balance"],
+        "prompt_template_balance": report["training_balance"]["passes_prompt_template_balance"],
+        "answer_entropy": report["training_balance"]["passes_answer_entropy"],
+        "geometry_hop_coverage": report["training_balance"]["passes_geometry_hop_coverage"],
+        "syntax_only_calibration_cap": report["training_balance"]["passes_syntax_only_calibration_cap"],
+    }
+    report["blocking_training_gates"] = [
+        name
+        for name, passed in report["training_stop_gates"].items()
+        if passed is False
+    ]
+    report["valid_for_training"] = not report["blocking_training_gates"]
+    report["enforced_training_gates"] = False
     write_json(out / "sft_report.json", report)
     return report
 

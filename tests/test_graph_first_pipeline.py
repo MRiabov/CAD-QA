@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import json
 import math
 from pathlib import Path
@@ -9,10 +10,16 @@ from cad_qa.dataset.audit import leakage_audit
 from cad_qa.dataset.public import private_rows, public_private_audit, public_rows, write_public_private_artifacts
 from cad_qa.dataset.quarantine import quarantine_report
 from cad_qa.dataset.release import export_release_dataset
-from cad_qa.dataset.release_report import release_verifier_markdown, release_verifier_report
-from cad_qa.dataset.report import dataset_card_markdown, dataset_report, failure_report
+from cad_qa.dataset.release_report import release_balance_report, release_verifier_markdown, release_verifier_report
+from cad_qa.dataset.report import (
+    dataset_card_markdown,
+    dataset_report,
+    failure_report,
+    shortcut_resistance_markdown,
+    shortcut_resistance_report,
+)
 from cad_qa.dataset.sft import ablation_sft_groups, answer_sft_rows, default_training_rows, reasoning_sft_rows, scaling_sft_groups
-from cad_qa.dataset.split import assign_splits, split_manifest
+from cad_qa.dataset.split import assign_splits, split_audit, split_manifest
 from cad_qa.dataset.validate import validate_rows
 from cad_qa.evaluation.baselines import run_baselines
 from cad_qa.evaluation.closed_book import closed_book_request_audit, run_closed_book_evaluation
@@ -29,11 +36,12 @@ from cad_qa.experiment import (
 )
 from cad_qa.io import read_jsonl, to_jsonable, write_jsonl
 from cad_qa.ontology import build_graph
-from cad_qa.ontology.nodes import graph_from_dict
+from cad_qa.ontology.nodes import Measurement, OntologyGraph, Relation, graph_from_dict
 from cad_qa.ontology.profile_geometry import circle_profile, polyline_profile, rect_profile
 from cad_qa.ontology.relations import RELATION_FAMILIES
 from cad_qa.ontology.workplane_frames import project_local_point
 from cad_qa.prompts.render import render_prompt
+from cad_qa.prompts.templates import prompt_template_registry
 from cad_qa.query.ir import Clause, QueryProgram
 from cad_qa.query.resolver import resolve_query, smoke_queries
 from cad_qa.source import load_sources_jsonl, source_audit, source_family_from_path, source_manifest, source_record_from_mapping
@@ -74,6 +82,52 @@ def test_source_loading(tmp_path: Path) -> None:
     sources = load_sources_jsonl(path)
     assert sources[0].source_id == "src_fixture"
     assert sources[0].source_code.endswith("\n")
+
+
+def test_graph_exact_duplicate_measurements_are_idempotent() -> None:
+    graph = OntologyGraph(graph_id="graph:src", source={"source_id": "src", "source_code": ""})
+    measurement = Measurement(
+        "face:kernel:a",
+        "entity_geometry",
+        "face_area",
+        12.0,
+        "mm^2",
+        {"source": "cadquery_selector_result"},
+    )
+    graph.add_measurement(measurement)
+    graph.add_measurement(measurement)
+    graph.add_measurement(
+        Measurement(
+            "face:kernel:a",
+            "entity_geometry",
+            "face_area",
+            12.0,
+            "mm^2",
+            {"source": "manual_fixture"},
+        )
+    )
+    assert len(graph.measurements_for("face:kernel:a", "face_area")) == 2
+
+
+def test_graph_exact_duplicate_relations_are_idempotent() -> None:
+    graph = OntologyGraph(graph_id="graph:src", source={"source_id": "src", "source_code": ""})
+    relation = Relation(
+        "face:kernel:a",
+        "origin:global",
+        "distance_to",
+        evidence={"source": "cadquery_selector_result"},
+    )
+    graph.add_relation(relation)
+    graph.add_relation(relation)
+    graph.add_relation(
+        Relation(
+            "face:kernel:a",
+            "origin:global",
+            "distance_to",
+            evidence={"source": "manual_fixture"},
+        )
+    )
+    assert len(graph.relations) == 2
 
 
 def test_cadevolve_source_manifest_and_audit_cli(tmp_path: Path) -> None:
@@ -979,7 +1033,7 @@ def test_kernel_selector_trace_produces_release_grade_face_identity() -> None:
                 "selected_count": 6,
                 "shape_types": ["Face", "Face", "Face", "Face", "Face", "Face"],
                 "bbox_signatures": [
-                    {"min": [-1, -1, -0.5], "max": [1, 1, -0.5]},
+                    {"min": [-2, -1, -0.5], "max": [2, 1, -0.5]},
                     {"min": [-1, -1, -0.4], "max": [1, 1, -0.4]},
                     {"min": [-1, 1, -0.3], "max": [1, 1, -0.3]},
                     {"min": [-1, -1, -0.2], "max": [1, -1, -0.2]},
@@ -1003,6 +1057,10 @@ def test_kernel_selector_trace_produces_release_grade_face_identity() -> None:
     face_z_values = sorted({graph.measurements_for(face.id, "bbox_max_z")[0].value for face in kernel_faces})
     assert face_z_values[0] == -1.0
     assert face_z_values[-1] == 1.0
+    assert graph.measurements_for(kernel_faces[0].id, "face_center")
+    assert graph.measurements_for(kernel_faces[0].id, "distance_to_origin")
+    assert graph.measurements_for(kernel_faces[0].id, "face_area")
+    assert any(relation.source_id == kernel_faces[0].id and relation.type == "distance_to" for relation in graph.relations)
     assert graph.measurements_for("selector:sel_all_faces_all", "selected_count")[0].value == 6
     assert any(
         relation.source_id == "selector:sel_all_faces_all"
@@ -1034,6 +1092,29 @@ def test_kernel_selector_trace_produces_release_grade_face_identity() -> None:
     assert highest_face_row.geometry_hop_count > 0
     assert "entity_geometry" in highest_face_row.measurement_scopes
     assert "has_kernel_stable_face_id" in highest_face_row.relation_families
+
+    nearest_face_center = resolutions["nearest_kernel_selected_face_center_to_origin"]
+    assert nearest_face_center.verifier_status == "resolved"
+    nearest_face_node = graph.node(nearest_face_center.gold_answer)
+    assert nearest_face_node is not None
+    assert graph.measurements_for(nearest_face_node.id, "distance_to_origin")[0].value == 0.4
+    nearest_face_center_row = materialize_row(graph, nearest_face_center)
+    assert nearest_face_center_row.release_ready
+    assert nearest_face_center_row.geometry_hop_count > 0
+    assert "has_kernel_stable_face_id" in nearest_face_center_row.relation_families
+    assert "distance_to" in nearest_face_center_row.relation_families
+    assert "relation_metric" in nearest_face_center_row.measurement_scopes
+
+    largest_face_area = resolutions["largest_kernel_selected_face_area"]
+    assert largest_face_area.verifier_status == "resolved"
+    largest_area_node = graph.node(largest_face_area.gold_answer)
+    assert largest_area_node is not None
+    assert graph.measurements_for(largest_area_node.id, "face_area")[0].value == 8.0
+    largest_face_area_row = materialize_row(graph, largest_face_area)
+    assert largest_face_area_row.release_ready
+    assert largest_face_area_row.geometry_hop_count > 0
+    assert "has_kernel_stable_face_id" in largest_face_area_row.relation_families
+    assert "entity_geometry" in largest_face_area_row.measurement_scopes
 
     largest_selector_count = resolutions["largest_kernel_selector_count"]
     assert largest_selector_count.verifier_status == "resolved"
@@ -1513,9 +1594,106 @@ def test_low_and_multi_hop_smoke_queries_render_and_materialize() -> None:
     row = materialize_row(graph, next(resolution for resolution in resolved if resolution.verifier_status == "resolved"))
     prompt = render_prompt(graph.source["source_code"], resolved[0].query_program)
     assert "Given the CadQuery script" in prompt.prompt
+    assert prompt.prompt_version == "cadqa_prompt_v2"
+    assert prompt.prompt_template_id.startswith("checklist_constraints_v1:")
+    assert all(clue["template_id"] == prompt.prompt_template_id for clue in prompt.clue_map)
+    assert row.prompt_template_id.startswith("checklist_constraints_v1:")
     assert row.candidate_trace["final_candidates"]
     report = validate_rows([to_jsonable(row)])
     assert report["valid"]
+
+
+def test_prompt_templates_yaml_controls_generated_prompt_wording() -> None:
+    registry = prompt_template_registry()
+    query = QueryProgram(
+        query_id="graph:src:q3:highest_kernel_selected_face",
+        target_type="face",
+        clauses=[
+            Clause(
+                id="has_kernel_selector_identity",
+                kind="has_relation",
+                relation="has_kernel_stable_face_id",
+                target_type="selector",
+            ),
+            Clause(
+                id="has_selected_face_bbox",
+                kind="has_measurement",
+                metric="bbox_max_z",
+            ),
+        ],
+        aggregation="argmax",
+        aggregation_metric="bbox_max_z",
+        hop_count=3,
+    )
+
+    rendered = render_prompt("import cadquery as cq\n", query)
+
+    assert registry["clause_templates"]["has_kernel_selector_identity"] in rendered.prompt
+    assert registry["clause_templates"]["has_selected_face_bbox"] in rendered.prompt
+    assert registry["aggregation_templates"]["argmax"].format(
+        metric="bbox_max_z",
+        metric_label=registry["metric_labels"]["bbox_max_z"],
+    ) in rendered.prompt
+    assert rendered.prompt_template_id == (
+        "checklist_constraints_v1:face:"
+        "relation_has_kernel_stable_face_id_measurement_bbox_max_z:argmax_bbox_max_z"
+    )
+
+
+def test_prompt_clause_templates_use_domain_wording() -> None:
+    implementation_terms = {
+        "cadquery",
+        "compiled",
+        "computed",
+        "extracted",
+        "implementation",
+        "kernel",
+        "script",
+        "selector",
+        "selector-result",
+        "snapshot",
+        "visible",
+    }
+    clause_templates = prompt_template_registry()["clause_templates"]
+    for key, template in clause_templates.items():
+        lowered = template.lower()
+        assert not implementation_terms & set(lowered.replace("-", " ").split()), key
+        assert "selector-result" not in lowered, key
+
+
+def test_prompt_metric_labels_hide_internal_measurement_names() -> None:
+    rendered = render_prompt(
+        "import cadquery as cq\n",
+        QueryProgram(
+            query_id="graph:src:q3:highest_kernel_selected_face",
+            target_type="face",
+            aggregation="argmax",
+            aggregation_metric="bbox_max_z",
+        ),
+    )
+
+    assert "greatest maximum Z height" in rendered.prompt
+    assert "bbox_max_z" not in rendered.prompt
+
+
+def test_generated_smoke_query_clauses_are_yaml_backed() -> None:
+    for source_id, source_code in {
+        "src_fixture": SOURCE,
+        "src_loop": LOOP_SOURCE,
+    }.items():
+        graph = build_graph(source_record_from_mapping({"source_id": source_id, "normalized_code": source_code}))
+        for query in smoke_queries(graph):
+            render_prompt(graph.source["source_code"], query)
+
+
+def test_resolver_does_not_inline_generated_prompt_text() -> None:
+    tree = ast.parse(Path("cad_qa/query/resolver.py").read_text(encoding="utf-8"))
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        if not isinstance(node.func, ast.Name) or node.func.id != "Clause":
+            continue
+        assert all(keyword.arg != "text" for keyword in node.keywords)
 
 
 def test_metric_filter_clause() -> None:
@@ -1687,6 +1865,7 @@ def test_split_report_baseline_and_sft_exports() -> None:
     assert manifest["source_count"] == 1
     assert report["row_count"] == len(rows)
     assert report["prompt_families"]
+    assert report["prompt_template_ids"]
     assert report["quality_flags"]["syntax_only_calibration"] >= 1
     assert baselines["oracle"]["accuracy"] == 1.0
     assert baselines["first_candidate"]["by_hop"]
@@ -1698,6 +1877,196 @@ def test_split_report_baseline_and_sft_exports() -> None:
     assert leakage_audit(row_dicts, manifest)["valid"]
     assert ablation_sft_groups(row_dicts)
     assert scaling_sft_groups(row_dicts, [1, 100])["size_1"]
+
+
+def test_release_balance_report_checks_family_entropy_and_geometry_hops() -> None:
+    rows = [
+        {
+            "row_id": f"row:src:{index}:family_{index % 4}",
+            "source_id": "src",
+            "prompt": f"geometry prompt {index}",
+            "prompt_template_id": f"template_{index % 4}",
+            "gold_answer": f"entity:{index}",
+            "geometry_hop_count": 2,
+            "static_hop_count": index % 3,
+            "query_program": {
+                "query_id": f"graph:src:q{index}:family_{index % 4}",
+                "aggregation_metric": "volume",
+            },
+        }
+        for index in range(24)
+    ]
+    report = release_balance_report(rows)
+    assert report["applicable"]
+    assert report["passes_prompt_family_balance"]
+    assert report["passes_prompt_template_balance"]
+    assert report["passes_answer_entropy"]
+    assert report["passes_geometry_hop_coverage"]
+    assert report["passes_syntax_only_calibration_cap"]
+    assert report["prompt_family_count"] == 4
+    assert report["prompt_template_count"] == 4
+    assert report["unique_answer_count"] == 24
+    assert report["geometry_critical_count"] == 24
+    assert report["syntax_only_calibration_count"] == 0
+
+    skewed_rows = [
+        {
+            "row_id": f"row:src:{index}:same_family",
+            "gold_answer": "same-answer",
+            "geometry_hop_count": 0,
+            "static_hop_count": 1,
+            "query_program": {"query_id": f"graph:src:q{index}:same_family"},
+        }
+        for index in range(20)
+    ]
+    skewed_report = release_balance_report(skewed_rows)
+    assert skewed_report["applicable"]
+    assert not skewed_report["passes_prompt_family_balance"]
+    assert not skewed_report["passes_prompt_template_balance"]
+    assert not skewed_report["passes_answer_entropy"]
+    assert not skewed_report["passes_geometry_hop_coverage"]
+    assert not skewed_report["passes_syntax_only_calibration_cap"]
+
+
+def test_release_verifier_blocks_non_calibration_low_geometry_critical_families() -> None:
+    rows = [
+        {
+            "row_id": f"row:src:{index}:family_{index % 4}",
+            "source_id": "src",
+            "prompt": f"geometry prompt {index}",
+            "gold_answer": f"entity:{index}",
+            "logical_hop_count": 2,
+            "geometry_hop_count": 2,
+            "static_hop_count": index % 2,
+            "difficulty_bucket": "bridge",
+            "verifier_status": "resolved",
+            "answer_format": "entity_id",
+            "relation_families": [],
+            "measurement_scopes": ["snapshot_state"],
+            "query_program": {
+                "query_id": f"graph:src:q{index}:family_{index % 4}",
+                "aggregation_metric": "volume",
+            },
+        }
+        for index in range(20)
+    ]
+    rows.append(
+        {
+            "row_id": "row:src:weak:highest_workplane",
+            "source_id": "src",
+            "prompt": "noncritical geometry prompt",
+            "gold_answer": "workplane:wp9",
+            "logical_hop_count": 2,
+            "geometry_hop_count": 1,
+            "static_hop_count": 0,
+            "difficulty_bucket": "bridge",
+            "verifier_status": "resolved",
+            "answer_format": "entity_id",
+            "relation_families": [],
+            "measurement_scopes": ["entity_geometry"],
+            "query_program": {"query_id": "graph:src:qweak:highest_workplane"},
+        }
+    )
+
+    report = release_verifier_report(rows)
+    assert not report["stop_gates"]["geometry_critical_prompt_family_coverage"]
+    assert "geometry_critical_prompt_family_coverage" in report["blocking_gates"]
+    assert "highest_workplane" in report["shortcut_resistance"]["low_geometry_critical_families"]
+
+    rows[-1] = {
+        "row_id": "row:src:calibration:first_operation",
+        "source_id": "src",
+        "prompt": "calibration prompt",
+        "gold_answer": "operation:wp1",
+        "logical_hop_count": 0,
+        "geometry_hop_count": 0,
+        "static_hop_count": 1,
+        "difficulty_bucket": "low",
+        "verifier_status": "resolved",
+        "answer_format": "entity_id",
+        "relation_families": [],
+        "measurement_scopes": [],
+        "query_program": {"query_id": "graph:src:qcal:first_operation"},
+    }
+    calibration_report = release_verifier_report(rows)
+    assert calibration_report["stop_gates"]["geometry_critical_prompt_family_coverage"]
+    assert "first_operation" in calibration_report["shortcut_resistance"]["syntax_only_families"]
+
+
+def test_shortcut_resistance_report_breaks_down_prompt_family_risk(tmp_path: Path) -> None:
+    rows = [
+        {
+            "row_id": "row:src:syntax:first_operation",
+            "gold_answer": "operation:wp1",
+            "static_hop_count": 1,
+            "geometry_hop_count": 0,
+            "query_program": {"query_id": "graph:src:q0:first_operation"},
+        },
+        {
+            "row_id": "row:src:geometry:largest_compiled_volume_feature",
+            "gold_answer": "feature:cut",
+            "static_hop_count": 1,
+            "geometry_hop_count": 2,
+            "release_ready": True,
+            "query_program": {
+                "query_id": "graph:src:q1:largest_compiled_volume_feature",
+                "aggregation_metric": "volume",
+            },
+        },
+        {
+            "row_id": "row:src:geometry:largest_compiled_volume_feature",
+            "gold_answer": "feature:boss",
+            "static_hop_count": 2,
+            "geometry_hop_count": 3,
+            "release_ready": True,
+            "query_program": {
+                "query_id": "graph:src:q2:largest_compiled_volume_feature",
+                "aggregation_metric": "volume",
+            },
+        },
+        {
+            "row_id": "row:src:mixed:profile_on_workplane",
+            "gold_answer": "profile:p1",
+            "static_hop_count": 2,
+            "geometry_hop_count": 0,
+            "query_program": {"query_id": "graph:src:q3:profile_on_workplane"},
+        },
+        {
+            "row_id": "row:src:mixed:profile_on_workplane",
+            "gold_answer": "profile:p2",
+            "static_hop_count": 2,
+            "geometry_hop_count": 1,
+            "query_program": {"query_id": "graph:src:q4:profile_on_workplane"},
+        },
+    ]
+
+    report = shortcut_resistance_report(rows)
+    assert report["row_count"] == 5
+    assert report["prompt_family_count"] == 3
+    assert report["geometry_hop_counts"] == {"0": 2, "1": 1, "2": 1, "3": 1}
+    assert report["geometry_hop_positive_count"] == 3
+    assert report["geometry_critical_count"] == 2
+    assert report["syntax_only_calibration_count"] == 2
+    assert report["zero_geometry_hop_families"] == ["first_operation"]
+    assert report["syntax_only_families"] == ["first_operation"]
+    assert set(report["low_geometry_coverage_families"]) == {"first_operation", "profile_on_workplane"}
+    assert set(report["low_geometry_critical_families"]) == {"first_operation", "profile_on_workplane"}
+
+    volume_family = report["by_prompt_family"]["largest_compiled_volume_feature"]
+    assert volume_family["geometry_hop_positive_share"] == 1.0
+    assert volume_family["geometry_critical_share"] == 1.0
+    assert volume_family["unique_answer_count"] == 2
+
+    markdown = shortcut_resistance_markdown(report)
+    assert "Shortcut Resistance Report" in markdown
+    assert "Weakest Geometry-Hop Families" in markdown
+    assert "Weakest Geometry-Critical Families" in markdown
+
+    dataset_dir = tmp_path / "dataset"
+    write_jsonl(dataset_dir / "rows.jsonl", rows)
+    assert cli_main(["dataset", "shortcut-report", str(dataset_dir)]) == 0
+    assert (dataset_dir / "shortcut_resistance_report.json").exists()
+    assert (dataset_dir / "SHORTCUT_RESISTANCE_REPORT.md").exists()
 
 
 def test_training_export_cli_defaults_to_geometry_critical_rows(tmp_path: Path) -> None:
@@ -1770,6 +2139,14 @@ def test_training_export_cli_defaults_to_geometry_critical_rows(tmp_path: Path) 
     assert default_sft_report["training_readiness"]["passes_geometry_critical_dominance"]
     assert default_sft_report["training_readiness"]["geometry_critical_training_rows"] == 1
     assert default_sft_report["training_readiness"]["syntax_only_training_rows"] == 0
+    assert default_sft_report["training_balance"]["row_count"] == 1
+    assert default_sft_report["training_balance"]["syntax_only_calibration_count"] == 0
+    assert default_sft_report["training_stop_gates"]["geometry_critical_dominance"]
+    assert "prompt_family_balance" in default_sft_report["training_stop_gates"]
+    assert "input_balance" in default_sft_report
+    assert default_sft_report["valid_for_training"]
+    assert default_sft_report["blocking_training_gates"] == []
+    assert default_sft_report["enforced_training_gates"]
 
     assert cli_main(
         [
@@ -1787,6 +2164,58 @@ def test_training_export_cli_defaults_to_geometry_critical_rows(tmp_path: Path) 
     assert calibration_sft_report["include_calibration"] is True
     assert not calibration_sft_report["training_readiness"]["passes_geometry_critical_dominance"]
     assert calibration_sft_report["training_readiness"]["syntax_only_training_rows"] == 1
+    assert calibration_sft_report["training_balance"]["syntax_only_calibration_count"] == 1
+    assert not calibration_sft_report["training_stop_gates"]["geometry_critical_dominance"]
+    assert not calibration_sft_report["valid_for_training"]
+    assert "geometry_critical_dominance" in calibration_sft_report["blocking_training_gates"]
+    assert not calibration_sft_report["enforced_training_gates"]
+
+
+def test_training_export_cli_blocks_failed_applicable_training_gates(tmp_path: Path) -> None:
+    rows = [
+        {
+            "row_id": f"row:src:{index}:same_family",
+            "prompt": f"geometry prompt {index}",
+            "gold_answer": "same-answer",
+            "logical_hop_count": 2,
+            "geometry_hop_count": 2,
+            "difficulty_bucket": "cad_browsecomp",
+            "measurement_scopes": ["snapshot_state"],
+            "relation_families": [],
+            "query_program": {
+                "query_id": f"graph:src:q{index}:same_family",
+                "aggregation_metric": "volume",
+            },
+        }
+        for index in range(20)
+    ]
+    rows_path = tmp_path / "rows.jsonl"
+    write_jsonl(rows_path, rows)
+
+    blocked_out = tmp_path / "sft_blocked"
+    assert cli_main(["training", "export-sft", "--rows", str(rows_path), "--out", str(blocked_out)]) == 1
+    blocked_report = json.loads((blocked_out / "sft_report.json").read_text())
+    assert not blocked_report["valid_for_training"]
+    assert set(blocked_report["blocking_training_gates"]) >= {
+        "prompt_family_balance",
+        "prompt_template_balance",
+        "answer_entropy",
+    }
+
+    allowed_out = tmp_path / "sft_allowed"
+    assert cli_main(
+        [
+            "training",
+            "export-sft",
+            "--rows",
+            str(rows_path),
+            "--out",
+            str(allowed_out),
+            "--allow-failing-training-gates",
+        ]
+    ) == 0
+    allowed_report = json.loads((allowed_out / "sft_report.json").read_text())
+    assert not allowed_report["valid_for_training"]
 
 
 def test_group_safe_splits_use_source_family_metadata() -> None:
@@ -1804,6 +2233,13 @@ def test_group_safe_splits_use_source_family_metadata() -> None:
     assert manifest["source_count"] == 5
     assert manifest["group_count"] == 4
     assert sum(len(items) for items in splits.values()) == len(rows)
+    assert split_audit(rows, manifest)["valid"]
+
+    stale_rows = [dict(row) for row in rows]
+    stale_rows[0]["split"] = "test" if source_splits["src_a1"] != "test" else "validation"
+    stale_audit = split_audit(stale_rows, manifest)
+    assert not stale_audit["valid"]
+    assert stale_audit["errors"][0]["error"] == "row_split_mismatch"
 
 
 def test_quarantine_policy_marks_non_release_ready_rows() -> None:
@@ -1835,6 +2271,125 @@ def test_validation_rejects_banned_prompt_terms() -> None:
     report = validate_rows([row])
     assert not report["valid"]
     assert report["errors"][0]["error"] == "banned_prompt_terms"
+
+
+def test_validation_reports_geometry_first_prompt_policy() -> None:
+    base = {
+        "source_id": "src_policy",
+        "source_code": "import cadquery as cq\n",
+        "prompt": "Identify the target.",
+        "answer_format": "entity_id",
+        "candidate_trace": {"final_candidates": ["entity:1"], "steps": []},
+        "relation_families": [],
+        "measurement_scopes": [],
+        "logical_hop_count": 1,
+        "static_hop_count": 0,
+        "difficulty_bucket": "bridge",
+        "verifier_status": "resolved",
+        "evidence_tier": "source_static_or_analytic",
+        "release_ready": True,
+        "quarantine_reasons": [],
+        "clue_map": [{"clause_id": "aggregation"}],
+    }
+    noncritical = {
+        **base,
+        "row_id": "row:src_policy:highest_workplane",
+        "gold_answer": "workplane:wp2",
+        "geometry_hop_count": 1,
+        "query_program": {
+            "query_id": "graph:src_policy:q1:highest_workplane",
+            "target_type": "workplane",
+            "clauses": [],
+            "aggregation": "argmax",
+            "aggregation_metric": "origin_z",
+        },
+    }
+    geometry = {
+        **base,
+        "row_id": "row:src_policy:largest_compiled_volume_feature",
+        "gold_answer": "feature:wp2",
+        "geometry_hop_count": 2,
+        "query_program": {
+            "query_id": "graph:src_policy:q2:largest_compiled_volume_feature",
+            "target_type": "feature",
+            "clauses": [],
+            "aggregation": "argmax",
+            "aggregation_metric": "volume",
+        },
+    }
+    literal_geometry = {
+        **base,
+        "row_id": "row:src_policy:selected_face",
+        "gold_answer": "face:selector",
+        "geometry_hop_count": 2,
+        "relation_families": ["has_kernel_stable_face_id"],
+        "query_program": {
+            "query_id": "graph:src_policy:q3:selected_face",
+            "target_type": "face",
+            "clauses": [
+                {
+                    "id": "stable_selector",
+                    "kind": "property_equals",
+                    "metric": "stable_selector",
+                    "value": ">Z",
+                }
+            ],
+        },
+        "clue_map": [{"clause_id": "stable_selector"}],
+    }
+    calibration = {
+        **base,
+        "row_id": "row:src_policy:first_operation",
+        "gold_answer": "operation:wp1",
+        "logical_hop_count": 0,
+        "geometry_hop_count": 0,
+        "query_program": {
+            "query_id": "graph:src_policy:q0:first_operation",
+            "target_type": "operation",
+            "clauses": [
+                {
+                    "id": "operation_target",
+                    "kind": "property_equals",
+                    "metric": "target",
+                    "value": "wp1",
+                }
+            ],
+        },
+        "clue_map": [{"clause_id": "operation_target"}],
+    }
+
+    nonrelease = validate_rows([noncritical, geometry, literal_geometry, calibration])
+    assert nonrelease["valid"]
+    assert any(
+        warning.get("prompt_policy_issue") == "non_geometry_critical_prompt"
+        for warning in nonrelease["warnings"]
+    )
+    assert any(
+        warning.get("prompt_policy_issue") == "literal_property_clause"
+        for warning in nonrelease["warnings"]
+    )
+    assert any(
+        warning.get("prompt_policy_issue") == "syntax_only_calibration_row"
+        for warning in nonrelease["warnings"]
+    )
+
+    release = validate_rows([noncritical, geometry, literal_geometry, calibration], release=True)
+    assert not release["valid"]
+    assert any(
+        error.get("error") == "geometry_first_prompt_policy"
+        and error.get("prompt_policy_issue") == "non_geometry_critical_prompt"
+        for error in release["errors"]
+    )
+    assert any(
+        error.get("error") == "geometry_first_prompt_policy"
+        and error.get("prompt_policy_issue") == "literal_property_clause"
+        for error in release["errors"]
+    )
+    assert not any(error.get("row_id") == geometry["row_id"] for error in release["errors"])
+    assert not any(
+        error.get("prompt_policy_issue") == "syntax_only_calibration_row"
+        for error in release["errors"]
+    )
 
 
 def test_prediction_grading_reports_breakdowns() -> None:
@@ -2065,6 +2620,9 @@ def test_smoke_experiment_orchestrates_artifacts(tmp_path: Path) -> None:
     assert report["validation"]["valid"]
     assert report["dataset"]["row_count"] > 0
     assert report["release_dataset"]["valid"]
+    assert report["release_dataset"]["blocking_release_gates"] == []
+    assert report["release_dataset"]["excluded_release_validation_count"] > 0
+    assert report["release_dataset"]["excluded_prompt_policy_count"] > 0
     assert report["release_dataset"]["row_count"] < report["dataset"]["row_count"]
     assert report["release_baseline"]["oracle"]["accuracy"] == 1.0
     assert report["requests"]["zero_shot_request_count"] == report["dataset"]["row_count"]
@@ -2079,12 +2637,26 @@ def test_smoke_experiment_orchestrates_artifacts(tmp_path: Path) -> None:
     assert report["release_dataset"]["public_private"]["public_row_count"] == report["release_dataset"]["row_count"]
     summary = experiment_summary(report)
     assert summary["release_validation_valid"]
+    assert summary["excluded_release_validation_count"] == report["release_dataset"]["excluded_release_validation_count"]
+    assert summary["excluded_prompt_policy_count"] == report["release_dataset"]["excluded_prompt_policy_count"]
+    assert (
+        summary["excluded_syntax_only_calibration_cap_count"]
+        == report["release_dataset"]["excluded_syntax_only_calibration_cap_count"]
+    )
+    assert summary["release_blocking_gates"] == report["release_dataset"]["blocking_release_gates"]
     assert summary["smoke_release_validation_valid"] is False
     assert "Release rows" in experiment_summary_markdown(summary)
+    assert "Prompt-policy rows excluded from release" in experiment_summary_markdown(summary)
+    assert "Syntax-only calibration rows excluded by cap" in experiment_summary_markdown(summary)
+    assert "Release blocking gates" in experiment_summary_markdown(summary)
     assert "private-key oracle accuracy" in experiment_summary_markdown(summary)
     assert "Tool-assisted upper-bound accuracy" in experiment_summary_markdown(summary)
     paper_results = write_paper_results(tmp_path / "run")
-    assert "Release Composition" in Path(paper_results["paper_results"]).read_text(encoding="utf-8")
+    paper_text = Path(paper_results["paper_results"]).read_text(encoding="utf-8")
+    assert "Release Composition" in paper_text
+    assert "Prompt-policy rows excluded from release" in paper_text
+    assert "Syntax-only calibration rows excluded by cap" in paper_text
+    assert "Release blocking gates" in paper_text
     assert (tmp_path / "run" / "experiment_report.json").exists()
     assert (tmp_path / "run" / "run_summary.json").exists()
     assert (tmp_path / "run" / "RUN_SUMMARY.md").exists()
@@ -2225,6 +2797,7 @@ def test_dataset_preview_cli_shows_task_and_node_samples(tmp_path: Path) -> None
     assert "geometry_critical" in text
     assert "Node Samples" in text
     assert "`feature`" in text
+    assert "measurement_count" in text
     assert "### `void_region`" in text
     assert "- Nodes: `0`" in text
 
@@ -2238,12 +2811,27 @@ def test_release_export_cli_filters_quarantined_rows(tmp_path: Path) -> None:
     ]
     dataset_dir = tmp_path / "dataset"
     write_jsonl(dataset_dir / "rows.jsonl", rows)
-    out_dir = tmp_path / "release"
-    assert cli_main(["dataset", "export-release", str(dataset_dir), "--out", str(out_dir)]) == 0
+    blocked_out = tmp_path / "release_blocked"
+    assert cli_main(["dataset", "export-release", str(dataset_dir), "--out", str(blocked_out)]) == 1
+    assert (blocked_out / "release_verifier_report.json").exists()
+    out_dir = tmp_path / "release_review"
+    assert cli_main(
+        [
+            "dataset",
+            "export-release",
+            str(dataset_dir),
+            "--out",
+            str(out_dir),
+            "--allow-failing-release-gates",
+        ]
+    ) == 0
     release_report = validate_rows([row for row in rows if row["release_ready"]], release=True)
     assert release_report["valid"]
     assert (out_dir / "rows.jsonl").exists()
     assert (out_dir / "release_validation_report.json").exists()
+    verifier_report = json.loads((out_dir / "release_verifier_report.json").read_text())
+    assert not verifier_report["valid_for_release"]
+    assert "default_sft_geometry_critical_dominance" in verifier_report["blocking_gates"]
 
 
 def test_release_export_helper_writes_reports(tmp_path: Path) -> None:
@@ -2256,17 +2844,188 @@ def test_release_export_helper_writes_reports(tmp_path: Path) -> None:
     duplicate = next(dict(row) for row in rows if row["release_ready"])
     duplicate["row_id"] = duplicate["row_id"] + ":duplicate"
     rows.append(duplicate)
-    result = export_release_dataset(rows, out=tmp_path / "release")
-    assert result["valid"]
+    result = export_release_dataset(rows, out=tmp_path / "release", allow_failing_release_gates=True)
+    assert not result["valid"]
+    assert "default_sft_geometry_critical_dominance" in result["blocking_release_gates"]
     assert result["excluded_quarantine_count"] > 0
     assert result["excluded_duplicate_prompt_count"] == 1
     assert result["leakage_audit"]["valid"]
+    assert result["split_audit"]["valid"]
     assert result["public_private"]["public_row_count"] == result["row_count"]
     assert (tmp_path / "release" / "split_manifest.json").exists()
+    assert (tmp_path / "release" / "split_audit.json").exists()
     assert (tmp_path / "release" / "DATASET_CARD.md").exists()
     assert (tmp_path / "release" / "release_exclusions.json").exists()
     assert (tmp_path / "release" / "public.jsonl").exists()
     assert (tmp_path / "release" / "private.jsonl").exists()
+
+
+def test_release_export_filters_prompt_policy_invalid_rows_before_verifier(tmp_path: Path) -> None:
+    rows = []
+    for index in range(24):
+        rows.append(
+            {
+                "row_id": f"row:src:{index}:family_{index % 4}",
+                "source_id": "src",
+                "source_code": "import cadquery as cq\n",
+                "prompt": f"geometry prompt {index}",
+                "prompt_template_id": f"checklist_constraints_v1:fixture:template_{index % 4}",
+                "answer_format": "entity_id",
+                "gold_answer": f"feature:{index}",
+                "query_program": {
+                    "query_id": f"graph:src:q{index}:family_{index % 4}",
+                    "target_type": "feature",
+                    "aggregation": "argmax",
+                    "aggregation_metric": "volume",
+                    "clauses": [],
+                },
+                "candidate_trace": {"final_candidates": [f"feature:{index}"], "steps": []},
+                "relation_families": [],
+                "measurement_scopes": ["snapshot_state"],
+                "logical_hop_count": 2,
+                "static_hop_count": 0,
+                "geometry_hop_count": 2,
+                "difficulty_bucket": "bridge",
+                "verifier_status": "resolved",
+                "evidence_tier": "source_static_or_analytic",
+                "release_ready": True,
+                "quarantine_reasons": [],
+                "clue_map": [{"clause_id": "aggregation"}],
+                "split": "stale",
+            }
+        )
+    rows.append(
+        {
+            "row_id": "row:src:weak:highest_workplane",
+            "source_id": "src",
+            "source_code": "import cadquery as cq\n",
+            "prompt": "noncritical prompt",
+            "answer_format": "entity_id",
+            "gold_answer": "workplane:wp9",
+            "query_program": {
+                "query_id": "graph:src:qweak:highest_workplane",
+                "target_type": "workplane",
+                "aggregation": "argmax",
+                "aggregation_metric": "origin_z",
+                "clauses": [],
+            },
+            "candidate_trace": {"final_candidates": ["workplane:wp9"], "steps": []},
+            "relation_families": [],
+            "measurement_scopes": ["entity_geometry"],
+            "logical_hop_count": 1,
+            "static_hop_count": 0,
+            "geometry_hop_count": 1,
+            "difficulty_bucket": "low",
+            "verifier_status": "resolved",
+            "evidence_tier": "source_static_or_analytic",
+            "release_ready": True,
+            "quarantine_reasons": [],
+            "clue_map": [{"clause_id": "aggregation"}],
+            "split": "stale",
+        }
+    )
+
+    result = export_release_dataset(rows, out=tmp_path / "release")
+    exclusions = json.loads((tmp_path / "release" / "release_exclusions.json").read_text())
+    release_rows = read_jsonl(tmp_path / "release" / "rows.jsonl")
+    split_quality = json.loads((tmp_path / "release" / "split_audit.json").read_text())
+    assert result["valid"]
+    assert result["blocking_release_gates"] == []
+    assert result["row_count"] == 24
+    assert result["excluded_release_validation_count"] == 1
+    assert result["excluded_prompt_policy_count"] == 1
+    assert len(release_rows) == 24
+    assert {row["split"] for row in release_rows} == {"train"}
+    assert all(row["prompt_template_id"].startswith("checklist_constraints_v1:") for row in release_rows)
+    assert result["split_audit"]["valid"]
+    assert split_quality["valid"]
+    assert exclusions["release_validation_exclusions"][0]["row_id"] == "row:src:weak:highest_workplane"
+    assert exclusions["release_validation_exclusions"][0]["errors"][0]["error"] == "geometry_first_prompt_policy"
+
+
+def test_release_export_caps_syntax_only_calibration_rows(tmp_path: Path) -> None:
+    rows = []
+    for index in range(36):
+        rows.append(
+            {
+                "row_id": f"row:src:geometry:{index}:family_{index % 4}",
+                "source_id": "src",
+                "source_code": "import cadquery as cq\n",
+                "prompt": f"geometry prompt {index}",
+                "prompt_template_id": f"checklist_constraints_v1:fixture:geometry_template_{index % 4}",
+                "answer_format": "entity_id",
+                "gold_answer": f"feature:{index}",
+                "query_program": {
+                    "query_id": f"graph:src:q{index}:family_{index % 4}",
+                    "target_type": "feature",
+                    "aggregation": "argmax",
+                    "aggregation_metric": "volume",
+                    "clauses": [],
+                },
+                "candidate_trace": {"final_candidates": [f"feature:{index}"], "steps": []},
+                "relation_families": [],
+                "measurement_scopes": ["snapshot_state"],
+                "logical_hop_count": 2,
+                "static_hop_count": 0,
+                "geometry_hop_count": 2,
+                "difficulty_bucket": "bridge",
+                "verifier_status": "resolved",
+                "evidence_tier": "source_static_or_analytic",
+                "release_ready": True,
+                "quarantine_reasons": [],
+                "clue_map": [{"clause_id": "aggregation"}],
+            }
+        )
+    for index in range(10):
+        rows.append(
+            {
+                "row_id": f"row:src:calibration:{index}:first_operation",
+                "source_id": "src",
+                "source_code": "import cadquery as cq\n",
+                "prompt": f"calibration prompt {index}",
+                "prompt_template_id": "checklist_constraints_v1:operation:property_target_property_operation:no_aggregation",
+                "answer_format": "entity_id",
+                "gold_answer": f"operation:wp{index}",
+                "query_program": {
+                    "query_id": f"graph:src:qcal{index}:first_operation",
+                    "target_type": "operation",
+                    "clauses": [
+                        {
+                            "id": "operation_target",
+                            "kind": "property_equals",
+                            "metric": "target",
+                            "value": f"wp{index}",
+                        }
+                    ],
+                },
+                "candidate_trace": {"final_candidates": [f"operation:wp{index}"], "steps": []},
+                "relation_families": [],
+                "measurement_scopes": [],
+                "logical_hop_count": 0,
+                "static_hop_count": 2,
+                "geometry_hop_count": 0,
+                "difficulty_bucket": "low",
+                "verifier_status": "resolved",
+                "evidence_tier": "source_static_or_analytic",
+                "release_ready": True,
+                "quarantine_reasons": [],
+                "clue_map": [{"clause_id": "operation_target"}],
+            }
+        )
+
+    result = export_release_dataset(rows, out=tmp_path / "release")
+    exclusions = json.loads((tmp_path / "release" / "release_exclusions.json").read_text())
+    release_rows = read_jsonl(tmp_path / "release" / "rows.jsonl")
+    verifier = json.loads((tmp_path / "release" / "release_verifier_report.json").read_text())
+
+    assert result["valid"]
+    assert result["excluded_syntax_only_calibration_cap_count"] == 6
+    assert exclusions["excluded_syntax_only_calibration_cap_count"] == 6
+    assert len(exclusions["syntax_only_calibration_cap_exclusions"]) == 6
+    assert len(release_rows) == 40
+    assert verifier["stop_gates"]["syntax_only_calibration_cap"]
+    assert verifier["release_balance"]["syntax_only_calibration_count"] == 4
+    assert verifier["release_balance"]["syntax_only_calibration_share"] == 0.1
 
 
 def test_release_verifier_report_stop_gates_and_cli(tmp_path: Path) -> None:
@@ -2288,10 +3047,24 @@ def test_release_verifier_report_stop_gates_and_cli(tmp_path: Path) -> None:
     assert not report["valid_for_release"]
     assert "release_validation" in report["blocking_gates"]
     assert "default_sft_geometry_critical_dominance" in report["stop_gates"]
+    assert "group_safe_split_audit" in report["stop_gates"]
+    assert "prompt_family_balance" in report["stop_gates"]
+    assert "prompt_template_balance" in report["stop_gates"]
+    assert "answer_entropy" in report["stop_gates"]
+    assert "geometry_hop_coverage" in report["stop_gates"]
+    assert "syntax_only_calibration_cap" in report["stop_gates"]
+    assert "geometry_critical_prompt_family_coverage" in report["stop_gates"]
     assert "training_readiness" in report
+    assert "split_audit" in report
+    assert "release_balance" in report
+    assert "shortcut_resistance" in report
+    assert report["release_balance"]["applicable"] is False
     assert report["quarantine"]["quarantine_count"] > 0
     assert report["failure_report"]["reasons"] == {"clue_too_narrow": 1}
-    assert "Release Verifier Report" in release_verifier_markdown(report)
+    markdown = release_verifier_markdown(report)
+    assert "Release Verifier Report" in markdown
+    assert "Release Balance" in markdown
+    assert "Shortcut Resistance" in markdown
 
     dataset_dir = tmp_path / "dataset"
     write_jsonl(dataset_dir / "rows.jsonl", rows)
@@ -2313,7 +3086,7 @@ def test_public_private_exports_do_not_leak_hidden_fields(tmp_path: Path) -> Non
     hidden_fields = {"gold_answer", "query_program", "candidate_trace", "clue_map"}
     assert public
     assert hidden_fields.isdisjoint(public[0])
-    assert {"prompt", "source_code", "answer_format"} <= set(public[0])
+    assert {"prompt", "source_code", "answer_format", "prompt_template_id"} <= set(public[0])
     assert {"gold_answer", "query_program", "candidate_trace"} <= set(private[0])
     assert public_private_audit(public, private)["valid"]
     leak = public_private_audit([{**public[0], "gold_answer": "leak"}], private[:1])

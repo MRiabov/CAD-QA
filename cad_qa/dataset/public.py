@@ -22,6 +22,7 @@ PUBLIC_FIELDS = {
     "geometry_hop_count",
     "difficulty_bucket",
     "prompt_version",
+    "prompt_template_id",
     "evidence_tier",
     "release_ready",
     "quarantine_reasons",

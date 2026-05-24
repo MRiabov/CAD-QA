@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from cad_qa.dataset.sft import is_geometry_critical_row, is_syntax_only_calibration_row, prompt_family
+from cad_qa.prompts.render import prompt_template_id_from_mapping
 
 
 def dataset_report(rows: list[Any]) -> dict[str, Any]:
@@ -22,6 +23,7 @@ def dataset_report(rows: list[Any]) -> dict[str, Any]:
     quarantine_reasons: Counter[str] = Counter()
     release_ready: Counter[str] = Counter()
     prompt_families: Counter[str] = Counter()
+    prompt_template_ids: Counter[str] = Counter()
     quality_flags: Counter[str] = Counter()
     for row in rows:
         item = row if isinstance(row, dict) else row.__dict__
@@ -38,6 +40,7 @@ def dataset_report(rows: list[Any]) -> dict[str, Any]:
         measurement_scopes.update(item.get("measurement_scopes", []))
         family = prompt_family(item)
         prompt_families[family] += 1
+        prompt_template_ids[_prompt_template_id(item)] += 1
         if is_syntax_only_calibration_row(item):
             quality_flags["syntax_only_calibration"] += 1
         if is_geometry_critical_row(item):
@@ -55,8 +58,131 @@ def dataset_report(rows: list[Any]) -> dict[str, Any]:
         "release_ready": dict(sorted(release_ready.items())),
         "quarantine_reasons": dict(sorted(quarantine_reasons.items())),
         "prompt_families": dict(sorted(prompt_families.items())),
+        "prompt_template_ids": dict(sorted(prompt_template_ids.items())),
         "quality_flags": dict(sorted(quality_flags.items())),
+        "shortcut_resistance": shortcut_resistance_report(rows),
     }
+
+
+def shortcut_resistance_report(rows: list[Any]) -> dict[str, Any]:
+    """Summarize shortcut risk by prompt family and geometry-hop coverage."""
+
+    row_items = [_row_item(row) for row in rows]
+    row_count = len(row_items)
+    family_rows: dict[str, list[dict[str, Any]]] = {}
+    for row in row_items:
+        family_rows.setdefault(prompt_family(row), []).append(row)
+
+    family_reports = {
+        family: _shortcut_family_report(family, items, row_count)
+        for family, items in sorted(family_rows.items())
+    }
+    zero_geometry_families = [
+        family
+        for family, report in family_reports.items()
+        if report["row_count"] > 0 and report["geometry_hop_positive_count"] == 0
+    ]
+    syntax_only_families = [
+        family
+        for family, report in family_reports.items()
+        if report["row_count"] > 0 and report["syntax_only_calibration_count"] == report["row_count"]
+    ]
+    low_geometry_coverage_families = [
+        family
+        for family, report in family_reports.items()
+        if report["row_count"] > 0 and report["geometry_hop_positive_share"] < 1.0
+    ]
+    low_geometry_critical_families = [
+        family
+        for family, report in family_reports.items()
+        if report["row_count"] > 0 and report["geometry_critical_share"] < 1.0
+    ]
+    weakest_geometry_hop_families = sorted(
+        family_reports.values(),
+        key=lambda report: (report["geometry_hop_positive_share"], -report["row_count"], report["prompt_family"]),
+    )[:10]
+    weakest_geometry_critical_families = sorted(
+        family_reports.values(),
+        key=lambda report: (report["geometry_critical_share"], -report["row_count"], report["prompt_family"]),
+    )[:10]
+    geometry_hop_positive_count = sum(
+        report["geometry_hop_positive_count"] for report in family_reports.values()
+    )
+    geometry_critical_count = sum(report["geometry_critical_count"] for report in family_reports.values())
+    syntax_only_calibration_count = sum(
+        report["syntax_only_calibration_count"] for report in family_reports.values()
+    )
+    return {
+        "row_count": row_count,
+        "prompt_family_count": len(family_reports),
+        "geometry_hop_counts": _counter_dict(_int_counter(row_items, "geometry_hop_count")),
+        "static_hop_counts": _counter_dict(_int_counter(row_items, "static_hop_count")),
+        "geometry_hop_positive_count": geometry_hop_positive_count,
+        "geometry_hop_positive_share": _share(geometry_hop_positive_count, row_count),
+        "geometry_critical_count": geometry_critical_count,
+        "geometry_critical_share": _share(geometry_critical_count, row_count),
+        "syntax_only_calibration_count": syntax_only_calibration_count,
+        "syntax_only_calibration_share": _share(syntax_only_calibration_count, row_count),
+        "zero_geometry_hop_families": zero_geometry_families,
+        "syntax_only_families": syntax_only_families,
+        "low_geometry_coverage_families": low_geometry_coverage_families,
+        "low_geometry_critical_families": low_geometry_critical_families,
+        "weakest_geometry_hop_families": [
+            _family_report_summary(report) for report in weakest_geometry_hop_families
+        ],
+        "weakest_geometry_critical_families": [
+            _family_report_summary(report) for report in weakest_geometry_critical_families
+        ],
+        "by_prompt_family": family_reports,
+    }
+
+
+def _prompt_template_id(row: dict[str, Any]) -> str:
+    template_id = row.get("prompt_template_id")
+    if template_id:
+        return str(template_id)
+    query = row.get("query_program")
+    if isinstance(query, dict):
+        return prompt_template_id_from_mapping(query)
+    return str(row.get("prompt_version", "unknown"))
+
+
+def shortcut_resistance_markdown(report: dict[str, Any]) -> str:
+    lines = [
+        "# CAD-QA Shortcut Resistance Report",
+        "",
+        "## Summary",
+        "",
+        _json_block(
+            {
+                "row_count": report.get("row_count", 0),
+                "prompt_family_count": report.get("prompt_family_count", 0),
+                "geometry_hop_counts": report.get("geometry_hop_counts", {}),
+                "static_hop_counts": report.get("static_hop_counts", {}),
+                "geometry_hop_positive_share": report.get("geometry_hop_positive_share", 0.0),
+                "geometry_critical_share": report.get("geometry_critical_share", 0.0),
+                "syntax_only_calibration_share": report.get("syntax_only_calibration_share", 0.0),
+                "zero_geometry_hop_families": report.get("zero_geometry_hop_families", []),
+                "syntax_only_families": report.get("syntax_only_families", []),
+                "low_geometry_coverage_families": report.get("low_geometry_coverage_families", []),
+                "low_geometry_critical_families": report.get("low_geometry_critical_families", []),
+            }
+        ),
+        "",
+        "## Weakest Geometry-Hop Families",
+        "",
+        _json_block({"families": report.get("weakest_geometry_hop_families", [])}),
+        "",
+        "## Weakest Geometry-Critical Families",
+        "",
+        _json_block({"families": report.get("weakest_geometry_critical_families", [])}),
+        "",
+        "## By Prompt Family",
+        "",
+        _json_block(report.get("by_prompt_family", {})),
+        "",
+    ]
+    return "\n".join(lines)
 
 
 def failure_report(failures: list[dict[str, Any]]) -> dict[str, Any]:
@@ -117,7 +243,45 @@ def dataset_card_markdown(
                 "release_ready": report.get("release_ready", {}),
                 "quarantine_reasons": report.get("quarantine_reasons", {}),
                 "prompt_families": report.get("prompt_families", {}),
+                "prompt_template_ids": report.get("prompt_template_ids", {}),
                 "quality_flags": report.get("quality_flags", {}),
+            }
+        ),
+        "",
+        "## Shortcut Resistance",
+        "",
+        _json_block(
+            {
+                "geometry_hop_counts": report.get("shortcut_resistance", {}).get("geometry_hop_counts", {}),
+                "static_hop_counts": report.get("shortcut_resistance", {}).get("static_hop_counts", {}),
+                "geometry_hop_positive_share": report.get("shortcut_resistance", {}).get(
+                    "geometry_hop_positive_share",
+                    0.0,
+                ),
+                "geometry_critical_share": report.get("shortcut_resistance", {}).get(
+                    "geometry_critical_share",
+                    0.0,
+                ),
+                "syntax_only_calibration_share": report.get("shortcut_resistance", {}).get(
+                    "syntax_only_calibration_share",
+                    0.0,
+                ),
+                "zero_geometry_hop_families": report.get("shortcut_resistance", {}).get(
+                    "zero_geometry_hop_families",
+                    [],
+                ),
+                "low_geometry_critical_families": report.get("shortcut_resistance", {}).get(
+                    "low_geometry_critical_families",
+                    [],
+                ),
+                "weakest_geometry_hop_families": report.get("shortcut_resistance", {}).get(
+                    "weakest_geometry_hop_families",
+                    [],
+                ),
+                "weakest_geometry_critical_families": report.get("shortcut_resistance", {}).get(
+                    "weakest_geometry_critical_families",
+                    [],
+                ),
             }
         ),
         "",
@@ -151,3 +315,67 @@ def dataset_card_markdown(
 
 def _json_block(value: dict[str, Any]) -> str:
     return "```json\n" + json.dumps(value, indent=2, sort_keys=True) + "\n```"
+
+
+def _row_item(row: Any) -> dict[str, Any]:
+    return row if isinstance(row, dict) else row.__dict__
+
+
+def _shortcut_family_report(
+    family: str,
+    rows: list[dict[str, Any]],
+    total_rows: int,
+) -> dict[str, Any]:
+    row_count = len(rows)
+    geometry_hop_positive_count = sum(1 for row in rows if int(row.get("geometry_hop_count") or 0) > 0)
+    geometry_critical_count = sum(1 for row in rows if is_geometry_critical_row(row))
+    syntax_only_calibration_count = sum(1 for row in rows if is_syntax_only_calibration_row(row))
+    release_ready_count = sum(
+        1
+        for row in rows
+        if row.get("release_ready") is not False and not row.get("quarantine_reasons")
+    )
+    unique_answer_count = len({_answer_key(row.get("gold_answer")) for row in rows})
+    return {
+        "prompt_family": family,
+        "row_count": row_count,
+        "row_share": _share(row_count, total_rows),
+        "static_hop_counts": _counter_dict(_int_counter(rows, "static_hop_count")),
+        "geometry_hop_counts": _counter_dict(_int_counter(rows, "geometry_hop_count")),
+        "geometry_hop_positive_count": geometry_hop_positive_count,
+        "geometry_hop_positive_share": _share(geometry_hop_positive_count, row_count),
+        "geometry_critical_count": geometry_critical_count,
+        "geometry_critical_share": _share(geometry_critical_count, row_count),
+        "syntax_only_calibration_count": syntax_only_calibration_count,
+        "syntax_only_calibration_share": _share(syntax_only_calibration_count, row_count),
+        "release_ready_count": release_ready_count,
+        "release_ready_share": _share(release_ready_count, row_count),
+        "unique_answer_count": unique_answer_count,
+    }
+
+
+def _family_report_summary(report: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "prompt_family": report["prompt_family"],
+        "row_count": report["row_count"],
+        "geometry_hop_positive_share": report["geometry_hop_positive_share"],
+        "geometry_critical_share": report["geometry_critical_share"],
+        "syntax_only_calibration_share": report["syntax_only_calibration_share"],
+        "geometry_hop_counts": report["geometry_hop_counts"],
+    }
+
+
+def _int_counter(rows: list[dict[str, Any]], key: str) -> Counter[str]:
+    return Counter(str(int(row.get(key) or 0)) for row in rows)
+
+
+def _counter_dict(counter: Counter[str]) -> dict[str, int]:
+    return dict(sorted(counter.items(), key=lambda item: int(item[0])))
+
+
+def _share(count: int, total: int) -> float:
+    return count / total if total else 0.0
+
+
+def _answer_key(value: Any) -> str:
+    return json.dumps(value, sort_keys=True, default=str)

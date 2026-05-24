@@ -1,0 +1,150 @@
+version: cadqa_prompt_v2
+checklist_template_id: checklist_constraints_v1
+
+prompt_shells:
+  checklist: |
+    Given the CadQuery script below, answer the question by reasoning about the CAD construction.
+
+    ```python
+    {source_code}
+    ```
+
+    Identify the target that satisfies all of these constraints:
+    {clue_lines}
+
+    Return exactly one {answer_format}.
+
+fallback_templates:
+  no_clause_target: "The target is a `{target_type}` entity from the script."
+  unknown_clause: "The target satisfies the hidden `{kind}` clause."
+
+aggregation_templates:
+  argmax: "Among the remaining candidates, choose the one with the greatest {metric_label}."
+  argmin: "Among the remaining candidates, choose the one with the smallest {metric_label}."
+
+metric_labels:
+  area: "profile area"
+  bbox_delta_max_span: "increase in overall part size"
+  bbox_delta_min_z: "upward movement of the lowest point"
+  bbox_delta_span_z: "height increase"
+  bbox_max_z: "maximum Z height"
+  centroid_delta_magnitude: "centroid shift"
+  centroid_delta_z: "upward centroid movement"
+  centroid_z: "centroid height"
+  coordinate_z: "Z coordinate"
+  distance_to_origin: "distance to the global origin"
+  edge_length: "edge length"
+  face_area: "surface area"
+  midpoint_x: "midpoint X coordinate"
+  midpoint_y: "midpoint Y coordinate"
+  nearest_point_distance_to_origin: "nearest-point distance to the global origin"
+  operation_index: "modeling-sequence position"
+  origin_z: "workplane origin height"
+  segment_length: "segment length"
+  selected_count: "number of selected entities"
+  signed_volume_delta: "volume change"
+  topology_delta_edges: "increase in edge count"
+  topology_delta_faces: "increase in face count"
+  topology_edges: "edge count"
+  topology_faces: "face count"
+  volume: "volume"
+  volume_delta_magnitude: "removed-volume amount"
+  workplane_origin_z: "workplane origin height"
+
+clause_templates:
+  operation_target: "The target feature is created in the modeling step named `{value}`."
+  operation_name: "The target feature is made by a `{value}` modeling operation."
+  located_on_workplane: "The target profile is sketched on a workplane."
+  located_on_explicit_or_default_workplane: "The target profile is a circle, rectangle, or closed polyline sketched on a workplane."
+  has_profile_area: "The target profile has a measurable enclosed area."
+  has_workplane_z: "The target is on a workplane whose origin Z coordinate can be compared."
+  stable_selector: "The target face belongs to the face selection described by `{value!r}`."
+  has_selector: "The target face is part of a repeatable face selection."
+
+  has_kernel_selector_identity: "The target face is one of the selected model faces."
+  has_kernel_face_selector_identity: "The target face is one of the selected model faces."
+  has_selected_face_bbox: "The target face has a measured bounding box."
+  face.has_origin_distance_relation: "The target face center has a measured distance to the global origin."
+  has_face_center_distance: "The target face center has a distance-to-origin measurement."
+  has_face_area: "The target face has a measured surface area."
+  has_opposite_face_relation: "The target face is opposite a parallel face with a matching in-plane span."
+  has_adjacent_face_relation: "The target face is adjacent to another face that shares a boundary."
+  has_perpendicular_face_relation: "The target face is perpendicular to another face."
+  flat_in_global_z: "The target face has near-zero thickness in the global Z direction."
+  positive_x_extent: "The target face extends into positive global X."
+  has_face_bbox_z: "The target face has a measured maximum Z coordinate."
+
+  has_kernel_selected_faces: "The target face selection identifies measured model faces."
+  has_selected_count: "The target selection has a measured entity count."
+  has_kernel_selected_edges: "The target edge selection identifies measured model edges."
+  has_selected_edge_count: "The target edge selection has a measured edge count."
+  same_face_as_another_selector: "The target face selection identifies the same face as another face selection."
+  has_selector_operation_index: "The target selection has a modeling-sequence position that can be compared."
+
+  has_kernel_edge_selector_identity: "The target edge is one of the selected model edges."
+  has_selected_edge_bbox: "The target edge has a measured bounding box."
+  has_perpendicular_edge_relation: "The target edge is perpendicular to another selected edge."
+  has_adjacent_edge_relation: "The target edge is adjacent to another selected edge that shares an endpoint."
+  has_intersection_edge_relation: "The target edge intersects another selected edge at an endpoint."
+  has_opposite_edge_relation: "The target edge is opposite a parallel edge of the same length without sharing an endpoint."
+  has_x_span: "The target edge spans in the global X direction."
+  on_negative_y_side: "The target edge lies on the negative-Y side of the model."
+  has_edge_bbox_z: "The target edge has a measured maximum Z coordinate."
+  edge.has_origin_distance_relation: "The target edge midpoint has a measured distance to the global origin."
+  has_midpoint_distance: "The target edge midpoint has a distance-to-origin measurement."
+  positive_midpoint_z: "The target edge midpoint has a positive global Z coordinate."
+  has_midpoint_y: "The target edge has a measured midpoint Y coordinate."
+  has_edge_length: "The target edge has a measured length."
+  edge_length_less_than_midpoint_distance: "The target edge length is less than its midpoint distance to the global origin."
+  has_midpoint_x: "The target edge has a measured midpoint X coordinate."
+  longer_than_another_kernel_edge: "The target edge is longer than another selected edge."
+  same_length_as_another_kernel_edge: "The target edge has the same length as another selected edge."
+  shorter_than_another_kernel_edge: "The target edge is shorter than another selected edge."
+
+  endpoint_of_kernel_selected_edge: "The target point is an endpoint of a selected edge."
+  contained_in_kernel_selected_edge: "The target endpoint lies on a selected edge."
+  edge_endpoint.has_origin_distance_relation: "The target endpoint has a measured distance to the global origin."
+  positive_x_endpoint: "The target endpoint has a positive global X coordinate."
+  negative_y_endpoint: "The target endpoint has a negative global Y coordinate."
+  has_endpoint_z: "The target endpoint has a measured Z coordinate."
+  has_endpoint_distance: "The target endpoint also has a distance-to-origin measurement."
+
+  has_initial_tangent: "The target path has an initial tangent from its first two control points."
+  has_nearest_origin_distance: "The target path has a nearest path point to the global origin."
+  point_on_visible_path: "The target point belongs to a spline path."
+  has_distance_to_origin: "The target point has a measured distance to the global origin."
+  has_path_point_z: "The target point has a measured global Z coordinate."
+  segment_on_visible_path: "The target segment belongs to a spline path."
+  has_segment_length: "The target segment has a measured path-segment length."
+
+  has_compiled_volume: "The target feature has a measured solid volume."
+  has_compiled_bbox_height: "The target feature has a measured overall height."
+  has_compiled_centroid: "The target feature has a measured solid centroid."
+  has_compiled_volume_for_centroid: "The target feature also has a measured solid volume."
+  has_compiled_face_count: "The target feature has a measured face count."
+  has_volume_for_face_count: "The target feature also has a measured solid volume."
+  has_positive_volume_delta: "The target feature adds volume to the part."
+  has_bbox_delta: "The target feature changes the part envelope."
+  has_negative_volume_delta: "The target feature removes volume from the part."
+  has_removed_volume_magnitude: "The target feature has a measured removed-volume amount."
+  has_positive_bbox_height_delta: "The target feature increases the part height."
+  has_volume_delta_for_bbox_delta: "The target feature also changes the part volume."
+  has_bbox_expansion: "The target feature expands at least one overall part dimension."
+  has_volume_delta_for_bbox_expansion: "The target feature also changes the part volume."
+  has_positive_bbox_min_z_delta: "The target feature raises the lowest point of the part."
+  has_volume_delta_for_bbox_min_z_delta: "The target feature also changes the part volume."
+  has_positive_centroid_delta: "The target feature moves the solid centroid upward."
+  has_volume_delta_for_centroid_delta: "The target feature also changes the part volume."
+  has_centroid_shift: "The target feature shifts the solid centroid."
+  has_volume_delta_for_centroid_shift: "The target feature also changes the part volume."
+  has_positive_face_delta: "The target feature increases the solid's face count."
+  has_volume_delta: "The target feature also changes the part volume."
+  has_positive_edge_delta: "The target feature increases the solid's edge count."
+  has_volume_delta_for_edge_delta: "The target feature also changes the part volume."
+
+  has_region_geometry: "The target is a region of material added by an extrusion or sweep."
+  has_region_volume: "The target added-material region has a comparable volume."
+  has_region_centroid_z: "The target added-material region has a comparable centroid height."
+  has_void_geometry: "The target is a region of material removed by a cut."
+  has_void_volume: "The target removed-material region has a comparable volume."
+  has_void_operation_index: "The target removed-material region has a comparable modeling-sequence position."

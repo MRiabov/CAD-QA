@@ -79,7 +79,7 @@ epics:
         status: implemented
   - id: epic-4
     title: CAD ontology graph extraction
-    status: work-in-progress
+    status: implemented
     priority: P0
     stories:
       - id: "4.1"
@@ -96,7 +96,7 @@ epics:
         status: implemented
       - id: "4.5"
         title: Material and void region geometry
-        status: work-in-progress
+        status: implemented
   - id: epic-5
     title: Query program and deterministic resolver
     status: implemented
@@ -116,7 +116,7 @@ epics:
         status: implemented
   - id: epic-6
     title: Label and relation families
-    status: work-in-progress
+    status: implemented
     priority: P0
     stories:
       - id: "6.1"
@@ -127,18 +127,18 @@ epics:
         status: implemented
       - id: "6.3"
         title: Selector face identity and same-face joins
-        status: work-in-progress
+        status: implemented
       - id: "6.4"
         title: Path tangents and nearest path points
-        status: work-in-progress
+        status: implemented
   - id: epic-7
     title: Rule-based prompt rendering
-    status: work-in-progress
+    status: implemented
     priority: P0
     stories:
       - id: "7.1"
         title: Versioned templates from query clauses
-        status: work-in-progress
+        status: implemented
       - id: "7.2"
         title: Clue map from public wording to hidden clauses
         status: implemented
@@ -147,13 +147,13 @@ epics:
         status: implemented
       - id: "7.4"
         title: Individual clue breadth gate
-        status: work-in-progress
+        status: implemented
       - id: "7.5"
         title: Geometry-first prompt policy and syntax-shortcut gate
-        status: planned
+        status: implemented
   - id: epic-8
     title: Dataset materialization, splits, and validation
-    status: work-in-progress
+    status: implemented
     priority: P0
     stories:
       - id: "8.1"
@@ -167,7 +167,7 @@ epics:
         status: implemented
       - id: "8.4"
         title: Group-safe release splits
-        status: work-in-progress
+        status: implemented
       - id: "8.5"
         title: Leakage audit reports
         status: implemented
@@ -176,13 +176,13 @@ epics:
         status: implemented
       - id: "8.7"
         title: Release export filtering to release-ready rows
-        status: work-in-progress
+        status: implemented
       - id: "8.8"
         title: Geometry-first dataset quality gates for release blocking
-        status: planned
+        status: implemented
   - id: epic-9
     title: Baselines and evaluation
-    status: work-in-progress
+    status: implemented
     priority: P1
     stories:
       - id: "9.1"
@@ -205,53 +205,53 @@ epics:
         status: implemented
       - id: "9.7"
         title: Shortcut-resistance reports by prompt family and geometry-hop coverage
-        status: planned
+        status: implemented
   - id: epic-10
     title: Training and SFT artifacts
-    status: work-in-progress
+    status: implemented
     priority: P1
     stories:
       - id: "10.1"
         title: Answer-only SFT exports
-        status: work-in-progress
+        status: implemented
       - id: "10.2"
         title: Candidate-trace reasoning SFT exports
-        status: work-in-progress
+        status: implemented
       - id: "10.3"
         title: SFT ablation and scaling exports
-        status: work-in-progress
+        status: implemented
       - id: "10.4"
         title: Training export quotas that exclude syntax-only calibration rows by default
-        status: work-in-progress
+        status: implemented
   - id: epic-11
     title: Experiment orchestration and reports
-    status: work-in-progress
+    status: implemented
     priority: P1
     stories:
       - id: "11.1"
         title: Smoke graph dataset report
-        status: work-in-progress
+        status: implemented
       - id: "11.2"
         title: Release-scale verifier and quarantine reports
-        status: work-in-progress
+        status: implemented
       - id: "11.3"
         title: One-command smoke experiment orchestration
-        status: work-in-progress
+        status: implemented
       - id: "11.4"
         title: Run summaries, paper-results snapshot, and artifact manifest
-        status: work-in-progress
+        status: implemented
       - id: "11.5"
         title: Local experiment artifact packaging with checksums
-        status: work-in-progress
+        status: implemented
       - id: "11.6"
         title: Release readiness report with template quotas and answer entropy
-        status: planned
+        status: implemented
       - id: "11.7"
         title: Generated Markdown previews for changed task families and ontology node types
         status: implemented
   - id: epic-12
     title: Geometry-backed training-critical question families
-    status: work-in-progress
+    status: implemented
     priority: P0
     stories:
       - id: "12.1"
@@ -262,13 +262,13 @@ epics:
         status: implemented
       - id: "12.3"
         title: Selector-result geometry questions with selected counts, bboxes, and stable face or edge signatures
-        status: work-in-progress
+        status: implemented
       - id: "12.4"
         title: Kernel-backed material and void region delta questions
         status: implemented
       - id: "12.5"
         title: Path, distance, containment, intersection, adjacency, and stable spatial-relation questions
-        status: work-in-progress
+        status: implemented
       - id: "12.6"
         title: Training-release gate requiring geometry-backed critical rows to dominate exported SFT data
         status: implemented

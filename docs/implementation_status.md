@@ -1,13 +1,14 @@
 # Implementation Status
 
-Date: 2026-05-17
+Date: 2026-05-24
 
 The repository has been reset around the graph-first CAD-QA architecture.
 
 The current surface is a smoke-test implementation, not a fine-tuning-ready
 benchmark release. Core schema, graph, resolver, release, evaluation, and SFT
-export mechanisms exist, but geometry-first dataset quality gates, template
-diversity quotas, and syntax-shortcut rejection are still open work.
+export mechanisms exist, but row/template-level geometry-first dataset quality
+gates, template diversity quotas, and release-grade geometry coverage still
+need substantial work.
 The critical missing implementation is not more syntax-readable prompts; it is
 release-grade CAD geometry task coverage for the rows models should actually
 train on.
@@ -36,6 +37,9 @@ train on.
 - AST assignment and call-chain extraction.
 - Bounded unrolling for simple `for` loops over literal iterables.
 - Typed ontology graph records with nodes, relations, and measurements.
+- Ontology graph relation and measurement insertion is idempotent for exact
+  duplicate records, preventing repeated selector observations from inflating
+  graph relation/measurement lists.
 - Operation, feature, parameter, profile, workplane, path, path-point,
   path-segment, selector, solid, and measurement node families.
 - Stable selector-derived face nodes and same-face joins.
@@ -43,6 +47,9 @@ train on.
   workplanes, with selected counts, shape types, face bbox signatures,
   kernel-backed stable face IDs, and release-ready selected-face rows when
   private trace evidence is present.
+- Kernel-selected face nodes include compiled face-center coordinates,
+  face-center distance-to-origin measurements, and face-area measurements
+  derived from selector-result bounding boxes.
 - Kernel selector-result association for simple loop-variable `.faces(...)`
   calls when trace evidence can be matched by source line.
 - Profile geometry for `.circle(...)`, `.rect(...)`, and
@@ -69,9 +76,11 @@ train on.
   identity, face bbox comparisons, and selected-count comparisons.
 - Initial path-geometry query families for nearest path point to origin,
   highest path point, and longest path segment.
-- Rule-based prompt rendering with clause-to-clue maps, persisted
-  candidate-count annotations, hidden-clause traceability validation, and
-  row-level high-hop clue breadth audits.
+- YAML-backed prompt rendering from `prompt-templates.yaml`, with centralized
+  domain-language clause templates, metric display labels, versioned query-shape
+  template IDs, clause-to-clue maps, persisted candidate-count annotations,
+  hidden-clause traceability validation, and row-level high-hop clue breadth
+  audits.
 - Dataset row materialization and validation.
 - Deterministic group-safe smoke and release splits over protected source
   groups, including source family, generator, counterfactual group, explicit
@@ -101,15 +110,19 @@ train on.
   samples after task-family or node-type changes.
 - Dataset composition reports now include prompt-family counts and quality flags
   for syntax-only calibration rows and geometry-critical rows.
-- Release verifier reports with row validation, release validation, leakage,
-  public/private parity, verifier failure taxonomy, quarantine taxonomy, and
-  stop-gate summaries.
+- Release verifier reports with row validation, release validation, group-safe
+  split audit, leakage, public/private parity, verifier failure taxonomy,
+  quarantine taxonomy, and stop-gate summaries.
 - Compact machine-readable and Markdown run summaries.
 - Local experiment artifact packaging with SHA-256 package summary.
 - Per-row evidence tiering with quarantine reasons and release validation for
   conservative geometry or selector-surrogate labels.
-- Release export command that filters smoke datasets down to
-  `release_ready=true` rows.
+- Release export command that filters smoke datasets down to rows that pass
+  per-row release validation, including `release_ready=true`, quarantine, and
+  geometry-first prompt-policy checks.
+- Release export deterministically caps syntax-only calibration rows so
+  calibration examples can remain reviewable without silently violating the
+  aggregate release cap.
 - One-command smoke experiments now emit both `dataset/` and filtered
   `release_dataset/` artifact trees.
 - Baseline metrics are written for both the full smoke rows and the filtered
@@ -120,10 +133,24 @@ train on.
   quarantined rows, and write the geometry-critical training subset unless
   calibration export is explicitly requested. SFT reports include a default
   training-readiness summary.
+- SFT reports include input/training balance diagnostics and training stop
+  gates for geometry-critical dominance, prompt-family balance,
+  prompt-template balance, answer entropy, geometry-hop coverage, and
+  syntax-only calibration share.
+- Default SFT exports enforce applicable training stop gates and fail the CLI
+  command when the default training subset is geometry-light, prompt-family
+  collapsed, answer-collapsed, geometry-hop-light, or syntax-calibration-heavy.
+  Explicit calibration exports remain allowed as review artifacts, and
+  `--allow-failing-training-gates` is available for deliberate debugging.
 - Release verifier reports include a `default_sft_geometry_critical_dominance`
   stop gate requiring the default exported training rows to be nonempty,
   geometry-critical above threshold, syntax-calibration-free, and
   quarantine-free.
+- Release verifier reports include release-balance diagnostics and stop gates
+  for prompt-family concentration, prompt-template concentration, answer
+  entropy, geometry-hop coverage, and syntax-only calibration share; these
+  gates are only applicable above the smoke-dataset size floor so small
+  fixtures do not masquerade as release evidence.
 - Public/private row views separate answer-free benchmark inputs from private
   gold answers, query programs, candidate traces, and clue maps.
 - Public/private exports include row-ID parity and hidden-field leak audits.
@@ -142,42 +169,97 @@ rtk uv run cadqa experiment smoke \
   --scaling-sizes 8 16 32
 ```
 
-Result on 2026-04-29:
+Result reviewed on 2026-05-24:
 
-- 10 graphs, 1,215 nodes, 2,486 relations, and 1,387 measurements.
-- 45 resolved smoke rows: 10 hop-0, 6 hop-1, 13 hop-2, and 16 hop-3.
-- 31 rows are release-ready under current evidence policy; 14 are quarantined
-  smoke rows.
-- The experiment writes a filtered `release_dataset/` with 31 valid release
-  rows and zero quarantined rows.
-- Quarantine reasons: 8 conservative region projections and 6
-  selector-surrogate identities.
-- Relation families covered in public rows: `located_on`,
+- 10 graphs, 1,521 nodes, 2,773 relations, and 3,374 measurements.
+- 57 resolved smoke rows: 10 hop-0, 6 hop-1, 13 hop-2, and 28 hop-3.
+- The experiment writes a filtered `release_dataset/` with 27 rows after
+  excluding 30 release-validation-invalid rows, including 25 prompt-policy
+  rows and 14 quarantined rows. Some excluded rows overlap those categories.
+- The filtered release tree has zero quarantined rows and passes row-level
+  release validation, leakage, public/private parity, and no-quarantine gates.
+  It still fails aggregate release gates on this tiny sample:
+  `prompt_family_balance`, `geometry_hop_coverage`, and
+  `syntax_only_calibration_cap`.
+- Quarantine reasons in the full smoke rows: 8 conservative region projections
+  and 6 selector-surrogate identities.
+- Relation families covered in public rows include `located_on`,
   `has_material_region_geometry`, `has_void_region_geometry`,
-  `has_path_tangent`, `same_selected_face_as`, and `selected_by`.
-- Smoke validation passed and leakage audit passed. Release validation
-  intentionally rejects non-release-ready rows until conservative region
-  projections and selector-surrogate identities are upgraded or excluded.
-- Full-smoke oracle baseline accuracy is 1.0; first-candidate baseline accuracy
-  is 0.356.
+  `has_path_tangent`, `same_selected_face_as`, `selected_by`,
+  `point_on_path`, and `segment_on_path`.
+- Full-smoke oracle baseline accuracy is 1.0; first-candidate baseline
+  accuracy is 0.333.
 - Filtered release oracle baseline accuracy is 1.0; first-candidate baseline
-  accuracy is 0.516.
-- Request exports: 45 full zero-shot requests, 6 full few-shot test requests,
-  31 release zero-shot requests, and 5 release few-shot test requests.
-- Public/private oracle key checks pass at 1.0 accuracy for both the 45-row
-  smoke dataset and the 31-row release dataset, with zero invalid outputs and
-  zero missing, duplicate, or extra responses.
-- SFT exports: 45 full answer/reasoning rows and 31 release answer/reasoning
-  rows, plus hop/difficulty ablations and scaling subsets. These artifacts
-  validate export format only; they should not be treated as useful training
-  data until geometry-first quality gates and prompt-family quotas pass.
-- Run summary artifacts: `runs/experiment_smoke/run_summary.json`,
-  `runs/experiment_smoke/RUN_SUMMARY.md`, and
-  `runs/experiment_smoke/PAPER_RESULTS.md`.
-- Public/private exports: 45 full public/private rows and 31 release
+  accuracy is 0.667.
+- Request exports: 57 full zero-shot requests, 57 full few-shot requests,
+  27 release zero-shot requests, and 27 release few-shot requests.
+- Public/private oracle key checks pass at 1.0 accuracy for both the 57-row
+  smoke dataset and the 27-row filtered release dataset, with zero invalid
+  outputs and zero missing, duplicate, or extra responses.
+- SFT exports: 17 full answer/reasoning rows and 17 release answer/reasoning
+  rows, plus hop/difficulty ablations and scaling subsets. These smoke-sized
+  artifacts validate orchestration and format only; the release subset remains
+  too small and aggregate-gate-skewed for training.
+- Run summary artifacts: `runs/experiment_smoke_after_release_prefilter/run_summary.json`,
+  `runs/experiment_smoke_after_release_prefilter/RUN_SUMMARY.md`, and
+  `runs/experiment_smoke_after_release_prefilter/PAPER_RESULTS.md`.
+- Public/private exports: 57 full public/private rows and 27 filtered release
   public/private rows; public/private parity and hidden-field audits pass.
-- Packaged artifact: `runs/experiment_smoke.tar.gz` with SHA-256
-  `16fefe2a511f75ddef0a0f2cddad88245a9a1c436498ced5893f316d142752f8`.
+- Packaged artifact: `runs/experiment_smoke_after_release_prefilter.tar.gz`
+  with SHA-256
+  `39a592a718e93a3b2f6371caba6a6743be7398637695d97d9365583f52435200`.
+- Stories 11.1, 11.3, 11.4, and 11.5 are checked as implemented after manual
+  review of the smoke graph/dataset reports, one-command orchestration,
+  run-summary and paper-result artifacts, artifact manifest checksums, and
+  packaged tarball.
+
+## CadEvolve 50 Release-Candidate Snapshot
+
+Result reviewed on 2026-05-24:
+
+- Local CadEvolve source evidence is present at
+  `data/cadqa_cadevolve_50/sources.jsonl`.
+- The old checked-in `data/cadqa_cadevolve_50/traces.jsonl` should not be used
+  as release evidence: it has 14 successful traces, 36 failed traces, no
+  recorded CadQuery version, zero operation effects, and zero selector results.
+- Fresh trace regeneration wrote
+  `runs/release_cadevolve_50_20260524/trace_current/traces.jsonl` and
+  `trace_report.json`: 46 of 50 programs executed successfully, producing 855
+  snapshots, 809 operation effects, and 74 selector results. The 4 failures are
+  trace-quality exclusions: 3 `non_solid_result` and 1
+  `zero_or_negative_volume`.
+- Fresh graph build wrote
+  `runs/release_cadevolve_50_20260524/graph_current/graphs.jsonl`: 50 graphs,
+  7,846 nodes, 21,718 relations, 54,265 measurements, and zero graph
+  diagnostics.
+- Query generation and materialization produced 470 rows across 31 prompt
+  families. Of those, 386 are geometry-critical, 50 are syntax-only
+  calibration, and 462 are row-level release-ready before release export.
+- Filtered release export wrote
+  `runs/release_cadevolve_50_20260524/release_dataset_current_capped/`: 407
+  release rows, 41 release-validation exclusions, 41 prompt-policy exclusions,
+  13 duplicate-prompt exclusions, and 9 syntax-only calibration rows excluded
+  by the deterministic cap. All release verifier stop gates pass.
+- The release verifier reports 26 prompt families, 26 prompt templates, largest
+  family/template share 0.098, 99 unique answers, 5.894 answer-entropy bits,
+  geometry-hop-positive share 0.902, and syntax-only calibration share 0.098.
+- Default SFT export wrote
+  `runs/release_cadevolve_50_20260524/release_sft_current_capped/`: 367
+  answer-only rows and 367 candidate-trace reasoning rows, with scaling
+  subsets of 32, 128, and 256 rows. Default training rows are 100%
+  geometry-critical, syntax-calibration-free, and pass all training gates.
+- Review preview:
+  `runs/release_cadevolve_50_20260524/RELEASE_50_REVIEW_PREVIEW.md`. It samples
+  one row per prompt family and includes graph node samples; reviewed families
+  include compiled feature volume/face-count, positive and removed volume
+  deltas, added and removed regions, centroid shifts, face/edge-count deltas,
+  selector-result counts, selected-face area/distance, and kernel edge
+  midpoint/endpoint/length spatial tasks.
+- Important caveat: the leakage-safe split manifest currently assigns the 50
+  sources to one protected train-only group because the available source
+  metadata/path grouping collapses them together. This is acceptable for a
+  fine-tuning dataset export, but not yet enough for a multi-split benchmark
+  release.
 
 ## Generated Preview Review
 
@@ -205,6 +287,24 @@ Reviewed on 2026-05-17:
 - `runs/verify_cadevolve_20260517/edge_shorter_than_preview.md`
 - `runs/verify_cadevolve_20260517/face_spatial_relation_preview.md`
 
+Reviewed on 2026-05-24:
+
+- `runs/verify_cadevolve_20260517/release_report_rc10_after_balance/RELEASE_VERIFIER_REPORT.md`
+- `runs/verify_cadevolve_20260517/release_report_rc10_after_balance/release_verifier_report.json`
+- `runs/verify_cadevolve_20260524/face_center_distance_preview.md`
+- `runs/verify_cadevolve_20260524/release_report_rc10_after_face_center_distance/RELEASE_VERIFIER_REPORT.md`
+- `runs/verify_cadevolve_20260524/face_geometry_preview.md`
+- `runs/verify_cadevolve_20260524/release_report_rc10_after_face_geometry/RELEASE_VERIFIER_REPORT.md`
+- `runs/verify_cadevolve_20260524/sft_rc10_after_face_geometry/sft_report.json`
+- `runs/verify_cadevolve_20260524/release_export_rc10_after_split_audit/split_audit.json`
+- `runs/verify_cadevolve_20260524/release_export_rc10_after_split_audit/RELEASE_VERIFIER_REPORT.md`
+- `runs/verify_cadevolve_20260524/release_export_rc10_after_split_audit/SPLIT_AUDIT_PREVIEW.md`
+- `runs/verify_cadevolve_20260524/release_export_rc10_after_split_audit/EPIC12_SELECTOR_PATH_PREVIEW.md`
+- `runs/verify_cadevolve_20260524/release_export_rc10_after_prompt_template_ids/PROMPT_TEMPLATE_PREVIEW.md`
+- `runs/verify_cadevolve_20260524/release_export_rc10_after_prompt_template_ids/release_verifier_report.json`
+- `runs/verify_cadevolve_20260524/release_export_rc10_after_prompt_template_ids/MATERIAL_VOID_REGION_REVIEW.md`
+- `runs/verify_cadevolve_20260524/release_export_rc10_after_template_balance_gate/release_verifier_report.json`
+
 Conservatively checked as done:
 
 - The preview generator itself works as a review artifact: it shows sampled
@@ -222,9 +322,29 @@ Conservatively checked as done:
   bbox spans/extrema, centroid coordinates, topology counts,
   feature-application volume deltas, bbox deltas, centroid deltas, and topology
   deltas.
+- The reviewed RC10 release export recomputes row-level split labels from the
+  final release split manifest after release filtering. Its split audit reports
+  no row/manifest mismatches and no protected-label split leaks.
+- The reviewed epic-12 selector/path preview contains release-ready,
+  geometry-critical selector-result face/edge, endpoint containment,
+  path-point, and path-segment rows backed by kernel or compiled geometry
+  measurements and relations.
+- The reviewed prompt-template export backfills stable query-shape
+  `prompt_template_id` values for existing rows and reports 27 template IDs in
+  the RC10 release verifier, with sampled geometry families showing non-null
+  template IDs in the generated Markdown preview.
+- The reviewed template-balance export applies a release stop gate for
+  prompt-template concentration. The RC10 release passes with 27 template IDs,
+  largest-template share below the configured 0.35 cap, and no blocking gates.
 - Kernel-measured material-region rows exist for additive `.extrude(...)` and
   `.sweep(...)` features in the reviewed trace artifact, including the first
   additive solid where no previous solid snapshot exists.
+- The reviewed material/void-region RC10 preview contains release-ready,
+  geometry-critical `largest_added_region` and `largest_removed_region` rows
+  backed by `has_kernel_material_region_geometry` and
+  `has_kernel_void_region_geometry`. Sampled region nodes have
+  `conservative=false`, trace evidence, volume measurements, and signed volume
+  deltas.
 - Additive features are no longer misclassified as void regions when an
   adjacent trace snapshot delta is negative because the adjacent snapshot is an
   unrelated standalone solid.
@@ -370,62 +490,144 @@ Conservatively checked as done:
 - Story 12.6 is checked as implemented because the SFT export and release
   verifier now enforce and report geometry-critical dominance for the default
   training surface.
+- The reviewed RC10 CadEvolve release-balance report contains 134 rows and now
+  applies stop gates for prompt-family balance, prompt-template balance,
+  answer entropy, and geometry-hop coverage plus a cap for syntax-only
+  calibration rows. The
+  reviewed artifact passes those gates with 30 prompt families,
+  largest-family share 0.075, 51 unique answers, answer entropy 5.30 bits,
+  geometry-hop-positive share 0.925, and syntax-only calibration share 0.075.
+- The same reviewed report still correctly fails release on
+  `release_validation` and `no_quarantined_rows` because 3
+  `selector_identity_surrogate` rows remain quarantined. Story 11.6 is checked
+  as implemented for reporting and gating; this is not a claim that the dataset
+  is release-ready.
+- The reviewed face-geometry preview adds compiled face-center
+  distance-to-origin and face-area measurements for kernel-selected faces. It
+  demonstrates 2 release-ready, geometry-critical CadEvolve rows for
+  `nearest_kernel_selected_face_center_to_origin` and 2 release-ready,
+  geometry-critical CadEvolve rows for `largest_kernel_selected_face_area`.
+  These rows start from two kernel-selected face candidates and resolve only
+  through compiled `distance_to_origin` or `face_area` aggregation.
+- The preview generator now reports total measurement counts and omitted
+  measurement names for node samples when measurements are truncated, so newly
+  added node measurements such as `face_center`, `distance_to_origin`, and
+  `face_area` remain visible during manual review.
+- The regenerated RC10 face-geometry graph drops from 10,543 to 10,456
+  measurements after exact duplicate measurement insertion is made idempotent;
+  the resolved row count and reviewed face-geometry rows remain unchanged.
+- The same graph drops from 3,339 to 3,321 relations after exact duplicate
+  relation insertion is made idempotent; a duplicate scan over the regenerated
+  RC10 graph reports zero exact duplicate relations.
+- The reviewed RC10 face-geometry SFT export writes 109 default training rows
+  from 138 input rows, excludes all 10 syntax-only calibration rows plus
+  noncritical/quarantined rows, and reports passing training stop gates for
+  geometry-critical dominance, prompt-family balance, prompt-template balance,
+  answer entropy, geometry-hop coverage, and syntax-only calibration share.
+  The default export now enforces applicable training gates and would fail on
+  a large collapsed training export unless `--allow-failing-training-gates` is
+  provided.
+- Story 10.4 is checked as implemented because the default SFT export excludes
+  syntax-only calibration/noncritical/quarantined rows and enforces applicable
+  training balance gates. This does not close broader row/template-level
+  shortcut resistance.
+- The reviewed filtered RC10 release SFT export writes 106 answer-only rows
+  and 106 candidate-trace reasoning rows from 116 release rows; the 10
+  syntax-only calibration rows are excluded from default training. It writes
+  ablation exports by difficulty and hop count plus scaling exports for 8, 16,
+  and 32 row subsets, and all training gates pass. Stories 10.1, 10.2, and
+  10.3 are checked as implemented for answer-only, reasoning, ablation, and
+  scaling SFT artifacts.
+- The shortcut-resistance report is now first-class in dataset reports,
+  dataset cards, and the `dataset shortcut-report` CLI. The reviewed RC10
+  CadEvolve-derived report contains 138 rows across 32 prompt families,
+  geometry-hop-positive share 0.928, geometry-critical share 0.790, and
+  syntax-only calibration share 0.072. It flags `first_operation` as the only
+  zero-geometry-hop and syntax-only family, and separately flags five low
+  geometry-critical families: `cad_browsecomp_profile`, `first_operation`,
+  `highest_workplane`, `latest_repeated_selector`, and
+  `profile_on_workplane`. Story 9.7 is checked as implemented for reporting;
+  this is not a row/template-level blocking gate.
+- The release verifier now uses the shortcut-resistance report as a release
+  stop gate: any low geometry-critical prompt family blocks release unless
+  that family is explicitly syntax-only calibration and remains under the
+  separate syntax-only calibration cap. The reviewed RC10 report now fails
+  `geometry_critical_prompt_family_coverage` in addition to
+  `release_validation` and `no_quarantined_rows`, which is the desired
+  conservative behavior while non-training prompt families remain in the
+  source dataset. Story 8.8 is checked as implemented for release blocking
+  gates.
+- Release export now treats the release verifier as authoritative: artifacts
+  are written, but the default `dataset export-release` command exits nonzero
+  when verifier stop gates fail. The explicit
+  `--allow-failing-release-gates` flag remains available for review artifacts.
+  Release export now pre-filters rows that fail per-row release validation, so
+  prompt-policy-invalid rows are excluded before verifier gates run. The
+  reviewed RC10 export filters out 22 prompt-policy-invalid rows, including 3
+  already-quarantined rows, and writes 116 release-valid rows with zero
+  blocking verifier gates. Story 8.7 is checked as implemented for
+  release-ready filtering plus gate enforcement.
+- Release-scale verifier and quarantine reporting is checked as implemented:
+  the reviewed RC10 release verifier reports row validation, release
+  validation, quarantine, leakage, public/private, prompt-family balance,
+  prompt-template balance, answer entropy, geometry-hop coverage,
+  syntax-only calibration share, geometry-critical family coverage, and
+  row-level prompt-policy gates. Story 11.2 is checked as implemented.
+- Individual clue-breadth gating is checked as implemented: high-hop resolver
+  clauses can fail with `clue_too_narrow`, and row validation audits clue
+  maps against candidate-count traces. Story 7.4 is checked as implemented.
+- Geometry-first prompt policy is now row-level in validation. Release
+  validation raises `geometry_first_prompt_policy` errors for non-calibration
+  rows that are not geometry-critical and for literal property clauses that
+  expose source-syntax selectors or values; syntax-only calibration rows remain
+  warnings and are controlled by the separate calibration cap. The reviewed
+  RC10 release-validation report has 22 prompt-policy errors: 19
+  non-geometry-critical prompt errors across `highest_workplane`,
+  `profile_on_workplane`, `cad_browsecomp_profile`, and
+  `latest_repeated_selector`, plus 3 literal property-clause errors on
+  `selected_face`. It also reports 10 syntax-only calibration warnings. Story
+  7.5 is checked as implemented for the explicit geometry-first policy gate;
+  the raw dataset still contains blocked rows, while the filtered release
+  export removes them.
 
-Still not checked as done:
+Checked as implemented with remaining scale caveats:
 
-- Solid measurement task coverage is still only an initial release-ready
-  subset: it has volume/bbox/centroid/topology-count rows, but not broad
-  variants, quotas, or answer-entropy guarantees.
-- Feature-application effect coverage is still an initial release-ready subset:
-  volume, bbox, topology, and centroid movement are demonstrated, but broader
-  variants, quotas, and answer-entropy guarantees remain incomplete.
-- Selector-result geometry remains partial: selected-count query support exists
-  and is unit-tested, but the reviewed RC8 CadEvolve slice has selected count
-  `1` for every kernel selector, so it does not yet demonstrate real
-  selected-count training rows or enough bbox/signature variants to close
-  story 12.3. The later RC10 review slice demonstrates kernel-backed edge
-  nodes and 1 release-ready edge-selector spatial row, but this is not broad
-  enough to close story 12.3.
-- Path/distance coverage is partial: path-point and path-segment distance rows
-  are demonstrated, and one kernel-edge perpendicularity/adjacency row plus
-  one kernel-edge endpoint containment/distance row plus one kernel-edge
-  midpoint distance row plus one kernel-edge length/midpoint row are
-  demonstrated, along with one kernel-edge length-ordering row and one
-  kernel-edge same-length ordering row plus one shorter-than length-ordering
-  row. A
-  face-spatial fixture demonstrates opposite, adjacent, intersecting, and
-  perpendicular face relations, but a real CadEvolve slice has not yet
-  demonstrated those face rows. Broader containment, broader intersection,
-  opposite-face coverage on real CadEvolve data, broader opposite-relation,
-  broader adjacency, broader parallel/perpendicular, and coaxial
-  spatial-relation rows remain open, so story 12.5 is work-in-progress rather
-  than implemented.
-- The preview does not establish prompt-family balance, answer entropy, or
-  syntax shortcut resistance. Those remain open release blockers even though
-  the default SFT geometry-critical dominance gate is now implemented.
-- Opposite-face on real CadEvolve data, broader containment, broader
-  intersection, broader adjacency, and broader stable spatial-relation question
-  families are not demonstrated by this preview.
+- Solid measurement, feature-application effect, selector-result geometry,
+  path/distance, material/void-region, and stable spatial-relation rows are
+  implemented and demonstrated in reviewed smoke/RC10 artifacts, but larger
+  releases still need better distribution across CadEvolve source families.
+- The release verifier establishes prompt-family balance, prompt-template
+  balance, answer entropy, geometry-hop coverage, syntax-only calibration,
+  geometry-critical family coverage, and row-level geometry-first prompt-policy
+  gates for release-scale artifacts. Future prompt families may still need
+  additional semantic shortcut rules as new source patterns appear.
+- Opposite-face rows on broad real CadEvolve data, broader containment,
+  broader intersection, broader adjacency, and broader stable spatial-relation
+  distributions remain scale/coverage work rather than unchecked core
+  implementation stories.
 
 ## Open Work
 
-- Highest priority: implement geometry-backed training rows for volume, bbox,
-  centroid, topology counts/deltas, selector-result geometry, material/void
-  region deltas, feature application effects, path distances, containment,
-  intersection, adjacency, and stable spatial relations.
-- Geometry-first release gates that reject or cap rows answerable from source
-  syntax, assignment names, operation order, or literal arguments alone.
-- Prompt-family, answer-entropy, and static-hop/geometry-hop quality reports
-  that block release and training exports when the dataset collapses to a few
-  shortcut templates.
-- Training-export defaults that exclude syntax-only calibration rows unless an
-  explicit calibration export is requested.
+- Broaden the current geometry-backed training rows across more CadEvolve
+  source families and larger generated releases: volume, bbox, centroid,
+  topology counts/deltas, selector-result geometry, material/void region
+  deltas, feature application effects, path distances, containment,
+  intersection, adjacency, and stable spatial relations are implemented in the
+  reviewed smoke/RC10 surfaces, but still need scale and distribution work.
+- Replace or stop generating rows currently excluded by geometry-first release
+  filtering: noncritical workplane/profile/selector prompts, literal
+  selector-property prompts, and syntax-only calibration rows beyond the cap.
+- Extend prompt-policy checks when new source-syntax shortcut patterns appear
+  outside the current geometry-critical, literal-property, and calibration
+  gates.
 - Broader kernel snapshot association for chained features, in-place mutation
   patterns, non-assignment feature effects, and more complex chained selector
   expressions beyond the current pre-execution `.faces(...)`/`.edges(...)`
   subexpression tracing.
 - Robust B-Rep adjacency and opposite-face relations.
-- Material-region and void-region geometry beyond source/profile projections.
+- Broader material-region and void-region geometry association for source
+  patterns not covered by current trace snapshots/effects and conservative
+  profile projections.
 - Provider submission adapters and remote/GPU experiment orchestration.
 
 ## Quarantine Policy
