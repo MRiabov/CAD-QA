@@ -270,6 +270,30 @@ families:
       expected_values:
         aggregation_rank: [2, 3, 4]
     notes: Synthesized feature family that selects a compiled feature by sampled rank instead of only min/max extrema.
+  - id: parameterized_feature_effect_delta_extreme
+    status: release
+    target_type: feature
+    minimum_hops: 3
+    maximum_hops: 3
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - effect_delta_metric
+        - effect_delta_sign
+        - comparison_operator
+        - measurement_value_bucket
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - effect_delta_metric
+        - comparison_operator
+        - aggregation_metric
+        - final_selector
+    notes: Synthesized feature-effect family that samples the effect delta metric, sign/comparison, and min/max selector instead of fixing one largest delta task.
   - id: highest_positive_x_flat_opposite_adjacent_perpendicular_kernel_face
     status: review_only
     target_type: face
@@ -734,50 +758,59 @@ families:
     maximum_hops: 2
     notes: Legacy fixed topology-count extremum; benchmark-release replacement is parameterized_feature_extreme.
   - id: largest_positive_volume_delta_feature
-    status: release
+    status: review_only
     target_type: feature
     minimum_hops: 3
     maximum_hops: 3
+    notes: Legacy fixed positive-volume-delta selector; benchmark-release replacement is parameterized_feature_effect_delta_extreme.
   - id: largest_removed_volume_delta_feature
-    status: release
+    status: review_only
     target_type: feature
     minimum_hops: 3
     maximum_hops: 3
+    notes: Legacy fixed removed-volume-delta selector; benchmark-release replacement is parameterized_feature_effect_delta_extreme.
   - id: largest_bbox_height_delta_feature
-    status: release
+    status: review_only
     target_type: feature
     minimum_hops: 3
     maximum_hops: 3
+    notes: Legacy fixed height-delta selector; benchmark-release replacement is parameterized_feature_effect_delta_extreme.
   - id: largest_bbox_expansion_feature
-    status: release
+    status: review_only
     target_type: feature
     minimum_hops: 3
     maximum_hops: 3
+    notes: Legacy fixed bbox-expansion selector; benchmark-release replacement is parameterized_feature_effect_delta_extreme.
   - id: largest_bbox_min_z_delta_feature
-    status: release
+    status: review_only
     target_type: feature
     minimum_hops: 3
     maximum_hops: 3
+    notes: Legacy fixed minimum-Z movement selector; benchmark-release replacement is parameterized_feature_effect_delta_extreme.
   - id: largest_upward_centroid_delta_feature
-    status: release
+    status: review_only
     target_type: feature
     minimum_hops: 3
     maximum_hops: 3
+    notes: Legacy fixed upward-centroid selector; benchmark-release replacement is parameterized_feature_effect_delta_extreme.
   - id: largest_centroid_shift_feature
-    status: release
+    status: review_only
     target_type: feature
     minimum_hops: 3
     maximum_hops: 3
+    notes: Legacy fixed centroid-shift selector; benchmark-release replacement is parameterized_feature_effect_delta_extreme.
   - id: largest_face_count_delta_feature
-    status: release
+    status: review_only
     target_type: feature
     minimum_hops: 3
     maximum_hops: 3
+    notes: Legacy fixed face-count-delta selector; benchmark-release replacement is parameterized_feature_effect_delta_extreme.
   - id: largest_edge_count_delta_feature
-    status: release
+    status: review_only
     target_type: feature
     minimum_hops: 3
     maximum_hops: 3
+    notes: Legacy fixed edge-count-delta selector; benchmark-release replacement is parameterized_feature_effect_delta_extreme.
   - id: largest_added_region
     status: review_only
     target_type: material_region

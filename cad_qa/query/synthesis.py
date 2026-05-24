@@ -10,10 +10,12 @@ from cad_qa.ontology.nodes import Node, OntologyGraph
 from cad_qa.query.ir import Clause, QueryProgram
 from cad_qa.query.predicate_catalog import (
     measurement_bucket_value,
+    metric_compare_predicate,
     measurement_value_predicate,
     merge_sampled_parameters,
     metric_axis,
     measurement_predicate,
+    nodes_matching_metric_compare,
     nodes_matching_measurement_value,
     nodes_matching_related_metric_compare,
     related_metric_compare_predicate,
@@ -143,6 +145,24 @@ class ViableRelationExtreme:
     candidate_ids: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class FeatureEffectDeltaFamilySpec:
+    family_id: str
+    compare_clause_id: str
+    selector_metric_clause_id: str
+    metrics: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class ViableFeatureEffectDeltaExtreme:
+    spec: FeatureEffectDeltaFamilySpec
+    compare_metric: str
+    operator: str
+    selector_metric: str
+    aggregation: str
+    candidate_ids: tuple[str, ...]
+
+
 EXTREME_FAMILY_SPECS = (
     ExtremeFamilySpec(
         family_id="parameterized_feature_extreme",
@@ -228,6 +248,27 @@ EXTREME_FAMILY_SPECS = (
         measurement_clause_id="has_parameterized_void_region_metric",
         metrics=("volume", "centroid_x", "centroid_y", "centroid_z"),
         relation_target_type="void_region",
+    ),
+)
+
+FEATURE_EFFECT_DELTA_METRIC_OPERATORS = {
+    "signed_volume_delta": (">", "<"),
+    "volume_delta_magnitude": (">",),
+    "bbox_delta_span_z": (">",),
+    "bbox_delta_max_span": (">",),
+    "bbox_delta_min_z": (">",),
+    "centroid_delta_z": (">",),
+    "centroid_delta_magnitude": (">",),
+    "topology_delta_faces": (">",),
+    "topology_delta_edges": (">",),
+}
+
+FEATURE_EFFECT_DELTA_FAMILY_SPECS = (
+    FeatureEffectDeltaFamilySpec(
+        family_id="parameterized_feature_effect_delta_extreme",
+        compare_clause_id="has_parameterized_feature_effect_delta",
+        selector_metric_clause_id="has_parameterized_feature_effect_metric",
+        metrics=tuple(FEATURE_EFFECT_DELTA_METRIC_OPERATORS),
     ),
 )
 
@@ -628,6 +669,14 @@ def synthesize_graph_hop_queries(graph: OntologyGraph) -> list[QueryProgram]:
         query = _query_for_extreme(graph, choice)
         if query is not None:
             queries.append(query)
+    for spec in FEATURE_EFFECT_DELTA_FAMILY_SPECS:
+        viable = _viable_feature_effect_delta_extremes(graph, spec)
+        if not viable:
+            continue
+        choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
+        query = _query_for_feature_effect_delta_extreme(graph, choice)
+        if query is not None:
+            queries.append(query)
     for spec in SELECTOR_COUNT_FAMILY_SPECS:
         viable = _viable_selector_counts(graph, spec)
         if not viable:
@@ -830,6 +879,136 @@ def _query_for_extreme(graph: OntologyGraph, viable: ViableExtreme) -> QueryProg
         tie_break_aggregation=viable.tie_break_aggregation,
         tie_break_metric=viable.tie_break_metric,
         hop_count=2 + int(relation is not None),
+        difficulty="cad_browsecomp",
+        min_individual_clause_candidates=2,
+        sampled_parameters=sampled,
+    )
+
+
+def _viable_feature_effect_delta_extremes(
+    graph: OntologyGraph,
+    spec: FeatureEffectDeltaFamilySpec,
+) -> list[ViableFeatureEffectDeltaExtreme]:
+    candidates = graph.nodes_by_type("feature")
+    viable: list[ViableFeatureEffectDeltaExtreme] = []
+    for compare_metric in spec.metrics:
+        for operator in FEATURE_EFFECT_DELTA_METRIC_OPERATORS[compare_metric]:
+            compare = metric_compare_predicate(
+                graph,
+                candidates,
+                clause_id=spec.compare_clause_id,
+                metric=compare_metric,
+                operator=operator,
+                value=0.0,
+            )
+            if compare is None:
+                continue
+            narrowed = nodes_matching_metric_compare(
+                graph,
+                candidates,
+                metric=compare_metric,
+                operator=operator,
+                value=0.0,
+            )
+            for selector_metric in spec.metrics:
+                selector = measurement_predicate(
+                    graph,
+                    narrowed,
+                    clause_id=spec.selector_metric_clause_id,
+                    metric=selector_metric,
+                )
+                if selector is None:
+                    continue
+                metric_candidates = _nodes_with_numeric_measurement(graph, narrowed, selector_metric)
+                if len(metric_candidates) < 2:
+                    continue
+                for aggregation in ("argmax", "argmin"):
+                    if _has_unique_extreme(graph, metric_candidates, selector_metric, aggregation):
+                        viable.append(
+                            ViableFeatureEffectDeltaExtreme(
+                                spec=spec,
+                                compare_metric=compare_metric,
+                                operator=operator,
+                                selector_metric=selector_metric,
+                                aggregation=aggregation,
+                                candidate_ids=tuple(node.id for node in metric_candidates),
+                            )
+                        )
+    return sorted(
+        viable,
+        key=lambda item: (
+            item.compare_metric,
+            item.operator,
+            item.selector_metric,
+            item.aggregation,
+            item.candidate_ids,
+        ),
+    )
+
+
+def _query_for_feature_effect_delta_extreme(
+    graph: OntologyGraph,
+    viable: ViableFeatureEffectDeltaExtreme,
+) -> QueryProgram | None:
+    spec = viable.spec
+    candidates = graph.nodes_by_type("feature")
+    compare = metric_compare_predicate(
+        graph,
+        candidates,
+        clause_id=spec.compare_clause_id,
+        metric=viable.compare_metric,
+        operator=viable.operator,
+        value=0.0,
+    )
+    if compare is None:
+        return None
+    narrowed = nodes_matching_metric_compare(
+        graph,
+        candidates,
+        metric=viable.compare_metric,
+        operator=viable.operator,
+        value=0.0,
+    )
+    selector = measurement_predicate(
+        graph,
+        narrowed,
+        clause_id=spec.selector_metric_clause_id,
+        metric=viable.selector_metric,
+    )
+    if selector is None:
+        return None
+    direction = "max" if viable.aggregation == "argmax" else "min"
+    sampled = merge_sampled_parameters(
+        {
+            "target_type": ["feature"],
+            "final_selector": [f"{direction}:{viable.selector_metric}"],
+            "aggregation_metric": [viable.selector_metric],
+            "effect_delta_metric": [viable.compare_metric],
+            "effect_delta_sign": ["negative" if viable.operator == "<" else "positive"],
+            "extremum_direction": [direction],
+            "predicate_catalog_version": ["v1"],
+            "prompt_wording_variant": [_prompt_wording_variant(graph.graph_id, spec.family_id)],
+            "synthesis_strategy": ["feature_effect_delta_extreme_v1"],
+        },
+        compare.sampled_parameters,
+        selector.sampled_parameters,
+    )
+    compare_axis = metric_axis(viable.compare_metric)
+    if compare_axis is not None:
+        sampled = merge_sampled_parameters(sampled, {"effect_delta_axis": [compare_axis]})
+    selector_axis = metric_axis(viable.selector_metric)
+    if selector_axis is not None:
+        sampled = merge_sampled_parameters(sampled, {"aggregation_axis": [selector_axis]})
+    return QueryProgram(
+        query_id=f"{graph.graph_id}:synth:{spec.family_id}",
+        target_type="feature",
+        clauses=[
+            compare.clause,
+            selector.clause,
+        ],
+        aggregation=viable.aggregation,
+        aggregation_metric=viable.selector_metric,
+        hop_count=3,
         difficulty="cad_browsecomp",
         min_individual_clause_candidates=2,
         sampled_parameters=sampled,

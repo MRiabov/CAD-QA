@@ -137,6 +137,50 @@ def measurement_value_predicate(
     )
 
 
+def metric_compare_predicate(
+    graph: OntologyGraph,
+    candidates: list[Node],
+    *,
+    clause_id: str,
+    metric: str,
+    operator: str,
+    value: float,
+) -> PredicateInstance | None:
+    """Instantiate a direct metric-comparison predicate if it preserves distractors."""
+
+    after = nodes_matching_metric_compare(
+        graph,
+        candidates,
+        metric=metric,
+        operator=operator,
+        value=value,
+    )
+    if len(after) < 2:
+        return None
+    params: dict[str, list[str]] = {
+        "narrowing_predicate_sequence": [f"metric_compare:{metric}:{operator}"],
+        "clause_metric": [metric],
+        "comparison_operator": [operator],
+        "measurement_value_bucket": [f"{metric}:{_value_bucket(value)}"],
+    }
+    axis = metric_axis(metric)
+    if axis is not None:
+        params["clause_axis"] = [axis]
+    return PredicateInstance(
+        id=f"metric_compare:{metric}:{operator}:{_value_bucket(value)}",
+        clause=Clause(
+            id=clause_id,
+            kind="metric_compare",
+            metric=metric,
+            operator=operator,
+            value=value,
+        ),
+        candidate_count_before=len(candidates),
+        candidate_count_after=len(after),
+        sampled_parameters=params,
+    )
+
+
 def related_metric_compare_predicate(
     graph: OntologyGraph,
     candidates: list[Node],
@@ -200,6 +244,21 @@ def nodes_matching_measurement_value(
         node
         for node in candidates
         if any(_value_matches(measurement.value, value) for measurement in graph.measurements_for(node.id, metric))
+    ]
+
+
+def nodes_matching_metric_compare(
+    graph: OntologyGraph,
+    candidates: list[Node],
+    *,
+    metric: str,
+    operator: str,
+    value: float,
+) -> list[Node]:
+    return [
+        node
+        for node in candidates
+        if any(_compare(measurement.value, operator, value) for measurement in graph.measurements_for(node.id, metric))
     ]
 
 

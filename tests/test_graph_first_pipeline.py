@@ -2653,6 +2653,93 @@ def test_synthesis_generates_parameterized_feature_extreme_and_rank_queries() ->
     assert "candidate when ordered" in rank_row.prompt or "item after sorting" in rank_row.prompt
 
 
+def test_synthesis_generates_parameterized_feature_effect_delta_query() -> None:
+    graph = OntologyGraph(graph_id="graph:feature-effect-delta-synth", source={"source_id": "synthetic", "source_code": ""})
+    for feature_id, values in {
+        "feature:add_a": {
+            "signed_volume_delta": 60.0,
+            "volume_delta_magnitude": 60.0,
+            "bbox_delta_span_z": 5.0,
+            "bbox_delta_max_span": 5.0,
+            "bbox_delta_min_z": 1.0,
+            "centroid_delta_z": 2.0,
+            "centroid_delta_magnitude": 2.0,
+            "topology_delta_faces": 3.0,
+            "topology_delta_edges": 6.0,
+        },
+        "feature:add_b": {
+            "signed_volume_delta": 24.0,
+            "volume_delta_magnitude": 24.0,
+            "bbox_delta_span_z": 2.0,
+            "bbox_delta_max_span": 8.0,
+            "bbox_delta_min_z": 3.0,
+            "centroid_delta_z": 6.0,
+            "centroid_delta_magnitude": 6.0,
+            "topology_delta_faces": 6.0,
+            "topology_delta_edges": 12.0,
+        },
+        "feature:cut_a": {
+            "signed_volume_delta": -10.0,
+            "volume_delta_magnitude": 10.0,
+            "bbox_delta_span_z": 1.0,
+            "bbox_delta_max_span": 1.0,
+            "bbox_delta_min_z": 0.5,
+            "centroid_delta_z": 0.5,
+            "centroid_delta_magnitude": 1.0,
+            "topology_delta_faces": 2.0,
+            "topology_delta_edges": 4.0,
+        },
+        "feature:cut_b": {
+            "signed_volume_delta": -30.0,
+            "volume_delta_magnitude": 30.0,
+            "bbox_delta_span_z": 3.0,
+            "bbox_delta_max_span": 4.0,
+            "bbox_delta_min_z": 2.0,
+            "centroid_delta_z": 1.0,
+            "centroid_delta_magnitude": 3.0,
+            "topology_delta_faces": 4.0,
+            "topology_delta_edges": 8.0,
+        },
+    }.items():
+        graph.add_node(Node(feature_id, "feature", feature_id))
+        for metric, value in values.items():
+            graph.add_measurement(Measurement(feature_id, "snapshot_delta", metric, value))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_feature_effect_delta_extreme")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+
+    assert resolution.verifier_status == "resolved"
+    assert query.target_type == "feature"
+    assert query.clauses[0].kind == "metric_compare"
+    assert query.clauses[0].metric in {
+        "signed_volume_delta",
+        "volume_delta_magnitude",
+        "bbox_delta_span_z",
+        "bbox_delta_max_span",
+        "bbox_delta_min_z",
+        "centroid_delta_z",
+        "centroid_delta_magnitude",
+        "topology_delta_faces",
+        "topology_delta_edges",
+    }
+    assert query.clauses[0].operator in {">", "<"}
+    assert query.clauses[0].value == 0.0
+    assert query.clauses[1].kind == "has_measurement"
+    assert query.aggregation in {"argmin", "argmax"}
+    assert row.release_ready
+    assert row.logical_hop_count == 3
+    assert row.geometry_hop_count == 3
+    assert row.query_program["sampled_parameters"]["effect_delta_metric"] == [query.clauses[0].metric]
+    assert row.query_program["sampled_parameters"]["comparison_operator"] == [query.clauses[0].operator]
+    assert row.query_program["sampled_parameters"]["aggregation_metric"] == [query.aggregation_metric]
+    assert "feature" in row.prompt.lower()
+
+
 def test_synthesis_generates_feature_reference_feature_distance_query() -> None:
     graph = OntologyGraph(
         graph_id="graph:feature-reference-distance-synth",
@@ -2848,6 +2935,16 @@ def test_synthesis_skips_parameterized_feature_queries_without_measured_distract
 
     assert "parameterized_feature_extreme" not in families
     assert "parameterized_feature_rank" not in families
+
+
+def test_synthesis_skips_feature_effect_delta_without_measured_distractors() -> None:
+    graph = OntologyGraph(graph_id="graph:no-feature-effect-delta-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph.add_node(Node("feature:only", "feature", "feature:only"))
+    graph.add_measurement(Measurement("feature:only", "snapshot_delta", "signed_volume_delta", 10.0, "mm^3"))
+
+    families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
+
+    assert "parameterized_feature_effect_delta_extreme" not in families
 
 
 def test_synthesis_skips_feature_reference_distance_without_feature_centroids() -> None:
@@ -4072,6 +4169,15 @@ def test_default_family_manifest_keeps_superseded_fixed_families_review_only() -
         "largest_equal_centroid_y_feature",
         "highest_centroid_feature",
         "largest_compiled_face_count_feature",
+        "largest_positive_volume_delta_feature",
+        "largest_removed_volume_delta_feature",
+        "largest_bbox_height_delta_feature",
+        "largest_bbox_expansion_feature",
+        "largest_bbox_min_z_delta_feature",
+        "largest_upward_centroid_delta_feature",
+        "largest_centroid_shift_feature",
+        "largest_face_count_delta_feature",
+        "largest_edge_count_delta_feature",
         "largest_added_region",
         "highest_equal_volume_added_region",
         "largest_removed_region",
@@ -4085,26 +4191,15 @@ def test_default_family_manifest_keeps_superseded_fixed_families_review_only() -
         "parameterized_edge_reference_feature_distance",
         "parameterized_feature_extreme",
         "parameterized_equal_feature_metric_extreme",
+        "parameterized_feature_effect_delta_extreme",
         "parameterized_material_region_extreme",
         "parameterized_equal_material_region_metric_extreme",
         "parameterized_void_region_extreme",
         "parameterized_equal_void_region_metric_extreme",
     ]
-    effect_families_without_parameterized_replacements = [
-        "largest_positive_volume_delta_feature",
-        "largest_removed_volume_delta_feature",
-        "largest_bbox_height_delta_feature",
-        "largest_bbox_expansion_feature",
-        "largest_bbox_min_z_delta_feature",
-        "largest_upward_centroid_delta_feature",
-        "largest_centroid_shift_feature",
-        "largest_face_count_delta_feature",
-        "largest_edge_count_delta_feature",
-    ]
 
     assert all(families[family]["status"] == "review_only" for family in superseded_fixed_families)
     assert all(families[family]["status"] == "release" for family in replacement_families)
-    assert all(families[family]["status"] == "release" for family in effect_families_without_parameterized_replacements)
 
 
 def test_parameter_balance_report_blocks_collapsed_query_parameters(tmp_path: Path) -> None:

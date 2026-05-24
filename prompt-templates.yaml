@@ -274,6 +274,14 @@ clause_templates:
   has_compiled_volume_for_centroid: "The target feature also has a measured solid volume."
   has_compiled_face_count: "The target feature has a measured face count."
   has_volume_for_face_count: "The target feature also has a measured solid volume."
+  has_parameterized_feature_effect_delta:
+    - "The target feature has {metric_label} {operator_label} {value}."
+    - "The target feature's {metric_label} is {operator_label} {value}."
+    - "The feature effect has {metric_label} {operator_label} {value}."
+  has_parameterized_feature_effect_metric:
+    - "The target feature has a measured {metric_label}."
+    - "The target feature has a known {metric_label}."
+    - "The target feature has a verified {metric_label}."
   has_positive_volume_delta: "The target feature adds volume to the part."
   has_bbox_delta: "The target feature changes the part envelope."
   has_negative_volume_delta: "The target feature removes volume from the part."

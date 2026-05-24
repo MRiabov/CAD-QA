@@ -20,6 +20,7 @@ from cad_qa.query.synthesis import synthesize_graph_hop_queries
 SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_feature_extreme",
     "parameterized_feature_rank",
+    "parameterized_feature_effect_delta_extreme",
     "parameterized_material_region_extreme",
     "parameterized_material_region_rank",
     "parameterized_void_region_extreme",
@@ -70,6 +71,9 @@ def synthesis_selfcheck_graphs() -> list[OntologyGraph]:
         _edge_spatial_relation_graph("graph:selfcheck-edge-spatial-relation-1"),
         _edge_spatial_relation_graph("graph:selfcheck-edge-spatial-relation-2"),
         _edge_spatial_relation_graph("graph:selfcheck-edge-spatial-relation-4"),
+        _feature_effect_delta_graph("graph:selfcheck-feature-effect-delta-0"),
+        _feature_effect_delta_graph("graph:selfcheck-feature-effect-delta-6"),
+        _feature_effect_delta_graph("graph:selfcheck-feature-effect-delta-10"),
         _feature_equal_metric_graph(),
         _region_equal_metric_graph(),
         _face_equal_metric_graph(),
@@ -331,6 +335,72 @@ def _feature_equal_metric_graph() -> OntologyGraph:
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "bbox_span_z", bbox_span_z, "mm"))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "topology_faces", 6.0 if feature_id != "feature:small" else 4.0))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "topology_edges", 12.0 if feature_id != "feature:small" else 8.0))
+    return graph
+
+
+def _feature_effect_delta_graph(graph_id: str) -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id=graph_id,
+        source={
+            "source_id": graph_id.rsplit(":", 1)[-1],
+            "source_code": (
+                "import cadquery as cq\n"
+                "base = cq.Workplane(\"XY\").box(10, 10, 3)\n"
+                "boss = base.faces(\">Z\").workplane().circle(2).extrude(4)\n"
+                "slot = boss.faces(\">Z\").workplane().rect(2, 5).cutBlind(-2)\n"
+                "result = slot\n"
+            ),
+        },
+    )
+    for feature_id, values in {
+        "feature:add_a": {
+            "signed_volume_delta": 60.0,
+            "volume_delta_magnitude": 60.0,
+            "bbox_delta_span_z": 5.0,
+            "bbox_delta_max_span": 5.0,
+            "bbox_delta_min_z": 1.0,
+            "centroid_delta_z": 2.0,
+            "centroid_delta_magnitude": 2.0,
+            "topology_delta_faces": 3.0,
+            "topology_delta_edges": 6.0,
+        },
+        "feature:add_b": {
+            "signed_volume_delta": 24.0,
+            "volume_delta_magnitude": 24.0,
+            "bbox_delta_span_z": 2.0,
+            "bbox_delta_max_span": 8.0,
+            "bbox_delta_min_z": 3.0,
+            "centroid_delta_z": 6.0,
+            "centroid_delta_magnitude": 6.0,
+            "topology_delta_faces": 6.0,
+            "topology_delta_edges": 12.0,
+        },
+        "feature:cut_a": {
+            "signed_volume_delta": -10.0,
+            "volume_delta_magnitude": 10.0,
+            "bbox_delta_span_z": 1.0,
+            "bbox_delta_max_span": 1.0,
+            "bbox_delta_min_z": 0.5,
+            "centroid_delta_z": 0.5,
+            "centroid_delta_magnitude": 1.0,
+            "topology_delta_faces": 2.0,
+            "topology_delta_edges": 4.0,
+        },
+        "feature:cut_b": {
+            "signed_volume_delta": -30.0,
+            "volume_delta_magnitude": 30.0,
+            "bbox_delta_span_z": 3.0,
+            "bbox_delta_max_span": 4.0,
+            "bbox_delta_min_z": 2.0,
+            "centroid_delta_z": 1.0,
+            "centroid_delta_magnitude": 3.0,
+            "topology_delta_faces": 4.0,
+            "topology_delta_edges": 8.0,
+        },
+    }.items():
+        graph.add_node(Node(feature_id, "feature", feature_id))
+        for metric, value in values.items():
+            graph.add_measurement(Measurement(feature_id, "snapshot_delta", metric, value))
     return graph
 
 

@@ -767,10 +767,18 @@ Checked as implemented with remaining scale caveats:
   tie-break metadata where needed. This reduces reliance on fixed
   `largest_*`/`highest_*` feature families. The intended-family manifest now
   marks superseded fixed feature extrema/equal-measurement fixtures as
-  review-only when a parameterized feature replacement exists. Feature-effect
-  delta families remain release families because equivalent parameterized
-  replacements have not yet been implemented. Release-scale metric/rank
-  distribution remains open.
+  review-only when a parameterized feature replacement exists. Release-scale
+  metric/rank distribution remains open.
+- The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_feature_effect_delta/PREVIEW.md`
+  demonstrates the initial `parameterized_feature_effect_delta_extreme` family.
+  The reviewed rows narrow feature candidates by sampled feature-effect
+  comparisons such as positive topology deltas, negative signed volume change,
+  or removed-volume amount, keep multiple candidates through another measured
+  delta metric, and resolve by sampled min/max selectors.
+  The intended-family manifest now marks superseded fixed feature-effect delta
+  fixtures as review-only where this parameterized replacement exists, but
+  release-scale effect-metric/sign distribution remains open.
 - The synthesized selfcheck preview at
   `runs/parameterized_synthesis_selfcheck_region_equal/PREVIEW.md`
   demonstrates initial `parameterized_equal_material_region_metric_extreme` and
@@ -865,8 +873,10 @@ Checked as implemented with remaining scale caveats:
   Superseded fixed face, edge, feature, and material/void region fixtures with
   implemented parameterized replacements are now marked review-only in the
   intended-family manifest, so benchmark-release reports block them if they
-  appear in release rows. Feature-effect delta families are still release
-  families and need parameterized replacements before they can be downgraded.
+  appear in release rows. The initial feature-effect delta fixtures are now
+  covered by a parameterized effect-delta family; remaining hard-coded release
+  debt is mainly broader reference-anchor sampling, selected-entity count
+  variants, and richer graph-hop predicate chains.
 - Rewrite sparse direct selector/count/extremum families as graph-hop narrowing
   programs instead of treating them as unusable when the whole model lacks a
   unique global largest/smallest candidate. These rows should use sampled
@@ -874,9 +884,9 @@ Checked as implemented with remaining scale caveats:
   measurement bucket, containment, adjacency, or distance to a sampled reference
   entity to define a nontrivial candidate subset before the final selector.
   The current synthesis slice covers parameterized extrema over kernel-selected
-  feature, face/edge geometry, measured path point/segment/edge-endpoint
-  geometry, and sampled face/edge spatial relations, initial selected face/edge
-  selector-count narrowing, initial equal-value
+  feature, feature-effect delta, face/edge geometry, measured path
+  point/segment/edge-endpoint geometry, and sampled face/edge spatial
+  relations, initial selected face/edge selector-count narrowing, initial equal-value
   face/edge/edge-endpoint/feature/material-region/void-region measurement
   groups, sampled material/void region extrema/ranks, contained-endpoint
   relation chains, and initial
