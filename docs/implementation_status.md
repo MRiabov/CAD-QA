@@ -1174,12 +1174,15 @@ Checked as implemented with remaining scale caveats:
   spatial-relation synthesis now samples same-length, parallel, coaxial,
   longer-than, and shorter-than relations instead of relying on fixed
   longer/shorter view-word fixtures. Selected face/edge count synthesis now
-  includes sampled selected-count rank rows. Kernel vertex selector results now
-  expose coordinate/distance measurements, synthesized vertex extrema/rank rows,
-  equal-coordinate vertex distractor rows, and vertex-to-reference-entity
-  distance/rank rows at the valid-row level; reviewed selfcheck evidence is in
+  includes sampled selected-count rank rows for face, edge, and vertex
+  selections. Kernel vertex selector results now expose coordinate/distance
+  measurements, synthesized vertex extrema/rank rows, equal-coordinate vertex
+  distractor rows, vertex-to-reference-entity distance/rank rows, and
+  vertex-selector count/rank rows at the valid-row level; reviewed selfcheck
+  evidence is in
   `runs/parameterized_synthesis_selfcheck_vertex/PREVIEW.md` and
-  `runs/parameterized_synthesis_selfcheck_vertex_value_reference/PREVIEW.md`.
+  `runs/parameterized_synthesis_selfcheck_vertex_value_reference/PREVIEW.md`
+  plus `runs/parameterized_synthesis_selfcheck_vertex_selector_count/PREVIEW.md`.
   Remaining hard-coded release debt is mainly richer graph-hop predicate chains,
   broader selected-entity count predicates, broader reference-entity balance,
   and release-scale distribution review.
@@ -1193,7 +1196,7 @@ Checked as implemented with remaining scale caveats:
   feature, feature-effect delta, face/edge/vertex geometry, measured path
   point/segment/edge-endpoint geometry, and sampled face/edge spatial
   relations including parallel face/edge and directed same-length/longer/shorter
-  edge relation rows, selected face/edge selector-count narrowing with
+  edge relation rows, selected face/edge/vertex selector-count narrowing with
   threshold, equal related-metric, same-selection relation predicates, and
   selected-count rank rows, initial equal-value
   face/edge/vertex/edge-endpoint/path-point/path-segment/feature/material-region/void-region measurement

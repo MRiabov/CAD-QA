@@ -6958,6 +6958,75 @@ def test_synthesis_generates_ranked_selector_count_queries() -> None:
         assert "selected entities" in row.prompt or "item count" in row.prompt
 
 
+def test_synthesis_generates_vertex_selector_count_queries() -> None:
+    graph = OntologyGraph(graph_id="graph:vertex-selector-count", source={"source_id": "synthetic", "source_code": ""})
+    for selector_id, selected_count, coordinate_z in [
+        ("selector:a", 2, -5.0),
+        ("selector:b", 4, -1.0),
+        ("selector:c", 6, 1.0),
+        ("selector:d", 8, 8.0),
+    ]:
+        vertex_id = f"vertex:{selector_id.rsplit(':', 1)[-1]}"
+        graph.add_node(Node(selector_id, "selector", selector_id))
+        graph.add_node(Node(vertex_id, "vertex", vertex_id))
+        graph.add_relation(Relation(selector_id, vertex_id, "has_kernel_stable_vertex_id"))
+        graph.add_measurement(Measurement(selector_id, "snapshot_state", "selected_count", selected_count))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_z", coordinate_z, "mm"))
+
+    queries = {query.query_id.rsplit(":", 1)[-1]: query for query in synthesize_graph_hop_queries(graph)}
+    for family in [
+        "parameterized_kernel_vertex_selector_count",
+        "parameterized_kernel_vertex_selector_count_rank",
+    ]:
+        query = queries[family]
+        resolution = resolve_query(graph, query)
+        row = materialize_row(graph, resolution)
+        related_step = next(
+            step
+            for step in row.candidate_trace["steps"]
+            if step["step"] == "has_parameterized_selected_vertex_metric_threshold"
+        )
+        aggregation_step = next(step for step in row.candidate_trace["steps"] if step["step"] == "aggregation")
+
+        assert resolution.verifier_status == "resolved"
+        assert row.release_ready
+        assert query.target_type == "selector"
+        assert query.aggregation_metric == "selected_count"
+        assert query.sampled_parameters["selected_entity_type"] == ["vertex"]
+        assert query.sampled_parameters["narrowing_axis"] == ["z"]
+        assert "has_kernel_stable_vertex_id" in row.relation_families
+        assert len(related_step["after"]) >= 2
+        assert len(aggregation_step["before"]) >= 2
+        assert row.logical_hop_count == 4
+        assert row.geometry_hop_count == 4
+        assert "vertex" in row.prompt.lower()
+        if family.endswith("_rank"):
+            assert query.aggregation in {"rank_asc", "rank_desc"}
+            assert query.aggregation_rank in {2, 3, 4}
+            assert row.query_program["sampled_parameters"]["aggregation_rank"] == [str(query.aggregation_rank)]
+            assert aggregation_step["rank"] == query.aggregation_rank
+
+
+def test_synthesis_skips_vertex_selector_count_when_narrowing_has_no_unique_count() -> None:
+    graph = OntologyGraph(graph_id="graph:tied-vertex-selector-count", source={"source_id": "synthetic", "source_code": ""})
+    for selector_id, coordinate_z in [
+        ("selector:a", -5.0),
+        ("selector:b", -1.0),
+        ("selector:c", 8.0),
+    ]:
+        vertex_id = f"vertex:{selector_id.rsplit(':', 1)[-1]}"
+        graph.add_node(Node(selector_id, "selector", selector_id))
+        graph.add_node(Node(vertex_id, "vertex", vertex_id))
+        graph.add_relation(Relation(selector_id, vertex_id, "has_kernel_stable_vertex_id"))
+        graph.add_measurement(Measurement(selector_id, "snapshot_state", "selected_count", 4))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_z", coordinate_z, "mm"))
+
+    families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
+
+    assert "parameterized_kernel_vertex_selector_count" not in families
+    assert "parameterized_kernel_vertex_selector_count_rank" not in families
+
+
 def test_synthesis_skips_selector_count_when_narrowing_has_no_unique_count() -> None:
     graph = OntologyGraph(graph_id="graph:tied-selector-count", source={"source_id": "synthetic", "source_code": ""})
     for selector_id, selected_count, midpoint_y in [

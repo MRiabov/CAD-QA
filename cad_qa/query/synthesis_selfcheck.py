@@ -137,8 +137,10 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_path_segment_reference_entity_distance_rank",
     "parameterized_kernel_face_selector_count",
     "parameterized_kernel_edge_selector_count",
+    "parameterized_kernel_vertex_selector_count",
     "parameterized_kernel_face_selector_count_rank",
     "parameterized_kernel_edge_selector_count_rank",
+    "parameterized_kernel_vertex_selector_count_rank",
 )
 
 
@@ -206,6 +208,7 @@ def synthesis_selfcheck_graphs() -> list[OntologyGraph]:
         _reference_entity_distance_rank_graph(),
         _face_selector_count_graph(),
         _edge_selector_count_graph(),
+        _vertex_selector_count_graph(),
         _selector_count_rank_graph(),
         _face_selector_relation_count_graph(),
         _edge_selector_relation_count_graph(),
@@ -1831,6 +1834,34 @@ def _edge_selector_count_graph() -> OntologyGraph:
     return graph
 
 
+def _vertex_selector_count_graph() -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id="graph:selfcheck-vertex-selector-count",
+        source={
+            "source_id": "selfcheck-vertex-selector-count",
+            "source_code": (
+                "import cadquery as cq\n"
+                "box = cq.Workplane(\"XY\").box(10, 6, 4)\n"
+                "sel_a = box.vertices(\"<Z\")\n"
+                "sel_b = box.vertices(\"|Z\")\n"
+                "sel_c = box.vertices(\">Z\")\n"
+            ),
+        },
+    )
+    for selector_id, selected_count, coordinate_z in [
+        ("selector:a", 3, -5.0),
+        ("selector:b", 4, -1.0),
+        ("selector:c", 4, 8.0),
+    ]:
+        vertex_id = f"vertex:{selector_id.rsplit(':', 1)[-1]}"
+        graph.add_node(Node(selector_id, "selector", selector_id))
+        graph.add_node(Node(vertex_id, "vertex", vertex_id))
+        graph.add_relation(Relation(selector_id, vertex_id, "has_kernel_stable_vertex_id"))
+        graph.add_measurement(Measurement(selector_id, "snapshot_state", "selected_count", selected_count))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_z", coordinate_z, "mm"))
+    return graph
+
+
 def _selector_count_rank_graph() -> OntologyGraph:
     graph = OntologyGraph(
         graph_id="graph:selfcheck-selector-count-rank",
@@ -1872,6 +1903,18 @@ def _selector_count_rank_graph() -> OntologyGraph:
         graph.add_relation(Relation(selector_id, edge_id, "has_kernel_stable_edge_id"))
         graph.add_measurement(Measurement(selector_id, "snapshot_state", "selected_count", selected_count))
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint_y, "mm"))
+    for selector_id, selected_count, coordinate_z in [
+        ("selector:vertex:a", 2, -5.0),
+        ("selector:vertex:b", 4, -1.0),
+        ("selector:vertex:c", 6, 1.0),
+        ("selector:vertex:d", 8, 8.0),
+    ]:
+        vertex_id = f"vertex:{selector_id.rsplit(':', 1)[-1]}"
+        graph.add_node(Node(selector_id, "selector", selector_id))
+        graph.add_node(Node(vertex_id, "vertex", vertex_id))
+        graph.add_relation(Relation(selector_id, vertex_id, "has_kernel_stable_vertex_id"))
+        graph.add_measurement(Measurement(selector_id, "snapshot_state", "selected_count", selected_count))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_z", coordinate_z, "mm"))
     return graph
 
 

@@ -489,6 +489,22 @@ SELECTOR_COUNT_FAMILY_SPECS = (
         ),
         selector_relations=("same_selected_entity_as",),
     ),
+    SelectorCountFamilySpec(
+        family_id="parameterized_kernel_vertex_selector_count",
+        relation="has_kernel_stable_vertex_id",
+        selected_type="vertex",
+        relation_clause_id="has_parameterized_vertex_selection",
+        selector_relation_clause_id="has_parameterized_selector_relation",
+        related_metric_clause_id="has_parameterized_selected_vertex_metric_threshold",
+        selected_count_clause_id="has_parameterized_selected_count",
+        related_metrics=(
+            "coordinate_x",
+            "coordinate_y",
+            "coordinate_z",
+            "distance_to_origin",
+        ),
+        selector_relations=("same_selected_entity_as",),
+    ),
 )
 
 SELECTOR_COUNT_RANK_FAMILY_SPECS = (
@@ -524,6 +540,23 @@ SELECTOR_COUNT_RANK_FAMILY_SPECS = (
             "midpoint_z",
             "midpoint_distance_to_origin",
             "edge_length",
+        ),
+        selector_relations=("same_selected_entity_as",),
+        allow_rank=True,
+    ),
+    SelectorCountFamilySpec(
+        family_id="parameterized_kernel_vertex_selector_count_rank",
+        relation="has_kernel_stable_vertex_id",
+        selected_type="vertex",
+        relation_clause_id="has_parameterized_vertex_selection",
+        selector_relation_clause_id="has_parameterized_selector_relation",
+        related_metric_clause_id="has_parameterized_selected_vertex_metric_threshold",
+        selected_count_clause_id="has_parameterized_selected_count",
+        related_metrics=(
+            "coordinate_x",
+            "coordinate_y",
+            "coordinate_z",
+            "distance_to_origin",
         ),
         selector_relations=("same_selected_entity_as",),
         allow_rank=True,

@@ -170,6 +170,14 @@ clause_templates:
     - "At least one edge in the target selection has {metric_label} {operator_label} {value}."
     - "At least one edge in the target edge group has {metric_label} {operator_label} {value}."
     - "The target edge set includes an edge with {metric_label} {operator_label} {value}."
+  has_parameterized_vertex_selection:
+    - "The target selection contains measured model vertices."
+    - "The target vertex group contains model vertices with measured coordinates."
+    - "The target vertex set includes vertices with checked point locations."
+  has_parameterized_selected_vertex_metric_threshold:
+    - "At least one vertex in the target selection has {metric_label} {operator_label} {value}."
+    - "At least one vertex in the target vertex group has {metric_label} {operator_label} {value}."
+    - "The target vertex set includes a vertex with {metric_label} {operator_label} {value}."
   has_selected_edge_count: "The target edge selection has a measured edge count."
   same_face_as_another_selector: "The target face selection identifies the same face as another face selection."
   has_selector_operation_index: "The target selection has a modeling-sequence position that can be compared."

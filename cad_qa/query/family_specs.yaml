@@ -1684,6 +1684,60 @@ families:
         narrowing_mode: [related_metric_compare, selector_relation]
         selector_relation: [same_selected_entity_as]
     notes: Synthesized selector-count family that narrows by selected-edge geometry and selects a sampled rank by measured selected-entity count.
+  - id: parameterized_kernel_vertex_selector_count
+    status: release
+    target_type: selector
+    minimum_hops: 4
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - narrowing_mode
+        - selected_entity_type
+        - comparison_operator
+        - measurement_value_bucket
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - narrowing_mode
+        - comparison_operator
+        - measurement_value_bucket
+      expected_values:
+        selected_entity_type: [vertex]
+        narrowing_mode: [related_metric_compare, selector_relation]
+        selector_relation: [same_selected_entity_as]
+    notes: Synthesized selector-count family that narrows by selected-vertex geometry and, when available, same-selection relations before sampling min/max count.
+  - id: parameterized_kernel_vertex_selector_count_rank
+    status: release
+    target_type: selector
+    minimum_hops: 4
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - narrowing_mode
+        - selected_entity_type
+        - comparison_operator
+        - measurement_value_bucket
+        - aggregation_rank
+        - rank_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - narrowing_mode
+        - comparison_operator
+        - measurement_value_bucket
+        - aggregation_rank
+        - rank_direction
+      expected_values:
+        selected_entity_type: [vertex]
+        narrowing_mode: [related_metric_compare, selector_relation]
+        selector_relation: [same_selected_entity_as]
+    notes: Synthesized selector-count family that narrows by selected-vertex geometry and selects a sampled rank by measured selected-entity count.
   - id: path_nearest_origin
     status: review_only
     target_type: path
