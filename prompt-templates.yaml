@@ -297,10 +297,18 @@ clause_templates:
   has_region_volume: "The target added-material region has a comparable volume."
   has_region_volume_value: "The target added-material region has a volume of {value}."
   has_region_centroid_z: "The target added-material region has a comparable centroid height."
+  has_parameterized_material_region_metric:
+    - "The target added-material region has a measured {metric_label}."
+    - "The target added-material region has a known {metric_label}."
+    - "The target added-material region has a verified {metric_label}."
   has_region_centroid_for_reference_distance: "The target added-material region has a measured centroid."
   has_void_geometry: "The target is a region of material removed by a cut."
   has_void_volume: "The target removed-material region has a comparable volume."
   has_void_volume_value: "The target removed-material region has a volume of {value}."
   has_void_centroid_z: "The target removed-material region has a comparable centroid height."
+  has_parameterized_void_region_metric:
+    - "The target removed-material region has a measured {metric_label}."
+    - "The target removed-material region has a known {metric_label}."
+    - "The target removed-material region has a verified {metric_label}."
   has_void_centroid_for_reference_distance: "The target removed-material region has a measured centroid."
   has_void_operation_index: "The target removed-material region has a comparable modeling-sequence position."

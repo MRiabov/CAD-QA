@@ -777,6 +777,15 @@ Checked as implemented with remaining scale caveats:
   region equal-measurement synthesis; release-scale distribution and broader
   region metrics remain open.
 - The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_region_extreme_rank/PREVIEW.md`
+  demonstrates initial `parameterized_material_region_extreme`,
+  `parameterized_material_region_rank`, `parameterized_void_region_extreme`,
+  and `parameterized_void_region_rank` families. The reviewed rows require
+  kernel-backed added/removed-region evidence, keep four region candidates
+  through measured volume or centroid clauses, and resolve by sampled extrema or
+  rank selectors. This reduces reliance on fixed largest/highest region
+  families, but release-scale region metric/rank distribution remains open.
+- The synthesized selfcheck preview at
   `runs/parameterized_synthesis_selfcheck_endpoint/PREVIEW.md` demonstrates
   the initial `parameterized_equal_endpoint_metric_extreme` family. The reviewed
   row narrows from three edge endpoints to two endpoints with the same measured
@@ -858,7 +867,8 @@ Checked as implemented with remaining scale caveats:
   geometry, and sampled face/edge spatial relations, initial selected face/edge
   selector-count narrowing, initial equal-value
   face/edge/edge-endpoint/feature/material-region/void-region measurement
-  groups, contained-endpoint relation chains, and initial
+  groups, sampled material/void region extrema/ranks, contained-endpoint
+  relation chains, and initial
   feature-to-feature and face/edge/endpoint/material-region/void-region-to-feature
   reference-distance families. Broader
   selected-entity-count narrowing,

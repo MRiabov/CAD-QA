@@ -211,6 +211,24 @@ EXTREME_FAMILY_SPECS = (
         metrics=("segment_length",),
         relation_target_type="path",
     ),
+    ExtremeFamilySpec(
+        family_id="parameterized_material_region_extreme",
+        target_type="material_region",
+        relation="has_kernel_material_region_geometry",
+        relation_clause_id="has_region_geometry",
+        measurement_clause_id="has_parameterized_material_region_metric",
+        metrics=("volume", "centroid_x", "centroid_y", "centroid_z"),
+        relation_target_type="material_region",
+    ),
+    ExtremeFamilySpec(
+        family_id="parameterized_void_region_extreme",
+        target_type="void_region",
+        relation="has_kernel_void_region_geometry",
+        relation_clause_id="has_void_geometry",
+        measurement_clause_id="has_parameterized_void_region_metric",
+        metrics=("volume", "centroid_x", "centroid_y", "centroid_z"),
+        relation_target_type="void_region",
+    ),
 )
 
 RANK_FAMILY_SPECS = (
@@ -259,6 +277,26 @@ RANK_FAMILY_SPECS = (
             "midpoint_distance_to_origin",
             "edge_length",
         ),
+        allow_rank=True,
+    ),
+    ExtremeFamilySpec(
+        family_id="parameterized_material_region_rank",
+        target_type="material_region",
+        relation="has_kernel_material_region_geometry",
+        relation_clause_id="has_region_geometry",
+        measurement_clause_id="has_parameterized_material_region_metric",
+        metrics=("volume", "centroid_x", "centroid_y", "centroid_z"),
+        relation_target_type="material_region",
+        allow_rank=True,
+    ),
+    ExtremeFamilySpec(
+        family_id="parameterized_void_region_rank",
+        target_type="void_region",
+        relation="has_kernel_void_region_geometry",
+        relation_clause_id="has_void_geometry",
+        measurement_clause_id="has_parameterized_void_region_metric",
+        metrics=("volume", "centroid_x", "centroid_y", "centroid_z"),
+        relation_target_type="void_region",
         allow_rank=True,
     ),
 )

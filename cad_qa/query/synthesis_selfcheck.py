@@ -20,6 +20,10 @@ from cad_qa.query.synthesis import synthesize_graph_hop_queries
 SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_feature_extreme",
     "parameterized_feature_rank",
+    "parameterized_material_region_extreme",
+    "parameterized_material_region_rank",
+    "parameterized_void_region_extreme",
+    "parameterized_void_region_rank",
     "parameterized_kernel_face_extreme",
     "parameterized_kernel_edge_extreme",
     "parameterized_kernel_face_rank",
@@ -352,20 +356,26 @@ def _region_equal_metric_graph() -> OntologyGraph:
         graph.add_node(Node(feature_id, "feature", feature_id))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume, "mm^3"))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid", centroid, "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_x", centroid[0], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_y", centroid[1], "mm"))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid[2], "mm"))
     for node_id, relation, volume, centroid in [
         ("material_region:a", "has_kernel_material_region_geometry", 12.0, [1.0, 0.0, 1.0]),
         ("material_region:b", "has_kernel_material_region_geometry", 12.0 + 1e-7, [6.0, 0.0, 7.0]),
         ("material_region:c", "has_kernel_material_region_geometry", 5.0, [20.0, 0.0, 20.0]),
+        ("material_region:d", "has_kernel_material_region_geometry", 20.0, [30.0, 4.0, 12.0]),
         ("void_region:a", "has_kernel_void_region_geometry", 8.0, [2.0, 0.0, 2.0]),
         ("void_region:b", "has_kernel_void_region_geometry", 8.0 + 1e-7, [7.0, 0.0, 6.0]),
         ("void_region:c", "has_kernel_void_region_geometry", 3.0, [30.0, 0.0, 30.0]),
+        ("void_region:d", "has_kernel_void_region_geometry", 14.0, [35.0, 5.0, 12.0]),
     ]:
         node_type = node_id.split(":", 1)[0]
         graph.add_node(Node(node_id, node_type, node_id))
         graph.add_relation(Relation(node_id, node_id, relation))
         graph.add_measurement(Measurement(node_id, "entity_geometry", "volume", volume, "mm^3"))
         graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid", centroid, "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_x", centroid[0], "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_y", centroid[1], "mm"))
         graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_z", centroid[2], "mm"))
     return graph
 

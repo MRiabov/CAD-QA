@@ -120,6 +120,38 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Initial synthesized compiled-feature rank family with sampled metrics and rank direction.
+  - id: parameterized_material_region_extreme
+    positive_generation:
+      - test_synthesis_generates_parameterized_region_extreme_and_rank_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_parameterized_region_queries_without_kernel_region_relations
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Initial synthesized added-material region extremum family with sampled metrics.
+  - id: parameterized_material_region_rank
+    positive_generation:
+      - test_synthesis_generates_parameterized_region_extreme_and_rank_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_parameterized_region_queries_without_kernel_region_relations
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Initial synthesized added-material region rank family with sampled metrics and rank direction.
+  - id: parameterized_void_region_extreme
+    positive_generation:
+      - test_synthesis_generates_parameterized_region_extreme_and_rank_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_parameterized_region_queries_without_kernel_region_relations
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Initial synthesized removed-material region extremum family with sampled metrics.
+  - id: parameterized_void_region_rank
+    positive_generation:
+      - test_synthesis_generates_parameterized_region_extreme_and_rank_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_parameterized_region_queries_without_kernel_region_relations
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Initial synthesized removed-material region rank family with sampled metrics and rank direction.
   - id: parameterized_equal_material_region_metric_extreme
     positive_generation:
       - test_synthesis_generates_equal_value_region_queries

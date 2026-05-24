@@ -2931,6 +2931,56 @@ def test_synthesis_generates_equal_value_region_queries() -> None:
     assert "removed-material region has a volume of 8.0" in void_row.prompt
 
 
+def test_synthesis_generates_parameterized_region_extreme_and_rank_queries() -> None:
+    graph = OntologyGraph(graph_id="graph:region-extreme-rank-synth", source={"source_id": "synthetic", "source_code": ""})
+    for node_id, relation, volume, centroid in [
+        ("material_region:a", "has_kernel_material_region_geometry", 12.0, [1.0, 0.0, 1.0]),
+        ("material_region:b", "has_kernel_material_region_geometry", 16.0, [6.0, 2.0, 7.0]),
+        ("material_region:c", "has_kernel_material_region_geometry", 5.0, [20.0, 3.0, 20.0]),
+        ("material_region:d", "has_kernel_material_region_geometry", 24.0, [30.0, 4.0, 12.0]),
+        ("void_region:a", "has_kernel_void_region_geometry", 8.0, [2.0, 0.0, 2.0]),
+        ("void_region:b", "has_kernel_void_region_geometry", 11.0, [7.0, 2.0, 6.0]),
+        ("void_region:c", "has_kernel_void_region_geometry", 3.0, [30.0, 3.0, 30.0]),
+        ("void_region:d", "has_kernel_void_region_geometry", 14.0, [35.0, 4.0, 12.0]),
+    ]:
+        node_type = node_id.split(":", 1)[0]
+        graph.add_node(Node(node_id, node_type, node_id))
+        graph.add_relation(Relation(node_id, node_id, relation))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid", centroid, "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_x", centroid[0], "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_y", centroid[1], "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_z", centroid[2], "mm"))
+
+    queries = {query.query_id.rsplit(":", 1)[-1]: query for query in synthesize_graph_hop_queries(graph)}
+    expected = {
+        "parameterized_material_region_extreme": ("material_region", "has_kernel_material_region_geometry"),
+        "parameterized_material_region_rank": ("material_region", "has_kernel_material_region_geometry"),
+        "parameterized_void_region_extreme": ("void_region", "has_kernel_void_region_geometry"),
+        "parameterized_void_region_rank": ("void_region", "has_kernel_void_region_geometry"),
+    }
+    for family, (target_type, relation) in expected.items():
+        query = queries[family]
+        resolution = resolve_query(graph, query)
+        row = materialize_row(graph, resolution)
+
+        assert resolution.verifier_status == "resolved"
+        assert query.target_type == target_type
+        assert query.clauses[0].relation == relation
+        assert query.clauses[1].metric in {"volume", "centroid_x", "centroid_y", "centroid_z"}
+        assert query.aggregation_metric in {"volume", "centroid_x", "centroid_y", "centroid_z"}
+        assert row.logical_hop_count == 3
+        assert row.geometry_hop_count == 3
+        assert row.query_program["sampled_parameters"]["target_type"] == [target_type]
+        assert row.query_program["sampled_parameters"]["aggregation_metric"] == [query.aggregation_metric]
+        if family.endswith("_rank"):
+            assert query.aggregation in {"rank_asc", "rank_desc"}
+            assert query.aggregation_rank in {2, 3, 4}
+            assert row.query_program["sampled_parameters"]["aggregation_rank"] == [str(query.aggregation_rank)]
+        else:
+            assert query.aggregation in {"argmin", "argmax"}
+
+
 def test_synthesis_skips_equal_value_region_families_without_repeated_value_distractors() -> None:
     graph = OntologyGraph(graph_id="graph:no-equal-region-synth", source={"source_id": "synthetic", "source_code": ""})
     for node_id, relation, volume, centroid_z in [
@@ -2949,6 +2999,25 @@ def test_synthesis_skips_equal_value_region_families_without_repeated_value_dist
 
     assert "parameterized_equal_material_region_metric_extreme" not in families
     assert "parameterized_equal_void_region_metric_extreme" not in families
+
+
+def test_synthesis_skips_parameterized_region_queries_without_kernel_region_relations() -> None:
+    graph = OntologyGraph(graph_id="graph:no-region-extreme-rank-synth", source={"source_id": "synthetic", "source_code": ""})
+    for node_id, node_type in [
+        ("material_region:a", "material_region"),
+        ("material_region:b", "material_region"),
+        ("void_region:a", "void_region"),
+        ("void_region:b", "void_region"),
+    ]:
+        graph.add_node(Node(node_id, node_type, node_id))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "volume", 8.0, "mm^3"))
+
+    families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
+
+    assert "parameterized_material_region_extreme" not in families
+    assert "parameterized_material_region_rank" not in families
+    assert "parameterized_void_region_extreme" not in families
+    assert "parameterized_void_region_rank" not in families
 
 
 def test_synthesis_generates_region_reference_feature_distance_queries() -> None:

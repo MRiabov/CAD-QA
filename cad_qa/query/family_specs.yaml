@@ -773,6 +773,49 @@ families:
     target_type: material_region
     minimum_hops: 3
     maximum_hops: 3
+  - id: parameterized_material_region_extreme
+    status: release
+    target_type: material_region
+    minimum_hops: 3
+    maximum_hops: 3
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - final_selector
+      expected_values:
+        target_type: [material_region]
+    notes: Synthesized added-material region family that samples volume or centroid metrics before selecting min/max.
+  - id: parameterized_material_region_rank
+    status: release
+    target_type: material_region
+    minimum_hops: 3
+    maximum_hops: 3
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - aggregation_rank
+        - rank_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - aggregation_rank
+        - final_selector
+      expected_values:
+        target_type: [material_region]
+        aggregation_rank: [2, 3, 4]
+    notes: Synthesized added-material region family that selects a measured region by sampled rank instead of only min/max extrema.
   - id: parameterized_equal_material_region_metric_extreme
     status: release
     target_type: material_region
@@ -840,6 +883,49 @@ families:
     target_type: void_region
     minimum_hops: 3
     maximum_hops: 3
+  - id: parameterized_void_region_extreme
+    status: release
+    target_type: void_region
+    minimum_hops: 3
+    maximum_hops: 3
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - final_selector
+      expected_values:
+        target_type: [void_region]
+    notes: Synthesized removed-material region family that samples volume or centroid metrics before selecting min/max.
+  - id: parameterized_void_region_rank
+    status: release
+    target_type: void_region
+    minimum_hops: 3
+    maximum_hops: 3
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - aggregation_rank
+        - rank_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - aggregation_rank
+        - final_selector
+      expected_values:
+        target_type: [void_region]
+        aggregation_rank: [2, 3, 4]
+    notes: Synthesized removed-material region family that selects a measured region by sampled rank instead of only min/max extrema.
   - id: parameterized_equal_void_region_metric_extreme
     status: release
     target_type: void_region
