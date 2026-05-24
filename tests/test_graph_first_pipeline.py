@@ -2415,6 +2415,84 @@ def test_synthesis_skips_equal_value_feature_family_without_repeated_value_distr
     assert "parameterized_equal_feature_metric_extreme" not in families
 
 
+def test_synthesis_generates_equal_value_region_queries() -> None:
+    graph = OntologyGraph(graph_id="graph:equal-region-synth", source={"source_id": "synthetic", "source_code": ""})
+    for node_id, relation, volume, centroid_z in [
+        ("material_region:a", "has_kernel_material_region_geometry", 42.0, 1.0),
+        ("material_region:b", "has_kernel_material_region_geometry", 42.0 + 1e-7, 7.0),
+        ("material_region:c", "has_kernel_material_region_geometry", 9.0, 20.0),
+        ("void_region:a", "has_kernel_void_region_geometry", 8.0, 2.0),
+        ("void_region:b", "has_kernel_void_region_geometry", 8.0 + 1e-7, 6.0),
+        ("void_region:c", "has_kernel_void_region_geometry", 3.0, 30.0),
+    ]:
+        node_type = node_id.split(":", 1)[0]
+        graph.add_node(Node(node_id, node_type, node_id))
+        graph.add_relation(Relation(node_id, node_id, relation))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_z", centroid_z, "mm"))
+
+    queries = {query.query_id.rsplit(":", 1)[-1]: query for query in synthesize_graph_hop_queries(graph)}
+    material_query = queries["parameterized_equal_material_region_metric_extreme"]
+    material_resolution = resolve_query(graph, material_query)
+    material_row = materialize_row(graph, material_resolution)
+    material_equal_step = next(step for step in material_row.candidate_trace["steps"] if step["step"] == "has_region_volume_value")
+
+    assert material_resolution.verifier_status == "resolved"
+    assert material_resolution.gold_answer == (
+        "material_region:b" if material_query.aggregation == "argmax" else "material_region:a"
+    )
+    assert material_query.clauses[0].relation == "has_kernel_material_region_geometry"
+    assert material_query.clauses[1].metric == "volume"
+    assert material_query.clauses[1].value == 42.0
+    assert material_query.aggregation_metric == "centroid_z"
+    assert material_equal_step["after"] == ["material_region:a", "material_region:b"]
+    assert material_row.logical_hop_count == 4
+    assert material_row.geometry_hop_count == 4
+    assert material_row.query_program["sampled_parameters"]["target_type"] == ["material_region"]
+    assert material_row.query_program["sampled_parameters"]["measurement_value_bucket"] == ["volume:42"]
+    assert "added-material region has a volume of 42.0" in material_row.prompt
+
+    void_query = queries["parameterized_equal_void_region_metric_extreme"]
+    void_resolution = resolve_query(graph, void_query)
+    void_row = materialize_row(graph, void_resolution)
+    void_equal_step = next(step for step in void_row.candidate_trace["steps"] if step["step"] == "has_void_volume_value")
+
+    assert void_resolution.verifier_status == "resolved"
+    assert void_resolution.gold_answer == (
+        "void_region:b" if void_query.aggregation == "argmax" else "void_region:a"
+    )
+    assert void_query.clauses[0].relation == "has_kernel_void_region_geometry"
+    assert void_query.clauses[1].metric == "volume"
+    assert void_query.clauses[1].value == 8.0
+    assert void_query.aggregation_metric == "centroid_z"
+    assert void_equal_step["after"] == ["void_region:a", "void_region:b"]
+    assert void_row.logical_hop_count == 4
+    assert void_row.geometry_hop_count == 4
+    assert void_row.query_program["sampled_parameters"]["target_type"] == ["void_region"]
+    assert void_row.query_program["sampled_parameters"]["measurement_value_bucket"] == ["volume:8"]
+    assert "removed-material region has a volume of 8.0" in void_row.prompt
+
+
+def test_synthesis_skips_equal_value_region_families_without_repeated_value_distractors() -> None:
+    graph = OntologyGraph(graph_id="graph:no-equal-region-synth", source={"source_id": "synthetic", "source_code": ""})
+    for node_id, relation, volume, centroid_z in [
+        ("material_region:a", "has_kernel_material_region_geometry", 42.0, 1.0),
+        ("material_region:b", "has_kernel_material_region_geometry", 24.0, 7.0),
+        ("void_region:a", "has_kernel_void_region_geometry", 8.0, 2.0),
+        ("void_region:b", "has_kernel_void_region_geometry", 6.0, 6.0),
+    ]:
+        node_type = node_id.split(":", 1)[0]
+        graph.add_node(Node(node_id, node_type, node_id))
+        graph.add_relation(Relation(node_id, node_id, relation))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_z", centroid_z, "mm"))
+
+    families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
+
+    assert "parameterized_equal_material_region_metric_extreme" not in families
+    assert "parameterized_equal_void_region_metric_extreme" not in families
+
+
 def test_synthesis_skips_equal_value_family_without_repeated_value_distractors() -> None:
     graph = OntologyGraph(graph_id="graph:no-equal-edge-synth", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("selector:edges", "selector", "edges"))

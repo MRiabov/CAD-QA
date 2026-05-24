@@ -748,6 +748,15 @@ Checked as implemented with remaining scale caveats:
   uniquely by a final centroid-height selector. This adds feature-level
   equal-measurement synthesis; region/material/void equal-measurement synthesis
   and release-scale distribution remain open.
+- The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_region_equal/PREVIEW.md`
+  demonstrates initial `parameterized_equal_material_region_metric_extreme` and
+  `parameterized_equal_void_region_metric_extreme` families. The reviewed rows
+  narrow from three added/removed material regions to two equal-volume regions,
+  keep both through the centroid-height measurement clause, and resolve
+  uniquely by final centroid-height selectors. This adds initial material/void
+  region equal-measurement synthesis; release-scale distribution and broader
+  region metrics remain open.
 - Opposite-face rows on broad real CadEvolve data, broader containment,
   broader intersection, broader adjacency, and broader stable spatial-relation
   distributions remain scale/coverage work rather than unchecked core
@@ -772,12 +781,12 @@ Checked as implemented with remaining scale caveats:
   entity to define a nontrivial candidate subset before the final selector.
   The current synthesis slice covers parameterized extrema over kernel-selected
   face/edge geometry and measured path point/segment geometry, initial selected
-  face/edge selector-count narrowing, initial equal-value face/edge/feature
-  measurement groups, and initial face/edge-to-feature reference-distance
-  families. Broader
+  face/edge selector-count narrowing, initial equal-value
+  face/edge/feature/material-region/void-region measurement groups, and initial
+  face/edge-to-feature reference-distance families. Broader
   selected-entity-count narrowing,
-  face/endpoint/material/void reference anchors, region equal-value synthesis,
-  containment/adjacency predicates, and rank/tie-break selectors
+  face/endpoint/material/void reference anchors, containment/adjacency
+  predicates, and rank/tie-break selectors
   remain open.
 - Extend sampled-parameter metadata from the synthesis layer to include
   predicate sequence, reference anchor, rank, rendered wording,

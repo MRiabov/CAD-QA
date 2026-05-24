@@ -25,6 +25,8 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_equal_face_metric_extreme",
     "parameterized_equal_edge_metric_extreme",
     "parameterized_equal_feature_metric_extreme",
+    "parameterized_equal_material_region_metric_extreme",
+    "parameterized_equal_void_region_metric_extreme",
     "parameterized_face_reference_feature_distance",
     "parameterized_edge_reference_feature_distance",
     "parameterized_path_point_extreme",
@@ -41,6 +43,7 @@ def synthesis_selfcheck_graphs() -> list[OntologyGraph]:
         _face_metric_graph(),
         _edge_metric_graph(),
         _feature_equal_metric_graph(),
+        _region_equal_metric_graph(),
         _face_equal_metric_graph(),
         _edge_equal_metric_graph(),
         _path_metric_graph(),
@@ -176,6 +179,37 @@ def _feature_equal_metric_graph() -> OntologyGraph:
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume, "mm^3"))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid_z, "mm"))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "bbox_span_z", bbox_span_z, "mm"))
+    return graph
+
+
+def _region_equal_metric_graph() -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id="graph:selfcheck-region-equal-metric",
+        source={
+            "source_id": "selfcheck-region-equal-metric",
+            "source_code": (
+                "import cadquery as cq\n"
+                "base = cq.Workplane(\"XY\").box(10, 10, 3)\n"
+                "boss_a = cq.Workplane(\"XY\").circle(1).extrude(4)\n"
+                "boss_b = cq.Workplane(\"XY\").circle(1).extrude(4).translate((4, 0, 0))\n"
+                "cut_a = base.faces(\">Z\").workplane().circle(1).cutBlind(-2)\n"
+                "cut_b = base.faces(\">Z\").workplane().center(4, 0).circle(1).cutBlind(-2)\n"
+            ),
+        },
+    )
+    for node_id, relation, volume, centroid_z in [
+        ("material_region:a", "has_kernel_material_region_geometry", 12.0, 1.0),
+        ("material_region:b", "has_kernel_material_region_geometry", 12.0 + 1e-7, 7.0),
+        ("material_region:c", "has_kernel_material_region_geometry", 5.0, 20.0),
+        ("void_region:a", "has_kernel_void_region_geometry", 8.0, 2.0),
+        ("void_region:b", "has_kernel_void_region_geometry", 8.0 + 1e-7, 6.0),
+        ("void_region:c", "has_kernel_void_region_geometry", 3.0, 30.0),
+    ]:
+        node_type = node_id.split(":", 1)[0]
+        graph.add_node(Node(node_id, node_type, node_id))
+        graph.add_relation(Relation(node_id, node_id, relation))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_z", centroid_z, "mm"))
     return graph
 
 

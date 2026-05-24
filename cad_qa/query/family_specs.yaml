@@ -572,6 +572,30 @@ families:
     target_type: material_region
     minimum_hops: 3
     maximum_hops: 3
+  - id: parameterized_equal_material_region_metric_extreme
+    status: release
+    target_type: material_region
+    minimum_hops: 4
+    maximum_hops: 4
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - final_selector
+      expected_values:
+        target_type: [material_region]
+    notes: Synthesized value-bearing added-material region family that narrows by repeated region volume before selecting by measured centroid height.
   - id: largest_removed_region
     status: release
     target_type: void_region
@@ -582,3 +606,27 @@ families:
     target_type: void_region
     minimum_hops: 3
     maximum_hops: 3
+  - id: parameterized_equal_void_region_metric_extreme
+    status: release
+    target_type: void_region
+    minimum_hops: 4
+    maximum_hops: 4
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - final_selector
+      expected_values:
+        target_type: [void_region]
+    notes: Synthesized value-bearing removed-material region family that narrows by repeated region volume before selecting by measured centroid height.
