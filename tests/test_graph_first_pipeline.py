@@ -2460,6 +2460,103 @@ def test_synthesis_skips_reference_distance_without_unique_reference_anchor() ->
     assert "parameterized_edge_reference_feature_distance" not in families
 
 
+def test_synthesis_generates_parameterized_path_queries() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:path-synth",
+        source={
+            "source_id": "synthetic",
+            "source_code": (
+                "import cadquery as cq\n"
+                "path = cq.Workplane(\"XY\").spline([(0, 0), (2, 1), (5, 1), (6, 4)])\n"
+            ),
+        },
+    )
+    graph.add_node(Node("path:main", "path", "path"))
+    for point_id, coordinate in [
+        ("path:main:point:0", [0.0, 0.0, 0.0]),
+        ("path:main:point:1", [2.0, 1.0, 0.0]),
+        ("path:main:point:2", [5.0, 1.0, 0.0]),
+        ("path:main:point:3", [6.0, 4.0, 0.0]),
+    ]:
+        graph.add_node(Node(point_id, "path_point", point_id))
+        graph.add_relation(Relation(point_id, "path:main", "point_on_path"))
+        distance = math.sqrt(sum(component * component for component in coordinate))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_x", coordinate[0], "mm"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_y", coordinate[1], "mm"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
+        graph.add_measurement(Measurement(point_id, "relation_metric", "distance_to_origin", distance, "mm"))
+    for segment_id, length in [
+        ("path:main:segment:0", math.sqrt(5.0)),
+        ("path:main:segment:1", 3.0),
+        ("path:main:segment:2", math.sqrt(10.0)),
+    ]:
+        graph.add_node(Node(segment_id, "path_segment", segment_id))
+        graph.add_relation(Relation(segment_id, "path:main", "segment_on_path"))
+        graph.add_measurement(Measurement(segment_id, "relation_metric", "segment_length", length, "mm"))
+
+    queries = {query.query_id.rsplit(":", 1)[-1]: query for query in synthesize_graph_hop_queries(graph)}
+
+    point_query = queries["parameterized_path_point_extreme"]
+    point_resolution = resolve_query(graph, point_query)
+    point_row = materialize_row(graph, point_resolution)
+
+    assert point_resolution.verifier_status == "resolved"
+    assert point_query.target_type == "path_point"
+    assert point_query.clauses[0].relation == "point_on_path"
+    assert point_query.clauses[0].target_type == "path"
+    assert point_query.aggregation_metric in {"coordinate_x", "coordinate_y", "coordinate_z", "distance_to_origin"}
+    assert point_row.logical_hop_count == 3
+    assert point_row.geometry_hop_count == 3
+    assert point_row.query_program["sampled_parameters"]["target_type"] == ["path_point"]
+    assert point_row.query_program["sampled_parameters"]["clause_target_type"] == ["path"]
+    assert "relation:point_on_path:path" in point_row.query_program["sampled_parameters"]["narrowing_predicate_sequence"]
+    assert "path" in point_row.prompt.lower()
+
+    segment_query = queries["parameterized_path_segment_extreme"]
+    segment_resolution = resolve_query(graph, segment_query)
+    segment_row = materialize_row(graph, segment_resolution)
+
+    assert segment_resolution.verifier_status == "resolved"
+    assert segment_query.target_type == "path_segment"
+    assert segment_query.clauses[0].relation == "segment_on_path"
+    assert segment_query.clauses[0].target_type == "path"
+    assert segment_query.aggregation_metric == "segment_length"
+    assert segment_row.logical_hop_count == 3
+    assert segment_row.geometry_hop_count == 3
+    assert segment_row.query_program["sampled_parameters"]["target_type"] == ["path_segment"]
+    assert segment_row.query_program["sampled_parameters"]["clause_target_type"] == ["path"]
+    assert "relation:segment_on_path:path" in segment_row.query_program["sampled_parameters"]["narrowing_predicate_sequence"]
+    assert "segment" in segment_row.prompt.lower()
+    assert "path" in segment_row.prompt.lower()
+
+
+def test_synthesis_skips_path_families_without_unique_geometry() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:tied-path-synth",
+        source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
+    )
+    graph.add_node(Node("path:main", "path", "path"))
+    for point_id, coordinate in [
+        ("path:main:point:0", [1.0, 0.0, 0.0]),
+        ("path:main:point:1", [1.0, 0.0, 0.0]),
+    ]:
+        graph.add_node(Node(point_id, "path_point", point_id))
+        graph.add_relation(Relation(point_id, "path:main", "point_on_path"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_x", coordinate[0], "mm"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_y", coordinate[1], "mm"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
+        graph.add_measurement(Measurement(point_id, "relation_metric", "distance_to_origin", 1.0, "mm"))
+    for segment_id in ["path:main:segment:0", "path:main:segment:1"]:
+        graph.add_node(Node(segment_id, "path_segment", segment_id))
+        graph.add_relation(Relation(segment_id, "path:main", "segment_on_path"))
+        graph.add_measurement(Measurement(segment_id, "relation_metric", "segment_length", 2.0, "mm"))
+
+    families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
+
+    assert "parameterized_path_point_extreme" not in families
+    assert "parameterized_path_segment_extreme" not in families
+
+
 def test_synthesis_generates_geometry_narrowed_selector_count_query() -> None:
     face_graph = OntologyGraph(graph_id="graph:face-selector-count", source={"source_id": "synthetic", "source_code": ""})
     for selector_id, selected_count, coordinate_x in [

@@ -56,6 +56,22 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Initial synthesized cross-feature edge family with sampled reference-feature anchor.
+  - id: parameterized_path_point_extreme
+    positive_generation:
+      - test_synthesis_generates_parameterized_path_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_path_families_without_unique_geometry
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Initial synthesized path-point extremum family with sampled path-point metric and direction.
+  - id: parameterized_path_segment_extreme
+    positive_generation:
+      - test_synthesis_generates_parameterized_path_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_path_families_without_unique_geometry
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Initial synthesized path-segment extremum family with sampled path-segment metric and direction.
   - id: parameterized_kernel_face_selector_count
     positive_generation:
       - test_synthesis_generates_geometry_narrowed_selector_count_query

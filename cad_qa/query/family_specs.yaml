@@ -376,12 +376,48 @@ families:
     minimum_hops: 2
     maximum_hops: 2
     notes: Fixed Z-axis fixture; release version should sample axis/direction.
+  - id: parameterized_path_point_extreme
+    status: release
+    target_type: path_point
+    minimum_hops: 3
+    maximum_hops: 3
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - final_selector
+    notes: Synthesized path-point family that samples the measured point quantity and min/max selector instead of fixing origin distance or Z height.
   - id: longest_path_segment
     status: review_only
     target_type: path_segment
     minimum_hops: 2
     maximum_hops: 2
     notes: Direct global extremum; release version needs narrowing.
+  - id: parameterized_path_segment_extreme
+    status: release
+    target_type: path_segment
+    minimum_hops: 3
+    maximum_hops: 3
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - final_selector
+    notes: Synthesized path-segment family that samples measured segment extrema through graph-hop synthesis.
   - id: latest_repeated_selector
     status: review_only
     target_type: selector

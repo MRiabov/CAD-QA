@@ -584,6 +584,15 @@ Conservatively checked as done:
   path slice contains 87 rows overall, including 61 geometry-critical rows and
   8 syntax-only calibration rows. Default SFT keeps 58 rows and excludes 29
   calibration/noncritical/quarantined rows.
+- The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_path/PREVIEW.md` adds initial
+  release-ready, geometry-critical rows for `parameterized_path_point_extreme`
+  and `parameterized_path_segment_extreme`. The reviewed examples use measured
+  path-point distance/coordinate or segment-length evidence, preserve 4 path
+  points or 3 path segments until the final selector, and resolve uniquely.
+  This is evidence for the initial synthesized path-extrema slice, not for
+  broader path/distance/containment/intersection/adjacency coverage or
+  benchmark-release distribution.
 - The reviewed path-geometry SFT report passes the default training geometry
   dominance gate: 58 of 58 default training rows are geometry-critical, with
   zero syntax-only and zero quarantined rows. The release verifier includes the
@@ -746,9 +755,10 @@ Checked as implemented with remaining scale caveats:
   measurement bucket, containment, adjacency, or distance to a sampled reference
   entity to define a nontrivial candidate subset before the final selector.
   The current synthesis slice covers parameterized extrema over kernel-selected
-  face/edge geometry, initial selected face/edge selector-count narrowing,
-  initial equal-value face/edge measurement groups, and one edge-to-feature
-  reference-distance family. Broader selected-entity-count narrowing,
+  face/edge geometry and measured path point/segment geometry, initial selected
+  face/edge selector-count narrowing, initial equal-value face/edge measurement
+  groups, and one edge-to-feature reference-distance family. Broader
+  selected-entity-count narrowing,
   face/endpoint/material/void reference anchors, feature/region equal-value
   synthesis, containment/adjacency predicates, and rank/tie-break selectors
   remain open.

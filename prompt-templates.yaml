@@ -200,9 +200,25 @@ clause_templates:
   has_initial_tangent: "The target path has an initial tangent from its first two control points."
   has_nearest_origin_distance: "The target path has a nearest path point to the global origin."
   point_on_visible_path: "The target point belongs to a spline path."
+  has_parameterized_path_point_set:
+    - "The target point lies on a measured path."
+    - "The target point belongs to a path with measured geometry."
+    - "The target point is one of the measured points on a path."
+  has_parameterized_path_point_metric:
+    - "The target point has a measured {metric_label}."
+    - "The target point has a known {metric_label}."
+    - "The target point has a documented {metric_label}."
   has_distance_to_origin: "The target point has a measured distance to the global origin."
   has_path_point_z: "The target point has a measured global Z coordinate."
   segment_on_visible_path: "The target segment belongs to a spline path."
+  has_parameterized_path_segment_set:
+    - "The target segment belongs to a measured path."
+    - "The target segment is part of a path with measured geometry."
+    - "The target segment is one of the measured path spans."
+  has_parameterized_path_segment_metric:
+    - "The target segment has a measured {metric_label}."
+    - "The target segment has a known {metric_label}."
+    - "The target segment has a documented {metric_label}."
   has_segment_length: "The target segment has a measured path-segment length."
 
   has_compiled_volume: "The target feature has a measured solid volume."

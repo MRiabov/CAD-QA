@@ -33,6 +33,7 @@ class ExtremeFamilySpec:
     relation_clause_id: str
     measurement_clause_id: str
     metrics: tuple[str, ...]
+    relation_target_type: str = "selector"
     allow_rank: bool = False
 
 
@@ -142,6 +143,29 @@ EXTREME_FAMILY_SPECS = (
             "midpoint_distance_to_origin",
             "edge_length",
         ),
+    ),
+    ExtremeFamilySpec(
+        family_id="parameterized_path_point_extreme",
+        target_type="path_point",
+        relation="point_on_path",
+        relation_clause_id="has_parameterized_path_point_set",
+        measurement_clause_id="has_parameterized_path_point_metric",
+        metrics=(
+            "coordinate_x",
+            "coordinate_y",
+            "coordinate_z",
+            "distance_to_origin",
+        ),
+        relation_target_type="path",
+    ),
+    ExtremeFamilySpec(
+        family_id="parameterized_path_segment_extreme",
+        target_type="path_segment",
+        relation="segment_on_path",
+        relation_clause_id="has_parameterized_path_segment_set",
+        measurement_clause_id="has_parameterized_path_segment_metric",
+        metrics=("segment_length",),
+        relation_target_type="path",
     ),
 )
 
@@ -329,7 +353,7 @@ def _viable_extremes(graph: OntologyGraph, spec: ExtremeFamilySpec) -> list[Viab
         candidates,
         clause_id=spec.relation_clause_id,
         relation=spec.relation,
-        target_type="selector",
+        target_type=spec.relation_target_type,
     )
     if relation is None:
         return []
@@ -390,7 +414,7 @@ def _viable_ranks(graph: OntologyGraph, spec: ExtremeFamilySpec) -> list[ViableE
         candidates,
         clause_id=spec.relation_clause_id,
         relation=spec.relation,
-        target_type="selector",
+        target_type=spec.relation_target_type,
     )
     if relation is None:
         return []
@@ -431,7 +455,7 @@ def _query_for_extreme(graph: OntologyGraph, viable: ViableExtreme) -> QueryProg
         broad_candidates,
         clause_id=spec.relation_clause_id,
         relation=spec.relation,
-        target_type="selector",
+        target_type=spec.relation_target_type,
     )
     if relation is None:
         return None
