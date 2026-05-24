@@ -51,6 +51,14 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Synthesized face spatial-relation family with sampled rank parameters after a spatial-relation narrowing predicate.
+  - id: parameterized_face_spatial_relation_tie_break_extreme
+    positive_generation:
+      - test_synthesis_generates_spatial_relation_tie_break_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_face_spatial_relation_family_without_viable_relation_subset
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Synthesized face spatial-relation family with a tied primary measured selector resolved by a secondary measured tie-break selector.
   - id: parameterized_face_spatial_relation_chain_extreme
     positive_generation:
       - test_synthesis_generates_spatial_relation_chain_queries
@@ -95,6 +103,14 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Synthesized edge spatial-relation family with sampled rank parameters after a spatial-relation narrowing predicate.
+  - id: parameterized_edge_spatial_relation_tie_break_extreme
+    positive_generation:
+      - test_synthesis_generates_spatial_relation_tie_break_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_edge_spatial_relation_family_without_viable_relation_subset
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Synthesized edge spatial-relation family with a tied primary measured selector resolved by a secondary measured tie-break selector.
   - id: parameterized_edge_spatial_relation_chain_extreme
     positive_generation:
       - test_synthesis_generates_spatial_relation_chain_queries

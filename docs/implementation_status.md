@@ -947,6 +947,18 @@ Checked as implemented with remaining scale caveats:
   implements spatial-relation rank synthesis at the valid-row level; relation,
   rank, axis, and metric distribution still require release-scale review.
 - The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_spatial_relation_tie_break/PREVIEW.md`
+  adds valid release-ready rows for
+  `parameterized_face_spatial_relation_tie_break_extreme` and
+  `parameterized_edge_spatial_relation_tie_break_extreme`. The reviewed rows
+  first narrow by sampled spatial-relation evidence, then intentionally leave a
+  tied primary measured selector before resolving the final answer with a
+  secondary measured tie-break selector. Candidate traces include the
+  `tie_break_aggregation` step and sampled metadata records tie-break metric,
+  direction, and selector. This extends tie-break synthesis into graph-hop
+  spatial-relation families at the valid-row level; broader target families and
+  release-scale tie-break distribution remain open.
+- The synthesized selfcheck preview at
   `runs/parameterized_synthesis_selfcheck_spatial_relation_chain/PREVIEW.md`
   adds valid release-ready rows for
   `parameterized_face_spatial_relation_chain_extreme` and

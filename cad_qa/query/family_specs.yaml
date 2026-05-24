@@ -169,6 +169,32 @@ families:
       expected_values:
         clause_relation: [adjacent_to, coplanar_with, intersects, opposite_to, parallel_to, perpendicular_to]
     notes: Synthesized face family that narrows by a sampled spatial relation before selecting a sampled rank by a measured face quantity.
+  - id: parameterized_face_spatial_relation_tie_break_extreme
+    status: release
+    target_type: face
+    minimum_hops: 4
+    maximum_hops: 4
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - clause_relation
+        - aggregation_metric
+        - extremum_direction
+        - tie_break_metric
+        - tie_break_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - clause_relation
+        - aggregation_metric
+        - tie_break_metric
+        - tie_break_selector
+        - final_selector
+      expected_values:
+        clause_relation: [adjacent_to, coplanar_with, intersects, opposite_to, parallel_to, perpendicular_to]
+    notes: Synthesized face family that narrows by a sampled spatial relation, intentionally allows a tied primary measured selector, and resolves by a sampled secondary measured selector.
   - id: parameterized_face_spatial_relation_chain_extreme
     status: release
     target_type: face
@@ -915,6 +941,32 @@ families:
       expected_values:
         clause_relation: [adjacent_to, coaxial_with, intersects, longer_than, opposite_to, parallel_to, perpendicular_to, same_length_as, shorter_than]
     notes: Synthesized edge family that narrows by a sampled spatial relation before selecting a sampled rank by a measured edge quantity.
+  - id: parameterized_edge_spatial_relation_tie_break_extreme
+    status: release
+    target_type: edge
+    minimum_hops: 4
+    maximum_hops: 4
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - clause_relation
+        - aggregation_metric
+        - extremum_direction
+        - tie_break_metric
+        - tie_break_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - clause_relation
+        - aggregation_metric
+        - tie_break_metric
+        - tie_break_selector
+        - final_selector
+      expected_values:
+        clause_relation: [adjacent_to, coaxial_with, intersects, longer_than, opposite_to, parallel_to, perpendicular_to, same_length_as, shorter_than]
+    notes: Synthesized edge family that narrows by a sampled spatial relation, intentionally allows a tied primary measured selector, and resolves by a sampled secondary measured selector.
   - id: parameterized_edge_spatial_relation_chain_extreme
     status: release
     target_type: edge

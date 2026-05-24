@@ -2871,6 +2871,95 @@ def test_synthesis_generates_spatial_relation_rank_queries() -> None:
         assert "increasing" in row.prompt or "decreasing" in row.prompt or "ordered" in row.prompt or "sorting" in row.prompt
 
 
+def test_synthesis_generates_spatial_relation_tie_break_queries() -> None:
+    face_graph = OntologyGraph(
+        graph_id="graph:face-spatial-tie-break-synth",
+        source={"source_id": "synthetic", "source_code": ""},
+    )
+    face_graph.add_node(Node("selector:faces", "selector", "faces"))
+    for face_id, area, center in [
+        ("face:a", 40.0, [0.0, 0.0, 0.0]),
+        ("face:b", 40.0, [4.0, 0.0, 0.0]),
+        ("face:c", 24.0, [1.0, 3.0, 0.0]),
+        ("face:d", 24.0, [3.0, 3.0, 0.0]),
+    ]:
+        face_graph.add_node(Node(face_id, "face", face_id))
+        face_graph.add_relation(Relation(face_id, "selector:faces", "has_kernel_stable_face_id"))
+        face_graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", area, "mm^2"))
+        face_graph.add_measurement(Measurement(face_id, "entity_geometry", "center", center, "mm"))
+        face_graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_x", center[0], "mm"))
+        face_graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_y", center[1], "mm"))
+        face_graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_z", center[2], "mm"))
+        face_graph.add_measurement(Measurement(face_id, "relation_metric", "distance_to_origin", area / 10.0, "mm"))
+    for source_id, target_id in [
+        ("face:a", "face:b"),
+        ("face:b", "face:c"),
+        ("face:c", "face:d"),
+        ("face:d", "face:a"),
+    ]:
+        face_graph.add_relation(Relation(source_id, target_id, "adjacent_to"))
+
+    edge_graph = OntologyGraph(
+        graph_id="graph:edge-spatial-tie-break-synth",
+        source={"source_id": "synthetic", "source_code": ""},
+    )
+    edge_graph.add_node(Node("selector:edges", "selector", "edges"))
+    for edge_id, length, midpoint in [
+        ("edge:a", 10.0, [0.0, 0.0, 0.0]),
+        ("edge:b", 10.0, [4.0, 0.0, 0.0]),
+        ("edge:c", 6.0, [1.0, 3.0, 0.0]),
+        ("edge:d", 6.0, [3.0, 3.0, 0.0]),
+    ]:
+        edge_graph.add_node(Node(edge_id, "edge", edge_id))
+        edge_graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
+        edge_graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
+        edge_graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint", midpoint, "mm"))
+        edge_graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_x", midpoint[0], "mm"))
+        edge_graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint[1], "mm"))
+        edge_graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_z", midpoint[2], "mm"))
+        edge_graph.add_measurement(Measurement(edge_id, "relation_metric", "midpoint_distance_to_origin", length / 2.0, "mm"))
+    for source_id, target_id in [
+        ("edge:a", "edge:b"),
+        ("edge:b", "edge:c"),
+        ("edge:c", "edge:d"),
+        ("edge:d", "edge:a"),
+    ]:
+        edge_graph.add_relation(Relation(source_id, target_id, "adjacent_to"))
+
+    for graph, family, target_type, measured_text in [
+        (face_graph, "parameterized_face_spatial_relation_tie_break_extreme", "face", "measured face"),
+        (edge_graph, "parameterized_edge_spatial_relation_tie_break_extreme", "edge", "measured edge"),
+    ]:
+        query = next(query for query in synthesize_graph_hop_queries(graph) if query.query_id.endswith(family))
+        resolution = resolve_query(graph, query)
+        row = materialize_row(graph, resolution)
+
+        assert resolution.verifier_status == "resolved"
+        assert row.release_ready
+        assert query.target_type == target_type
+        assert query.clauses[1].relation == "adjacent_to"
+        assert query.aggregation in {"argmax", "argmin"}
+        assert query.tie_break_aggregation in {"argmax", "argmin"}
+        assert query.tie_break_metric
+        assert query.tie_break_metric != query.aggregation_metric
+        assert query.sampled_parameters["spatial_relation"] == ["adjacent_to"]
+        assert query.sampled_parameters["synthesis_strategy"] == ["spatial_relation_tie_break_extreme_v1"]
+        assert query.sampled_parameters["tie_break_metric"] == [query.tie_break_metric]
+        assert query.sampled_parameters["tie_break_direction"] in (["max"], ["min"])
+        assert row.candidate_trace["steps"][-1]["step"] == "tie_break_aggregation"
+        assert len(row.candidate_trace["steps"][-1]["before"]) == 2
+        assert row.candidate_trace["steps"][-1]["after"] == [resolution.gold_answer]
+        assert len(row.candidate_trace["final_candidates"]) == 1
+        assert "adjacent_to" in row.relation_families
+        assert "adjacent_to" not in row.prompt
+        assert "adjacent to" in row.prompt
+        assert measured_text in row.prompt
+        assert any(
+            phrase in row.prompt
+            for phrase in ("If that leaves a tie", "If candidates are still tied", "For any remaining tie")
+        )
+
+
 def test_synthesis_generates_spatial_relation_chain_queries() -> None:
     face_graph = OntologyGraph(
         graph_id="graph:face-spatial-chain-synth",
@@ -2999,6 +3088,7 @@ def test_synthesis_skips_edge_spatial_relation_family_without_viable_relation_su
 
     assert "parameterized_edge_spatial_relation_extreme" not in families
     assert "parameterized_edge_spatial_relation_rank" not in families
+    assert "parameterized_edge_spatial_relation_tie_break_extreme" not in families
     assert "parameterized_edge_spatial_relation_chain_extreme" not in families
 
 
@@ -3013,6 +3103,7 @@ def test_synthesis_skips_face_spatial_relation_family_without_viable_relation_su
 
     assert "parameterized_face_spatial_relation_extreme" not in families
     assert "parameterized_face_spatial_relation_rank" not in families
+    assert "parameterized_face_spatial_relation_tie_break_extreme" not in families
     assert "parameterized_face_spatial_relation_chain_extreme" not in families
 
 
