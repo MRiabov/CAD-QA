@@ -2600,6 +2600,53 @@ def test_synthesis_generates_equal_value_feature_query() -> None:
     assert "feature" in row.prompt.lower()
 
 
+def test_synthesis_generates_feature_reference_feature_distance_query() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:feature-reference-distance-synth",
+        source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
+    )
+    for feature_id, volume, centroid, bbox_span_z in [
+        ("feature:base", 240.0, [0.0, 0.0, 2.0], 4.0),
+        ("feature:upper", 240.0 + 1e-7, [0.0, 0.0, 8.0], 5.0),
+        ("feature:small", 32.0, [20.0, 0.0, 1.0], 2.0),
+    ]:
+        graph.add_node(Node(feature_id, "feature", feature_id))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid", centroid, "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid[2], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "bbox_span_z", bbox_span_z, "mm"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_feature_reference_feature_distance")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+    equal_step = next(step for step in row.candidate_trace["steps"] if step["step"] == "has_parameterized_equal_feature_metric_value")
+    reference_value = query.clauses[1].value
+
+    assert resolution.verifier_status == "resolved"
+    assert query.target_type == "feature"
+    assert query.aggregation in {"argmin", "argmax"}
+    assert query.aggregation_metric == "distance_to_reference_feature_centroid"
+    assert query.clauses[0].metric == "volume"
+    assert query.clauses[0].value == 240.0
+    assert query.clauses[1].kind == "reference_measurement"
+    assert query.clauses[2].metric == "centroid"
+    assert equal_step["after"] == ["feature:base", "feature:upper"]
+    assert reference_value["reference_id"] == "feature:small"
+    assert row.logical_hop_count == 4
+    assert row.geometry_hop_count == 4
+    assert row.query_program["sampled_parameters"]["reference_type"] == ["feature"]
+    assert row.query_program["sampled_parameters"]["target_type"] == ["feature"]
+    assert row.query_program["sampled_parameters"]["target_point_metric"] == ["centroid"]
+    assert row.query_program["sampled_parameters"]["reference_point_metric"] == ["centroid"]
+    assert row.query_program["sampled_parameters"]["measurement_value_bucket"] == ["volume:240"]
+    assert "solid centroid" in row.prompt
+    assert any(phrase in row.prompt for phrase in ("closest to", "farthest from"))
+
+
 def test_synthesis_generates_equal_value_endpoint_query() -> None:
     graph = OntologyGraph(graph_id="graph:equal-endpoint-synth", source={"source_id": "synthetic", "source_code": ""})
     for edge_id in ["edge:a", "edge:b", "edge:c"]:
@@ -2737,6 +2784,25 @@ def test_synthesis_skips_equal_value_feature_family_without_repeated_value_distr
     families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
 
     assert "parameterized_equal_feature_metric_extreme" not in families
+
+
+def test_synthesis_skips_feature_reference_distance_without_feature_centroids() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:no-feature-reference-distance-synth",
+        source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
+    )
+    for feature_id, volume, centroid_z in [
+        ("feature:base", 240.0, 2.0),
+        ("feature:upper", 240.0 + 1e-7, 8.0),
+        ("feature:small", 32.0, 1.0),
+    ]:
+        graph.add_node(Node(feature_id, "feature", feature_id))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid_z, "mm"))
+
+    families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
+
+    assert "parameterized_feature_reference_feature_distance" not in families
 
 
 def test_synthesis_generates_equal_value_region_queries() -> None:

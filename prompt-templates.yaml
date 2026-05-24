@@ -269,6 +269,7 @@ clause_templates:
     - "The target feature's {metric_label} is {value}."
     - "The target feature matches the {metric_label} value {value}."
   reference_feature_volume_and_centroid: "Use as the reference the feature with solid volume {reference_volume} and centroid height {reference_centroid_z}."
+  has_feature_centroid_for_reference_distance: "The target feature has a measured solid centroid."
   has_compiled_volume_for_centroid: "The target feature also has a measured solid volume."
   has_compiled_face_count: "The target feature has a measured face count."
   has_volume_for_face_count: "The target feature also has a measured solid volume."

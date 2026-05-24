@@ -27,6 +27,7 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_equal_face_metric_extreme",
     "parameterized_equal_edge_metric_extreme",
     "parameterized_equal_feature_metric_extreme",
+    "parameterized_feature_reference_feature_distance",
     "parameterized_equal_endpoint_metric_extreme",
     "parameterized_contained_endpoint_metric_extreme",
     "parameterized_endpoint_reference_feature_distance",
@@ -310,14 +311,15 @@ def _feature_equal_metric_graph() -> OntologyGraph:
             ),
         },
     )
-    for feature_id, volume, centroid_z, bbox_span_z in [
-        ("feature:base", 240.0, 2.0, 4.0),
-        ("feature:upper", 240.0 + 1e-7, 8.0, 5.0),
-        ("feature:small", 32.0, 1.0, 2.0),
+    for feature_id, volume, centroid, bbox_span_z in [
+        ("feature:base", 240.0, [0.0, 0.0, 2.0], 4.0),
+        ("feature:upper", 240.0 + 1e-7, [0.0, 0.0, 8.0], 5.0),
+        ("feature:small", 32.0, [20.0, 0.0, 1.0], 2.0),
     ]:
         graph.add_node(Node(feature_id, "feature", feature_id))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume, "mm^3"))
-        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid_z, "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid", centroid, "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid[2], "mm"))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "bbox_span_z", bbox_span_z, "mm"))
     return graph
 

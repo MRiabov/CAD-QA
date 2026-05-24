@@ -99,9 +99,9 @@ class ViableEqualValueExtreme:
 class ReferenceDistanceFamilySpec:
     family_id: str
     target_type: str
-    relation: str
-    relation_clause_id: str
-    relation_target_type: str
+    relation: str | None
+    relation_clause_id: str | None
+    relation_target_type: str | None
     equal_value_clause_id: str
     reference_clause_id: str
     target_point_clause_id: str
@@ -475,6 +475,20 @@ REFERENCE_DISTANCE_FAMILY_SPECS = (
         target_point_clause_id="has_edge_midpoint_for_reference_distance",
         equal_metric="edge_length",
         target_point_metric="midpoint",
+        reference_type="feature",
+        reference_point_metric="centroid",
+    ),
+    ReferenceDistanceFamilySpec(
+        family_id="parameterized_feature_reference_feature_distance",
+        target_type="feature",
+        relation=None,
+        relation_clause_id=None,
+        relation_target_type=None,
+        equal_value_clause_id="has_parameterized_equal_feature_metric_value",
+        reference_clause_id="reference_feature_volume_and_centroid",
+        target_point_clause_id="has_feature_centroid_for_reference_distance",
+        equal_metric="volume",
+        target_point_metric="centroid",
         reference_type="feature",
         reference_point_metric="centroid",
     ),
@@ -1213,21 +1227,25 @@ def _viable_reference_distances(
     spec: ReferenceDistanceFamilySpec,
 ) -> list[ViableReferenceDistance]:
     candidates = graph.nodes_by_type(spec.target_type)
-    relation = relation_predicate(
-        graph,
-        candidates,
-        clause_id=spec.relation_clause_id,
-        relation=spec.relation,
-        target_type=spec.relation_target_type,
-    )
-    if relation is None:
-        return []
-    relation_candidates = _apply_relation_clause(graph, candidates, spec.relation)
+    if spec.relation is not None and spec.relation_clause_id is not None and spec.relation_target_type is not None:
+        relation = relation_predicate(
+            graph,
+            candidates,
+            clause_id=spec.relation_clause_id,
+            relation=spec.relation,
+            target_type=spec.relation_target_type,
+        )
+        if relation is None:
+            return []
+        relation_candidates = _apply_relation_clause(graph, candidates, spec.relation)
+    else:
+        relation_candidates = candidates
     references = _unique_reference_features(graph, graph.nodes_by_type(spec.reference_type))
     if not references:
         return []
     viable: list[ViableReferenceDistance] = []
     for equal_value, equal_nodes in _equal_measurement_groups(graph, relation_candidates, spec.equal_metric):
+        equal_node_ids = {node.id for node in equal_nodes}
         target_nodes = [
             node
             for node in equal_nodes
@@ -1246,6 +1264,8 @@ def _viable_reference_distances(
         for reference in references:
             reference_point = _point_measurement(graph, reference.id, spec.reference_point_metric)
             if reference_point is None:
+                continue
+            if reference.id in equal_node_ids:
                 continue
             distances = [
                 _point_distance(_point_measurement(graph, target.id, spec.target_point_metric), reference_point)
@@ -1287,16 +1307,19 @@ def _viable_reference_distances(
 def _query_for_reference_distance(graph: OntologyGraph, viable: ViableReferenceDistance) -> QueryProgram | None:
     spec = viable.spec
     broad_candidates = graph.nodes_by_type(spec.target_type)
-    relation = relation_predicate(
-        graph,
-        broad_candidates,
-        clause_id=spec.relation_clause_id,
-        relation=spec.relation,
-        target_type=spec.relation_target_type,
-    )
-    if relation is None:
-        return None
-    relation_candidates = _apply_relation_clause(graph, broad_candidates, spec.relation)
+    relation = None
+    relation_candidates = broad_candidates
+    if spec.relation is not None and spec.relation_clause_id is not None and spec.relation_target_type is not None:
+        relation = relation_predicate(
+            graph,
+            broad_candidates,
+            clause_id=spec.relation_clause_id,
+            relation=spec.relation,
+            target_type=spec.relation_target_type,
+        )
+        if relation is None:
+            return None
+        relation_candidates = _apply_relation_clause(graph, broad_candidates, spec.relation)
     equal_value = measurement_value_predicate(
         graph,
         relation_candidates,
@@ -1345,27 +1368,32 @@ def _query_for_reference_distance(graph: OntologyGraph, viable: ViableReferenceD
             "prompt_wording_variant": [_prompt_wording_variant(graph.graph_id, spec.family_id)],
             "synthesis_strategy": ["reference_distance_narrowing_v1"],
         },
-        relation.sampled_parameters,
         equal_value.sampled_parameters,
         target_point.sampled_parameters,
     )
+    if relation is not None:
+        sampled = merge_sampled_parameters(sampled, relation.sampled_parameters)
     return QueryProgram(
         query_id=f"{graph.graph_id}:synth:{spec.family_id}",
         target_type=spec.target_type,
         clauses=[
-            relation.clause,
-            equal_value.clause,
-            Clause(
-                id=spec.reference_clause_id,
-                kind="reference_measurement",
-                metric=REFERENCE_FEATURE_DISTANCE_METRIC,
-                value=reference_value,
-            ),
-            target_point.clause,
+            clause
+            for clause in (
+                relation.clause if relation is not None else None,
+                equal_value.clause,
+                Clause(
+                    id=spec.reference_clause_id,
+                    kind="reference_measurement",
+                    metric=REFERENCE_FEATURE_DISTANCE_METRIC,
+                    value=reference_value,
+                ),
+                target_point.clause,
+            )
+            if clause is not None
         ],
         aggregation=viable.aggregation,
         aggregation_metric=REFERENCE_FEATURE_DISTANCE_METRIC,
-        hop_count=5,
+        hop_count=4 + int(relation is not None),
         difficulty="cad_browsecomp",
         min_individual_clause_candidates=2,
         sampled_parameters=sampled,

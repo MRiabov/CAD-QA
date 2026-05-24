@@ -749,6 +749,16 @@ Checked as implemented with remaining scale caveats:
   equal-measurement synthesis; region/material/void equal-measurement synthesis
   and release-scale distribution remain open.
 - The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_feature_reference/PREVIEW.md`
+  demonstrates the initial `parameterized_feature_reference_feature_distance`
+  family. The reviewed row narrows from three features to two equal-volume
+  features, describes a separate reference feature by solid volume and centroid
+  height, keeps both target candidates through measured-centroid evidence, and
+  resolves uniquely by target-centroid distance to the reference feature
+  centroid. This adds feature-to-feature value-bearing reference-distance
+  synthesis; broader target/reference combinations and release-scale
+  distribution remain open.
+- The synthesized selfcheck preview at
   `runs/parameterized_synthesis_selfcheck_region_equal/PREVIEW.md`
   demonstrates initial `parameterized_equal_material_region_metric_extreme` and
   `parameterized_equal_void_region_metric_extreme` families. The reviewed rows
@@ -840,8 +850,8 @@ Checked as implemented with remaining scale caveats:
   narrowing, initial equal-value
   face/edge/edge-endpoint/feature/material-region/void-region measurement
   groups, contained-endpoint relation chains, and initial
-  face/edge/endpoint/material-region/void-region-to-feature reference-distance
-  families. Broader
+  feature-to-feature and face/edge/endpoint/material-region/void-region-to-feature
+  reference-distance families. Broader
   selected-entity-count narrowing,
   non-feature reference anchors, containment/adjacency
   predicates, and broader tie-break selectors
@@ -894,11 +904,11 @@ Checked as implemented with remaining scale caveats:
   real CadEvolve distributions. Removed-region equal-volume mining is
   implemented and unit-tested, but produced no rows in the reviewed CadEvolve-50
   sample.
-- Broaden cross-feature value-bearing tasks beyond the implemented face, edge,
-  endpoint, material-region, and void-region target entities with
+- Broaden cross-feature value-bearing tasks beyond the implemented feature,
+  face, edge, endpoint, material-region, and void-region target entities with
   reference-feature centroids. Additional target/reference combinations should
-  include non-feature reference anchors and feature-to-feature distances where
-  public clues describe geometry rather than source names.
+  include non-feature reference anchors and more feature-to-feature distance
+  variants where public clues describe geometry rather than source names.
 - Broaden the current geometry-backed training rows across more CadEvolve
   source families and larger generated releases: volume, bbox, centroid,
   topology counts/deltas, selector-result geometry, material/void region
