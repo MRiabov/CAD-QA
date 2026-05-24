@@ -2407,6 +2407,52 @@ def test_synthesis_generates_parameterized_edge_spatial_relation_query() -> None
     assert "measured edge" in row.prompt
 
 
+def test_synthesis_generates_same_length_edge_spatial_relation_query() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:edge-same-length-spatial-synth",
+        source={"source_id": "synthetic", "source_code": ""},
+    )
+    graph.add_node(Node("selector:edges", "selector", "edges"))
+    for edge_id, length, midpoint in [
+        ("edge:a", 10.0, [0.0, 0.0, 0.0]),
+        ("edge:b", 10.0, [2.0, 0.0, 0.0]),
+        ("edge:c", 5.0, [0.0, 3.0, 0.0]),
+        ("edge:d", 5.0, [4.0, 3.0, 0.0]),
+    ]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint", midpoint, "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_x", midpoint[0], "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint[1], "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_z", midpoint[2], "mm"))
+        graph.add_measurement(Measurement(edge_id, "relation_metric", "midpoint_distance_to_origin", length / 2.0, "mm"))
+    for source_id, target_id in [
+        ("edge:a", "edge:b"),
+        ("edge:b", "edge:a"),
+        ("edge:c", "edge:d"),
+        ("edge:d", "edge:c"),
+    ]:
+        graph.add_relation(Relation(source_id, target_id, "same_length_as"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_edge_spatial_relation_extreme")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+
+    assert resolution.verifier_status == "resolved"
+    assert query.clauses[1].relation == "same_length_as"
+    assert query.sampled_parameters["spatial_relation"] == ["same_length_as"]
+    assert "same_length_as" in row.relation_families
+    assert row.logical_hop_count == 4
+    assert row.geometry_hop_count == 4
+    assert "same length as" in row.prompt
+    assert len(row.candidate_trace["final_candidates"]) == 1
+
+
 def test_synthesis_generates_parameterized_face_spatial_relation_query() -> None:
     graph = OntologyGraph(graph_id="graph:face-spatial-synth", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("selector:faces", "selector", "faces"))
@@ -5038,6 +5084,7 @@ def test_benchmark_release_profile_matches_dataset_spec_numeric_contract() -> No
     assert profile.enforce_family_test_evidence
     assert tier_contract["supports_public_benchmark_claims"]
     assert tier_contract["supports_real_fine_tuning_claims"]
+    assert "fine-tuning-ready" in tier_contract["claim_policy"]
     assert epics["release_tiers"]["smoke"]["supports_public_benchmark_claims"] is False
     assert epics["release_tiers"]["release-candidate"]["supports_real_fine_tuning_claims"] is False
     assert tier_contract["verdict_requirements"]["release_report_valid_for_release"] is True
@@ -5098,6 +5145,7 @@ def test_benchmark_release_profile_matches_dataset_spec_numeric_contract() -> No
         "at least 3 protected groups per split",
         "At least 20 sampled rows per changed release family",
         "positive generation coverage, failure/quarantine coverage, and release-report accounting coverage",
+        "and experiment summaries may call an artifact benchmark-ready",
     ]:
         assert required_fragment in spec
 

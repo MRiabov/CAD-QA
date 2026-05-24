@@ -100,6 +100,12 @@ blocking gates, and the corresponding default SFT report passes the same tier.
 Passing smoke or release-candidate gates must never be described as
 benchmark-release readiness.
 
+Release-level labels are normative. Dataset cards, paper tables, SFT manifests,
+and experiment summaries may call an artifact benchmark-ready or fine-tuning-ready
+only when they are backed by the `benchmark-release` profile. Smoke and
+release-candidate labels are useful implementation checkpoints, but they are
+not weaker benchmark-release levels and cannot be promoted by prose.
+
 ## Benchmark-Release Contract
 
 `benchmark-release` is the normative dataset level for CAD-QA. It is not a

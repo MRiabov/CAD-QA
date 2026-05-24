@@ -842,6 +842,15 @@ Checked as implemented with remaining scale caveats:
   edge-spatial slice rather than proof of release-scale spatial-relation
   distribution.
 - The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_same_length_edges/PREVIEW.md` adds
+  `same_length_as` as another sampled relation inside
+  `parameterized_edge_spatial_relation_extreme`. The reviewed same-length row
+  asks for an edge with another measured edge of the same length, then selects
+  by measured midpoint X coordinate. This moves the old fixed
+  `frontmost_same_length_longer_positive_z_kernel_edge` pattern into a sampled
+  relation/selector family, while release-scale same-length distribution and
+  broader spatial relation balance remain open.
+- The synthesized selfcheck preview at
   `runs/parameterized_synthesis_selfcheck_face_spatial/PREVIEW.md` demonstrates
   the initial `parameterized_face_spatial_relation_extreme` family. The reviewed
   rows require kernel-selected face evidence, then sample one of adjacent,
@@ -966,8 +975,9 @@ Checked as implemented with remaining scale caveats:
   The current synthesis slice covers parameterized extrema over kernel-selected
   feature, feature-effect delta, face/edge geometry, measured path
   point/segment/edge-endpoint geometry, and sampled face/edge spatial
-  relations, initial selected face/edge selector-count narrowing with threshold
-  and equal related-metric predicates, initial equal-value
+  relations including same-length edge relation rows, initial selected
+  face/edge selector-count narrowing with threshold and equal related-metric
+  predicates, initial equal-value
   face/edge/edge-endpoint/feature/material-region/void-region measurement
   groups, sampled material/void region extrema/ranks, contained-endpoint
   relation chains, and initial

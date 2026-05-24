@@ -67,6 +67,11 @@ release_tiers:
     purpose: Canonical public benchmark and default SFT dataset release bar.
     supports_public_benchmark_claims: true
     supports_real_fine_tuning_claims: true
+    claim_policy: >
+      Dataset cards, paper tables, SFT manifests, and experiment summaries may
+      call an artifact benchmark-ready or fine-tuning-ready only when this
+      profile passes. Smoke and release-candidate artifacts are implementation
+      checkpoints, not weaker benchmark-release levels.
     verdict_requirements:
       release_report_valid_for_release: true
       blocking_release_gates: 0

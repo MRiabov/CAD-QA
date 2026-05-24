@@ -48,6 +48,10 @@ Recent policy updates:
 The `benchmark-release` level is the canonical public benchmark and real
 fine-tuning bar. Smoke and release-candidate tiers are development gates; they
 can demonstrate mechanics, but they cannot support benchmark-release claims.
+Dataset cards, paper tables, SFT manifests, and experiment summaries may use
+benchmark-ready or fine-tuning-ready language only when the artifact passes the
+`benchmark-release` profile. Smoke and release-candidate labels are not weaker
+benchmark-release levels and cannot be promoted by prose.
 The executable profile, this planning document, and `specs/dataset-spec.md`
 must stay synchronized; changing a threshold or blocking dimension requires
 updating all three plus the machine-readable `release_tiers` block in

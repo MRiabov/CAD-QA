@@ -547,6 +547,7 @@ RELATION_EXTREME_FAMILY_SPECS = (
             "intersects",
             "opposite_to",
             "perpendicular_to",
+            "same_length_as",
         ),
         relation_clause_id="has_parameterized_edge_spatial_relation",
         measurement_clause_id="has_parameterized_edge_metric",
