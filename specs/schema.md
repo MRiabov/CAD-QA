@@ -46,9 +46,14 @@ Measurements have `entity_id`, `scope`, `name`, `value`, `unit`, and
 - `answer_type`;
 - `clauses`;
 - `aggregation`;
+- `aggregation_metric`;
 - `hop_count`;
 - `difficulty`;
 - `reject_unless_unique`.
+- `sampled_parameters`: private normalized metadata used for release balance
+  gates, including target type, final selector, aggregation metric/axis,
+  extremum direction, clause metrics/axes, comparison operators, reference
+  metrics, and value buckets where applicable.
 
 ## DatasetRow
 

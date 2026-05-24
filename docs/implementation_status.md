@@ -177,11 +177,13 @@ when those choices can be sampled and verified.
 - Benchmark-release release and SFT reports include intended-family manifest
   coverage: zero-row intended release families, generated review-only or
   calibration families, and unknown generated families block the benchmark tier.
+- Materialized rows now serialize private `query_program.sampled_parameters`
+  for the parameter dimensions currently inferable from each query program.
 - Benchmark-release release and SFT reports include an initial parameter-balance
-  gate derived from private query programs. It reports and blocks collapsed
-  target type, final selector, aggregation metric/axis, extremum direction,
-  clause metric/axis, comparison operator, reference metric, and value-bucket
-  distributions for generated release families.
+  gate over private sampled-parameter metadata. It reports and blocks missing
+  metadata plus collapsed target type, final selector, aggregation metric/axis,
+  extremum direction, clause metric/axis, comparison operator, reference metric,
+  and value-bucket distributions for generated release families.
 - Public/private row views separate answer-free benchmark inputs from private
   gold answers, query programs, candidate traces, and clue maps.
 - Public/private exports include row-ID parity and hidden-field leak audits.
@@ -672,11 +674,11 @@ Checked as implemented with remaining scale caveats:
   geometry-derived relations such as shared height, plane, axis, equal
   measurement bucket, containment, adjacency, or distance to a sampled reference
   entity to define a nontrivial candidate subset before the final selector.
-- Replace the initial query-program-derived parameter-balance report with
-  explicit sampled-parameter metadata from the synthesis layer. The current gate
-  catches collapsed generated rows, but it does not yet prove that every
-  intended parameter dimension was sampled whenever the verifier could support
-  it.
+- Extend sampled-parameter metadata from the synthesis layer to include
+  predicate sequence, reference anchor, rank, tie-break metric, rendered wording,
+  and geometry-limited exceptions. The current gate catches missing or collapsed
+  generated metadata, but it does not yet prove that every intended parameter
+  dimension was sampled whenever the verifier could support it.
 - Expand the intended-family manifest into full family specs with predicates,
   selectors, parameter dimensions, and geometry-limited exceptions.
 - Complete benchmark-release gating. Explicit release-tier verifier profiles now
@@ -685,16 +687,16 @@ Checked as implemented with remaining scale caveats:
   geometry-hop coverage, default SFT geometry-critical dominance, syntax-only
   caps, value-bearing and cross-feature coverage bands, prompt-template share,
   unique-answer count, answer entropy, candidate breadth, intended-family
-  coverage, query-program parameter balance, and non-collapsed split group
-  coverage. Remaining benchmark-release work is explicit sampled-parameter
-  metadata from synthesized families and machine-checked preview/test evidence
-  for changed release families.
+  coverage, sampled-parameter balance, and non-collapsed split group coverage.
+  Remaining benchmark-release work is synthesis-layer metadata for predicate
+  sequence/reference/rank/rendered wording and machine-checked preview/test
+  evidence for changed release families.
   Rechecking the current CadEvolve-50 release artifact with
   `--release-tier benchmark-release` blocks release on row count, split group
   coverage, default SFT row count, prompt-family balance, prompt-template
   balance, answer entropy, geometry-hop coverage, main BrowseComp hop coverage,
   syntax-only calibration cap, cross-feature value-bearing coverage, and
-  candidate breadth.
+  candidate breadth, intended-family coverage, and sampled-parameter balance.
 - Broaden value-bearing and tolerance-equal coverage beyond the implemented
   core to radius/diameter/angle once those measurements are extracted broadly,
   additional face/endpoint/material/void coordinate combinations, and larger

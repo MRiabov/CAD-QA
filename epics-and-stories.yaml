@@ -354,7 +354,7 @@ epics:
         status: planned
       - id: "14.8"
         title: Sampled query metadata and prompt-template bindings for synthesized queries
-        status: planned
+        status: work-in-progress
       - id: "14.9"
         title: Graph-hop narrowing implementation for sparse selector, count, and extremum task families
         status: planned

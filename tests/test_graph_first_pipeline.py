@@ -45,6 +45,7 @@ from cad_qa.prompts.render import render_prompt
 from cad_qa.prompts.templates import prompt_template_registry
 from cad_qa.query.family_manifest import intended_family_coverage_report
 from cad_qa.query.ir import Clause, QueryProgram
+from cad_qa.query.parameters import sampled_parameters_from_query
 from cad_qa.query.resolver import resolve_query, smoke_queries
 from cad_qa.source import load_sources_jsonl, source_audit, source_family_from_path, source_manifest, source_record_from_mapping
 from cad_qa.trace import TraceRecord, cadquery_available, trace_report, trace_source, trace_sources_bounded
@@ -2038,6 +2039,8 @@ def test_materialized_rows_audit_clue_traceability_and_breadth() -> None:
     )
     row = to_jsonable(materialize_row(graph, resolution))
     assert validate_rows([row])["valid"]
+    assert row["query_program"]["sampled_parameters"]
+    assert row["query_program"]["sampled_parameters"] == sampled_parameters_from_query(row["query_program"])
     assert any("candidate_count_after" in clue for clue in row["clue_map"] if clue["clause_id"] != "aggregation")
 
     narrow = {**row, "candidate_trace": {**row["candidate_trace"], "steps": [dict(step) for step in row["candidate_trace"]["steps"]]}}
@@ -2342,6 +2345,8 @@ def test_parameter_balance_report_blocks_collapsed_query_parameters(tmp_path: Pa
         }
         for index in range(6)
     ]
+    for row in rows:
+        row["query_program"]["sampled_parameters"] = sampled_parameters_from_query(row["query_program"])
     balanced_axes = ["x", "y", "z", "x", "y", "z"]
     balanced_directions = ["argmax", "argmin", "argmax", "argmin", "argmax", "argmin"]
     balanced_targets = ["feature", "face", "edge", "feature", "face", "edge"]
@@ -2357,6 +2362,8 @@ def test_parameter_balance_report_blocks_collapsed_query_parameters(tmp_path: Pa
         }
         for index in range(6)
     )
+    for row in rows:
+        row["query_program"]["sampled_parameters"] = sampled_parameters_from_query(row["query_program"])
     rows.append(
         {
             "row_id": "row:src:0:review_fixture",
@@ -2379,6 +2386,7 @@ def test_parameter_balance_report_blocks_collapsed_query_parameters(tmp_path: Pa
 
     assert not report["valid"]
     assert report["release_family_count"] == 2
+    assert report["sampled_parameter_metadata_missing_count"] == 0
     assert all(family["prompt_family"] != "review_fixture" for family in report["families"])
     collapsed_violations = [
         violation for violation in report["violations"] if violation["prompt_family"] == "collapsed_family"
@@ -2390,6 +2398,17 @@ def test_parameter_balance_report_blocks_collapsed_query_parameters(tmp_path: Pa
     assert any(violation["dimension"] == "extremum_direction" for violation in collapsed_violations)
     assert any(violation["dimension"] == "target_type" for violation in collapsed_violations)
     assert balanced_violations == []
+
+    legacy_rows = [{**rows[0], "query_program": {key: value for key, value in rows[0]["query_program"].items() if key != "sampled_parameters"}}]
+    legacy_report = parameter_balance_report(
+        legacy_rows,
+        family_manifest=manifest,
+        max_parameter_value_share=0.35,
+        min_axis_direction_share=0.20,
+        enforce=True,
+    )
+    assert not legacy_report["valid"]
+    assert legacy_report["sampled_parameter_metadata_missing_count"] == 1
 
 
 def test_benchmark_release_verifier_blocks_intended_family_coverage_failures(tmp_path: Path) -> None:
@@ -2465,6 +2484,8 @@ def test_benchmark_release_verifier_blocks_intended_family_coverage_failures(tmp
             },
         },
     ]
+    for row in rows:
+        row["query_program"]["sampled_parameters"] = sampled_parameters_from_query(row["query_program"])
 
     report = release_verifier_report(rows, release_tier="benchmark-release", family_manifest=manifest)
 

@@ -8,6 +8,7 @@ from typing import Any
 from cad_qa.ontology.nodes import OntologyGraph
 from cad_qa.prompts.render import render_prompt
 from cad_qa.query.ir import QueryResolution
+from cad_qa.query.parameters import normalize_sampled_parameters, sampled_parameters_from_query
 from cad_qa.source import source_family_from_path
 
 
@@ -88,7 +89,7 @@ def materialize_row(graph: OntologyGraph, resolution: QueryResolution) -> Datase
 
 
 def _query_to_dict(query: Any) -> dict[str, Any]:
-    return {
+    mapping = {
         "query_id": query.query_id,
         "target_type": query.target_type,
         "answer_type": query.answer_type,
@@ -100,6 +101,10 @@ def _query_to_dict(query: Any) -> dict[str, Any]:
         "reject_unless_unique": query.reject_unless_unique,
         "min_individual_clause_candidates": query.min_individual_clause_candidates,
     }
+    mapping["sampled_parameters"] = normalize_sampled_parameters(
+        getattr(query, "sampled_parameters", None)
+    ) or sampled_parameters_from_query(mapping)
+    return mapping
 
 
 def _clue_map_with_candidate_counts(

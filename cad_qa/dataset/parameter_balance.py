@@ -8,26 +8,13 @@ from typing import Any
 
 from cad_qa.dataset.sft import prompt_family
 from cad_qa.query.family_manifest import DEFAULT_FAMILY_MANIFEST, load_family_manifest
-
-AXES = ("x", "y", "z")
-DIRECTIONS = ("min", "max")
-AXIS_DIRECTION_DIMENSIONS = {"aggregation_axis", "clause_axis", "extremum_direction"}
-DEFAULT_ENFORCED_DIMENSIONS = {
-    "target_type",
-    "final_selector",
-    "aggregation_metric",
-    "clause_relation",
-    "clause_metric",
-    "clause_target_type",
-    "comparison_operator",
-    "reference_metric",
-    "measurement_value_bucket",
-}
-EXPECTED_VALUES = {
-    "aggregation_axis": AXES,
-    "clause_axis": AXES,
-    "extremum_direction": DIRECTIONS,
-}
+from cad_qa.query.parameters import (
+    AXIS_DIRECTION_DIMENSIONS,
+    DEFAULT_ENFORCED_DIMENSIONS,
+    EXPECTED_VALUES,
+    normalize_sampled_parameters,
+    sampled_parameters_from_query,
+)
 
 
 def parameter_balance_report(
@@ -48,11 +35,21 @@ def parameter_balance_report(
         if spec.get("status") == "release"
     }
     rows_by_family: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    metadata_missing_rows = []
     for row in rows:
         family = prompt_family(row)
         if release_families and family not in release_families:
             continue
         rows_by_family[family].append(row)
+        query = row.get("query_program") if isinstance(row.get("query_program"), dict) else {}
+        if not normalize_sampled_parameters(query.get("sampled_parameters")):
+            metadata_missing_rows.append(
+                {
+                    "row_id": row.get("row_id"),
+                    "prompt_family": family,
+                    "query_id": query.get("query_id"),
+                }
+            )
 
     family_reports = []
     violations = []
@@ -75,7 +72,7 @@ def parameter_balance_report(
 
     valid = True
     if enforce:
-        valid = manifest["exists"] and not violations
+        valid = manifest["exists"] and not violations and not metadata_missing_rows
     return {
         "valid": valid,
         "enforced": enforce,
@@ -87,6 +84,8 @@ def parameter_balance_report(
         "min_axis_direction_share": min_axis_direction_share,
         "enforced_dimensions": sorted(DEFAULT_ENFORCED_DIMENSIONS),
         "axis_direction_dimensions": sorted(AXIS_DIRECTION_DIMENSIONS),
+        "sampled_parameter_metadata_missing_count": len(metadata_missing_rows),
+        "sampled_parameter_metadata_missing_rows": metadata_missing_rows[:50],
         "violations": violations,
         "families": family_reports,
     }
@@ -96,31 +95,7 @@ def row_sampled_parameters(row: dict[str, Any]) -> dict[str, list[str]]:
     """Extract currently observable sampled parameters from a row's query program."""
 
     query = row.get("query_program") or {}
-    params: dict[str, set[str]] = defaultdict(set)
-    _add(params, "target_type", query.get("target_type"))
-    aggregation = query.get("aggregation")
-    aggregation_metric = query.get("aggregation_metric")
-    if isinstance(aggregation, str):
-        direction = _aggregation_direction(aggregation)
-        _add(params, "extremum_direction", direction)
-        _add(params, "final_selector", f"{direction or aggregation}:{aggregation_metric or 'none'}")
-    _add(params, "aggregation_metric", aggregation_metric)
-    _add(params, "aggregation_axis", _metric_axis(aggregation_metric))
-
-    for clause in query.get("clauses") or []:
-        if not isinstance(clause, dict):
-            continue
-        metric = clause.get("metric")
-        _add(params, "clause_relation", clause.get("relation"))
-        _add(params, "clause_metric", metric)
-        _add(params, "clause_axis", _metric_axis(metric))
-        _add(params, "clause_target_type", clause.get("target_type"))
-        _add(params, "comparison_operator", clause.get("operator"))
-        _add(params, "reference_metric", clause.get("reference_metric"))
-        if clause.get("value") is not None:
-            _add(params, "measurement_value_bucket", f"{metric or 'value'}:{_value_bucket(clause.get('value'))}")
-
-    return {key: sorted(values) for key, values in sorted(params.items()) if values}
+    return sampled_parameters_from_query(query)
 
 
 def _family_parameter_report(
@@ -210,42 +185,6 @@ def _ignored_dimensions(spec: dict[str, Any]) -> set[str]:
     ignored = set(balance.get("ignored_dimensions") or [])
     ignored.update(balance.get("geometry_limited_dimensions") or [])
     return {str(value) for value in ignored}
-
-
-def _add(params: dict[str, set[str]], dimension: str, value: Any) -> None:
-    if value is None:
-        return
-    if isinstance(value, str):
-        if value:
-            params[dimension].add(value)
-        return
-    params[dimension].add(str(value))
-
-
-def _aggregation_direction(aggregation: str) -> str | None:
-    if aggregation == "argmax":
-        return "max"
-    if aggregation == "argmin":
-        return "min"
-    return None
-
-
-def _metric_axis(metric: Any) -> str | None:
-    if not isinstance(metric, str):
-        return None
-    tokens = [token for token in metric.lower().replace("-", "_").split("_") if token]
-    for token in reversed(tokens):
-        if token in AXES:
-            return token
-    return None
-
-
-def _value_bucket(value: Any) -> str:
-    if isinstance(value, float):
-        return f"{value:.6g}"
-    if isinstance(value, (int, str, bool)):
-        return str(value)
-    return type(value).__name__
 
 
 def _largest_counter_item(counts: Counter[str]) -> tuple[str | None, int]:

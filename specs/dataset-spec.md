@@ -117,11 +117,13 @@ the row-count, hop-coverage, geometry-critical, syntax-only, value-bearing,
 cross-feature, prompt-template, answer-diversity, candidate-breadth, and split
 coverage targets above. Benchmark-release release/SFT reports also enforce the
 intended-family manifest: generated review-only/calibration/unknown families and
-zero-row intended release families block the tier. They also enforce an initial
-parameter-balance gate from private query-program metadata: target type, final
-selector, aggregation metric/axis, extremum direction, clause metrics/axes,
-comparison operators, reference metrics, and value buckets. Full sampled
-metadata bindings and machine-checked preview/test evidence gates remain open
+zero-row intended release families block the tier. They also serialize private
+`query_program.sampled_parameters` and enforce an initial parameter-balance gate
+over that metadata: target type, final selector, aggregation metric/axis,
+extremum direction, clause metrics/axes, comparison operators, reference
+metrics, and value buckets. Full synthesis-layer parameter bindings for
+predicate sequence, reference anchor, rank, tie-break metric, and rendered
+wording, plus machine-checked preview/test evidence gates, remain open
 implementation work.
 
 ## Splits
