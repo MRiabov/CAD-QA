@@ -77,6 +77,14 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Initial synthesized value-bearing endpoint family with equal-measurement narrowing.
+  - id: parameterized_endpoint_rank
+    positive_generation:
+      - test_synthesis_generates_endpoint_and_path_rank_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_endpoint_and_path_rank_families_without_unique_rank_positions
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Synthesized endpoint rank family with sampled endpoint metric, rank, and rank direction.
   - id: parameterized_contained_endpoint_metric_extreme
     positive_generation:
       - test_synthesis_generates_contained_endpoint_query
@@ -416,6 +424,14 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Initial synthesized path-point extremum family with sampled path-point metric and direction.
+  - id: parameterized_path_point_rank
+    positive_generation:
+      - test_synthesis_generates_endpoint_and_path_rank_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_endpoint_and_path_rank_families_without_unique_rank_positions
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Synthesized path-point rank family with sampled point metric, rank, and rank direction.
   - id: parameterized_path_segment_extreme
     positive_generation:
       - test_synthesis_generates_parameterized_path_queries
@@ -424,6 +440,14 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Initial synthesized path-segment extremum family with sampled path-segment metric and direction.
+  - id: parameterized_path_segment_rank
+    positive_generation:
+      - test_synthesis_generates_endpoint_and_path_rank_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_endpoint_and_path_rank_families_without_unique_rank_positions
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Synthesized path-segment rank family with sampled segment metric, rank, and rank direction.
   - id: parameterized_equal_path_point_metric_extreme
     positive_generation:
       - test_synthesis_generates_equal_value_path_queries

@@ -3342,6 +3342,125 @@ def test_synthesis_skips_contained_endpoint_family_without_containment_evidence(
     assert "parameterized_contained_endpoint_metric_extreme" not in families
 
 
+def test_synthesis_generates_endpoint_and_path_rank_queries() -> None:
+    endpoint_graph = OntologyGraph(graph_id="graph:endpoint-path-rank-synth", source={"source_id": "synthetic", "source_code": ""})
+    for edge_id in ["edge:a", "edge:b", "edge:c", "edge:d"]:
+        endpoint_graph.add_node(Node(edge_id, "edge", edge_id))
+    for endpoint_id, edge_id, coordinate, distance_to_origin in [
+        ("edge_endpoint:a", "edge:a", [0.0, 0.0, 3.0], 2.0),
+        ("edge_endpoint:b", "edge:b", [4.0, 1.0, 3.0], 6.0),
+        ("edge_endpoint:c", "edge:c", [8.0, 2.0, 9.0], 20.0),
+        ("edge_endpoint:d", "edge:d", [12.0, 3.0, 12.0], 30.0),
+    ]:
+        endpoint_graph.add_node(Node(endpoint_id, "edge_endpoint", endpoint_id))
+        endpoint_graph.add_relation(Relation(endpoint_id, edge_id, "endpoint_of"))
+        endpoint_graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate", coordinate, "mm"))
+        endpoint_graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_x", coordinate[0], "mm"))
+        endpoint_graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_y", coordinate[1], "mm"))
+        endpoint_graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
+        endpoint_graph.add_measurement(Measurement(endpoint_id, "relation_metric", "distance_to_origin", distance_to_origin, "mm"))
+
+    path_graph = OntologyGraph(graph_id="graph:path-rank-synth", source={"source_id": "synthetic", "source_code": ""})
+    path_graph.add_node(Node("path:main", "path", "path"))
+    for point_id, coordinate in [
+        ("path:main:point:0", [0.0, 0.0, 0.0]),
+        ("path:main:point:1", [2.0, 1.0, 0.0]),
+        ("path:main:point:2", [5.0, 1.0, 0.0]),
+        ("path:main:point:3", [6.0, 4.0, 0.0]),
+    ]:
+        path_graph.add_node(Node(point_id, "path_point", point_id))
+        path_graph.add_relation(Relation(point_id, "path:main", "point_on_path"))
+        distance = math.sqrt(sum(component * component for component in coordinate))
+        path_graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate", coordinate, "mm"))
+        path_graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_x", coordinate[0], "mm"))
+        path_graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_y", coordinate[1], "mm"))
+        path_graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
+        path_graph.add_measurement(Measurement(point_id, "relation_metric", "distance_to_origin", distance, "mm"))
+    for segment_id, length, midpoint in [
+        ("path:main:segment:0", 2.0, [1.0, 0.0, 0.0]),
+        ("path:main:segment:1", 3.0, [3.5, 1.0, 0.0]),
+        ("path:main:segment:2", 5.0, [5.5, 2.5, 0.0]),
+        ("path:main:segment:3", 7.0, [7.5, 4.0, 0.0]),
+    ]:
+        path_graph.add_node(Node(segment_id, "path_segment", segment_id))
+        path_graph.add_relation(Relation(segment_id, "path:main", "segment_on_path"))
+        path_graph.add_measurement(Measurement(segment_id, "entity_geometry", "segment_midpoint", midpoint, "mm"))
+        path_graph.add_measurement(Measurement(segment_id, "relation_metric", "segment_length", length, "mm"))
+        path_graph.add_measurement(
+            Measurement(
+                segment_id,
+                "relation_metric",
+                "midpoint_distance_to_origin",
+                math.sqrt(sum(component * component for component in midpoint)),
+                "mm",
+            )
+        )
+
+    expected = {
+        "parameterized_endpoint_rank": (endpoint_graph, "edge_endpoint", "endpoint_of", "edge"),
+        "parameterized_path_point_rank": (path_graph, "path_point", "point_on_path", "path"),
+        "parameterized_path_segment_rank": (path_graph, "path_segment", "segment_on_path", "path"),
+    }
+    for family, (graph, target_type, relation, relation_target_type) in expected.items():
+        query = next(query for query in synthesize_graph_hop_queries(graph) if query.query_id.endswith(family))
+        resolution = resolve_query(graph, query)
+        row = materialize_row(graph, resolution)
+
+        assert resolution.verifier_status == "resolved"
+        assert query.target_type == target_type
+        assert query.clauses[0].relation == relation
+        assert query.clauses[0].target_type == relation_target_type
+        assert query.aggregation in {"rank_asc", "rank_desc"}
+        assert query.aggregation_rank in {2, 3, 4}
+        assert row.logical_hop_count == 3
+        assert row.geometry_hop_count == 3
+        assert row.query_program["sampled_parameters"]["target_type"] == [target_type]
+        assert row.query_program["sampled_parameters"]["aggregation_rank"] == [str(query.aggregation_rank)]
+        assert row.query_program["sampled_parameters"]["rank_direction"] in (["max"], ["min"])
+        assert row.candidate_trace["steps"][-1]["rank"] == query.aggregation_rank
+        assert any(
+            fragment in row.prompt
+            for fragment in (
+                "candidate when ordered",
+                "item after sorting",
+                "candidate in increasing",
+                "candidate in decreasing",
+            )
+        )
+
+
+def test_synthesis_skips_endpoint_and_path_rank_families_without_unique_rank_positions() -> None:
+    graph = OntologyGraph(graph_id="graph:tied-endpoint-path-rank-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph.add_node(Node("path:main", "path", "path"))
+    for edge_id in ["edge:a", "edge:b", "edge:c"]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+    for index, edge_id in enumerate(["edge:a", "edge:b", "edge:c"]):
+        endpoint_id = f"edge_endpoint:{index}"
+        graph.add_node(Node(endpoint_id, "edge_endpoint", endpoint_id))
+        graph.add_relation(Relation(endpoint_id, edge_id, "endpoint_of"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_z", 3.0, "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "relation_metric", "distance_to_origin", 2.0, "mm"))
+    for index in range(3):
+        point_id = f"path:main:point:{index}"
+        graph.add_node(Node(point_id, "path_point", point_id))
+        graph.add_relation(Relation(point_id, "path:main", "point_on_path"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_x", 1.0, "mm"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_y", 1.0, "mm"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_z", 1.0, "mm"))
+        graph.add_measurement(Measurement(point_id, "relation_metric", "distance_to_origin", 1.0, "mm"))
+        segment_id = f"path:main:segment:{index}"
+        graph.add_node(Node(segment_id, "path_segment", segment_id))
+        graph.add_relation(Relation(segment_id, "path:main", "segment_on_path"))
+        graph.add_measurement(Measurement(segment_id, "relation_metric", "segment_length", 2.0, "mm"))
+        graph.add_measurement(Measurement(segment_id, "relation_metric", "midpoint_distance_to_origin", 2.0, "mm"))
+
+    families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
+
+    assert "parameterized_endpoint_rank" not in families
+    assert "parameterized_path_point_rank" not in families
+    assert "parameterized_path_segment_rank" not in families
+
+
 def test_synthesis_skips_equal_value_feature_family_without_repeated_value_distractors() -> None:
     graph = OntologyGraph(graph_id="graph:no-equal-feature-synth", source={"source_id": "synthetic", "source_code": ""})
     for feature_id, volume, centroid_z in [

@@ -857,6 +857,29 @@ families:
       expected_values:
         target_type: [edge_endpoint]
     notes: Synthesized value-bearing endpoint family that narrows by repeated endpoint coordinates or distances before selecting by another endpoint measurement.
+  - id: parameterized_endpoint_rank
+    status: release
+    target_type: edge_endpoint
+    minimum_hops: 3
+    maximum_hops: 3
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - aggregation_rank
+        - rank_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - aggregation_rank
+        - final_selector
+      expected_values:
+        target_type: [edge_endpoint]
+        aggregation_rank: [2, 3, 4, 5, 6]
+    notes: Synthesized endpoint family that selects an edge endpoint by sampled rank over measured endpoint geometry instead of only min/max extrema.
   - id: parameterized_contained_endpoint_metric_extreme
     status: release
     target_type: edge_endpoint
@@ -1083,6 +1106,29 @@ families:
         - aggregation_metric
         - final_selector
     notes: Synthesized path-point family that samples the measured point quantity and min/max selector instead of fixing origin distance or Z height.
+  - id: parameterized_path_point_rank
+    status: release
+    target_type: path_point
+    minimum_hops: 3
+    maximum_hops: 3
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - aggregation_rank
+        - rank_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - aggregation_rank
+        - final_selector
+      expected_values:
+        target_type: [path_point]
+        aggregation_rank: [2, 3, 4, 5, 6]
+    notes: Synthesized path-point family that selects a measured path point by sampled rank over point coordinates or origin distance.
   - id: longest_path_segment
     status: review_only
     target_type: path_segment
@@ -1107,6 +1153,29 @@ families:
         - aggregation_metric
         - final_selector
     notes: Synthesized path-segment family that samples measured segment extrema through graph-hop synthesis.
+  - id: parameterized_path_segment_rank
+    status: release
+    target_type: path_segment
+    minimum_hops: 3
+    maximum_hops: 3
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - aggregation_rank
+        - rank_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - aggregation_rank
+        - final_selector
+      expected_values:
+        target_type: [path_segment]
+        aggregation_rank: [2, 3, 4, 5, 6]
+    notes: Synthesized path-segment family that selects a measured path segment by sampled rank over segment length or midpoint distance.
   - id: parameterized_equal_path_point_metric_extreme
     status: release
     target_type: path_point

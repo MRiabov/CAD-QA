@@ -858,6 +858,15 @@ Checked as implemented with remaining scale caveats:
   equal-measurement synthesis; broader endpoint relations, containment/adjacency
   combinations, and release-scale distribution remain open.
 - The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_endpoint_path_rank/PREVIEW.md` adds
+  valid release-ready rows for `parameterized_endpoint_rank`,
+  `parameterized_path_point_rank`, and `parameterized_path_segment_rank`. The
+  reviewed rows require measured endpoint/path evidence, preserve the measured
+  candidate set, and resolve by sampled rank order over endpoint distance,
+  path-point coordinate, or path-segment midpoint-distance measurements. These
+  families are implemented at the valid-row level; release-scale rank/value
+  distribution remains open.
+- The synthesized selfcheck preview at
   `runs/parameterized_synthesis_selfcheck_contained_endpoint/PREVIEW.md`
   demonstrates the initial
   `parameterized_contained_endpoint_metric_extreme` family. The reviewed row
