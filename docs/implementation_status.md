@@ -174,6 +174,9 @@ when those choices can be sampled and verified.
   entropy, geometry-hop coverage, and syntax-only calibration share; these
   gates are only applicable above the smoke-dataset size floor so small
   fixtures do not masquerade as release evidence.
+- Benchmark-release release and SFT reports include intended-family manifest
+  coverage: zero-row intended release families, generated review-only or
+  calibration families, and unknown generated families block the benchmark tier.
 - Public/private row views separate answer-free benchmark inputs from private
   gold answers, query programs, candidate traces, and clue maps.
 - Public/private exports include row-ID parity and hidden-field leak audits.

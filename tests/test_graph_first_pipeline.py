@@ -42,6 +42,7 @@ from cad_qa.ontology.relations import RELATION_FAMILIES
 from cad_qa.ontology.workplane_frames import project_local_point
 from cad_qa.prompts.render import render_prompt
 from cad_qa.prompts.templates import prompt_template_registry
+from cad_qa.query.family_manifest import intended_family_coverage_report
 from cad_qa.query.ir import Clause, QueryProgram
 from cad_qa.query.resolver import resolve_query, smoke_queries
 from cad_qa.source import load_sources_jsonl, source_audit, source_family_from_path, source_manifest, source_record_from_mapping
@@ -2270,6 +2271,125 @@ def test_benchmark_release_tier_applies_stricter_numeric_gates() -> None:
     assert benchmark["passes_candidate_breadth"]
 
 
+def test_intended_family_manifest_reports_zero_row_and_non_release_families(tmp_path: Path) -> None:
+    manifest = tmp_path / "family_specs.yaml"
+    manifest.write_text(
+        "\n".join(
+            [
+                "schema_version: 1",
+                "families:",
+                "  - id: release_present",
+                "    status: release",
+                "  - id: release_missing",
+                "    status: release",
+                "  - id: review_fixture",
+                "    status: review_only",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    rows = [
+        {"row_id": "row:src:0:release_present", "query_program": {"query_id": "graph:src:q0:release_present"}},
+        {"row_id": "row:src:1:review_fixture", "query_program": {"query_id": "graph:src:q1:review_fixture"}},
+        {"row_id": "row:src:2:unknown_family", "query_program": {"query_id": "graph:src:q2:unknown_family"}},
+    ]
+
+    report = intended_family_coverage_report(rows, manifest_path=manifest, enforce=True)
+
+    assert not report["valid"]
+    assert report["manifest_exists"]
+    assert report["zero_row_release_families"] == ["release_missing"]
+    assert report["generated_non_release_families"] == ["review_fixture"]
+    assert report["unknown_generated_families"] == ["unknown_family"]
+    assert report["generated_family_counts"] == {
+        "release_present": 1,
+        "review_fixture": 1,
+        "unknown_family": 1,
+    }
+
+
+def test_benchmark_release_verifier_blocks_intended_family_coverage_failures(tmp_path: Path) -> None:
+    manifest = tmp_path / "family_specs.yaml"
+    manifest.write_text(
+        "\n".join(
+            [
+                "schema_version: 1",
+                "families:",
+                "  - id: release_present",
+                "    status: release",
+                "  - id: release_missing",
+                "    status: release",
+                "  - id: review_fixture",
+                "    status: review_only",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    rows = [
+        {
+            "row_id": "row:src:0:release_present",
+            "source_id": "src",
+            "prompt": "Find the measured feature.",
+            "prompt_template_id": "template_0",
+            "gold_answer": "feature:a",
+            "answer_format": "entity_id",
+            "difficulty_bucket": "cad_browsecomp",
+            "verifier_status": "resolved",
+            "release_ready": True,
+            "relation_families": [],
+            "measurement_scopes": ["kernel"],
+            "logical_hop_count": 3,
+            "geometry_hop_count": 2,
+            "query_program": {
+                "query_id": "graph:src:q0:release_present",
+                "aggregation_metric": "volume",
+                "clauses": [{"kind": "has_measurement", "metric": "volume", "value": 1.0}],
+            },
+            "candidate_trace": {
+                "steps": [
+                    {"step": "initial", "candidate_ids": ["feature:a", "feature:b"]},
+                    {"step": "aggregation", "before": ["feature:a", "feature:b"], "after": ["feature:a"]},
+                ],
+                "final_candidates": ["feature:a"],
+            },
+        },
+        {
+            "row_id": "row:src:1:review_fixture",
+            "source_id": "src",
+            "prompt": "Fixture row.",
+            "prompt_template_id": "template_1",
+            "gold_answer": "feature:b",
+            "answer_format": "entity_id",
+            "difficulty_bucket": "cad_browsecomp",
+            "verifier_status": "resolved",
+            "release_ready": True,
+            "relation_families": [],
+            "measurement_scopes": ["kernel"],
+            "logical_hop_count": 3,
+            "geometry_hop_count": 2,
+            "query_program": {
+                "query_id": "graph:src:q1:review_fixture",
+                "aggregation_metric": "volume",
+                "clauses": [{"kind": "has_measurement", "metric": "volume", "value": 2.0}],
+            },
+            "candidate_trace": {
+                "steps": [
+                    {"step": "initial", "candidate_ids": ["feature:a", "feature:b"]},
+                    {"step": "aggregation", "before": ["feature:a", "feature:b"], "after": ["feature:b"]},
+                ],
+                "final_candidates": ["feature:b"],
+            },
+        },
+    ]
+
+    report = release_verifier_report(rows, release_tier="benchmark-release", family_manifest=manifest)
+
+    assert not report["stop_gates"]["intended_family_coverage"]
+    assert "intended_family_coverage" in report["blocking_gates"]
+    assert report["intended_family_coverage"]["zero_row_release_families"] == ["release_missing"]
+    assert report["intended_family_coverage"]["generated_non_release_families"] == ["review_fixture"]
+
+
 def test_release_verifier_blocks_non_calibration_low_geometry_critical_families() -> None:
     rows = [
         {
@@ -2486,6 +2606,7 @@ def test_training_export_cli_defaults_to_geometry_critical_rows(tmp_path: Path) 
     assert default_sft_report["training_balance"]["syntax_only_calibration_count"] == 0
     assert default_sft_report["training_stop_gates"]["geometry_critical_dominance"]
     assert "prompt_family_balance" in default_sft_report["training_stop_gates"]
+    assert "intended_family_coverage" in default_sft_report["training_stop_gates"]
     assert "input_balance" in default_sft_report
     assert default_sft_report["valid_for_training"]
     assert default_sft_report["blocking_training_gates"] == []
@@ -2508,6 +2629,7 @@ def test_training_export_cli_defaults_to_geometry_critical_rows(tmp_path: Path) 
     assert benchmark_sft_report["release_tier"] == "benchmark-release"
     assert not benchmark_sft_report["valid_for_training"]
     assert "default_sft_row_count" in benchmark_sft_report["blocking_training_gates"]
+    assert "intended_family_coverage" in benchmark_sft_report["blocking_training_gates"]
     assert benchmark_sft_report["training_balance"]["release_gate_profile"]["min_default_sft_rows"] == 10000
 
     assert cli_main(
@@ -3444,6 +3566,7 @@ def test_release_verifier_report_stop_gates_and_cli(tmp_path: Path) -> None:
     assert "answer_entropy" in report["stop_gates"]
     assert "geometry_hop_coverage" in report["stop_gates"]
     assert "syntax_only_calibration_cap" in report["stop_gates"]
+    assert "intended_family_coverage" in report["stop_gates"]
     assert "geometry_critical_prompt_family_coverage" in report["stop_gates"]
     assert "training_readiness" in report
     assert "split_audit" in report
@@ -3455,6 +3578,7 @@ def test_release_verifier_report_stop_gates_and_cli(tmp_path: Path) -> None:
     markdown = release_verifier_markdown(report)
     assert "Release Verifier Report" in markdown
     assert "Release Balance" in markdown
+    assert "Intended Family Coverage" in markdown
     assert "Shortcut Resistance" in markdown
 
     dataset_dir = tmp_path / "dataset"
@@ -3470,6 +3594,7 @@ def test_release_verifier_report_stop_gates_and_cli(tmp_path: Path) -> None:
     assert "release_row_count" in benchmark_report["blocking_gates"]
     assert "default_sft_row_count" in benchmark_report["blocking_gates"]
     assert "benchmark_split_group_coverage" in benchmark_report["blocking_gates"]
+    assert "intended_family_coverage" in benchmark_report["blocking_gates"]
 
 
 def test_public_private_exports_do_not_leak_hidden_fields(tmp_path: Path) -> None:

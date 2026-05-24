@@ -1,0 +1,280 @@
+schema_version: 1
+families:
+  - id: first_operation
+    status: calibration
+    target_type: operation
+    minimum_hops: 0
+    maximum_hops: 0
+    notes: Syntax-readable calibration row, not benchmark-release training data.
+  - id: highest_workplane
+    status: review_only
+    target_type: workplane
+    minimum_hops: 1
+    maximum_hops: 1
+    notes: Direct fixed-Z workplane extremum; should become parameterized.
+  - id: profile_on_workplane
+    status: review_only
+    target_type: profile
+    minimum_hops: 2
+    maximum_hops: 2
+    notes: Early bridge fixture; direct workplane-Z selector is not release-grade.
+  - id: cad_browsecomp_profile
+    status: review_only
+    target_type: profile
+    minimum_hops: 3
+    maximum_hops: 3
+    notes: Early profile fixture overfits to workplane Z.
+  - id: selected_face
+    status: review_only
+    target_type: face
+    minimum_hops: 2
+    maximum_hops: 2
+    notes: Selector identity fixture; useful for audits, not final benchmark rows.
+  - id: highest_kernel_selected_face
+    status: release
+    target_type: face
+    minimum_hops: 3
+    maximum_hops: 3
+  - id: nearest_kernel_selected_face_center_to_origin
+    status: release
+    target_type: face
+    minimum_hops: 3
+    maximum_hops: 3
+  - id: largest_kernel_selected_face_area
+    status: release
+    target_type: face
+    minimum_hops: 3
+    maximum_hops: 3
+  - id: highest_equal_area_kernel_selected_face
+    status: release
+    target_type: face
+    minimum_hops: 3
+    maximum_hops: 3
+  - id: nearest_equal_center_z_kernel_selected_face
+    status: release
+    target_type: face
+    minimum_hops: 3
+    maximum_hops: 3
+  - id: highest_positive_x_flat_opposite_adjacent_perpendicular_kernel_face
+    status: review_only
+    target_type: face
+    minimum_hops: 3
+    maximum_hops: 3
+    notes: Hard-coded parameter combination; should become a sampled graph-hop family.
+  - id: largest_kernel_selector_count
+    status: review_only
+    target_type: selector
+    minimum_hops: 2
+    maximum_hops: 2
+    notes: Direct global count extremum; release version needs graph-hop narrowing.
+  - id: highest_kernel_selected_edge
+    status: release
+    target_type: edge
+    minimum_hops: 3
+    maximum_hops: 3
+  - id: highest_negative_y_x_span_opposite_intersecting_adjacent_perpendicular_kernel_edge
+    status: review_only
+    target_type: edge
+    minimum_hops: 3
+    maximum_hops: 3
+    notes: Hard-coded parameter combination; should become a sampled graph-hop family.
+  - id: highest_y_positive_z_x_span_kernel_edge_midpoint
+    status: review_only
+    target_type: edge
+    minimum_hops: 3
+    maximum_hops: 3
+    notes: Hard-coded parameter combination; should become a sampled graph-hop family.
+  - id: rightmost_short_positive_z_kernel_edge
+    status: review_only
+    target_type: edge
+    minimum_hops: 3
+    maximum_hops: 3
+    notes: Hard-coded parameter combination; should become a sampled graph-hop family.
+  - id: frontmost_longer_positive_z_kernel_edge
+    status: review_only
+    target_type: edge
+    minimum_hops: 3
+    maximum_hops: 3
+    notes: Hard-coded parameter combination; should become a sampled graph-hop family.
+  - id: frontmost_equal_length_kernel_edge
+    status: review_only
+    target_type: edge
+    minimum_hops: 3
+    maximum_hops: 3
+    notes: Fixed view-word final selector; should become parameterized.
+  - id: nearest_equal_length_edge_to_reference_feature_centroid
+    status: release
+    target_type: edge
+    minimum_hops: 3
+    maximum_hops: 3
+  - id: frontmost_equal_midpoint_distance_kernel_edge
+    status: review_only
+    target_type: edge
+    minimum_hops: 3
+    maximum_hops: 3
+    notes: Fixed view-word final selector; should become parameterized.
+  - id: frontmost_same_length_longer_positive_z_kernel_edge
+    status: review_only
+    target_type: edge
+    minimum_hops: 3
+    maximum_hops: 3
+    notes: Hard-coded parameter combination; should become a sampled graph-hop family.
+  - id: rightmost_shorter_positive_z_kernel_edge
+    status: review_only
+    target_type: edge
+    minimum_hops: 3
+    maximum_hops: 3
+    notes: Hard-coded parameter combination; should become a sampled graph-hop family.
+  - id: highest_positive_x_negative_y_contained_kernel_edge_endpoint
+    status: review_only
+    target_type: edge_endpoint
+    minimum_hops: 3
+    maximum_hops: 3
+    notes: Hard-coded parameter combination; should become a sampled graph-hop family.
+  - id: farthest_equal_z_kernel_edge_endpoint
+    status: review_only
+    target_type: edge_endpoint
+    minimum_hops: 3
+    maximum_hops: 3
+    notes: Fixed Z-equality family; should become parameterized.
+  - id: largest_kernel_edge_selector_count
+    status: review_only
+    target_type: selector
+    minimum_hops: 2
+    maximum_hops: 2
+    notes: Direct global count extremum; release version needs graph-hop narrowing.
+  - id: path_nearest_origin
+    status: review_only
+    target_type: path
+    minimum_hops: 2
+    maximum_hops: 2
+    notes: Direct origin-distance fixture; release version should sample anchors.
+  - id: nearest_path_point_to_origin
+    status: review_only
+    target_type: path_point
+    minimum_hops: 2
+    maximum_hops: 2
+    notes: Direct origin-distance fixture; release version should sample anchors.
+  - id: highest_path_point
+    status: review_only
+    target_type: path_point
+    minimum_hops: 2
+    maximum_hops: 2
+    notes: Fixed Z-axis fixture; release version should sample axis/direction.
+  - id: longest_path_segment
+    status: review_only
+    target_type: path_segment
+    minimum_hops: 2
+    maximum_hops: 2
+    notes: Direct global extremum; release version needs narrowing.
+  - id: latest_repeated_selector
+    status: review_only
+    target_type: selector
+    minimum_hops: 1
+    maximum_hops: 1
+    notes: Source-order fixture, not geometry-critical benchmark data.
+  - id: largest_compiled_volume_feature
+    status: release
+    target_type: feature
+    minimum_hops: 2
+    maximum_hops: 2
+  - id: highest_equal_volume_feature
+    status: release
+    target_type: feature
+    minimum_hops: 3
+    maximum_hops: 3
+  - id: largest_equal_centroid_height_feature
+    status: release
+    target_type: feature
+    minimum_hops: 3
+    maximum_hops: 3
+  - id: largest_equal_bbox_height_feature
+    status: release
+    target_type: feature
+    minimum_hops: 3
+    maximum_hops: 3
+  - id: largest_equal_centroid_x_feature
+    status: release
+    target_type: feature
+    minimum_hops: 3
+    maximum_hops: 3
+  - id: largest_equal_centroid_y_feature
+    status: release
+    target_type: feature
+    minimum_hops: 3
+    maximum_hops: 3
+  - id: highest_centroid_feature
+    status: release
+    target_type: feature
+    minimum_hops: 2
+    maximum_hops: 2
+  - id: largest_compiled_face_count_feature
+    status: release
+    target_type: feature
+    minimum_hops: 2
+    maximum_hops: 2
+  - id: largest_positive_volume_delta_feature
+    status: release
+    target_type: feature
+    minimum_hops: 3
+    maximum_hops: 3
+  - id: largest_removed_volume_delta_feature
+    status: release
+    target_type: feature
+    minimum_hops: 3
+    maximum_hops: 3
+  - id: largest_bbox_height_delta_feature
+    status: release
+    target_type: feature
+    minimum_hops: 3
+    maximum_hops: 3
+  - id: largest_bbox_expansion_feature
+    status: release
+    target_type: feature
+    minimum_hops: 3
+    maximum_hops: 3
+  - id: largest_bbox_min_z_delta_feature
+    status: release
+    target_type: feature
+    minimum_hops: 3
+    maximum_hops: 3
+  - id: largest_upward_centroid_delta_feature
+    status: release
+    target_type: feature
+    minimum_hops: 3
+    maximum_hops: 3
+  - id: largest_centroid_shift_feature
+    status: release
+    target_type: feature
+    minimum_hops: 3
+    maximum_hops: 3
+  - id: largest_face_count_delta_feature
+    status: release
+    target_type: feature
+    minimum_hops: 3
+    maximum_hops: 3
+  - id: largest_edge_count_delta_feature
+    status: release
+    target_type: feature
+    minimum_hops: 3
+    maximum_hops: 3
+  - id: largest_added_region
+    status: release
+    target_type: material_region
+    minimum_hops: 3
+    maximum_hops: 3
+  - id: highest_equal_volume_added_region
+    status: release
+    target_type: material_region
+    minimum_hops: 3
+    maximum_hops: 3
+  - id: largest_removed_region
+    status: release
+    target_type: void_region
+    minimum_hops: 3
+    maximum_hops: 3
+  - id: highest_equal_volume_removed_region
+    status: release
+    target_type: void_region
+    minimum_hops: 3
+    maximum_hops: 3

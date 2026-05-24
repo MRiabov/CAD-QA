@@ -47,6 +47,7 @@ from cad_qa.experiment import package_run_artifacts, run_smoke_experiment, run_a
 from cad_qa.io import read_jsonl, write_json, write_jsonl
 from cad_qa.ontology import build_graph
 from cad_qa.ontology.nodes import OntologyGraph, graph_from_dict
+from cad_qa.query.family_manifest import DEFAULT_FAMILY_MANIFEST, intended_family_coverage_report
 from cad_qa.query.ir import query_from_dict
 from cad_qa.query.resolver import resolve_query, smoke_queries
 from cad_qa.source import load_sources_jsonl, source_audit, source_manifest
@@ -133,6 +134,7 @@ def build_parser() -> argparse.ArgumentParser:
     export_release.add_argument("path", type=Path)
     export_release.add_argument("--out", type=Path, required=True)
     export_release.add_argument("--release-tier", choices=RELEASE_TIERS, default=DEFAULT_RELEASE_TIER)
+    export_release.add_argument("--family-manifest", type=Path, default=DEFAULT_FAMILY_MANIFEST)
     export_release.add_argument(
         "--allow-failing-release-gates",
         action="store_true",
@@ -150,6 +152,7 @@ def build_parser() -> argparse.ArgumentParser:
     release_report.add_argument("path", type=Path)
     release_report.add_argument("--out", type=Path)
     release_report.add_argument("--release-tier", choices=RELEASE_TIERS, default=DEFAULT_RELEASE_TIER)
+    release_report.add_argument("--family-manifest", type=Path, default=DEFAULT_FAMILY_MANIFEST)
     release_report.set_defaults(func=_cmd_dataset_release_report)
     shortcut_report = dataset_sub.add_parser("shortcut-report")
     shortcut_report.add_argument("path", type=Path, help="Dataset directory or rows.jsonl file.")
@@ -216,6 +219,7 @@ def build_parser() -> argparse.ArgumentParser:
     export_sft.add_argument("--out", type=Path, required=True)
     export_sft.add_argument("--scaling-sizes", type=int, nargs="*", default=[8, 16, 32])
     export_sft.add_argument("--release-tier", choices=RELEASE_TIERS, default=DEFAULT_RELEASE_TIER)
+    export_sft.add_argument("--family-manifest", type=Path, default=DEFAULT_FAMILY_MANIFEST)
     export_sft.add_argument(
         "--include-calibration",
         action="store_true",
@@ -423,6 +427,7 @@ def _cmd_dataset_export_release(args: argparse.Namespace) -> dict[str, Any]:
         source_dataset=args.path,
         allow_failing_release_gates=bool(args.allow_failing_release_gates),
         release_tier=args.release_tier,
+        family_manifest=args.family_manifest,
     )
     return {
         "row_count": result["row_count"],
@@ -476,7 +481,12 @@ def _cmd_dataset_card(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _cmd_dataset_release_report(args: argparse.Namespace) -> dict[str, Any]:
-    return write_release_verifier_report(args.path, out=args.out, release_tier=args.release_tier)
+    return write_release_verifier_report(
+        args.path,
+        out=args.out,
+        release_tier=args.release_tier,
+        family_manifest=args.family_manifest,
+    )
 
 
 def _cmd_dataset_shortcut_report(args: argparse.Namespace) -> dict[str, Any]:
@@ -661,9 +671,15 @@ def _cmd_training_export_sft(args: argparse.Namespace) -> dict[str, Any]:
     )
     report["input_balance"] = release_balance_report(input_rows, release_tier=profile.name)
     report["training_balance"] = release_balance_report(rows, release_tier=profile.name)
+    report["intended_family_coverage"] = intended_family_coverage_report(
+        rows,
+        manifest_path=args.family_manifest,
+        enforce=profile.enforce_intended_family_coverage,
+    )
     report["training_stop_gates"] = _training_stop_gates(
         report["training_readiness"],
         report["training_balance"],
+        report["intended_family_coverage"],
         profile_name=profile.name,
     )
     report["blocking_training_gates"] = _blocking_gates(report["training_stop_gates"])
@@ -682,6 +698,7 @@ def _cmd_training_export_sft(args: argparse.Namespace) -> dict[str, Any]:
 def _training_stop_gates(
     training_readiness: dict[str, Any],
     training_balance: dict[str, Any],
+    intended_family_coverage: dict[str, Any],
     *,
     profile_name: str = DEFAULT_RELEASE_TIER,
 ) -> dict[str, Any]:
@@ -702,6 +719,7 @@ def _training_stop_gates(
         "value_bearing_measurement_coverage": training_balance["passes_value_bearing_measurement_coverage"],
         "cross_feature_value_bearing_coverage": training_balance["passes_cross_feature_value_bearing_coverage"],
         "candidate_breadth": training_balance["passes_candidate_breadth"],
+        "intended_family_coverage": intended_family_coverage["valid"],
     }
 
 

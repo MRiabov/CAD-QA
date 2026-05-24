@@ -20,6 +20,7 @@ from cad_qa.dataset.split import rows_with_assigned_splits, split_audit, split_m
 from cad_qa.dataset.validate import validate_dataset_dir, validate_rows
 from cad_qa.io import write_json, write_jsonl
 from cad_qa.prompts.render import prompt_template_id_from_mapping
+from cad_qa.query.family_manifest import DEFAULT_FAMILY_MANIFEST
 
 
 def export_release_dataset(
@@ -29,6 +30,7 @@ def export_release_dataset(
     source_dataset: Path | None = None,
     allow_failing_release_gates: bool = False,
     release_tier: str = DEFAULT_RELEASE_TIER,
+    family_manifest: Path | None = DEFAULT_FAMILY_MANIFEST,
 ) -> dict[str, Any]:
     profile = release_gate_profile(release_tier)
     release_valid_rows, validation_exclusions = _filter_release_valid_rows(rows)
@@ -105,7 +107,11 @@ def export_release_dataset(
         ),
         encoding="utf-8",
     )
-    verifier_report = write_release_verifier_report(out, release_tier=profile.name)
+    verifier_report = write_release_verifier_report(
+        out,
+        release_tier=profile.name,
+        family_manifest=family_manifest,
+    )
     valid = validation["valid"] and audit["valid"] and split_quality["valid"] and verifier_report["valid_for_release"]
     result = {
         "row_count": len(release_rows),

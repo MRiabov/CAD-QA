@@ -23,6 +23,7 @@ from cad_qa.dataset.split import split_audit, split_manifest
 from cad_qa.dataset.validate import validate_rows
 from cad_qa.io import read_jsonl, write_json
 from cad_qa.prompts.render import prompt_template_id_from_mapping
+from cad_qa.query.family_manifest import DEFAULT_FAMILY_MANIFEST, intended_family_coverage_report
 from cad_qa.query.resolver import VALUE_BUCKET_DECIMALS, VALUE_MATCH_TOLERANCE
 
 DEFAULT_RELEASE_TIER = "release-candidate"
@@ -54,6 +55,7 @@ class ReleaseGateProfile:
     min_pre_final_candidate_count: int | None
     min_median_pre_final_candidate_count: float | None
     min_split_groups_per_split: int | None
+    enforce_intended_family_coverage: bool
 
 
 SMOKE_RELEASE_PROFILE = ReleaseGateProfile(
@@ -80,6 +82,7 @@ SMOKE_RELEASE_PROFILE = ReleaseGateProfile(
     min_pre_final_candidate_count=None,
     min_median_pre_final_candidate_count=None,
     min_split_groups_per_split=None,
+    enforce_intended_family_coverage=False,
 )
 
 RELEASE_CANDIDATE_PROFILE = replace(SMOKE_RELEASE_PROFILE, name="release-candidate")
@@ -108,6 +111,7 @@ BENCHMARK_RELEASE_PROFILE = ReleaseGateProfile(
     min_pre_final_candidate_count=2,
     min_median_pre_final_candidate_count=4.0,
     min_split_groups_per_split=3,
+    enforce_intended_family_coverage=True,
 )
 
 RELEASE_GATE_PROFILES = {
@@ -138,6 +142,7 @@ def release_verifier_report(
     public_rows: list[dict[str, Any]] | None = None,
     private_rows: list[dict[str, Any]] | None = None,
     release_tier: str = DEFAULT_RELEASE_TIER,
+    family_manifest: Path | None = DEFAULT_FAMILY_MANIFEST,
 ) -> dict[str, Any]:
     """Aggregate release-readiness gates and verifier/quarantine taxonomy."""
 
@@ -154,6 +159,11 @@ def release_verifier_report(
         dominance_threshold=profile.min_geometry_critical_training_share,
     )
     release_balance = release_balance_report(rows, release_tier=profile.name)
+    intended_family_coverage = intended_family_coverage_report(
+        rows,
+        manifest_path=family_manifest,
+        enforce=profile.enforce_intended_family_coverage,
+    )
     shortcut_resistance = dataset["shortcut_resistance"]
     failures_by_reason = failure_report(failures or [])
     public_private = public_private_audit(public_rows, private_rows) if public_rows is not None and private_rows is not None else None
@@ -182,6 +192,7 @@ def release_verifier_report(
         "value_bearing_measurement_coverage": release_balance["passes_value_bearing_measurement_coverage"],
         "cross_feature_value_bearing_coverage": release_balance["passes_cross_feature_value_bearing_coverage"],
         "candidate_breadth": release_balance["passes_candidate_breadth"],
+        "intended_family_coverage": intended_family_coverage["valid"],
         "geometry_critical_prompt_family_coverage": _passes_geometry_critical_family_coverage(
             shortcut_resistance
         ),
@@ -203,6 +214,7 @@ def release_verifier_report(
         "quarantine": quarantine,
         "training_readiness": training_readiness,
         "release_balance": release_balance,
+        "intended_family_coverage": intended_family_coverage,
         "shortcut_resistance": shortcut_resistance,
         "failure_report": failures_by_reason,
         "split_manifest": split,
@@ -417,6 +429,10 @@ def release_verifier_markdown(report: dict[str, Any]) -> str:
         "",
         _json_block(report["release_balance"]),
         "",
+        "## Intended Family Coverage",
+        "",
+        _json_block(report["intended_family_coverage"]),
+        "",
         "## Shortcut Resistance",
         "",
         _json_block(
@@ -479,6 +495,7 @@ def write_release_verifier_report(
     *,
     out: Path | None = None,
     release_tier: str = DEFAULT_RELEASE_TIER,
+    family_manifest: Path | None = DEFAULT_FAMILY_MANIFEST,
 ) -> dict[str, Any]:
     rows = read_jsonl(dataset_dir / "rows.jsonl")
     failure_path = dataset_dir / "failure_manifest.jsonl"
@@ -496,6 +513,7 @@ def write_release_verifier_report(
         public_rows=public,
         private_rows=private,
         release_tier=release_tier,
+        family_manifest=family_manifest,
     )
     output_dir = out or dataset_dir
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -538,6 +556,7 @@ def release_gate_profile_report(profile: ReleaseGateProfile) -> dict[str, Any]:
         "min_pre_final_candidate_count": profile.min_pre_final_candidate_count,
         "min_median_pre_final_candidate_count": profile.min_median_pre_final_candidate_count,
         "min_split_groups_per_split": profile.min_split_groups_per_split,
+        "enforce_intended_family_coverage": profile.enforce_intended_family_coverage,
     }
 
 

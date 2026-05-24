@@ -115,8 +115,10 @@ described as benchmark-release ready.
 Current implementation gates now support an explicit `benchmark-release` tier for
 the row-count, hop-coverage, geometry-critical, syntax-only, value-bearing,
 cross-feature, prompt-template, answer-diversity, candidate-breadth, and split
-coverage targets above. Parameter-balance gates, intended-family zero-row gates,
-and machine-checked preview/test evidence gates remain open implementation work.
+coverage targets above. Benchmark-release release/SFT reports also enforce the
+intended-family manifest: generated review-only/calibration/unknown families and
+zero-row intended release families block the tier. Parameter-balance gates and
+machine-checked preview/test evidence gates remain open implementation work.
 
 ## Splits
 
