@@ -363,7 +363,7 @@ epics:
         status: work-in-progress
   - id: epic-15
     title: Benchmark-release numeric readiness tier
-    status: work-in-progress
+    status: implemented
     priority: P0
     acceptance_criteria:
       - Benchmark-release artifacts contain at least 10,000 release rows and at
@@ -397,4 +397,4 @@ epics:
         status: implemented
       - id: "15.5"
         title: Benchmark-release gates for parameter balance, intended-family coverage, split quality, and preview/test evidence
-        status: work-in-progress
+        status: implemented

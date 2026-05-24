@@ -9,6 +9,7 @@ import sys
 from typing import Any
 
 from cad_qa.dataset.audit import leakage_audit
+from cad_qa.dataset.family_test_evidence import DEFAULT_FAMILY_TEST_EVIDENCE, family_test_evidence_gate_report
 from cad_qa.dataset.parameter_balance import parameter_balance_report
 from cad_qa.dataset.preview import (
     DEFAULT_PREVIEW_EVIDENCE_FILENAME,
@@ -141,6 +142,8 @@ def build_parser() -> argparse.ArgumentParser:
     export_release.add_argument("--out", type=Path, required=True)
     export_release.add_argument("--release-tier", choices=RELEASE_TIERS, default=DEFAULT_RELEASE_TIER)
     export_release.add_argument("--family-manifest", type=Path, default=DEFAULT_FAMILY_MANIFEST)
+    export_release.add_argument("--preview-evidence", type=Path)
+    export_release.add_argument("--family-test-evidence", type=Path, default=DEFAULT_FAMILY_TEST_EVIDENCE)
     export_release.add_argument(
         "--allow-failing-release-gates",
         action="store_true",
@@ -160,6 +163,7 @@ def build_parser() -> argparse.ArgumentParser:
     release_report.add_argument("--release-tier", choices=RELEASE_TIERS, default=DEFAULT_RELEASE_TIER)
     release_report.add_argument("--family-manifest", type=Path, default=DEFAULT_FAMILY_MANIFEST)
     release_report.add_argument("--preview-evidence", type=Path)
+    release_report.add_argument("--family-test-evidence", type=Path, default=DEFAULT_FAMILY_TEST_EVIDENCE)
     release_report.set_defaults(func=_cmd_dataset_release_report)
     shortcut_report = dataset_sub.add_parser("shortcut-report")
     shortcut_report.add_argument("path", type=Path, help="Dataset directory or rows.jsonl file.")
@@ -228,6 +232,7 @@ def build_parser() -> argparse.ArgumentParser:
     export_sft.add_argument("--release-tier", choices=RELEASE_TIERS, default=DEFAULT_RELEASE_TIER)
     export_sft.add_argument("--family-manifest", type=Path, default=DEFAULT_FAMILY_MANIFEST)
     export_sft.add_argument("--preview-evidence", type=Path)
+    export_sft.add_argument("--family-test-evidence", type=Path, default=DEFAULT_FAMILY_TEST_EVIDENCE)
     export_sft.add_argument(
         "--include-calibration",
         action="store_true",
@@ -436,6 +441,8 @@ def _cmd_dataset_export_release(args: argparse.Namespace) -> dict[str, Any]:
         allow_failing_release_gates=bool(args.allow_failing_release_gates),
         release_tier=args.release_tier,
         family_manifest=args.family_manifest,
+        preview_evidence=args.preview_evidence,
+        family_test_evidence=args.family_test_evidence,
     )
     return {
         "row_count": result["row_count"],
@@ -495,6 +502,7 @@ def _cmd_dataset_release_report(args: argparse.Namespace) -> dict[str, Any]:
         release_tier=args.release_tier,
         family_manifest=args.family_manifest,
         preview_evidence=args.preview_evidence,
+        family_test_evidence=args.family_test_evidence,
     )
 
 
@@ -716,12 +724,19 @@ def _cmd_training_export_sft(args: argparse.Namespace) -> dict[str, Any]:
         min_samples_per_family=profile.min_preview_samples_per_family,
         enforce=profile.enforce_preview_evidence,
     )
+    report["family_test_evidence"] = family_test_evidence_gate_report(
+        rows,
+        evidence_path=args.family_test_evidence,
+        family_manifest=args.family_manifest,
+        enforce=profile.enforce_family_test_evidence,
+    )
     report["training_stop_gates"] = _training_stop_gates(
         report["training_readiness"],
         report["training_balance"],
         report["intended_family_coverage"],
         report["parameter_balance"],
         report["preview_evidence"],
+        report["family_test_evidence"],
         profile_name=profile.name,
     )
     report["blocking_training_gates"] = _blocking_gates(report["training_stop_gates"])
@@ -743,6 +758,7 @@ def _training_stop_gates(
     intended_family_coverage: dict[str, Any],
     parameter_balance: dict[str, Any],
     preview_evidence: dict[str, Any],
+    family_test_evidence: dict[str, Any],
     *,
     profile_name: str = DEFAULT_RELEASE_TIER,
 ) -> dict[str, Any]:
@@ -766,6 +782,7 @@ def _training_stop_gates(
         "intended_family_coverage": intended_family_coverage["valid"],
         "parameter_balance": parameter_balance["valid"],
         "preview_evidence": preview_evidence["valid"],
+        "family_test_evidence": family_test_evidence["valid"],
     }
 
 

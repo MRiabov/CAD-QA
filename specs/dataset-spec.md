@@ -125,8 +125,9 @@ metrics, and value buckets. Full synthesis-layer parameter bindings for
 predicate sequence, reference anchor, rank, tie-break metric, and rendered
 wording remain open implementation work. The preview CLI writes machine-readable
 preview evidence and benchmark-release reports block missing, stale, or
-insufficient preview coverage; machine-checked new-family test evidence remains
-open implementation work.
+insufficient preview coverage. Benchmark-release reports also block generated
+release families without machine-readable positive-generation,
+failure/quarantine, and release-report-accounting test evidence refs.
 
 ## Splits
 

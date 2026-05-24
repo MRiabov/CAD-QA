@@ -440,7 +440,7 @@ Technical definition of done:
 
 ## Epic 15: Benchmark-release numeric readiness tier (`epic-15`)
 
-Status: `work-in-progress`
+Status: `implemented`
 Priority: `P0`
 
 Acceptance criteria:
@@ -475,7 +475,7 @@ Technical definition of done:
 | 15.2 Configurable release-tier verifier profiles for smoke, release-candidate, and benchmark-release | `implemented` | Users can select the intended release tier and get the right thresholds. | CLI/reporting accepts explicit tier selection and uses tier-specific constants in verifier/SFT reports. |
 | 15.3 Benchmark-release gates for row counts, geometry-hop coverage, geometry-critical dominance, and syntax-only caps | `implemented` | Users cannot label small or shortcut-heavy artifacts benchmark-release ready. | Verifier blocks artifacts below 10,000 release/default-SFT rows, below 95% geometry-hop-positive, below 99% default-SFT geometry-critical, above 0% default-SFT syntax-only, or above 2% benchmark syntax-only without separate calibration. |
 | 15.4 Benchmark-release gates for value-bearing, cross-feature, prompt-template, answer-diversity, and candidate-breadth targets | `implemented` | Users get datasets with enough concrete measurement reasoning, cross-feature reasoning, prompt variety, answer diversity, and distractors. | Verifier blocks artifacts outside 15%-30% value-bearing, outside 5%-15% cross-feature, above 5% prompt-template share, below 1,000 unique answers, below 8 entropy bits, or below candidate-breadth targets. |
-| 15.5 Benchmark-release gates for parameter balance, intended-family coverage, split quality, and preview/test evidence | `work-in-progress` | Users can trust that parameterized families, intended-family coverage, splits, and manual review evidence are not collapsed. | Verifier blocks train-only split collapse, fewer than 3 protected groups per split, collapsed sampled parameters, zero-row intended families, and missing/stale/insufficient preview evidence for the benchmark-release tier; new-family test-evidence gates remain to be completed. |
+| 15.5 Benchmark-release gates for parameter balance, intended-family coverage, split quality, and preview/test evidence | `implemented` | Users can trust that parameterized families, intended-family coverage, splits, and manual review evidence are not collapsed. | Verifier blocks train-only split collapse, fewer than 3 protected groups per split, collapsed sampled parameters, zero-row intended families, missing/stale/insufficient preview evidence, and missing family test-evidence refs for the benchmark-release tier. |
 
 ## Manual Review Requirements Before Marking Implemented
 

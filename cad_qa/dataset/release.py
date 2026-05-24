@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Any
 
 from cad_qa.dataset.audit import leakage_audit
+from cad_qa.dataset.family_test_evidence import DEFAULT_FAMILY_TEST_EVIDENCE
+from cad_qa.dataset.preview import DEFAULT_PREVIEW_EVIDENCE_FILENAME
 from cad_qa.dataset.public import write_public_private_artifacts
 from cad_qa.dataset.quarantine import quarantine_report
 from cad_qa.dataset.release_report import (
@@ -31,6 +33,8 @@ def export_release_dataset(
     allow_failing_release_gates: bool = False,
     release_tier: str = DEFAULT_RELEASE_TIER,
     family_manifest: Path | None = DEFAULT_FAMILY_MANIFEST,
+    preview_evidence: Path | None = None,
+    family_test_evidence: Path | None = DEFAULT_FAMILY_TEST_EVIDENCE,
 ) -> dict[str, Any]:
     profile = release_gate_profile(release_tier)
     release_valid_rows, validation_exclusions = _filter_release_valid_rows(rows)
@@ -111,6 +115,8 @@ def export_release_dataset(
         out,
         release_tier=profile.name,
         family_manifest=family_manifest,
+        preview_evidence=preview_evidence or out / DEFAULT_PREVIEW_EVIDENCE_FILENAME,
+        family_test_evidence=family_test_evidence,
     )
     valid = validation["valid"] and audit["valid"] and split_quality["valid"] and verifier_report["valid_for_release"]
     result = {

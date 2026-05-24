@@ -7,6 +7,7 @@ from pathlib import Path
 
 from cad_qa.dataset.materialize import materialize_row
 from cad_qa.dataset.audit import leakage_audit
+from cad_qa.dataset.family_test_evidence import family_test_evidence_gate_report
 from cad_qa.dataset.parameter_balance import parameter_balance_report
 from cad_qa.dataset.preview import dataset_preview_evidence_report, preview_evidence_gate_report
 from cad_qa.dataset.public import private_rows, public_private_audit, public_rows, write_public_private_artifacts
@@ -2272,6 +2273,7 @@ def test_benchmark_release_tier_applies_stricter_numeric_gates() -> None:
     assert benchmark["release_gate_profile"]["min_axis_direction_parameter_share"] == 0.20
     assert benchmark["release_gate_profile"]["enforce_preview_evidence"]
     assert benchmark["release_gate_profile"]["min_preview_samples_per_family"] == 20
+    assert benchmark["release_gate_profile"]["enforce_family_test_evidence"]
     assert not benchmark["passes_prompt_template_balance"]
     assert not benchmark["passes_answer_entropy"]
     assert benchmark["passes_geometry_hop_coverage"]
@@ -2504,6 +2506,95 @@ def test_preview_evidence_gate_requires_sufficient_release_family_samples(tmp_pa
     ]
 
 
+def test_family_test_evidence_gate_requires_release_family_test_refs(tmp_path: Path) -> None:
+    manifest = tmp_path / "family_specs.yaml"
+    manifest.write_text(
+        "\n".join(
+            [
+                "schema_version: 1",
+                "families:",
+                "  - id: release_family",
+                "    status: release",
+                "  - id: partial_family",
+                "    status: release",
+                "  - id: review_fixture",
+                "    status: review_only",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    rows = [
+        {"row_id": "row:src:0:release_family", "query_program": {"query_id": "graph:src:q0:release_family"}},
+        {"row_id": "row:src:0:partial_family", "query_program": {"query_id": "graph:src:q0:partial_family"}},
+        {"row_id": "row:src:0:review_fixture", "query_program": {"query_id": "graph:src:q0:review_fixture"}},
+    ]
+    missing = family_test_evidence_gate_report(
+        rows,
+        family_manifest=manifest,
+        evidence_path=tmp_path / "missing.yaml",
+        enforce=True,
+    )
+    assert not missing["valid"]
+    assert missing["violations"][0]["reason"] == "missing_family_test_evidence"
+
+    evidence = tmp_path / "family_test_evidence.yaml"
+    evidence.write_text(
+        "\n".join(
+            [
+                "schema_version: 1",
+                "families:",
+                "  - id: release_family",
+                "    positive_generation:",
+                "      - test_release_family_generates_rows",
+                "    failure_or_quarantine:",
+                "      - test_release_family_failure_manifest",
+                "    release_report_accounting:",
+                "      - test_release_report_counts_release_family",
+                "  - id: partial_family",
+                "    positive_generation:",
+                "      - test_partial_family_generates_rows",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    report = family_test_evidence_gate_report(
+        rows,
+        family_manifest=manifest,
+        evidence_path=evidence,
+        enforce=True,
+    )
+    assert not report["valid"]
+    assert all(family["prompt_family"] != "review_fixture" for family in report["families"])
+    partial = next(family for family in report["families"] if family["prompt_family"] == "partial_family")
+    assert partial["missing_evidence_kinds"] == ["failure_or_quarantine", "release_report_accounting"]
+
+    complete = tmp_path / "complete_family_test_evidence.yaml"
+    complete.write_text(
+        "\n".join(
+            [
+                "schema_version: 1",
+                "families:",
+                "  - id: release_family",
+                "    positive_generation: [test_release_family_generates_rows]",
+                "    failure_or_quarantine: [test_release_family_failure_manifest]",
+                "    release_report_accounting: [test_release_report_counts_release_family]",
+                "  - id: partial_family",
+                "    positive_generation: [test_partial_family_generates_rows]",
+                "    failure_or_quarantine: [test_partial_family_failure_manifest]",
+                "    release_report_accounting: [test_release_report_counts_partial_family]",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    complete_report = family_test_evidence_gate_report(
+        rows,
+        family_manifest=manifest,
+        evidence_path=complete,
+        enforce=True,
+    )
+    assert complete_report["valid"]
+
+
 def test_benchmark_release_verifier_blocks_intended_family_coverage_failures(tmp_path: Path) -> None:
     manifest = tmp_path / "family_specs.yaml"
     manifest.write_text(
@@ -2585,9 +2676,11 @@ def test_benchmark_release_verifier_blocks_intended_family_coverage_failures(tmp
     assert not report["stop_gates"]["intended_family_coverage"]
     assert not report["stop_gates"]["parameter_balance"]
     assert not report["stop_gates"]["preview_evidence"]
+    assert not report["stop_gates"]["family_test_evidence"]
     assert "intended_family_coverage" in report["blocking_gates"]
     assert "parameter_balance" in report["blocking_gates"]
     assert "preview_evidence" in report["blocking_gates"]
+    assert "family_test_evidence" in report["blocking_gates"]
     assert report["intended_family_coverage"]["zero_row_release_families"] == ["release_missing"]
     assert report["intended_family_coverage"]["generated_non_release_families"] == ["review_fixture"]
 
@@ -2811,6 +2904,7 @@ def test_training_export_cli_defaults_to_geometry_critical_rows(tmp_path: Path) 
     assert "intended_family_coverage" in default_sft_report["training_stop_gates"]
     assert "parameter_balance" in default_sft_report["training_stop_gates"]
     assert "preview_evidence" in default_sft_report["training_stop_gates"]
+    assert "family_test_evidence" in default_sft_report["training_stop_gates"]
     assert "input_balance" in default_sft_report
     assert default_sft_report["valid_for_training"]
     assert default_sft_report["blocking_training_gates"] == []
@@ -2836,6 +2930,7 @@ def test_training_export_cli_defaults_to_geometry_critical_rows(tmp_path: Path) 
     assert "intended_family_coverage" in benchmark_sft_report["blocking_training_gates"]
     assert "parameter_balance" in benchmark_sft_report["blocking_training_gates"]
     assert "preview_evidence" in benchmark_sft_report["blocking_training_gates"]
+    assert "family_test_evidence" in benchmark_sft_report["blocking_training_gates"]
     assert benchmark_sft_report["training_balance"]["release_gate_profile"]["min_default_sft_rows"] == 10000
 
     assert cli_main(
@@ -3783,6 +3878,7 @@ def test_release_verifier_report_stop_gates_and_cli(tmp_path: Path) -> None:
     assert "intended_family_coverage" in report["stop_gates"]
     assert "parameter_balance" in report["stop_gates"]
     assert "preview_evidence" in report["stop_gates"]
+    assert "family_test_evidence" in report["stop_gates"]
     assert "geometry_critical_prompt_family_coverage" in report["stop_gates"]
     assert "training_readiness" in report
     assert "split_audit" in report
@@ -3797,6 +3893,7 @@ def test_release_verifier_report_stop_gates_and_cli(tmp_path: Path) -> None:
     assert "Intended Family Coverage" in markdown
     assert "Parameter Balance" in markdown
     assert "Preview Evidence" in markdown
+    assert "Family Test Evidence" in markdown
     assert "Shortcut Resistance" in markdown
 
     dataset_dir = tmp_path / "dataset"
@@ -3815,6 +3912,7 @@ def test_release_verifier_report_stop_gates_and_cli(tmp_path: Path) -> None:
     assert "intended_family_coverage" in benchmark_report["blocking_gates"]
     assert "parameter_balance" in benchmark_report["blocking_gates"]
     assert "preview_evidence" in benchmark_report["blocking_gates"]
+    assert "family_test_evidence" in benchmark_report["blocking_gates"]
 
 
 def test_public_private_exports_do_not_leak_hidden_fields(tmp_path: Path) -> None:

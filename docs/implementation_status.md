@@ -189,6 +189,9 @@ when those choices can be sampled and verified.
   block missing preview evidence, dataset-fingerprint mismatches, and fewer than
   20 previewed rows per generated release family, or all rows when a family has
   fewer than 20 rows.
+- Benchmark-release release and SFT reports include a family test-evidence gate.
+  Generated release families must have machine-readable references for positive
+  generation, failure/quarantine behavior, and release-report accounting tests.
 - Public/private row views separate answer-free benchmark inputs from private
   gold answers, query programs, candidate traces, and clue maps.
 - Public/private exports include row-ID parity and hidden-field leak audits.
@@ -692,17 +695,17 @@ Checked as implemented with remaining scale caveats:
   geometry-hop coverage, default SFT geometry-critical dominance, syntax-only
   caps, value-bearing and cross-feature coverage bands, prompt-template share,
   unique-answer count, answer entropy, candidate breadth, intended-family
-  coverage, sampled-parameter balance, and non-collapsed split group coverage.
-  Remaining benchmark-release work is synthesis-layer metadata for predicate
-  sequence/reference/rank/rendered wording and machine-checked new-family test
-  evidence.
+  coverage, sampled-parameter balance, preview evidence, family test evidence,
+  and non-collapsed split group coverage. Remaining benchmark-release work is
+  synthesis-layer metadata for predicate sequence/reference/rank/rendered
+  wording.
   Rechecking the current CadEvolve-50 release artifact with
   `--release-tier benchmark-release` blocks release on row count, split group
   coverage, default SFT row count, prompt-family balance, prompt-template
   balance, answer entropy, geometry-hop coverage, main BrowseComp hop coverage,
   syntax-only calibration cap, cross-feature value-bearing coverage, and
-  candidate breadth, intended-family coverage, sampled-parameter balance, and
-  preview evidence.
+  candidate breadth, intended-family coverage, sampled-parameter balance,
+  preview evidence, and family test evidence.
 - Broaden value-bearing and tolerance-equal coverage beyond the implemented
   core to radius/diameter/angle once those measurements are extracted broadly,
   additional face/endpoint/material/void coordinate combinations, and larger

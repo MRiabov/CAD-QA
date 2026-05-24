@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from cad_qa.dataset.audit import leakage_audit
+from cad_qa.dataset.family_test_evidence import DEFAULT_FAMILY_TEST_EVIDENCE, family_test_evidence_gate_report
 from cad_qa.dataset.parameter_balance import parameter_balance_report
 from cad_qa.dataset.preview import DEFAULT_PREVIEW_EVIDENCE_FILENAME, preview_evidence_gate_report
 from cad_qa.dataset.public import public_private_audit
@@ -63,6 +64,7 @@ class ReleaseGateProfile:
     min_axis_direction_parameter_share: float | None
     enforce_preview_evidence: bool
     min_preview_samples_per_family: int | None
+    enforce_family_test_evidence: bool
 
 
 SMOKE_RELEASE_PROFILE = ReleaseGateProfile(
@@ -95,6 +97,7 @@ SMOKE_RELEASE_PROFILE = ReleaseGateProfile(
     min_axis_direction_parameter_share=None,
     enforce_preview_evidence=False,
     min_preview_samples_per_family=None,
+    enforce_family_test_evidence=False,
 )
 
 RELEASE_CANDIDATE_PROFILE = replace(SMOKE_RELEASE_PROFILE, name="release-candidate")
@@ -129,6 +132,7 @@ BENCHMARK_RELEASE_PROFILE = ReleaseGateProfile(
     min_axis_direction_parameter_share=0.20,
     enforce_preview_evidence=True,
     min_preview_samples_per_family=20,
+    enforce_family_test_evidence=True,
 )
 
 RELEASE_GATE_PROFILES = {
@@ -161,6 +165,7 @@ def release_verifier_report(
     release_tier: str = DEFAULT_RELEASE_TIER,
     family_manifest: Path | None = DEFAULT_FAMILY_MANIFEST,
     preview_evidence: dict[str, Any] | None = None,
+    family_test_evidence: Path | None = DEFAULT_FAMILY_TEST_EVIDENCE,
 ) -> dict[str, Any]:
     """Aggregate release-readiness gates and verifier/quarantine taxonomy."""
 
@@ -196,6 +201,12 @@ def release_verifier_report(
         min_samples_per_family=profile.min_preview_samples_per_family,
         enforce=profile.enforce_preview_evidence,
     )
+    family_test_evidence_report = family_test_evidence_gate_report(
+        rows,
+        evidence_path=family_test_evidence,
+        family_manifest=family_manifest,
+        enforce=profile.enforce_family_test_evidence,
+    )
     shortcut_resistance = dataset["shortcut_resistance"]
     failures_by_reason = failure_report(failures or [])
     public_private = public_private_audit(public_rows, private_rows) if public_rows is not None and private_rows is not None else None
@@ -227,6 +238,7 @@ def release_verifier_report(
         "intended_family_coverage": intended_family_coverage["valid"],
         "parameter_balance": parameter_balance["valid"],
         "preview_evidence": preview_evidence_report["valid"],
+        "family_test_evidence": family_test_evidence_report["valid"],
         "geometry_critical_prompt_family_coverage": _passes_geometry_critical_family_coverage(
             shortcut_resistance
         ),
@@ -251,6 +263,7 @@ def release_verifier_report(
         "intended_family_coverage": intended_family_coverage,
         "parameter_balance": parameter_balance,
         "preview_evidence": preview_evidence_report,
+        "family_test_evidence": family_test_evidence_report,
         "shortcut_resistance": shortcut_resistance,
         "failure_report": failures_by_reason,
         "split_manifest": split,
@@ -477,6 +490,10 @@ def release_verifier_markdown(report: dict[str, Any]) -> str:
         "",
         _json_block(report["preview_evidence"]),
         "",
+        "## Family Test Evidence",
+        "",
+        _json_block(report["family_test_evidence"]),
+        "",
         "## Shortcut Resistance",
         "",
         _json_block(
@@ -541,6 +558,7 @@ def write_release_verifier_report(
     release_tier: str = DEFAULT_RELEASE_TIER,
     family_manifest: Path | None = DEFAULT_FAMILY_MANIFEST,
     preview_evidence: Path | None = None,
+    family_test_evidence: Path | None = DEFAULT_FAMILY_TEST_EVIDENCE,
 ) -> dict[str, Any]:
     rows = read_jsonl(dataset_dir / "rows.jsonl")
     failure_path = dataset_dir / "failure_manifest.jsonl"
@@ -566,6 +584,7 @@ def write_release_verifier_report(
         release_tier=release_tier,
         family_manifest=family_manifest,
         preview_evidence=preview_evidence_payload,
+        family_test_evidence=family_test_evidence,
     )
     output_dir = out or dataset_dir
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -614,6 +633,7 @@ def release_gate_profile_report(profile: ReleaseGateProfile) -> dict[str, Any]:
         "min_axis_direction_parameter_share": profile.min_axis_direction_parameter_share,
         "enforce_preview_evidence": profile.enforce_preview_evidence,
         "min_preview_samples_per_family": profile.min_preview_samples_per_family,
+        "enforce_family_test_evidence": profile.enforce_family_test_evidence,
     }
 
 
