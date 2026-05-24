@@ -65,6 +65,7 @@ families:
         - narrowing_predicate_sequence
         - aggregation_metric
         - extremum_direction
+        - prompt_wording_variant
         - rendered_clue_template_sequence
         - rendered_prompt_template_id
       enforced_dimensions:
@@ -83,6 +84,7 @@ families:
         - aggregation_metric
         - aggregation_rank
         - rank_direction
+        - prompt_wording_variant
         - rendered_clue_template_sequence
         - rendered_prompt_template_id
       enforced_dimensions:
@@ -116,6 +118,7 @@ families:
         - selected_entity_type
         - comparison_operator
         - measurement_value_bucket
+        - prompt_wording_variant
         - rendered_clue_template_sequence
         - rendered_prompt_template_id
       enforced_dimensions:
@@ -191,6 +194,7 @@ families:
         - narrowing_predicate_sequence
         - aggregation_metric
         - extremum_direction
+        - prompt_wording_variant
         - rendered_clue_template_sequence
         - rendered_prompt_template_id
       enforced_dimensions:
@@ -209,6 +213,7 @@ families:
         - aggregation_metric
         - aggregation_rank
         - rank_direction
+        - prompt_wording_variant
         - rendered_clue_template_sequence
         - rendered_prompt_template_id
       enforced_dimensions:
@@ -266,6 +271,7 @@ families:
         - selected_entity_type
         - comparison_operator
         - measurement_value_bucket
+        - prompt_wording_variant
         - rendered_clue_template_sequence
         - rendered_prompt_template_id
       enforced_dimensions:

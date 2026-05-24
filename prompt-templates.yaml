@@ -19,15 +19,33 @@ fallback_templates:
   unknown_clause: "The target satisfies the hidden `{kind}` clause."
 
 aggregation_templates:
-  argmax: "Among the remaining candidates, choose the one with the greatest {metric_label}."
-  argmin: "Among the remaining candidates, choose the one with the smallest {metric_label}."
-  rank_desc: "Among the remaining candidates, choose the {rank_label} candidate when ordered from greatest to smallest {metric_label}."
-  rank_asc: "Among the remaining candidates, choose the {rank_label} candidate when ordered from smallest to greatest {metric_label}."
+  argmax:
+    - "Among the remaining candidates, choose the one with the greatest {metric_label}."
+    - "From the remaining candidates, choose the one with the largest {metric_label}."
+    - "Within the narrowed set, select the candidate with the maximum {metric_label}."
+  argmin:
+    - "Among the remaining candidates, choose the one with the smallest {metric_label}."
+    - "From the remaining candidates, choose the one with the least {metric_label}."
+    - "Within the narrowed set, select the candidate with the minimum {metric_label}."
+  rank_desc:
+    - "Among the remaining candidates, choose the {rank_label} candidate when ordered from greatest to smallest {metric_label}."
+    - "From the remaining candidates, choose the {rank_label} item after sorting by descending {metric_label}."
+    - "Within the narrowed set, select the {rank_label} candidate in decreasing {metric_label} order."
+  rank_asc:
+    - "Among the remaining candidates, choose the {rank_label} candidate when ordered from smallest to greatest {metric_label}."
+    - "From the remaining candidates, choose the {rank_label} item after sorting by ascending {metric_label}."
+    - "Within the narrowed set, select the {rank_label} candidate in increasing {metric_label} order."
   argmin.distance_to_reference_feature_centroid: "Among the remaining candidates, choose the one whose midpoint is closest to the reference feature's solid centroid."
 
 tie_break_templates:
-  argmax: "If that leaves a tie, choose the tied candidate with the greatest {metric_label}."
-  argmin: "If that leaves a tie, choose the tied candidate with the smallest {metric_label}."
+  argmax:
+    - "If that leaves a tie, choose the tied candidate with the greatest {metric_label}."
+    - "If candidates are still tied, use the largest {metric_label} as the tie-break."
+    - "For any remaining tie, keep the candidate with the maximum {metric_label}."
+  argmin:
+    - "If that leaves a tie, choose the tied candidate with the smallest {metric_label}."
+    - "If candidates are still tied, use the least {metric_label} as the tie-break."
+    - "For any remaining tie, keep the candidate with the minimum {metric_label}."
 
 metric_labels:
   area: "profile area"
@@ -76,14 +94,23 @@ clause_templates:
 
   has_kernel_selector_identity: "The target face is one of the selected model faces."
   has_kernel_face_selector_identity: "The target face is one of the selected model faces."
-  has_parameterized_face_set: "The target face belongs to a measured face set."
-  has_parameterized_face_metric: "The target face has a measured {metric_label}."
+  has_parameterized_face_set:
+    - "The target face belongs to a measured face set."
+    - "The target face is part of a face group with measured geometry."
+    - "The target face is included in a face set with checked dimensions."
+  has_parameterized_face_metric:
+    - "The target face has a measured {metric_label}."
+    - "The target face has a known {metric_label}."
+    - "The target face has a verified {metric_label}."
   has_selected_face_bbox: "The target face has a measured bounding box."
   face.has_origin_distance_relation: "The target face center has a measured distance to the global origin."
   has_face_center_distance: "The target face center has a distance-to-origin measurement."
   has_face_center_z_value: "The target face center has a global Z coordinate of {value}."
   has_face_area: "The target face has a measured surface area."
-  has_face_area_value: "The target face has a surface area of {value}."
+  has_face_area_value:
+    - "The target face has a surface area of {value}."
+    - "The target face area is {value}."
+    - "The target face encloses {value} of surface area."
   has_opposite_face_relation: "The target face is opposite a parallel face with a matching in-plane span."
   has_adjacent_face_relation: "The target face is adjacent to another face that shares a boundary."
   has_perpendicular_face_relation: "The target face is perpendicular to another face."
@@ -92,20 +119,41 @@ clause_templates:
   has_face_bbox_z: "The target face has a measured maximum Z coordinate."
 
   has_kernel_selected_faces: "The target face selection identifies measured model faces."
-  has_parameterized_face_selection: "The target selection contains measured model faces."
-  has_parameterized_selected_face_metric_threshold: "At least one face in the target selection has a {metric_label} {operator_label} {value}."
+  has_parameterized_face_selection:
+    - "The target selection contains measured model faces."
+    - "The target face group contains model faces with measured geometry."
+    - "The target face set includes faces with checked dimensions."
+  has_parameterized_selected_face_metric_threshold:
+    - "At least one face in the target selection has a {metric_label} {operator_label} {value}."
+    - "At least one face in the target face group has a {metric_label} {operator_label} {value}."
+    - "The target face set includes a face with {metric_label} {operator_label} {value}."
   has_selected_count: "The target selection has a measured entity count."
-  has_parameterized_selected_count: "The target selection has a measured entity count."
+  has_parameterized_selected_count:
+    - "The target selection has a measured entity count."
+    - "The target group has a counted number of selected entities."
+    - "The target set has a checked item count."
   has_kernel_selected_edges: "The target edge selection identifies measured model edges."
-  has_parameterized_edge_selection: "The target selection contains measured model edges."
-  has_parameterized_selected_edge_metric_threshold: "At least one edge in the target selection has a {metric_label} {operator_label} {value}."
+  has_parameterized_edge_selection:
+    - "The target selection contains measured model edges."
+    - "The target edge group contains model edges with measured geometry."
+    - "The target edge set includes edges with checked dimensions."
+  has_parameterized_selected_edge_metric_threshold:
+    - "At least one edge in the target selection has a {metric_label} {operator_label} {value}."
+    - "At least one edge in the target edge group has a {metric_label} {operator_label} {value}."
+    - "The target edge set includes an edge with {metric_label} {operator_label} {value}."
   has_selected_edge_count: "The target edge selection has a measured edge count."
   same_face_as_another_selector: "The target face selection identifies the same face as another face selection."
   has_selector_operation_index: "The target selection has a modeling-sequence position that can be compared."
 
   has_kernel_edge_selector_identity: "The target edge is one of the selected model edges."
-  has_parameterized_edge_set: "The target edge belongs to a measured edge set."
-  has_parameterized_edge_metric: "The target edge has a measured {metric_label}."
+  has_parameterized_edge_set:
+    - "The target edge belongs to a measured edge set."
+    - "The target edge is part of an edge group with measured geometry."
+    - "The target edge is included in an edge set with checked dimensions."
+  has_parameterized_edge_metric:
+    - "The target edge has a measured {metric_label}."
+    - "The target edge has a known {metric_label}."
+    - "The target edge has a verified {metric_label}."
   has_selected_edge_bbox: "The target edge has a measured bounding box."
   has_perpendicular_edge_relation: "The target edge is perpendicular to another selected edge."
   has_adjacent_edge_relation: "The target edge is adjacent to another selected edge that shares an endpoint."
@@ -120,7 +168,10 @@ clause_templates:
   positive_midpoint_z: "The target edge midpoint has a positive global Z coordinate."
   has_midpoint_y: "The target edge has a measured midpoint Y coordinate."
   has_edge_length: "The target edge has a measured length."
-  has_edge_length_value: "The target edge has a length of {value}."
+  has_edge_length_value:
+    - "The target edge has a length of {value}."
+    - "The target edge length is {value}."
+    - "The target edge measures {value} end to end."
   has_edge_midpoint_for_reference_distance: "The target edge has a measured midpoint for the reference-distance comparison."
   edge_length_less_than_midpoint_distance: "The target edge length is less than its midpoint distance to the global origin."
   has_midpoint_x: "The target edge has a measured midpoint X coordinate."
@@ -146,7 +197,10 @@ clause_templates:
   has_segment_length: "The target segment has a measured path-segment length."
 
   has_compiled_volume: "The target feature has a measured solid volume."
-  has_compiled_volume_value: "The target feature has a solid volume of {value}."
+  has_compiled_volume_value:
+    - "The target feature has a solid volume of {value}."
+    - "The target feature's solid volume is {value}."
+    - "The target feature encloses a solid volume of {value}."
   has_compiled_bbox_height: "The target feature has a measured overall height."
   has_compiled_bbox_height_value: "The target feature has an overall height of {value}."
   has_compiled_centroid: "The target feature has a measured solid centroid."

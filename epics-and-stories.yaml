@@ -341,7 +341,7 @@ epics:
         status: work-in-progress
       - id: "14.3"
         title: Randomize rendered view words, min/max wording, exact-value clues, and entity-type wording from sampled parameters
-        status: planned
+        status: work-in-progress
       - id: "14.4"
         title: Release and SFT gates for parameter balance across task families
         status: work-in-progress

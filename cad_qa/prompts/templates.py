@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 import yaml
 
 
 PROMPT_TEMPLATE_PATH = Path(__file__).resolve().parents[2] / "prompt-templates.yaml"
+TemplateEntry = str | list[str]
 
 
 @lru_cache(maxsize=1)
@@ -52,18 +53,18 @@ def clause_prompt(clause: Any, *, query: Any | None = None) -> str:
     if template_key is None:
         clause_id = getattr(clause, "id", None) or "<missing>"
         raise KeyError(f"missing prompt template for clause id: {clause_id}")
-    return templates[template_key].format(**_clause_format_values(clause, query))
+    return _select_template(templates[template_key], query=query).format(**_clause_format_values(clause, query))
 
 
-def aggregation_prompt(aggregation: str, metric: str, *, rank: int | None = None) -> str:
+def aggregation_prompt(aggregation: str, metric: str, *, rank: int | None = None, query: Any | None = None) -> str:
     templates = _template_mapping("aggregation_templates")
-    template = templates[aggregation_template_key(aggregation, metric)]
+    template = _select_template(templates[aggregation_template_key(aggregation, metric)], query=query)
     return template.format(metric=metric, metric_label=metric_label(metric), rank=rank, rank_label=_rank_label(rank))
 
 
-def tie_break_prompt(aggregation: str, metric: str) -> str:
+def tie_break_prompt(aggregation: str, metric: str, *, query: Any | None = None) -> str:
     templates = _template_mapping("tie_break_templates")
-    template = templates[tie_break_template_key(aggregation, metric)]
+    template = _select_template(templates[tie_break_template_key(aggregation, metric)], query=query)
     return template.format(metric=metric, metric_label=metric_label(metric))
 
 
@@ -71,6 +72,15 @@ def clause_template_key(clause: Any, *, query: Any | None = None) -> str | None:
     """Return the YAML template key used for a rendered query clause."""
 
     return _clause_template_key(clause, query, _template_mapping("clause_templates"))
+
+
+def clause_template_id(clause: Any, *, query: Any | None = None) -> str | None:
+    """Return the rendered YAML clue-template identifier, including wording variant."""
+
+    key = clause_template_key(clause, query=query)
+    if key is None:
+        return None
+    return _template_id_with_variant(key, _template_mapping("clause_templates")[key], query)
 
 
 def aggregation_template_key(aggregation: str, metric: str) -> str:
@@ -81,6 +91,13 @@ def aggregation_template_key(aggregation: str, metric: str) -> str:
     return key if key in templates else aggregation
 
 
+def aggregation_template_id(aggregation: str, metric: str, *, query: Any | None = None) -> str:
+    """Return the rendered aggregation-template identifier, including wording variant."""
+
+    key = aggregation_template_key(aggregation, metric)
+    return _template_id_with_variant(key, _template_mapping("aggregation_templates")[key], query)
+
+
 def tie_break_template_key(aggregation: str, metric: str) -> str:
     """Return the YAML template key used for a tie-break clue."""
 
@@ -89,9 +106,19 @@ def tie_break_template_key(aggregation: str, metric: str) -> str:
     return key if key in templates else aggregation
 
 
+def tie_break_template_id(aggregation: str, metric: str, *, query: Any | None = None) -> str:
+    """Return the rendered tie-break template identifier, including wording variant."""
+
+    key = tie_break_template_key(aggregation, metric)
+    return _template_id_with_variant(key, _template_mapping("tie_break_templates")[key], query)
+
+
 def metric_label(metric: str) -> str:
     labels = _template_mapping("metric_labels")
-    return labels.get(metric, metric.replace("_", " "))
+    value = labels.get(metric)
+    if isinstance(value, list):
+        return value[0]
+    return value if isinstance(value, str) else metric.replace("_", " ")
 
 
 def no_clause_prompt(target_type: str) -> str:
@@ -99,7 +126,7 @@ def no_clause_prompt(target_type: str) -> str:
     return template.format(target_type=target_type)
 
 
-def _clause_template_key(clause: Any, query: Any | None, templates: dict[str, str]) -> str | None:
+def _clause_template_key(clause: Any, query: Any | None, templates: dict[str, TemplateEntry]) -> str | None:
     clause_id = getattr(clause, "id", None)
     if not clause_id:
         return None
@@ -141,16 +168,57 @@ def _string_template(section: str, key: str) -> str:
     mapping = _template_mapping(section)
     if key not in mapping:
         raise KeyError(f"missing prompt template: {section}.{key}")
-    return mapping[key]
+    return _select_template(mapping[key])
 
 
-def _template_mapping(section: str) -> dict[str, str]:
+def _template_mapping(section: str) -> dict[str, TemplateEntry]:
     value = prompt_template_registry().get(section)
     if not isinstance(value, dict):
         raise ValueError(f"{PROMPT_TEMPLATE_PATH} section must be a mapping: {section}")
-    if not all(isinstance(key, str) and isinstance(template, str) for key, template in value.items()):
-        raise ValueError(f"{PROMPT_TEMPLATE_PATH} section must map strings to strings: {section}")
+    if not all(isinstance(key, str) and _valid_template_entry(template) for key, template in value.items()):
+        raise ValueError(f"{PROMPT_TEMPLATE_PATH} section must map strings to strings or string lists: {section}")
     return value
+
+
+def _valid_template_entry(value: Any) -> bool:
+    return isinstance(value, str) or (
+        isinstance(value, list)
+        and bool(value)
+        and all(isinstance(item, str) and item for item in value)
+    )
+
+
+def _select_template(entry: TemplateEntry, *, query: Any | None = None) -> str:
+    if isinstance(entry, str):
+        return entry
+    index = _wording_variant_index(query)
+    return entry[index % len(entry)]
+
+
+def _template_id_with_variant(key: str, entry: TemplateEntry, query: Any | None) -> str:
+    if isinstance(entry, str) or not _has_explicit_wording_variant(query):
+        return key
+    return f"{key}.variant_{_wording_variant_index(query) % len(entry)}"
+
+
+def _has_explicit_wording_variant(query: Any | None) -> bool:
+    sampled = getattr(query, "sampled_parameters", None)
+    return isinstance(sampled, Mapping) and "prompt_wording_variant" in sampled
+
+
+def _wording_variant_index(query: Any | None) -> int:
+    sampled = getattr(query, "sampled_parameters", None)
+    if not isinstance(sampled, Mapping):
+        return 0
+    raw = sampled.get("prompt_wording_variant")
+    values = raw if isinstance(raw, list) else [raw]
+    for value in values:
+        if value is None:
+            continue
+        text = str(value).removeprefix("variant_")
+        if text.isdigit():
+            return int(text)
+    return 0
 
 
 def _operator_label(operator: str) -> str:

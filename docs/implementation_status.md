@@ -103,7 +103,9 @@ when those choices can be sampled and verified.
   domain-language clause templates, metric display labels, versioned query-shape
   template IDs, clause-to-clue maps, persisted candidate-count annotations,
   hidden-clause traceability validation, and row-level high-hop clue breadth
-  audits.
+  audits. Template entries may now define wording variants selected by sampled
+  `prompt_wording_variant` metadata, with rendered variant IDs recorded in row
+  sampled-parameter metadata.
 - Dataset row materialization and validation.
 - Deterministic group-safe smoke and release splits over protected source
   groups, including source family, generator, counterfactual group, explicit
@@ -739,10 +741,13 @@ Checked as implemented with remaining scale caveats:
   reference type, point metrics, anchor metrics, and anchor signatures for
   balance reporting. The resolver now supports ranked measured selectors,
   serializes aggregation-rank/rank-direction metadata, and the synthesis layer
-  emits an initial face/edge rank-family slice. Broader synthesized
-  reference-anchor sampling, additional rank values, and actual wording
-  randomization remain open. The gate still does not prove every future intended
-  parameter dimension was sampled whenever the verifier could support it.
+  emits an initial face/edge rank-family slice. Synthesized extrema, rank, and
+  selector-count rows now sample prompt-wording variants from the centralized
+  YAML templates. Broader synthesized reference-anchor sampling, additional rank
+  values, full entity/view-word randomization, and release-scale wording
+  distribution review remain open. The gate still does not prove every future
+  intended parameter dimension was sampled whenever the verifier could support
+  it.
 - Expand the intended-family manifest into full family specs with predicates,
   selectors, parameter dimensions, and geometry-limited exceptions.
 - Keep benchmark-release gating as the canonical release bar. Explicit

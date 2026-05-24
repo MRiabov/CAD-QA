@@ -9,13 +9,13 @@ from cad_qa.prompts.templates import (
     CHECKLIST_TEMPLATE_ID,
     PROMPT_VERSION,
     aggregation_prompt,
-    aggregation_template_key,
+    aggregation_template_id,
     checklist_prompt,
     clause_prompt,
-    clause_template_key,
+    clause_template_id,
     no_clause_prompt,
     tie_break_prompt,
-    tie_break_template_key,
+    tie_break_template_id,
 )
 from cad_qa.prompts.wording_gates import banned_terms
 from cad_qa.query.ir import Clause
@@ -35,7 +35,7 @@ def render_prompt(source_code: str, query: QueryProgram) -> RenderedPrompt:
     clues = [clause_prompt(clause, query=query) for clause in query.clauses]
     clue_ids = [clause.id for clause in query.clauses]
     clue_template_ids = [
-        f"clause:{clause_template_key(clause, query=query)}"
+        f"clause:{clause_template_id(clause, query=query)}"
         for clause in query.clauses
     ]
     if query.aggregation and query.aggregation_metric:
@@ -44,17 +44,18 @@ def render_prompt(source_code: str, query: QueryProgram) -> RenderedPrompt:
                 query.aggregation,
                 query.aggregation_metric,
                 rank=getattr(query, "aggregation_rank", None),
+                query=query,
             )
         )
         clue_ids.append("aggregation")
         clue_template_ids.append(
-            f"aggregation:{aggregation_template_key(query.aggregation, query.aggregation_metric)}"
+            f"aggregation:{aggregation_template_id(query.aggregation, query.aggregation_metric, query=query)}"
         )
     if query.tie_break_aggregation and query.tie_break_metric:
-        clues.append(tie_break_prompt(query.tie_break_aggregation, query.tie_break_metric))
+        clues.append(tie_break_prompt(query.tie_break_aggregation, query.tie_break_metric, query=query))
         clue_ids.append("tie_break_aggregation")
         clue_template_ids.append(
-            f"tie_break:{tie_break_template_key(query.tie_break_aggregation, query.tie_break_metric)}"
+            f"tie_break:{tie_break_template_id(query.tie_break_aggregation, query.tie_break_metric, query=query)}"
         )
     if not clues:
         clues.append(no_clause_prompt(query.target_type))

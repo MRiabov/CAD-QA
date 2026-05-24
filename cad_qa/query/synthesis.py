@@ -328,6 +328,7 @@ def _query_for_extreme(graph: OntologyGraph, viable: ViableExtreme) -> QueryProg
             "aggregation_metric": [viable.metric],
             "extremum_direction": [direction],
             "predicate_catalog_version": ["v1"],
+            "prompt_wording_variant": [_prompt_wording_variant(graph.graph_id, spec.family_id)],
             "synthesis_strategy": [
                 "bounded_parameterized_rank_v1"
                 if viable.aggregation_rank is not None
@@ -483,6 +484,7 @@ def _query_for_selector_count(graph: OntologyGraph, viable: ViableSelectorCount)
             "aggregation_metric": ["selected_count"],
             "extremum_direction": [direction],
             "predicate_catalog_version": ["v1"],
+            "prompt_wording_variant": [_prompt_wording_variant(graph.graph_id, spec.family_id)],
             "synthesis_strategy": ["selector_count_narrowing_v1"],
         },
         relation.sampled_parameters,
@@ -646,3 +648,7 @@ def _measurement_value(graph: OntologyGraph, entity_id: str, metric: str) -> Any
 def _stable_choice_index(graph_id: str, family_id: str, count: int) -> int:
     digest = hashlib.sha256(f"{graph_id}:{family_id}".encode("utf-8")).hexdigest()
     return int(digest[:12], 16) % count
+
+
+def _prompt_wording_variant(graph_id: str, family_id: str) -> str:
+    return str(_stable_choice_index(graph_id, f"{family_id}:prompt_wording", 3))

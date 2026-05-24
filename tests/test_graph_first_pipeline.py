@@ -1734,7 +1734,10 @@ def test_prompt_templates_yaml_controls_generated_prompt_wording() -> None:
 
     assert registry["clause_templates"]["has_kernel_selector_identity"] in rendered.prompt
     assert registry["clause_templates"]["has_selected_face_bbox"] in rendered.prompt
-    assert registry["aggregation_templates"]["argmax"].format(
+    argmax_template = registry["aggregation_templates"]["argmax"]
+    if isinstance(argmax_template, list):
+        argmax_template = argmax_template[0]
+    assert argmax_template.format(
         metric="bbox_max_z",
         metric_label=registry["metric_labels"]["bbox_max_z"],
     ) in rendered.prompt
@@ -1746,6 +1749,41 @@ def test_prompt_templates_yaml_controls_generated_prompt_wording() -> None:
         "clause:has_kernel_selector_identity",
         "clause:has_selected_face_bbox",
         "aggregation:argmax",
+    ]
+
+
+def test_prompt_template_variants_are_selected_from_sampled_parameters() -> None:
+    query = QueryProgram(
+        query_id="graph:src:q3:parameterized_kernel_edge_extreme",
+        target_type="edge",
+        clauses=[
+            Clause(
+                id="has_parameterized_edge_set",
+                kind="has_relation",
+                relation="has_kernel_stable_edge_id",
+                target_type="selector",
+            ),
+            Clause(
+                id="has_parameterized_edge_metric",
+                kind="has_measurement",
+                metric="edge_length",
+            ),
+        ],
+        aggregation="argmin",
+        aggregation_metric="edge_length",
+        hop_count=3,
+        sampled_parameters={"prompt_wording_variant": ["1"]},
+    )
+
+    rendered = render_prompt("import cadquery as cq\n", query)
+
+    assert "edge group with measured geometry" in rendered.prompt
+    assert "known edge length" in rendered.prompt
+    assert "least edge length" in rendered.prompt
+    assert [clue["clue_template_id"] for clue in rendered.clue_map] == [
+        "clause:has_parameterized_edge_set.variant_1",
+        "clause:has_parameterized_edge_metric.variant_1",
+        "aggregation:argmin.variant_1",
     ]
 
 
@@ -1765,9 +1803,11 @@ def test_prompt_clause_templates_use_domain_wording() -> None:
     }
     clause_templates = prompt_template_registry()["clause_templates"]
     for key, template in clause_templates.items():
-        lowered = template.lower()
-        assert not implementation_terms & set(lowered.replace("-", " ").split()), key
-        assert "selector-result" not in lowered, key
+        templates = template if isinstance(template, list) else [template]
+        for item in templates:
+            lowered = item.lower()
+            assert not implementation_terms & set(lowered.replace("-", " ").split()), key
+            assert "selector-result" not in lowered, key
 
 
 def test_prompt_metric_labels_hide_internal_measurement_names() -> None:
@@ -2105,13 +2145,33 @@ def test_synthesis_generates_parameterized_kernel_face_extreme_query() -> None:
         "relation:has_kernel_stable_face_id:selector",
     ]
     assert row.query_program["sampled_parameters"] == sampled_parameters_from_query(row.query_program)
-    assert row.query_program["sampled_parameters"]["rendered_clue_template_id"] == [
+    rendered_ids = row.query_program["sampled_parameters"]["rendered_clue_template_id"]
+    expected_bases = [
         f"aggregation:{query.aggregation}",
         "clause:has_parameterized_face_metric",
         "clause:has_parameterized_face_set",
     ]
-    assert "belongs to a measured face set" in row.prompt
-    assert "measured X coordinate" in row.prompt
+    assert query.sampled_parameters["prompt_wording_variant"]
+    assert all(
+        any(rendered_id == base or rendered_id.startswith(f"{base}.variant_") for rendered_id in rendered_ids)
+        for base in expected_bases
+    )
+    assert any(
+        phrase in row.prompt
+        for phrase in (
+            "belongs to a measured face set",
+            "face group with measured geometry",
+            "face set with checked dimensions",
+        )
+    )
+    assert any(
+        phrase in row.prompt
+        for phrase in (
+            "measured X coordinate",
+            "known X coordinate",
+            "verified X coordinate",
+        )
+    )
 
 
 def test_smoke_queries_include_parameterized_kernel_edge_synthesis() -> None:
@@ -2137,8 +2197,22 @@ def test_smoke_queries_include_parameterized_kernel_edge_synthesis() -> None:
     assert query.sampled_parameters["aggregation_axis"] == ["y"]
     assert query.sampled_parameters["target_type"] == ["edge"]
     assert row.logical_hop_count == 3
-    assert "belongs to a measured edge set" in row.prompt
-    assert "measured midpoint Y coordinate" in row.prompt
+    assert any(
+        phrase in row.prompt
+        for phrase in (
+            "belongs to a measured edge set",
+            "edge group with measured geometry",
+            "edge set with checked dimensions",
+        )
+    )
+    assert any(
+        phrase in row.prompt
+        for phrase in (
+            "measured midpoint Y coordinate",
+            "known midpoint Y coordinate",
+            "verified midpoint Y coordinate",
+        )
+    )
 
 
 def test_synthesis_generates_ranked_kernel_edge_query() -> None:
@@ -2329,7 +2403,10 @@ def test_synthesis_uses_tie_break_metric_for_tied_extrema() -> None:
     assert row.candidate_trace["steps"][-1]["step"] == "tie_break_aggregation"
     assert len(row.candidate_trace["steps"][-1]["before"]) == 2
     assert row.candidate_trace["steps"][-1]["after"] == [resolution.gold_answer]
-    assert "If that leaves a tie" in row.prompt
+    assert any(
+        phrase in row.prompt
+        for phrase in ("If that leaves a tie", "If candidates are still tied", "For any remaining tie")
+    )
     assert row.query_program["sampled_parameters"]["tie_break_metric"] == [query.tie_break_metric]
 
 
