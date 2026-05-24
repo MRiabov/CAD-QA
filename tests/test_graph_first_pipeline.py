@@ -1743,6 +1743,33 @@ def test_smoke_queries_mine_equal_value_measurement_distractors() -> None:
     assert row.geometry_hop_count == 3
 
 
+def test_smoke_queries_mine_equal_centroid_and_height_values() -> None:
+    graph = OntologyGraph(graph_id="graph:equal_more", source={"source_id": "src_equal_more", "source_code": "import cadquery as cq\n"})
+    for node_id, volume, centroid_z, bbox_span_z in [
+        ("feature:a", 10.0, -0.0, 5.0),
+        ("feature:b", 20.0, 0.0, 5.0),
+        ("feature:c", 5.0, 9.0, 1.0),
+    ]:
+        graph.add_node(Node(node_id, "feature", node_id))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "volume", volume))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "centroid_z", centroid_z))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "bbox_span_z", bbox_span_z))
+
+    queries = {query.query_id.rsplit(":", 1)[-1]: query for query in smoke_queries(graph)}
+    centroid_query = queries["largest_equal_centroid_height_feature"]
+    height_query = queries["largest_equal_bbox_height_feature"]
+    centroid_row = materialize_row(graph, resolve_query(graph, centroid_query))
+    height_row = materialize_row(graph, resolve_query(graph, height_query))
+
+    assert centroid_query.clauses[0].value == 0.0
+    assert centroid_row.gold_answer == "feature:b"
+    assert "solid centroid height of 0.0" in centroid_row.prompt
+    assert "-0.0" not in centroid_row.prompt
+    assert height_query.clauses[0].value == 5.0
+    assert height_row.gold_answer == "feature:b"
+    assert "overall height of 5.0" in height_row.prompt
+
+
 def test_generated_smoke_query_clauses_are_yaml_backed() -> None:
     for source_id, source_code in {
         "src_fixture": SOURCE,

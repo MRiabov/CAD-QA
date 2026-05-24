@@ -82,9 +82,11 @@ candidates.
 - Initial path-geometry query families for nearest path point to origin,
   highest path point, and longest path segment.
 - Initial value-bearing measurement query families for tolerance-equal feature
-  volumes, selected-face areas, and selected-edge lengths. These rows expose
-  rounded measurement values in the public prompt, keep equal-value candidates
-  as distractors, and resolve with an additional geometric aggregation.
+  volumes, feature centroid heights, feature overall heights, selected-face
+  areas, selected-edge lengths, and selected-edge midpoint distances. These
+  rows expose rounded measurement values in the public prompt, keep equal-value
+  candidates as distractors, and resolve with an additional geometric
+  aggregation.
 - YAML-backed prompt rendering from `prompt-templates.yaml`, with centralized
   domain-language clause templates, metric display labels, versioned query-shape
   template IDs, clause-to-clue maps, persisted candidate-count annotations,
@@ -618,13 +620,16 @@ Checked as implemented with remaining scale caveats:
 ## Open Work
 
 - Add value-bearing measurement prompt families. Current domain-language
-  templates now cover initial equal-volume, equal-face-area, and
-  equal-edge-length rows; coverage still needs to broaden to centroid, bbox,
-  coordinate, distance, radius/diameter, angle, and derived region values.
+  templates now cover initial equal-volume, equal-centroid-height,
+  equal-overall-height, equal-face-area, equal-edge-length, and
+  equal-edge-midpoint-distance rows; coverage still needs to broaden to direct
+  coordinates, radius/diameter, angle, derived region values, and cross-feature
+  distance values.
 - Add tolerance-equal measurement mining for multi-hop distractor construction:
-  the first implementation groups feature volumes, selected-face areas, and
-  selected-edge lengths; it still needs broader entity/parameter coverage and
-  configurable tolerance policy surfaced in release reports.
+  the current implementation groups feature volumes, feature centroid heights,
+  feature overall heights, selected-face areas, selected-edge lengths, and
+  selected-edge midpoint distances; it still needs broader entity/parameter
+  coverage and configurable tolerance policy surfaced in release reports.
 - Add cross-feature value-bearing tasks and require them to be well represented
   in release/SFT exports. Example: identify an edge on a box-like feature whose
   midpoint is closest to the center of a sphere-like feature, with both
