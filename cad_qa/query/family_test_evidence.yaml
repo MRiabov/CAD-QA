@@ -427,6 +427,7 @@ families:
   - id: parameterized_kernel_edge_selector_count
     positive_generation:
       - test_synthesis_generates_geometry_narrowed_selector_count_query
+      - test_synthesis_generates_equal_related_metric_selector_count_query
     failure_or_quarantine:
       - test_synthesis_skips_selector_count_when_narrowing_has_no_unique_count
     release_report_accounting:

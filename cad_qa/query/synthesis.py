@@ -1425,8 +1425,19 @@ def _viable_selector_counts(graph: OntologyGraph, spec: SelectorCountFamilySpec)
     relation_candidates = _apply_relation_clause(graph, selectors, spec.relation)
     viable: list[ViableSelectorCount] = []
     for metric in spec.related_metrics:
-        thresholds = _related_metric_thresholds(graph, relation_candidates, relation=spec.relation, metric=metric)
-        for operator, value in thresholds:
+        predicates = [
+            *(_related_metric_thresholds(graph, relation_candidates, relation=spec.relation, metric=metric)),
+            *(
+                ("==", value)
+                for value in _related_metric_equal_values(
+                    graph,
+                    relation_candidates,
+                    relation=spec.relation,
+                    metric=metric,
+                )
+            ),
+        ]
+        for operator, value in predicates:
             predicate = related_metric_compare_predicate(
                 graph,
                 relation_candidates,
@@ -1472,6 +1483,28 @@ def _viable_selector_counts(graph: OntologyGraph, spec: SelectorCountFamilySpec)
             item.candidate_ids,
         ),
     )
+
+
+def _related_metric_equal_values(
+    graph: OntologyGraph,
+    candidates: list[Node],
+    *,
+    relation: str,
+    metric: str,
+) -> list[float]:
+    counts: dict[float, int] = {}
+    for node in candidates:
+        buckets = {
+            measurement_bucket_value(measurement.value)
+            for edge in graph.relations
+            if edge.source_id == node.id and edge.type == relation
+            for measurement in graph.measurements_for(edge.target_id, metric)
+            if isinstance(measurement.value, (int, float))
+        }
+        for bucket in buckets:
+            if bucket is not None:
+                counts[bucket] = counts.get(bucket, 0) + 1
+    return sorted(value for value, count in counts.items() if count >= 2)[:24]
 
 
 def _query_for_selector_count(graph: OntologyGraph, viable: ViableSelectorCount) -> QueryProgram | None:

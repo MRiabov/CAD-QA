@@ -106,6 +106,7 @@ def synthesis_selfcheck_graphs() -> list[OntologyGraph]:
         _path_metric_graph(),
         _face_selector_count_graph(),
         _edge_selector_count_graph(),
+        _edge_selector_equal_metric_count_graph(),
     ]
 
 
@@ -766,6 +767,35 @@ def _edge_selector_count_graph() -> OntologyGraph:
         ("selector:a", 3, -5.0),
         ("selector:b", 4, -1.0),
         ("selector:c", 4, 8.0),
+    ]:
+        edge_id = f"edge:{selector_id.rsplit(':', 1)[-1]}"
+        graph.add_node(Node(selector_id, "selector", selector_id))
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(selector_id, edge_id, "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(selector_id, "snapshot_state", "selected_count", selected_count))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint_y, "mm"))
+    return graph
+
+
+def _edge_selector_equal_metric_count_graph() -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id="graph:selector-count-equal-2",
+        source={
+            "source_id": "selfcheck-edge-selector-equal-metric-count",
+            "source_code": (
+                "import cadquery as cq\n"
+                "box = cq.Workplane(\"XY\").box(10, 6, 4)\n"
+                "sel_a = box.edges(\"<Y\")\n"
+                "sel_b = box.edges(\"|Y\")\n"
+                "sel_c = box.edges(\">Y\")\n"
+            ),
+        },
+    )
+    for selector_id, selected_count, midpoint_y in [
+        ("selector:a", 3, 2.0),
+        ("selector:b", 5, 2.0),
+        ("selector:c", 3, 8.0),
+        ("selector:d", 5, 8.0),
     ]:
         edge_id = f"edge:{selector_id.rsplit(':', 1)[-1]}"
         graph.add_node(Node(selector_id, "selector", selector_id))

@@ -4554,6 +4554,44 @@ def test_synthesis_generates_geometry_narrowed_selector_count_query() -> None:
     assert "At least one edge in the target selection has a midpoint Y coordinate" in row.prompt
 
 
+def test_synthesis_generates_equal_related_metric_selector_count_query() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:selector-count-equal-2",
+        source={"source_id": "synthetic", "source_code": ""},
+    )
+    for selector_id, selected_count, midpoint_y in [
+        ("selector:a", 3, 2.0),
+        ("selector:b", 5, 2.0),
+        ("selector:c", 3, 8.0),
+        ("selector:d", 5, 8.0),
+    ]:
+        edge_id = f"edge:{selector_id.rsplit(':', 1)[-1]}"
+        graph.add_node(Node(selector_id, "selector", selector_id))
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(selector_id, edge_id, "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(selector_id, "snapshot_state", "selected_count", selected_count))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint_y, "mm"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_kernel_edge_selector_count")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+    related_step = next(step for step in row.candidate_trace["steps"] if step["step"] == "has_parameterized_selected_edge_metric_threshold")
+
+    assert resolution.verifier_status == "resolved"
+    assert query.clauses[1].kind == "related_metric_compare"
+    assert query.clauses[1].operator == "=="
+    assert query.clauses[1].value == 2.0
+    assert related_step["after"] == ["selector:a", "selector:b"]
+    assert row.gold_answer == "selector:b"
+    assert row.query_program["sampled_parameters"]["comparison_operator"] == ["=="]
+    assert row.query_program["sampled_parameters"]["measurement_value_bucket"] == ["midpoint_y:2"]
+    assert "equal to 2.0" in row.prompt
+
+
 def test_synthesis_skips_selector_count_when_narrowing_has_no_unique_count() -> None:
     graph = OntologyGraph(graph_id="graph:tied-selector-count", source={"source_id": "synthetic", "source_code": ""})
     for selector_id, selected_count, midpoint_y in [

@@ -524,7 +524,7 @@ families:
         - measurement_value_bucket
       expected_values:
         selected_entity_type: [face]
-    notes: Synthesized selector-count family that narrows by selected-face geometry before sampling min/max count.
+    notes: Synthesized selector-count family that narrows by selected-face geometry using sampled thresholds or equal measured values before sampling min/max count.
   - id: highest_kernel_selected_edge
     status: review_only
     target_type: edge
@@ -1038,7 +1038,7 @@ families:
         - measurement_value_bucket
       expected_values:
         selected_entity_type: [edge]
-    notes: Synthesized selector-count family that narrows by selected-edge geometry before sampling min/max count.
+    notes: Synthesized selector-count family that narrows by selected-edge geometry using sampled thresholds or equal measured values before sampling min/max count.
   - id: path_nearest_origin
     status: review_only
     target_type: path

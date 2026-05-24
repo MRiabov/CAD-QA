@@ -208,10 +208,15 @@ when those choices can be sampled and verified.
 - The synthesis layer also has an initial sparse selector-count narrowing
   slice for `parameterized_kernel_face_selector_count` and
   `parameterized_kernel_edge_selector_count`. It uses a related-entity metric
-  predicate, such as a selected edge's midpoint coordinate threshold, to keep a
-  geometry-defined selector subset before applying sampled min/max
-  `selected_count`. This is still not the full predicate catalog or bounded
-  beam-search implementation.
+  predicate, such as a selected edge's midpoint coordinate threshold or an
+  equal related-geometry value, to keep a geometry-defined selector subset
+  before applying sampled min/max `selected_count`. The reviewed selfcheck
+  preview at
+  `runs/parameterized_synthesis_selfcheck_selector_equal_counts/PREVIEW.md`
+  includes a row that narrows edge selections to those containing an edge with
+  midpoint Y coordinate equal to `2.0`, then selects the largest measured
+  selected-entity count. This is still not the full predicate catalog or
+  bounded beam-search implementation.
 - Initial synthesized rank families now exist for measured kernel faces and
   edges. `parameterized_kernel_face_rank` and
   `parameterized_kernel_edge_rank` use the same reusable relation/measurement
@@ -961,7 +966,8 @@ Checked as implemented with remaining scale caveats:
   The current synthesis slice covers parameterized extrema over kernel-selected
   feature, feature-effect delta, face/edge geometry, measured path
   point/segment/edge-endpoint geometry, and sampled face/edge spatial
-  relations, initial selected face/edge selector-count narrowing, initial equal-value
+  relations, initial selected face/edge selector-count narrowing with threshold
+  and equal related-metric predicates, initial equal-value
   face/edge/edge-endpoint/feature/material-region/void-region measurement
   groups, sampled material/void region extrema/ranks, contained-endpoint
   relation chains, and initial
@@ -971,7 +977,7 @@ Checked as implemented with remaining scale caveats:
   material-region, and void-region targets, plus generic reference-entity
   distance families that sample feature/face/edge/endpoint/material-region/
   void-region reference types where graph evidence supports them. Broader
-  selected-entity-count narrowing,
+  selected-entity-count narrowing beyond face/edge selectors,
   release-scale reference-type balance, containment/adjacency
   predicates, and broader tie-break selectors
   remain open.
