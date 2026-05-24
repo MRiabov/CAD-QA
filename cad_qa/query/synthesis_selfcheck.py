@@ -42,6 +42,12 @@ def synthesis_selfcheck_graphs() -> list[OntologyGraph]:
     return [
         _face_metric_graph(),
         _edge_metric_graph(),
+        _face_rank_graph("graph:selfcheck-face-rank-0"),
+        _face_rank_graph("graph:selfcheck-face-rank-1"),
+        _face_rank_graph("graph:selfcheck-face-rank-2"),
+        _edge_rank_graph("graph:selfcheck-edge-rank-0"),
+        _edge_rank_graph("graph:selfcheck-edge-rank-1"),
+        _edge_rank_graph("graph:selfcheck-edge-rank-2"),
         _feature_equal_metric_graph(),
         _region_equal_metric_graph(),
         _face_equal_metric_graph(),
@@ -150,6 +156,44 @@ def _edge_metric_graph() -> OntologyGraph:
     )
     graph.add_node(Node("selector:edges", "selector", "edges"))
     for edge_id, length in [("edge:a", 10.0), ("edge:b", 8.0), ("edge:c", 5.0)]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
+    return graph
+
+
+def _face_rank_graph(graph_id: str) -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id=graph_id,
+        source={
+            "source_id": graph_id.rsplit(":", 1)[-1],
+            "source_code": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane(\"XY\").box(10, 6, 4).faces(\"|Z\")\n"
+            ),
+        },
+    )
+    graph.add_node(Node("selector:faces", "selector", "faces"))
+    for face_id, area in [("face:a", 30.0), ("face:b", 20.0), ("face:c", 10.0), ("face:d", 5.0)]:
+        graph.add_node(Node(face_id, "face", face_id))
+        graph.add_relation(Relation(face_id, "selector:faces", "has_kernel_stable_face_id"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", area, "mm^2"))
+    return graph
+
+
+def _edge_rank_graph(graph_id: str) -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id=graph_id,
+        source={
+            "source_id": graph_id.rsplit(":", 1)[-1],
+            "source_code": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane(\"XY\").box(10, 6, 4).edges(\"|Y\")\n"
+            ),
+        },
+    )
+    graph.add_node(Node("selector:edges", "selector", "edges"))
+    for edge_id, length in [("edge:a", 10.0), ("edge:b", 8.0), ("edge:c", 5.0), ("edge:d", 1.0)]:
         graph.add_node(Node(edge_id, "edge", edge_id))
         graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))

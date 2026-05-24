@@ -93,7 +93,7 @@ families:
         - aggregation_rank
         - final_selector
       expected_values:
-        aggregation_rank: [2]
+        aggregation_rank: [2, 3, 4]
     notes: Synthesized family that selects a measured face by sampled rank instead of only min/max extrema.
   - id: parameterized_equal_face_metric_extreme
     status: release
@@ -330,7 +330,7 @@ families:
         - aggregation_rank
         - final_selector
       expected_values:
-        aggregation_rank: [2]
+        aggregation_rank: [2, 3, 4]
     notes: Synthesized family that selects a measured edge by sampled rank instead of only min/max extrema.
   - id: parameterized_equal_edge_metric_extreme
     status: release

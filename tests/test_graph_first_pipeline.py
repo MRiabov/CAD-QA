@@ -2238,12 +2238,13 @@ def test_synthesis_generates_ranked_kernel_edge_query() -> None:
     assert face_resolution.gold_answer == "face:b"
     assert face_query.aggregation_rank == 2
 
-    graph = OntologyGraph(graph_id="graph:synthetic-edge-rank", source={"source_id": "synthetic", "source_code": ""})
+    graph = OntologyGraph(graph_id="graph:rank-sample:0", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("selector:edges", "selector", "edges"))
     for edge_id, length in [
         ("edge:a", 10.0),
         ("edge:b", 8.0),
         ("edge:c", 5.0),
+        ("edge:d", 1.0),
     ]:
         graph.add_node(Node(edge_id, "edge", edge_id))
         graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
@@ -2278,7 +2279,40 @@ def test_synthesis_generates_ranked_kernel_edge_query() -> None:
     assert "2nd candidate when ordered" in row.prompt
 
 
-def test_synthesis_skips_rank_family_when_rank_is_tied() -> None:
+def test_synthesis_samples_later_rank_values_when_viable() -> None:
+    expected = {
+        "graph:face-rank-sample:3": ("face", "parameterized_kernel_face_rank", 3, "3rd candidate"),
+        "graph:rank-sample:4": ("edge", "parameterized_kernel_edge_rank", 4, "4th candidate"),
+    }
+    for graph_id, (target_type, family, expected_rank, prompt_fragment) in expected.items():
+        graph = OntologyGraph(graph_id=graph_id, source={"source_id": "synthetic", "source_code": ""})
+        selector_id = "selector:faces" if target_type == "face" else "selector:edges"
+        graph.add_node(Node(selector_id, "selector", selector_id.rsplit(":", 1)[-1]))
+        values = (
+            [("face:a", 30.0), ("face:b", 20.0), ("face:c", 10.0), ("face:d", 5.0)]
+            if target_type == "face"
+            else [("edge:a", 10.0), ("edge:b", 8.0), ("edge:c", 5.0), ("edge:d", 1.0)]
+        )
+        relation = "has_kernel_stable_face_id" if target_type == "face" else "has_kernel_stable_edge_id"
+        metric = "face_area" if target_type == "face" else "edge_length"
+        unit = "mm^2" if target_type == "face" else "mm"
+        for node_id, value in values:
+            graph.add_node(Node(node_id, target_type, node_id))
+            graph.add_relation(Relation(node_id, selector_id, relation))
+            graph.add_measurement(Measurement(node_id, "entity_geometry", metric, value, unit))
+
+        query = next(query for query in synthesize_graph_hop_queries(graph) if query.query_id.endswith(family))
+        resolution = resolve_query(graph, query)
+        row = materialize_row(graph, resolution)
+
+        assert resolution.verifier_status == "resolved"
+        assert query.aggregation_rank == expected_rank
+        assert query.sampled_parameters["aggregation_rank"] == [str(expected_rank)]
+        assert row.candidate_trace["steps"][-1]["rank"] == expected_rank
+        assert prompt_fragment in row.prompt
+
+
+def test_synthesis_skips_tied_rank_positions_without_dropping_viable_later_ranks() -> None:
     graph = OntologyGraph(graph_id="graph:tied-rank", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("selector:edges", "selector", "edges"))
     for edge_id, length in [
@@ -2289,6 +2323,27 @@ def test_synthesis_skips_rank_family_when_rank_is_tied() -> None:
         graph.add_node(Node(edge_id, "edge", edge_id))
         graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_kernel_edge_rank")
+    )
+    resolution = resolve_query(graph, query)
+
+    assert resolution.verifier_status == "resolved"
+    assert query.aggregation == "rank_asc"
+    assert query.aggregation_rank == 3
+    assert resolution.gold_answer == "edge:a"
+
+
+def test_synthesis_skips_rank_family_when_all_rank_positions_are_tied() -> None:
+    graph = OntologyGraph(graph_id="graph:all-tied-rank", source={"source_id": "synthetic", "source_code": ""})
+    graph.add_node(Node("selector:edges", "selector", "edges"))
+    for edge_id in ["edge:a", "edge:b", "edge:c"]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", 8.0, "mm"))
 
     families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
 

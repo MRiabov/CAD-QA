@@ -492,7 +492,7 @@ def _viable_ranks(graph: OntologyGraph, spec: ExtremeFamilySpec) -> list[ViableE
         if len(metric_candidates) < 3:
             continue
         for aggregation in ("rank_desc", "rank_asc"):
-            for rank in (2,):
+            for rank in range(2, min(len(metric_candidates), 4) + 1):
                 if _has_unique_rank(graph, metric_candidates, metric, aggregation, rank):
                     viable.append(ViableExtreme(spec, metric_candidates, metric, aggregation, aggregation_rank=rank))
     return sorted(

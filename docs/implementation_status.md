@@ -786,7 +786,7 @@ Checked as implemented with remaining scale caveats:
   face/edge-to-feature reference-distance families. Broader
   selected-entity-count narrowing,
   face/endpoint/material/void reference anchors, containment/adjacency
-  predicates, and rank/tie-break selectors
+  predicates, and broader tie-break selectors
   remain open.
 - Extend sampled-parameter metadata from the synthesis layer to include
   predicate sequence, reference anchor, rank, rendered wording,
@@ -797,14 +797,14 @@ Checked as implemented with remaining scale caveats:
   reference type, point metrics, anchor metrics, and anchor signatures for
   balance reporting. The resolver now supports ranked measured selectors,
   serializes aggregation-rank/rank-direction metadata, and the synthesis layer
-  emits an initial face/edge rank-family slice. Synthesized equal-measurement
+  emits face/edge rank-family rows for viable ranks 2-4. Synthesized equal-measurement
   rows serialize equal metric and value-bucket metadata, and synthesized
   reference-distance rows serialize sampled reference-anchor and target/reference
   point metric metadata.
   Synthesized extrema, rank, selector-count, equal-measurement, and
   reference-distance rows now sample prompt-wording variants from the centralized
-  YAML templates. Broader synthesized reference-anchor sampling, additional rank
-  values, full entity/view-word randomization, and release-scale wording
+  YAML templates. Broader synthesized reference-anchor sampling, rank values
+  beyond 2-4, full entity/view-word randomization, and release-scale wording
   distribution review remain open. The gate still does not prove every future
   intended parameter dimension was sampled whenever the verifier could support
   it.
