@@ -104,6 +104,22 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Initial synthesized feature-to-reference-feature distance family with equal-measurement narrowing.
+  - id: parameterized_feature_extreme
+    positive_generation:
+      - test_synthesis_generates_parameterized_feature_extreme_and_rank_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_parameterized_feature_queries_without_measured_distractors
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Initial synthesized compiled-feature extremum family with sampled metrics.
+  - id: parameterized_feature_rank
+    positive_generation:
+      - test_synthesis_generates_parameterized_feature_extreme_and_rank_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_parameterized_feature_queries_without_measured_distractors
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Initial synthesized compiled-feature rank family with sampled metrics and rank direction.
   - id: parameterized_equal_material_region_metric_extreme
     positive_generation:
       - test_synthesis_generates_equal_value_region_queries

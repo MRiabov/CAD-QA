@@ -29,11 +29,11 @@ REFERENCE_FEATURE_DISTANCE_METRIC = "distance_to_reference_feature_centroid"
 class ExtremeFamilySpec:
     family_id: str
     target_type: str
-    relation: str
-    relation_clause_id: str
+    relation: str | None
+    relation_clause_id: str | None
     measurement_clause_id: str
     metrics: tuple[str, ...]
-    relation_target_type: str = "selector"
+    relation_target_type: str | None = "selector"
     allow_rank: bool = False
 
 
@@ -145,6 +145,22 @@ class ViableRelationExtreme:
 
 EXTREME_FAMILY_SPECS = (
     ExtremeFamilySpec(
+        family_id="parameterized_feature_extreme",
+        target_type="feature",
+        relation=None,
+        relation_clause_id=None,
+        measurement_clause_id="has_parameterized_feature_metric",
+        metrics=(
+            "volume",
+            "centroid_x",
+            "centroid_y",
+            "centroid_z",
+            "bbox_span_z",
+            "topology_faces",
+            "topology_edges",
+        ),
+    ),
+    ExtremeFamilySpec(
         family_id="parameterized_kernel_face_extreme",
         target_type="face",
         relation="has_kernel_stable_face_id",
@@ -198,6 +214,23 @@ EXTREME_FAMILY_SPECS = (
 )
 
 RANK_FAMILY_SPECS = (
+    ExtremeFamilySpec(
+        family_id="parameterized_feature_rank",
+        target_type="feature",
+        relation=None,
+        relation_clause_id=None,
+        measurement_clause_id="has_parameterized_feature_metric",
+        metrics=(
+            "volume",
+            "centroid_x",
+            "centroid_y",
+            "centroid_z",
+            "bbox_span_z",
+            "topology_faces",
+            "topology_edges",
+        ),
+        allow_rank=True,
+    ),
     ExtremeFamilySpec(
         family_id="parameterized_kernel_face_rank",
         target_type="face",
@@ -594,16 +627,9 @@ def synthesize_graph_hop_queries(graph: OntologyGraph) -> list[QueryProgram]:
 
 def _viable_extremes(graph: OntologyGraph, spec: ExtremeFamilySpec) -> list[ViableExtreme]:
     candidates = graph.nodes_by_type(spec.target_type)
-    relation = relation_predicate(
-        graph,
-        candidates,
-        clause_id=spec.relation_clause_id,
-        relation=spec.relation,
-        target_type=spec.relation_target_type,
-    )
-    if relation is None:
+    relation_candidates = _relation_filtered_candidates(graph, candidates, spec)
+    if relation_candidates is None:
         return []
-    relation_candidates = _apply_relation_clause(graph, candidates, spec.relation)
     viable: list[ViableExtreme] = []
     for metric in spec.metrics:
         measurement = measurement_predicate(
@@ -655,16 +681,9 @@ def _viable_ranks(graph: OntologyGraph, spec: ExtremeFamilySpec) -> list[ViableE
     candidates = graph.nodes_by_type(spec.target_type)
     if not spec.allow_rank:
         return []
-    relation = relation_predicate(
-        graph,
-        candidates,
-        clause_id=spec.relation_clause_id,
-        relation=spec.relation,
-        target_type=spec.relation_target_type,
-    )
-    if relation is None:
+    relation_candidates = _relation_filtered_candidates(graph, candidates, spec)
+    if relation_candidates is None:
         return []
-    relation_candidates = _apply_relation_clause(graph, candidates, spec.relation)
     viable: list[ViableExtreme] = []
     for metric in spec.metrics:
         measurement = measurement_predicate(
@@ -696,16 +715,10 @@ def _viable_ranks(graph: OntologyGraph, spec: ExtremeFamilySpec) -> list[ViableE
 def _query_for_extreme(graph: OntologyGraph, viable: ViableExtreme) -> QueryProgram | None:
     spec = viable.spec
     broad_candidates = graph.nodes_by_type(spec.target_type)
-    relation = relation_predicate(
-        graph,
-        broad_candidates,
-        clause_id=spec.relation_clause_id,
-        relation=spec.relation,
-        target_type=spec.relation_target_type,
-    )
-    if relation is None:
+    relation = _relation_instance(graph, broad_candidates, spec)
+    if spec.relation is not None and relation is None:
         return None
-    relation_candidates = _apply_relation_clause(graph, broad_candidates, spec.relation)
+    relation_candidates = _apply_relation_clause(graph, broad_candidates, spec.relation) if spec.relation is not None else broad_candidates
     measurement = measurement_predicate(
         graph,
         relation_candidates,
@@ -734,9 +747,10 @@ def _query_for_extreme(graph: OntologyGraph, viable: ViableExtreme) -> QueryProg
                 else "bounded_parameterized_extreme_v1"
             ],
         },
-        relation.sampled_parameters,
         measurement.sampled_parameters,
     )
+    if relation is not None:
+        sampled = merge_sampled_parameters(sampled, relation.sampled_parameters)
     if viable.aggregation_rank is not None:
         sampled = merge_sampled_parameters(
             sampled,
@@ -765,19 +779,52 @@ def _query_for_extreme(graph: OntologyGraph, viable: ViableExtreme) -> QueryProg
         query_id=f"{graph.graph_id}:synth:{spec.family_id}",
         target_type=spec.target_type,
         clauses=[
-            relation.clause,
-            measurement.clause,
+            clause
+            for clause in (
+                relation.clause if relation is not None else None,
+                measurement.clause,
+            )
+            if clause is not None
         ],
         aggregation=viable.aggregation,
         aggregation_metric=viable.metric,
         aggregation_rank=viable.aggregation_rank,
         tie_break_aggregation=viable.tie_break_aggregation,
         tie_break_metric=viable.tie_break_metric,
-        hop_count=3,
+        hop_count=2 + int(relation is not None),
         difficulty="cad_browsecomp",
         min_individual_clause_candidates=2,
         sampled_parameters=sampled,
     )
+
+
+def _relation_instance(
+    graph: OntologyGraph,
+    candidates: list[Node],
+    spec: ExtremeFamilySpec,
+) -> Any | None:
+    if spec.relation is None or spec.relation_clause_id is None or spec.relation_target_type is None:
+        return None
+    return relation_predicate(
+        graph,
+        candidates,
+        clause_id=spec.relation_clause_id,
+        relation=spec.relation,
+        target_type=spec.relation_target_type,
+    )
+
+
+def _relation_filtered_candidates(
+    graph: OntologyGraph,
+    candidates: list[Node],
+    spec: ExtremeFamilySpec,
+) -> list[Node] | None:
+    if spec.relation is None:
+        return candidates
+    relation = _relation_instance(graph, candidates, spec)
+    if relation is None:
+        return None
+    return _apply_relation_clause(graph, candidates, spec.relation)
 
 
 def _viable_selector_counts(graph: OntologyGraph, spec: SelectorCountFamilySpec) -> list[ViableSelectorCount]:

@@ -2600,6 +2600,63 @@ def test_synthesis_generates_equal_value_feature_query() -> None:
     assert "feature" in row.prompt.lower()
 
 
+def test_synthesis_generates_parameterized_feature_extreme_and_rank_queries() -> None:
+    graph = OntologyGraph(graph_id="graph:feature-extreme-rank-synth", source={"source_id": "synthetic", "source_code": ""})
+    for feature_id, volume, centroid, bbox_span_z, topology_faces in [
+        ("feature:base", 240.0, [0.0, 0.0, 2.0], 4.0, 6.0),
+        ("feature:upper", 240.0 + 1e-7, [0.0, 0.0, 8.0], 5.0, 8.0),
+        ("feature:small", 32.0, [20.0, 0.0, 1.0], 2.0, 4.0),
+        ("feature:side", 96.0, [-8.0, 3.0, 4.0], 3.0, 10.0),
+    ]:
+        graph.add_node(Node(feature_id, "feature", feature_id))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid", centroid, "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_x", centroid[0], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_y", centroid[1], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid[2], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "bbox_span_z", bbox_span_z, "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "topology_faces", topology_faces, "count"))
+
+    queries = {query.query_id.rsplit(":", 1)[-1]: query for query in synthesize_graph_hop_queries(graph)}
+    extreme_query = queries["parameterized_feature_extreme"]
+    rank_query = queries["parameterized_feature_rank"]
+    extreme_resolution = resolve_query(graph, extreme_query)
+    rank_resolution = resolve_query(graph, rank_query)
+    extreme_row = materialize_row(graph, extreme_resolution)
+    rank_row = materialize_row(graph, rank_resolution)
+
+    assert extreme_resolution.verifier_status == "resolved"
+    assert extreme_query.target_type == "feature"
+    assert extreme_query.clauses[0].kind == "has_measurement"
+    assert extreme_query.clauses[0].metric in {
+        "volume",
+        "centroid_x",
+        "centroid_y",
+        "centroid_z",
+        "bbox_span_z",
+        "topology_faces",
+        "topology_edges",
+    }
+    assert not any(clause.kind == "has_relation" for clause in extreme_query.clauses)
+    assert extreme_query.aggregation in {"argmin", "argmax"}
+    assert extreme_row.logical_hop_count == 2
+    assert extreme_row.geometry_hop_count == 2
+    assert extreme_row.query_program["sampled_parameters"]["target_type"] == ["feature"]
+    assert extreme_row.query_program["sampled_parameters"]["aggregation_metric"] == [extreme_query.aggregation_metric]
+    assert "feature" in extreme_row.prompt.lower()
+
+    assert rank_resolution.verifier_status == "resolved"
+    assert rank_query.target_type == "feature"
+    assert rank_query.aggregation in {"rank_asc", "rank_desc"}
+    assert rank_query.aggregation_rank in {2, 3, 4}
+    assert rank_query.clauses[0].kind == "has_measurement"
+    assert not any(clause.kind == "has_relation" for clause in rank_query.clauses)
+    assert rank_row.logical_hop_count == 2
+    assert rank_row.geometry_hop_count == 2
+    assert rank_row.query_program["sampled_parameters"]["aggregation_rank"] == [str(rank_query.aggregation_rank)]
+    assert "candidate when ordered" in rank_row.prompt or "item after sorting" in rank_row.prompt
+
+
 def test_synthesis_generates_feature_reference_feature_distance_query() -> None:
     graph = OntologyGraph(
         graph_id="graph:feature-reference-distance-synth",
@@ -2784,6 +2841,17 @@ def test_synthesis_skips_equal_value_feature_family_without_repeated_value_distr
     families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
 
     assert "parameterized_equal_feature_metric_extreme" not in families
+
+
+def test_synthesis_skips_parameterized_feature_queries_without_measured_distractors() -> None:
+    graph = OntologyGraph(graph_id="graph:no-feature-extreme-rank-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph.add_node(Node("feature:only", "feature", "feature:only"))
+    graph.add_measurement(Measurement("feature:only", "snapshot_state", "volume", 240.0, "mm^3"))
+
+    families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
+
+    assert "parameterized_feature_extreme" not in families
+    assert "parameterized_feature_rank" not in families
 
 
 def test_synthesis_skips_feature_reference_distance_without_feature_centroids() -> None:

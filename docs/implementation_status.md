@@ -759,6 +759,15 @@ Checked as implemented with remaining scale caveats:
   synthesis; broader target/reference combinations and release-scale
   distribution remain open.
 - The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_feature_extreme_rank/PREVIEW.md`
+  demonstrates initial `parameterized_feature_extreme` and
+  `parameterized_feature_rank` families. The reviewed rows select compiled
+  feature entities by sampled solid measurements such as volume, centroid
+  coordinates, overall height, and topology counts, including rank ordering and
+  tie-break metadata where needed. This reduces reliance on fixed
+  `largest_*`/`highest_*` feature families, but release-scale metric/rank
+  distribution remains open.
+- The synthesized selfcheck preview at
   `runs/parameterized_synthesis_selfcheck_region_equal/PREVIEW.md`
   demonstrates initial `parameterized_equal_material_region_metric_extreme` and
   `parameterized_equal_void_region_metric_extreme` families. The reviewed rows
@@ -845,9 +854,9 @@ Checked as implemented with remaining scale caveats:
   measurement bucket, containment, adjacency, or distance to a sampled reference
   entity to define a nontrivial candidate subset before the final selector.
   The current synthesis slice covers parameterized extrema over kernel-selected
-  face/edge geometry, measured path point/segment/edge-endpoint geometry, and
-  sampled face/edge spatial relations, initial selected face/edge selector-count
-  narrowing, initial equal-value
+  feature, face/edge geometry, measured path point/segment/edge-endpoint
+  geometry, and sampled face/edge spatial relations, initial selected face/edge
+  selector-count narrowing, initial equal-value
   face/edge/edge-endpoint/feature/material-region/void-region measurement
   groups, contained-endpoint relation chains, and initial
   feature-to-feature and face/edge/endpoint/material-region/void-region-to-feature
@@ -889,7 +898,8 @@ Checked as implemented with remaining scale caveats:
   answer entropy, candidate breadth, intended-family coverage,
   sampled-parameter balance, preview evidence, family test evidence, and
   non-collapsed split group coverage. Remaining benchmark-release work is
-  synthesis-layer sampling for broader reference/rank/rendered-wording variants.
+  synthesis-layer sampling for broader reference/rank/rendered-wording variants
+  and release-scale parameter distributions.
   Rechecking the current CadEvolve-50 release artifact with
   `--release-tier benchmark-release` blocks release on row count, split group
   coverage, default SFT row count, prompt-family balance, prompt-template

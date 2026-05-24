@@ -18,6 +18,8 @@ from cad_qa.query.synthesis import synthesize_graph_hop_queries
 
 
 SYNTHESIS_SELFCHECK_FAMILIES = (
+    "parameterized_feature_extreme",
+    "parameterized_feature_rank",
     "parameterized_kernel_face_extreme",
     "parameterized_kernel_edge_extreme",
     "parameterized_kernel_face_rank",
@@ -319,8 +321,12 @@ def _feature_equal_metric_graph() -> OntologyGraph:
         graph.add_node(Node(feature_id, "feature", feature_id))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume, "mm^3"))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid", centroid, "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_x", centroid[0], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_y", centroid[1], "mm"))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid[2], "mm"))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "bbox_span_z", bbox_span_z, "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "topology_faces", 6.0 if feature_id != "feature:small" else 4.0))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "topology_edges", 12.0 if feature_id != "feature:small" else 8.0))
     return graph
 
 

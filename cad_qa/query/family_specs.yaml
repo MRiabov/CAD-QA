@@ -225,6 +225,46 @@ families:
         reference_point_metric: [centroid]
         target_point_metric: [centroid]
     notes: Synthesized feature-to-feature distance family that narrows by repeated solid volume and samples a measured reference feature before selecting nearest/farthest by centroid distance.
+  - id: parameterized_feature_extreme
+    status: release
+    target_type: feature
+    minimum_hops: 2
+    maximum_hops: 2
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - final_selector
+    notes: Synthesized feature family that samples compiled solid volume, centroid, height, or topology metrics before selecting min/max.
+  - id: parameterized_feature_rank
+    status: release
+    target_type: feature
+    minimum_hops: 2
+    maximum_hops: 2
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - aggregation_rank
+        - rank_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - aggregation_rank
+        - final_selector
+      expected_values:
+        aggregation_rank: [2, 3, 4]
+    notes: Synthesized feature family that selects a compiled feature by sampled rank instead of only min/max extrema.
   - id: highest_positive_x_flat_opposite_adjacent_perpendicular_kernel_face
     status: review_only
     target_type: face

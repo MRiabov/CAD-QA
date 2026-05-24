@@ -54,6 +54,7 @@ metric_labels:
   bbox_delta_min_z: "upward movement of the lowest point"
   bbox_delta_span_z: "height increase"
   bbox_max_z: "maximum Z height"
+  bbox_span_z: "overall height"
   centroid_delta_magnitude: "centroid shift"
   centroid_delta_z: "upward centroid movement"
   centroid_x: "centroid X coordinate"
