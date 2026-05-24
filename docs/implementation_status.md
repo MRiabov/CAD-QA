@@ -759,6 +759,16 @@ Checked as implemented with remaining scale caveats:
   synthesis; broader target/reference combinations and release-scale
   distribution remain open.
 - The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_feature_reference_face/PREVIEW.md`
+  demonstrates the initial `parameterized_feature_reference_face_distance`
+  family. The reviewed row narrows from three features to two equal-volume
+  features, describes a reference face by measured surface area and face-center
+  height, keeps both target candidates through measured-centroid evidence, and
+  resolves uniquely by target-centroid distance to the reference face center.
+  This completes the current reference-face target slice across feature, face,
+  edge, endpoint, material-region, and void-region targets, while release-scale
+  distribution remains open.
+- The synthesized selfcheck preview at
   `runs/parameterized_synthesis_selfcheck_feature_extreme_rank/PREVIEW.md`
   demonstrates initial `parameterized_feature_extreme` and
   `parameterized_feature_rank` families. The reviewed rows select compiled
@@ -898,8 +908,8 @@ Checked as implemented with remaining scale caveats:
   intended-family manifest, so benchmark-release reports block them if they
   appear in release rows. The initial feature-effect delta fixtures are now
   covered by a parameterized effect-delta family; non-feature reference anchors
-  now cover reference-face distance rows for edge, face, endpoint, material
-  region, and void region targets. Remaining hard-coded release debt is mainly
+  now cover reference-face distance rows for feature, edge, face, endpoint,
+  material region, and void region targets. Remaining hard-coded release debt is mainly
   selected-entity count variants, richer graph-hop predicate chains, broader
   reference-entity types, and release-scale distribution review.
 - Rewrite sparse direct selector/count/extremum families as graph-hop narrowing
@@ -916,8 +926,8 @@ Checked as implemented with remaining scale caveats:
   groups, sampled material/void region extrema/ranks, contained-endpoint
   relation chains, and initial
   feature-to-feature and face/edge/endpoint/material-region/void-region-to-feature
-  reference-distance families plus reference-face distance families for edge,
-  face, endpoint, material-region, and void-region targets. Broader
+  reference-distance families plus reference-face distance families for feature,
+  edge, face, endpoint, material-region, and void-region targets. Broader
   selected-entity-count narrowing,
   additional non-feature reference anchors, containment/adjacency
   predicates, and broader tie-break selectors

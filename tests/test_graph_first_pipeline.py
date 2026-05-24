@@ -2787,6 +2787,63 @@ def test_synthesis_generates_feature_reference_feature_distance_query() -> None:
     assert any(phrase in row.prompt for phrase in ("closest to", "farthest from"))
 
 
+def test_synthesis_generates_feature_reference_face_distance_query() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:feature-reference-face-distance-synth",
+        source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
+    )
+    for feature_id, volume, centroid, bbox_span_z in [
+        ("feature:base", 240.0, [0.0, 0.0, 2.0], 4.0),
+        ("feature:upper", 240.0 + 1e-7, [0.0, 0.0, 8.0], 5.0),
+        ("feature:small", 32.0, [20.0, 0.0, 1.0], 2.0),
+    ]:
+        graph.add_node(Node(feature_id, "feature", feature_id))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid", centroid, "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid[2], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "bbox_span_z", bbox_span_z, "mm"))
+    for face_id, area, coordinate_z, face_center in [
+        ("face:ref", 18.0, 3.0, [0.0, 0.0, 0.0]),
+        ("face:far", 7.0, 9.0, [50.0, 0.0, 0.0]),
+    ]:
+        graph.add_node(Node(face_id, "face", face_id))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", area, "mm^2"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_z", coordinate_z, "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_center", face_center, "mm"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_feature_reference_face_distance")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+    equal_step = next(step for step in row.candidate_trace["steps"] if step["step"] == "has_parameterized_equal_feature_metric_value")
+
+    assert resolution.verifier_status == "resolved"
+    assert query.target_type == "feature"
+    assert query.aggregation in {"argmin", "argmax"}
+    assert query.aggregation_metric == "distance_to_reference_feature_centroid"
+    assert query.clauses[0].metric == "volume"
+    assert query.clauses[0].value == 240.0
+    assert query.clauses[1].id == "reference_face_area_and_center"
+    assert query.clauses[1].kind == "reference_measurement"
+    assert query.clauses[2].metric == "centroid"
+    assert equal_step["after"] == ["feature:base", "feature:upper"]
+    assert row.logical_hop_count == 4
+    assert row.geometry_hop_count == 4
+    assert row.query_program["sampled_parameters"]["reference_type"] == ["face"]
+    assert row.query_program["sampled_parameters"]["target_type"] == ["feature"]
+    assert row.query_program["sampled_parameters"]["target_point_metric"] == ["centroid"]
+    assert row.query_program["sampled_parameters"]["reference_point_metric"] == ["face_center"]
+    assert row.query_program["sampled_parameters"]["reference_anchor_metric"] == ["coordinate_z", "face_area"]
+    assert row.query_program["sampled_parameters"]["measurement_value_bucket"] == ["volume:240"]
+    assert "solid centroid" in row.prompt
+    assert "reference face" in row.prompt
+    assert "face center" in row.prompt
+    assert any(phrase in row.prompt for phrase in ("closest to", "farthest from"))
+
+
 def test_synthesis_generates_equal_value_endpoint_query() -> None:
     graph = OntologyGraph(graph_id="graph:equal-endpoint-synth", source={"source_id": "synthetic", "source_code": ""})
     for edge_id in ["edge:a", "edge:b", "edge:c"]:
@@ -4403,6 +4460,7 @@ def test_default_family_manifest_keeps_superseded_fixed_families_review_only() -
         "parameterized_feature_extreme",
         "parameterized_equal_feature_metric_extreme",
         "parameterized_feature_effect_delta_extreme",
+        "parameterized_feature_reference_face_distance",
         "parameterized_material_region_extreme",
         "parameterized_equal_material_region_metric_extreme",
         "parameterized_material_region_reference_face_distance",
