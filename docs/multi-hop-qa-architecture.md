@@ -37,6 +37,28 @@ OntologyGraph
 - Rows that fail candidate-breadth or uniqueness gates go to the failure
   manifest.
 
+## Axis-General Spatial Tasks
+
+Main benchmark and default SFT rows must not encode a fixed global direction as
+the semantic identity of a task family. Families such as
+`frontmost_longer_positive_z_kernel_edge`,
+`rightmost_shorter_positive_z_kernel_edge`, or any equivalent "always X/Y/Z"
+variant are unacceptable as release-grade training families because they teach
+models a narrow coordinate habit instead of CAD reasoning.
+
+Axis-dependent tasks must be parameterized. The family identity should describe
+the geometric relation while leaving the axis as a sampled query parameter. For
+example, use a family shape like `longer_positive_edge_along_axis`, then sample
+the axis and direction from supported candidate geometry. The hidden query
+program may bind that parameter to X, Y, or Z for a specific row, but the
+family/template itself must not permanently mean "positive Z" or "frontmost".
+
+View words such as "frontmost", "backmost", "leftmost", "rightmost", "highest",
+and "lowest" are allowed only as sampled renderings of an explicit axis/view
+parameter. They must not be hard-coded into generator family names or fixed to
+one global axis across a release. Release reports should expose axis/direction
+coverage for these families and block or cap collapsed distributions.
+
 ## Value-Bearing Multi-Hop Tasks
 
 The dataset should contain a well-represented slice of tasks where public clues

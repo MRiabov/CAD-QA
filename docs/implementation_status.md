@@ -17,6 +17,10 @@ equal-value distractor tasks: prompts should often expose concrete CAD
 measurements such as area, volume, length, centroid coordinate, or distance,
 then require additional geometry to disambiguate among equal or near-equal
 candidates.
+The newly identified quality gap is axis overfitting in spatial query families:
+release-grade families must not permanently mean "frontmost", "rightmost",
+"leftmost", "highest", or "positive Z". Those words must come from sampled
+axis/view parameters, not from fixed family semantics.
 
 ## Implemented In Current Surface
 
@@ -636,6 +640,17 @@ Checked as implemented with remaining scale caveats:
 
 ## Open Work
 
+- Replace fixed-axis spatial families with axis-parameterized families. Current
+  generator names such as `frontmost_longer_positive_z_kernel_edge`,
+  `frontmost_same_length_longer_positive_z_kernel_edge`, and
+  `rightmost_shorter_positive_z_kernel_edge` are not acceptable release-grade
+  family semantics under the updated policy. They should become axis-general
+  families such as `longer_positive_edge_along_axis`, with the axis/sign
+  sampled per row and view words rendered from that sampled parameter.
+- Add release/SFT reporting and gates for axis/direction balance. Any spatial
+  family that collapses onto one global axis or one fixed view word should be
+  capped, blocked, or treated as review-only until the sampled distribution is
+  healthy.
 - Broaden value-bearing and tolerance-equal coverage beyond the implemented
   core to radius/diameter/angle once those measurements are extracted broadly,
   additional face/endpoint/material/void coordinate combinations, and larger
