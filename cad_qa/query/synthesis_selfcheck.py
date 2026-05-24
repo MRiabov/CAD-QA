@@ -84,9 +84,17 @@ def synthesis_selfcheck_graphs() -> list[OntologyGraph]:
         _face_rank_graph("graph:selfcheck-face-rank-0"),
         _face_rank_graph("graph:selfcheck-face-rank-1"),
         _face_rank_graph("graph:selfcheck-face-rank-2"),
+        _face_deep_rank_graph("graph:face-rank-sample:1"),
         _edge_rank_graph("graph:selfcheck-edge-rank-0"),
         _edge_rank_graph("graph:selfcheck-edge-rank-1"),
         _edge_rank_graph("graph:selfcheck-edge-rank-2"),
+        _edge_deep_rank_graph("graph:rank-sample:7"),
+        _feature_rank_graph("graph:feature-rank-sample:4"),
+        _feature_rank_graph("graph:feature-rank-sample:0"),
+        _region_rank_graph("graph:material-region-rank-sample:1"),
+        _region_rank_graph("graph:material-region-rank-sample:0"),
+        _region_rank_graph("graph:void-region-rank-sample:11"),
+        _region_rank_graph("graph:void-region-rank-sample:0"),
         _face_spatial_relation_graph("graph:selfcheck-face-spatial-relation-0"),
         _face_spatial_relation_graph("graph:selfcheck-face-spatial-relation-2"),
         _face_spatial_relation_graph("graph:selfcheck-face-spatial-relation-4"),
@@ -265,6 +273,26 @@ def _face_rank_graph(graph_id: str) -> OntologyGraph:
     return graph
 
 
+def _face_deep_rank_graph(graph_id: str) -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id=graph_id,
+        source={
+            "source_id": graph_id.rsplit(":", 1)[-1],
+            "source_code": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane(\"XY\").box(10, 6, 4).faces()\n"
+            ),
+        },
+    )
+    graph.add_node(Node("selector:faces", "selector", "faces"))
+    for index, area in enumerate([30.0, 25.0, 20.0, 15.0, 10.0, 5.0]):
+        face_id = f"face:{index}"
+        graph.add_node(Node(face_id, "face", face_id))
+        graph.add_relation(Relation(face_id, "selector:faces", "has_kernel_stable_face_id"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", area, "mm^2"))
+    return graph
+
+
 def _edge_rank_graph(graph_id: str) -> OntologyGraph:
     graph = OntologyGraph(
         graph_id=graph_id,
@@ -281,6 +309,82 @@ def _edge_rank_graph(graph_id: str) -> OntologyGraph:
         graph.add_node(Node(edge_id, "edge", edge_id))
         graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
+    return graph
+
+
+def _edge_deep_rank_graph(graph_id: str) -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id=graph_id,
+        source={
+            "source_id": graph_id.rsplit(":", 1)[-1],
+            "source_code": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane(\"XY\").box(10, 6, 4).edges()\n"
+            ),
+        },
+    )
+    graph.add_node(Node("selector:edges", "selector", "edges"))
+    for index, length in enumerate([30.0, 25.0, 20.0, 15.0, 10.0, 5.0]):
+        edge_id = f"edge:{index}"
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
+    return graph
+
+
+def _feature_rank_graph(graph_id: str) -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id=graph_id,
+        source={
+            "source_id": graph_id.rsplit(":", 1)[-1],
+            "source_code": (
+                "import cadquery as cq\n"
+                "base = cq.Workplane(\"XY\").box(10, 6, 4)\n"
+                "features = [base.translate((index * 4, 0, 0)) for index in range(6)]\n"
+            ),
+        },
+    )
+    for index, volume in enumerate([60.0, 50.0, 40.0, 30.0, 20.0, 10.0]):
+        feature_id = f"feature:{index}"
+        centroid = [float(index), float(index * 2), float(index * 3)]
+        graph.add_node(Node(feature_id, "feature", feature_id))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid", centroid, "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_x", centroid[0], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_y", centroid[1], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid[2], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "bbox_span_z", volume / 10.0, "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "topology_faces", float(index + 4), "count"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "topology_edges", float(index + 8), "count"))
+    return graph
+
+
+def _region_rank_graph(graph_id: str) -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id=graph_id,
+        source={
+            "source_id": graph_id.rsplit(":", 1)[-1],
+            "source_code": (
+                "import cadquery as cq\n"
+                "base = cq.Workplane(\"XY\").box(10, 10, 3)\n"
+                "regions = [base.translate((index * 4, 0, 0)) for index in range(6)]\n"
+            ),
+        },
+    )
+    for target_type, relation in [
+        ("material_region", "has_kernel_material_region_geometry"),
+        ("void_region", "has_kernel_void_region_geometry"),
+    ]:
+        for index, volume in enumerate([60.0, 50.0, 40.0, 30.0, 20.0, 10.0]):
+            node_id = f"{target_type}:{index}"
+            centroid = [float(index), float(index * 2), float(index * 3)]
+            graph.add_node(Node(node_id, target_type, node_id))
+            graph.add_relation(Relation(node_id, node_id, relation))
+            graph.add_measurement(Measurement(node_id, "entity_geometry", "volume", volume, "mm^3"))
+            graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid", centroid, "mm"))
+            graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_x", centroid[0], "mm"))
+            graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_y", centroid[1], "mm"))
+            graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_z", centroid[2], "mm"))
     return graph
 
 

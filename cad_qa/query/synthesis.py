@@ -25,6 +25,7 @@ from cad_qa.query.predicate_catalog import (
 
 GEOMETRY_MARGIN_EPSILON = 1e-6
 REFERENCE_FEATURE_DISTANCE_METRIC = "distance_to_reference_feature_centroid"
+MAX_SYNTHESIZED_RANK = 6
 
 
 @dataclass(frozen=True)
@@ -1164,7 +1165,7 @@ def _viable_ranks(graph: OntologyGraph, spec: ExtremeFamilySpec) -> list[ViableE
         if len(metric_candidates) < 3:
             continue
         for aggregation in ("rank_desc", "rank_asc"):
-            for rank in range(2, min(len(metric_candidates), 4) + 1):
+            for rank in range(2, min(len(metric_candidates), MAX_SYNTHESIZED_RANK) + 1):
                 if _has_unique_rank(graph, metric_candidates, metric, aggregation, rank):
                     viable.append(ViableExtreme(spec, metric_candidates, metric, aggregation, aggregation_rank=rank))
     return sorted(

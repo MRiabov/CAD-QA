@@ -2308,6 +2308,101 @@ def test_synthesis_samples_later_rank_values_when_viable() -> None:
         assert prompt_fragment in row.prompt
 
 
+def test_synthesis_samples_fifth_and_sixth_rank_values_when_viable() -> None:
+    expected = {
+        "graph:face-rank-sample:1": ("face", "parameterized_kernel_face_rank", 5, "5th candidate"),
+        "graph:rank-sample:7": ("edge", "parameterized_kernel_edge_rank", 6, "6th candidate"),
+    }
+    for graph_id, (target_type, family, expected_rank, prompt_fragment) in expected.items():
+        graph = OntologyGraph(graph_id=graph_id, source={"source_id": "synthetic", "source_code": ""})
+        selector_id = "selector:faces" if target_type == "face" else "selector:edges"
+        graph.add_node(Node(selector_id, "selector", selector_id.rsplit(":", 1)[-1]))
+        relation = "has_kernel_stable_face_id" if target_type == "face" else "has_kernel_stable_edge_id"
+        metric = "face_area" if target_type == "face" else "edge_length"
+        unit = "mm^2" if target_type == "face" else "mm"
+        for index, value in enumerate([30.0, 25.0, 20.0, 15.0, 10.0, 5.0]):
+            node_id = f"{target_type}:{index}"
+            graph.add_node(Node(node_id, target_type, node_id))
+            graph.add_relation(Relation(node_id, selector_id, relation))
+            graph.add_measurement(Measurement(node_id, "entity_geometry", metric, value, unit))
+
+        query = next(query for query in synthesize_graph_hop_queries(graph) if query.query_id.endswith(family))
+        resolution = resolve_query(graph, query)
+        row = materialize_row(graph, resolution)
+
+        assert resolution.verifier_status == "resolved"
+        assert query.aggregation_rank == expected_rank
+        assert query.sampled_parameters["aggregation_rank"] == [str(expected_rank)]
+        assert row.candidate_trace["steps"][-1]["rank"] == expected_rank
+        assert prompt_fragment in row.prompt
+
+
+def test_synthesis_samples_fifth_and_sixth_feature_and_region_rank_values_when_viable() -> None:
+    def feature_rank_graph(graph_id: str) -> OntologyGraph:
+        graph = OntologyGraph(graph_id=graph_id, source={"source_id": "synthetic", "source_code": ""})
+        for index, volume in enumerate([60.0, 50.0, 40.0, 30.0, 20.0, 10.0]):
+            feature_id = f"feature:{index}"
+            centroid = [float(index), float(index * 2), float(index * 3)]
+            graph.add_node(Node(feature_id, "feature", feature_id))
+            graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume, "mm^3"))
+            graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid", centroid, "mm"))
+            graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_x", centroid[0], "mm"))
+            graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_y", centroid[1], "mm"))
+            graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid[2], "mm"))
+            graph.add_measurement(Measurement(feature_id, "snapshot_state", "bbox_span_z", volume / 10.0, "mm"))
+            graph.add_measurement(Measurement(feature_id, "snapshot_state", "topology_faces", float(index + 4), "count"))
+            graph.add_measurement(Measurement(feature_id, "snapshot_state", "topology_edges", float(index + 8), "count"))
+        return graph
+
+    def region_rank_graph(graph_id: str) -> OntologyGraph:
+        graph = OntologyGraph(graph_id=graph_id, source={"source_id": "synthetic", "source_code": ""})
+        for target_type, relation in [
+            ("material_region", "has_kernel_material_region_geometry"),
+            ("void_region", "has_kernel_void_region_geometry"),
+        ]:
+            for index, volume in enumerate([60.0, 50.0, 40.0, 30.0, 20.0, 10.0]):
+                node_id = f"{target_type}:{index}"
+                centroid = [float(index), float(index * 2), float(index * 3)]
+                graph.add_node(Node(node_id, target_type, node_id))
+                graph.add_relation(Relation(node_id, node_id, relation))
+                graph.add_measurement(Measurement(node_id, "entity_geometry", "volume", volume, "mm^3"))
+                graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid", centroid, "mm"))
+                graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_x", centroid[0], "mm"))
+                graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_y", centroid[1], "mm"))
+                graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_z", centroid[2], "mm"))
+        return graph
+
+    expected = {
+        "graph:feature-rank-sample:4": (feature_rank_graph, "parameterized_feature_rank", 5, "5th"),
+        "graph:feature-rank-sample:0": (feature_rank_graph, "parameterized_feature_rank", 6, "6th"),
+        "graph:material-region-rank-sample:1": (
+            region_rank_graph,
+            "parameterized_material_region_rank",
+            5,
+            "5th",
+        ),
+        "graph:material-region-rank-sample:0": (
+            region_rank_graph,
+            "parameterized_material_region_rank",
+            6,
+            "6th",
+        ),
+        "graph:void-region-rank-sample:11": (region_rank_graph, "parameterized_void_region_rank", 5, "5th"),
+        "graph:void-region-rank-sample:0": (region_rank_graph, "parameterized_void_region_rank", 6, "6th"),
+    }
+    for graph_id, (builder, family, expected_rank, prompt_fragment) in expected.items():
+        graph = builder(graph_id)
+        query = next(query for query in synthesize_graph_hop_queries(graph) if query.query_id.endswith(family))
+        resolution = resolve_query(graph, query)
+        row = materialize_row(graph, resolution)
+
+        assert resolution.verifier_status == "resolved"
+        assert query.aggregation_rank == expected_rank
+        assert query.sampled_parameters["aggregation_rank"] == [str(expected_rank)]
+        assert row.candidate_trace["steps"][-1]["rank"] == expected_rank
+        assert prompt_fragment in row.prompt
+
+
 def test_synthesis_skips_tied_rank_positions_without_dropping_viable_later_ranks() -> None:
     graph = OntologyGraph(graph_id="graph:tied-rank", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("selector:edges", "selector", "edges"))
@@ -2775,7 +2870,7 @@ def test_synthesis_generates_parameterized_feature_extreme_and_rank_queries() ->
     assert rank_resolution.verifier_status == "resolved"
     assert rank_query.target_type == "feature"
     assert rank_query.aggregation in {"rank_asc", "rank_desc"}
-    assert rank_query.aggregation_rank in {2, 3, 4}
+    assert rank_query.aggregation_rank in {2, 3, 4, 5, 6}
     assert rank_query.clauses[0].kind == "has_measurement"
     assert not any(clause.kind == "has_relation" for clause in rank_query.clauses)
     assert rank_row.logical_hop_count == 2
@@ -3405,7 +3500,7 @@ def test_synthesis_generates_parameterized_region_extreme_and_rank_queries() -> 
         assert row.query_program["sampled_parameters"]["aggregation_metric"] == [query.aggregation_metric]
         if family.endswith("_rank"):
             assert query.aggregation in {"rank_asc", "rank_desc"}
-            assert query.aggregation_rank in {2, 3, 4}
+            assert query.aggregation_rank in {2, 3, 4, 5, 6}
             assert row.query_program["sampled_parameters"]["aggregation_rank"] == [str(query.aggregation_rank)]
         else:
             assert query.aggregation in {"argmin", "argmax"}

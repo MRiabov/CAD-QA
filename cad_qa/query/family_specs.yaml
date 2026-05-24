@@ -98,8 +98,8 @@ families:
         - aggregation_rank
         - final_selector
       expected_values:
-        aggregation_rank: [2, 3, 4]
-    notes: Synthesized family that selects a measured face by sampled rank instead of only min/max extrema.
+        aggregation_rank: [2, 3, 4, 5, 6]
+    notes: Synthesized family that selects a measured face by sampled rank instead of only min/max extrema, bounded to reviewed ranks 2-6.
   - id: parameterized_equal_face_metric_extreme
     status: release
     target_type: face
@@ -466,8 +466,8 @@ families:
         - aggregation_rank
         - final_selector
       expected_values:
-        aggregation_rank: [2, 3, 4]
-    notes: Synthesized feature family that selects a compiled feature by sampled rank instead of only min/max extrema.
+        aggregation_rank: [2, 3, 4, 5, 6]
+    notes: Synthesized feature family that selects a compiled feature by sampled rank instead of only min/max extrema, bounded to reviewed ranks 2-6.
   - id: parameterized_feature_effect_delta_extreme
     status: release
     target_type: feature
@@ -757,8 +757,8 @@ families:
         - aggregation_rank
         - final_selector
       expected_values:
-        aggregation_rank: [2, 3, 4]
-    notes: Synthesized family that selects a measured edge by sampled rank instead of only min/max extrema.
+        aggregation_rank: [2, 3, 4, 5, 6]
+    notes: Synthesized family that selects a measured edge by sampled rank instead of only min/max extrema, bounded to reviewed ranks 2-6.
   - id: parameterized_equal_edge_metric_extreme
     status: release
     target_type: edge
@@ -1268,8 +1268,8 @@ families:
         - final_selector
       expected_values:
         target_type: [material_region]
-        aggregation_rank: [2, 3, 4]
-    notes: Synthesized added-material region family that selects a measured region by sampled rank instead of only min/max extrema.
+        aggregation_rank: [2, 3, 4, 5, 6]
+    notes: Synthesized added-material region family that selects a measured region by sampled rank instead of only min/max extrema, bounded to reviewed ranks 2-6.
   - id: parameterized_equal_material_region_metric_extreme
     status: release
     target_type: material_region
@@ -1479,8 +1479,8 @@ families:
         - final_selector
       expected_values:
         target_type: [void_region]
-        aggregation_rank: [2, 3, 4]
-    notes: Synthesized removed-material region family that selects a measured region by sampled rank instead of only min/max extrema.
+        aggregation_rank: [2, 3, 4, 5, 6]
+    notes: Synthesized removed-material region family that selects a measured region by sampled rank instead of only min/max extrema, bounded to reviewed ranks 2-6.
   - id: parameterized_equal_void_region_metric_extreme
     status: release
     target_type: void_region
