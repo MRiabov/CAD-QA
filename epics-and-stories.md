@@ -45,8 +45,9 @@ Recent policy updates:
   narrowing predicates, bounded clause-chain search, sampled final selectors, and
   normal resolver/verifier/rendering.
 
-Benchmark-release readiness is stricter than current smoke/release-candidate
-gates:
+Benchmark-release readiness is the canonical public benchmark and real
+fine-tuning bar. Smoke and release-candidate tiers are development gates; they
+can demonstrate mechanics, but they cannot support benchmark-release claims:
 
 | Gate | Benchmark-release requirement |
 | --- | --- |
@@ -70,6 +71,12 @@ gates:
 | Split quality | Train/validation/test splits, at least 3 protected groups per split, no train-only collapse. |
 | Manual preview | At least 20 sampled rows per changed release family, or all rows if fewer exist. |
 | New-family tests | Positive generation, failure/quarantine, and release-report accounting coverage. |
+
+A benchmark-release artifact is ready only when the benchmark-release verifier
+reports `valid_for_release=true`, has no blocking gates, and the default SFT
+export passes the same tier. Any missing intended family, collapsed sampled
+parameter, stale preview, absent test evidence, weak split, or failed numeric
+threshold keeps the artifact in development status.
 
 ## Status Meaning
 

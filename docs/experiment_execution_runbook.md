@@ -29,10 +29,15 @@ calibration exports.
 
 For benchmark-release training or benchmark claims, the artifact must satisfy the
 numeric benchmark-release tier in `specs/dataset-spec.md`, not only the current
-smoke/release-candidate gates. In particular, expect at least 10,000 release
-rows, at least 10,000 default SFT rows, 95%+ geometry-hop-positive rows, 99%+
-geometry-critical default SFT rows, 0% syntax-only default SFT rows, and
-non-collapsed train/validation/test protected splits.
+smoke/release-candidate gates. Treat the benchmark-release report as the
+canonical verdict: the artifact is benchmark-release ready only when
+`valid_for_release=true`, every stop gate passes, and the matching default SFT
+report also passes the benchmark-release tier. In particular, expect at least
+10,000 release rows, at least 10,000 default SFT rows, 95%+
+geometry-hop-positive rows, 99%+ geometry-critical default SFT rows, 0%
+syntax-only default SFT rows, 15%-30% value-bearing rows, 5%-15% cross-feature
+value-bearing rows, healthy parameter coverage, manual preview/test evidence,
+and non-collapsed train/validation/test protected splits.
 
 Pass `--release-tier benchmark-release` to `cadqa dataset release-report`,
 `cadqa dataset export-release`, and `cadqa training export-sft` when validating a

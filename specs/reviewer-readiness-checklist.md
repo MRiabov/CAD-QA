@@ -3,6 +3,9 @@
 Before public paper or dataset release, verify:
 
 - The paper states the CAD BrowseComp thesis clearly.
+- The artifact is being judged against the `benchmark-release` tier. Smoke and
+  release-candidate artifacts are development evidence and are not sufficient
+  for public benchmark or real fine-tuning claims.
 - Every public row has a matching private row with hidden query program and
   candidate-set trace.
 - Every prompt clue maps to a hidden clause.
@@ -13,6 +16,9 @@ Before public paper or dataset release, verify:
   geometry-hop-positive rows, at least 90% `logical_hop_count >= 3` rows, at
   least 99% geometry-critical default SFT rows, 0% syntax-only default SFT rows,
   and no more than 2% syntax-only benchmark rows unless calibration is separated.
+- The benchmark-release release report has `valid_for_release=true` and no
+  blocking gates, and the matching default SFT report passes
+  `--release-tier benchmark-release`.
 - Static shortcut baselines are reported.
 - Main benchmark and training rows are not solvable from syntax-only clues.
 - Syntax-only calibration rows are excluded from headline training/benchmark

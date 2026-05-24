@@ -689,14 +689,16 @@ Checked as implemented with remaining scale caveats:
   dimension was sampled whenever the verifier could support it.
 - Expand the intended-family manifest into full family specs with predicates,
   selectors, parameter dimensions, and geometry-limited exceptions.
-- Complete benchmark-release gating. Explicit release-tier verifier profiles now
-  exist for `smoke`, `release-candidate`, and `benchmark-release`, and the
-  benchmark-release profile enforces row counts, default SFT row counts,
-  geometry-hop coverage, default SFT geometry-critical dominance, syntax-only
-  caps, value-bearing and cross-feature coverage bands, prompt-template share,
-  unique-answer count, answer entropy, candidate breadth, intended-family
-  coverage, sampled-parameter balance, preview evidence, family test evidence,
-  and non-collapsed split group coverage. Remaining benchmark-release work is
+- Keep benchmark-release gating as the canonical release bar. Explicit
+  release-tier verifier profiles now exist for `smoke`, `release-candidate`,
+  and `benchmark-release`; only the benchmark-release tier can support public
+  benchmark or real fine-tuning claims. The benchmark-release profile enforces
+  row counts, default SFT row counts, geometry-hop coverage, default SFT
+  geometry-critical dominance, syntax-only caps, value-bearing and
+  cross-feature coverage bands, prompt-template share, unique-answer count,
+  answer entropy, candidate breadth, intended-family coverage,
+  sampled-parameter balance, preview evidence, family test evidence, and
+  non-collapsed split group coverage. Remaining benchmark-release work is
   synthesis-layer metadata for predicate sequence/reference/rank/rendered
   wording.
   Rechecking the current CadEvolve-50 release artifact with

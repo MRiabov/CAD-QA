@@ -55,14 +55,15 @@ preview review must confirm that task families are not collapsed onto
 hard-coded generator choices such as one axis, one min/max direction, one value
 shape, one comparison relation, or one entity type.
 
-The benchmark-release target is stricter than the current smoke gates. A public
-benchmark or real fine-tuning dataset should satisfy the numeric tier in
-[`specs/dataset-spec.md`](specs/dataset-spec.md): at least 10,000 release rows,
-at least 10,000 default SFT rows, generated task families in the 1%-10% band,
-at least 95% geometry-hop-positive rows, at least 99% geometry-critical default
-SFT rows, 0% syntax-only default SFT rows, value-bearing and cross-feature
-coverage targets, parameter-balance targets, and a non-collapsed multi-split
-release.
+The benchmark-release target is the canonical public-release bar, not a nice
+extra check. A public benchmark or real fine-tuning dataset must satisfy the
+numeric tier in [`specs/dataset-spec.md`](specs/dataset-spec.md): at least
+10,000 release rows, at least 10,000 default SFT rows, generated task families
+in the 1%-10% band, at least 95% geometry-hop-positive rows, at least 99%
+geometry-critical default SFT rows, 0% syntax-only default SFT rows,
+value-bearing and cross-feature coverage targets, parameter-balance targets,
+manual preview/test evidence, and a non-collapsed multi-split release. Smoke and
+release-candidate artifacts are development evidence only.
 
 ## Quick Start
 
@@ -118,6 +119,17 @@ rows still include conservative region projections or selector-surrogate
 identities. Use `cadqa dataset quarantine` to inspect those rows before deciding
 whether to upgrade, exclude, or keep them as training-only artifacts.
 `cadqa dataset export-release` writes only `release_ready=true` rows.
+
+For benchmark-release claims, validate the stricter tier explicitly:
+
+```bash
+uv run cadqa dataset release-report \
+  data/cadqa_graph_release_smoke \
+  --release-tier benchmark-release
+```
+
+The artifact is not benchmark-release ready unless that report has
+`valid_for_release=true` and no blocking gates.
 
 Run simple baselines, grade release-style model responses, and export SFT rows:
 

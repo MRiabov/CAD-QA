@@ -25,11 +25,13 @@ current_snapshot:
     family specs, reusable geometry-derived narrowing predicates, bounded
     clause-chain search, sampled final selectors, and release gates for both
     generated-family balance and zero-row intended families. Benchmark-release
-    readiness is stricter than current smoke gates: the target tier requires at
-    least 10,000 release rows, at least 10,000 default SFT rows, strong
-    geometry-hop and geometry-critical dominance, zero syntax-only default SFT
-    rows, value-bearing and cross-feature coverage bands, parameter-balance
-    limits, and non-collapsed train/validation/test splits.
+    readiness is the canonical public benchmark and real fine-tuning bar, not
+    an optional polish pass: the target tier requires at least 10,000 release
+    rows, at least 10,000 default SFT rows, strong geometry-hop and
+    geometry-critical dominance, zero syntax-only default SFT rows,
+    value-bearing and cross-feature coverage bands, parameter-balance limits,
+    manual preview/test evidence, and non-collapsed train/validation/test
+    splits. Smoke and release-candidate tiers are development gates only.
     Earlier separate task-family and graph-query framing is obsolete.
 status_values:
   - planned
@@ -382,6 +384,9 @@ epics:
         supported axis/direction values at or above 20%, unless geometry-limited.
       - Multi-split benchmark releases have train/validation/test splits, at
         least 3 protected groups per split, and no train-only collapse.
+      - Benchmark-release artifacts report `valid_for_release=true`, no
+        blocking release gates, and passing default SFT benchmark-release gates;
+        otherwise they remain development artifacts.
     stories:
       - id: "15.1"
         title: Document benchmark-release numeric gate tier

@@ -82,6 +82,24 @@ export. Intended task families that produce zero rows need an explicit
 intended-family manifest; without that manifest, absence must be caught during
 manual release review and treated as unfinished coverage.
 
+## Release Tiers
+
+CAD-QA has three release-tier names, but only one is acceptable for public
+benchmark claims or real fine-tuning dataset creation:
+
+| Tier | Purpose | May support public benchmark or real fine-tuning claims? |
+| --- | --- | --- |
+| `smoke` | Local plumbing checks, fixture review, and tiny end-to-end runs. | No. |
+| `release-candidate` | Development-scale artifacts that exercise release machinery while generation coverage is still changing. | No. |
+| `benchmark-release` | The canonical release bar for the benchmark and default SFT dataset. | Yes, only if every stop gate passes. |
+
+The benchmark-release verdict is the source of truth. A dataset is
+benchmark-release ready only when `cadqa dataset release-report
+--release-tier benchmark-release` reports `valid_for_release=true` and no
+blocking gates, and the corresponding default SFT report passes the same tier.
+Passing smoke or release-candidate gates must never be described as
+benchmark-release readiness.
+
 ## Benchmark-Release Numeric Gates
 
 The benchmark-release tier is the target standard for public benchmark claims and
@@ -111,6 +129,12 @@ described as benchmark-release ready.
 | Split quality | Multi-split benchmark releases must have train/validation/test splits, at least 3 protected groups per split, and no train-only collapse. |
 | Manual preview | At least 20 sampled rows per changed release family, or all rows if fewer than 20 exist. |
 | New-family tests | Each new release family has positive generation coverage, failure/quarantine coverage, and release-report accounting coverage. |
+
+These are blocking functional requirements for the benchmark-release tier, not
+aspirational diagnostics. A missing measurement family, collapsed parameter
+dimension, stale preview, absent test-evidence reference, insufficient row count,
+or failed split audit means the artifact remains a development artifact even if
+its rows are individually valid.
 
 Current implementation gates now support an explicit `benchmark-release` tier for
 the row-count, hop-coverage, geometry-critical, syntax-only, value-bearing,
