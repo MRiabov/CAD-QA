@@ -165,10 +165,13 @@ Technical definition of done:
 
 - Trace records, isolated execution, snapshot effect extraction, CLI reports, and
   timeout/crash accounting exist and feed graph construction.
+- Prepared CADEvolve trace snapshots keyed by `feature_id` are normalized during
+  graph construction so source-line and operation-order evidence remain
+  available to downstream geometry queries.
 
 | Story | Status | Acceptance criteria | Technical definition of done |
 | --- | --- | --- | --- |
-| 3.1 TraceRecord schema | `implemented` | Runtime geometry evidence has a stable serialized shape. | Trace schema captures execution status, snapshots, and measured evidence. |
+| 3.1 TraceRecord schema | `implemented` | Runtime geometry evidence has a stable serialized shape, including prepared CADEvolve traces that use feature IDs for snapshots. | Trace schema captures execution status, snapshots, and measured evidence; graph build normalizes `feature_id` snapshots through `operation_nodes`. |
 | 3.2 Isolated CadQuery execution worker | `implemented` | Bad source files cannot compromise the whole run. | Worker runs source with bounded failure handling and records errors. |
 | 3.3 Snapshot-derived feature application effects | `implemented` | Users can ask about geometry changes caused by operations. | Snapshot deltas expose volume, bbox, topology, and centroid changes where stable. |
 | 3.4 Trace CLI, trace reports, and timeout/crash accounting | `implemented` | Users can run and inspect execution at corpus scale. | CLI writes trace artifacts and reports timeout/crash counts. |

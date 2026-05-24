@@ -162,6 +162,10 @@ epics:
       - id: "3.1"
         title: TraceRecord schema
         status: implemented
+        acceptance_criteria:
+          - "Runtime geometry evidence has a stable serialized shape, including prepared CADEvolve traces that use feature IDs for snapshots."
+        technical_definition_of_done:
+          - "Graph build normalizes feature_id-keyed snapshots through operation_nodes so source-line and operation-order evidence remain available to downstream geometry queries."
       - id: "3.2"
         title: Isolated CadQuery execution worker
         status: implemented

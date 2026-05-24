@@ -467,6 +467,55 @@ def test_graph_build_integrates_trace_feature_effects(tmp_path: Path) -> None:
     assert any(relation.type == "has_kernel_material_region_geometry" for relation in persisted.relations)
 
 
+def test_graph_build_normalizes_cadevolve_snapshot_feature_ids() -> None:
+    source = source_record_from_mapping({"source_id": "src_cadevolve_trace_schema", "normalized_code": SOURCE})
+    trace_record = {
+        "source_id": "src_cadevolve_trace_schema",
+        "execution_status": "ok",
+        "operation_nodes": [
+            {"feature_id": "wp3", "target": "wp3", "operation": "extrude", "source_line": 4, "step_index": 2},
+            {"feature_id": "wp6", "target": "wp6", "operation": "extrude", "source_line": 7, "step_index": 5},
+        ],
+        "snapshots": [
+            {
+                "snapshot_id": "snap_wp3_0002",
+                "feature_id": "wp3",
+                "step_index": 2,
+                "volume": 62.8,
+                "bbox": {"min": [-2, -2, 0], "max": [2, 2, 5]},
+                "topology": {"face_count": 3, "edge_count": 6, "vertex_count": 4},
+            },
+            {
+                "snapshot_id": "snap_wp6_0005",
+                "feature_id": "wp6",
+                "step_index": 5,
+                "volume": 24.0,
+                "bbox": {"min": [-2, -1.5, 10], "max": [2, 1.5, 12]},
+                "topology": {"face_count": 6, "edge_count": 12, "vertex_count": 8},
+            },
+        ],
+        "environment": {"cadquery_available": True},
+        "failure_reason": None,
+    }
+
+    graph = build_graph(source, trace=trace_record)
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_feature_extreme")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+
+    assert graph.measurements_for("feature:wp3", "volume")[0].value == 62.8
+    assert graph.measurements_for("feature:wp3", "bbox_span_z")[0].value == 5.0
+    assert graph.measurements_for("feature:wp3", "topology_faces")[0].value == 3.0
+    assert graph.measurements_for("feature:wp6", "operation_index")[0].value == 5
+    assert graph.measurements_for("feature:wp6", "volume")[0].evidence["source_line"] == 7
+    assert resolution.verifier_status == "resolved"
+    assert row.prompt
+
+
 def test_additive_trace_snapshot_does_not_become_false_void_region() -> None:
     source = source_record_from_mapping(
         {

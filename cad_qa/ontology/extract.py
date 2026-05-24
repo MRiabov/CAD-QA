@@ -1441,9 +1441,11 @@ def _trace_snapshots_by_target(trace: dict[str, Any] | None) -> dict[str, list[d
     if not trace or trace.get("execution_status") != "ok":
         return {}
     grouped: dict[str, list[dict[str, Any]]] = {}
+    operation_nodes = _trace_operation_nodes_by_feature_id(trace)
     for snapshot in trace.get("snapshots") or []:
         if not isinstance(snapshot, dict):
             continue
+        snapshot = _normalized_trace_snapshot(snapshot, operation_nodes)
         target = snapshot.get("target")
         if isinstance(target, str):
             grouped.setdefault(target, []).append(snapshot)
@@ -1507,6 +1509,43 @@ def _trace_selectors_by_line(trace: dict[str, Any] | None) -> dict[int, list[dic
     return grouped
 
 
+def _trace_operation_nodes_by_feature_id(trace: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    operations: dict[str, dict[str, Any]] = {}
+    for item in trace.get("operation_nodes") or []:
+        if not isinstance(item, dict):
+            continue
+        feature_id = item.get("feature_id")
+        target = item.get("target")
+        if isinstance(feature_id, str):
+            operations[feature_id] = item
+        if isinstance(target, str):
+            operations[target] = item
+    return operations
+
+
+def _normalized_trace_snapshot(
+    snapshot: dict[str, Any],
+    operation_nodes: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    normalized = dict(snapshot)
+    feature_id = normalized.get("feature_id")
+    target = normalized.get("target")
+    if not isinstance(target, str) and isinstance(feature_id, str):
+        normalized["target"] = feature_id
+        target = feature_id
+    operation = operation_nodes.get(str(target)) if isinstance(target, str) else None
+    if operation is None and isinstance(feature_id, str):
+        operation = operation_nodes.get(feature_id)
+    if operation is not None:
+        if normalized.get("source_line") is None and isinstance(operation.get("source_line"), int):
+            normalized["source_line"] = operation["source_line"]
+        if normalized.get("operation_index") is None and isinstance(operation.get("step_index"), int):
+            normalized["operation_index"] = operation["step_index"]
+    elif normalized.get("operation_index") is None and isinstance(normalized.get("step_index"), int):
+        normalized["operation_index"] = normalized["step_index"]
+    return normalized
+
+
 def _best_trace_item(items: list[dict[str, Any]], record: OperationRecord) -> dict[str, Any] | None:
     if not items:
         return None
@@ -1532,6 +1571,8 @@ def _scalar_geometry_measurements(snapshot: dict[str, Any]) -> dict[str, float]:
         for key, value in topology.items():
             if isinstance(value, (int, float)) and math.isfinite(float(value)):
                 values[f"topology_{key}"] = float(value)
+                if key.endswith("_count"):
+                    values[f"topology_{key.removesuffix('_count')}s"] = float(value)
     bbox = snapshot.get("bbox")
     if isinstance(bbox, dict):
         values.update(_bbox_scalar_measurements("bbox", bbox))

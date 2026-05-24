@@ -1,6 +1,6 @@
 # Implementation Status
 
-Date: 2026-05-24
+Date: 2026-05-25
 
 The repository has been reset around the graph-first CAD-QA architecture.
 
@@ -39,6 +39,10 @@ when those choices can be sampled and verified.
 - Trace snapshots for measurable top-level CadQuery assignments, final shape
   metrics, centroids, topology counts, and adjacent snapshot-derived
   volume/bbox/centroid/topology deltas when CadQuery is installed.
+- Prepared CADEvolve trace snapshots keyed by `feature_id` are normalized during
+  graph build using `operation_nodes`, so snapshot-state measurements retain
+  target, source-line, and operation-order evidence even when the trace did not
+  serialize a direct `target` field.
 - Scalar trace-derived geometry measurements for resolver use, including bbox
   spans, bbox extrema, centroid coordinates, topology counts, centroid deltas,
   topology deltas, and bbox deltas.
@@ -388,6 +392,34 @@ Result reviewed on 2026-05-24:
   review of the smoke graph/dataset reports, one-command orchestration,
   run-summary and paper-result artifacts, artifact manifest checksums, and
   packaged tarball.
+
+## CadEvolve RC10 Prepared Trace Schema Check
+
+Result reviewed on 2026-05-25:
+
+- Graph build with prepared RC10 traces at
+  `runs/current_rc10_trace_schema_graph/` produced 10 graphs, 1,521 nodes, 2,773
+  relations, and 8,313 measurements.
+- The same RC10 prepared-trace slice previously exposed only 3,374 graph
+  measurements because snapshots keyed by `feature_id` were not grouped as
+  feature snapshots by the graph extractor.
+- Release-family query synthesis over the normalized graph wrote
+  `runs/current_rc10_trace_schema_query/` with 205 resolved queries and zero
+  synthesis failures.
+- Materialization wrote `runs/current_rc10_trace_schema_dataset/` with 205
+  valid rows, all row-level release-ready and geometry-critical. Of those, 95
+  rows carry value-bearing measurement flags.
+- The recovered rows include feature and material-region synthesis families
+  such as `parameterized_feature_extreme`, `parameterized_feature_rank`,
+  `parameterized_equal_feature_metric_extreme`,
+  `parameterized_equal_feature_metric_rank`,
+  `parameterized_material_region_extreme`,
+  `parameterized_material_region_rank`,
+  `parameterized_equal_material_region_metric_extreme`, and
+  `parameterized_equal_material_region_metric_rank`.
+- This is compatibility and coverage evidence for prepared CADEvolve traces. It
+  does not by itself satisfy benchmark-release scale, split-group, balance, or
+  final preview requirements.
 
 ## CadEvolve 50 Release-Candidate Snapshot
 
