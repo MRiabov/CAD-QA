@@ -1216,6 +1216,34 @@ families:
       expected_values:
         target_type: [edge_endpoint]
     notes: Synthesized value-bearing endpoint family that narrows by repeated endpoint coordinates or distances before selecting by another endpoint measurement.
+  - id: parameterized_equal_endpoint_metric_rank
+    status: release
+    target_type: edge_endpoint
+    minimum_hops: 4
+    maximum_hops: 4
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - aggregation_rank
+        - rank_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - aggregation_rank
+        - rank_direction
+        - final_selector
+      expected_values:
+        target_type: [edge_endpoint]
+        aggregation_rank: [2, 3, 4, 5, 6]
+    notes: Synthesized value-bearing endpoint family that narrows by repeated endpoint coordinates or distances before selecting a sampled rank by another endpoint measurement.
   - id: parameterized_endpoint_rank
     status: release
     target_type: edge_endpoint
@@ -1266,6 +1294,37 @@ families:
         target_type: [edge_endpoint]
         clause_relation: [endpoint_of, contained_in]
     notes: Synthesized containment-aware endpoint family that requires endpoint and contained-on-edge evidence, narrows by a repeated endpoint measurement, then selects by another measured endpoint quantity.
+  - id: parameterized_contained_endpoint_metric_rank
+    status: release
+    target_type: edge_endpoint
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - clause_relation
+        - aggregation_metric
+        - aggregation_rank
+        - rank_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - clause_relation
+        - aggregation_metric
+        - aggregation_rank
+        - rank_direction
+        - final_selector
+      expected_values:
+        target_type: [edge_endpoint]
+        clause_relation: [endpoint_of, contained_in]
+        aggregation_rank: [2, 3, 4, 5, 6]
+    notes: Synthesized containment-aware endpoint family that requires endpoint and contained-on-edge evidence, narrows by a repeated endpoint measurement, then selects a sampled rank by another endpoint measurement.
   - id: parameterized_endpoint_containment_relation_extreme
     status: release
     target_type: edge_endpoint

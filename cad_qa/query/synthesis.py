@@ -717,6 +717,53 @@ EQUAL_VALUE_RANK_FAMILY_SPECS = (
         ),
         selection_mode="rank",
     ),
+    EqualValueExtremeFamilySpec(
+        family_id="parameterized_equal_endpoint_metric_rank",
+        target_type="edge_endpoint",
+        relation="endpoint_of",
+        relation_clause_id="has_parameterized_endpoint_set",
+        equal_value_clause_id="has_parameterized_equal_endpoint_metric_value",
+        selector_metric_clause_id="has_parameterized_endpoint_metric",
+        equal_metrics=(
+            "coordinate_x",
+            "coordinate_y",
+            "coordinate_z",
+            "distance_to_origin",
+        ),
+        selector_metrics=(
+            "coordinate_x",
+            "coordinate_y",
+            "coordinate_z",
+            "distance_to_origin",
+        ),
+        relation_target_type="edge",
+        selection_mode="rank",
+    ),
+    EqualValueExtremeFamilySpec(
+        family_id="parameterized_contained_endpoint_metric_rank",
+        target_type="edge_endpoint",
+        relation="endpoint_of",
+        relation_clause_id="has_parameterized_endpoint_set",
+        equal_value_clause_id="has_parameterized_equal_endpoint_metric_value",
+        selector_metric_clause_id="has_parameterized_endpoint_metric",
+        equal_metrics=(
+            "coordinate_x",
+            "coordinate_y",
+            "coordinate_z",
+            "distance_to_origin",
+        ),
+        selector_metrics=(
+            "coordinate_x",
+            "coordinate_y",
+            "coordinate_z",
+            "distance_to_origin",
+        ),
+        relation_target_type="edge",
+        extra_relation="contained_in",
+        extra_relation_clause_id="has_parameterized_contained_endpoint_set",
+        extra_relation_target_type="edge",
+        selection_mode="rank",
+    ),
 )
 
 RELATION_EXTREME_FAMILY_SPECS = (

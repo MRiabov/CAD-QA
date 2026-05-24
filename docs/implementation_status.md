@@ -879,6 +879,16 @@ Checked as implemented with remaining scale caveats:
   equal-measurement synthesis; broader endpoint relations, containment/adjacency
   combinations, and release-scale distribution remain open.
 - The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_endpoint_equal_metric_rank/PREVIEW.md`
+  adds valid release-ready rows for `parameterized_equal_endpoint_metric_rank`
+  and `parameterized_contained_endpoint_metric_rank`. The reviewed rows narrow
+  to endpoints with the same measured Z coordinate, preserve four endpoint
+  candidates through the equal-measurement clause, and resolve by sampled rank
+  over another measured endpoint quantity. The contained variant also requires
+  contained-on-edge evidence. This implements endpoint equal-measurement rank
+  synthesis at the valid-row level; broader endpoint metrics, containment
+  combinations, and release-scale balance remain open.
+- The synthesized selfcheck preview at
   `runs/parameterized_synthesis_selfcheck_endpoint_path_rank/PREVIEW.md` adds
   valid release-ready rows for `parameterized_endpoint_rank`,
   `parameterized_path_point_rank`, and `parameterized_path_segment_rank`. The

@@ -59,7 +59,9 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_feature_reference_void_region_distance",
     "parameterized_feature_reference_entity_distance",
     "parameterized_equal_endpoint_metric_extreme",
+    "parameterized_equal_endpoint_metric_rank",
     "parameterized_contained_endpoint_metric_extreme",
+    "parameterized_contained_endpoint_metric_rank",
     "parameterized_endpoint_containment_relation_extreme",
     "parameterized_endpoint_containment_relation_rank",
     "parameterized_endpoint_reference_feature_distance",
@@ -173,6 +175,7 @@ def synthesis_selfcheck_graphs() -> list[OntologyGraph]:
         _edge_equal_metric_graph(),
         _edge_equal_metric_rank_graph(),
         _endpoint_equal_metric_graph(),
+        _endpoint_equal_metric_rank_graph(),
         _path_metric_graph(),
         _face_selector_count_graph(),
         _edge_selector_count_graph(),
@@ -1322,6 +1325,36 @@ def _endpoint_equal_metric_graph() -> OntologyGraph:
         graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
         graph.add_measurement(Measurement(endpoint_id, "relation_metric", "distance_to_origin", distance, "mm"))
     _add_reference_region_nodes(graph)
+    return graph
+
+
+def _endpoint_equal_metric_rank_graph() -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id="graph:selfcheck-endpoint-equal-metric-rank",
+        source={
+            "source_id": "selfcheck-endpoint-equal-metric-rank",
+            "source_code": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane(\"XY\").box(12, 8, 4).edges(\"|Y\")\n"
+            ),
+        },
+    )
+    for edge_id in ["edge:a", "edge:b", "edge:c", "edge:d"]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+    for endpoint_id, edge_id, coordinate, distance in [
+        ("edge_endpoint:a", "edge:a", [0.0, 0.0, 3.0], 2.0),
+        ("edge_endpoint:b", "edge:b", [4.0, 1.0, 3.0], 6.0),
+        ("edge_endpoint:c", "edge:c", [8.0, 2.0, 3.0], 20.0),
+        ("edge_endpoint:d", "edge:d", [12.0, 3.0, 3.0], 30.0),
+    ]:
+        graph.add_node(Node(endpoint_id, "edge_endpoint", endpoint_id))
+        graph.add_relation(Relation(endpoint_id, edge_id, "endpoint_of"))
+        graph.add_relation(Relation(endpoint_id, edge_id, "contained_in"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate", coordinate, "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_x", coordinate[0], "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_y", coordinate[1], "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "relation_metric", "distance_to_origin", distance, "mm"))
     return graph
 
 
