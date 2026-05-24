@@ -13,8 +13,11 @@ current_snapshot:
     critical path is kernel/geometry-backed task coverage for the rows models
     actually train on: volumes, bboxes, centroids, topology deltas,
     selector-result geometry, material/void deltas, path distances, and stable
-    spatial relations. Earlier separate task-family and graph-query framing is
-    obsolete.
+    spatial relations. The next required slice is value-bearing measurement
+    prompts and multi-hop equal-value distractor tasks: public clues should
+    expose stable rounded/tolerance-bucketed CAD values when useful, then use
+    additional geometry to disambiguate among equal or near-equal candidates.
+    Earlier separate task-family and graph-query framing is obsolete.
 status_values:
   - planned
   - work-in-progress
@@ -272,3 +275,20 @@ epics:
       - id: "12.6"
         title: Training-release gate requiring geometry-backed critical rows to dominate exported SFT data
         status: implemented
+  - id: epic-13
+    title: Value-bearing measurement and equal-geometry multi-hop tasks
+    status: planned
+    priority: P0
+    stories:
+      - id: "13.1"
+        title: Prompt templates that expose stable rounded CAD measurement values
+        status: planned
+      - id: "13.2"
+        title: Tolerance-equal measurement mining for distractor candidate sets
+        status: planned
+      - id: "13.3"
+        title: Cross-feature value-bearing tasks using distances between derived feature geometry
+        status: planned
+      - id: "13.4"
+        title: Release and SFT coverage gates for value-bearing measurement task families
+        status: planned

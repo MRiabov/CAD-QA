@@ -12,6 +12,11 @@ need substantial work.
 The critical missing implementation is not more syntax-readable prompts; it is
 release-grade CAD geometry task coverage for the rows models should actually
 train on.
+The next missing slice is value-bearing measurement prompts and multi-hop
+equal-value distractor tasks: prompts should often expose concrete CAD
+measurements such as area, volume, length, centroid coordinate, or distance,
+then require additional geometry to disambiguate among equal or near-equal
+candidates.
 
 ## Implemented In Current Surface
 
@@ -608,6 +613,20 @@ Checked as implemented with remaining scale caveats:
 
 ## Open Work
 
+- Add value-bearing measurement prompt families. Current domain-language
+  templates often say that a target has a measured area, volume, length,
+  centroid, bbox, or distance; release training rows should also include prompts
+  that expose stable rounded/tolerance-bucketed values such as "surface area of
+  12.5" or "solid volume of 48.0" when those values are part of the intended
+  reasoning.
+- Add tolerance-equal measurement mining for multi-hop distractor construction:
+  group entities and feature parameters with equal or near-equal values within
+  a configured tolerance, then generate tasks where the shared value leaves
+  multiple candidates and another geometric clue resolves the answer.
+- Add cross-feature value-bearing tasks and require them to be well represented
+  in release/SFT exports. Example: identify an edge on a box-like feature whose
+  midpoint is closest to the center of a sphere-like feature, with both
+  reference features described by geometry rather than direct source names.
 - Broaden the current geometry-backed training rows across more CadEvolve
   source families and larger generated releases: volume, bbox, centroid,
   topology counts/deltas, selector-result geometry, material/void region
