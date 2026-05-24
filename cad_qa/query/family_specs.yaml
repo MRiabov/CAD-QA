@@ -55,6 +55,12 @@ families:
     target_type: face
     minimum_hops: 3
     maximum_hops: 3
+  - id: parameterized_kernel_face_extreme
+    status: release
+    target_type: face
+    minimum_hops: 3
+    maximum_hops: 3
+    notes: Synthesized family that samples the measured face quantity and min/max selector instead of fixing a global axis.
   - id: highest_positive_x_flat_opposite_adjacent_perpendicular_kernel_face
     status: review_only
     target_type: face
@@ -107,6 +113,12 @@ families:
     target_type: edge
     minimum_hops: 3
     maximum_hops: 3
+  - id: parameterized_kernel_edge_extreme
+    status: release
+    target_type: edge
+    minimum_hops: 3
+    maximum_hops: 3
+    notes: Synthesized family that samples the measured edge quantity and min/max selector instead of fixing a global axis.
   - id: frontmost_equal_midpoint_distance_kernel_edge
     status: review_only
     target_type: edge

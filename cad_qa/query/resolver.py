@@ -9,6 +9,7 @@ from cad_qa.ontology.nodes import Measurement, Node, OntologyGraph
 from cad_qa.query.candidates import candidate_ids, initial_candidates
 from cad_qa.query.difficulty import difficulty_for_hops
 from cad_qa.query.ir import CandidateSetTrace, Clause, QueryProgram, QueryResolution
+from cad_qa.query.synthesis import synthesize_graph_hop_queries
 
 
 GEOMETRY_MARGIN_EPSILON = 1e-6
@@ -2198,6 +2199,7 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
                     min_individual_clause_candidates=2,
                 )
             )
+    queries.extend(synthesize_graph_hop_queries(graph))
     return queries
 
 

@@ -338,7 +338,7 @@ epics:
         status: implemented
       - id: "14.2"
         title: Refactor fixed-axis, fixed-extremum, fixed-comparison, and fixed-entity query families into parameterized families
-        status: planned
+        status: work-in-progress
       - id: "14.3"
         title: Randomize rendered view words, min/max wording, exact-value clues, and entity-type wording from sampled parameters
         status: planned
@@ -350,16 +350,16 @@ epics:
         status: work-in-progress
       - id: "14.6"
         title: Predicate catalog for reusable geometry-derived narrowing clauses
-        status: planned
+        status: work-in-progress
       - id: "14.7"
         title: Bounded graph-hop query synthesis layer over ontology graphs
-        status: planned
+        status: work-in-progress
       - id: "14.8"
         title: Sampled query metadata and prompt-template bindings for synthesized queries
         status: work-in-progress
       - id: "14.9"
         title: Graph-hop narrowing implementation for sparse selector, count, and extremum task families
-        status: planned
+        status: work-in-progress
       - id: "14.10"
         title: Release and SFT gates for zero-row intended families and narrowing-parameter coverage
         status: work-in-progress

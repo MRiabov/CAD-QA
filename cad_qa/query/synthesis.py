@@ -1,0 +1,218 @@
+"""Bounded graph-hop query synthesis over ontology graphs."""
+
+from __future__ import annotations
+
+import hashlib
+from dataclasses import dataclass
+from typing import Any
+
+from cad_qa.ontology.nodes import Node, OntologyGraph
+from cad_qa.query.ir import QueryProgram
+from cad_qa.query.predicate_catalog import (
+    merge_sampled_parameters,
+    metric_axis,
+    measurement_predicate,
+    relation_predicate,
+)
+
+
+GEOMETRY_MARGIN_EPSILON = 1e-6
+
+
+@dataclass(frozen=True)
+class ExtremeFamilySpec:
+    family_id: str
+    target_type: str
+    relation: str
+    relation_clause_id: str
+    measurement_clause_id: str
+    metrics: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class ViableExtreme:
+    spec: ExtremeFamilySpec
+    candidates: list[Node]
+    metric: str
+    aggregation: str
+
+
+EXTREME_FAMILY_SPECS = (
+    ExtremeFamilySpec(
+        family_id="parameterized_kernel_face_extreme",
+        target_type="face",
+        relation="has_kernel_stable_face_id",
+        relation_clause_id="has_parameterized_face_set",
+        measurement_clause_id="has_parameterized_face_metric",
+        metrics=(
+            "coordinate_x",
+            "coordinate_y",
+            "coordinate_z",
+            "distance_to_origin",
+            "face_area",
+        ),
+    ),
+    ExtremeFamilySpec(
+        family_id="parameterized_kernel_edge_extreme",
+        target_type="edge",
+        relation="has_kernel_stable_edge_id",
+        relation_clause_id="has_parameterized_edge_set",
+        measurement_clause_id="has_parameterized_edge_metric",
+        metrics=(
+            "midpoint_x",
+            "midpoint_y",
+            "midpoint_z",
+            "midpoint_distance_to_origin",
+            "edge_length",
+        ),
+    ),
+)
+
+
+def synthesize_graph_hop_queries(graph: OntologyGraph) -> list[QueryProgram]:
+    """Create deterministic parameterized graph-hop queries from graph evidence."""
+
+    queries: list[QueryProgram] = []
+    for spec in EXTREME_FAMILY_SPECS:
+        viable = _viable_extremes(graph, spec)
+        if not viable:
+            continue
+        choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
+        query = _query_for_extreme(graph, choice)
+        if query is not None:
+            queries.append(query)
+    return queries
+
+
+def _viable_extremes(graph: OntologyGraph, spec: ExtremeFamilySpec) -> list[ViableExtreme]:
+    candidates = graph.nodes_by_type(spec.target_type)
+    relation = relation_predicate(
+        graph,
+        candidates,
+        clause_id=spec.relation_clause_id,
+        relation=spec.relation,
+        target_type="selector",
+    )
+    if relation is None:
+        return []
+    relation_candidates = _apply_relation_clause(graph, candidates, spec.relation)
+    viable: list[ViableExtreme] = []
+    for metric in spec.metrics:
+        measurement = measurement_predicate(
+            graph,
+            relation_candidates,
+            clause_id=spec.measurement_clause_id,
+            metric=metric,
+        )
+        if measurement is None:
+            continue
+        metric_candidates = _nodes_with_numeric_measurement(graph, relation_candidates, metric)
+        if len(metric_candidates) < 2:
+            continue
+        for aggregation in ("argmax", "argmin"):
+            if _has_unique_extreme(graph, metric_candidates, metric, aggregation):
+                viable.append(ViableExtreme(spec, metric_candidates, metric, aggregation))
+    return sorted(
+        viable,
+        key=lambda item: (
+            item.metric,
+            item.aggregation,
+            [node.id for node in item.candidates],
+        ),
+    )
+
+
+def _query_for_extreme(graph: OntologyGraph, viable: ViableExtreme) -> QueryProgram | None:
+    spec = viable.spec
+    broad_candidates = graph.nodes_by_type(spec.target_type)
+    relation = relation_predicate(
+        graph,
+        broad_candidates,
+        clause_id=spec.relation_clause_id,
+        relation=spec.relation,
+        target_type="selector",
+    )
+    if relation is None:
+        return None
+    relation_candidates = _apply_relation_clause(graph, broad_candidates, spec.relation)
+    measurement = measurement_predicate(
+        graph,
+        relation_candidates,
+        clause_id=spec.measurement_clause_id,
+        metric=viable.metric,
+    )
+    if measurement is None:
+        return None
+    direction = "max" if viable.aggregation == "argmax" else "min"
+    sampled = merge_sampled_parameters(
+        {
+            "target_type": [spec.target_type],
+            "final_selector": [f"{direction}:{viable.metric}"],
+            "aggregation_metric": [viable.metric],
+            "extremum_direction": [direction],
+            "predicate_catalog_version": ["v1"],
+            "synthesis_strategy": ["bounded_parameterized_extreme_v1"],
+        },
+        relation.sampled_parameters,
+        measurement.sampled_parameters,
+    )
+    axis = metric_axis(viable.metric)
+    if axis is not None:
+        sampled = merge_sampled_parameters(sampled, {"aggregation_axis": [axis]})
+    return QueryProgram(
+        query_id=f"{graph.graph_id}:synth:{spec.family_id}",
+        target_type=spec.target_type,
+        clauses=[
+            relation.clause,
+            measurement.clause,
+        ],
+        aggregation=viable.aggregation,
+        aggregation_metric=viable.metric,
+        hop_count=3,
+        difficulty="cad_browsecomp",
+        min_individual_clause_candidates=2,
+        sampled_parameters=sampled,
+    )
+
+
+def _apply_relation_clause(graph: OntologyGraph, candidates: list[Node], relation_type: str) -> list[Node]:
+    return [
+        node
+        for node in candidates
+        if any(edge.source_id == node.id and edge.type == relation_type for edge in graph.relations)
+    ]
+
+
+def _nodes_with_numeric_measurement(graph: OntologyGraph, candidates: list[Node], metric: str) -> list[Node]:
+    return [
+        node
+        for node in candidates
+        if isinstance(_measurement_value(graph, node.id, metric), (int, float))
+    ]
+
+
+def _has_unique_extreme(
+    graph: OntologyGraph,
+    candidates: list[Node],
+    metric: str,
+    aggregation: str,
+) -> bool:
+    scores = [
+        float(value)
+        for node in candidates
+        if isinstance((value := _measurement_value(graph, node.id, metric)), (int, float))
+    ]
+    if len(scores) < 2:
+        return False
+    ordered = sorted(scores, reverse=aggregation == "argmax")
+    return abs(ordered[0] - ordered[1]) > GEOMETRY_MARGIN_EPSILON
+
+
+def _measurement_value(graph: OntologyGraph, entity_id: str, metric: str) -> Any:
+    measurements = graph.measurements_for(entity_id, metric)
+    return measurements[0].value if measurements else None
+
+
+def _stable_choice_index(graph_id: str, family_id: str, count: int) -> int:
+    digest = hashlib.sha256(f"{graph_id}:{family_id}".encode("utf-8")).hexdigest()
+    return int(digest[:12], 16) % count

@@ -98,6 +98,8 @@ def _clause_format_values(clause: Any, query: Any | None) -> dict[str, Any]:
     }
     if isinstance(values["value"], dict):
         values.update(values["value"])
+    if isinstance(values["metric"], str):
+        values["metric_label"] = metric_label(values["metric"])
     if query is not None:
         values["query_id"] = getattr(query, "query_id", None)
         values["query_target_type"] = getattr(query, "target_type", None)

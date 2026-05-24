@@ -49,6 +49,7 @@ from cad_qa.query.family_manifest import intended_family_coverage_report
 from cad_qa.query.ir import Clause, QueryProgram
 from cad_qa.query.parameters import sampled_parameters_from_query
 from cad_qa.query.resolver import resolve_query, smoke_queries
+from cad_qa.query.synthesis import synthesize_graph_hop_queries
 from cad_qa.source import load_sources_jsonl, source_audit, source_family_from_path, source_manifest, source_record_from_mapping
 from cad_qa.trace import TraceRecord, cadquery_available, trace_report, trace_source, trace_sources_bounded
 from cad_qa.cli import main as cli_main
@@ -1932,6 +1933,65 @@ def test_generated_smoke_query_clauses_are_yaml_backed() -> None:
         graph = build_graph(source_record_from_mapping({"source_id": source_id, "normalized_code": source_code}))
         for query in smoke_queries(graph):
             render_prompt(graph.source["source_code"], query)
+
+
+def test_synthesis_generates_parameterized_kernel_face_extreme_query() -> None:
+    graph = OntologyGraph(graph_id="graph:synthetic-face", source={"source_id": "synthetic", "source_code": ""})
+    graph.add_node(Node("selector:faces", "selector", "faces"))
+    for index, x_value in enumerate([0.0, 5.0, 11.0], start=1):
+        face_id = f"face:{index}"
+        graph.add_node(Node(face_id, "face", face_id))
+        graph.add_relation(Relation(face_id, "selector:faces", "has_kernel_stable_face_id"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_x", x_value, "mm"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_kernel_face_extreme")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+
+    assert resolution.verifier_status == "resolved"
+    assert resolution.gold_answer in {"face:1", "face:3"}
+    assert query.aggregation in {"argmax", "argmin"}
+    assert query.aggregation_metric == "coordinate_x"
+    assert query.sampled_parameters["aggregation_axis"] == ["x"]
+    assert query.sampled_parameters["extremum_direction"] in (["max"], ["min"])
+    assert query.sampled_parameters["narrowing_predicate_sequence"] == [
+        "measurement:coordinate_x",
+        "relation:has_kernel_stable_face_id:selector",
+    ]
+    assert row.query_program["sampled_parameters"] == sampled_parameters_from_query(row.query_program)
+    assert "belongs to a measured face set" in row.prompt
+    assert "measured X coordinate" in row.prompt
+
+
+def test_smoke_queries_include_parameterized_kernel_edge_synthesis() -> None:
+    graph = OntologyGraph(graph_id="graph:synthetic-edge", source={"source_id": "synthetic", "source_code": ""})
+    graph.add_node(Node("selector:edges", "selector", "edges"))
+    for index, y_value in enumerate([-2.0, 0.0, 8.0], start=1):
+        edge_id = f"edge:{index}"
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", y_value, "mm"))
+
+    query = next(
+        query
+        for query in smoke_queries(graph)
+        if query.query_id.endswith("parameterized_kernel_edge_extreme")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+
+    assert resolution.verifier_status == "resolved"
+    assert resolution.gold_answer in {"edge:1", "edge:3"}
+    assert query.aggregation_metric == "midpoint_y"
+    assert query.sampled_parameters["aggregation_axis"] == ["y"]
+    assert query.sampled_parameters["target_type"] == ["edge"]
+    assert row.logical_hop_count == 3
+    assert "belongs to a measured edge set" in row.prompt
+    assert "measured midpoint Y coordinate" in row.prompt
 
 
 def test_resolver_does_not_inline_generated_prompt_text() -> None:
