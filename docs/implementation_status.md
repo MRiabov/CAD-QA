@@ -936,6 +936,17 @@ Checked as implemented with remaining scale caveats:
   still an initial synthesized face-spatial slice rather than proof of
   release-scale spatial-relation distribution.
 - The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_spatial_relation_rank/PREVIEW.md`
+  adds valid release-ready rows for
+  `parameterized_face_spatial_relation_rank` and
+  `parameterized_edge_spatial_relation_rank`. The reviewed face row first
+  requires kernel-selected face evidence, then adjacency to another measured
+  face, then a measured X coordinate, and resolves by a sampled rank over the
+  narrowed candidate set. The reviewed edge row follows the same graph-hop shape
+  with adjacent measured edges and a measured midpoint-distance selector. This
+  implements spatial-relation rank synthesis at the valid-row level; relation,
+  rank, axis, and metric distribution still require release-scale review.
+- The synthesized selfcheck preview at
   `runs/parameterized_synthesis_selfcheck_endpoint_reference/PREVIEW.md`
   demonstrates the initial `parameterized_endpoint_reference_feature_distance`
   family. The reviewed row narrows edge endpoints by a repeated measured Z

@@ -140,6 +140,7 @@ class RelationExtremeFamilySpec:
     measurement_clause_id: str
     metrics: tuple[str, ...]
     relation_target_type: str
+    selection_mode: str = "extreme"
 
 
 @dataclass(frozen=True)
@@ -149,6 +150,7 @@ class ViableRelationExtreme:
     metric: str
     aggregation: str
     candidate_ids: tuple[str, ...]
+    aggregation_rank: int | None = None
 
 
 @dataclass(frozen=True)
@@ -706,6 +708,64 @@ RELATION_EXTREME_FAMILY_SPECS = (
             "distance_to_origin",
         ),
         relation_target_type="edge",
+    ),
+)
+
+RELATION_RANK_FAMILY_SPECS = (
+    RelationExtremeFamilySpec(
+        family_id="parameterized_face_spatial_relation_rank",
+        target_type="face",
+        base_relation="has_kernel_stable_face_id",
+        base_relation_clause_id="has_parameterized_face_set",
+        base_relation_target_type="selector",
+        relations=(
+            "adjacent_to",
+            "coplanar_with",
+            "intersects",
+            "opposite_to",
+            "parallel_to",
+            "perpendicular_to",
+        ),
+        relation_clause_id="has_parameterized_face_spatial_relation",
+        measurement_clause_id="has_parameterized_face_metric",
+        metrics=(
+            "coordinate_x",
+            "coordinate_y",
+            "coordinate_z",
+            "distance_to_origin",
+            "face_area",
+        ),
+        relation_target_type="face",
+        selection_mode="rank",
+    ),
+    RelationExtremeFamilySpec(
+        family_id="parameterized_edge_spatial_relation_rank",
+        target_type="edge",
+        base_relation="has_kernel_stable_edge_id",
+        base_relation_clause_id="has_parameterized_edge_set",
+        base_relation_target_type="selector",
+        relations=(
+            "adjacent_to",
+            "coaxial_with",
+            "intersects",
+            "longer_than",
+            "opposite_to",
+            "parallel_to",
+            "perpendicular_to",
+            "same_length_as",
+            "shorter_than",
+        ),
+        relation_clause_id="has_parameterized_edge_spatial_relation",
+        measurement_clause_id="has_parameterized_edge_metric",
+        metrics=(
+            "midpoint_x",
+            "midpoint_y",
+            "midpoint_z",
+            "midpoint_distance_to_origin",
+            "edge_length",
+        ),
+        relation_target_type="edge",
+        selection_mode="rank",
     ),
 )
 
@@ -1335,6 +1395,14 @@ def synthesize_graph_hop_queries(graph: OntologyGraph) -> list[QueryProgram]:
         if query is not None:
             queries.append(query)
     for spec in RELATION_EXTREME_FAMILY_SPECS:
+        viable = _viable_relation_extremes(graph, spec)
+        if not viable:
+            continue
+        choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
+        query = _query_for_relation_extreme(graph, choice)
+        if query is not None:
+            queries.append(query)
+    for spec in RELATION_RANK_FAMILY_SPECS:
         viable = _viable_relation_extremes(graph, spec)
         if not viable:
             continue
@@ -2173,7 +2241,28 @@ def _viable_relation_extremes(
             metric_candidates = _nodes_with_numeric_measurement(graph, relation_candidates, metric)
             if len(metric_candidates) < 2:
                 continue
-            for aggregation in ("argmax", "argmin"):
+            if spec.selection_mode == "rank" and len(metric_candidates) < 3:
+                continue
+            aggregations = (
+                ("rank_desc", "rank_asc")
+                if spec.selection_mode == "rank"
+                else ("argmax", "argmin")
+            )
+            for aggregation in aggregations:
+                if spec.selection_mode == "rank":
+                    for rank in range(2, min(len(metric_candidates), MAX_SYNTHESIZED_RANK) + 1):
+                        if _has_unique_rank(graph, metric_candidates, metric, aggregation, rank):
+                            viable.append(
+                                ViableRelationExtreme(
+                                    spec=spec,
+                                    relation=relation_name,
+                                    metric=metric,
+                                    aggregation=aggregation,
+                                    candidate_ids=tuple(node.id for node in metric_candidates),
+                                    aggregation_rank=rank,
+                                )
+                            )
+                    continue
                 if _has_unique_extreme(graph, metric_candidates, metric, aggregation):
                     viable.append(
                         ViableRelationExtreme(
@@ -2190,6 +2279,7 @@ def _viable_relation_extremes(
             item.relation,
             item.metric,
             item.aggregation,
+            item.aggregation_rank or 0,
             item.candidate_ids,
         ),
     )
@@ -2226,21 +2316,38 @@ def _query_for_relation_extreme(graph: OntologyGraph, viable: ViableRelationExtr
     )
     if measurement is None:
         return None
-    direction = "max" if viable.aggregation == "argmax" else "min"
+    direction = "max" if viable.aggregation in {"argmax", "rank_desc"} else "min"
+    final_selector = (
+        f"rank:{viable.aggregation_rank}:{direction}:{viable.metric}"
+        if viable.aggregation_rank is not None
+        else f"{direction}:{viable.metric}"
+    )
     sampled = merge_sampled_parameters(
         {
             "target_type": [spec.target_type],
             "spatial_relation": [viable.relation],
-            "final_selector": [f"{direction}:{viable.metric}"],
+            "final_selector": [final_selector],
             "aggregation_metric": [viable.metric],
             "extremum_direction": [direction],
             "predicate_catalog_version": ["v1"],
             "prompt_wording_variant": [_prompt_wording_variant(graph.graph_id, spec.family_id)],
-            "synthesis_strategy": ["spatial_relation_extreme_v1"],
+            "synthesis_strategy": [
+                "spatial_relation_rank_v1"
+                if viable.aggregation_rank is not None
+                else "spatial_relation_extreme_v1"
+            ],
         },
         relation.sampled_parameters,
         measurement.sampled_parameters,
     )
+    if viable.aggregation_rank is not None:
+        sampled = merge_sampled_parameters(
+            sampled,
+            {
+                "aggregation_rank": [str(viable.aggregation_rank)],
+                "rank_direction": [direction],
+            },
+        )
     axis = metric_axis(viable.metric)
     if axis is not None:
         sampled = merge_sampled_parameters(sampled, {"aggregation_axis": [axis]})
@@ -2254,6 +2361,7 @@ def _query_for_relation_extreme(graph: OntologyGraph, viable: ViableRelationExtr
         ],
         aggregation=viable.aggregation,
         aggregation_metric=viable.metric,
+        aggregation_rank=viable.aggregation_rank,
         hop_count=4,
         difficulty="cad_browsecomp",
         min_individual_clause_candidates=2,

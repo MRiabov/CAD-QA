@@ -2781,6 +2781,96 @@ def test_synthesis_generates_coplanar_face_spatial_relation_query() -> None:
     assert len(row.candidate_trace["final_candidates"]) == 1
 
 
+def test_synthesis_generates_spatial_relation_rank_queries() -> None:
+    face_graph = OntologyGraph(
+        graph_id="graph:face-spatial-rank-synth",
+        source={"source_id": "synthetic", "source_code": ""},
+    )
+    face_graph.add_node(Node("selector:faces", "selector", "faces"))
+    for face_id, area, center in [
+        ("face:a", 64.0, [0.0, 0.0, 0.0]),
+        ("face:b", 48.0, [2.0, 0.0, 1.0]),
+        ("face:c", 32.0, [0.0, 3.0, 2.0]),
+        ("face:d", 16.0, [4.0, 3.0, 3.0]),
+    ]:
+        face_graph.add_node(Node(face_id, "face", face_id))
+        face_graph.add_relation(Relation(face_id, "selector:faces", "has_kernel_stable_face_id"))
+        face_graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", area, "mm^2"))
+        face_graph.add_measurement(Measurement(face_id, "entity_geometry", "center", center, "mm"))
+        face_graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_x", center[0], "mm"))
+        face_graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_y", center[1], "mm"))
+        face_graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_z", center[2], "mm"))
+        face_graph.add_measurement(Measurement(face_id, "relation_metric", "distance_to_origin", area / 10.0, "mm"))
+    for source_id, target_id in [
+        ("face:a", "face:b"),
+        ("face:b", "face:c"),
+        ("face:c", "face:d"),
+        ("face:d", "face:a"),
+    ]:
+        face_graph.add_relation(Relation(source_id, target_id, "adjacent_to"))
+
+    edge_graph = OntologyGraph(
+        graph_id="graph:edge-spatial-rank-synth",
+        source={"source_id": "synthetic", "source_code": ""},
+    )
+    edge_graph.add_node(Node("selector:edges", "selector", "edges"))
+    for edge_id, length, midpoint in [
+        ("edge:a", 12.0, [0.0, 0.0, 0.0]),
+        ("edge:b", 9.0, [2.0, 0.0, 1.0]),
+        ("edge:c", 6.0, [0.0, 3.0, 2.0]),
+        ("edge:d", 3.0, [4.0, 3.0, 3.0]),
+    ]:
+        edge_graph.add_node(Node(edge_id, "edge", edge_id))
+        edge_graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
+        edge_graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
+        edge_graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint", midpoint, "mm"))
+        edge_graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_x", midpoint[0], "mm"))
+        edge_graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint[1], "mm"))
+        edge_graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_z", midpoint[2], "mm"))
+        edge_graph.add_measurement(Measurement(edge_id, "relation_metric", "midpoint_distance_to_origin", length / 2.0, "mm"))
+    for source_id, target_id in [
+        ("edge:a", "edge:b"),
+        ("edge:b", "edge:c"),
+        ("edge:c", "edge:d"),
+        ("edge:d", "edge:a"),
+    ]:
+        edge_graph.add_relation(Relation(source_id, target_id, "adjacent_to"))
+
+    for graph, family, target_type, measured_text in [
+        (face_graph, "parameterized_face_spatial_relation_rank", "face", "measured face"),
+        (edge_graph, "parameterized_edge_spatial_relation_rank", "edge", "measured edge"),
+    ]:
+        query = next(query for query in synthesize_graph_hop_queries(graph) if query.query_id.endswith(family))
+        resolution = resolve_query(graph, query)
+        row = materialize_row(graph, resolution)
+        aggregation_step = next(step for step in row.candidate_trace["steps"] if step["step"] == "aggregation")
+
+        assert resolution.verifier_status == "resolved"
+        assert row.release_ready
+        assert query.target_type == target_type
+        assert query.clauses[0].relation in {"has_kernel_stable_face_id", "has_kernel_stable_edge_id"}
+        assert query.clauses[1].relation == "adjacent_to"
+        assert query.aggregation in {"rank_asc", "rank_desc"}
+        assert query.aggregation_rank in {2, 3, 4}
+        assert query.sampled_parameters["spatial_relation"] == ["adjacent_to"]
+        assert query.sampled_parameters["aggregation_rank"] == [str(query.aggregation_rank)]
+        assert query.sampled_parameters["rank_direction"] in (["max"], ["min"])
+        assert query.sampled_parameters["final_selector"] == [
+            f"rank:{query.aggregation_rank}:{query.sampled_parameters['rank_direction'][0]}:{query.aggregation_metric}"
+        ]
+        assert len(row.candidate_trace["steps"][2]["after"]) >= 3
+        assert len(aggregation_step["before"]) >= 3
+        assert aggregation_step["rank"] == query.aggregation_rank
+        assert len(row.candidate_trace["final_candidates"]) == 1
+        assert row.logical_hop_count == 4
+        assert row.geometry_hop_count == 4
+        assert "adjacent_to" in row.relation_families
+        assert "adjacent_to" not in row.prompt
+        assert measured_text in row.prompt
+        assert "candidate" in row.prompt
+        assert "increasing" in row.prompt or "decreasing" in row.prompt or "ordered" in row.prompt or "sorting" in row.prompt
+
+
 def test_synthesis_skips_edge_spatial_relation_family_without_viable_relation_subset() -> None:
     graph = OntologyGraph(graph_id="graph:no-edge-spatial-synth", source={"source_id": "synthetic", "source_code": ""})
     for edge_id, length in [("edge:a", 10.0), ("edge:b", 10.0), ("edge:c", 10.0)]:
@@ -2791,6 +2881,7 @@ def test_synthesis_skips_edge_spatial_relation_family_without_viable_relation_su
     families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
 
     assert "parameterized_edge_spatial_relation_extreme" not in families
+    assert "parameterized_edge_spatial_relation_rank" not in families
 
 
 def test_synthesis_skips_face_spatial_relation_family_without_viable_relation_subset() -> None:
@@ -2803,6 +2894,7 @@ def test_synthesis_skips_face_spatial_relation_family_without_viable_relation_su
     families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
 
     assert "parameterized_face_spatial_relation_extreme" not in families
+    assert "parameterized_face_spatial_relation_rank" not in families
 
 
 def test_synthesis_generates_equal_value_face_and_edge_queries() -> None:
