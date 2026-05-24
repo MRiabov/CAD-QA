@@ -45,6 +45,32 @@ Recent policy updates:
   narrowing predicates, bounded clause-chain search, sampled final selectors, and
   normal resolver/verifier/rendering.
 
+Benchmark-release readiness is stricter than current smoke/release-candidate
+gates:
+
+| Gate | Benchmark-release requirement |
+| --- | --- |
+| Release rows | At least 10,000 public/private release rows. |
+| Default SFT rows | At least 10,000 rows after default geometry-critical filtering. |
+| Generated task-family share | Every generated release family is between 1% and 10%. |
+| Zero-row intended families | 0 intended release families with zero rows unless `review_only` or `calibration`. |
+| Default SFT geometry-critical share | At least 99%. |
+| Default SFT syntax-only calibration share | 0%. |
+| Benchmark syntax-only calibration share | At most 2%, or separate calibration artifact. |
+| Geometry-hop-positive share | At least 95%. |
+| Main BrowseComp hop share | At least 90% with `logical_hop_count >= 3`. |
+| Value-bearing measurement share | 15%-30%. |
+| Cross-feature value-bearing share | 5%-15%. |
+| Candidate breadth | Minimum 2 candidates before the final selector; median pre-final breadth at least 4. |
+| Prompt-template max share | At most 5%. |
+| Unique answer count | At least 1,000. |
+| Answer entropy | At least 8 bits. |
+| Parameter value max share | At most 35% within each parameterized family unless geometry-limited. |
+| Axis/direction coverage | Each supported sampled value at least 20% unless geometry-limited. |
+| Split quality | Train/validation/test splits, at least 3 protected groups per split, no train-only collapse. |
+| Manual preview | At least 20 sampled rows per changed release family, or all rows if fewer exist. |
+| New-family tests | Positive generation, failure/quarantine, and release-report accounting coverage. |
+
 ## Status Meaning
 
 - `planned`: required or desirable work is defined, but implementation evidence is
@@ -411,6 +437,45 @@ Technical definition of done:
 | 14.8 Sampled query metadata and prompt-template bindings for synthesized queries | `planned` | Reviewers can audit exactly which parameters each synthesized prompt sampled. | Rows serialize target/reference type, reference anchor, predicate sequence, bucket policy, axis, sign, direction, rank, aggregation metric, and tie-break metric; prompt templates render from those fields. |
 | 14.9 Graph-hop narrowing implementation for sparse selector, count, and extremum task families | `planned` | Selector/count/extremum families generate enough high-hop rows without relying on a global unique largest/smallest object. | Sparse families use synthesized narrowing clauses and sampled final selectors, pass candidate-trace gates, produce preview samples, and meet distribution thresholds. |
 | 14.10 Release and SFT gates for zero-row intended families and narrowing-parameter coverage | `planned` | Missing intended families and collapsed narrowing parameters block release instead of requiring human luck to notice. | Release/SFT verifiers report zero-row intended families, narrowing predicate coverage, reference-anchor coverage, final selector coverage, and block configured failures. |
+
+## Epic 15: Benchmark-release numeric readiness tier (`epic-15`)
+
+Status: `planned`
+Priority: `P0`
+
+Acceptance criteria:
+
+- Benchmark-release artifacts contain at least 10,000 release rows and at least
+  10,000 default SFT rows.
+- Default SFT rows are at least 99% geometry-critical and 0% syntax-only
+  calibration.
+- Benchmark rows are at least 95% geometry-hop-positive and at least 90%
+  `logical_hop_count >= 3`.
+- Value-bearing measurement rows are 15%-30% and cross-feature value-bearing rows
+  are 5%-15% of benchmark-release rows.
+- Prompt templates are capped at 5%, answer entropy is at least 8 bits, and at
+  least 1,000 unique gold answers are present.
+- High-hop rows have at least 2 pre-final candidates and median pre-final
+  candidate breadth of at least 4.
+- Parameterized families keep sampled values at or below 35% share and supported
+  axis/direction values at or above 20%, unless geometry-limited.
+- Multi-split benchmark releases have train/validation/test splits, at least 3
+  protected groups per split, and no train-only collapse.
+
+Technical definition of done:
+
+- Release verifier, SFT exporter, dataset reports, preview tooling, and
+  readiness docs support explicit release-tier profiles. The benchmark-release
+  profile enforces the numeric gates above and marks artifacts failing them as
+  not benchmark-release ready.
+
+| Story | Status | Acceptance criteria | Technical definition of done |
+| --- | --- | --- | --- |
+| 15.1 Document benchmark-release numeric gate tier | `implemented` | Users can see the actual benchmark-release target numbers instead of vague "healthy" thresholds. | Dataset spec, reviewer checklist, runbooks, README, and planning docs define the benchmark-release numeric tier and label lower gates as smoke/release-candidate. |
+| 15.2 Configurable release-tier verifier profiles for smoke, release-candidate, and benchmark-release | `planned` | Users can select the intended release tier and get the right thresholds. | CLI/reporting accepts explicit tier selection and uses tier-specific constants in verifier/SFT reports. |
+| 15.3 Benchmark-release gates for row counts, geometry-hop coverage, geometry-critical dominance, and syntax-only caps | `planned` | Users cannot label small or shortcut-heavy artifacts benchmark-release ready. | Verifier blocks artifacts below 10,000 release/default-SFT rows, below 95% geometry-hop-positive, below 99% default-SFT geometry-critical, above 0% default-SFT syntax-only, or above 2% benchmark syntax-only without separate calibration. |
+| 15.4 Benchmark-release gates for value-bearing, cross-feature, prompt-template, answer-diversity, and candidate-breadth targets | `planned` | Users get datasets with enough concrete measurement reasoning, cross-feature reasoning, prompt variety, answer diversity, and distractors. | Verifier blocks artifacts outside 15%-30% value-bearing, outside 5%-15% cross-feature, above 5% prompt-template share, below 1,000 unique answers, below 8 entropy bits, or below candidate-breadth targets. |
+| 15.5 Benchmark-release gates for parameter balance, intended-family coverage, split quality, and preview/test evidence | `planned` | Users can trust that parameterized families, intended-family coverage, splits, and manual review evidence are not collapsed. | Verifier blocks sampled parameter values above 35%, missing supported axis/direction coverage below 20%, zero-row intended release families, train-only split collapse, fewer than 3 protected groups per split, and missing preview/test evidence for changed release families. |
 
 ## Manual Review Requirements Before Marking Implemented
 

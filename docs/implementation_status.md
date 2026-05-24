@@ -670,6 +670,16 @@ Checked as implemented with remaining scale caveats:
   review-only until the sampled distribution is healthy.
 - Add an intended-family manifest so planned release task families that generate
   zero rows block release instead of relying on manual review.
+- Implement explicit release-tier verifier profiles. Current enforced constants
+  are smoke/release-candidate gates, not the benchmark-release tier. The
+  benchmark-release profile should require at least 10,000 release rows, at least
+  10,000 default SFT rows, at least 95% geometry-hop-positive rows, at least 99%
+  geometry-critical default SFT rows, 0% syntax-only default SFT rows, at most 2%
+  syntax-only benchmark rows unless separated as calibration, 15%-30%
+  value-bearing rows, 5%-15% cross-feature value-bearing rows, prompt-template
+  max share of 5%, at least 1,000 unique answers, at least 8 answer-entropy bits,
+  benchmark candidate-breadth thresholds, parameter-balance thresholds, and
+  non-collapsed train/validation/test protected splits.
 - Broaden value-bearing and tolerance-equal coverage beyond the implemented
   core to radius/diameter/angle once those measurements are extracted broadly,
   additional face/endpoint/material/void coordinate combinations, and larger

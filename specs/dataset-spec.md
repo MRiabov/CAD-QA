@@ -82,6 +82,40 @@ export. Intended task families that produce zero rows need an explicit
 intended-family manifest; without that manifest, absence must be caught during
 manual release review and treated as unfinished coverage.
 
+## Benchmark-Release Numeric Gates
+
+The benchmark-release tier is the target standard for public benchmark claims and
+real fine-tuning dataset creation. Smoke and release-candidate runs may use lower
+thresholds for development, but they must be labeled as such and must not be
+described as benchmark-release ready.
+
+| Gate | Benchmark-release requirement |
+| --- | --- |
+| Release rows | At least 10,000 public/private release rows. |
+| Default SFT rows | At least 10,000 rows after default geometry-critical filtering. |
+| Generated task-family share | Every generated release family is between 1% and 10% of exported rows. |
+| Zero-row intended families | 0 intended release families with zero rows, unless explicitly marked `review_only` or `calibration`. |
+| Default SFT geometry-critical share | At least 99%. |
+| Default SFT syntax-only calibration share | 0%. |
+| Benchmark syntax-only calibration share | At most 2%, or emitted only in a separate calibration split/artifact. |
+| Geometry-hop-positive share | At least 95% of benchmark-release rows have `geometry_hop_count > 0`. |
+| Main BrowseComp hop share | At least 90% of benchmark-release rows have `logical_hop_count >= 3`. |
+| Value-bearing measurement share | 15%-30% of benchmark-release rows. |
+| Cross-feature value-bearing share | 5%-15% of benchmark-release rows. |
+| Candidate breadth | Minimum 2 candidates before the final selector for high-hop rows; median pre-final breadth at least 4. |
+| Prompt-template max share | No prompt template exceeds 5% of benchmark-release rows. |
+| Unique answer count | At least 1,000 unique gold answers. |
+| Answer entropy | At least 8 bits. |
+| Parameter value max share | Within each parameterized family, no sampled parameter value exceeds 35%, unless marked geometry-limited. |
+| Axis/direction coverage | Every supported sampled axis/direction value contributes at least 20% where applicable, unless marked geometry-limited. |
+| Split quality | Multi-split benchmark releases must have train/validation/test splits, at least 3 protected groups per split, and no train-only collapse. |
+| Manual preview | At least 20 sampled rows per changed release family, or all rows if fewer than 20 exist. |
+| New-family tests | Each new release family has positive generation coverage, failure/quarantine coverage, and release-report accounting coverage. |
+
+Current implementation gates are not yet equivalent to this benchmark-release
+tier. When code-enforced thresholds are lower, they should be treated as smoke or
+release-candidate gates until the benchmark-release tier is implemented.
+
 ## Splits
 
 Release splits must be group-safe by source family, generator, and

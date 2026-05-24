@@ -15,6 +15,14 @@ must pass thresholds, parameterized families must have healthy sampled
 distributions, and the main rows must require geometry-derived evidence rather
 than assignment-name, operation-order, or literal-argument lookup.
 
+For benchmark-release fine-tuning, use the numeric tier in
+`specs/dataset-spec.md`: at least 10,000 default SFT rows, at least 99%
+geometry-critical default SFT rows, 0% syntax-only default SFT rows,
+value-bearing rows in the 15%-30% band, cross-feature value-bearing rows in the
+5%-15% band, generated task families in the 1%-10% band, and healthy sampled
+parameter distributions. Current smoke/release-candidate gates are not enough for
+that claim.
+
 Build the smoke SFT artifacts:
 
 ```bash

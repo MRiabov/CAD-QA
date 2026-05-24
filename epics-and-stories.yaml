@@ -24,7 +24,12 @@ current_snapshot:
     should be generated through a graph-hop query-synthesis layer: intended
     family specs, reusable geometry-derived narrowing predicates, bounded
     clause-chain search, sampled final selectors, and release gates for both
-    generated-family balance and zero-row intended families.
+    generated-family balance and zero-row intended families. Benchmark-release
+    readiness is stricter than current smoke gates: the target tier requires at
+    least 10,000 release rows, at least 10,000 default SFT rows, strong
+    geometry-hop and geometry-critical dominance, zero syntax-only default SFT
+    rows, value-bearing and cross-feature coverage bands, parameter-balance
+    limits, and non-collapsed train/validation/test splits.
     Earlier separate task-family and graph-query framing is obsolete.
 status_values:
   - planned
@@ -355,4 +360,41 @@ epics:
         status: planned
       - id: "14.10"
         title: Release and SFT gates for zero-row intended families and narrowing-parameter coverage
+        status: planned
+  - id: epic-15
+    title: Benchmark-release numeric readiness tier
+    status: planned
+    priority: P0
+    acceptance_criteria:
+      - Benchmark-release artifacts contain at least 10,000 release rows and at
+        least 10,000 default SFT rows.
+      - Default SFT rows are at least 99% geometry-critical and 0% syntax-only
+        calibration.
+      - Benchmark rows are at least 95% geometry-hop-positive and at least 90%
+        `logical_hop_count >= 3`.
+      - Value-bearing measurement rows are 15%-30% and cross-feature
+        value-bearing rows are 5%-15% of benchmark-release rows.
+      - Prompt templates are capped at 5%, answer entropy is at least 8 bits,
+        and there are at least 1,000 unique gold answers.
+      - High-hop rows have at least 2 pre-final candidates and median pre-final
+        candidate breadth of at least 4.
+      - Parameterized families keep sampled values at or below 35% share and
+        supported axis/direction values at or above 20%, unless geometry-limited.
+      - Multi-split benchmark releases have train/validation/test splits, at
+        least 3 protected groups per split, and no train-only collapse.
+    stories:
+      - id: "15.1"
+        title: Document benchmark-release numeric gate tier
+        status: implemented
+      - id: "15.2"
+        title: Configurable release-tier verifier profiles for smoke, release-candidate, and benchmark-release
+        status: planned
+      - id: "15.3"
+        title: Benchmark-release gates for row counts, geometry-hop coverage, geometry-critical dominance, and syntax-only caps
+        status: planned
+      - id: "15.4"
+        title: Benchmark-release gates for value-bearing, cross-feature, prompt-template, answer-diversity, and candidate-breadth targets
+        status: planned
+      - id: "15.5"
+        title: Benchmark-release gates for parameter balance, intended-family coverage, split quality, and preview/test evidence
         status: planned

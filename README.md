@@ -55,6 +55,15 @@ preview review must confirm that task families are not collapsed onto
 hard-coded generator choices such as one axis, one min/max direction, one value
 shape, one comparison relation, or one entity type.
 
+The benchmark-release target is stricter than the current smoke gates. A public
+benchmark or real fine-tuning dataset should satisfy the numeric tier in
+[`specs/dataset-spec.md`](specs/dataset-spec.md): at least 10,000 release rows,
+at least 10,000 default SFT rows, generated task families in the 1%-10% band,
+at least 95% geometry-hop-positive rows, at least 99% geometry-critical default
+SFT rows, 0% syntax-only default SFT rows, value-bearing and cross-feature
+coverage targets, parameter-balance targets, and a non-collapsed multi-split
+release.
+
 ## Quick Start
 
 Inspect source records:

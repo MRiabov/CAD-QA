@@ -65,6 +65,11 @@ current verifier can enforce this band for generated families present in the
 export; intended families that generate zero rows require an explicit
 intended-family manifest so absence can also block release.
 
+Benchmark-release rows must also satisfy the numeric tier in
+`specs/dataset-spec.md`. Lower smoke or release-candidate verifier thresholds are
+development aids and must not be used for public benchmark or real fine-tuning
+claims.
+
 ## Maximal Parameter Sampling
 
 Release-grade task families must not bake avoidable constants or fixed choices
