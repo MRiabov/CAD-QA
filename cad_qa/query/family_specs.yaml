@@ -684,7 +684,7 @@ families:
         - comparison_operator
         - aggregation_metric
         - final_selector
-    notes: Synthesized feature-effect family that samples the effect delta metric, sign/comparison, and min/max selector instead of fixing one largest delta task.
+    notes: Synthesized feature-effect family that samples the effect delta metric, sign/comparison, and min/max selector instead of fixing one largest delta task; prepared-trace rows may narrow by application delta and select by compiled snapshot-state feature geometry.
   - id: highest_positive_x_flat_opposite_adjacent_perpendicular_kernel_face
     status: review_only
     target_type: face

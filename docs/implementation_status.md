@@ -454,18 +454,30 @@ Result reviewed on 2026-05-25:
   `parameterized_material_region_reference_entity_distance_rank`,
   `parameterized_path_segment_reference_entity_distance`, and
   `parameterized_path_segment_reference_entity_distance_rank`.
+- Feature-effect synthesis now works on prepared CadEvolve trace geometry where
+  the narrowing evidence is a feature application delta and the final selector
+  is compiled snapshot-state geometry. The regenerated RC10 slice at
+  `runs/current_rc10_feature_effect_dataset/` contains 254 rows across 21
+  generated release families, including 10 release-ready
+  `parameterized_feature_effect_delta_extreme` rows. These rows narrow features
+  by positive `signed_volume_delta`, require a measured target feature geometry
+  value such as bounding-box center height, and then select the min/max feature
+  within that narrowed set.
 - Manual preview:
-  `runs/current_rc10_bbox_reference_dataset/BBOX_REFERENCE_PREVIEW.md`.
+  `runs/current_rc10_bbox_reference_dataset/BBOX_REFERENCE_PREVIEW.md` and
+  `runs/current_rc10_feature_effect_dataset/FEATURE_EFFECT_PREVIEW.md`.
   Reviewed samples use public clues such as reference feature volume plus
   bounding-box center coordinates, then resolve by closest/farthest target
-  centroid or segment midpoint distance to that reference center.
+  centroid or segment midpoint distance to that reference center; the
+  feature-effect samples use positive volume-change clues plus compiled
+  bounding-box center height.
 - A benchmark-tier export probe with failing gates allowed wrote
-  `runs/current_rc10_unique_rows_balanced_export/` after rematerializing the
-  existing RC10 query output with query-unique row IDs. The deterministic
-  release-balance cap reduced the 244-row artifact to 40 rows and wrote 204
-  balance-cap exclusions while preserving all 20 generated families and 37
-  prompt templates. The remaining export passes value-bearing, cross-feature,
-  main-hop, prompt-family, prompt-template, public/private,
+  `runs/current_rc10_feature_effect_balanced_export/` after regenerating the
+  existing RC10 query output with feature-effect delta synthesis enabled. The
+  deterministic release-balance cap reduced the 254-row artifact to 121 rows
+  and wrote 133 balance-cap exclusions while preserving all 21 generated
+  families and 81 prompt templates. The remaining export passes value-bearing,
+  cross-feature, main-hop, prompt-family, prompt-template, public/private,
   release-validation, row-validation, candidate-breadth, and quarantine gates.
   `public_private_audit` now passes on the rematerialized artifact because row
   IDs include the full query ID rather than only source and family.

@@ -433,6 +433,18 @@ epics:
       - id: "14.2"
         title: Refactor fixed-axis, fixed-extremum, fixed-comparison, and fixed-entity query families into parameterized families
         status: work-in-progress
+        acceptance_criteria:
+          - Users see general task families with sampled parameters instead of
+            names like fixed positive-Z/frontmost variants.
+          - Prepared CadEvolve traces can produce feature-effect delta rows
+            even when only application deltas and compiled snapshot-state
+            geometry are available.
+        technical_definition_of_done:
+          - Feature-effect delta synthesis can narrow by sampled feature
+            application delta and select by compiled feature geometry such as
+            volume, centroid, bounding-box span/center, or topology counts.
+          - Broader fixed-family replacement remains work-in-progress until
+            every intended release family has valid generated rows.
       - id: "14.3"
         title: Randomize rendered view words, min/max wording, exact-value clues, and entity-type wording from sampled parameters
         status: work-in-progress
@@ -475,6 +487,8 @@ epics:
           - "cadqa query synthesize resolves synthesized graph-hop queries, filters to manifest release families by default, and writes query/failure report artifacts."
           - Synthesis keeps deterministic stable sampling while allowing a
             configurable maximum number of viable variants per family and graph.
+          - Prepared-trace feature-effect rows are generated through the same
+            resolver/materializer path and have RC10 preview evidence.
           - Benchmark-scale family balance, full beam search, and broader real
             CadEvolve family coverage remain work-in-progress.
       - id: "14.8"

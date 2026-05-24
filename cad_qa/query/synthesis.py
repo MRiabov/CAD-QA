@@ -194,6 +194,7 @@ class FeatureEffectDeltaFamilySpec:
     compare_clause_id: str
     selector_metric_clause_id: str
     metrics: tuple[str, ...]
+    selector_metrics: tuple[str, ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -325,6 +326,20 @@ FEATURE_EFFECT_DELTA_FAMILY_SPECS = (
         compare_clause_id="has_parameterized_feature_effect_delta",
         selector_metric_clause_id="has_parameterized_feature_effect_metric",
         metrics=tuple(FEATURE_EFFECT_DELTA_METRIC_OPERATORS),
+        selector_metrics=(
+            "volume",
+            "centroid_x",
+            "centroid_y",
+            "centroid_z",
+            "bbox_span_x",
+            "bbox_span_y",
+            "bbox_span_z",
+            "bbox_center_x",
+            "bbox_center_y",
+            "bbox_center_z",
+            "topology_faces",
+            "topology_edges",
+        ),
     ),
 )
 
@@ -2268,7 +2283,8 @@ def _viable_feature_effect_delta_extremes(
                 operator=operator,
                 value=0.0,
             )
-            for selector_metric in spec.metrics:
+            selector_metrics = tuple(dict.fromkeys((*spec.metrics, *(spec.selector_metrics or ()))))
+            for selector_metric in selector_metrics:
                 selector = measurement_predicate(
                     graph,
                     narrowed,

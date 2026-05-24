@@ -3934,6 +3934,39 @@ def test_synthesis_generates_parameterized_feature_effect_delta_query() -> None:
     assert "feature" in row.prompt.lower()
 
 
+def test_synthesis_generates_feature_effect_delta_from_prepared_trace_geometry() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:feature-effect-prepared-trace-synth",
+        source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
+    )
+    for feature_id, delta, volume, span_z in [
+        ("feature:base", 0.0, 120.0, 4.0),
+        ("feature:add_a", 10.0, 140.0, 5.0),
+        ("feature:add_b", 10.0, 220.0, 8.0),
+        ("feature:add_c", 10.0, 180.0, 6.0),
+    ]:
+        graph.add_node(Node(feature_id, "feature", feature_id))
+        graph.add_measurement(Measurement(feature_id, "snapshot_delta", "signed_volume_delta", delta, "mm^3"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "bbox_span_z", span_z, "mm"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph, max_per_family=8)
+        if query.query_id.endswith("parameterized_feature_effect_delta_extreme")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+
+    assert resolution.verifier_status == "resolved"
+    assert query.clauses[0].metric == "signed_volume_delta"
+    assert query.clauses[0].operator == ">"
+    assert query.aggregation_metric in {"volume", "bbox_span_z"}
+    assert row.release_ready
+    assert row.query_program["sampled_parameters"]["effect_delta_metric"] == ["signed_volume_delta"]
+    assert row.query_program["sampled_parameters"]["aggregation_metric"] == [query.aggregation_metric]
+
+
 def _add_reference_endpoint_nodes(graph: OntologyGraph) -> None:
     for endpoint_id, coordinate in [
         ("edge_endpoint:ref", [0.0, -4.0, 0.0]),
