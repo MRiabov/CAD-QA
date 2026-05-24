@@ -37,6 +37,37 @@ OntologyGraph
 - Rows that fail candidate-breadth or uniqueness gates go to the failure
   manifest.
 
+## Graph-Hop Candidate Narrowing
+
+Generators must not treat a sparse direct extremum as evidence that a task is
+unusable. If a family such as "largest selected-edge count" or "largest selector
+result" rarely has a unique global answer, the generator should build a
+multi-hop query that first narrows candidates through geometry-derived graph
+relations, then applies a sampled final selector inside that subset.
+
+Valid narrowing clauses include shared height or coordinate bucket, coplanarity,
+axis/coaxial relation, equal measurement bucket, containment, adjacency,
+membership in a sampled selector result, distance to a sampled vertex/reference
+feature, or another stable relation in the ontology graph. The narrowed set must
+still contain distractors before the final selector. The final selector should
+also be parameterized: axis, min/max direction, rank where supported, metric,
+target type, and reference anchor should vary by row.
+
+Example shape:
+
+```text
+target candidates
+-> candidates sharing a sampled geometric relation with a reference entity
+-> candidates satisfying a sampled spatial/value constraint
+-> nth/min/max/nearest/farthest selector under a sampled metric
+-> unique answer
+```
+
+This is how sparse selector-count, face-count, edge-count, and similar tasks
+should become useful training rows: by asking for a resolvable entity within a
+geometry-defined subset, not by relying on a single global aggregation over the
+entire model.
+
 ## Maximally Parameterized Tasks
 
 Main benchmark and default SFT rows must not encode avoidable constants or

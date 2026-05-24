@@ -658,6 +658,12 @@ Checked as implemented with remaining scale caveats:
   problem, but the rule is broader: axes, signs, min/max direction, comparison
   relation, exact values, target/reference entity type, and subtype choices
   should be sampled per row whenever the verifier supports the variation.
+- Rewrite sparse direct selector/count/extremum families as graph-hop narrowing
+  programs instead of treating them as unusable when the whole model lacks a
+  unique global largest/smallest candidate. These rows should use sampled
+  geometry-derived relations such as shared height, plane, axis, equal
+  measurement bucket, containment, adjacency, or distance to a sampled reference
+  entity to define a nontrivial candidate subset before the final selector.
 - Add release/SFT reporting and gates for parameter balance. Any family that
   collapses onto one global axis, view word, extremum direction, comparison,
   value shape, or entity type should be capped, blocked, or treated as

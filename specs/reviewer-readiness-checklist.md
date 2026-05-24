@@ -19,6 +19,11 @@ Before public paper or dataset release, verify:
   to review-only/calibration artifacts.
 - Intended release task families with zero generated rows are listed from an
   intended-family manifest or called out manually as unfinished coverage.
+- Sparse direct extrema, such as selector-count or selected-entity-count tasks,
+  are implemented through graph-hop narrowing instead of being dropped merely
+  because the global model rarely has a unique largest/smallest candidate.
+- Candidate traces for these narrowed tasks show nontrivial intermediate
+  distractors and exactly one final answer.
 - Prompt-template distribution and clue-shape distribution pass release
   thresholds; no single checklist shape dominates the benchmark.
 - Parameterized families report healthy sampled coverage over axis, sign,

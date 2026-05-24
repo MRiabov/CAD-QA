@@ -21,6 +21,21 @@ its candidate breadth is audited. If the exact value alone identifies the
 answer, the row must be tagged as low-hop or calibration-style value grounding,
 not counted as high-hop distractor reasoning.
 
+Scarce direct extrema are not a reason to drop a release-grade task family. If a
+plain query such as "largest selected-edge count" rarely has a unique answer,
+the generator should add graph-hop conditioning clauses that define a meaningful
+candidate subset before applying the final aggregation. Examples include
+conditioning candidates by shared height, coplanarity, coaxiality, equal
+measurement bucket, containment, adjacency, relation to a sampled vertex, or a
+sampled reference feature. The final prompt should ask for an entity among that
+conditioned set, not for a global extremum over every entity in the model.
+
+Graph-hop conditioning is still subject to candidate-breadth gates: intermediate
+clauses should preserve distractors, and the full hidden query should resolve
+exactly one answer. A task family that only works as a direct global argmax is
+under-specified; the intended family shape must include parameterized narrowing
+relations and a parameterized final selector.
+
 ## Geometry-First Requirement
 
 The main training and benchmark rows must not be answerable from source syntax
@@ -69,6 +84,7 @@ Parameters include, but are not limited to:
   parallel/perpendicular;
 - exact public measurement values and tolerance buckets;
 - aggregation metric and tie-break metric.
+- narrowing relation sequence and reference-anchor choice.
 
 Hard-coded families such as `frontmost_longer_positive_z_kernel_edge` are not
 release-grade because they collapse several variable choices into permanent
