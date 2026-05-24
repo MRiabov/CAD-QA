@@ -38,11 +38,15 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_equal_endpoint_metric_extreme",
     "parameterized_contained_endpoint_metric_extreme",
     "parameterized_endpoint_reference_feature_distance",
+    "parameterized_endpoint_reference_face_distance",
     "parameterized_equal_material_region_metric_extreme",
     "parameterized_equal_void_region_metric_extreme",
     "parameterized_material_region_reference_feature_distance",
+    "parameterized_material_region_reference_face_distance",
     "parameterized_void_region_reference_feature_distance",
+    "parameterized_void_region_reference_face_distance",
     "parameterized_face_reference_feature_distance",
+    "parameterized_face_reference_face_distance",
     "parameterized_edge_reference_feature_distance",
     "parameterized_edge_reference_face_distance",
     "parameterized_path_point_extreme",
@@ -430,6 +434,14 @@ def _region_equal_metric_graph() -> OntologyGraph:
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_x", centroid[0], "mm"))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_y", centroid[1], "mm"))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid[2], "mm"))
+    for face_id, area, coordinate_z, face_center in [
+        ("face:ref", 18.0, 3.0, [0.0, 0.0, 0.0]),
+        ("face:far", 7.0, 9.0, [50.0, 0.0, 0.0]),
+    ]:
+        graph.add_node(Node(face_id, "face", face_id))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", area, "mm^2"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_z", coordinate_z, "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_center", face_center, "mm"))
     for node_id, relation, volume, centroid in [
         ("material_region:a", "has_kernel_material_region_geometry", 12.0, [1.0, 0.0, 1.0]),
         ("material_region:b", "has_kernel_material_region_geometry", 12.0 + 1e-7, [6.0, 0.0, 7.0]),
@@ -545,6 +557,14 @@ def _endpoint_equal_metric_graph() -> OntologyGraph:
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume, "mm^3"))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid", centroid, "mm"))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid[2], "mm"))
+    for face_id, area, coordinate_z, face_center in [
+        ("face:ref", 18.0, 3.0, [0.0, 0.0, 0.0]),
+        ("face:far", 7.0, 9.0, [50.0, 0.0, 0.0]),
+    ]:
+        graph.add_node(Node(face_id, "face", face_id))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", area, "mm^2"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_z", coordinate_z, "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_center", face_center, "mm"))
     for edge_id in ["edge:a", "edge:b", "edge:c"]:
         graph.add_node(Node(edge_id, "edge", edge_id))
     for endpoint_id, edge_id, coordinate, distance in [
