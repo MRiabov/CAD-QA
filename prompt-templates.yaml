@@ -139,9 +139,13 @@ clause_templates:
     - "The target face group contains model faces with measured geometry."
     - "The target face set includes faces with checked dimensions."
   has_parameterized_selected_face_metric_threshold:
-    - "At least one face in the target selection has a {metric_label} {operator_label} {value}."
-    - "At least one face in the target face group has a {metric_label} {operator_label} {value}."
+    - "At least one face in the target selection has {metric_label} {operator_label} {value}."
+    - "At least one face in the target face group has {metric_label} {operator_label} {value}."
     - "The target face set includes a face with {metric_label} {operator_label} {value}."
+  has_parameterized_selector_relation:
+    - "The target selection {relation_label} another measured selection."
+    - "The target group {relation_label} a second measured group."
+    - "The target set {relation_label} another checked set."
   has_selected_count: "The target selection has a measured entity count."
   has_parameterized_selected_count:
     - "The target selection has a measured entity count."
@@ -153,8 +157,8 @@ clause_templates:
     - "The target edge group contains model edges with measured geometry."
     - "The target edge set includes edges with checked dimensions."
   has_parameterized_selected_edge_metric_threshold:
-    - "At least one edge in the target selection has a {metric_label} {operator_label} {value}."
-    - "At least one edge in the target edge group has a {metric_label} {operator_label} {value}."
+    - "At least one edge in the target selection has {metric_label} {operator_label} {value}."
+    - "At least one edge in the target edge group has {metric_label} {operator_label} {value}."
     - "The target edge set includes an edge with {metric_label} {operator_label} {value}."
   has_selected_edge_count: "The target edge selection has a measured edge count."
   same_face_as_another_selector: "The target face selection identifies the same face as another face selection."

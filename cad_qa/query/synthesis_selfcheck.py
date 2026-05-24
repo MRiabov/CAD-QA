@@ -111,6 +111,8 @@ def synthesis_selfcheck_graphs() -> list[OntologyGraph]:
         _path_metric_graph(),
         _face_selector_count_graph(),
         _edge_selector_count_graph(),
+        _face_selector_relation_count_graph(),
+        _edge_selector_relation_count_graph(),
         _edge_selector_equal_metric_count_graph(),
     ]
 
@@ -883,6 +885,70 @@ def _edge_selector_count_graph() -> OntologyGraph:
         graph.add_relation(Relation(selector_id, edge_id, "has_kernel_stable_edge_id"))
         graph.add_measurement(Measurement(selector_id, "snapshot_state", "selected_count", selected_count))
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint_y, "mm"))
+    return graph
+
+
+def _face_selector_relation_count_graph() -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id="graph:selfcheck-face-selector-relation-count",
+        source={
+            "source_id": "selfcheck-face-selector-relation-count",
+            "source_code": (
+                "import cadquery as cq\n"
+                "box = cq.Workplane(\"XY\").box(10, 6, 4)\n"
+                "sel_a = box.faces(\"<X\")\n"
+                "sel_b = box.faces(\"<X\")\n"
+                "sel_c = box.faces(\"|X\")\n"
+                "sel_d = box.faces(\">X\")\n"
+            ),
+        },
+    )
+    for selector_id, selected_count in [
+        ("selector:a", 2),
+        ("selector:b", 5),
+        ("selector:c", 3),
+        ("selector:d", 4),
+    ]:
+        face_id = f"face:{selector_id.rsplit(':', 1)[-1]}"
+        graph.add_node(Node(selector_id, "selector", selector_id))
+        graph.add_node(Node(face_id, "face", face_id))
+        graph.add_relation(Relation(selector_id, face_id, "has_kernel_stable_face_id"))
+        graph.add_measurement(Measurement(selector_id, "snapshot_state", "selected_count", selected_count))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_x", 1.0, "mm"))
+    graph.add_relation(Relation("selector:a", "selector:b", "same_selected_face_as"))
+    graph.add_relation(Relation("selector:b", "selector:a", "same_selected_face_as"))
+    return graph
+
+
+def _edge_selector_relation_count_graph() -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id="graph:selfcheck-edge-selector-relation-count",
+        source={
+            "source_id": "selfcheck-edge-selector-relation-count",
+            "source_code": (
+                "import cadquery as cq\n"
+                "box = cq.Workplane(\"XY\").box(10, 6, 4)\n"
+                "sel_a = box.edges(\"<Y\")\n"
+                "sel_b = box.edges(\"<Y\")\n"
+                "sel_c = box.edges(\"|Y\")\n"
+                "sel_d = box.edges(\">Y\")\n"
+            ),
+        },
+    )
+    for selector_id, selected_count in [
+        ("selector:a", 2),
+        ("selector:b", 5),
+        ("selector:c", 3),
+        ("selector:d", 4),
+    ]:
+        edge_id = f"edge:{selector_id.rsplit(':', 1)[-1]}"
+        graph.add_node(Node(selector_id, "selector", selector_id))
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(selector_id, edge_id, "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(selector_id, "snapshot_state", "selected_count", selected_count))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", 8.0, "mm"))
+    graph.add_relation(Relation("selector:a", "selector:b", "same_selected_entity_as"))
+    graph.add_relation(Relation("selector:b", "selector:a", "same_selected_entity_as"))
     return graph
 
 

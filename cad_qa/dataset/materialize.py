@@ -186,7 +186,7 @@ def _evidence_policy(resolution: QueryResolution) -> tuple[str, list[str]]:
     }
     if (
         (query.target_type in {"face", "edge", "vertex", "selector"} and not has_kernel_selector_evidence)
-        or has_selector_surrogate
+        or (has_selector_surrogate and not has_kernel_selector_evidence)
     ):
         reasons.append("selector_identity_surrogate")
     if resolution.verifier_status != "resolved":

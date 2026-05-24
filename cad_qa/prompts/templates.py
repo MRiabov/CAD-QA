@@ -261,6 +261,8 @@ def relation_label(relation: str) -> str:
         "same_length_as": "the same length as",
         "longer_than": "longer than",
         "shorter_than": "shorter than",
+        "same_selected_face_as": "selects the same face as",
+        "same_selected_entity_as": "selects the same model entity as",
         "contained_in": "contained in",
         "endpoint_of": "an endpoint of",
     }.get(relation, relation.replace("_", " "))

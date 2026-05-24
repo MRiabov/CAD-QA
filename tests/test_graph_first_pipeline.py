@@ -4682,7 +4682,7 @@ def test_synthesis_generates_geometry_narrowed_selector_count_query() -> None:
     assert query.aggregation_metric == "selected_count"
     assert query.sampled_parameters["selected_entity_type"] == ["edge"]
     assert query.sampled_parameters["narrowing_axis"] == ["y"]
-    assert "At least one edge in the target selection has a midpoint Y coordinate" in row.prompt
+    assert "At least one edge in the target selection has midpoint Y coordinate" in row.prompt
 
 
 def test_synthesis_generates_equal_related_metric_selector_count_query() -> None:
@@ -4721,6 +4721,85 @@ def test_synthesis_generates_equal_related_metric_selector_count_query() -> None
     assert row.query_program["sampled_parameters"]["comparison_operator"] == ["=="]
     assert row.query_program["sampled_parameters"]["measurement_value_bucket"] == ["midpoint_y:2"]
     assert "equal to 2.0" in row.prompt
+
+
+def test_synthesis_generates_relation_narrowed_face_selector_count_query() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:face-selector-relation-count",
+        source={"source_id": "synthetic", "source_code": ""},
+    )
+    for selector_id, selected_count, face_id in [
+        ("selector:a", 2, "face:a"),
+        ("selector:b", 5, "face:b"),
+        ("selector:c", 3, "face:c"),
+        ("selector:d", 4, "face:d"),
+    ]:
+        graph.add_node(Node(selector_id, "selector", selector_id))
+        graph.add_node(Node(face_id, "face", face_id))
+        graph.add_relation(Relation(selector_id, face_id, "has_kernel_stable_face_id"))
+        graph.add_measurement(Measurement(selector_id, "snapshot_state", "selected_count", selected_count))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_x", 1.0, "mm"))
+    graph.add_relation(Relation("selector:a", "selector:b", "same_selected_face_as"))
+    graph.add_relation(Relation("selector:b", "selector:a", "same_selected_face_as"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_kernel_face_selector_count")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+
+    assert resolution.verifier_status == "resolved"
+    assert row.release_ready
+    assert query.clauses[1].relation == "same_selected_face_as"
+    assert query.clauses[2].operator == "=="
+    assert query.hop_count == 5
+    assert query.sampled_parameters["selector_relation"] == ["same_selected_face_as"]
+    assert query.sampled_parameters["narrowing_mode"] == ["selector_relation"]
+    assert "same_selected_face_as" in row.relation_families
+    assert "selects the same face as" in row.prompt
+    assert len(row.candidate_trace["steps"][2]["after"]) == 2
+    assert len(row.candidate_trace["final_candidates"]) == 1
+
+
+def test_synthesis_generates_relation_narrowed_edge_selector_count_query() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:edge-selector-relation-count",
+        source={"source_id": "synthetic", "source_code": ""},
+    )
+    for selector_id, selected_count, edge_id in [
+        ("selector:a", 2, "edge:a"),
+        ("selector:b", 5, "edge:b"),
+        ("selector:c", 3, "edge:c"),
+        ("selector:d", 4, "edge:d"),
+    ]:
+        graph.add_node(Node(selector_id, "selector", selector_id))
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(selector_id, edge_id, "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(selector_id, "snapshot_state", "selected_count", selected_count))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", 8.0, "mm"))
+    graph.add_relation(Relation("selector:a", "selector:b", "same_selected_entity_as"))
+    graph.add_relation(Relation("selector:b", "selector:a", "same_selected_entity_as"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_kernel_edge_selector_count")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+
+    assert resolution.verifier_status == "resolved"
+    assert row.release_ready
+    assert query.clauses[1].relation == "same_selected_entity_as"
+    assert query.hop_count == 5
+    assert query.sampled_parameters["selector_relation"] == ["same_selected_entity_as"]
+    assert query.sampled_parameters["narrowing_mode"] == ["selector_relation"]
+    assert "same_selected_entity_as" in row.relation_families
+    assert "selects the same model entity as" in row.prompt
+    assert len(row.candidate_trace["steps"][2]["after"]) == 2
+    assert len(row.candidate_trace["final_candidates"]) == 1
 
 
 def test_synthesis_skips_selector_count_when_narrowing_has_no_unique_count() -> None:

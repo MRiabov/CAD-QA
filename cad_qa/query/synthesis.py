@@ -56,9 +56,11 @@ class SelectorCountFamilySpec:
     relation: str
     selected_type: str
     relation_clause_id: str
+    selector_relation_clause_id: str
     related_metric_clause_id: str
     selected_count_clause_id: str
     related_metrics: tuple[str, ...]
+    selector_relations: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -69,6 +71,7 @@ class ViableSelectorCount:
     value: float
     aggregation: str
     candidate_ids: tuple[str, ...]
+    selector_relation: str | None = None
 
 
 @dataclass(frozen=True)
@@ -348,6 +351,7 @@ SELECTOR_COUNT_FAMILY_SPECS = (
         relation="has_kernel_stable_face_id",
         selected_type="face",
         relation_clause_id="has_parameterized_face_selection",
+        selector_relation_clause_id="has_parameterized_selector_relation",
         related_metric_clause_id="has_parameterized_selected_face_metric_threshold",
         selected_count_clause_id="has_parameterized_selected_count",
         related_metrics=(
@@ -357,12 +361,14 @@ SELECTOR_COUNT_FAMILY_SPECS = (
             "distance_to_origin",
             "face_area",
         ),
+        selector_relations=("same_selected_face_as", "same_selected_entity_as"),
     ),
     SelectorCountFamilySpec(
         family_id="parameterized_kernel_edge_selector_count",
         relation="has_kernel_stable_edge_id",
         selected_type="edge",
         relation_clause_id="has_parameterized_edge_selection",
+        selector_relation_clause_id="has_parameterized_selector_relation",
         related_metric_clause_id="has_parameterized_selected_edge_metric_threshold",
         selected_count_clause_id="has_parameterized_selected_count",
         related_metrics=(
@@ -372,6 +378,7 @@ SELECTOR_COUNT_FAMILY_SPECS = (
             "midpoint_distance_to_origin",
             "edge_length",
         ),
+        selector_relations=("same_selected_entity_as",),
     ),
 )
 
@@ -1429,58 +1436,63 @@ def _viable_selector_counts(graph: OntologyGraph, spec: SelectorCountFamilySpec)
         return []
     relation_candidates = _apply_relation_clause(graph, selectors, spec.relation)
     viable: list[ViableSelectorCount] = []
-    for metric in spec.related_metrics:
-        predicates = [
-            *(_related_metric_thresholds(graph, relation_candidates, relation=spec.relation, metric=metric)),
-            *(
-                ("==", value)
-                for value in _related_metric_equal_values(
-                    graph,
-                    relation_candidates,
-                    relation=spec.relation,
-                    metric=metric,
-                )
-            ),
-        ]
-        for operator, value in predicates:
-            predicate = related_metric_compare_predicate(
-                graph,
-                relation_candidates,
-                clause_id=spec.related_metric_clause_id,
-                relation=spec.relation,
-                target_type=spec.selected_type,
-                metric=metric,
-                operator=operator,
-                value=value,
-            )
-            if predicate is None or predicate.candidate_count_after >= len(relation_candidates):
-                continue
-            narrowed = nodes_matching_related_metric_compare(
-                graph,
-                relation_candidates,
-                relation=spec.relation,
-                target_type=spec.selected_type,
-                metric=metric,
-                operator=operator,
-                value=value,
-            )
-            if len(narrowed) < 2:
-                continue
-            for aggregation in ("argmax", "argmin"):
-                if _has_unique_extreme(graph, narrowed, "selected_count", aggregation):
-                    viable.append(
-                        ViableSelectorCount(
-                            spec=spec,
-                            metric=metric,
-                            operator=operator,
-                            value=value,
-                            aggregation=aggregation,
-                            candidate_ids=tuple(node.id for node in narrowed),
-                        )
+    for selector_relation, selector_candidates in _selector_count_contexts(graph, relation_candidates, spec):
+        for metric in spec.related_metrics:
+            predicates = [
+                *(_related_metric_thresholds(graph, selector_candidates, relation=spec.relation, metric=metric)),
+                *(
+                    ("==", value)
+                    for value in _related_metric_equal_values(
+                        graph,
+                        selector_candidates,
+                        relation=spec.relation,
+                        metric=metric,
                     )
+                ),
+            ]
+            for operator, value in predicates:
+                predicate = related_metric_compare_predicate(
+                    graph,
+                    selector_candidates,
+                    clause_id=spec.related_metric_clause_id,
+                    relation=spec.relation,
+                    target_type=spec.selected_type,
+                    metric=metric,
+                    operator=operator,
+                    value=value,
+                )
+                if predicate is None:
+                    continue
+                if selector_relation is None and predicate.candidate_count_after >= len(selector_candidates):
+                    continue
+                narrowed = nodes_matching_related_metric_compare(
+                    graph,
+                    selector_candidates,
+                    relation=spec.relation,
+                    target_type=spec.selected_type,
+                    metric=metric,
+                    operator=operator,
+                    value=value,
+                )
+                if len(narrowed) < 2:
+                    continue
+                for aggregation in ("argmax", "argmin"):
+                    if _has_unique_extreme(graph, narrowed, "selected_count", aggregation):
+                        viable.append(
+                            ViableSelectorCount(
+                                spec=spec,
+                                metric=metric,
+                                operator=operator,
+                                value=value,
+                                aggregation=aggregation,
+                                candidate_ids=tuple(node.id for node in narrowed),
+                                selector_relation=selector_relation,
+                            )
+                        )
     return sorted(
         viable,
         key=lambda item: (
+            item.selector_relation or "",
             item.metric,
             item.operator,
             item.value,
@@ -1488,6 +1500,28 @@ def _viable_selector_counts(graph: OntologyGraph, spec: SelectorCountFamilySpec)
             item.candidate_ids,
         ),
     )
+
+
+def _selector_count_contexts(
+    graph: OntologyGraph,
+    relation_candidates: list[Node],
+    spec: SelectorCountFamilySpec,
+) -> list[tuple[str | None, list[Node]]]:
+    contexts: list[tuple[str | None, list[Node]]] = [(None, relation_candidates)]
+    for selector_relation in spec.selector_relations:
+        predicate = relation_predicate(
+            graph,
+            relation_candidates,
+            clause_id=spec.selector_relation_clause_id,
+            relation=selector_relation,
+            target_type="selector",
+        )
+        if predicate is None or predicate.candidate_count_after >= len(relation_candidates):
+            continue
+        narrowed = _apply_relation_clause(graph, relation_candidates, selector_relation)
+        if len(narrowed) >= 2:
+            contexts.append((selector_relation, narrowed))
+    return contexts
 
 
 def _related_metric_equal_values(
@@ -1525,9 +1559,22 @@ def _query_for_selector_count(graph: OntologyGraph, viable: ViableSelectorCount)
     if relation is None:
         return None
     relation_candidates = _apply_relation_clause(graph, selectors, spec.relation)
+    selector_relation = None
+    selector_candidates = relation_candidates
+    if viable.selector_relation is not None:
+        selector_relation = relation_predicate(
+            graph,
+            relation_candidates,
+            clause_id=spec.selector_relation_clause_id,
+            relation=viable.selector_relation,
+            target_type="selector",
+        )
+        if selector_relation is None:
+            return None
+        selector_candidates = _apply_relation_clause(graph, relation_candidates, viable.selector_relation)
     related_metric = related_metric_compare_predicate(
         graph,
-        relation_candidates,
+        selector_candidates,
         clause_id=spec.related_metric_clause_id,
         relation=spec.relation,
         target_type=spec.selected_type,
@@ -1537,7 +1584,7 @@ def _query_for_selector_count(graph: OntologyGraph, viable: ViableSelectorCount)
     )
     selected_count = measurement_predicate(
         graph,
-        relation_candidates,
+        selector_candidates,
         clause_id=spec.selected_count_clause_id,
         metric="selected_count",
     )
@@ -1556,6 +1603,15 @@ def _query_for_selector_count(graph: OntologyGraph, viable: ViableSelectorCount)
             "synthesis_strategy": ["selector_count_narrowing_v1"],
         },
         relation.sampled_parameters,
+        selector_relation.sampled_parameters if selector_relation is not None else {},
+        (
+            {
+                "selector_relation": [viable.selector_relation],
+                "narrowing_mode": ["selector_relation"],
+            }
+            if viable.selector_relation is not None
+            else {"narrowing_mode": ["related_metric_compare"]}
+        ),
         related_metric.sampled_parameters,
         selected_count.sampled_parameters,
     )
@@ -1566,13 +1622,18 @@ def _query_for_selector_count(graph: OntologyGraph, viable: ViableSelectorCount)
         query_id=f"{graph.graph_id}:synth:{spec.family_id}",
         target_type="selector",
         clauses=[
-            relation.clause,
-            related_metric.clause,
-            selected_count.clause,
+            clause
+            for clause in (
+                relation.clause,
+                selector_relation.clause if selector_relation is not None else None,
+                related_metric.clause,
+                selected_count.clause,
+            )
+            if clause is not None
         ],
         aggregation=viable.aggregation,
         aggregation_metric="selected_count",
-        hop_count=4,
+        hop_count=4 + int(selector_relation is not None),
         difficulty="cad_browsecomp",
         min_individual_clause_candidates=2,
         sampled_parameters=sampled,

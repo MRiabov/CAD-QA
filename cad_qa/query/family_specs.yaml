@@ -508,10 +508,11 @@ families:
     status: release
     target_type: selector
     minimum_hops: 4
-    maximum_hops: 4
+    maximum_hops: 5
     parameter_balance:
       required_dimensions:
         - narrowing_predicate_sequence
+        - narrowing_mode
         - selected_entity_type
         - comparison_operator
         - measurement_value_bucket
@@ -520,11 +521,14 @@ families:
         - rendered_prompt_template_id
       enforced_dimensions:
         - narrowing_predicate_sequence
+        - narrowing_mode
         - comparison_operator
         - measurement_value_bucket
       expected_values:
         selected_entity_type: [face]
-    notes: Synthesized selector-count family that narrows by selected-face geometry using sampled thresholds or equal measured values before sampling min/max count.
+        narrowing_mode: [related_metric_compare, selector_relation]
+        selector_relation: [same_selected_face_as, same_selected_entity_as]
+    notes: Synthesized selector-count family that narrows by selected-face geometry and, when available, same-selection relations before sampling min/max count.
   - id: highest_kernel_selected_edge
     status: review_only
     target_type: edge
@@ -1022,10 +1026,11 @@ families:
     status: release
     target_type: selector
     minimum_hops: 4
-    maximum_hops: 4
+    maximum_hops: 5
     parameter_balance:
       required_dimensions:
         - narrowing_predicate_sequence
+        - narrowing_mode
         - selected_entity_type
         - comparison_operator
         - measurement_value_bucket
@@ -1034,11 +1039,14 @@ families:
         - rendered_prompt_template_id
       enforced_dimensions:
         - narrowing_predicate_sequence
+        - narrowing_mode
         - comparison_operator
         - measurement_value_bucket
       expected_values:
         selected_entity_type: [edge]
-    notes: Synthesized selector-count family that narrows by selected-edge geometry using sampled thresholds or equal measured values before sampling min/max count.
+        narrowing_mode: [related_metric_compare, selector_relation]
+        selector_relation: [same_selected_entity_as]
+    notes: Synthesized selector-count family that narrows by selected-edge geometry and, when available, same-selection relations before sampling min/max count.
   - id: path_nearest_origin
     status: review_only
     target_type: path

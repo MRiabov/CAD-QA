@@ -209,14 +209,19 @@ when those choices can be sampled and verified.
   slice for `parameterized_kernel_face_selector_count` and
   `parameterized_kernel_edge_selector_count`. It uses a related-entity metric
   predicate, such as a selected edge's midpoint coordinate threshold or an
-  equal related-geometry value, to keep a geometry-defined selector subset
-  before applying sampled min/max `selected_count`. The reviewed selfcheck
-  preview at
+  equal related-geometry value, and can now add a same-selection relation
+  predicate such as `same_selected_face_as` or `same_selected_entity_as` before
+  applying sampled min/max `selected_count`. The reviewed selfcheck preview at
   `runs/parameterized_synthesis_selfcheck_selector_equal_counts/PREVIEW.md`
   includes a row that narrows edge selections to those containing an edge with
   midpoint Y coordinate equal to `2.0`, then selects the largest measured
-  selected-entity count. This is still not the full predicate catalog or
-  bounded beam-search implementation.
+  selected-entity count. The reviewed selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_selector_relation_counts/PREVIEW.md`
+  adds release-ready rows that first narrow selector candidates by same selected
+  face/entity evidence, preserve two candidate selectors through an equal
+  selected-geometry value, and then select by measured selected-entity count.
+  This is still not the full predicate catalog or bounded beam-search
+  implementation.
 - Initial synthesized rank families now exist for measured kernel faces and
   edges. `parameterized_kernel_face_rank` and
   `parameterized_kernel_edge_rank` use the same reusable relation/measurement
@@ -986,8 +991,9 @@ Checked as implemented with remaining scale caveats:
   feature, feature-effect delta, face/edge geometry, measured path
   point/segment/edge-endpoint geometry, and sampled face/edge spatial
   relations including parallel face/edge and directed same-length/longer/shorter
-  edge relation rows, initial selected face/edge selector-count narrowing with
-  threshold and equal related-metric predicates, initial equal-value
+  edge relation rows, selected face/edge selector-count narrowing with
+  threshold, equal related-metric, and same-selection relation predicates,
+  initial equal-value
   face/edge/edge-endpoint/feature/material-region/void-region measurement
   groups, sampled material/void region extrema/ranks, contained-endpoint
   relation chains, and initial
