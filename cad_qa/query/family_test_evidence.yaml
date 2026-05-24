@@ -416,6 +416,66 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Parameterized removed-material-region reference-distance family with sampled reference entity type.
+  - id: parameterized_feature_reference_material_region_distance
+    positive_generation: [test_synthesis_generates_parameterized_reference_entity_distance_queries]
+    failure_or_quarantine: [test_synthesis_skips_region_reference_distance_without_unique_region_anchor]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Synthesized feature-to-reference-material-region distance family.
+  - id: parameterized_feature_reference_void_region_distance
+    positive_generation: [test_synthesis_generates_parameterized_reference_entity_distance_queries]
+    failure_or_quarantine: [test_synthesis_skips_region_reference_distance_without_unique_region_anchor]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Synthesized feature-to-reference-void-region distance family.
+  - id: parameterized_face_reference_material_region_distance
+    positive_generation: [test_synthesis_generates_parameterized_reference_entity_distance_queries]
+    failure_or_quarantine: [test_synthesis_skips_region_reference_distance_without_unique_region_anchor]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Synthesized face-to-reference-material-region distance family.
+  - id: parameterized_face_reference_void_region_distance
+    positive_generation: [test_synthesis_generates_parameterized_reference_entity_distance_queries]
+    failure_or_quarantine: [test_synthesis_skips_region_reference_distance_without_unique_region_anchor]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Synthesized face-to-reference-void-region distance family.
+  - id: parameterized_edge_reference_material_region_distance
+    positive_generation: [test_synthesis_generates_parameterized_reference_entity_distance_queries]
+    failure_or_quarantine: [test_synthesis_skips_region_reference_distance_without_unique_region_anchor]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Synthesized edge-to-reference-material-region distance family.
+  - id: parameterized_edge_reference_void_region_distance
+    positive_generation: [test_synthesis_generates_parameterized_reference_entity_distance_queries]
+    failure_or_quarantine: [test_synthesis_skips_region_reference_distance_without_unique_region_anchor]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Synthesized edge-to-reference-void-region distance family.
+  - id: parameterized_endpoint_reference_material_region_distance
+    positive_generation: [test_synthesis_generates_parameterized_reference_entity_distance_queries]
+    failure_or_quarantine: [test_synthesis_skips_region_reference_distance_without_unique_region_anchor]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Synthesized endpoint-to-reference-material-region distance family.
+  - id: parameterized_endpoint_reference_void_region_distance
+    positive_generation: [test_synthesis_generates_parameterized_reference_entity_distance_queries]
+    failure_or_quarantine: [test_synthesis_skips_region_reference_distance_without_unique_region_anchor]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Synthesized endpoint-to-reference-void-region distance family.
+  - id: parameterized_material_region_reference_material_region_distance
+    positive_generation: [test_synthesis_generates_parameterized_reference_entity_distance_queries]
+    failure_or_quarantine: [test_synthesis_skips_region_reference_distance_without_unique_region_anchor]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Synthesized material-region-to-reference-material-region distance family.
+  - id: parameterized_material_region_reference_void_region_distance
+    positive_generation: [test_synthesis_generates_parameterized_reference_entity_distance_queries]
+    failure_or_quarantine: [test_synthesis_skips_region_reference_distance_without_unique_region_anchor]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Synthesized material-region-to-reference-void-region distance family.
+  - id: parameterized_void_region_reference_material_region_distance
+    positive_generation: [test_synthesis_generates_parameterized_reference_entity_distance_queries]
+    failure_or_quarantine: [test_synthesis_skips_region_reference_distance_without_unique_region_anchor]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Synthesized void-region-to-reference-material-region distance family.
+  - id: parameterized_void_region_reference_void_region_distance
+    positive_generation: [test_synthesis_generates_parameterized_reference_entity_distance_queries]
+    failure_or_quarantine: [test_synthesis_skips_region_reference_distance_without_unique_region_anchor]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Synthesized void-region-to-reference-void-region distance family.
   - id: parameterized_path_point_extreme
     positive_generation:
       - test_synthesis_generates_parameterized_path_queries

@@ -1294,6 +1294,402 @@ families:
         reference_point_metric: [centroid, face_center, midpoint, coordinate]
         target_point_metric: [segment_midpoint]
     notes: Parameterized path-segment reference-distance family that narrows by repeated segment length and samples a measured reference entity before selecting nearest/farthest by segment-midpoint-to-reference distance.
+  - id: parameterized_feature_reference_material_region_distance
+    status: release
+    target_type: feature
+    minimum_hops: 4
+    maximum_hops: 4
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [material_region]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [centroid]
+        target_point_metric: [centroid]
+    notes: Synthesized feature reference-material-region distance family with equal-measurement distractors before nearest/farthest distance selection.
+  - id: parameterized_feature_reference_void_region_distance
+    status: release
+    target_type: feature
+    minimum_hops: 4
+    maximum_hops: 4
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [void_region]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [centroid]
+        target_point_metric: [centroid]
+    notes: Synthesized feature reference-void-region distance family with equal-measurement distractors before nearest/farthest distance selection.
+  - id: parameterized_face_reference_material_region_distance
+    status: release
+    target_type: face
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [material_region]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [centroid]
+        target_point_metric: [face_center]
+    notes: Synthesized face reference-material-region distance family with equal-measurement distractors before nearest/farthest distance selection.
+  - id: parameterized_face_reference_void_region_distance
+    status: release
+    target_type: face
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [void_region]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [centroid]
+        target_point_metric: [face_center]
+    notes: Synthesized face reference-void-region distance family with equal-measurement distractors before nearest/farthest distance selection.
+  - id: parameterized_edge_reference_material_region_distance
+    status: release
+    target_type: edge
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [material_region]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [centroid]
+        target_point_metric: [midpoint]
+    notes: Synthesized edge reference-material-region distance family with equal-measurement distractors before nearest/farthest distance selection.
+  - id: parameterized_edge_reference_void_region_distance
+    status: release
+    target_type: edge
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [void_region]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [centroid]
+        target_point_metric: [midpoint]
+    notes: Synthesized edge reference-void-region distance family with equal-measurement distractors before nearest/farthest distance selection.
+  - id: parameterized_endpoint_reference_material_region_distance
+    status: release
+    target_type: edge_endpoint
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [material_region]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [centroid]
+        target_point_metric: [coordinate]
+    notes: Synthesized edge_endpoint reference-material-region distance family with equal-measurement distractors before nearest/farthest distance selection.
+  - id: parameterized_endpoint_reference_void_region_distance
+    status: release
+    target_type: edge_endpoint
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [void_region]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [centroid]
+        target_point_metric: [coordinate]
+    notes: Synthesized edge_endpoint reference-void-region distance family with equal-measurement distractors before nearest/farthest distance selection.
+  - id: parameterized_material_region_reference_material_region_distance
+    status: release
+    target_type: material_region
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [material_region]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [centroid]
+        target_point_metric: [centroid]
+    notes: Synthesized material_region reference-material-region distance family with equal-measurement distractors before nearest/farthest distance selection.
+  - id: parameterized_material_region_reference_void_region_distance
+    status: release
+    target_type: material_region
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [void_region]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [centroid]
+        target_point_metric: [centroid]
+    notes: Synthesized material_region reference-void-region distance family with equal-measurement distractors before nearest/farthest distance selection.
+  - id: parameterized_void_region_reference_material_region_distance
+    status: release
+    target_type: void_region
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [material_region]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [centroid]
+        target_point_metric: [centroid]
+    notes: Synthesized void_region reference-material-region distance family with equal-measurement distractors before nearest/farthest distance selection.
+  - id: parameterized_void_region_reference_void_region_distance
+    status: release
+    target_type: void_region
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [void_region]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [centroid]
+        target_point_metric: [centroid]
+    notes: Synthesized void_region reference-void-region distance family with equal-measurement distractors before nearest/farthest distance selection.
   - id: parameterized_path_point_reference_face_distance
     status: release
     target_type: path_point

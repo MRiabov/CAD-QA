@@ -990,6 +990,16 @@ Checked as implemented with remaining scale caveats:
   centroid coordinates. This is the first reference-distance slice where
   reference type is a real sampled family parameter rather than only a family
   suffix; release-scale reference-type balance remains open.
+- The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_region_reference_types/PREVIEW.md`
+  adds valid release-ready rows for explicit reference-material-region and
+  reference-void-region distance families across feature, face, edge, endpoint,
+  added-material-region, and removed-material-region targets. The reviewed rows
+  keep equal-measurement distractors, describe region references by concrete
+  measured volume and centroid coordinates, preserve measured target-point
+  clauses, and resolve uniquely by nearest/farthest distance to the reference
+  region centroid. These families are implemented at the valid-row level;
+  benchmark-release distribution and reference-type balance remain open.
 - Opposite-face rows on broad real CadEvolve data, broader containment,
   broader intersection, broader adjacency, and broader stable spatial-relation
   distributions remain scale/coverage work rather than unchecked core
@@ -1011,10 +1021,11 @@ Checked as implemented with remaining scale caveats:
   intended-family manifest, so benchmark-release reports block them if they
   appear in release rows. The initial feature-effect delta fixtures are now
   covered by a parameterized effect-delta family; non-feature reference anchors
-  now cover reference-face, reference-edge, and reference-endpoint distance rows
-  for feature, edge, face, endpoint, material region, and void region targets.
-  Generic reference-entity distance families now also sample reference type
-  inside the family and cover added-material/removed-material reference anchors.
+  now cover reference-face, reference-edge, reference-endpoint,
+  reference-material-region, and reference-void-region distance rows for
+  feature, edge, face, endpoint, material region, and void region targets.
+  Generic reference-entity distance families also sample reference type inside
+  the family and cover added-material/removed-material reference anchors.
   Edge spatial-relation synthesis now samples same-length, parallel, longer-than,
   and shorter-than relations instead of relying on fixed longer/shorter view-word
   fixtures. Remaining hard-coded release debt is mainly
@@ -1039,8 +1050,10 @@ Checked as implemented with remaining scale caveats:
   feature-to-feature, path-to-reference-feature, and
   face/edge/endpoint/material-region/void-region-to-feature reference-distance
   families plus reference-face, reference-edge, and reference-endpoint distance
-  families for feature, edge, face, endpoint, material-region, and void-region
-  targets, plus generic reference-entity distance families for
+  families plus reference-face, reference-edge, reference-endpoint,
+  reference-material-region, and reference-void-region distance families for
+  feature, edge, face, endpoint, material-region, and void-region targets, plus
+  generic reference-entity distance families for
   feature/face/edge/endpoint/path-point/path-segment/material-region/void-region
   targets that sample feature/face/edge/endpoint/material-region/void-region
   reference types where graph evidence supports them. Broader

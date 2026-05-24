@@ -43,6 +43,8 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_feature_reference_face_distance",
     "parameterized_feature_reference_edge_distance",
     "parameterized_feature_reference_endpoint_distance",
+    "parameterized_feature_reference_material_region_distance",
+    "parameterized_feature_reference_void_region_distance",
     "parameterized_feature_reference_entity_distance",
     "parameterized_equal_endpoint_metric_extreme",
     "parameterized_contained_endpoint_metric_extreme",
@@ -50,6 +52,8 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_endpoint_reference_face_distance",
     "parameterized_endpoint_reference_edge_distance",
     "parameterized_endpoint_reference_endpoint_distance",
+    "parameterized_endpoint_reference_material_region_distance",
+    "parameterized_endpoint_reference_void_region_distance",
     "parameterized_endpoint_reference_entity_distance",
     "parameterized_equal_material_region_metric_extreme",
     "parameterized_equal_void_region_metric_extreme",
@@ -57,21 +61,29 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_material_region_reference_face_distance",
     "parameterized_material_region_reference_edge_distance",
     "parameterized_material_region_reference_endpoint_distance",
+    "parameterized_material_region_reference_material_region_distance",
+    "parameterized_material_region_reference_void_region_distance",
     "parameterized_material_region_reference_entity_distance",
     "parameterized_void_region_reference_feature_distance",
     "parameterized_void_region_reference_face_distance",
     "parameterized_void_region_reference_edge_distance",
     "parameterized_void_region_reference_endpoint_distance",
+    "parameterized_void_region_reference_material_region_distance",
+    "parameterized_void_region_reference_void_region_distance",
     "parameterized_void_region_reference_entity_distance",
     "parameterized_face_reference_feature_distance",
     "parameterized_face_reference_face_distance",
     "parameterized_face_reference_edge_distance",
     "parameterized_face_reference_endpoint_distance",
+    "parameterized_face_reference_material_region_distance",
+    "parameterized_face_reference_void_region_distance",
     "parameterized_face_reference_entity_distance",
     "parameterized_edge_reference_feature_distance",
     "parameterized_edge_reference_face_distance",
     "parameterized_edge_reference_edge_distance",
     "parameterized_edge_reference_endpoint_distance",
+    "parameterized_edge_reference_material_region_distance",
+    "parameterized_edge_reference_void_region_distance",
     "parameterized_edge_reference_entity_distance",
     "parameterized_path_point_extreme",
     "parameterized_path_segment_extreme",
@@ -914,6 +926,7 @@ def _endpoint_equal_metric_graph() -> OntologyGraph:
         graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_y", coordinate[1], "mm"))
         graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
         graph.add_measurement(Measurement(endpoint_id, "relation_metric", "distance_to_origin", distance, "mm"))
+    _add_reference_region_nodes(graph)
     return graph
 
 

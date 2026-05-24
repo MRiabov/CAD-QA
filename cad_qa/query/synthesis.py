@@ -1123,6 +1123,21 @@ _PATH_REFERENCE_DISTANCE_REFERENCES = (
 )
 
 
+_REGION_REFERENCE_DISTANCE_TARGET_TYPES = {
+    "feature",
+    "face",
+    "edge",
+    "edge_endpoint",
+    "material_region",
+    "void_region",
+}
+
+_REGION_REFERENCE_DISTANCE_REFERENCES = (
+    ("material_region", "reference_material_region_volume_and_centroid", "centroid"),
+    ("void_region", "reference_void_region_volume_and_centroid", "centroid"),
+)
+
+
 def _path_reference_distance_family_specs() -> tuple[ReferenceDistanceFamilySpec, ...]:
     specs: list[ReferenceDistanceFamilySpec] = []
     for target in _PATH_REFERENCE_DISTANCE_TARGETS:
@@ -1148,6 +1163,32 @@ def _path_reference_distance_family_specs() -> tuple[ReferenceDistanceFamilySpec
 
 def _reference_family_suffix(reference_type: str) -> str:
     return "endpoint" if reference_type == "edge_endpoint" else reference_type
+
+
+def _region_reference_distance_family_specs() -> tuple[ReferenceDistanceFamilySpec, ...]:
+    specs: list[ReferenceDistanceFamilySpec] = []
+    for target in _GENERIC_REFERENCE_DISTANCE_TARGETS:
+        if str(target["target_type"]) not in _REGION_REFERENCE_DISTANCE_TARGET_TYPES:
+            continue
+        family_prefix = str(target["family_id"]).removesuffix("_entity_distance")
+        for reference_type, reference_clause_id, reference_point_metric in _REGION_REFERENCE_DISTANCE_REFERENCES:
+            specs.append(
+                ReferenceDistanceFamilySpec(
+                    family_id=f"{family_prefix}_{reference_type}_distance",
+                    target_type=str(target["target_type"]),
+                    relation=target["relation"],
+                    relation_clause_id=target["relation_clause_id"],
+                    relation_target_type=target["relation_target_type"],
+                    equal_value_clause_id=str(target["equal_value_clause_id"]),
+                    reference_clause_id=reference_clause_id,
+                    target_point_clause_id=str(target["target_point_clause_id"]),
+                    equal_metric=str(target["equal_metric"]),
+                    target_point_metric=str(target["target_point_metric"]),
+                    reference_type=reference_type,
+                    reference_point_metric=reference_point_metric,
+                )
+            )
+    return tuple(specs)
 
 
 def _generic_reference_distance_family_specs() -> tuple[ReferenceDistanceFamilySpec, ...]:
@@ -1176,6 +1217,7 @@ def _generic_reference_distance_family_specs() -> tuple[ReferenceDistanceFamilyS
 REFERENCE_DISTANCE_FAMILY_SPECS = (
     REFERENCE_DISTANCE_FAMILY_SPECS
     + _path_reference_distance_family_specs()
+    + _region_reference_distance_family_specs()
     + _generic_reference_distance_family_specs()
 )
 
