@@ -76,7 +76,7 @@ def measurement_predicate(
     after = [
         node
         for node in candidates
-        if graph.measurements_for(node.id, metric)
+        if _has_measurement(graph, node.id, metric)
     ]
     if len(after) < 2:
         return None
@@ -98,6 +98,21 @@ def measurement_predicate(
         candidate_count_after=len(after),
         sampled_parameters=params,
     )
+
+
+def _has_measurement(graph: OntologyGraph, entity_id: str, metric: str) -> bool:
+    if graph.measurements_for(entity_id, metric):
+        return True
+    return all(graph.measurements_for(entity_id, component) for component in _point_metric_components(metric))
+
+
+def _point_metric_components(metric: str) -> tuple[str, ...]:
+    return {
+        "bbox_center": ("bbox_center_x", "bbox_center_y", "bbox_center_z"),
+        "centroid": ("centroid_x", "centroid_y", "centroid_z"),
+        "midpoint": ("midpoint_x", "midpoint_y", "midpoint_z"),
+        "coordinate": ("coordinate_x", "coordinate_y", "coordinate_z"),
+    }.get(metric, ())
 
 
 def measurement_value_predicate(

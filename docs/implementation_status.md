@@ -122,7 +122,9 @@ when those choices can be sampled and verified.
   centers for feature, added-material-region, and removed-material-region
   anchors when prepared traces expose bbox geometry but not full centroid
   vectors. Prompt wording names these as bounding-box centers rather than
-  centroids.
+  centroids. Composite point predicates now treat scalar component measurements
+  such as `bbox_center_x`, `bbox_center_y`, and `bbox_center_z` as valid
+  `bbox_center` evidence in synthesis and resolver clauses.
 - Release and SFT stop gates now require value-bearing measurement coverage and
   at least one cross-feature value-bearing row on applicable release-scale
   artifacts.
@@ -317,7 +319,9 @@ when those choices can be sampled and verified.
   narrowing with a geometry-described reference feature anchor and nearest or
   farthest midpoint-distance selection. Rows serialize reference type, reference
   metric, target/reference point metrics including bbox centers, anchor
-  signature, and anchor value buckets.
+  signature, and anchor value buckets. Composite point measurements can be
+  backed by scalar component measurements, so prepared-trace feature bbox
+  centers do not require a redundant vector-valued `bbox_center` measurement.
 - `cadqa dataset synthesis-selfcheck --out <dir>` now regenerates rows, graphs,
   Markdown preview, and preview evidence for the currently implemented
   synthesized release families. This gives reviewers a repeatable artifact for
@@ -463,20 +467,32 @@ Result reviewed on 2026-05-25:
   by positive `signed_volume_delta`, require a measured target feature geometry
   value such as bounding-box center height, and then select the min/max feature
   within that narrowed set.
+- Composite bbox-center predicates now unlock prepared-trace feature
+  reference-distance rows. The regenerated RC10 slice at
+  `runs/current_rc10_composite_reference_dataset/` contains 302 rows across 23
+  generated release families, including 15
+  `parameterized_feature_reference_entity_distance` rows and 15
+  `parameterized_feature_reference_entity_distance_rank` rows. These rows narrow
+  features by equal bbox height, describe a reference feature by volume plus
+  bounding-box center coordinates, and resolve by nearest/farthest or ranked
+  target feature bbox-center distance.
 - Manual preview:
   `runs/current_rc10_bbox_reference_dataset/BBOX_REFERENCE_PREVIEW.md` and
-  `runs/current_rc10_feature_effect_dataset/FEATURE_EFFECT_PREVIEW.md`.
+  `runs/current_rc10_feature_effect_dataset/FEATURE_EFFECT_PREVIEW.md` and
+  `runs/current_rc10_composite_reference_dataset/COMPOSITE_REFERENCE_PREVIEW.md`.
   Reviewed samples use public clues such as reference feature volume plus
   bounding-box center coordinates, then resolve by closest/farthest target
   centroid or segment midpoint distance to that reference center; the
+  feature reference samples use bbox-center-to-bbox-center distance; the
   feature-effect samples use positive volume-change clues plus compiled
   bounding-box center height.
 - A benchmark-tier export probe with failing gates allowed wrote
-  `runs/current_rc10_feature_effect_balanced_export/` after regenerating the
-  existing RC10 query output with feature-effect delta synthesis enabled. The
-  deterministic release-balance cap reduced the 254-row artifact to 121 rows
-  and wrote 133 balance-cap exclusions while preserving all 21 generated
-  families and 81 prompt templates. The remaining export passes value-bearing,
+  `runs/current_rc10_composite_reference_balanced_export/` after regenerating
+  the existing RC10 query output with composite point measurement support
+  enabled. The deterministic release-balance cap reduced the 302-row artifact
+  to 121 rows and wrote 181 balance-cap exclusions while preserving all 23
+  generated families and 86 prompt templates. The remaining export passes
+  value-bearing,
   cross-feature, main-hop, prompt-family, prompt-template, public/private,
   release-validation, row-validation, candidate-breadth, and quarantine gates.
   `public_private_audit` now passes on the rematerialized artifact because row

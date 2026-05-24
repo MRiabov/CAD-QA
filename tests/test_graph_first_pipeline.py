@@ -4928,7 +4928,6 @@ def test_synthesis_generates_feature_reference_distance_from_bbox_centers() -> N
         graph.add_node(Node(feature_id, "feature", feature_id))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume, "mm^3"))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "bbox_span_z", span_z, "mm"))
-        graph.add_measurement(Measurement(feature_id, "snapshot_state", "bbox_center", center, "mm"))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "bbox_center_x", center[0], "mm"))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "bbox_center_y", center[1], "mm"))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "bbox_center_z", center[2], "mm"))
@@ -4947,6 +4946,7 @@ def test_synthesis_generates_feature_reference_distance_from_bbox_centers() -> N
     assert query.clauses[2].id == "has_feature_bbox_center_for_reference_distance"
     assert row.query_program["sampled_parameters"]["target_point_metric"] == ["bbox_center"]
     assert row.query_program["sampled_parameters"]["reference_point_metric"] == ["bbox_center"]
+    assert row.measurement_scopes == ["snapshot_state"]
     assert row.query_program["sampled_parameters"]["reference_anchor_metric"] == [
         "bbox_center_x",
         "bbox_center_y",

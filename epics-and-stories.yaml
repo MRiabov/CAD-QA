@@ -489,6 +489,8 @@ epics:
             configurable maximum number of viable variants per family and graph.
           - Prepared-trace feature-effect rows are generated through the same
             resolver/materializer path and have RC10 preview evidence.
+          - Composite point metrics such as `bbox_center` are recognized from
+            scalar component measurements in synthesis and resolver paths.
           - Benchmark-scale family balance, full beam search, and broader real
             CadEvolve family coverage remain work-in-progress.
       - id: "14.8"
@@ -497,7 +499,7 @@ epics:
         acceptance_criteria:
           - Reviewers can see whether a synthesized reference-distance row used a centroid, midpoint, coordinate, or bounding-box center.
         technical_definition_of_done:
-          - Sampled parameters serialize `target_point_metric`, `reference_point_metric`, anchor metrics, anchor value buckets, and rendered clue-template IDs for bbox-center reference-distance rows.
+          - Sampled parameters serialize `target_point_metric`, `reference_point_metric`, anchor metrics, anchor value buckets, and rendered clue-template IDs for bbox-center reference-distance rows, including rows whose bbox centers are backed by scalar component measurements.
       - id: "14.9"
         title: Graph-hop narrowing implementation for sparse selector, count, and extremum task families
         status: work-in-progress

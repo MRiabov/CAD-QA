@@ -2273,7 +2273,7 @@ def _apply_clause(graph: OntologyGraph, candidates: list[Node], clause: Clause) 
         ]
     if clause.kind == "has_measurement" and clause.metric:
         if clause.value is None:
-            return [node for node in candidates if graph.measurements_for(node.id, clause.metric)]
+            return [node for node in candidates if _has_measurement(graph, node.id, clause.metric)]
         return [
             node
             for node in candidates
@@ -2425,8 +2425,29 @@ def _measurement_scopes_for_clause(graph: OntologyGraph, candidates: list[Node],
     return {
         measurement.scope
         for node in candidates
-        for measurement in graph.measurements_for(node.id, clause.metric)
+        for metric in _measurement_scope_metrics(clause.metric)
+        for measurement in graph.measurements_for(node.id, metric)
     }
+
+
+def _has_measurement(graph: OntologyGraph, entity_id: str, metric: str) -> bool:
+    if graph.measurements_for(entity_id, metric):
+        return True
+    return all(graph.measurements_for(entity_id, component) for component in _point_metric_components(metric))
+
+
+def _measurement_scope_metrics(metric: str) -> tuple[str, ...]:
+    components = _point_metric_components(metric)
+    return (metric, *components) if components else (metric,)
+
+
+def _point_metric_components(metric: str) -> tuple[str, ...]:
+    return {
+        "bbox_center": ("bbox_center_x", "bbox_center_y", "bbox_center_z"),
+        "centroid": ("centroid_x", "centroid_y", "centroid_z"),
+        "midpoint": ("midpoint_x", "midpoint_y", "midpoint_z"),
+        "coordinate": ("coordinate_x", "coordinate_y", "coordinate_z"),
+    }.get(metric, ())
 
 
 def _measurement_matches(graph: OntologyGraph, entity_id: str, metric: str, expected: Any) -> bool:

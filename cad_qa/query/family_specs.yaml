@@ -3659,7 +3659,7 @@ families:
         reference_metric: [distance_to_reference_feature_centroid]
         reference_point_metric: [centroid, bbox_center, face_center, midpoint, coordinate]
         target_point_metric: [centroid, bbox_center]
-    notes: Parameterized feature reference-distance family that samples the reference entity type and anchor before selecting nearest/farthest by measured target-point distance.
+    notes: Parameterized feature reference-distance family that samples the reference entity type and anchor before selecting nearest/farthest by measured target-point distance; prepared-trace bbox-center rows may be backed by scalar bbox_center_x/y/z components.
   - id: parameterized_feature_reference_entity_distance_rank
     status: release
     target_type: feature
@@ -3697,7 +3697,7 @@ families:
         reference_point_metric: [centroid, bbox_center, face_center, midpoint, coordinate]
         target_point_metric: [centroid, bbox_center]
         aggregation_rank: [2, 3, 4, 5, 6]
-    notes: Parameterized feature reference-distance rank family that samples the reference entity type and anchor before selecting a sampled rank by measured target-point distance.
+    notes: Parameterized feature reference-distance rank family that samples the reference entity type and anchor before selecting a sampled rank by measured target-point distance; prepared-trace bbox-center rows may be backed by scalar bbox_center_x/y/z components.
   - id: parameterized_endpoint_reference_entity_distance
     status: release
     target_type: edge_endpoint
