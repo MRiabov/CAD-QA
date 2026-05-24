@@ -605,6 +605,20 @@ REFERENCE_DISTANCE_FAMILY_SPECS = (
         reference_point_metric="midpoint",
     ),
     ReferenceDistanceFamilySpec(
+        family_id="parameterized_face_reference_endpoint_distance",
+        target_type="face",
+        relation="has_kernel_stable_face_id",
+        relation_clause_id="has_parameterized_face_set",
+        relation_target_type="selector",
+        equal_value_clause_id="has_parameterized_equal_face_metric_value",
+        reference_clause_id="reference_endpoint_coordinates",
+        target_point_clause_id="has_face_center_for_reference_distance",
+        equal_metric="face_area",
+        target_point_metric="face_center",
+        reference_type="edge_endpoint",
+        reference_point_metric="coordinate",
+    ),
+    ReferenceDistanceFamilySpec(
         family_id="parameterized_edge_reference_feature_distance",
         target_type="edge",
         relation="has_kernel_stable_edge_id",
@@ -645,6 +659,20 @@ REFERENCE_DISTANCE_FAMILY_SPECS = (
         target_point_metric="midpoint",
         reference_type="edge",
         reference_point_metric="midpoint",
+    ),
+    ReferenceDistanceFamilySpec(
+        family_id="parameterized_edge_reference_endpoint_distance",
+        target_type="edge",
+        relation="has_kernel_stable_edge_id",
+        relation_clause_id="has_parameterized_edge_set",
+        relation_target_type="selector",
+        equal_value_clause_id="has_parameterized_equal_edge_metric_value",
+        reference_clause_id="reference_endpoint_coordinates",
+        target_point_clause_id="has_edge_midpoint_for_reference_distance",
+        equal_metric="edge_length",
+        target_point_metric="midpoint",
+        reference_type="edge_endpoint",
+        reference_point_metric="coordinate",
     ),
     ReferenceDistanceFamilySpec(
         family_id="parameterized_feature_reference_feature_distance",
@@ -689,6 +717,20 @@ REFERENCE_DISTANCE_FAMILY_SPECS = (
         reference_point_metric="midpoint",
     ),
     ReferenceDistanceFamilySpec(
+        family_id="parameterized_feature_reference_endpoint_distance",
+        target_type="feature",
+        relation=None,
+        relation_clause_id=None,
+        relation_target_type=None,
+        equal_value_clause_id="has_parameterized_equal_feature_metric_value",
+        reference_clause_id="reference_endpoint_coordinates",
+        target_point_clause_id="has_feature_centroid_for_reference_distance",
+        equal_metric="volume",
+        target_point_metric="centroid",
+        reference_type="edge_endpoint",
+        reference_point_metric="coordinate",
+    ),
+    ReferenceDistanceFamilySpec(
         family_id="parameterized_endpoint_reference_feature_distance",
         target_type="edge_endpoint",
         relation="endpoint_of",
@@ -729,6 +771,20 @@ REFERENCE_DISTANCE_FAMILY_SPECS = (
         target_point_metric="coordinate",
         reference_type="edge",
         reference_point_metric="midpoint",
+    ),
+    ReferenceDistanceFamilySpec(
+        family_id="parameterized_endpoint_reference_endpoint_distance",
+        target_type="edge_endpoint",
+        relation="endpoint_of",
+        relation_clause_id="has_parameterized_endpoint_set",
+        relation_target_type="edge",
+        equal_value_clause_id="has_parameterized_equal_endpoint_metric_value",
+        reference_clause_id="reference_endpoint_coordinates",
+        target_point_clause_id="has_endpoint_for_reference_distance",
+        equal_metric="coordinate_z",
+        target_point_metric="coordinate",
+        reference_type="edge_endpoint",
+        reference_point_metric="coordinate",
     ),
     ReferenceDistanceFamilySpec(
         family_id="parameterized_material_region_reference_feature_distance",
@@ -773,6 +829,20 @@ REFERENCE_DISTANCE_FAMILY_SPECS = (
         reference_point_metric="midpoint",
     ),
     ReferenceDistanceFamilySpec(
+        family_id="parameterized_material_region_reference_endpoint_distance",
+        target_type="material_region",
+        relation="has_kernel_material_region_geometry",
+        relation_clause_id="has_region_geometry",
+        relation_target_type="material_region",
+        equal_value_clause_id="has_region_volume_value",
+        reference_clause_id="reference_endpoint_coordinates",
+        target_point_clause_id="has_region_centroid_for_reference_distance",
+        equal_metric="volume",
+        target_point_metric="centroid",
+        reference_type="edge_endpoint",
+        reference_point_metric="coordinate",
+    ),
+    ReferenceDistanceFamilySpec(
         family_id="parameterized_void_region_reference_feature_distance",
         target_type="void_region",
         relation="has_kernel_void_region_geometry",
@@ -813,6 +883,20 @@ REFERENCE_DISTANCE_FAMILY_SPECS = (
         target_point_metric="centroid",
         reference_type="edge",
         reference_point_metric="midpoint",
+    ),
+    ReferenceDistanceFamilySpec(
+        family_id="parameterized_void_region_reference_endpoint_distance",
+        target_type="void_region",
+        relation="has_kernel_void_region_geometry",
+        relation_clause_id="has_void_geometry",
+        relation_target_type="void_region",
+        equal_value_clause_id="has_void_volume_value",
+        reference_clause_id="reference_endpoint_coordinates",
+        target_point_clause_id="has_void_centroid_for_reference_distance",
+        equal_metric="volume",
+        target_point_metric="centroid",
+        reference_type="edge_endpoint",
+        reference_point_metric="coordinate",
     ),
 )
 
@@ -1946,6 +2030,9 @@ def _reference_anchor_prompt_value(
         "reference_edge_midpoint_x": values.get("midpoint_x"),
         "reference_edge_midpoint_y": values.get("midpoint_y"),
         "reference_edge_midpoint_z": values.get("midpoint_z"),
+        "reference_endpoint_x": values.get("coordinate_x"),
+        "reference_endpoint_y": values.get("coordinate_y"),
+        "reference_endpoint_z": values.get("coordinate_z"),
     }
 
 
@@ -1954,6 +2041,8 @@ def _reference_anchor_metrics(reference_type: str) -> tuple[str, ...]:
         return ("face_area", "coordinate_z")
     if reference_type == "edge":
         return ("edge_length", "midpoint_x", "midpoint_y", "midpoint_z")
+    if reference_type == "edge_endpoint":
+        return ("coordinate_x", "coordinate_y", "coordinate_z")
     return ("volume", "centroid_z")
 
 
@@ -1991,6 +2080,7 @@ def _point_measurement(graph: OntologyGraph, entity_id: str, metric: str) -> lis
     scalar_names = {
         "centroid": ("centroid_x", "centroid_y", "centroid_z"),
         "midpoint": ("midpoint_x", "midpoint_y", "midpoint_z"),
+        "coordinate": ("coordinate_x", "coordinate_y", "coordinate_z"),
     }.get(metric)
     if scalar_names is None:
         return None

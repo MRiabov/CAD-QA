@@ -241,6 +241,39 @@ families:
         reference_point_metric: [midpoint]
         target_point_metric: [face_center]
     notes: Synthesized cross-entity face family that narrows by repeated face area before selecting by distance from face center to a geometry-described reference edge midpoint.
+  - id: parameterized_face_reference_endpoint_distance
+    status: release
+    target_type: face
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [edge_endpoint]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [coordinate]
+        target_point_metric: [face_center]
+    notes: Synthesized cross-entity face family that narrows by repeated face area before selecting by distance from face center to a geometry-described reference endpoint.
   - id: parameterized_equal_feature_metric_extreme
     status: release
     target_type: feature
@@ -362,6 +395,39 @@ families:
         reference_point_metric: [midpoint]
         target_point_metric: [centroid]
     notes: Synthesized cross-entity feature family that narrows by repeated feature volume before selecting by distance from feature centroid to a geometry-described reference edge midpoint.
+  - id: parameterized_feature_reference_endpoint_distance
+    status: release
+    target_type: feature
+    minimum_hops: 4
+    maximum_hops: 4
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [edge_endpoint]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [coordinate]
+        target_point_metric: [centroid]
+    notes: Synthesized cross-entity feature family that narrows by repeated feature volume before selecting by distance from feature centroid to a geometry-described reference endpoint.
   - id: parameterized_feature_extreme
     status: release
     target_type: feature
@@ -616,6 +682,39 @@ families:
         reference_point_metric: [midpoint]
         target_point_metric: [midpoint]
     notes: Synthesized cross-entity edge family that narrows to equal-length edges and samples a measured reference edge before selecting nearest/farthest by midpoint distance.
+  - id: parameterized_edge_reference_endpoint_distance
+    status: release
+    target_type: edge
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [edge_endpoint]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [coordinate]
+        target_point_metric: [midpoint]
+    notes: Synthesized cross-entity edge family that narrows to equal-length edges and samples a measured reference endpoint before selecting nearest/farthest by edge-midpoint-to-endpoint distance.
   - id: parameterized_kernel_edge_extreme
     status: release
     target_type: edge
@@ -880,6 +979,39 @@ families:
         reference_point_metric: [midpoint]
         target_point_metric: [coordinate]
     notes: Synthesized cross-entity endpoint family that narrows to equal-height endpoints and samples a measured reference edge before selecting nearest/farthest by endpoint-to-edge-midpoint distance.
+  - id: parameterized_endpoint_reference_endpoint_distance
+    status: release
+    target_type: edge_endpoint
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [edge_endpoint]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [coordinate]
+        target_point_metric: [coordinate]
+    notes: Synthesized cross-entity endpoint family that narrows to equal-height endpoints and samples a measured reference endpoint before selecting nearest/farthest by endpoint-to-endpoint distance.
   - id: largest_kernel_edge_selector_count
     status: review_only
     target_type: selector
@@ -1253,6 +1385,39 @@ families:
         reference_point_metric: [midpoint]
         target_point_metric: [centroid]
     notes: Synthesized cross-entity added-material region family that narrows to equal-volume regions and samples a measured reference edge before selecting nearest/farthest by region-centroid-to-edge-midpoint distance.
+  - id: parameterized_material_region_reference_endpoint_distance
+    status: release
+    target_type: material_region
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [edge_endpoint]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [coordinate]
+        target_point_metric: [centroid]
+    notes: Synthesized cross-entity added-material region family that narrows to equal-volume regions and samples a measured reference endpoint before selecting nearest/farthest by region-centroid-to-endpoint distance.
   - id: largest_removed_region
     status: review_only
     target_type: void_region
@@ -1431,3 +1596,36 @@ families:
         reference_point_metric: [midpoint]
         target_point_metric: [centroid]
     notes: Synthesized cross-entity removed-material region family that narrows to equal-volume regions and samples a measured reference edge before selecting nearest/farthest by region-centroid-to-edge-midpoint distance.
+  - id: parameterized_void_region_reference_endpoint_distance
+    status: release
+    target_type: void_region
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [edge_endpoint]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [coordinate]
+        target_point_metric: [centroid]
+    notes: Synthesized cross-entity removed-material region family that narrows to equal-volume regions and samples a measured reference endpoint before selecting nearest/farthest by region-centroid-to-endpoint distance.

@@ -104,6 +104,14 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Initial synthesized endpoint-to-reference-edge distance family with equal-measurement narrowing.
+  - id: parameterized_endpoint_reference_endpoint_distance
+    positive_generation:
+      - test_synthesis_generates_endpoint_reference_endpoint_distance_query
+    failure_or_quarantine:
+      - test_synthesis_skips_endpoint_reference_distance_without_endpoint_locations
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Initial synthesized endpoint-to-reference-endpoint distance family with equal-measurement narrowing.
   - id: parameterized_equal_feature_metric_extreme
     positive_generation:
       - test_synthesis_generates_equal_value_feature_query
@@ -136,6 +144,14 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Initial synthesized feature-to-reference-edge distance family with equal-measurement narrowing.
+  - id: parameterized_feature_reference_endpoint_distance
+    positive_generation:
+      - test_synthesis_generates_feature_reference_endpoint_distance_query
+    failure_or_quarantine:
+      - test_synthesis_skips_feature_reference_distance_without_feature_centroids
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Initial synthesized feature-to-reference-endpoint distance family with equal-measurement narrowing.
   - id: parameterized_feature_extreme
     positive_generation:
       - test_synthesis_generates_parameterized_feature_extreme_and_rank_queries
@@ -232,6 +248,14 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Initial synthesized added-material-region-to-reference-edge distance family with equal-measurement narrowing.
+  - id: parameterized_material_region_reference_endpoint_distance
+    positive_generation:
+      - test_synthesis_generates_region_reference_distance_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_region_reference_distance_without_region_centroids
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Initial synthesized added-material-region-to-reference-endpoint distance family with equal-measurement narrowing.
   - id: parameterized_void_region_reference_feature_distance
     positive_generation:
       - test_synthesis_generates_region_reference_distance_queries
@@ -256,6 +280,14 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Initial synthesized removed-material-region-to-reference-edge distance family with equal-measurement narrowing.
+  - id: parameterized_void_region_reference_endpoint_distance
+    positive_generation:
+      - test_synthesis_generates_region_reference_distance_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_region_reference_distance_without_region_centroids
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Initial synthesized removed-material-region-to-reference-endpoint distance family with equal-measurement narrowing.
   - id: parameterized_edge_reference_feature_distance
     positive_generation:
       - test_synthesis_generates_reference_feature_distance_query
@@ -280,6 +312,14 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Initial synthesized cross-entity edge family with sampled reference-edge anchor.
+  - id: parameterized_edge_reference_endpoint_distance
+    positive_generation:
+      - test_synthesis_generates_edge_reference_endpoint_distance_query
+    failure_or_quarantine:
+      - test_synthesis_skips_reference_distance_without_unique_reference_anchor
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Initial synthesized cross-entity edge family with sampled reference-endpoint anchor.
   - id: parameterized_face_reference_feature_distance
     positive_generation:
       - test_synthesis_generates_face_reference_feature_distance_query
@@ -304,6 +344,14 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Initial synthesized cross-entity face family with equal-area distractors and a sampled reference-edge anchor.
+  - id: parameterized_face_reference_endpoint_distance
+    positive_generation:
+      - test_synthesis_generates_face_reference_endpoint_distance_query
+    failure_or_quarantine:
+      - test_synthesis_skips_face_reference_distance_without_face_centers
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Initial synthesized cross-entity face family with equal-area distractors and a sampled reference-endpoint anchor.
   - id: parameterized_path_point_extreme
     positive_generation:
       - test_synthesis_generates_parameterized_path_queries

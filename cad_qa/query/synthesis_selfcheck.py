@@ -37,25 +37,31 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_feature_reference_feature_distance",
     "parameterized_feature_reference_face_distance",
     "parameterized_feature_reference_edge_distance",
+    "parameterized_feature_reference_endpoint_distance",
     "parameterized_equal_endpoint_metric_extreme",
     "parameterized_contained_endpoint_metric_extreme",
     "parameterized_endpoint_reference_feature_distance",
     "parameterized_endpoint_reference_face_distance",
     "parameterized_endpoint_reference_edge_distance",
+    "parameterized_endpoint_reference_endpoint_distance",
     "parameterized_equal_material_region_metric_extreme",
     "parameterized_equal_void_region_metric_extreme",
     "parameterized_material_region_reference_feature_distance",
     "parameterized_material_region_reference_face_distance",
     "parameterized_material_region_reference_edge_distance",
+    "parameterized_material_region_reference_endpoint_distance",
     "parameterized_void_region_reference_feature_distance",
     "parameterized_void_region_reference_face_distance",
     "parameterized_void_region_reference_edge_distance",
+    "parameterized_void_region_reference_endpoint_distance",
     "parameterized_face_reference_feature_distance",
     "parameterized_face_reference_face_distance",
     "parameterized_face_reference_edge_distance",
+    "parameterized_face_reference_endpoint_distance",
     "parameterized_edge_reference_feature_distance",
     "parameterized_edge_reference_face_distance",
     "parameterized_edge_reference_edge_distance",
+    "parameterized_edge_reference_endpoint_distance",
     "parameterized_path_point_extreme",
     "parameterized_path_segment_extreme",
     "parameterized_kernel_face_selector_count",
@@ -161,6 +167,18 @@ def write_synthesis_selfcheck(out: Path, *, sample_per_family: int = 20, seed: i
         "preview": str(preview_path),
         "preview_evidence": str(dataset_dir / DEFAULT_PREVIEW_EVIDENCE_FILENAME),
     }
+
+
+def _add_reference_endpoint_nodes(graph: OntologyGraph) -> None:
+    for endpoint_id, coordinate in [
+        ("edge_endpoint:ref", [0.0, -4.0, 0.0]),
+        ("edge_endpoint:far", [50.0, 4.0, 0.0]),
+    ]:
+        graph.add_node(Node(endpoint_id, "edge_endpoint", endpoint_id))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate", coordinate, "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_x", coordinate[0], "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_y", coordinate[1], "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
 
 
 def _face_metric_graph() -> OntologyGraph:
@@ -365,6 +383,7 @@ def _feature_equal_metric_graph() -> OntologyGraph:
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_x", midpoint[0], "mm"))
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint[1], "mm"))
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_z", midpoint[2], "mm"))
+    _add_reference_endpoint_nodes(graph)
     return graph
 
 
@@ -477,6 +496,7 @@ def _region_equal_metric_graph() -> OntologyGraph:
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_x", midpoint[0], "mm"))
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint[1], "mm"))
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_z", midpoint[2], "mm"))
+    _add_reference_endpoint_nodes(graph)
     for node_id, relation, volume, centroid in [
         ("material_region:a", "has_kernel_material_region_geometry", 12.0, [1.0, 0.0, 1.0]),
         ("material_region:b", "has_kernel_material_region_geometry", 12.0 + 1e-7, [6.0, 0.0, 7.0]),
@@ -538,6 +558,7 @@ def _face_equal_metric_graph() -> OntologyGraph:
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_x", midpoint[0], "mm"))
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint[1], "mm"))
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_z", midpoint[2], "mm"))
+    _add_reference_endpoint_nodes(graph)
     return graph
 
 
@@ -582,6 +603,7 @@ def _edge_equal_metric_graph() -> OntologyGraph:
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_x", midpoint_x, "mm"))
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_z", 0.0, "mm"))
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint", [midpoint_x, midpoint_y, 0.0], "mm"))
+    _add_reference_endpoint_nodes(graph)
     return graph
 
 

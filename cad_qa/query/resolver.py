@@ -2554,6 +2554,7 @@ def _point_measurement(graph: OntologyGraph, entity_id: str, metric: str) -> lis
     scalar_names = {
         "centroid": ("centroid_x", "centroid_y", "centroid_z"),
         "midpoint": ("midpoint_x", "midpoint_y", "midpoint_z"),
+        "coordinate": ("coordinate_x", "coordinate_y", "coordinate_z"),
     }.get(metric)
     if scalar_names is None:
         return None

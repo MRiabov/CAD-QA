@@ -130,6 +130,8 @@ def metric_label(metric: str) -> str:
 
 
 def _entity_type_label(entity_type: str) -> str:
+    if entity_type == "edge_endpoint":
+        return "endpoint"
     return entity_type.replace("_", " ")
 
 
