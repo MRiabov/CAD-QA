@@ -907,6 +907,29 @@ families:
         target_type: [edge_endpoint]
         clause_relation: [endpoint_of, contained_in]
     notes: Synthesized containment-aware endpoint family that requires endpoint and contained-on-edge evidence, narrows by a repeated endpoint measurement, then selects by another measured endpoint quantity.
+  - id: parameterized_endpoint_containment_relation_extreme
+    status: release
+    target_type: edge_endpoint
+    minimum_hops: 4
+    maximum_hops: 4
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - clause_relation
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - clause_relation
+        - aggregation_metric
+        - final_selector
+      expected_values:
+        target_type: [edge_endpoint]
+        clause_relation: [contained_in]
+    notes: Synthesized containment-relation endpoint family that requires endpoint and contained-on-edge evidence before selecting by a measured endpoint quantity.
   - id: parameterized_endpoint_reference_feature_distance
     status: release
     target_type: edge_endpoint

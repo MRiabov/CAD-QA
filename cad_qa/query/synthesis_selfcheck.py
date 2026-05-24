@@ -48,6 +48,7 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_feature_reference_entity_distance",
     "parameterized_equal_endpoint_metric_extreme",
     "parameterized_contained_endpoint_metric_extreme",
+    "parameterized_endpoint_containment_relation_extreme",
     "parameterized_endpoint_reference_feature_distance",
     "parameterized_endpoint_reference_face_distance",
     "parameterized_endpoint_reference_edge_distance",

@@ -877,6 +877,15 @@ Checked as implemented with remaining scale caveats:
   equal-measurement synthesis; broader containment/adjacency combinations and
   release-scale distribution remain open.
 - The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_endpoint_containment_relation/PREVIEW.md`
+  adds a valid release-ready row for
+  `parameterized_endpoint_containment_relation_extreme`. The reviewed row first
+  requires endpoint-of-edge evidence, then requires contained-on-edge evidence,
+  keeps multiple endpoint candidates through a measured endpoint coordinate
+  clause, and resolves uniquely by a sampled min/max endpoint measurement. This
+  implements a reusable containment-relation endpoint extrema family at the
+  valid-row level; broader containment and adjacency predicates remain open.
+- The synthesized selfcheck preview at
   `runs/parameterized_synthesis_selfcheck_edge_spatial/PREVIEW.md` demonstrates
   the initial `parameterized_edge_spatial_relation_extreme` family. The reviewed
   rows require kernel-selected edge evidence, then sample one of adjacent,
@@ -1046,7 +1055,7 @@ Checked as implemented with remaining scale caveats:
   initial equal-value
   face/edge/edge-endpoint/path-point/path-segment/feature/material-region/void-region measurement
   groups, sampled material/void region extrema/ranks, contained-endpoint
-  relation chains, and initial
+  relation chains, endpoint containment-relation extrema, and initial
   feature-to-feature, path-to-reference-feature, and
   face/edge/endpoint/material-region/void-region-to-feature reference-distance
   families plus reference-face, reference-edge, and reference-endpoint distance
