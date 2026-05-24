@@ -55,10 +55,10 @@ def clause_prompt(clause: Any, *, query: Any | None = None) -> str:
     return templates[template_key].format(**_clause_format_values(clause, query))
 
 
-def aggregation_prompt(aggregation: str, metric: str) -> str:
+def aggregation_prompt(aggregation: str, metric: str, *, rank: int | None = None) -> str:
     templates = _template_mapping("aggregation_templates")
     template = templates[aggregation_template_key(aggregation, metric)]
-    return template.format(metric=metric, metric_label=metric_label(metric))
+    return template.format(metric=metric, metric_label=metric_label(metric), rank=rank, rank_label=_rank_label(rank))
 
 
 def tie_break_prompt(aggregation: str, metric: str) -> str:
@@ -161,3 +161,13 @@ def _operator_label(operator: str) -> str:
         "<=": "at most",
         "==": "equal to",
     }.get(operator, operator)
+
+
+def _rank_label(rank: int | None) -> str:
+    if rank is None:
+        return ""
+    if 10 <= rank % 100 <= 20:
+        suffix = "th"
+    else:
+        suffix = {1: "st", 2: "nd", 3: "rd"}.get(rank % 10, "th")
+    return f"{rank}{suffix}"

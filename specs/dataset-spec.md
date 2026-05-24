@@ -152,9 +152,9 @@ over that metadata: target type, final selector, aggregation metric/axis,
 extremum direction, clause metrics/axes, comparison operators, reference
 metrics, value buckets, reference type/anchor signatures for
 reference-measurement rows, rendered prompt-template IDs, rendered clue-template
-sequences, and tie-break metric/direction where used. Full synthesis-layer
-parameter bindings for broader reference-anchor sampling, rank, and randomized
-wording variants remain open implementation work. The preview CLI writes machine-readable
+sequences, aggregation rank/direction where used, and tie-break metric/direction
+where used. Full synthesis-layer parameter bindings for broader reference-anchor
+sampling and randomized wording variants remain open implementation work. The preview CLI writes machine-readable
 preview evidence and benchmark-release reports block missing, stale, or
 insufficient preview coverage. Benchmark-release reports also block generated
 release families without machine-readable positive-generation,

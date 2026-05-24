@@ -29,6 +29,7 @@ class QueryProgram:
     clauses: list[Clause] = field(default_factory=list)
     aggregation: str | None = None
     aggregation_metric: str | None = None
+    aggregation_rank: int | None = None
     tie_break_aggregation: str | None = None
     tie_break_metric: str | None = None
     hop_count: int = 0
@@ -65,6 +66,7 @@ def query_from_dict(data: dict[str, Any]) -> QueryProgram:
         clauses=[Clause(**clause) for clause in data.get("clauses", [])],
         aggregation=data.get("aggregation"),
         aggregation_metric=data.get("aggregation_metric"),
+        aggregation_rank=int(data["aggregation_rank"]) if data.get("aggregation_rank") is not None else None,
         tie_break_aggregation=data.get("tie_break_aggregation"),
         tie_break_metric=data.get("tie_break_metric"),
         hop_count=int(data.get("hop_count", 0)),

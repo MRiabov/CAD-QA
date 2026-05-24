@@ -21,6 +21,8 @@ fallback_templates:
 aggregation_templates:
   argmax: "Among the remaining candidates, choose the one with the greatest {metric_label}."
   argmin: "Among the remaining candidates, choose the one with the smallest {metric_label}."
+  rank_desc: "Among the remaining candidates, choose the {rank_label} candidate when ordered from greatest to smallest {metric_label}."
+  rank_asc: "Among the remaining candidates, choose the {rank_label} candidate when ordered from smallest to greatest {metric_label}."
   argmin.distance_to_reference_feature_centroid: "Among the remaining candidates, choose the one whose midpoint is closest to the reference feature's solid centroid."
 
 tie_break_templates:

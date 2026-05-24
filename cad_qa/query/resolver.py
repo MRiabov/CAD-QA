@@ -68,6 +68,7 @@ def resolve_query(graph: OntologyGraph, query: QueryProgram) -> QueryResolution:
                 "step": "aggregation",
                 "aggregation": query.aggregation,
                 "metric": query.aggregation_metric,
+                "rank": query.aggregation_rank,
                 "before": before,
                 "after": candidate_ids(candidates),
             }
@@ -2315,6 +2316,14 @@ def _apply_primary_aggregation(graph: OntologyGraph, candidates: list[Node], que
         return candidates
     if query.aggregation_metric == REFERENCE_FEATURE_DISTANCE_METRIC:
         return _apply_reference_feature_distance_aggregation(graph, candidates, query)
+    if query.aggregation in {"rank_asc", "rank_desc"}:
+        return _apply_metric_rank_aggregation(
+            graph,
+            candidates,
+            aggregation=query.aggregation,
+            metric=query.aggregation_metric,
+            rank=query.aggregation_rank,
+        )
     return _apply_metric_aggregation(
         graph,
         candidates,
@@ -2339,6 +2348,34 @@ def _apply_metric_aggregation(
         return []
     target = max(score for score, _ in scored) if aggregation == "argmax" else min(score for score, _ in scored)
     return [node for score, node in scored if score == target]
+
+
+def _apply_metric_rank_aggregation(
+    graph: OntologyGraph,
+    candidates: list[Node],
+    *,
+    aggregation: str | None,
+    metric: str,
+    rank: int | None,
+) -> list[Node]:
+    scored: list[tuple[float, Node]] = []
+    for node in candidates:
+        value = _measurement_value(graph, node.id, metric)
+        if isinstance(value, (int, float)):
+            scored.append((float(value), node))
+    if not scored or rank is None or rank < 1:
+        return []
+    if aggregation not in {"rank_asc", "rank_desc"}:
+        return _apply_metric_aggregation(graph, candidates, aggregation=aggregation, metric=metric)
+    return _ranked_nodes(scored, rank=rank, descending=aggregation == "rank_desc")
+
+
+def _ranked_nodes(scored: list[tuple[float, Node]], *, rank: int, descending: bool) -> list[Node]:
+    ordered = sorted(scored, key=lambda item: (-item[0] if descending else item[0], item[1].id))
+    if rank > len(ordered):
+        return []
+    target = ordered[rank - 1][0]
+    return [node for score, node in scored if abs(score - target) <= VALUE_MATCH_TOLERANCE]
 
 
 def _apply_reference_feature_distance_aggregation(

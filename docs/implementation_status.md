@@ -723,10 +723,11 @@ Checked as implemented with remaining scale caveats:
   narrowing dimensions. Materialized rows now include rendered prompt-template
   and clue-template sequence metadata, and reference-measurement rows serialize
   reference type, point metrics, anchor metrics, and anchor signatures for
-  balance reporting. Rank selectors, broader synthesized reference-anchor
-  sampling, and actual wording randomization remain open. The gate still does
-  not prove every future intended parameter dimension was sampled whenever the
-  verifier could support it.
+  balance reporting. The resolver now supports ranked measured selectors and
+  serializes aggregation-rank/rank-direction metadata; synthesized rank-family
+  generation, broader synthesized reference-anchor sampling, and actual wording
+  randomization remain open. The gate still does not prove every future intended
+  parameter dimension was sampled whenever the verifier could support it.
 - Expand the intended-family manifest into full family specs with predicates,
   selectors, parameter dimensions, and geometry-limited exceptions.
 - Keep benchmark-release gating as the canonical release bar. Explicit
@@ -739,8 +740,7 @@ Checked as implemented with remaining scale caveats:
   answer entropy, candidate breadth, intended-family coverage,
   sampled-parameter balance, preview evidence, family test evidence, and
   non-collapsed split group coverage. Remaining benchmark-release work is
-  synthesis-layer metadata and sampling for broader reference/rank/rendered-wording
-  variants.
+  synthesis-layer sampling for broader reference/rank/rendered-wording variants.
   Rechecking the current CadEvolve-50 release artifact with
   `--release-tier benchmark-release` blocks release on row count, split group
   coverage, default SFT row count, prompt-family balance, prompt-template

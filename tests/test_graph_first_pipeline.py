@@ -1630,6 +1630,63 @@ def test_query_resolver_uses_tie_break_aggregation() -> None:
     assert query_from_dict(row.query_program).tie_break_metric == "edge_length"
 
 
+def test_query_resolver_rank_aggregation_and_ambiguity() -> None:
+    graph = OntologyGraph(graph_id="graph:rank", source={"source_id": "rank", "source_code": ""})
+    for node_id, length in [
+        ("edge:a", 10.0),
+        ("edge:b", 8.0),
+        ("edge:c", 5.0),
+    ]:
+        graph.add_node(Node(node_id, "edge", node_id))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "edge_length", length, "mm"))
+    query = QueryProgram(
+        query_id="graph:rank:q0:second_longest_edge",
+        target_type="edge",
+        aggregation="rank_desc",
+        aggregation_metric="edge_length",
+        aggregation_rank=2,
+        hop_count=2,
+    )
+
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+
+    assert resolution.verifier_status == "resolved"
+    assert resolution.gold_answer == "edge:b"
+    assert row.candidate_trace["steps"][1]["aggregation"] == "rank_desc"
+    assert row.candidate_trace["steps"][1]["rank"] == 2
+    assert row.query_program["aggregation_rank"] == 2
+    assert row.query_program["sampled_parameters"]["aggregation_rank"] == ["2"]
+    assert row.query_program["sampled_parameters"]["rank_direction"] == ["max"]
+    assert row.query_program["sampled_parameters"]["final_selector"] == ["rank:2:max:edge_length"]
+    assert query_from_dict(row.query_program).aggregation_rank == 2
+    assert "2nd candidate when ordered from greatest to smallest edge length" in row.prompt
+    assert row.clue_map[-1]["clue_template_id"] == "aggregation:rank_desc"
+
+    tie_graph = OntologyGraph(graph_id="graph:rank-tie", source={"source_id": "rank_tie", "source_code": ""})
+    for node_id, length in [
+        ("edge:a", 10.0),
+        ("edge:b", 10.0),
+        ("edge:c", 5.0),
+    ]:
+        tie_graph.add_node(Node(node_id, "edge", node_id))
+        tie_graph.add_measurement(Measurement(node_id, "entity_geometry", "edge_length", length, "mm"))
+
+    ambiguous = resolve_query(
+        tie_graph,
+        QueryProgram(
+            query_id="graph:rank-tie:q0:longest_tied_edge",
+            target_type="edge",
+            aggregation="rank_desc",
+            aggregation_metric="edge_length",
+            aggregation_rank=1,
+        ),
+    )
+    assert ambiguous.verifier_status == "failed"
+    assert ambiguous.candidate_trace.failure_reason == "not_unique"
+    assert ambiguous.candidate_trace.final_candidates == ["edge:a", "edge:b"]
+
+
 def test_low_and_multi_hop_smoke_queries_render_and_materialize() -> None:
     graph = build_graph(source_record_from_mapping({"source_id": "src_fixture", "normalized_code": SOURCE}))
     queries = smoke_queries(graph)

@@ -155,6 +155,7 @@ def _row_sample_markdown(row: dict[str, Any], *, index: int, max_prompt_chars: i
                 "clauses": query.get("clauses", []),
                 "aggregation": query.get("aggregation"),
                 "aggregation_metric": query.get("aggregation_metric"),
+                "aggregation_rank": query.get("aggregation_rank"),
                 "tie_break_aggregation": query.get("tie_break_aggregation"),
                 "tie_break_metric": query.get("tie_break_metric"),
                 "sampled_parameters": query.get("sampled_parameters", {}),

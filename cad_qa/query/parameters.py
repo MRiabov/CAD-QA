@@ -13,11 +13,13 @@ AXIS_DIRECTION_DIMENSIONS = {
     "extremum_direction",
     "tie_break_axis",
     "tie_break_direction",
+    "rank_direction",
 }
 DEFAULT_ENFORCED_DIMENSIONS = {
     "target_type",
     "final_selector",
     "aggregation_metric",
+    "aggregation_rank",
     "tie_break_metric",
     "tie_break_selector",
     "clause_relation",
@@ -33,6 +35,7 @@ EXPECTED_VALUES = {
     "extremum_direction": DIRECTIONS,
     "tie_break_axis": AXES,
     "tie_break_direction": DIRECTIONS,
+    "rank_direction": DIRECTIONS,
 }
 
 
@@ -50,7 +53,16 @@ def sampled_parameters_from_query(query: Mapping[str, Any]) -> dict[str, list[st
     if isinstance(aggregation, str):
         direction = _aggregation_direction(aggregation)
         _add(params, "extremum_direction", direction)
-        _add(params, "final_selector", f"{direction or aggregation}:{aggregation_metric or 'none'}")
+        if query.get("aggregation_rank") is not None:
+            _add(params, "aggregation_rank", query.get("aggregation_rank"))
+            _add(params, "rank_direction", direction)
+            _add(
+                params,
+                "final_selector",
+                f"rank:{query.get('aggregation_rank')}:{direction or aggregation}:{aggregation_metric or 'none'}",
+            )
+        else:
+            _add(params, "final_selector", f"{direction or aggregation}:{aggregation_metric or 'none'}")
     _add(params, "aggregation_metric", aggregation_metric)
     _add(params, "aggregation_axis", _metric_axis(aggregation_metric))
     tie_break_aggregation = query.get("tie_break_aggregation")
@@ -141,9 +153,9 @@ def _add_reference_measurement_parameters(
 
 
 def _aggregation_direction(aggregation: str) -> str | None:
-    if aggregation == "argmax":
+    if aggregation in {"argmax", "rank_desc"}:
         return "max"
-    if aggregation == "argmin":
+    if aggregation in {"argmin", "rank_asc"}:
         return "min"
     return None
 

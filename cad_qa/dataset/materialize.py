@@ -96,6 +96,7 @@ def _query_to_dict(query: Any, rendered: Any | None = None) -> dict[str, Any]:
         "clauses": [clause.__dict__ for clause in query.clauses],
         "aggregation": query.aggregation,
         "aggregation_metric": query.aggregation_metric,
+        "aggregation_rank": getattr(query, "aggregation_rank", None),
         "tie_break_aggregation": getattr(query, "tie_break_aggregation", None),
         "tie_break_metric": getattr(query, "tie_break_metric", None),
         "hop_count": query.hop_count,

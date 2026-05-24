@@ -39,7 +39,13 @@ def render_prompt(source_code: str, query: QueryProgram) -> RenderedPrompt:
         for clause in query.clauses
     ]
     if query.aggregation and query.aggregation_metric:
-        clues.append(aggregation_prompt(query.aggregation, query.aggregation_metric))
+        clues.append(
+            aggregation_prompt(
+                query.aggregation,
+                query.aggregation_metric,
+                rank=getattr(query, "aggregation_rank", None),
+            )
+        )
         clue_ids.append("aggregation")
         clue_template_ids.append(
             f"aggregation:{aggregation_template_key(query.aggregation, query.aggregation_metric)}"
@@ -77,7 +83,11 @@ def prompt_template_id(query: QueryProgram) -> str:
     """Return a stable, coarse template ID for release/reporting quotas."""
 
     clause_shape = "_".join(_clause_shape(clause) for clause in query.clauses) or "no_clauses"
-    aggregation_shape = f"{query.aggregation}_{query.aggregation_metric}" if query.aggregation else "no_aggregation"
+    aggregation_shape = _aggregation_shape(
+        query.aggregation,
+        query.aggregation_metric,
+        getattr(query, "aggregation_rank", None),
+    )
     tie_break_shape = (
         f"tie_{query.tie_break_aggregation}_{query.tie_break_metric}"
         if query.tie_break_aggregation and query.tie_break_metric
@@ -92,7 +102,7 @@ def prompt_template_id_from_mapping(query: dict[str, Any]) -> str:
     clause_shape = clause_shape or "no_clauses"
     aggregation = query.get("aggregation")
     aggregation_metric = query.get("aggregation_metric")
-    aggregation_shape = f"{aggregation}_{aggregation_metric}" if aggregation else "no_aggregation"
+    aggregation_shape = _aggregation_shape(aggregation, aggregation_metric, query.get("aggregation_rank"))
     tie_break_aggregation = query.get("tie_break_aggregation")
     tie_break_metric = query.get("tie_break_metric")
     tie_break_shape = (
@@ -101,6 +111,13 @@ def prompt_template_id_from_mapping(query: dict[str, Any]) -> str:
         else "no_tie_break"
     )
     return f"{CHECKLIST_TEMPLATE_ID}:{query.get('target_type', 'unknown')}:{clause_shape}:{aggregation_shape}:{tie_break_shape}"
+
+
+def _aggregation_shape(aggregation: Any, metric: Any, rank: Any = None) -> str:
+    if not aggregation:
+        return "no_aggregation"
+    rank_part = f"_rank_{rank}" if rank is not None else ""
+    return f"{aggregation}_{metric}{rank_part}"
 
 
 def _clause_shape(clause: Clause) -> str:
