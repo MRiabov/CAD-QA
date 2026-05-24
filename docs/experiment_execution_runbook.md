@@ -36,8 +36,10 @@ report also passes the benchmark-release tier. In particular, expect at least
 10,000 release rows, at least 10,000 default SFT rows, 95%+
 geometry-hop-positive rows, 99%+ geometry-critical default SFT rows, 0%
 syntax-only default SFT rows, 15%-30% value-bearing rows, 5%-15% cross-feature
-value-bearing rows, healthy parameter coverage, manual preview/test evidence,
-and non-collapsed train/validation/test protected splits.
+value-bearing rows, at least 10 generated release families with each family in
+the 1%-10% band, at least 20 prompt templates with no template above 5%,
+healthy parameter coverage, manual preview/test evidence, and non-collapsed
+train/validation/test protected splits.
 
 Pass `--release-tier benchmark-release` to `cadqa dataset release-report`,
 `cadqa dataset export-release`, and `cadqa training export-sft` when validating a

@@ -59,11 +59,13 @@ The benchmark-release target is the canonical public-release bar, not a nice
 extra check. A public benchmark or real fine-tuning dataset must satisfy the
 numeric tier in [`specs/dataset-spec.md`](specs/dataset-spec.md): at least
 10,000 release rows, at least 10,000 default SFT rows, generated task families
-in the 1%-10% band, at least 95% geometry-hop-positive rows, at least 99%
-geometry-critical default SFT rows, 0% syntax-only default SFT rows,
-value-bearing and cross-feature coverage targets, parameter-balance targets,
-manual preview/test evidence, and a non-collapsed multi-split release. Smoke and
-release-candidate artifacts are development evidence only.
+in the 1%-10% band with at least 10 generated release families, at least 20
+prompt templates with no template above 5%, at least 95%
+geometry-hop-positive rows, at least 99% geometry-critical default SFT rows, 0%
+syntax-only default SFT rows, value-bearing and cross-feature coverage targets,
+parameter-balance targets, manual preview/test evidence, and a non-collapsed
+multi-split release. Smoke and release-candidate artifacts are development
+evidence only.
 
 ## Quick Start
 

@@ -139,7 +139,7 @@ described as benchmark-release ready.
 | --- | --- |
 | Release rows | At least 10,000 public/private release rows. |
 | Default SFT rows | At least 10,000 rows after default geometry-critical filtering. |
-| Generated task-family share | Every generated release family is between 1% and 10% of exported rows. |
+| Generated task-family count/share | At least 10 generated release families; every generated release family is between 1% and 10% of exported rows. |
 | Zero-row intended families | 0 intended release families with zero rows, unless explicitly marked `review_only` or `calibration`. |
 | Default SFT geometry-critical share | At least 99%. |
 | Default SFT syntax-only calibration share | 0%. |
@@ -149,7 +149,7 @@ described as benchmark-release ready.
 | Value-bearing measurement share | 15%-30% of benchmark-release rows. |
 | Cross-feature value-bearing share | 5%-15% of benchmark-release rows. |
 | Candidate breadth | Minimum 2 candidates before the final selector for high-hop rows; median pre-final breadth at least 4. |
-| Prompt-template max share | No prompt template exceeds 5% of benchmark-release rows. |
+| Prompt-template count/share | At least 20 prompt templates; no prompt template exceeds 5% of benchmark-release rows. |
 | Unique answer count | At least 1,000 unique gold answers. |
 | Answer entropy | At least 8 bits. |
 | Parameter value max share | Within each parameterized family, no sampled parameter value exceeds 35%, unless marked geometry-limited. |

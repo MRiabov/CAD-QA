@@ -19,10 +19,11 @@ For benchmark-release fine-tuning, use the numeric tier in
 `specs/dataset-spec.md`: at least 10,000 default SFT rows, at least 99%
 geometry-critical default SFT rows, 0% syntax-only default SFT rows,
 value-bearing rows in the 15%-30% band, cross-feature value-bearing rows in the
-5%-15% band, generated task families in the 1%-10% band, healthy sampled
-parameter distributions, manual preview evidence, and test evidence for changed
-release families. Current smoke/release-candidate gates are not enough for that
-claim.
+5%-15% band, at least 10 generated release families with each family in the
+1%-10% band, at least 20 prompt templates with no template above 5%, healthy
+sampled parameter distributions, manual preview evidence, and test evidence for
+changed release families. Current smoke/release-candidate gates are not enough
+for that claim.
 
 Use `--release-tier benchmark-release` to apply the benchmark numeric profile to
 SFT reports. The default tier is `release-candidate`, so benchmark or real

@@ -25,9 +25,10 @@ Before public paper or dataset release, verify:
   counts or capped by an explicit quota.
 - Prompt-family distribution, answer distribution, and geometry-hop coverage
   pass release thresholds.
-- Every generated release task family contributes between 1% and 10% of the
-  exported rows. Families outside that band block release unless explicitly moved
-  to review-only/calibration artifacts.
+- At least 10 generated release task families are present, and every generated
+  release task family contributes between 1% and 10% of the exported rows.
+  Families outside that band block release unless explicitly moved to
+  review-only/calibration artifacts.
 - Intended release task families with zero generated rows are listed from an
   intended-family manifest or called out manually as unfinished coverage.
 - Sparse direct extrema, such as selector-count or selected-entity-count tasks,
@@ -46,8 +47,9 @@ Before public paper or dataset release, verify:
 - Value-bearing measurement and cross-feature value-bearing rows are present in
   the default training export above benchmark-release thresholds: 15%-30%
   value-bearing measurement rows and 5%-15% cross-feature value-bearing rows.
-- Prompt-template max share is at most 5%, answer entropy is at least 8 bits,
-  and at least 1,000 unique gold answers are present.
+- At least 20 prompt templates are present, prompt-template max share is at most
+  5%, answer entropy is at least 8 bits, and at least 1,000 unique gold answers
+  are present.
 - High-hop candidate traces have at least 2 candidates before the final selector,
   with median pre-final breadth at least 4.
 - Parameterized families keep each sampled parameter value at or below 35%, and

@@ -3207,6 +3207,8 @@ def test_benchmark_release_tier_applies_stricter_numeric_gates() -> None:
 
     benchmark = release_balance_report(rows, release_tier="benchmark-release")
     assert benchmark["release_tier"] == "benchmark-release"
+    assert benchmark["minimum_prompt_family_count"] == 10
+    assert benchmark["minimum_prompt_template_count"] == 20
     assert benchmark["maximum_prompt_template_share"] == 0.05
     assert benchmark["minimum_unique_answer_count"] == 1000
     assert benchmark["minimum_answer_entropy_bits"] == 8.0
@@ -3238,6 +3240,7 @@ def test_benchmark_release_profile_matches_dataset_spec_numeric_contract() -> No
 
     assert profile.min_release_rows == 10_000
     assert profile.min_default_sft_rows == 10_000
+    assert profile.min_prompt_family_count == 10
     assert profile.min_prompt_family_share == 0.01
     assert profile.max_prompt_family_share == 0.10
     assert profile.min_geometry_critical_training_share == 0.99
@@ -3250,6 +3253,7 @@ def test_benchmark_release_profile_matches_dataset_spec_numeric_contract() -> No
     assert profile.max_cross_feature_value_bearing_share == 0.15
     assert profile.min_pre_final_candidate_count == 2
     assert profile.min_median_pre_final_candidate_count == 4.0
+    assert profile.min_prompt_template_count == 20
     assert profile.max_prompt_template_share == 0.05
     assert profile.min_unique_answer_count == 1_000
     assert profile.min_answer_entropy_bits == 8.0
@@ -3265,7 +3269,8 @@ def test_benchmark_release_profile_matches_dataset_spec_numeric_contract() -> No
     for required_fragment in [
         "At least 10,000 public/private release rows.",
         "At least 10,000 rows after default geometry-critical filtering.",
-        "Every generated release family is between 1% and 10% of exported rows.",
+        "At least 10 generated release families",
+        "every generated release family is between 1% and 10% of exported rows.",
         "At least 99%.",
         "At most 2%, or emitted only in a separate calibration split/artifact.",
         "At least 95% of benchmark-release rows have `geometry_hop_count > 0`.",
@@ -3273,7 +3278,8 @@ def test_benchmark_release_profile_matches_dataset_spec_numeric_contract() -> No
         "15%-30% of benchmark-release rows.",
         "5%-15% of benchmark-release rows.",
         "median pre-final breadth at least 4.",
-        "No prompt template exceeds 5% of benchmark-release rows.",
+        "At least 20 prompt templates",
+        "no prompt template exceeds 5% of benchmark-release rows.",
         "At least 1,000 unique gold answers.",
         "At least 8 bits.",
         "no sampled parameter value exceeds 35%",

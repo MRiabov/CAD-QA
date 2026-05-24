@@ -380,8 +380,12 @@ epics:
         `logical_hop_count >= 3`.
       - Value-bearing measurement rows are 15%-30% and cross-feature
         value-bearing rows are 5%-15% of benchmark-release rows.
-      - Prompt templates are capped at 5%, answer entropy is at least 8 bits,
-        and there are at least 1,000 unique gold answers.
+      - Benchmark-release artifacts have at least 10 generated release task
+        families, and every generated release family contributes 1%-10% of
+        rows.
+      - Prompt templates include at least 20 templates and are capped at 5%,
+        answer entropy is at least 8 bits, and there are at least 1,000 unique
+        gold answers.
       - High-hop rows have at least 2 pre-final candidates and median pre-final
         candidate breadth of at least 4.
       - Parameterized families keep sampled values at or below 35% share and
