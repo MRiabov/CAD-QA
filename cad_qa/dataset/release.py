@@ -288,6 +288,7 @@ def _cap_release_balance_rows(
             predicate=_is_cross_feature_value_bearing_row,
             max_share=profile.max_cross_feature_value_bearing_share,
             reason="cross_feature_value_bearing_cap",
+            prefer_keep=_high_hop_keep_priority,
         )
         exclusions.extend(dropped)
         kept, dropped = _cap_boolean_share_rows(
@@ -296,6 +297,13 @@ def _cap_release_balance_rows(
             max_share=profile.max_value_bearing_measurement_share,
             reason="value_bearing_measurement_cap",
             prefer_keep=_cross_feature_keep_priority,
+        )
+        exclusions.extend(dropped)
+        kept, dropped = _cap_boolean_min_share_rows(
+            kept,
+            predicate=_is_main_browsecomp_hop_row,
+            min_share=profile.min_logical_hop_ge_3_share,
+            reason="main_browsecomp_hop_cap",
         )
         exclusions.extend(dropped)
         kept, dropped = _cap_group_share_rows(
@@ -310,6 +318,13 @@ def _cap_release_balance_rows(
             group_key=_prompt_template,
             max_share=profile.max_prompt_template_share,
             reason="prompt_template_share_cap",
+        )
+        exclusions.extend(dropped)
+        kept, dropped = _cap_group_min_share_rows(
+            kept,
+            group_key=_prompt_family,
+            min_share=profile.min_prompt_family_share,
+            reason="prompt_family_min_share_cap",
         )
         exclusions.extend(dropped)
         if len(kept) == before:
@@ -333,7 +348,7 @@ def _cap_boolean_share_rows(
     if len(matched) <= allowed_count:
         return rows, []
     key = prefer_keep or _stable_row_key
-    kept_matched = sorted(matched, key=key)[:allowed_count]
+    kept_matched = _keep_rows_preserving_prompt_families(rows, matched, allowed_count, key=key)
     kept_ids = {id(row) for row in kept_matched}
     dropped = [row for row in matched if id(row) not in kept_ids]
     exclusions = [
@@ -341,6 +356,32 @@ def _cap_boolean_share_rows(
         for row in sorted(dropped, key=_stable_row_key)
     ]
     return [row for row in rows if not predicate(row) or id(row) in kept_ids], exclusions
+
+
+def _cap_boolean_min_share_rows(
+    rows: list[dict[str, Any]],
+    *,
+    predicate: Any,
+    min_share: float | None,
+    reason: str,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    if min_share is None or min_share <= 0:
+        return rows, []
+    matched = [row for row in rows if predicate(row)]
+    unmatched = [row for row in rows if not predicate(row)]
+    if not matched or len(matched) / len(rows) >= min_share:
+        return rows, []
+    allowed_unmatched_count = int((len(matched) * (1 - min_share)) / min_share + 1e-12)
+    if len(unmatched) <= allowed_unmatched_count:
+        return rows, []
+    kept_unmatched = _keep_rows_preserving_prompt_families(rows, unmatched, allowed_unmatched_count, key=_stable_row_key)
+    kept_unmatched_ids = {id(row) for row in kept_unmatched}
+    dropped = [row for row in unmatched if id(row) not in kept_unmatched_ids]
+    exclusions = [
+        _balance_exclusion(row, reason=reason, minimum_share=min_share)
+        for row in sorted(dropped, key=_stable_row_key)
+    ]
+    return [row for row in rows if predicate(row) or id(row) in kept_unmatched_ids], exclusions
 
 
 def _cap_group_share_rows(
@@ -362,7 +403,7 @@ def _cap_group_share_rows(
     for group, group_rows in sorted(groups.items(), key=lambda item: (-len(item[1]), item[0])):
         current_group_rows = [row for row in kept if group_key(row) == group]
         other_count = len(kept) - len(current_group_rows)
-        allowed_count = _allowed_share_count(other_count, max_share)
+        allowed_count = max(1, _allowed_share_count(other_count, max_share))
         if len(current_group_rows) <= allowed_count:
             continue
         kept_group_rows = sorted(current_group_rows, key=_stable_row_key)[:allowed_count]
@@ -376,12 +417,100 @@ def _cap_group_share_rows(
     return kept, exclusions
 
 
+def _cap_group_min_share_rows(
+    rows: list[dict[str, Any]],
+    *,
+    group_key: Any,
+    min_share: float,
+    reason: str,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    if min_share <= 0 or not rows:
+        return rows, []
+    kept = list(rows)
+    exclusions: list[dict[str, Any]] = []
+    for _ in range(len(rows)):
+        groups = _rows_by_group(kept, group_key)
+        underrepresented = {
+            group: group_rows
+            for group, group_rows in groups.items()
+            if len(group_rows) / len(kept) < min_share
+        }
+        if not underrepresented:
+            break
+        target_total = min(int(len(group_rows) / min_share + 1e-12) for group_rows in underrepresented.values())
+        drop_count = len(kept) - target_total
+        if drop_count <= 0:
+            break
+        protected_groups = set(underrepresented)
+        dropped: list[dict[str, Any]] = []
+        for group, group_rows in sorted(groups.items(), key=lambda item: (-len(item[1]), item[0])):
+            if group in protected_groups:
+                continue
+            for row in sorted(group_rows, key=_stable_row_key, reverse=True):
+                if len(dropped) >= drop_count:
+                    break
+                if len(group_rows) - sum(1 for item in dropped if group_key(item) == group) <= 1:
+                    break
+                dropped.append(row)
+            if len(dropped) >= drop_count:
+                break
+        if not dropped:
+            break
+        dropped_ids = {id(row) for row in dropped}
+        exclusions.extend(
+            _balance_exclusion(row, reason=reason, minimum_share=min_share, group=group_key(row))
+            for row in sorted(dropped, key=_stable_row_key)
+        )
+        kept = [row for row in kept if id(row) not in dropped_ids]
+    return kept, exclusions
+
+
+def _rows_by_group(rows: list[dict[str, Any]], group_key: Any) -> dict[str, list[dict[str, Any]]]:
+    groups: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        groups.setdefault(group_key(row), []).append(row)
+    return groups
+
+
+def _keep_rows_preserving_prompt_families(
+    all_rows: list[dict[str, Any]],
+    candidate_rows: list[dict[str, Any]],
+    keep_count: int,
+    *,
+    key: Any,
+) -> list[dict[str, Any]]:
+    if keep_count <= 0:
+        return []
+    candidates = sorted(candidate_rows, key=key)
+    if len(candidates) <= keep_count:
+        return candidates
+    families_in_all = {_prompt_family(row) for row in all_rows}
+    candidate_families = {_prompt_family(row) for row in candidates}
+    families_outside_candidates = families_in_all - candidate_families
+    required_families = candidate_families - families_outside_candidates
+    kept: list[dict[str, Any]] = []
+    for family in sorted(required_families):
+        family_rows = [row for row in candidates if _prompt_family(row) == family]
+        if family_rows:
+            kept.append(family_rows[0])
+    if len(kept) > keep_count:
+        return sorted(kept, key=key)[:keep_count]
+    kept_ids = {id(row) for row in kept}
+    for row in candidates:
+        if len(kept) >= keep_count:
+            break
+        if id(row) not in kept_ids:
+            kept.append(row)
+            kept_ids.add(id(row))
+    return sorted(kept, key=key)
+
+
 def _allowed_share_count(other_count: int, max_share: float) -> int:
     if max_share <= 0:
         return 0
     if max_share >= 1:
         return 10**12
-    return int((max_share * other_count) // (1 - max_share))
+    return int((max_share * other_count) / (1 - max_share) + 1e-12)
 
 
 def _minimum_group_count_for_share(max_share: float) -> int:
@@ -390,8 +519,20 @@ def _minimum_group_count_for_share(max_share: float) -> int:
     return int((1 / max_share) + 0.999999)
 
 
-def _cross_feature_keep_priority(row: dict[str, Any]) -> tuple[int, str]:
-    return (0 if _is_cross_feature_value_bearing_row(row) else 1, _stable_row_key(row))
+def _cross_feature_keep_priority(row: dict[str, Any]) -> tuple[int, int, str]:
+    return (
+        0 if _is_cross_feature_value_bearing_row(row) else 1,
+        0 if _is_main_browsecomp_hop_row(row) else 1,
+        _stable_row_key(row),
+    )
+
+
+def _high_hop_keep_priority(row: dict[str, Any]) -> tuple[int, str]:
+    return (0 if _is_main_browsecomp_hop_row(row) else 1, _stable_row_key(row))
+
+
+def _is_main_browsecomp_hop_row(row: dict[str, Any]) -> bool:
+    return int(row.get("logical_hop_count") or 0) >= 3
 
 
 def _stable_row_key(row: dict[str, Any]) -> str:
@@ -402,7 +543,8 @@ def _balance_exclusion(
     row: dict[str, Any],
     *,
     reason: str,
-    maximum_share: float,
+    maximum_share: float | None = None,
+    minimum_share: float | None = None,
     group: str | None = None,
 ) -> dict[str, Any]:
     exclusion = {
@@ -411,8 +553,11 @@ def _balance_exclusion(
         "prompt_family": _prompt_family(row),
         "prompt_template": _prompt_template(row),
         "reason": reason,
-        "maximum_share": maximum_share,
     }
+    if maximum_share is not None:
+        exclusion["maximum_share"] = maximum_share
+    if minimum_share is not None:
+        exclusion["minimum_share"] = minimum_share
     if group is not None:
         exclusion["group"] = group
     return exclusion

@@ -7581,6 +7581,7 @@ def test_release_export_balance_caps_overrepresented_training_slices() -> None:
     for index in range(100):
         clauses = []
         aggregation_metric = "volume"
+        family = "family_rare" if index == 99 else f"family_{index % 20}"
         if index < 50:
             clauses.append({"kind": "has_measurement", "metric": "volume", "value": float(index)})
         if index < 20:
@@ -7588,16 +7589,16 @@ def test_release_export_balance_caps_overrepresented_training_slices() -> None:
             aggregation_metric = "distance_to_reference_feature_centroid"
         rows.append(
             {
-                "row_id": f"row:src:{index}:family_{index % 20}",
+                "row_id": f"row:src:{index}:{family}",
                 "source_id": f"src_{index}",
                 "prompt": f"geometry prompt {index}",
-                "prompt_template_id": f"template_{index % 20}",
+                "prompt_template_id": f"template_{index % 20 if index != 99 else 'rare'}",
                 "gold_answer": f"entity:{index}",
-                "logical_hop_count": 4,
-                "geometry_hop_count": 4,
+                "logical_hop_count": 2 if index >= 80 else 4,
+                "geometry_hop_count": 2 if index >= 80 else 4,
                 "static_hop_count": 0,
                 "query_program": {
-                    "query_id": f"graph:src:q{index}:family_{index % 20}",
+                    "query_id": f"graph:src:q{index}:{family}",
                     "aggregation_metric": aggregation_metric,
                     "clauses": clauses,
                 },
@@ -7611,11 +7612,45 @@ def test_release_export_balance_caps_overrepresented_training_slices() -> None:
     assert len(capped) < len(rows)
     assert {item["reason"] for item in exclusions} >= {
         "cross_feature_value_bearing_cap",
+        "main_browsecomp_hop_cap",
         "value_bearing_measurement_cap",
     }
     assert report["value_bearing_measurement_share"] <= profile.max_value_bearing_measurement_share
     assert report["cross_feature_value_bearing_share"] <= profile.max_cross_feature_value_bearing_share
     assert report["largest_prompt_family_share"] <= profile.max_prompt_family_share
+    assert report["logical_hop_ge_3_share"] >= profile.min_logical_hop_ge_3_share
+    assert not report["underrepresented_prompt_families"]
+
+
+def test_release_export_balance_caps_to_satisfy_minimum_family_share() -> None:
+    rows = []
+    for index in range(101):
+        family = "family_rare" if index == 100 else f"family_{index % 10}"
+        rows.append(
+            {
+                "row_id": f"row:src:{index}:{family}",
+                "source_id": f"src_{index}",
+                "prompt": f"geometry prompt {index}",
+                "prompt_template_id": f"template_{index}",
+                "gold_answer": f"entity:{index}",
+                "logical_hop_count": 4,
+                "geometry_hop_count": 4,
+                "static_hop_count": 0,
+                "query_program": {
+                    "query_id": f"graph:src:q{index}:{family}",
+                    "aggregation_metric": "volume",
+                    "clauses": [],
+                },
+            }
+        )
+
+    profile = release_gate_profile("benchmark-release")
+    capped, exclusions = _cap_release_balance_rows(rows, profile)
+    report = release_balance_report(capped, release_tier="benchmark-release")
+
+    assert len(capped) == 100
+    assert any(item["reason"] == "prompt_family_min_share_cap" for item in exclusions)
+    assert not report["underrepresented_prompt_families"]
 
 
 def test_benchmark_release_tier_applies_stricter_numeric_gates() -> None:

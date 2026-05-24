@@ -186,6 +186,11 @@ when those choices can be sampled and verified.
   when the verifier profile defines maximum shares. It can drop excess
   value-bearing rows, cross-feature rows, prompt-family rows, and
   prompt-template rows while writing explicit balance-cap exclusions.
+- Release export also caps rows that prevent benchmark minimum-share gates from
+  passing when alternatives exist, including low-hop rows for the main
+  BrowseComp-style hop-share gate and rows from larger prompt families when a
+  represented family would otherwise fall below the configured 1% floor. The
+  cap preserves at least one row per prompt family whenever possible.
 - One-command smoke experiments now emit both `dataset/` and filtered
   `release_dataset/` artifact trees.
 - Baseline metrics are written for both the full smoke rows and the filtered
@@ -455,12 +460,15 @@ Result reviewed on 2026-05-25:
   bounding-box center coordinates, then resolve by closest/farthest target
   centroid or segment midpoint distance to that reference center.
 - A benchmark-tier export probe with failing gates allowed wrote
-  `runs/current_rc10_bbox_reference_balanced_export/`. The deterministic
-  release-balance cap reduced the 244-row artifact to 101 rows and wrote 143
-  balance-cap exclusions: 84 value-bearing, 23 cross-feature, 35 prompt-family,
-  and 1 prompt-template exclusions. The remaining export passes the
-  value-bearing band at 26/101 rows and the cross-feature band at 15/101 rows;
-  both gates were blocking before balance capping.
+  `runs/current_rc10_bbox_reference_balanced_export_v4/`. The deterministic
+  release-balance cap reduced the 244-row artifact to 10 rows and wrote 234
+  balance-cap exclusions: 96 value-bearing, 31 cross-feature, 29 low-hop, 45
+  prompt-family maximum-share, 29 prompt-family minimum-share, and 4
+  prompt-template exclusions. The remaining export passes value-bearing,
+  cross-feature, main-hop, prompt-family, public/private, release-validation,
+  row-validation, candidate-breadth, and quarantine gates. It still fails
+  prompt-template balance because this partial RC10 slice cannot retain 20
+  templates while also satisfying the stricter benchmark distribution caps.
 - This is valid-row and RC10 coverage evidence only. Benchmark-release remains
   blocked on scale, split-group coverage, family distribution, parameter
   balance, intended-family coverage, and preview coverage.

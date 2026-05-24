@@ -542,7 +542,7 @@ epics:
           - Exported release artifacts do not silently keep rows that exceed configured maximum shares when enough alternative rows exist.
         technical_definition_of_done:
           - Verifier blocks artifacts outside 15%-30% value-bearing, outside 5%-15% cross-feature, below 20 prompt templates, above 5% prompt-template share, below 1,000 unique answers, below 8 entropy bits, or below candidate-breadth targets.
-          - Release export deterministically caps overrepresented value-bearing, cross-feature, prompt-family, and prompt-template slices and writes explicit balance-cap exclusions.
+          - Release export deterministically caps overrepresented value-bearing, cross-feature, prompt-family, prompt-template, low-hop, and under-floor prompt-family slices and writes explicit balance-cap exclusions.
       - id: "15.5"
         title: Benchmark-release gates for parameter balance, intended-family coverage, split quality, and preview/test evidence
         status: implemented
