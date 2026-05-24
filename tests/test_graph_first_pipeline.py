@@ -1968,6 +1968,45 @@ def test_smoke_queries_generate_cross_feature_reference_distance_tasks() -> None
     assert "solid volume 100.0 and centroid height 0.0" in row.prompt
     assert "closest to the reference feature's solid centroid" in row.prompt
     assert row.logical_hop_count == 5
+    assert row.query_program["sampled_parameters"]["reference_type"] == ["feature"]
+    assert row.query_program["sampled_parameters"]["reference_metric"] == [
+        "distance_to_reference_feature_centroid"
+    ]
+    assert row.query_program["sampled_parameters"]["reference_point_metric"] == ["centroid"]
+    assert row.query_program["sampled_parameters"]["target_point_metric"] == ["midpoint"]
+    assert row.query_program["sampled_parameters"]["reference_anchor_metric"] == ["centroid_z", "volume"]
+    assert row.query_program["sampled_parameters"]["reference_anchor_signature"] == [
+        "feature:centroid_z=0|volume=100"
+    ]
+    assert row.query_program["sampled_parameters"]["reference_anchor_value_bucket"] == [
+        "centroid_z:0",
+        "volume:100",
+    ]
+    balance = parameter_balance_report(
+        [to_jsonable(row)],
+        max_parameter_value_share=1.0,
+        min_axis_direction_share=None,
+        enforce=True,
+    )
+    family_report = next(
+        family
+        for family in balance["families"]
+        if family["prompt_family"] == "nearest_equal_length_edge_to_reference_feature_centroid"
+    )
+    assert family_report["valid"]
+    assert "reference_anchor_signature" in family_report["required_dimensions"]
+
+    release_balance = parameter_balance_report(
+        [to_jsonable(row)],
+        max_parameter_value_share=1.0,
+        min_axis_direction_share=0.20,
+        enforce=True,
+    )
+    assert any(
+        violation["prompt_family"] == "nearest_equal_length_edge_to_reference_feature_centroid"
+        and violation["dimension"] == "extremum_direction"
+        for violation in release_balance["violations"]
+    )
 
 
 def test_generated_smoke_query_clauses_are_yaml_backed() -> None:

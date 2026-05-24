@@ -72,6 +72,8 @@ def sampled_parameters_from_query(query: Mapping[str, Any]) -> dict[str, list[st
         _add(params, "clause_target_type", clause.get("target_type"))
         _add(params, "comparison_operator", clause.get("operator"))
         _add(params, "reference_metric", clause.get("reference_metric"))
+        if clause.get("kind") == "reference_measurement":
+            _add_reference_measurement_parameters(params, query, clause)
         if clause.get("value") is not None:
             _add(params, "measurement_value_bucket", f"{metric or 'value'}:{_value_bucket(clause.get('value'))}")
 
@@ -106,11 +108,64 @@ def _add(params: dict[str, set[str]], dimension: str, value: Any) -> None:
     params[dimension].add(str(value))
 
 
+def _add_reference_measurement_parameters(
+    params: dict[str, set[str]],
+    query: Mapping[str, Any],
+    clause: Mapping[str, Any],
+) -> None:
+    metric = clause.get("metric")
+    _add(params, "reference_metric", metric)
+    reference_info = _reference_metric_info(metric)
+    _add(params, "reference_type", reference_info.get("reference_type"))
+    _add(params, "reference_point_metric", reference_info.get("reference_point_metric"))
+    _add(params, "target_point_metric", reference_info.get("target_point_metric") or _target_point_metric(query))
+    value = clause.get("value")
+    if not isinstance(value, Mapping):
+        return
+    reference_id = value.get("reference_id")
+    if isinstance(reference_id, str) and ":" in reference_id:
+        _add(params, "reference_type", reference_id.split(":", 1)[0])
+    _add(params, "reference_anchor_id", reference_id)
+    anchor_metrics = []
+    for key in sorted(value):
+        if key == "reference_id":
+            continue
+        metric_name = str(key).removeprefix("reference_")
+        bucket = _value_bucket(value[key])
+        _add(params, "reference_anchor_metric", metric_name)
+        _add(params, "reference_anchor_value_bucket", f"{metric_name}:{bucket}")
+        anchor_metrics.append(f"{metric_name}={bucket}")
+    if anchor_metrics:
+        reference_type = sorted(params.get("reference_type", []))[0] if params.get("reference_type") else "reference"
+        _add(params, "reference_anchor_signature", f"{reference_type}:{'|'.join(anchor_metrics)}")
+
+
 def _aggregation_direction(aggregation: str) -> str | None:
     if aggregation == "argmax":
         return "max"
     if aggregation == "argmin":
         return "min"
+    return None
+
+
+def _reference_metric_info(metric: Any) -> dict[str, str]:
+    if metric == "distance_to_reference_feature_centroid":
+        return {
+            "reference_type": "feature",
+            "reference_point_metric": "centroid",
+            "target_point_metric": "midpoint",
+        }
+    return {}
+
+
+def _target_point_metric(query: Mapping[str, Any]) -> str | None:
+    target_type = query.get("target_type")
+    if target_type == "edge":
+        return "midpoint"
+    if target_type == "face":
+        return "center"
+    if target_type in {"vertex", "edge_endpoint", "path_point"}:
+        return "point"
     return None
 
 
