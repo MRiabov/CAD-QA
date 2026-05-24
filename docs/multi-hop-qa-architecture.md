@@ -68,6 +68,117 @@ should become useful training rows: by asking for a resolvable entity within a
 geometry-defined subset, not by relying on a single global aggregation over the
 entire model.
 
+### Query Synthesis Architecture
+
+Graph-hop narrowing should be implemented as a query-synthesis layer over the
+`OntologyGraph`, not as more one-off hard-coded smoke queries.
+
+```text
+OntologyGraph
+-> intended family spec
+-> broad target candidates
+-> predicate catalog
+-> bounded clause-chain search
+-> final selector sampler
+-> QueryProgram
+-> existing resolver/verifier/rendering path
+```
+
+The synthesis layer should add these components:
+
+- `cad_qa/query/family_specs.yaml`: intended release task families, target
+  entity types, allowed narrowing predicates, allowed final selectors,
+  release/calibration status, and minimum/maximum hop counts.
+- `cad_qa/query/predicate_catalog.py`: reusable geometry-derived predicates that
+  can be instantiated from graph evidence. Initial predicates should cover
+  shared coordinate buckets, coplanarity, axis/coaxial relation,
+  equal/tolerance-equal measurement buckets, containment, adjacency, selector
+  membership, and distance to a sampled vertex/feature/entity.
+- `cad_qa/query/synthesis.py`: deterministic bounded search that composes
+  predicate instances into candidate-narrowing clause chains.
+- Query metadata fields for sampled parameters: target type, reference type,
+  reference anchor, narrowing predicate sequence, measurement bucket policy,
+  axis, sign, extremum direction, rank when supported, aggregation metric, and
+  tie-break metric.
+
+### Synthesis Algorithm
+
+For each intended family and source graph:
+
+1. Collect broad candidates by target type and required evidence. For example,
+   selectors with kernel-backed selected-edge counts, faces with measured area,
+   edges with stable IDs and centroids, or features with compiled volumes.
+2. Instantiate predicate candidates from graph evidence. Each predicate instance
+   must have a deterministic public rendering and a hidden verifier clause.
+3. Search clause chains with a small deterministic beam. Keep only chains whose
+   intermediate candidate sets remain nontrivial and whose clauses add
+   geometry-derived evidence.
+4. Sample a final selector from the family spec: min/max, nearest/farthest, nth
+   rank where supported, count extremum, coordinate extremum, distance extremum,
+   or measurement extremum.
+5. Resolve the composed `QueryProgram`. Accept the row only if the candidate
+   trace shows meaningful distractors before the final selector and exactly one
+   final answer.
+6. Score accepted rows by geometry-hop count, candidate breadth, rarity of the
+   sampled parameter combination, prompt-family balance, and answer diversity.
+   The exporter may downsample overrepresented rows, but it must not silently
+   ignore underrepresented intended families.
+
+The search must be bounded. A practical starting point is depth 1-3 narrowing
+clauses, a fixed predicate-instance cap per predicate family, and a small beam
+ordered by candidate breadth and parameter-balance need. This avoids a Cartesian
+explosion while still finding local subsets that global direct extrema miss.
+
+### Selector-Count Example
+
+The direct family `largest_kernel_edge_selector_count` is weak when the whole
+model rarely has a unique largest selector. The synthesized family should instead
+look like:
+
+```text
+target: selector operations with kernel-backed selected-edge counts
+narrowing:
+  - selected edges share a sampled plane/height/axis bucket, or
+  - selected result geometry is near/far from a sampled feature/vertex, or
+  - selected entities share a sampled measurement bucket or containment relation
+final selector:
+  - largest/smallest selected-edge count, or
+  - nth by selected-edge count with deterministic tie-break, or
+  - nearest/farthest selector result centroid to a sampled reference
+```
+
+Rendered prompt shape:
+
+```text
+Identify the selector among the candidates whose selected edges lie on the same
+sampled geometric condition as the reference entity. Among that subset, choose
+the selector with the sampled count/distance/coordinate criterion.
+```
+
+The exact public wording should come from `prompt-templates.yaml`; the hidden
+query program carries the actual sampled plane/axis/value bucket/reference
+bindings. This keeps the row deterministic while preventing the family from
+overfitting to one axis, one extremum, or one global aggregation.
+
+### Acceptance Gates
+
+A synthesized graph-hop narrowing family is release-ready only when:
+
+- each generated row records the sampled narrowing predicates and final selector
+  parameters in private metadata;
+- candidate traces show at least two candidates before the final selector unless
+  the row is explicitly low-hop calibration;
+- intermediate narrowing clauses preserve distractors and are not solvable by
+  syntax-only source lookup;
+- final uniqueness comes from the composed graph query, not from a hand-coded
+  target ID or assignment name;
+- release reports expose coverage for narrowing predicate families, reference
+  anchor types, axes, directions, ranks, final selector metrics, and target
+  entity types;
+- intended families that generate zero accepted rows are visible in an
+  intended-family manifest and block release until moved to review-only status or
+  supplied with enough valid rows.
+
 ## Maximally Parameterized Tasks
 
 Main benchmark and default SFT rows must not encode avoidable constants or
