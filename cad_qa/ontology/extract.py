@@ -1652,6 +1652,7 @@ def _bbox_scalar_measurements(prefix: str, bbox: dict[str, Any]) -> dict[str, fl
         ):
             span = abs(float(hi) - float(lo))
             values[f"{prefix}_span_{axis}"] = span
+            values[f"{prefix}_center_{axis}"] = (float(lo) + float(hi)) / 2.0
             spans.append(span)
     if spans:
         values[f"{prefix}_max_span"] = max(spans)

@@ -1722,6 +1722,17 @@ _GENERIC_REFERENCE_DISTANCE_TARGETS = (
         "target_point_metric": "centroid",
     },
     {
+        "family_id": "parameterized_feature_reference_entity_distance",
+        "target_type": "feature",
+        "relation": None,
+        "relation_clause_id": None,
+        "relation_target_type": None,
+        "equal_value_clause_id": "has_parameterized_equal_feature_metric_value",
+        "target_point_clause_id": "has_feature_bbox_center_for_reference_distance",
+        "equal_metric": "bbox_span_z",
+        "target_point_metric": "bbox_center",
+    },
+    {
         "family_id": "parameterized_endpoint_reference_entity_distance",
         "target_type": "edge_endpoint",
         "relation": "endpoint_of",
@@ -1766,6 +1777,17 @@ _GENERIC_REFERENCE_DISTANCE_TARGETS = (
         "target_point_metric": "centroid",
     },
     {
+        "family_id": "parameterized_material_region_reference_entity_distance",
+        "target_type": "material_region",
+        "relation": "has_kernel_material_region_geometry",
+        "relation_clause_id": "has_region_geometry",
+        "relation_target_type": "material_region",
+        "equal_value_clause_id": "has_region_volume_value",
+        "target_point_clause_id": "has_region_bbox_center_for_reference_distance",
+        "equal_metric": "bbox_span_z",
+        "target_point_metric": "bbox_center",
+    },
+    {
         "family_id": "parameterized_void_region_reference_entity_distance",
         "target_type": "void_region",
         "relation": "has_kernel_void_region_geometry",
@@ -1776,15 +1798,29 @@ _GENERIC_REFERENCE_DISTANCE_TARGETS = (
         "equal_metric": "volume",
         "target_point_metric": "centroid",
     },
+    {
+        "family_id": "parameterized_void_region_reference_entity_distance",
+        "target_type": "void_region",
+        "relation": "has_kernel_void_region_geometry",
+        "relation_clause_id": "has_void_geometry",
+        "relation_target_type": "void_region",
+        "equal_value_clause_id": "has_void_volume_value",
+        "target_point_clause_id": "has_void_bbox_center_for_reference_distance",
+        "equal_metric": "bbox_span_z",
+        "target_point_metric": "bbox_center",
+    },
 )
 
 _GENERIC_REFERENCE_DISTANCE_REFERENCES = (
     ("feature", "reference_feature_volume_and_centroid", "centroid"),
+    ("feature", "reference_feature_volume_and_bbox_center", "bbox_center"),
     ("face", "reference_face_area_and_center", "face_center"),
     ("edge", "reference_edge_length_and_midpoint", "midpoint"),
     ("edge_endpoint", "reference_endpoint_coordinates", "coordinate"),
     ("material_region", "reference_material_region_volume_and_centroid", "centroid"),
+    ("material_region", "reference_material_region_volume_and_bbox_center", "bbox_center"),
     ("void_region", "reference_void_region_volume_and_centroid", "centroid"),
+    ("void_region", "reference_void_region_volume_and_bbox_center", "bbox_center"),
 )
 
 
@@ -3423,8 +3459,16 @@ def _query_for_reference_distance(graph: OntologyGraph, viable: ViableReferenceD
     reference = graph.node(viable.reference_id)
     if target_point is None or reference is None:
         return None
-    reference_value = _reference_anchor_prompt_value(graph, reference, reference_type=spec.reference_type)
-    reference_metrics = _reference_anchor_metrics(spec.reference_type)
+    reference_value = _reference_anchor_prompt_value(
+        graph,
+        reference,
+        reference_type=spec.reference_type,
+        reference_point_metric=spec.reference_point_metric,
+    )
+    reference_metrics = _reference_anchor_metrics(
+        spec.reference_type,
+        reference_point_metric=spec.reference_point_metric,
+    )
     direction = "min" if viable.aggregation in {"argmin", "rank_asc"} else "max"
     final_selector = (
         f"rank:{viable.aggregation_rank}:{direction}:{REFERENCE_FEATURE_DISTANCE_METRIC}"
@@ -3594,7 +3638,12 @@ def _unique_reference_anchors(
     counts: dict[tuple[float | None, ...], int] = {}
     keyed: list[tuple[Node, tuple[float | None, ...]]] = []
     for reference in references:
-        key = _reference_anchor_key(graph, reference.id, reference_type=reference_type)
+        key = _reference_anchor_key(
+            graph,
+            reference.id,
+            reference_type=reference_type,
+            reference_point_metric=reference_point_metric,
+        )
         keyed.append((reference, key))
         counts[key] = counts.get(key, 0) + 1
     return [
@@ -3611,8 +3660,9 @@ def _reference_anchor_prompt_value(
     reference: Node,
     *,
     reference_type: str,
+    reference_point_metric: str,
 ) -> dict[str, Any]:
-    metrics = _reference_anchor_metrics(reference_type)
+    metrics = _reference_anchor_metrics(reference_type, reference_point_metric=reference_point_metric)
     values = {
         metric: measurement_bucket_value(_measurement_value(graph, reference.id, metric))
         for metric in metrics
@@ -3624,6 +3674,9 @@ def _reference_anchor_prompt_value(
         "reference_anchor_values": values,
         "reference_volume": values.get("volume"),
         "reference_centroid_z": values.get("centroid_z"),
+        "reference_bbox_center_x": values.get("bbox_center_x"),
+        "reference_bbox_center_y": values.get("bbox_center_y"),
+        "reference_bbox_center_z": values.get("bbox_center_z"),
         "reference_face_area": values.get("face_area"),
         "reference_face_center_z": values.get("coordinate_z"),
         "reference_edge_length": values.get("edge_length"),
@@ -3637,16 +3690,25 @@ def _reference_anchor_prompt_value(
         "reference_region_centroid_x": values.get("centroid_x"),
         "reference_region_centroid_y": values.get("centroid_y"),
         "reference_region_centroid_z": values.get("centroid_z"),
+        "reference_region_bbox_center_x": values.get("bbox_center_x"),
+        "reference_region_bbox_center_y": values.get("bbox_center_y"),
+        "reference_region_bbox_center_z": values.get("bbox_center_z"),
     }
 
 
-def _reference_anchor_metrics(reference_type: str) -> tuple[str, ...]:
+def _reference_anchor_metrics(
+    reference_type: str,
+    *,
+    reference_point_metric: str = "centroid",
+) -> tuple[str, ...]:
     if reference_type == "face":
         return ("face_area", "coordinate_z")
     if reference_type == "edge":
         return ("edge_length", "midpoint_x", "midpoint_y", "midpoint_z")
     if reference_type == "edge_endpoint":
         return ("coordinate_x", "coordinate_y", "coordinate_z")
+    if reference_point_metric == "bbox_center" and reference_type in {"feature", "material_region", "void_region"}:
+        return ("bbox_center_x", "bbox_center_y", "bbox_center_z", "volume")
     if reference_type in {"material_region", "void_region"}:
         return ("volume", "centroid_x", "centroid_y", "centroid_z")
     return ("volume", "centroid_z")
@@ -3657,10 +3719,11 @@ def _reference_anchor_key(
     reference_id: str,
     *,
     reference_type: str,
+    reference_point_metric: str = "centroid",
 ) -> tuple[float | None, ...]:
     return tuple(
         measurement_bucket_value(_measurement_value(graph, reference_id, metric))
-        for metric in _reference_anchor_metrics(reference_type)
+        for metric in _reference_anchor_metrics(reference_type, reference_point_metric=reference_point_metric)
     )
 
 
@@ -3684,6 +3747,7 @@ def _point_measurement(graph: OntologyGraph, entity_id: str, metric: str) -> lis
     if isinstance(value, list) and len(value) >= 3:
         return _numeric_point(value[:3])
     scalar_names = {
+        "bbox_center": ("bbox_center_x", "bbox_center_y", "bbox_center_z"),
         "centroid": ("centroid_x", "centroid_y", "centroid_z"),
         "midpoint": ("midpoint_x", "midpoint_y", "midpoint_z"),
         "coordinate": ("coordinate_x", "coordinate_y", "coordinate_z"),

@@ -387,6 +387,12 @@ epics:
       - id: "13.3"
         title: Cross-feature value-bearing tasks using distances between derived feature geometry
         status: work-in-progress
+        acceptance_criteria:
+          - Users can generate valid rows where one measured entity is selected by distance to another geometry-described reference entity.
+          - Reference anchors name the actual measured point being used, including bounding-box centers when full centroids are unavailable.
+        technical_definition_of_done:
+          - Generic reference-entity distance synthesis supports feature/material/void bounding-box center target and reference point metrics without relabeling them as centroids.
+          - Reviewed RC10 evidence includes valid cross-feature value-bearing rows generated from prepared CADEvolve traces; benchmark-scale distribution remains work-in-progress.
       - id: "13.4"
         title: Release and SFT coverage gates for value-bearing measurement task families
         status: work-in-progress
@@ -466,6 +472,10 @@ epics:
       - id: "14.8"
         title: Sampled query metadata and prompt-template bindings for synthesized queries
         status: work-in-progress
+        acceptance_criteria:
+          - Reviewers can see whether a synthesized reference-distance row used a centroid, midpoint, coordinate, or bounding-box center.
+        technical_definition_of_done:
+          - Sampled parameters serialize `target_point_metric`, `reference_point_metric`, anchor metrics, anchor value buckets, and rendered clue-template IDs for bbox-center reference-distance rows.
       - id: "14.9"
         title: Graph-hop narrowing implementation for sparse selector, count, and extremum task families
         status: work-in-progress

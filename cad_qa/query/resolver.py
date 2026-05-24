@@ -2558,6 +2558,7 @@ def _point_measurement(graph: OntologyGraph, entity_id: str, metric: str) -> lis
     if isinstance(value, list) and len(value) >= 3:
         return _numeric_point(value[:3])
     scalar_names = {
+        "bbox_center": ("bbox_center_x", "bbox_center_y", "bbox_center_z"),
         "centroid": ("centroid_x", "centroid_y", "centroid_z"),
         "midpoint": ("midpoint_x", "midpoint_y", "midpoint_z"),
         "coordinate": ("coordinate_x", "coordinate_y", "coordinate_z"),

@@ -4882,6 +4882,48 @@ def test_synthesis_skips_feature_reference_distance_without_feature_centroids() 
     assert "parameterized_feature_reference_feature_distance" not in families
 
 
+def test_synthesis_generates_feature_reference_distance_from_bbox_centers() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:feature-reference-bbox-center-synth",
+        source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
+    )
+    for feature_id, volume, span_z, center in [
+        ("feature:a", 50.0, 10.0, [0.0, 0.0, 5.0]),
+        ("feature:b", 60.0, 10.0 + 1e-7, [12.0, 0.0, 5.0]),
+        ("feature:ref", 90.0, 20.0, [40.0, 0.0, 10.0]),
+    ]:
+        graph.add_node(Node(feature_id, "feature", feature_id))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "bbox_span_z", span_z, "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "bbox_center", center, "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "bbox_center_x", center[0], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "bbox_center_y", center[1], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "bbox_center_z", center[2], "mm"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_feature_reference_entity_distance")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+    report = dataset_report([row.__dict__])
+
+    assert resolution.verifier_status == "resolved"
+    assert query.clauses[1].id == "reference_feature_volume_and_bbox_center"
+    assert query.clauses[2].id == "has_feature_bbox_center_for_reference_distance"
+    assert row.query_program["sampled_parameters"]["target_point_metric"] == ["bbox_center"]
+    assert row.query_program["sampled_parameters"]["reference_point_metric"] == ["bbox_center"]
+    assert row.query_program["sampled_parameters"]["reference_anchor_metric"] == [
+        "bbox_center_x",
+        "bbox_center_y",
+        "bbox_center_z",
+        "volume",
+    ]
+    assert "bounding-box center" in row.prompt
+    assert report["quality_flags"]["cross_feature_value_bearing"] == 1
+
+
 def test_synthesis_generates_equal_value_region_queries() -> None:
     graph = OntologyGraph(graph_id="graph:equal-region-synth", source={"source_id": "synthetic", "source_code": ""})
     for node_id, relation, volume, centroid_z in [

@@ -1983,7 +1983,7 @@ families:
       expected_values:
         reference_type: [feature, face, edge, edge_endpoint, material_region, void_region]
         reference_metric: [distance_to_reference_feature_centroid]
-        reference_point_metric: [centroid, face_center, midpoint, coordinate]
+        reference_point_metric: [centroid, bbox_center, face_center, midpoint, coordinate]
         target_point_metric: [coordinate]
     notes: Parameterized path-point reference-distance family that narrows by repeated path-point coordinate values and samples a measured reference entity before selecting nearest/farthest by point-to-reference distance.
   - id: parameterized_path_point_reference_entity_distance_rank
@@ -2020,7 +2020,7 @@ families:
       expected_values:
         reference_type: [feature, face, edge, edge_endpoint, material_region, void_region]
         reference_metric: [distance_to_reference_feature_centroid]
-        reference_point_metric: [centroid, face_center, midpoint, coordinate]
+        reference_point_metric: [centroid, bbox_center, face_center, midpoint, coordinate]
         target_point_metric: [coordinate]
         aggregation_rank: [2, 3, 4, 5, 6]
     notes: Parameterized path-point reference-distance rank family that narrows by repeated path-point coordinate values and samples a measured reference entity before selecting a sampled rank by point-to-reference distance.
@@ -2055,7 +2055,7 @@ families:
       expected_values:
         reference_type: [feature, face, edge, edge_endpoint, material_region, void_region]
         reference_metric: [distance_to_reference_feature_centroid]
-        reference_point_metric: [centroid, face_center, midpoint, coordinate]
+        reference_point_metric: [centroid, bbox_center, face_center, midpoint, coordinate]
         target_point_metric: [segment_midpoint]
     notes: Parameterized path-segment reference-distance family that narrows by repeated segment length and samples a measured reference entity before selecting nearest/farthest by segment-midpoint-to-reference distance.
   - id: parameterized_path_segment_reference_entity_distance_rank
@@ -2092,7 +2092,7 @@ families:
       expected_values:
         reference_type: [feature, face, edge, edge_endpoint, material_region, void_region]
         reference_metric: [distance_to_reference_feature_centroid]
-        reference_point_metric: [centroid, face_center, midpoint, coordinate]
+        reference_point_metric: [centroid, bbox_center, face_center, midpoint, coordinate]
         target_point_metric: [segment_midpoint]
         aggregation_rank: [2, 3, 4, 5, 6]
     notes: Parameterized path-segment reference-distance rank family that narrows by repeated segment length and samples a measured reference entity before selecting a sampled rank by segment-midpoint-to-reference distance.
@@ -3441,7 +3441,7 @@ families:
       expected_values:
         reference_type: [feature, face, edge, edge_endpoint, material_region, void_region]
         reference_metric: [distance_to_reference_feature_centroid]
-        reference_point_metric: [centroid, face_center, midpoint, coordinate]
+        reference_point_metric: [centroid, bbox_center, face_center, midpoint, coordinate]
         target_point_metric: [face_center]
     notes: Parameterized face reference-distance family that samples the reference entity type and anchor before selecting nearest/farthest by measured target-point distance.
   - id: parameterized_face_reference_entity_distance_rank
@@ -3478,7 +3478,7 @@ families:
       expected_values:
         reference_type: [feature, face, edge, edge_endpoint, material_region, void_region]
         reference_metric: [distance_to_reference_feature_centroid]
-        reference_point_metric: [centroid, face_center, midpoint, coordinate]
+        reference_point_metric: [centroid, bbox_center, face_center, midpoint, coordinate]
         target_point_metric: [face_center]
         aggregation_rank: [2, 3, 4, 5, 6]
     notes: Parameterized face reference-distance rank family that samples the reference entity type and anchor before selecting a sampled rank by measured target-point distance.
@@ -3513,7 +3513,7 @@ families:
       expected_values:
         reference_type: [feature, face, edge, edge_endpoint, material_region, void_region]
         reference_metric: [distance_to_reference_feature_centroid]
-        reference_point_metric: [centroid, face_center, midpoint, coordinate]
+        reference_point_metric: [centroid, bbox_center, face_center, midpoint, coordinate]
         target_point_metric: [midpoint]
     notes: Parameterized edge reference-distance family that samples the reference entity type and anchor before selecting nearest/farthest by measured target-point distance.
   - id: parameterized_edge_reference_entity_distance_rank
@@ -3550,7 +3550,7 @@ families:
       expected_values:
         reference_type: [feature, face, edge, edge_endpoint, material_region, void_region]
         reference_metric: [distance_to_reference_feature_centroid]
-        reference_point_metric: [centroid, face_center, midpoint, coordinate]
+        reference_point_metric: [centroid, bbox_center, face_center, midpoint, coordinate]
         target_point_metric: [midpoint]
         aggregation_rank: [2, 3, 4, 5, 6]
     notes: Parameterized edge reference-distance rank family that samples the reference entity type and anchor before selecting a sampled rank by measured target-point distance.
@@ -3585,7 +3585,7 @@ families:
       expected_values:
         reference_type: [feature, face, edge, edge_endpoint, material_region, void_region]
         reference_metric: [distance_to_reference_feature_centroid]
-        reference_point_metric: [centroid, face_center, midpoint, coordinate]
+        reference_point_metric: [centroid, bbox_center, face_center, midpoint, coordinate]
         target_point_metric: [coordinate]
     notes: Parameterized vertex reference-distance family that samples the reference entity type and anchor before selecting nearest/farthest by measured vertex-to-reference distance.
   - id: parameterized_vertex_reference_entity_distance_rank
@@ -3622,7 +3622,7 @@ families:
       expected_values:
         reference_type: [feature, face, edge, edge_endpoint, material_region, void_region]
         reference_metric: [distance_to_reference_feature_centroid]
-        reference_point_metric: [centroid, face_center, midpoint, coordinate]
+        reference_point_metric: [centroid, bbox_center, face_center, midpoint, coordinate]
         target_point_metric: [coordinate]
         aggregation_rank: [2, 3, 4, 5, 6]
     notes: Parameterized vertex reference-distance rank family that samples the reference entity type and anchor before selecting a sampled rank by measured vertex-to-reference distance.
@@ -3657,8 +3657,8 @@ families:
       expected_values:
         reference_type: [feature, face, edge, edge_endpoint, material_region, void_region]
         reference_metric: [distance_to_reference_feature_centroid]
-        reference_point_metric: [centroid, face_center, midpoint, coordinate]
-        target_point_metric: [centroid]
+        reference_point_metric: [centroid, bbox_center, face_center, midpoint, coordinate]
+        target_point_metric: [centroid, bbox_center]
     notes: Parameterized feature reference-distance family that samples the reference entity type and anchor before selecting nearest/farthest by measured target-point distance.
   - id: parameterized_feature_reference_entity_distance_rank
     status: release
@@ -3694,8 +3694,8 @@ families:
       expected_values:
         reference_type: [feature, face, edge, edge_endpoint, material_region, void_region]
         reference_metric: [distance_to_reference_feature_centroid]
-        reference_point_metric: [centroid, face_center, midpoint, coordinate]
-        target_point_metric: [centroid]
+        reference_point_metric: [centroid, bbox_center, face_center, midpoint, coordinate]
+        target_point_metric: [centroid, bbox_center]
         aggregation_rank: [2, 3, 4, 5, 6]
     notes: Parameterized feature reference-distance rank family that samples the reference entity type and anchor before selecting a sampled rank by measured target-point distance.
   - id: parameterized_endpoint_reference_entity_distance
@@ -3729,7 +3729,7 @@ families:
       expected_values:
         reference_type: [feature, face, edge, edge_endpoint, material_region, void_region]
         reference_metric: [distance_to_reference_feature_centroid]
-        reference_point_metric: [centroid, face_center, midpoint, coordinate]
+        reference_point_metric: [centroid, bbox_center, face_center, midpoint, coordinate]
         target_point_metric: [coordinate]
     notes: Parameterized endpoint reference-distance family that samples the reference entity type and anchor before selecting nearest/farthest by measured target-point distance.
   - id: parameterized_endpoint_reference_entity_distance_rank
@@ -3766,7 +3766,7 @@ families:
       expected_values:
         reference_type: [feature, face, edge, edge_endpoint, material_region, void_region]
         reference_metric: [distance_to_reference_feature_centroid]
-        reference_point_metric: [centroid, face_center, midpoint, coordinate]
+        reference_point_metric: [centroid, bbox_center, face_center, midpoint, coordinate]
         target_point_metric: [coordinate]
         aggregation_rank: [2, 3, 4, 5, 6]
     notes: Parameterized endpoint reference-distance rank family that samples the reference entity type and anchor before selecting a sampled rank by measured target-point distance.
@@ -3801,8 +3801,8 @@ families:
       expected_values:
         reference_type: [feature, face, edge, edge_endpoint, material_region, void_region]
         reference_metric: [distance_to_reference_feature_centroid]
-        reference_point_metric: [centroid, face_center, midpoint, coordinate]
-        target_point_metric: [centroid]
+        reference_point_metric: [centroid, bbox_center, face_center, midpoint, coordinate]
+        target_point_metric: [centroid, bbox_center]
     notes: Parameterized added-material region reference-distance family that samples the reference entity type and anchor before selecting nearest/farthest by measured target-point distance.
   - id: parameterized_material_region_reference_entity_distance_rank
     status: release
@@ -3838,8 +3838,8 @@ families:
       expected_values:
         reference_type: [feature, face, edge, edge_endpoint, material_region, void_region]
         reference_metric: [distance_to_reference_feature_centroid]
-        reference_point_metric: [centroid, face_center, midpoint, coordinate]
-        target_point_metric: [centroid]
+        reference_point_metric: [centroid, bbox_center, face_center, midpoint, coordinate]
+        target_point_metric: [centroid, bbox_center]
         aggregation_rank: [2, 3, 4, 5, 6]
     notes: Parameterized added-material region reference-distance rank family that samples the reference entity type and anchor before selecting a sampled rank by measured target-point distance.
   - id: parameterized_void_region_reference_entity_distance
@@ -3873,8 +3873,8 @@ families:
       expected_values:
         reference_type: [feature, face, edge, edge_endpoint, material_region, void_region]
         reference_metric: [distance_to_reference_feature_centroid]
-        reference_point_metric: [centroid, face_center, midpoint, coordinate]
-        target_point_metric: [centroid]
+        reference_point_metric: [centroid, bbox_center, face_center, midpoint, coordinate]
+        target_point_metric: [centroid, bbox_center]
     notes: Parameterized removed-material region reference-distance family that samples the reference entity type and anchor before selecting nearest/farthest by measured target-point distance.
   - id: parameterized_void_region_reference_entity_distance_rank
     status: release
@@ -3910,7 +3910,7 @@ families:
       expected_values:
         reference_type: [feature, face, edge, edge_endpoint, material_region, void_region]
         reference_metric: [distance_to_reference_feature_centroid]
-        reference_point_metric: [centroid, face_center, midpoint, coordinate]
-        target_point_metric: [centroid]
+        reference_point_metric: [centroid, bbox_center, face_center, midpoint, coordinate]
+        target_point_metric: [centroid, bbox_center]
         aggregation_rank: [2, 3, 4, 5, 6]
     notes: Parameterized removed-material region reference-distance rank family that samples the reference entity type and anchor before selecting a sampled rank by measured target-point distance.

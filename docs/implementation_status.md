@@ -44,8 +44,8 @@ when those choices can be sampled and verified.
   target, source-line, and operation-order evidence even when the trace did not
   serialize a direct `target` field.
 - Scalar trace-derived geometry measurements for resolver use, including bbox
-  spans, bbox extrema, centroid coordinates, topology counts, centroid deltas,
-  topology deltas, and bbox deltas.
+  spans, bbox extrema, bbox center coordinates, centroid coordinates, topology
+  counts, centroid deltas, topology deltas, and bbox deltas.
 - Trace CLI that writes `traces.jsonl` and `trace_report.json`.
 - Optional graph build integration for trace JSONL, including snapshot-state
   measurements, feature application effect deltas, and exact
@@ -118,6 +118,11 @@ when those choices can be sampled and verified.
   centroid height. The synthesized
   `parameterized_edge_reference_feature_distance` family now samples that
   reference-anchor path through the graph-hop synthesis layer.
+- Generic reference-distance synthesis can also use measured bounding-box
+  centers for feature, added-material-region, and removed-material-region
+  anchors when prepared traces expose bbox geometry but not full centroid
+  vectors. Prompt wording names these as bounding-box centers rather than
+  centroids.
 - Release and SFT stop gates now require value-bearing measurement coverage and
   at least one cross-feature value-bearing row on applicable release-scale
   artifacts.
@@ -302,8 +307,8 @@ when those choices can be sampled and verified.
 - Initial synthesized reference-distance rows now combine equal-measurement
   narrowing with a geometry-described reference feature anchor and nearest or
   farthest midpoint-distance selection. Rows serialize reference type, reference
-  metric, target/reference point metrics, anchor signature, and anchor value
-  buckets.
+  metric, target/reference point metrics including bbox centers, anchor
+  signature, and anchor value buckets.
 - `cadqa dataset synthesis-selfcheck --out <dir>` now regenerates rows, graphs,
   Markdown preview, and preview evidence for the currently implemented
   synthesized release families. This gives reviewers a repeatable artifact for
@@ -420,6 +425,34 @@ Result reviewed on 2026-05-25:
 - This is compatibility and coverage evidence for prepared CADEvolve traces. It
   does not by itself satisfy benchmark-release scale, split-group, balance, or
   final preview requirements.
+
+## CadEvolve RC10 BBox-Center Reference-Distance Check
+
+Result reviewed on 2026-05-25:
+
+- Graph build with prepared RC10 traces at
+  `runs/current_rc10_bbox_reference_graph/` produced 10 graphs, 1,521 nodes,
+  2,773 relations, and 8,865 measurements after bbox centers were exposed as
+  resolver-ready measurements.
+- Release-family query synthesis wrote
+  `runs/current_rc10_bbox_reference_query/` with 244 resolved queries and zero
+  synthesis failures.
+- Materialization wrote `runs/current_rc10_bbox_reference_dataset/` with 244
+  valid rows, all row-level release-ready and geometry-critical.
+- The same RC10 slice now contains 39 cross-feature value-bearing rows, up from
+  zero in the prior prepared-trace run. New real CadEvolve rows include
+  `parameterized_material_region_reference_entity_distance`,
+  `parameterized_material_region_reference_entity_distance_rank`,
+  `parameterized_path_segment_reference_entity_distance`, and
+  `parameterized_path_segment_reference_entity_distance_rank`.
+- Manual preview:
+  `runs/current_rc10_bbox_reference_dataset/BBOX_REFERENCE_PREVIEW.md`.
+  Reviewed samples use public clues such as reference feature volume plus
+  bounding-box center coordinates, then resolve by closest/farthest target
+  centroid or segment midpoint distance to that reference center.
+- This is valid-row and RC10 coverage evidence only. Benchmark-release remains
+  blocked on scale, split-group coverage, family distribution, parameter
+  balance, preview coverage, and value/cross-feature share tuning.
 
 ## CadEvolve 50 Release-Candidate Snapshot
 
