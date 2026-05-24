@@ -7873,6 +7873,62 @@ def test_parameter_balance_report_enforces_manifest_configured_narrowing_dimensi
     )
 
 
+def test_parameter_balance_report_treats_manifest_singletons_as_structural(tmp_path: Path) -> None:
+    manifest = tmp_path / "family_specs.yaml"
+    manifest.write_text(
+        "\n".join(
+            [
+                "schema_version: 1",
+                "families:",
+                "  - id: chain_family",
+                "    status: release",
+                "    target_type: edge",
+                "    parameter_balance:",
+                "      required_dimensions:",
+                "        - spatial_relation_chain_length",
+                "        - aggregation_metric",
+                "      enforced_dimensions:",
+                "        - spatial_relation_chain_length",
+                "        - aggregation_metric",
+                "        - target_type",
+                "      expected_values:",
+                "        spatial_relation_chain_length: [2]",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    rows = [
+        {
+            "row_id": f"row:src:{index}:chain_family",
+            "query_program": {
+                "query_id": f"graph:src:q{index}:chain_family",
+                "sampled_parameters": {
+                    "target_type": ["edge"],
+                    "spatial_relation_chain_length": ["2"],
+                    "aggregation_metric": ["midpoint_x" if index < 2 else "midpoint_y"],
+                },
+            },
+        }
+        for index in range(4)
+    ]
+
+    report = parameter_balance_report(
+        rows,
+        family_manifest=manifest,
+        max_parameter_value_share=0.60,
+        min_axis_direction_share=0.20,
+        enforce=True,
+    )
+
+    assert report["valid"]
+    family = report["families"][0]
+    assert not family["uses_default_enforced_dimensions"]
+    assert not any(
+        violation["dimension"] in {"target_type", "spatial_relation_chain_length"}
+        for violation in report["violations"]
+    )
+
+
 def test_preview_evidence_gate_requires_sufficient_release_family_samples(tmp_path: Path) -> None:
     manifest = tmp_path / "family_specs.yaml"
     manifest.write_text(

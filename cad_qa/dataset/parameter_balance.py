@@ -116,8 +116,11 @@ def _family_parameter_report(
     balance = _balance_spec(spec)
     ignored_dimensions = _ignored_dimensions(balance)
     required_dimensions = _required_dimensions(balance)
-    enforced_dimensions = DEFAULT_ENFORCED_DIMENSIONS | _configured_enforced_dimensions(balance)
+    configured_enforced_dimensions = _configured_enforced_dimensions(balance)
+    enforced_dimensions = configured_enforced_dimensions if balance else DEFAULT_ENFORCED_DIMENSIONS
     expected_values_by_dimension = _configured_expected_values(balance)
+    if spec.get("target_type") and "target_type" not in expected_values_by_dimension:
+        expected_values_by_dimension["target_type"] = [str(spec["target_type"])]
     dimension_reports = []
     violations = []
     for dimension in sorted(required_dimensions - set(counters) - ignored_dimensions):
@@ -143,8 +146,10 @@ def _family_parameter_report(
             "required": dimension in required_dimensions,
         }
         expected = expected_values_by_dimension.get(dimension)
+        has_single_structural_expected = False
         if expected is not None or dimension in AXIS_DIRECTION_DIMENSIONS:
             expected = expected or EXPECTED_VALUES.get(dimension, ())
+            has_single_structural_expected = len(expected) == 1
             expected_shares = {
                 value: counts.get(value, 0) / total if total else 0.0
                 for value in expected
@@ -152,7 +157,11 @@ def _family_parameter_report(
             undercovered = [
                 {"value": value, "share": share}
                 for value, share in expected_shares.items()
-                if min_axis_direction_share is not None and share < min_axis_direction_share
+                if (
+                    not has_single_structural_expected
+                    and min_axis_direction_share is not None
+                    and share < min_axis_direction_share
+                )
             ]
             report["expected_values"] = list(expected)
             report["expected_value_shares"] = expected_shares
@@ -172,6 +181,7 @@ def _family_parameter_report(
                 max_parameter_value_share is not None
                 and largest_share > max_parameter_value_share
                 and dimension not in ignored_dimensions
+                and not has_single_structural_expected
             ):
                 violations.append(
                     {
@@ -189,7 +199,8 @@ def _family_parameter_report(
         "row_count": len(rows),
         "ignored_dimensions": sorted(ignored_dimensions),
         "required_dimensions": sorted(required_dimensions),
-        "configured_enforced_dimensions": sorted(_configured_enforced_dimensions(balance)),
+        "configured_enforced_dimensions": sorted(configured_enforced_dimensions),
+        "uses_default_enforced_dimensions": not bool(balance),
         "dimensions": dimension_reports,
         "violations": violations,
         "valid": not violations,

@@ -213,9 +213,13 @@ when those choices can be sampled and verified.
   for the parameter dimensions currently inferable from each query program.
 - Benchmark-release release and SFT reports include an initial parameter-balance
   gate over private sampled-parameter metadata. It reports and blocks missing
-  metadata plus collapsed target type, final selector, aggregation metric/axis,
-  extremum direction, clause metric/axis, comparison operator, reference metric,
-  and value-bucket distributions for generated release families.
+  metadata plus collapsed configured dimensions such as final selector,
+  aggregation metric/axis, extremum direction, clause metric/axis, comparison
+  operator, reference metric/type, and value-bucket distributions for generated
+  release families. For families with manifest `parameter_balance` sections,
+  the manifest is the enforcement authority; structural singletons such as a
+  face family always targeting faces are reported but do not create false
+  parameter-collapse failures.
 - Family specs can now configure additional parameter-balance requirements:
   required sampled dimensions, extra dimensions subject to the max-share rule,
   and expected values for non-axis dimensions. The initial synthesized families

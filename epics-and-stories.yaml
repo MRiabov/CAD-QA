@@ -414,6 +414,22 @@ epics:
       - id: "14.4"
         title: Release and SFT gates for parameter balance across task families
         status: work-in-progress
+        acceptance_criteria:
+          - Users cannot release a nominally parameterized family that always
+            picks one axis, direction, value shape, selector, relation, or
+            reference type when that dimension is meant to vary.
+          - Users do not get false failures for structural family constants,
+            such as a face family always targeting faces, when the manifest
+            declares them as single expected values.
+        technical_definition_of_done:
+          - Release/SFT reports compute sampled-parameter distributions from
+            private query metadata and block collapsed manifest-configured
+            dimensions.
+          - Families with explicit `parameter_balance` sections use those
+            sections as the enforcement authority; legacy/unconfigured release
+            families keep default parameter-collapse checks.
+          - Benchmark-scale tuning still needs enough generated rows for each
+            configured dimension to satisfy the distribution thresholds.
       - id: "14.5"
         title: Intended-family manifest for release, calibration, and review-only task families
         status: work-in-progress
