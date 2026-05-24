@@ -72,6 +72,27 @@ families:
         - aggregation_metric
         - final_selector
     notes: Synthesized family that samples the measured face quantity and min/max selector instead of fixing a global axis.
+  - id: parameterized_kernel_face_rank
+    status: release
+    target_type: face
+    minimum_hops: 3
+    maximum_hops: 3
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - aggregation_rank
+        - rank_direction
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - aggregation_rank
+        - final_selector
+      expected_values:
+        aggregation_rank: [2]
+    notes: Synthesized family that selects a measured face by sampled rank instead of only min/max extrema.
   - id: highest_positive_x_flat_opposite_adjacent_perpendicular_kernel_face
     status: review_only
     target_type: face
@@ -177,6 +198,27 @@ families:
         - aggregation_metric
         - final_selector
     notes: Synthesized family that samples the measured edge quantity and min/max selector instead of fixing a global axis.
+  - id: parameterized_kernel_edge_rank
+    status: release
+    target_type: edge
+    minimum_hops: 3
+    maximum_hops: 3
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - aggregation_rank
+        - rank_direction
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - aggregation_rank
+        - final_selector
+      expected_values:
+        aggregation_rank: [2]
+    notes: Synthesized family that selects a measured edge by sampled rank instead of only min/max extrema.
   - id: frontmost_equal_midpoint_distance_kernel_edge
     status: review_only
     target_type: edge

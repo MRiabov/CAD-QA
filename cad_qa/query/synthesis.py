@@ -29,6 +29,7 @@ class ExtremeFamilySpec:
     relation_clause_id: str
     measurement_clause_id: str
     metrics: tuple[str, ...]
+    allow_rank: bool = False
 
 
 @dataclass(frozen=True)
@@ -37,6 +38,7 @@ class ViableExtreme:
     candidates: list[Node]
     metric: str
     aggregation: str
+    aggregation_rank: int | None = None
     tie_break_metric: str | None = None
     tie_break_aggregation: str | None = None
 
@@ -93,6 +95,39 @@ EXTREME_FAMILY_SPECS = (
     ),
 )
 
+RANK_FAMILY_SPECS = (
+    ExtremeFamilySpec(
+        family_id="parameterized_kernel_face_rank",
+        target_type="face",
+        relation="has_kernel_stable_face_id",
+        relation_clause_id="has_parameterized_face_set",
+        measurement_clause_id="has_parameterized_face_metric",
+        metrics=(
+            "coordinate_x",
+            "coordinate_y",
+            "coordinate_z",
+            "distance_to_origin",
+            "face_area",
+        ),
+        allow_rank=True,
+    ),
+    ExtremeFamilySpec(
+        family_id="parameterized_kernel_edge_rank",
+        target_type="edge",
+        relation="has_kernel_stable_edge_id",
+        relation_clause_id="has_parameterized_edge_set",
+        measurement_clause_id="has_parameterized_edge_metric",
+        metrics=(
+            "midpoint_x",
+            "midpoint_y",
+            "midpoint_z",
+            "midpoint_distance_to_origin",
+            "edge_length",
+        ),
+        allow_rank=True,
+    ),
+)
+
 SELECTOR_COUNT_FAMILY_SPECS = (
     SelectorCountFamilySpec(
         family_id="parameterized_kernel_face_selector_count",
@@ -133,6 +168,14 @@ def synthesize_graph_hop_queries(graph: OntologyGraph) -> list[QueryProgram]:
     queries: list[QueryProgram] = []
     for spec in EXTREME_FAMILY_SPECS:
         viable = _viable_extremes(graph, spec)
+        if not viable:
+            continue
+        choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
+        query = _query_for_extreme(graph, choice)
+        if query is not None:
+            queries.append(query)
+    for spec in RANK_FAMILY_SPECS:
+        viable = _viable_ranks(graph, spec)
         if not viable:
             continue
         choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
@@ -201,8 +244,51 @@ def _viable_extremes(graph: OntologyGraph, spec: ExtremeFamilySpec) -> list[Viab
         key=lambda item: (
             item.metric,
             item.aggregation,
+            item.aggregation_rank or 0,
             item.tie_break_metric or "",
             item.tie_break_aggregation or "",
+            [node.id for node in item.candidates],
+        ),
+    )
+
+
+def _viable_ranks(graph: OntologyGraph, spec: ExtremeFamilySpec) -> list[ViableExtreme]:
+    candidates = graph.nodes_by_type(spec.target_type)
+    if not spec.allow_rank:
+        return []
+    relation = relation_predicate(
+        graph,
+        candidates,
+        clause_id=spec.relation_clause_id,
+        relation=spec.relation,
+        target_type="selector",
+    )
+    if relation is None:
+        return []
+    relation_candidates = _apply_relation_clause(graph, candidates, spec.relation)
+    viable: list[ViableExtreme] = []
+    for metric in spec.metrics:
+        measurement = measurement_predicate(
+            graph,
+            relation_candidates,
+            clause_id=spec.measurement_clause_id,
+            metric=metric,
+        )
+        if measurement is None:
+            continue
+        metric_candidates = _nodes_with_numeric_measurement(graph, relation_candidates, metric)
+        if len(metric_candidates) < 3:
+            continue
+        for aggregation in ("rank_desc", "rank_asc"):
+            for rank in (2,):
+                if _has_unique_rank(graph, metric_candidates, metric, aggregation, rank):
+                    viable.append(ViableExtreme(spec, metric_candidates, metric, aggregation, aggregation_rank=rank))
+    return sorted(
+        viable,
+        key=lambda item: (
+            item.metric,
+            item.aggregation,
+            item.aggregation_rank or 0,
             [node.id for node in item.candidates],
         ),
     )
@@ -229,19 +315,36 @@ def _query_for_extreme(graph: OntologyGraph, viable: ViableExtreme) -> QueryProg
     )
     if measurement is None:
         return None
-    direction = "max" if viable.aggregation == "argmax" else "min"
+    direction = "max" if viable.aggregation in {"argmax", "rank_desc"} else "min"
+    final_selector = (
+        f"rank:{viable.aggregation_rank}:{direction}:{viable.metric}"
+        if viable.aggregation_rank is not None
+        else f"{direction}:{viable.metric}"
+    )
     sampled = merge_sampled_parameters(
         {
             "target_type": [spec.target_type],
-            "final_selector": [f"{direction}:{viable.metric}"],
+            "final_selector": [final_selector],
             "aggregation_metric": [viable.metric],
             "extremum_direction": [direction],
             "predicate_catalog_version": ["v1"],
-            "synthesis_strategy": ["bounded_parameterized_extreme_v1"],
+            "synthesis_strategy": [
+                "bounded_parameterized_rank_v1"
+                if viable.aggregation_rank is not None
+                else "bounded_parameterized_extreme_v1"
+            ],
         },
         relation.sampled_parameters,
         measurement.sampled_parameters,
     )
+    if viable.aggregation_rank is not None:
+        sampled = merge_sampled_parameters(
+            sampled,
+            {
+                "aggregation_rank": [str(viable.aggregation_rank)],
+                "rank_direction": [direction],
+            },
+        )
     if viable.tie_break_metric and viable.tie_break_aggregation:
         tie_break_direction = "max" if viable.tie_break_aggregation == "argmax" else "min"
         sampled = merge_sampled_parameters(
@@ -267,6 +370,7 @@ def _query_for_extreme(graph: OntologyGraph, viable: ViableExtreme) -> QueryProg
         ],
         aggregation=viable.aggregation,
         aggregation_metric=viable.metric,
+        aggregation_rank=viable.aggregation_rank,
         tie_break_aggregation=viable.tie_break_aggregation,
         tie_break_metric=viable.tie_break_metric,
         hop_count=3,
@@ -478,6 +582,37 @@ def _extreme_nodes(
     if not scored:
         return []
     target = max(score for score, _ in scored) if aggregation == "argmax" else min(score for score, _ in scored)
+    return [node for score, node in scored if abs(score - target) <= GEOMETRY_MARGIN_EPSILON]
+
+
+def _has_unique_rank(
+    graph: OntologyGraph,
+    candidates: list[Node],
+    metric: str,
+    aggregation: str,
+    rank: int,
+) -> bool:
+    ranked = _rank_nodes(graph, candidates, metric, aggregation, rank)
+    return len(ranked) == 1
+
+
+def _rank_nodes(
+    graph: OntologyGraph,
+    candidates: list[Node],
+    metric: str,
+    aggregation: str,
+    rank: int,
+) -> list[Node]:
+    scored = [
+        (float(value), node)
+        for node in candidates
+        if isinstance((value := _measurement_value(graph, node.id, metric)), (int, float))
+    ]
+    if rank < 1 or rank > len(scored):
+        return []
+    descending = aggregation == "rank_desc"
+    ordered = sorted(scored, key=lambda item: (-item[0] if descending else item[0], item[1].id))
+    target = ordered[rank - 1][0]
     return [node for score, node in scored if abs(score - target) <= GEOMETRY_MARGIN_EPSILON]
 
 

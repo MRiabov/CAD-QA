@@ -203,6 +203,11 @@ when those choices can be sampled and verified.
   geometry-defined selector subset before applying sampled min/max
   `selected_count`. This is still not the full predicate catalog or bounded
   beam-search implementation.
+- Initial synthesized rank families now exist for measured kernel faces and
+  edges. `parameterized_kernel_face_rank` and
+  `parameterized_kernel_edge_rank` use the same reusable relation/measurement
+  predicate path as extrema, then apply a ranked measured selector with
+  aggregation-rank and rank-direction metadata.
 - Query programs now support deterministic tie-break aggregations. When a
   primary min/max aggregation leaves multiple candidates and a configured
   secondary metric resolves the tie, resolver traces include a
@@ -723,9 +728,10 @@ Checked as implemented with remaining scale caveats:
   narrowing dimensions. Materialized rows now include rendered prompt-template
   and clue-template sequence metadata, and reference-measurement rows serialize
   reference type, point metrics, anchor metrics, and anchor signatures for
-  balance reporting. The resolver now supports ranked measured selectors and
-  serializes aggregation-rank/rank-direction metadata; synthesized rank-family
-  generation, broader synthesized reference-anchor sampling, and actual wording
+  balance reporting. The resolver now supports ranked measured selectors,
+  serializes aggregation-rank/rank-direction metadata, and the synthesis layer
+  emits an initial face/edge rank-family slice. Broader synthesized
+  reference-anchor sampling, additional rank values, and actual wording
   randomization remain open. The gate still does not prove every future intended
   parameter dimension was sampled whenever the verifier could support it.
 - Expand the intended-family manifest into full family specs with predicates,

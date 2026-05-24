@@ -2140,6 +2140,69 @@ def test_smoke_queries_include_parameterized_kernel_edge_synthesis() -> None:
     assert "measured midpoint Y coordinate" in row.prompt
 
 
+def test_synthesis_generates_ranked_kernel_edge_query() -> None:
+    face_graph = OntologyGraph(graph_id="graph:synthetic-face-rank", source={"source_id": "synthetic", "source_code": ""})
+    face_graph.add_node(Node("selector:faces", "selector", "faces"))
+    for face_id, area in [
+        ("face:a", 30.0),
+        ("face:b", 20.0),
+        ("face:c", 10.0),
+    ]:
+        face_graph.add_node(Node(face_id, "face", face_id))
+        face_graph.add_relation(Relation(face_id, "selector:faces", "has_kernel_stable_face_id"))
+        face_graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", area, "mm^2"))
+
+    face_query = next(
+        query
+        for query in synthesize_graph_hop_queries(face_graph)
+        if query.query_id.endswith("parameterized_kernel_face_rank")
+    )
+    face_resolution = resolve_query(face_graph, face_query)
+
+    assert face_resolution.verifier_status == "resolved"
+    assert face_resolution.gold_answer == "face:b"
+    assert face_query.aggregation_rank == 2
+
+    graph = OntologyGraph(graph_id="graph:synthetic-edge-rank", source={"source_id": "synthetic", "source_code": ""})
+    graph.add_node(Node("selector:edges", "selector", "edges"))
+    for edge_id, length in [
+        ("edge:a", 10.0),
+        ("edge:b", 8.0),
+        ("edge:c", 5.0),
+    ]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_kernel_edge_rank")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+
+    assert resolution.verifier_status == "resolved"
+    assert resolution.gold_answer == "edge:b"
+    assert query.aggregation in {"rank_asc", "rank_desc"}
+    assert query.aggregation_metric == "edge_length"
+    assert query.aggregation_rank == 2
+    assert query.sampled_parameters["aggregation_rank"] == ["2"]
+    assert query.sampled_parameters["rank_direction"] in (["max"], ["min"])
+    assert query.sampled_parameters["final_selector"] in (
+        ["rank:2:max:edge_length"],
+        ["rank:2:min:edge_length"],
+    )
+    assert query.sampled_parameters["narrowing_predicate_sequence"] == [
+        "measurement:edge_length",
+        "relation:has_kernel_stable_edge_id:selector",
+    ]
+    assert row.candidate_trace["steps"][-1]["aggregation"] == query.aggregation
+    assert row.candidate_trace["steps"][-1]["rank"] == 2
+    assert row.query_program["sampled_parameters"] == sampled_parameters_from_query(row.query_program)
+    assert "2nd candidate when ordered" in row.prompt
+
+
 def test_synthesis_generates_geometry_narrowed_selector_count_query() -> None:
     graph = OntologyGraph(graph_id="graph:selector-count", source={"source_id": "synthetic", "source_code": ""})
     selector_specs = [
