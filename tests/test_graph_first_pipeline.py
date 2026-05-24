@@ -1994,6 +1994,44 @@ def test_smoke_queries_include_parameterized_kernel_edge_synthesis() -> None:
     assert "measured midpoint Y coordinate" in row.prompt
 
 
+def test_synthesis_generates_geometry_narrowed_selector_count_query() -> None:
+    graph = OntologyGraph(graph_id="graph:selector-count", source={"source_id": "synthetic", "source_code": ""})
+    selector_specs = [
+        ("selector:a", 3, -5.0),
+        ("selector:b", 4, -1.0),
+        ("selector:c", 4, 8.0),
+    ]
+    for selector_id, selected_count, midpoint_y in selector_specs:
+        edge_id = f"edge:{selector_id.rsplit(':', 1)[-1]}"
+        graph.add_node(Node(selector_id, "selector", selector_id))
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(selector_id, edge_id, "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(selector_id, "snapshot_state", "selected_count", selected_count))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint_y, "mm"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_kernel_edge_selector_count")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+    related_step = next(step for step in row.candidate_trace["steps"] if step["step"] == "has_parameterized_selected_edge_metric_threshold")
+    aggregation_step = next(step for step in row.candidate_trace["steps"] if step["step"] == "aggregation")
+
+    assert resolution.verifier_status == "resolved"
+    assert len(related_step["before"]) == 3
+    assert len(related_step["after"]) == 2
+    assert len(aggregation_step["before"]) == 2
+    assert row.logical_hop_count == 4
+    assert row.geometry_hop_count == 4
+    assert "entity_geometry" in row.measurement_scopes
+    assert query.aggregation_metric == "selected_count"
+    assert query.sampled_parameters["selected_entity_type"] == ["edge"]
+    assert query.sampled_parameters["narrowing_axis"] == ["y"]
+    assert "At least one edge in the target selection has a midpoint Y coordinate" in row.prompt
+
+
 def test_resolver_does_not_inline_generated_prompt_text() -> None:
     tree = ast.parse(Path("cad_qa/query/resolver.py").read_text(encoding="utf-8"))
     for node in ast.walk(tree):

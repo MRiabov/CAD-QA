@@ -190,8 +190,13 @@ when those choices can be sampled and verified.
   `parameterized_kernel_edge_extreme` rows. These rows sample the measured
   geometry quantity and min/max direction in private metadata and route through
   the existing resolver, prompt renderer, candidate trace, and materializer.
-  This is deliberately only the first slice of Epic 14, not the full predicate
-  catalog or sparse selector/count narrowing implementation.
+- The synthesis layer also has an initial sparse selector-count narrowing
+  slice for `parameterized_kernel_face_selector_count` and
+  `parameterized_kernel_edge_selector_count`. It uses a related-entity metric
+  predicate, such as a selected edge's midpoint coordinate threshold, to keep a
+  geometry-defined selector subset before applying sampled min/max
+  `selected_count`. This is still not the full predicate catalog or bounded
+  beam-search implementation.
 - The preview CLI writes machine-readable preview evidence next to the Markdown
   artifact and into dataset directories. Benchmark-release release/SFT reports
   block missing preview evidence, dataset-fingerprint mismatches, and fewer than
@@ -693,7 +698,10 @@ Checked as implemented with remaining scale caveats:
   measurement bucket, containment, adjacency, or distance to a sampled reference
   entity to define a nontrivial candidate subset before the final selector.
   The current synthesis slice covers parameterized extrema over kernel-selected
-  face/edge geometry, but not selector-count or selected-entity-count narrowing.
+  face/edge geometry and an initial selected face/edge selector-count narrowing
+  path. Broader selected-entity-count narrowing, reference anchors, equal-value
+  groups, containment/adjacency predicates, and rank/tie-break selectors remain
+  open.
 - Extend sampled-parameter metadata from the synthesis layer to include
   predicate sequence, reference anchor, rank, tie-break metric, rendered wording,
   and geometry-limited exceptions. The current gate catches missing or collapsed

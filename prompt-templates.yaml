@@ -86,8 +86,13 @@ clause_templates:
   has_face_bbox_z: "The target face has a measured maximum Z coordinate."
 
   has_kernel_selected_faces: "The target face selection identifies measured model faces."
+  has_parameterized_face_selection: "The target selection contains measured model faces."
+  has_parameterized_selected_face_metric_threshold: "At least one face in the target selection has a {metric_label} {operator_label} {value}."
   has_selected_count: "The target selection has a measured entity count."
+  has_parameterized_selected_count: "The target selection has a measured entity count."
   has_kernel_selected_edges: "The target edge selection identifies measured model edges."
+  has_parameterized_edge_selection: "The target selection contains measured model edges."
+  has_parameterized_selected_edge_metric_threshold: "At least one edge in the target selection has a {metric_label} {operator_label} {value}."
   has_selected_edge_count: "The target edge selection has a measured edge count."
   same_face_as_another_selector: "The target face selection identifies the same face as another face selection."
   has_selector_operation_index: "The target selection has a modeling-sequence position that can be compared."

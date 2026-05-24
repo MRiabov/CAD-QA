@@ -96,6 +96,82 @@ def measurement_predicate(
     )
 
 
+def related_metric_compare_predicate(
+    graph: OntologyGraph,
+    candidates: list[Node],
+    *,
+    clause_id: str,
+    relation: str,
+    target_type: str,
+    metric: str,
+    operator: str,
+    value: float,
+) -> PredicateInstance | None:
+    """Instantiate a predicate over measurements on related graph entities."""
+
+    after = nodes_matching_related_metric_compare(
+        graph,
+        candidates,
+        relation=relation,
+        target_type=target_type,
+        metric=metric,
+        operator=operator,
+        value=value,
+    )
+    if len(after) < 2:
+        return None
+    params: dict[str, list[str]] = {
+        "narrowing_predicate_sequence": [f"related_metric_compare:{relation}:{target_type}:{metric}:{operator}"],
+        "clause_relation": [relation],
+        "clause_target_type": [target_type],
+        "clause_metric": [metric],
+        "comparison_operator": [operator],
+        "measurement_value_bucket": [f"{metric}:{value:.6g}"],
+    }
+    axis = metric_axis(metric)
+    if axis is not None:
+        params["clause_axis"] = [axis]
+    return PredicateInstance(
+        id=f"related_metric_compare:{relation}:{target_type}:{metric}:{operator}:{value:.6g}",
+        clause=Clause(
+            id=clause_id,
+            kind="related_metric_compare",
+            relation=relation,
+            target_type=target_type,
+            metric=metric,
+            operator=operator,
+            value=value,
+        ),
+        candidate_count_before=len(candidates),
+        candidate_count_after=len(after),
+        sampled_parameters=params,
+    )
+
+
+def nodes_matching_related_metric_compare(
+    graph: OntologyGraph,
+    candidates: list[Node],
+    *,
+    relation: str,
+    target_type: str,
+    metric: str,
+    operator: str,
+    value: float,
+) -> list[Node]:
+    return [
+        node
+        for node in candidates
+        if any(
+            edge.source_id == node.id
+            and edge.type == relation
+            and (target := graph.node(edge.target_id)) is not None
+            and target.type == target_type
+            and any(_compare(measurement.value, operator, value) for measurement in graph.measurements_for(target.id, metric))
+            for edge in graph.relations
+        )
+    ]
+
+
 def merge_sampled_parameters(*mappings: dict[str, list[str]]) -> dict[str, list[str]]:
     merged: dict[str, set[str]] = {}
     for mapping in mappings:
@@ -110,3 +186,20 @@ def metric_axis(metric: str) -> str | None:
         if token in {"x", "y", "z"}:
             return token
     return None
+
+
+def _compare(measured: object, operator: str, expected: float) -> bool:
+    if not isinstance(measured, (int, float)):
+        return False
+    value = float(measured)
+    if operator == ">":
+        return value > expected
+    if operator == "<":
+        return value < expected
+    if operator == ">=":
+        return value >= expected
+    if operator == "<=":
+        return value <= expected
+    if operator == "==":
+        return abs(value - expected) <= 1e-6
+    return False

@@ -9,6 +9,7 @@ from cad_qa.ontology.nodes import Measurement, Node, OntologyGraph
 from cad_qa.query.candidates import candidate_ids, initial_candidates
 from cad_qa.query.difficulty import difficulty_for_hops
 from cad_qa.query.ir import CandidateSetTrace, Clause, QueryProgram, QueryResolution
+from cad_qa.query.predicate_catalog import nodes_matching_related_metric_compare
 from cad_qa.query.synthesis import synthesize_graph_hop_queries
 
 
@@ -33,11 +34,7 @@ def resolve_query(graph: OntologyGraph, query: QueryProgram) -> QueryResolution:
         if clause.relation:
             relation_families.add(clause.relation)
         if clause.metric:
-            measurement_scopes.update(
-                measurement.scope
-                for node in candidates
-                for measurement in graph.measurements_for(node.id, clause.metric)
-            )
+            measurement_scopes.update(_measurement_scopes_for_clause(graph, candidates, clause))
         steps.append(
             {
                 "step": clause.id,
@@ -2278,6 +2275,16 @@ def _apply_clause(graph: OntologyGraph, candidates: list[Node], clause: Clause) 
                 clause.value,
             )
         ]
+    if clause.kind == "related_metric_compare" and clause.relation and clause.target_type and clause.metric and clause.operator:
+        return nodes_matching_related_metric_compare(
+            graph,
+            candidates,
+            relation=clause.relation,
+            target_type=clause.target_type,
+            metric=clause.metric,
+            operator=clause.operator,
+            value=clause.value,
+        )
     return candidates
 
 
@@ -2319,6 +2326,26 @@ def _apply_reference_feature_distance_aggregation(
 def _measurement_value(graph: OntologyGraph, entity_id: str, metric: str) -> Any:
     measurements: list[Measurement] = graph.measurements_for(entity_id, metric)
     return measurements[0].value if measurements else None
+
+
+def _measurement_scopes_for_clause(graph: OntologyGraph, candidates: list[Node], clause: Clause) -> set[str]:
+    if not clause.metric:
+        return set()
+    if clause.kind == "related_metric_compare" and clause.relation and clause.target_type:
+        return {
+            measurement.scope
+            for node in candidates
+            for edge in graph.relations
+            if edge.source_id == node.id and edge.type == clause.relation
+            for target in [graph.node(edge.target_id)]
+            if target is not None and target.type == clause.target_type
+            for measurement in graph.measurements_for(target.id, clause.metric)
+        }
+    return {
+        measurement.scope
+        for node in candidates
+        for measurement in graph.measurements_for(node.id, clause.metric)
+    }
 
 
 def _measurement_matches(graph: OntologyGraph, entity_id: str, metric: str, expected: Any) -> bool:

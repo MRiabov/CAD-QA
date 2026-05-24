@@ -100,6 +100,8 @@ def _clause_format_values(clause: Any, query: Any | None) -> dict[str, Any]:
         values.update(values["value"])
     if isinstance(values["metric"], str):
         values["metric_label"] = metric_label(values["metric"])
+    if isinstance(values["operator"], str):
+        values["operator_label"] = _operator_label(values["operator"])
     if query is not None:
         values["query_id"] = getattr(query, "query_id", None)
         values["query_target_type"] = getattr(query, "target_type", None)
@@ -120,3 +122,13 @@ def _template_mapping(section: str) -> dict[str, str]:
     if not all(isinstance(key, str) and isinstance(template, str) for key, template in value.items()):
         raise ValueError(f"{PROMPT_TEMPLATE_PATH} section must map strings to strings: {section}")
     return value
+
+
+def _operator_label(operator: str) -> str:
+    return {
+        ">": "greater than",
+        ">=": "at least",
+        "<": "less than",
+        "<=": "at most",
+        "==": "equal to",
+    }.get(operator, operator)

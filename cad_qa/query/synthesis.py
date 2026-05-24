@@ -12,6 +12,8 @@ from cad_qa.query.predicate_catalog import (
     merge_sampled_parameters,
     metric_axis,
     measurement_predicate,
+    nodes_matching_related_metric_compare,
+    related_metric_compare_predicate,
     relation_predicate,
 )
 
@@ -35,6 +37,27 @@ class ViableExtreme:
     candidates: list[Node]
     metric: str
     aggregation: str
+
+
+@dataclass(frozen=True)
+class SelectorCountFamilySpec:
+    family_id: str
+    relation: str
+    selected_type: str
+    relation_clause_id: str
+    related_metric_clause_id: str
+    selected_count_clause_id: str
+    related_metrics: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class ViableSelectorCount:
+    spec: SelectorCountFamilySpec
+    metric: str
+    operator: str
+    value: float
+    aggregation: str
+    candidate_ids: tuple[str, ...]
 
 
 EXTREME_FAMILY_SPECS = (
@@ -68,6 +91,39 @@ EXTREME_FAMILY_SPECS = (
     ),
 )
 
+SELECTOR_COUNT_FAMILY_SPECS = (
+    SelectorCountFamilySpec(
+        family_id="parameterized_kernel_face_selector_count",
+        relation="has_kernel_stable_face_id",
+        selected_type="face",
+        relation_clause_id="has_parameterized_face_selection",
+        related_metric_clause_id="has_parameterized_selected_face_metric_threshold",
+        selected_count_clause_id="has_parameterized_selected_count",
+        related_metrics=(
+            "coordinate_x",
+            "coordinate_y",
+            "coordinate_z",
+            "distance_to_origin",
+            "face_area",
+        ),
+    ),
+    SelectorCountFamilySpec(
+        family_id="parameterized_kernel_edge_selector_count",
+        relation="has_kernel_stable_edge_id",
+        selected_type="edge",
+        relation_clause_id="has_parameterized_edge_selection",
+        related_metric_clause_id="has_parameterized_selected_edge_metric_threshold",
+        selected_count_clause_id="has_parameterized_selected_count",
+        related_metrics=(
+            "midpoint_x",
+            "midpoint_y",
+            "midpoint_z",
+            "midpoint_distance_to_origin",
+            "edge_length",
+        ),
+    ),
+)
+
 
 def synthesize_graph_hop_queries(graph: OntologyGraph) -> list[QueryProgram]:
     """Create deterministic parameterized graph-hop queries from graph evidence."""
@@ -79,6 +135,14 @@ def synthesize_graph_hop_queries(graph: OntologyGraph) -> list[QueryProgram]:
             continue
         choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
         query = _query_for_extreme(graph, choice)
+        if query is not None:
+            queries.append(query)
+    for spec in SELECTOR_COUNT_FAMILY_SPECS:
+        viable = _viable_selector_counts(graph, spec)
+        if not viable:
+            continue
+        choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
+        query = _query_for_selector_count(graph, choice)
         if query is not None:
             queries.append(query)
     return queries
@@ -175,12 +239,167 @@ def _query_for_extreme(graph: OntologyGraph, viable: ViableExtreme) -> QueryProg
     )
 
 
+def _viable_selector_counts(graph: OntologyGraph, spec: SelectorCountFamilySpec) -> list[ViableSelectorCount]:
+    selectors = _nodes_with_numeric_measurement(graph, graph.nodes_by_type("selector"), "selected_count")
+    relation = relation_predicate(
+        graph,
+        selectors,
+        clause_id=spec.relation_clause_id,
+        relation=spec.relation,
+        target_type=spec.selected_type,
+    )
+    if relation is None:
+        return []
+    relation_candidates = _apply_relation_clause(graph, selectors, spec.relation)
+    viable: list[ViableSelectorCount] = []
+    for metric in spec.related_metrics:
+        thresholds = _related_metric_thresholds(graph, relation_candidates, relation=spec.relation, metric=metric)
+        for operator, value in thresholds:
+            predicate = related_metric_compare_predicate(
+                graph,
+                relation_candidates,
+                clause_id=spec.related_metric_clause_id,
+                relation=spec.relation,
+                target_type=spec.selected_type,
+                metric=metric,
+                operator=operator,
+                value=value,
+            )
+            if predicate is None or predicate.candidate_count_after >= len(relation_candidates):
+                continue
+            narrowed = nodes_matching_related_metric_compare(
+                graph,
+                relation_candidates,
+                relation=spec.relation,
+                target_type=spec.selected_type,
+                metric=metric,
+                operator=operator,
+                value=value,
+            )
+            if len(narrowed) < 2:
+                continue
+            for aggregation in ("argmax", "argmin"):
+                if _has_unique_extreme(graph, narrowed, "selected_count", aggregation):
+                    viable.append(
+                        ViableSelectorCount(
+                            spec=spec,
+                            metric=metric,
+                            operator=operator,
+                            value=value,
+                            aggregation=aggregation,
+                            candidate_ids=tuple(node.id for node in narrowed),
+                        )
+                    )
+    return sorted(
+        viable,
+        key=lambda item: (
+            item.metric,
+            item.operator,
+            item.value,
+            item.aggregation,
+            item.candidate_ids,
+        ),
+    )
+
+
+def _query_for_selector_count(graph: OntologyGraph, viable: ViableSelectorCount) -> QueryProgram | None:
+    spec = viable.spec
+    selectors = _nodes_with_numeric_measurement(graph, graph.nodes_by_type("selector"), "selected_count")
+    relation = relation_predicate(
+        graph,
+        selectors,
+        clause_id=spec.relation_clause_id,
+        relation=spec.relation,
+        target_type=spec.selected_type,
+    )
+    if relation is None:
+        return None
+    relation_candidates = _apply_relation_clause(graph, selectors, spec.relation)
+    related_metric = related_metric_compare_predicate(
+        graph,
+        relation_candidates,
+        clause_id=spec.related_metric_clause_id,
+        relation=spec.relation,
+        target_type=spec.selected_type,
+        metric=viable.metric,
+        operator=viable.operator,
+        value=viable.value,
+    )
+    selected_count = measurement_predicate(
+        graph,
+        relation_candidates,
+        clause_id=spec.selected_count_clause_id,
+        metric="selected_count",
+    )
+    if related_metric is None or selected_count is None:
+        return None
+    direction = "max" if viable.aggregation == "argmax" else "min"
+    sampled = merge_sampled_parameters(
+        {
+            "target_type": ["selector"],
+            "selected_entity_type": [spec.selected_type],
+            "final_selector": [f"{direction}:selected_count"],
+            "aggregation_metric": ["selected_count"],
+            "extremum_direction": [direction],
+            "predicate_catalog_version": ["v1"],
+            "synthesis_strategy": ["selector_count_narrowing_v1"],
+        },
+        relation.sampled_parameters,
+        related_metric.sampled_parameters,
+        selected_count.sampled_parameters,
+    )
+    axis = metric_axis(viable.metric)
+    if axis is not None:
+        sampled = merge_sampled_parameters(sampled, {"narrowing_axis": [axis]})
+    return QueryProgram(
+        query_id=f"{graph.graph_id}:synth:{spec.family_id}",
+        target_type="selector",
+        clauses=[
+            relation.clause,
+            related_metric.clause,
+            selected_count.clause,
+        ],
+        aggregation=viable.aggregation,
+        aggregation_metric="selected_count",
+        hop_count=4,
+        difficulty="cad_browsecomp",
+        min_individual_clause_candidates=2,
+        sampled_parameters=sampled,
+    )
+
+
 def _apply_relation_clause(graph: OntologyGraph, candidates: list[Node], relation_type: str) -> list[Node]:
     return [
         node
         for node in candidates
         if any(edge.source_id == node.id and edge.type == relation_type for edge in graph.relations)
     ]
+
+
+def _related_metric_thresholds(
+    graph: OntologyGraph,
+    candidates: list[Node],
+    *,
+    relation: str,
+    metric: str,
+) -> list[tuple[str, float]]:
+    values = sorted(
+        {
+            round(float(measurement.value), 6)
+            for node in candidates
+            for edge in graph.relations
+            if edge.source_id == node.id and edge.type == relation
+            for measurement in graph.measurements_for(edge.target_id, metric)
+            if isinstance(measurement.value, (int, float))
+        }
+    )
+    thresholds: list[tuple[str, float]] = []
+    for value in values:
+        if any(candidate_value < value for candidate_value in values):
+            thresholds.append(("<", value))
+        if any(candidate_value > value for candidate_value in values):
+            thresholds.append((">", value))
+    return thresholds[:24]
 
 
 def _nodes_with_numeric_measurement(graph: OntologyGraph, candidates: list[Node], metric: str) -> list[Node]:

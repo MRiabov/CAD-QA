@@ -78,6 +78,8 @@ def _clause_shape(clause: Clause) -> str:
         return f"reference_{clause.metric or 'unknown'}"
     if clause.kind == "metric_compare":
         return f"metric_compare_{clause.metric or 'unknown'}_{clause.operator or 'op'}"
+    if clause.kind == "related_metric_compare":
+        return f"related_metric_compare_{clause.relation or 'relation'}_{clause.metric or 'unknown'}_{clause.operator or 'op'}"
     if clause.kind == "property_equals":
         return f"property_{clause.metric or 'unknown'}"
     return clause.kind
@@ -93,6 +95,11 @@ def _clause_mapping_shape(clause: dict[str, Any]) -> str:
         return f"reference_{clause.get('metric') or 'unknown'}"
     if kind == "metric_compare":
         return f"metric_compare_{clause.get('metric') or 'unknown'}_{clause.get('operator') or 'op'}"
+    if kind == "related_metric_compare":
+        return (
+            f"related_metric_compare_{clause.get('relation') or 'relation'}_"
+            f"{clause.get('metric') or 'unknown'}_{clause.get('operator') or 'op'}"
+        )
     if kind == "property_equals":
         return f"property_{clause.get('metric') or 'unknown'}"
     return str(kind or "unknown")

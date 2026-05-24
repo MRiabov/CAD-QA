@@ -73,6 +73,12 @@ families:
     minimum_hops: 2
     maximum_hops: 2
     notes: Direct global count extremum; release version needs graph-hop narrowing.
+  - id: parameterized_kernel_face_selector_count
+    status: release
+    target_type: selector
+    minimum_hops: 4
+    maximum_hops: 4
+    notes: Synthesized selector-count family that narrows by selected-face geometry before sampling min/max count.
   - id: highest_kernel_selected_edge
     status: release
     target_type: edge
@@ -155,6 +161,12 @@ families:
     minimum_hops: 2
     maximum_hops: 2
     notes: Direct global count extremum; release version needs graph-hop narrowing.
+  - id: parameterized_kernel_edge_selector_count
+    status: release
+    target_type: selector
+    minimum_hops: 4
+    maximum_hops: 4
+    notes: Synthesized selector-count family that narrows by selected-edge geometry before sampling min/max count.
   - id: path_nearest_origin
     status: review_only
     target_type: path
