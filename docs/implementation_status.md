@@ -184,6 +184,11 @@ when those choices can be sampled and verified.
   metadata plus collapsed target type, final selector, aggregation metric/axis,
   extremum direction, clause metric/axis, comparison operator, reference metric,
   and value-bucket distributions for generated release families.
+- The preview CLI writes machine-readable preview evidence next to the Markdown
+  artifact and into dataset directories. Benchmark-release release/SFT reports
+  block missing preview evidence, dataset-fingerprint mismatches, and fewer than
+  20 previewed rows per generated release family, or all rows when a family has
+  fewer than 20 rows.
 - Public/private row views separate answer-free benchmark inputs from private
   gold answers, query programs, candidate traces, and clue maps.
 - Public/private exports include row-ID parity and hidden-field leak audits.
@@ -689,14 +694,15 @@ Checked as implemented with remaining scale caveats:
   unique-answer count, answer entropy, candidate breadth, intended-family
   coverage, sampled-parameter balance, and non-collapsed split group coverage.
   Remaining benchmark-release work is synthesis-layer metadata for predicate
-  sequence/reference/rank/rendered wording and machine-checked preview/test
-  evidence for changed release families.
+  sequence/reference/rank/rendered wording and machine-checked new-family test
+  evidence.
   Rechecking the current CadEvolve-50 release artifact with
   `--release-tier benchmark-release` blocks release on row count, split group
   coverage, default SFT row count, prompt-family balance, prompt-template
   balance, answer entropy, geometry-hop coverage, main BrowseComp hop coverage,
   syntax-only calibration cap, cross-feature value-bearing coverage, and
-  candidate breadth, intended-family coverage, and sampled-parameter balance.
+  candidate breadth, intended-family coverage, sampled-parameter balance, and
+  preview evidence.
 - Broaden value-bearing and tolerance-equal coverage beyond the implemented
   core to radius/diameter/angle once those measurements are extracted broadly,
   additional face/endpoint/material/void coordinate combinations, and larger

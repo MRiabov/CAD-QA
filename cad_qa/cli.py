@@ -10,7 +10,12 @@ from typing import Any
 
 from cad_qa.dataset.audit import leakage_audit
 from cad_qa.dataset.parameter_balance import parameter_balance_report
-from cad_qa.dataset.preview import dataset_preview_markdown
+from cad_qa.dataset.preview import (
+    DEFAULT_PREVIEW_EVIDENCE_FILENAME,
+    dataset_preview_evidence_report,
+    dataset_preview_markdown,
+    preview_evidence_gate_report,
+)
 from cad_qa.dataset.public import write_public_private_artifacts
 from cad_qa.dataset.quarantine import quarantine_report
 from cad_qa.dataset.release import export_release_dataset
@@ -154,6 +159,7 @@ def build_parser() -> argparse.ArgumentParser:
     release_report.add_argument("--out", type=Path)
     release_report.add_argument("--release-tier", choices=RELEASE_TIERS, default=DEFAULT_RELEASE_TIER)
     release_report.add_argument("--family-manifest", type=Path, default=DEFAULT_FAMILY_MANIFEST)
+    release_report.add_argument("--preview-evidence", type=Path)
     release_report.set_defaults(func=_cmd_dataset_release_report)
     shortcut_report = dataset_sub.add_parser("shortcut-report")
     shortcut_report.add_argument("path", type=Path, help="Dataset directory or rows.jsonl file.")
@@ -221,6 +227,7 @@ def build_parser() -> argparse.ArgumentParser:
     export_sft.add_argument("--scaling-sizes", type=int, nargs="*", default=[8, 16, 32])
     export_sft.add_argument("--release-tier", choices=RELEASE_TIERS, default=DEFAULT_RELEASE_TIER)
     export_sft.add_argument("--family-manifest", type=Path, default=DEFAULT_FAMILY_MANIFEST)
+    export_sft.add_argument("--preview-evidence", type=Path)
     export_sft.add_argument(
         "--include-calibration",
         action="store_true",
@@ -487,6 +494,7 @@ def _cmd_dataset_release_report(args: argparse.Namespace) -> dict[str, Any]:
         out=args.out,
         release_tier=args.release_tier,
         family_manifest=args.family_manifest,
+        preview_evidence=args.preview_evidence,
     )
 
 
@@ -527,8 +535,20 @@ def _cmd_dataset_preview(args: argparse.Namespace) -> dict[str, Any]:
         ),
         encoding="utf-8",
     )
+    evidence = dataset_preview_evidence_report(
+        rows,
+        preview_path=args.out,
+        sample_per_family=args.sample_per_family,
+        families=args.families,
+        seed=args.seed,
+    )
+    evidence_path = args.out.with_suffix(".preview_evidence.json")
+    write_json(evidence_path, evidence)
+    if args.path.is_dir():
+        write_json(args.path / DEFAULT_PREVIEW_EVIDENCE_FILENAME, evidence)
     return {
         "out": str(args.out),
+        "preview_evidence": str(evidence_path),
         "row_count": len(rows),
         "graph_count": len(graphs) if graphs is not None else 0,
         "sample_per_family": args.sample_per_family,
@@ -684,11 +704,24 @@ def _cmd_training_export_sft(args: argparse.Namespace) -> dict[str, Any]:
         min_axis_direction_share=profile.min_axis_direction_parameter_share,
         enforce=profile.enforce_parameter_balance,
     )
+    preview_evidence_payload = (
+        json.loads(args.preview_evidence.read_text(encoding="utf-8"))
+        if args.preview_evidence and args.preview_evidence.exists()
+        else None
+    )
+    report["preview_evidence"] = preview_evidence_gate_report(
+        rows,
+        evidence=preview_evidence_payload,
+        family_manifest=args.family_manifest,
+        min_samples_per_family=profile.min_preview_samples_per_family,
+        enforce=profile.enforce_preview_evidence,
+    )
     report["training_stop_gates"] = _training_stop_gates(
         report["training_readiness"],
         report["training_balance"],
         report["intended_family_coverage"],
         report["parameter_balance"],
+        report["preview_evidence"],
         profile_name=profile.name,
     )
     report["blocking_training_gates"] = _blocking_gates(report["training_stop_gates"])
@@ -709,6 +742,7 @@ def _training_stop_gates(
     training_balance: dict[str, Any],
     intended_family_coverage: dict[str, Any],
     parameter_balance: dict[str, Any],
+    preview_evidence: dict[str, Any],
     *,
     profile_name: str = DEFAULT_RELEASE_TIER,
 ) -> dict[str, Any]:
@@ -731,6 +765,7 @@ def _training_stop_gates(
         "candidate_breadth": training_balance["passes_candidate_breadth"],
         "intended_family_coverage": intended_family_coverage["valid"],
         "parameter_balance": parameter_balance["valid"],
+        "preview_evidence": preview_evidence["valid"],
     }
 
 

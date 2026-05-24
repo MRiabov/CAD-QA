@@ -11,6 +11,7 @@ from typing import Any
 
 from cad_qa.dataset.audit import leakage_audit
 from cad_qa.dataset.parameter_balance import parameter_balance_report
+from cad_qa.dataset.preview import DEFAULT_PREVIEW_EVIDENCE_FILENAME, preview_evidence_gate_report
 from cad_qa.dataset.public import public_private_audit
 from cad_qa.dataset.quarantine import quarantine_report
 from cad_qa.dataset.report import dataset_report, failure_report
@@ -60,6 +61,8 @@ class ReleaseGateProfile:
     enforce_parameter_balance: bool
     max_parameter_value_share: float | None
     min_axis_direction_parameter_share: float | None
+    enforce_preview_evidence: bool
+    min_preview_samples_per_family: int | None
 
 
 SMOKE_RELEASE_PROFILE = ReleaseGateProfile(
@@ -90,6 +93,8 @@ SMOKE_RELEASE_PROFILE = ReleaseGateProfile(
     enforce_parameter_balance=False,
     max_parameter_value_share=None,
     min_axis_direction_parameter_share=None,
+    enforce_preview_evidence=False,
+    min_preview_samples_per_family=None,
 )
 
 RELEASE_CANDIDATE_PROFILE = replace(SMOKE_RELEASE_PROFILE, name="release-candidate")
@@ -122,6 +127,8 @@ BENCHMARK_RELEASE_PROFILE = ReleaseGateProfile(
     enforce_parameter_balance=True,
     max_parameter_value_share=0.35,
     min_axis_direction_parameter_share=0.20,
+    enforce_preview_evidence=True,
+    min_preview_samples_per_family=20,
 )
 
 RELEASE_GATE_PROFILES = {
@@ -153,6 +160,7 @@ def release_verifier_report(
     private_rows: list[dict[str, Any]] | None = None,
     release_tier: str = DEFAULT_RELEASE_TIER,
     family_manifest: Path | None = DEFAULT_FAMILY_MANIFEST,
+    preview_evidence: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Aggregate release-readiness gates and verifier/quarantine taxonomy."""
 
@@ -180,6 +188,13 @@ def release_verifier_report(
         max_parameter_value_share=profile.max_parameter_value_share,
         min_axis_direction_share=profile.min_axis_direction_parameter_share,
         enforce=profile.enforce_parameter_balance,
+    )
+    preview_evidence_report = preview_evidence_gate_report(
+        rows,
+        evidence=preview_evidence,
+        family_manifest=family_manifest,
+        min_samples_per_family=profile.min_preview_samples_per_family,
+        enforce=profile.enforce_preview_evidence,
     )
     shortcut_resistance = dataset["shortcut_resistance"]
     failures_by_reason = failure_report(failures or [])
@@ -211,6 +226,7 @@ def release_verifier_report(
         "candidate_breadth": release_balance["passes_candidate_breadth"],
         "intended_family_coverage": intended_family_coverage["valid"],
         "parameter_balance": parameter_balance["valid"],
+        "preview_evidence": preview_evidence_report["valid"],
         "geometry_critical_prompt_family_coverage": _passes_geometry_critical_family_coverage(
             shortcut_resistance
         ),
@@ -234,6 +250,7 @@ def release_verifier_report(
         "release_balance": release_balance,
         "intended_family_coverage": intended_family_coverage,
         "parameter_balance": parameter_balance,
+        "preview_evidence": preview_evidence_report,
         "shortcut_resistance": shortcut_resistance,
         "failure_report": failures_by_reason,
         "split_manifest": split,
@@ -456,6 +473,10 @@ def release_verifier_markdown(report: dict[str, Any]) -> str:
         "",
         _json_block(report["parameter_balance"]),
         "",
+        "## Preview Evidence",
+        "",
+        _json_block(report["preview_evidence"]),
+        "",
         "## Shortcut Resistance",
         "",
         _json_block(
@@ -519,6 +540,7 @@ def write_release_verifier_report(
     out: Path | None = None,
     release_tier: str = DEFAULT_RELEASE_TIER,
     family_manifest: Path | None = DEFAULT_FAMILY_MANIFEST,
+    preview_evidence: Path | None = None,
 ) -> dict[str, Any]:
     rows = read_jsonl(dataset_dir / "rows.jsonl")
     failure_path = dataset_dir / "failure_manifest.jsonl"
@@ -529,6 +551,12 @@ def write_release_verifier_report(
     private_path = dataset_dir / "private.jsonl"
     public = read_jsonl(public_path) if public_path.exists() else None
     private = read_jsonl(private_path) if private_path.exists() else None
+    preview_evidence_path = preview_evidence or dataset_dir / DEFAULT_PREVIEW_EVIDENCE_FILENAME
+    preview_evidence_payload = (
+        json.loads(preview_evidence_path.read_text(encoding="utf-8"))
+        if preview_evidence_path.exists()
+        else None
+    )
     report = release_verifier_report(
         rows,
         failures=failures,
@@ -537,6 +565,7 @@ def write_release_verifier_report(
         private_rows=private,
         release_tier=release_tier,
         family_manifest=family_manifest,
+        preview_evidence=preview_evidence_payload,
     )
     output_dir = out or dataset_dir
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -583,6 +612,8 @@ def release_gate_profile_report(profile: ReleaseGateProfile) -> dict[str, Any]:
         "enforce_parameter_balance": profile.enforce_parameter_balance,
         "max_parameter_value_share": profile.max_parameter_value_share,
         "min_axis_direction_parameter_share": profile.min_axis_direction_parameter_share,
+        "enforce_preview_evidence": profile.enforce_preview_evidence,
+        "min_preview_samples_per_family": profile.min_preview_samples_per_family,
     }
 
 

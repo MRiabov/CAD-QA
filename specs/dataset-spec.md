@@ -123,8 +123,10 @@ over that metadata: target type, final selector, aggregation metric/axis,
 extremum direction, clause metrics/axes, comparison operators, reference
 metrics, and value buckets. Full synthesis-layer parameter bindings for
 predicate sequence, reference anchor, rank, tie-break metric, and rendered
-wording, plus machine-checked preview/test evidence gates, remain open
-implementation work.
+wording remain open implementation work. The preview CLI writes machine-readable
+preview evidence and benchmark-release reports block missing, stale, or
+insufficient preview coverage; machine-checked new-family test evidence remains
+open implementation work.
 
 ## Splits
 

@@ -8,6 +8,7 @@ from pathlib import Path
 from cad_qa.dataset.materialize import materialize_row
 from cad_qa.dataset.audit import leakage_audit
 from cad_qa.dataset.parameter_balance import parameter_balance_report
+from cad_qa.dataset.preview import dataset_preview_evidence_report, preview_evidence_gate_report
 from cad_qa.dataset.public import private_rows, public_private_audit, public_rows, write_public_private_artifacts
 from cad_qa.dataset.quarantine import quarantine_report
 from cad_qa.dataset.release import export_release_dataset
@@ -2269,6 +2270,8 @@ def test_benchmark_release_tier_applies_stricter_numeric_gates() -> None:
     assert benchmark["release_gate_profile"]["enforce_parameter_balance"]
     assert benchmark["release_gate_profile"]["max_parameter_value_share"] == 0.35
     assert benchmark["release_gate_profile"]["min_axis_direction_parameter_share"] == 0.20
+    assert benchmark["release_gate_profile"]["enforce_preview_evidence"]
+    assert benchmark["release_gate_profile"]["min_preview_samples_per_family"] == 20
     assert not benchmark["passes_prompt_template_balance"]
     assert not benchmark["passes_answer_entropy"]
     assert benchmark["passes_geometry_hop_coverage"]
@@ -2411,6 +2414,96 @@ def test_parameter_balance_report_blocks_collapsed_query_parameters(tmp_path: Pa
     assert legacy_report["sampled_parameter_metadata_missing_count"] == 1
 
 
+def test_preview_evidence_gate_requires_sufficient_release_family_samples(tmp_path: Path) -> None:
+    manifest = tmp_path / "family_specs.yaml"
+    manifest.write_text(
+        "\n".join(
+            [
+                "schema_version: 1",
+                "families:",
+                "  - id: release_family",
+                "    status: release",
+                "  - id: review_fixture",
+                "    status: review_only",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    rows = [
+        {
+            "row_id": f"row:src:{index}:release_family",
+            "prompt": f"prompt {index}",
+            "gold_answer": f"entity:{index}",
+            "query_program": {"query_id": f"graph:src:q{index}:release_family"},
+        }
+        for index in range(3)
+    ]
+    rows.append(
+        {
+            "row_id": "row:src:0:review_fixture",
+            "prompt": "review prompt",
+            "gold_answer": "entity:review",
+            "query_program": {"query_id": "graph:src:q0:review_fixture"},
+        }
+    )
+
+    missing = preview_evidence_gate_report(
+        rows,
+        evidence=None,
+        family_manifest=manifest,
+        min_samples_per_family=2,
+        enforce=True,
+    )
+    assert not missing["valid"]
+    assert missing["violations"][0]["reason"] == "missing_preview_evidence"
+
+    insufficient = dataset_preview_evidence_report(
+        rows,
+        sample_per_family=1,
+        family_manifest=manifest,
+    )
+    insufficient_report = preview_evidence_gate_report(
+        rows,
+        evidence=insufficient,
+        family_manifest=manifest,
+        min_samples_per_family=2,
+        enforce=True,
+    )
+    assert not insufficient_report["valid"]
+    assert any(
+        violation["reason"] == "insufficient_family_preview_samples"
+        for violation in insufficient_report["violations"]
+    )
+
+    sufficient = dataset_preview_evidence_report(
+        rows,
+        sample_per_family=3,
+        family_manifest=manifest,
+    )
+    sufficient_report = preview_evidence_gate_report(
+        rows,
+        evidence=sufficient,
+        family_manifest=manifest,
+        min_samples_per_family=2,
+        enforce=True,
+    )
+    assert sufficient_report["valid"]
+    assert sufficient_report["families"] == [
+        {
+            "prompt_family": "release_family",
+            "row_count": 3,
+            "required_sample_count": 2,
+            "sampled_count": 3,
+            "sampled_row_ids": [
+                "row:src:0:release_family",
+                "row:src:1:release_family",
+                "row:src:2:release_family",
+            ],
+            "valid": True,
+        }
+    ]
+
+
 def test_benchmark_release_verifier_blocks_intended_family_coverage_failures(tmp_path: Path) -> None:
     manifest = tmp_path / "family_specs.yaml"
     manifest.write_text(
@@ -2491,8 +2584,10 @@ def test_benchmark_release_verifier_blocks_intended_family_coverage_failures(tmp
 
     assert not report["stop_gates"]["intended_family_coverage"]
     assert not report["stop_gates"]["parameter_balance"]
+    assert not report["stop_gates"]["preview_evidence"]
     assert "intended_family_coverage" in report["blocking_gates"]
     assert "parameter_balance" in report["blocking_gates"]
+    assert "preview_evidence" in report["blocking_gates"]
     assert report["intended_family_coverage"]["zero_row_release_families"] == ["release_missing"]
     assert report["intended_family_coverage"]["generated_non_release_families"] == ["review_fixture"]
 
@@ -2715,6 +2810,7 @@ def test_training_export_cli_defaults_to_geometry_critical_rows(tmp_path: Path) 
     assert "prompt_family_balance" in default_sft_report["training_stop_gates"]
     assert "intended_family_coverage" in default_sft_report["training_stop_gates"]
     assert "parameter_balance" in default_sft_report["training_stop_gates"]
+    assert "preview_evidence" in default_sft_report["training_stop_gates"]
     assert "input_balance" in default_sft_report
     assert default_sft_report["valid_for_training"]
     assert default_sft_report["blocking_training_gates"] == []
@@ -2739,6 +2835,7 @@ def test_training_export_cli_defaults_to_geometry_critical_rows(tmp_path: Path) 
     assert "default_sft_row_count" in benchmark_sft_report["blocking_training_gates"]
     assert "intended_family_coverage" in benchmark_sft_report["blocking_training_gates"]
     assert "parameter_balance" in benchmark_sft_report["blocking_training_gates"]
+    assert "preview_evidence" in benchmark_sft_report["blocking_training_gates"]
     assert benchmark_sft_report["training_balance"]["release_gate_profile"]["min_default_sft_rows"] == 10000
 
     assert cli_main(
@@ -3393,6 +3490,14 @@ def test_dataset_preview_cli_shows_task_and_node_samples(tmp_path: Path) -> None
     assert "measurement_count" in text
     assert "### `void_region`" in text
     assert "- Nodes: `0`" in text
+    evidence_path = out.with_suffix(".preview_evidence.json")
+    evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+    dataset_evidence = json.loads((dataset_dir / "preview_evidence.json").read_text(encoding="utf-8"))
+    assert evidence == dataset_evidence
+    assert evidence["sample_per_family"] == 1
+    assert evidence["selected_families"] == ["largest_compiled_volume_feature"]
+    assert evidence["families"][0]["prompt_family"] == "largest_compiled_volume_feature"
+    assert evidence["families"][0]["sampled_count"] == 1
 
 
 def test_release_export_cli_filters_quarantined_rows(tmp_path: Path) -> None:
@@ -3677,6 +3782,7 @@ def test_release_verifier_report_stop_gates_and_cli(tmp_path: Path) -> None:
     assert "syntax_only_calibration_cap" in report["stop_gates"]
     assert "intended_family_coverage" in report["stop_gates"]
     assert "parameter_balance" in report["stop_gates"]
+    assert "preview_evidence" in report["stop_gates"]
     assert "geometry_critical_prompt_family_coverage" in report["stop_gates"]
     assert "training_readiness" in report
     assert "split_audit" in report
@@ -3690,6 +3796,7 @@ def test_release_verifier_report_stop_gates_and_cli(tmp_path: Path) -> None:
     assert "Release Balance" in markdown
     assert "Intended Family Coverage" in markdown
     assert "Parameter Balance" in markdown
+    assert "Preview Evidence" in markdown
     assert "Shortcut Resistance" in markdown
 
     dataset_dir = tmp_path / "dataset"
@@ -3707,6 +3814,7 @@ def test_release_verifier_report_stop_gates_and_cli(tmp_path: Path) -> None:
     assert "benchmark_split_group_coverage" in benchmark_report["blocking_gates"]
     assert "intended_family_coverage" in benchmark_report["blocking_gates"]
     assert "parameter_balance" in benchmark_report["blocking_gates"]
+    assert "preview_evidence" in benchmark_report["blocking_gates"]
 
 
 def test_public_private_exports_do_not_leak_hidden_fields(tmp_path: Path) -> None:
