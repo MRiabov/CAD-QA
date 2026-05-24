@@ -102,6 +102,10 @@ clause_templates:
     - "The target face has a measured {metric_label}."
     - "The target face has a known {metric_label}."
     - "The target face has a verified {metric_label}."
+  has_parameterized_equal_face_metric_value:
+    - "The target face has a {metric_label} of {value}."
+    - "The target face's {metric_label} is {value}."
+    - "The target face matches the {metric_label} value {value}."
   has_selected_face_bbox: "The target face has a measured bounding box."
   face.has_origin_distance_relation: "The target face center has a measured distance to the global origin."
   has_face_center_distance: "The target face center has a distance-to-origin measurement."
@@ -154,6 +158,10 @@ clause_templates:
     - "The target edge has a measured {metric_label}."
     - "The target edge has a known {metric_label}."
     - "The target edge has a verified {metric_label}."
+  has_parameterized_equal_edge_metric_value:
+    - "The target edge has a {metric_label} of {value}."
+    - "The target edge's {metric_label} is {value}."
+    - "The target edge matches the {metric_label} value {value}."
   has_selected_edge_bbox: "The target edge has a measured bounding box."
   has_perpendicular_edge_relation: "The target edge is perpendicular to another selected edge."
   has_adjacent_edge_relation: "The target edge is adjacent to another selected edge that shares an endpoint."

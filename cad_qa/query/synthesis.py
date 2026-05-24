@@ -9,9 +9,12 @@ from typing import Any
 from cad_qa.ontology.nodes import Node, OntologyGraph
 from cad_qa.query.ir import QueryProgram
 from cad_qa.query.predicate_catalog import (
+    measurement_bucket_value,
+    measurement_value_predicate,
     merge_sampled_parameters,
     metric_axis,
     measurement_predicate,
+    nodes_matching_measurement_value,
     nodes_matching_related_metric_compare,
     related_metric_compare_predicate,
     relation_predicate,
@@ -60,6 +63,28 @@ class ViableSelectorCount:
     metric: str
     operator: str
     value: float
+    aggregation: str
+    candidate_ids: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class EqualValueExtremeFamilySpec:
+    family_id: str
+    target_type: str
+    relation: str
+    relation_clause_id: str
+    equal_value_clause_id: str
+    selector_metric_clause_id: str
+    equal_metrics: tuple[str, ...]
+    selector_metrics: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class ViableEqualValueExtreme:
+    spec: EqualValueExtremeFamilySpec
+    equal_metric: str
+    equal_value: float
+    selector_metric: str
     aggregation: str
     candidate_ids: tuple[str, ...]
 
@@ -161,6 +186,53 @@ SELECTOR_COUNT_FAMILY_SPECS = (
     ),
 )
 
+EQUAL_VALUE_EXTREME_FAMILY_SPECS = (
+    EqualValueExtremeFamilySpec(
+        family_id="parameterized_equal_face_metric_extreme",
+        target_type="face",
+        relation="has_kernel_stable_face_id",
+        relation_clause_id="has_parameterized_face_set",
+        equal_value_clause_id="has_parameterized_equal_face_metric_value",
+        selector_metric_clause_id="has_parameterized_face_metric",
+        equal_metrics=(
+            "coordinate_x",
+            "coordinate_y",
+            "coordinate_z",
+            "distance_to_origin",
+            "face_area",
+        ),
+        selector_metrics=(
+            "coordinate_x",
+            "coordinate_y",
+            "coordinate_z",
+            "distance_to_origin",
+            "face_area",
+        ),
+    ),
+    EqualValueExtremeFamilySpec(
+        family_id="parameterized_equal_edge_metric_extreme",
+        target_type="edge",
+        relation="has_kernel_stable_edge_id",
+        relation_clause_id="has_parameterized_edge_set",
+        equal_value_clause_id="has_parameterized_equal_edge_metric_value",
+        selector_metric_clause_id="has_parameterized_edge_metric",
+        equal_metrics=(
+            "midpoint_x",
+            "midpoint_y",
+            "midpoint_z",
+            "midpoint_distance_to_origin",
+            "edge_length",
+        ),
+        selector_metrics=(
+            "midpoint_x",
+            "midpoint_y",
+            "midpoint_z",
+            "midpoint_distance_to_origin",
+            "edge_length",
+        ),
+    ),
+)
+
 
 def synthesize_graph_hop_queries(graph: OntologyGraph) -> list[QueryProgram]:
     """Create deterministic parameterized graph-hop queries from graph evidence."""
@@ -188,6 +260,14 @@ def synthesize_graph_hop_queries(graph: OntologyGraph) -> list[QueryProgram]:
             continue
         choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
         query = _query_for_selector_count(graph, choice)
+        if query is not None:
+            queries.append(query)
+    for spec in EQUAL_VALUE_EXTREME_FAMILY_SPECS:
+        viable = _viable_equal_value_extremes(graph, spec)
+        if not viable:
+            continue
+        choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
+        query = _query_for_equal_value_extreme(graph, choice)
         if query is not None:
             queries.append(query)
     return queries
@@ -511,6 +591,146 @@ def _query_for_selector_count(graph: OntologyGraph, viable: ViableSelectorCount)
     )
 
 
+def _viable_equal_value_extremes(
+    graph: OntologyGraph,
+    spec: EqualValueExtremeFamilySpec,
+) -> list[ViableEqualValueExtreme]:
+    candidates = graph.nodes_by_type(spec.target_type)
+    relation = relation_predicate(
+        graph,
+        candidates,
+        clause_id=spec.relation_clause_id,
+        relation=spec.relation,
+        target_type="selector",
+    )
+    if relation is None:
+        return []
+    relation_candidates = _apply_relation_clause(graph, candidates, spec.relation)
+    viable: list[ViableEqualValueExtreme] = []
+    for equal_metric in spec.equal_metrics:
+        for equal_value, equal_nodes in _equal_measurement_groups(graph, relation_candidates, equal_metric):
+            value_predicate = measurement_value_predicate(
+                graph,
+                relation_candidates,
+                clause_id=spec.equal_value_clause_id,
+                metric=equal_metric,
+                value=equal_value,
+            )
+            if value_predicate is None:
+                continue
+            for selector_metric in spec.selector_metrics:
+                if selector_metric == equal_metric:
+                    continue
+                measurement = measurement_predicate(
+                    graph,
+                    equal_nodes,
+                    clause_id=spec.selector_metric_clause_id,
+                    metric=selector_metric,
+                )
+                if measurement is None:
+                    continue
+                metric_candidates = _nodes_with_numeric_measurement(graph, equal_nodes, selector_metric)
+                if len(metric_candidates) < 2:
+                    continue
+                for aggregation in ("argmax", "argmin"):
+                    if _has_unique_extreme(graph, metric_candidates, selector_metric, aggregation):
+                        viable.append(
+                            ViableEqualValueExtreme(
+                                spec=spec,
+                                equal_metric=equal_metric,
+                                equal_value=equal_value,
+                                selector_metric=selector_metric,
+                                aggregation=aggregation,
+                                candidate_ids=tuple(node.id for node in metric_candidates),
+                            )
+                        )
+    return sorted(
+        viable,
+        key=lambda item: (
+            item.equal_metric,
+            item.equal_value,
+            item.selector_metric,
+            item.aggregation,
+            item.candidate_ids,
+        ),
+    )
+
+
+def _query_for_equal_value_extreme(graph: OntologyGraph, viable: ViableEqualValueExtreme) -> QueryProgram | None:
+    spec = viable.spec
+    broad_candidates = graph.nodes_by_type(spec.target_type)
+    relation = relation_predicate(
+        graph,
+        broad_candidates,
+        clause_id=spec.relation_clause_id,
+        relation=spec.relation,
+        target_type="selector",
+    )
+    if relation is None:
+        return None
+    relation_candidates = _apply_relation_clause(graph, broad_candidates, spec.relation)
+    equal_value = measurement_value_predicate(
+        graph,
+        relation_candidates,
+        clause_id=spec.equal_value_clause_id,
+        metric=viable.equal_metric,
+        value=viable.equal_value,
+    )
+    if equal_value is None:
+        return None
+    equal_candidates = nodes_matching_measurement_value(
+        graph,
+        relation_candidates,
+        metric=viable.equal_metric,
+        value=viable.equal_value,
+    )
+    selector_metric = measurement_predicate(
+        graph,
+        equal_candidates,
+        clause_id=spec.selector_metric_clause_id,
+        metric=viable.selector_metric,
+    )
+    if selector_metric is None:
+        return None
+    direction = "max" if viable.aggregation == "argmax" else "min"
+    sampled = merge_sampled_parameters(
+        {
+            "target_type": [spec.target_type],
+            "final_selector": [f"{direction}:{viable.selector_metric}"],
+            "aggregation_metric": [viable.selector_metric],
+            "equal_measurement_metric": [viable.equal_metric],
+            "extremum_direction": [direction],
+            "predicate_catalog_version": ["v1"],
+            "prompt_wording_variant": [_prompt_wording_variant(graph.graph_id, spec.family_id)],
+            "synthesis_strategy": ["equal_measurement_narrowing_v1"],
+        },
+        relation.sampled_parameters,
+        equal_value.sampled_parameters,
+        selector_metric.sampled_parameters,
+    )
+    selector_axis = metric_axis(viable.selector_metric)
+    if selector_axis is not None:
+        sampled = merge_sampled_parameters(sampled, {"aggregation_axis": [selector_axis]})
+    equal_axis = metric_axis(viable.equal_metric)
+    if equal_axis is not None:
+        sampled = merge_sampled_parameters(sampled, {"equal_measurement_axis": [equal_axis]})
+    return QueryProgram(
+        query_id=f"{graph.graph_id}:synth:{spec.family_id}",
+        target_type=spec.target_type,
+        clauses=[
+            relation.clause,
+            equal_value.clause,
+            selector_metric.clause,
+        ],
+        aggregation=viable.aggregation,
+        aggregation_metric=viable.selector_metric,
+        hop_count=4,
+        difficulty="cad_browsecomp",
+        min_individual_clause_candidates=2,
+        sampled_parameters=sampled,
+    )
+
+
 def _apply_relation_clause(graph: OntologyGraph, candidates: list[Node], relation_type: str) -> list[Node]:
     return [
         node
@@ -551,6 +771,26 @@ def _nodes_with_numeric_measurement(graph: OntologyGraph, candidates: list[Node]
         for node in candidates
         if isinstance(_measurement_value(graph, node.id, metric), (int, float))
     ]
+
+
+def _equal_measurement_groups(
+    graph: OntologyGraph,
+    candidates: list[Node],
+    metric: str,
+) -> list[tuple[float, list[Node]]]:
+    groups: dict[float, list[Node]] = {}
+    for node in candidates:
+        bucket = measurement_bucket_value(_measurement_value(graph, node.id, metric))
+        if bucket is not None:
+            groups.setdefault(bucket, []).append(node)
+    return sorted(
+        (
+            (value, sorted(nodes, key=lambda node: node.id))
+            for value, nodes in groups.items()
+            if len(nodes) >= 2
+        ),
+        key=lambda item: (item[0], [node.id for node in item[1]]),
+    )
 
 
 def _has_unique_extreme(

@@ -2295,6 +2295,91 @@ def test_synthesis_skips_rank_family_when_rank_is_tied() -> None:
     assert "parameterized_kernel_edge_rank" not in families
 
 
+def test_synthesis_generates_equal_value_face_and_edge_queries() -> None:
+    face_graph = OntologyGraph(graph_id="graph:equal-face-synth", source={"source_id": "synthetic", "source_code": ""})
+    face_graph.add_node(Node("selector:faces", "selector", "faces"))
+    for face_id, area, coordinate_z in [
+        ("face:a", 12.0, 0.0),
+        ("face:b", 12.0 + 1e-7, 5.0),
+        ("face:c", 8.0, 9.0),
+    ]:
+        face_graph.add_node(Node(face_id, "face", face_id))
+        face_graph.add_relation(Relation(face_id, "selector:faces", "has_kernel_stable_face_id"))
+        face_graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", area, "mm^2"))
+        face_graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_z", coordinate_z, "mm"))
+
+    face_query = next(
+        query
+        for query in synthesize_graph_hop_queries(face_graph)
+        if query.query_id.endswith("parameterized_equal_face_metric_extreme")
+    )
+    face_resolution = resolve_query(face_graph, face_query)
+    face_row = materialize_row(face_graph, face_resolution)
+    face_equal_step = next(step for step in face_row.candidate_trace["steps"] if step["step"] == "has_parameterized_equal_face_metric_value")
+
+    assert face_resolution.verifier_status == "resolved"
+    assert face_resolution.gold_answer in {"face:a", "face:b"}
+    assert face_query.clauses[1].metric == "face_area"
+    assert face_query.clauses[1].value == 12.0
+    assert face_query.aggregation_metric == "coordinate_z"
+    assert face_equal_step["after"] == ["face:a", "face:b"]
+    assert face_row.logical_hop_count == 4
+    assert face_row.geometry_hop_count == 4
+    assert face_row.query_program["sampled_parameters"]["equal_measurement_metric"] == ["face_area"]
+    assert face_row.query_program["sampled_parameters"]["measurement_value_bucket"] == ["face_area:12"]
+    assert dataset_report([face_row])["quality_flags"]["value_bearing_measurement"] == 1
+    assert "12.0" in face_row.prompt
+
+    edge_graph = OntologyGraph(graph_id="graph:equal-edge-synth", source={"source_id": "synthetic", "source_code": ""})
+    edge_graph.add_node(Node("selector:edges", "selector", "edges"))
+    for edge_id, length, midpoint_y in [
+        ("edge:a", 10.0, -3.0),
+        ("edge:b", 10.0 + 1e-7, 7.0),
+        ("edge:c", 4.0, 2.0),
+    ]:
+        edge_graph.add_node(Node(edge_id, "edge", edge_id))
+        edge_graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
+        edge_graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
+        edge_graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint_y, "mm"))
+
+    edge_query = next(
+        query
+        for query in synthesize_graph_hop_queries(edge_graph)
+        if query.query_id.endswith("parameterized_equal_edge_metric_extreme")
+    )
+    edge_resolution = resolve_query(edge_graph, edge_query)
+    edge_row = materialize_row(edge_graph, edge_resolution)
+    edge_equal_step = next(step for step in edge_row.candidate_trace["steps"] if step["step"] == "has_parameterized_equal_edge_metric_value")
+
+    assert edge_resolution.verifier_status == "resolved"
+    assert edge_resolution.gold_answer in {"edge:a", "edge:b"}
+    assert edge_query.clauses[1].metric == "edge_length"
+    assert edge_query.clauses[1].value == 10.0
+    assert edge_query.aggregation_metric == "midpoint_y"
+    assert edge_equal_step["after"] == ["edge:a", "edge:b"]
+    assert edge_row.query_program["sampled_parameters"]["equal_measurement_metric"] == ["edge_length"]
+    assert edge_row.query_program["sampled_parameters"]["measurement_value_bucket"] == ["edge_length:10"]
+    assert "10.0" in edge_row.prompt
+
+
+def test_synthesis_skips_equal_value_family_without_repeated_value_distractors() -> None:
+    graph = OntologyGraph(graph_id="graph:no-equal-edge-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph.add_node(Node("selector:edges", "selector", "edges"))
+    for edge_id, length, midpoint_y in [
+        ("edge:a", 10.0, -3.0),
+        ("edge:b", 8.0, 7.0),
+        ("edge:c", 4.0, 2.0),
+    ]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint_y, "mm"))
+
+    families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
+
+    assert "parameterized_equal_edge_metric_extreme" not in families
+
+
 def test_synthesis_generates_geometry_narrowed_selector_count_query() -> None:
     face_graph = OntologyGraph(graph_id="graph:face-selector-count", source={"source_id": "synthetic", "source_code": ""})
     for selector_id, selected_count, coordinate_x in [
@@ -3221,14 +3306,7 @@ def test_family_test_evidence_gate_requires_release_family_test_refs(tmp_path: P
 
 
 def test_default_family_test_evidence_covers_synthesized_release_families() -> None:
-    families = [
-        "parameterized_kernel_face_extreme",
-        "parameterized_kernel_edge_extreme",
-        "parameterized_kernel_face_rank",
-        "parameterized_kernel_edge_rank",
-        "parameterized_kernel_face_selector_count",
-        "parameterized_kernel_edge_selector_count",
-    ]
+    families = list(SYNTHESIS_SELFCHECK_FAMILIES)
     evidence = load_family_test_evidence()
 
     assert evidence["exists"]

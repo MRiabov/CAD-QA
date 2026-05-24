@@ -95,6 +95,28 @@ families:
       expected_values:
         aggregation_rank: [2]
     notes: Synthesized family that selects a measured face by sampled rank instead of only min/max extrema.
+  - id: parameterized_equal_face_metric_extreme
+    status: release
+    target_type: face
+    minimum_hops: 4
+    maximum_hops: 4
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - final_selector
+    notes: Synthesized value-bearing face family that narrows to a repeated measured value before selecting by another measured quantity.
   - id: highest_positive_x_flat_opposite_adjacent_perpendicular_kernel_face
     status: review_only
     target_type: face
@@ -224,6 +246,28 @@ families:
       expected_values:
         aggregation_rank: [2]
     notes: Synthesized family that selects a measured edge by sampled rank instead of only min/max extrema.
+  - id: parameterized_equal_edge_metric_extreme
+    status: release
+    target_type: edge
+    minimum_hops: 4
+    maximum_hops: 4
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - aggregation_metric
+        - final_selector
+    notes: Synthesized value-bearing edge family that narrows to a repeated measured value before selecting by another measured quantity.
   - id: frontmost_equal_midpoint_distance_kernel_edge
     status: review_only
     target_type: edge

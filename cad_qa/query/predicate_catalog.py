@@ -3,9 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 from cad_qa.ontology.nodes import Node, OntologyGraph
 from cad_qa.query.ir import Clause
+
+VALUE_BUCKET_DECIMALS = 6
+VALUE_MATCH_TOLERANCE = 1e-6
 
 
 @dataclass(frozen=True)
@@ -96,6 +100,43 @@ def measurement_predicate(
     )
 
 
+def measurement_value_predicate(
+    graph: OntologyGraph,
+    candidates: list[Node],
+    *,
+    clause_id: str,
+    metric: str,
+    value: float,
+) -> PredicateInstance | None:
+    """Instantiate an equal-value measurement predicate if it preserves distractors."""
+
+    after = nodes_matching_measurement_value(graph, candidates, metric=metric, value=value)
+    if len(after) < 2:
+        return None
+    params: dict[str, list[str]] = {
+        "narrowing_predicate_sequence": [f"equal_measurement:{metric}"],
+        "clause_metric": [metric],
+        "comparison_operator": ["=="],
+        "equal_measurement_metric": [metric],
+        "measurement_value_bucket": [f"{metric}:{_value_bucket(value)}"],
+    }
+    axis = metric_axis(metric)
+    if axis is not None:
+        params["clause_axis"] = [axis]
+    return PredicateInstance(
+        id=f"equal_measurement:{metric}:{_value_bucket(value)}",
+        clause=Clause(
+            id=clause_id,
+            kind="has_measurement",
+            metric=metric,
+            value=value,
+        ),
+        candidate_count_before=len(candidates),
+        candidate_count_after=len(after),
+        sampled_parameters=params,
+    )
+
+
 def related_metric_compare_predicate(
     graph: OntologyGraph,
     candidates: list[Node],
@@ -148,6 +189,20 @@ def related_metric_compare_predicate(
     )
 
 
+def nodes_matching_measurement_value(
+    graph: OntologyGraph,
+    candidates: list[Node],
+    *,
+    metric: str,
+    value: float,
+) -> list[Node]:
+    return [
+        node
+        for node in candidates
+        if any(_value_matches(measurement.value, value) for measurement in graph.measurements_for(node.id, metric))
+    ]
+
+
 def nodes_matching_related_metric_compare(
     graph: OntologyGraph,
     candidates: list[Node],
@@ -188,6 +243,13 @@ def metric_axis(metric: str) -> str | None:
     return None
 
 
+def measurement_bucket_value(value: Any) -> float | None:
+    if not isinstance(value, (int, float)):
+        return None
+    bucket = round(float(value), VALUE_BUCKET_DECIMALS)
+    return 0.0 if bucket == 0.0 else bucket
+
+
 def _compare(measured: object, operator: str, expected: float) -> bool:
     if not isinstance(measured, (int, float)):
         return False
@@ -203,3 +265,12 @@ def _compare(measured: object, operator: str, expected: float) -> bool:
     if operator == "==":
         return abs(value - expected) <= 1e-6
     return False
+
+
+def _value_matches(measured: object, expected: float) -> bool:
+    return isinstance(measured, (int, float)) and abs(float(measured) - expected) <= VALUE_MATCH_TOLERANCE
+
+
+def _value_bucket(value: float) -> str:
+    bucket = measurement_bucket_value(value)
+    return f"{bucket:.6g}" if bucket is not None else str(value)

@@ -22,6 +22,8 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_kernel_edge_extreme",
     "parameterized_kernel_face_rank",
     "parameterized_kernel_edge_rank",
+    "parameterized_equal_face_metric_extreme",
+    "parameterized_equal_edge_metric_extreme",
     "parameterized_kernel_face_selector_count",
     "parameterized_kernel_edge_selector_count",
 )
@@ -33,6 +35,8 @@ def synthesis_selfcheck_graphs() -> list[OntologyGraph]:
     return [
         _face_metric_graph(),
         _edge_metric_graph(),
+        _face_equal_metric_graph(),
+        _edge_equal_metric_graph(),
         _face_selector_count_graph(),
         _edge_selector_count_graph(),
     ]
@@ -139,6 +143,54 @@ def _edge_metric_graph() -> OntologyGraph:
         graph.add_node(Node(edge_id, "edge", edge_id))
         graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
+    return graph
+
+
+def _face_equal_metric_graph() -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id="graph:selfcheck-face-equal-metric",
+        source={
+            "source_id": "selfcheck-face-equal-metric",
+            "source_code": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane(\"XY\").box(10, 6, 4).faces(\"|Z\")\n"
+            ),
+        },
+    )
+    graph.add_node(Node("selector:faces", "selector", "faces"))
+    for face_id, area, coordinate_z in [
+        ("face:a", 12.0, 0.0),
+        ("face:b", 12.0 + 1e-7, 5.0),
+        ("face:c", 8.0, 9.0),
+    ]:
+        graph.add_node(Node(face_id, "face", face_id))
+        graph.add_relation(Relation(face_id, "selector:faces", "has_kernel_stable_face_id"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", area, "mm^2"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_z", coordinate_z, "mm"))
+    return graph
+
+
+def _edge_equal_metric_graph() -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id="graph:selfcheck-edge-equal-metric",
+        source={
+            "source_id": "selfcheck-edge-equal-metric",
+            "source_code": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane(\"XY\").box(10, 6, 4).edges(\"|Y\")\n"
+            ),
+        },
+    )
+    graph.add_node(Node("selector:edges", "selector", "edges"))
+    for edge_id, length, midpoint_y in [
+        ("edge:a", 10.0, -3.0),
+        ("edge:b", 10.0 + 1e-7, 7.0),
+        ("edge:c", 4.0, 2.0),
+    ]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint_y, "mm"))
     return graph
 
 

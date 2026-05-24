@@ -24,6 +24,14 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Initial synthesized face rank family over kernel-backed selected faces.
+  - id: parameterized_equal_face_metric_extreme
+    positive_generation:
+      - test_synthesis_generates_equal_value_face_and_edge_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_equal_value_family_without_repeated_value_distractors
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Initial synthesized value-bearing face family with equal-measurement narrowing.
   - id: parameterized_kernel_edge_rank
     positive_generation:
       - test_synthesis_generates_ranked_kernel_edge_query
@@ -32,6 +40,14 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Initial synthesized edge rank family over kernel-backed selected edges.
+  - id: parameterized_equal_edge_metric_extreme
+    positive_generation:
+      - test_synthesis_generates_equal_value_face_and_edge_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_equal_value_family_without_repeated_value_distractors
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Initial synthesized value-bearing edge family with equal-measurement narrowing.
   - id: parameterized_kernel_face_selector_count
     positive_generation:
       - test_synthesis_generates_geometry_narrowed_selector_count_query
