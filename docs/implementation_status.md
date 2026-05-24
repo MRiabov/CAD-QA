@@ -199,6 +199,11 @@ when those choices can be sampled and verified.
   With the current 1%-10% family-share rule, a benchmark manifest must expose
   between 10 and 100 intended release families; outside that range, release is
   blocked before balance tuning can hide an impossible target.
+- The default manifest now keeps generic `*_reference_entity_distance` families
+  as benchmark-release families and demotes explicit fixed-reference variants
+  such as `*_reference_face_distance` and `*_reference_edge_distance` to
+  `review_only`. This keeps the intended benchmark family count feasible while
+  preserving the explicit variants as implementation and preview evidence.
 - Materialized rows now serialize private `query_program.sampled_parameters`
   for the parameter dimensions currently inferable from each query program.
 - Benchmark-release release and SFT reports include an initial parameter-balance
@@ -1266,8 +1271,7 @@ Checked as implemented with remaining scale caveats:
   balance, answer entropy, geometry-hop coverage, main BrowseComp hop coverage,
   default SFT syntax-only cap, syntax-only calibration cap, cross-feature
   value-bearing coverage, candidate breadth, intended-family coverage,
-  intended-family share feasibility, sampled-parameter balance,
-  preview evidence, and family test evidence.
+  sampled-parameter balance, preview evidence, and family test evidence.
 - Broaden value-bearing and tolerance-equal coverage beyond the implemented
   core to radius/diameter/angle once those measurements are extracted broadly,
   additional face/endpoint/material/void coordinate combinations, and larger

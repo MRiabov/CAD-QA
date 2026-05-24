@@ -310,7 +310,7 @@ families:
         clause_relation: [adjacent_to, coplanar_with, intersects, opposite_to, parallel_to, perpendicular_to]
     notes: Synthesized face family that applies a sampled chain of spatial-relation predicates, allows a tied primary measured selector, and resolves by a sampled secondary measured selector.
   - id: parameterized_face_reference_feature_distance
-    status: release
+    status: review_only
     target_type: face
     minimum_hops: 5
     maximum_hops: 5
@@ -341,7 +341,7 @@ families:
         reference_point_metric: [centroid]
     notes: Synthesized cross-feature face family that narrows by repeated face area before selecting by distance from face center to a geometry-described feature centroid.
   - id: parameterized_face_reference_face_distance
-    status: release
+    status: review_only
     target_type: face
     minimum_hops: 5
     maximum_hops: 5
@@ -374,7 +374,7 @@ families:
         target_point_metric: [face_center]
     notes: Synthesized cross-entity face family that narrows by repeated face area before selecting by distance from face center to a geometry-described reference face center.
   - id: parameterized_face_reference_edge_distance
-    status: release
+    status: review_only
     target_type: face
     minimum_hops: 5
     maximum_hops: 5
@@ -407,7 +407,7 @@ families:
         target_point_metric: [face_center]
     notes: Synthesized cross-entity face family that narrows by repeated face area before selecting by distance from face center to a geometry-described reference edge midpoint.
   - id: parameterized_face_reference_endpoint_distance
-    status: release
+    status: review_only
     target_type: face
     minimum_hops: 5
     maximum_hops: 5
@@ -490,7 +490,7 @@ families:
         aggregation_rank: [2, 3, 4, 5, 6]
     notes: Synthesized value-bearing feature family that narrows by repeated compiled feature measurements before selecting a sampled rank by another measured feature quantity.
   - id: parameterized_feature_reference_feature_distance
-    status: release
+    status: review_only
     target_type: feature
     minimum_hops: 4
     maximum_hops: 4
@@ -523,7 +523,7 @@ families:
         target_point_metric: [centroid]
     notes: Synthesized feature-to-feature distance family that narrows by repeated solid volume and samples a measured reference feature before selecting nearest/farthest by centroid distance.
   - id: parameterized_feature_reference_face_distance
-    status: release
+    status: review_only
     target_type: feature
     minimum_hops: 4
     maximum_hops: 4
@@ -556,7 +556,7 @@ families:
         target_point_metric: [centroid]
     notes: Synthesized cross-entity feature family that narrows by repeated feature volume before selecting by distance from feature centroid to a geometry-described reference face center.
   - id: parameterized_feature_reference_edge_distance
-    status: release
+    status: review_only
     target_type: feature
     minimum_hops: 4
     maximum_hops: 4
@@ -589,7 +589,7 @@ families:
         target_point_metric: [centroid]
     notes: Synthesized cross-entity feature family that narrows by repeated feature volume before selecting by distance from feature centroid to a geometry-described reference edge midpoint.
   - id: parameterized_feature_reference_endpoint_distance
-    status: release
+    status: review_only
     target_type: feature
     minimum_hops: 4
     maximum_hops: 4
@@ -810,7 +810,7 @@ families:
         target_point_metric: [midpoint]
     notes: Legacy fixed nearest-distance edge family; benchmark-release replacement is parameterized_edge_reference_feature_distance.
   - id: parameterized_edge_reference_feature_distance
-    status: release
+    status: review_only
     target_type: edge
     minimum_hops: 5
     maximum_hops: 5
@@ -843,7 +843,7 @@ families:
         target_point_metric: [midpoint]
     notes: Synthesized cross-feature edge family that narrows to equal-length edges and samples a measured reference feature before selecting nearest/farthest by midpoint distance.
   - id: parameterized_edge_reference_face_distance
-    status: release
+    status: review_only
     target_type: edge
     minimum_hops: 5
     maximum_hops: 5
@@ -876,7 +876,7 @@ families:
         target_point_metric: [midpoint]
     notes: Synthesized cross-entity edge family that narrows to equal-length edges and samples a measured reference face before selecting nearest/farthest by midpoint distance.
   - id: parameterized_edge_reference_edge_distance
-    status: release
+    status: review_only
     target_type: edge
     minimum_hops: 5
     maximum_hops: 5
@@ -909,7 +909,7 @@ families:
         target_point_metric: [midpoint]
     notes: Synthesized cross-entity edge family that narrows to equal-length edges and samples a measured reference edge before selecting nearest/farthest by midpoint distance.
   - id: parameterized_edge_reference_endpoint_distance
-    status: release
+    status: review_only
     target_type: edge
     minimum_hops: 5
     maximum_hops: 5
@@ -1493,7 +1493,7 @@ families:
         aggregation_rank: [2, 3, 4, 5, 6]
     notes: Synthesized containment-relation endpoint family that requires endpoint and contained-on-edge evidence before selecting a sampled rank by a measured endpoint quantity.
   - id: parameterized_endpoint_reference_feature_distance
-    status: release
+    status: review_only
     target_type: edge_endpoint
     minimum_hops: 5
     maximum_hops: 5
@@ -1526,7 +1526,7 @@ families:
         target_point_metric: [coordinate]
     notes: Synthesized cross-feature endpoint family that narrows to equal-height endpoints and samples a measured reference feature before selecting nearest/farthest by endpoint-to-centroid distance.
   - id: parameterized_endpoint_reference_face_distance
-    status: release
+    status: review_only
     target_type: edge_endpoint
     minimum_hops: 5
     maximum_hops: 5
@@ -1559,7 +1559,7 @@ families:
         target_point_metric: [coordinate]
     notes: Synthesized cross-entity endpoint family that narrows to equal-height endpoints and samples a measured reference face before selecting nearest/farthest by endpoint-to-face-center distance.
   - id: parameterized_endpoint_reference_edge_distance
-    status: release
+    status: review_only
     target_type: edge_endpoint
     minimum_hops: 5
     maximum_hops: 5
@@ -1592,7 +1592,7 @@ families:
         target_point_metric: [coordinate]
     notes: Synthesized cross-entity endpoint family that narrows to equal-height endpoints and samples a measured reference edge before selecting nearest/farthest by endpoint-to-edge-midpoint distance.
   - id: parameterized_endpoint_reference_endpoint_distance
-    status: release
+    status: review_only
     target_type: edge_endpoint
     minimum_hops: 5
     maximum_hops: 5
@@ -2097,7 +2097,7 @@ families:
         aggregation_rank: [2, 3, 4, 5, 6]
     notes: Parameterized path-segment reference-distance rank family that narrows by repeated segment length and samples a measured reference entity before selecting a sampled rank by segment-midpoint-to-reference distance.
   - id: parameterized_feature_reference_material_region_distance
-    status: release
+    status: review_only
     target_type: feature
     minimum_hops: 4
     maximum_hops: 4
@@ -2130,7 +2130,7 @@ families:
         target_point_metric: [centroid]
     notes: Synthesized feature reference-material-region distance family with equal-measurement distractors before nearest/farthest distance selection.
   - id: parameterized_feature_reference_void_region_distance
-    status: release
+    status: review_only
     target_type: feature
     minimum_hops: 4
     maximum_hops: 4
@@ -2163,7 +2163,7 @@ families:
         target_point_metric: [centroid]
     notes: Synthesized feature reference-void-region distance family with equal-measurement distractors before nearest/farthest distance selection.
   - id: parameterized_face_reference_material_region_distance
-    status: release
+    status: review_only
     target_type: face
     minimum_hops: 5
     maximum_hops: 5
@@ -2196,7 +2196,7 @@ families:
         target_point_metric: [face_center]
     notes: Synthesized face reference-material-region distance family with equal-measurement distractors before nearest/farthest distance selection.
   - id: parameterized_face_reference_void_region_distance
-    status: release
+    status: review_only
     target_type: face
     minimum_hops: 5
     maximum_hops: 5
@@ -2229,7 +2229,7 @@ families:
         target_point_metric: [face_center]
     notes: Synthesized face reference-void-region distance family with equal-measurement distractors before nearest/farthest distance selection.
   - id: parameterized_edge_reference_material_region_distance
-    status: release
+    status: review_only
     target_type: edge
     minimum_hops: 5
     maximum_hops: 5
@@ -2262,7 +2262,7 @@ families:
         target_point_metric: [midpoint]
     notes: Synthesized edge reference-material-region distance family with equal-measurement distractors before nearest/farthest distance selection.
   - id: parameterized_edge_reference_void_region_distance
-    status: release
+    status: review_only
     target_type: edge
     minimum_hops: 5
     maximum_hops: 5
@@ -2295,7 +2295,7 @@ families:
         target_point_metric: [midpoint]
     notes: Synthesized edge reference-void-region distance family with equal-measurement distractors before nearest/farthest distance selection.
   - id: parameterized_endpoint_reference_material_region_distance
-    status: release
+    status: review_only
     target_type: edge_endpoint
     minimum_hops: 5
     maximum_hops: 5
@@ -2328,7 +2328,7 @@ families:
         target_point_metric: [coordinate]
     notes: Synthesized edge_endpoint reference-material-region distance family with equal-measurement distractors before nearest/farthest distance selection.
   - id: parameterized_endpoint_reference_void_region_distance
-    status: release
+    status: review_only
     target_type: edge_endpoint
     minimum_hops: 5
     maximum_hops: 5
@@ -2361,7 +2361,7 @@ families:
         target_point_metric: [coordinate]
     notes: Synthesized edge_endpoint reference-void-region distance family with equal-measurement distractors before nearest/farthest distance selection.
   - id: parameterized_material_region_reference_material_region_distance
-    status: release
+    status: review_only
     target_type: material_region
     minimum_hops: 5
     maximum_hops: 5
@@ -2394,7 +2394,7 @@ families:
         target_point_metric: [centroid]
     notes: Synthesized material_region reference-material-region distance family with equal-measurement distractors before nearest/farthest distance selection.
   - id: parameterized_material_region_reference_void_region_distance
-    status: release
+    status: review_only
     target_type: material_region
     minimum_hops: 5
     maximum_hops: 5
@@ -2427,7 +2427,7 @@ families:
         target_point_metric: [centroid]
     notes: Synthesized material_region reference-void-region distance family with equal-measurement distractors before nearest/farthest distance selection.
   - id: parameterized_void_region_reference_material_region_distance
-    status: release
+    status: review_only
     target_type: void_region
     minimum_hops: 5
     maximum_hops: 5
@@ -2460,7 +2460,7 @@ families:
         target_point_metric: [centroid]
     notes: Synthesized void_region reference-material-region distance family with equal-measurement distractors before nearest/farthest distance selection.
   - id: parameterized_void_region_reference_void_region_distance
-    status: release
+    status: review_only
     target_type: void_region
     minimum_hops: 5
     maximum_hops: 5
@@ -2493,7 +2493,7 @@ families:
         target_point_metric: [centroid]
     notes: Synthesized void_region reference-void-region distance family with equal-measurement distractors before nearest/farthest distance selection.
   - id: parameterized_path_point_reference_face_distance
-    status: release
+    status: review_only
     target_type: path_point
     minimum_hops: 5
     maximum_hops: 5
@@ -2526,7 +2526,7 @@ families:
         target_point_metric: [coordinate]
     notes: Synthesized path-point reference-face distance family with repeated coordinate-z distractors before nearest/farthest distance selection.
   - id: parameterized_path_point_reference_edge_distance
-    status: release
+    status: review_only
     target_type: path_point
     minimum_hops: 5
     maximum_hops: 5
@@ -2559,7 +2559,7 @@ families:
         target_point_metric: [coordinate]
     notes: Synthesized path-point reference-edge distance family with repeated coordinate-z distractors before nearest/farthest distance selection.
   - id: parameterized_path_point_reference_endpoint_distance
-    status: release
+    status: review_only
     target_type: path_point
     minimum_hops: 5
     maximum_hops: 5
@@ -2592,7 +2592,7 @@ families:
         target_point_metric: [coordinate]
     notes: Synthesized path-point reference-endpoint distance family with repeated coordinate-z distractors before nearest/farthest distance selection.
   - id: parameterized_path_point_reference_material_region_distance
-    status: release
+    status: review_only
     target_type: path_point
     minimum_hops: 5
     maximum_hops: 5
@@ -2625,7 +2625,7 @@ families:
         target_point_metric: [coordinate]
     notes: Synthesized path-point reference-material-region distance family with repeated coordinate-z distractors before nearest/farthest distance selection.
   - id: parameterized_path_point_reference_void_region_distance
-    status: release
+    status: review_only
     target_type: path_point
     minimum_hops: 5
     maximum_hops: 5
@@ -2658,7 +2658,7 @@ families:
         target_point_metric: [coordinate]
     notes: Synthesized path-point reference-void-region distance family with repeated coordinate-z distractors before nearest/farthest distance selection.
   - id: parameterized_path_segment_reference_face_distance
-    status: release
+    status: review_only
     target_type: path_segment
     minimum_hops: 5
     maximum_hops: 5
@@ -2691,7 +2691,7 @@ families:
         target_point_metric: [segment_midpoint]
     notes: Synthesized path-segment reference-face distance family with repeated segment-length distractors before nearest/farthest distance selection.
   - id: parameterized_path_segment_reference_edge_distance
-    status: release
+    status: review_only
     target_type: path_segment
     minimum_hops: 5
     maximum_hops: 5
@@ -2724,7 +2724,7 @@ families:
         target_point_metric: [segment_midpoint]
     notes: Synthesized path-segment reference-edge distance family with repeated segment-length distractors before nearest/farthest distance selection.
   - id: parameterized_path_segment_reference_endpoint_distance
-    status: release
+    status: review_only
     target_type: path_segment
     minimum_hops: 5
     maximum_hops: 5
@@ -2757,7 +2757,7 @@ families:
         target_point_metric: [segment_midpoint]
     notes: Synthesized path-segment reference-endpoint distance family with repeated segment-length distractors before nearest/farthest distance selection.
   - id: parameterized_path_segment_reference_material_region_distance
-    status: release
+    status: review_only
     target_type: path_segment
     minimum_hops: 5
     maximum_hops: 5
@@ -2790,7 +2790,7 @@ families:
         target_point_metric: [segment_midpoint]
     notes: Synthesized path-segment reference-material-region distance family with repeated segment-length distractors before nearest/farthest distance selection.
   - id: parameterized_path_segment_reference_void_region_distance
-    status: release
+    status: review_only
     target_type: path_segment
     minimum_hops: 5
     maximum_hops: 5
@@ -3039,7 +3039,7 @@ families:
         aggregation_rank: [2, 3, 4, 5, 6]
     notes: Synthesized value-bearing added-material region family that narrows by repeated region volume or centroid coordinate before selecting a sampled rank by another measured region quantity.
   - id: parameterized_material_region_reference_feature_distance
-    status: release
+    status: review_only
     target_type: material_region
     minimum_hops: 5
     maximum_hops: 5
@@ -3072,7 +3072,7 @@ families:
         target_point_metric: [centroid]
     notes: Synthesized cross-feature added-material region family that narrows to equal-volume regions and samples a measured reference feature before selecting nearest/farthest by region-centroid distance.
   - id: parameterized_material_region_reference_face_distance
-    status: release
+    status: review_only
     target_type: material_region
     minimum_hops: 5
     maximum_hops: 5
@@ -3105,7 +3105,7 @@ families:
         target_point_metric: [centroid]
     notes: Synthesized cross-entity added-material region family that narrows to equal-volume regions and samples a measured reference face before selecting nearest/farthest by region-centroid-to-face-center distance.
   - id: parameterized_material_region_reference_edge_distance
-    status: release
+    status: review_only
     target_type: material_region
     minimum_hops: 5
     maximum_hops: 5
@@ -3138,7 +3138,7 @@ families:
         target_point_metric: [centroid]
     notes: Synthesized cross-entity added-material region family that narrows to equal-volume regions and samples a measured reference edge before selecting nearest/farthest by region-centroid-to-edge-midpoint distance.
   - id: parameterized_material_region_reference_endpoint_distance
-    status: release
+    status: review_only
     target_type: material_region
     minimum_hops: 5
     maximum_hops: 5
@@ -3279,7 +3279,7 @@ families:
         aggregation_rank: [2, 3, 4, 5, 6]
     notes: Synthesized value-bearing removed-material region family that narrows by repeated region volume or centroid coordinate before selecting a sampled rank by another measured region quantity.
   - id: parameterized_void_region_reference_feature_distance
-    status: release
+    status: review_only
     target_type: void_region
     minimum_hops: 5
     maximum_hops: 5
@@ -3312,7 +3312,7 @@ families:
         target_point_metric: [centroid]
     notes: Synthesized cross-feature removed-material region family that narrows to equal-volume regions and samples a measured reference feature before selecting nearest/farthest by region-centroid distance.
   - id: parameterized_void_region_reference_face_distance
-    status: release
+    status: review_only
     target_type: void_region
     minimum_hops: 5
     maximum_hops: 5
@@ -3345,7 +3345,7 @@ families:
         target_point_metric: [centroid]
     notes: Synthesized cross-entity removed-material region family that narrows to equal-volume regions and samples a measured reference face before selecting nearest/farthest by region-centroid-to-face-center distance.
   - id: parameterized_void_region_reference_edge_distance
-    status: release
+    status: review_only
     target_type: void_region
     minimum_hops: 5
     maximum_hops: 5
@@ -3378,7 +3378,7 @@ families:
         target_point_metric: [centroid]
     notes: Synthesized cross-entity removed-material region family that narrows to equal-volume regions and samples a measured reference edge before selecting nearest/farthest by region-centroid-to-edge-midpoint distance.
   - id: parameterized_void_region_reference_endpoint_distance
-    status: release
+    status: review_only
     target_type: void_region
     minimum_hops: 5
     maximum_hops: 5

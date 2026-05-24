@@ -7609,8 +7609,12 @@ def test_benchmark_release_family_share_feasibility_blocks_impossible_manifest()
     assert too_few["violations"][0]["reason"] == "too_few_intended_release_families_for_share_band"
     assert not too_many["valid"]
     assert too_many["violations"][0]["reason"] == "too_many_intended_release_families_for_share_band"
-    assert not current["valid"]
-    assert current["intended_release_family_count"] > current["maximum_feasible_release_family_count"]
+    assert current["valid"]
+    assert (
+        current["minimum_feasible_release_family_count"]
+        <= current["intended_release_family_count"]
+        <= current["maximum_feasible_release_family_count"]
+    )
 
 
 def test_default_family_manifest_keeps_superseded_fixed_families_review_only() -> None:
@@ -7650,43 +7654,32 @@ def test_default_family_manifest_keeps_superseded_fixed_families_review_only() -
     replacement_families = [
         "parameterized_kernel_face_extreme",
         "parameterized_equal_face_metric_extreme",
-        "parameterized_face_reference_feature_distance",
-        "parameterized_face_reference_face_distance",
-        "parameterized_face_reference_edge_distance",
-        "parameterized_face_reference_endpoint_distance",
         "parameterized_face_reference_entity_distance",
         "parameterized_kernel_edge_extreme",
-        "parameterized_edge_reference_feature_distance",
-        "parameterized_edge_reference_face_distance",
-        "parameterized_edge_reference_edge_distance",
-        "parameterized_edge_reference_endpoint_distance",
         "parameterized_edge_reference_entity_distance",
         "parameterized_feature_extreme",
         "parameterized_equal_feature_metric_extreme",
         "parameterized_feature_effect_delta_extreme",
-        "parameterized_feature_reference_face_distance",
-        "parameterized_feature_reference_edge_distance",
-        "parameterized_feature_reference_endpoint_distance",
         "parameterized_feature_reference_entity_distance",
         "parameterized_material_region_extreme",
         "parameterized_equal_material_region_metric_extreme",
-        "parameterized_material_region_reference_face_distance",
-        "parameterized_material_region_reference_edge_distance",
-        "parameterized_material_region_reference_endpoint_distance",
         "parameterized_material_region_reference_entity_distance",
         "parameterized_void_region_extreme",
         "parameterized_equal_void_region_metric_extreme",
-        "parameterized_void_region_reference_face_distance",
-        "parameterized_void_region_reference_edge_distance",
-        "parameterized_void_region_reference_endpoint_distance",
         "parameterized_void_region_reference_entity_distance",
-        "parameterized_endpoint_reference_face_distance",
-        "parameterized_endpoint_reference_edge_distance",
-        "parameterized_endpoint_reference_endpoint_distance",
         "parameterized_endpoint_reference_entity_distance",
+    ]
+    explicit_reference_families = [
+        family
+        for family in families
+        if "_reference_" in family
+        and "_reference_entity_distance" not in family
+        and families[family]["status"] != "calibration"
     ]
 
     assert all(families[family]["status"] == "review_only" for family in superseded_fixed_families)
+    assert explicit_reference_families
+    assert all(families[family]["status"] == "review_only" for family in explicit_reference_families)
     assert all(families[family]["status"] == "release" for family in replacement_families)
 
 
@@ -8061,6 +8054,12 @@ def test_family_test_evidence_gate_requires_release_family_test_refs(tmp_path: P
 
 def test_default_family_test_evidence_covers_synthesized_release_families() -> None:
     families = list(SYNTHESIS_SELFCHECK_FAMILIES)
+    manifest = load_family_manifest()
+    release_families = {
+        family
+        for family, spec in manifest["families"].items()
+        if spec["status"] == "release"
+    }
     evidence = load_family_test_evidence()
 
     assert evidence["exists"]
@@ -8082,7 +8081,7 @@ def test_default_family_test_evidence_covers_synthesized_release_families() -> N
 
     assert report["valid"]
     assert report["evidence_exists"]
-    assert report["generated_release_family_count"] == len(families)
+    assert report["generated_release_family_count"] == len(set(families) & release_families)
     assert report["violations"] == []
 
 
@@ -8159,7 +8158,7 @@ def test_benchmark_release_verifier_blocks_intended_family_coverage_failures(tmp
             "query_program": {
                 "query_id": "graph:src:q0:release_present",
                 "aggregation_metric": "volume",
-                "clauses": [{"kind": "has_measurement", "metric": "volume", "value": 1.0}],
+                "clauses": [{"id": "has_compiled_volume", "kind": "has_measurement", "metric": "volume", "value": 1.0}],
             },
             "candidate_trace": {
                 "steps": [
@@ -8461,7 +8460,8 @@ def test_training_export_cli_defaults_to_geometry_critical_rows(tmp_path: Path) 
     assert "default_sft_row_count" in benchmark_sft_report["blocking_training_gates"]
     assert benchmark_sft_report["training_readiness"]["max_syntax_only_training_share"] == 0.0
     assert "intended_family_coverage" in benchmark_sft_report["blocking_training_gates"]
-    assert "intended_family_share_feasibility" in benchmark_sft_report["blocking_training_gates"]
+    assert "intended_family_share_feasibility" not in benchmark_sft_report["blocking_training_gates"]
+    assert benchmark_sft_report["training_stop_gates"]["intended_family_share_feasibility"]
     assert "parameter_balance" not in benchmark_sft_report["blocking_training_gates"]
     assert benchmark_sft_report["intended_family_coverage"]["generated_non_release_families"] == [
         "largest_compiled_volume_feature"
@@ -9284,6 +9284,43 @@ def test_release_export_filters_prompt_policy_invalid_rows_before_verifier(tmp_p
             "split": "stale",
         }
     )
+    rows.append(
+        {
+            "row_id": "row:src:review:largest_compiled_volume_feature",
+            "source_id": "src",
+            "source_code": "import cadquery as cq\n",
+            "prompt": "Which reviewed feature has the largest measured volume?",
+            "prompt_template_id": "checklist_constraints_v1:fixture:review",
+            "answer_format": "entity_id",
+            "gold_answer": "feature:review",
+            "query_program": {
+                "query_id": "graph:src:qreview:largest_compiled_volume_feature",
+                "target_type": "feature",
+                "aggregation": "argmax",
+                "aggregation_metric": "volume",
+                "clauses": [{"id": "has_compiled_volume", "kind": "has_measurement", "metric": "volume", "value": 1.0}],
+            },
+            "candidate_trace": {
+                "final_candidates": ["feature:review"],
+                "steps": [
+                    {"step": "initial", "candidate_ids": ["feature:review", "feature:other"]},
+                    {"step": "aggregation", "before": ["feature:review", "feature:other"], "after": ["feature:review"]},
+                ],
+            },
+            "relation_families": [],
+            "measurement_scopes": ["snapshot_state"],
+            "logical_hop_count": 3,
+            "static_hop_count": 0,
+            "geometry_hop_count": 2,
+            "difficulty_bucket": "cad_browsecomp",
+            "verifier_status": "resolved",
+            "evidence_tier": "source_static_or_analytic",
+            "release_ready": True,
+            "quarantine_reasons": [],
+            "clue_map": [{"clause_id": "has_compiled_volume"}, {"clause_id": "aggregation"}],
+            "split": "stale",
+        }
+    )
     _mark_value_bearing_release_fixture_rows(rows)
 
     result = export_release_dataset(rows, out=tmp_path / "release")
@@ -9292,16 +9329,36 @@ def test_release_export_filters_prompt_policy_invalid_rows_before_verifier(tmp_p
     split_quality = json.loads((tmp_path / "release" / "split_audit.json").read_text())
     assert result["valid"]
     assert result["blocking_release_gates"] == []
-    assert result["row_count"] == 24
+    assert result["row_count"] == 25
     assert result["excluded_release_validation_count"] == 1
+    assert result["excluded_non_release_family_count"] == 0
     assert result["excluded_prompt_policy_count"] == 1
-    assert len(release_rows) == 24
+    assert len(release_rows) == 25
     assert {row["split"] for row in release_rows} == {"train"}
     assert all(row["prompt_template_id"].startswith("checklist_constraints_v1:") for row in release_rows)
     assert result["split_audit"]["valid"]
     assert split_quality["valid"]
     assert exclusions["release_validation_exclusions"][0]["row_id"] == "row:src:weak:highest_workplane"
     assert exclusions["release_validation_exclusions"][0]["errors"][0]["error"] == "geometry_first_prompt_policy"
+
+    benchmark_result = export_release_dataset(
+        rows,
+        out=tmp_path / "benchmark_release",
+        release_tier="benchmark-release",
+        allow_failing_release_gates=True,
+    )
+    benchmark_exclusions = json.loads((tmp_path / "benchmark_release" / "release_exclusions.json").read_text())
+    assert benchmark_result["row_count"] == 24
+    assert benchmark_result["excluded_non_release_family_count"] == 1
+    assert benchmark_exclusions["non_release_family_exclusions"] == [
+        {
+            "row_id": "row:src:review:largest_compiled_volume_feature",
+            "source_id": "src",
+            "prompt_family": "largest_compiled_volume_feature",
+            "family_status": "review_only",
+            "reason": "non_release_family",
+        }
+    ]
 
 
 def test_release_export_caps_syntax_only_calibration_rows(tmp_path: Path) -> None:
@@ -9453,7 +9510,8 @@ def test_release_verifier_report_stop_gates_and_cli(tmp_path: Path) -> None:
     assert "default_sft_row_count" in benchmark_report["blocking_gates"]
     assert "benchmark_split_group_coverage" in benchmark_report["blocking_gates"]
     assert "intended_family_coverage" in benchmark_report["blocking_gates"]
-    assert "intended_family_share_feasibility" in benchmark_report["blocking_gates"]
+    assert "intended_family_share_feasibility" not in benchmark_report["blocking_gates"]
+    assert benchmark_report["stop_gates"]["intended_family_share_feasibility"]
     assert "parameter_balance" not in benchmark_report["blocking_gates"]
     assert "largest_removed_region" in benchmark_report["intended_family_coverage"]["generated_non_release_families"]
     assert "preview_evidence" in benchmark_report["blocking_gates"]

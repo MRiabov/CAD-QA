@@ -22,7 +22,7 @@ from cad_qa.dataset.split import rows_with_assigned_splits, split_audit, split_m
 from cad_qa.dataset.validate import validate_dataset_dir, validate_rows
 from cad_qa.io import write_json, write_jsonl
 from cad_qa.prompts.render import prompt_template_id_from_mapping
-from cad_qa.query.family_manifest import DEFAULT_FAMILY_MANIFEST
+from cad_qa.query.family_manifest import DEFAULT_FAMILY_MANIFEST, RELEASE_STATUSES, load_family_manifest
 
 
 def export_release_dataset(
@@ -38,7 +38,12 @@ def export_release_dataset(
 ) -> dict[str, Any]:
     profile = release_gate_profile(release_tier)
     release_valid_rows, validation_exclusions = _filter_release_valid_rows(rows)
-    deduped_rows, duplicate_exclusions = _dedupe_release_prompts(release_valid_rows)
+    release_family_rows, non_release_family_exclusions = _filter_release_family_rows(
+        release_valid_rows,
+        family_manifest,
+        enforce=profile.enforce_intended_family_coverage,
+    )
+    deduped_rows, duplicate_exclusions = _dedupe_release_prompts(release_family_rows)
     release_rows, calibration_cap_exclusions = _cap_syntax_only_calibration_rows(
         deduped_rows,
         profile.max_syntax_only_calibration_share,
@@ -74,6 +79,7 @@ def export_release_dataset(
     )
     report["excluded_quarantine_count"] = excluded_quarantine_count
     report["excluded_release_validation_count"] = len(validation_exclusions)
+    report["excluded_non_release_family_count"] = len(non_release_family_exclusions)
     report["excluded_prompt_policy_count"] = excluded_prompt_policy_count
     report["excluded_duplicate_prompt_count"] = len(duplicate_exclusions)
     report["excluded_syntax_only_calibration_cap_count"] = len(calibration_cap_exclusions)
@@ -83,10 +89,12 @@ def export_release_dataset(
         {
             "excluded_quarantine_count": excluded_quarantine_count,
             "excluded_release_validation_count": len(validation_exclusions),
+            "excluded_non_release_family_count": len(non_release_family_exclusions),
             "excluded_prompt_policy_count": excluded_prompt_policy_count,
             "excluded_duplicate_prompt_count": len(duplicate_exclusions),
             "excluded_syntax_only_calibration_cap_count": len(calibration_cap_exclusions),
             "release_validation_exclusions": validation_exclusions,
+            "non_release_family_exclusions": non_release_family_exclusions,
             "duplicate_prompt_exclusions": duplicate_exclusions,
             "syntax_only_calibration_cap_exclusions": calibration_cap_exclusions,
         },
@@ -123,6 +131,7 @@ def export_release_dataset(
         "row_count": len(release_rows),
         "excluded_quarantine_count": excluded_quarantine_count,
         "excluded_release_validation_count": len(validation_exclusions),
+        "excluded_non_release_family_count": len(non_release_family_exclusions),
         "excluded_prompt_policy_count": excluded_prompt_policy_count,
         "excluded_duplicate_prompt_count": len(duplicate_exclusions),
         "excluded_syntax_only_calibration_cap_count": len(calibration_cap_exclusions),
@@ -160,6 +169,43 @@ def _filter_release_valid_rows(rows: list[dict[str, Any]]) -> tuple[list[dict[st
                     {key: value for key, value in error.items() if key not in {"index"}}
                     for error in validation["errors"]
                 ],
+            }
+        )
+    return kept, exclusions
+
+
+def _filter_release_family_rows(
+    rows: list[dict[str, Any]],
+    family_manifest: Path | None,
+    *,
+    enforce: bool = False,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    if not enforce:
+        return rows, []
+    manifest = load_family_manifest(family_manifest)
+    if not manifest["exists"]:
+        return rows, []
+    families = manifest["families"]
+    release_families = {
+        family_id
+        for family_id, spec in families.items()
+        if spec.get("status") in RELEASE_STATUSES
+    }
+    kept: list[dict[str, Any]] = []
+    exclusions: list[dict[str, Any]] = []
+    for row in rows:
+        family = _prompt_family(row)
+        spec = families.get(family)
+        if spec is None or family in release_families:
+            kept.append(row)
+            continue
+        exclusions.append(
+            {
+                "row_id": row.get("row_id"),
+                "source_id": row.get("source_id"),
+                "prompt_family": family,
+                "family_status": spec.get("status"),
+                "reason": "non_release_family",
             }
         )
     return kept, exclusions
