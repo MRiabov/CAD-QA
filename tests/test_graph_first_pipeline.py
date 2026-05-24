@@ -7,6 +7,7 @@ from pathlib import Path
 
 from cad_qa.dataset.materialize import materialize_row
 from cad_qa.dataset.audit import leakage_audit
+from cad_qa.dataset.parameter_balance import parameter_balance_report
 from cad_qa.dataset.public import private_rows, public_private_audit, public_rows, write_public_private_artifacts
 from cad_qa.dataset.quarantine import quarantine_report
 from cad_qa.dataset.release import export_release_dataset
@@ -2262,6 +2263,9 @@ def test_benchmark_release_tier_applies_stricter_numeric_gates() -> None:
     assert benchmark["minimum_cross_feature_value_bearing_share"] == 0.05
     assert benchmark["minimum_required_pre_final_candidate_count"] == 2
     assert benchmark["minimum_required_median_pre_final_candidate_count"] == 4.0
+    assert benchmark["release_gate_profile"]["enforce_parameter_balance"]
+    assert benchmark["release_gate_profile"]["max_parameter_value_share"] == 0.35
+    assert benchmark["release_gate_profile"]["min_axis_direction_parameter_share"] == 0.20
     assert not benchmark["passes_prompt_template_balance"]
     assert not benchmark["passes_answer_entropy"]
     assert benchmark["passes_geometry_hop_coverage"]
@@ -2306,6 +2310,86 @@ def test_intended_family_manifest_reports_zero_row_and_non_release_families(tmp_
         "review_fixture": 1,
         "unknown_family": 1,
     }
+
+
+def test_parameter_balance_report_blocks_collapsed_query_parameters(tmp_path: Path) -> None:
+    manifest = tmp_path / "family_specs.yaml"
+    manifest.write_text(
+        "\n".join(
+            [
+                "schema_version: 1",
+                "families:",
+                "  - id: collapsed_family",
+                "    status: release",
+                "  - id: balanced_family",
+                "    status: release",
+                "  - id: review_fixture",
+                "    status: review_only",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    rows = [
+        {
+            "row_id": f"row:src:{index}:collapsed_family",
+            "query_program": {
+                "query_id": f"graph:src:q{index}:collapsed_family",
+                "target_type": "feature",
+                "aggregation": "argmax",
+                "aggregation_metric": "centroid_z",
+                "clauses": [{"kind": "has_measurement", "metric": "volume", "value": 10.0}],
+            },
+        }
+        for index in range(6)
+    ]
+    balanced_axes = ["x", "y", "z", "x", "y", "z"]
+    balanced_directions = ["argmax", "argmin", "argmax", "argmin", "argmax", "argmin"]
+    balanced_targets = ["feature", "face", "edge", "feature", "face", "edge"]
+    rows.extend(
+        {
+            "row_id": f"row:src:{index}:balanced_family",
+            "query_program": {
+                "query_id": f"graph:src:q{index}:balanced_family",
+                "target_type": balanced_targets[index],
+                "aggregation": balanced_directions[index],
+                "aggregation_metric": f"centroid_{balanced_axes[index]}",
+            },
+        }
+        for index in range(6)
+    )
+    rows.append(
+        {
+            "row_id": "row:src:0:review_fixture",
+            "query_program": {
+                "query_id": "graph:src:q0:review_fixture",
+                "target_type": "feature",
+                "aggregation": "argmax",
+                "aggregation_metric": "centroid_z",
+            },
+        }
+    )
+
+    report = parameter_balance_report(
+        rows,
+        family_manifest=manifest,
+        max_parameter_value_share=0.35,
+        min_axis_direction_share=0.20,
+        enforce=True,
+    )
+
+    assert not report["valid"]
+    assert report["release_family_count"] == 2
+    assert all(family["prompt_family"] != "review_fixture" for family in report["families"])
+    collapsed_violations = [
+        violation for violation in report["violations"] if violation["prompt_family"] == "collapsed_family"
+    ]
+    balanced_violations = [
+        violation for violation in report["violations"] if violation["prompt_family"] == "balanced_family"
+    ]
+    assert any(violation["dimension"] == "aggregation_axis" for violation in collapsed_violations)
+    assert any(violation["dimension"] == "extremum_direction" for violation in collapsed_violations)
+    assert any(violation["dimension"] == "target_type" for violation in collapsed_violations)
+    assert balanced_violations == []
 
 
 def test_benchmark_release_verifier_blocks_intended_family_coverage_failures(tmp_path: Path) -> None:
@@ -2385,7 +2469,9 @@ def test_benchmark_release_verifier_blocks_intended_family_coverage_failures(tmp
     report = release_verifier_report(rows, release_tier="benchmark-release", family_manifest=manifest)
 
     assert not report["stop_gates"]["intended_family_coverage"]
+    assert not report["stop_gates"]["parameter_balance"]
     assert "intended_family_coverage" in report["blocking_gates"]
+    assert "parameter_balance" in report["blocking_gates"]
     assert report["intended_family_coverage"]["zero_row_release_families"] == ["release_missing"]
     assert report["intended_family_coverage"]["generated_non_release_families"] == ["review_fixture"]
 
@@ -2607,6 +2693,7 @@ def test_training_export_cli_defaults_to_geometry_critical_rows(tmp_path: Path) 
     assert default_sft_report["training_stop_gates"]["geometry_critical_dominance"]
     assert "prompt_family_balance" in default_sft_report["training_stop_gates"]
     assert "intended_family_coverage" in default_sft_report["training_stop_gates"]
+    assert "parameter_balance" in default_sft_report["training_stop_gates"]
     assert "input_balance" in default_sft_report
     assert default_sft_report["valid_for_training"]
     assert default_sft_report["blocking_training_gates"] == []
@@ -2630,6 +2717,7 @@ def test_training_export_cli_defaults_to_geometry_critical_rows(tmp_path: Path) 
     assert not benchmark_sft_report["valid_for_training"]
     assert "default_sft_row_count" in benchmark_sft_report["blocking_training_gates"]
     assert "intended_family_coverage" in benchmark_sft_report["blocking_training_gates"]
+    assert "parameter_balance" in benchmark_sft_report["blocking_training_gates"]
     assert benchmark_sft_report["training_balance"]["release_gate_profile"]["min_default_sft_rows"] == 10000
 
     assert cli_main(
@@ -3567,6 +3655,7 @@ def test_release_verifier_report_stop_gates_and_cli(tmp_path: Path) -> None:
     assert "geometry_hop_coverage" in report["stop_gates"]
     assert "syntax_only_calibration_cap" in report["stop_gates"]
     assert "intended_family_coverage" in report["stop_gates"]
+    assert "parameter_balance" in report["stop_gates"]
     assert "geometry_critical_prompt_family_coverage" in report["stop_gates"]
     assert "training_readiness" in report
     assert "split_audit" in report
@@ -3579,6 +3668,7 @@ def test_release_verifier_report_stop_gates_and_cli(tmp_path: Path) -> None:
     assert "Release Verifier Report" in markdown
     assert "Release Balance" in markdown
     assert "Intended Family Coverage" in markdown
+    assert "Parameter Balance" in markdown
     assert "Shortcut Resistance" in markdown
 
     dataset_dir = tmp_path / "dataset"
@@ -3595,6 +3685,7 @@ def test_release_verifier_report_stop_gates_and_cli(tmp_path: Path) -> None:
     assert "default_sft_row_count" in benchmark_report["blocking_gates"]
     assert "benchmark_split_group_coverage" in benchmark_report["blocking_gates"]
     assert "intended_family_coverage" in benchmark_report["blocking_gates"]
+    assert "parameter_balance" in benchmark_report["blocking_gates"]
 
 
 def test_public_private_exports_do_not_leak_hidden_fields(tmp_path: Path) -> None:

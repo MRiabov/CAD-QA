@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from cad_qa.dataset.audit import leakage_audit
+from cad_qa.dataset.parameter_balance import parameter_balance_report
 from cad_qa.dataset.public import public_private_audit
 from cad_qa.dataset.quarantine import quarantine_report
 from cad_qa.dataset.report import dataset_report, failure_report
@@ -56,6 +57,9 @@ class ReleaseGateProfile:
     min_median_pre_final_candidate_count: float | None
     min_split_groups_per_split: int | None
     enforce_intended_family_coverage: bool
+    enforce_parameter_balance: bool
+    max_parameter_value_share: float | None
+    min_axis_direction_parameter_share: float | None
 
 
 SMOKE_RELEASE_PROFILE = ReleaseGateProfile(
@@ -83,6 +87,9 @@ SMOKE_RELEASE_PROFILE = ReleaseGateProfile(
     min_median_pre_final_candidate_count=None,
     min_split_groups_per_split=None,
     enforce_intended_family_coverage=False,
+    enforce_parameter_balance=False,
+    max_parameter_value_share=None,
+    min_axis_direction_parameter_share=None,
 )
 
 RELEASE_CANDIDATE_PROFILE = replace(SMOKE_RELEASE_PROFILE, name="release-candidate")
@@ -112,6 +119,9 @@ BENCHMARK_RELEASE_PROFILE = ReleaseGateProfile(
     min_median_pre_final_candidate_count=4.0,
     min_split_groups_per_split=3,
     enforce_intended_family_coverage=True,
+    enforce_parameter_balance=True,
+    max_parameter_value_share=0.35,
+    min_axis_direction_parameter_share=0.20,
 )
 
 RELEASE_GATE_PROFILES = {
@@ -164,6 +174,13 @@ def release_verifier_report(
         manifest_path=family_manifest,
         enforce=profile.enforce_intended_family_coverage,
     )
+    parameter_balance = parameter_balance_report(
+        rows,
+        family_manifest=family_manifest,
+        max_parameter_value_share=profile.max_parameter_value_share,
+        min_axis_direction_share=profile.min_axis_direction_parameter_share,
+        enforce=profile.enforce_parameter_balance,
+    )
     shortcut_resistance = dataset["shortcut_resistance"]
     failures_by_reason = failure_report(failures or [])
     public_private = public_private_audit(public_rows, private_rows) if public_rows is not None and private_rows is not None else None
@@ -193,6 +210,7 @@ def release_verifier_report(
         "cross_feature_value_bearing_coverage": release_balance["passes_cross_feature_value_bearing_coverage"],
         "candidate_breadth": release_balance["passes_candidate_breadth"],
         "intended_family_coverage": intended_family_coverage["valid"],
+        "parameter_balance": parameter_balance["valid"],
         "geometry_critical_prompt_family_coverage": _passes_geometry_critical_family_coverage(
             shortcut_resistance
         ),
@@ -215,6 +233,7 @@ def release_verifier_report(
         "training_readiness": training_readiness,
         "release_balance": release_balance,
         "intended_family_coverage": intended_family_coverage,
+        "parameter_balance": parameter_balance,
         "shortcut_resistance": shortcut_resistance,
         "failure_report": failures_by_reason,
         "split_manifest": split,
@@ -433,6 +452,10 @@ def release_verifier_markdown(report: dict[str, Any]) -> str:
         "",
         _json_block(report["intended_family_coverage"]),
         "",
+        "## Parameter Balance",
+        "",
+        _json_block(report["parameter_balance"]),
+        "",
         "## Shortcut Resistance",
         "",
         _json_block(
@@ -557,6 +580,9 @@ def release_gate_profile_report(profile: ReleaseGateProfile) -> dict[str, Any]:
         "min_median_pre_final_candidate_count": profile.min_median_pre_final_candidate_count,
         "min_split_groups_per_split": profile.min_split_groups_per_split,
         "enforce_intended_family_coverage": profile.enforce_intended_family_coverage,
+        "enforce_parameter_balance": profile.enforce_parameter_balance,
+        "max_parameter_value_share": profile.max_parameter_value_share,
+        "min_axis_direction_parameter_share": profile.min_axis_direction_parameter_share,
     }
 
 

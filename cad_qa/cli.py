@@ -9,6 +9,7 @@ import sys
 from typing import Any
 
 from cad_qa.dataset.audit import leakage_audit
+from cad_qa.dataset.parameter_balance import parameter_balance_report
 from cad_qa.dataset.preview import dataset_preview_markdown
 from cad_qa.dataset.public import write_public_private_artifacts
 from cad_qa.dataset.quarantine import quarantine_report
@@ -676,10 +677,18 @@ def _cmd_training_export_sft(args: argparse.Namespace) -> dict[str, Any]:
         manifest_path=args.family_manifest,
         enforce=profile.enforce_intended_family_coverage,
     )
+    report["parameter_balance"] = parameter_balance_report(
+        rows,
+        family_manifest=args.family_manifest,
+        max_parameter_value_share=profile.max_parameter_value_share,
+        min_axis_direction_share=profile.min_axis_direction_parameter_share,
+        enforce=profile.enforce_parameter_balance,
+    )
     report["training_stop_gates"] = _training_stop_gates(
         report["training_readiness"],
         report["training_balance"],
         report["intended_family_coverage"],
+        report["parameter_balance"],
         profile_name=profile.name,
     )
     report["blocking_training_gates"] = _blocking_gates(report["training_stop_gates"])
@@ -699,6 +708,7 @@ def _training_stop_gates(
     training_readiness: dict[str, Any],
     training_balance: dict[str, Any],
     intended_family_coverage: dict[str, Any],
+    parameter_balance: dict[str, Any],
     *,
     profile_name: str = DEFAULT_RELEASE_TIER,
 ) -> dict[str, Any]:
@@ -720,6 +730,7 @@ def _training_stop_gates(
         "cross_feature_value_bearing_coverage": training_balance["passes_cross_feature_value_bearing_coverage"],
         "candidate_breadth": training_balance["passes_candidate_breadth"],
         "intended_family_coverage": intended_family_coverage["valid"],
+        "parameter_balance": parameter_balance["valid"],
     }
 
 

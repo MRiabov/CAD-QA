@@ -38,6 +38,7 @@ def load_family_manifest(path: Path | None = None) -> dict[str, Any]:
             "target_type": family.get("target_type"),
             "minimum_hops": family.get("minimum_hops"),
             "maximum_hops": family.get("maximum_hops"),
+            "parameter_balance": family.get("parameter_balance") or {},
             "notes": family.get("notes"),
         }
     return {

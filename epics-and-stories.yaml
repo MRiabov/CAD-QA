@@ -342,7 +342,7 @@ epics:
         status: planned
       - id: "14.4"
         title: Release and SFT gates for parameter balance across task families
-        status: planned
+        status: work-in-progress
       - id: "14.5"
         title: Intended-family manifest for release, calibration, and review-only task families
         status: work-in-progress

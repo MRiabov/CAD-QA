@@ -177,6 +177,11 @@ when those choices can be sampled and verified.
 - Benchmark-release release and SFT reports include intended-family manifest
   coverage: zero-row intended release families, generated review-only or
   calibration families, and unknown generated families block the benchmark tier.
+- Benchmark-release release and SFT reports include an initial parameter-balance
+  gate derived from private query programs. It reports and blocks collapsed
+  target type, final selector, aggregation metric/axis, extremum direction,
+  clause metric/axis, comparison operator, reference metric, and value-bucket
+  distributions for generated release families.
 - Public/private row views separate answer-free benchmark inputs from private
   gold answers, query programs, candidate traces, and clue maps.
 - Public/private exports include row-ID parity and hidden-field leak audits.
@@ -667,21 +672,23 @@ Checked as implemented with remaining scale caveats:
   geometry-derived relations such as shared height, plane, axis, equal
   measurement bucket, containment, adjacency, or distance to a sampled reference
   entity to define a nontrivial candidate subset before the final selector.
-- Add release/SFT reporting and gates for parameter balance. Any family that
-  collapses onto one global axis, view word, extremum direction, comparison,
-  value shape, or entity type should be capped, blocked, or treated as
-  review-only until the sampled distribution is healthy.
-- Add an intended-family manifest so planned release task families that generate
-  zero rows block release instead of relying on manual review.
+- Replace the initial query-program-derived parameter-balance report with
+  explicit sampled-parameter metadata from the synthesis layer. The current gate
+  catches collapsed generated rows, but it does not yet prove that every
+  intended parameter dimension was sampled whenever the verifier could support
+  it.
+- Expand the intended-family manifest into full family specs with predicates,
+  selectors, parameter dimensions, and geometry-limited exceptions.
 - Complete benchmark-release gating. Explicit release-tier verifier profiles now
   exist for `smoke`, `release-candidate`, and `benchmark-release`, and the
   benchmark-release profile enforces row counts, default SFT row counts,
   geometry-hop coverage, default SFT geometry-critical dominance, syntax-only
   caps, value-bearing and cross-feature coverage bands, prompt-template share,
-  unique-answer count, answer entropy, candidate breadth, and non-collapsed split
-  group coverage. Remaining benchmark-release gates are sampled parameter
-  balance, intended-family zero-row coverage from a manifest, and machine-checked
-  preview/test evidence for changed release families.
+  unique-answer count, answer entropy, candidate breadth, intended-family
+  coverage, query-program parameter balance, and non-collapsed split group
+  coverage. Remaining benchmark-release work is explicit sampled-parameter
+  metadata from synthesized families and machine-checked preview/test evidence
+  for changed release families.
   Rechecking the current CadEvolve-50 release artifact with
   `--release-tier benchmark-release` blocks release on row count, split group
   coverage, default SFT row count, prompt-family balance, prompt-template
