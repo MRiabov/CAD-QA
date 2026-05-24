@@ -16,6 +16,7 @@ from cad_qa.dataset.public import private_rows, public_private_audit, public_row
 from cad_qa.dataset.quarantine import quarantine_report
 from cad_qa.dataset.release import export_release_dataset
 from cad_qa.dataset.release_report import (
+    intended_family_share_feasibility_report,
     release_balance_report,
     release_gate_profile,
     release_verifier_markdown,
@@ -7577,6 +7578,41 @@ def test_intended_family_manifest_reports_zero_row_and_non_release_families(tmp_
     }
 
 
+def test_benchmark_release_family_share_feasibility_blocks_impossible_manifest() -> None:
+    profile = release_gate_profile("benchmark-release")
+    feasible = intended_family_share_feasibility_report(
+        {"intended_release_family_count": 10},
+        profile,
+    )
+    too_few = intended_family_share_feasibility_report(
+        {"intended_release_family_count": 9},
+        profile,
+    )
+    too_many = intended_family_share_feasibility_report(
+        {"intended_release_family_count": 101},
+        profile,
+    )
+    default_manifest = load_family_manifest()
+    current = intended_family_share_feasibility_report(
+        {
+            "intended_release_family_count": sum(
+                1 for family in default_manifest["families"].values() if family["status"] == "release"
+            )
+        },
+        profile,
+    )
+
+    assert feasible["valid"]
+    assert feasible["minimum_feasible_release_family_count"] == 10
+    assert feasible["maximum_feasible_release_family_count"] == 100
+    assert not too_few["valid"]
+    assert too_few["violations"][0]["reason"] == "too_few_intended_release_families_for_share_band"
+    assert not too_many["valid"]
+    assert too_many["violations"][0]["reason"] == "too_many_intended_release_families_for_share_band"
+    assert not current["valid"]
+    assert current["intended_release_family_count"] > current["maximum_feasible_release_family_count"]
+
+
 def test_default_family_manifest_keeps_superseded_fixed_families_review_only() -> None:
     manifest = load_family_manifest()
     families = manifest["families"]
@@ -8167,10 +8203,12 @@ def test_benchmark_release_verifier_blocks_intended_family_coverage_failures(tmp
     report = release_verifier_report(rows, release_tier="benchmark-release", family_manifest=manifest)
 
     assert not report["stop_gates"]["intended_family_coverage"]
+    assert not report["stop_gates"]["intended_family_share_feasibility"]
     assert not report["stop_gates"]["parameter_balance"]
     assert not report["stop_gates"]["preview_evidence"]
     assert not report["stop_gates"]["family_test_evidence"]
     assert "intended_family_coverage" in report["blocking_gates"]
+    assert "intended_family_share_feasibility" in report["blocking_gates"]
     assert "parameter_balance" in report["blocking_gates"]
     assert "preview_evidence" in report["blocking_gates"]
     assert "family_test_evidence" in report["blocking_gates"]
@@ -8395,6 +8433,7 @@ def test_training_export_cli_defaults_to_geometry_critical_rows(tmp_path: Path) 
     assert default_sft_report["training_stop_gates"]["geometry_critical_dominance"]
     assert "prompt_family_balance" in default_sft_report["training_stop_gates"]
     assert "intended_family_coverage" in default_sft_report["training_stop_gates"]
+    assert "intended_family_share_feasibility" in default_sft_report["training_stop_gates"]
     assert "parameter_balance" in default_sft_report["training_stop_gates"]
     assert "preview_evidence" in default_sft_report["training_stop_gates"]
     assert "family_test_evidence" in default_sft_report["training_stop_gates"]
@@ -8422,6 +8461,7 @@ def test_training_export_cli_defaults_to_geometry_critical_rows(tmp_path: Path) 
     assert "default_sft_row_count" in benchmark_sft_report["blocking_training_gates"]
     assert benchmark_sft_report["training_readiness"]["max_syntax_only_training_share"] == 0.0
     assert "intended_family_coverage" in benchmark_sft_report["blocking_training_gates"]
+    assert "intended_family_share_feasibility" in benchmark_sft_report["blocking_training_gates"]
     assert "parameter_balance" not in benchmark_sft_report["blocking_training_gates"]
     assert benchmark_sft_report["intended_family_coverage"]["generated_non_release_families"] == [
         "largest_compiled_volume_feature"
@@ -9377,6 +9417,7 @@ def test_release_verifier_report_stop_gates_and_cli(tmp_path: Path) -> None:
     assert "geometry_hop_coverage" in report["stop_gates"]
     assert "syntax_only_calibration_cap" in report["stop_gates"]
     assert "intended_family_coverage" in report["stop_gates"]
+    assert "intended_family_share_feasibility" in report["stop_gates"]
     assert "parameter_balance" in report["stop_gates"]
     assert "preview_evidence" in report["stop_gates"]
     assert "family_test_evidence" in report["stop_gates"]
@@ -9412,6 +9453,7 @@ def test_release_verifier_report_stop_gates_and_cli(tmp_path: Path) -> None:
     assert "default_sft_row_count" in benchmark_report["blocking_gates"]
     assert "benchmark_split_group_coverage" in benchmark_report["blocking_gates"]
     assert "intended_family_coverage" in benchmark_report["blocking_gates"]
+    assert "intended_family_share_feasibility" in benchmark_report["blocking_gates"]
     assert "parameter_balance" not in benchmark_report["blocking_gates"]
     assert "largest_removed_region" in benchmark_report["intended_family_coverage"]["generated_non_release_families"]
     assert "preview_evidence" in benchmark_report["blocking_gates"]

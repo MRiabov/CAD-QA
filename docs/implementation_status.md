@@ -194,6 +194,11 @@ when those choices can be sampled and verified.
 - Benchmark-release release and SFT reports include intended-family manifest
   coverage: zero-row intended release families, generated review-only or
   calibration families, and unknown generated families block the benchmark tier.
+- Benchmark-release release and SFT reports also check whether the intended
+  release-family count can satisfy the configured family-share band at all.
+  With the current 1%-10% family-share rule, a benchmark manifest must expose
+  between 10 and 100 intended release families; outside that range, release is
+  blocked before balance tuning can hide an impossible target.
 - Materialized rows now serialize private `query_program.sampled_parameters`
   for the parameter dimensions currently inferable from each query program.
 - Benchmark-release release and SFT reports include an initial parameter-balance
@@ -1250,8 +1255,9 @@ Checked as implemented with remaining scale caveats:
   benchmark syntax-only caps, value-bearing and
   cross-feature coverage bands, prompt-template share, unique-answer count,
   answer entropy, candidate breadth, intended-family coverage,
-  sampled-parameter balance, preview evidence, family test evidence, and
-  non-collapsed split group coverage. Remaining benchmark-release work is
+  intended-family share feasibility, sampled-parameter balance, preview
+  evidence, family test evidence, and non-collapsed split group coverage.
+  Remaining benchmark-release work is
   synthesis-layer sampling for broader reference/rank/rendered-wording variants
   and release-scale parameter distributions.
   Rechecking the current CadEvolve-50 release artifact with
@@ -1260,7 +1266,7 @@ Checked as implemented with remaining scale caveats:
   balance, answer entropy, geometry-hop coverage, main BrowseComp hop coverage,
   default SFT syntax-only cap, syntax-only calibration cap, cross-feature
   value-bearing coverage, candidate breadth, intended-family coverage,
-  sampled-parameter balance,
+  intended-family share feasibility, sampled-parameter balance,
   preview evidence, and family test evidence.
 - Broaden value-bearing and tolerance-equal coverage beyond the implemented
   core to radius/diameter/angle once those measurements are extracted broadly,

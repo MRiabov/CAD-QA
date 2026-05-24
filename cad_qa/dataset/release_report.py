@@ -191,6 +191,10 @@ def release_verifier_report(
         manifest_path=family_manifest,
         enforce=profile.enforce_intended_family_coverage,
     )
+    intended_family_share_feasibility = intended_family_share_feasibility_report(
+        intended_family_coverage,
+        profile,
+    )
     parameter_balance = parameter_balance_report(
         rows,
         family_manifest=family_manifest,
@@ -241,6 +245,7 @@ def release_verifier_report(
         "cross_feature_value_bearing_coverage": release_balance["passes_cross_feature_value_bearing_coverage"],
         "candidate_breadth": release_balance["passes_candidate_breadth"],
         "intended_family_coverage": intended_family_coverage["valid"],
+        "intended_family_share_feasibility": intended_family_share_feasibility["valid"],
         "parameter_balance": parameter_balance["valid"],
         "preview_evidence": preview_evidence_report["valid"],
         "family_test_evidence": family_test_evidence_report["valid"],
@@ -266,6 +271,7 @@ def release_verifier_report(
         "training_readiness": training_readiness,
         "release_balance": release_balance,
         "intended_family_coverage": intended_family_coverage,
+        "intended_family_share_feasibility": intended_family_share_feasibility,
         "parameter_balance": parameter_balance,
         "preview_evidence": preview_evidence_report,
         "family_test_evidence": family_test_evidence_report,
@@ -487,6 +493,10 @@ def release_verifier_markdown(report: dict[str, Any]) -> str:
         "",
         _json_block(report["intended_family_coverage"]),
         "",
+        "## Intended Family Share Feasibility",
+        "",
+        _json_block(report["intended_family_share_feasibility"]),
+        "",
         "## Parameter Balance",
         "",
         _json_block(report["parameter_balance"]),
@@ -640,6 +650,52 @@ def release_gate_profile_report(profile: ReleaseGateProfile) -> dict[str, Any]:
         "enforce_preview_evidence": profile.enforce_preview_evidence,
         "min_preview_samples_per_family": profile.min_preview_samples_per_family,
         "enforce_family_test_evidence": profile.enforce_family_test_evidence,
+    }
+
+
+def intended_family_share_feasibility_report(
+    intended_family_coverage: dict[str, Any],
+    profile: ReleaseGateProfile | str = DEFAULT_RELEASE_TIER,
+) -> dict[str, Any]:
+    """Report whether intended release-family count can satisfy family-share gates."""
+
+    profile = release_gate_profile(profile)
+    intended_count = int(intended_family_coverage.get("intended_release_family_count") or 0)
+    minimum_feasible_count = max(
+        profile.min_prompt_family_count,
+        math.ceil((1.0 - 1e-12) / profile.max_prompt_family_share),
+    )
+    maximum_feasible_count = math.floor((1.0 + 1e-12) / profile.min_prompt_family_share)
+    violations = []
+    if intended_count < minimum_feasible_count:
+        violations.append(
+            {
+                "reason": "too_few_intended_release_families_for_share_band",
+                "intended_release_family_count": intended_count,
+                "minimum_feasible_release_family_count": minimum_feasible_count,
+                "minimum_prompt_family_count": profile.min_prompt_family_count,
+                "maximum_prompt_family_share": profile.max_prompt_family_share,
+            }
+        )
+    if intended_count > maximum_feasible_count:
+        violations.append(
+            {
+                "reason": "too_many_intended_release_families_for_share_band",
+                "intended_release_family_count": intended_count,
+                "maximum_feasible_release_family_count": maximum_feasible_count,
+                "minimum_prompt_family_share": profile.min_prompt_family_share,
+            }
+        )
+    return {
+        "valid": not violations if profile.enforce_intended_family_coverage else True,
+        "enforced": profile.enforce_intended_family_coverage,
+        "release_tier": profile.name,
+        "intended_release_family_count": intended_count,
+        "minimum_feasible_release_family_count": minimum_feasible_count,
+        "maximum_feasible_release_family_count": maximum_feasible_count,
+        "minimum_prompt_family_share": profile.min_prompt_family_share,
+        "maximum_prompt_family_share": profile.max_prompt_family_share,
+        "violations": violations,
     }
 
 

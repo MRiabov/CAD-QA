@@ -23,6 +23,7 @@ from cad_qa.dataset.release import export_release_dataset
 from cad_qa.dataset.release_report import (
     DEFAULT_RELEASE_TIER,
     RELEASE_TIERS,
+    intended_family_share_feasibility_report,
     release_balance_report,
     release_gate_profile,
     write_release_verifier_report,
@@ -720,6 +721,10 @@ def _cmd_training_export_sft(args: argparse.Namespace) -> dict[str, Any]:
         manifest_path=args.family_manifest,
         enforce=profile.enforce_intended_family_coverage,
     )
+    report["intended_family_share_feasibility"] = intended_family_share_feasibility_report(
+        report["intended_family_coverage"],
+        profile,
+    )
     report["parameter_balance"] = parameter_balance_report(
         rows,
         family_manifest=args.family_manifest,
@@ -749,6 +754,7 @@ def _cmd_training_export_sft(args: argparse.Namespace) -> dict[str, Any]:
         report["training_readiness"],
         report["training_balance"],
         report["intended_family_coverage"],
+        report["intended_family_share_feasibility"],
         report["parameter_balance"],
         report["preview_evidence"],
         report["family_test_evidence"],
@@ -771,6 +777,7 @@ def _training_stop_gates(
     training_readiness: dict[str, Any],
     training_balance: dict[str, Any],
     intended_family_coverage: dict[str, Any],
+    intended_family_share_feasibility: dict[str, Any],
     parameter_balance: dict[str, Any],
     preview_evidence: dict[str, Any],
     family_test_evidence: dict[str, Any],
@@ -796,6 +803,7 @@ def _training_stop_gates(
         "cross_feature_value_bearing_coverage": training_balance["passes_cross_feature_value_bearing_coverage"],
         "candidate_breadth": training_balance["passes_candidate_breadth"],
         "intended_family_coverage": intended_family_coverage["valid"],
+        "intended_family_share_feasibility": intended_family_share_feasibility["valid"],
         "parameter_balance": parameter_balance["valid"],
         "preview_evidence": preview_evidence["valid"],
         "family_test_evidence": family_test_evidence["valid"],
