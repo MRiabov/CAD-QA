@@ -675,6 +675,8 @@ def _training_stop_gates(
         "answer_entropy": training_balance["passes_answer_entropy"],
         "geometry_hop_coverage": training_balance["passes_geometry_hop_coverage"],
         "syntax_only_calibration_cap": training_balance["passes_syntax_only_calibration_cap"],
+        "value_bearing_measurement_coverage": training_balance["passes_value_bearing_measurement_coverage"],
+        "cross_feature_value_bearing_coverage": training_balance["passes_cross_feature_value_bearing_coverage"],
     }
 
 

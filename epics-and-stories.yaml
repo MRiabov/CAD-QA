@@ -288,7 +288,7 @@ epics:
         status: work-in-progress
       - id: "13.3"
         title: Cross-feature value-bearing tasks using distances between derived feature geometry
-        status: planned
+        status: implemented
       - id: "13.4"
         title: Release and SFT coverage gates for value-bearing measurement task families
-        status: planned
+        status: implemented

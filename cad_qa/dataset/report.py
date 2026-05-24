@@ -47,6 +47,8 @@ def dataset_report(rows: list[Any]) -> dict[str, Any]:
             quality_flags["geometry_critical"] += 1
         if _is_value_bearing_measurement_row(item):
             quality_flags["value_bearing_measurement"] += 1
+        if _is_cross_feature_value_bearing_row(item):
+            quality_flags["cross_feature_value_bearing"] += 1
     return {
         "row_count": len(rows),
         "hop_counts": dict(sorted(hop_counts.items())),
@@ -158,6 +160,16 @@ def _is_value_bearing_measurement_row(row: dict[str, Any]) -> bool:
             and clause.get("metric")
             and clause.get("value") is not None
         ):
+            return True
+    return False
+
+
+def _is_cross_feature_value_bearing_row(row: dict[str, Any]) -> bool:
+    query = row.get("query_program") or {}
+    if query.get("aggregation_metric") == "distance_to_reference_feature_centroid":
+        return True
+    for clause in query.get("clauses", []):
+        if isinstance(clause, dict) and clause.get("kind") == "reference_measurement":
             return True
     return False
 

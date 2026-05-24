@@ -1770,6 +1770,42 @@ def test_smoke_queries_mine_equal_centroid_and_height_values() -> None:
     assert "overall height of 5.0" in height_row.prompt
 
 
+def test_smoke_queries_generate_cross_feature_reference_distance_tasks() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:cross_value",
+        source={"source_id": "src_cross_value", "source_code": "import cadquery as cq\n"},
+    )
+    for node_id, volume, centroid in [
+        ("feature:ref", 100.0, [0.0, 0.0, 0.0]),
+        ("feature:z", 50.0, [100.0, 0.0, 0.0]),
+    ]:
+        graph.add_node(Node(node_id, "feature", node_id))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "volume", volume))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "centroid", centroid))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "centroid_z", centroid[2]))
+    graph.add_node(Node("selector:edges", "selector", "selected edges"))
+    for node_id, midpoint in [
+        ("edge:a", [1.0, 0.0, 0.0]),
+        ("edge:b", [5.0, 0.0, 0.0]),
+    ]:
+        graph.add_node(Node(node_id, "edge", node_id))
+        graph.add_relation(Relation(node_id, "selector:edges", "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "bbox_max_z", 0.0))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "edge_length", 10.0))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "midpoint", midpoint))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "midpoint_y", midpoint[1]))
+
+    queries = {query.query_id.rsplit(":", 1)[-1]: query for query in smoke_queries(graph)}
+    query = queries["nearest_equal_length_edge_to_reference_feature_centroid"]
+    row = materialize_row(graph, resolve_query(graph, query))
+
+    assert row.gold_answer == "edge:a"
+    assert "The target edge has a length of 10.0." in row.prompt
+    assert "solid volume 100.0 and centroid height 0.0" in row.prompt
+    assert "closest to the reference feature's solid centroid" in row.prompt
+    assert row.logical_hop_count == 5
+
+
 def test_generated_smoke_query_clauses_are_yaml_backed() -> None:
     for source_id, source_code in {
         "src_fixture": SOURCE,
@@ -1997,6 +2033,8 @@ def test_release_balance_report_checks_family_entropy_and_geometry_hops() -> Non
     assert report["passes_answer_entropy"]
     assert report["passes_geometry_hop_coverage"]
     assert report["passes_syntax_only_calibration_cap"]
+    assert not report["passes_value_bearing_measurement_coverage"]
+    assert not report["passes_cross_feature_value_bearing_coverage"]
     assert report["prompt_family_count"] == 4
     assert report["prompt_template_count"] == 4
     assert report["unique_answer_count"] == 24
@@ -2020,6 +2058,20 @@ def test_release_balance_report_checks_family_entropy_and_geometry_hops() -> Non
     assert not skewed_report["passes_answer_entropy"]
     assert not skewed_report["passes_geometry_hop_coverage"]
     assert not skewed_report["passes_syntax_only_calibration_cap"]
+
+    value_rows = []
+    for index, row in enumerate(rows):
+        query = dict(row["query_program"])
+        clauses = [{"kind": "has_measurement", "metric": "volume", "value": float(index)}]
+        if index == 0:
+            clauses.append({"kind": "reference_measurement", "metric": "distance_to_reference_feature_centroid"})
+            query["aggregation_metric"] = "distance_to_reference_feature_centroid"
+        query["clauses"] = clauses
+        value_rows.append({**row, "query_program": query})
+    value_report = release_balance_report(value_rows)
+    assert value_report["passes_value_bearing_measurement_coverage"]
+    assert value_report["passes_cross_feature_value_bearing_coverage"]
+    assert value_report["cross_feature_value_bearing_count"] == 1
 
 
 def test_release_verifier_blocks_non_calibration_low_geometry_critical_families() -> None:
@@ -2954,6 +3006,33 @@ def test_release_export_helper_writes_reports(tmp_path: Path) -> None:
     assert (tmp_path / "release" / "private.jsonl").exists()
 
 
+def _mark_value_bearing_release_fixture_rows(rows: list[dict]) -> None:
+    for index in range(2):
+        row = rows[index]
+        query = row["query_program"]
+        query["clauses"] = [
+            {
+                "id": "has_compiled_volume_value",
+                "kind": "has_measurement",
+                "metric": "volume",
+                "value": float(index + 1),
+            }
+        ]
+        row["clue_map"] = [
+            {"clause_id": "has_compiled_volume_value"},
+            {"clause_id": "aggregation"},
+        ]
+    rows[0]["query_program"]["aggregation_metric"] = "distance_to_reference_feature_centroid"
+    rows[0]["query_program"]["clauses"].append(
+        {
+            "id": "reference_feature_volume_and_centroid",
+            "kind": "reference_measurement",
+            "metric": "distance_to_reference_feature_centroid",
+        }
+    )
+    rows[0]["clue_map"].insert(1, {"clause_id": "reference_feature_volume_and_centroid"})
+
+
 def test_release_export_filters_prompt_policy_invalid_rows_before_verifier(tmp_path: Path) -> None:
     rows = []
     for index in range(24):
@@ -3018,6 +3097,7 @@ def test_release_export_filters_prompt_policy_invalid_rows_before_verifier(tmp_p
             "split": "stale",
         }
     )
+    _mark_value_bearing_release_fixture_rows(rows)
 
     result = export_release_dataset(rows, out=tmp_path / "release")
     exclusions = json.loads((tmp_path / "release" / "release_exclusions.json").read_text())
@@ -3106,6 +3186,7 @@ def test_release_export_caps_syntax_only_calibration_rows(tmp_path: Path) -> Non
                 "clue_map": [{"clause_id": "operation_target"}],
             }
         )
+    _mark_value_bearing_release_fixture_rows(rows)
 
     result = export_release_dataset(rows, out=tmp_path / "release")
     exclusions = json.loads((tmp_path / "release" / "release_exclusions.json").read_text())

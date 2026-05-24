@@ -14,6 +14,7 @@ from cad_qa.query.ir import CandidateSetTrace, Clause, QueryProgram, QueryResolu
 GEOMETRY_MARGIN_EPSILON = 1e-6
 VALUE_MATCH_TOLERANCE = 1e-6
 VALUE_BUCKET_DECIMALS = 6
+REFERENCE_FEATURE_DISTANCE_METRIC = "distance_to_reference_feature_centroid"
 
 
 def resolve_query(graph: OntologyGraph, query: QueryProgram) -> QueryResolution:
@@ -854,6 +855,50 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
                 aggregation="argmax",
                 aggregation_metric="midpoint_y",
                 hop_count=4,
+                difficulty="cad_browsecomp",
+                min_individual_clause_candidates=2,
+            )
+        )
+    reference_feature = _reference_feature_for_unique_nearest(
+        graph,
+        features,
+        equal_length_edges,
+        target_point_metric="midpoint",
+        reference_point_metric="centroid",
+    )
+    if reference_feature is not None:
+        queries.append(
+            QueryProgram(
+                query_id=f"{graph.graph_id}:q16:nearest_equal_length_edge_to_reference_feature_centroid",
+                target_type="edge",
+                clauses=[
+                    Clause(
+                        id="has_kernel_edge_selector_identity",
+                        kind="has_relation",
+                        relation="has_kernel_stable_edge_id",
+                        target_type="selector",
+                    ),
+                    Clause(
+                        id="has_edge_length_value",
+                        kind="has_measurement",
+                        metric="edge_length",
+                        value=_measurement_bucket_value(graph, equal_length_edges[0].id, "edge_length"),
+                    ),
+                    Clause(
+                        id="reference_feature_volume_and_centroid",
+                        kind="reference_measurement",
+                        metric=REFERENCE_FEATURE_DISTANCE_METRIC,
+                        value=_reference_feature_prompt_value(graph, reference_feature),
+                    ),
+                    Clause(
+                        id="has_edge_midpoint_for_reference_distance",
+                        kind="has_measurement",
+                        metric="midpoint",
+                    ),
+                ],
+                aggregation="argmin",
+                aggregation_metric=REFERENCE_FEATURE_DISTANCE_METRIC,
+                hop_count=5,
                 difficulty="cad_browsecomp",
                 min_individual_clause_candidates=2,
             )
@@ -1950,6 +1995,8 @@ def _apply_clause(graph: OntologyGraph, candidates: list[Node], clause: Clause) 
             for node in candidates
             if _measurement_matches(graph, node.id, clause.metric, clause.value)
         ]
+    if clause.kind == "reference_measurement":
+        return candidates if _reference_clause_matches(graph, clause) else []
     if clause.kind == "metric_compare" and clause.metric and clause.operator:
         return [
             node
@@ -1973,6 +2020,8 @@ def _apply_clause(graph: OntologyGraph, candidates: list[Node], clause: Clause) 
 def _apply_aggregation(graph: OntologyGraph, candidates: list[Node], query: QueryProgram) -> list[Node]:
     if not query.aggregation_metric or not candidates:
         return candidates
+    if query.aggregation_metric == REFERENCE_FEATURE_DISTANCE_METRIC:
+        return _apply_reference_feature_distance_aggregation(graph, candidates, query)
     scored: list[tuple[float, Node]] = []
     for node in candidates:
         value = _measurement_value(graph, node.id, query.aggregation_metric)
@@ -1982,6 +2031,25 @@ def _apply_aggregation(graph: OntologyGraph, candidates: list[Node], query: Quer
         return []
     target = max(score for score, _ in scored) if query.aggregation == "argmax" else min(score for score, _ in scored)
     return [node for score, node in scored if score == target]
+
+
+def _apply_reference_feature_distance_aggregation(
+    graph: OntologyGraph,
+    candidates: list[Node],
+    query: QueryProgram,
+) -> list[Node]:
+    reference_point = _reference_point_from_query(graph, query)
+    if reference_point is None:
+        return []
+    scored: list[tuple[float, Node]] = []
+    for node in candidates:
+        point = _point_measurement(graph, node.id, "midpoint")
+        if point is not None:
+            scored.append((_point_distance(point, reference_point), node))
+    if not scored:
+        return []
+    target = min(score for score, _ in scored) if query.aggregation == "argmin" else max(score for score, _ in scored)
+    return [node for score, node in scored if abs(score - target) <= VALUE_MATCH_TOLERANCE]
 
 
 def _measurement_value(graph: OntologyGraph, entity_id: str, metric: str) -> Any:
@@ -1996,6 +2064,24 @@ def _measurement_matches(graph: OntologyGraph, entity_id: str, metric: str, expe
     return value == expected
 
 
+def _reference_clause_matches(graph: OntologyGraph, clause: Clause) -> bool:
+    if not isinstance(clause.value, dict):
+        return False
+    reference_id = clause.value.get("reference_id")
+    if not isinstance(reference_id, str):
+        return False
+    reference = graph.node(reference_id)
+    if reference is None or reference.type != "feature":
+        return False
+    expected_volume = clause.value.get("reference_volume")
+    expected_centroid_z = clause.value.get("reference_centroid_z")
+    return (
+        _measurement_matches(graph, reference_id, "volume", expected_volume)
+        and _measurement_matches(graph, reference_id, "centroid_z", expected_centroid_z)
+        and _point_measurement(graph, reference_id, "centroid") is not None
+    )
+
+
 def _largest_equal_value_group(graph: OntologyGraph, nodes: list[Node], metric: str) -> list[Node]:
     groups: dict[float, list[Node]] = {}
     for node in nodes:
@@ -2005,6 +2091,99 @@ def _largest_equal_value_group(graph: OntologyGraph, nodes: list[Node], metric: 
     if not groups:
         return []
     return max(groups.values(), key=lambda group: (len(group), candidate_ids(group)))
+
+
+def _reference_feature_for_unique_nearest(
+    graph: OntologyGraph,
+    reference_features: list[Node],
+    target_nodes: list[Node],
+    *,
+    target_point_metric: str,
+    reference_point_metric: str,
+) -> Node | None:
+    targets = [
+        node
+        for node in target_nodes
+        if _point_measurement(graph, node.id, target_point_metric) is not None
+    ]
+    if len(targets) < 2:
+        return None
+    reference_key_counts = _reference_feature_key_counts(graph, reference_features)
+    for reference in sorted(reference_features, key=lambda node: node.id):
+        reference_key = _reference_feature_key(graph, reference.id)
+        if None in reference_key or reference_key_counts.get(reference_key, 0) != 1:
+            continue
+        reference_point = _point_measurement(graph, reference.id, reference_point_metric)
+        if reference_point is None:
+            continue
+        distances = [
+            _point_distance(_point_measurement(graph, target.id, target_point_metric), reference_point)
+            for target in targets
+        ]
+        ordered = sorted(distances)
+        if len(ordered) >= 2 and abs(ordered[0] - ordered[1]) > GEOMETRY_MARGIN_EPSILON:
+            return reference
+    return None
+
+
+def _reference_feature_prompt_value(graph: OntologyGraph, reference: Node) -> dict[str, Any]:
+    return {
+        "reference_id": reference.id,
+        "reference_volume": _measurement_bucket_value(graph, reference.id, "volume"),
+        "reference_centroid_z": _measurement_bucket_value(graph, reference.id, "centroid_z"),
+    }
+
+
+def _reference_feature_key_counts(graph: OntologyGraph, features: list[Node]) -> dict[tuple[float | None, float | None], int]:
+    counts: dict[tuple[float | None, float | None], int] = {}
+    for feature in features:
+        key = _reference_feature_key(graph, feature.id)
+        counts[key] = counts.get(key, 0) + 1
+    return counts
+
+
+def _reference_feature_key(graph: OntologyGraph, feature_id: str) -> tuple[float | None, float | None]:
+    return (
+        _measurement_bucket_value(graph, feature_id, "volume"),
+        _measurement_bucket_value(graph, feature_id, "centroid_z"),
+    )
+
+
+def _reference_point_from_query(graph: OntologyGraph, query: QueryProgram) -> list[float] | None:
+    for clause in query.clauses:
+        if clause.kind == "reference_measurement" and isinstance(clause.value, dict):
+            reference_id = clause.value.get("reference_id")
+            if isinstance(reference_id, str):
+                return _point_measurement(graph, reference_id, "centroid")
+    return None
+
+
+def _point_measurement(graph: OntologyGraph, entity_id: str, metric: str) -> list[float] | None:
+    value = _measurement_value(graph, entity_id, metric)
+    if isinstance(value, list) and len(value) >= 3:
+        return _numeric_point(value[:3])
+    scalar_names = {
+        "centroid": ("centroid_x", "centroid_y", "centroid_z"),
+        "midpoint": ("midpoint_x", "midpoint_y", "midpoint_z"),
+    }.get(metric)
+    if scalar_names is None:
+        return None
+    return _numeric_point([_measurement_value(graph, entity_id, name) for name in scalar_names])
+
+
+def _numeric_point(values: list[Any]) -> list[float] | None:
+    point: list[float] = []
+    for component in values:
+        if not isinstance(component, (int, float)):
+            return None
+        point.append(float(component))
+    return point
+
+
+def _point_distance(first: list[float] | None, second: list[float] | None) -> float:
+    if first is None or second is None:
+        return float("inf")
+    return sum((first[index] - second[index]) ** 2 for index in range(3)) ** 0.5
 
 
 def _measurement_bucket_value(graph: OntologyGraph, entity_id: str, metric: str) -> float | None:

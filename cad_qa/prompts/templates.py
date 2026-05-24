@@ -55,7 +55,8 @@ def clause_prompt(clause: Any, *, query: Any | None = None) -> str:
 
 
 def aggregation_prompt(aggregation: str, metric: str) -> str:
-    template = _string_template("aggregation_templates", aggregation)
+    templates = _template_mapping("aggregation_templates")
+    template = templates.get(f"{aggregation}.{metric}") or _string_template("aggregation_templates", aggregation)
     return template.format(metric=metric, metric_label=metric_label(metric))
 
 
@@ -95,6 +96,8 @@ def _clause_format_values(clause: Any, query: Any | None) -> dict[str, Any]:
         "operator": getattr(clause, "operator", None),
         "value": getattr(clause, "value", None),
     }
+    if isinstance(values["value"], dict):
+        values.update(values["value"])
     if query is not None:
         values["query_id"] = getattr(query, "query_id", None)
         values["query_target_type"] = getattr(query, "target_type", None)

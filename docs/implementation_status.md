@@ -87,6 +87,13 @@ candidates.
   rows expose rounded measurement values in the public prompt, keep equal-value
   candidates as distractors, and resolve with an additional geometric
   aggregation.
+- Initial cross-feature value-bearing distance tasks: selected edges with equal
+  measured length can be resolved by nearest midpoint distance to the solid
+  centroid of a reference feature described by measured volume and centroid
+  height.
+- Release and SFT stop gates now require value-bearing measurement coverage and
+  at least one cross-feature value-bearing row on applicable release-scale
+  artifacts.
 - YAML-backed prompt rendering from `prompt-templates.yaml`, with centralized
   domain-language clause templates, metric display labels, versioned query-shape
   template IDs, clause-to-clue maps, persisted candidate-count annotations,
@@ -622,18 +629,20 @@ Checked as implemented with remaining scale caveats:
 - Add value-bearing measurement prompt families. Current domain-language
   templates now cover initial equal-volume, equal-centroid-height,
   equal-overall-height, equal-face-area, equal-edge-length, and
-  equal-edge-midpoint-distance rows; coverage still needs to broaden to direct
-  coordinates, radius/diameter, angle, derived region values, and cross-feature
-  distance values.
+  equal-edge-midpoint-distance rows, plus one cross-feature edge-to-reference
+  feature distance family; coverage still needs to broaden to direct
+  coordinates, radius/diameter, angle, derived region values, and additional
+  cross-feature distance forms.
 - Add tolerance-equal measurement mining for multi-hop distractor construction:
   the current implementation groups feature volumes, feature centroid heights,
   feature overall heights, selected-face areas, selected-edge lengths, and
   selected-edge midpoint distances; it still needs broader entity/parameter
   coverage and configurable tolerance policy surfaced in release reports.
-- Add cross-feature value-bearing tasks and require them to be well represented
-  in release/SFT exports. Example: identify an edge on a box-like feature whose
-  midpoint is closest to the center of a sphere-like feature, with both
-  reference features described by geometry rather than direct source names.
+- Broaden cross-feature value-bearing tasks beyond the implemented selected-edge
+  midpoint to reference-feature centroid family. Additional target/reference
+  combinations should include faces, endpoints, material/void regions, and
+  feature-to-feature distances where public clues describe geometry rather than
+  source names.
 - Broaden the current geometry-backed training rows across more CadEvolve
   source families and larger generated releases: volume, bbox, centroid,
   topology counts/deltas, selector-result geometry, material/void region
