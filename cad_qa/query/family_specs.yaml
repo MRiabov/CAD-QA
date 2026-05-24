@@ -142,8 +142,8 @@ families:
         - aggregation_metric
         - final_selector
       expected_values:
-        clause_relation: [adjacent_to, intersects, opposite_to, parallel_to, perpendicular_to]
-    notes: Synthesized face family that samples the spatial relation before selecting by a measured face quantity.
+        clause_relation: [adjacent_to, coplanar_with, intersects, opposite_to, parallel_to, perpendicular_to]
+    notes: Synthesized face family that samples the spatial relation, including coplanar face relations, before selecting by a measured face quantity.
   - id: parameterized_face_reference_feature_distance
     status: release
     target_type: face

@@ -138,6 +138,7 @@ def synthesis_selfcheck_graphs() -> list[OntologyGraph]:
         _edge_single_relation_graph("graph:selfcheck-edge-longer-relation", "longer_than"),
         _edge_single_relation_graph("graph:selfcheck-edge-shorter-relation", "shorter_than"),
         _face_single_relation_graph("graph:selfcheck-face-parallel-relation", "parallel_to"),
+        _face_single_relation_graph("graph:selfcheck-face-coplanar-relation", "coplanar_with"),
         _feature_effect_delta_graph("graph:selfcheck-feature-effect-delta-0"),
         _feature_effect_delta_graph("graph:selfcheck-feature-effect-delta-6"),
         _feature_effect_delta_graph("graph:selfcheck-feature-effect-delta-10"),

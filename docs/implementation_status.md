@@ -906,16 +906,18 @@ Checked as implemented with remaining scale caveats:
 - The synthesized selfcheck preview at
   `runs/parameterized_synthesis_selfcheck_spatial_relation_expansion/PREVIEW.md`
   extends sampled spatial-relation synthesis to face `parallel_to` rows and
-  edge `parallel_to`, `longer_than`, and `shorter_than` rows. The reviewed
-  directed-comparison prompts phrase the target edge as longer or shorter than
-  another measured edge, preserving relation direction before the final
-  measured selector. This generalizes more of the old fixed longer/shorter
-  edge fixtures, but release-scale relation balance remains open.
+  `coplanar_with` rows and edge `parallel_to`, `longer_than`, and
+  `shorter_than` rows. The reviewed directed-comparison prompts phrase the
+  target edge as longer or shorter than another measured edge, preserving
+  relation direction before the final measured selector, and the reviewed
+  coplanar prompt uses conventional face-relation wording. This generalizes
+  more of the old fixed longer/shorter edge fixtures, but release-scale
+  relation balance remains open.
 - The synthesized selfcheck preview at
   `runs/parameterized_synthesis_selfcheck_face_spatial/PREVIEW.md` demonstrates
   the initial `parameterized_face_spatial_relation_extreme` family. The reviewed
   rows require kernel-selected face evidence, then sample one of adjacent,
-  intersecting, opposite, parallel, or perpendicular face relations before
+  coplanar, intersecting, opposite, parallel, or perpendicular face relations before
   resolving by a measured face quantity. The preview covers the initial
   relation parameters and all reviewed rows are release-ready, but this is
   still an initial synthesized face-spatial slice rather than proof of
@@ -1035,8 +1037,9 @@ Checked as implemented with remaining scale caveats:
   feature, edge, face, endpoint, material region, and void region targets.
   Generic reference-entity distance families also sample reference type inside
   the family and cover added-material/removed-material reference anchors.
-  Edge spatial-relation synthesis now samples same-length, parallel, longer-than,
-  and shorter-than relations instead of relying on fixed longer/shorter view-word
+  Face spatial-relation synthesis now includes coplanar relations, and edge
+  spatial-relation synthesis now samples same-length, parallel, longer-than, and
+  shorter-than relations instead of relying on fixed longer/shorter view-word
   fixtures. Remaining hard-coded release debt is mainly
   selected-entity count variants, richer graph-hop predicate chains, broader
   reference-entity balance, and release-scale distribution review.

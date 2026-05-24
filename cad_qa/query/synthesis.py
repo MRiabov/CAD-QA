@@ -604,6 +604,7 @@ RELATION_EXTREME_FAMILY_SPECS = (
         base_relation_target_type="selector",
         relations=(
             "adjacent_to",
+            "coplanar_with",
             "intersects",
             "opposite_to",
             "parallel_to",

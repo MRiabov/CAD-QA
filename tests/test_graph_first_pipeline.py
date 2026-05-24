@@ -2694,6 +2694,48 @@ def test_synthesis_generates_parallel_face_spatial_relation_query() -> None:
     assert len(row.candidate_trace["final_candidates"]) == 1
 
 
+def test_synthesis_generates_coplanar_face_spatial_relation_query() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:face-coplanar-spatial-synth",
+        source={"source_id": "synthetic", "source_code": ""},
+    )
+    graph.add_node(Node("selector:faces", "selector", "faces"))
+    for face_id, area, center in [
+        ("face:a", 60.0, [0.0, 0.0, 0.0]),
+        ("face:b", 48.0, [2.0, 0.0, 0.0]),
+        ("face:c", 30.0, [0.0, 3.0, 2.0]),
+        ("face:d", 12.0, [4.0, 3.0, 2.0]),
+    ]:
+        graph.add_node(Node(face_id, "face", face_id))
+        graph.add_relation(Relation(face_id, "selector:faces", "has_kernel_stable_face_id"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", area, "mm^2"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "center", center, "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_x", center[0], "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_y", center[1], "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_z", center[2], "mm"))
+        graph.add_measurement(Measurement(face_id, "relation_metric", "distance_to_origin", area / 10.0, "mm"))
+    for source_id, target_id in [
+        ("face:a", "face:b"),
+        ("face:c", "face:d"),
+    ]:
+        graph.add_relation(Relation(source_id, target_id, "coplanar_with"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_face_spatial_relation_extreme")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+
+    assert resolution.verifier_status == "resolved"
+    assert query.clauses[1].relation == "coplanar_with"
+    assert query.sampled_parameters["spatial_relation"] == ["coplanar_with"]
+    assert "coplanar_with" in row.relation_families
+    assert "coplanar with" in row.prompt
+    assert len(row.candidate_trace["final_candidates"]) == 1
+
+
 def test_synthesis_skips_edge_spatial_relation_family_without_viable_relation_subset() -> None:
     graph = OntologyGraph(graph_id="graph:no-edge-spatial-synth", source={"source_id": "synthetic", "source_code": ""})
     for edge_id, length in [("edge:a", 10.0), ("edge:b", 10.0), ("edge:c", 10.0)]:
