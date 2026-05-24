@@ -1174,10 +1174,13 @@ Checked as implemented with remaining scale caveats:
   spatial-relation synthesis now samples same-length, parallel, coaxial,
   longer-than, and shorter-than relations instead of relying on fixed
   longer/shorter view-word fixtures. Selected face/edge count synthesis now
-  includes sampled selected-count rank rows. Remaining hard-coded release debt
-  is mainly richer graph-hop predicate chains, broader selected-entity count
-  predicates, broader reference-entity balance, and release-scale distribution
-  review.
+  includes sampled selected-count rank rows. Kernel vertex selector results now
+  expose coordinate/distance measurements and synthesized vertex extrema/rank
+  rows at the valid-row level; reviewed selfcheck evidence is in
+  `runs/parameterized_synthesis_selfcheck_vertex/PREVIEW.md`. Remaining
+  hard-coded release debt is mainly richer graph-hop predicate chains, broader
+  selected-entity count predicates, broader reference-entity balance, and
+  release-scale distribution review.
 - Rewrite sparse direct selector/count/extremum families as graph-hop narrowing
   programs instead of treating them as unusable when the whole model lacks a
   unique global largest/smallest candidate. These rows should use sampled
@@ -1185,7 +1188,7 @@ Checked as implemented with remaining scale caveats:
   measurement bucket, containment, adjacency, or distance to a sampled reference
   entity to define a nontrivial candidate subset before the final selector.
   The current synthesis slice covers parameterized extrema over kernel-selected
-  feature, feature-effect delta, face/edge geometry, measured path
+  feature, feature-effect delta, face/edge/vertex geometry, measured path
   point/segment/edge-endpoint geometry, and sampled face/edge spatial
   relations including parallel face/edge and directed same-length/longer/shorter
   edge relation rows, selected face/edge selector-count narrowing with

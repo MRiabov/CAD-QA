@@ -100,6 +100,22 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Synthesized edge rank family over kernel-backed selected edges, including reviewed later rank positions.
+  - id: parameterized_kernel_vertex_extreme
+    positive_generation:
+      - test_synthesis_generates_parameterized_kernel_vertex_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_parameterized_kernel_vertex_without_unique_geometry
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Synthesized vertex extrema family over kernel-backed selected vertices.
+  - id: parameterized_kernel_vertex_rank
+    positive_generation:
+      - test_synthesis_generates_parameterized_kernel_vertex_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_parameterized_kernel_vertex_without_unique_geometry
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Synthesized vertex rank family over kernel-backed selected vertices.
   - id: parameterized_equal_edge_metric_extreme
     positive_generation:
       - test_synthesis_generates_equal_value_face_and_edge_queries

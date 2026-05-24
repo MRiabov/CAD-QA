@@ -981,6 +981,46 @@ families:
       expected_values:
         aggregation_rank: [2, 3, 4, 5, 6]
     notes: Synthesized family that selects a measured edge by sampled rank instead of only min/max extrema, bounded to reviewed ranks 2-6.
+  - id: parameterized_kernel_vertex_extreme
+    status: release
+    target_type: vertex
+    minimum_hops: 3
+    maximum_hops: 3
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - final_selector
+    notes: Synthesized family that samples the measured vertex coordinate or origin-distance selector instead of fixing a global axis.
+  - id: parameterized_kernel_vertex_rank
+    status: release
+    target_type: vertex
+    minimum_hops: 3
+    maximum_hops: 3
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - aggregation_rank
+        - rank_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - aggregation_metric
+        - aggregation_rank
+        - final_selector
+      expected_values:
+        aggregation_rank: [2, 3, 4, 5, 6]
+    notes: Synthesized family that selects a measured vertex by sampled rank, bounded to reviewed ranks 2-6.
   - id: parameterized_equal_edge_metric_extreme
     status: release
     target_type: edge

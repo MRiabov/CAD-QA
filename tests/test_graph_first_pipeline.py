@@ -1442,6 +1442,60 @@ def test_kernel_edge_selector_trace_produces_release_grade_edge_identity() -> No
     assert "entity_geometry" in endpoint_row.measurement_scopes
 
 
+def test_kernel_vertex_selector_trace_adds_vertex_coordinates() -> None:
+    source_code = (
+        "import cadquery as cq\n"
+        "base = cq.Workplane('XY').box(2, 2, 2)\n"
+        "corners = base.vertices()\n"
+    )
+    trace_record = {
+        "source_id": "src_selector_vertices",
+        "execution_status": "ok",
+        "snapshots": [
+            {"target": "base", "source_line": 2, "operation_index": 0, "volume": 8.0, "bbox": {"min": [-1, -1, -1], "max": [1, 1, 1]}, "topology": {"vertices": 8}},
+        ],
+        "operation_effects": [],
+        "selector_results": [
+            {
+                "target": "corners",
+                "selector": "",
+                "selector_kind": "vertices",
+                "source_line": 3,
+                "selector_index": 0,
+                "selected_count": 4,
+                "shape_types": ["Vertex", "Vertex", "Vertex", "Vertex"],
+                "bbox_signatures": [
+                    {"min": [-1, -1, -1], "max": [-1, -1, -1]},
+                    {"min": [-1, 1, -1], "max": [-1, 1, -1]},
+                    {"min": [1, -1, 1], "max": [1, -1, 1]},
+                    {"min": [1, 1, 1], "max": [1, 1, 1]},
+                ],
+                "evidence": "cadquery_selector_result",
+            },
+        ],
+        "environment": {"cadquery_available": True},
+        "failure_reason": None,
+    }
+    graph = build_graph(
+        source_record_from_mapping({"source_id": "src_selector_vertices", "normalized_code": source_code}),
+        trace=trace_record,
+    )
+    kernel_vertices = [node for node in graph.nodes_by_type("vertex") if node.properties.get("kernel_backed")]
+
+    assert len(kernel_vertices) == 4
+    assert graph.node("origin:global") is not None
+    assert any(relation.type == "has_kernel_stable_vertex_id" for relation in graph.relations)
+    assert any(
+        relation.type == "distance_to" and relation.target_id == "origin:global"
+        for relation in graph.relations
+    )
+    assert graph.measurements_for(kernel_vertices[0].id, "coordinate")
+    assert graph.measurements_for(kernel_vertices[0].id, "coordinate_x")
+    assert graph.measurements_for(kernel_vertices[0].id, "coordinate_y")
+    assert graph.measurements_for(kernel_vertices[0].id, "coordinate_z")
+    assert graph.measurements_for(kernel_vertices[0].id, "distance_to_origin")
+
+
 def test_kernel_edge_length_query_uses_compiled_midpoint_geometry() -> None:
     source_code = (
         "import cadquery as cq\n"
@@ -4345,6 +4399,90 @@ def test_synthesis_generates_endpoint_and_path_rank_queries() -> None:
                 "candidate in decreasing",
             )
         )
+
+
+def test_synthesis_generates_parameterized_kernel_vertex_queries() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:vertex-synth",
+        source={"source_id": "synthetic", "source_code": "result = cq.Workplane('XY').box(2, 4, 6).vertices()"},
+    )
+    graph.add_node(Node("selector:vertices", "selector", "vertices"))
+    for index, coordinate in enumerate(
+        [
+            [-6.0, -4.0, -3.0],
+            [-4.0, -1.0, -2.0],
+            [-1.0, 2.0, -1.0],
+            [2.0, 4.0, 1.0],
+            [5.0, 7.0, 3.0],
+            [9.0, 11.0, 6.0],
+        ]
+    ):
+        vertex_id = f"vertex:{index}"
+        graph.add_node(Node(vertex_id, "vertex", vertex_id))
+        graph.add_relation(Relation(vertex_id, "selector:vertices", "has_kernel_stable_vertex_id"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate", coordinate, "mm"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_x", coordinate[0], "mm"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_y", coordinate[1], "mm"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
+        graph.add_measurement(
+            Measurement(
+                vertex_id,
+                "relation_metric",
+                "distance_to_origin",
+                math.sqrt(sum(component * component for component in coordinate)),
+                "mm",
+            )
+        )
+
+    queries = {query.query_id.rsplit(":", 1)[-1]: query for query in synthesize_graph_hop_queries(graph)}
+
+    for family, expected_aggregation in [
+        ("parameterized_kernel_vertex_extreme", {"argmax", "argmin"}),
+        ("parameterized_kernel_vertex_rank", {"rank_asc", "rank_desc"}),
+    ]:
+        query = queries[family]
+        resolution = resolve_query(graph, query)
+        row = materialize_row(graph, resolution)
+
+        assert resolution.verifier_status == "resolved"
+        assert row.release_ready
+        assert query.target_type == "vertex"
+        assert query.clauses[0].relation == "has_kernel_stable_vertex_id"
+        assert query.clauses[0].target_type == "selector"
+        assert query.aggregation in expected_aggregation
+        assert query.aggregation_metric in {
+            "coordinate_x",
+            "coordinate_y",
+            "coordinate_z",
+            "distance_to_origin",
+        }
+        assert row.logical_hop_count == 3
+        assert row.geometry_hop_count == 3
+        assert row.query_program["sampled_parameters"]["target_type"] == ["vertex"]
+        assert "has_kernel_stable_vertex_id" in row.relation_families
+        assert "vertex" in row.prompt.lower()
+        if family.endswith("_rank"):
+            assert query.aggregation_rank in {2, 3, 4, 5, 6}
+            assert row.query_program["sampled_parameters"]["aggregation_rank"] == [str(query.aggregation_rank)]
+            assert row.candidate_trace["steps"][-1]["rank"] == query.aggregation_rank
+
+
+def test_synthesis_skips_parameterized_kernel_vertex_without_unique_geometry() -> None:
+    graph = OntologyGraph(graph_id="graph:tied-vertex-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph.add_node(Node("selector:vertices", "selector", "vertices"))
+    for index in range(3):
+        vertex_id = f"vertex:{index}"
+        graph.add_node(Node(vertex_id, "vertex", vertex_id))
+        graph.add_relation(Relation(vertex_id, "selector:vertices", "has_kernel_stable_vertex_id"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_x", 1.0, "mm"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_y", 1.0, "mm"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_z", 1.0, "mm"))
+        graph.add_measurement(Measurement(vertex_id, "relation_metric", "distance_to_origin", 1.0, "mm"))
+
+    families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
+
+    assert "parameterized_kernel_vertex_extreme" not in families
+    assert "parameterized_kernel_vertex_rank" not in families
 
 
 def test_synthesis_skips_endpoint_and_path_rank_families_without_unique_rank_positions() -> None:

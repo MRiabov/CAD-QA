@@ -351,7 +351,7 @@ epics:
         title: "Feature application effect questions from kernel deltas: volume, bbox, topology, centroid movement"
         status: implemented
       - id: "12.3"
-        title: Selector-result geometry questions with selected counts, bboxes, and stable face or edge signatures
+        title: Selector-result geometry questions with selected counts, bboxes, and stable face, edge, or vertex signatures
         status: implemented
       - id: "12.4"
         title: Kernel-backed material and void region delta questions

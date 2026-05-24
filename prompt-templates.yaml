@@ -224,6 +224,15 @@ clause_templates:
   same_length_as_another_kernel_edge: "The target edge has the same length as another selected edge."
   shorter_than_another_kernel_edge: "The target edge is shorter than another selected edge."
 
+  has_parameterized_vertex_set:
+    - "The target vertex belongs to a measured vertex set."
+    - "The target vertex is part of a vertex group with measured coordinates."
+    - "The target vertex is included in a vertex set with checked point locations."
+  has_parameterized_vertex_metric:
+    - "The target vertex has a measured {metric_label}."
+    - "The target vertex has a known {metric_label}."
+    - "The target vertex has a verified {metric_label}."
+
   endpoint_of_kernel_selected_edge: "The target point is an endpoint of a selected edge."
   contained_in_kernel_selected_edge: "The target endpoint lies on a selected edge."
   edge_endpoint.has_origin_distance_relation: "The target endpoint has a measured distance to the global origin."

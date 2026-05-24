@@ -28,8 +28,10 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_void_region_rank",
     "parameterized_kernel_face_extreme",
     "parameterized_kernel_edge_extreme",
+    "parameterized_kernel_vertex_extreme",
     "parameterized_kernel_face_rank",
     "parameterized_kernel_edge_rank",
+    "parameterized_kernel_vertex_rank",
     "parameterized_endpoint_rank",
     "parameterized_path_point_rank",
     "parameterized_path_segment_rank",
@@ -150,6 +152,8 @@ def synthesis_selfcheck_graphs() -> list[OntologyGraph]:
         _edge_rank_graph("graph:selfcheck-edge-rank-1"),
         _edge_rank_graph("graph:selfcheck-edge-rank-2"),
         _edge_deep_rank_graph("graph:rank-sample:7"),
+        _vertex_metric_graph("graph:selfcheck-vertex-metric-0"),
+        _vertex_metric_graph("graph:selfcheck-vertex-metric-1"),
         _feature_rank_graph("graph:feature-rank-sample:4"),
         _feature_rank_graph("graph:feature-rank-sample:0"),
         _region_rank_graph("graph:material-region-rank-sample:1"),
@@ -408,6 +412,40 @@ def _edge_deep_rank_graph(graph_id: str) -> OntologyGraph:
         graph.add_node(Node(edge_id, "edge", edge_id))
         graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
+    return graph
+
+
+def _vertex_metric_graph(graph_id: str) -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id=graph_id,
+        source={
+            "source_id": graph_id.rsplit(":", 1)[-1],
+            "source_code": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane(\"XY\").box(10, 6, 4).vertices()\n"
+            ),
+        },
+    )
+    graph.add_node(Node("selector:vertices", "selector", "vertices"))
+    for index, coordinate in enumerate(
+        [
+            [-6.0, -4.0, -3.0],
+            [-4.0, -1.0, -2.0],
+            [-1.0, 2.0, -1.0],
+            [2.0, 4.0, 1.0],
+            [5.0, 7.0, 3.0],
+            [9.0, 11.0, 6.0],
+        ]
+    ):
+        vertex_id = f"vertex:{index}"
+        graph.add_node(Node(vertex_id, "vertex", vertex_id))
+        graph.add_relation(Relation(vertex_id, "selector:vertices", "has_kernel_stable_vertex_id"))
+        distance = math.sqrt(sum(component * component for component in coordinate))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate", coordinate, "mm"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_x", coordinate[0], "mm"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_y", coordinate[1], "mm"))
+        graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
+        graph.add_measurement(Measurement(vertex_id, "relation_metric", "distance_to_origin", distance, "mm"))
     return graph
 
 

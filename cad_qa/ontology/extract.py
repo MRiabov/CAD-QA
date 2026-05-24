@@ -764,6 +764,8 @@ class _Extractor:
             self._add_kernel_edge_midpoint_metrics(selected_entity_ids, kernel_result)
             self._add_kernel_edge_endpoints(selected_entity_ids, kernel_result)
             self._add_kernel_edge_spatial_relations(selected_entity_ids, selected_axes, kernel_result)
+        elif entity_type == "vertex":
+            self._add_kernel_vertex_coordinate_metrics(selected_entity_ids, kernel_result)
         for previous_selector_id in previous_selector_ids:
             self.graph.add_relation(
                 Relation(
@@ -886,6 +888,24 @@ class _Extractor:
                     self.graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_y", endpoint[1], "mm", evidence))
                     self.graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_z", endpoint[2], "mm", evidence))
                     self.graph.add_measurement(Measurement(endpoint_id, "relation_metric", "distance_to_origin", distance_to_origin, "mm", evidence))
+
+    def _add_kernel_vertex_coordinate_metrics(self, vertex_ids: list[str], kernel_result: dict[str, Any]) -> None:
+        evidence = {"source": kernel_result.get("evidence", "cadquery_selector_result")}
+        self._ensure_global_origin(evidence)
+        for vertex_id in vertex_ids:
+            vertex = self.graph.node(vertex_id)
+            if vertex is None or self.graph.measurements_for(vertex_id, "coordinate"):
+                continue
+            coordinate = _bbox_midpoint(vertex.properties.get("bbox"))
+            if coordinate is None:
+                continue
+            distance_to_origin = math.sqrt(sum(component * component for component in coordinate))
+            self.graph.add_relation(Relation(vertex_id, "origin:global", "distance_to", evidence=evidence))
+            self.graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate", coordinate, "mm", evidence))
+            self.graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_x", coordinate[0], "mm", evidence))
+            self.graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_y", coordinate[1], "mm", evidence))
+            self.graph.add_measurement(Measurement(vertex_id, "entity_geometry", "coordinate_z", coordinate[2], "mm", evidence))
+            self.graph.add_measurement(Measurement(vertex_id, "relation_metric", "distance_to_origin", distance_to_origin, "mm", evidence))
 
     def _ensure_global_origin(self, evidence: dict[str, Any]) -> None:
         self.graph.add_node(
