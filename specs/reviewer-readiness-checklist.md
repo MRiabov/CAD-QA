@@ -14,6 +14,11 @@ Before public paper or dataset release, verify:
   counts or capped by an explicit quota.
 - Prompt-family distribution, answer distribution, and geometry-hop coverage
   pass release thresholds.
+- Every generated release task family contributes between 1% and 10% of the
+  exported rows. Families outside that band block release unless explicitly moved
+  to review-only/calibration artifacts.
+- Intended release task families with zero generated rows are listed from an
+  intended-family manifest or called out manually as unfinished coverage.
 - Prompt-template distribution and clue-shape distribution pass release
   thresholds; no single checklist shape dominates the benchmark.
 - Parameterized families report healthy sampled coverage over axis, sign,

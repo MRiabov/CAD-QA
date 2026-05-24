@@ -26,7 +26,8 @@ from cad_qa.query.resolver import VALUE_BUCKET_DECIMALS, VALUE_MATCH_TOLERANCE
 
 MIN_RELEASE_BALANCE_ROWS = 20
 MIN_PROMPT_FAMILY_COUNT = 4
-MAX_PROMPT_FAMILY_SHARE = 0.35
+MIN_PROMPT_FAMILY_SHARE = 0.01
+MAX_PROMPT_FAMILY_SHARE = 0.10
 MIN_PROMPT_TEMPLATE_COUNT = 4
 MAX_PROMPT_TEMPLATE_SHARE = 0.35
 MIN_UNIQUE_ANSWER_COUNT = 8
@@ -115,6 +116,13 @@ def release_balance_report(rows: list[dict[str, Any]]) -> dict[str, Any]:
     largest_prompt_template, largest_prompt_template_count = _largest_counter_item(prompt_template_counts)
     largest_prompt_family_share = largest_prompt_family_count / row_count if row_count else 0.0
     largest_prompt_template_share = largest_prompt_template_count / row_count if row_count else 0.0
+    prompt_family_share_reports = _counter_share_reports(prompt_family_counts, row_count)
+    underrepresented_prompt_families = [
+        report for report in prompt_family_share_reports if report["share"] < MIN_PROMPT_FAMILY_SHARE
+    ]
+    overrepresented_prompt_families = [
+        report for report in prompt_family_share_reports if report["share"] > MAX_PROMPT_FAMILY_SHARE
+    ]
     geometry_hop_positive_share = geometry_hop_positive_count / row_count if row_count else 0.0
     geometry_critical_share = geometry_critical_count / row_count if row_count else 0.0
     syntax_only_calibration_share = syntax_only_calibration_count / row_count if row_count else 0.0
@@ -135,12 +143,16 @@ def release_balance_report(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "largest_prompt_family": largest_prompt_family,
         "largest_prompt_family_count": largest_prompt_family_count,
         "largest_prompt_family_share": largest_prompt_family_share,
+        "minimum_prompt_family_share": MIN_PROMPT_FAMILY_SHARE,
         "maximum_prompt_family_share": MAX_PROMPT_FAMILY_SHARE,
+        "underrepresented_prompt_families": underrepresented_prompt_families,
+        "overrepresented_prompt_families": overrepresented_prompt_families,
         "passes_prompt_family_balance": (
             None
             if not applicable
             else prompt_family_count >= MIN_PROMPT_FAMILY_COUNT
-            and largest_prompt_family_share <= MAX_PROMPT_FAMILY_SHARE
+            and not underrepresented_prompt_families
+            and not overrepresented_prompt_families
         ),
         "prompt_template_counts": dict(sorted(prompt_template_counts.items())),
         "prompt_template_count": prompt_template_count,
@@ -379,6 +391,17 @@ def _largest_counter_item(counts: Counter[str]) -> tuple[str | None, int]:
         return None, 0
     item, count = max(counts.items(), key=lambda entry: (entry[1], entry[0]))
     return item, count
+
+
+def _counter_share_reports(counts: Counter[str], total: int) -> list[dict[str, Any]]:
+    return [
+        {
+            "prompt_family": key,
+            "count": count,
+            "share": count / total if total else 0.0,
+        }
+        for key, count in sorted(counts.items())
+    ]
 
 
 def _int_counter(rows: list[dict[str, Any]], key: str) -> dict[str, int]:

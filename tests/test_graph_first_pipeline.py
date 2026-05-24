@@ -2125,19 +2125,19 @@ def test_split_report_baseline_and_sft_exports() -> None:
 def test_release_balance_report_checks_family_entropy_and_geometry_hops() -> None:
     rows = [
         {
-            "row_id": f"row:src:{index}:family_{index % 4}",
+            "row_id": f"row:src:{index}:family_{index % 10}",
             "source_id": "src",
             "prompt": f"geometry prompt {index}",
-            "prompt_template_id": f"template_{index % 4}",
+            "prompt_template_id": f"template_{index % 10}",
             "gold_answer": f"entity:{index}",
             "geometry_hop_count": 2,
             "static_hop_count": index % 3,
             "query_program": {
-                "query_id": f"graph:src:q{index}:family_{index % 4}",
+                "query_id": f"graph:src:q{index}:family_{index % 10}",
                 "aggregation_metric": "volume",
             },
         }
-        for index in range(24)
+        for index in range(100)
     ]
     report = release_balance_report(rows)
     assert report["applicable"]
@@ -2148,11 +2148,15 @@ def test_release_balance_report_checks_family_entropy_and_geometry_hops() -> Non
     assert report["passes_syntax_only_calibration_cap"]
     assert not report["passes_value_bearing_measurement_coverage"]
     assert not report["passes_cross_feature_value_bearing_coverage"]
-    assert report["prompt_family_count"] == 4
-    assert report["prompt_template_count"] == 4
-    assert report["unique_answer_count"] == 24
-    assert report["geometry_critical_count"] == 24
+    assert report["prompt_family_count"] == 10
+    assert report["prompt_template_count"] == 10
+    assert report["unique_answer_count"] == 100
+    assert report["geometry_critical_count"] == 100
     assert report["syntax_only_calibration_count"] == 0
+    assert report["minimum_prompt_family_share"] == 0.01
+    assert report["maximum_prompt_family_share"] == 0.10
+    assert report["underrepresented_prompt_families"] == []
+    assert report["overrepresented_prompt_families"] == []
 
     skewed_rows = [
         {
@@ -2171,6 +2175,27 @@ def test_release_balance_report_checks_family_entropy_and_geometry_hops() -> Non
     assert not skewed_report["passes_answer_entropy"]
     assert not skewed_report["passes_geometry_hop_coverage"]
     assert not skewed_report["passes_syntax_only_calibration_cap"]
+
+    sparse_rows = [
+        {
+            "row_id": f"row:src:{index}:family",
+            "prompt_template_id": f"template_{index % 10}",
+            "gold_answer": f"entity:{index}",
+            "geometry_hop_count": 2,
+            "static_hop_count": 1,
+            "query_program": {
+                "query_id": f"graph:src:q{index}:{'dominant' if index < 191 else f'rare_{index}'}",
+                "aggregation_metric": "volume",
+            },
+        }
+        for index in range(200)
+    ]
+    sparse_report = release_balance_report(sparse_rows)
+    assert not sparse_report["passes_prompt_family_balance"]
+    assert sparse_report["overrepresented_prompt_families"] == [
+        {"prompt_family": "dominant", "count": 191, "share": 0.955}
+    ]
+    assert len(sparse_report["underrepresented_prompt_families"]) == 9
 
     value_rows = []
     for index, row in enumerate(rows):
@@ -3151,15 +3176,15 @@ def test_release_export_filters_prompt_policy_invalid_rows_before_verifier(tmp_p
     for index in range(24):
         rows.append(
             {
-                "row_id": f"row:src:{index}:family_{index % 4}",
+                "row_id": f"row:src:{index}:family_{index % 12}",
                 "source_id": "src",
                 "source_code": "import cadquery as cq\n",
                 "prompt": f"geometry prompt {index}",
-                "prompt_template_id": f"checklist_constraints_v1:fixture:template_{index % 4}",
+                "prompt_template_id": f"checklist_constraints_v1:fixture:template_{index % 12}",
                 "answer_format": "entity_id",
                 "gold_answer": f"feature:{index}",
                 "query_program": {
-                    "query_id": f"graph:src:q{index}:family_{index % 4}",
+                    "query_id": f"graph:src:q{index}:family_{index % 12}",
                     "target_type": "feature",
                     "aggregation": "argmax",
                     "aggregation_metric": "volume",
@@ -3235,15 +3260,15 @@ def test_release_export_caps_syntax_only_calibration_rows(tmp_path: Path) -> Non
     for index in range(36):
         rows.append(
             {
-                "row_id": f"row:src:geometry:{index}:family_{index % 4}",
+                "row_id": f"row:src:geometry:{index}:family_{index % 9}",
                 "source_id": "src",
                 "source_code": "import cadquery as cq\n",
                 "prompt": f"geometry prompt {index}",
-                "prompt_template_id": f"checklist_constraints_v1:fixture:geometry_template_{index % 4}",
+                "prompt_template_id": f"checklist_constraints_v1:fixture:geometry_template_{index % 9}",
                 "answer_format": "entity_id",
                 "gold_answer": f"feature:{index}",
                 "query_program": {
-                    "query_id": f"graph:src:q{index}:family_{index % 4}",
+                    "query_id": f"graph:src:q{index}:family_{index % 9}",
                     "target_type": "feature",
                     "aggregation": "argmax",
                     "aggregation_metric": "volume",

@@ -41,6 +41,15 @@ Release-quality high-hop rows should satisfy these shortcut-resistance gates:
 - static-only baselines are measured and reported;
 - prompt-family quotas prevent syntax-only templates from dominating the set.
 
+Release-grade task-family balance is a hard gate. Every task family intended for
+a release distribution must contribute at least 1% and at most 10% of that
+distribution. Families below the floor are too rare to train or evaluate
+reliably; families above the cap dominate the benchmark and must be downsampled,
+split into real parameterized families, or moved to review-only artifacts. The
+current verifier can enforce this band for generated families present in the
+export; intended families that generate zero rows require an explicit
+intended-family manifest so absence can also block release.
+
 ## Maximal Parameter Sampling
 
 Release-grade task families must not bake avoidable constants or fixed choices

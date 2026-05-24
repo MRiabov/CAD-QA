@@ -187,6 +187,9 @@ epics:
       - id: "8.8"
         title: Geometry-first dataset quality gates for release blocking
         status: implemented
+      - id: "8.9"
+        title: Release and SFT task-family distribution gate requiring generated task families to stay within 1%-10%
+        status: implemented
   - id: epic-9
     title: Baselines and evaluation
     status: implemented
@@ -300,6 +303,17 @@ epics:
     title: Maximally parameterized query sampling
     status: planned
     priority: P0
+    acceptance_criteria:
+      - Every generated release task family contributes at least 1% and at most
+        10% of the exported release/SFT rows, or release is blocked.
+      - Intended release task families with zero generated rows are blocked by
+        an intended-family manifest once that manifest exists; until then, manual
+        review must call them out as unfinished coverage.
+      - Parameterized families expose sampled dimensions in private metadata and
+        reports, including axis, sign, min/max direction, comparison relation,
+        value shape, target type, reference type, and rendered wording.
+      - A family that collapses onto one avoidable constant or choice is capped,
+        blocked, or moved to review-only artifacts.
     stories:
       - id: "14.1"
         title: Document avoidably hard-coded task-family semantics as unacceptable for release rows

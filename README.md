@@ -150,11 +150,11 @@ uv run cadqa dataset preview \
 The SFT export command writes only geometry-critical rows by default and
 excludes syntax-only calibration, noncritical, and quarantined rows. Do not
 treat its output as a model-training dataset unless the input rows also pass
-the broader geometry-first quality gates: prompt families must be balanced,
-value-bearing and cross-feature coverage must pass thresholds, parameterized
-families must have healthy sampled distributions, and geometry-derived clauses
-must be necessary for the main benchmark answers. Use `--include-calibration`
-only for explicit calibration exports.
+the broader geometry-first quality gates: generated prompt families must each
+represent 1%-10% of the export, value-bearing and cross-feature coverage must
+pass thresholds, parameterized families must have healthy sampled distributions,
+and geometry-derived clauses must be necessary for the main benchmark answers.
+Use `--include-calibration` only for explicit calibration exports.
 
 Use `cadqa dataset preview` after adding or changing a task family, graph node
 type, or measurement extractor. It writes a Markdown artifact containing
@@ -246,7 +246,8 @@ direction, exact measurement values, comparison relations, aggregation metrics,
 target entity type, reference entity type, and rendered view words should be
 sampled row parameters whenever the verifier can support the variation. A
 schema-valid dataset that repeatedly asks the same hard-coded spatial/value
-pattern is still a weak training set.
+pattern is still a weak training set. Release exports block generated task
+families below 1% or above 10% of the row distribution.
 
 The critical path is kernel/geometry-backed task coverage: volumes, bounding
 boxes, centroids, topology counts and deltas, feature effects, selector-result

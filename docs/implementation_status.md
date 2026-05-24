@@ -627,6 +627,13 @@ Checked as implemented with remaining scale caveats:
   geometry-critical family coverage, and row-level geometry-first prompt-policy
   gates for release-scale artifacts. Future prompt families may still need
   additional semantic shortcut rules as new source patterns appear.
+- Prompt-family balance now blocks generated release/SFT task families outside
+  the 1%-10% distribution band. This catches both dominant task families and
+  sparse present families, but intended families that produce zero rows still
+  need an explicit intended-family manifest to become machine-gated.
+  Rechecking the current CadEvolve-50 release artifact with this stricter gate
+  blocks release on `prompt_family_balance`: 18 present task families are below
+  the 1% floor and no present family is above the 10% cap.
 - Value-bearing measurement and tolerance-equal distractor rows are implemented
   for feature volume, centroid height, centroid X/Y coordinate, overall height,
   selected-face area, selected-face center Z, selected-edge length,
@@ -655,6 +662,8 @@ Checked as implemented with remaining scale caveats:
   collapses onto one global axis, view word, extremum direction, comparison,
   value shape, or entity type should be capped, blocked, or treated as
   review-only until the sampled distribution is healthy.
+- Add an intended-family manifest so planned release task families that generate
+  zero rows block release instead of relying on manual review.
 - Broaden value-bearing and tolerance-equal coverage beyond the implemented
   core to radius/diameter/angle once those measurements are extracted broadly,
   additional face/endpoint/material/void coordinate combinations, and larger

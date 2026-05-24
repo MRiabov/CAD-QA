@@ -59,7 +59,8 @@ Main benchmark and training exports must additionally pass geometry-first
 quality gates:
 
 - syntax-only calibration rows are excluded or capped;
-- prompt-family quotas prevent one template from dominating;
+- prompt-family quotas require every generated release task family to account
+  for at least 1% and at most 10% of the exported rows;
 - rows report nonzero geometry-derived evidence for main benchmark slices;
 - value-bearing measurement rows and cross-feature value-bearing rows are
   represented above the configured release thresholds;
@@ -75,6 +76,11 @@ Some gates are already enforced by the release and SFT exporters. A dataset is
 still not recommended for model training unless every active gate passes and
 manual preview review confirms that the sampled prompts are not collapsed onto
 hard-coded generator choices.
+
+The 1%-10% prompt-family gate applies to task families present in the generated
+export. Intended task families that produce zero rows need an explicit
+intended-family manifest; without that manifest, absence must be caught during
+manual release review and treated as unfinished coverage.
 
 ## Splits
 
