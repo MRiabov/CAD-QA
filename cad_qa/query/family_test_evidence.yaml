@@ -456,6 +456,56 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Synthesized path-segment reference-distance family with repeated segment-length distractors and sampled reference entity type.
+  - id: parameterized_path_point_reference_face_distance
+    positive_generation: [test_synthesis_generates_parameterized_path_reference_distance_queries]
+    failure_or_quarantine: [test_synthesis_skips_path_reference_distance_without_equal_distractors]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Synthesized path-point reference-face distance family.
+  - id: parameterized_path_point_reference_edge_distance
+    positive_generation: [test_synthesis_generates_parameterized_path_reference_distance_queries]
+    failure_or_quarantine: [test_synthesis_skips_path_reference_distance_without_equal_distractors]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Synthesized path-point reference-edge distance family.
+  - id: parameterized_path_point_reference_endpoint_distance
+    positive_generation: [test_synthesis_generates_parameterized_path_reference_distance_queries]
+    failure_or_quarantine: [test_synthesis_skips_path_reference_distance_without_equal_distractors]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Synthesized path-point reference-endpoint distance family.
+  - id: parameterized_path_point_reference_material_region_distance
+    positive_generation: [test_synthesis_generates_parameterized_path_reference_distance_queries]
+    failure_or_quarantine: [test_synthesis_skips_path_reference_distance_without_equal_distractors]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Synthesized path-point reference-material-region distance family.
+  - id: parameterized_path_point_reference_void_region_distance
+    positive_generation: [test_synthesis_generates_parameterized_path_reference_distance_queries]
+    failure_or_quarantine: [test_synthesis_skips_path_reference_distance_without_equal_distractors]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Synthesized path-point reference-void-region distance family.
+  - id: parameterized_path_segment_reference_face_distance
+    positive_generation: [test_synthesis_generates_parameterized_path_reference_distance_queries]
+    failure_or_quarantine: [test_synthesis_skips_path_reference_distance_without_equal_distractors]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Synthesized path-segment reference-face distance family.
+  - id: parameterized_path_segment_reference_edge_distance
+    positive_generation: [test_synthesis_generates_parameterized_path_reference_distance_queries]
+    failure_or_quarantine: [test_synthesis_skips_path_reference_distance_without_equal_distractors]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Synthesized path-segment reference-edge distance family.
+  - id: parameterized_path_segment_reference_endpoint_distance
+    positive_generation: [test_synthesis_generates_parameterized_path_reference_distance_queries]
+    failure_or_quarantine: [test_synthesis_skips_path_reference_distance_without_equal_distractors]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Synthesized path-segment reference-endpoint distance family.
+  - id: parameterized_path_segment_reference_material_region_distance
+    positive_generation: [test_synthesis_generates_parameterized_path_reference_distance_queries]
+    failure_or_quarantine: [test_synthesis_skips_path_reference_distance_without_equal_distractors]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Synthesized path-segment reference-material-region distance family.
+  - id: parameterized_path_segment_reference_void_region_distance
+    positive_generation: [test_synthesis_generates_parameterized_path_reference_distance_queries]
+    failure_or_quarantine: [test_synthesis_skips_path_reference_distance_without_equal_distractors]
+    release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
+    notes: Synthesized path-segment reference-void-region distance family.
   - id: parameterized_kernel_face_selector_count
     positive_generation:
       - test_synthesis_generates_geometry_narrowed_selector_count_query

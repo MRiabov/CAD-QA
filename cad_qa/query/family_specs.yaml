@@ -1225,6 +1225,336 @@ families:
         reference_point_metric: [centroid, face_center, midpoint, coordinate]
         target_point_metric: [segment_midpoint]
     notes: Parameterized path-segment reference-distance family that narrows by repeated segment length and samples a measured reference entity before selecting nearest/farthest by segment-midpoint-to-reference distance.
+  - id: parameterized_path_point_reference_face_distance
+    status: release
+    target_type: path_point
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [face]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [face_center]
+        target_point_metric: [coordinate]
+    notes: Synthesized path-point reference-face distance family with repeated coordinate-z distractors before nearest/farthest distance selection.
+  - id: parameterized_path_point_reference_edge_distance
+    status: release
+    target_type: path_point
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [edge]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [midpoint]
+        target_point_metric: [coordinate]
+    notes: Synthesized path-point reference-edge distance family with repeated coordinate-z distractors before nearest/farthest distance selection.
+  - id: parameterized_path_point_reference_endpoint_distance
+    status: release
+    target_type: path_point
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [edge_endpoint]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [coordinate]
+        target_point_metric: [coordinate]
+    notes: Synthesized path-point reference-endpoint distance family with repeated coordinate-z distractors before nearest/farthest distance selection.
+  - id: parameterized_path_point_reference_material_region_distance
+    status: release
+    target_type: path_point
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [material_region]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [centroid]
+        target_point_metric: [coordinate]
+    notes: Synthesized path-point reference-material-region distance family with repeated coordinate-z distractors before nearest/farthest distance selection.
+  - id: parameterized_path_point_reference_void_region_distance
+    status: release
+    target_type: path_point
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [void_region]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [centroid]
+        target_point_metric: [coordinate]
+    notes: Synthesized path-point reference-void-region distance family with repeated coordinate-z distractors before nearest/farthest distance selection.
+  - id: parameterized_path_segment_reference_face_distance
+    status: release
+    target_type: path_segment
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [face]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [face_center]
+        target_point_metric: [segment_midpoint]
+    notes: Synthesized path-segment reference-face distance family with repeated segment-length distractors before nearest/farthest distance selection.
+  - id: parameterized_path_segment_reference_edge_distance
+    status: release
+    target_type: path_segment
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [edge]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [midpoint]
+        target_point_metric: [segment_midpoint]
+    notes: Synthesized path-segment reference-edge distance family with repeated segment-length distractors before nearest/farthest distance selection.
+  - id: parameterized_path_segment_reference_endpoint_distance
+    status: release
+    target_type: path_segment
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [edge_endpoint]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [coordinate]
+        target_point_metric: [segment_midpoint]
+    notes: Synthesized path-segment reference-endpoint distance family with repeated segment-length distractors before nearest/farthest distance selection.
+  - id: parameterized_path_segment_reference_material_region_distance
+    status: release
+    target_type: path_segment
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [material_region]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [centroid]
+        target_point_metric: [segment_midpoint]
+    notes: Synthesized path-segment reference-material-region distance family with repeated segment-length distractors before nearest/farthest distance selection.
+  - id: parameterized_path_segment_reference_void_region_distance
+    status: release
+    target_type: path_segment
+    minimum_hops: 5
+    maximum_hops: 5
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_type
+        - reference_metric
+        - reference_point_metric
+        - target_point_metric
+        - reference_anchor_signature
+        - reference_anchor_metric
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - equal_measurement_metric
+        - measurement_value_bucket
+        - reference_anchor_signature
+        - final_selector
+      expected_values:
+        reference_type: [void_region]
+        reference_metric: [distance_to_reference_feature_centroid]
+        reference_point_metric: [centroid]
+        target_point_metric: [segment_midpoint]
+    notes: Synthesized path-segment reference-void-region distance family with repeated segment-length distractors before nearest/farthest distance selection.
   - id: latest_repeated_selector
     status: review_only
     target_type: selector

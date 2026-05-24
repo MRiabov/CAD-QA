@@ -72,7 +72,17 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_edge_reference_entity_distance",
     "parameterized_path_point_extreme",
     "parameterized_path_segment_extreme",
+    "parameterized_path_point_reference_face_distance",
+    "parameterized_path_point_reference_edge_distance",
+    "parameterized_path_point_reference_endpoint_distance",
+    "parameterized_path_point_reference_material_region_distance",
+    "parameterized_path_point_reference_void_region_distance",
     "parameterized_path_point_reference_entity_distance",
+    "parameterized_path_segment_reference_face_distance",
+    "parameterized_path_segment_reference_edge_distance",
+    "parameterized_path_segment_reference_endpoint_distance",
+    "parameterized_path_segment_reference_material_region_distance",
+    "parameterized_path_segment_reference_void_region_distance",
     "parameterized_path_segment_reference_entity_distance",
     "parameterized_kernel_face_selector_count",
     "parameterized_kernel_edge_selector_count",
@@ -962,6 +972,26 @@ def _path_metric_graph() -> OntologyGraph:
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_x", centroid[0], "mm"))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_y", centroid[1], "mm"))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid[2], "mm"))
+    for face_id, area, coordinate_z, face_center in [
+        ("face:path-ref", 18.0, 0.0, [0.0, 6.0, 0.0]),
+        ("face:path-far", 7.0, 8.0, [25.0, 6.0, 8.0]),
+    ]:
+        graph.add_node(Node(face_id, "face", face_id))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", area, "mm^2"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_z", coordinate_z, "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_center", face_center, "mm"))
+    for edge_id, length, midpoint in [
+        ("edge:path-ref", 15.0, [0.0, -4.0, 0.0]),
+        ("edge:path-far", 5.0, [30.0, 4.0, 0.0]),
+    ]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint", midpoint, "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_x", midpoint[0], "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint[1], "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_z", midpoint[2], "mm"))
+    _add_reference_endpoint_nodes(graph)
+    _add_reference_region_nodes(graph)
     return graph
 
 

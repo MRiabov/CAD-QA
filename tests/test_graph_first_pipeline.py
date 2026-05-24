@@ -4742,6 +4742,45 @@ def test_synthesis_generates_parameterized_path_reference_distance_queries() -> 
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_x", centroid[0], "mm"))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_y", centroid[1], "mm"))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid[2], "mm"))
+    for face_id, area, coordinate_z, face_center in [
+        ("face:path-ref", 18.0, 0.0, [0.0, 6.0, 0.0]),
+        ("face:path-far", 7.0, 8.0, [25.0, 6.0, 8.0]),
+    ]:
+        graph.add_node(Node(face_id, "face", face_id))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", area, "mm^2"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_z", coordinate_z, "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_center", face_center, "mm"))
+    for edge_id, length, midpoint in [
+        ("edge:path-ref", 15.0, [0.0, -4.0, 0.0]),
+        ("edge:path-far", 5.0, [30.0, 4.0, 0.0]),
+    ]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint", midpoint, "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_x", midpoint[0], "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint[1], "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_z", midpoint[2], "mm"))
+    for endpoint_id, coordinate in [
+        ("edge_endpoint:path-ref", [0.0, -4.0, 0.0]),
+        ("edge_endpoint:path-far", [50.0, 4.0, 0.0]),
+    ]:
+        graph.add_node(Node(endpoint_id, "edge_endpoint", endpoint_id))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate", coordinate, "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_x", coordinate[0], "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_y", coordinate[1], "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
+    for region_id, region_type, volume, centroid in [
+        ("material_region:path-ref", "material_region", 33.0, [0.0, -6.0, 1.0]),
+        ("material_region:path-far", "material_region", 44.0, [45.0, 3.0, 2.0]),
+        ("void_region:path-ref", "void_region", 11.0, [0.0, 7.0, 1.0]),
+        ("void_region:path-far", "void_region", 22.0, [45.0, 4.0, 2.0]),
+    ]:
+        graph.add_node(Node(region_id, region_type, region_id))
+        graph.add_measurement(Measurement(region_id, "entity_geometry", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid", centroid, "mm"))
+        graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid_x", centroid[0], "mm"))
+        graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid_y", centroid[1], "mm"))
+        graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid_z", centroid[2], "mm"))
 
     queries = {query.query_id.rsplit(":", 1)[-1]: query for query in synthesize_graph_hop_queries(graph)}
     expected = {
@@ -4750,15 +4789,36 @@ def test_synthesis_generates_parameterized_path_reference_distance_queries() -> 
             "has_parameterized_equal_path_point_metric_value",
             "coordinate_z",
             "coordinate",
+            None,
         ),
         "parameterized_path_segment_reference_entity_distance": (
             "path_segment",
             "has_parameterized_equal_path_segment_metric_value",
             "segment_length",
             "segment_midpoint",
+            None,
         ),
     }
-    for family, (target_type, equal_clause_id, equal_metric, target_point_metric) in expected.items():
+    for target_type, equal_clause_id, equal_metric, target_point_metric in [
+        ("path_point", "has_parameterized_equal_path_point_metric_value", "coordinate_z", "coordinate"),
+        ("path_segment", "has_parameterized_equal_path_segment_metric_value", "segment_length", "segment_midpoint"),
+    ]:
+        family_prefix = f"parameterized_{target_type}_reference"
+        for family_suffix, reference_type in [
+            ("face", "face"),
+            ("edge", "edge"),
+            ("endpoint", "edge_endpoint"),
+            ("material_region", "material_region"),
+            ("void_region", "void_region"),
+        ]:
+            expected[f"{family_prefix}_{family_suffix}_distance"] = (
+                target_type,
+                equal_clause_id,
+                equal_metric,
+                target_point_metric,
+                reference_type,
+            )
+    for family, (target_type, equal_clause_id, equal_metric, target_point_metric, reference_type) in expected.items():
         query = queries[family]
         resolution = resolve_query(graph, query)
         row = materialize_row(graph, resolution)
@@ -4770,7 +4830,17 @@ def test_synthesis_generates_parameterized_path_reference_distance_queries() -> 
         assert query.aggregation in {"argmin", "argmax"}
         assert row.logical_hop_count == 5
         assert row.geometry_hop_count == 5
-        assert row.query_program["sampled_parameters"]["reference_type"] == ["feature"]
+        if reference_type is not None:
+            assert row.query_program["sampled_parameters"]["reference_type"] == [reference_type]
+        else:
+            assert row.query_program["sampled_parameters"]["reference_type"][0] in {
+                "feature",
+                "face",
+                "edge",
+                "edge_endpoint",
+                "material_region",
+                "void_region",
+            }
         assert row.query_program["sampled_parameters"]["target_point_metric"] == [target_point_metric]
         assert row.query_program["sampled_parameters"]["equal_measurement_metric"] == [equal_metric]
         assert "reference" in row.prompt.lower()

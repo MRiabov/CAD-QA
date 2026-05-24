@@ -615,6 +615,16 @@ Conservatively checked as done:
   value-bearing reference-distance tasks; broader reference-type balance and
   release-scale path distribution remain open.
 - The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_path_reference_types/PREVIEW.md` adds
+  valid release-ready rows for explicit path point/path segment reference
+  distance families using reference faces, edges, endpoints, added-material
+  regions, and removed-material regions. Manual review confirmed each new
+  family keeps equal-measurement path distractors, describes the reference with
+  concrete measured geometry such as area, length, coordinates, volume, or
+  centroid, and resolves uniquely by nearest/farthest point or midpoint
+  distance. These families are implemented at the valid-row level; release-scale
+  source coverage and 1%-10% family balance remain open.
+- The synthesized selfcheck preview at
   `runs/parameterized_synthesis_selfcheck_equal_path/PREVIEW.md` adds valid
   release-ready rows for `parameterized_equal_path_point_metric_extreme` and
   `parameterized_equal_path_segment_metric_extreme`. The reviewed rows narrow

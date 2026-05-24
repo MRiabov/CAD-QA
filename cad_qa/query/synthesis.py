@@ -1046,6 +1046,67 @@ _GENERIC_REFERENCE_DISTANCE_REFERENCES = (
 )
 
 
+_PATH_REFERENCE_DISTANCE_TARGETS = (
+    {
+        "family_prefix": "parameterized_path_point_reference",
+        "target_type": "path_point",
+        "relation": "point_on_path",
+        "relation_clause_id": "has_parameterized_path_point_set",
+        "relation_target_type": "path",
+        "equal_value_clause_id": "has_parameterized_equal_path_point_metric_value",
+        "target_point_clause_id": "has_path_point_for_reference_distance",
+        "equal_metric": "coordinate_z",
+        "target_point_metric": "coordinate",
+    },
+    {
+        "family_prefix": "parameterized_path_segment_reference",
+        "target_type": "path_segment",
+        "relation": "segment_on_path",
+        "relation_clause_id": "has_parameterized_path_segment_set",
+        "relation_target_type": "path",
+        "equal_value_clause_id": "has_parameterized_equal_path_segment_metric_value",
+        "target_point_clause_id": "has_path_segment_midpoint_for_reference_distance",
+        "equal_metric": "segment_length",
+        "target_point_metric": "segment_midpoint",
+    },
+)
+
+_PATH_REFERENCE_DISTANCE_REFERENCES = (
+    ("face", "reference_face_area_and_center", "face_center"),
+    ("edge", "reference_edge_length_and_midpoint", "midpoint"),
+    ("edge_endpoint", "reference_endpoint_coordinates", "coordinate"),
+    ("material_region", "reference_material_region_volume_and_centroid", "centroid"),
+    ("void_region", "reference_void_region_volume_and_centroid", "centroid"),
+)
+
+
+def _path_reference_distance_family_specs() -> tuple[ReferenceDistanceFamilySpec, ...]:
+    specs: list[ReferenceDistanceFamilySpec] = []
+    for target in _PATH_REFERENCE_DISTANCE_TARGETS:
+        for reference_type, reference_clause_id, reference_point_metric in _PATH_REFERENCE_DISTANCE_REFERENCES:
+            specs.append(
+                ReferenceDistanceFamilySpec(
+                    family_id=f"{target['family_prefix']}_{_reference_family_suffix(reference_type)}_distance",
+                    target_type=str(target["target_type"]),
+                    relation=str(target["relation"]),
+                    relation_clause_id=str(target["relation_clause_id"]),
+                    relation_target_type=str(target["relation_target_type"]),
+                    equal_value_clause_id=str(target["equal_value_clause_id"]),
+                    reference_clause_id=reference_clause_id,
+                    target_point_clause_id=str(target["target_point_clause_id"]),
+                    equal_metric=str(target["equal_metric"]),
+                    target_point_metric=str(target["target_point_metric"]),
+                    reference_type=reference_type,
+                    reference_point_metric=reference_point_metric,
+                )
+            )
+    return tuple(specs)
+
+
+def _reference_family_suffix(reference_type: str) -> str:
+    return "endpoint" if reference_type == "edge_endpoint" else reference_type
+
+
 def _generic_reference_distance_family_specs() -> tuple[ReferenceDistanceFamilySpec, ...]:
     specs: list[ReferenceDistanceFamilySpec] = []
     for target in _GENERIC_REFERENCE_DISTANCE_TARGETS:
@@ -1069,7 +1130,11 @@ def _generic_reference_distance_family_specs() -> tuple[ReferenceDistanceFamilyS
     return tuple(specs)
 
 
-REFERENCE_DISTANCE_FAMILY_SPECS = REFERENCE_DISTANCE_FAMILY_SPECS + _generic_reference_distance_family_specs()
+REFERENCE_DISTANCE_FAMILY_SPECS = (
+    REFERENCE_DISTANCE_FAMILY_SPECS
+    + _path_reference_distance_family_specs()
+    + _generic_reference_distance_family_specs()
+)
 
 
 def synthesize_graph_hop_queries(graph: OntologyGraph) -> list[QueryProgram]:
