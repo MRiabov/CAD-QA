@@ -136,6 +136,11 @@ dimension, stale preview, absent test-evidence reference, insufficient row count
 or failed split audit means the artifact remains a development artifact even if
 its rows are individually valid.
 
+The executable contract for these numbers is `BENCHMARK_RELEASE_PROFILE` in
+`cad_qa/dataset/release_report.py`. The dataset spec and executable profile must
+move together; tests assert that the benchmark-release profile keeps the numeric
+requirements above.
+
 Current implementation gates now support an explicit `benchmark-release` tier for
 the row-count, hop-coverage, geometry-critical, syntax-only, value-bearing,
 cross-feature, prompt-template, answer-diversity, candidate-breadth, and split

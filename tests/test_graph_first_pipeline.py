@@ -13,7 +13,12 @@ from cad_qa.dataset.preview import dataset_preview_evidence_report, preview_evid
 from cad_qa.dataset.public import private_rows, public_private_audit, public_rows, write_public_private_artifacts
 from cad_qa.dataset.quarantine import quarantine_report
 from cad_qa.dataset.release import export_release_dataset
-from cad_qa.dataset.release_report import release_balance_report, release_verifier_markdown, release_verifier_report
+from cad_qa.dataset.release_report import (
+    release_balance_report,
+    release_gate_profile,
+    release_verifier_markdown,
+    release_verifier_report,
+)
 from cad_qa.dataset.report import (
     dataset_card_markdown,
     dataset_report,
@@ -2445,6 +2450,59 @@ def test_benchmark_release_tier_applies_stricter_numeric_gates() -> None:
     assert not benchmark["passes_value_bearing_measurement_coverage"]
     assert not benchmark["passes_cross_feature_value_bearing_coverage"]
     assert benchmark["passes_candidate_breadth"]
+
+
+def test_benchmark_release_profile_matches_dataset_spec_numeric_contract() -> None:
+    profile = release_gate_profile("benchmark-release")
+    spec = Path("specs/dataset-spec.md").read_text(encoding="utf-8")
+
+    assert profile.min_release_rows == 10_000
+    assert profile.min_default_sft_rows == 10_000
+    assert profile.min_prompt_family_share == 0.01
+    assert profile.max_prompt_family_share == 0.10
+    assert profile.min_geometry_critical_training_share == 0.99
+    assert profile.max_syntax_only_calibration_share == 0.02
+    assert profile.min_geometry_hop_positive_share == 0.95
+    assert profile.min_logical_hop_ge_3_share == 0.90
+    assert profile.min_value_bearing_measurement_share == 0.15
+    assert profile.max_value_bearing_measurement_share == 0.30
+    assert profile.min_cross_feature_value_bearing_share == 0.05
+    assert profile.max_cross_feature_value_bearing_share == 0.15
+    assert profile.min_pre_final_candidate_count == 2
+    assert profile.min_median_pre_final_candidate_count == 4.0
+    assert profile.max_prompt_template_share == 0.05
+    assert profile.min_unique_answer_count == 1_000
+    assert profile.min_answer_entropy_bits == 8.0
+    assert profile.max_parameter_value_share == 0.35
+    assert profile.min_axis_direction_parameter_share == 0.20
+    assert profile.min_split_groups_per_split == 3
+    assert profile.min_preview_samples_per_family == 20
+    assert profile.enforce_intended_family_coverage
+    assert profile.enforce_parameter_balance
+    assert profile.enforce_preview_evidence
+    assert profile.enforce_family_test_evidence
+
+    for required_fragment in [
+        "At least 10,000 public/private release rows.",
+        "At least 10,000 rows after default geometry-critical filtering.",
+        "Every generated release family is between 1% and 10% of exported rows.",
+        "At least 99%.",
+        "At most 2%, or emitted only in a separate calibration split/artifact.",
+        "At least 95% of benchmark-release rows have `geometry_hop_count > 0`.",
+        "At least 90% of benchmark-release rows have `logical_hop_count >= 3`.",
+        "15%-30% of benchmark-release rows.",
+        "5%-15% of benchmark-release rows.",
+        "median pre-final breadth at least 4.",
+        "No prompt template exceeds 5% of benchmark-release rows.",
+        "At least 1,000 unique gold answers.",
+        "At least 8 bits.",
+        "no sampled parameter value exceeds 35%",
+        "Every supported sampled axis/direction value contributes at least 20%",
+        "at least 3 protected groups per split",
+        "At least 20 sampled rows per changed release family",
+        "positive generation coverage, failure/quarantine coverage, and release-report accounting coverage",
+    ]:
+        assert required_fragment in spec
 
 
 def test_intended_family_manifest_reports_zero_row_and_non_release_families(tmp_path: Path) -> None:
