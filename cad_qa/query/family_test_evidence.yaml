@@ -33,6 +33,14 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Initial synthesized value-bearing face family with equal-measurement narrowing.
+  - id: parameterized_equal_face_metric_rank
+    positive_generation:
+      - test_synthesis_generates_equal_value_face_and_edge_rank_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_equal_value_family_without_repeated_value_distractors
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Synthesized value-bearing face family with equal-measurement narrowing and sampled rank selection.
   - id: parameterized_face_spatial_relation_extreme
     positive_generation:
       - test_synthesis_generates_parameterized_face_spatial_relation_query
@@ -84,6 +92,14 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Initial synthesized value-bearing edge family with equal-measurement narrowing.
+  - id: parameterized_equal_edge_metric_rank
+    positive_generation:
+      - test_synthesis_generates_equal_value_face_and_edge_rank_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_equal_value_family_without_repeated_value_distractors
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Synthesized value-bearing edge family with equal-measurement narrowing and sampled rank selection.
   - id: parameterized_edge_spatial_relation_extreme
     positive_generation:
       - test_synthesis_generates_parameterized_edge_spatial_relation_query

@@ -91,6 +91,7 @@ class EqualValueExtremeFamilySpec:
     extra_relation: str | None = None
     extra_relation_clause_id: str | None = None
     extra_relation_target_type: str | None = None
+    selection_mode: str = "extreme"
 
 
 @dataclass(frozen=True)
@@ -101,6 +102,7 @@ class ViableEqualValueExtreme:
     selector_metric: str
     aggregation: str
     candidate_ids: tuple[str, ...]
+    aggregation_rank: int | None = None
 
 
 @dataclass(frozen=True)
@@ -661,6 +663,55 @@ EQUAL_VALUE_EXTREME_FAMILY_SPECS = (
         extra_relation="contained_in",
         extra_relation_clause_id="has_parameterized_contained_endpoint_set",
         extra_relation_target_type="edge",
+    ),
+)
+
+EQUAL_VALUE_RANK_FAMILY_SPECS = (
+    EqualValueExtremeFamilySpec(
+        family_id="parameterized_equal_face_metric_rank",
+        target_type="face",
+        relation="has_kernel_stable_face_id",
+        relation_clause_id="has_parameterized_face_set",
+        equal_value_clause_id="has_parameterized_equal_face_metric_value",
+        selector_metric_clause_id="has_parameterized_face_metric",
+        equal_metrics=(
+            "coordinate_x",
+            "coordinate_y",
+            "coordinate_z",
+            "distance_to_origin",
+            "face_area",
+        ),
+        selector_metrics=(
+            "coordinate_x",
+            "coordinate_y",
+            "coordinate_z",
+            "distance_to_origin",
+            "face_area",
+        ),
+        selection_mode="rank",
+    ),
+    EqualValueExtremeFamilySpec(
+        family_id="parameterized_equal_edge_metric_rank",
+        target_type="edge",
+        relation="has_kernel_stable_edge_id",
+        relation_clause_id="has_parameterized_edge_set",
+        equal_value_clause_id="has_parameterized_equal_edge_metric_value",
+        selector_metric_clause_id="has_parameterized_edge_metric",
+        equal_metrics=(
+            "midpoint_x",
+            "midpoint_y",
+            "midpoint_z",
+            "midpoint_distance_to_origin",
+            "edge_length",
+        ),
+        selector_metrics=(
+            "midpoint_x",
+            "midpoint_y",
+            "midpoint_z",
+            "midpoint_distance_to_origin",
+            "edge_length",
+        ),
+        selection_mode="rank",
     ),
 )
 
@@ -1536,6 +1587,14 @@ def synthesize_graph_hop_queries(graph: OntologyGraph) -> list[QueryProgram]:
         query = _query_for_equal_value_extreme(graph, choice)
         if query is not None:
             queries.append(query)
+    for spec in EQUAL_VALUE_RANK_FAMILY_SPECS:
+        viable = _viable_equal_value_extremes(graph, spec)
+        if not viable:
+            continue
+        choice = viable[_stable_choice_index(graph.graph_id, spec.family_id, len(viable))]
+        query = _query_for_equal_value_extreme(graph, choice)
+        if query is not None:
+            queries.append(query)
     for spec in RELATION_EXTREME_FAMILY_SPECS:
         viable = _viable_relation_extremes(graph, spec)
         if not viable:
@@ -2234,6 +2293,24 @@ def _viable_equal_value_extremes(
                 metric_candidates = _nodes_with_numeric_measurement(graph, equal_nodes, selector_metric)
                 if len(metric_candidates) < 2:
                     continue
+                if spec.selection_mode == "rank":
+                    if len(metric_candidates) < 3:
+                        continue
+                    for aggregation in ("rank_desc", "rank_asc"):
+                        for rank in range(2, min(len(metric_candidates), MAX_SYNTHESIZED_RANK) + 1):
+                            if _has_unique_rank(graph, metric_candidates, selector_metric, aggregation, rank):
+                                viable.append(
+                                    ViableEqualValueExtreme(
+                                        spec=spec,
+                                        equal_metric=equal_metric,
+                                        equal_value=equal_value,
+                                        selector_metric=selector_metric,
+                                        aggregation=aggregation,
+                                        candidate_ids=tuple(node.id for node in metric_candidates),
+                                        aggregation_rank=rank,
+                                    )
+                                )
+                    continue
                 for aggregation in ("argmax", "argmin"):
                     if _has_unique_extreme(graph, metric_candidates, selector_metric, aggregation):
                         viable.append(
@@ -2253,6 +2330,7 @@ def _viable_equal_value_extremes(
             item.equal_value,
             item.selector_metric,
             item.aggregation,
+            item.aggregation_rank or 0,
             item.candidate_ids,
         ),
     )
@@ -2313,21 +2391,38 @@ def _query_for_equal_value_extreme(graph: OntologyGraph, viable: ViableEqualValu
     )
     if selector_metric is None:
         return None
-    direction = "max" if viable.aggregation == "argmax" else "min"
+    direction = "max" if viable.aggregation in {"argmax", "rank_desc"} else "min"
+    final_selector = (
+        f"rank:{viable.aggregation_rank}:{direction}:{viable.selector_metric}"
+        if viable.aggregation_rank is not None
+        else f"{direction}:{viable.selector_metric}"
+    )
     sampled = merge_sampled_parameters(
         {
             "target_type": [spec.target_type],
-            "final_selector": [f"{direction}:{viable.selector_metric}"],
+            "final_selector": [final_selector],
             "aggregation_metric": [viable.selector_metric],
             "equal_measurement_metric": [viable.equal_metric],
             "extremum_direction": [direction],
             "predicate_catalog_version": ["v1"],
             "prompt_wording_variant": [_prompt_wording_variant(graph.graph_id, spec.family_id)],
-            "synthesis_strategy": ["equal_measurement_narrowing_v1"],
+            "synthesis_strategy": [
+                "equal_measurement_rank_narrowing_v1"
+                if viable.aggregation_rank is not None
+                else "equal_measurement_narrowing_v1"
+            ],
         },
         equal_value.sampled_parameters,
         selector_metric.sampled_parameters,
     )
+    if viable.aggregation_rank is not None:
+        sampled = merge_sampled_parameters(
+            sampled,
+            {
+                "aggregation_rank": [str(viable.aggregation_rank)],
+                "rank_direction": [direction],
+            },
+        )
     if relation is not None:
         sampled = merge_sampled_parameters(sampled, relation.sampled_parameters)
     if extra_relation is not None:
@@ -2353,6 +2448,7 @@ def _query_for_equal_value_extreme(graph: OntologyGraph, viable: ViableEqualValu
         ],
         aggregation=viable.aggregation,
         aggregation_metric=viable.selector_metric,
+        aggregation_rank=viable.aggregation_rank,
         hop_count=3 + int(relation is not None) + int(extra_relation is not None),
         difficulty="cad_browsecomp",
         min_individual_clause_candidates=2,

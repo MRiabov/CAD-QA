@@ -97,6 +97,14 @@ when those choices can be sampled and verified.
   `parameterized_equal_edge_metric_extreme` mine repeated/tolerance-equal
   measured values, keep that equal-value group as the distractor set, then
   select by another sampled measured quantity.
+- Initial synthesized value-bearing equal-measurement rank families now exist
+  for faces and edges. `parameterized_equal_face_metric_rank` and
+  `parameterized_equal_edge_metric_rank` first narrow to candidates with the
+  same measured face coordinate or edge midpoint coordinate, preserve that
+  equal-value group as distractors, then choose a sampled rank by another
+  measured quantity such as surface area or edge length. This is implemented at
+  the valid-row/selfcheck level; broader metric coverage and release-scale
+  balance remain open.
 - Initial cross-feature value-bearing distance tasks: selected edges with equal
   measured length can be resolved by nearest or farthest midpoint distance to a
   solid centroid of a reference feature described by measured volume and
@@ -236,6 +244,14 @@ when those choices can be sampled and verified.
   value-bucket predicate from the predicate catalog. The predicate records the
   equal metric, comparison operator, value bucket, and narrowing sequence, and
   renders a concrete public measurement clue from `prompt-templates.yaml`.
+- The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_equal_metric_rank/PREVIEW.md` adds
+  valid release-ready rows for `parameterized_equal_face_metric_rank` and
+  `parameterized_equal_edge_metric_rank`. The reviewed rows keep four
+  equal-measurement face or edge candidates through the narrowing clauses, then
+  resolve uniquely by sampled rank over a separate measured quantity. This adds
+  rank-based equal-measurement synthesis for faces and edges only; target-type,
+  metric, and release-distribution expansion remain open.
 - Initial synthesized reference-distance rows now combine equal-measurement
   narrowing with a geometry-described reference feature anchor and nearest or
   farthest midpoint-distance selection. Rows serialize reference type, reference
