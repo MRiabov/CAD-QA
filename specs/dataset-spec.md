@@ -127,8 +127,9 @@ The docs and code must move together. Changes to benchmark-release thresholds,
 new blocking dimensions, or tier semantics require updating this spec,
 `epics-and-stories.md`, `epics-and-stories.yaml`, the executable profile, and
 the profile/spec consistency tests in the same change. The machine-readable
-planning copy lives in `epics-and-stories.yaml` under `release_tiers`; it is
-intended to make benchmark-release thresholds auditable without scraping prose.
+planning copy records `canonical_release_tier: benchmark-release` and the
+numeric tier details under `release_tiers`; it is intended to make the release
+level and thresholds auditable without scraping prose.
 
 ## Benchmark-Release Numeric Gates
 

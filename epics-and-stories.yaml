@@ -1,5 +1,6 @@
 schema_version: 2
 project: CAD-QA
+canonical_release_tier: benchmark-release
 current_snapshot:
   date: "2026-05-24"
   codebase_state: >

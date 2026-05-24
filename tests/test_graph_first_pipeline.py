@@ -4076,6 +4076,7 @@ def test_benchmark_release_profile_matches_dataset_spec_numeric_contract() -> No
     numeric_gates = tier_contract["numeric_gates"]
     enforced_gates = tier_contract["enforced_gates"]
 
+    assert epics["canonical_release_tier"] == "benchmark-release"
     assert profile.min_release_rows == 10_000
     assert profile.min_default_sft_rows == 10_000
     assert profile.max_default_sft_syntax_only_share == 0.0

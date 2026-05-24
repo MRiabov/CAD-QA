@@ -52,6 +52,9 @@ The executable profile, this planning document, and `specs/dataset-spec.md`
 must stay synchronized; changing a threshold or blocking dimension requires
 updating all three plus the machine-readable `release_tiers` block in
 `epics-and-stories.yaml` and the profile/spec consistency tests:
+`epics-and-stories.yaml` also records `canonical_release_tier:
+benchmark-release` so the target release level is explicit metadata, not only
+prose.
 
 | Gate | Benchmark-release requirement |
 | --- | --- |
