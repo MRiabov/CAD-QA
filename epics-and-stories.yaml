@@ -53,6 +53,65 @@ source_documents:
   - specs/multi-hop-qa-task-spec.md
   - docs/multi-hop-qa-architecture.md
   - specs/paper-spec.md
+release_tiers:
+  smoke:
+    purpose: Local plumbing checks, fixture review, and tiny end-to-end runs.
+    supports_public_benchmark_claims: false
+    supports_real_fine_tuning_claims: false
+  release-candidate:
+    purpose: Development-scale artifacts that exercise release machinery while generation coverage is still changing.
+    supports_public_benchmark_claims: false
+    supports_real_fine_tuning_claims: false
+  benchmark-release:
+    purpose: Canonical public benchmark and default SFT dataset release bar.
+    supports_public_benchmark_claims: true
+    supports_real_fine_tuning_claims: true
+    verdict_requirements:
+      release_report_valid_for_release: true
+      blocking_release_gates: 0
+      default_sft_report_passes_same_tier: true
+    numeric_gates:
+      min_release_rows: 10000
+      min_default_sft_rows: 10000
+      max_default_sft_syntax_only_share: 0.0
+      min_prompt_family_count: 10
+      min_prompt_family_share: 0.01
+      max_prompt_family_share: 0.10
+      min_geometry_critical_training_share: 0.99
+      max_syntax_only_calibration_share: 0.02
+      min_geometry_hop_positive_share: 0.95
+      min_logical_hop_ge_3_share: 0.90
+      min_value_bearing_measurement_share: 0.15
+      max_value_bearing_measurement_share: 0.30
+      min_cross_feature_value_bearing_share: 0.05
+      max_cross_feature_value_bearing_share: 0.15
+      min_pre_final_candidate_count: 2
+      min_median_pre_final_candidate_count: 4.0
+      min_prompt_template_count: 20
+      max_prompt_template_share: 0.05
+      min_unique_answer_count: 1000
+      min_answer_entropy_bits: 8.0
+      max_parameter_value_share: 0.35
+      min_axis_direction_parameter_share: 0.20
+      min_split_groups_per_split: 3
+      min_preview_samples_per_family: 20
+    enforced_gates:
+      intended_family_coverage: true
+      parameter_balance: true
+      preview_evidence: true
+      family_test_evidence: true
+    release_blockers:
+      - missing intended release family rows
+      - generated review-only, calibration, or unknown families in release rows
+      - collapsed sampled parameters without geometry-limited justification
+      - stale or insufficient manual preview evidence
+      - missing positive-generation, failure/quarantine, or release-report test evidence
+      - train-only split collapse or fewer than 3 protected groups per split
+    synchronized_sources:
+      - specs/dataset-spec.md
+      - epics-and-stories.md
+      - cad_qa/dataset/release_report.py
+      - tests/test_graph_first_pipeline.py
 epics:
   - id: epic-1
     title: Project framing and graph-first spec

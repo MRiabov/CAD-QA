@@ -5,6 +5,8 @@ import json
 import math
 from pathlib import Path
 
+import yaml
+
 from cad_qa.dataset.materialize import materialize_row
 from cad_qa.dataset.audit import leakage_audit
 from cad_qa.dataset.family_test_evidence import family_test_evidence_gate_report, load_family_test_evidence
@@ -3920,6 +3922,10 @@ def test_benchmark_release_tier_applies_stricter_numeric_gates() -> None:
 def test_benchmark_release_profile_matches_dataset_spec_numeric_contract() -> None:
     profile = release_gate_profile("benchmark-release")
     spec = Path("specs/dataset-spec.md").read_text(encoding="utf-8")
+    epics = yaml.safe_load(Path("epics-and-stories.yaml").read_text(encoding="utf-8"))
+    tier_contract = epics["release_tiers"]["benchmark-release"]
+    numeric_gates = tier_contract["numeric_gates"]
+    enforced_gates = tier_contract["enforced_gates"]
 
     assert profile.min_release_rows == 10_000
     assert profile.min_default_sft_rows == 10_000
@@ -3949,6 +3955,45 @@ def test_benchmark_release_profile_matches_dataset_spec_numeric_contract() -> No
     assert profile.enforce_parameter_balance
     assert profile.enforce_preview_evidence
     assert profile.enforce_family_test_evidence
+    assert tier_contract["supports_public_benchmark_claims"]
+    assert tier_contract["supports_real_fine_tuning_claims"]
+    assert epics["release_tiers"]["smoke"]["supports_public_benchmark_claims"] is False
+    assert epics["release_tiers"]["release-candidate"]["supports_real_fine_tuning_claims"] is False
+    assert tier_contract["verdict_requirements"]["release_report_valid_for_release"] is True
+    assert tier_contract["verdict_requirements"]["blocking_release_gates"] == 0
+    assert tier_contract["verdict_requirements"]["default_sft_report_passes_same_tier"] is True
+
+    for field in [
+        "min_release_rows",
+        "min_default_sft_rows",
+        "max_default_sft_syntax_only_share",
+        "min_prompt_family_count",
+        "min_prompt_family_share",
+        "max_prompt_family_share",
+        "min_geometry_critical_training_share",
+        "max_syntax_only_calibration_share",
+        "min_geometry_hop_positive_share",
+        "min_logical_hop_ge_3_share",
+        "min_value_bearing_measurement_share",
+        "max_value_bearing_measurement_share",
+        "min_cross_feature_value_bearing_share",
+        "max_cross_feature_value_bearing_share",
+        "min_pre_final_candidate_count",
+        "min_median_pre_final_candidate_count",
+        "min_prompt_template_count",
+        "max_prompt_template_share",
+        "min_unique_answer_count",
+        "min_answer_entropy_bits",
+        "max_parameter_value_share",
+        "min_axis_direction_parameter_share",
+        "min_split_groups_per_split",
+        "min_preview_samples_per_family",
+    ]:
+        assert numeric_gates[field] == getattr(profile, field)
+    assert enforced_gates["intended_family_coverage"] == profile.enforce_intended_family_coverage
+    assert enforced_gates["parameter_balance"] == profile.enforce_parameter_balance
+    assert enforced_gates["preview_evidence"] == profile.enforce_preview_evidence
+    assert enforced_gates["family_test_evidence"] == profile.enforce_family_test_evidence
 
     for required_fragment in [
         "At least 10,000 public/private release rows.",

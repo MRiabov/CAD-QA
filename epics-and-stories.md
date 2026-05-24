@@ -50,7 +50,8 @@ fine-tuning bar. Smoke and release-candidate tiers are development gates; they
 can demonstrate mechanics, but they cannot support benchmark-release claims.
 The executable profile, this planning document, and `specs/dataset-spec.md`
 must stay synchronized; changing a threshold or blocking dimension requires
-updating all three plus the profile/spec consistency tests:
+updating all three plus the machine-readable `release_tiers` block in
+`epics-and-stories.yaml` and the profile/spec consistency tests:
 
 | Gate | Benchmark-release requirement |
 | --- | --- |

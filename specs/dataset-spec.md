@@ -126,7 +126,9 @@ geometry/value-bearing coverage are release blockers, not warnings.
 The docs and code must move together. Changes to benchmark-release thresholds,
 new blocking dimensions, or tier semantics require updating this spec,
 `epics-and-stories.md`, `epics-and-stories.yaml`, the executable profile, and
-the profile/spec consistency tests in the same change.
+the profile/spec consistency tests in the same change. The machine-readable
+planning copy lives in `epics-and-stories.yaml` under `release_tiers`; it is
+intended to make benchmark-release thresholds auditable without scraping prose.
 
 ## Benchmark-Release Numeric Gates
 
