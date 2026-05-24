@@ -78,6 +78,7 @@ metric_labels:
   operation_index: "modeling-sequence position"
   origin_z: "workplane origin height"
   segment_length: "segment length"
+  segment_midpoint: "segment midpoint"
   selected_count: "number of selected entities"
   signed_volume_delta: "volume change"
   topology_delta_edges: "increase in edge count"
@@ -243,6 +244,11 @@ clause_templates:
     - "The target point has a measured {metric_label}."
     - "The target point has a known {metric_label}."
     - "The target point has a documented {metric_label}."
+  has_parameterized_equal_path_point_metric_value:
+    - "The target path point has {metric_label} equal to {value}."
+    - "The target path point's {metric_label} is {value}."
+    - "The target path point matches the {metric_label} value {value}."
+  has_path_point_for_reference_distance: "The target path point has a measured point location."
   has_distance_to_origin: "The target point has a measured distance to the global origin."
   has_path_point_z: "The target point has a measured global Z coordinate."
   segment_on_visible_path: "The target segment belongs to a spline path."
@@ -254,6 +260,11 @@ clause_templates:
     - "The target segment has a measured {metric_label}."
     - "The target segment has a known {metric_label}."
     - "The target segment has a documented {metric_label}."
+  has_parameterized_equal_path_segment_metric_value:
+    - "The target path segment has {metric_label} equal to {value}."
+    - "The target path segment's {metric_label} is {value}."
+    - "The target path segment matches the {metric_label} value {value}."
+  has_path_segment_midpoint_for_reference_distance: "The target path segment has a measured midpoint."
   has_segment_length: "The target segment has a measured path-segment length."
 
   has_compiled_volume: "The target feature has a measured solid volume."

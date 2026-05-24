@@ -4630,6 +4630,8 @@ def test_synthesis_generates_parameterized_path_queries() -> None:
             "source_code": (
                 "import cadquery as cq\n"
                 "path = cq.Workplane(\"XY\").spline([(0, 0), (2, 1), (5, 1), (6, 4)])\n"
+                "ref = cq.Workplane(\"XY\").box(10, 5, 2).translate((0, 5, 0))\n"
+                "far = cq.Workplane(\"XY\").box(5, 5, 2).translate((20, 5, 1))\n"
             ),
         },
     )
@@ -4648,12 +4650,15 @@ def test_synthesis_generates_parameterized_path_queries() -> None:
         graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
         graph.add_measurement(Measurement(point_id, "relation_metric", "distance_to_origin", distance, "mm"))
     for segment_id, length in [
-        ("path:main:segment:0", math.sqrt(5.0)),
+        ("path:main:segment:0", 3.0),
         ("path:main:segment:1", 3.0),
         ("path:main:segment:2", math.sqrt(10.0)),
     ]:
+        index = int(segment_id.rsplit(":", 1)[-1])
+        midpoint = [float(index * 2 + 1), float(index), 0.0]
         graph.add_node(Node(segment_id, "path_segment", segment_id))
         graph.add_relation(Relation(segment_id, "path:main", "segment_on_path"))
+        graph.add_measurement(Measurement(segment_id, "entity_geometry", "segment_midpoint", midpoint, "mm"))
         graph.add_measurement(Measurement(segment_id, "relation_metric", "segment_length", length, "mm"))
 
     queries = {query.query_id.rsplit(":", 1)[-1]: query for query in synthesize_graph_hop_queries(graph)}
@@ -4690,6 +4695,117 @@ def test_synthesis_generates_parameterized_path_queries() -> None:
     assert "relation:segment_on_path:path" in segment_row.query_program["sampled_parameters"]["narrowing_predicate_sequence"]
     assert "segment" in segment_row.prompt.lower()
     assert "path" in segment_row.prompt.lower()
+
+
+def test_synthesis_generates_parameterized_path_reference_distance_queries() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:path-reference-distance-synth",
+        source={
+            "source_id": "synthetic",
+            "source_code": (
+                "import cadquery as cq\n"
+                "path = cq.Workplane(\"XY\").spline([(0, 0), (2, 1), (5, 1), (6, 4)])\n"
+                "ref = cq.Workplane(\"XY\").box(10, 5, 2).translate((0, 5, 0))\n"
+                "far = cq.Workplane(\"XY\").box(5, 5, 2).translate((20, 5, 1))\n"
+            ),
+        },
+    )
+    graph.add_node(Node("path:main", "path", "path"))
+    for point_id, coordinate in [
+        ("path:main:point:0", [0.0, 0.0, 0.0]),
+        ("path:main:point:1", [2.0, 1.0, 0.0]),
+        ("path:main:point:2", [5.0, 1.0, 0.0]),
+        ("path:main:point:3", [6.0, 4.0, 0.0]),
+    ]:
+        graph.add_node(Node(point_id, "path_point", point_id))
+        graph.add_relation(Relation(point_id, "path:main", "point_on_path"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate", coordinate, "mm"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_x", coordinate[0], "mm"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_y", coordinate[1], "mm"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
+    for segment_id, length, midpoint in [
+        ("path:main:segment:0", 3.0, [1.0, 0.0, 0.0]),
+        ("path:main:segment:1", 3.0, [4.0, 1.0, 0.0]),
+        ("path:main:segment:2", 5.0, [6.0, 2.5, 0.0]),
+    ]:
+        graph.add_node(Node(segment_id, "path_segment", segment_id))
+        graph.add_relation(Relation(segment_id, "path:main", "segment_on_path"))
+        graph.add_measurement(Measurement(segment_id, "entity_geometry", "segment_midpoint", midpoint, "mm"))
+        graph.add_measurement(Measurement(segment_id, "relation_metric", "segment_length", length, "mm"))
+    for feature_id, volume, centroid in [
+        ("feature:path-ref", 100.0, [0.0, 5.0, 0.0]),
+        ("feature:path-far", 50.0, [20.0, 5.0, 1.0]),
+    ]:
+        graph.add_node(Node(feature_id, "feature", feature_id))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid", centroid, "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_x", centroid[0], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_y", centroid[1], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid[2], "mm"))
+
+    queries = {query.query_id.rsplit(":", 1)[-1]: query for query in synthesize_graph_hop_queries(graph)}
+    expected = {
+        "parameterized_path_point_reference_entity_distance": (
+            "path_point",
+            "has_parameterized_equal_path_point_metric_value",
+            "coordinate_z",
+            "coordinate",
+        ),
+        "parameterized_path_segment_reference_entity_distance": (
+            "path_segment",
+            "has_parameterized_equal_path_segment_metric_value",
+            "segment_length",
+            "segment_midpoint",
+        ),
+    }
+    for family, (target_type, equal_clause_id, equal_metric, target_point_metric) in expected.items():
+        query = queries[family]
+        resolution = resolve_query(graph, query)
+        row = materialize_row(graph, resolution)
+
+        assert resolution.verifier_status == "resolved"
+        assert query.target_type == target_type
+        assert any(clause.id == equal_clause_id and clause.metric == equal_metric for clause in query.clauses)
+        assert query.aggregation_metric == "distance_to_reference_feature_centroid"
+        assert query.aggregation in {"argmin", "argmax"}
+        assert row.logical_hop_count == 5
+        assert row.geometry_hop_count == 5
+        assert row.query_program["sampled_parameters"]["reference_type"] == ["feature"]
+        assert row.query_program["sampled_parameters"]["target_point_metric"] == [target_point_metric]
+        assert row.query_program["sampled_parameters"]["equal_measurement_metric"] == [equal_metric]
+        assert "reference" in row.prompt.lower()
+
+
+def test_synthesis_skips_path_reference_distance_without_equal_distractors() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:no-path-reference-distance-synth",
+        source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
+    )
+    graph.add_node(Node("path:main", "path", "path"))
+    for index, coordinate_z in enumerate([0.0, 1.0, 2.0]):
+        point_id = f"path:main:point:{index}"
+        coordinate = [float(index), 0.0, coordinate_z]
+        graph.add_node(Node(point_id, "path_point", point_id))
+        graph.add_relation(Relation(point_id, "path:main", "point_on_path"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate", coordinate, "mm"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_x", coordinate[0], "mm"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_y", coordinate[1], "mm"))
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
+    for index, length in enumerate([1.0, 2.0, 3.0]):
+        segment_id = f"path:main:segment:{index}"
+        graph.add_node(Node(segment_id, "path_segment", segment_id))
+        graph.add_relation(Relation(segment_id, "path:main", "segment_on_path"))
+        graph.add_measurement(Measurement(segment_id, "entity_geometry", "segment_midpoint", [float(index), 0.0, 0.0], "mm"))
+        graph.add_measurement(Measurement(segment_id, "relation_metric", "segment_length", length, "mm"))
+    graph.add_node(Node("feature:path-ref", "feature", "reference"))
+    graph.add_measurement(Measurement("feature:path-ref", "snapshot_state", "volume", 100.0, "mm^3"))
+    graph.add_measurement(Measurement("feature:path-ref", "snapshot_state", "centroid", [0.0, 5.0, 0.0], "mm"))
+    graph.add_measurement(Measurement("feature:path-ref", "snapshot_state", "centroid_z", 0.0, "mm"))
+
+    families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
+
+    assert "parameterized_path_point_reference_entity_distance" not in families
+    assert "parameterized_path_segment_reference_entity_distance" not in families
 
 
 def test_synthesis_skips_path_families_without_unique_geometry() -> None:

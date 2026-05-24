@@ -70,6 +70,8 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_edge_reference_entity_distance",
     "parameterized_path_point_extreme",
     "parameterized_path_segment_extreme",
+    "parameterized_path_point_reference_entity_distance",
+    "parameterized_path_segment_reference_entity_distance",
     "parameterized_kernel_face_selector_count",
     "parameterized_kernel_edge_selector_count",
 )
@@ -908,6 +910,8 @@ def _path_metric_graph() -> OntologyGraph:
             "source_code": (
                 "import cadquery as cq\n"
                 "path = cq.Workplane(\"XY\").spline([(0, 0), (2, 1), (5, 1), (6, 4)])\n"
+                "ref = cq.Workplane(\"XY\").box(10, 5, 2).translate((0, 5, 0))\n"
+                "far = cq.Workplane(\"XY\").box(5, 5, 2).translate((20, 5, 1))\n"
             ),
         },
     )
@@ -921,18 +925,32 @@ def _path_metric_graph() -> OntologyGraph:
         graph.add_node(Node(point_id, "path_point", point_id))
         graph.add_relation(Relation(point_id, "path:main", "point_on_path"))
         distance = sum(component * component for component in coordinate) ** 0.5
+        graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate", coordinate, "mm"))
         graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_x", coordinate[0], "mm"))
         graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_y", coordinate[1], "mm"))
         graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
         graph.add_measurement(Measurement(point_id, "relation_metric", "distance_to_origin", distance, "mm"))
     for segment_id, length in [
-        ("path:main:segment:0", 2.2360679),
+        ("path:main:segment:0", 3.0),
         ("path:main:segment:1", 3.0),
         ("path:main:segment:2", 3.1622777),
     ]:
+        index = int(segment_id.rsplit(":", 1)[-1])
+        midpoint = [float(index * 2 + 1), float(index), 0.0]
         graph.add_node(Node(segment_id, "path_segment", segment_id))
         graph.add_relation(Relation(segment_id, "path:main", "segment_on_path"))
+        graph.add_measurement(Measurement(segment_id, "entity_geometry", "segment_midpoint", midpoint, "mm"))
         graph.add_measurement(Measurement(segment_id, "relation_metric", "segment_length", length, "mm"))
+    for feature_id, volume, centroid in [
+        ("feature:path-ref", 100.0, [0.0, 5.0, 0.0]),
+        ("feature:path-far", 50.0, [20.0, 5.0, 1.0]),
+    ]:
+        graph.add_node(Node(feature_id, "feature", feature_id))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid", centroid, "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_x", centroid[0], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_y", centroid[1], "mm"))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid[2], "mm"))
     return graph
 
 

@@ -603,6 +603,17 @@ Conservatively checked as done:
   This is evidence for the initial synthesized path-extrema slice, not for
   broader path/distance/containment/intersection/adjacency coverage or
   benchmark-release distribution.
+- The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_path_reference/PREVIEW.md` adds
+  release-ready, geometry-critical rows for
+  `parameterized_path_point_reference_entity_distance` and
+  `parameterized_path_segment_reference_entity_distance`. The reviewed rows
+  narrow path points by repeated coordinate height or path segments by repeated
+  segment length, describe a measured reference feature, preserve distractors
+  through measured point/midpoint clauses, and resolve by nearest/farthest
+  distance to the reference feature centroid. This extends path coverage into
+  value-bearing reference-distance tasks; broader reference-type balance and
+  release-scale path distribution remain open.
 - The reviewed path-geometry SFT report passes the default training geometry
   dominance gate: 58 of 58 default training rows are geometry-critical, with
   zero syntax-only and zero quarantined rows. The release verifier includes the
@@ -997,12 +1008,14 @@ Checked as implemented with remaining scale caveats:
   face/edge/edge-endpoint/feature/material-region/void-region measurement
   groups, sampled material/void region extrema/ranks, contained-endpoint
   relation chains, and initial
-  feature-to-feature and face/edge/endpoint/material-region/void-region-to-feature
-  reference-distance families plus reference-face, reference-edge, and
-  reference-endpoint distance families for feature, edge, face, endpoint,
-  material-region, and void-region targets, plus generic reference-entity
-  distance families that sample feature/face/edge/endpoint/material-region/
-  void-region reference types where graph evidence supports them. Broader
+  feature-to-feature, path-to-reference-feature, and
+  face/edge/endpoint/material-region/void-region-to-feature reference-distance
+  families plus reference-face, reference-edge, and reference-endpoint distance
+  families for feature, edge, face, endpoint, material-region, and void-region
+  targets, plus generic reference-entity distance families for
+  feature/face/edge/endpoint/path-point/path-segment/material-region/void-region
+  targets that sample feature/face/edge/endpoint/material-region/void-region
+  reference types where graph evidence supports them. Broader
   selected-entity-count narrowing beyond face/edge selectors,
   release-scale reference-type balance, containment/adjacency
   predicates, and broader tie-break selectors
