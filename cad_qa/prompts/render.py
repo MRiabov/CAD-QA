@@ -12,6 +12,7 @@ from cad_qa.prompts.templates import (
     checklist_prompt,
     clause_prompt,
     no_clause_prompt,
+    tie_break_prompt,
 )
 from cad_qa.prompts.wording_gates import banned_terms
 from cad_qa.query.ir import Clause
@@ -29,16 +30,22 @@ class RenderedPrompt:
 
 def render_prompt(source_code: str, query: QueryProgram) -> RenderedPrompt:
     clues = [clause_prompt(clause, query=query) for clause in query.clauses]
+    clue_ids = [clause.id for clause in query.clauses]
     if query.aggregation and query.aggregation_metric:
         clues.append(aggregation_prompt(query.aggregation, query.aggregation_metric))
+        clue_ids.append("aggregation")
+    if query.tie_break_aggregation and query.tie_break_metric:
+        clues.append(tie_break_prompt(query.tie_break_aggregation, query.tie_break_metric))
+        clue_ids.append("tie_break_aggregation")
     if not clues:
         clues.append(no_clause_prompt(query.target_type))
+        clue_ids.append("target")
     prompt = checklist_prompt(source_code, clues, query.answer_type)
     warnings = banned_terms(prompt)
     template_id = prompt_template_id(query)
     clue_map = []
     for index, clue in enumerate(clues):
-        clause_id = query.clauses[index].id if index < len(query.clauses) else "aggregation"
+        clause_id = clue_ids[index]
         clue_map.append(
             {
                 "clue_index": index,
@@ -56,7 +63,12 @@ def prompt_template_id(query: QueryProgram) -> str:
 
     clause_shape = "_".join(_clause_shape(clause) for clause in query.clauses) or "no_clauses"
     aggregation_shape = f"{query.aggregation}_{query.aggregation_metric}" if query.aggregation else "no_aggregation"
-    return f"{CHECKLIST_TEMPLATE_ID}:{query.target_type}:{clause_shape}:{aggregation_shape}"
+    tie_break_shape = (
+        f"tie_{query.tie_break_aggregation}_{query.tie_break_metric}"
+        if query.tie_break_aggregation and query.tie_break_metric
+        else "no_tie_break"
+    )
+    return f"{CHECKLIST_TEMPLATE_ID}:{query.target_type}:{clause_shape}:{aggregation_shape}:{tie_break_shape}"
 
 
 def prompt_template_id_from_mapping(query: dict[str, Any]) -> str:
@@ -66,7 +78,14 @@ def prompt_template_id_from_mapping(query: dict[str, Any]) -> str:
     aggregation = query.get("aggregation")
     aggregation_metric = query.get("aggregation_metric")
     aggregation_shape = f"{aggregation}_{aggregation_metric}" if aggregation else "no_aggregation"
-    return f"{CHECKLIST_TEMPLATE_ID}:{query.get('target_type', 'unknown')}:{clause_shape}:{aggregation_shape}"
+    tie_break_aggregation = query.get("tie_break_aggregation")
+    tie_break_metric = query.get("tie_break_metric")
+    tie_break_shape = (
+        f"tie_{tie_break_aggregation}_{tie_break_metric}"
+        if tie_break_aggregation and tie_break_metric
+        else "no_tie_break"
+    )
+    return f"{CHECKLIST_TEMPLATE_ID}:{query.get('target_type', 'unknown')}:{clause_shape}:{aggregation_shape}:{tie_break_shape}"
 
 
 def _clause_shape(clause: Clause) -> str:

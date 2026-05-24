@@ -89,6 +89,9 @@ def _query_metrics(row: dict[str, Any]) -> set[str]:
     aggregation_metric = query.get("aggregation_metric")
     if isinstance(aggregation_metric, str):
         metrics.add(aggregation_metric)
+    tie_break_metric = query.get("tie_break_metric")
+    if isinstance(tie_break_metric, str):
+        metrics.add(tie_break_metric)
     for clause in query.get("clauses") or []:
         if isinstance(clause, dict) and isinstance(clause.get("metric"), str):
             metrics.add(clause["metric"])

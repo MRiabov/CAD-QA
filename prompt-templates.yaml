@@ -23,6 +23,10 @@ aggregation_templates:
   argmin: "Among the remaining candidates, choose the one with the smallest {metric_label}."
   argmin.distance_to_reference_feature_centroid: "Among the remaining candidates, choose the one whose midpoint is closest to the reference feature's solid centroid."
 
+tie_break_templates:
+  argmax: "If that leaves a tie, choose the tied candidate with the greatest {metric_label}."
+  argmin: "If that leaves a tie, choose the tied candidate with the smallest {metric_label}."
+
 metric_labels:
   area: "profile area"
   bbox_delta_max_span: "increase in overall part size"

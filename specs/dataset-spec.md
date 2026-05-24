@@ -145,8 +145,8 @@ zero-row intended release families block the tier. They also serialize private
 `query_program.sampled_parameters` and enforce an initial parameter-balance gate
 over that metadata: target type, final selector, aggregation metric/axis,
 extremum direction, clause metrics/axes, comparison operators, reference
-metrics, and value buckets. Full synthesis-layer parameter bindings for
-predicate sequence, reference anchor, rank, tie-break metric, and rendered
+metrics, value buckets, and tie-break metric/direction where used. Full
+synthesis-layer parameter bindings for reference anchor, rank, and rendered
 wording remain open implementation work. The preview CLI writes machine-readable
 preview evidence and benchmark-release reports block missing, stale, or
 insufficient preview coverage. Benchmark-release reports also block generated

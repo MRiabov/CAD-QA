@@ -23,6 +23,7 @@ def prompt_template_registry() -> dict[str, Any]:
         "prompt_shells",
         "fallback_templates",
         "aggregation_templates",
+        "tie_break_templates",
         "metric_labels",
         "clause_templates",
     ):
@@ -57,6 +58,12 @@ def clause_prompt(clause: Any, *, query: Any | None = None) -> str:
 def aggregation_prompt(aggregation: str, metric: str) -> str:
     templates = _template_mapping("aggregation_templates")
     template = templates.get(f"{aggregation}.{metric}") or _string_template("aggregation_templates", aggregation)
+    return template.format(metric=metric, metric_label=metric_label(metric))
+
+
+def tie_break_prompt(aggregation: str, metric: str) -> str:
+    templates = _template_mapping("tie_break_templates")
+    template = templates.get(f"{aggregation}.{metric}") or _string_template("tie_break_templates", aggregation)
     return template.format(metric=metric, metric_label=metric_label(metric))
 
 

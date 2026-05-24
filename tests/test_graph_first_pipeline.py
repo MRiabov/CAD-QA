@@ -46,7 +46,7 @@ from cad_qa.ontology.workplane_frames import project_local_point
 from cad_qa.prompts.render import render_prompt
 from cad_qa.prompts.templates import prompt_template_registry
 from cad_qa.query.family_manifest import intended_family_coverage_report
-from cad_qa.query.ir import Clause, QueryProgram
+from cad_qa.query.ir import Clause, QueryProgram, query_from_dict
 from cad_qa.query.parameters import sampled_parameters_from_query
 from cad_qa.query.resolver import resolve_query, smoke_queries
 from cad_qa.query.synthesis import synthesize_graph_hop_queries
@@ -1591,6 +1591,40 @@ def test_query_resolver_argmax_and_reject_unless_unique() -> None:
     assert ambiguous_resolution.candidate_trace.failure_reason == "not_unique"
 
 
+def test_query_resolver_uses_tie_break_aggregation() -> None:
+    graph = OntologyGraph(graph_id="graph:tie", source={"source_id": "tie", "source_code": ""})
+    for node_id, primary, secondary in [
+        ("edge:a", 10.0, 2.0),
+        ("edge:b", 10.0, 8.0),
+        ("edge:c", 5.0, 9.0),
+    ]:
+        graph.add_node(Node(node_id, "edge", node_id))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "midpoint_y", primary, "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "edge_length", secondary, "mm"))
+    query = QueryProgram(
+        query_id="graph:tie:q0:tie_break_edge",
+        target_type="edge",
+        aggregation="argmax",
+        aggregation_metric="midpoint_y",
+        tie_break_aggregation="argmax",
+        tie_break_metric="edge_length",
+        hop_count=2,
+    )
+
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+
+    assert resolution.verifier_status == "resolved"
+    assert resolution.gold_answer == "edge:b"
+    assert row.candidate_trace["steps"][1]["after"] == ["edge:a", "edge:b"]
+    assert row.candidate_trace["steps"][2]["step"] == "tie_break_aggregation"
+    assert row.candidate_trace["steps"][2]["after"] == ["edge:b"]
+    assert "If that leaves a tie" in row.prompt
+    assert row.query_program["tie_break_metric"] == "edge_length"
+    assert row.query_program["sampled_parameters"]["tie_break_metric"] == ["edge_length"]
+    assert query_from_dict(row.query_program).tie_break_metric == "edge_length"
+
+
 def test_low_and_multi_hop_smoke_queries_render_and_materialize() -> None:
     graph = build_graph(source_record_from_mapping({"source_id": "src_fixture", "normalized_code": SOURCE}))
     queries = smoke_queries(graph)
@@ -1642,7 +1676,7 @@ def test_prompt_templates_yaml_controls_generated_prompt_wording() -> None:
     ) in rendered.prompt
     assert rendered.prompt_template_id == (
         "checklist_constraints_v1:face:"
-        "relation_has_kernel_stable_face_id_measurement_bbox_max_z:argmax_bbox_max_z"
+        "relation_has_kernel_stable_face_id_measurement_bbox_max_z:argmax_bbox_max_z:no_tie_break"
     )
 
 
@@ -2030,6 +2064,38 @@ def test_synthesis_generates_geometry_narrowed_selector_count_query() -> None:
     assert query.sampled_parameters["selected_entity_type"] == ["edge"]
     assert query.sampled_parameters["narrowing_axis"] == ["y"]
     assert "At least one edge in the target selection has a midpoint Y coordinate" in row.prompt
+
+
+def test_synthesis_uses_tie_break_metric_for_tied_extrema() -> None:
+    graph = OntologyGraph(graph_id="graph:tied-edge-extreme", source={"source_id": "synthetic", "source_code": ""})
+    graph.add_node(Node("selector:edges", "selector", "edges"))
+    edge_specs = [
+        ("edge:a", 10.0, 2.0),
+        ("edge:b", 10.0, 8.0),
+        ("edge:c", 5.0, 8.0),
+        ("edge:d", 5.0, 2.0),
+    ]
+    for edge_id, midpoint_y, edge_length in edge_specs:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint_y, "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", edge_length, "mm"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_kernel_edge_extreme")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+
+    assert resolution.verifier_status == "resolved"
+    assert query.tie_break_metric in {"edge_length", "midpoint_y"}
+    assert row.candidate_trace["steps"][-1]["step"] == "tie_break_aggregation"
+    assert len(row.candidate_trace["steps"][-1]["before"]) == 2
+    assert row.candidate_trace["steps"][-1]["after"] == [resolution.gold_answer]
+    assert "If that leaves a tie" in row.prompt
+    assert row.query_program["sampled_parameters"]["tie_break_metric"] == [query.tie_break_metric]
 
 
 def test_resolver_does_not_inline_generated_prompt_text() -> None:

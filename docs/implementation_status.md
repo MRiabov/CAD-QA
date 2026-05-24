@@ -203,6 +203,14 @@ when those choices can be sampled and verified.
   geometry-defined selector subset before applying sampled min/max
   `selected_count`. This is still not the full predicate catalog or bounded
   beam-search implementation.
+- Query programs now support deterministic tie-break aggregations. When a
+  primary min/max aggregation leaves multiple candidates and a configured
+  secondary metric resolves the tie, resolver traces include a
+  `tie_break_aggregation` step, prompts render a conventional tie-break clue,
+  materialized rows serialize `tie_break_metric`/`tie_break_aggregation`, and
+  sampled-parameter metadata records tie-break metric, direction, selector, and
+  axis where applicable. Initial face/edge extremum synthesis can use this when
+  a tied primary geometric quantity has a unique secondary geometric selector.
 - The preview CLI writes machine-readable preview evidence next to the Markdown
   artifact and into dataset directories. Benchmark-release release/SFT reports
   block missing preview evidence, dataset-fingerprint mismatches, and fewer than
@@ -709,7 +717,7 @@ Checked as implemented with remaining scale caveats:
   groups, containment/adjacency predicates, and rank/tie-break selectors remain
   open.
 - Extend sampled-parameter metadata from the synthesis layer to include
-  predicate sequence, reference anchor, rank, tie-break metric, rendered wording,
+  predicate sequence, reference anchor, rank, rendered wording,
   and geometry-limited exceptions. The current gate catches missing or collapsed
   generated metadata, and family specs can now require/enforce specific
   narrowing dimensions. It still does not prove every future intended parameter

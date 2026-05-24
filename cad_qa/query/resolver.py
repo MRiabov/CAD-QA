@@ -62,7 +62,7 @@ def resolve_query(graph: OntologyGraph, query: QueryProgram) -> QueryResolution:
             )
     if query.aggregation:
         before = candidate_ids(candidates)
-        candidates = _apply_aggregation(graph, candidates, query)
+        candidates = _apply_primary_aggregation(graph, candidates, query)
         steps.append(
             {
                 "step": "aggregation",
@@ -77,6 +77,28 @@ def resolve_query(graph: OntologyGraph, query: QueryProgram) -> QueryResolution:
                 measurement.scope
                 for node in candidates
                 for measurement in graph.measurements_for(node.id, query.aggregation_metric)
+            )
+        if len(candidates) > 1 and query.tie_break_aggregation and query.tie_break_metric:
+            before_tie_break = candidate_ids(candidates)
+            candidates = _apply_metric_aggregation(
+                graph,
+                candidates,
+                aggregation=query.tie_break_aggregation,
+                metric=query.tie_break_metric,
+            )
+            steps.append(
+                {
+                    "step": "tie_break_aggregation",
+                    "aggregation": query.tie_break_aggregation,
+                    "metric": query.tie_break_metric,
+                    "before": before_tie_break,
+                    "after": candidate_ids(candidates),
+                }
+            )
+            measurement_scopes.update(
+                measurement.scope
+                for node in candidates
+                for measurement in graph.measurements_for(node.id, query.tie_break_metric)
             )
     status = "resolved"
     failure_reason = None
@@ -2288,19 +2310,34 @@ def _apply_clause(graph: OntologyGraph, candidates: list[Node], clause: Clause) 
     return candidates
 
 
-def _apply_aggregation(graph: OntologyGraph, candidates: list[Node], query: QueryProgram) -> list[Node]:
+def _apply_primary_aggregation(graph: OntologyGraph, candidates: list[Node], query: QueryProgram) -> list[Node]:
     if not query.aggregation_metric or not candidates:
         return candidates
     if query.aggregation_metric == REFERENCE_FEATURE_DISTANCE_METRIC:
         return _apply_reference_feature_distance_aggregation(graph, candidates, query)
+    return _apply_metric_aggregation(
+        graph,
+        candidates,
+        aggregation=query.aggregation,
+        metric=query.aggregation_metric,
+    )
+
+
+def _apply_metric_aggregation(
+    graph: OntologyGraph,
+    candidates: list[Node],
+    *,
+    aggregation: str | None,
+    metric: str,
+) -> list[Node]:
     scored: list[tuple[float, Node]] = []
     for node in candidates:
-        value = _measurement_value(graph, node.id, query.aggregation_metric)
+        value = _measurement_value(graph, node.id, metric)
         if isinstance(value, (int, float)):
             scored.append((float(value), node))
     if not scored:
         return []
-    target = max(score for score, _ in scored) if query.aggregation == "argmax" else min(score for score, _ in scored)
+    target = max(score for score, _ in scored) if aggregation == "argmax" else min(score for score, _ in scored)
     return [node for score, node in scored if score == target]
 
 

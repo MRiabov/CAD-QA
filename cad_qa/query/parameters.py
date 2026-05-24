@@ -7,11 +7,19 @@ from typing import Any, Mapping
 
 AXES = ("x", "y", "z")
 DIRECTIONS = ("min", "max")
-AXIS_DIRECTION_DIMENSIONS = {"aggregation_axis", "clause_axis", "extremum_direction"}
+AXIS_DIRECTION_DIMENSIONS = {
+    "aggregation_axis",
+    "clause_axis",
+    "extremum_direction",
+    "tie_break_axis",
+    "tie_break_direction",
+}
 DEFAULT_ENFORCED_DIMENSIONS = {
     "target_type",
     "final_selector",
     "aggregation_metric",
+    "tie_break_metric",
+    "tie_break_selector",
     "clause_relation",
     "clause_metric",
     "clause_target_type",
@@ -23,6 +31,8 @@ EXPECTED_VALUES = {
     "aggregation_axis": AXES,
     "clause_axis": AXES,
     "extremum_direction": DIRECTIONS,
+    "tie_break_axis": AXES,
+    "tie_break_direction": DIRECTIONS,
 }
 
 
@@ -43,6 +53,14 @@ def sampled_parameters_from_query(query: Mapping[str, Any]) -> dict[str, list[st
         _add(params, "final_selector", f"{direction or aggregation}:{aggregation_metric or 'none'}")
     _add(params, "aggregation_metric", aggregation_metric)
     _add(params, "aggregation_axis", _metric_axis(aggregation_metric))
+    tie_break_aggregation = query.get("tie_break_aggregation")
+    tie_break_metric = query.get("tie_break_metric")
+    if isinstance(tie_break_aggregation, str):
+        direction = _aggregation_direction(tie_break_aggregation)
+        _add(params, "tie_break_direction", direction)
+        _add(params, "tie_break_selector", f"{direction or tie_break_aggregation}:{tie_break_metric or 'none'}")
+    _add(params, "tie_break_metric", tie_break_metric)
+    _add(params, "tie_break_axis", _metric_axis(tie_break_metric))
 
     for clause in query.get("clauses") or []:
         if not isinstance(clause, Mapping):

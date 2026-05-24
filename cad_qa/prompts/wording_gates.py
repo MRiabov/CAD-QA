@@ -66,6 +66,8 @@ def clue_map_traceability_errors(row: dict[str, Any]) -> list[dict[str, Any]]:
     expected = set(clause_ids)
     if query.get("aggregation"):
         expected.add("aggregation")
+    if query.get("tie_break_aggregation"):
+        expected.add("tie_break_aggregation")
     seen = {
         clue.get("clause_id")
         for clue in row.get("clue_map", [])
@@ -146,7 +148,7 @@ def _is_geometry_critical_row(row: dict[str, Any]) -> bool:
     query = row.get("query_program") or {}
     metrics = {
         metric
-        for metric in [query.get("aggregation_metric")]
+        for metric in [query.get("aggregation_metric"), query.get("tie_break_metric")]
         if isinstance(metric, str)
     }
     metrics.update(
