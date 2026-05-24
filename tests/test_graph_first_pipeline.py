@@ -2380,6 +2380,86 @@ def test_synthesis_skips_equal_value_family_without_repeated_value_distractors()
     assert "parameterized_equal_edge_metric_extreme" not in families
 
 
+def test_synthesis_generates_reference_feature_distance_query() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:reference-distance-synth",
+        source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
+    )
+    for node_id, volume, centroid in [
+        ("feature:ref", 100.0, [0.0, 0.0, 0.0]),
+        ("feature:far", 50.0, [100.0, 0.0, 0.0]),
+    ]:
+        graph.add_node(Node(node_id, "feature", node_id))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "volume", volume))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "centroid", centroid))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "centroid_z", centroid[2]))
+    graph.add_node(Node("selector:edges", "selector", "selected edges"))
+    for node_id, midpoint in [
+        ("edge:a", [1.0, 0.0, 0.0]),
+        ("edge:b", [5.0, 0.0, 0.0]),
+        ("edge:c", [40.0, 0.0, 0.0]),
+    ]:
+        graph.add_node(Node(node_id, "edge", node_id))
+        graph.add_relation(Relation(node_id, "selector:edges", "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "edge_length", 10.0 if node_id != "edge:c" else 4.0, "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "midpoint", midpoint, "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "midpoint_y", midpoint[1], "mm"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_edge_reference_feature_distance")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+    reference_value = query.clauses[2].value
+
+    assert resolution.verifier_status == "resolved"
+    assert query.aggregation in {"argmin", "argmax"}
+    assert query.aggregation_metric == "distance_to_reference_feature_centroid"
+    assert query.clauses[1].metric == "edge_length"
+    assert query.clauses[1].value == 10.0
+    assert query.clauses[2].kind == "reference_measurement"
+    assert query.clauses[3].metric == "midpoint"
+    assert row.logical_hop_count == 5
+    assert row.geometry_hop_count == 5
+    assert row.query_program["sampled_parameters"]["reference_type"] == ["feature"]
+    assert row.query_program["sampled_parameters"]["reference_metric"] == [
+        "distance_to_reference_feature_centroid"
+    ]
+    assert row.query_program["sampled_parameters"]["reference_point_metric"] == ["centroid"]
+    assert row.query_program["sampled_parameters"]["target_point_metric"] == ["midpoint"]
+    assert row.query_program["sampled_parameters"]["reference_anchor_metric"] == ["centroid_z", "volume"]
+    assert row.query_program["sampled_parameters"]["measurement_value_bucket"] == ["edge_length:10"]
+    assert any(phrase in row.prompt for phrase in ("closest to", "farthest from"))
+    assert str(reference_value["reference_volume"]) in row.prompt
+
+
+def test_synthesis_skips_reference_distance_without_unique_reference_anchor() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:no-reference-distance-synth",
+        source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
+    )
+    for node_id in ["feature:a", "feature:b"]:
+        graph.add_node(Node(node_id, "feature", node_id))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "volume", 100.0))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "centroid", [0.0, 0.0, 0.0]))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "centroid_z", 0.0))
+    graph.add_node(Node("selector:edges", "selector", "selected edges"))
+    for node_id, midpoint in [
+        ("edge:a", [1.0, 0.0, 0.0]),
+        ("edge:b", [5.0, 0.0, 0.0]),
+    ]:
+        graph.add_node(Node(node_id, "edge", node_id))
+        graph.add_relation(Relation(node_id, "selector:edges", "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "edge_length", 10.0, "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "midpoint", midpoint, "mm"))
+
+    families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
+
+    assert "parameterized_edge_reference_feature_distance" not in families
+
+
 def test_synthesis_generates_geometry_narrowed_selector_count_query() -> None:
     face_graph = OntologyGraph(graph_id="graph:face-selector-count", source={"source_id": "synthetic", "source_code": ""})
     for selector_id, selected_count, coordinate_x in [

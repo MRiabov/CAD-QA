@@ -36,6 +36,7 @@ aggregation_templates:
     - "From the remaining candidates, choose the {rank_label} item after sorting by ascending {metric_label}."
     - "Within the narrowed set, select the {rank_label} candidate in increasing {metric_label} order."
   argmin.distance_to_reference_feature_centroid: "Among the remaining candidates, choose the one whose midpoint is closest to the reference feature's solid centroid."
+  argmax.distance_to_reference_feature_centroid: "Among the remaining candidates, choose the one whose midpoint is farthest from the reference feature's solid centroid."
 
 tie_break_templates:
   argmax:
@@ -103,7 +104,7 @@ clause_templates:
     - "The target face has a known {metric_label}."
     - "The target face has a verified {metric_label}."
   has_parameterized_equal_face_metric_value:
-    - "The target face has a {metric_label} of {value}."
+    - "The target face has {metric_label} equal to {value}."
     - "The target face's {metric_label} is {value}."
     - "The target face matches the {metric_label} value {value}."
   has_selected_face_bbox: "The target face has a measured bounding box."
@@ -159,7 +160,7 @@ clause_templates:
     - "The target edge has a known {metric_label}."
     - "The target edge has a verified {metric_label}."
   has_parameterized_equal_edge_metric_value:
-    - "The target edge has a {metric_label} of {value}."
+    - "The target edge has {metric_label} equal to {value}."
     - "The target edge's {metric_label} is {value}."
     - "The target edge matches the {metric_label} value {value}."
   has_selected_edge_bbox: "The target edge has a measured bounding box."
@@ -180,7 +181,7 @@ clause_templates:
     - "The target edge has a length of {value}."
     - "The target edge length is {value}."
     - "The target edge measures {value} end to end."
-  has_edge_midpoint_for_reference_distance: "The target edge has a measured midpoint for the reference-distance comparison."
+  has_edge_midpoint_for_reference_distance: "The target edge has a measured midpoint."
   edge_length_less_than_midpoint_distance: "The target edge length is less than its midpoint distance to the global origin."
   has_midpoint_x: "The target edge has a measured midpoint X coordinate."
   longer_than_another_kernel_edge: "The target edge is longer than another selected edge."

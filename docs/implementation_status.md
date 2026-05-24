@@ -98,9 +98,11 @@ when those choices can be sampled and verified.
   measured values, keep that equal-value group as the distractor set, then
   select by another sampled measured quantity.
 - Initial cross-feature value-bearing distance tasks: selected edges with equal
-  measured length can be resolved by nearest midpoint distance to the solid
-  centroid of a reference feature described by measured volume and centroid
-  height.
+  measured length can be resolved by nearest or farthest midpoint distance to a
+  solid centroid of a reference feature described by measured volume and
+  centroid height. The synthesized
+  `parameterized_edge_reference_feature_distance` family now samples that
+  reference-anchor path through the graph-hop synthesis layer.
 - Release and SFT stop gates now require value-bearing measurement coverage and
   at least one cross-feature value-bearing row on applicable release-scale
   artifacts.
@@ -219,10 +221,16 @@ when those choices can be sampled and verified.
   value-bucket predicate from the predicate catalog. The predicate records the
   equal metric, comparison operator, value bucket, and narrowing sequence, and
   renders a concrete public measurement clue from `prompt-templates.yaml`.
+- Initial synthesized reference-distance rows now combine equal-measurement
+  narrowing with a geometry-described reference feature anchor and nearest or
+  farthest midpoint-distance selection. Rows serialize reference type, reference
+  metric, target/reference point metrics, anchor signature, and anchor value
+  buckets.
 - `cadqa dataset synthesis-selfcheck --out <dir>` now regenerates rows, graphs,
   Markdown preview, and preview evidence for the currently implemented
   synthesized release families. This gives reviewers a repeatable artifact for
-  extrema, rank, selector-count, and equal-measurement synthesis changes.
+  extrema, rank, selector-count, equal-measurement, and reference-distance
+  synthesis changes.
 - Query programs now support deterministic tie-break aggregations. When a
   primary min/max aggregation leaves multiple candidates and a configured
   secondary metric resolves the tie, resolver traces include a
@@ -240,11 +248,11 @@ when those choices can be sampled and verified.
   Generated release families must have machine-readable references for positive
   generation, failure/quarantine behavior, and release-report accounting tests.
   The default evidence manifest now covers the currently implemented synthesized
-  face/edge extrema, rank, selector-count, and equal-measurement families; other
-  generated release families still need their own entries before they can pass
-  this gate. The synthesized-family selfcheck command writes matching preview
-  evidence for manual review and benchmark-release preview gates on that
-  implemented slice.
+  face/edge extrema, rank, selector-count, equal-measurement, and
+  reference-distance families; other generated release families still need their
+  own entries before they can pass this gate. The synthesized-family selfcheck
+  command writes matching preview evidence for manual review and
+  benchmark-release preview gates on that implemented slice.
 - Public/private row views separate answer-free benchmark inputs from private
   gold answers, query programs, candidate traces, and clue maps.
 - Public/private exports include row-ID parity and hidden-field leak audits.
@@ -738,10 +746,12 @@ Checked as implemented with remaining scale caveats:
   measurement bucket, containment, adjacency, or distance to a sampled reference
   entity to define a nontrivial candidate subset before the final selector.
   The current synthesis slice covers parameterized extrema over kernel-selected
-  face/edge geometry, initial selected face/edge selector-count narrowing, and
-  initial equal-value face/edge measurement groups. Broader selected-entity-count
-  narrowing, reference anchors, feature/region equal-value synthesis,
-  containment/adjacency predicates, and rank/tie-break selectors remain open.
+  face/edge geometry, initial selected face/edge selector-count narrowing,
+  initial equal-value face/edge measurement groups, and one edge-to-feature
+  reference-distance family. Broader selected-entity-count narrowing,
+  face/endpoint/material/void reference anchors, feature/region equal-value
+  synthesis, containment/adjacency predicates, and rank/tie-break selectors
+  remain open.
 - Extend sampled-parameter metadata from the synthesis layer to include
   predicate sequence, reference anchor, rank, rendered wording,
   and geometry-limited exceptions. The current gate catches missing or collapsed
@@ -752,13 +762,15 @@ Checked as implemented with remaining scale caveats:
   balance reporting. The resolver now supports ranked measured selectors,
   serializes aggregation-rank/rank-direction metadata, and the synthesis layer
   emits an initial face/edge rank-family slice. Synthesized equal-measurement
-  rows serialize equal metric and value-bucket metadata. Synthesized extrema,
-  rank, selector-count, and equal-measurement rows now sample prompt-wording
-  variants from the centralized YAML templates. Broader synthesized
-  reference-anchor sampling, additional rank values, full entity/view-word
-  randomization, and release-scale wording distribution review remain open. The
-  gate still does not prove every future intended parameter dimension was
-  sampled whenever the verifier could support it.
+  rows serialize equal metric and value-bucket metadata, and synthesized
+  reference-distance rows serialize sampled reference-anchor metadata.
+  Synthesized extrema, rank, selector-count, equal-measurement, and
+  reference-distance rows now sample prompt-wording variants from the centralized
+  YAML templates. Broader synthesized reference-anchor sampling, additional rank
+  values, full entity/view-word randomization, and release-scale wording
+  distribution review remain open. The gate still does not prove every future
+  intended parameter dimension was sampled whenever the verifier could support
+  it.
 - Expand the intended-family manifest into full family specs with predicates,
   selectors, parameter dimensions, and geometry-limited exceptions.
 - Keep benchmark-release gating as the canonical release bar. Explicit
@@ -786,7 +798,7 @@ Checked as implemented with remaining scale caveats:
   implemented and unit-tested, but produced no rows in the reviewed CadEvolve-50
   sample.
 - Broaden cross-feature value-bearing tasks beyond the implemented selected-edge
-  midpoint to reference-feature centroid family. Additional target/reference
+  midpoint to reference-feature centroid families. Additional target/reference
   combinations should include faces, endpoints, material/void regions, and
   feature-to-feature distances where public clues describe geometry rather than
   source names.

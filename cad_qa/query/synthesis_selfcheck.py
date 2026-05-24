@@ -24,6 +24,7 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_kernel_edge_rank",
     "parameterized_equal_face_metric_extreme",
     "parameterized_equal_edge_metric_extreme",
+    "parameterized_edge_reference_feature_distance",
     "parameterized_kernel_face_selector_count",
     "parameterized_kernel_edge_selector_count",
 )
@@ -182,6 +183,14 @@ def _edge_equal_metric_graph() -> OntologyGraph:
         },
     )
     graph.add_node(Node("selector:edges", "selector", "edges"))
+    for feature_id, volume, centroid in [
+        ("feature:ref", 100.0, [0.0, 0.0, 0.0]),
+        ("feature:far", 50.0, [100.0, 0.0, 0.0]),
+    ]:
+        graph.add_node(Node(feature_id, "feature", feature_id))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid", centroid))
+        graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid[2]))
     for edge_id, length, midpoint_y in [
         ("edge:a", 10.0, -3.0),
         ("edge:b", 10.0 + 1e-7, 7.0),
@@ -191,6 +200,8 @@ def _edge_equal_metric_graph() -> OntologyGraph:
         graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint_y, "mm"))
+        midpoint_x = 1.0 if edge_id == "edge:a" else 5.0 if edge_id == "edge:b" else 10.0
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint", [midpoint_x, midpoint_y, 0.0], "mm"))
     return graph
 
 
