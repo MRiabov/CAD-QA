@@ -20,7 +20,11 @@ current_snapshot:
     Task families must be maximally parameterized: axes, view words, min/max
     direction, exact values, comparison relations, target/reference entity
     types, and subtype choices are sampled row parameters whenever the verifier
-    can support them, not permanent family semantics.
+    can support them, not permanent family semantics. Sparse direct extrema
+    should be generated through a graph-hop query-synthesis layer: intended
+    family specs, reusable geometry-derived narrowing predicates, bounded
+    clause-chain search, sampled final selectors, and release gates for both
+    generated-family balance and zero-row intended families.
     Earlier separate task-family and graph-query framing is obsolete.
 status_values:
   - planned
@@ -316,6 +320,9 @@ epics:
         Sparse direct extrema are rewritten as graph-hop narrowing programs:
         sampled geometry-derived relations define a nontrivial candidate subset,
         then a sampled selector resolves exactly one answer.
+      - Query synthesis is implemented as explicit family specs, a reusable
+        predicate catalog, bounded clause-chain search, sampled final selector
+        metadata, and the existing resolver/verifier/rendering path.
       - A family that collapses onto one avoidable constant or choice is capped,
         blocked, or moved to review-only artifacts.
     stories:
@@ -332,5 +339,20 @@ epics:
         title: Release and SFT gates for parameter balance across task families
         status: planned
       - id: "14.5"
-        title: Graph-hop narrowing for sparse selector/count/extremum task families
+        title: Intended-family manifest for release, calibration, and review-only task families
+        status: planned
+      - id: "14.6"
+        title: Predicate catalog for reusable geometry-derived narrowing clauses
+        status: planned
+      - id: "14.7"
+        title: Bounded graph-hop query synthesis layer over ontology graphs
+        status: planned
+      - id: "14.8"
+        title: Sampled query metadata and prompt-template bindings for synthesized queries
+        status: planned
+      - id: "14.9"
+        title: Graph-hop narrowing implementation for sparse selector, count, and extremum task families
+        status: planned
+      - id: "14.10"
+        title: Release and SFT gates for zero-row intended families and narrowing-parameter coverage
         status: planned
