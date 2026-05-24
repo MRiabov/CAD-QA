@@ -374,6 +374,29 @@ EQUAL_VALUE_EXTREME_FAMILY_SPECS = (
 
 RELATION_EXTREME_FAMILY_SPECS = (
     RelationExtremeFamilySpec(
+        family_id="parameterized_face_spatial_relation_extreme",
+        target_type="face",
+        base_relation="has_kernel_stable_face_id",
+        base_relation_clause_id="has_parameterized_face_set",
+        base_relation_target_type="selector",
+        relations=(
+            "adjacent_to",
+            "intersects",
+            "opposite_to",
+            "perpendicular_to",
+        ),
+        relation_clause_id="has_parameterized_face_spatial_relation",
+        measurement_clause_id="has_parameterized_face_metric",
+        metrics=(
+            "coordinate_x",
+            "coordinate_y",
+            "coordinate_z",
+            "distance_to_origin",
+            "face_area",
+        ),
+        relation_target_type="face",
+    ),
+    RelationExtremeFamilySpec(
         family_id="parameterized_edge_spatial_relation_extreme",
         target_type="edge",
         base_relation="has_kernel_stable_edge_id",

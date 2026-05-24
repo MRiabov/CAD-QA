@@ -2411,6 +2411,67 @@ def test_synthesis_generates_parameterized_edge_spatial_relation_query() -> None
     assert "measured edge" in row.prompt
 
 
+def test_synthesis_generates_parameterized_face_spatial_relation_query() -> None:
+    graph = OntologyGraph(graph_id="graph:face-spatial-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph.add_node(Node("selector:faces", "selector", "faces"))
+    for face_id, area, center in [
+        ("face:a", 60.0, [0.0, 0.0, 0.0]),
+        ("face:b", 48.0, [2.0, 0.0, 1.0]),
+        ("face:c", 30.0, [0.0, 3.0, 2.0]),
+        ("face:d", 12.0, [4.0, 3.0, 3.0]),
+    ]:
+        graph.add_node(Node(face_id, "face", face_id))
+        graph.add_relation(Relation(face_id, "selector:faces", "has_kernel_stable_face_id"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", area, "mm^2"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "center", center, "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_x", center[0], "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_y", center[1], "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_z", center[2], "mm"))
+        graph.add_measurement(Measurement(face_id, "relation_metric", "distance_to_origin", area / 10.0, "mm"))
+    for source_id, target_id, relation in [
+        ("face:a", "face:b", "adjacent_to"),
+        ("face:b", "face:a", "adjacent_to"),
+        ("face:a", "face:c", "intersects"),
+        ("face:c", "face:a", "intersects"),
+        ("face:c", "face:d", "opposite_to"),
+        ("face:d", "face:c", "opposite_to"),
+        ("face:b", "face:d", "perpendicular_to"),
+        ("face:d", "face:b", "perpendicular_to"),
+    ]:
+        graph.add_relation(Relation(source_id, target_id, relation))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_face_spatial_relation_extreme")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+
+    assert resolution.verifier_status == "resolved"
+    assert row.release_ready
+    assert query.target_type == "face"
+    assert query.clauses[0].relation == "has_kernel_stable_face_id"
+    assert query.clauses[1].relation in {"adjacent_to", "intersects", "opposite_to", "perpendicular_to"}
+    assert query.aggregation_metric in {
+        "coordinate_x",
+        "coordinate_y",
+        "coordinate_z",
+        "distance_to_origin",
+        "face_area",
+    }
+    assert row.candidate_trace["steps"][2]["after"]
+    assert len(row.candidate_trace["steps"][2]["after"]) >= 2
+    assert len(row.candidate_trace["final_candidates"]) == 1
+    assert query.sampled_parameters["spatial_relation"] == [query.clauses[1].relation]
+    assert query.clauses[1].relation in query.sampled_parameters["clause_relation"]
+    assert "has_kernel_stable_face_id" in row.relation_families
+    assert query.clauses[1].relation in row.relation_families
+    assert row.query_program["sampled_parameters"] == sampled_parameters_from_query(row.query_program)
+    assert query.clauses[1].relation not in row.prompt
+    assert "measured face" in row.prompt
+
+
 def test_synthesis_skips_edge_spatial_relation_family_without_viable_relation_subset() -> None:
     graph = OntologyGraph(graph_id="graph:no-edge-spatial-synth", source={"source_id": "synthetic", "source_code": ""})
     for edge_id, length in [("edge:a", 10.0), ("edge:b", 10.0), ("edge:c", 10.0)]:
@@ -2421,6 +2482,18 @@ def test_synthesis_skips_edge_spatial_relation_family_without_viable_relation_su
     families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
 
     assert "parameterized_edge_spatial_relation_extreme" not in families
+
+
+def test_synthesis_skips_face_spatial_relation_family_without_viable_relation_subset() -> None:
+    graph = OntologyGraph(graph_id="graph:no-face-spatial-synth", source={"source_id": "synthetic", "source_code": ""})
+    for face_id, area in [("face:a", 10.0), ("face:b", 10.0), ("face:c", 10.0)]:
+        graph.add_node(Node(face_id, "face", face_id))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", area, "mm^2"))
+    graph.add_relation(Relation("face:a", "face:b", "adjacent_to"))
+
+    families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
+
+    assert "parameterized_face_spatial_relation_extreme" not in families
 
 
 def test_synthesis_generates_equal_value_face_and_edge_queries() -> None:

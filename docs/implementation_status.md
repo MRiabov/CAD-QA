@@ -774,6 +774,15 @@ Checked as implemented with remaining scale caveats:
   all reviewed rows are release-ready, but this is still an initial synthesized
   edge-spatial slice rather than proof of release-scale spatial-relation
   distribution.
+- The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_face_spatial/PREVIEW.md` demonstrates
+  the initial `parameterized_face_spatial_relation_extreme` family. The reviewed
+  rows require kernel-selected face evidence, then sample one of adjacent,
+  intersecting, opposite, or perpendicular face relations before resolving by a
+  measured face quantity. The preview covers all four relation parameters and
+  all reviewed rows are release-ready, but this is still an initial synthesized
+  face-spatial slice rather than proof of release-scale spatial-relation
+  distribution.
 - Opposite-face rows on broad real CadEvolve data, broader containment,
   broader intersection, broader adjacency, and broader stable spatial-relation
   distributions remain scale/coverage work rather than unchecked core
@@ -798,7 +807,7 @@ Checked as implemented with remaining scale caveats:
   entity to define a nontrivial candidate subset before the final selector.
   The current synthesis slice covers parameterized extrema over kernel-selected
   face/edge geometry, measured path point/segment/edge-endpoint geometry, and
-  sampled edge spatial relations, initial selected face/edge selector-count
+  sampled face/edge spatial relations, initial selected face/edge selector-count
   narrowing, initial equal-value
   face/edge/edge-endpoint/feature/material-region/void-region measurement groups, and initial
   face/edge-to-feature reference-distance families. Broader

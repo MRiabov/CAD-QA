@@ -22,6 +22,7 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_kernel_edge_extreme",
     "parameterized_kernel_face_rank",
     "parameterized_kernel_edge_rank",
+    "parameterized_face_spatial_relation_extreme",
     "parameterized_edge_spatial_relation_extreme",
     "parameterized_equal_face_metric_extreme",
     "parameterized_equal_edge_metric_extreme",
@@ -50,6 +51,10 @@ def synthesis_selfcheck_graphs() -> list[OntologyGraph]:
         _edge_rank_graph("graph:selfcheck-edge-rank-0"),
         _edge_rank_graph("graph:selfcheck-edge-rank-1"),
         _edge_rank_graph("graph:selfcheck-edge-rank-2"),
+        _face_spatial_relation_graph("graph:selfcheck-face-spatial-relation-0"),
+        _face_spatial_relation_graph("graph:selfcheck-face-spatial-relation-2"),
+        _face_spatial_relation_graph("graph:selfcheck-face-spatial-relation-4"),
+        _face_spatial_relation_graph("graph:selfcheck-face-spatial-relation-8"),
         _edge_spatial_relation_graph("graph:selfcheck-edge-spatial-relation-0"),
         _edge_spatial_relation_graph("graph:selfcheck-edge-spatial-relation-1"),
         _edge_spatial_relation_graph("graph:selfcheck-edge-spatial-relation-2"),
@@ -242,6 +247,46 @@ def _edge_spatial_relation_graph(graph_id: str) -> OntologyGraph:
         ("edge:d", "edge:c", "opposite_to"),
         ("edge:b", "edge:d", "perpendicular_to"),
         ("edge:d", "edge:b", "perpendicular_to"),
+    ]:
+        graph.add_relation(Relation(source_id, target_id, relation))
+    return graph
+
+
+def _face_spatial_relation_graph(graph_id: str) -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id=graph_id,
+        source={
+            "source_id": graph_id.rsplit(":", 1)[-1],
+            "source_code": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane(\"XY\").box(10, 6, 4).faces()\n"
+            ),
+        },
+    )
+    graph.add_node(Node("selector:faces", "selector", "faces"))
+    for face_id, area, center in [
+        ("face:a", 60.0, [0.0, 0.0, 0.0]),
+        ("face:b", 48.0, [2.0, 0.0, 1.0]),
+        ("face:c", 30.0, [0.0, 3.0, 2.0]),
+        ("face:d", 12.0, [4.0, 3.0, 3.0]),
+    ]:
+        graph.add_node(Node(face_id, "face", face_id))
+        graph.add_relation(Relation(face_id, "selector:faces", "has_kernel_stable_face_id"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", area, "mm^2"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "center", center, "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_x", center[0], "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_y", center[1], "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_z", center[2], "mm"))
+        graph.add_measurement(Measurement(face_id, "relation_metric", "distance_to_origin", area / 10.0, "mm"))
+    for source_id, target_id, relation in [
+        ("face:a", "face:b", "adjacent_to"),
+        ("face:b", "face:a", "adjacent_to"),
+        ("face:a", "face:c", "intersects"),
+        ("face:c", "face:a", "intersects"),
+        ("face:c", "face:d", "opposite_to"),
+        ("face:d", "face:c", "opposite_to"),
+        ("face:b", "face:d", "perpendicular_to"),
+        ("face:d", "face:b", "perpendicular_to"),
     ]:
         graph.add_relation(Relation(source_id, target_id, relation))
     return graph

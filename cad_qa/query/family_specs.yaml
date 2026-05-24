@@ -117,6 +117,28 @@ families:
         - aggregation_metric
         - final_selector
     notes: Synthesized value-bearing face family that narrows to a repeated measured value before selecting by another measured quantity.
+  - id: parameterized_face_spatial_relation_extreme
+    status: release
+    target_type: face
+    minimum_hops: 4
+    maximum_hops: 4
+    parameter_balance:
+      required_dimensions:
+        - narrowing_predicate_sequence
+        - clause_relation
+        - aggregation_metric
+        - extremum_direction
+        - prompt_wording_variant
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - narrowing_predicate_sequence
+        - clause_relation
+        - aggregation_metric
+        - final_selector
+      expected_values:
+        clause_relation: [adjacent_to, intersects, opposite_to, perpendicular_to]
+    notes: Synthesized face family that samples the spatial relation before selecting by a measured face quantity.
   - id: parameterized_face_reference_feature_distance
     status: release
     target_type: face
