@@ -766,6 +766,16 @@ Checked as implemented with remaining scale caveats:
   equal-measurement synthesis; broader endpoint relations, containment/adjacency
   combinations, and release-scale distribution remain open.
 - The synthesized selfcheck preview at
+  `runs/parameterized_synthesis_selfcheck_contained_endpoint/PREVIEW.md`
+  demonstrates the initial
+  `parameterized_contained_endpoint_metric_extreme` family. The reviewed row
+  requires both endpoint-of-edge and contained-on-edge evidence, narrows from
+  three edge endpoints to two endpoints with the same measured Z coordinate,
+  keeps both through the measured distance-to-origin clause, and resolves
+  uniquely by final distance selector. This adds containment-aware endpoint
+  equal-measurement synthesis; broader containment/adjacency combinations and
+  release-scale distribution remain open.
+- The synthesized selfcheck preview at
   `runs/parameterized_synthesis_selfcheck_edge_spatial/PREVIEW.md` demonstrates
   the initial `parameterized_edge_spatial_relation_extreme` family. The reviewed
   rows require kernel-selected edge evidence, then sample one of adjacent,
@@ -828,7 +838,8 @@ Checked as implemented with remaining scale caveats:
   face/edge geometry, measured path point/segment/edge-endpoint geometry, and
   sampled face/edge spatial relations, initial selected face/edge selector-count
   narrowing, initial equal-value
-  face/edge/edge-endpoint/feature/material-region/void-region measurement groups, and initial
+  face/edge/edge-endpoint/feature/material-region/void-region measurement
+  groups, contained-endpoint relation chains, and initial
   face/edge/endpoint/material-region/void-region-to-feature reference-distance
   families. Broader
   selected-entity-count narrowing,

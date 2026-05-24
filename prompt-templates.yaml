@@ -211,6 +211,10 @@ clause_templates:
     - "The target point is an endpoint of a measured edge."
     - "The target endpoint belongs to an edge with measured geometry."
     - "The target point is one of the checked edge endpoints."
+  has_parameterized_contained_endpoint_set:
+    - "The target endpoint lies on a measured edge."
+    - "The target point is contained on an edge with measured geometry."
+    - "The target endpoint is part of a checked edge."
   has_parameterized_equal_endpoint_metric_value:
     - "The target endpoint has {metric_label} equal to {value}."
     - "The target endpoint's {metric_label} is {value}."

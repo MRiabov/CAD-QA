@@ -28,6 +28,7 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_equal_edge_metric_extreme",
     "parameterized_equal_feature_metric_extreme",
     "parameterized_equal_endpoint_metric_extreme",
+    "parameterized_contained_endpoint_metric_extreme",
     "parameterized_endpoint_reference_feature_distance",
     "parameterized_equal_material_region_metric_extreme",
     "parameterized_equal_void_region_metric_extreme",
@@ -456,6 +457,7 @@ def _endpoint_equal_metric_graph() -> OntologyGraph:
     ]:
         graph.add_node(Node(endpoint_id, "edge_endpoint", endpoint_id))
         graph.add_relation(Relation(endpoint_id, edge_id, "endpoint_of"))
+        graph.add_relation(Relation(endpoint_id, edge_id, "contained_in"))
         graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate", coordinate, "mm"))
         graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_x", coordinate[0], "mm"))
         graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_y", coordinate[1], "mm"))

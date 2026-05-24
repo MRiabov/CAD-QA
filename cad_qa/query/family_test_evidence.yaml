@@ -72,6 +72,14 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Initial synthesized value-bearing endpoint family with equal-measurement narrowing.
+  - id: parameterized_contained_endpoint_metric_extreme
+    positive_generation:
+      - test_synthesis_generates_contained_endpoint_query
+    failure_or_quarantine:
+      - test_synthesis_skips_contained_endpoint_family_without_containment_evidence
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Initial synthesized containment-aware endpoint family with equal-measurement narrowing.
   - id: parameterized_endpoint_reference_feature_distance
     positive_generation:
       - test_synthesis_generates_endpoint_reference_feature_distance_query
