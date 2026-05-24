@@ -591,6 +591,20 @@ REFERENCE_DISTANCE_FAMILY_SPECS = (
         reference_point_metric="centroid",
     ),
     ReferenceDistanceFamilySpec(
+        family_id="parameterized_edge_reference_face_distance",
+        target_type="edge",
+        relation="has_kernel_stable_edge_id",
+        relation_clause_id="has_parameterized_edge_set",
+        relation_target_type="selector",
+        equal_value_clause_id="has_parameterized_equal_edge_metric_value",
+        reference_clause_id="reference_face_area_and_center",
+        target_point_clause_id="has_edge_midpoint_for_reference_distance",
+        equal_metric="edge_length",
+        target_point_metric="midpoint",
+        reference_type="face",
+        reference_point_metric="face_center",
+    ),
+    ReferenceDistanceFamilySpec(
         family_id="parameterized_feature_reference_feature_distance",
         target_type="feature",
         relation=None,
@@ -1504,7 +1518,12 @@ def _viable_reference_distances(
         relation_candidates = _apply_relation_clause(graph, candidates, spec.relation)
     else:
         relation_candidates = candidates
-    references = _unique_reference_features(graph, graph.nodes_by_type(spec.reference_type))
+    references = _unique_reference_anchors(
+        graph,
+        graph.nodes_by_type(spec.reference_type),
+        reference_type=spec.reference_type,
+        reference_point_metric=spec.reference_point_metric,
+    )
     if not references:
         return []
     viable: list[ViableReferenceDistance] = []
@@ -1608,7 +1627,8 @@ def _query_for_reference_distance(graph: OntologyGraph, viable: ViableReferenceD
     reference = graph.node(viable.reference_id)
     if target_point is None or reference is None:
         return None
-    reference_value = _reference_feature_prompt_value(graph, reference)
+    reference_value = _reference_anchor_prompt_value(graph, reference, reference_type=spec.reference_type)
+    reference_metrics = _reference_anchor_metrics(spec.reference_type)
     direction = "min" if viable.aggregation == "argmin" else "max"
     sampled = merge_sampled_parameters(
         {
@@ -1618,11 +1638,11 @@ def _query_for_reference_distance(graph: OntologyGraph, viable: ViableReferenceD
             "reference_point_metric": [spec.reference_point_metric],
             "target_point_metric": [spec.target_point_metric],
             "reference_anchor_id": [viable.reference_id],
-            "reference_anchor_metric": ["centroid_z", "volume"],
+            "reference_anchor_metric": list(reference_metrics),
             "reference_anchor_signature": [_reference_anchor_signature(reference_value)],
             "reference_anchor_value_bucket": [
-                f"centroid_z:{_value_bucket(reference_value.get('reference_centroid_z'))}",
-                f"volume:{_value_bucket(reference_value.get('reference_volume'))}",
+                f"{metric}:{_value_bucket(reference_value.get('reference_anchor_values', {}).get(metric))}"
+                for metric in reference_metrics
             ],
             "final_selector": [f"{direction}:{REFERENCE_FEATURE_DISTANCE_METRIC}"],
             "aggregation_metric": [REFERENCE_FEATURE_DISTANCE_METRIC],
@@ -1726,43 +1746,82 @@ def _equal_measurement_groups(
     )
 
 
-def _unique_reference_features(graph: OntologyGraph, features: list[Node]) -> list[Node]:
-    counts: dict[tuple[float | None, float | None], int] = {}
-    keyed: list[tuple[Node, tuple[float | None, float | None]]] = []
-    for feature in features:
-        key = _reference_feature_key(graph, feature.id)
-        keyed.append((feature, key))
+def _unique_reference_anchors(
+    graph: OntologyGraph,
+    references: list[Node],
+    *,
+    reference_type: str,
+    reference_point_metric: str,
+) -> list[Node]:
+    counts: dict[tuple[float | None, ...], int] = {}
+    keyed: list[tuple[Node, tuple[float | None, ...]]] = []
+    for reference in references:
+        key = _reference_anchor_key(graph, reference.id, reference_type=reference_type)
+        keyed.append((reference, key))
         counts[key] = counts.get(key, 0) + 1
     return [
-        feature
-        for feature, key in sorted(keyed, key=lambda item: item[0].id)
+        reference
+        for reference, key in sorted(keyed, key=lambda item: item[0].id)
         if None not in key
         and counts.get(key, 0) == 1
-        and _point_measurement(graph, feature.id, "centroid") is not None
+        and _point_measurement(graph, reference.id, reference_point_metric) is not None
     ]
 
 
-def _reference_feature_prompt_value(graph: OntologyGraph, reference: Node) -> dict[str, Any]:
+def _reference_anchor_prompt_value(
+    graph: OntologyGraph,
+    reference: Node,
+    *,
+    reference_type: str,
+) -> dict[str, Any]:
+    metrics = _reference_anchor_metrics(reference_type)
+    values = {
+        metric: measurement_bucket_value(_measurement_value(graph, reference.id, metric))
+        for metric in metrics
+    }
     return {
         "reference_id": reference.id,
-        "reference_volume": measurement_bucket_value(_measurement_value(graph, reference.id, "volume")),
-        "reference_centroid_z": measurement_bucket_value(_measurement_value(graph, reference.id, "centroid_z")),
+        "reference_type": reference_type,
+        "reference_anchor_metrics": list(metrics),
+        "reference_anchor_values": values,
+        "reference_volume": values.get("volume"),
+        "reference_centroid_z": values.get("centroid_z"),
+        "reference_face_area": values.get("face_area"),
+        "reference_face_center_z": values.get("coordinate_z"),
     }
 
 
-def _reference_feature_key(graph: OntologyGraph, feature_id: str) -> tuple[float | None, float | None]:
-    return (
-        measurement_bucket_value(_measurement_value(graph, feature_id, "volume")),
-        measurement_bucket_value(_measurement_value(graph, feature_id, "centroid_z")),
+def _reference_anchor_metrics(reference_type: str) -> tuple[str, ...]:
+    if reference_type == "face":
+        return ("face_area", "coordinate_z")
+    return ("volume", "centroid_z")
+
+
+def _reference_anchor_key(
+    graph: OntologyGraph,
+    reference_id: str,
+    *,
+    reference_type: str,
+) -> tuple[float | None, ...]:
+    return tuple(
+        measurement_bucket_value(_measurement_value(graph, reference_id, metric))
+        for metric in _reference_anchor_metrics(reference_type)
     )
 
 
 def _reference_anchor_signature(reference_value: dict[str, Any]) -> str:
-    return (
-        "feature:"
-        f"centroid_z={_value_bucket(reference_value.get('reference_centroid_z'))}|"
-        f"volume={_value_bucket(reference_value.get('reference_volume'))}"
+    reference_type = str(reference_value.get("reference_type", "feature"))
+    values = reference_value.get("reference_anchor_values")
+    if not isinstance(values, dict):
+        values = {
+            "centroid_z": reference_value.get("reference_centroid_z"),
+            "volume": reference_value.get("reference_volume"),
+        }
+    parts = "|".join(
+        f"{metric}={_value_bucket(values.get(metric))}"
+        for metric in sorted(values)
     )
+    return f"{reference_type}:{parts}"
 
 
 def _point_measurement(graph: OntologyGraph, entity_id: str, metric: str) -> list[float] | None:

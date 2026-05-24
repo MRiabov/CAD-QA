@@ -2436,9 +2436,18 @@ def _reference_clause_matches(graph: OntologyGraph, clause: Clause) -> bool:
     reference_id = clause.value.get("reference_id")
     if not isinstance(reference_id, str):
         return False
+    reference_type = str(clause.value.get("reference_type", "feature"))
     reference = graph.node(reference_id)
-    if reference is None or reference.type != "feature":
+    if reference is None or reference.type != reference_type:
         return False
+    anchor_metrics = clause.value.get("reference_anchor_metrics")
+    anchor_values = clause.value.get("reference_anchor_values")
+    if isinstance(anchor_metrics, list) and isinstance(anchor_values, dict):
+        return all(
+            isinstance(metric, str)
+            and _measurement_matches(graph, reference_id, metric, anchor_values.get(metric))
+            for metric in anchor_metrics
+        )
     expected_volume = clause.value.get("reference_volume")
     expected_centroid_z = clause.value.get("reference_centroid_z")
     return (

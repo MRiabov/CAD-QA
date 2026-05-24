@@ -65,6 +65,8 @@ def aggregation_prompt(aggregation: str, metric: str, *, rank: int | None = None
         rank=rank,
         rank_label=_rank_label(rank),
         target_point_label=metric_label(_sampled_parameter_value(query, "target_point_metric") or "midpoint"),
+        reference_type_label=_entity_type_label(_sampled_parameter_value(query, "reference_type") or "feature"),
+        reference_point_label=metric_label(_sampled_parameter_value(query, "reference_point_metric") or "centroid"),
     )
 
 
@@ -125,6 +127,10 @@ def metric_label(metric: str) -> str:
     if isinstance(value, list):
         return value[0]
     return value if isinstance(value, str) else metric.replace("_", " ")
+
+
+def _entity_type_label(entity_type: str) -> str:
+    return entity_type.replace("_", " ")
 
 
 def no_clause_prompt(target_type: str) -> str:

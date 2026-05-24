@@ -2066,7 +2066,7 @@ def test_smoke_queries_generate_cross_feature_reference_distance_tasks() -> None
     assert row.gold_answer == "edge:a"
     assert "The target edge has a length of 10.0." in row.prompt
     assert "solid volume 100.0 and centroid height 0.0" in row.prompt
-    assert "closest to the reference feature's solid centroid" in row.prompt
+    assert "closest to the solid centroid of the reference feature" in row.prompt
     assert row.logical_hop_count == 5
     assert row.query_program["sampled_parameters"]["reference_type"] == ["feature"]
     assert row.query_program["sampled_parameters"]["reference_metric"] == [
@@ -3267,6 +3267,64 @@ def test_synthesis_generates_reference_feature_distance_query() -> None:
     assert str(reference_value["reference_volume"]) in row.prompt
 
 
+def test_synthesis_generates_edge_reference_face_distance_query() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:edge-reference-face-distance-synth",
+        source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
+    )
+    for face_id, area, coordinate_z, face_center in [
+        ("face:ref", 18.0, 3.0, [0.0, 0.0, 0.0]),
+        ("face:far", 7.0, 9.0, [50.0, 0.0, 0.0]),
+    ]:
+        graph.add_node(Node(face_id, "face", face_id))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", area, "mm^2"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_z", coordinate_z, "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_center", face_center, "mm"))
+    graph.add_node(Node("selector:edges", "selector", "selected edges"))
+    for edge_id, length, midpoint in [
+        ("edge:a", 10.0, [1.0, 0.0, 0.0]),
+        ("edge:b", 10.0 + 1e-7, [5.0, 0.0, 0.0]),
+        ("edge:c", 4.0, [40.0, 0.0, 0.0]),
+    ]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint", midpoint, "mm"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_edge_reference_face_distance")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+    reference_value = query.clauses[2].value
+
+    assert resolution.verifier_status == "resolved"
+    assert query.aggregation in {"argmin", "argmax"}
+    assert query.aggregation_metric == "distance_to_reference_feature_centroid"
+    assert query.clauses[1].metric == "edge_length"
+    assert query.clauses[1].value == 10.0
+    assert query.clauses[2].id == "reference_face_area_and_center"
+    assert query.clauses[2].kind == "reference_measurement"
+    assert query.clauses[3].metric == "midpoint"
+    assert row.logical_hop_count == 5
+    assert row.geometry_hop_count == 5
+    assert row.query_program["sampled_parameters"]["reference_type"] == ["face"]
+    assert row.query_program["sampled_parameters"]["reference_point_metric"] == ["face_center"]
+    assert row.query_program["sampled_parameters"]["target_point_metric"] == ["midpoint"]
+    assert row.query_program["sampled_parameters"]["reference_anchor_metric"] == ["coordinate_z", "face_area"]
+    assert row.query_program["sampled_parameters"]["reference_anchor_signature"] == [
+        "face:coordinate_z=3|face_area=18"
+    ]
+    assert row.query_program["sampled_parameters"]["measurement_value_bucket"] == ["edge_length:10"]
+    assert reference_value["reference_type"] == "face"
+    assert str(reference_value["reference_face_area"]) in row.prompt
+    assert "reference face" in row.prompt
+    assert "face center" in row.prompt
+    assert any(phrase in row.prompt for phrase in ("closest to", "farthest from"))
+
+
 def test_synthesis_generates_face_reference_feature_distance_query() -> None:
     graph = OntologyGraph(
         graph_id="graph:face-reference-distance-synth",
@@ -4189,6 +4247,7 @@ def test_default_family_manifest_keeps_superseded_fixed_families_review_only() -
         "parameterized_face_reference_feature_distance",
         "parameterized_kernel_edge_extreme",
         "parameterized_edge_reference_feature_distance",
+        "parameterized_edge_reference_face_distance",
         "parameterized_feature_extreme",
         "parameterized_equal_feature_metric_extreme",
         "parameterized_feature_effect_delta_extreme",

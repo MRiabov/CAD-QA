@@ -44,6 +44,7 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_void_region_reference_feature_distance",
     "parameterized_face_reference_feature_distance",
     "parameterized_edge_reference_feature_distance",
+    "parameterized_edge_reference_face_distance",
     "parameterized_path_point_extreme",
     "parameterized_path_segment_extreme",
     "parameterized_kernel_face_selector_count",
@@ -503,6 +504,14 @@ def _edge_equal_metric_graph() -> OntologyGraph:
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "volume", volume))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid", centroid))
         graph.add_measurement(Measurement(feature_id, "snapshot_state", "centroid_z", centroid[2]))
+    for face_id, area, coordinate_z, face_center in [
+        ("face:ref", 18.0, 3.0, [0.0, 0.0, 0.0]),
+        ("face:far", 7.0, 9.0, [50.0, 0.0, 0.0]),
+    ]:
+        graph.add_node(Node(face_id, "face", face_id))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", area, "mm^2"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_z", coordinate_z, "mm"))
+        graph.add_measurement(Measurement(face_id, "entity_geometry", "face_center", face_center, "mm"))
     for edge_id, length, midpoint_y in [
         ("edge:a", 10.0, -3.0),
         ("edge:b", 10.0 + 1e-7, 7.0),

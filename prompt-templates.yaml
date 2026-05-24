@@ -35,8 +35,8 @@ aggregation_templates:
     - "Among the remaining candidates, choose the {rank_label} candidate when ordered from smallest to greatest {metric_label}."
     - "From the remaining candidates, choose the {rank_label} item after sorting by ascending {metric_label}."
     - "Within the narrowed set, select the {rank_label} candidate in increasing {metric_label} order."
-  argmin.distance_to_reference_feature_centroid: "Among the remaining candidates, choose the one whose {target_point_label} is closest to the reference feature's solid centroid."
-  argmax.distance_to_reference_feature_centroid: "Among the remaining candidates, choose the one whose {target_point_label} is farthest from the reference feature's solid centroid."
+  argmin.distance_to_reference_feature_centroid: "Among the remaining candidates, choose the one whose {target_point_label} is closest to the {reference_point_label} of the reference {reference_type_label}."
+  argmax.distance_to_reference_feature_centroid: "Among the remaining candidates, choose the one whose {target_point_label} is farthest from the {reference_point_label} of the reference {reference_type_label}."
 
 tie_break_templates:
   argmax:
@@ -55,6 +55,7 @@ metric_labels:
   bbox_delta_span_z: "height increase"
   bbox_max_z: "maximum Z height"
   bbox_span_z: "overall height"
+  centroid: "solid centroid"
   centroid_delta_magnitude: "centroid shift"
   centroid_delta_z: "upward centroid movement"
   centroid_x: "centroid X coordinate"
@@ -65,7 +66,7 @@ metric_labels:
   coordinate_x: "X coordinate"
   coordinate_y: "Y coordinate"
   distance_to_origin: "distance to the global origin"
-  distance_to_reference_feature_centroid: "distance to the reference feature's solid centroid"
+  distance_to_reference_feature_centroid: "distance to the reference entity"
   edge_length: "edge length"
   face_area: "surface area"
   face_center: "face center"
@@ -270,6 +271,7 @@ clause_templates:
     - "The target feature's {metric_label} is {value}."
     - "The target feature matches the {metric_label} value {value}."
   reference_feature_volume_and_centroid: "Use as the reference the feature with solid volume {reference_volume} and centroid height {reference_centroid_z}."
+  reference_face_area_and_center: "Use as the reference the face with surface area {reference_face_area} and center height {reference_face_center_z}."
   has_feature_centroid_for_reference_distance: "The target feature has a measured solid centroid."
   has_compiled_volume_for_centroid: "The target feature also has a measured solid volume."
   has_compiled_face_count: "The target feature has a measured face count."
