@@ -60,6 +60,7 @@ metric_labels:
   centroid_y: "centroid Y coordinate"
   centroid_z: "centroid height"
   coordinate_z: "Z coordinate"
+  coordinate: "point location"
   coordinate_x: "X coordinate"
   coordinate_y: "Y coordinate"
   distance_to_origin: "distance to the global origin"
@@ -218,6 +219,7 @@ clause_templates:
     - "The target endpoint has a measured {metric_label}."
     - "The target endpoint has a known {metric_label}."
     - "The target endpoint has a verified {metric_label}."
+  has_endpoint_for_reference_distance: "The target endpoint has a measured point location."
 
   has_initial_tangent: "The target path has an initial tangent from its first two control points."
   has_nearest_origin_distance: "The target path has a nearest path point to the global origin."

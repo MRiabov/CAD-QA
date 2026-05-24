@@ -98,6 +98,7 @@ class ReferenceDistanceFamilySpec:
     target_type: str
     relation: str
     relation_clause_id: str
+    relation_target_type: str
     equal_value_clause_id: str
     reference_clause_id: str
     target_point_clause_id: str
@@ -427,6 +428,7 @@ REFERENCE_DISTANCE_FAMILY_SPECS = (
         target_type="face",
         relation="has_kernel_stable_face_id",
         relation_clause_id="has_parameterized_face_set",
+        relation_target_type="selector",
         equal_value_clause_id="has_parameterized_equal_face_metric_value",
         reference_clause_id="reference_feature_volume_and_centroid",
         target_point_clause_id="has_face_center_for_reference_distance",
@@ -440,11 +442,26 @@ REFERENCE_DISTANCE_FAMILY_SPECS = (
         target_type="edge",
         relation="has_kernel_stable_edge_id",
         relation_clause_id="has_parameterized_edge_set",
+        relation_target_type="selector",
         equal_value_clause_id="has_parameterized_equal_edge_metric_value",
         reference_clause_id="reference_feature_volume_and_centroid",
         target_point_clause_id="has_edge_midpoint_for_reference_distance",
         equal_metric="edge_length",
         target_point_metric="midpoint",
+        reference_type="feature",
+        reference_point_metric="centroid",
+    ),
+    ReferenceDistanceFamilySpec(
+        family_id="parameterized_endpoint_reference_feature_distance",
+        target_type="edge_endpoint",
+        relation="endpoint_of",
+        relation_clause_id="has_parameterized_endpoint_set",
+        relation_target_type="edge",
+        equal_value_clause_id="has_parameterized_equal_endpoint_metric_value",
+        reference_clause_id="reference_feature_volume_and_centroid",
+        target_point_clause_id="has_endpoint_for_reference_distance",
+        equal_metric="coordinate_z",
+        target_point_metric="coordinate",
         reference_type="feature",
         reference_point_metric="centroid",
     ),
@@ -1112,7 +1129,7 @@ def _viable_reference_distances(
         candidates,
         clause_id=spec.relation_clause_id,
         relation=spec.relation,
-        target_type="selector",
+        target_type=spec.relation_target_type,
     )
     if relation is None:
         return []
@@ -1186,7 +1203,7 @@ def _query_for_reference_distance(graph: OntologyGraph, viable: ViableReferenceD
         broad_candidates,
         clause_id=spec.relation_clause_id,
         relation=spec.relation,
-        target_type="selector",
+        target_type=spec.relation_target_type,
     )
     if relation is None:
         return None

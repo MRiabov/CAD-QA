@@ -2878,6 +2878,60 @@ def test_synthesis_generates_face_reference_feature_distance_query() -> None:
     assert any(phrase in row.prompt for phrase in ("closest to", "farthest from"))
 
 
+def test_synthesis_generates_endpoint_reference_feature_distance_query() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:endpoint-reference-distance-synth",
+        source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
+    )
+    for node_id, volume, centroid in [
+        ("feature:ref", 100.0, [0.0, 0.0, 0.0]),
+        ("feature:far", 50.0, [100.0, 0.0, 1.0]),
+    ]:
+        graph.add_node(Node(node_id, "feature", node_id))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "volume", volume))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "centroid", centroid))
+        graph.add_measurement(Measurement(node_id, "snapshot_state", "centroid_z", centroid[2]))
+    for edge_id in ["edge:a", "edge:b", "edge:c"]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+    for endpoint_id, edge_id, coordinate in [
+        ("edge_endpoint:a", "edge:a", [1.0, 0.0, 3.0]),
+        ("edge_endpoint:b", "edge:b", [5.0, 0.0, 3.0 + 1e-7]),
+        ("edge_endpoint:c", "edge:c", [12.0, 0.0, 8.0]),
+    ]:
+        graph.add_node(Node(endpoint_id, "edge_endpoint", endpoint_id))
+        graph.add_relation(Relation(endpoint_id, edge_id, "endpoint_of"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate", coordinate, "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph)
+        if query.query_id.endswith("parameterized_endpoint_reference_feature_distance")
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+
+    assert resolution.verifier_status == "resolved"
+    assert query.target_type == "edge_endpoint"
+    assert query.aggregation in {"argmin", "argmax"}
+    assert query.aggregation_metric == "distance_to_reference_feature_centroid"
+    assert query.clauses[0].relation == "endpoint_of"
+    assert query.clauses[0].target_type == "edge"
+    assert query.clauses[1].metric == "coordinate_z"
+    assert query.clauses[1].value == 3.0
+    assert query.clauses[2].kind == "reference_measurement"
+    assert query.clauses[3].metric == "coordinate"
+    assert row.logical_hop_count == 5
+    assert row.geometry_hop_count == 5
+    assert row.query_program["sampled_parameters"]["reference_type"] == ["feature"]
+    assert row.query_program["sampled_parameters"]["target_type"] == ["edge_endpoint"]
+    assert row.query_program["sampled_parameters"]["target_point_metric"] == ["coordinate"]
+    assert row.query_program["sampled_parameters"]["reference_point_metric"] == ["centroid"]
+    assert row.query_program["sampled_parameters"]["measurement_value_bucket"] == ["coordinate_z:3"]
+    assert "point location" in row.prompt
+    assert any(phrase in row.prompt for phrase in ("closest to", "farthest from"))
+
+
 def test_synthesis_skips_face_reference_distance_without_face_centers() -> None:
     graph = OntologyGraph(
         graph_id="graph:no-face-reference-distance-synth",
@@ -2903,6 +2957,27 @@ def test_synthesis_skips_face_reference_distance_without_face_centers() -> None:
     families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
 
     assert "parameterized_face_reference_feature_distance" not in families
+
+
+def test_synthesis_skips_endpoint_reference_distance_without_endpoint_locations() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:no-endpoint-reference-distance-synth",
+        source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
+    )
+    graph.add_node(Node("feature:ref", "feature", "feature:ref"))
+    graph.add_measurement(Measurement("feature:ref", "snapshot_state", "volume", 100.0))
+    graph.add_measurement(Measurement("feature:ref", "snapshot_state", "centroid", [0.0, 0.0, 0.0]))
+    graph.add_measurement(Measurement("feature:ref", "snapshot_state", "centroid_z", 0.0))
+    for edge_id in ["edge:a", "edge:b"]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+    for endpoint_id, edge_id in [("edge_endpoint:a", "edge:a"), ("edge_endpoint:b", "edge:b")]:
+        graph.add_node(Node(endpoint_id, "edge_endpoint", endpoint_id))
+        graph.add_relation(Relation(endpoint_id, edge_id, "endpoint_of"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_z", 3.0, "mm"))
+
+    families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
+
+    assert "parameterized_endpoint_reference_feature_distance" not in families
 
 
 def test_synthesis_skips_reference_distance_without_unique_reference_anchor() -> None:
