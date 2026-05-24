@@ -35,22 +35,32 @@ Release-quality high-hop rows should satisfy these shortcut-resistance gates:
 - static-only baselines are measured and reported;
 - prompt-family quotas prevent syntax-only templates from dominating the set.
 
-## Axis and View Sampling
+## Maximal Parameter Sampling
 
-Release-grade spatial task families must not bake a single global axis or view
-direction into the family definition. A family named or implemented as
-"frontmost", "rightmost", "leftmost", "highest", "positive Z", or similar is
-only acceptable when that word is a sampled rendering of an explicit
-axis/direction parameter for the row. It is not acceptable for the generator to
-produce a stable family such as `frontmost_longer_positive_z_kernel_edge`,
-because that collapses the task distribution onto one coordinate convention.
+Release-grade task families must not bake avoidable constants or fixed choices
+into the family definition. A family should encode the reasoning pattern; the
+generator should sample the variable parts of that pattern from supported graph
+evidence.
 
-Axis-dependent families should be written in axis-general form. For example,
-the intended family shape is `longer_positive_edge_along_axis`: the query
-chooses an axis and sign from the graph, filters candidates by that sampled
-parameter, and renders the prompt with terminology appropriate to the sampled
-view. The verifier must record the bound axis/direction, and release reports
-should measure distribution across axes and signs so collapsed axis habits are
+Parameters include, but are not limited to:
+
+- target entity type: feature, face, edge, vertex, endpoint, material region,
+  void region, path point, or path segment;
+- reference entity type and reference-selection strategy;
+- axis, sign, coordinate component, and rendered view word;
+- extremum direction such as minimum or maximum;
+- comparison relation such as shorter/longer, smaller/larger, nearer/farther,
+  equal/tolerance-equal, before/after, inside/outside, or
+  parallel/perpendicular;
+- exact public measurement values and tolerance buckets;
+- aggregation metric and tie-break metric.
+
+Hard-coded families such as `frontmost_longer_positive_z_kernel_edge` are not
+release-grade because they collapse several variable choices into permanent
+family semantics. The intended shape is a parameterized family whose private
+query metadata records the sampled entity type, axis, sign, comparison,
+aggregation, and measurement values for the row. Release reports should measure
+coverage across these parameter dimensions so collapsed distributions are
 visible and gateable.
 
 ## Critical Training Subset
@@ -93,8 +103,8 @@ Reject or quarantine rows when:
 - the public prompt cannot be traced to hidden clauses.
 - a nominal training/benchmark row is solvable by syntax-only clues without
   geometry-derived evidence.
-- a nominal spatial family hard-codes one global axis or view direction instead
-  of sampling an explicit axis/direction parameter.
+- a nominal task family hard-codes avoidable constants or fixed choices instead
+  of sampling explicit row parameters.
 
 ## Difficulty
 

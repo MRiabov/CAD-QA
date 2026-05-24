@@ -74,12 +74,13 @@ containment/intersection/adjacency, and other stable spatial relations. These
 rows should be the main training surface; syntax-readable rows are supporting
 calibration only.
 
-Spatial benchmark rows must avoid fixed-axis overfitting. A task family must
-not permanently mean "frontmost", "rightmost", "leftmost", "highest", or
-"positive Z". Those words are allowed only when they render a sampled
-axis/direction parameter for a particular row. The durable family identity must
-be axis-general, for example `longer_positive_edge_along_axis`, with the bound
-axis and sign recorded privately for verification and reporting.
+Benchmark rows must avoid overfitting to hard-coded generator choices. A task
+family must not permanently mean one axis, one view word, one min/max
+direction, one exact value pattern, one comparison, or one entity subtype when
+those choices can be sampled. Words such as "frontmost", "rightmost",
+"leftmost", and "highest" are allowed only when they render sampled parameters
+for a particular row. The durable family identity should be parameterized, with
+the bound parameters recorded privately for verification and reporting.
 
 ## Prompt Requirements
 

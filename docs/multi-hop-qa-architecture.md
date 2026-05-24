@@ -37,27 +37,29 @@ OntologyGraph
 - Rows that fail candidate-breadth or uniqueness gates go to the failure
   manifest.
 
-## Axis-General Spatial Tasks
+## Maximally Parameterized Tasks
 
-Main benchmark and default SFT rows must not encode a fixed global direction as
-the semantic identity of a task family. Families such as
-`frontmost_longer_positive_z_kernel_edge`,
-`rightmost_shorter_positive_z_kernel_edge`, or any equivalent "always X/Y/Z"
-variant are unacceptable as release-grade training families because they teach
-models a narrow coordinate habit instead of CAD reasoning.
+Main benchmark and default SFT rows must not encode avoidable constants or
+fixed choices as the semantic identity of a task family. A family should
+describe the invariant reasoning structure; everything that can vary while
+preserving that structure should be a sampled row parameter.
 
-Axis-dependent tasks must be parameterized. The family identity should describe
-the geometric relation while leaving the axis as a sampled query parameter. For
-example, use a family shape like `longer_positive_edge_along_axis`, then sample
-the axis and direction from supported candidate geometry. The hidden query
-program may bind that parameter to X, Y, or Z for a specific row, but the
-family/template itself must not permanently mean "positive Z" or "frontmost".
+This applies beyond axes. Axes, signs, min/max aggregation direction, exact
+measurement values, comparison operators, entity types, reference-object
+choices, and target subtypes such as feature, face, edge, vertex, endpoint, or
+region should be parameterized whenever the graph and verifier can support the
+variation. For example, avoid a permanent family like
+`frontmost_longer_positive_z_kernel_edge`; prefer an axis/entity/ordering
+general family whose row parameters bind the target type, axis, sign,
+comparison relation, and aggregation direction.
 
-View words such as "frontmost", "backmost", "leftmost", "rightmost", "highest",
-and "lowest" are allowed only as sampled renderings of an explicit axis/view
-parameter. They must not be hard-coded into generator family names or fixed to
-one global axis across a release. Release reports should expose axis/direction
-coverage for these families and block or cap collapsed distributions.
+Prompt view words such as "frontmost", "backmost", "leftmost", "rightmost",
+"highest", and "lowest" are allowed only as sampled renderings of explicit
+parameters. Exact public measurements such as area, length, volume, or distance
+should likewise come from sampled verified values, not from hand-coded family
+templates. Release reports should expose parameter coverage and block or cap
+collapsed distributions where a nominally general family always chooses the
+same axis, extremum, value shape, comparison, or entity type.
 
 ## Value-Bearing Multi-Hop Tasks
 

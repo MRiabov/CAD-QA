@@ -9,18 +9,20 @@ regions. Each clue is individually readable from the public CadQuery source but
 should preserve distractors. The complete clue set must resolve exactly one
 answer through the hidden query program.
 
-## Axis-Parameterized Spatial Families
+## Parameterized Task Families
 
-Spatial task families must be axis-general. If a task uses an extremum,
-directional coordinate, positive/negative side, or view word, the axis and sign
-must be row parameters sampled by the generator and recorded in the private
-query metadata. The family name should describe the relation independently of a
-fixed coordinate convention, for example `longer_positive_edge_along_axis`.
+Task families must be as parameterized as the graph evidence and verifier allow.
+If a task uses an extremum, directional coordinate, positive/negative side,
+measurement value, comparison relation, target subtype, or reference subtype,
+that choice should be a row parameter sampled by the generator and recorded in
+the private query metadata.
 
-Do not define release-grade families whose identity is tied to one global axis
-or view, such as `frontmost_longer_positive_z_kernel_edge`. Words like
-"frontmost", "rightmost", "leftmost", "highest", and "lowest" are prompt
-rendering choices for a sampled view parameter, not permanent family semantics.
+The family name should describe the relation independently of avoidable fixed
+choices. Do not define release-grade families whose identity is tied to one
+global axis, one min/max direction, one exact value shape, or one entity subtype
+when those choices can be varied. Words like "frontmost", "rightmost",
+"leftmost", "highest", and "lowest" are prompt rendering choices for sampled
+view parameters, not permanent family semantics.
 
 ## Required Hidden Evidence
 

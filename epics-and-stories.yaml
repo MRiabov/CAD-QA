@@ -17,9 +17,10 @@ current_snapshot:
     prompts and multi-hop equal-value distractor tasks: public clues should
     expose stable rounded/tolerance-bucketed CAD values when useful, then use
     additional geometry to disambiguate among equal or near-equal candidates.
-    Spatial task families must be axis-general: global-axis and view words
-    such as frontmost, rightmost, highest, and positive Z are sampled row
-    parameters, not permanent family semantics.
+    Task families must be maximally parameterized: axes, view words, min/max
+    direction, exact values, comparison relations, target/reference entity
+    types, and subtype choices are sampled row parameters whenever the verifier
+    can support them, not permanent family semantics.
     Earlier separate task-family and graph-query framing is obsolete.
 status_values:
   - planned
@@ -296,19 +297,19 @@ epics:
         title: Release and SFT coverage gates for value-bearing measurement task families
         status: implemented
   - id: epic-14
-    title: Axis-general spatial query sampling
+    title: Maximally parameterized query sampling
     status: planned
     priority: P0
     stories:
       - id: "14.1"
-        title: Document fixed-axis spatial family names as unacceptable for release rows
+        title: Document avoidably hard-coded task-family semantics as unacceptable for release rows
         status: implemented
       - id: "14.2"
-        title: Refactor fixed-X/Y/Z spatial families into axis-parameterized query families
+        title: Refactor fixed-axis, fixed-extremum, fixed-comparison, and fixed-entity query families into parameterized families
         status: planned
       - id: "14.3"
-        title: Randomize rendered view words such as frontmost, leftmost, rightmost, highest, and lowest from sampled axis parameters
+        title: Randomize rendered view words, min/max wording, exact-value clues, and entity-type wording from sampled parameters
         status: planned
       - id: "14.4"
-        title: Release and SFT gates for axis and direction balance in spatial task families
+        title: Release and SFT gates for parameter balance across task families
         status: planned
