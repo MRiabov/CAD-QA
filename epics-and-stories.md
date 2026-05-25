@@ -199,7 +199,7 @@ Technical definition of done:
 
 | Story | Status | Acceptance criteria | Technical definition of done |
 | --- | --- | --- | --- |
-| 4.1 AST assignment and call-chain extraction | `implemented` | Users can trace visible CadQuery constructs into graph operations. | Parser extracts assignments, chained calls, and operation order without relying on regex-only logic. |
+| 4.1 AST assignment and call-chain extraction | `implemented` | Users can trace visible CadQuery constructs into graph operations. | Parser extracts assignments, chained calls, and operation order without relying on regex-only logic; operation arguments remain graph-serializable, including source-defined callback functions represented by source names. |
 | 4.2 Feature, operation, and parameter nodes | `implemented` | Queries can target meaningful CAD construction entities. | Graph builder emits typed feature, operation, and parameter nodes with stable IDs. |
 | 4.3 Profile geometry nodes for circle, rect, and polyline | `implemented` | Profile-based questions can refer to actual sketch geometry. | Profile nodes capture computable shape data and source links. |
 | 4.4 Workplane frame nodes and profile projection links | `implemented` | Workplane-dependent geometry can be queried through frame evidence. | Workplane origins/orientations and profile-to-workplane links are extracted. |

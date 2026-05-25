@@ -195,6 +195,10 @@ epics:
       - id: "4.1"
         title: AST assignment and call-chain extraction
         status: implemented
+        technical_definition_of_done:
+          - Operation argument extraction must serialize safely for graph JSONL
+            artifacts; source-defined callback objects are represented by their
+            source names rather than by live Python objects.
       - id: "4.2"
         title: Feature, operation, and parameter nodes
         status: implemented

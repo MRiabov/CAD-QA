@@ -1498,12 +1498,19 @@ def _base_name(expr: ast.AST) -> str | None:
 
 
 def _literal_or_repr(expr: ast.AST, env: dict[str, Any]) -> Any:
+    fallback = expr.id if isinstance(expr, ast.Name) else ast.unparse(expr)
     try:
-        return _safe_eval(expr, env)
+        return _json_safe_literal(_safe_eval(expr, env), fallback=fallback)
     except Exception:
-        if isinstance(expr, ast.Name):
-            return expr.id
-        return ast.unparse(expr)
+        return fallback
+
+
+def _json_safe_literal(value: Any, *, fallback: str) -> Any:
+    try:
+        json.dumps(value)
+        return value
+    except TypeError:
+        return fallback
 
 
 def _safe_eval(expr: ast.AST, env: dict[str, Any]) -> Any:

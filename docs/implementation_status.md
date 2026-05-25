@@ -1574,6 +1574,33 @@ Checked as implemented with remaining scale caveats:
   8.50 answer-entropy bits while preserving family/template/value-bearing
   gates. Remaining blockers are split-group coverage, intended-family coverage,
   and sampled parameter balance.
+  A broader CadEvolve ShapeNet-P probe now verifies that CadEvolve is present
+  and usable for a 100-source graph-backed dataset build:
+  `runs/current_cadevolve100_shapenet/` contains 100 normalized ShapeNet-P
+  sources from `data/cadevolve.tar`; tracing produced 78 ok traces, 8 partial
+  traces, 14 failed traces, and 86 usable traces. Graph construction produced
+  100 graphs with 20,462 nodes, 607,376 relations, and 290,011 measurements,
+  including compiled face, edge, vertex, endpoint, material-region,
+  void-region, selector, snapshot-state, and relation-metric evidence. The
+  `max_per_family=5` synthesis run produced 11,871 resolved release-family
+  rows and 55 failures; benchmark export capped this to 10,000 rows. The
+  benchmark-release report at
+  `runs/current_cadevolve100_shapenet/release_report/` passes release row
+  count, default SFT row count, split-group coverage, answer entropy,
+  prompt-template balance, geometry-critical dominance, geometry-hop coverage,
+  candidate breadth, preview evidence, family-test evidence, and leakage/public
+  private audits. It is still not benchmark-release ready: blockers are
+  prompt-family balance, value-bearing measurement coverage, cross-feature
+  value-bearing coverage, intended-family coverage, and sampled-parameter
+  balance. The remaining zero-row intended release families in this probe are
+  path-point/path-segment extrema/rank and equal-metric families; sparse
+  material/void-region families remain below the 1% family floor; value-bearing
+  and cross-feature shares are above the benchmark max bands.
+  The same probe exposed and fixed a graph serialization bug: source-defined
+  callback functions passed as operation arguments, such as
+  `.parametricCurve(hel)`, are now stored as stable source names instead of
+  unserializable Python function objects, with regression coverage in
+  `tests/test_graph_first_pipeline.py`.
 - Broaden value-bearing and tolerance-equal coverage beyond the implemented
   core to radius/diameter/angle once those measurements are extracted broadly,
   additional face/endpoint/material/void coordinate combinations, and larger

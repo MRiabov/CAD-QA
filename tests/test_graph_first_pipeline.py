@@ -122,6 +122,20 @@ while True:
 """
 
 
+def test_graph_operation_properties_are_json_safe_for_function_arguments() -> None:
+    source = """
+import cadquery as cq
+def hel(t):
+    return (t, t, t)
+wp1 = cq.Workplane("XY").parametricCurve(hel)
+"""
+    graph = build_graph(source_record_from_mapping({"source_id": "src_callback", "normalized_code": source}))
+
+    json.dumps(to_jsonable(graph))
+    operation = next(node for node in graph.nodes if node.type == "operation" and node.properties["operation"] == "parametricCurve")
+    assert operation.properties["args"] == ["hel"]
+
+
 def test_source_loading(tmp_path: Path) -> None:
     path = tmp_path / "sources.jsonl"
     write_jsonl(path, [{"source_id": "src_fixture", "normalized_code": SOURCE}])
