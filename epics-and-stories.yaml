@@ -594,6 +594,12 @@ epics:
             `parameterized_kernel_edge_rank`, and
             `parameterized_kernel_face_rank` above the 100-row benchmark-family
             floor before release capping.
+          - Expanded benchmark release export over the 35k-row direct-metric
+            probe now completes and writes reviewed preview evidence; the
+            resulting 40-row capped artifact is still blocked by benchmark row
+            count, value-bearing coverage, intended-family coverage,
+            parameter-balance, split-group, default-SFT, and answer-entropy
+            gates.
           - Reference-distance rank narrowing includes valid two-candidate
             subsets; broader selected-entity count predicates, release-scale
             preview review, and distribution thresholds remain work-in-progress.

@@ -16,7 +16,12 @@ from cad_qa.dataset.parameter_balance import parameter_balance_report
 from cad_qa.dataset.preview import dataset_preview_evidence_report, preview_evidence_gate_report
 from cad_qa.dataset.public import private_rows, public_private_audit, public_rows, write_public_private_artifacts
 from cad_qa.dataset.quarantine import quarantine_report
-from cad_qa.dataset.release import _cap_release_balance_rows, _release_balance_capacity_report, export_release_dataset
+from cad_qa.dataset.release import (
+    _cap_group_share_rows,
+    _cap_release_balance_rows,
+    _release_balance_capacity_report,
+    export_release_dataset,
+)
 from cad_qa.dataset.release_report import (
     intended_family_share_feasibility_report,
     release_balance_report,
@@ -7999,6 +8004,48 @@ def test_release_export_balance_caps_overrepresented_training_slices() -> None:
     assert report["largest_prompt_family_share"] <= profile.max_prompt_family_share
     assert report["logical_hop_ge_3_share"] >= profile.min_logical_hop_ge_3_share
     assert not report["underrepresented_prompt_families"]
+
+
+def test_release_group_share_cap_uses_precomputed_groups_for_many_templates() -> None:
+    rows = []
+    for group_index in range(50):
+        row_count = 40 if group_index == 0 else 1
+        for row_index in range(row_count):
+            rows.append(
+                {
+                    "row_id": f"row:src:{group_index}:{row_index}:family_{group_index}",
+                    "source_id": f"src_{group_index}_{row_index}",
+                    "prompt": f"geometry prompt {group_index} {row_index}",
+                    "prompt_template_id": f"template_{group_index}",
+                    "gold_answer": f"entity:{group_index}:{row_index}",
+                    "logical_hop_count": 4,
+                    "geometry_hop_count": 4,
+                    "static_hop_count": 0,
+                    "query_program": {
+                        "query_id": f"graph:src:q{group_index}_{row_index}:family_{group_index}",
+                        "aggregation_metric": "volume",
+                        "clauses": [],
+                    },
+                }
+            )
+    key_calls = 0
+
+    def counted_group_key(row: dict[str, object]) -> str:
+        nonlocal key_calls
+        key_calls += 1
+        return str(row["prompt_template_id"])
+
+    capped, exclusions = _cap_group_share_rows(
+        rows,
+        group_key=counted_group_key,
+        max_share=0.05,
+        reason="prompt_template_share_cap",
+    )
+
+    assert key_calls == len(rows)
+    assert len(capped) < len(rows)
+    assert {row["prompt_template_id"] for row in capped} == {f"template_{index}" for index in range(50)}
+    assert {item["reason"] for item in exclusions} == {"prompt_template_share_cap"}
 
 
 def test_release_export_balance_caps_to_satisfy_minimum_family_share() -> None:

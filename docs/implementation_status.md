@@ -1520,10 +1520,19 @@ Checked as implemented with remaining scale caveats:
   `parameterized_kernel_face_rank` has 193 rows. The reviewed preview at
   `runs/current_cadevolve50_probe_direct_metric_narrowing/DIRECT_METRIC_NARROWING_PREVIEW.md`
   shows conventional measurement-threshold clues, preserved distractors, and
-  unique ranked gold answers. A full benchmark export over the 35k-row expanded
-  probe was stopped after several minutes because release capping was too slow;
-  that is recorded as an open release-export performance/scaling issue rather
-  than benchmark readiness evidence.
+  unique ranked gold answers. Release balance capping has been optimized enough
+  for the full expanded probe: benchmark export over the 35k-row candidate set
+  completes in about 11 seconds and writes
+  `runs/current_cadevolve50_probe_direct_metric_narrowing/release_export/`.
+  That export keeps only 40 rows after balance caps because benchmark-family
+  capacity remains source-limited before capping: `parameterized_equal_material_region_metric_extreme`
+  has 39 rows, `parameterized_kernel_edge_selector_count` has 58 rows, and
+  `parameterized_kernel_edge_selector_count_rank` has 58 rows, all below the
+  100-row floor required for a 10,000-row release under the 1% family minimum.
+  After reviewed preview evidence, candidate breadth and preview gates pass, but
+  the artifact still blocks benchmark release on release row count, split-group
+  coverage, default SFT row count, answer entropy, value-bearing measurement
+  coverage, intended-family coverage, and sampled-parameter balance.
 - Broaden value-bearing and tolerance-equal coverage beyond the implemented
   core to radius/diameter/angle once those measurements are extracted broadly,
   additional face/endpoint/material/void coordinate combinations, and larger

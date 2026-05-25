@@ -52,6 +52,7 @@ def export_release_dataset(
         deduped_rows,
         profile.max_syntax_only_calibration_share,
     )
+    release_rows = [_with_prompt_template_id(row) for row in release_rows]
     balance_capacity = _release_balance_capacity_report(release_rows, profile)
     protected_prompt_families = (
         {_prompt_family(row) for row in release_rows}
@@ -68,7 +69,6 @@ def export_release_dataset(
     out.mkdir(parents=True, exist_ok=True)
     manifest = split_manifest(release_rows)
     release_rows = rows_with_assigned_splits(release_rows, manifest)
-    release_rows = [_with_prompt_template_id(row) for row in release_rows]
     write_jsonl(out / "rows.jsonl", release_rows)
     public_private = write_public_private_artifacts(release_rows, out)
     split_rows: dict[str, list[dict[str, Any]]] = {}
@@ -498,23 +498,26 @@ def _cap_group_share_rows(
         groups.setdefault(group_key(row), []).append(row)
     if len(groups) < _minimum_group_count_for_share(max_share):
         return rows, []
-    kept = list(rows)
+    kept_ids = {id(row) for row in rows}
     exclusions: list[dict[str, Any]] = []
     for group, group_rows in sorted(groups.items(), key=lambda item: (-len(item[1]), item[0])):
-        current_group_rows = [row for row in kept if group_key(row) == group]
-        other_count = len(kept) - len(current_group_rows)
+        current_group_rows = [row for row in group_rows if id(row) in kept_ids]
+        if not current_group_rows:
+            continue
+        other_count = len(kept_ids) - len(current_group_rows)
         allowed_count = max(1, _allowed_share_count(other_count, max_share))
         if len(current_group_rows) <= allowed_count:
             continue
         kept_group_rows = sorted(current_group_rows, key=_stable_row_key)[:allowed_count]
         kept_group_ids = {id(row) for row in kept_group_rows}
         dropped = [row for row in current_group_rows if id(row) not in kept_group_ids]
+        dropped_ids = {id(row) for row in dropped}
         exclusions.extend(
             _balance_exclusion(row, reason=reason, maximum_share=max_share, group=group)
             for row in sorted(dropped, key=_stable_row_key)
         )
-        kept = [row for row in kept if group_key(row) != group or id(row) in kept_group_ids]
-    return kept, exclusions
+        kept_ids.difference_update(dropped_ids)
+    return [row for row in rows if id(row) in kept_ids], exclusions
 
 
 def _cap_group_min_share_rows(
@@ -550,17 +553,21 @@ def _cap_group_min_share_rows(
         protected_drops = [0 for _predicate, _minimum, _current in protected_minimums]
         protected_groups = set(underrepresented)
         dropped: list[dict[str, Any]] = []
+        dropped_by_group: Counter[str] = Counter()
         for group, group_rows in sorted(groups.items(), key=lambda item: (-len(item[1]), item[0])):
             if group in protected_groups:
                 continue
+            group_drop_count = dropped_by_group[group]
             for row in sorted(group_rows, key=_stable_row_key, reverse=True):
                 if len(dropped) >= drop_count:
                     break
-                if len(group_rows) - sum(1 for item in dropped if group_key(item) == group) <= 1:
+                if len(group_rows) - group_drop_count <= 1:
                     break
                 if _would_violate_protected_boolean_minimum(row, protected_minimums, protected_drops):
                     continue
                 dropped.append(row)
+                group_drop_count += 1
+                dropped_by_group[group] = group_drop_count
                 _record_protected_boolean_drop(row, protected_minimums, protected_drops)
             if len(dropped) >= drop_count:
                 break
