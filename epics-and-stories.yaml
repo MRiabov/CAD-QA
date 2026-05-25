@@ -413,6 +413,11 @@ epics:
       - id: "12.4"
         title: Kernel-backed material and void region delta questions
         status: implemented
+        technical_definition_of_done:
+          - Material/void region geometry and measurements are emitted from
+            kernel-backed deltas.
+          - Centered workplane chains propagate `.center(x, y)` offsets into
+            profile-derived material/void-region centroids.
       - id: "12.5"
         title: Path, distance, containment, intersection, adjacency, and stable spatial-relation questions
         status: work-in-progress
@@ -430,6 +435,13 @@ epics:
       - id: "13.2"
         title: Tolerance-equal measurement mining for distractor candidate sets
         status: work-in-progress
+        technical_definition_of_done:
+          - Initial equal-value families cover repeated measured values for
+            face, edge, vertex, endpoint, feature, material-region,
+            void-region, path-point, and path-segment targets.
+          - Void-region equal-value extrema can select across sampled centroid
+            X/Y/Z metrics when workplane-center offsets are available; broader
+            metrics and release-scale coverage remain work-in-progress.
       - id: "13.3"
         title: Cross-feature value-bearing tasks using distances between derived feature geometry
         status: work-in-progress
@@ -438,6 +450,9 @@ epics:
           - Reference anchors name the actual measured point being used, including bounding-box centers when full centroids are unavailable.
         technical_definition_of_done:
           - Generic reference-entity distance synthesis supports feature/material/void bounding-box center target and reference point metrics without relabeling them as centroids.
+          - Path-point reference-distance synthesis samples X/Y/Z coordinate
+            equal-value narrowing, and reference-distance rank synthesis accepts
+            valid two-candidate narrowed groups.
           - Reviewed RC10 evidence includes valid cross-feature value-bearing rows generated from prepared CADEvolve traces; benchmark-scale distribution remains work-in-progress.
       - id: "13.4"
         title: Release and SFT coverage gates for value-bearing measurement task families
@@ -529,6 +544,11 @@ epics:
             resolver/materializer path and have RC10 preview evidence.
           - Composite point metrics such as `bbox_center` are recognized from
             scalar component measurements in synthesis and resolver paths.
+          - Centered workplane chains propagate `.center(x, y)` offsets into
+            profile-derived material/void-region centroids used by synthesized
+            graph-hop rows.
+          - Reference-distance rank rows can use valid rank-2 narrowed groups
+            when only two candidates survive the graph-hop predicates.
           - Benchmark-scale family balance, full beam search, and broader real
             CadEvolve family coverage remain work-in-progress.
       - id: "14.8"
@@ -541,6 +561,14 @@ epics:
       - id: "14.9"
         title: Graph-hop narrowing implementation for sparse selector, count, and extremum task families
         status: work-in-progress
+        technical_definition_of_done:
+          - Initial selector/count/extremum/rank families use graph-hop
+            narrowing from measured geometry, equal values, relations,
+            containment, and sampled reference entities instead of requiring a
+            global unique object.
+          - Reference-distance rank narrowing includes valid two-candidate
+            subsets; broader selected-entity count predicates, release-scale
+            preview review, and distribution thresholds remain work-in-progress.
       - id: "14.10"
         title: Release and SFT gates for zero-row intended families and narrowing-parameter coverage
         status: work-in-progress

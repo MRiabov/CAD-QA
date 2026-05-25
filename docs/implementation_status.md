@@ -1372,6 +1372,21 @@ Checked as implemented with remaining scale caveats:
   `runs/parameterized_synthesis_selfcheck_vertex/PREVIEW.md` and
   `runs/parameterized_synthesis_selfcheck_vertex_value_reference/PREVIEW.md`
   plus `runs/parameterized_synthesis_selfcheck_vertex_selector_count/PREVIEW.md`.
+  Centered workplane frame propagation is now implemented for `.center(x, y)`
+  chains, so profile-derived material/void-region centroids keep local sketch
+  offsets instead of collapsing to the parent workplane origin. The reviewed
+  RC10 evidence in
+  `runs/current_centered_void_rc10/CENTERED_VOID_AND_PATH_REFERENCE_PREVIEW.md`
+  generated valid rows for `parameterized_equal_void_region_metric_extreme`
+  using sampled `centroid_x`/`centroid_y`/`centroid_z` selectors, valid
+  path-point reference-distance rows using sampled `coordinate_x`,
+  `coordinate_y`, or `coordinate_z` equal-value narrowing, and rank-2
+  reference-distance rows where only two narrowed candidates exist. The
+  benchmark-tier report for the same artifact has 1,142 valid geometry-critical
+  rows across 76 release families, with `intended_family_coverage` passing and
+  zero missing release families; it still blocks benchmark release on scale,
+  family balance, parameter balance, split-group coverage, entropy, coverage
+  share, and preview-evidence gates.
   Remaining hard-coded release debt is mainly richer graph-hop predicate chains,
   broader selected-entity count predicates, broader reference-entity balance,
   and release-scale distribution review.

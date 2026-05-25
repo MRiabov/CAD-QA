@@ -207,6 +207,8 @@ class _Extractor:
             self.graph.add_relation(Relation(input_id, record.id, "input_to"))
         if record.operation in {"Workplane", "workplane"}:
             self._extract_workplane(record)
+        if record.operation == "center":
+            self._extract_centered_workplane(record)
         if record.operation in {"circle", "rect", "polyline"}:
             self._extract_profile(record)
         if record.operation == "splineApprox":
@@ -278,6 +280,44 @@ class _Extractor:
                 label=record.target,
                 source_ref=str(record.source_line),
                 properties=frame,
+            )
+        )
+        for name, value in {"origin": frame["origin"], "normal": frame["normal"], "origin_z": frame["origin"][2]}.items():
+            self.graph.add_measurement(
+                Measurement(node_id, "entity_geometry", name, value, evidence={"source_line": record.source_line})
+            )
+
+    def _extract_centered_workplane(self, record: OperationRecord) -> None:
+        if len(record.args) < 2:
+            return
+        base_workplane_id = self.variable_workplanes.get(str(record.base))
+        base_workplane = self.graph.node(base_workplane_id) if base_workplane_id else None
+        if base_workplane is None:
+            return
+        try:
+            offset = [float(record.args[0]), float(record.args[1])]
+        except (TypeError, ValueError):
+            return
+        frame = dict(base_workplane.properties)
+        frame["origin"] = project_local_point(base_workplane.properties, offset)
+        frame["center_offset"] = offset
+        node_id = self._unique_node_id(f"workplane:{record.target}_center")
+        self.variable_workplanes[record.target] = node_id
+        self.graph.add_node(
+            Node(
+                id=node_id,
+                type="workplane",
+                label=f"{record.target} centered workplane",
+                source_ref=str(record.source_line),
+                properties=frame,
+            )
+        )
+        self.graph.add_relation(
+            Relation(
+                node_id,
+                base_workplane_id,
+                "derived_from",
+                evidence={"operation": "center", "source_line": record.source_line},
             )
         )
         for name, value in {"origin": frame["origin"], "normal": frame["normal"], "origin_z": frame["origin"][2]}.items():
@@ -1140,6 +1180,8 @@ class _Extractor:
         if isinstance(centroid, list):
             self.graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid", centroid, "mm", {"profile_id": profile_id}))
             if len(centroid) >= 3:
+                self.graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid_x", centroid[0], "mm", {"profile_id": profile_id}))
+                self.graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid_y", centroid[1], "mm", {"profile_id": profile_id}))
                 self.graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid_z", centroid[2], "mm", {"profile_id": profile_id}))
         self.graph.add_measurement(Measurement(region_id, "snapshot_state", "source_line", region_measurement.get("source_line") or record.source_line, None, evidence))
         self.graph.add_measurement(Measurement(region_id, "snapshot_state", "operation_index", len(self.operations) - 1, None, evidence))
@@ -1224,6 +1266,8 @@ class _Extractor:
                 )
             )
         if isinstance(centroid, list) and len(centroid) >= 3:
+            self.graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid_x", centroid[0], "mm", {"profile_id": profile_id}))
+            self.graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid_y", centroid[1], "mm", {"profile_id": profile_id}))
             self.graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid_z", centroid[2], "mm", {"profile_id": profile_id}))
         self.graph.add_measurement(Measurement(region_id, "snapshot_state", "source_line", record.source_line, None, {"profile_id": profile_id}))
         self.graph.add_measurement(Measurement(region_id, "snapshot_state", "operation_index", len(self.operations) - 1, None, {"profile_id": profile_id}))

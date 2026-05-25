@@ -6830,7 +6830,12 @@ def test_synthesis_generates_parameterized_path_reference_distance_queries() -> 
 
         assert resolution.verifier_status == "resolved"
         assert query.target_type == target_type
-        assert any(clause.id == equal_clause_id and clause.metric == equal_metric for clause in query.clauses)
+        expected_equal_metrics = (
+            {"coordinate_x", "coordinate_y", "coordinate_z"}
+            if family == "parameterized_path_point_reference_entity_distance"
+            else {equal_metric}
+        )
+        assert any(clause.id == equal_clause_id and clause.metric in expected_equal_metrics for clause in query.clauses)
         assert query.aggregation_metric == "distance_to_reference_feature_centroid"
         assert query.aggregation in {"argmin", "argmax"}
         assert row.logical_hop_count == 5
@@ -6847,7 +6852,7 @@ def test_synthesis_generates_parameterized_path_reference_distance_queries() -> 
                 "void_region",
             }
         assert row.query_program["sampled_parameters"]["target_point_metric"] == [target_point_metric]
-        assert row.query_program["sampled_parameters"]["equal_measurement_metric"] == [equal_metric]
+        assert row.query_program["sampled_parameters"]["equal_measurement_metric"][0] in expected_equal_metrics
         assert "reference" in row.prompt.lower()
 
 
@@ -6859,7 +6864,7 @@ def test_synthesis_skips_path_reference_distance_without_equal_distractors() -> 
     graph.add_node(Node("path:main", "path", "path"))
     for index, coordinate_z in enumerate([0.0, 1.0, 2.0]):
         point_id = f"path:main:point:{index}"
-        coordinate = [float(index), 0.0, coordinate_z]
+        coordinate = [float(index), float(index + 10), coordinate_z]
         graph.add_node(Node(point_id, "path_point", point_id))
         graph.add_relation(Relation(point_id, "path:main", "point_on_path"))
         graph.add_measurement(Measurement(point_id, "entity_geometry", "coordinate", coordinate, "mm"))
@@ -7505,6 +7510,12 @@ def test_loop_unrolling_extracts_selectors_faces_sketches_and_void_regions() -> 
     assert any(node.properties["stable_selector"] == ">Y" for node in faces)
     assert sketches
     assert void_regions
+    centroid_y_values = [
+        graph.measurements_for(region.id, "centroid_y")[0].value
+        for region in void_regions
+        if graph.measurements_for(region.id, "centroid_y")
+    ]
+    assert len(set(centroid_y_values)) > 1
     assert any(relation.type == "same_selected_face_as" for relation in graph.relations)
     assert any(relation.type == "has_sketch_center" for relation in graph.relations)
     assert any(relation.type == "has_void_region_geometry" for relation in graph.relations)

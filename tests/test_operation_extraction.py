@@ -80,7 +80,9 @@ def test_cad_operation_extraction_preserves_full_chain_order_and_args() -> None:
     assert _has_relation(graph, "feature:boss", "operation:result", "input_to")
     assert _has_relation(graph, "feature:part", "feature:result", "input_to")
     assert _has_relation(graph, "feature:boss", "feature:result", "input_to")
-    assert _has_relation(graph, "profile:part", "workplane:part", "located_on")
+    assert _has_relation(graph, "workplane:part_center", "workplane:part", "derived_from")
+    assert graph.node("workplane:part_center").properties["origin"] == [1.0, -1.0, 0.0]
+    assert _has_relation(graph, "profile:part", "workplane:part_center", "located_on")
     assert _has_relation(graph, "operation:part:3:circle", "operation:part:4:cutBlind", "input_to")
     assert not _self_input_relations(graph)
 

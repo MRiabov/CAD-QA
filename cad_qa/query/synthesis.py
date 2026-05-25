@@ -642,9 +642,9 @@ EQUAL_VALUE_EXTREME_FAMILY_SPECS = (
         relation="has_kernel_void_region_geometry",
         relation_clause_id="has_void_geometry",
         equal_value_clause_id="has_void_volume_value",
-        selector_metric_clause_id="has_void_centroid_z",
+        selector_metric_clause_id="has_parameterized_void_region_metric",
         equal_metrics=("volume",),
-        selector_metrics=("centroid_z",),
+        selector_metrics=("centroid_x", "centroid_y", "centroid_z"),
         relation_target_type="void_region",
     ),
     EqualValueExtremeFamilySpec(
@@ -1767,6 +1767,28 @@ _GENERIC_REFERENCE_DISTANCE_TARGETS = (
         "equal_value_clause_id": "has_parameterized_equal_path_point_metric_value",
         "target_point_clause_id": "has_path_point_for_reference_distance",
         "equal_metric": "coordinate_z",
+        "target_point_metric": "coordinate",
+    },
+    {
+        "family_id": "parameterized_path_point_reference_entity_distance",
+        "target_type": "path_point",
+        "relation": "point_on_path",
+        "relation_clause_id": "has_parameterized_path_point_set",
+        "relation_target_type": "path",
+        "equal_value_clause_id": "has_parameterized_equal_path_point_metric_value",
+        "target_point_clause_id": "has_path_point_for_reference_distance",
+        "equal_metric": "coordinate_x",
+        "target_point_metric": "coordinate",
+    },
+    {
+        "family_id": "parameterized_path_point_reference_entity_distance",
+        "target_type": "path_point",
+        "relation": "point_on_path",
+        "relation_clause_id": "has_parameterized_path_point_set",
+        "relation_target_type": "path",
+        "equal_value_clause_id": "has_parameterized_equal_path_point_metric_value",
+        "target_point_clause_id": "has_path_point_for_reference_distance",
+        "equal_metric": "coordinate_y",
         "target_point_metric": "coordinate",
     },
     {
@@ -3384,7 +3406,7 @@ def _viable_reference_distances(
             ]
             if spec.selection_mode == "rank":
                 scored = tuple(zip((node.id for node in target_nodes), distances, strict=True))
-                if len(scored) < 3:
+                if len(scored) < 2:
                     continue
                 for aggregation in ("rank_asc", "rank_desc"):
                     for rank in range(2, min(len(scored), MAX_SYNTHESIZED_RANK) + 1):
