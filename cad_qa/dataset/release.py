@@ -52,6 +52,7 @@ def export_release_dataset(
         deduped_rows,
         profile.max_syntax_only_calibration_share,
     )
+    balance_capacity = _release_balance_capacity_report(release_rows, profile)
     protected_prompt_families = (
         {_prompt_family(row) for row in release_rows}
         if profile.enforce_intended_family_coverage
@@ -98,6 +99,7 @@ def export_release_dataset(
     report["excluded_duplicate_prompt_count"] = len(duplicate_exclusions)
     report["excluded_syntax_only_calibration_cap_count"] = len(calibration_cap_exclusions)
     report["excluded_release_balance_cap_count"] = len(balance_cap_exclusions)
+    report["pre_balance_capacity"] = balance_capacity
     write_json(out / "dataset_report.json", report)
     write_json(
         out / "release_exclusions.json",
@@ -114,6 +116,7 @@ def export_release_dataset(
             "duplicate_prompt_exclusions": duplicate_exclusions,
             "syntax_only_calibration_cap_exclusions": calibration_cap_exclusions,
             "release_balance_cap_exclusions": balance_cap_exclusions,
+            "pre_balance_capacity": balance_capacity,
         },
     )
 
@@ -153,6 +156,7 @@ def export_release_dataset(
         "excluded_duplicate_prompt_count": len(duplicate_exclusions),
         "excluded_syntax_only_calibration_cap_count": len(calibration_cap_exclusions),
         "excluded_release_balance_cap_count": len(balance_cap_exclusions),
+        "pre_balance_capacity": balance_capacity,
         "valid": valid,
         "release_tier": profile.name,
         "blocking_release_gates": verifier_report["blocking_gates"],
@@ -168,6 +172,41 @@ def export_release_dataset(
     if not valid and not allow_failing_release_gates:
         raise RuntimeError(f"release gates failed: {verifier_report['blocking_gates']}")
     return result
+
+
+def _release_balance_capacity_report(rows: list[dict[str, Any]], profile: Any) -> dict[str, Any]:
+    """Report whether input rows can satisfy family-share gates before capping."""
+
+    family_counts = Counter(_prompt_family(row) for row in rows)
+    family_floor_only_max_rows = None
+    if family_counts and profile.min_prompt_family_share > 0:
+        family_floor_only_max_rows = min(
+            int(count / profile.min_prompt_family_share + 1e-12)
+            for count in family_counts.values()
+        )
+    min_rows_per_family_for_release = None
+    families_below_min_release_floor: list[dict[str, Any]] = []
+    if profile.min_release_rows is not None:
+        min_rows_per_family_for_release = math.ceil(
+            profile.min_release_rows * profile.min_prompt_family_share - 1e-12
+        )
+        families_below_min_release_floor = [
+            {"prompt_family": family, "count": count, "minimum_required_count": min_rows_per_family_for_release}
+            for family, count in sorted(family_counts.items())
+            if count < min_rows_per_family_for_release
+        ]
+    return {
+        "input_row_count": len(rows),
+        "prompt_family_count": len(family_counts),
+        "prompt_family_counts": dict(sorted(family_counts.items())),
+        "minimum_prompt_family_share": profile.min_prompt_family_share,
+        "maximum_prompt_family_share": profile.max_prompt_family_share,
+        "minimum_release_rows": profile.min_release_rows,
+        "minimum_rows_per_family_for_minimum_release_rows": min_rows_per_family_for_release,
+        "family_floor_only_max_rows": family_floor_only_max_rows,
+        "families_below_minimum_release_floor": families_below_min_release_floor,
+        "passes_family_floor_for_minimum_release_rows": not families_below_min_release_floor,
+    }
 
 
 def _filter_release_valid_rows(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:

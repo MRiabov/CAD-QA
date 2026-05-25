@@ -1478,12 +1478,20 @@ Checked as implemented with remaining scale caveats:
   release row count, split-group coverage, default SFT row count, answer
   entropy, and sampled-parameter balance.
   Rechecking the current CadEvolve-50 release artifact with
-  `--release-tier benchmark-release` blocks release on row count, split group
-  coverage, default SFT row count, prompt-family balance, prompt-template
-  balance, answer entropy, geometry-hop coverage, main BrowseComp hop coverage,
-  default SFT syntax-only cap, syntax-only calibration cap, cross-feature
-  value-bearing coverage, candidate breadth, intended-family coverage,
-  sampled-parameter balance, preview evidence, and family test evidence.
+  `--release-tier benchmark-release` now writes explicit pre-balance capacity
+  diagnostics. The 50-source candidate set has 5,169 deduped release-family
+  rows across 37 generated families, but 25 families have fewer than the 100
+  rows needed to support a 10,000-row benchmark release under the 1% family
+  floor; the family-floor-only maximum is 300 rows before value/cross/template
+  caps. The benchmark export therefore keeps 82 rows after balance caps and
+  still blocks release on row count, split-group coverage, default SFT row
+  count, answer entropy, intended-family coverage, and sampled-parameter
+  balance. The rebuilt CadEvolve-50 graph report also exposes source/extraction
+  coverage directly: with `trace_current` it contains 50 graphs, 7,918 nodes,
+  21,826 relations, and type counters including feature, face, edge,
+  edge-endpoint, material-region, void-region, selector, relation-metric, and
+  snapshot-state coverage, while still showing no path-point/path-segment or
+  kernel-vertex nodes in this source slice.
 - Broaden value-bearing and tolerance-equal coverage beyond the implemented
   core to radius/diameter/angle once those measurements are extracted broadly,
   additional face/endpoint/material/void coordinate combinations, and larger

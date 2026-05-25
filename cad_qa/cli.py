@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import json
 from pathlib import Path
 import sys
@@ -368,12 +369,20 @@ def _cmd_graph_build(args: argparse.Namespace) -> dict[str, Any]:
     graphs = [build_graph(source, trace=traces_by_source.get(source.source_id)) for source in sources]
     args.out.mkdir(parents=True, exist_ok=True)
     write_jsonl(args.out / "graphs.jsonl", graphs)
+    node_type_counts = Counter(node.type for graph in graphs for node in graph.nodes)
+    relation_type_counts = Counter(relation.type for graph in graphs for relation in graph.relations)
+    measurement_scope_counts = Counter(measurement.scope for graph in graphs for measurement in graph.measurements)
+    measurement_name_counts = Counter(measurement.name for graph in graphs for measurement in graph.measurements)
     report = {
         "graph_count": len(graphs),
         "node_count": sum(len(graph.nodes) for graph in graphs),
         "relation_count": sum(len(graph.relations) for graph in graphs),
         "measurement_count": sum(len(graph.measurements) for graph in graphs),
         "diagnostic_count": sum(len(graph.diagnostics) for graph in graphs),
+        "node_type_counts": dict(sorted(node_type_counts.items())),
+        "relation_type_counts": dict(sorted(relation_type_counts.items())),
+        "measurement_scope_counts": dict(sorted(measurement_scope_counts.items())),
+        "measurement_name_counts": dict(sorted(measurement_name_counts.items())),
     }
     write_json(args.out / "graph_report.json", report)
     return report

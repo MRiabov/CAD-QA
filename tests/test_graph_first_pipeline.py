@@ -16,7 +16,7 @@ from cad_qa.dataset.parameter_balance import parameter_balance_report
 from cad_qa.dataset.preview import dataset_preview_evidence_report, preview_evidence_gate_report
 from cad_qa.dataset.public import private_rows, public_private_audit, public_rows, write_public_private_artifacts
 from cad_qa.dataset.quarantine import quarantine_report
-from cad_qa.dataset.release import _cap_release_balance_rows, export_release_dataset
+from cad_qa.dataset.release import _cap_release_balance_rows, _release_balance_capacity_report, export_release_dataset
 from cad_qa.dataset.release_report import (
     intended_family_share_feasibility_report,
     release_balance_report,
@@ -293,6 +293,30 @@ def test_cadevolve_tar_import_writes_source_jsonl(tmp_path: Path) -> None:
     assert loaded[0].metadata["source"] == "cadevolve"
     assert out.with_suffix(".manifest.json").exists()
     assert out.with_suffix(".report.json").exists()
+
+
+def test_graph_build_report_exposes_type_coverage(tmp_path: Path) -> None:
+    sources_path = tmp_path / "sources.jsonl"
+    graph_dir = tmp_path / "graph"
+    write_jsonl(
+        sources_path,
+        [
+            {
+                "source_id": "src_graph_report",
+                "normalized_code": "import cadquery as cq\npart = cq.Workplane('XY').box(1, 2, 3)\n",
+            }
+        ],
+    )
+
+    assert cli_main(["graph", "build", "--sources-jsonl", str(sources_path), "--out", str(graph_dir)]) == 0
+    report = json.loads((graph_dir / "graph_report.json").read_text(encoding="utf-8"))
+
+    assert report["graph_count"] == 1
+    assert report["node_type_counts"]["source"] == 1
+    assert report["node_type_counts"]["feature"] >= 1
+    assert report["relation_type_counts"]["created_by"] >= 1
+    assert report["measurement_scope_counts"]["entity_geometry"] >= 1
+    assert "origin_z" in report["measurement_name_counts"]
 
 
 def test_trace_worker_executes_cadquery_source_or_reports_unavailable(tmp_path: Path) -> None:
@@ -7891,6 +7915,40 @@ def test_release_export_balance_caps_to_satisfy_minimum_family_share() -> None:
     assert len(capped) == 100
     assert any(item["reason"] == "prompt_family_min_share_cap" for item in exclusions)
     assert not report["underrepresented_prompt_families"]
+
+
+def test_release_export_reports_pre_balance_family_capacity() -> None:
+    profile = release_gate_profile("benchmark-release")
+    rows = []
+    for index in range(1001):
+        family = "family_sparse" if index == 1000 else f"family_{index % 10}"
+        rows.append(
+            {
+                "row_id": f"row:src:{index}:{family}",
+                "source_id": f"src_{index}",
+                "prompt": f"geometry prompt {index}",
+                "prompt_template_id": f"template_{index}",
+                "gold_answer": f"entity:{index}",
+                "logical_hop_count": 4,
+                "geometry_hop_count": 4,
+                "static_hop_count": 0,
+                "query_program": {
+                    "query_id": f"graph:src:q{index}:{family}",
+                    "aggregation_metric": "volume",
+                    "clauses": [],
+                },
+            }
+        )
+
+    capacity = _release_balance_capacity_report(rows, profile)
+
+    assert capacity["input_row_count"] == 1001
+    assert capacity["minimum_rows_per_family_for_minimum_release_rows"] == 100
+    assert capacity["family_floor_only_max_rows"] == 100
+    assert not capacity["passes_family_floor_for_minimum_release_rows"]
+    assert capacity["families_below_minimum_release_floor"] == [
+        {"prompt_family": "family_sparse", "count": 1, "minimum_required_count": 100}
+    ]
 
 
 def test_release_export_balance_caps_preserve_available_family_diversity() -> None:

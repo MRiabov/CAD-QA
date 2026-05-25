@@ -637,6 +637,9 @@ epics:
         technical_definition_of_done:
           - Verifier blocks artifacts outside 15%-30% value-bearing, outside 5%-15% cross-feature, below 20 prompt templates, above 5% prompt-template share, below 1,000 unique answers, below 8 entropy bits, or below candidate-breadth targets.
           - Release export deterministically caps overrepresented value-bearing, cross-feature, prompt-family, prompt-template, low-hop, and under-floor prompt-family slices; preserves at least one row for every generated release family; preserves enough value-bearing and cross-feature rows for configured minimum shares when feasible; and writes explicit balance-cap exclusions.
+          - Release export writes pre-balance family-capacity diagnostics that
+            show whether the candidate rows can support the benchmark 10,000-row
+            target while keeping every generated family inside the 1%-10% band.
       - id: "15.5"
         title: Benchmark-release gates for parameter balance, intended-family coverage, split quality, and preview/test evidence
         status: implemented
@@ -658,6 +661,9 @@ epics:
           - Release reports expose when value-bearing-only or
             cross-feature-only release-family counts make the value/cross caps
             infeasible under the 1% family floor.
+          - Graph build reports expose node-type, relation-type,
+            measurement-scope, and measurement-name coverage so CadEvolve
+            source/extraction gaps are directly inspectable.
           - Canonical sampled-reference-entity release families replace
             target-specific reference-distance release-family identities where
             the target entity type can be sampled, keeping the RC10 generated

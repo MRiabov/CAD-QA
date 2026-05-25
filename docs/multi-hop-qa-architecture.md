@@ -175,6 +175,10 @@ A synthesized graph-hop narrowing family is release-ready only when:
 - release reports expose coverage for narrowing predicate families, reference
   anchor types, axes, directions, ranks, final selector metrics, and target
   entity types;
+- release export reports the pre-balance family capacity, including families
+  below the row count required by the benchmark 1%-10% family-share band, so a
+  tiny balanced export cannot hide that the candidate rows are too sparse for a
+  10,000-row benchmark release;
 - intended families that generate zero accepted rows are visible in an
   intended-family manifest and block release until moved to review-only status or
   supplied with enough valid rows.
