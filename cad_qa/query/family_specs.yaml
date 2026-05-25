@@ -64,7 +64,7 @@ families:
     status: release
     target_type: face
     minimum_hops: 3
-    maximum_hops: 3
+    maximum_hops: 4
     parameter_balance:
       required_dimensions:
         - narrowing_predicate_sequence
@@ -82,7 +82,7 @@ families:
     status: release
     target_type: face
     minimum_hops: 3
-    maximum_hops: 3
+    maximum_hops: 4
     parameter_balance:
       required_dimensions:
         - narrowing_predicate_sequence
@@ -625,7 +625,7 @@ families:
     status: release
     target_type: feature
     minimum_hops: 2
-    maximum_hops: 2
+    maximum_hops: 3
     parameter_balance:
       required_dimensions:
         - narrowing_predicate_sequence
@@ -643,7 +643,7 @@ families:
     status: release
     target_type: feature
     minimum_hops: 2
-    maximum_hops: 2
+    maximum_hops: 3
     parameter_balance:
       required_dimensions:
         - narrowing_predicate_sequence
@@ -945,7 +945,7 @@ families:
     status: release
     target_type: edge
     minimum_hops: 3
-    maximum_hops: 3
+    maximum_hops: 4
     parameter_balance:
       required_dimensions:
         - narrowing_predicate_sequence
@@ -963,7 +963,7 @@ families:
     status: release
     target_type: edge
     minimum_hops: 3
-    maximum_hops: 3
+    maximum_hops: 4
     parameter_balance:
       required_dimensions:
         - narrowing_predicate_sequence
@@ -985,7 +985,7 @@ families:
     status: release
     target_type: vertex
     minimum_hops: 3
-    maximum_hops: 3
+    maximum_hops: 4
     parameter_balance:
       required_dimensions:
         - narrowing_predicate_sequence
@@ -1003,7 +1003,7 @@ families:
     status: release
     target_type: vertex
     minimum_hops: 3
-    maximum_hops: 3
+    maximum_hops: 4
     parameter_balance:
       required_dimensions:
         - narrowing_predicate_sequence
@@ -1365,7 +1365,7 @@ families:
     status: release
     target_type: edge_endpoint
     minimum_hops: 3
-    maximum_hops: 3
+    maximum_hops: 4
     parameter_balance:
       required_dimensions:
         - narrowing_predicate_sequence
@@ -1760,7 +1760,7 @@ families:
     status: release
     target_type: path_point
     minimum_hops: 3
-    maximum_hops: 3
+    maximum_hops: 4
     parameter_balance:
       required_dimensions:
         - narrowing_predicate_sequence
@@ -1778,7 +1778,7 @@ families:
     status: release
     target_type: path_point
     minimum_hops: 3
-    maximum_hops: 3
+    maximum_hops: 4
     parameter_balance:
       required_dimensions:
         - narrowing_predicate_sequence
@@ -1807,7 +1807,7 @@ families:
     status: release
     target_type: path_segment
     minimum_hops: 3
-    maximum_hops: 3
+    maximum_hops: 4
     parameter_balance:
       required_dimensions:
         - narrowing_predicate_sequence
@@ -1825,7 +1825,7 @@ families:
     status: release
     target_type: path_segment
     minimum_hops: 3
-    maximum_hops: 3
+    maximum_hops: 4
     parameter_balance:
       required_dimensions:
         - narrowing_predicate_sequence
@@ -2946,7 +2946,7 @@ families:
     status: release
     target_type: material_region
     minimum_hops: 3
-    maximum_hops: 3
+    maximum_hops: 4
     parameter_balance:
       required_dimensions:
         - narrowing_predicate_sequence
@@ -2966,7 +2966,7 @@ families:
     status: release
     target_type: material_region
     minimum_hops: 3
-    maximum_hops: 3
+    maximum_hops: 4
     parameter_balance:
       required_dimensions:
         - narrowing_predicate_sequence
@@ -3186,7 +3186,7 @@ families:
     status: release
     target_type: void_region
     minimum_hops: 3
-    maximum_hops: 3
+    maximum_hops: 4
     parameter_balance:
       required_dimensions:
         - narrowing_predicate_sequence
@@ -3206,7 +3206,7 @@ families:
     status: release
     target_type: void_region
     minimum_hops: 3
-    maximum_hops: 3
+    maximum_hops: 4
     parameter_balance:
       required_dimensions:
         - narrowing_predicate_sequence

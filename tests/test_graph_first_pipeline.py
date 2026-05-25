@@ -4837,6 +4837,56 @@ def test_synthesis_generates_endpoint_and_path_rank_queries() -> None:
         )
 
 
+def test_synthesis_generates_metric_threshold_endpoint_rank_query() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:endpoint-metric-threshold-rank",
+        source={"source_id": "synthetic", "source_code": ""},
+    )
+    for edge_id in ["edge:a", "edge:b", "edge:c", "edge:d", "edge:e"]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+    for endpoint_id, edge_id, coordinate, distance_to_origin in [
+        ("edge_endpoint:a", "edge:a", [0.0, 0.0, 0.0], 1.0),
+        ("edge_endpoint:b", "edge:b", [2.0, 0.0, 1.0], 3.0),
+        ("edge_endpoint:c", "edge:c", [4.0, 1.0, 2.0], 5.0),
+        ("edge_endpoint:d", "edge:d", [6.0, 1.0, 3.0], 7.0),
+        ("edge_endpoint:e", "edge:e", [8.0, 2.0, 4.0], 9.0),
+    ]:
+        graph.add_node(Node(endpoint_id, "edge_endpoint", endpoint_id))
+        graph.add_relation(Relation(endpoint_id, edge_id, "endpoint_of"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate", coordinate, "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_x", coordinate[0], "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_y", coordinate[1], "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
+        graph.add_measurement(Measurement(endpoint_id, "relation_metric", "distance_to_origin", distance_to_origin, "mm"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph, max_per_family=20)
+        if "parameterized_endpoint_rank" in query.query_id
+        and query.sampled_parameters["synthesis_strategy"] == ["bounded_parameterized_metric_compare_rank_v1"]
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+    compare_step = next(step for step in row.candidate_trace["steps"] if step["step"] == "has_parameterized_endpoint_metric_threshold")
+
+    assert resolution.verifier_status == "resolved"
+    assert row.release_ready
+    assert query.clauses[0].relation == "endpoint_of"
+    assert query.clauses[1].kind == "metric_compare"
+    assert query.clauses[1].metric != query.aggregation_metric
+    assert query.clauses[2].kind == "has_measurement"
+    assert query.aggregation in {"rank_asc", "rank_desc"}
+    assert query.aggregation_rank in {2, 3, 4, 5}
+    assert query.sampled_parameters["comparison_operator"] == [query.clauses[1].operator]
+    assert query.sampled_parameters["measurement_value_bucket"]
+    assert len(compare_step["before"]) == 5
+    assert 2 <= len(compare_step["after"]) < len(compare_step["before"])
+    assert len(row.candidate_trace["final_candidates"]) == 1
+    assert row.logical_hop_count == 4
+    assert row.geometry_hop_count == 4
+    assert str(query.clauses[1].value) in row.prompt
+
+
 def test_synthesis_generates_parameterized_kernel_vertex_queries() -> None:
     graph = OntologyGraph(
         graph_id="graph:vertex-synth",

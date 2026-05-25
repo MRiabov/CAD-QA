@@ -531,6 +531,9 @@ epics:
             measured metric-threshold predicates after relation narrowing, so
             sparse relation families can form local candidate subsets instead
             of depending on globally unique relation-only extrema.
+          - Direct extrema/rank synthesis can add measured metric-threshold
+            predicates before the final selector for feature, face, edge,
+            vertex, endpoint, path, material-region, and void-region targets.
       - id: "14.7"
         title: Bounded graph-hop query synthesis layer over ontology graphs
         status: work-in-progress
@@ -557,6 +560,10 @@ epics:
           - Spatial-relation synthesis supports relation plus direct
             metric-threshold graph-hop variants and records
             `spatial_relation_metric_compare_*` strategy metadata.
+          - Direct extrema/rank synthesis supports metric-threshold graph-hop
+            variants and records `bounded_parameterized_metric_compare_*`
+            strategy metadata while preserving one direct variant for
+            single-row smoke synthesis.
           - Review-only explicit fixed-reference distance variants do not pass
             the default release-family filter through canonical sampled-family
             metadata; only generic `*_reference_entity_distance` families map
@@ -582,6 +589,11 @@ epics:
             narrowing increases generated rows for sparse edge spatial-relation
             and endpoint containment-relation families; benchmark-scale balance
             and face/selector bottlenecks remain work-in-progress.
+          - CadEvolve-50 max-per-family=100 evidence shows direct
+            metric-threshold narrowing raises `parameterized_endpoint_rank`,
+            `parameterized_kernel_edge_rank`, and
+            `parameterized_kernel_face_rank` above the 100-row benchmark-family
+            floor before release capping.
           - Reference-distance rank narrowing includes valid two-candidate
             subsets; broader selected-entity count predicates, release-scale
             preview review, and distribution thresholds remain work-in-progress.

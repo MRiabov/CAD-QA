@@ -50,6 +50,9 @@ class ViableExtreme:
     aggregation_rank: int | None = None
     tie_break_metric: str | None = None
     tie_break_aggregation: str | None = None
+    compare_metric: str | None = None
+    compare_operator: str | None = None
+    compare_value: float | None = None
 
 
 @dataclass(frozen=True)
@@ -2095,6 +2098,29 @@ def _sample_viable_choices(
     limit = max(1, max_per_family)
     start = _stable_choice_index(graph_id, family_id, len(viable))
     ordered = [viable[(start + offset) % len(viable)] for offset in range(len(viable))]
+    if any(hasattr(item, "compare_metric") for item in ordered):
+        direct_unrotated = [item for item in viable if getattr(item, "compare_metric", None) is None]
+        direct_start = _stable_choice_index(graph_id, family_id, len(direct_unrotated)) if direct_unrotated else 0
+        direct = [
+            direct_unrotated[(direct_start + offset) % len(direct_unrotated)]
+            for offset in range(len(direct_unrotated))
+        ]
+        compared = [item for item in ordered if getattr(item, "compare_metric", None) is not None]
+        if limit == 1 and direct:
+            return direct[:1]
+        seeded: list[T] = []
+        if direct:
+            seeded.append(direct[0])
+        if compared and len(seeded) < limit:
+            seeded.append(compared[0])
+        seen = {id(item) for item in seeded}
+        for item in ordered:
+            if len(seeded) >= limit:
+                break
+            if id(item) not in seen:
+                seeded.append(item)
+                seen.add(id(item))
+        return seeded
     return ordered[:limit]
 
 
@@ -2115,22 +2141,78 @@ def _viable_extremes(graph: OntologyGraph, spec: ExtremeFamilySpec) -> list[Viab
     relation_candidates = _relation_filtered_candidates(graph, candidates, spec)
     if relation_candidates is None:
         return []
+    viable = _viable_extremes_for_candidates(graph, spec, relation_candidates)
+    for compare_metric in spec.metrics:
+        for operator, value in _metric_thresholds(graph, relation_candidates, compare_metric):
+            compare = metric_compare_predicate(
+                graph,
+                relation_candidates,
+                clause_id=_direct_metric_compare_clause_id(spec),
+                metric=compare_metric,
+                operator=operator,
+                value=value,
+            )
+            if compare is None:
+                continue
+            narrowed = nodes_matching_metric_compare(
+                graph,
+                relation_candidates,
+                metric=compare_metric,
+                operator=operator,
+                value=value,
+            )
+            if len(narrowed) >= len(relation_candidates):
+                continue
+            viable.extend(
+                _viable_extremes_for_candidates(
+                    graph,
+                    spec,
+                    narrowed,
+                    compare_metric=compare_metric,
+                    compare_operator=operator,
+                    compare_value=value,
+                )
+            )
+    return _sort_viable_extremes(viable)
+
+
+def _viable_extremes_for_candidates(
+    graph: OntologyGraph,
+    spec: ExtremeFamilySpec,
+    candidates: list[Node],
+    *,
+    compare_metric: str | None = None,
+    compare_operator: str | None = None,
+    compare_value: float | None = None,
+) -> list[ViableExtreme]:
     viable: list[ViableExtreme] = []
     for metric in spec.metrics:
+        if metric == compare_metric:
+            continue
         measurement = measurement_predicate(
             graph,
-            relation_candidates,
+            candidates,
             clause_id=spec.measurement_clause_id,
             metric=metric,
         )
         if measurement is None:
             continue
-        metric_candidates = _nodes_with_numeric_measurement(graph, relation_candidates, metric)
+        metric_candidates = _nodes_with_numeric_measurement(graph, candidates, metric)
         if len(metric_candidates) < 2:
             continue
         for aggregation in ("argmax", "argmin"):
             if _has_unique_extreme(graph, metric_candidates, metric, aggregation):
-                viable.append(ViableExtreme(spec, metric_candidates, metric, aggregation))
+                viable.append(
+                    ViableExtreme(
+                        spec,
+                        metric_candidates,
+                        metric,
+                        aggregation,
+                        compare_metric=compare_metric,
+                        compare_operator=compare_operator,
+                        compare_value=compare_value,
+                    )
+                )
                 continue
             tied = _extreme_nodes(graph, metric_candidates, metric, aggregation)
             for tie_break_metric, tie_break_aggregation in _viable_tie_breaks(
@@ -2147,19 +2229,12 @@ def _viable_extremes(graph: OntologyGraph, spec: ExtremeFamilySpec) -> list[Viab
                         aggregation,
                         tie_break_metric=tie_break_metric,
                         tie_break_aggregation=tie_break_aggregation,
+                        compare_metric=compare_metric,
+                        compare_operator=compare_operator,
+                        compare_value=compare_value,
                     )
                 )
-    return sorted(
-        viable,
-        key=lambda item: (
-            item.metric,
-            item.aggregation,
-            item.aggregation_rank or 0,
-            item.tie_break_metric or "",
-            item.tie_break_aggregation or "",
-            [node.id for node in item.candidates],
-        ),
-    )
+    return viable
 
 
 def _viable_ranks(graph: OntologyGraph, spec: ExtremeFamilySpec) -> list[ViableExtreme]:
@@ -2169,29 +2244,95 @@ def _viable_ranks(graph: OntologyGraph, spec: ExtremeFamilySpec) -> list[ViableE
     relation_candidates = _relation_filtered_candidates(graph, candidates, spec)
     if relation_candidates is None:
         return []
+    viable = _viable_ranks_for_candidates(graph, spec, relation_candidates)
+    for compare_metric in spec.metrics:
+        for operator, value in _metric_thresholds(graph, relation_candidates, compare_metric):
+            compare = metric_compare_predicate(
+                graph,
+                relation_candidates,
+                clause_id=_direct_metric_compare_clause_id(spec),
+                metric=compare_metric,
+                operator=operator,
+                value=value,
+            )
+            if compare is None:
+                continue
+            narrowed = nodes_matching_metric_compare(
+                graph,
+                relation_candidates,
+                metric=compare_metric,
+                operator=operator,
+                value=value,
+            )
+            if len(narrowed) >= len(relation_candidates):
+                continue
+            viable.extend(
+                _viable_ranks_for_candidates(
+                    graph,
+                    spec,
+                    narrowed,
+                    compare_metric=compare_metric,
+                    compare_operator=operator,
+                    compare_value=value,
+                )
+            )
+    return _sort_viable_extremes(viable)
+
+
+def _viable_ranks_for_candidates(
+    graph: OntologyGraph,
+    spec: ExtremeFamilySpec,
+    candidates: list[Node],
+    *,
+    compare_metric: str | None = None,
+    compare_operator: str | None = None,
+    compare_value: float | None = None,
+) -> list[ViableExtreme]:
     viable: list[ViableExtreme] = []
     for metric in spec.metrics:
+        if metric == compare_metric:
+            continue
         measurement = measurement_predicate(
             graph,
-            relation_candidates,
+            candidates,
             clause_id=spec.measurement_clause_id,
             metric=metric,
         )
         if measurement is None:
             continue
-        metric_candidates = _nodes_with_numeric_measurement(graph, relation_candidates, metric)
+        metric_candidates = _nodes_with_numeric_measurement(graph, candidates, metric)
         if len(metric_candidates) < 3:
             continue
         for aggregation in ("rank_desc", "rank_asc"):
             for rank in range(2, min(len(metric_candidates), MAX_SYNTHESIZED_RANK) + 1):
                 if _has_unique_rank(graph, metric_candidates, metric, aggregation, rank):
-                    viable.append(ViableExtreme(spec, metric_candidates, metric, aggregation, aggregation_rank=rank))
+                    viable.append(
+                        ViableExtreme(
+                            spec,
+                            metric_candidates,
+                            metric,
+                            aggregation,
+                            aggregation_rank=rank,
+                            compare_metric=compare_metric,
+                            compare_operator=compare_operator,
+                            compare_value=compare_value,
+                        )
+                    )
+    return viable
+
+
+def _sort_viable_extremes(viable: list[ViableExtreme]) -> list[ViableExtreme]:
     return sorted(
         viable,
         key=lambda item: (
             item.metric,
             item.aggregation,
             item.aggregation_rank or 0,
+            item.compare_metric or "",
+            item.compare_operator or "",
+            item.compare_value if item.compare_value is not None else 0.0,
+            item.tie_break_metric or "",
+            item.tie_break_aggregation or "",
             [node.id for node in item.candidates],
         ),
     )
@@ -2204,6 +2345,25 @@ def _query_for_extreme(graph: OntologyGraph, viable: ViableExtreme) -> QueryProg
     if spec.relation is not None and relation is None:
         return None
     relation_candidates = _apply_relation_clause(graph, broad_candidates, spec.relation) if spec.relation is not None else broad_candidates
+    compare = None
+    if viable.compare_metric and viable.compare_operator and viable.compare_value is not None:
+        compare = metric_compare_predicate(
+            graph,
+            relation_candidates,
+            clause_id=_direct_metric_compare_clause_id(spec),
+            metric=viable.compare_metric,
+            operator=viable.compare_operator,
+            value=viable.compare_value,
+        )
+        if compare is None:
+            return None
+        relation_candidates = nodes_matching_metric_compare(
+            graph,
+            relation_candidates,
+            metric=viable.compare_metric,
+            operator=viable.compare_operator,
+            value=viable.compare_value,
+        )
     measurement = measurement_predicate(
         graph,
         relation_candidates,
@@ -2226,12 +2386,9 @@ def _query_for_extreme(graph: OntologyGraph, viable: ViableExtreme) -> QueryProg
             "extremum_direction": [direction],
             "predicate_catalog_version": ["v1"],
             "prompt_wording_variant": [_prompt_wording_variant(graph.graph_id, spec.family_id)],
-            "synthesis_strategy": [
-                "bounded_parameterized_rank_v1"
-                if viable.aggregation_rank is not None
-                else "bounded_parameterized_extreme_v1"
-            ],
+            "synthesis_strategy": [_extreme_strategy(viable)],
         },
+        compare.sampled_parameters if compare is not None else {},
         measurement.sampled_parameters,
     )
     if relation is not None:
@@ -2267,6 +2424,7 @@ def _query_for_extreme(graph: OntologyGraph, viable: ViableExtreme) -> QueryProg
             clause
             for clause in (
                 relation.clause if relation is not None else None,
+                compare.clause if compare is not None else None,
                 measurement.clause,
             )
             if clause is not None
@@ -2276,7 +2434,7 @@ def _query_for_extreme(graph: OntologyGraph, viable: ViableExtreme) -> QueryProg
         aggregation_rank=viable.aggregation_rank,
         tie_break_aggregation=viable.tie_break_aggregation,
         tie_break_metric=viable.tie_break_metric,
-        hop_count=2 + int(relation is not None),
+        hop_count=2 + int(relation is not None) + int(compare is not None),
         difficulty="cad_browsecomp",
         min_individual_clause_candidates=2,
         sampled_parameters=sampled,
@@ -4045,13 +4203,42 @@ def _viable_tie_break_metrics(
 
 
 def _relation_metric_compare_clause_id(spec: RelationExtremeFamilySpec) -> str:
-    if spec.target_type == "face":
+    return _metric_compare_clause_id(spec.target_type, spec.measurement_clause_id)
+
+
+def _direct_metric_compare_clause_id(spec: ExtremeFamilySpec) -> str:
+    return _metric_compare_clause_id(spec.target_type, spec.measurement_clause_id)
+
+
+def _metric_compare_clause_id(target_type: str, fallback_measurement_clause_id: str) -> str:
+    if target_type == "feature":
+        return "has_parameterized_feature_metric_threshold"
+    if target_type == "face":
         return "has_parameterized_face_metric_threshold"
-    if spec.target_type == "edge":
+    if target_type == "edge":
         return "has_parameterized_edge_metric_threshold"
-    if spec.target_type == "edge_endpoint":
+    if target_type == "vertex":
+        return "has_parameterized_vertex_metric_threshold"
+    if target_type == "edge_endpoint":
         return "has_parameterized_endpoint_metric_threshold"
-    return f"{spec.measurement_clause_id}_threshold"
+    if target_type == "path_point":
+        return "has_parameterized_path_point_metric_threshold"
+    if target_type == "path_segment":
+        return "has_parameterized_path_segment_metric_threshold"
+    if target_type == "material_region":
+        return "has_parameterized_material_region_metric_threshold"
+    if target_type == "void_region":
+        return "has_parameterized_void_region_metric_threshold"
+    return f"{fallback_measurement_clause_id}_threshold"
+
+
+def _extreme_strategy(viable: ViableExtreme) -> str:
+    prefix = "bounded_parameterized_metric_compare" if viable.compare_metric is not None else "bounded_parameterized"
+    if viable.aggregation_rank is not None:
+        return f"{prefix}_rank_v1"
+    if viable.tie_break_metric is not None:
+        return f"{prefix}_tie_break_extreme_v1"
+    return f"{prefix}_extreme_v1"
 
 
 def _relation_extreme_strategy(viable: ViableRelationExtreme) -> str:

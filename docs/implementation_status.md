@@ -1507,6 +1507,23 @@ Checked as implemented with remaining scale caveats:
   release-ready: it keeps 80 rows after balance caps and blocks on release row
   count, split-group coverage, default SFT row count, answer entropy, candidate
   breadth, intended-family coverage, and sampled-parameter balance.
+  Direct extrema/rank synthesis now uses the same measured metric-threshold
+  narrowing for feature, face, edge, vertex, endpoint, path, material-region,
+  and void-region targets while preserving a direct variant for single-row
+  smoke synthesis. The CadEvolve-50
+  `runs/current_cadevolve50_probe_direct_metric_narrowing/` probe was generated
+  with `--max-per-family 100`, materializes and validates 35,782 rows, and
+  raises several previously sparse direct-rank families above the 100-row
+  benchmark-family floor before release capping:
+  `parameterized_endpoint_rank` has 260 rows,
+  `parameterized_kernel_edge_rank` has 632 rows, and
+  `parameterized_kernel_face_rank` has 193 rows. The reviewed preview at
+  `runs/current_cadevolve50_probe_direct_metric_narrowing/DIRECT_METRIC_NARROWING_PREVIEW.md`
+  shows conventional measurement-threshold clues, preserved distractors, and
+  unique ranked gold answers. A full benchmark export over the 35k-row expanded
+  probe was stopped after several minutes because release capping was too slow;
+  that is recorded as an open release-export performance/scaling issue rather
+  than benchmark readiness evidence.
 - Broaden value-bearing and tolerance-equal coverage beyond the implemented
   core to radius/diameter/angle once those measurements are extracted broadly,
   additional face/endpoint/material/void coordinate combinations, and larger

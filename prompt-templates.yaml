@@ -252,6 +252,10 @@ clause_templates:
     - "The target vertex has a measured {metric_label}."
     - "The target vertex has a known {metric_label}."
     - "The target vertex has a verified {metric_label}."
+  has_parameterized_vertex_metric_threshold:
+    - "The target vertex has {metric_label} {operator_label} {value}."
+    - "The target vertex's {metric_label} is {operator_label} {value}."
+    - "The target vertex satisfies {metric_label} {operator_label} {value}."
   has_parameterized_equal_vertex_metric_value:
     - "The target vertex has {metric_label} equal to {value}."
     - "The target vertex's {metric_label} is {value}."
@@ -299,6 +303,10 @@ clause_templates:
     - "The target point has a measured {metric_label}."
     - "The target point has a known {metric_label}."
     - "The target point has a documented {metric_label}."
+  has_parameterized_path_point_metric_threshold:
+    - "The target point has {metric_label} {operator_label} {value}."
+    - "The target point's {metric_label} is {operator_label} {value}."
+    - "The target point satisfies {metric_label} {operator_label} {value}."
   has_parameterized_equal_path_point_metric_value:
     - "The target path point has {metric_label} equal to {value}."
     - "The target path point's {metric_label} is {value}."
@@ -315,6 +323,10 @@ clause_templates:
     - "The target segment has a measured {metric_label}."
     - "The target segment has a known {metric_label}."
     - "The target segment has a documented {metric_label}."
+  has_parameterized_path_segment_metric_threshold:
+    - "The target segment has {metric_label} {operator_label} {value}."
+    - "The target segment's {metric_label} is {operator_label} {value}."
+    - "The target segment satisfies {metric_label} {operator_label} {value}."
   has_parameterized_equal_path_segment_metric_value:
     - "The target path segment has {metric_label} equal to {value}."
     - "The target path segment's {metric_label} is {value}."
@@ -337,6 +349,10 @@ clause_templates:
     - "The target feature has a measured {metric_label}."
     - "The target feature has a known {metric_label}."
     - "The target feature has a documented {metric_label}."
+  has_parameterized_feature_metric_threshold:
+    - "The target feature has {metric_label} {operator_label} {value}."
+    - "The target feature's {metric_label} is {operator_label} {value}."
+    - "The target feature satisfies {metric_label} {operator_label} {value}."
   has_parameterized_equal_feature_metric_value:
     - "The target feature has {metric_label} equal to {value}."
     - "The target feature's {metric_label} is {value}."
@@ -394,6 +410,10 @@ clause_templates:
     - "The target added-material region has a measured {metric_label}."
     - "The target added-material region has a known {metric_label}."
     - "The target added-material region has a verified {metric_label}."
+  has_parameterized_material_region_metric_threshold:
+    - "The target added-material region has {metric_label} {operator_label} {value}."
+    - "The target added-material region's {metric_label} is {operator_label} {value}."
+    - "The target added-material region satisfies {metric_label} {operator_label} {value}."
   has_region_centroid_for_reference_distance: "The target added-material region has a measured centroid."
   has_region_bbox_center_for_reference_distance: "The target added-material region has a measured bounding-box center."
   has_void_geometry: "The target is a region of material removed by a cut."
@@ -408,6 +428,10 @@ clause_templates:
     - "The target removed-material region has a measured {metric_label}."
     - "The target removed-material region has a known {metric_label}."
     - "The target removed-material region has a verified {metric_label}."
+  has_parameterized_void_region_metric_threshold:
+    - "The target removed-material region has {metric_label} {operator_label} {value}."
+    - "The target removed-material region's {metric_label} is {operator_label} {value}."
+    - "The target removed-material region satisfies {metric_label} {operator_label} {value}."
   has_void_centroid_for_reference_distance: "The target removed-material region has a measured centroid."
   has_void_bbox_center_for_reference_distance: "The target removed-material region has a measured bounding-box center."
   has_void_operation_index: "The target removed-material region has a comparable modeling-sequence position."
