@@ -8177,6 +8177,81 @@ def test_release_export_balance_caps_to_satisfy_minimum_family_share() -> None:
     assert not report["underrepresented_prompt_families"]
 
 
+def test_benchmark_release_balance_cap_does_not_shrink_feasible_rows_below_release_floor() -> None:
+    rows = []
+    for family_index in range(39):
+        family = f"family_{family_index}"
+        row_count = 1000 if family_index < 10 else 100
+        for row_index in range(row_count):
+            index = len(rows)
+            rows.append(
+                {
+                    "row_id": f"row:src:{index}:{family}",
+                    "source_id": f"src_{index}",
+                    "prompt": f"geometry prompt {index}",
+                    "prompt_template_id": f"template_{index}",
+                    "gold_answer": f"entity:{index}",
+                    "logical_hop_count": 4,
+                    "geometry_hop_count": 4,
+                    "static_hop_count": 0,
+                    "query_program": {
+                        "query_id": f"graph:src:q{index}:{family}",
+                        "aggregation_metric": "volume",
+                        "clauses": [],
+                    },
+                }
+            )
+
+    profile = release_gate_profile("benchmark-release")
+    capped, exclusions = _cap_release_balance_rows(rows, profile)
+    report = release_balance_report(capped, release_tier="benchmark-release")
+
+    assert len(capped) >= profile.min_release_rows
+    assert any(item["reason"] == "prompt_family_min_share_cap" for item in exclusions)
+    assert report["passes_prompt_family_balance"]
+    assert report["largest_prompt_family_share"] <= profile.max_prompt_family_share
+    assert not report["underrepresented_prompt_families"]
+
+
+def test_benchmark_release_max_caps_do_not_shrink_feasible_rows_below_release_floor() -> None:
+    rows = []
+    for family_index in range(39):
+        family = f"family_{family_index}"
+        row_count = 1000 if family_index < 10 else 100
+        for row_index in range(row_count):
+            index = len(rows)
+            clauses = []
+            if index < 5000:
+                clauses.append({"kind": "has_measurement", "metric": "volume", "value": float(index)})
+            rows.append(
+                {
+                    "row_id": f"row:src:{index}:{family}",
+                    "source_id": f"src_{index}",
+                    "prompt": f"geometry prompt {index}",
+                    "prompt_template_id": f"template_{index}",
+                    "gold_answer": f"entity:{index}",
+                    "logical_hop_count": 4,
+                    "geometry_hop_count": 4,
+                    "static_hop_count": 0,
+                    "query_program": {
+                        "query_id": f"graph:src:q{index}:{family}",
+                        "aggregation_metric": "volume",
+                        "clauses": clauses,
+                    },
+                }
+            )
+
+    profile = release_gate_profile("benchmark-release")
+    capped, exclusions = _cap_release_balance_rows(rows, profile)
+    report = release_balance_report(capped, release_tier="benchmark-release")
+
+    assert len(capped) >= profile.min_release_rows
+    assert any(item["reason"] == "value_bearing_measurement_cap" for item in exclusions)
+    assert report["passes_value_bearing_measurement_coverage"]
+    assert report["passes_prompt_family_balance"]
+    assert not report["underrepresented_prompt_families"]
+
+
 def test_release_export_reports_pre_balance_family_capacity() -> None:
     profile = release_gate_profile("benchmark-release")
     rows = []

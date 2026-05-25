@@ -1544,13 +1544,30 @@ Checked as implemented with remaining scale caveats:
   `selected_count` extrema or rank buckets are tied: extraction writes
   selector-level aggregate measurements such as longest selected edge length
   and selected-edge midpoint coordinate extrema, and synthesis can use those as
-  final tie-breaks after the measured selected-entity count. Applying those
-  aggregate measurements to the same CadEvolve-50 graph slice in memory raises
-  `parameterized_kernel_edge_selector_count` from 58 to 358 rows and
-  `parameterized_kernel_edge_selector_count_rank` from 58 to 358 rows before
-  release capping under `max_per_family=100`; regenerated graph artifacts are
-  still required before those counts can replace the previous release-export
-  evidence.
+  final tie-breaks after the measured selected-entity count. Regenerating the
+  CadEvolve-50 graph at
+  `runs/current_cadevolve50_selector_tiebreak/graph/` produces 50 graphs,
+  7,918 nodes, 21,826 relations, 61,624 measurements, and 650
+  `selection_geometry` measurements. The matching synthesized/materialized
+  dataset has 41,665 rows across 39 release families; selector/count and
+  material-region families that previously blocked the 10k family floor now
+  have enough pre-balance capacity:
+  `parameterized_equal_material_region_metric_extreme` has 368 rows,
+  `parameterized_kernel_edge_selector_count` has 358 rows,
+  `parameterized_kernel_edge_selector_count_rank` has 358 rows,
+  `parameterized_kernel_face_selector_count` has 300 rows, and
+  `parameterized_kernel_face_selector_count_rank` has 300 rows before release
+  capping. The benchmark export capper now preserves the 10,000-row release
+  floor when feasible while enforcing 1%-10% family balance; the refreshed
+  export at
+  `runs/current_cadevolve50_selector_tiebreak/release_export_capfix/` keeps
+  10,000 rows and passes release row count, default SFT row count,
+  prompt-family balance, prompt-template balance, geometry-critical dominance,
+  geometry-hop coverage, candidate breadth, value-bearing measurement coverage
+  at 22.49%, cross-feature value-bearing coverage at 5.0%, and
+  preview-evidence gates. Remaining blockers are split-group coverage,
+  answer-diversity coverage, intended-family coverage, and sampled parameter
+  balance.
 - Broaden value-bearing and tolerance-equal coverage beyond the implemented
   core to radius/diameter/angle once those measurements are extracted broadly,
   additional face/endpoint/material/void coordinate combinations, and larger

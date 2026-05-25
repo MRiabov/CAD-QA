@@ -601,16 +601,21 @@ epics:
           - Selector-count synthesis can resolve tied selected-count
             extrema/ranks with selector-level geometry aggregates such as
             longest selected edge length and selected-edge midpoint coordinate
-            extrema; in-memory CadEvolve-50 evidence raises edge
-            selector-count and selector-count-rank capacity from 58 to 358
-            rows each before release capping once graphs include those
-            aggregate measurements.
-          - Expanded benchmark release export over the 35k-row direct-metric
-            probe now completes and writes reviewed preview evidence; the
-            resulting 40-row capped artifact is still blocked by benchmark row
-            count, value-bearing coverage, intended-family coverage,
-            parameter-balance, split-group, default-SFT, and answer-entropy
-            gates.
+            extrema; regenerated CadEvolve-50 graph evidence includes 650
+            selector-geometry measurements, and the matching 41,665-row
+            synthesized/materialized dataset raises edge selector-count and
+            selector-count-rank capacity to 358 rows each, face selector-count
+            capacity to 300 rows, and face selector-count-rank capacity to 300
+            rows before release capping.
+          - Benchmark export over the regenerated CadEvolve-50 selector
+            tie-break dataset preserves the feasible 10,000-row release floor
+            while enforcing family/template/value-bearing balance and writes
+            preview evidence; the refreshed artifact passes
+            row-count/default-SFT, prompt-family/template balance,
+            value-bearing and cross-feature coverage, geometry-critical,
+            geometry-hop, candidate-breadth, and preview-evidence gates, but
+            remains blocked by intended-family coverage, parameter-balance,
+            split-group, and answer-diversity gates.
           - Reference-distance rank narrowing includes valid two-candidate
             subsets; broader selected-entity count predicates, release-scale
             preview review, and distribution thresholds remain work-in-progress.
@@ -678,6 +683,9 @@ epics:
         technical_definition_of_done:
           - Verifier blocks artifacts outside 15%-30% value-bearing, outside 5%-15% cross-feature, below 20 prompt templates, above 5% prompt-template share, below 1,000 unique answers, below 8 entropy bits, or below candidate-breadth targets.
           - Release export deterministically caps overrepresented value-bearing, cross-feature, prompt-family, prompt-template, low-hop, and under-floor prompt-family slices; preserves at least one row for every generated release family; preserves enough value-bearing and cross-feature rows for configured minimum shares when feasible; and writes explicit balance-cap exclusions.
+          - Release export preserves the configured benchmark release row floor
+            while applying share caps when the pre-balance candidate pool can
+            satisfy both the floor and the relevant balance constraints.
           - Release export writes pre-balance family-capacity diagnostics that
             show whether the candidate rows can support the benchmark 10,000-row
             target while keeping every generated family inside the 1%-10% band.

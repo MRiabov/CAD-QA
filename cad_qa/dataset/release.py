@@ -331,6 +331,11 @@ def _cap_release_balance_rows(
 
     if len(rows) < profile.min_applicable_rows:
         return rows, []
+    release_floor = (
+        profile.min_release_rows
+        if profile.min_release_rows is not None and len(rows) >= profile.min_release_rows
+        else None
+    )
     kept = list(rows)
     exclusions: list[dict[str, Any]] = []
     for _ in range(len(rows)):
@@ -343,6 +348,7 @@ def _cap_release_balance_rows(
             reason="cross_feature_value_bearing_cap",
             prefer_keep=_high_hop_keep_priority,
             protected_prompt_families=protected_prompt_families,
+            min_total_rows=release_floor,
         )
         exclusions.extend(dropped)
         kept, dropped = _cap_boolean_share_rows(
@@ -353,6 +359,7 @@ def _cap_release_balance_rows(
             reason="value_bearing_measurement_cap",
             prefer_keep=_cross_feature_keep_priority,
             protected_prompt_families=protected_prompt_families,
+            min_total_rows=release_floor,
         )
         exclusions.extend(dropped)
         kept, dropped = _cap_boolean_min_share_rows(
@@ -362,6 +369,7 @@ def _cap_release_balance_rows(
             min_prompt_family_share=profile.min_prompt_family_share,
             reason="main_browsecomp_hop_cap",
             protected_prompt_families=protected_prompt_families,
+            min_total_rows=release_floor,
         )
         exclusions.extend(dropped)
         kept, dropped = _cap_group_share_rows(
@@ -369,6 +377,7 @@ def _cap_release_balance_rows(
             group_key=_prompt_family,
             max_share=profile.max_prompt_family_share,
             reason="prompt_family_share_cap",
+            min_total_rows=release_floor,
         )
         exclusions.extend(dropped)
         kept, dropped = _cap_group_share_rows(
@@ -376,6 +385,7 @@ def _cap_release_balance_rows(
             group_key=_prompt_template,
             max_share=profile.max_prompt_template_share,
             reason="prompt_template_share_cap",
+            min_total_rows=release_floor,
         )
         exclusions.extend(dropped)
         kept, dropped = _cap_group_min_share_rows(
@@ -383,9 +393,14 @@ def _cap_release_balance_rows(
             group_key=_prompt_family,
             min_share=profile.min_prompt_family_share,
             reason="prompt_family_min_share_cap",
+            min_total_rows=release_floor,
             protected_boolean_minimums=[
                 (_is_cross_feature_value_bearing_row, profile.min_cross_feature_value_bearing_share),
                 (_is_value_bearing_measurement_row, profile.min_value_bearing_measurement_share),
+            ],
+            protected_boolean_maximums=[
+                (_is_cross_feature_value_bearing_row, profile.max_cross_feature_value_bearing_share),
+                (_is_value_bearing_measurement_row, profile.max_value_bearing_measurement_share),
             ],
         )
         exclusions.extend(dropped)
@@ -396,6 +411,7 @@ def _cap_release_balance_rows(
             min_prompt_family_share=profile.min_prompt_family_share,
             reason="cross_feature_value_bearing_min_share_cap",
             protected_prompt_families=protected_prompt_families,
+            min_total_rows=release_floor,
         )
         exclusions.extend(dropped)
         kept, dropped = _cap_boolean_min_share_rows(
@@ -405,6 +421,7 @@ def _cap_release_balance_rows(
             min_prompt_family_share=profile.min_prompt_family_share,
             reason="value_bearing_measurement_min_share_cap",
             protected_prompt_families=protected_prompt_families,
+            min_total_rows=release_floor,
         )
         exclusions.extend(dropped)
         if len(kept) == before:
@@ -421,12 +438,15 @@ def _cap_boolean_share_rows(
     reason: str,
     prefer_keep: Any | None = None,
     protected_prompt_families: set[str] | None = None,
+    min_total_rows: int | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     if max_share is None:
         return rows, []
     matched = [row for row in rows if predicate(row)]
     other_count = len(rows) - len(matched)
     allowed_count = _allowed_share_count(other_count, max_share)
+    if min_total_rows is not None and other_count + allowed_count < min_total_rows:
+        allowed_count = min(len(matched), max(allowed_count, min_total_rows - other_count))
     if len(matched) <= allowed_count:
         return rows, []
     key = prefer_keep or _stable_row_key
@@ -456,6 +476,7 @@ def _cap_boolean_min_share_rows(
     min_prompt_family_share: float | None = None,
     reason: str,
     protected_prompt_families: set[str] | None = None,
+    min_total_rows: int | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     if min_share is None or min_share <= 0:
         return rows, []
@@ -464,6 +485,8 @@ def _cap_boolean_min_share_rows(
     if not matched or len(matched) / len(rows) >= min_share:
         return rows, []
     allowed_unmatched_count = int((len(matched) * (1 - min_share)) / min_share + 1e-12)
+    if min_total_rows is not None and len(matched) + allowed_unmatched_count < min_total_rows:
+        return rows, []
     if len(unmatched) <= allowed_unmatched_count:
         return rows, []
     kept_unmatched = _keep_rows_preserving_prompt_families(
@@ -490,6 +513,7 @@ def _cap_group_share_rows(
     group_key: Any,
     max_share: float,
     reason: str,
+    min_total_rows: int | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     if max_share <= 0:
         return rows, []
@@ -506,6 +530,11 @@ def _cap_group_share_rows(
             continue
         other_count = len(kept_ids) - len(current_group_rows)
         allowed_count = max(1, _allowed_share_count(other_count, max_share))
+        if min_total_rows is not None and other_count + allowed_count < min_total_rows:
+            allowed_count = min(
+                len(current_group_rows),
+                max(allowed_count, min_total_rows - other_count),
+            )
         if len(current_group_rows) <= allowed_count:
             continue
         kept_group_rows = sorted(current_group_rows, key=_stable_row_key)[:allowed_count]
@@ -527,6 +556,8 @@ def _cap_group_min_share_rows(
     min_share: float,
     reason: str,
     protected_boolean_minimums: list[tuple[Any, float | None]] | None = None,
+    protected_boolean_maximums: list[tuple[Any, float | None]] | None = None,
+    min_total_rows: int | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     if min_share <= 0 or not rows:
         return rows, []
@@ -542,6 +573,9 @@ def _cap_group_min_share_rows(
         if not underrepresented:
             break
         target_total = min(int(len(group_rows) / min_share + 1e-12) for group_rows in underrepresented.values())
+        if min_total_rows is not None and target_total < min_total_rows:
+            break
+        minimum_group_rows_after = max(1, math.ceil(min_share * target_total - 1e-12))
         drop_count = len(kept) - target_total
         if drop_count <= 0:
             break
@@ -550,18 +584,37 @@ def _cap_group_min_share_rows(
             target_total=target_total,
             protected_boolean_minimums=protected_boolean_minimums,
         )
+        protected_maximums = _protected_boolean_maximum_counts(
+            kept,
+            target_total=target_total,
+            protected_boolean_maximums=protected_boolean_maximums,
+        )
         protected_drops = [0 for _predicate, _minimum, _current in protected_minimums]
         protected_groups = set(underrepresented)
         dropped: list[dict[str, Any]] = []
         dropped_by_group: Counter[str] = Counter()
-        for group, group_rows in sorted(groups.items(), key=lambda item: (-len(item[1]), item[0])):
+        for group, group_rows in sorted(
+            groups.items(),
+            key=lambda item: (
+                -sum(_protected_boolean_maximum_drop_score(row, protected_maximums) for row in item[1]),
+                -len(item[1]),
+                item[0],
+            ),
+        ):
             if group in protected_groups:
                 continue
             group_drop_count = dropped_by_group[group]
-            for row in sorted(group_rows, key=_stable_row_key, reverse=True):
+            for row in sorted(
+                group_rows,
+                key=lambda row: (
+                    _protected_boolean_maximum_drop_score(row, protected_maximums),
+                    _stable_row_key(row),
+                ),
+                reverse=True,
+            ):
                 if len(dropped) >= drop_count:
                     break
-                if len(group_rows) - group_drop_count <= 1:
+                if len(group_rows) - group_drop_count <= minimum_group_rows_after:
                     break
                 if _would_violate_protected_boolean_minimum(row, protected_minimums, protected_drops):
                     continue
@@ -599,6 +652,32 @@ def _protected_boolean_minimum_counts(
         if current_count > minimum_count:
             protected.append((predicate, minimum_count, current_count))
     return protected
+
+
+def _protected_boolean_maximum_counts(
+    rows: list[dict[str, Any]],
+    *,
+    target_total: int,
+    protected_boolean_maximums: list[tuple[Any, float | None]] | None,
+) -> list[tuple[Any, int, int]]:
+    protected: list[tuple[Any, int, int]] = []
+    if not protected_boolean_maximums:
+        return protected
+    for predicate, max_share in protected_boolean_maximums:
+        if max_share is None or max_share <= 0:
+            continue
+        maximum_count = math.floor(max_share * target_total + 1e-12)
+        current_count = sum(1 for row in rows if predicate(row))
+        if current_count > maximum_count:
+            protected.append((predicate, maximum_count, current_count))
+    return protected
+
+
+def _protected_boolean_maximum_drop_score(
+    row: dict[str, Any],
+    protected_maximums: list[tuple[Any, int, int]],
+) -> int:
+    return sum(1 for predicate, _maximum_count, _current_count in protected_maximums if predicate(row))
 
 
 def _would_violate_protected_boolean_minimum(
