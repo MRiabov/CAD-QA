@@ -1540,6 +1540,17 @@ Checked as implemented with remaining scale caveats:
   split-group coverage, default SFT row count, answer entropy, value-bearing
   measurement coverage, intended-family coverage, and sampled-parameter balance
   until the probe is regenerated end-to-end.
+  Selector-count synthesis now also supports geometry tie-breaks when
+  `selected_count` extrema or rank buckets are tied: extraction writes
+  selector-level aggregate measurements such as longest selected edge length
+  and selected-edge midpoint coordinate extrema, and synthesis can use those as
+  final tie-breaks after the measured selected-entity count. Applying those
+  aggregate measurements to the same CadEvolve-50 graph slice in memory raises
+  `parameterized_kernel_edge_selector_count` from 58 to 358 rows and
+  `parameterized_kernel_edge_selector_count_rank` from 58 to 358 rows before
+  release capping under `max_per_family=100`; regenerated graph artifacts are
+  still required before those counts can replace the previous release-export
+  evidence.
 - Broaden value-bearing and tolerance-equal coverage beyond the implemented
   core to radius/diameter/angle once those measurements are extracted broadly,
   additional face/endpoint/material/void coordinate combinations, and larger

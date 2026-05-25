@@ -1654,7 +1654,7 @@ families:
         selected_entity_type: [edge]
         narrowing_mode: [related_metric_compare, selector_relation]
         selector_relation: [same_selected_entity_as]
-    notes: Synthesized selector-count family that narrows by selected-edge geometry and, when available, same-selection relations before sampling min/max count.
+    notes: Synthesized selector-count family that narrows by selected-edge geometry and, when available, same-selection relations before sampling min/max count; tied count extrema can be resolved by geometry summaries of the selected edges.
   - id: parameterized_kernel_edge_selector_count_rank
     status: release
     target_type: selector
@@ -1683,7 +1683,7 @@ families:
         selected_entity_type: [edge]
         narrowing_mode: [related_metric_compare, selector_relation]
         selector_relation: [same_selected_entity_as]
-    notes: Synthesized selector-count family that narrows by selected-edge geometry and selects a sampled rank by measured selected-entity count.
+    notes: Synthesized selector-count family that narrows by selected-edge geometry and selects a sampled rank by measured selected-entity count; tied rank buckets can be resolved by geometry summaries of the selected edges.
   - id: parameterized_kernel_vertex_selector_count
     status: release
     target_type: selector

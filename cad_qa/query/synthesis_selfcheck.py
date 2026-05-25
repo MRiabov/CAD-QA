@@ -201,6 +201,7 @@ def synthesis_selfcheck_graphs() -> list[OntologyGraph]:
         _face_selector_relation_count_graph(),
         _edge_selector_relation_count_graph(),
         _edge_selector_equal_metric_count_graph(),
+        _edge_selector_tie_break_count_graph(),
     ]
 
 
@@ -2078,5 +2079,37 @@ def _edge_selector_equal_metric_count_graph() -> OntologyGraph:
         graph.add_node(Node(edge_id, "edge", edge_id))
         graph.add_relation(Relation(selector_id, edge_id, "has_kernel_stable_edge_id"))
         graph.add_measurement(Measurement(selector_id, "snapshot_state", "selected_count", selected_count))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint_y, "mm"))
+    return graph
+
+
+def _edge_selector_tie_break_count_graph() -> OntologyGraph:
+    graph = OntologyGraph(
+        graph_id="graph:selfcheck-edge-selector-count-tie-break",
+        source={
+            "source_id": "selfcheck-edge-selector-count-tie-break",
+            "source_code": (
+                "import cadquery as cq\n"
+                "box = cq.Workplane(\"XY\").box(10, 6, 4)\n"
+                "sel_a = box.edges(\"<Y\")\n"
+                "sel_b = box.edges(\"|Y\")\n"
+                "sel_c = box.edges(\">Y\")\n"
+            ),
+        },
+    )
+    for selector_id, midpoint_y, selected_edge_max_length in [
+        ("selector:a", -4.0, 6.0),
+        ("selector:b", -1.0, 9.0),
+        ("selector:c", 2.0, 5.0),
+        ("selector:d", 5.0, 7.0),
+    ]:
+        edge_id = f"edge:{selector_id.rsplit(':', 1)[-1]}"
+        graph.add_node(Node(selector_id, "selector", selector_id))
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(selector_id, edge_id, "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(selector_id, "snapshot_state", "selected_count", 4))
+        graph.add_measurement(
+            Measurement(selector_id, "selection_geometry", "selected_edge_max_edge_length", selected_edge_max_length, "mm")
+        )
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint_y, "mm"))
     return graph

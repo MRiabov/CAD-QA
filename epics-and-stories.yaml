@@ -598,6 +598,13 @@ epics:
             X/Y/Z for both equal-measurement narrowing and final measured
             selection, raising the CadEvolve-50 viable count from 39 to 337
             resolved release-ready rows before release capping.
+          - Selector-count synthesis can resolve tied selected-count
+            extrema/ranks with selector-level geometry aggregates such as
+            longest selected edge length and selected-edge midpoint coordinate
+            extrema; in-memory CadEvolve-50 evidence raises edge
+            selector-count and selector-count-rank capacity from 58 to 358
+            rows each before release capping once graphs include those
+            aggregate measurements.
           - Expanded benchmark release export over the 35k-row direct-metric
             probe now completes and writes reviewed preview evidence; the
             resulting 40-row capped artifact is still blocked by benchmark row

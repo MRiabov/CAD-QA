@@ -1660,6 +1660,15 @@ def test_kernel_edge_selector_trace_produces_release_grade_edge_identity() -> No
     assert graph.measurements_for(kernel_edges[0].id, "bbox")
     assert graph.measurements_for(kernel_edges[0].id, "midpoint")
     assert graph.measurements_for(kernel_edges[0].id, "midpoint_distance_to_origin")
+    assert any(
+        graph.measurements_for(selector.id, "selected_edge_max_edge_length")
+        for selector in graph.nodes_by_type("selector")
+    )
+    assert any(
+        measurement.value == 3.0
+        for selector in graph.nodes_by_type("selector")
+        for measurement in graph.measurements_for(selector.id, "selected_edge_max_edge_length")
+    )
     assert graph.measurements_for(kernel_endpoints[0].id, "coordinate_z")
     assert graph.measurements_for(kernel_endpoints[0].id, "distance_to_origin")
     assert graph.measurements_for(kernel_edges[0].id, "dominant_axis")
@@ -7470,6 +7479,50 @@ def test_synthesis_generates_relation_narrowed_edge_selector_count_query() -> No
     assert "selects the same model entity as" in row.prompt
     assert len(row.candidate_trace["steps"][2]["after"]) == 2
     assert len(row.candidate_trace["final_candidates"]) == 1
+
+
+def test_synthesis_generates_tie_break_edge_selector_count_query() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:edge-selector-count-tie-break",
+        source={"source_id": "synthetic", "source_code": ""},
+    )
+    for selector_id, midpoint_y, selected_edge_max_length in [
+        ("selector:a", -4.0, 6.0),
+        ("selector:b", -1.0, 9.0),
+        ("selector:c", 2.0, 5.0),
+        ("selector:d", 5.0, 7.0),
+    ]:
+        edge_id = f"edge:{selector_id.rsplit(':', 1)[-1]}"
+        graph.add_node(Node(selector_id, "selector", selector_id))
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(selector_id, edge_id, "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(selector_id, "snapshot_state", "selected_count", 4))
+        graph.add_measurement(
+            Measurement(selector_id, "selection_geometry", "selected_edge_max_edge_length", selected_edge_max_length)
+        )
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint_y, "mm"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph, max_per_family=10)
+        if query.query_id.endswith("parameterized_kernel_edge_selector_count")
+        and query.tie_break_metric == "selected_edge_max_edge_length"
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+    tie_break_step = row.candidate_trace["steps"][-1]
+
+    assert resolution.verifier_status == "resolved"
+    assert resolution.gold_answer in {"selector:a", "selector:b", "selector:c", "selector:d"}
+    assert row.release_ready
+    assert query.aggregation_metric == "selected_count"
+    assert query.tie_break_aggregation in {"argmax", "argmin"}
+    assert query.sampled_parameters["tie_break_metric"] == ["selected_edge_max_edge_length"]
+    assert query.sampled_parameters["synthesis_strategy"] == ["selector_count_narrowing_tie_break_v1"]
+    assert tie_break_step["step"] == "tie_break_aggregation"
+    assert len(tie_break_step["before"]) >= 2
+    assert tie_break_step["after"] == [resolution.gold_answer]
+    assert "longest selected edge length" in row.prompt
 
 
 def test_synthesis_generates_ranked_selector_count_queries() -> None:

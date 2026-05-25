@@ -66,6 +66,7 @@ class SelectorCountFamilySpec:
     selected_count_clause_id: str
     related_metrics: tuple[str, ...]
     selector_relations: tuple[str, ...] = ()
+    selector_tie_break_metrics: tuple[str, ...] = ()
     allow_rank: bool = False
 
 
@@ -79,6 +80,8 @@ class ViableSelectorCount:
     candidate_ids: tuple[str, ...]
     selector_relation: str | None = None
     aggregation_rank: int | None = None
+    tie_break_metric: str | None = None
+    tie_break_aggregation: str | None = None
 
 
 @dataclass(frozen=True)
@@ -493,6 +496,16 @@ SELECTOR_COUNT_FAMILY_SPECS = (
             "face_area",
         ),
         selector_relations=("same_selected_face_as", "same_selected_entity_as"),
+        selector_tie_break_metrics=(
+            "selected_face_max_coordinate_x",
+            "selected_face_min_coordinate_x",
+            "selected_face_max_coordinate_y",
+            "selected_face_min_coordinate_y",
+            "selected_face_max_coordinate_z",
+            "selected_face_min_coordinate_z",
+            "selected_face_max_face_area",
+            "selected_face_min_face_area",
+        ),
     ),
     SelectorCountFamilySpec(
         family_id="parameterized_kernel_edge_selector_count",
@@ -510,6 +523,18 @@ SELECTOR_COUNT_FAMILY_SPECS = (
             "edge_length",
         ),
         selector_relations=("same_selected_entity_as",),
+        selector_tie_break_metrics=(
+            "selected_edge_max_midpoint_x",
+            "selected_edge_min_midpoint_x",
+            "selected_edge_max_midpoint_y",
+            "selected_edge_min_midpoint_y",
+            "selected_edge_max_midpoint_z",
+            "selected_edge_min_midpoint_z",
+            "selected_edge_max_edge_length",
+            "selected_edge_min_edge_length",
+            "selected_edge_max_midpoint_distance_to_origin",
+            "selected_edge_min_midpoint_distance_to_origin",
+        ),
     ),
     SelectorCountFamilySpec(
         family_id="parameterized_kernel_vertex_selector_count",
@@ -526,6 +551,16 @@ SELECTOR_COUNT_FAMILY_SPECS = (
             "distance_to_origin",
         ),
         selector_relations=("same_selected_entity_as",),
+        selector_tie_break_metrics=(
+            "selected_vertex_max_coordinate_x",
+            "selected_vertex_min_coordinate_x",
+            "selected_vertex_max_coordinate_y",
+            "selected_vertex_min_coordinate_y",
+            "selected_vertex_max_coordinate_z",
+            "selected_vertex_min_coordinate_z",
+            "selected_vertex_max_distance_to_origin",
+            "selected_vertex_min_distance_to_origin",
+        ),
     ),
 )
 
@@ -546,6 +581,16 @@ SELECTOR_COUNT_RANK_FAMILY_SPECS = (
             "face_area",
         ),
         selector_relations=("same_selected_face_as", "same_selected_entity_as"),
+        selector_tie_break_metrics=(
+            "selected_face_max_coordinate_x",
+            "selected_face_min_coordinate_x",
+            "selected_face_max_coordinate_y",
+            "selected_face_min_coordinate_y",
+            "selected_face_max_coordinate_z",
+            "selected_face_min_coordinate_z",
+            "selected_face_max_face_area",
+            "selected_face_min_face_area",
+        ),
         allow_rank=True,
     ),
     SelectorCountFamilySpec(
@@ -564,6 +609,18 @@ SELECTOR_COUNT_RANK_FAMILY_SPECS = (
             "edge_length",
         ),
         selector_relations=("same_selected_entity_as",),
+        selector_tie_break_metrics=(
+            "selected_edge_max_midpoint_x",
+            "selected_edge_min_midpoint_x",
+            "selected_edge_max_midpoint_y",
+            "selected_edge_min_midpoint_y",
+            "selected_edge_max_midpoint_z",
+            "selected_edge_min_midpoint_z",
+            "selected_edge_max_edge_length",
+            "selected_edge_min_edge_length",
+            "selected_edge_max_midpoint_distance_to_origin",
+            "selected_edge_min_midpoint_distance_to_origin",
+        ),
         allow_rank=True,
     ),
     SelectorCountFamilySpec(
@@ -581,6 +638,16 @@ SELECTOR_COUNT_RANK_FAMILY_SPECS = (
             "distance_to_origin",
         ),
         selector_relations=("same_selected_entity_as",),
+        selector_tie_break_metrics=(
+            "selected_vertex_max_coordinate_x",
+            "selected_vertex_min_coordinate_x",
+            "selected_vertex_max_coordinate_y",
+            "selected_vertex_min_coordinate_y",
+            "selected_vertex_max_coordinate_z",
+            "selected_vertex_min_coordinate_z",
+            "selected_vertex_max_distance_to_origin",
+            "selected_vertex_min_distance_to_origin",
+        ),
         allow_rank=True,
     ),
 )
@@ -2668,6 +2735,27 @@ def _viable_selector_counts(graph: OntologyGraph, spec: SelectorCountFamilySpec)
                                     selector_relation=selector_relation,
                                 )
                             )
+                            continue
+                        tied = _extreme_nodes(graph, narrowed, "selected_count", aggregation)
+                        for tie_break_metric, tie_break_aggregation in _viable_tie_break_metrics(
+                            graph,
+                            spec.selector_tie_break_metrics,
+                            tied,
+                            primary_metric="selected_count",
+                        ):
+                            viable.append(
+                                ViableSelectorCount(
+                                    spec=spec,
+                                    metric=metric,
+                                    operator=operator,
+                                    value=value,
+                                    aggregation=aggregation,
+                                    candidate_ids=tuple(node.id for node in narrowed),
+                                    selector_relation=selector_relation,
+                                    tie_break_metric=tie_break_metric,
+                                    tie_break_aggregation=tie_break_aggregation,
+                                )
+                            )
                 if spec.allow_rank:
                     for aggregation in ("rank_desc", "rank_asc"):
                         for rank in range(2, min(len(narrowed), MAX_SYNTHESIZED_RANK) + 1):
@@ -2684,6 +2772,28 @@ def _viable_selector_counts(graph: OntologyGraph, spec: SelectorCountFamilySpec)
                                         aggregation_rank=rank,
                                     )
                                 )
+                                continue
+                            tied = _rank_nodes(graph, narrowed, "selected_count", aggregation, rank)
+                            for tie_break_metric, tie_break_aggregation in _viable_tie_break_metrics(
+                                graph,
+                                spec.selector_tie_break_metrics,
+                                tied,
+                                primary_metric="selected_count",
+                            ):
+                                viable.append(
+                                    ViableSelectorCount(
+                                        spec=spec,
+                                        metric=metric,
+                                        operator=operator,
+                                        value=value,
+                                        aggregation=aggregation,
+                                        candidate_ids=tuple(node.id for node in narrowed),
+                                        selector_relation=selector_relation,
+                                        aggregation_rank=rank,
+                                        tie_break_metric=tie_break_metric,
+                                        tie_break_aggregation=tie_break_aggregation,
+                                    )
+                                )
     return sorted(
         viable,
         key=lambda item: (
@@ -2693,6 +2803,8 @@ def _viable_selector_counts(graph: OntologyGraph, spec: SelectorCountFamilySpec)
             item.value,
             item.aggregation,
             item.aggregation_rank or 0,
+            item.tie_break_metric or "",
+            item.tie_break_aggregation or "",
             item.candidate_ids,
         ),
     )
@@ -2801,9 +2913,7 @@ def _query_for_selector_count(graph: OntologyGraph, viable: ViableSelectorCount)
             "predicate_catalog_version": ["v1"],
             "prompt_wording_variant": [_prompt_wording_variant(graph.graph_id, spec.family_id)],
             "synthesis_strategy": [
-                "selector_count_rank_narrowing_v1"
-                if viable.aggregation_rank is not None
-                else "selector_count_narrowing_v1"
+                _selector_count_synthesis_strategy(viable)
             ],
         },
         relation.sampled_parameters,
@@ -2830,6 +2940,19 @@ def _query_for_selector_count(graph: OntologyGraph, viable: ViableSelectorCount)
                 "rank_direction": [direction],
             },
         )
+    if viable.tie_break_metric is not None and viable.tie_break_aggregation is not None:
+        tie_break_direction = "max" if viable.tie_break_aggregation == "argmax" else "min"
+        sampled = merge_sampled_parameters(
+            sampled,
+            {
+                "tie_break_metric": [viable.tie_break_metric],
+                "tie_break_direction": [tie_break_direction],
+                "tie_break_selector": [f"{tie_break_direction}:{viable.tie_break_metric}"],
+            },
+        )
+    tie_break_axis = metric_axis(viable.tie_break_metric) if viable.tie_break_metric else None
+    if tie_break_axis is not None:
+        sampled = merge_sampled_parameters(sampled, {"tie_break_axis": [tie_break_axis]})
     return QueryProgram(
         query_id=f"{graph.graph_id}:synth:{spec.family_id}",
         target_type="selector",
@@ -2846,11 +2969,24 @@ def _query_for_selector_count(graph: OntologyGraph, viable: ViableSelectorCount)
         aggregation=viable.aggregation,
         aggregation_metric="selected_count",
         aggregation_rank=viable.aggregation_rank,
+        tie_break_aggregation=viable.tie_break_aggregation,
+        tie_break_metric=viable.tie_break_metric,
         hop_count=4 + int(selector_relation is not None),
         difficulty="cad_browsecomp",
         min_individual_clause_candidates=2,
         sampled_parameters=sampled,
     )
+
+
+def _selector_count_synthesis_strategy(viable: ViableSelectorCount) -> str:
+    prefix = (
+        "selector_count_rank_narrowing"
+        if viable.aggregation_rank is not None
+        else "selector_count_narrowing"
+    )
+    if viable.tie_break_metric is not None:
+        return f"{prefix}_tie_break_v1"
+    return f"{prefix}_v1"
 
 
 def _viable_equal_value_extremes(

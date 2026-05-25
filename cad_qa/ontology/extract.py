@@ -650,6 +650,13 @@ class _Extractor:
                 )
         self._add_kernel_face_center_metrics(selected_face_ids, kernel_result)
         self._add_kernel_face_spatial_relations(selected_face_ids, normal_axes, kernel_result)
+        self._add_selector_aggregate_metrics(
+            selector_id,
+            selected_face_ids,
+            entity_label="face",
+            metrics=("coordinate_x", "coordinate_y", "coordinate_z", "distance_to_origin", "face_area"),
+            evidence_source=str(kernel_result.get("evidence", "cadquery_selector_result")),
+        )
         for previous_selector_id in previous_selector_ids:
             self.graph.add_relation(
                 Relation(
@@ -804,8 +811,28 @@ class _Extractor:
             self._add_kernel_edge_midpoint_metrics(selected_entity_ids, kernel_result)
             self._add_kernel_edge_endpoints(selected_entity_ids, kernel_result)
             self._add_kernel_edge_spatial_relations(selected_entity_ids, selected_axes, kernel_result)
+            self._add_selector_aggregate_metrics(
+                selector_id,
+                selected_entity_ids,
+                entity_label="edge",
+                metrics=(
+                    "edge_length",
+                    "midpoint_x",
+                    "midpoint_y",
+                    "midpoint_z",
+                    "midpoint_distance_to_origin",
+                ),
+                evidence_source=str(kernel_result.get("evidence", "cadquery_selector_result")),
+            )
         elif entity_type == "vertex":
             self._add_kernel_vertex_coordinate_metrics(selected_entity_ids, kernel_result)
+            self._add_selector_aggregate_metrics(
+                selector_id,
+                selected_entity_ids,
+                entity_label="vertex",
+                metrics=("coordinate_x", "coordinate_y", "coordinate_z", "distance_to_origin"),
+                evidence_source=str(kernel_result.get("evidence", "cadquery_selector_result")),
+            )
         for previous_selector_id in previous_selector_ids:
             self.graph.add_relation(
                 Relation(
@@ -821,6 +848,48 @@ class _Extractor:
                     selector_id,
                     "same_selected_entity_as",
                     evidence={"source": kernel_result.get("evidence", "cadquery_selector_result")},
+                )
+            )
+
+    def _add_selector_aggregate_metrics(
+        self,
+        selector_id: str,
+        entity_ids: list[str],
+        *,
+        entity_label: str,
+        metrics: tuple[str, ...],
+        evidence_source: str,
+    ) -> None:
+        evidence = {"source": evidence_source, "aggregation": "selected_entity_extreme"}
+        for metric in metrics:
+            measured = [
+                (float(measurement.value), measurement.unit)
+                for entity_id in entity_ids
+                for measurement in self.graph.measurements_for(entity_id, metric)
+                if isinstance(measurement.value, (int, float))
+            ]
+            if not measured:
+                continue
+            values = [value for value, _unit in measured]
+            unit = next((unit for _value, unit in measured if unit is not None), None)
+            self.graph.add_measurement(
+                Measurement(
+                    selector_id,
+                    "selection_geometry",
+                    f"selected_{entity_label}_max_{metric}",
+                    max(values),
+                    unit,
+                    evidence,
+                )
+            )
+            self.graph.add_measurement(
+                Measurement(
+                    selector_id,
+                    "selection_geometry",
+                    f"selected_{entity_label}_min_{metric}",
+                    min(values),
+                    unit,
+                    evidence,
                 )
             )
 
