@@ -21,7 +21,9 @@ from cad_qa.dataset.release import (
     _answer_diversity_keep_priority,
     _cap_group_share_rows,
     _cap_release_balance_rows,
+    _cap_sampled_parameter_share_rows,
     _improve_answer_diversity_rows,
+    _parameter_diversity_keep_priority,
     _release_balance_capacity_report,
     export_release_dataset,
 )
@@ -8364,6 +8366,91 @@ def test_release_group_share_cap_uses_precomputed_groups_for_many_templates() ->
     assert len(capped) < len(rows)
     assert {row["prompt_template_id"] for row in capped} == {f"template_{index}" for index in range(50)}
     assert {item["reason"] for item in exclusions} == {"prompt_template_share_cap"}
+
+
+def test_release_family_cap_prefers_sampled_parameter_diversity() -> None:
+    rows = []
+    for index, axis in enumerate(["x"] * 10 + ["y", "z"]):
+        rows.append(
+            {
+                "row_id": f"row:src:big:{index}:family_big",
+                "source_id": f"src_big_{index}",
+                "prompt": f"geometry prompt big {index}",
+                "prompt_template_id": f"template_big_{index}",
+                "gold_answer": f"entity:big:{index}",
+                "logical_hop_count": 4,
+                "geometry_hop_count": 4,
+                "static_hop_count": 0,
+                "query_program": {
+                    "query_id": f"graph:src:big:{index}:family_big",
+                    "sampled_parameters": {"aggregation_axis": [axis], "aggregation_metric": [f"centroid_{axis}"]},
+                },
+            }
+        )
+    for family in ("family_a", "family_b"):
+        for index in range(4):
+            rows.append(
+                {
+                    "row_id": f"row:src:{family}:{index}:{family}",
+                    "source_id": f"src_{family}_{index}",
+                    "prompt": f"geometry prompt {family} {index}",
+                    "prompt_template_id": f"template_{family}_{index}",
+                    "gold_answer": f"entity:{family}:{index}",
+                    "logical_hop_count": 4,
+                    "geometry_hop_count": 4,
+                    "static_hop_count": 0,
+                    "query_program": {
+                        "query_id": f"graph:src:{family}:{index}:{family}",
+                        "sampled_parameters": {"aggregation_axis": ["x"], "aggregation_metric": ["centroid_x"]},
+                    },
+                }
+            )
+
+    capped, exclusions = _cap_group_share_rows(
+        rows,
+        group_key=prompt_family,
+        max_share=0.35,
+        reason="prompt_family_share_cap",
+        prefer_keep=_parameter_diversity_keep_priority(rows),
+    )
+    kept_big_axes = {
+        row["query_program"]["sampled_parameters"]["aggregation_axis"][0]
+        for row in capped
+        if prompt_family(row) == "family_big"
+    }
+
+    assert any(item["reason"] == "prompt_family_share_cap" for item in exclusions)
+    assert kept_big_axes == {"x", "y", "z"}
+
+
+def test_release_export_caps_overrepresented_sampled_parameter_values() -> None:
+    rows = []
+    for index, axis in enumerate(["x"] * 14 + ["y"] * 3 + ["z"] * 3):
+        rows.append(
+            {
+                "row_id": f"row:src:{index}:parameterized_family",
+                "source_id": f"src_{index}",
+                "prompt": f"geometry prompt {index}",
+                "prompt_template_id": f"template_{index}",
+                "gold_answer": f"entity:{index}",
+                "logical_hop_count": 4,
+                "geometry_hop_count": 4,
+                "static_hop_count": 0,
+                "query_program": {
+                    "query_id": f"graph:src:q{index}:parameterized_family",
+                    "sampled_parameters": {"aggregation_axis": [axis], "aggregation_metric": [f"centroid_{axis}"]},
+                },
+            }
+        )
+
+    profile = release_gate_profile("benchmark-release")
+    capped, exclusions = _cap_sampled_parameter_share_rows(rows, profile)
+    axis_counts = Counter(row["query_program"]["sampled_parameters"]["aggregation_axis"][0] for row in capped)
+
+    assert {item["reason"] for item in exclusions} == {"sampled_parameter_share_cap"}
+    assert axis_counts["x"] / len(capped) <= profile.max_parameter_value_share
+    assert axis_counts["y"] > 0
+    assert axis_counts["z"] > 0
 
 
 def test_release_export_balance_caps_to_satisfy_minimum_family_share() -> None:

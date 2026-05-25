@@ -534,6 +534,14 @@ epics:
           - Families with explicit `parameter_balance` sections use those
             sections as the enforcement authority; legacy/unconfigured release
             families keep default parameter-collapse checks.
+          - Release export uses sampled-parameter diversity as the deterministic
+            keep priority when capping overrepresented prompt families, with
+            focused tests proving rare sampled axis/metric values are preserved
+            during family capping.
+          - A direct sampled-parameter cap helper is implemented and unit
+            tested, but remains outside the default benchmark export drop pass
+            until it can be combined with prompt-family balance without causing
+            regressions.
           - Benchmark-scale tuning still needs enough generated rows for each
             configured dimension to satisfy the distribution thresholds.
       - id: "14.5"

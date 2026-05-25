@@ -28,6 +28,33 @@ from cad_qa.io import record_artifact_path, write_json, write_records
 from cad_qa.prompts.render import prompt_template_id_from_mapping
 from cad_qa.query.family_manifest import DEFAULT_FAMILY_MANIFEST, RELEASE_STATUSES, load_family_manifest
 
+PARAMETER_DIVERSITY_DIMENSIONS = (
+    "aggregation_axis",
+    "aggregation_metric",
+    "aggregation_rank",
+    "clause_axis",
+    "clause_metric",
+    "clause_relation",
+    "clause_target_type",
+    "comparison_operator",
+    "effect_delta_metric",
+    "equal_measurement_metric",
+    "extremum_direction",
+    "final_selector",
+    "measurement_value_bucket",
+    "narrowing_mode",
+    "rank_direction",
+    "reference_point_metric",
+    "reference_type",
+    "selected_entity_type",
+    "target_point_metric",
+    "target_type",
+    "tie_break_axis",
+    "tie_break_direction",
+    "tie_break_metric",
+    "tie_break_selector",
+)
+
 
 def export_release_dataset(
     rows: list[dict[str, Any]],
@@ -378,7 +405,7 @@ def _cap_release_balance_rows(
             max_share=profile.max_prompt_family_share,
             reason="prompt_family_share_cap",
             min_total_rows=release_floor,
-            prefer_keep=_answer_diversity_keep_priority(kept),
+            prefer_keep=_parameter_diversity_keep_priority(kept),
         )
         exclusions.extend(dropped)
         kept, dropped = _cap_group_share_rows(
@@ -639,6 +666,114 @@ def _cap_group_min_share_rows(
         )
         kept = [row for row in kept if id(row) not in dropped_ids]
     return kept, exclusions
+
+
+def _cap_sampled_parameter_share_rows(
+    rows: list[dict[str, Any]],
+    profile: Any,
+    *,
+    min_total_rows: int | None = None,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    max_share = profile.max_parameter_value_share
+    if max_share is None or max_share <= 0 or len(rows) < profile.min_applicable_rows:
+        return rows, []
+    kept = list(rows)
+    drops = _sampled_parameter_cap_drop_batch(
+        kept,
+        max_share=max_share,
+        min_family_share=profile.min_prompt_family_share,
+        min_total_rows=min_total_rows,
+    )
+    if not drops:
+        return rows, []
+    dropped_ids = {id(drop["row"]) for drop in drops}
+    kept = [row for row in kept if id(row) not in dropped_ids]
+    exclusions = [
+        _balance_exclusion(
+            drop["row"],
+            reason="sampled_parameter_share_cap",
+            maximum_share=max_share,
+            group=f"{drop['prompt_family']}:{drop['dimension']}:{drop['value']}",
+        )
+        for drop in sorted(drops, key=lambda item: _stable_row_key(item["row"]))
+    ]
+    return kept, exclusions
+
+
+def _sampled_parameter_cap_drop_batch(
+    rows: list[dict[str, Any]],
+    *,
+    max_share: float,
+    min_family_share: float,
+    min_total_rows: int | None,
+) -> list[dict[str, Any]]:
+    family_rows = _rows_by_group(rows, _prompt_family)
+    family_minimum_rows = 1
+    if min_total_rows is not None and min_family_share > 0:
+        family_minimum_rows = max(1, math.ceil(min_total_rows * min_family_share - 1e-12))
+    total_drop_budget = len(rows) - min_total_rows if min_total_rows is not None else len(rows)
+    if total_drop_budget <= 0:
+        return []
+    priority = _parameter_diversity_keep_priority(rows)
+    selected_ids: set[int] = set()
+    drops: list[dict[str, Any]] = []
+    family_drop_counts: Counter[str] = Counter()
+    for family, current_family_rows in sorted(family_rows.items()):
+        if len(current_family_rows) <= family_minimum_rows:
+            continue
+        family_drop_budget = len(current_family_rows) - family_minimum_rows
+        for dimension in PARAMETER_DIVERSITY_DIMENSIONS:
+            value_groups = _sampled_parameter_value_groups(current_family_rows, dimension)
+            if len(value_groups) < _minimum_group_count_for_share(max_share):
+                continue
+            for value, value_rows in sorted(value_groups.items(), key=lambda item: (-len(item[1]), item[0])):
+                other_count = len(current_family_rows) - len(value_rows)
+                allowed_count = max(1, _allowed_share_count(other_count, max_share))
+                if len(value_rows) <= allowed_count:
+                    continue
+                remaining_family_budget = family_drop_budget - family_drop_counts[family]
+                remaining_total_budget = total_drop_budget - len(drops)
+                if remaining_family_budget <= 0 or remaining_total_budget <= 0:
+                    continue
+                drop_count = min(len(value_rows) - allowed_count, remaining_family_budget, remaining_total_budget)
+                candidates = [row for row in sorted(value_rows, key=priority, reverse=True) if id(row) not in selected_ids]
+                for row in candidates[:drop_count]:
+                    selected_ids.add(id(row))
+                    family_drop_counts[family] += 1
+                    drops.append(
+                        {
+                            "row": row,
+                            "prompt_family": family,
+                            "dimension": dimension,
+                            "value": value,
+                        }
+                    )
+    return drops
+
+
+def _sampled_parameter_value_groups(
+    rows: list[dict[str, Any]],
+    dimension: str,
+) -> dict[str, list[dict[str, Any]]]:
+    groups: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        for value in _sampled_parameter_values(row, dimension):
+            groups.setdefault(value, []).append(row)
+    return groups
+
+
+def _sampled_parameter_values(row: dict[str, Any], dimension: str) -> tuple[str, ...]:
+    query = row.get("query_program")
+    if not isinstance(query, dict):
+        return ()
+    sampled = query.get("sampled_parameters")
+    if not isinstance(sampled, dict):
+        return ()
+    raw = sampled.get(dimension)
+    if raw is None:
+        return ()
+    values = raw if isinstance(raw, list) else [raw]
+    return tuple(str(value) for value in values if value is not None)
 
 
 def _improve_answer_diversity_rows(
@@ -910,6 +1045,26 @@ def _answer_diversity_keep_priority(rows: list[dict[str, Any]]) -> Any:
 
     def key(row: dict[str, Any]) -> tuple[int, str]:
         return (answer_counts[_answer_identity_key(row)], _stable_row_key(row))
+
+    return key
+
+
+def _parameter_diversity_keep_priority(rows: list[dict[str, Any]]) -> Any:
+    answer_counts = Counter(_answer_identity_key(row) for row in rows)
+    parameter_counts: Counter[tuple[str, str, str]] = Counter()
+    for row in rows:
+        family = _prompt_family(row)
+        for dimension in PARAMETER_DIVERSITY_DIMENSIONS:
+            for value in _sampled_parameter_values(row, dimension):
+                parameter_counts[(family, dimension, value)] += 1
+
+    def key(row: dict[str, Any]) -> tuple[int, int, str]:
+        family = _prompt_family(row)
+        parameter_frequency = 0
+        for dimension in PARAMETER_DIVERSITY_DIMENSIONS:
+            for value in _sampled_parameter_values(row, dimension):
+                parameter_frequency += parameter_counts[(family, dimension, value)]
+        return (parameter_frequency, answer_counts[_answer_identity_key(row)], _stable_row_key(row))
 
     return key
 

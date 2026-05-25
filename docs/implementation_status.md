@@ -305,6 +305,14 @@ when those choices can be sampled and verified.
   use this to make `narrowing_predicate_sequence`, selected entity type,
   comparison operator, and narrowing value buckets release-gated rather than
   merely serialized.
+- Release export now uses sampled-parameter diversity as a deterministic keep
+  priority when capping overrepresented prompt families. A tested direct
+  sampled-parameter cap helper can trim dominant values in isolation, but it is
+  not enabled as a default benchmark export drop pass because the current
+  CadEvolve-50 probe showed that direct parameter drops can preserve parameter
+  shares while damaging prompt-family balance. The safe implemented slice is
+  therefore parameter-aware row selection during existing family caps; broader
+  benchmark parameter balance remains blocked by real candidate coverage.
 - Initial query synthesis now exists outside `resolver.py`: reusable relation
   and measurement predicates feed a bounded deterministic synthesis pass that
   emits `parameterized_kernel_face_extreme` and
@@ -630,6 +638,20 @@ Result reviewed on 2026-05-24:
   metadata/path grouping collapses them together. This is acceptable for a
   fine-tuning dataset export, but not yet enough for a multi-split benchmark
   release.
+
+Parameter-aware export probe reviewed on 2026-05-25:
+
+- `runs/current_cadevolve50_selector_tiebreak/release_export_parameter_balance_probe/`
+  regenerates the benchmark export from the existing 41,665-row CadEvolve-50
+  selector-tie-break dataset after adding parameter-diversity keep priority to
+  prompt-family caps. It writes 10,000 rows and keeps prompt-family balance
+  passing; remaining blockers are split-group coverage, intended-family
+  coverage, sampled-parameter balance, and stale/missing preview evidence for
+  the new export artifact.
+- A direct sampled-parameter drop pass was tested and left available as a
+  helper, but the real CadEvolve-50 probe showed it can overcorrect sparse
+  families and break prompt-family balance. It is therefore not enabled in the
+  default benchmark export path until a joint family/parameter optimizer exists.
 
 ## Generated Preview Review
 
