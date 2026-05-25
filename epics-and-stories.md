@@ -224,6 +224,7 @@ Technical definition of done:
 | 5.2 Candidate-set trace and failure reasons | `implemented` | Users can see why a row resolved or failed. | Resolver records candidate counts after each clause and structured failure reasons. |
 | 5.3 Argmax/argmin aggregation | `implemented` | Geometry extrema can be asked deterministically. | Aggregations resolve numeric metrics with deterministic tie/failure behavior. |
 | 5.4 Reject-unless-unique policy | `implemented` | Ambiguous rows do not enter release silently. | Resolver rejects zero-candidate and multi-final-candidate queries unless explicitly allowed for calibration/review. |
+| 5.5 Indexed graph lookup for topology-rich synthesis and resolution | `implemented` | Users can synthesize and materialize rows from topology-rich CadEvolve graphs without relation and measurement lookup becoming an accidental release blocker. | OntologyGraph provides mutation-safe indexed node, node-type, relation, and measurement lookups that do not serialize; predicate catalog, graph-hop synthesis, and resolver relation clauses use indexed lookup in hot paths; a retraced 10-source CadEvolve topology slice synthesizes/materializes valid compiled-topology rows. |
 
 ## Epic 6: Label and relation families (`epic-6`)
 

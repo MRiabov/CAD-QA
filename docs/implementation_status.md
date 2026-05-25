@@ -61,6 +61,10 @@ when those choices can be sampled and verified.
 - Ontology graph relation and measurement insertion is idempotent for exact
   duplicate records, preventing repeated selector observations from inflating
   graph relation/measurement lists.
+- Ontology graph node, node-type, relation, and measurement lookup is indexed
+  behind mutation-safe helper methods. This keeps topology-rich CadEvolve
+  graphs usable for synthesis/resolution without serializing cache state into
+  graph artifacts.
 - Operation, feature, parameter, profile, workplane, path, path-point,
   path-segment, selector, solid, and measurement node families.
 - Stable selector-derived face nodes and same-face joins.
@@ -73,6 +77,12 @@ when those choices can be sampled and verified.
   spatial-relation evidence. The new regression test verifies synthesized
   face/edge equal-measurement and edge spatial-relation rows from this topology
   without visible selector syntax in the source.
+- Regenerated evidence with current tracing/indexing:
+  `runs/current_topology_rc10/` retraces 10 prepared CadEvolve RC sources
+  (4 trace successes, 6 timeouts), builds 10 graphs with 3,178 nodes and 25,344
+  relations, synthesizes 391 valid rows across 60 release families in 64.23s,
+  and materializes rows with 0 failures. Preview evidence is in
+  `runs/current_topology_rc10/TOPOLOGY_PREVIEW.md`.
 - Kernel-selected face nodes include compiled face-center coordinates,
   face-center distance-to-origin measurements, and face-area measurements
   derived from selector-result bounding boxes.

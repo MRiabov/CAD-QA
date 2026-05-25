@@ -2548,8 +2548,7 @@ def _related_metric_equal_values(
     for node in candidates:
         buckets = {
             measurement_bucket_value(measurement.value)
-            for edge in graph.relations
-            if edge.source_id == node.id and edge.type == relation
+            for edge in graph.relations_from(node.id, relation)
             for measurement in graph.measurements_for(edge.target_id, metric)
             if isinstance(measurement.value, (int, float))
         }
@@ -3562,7 +3561,7 @@ def _apply_relation_clause(graph: OntologyGraph, candidates: list[Node], relatio
     return [
         node
         for node in candidates
-        if any(edge.source_id == node.id and edge.type == relation_type for edge in graph.relations)
+        if graph.relations_from(node.id, relation_type)
     ]
 
 
@@ -3601,8 +3600,7 @@ def _related_metric_thresholds(
         {
             round(float(measurement.value), 6)
             for node in candidates
-            for edge in graph.relations
-            if edge.source_id == node.id and edge.type == relation
+            for edge in graph.relations_from(node.id, relation)
             for measurement in graph.measurements_for(edge.target_id, metric)
             if isinstance(measurement.value, (int, float))
         }

@@ -2265,10 +2265,9 @@ def _apply_clause(graph: OntologyGraph, candidates: list[Node], clause: Clause) 
             node
             for node in candidates
             if any(
-                relation.source_id == node.id
-                and relation.type == clause.relation
-                and (clause.target_type is None or (graph.node(relation.target_id) and graph.node(relation.target_id).type == clause.target_type))
-                for relation in graph.relations
+                clause.target_type is None
+                or ((target := graph.node(relation.target_id)) is not None and target.type == clause.target_type)
+                for relation in graph.relations_from(node.id, clause.relation)
             )
         ]
     if clause.kind == "has_measurement" and clause.metric:
@@ -2416,8 +2415,7 @@ def _measurement_scopes_for_clause(graph: OntologyGraph, candidates: list[Node],
         return {
             measurement.scope
             for node in candidates
-            for edge in graph.relations
-            if edge.source_id == node.id and edge.type == clause.relation
+            for edge in graph.relations_from(node.id, clause.relation)
             for target in [graph.node(edge.target_id)]
             if target is not None and target.type == clause.target_type
             for measurement in graph.measurements_for(target.id, clause.metric)

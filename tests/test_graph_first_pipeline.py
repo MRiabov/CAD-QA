@@ -154,6 +154,22 @@ def test_graph_exact_duplicate_relations_are_idempotent() -> None:
     assert len(graph.relations) == 2
 
 
+def test_graph_lookup_indexes_update_after_mutation_and_do_not_serialize() -> None:
+    graph = OntologyGraph(graph_id="graph:src", source={"source_id": "src", "source_code": ""})
+    graph.add_node(Node("edge:a", "edge", "edge a"))
+    assert graph.node("edge:a") is not None
+    assert graph.nodes_by_type("edge") == [Node("edge:a", "edge", "edge a")]
+
+    graph.add_node(Node("edge:b", "edge", "edge b"))
+    graph.add_relation(Relation("edge:a", "edge:b", "parallel_to"))
+    graph.add_measurement(Measurement("edge:a", "entity_geometry", "edge_length", 12.0, "mm"))
+
+    assert [node.id for node in graph.nodes_by_type("edge")] == ["edge:a", "edge:b"]
+    assert [relation.target_id for relation in graph.relations_from("edge:a", "parallel_to")] == ["edge:b"]
+    assert graph.measurements_for("edge:a", "edge_length")[0].value == 12.0
+    assert "_cached_node_index" not in to_jsonable(graph)
+
+
 def test_cadevolve_source_manifest_and_audit_cli(tmp_path: Path) -> None:
     sources_path = tmp_path / "sources.jsonl"
     manifest_path = tmp_path / "source_manifest.json"

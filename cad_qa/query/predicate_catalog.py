@@ -37,11 +37,9 @@ def relation_predicate(
         node
         for node in candidates
         if any(
-            edge.source_id == node.id
-            and edge.type == relation
-            and (target := graph.node(edge.target_id)) is not None
+            (target := graph.node(edge.target_id)) is not None
             and target.type == target_type
-            for edge in graph.relations
+            for edge in graph.relations_from(node.id, relation)
         )
     ]
     if len(after) < 2:
@@ -291,12 +289,10 @@ def nodes_matching_related_metric_compare(
         node
         for node in candidates
         if any(
-            edge.source_id == node.id
-            and edge.type == relation
-            and (target := graph.node(edge.target_id)) is not None
+            (target := graph.node(edge.target_id)) is not None
             and target.type == target_type
             and any(_compare(measurement.value, operator, value) for measurement in graph.measurements_for(target.id, metric))
-            for edge in graph.relations
+            for edge in graph.relations_from(node.id, relation)
         )
     ]
 

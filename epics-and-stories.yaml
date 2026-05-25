@@ -221,6 +221,15 @@ epics:
       - id: "5.4"
         title: Reject-unless-unique policy
         status: implemented
+      - id: "5.5"
+        title: Indexed graph lookup for topology-rich synthesis and resolution
+        status: implemented
+        acceptance_criteria:
+          - Users can synthesize and materialize rows from topology-rich CadEvolve graphs without relation and measurement lookup becoming an accidental release blocker.
+        technical_definition_of_done:
+          - OntologyGraph provides mutation-safe indexed node, node-type, relation, and measurement lookup helpers that do not leak into serialized graph artifacts.
+          - Predicate catalog, graph-hop synthesis, and resolver relation clauses use indexed relation/measurement lookup in hot paths.
+          - A retraced 10-source CadEvolve topology slice synthesizes and materializes valid rows, including compiled-topology face/edge/vertex-derived task families.
   - id: epic-6
     title: Label and relation families
     status: implemented
