@@ -1565,9 +1565,15 @@ Checked as implemented with remaining scale caveats:
   prompt-family balance, prompt-template balance, geometry-critical dominance,
   geometry-hop coverage, candidate breadth, value-bearing measurement coverage
   at 22.49%, cross-feature value-bearing coverage at 5.0%, and
-  preview-evidence gates. Remaining blockers are split-group coverage,
-  answer-diversity coverage, intended-family coverage, and sampled parameter
-  balance.
+  preview-evidence gates. Release answer-diversity accounting now treats
+  entity IDs as source-scoped because entity IDs are local to a CAD program,
+  and export capping replaces repeated-answer rows with same-family unused
+  rows when possible. The refreshed answer-diverse export at
+  `runs/current_cadevolve50_selector_tiebreak/release_export_answerdiv/` keeps
+  10,000 rows, reaches exactly 1,000 source-scoped unique answers, and reaches
+  8.50 answer-entropy bits while preserving family/template/value-bearing
+  gates. Remaining blockers are split-group coverage, intended-family coverage,
+  and sampled parameter balance.
 - Broaden value-bearing and tolerance-equal coverage beyond the implemented
   core to radius/diameter/angle once those measurements are extracted broadly,
   additional face/endpoint/material/void coordinate combinations, and larger

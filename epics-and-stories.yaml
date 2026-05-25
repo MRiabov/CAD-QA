@@ -609,13 +609,13 @@ epics:
             rows before release capping.
           - Benchmark export over the regenerated CadEvolve-50 selector
             tie-break dataset preserves the feasible 10,000-row release floor
-            while enforcing family/template/value-bearing balance and writes
-            preview evidence; the refreshed artifact passes
+            while enforcing family/template/value-bearing/answer-diversity
+            balance and writes preview evidence; the refreshed artifact passes
             row-count/default-SFT, prompt-family/template balance,
-            value-bearing and cross-feature coverage, geometry-critical,
-            geometry-hop, candidate-breadth, and preview-evidence gates, but
-            remains blocked by intended-family coverage, parameter-balance,
-            split-group, and answer-diversity gates.
+            value-bearing and cross-feature coverage, source-scoped answer
+            diversity, geometry-critical, geometry-hop, candidate-breadth, and
+            preview-evidence gates, but remains blocked by intended-family
+            coverage, parameter-balance, and split-group gates.
           - Reference-distance rank narrowing includes valid two-candidate
             subsets; broader selected-entity count predicates, release-scale
             preview review, and distribution thresholds remain work-in-progress.
@@ -639,8 +639,8 @@ epics:
         families, and every generated release family contributes 1%-10% of
         rows.
       - Prompt templates include at least 20 templates and are capped at 5%,
-        answer entropy is at least 8 bits, and there are at least 1,000 unique
-        gold answers.
+        answer entropy is at least 8 bits, and there are at least 1,000
+        source-scoped answer identities for graph-local entity answers.
       - High-hop rows have at least 2 pre-final candidates and median pre-final
         candidate breadth of at least 4.
       - Parameterized families keep sampled values at or below 35% share and
@@ -681,8 +681,12 @@ epics:
           - Users get datasets with enough concrete measurement reasoning, cross-feature reasoning, prompt variety, answer diversity, and distractors.
           - Exported release artifacts do not silently keep rows that exceed configured maximum shares when enough alternative rows exist.
         technical_definition_of_done:
-          - Verifier blocks artifacts outside 15%-30% value-bearing, outside 5%-15% cross-feature, below 20 prompt templates, above 5% prompt-template share, below 1,000 unique answers, below 8 entropy bits, or below candidate-breadth targets.
+          - Verifier blocks artifacts outside 15%-30% value-bearing, outside 5%-15% cross-feature, below 20 prompt templates, above 5% prompt-template share, below 1,000 source-scoped answer identities for graph-local entity answers, below 8 entropy bits, or below candidate-breadth targets.
           - Release export deterministically caps overrepresented value-bearing, cross-feature, prompt-family, prompt-template, low-hop, and under-floor prompt-family slices; preserves at least one row for every generated release family; preserves enough value-bearing and cross-feature rows for configured minimum shares when feasible; and writes explicit balance-cap exclusions.
+          - Release export preserves source-scoped answer diversity through
+            same-family replacement of repeated-answer rows when unused
+            same-family rows can increase answer coverage without changing
+            release row count.
           - Release export preserves the configured benchmark release row floor
             while applying share caps when the pre-balance candidate pool can
             satisfy both the floor and the relevant balance constraints.

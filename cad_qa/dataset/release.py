@@ -378,6 +378,7 @@ def _cap_release_balance_rows(
             max_share=profile.max_prompt_family_share,
             reason="prompt_family_share_cap",
             min_total_rows=release_floor,
+            prefer_keep=_answer_diversity_keep_priority(kept),
         )
         exclusions.extend(dropped)
         kept, dropped = _cap_group_share_rows(
@@ -386,6 +387,7 @@ def _cap_release_balance_rows(
             max_share=profile.max_prompt_template_share,
             reason="prompt_template_share_cap",
             min_total_rows=release_floor,
+            prefer_keep=_answer_diversity_keep_priority(kept),
         )
         exclusions.extend(dropped)
         kept, dropped = _cap_group_min_share_rows(
@@ -426,6 +428,8 @@ def _cap_release_balance_rows(
         exclusions.extend(dropped)
         if len(kept) == before:
             break
+    kept, dropped = _improve_answer_diversity_rows(rows, kept, profile)
+    exclusions.extend(dropped)
     return kept, exclusions
 
 
@@ -514,6 +518,7 @@ def _cap_group_share_rows(
     max_share: float,
     reason: str,
     min_total_rows: int | None = None,
+    prefer_keep: Any | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     if max_share <= 0:
         return rows, []
@@ -537,7 +542,8 @@ def _cap_group_share_rows(
             )
         if len(current_group_rows) <= allowed_count:
             continue
-        kept_group_rows = sorted(current_group_rows, key=_stable_row_key)[:allowed_count]
+        keep_key = prefer_keep or _stable_row_key
+        kept_group_rows = sorted(current_group_rows, key=keep_key)[:allowed_count]
         kept_group_ids = {id(row) for row in kept_group_rows}
         dropped = [row for row in current_group_rows if id(row) not in kept_group_ids]
         dropped_ids = {id(row) for row in dropped}
@@ -633,6 +639,95 @@ def _cap_group_min_share_rows(
         )
         kept = [row for row in kept if id(row) not in dropped_ids]
     return kept, exclusions
+
+
+def _improve_answer_diversity_rows(
+    all_rows: list[dict[str, Any]],
+    kept_rows: list[dict[str, Any]],
+    profile: Any,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    target_unique = profile.min_unique_answer_count
+    if target_unique is None or target_unique <= 0:
+        return kept_rows, []
+    answer_counts = Counter(_answer_identity_key(row) for row in kept_rows)
+    if len(answer_counts) >= target_unique:
+        return kept_rows, []
+    available_unique = {_answer_identity_key(row) for row in all_rows}
+    if len(available_unique) < target_unique:
+        return kept_rows, []
+
+    kept_ids = {id(row) for row in kept_rows}
+    replacements_by_family: dict[str, list[dict[str, Any]]] = {}
+    for row in sorted(all_rows, key=_stable_row_key):
+        if id(row) in kept_ids:
+            continue
+        answer_key = _answer_identity_key(row)
+        if answer_key in answer_counts:
+            continue
+        replacements_by_family.setdefault(_prompt_family(row), []).append(row)
+
+    kept = list(kept_rows)
+    removed: list[dict[str, Any]] = []
+    replacement_indices: Counter[str] = Counter()
+    for row in sorted(
+        kept,
+        key=lambda item: (answer_counts[_answer_identity_key(item)], _stable_row_key(item)),
+        reverse=True,
+    ):
+        if len(answer_counts) >= target_unique:
+            break
+        row_answer_key = _answer_identity_key(row)
+        if answer_counts[row_answer_key] <= 1:
+            continue
+        family = _prompt_family(row)
+        replacement = _next_answer_diversity_replacement(
+            replacements_by_family.get(family, []),
+            replacement_indices[family],
+            answer_counts,
+            row,
+        )
+        if replacement is None:
+            continue
+        replacement_indices[family] += 1
+        original_position = next(position for position, kept_row in enumerate(kept) if id(kept_row) == id(row))
+        kept[original_position] = replacement
+        removed.append(row)
+        answer_counts[row_answer_key] -= 1
+        if answer_counts[row_answer_key] <= 0:
+            del answer_counts[row_answer_key]
+        answer_counts[_answer_identity_key(replacement)] += 1
+
+    exclusions = [
+        _balance_exclusion(row, reason="answer_diversity_replacement")
+        for row in sorted(removed, key=_stable_row_key)
+    ]
+    return kept, exclusions
+
+
+def _next_answer_diversity_replacement(
+    candidates: list[dict[str, Any]],
+    start_index: int,
+    answer_counts: Counter[str],
+    replaced_row: dict[str, Any],
+) -> dict[str, Any] | None:
+    replaced_shape = _answer_diversity_balance_shape(replaced_row)
+    fallback: dict[str, Any] | None = None
+    for candidate in candidates[start_index:]:
+        if _answer_identity_key(candidate) in answer_counts:
+            continue
+        if fallback is None:
+            fallback = candidate
+        if _answer_diversity_balance_shape(candidate) == replaced_shape:
+            return candidate
+    return fallback
+
+
+def _answer_diversity_balance_shape(row: dict[str, Any]) -> tuple[bool, bool, bool]:
+    return (
+        _is_value_bearing_measurement_row(row),
+        _is_cross_feature_value_bearing_row(row),
+        _is_main_browsecomp_hop_row(row),
+    )
 
 
 def _protected_boolean_minimum_counts(
@@ -808,6 +903,22 @@ def _cross_feature_keep_priority(row: dict[str, Any]) -> tuple[int, int, str]:
 
 def _high_hop_keep_priority(row: dict[str, Any]) -> tuple[int, str]:
     return (0 if _is_main_browsecomp_hop_row(row) else 1, _stable_row_key(row))
+
+
+def _answer_diversity_keep_priority(rows: list[dict[str, Any]]) -> Any:
+    answer_counts = Counter(_answer_identity_key(row) for row in rows)
+
+    def key(row: dict[str, Any]) -> tuple[int, str]:
+        return (answer_counts[_answer_identity_key(row)], _stable_row_key(row))
+
+    return key
+
+
+def _answer_identity_key(row: dict[str, Any]) -> str:
+    answer = row.get("gold_answer")
+    if row.get("answer_format") == "entity_id":
+        return f"{row.get('source_id')}::{answer}"
+    return str(answer)
 
 
 def _is_main_browsecomp_hop_row(row: dict[str, Any]) -> bool:

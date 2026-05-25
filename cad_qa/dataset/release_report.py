@@ -293,7 +293,7 @@ def release_balance_report(
     row_count = len(rows)
     prompt_family_counts = Counter(prompt_family(row) for row in rows)
     prompt_template_counts = Counter(_prompt_template_id(row) for row in rows)
-    answer_counts = Counter(_answer_key(row.get("gold_answer")) for row in rows)
+    answer_counts = Counter(_answer_identity_key(row) for row in rows)
     geometry_hop_positive_count = sum(1 for row in rows if int(row.get("geometry_hop_count") or 0) > 0)
     logical_hop_ge_3_count = sum(1 for row in rows if int(row.get("logical_hop_count") or 0) >= 3)
     geometry_critical_count = sum(1 for row in rows if is_geometry_critical_row(row))
@@ -372,6 +372,7 @@ def release_balance_report(
             and largest_prompt_template_share <= profile.max_prompt_template_share
         ),
         "unique_answer_count": unique_answer_count,
+        "answer_identity_scope": "source_scoped_for_entity_id",
         "minimum_unique_answer_count": profile.min_unique_answer_count,
         "answer_entropy_bits": answer_entropy_bits,
         "minimum_answer_entropy_bits": profile.min_answer_entropy_bits,
@@ -738,8 +739,15 @@ def _json_block(value: Any) -> str:
     return "```json\n" + json.dumps(value, indent=2, sort_keys=True) + "\n```"
 
 
-def _answer_key(value: Any) -> str:
-    return json.dumps(value, sort_keys=True, default=str)
+def _answer_identity_key(row: dict[str, Any]) -> str:
+    answer = row.get("gold_answer")
+    if row.get("answer_format") == "entity_id":
+        return json.dumps(
+            {"source_id": row.get("source_id"), "gold_answer": answer},
+            sort_keys=True,
+            default=str,
+        )
+    return json.dumps(answer, sort_keys=True, default=str)
 
 
 def _prompt_template_id(row: dict[str, Any]) -> str:

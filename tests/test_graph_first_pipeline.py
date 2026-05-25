@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+from collections import Counter
 import io
 import json
 import math
@@ -17,8 +18,10 @@ from cad_qa.dataset.preview import dataset_preview_evidence_report, preview_evid
 from cad_qa.dataset.public import private_rows, public_private_audit, public_rows, write_public_private_artifacts
 from cad_qa.dataset.quarantine import quarantine_report
 from cad_qa.dataset.release import (
+    _answer_diversity_keep_priority,
     _cap_group_share_rows,
     _cap_release_balance_rows,
+    _improve_answer_diversity_rows,
     _release_balance_capacity_report,
     export_release_dataset,
 )
@@ -8250,6 +8253,128 @@ def test_benchmark_release_max_caps_do_not_shrink_feasible_rows_below_release_fl
     assert report["passes_value_bearing_measurement_coverage"]
     assert report["passes_prompt_family_balance"]
     assert not report["underrepresented_prompt_families"]
+
+
+def test_release_balance_counts_entity_answers_in_source_context() -> None:
+    rows = [
+        {
+            "row_id": "row:src_a:0:family_a",
+            "source_id": "src_a",
+            "prompt": "geometry prompt a",
+            "prompt_template_id": "template_a",
+            "gold_answer": "feature:wp1",
+            "answer_format": "entity_id",
+            "logical_hop_count": 4,
+            "geometry_hop_count": 4,
+            "static_hop_count": 0,
+            "query_program": {"query_id": "graph:src_a:q0:family_a", "clauses": []},
+        },
+        {
+            "row_id": "row:src_b:0:family_a",
+            "source_id": "src_b",
+            "prompt": "geometry prompt b",
+            "prompt_template_id": "template_b",
+            "gold_answer": "feature:wp1",
+            "answer_format": "entity_id",
+            "logical_hop_count": 4,
+            "geometry_hop_count": 4,
+            "static_hop_count": 0,
+            "query_program": {"query_id": "graph:src_b:q0:family_a", "clauses": []},
+        },
+    ]
+
+    report = release_balance_report(rows, release_tier="smoke")
+
+    assert report["unique_answer_count"] == 2
+    assert report["answer_identity_scope"] == "source_scoped_for_entity_id"
+    assert report["answer_entropy_bits"] == 1.0
+
+
+def test_group_share_cap_prefers_source_scoped_answer_diversity() -> None:
+    rows = []
+    for index in range(10):
+        answer = "feature:duplicate" if index < 6 else f"feature:unique_{index}"
+        rows.append(
+            {
+                "row_id": f"row:src_a:{index}:family_large",
+                "source_id": "src_a",
+                "prompt": f"geometry prompt {index}",
+                "prompt_template_id": f"template_{index}",
+                "gold_answer": answer,
+                "answer_format": "entity_id",
+                "logical_hop_count": 4,
+                "geometry_hop_count": 4,
+                "static_hop_count": 0,
+                "query_program": {"query_id": f"graph:src_a:q{index}:family_large", "clauses": []},
+            }
+        )
+    for index in range(4):
+        rows.append(
+            {
+                "row_id": f"row:src_b:{index}:family_small",
+                "source_id": "src_b",
+                "prompt": f"geometry prompt small {index}",
+                "prompt_template_id": f"template_small_{index}",
+                "gold_answer": f"feature:small_{index}",
+                "answer_format": "entity_id",
+                "logical_hop_count": 4,
+                "geometry_hop_count": 4,
+                "static_hop_count": 0,
+                "query_program": {"query_id": f"graph:src_b:q{index}:family_small", "clauses": []},
+            }
+        )
+
+    capped, exclusions = _cap_group_share_rows(
+        rows,
+        group_key=prompt_family,
+        max_share=0.5,
+        reason="prompt_family_share_cap",
+        prefer_keep=_answer_diversity_keep_priority(rows),
+    )
+    kept_large_answers = {
+        row["gold_answer"]
+        for row in capped
+        if prompt_family(row) == "family_large"
+    }
+
+    assert len(capped) == 8
+    assert len(exclusions) == 6
+    assert kept_large_answers == {
+        "feature:unique_6",
+        "feature:unique_7",
+        "feature:unique_8",
+        "feature:unique_9",
+    }
+
+
+def test_answer_diversity_replacement_preserves_family_counts() -> None:
+    all_rows = []
+    kept_rows = []
+    for index in range(8):
+        row = {
+            "row_id": f"row:src_a:{index}:family_a",
+            "source_id": "src_a",
+            "prompt": f"geometry prompt {index}",
+            "prompt_template_id": f"template_{index}",
+            "gold_answer": "feature:duplicate" if index < 6 else f"feature:unique_{index}",
+            "answer_format": "entity_id",
+            "logical_hop_count": 4,
+            "geometry_hop_count": 4,
+            "static_hop_count": 0,
+            "query_program": {"query_id": f"graph:src_a:q{index}:family_a", "clauses": []},
+        }
+        all_rows.append(row)
+        if index < 6:
+            kept_rows.append(row)
+
+    profile = release_gate_profile("benchmark-release")
+    profile = profile.__class__(**{**profile.__dict__, "min_unique_answer_count": 3})
+    improved, exclusions = _improve_answer_diversity_rows(all_rows, kept_rows, profile)
+
+    assert len(improved) == len(kept_rows)
+    assert Counter(prompt_family(row) for row in improved) == Counter({"family_a": 6})
+    assert len({(row["source_id"], row["gold_answer"]) for row in improved}) == 3
+    assert {item["reason"] for item in exclusions} == {"answer_diversity_replacement"}
 
 
 def test_release_export_reports_pre_balance_family_capacity() -> None:
