@@ -1323,6 +1323,77 @@ def test_kernel_face_selector_trace_produces_release_grade_face_spatial_relation
     assert "entity_geometry" in spatial_face_row.measurement_scopes
 
 
+def test_compiled_snapshot_topology_creates_kernel_face_edge_vertex_entities_without_selector_syntax() -> None:
+    source_code = "import cadquery as cq\nbase = cq.Workplane('XY').box(2, 2, 2)\n"
+    trace_record = {
+        "source_id": "src_snapshot_topology",
+        "execution_status": "ok",
+        "snapshots": [
+            {
+                "target": "base",
+                "source_line": 2,
+                "operation_index": 0,
+                "volume": 8.0,
+                "bbox": {"min": [-1, -1, -1], "max": [1, 1, 1]},
+                "centroid": [0.0, 0.0, 0.0],
+                "topology": {"faces": 6, "edges": 12, "vertices": 8},
+                "topology_entities": {
+                    "faces": [
+                        {"shape_type": "Face", "bbox": {"min": [-1, -1, -1], "max": [1, 1, -1]}},
+                        {"shape_type": "Face", "bbox": {"min": [-1, -1, 1], "max": [1, 1, 1]}},
+                        {"shape_type": "Face", "bbox": {"min": [-1, -1, -1], "max": [1, -1, 1]}},
+                        {"shape_type": "Face", "bbox": {"min": [-1, 1, -1], "max": [1, 1, 1]}},
+                        {"shape_type": "Face", "bbox": {"min": [-1, -1, -1], "max": [-1, 1, 1]}},
+                        {"shape_type": "Face", "bbox": {"min": [1, -1, -1], "max": [1, 1, 1]}},
+                    ],
+                    "edges": [
+                        {"shape_type": "Edge", "bbox": {"min": [-1, -1, -1], "max": [1, -1, -1]}},
+                        {"shape_type": "Edge", "bbox": {"min": [-1, 1, -1], "max": [1, 1, -1]}},
+                        {"shape_type": "Edge", "bbox": {"min": [-1, -1, 1], "max": [1, -1, 1]}},
+                        {"shape_type": "Edge", "bbox": {"min": [-1, 1, 1], "max": [1, 1, 1]}},
+                        {"shape_type": "Edge", "bbox": {"min": [-1, -1, -1], "max": [-1, 1, -1]}},
+                        {"shape_type": "Edge", "bbox": {"min": [1, -1, -1], "max": [1, 1, -1]}},
+                        {"shape_type": "Edge", "bbox": {"min": [-1, -1, 1], "max": [-1, 1, 1]}},
+                        {"shape_type": "Edge", "bbox": {"min": [1, -1, 1], "max": [1, 1, 1]}},
+                        {"shape_type": "Edge", "bbox": {"min": [-1, -1, -1], "max": [-1, -1, 1]}},
+                        {"shape_type": "Edge", "bbox": {"min": [-1, 1, -1], "max": [-1, 1, 1]}},
+                        {"shape_type": "Edge", "bbox": {"min": [1, -1, -1], "max": [1, -1, 1]}},
+                        {"shape_type": "Edge", "bbox": {"min": [1, 1, -1], "max": [1, 1, 1]}},
+                    ],
+                    "vertices": [
+                        {"shape_type": "Vertex", "bbox": {"min": [x, y, z], "max": [x, y, z]}}
+                        for x in (-1, 1)
+                        for y in (-1, 1)
+                        for z in (-1, 1)
+                    ],
+                },
+            }
+        ],
+        "operation_effects": [],
+        "selector_results": [],
+        "environment": {"cadquery_available": True},
+        "failure_reason": None,
+    }
+    graph = build_graph(
+        source_record_from_mapping({"source_id": "src_snapshot_topology", "normalized_code": source_code}),
+        trace=trace_record,
+    )
+
+    assert ".faces(" not in source_code and ".edges(" not in source_code and ".vertices(" not in source_code
+    assert any(node.properties.get("compiled_topology") for node in graph.nodes_by_type("selector"))
+    assert len([node for node in graph.nodes_by_type("face") if node.properties.get("kernel_backed")]) == 6
+    assert len([node for node in graph.nodes_by_type("edge") if node.properties.get("kernel_backed")]) == 12
+    assert len([node for node in graph.nodes_by_type("vertex") if node.properties.get("kernel_backed")]) == 8
+    assert any(relation.type == "has_kernel_stable_face_id" for relation in graph.relations)
+    assert any(relation.type == "has_kernel_stable_edge_id" for relation in graph.relations)
+    assert graph.measurements_for("selector:base_faces_snapshot_all", "selected_count")[0].value == 6
+
+    families = {query.query_id.rsplit(":", 1)[-1] for query in synthesize_graph_hop_queries(graph)}
+    assert "parameterized_equal_face_metric_extreme" in families
+    assert "parameterized_equal_edge_metric_extreme" in families
+    assert any(family.startswith("parameterized_edge_spatial_relation") for family in families)
+
+
 def test_loop_variable_selectors_match_kernel_trace_by_source_line() -> None:
     source_code = (
         "import cadquery as cq\n"

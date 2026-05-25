@@ -31,6 +31,8 @@ TRACE_FAILURE_REASONS = {
     "unknown_error",
 }
 
+MAX_SNAPSHOT_TOPOLOGY_ENTITIES_PER_KIND = 128
+
 
 @dataclass(frozen=True)
 class TraceRecord:
@@ -247,6 +249,7 @@ def measure_shape(shape: Any) -> dict[str, Any]:
         "bbox": bbox,
         "centroid": centroid,
         "topology": _topology_counts(shape),
+        "topology_entities": _topology_entities(shape),
     }
 
 
@@ -712,6 +715,38 @@ def _topology_counts(shape: Any) -> dict[str, int | None]:
         "edges": _shape_count(shape, "Edges"),
         "vertices": _shape_count(shape, "Vertices"),
     }
+
+
+def _topology_entities(shape: Any) -> dict[str, list[dict[str, Any]]]:
+    return {
+        "faces": _shape_entity_signatures(shape, "Faces"),
+        "edges": _shape_entity_signatures(shape, "Edges"),
+        "vertices": _shape_entity_signatures(shape, "Vertices"),
+    }
+
+
+def _shape_entity_signatures(shape: Any, method_name: str) -> list[dict[str, Any]]:
+    method = getattr(shape, method_name, None)
+    if method is None:
+        return []
+    try:
+        values = list(method())
+    except Exception:
+        return []
+    signatures: list[dict[str, Any]] = []
+    for selected in values[:MAX_SNAPSHOT_TOPOLOGY_ENTITIES_PER_KIND]:
+        shape_type = getattr(selected, "ShapeType", None)
+        try:
+            bbox = _bounding_box_from_shape(selected)
+        except CadQueryTraceError:
+            bbox = None
+        signatures.append(
+            {
+                "shape_type": str(shape_type()) if callable(shape_type) else type(selected).__name__,
+                "bbox": bbox,
+            }
+        )
+    return signatures
 
 
 def _shape_count(shape: Any, method_name: str) -> int | None:

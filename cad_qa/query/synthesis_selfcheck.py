@@ -13,9 +13,11 @@ from cad_qa.dataset.preview import (
     dataset_preview_markdown,
 )
 from cad_qa.io import to_jsonable, write_json, write_jsonl
+from cad_qa.ontology import build_graph
 from cad_qa.ontology.nodes import Measurement, Node, OntologyGraph, Relation
 from cad_qa.query.resolver import resolve_query
 from cad_qa.query.synthesis import synthesize_graph_hop_queries
+from cad_qa.source import source_record_from_mapping
 
 
 SYNTHESIS_SELFCHECK_FAMILIES = (
@@ -171,6 +173,7 @@ def synthesis_selfcheck_graphs() -> list[OntologyGraph]:
         _face_spatial_relation_graph("graph:selfcheck-face-spatial-relation-2"),
         _face_spatial_relation_graph("graph:selfcheck-face-spatial-relation-4"),
         _face_spatial_relation_graph("graph:selfcheck-face-spatial-relation-8"),
+        _snapshot_topology_graph(),
         _face_spatial_relation_rank_graph(),
         _face_spatial_relation_tie_break_graph(),
         _face_spatial_relation_chain_graph(),
@@ -305,6 +308,78 @@ def _add_reference_region_nodes(graph: OntologyGraph) -> None:
         graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid_x", centroid[0], "mm"))
         graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid_y", centroid[1], "mm"))
         graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid_z", centroid[2], "mm"))
+
+
+def _snapshot_topology_graph() -> OntologyGraph:
+    source_code = "import cadquery as cq\nbase = cq.Workplane('XY').box(2, 2, 2)\n"
+    trace_record = {
+        "source_id": "src_selfcheck_snapshot_topology",
+        "execution_status": "ok",
+        "snapshots": [
+            {
+                "target": "base",
+                "source_line": 2,
+                "operation_index": 0,
+                "volume": 8.0,
+                "bbox": {"min": [-1, -1, -1], "max": [1, 1, 1]},
+                "centroid": [0.0, 0.0, 0.0],
+                "topology": {"faces": 6, "edges": 12, "vertices": 8},
+                "topology_entities": {
+                    "faces": _box_face_entities(),
+                    "edges": _box_edge_entities(),
+                    "vertices": [
+                        {"shape_type": "Vertex", "bbox": {"min": [x, y, z], "max": [x, y, z]}}
+                        for x in (-1, 1)
+                        for y in (-1, 1)
+                        for z in (-1, 1)
+                    ],
+                },
+            }
+        ],
+        "operation_effects": [],
+        "selector_results": [],
+        "environment": {"cadquery_available": True},
+        "failure_reason": None,
+    }
+    graph = build_graph(
+        source_record_from_mapping(
+            {
+                "source_id": "src_selfcheck_snapshot_topology",
+                "normalized_code": source_code,
+            }
+        ),
+        trace=trace_record,
+    )
+    graph.graph_id = "graph:selfcheck-snapshot-topology"
+    return graph
+
+
+def _box_face_entities() -> list[dict[str, Any]]:
+    return [
+        {"shape_type": "Face", "bbox": {"min": [-1, -1, -1], "max": [1, 1, -1]}},
+        {"shape_type": "Face", "bbox": {"min": [-1, -1, 1], "max": [1, 1, 1]}},
+        {"shape_type": "Face", "bbox": {"min": [-1, -1, -1], "max": [1, -1, 1]}},
+        {"shape_type": "Face", "bbox": {"min": [-1, 1, -1], "max": [1, 1, 1]}},
+        {"shape_type": "Face", "bbox": {"min": [-1, -1, -1], "max": [-1, 1, 1]}},
+        {"shape_type": "Face", "bbox": {"min": [1, -1, -1], "max": [1, 1, 1]}},
+    ]
+
+
+def _box_edge_entities() -> list[dict[str, Any]]:
+    return [
+        {"shape_type": "Edge", "bbox": {"min": [-1, -1, -1], "max": [1, -1, -1]}},
+        {"shape_type": "Edge", "bbox": {"min": [-1, 1, -1], "max": [1, 1, -1]}},
+        {"shape_type": "Edge", "bbox": {"min": [-1, -1, 1], "max": [1, -1, 1]}},
+        {"shape_type": "Edge", "bbox": {"min": [-1, 1, 1], "max": [1, 1, 1]}},
+        {"shape_type": "Edge", "bbox": {"min": [-1, -1, -1], "max": [-1, 1, -1]}},
+        {"shape_type": "Edge", "bbox": {"min": [1, -1, -1], "max": [1, 1, -1]}},
+        {"shape_type": "Edge", "bbox": {"min": [-1, -1, 1], "max": [-1, 1, 1]}},
+        {"shape_type": "Edge", "bbox": {"min": [1, -1, 1], "max": [1, 1, 1]}},
+        {"shape_type": "Edge", "bbox": {"min": [-1, -1, -1], "max": [-1, -1, 1]}},
+        {"shape_type": "Edge", "bbox": {"min": [-1, 1, -1], "max": [-1, 1, 1]}},
+        {"shape_type": "Edge", "bbox": {"min": [1, -1, -1], "max": [1, -1, 1]}},
+        {"shape_type": "Edge", "bbox": {"min": [1, 1, -1], "max": [1, 1, 1]}},
+    ]
 
 
 def _face_metric_graph() -> OntologyGraph:

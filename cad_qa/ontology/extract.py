@@ -968,6 +968,72 @@ class _Extractor:
                     },
                 )
             )
+        self._add_snapshot_topology_entities(feature_id, target, record, snapshot)
+
+    def _add_snapshot_topology_entities(
+        self,
+        feature_id: str,
+        target: str,
+        record: OperationRecord,
+        snapshot: dict[str, Any],
+    ) -> None:
+        topology_entities = snapshot.get("topology_entities")
+        if not isinstance(topology_entities, dict):
+            return
+        for selector_kind, entity_type in (("faces", "face"), ("edges", "edge"), ("vertices", "vertex")):
+            entities = topology_entities.get(selector_kind)
+            if not isinstance(entities, list) or not entities:
+                continue
+            selector_text = f"snapshot:{target}:{selector_kind}"
+            selector_id = self._unique_node_id(f"selector:{_slug(target)}_{selector_kind}_snapshot_all")
+            self.graph.add_node(
+                Node(
+                    id=selector_id,
+                    type="selector",
+                    label=f"{target} {selector_kind} from compiled topology",
+                    source_ref=str(record.source_line),
+                    properties={
+                        "selector": None,
+                        "selector_label": f"{target} {selector_kind}",
+                        "selector_kind": selector_kind,
+                        "kernel_backed": True,
+                        "compiled_topology": True,
+                        "selected_count": len(entities),
+                        "feature_id": feature_id,
+                    },
+                )
+            )
+            self.graph.add_relation(
+                Relation(
+                    selector_id,
+                    feature_id,
+                    "selected_by",
+                    evidence={"source": "cadquery_trace_snapshot_topology"},
+                )
+            )
+            self.graph.add_measurement(
+                Measurement(
+                    selector_id,
+                    "snapshot_state",
+                    "selected_count",
+                    len(entities),
+                    evidence={"source": "cadquery_trace_snapshot_topology"},
+                )
+            )
+            kernel_result = {
+                "selector_kind": selector_kind,
+                "selected_count": len(entities),
+                "shape_types": [
+                    str(item.get("shape_type") or entity_type.title()) if isinstance(item, dict) else entity_type.title()
+                    for item in entities
+                ],
+                "bbox_signatures": [
+                    item.get("bbox") if isinstance(item, dict) else None
+                    for item in entities
+                ],
+                "evidence": "cadquery_trace_snapshot_topology",
+            }
+            self._add_kernel_selected_faces(selector_id, selector_text, kernel_result, record)
 
     def _attach_trace_feature_effect(self, feature_id: str, target: str, record: OperationRecord) -> None:
         effect = self._trace_effect_for_target(target, record, consume=False)

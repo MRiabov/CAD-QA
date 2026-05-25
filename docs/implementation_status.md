@@ -39,6 +39,10 @@ when those choices can be sampled and verified.
 - Trace snapshots for measurable top-level CadQuery assignments, final shape
   metrics, centroids, topology counts, and adjacent snapshot-derived
   volume/bbox/centroid/topology deltas when CadQuery is installed.
+- Trace snapshots can now include bounded compiled-topology entity signatures
+  for faces, edges, and vertices, so graph extraction can mine topological
+  geometry from the solid even when the source code never calls `.faces(...)`,
+  `.edges(...)`, or `.vertices(...)`.
 - Prepared CADEvolve trace snapshots keyed by `feature_id` are normalized during
   graph build using `operation_nodes`, so snapshot-state measurements retain
   target, source-line, and operation-order evidence even when the trace did not
@@ -64,6 +68,11 @@ when those choices can be sampled and verified.
   workplanes, with selected counts, shape types, face bbox signatures,
   kernel-backed stable face IDs, and release-ready selected-face rows when
   private trace evidence is present.
+- Compiled snapshot topology is represented through synthetic kernel-backed
+  selector sets plus face, edge, vertex, endpoint, measurement, and
+  spatial-relation evidence. The new regression test verifies synthesized
+  face/edge equal-measurement and edge spatial-relation rows from this topology
+  without visible selector syntax in the source.
 - Kernel-selected face nodes include compiled face-center coordinates,
   face-center distance-to-origin measurements, and face-area measurements
   derived from selector-result bounding boxes.

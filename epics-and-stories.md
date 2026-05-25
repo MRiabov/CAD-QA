@@ -201,6 +201,7 @@ Technical definition of done:
 | 4.3 Profile geometry nodes for circle, rect, and polyline | `implemented` | Profile-based questions can refer to actual sketch geometry. | Profile nodes capture computable shape data and source links. |
 | 4.4 Workplane frame nodes and profile projection links | `implemented` | Workplane-dependent geometry can be queried through frame evidence. | Workplane origins/orientations and profile-to-workplane links are extracted. |
 | 4.5 Material and void region geometry | `implemented` | Users can ask about added and removed material, not only operation names. | Kernel-backed material/void region nodes and measurements are emitted where stable. |
+| 4.6 Compiled topology entities from feature snapshots | `implemented` | Users get face, edge, and vertex graph entities from compiled solid topology even when source code never calls `.faces(...)`, `.edges(...)`, or `.vertices(...)`. | Trace snapshot `topology_entities` are converted into kernel-backed selector, face, edge, vertex, endpoint, measurement, and spatial-relation graph evidence; tests verify synthesized face/edge equal-measurement and edge spatial-relation families from snapshot topology without selector syntax. |
 
 ## Epic 5: Query program and deterministic resolver (`epic-5`)
 

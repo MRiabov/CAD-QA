@@ -166,6 +166,7 @@ epics:
           - "Runtime geometry evidence has a stable serialized shape, including prepared CADEvolve traces that use feature IDs for snapshots."
         technical_definition_of_done:
           - "Graph build normalizes feature_id-keyed snapshots through operation_nodes so source-line and operation-order evidence remain available to downstream geometry queries."
+          - "Trace snapshots can carry bounded compiled-topology entity signatures for faces, edges, and vertices when CadQuery exposes them."
       - id: "3.2"
         title: Isolated CadQuery execution worker
         status: implemented
@@ -195,6 +196,14 @@ epics:
       - id: "4.5"
         title: Material and void region geometry
         status: implemented
+      - id: "4.6"
+        title: Compiled topology entities from feature snapshots
+        status: implemented
+        acceptance_criteria:
+          - Users get face, edge, and vertex graph entities from compiled solid topology even when source code never calls `.faces(...)`, `.edges(...)`, or `.vertices(...)`.
+        technical_definition_of_done:
+          - Trace snapshot `topology_entities` are converted into kernel-backed selector, face, edge, vertex, endpoint, measurement, and spatial-relation graph evidence.
+          - Unit coverage verifies synthesized face/edge equal-measurement and edge spatial-relation families from snapshot topology without selector syntax in source code.
   - id: epic-5
     title: Query program and deterministic resolver
     status: implemented
