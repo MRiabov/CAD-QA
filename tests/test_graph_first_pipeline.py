@@ -7764,6 +7764,47 @@ def test_release_balance_report_checks_family_entropy_and_geometry_hops() -> Non
     assert value_report["passes_value_bearing_measurement_coverage"]
     assert value_report["passes_cross_feature_value_bearing_coverage"]
     assert value_report["cross_feature_value_bearing_count"] == 1
+    assert value_report["value_bearing_only_prompt_family_count"] == 10
+    assert value_report["value_bearing_family_floor_feasible"]
+
+    impossible_value_mix = []
+    for index in range(40):
+        impossible_value_mix.append(
+            {
+                "row_id": f"row:src:value:{index}:value_family_{index}",
+                "source_id": "src",
+                "prompt": f"value prompt {index}",
+                "prompt_template_id": f"value_template_{index}",
+                "gold_answer": f"value_entity:{index}",
+                "geometry_hop_count": 2,
+                "static_hop_count": 0,
+                "query_program": {
+                    "query_id": f"graph:src:value:{index}:value_family_{index}",
+                    "aggregation_metric": "volume",
+                    "clauses": [{"kind": "has_measurement", "metric": "volume", "value": float(index)}],
+                },
+            }
+        )
+    for index in range(60):
+        impossible_value_mix.append(
+            {
+                "row_id": f"row:src:plain:{index}:plain_family_{index}",
+                "source_id": "src",
+                "prompt": f"plain prompt {index}",
+                "prompt_template_id": f"plain_template_{index}",
+                "gold_answer": f"plain_entity:{index}",
+                "geometry_hop_count": 2,
+                "static_hop_count": 0,
+                "query_program": {
+                    "query_id": f"graph:src:plain:{index}:plain_family_{index}",
+                    "aggregation_metric": "volume",
+                    "clauses": [],
+                },
+            }
+        )
+    impossible_report = release_balance_report(impossible_value_mix, release_tier="benchmark-release")
+    assert impossible_report["minimum_value_bearing_share_from_family_floor"] == 0.4
+    assert not impossible_report["value_bearing_family_floor_feasible"]
 
 
 def test_release_export_balance_caps_overrepresented_training_slices() -> None:
@@ -7881,6 +7922,66 @@ def test_release_export_balance_caps_preserve_available_family_diversity() -> No
     assert report["passes_main_browsecomp_hop_coverage"]
     assert report["passes_value_bearing_measurement_coverage"]
     assert any(item["reason"] == "value_bearing_measurement_cap" for item in exclusions)
+
+
+def test_release_export_balance_caps_preserve_protected_release_families() -> None:
+    rows = []
+    protected_families = {f"value_family_{index}" for index in range(12)}
+    protected_families.update(f"plain_family_{index}" for index in range(24))
+    for index in range(12):
+        family = f"value_family_{index}"
+        rows.append(
+            {
+                "row_id": f"row:src:value:{index}:{family}",
+                "source_id": f"src_value_{index}",
+                "prompt": f"value prompt {index}",
+                "prompt_template_id": f"value_template_{index}",
+                "gold_answer": f"value_entity:{index}",
+                "logical_hop_count": 4,
+                "geometry_hop_count": 4,
+                "static_hop_count": 0,
+                "query_program": {
+                    "query_id": f"graph:src:value:{index}:{family}",
+                    "aggregation_metric": "volume",
+                    "clauses": [{"kind": "has_measurement", "metric": "volume", "value": float(index)}],
+                },
+            }
+        )
+    for index in range(24):
+        family = f"plain_family_{index}"
+        rows.append(
+            {
+                "row_id": f"row:src:plain:{index}:{family}",
+                "source_id": f"src_plain_{index}",
+                "prompt": f"plain prompt {index}",
+                "prompt_template_id": f"plain_template_{index}",
+                "gold_answer": f"plain_entity:{index}",
+                "logical_hop_count": 4,
+                "geometry_hop_count": 4,
+                "static_hop_count": 0,
+                "query_program": {
+                    "query_id": f"graph:src:plain:{index}:{family}",
+                    "aggregation_metric": "volume",
+                    "clauses": [],
+                },
+            }
+        )
+
+    profile = release_gate_profile("benchmark-release")
+    capped, _ = _cap_release_balance_rows(
+        rows,
+        profile,
+        protected_prompt_families=protected_families,
+    )
+    report = release_balance_report(capped, release_tier="benchmark-release")
+
+    assert {
+        row["query_program"]["query_id"].rsplit(":", 1)[-1]
+        for row in capped
+    } == protected_families
+    assert report["passes_prompt_family_balance"]
+    assert not report["passes_value_bearing_measurement_coverage"]
+    assert report["value_bearing_measurement_share"] > profile.max_value_bearing_measurement_share
 
 
 def test_benchmark_release_tier_applies_stricter_numeric_gates() -> None:

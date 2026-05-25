@@ -52,7 +52,16 @@ def export_release_dataset(
         deduped_rows,
         profile.max_syntax_only_calibration_share,
     )
-    release_rows, balance_cap_exclusions = _cap_release_balance_rows(release_rows, profile)
+    protected_prompt_families = (
+        {_prompt_family(row) for row in release_rows}
+        if profile.enforce_intended_family_coverage
+        else None
+    )
+    release_rows, balance_cap_exclusions = _cap_release_balance_rows(
+        release_rows,
+        profile,
+        protected_prompt_families=protected_prompt_families,
+    )
     if not release_rows:
         raise ValueError("no release-ready rows found")
     out.mkdir(parents=True, exist_ok=True)
@@ -276,6 +285,8 @@ def _allowed_calibration_count(main_count: int, max_share: float) -> int:
 def _cap_release_balance_rows(
     rows: list[dict[str, Any]],
     profile: Any,
+    *,
+    protected_prompt_families: set[str] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Deterministically cap overrepresented release slices when alternatives exist."""
 
@@ -292,6 +303,7 @@ def _cap_release_balance_rows(
             min_prompt_family_share=profile.min_prompt_family_share,
             reason="cross_feature_value_bearing_cap",
             prefer_keep=_high_hop_keep_priority,
+            protected_prompt_families=protected_prompt_families,
         )
         exclusions.extend(dropped)
         kept, dropped = _cap_boolean_share_rows(
@@ -301,6 +313,7 @@ def _cap_release_balance_rows(
             min_prompt_family_share=profile.min_prompt_family_share,
             reason="value_bearing_measurement_cap",
             prefer_keep=_cross_feature_keep_priority,
+            protected_prompt_families=protected_prompt_families,
         )
         exclusions.extend(dropped)
         kept, dropped = _cap_boolean_min_share_rows(
@@ -309,6 +322,7 @@ def _cap_release_balance_rows(
             min_share=profile.min_logical_hop_ge_3_share,
             min_prompt_family_share=profile.min_prompt_family_share,
             reason="main_browsecomp_hop_cap",
+            protected_prompt_families=protected_prompt_families,
         )
         exclusions.extend(dropped)
         kept, dropped = _cap_group_share_rows(
@@ -345,6 +359,7 @@ def _cap_boolean_share_rows(
     min_prompt_family_share: float | None = None,
     reason: str,
     prefer_keep: Any | None = None,
+    protected_prompt_families: set[str] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     if max_share is None:
         return rows, []
@@ -361,6 +376,7 @@ def _cap_boolean_share_rows(
         key=key,
         min_family_share=min_prompt_family_share,
         target_total=other_count + allowed_count,
+        protected_prompt_families=protected_prompt_families,
     )
     kept_ids = {id(row) for row in kept_matched}
     dropped = [row for row in matched if id(row) not in kept_ids]
@@ -378,6 +394,7 @@ def _cap_boolean_min_share_rows(
     min_share: float | None,
     min_prompt_family_share: float | None = None,
     reason: str,
+    protected_prompt_families: set[str] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     if min_share is None or min_share <= 0:
         return rows, []
@@ -395,6 +412,7 @@ def _cap_boolean_min_share_rows(
         key=_stable_row_key,
         min_family_share=min_prompt_family_share,
         target_total=len(matched) + allowed_unmatched_count,
+        protected_prompt_families=protected_prompt_families,
     )
     kept_unmatched_ids = {id(row) for row in kept_unmatched}
     dropped = [row for row in unmatched if id(row) not in kept_unmatched_ids]
@@ -501,6 +519,7 @@ def _keep_rows_preserving_prompt_families(
     key: Any,
     min_family_share: float | None = None,
     target_total: int | None = None,
+    protected_prompt_families: set[str] | None = None,
 ) -> list[dict[str, Any]]:
     if keep_count <= 0:
         return []
@@ -513,11 +532,21 @@ def _keep_rows_preserving_prompt_families(
         candidates,
         min_family_share=min_family_share,
         target_total=target_total,
+        protected_prompt_families=protected_prompt_families,
     )
     for family, required_count in sorted(required_by_family.items()):
         family_rows = [row for row in candidates if _prompt_family(row) == family]
         kept.extend(family_rows[:required_count])
     if len(kept) > keep_count:
+        protected = protected_prompt_families or set()
+        protected_kept = [row for row in kept if _prompt_family(row) in protected]
+        if protected_kept:
+            protected_ids = {id(row) for row in protected_kept}
+            remaining = [row for row in kept if id(row) not in protected_ids]
+            return sorted(
+                protected_kept + sorted(remaining, key=key)[: max(0, keep_count - len(protected_kept))],
+                key=key,
+            )
         return sorted(kept, key=key)[:keep_count]
     kept_ids = {id(row) for row in kept}
     for row in candidates:
@@ -535,6 +564,7 @@ def _minimum_candidate_rows_by_prompt_family(
     *,
     min_family_share: float | None,
     target_total: int | None,
+    protected_prompt_families: set[str] | None = None,
 ) -> dict[str, int]:
     candidates_by_family = _rows_by_group(candidate_rows, _prompt_family)
     candidate_ids = {id(row) for row in candidate_rows}
@@ -548,7 +578,10 @@ def _minimum_candidate_rows_by_prompt_family(
         minimum_rows = max(1, math.ceil(min_family_share * target_total - 1e-12))
     required: dict[str, int] = {}
     for family, family_candidates in candidates_by_family.items():
-        needed = minimum_rows - noncandidate_counts.get(family, 0)
+        family_minimum_rows = minimum_rows
+        if family in (protected_prompt_families or set()) and noncandidate_counts.get(family, 0) == 0:
+            family_minimum_rows = max(1, family_minimum_rows)
+        needed = family_minimum_rows - noncandidate_counts.get(family, 0)
         if needed > 0:
             required[family] = min(needed, len(family_candidates))
     return required

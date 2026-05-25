@@ -300,6 +300,16 @@ def release_balance_report(
     syntax_only_calibration_count = sum(1 for row in rows if is_syntax_only_calibration_row(row))
     value_bearing_measurement_count = sum(1 for row in rows if _is_value_bearing_measurement_row(row))
     cross_feature_value_bearing_count = sum(1 for row in rows if _is_cross_feature_value_bearing_row(row))
+    value_bearing_only_family_count = _predicate_only_family_count(rows, _is_value_bearing_measurement_row)
+    cross_feature_only_family_count = _predicate_only_family_count(rows, _is_cross_feature_value_bearing_row)
+    minimum_value_bearing_share_from_family_floor = min(
+        1.0,
+        value_bearing_only_family_count * profile.min_prompt_family_share,
+    )
+    minimum_cross_feature_share_from_family_floor = min(
+        1.0,
+        cross_feature_only_family_count * profile.min_prompt_family_share,
+    )
     largest_prompt_family, largest_prompt_family_count = _largest_counter_item(prompt_family_counts)
     largest_prompt_template, largest_prompt_template_count = _largest_counter_item(prompt_template_counts)
     largest_prompt_family_share = largest_prompt_family_count / row_count if row_count else 0.0
@@ -386,10 +396,22 @@ def release_balance_report(
         "syntax_only_calibration_share": syntax_only_calibration_share,
         "value_bearing_measurement_count": value_bearing_measurement_count,
         "value_bearing_measurement_share": value_bearing_measurement_share,
+        "value_bearing_only_prompt_family_count": value_bearing_only_family_count,
+        "minimum_value_bearing_share_from_family_floor": minimum_value_bearing_share_from_family_floor,
+        "value_bearing_family_floor_feasible": (
+            profile.max_value_bearing_measurement_share is None
+            or minimum_value_bearing_share_from_family_floor <= profile.max_value_bearing_measurement_share
+        ),
         "minimum_value_bearing_measurement_share": profile.min_value_bearing_measurement_share,
         "maximum_value_bearing_measurement_share": profile.max_value_bearing_measurement_share,
         "cross_feature_value_bearing_count": cross_feature_value_bearing_count,
         "cross_feature_value_bearing_share": cross_feature_value_bearing_share,
+        "cross_feature_only_prompt_family_count": cross_feature_only_family_count,
+        "minimum_cross_feature_share_from_family_floor": minimum_cross_feature_share_from_family_floor,
+        "cross_feature_family_floor_feasible": (
+            profile.max_cross_feature_value_bearing_share is None
+            or minimum_cross_feature_share_from_family_floor <= profile.max_cross_feature_value_bearing_share
+        ),
         "minimum_cross_feature_value_bearing_count": profile.min_cross_feature_value_bearing_count,
         "minimum_cross_feature_value_bearing_share": profile.min_cross_feature_value_bearing_share,
         "maximum_cross_feature_value_bearing_share": profile.max_cross_feature_value_bearing_share,
@@ -776,6 +798,13 @@ def _counter_share_reports(counts: Counter[str], total: int) -> list[dict[str, A
         }
         for key, count in sorted(counts.items())
     ]
+
+
+def _predicate_only_family_count(rows: list[dict[str, Any]], predicate: Any) -> int:
+    by_family: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        by_family.setdefault(prompt_family(row), []).append(row)
+    return sum(1 for family_rows in by_family.values() if family_rows and all(predicate(row) for row in family_rows))
 
 
 def _pre_final_candidate_counts(rows: list[dict[str, Any]]) -> list[int]:
