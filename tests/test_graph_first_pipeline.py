@@ -10784,6 +10784,9 @@ def test_release_export_helper_writes_reports(tmp_path: Path) -> None:
     assert (tmp_path / "release" / "split_audit.json").exists()
     assert (tmp_path / "release" / "DATASET_CARD.md").exists()
     assert (tmp_path / "release" / "release_exclusions.json").exists()
+    assert (tmp_path / "release" / "PREVIEW.md").exists()
+    assert (tmp_path / "release" / "PREVIEW.preview_evidence.json").exists()
+    assert (tmp_path / "release" / "preview_evidence.json").exists()
     assert (tmp_path / "release" / "public.parquet").exists()
     assert (tmp_path / "release" / "private.parquet").exists()
 

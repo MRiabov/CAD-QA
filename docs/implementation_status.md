@@ -397,6 +397,13 @@ when those choices can be sampled and verified.
   block missing preview evidence, dataset-fingerprint mismatches, and fewer than
   20 previewed rows per generated release family, or all rows when a family has
   fewer than 20 rows.
+- Release export now writes its own `PREVIEW.md`,
+  `PREVIEW.preview_evidence.json`, and dataset-local `preview_evidence.json`
+  before running the verifier. A CadEvolve-50 benchmark export probe at
+  `runs/current_cadevolve50_selector_tiebreak/release_export_generated_preview_probe/`
+  keeps the preview-evidence gate passing without an external preview override;
+  the remaining blockers are split-group coverage, intended-family coverage,
+  and sampled-parameter balance.
 - Benchmark-release release and SFT reports include a family test-evidence gate.
   Generated release families must have machine-readable references for positive
   generation, failure/quarantine behavior, and release-report accounting tests.

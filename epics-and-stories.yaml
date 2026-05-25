@@ -739,6 +739,10 @@ epics:
             counts for the 1%-10% family-share band, insufficient preview
             samples, missing family-test evidence, and fewer than 3 protected
             split groups per split.
+          - Release export writes preview Markdown plus machine-readable
+            preview evidence for the exported rows before verifier execution,
+            so benchmark preview gates do not depend on stale external preview
+            artifacts.
           - Release reports expose when value-bearing-only or
             cross-feature-only release-family counts make the value/cross caps
             infeasible under the 1% family floor.

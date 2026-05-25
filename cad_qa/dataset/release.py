@@ -10,7 +10,11 @@ from typing import Any
 
 from cad_qa.dataset.audit import leakage_audit
 from cad_qa.dataset.family_test_evidence import DEFAULT_FAMILY_TEST_EVIDENCE
-from cad_qa.dataset.preview import DEFAULT_PREVIEW_EVIDENCE_FILENAME
+from cad_qa.dataset.preview import (
+    DEFAULT_PREVIEW_EVIDENCE_FILENAME,
+    dataset_preview_evidence_report,
+    dataset_preview_markdown,
+)
 from cad_qa.dataset.public import write_public_private_artifacts
 from cad_qa.dataset.quarantine import quarantine_report
 from cad_qa.dataset.release_report import (
@@ -166,11 +170,12 @@ def export_release_dataset(
         ),
         encoding="utf-8",
     )
+    generated_preview_evidence = _write_release_preview_artifacts(release_rows, out, profile)
     verifier_report = write_release_verifier_report(
         out,
         release_tier=profile.name,
         family_manifest=family_manifest,
-        preview_evidence=preview_evidence or out / DEFAULT_PREVIEW_EVIDENCE_FILENAME,
+        preview_evidence=preview_evidence or generated_preview_evidence,
         family_test_evidence=family_test_evidence,
     )
     valid = validation["valid"] and audit["valid"] and split_quality["valid"] and verifier_report["valid_for_release"]
@@ -199,6 +204,29 @@ def export_release_dataset(
     if not valid and not allow_failing_release_gates:
         raise RuntimeError(f"release gates failed: {verifier_report['blocking_gates']}")
     return result
+
+
+def _write_release_preview_artifacts(rows: list[dict[str, Any]], out: Path, profile: Any) -> Path:
+    sample_per_family = profile.min_preview_samples_per_family or 1
+    preview_path = out / "PREVIEW.md"
+    preview_path.write_text(
+        dataset_preview_markdown(
+            rows,
+            sample_per_family=sample_per_family,
+            seed=0,
+        ),
+        encoding="utf-8",
+    )
+    evidence = dataset_preview_evidence_report(
+        rows,
+        preview_path=preview_path,
+        sample_per_family=sample_per_family,
+        seed=0,
+    )
+    evidence_path = out / DEFAULT_PREVIEW_EVIDENCE_FILENAME
+    write_json(evidence_path, evidence)
+    write_json(preview_path.with_suffix(".preview_evidence.json"), evidence)
+    return evidence_path
 
 
 def _release_balance_capacity_report(rows: list[dict[str, Any]], profile: Any) -> dict[str, Any]:
