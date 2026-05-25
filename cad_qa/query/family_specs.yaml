@@ -3008,7 +3008,7 @@ families:
         - final_selector
       expected_values:
         target_type: [material_region]
-    notes: Synthesized value-bearing added-material region family that narrows by repeated region volume before selecting by measured centroid height.
+    notes: Synthesized value-bearing added-material region family that narrows by repeated sampled region measurements before selecting by a different sampled measured region metric.
   - id: parameterized_equal_material_region_metric_rank
     status: release
     target_type: material_region

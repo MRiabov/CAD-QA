@@ -594,6 +594,10 @@ epics:
             `parameterized_kernel_edge_rank`, and
             `parameterized_kernel_face_rank` above the 100-row benchmark-family
             floor before release capping.
+          - Equal-material-region metric extrema now sample volume and centroid
+            X/Y/Z for both equal-measurement narrowing and final measured
+            selection, raising the CadEvolve-50 viable count from 39 to 337
+            resolved release-ready rows before release capping.
           - Expanded benchmark release export over the 35k-row direct-metric
             probe now completes and writes reviewed preview evidence; the
             resulting 40-row capped artifact is still blocked by benchmark row

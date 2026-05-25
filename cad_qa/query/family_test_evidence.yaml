@@ -397,11 +397,12 @@ families:
   - id: parameterized_equal_material_region_metric_extreme
     positive_generation:
       - test_synthesis_generates_equal_value_region_queries
+      - test_synthesis_equal_value_material_region_extreme_samples_metrics_beyond_volume_z
     failure_or_quarantine:
       - test_synthesis_skips_equal_value_region_families_without_repeated_value_distractors
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
-    notes: Initial synthesized value-bearing added-material region family with equal-measurement narrowing.
+    notes: Synthesized value-bearing added-material region family with sampled equal-measurement and selector metrics.
   - id: parameterized_equal_material_region_metric_rank
     positive_generation:
       - test_synthesis_generates_equal_value_region_rank_queries

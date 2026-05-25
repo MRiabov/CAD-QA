@@ -5252,10 +5252,10 @@ def test_synthesis_generates_feature_reference_distance_from_bbox_centers() -> N
 
 def test_synthesis_generates_equal_value_region_queries() -> None:
     graph = OntologyGraph(graph_id="graph:equal-region-synth", source={"source_id": "synthetic", "source_code": ""})
-    for node_id, relation, volume, centroid_z in [
-        ("material_region:a", "has_kernel_material_region_geometry", 42.0, 1.0),
-        ("material_region:b", "has_kernel_material_region_geometry", 42.0 + 1e-7, 7.0),
-        ("material_region:c", "has_kernel_material_region_geometry", 9.0, 20.0),
+    for node_id, relation, volume, centroid in [
+        ("material_region:a", "has_kernel_material_region_geometry", 42.0, [1.0, 0.0, 1.0]),
+        ("material_region:b", "has_kernel_material_region_geometry", 42.0 + 1e-7, [4.0, 1.0, 7.0]),
+        ("material_region:c", "has_kernel_material_region_geometry", 9.0, [8.0, 2.0, 20.0]),
         ("void_region:a", "has_kernel_void_region_geometry", 8.0, 2.0),
         ("void_region:b", "has_kernel_void_region_geometry", 8.0 + 1e-7, 6.0),
         ("void_region:c", "has_kernel_void_region_geometry", 3.0, 30.0),
@@ -5264,28 +5264,36 @@ def test_synthesis_generates_equal_value_region_queries() -> None:
         graph.add_node(Node(node_id, node_type, node_id))
         graph.add_relation(Relation(node_id, node_id, relation))
         graph.add_measurement(Measurement(node_id, "entity_geometry", "volume", volume, "mm^3"))
-        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_z", centroid_z, "mm"))
+        if node_type == "material_region":
+            graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid", centroid, "mm"))
+            graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_x", centroid[0], "mm"))
+            graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_y", centroid[1], "mm"))
+            graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_z", centroid[2], "mm"))
+        else:
+            graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_z", centroid, "mm"))
 
     queries = {query.query_id.rsplit(":", 1)[-1]: query for query in synthesize_graph_hop_queries(graph)}
     material_query = queries["parameterized_equal_material_region_metric_extreme"]
     material_resolution = resolve_query(graph, material_query)
     material_row = materialize_row(graph, material_resolution)
-    material_equal_step = next(step for step in material_row.candidate_trace["steps"] if step["step"] == "has_region_volume_value")
+    material_equal_step = next(
+        step
+        for step in material_row.candidate_trace["steps"]
+        if step["step"] == "has_parameterized_equal_material_region_metric_value"
+    )
 
     assert material_resolution.verifier_status == "resolved"
-    assert material_resolution.gold_answer == (
-        "material_region:b" if material_query.aggregation == "argmax" else "material_region:a"
-    )
     assert material_query.clauses[0].relation == "has_kernel_material_region_geometry"
-    assert material_query.clauses[1].metric == "volume"
-    assert material_query.clauses[1].value == 42.0
-    assert material_query.aggregation_metric == "centroid_z"
-    assert material_equal_step["after"] == ["material_region:a", "material_region:b"]
+    assert material_query.clauses[1].metric in {"volume", "centroid_x", "centroid_y", "centroid_z"}
+    assert material_query.aggregation_metric in {"volume", "centroid_x", "centroid_y", "centroid_z"}
+    assert material_query.clauses[1].metric != material_query.aggregation_metric
+    assert len(material_equal_step["after"]) >= 2
     assert material_row.logical_hop_count == 4
     assert material_row.geometry_hop_count == 4
     assert material_row.query_program["sampled_parameters"]["target_type"] == ["material_region"]
-    assert material_row.query_program["sampled_parameters"]["measurement_value_bucket"] == ["volume:42"]
-    assert "added-material region has a volume of 42.0" in material_row.prompt
+    assert material_row.query_program["sampled_parameters"]["equal_measurement_metric"] == [material_query.clauses[1].metric]
+    assert material_row.query_program["sampled_parameters"]["aggregation_metric"] == [material_query.aggregation_metric]
+    assert "added-material region" in material_row.prompt
 
     void_query = queries["parameterized_equal_void_region_metric_extreme"]
     void_resolution = resolve_query(graph, void_query)
@@ -5306,6 +5314,43 @@ def test_synthesis_generates_equal_value_region_queries() -> None:
     assert void_row.query_program["sampled_parameters"]["target_type"] == ["void_region"]
     assert void_row.query_program["sampled_parameters"]["measurement_value_bucket"] == ["volume:8"]
     assert "removed-material region has a volume of 8.0" in void_row.prompt
+
+
+def test_synthesis_equal_value_material_region_extreme_samples_metrics_beyond_volume_z() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:equal-region-extreme-metric-sampling",
+        source={"source_id": "synthetic", "source_code": ""},
+    )
+    for node_id, volume, centroid in [
+        ("material_region:a", 12.0, [1.0, 0.0, 1.0]),
+        ("material_region:b", 12.0, [4.0, 0.0, 4.0]),
+        ("material_region:c", 18.0, [8.0, 2.0, 7.0]),
+        ("material_region:d", 24.0, [12.0, 2.0, 10.0]),
+        ("material_region:e", 30.0, [16.0, 4.0, 13.0]),
+        ("material_region:f", 36.0, [20.0, 4.0, 16.0]),
+    ]:
+        graph.add_node(Node(node_id, "material_region", node_id))
+        graph.add_relation(Relation(node_id, node_id, "has_kernel_material_region_geometry"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid", centroid, "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_x", centroid[0], "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_y", centroid[1], "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_z", centroid[2], "mm"))
+
+    queries = [
+        query
+        for query in synthesize_graph_hop_queries(graph, max_per_family=20)
+        if query.query_id.rsplit(":", 1)[-1] == "parameterized_equal_material_region_metric_extreme"
+    ]
+    sampled_pairs = {(query.clauses[1].metric, query.aggregation_metric) for query in queries}
+
+    assert ("centroid_y", "volume") in sampled_pairs
+    assert any(equal_metric != "volume" for equal_metric, _selector_metric in sampled_pairs)
+    assert any(selector_metric != "centroid_z" for _equal_metric, selector_metric in sampled_pairs)
+    for query in queries:
+        row = materialize_row(graph, resolve_query(graph, query))
+        assert row.verifier_status == "resolved"
+        assert row.release_ready
 
 
 def test_synthesis_generates_equal_value_region_rank_queries() -> None:
