@@ -114,6 +114,10 @@ clause_templates:
     - "The target face has a measured {metric_label}."
     - "The target face has a known {metric_label}."
     - "The target face has a verified {metric_label}."
+  has_parameterized_face_metric_threshold:
+    - "The target face has {metric_label} {operator_label} {value}."
+    - "The target face's {metric_label} is {operator_label} {value}."
+    - "The target face satisfies {metric_label} {operator_label} {value}."
   has_parameterized_face_spatial_relation:
     - "The target face is {relation_label} another measured face."
     - "The target face has a measured face that is {relation_label} it."
@@ -195,6 +199,10 @@ clause_templates:
     - "The target edge has a measured {metric_label}."
     - "The target edge has a known {metric_label}."
     - "The target edge has a verified {metric_label}."
+  has_parameterized_edge_metric_threshold:
+    - "The target edge has {metric_label} {operator_label} {value}."
+    - "The target edge's {metric_label} is {operator_label} {value}."
+    - "The target edge satisfies {metric_label} {operator_label} {value}."
   has_parameterized_edge_spatial_relation:
     - "The target edge is {relation_label} another measured edge."
     - "The target edge is {relation_label} at least one other measured edge."
@@ -274,6 +282,10 @@ clause_templates:
     - "The target endpoint has a measured {metric_label}."
     - "The target endpoint has a known {metric_label}."
     - "The target endpoint has a verified {metric_label}."
+  has_parameterized_endpoint_metric_threshold:
+    - "The target endpoint has {metric_label} {operator_label} {value}."
+    - "The target endpoint's {metric_label} is {operator_label} {value}."
+    - "The target endpoint satisfies {metric_label} {operator_label} {value}."
   has_endpoint_for_reference_distance: "The target endpoint has a measured point location."
 
   has_initial_tangent: "The target path has an initial tangent from its first two control points."

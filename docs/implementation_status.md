@@ -1492,6 +1492,21 @@ Checked as implemented with remaining scale caveats:
   edge-endpoint, material-region, void-region, selector, relation-metric, and
   snapshot-state coverage, while still showing no path-point/path-segment or
   kernel-vertex nodes in this source slice.
+  Spatial-relation synthesis now also tries a measured metric-threshold
+  predicate after relation narrowing before the final selector. On the same
+  CadEvolve-50 graph, `runs/current_cadevolve50_probe_relation_metric_narrowing/`
+  synthesizes 5,371 rows and increases pre-export capacity for several sparse
+  families: `parameterized_edge_spatial_relation_extreme` reaches 100 rows,
+  `parameterized_edge_spatial_relation_rank` reaches 70 rows,
+  `parameterized_endpoint_containment_relation_extreme` reaches 48 rows, and
+  `parameterized_endpoint_containment_relation_rank` reaches 40 rows. The
+  reviewed preview at
+  `runs/current_cadevolve50_probe_relation_metric_narrowing/RELATION_METRIC_NARROWING_PREVIEW.md`
+  shows relation plus metric-threshold prompts with preserved distractors and
+  unique gold answers. Benchmark export from this 50-source probe is still not
+  release-ready: it keeps 80 rows after balance caps and blocks on release row
+  count, split-group coverage, default SFT row count, answer entropy, candidate
+  breadth, intended-family coverage, and sampled-parameter balance.
 - Broaden value-bearing and tolerance-equal coverage beyond the implemented
   core to radius/diameter/angle once those measurements are extracted broadly,
   additional face/endpoint/material/void coordinate combinations, and larger

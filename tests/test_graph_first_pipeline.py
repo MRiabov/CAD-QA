@@ -2894,6 +2894,65 @@ def test_synthesis_generates_parameterized_edge_spatial_relation_query() -> None
     assert "measured edge" in row.prompt
 
 
+def test_synthesis_generates_metric_threshold_edge_spatial_relation_query() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:edge-spatial-threshold-synth",
+        source={"source_id": "synthetic", "source_code": ""},
+    )
+    graph.add_node(Node("selector:edges", "selector", "edges"))
+    for edge_id, length, midpoint in [
+        ("edge:a", 10.0, [0.0, 0.0, 0.0]),
+        ("edge:b", 8.0, [2.0, 0.0, 1.0]),
+        ("edge:c", 6.0, [4.0, 5.0, 2.0]),
+        ("edge:d", 4.0, [6.0, 5.0, 3.0]),
+    ]:
+        graph.add_node(Node(edge_id, "edge", edge_id))
+        graph.add_relation(Relation(edge_id, "selector:edges", "has_kernel_stable_edge_id"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint", midpoint, "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_x", midpoint[0], "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_y", midpoint[1], "mm"))
+        graph.add_measurement(Measurement(edge_id, "entity_geometry", "midpoint_z", midpoint[2], "mm"))
+        graph.add_measurement(Measurement(edge_id, "relation_metric", "midpoint_distance_to_origin", length / 2.0, "mm"))
+    for source_id, target_id in [
+        ("edge:a", "edge:b"),
+        ("edge:b", "edge:a"),
+        ("edge:c", "edge:d"),
+        ("edge:d", "edge:c"),
+    ]:
+        graph.add_relation(Relation(source_id, target_id, "parallel_to"))
+
+    query = next(
+        query
+        for query in synthesize_graph_hop_queries(graph, max_per_family=30)
+        if "parameterized_edge_spatial_relation_extreme" in query.query_id
+        and query.sampled_parameters["synthesis_strategy"] == ["spatial_relation_metric_compare_extreme_v1"]
+    )
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+    compare_step = next(step for step in row.candidate_trace["steps"] if step["step"] == "has_parameterized_edge_metric_threshold")
+
+    assert resolution.verifier_status == "resolved"
+    assert row.release_ready
+    assert query.clauses[0].relation == "has_kernel_stable_edge_id"
+    assert query.clauses[1].relation == "parallel_to"
+    assert query.clauses[2].kind == "metric_compare"
+    assert query.clauses[2].operator in {"<", ">"}
+    assert query.clauses[2].metric != query.aggregation_metric
+    assert query.clauses[3].kind == "has_measurement"
+    assert query.sampled_parameters["spatial_relation"] == ["parallel_to"]
+    assert query.sampled_parameters["comparison_operator"] == [query.clauses[2].operator]
+    assert query.sampled_parameters["clause_metric"]
+    assert len(compare_step["before"]) == 4
+    assert 2 <= len(compare_step["after"]) < len(compare_step["before"])
+    assert len(row.candidate_trace["final_candidates"]) == 1
+    assert len(query.clauses) == 4
+    assert row.logical_hop_count >= 4
+    assert row.geometry_hop_count >= 4
+    assert "parallel to" in row.prompt
+    assert str(query.clauses[2].value) in row.prompt
+
+
 def test_synthesis_generates_same_length_edge_spatial_relation_query() -> None:
     graph = OntologyGraph(
         graph_id="graph:edge-same-length-spatial-synth",
@@ -3335,11 +3394,14 @@ def test_synthesis_generates_spatial_relation_tie_break_queries() -> None:
         assert query.tie_break_metric
         assert query.tie_break_metric != query.aggregation_metric
         assert query.sampled_parameters["spatial_relation"] == ["adjacent_to"]
-        assert query.sampled_parameters["synthesis_strategy"] == ["spatial_relation_tie_break_extreme_v1"]
+        assert query.sampled_parameters["synthesis_strategy"] in (
+            ["spatial_relation_tie_break_extreme_v1"],
+            ["spatial_relation_metric_compare_tie_break_extreme_v1"],
+        )
         assert query.sampled_parameters["tie_break_metric"] == [query.tie_break_metric]
         assert query.sampled_parameters["tie_break_direction"] in (["max"], ["min"])
         assert row.candidate_trace["steps"][-1]["step"] == "tie_break_aggregation"
-        assert len(row.candidate_trace["steps"][-1]["before"]) == 2
+        assert len(row.candidate_trace["steps"][-1]["before"]) >= 2
         assert row.candidate_trace["steps"][-1]["after"] == [resolution.gold_answer]
         assert len(row.candidate_trace["final_candidates"]) == 1
         assert "adjacent_to" in row.relation_families
@@ -4626,7 +4688,10 @@ def test_synthesis_generates_endpoint_containment_relation_rank_query() -> None:
     assert query.aggregation_rank in {2, 3, 4}
     assert query.sampled_parameters["aggregation_rank"] == [str(query.aggregation_rank)]
     assert query.sampled_parameters["rank_direction"] in (["max"], ["min"])
-    assert query.sampled_parameters["synthesis_strategy"] == ["spatial_relation_rank_v1"]
+    assert query.sampled_parameters["synthesis_strategy"] in (
+        ["spatial_relation_rank_v1"],
+        ["spatial_relation_metric_compare_rank_v1"],
+    )
     assert query.sampled_parameters["spatial_relation"] == ["contained_in"]
     assert query.sampled_parameters["final_selector"] == [
         f"rank:{query.aggregation_rank}:{query.sampled_parameters['rank_direction'][0]}:{query.aggregation_metric}"

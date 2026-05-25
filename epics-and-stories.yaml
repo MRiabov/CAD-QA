@@ -526,6 +526,11 @@ epics:
       - id: "14.6"
         title: Predicate catalog for reusable geometry-derived narrowing clauses
         status: work-in-progress
+        technical_definition_of_done:
+          - Spatial-relation extrema/rank/tie-break synthesis can add direct
+            measured metric-threshold predicates after relation narrowing, so
+            sparse relation families can form local candidate subsets instead
+            of depending on globally unique relation-only extrema.
       - id: "14.7"
         title: Bounded graph-hop query synthesis layer over ontology graphs
         status: work-in-progress
@@ -549,6 +554,9 @@ epics:
             graph-hop rows.
           - Reference-distance rank rows can use valid rank-2 narrowed groups
             when only two candidates survive the graph-hop predicates.
+          - Spatial-relation synthesis supports relation plus direct
+            metric-threshold graph-hop variants and records
+            `spatial_relation_metric_compare_*` strategy metadata.
           - Review-only explicit fixed-reference distance variants do not pass
             the default release-family filter through canonical sampled-family
             metadata; only generic `*_reference_entity_distance` families map
@@ -570,6 +578,10 @@ epics:
             narrowing from measured geometry, equal values, relations,
             containment, and sampled reference entities instead of requiring a
             global unique object.
+          - CadEvolve-50 preview evidence shows relation plus metric-threshold
+            narrowing increases generated rows for sparse edge spatial-relation
+            and endpoint containment-relation families; benchmark-scale balance
+            and face/selector bottlenecks remain work-in-progress.
           - Reference-distance rank narrowing includes valid two-candidate
             subsets; broader selected-entity count predicates, release-scale
             preview review, and distribution thresholds remain work-in-progress.
