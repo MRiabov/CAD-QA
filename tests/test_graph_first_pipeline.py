@@ -6275,6 +6275,7 @@ def test_synthesis_generates_parameterized_reference_entity_distance_queries() -
         assert row.geometry_hop_count == row.logical_hop_count
         assert sampled["target_type"] == [target_type]
         assert sampled["target_point_metric"] == [target_point_metric]
+        assert sampled["canonical_prompt_family"] == ["parameterized_reference_entity_distance"]
         assert reference_type in {"feature", "face", "edge", "edge_endpoint", "material_region", "void_region"}
         assert sampled["reference_point_metric"][0] in {"centroid", "face_center", "midpoint", "coordinate"}
         assert any(phrase in row.prompt for phrase in ("closest to", "farthest from"))
@@ -6311,6 +6312,7 @@ def test_synthesis_generates_parameterized_reference_entity_distance_queries() -
             assert row.geometry_hop_count == row.logical_hop_count
             assert sampled["target_type"] == [target_type]
             assert sampled["target_point_metric"] == [target_point_metric]
+            assert "canonical_prompt_family" not in sampled
             assert sampled["reference_type"] == [reference_type]
             assert sampled["reference_point_metric"] == ["centroid"]
             assert sampled["reference_anchor_metric"] == ["centroid_x", "centroid_y", "centroid_z", "volume"]

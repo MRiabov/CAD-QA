@@ -549,6 +549,10 @@ epics:
             graph-hop rows.
           - Reference-distance rank rows can use valid rank-2 narrowed groups
             when only two candidates survive the graph-hop predicates.
+          - Review-only explicit fixed-reference distance variants do not pass
+            the default release-family filter through canonical sampled-family
+            metadata; only generic `*_reference_entity_distance` families map
+            to the canonical release families.
           - Benchmark-scale family balance, full beam search, and broader real
             CadEvolve family coverage remain work-in-progress.
       - id: "14.8"

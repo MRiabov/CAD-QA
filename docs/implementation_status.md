@@ -1465,14 +1465,18 @@ Checked as implemented with remaining scale caveats:
   target-specific `*_reference_entity_distance` families have been demoted to
   review-only aliases where a canonical sampled-reference-entity family exists,
   so target entity type is now a sampled parameter rather than a permanent
-  release-family identity. On the current RC10 artifact, benchmark export keeps
-  97 rows across all 60 generated release families, with
+  release-family identity. Explicit fixed-reference variants now remain
+  review-only during release-family query synthesis instead of leaking through
+  the canonical family override. On the regenerated RC11 artifact,
+  `cadqa query synthesize --max-per-family 3` writes 1,142 release-family rows
+  and skips 314 review-only rows; materialization has no duplicate prompts. The
+  benchmark export keeps 97 rows across all 60 generated release families, with
   `intended_family_coverage`, `family_test_evidence`,
   `passes_prompt_family_balance`, `passes_value_bearing_measurement_coverage`,
-  and `passes_cross_feature_value_bearing_coverage` passing. The same report
-  still blocks benchmark release on release row count, split-group coverage,
-  default SFT row count, answer entropy, sampled-parameter balance, and preview
-  evidence.
+  `passes_cross_feature_value_bearing_coverage`, and final-row
+  `preview_evidence` passing. The same report still blocks benchmark release on
+  release row count, split-group coverage, default SFT row count, answer
+  entropy, and sampled-parameter balance.
   Rechecking the current CadEvolve-50 release artifact with
   `--release-tier benchmark-release` blocks release on row count, split group
   coverage, default SFT row count, prompt-family balance, prompt-template

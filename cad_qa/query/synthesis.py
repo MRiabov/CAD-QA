@@ -3507,11 +3507,7 @@ def _query_for_reference_distance(graph: OntologyGraph, viable: ViableReferenceD
         reference_point_metric=spec.reference_point_metric,
     )
     direction = "min" if viable.aggregation in {"argmin", "rank_asc"} else "max"
-    canonical_family = (
-        "parameterized_reference_entity_distance_rank"
-        if viable.aggregation_rank is not None
-        else "parameterized_reference_entity_distance"
-    )
+    canonical_family = _canonical_reference_distance_family(spec)
     final_selector = (
         f"rank:{viable.aggregation_rank}:{direction}:{REFERENCE_FEATURE_DISTANCE_METRIC}"
         if viable.aggregation_rank is not None
@@ -3531,7 +3527,6 @@ def _query_for_reference_distance(graph: OntologyGraph, viable: ViableReferenceD
                 f"{metric}:{_value_bucket(reference_value.get('reference_anchor_values', {}).get(metric))}"
                 for metric in reference_metrics
             ],
-            "canonical_prompt_family": [canonical_family],
             "final_selector": [final_selector],
             "aggregation_metric": [REFERENCE_FEATURE_DISTANCE_METRIC],
             "equal_measurement_metric": [spec.equal_metric],
@@ -3547,6 +3542,8 @@ def _query_for_reference_distance(graph: OntologyGraph, viable: ViableReferenceD
         equal_value.sampled_parameters,
         target_point.sampled_parameters,
     )
+    if canonical_family is not None:
+        sampled = merge_sampled_parameters(sampled, {"canonical_prompt_family": [canonical_family]})
     if viable.aggregation_rank is not None:
         sampled = merge_sampled_parameters(
             sampled,
@@ -3583,6 +3580,14 @@ def _query_for_reference_distance(graph: OntologyGraph, viable: ViableReferenceD
         min_individual_clause_candidates=2,
         sampled_parameters=sampled,
     )
+
+
+def _canonical_reference_distance_family(spec: ReferenceDistanceFamilySpec) -> str | None:
+    if spec.family_id.endswith("_reference_entity_distance_rank"):
+        return "parameterized_reference_entity_distance_rank"
+    if spec.family_id.endswith("_reference_entity_distance"):
+        return "parameterized_reference_entity_distance"
+    return None
 
 
 def _apply_relation_clause(graph: OntologyGraph, candidates: list[Node], relation_type: str) -> list[Node]:
