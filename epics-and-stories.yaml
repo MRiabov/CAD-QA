@@ -389,14 +389,15 @@ epics:
         title: Run summaries, paper-results snapshot, and artifact manifest
         status: implemented
       - id: "11.8"
-        title: Compact query records with graph sidecars
+        title: Compact Parquet query records with graph sidecars
         status: implemented
         acceptance_criteria:
-          - "Users can synthesize and materialize topology-rich query artifacts without duplicating a full ontology graph into every query row."
+          - "Users can synthesize and materialize topology-rich query artifacts without duplicating a full ontology graph into every query row or persisting large cache/blob rows as JSONL."
         technical_definition_of_done:
-          - "`cadqa query synthesize` writes compact query records keyed by graph_id plus a single graphs.jsonl sidecar."
-          - "`cadqa dataset materialize` can load embedded-graph records, an explicit --graphs path, or the query-directory graphs.jsonl sidecar."
-          - "Regression coverage verifies compact synthesized query records and automatic materialization from the sidecar."
+          - "`cadqa trace run`, `cadqa graph build`, `cadqa query synthesize`, and `cadqa dataset materialize` write large row artifacts as compressed Parquet by default."
+          - "`cadqa query synthesize` writes compact query records keyed by graph_id plus a single `graphs.parquet` sidecar."
+          - "`cadqa dataset materialize` can load embedded-graph records, an explicit --graphs path, or the query-directory graph sidecar, with backwards-compatible JSONL reads."
+          - "Regression coverage verifies compact synthesized query records, Parquet public/private exports, and automatic materialization from the sidecar."
       - id: "11.5"
         title: Local experiment artifact packaging with checksums
         status: implemented

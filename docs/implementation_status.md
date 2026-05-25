@@ -107,11 +107,12 @@ when those choices can be sampled and verified.
   and materialization completes in 3.59s with 1,077 dataset rows. Focused manual
   review samples are in
   `runs/current_partial_trace_rc10/TOPOLOGY_PARTIAL_PREVIEW.md`.
-- Synthesized query artifacts now use compact graph sidecars by default:
-  `queries.jsonl` records carry `graph_id`, `query`, and `resolution`, while
-  `graphs.jsonl` stores each ontology graph once. `cadqa dataset materialize`
-  remains backward-compatible with embedded graph records and can also load an
-  explicit `--graphs` path.
+- Generated trace, graph, query, dataset, and release row artifacts now use
+  compressed Parquet by default for large row/blob payloads. Synthesized query
+  artifacts use compact graph sidecars: `queries.parquet` records carry
+  `graph_id`, `query`, and `resolution`, while `graphs.parquet` stores each
+  ontology graph once. Loaders remain backward-compatible with older JSONL
+  artifacts and can also load an explicit `--graphs` path.
 - Kernel-selected face nodes include compiled face-center coordinates,
   face-center distance-to-origin measurements, and face-area measurements
   derived from selector-result bounding boxes.
@@ -548,6 +549,27 @@ Result reviewed on 2026-05-25:
 - This is valid-row and RC10 coverage evidence only. Benchmark-release remains
   blocked on scale, split-group coverage, answer entropy, parameter balance,
   intended-family coverage, and preview coverage.
+
+## Current Void-Rich CadEvolve Probe
+
+Result reviewed on 2026-05-25:
+
+- CadEvolve source import supports targeted `--path-contains` and
+  `--code-contains` filters for release-capacity probes over CAD operations such
+  as holes, slots, pockets, bores, recesses, notches, and cuts.
+- Direct tool-body `.cut(...)` trace deltas now create kernel-backed
+  `void_region` graph nodes even when there is no visible profile sketch to
+  attach. The current void-rich graph has 47 `void_region` nodes, including 45
+  with `has_kernel_void_region_geometry`.
+- Large generated artifacts are Parquet-backed in this probe:
+  `trace/traces.parquet`, `graph/graphs.parquet`, `query/queries.parquet`,
+  `query/graphs.parquet`, and `dataset/rows.parquet`. The converted graph
+  artifact is about 9.5 MB as Parquet versus about 399 MB as JSONL.
+- The probe materialized 17,227 rows across 44 prompt families, but zero
+  material-region or void-region prompt families. Therefore direct cut-region
+  extraction is implemented as graph evidence only; release-grade material/void
+  region task generation is still blocked on family constraints that can use
+  these non-profile cut regions without misleading geometry wording.
 
 ## CadEvolve 50 Release-Candidate Snapshot
 

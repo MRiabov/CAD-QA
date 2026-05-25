@@ -239,7 +239,7 @@ class _Extractor:
             self.graph.add_relation(Relation(input_id, feature_id, "input_to"))
         self._attach_trace_snapshot_state(feature_id, target, record)
         self._attach_trace_feature_effect(feature_id, target, record)
-        if record.operation in {"extrude", "cutBlind", "cutThruAll", "sweep"}:
+        if record.operation in {"extrude", "cut", "cutBlind", "cutThruAll", "sweep"}:
             profile_id = self.variable_profiles.get(str(record.base))
             if profile_id:
                 self.graph.add_relation(Relation(feature_id, profile_id, "uses_profile"))
@@ -247,6 +247,8 @@ class _Extractor:
                 self._attach_profile_application_effect(feature_id, profile_id, record)
                 if not self._add_kernel_region_projection(feature_id, profile_id, target, record):
                     self._add_region_projection(feature_id, profile_id, record)
+            elif record.operation.startswith("cut"):
+                self._add_kernel_region_projection(feature_id, None, target, record)
         if record.operation == "union":
             self.graph.add_node(Node(id=f"solid:{target}", type="solid", label=target))
             self.graph.add_relation(Relation(feature_id, f"solid:{target}", "adds_material_to"))
@@ -1186,7 +1188,7 @@ class _Extractor:
     def _add_kernel_region_projection(
         self,
         feature_id: str,
-        profile_id: str,
+        profile_id: str | None,
         target: str,
         record: OperationRecord,
     ) -> bool:
@@ -1217,7 +1219,8 @@ class _Extractor:
             else "has_kernel_material_region_geometry"
         )
         self.graph.add_relation(Relation(feature_id, region_id, relation))
-        self.graph.add_relation(Relation(region_id, profile_id, "created_by"))
+        if profile_id is not None:
+            self.graph.add_relation(Relation(region_id, profile_id, "created_by"))
         self.graph.add_relation(
             Relation(
                 region_id,
@@ -1228,10 +1231,11 @@ class _Extractor:
         )
         evidence = {
             "source": evidence_source,
-            "profile_id": profile_id,
             "from_target": region_measurement.get("from_target"),
             "to_target": region_measurement.get("to_target"),
         }
+        if profile_id is not None:
+            evidence["profile_id"] = profile_id
         self.graph.add_measurement(Measurement(region_id, "entity_geometry", "volume", abs(float(signed_delta)), "mm^3", evidence))
         self.graph.add_measurement(Measurement(region_id, "feature_application_effect", "signed_volume_delta", float(signed_delta), "mm^3", evidence))
         if region_measurement.get("bbox") is not None:
@@ -1246,14 +1250,15 @@ class _Extractor:
             self.graph.add_measurement(Measurement(region_id, "entity_geometry", name, value, None, evidence))
         for name, value in region_measurement.get("scalar_feature_effect", {}).items():
             self.graph.add_measurement(Measurement(region_id, "feature_application_effect", name, value, None, evidence))
-        centroid_measurements = self.graph.measurements_for(profile_id, "world_centroid")
-        centroid = centroid_measurements[0].value if centroid_measurements else None
-        if isinstance(centroid, list):
-            self.graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid", centroid, "mm", {"profile_id": profile_id}))
-            if len(centroid) >= 3:
-                self.graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid_x", centroid[0], "mm", {"profile_id": profile_id}))
-                self.graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid_y", centroid[1], "mm", {"profile_id": profile_id}))
-                self.graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid_z", centroid[2], "mm", {"profile_id": profile_id}))
+        if profile_id is not None:
+            centroid_measurements = self.graph.measurements_for(profile_id, "world_centroid")
+            centroid = centroid_measurements[0].value if centroid_measurements else None
+            if isinstance(centroid, list):
+                self.graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid", centroid, "mm", {"profile_id": profile_id}))
+                if len(centroid) >= 3:
+                    self.graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid_x", centroid[0], "mm", {"profile_id": profile_id}))
+                    self.graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid_y", centroid[1], "mm", {"profile_id": profile_id}))
+                    self.graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid_z", centroid[2], "mm", {"profile_id": profile_id}))
         self.graph.add_measurement(Measurement(region_id, "snapshot_state", "source_line", region_measurement.get("source_line") or record.source_line, None, evidence))
         self.graph.add_measurement(Measurement(region_id, "snapshot_state", "operation_index", len(self.operations) - 1, None, evidence))
         return True

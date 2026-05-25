@@ -5,15 +5,38 @@ description = "Trace-derived CAD-QA dataset generation and evaluation tools."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "cadquery>=2.7.0",
+    "pyarrow>=15.0",
     "PyYAML>=6.0",
-    "vastai>=1.0.7",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0"]
 cadquery = ["cadquery>=2.4"]
+data = [
+    "pandas>=3.0.2",
+    "polars>=1.41.0",
+]
+dev = [
+    "hypothesis>=6.148.7",
+    "mypy>=1.18.2",
+    "pytest>=9.0.3",
+    "pytest-cov>=7.0.0",
+    "pytest-xdist>=3.8.0",
+    "ruff>=0.15.12",
+    "types-PyYAML>=6.0.12.20250915",
+]
+experiment = [
+    "hf>=1.12.2",
+    "vastai>=1.0.7",
+]
 parquet = ["pyarrow>=15.0"]
-training = ["datasets>=2.18", "torch>=2.2", "transformers>=4.40", "trl>=0.8", "unsloth"]
+training = [
+    "datasets>=2.18",
+    "torch>=2.2",
+    "transformers>=4.40",
+    "trl>=0.8",
+    "unsloth",
+]
 
 [project.scripts]
 cadqa = "cad_qa.cli:main"
@@ -28,7 +51,13 @@ pythonpath = ["."]
 
 [dependency-groups]
 dev = [
+    "hypothesis>=6.148.7",
     "hf>=1.12.2",
+    "mypy>=1.18.2",
+    "pytest>=9.0.3",
+    "pytest-cov>=7.0.0",
+    "pytest-xdist>=3.8.0",
     "ruff>=0.15.12",
+    "types-PyYAML>=6.0.12.20250915",
     "vastai>=1.0.7",
 ]

@@ -30,7 +30,7 @@ from cad_qa.evaluation.baselines import run_baselines
 from cad_qa.evaluation.grade import grade_public_private
 from cad_qa.evaluation.requests import few_shot_requests, oracle_responses, zero_shot_requests
 from cad_qa.evaluation.tool_assisted import run_tool_assisted_upper_bound
-from cad_qa.io import read_jsonl, write_json, write_jsonl
+from cad_qa.io import existing_record_artifact_path, read_records, record_artifact_path, write_json, write_jsonl, write_records
 from cad_qa.ontology import build_graph
 from cad_qa.query.resolver import resolve_query, smoke_queries
 from cad_qa.source import load_sources_jsonl
@@ -61,7 +61,7 @@ def run_smoke_experiment(
 
     sources = load_sources_jsonl(sources_jsonl, limit=limit)
     graphs = [build_graph(source) for source in sources]
-    write_jsonl(graph_dir / "graphs.jsonl", graphs)
+    write_records(record_artifact_path(graph_dir, "graphs"), graphs)
     graph_report = {
         "graph_count": len(graphs),
         "node_count": sum(len(graph.nodes) for graph in graphs),
@@ -89,8 +89,8 @@ def run_smoke_experiment(
                         "candidate_trace": resolution.candidate_trace,
                     }
                 )
-    write_jsonl(query_dir / "queries.jsonl", query_records)
-    write_jsonl(query_dir / "failure_manifest.jsonl", failures)
+    write_records(record_artifact_path(query_dir, "queries"), query_records)
+    write_records(record_artifact_path(query_dir, "failure_manifest"), failures)
     query_report = {"query_count": len(query_records), "failure_count": len(failures)}
     write_json(query_dir / "query_report.json", query_report)
 
@@ -103,12 +103,12 @@ def run_smoke_experiment(
             item["split"] = split
             split_dicts.append(item)
             row_dicts.append(item)
-        write_jsonl(dataset_dir / "jsonl" / f"{split}.jsonl", split_dicts)
-    write_jsonl(dataset_dir / "rows.jsonl", row_dicts)
+        write_records(record_artifact_path(dataset_dir / "parquet", split), split_dicts)
+    write_records(record_artifact_path(dataset_dir, "rows"), row_dicts)
     public_private = write_public_private_artifacts(row_dicts, dataset_dir)
     manifest = split_manifest(rows)
     write_json(dataset_dir / "split_manifest.json", manifest)
-    write_jsonl(dataset_dir / "failure_manifest.jsonl", failures)
+    write_records(record_artifact_path(dataset_dir, "failure_manifest"), failures)
     report = dataset_report(row_dicts)
     report["split_manifest"] = manifest
     report["leakage_audit"] = leakage_audit(row_dicts, manifest)
@@ -165,7 +165,7 @@ def run_smoke_experiment(
     for name, result in baselines.items():
         write_jsonl(baseline_dir / f"{name}_predictions.jsonl", result["predictions"])
 
-    release_rows = read_jsonl(release_dataset_dir / "rows.jsonl")
+    release_rows = read_records(existing_record_artifact_path(release_dataset_dir, "rows"))
     release_baselines = run_baselines(release_rows)
     release_baseline_metrics = {
         name: {key: value for key, value in result.items() if key != "predictions"}

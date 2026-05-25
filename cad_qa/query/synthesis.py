@@ -26,6 +26,7 @@ from cad_qa.query.predicate_catalog import (
 GEOMETRY_MARGIN_EPSILON = 1e-6
 REFERENCE_FEATURE_DISTANCE_METRIC = "distance_to_reference_feature_centroid"
 MAX_SYNTHESIZED_RANK = 6
+MAX_REFERENCE_DISTANCE_ANCHORS = 64
 T = TypeVar("T")
 
 
@@ -3760,6 +3761,7 @@ def _viable_reference_distances(
         reference_type=spec.reference_type,
         reference_point_metric=spec.reference_point_metric,
     )
+    references = _sample_reference_distance_anchors(graph.graph_id, spec, references)
     if not references:
         return []
     viable: list[ViableReferenceDistance] = []
@@ -3840,6 +3842,27 @@ def _viable_reference_distances(
             item.candidate_ids,
         ),
     )
+
+
+def _sample_reference_distance_anchors(
+    graph_id: str,
+    spec: ReferenceDistanceFamilySpec,
+    references: list[Node],
+) -> list[Node]:
+    if len(references) <= MAX_REFERENCE_DISTANCE_ANCHORS:
+        return references
+    sample_key = (
+        f"{spec.family_id}:"
+        f"{spec.target_type}:"
+        f"{spec.equal_metric}:"
+        f"{spec.target_point_metric}:"
+        f"{spec.reference_type}:"
+        f"{spec.reference_point_metric}:"
+        f"{spec.selection_mode}"
+    )
+    start = _stable_choice_index(graph_id, sample_key, len(references))
+    ordered = [references[(start + offset) % len(references)] for offset in range(len(references))]
+    return ordered[:MAX_REFERENCE_DISTANCE_ANCHORS]
 
 
 def _query_for_reference_distance(graph: OntologyGraph, viable: ViableReferenceDistance) -> QueryProgram | None:
@@ -4237,11 +4260,7 @@ def _has_unique_extreme(
     metric: str,
     aggregation: str,
 ) -> bool:
-    scores = [
-        float(value)
-        for node in candidates
-        if isinstance((value := _measurement_value(graph, node.id, metric)), (int, float))
-    ]
+    scores = [score for score, _ in _scored_node_ids(graph, candidates, metric)]
     if len(scores) < 2:
         return False
     ordered = sorted(scores, reverse=aggregation == "argmax")
@@ -4254,15 +4273,16 @@ def _extreme_nodes(
     metric: str,
     aggregation: str,
 ) -> list[Node]:
-    scored = [
-        (float(value), node)
-        for node in candidates
-        if isinstance((value := _measurement_value(graph, node.id, metric)), (int, float))
-    ]
+    scored = _scored_node_ids(graph, candidates, metric)
     if not scored:
         return []
     target = max(score for score, _ in scored) if aggregation == "argmax" else min(score for score, _ in scored)
-    return [node for score, node in scored if abs(score - target) <= GEOMETRY_MARGIN_EPSILON]
+    return [
+        node
+        for score, node_id in scored
+        if abs(score - target) <= GEOMETRY_MARGIN_EPSILON
+        and (node := graph.node(node_id)) is not None
+    ]
 
 
 def _has_unique_rank(
@@ -4296,17 +4316,39 @@ def _rank_nodes(
     aggregation: str,
     rank: int,
 ) -> list[Node]:
-    scored = [
-        (float(value), node)
-        for node in candidates
-        if isinstance((value := _measurement_value(graph, node.id, metric)), (int, float))
-    ]
+    scored = _scored_node_ids(graph, candidates, metric)
     if rank < 1 or rank > len(scored):
         return []
     descending = aggregation == "rank_desc"
-    ordered = sorted(scored, key=lambda item: (-item[0] if descending else item[0], item[1].id))
+    ordered = sorted(scored, key=lambda item: (-item[0] if descending else item[0], item[1]))
     target = ordered[rank - 1][0]
-    return [node for score, node in scored if abs(score - target) <= GEOMETRY_MARGIN_EPSILON]
+    return [
+        node
+        for score, node_id in scored
+        if abs(score - target) <= GEOMETRY_MARGIN_EPSILON
+        and (node := graph.node(node_id)) is not None
+    ]
+
+
+def _scored_node_ids(
+    graph: OntologyGraph,
+    candidates: list[Node],
+    metric: str,
+) -> tuple[tuple[float, str], ...]:
+    cache = getattr(graph, "_cached_query_scored_node_ids", None)
+    if cache is None:
+        cache = {}
+        graph._cached_query_scored_node_ids = cache
+    key = (tuple(node.id for node in candidates), metric)
+    if key in cache:
+        return cache[key]
+    scored = tuple(
+        (float(value), node.id)
+        for node in candidates
+        if isinstance((value := _measurement_value(graph, node.id, metric)), (int, float))
+    )
+    cache[key] = scored
+    return scored
 
 
 def _viable_tie_breaks(
@@ -4390,8 +4432,17 @@ def _relation_extreme_strategy(viable: ViableRelationExtreme) -> str:
 
 
 def _measurement_value(graph: OntologyGraph, entity_id: str, metric: str) -> Any:
+    cache = getattr(graph, "_cached_query_measurement_values", None)
+    if cache is None:
+        cache = {}
+        graph._cached_query_measurement_values = cache
+    key = (entity_id, metric)
+    if key in cache:
+        return cache[key]
     measurements = graph.measurements_for(entity_id, metric)
-    return measurements[0].value if measurements else None
+    value = measurements[0].value if measurements else None
+    cache[key] = value
+    return value
 
 
 def _stable_choice_index(graph_id: str, family_id: str, count: int) -> int:

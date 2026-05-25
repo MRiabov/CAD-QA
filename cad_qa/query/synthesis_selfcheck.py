@@ -13,7 +13,7 @@ from cad_qa.dataset.preview import (
     dataset_preview_markdown,
 )
 from cad_qa.dataset.sft import prompt_family
-from cad_qa.io import to_jsonable, write_json, write_jsonl
+from cad_qa.io import record_artifact_path, to_jsonable, write_json, write_records
 from cad_qa.ontology import build_graph
 from cad_qa.ontology.nodes import Measurement, Node, OntologyGraph, Relation
 from cad_qa.query.resolver import resolve_query
@@ -240,9 +240,9 @@ def write_synthesis_selfcheck(out: Path, *, sample_per_family: int = 20, seed: i
     dataset_dir = out / "dataset"
     graph_dir = out / "graphs"
     preview_path = out / "PREVIEW.md"
-    write_jsonl(dataset_dir / "rows.jsonl", rows)
-    write_jsonl(dataset_dir / "failure_manifest.jsonl", failures)
-    write_jsonl(graph_dir / "graphs.jsonl", graphs)
+    write_records(record_artifact_path(dataset_dir, "rows"), rows)
+    write_records(record_artifact_path(dataset_dir, "failure_manifest"), failures)
+    write_records(record_artifact_path(graph_dir, "graphs"), graphs)
     preview = dataset_preview_markdown(
         rows,
         graphs=graphs,

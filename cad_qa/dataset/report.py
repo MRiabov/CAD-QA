@@ -342,7 +342,7 @@ def dataset_card_markdown(
             "",
             "## Intended Use",
             "",
-            "Use `public.jsonl` or request exports for model input. Use `private.jsonl`, hidden query programs, candidate traces, and verifier outputs only for dataset construction, auditing, grading, and error analysis.",
+            "Use `public.parquet` or request exports for model input. Use `private.parquet`, hidden query programs, candidate traces, and verifier outputs only for dataset construction, auditing, grading, and error analysis.",
             "",
         ]
     )

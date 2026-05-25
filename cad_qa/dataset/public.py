@@ -6,7 +6,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from cad_qa.io import write_json, write_jsonl
+from cad_qa.io import record_artifact_path, write_json, write_records
 
 
 PUBLIC_FIELDS = {
@@ -53,8 +53,8 @@ def private_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
 def write_public_private_artifacts(rows: list[dict[str, Any]], out: Path) -> dict[str, Any]:
     public = public_rows(rows)
     private = private_rows(rows)
-    write_jsonl(out / "public.jsonl", public)
-    write_jsonl(out / "private.jsonl", private)
+    write_records(record_artifact_path(out, "public"), public)
+    write_records(record_artifact_path(out, "private"), private)
     public_split_counts: dict[str, int] = {}
     for row in public:
         public_split_counts[row.get("split", "unsplit")] = public_split_counts.get(row.get("split", "unsplit"), 0) + 1

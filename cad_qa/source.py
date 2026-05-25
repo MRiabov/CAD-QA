@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from cad_qa.io import read_jsonl
+from cad_qa.io import read_records
 
 
 PROTECTED_SOURCE_GROUP_KEYS = (
@@ -86,7 +86,7 @@ def source_record_from_mapping(data: dict[str, Any]) -> SourceRecord:
 
 
 def load_sources_jsonl(path: Path, *, limit: int | None = None) -> list[SourceRecord]:
-    records = [source_record_from_mapping(row) for row in read_jsonl(path)]
+    records = [source_record_from_mapping(row) for row in read_records(path)]
     return records[:limit] if limit is not None else records
 
 
@@ -95,11 +95,15 @@ def cadevolve_tar_source_rows(
     *,
     limit: int | None = None,
     path_prefixes: list[str] | None = None,
+    path_contains: list[str] | None = None,
+    code_contains: list[str] | None = None,
     max_member_bytes: int = 1_000_000,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Extract normalized CadQuery source rows from a CADEvolve tar archive."""
 
     prefixes = tuple(_normalize_archive_path(prefix) for prefix in path_prefixes or [] if prefix)
+    path_needles = tuple(value.lower() for value in path_contains or [] if value)
+    code_needles = tuple(value.lower() for value in code_contains or [] if value)
     rows: list[dict[str, Any]] = []
     stats = {
         "archive_path": str(tar_path),
@@ -108,11 +112,15 @@ def cadevolve_tar_source_rows(
         "included_count": 0,
         "skipped_non_python_count": 0,
         "skipped_prefix_count": 0,
+        "skipped_path_contains_count": 0,
         "skipped_large_member_count": 0,
+        "skipped_code_contains_count": 0,
         "skipped_non_cadquery_count": 0,
         "limit": limit,
         "max_member_bytes": max_member_bytes,
         "path_prefixes": list(prefixes),
+        "path_contains": list(path_needles),
+        "code_contains": list(code_needles),
     }
     with tarfile.open(tar_path, "r:*") as archive:
         for member in archive:
@@ -125,6 +133,9 @@ def cadevolve_tar_source_rows(
             if prefixes and not any(_archive_path_matches_prefix(member_path, prefix) for prefix in prefixes):
                 stats["skipped_prefix_count"] += 1
                 continue
+            if path_needles and not any(needle in member_path.lower() for needle in path_needles):
+                stats["skipped_path_contains_count"] += 1
+                continue
             if not member_path.endswith(".py"):
                 stats["skipped_non_python_count"] += 1
                 continue
@@ -136,6 +147,9 @@ def cadevolve_tar_source_rows(
             if handle is None:
                 continue
             source_code = normalize_source_text(handle.read().decode("utf-8", errors="replace"))
+            if code_needles and not any(needle in source_code.lower() for needle in code_needles):
+                stats["skipped_code_contains_count"] += 1
+                continue
             if not _looks_like_cadquery_source(source_code):
                 stats["skipped_non_cadquery_count"] += 1
                 continue

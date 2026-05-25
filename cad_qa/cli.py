@@ -53,7 +53,14 @@ from cad_qa.evaluation.grade import grade_public_private, grade_responses
 from cad_qa.evaluation.requests import few_shot_requests, oracle_responses, zero_shot_requests
 from cad_qa.evaluation.tool_assisted import run_tool_assisted_upper_bound
 from cad_qa.experiment import package_run_artifacts, run_smoke_experiment, run_artifact_manifest, write_paper_results
-from cad_qa.io import read_jsonl, write_json, write_jsonl
+from cad_qa.io import (
+    existing_record_artifact_path,
+    read_records,
+    record_artifact_path,
+    write_json,
+    write_jsonl,
+    write_records,
+)
 from cad_qa.ontology import build_graph
 from cad_qa.ontology.nodes import OntologyGraph, graph_from_dict
 from cad_qa.query.family_manifest import (
@@ -114,6 +121,8 @@ def build_parser() -> argparse.ArgumentParser:
     source_from_cadevolve_tar.add_argument("--out", type=Path, required=True)
     source_from_cadevolve_tar.add_argument("--limit", type=int)
     source_from_cadevolve_tar.add_argument("--path-prefix", action="append", dest="path_prefixes")
+    source_from_cadevolve_tar.add_argument("--path-contains", action="append", dest="path_contains")
+    source_from_cadevolve_tar.add_argument("--code-contains", action="append", dest="code_contains")
     source_from_cadevolve_tar.add_argument("--max-member-bytes", type=int, default=1_000_000)
     source_from_cadevolve_tar.set_defaults(func=_cmd_sources_from_cadevolve_tar)
 
@@ -158,7 +167,7 @@ def build_parser() -> argparse.ArgumentParser:
     dataset_sub = dataset.add_subparsers(required=True)
     materialize = dataset_sub.add_parser("materialize")
     materialize.add_argument("--queries", type=Path, required=True)
-    materialize.add_argument("--graphs", type=Path, help="Optional graph directory or graphs.jsonl file for compact query records.")
+    materialize.add_argument("--graphs", type=Path, help="Optional graph directory or graph artifact file for compact query records.")
     materialize.add_argument("--out", type=Path, required=True)
     materialize.set_defaults(func=_cmd_dataset_materialize)
     validate = dataset_sub.add_parser("validate")
@@ -200,12 +209,12 @@ def build_parser() -> argparse.ArgumentParser:
     release_report.add_argument("--family-test-evidence", type=Path, default=DEFAULT_FAMILY_TEST_EVIDENCE)
     release_report.set_defaults(func=_cmd_dataset_release_report)
     shortcut_report = dataset_sub.add_parser("shortcut-report")
-    shortcut_report.add_argument("path", type=Path, help="Dataset directory or rows.jsonl file.")
+    shortcut_report.add_argument("path", type=Path, help="Dataset directory or rows artifact file.")
     shortcut_report.add_argument("--out", type=Path, help="Output directory. Defaults to the dataset directory.")
     shortcut_report.set_defaults(func=_cmd_dataset_shortcut_report)
     preview = dataset_sub.add_parser("preview")
-    preview.add_argument("path", type=Path, help="Dataset directory or rows.jsonl file.")
-    preview.add_argument("--graphs", type=Path, help="Optional graph directory or graphs.jsonl file for node samples.")
+    preview.add_argument("path", type=Path, help="Dataset directory or rows artifact file.")
+    preview.add_argument("--graphs", type=Path, help="Optional graph directory or graph artifact file for node samples.")
     preview.add_argument("--out", type=Path, required=True)
     preview.add_argument("--sample-per-family", type=int, default=1)
     preview.add_argument("--family", action="append", dest="families")
@@ -345,6 +354,8 @@ def _cmd_sources_from_cadevolve_tar(args: argparse.Namespace) -> dict[str, Any]:
         args.tar,
         limit=args.limit,
         path_prefixes=args.path_prefixes,
+        path_contains=args.path_contains,
+        code_contains=args.code_contains,
         max_member_bytes=args.max_member_bytes,
     )
     write_jsonl(args.out, rows)
@@ -368,7 +379,7 @@ def _cmd_graph_build(args: argparse.Namespace) -> dict[str, Any]:
     traces_by_source = _trace_records_by_source(args.traces_jsonl)
     graphs = [build_graph(source, trace=traces_by_source.get(source.source_id)) for source in sources]
     args.out.mkdir(parents=True, exist_ok=True)
-    write_jsonl(args.out / "graphs.jsonl", graphs)
+    write_records(record_artifact_path(args.out, "graphs"), graphs)
     node_type_counts = Counter(node.type for graph in graphs for node in graph.nodes)
     relation_type_counts = Counter(relation.type for graph in graphs for relation in graph.relations)
     measurement_scope_counts = Counter(measurement.scope for graph in graphs for measurement in graph.measurements)
@@ -393,7 +404,7 @@ def _trace_records_by_source(path: Path | None) -> dict[str, dict[str, Any]]:
         return {}
     return {
         str(record["source_id"]): record
-        for record in read_jsonl(path)
+        for record in read_records(path)
         if record.get("source_id")
     }
 
@@ -406,7 +417,7 @@ def _cmd_trace_run(args: argparse.Namespace) -> dict[str, Any]:
         worker_count=args.workers,
     )
     args.out.mkdir(parents=True, exist_ok=True)
-    write_jsonl(args.out / "traces.jsonl", traces)
+    write_records(record_artifact_path(args.out, "traces"), traces)
     report = trace_report(traces)
     write_json(args.out / "trace_report.json", report)
     return report
@@ -436,9 +447,9 @@ def _cmd_query_smoke(args: argparse.Namespace) -> dict[str, Any]:
                     }
                 )
     args.out.mkdir(parents=True, exist_ok=True)
-    write_jsonl(args.out / "graphs.jsonl", graphs)
-    write_jsonl(args.out / "queries.jsonl", records)
-    write_jsonl(args.out / "failure_manifest.jsonl", failures)
+    write_records(record_artifact_path(args.out, "graphs"), graphs)
+    write_records(record_artifact_path(args.out, "queries"), records)
+    write_records(record_artifact_path(args.out, "failure_manifest"), failures)
     report = {"query_count": len(records), "failure_count": len(failures)}
     write_json(args.out / "query_report.json", report)
     return report
@@ -474,16 +485,16 @@ def _cmd_query_synthesize(args: argparse.Namespace) -> dict[str, Any]:
                     }
                 )
     args.out.mkdir(parents=True, exist_ok=True)
-    write_jsonl(args.out / "graphs.jsonl", graphs)
-    write_jsonl(args.out / "queries.jsonl", records)
-    write_jsonl(args.out / "failure_manifest.jsonl", failures)
+    write_records(record_artifact_path(args.out, "graphs"), graphs)
+    write_records(record_artifact_path(args.out, "queries"), records)
+    write_records(record_artifact_path(args.out, "failure_manifest"), failures)
     report = {
         "query_count": len(records),
         "failure_count": len(failures),
         "skipped_review_only_count": skipped_review_only_count,
         "max_per_family": max(1, args.max_per_family),
         "release_families_only": release_families is not None,
-        "query_record_format": "compact_graph_sidecar_v1",
+        "query_record_format": "compact_graph_sidecar_parquet_v1",
     }
     write_json(args.out / "query_report.json", report)
     return report
@@ -516,7 +527,7 @@ def _query_family_id(query: Any) -> str:
 
 
 def _cmd_dataset_materialize(args: argparse.Namespace) -> dict[str, Any]:
-    query_records = read_jsonl(args.queries)
+    query_records = read_records(args.queries)
     graph_lookup = _materialize_graph_lookup(args)
     rows = []
     for record in query_records:
@@ -533,19 +544,19 @@ def _cmd_dataset_materialize(args: argparse.Namespace) -> dict[str, Any]:
             item = row.__dict__.copy()
             item["split"] = split
             row_dicts.append(item)
-    write_jsonl(args.out / "rows.jsonl", row_dicts)
+    write_records(record_artifact_path(args.out, "rows"), row_dicts)
     for split, split_rows in split_groups.items():
         split_dicts = []
         for row in split_rows:
             item = row.__dict__.copy()
             item["split"] = split
             split_dicts.append(item)
-        write_jsonl(args.out / "jsonl" / f"{split}.jsonl", split_dicts)
+        write_records(record_artifact_path(args.out / "parquet", split), split_dicts)
     manifest = split_manifest(rows)
     write_json(args.out / "split_manifest.json", manifest)
-    query_failure_path = args.queries.parent / "failure_manifest.jsonl"
+    query_failure_path = existing_record_artifact_path(args.queries.parent, "failure_manifest")
     if query_failure_path.exists():
-        write_jsonl(args.out / "failure_manifest.jsonl", read_jsonl(query_failure_path))
+        write_records(record_artifact_path(args.out, "failure_manifest"), read_records(query_failure_path))
     report = dataset_report(row_dicts)
     report["split_manifest"] = manifest
     report["leakage_audit"] = leakage_audit(row_dicts, manifest)
@@ -558,7 +569,7 @@ def _cmd_dataset_materialize(args: argparse.Namespace) -> dict[str, Any]:
 def _materialize_graph_lookup(args: argparse.Namespace) -> dict[str, OntologyGraph]:
     graph_path = args.graphs
     if graph_path is None:
-        sidecar = args.queries.parent / "graphs.jsonl"
+        sidecar = existing_record_artifact_path(args.queries.parent, "graphs")
         if sidecar.exists():
             graph_path = sidecar
     if graph_path is None:
@@ -579,12 +590,17 @@ def _graph_for_query_record(record: dict[str, Any], graph_lookup: dict[str, Onto
     return graph
 
 
+def _load_dataset_rows(path: Path) -> list[dict[str, Any]]:
+    rows_path = existing_record_artifact_path(path, "rows") if path.is_dir() else path
+    return read_records(rows_path)
+
+
 def _cmd_dataset_validate(args: argparse.Namespace) -> dict[str, Any]:
     return validate_dataset_dir(args.path, release=args.release)
 
 
 def _cmd_dataset_audit(args: argparse.Namespace) -> dict[str, Any]:
-    rows = read_jsonl(args.path / "rows.jsonl")
+    rows = _load_dataset_rows(args.path)
     manifest_path = args.path / "split_manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else None
     report = leakage_audit(rows, manifest)
@@ -593,14 +609,14 @@ def _cmd_dataset_audit(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _cmd_dataset_quarantine(args: argparse.Namespace) -> dict[str, Any]:
-    rows = read_jsonl(args.path / "rows.jsonl")
+    rows = _load_dataset_rows(args.path)
     report = quarantine_report(rows)
     write_json(args.path / "quarantine_report.json", report)
     return report
 
 
 def _cmd_dataset_export_release(args: argparse.Namespace) -> dict[str, Any]:
-    rows = read_jsonl(args.path / "rows.jsonl")
+    rows = _load_dataset_rows(args.path)
     result = export_release_dataset(
         rows,
         out=args.out,
@@ -628,12 +644,12 @@ def _cmd_dataset_export_release(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _cmd_dataset_export_public_private(args: argparse.Namespace) -> dict[str, Any]:
-    rows = read_jsonl(args.path / "rows.jsonl")
+    rows = _load_dataset_rows(args.path)
     return write_public_private_artifacts(rows, args.path)
 
 
 def _cmd_dataset_card(args: argparse.Namespace) -> dict[str, Any]:
-    rows = read_jsonl(args.path / "rows.jsonl")
+    rows = _load_dataset_rows(args.path)
     report_path = args.path / "dataset_report.json"
     report = json.loads(report_path.read_text(encoding="utf-8")) if report_path.exists() else dataset_report(rows)
     validation_path = args.path / "validation_report.json"
@@ -645,8 +661,8 @@ def _cmd_dataset_card(args: argparse.Namespace) -> dict[str, Any]:
     quarantine_path = args.path / "quarantine_report.json"
     if not quarantine_path.exists():
         write_json(quarantine_path, quarantine_report(rows))
-    failure_path = args.path / "failure_manifest.jsonl"
-    failures = failure_report(read_jsonl(failure_path)) if failure_path.exists() else failure_report([])
+    failure_path = existing_record_artifact_path(args.path, "failure_manifest")
+    failures = failure_report(read_records(failure_path)) if failure_path.exists() else failure_report([])
     write_json(args.path / "failure_report.json", failures)
     out = args.out or args.path / "DATASET_CARD.md"
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -675,8 +691,7 @@ def _cmd_dataset_release_report(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _cmd_dataset_shortcut_report(args: argparse.Namespace) -> dict[str, Any]:
-    rows_path = args.path / "rows.jsonl" if args.path.is_dir() else args.path
-    rows = read_jsonl(rows_path)
+    rows = _load_dataset_rows(args.path)
     report = shortcut_resistance_report(rows)
     out_dir = args.out or (args.path if args.path.is_dir() else args.path.parent)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -695,8 +710,7 @@ def _cmd_dataset_shortcut_report(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _cmd_dataset_preview(args: argparse.Namespace) -> dict[str, Any]:
-    rows_path = args.path / "rows.jsonl" if args.path.is_dir() else args.path
-    rows = read_jsonl(rows_path)
+    rows = _load_dataset_rows(args.path)
     graphs = _load_graphs(args.graphs) if args.graphs else None
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(
@@ -743,7 +757,7 @@ def _cmd_dataset_synthesis_selfcheck(args: argparse.Namespace) -> dict[str, Any]
 
 
 def _cmd_evaluation_baseline(args: argparse.Namespace) -> dict[str, Any]:
-    rows = read_jsonl(args.rows)
+    rows = read_records(args.rows)
     results = run_baselines(rows)
     args.out.mkdir(parents=True, exist_ok=True)
     metrics = {
@@ -757,8 +771,8 @@ def _cmd_evaluation_baseline(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _cmd_evaluation_grade(args: argparse.Namespace) -> dict[str, Any]:
-    rows = read_jsonl(args.rows)
-    responses = read_jsonl(args.responses)
+    rows = read_records(args.rows)
+    responses = read_records(args.responses)
     result = grade_responses(rows, responses)
     args.out.mkdir(parents=True, exist_ok=True)
     metrics = {key: value for key, value in result.items() if key != "graded"}
@@ -768,9 +782,9 @@ def _cmd_evaluation_grade(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _cmd_evaluation_grade_private(args: argparse.Namespace) -> dict[str, Any]:
-    public_rows = read_jsonl(args.public)
-    private_rows = read_jsonl(args.private)
-    responses = read_jsonl(args.responses)
+    public_rows = read_records(args.public)
+    private_rows = read_records(args.private)
+    responses = read_records(args.responses)
     result = grade_public_private(public_rows, private_rows, responses)
     args.out.mkdir(parents=True, exist_ok=True)
     metrics = {key: value for key, value in result.items() if key != "graded"}
@@ -780,10 +794,10 @@ def _cmd_evaluation_grade_private(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _cmd_evaluation_closed_book(args: argparse.Namespace) -> dict[str, Any]:
-    public_rows = read_jsonl(args.public)
-    private_rows = read_jsonl(args.private)
-    requests = read_jsonl(args.requests)
-    responses = read_jsonl(args.responses)
+    public_rows = read_records(args.public)
+    private_rows = read_records(args.private)
+    requests = read_records(args.requests)
+    responses = read_records(args.responses)
     result = run_closed_book_evaluation(
         public_rows,
         private_rows,
@@ -801,24 +815,24 @@ def _cmd_evaluation_closed_book(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _cmd_evaluation_export_requests(args: argparse.Namespace) -> dict[str, Any]:
-    rows = read_jsonl(args.rows)
+    rows = read_records(args.rows)
     if args.mode == "few-shot":
-        examples = read_jsonl(args.examples) if args.examples else rows
+        examples = read_records(args.examples) if args.examples else rows
         requests = few_shot_requests(rows, examples, shots=args.shots)
     else:
         requests = zero_shot_requests(rows)
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    write_jsonl(args.out, requests)
+    write_records(args.out, requests)
     report = {"request_count": len(requests), "mode": args.mode, "output": str(args.out)}
     write_json(args.out.with_suffix(".report.json"), report)
     return report
 
 
 def _cmd_evaluation_export_oracle_responses(args: argparse.Namespace) -> dict[str, Any]:
-    private_rows = read_jsonl(args.private)
+    private_rows = read_records(args.private)
     responses = oracle_responses(private_rows)
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    write_jsonl(args.out, responses)
+    write_records(args.out, responses)
     report = {
         "response_count": len(responses),
         "private_rows": str(args.private),
@@ -829,8 +843,8 @@ def _cmd_evaluation_export_oracle_responses(args: argparse.Namespace) -> dict[st
 
 
 def _cmd_evaluation_tool_assisted_upper_bound(args: argparse.Namespace) -> dict[str, Any]:
-    public_rows = read_jsonl(args.public)
-    private_rows = read_jsonl(args.private)
+    public_rows = read_records(args.public)
+    private_rows = read_records(args.private)
     result = run_tool_assisted_upper_bound(public_rows, private_rows)
     args.out.mkdir(parents=True, exist_ok=True)
     write_jsonl(args.out / "tool_assisted_responses.jsonl", result["responses"])
@@ -843,7 +857,7 @@ def _cmd_evaluation_tool_assisted_upper_bound(args: argparse.Namespace) -> dict[
 
 def _cmd_training_export_sft(args: argparse.Namespace) -> dict[str, Any]:
     profile = release_gate_profile(args.release_tier)
-    input_rows = read_jsonl(args.rows)
+    input_rows = read_records(args.rows)
     rows = input_rows if args.include_calibration else default_training_rows(input_rows)
     args.out.mkdir(parents=True, exist_ok=True)
     answer_rows = answer_sft_rows(rows)
@@ -994,8 +1008,8 @@ def _cmd_experiment_paper_results(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _load_graphs(path: Path) -> list[OntologyGraph]:
-    graph_path = path / "graphs.jsonl" if path.is_dir() else path
-    return [graph_from_dict(row) for row in read_jsonl(graph_path)]
+    graph_path = existing_record_artifact_path(path, "graphs") if path.is_dir() else path
+    return [graph_from_dict(row) for row in read_records(graph_path)]
 
 
 if __name__ == "__main__":

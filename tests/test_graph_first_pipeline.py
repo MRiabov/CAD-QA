@@ -62,7 +62,7 @@ from cad_qa.experiment import (
     run_artifact_manifest,
     run_smoke_experiment,
 )
-from cad_qa.io import read_jsonl, to_jsonable, write_jsonl
+from cad_qa.io import read_jsonl, read_records, to_jsonable, write_jsonl
 from cad_qa.ontology import build_graph
 from cad_qa.ontology.nodes import Measurement, Node, OntologyGraph, Relation, graph_from_dict
 from cad_qa.ontology.profile_geometry import circle_profile, polyline_profile, rect_profile
@@ -336,6 +336,62 @@ def test_cadevolve_tar_import_writes_source_jsonl(tmp_path: Path) -> None:
     assert out.with_suffix(".report.json").exists()
 
 
+def test_cadevolve_tar_import_filters_by_path_and_code_substrings(tmp_path: Path) -> None:
+    tar_path = tmp_path / "cadevolve.tar"
+    with tarfile.open(tar_path, "w") as archive:
+        for name, text in {
+            "CADEvolve-P/CADEvolve-P-core/GradientHolePlate_01.py": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane('XY').box(10, 10, 2).faces('>Z').workplane().circle(1).cutThruAll()\n"
+            ),
+            "CADEvolve-P/CADEvolve-P-core/GradientHolePlate_02.py": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane('XY').box(10, 10, 2)\n"
+            ),
+            "CADEvolve-P/CADEvolve-P-core/PlainPlate_01.py": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane('XY').box(10, 10, 2).faces('>Z').workplane().circle(1).cutThruAll()\n"
+            ),
+        }.items():
+            payload = text.encode("utf-8")
+            info = tarfile.TarInfo(name)
+            info.size = len(payload)
+            archive.addfile(info, io.BytesIO(payload))
+
+    rows, report = cadevolve_tar_source_rows(
+        tar_path,
+        path_prefixes=["CADEvolve-P/CADEvolve-P-core"],
+        path_contains=["hole"],
+        code_contains=["cutThruAll"],
+    )
+
+    assert [row["normalized_archive_member_path"] for row in rows] == [
+        "CADEvolve-P/CADEvolve-P-core/GradientHolePlate_01.py"
+    ]
+    assert report["included_count"] == 1
+    assert report["skipped_path_contains_count"] == 1
+    assert report["skipped_code_contains_count"] == 1
+
+    out = tmp_path / "sources.jsonl"
+    assert cli_main(
+        [
+            "sources",
+            "from-cadevolve-tar",
+            "--tar",
+            str(tar_path),
+            "--out",
+            str(out),
+            "--path-prefix",
+            "CADEvolve-P/CADEvolve-P-core",
+            "--path-contains",
+            "hole",
+            "--code-contains",
+            "cutThruAll",
+        ]
+    ) == 0
+    assert len(load_sources_jsonl(out)) == 1
+
+
 def test_graph_build_report_exposes_type_coverage(tmp_path: Path) -> None:
     sources_path = tmp_path / "sources.jsonl"
     graph_dir = tmp_path / "graph"
@@ -379,7 +435,7 @@ def test_trace_worker_executes_cadquery_source_or_reports_unavailable(tmp_path: 
             "5",
         ]
     ) == 0
-    assert (out_dir / "traces.jsonl").exists()
+    assert (out_dir / "traces.parquet").exists()
     assert (out_dir / "trace_report.json").exists()
 
     if not cadquery_available():
@@ -598,7 +654,7 @@ def test_graph_build_integrates_trace_feature_effects(tmp_path: Path) -> None:
             str(graph_dir),
         ]
     ) == 0
-    persisted = graph_from_dict(read_jsonl(graph_dir / "graphs.jsonl")[0])
+    persisted = graph_from_dict(read_records(graph_dir / "graphs.parquet")[0])
     assert any(relation.type == "has_kernel_material_region_geometry" for relation in persisted.relations)
 
 
@@ -789,6 +845,79 @@ def test_cut_trace_effect_creates_kernel_void_region() -> None:
     assert resolution.gold_answer == "void_region:wp1"
     assert row.release_ready
     assert "conservative_region_projection" not in row.quarantine_reasons
+
+
+def test_direct_cut_trace_effect_creates_kernel_void_region_without_profile() -> None:
+    source = source_record_from_mapping(
+        {
+            "source_id": "src_direct_kernel_void",
+            "normalized_code": (
+                "import cadquery as cq\n"
+                "base = cq.Workplane('XY').box(10, 10, 10)\n"
+                "tool = cq.Workplane('XY').box(2, 2, 12)\n"
+                "result = base.cut(tool)\n"
+            ),
+        }
+    )
+    trace_record = {
+        "source_id": "src_direct_kernel_void",
+        "execution_status": "ok",
+        "snapshots": [
+            {
+                "target": "base",
+                "source_line": 2,
+                "operation_index": 0,
+                "volume": 1000.0,
+                "bbox": {"min": [-5, -5, -5], "max": [5, 5, 5]},
+                "topology": {"faces": 6, "edges": 12, "vertices": 8},
+            },
+            {
+                "target": "tool",
+                "source_line": 3,
+                "operation_index": 1,
+                "volume": 48.0,
+                "bbox": {"min": [-1, -1, -6], "max": [1, 1, 6]},
+                "topology": {"faces": 6, "edges": 12, "vertices": 8},
+            },
+            {
+                "target": "result",
+                "source_line": 4,
+                "operation_index": 2,
+                "volume": 952.0,
+                "bbox": {"min": [-5, -5, -5], "max": [5, 5, 5]},
+                "topology": {"faces": 10, "edges": 24, "vertices": 16},
+            },
+        ],
+        "operation_effects": [
+            {
+                "from_target": "base",
+                "to_target": "result",
+                "source_line": 4,
+                "signed_volume_delta": -48.0,
+                "bbox_delta": {"min": [0, 0, 0], "max": [0, 0, 0]},
+                "topology_delta": {"faces": 4, "edges": 12, "vertices": 8},
+                "evidence": "cadquery_assignment_snapshot_delta",
+            }
+        ],
+        "environment": {"cadquery_available": True},
+        "failure_reason": None,
+    }
+
+    graph = build_graph(source, trace=trace_record)
+    void_region = graph.node("void_region:result")
+
+    assert void_region is not None
+    assert void_region.properties["conservative"] is False
+    assert graph.measurements_for("void_region:result", "volume")[0].value == 48.0
+    assert graph.measurements_for("void_region:result", "topology_delta_faces")[0].value == 4.0
+    assert any(
+        relation.type == "has_kernel_void_region_geometry" and relation.source_id == "void_region:result"
+        for relation in graph.relations
+    )
+    assert not any(
+        relation.type == "created_by" and relation.source_id == "void_region:result"
+        for relation in graph.relations
+    )
 
 
 def test_repeated_target_trace_effect_requires_source_line_match() -> None:
@@ -2590,9 +2719,9 @@ def test_synthesis_can_emit_multiple_deterministic_variants_per_family(tmp_path:
             "2",
         ]
     ) == 0
-    records = read_jsonl(out / "queries.jsonl")
+    records = read_records(out / "queries.parquet")
     report = json.loads((out / "query_report.json").read_text(encoding="utf-8"))
-    assert (out / "graphs.jsonl").exists()
+    assert (out / "graphs.parquet").exists()
     assert records and "graph_id" in records[0]
     assert "graph" not in records[0]
     emitted = [
@@ -2605,11 +2734,11 @@ def test_synthesis_can_emit_multiple_deterministic_variants_per_family(tmp_path:
     assert report["query_count"] > len(emitted)
     assert report["release_families_only"]
     assert report["skipped_review_only_count"] == 0
-    assert report["query_record_format"] == "compact_graph_sidecar_v1"
+    assert report["query_record_format"] == "compact_graph_sidecar_parquet_v1"
 
     dataset_out = tmp_path / "dataset"
-    assert cli_main(["dataset", "materialize", "--queries", str(out / "queries.jsonl"), "--out", str(dataset_out)]) == 0
-    assert read_jsonl(dataset_out / "rows.jsonl")
+    assert cli_main(["dataset", "materialize", "--queries", str(out / "queries.parquet"), "--out", str(dataset_out)]) == 0
+    assert read_records(dataset_out / "rows.parquet")
 
 
 def test_smoke_queries_include_parameterized_kernel_edge_synthesis() -> None:
@@ -9405,7 +9534,7 @@ def test_default_family_test_evidence_covers_synthesized_release_families() -> N
 
 def test_synthesis_selfcheck_writes_preview_evidence(tmp_path: Path) -> None:
     result = write_synthesis_selfcheck(tmp_path / "synthesis_selfcheck", sample_per_family=20, seed=17)
-    rows = read_jsonl(tmp_path / "synthesis_selfcheck" / "dataset" / "rows.jsonl")
+    rows = read_records(tmp_path / "synthesis_selfcheck" / "dataset" / "rows.parquet")
     evidence = json.loads(
         (tmp_path / "synthesis_selfcheck" / "dataset" / "preview_evidence.json").read_text(encoding="utf-8")
     )
@@ -10144,9 +10273,9 @@ def test_public_private_grading_uses_private_key_without_public_gold(tmp_path: P
             "evaluation",
             "grade-private",
             "--public",
-            str(dataset_dir / "public.jsonl"),
+            str(dataset_dir / "public.parquet"),
             "--private",
-            str(dataset_dir / "private.jsonl"),
+            str(dataset_dir / "private.parquet"),
             "--responses",
             str(response_path),
             "--out",
@@ -10161,7 +10290,7 @@ def test_public_private_grading_uses_private_key_without_public_gold(tmp_path: P
             "evaluation",
             "export-oracle-responses",
             "--private",
-            str(dataset_dir / "private.jsonl"),
+            str(dataset_dir / "private.parquet"),
             "--out",
             str(oracle_path),
         ]
@@ -10196,9 +10325,9 @@ def test_tool_assisted_upper_bound_exports_and_grades_private_artifacts(tmp_path
             "evaluation",
             "tool-assisted-upper-bound",
             "--public",
-            str(dataset_dir / "public.jsonl"),
+            str(dataset_dir / "public.parquet"),
             "--private",
-            str(dataset_dir / "private.jsonl"),
+            str(dataset_dir / "private.parquet"),
             "--out",
             str(out_dir),
         ]
@@ -10258,9 +10387,9 @@ def test_closed_book_evaluation_audits_requests_and_grades_private_key(tmp_path:
             "evaluation",
             "closed-book",
             "--public",
-            str(dataset_dir / "public.jsonl"),
+            str(dataset_dir / "public.parquet"),
             "--private",
-            str(dataset_dir / "private.jsonl"),
+            str(dataset_dir / "private.parquet"),
             "--requests",
             str(request_path),
             "--responses",
@@ -10333,16 +10462,16 @@ def test_smoke_experiment_orchestrates_artifacts(tmp_path: Path) -> None:
     assert (tmp_path / "run" / "artifact_manifest.json").exists()
     assert (tmp_path / "run" / "dataset" / "DATASET_CARD.md").exists()
     assert (tmp_path / "run" / "dataset" / "GENERATED_PREVIEW.md").exists()
-    assert (tmp_path / "run" / "dataset" / "public.jsonl").exists()
-    assert (tmp_path / "run" / "dataset" / "private.jsonl").exists()
+    assert (tmp_path / "run" / "dataset" / "public.parquet").exists()
+    assert (tmp_path / "run" / "dataset" / "private.parquet").exists()
     assert (tmp_path / "run" / "dataset" / "public_private_report.json").exists()
     assert (tmp_path / "run" / "dataset" / "failure_report.json").exists()
     assert (tmp_path / "run" / "dataset" / "quarantine_report.json").exists()
     assert (tmp_path / "run" / "dataset" / "release_validation_report.json").exists()
     assert (tmp_path / "run" / "dataset" / "release_verifier_report.json").exists()
-    assert (tmp_path / "run" / "release_dataset" / "rows.jsonl").exists()
-    assert (tmp_path / "run" / "release_dataset" / "public.jsonl").exists()
-    assert (tmp_path / "run" / "release_dataset" / "private.jsonl").exists()
+    assert (tmp_path / "run" / "release_dataset" / "rows.parquet").exists()
+    assert (tmp_path / "run" / "release_dataset" / "public.parquet").exists()
+    assert (tmp_path / "run" / "release_dataset" / "private.parquet").exists()
     assert (tmp_path / "run" / "release_dataset" / "release_validation_report.json").exists()
     assert (tmp_path / "run" / "release_dataset" / "RELEASE_VERIFIER_REPORT.md").exists()
     assert (tmp_path / "run" / "release_baseline" / "baseline_metrics.json").exists()
@@ -10504,7 +10633,7 @@ def test_release_export_cli_filters_quarantined_rows(tmp_path: Path) -> None:
     ) == 0
     release_report = validate_rows([row for row in rows if row["release_ready"]], release=True)
     assert release_report["valid"]
-    assert (out_dir / "rows.jsonl").exists()
+    assert (out_dir / "rows.parquet").exists()
     assert (out_dir / "release_validation_report.json").exists()
     verifier_report = json.loads((out_dir / "release_verifier_report.json").read_text())
     assert not verifier_report["valid_for_release"]
@@ -10533,8 +10662,8 @@ def test_release_export_helper_writes_reports(tmp_path: Path) -> None:
     assert (tmp_path / "release" / "split_audit.json").exists()
     assert (tmp_path / "release" / "DATASET_CARD.md").exists()
     assert (tmp_path / "release" / "release_exclusions.json").exists()
-    assert (tmp_path / "release" / "public.jsonl").exists()
-    assert (tmp_path / "release" / "private.jsonl").exists()
+    assert (tmp_path / "release" / "public.parquet").exists()
+    assert (tmp_path / "release" / "private.parquet").exists()
 
 
 def _mark_value_bearing_release_fixture_rows(rows: list[dict]) -> None:
@@ -10669,7 +10798,7 @@ def test_release_export_filters_prompt_policy_invalid_rows_before_verifier(tmp_p
 
     result = export_release_dataset(rows, out=tmp_path / "release")
     exclusions = json.loads((tmp_path / "release" / "release_exclusions.json").read_text())
-    release_rows = read_jsonl(tmp_path / "release" / "rows.jsonl")
+    release_rows = read_records(tmp_path / "release" / "rows.parquet")
     split_quality = json.loads((tmp_path / "release" / "split_audit.json").read_text())
     assert result["valid"]
     assert result["blocking_release_gates"] == []
@@ -10778,7 +10907,7 @@ def test_release_export_caps_syntax_only_calibration_rows(tmp_path: Path) -> Non
 
     result = export_release_dataset(rows, out=tmp_path / "release")
     exclusions = json.loads((tmp_path / "release" / "release_exclusions.json").read_text())
-    release_rows = read_jsonl(tmp_path / "release" / "rows.jsonl")
+    release_rows = read_records(tmp_path / "release" / "rows.parquet")
     verifier = json.loads((tmp_path / "release" / "release_verifier_report.json").read_text())
 
     assert result["valid"]
@@ -10884,8 +11013,8 @@ def test_public_private_exports_do_not_leak_hidden_fields(tmp_path: Path) -> Non
     assert report["public_row_count"] == len(rows)
     assert report["private_row_count"] == len(rows)
     assert report["audit"]["valid"]
-    assert (tmp_path / "views" / "public.jsonl").exists()
-    assert (tmp_path / "views" / "private.jsonl").exists()
+    assert (tmp_path / "views" / "public.parquet").exists()
+    assert (tmp_path / "views" / "private.parquet").exists()
 
 
 def test_public_private_cli_writes_views(tmp_path: Path) -> None:
@@ -10898,5 +11027,5 @@ def test_public_private_cli_writes_views(tmp_path: Path) -> None:
     dataset_dir = tmp_path / "dataset"
     write_jsonl(dataset_dir / "rows.jsonl", rows)
     assert cli_main(["dataset", "export-public-private", str(dataset_dir)]) == 0
-    assert (dataset_dir / "public.jsonl").exists()
-    assert (dataset_dir / "private.jsonl").exists()
+    assert (dataset_dir / "public.parquet").exists()
+    assert (dataset_dir / "private.parquet").exists()

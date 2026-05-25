@@ -24,7 +24,7 @@ from cad_qa.dataset.report import dataset_card_markdown, dataset_report, failure
 from cad_qa.dataset.sft import is_syntax_only_calibration_row
 from cad_qa.dataset.split import rows_with_assigned_splits, split_audit, split_manifest
 from cad_qa.dataset.validate import validate_dataset_dir, validate_rows
-from cad_qa.io import write_json, write_jsonl
+from cad_qa.io import record_artifact_path, write_json, write_records
 from cad_qa.prompts.render import prompt_template_id_from_mapping
 from cad_qa.query.family_manifest import DEFAULT_FAMILY_MANIFEST, RELEASE_STATUSES, load_family_manifest
 
@@ -69,13 +69,13 @@ def export_release_dataset(
     out.mkdir(parents=True, exist_ok=True)
     manifest = split_manifest(release_rows)
     release_rows = rows_with_assigned_splits(release_rows, manifest)
-    write_jsonl(out / "rows.jsonl", release_rows)
+    write_records(record_artifact_path(out, "rows"), release_rows)
     public_private = write_public_private_artifacts(release_rows, out)
     split_rows: dict[str, list[dict[str, Any]]] = {}
     for row in release_rows:
         split_rows.setdefault(row.get("split", "unsplit"), []).append(row)
     for split, items in sorted(split_rows.items()):
-        write_jsonl(out / "jsonl" / f"{split}.jsonl", items)
+        write_records(record_artifact_path(out / "parquet", split), items)
 
     write_json(out / "split_manifest.json", manifest)
     report = dataset_report(release_rows)

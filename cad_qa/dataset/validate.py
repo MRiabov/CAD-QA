@@ -6,7 +6,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from cad_qa.io import read_jsonl, write_json
+from cad_qa.io import existing_record_artifact_path, read_records, write_json
 from cad_qa.prompts.wording_gates import (
     banned_terms,
     clue_breadth_violations,
@@ -88,8 +88,8 @@ def validate_rows(rows: list[dict[str, Any]], *, release: bool = False) -> dict[
 
 
 def validate_dataset_dir(path: Path, *, release: bool = False) -> dict[str, Any]:
-    row_path = path / "rows.jsonl"
-    rows = read_jsonl(row_path)
+    row_path = existing_record_artifact_path(path, "rows")
+    rows = read_records(row_path)
     report = validate_rows(rows, release=release)
     output_name = "release_validation_report.json" if release else "validation_report.json"
     write_json(path / output_name, report)

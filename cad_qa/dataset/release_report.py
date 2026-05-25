@@ -24,7 +24,7 @@ from cad_qa.dataset.sft import (
 )
 from cad_qa.dataset.split import split_audit, split_manifest
 from cad_qa.dataset.validate import validate_rows
-from cad_qa.io import read_jsonl, write_json
+from cad_qa.io import existing_record_artifact_path, read_records, write_json
 from cad_qa.prompts.render import prompt_template_id_from_mapping
 from cad_qa.query.family_manifest import DEFAULT_FAMILY_MANIFEST, intended_family_coverage_report
 from cad_qa.query.resolver import VALUE_BUCKET_DECIMALS, VALUE_MATCH_TOLERANCE
@@ -598,15 +598,15 @@ def write_release_verifier_report(
     preview_evidence: Path | None = None,
     family_test_evidence: Path | None = DEFAULT_FAMILY_TEST_EVIDENCE,
 ) -> dict[str, Any]:
-    rows = read_jsonl(dataset_dir / "rows.jsonl")
-    failure_path = dataset_dir / "failure_manifest.jsonl"
-    failures = read_jsonl(failure_path) if failure_path.exists() else []
+    rows = read_records(existing_record_artifact_path(dataset_dir, "rows"))
+    failure_path = existing_record_artifact_path(dataset_dir, "failure_manifest")
+    failures = read_records(failure_path) if failure_path.exists() else []
     split_path = dataset_dir / "split_manifest.json"
     split = json.loads(split_path.read_text(encoding="utf-8")) if split_path.exists() else None
-    public_path = dataset_dir / "public.jsonl"
-    private_path = dataset_dir / "private.jsonl"
-    public = read_jsonl(public_path) if public_path.exists() else None
-    private = read_jsonl(private_path) if private_path.exists() else None
+    public_path = existing_record_artifact_path(dataset_dir, "public")
+    private_path = existing_record_artifact_path(dataset_dir, "private")
+    public = read_records(public_path) if public_path.exists() else None
+    private = read_records(private_path) if private_path.exists() else None
     preview_evidence_path = preview_evidence or dataset_dir / DEFAULT_PREVIEW_EVIDENCE_FILENAME
     preview_evidence_payload = (
         json.loads(preview_evidence_path.read_text(encoding="utf-8"))
