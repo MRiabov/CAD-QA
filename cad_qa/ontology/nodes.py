@@ -60,9 +60,12 @@ class OntologyGraph:
             nodes_by_type.setdefault(node.type, []).append(node)
 
     def add_relation(self, relation: Relation) -> None:
-        if relation in self.relations:
+        relation_key_index = self._relation_key_index()
+        relation_key = _relation_key(relation)
+        if relation_key in relation_key_index:
             return
         self.relations.append(relation)
+        relation_key_index.add(relation_key)
         relation_index = getattr(self, "_cached_relation_index", None)
         if relation_index is not None:
             relation_index.setdefault((relation.source_id, relation.type), []).append(relation)
@@ -71,9 +74,12 @@ class OntologyGraph:
             relations_by_source.setdefault(relation.source_id, []).append(relation)
 
     def add_measurement(self, measurement: Measurement) -> None:
-        if measurement in self.measurements:
+        measurement_key_index = self._measurement_key_index()
+        measurement_key = _measurement_key(measurement)
+        if measurement_key in measurement_key_index:
             return
         self.measurements.append(measurement)
+        measurement_key_index.add(measurement_key)
         measurement_index = getattr(self, "_cached_measurement_index", None)
         if measurement_index is not None:
             measurement_index.setdefault((measurement.entity_id, measurement.name), []).append(measurement)
@@ -142,6 +148,53 @@ class OntologyGraph:
                 index.setdefault(measurement.entity_id, []).append(measurement)
             self._cached_measurements_by_entity_index = index
         return index
+
+    def _relation_key_index(self) -> set[tuple[Any, ...]]:
+        index = getattr(self, "_cached_relation_key_index", None)
+        if index is None:
+            index = {_relation_key(relation) for relation in self.relations}
+            self._cached_relation_key_index = index
+        return index
+
+    def _measurement_key_index(self) -> set[tuple[Any, ...]]:
+        index = getattr(self, "_cached_measurement_key_index", None)
+        if index is None:
+            index = {_measurement_key(measurement) for measurement in self.measurements}
+            self._cached_measurement_key_index = index
+        return index
+
+
+def _relation_key(relation: Relation) -> tuple[Any, ...]:
+    return (
+        relation.source_id,
+        relation.target_id,
+        relation.type,
+        _freeze_value(relation.properties),
+        _freeze_value(relation.evidence),
+    )
+
+
+def _measurement_key(measurement: Measurement) -> tuple[Any, ...]:
+    return (
+        measurement.entity_id,
+        measurement.scope,
+        measurement.name,
+        _freeze_value(measurement.value),
+        measurement.unit,
+        _freeze_value(measurement.evidence),
+    )
+
+
+def _freeze_value(value: Any) -> Any:
+    if isinstance(value, dict):
+        return tuple((key, _freeze_value(value[key])) for key in sorted(value))
+    if isinstance(value, list):
+        return tuple(_freeze_value(item) for item in value)
+    if isinstance(value, tuple):
+        return tuple(_freeze_value(item) for item in value)
+    if isinstance(value, set):
+        return tuple(sorted(_freeze_value(item) for item in value))
+    return value
 
 def graph_from_dict(data: dict[str, Any]) -> OntologyGraph:
     return OntologyGraph(

@@ -176,6 +176,17 @@ epics:
       - id: "3.4"
         title: Trace CLI, trace reports, and timeout/crash accounting
         status: implemented
+      - id: "3.5"
+        title: Partial trace evidence on timeout
+        status: implemented
+        acceptance_criteria:
+          - "Long-running CadQuery sources still contribute completed geometry snapshots when they time out after producing measurable solids."
+          - "Users can distinguish complete traces from timeout-partial traces in trace reports."
+        technical_definition_of_done:
+          - "Trace workers publish bounded progress snapshots, operation effects, and selector observations while executing."
+          - "Timeouts with usable progress serialize as execution_status=partial with failure_reason=timeout instead of discarding snapshots."
+          - "Graph build accepts ok and partial traces for snapshot/effect/selector evidence while failed traces remain excluded."
+          - "Regression coverage and artifact evidence prove that a timed-out source yields valid topology-derived dataset rows."
   - id: epic-4
     title: CAD ontology graph extraction
     status: implemented
@@ -227,9 +238,9 @@ epics:
         acceptance_criteria:
           - Users can synthesize and materialize rows from topology-rich CadEvolve graphs without relation and measurement lookup becoming an accidental release blocker.
         technical_definition_of_done:
-          - OntologyGraph provides mutation-safe indexed node, node-type, relation, and measurement lookup helpers that do not leak into serialized graph artifacts.
+          - OntologyGraph provides mutation-safe indexed node, node-type, relation, measurement, relation-deduplication, and measurement-deduplication helpers that do not leak into serialized graph artifacts.
           - Predicate catalog, graph-hop synthesis, and resolver relation clauses use indexed relation/measurement lookup in hot paths.
-          - A retraced 10-source CadEvolve topology slice synthesizes and materializes valid rows, including compiled-topology face/edge/vertex-derived task families.
+          - A retraced 10-source CadEvolve topology slice builds, synthesizes, and materializes valid rows, including compiled-topology face/edge/vertex-derived task families.
   - id: epic-6
     title: Label and relation families
     status: implemented
@@ -367,6 +378,15 @@ epics:
       - id: "11.4"
         title: Run summaries, paper-results snapshot, and artifact manifest
         status: implemented
+      - id: "11.8"
+        title: Compact query records with graph sidecars
+        status: implemented
+        acceptance_criteria:
+          - "Users can synthesize and materialize topology-rich query artifacts without duplicating a full ontology graph into every query row."
+        technical_definition_of_done:
+          - "`cadqa query synthesize` writes compact query records keyed by graph_id plus a single graphs.jsonl sidecar."
+          - "`cadqa dataset materialize` can load embedded-graph records, an explicit --graphs path, or the query-directory graphs.jsonl sidecar."
+          - "Regression coverage verifies compact synthesized query records and automatic materialization from the sidecar."
       - id: "11.5"
         title: Local experiment artifact packaging with checksums
         status: implemented

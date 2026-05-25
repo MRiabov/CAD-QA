@@ -168,6 +168,8 @@ Technical definition of done:
 - Prepared CADEvolve trace snapshots keyed by `feature_id` are normalized during
   graph construction so source-line and operation-order evidence remain
   available to downstream geometry queries.
+- Timeout-partial traces retain completed geometry snapshots and remain visibly
+  marked as partial timeout evidence.
 
 | Story | Status | Acceptance criteria | Technical definition of done |
 | --- | --- | --- | --- |
@@ -175,6 +177,7 @@ Technical definition of done:
 | 3.2 Isolated CadQuery execution worker | `implemented` | Bad source files cannot compromise the whole run. | Worker runs source with bounded failure handling and records errors. |
 | 3.3 Snapshot-derived feature application effects | `implemented` | Users can ask about geometry changes caused by operations. | Snapshot deltas expose volume, bbox, topology, and centroid changes where stable. |
 | 3.4 Trace CLI, trace reports, and timeout/crash accounting | `implemented` | Users can run and inspect execution at corpus scale. | CLI writes trace artifacts and reports timeout/crash counts. |
+| 3.5 Partial trace evidence on timeout | `implemented` | Long-running CadQuery sources still contribute completed geometry snapshots when they time out after producing measurable solids. | Trace workers publish bounded progress; timeout-progress records serialize as `execution_status=partial`, graph build consumes partial snapshot/effect/selector evidence, and `runs/current_partial_trace_smoke/` proves valid topology-derived rows from a timed-out source. |
 
 ## Epic 4: CAD ontology graph extraction (`epic-4`)
 
@@ -224,7 +227,7 @@ Technical definition of done:
 | 5.2 Candidate-set trace and failure reasons | `implemented` | Users can see why a row resolved or failed. | Resolver records candidate counts after each clause and structured failure reasons. |
 | 5.3 Argmax/argmin aggregation | `implemented` | Geometry extrema can be asked deterministically. | Aggregations resolve numeric metrics with deterministic tie/failure behavior. |
 | 5.4 Reject-unless-unique policy | `implemented` | Ambiguous rows do not enter release silently. | Resolver rejects zero-candidate and multi-final-candidate queries unless explicitly allowed for calibration/review. |
-| 5.5 Indexed graph lookup for topology-rich synthesis and resolution | `implemented` | Users can synthesize and materialize rows from topology-rich CadEvolve graphs without relation and measurement lookup becoming an accidental release blocker. | OntologyGraph provides mutation-safe indexed node, node-type, relation, and measurement lookups that do not serialize; predicate catalog, graph-hop synthesis, and resolver relation clauses use indexed lookup in hot paths; a retraced 10-source CadEvolve topology slice synthesizes/materializes valid compiled-topology rows. |
+| 5.5 Indexed graph lookup for topology-rich synthesis and resolution | `implemented` | Users can synthesize and materialize rows from topology-rich CadEvolve graphs without relation and measurement lookup becoming an accidental release blocker. | OntologyGraph provides mutation-safe indexed node, node-type, relation, measurement, relation-deduplication, and measurement-deduplication lookups that do not serialize; predicate catalog, graph-hop synthesis, and resolver relation clauses use indexed lookup in hot paths; a retraced 10-source CadEvolve topology slice builds/synthesizes/materializes valid compiled-topology rows. |
 
 ## Epic 6: Label and relation families (`epic-6`)
 
@@ -377,6 +380,7 @@ Technical definition of done:
 | 11.5 Local experiment artifact packaging with checksums | `implemented` | Users can preserve and compare run artifacts. | Packaging command writes archives/checksums for local experiments. |
 | 11.6 Release readiness report with template quotas and answer entropy | `implemented` | Users can decide whether an artifact is release-ready from one report. | Report includes template/family balance, answer entropy, gates, and blocking reasons. |
 | 11.7 Generated Markdown previews for changed task families and ontology node types | `implemented` | Users can manually inspect prompts, query programs, traces, and gold answers after feature changes. | Preview command samples rows by family/node type and writes Markdown review artifacts. |
+| 11.8 Compact query records with graph sidecars | `implemented` | Users can synthesize and materialize topology-rich query artifacts without duplicating a full ontology graph into every query row. | `cadqa query synthesize` writes compact `graph_id` query records plus one `graphs.jsonl` sidecar; `cadqa dataset materialize` loads embedded graphs, explicit `--graphs`, or the sidecar automatically; regression coverage verifies compact synthesis and materialization. |
 
 ## Epic 12: Geometry-backed training-critical question families (`epic-12`)
 

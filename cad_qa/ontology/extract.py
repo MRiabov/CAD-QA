@@ -1504,7 +1504,7 @@ def _trace_mapping(trace: TraceRecord | Mapping[str, Any] | None) -> dict[str, A
 
 
 def _trace_snapshots_by_target(trace: dict[str, Any] | None) -> dict[str, list[dict[str, Any]]]:
-    if not trace or trace.get("execution_status") != "ok":
+    if not _trace_has_usable_geometry(trace):
         return {}
     grouped: dict[str, list[dict[str, Any]]] = {}
     operation_nodes = _trace_operation_nodes_by_feature_id(trace)
@@ -1519,7 +1519,7 @@ def _trace_snapshots_by_target(trace: dict[str, Any] | None) -> dict[str, list[d
 
 
 def _trace_effects_by_target(trace: dict[str, Any] | None) -> dict[str, list[dict[str, Any]]]:
-    if not trace or trace.get("execution_status") != "ok":
+    if not _trace_has_usable_geometry(trace):
         return {}
     grouped: dict[str, list[dict[str, Any]]] = {}
     for index, effect in enumerate(trace.get("operation_effects") or []):
@@ -1532,7 +1532,7 @@ def _trace_effects_by_target(trace: dict[str, Any] | None) -> dict[str, list[dic
 
 
 def _trace_selectors_by_line_text(trace: dict[str, Any] | None) -> dict[tuple[int, str], dict[str, Any]]:
-    if not trace or trace.get("execution_status") != "ok":
+    if not _trace_has_usable_geometry(trace):
         return {}
     grouped: dict[tuple[int, str], dict[str, Any]] = {}
     for result in trace.get("selector_results") or []:
@@ -1546,7 +1546,7 @@ def _trace_selectors_by_line_text(trace: dict[str, Any] | None) -> dict[tuple[in
 
 
 def _trace_selectors_by_line_text_kind(trace: dict[str, Any] | None) -> dict[tuple[int, str, str], dict[str, Any]]:
-    if not trace or trace.get("execution_status") != "ok":
+    if not _trace_has_usable_geometry(trace):
         return {}
     grouped: dict[tuple[int, str, str], dict[str, Any]] = {}
     for result in trace.get("selector_results") or []:
@@ -1561,7 +1561,7 @@ def _trace_selectors_by_line_text_kind(trace: dict[str, Any] | None) -> dict[tup
 
 
 def _trace_selectors_by_line(trace: dict[str, Any] | None) -> dict[int, list[dict[str, Any]]]:
-    if not trace or trace.get("execution_status") != "ok":
+    if not _trace_has_usable_geometry(trace):
         return {}
     grouped: dict[int, list[dict[str, Any]]] = {}
     for result in trace.get("selector_results") or []:
@@ -1573,6 +1573,10 @@ def _trace_selectors_by_line(trace: dict[str, Any] | None) -> dict[int, list[dic
     for items in grouped.values():
         items.sort(key=lambda item: int(item.get("selector_index") or 0))
     return grouped
+
+
+def _trace_has_usable_geometry(trace: dict[str, Any] | None) -> bool:
+    return bool(trace and trace.get("execution_status") in {"ok", "partial"})
 
 
 def _trace_operation_nodes_by_feature_id(trace: dict[str, Any]) -> dict[str, dict[str, Any]]:

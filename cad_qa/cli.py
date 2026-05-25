@@ -157,6 +157,7 @@ def build_parser() -> argparse.ArgumentParser:
     dataset_sub = dataset.add_subparsers(required=True)
     materialize = dataset_sub.add_parser("materialize")
     materialize.add_argument("--queries", type=Path, required=True)
+    materialize.add_argument("--graphs", type=Path, help="Optional graph directory or graphs.jsonl file for compact query records.")
     materialize.add_argument("--out", type=Path, required=True)
     materialize.set_defaults(func=_cmd_dataset_materialize)
     validate = dataset_sub.add_parser("validate")
@@ -410,7 +411,7 @@ def _cmd_query_smoke(args: argparse.Namespace) -> dict[str, Any]:
         for query in smoke_queries(graph):
             resolution = resolve_query(graph, query)
             record = {
-                "graph": graph,
+                "graph_id": graph.graph_id,
                 "query": resolution.query_program,
                 "resolution": resolution,
             }
@@ -426,6 +427,7 @@ def _cmd_query_smoke(args: argparse.Namespace) -> dict[str, Any]:
                     }
                 )
     args.out.mkdir(parents=True, exist_ok=True)
+    write_jsonl(args.out / "graphs.jsonl", graphs)
     write_jsonl(args.out / "queries.jsonl", records)
     write_jsonl(args.out / "failure_manifest.jsonl", failures)
     report = {"query_count": len(records), "failure_count": len(failures)}
@@ -447,7 +449,7 @@ def _cmd_query_synthesize(args: argparse.Namespace) -> dict[str, Any]:
                 continue
             resolution = resolve_query(graph, query)
             record = {
-                "graph": graph,
+                "graph_id": graph.graph_id,
                 "query": resolution.query_program,
                 "resolution": resolution,
             }
@@ -463,6 +465,7 @@ def _cmd_query_synthesize(args: argparse.Namespace) -> dict[str, Any]:
                     }
                 )
     args.out.mkdir(parents=True, exist_ok=True)
+    write_jsonl(args.out / "graphs.jsonl", graphs)
     write_jsonl(args.out / "queries.jsonl", records)
     write_jsonl(args.out / "failure_manifest.jsonl", failures)
     report = {
@@ -471,6 +474,7 @@ def _cmd_query_synthesize(args: argparse.Namespace) -> dict[str, Any]:
         "skipped_review_only_count": skipped_review_only_count,
         "max_per_family": max(1, args.max_per_family),
         "release_families_only": release_families is not None,
+        "query_record_format": "compact_graph_sidecar_v1",
     }
     write_json(args.out / "query_report.json", report)
     return report
@@ -491,9 +495,10 @@ def _query_family_id(query_id: str) -> str:
 
 def _cmd_dataset_materialize(args: argparse.Namespace) -> dict[str, Any]:
     query_records = read_jsonl(args.queries)
+    graph_lookup = _materialize_graph_lookup(args)
     rows = []
     for record in query_records:
-        graph = graph_from_dict(record["graph"])
+        graph = _graph_for_query_record(record, graph_lookup)
         query = query_from_dict(record["query"])
         resolution = resolve_query(graph, query)
         if resolution.verifier_status == "resolved":
@@ -526,6 +531,30 @@ def _cmd_dataset_materialize(args: argparse.Namespace) -> dict[str, Any]:
     write_json(args.out / "split_audit.json", report["split_audit"])
     write_json(args.out / "dataset_report.json", report)
     return report
+
+
+def _materialize_graph_lookup(args: argparse.Namespace) -> dict[str, OntologyGraph]:
+    graph_path = args.graphs
+    if graph_path is None:
+        sidecar = args.queries.parent / "graphs.jsonl"
+        if sidecar.exists():
+            graph_path = sidecar
+    if graph_path is None:
+        return {}
+    return {graph.graph_id: graph for graph in _load_graphs(graph_path)}
+
+
+def _graph_for_query_record(record: dict[str, Any], graph_lookup: dict[str, OntologyGraph]) -> OntologyGraph:
+    embedded = record.get("graph")
+    if embedded is not None:
+        return graph_from_dict(embedded)
+    graph_id = record.get("graph_id")
+    if not isinstance(graph_id, str):
+        raise ValueError("query record has neither embedded graph nor graph_id")
+    graph = graph_lookup.get(graph_id)
+    if graph is None:
+        raise ValueError(f"missing graph sidecar entry for query graph_id {graph_id!r}")
+    return graph
 
 
 def _cmd_dataset_validate(args: argparse.Namespace) -> dict[str, Any]:

@@ -99,6 +99,13 @@ for z in (1, -1):
 result = base
 """
 
+PARTIAL_TIMEOUT_SOURCE = """
+import cadquery as cq
+base = cq.Workplane("XY").box(2, 2, 2)
+while True:
+    pass
+"""
+
 
 def test_source_loading(tmp_path: Path) -> None:
     path = tmp_path / "sources.jsonl"
@@ -163,11 +170,16 @@ def test_graph_lookup_indexes_update_after_mutation_and_do_not_serialize() -> No
     graph.add_node(Node("edge:b", "edge", "edge b"))
     graph.add_relation(Relation("edge:a", "edge:b", "parallel_to"))
     graph.add_measurement(Measurement("edge:a", "entity_geometry", "edge_length", 12.0, "mm"))
+    graph.add_relation(Relation("edge:a", "edge:b", "parallel_to"))
+    graph.add_measurement(Measurement("edge:a", "entity_geometry", "edge_length", 12.0, "mm"))
 
     assert [node.id for node in graph.nodes_by_type("edge")] == ["edge:a", "edge:b"]
     assert [relation.target_id for relation in graph.relations_from("edge:a", "parallel_to")] == ["edge:b"]
     assert graph.measurements_for("edge:a", "edge_length")[0].value == 12.0
-    assert "_cached_node_index" not in to_jsonable(graph)
+    serialized = to_jsonable(graph)
+    assert "_cached_node_index" not in serialized
+    assert "_cached_relation_key_index" not in serialized
+    assert "_cached_measurement_key_index" not in serialized
 
 
 def test_cadevolve_source_manifest_and_audit_cli(tmp_path: Path) -> None:
@@ -333,14 +345,49 @@ def test_trace_sources_bounded_preserves_order_and_reports_timeouts() -> None:
             "normalized_code": "import cadquery as cq\nwhile True:\n    pass\n",
         }
     )
-    traces = trace_sources_bounded([ok, infinite], timeout_seconds=5.0, worker_count=2)
-    assert [trace.source_id for trace in traces] == ["src_trace_ok", "src_trace_timeout"]
+    partial_timeout = source_record_from_mapping(
+        {
+            "source_id": "src_trace_partial_timeout",
+            "normalized_code": PARTIAL_TIMEOUT_SOURCE,
+        }
+    )
+    traces = trace_sources_bounded([ok, infinite, partial_timeout], timeout_seconds=5.0, worker_count=3)
+    assert [trace.source_id for trace in traces] == [
+        "src_trace_ok",
+        "src_trace_timeout",
+        "src_trace_partial_timeout",
+    ]
     assert traces[0].execution_status == "ok"
     assert traces[1].execution_status == "failed"
     assert traces[1].failure_reason == "timeout"
+    assert traces[2].execution_status == "partial"
+    assert traces[2].failure_reason == "timeout"
+    assert traces[2].snapshots
     report = trace_report(traces)
-    assert report["trace_count"] == 2
-    assert report["failure_reasons"]["timeout"] == 1
+    assert report["trace_count"] == 3
+    assert report["partial_count"] == 1
+    assert report["usable_count"] == 2
+    assert report["failure_reasons"]["timeout"] == 2
+
+
+def test_partial_timeout_trace_contributes_snapshot_topology_to_graph() -> None:
+    if not cadquery_available():
+        return
+    source = source_record_from_mapping(
+        {
+            "source_id": "src_trace_partial_timeout_graph",
+            "normalized_code": PARTIAL_TIMEOUT_SOURCE,
+        }
+    )
+    trace = trace_source(source, timeout_seconds=5.0)
+    assert trace.execution_status == "partial"
+    graph = build_graph(source, trace=trace)
+    topology_faces = [node for node in graph.nodes if node.type == "face"]
+    topology_edges = [node for node in graph.nodes if node.type == "edge"]
+    topology_vertices = [node for node in graph.nodes if node.type == "vertex"]
+    assert len(topology_faces) == 6
+    assert len(topology_edges) == 12
+    assert len(topology_vertices) == 8
 
 
 def test_trace_skips_non_shape_workplane_cursor_values() -> None:
@@ -2464,6 +2511,9 @@ def test_synthesis_can_emit_multiple_deterministic_variants_per_family(tmp_path:
     ) == 0
     records = read_jsonl(out / "queries.jsonl")
     report = json.loads((out / "query_report.json").read_text(encoding="utf-8"))
+    assert (out / "graphs.jsonl").exists()
+    assert records and "graph_id" in records[0]
+    assert "graph" not in records[0]
     emitted = [
         record
         for record in records
@@ -2474,6 +2524,11 @@ def test_synthesis_can_emit_multiple_deterministic_variants_per_family(tmp_path:
     assert report["query_count"] > len(emitted)
     assert report["release_families_only"]
     assert report["skipped_review_only_count"] == 0
+    assert report["query_record_format"] == "compact_graph_sidecar_v1"
+
+    dataset_out = tmp_path / "dataset"
+    assert cli_main(["dataset", "materialize", "--queries", str(out / "queries.jsonl"), "--out", str(dataset_out)]) == 0
+    assert read_jsonl(dataset_out / "rows.jsonl")
 
 
 def test_smoke_queries_include_parameterized_kernel_edge_synthesis() -> None:

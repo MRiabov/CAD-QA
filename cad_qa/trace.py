@@ -9,7 +9,7 @@ from dataclasses import dataclass
 import importlib.util
 import math
 import multiprocessing as mp
-from queue import Empty
+from queue import Empty, Full
 import sys
 import time
 from typing import Any
@@ -52,6 +52,9 @@ class _RunningTrace:
     process: mp.Process
     queue: mp.Queue
     started_at: float
+
+
+TraceProgressCallback = Callable[[dict[str, Any]], None]
 
 
 class CadQueryTraceError(RuntimeError):
@@ -152,9 +155,15 @@ def trace_sources_bounded(
             if job.process.is_alive() and now - job.started_at <= timeout_seconds:
                 continue
             if job.process.is_alive():
-                job.process.terminate()
-                job.process.join(1.0)
-                result = _failed_trace(job.source, "timeout", timeout_seconds=timeout_seconds)
+                early_result = _latest_worker_result(job.queue)
+                _stop_process(job.process)
+                result = _record_from_timed_out_worker(job, timeout_seconds=timeout_seconds)
+                if result.execution_status == "failed" and early_result is not None:
+                    result = _trace_record_from_worker_result(
+                        job.source,
+                        early_result,
+                        timeout_seconds=timeout_seconds,
+                    )
             else:
                 job.process.join()
                 result = _record_from_completed_worker(job, timeout_seconds=timeout_seconds)
@@ -179,7 +188,9 @@ def trace_report(records: list[TraceRecord]) -> dict[str, Any]:
     return {
         "trace_count": len(records),
         "ok_count": statuses.get("ok", 0),
-        "failed_count": len(records) - statuses.get("ok", 0),
+        "partial_count": statuses.get("partial", 0),
+        "usable_count": statuses.get("ok", 0) + statuses.get("partial", 0),
+        "failed_count": statuses.get("failed", 0),
         "statuses": dict(sorted(statuses.items())),
         "failure_reasons": dict(sorted(failures.items())),
         "snapshot_count": sum(len(record.snapshots or []) for record in records),
@@ -260,8 +271,11 @@ def _trace_source_isolated(source: SourceRecord, *, timeout_seconds: float) -> T
     process.start()
     process.join(timeout_seconds)
     if process.is_alive():
-        process.terminate()
-        process.join(1.0)
+        result = _latest_worker_result(queue)
+        _stop_process(process)
+        result = _latest_worker_result(queue) or result
+        if result is not None:
+            return _trace_record_from_worker_result(source, result, timeout_seconds=timeout_seconds)
         return _failed_trace(source, "timeout", timeout_seconds=timeout_seconds)
     if process.exitcode != 0:
         return _failed_trace(source, "worker_crash", timeout_seconds=timeout_seconds)
@@ -291,16 +305,23 @@ def _trace_source_in_process(source: SourceRecord, *, timeout_seconds: float) ->
 
 
 def _trace_worker(source: SourceRecord, queue: mp.Queue, timeout_seconds: float) -> None:
+    def publish_progress(result: dict[str, Any]) -> None:
+        _put_worker_result(queue, {"status": "partial", "failure_reason": "timeout", **result})
+
     try:
-        result = _execute_source_trace(source)
-        queue.put({"status": "ok", **result})
+        result = _execute_source_trace(source, progress=publish_progress)
+        _put_worker_result(queue, {"status": "ok", **result})
     except CadQueryTraceError as exc:
-        queue.put({"status": "error", "failure_reason": exc.failure_reason})
+        _put_worker_result(queue, {"status": "error", "failure_reason": exc.failure_reason})
     except Exception:
-        queue.put({"status": "error", "failure_reason": "unknown_error"})
+        _put_worker_result(queue, {"status": "error", "failure_reason": "unknown_error"})
 
 
-def _execute_source_trace(source: SourceRecord) -> dict[str, Any]:
+def _execute_source_trace(
+    source: SourceRecord,
+    *,
+    progress: TraceProgressCallback | None = None,
+) -> dict[str, Any]:
     if not cadquery_available():
         raise CadQueryTraceError("cadquery_unavailable", "cadquery is not installed")
     import cadquery as cq
@@ -321,6 +342,17 @@ def _execute_source_trace(source: SourceRecord) -> dict[str, Any]:
     selector_results: list[dict[str, Any]] = []
     operation_index = 0
     selector_index = 0
+
+    def publish_progress() -> None:
+        if progress is None or not snapshots:
+            return
+        progress(
+            {
+                "snapshots": list(snapshots),
+                "operation_effects": _snapshot_effects(snapshots),
+                "selector_results": list(selector_results),
+            }
+        )
 
     def capture_statement(statement: ast.stmt) -> None:
         nonlocal operation_index, selector_index
@@ -359,6 +391,7 @@ def _execute_source_trace(source: SourceRecord) -> dict[str, Any]:
                 continue
             snapshots.append(snapshot)
             operation_index += 1
+        publish_progress()
 
     def execute_statement(statement: ast.stmt) -> None:
         if isinstance(statement, ast.For) and _can_trace_unroll_for(statement):
@@ -762,11 +795,52 @@ def _shape_count(shape: Any, method_name: str) -> int | None:
 def _record_from_completed_worker(job: _RunningTrace, *, timeout_seconds: float) -> TraceRecord:
     if job.process.exitcode != 0:
         return _failed_trace(job.source, "worker_crash", timeout_seconds=timeout_seconds)
-    try:
-        result = job.queue.get_nowait()
-    except Empty:
+    result = _latest_worker_result(job.queue)
+    if result is None:
         return _failed_trace(job.source, "worker_crash", timeout_seconds=timeout_seconds)
     return _trace_record_from_worker_result(job.source, result, timeout_seconds=timeout_seconds)
+
+
+def _record_from_timed_out_worker(job: _RunningTrace, *, timeout_seconds: float) -> TraceRecord:
+    result = _latest_worker_result(job.queue)
+    if result is None:
+        return _failed_trace(job.source, "timeout", timeout_seconds=timeout_seconds)
+    return _trace_record_from_worker_result(job.source, result, timeout_seconds=timeout_seconds)
+
+
+def _stop_process(process: mp.Process) -> None:
+    process.terminate()
+    process.join(1.0)
+    if process.is_alive():
+        process.kill()
+        process.join(1.0)
+
+
+def _latest_worker_result(queue: mp.Queue) -> dict[str, Any] | None:
+    latest: dict[str, Any] | None = None
+    while True:
+        try:
+            item = queue.get_nowait()
+        except Empty:
+            return latest
+        if isinstance(item, dict):
+            latest = item
+
+
+def _put_worker_result(queue: mp.Queue, result: dict[str, Any]) -> None:
+    try:
+        queue.put_nowait(result)
+        return
+    except Full:
+        pass
+    try:
+        queue.get_nowait()
+    except Empty:
+        pass
+    try:
+        queue.put_nowait(result)
+    except Full:
+        pass
 
 
 def _trace_record_from_worker_result(
@@ -780,6 +854,19 @@ def _trace_record_from_worker_result(
             source,
             str(result.get("failure_reason") or "unknown_error"),
             timeout_seconds=timeout_seconds,
+        )
+    if result.get("status") == "partial":
+        snapshots = result.get("snapshots") or []
+        if not snapshots:
+            return _failed_trace(source, "timeout", timeout_seconds=timeout_seconds)
+        return TraceRecord(
+            source_id=source.source_id,
+            execution_status="partial",
+            snapshots=snapshots,
+            operation_effects=result.get("operation_effects", []),
+            selector_results=result.get("selector_results", []),
+            environment=_environment(timeout_seconds=timeout_seconds),
+            failure_reason=str(result.get("failure_reason") or "timeout"),
         )
     return TraceRecord(
         source_id=source.source_id,

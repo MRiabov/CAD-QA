@@ -39,6 +39,11 @@ when those choices can be sampled and verified.
 - Trace snapshots for measurable top-level CadQuery assignments, final shape
   metrics, centroids, topology counts, and adjacent snapshot-derived
   volume/bbox/centroid/topology deltas when CadQuery is installed.
+- Trace workers publish bounded progress while executing. If a source times out
+  after producing measurable solids, the trace now serializes as
+  `execution_status=partial` with `failure_reason=timeout`; trace reports expose
+  `partial_count` and `usable_count`, and graph construction consumes partial
+  geometry evidence while still excluding fully failed traces.
 - Trace snapshots can now include bounded compiled-topology entity signatures
   for faces, edges, and vertices, so graph extraction can mine topological
   geometry from the solid even when the source code never calls `.faces(...)`,
@@ -65,6 +70,9 @@ when those choices can be sampled and verified.
   behind mutation-safe helper methods. This keeps topology-rich CadEvolve
   graphs usable for synthesis/resolution without serializing cache state into
   graph artifacts.
+- Ontology graph relation and measurement deduplication also uses mutation-safe
+  key indexes, avoiding quadratic insertion costs when compiled topology creates
+  tens of thousands of relation and measurement records.
 - Operation, feature, parameter, profile, workplane, path, path-point,
   path-segment, selector, solid, and measurement node families.
 - Stable selector-derived face nodes and same-face joins.
@@ -83,6 +91,27 @@ when those choices can be sampled and verified.
   relations, synthesizes 391 valid rows across 60 release families in 64.23s,
   and materializes rows with 0 failures. Preview evidence is in
   `runs/current_topology_rc10/TOPOLOGY_PREVIEW.md`.
+- Partial-timeout artifact evidence:
+  `runs/current_partial_trace_smoke/` traces one source that creates a box and
+  then hangs. The trace report has 1 partial timeout, 1 snapshot, and 1 usable
+  trace; graph build creates 47 nodes and 604 measurements; synthesis/materialize
+  produce 45 resolved rows across 15 topology families with preview evidence in
+  `runs/current_partial_trace_smoke/PREVIEW.md`.
+- Current 10-source CadEvolve topology evidence with the indexed deduplication
+  and compact query sidecar format is in `runs/current_partial_trace_rc10/`.
+  The trace report has 10 ok traces, 144 snapshots, and 134 operation effects.
+  Graph build completes in 5.15s with 7,470 nodes, 90,835 relations, and 106,001
+  measurements. `cadqa query synthesize` writes compact query records plus one
+  `graphs.jsonl` sidecar, avoiding per-query graph duplication; synthesis
+  completes in 16.93s with 1,077 resolved query rows across 71 release families,
+  and materialization completes in 3.59s with 1,077 dataset rows. Focused manual
+  review samples are in
+  `runs/current_partial_trace_rc10/TOPOLOGY_PARTIAL_PREVIEW.md`.
+- Synthesized query artifacts now use compact graph sidecars by default:
+  `queries.jsonl` records carry `graph_id`, `query`, and `resolution`, while
+  `graphs.jsonl` stores each ontology graph once. `cadqa dataset materialize`
+  remains backward-compatible with embedded graph records and can also load an
+  explicit `--graphs` path.
 - Kernel-selected face nodes include compiled face-center coordinates,
   face-center distance-to-origin measurements, and face-area measurements
   derived from selector-result bounding boxes.
