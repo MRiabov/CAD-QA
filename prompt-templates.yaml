@@ -50,8 +50,11 @@ tie_break_templates:
 
 metric_labels:
   area: "profile area"
-  bbox_delta_max_span: "increase in overall part size"
+  bbox_delta_center_z: "center height of the removed volume envelope"
+  bbox_delta_max_span: "largest span of the changed envelope"
   bbox_delta_min_z: "upward movement of the lowest point"
+  bbox_delta_span_x: "X span of the changed envelope"
+  bbox_delta_span_y: "Y span of the changed envelope"
   bbox_delta_span_z: "height increase"
   bbox_center: "bounding-box center"
   bbox_center_x: "bounding-box center X coordinate"
@@ -117,7 +120,8 @@ metric_labels:
   topology_edges: "edge count"
   topology_faces: "face count"
   volume: "volume"
-  volume_delta_magnitude: "removed-volume amount"
+  topology_delta_vertices: "change in vertex count"
+  volume_delta_magnitude: "volume-change amount"
   workplane_origin_z: "workplane origin height"
 
 clause_templates:

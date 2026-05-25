@@ -453,6 +453,11 @@ epics:
           - Void-region equal-value extrema can select across sampled centroid
             X/Y/Z metrics when workplane-center offsets are available; broader
             metrics and release-scale coverage remain work-in-progress.
+          - Direct tool-body cut regions without true centroids can now generate
+            valid void-region extrema/rank/equal-value rows from measured
+            cut-delta volume, changed-envelope, and topology metrics; CadEvolve
+            release-scale coverage remains source-limited by within-graph
+            symmetric cuts until graph-hop reference narrowing is expanded.
       - id: "13.3"
         title: Cross-feature value-bearing tasks using distances between derived feature geometry
         status: work-in-progress
@@ -563,6 +568,10 @@ epics:
             resolver/materializer path and have RC10 preview evidence.
           - Composite point metrics such as `bbox_center` are recognized from
             scalar component measurements in synthesis and resolver paths.
+          - Direct cut-region synthesis can use measured cut-delta metrics when
+            region centroids are unavailable, with valid-row evidence for
+            void-region extrema, rank, equal-measurement extrema, and
+            equal-measurement rank families.
           - Centered workplane chains propagate `.center(x, y)` offsets into
             profile-derived material/void-region centroids used by synthesized
             graph-hop rows.

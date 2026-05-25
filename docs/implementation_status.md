@@ -570,6 +570,18 @@ Result reviewed on 2026-05-25:
   extraction is implemented as graph evidence only; release-grade material/void
   region task generation is still blocked on family constraints that can use
   these non-profile cut regions without misleading geometry wording.
+- Follow-up valid-row evidence now exists for direct cut-region task synthesis
+  when true cut centroids are unavailable:
+  `runs/current_void_region_delta_synthetic/` contains 52 rows covering
+  `parameterized_void_region_extreme`, `parameterized_void_region_rank`,
+  `parameterized_equal_void_region_metric_extreme`, and
+  `parameterized_equal_void_region_metric_rank`. These rows use measured
+  cut-delta volume, changed-envelope height, and topology-change clues rather
+  than relabeling operation deltas as true region centroids. This checks off the
+  direct cut-delta valid-row slice, but not CadEvolve release-scale coverage:
+  the current void-rich CadEvolve graphs still contain within-graph symmetric
+  cut regions that require graph-hop reference narrowing to produce unique
+  region answers.
 
 ## CadEvolve 50 Release-Candidate Snapshot
 

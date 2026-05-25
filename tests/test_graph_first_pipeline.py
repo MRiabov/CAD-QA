@@ -2974,6 +2974,41 @@ def test_synthesis_samples_fifth_and_sixth_feature_and_region_rank_values_when_v
         assert prompt_fragment in row.prompt
 
 
+def test_synthesis_generates_void_region_rows_from_cut_delta_metrics_without_centroids() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:void-region-cut-delta-metrics",
+        source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
+    )
+    for index, (faces, span_z) in enumerate([(2.0, 1.0), (4.0, 3.0), (6.0, 5.0)]):
+        node_id = f"void_region:{index}"
+        graph.add_node(Node(node_id, "void_region", node_id))
+        graph.add_relation(Relation(node_id, node_id, "has_kernel_void_region_geometry"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "volume", 100.0, "mm^3"))
+        graph.add_measurement(Measurement(node_id, "feature_application_effect", "volume_delta_magnitude", 100.0, "mm^3"))
+        graph.add_measurement(Measurement(node_id, "feature_application_effect", "bbox_delta_span_z", span_z, "mm"))
+        graph.add_measurement(Measurement(node_id, "feature_application_effect", "topology_delta_faces", faces, None))
+
+    queries = {
+        query.query_id.rsplit(":", 1)[-1]: query
+        for query in synthesize_graph_hop_queries(graph, max_per_family=20)
+        if "void_region" in query.query_id
+    }
+
+    for family in [
+        "parameterized_void_region_extreme",
+        "parameterized_void_region_rank",
+        "parameterized_equal_void_region_metric_extreme",
+        "parameterized_equal_void_region_metric_rank",
+    ]:
+        query = queries[family]
+        resolution = resolve_query(graph, query)
+        row = materialize_row(graph, resolution)
+        assert resolution.verifier_status == "resolved"
+        assert row.gold_answer.startswith("void_region:")
+        assert row.release_ready
+        assert row.geometry_hop_count > 0
+
+
 def test_synthesis_skips_tied_rank_positions_without_dropping_viable_later_ranks() -> None:
     graph = OntologyGraph(graph_id="graph:tied-rank", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("selector:edges", "selector", "edges"))

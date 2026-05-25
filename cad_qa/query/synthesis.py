@@ -29,6 +29,37 @@ MAX_SYNTHESIZED_RANK = 6
 MAX_REFERENCE_DISTANCE_ANCHORS = 64
 T = TypeVar("T")
 
+MATERIAL_REGION_METRICS = (
+    "volume",
+    "centroid_x",
+    "centroid_y",
+    "centroid_z",
+    "bbox_center_x",
+    "bbox_center_y",
+    "bbox_center_z",
+    "bbox_span_x",
+    "bbox_span_y",
+    "bbox_span_z",
+    "topology_faces",
+    "topology_edges",
+)
+
+VOID_REGION_METRICS = (
+    "volume",
+    "centroid_x",
+    "centroid_y",
+    "centroid_z",
+    "volume_delta_magnitude",
+    "bbox_delta_span_x",
+    "bbox_delta_span_y",
+    "bbox_delta_span_z",
+    "bbox_delta_center_z",
+    "bbox_delta_max_span",
+    "topology_delta_faces",
+    "topology_delta_edges",
+    "topology_delta_vertices",
+)
+
 
 @dataclass(frozen=True)
 class ExtremeFamilySpec:
@@ -307,7 +338,7 @@ EXTREME_FAMILY_SPECS = (
         relation="has_kernel_material_region_geometry",
         relation_clause_id="has_region_geometry",
         measurement_clause_id="has_parameterized_material_region_metric",
-        metrics=("volume", "centroid_x", "centroid_y", "centroid_z"),
+        metrics=MATERIAL_REGION_METRICS,
         relation_target_type="material_region",
     ),
     ExtremeFamilySpec(
@@ -316,7 +347,7 @@ EXTREME_FAMILY_SPECS = (
         relation="has_kernel_void_region_geometry",
         relation_clause_id="has_void_geometry",
         measurement_clause_id="has_parameterized_void_region_metric",
-        metrics=("volume", "centroid_x", "centroid_y", "centroid_z"),
+        metrics=VOID_REGION_METRICS,
         relation_target_type="void_region",
     ),
 )
@@ -467,7 +498,7 @@ RANK_FAMILY_SPECS = (
         relation="has_kernel_material_region_geometry",
         relation_clause_id="has_region_geometry",
         measurement_clause_id="has_parameterized_material_region_metric",
-        metrics=("volume", "centroid_x", "centroid_y", "centroid_z"),
+        metrics=MATERIAL_REGION_METRICS,
         relation_target_type="material_region",
         allow_rank=True,
     ),
@@ -477,7 +508,7 @@ RANK_FAMILY_SPECS = (
         relation="has_kernel_void_region_geometry",
         relation_clause_id="has_void_geometry",
         measurement_clause_id="has_parameterized_void_region_metric",
-        metrics=("volume", "centroid_x", "centroid_y", "centroid_z"),
+        metrics=VOID_REGION_METRICS,
         relation_target_type="void_region",
         allow_rank=True,
     ),
@@ -709,8 +740,8 @@ EQUAL_VALUE_EXTREME_FAMILY_SPECS = (
         relation_clause_id="has_region_geometry",
         equal_value_clause_id="has_parameterized_equal_material_region_metric_value",
         selector_metric_clause_id="has_parameterized_material_region_metric",
-        equal_metrics=("volume", "centroid_x", "centroid_y", "centroid_z"),
-        selector_metrics=("volume", "centroid_x", "centroid_y", "centroid_z"),
+        equal_metrics=MATERIAL_REGION_METRICS,
+        selector_metrics=MATERIAL_REGION_METRICS,
         relation_target_type="material_region",
     ),
     EqualValueExtremeFamilySpec(
@@ -720,8 +751,8 @@ EQUAL_VALUE_EXTREME_FAMILY_SPECS = (
         relation_clause_id="has_void_geometry",
         equal_value_clause_id="has_void_volume_value",
         selector_metric_clause_id="has_parameterized_void_region_metric",
-        equal_metrics=("volume",),
-        selector_metrics=("centroid_x", "centroid_y", "centroid_z"),
+        equal_metrics=VOID_REGION_METRICS,
+        selector_metrics=VOID_REGION_METRICS,
         relation_target_type="void_region",
     ),
     EqualValueExtremeFamilySpec(
@@ -877,8 +908,8 @@ EQUAL_VALUE_RANK_FAMILY_SPECS = (
         relation_clause_id="has_region_geometry",
         equal_value_clause_id="has_parameterized_equal_material_region_metric_value",
         selector_metric_clause_id="has_parameterized_material_region_metric",
-        equal_metrics=("volume", "centroid_x", "centroid_y", "centroid_z"),
-        selector_metrics=("volume", "centroid_x", "centroid_y", "centroid_z"),
+        equal_metrics=MATERIAL_REGION_METRICS,
+        selector_metrics=MATERIAL_REGION_METRICS,
         relation_target_type="material_region",
         selection_mode="rank",
     ),
@@ -889,8 +920,8 @@ EQUAL_VALUE_RANK_FAMILY_SPECS = (
         relation_clause_id="has_void_geometry",
         equal_value_clause_id="has_parameterized_equal_void_region_metric_value",
         selector_metric_clause_id="has_parameterized_void_region_metric",
-        equal_metrics=("volume", "centroid_x", "centroid_y", "centroid_z"),
-        selector_metrics=("volume", "centroid_x", "centroid_y", "centroid_z"),
+        equal_metrics=VOID_REGION_METRICS,
+        selector_metrics=VOID_REGION_METRICS,
         relation_target_type="void_region",
         selection_mode="rank",
     ),

@@ -380,6 +380,7 @@ families:
   - id: parameterized_void_region_extreme
     positive_generation:
       - test_synthesis_generates_parameterized_region_extreme_and_rank_queries
+      - test_synthesis_generates_void_region_rows_from_cut_delta_metrics_without_centroids
     failure_or_quarantine:
       - test_synthesis_skips_parameterized_region_queries_without_kernel_region_relations
     release_report_accounting:
@@ -389,6 +390,7 @@ families:
     positive_generation:
       - test_synthesis_generates_parameterized_region_extreme_and_rank_queries
       - test_synthesis_samples_fifth_and_sixth_feature_and_region_rank_values_when_viable
+      - test_synthesis_generates_void_region_rows_from_cut_delta_metrics_without_centroids
     failure_or_quarantine:
       - test_synthesis_skips_parameterized_region_queries_without_kernel_region_relations
     release_report_accounting:
@@ -414,6 +416,7 @@ families:
   - id: parameterized_equal_void_region_metric_extreme
     positive_generation:
       - test_synthesis_generates_equal_value_region_queries
+      - test_synthesis_generates_void_region_rows_from_cut_delta_metrics_without_centroids
     failure_or_quarantine:
       - test_synthesis_skips_equal_value_region_families_without_repeated_value_distractors
     release_report_accounting:
@@ -422,6 +425,7 @@ families:
   - id: parameterized_equal_void_region_metric_rank
     positive_generation:
       - test_synthesis_generates_equal_value_region_rank_queries
+      - test_synthesis_generates_void_region_rows_from_cut_delta_metrics_without_centroids
     failure_or_quarantine:
       - test_synthesis_skips_equal_value_region_families_without_repeated_value_distractors
     release_report_accounting:
