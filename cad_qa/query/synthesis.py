@@ -3507,6 +3507,11 @@ def _query_for_reference_distance(graph: OntologyGraph, viable: ViableReferenceD
         reference_point_metric=spec.reference_point_metric,
     )
     direction = "min" if viable.aggregation in {"argmin", "rank_asc"} else "max"
+    canonical_family = (
+        "parameterized_reference_entity_distance_rank"
+        if viable.aggregation_rank is not None
+        else "parameterized_reference_entity_distance"
+    )
     final_selector = (
         f"rank:{viable.aggregation_rank}:{direction}:{REFERENCE_FEATURE_DISTANCE_METRIC}"
         if viable.aggregation_rank is not None
@@ -3526,6 +3531,7 @@ def _query_for_reference_distance(graph: OntologyGraph, viable: ViableReferenceD
                 f"{metric}:{_value_bucket(reference_value.get('reference_anchor_values', {}).get(metric))}"
                 for metric in reference_metrics
             ],
+            "canonical_prompt_family": [canonical_family],
             "final_selector": [final_selector],
             "aggregation_metric": [REFERENCE_FEATURE_DISTANCE_METRIC],
             "equal_measurement_metric": [spec.equal_metric],

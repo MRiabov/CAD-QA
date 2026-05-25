@@ -31,7 +31,14 @@ from cad_qa.dataset.report import (
     shortcut_resistance_markdown,
     shortcut_resistance_report,
 )
-from cad_qa.dataset.sft import ablation_sft_groups, answer_sft_rows, default_training_rows, reasoning_sft_rows, scaling_sft_groups
+from cad_qa.dataset.sft import (
+    ablation_sft_groups,
+    answer_sft_rows,
+    default_training_rows,
+    prompt_family,
+    reasoning_sft_rows,
+    scaling_sft_groups,
+)
 from cad_qa.dataset.split import assign_splits, split_audit, split_manifest
 from cad_qa.dataset.validate import validate_rows
 from cad_qa.evaluation.baselines import run_baselines
@@ -7984,6 +7991,72 @@ def test_release_export_balance_caps_preserve_protected_release_families() -> No
     assert report["value_bearing_measurement_share"] > profile.max_value_bearing_measurement_share
 
 
+def test_release_export_balance_caps_preserve_cross_feature_minimum_share() -> None:
+    rows = []
+    protected_families = {f"plain_family_{index}" for index in range(58)}
+    protected_families.update({"cross_family_a", "cross_family_b"})
+    for index in range(58):
+        family = f"plain_family_{index}"
+        for row_index in range(4):
+            rows.append(
+                {
+                    "row_id": f"row:src:plain:{index}:{row_index}:{family}",
+                    "source_id": f"src_plain_{index}_{row_index}",
+                    "prompt": f"plain prompt {index} {row_index}",
+                    "prompt_template_id": f"plain_template_{index}_{row_index}",
+                    "gold_answer": f"plain_entity:{index}:{row_index}",
+                    "logical_hop_count": 4,
+                    "geometry_hop_count": 4,
+                    "static_hop_count": 0,
+                    "query_program": {
+                        "query_id": f"graph:src:plain:{index}:{row_index}:{family}",
+                        "aggregation_metric": "volume",
+                        "clauses": [],
+                    },
+                }
+            )
+    for family in ("cross_family_a", "cross_family_b"):
+        for index in range(5):
+            rows.append(
+                {
+                    "row_id": f"row:src:{family}:{index}:{family}",
+                    "source_id": f"src_{family}_{index}",
+                    "prompt": f"cross prompt {family} {index}",
+                    "prompt_template_id": f"cross_template_{family}_{index}",
+                    "gold_answer": f"cross_entity:{family}:{index}",
+                    "logical_hop_count": 5,
+                    "geometry_hop_count": 5,
+                    "static_hop_count": 0,
+                    "query_program": {
+                        "query_id": f"graph:src:{family}:{index}:{family}",
+                        "aggregation_metric": "distance_to_reference_feature_centroid",
+                        "clauses": [
+                            {
+                                "kind": "reference_measurement",
+                                "metric": "distance_to_reference_feature_centroid",
+                            }
+                        ],
+                    },
+                }
+            )
+
+    profile = release_gate_profile("benchmark-release")
+    capped, exclusions = _cap_release_balance_rows(
+        rows,
+        profile,
+        protected_prompt_families=protected_families,
+    )
+    report = release_balance_report(capped, release_tier="benchmark-release")
+
+    assert {
+        row["query_program"]["query_id"].rsplit(":", 1)[-1]
+        for row in capped
+    } == protected_families
+    assert report["passes_prompt_family_balance"]
+    assert report["passes_cross_feature_value_bearing_coverage"]
+    assert any(item["reason"] == "cross_feature_value_bearing_min_share_cap" for item in exclusions)
+
+
 def test_benchmark_release_tier_applies_stricter_numeric_gates() -> None:
     rows = [
         {
@@ -8264,24 +8337,26 @@ def test_default_family_manifest_keeps_superseded_fixed_families_review_only() -
         "highest_equal_volume_added_region",
         "largest_removed_region",
         "highest_equal_volume_removed_region",
+        "parameterized_face_reference_entity_distance",
+        "parameterized_edge_reference_entity_distance",
+        "parameterized_feature_reference_entity_distance",
+        "parameterized_material_region_reference_entity_distance",
+        "parameterized_void_region_reference_entity_distance",
+        "parameterized_endpoint_reference_entity_distance",
     ]
     replacement_families = [
         "parameterized_kernel_face_extreme",
         "parameterized_equal_face_metric_extreme",
-        "parameterized_face_reference_entity_distance",
         "parameterized_kernel_edge_extreme",
-        "parameterized_edge_reference_entity_distance",
         "parameterized_feature_extreme",
         "parameterized_equal_feature_metric_extreme",
         "parameterized_feature_effect_delta_extreme",
-        "parameterized_feature_reference_entity_distance",
         "parameterized_material_region_extreme",
         "parameterized_equal_material_region_metric_extreme",
-        "parameterized_material_region_reference_entity_distance",
         "parameterized_void_region_extreme",
         "parameterized_equal_void_region_metric_extreme",
-        "parameterized_void_region_reference_entity_distance",
-        "parameterized_endpoint_reference_entity_distance",
+        "parameterized_reference_entity_distance",
+        "parameterized_reference_entity_distance_rank",
     ]
     explicit_reference_families = [
         family
@@ -8761,10 +8836,16 @@ def test_synthesis_selfcheck_writes_preview_evidence(tmp_path: Path) -> None:
     evidence = json.loads(
         (tmp_path / "synthesis_selfcheck" / "dataset" / "preview_evidence.json").read_text(encoding="utf-8")
     )
-    families = {row["query_program"]["query_id"].rsplit(":", 1)[-1] for row in rows}
+    families = {prompt_family(row) for row in rows}
+    release_families = {
+        family
+        for family, spec in load_family_manifest()["families"].items()
+        if spec["status"] == "release"
+    }
 
     assert result["failure_count"] == 0
-    assert families == set(SYNTHESIS_SELFCHECK_FAMILIES)
+    assert families <= set(SYNTHESIS_SELFCHECK_FAMILIES)
+    assert set(SYNTHESIS_SELFCHECK_FAMILIES) & release_families <= families
     assert (tmp_path / "synthesis_selfcheck" / "PREVIEW.md").exists()
     assert (tmp_path / "synthesis_selfcheck" / "PREVIEW.preview_evidence.json").exists()
     assert all(
@@ -10038,7 +10119,7 @@ def test_release_export_filters_prompt_policy_invalid_rows_before_verifier(tmp_p
         allow_failing_release_gates=True,
     )
     benchmark_exclusions = json.loads((tmp_path / "benchmark_release" / "release_exclusions.json").read_text())
-    assert benchmark_result["row_count"] == 24
+    assert benchmark_result["row_count"] == 12
     assert benchmark_result["excluded_non_release_family_count"] == 1
     assert benchmark_exclusions["non_release_family_exclusions"] == [
         {

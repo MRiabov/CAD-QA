@@ -12,6 +12,7 @@ from cad_qa.dataset.preview import (
     dataset_preview_evidence_report,
     dataset_preview_markdown,
 )
+from cad_qa.dataset.sft import prompt_family
 from cad_qa.io import to_jsonable, write_json, write_jsonl
 from cad_qa.ontology import build_graph
 from cad_qa.ontology.nodes import Measurement, Node, OntologyGraph, Relation
@@ -67,10 +68,8 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_feature_reference_endpoint_distance",
     "parameterized_feature_reference_material_region_distance",
     "parameterized_feature_reference_void_region_distance",
-    "parameterized_feature_reference_entity_distance",
-    "parameterized_feature_reference_entity_distance_rank",
-    "parameterized_vertex_reference_entity_distance",
-    "parameterized_vertex_reference_entity_distance_rank",
+    "parameterized_reference_entity_distance",
+    "parameterized_reference_entity_distance_rank",
     "parameterized_equal_endpoint_metric_extreme",
     "parameterized_equal_endpoint_metric_rank",
     "parameterized_contained_endpoint_metric_extreme",
@@ -83,8 +82,6 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_endpoint_reference_endpoint_distance",
     "parameterized_endpoint_reference_material_region_distance",
     "parameterized_endpoint_reference_void_region_distance",
-    "parameterized_endpoint_reference_entity_distance",
-    "parameterized_endpoint_reference_entity_distance_rank",
     "parameterized_equal_material_region_metric_extreme",
     "parameterized_equal_material_region_metric_rank",
     "parameterized_equal_void_region_metric_extreme",
@@ -95,32 +92,24 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_material_region_reference_endpoint_distance",
     "parameterized_material_region_reference_material_region_distance",
     "parameterized_material_region_reference_void_region_distance",
-    "parameterized_material_region_reference_entity_distance",
-    "parameterized_material_region_reference_entity_distance_rank",
     "parameterized_void_region_reference_feature_distance",
     "parameterized_void_region_reference_face_distance",
     "parameterized_void_region_reference_edge_distance",
     "parameterized_void_region_reference_endpoint_distance",
     "parameterized_void_region_reference_material_region_distance",
     "parameterized_void_region_reference_void_region_distance",
-    "parameterized_void_region_reference_entity_distance",
-    "parameterized_void_region_reference_entity_distance_rank",
     "parameterized_face_reference_feature_distance",
     "parameterized_face_reference_face_distance",
     "parameterized_face_reference_edge_distance",
     "parameterized_face_reference_endpoint_distance",
     "parameterized_face_reference_material_region_distance",
     "parameterized_face_reference_void_region_distance",
-    "parameterized_face_reference_entity_distance",
-    "parameterized_face_reference_entity_distance_rank",
     "parameterized_edge_reference_feature_distance",
     "parameterized_edge_reference_face_distance",
     "parameterized_edge_reference_edge_distance",
     "parameterized_edge_reference_endpoint_distance",
     "parameterized_edge_reference_material_region_distance",
     "parameterized_edge_reference_void_region_distance",
-    "parameterized_edge_reference_entity_distance",
-    "parameterized_edge_reference_entity_distance_rank",
     "parameterized_path_point_extreme",
     "parameterized_path_segment_extreme",
     "parameterized_path_point_reference_face_distance",
@@ -128,15 +117,11 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_path_point_reference_endpoint_distance",
     "parameterized_path_point_reference_material_region_distance",
     "parameterized_path_point_reference_void_region_distance",
-    "parameterized_path_point_reference_entity_distance",
-    "parameterized_path_point_reference_entity_distance_rank",
     "parameterized_path_segment_reference_face_distance",
     "parameterized_path_segment_reference_edge_distance",
     "parameterized_path_segment_reference_endpoint_distance",
     "parameterized_path_segment_reference_material_region_distance",
     "parameterized_path_segment_reference_void_region_distance",
-    "parameterized_path_segment_reference_entity_distance",
-    "parameterized_path_segment_reference_entity_distance_rank",
     "parameterized_kernel_face_selector_count",
     "parameterized_kernel_edge_selector_count",
     "parameterized_kernel_vertex_selector_count",
@@ -228,7 +213,7 @@ def synthesis_selfcheck_rows() -> tuple[list[dict[str, Any]], list[OntologyGraph
     families = set(SYNTHESIS_SELFCHECK_FAMILIES)
     for graph in graphs:
         for query in synthesize_graph_hop_queries(graph):
-            family = query.query_id.rsplit(":", 1)[-1]
+            family = _query_prompt_family(query)
             if family not in families:
                 continue
             resolution = resolve_query(graph, query)
@@ -279,10 +264,21 @@ def write_synthesis_selfcheck(out: Path, *, sample_per_family: int = 20, seed: i
         "out": str(out),
         "row_count": len(rows),
         "failure_count": len(failures),
-        "families": sorted({row["query_program"]["query_id"].rsplit(":", 1)[-1] for row in rows}),
+        "families": sorted({prompt_family(row) for row in rows}),
         "preview": str(preview_path),
         "preview_evidence": str(dataset_dir / DEFAULT_PREVIEW_EVIDENCE_FILENAME),
     }
+
+
+def _query_prompt_family(query: Any) -> str:
+    sampled = getattr(query, "sampled_parameters", None)
+    if isinstance(sampled, dict):
+        canonical = sampled.get("canonical_prompt_family")
+        if isinstance(canonical, list) and canonical:
+            return str(canonical[0])
+        if isinstance(canonical, str) and canonical:
+            return canonical
+    return str(getattr(query, "query_id", "")).rsplit(":", 1)[-1]
 
 
 def _add_reference_endpoint_nodes(graph: OntologyGraph) -> None:

@@ -125,7 +125,19 @@ def _is_geometry_critical_metric(metric: str) -> bool:
 
 
 def prompt_family(row: dict[str, Any]) -> str:
-    query_id = row.get("query_program", {}).get("query_id")
+    query = row.get("query_program", {})
+    if isinstance(query, dict):
+        canonical = query.get("canonical_prompt_family")
+        if isinstance(canonical, str) and canonical:
+            return canonical
+        sampled = query.get("sampled_parameters")
+        if isinstance(sampled, dict):
+            values = sampled.get("canonical_prompt_family")
+            if isinstance(values, list) and values:
+                return str(values[0])
+            if isinstance(values, str) and values:
+                return values
+    query_id = query.get("query_id") if isinstance(query, dict) else None
     if isinstance(query_id, str) and ":" in query_id:
         return query_id.rsplit(":", 1)[-1]
     row_id = row.get("row_id")

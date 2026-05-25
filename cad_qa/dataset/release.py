@@ -344,6 +344,28 @@ def _cap_release_balance_rows(
             group_key=_prompt_family,
             min_share=profile.min_prompt_family_share,
             reason="prompt_family_min_share_cap",
+            protected_boolean_minimums=[
+                (_is_cross_feature_value_bearing_row, profile.min_cross_feature_value_bearing_share),
+                (_is_value_bearing_measurement_row, profile.min_value_bearing_measurement_share),
+            ],
+        )
+        exclusions.extend(dropped)
+        kept, dropped = _cap_boolean_min_share_rows(
+            kept,
+            predicate=_is_cross_feature_value_bearing_row,
+            min_share=profile.min_cross_feature_value_bearing_share,
+            min_prompt_family_share=profile.min_prompt_family_share,
+            reason="cross_feature_value_bearing_min_share_cap",
+            protected_prompt_families=protected_prompt_families,
+        )
+        exclusions.extend(dropped)
+        kept, dropped = _cap_boolean_min_share_rows(
+            kept,
+            predicate=_is_value_bearing_measurement_row,
+            min_share=profile.min_value_bearing_measurement_share,
+            min_prompt_family_share=profile.min_prompt_family_share,
+            reason="value_bearing_measurement_min_share_cap",
+            protected_prompt_families=protected_prompt_families,
         )
         exclusions.extend(dropped)
         if len(kept) == before:
@@ -462,6 +484,7 @@ def _cap_group_min_share_rows(
     group_key: Any,
     min_share: float,
     reason: str,
+    protected_boolean_minimums: list[tuple[Any, float | None]] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     if min_share <= 0 or not rows:
         return rows, []
@@ -480,6 +503,12 @@ def _cap_group_min_share_rows(
         drop_count = len(kept) - target_total
         if drop_count <= 0:
             break
+        protected_minimums = _protected_boolean_minimum_counts(
+            kept,
+            target_total=target_total,
+            protected_boolean_minimums=protected_boolean_minimums,
+        )
+        protected_drops = [0 for _predicate, _minimum, _current in protected_minimums]
         protected_groups = set(underrepresented)
         dropped: list[dict[str, Any]] = []
         for group, group_rows in sorted(groups.items(), key=lambda item: (-len(item[1]), item[0])):
@@ -490,7 +519,10 @@ def _cap_group_min_share_rows(
                     break
                 if len(group_rows) - sum(1 for item in dropped if group_key(item) == group) <= 1:
                     break
+                if _would_violate_protected_boolean_minimum(row, protected_minimums, protected_drops):
+                    continue
                 dropped.append(row)
+                _record_protected_boolean_drop(row, protected_minimums, protected_drops)
             if len(dropped) >= drop_count:
                 break
         if not dropped:
@@ -502,6 +534,46 @@ def _cap_group_min_share_rows(
         )
         kept = [row for row in kept if id(row) not in dropped_ids]
     return kept, exclusions
+
+
+def _protected_boolean_minimum_counts(
+    rows: list[dict[str, Any]],
+    *,
+    target_total: int,
+    protected_boolean_minimums: list[tuple[Any, float | None]] | None,
+) -> list[tuple[Any, int, int]]:
+    protected: list[tuple[Any, int, int]] = []
+    if not protected_boolean_minimums:
+        return protected
+    for predicate, min_share in protected_boolean_minimums:
+        if min_share is None or min_share <= 0:
+            continue
+        minimum_count = math.ceil(min_share * target_total - 1e-12)
+        current_count = sum(1 for row in rows if predicate(row))
+        if current_count > minimum_count:
+            protected.append((predicate, minimum_count, current_count))
+    return protected
+
+
+def _would_violate_protected_boolean_minimum(
+    row: dict[str, Any],
+    protected_minimums: list[tuple[Any, int, int]],
+    protected_drops: list[int],
+) -> bool:
+    for index, (predicate, minimum_count, current_count) in enumerate(protected_minimums):
+        if predicate(row) and current_count - protected_drops[index] <= minimum_count:
+            return True
+    return False
+
+
+def _record_protected_boolean_drop(
+    row: dict[str, Any],
+    protected_minimums: list[tuple[Any, int, int]],
+    protected_drops: list[int],
+) -> None:
+    for index, (predicate, _minimum_count, _current_count) in enumerate(protected_minimums):
+        if predicate(row):
+            protected_drops[index] += 1
 
 
 def _rows_by_group(rows: list[dict[str, Any]], group_key: Any) -> dict[str, list[dict[str, Any]]]:
@@ -655,7 +727,21 @@ def _with_prompt_template_id(row: dict[str, Any]) -> dict[str, Any]:
 
 
 def _prompt_family(row: dict[str, Any]) -> str:
-    query_id = row.get("query_program", {}).get("query_id")
+    query = row.get("query_program")
+    if isinstance(query, dict):
+        canonical = query.get("canonical_prompt_family")
+        if isinstance(canonical, str) and canonical:
+            return canonical
+        sampled = query.get("sampled_parameters")
+        if isinstance(sampled, dict):
+            values = sampled.get("canonical_prompt_family")
+            if isinstance(values, list) and values:
+                return str(values[0])
+            if isinstance(values, str) and values:
+                return values
+        query_id = query.get("query_id")
+    else:
+        query_id = None
     if isinstance(query_id, str) and ":" in query_id:
         return query_id.rsplit(":", 1)[-1]
     row_id = row.get("row_id")

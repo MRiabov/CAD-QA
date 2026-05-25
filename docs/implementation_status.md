@@ -1461,16 +1461,18 @@ Checked as implemented with remaining scale caveats:
   and release-scale parameter distributions.
   Release export now treats intended-family coverage as protected during
   balance capping: it no longer satisfies value-bearing, cross-feature, or
-  family-share caps by deleting every row from a generated release family. On
-  the current RC10 artifact, benchmark export keeps 93 rows across all 76
-  generated release families, with `intended_family_coverage` passing and no
-  zero-row families after capping. The same report still blocks benchmark
-  release, and now exposes why the value/cross caps cannot pass on that
-  family mix: 38 value-bearing-only families imply at least 38% value-bearing
-  rows under the 1% family floor, above the 30% cap, and 18
-  cross-feature-only families imply at least 18% cross-feature rows, above the
-  15% cap. This is release-family composition debt, not a reason to silently
-  remove intended families.
+  family-share caps by deleting every row from a generated release family. The
+  target-specific `*_reference_entity_distance` families have been demoted to
+  review-only aliases where a canonical sampled-reference-entity family exists,
+  so target entity type is now a sampled parameter rather than a permanent
+  release-family identity. On the current RC10 artifact, benchmark export keeps
+  97 rows across all 60 generated release families, with
+  `intended_family_coverage`, `family_test_evidence`,
+  `passes_prompt_family_balance`, `passes_value_bearing_measurement_coverage`,
+  and `passes_cross_feature_value_bearing_coverage` passing. The same report
+  still blocks benchmark release on release row count, split-group coverage,
+  default SFT row count, answer entropy, sampled-parameter balance, and preview
+  evidence.
   Rechecking the current CadEvolve-50 release artifact with
   `--release-tier benchmark-release` blocks release on row count, split group
   coverage, default SFT row count, prompt-family balance, prompt-template

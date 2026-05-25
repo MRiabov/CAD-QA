@@ -443,7 +443,7 @@ def _cmd_query_synthesize(args: argparse.Namespace) -> dict[str, Any]:
     skipped_review_only_count = 0
     for graph in graphs:
         for query in synthesize_graph_hop_queries(graph, max_per_family=args.max_per_family):
-            family_id = _query_family_id(query.query_id)
+            family_id = _query_family_id(query)
             if release_families is not None and family_id not in release_families:
                 skipped_review_only_count += 1
                 continue
@@ -489,8 +489,21 @@ def _release_family_ids(manifest_path: Path) -> set[str]:
     }
 
 
-def _query_family_id(query_id: str) -> str:
-    return query_id.rsplit(":", 1)[-1]
+def _query_family_id(query: Any) -> str:
+    if isinstance(query, str):
+        return query.rsplit(":", 1)[-1]
+    canonical = getattr(query, "canonical_prompt_family", None)
+    if isinstance(canonical, str) and canonical:
+        return canonical
+    sampled = getattr(query, "sampled_parameters", None)
+    if isinstance(sampled, dict):
+        values = sampled.get("canonical_prompt_family")
+        if isinstance(values, list) and values:
+            return str(values[0])
+        if isinstance(values, str) and values:
+            return values
+    query_id = getattr(query, "query_id", "")
+    return str(query_id).rsplit(":", 1)[-1]
 
 
 def _cmd_dataset_materialize(args: argparse.Namespace) -> dict[str, Any]:

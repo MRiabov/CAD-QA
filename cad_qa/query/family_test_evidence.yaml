@@ -554,6 +554,24 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Initial synthesized cross-entity face family with equal-area distractors and a sampled reference-endpoint anchor.
+  - id: parameterized_reference_entity_distance
+    positive_generation:
+      - test_synthesis_generates_parameterized_reference_entity_distance_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_reference_distance_without_unique_reference_anchor
+      - test_synthesis_skips_path_reference_distance_without_equal_distractors
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Canonical release family for sampled target-entity to sampled reference-entity distance tasks.
+  - id: parameterized_reference_entity_distance_rank
+    positive_generation:
+      - test_synthesis_generates_parameterized_reference_entity_distance_rank_queries
+    failure_or_quarantine:
+      - test_synthesis_skips_reference_distance_without_unique_reference_anchor
+      - test_synthesis_skips_path_reference_distance_without_equal_distractors
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: Canonical release family for sampled target-entity to sampled reference-entity distance-rank tasks.
   - id: parameterized_feature_reference_entity_distance
     positive_generation:
       - test_synthesis_generates_parameterized_reference_entity_distance_queries
