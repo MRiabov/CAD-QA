@@ -134,6 +134,25 @@ wp1 = cq.Workplane("XY").parametricCurve(hel)
     json.dumps(to_jsonable(graph))
     operation = next(node for node in graph.nodes if node.type == "operation" and node.properties["operation"] == "parametricCurve")
     assert operation.properties["args"] == ["hel"]
+    assert len(graph.nodes_by_type("path_point")) == 7
+    assert len(graph.nodes_by_type("path_segment")) == 6
+
+
+def test_graph_extracts_path_points_from_parametric_curve_lambda() -> None:
+    source = """
+import cadquery as cq
+import math
+radius = 2
+height = 3
+path = cq.Workplane("XY").parametricCurve(lambda t: (radius * math.cos(t), radius * math.sin(t), height * t))
+"""
+    graph = build_graph(source_record_from_mapping({"source_id": "src_parametric_lambda", "normalized_code": source}))
+
+    points = graph.nodes_by_type("path_point")
+    segments = graph.nodes_by_type("path_segment")
+    assert len(points) == 7
+    assert len(segments) == 6
+    assert graph.measurements_for(points[-1].id, name="coordinate_z")[0].value == 3.0
 
 
 def test_source_loading(tmp_path: Path) -> None:
@@ -6916,7 +6935,7 @@ def test_synthesis_generates_parameterized_path_queries() -> None:
     assert segment_query.target_type == "path_segment"
     assert segment_query.clauses[0].relation == "segment_on_path"
     assert segment_query.clauses[0].target_type == "path"
-    assert segment_query.aggregation_metric == "segment_length"
+    assert segment_query.aggregation_metric in {"segment_length", "midpoint_distance_to_origin"}
     assert segment_row.logical_hop_count == 3
     assert segment_row.geometry_hop_count == 3
     assert segment_row.query_program["sampled_parameters"]["target_type"] == ["path_segment"]
@@ -6924,6 +6943,26 @@ def test_synthesis_generates_parameterized_path_queries() -> None:
     assert "relation:segment_on_path:path" in segment_row.query_program["sampled_parameters"]["narrowing_predicate_sequence"]
     assert "segment" in segment_row.prompt.lower()
     assert "path" in segment_row.prompt.lower()
+
+
+def test_path_segment_extreme_can_use_midpoint_distance_when_lengths_tie() -> None:
+    graph = OntologyGraph(graph_id="graph:path-segment-equal-length", source={"source_id": "synthetic"})
+    graph.add_node(Node("path:main", "path", "path"))
+    for index, midpoint_distance in enumerate([1.0, 2.0, 3.0]):
+        segment_id = f"path:main:segment:{index}"
+        graph.add_node(Node(segment_id, "path_segment", segment_id))
+        graph.add_relation(Relation(segment_id, "path:main", "segment_on_path"))
+        graph.add_measurement(Measurement(segment_id, "relation_metric", "segment_length", 1.0, "mm"))
+        graph.add_measurement(
+            Measurement(segment_id, "relation_metric", "midpoint_distance_to_origin", midpoint_distance, "mm")
+        )
+
+    queries = {query.query_id.rsplit(":", 1)[-1]: query for query in synthesize_graph_hop_queries(graph)}
+    query = queries["parameterized_path_segment_extreme"]
+    resolution = resolve_query(graph, query)
+
+    assert query.tie_break_metric == "midpoint_distance_to_origin"
+    assert resolution.verifier_status == "resolved"
 
 
 def test_synthesis_generates_parameterized_path_reference_distance_queries() -> None:

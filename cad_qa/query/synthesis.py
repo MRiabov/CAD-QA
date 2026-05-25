@@ -294,7 +294,10 @@ EXTREME_FAMILY_SPECS = (
         relation="segment_on_path",
         relation_clause_id="has_parameterized_path_segment_set",
         measurement_clause_id="has_parameterized_path_segment_metric",
-        metrics=("segment_length",),
+        metrics=(
+            "segment_length",
+            "midpoint_distance_to_origin",
+        ),
         relation_target_type="path",
     ),
     ExtremeFamilySpec(

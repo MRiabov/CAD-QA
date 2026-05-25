@@ -211,7 +211,7 @@ class _Extractor:
             self._extract_centered_workplane(record)
         if record.operation in {"circle", "rect", "polyline"}:
             self._extract_profile(record)
-        if record.operation == "splineApprox":
+        if record.operation in {"spline", "splineApprox", "parametricCurve"}:
             self._extract_path(record)
         if record.operation in {"faces", "edges", "vertices"}:
             self._extract_selector(record)
@@ -417,6 +417,8 @@ class _Extractor:
 
     def _extract_path(self, record: OperationRecord) -> None:
         points = record.args[0] if record.args else []
+        if record.operation == "parametricCurve":
+            points = _sample_parametric_curve_points(points, self.env)
         path_id = f"path:{record.target}"
         self.graph.add_node(
             Node(
@@ -1551,6 +1553,44 @@ def _safe_eval(expr: ast.AST, env: dict[str, Any]) -> Any:
         kwargs = {kw.arg: _safe_eval(kw.value, env) for kw in expr.keywords if kw.arg}
         return func(*args, **kwargs)
     raise ValueError(ast.dump(expr))
+
+
+def _sample_parametric_curve_points(value: Any, env: dict[str, Any], *, sample_count: int = 7) -> list[list[float]]:
+    curve = _safe_curve_callable(value, env)
+    if curve is None:
+        return []
+    points: list[list[float]] = []
+    for index in range(sample_count):
+        t = index / (sample_count - 1) if sample_count > 1 else 0.0
+        try:
+            point = _coerce_point3(curve(t))
+        except Exception:
+            return []
+        if point is None:
+            return []
+        points.append(point)
+    return points
+
+
+def _safe_curve_callable(value: Any, env: dict[str, Any]) -> Any | None:
+    if callable(value):
+        return value
+    if not isinstance(value, str):
+        return None
+    if value in env and callable(env[value]):
+        return env[value]
+    try:
+        expr = ast.parse(value, mode="eval").body
+    except SyntaxError:
+        return None
+    if not isinstance(expr, ast.Lambda):
+        return None
+    namespace = {"math": math, "__builtins__": {}}
+    namespace.update(env)
+    try:
+        return eval(compile(ast.Expression(expr), "<cadqa-safe-lambda>", "eval"), namespace)  # noqa: S307
+    except Exception:
+        return None
 
 
 def _compile_safe_function(fn: ast.FunctionDef, env: dict[str, Any]) -> Any:

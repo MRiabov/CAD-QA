@@ -818,6 +818,25 @@ Conservatively checked as done:
   path slice contains 87 rows overall, including 61 geometry-critical rows and
   8 syntax-only calibration rows. Default SFT keeps 58 rows and excludes 29
   calibration/noncritical/quarantined rows.
+- CadEvolve-P-core parametric paths are now extracted from visible
+  `.parametricCurve(...)` calls by deterministically sampling points along the
+  source-defined callback or lambda. The current probe at
+  `runs/current_cadevolve100_core_path/` traces 100 CADEvolve-P-core sources
+  with 90 ok traces, 5 partial traces, 5 failed traces, and 95 usable traces.
+  Its rebuilt graph contains 30 path nodes, 210 path-point nodes, and 180
+  path-segment nodes. Synthesis/materialization with `max_per_family=2`
+  produces 6,586 resolved rows and now includes valid CadEvolve rows for all
+  eight path release families that were zero in the ShapeNet-only probe:
+  `parameterized_path_point_extreme`, `parameterized_path_point_rank`,
+  `parameterized_path_segment_extreme`, `parameterized_path_segment_rank`,
+  `parameterized_equal_path_point_metric_extreme`,
+  `parameterized_equal_path_point_metric_rank`,
+  `parameterized_equal_path_segment_metric_extreme`, and
+  `parameterized_equal_path_segment_metric_rank`. Manual-review samples are in
+  `runs/current_cadevolve100_core_path/PATH_PARAMETRIC_PREVIEW.md`. This closes
+  the CadEvolve path-extraction gap at the valid-row level; benchmark-release
+  distribution still requires a mixed source release and remaining
+  material/void/parameter-balance work.
 - The synthesized selfcheck preview at
   `runs/parameterized_synthesis_selfcheck_path/PREVIEW.md` adds initial
   release-ready, geometry-critical rows for `parameterized_path_point_extreme`

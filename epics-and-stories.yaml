@@ -262,6 +262,12 @@ epics:
       - id: "6.4"
         title: Path tangents and nearest path points
         status: implemented
+        acceptance_criteria:
+          - Path questions can use geometric path evidence from both explicit point-list paths and CadEvolve parametric-curve paths.
+        technical_definition_of_done:
+          - Path nodes, path-point nodes, path-segment nodes, tangent/bbox/nearest-point measurements, point coordinates, and segment midpoint/length measurements are extracted from supported visible path operations.
+          - Source-defined `.parametricCurve(...)` callbacks and lambda curves are sampled deterministically into path points and segments when their points can be evaluated safely.
+          - Current CadEvolve-P-core evidence generates valid rows for path-point/path-segment extrema, rank, and equal-measurement families, with reviewed preview samples.
   - id: epic-7
     title: Rule-based prompt rendering
     status: implemented

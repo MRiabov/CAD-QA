@@ -250,7 +250,7 @@ Technical definition of done:
 | 6.1 Relation registry | `implemented` | Relation names are consistent across graph, query, prompt, and reports. | Registry-backed relation families are emitted and counted in reports. |
 | 6.2 Measurement-scope registry | `implemented` | Users can distinguish source-static, entity geometry, snapshot, and relation measurements. | Measurement scopes are serialized on rows and summarized in reports. |
 | 6.3 Selector face identity and same-face joins | `implemented` | Selector questions can depend on selected geometry identity. | Stable selector-result evidence is represented where kernel identity is reliable. |
-| 6.4 Path tangents and nearest path points | `implemented` | Path questions can use geometric path evidence. | Path segments/points expose tangent, nearest-point, and distance measurements. |
+| 6.4 Path tangents and nearest path points | `implemented` | Path questions can use geometric path evidence from explicit point-list paths and CadEvolve parametric-curve paths. | Path nodes, path-point nodes, path-segment nodes, tangent/bbox/nearest-point measurements, point coordinates, and segment midpoint/length measurements are extracted from supported visible path operations; source-defined `.parametricCurve(...)` callbacks and lambda curves are sampled deterministically when safe; the current CadEvolve-P-core probe generates valid rows for path-point/path-segment extrema, rank, and equal-measurement families with reviewed preview samples. |
 
 ## Epic 7: Rule-based prompt rendering (`epic-7`)
 
