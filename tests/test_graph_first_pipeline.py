@@ -5,6 +5,8 @@ from collections import Counter
 import io
 import json
 import math
+import subprocess
+import sys
 import tarfile
 from pathlib import Path
 
@@ -15,7 +17,7 @@ from cad_qa.dataset.audit import leakage_audit
 from cad_qa.dataset.family_test_evidence import family_test_evidence_gate_report, load_family_test_evidence
 from cad_qa.dataset.parameter_balance import parameter_balance_report
 from cad_qa.dataset.preview import dataset_preview_evidence_report, preview_evidence_gate_report
-from cad_qa.dataset.public import private_rows, public_private_audit, public_rows, write_public_private_artifacts
+from cad_qa.dataset.public import PRIVATE_FIELDS, PUBLIC_FIELDS, private_rows, public_private_audit, public_rows, write_public_private_artifacts
 from cad_qa.dataset.quarantine import quarantine_report
 from cad_qa.dataset.release import (
     _answer_diversity_keep_priority,
@@ -64,7 +66,8 @@ from cad_qa.experiment import (
     run_artifact_manifest,
     run_smoke_experiment,
 )
-from cad_qa.io import read_jsonl, read_records, to_jsonable, write_jsonl
+from cad_qa.harbor import grade_harbor_task, materialize_harbor_tasks
+from cad_qa.io import read_jsonl, read_records, to_jsonable, write_json, write_jsonl
 from cad_qa.ontology import build_graph
 from cad_qa.ontology.nodes import Measurement, Node, OntologyGraph, Relation, graph_from_dict
 from cad_qa.ontology.profile_geometry import circle_profile, polyline_profile, rect_profile
@@ -10524,6 +10527,188 @@ def test_closed_book_evaluation_audits_requests_and_grades_private_key(tmp_path:
     ) == 0
     assert (out_dir / "closed_book_report.json").exists()
     assert (out_dir / "prediction_metrics.json").exists()
+
+
+def _tiny_harbor_rows() -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+    public = [
+        {
+            "row_id": "row:int-answer",
+            "source_id": "src_fixture",
+            "source_code": "import cadquery as cq\nresult = cq.Workplane('XY').box(1, 2, 3)\n",
+            "prompt": "What is the integer calibration answer for this CAD model?",
+            "answer_format": "integer",
+            "relation_families": ["has_measurement"],
+            "measurement_scopes": ["feature"],
+            "logical_hop_count": 2,
+            "static_hop_count": 1,
+            "geometry_hop_count": 1,
+            "difficulty_bucket": "smoke",
+            "prompt_version": "test",
+            "prompt_template_id": "test_template",
+            "evidence_tier": "smoke",
+            "release_ready": True,
+            "quarantine_reasons": [],
+            "split": "test",
+        }
+    ]
+    private = [
+        {
+            "row_id": "row:int-answer",
+            "source_id": "src_fixture",
+            "answer_format": "integer",
+            "gold_answer": 7,
+            "query_program": {"query_id": "query:int-answer"},
+            "candidate_trace": {"steps": []},
+            "clue_map": [],
+            "verifier_status": "resolved",
+            "split": "test",
+        }
+    ]
+    return public, private
+
+
+def _materialize_tiny_harbor_task(tmp_path: Path) -> Path:
+    public, private = _tiny_harbor_rows()
+    out = tmp_path / "harbor"
+    report = materialize_harbor_tasks(public, private, out, split=["test"], max_rows=1, fresh=True)
+    assert report["task_count"] == 1
+    return Path(report["tasks"][0]["task_dir"])
+
+
+def test_harbor_materializes_tiny_public_private_release_smoke_slice(tmp_path: Path) -> None:
+    public, private = _tiny_harbor_rows()
+    public_path = tmp_path / "public.jsonl"
+    private_path = tmp_path / "private.jsonl"
+    out = tmp_path / "harbor_cli"
+    write_jsonl(public_path, public)
+    write_jsonl(private_path, private)
+
+    assert cli_main(
+        [
+            "harbor",
+            "materialize",
+            "--public",
+            str(public_path),
+            "--private",
+            str(private_path),
+            "--out",
+            str(out),
+            "--split",
+            "test",
+            "--max-rows",
+            "1",
+            "--fresh",
+        ]
+    ) == 0
+
+    manifest = json.loads((out / "cadqa_harbor_manifest.json").read_text(encoding="utf-8"))
+    task_dir = Path(manifest["tasks"][0]["task_dir"])
+    assert (task_dir / "instruction.md").exists()
+    assert (task_dir / "task.toml").exists()
+    assert (task_dir / "environment" / "Dockerfile").exists()
+    assert (task_dir / "workspace" / "prompt.txt").exists()
+    assert (task_dir / "workspace" / "row_public.json").exists()
+    assert (task_dir / "tests" / "test.sh").exists()
+    assert (task_dir / "tests" / "grade_cadqa.py").exists()
+    assert (task_dir / "tests" / "cad_qa" / "evaluation" / "grade.py").exists()
+    assert (task_dir / "expected" / "private.json").exists()
+    assert "/app/answer.json" in (task_dir / "instruction.md").read_text(encoding="utf-8")
+
+
+def test_harbor_correct_answer_gives_reward_one(tmp_path: Path) -> None:
+    task_dir = _materialize_tiny_harbor_task(tmp_path)
+    app_dir = tmp_path / "app"
+    logs_dir = tmp_path / "logs"
+    app_dir.mkdir()
+    write_json(app_dir / "answer.json", {"answer": "7", "confidence": 0.8})
+
+    artifact = grade_harbor_task(task_dir, app_dir=app_dir, logs_dir=logs_dir)
+
+    assert artifact["reward"] == 1
+    assert artifact["metrics"]["correct"] == 1
+    assert (logs_dir / "reward.txt").read_text(encoding="utf-8").strip() == "1"
+
+    script_logs = tmp_path / "script_logs"
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(task_dir / "tests" / "grade_cadqa.py"),
+            "--public",
+            str(task_dir / "workspace" / "row_public.json"),
+            "--private",
+            str(task_dir / "expected" / "private.json"),
+            "--app-dir",
+            str(app_dir),
+            "--logs-dir",
+            str(script_logs),
+        ],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert (script_logs / "reward.txt").read_text(encoding="utf-8").strip() == "1"
+
+
+def test_harbor_wrong_answer_gives_reward_zero(tmp_path: Path) -> None:
+    task_dir = _materialize_tiny_harbor_task(tmp_path)
+    app_dir = tmp_path / "app"
+    app_dir.mkdir()
+    write_json(app_dir / "answer.json", {"answer": "8"})
+
+    artifact = grade_harbor_task(task_dir, app_dir=app_dir, logs_dir=tmp_path / "logs")
+
+    assert artifact["reward"] == 0
+    assert artifact["metrics"]["correct"] == 0
+    assert artifact["metrics"]["invalid_output_count"] == 0
+
+
+def test_harbor_unparsable_answer_gives_reward_zero_and_invalid_metadata(tmp_path: Path) -> None:
+    task_dir = _materialize_tiny_harbor_task(tmp_path)
+    app_dir = tmp_path / "app"
+    app_dir.mkdir()
+    (app_dir / "answer.txt").write_text("not-an-int\n", encoding="utf-8")
+
+    artifact = grade_harbor_task(task_dir, app_dir=app_dir, logs_dir=tmp_path / "logs")
+
+    assert artifact["reward"] == 0
+    assert artifact["harbor"]["invalid_output"]
+    assert artifact["harbor"]["invalid_output_reason"].startswith("parse_error:")
+    assert artifact["metrics"]["invalid_output_count"] == 1
+
+
+def test_harbor_public_task_files_do_not_leak_private_fields(tmp_path: Path) -> None:
+    task_dir = _materialize_tiny_harbor_task(tmp_path)
+    public_row = json.loads((task_dir / "workspace" / "row_public.json").read_text(encoding="utf-8"))
+    hidden_private_fields = PRIVATE_FIELDS - {"row_id", "source_id", "answer_format", "split"}
+    assert set(public_row) <= PUBLIC_FIELDS
+    assert not (set(public_row) & hidden_private_fields)
+
+    public_text = "\n".join(
+        [
+            (task_dir / "instruction.md").read_text(encoding="utf-8"),
+            (task_dir / "task.toml").read_text(encoding="utf-8"),
+            (task_dir / "workspace" / "prompt.txt").read_text(encoding="utf-8"),
+            (task_dir / "workspace" / "row_public.json").read_text(encoding="utf-8"),
+        ]
+    )
+    for field in hidden_private_fields:
+        assert field not in public_text
+
+
+def test_harbor_grading_matches_grade_private_for_same_response(tmp_path: Path) -> None:
+    public, private = _tiny_harbor_rows()
+    task_dir = _materialize_tiny_harbor_task(tmp_path)
+    app_dir = tmp_path / "app"
+    app_dir.mkdir()
+    write_json(app_dir / "answer.json", {"answer": "7"})
+    response = [{"row_id": public[0]["row_id"], "answer": "7"}]
+
+    harbor_artifact = grade_harbor_task(task_dir, app_dir=app_dir, logs_dir=tmp_path / "logs")
+    direct = grade_public_private(public, private, response)
+
+    assert harbor_artifact["metrics"] == {key: value for key, value in direct.items() if key != "graded"}
+    assert harbor_artifact["graded"] == direct["graded"]
 
 
 def test_smoke_experiment_orchestrates_artifacts(tmp_path: Path) -> None:

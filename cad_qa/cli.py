@@ -53,6 +53,11 @@ from cad_qa.evaluation.grade import grade_public_private, grade_responses
 from cad_qa.evaluation.requests import few_shot_requests, oracle_responses, zero_shot_requests
 from cad_qa.evaluation.tool_assisted import run_tool_assisted_upper_bound
 from cad_qa.experiment import package_run_artifacts, run_smoke_experiment, run_artifact_manifest, write_paper_results
+from cad_qa.harbor import (
+    export_harbor_atif,
+    materialize_harbor_dataset,
+    materialize_harbor_tasks,
+)
 from cad_qa.io import (
     existing_record_artifact_path,
     read_records,
@@ -293,6 +298,37 @@ def build_parser() -> argparse.ArgumentParser:
     )
     export_sft.set_defaults(func=_cmd_training_export_sft)
 
+    harbor = subparsers.add_parser("harbor")
+    harbor_sub = harbor.add_subparsers(required=True)
+    harbor_materialize = harbor_sub.add_parser("materialize")
+    harbor_materialize.add_argument("--public", type=Path, required=True)
+    harbor_materialize.add_argument("--private", type=Path, required=True)
+    harbor_materialize.add_argument("--out", type=Path, required=True)
+    _add_harbor_filters(harbor_materialize)
+    harbor_materialize.set_defaults(func=_cmd_harbor_materialize)
+    harbor_dataset = harbor_sub.add_parser("materialize-dataset")
+    harbor_dataset.add_argument("dataset_dir", type=Path)
+    harbor_dataset.add_argument("--out", type=Path, required=True)
+    _add_harbor_filters(harbor_dataset)
+    harbor_dataset.set_defaults(func=_cmd_harbor_materialize_dataset)
+    harbor_sft = harbor_sub.add_parser("export-sft")
+    harbor_sft.add_argument("--rows", type=Path, required=True)
+    harbor_sft.add_argument("--out", type=Path, required=True)
+    harbor_sft.add_argument("--scaling-sizes", type=int, nargs="*", default=[8, 16, 32])
+    harbor_sft.add_argument("--release-tier", choices=RELEASE_TIERS, default=DEFAULT_RELEASE_TIER)
+    harbor_sft.add_argument("--family-manifest", type=Path, default=DEFAULT_FAMILY_MANIFEST)
+    harbor_sft.add_argument("--preview-evidence", type=Path)
+    harbor_sft.add_argument("--family-test-evidence", type=Path, default=DEFAULT_FAMILY_TEST_EVIDENCE)
+    harbor_sft.add_argument("--include-calibration", action="store_true")
+    harbor_sft.add_argument("--allow-failing-training-gates", action="store_true")
+    harbor_sft.set_defaults(func=_cmd_harbor_export_sft)
+    harbor_atif = harbor_sub.add_parser("export-atif")
+    harbor_atif.add_argument("--responses", type=Path, required=True)
+    harbor_atif.add_argument("--public", type=Path, required=True)
+    harbor_atif.add_argument("--private", type=Path, required=True)
+    harbor_atif.add_argument("--out", type=Path, required=True)
+    harbor_atif.set_defaults(func=_cmd_harbor_export_atif)
+
     experiment = subparsers.add_parser("experiment")
     experiment_sub = experiment.add_subparsers(required=True)
     smoke_exp = experiment_sub.add_parser("smoke")
@@ -311,6 +347,15 @@ def build_parser() -> argparse.ArgumentParser:
     paper_results.set_defaults(func=_cmd_experiment_paper_results)
 
     return parser
+
+
+def _add_harbor_filters(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--split", action="append", dest="split")
+    parser.add_argument("--difficulty", action="append", dest="difficulty")
+    parser.add_argument("--relation-family", action="append", dest="relation_family")
+    parser.add_argument("--measurement-scope", action="append", dest="measurement_scope")
+    parser.add_argument("--max-rows", type=int)
+    parser.add_argument("--fresh", action="store_true")
 
 
 def _cmd_sources_inspect(args: argparse.Namespace) -> dict[str, Any]:
@@ -946,6 +991,46 @@ def _cmd_training_export_sft(args: argparse.Namespace) -> dict[str, Any]:
     ):
         raise RuntimeError(f"training gates failed: {report['blocking_training_gates']}")
     return report
+
+
+def _cmd_harbor_materialize(args: argparse.Namespace) -> dict[str, Any]:
+    public_rows = read_records(args.public)
+    private_rows = read_records(args.private)
+    return materialize_harbor_tasks(
+        public_rows,
+        private_rows,
+        args.out,
+        split=args.split,
+        difficulty=args.difficulty,
+        relation_family=args.relation_family,
+        measurement_scope=args.measurement_scope,
+        max_rows=args.max_rows,
+        fresh=bool(args.fresh),
+    )
+
+
+def _cmd_harbor_materialize_dataset(args: argparse.Namespace) -> dict[str, Any]:
+    return materialize_harbor_dataset(
+        args.dataset_dir,
+        args.out,
+        split=args.split,
+        difficulty=args.difficulty,
+        relation_family=args.relation_family,
+        measurement_scope=args.measurement_scope,
+        max_rows=args.max_rows,
+        fresh=bool(args.fresh),
+    )
+
+
+def _cmd_harbor_export_sft(args: argparse.Namespace) -> dict[str, Any]:
+    return _cmd_training_export_sft(args)
+
+
+def _cmd_harbor_export_atif(args: argparse.Namespace) -> dict[str, Any]:
+    responses = read_records(args.responses)
+    public_rows = read_records(args.public)
+    private_rows = read_records(args.private)
+    return export_harbor_atif(responses, public_rows, private_rows, args.out)
 
 
 def _training_stop_gates(
