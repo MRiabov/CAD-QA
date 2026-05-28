@@ -63,7 +63,9 @@ Filters are available for `--split`, `--difficulty`, `--relation-family`,
 
 Each task contains `instruction.md`, `task.toml`, `environment/Dockerfile`,
 `workspace/prompt.txt`, `workspace/row_public.json`, `tests/test.sh`,
-`tests/grade_cadqa.py`, and hidden verifier data under `expected/private.json`.
+`tests/grade_cadqa.py`, `solution/solve.sh`, and hidden verifier data under
+`expected/private.json`. The solution script is for Harbor oracle runs only; it
+reads the private answer key and writes `/app/answer.json`.
 The agent must write exactly one of:
 
 ```json
@@ -72,13 +74,26 @@ The agent must write exactly one of:
 
 to `/app/answer.json`, or plain answer text to `/app/answer.txt`.
 
+The task allows local computation, including Python standard-library modules and
+installed third-party packages such as NumPy. It remains closed-book CAD
+reasoning: agents must not import or call CadQuery, `cq`, OCP, OpenCascade, or
+any other CAD kernel, and must not make network requests.
+
 ## Run With Harbor
 
 Run one task or the full materialized directory:
 
 ```bash
-harbor run -p runs/harbor_cadqa_smoke -a <agent> -m <model>
+harbor run -c runs/harbor_cadqa_smoke/cadqa_harbor_job.json
 ```
+
+The generated job config uses the `terminus-2` Harbor agent with model
+`openrouter/deepseek/deepseek-v4-flash`. It also pins conservative run limits:
+`max_input_tokens=32768`, `max_output_tokens=2048`, `max_tokens=2048` on each
+LLM call, `max_episodes=8`, one attempt, no retries, and one concurrent trial.
+The materializer writes the same recommendation to `cadqa_harbor_manifest.json`
+under `recommended_run`. Agent/model/token selection is a Harbor run
+configuration, not part of the public task prompt or CAD-QA grading contract.
 
 The verifier uses `cad_qa.evaluation.grade.grade_public_private` for the single
 row, writes the full CAD-QA artifact to `/logs/verifier/cadqa_grade.json`, and
