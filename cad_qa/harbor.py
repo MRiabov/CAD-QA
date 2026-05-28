@@ -17,6 +17,11 @@ from cad_qa.io import existing_record_artifact_path, read_records, write_json, w
 
 DEFAULT_VERIFIER_TIMEOUT_SEC = 120.0
 DEFAULT_AGENT_TIMEOUT_SEC = 300.0
+DEFAULT_HARBOR_AGENT = "terminus-2"
+DEFAULT_HARBOR_MODEL = "openrouter/deepseek/deepseek-v4-flash"
+DEFAULT_MAX_INPUT_TOKENS = 32_768
+DEFAULT_MAX_OUTPUT_TOKENS = 2_048
+DEFAULT_MAX_AGENT_EPISODES = 8
 
 
 def materialize_harbor_tasks(
@@ -78,6 +83,9 @@ def materialize_harbor_tasks(
             }
         )
 
+    job_config_path = out / "cadqa_harbor_job.json"
+    job_config = _job_config(out)
+    write_json(job_config_path, job_config)
     report = {
         "task_count": len(tasks),
         "input_public_rows": len(public_rows),
@@ -91,11 +99,51 @@ def materialize_harbor_tasks(
             "max_rows": max_rows,
         },
         "out": str(out),
+        "recommended_run": {
+            "agent": DEFAULT_HARBOR_AGENT,
+            "model": DEFAULT_HARBOR_MODEL,
+            "max_input_tokens": DEFAULT_MAX_INPUT_TOKENS,
+            "max_output_tokens": DEFAULT_MAX_OUTPUT_TOKENS,
+            "max_agent_episodes": DEFAULT_MAX_AGENT_EPISODES,
+            "job_config": str(job_config_path),
+            "command": f"harbor run -c {job_config_path}",
+        },
         "tasks": tasks,
     }
     write_json(out / "cadqa_harbor_manifest.json", report)
     write_jsonl(out / "tasks.jsonl", tasks)
     return report
+
+
+def _job_config(dataset_path: Path) -> dict[str, Any]:
+    return {
+        "job_name": "cadqa-harbor-openrouter-deepseek-v4-flash",
+        "n_attempts": 1,
+        "n_concurrent_trials": 1,
+        "retry": {"max_retries": 0},
+        "environment": {"type": "docker", "delete": True},
+        "agents": [
+            {
+                "name": DEFAULT_HARBOR_AGENT,
+                "model_name": DEFAULT_HARBOR_MODEL,
+                "kwargs": {
+                    "max_episodes": DEFAULT_MAX_AGENT_EPISODES,
+                    "model_info": {
+                        "max_input_tokens": DEFAULT_MAX_INPUT_TOKENS,
+                        "max_output_tokens": DEFAULT_MAX_OUTPUT_TOKENS,
+                    },
+                    "llm_call_kwargs": {
+                        "max_tokens": DEFAULT_MAX_OUTPUT_TOKENS,
+                    },
+                },
+            }
+        ],
+        "datasets": [
+            {
+                "path": str(dataset_path),
+            }
+        ],
+    }
 
 
 def materialize_harbor_dataset(
@@ -292,6 +340,7 @@ def _write_task(
     (task_dir / "workspace").mkdir()
     (task_dir / "tests").mkdir()
     (task_dir / "expected").mkdir()
+    (task_dir / "solution").mkdir()
 
     (task_dir / "instruction.md").write_text(_instruction(public), encoding="utf-8")
     (task_dir / "task.toml").write_text(_task_toml(public, verifier_timeout_sec=verifier_timeout_sec), encoding="utf-8")
@@ -302,6 +351,9 @@ def _write_task(
     test_sh = task_dir / "tests" / "test.sh"
     test_sh.write_text(_test_sh(), encoding="utf-8")
     test_sh.chmod(0o755)
+    solve_sh = task_dir / "solution" / "solve.sh"
+    solve_sh.write_text(_solve_sh(), encoding="utf-8")
+    solve_sh.chmod(0o755)
     (task_dir / "tests" / "grade_cadqa.py").write_text(_grade_script(), encoding="utf-8")
     _write_verifier_package(task_dir / "tests")
 
@@ -321,6 +373,10 @@ def _instruction(public: dict[str, Any]) -> str:
     return (
         "# CAD-QA Closed-Book CAD Reasoning Task\n\n"
         f"{str(public['prompt']).rstrip()}\n\n"
+        "You may use local computation while solving the task, including Python "
+        "standard-library modules and installed third-party packages such as NumPy. "
+        "Do not import or call CadQuery, `cq`, OCP, OpenCascade, or any other CAD "
+        "kernel, and do not make network requests.\n\n"
         "Write your final answer to exactly one of these files:\n\n"
         '- `/app/answer.json` with JSON object `{"answer": "...", "confidence": optional_number}`\n'
         "- `/app/answer.txt` containing only the answer text\n\n"
@@ -374,7 +430,7 @@ def _dockerfile() -> str:
     return (
         "FROM python:3.11-slim\n\n"
         "WORKDIR /app\n"
-        "RUN python -m pip install --no-cache-dir pyarrow PyYAML\n"
+        "RUN python -m pip install --no-cache-dir numpy pyarrow PyYAML\n"
         "ENV PYTHONPATH=/app:/tests:${PYTHONPATH}\n"
     )
 
@@ -383,14 +439,51 @@ def _test_sh() -> str:
     return (
         "#!/bin/bash\n"
         "set -u\n"
-        "mkdir -p /logs/verifier\n"
+        "APP_DIR=\"${CADQA_APP_DIR:-/app}\"\n"
+        "LOGS_DIR=\"${CADQA_LOGS_DIR:-/logs/verifier}\"\n"
+        "mkdir -p \"$LOGS_DIR\"\n"
         "TASK_DIR=\"$(cd \"$(dirname \"$0\")/..\" && pwd)\"\n"
         "PUBLIC_PATH=\"${CADQA_PUBLIC:-$TASK_DIR/workspace/row_public.json}\"\n"
         "PRIVATE_PATH=\"${CADQA_PRIVATE:-$TASK_DIR/expected/private.json}\"\n"
-        "python3 /tests/grade_cadqa.py --public \"$PUBLIC_PATH\" --private \"$PRIVATE_PATH\" --app-dir /app --logs-dir /logs/verifier\n"
+        "GRADE_SCRIPT=\"${CADQA_GRADE_SCRIPT:-/tests/grade_cadqa.py}\"\n"
+        "if [ ! -f \"$GRADE_SCRIPT\" ]; then GRADE_SCRIPT=\"$TASK_DIR/tests/grade_cadqa.py\"; fi\n"
+        "python3 \"$GRADE_SCRIPT\" --public \"$PUBLIC_PATH\" --private \"$PRIVATE_PATH\" --app-dir \"$APP_DIR\" --logs-dir \"$LOGS_DIR\"\n"
         "status=$?\n"
-        "if [ ! -f /logs/verifier/reward.txt ]; then echo 0 > /logs/verifier/reward.txt; fi\n"
+        "if [ ! -f \"$LOGS_DIR/reward.txt\" ]; then echo 0 > \"$LOGS_DIR/reward.txt\"; fi\n"
         "exit $status\n"
+    )
+
+
+def _solve_sh() -> str:
+    return (
+        "#!/bin/bash\n"
+        "set -euo pipefail\n"
+        "APP_DIR=\"${CADQA_APP_DIR:-/app}\"\n"
+        "mkdir -p \"$APP_DIR\"\n"
+        "TASK_DIR=\"$(cd \"$(dirname \"$0\")/..\" && pwd)\"\n"
+        "PRIVATE_PATH=\"${CADQA_PRIVATE:-}\"\n"
+        "if [ -z \"$PRIVATE_PATH\" ]; then\n"
+        "  for candidate in /expected/private.json \"$TASK_DIR/expected/private.json\" /tests/expected/private.json; do\n"
+        "    if [ -f \"$candidate\" ]; then PRIVATE_PATH=\"$candidate\"; break; fi\n"
+        "  done\n"
+        "fi\n"
+        "if [ -z \"$PRIVATE_PATH\" ] || [ ! -f \"$PRIVATE_PATH\" ]; then\n"
+        "  echo 'missing CAD-QA private answer key' >&2\n"
+        "  exit 2\n"
+        "fi\n"
+        "python3 - \"$PRIVATE_PATH\" \"$APP_DIR\" <<'PY'\n"
+        "import json\n"
+        "import sys\n"
+        "from pathlib import Path\n"
+        "private = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))\n"
+        "app_dir = Path(sys.argv[2])\n"
+        "app_dir.mkdir(parents=True, exist_ok=True)\n"
+        "(app_dir / 'answer.txt').unlink(missing_ok=True)\n"
+        "(app_dir / 'answer.json').write_text(\n"
+        "    json.dumps({'answer': private['gold_answer'], 'confidence': 1.0}, sort_keys=True) + '\\n',\n"
+        "    encoding='utf-8',\n"
+        ")\n"
+        "PY\n"
     )
 
 

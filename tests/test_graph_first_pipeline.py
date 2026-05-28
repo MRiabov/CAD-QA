@@ -5,6 +5,7 @@ from collections import Counter
 import io
 import json
 import math
+import os
 import subprocess
 import sys
 import tarfile
@@ -10602,6 +10603,21 @@ def test_harbor_materializes_tiny_public_private_release_smoke_slice(tmp_path: P
     ) == 0
 
     manifest = json.loads((out / "cadqa_harbor_manifest.json").read_text(encoding="utf-8"))
+    assert manifest["recommended_run"]["agent"] == "terminus-2"
+    assert manifest["recommended_run"]["model"] == "openrouter/deepseek/deepseek-v4-flash"
+    assert manifest["recommended_run"]["max_input_tokens"] == 32768
+    assert manifest["recommended_run"]["max_output_tokens"] == 2048
+    assert manifest["recommended_run"]["max_agent_episodes"] == 8
+    assert manifest["recommended_run"]["command"].startswith("harbor run -c ")
+    job_config = json.loads((out / "cadqa_harbor_job.json").read_text(encoding="utf-8"))
+    assert job_config["agents"][0]["name"] == "terminus-2"
+    assert job_config["agents"][0]["model_name"] == "openrouter/deepseek/deepseek-v4-flash"
+    assert job_config["agents"][0]["kwargs"]["model_info"]["max_input_tokens"] == 32768
+    assert job_config["agents"][0]["kwargs"]["model_info"]["max_output_tokens"] == 2048
+    assert job_config["agents"][0]["kwargs"]["llm_call_kwargs"]["max_tokens"] == 2048
+    assert job_config["agents"][0]["kwargs"]["max_episodes"] == 8
+    assert job_config["retry"]["max_retries"] == 0
+    assert job_config["n_concurrent_trials"] == 1
     task_dir = Path(manifest["tasks"][0]["task_dir"])
     assert (task_dir / "instruction.md").exists()
     assert (task_dir / "task.toml").exists()
@@ -10611,8 +10627,16 @@ def test_harbor_materializes_tiny_public_private_release_smoke_slice(tmp_path: P
     assert (task_dir / "tests" / "test.sh").exists()
     assert (task_dir / "tests" / "grade_cadqa.py").exists()
     assert (task_dir / "tests" / "cad_qa" / "evaluation" / "grade.py").exists()
+    assert (task_dir / "solution" / "solve.sh").exists()
     assert (task_dir / "expected" / "private.json").exists()
-    assert "/app/answer.json" in (task_dir / "instruction.md").read_text(encoding="utf-8")
+    instruction = (task_dir / "instruction.md").read_text(encoding="utf-8")
+    assert "/app/answer.json" in instruction
+    assert "Python standard-library modules" in instruction
+    assert "NumPy" in instruction
+    assert "Do not import or call CadQuery" in instruction
+    assert "do not make network requests" in instruction
+    dockerfile = (task_dir / "environment" / "Dockerfile").read_text(encoding="utf-8")
+    assert "numpy" in dockerfile
 
 
 def test_harbor_correct_answer_gives_reward_one(tmp_path: Path) -> None:
@@ -10648,6 +10672,43 @@ def test_harbor_correct_answer_gives_reward_one(tmp_path: Path) -> None:
     )
     assert completed.returncode == 0, completed.stderr
     assert (script_logs / "reward.txt").read_text(encoding="utf-8").strip() == "1"
+
+
+def test_harbor_oracle_solution_writes_correct_answer(tmp_path: Path) -> None:
+    task_dir = _materialize_tiny_harbor_task(tmp_path)
+    app_dir = tmp_path / "oracle_app"
+
+    completed = subprocess.run(
+        [str(task_dir / "solution" / "solve.sh")],
+        check=False,
+        text=True,
+        capture_output=True,
+        env={
+            **dict(os.environ),
+            "CADQA_PRIVATE": str(task_dir / "expected" / "private.json"),
+            "CADQA_APP_DIR": str(app_dir),
+        },
+    )
+    assert completed.returncode == 0, completed.stderr
+    answer = json.loads((app_dir / "answer.json").read_text(encoding="utf-8"))
+    assert answer == {"answer": 7, "confidence": 1.0}
+    logs_dir = tmp_path / "oracle_logs"
+    completed = subprocess.run(
+        [str(task_dir / "tests" / "test.sh")],
+        check=False,
+        text=True,
+        capture_output=True,
+        env={
+            **dict(os.environ),
+            "CADQA_APP_DIR": str(app_dir),
+            "CADQA_LOGS_DIR": str(logs_dir),
+            "CADQA_GRADE_SCRIPT": str(task_dir / "tests" / "grade_cadqa.py"),
+        },
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert (logs_dir / "reward.txt").read_text(encoding="utf-8").strip() == "1"
+    artifact = json.loads((logs_dir / "cadqa_grade.json").read_text(encoding="utf-8"))
+    assert artifact["reward"] == 1
 
 
 def test_harbor_wrong_answer_gives_reward_zero(tmp_path: Path) -> None:
