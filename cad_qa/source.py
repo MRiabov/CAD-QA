@@ -8,7 +8,10 @@ import re
 import tarfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
+
+import pyarrow as pa
+import pyarrow.parquet as pq
 
 from cad_qa.io import iter_records, read_records
 
@@ -39,6 +42,32 @@ _CADQUERY_METHOD_TAGS = (
     ("kernel_edge_selector", ("edges",)),
     ("void_cut", ("cut", "cutThruAll", "cutBlind", "hole", "cboreHole", "cskHole")),
     ("profile_polyline", ("polyline",)),
+)
+CADEVOLVE_SOURCE_CACHE_COLUMNS = (
+    "source_id",
+    "normalized_archive_member_path",
+    "normalized_code",
+    "source",
+    "source_subtree",
+    "source_collection",
+    "path_family",
+    "source_feature_tags",
+    "generator_id",
+    "normalized_source_code_hash",
+)
+_CADEVOLVE_SOURCE_CACHE_SCHEMA = pa.schema(
+    [
+        pa.field("source_id", pa.string()),
+        pa.field("normalized_archive_member_path", pa.string()),
+        pa.field("normalized_code", pa.string()),
+        pa.field("source", pa.string()),
+        pa.field("source_subtree", pa.string()),
+        pa.field("source_collection", pa.string()),
+        pa.field("path_family", pa.string()),
+        pa.field("source_feature_tags", pa.list_(pa.string())),
+        pa.field("generator_id", pa.string()),
+        pa.field("normalized_source_code_hash", pa.string()),
+    ]
 )
 
 
@@ -425,6 +454,45 @@ def cadevolve_source_table_rows(
     return selected_rows, stats
 
 
+def write_cadevolve_source_cache_parquet(
+    path: Path,
+    rows: Iterable[dict[str, Any]],
+    *,
+    batch_size: int = 1000,
+) -> int:
+    """Write CADEvolve source rows as real parquet columns, not JSON blobs."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    writer: pq.ParquetWriter | None = None
+    batch: list[dict[str, Any]] = []
+    count = 0
+
+    def flush() -> None:
+        nonlocal batch, count, writer
+        if not batch:
+            return
+        table = pa.Table.from_pylist(
+            [_cadevolve_source_cache_row(row) for row in batch],
+            schema=_CADEVOLVE_SOURCE_CACHE_SCHEMA,
+        )
+        if writer is None:
+            writer = pq.ParquetWriter(path, table.schema, compression="zstd")
+        writer.write_table(table)
+        count += len(batch)
+        batch = []
+
+    try:
+        for row in rows:
+            batch.append(row)
+            if len(batch) >= batch_size:
+                flush()
+        flush()
+    finally:
+        if writer is not None:
+            writer.close()
+    return count
+
+
 def source_geometry_feature_tags(source_code: str) -> list[str]:
     """Return source-level geometry hints used to keep rare release families reachable."""
 
@@ -454,6 +522,34 @@ def _cadevolve_source_row(member_path: str, source_code: str) -> dict[str, Any]:
             if part
         ),
         "hashes": {"normalized_source_code_hash": source_hash},
+    }
+
+
+def _cadevolve_source_cache_row(row: dict[str, Any]) -> dict[str, Any]:
+    source_code = str(row.get("normalized_code") or row.get("source_code") or row.get("raw_code") or "")
+    source_hash = row.get("normalized_source_code_hash")
+    hashes = row.get("hashes")
+    if not isinstance(source_hash, str) and isinstance(hashes, dict):
+        source_hash = hashes.get("normalized_source_code_hash")
+    if not isinstance(source_hash, str):
+        source_hash = "sha256:" + hashlib.sha256(source_code.encode("utf-8")).hexdigest()
+    return {
+        "source_id": str(row.get("source_id") or ""),
+        "normalized_archive_member_path": str(
+            row.get("normalized_archive_member_path") or row.get("archive_member_path") or row.get("source_path") or ""
+        ),
+        "normalized_code": normalize_source_text(source_code) if source_code else "",
+        "source": str(row.get("source") or "cadevolve"),
+        "source_subtree": str(row.get("source_subtree") or ""),
+        "source_collection": str(row.get("source_collection") or ""),
+        "path_family": str(row.get("path_family") or ""),
+        "source_feature_tags": [
+            str(tag)
+            for tag in row.get("source_feature_tags", [])
+            if isinstance(tag, str)
+        ],
+        "generator_id": str(row.get("generator_id") or ""),
+        "normalized_source_code_hash": source_hash,
     }
 
 

@@ -11,8 +11,10 @@ import sys
 import tarfile
 from pathlib import Path
 
+import pyarrow.parquet as pq
 import yaml
 
+from cad_qa.io import RECORD_JSON_COLUMN
 from cad_qa.dataset.materialize import materialize_row
 from cad_qa.dataset.audit import leakage_audit
 from cad_qa.dataset.family_test_evidence import family_test_evidence_gate_report, load_family_test_evidence
@@ -528,6 +530,15 @@ def test_cadevolve_tar_cache_and_cached_selection_are_parquet_only(tmp_path: Pat
             str(cache),
         ]
     ) == 0
+    cache_schema = pq.ParquetFile(cache).schema_arrow.names
+    assert RECORD_JSON_COLUMN not in cache_schema
+    assert {
+        "source_id",
+        "normalized_archive_member_path",
+        "normalized_code",
+        "source_feature_tags",
+        "normalized_source_code_hash",
+    }.issubset(cache_schema)
     assert len(read_records(cache)) == 3
     assert cache.with_suffix(".report.json").exists()
 
@@ -545,6 +556,9 @@ def test_cadevolve_tar_cache_and_cached_selection_are_parquet_only(tmp_path: Pat
             "--stratify-geometry-tags",
         ]
     ) == 0
+    selected_schema = pq.ParquetFile(out).schema_arrow.names
+    assert RECORD_JSON_COLUMN not in selected_schema
+    assert "source_feature_tags" in selected_schema
     selected = read_records(out)
     assert {row["normalized_archive_member_path"] for row in selected} == {
         "CADEvolve-P/CADEvolve-P-core/path.py",
@@ -593,6 +607,9 @@ def test_cadevolve_directory_cache_writes_parquet(tmp_path: Path) -> None:
             str(cache),
         ]
     ) == 0
+    cache_schema = pq.ParquetFile(cache).schema_arrow.names
+    assert RECORD_JSON_COLUMN not in cache_schema
+    assert "normalized_source_code_hash" in cache_schema
     rows = read_records(cache)
     assert [row["normalized_archive_member_path"] for row in rows] == [
         "CADEvolve-P/CADEvolve-P-core/path.py",

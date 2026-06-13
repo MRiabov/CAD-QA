@@ -64,7 +64,6 @@ from cad_qa.io import (
     record_artifact_path,
     write_json,
     write_jsonl,
-    write_parquet_records_batched,
     write_records,
 )
 from cad_qa.ontology import build_graph
@@ -90,6 +89,7 @@ from cad_qa.source import (
     source_geometry_feature_tags,
     source_manifest,
     source_record_from_mapping,
+    write_cadevolve_source_cache_parquet,
 )
 from cad_qa.trace import trace_report, trace_sources_bounded
 
@@ -525,7 +525,7 @@ def _cmd_sources_cache_cadevolve_tar(args: argparse.Namespace) -> dict[str, Any]
         code_contains=args.code_contains,
         max_member_bytes=args.max_member_bytes,
     )
-    write_records(args.out, rows)
+    write_cadevolve_source_cache_parquet(args.out, rows)
     manifest = source_manifest([source_record_from_mapping(row) for row in rows])
     report = {**report, "source_manifest": manifest}
     write_json(args.out.with_suffix(".manifest.json"), manifest)
@@ -558,7 +558,7 @@ def _cmd_sources_cache_cadevolve_dir(args: argparse.Namespace) -> dict[str, Any]
         code_contains=args.code_contains,
         max_member_bytes=args.max_member_bytes,
     )
-    row_count = write_parquet_records_batched(args.out, rows)
+    row_count = write_cadevolve_source_cache_parquet(args.out, rows)
     report["included_count"] = row_count
     write_json(args.out.with_suffix(".report.json"), report)
     return {
@@ -583,7 +583,7 @@ def _cmd_sources_from_cadevolve_cache(args: argparse.Namespace) -> dict[str, Any
         stratify_by_tags=bool(args.stratify_geometry_tags),
         min_per_tag=args.min_per_geometry_tag,
     )
-    write_records(args.out, rows)
+    write_cadevolve_source_cache_parquet(args.out, rows)
     manifest = source_manifest([source_record_from_mapping(row) for row in rows])
     report = {**report, "source_manifest": manifest}
     write_json(args.out.with_suffix(".manifest.json"), manifest)
