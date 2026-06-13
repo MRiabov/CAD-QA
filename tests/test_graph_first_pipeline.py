@@ -1319,6 +1319,97 @@ def test_direct_cut_uses_base_result_snapshot_delta_when_assignment_delta_is_mis
     )
 
 
+def test_direct_cut_prefers_base_result_snapshot_delta_when_assignment_delta_has_wrong_magnitude() -> None:
+    source = source_record_from_mapping(
+        {
+            "source_id": "src_direct_kernel_void_base_result_magnitude",
+            "normalized_code": (
+                "import cadquery as cq\n"
+                "base = cq.Workplane('XY').box(10, 10, 10)\n"
+                "tool = cq.Workplane('XY').box(2, 2, 12)\n"
+                "result = base.cut(tool)\n"
+            ),
+        }
+    )
+    trace_record = {
+        "source_id": "src_direct_kernel_void_base_result_magnitude",
+        "execution_status": "ok",
+        "snapshots": [
+            {"target": "base", "source_line": 2, "operation_index": 0, "volume": 1000.0},
+            {"target": "tool", "source_line": 3, "operation_index": 1, "volume": 48.0},
+            {"target": "result", "source_line": 4, "operation_index": 2, "volume": 952.0},
+        ],
+        "operation_effects": [
+            {
+                "from_target": "tool",
+                "to_target": "result",
+                "source_line": 4,
+                "signed_volume_delta": -904.0,
+                "evidence": "cadquery_assignment_snapshot_delta",
+            }
+        ],
+        "environment": {"cadquery_available": True},
+        "failure_reason": None,
+    }
+
+    graph = build_graph(source, trace=trace_record)
+
+    assert graph.measurements_for("void_region:result", "volume")[0].value == 48.0
+    delta = graph.measurements_for("void_region:result", "signed_volume_delta")[0]
+    assert delta.value == -48.0
+    assert delta.evidence["source"] == "cadquery_base_result_snapshot_delta"
+    feature_delta = graph.measurements_for("feature:result", "signed_volume_delta")[0]
+    assert feature_delta.value == -48.0
+    assert feature_delta.evidence["source"] == "cadquery_base_result_snapshot_delta"
+
+
+def test_direct_union_creates_kernel_material_region_from_base_result_snapshot_delta() -> None:
+    source = source_record_from_mapping(
+        {
+            "source_id": "src_direct_kernel_material_union",
+            "normalized_code": (
+                "import cadquery as cq\n"
+                "base = cq.Workplane('XY').box(10, 10, 10)\n"
+                "boss = cq.Workplane('XY').box(2, 2, 12)\n"
+                "result = base.union(boss)\n"
+            ),
+        }
+    )
+    trace_record = {
+        "source_id": "src_direct_kernel_material_union",
+        "execution_status": "ok",
+        "snapshots": [
+            {"target": "base", "source_line": 2, "operation_index": 0, "volume": 1000.0},
+            {"target": "boss", "source_line": 3, "operation_index": 1, "volume": 48.0},
+            {"target": "result", "source_line": 4, "operation_index": 2, "volume": 1048.0},
+        ],
+        "operation_effects": [
+            {
+                "from_target": "boss",
+                "to_target": "result",
+                "source_line": 4,
+                "signed_volume_delta": 1000.0,
+                "evidence": "cadquery_assignment_snapshot_delta",
+            }
+        ],
+        "environment": {"cadquery_available": True},
+        "failure_reason": None,
+    }
+
+    graph = build_graph(source, trace=trace_record)
+    material_region = graph.node("material_region:result")
+
+    assert material_region is not None
+    assert material_region.properties["conservative"] is False
+    assert material_region.properties["trace_evidence"] == "cadquery_base_result_snapshot_delta"
+    assert graph.measurements_for("material_region:result", "volume")[0].value == 48.0
+    assert graph.measurements_for("material_region:result", "signed_volume_delta")[0].value == 48.0
+    assert any(
+        relation.type == "has_kernel_material_region_geometry" and relation.source_id == "material_region:result"
+        for relation in graph.relations
+    )
+
+
 def test_repeated_target_trace_effect_requires_source_line_match() -> None:
     source = source_record_from_mapping(
         {

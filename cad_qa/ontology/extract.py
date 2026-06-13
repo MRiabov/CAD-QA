@@ -252,6 +252,7 @@ class _Extractor:
         if record.operation == "union":
             self.graph.add_node(Node(id=f"solid:{target}", type="solid", label=target))
             self.graph.add_relation(Relation(feature_id, f"solid:{target}", "adds_material_to"))
+            self._add_kernel_region_projection(feature_id, None, target, record)
         if record.operation.startswith("cut"):
             self.graph.add_relation(Relation(feature_id, f"source:{self.source.source_id}", "removes_material_from"))
 
@@ -1267,27 +1268,13 @@ class _Extractor:
 
     def _kernel_region_measurement(self, target: str, record: OperationRecord) -> dict[str, Any] | None:
         is_cut = record.operation.startswith("cut")
-        is_additive = record.operation in {"extrude", "sweep"}
-        effect = self._trace_effect_for_target(target, record)
-        if effect is not None:
-            signed_delta = effect.get("signed_volume_delta")
-            if isinstance(signed_delta, (int, float)) and math.isfinite(float(signed_delta)):
-                if (is_cut and signed_delta < 0) or (is_additive and signed_delta > 0):
-                    return {
-                        "signed_volume_delta": float(signed_delta),
-                        "bbox_delta": effect.get("bbox_delta"),
-                        "topology_delta": effect.get("topology_delta"),
-                        "scalar_feature_effect": _scalar_effect_measurements(effect),
-                        "evidence": effect.get("evidence", "cadquery_assignment_snapshot_delta"),
-                        "from_target": effect.get("from_target"),
-                        "to_target": effect.get("to_target"),
-                        "source_line": effect.get("source_line"),
-                    }
-        base_result_effect = self._trace_base_result_effect(target, record)
+        is_union = record.operation == "union"
+        is_prismatic_additive = record.operation in {"extrude", "sweep"}
+        base_result_effect = self._trace_base_result_effect(target, record) if _operation_prefers_base_result_effect(record.operation) else None
         if base_result_effect is not None:
             signed_delta = base_result_effect.get("signed_volume_delta")
             if isinstance(signed_delta, (int, float)) and math.isfinite(float(signed_delta)):
-                if (is_cut and signed_delta < 0) or (is_additive and signed_delta > 0):
+                if (is_cut and signed_delta < 0) or (is_union and signed_delta > 0):
                     return {
                         "signed_volume_delta": float(signed_delta),
                         "bbox_delta": base_result_effect.get("bbox_delta"),
@@ -1298,7 +1285,22 @@ class _Extractor:
                         "to_target": base_result_effect.get("to_target"),
                         "source_line": base_result_effect.get("source_line"),
                     }
-        if not is_additive:
+        effect = self._trace_effect_for_target(target, record)
+        if effect is not None:
+            signed_delta = effect.get("signed_volume_delta")
+            if isinstance(signed_delta, (int, float)) and math.isfinite(float(signed_delta)):
+                if (is_cut and signed_delta < 0) or (is_prismatic_additive and signed_delta > 0):
+                    return {
+                        "signed_volume_delta": float(signed_delta),
+                        "bbox_delta": effect.get("bbox_delta"),
+                        "topology_delta": effect.get("topology_delta"),
+                        "scalar_feature_effect": _scalar_effect_measurements(effect),
+                        "evidence": effect.get("evidence", "cadquery_assignment_snapshot_delta"),
+                        "from_target": effect.get("from_target"),
+                        "to_target": effect.get("to_target"),
+                        "source_line": effect.get("source_line"),
+                    }
+        if not is_prismatic_additive:
             return None
         snapshot = self._trace_snapshot_for_target(target, record)
         if snapshot is None:
@@ -1782,6 +1784,10 @@ def _trace_has_usable_geometry(trace: dict[str, Any] | None) -> bool:
     if trace.get("execution_status") in {"ok", "partial"}:
         return True
     return bool(trace.get("snapshots") or trace.get("operation_effects") or trace.get("selector_results"))
+
+
+def _operation_prefers_base_result_effect(operation: str) -> bool:
+    return operation == "union" or operation.startswith("cut")
 
 
 def _trace_operation_nodes_by_feature_id(trace: dict[str, Any]) -> dict[str, dict[str, Any]]:
