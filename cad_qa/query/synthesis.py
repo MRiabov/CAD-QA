@@ -11,11 +11,8 @@ from cad_qa.query.ir import Clause, QueryProgram
 from cad_qa.query.predicate_catalog import (
     PredicateInstance,
     measurement_bucket_value,
-    measurement_value_predicate,
     merge_sampled_parameters,
     metric_axis,
-    measurement_predicate,
-    nodes_matching_measurement_value,
     nodes_matching_related_metric_compare,
     related_metric_compare_predicate,
     relation_predicate,
@@ -2292,7 +2289,7 @@ def _viable_extremes_for_candidates(
     for metric in spec.metrics:
         if metric == compare_metric:
             continue
-        measurement = measurement_predicate(
+        measurement = _measurement_predicate_cached(
             graph,
             candidates,
             clause_id=spec.measurement_clause_id,
@@ -2395,7 +2392,7 @@ def _viable_ranks_for_candidates(
     for metric in spec.metrics:
         if metric == compare_metric:
             continue
-        measurement = measurement_predicate(
+        measurement = _measurement_predicate_cached(
             graph,
             candidates,
             clause_id=spec.measurement_clause_id,
@@ -2467,7 +2464,7 @@ def _query_for_extreme(graph: OntologyGraph, viable: ViableExtreme) -> QueryProg
             operator=viable.compare_operator,
             value=viable.compare_value,
         )
-    measurement = measurement_predicate(
+    measurement = _measurement_predicate_cached(
         graph,
         relation_candidates,
         clause_id=spec.measurement_clause_id,
@@ -2571,7 +2568,7 @@ def _viable_feature_effect_delta_extremes(
             )
             selector_metrics = tuple(dict.fromkeys((*spec.metrics, *(spec.selector_metrics or ()))))
             for selector_metric in selector_metrics:
-                selector = measurement_predicate(
+                selector = _measurement_predicate_cached(
                     graph,
                     narrowed,
                     clause_id=spec.selector_metric_clause_id,
@@ -2629,7 +2626,7 @@ def _query_for_feature_effect_delta_extreme(
         operator=viable.operator,
         value=0.0,
     )
-    selector = measurement_predicate(
+    selector = _measurement_predicate_cached(
         graph,
         narrowed,
         clause_id=spec.selector_metric_clause_id,
@@ -2925,7 +2922,7 @@ def _query_for_selector_count(graph: OntologyGraph, viable: ViableSelectorCount)
         operator=viable.operator,
         value=viable.value,
     )
-    selected_count = measurement_predicate(
+    selected_count = _measurement_predicate_cached(
         graph,
         selector_candidates,
         clause_id=spec.selected_count_clause_id,
@@ -3061,7 +3058,7 @@ def _viable_equal_value_extremes(
     viable: list[ViableEqualValueExtreme] = []
     for equal_metric in spec.equal_metrics:
         for equal_value, equal_nodes in _equal_measurement_groups(graph, relation_candidates, equal_metric):
-            value_predicate = measurement_value_predicate(
+            value_predicate = _measurement_value_predicate_cached(
                 graph,
                 relation_candidates,
                 clause_id=spec.equal_value_clause_id,
@@ -3073,7 +3070,7 @@ def _viable_equal_value_extremes(
             for selector_metric in spec.selector_metrics:
                 if selector_metric == equal_metric:
                     continue
-                measurement = measurement_predicate(
+                measurement = _measurement_predicate_cached(
                     graph,
                     equal_nodes,
                     clause_id=spec.selector_metric_clause_id,
@@ -3159,7 +3156,7 @@ def _query_for_equal_value_extreme(graph: OntologyGraph, viable: ViableEqualValu
         if extra_relation is None:
             return None
         relation_candidates = _apply_relation_clause(graph, relation_candidates, spec.extra_relation)
-    equal_value = measurement_value_predicate(
+    equal_value = _measurement_value_predicate_cached(
         graph,
         relation_candidates,
         clause_id=spec.equal_value_clause_id,
@@ -3168,13 +3165,13 @@ def _query_for_equal_value_extreme(graph: OntologyGraph, viable: ViableEqualValu
     )
     if equal_value is None:
         return None
-    equal_candidates = nodes_matching_measurement_value(
+    equal_candidates = _nodes_matching_measurement_value_cached(
         graph,
         relation_candidates,
         metric=viable.equal_metric,
         value=viable.equal_value,
     )
-    selector_metric = measurement_predicate(
+    selector_metric = _measurement_predicate_cached(
         graph,
         equal_candidates,
         clause_id=spec.selector_metric_clause_id,
@@ -3345,7 +3342,7 @@ def _viable_relation_extremes_for_candidates(
     for metric in spec.metrics:
         if compare_metric == metric:
             continue
-        measurement = measurement_predicate(
+        measurement = _measurement_predicate_cached(
             graph,
             relation_candidates,
             clause_id=spec.measurement_clause_id,
@@ -3466,7 +3463,7 @@ def _query_for_relation_extreme(graph: OntologyGraph, viable: ViableRelationExtr
             operator=viable.compare_operator,
             value=viable.compare_value,
         )
-    measurement = measurement_predicate(
+    measurement = _measurement_predicate_cached(
         graph,
         relation_candidates,
         clause_id=spec.measurement_clause_id,
@@ -3581,7 +3578,7 @@ def _viable_relation_chain_extremes(
         if not chain_is_viable or not narrowed_by_chain:
             continue
         for metric in spec.metrics:
-            measurement = measurement_predicate(
+            measurement = _measurement_predicate_cached(
                 graph,
                 chain_candidates,
                 clause_id=spec.measurement_clause_id,
@@ -3686,7 +3683,7 @@ def _query_for_relation_chain_extreme(
             return None
         relation_instances.append(relation)
         relation_candidates = _apply_relation_clause(graph, relation_candidates, relation_name)
-    measurement = measurement_predicate(
+    measurement = _measurement_predicate_cached(
         graph,
         relation_candidates,
         clause_id=spec.measurement_clause_id,
@@ -3806,7 +3803,7 @@ def _viable_reference_distances(
         ]
         if len(target_nodes) < 2:
             continue
-        if measurement_value_predicate(
+        if _measurement_value_predicate_cached(
             graph,
             relation_candidates,
             clause_id=spec.equal_value_clause_id,
@@ -3913,7 +3910,7 @@ def _query_for_reference_distance(graph: OntologyGraph, viable: ViableReferenceD
         if relation is None:
             return None
         relation_candidates = _apply_relation_clause(graph, broad_candidates, spec.relation)
-    equal_value = measurement_value_predicate(
+    equal_value = _measurement_value_predicate_cached(
         graph,
         relation_candidates,
         clause_id=spec.equal_value_clause_id,
@@ -3922,13 +3919,13 @@ def _query_for_reference_distance(graph: OntologyGraph, viable: ViableReferenceD
     )
     if equal_value is None:
         return None
-    equal_candidates = nodes_matching_measurement_value(
+    equal_candidates = _nodes_matching_measurement_value_cached(
         graph,
         relation_candidates,
         metric=spec.equal_metric,
         value=viable.equal_value,
     )
-    target_point = measurement_predicate(
+    target_point = _measurement_predicate_cached(
         graph,
         equal_candidates,
         clause_id=spec.target_point_clause_id,
@@ -4110,10 +4107,27 @@ def _metric_thresholds(
 
 
 def _nodes_with_numeric_measurement(graph: OntologyGraph, candidates: list[Node], metric: str) -> list[Node]:
-    return [
-        node
+    cache = getattr(graph, "_cached_query_numeric_node_ids", None)
+    if cache is None:
+        cache = {}
+        graph._cached_query_numeric_node_ids = cache
+    key = (tuple(node.id for node in candidates), metric)
+    if key in cache:
+        return [
+            node
+            for node_id in cache[key]
+            if (node := graph.node(node_id)) is not None
+        ]
+    node_ids = tuple(
+        node.id
         for node in candidates
         if isinstance(_measurement_value(graph, node.id, metric), (int, float))
+    )
+    cache[key] = node_ids
+    return [
+        node
+        for node_id in node_ids
+        if (node := graph.node(node_id)) is not None
     ]
 
 
@@ -4252,9 +4266,18 @@ def _reference_anchor_signature(reference_value: dict[str, Any]) -> str:
 
 
 def _point_measurement(graph: OntologyGraph, entity_id: str, metric: str) -> list[float] | None:
+    cache = getattr(graph, "_cached_query_point_measurements", None)
+    if cache is None:
+        cache = {}
+        graph._cached_query_point_measurements = cache
+    key = (entity_id, metric)
+    if key in cache:
+        return cache[key]
     value = _measurement_value(graph, entity_id, metric)
     if isinstance(value, list) and len(value) >= 3:
-        return _numeric_point(value[:3])
+        point = _numeric_point(value[:3])
+        cache[key] = point
+        return point
     scalar_names = {
         "bbox_center": ("bbox_center_x", "bbox_center_y", "bbox_center_z"),
         "centroid": ("centroid_x", "centroid_y", "centroid_z"),
@@ -4262,8 +4285,11 @@ def _point_measurement(graph: OntologyGraph, entity_id: str, metric: str) -> lis
         "coordinate": ("coordinate_x", "coordinate_y", "coordinate_z"),
     }.get(metric)
     if scalar_names is None:
+        cache[key] = None
         return None
-    return _numeric_point([_measurement_value(graph, entity_id, name) for name in scalar_names])
+    point = _numeric_point([_measurement_value(graph, entity_id, name) for name in scalar_names])
+    cache[key] = point
+    return point
 
 
 def _numeric_point(values: list[Any]) -> list[float] | None:
@@ -4324,8 +4350,7 @@ def _has_unique_rank(
     aggregation: str,
     rank: int,
 ) -> bool:
-    ranked = _rank_nodes(graph, candidates, metric, aggregation, rank)
-    return len(ranked) == 1
+    return rank in _unique_scored_rank_positions(_scored_node_ids(graph, candidates, metric), aggregation)
 
 
 def _has_unique_scored_rank(
@@ -4470,6 +4495,151 @@ def _metric_compare_clause_id(target_type: str, fallback_measurement_clause_id: 
     return f"{fallback_measurement_clause_id}_threshold"
 
 
+def _measurement_predicate_cached(
+    graph: OntologyGraph,
+    candidates: list[Node],
+    *,
+    clause_id: str,
+    metric: str,
+) -> PredicateInstance | None:
+    after = _nodes_with_measurement_cached(graph, candidates, metric)
+    if len(after) < 2:
+        return None
+    params: dict[str, list[str]] = {
+        "narrowing_predicate_sequence": [f"measurement:{metric}"],
+        "clause_metric": [metric],
+    }
+    axis = metric_axis(metric)
+    if axis is not None:
+        params["clause_axis"] = [axis]
+    return PredicateInstance(
+        id=f"measurement:{metric}",
+        clause=Clause(
+            id=clause_id,
+            kind="has_measurement",
+            metric=metric,
+        ),
+        candidate_count_before=len(candidates),
+        candidate_count_after=len(after),
+        sampled_parameters=params,
+    )
+
+
+def _measurement_value_predicate_cached(
+    graph: OntologyGraph,
+    candidates: list[Node],
+    *,
+    clause_id: str,
+    metric: str,
+    value: float,
+) -> PredicateInstance | None:
+    after = _nodes_matching_measurement_value_cached(
+        graph,
+        candidates,
+        metric=metric,
+        value=value,
+    )
+    if len(after) < 2:
+        return None
+    params: dict[str, list[str]] = {
+        "narrowing_predicate_sequence": [f"equal_measurement:{metric}"],
+        "clause_metric": [metric],
+        "comparison_operator": ["=="],
+        "equal_measurement_metric": [metric],
+        "measurement_value_bucket": [f"{metric}:{_value_bucket(value)}"],
+    }
+    axis = metric_axis(metric)
+    if axis is not None:
+        params["clause_axis"] = [axis]
+    return PredicateInstance(
+        id=f"equal_measurement:{metric}:{_value_bucket(value)}",
+        clause=Clause(
+            id=clause_id,
+            kind="has_measurement",
+            metric=metric,
+            value=value,
+        ),
+        candidate_count_before=len(candidates),
+        candidate_count_after=len(after),
+        sampled_parameters=params,
+    )
+
+
+def _nodes_with_measurement_cached(
+    graph: OntologyGraph,
+    candidates: list[Node],
+    metric: str,
+) -> list[Node]:
+    cache = getattr(graph, "_cached_query_measurement_node_ids", None)
+    if cache is None:
+        cache = {}
+        graph._cached_query_measurement_node_ids = cache
+    key = (tuple(node.id for node in candidates), metric)
+    if key in cache:
+        return [
+            node
+            for node_id in cache[key]
+            if (node := graph.node(node_id)) is not None
+        ]
+    node_ids = tuple(
+        node.id
+        for node in candidates
+        if _has_measurement_cached(graph, node.id, metric)
+    )
+    cache[key] = node_ids
+    return [
+        node
+        for node_id in node_ids
+        if (node := graph.node(node_id)) is not None
+    ]
+
+
+def _has_measurement_cached(graph: OntologyGraph, entity_id: str, metric: str) -> bool:
+    if _measurement_values(graph, entity_id, metric):
+        return True
+    return all(_measurement_values(graph, entity_id, component) for component in _point_metric_components(metric))
+
+
+def _point_metric_components(metric: str) -> tuple[str, ...]:
+    return {
+        "bbox_center": ("bbox_center_x", "bbox_center_y", "bbox_center_z"),
+        "centroid": ("centroid_x", "centroid_y", "centroid_z"),
+        "midpoint": ("midpoint_x", "midpoint_y", "midpoint_z"),
+        "coordinate": ("coordinate_x", "coordinate_y", "coordinate_z"),
+    }.get(metric, ())
+
+
+def _nodes_matching_measurement_value_cached(
+    graph: OntologyGraph,
+    candidates: list[Node],
+    *,
+    metric: str,
+    value: float,
+) -> list[Node]:
+    cache = getattr(graph, "_cached_query_equal_measurement_node_ids", None)
+    if cache is None:
+        cache = {}
+        graph._cached_query_equal_measurement_node_ids = cache
+    key = (tuple(node.id for node in candidates), metric, value)
+    if key in cache:
+        return [
+            node
+            for node_id in cache[key]
+            if (node := graph.node(node_id)) is not None
+        ]
+    node_ids = tuple(
+        node.id
+        for node in candidates
+        if any(_value_matches(measured, value) for measured in _measurement_values(graph, node.id, metric))
+    )
+    cache[key] = node_ids
+    return [
+        node
+        for node_id in node_ids
+        if (node := graph.node(node_id)) is not None
+    ]
+
+
 def _metric_compare_predicate_cached(
     graph: OntologyGraph,
     candidates: list[Node],
@@ -4520,11 +4690,32 @@ def _nodes_matching_metric_compare_cached(
     operator: str,
     value: float,
 ) -> list[Node]:
+    cache = getattr(graph, "_cached_query_metric_compare_node_ids", None)
+    if cache is None:
+        cache = {}
+        graph._cached_query_metric_compare_node_ids = cache
+    key = (tuple(node.id for node in candidates), metric, operator, value)
+    if key in cache:
+        return [
+            node
+            for node_id in cache[key]
+            if (node := graph.node(node_id)) is not None
+        ]
+    node_ids = tuple(
+        node.id
+        for node in candidates
+        if any(_numeric_compare(measured, operator, value) for measured in _measurement_values(graph, node.id, metric))
+    )
+    cache[key] = node_ids
     return [
         node
-        for node in candidates
-        if _numeric_compare(_measurement_value(graph, node.id, metric), operator, value)
+        for node_id in node_ids
+        if (node := graph.node(node_id)) is not None
     ]
+
+
+def _value_matches(measured: object, expected: float) -> bool:
+    return isinstance(measured, (int, float)) and abs(float(measured) - expected) <= GEOMETRY_MARGIN_EPSILON
 
 
 def _numeric_compare(value: Any, operator: str, threshold: float) -> bool:
@@ -4565,6 +4756,11 @@ def _relation_extreme_strategy(viable: ViableRelationExtreme) -> str:
 
 
 def _measurement_value(graph: OntologyGraph, entity_id: str, metric: str) -> Any:
+    values = _measurement_values(graph, entity_id, metric)
+    return values[0] if values else None
+
+
+def _measurement_values(graph: OntologyGraph, entity_id: str, metric: str) -> tuple[Any, ...]:
     cache = getattr(graph, "_cached_query_measurement_values", None)
     if cache is None:
         cache = {}
@@ -4572,10 +4768,9 @@ def _measurement_value(graph: OntologyGraph, entity_id: str, metric: str) -> Any
     key = (entity_id, metric)
     if key in cache:
         return cache[key]
-    measurements = graph.measurements_for(entity_id, metric)
-    value = measurements[0].value if measurements else None
-    cache[key] = value
-    return value
+    values = tuple(measurement.value for measurement in graph.measurements_for(entity_id, metric))
+    cache[key] = values
+    return values
 
 
 def _stable_choice_index(graph_id: str, family_id: str, count: int) -> int:
