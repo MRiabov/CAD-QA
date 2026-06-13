@@ -20,8 +20,8 @@ DEFAULT_AGENT_TIMEOUT_SEC = 300.0
 DEFAULT_HARBOR_AGENT = "terminus-2"
 DEFAULT_HARBOR_MODEL = "openrouter/deepseek/deepseek-v4-flash"
 DEFAULT_MAX_INPUT_TOKENS = 32_768
-DEFAULT_MAX_OUTPUT_TOKENS = 2_048
-DEFAULT_MAX_AGENT_EPISODES = 8
+DEFAULT_MAX_OUTPUT_TOKENS = 16_384
+DEFAULT_MAX_TURNS = 32
 
 
 def materialize_harbor_tasks(
@@ -104,7 +104,7 @@ def materialize_harbor_tasks(
             "model": DEFAULT_HARBOR_MODEL,
             "max_input_tokens": DEFAULT_MAX_INPUT_TOKENS,
             "max_output_tokens": DEFAULT_MAX_OUTPUT_TOKENS,
-            "max_agent_episodes": DEFAULT_MAX_AGENT_EPISODES,
+            "max_turns": DEFAULT_MAX_TURNS,
             "job_config": str(job_config_path),
             "command": f"harbor run -c {job_config_path}",
         },
@@ -127,7 +127,8 @@ def _job_config(dataset_path: Path) -> dict[str, Any]:
                 "name": DEFAULT_HARBOR_AGENT,
                 "model_name": DEFAULT_HARBOR_MODEL,
                 "kwargs": {
-                    "max_episodes": DEFAULT_MAX_AGENT_EPISODES,
+                    "max_turns": DEFAULT_MAX_TURNS,
+                    "suppress_max_turns_warning": True,
                     "model_info": {
                         "max_input_tokens": DEFAULT_MAX_INPUT_TOKENS,
                         "max_output_tokens": DEFAULT_MAX_OUTPUT_TOKENS,

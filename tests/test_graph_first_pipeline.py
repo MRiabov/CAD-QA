@@ -10769,16 +10769,17 @@ def test_harbor_materializes_tiny_public_private_release_smoke_slice(tmp_path: P
     assert manifest["recommended_run"]["agent"] == "terminus-2"
     assert manifest["recommended_run"]["model"] == "openrouter/deepseek/deepseek-v4-flash"
     assert manifest["recommended_run"]["max_input_tokens"] == 32768
-    assert manifest["recommended_run"]["max_output_tokens"] == 2048
-    assert manifest["recommended_run"]["max_agent_episodes"] == 8
+    assert manifest["recommended_run"]["max_output_tokens"] == 16384
+    assert manifest["recommended_run"]["max_turns"] == 32
     assert manifest["recommended_run"]["command"].startswith("harbor run -c ")
     job_config = json.loads((out / "cadqa_harbor_job.json").read_text(encoding="utf-8"))
     assert job_config["agents"][0]["name"] == "terminus-2"
     assert job_config["agents"][0]["model_name"] == "openrouter/deepseek/deepseek-v4-flash"
     assert job_config["agents"][0]["kwargs"]["model_info"]["max_input_tokens"] == 32768
-    assert job_config["agents"][0]["kwargs"]["model_info"]["max_output_tokens"] == 2048
-    assert job_config["agents"][0]["kwargs"]["llm_call_kwargs"]["max_tokens"] == 2048
-    assert job_config["agents"][0]["kwargs"]["max_episodes"] == 8
+    assert job_config["agents"][0]["kwargs"]["model_info"]["max_output_tokens"] == 16384
+    assert job_config["agents"][0]["kwargs"]["llm_call_kwargs"]["max_tokens"] == 16384
+    assert job_config["agents"][0]["kwargs"]["max_turns"] == 32
+    assert job_config["agents"][0]["kwargs"]["suppress_max_turns_warning"]
     assert job_config["retry"]["max_retries"] == 0
     assert job_config["n_concurrent_trials"] == 1
     task_dir = Path(manifest["tasks"][0]["task_dir"])

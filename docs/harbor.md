@@ -89,8 +89,10 @@ harbor run -c runs/harbor_cadqa_smoke/cadqa_harbor_job.json
 
 The generated job config uses the `terminus-2` Harbor agent with model
 `openrouter/deepseek/deepseek-v4-flash`. It also pins conservative run limits:
-`max_input_tokens=32768`, `max_output_tokens=2048`, `max_tokens=2048` on each
-LLM call, `max_episodes=8`, one attempt, no retries, and one concurrent trial.
+`max_input_tokens=32768`, `max_output_tokens=16384`, `max_tokens=16384` on each
+LLM call, `max_turns=32`, one attempt, no trial retries, and one concurrent
+trial. In Terminus-2, `max_turns` is the cap on agent interaction turns/tool-use
+rounds; Harbor `max_retries` is only a job-level retry policy for failed trials.
 The materializer writes the same recommendation to `cadqa_harbor_manifest.json`
 under `recommended_run`. Agent/model/token selection is a Harbor run
 configuration, not part of the public task prompt or CAD-QA grading contract.
