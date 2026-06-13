@@ -300,6 +300,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "cadquery" },
+    { name = "polars" },
     { name = "pyarrow" },
     { name = "pyyaml" },
 ]
@@ -358,6 +359,7 @@ requires-dist = [
     { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.148.7" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.18.2" },
     { name = "pandas", marker = "extra == 'data'", specifier = ">=3.0.2" },
+    { name = "polars", specifier = ">=1.41.0" },
     { name = "polars", marker = "extra == 'data'", specifier = ">=1.41.0" },
     { name = "pyarrow", specifier = ">=15.0" },
     { name = "pyarrow", marker = "extra == 'parquet'", specifier = ">=15.0" },

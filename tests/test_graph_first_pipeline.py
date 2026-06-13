@@ -12,6 +12,8 @@ import tarfile
 from pathlib import Path
 
 import pyarrow.parquet as pq
+import pyarrow as pa
+import polars as pl
 import yaml
 
 from cad_qa.io import RECORD_JSON_COLUMN
@@ -70,7 +72,7 @@ from cad_qa.experiment import (
     run_smoke_experiment,
 )
 from cad_qa.harbor import grade_harbor_task, materialize_harbor_tasks
-from cad_qa.io import read_jsonl, read_records, to_jsonable, write_json, write_jsonl
+from cad_qa.io import iter_records, read_jsonl, read_records, to_jsonable, write_json, write_jsonl, write_records
 from cad_qa.ontology import build_graph
 from cad_qa.ontology.nodes import Measurement, Node, OntologyGraph, Relation, graph_from_dict
 from cad_qa.ontology.profile_geometry import circle_profile, polyline_profile, rect_profile
@@ -129,6 +131,59 @@ base = cq.Workplane("XY").box(2, 2, 2)
 while True:
     pass
 """
+
+
+def test_write_records_parquet_uses_columnar_top_level_schema(tmp_path: Path) -> None:
+    rows = [
+        {
+            "row_id": "row:a",
+            "score": 1,
+            "tags": ["path_curve", "void_cut"],
+            "metadata": {"source": "cadevolve", "rank": 1},
+            "mixed_value": {"value": 3.5},
+        },
+        {
+            "row_id": "row:b",
+            "score": 2,
+            "tags": ["kernel_face_selector"],
+            "metadata": {"source": "cadevolve", "rank": 2},
+            "mixed_value": {"value": {"nested": True}},
+        },
+    ]
+    path = tmp_path / "rows.parquet"
+
+    assert write_records(path, rows) == 2
+
+    parquet_file = pq.ParquetFile(path)
+    schema_names = parquet_file.schema_arrow.names
+    assert RECORD_JSON_COLUMN not in schema_names
+    assert {"row_id", "score", "tags", "metadata", "mixed_value"}.issubset(schema_names)
+    polars_frame = pl.read_parquet(path)
+    assert RECORD_JSON_COLUMN not in polars_frame.columns
+    assert polars_frame.select(pl.col("score").sum()).item() == 3
+    assert read_records(path) == rows
+    assert list(iter_records(path, batch_size=1)) == rows
+
+
+def test_write_records_parquet_supports_empty_columnar_artifacts(tmp_path: Path) -> None:
+    path = tmp_path / "failure_manifest.parquet"
+
+    assert write_records(path, []) == 0
+
+    schema_names = pq.ParquetFile(path).schema_arrow.names
+    assert RECORD_JSON_COLUMN not in schema_names
+    assert read_records(path) == []
+    assert list(iter_records(path)) == []
+
+
+def test_read_records_keeps_legacy_record_json_parquet_compatibility(tmp_path: Path) -> None:
+    rows = [{"row_id": "legacy:a", "value": {"nested": [1, 2, 3]}}]
+    path = tmp_path / "legacy.parquet"
+    table = pa.table({RECORD_JSON_COLUMN: pa.array([json.dumps(row) for row in rows], type=pa.string())})
+    pq.write_table(table, path)
+
+    assert read_records(path) == rows
+    assert list(iter_records(path)) == rows
 
 
 def test_graph_operation_properties_are_json_safe_for_function_arguments() -> None:
