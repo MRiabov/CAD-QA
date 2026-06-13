@@ -9,13 +9,12 @@ from typing import Any, Callable, TypeVar
 from cad_qa.ontology.nodes import Node, OntologyGraph
 from cad_qa.query.ir import Clause, QueryProgram
 from cad_qa.query.predicate_catalog import (
+    PredicateInstance,
     measurement_bucket_value,
-    metric_compare_predicate,
     measurement_value_predicate,
     merge_sampled_parameters,
     metric_axis,
     measurement_predicate,
-    nodes_matching_metric_compare,
     nodes_matching_measurement_value,
     nodes_matching_related_metric_compare,
     related_metric_compare_predicate,
@@ -27,6 +26,8 @@ GEOMETRY_MARGIN_EPSILON = 1e-6
 REFERENCE_FEATURE_DISTANCE_METRIC = "distance_to_reference_feature_centroid"
 MAX_SYNTHESIZED_RANK = 6
 MAX_REFERENCE_DISTANCE_ANCHORS = 64
+MAX_METRIC_COMPARE_THRESHOLDS = 12
+MAX_RELATED_METRIC_COMPARE_THRESHOLDS = 24
 T = TypeVar("T")
 
 MATERIAL_REGION_METRICS = (
@@ -2246,7 +2247,7 @@ def _viable_extremes(graph: OntologyGraph, spec: ExtremeFamilySpec) -> list[Viab
     viable = _viable_extremes_for_candidates(graph, spec, relation_candidates)
     for compare_metric in spec.metrics:
         for operator, value in _metric_thresholds(graph, relation_candidates, compare_metric):
-            compare = metric_compare_predicate(
+            compare = _metric_compare_predicate_cached(
                 graph,
                 relation_candidates,
                 clause_id=_direct_metric_compare_clause_id(spec),
@@ -2256,7 +2257,7 @@ def _viable_extremes(graph: OntologyGraph, spec: ExtremeFamilySpec) -> list[Viab
             )
             if compare is None:
                 continue
-            narrowed = nodes_matching_metric_compare(
+            narrowed = _nodes_matching_metric_compare_cached(
                 graph,
                 relation_candidates,
                 metric=compare_metric,
@@ -2349,7 +2350,7 @@ def _viable_ranks(graph: OntologyGraph, spec: ExtremeFamilySpec) -> list[ViableE
     viable = _viable_ranks_for_candidates(graph, spec, relation_candidates)
     for compare_metric in spec.metrics:
         for operator, value in _metric_thresholds(graph, relation_candidates, compare_metric):
-            compare = metric_compare_predicate(
+            compare = _metric_compare_predicate_cached(
                 graph,
                 relation_candidates,
                 clause_id=_direct_metric_compare_clause_id(spec),
@@ -2359,7 +2360,7 @@ def _viable_ranks(graph: OntologyGraph, spec: ExtremeFamilySpec) -> list[ViableE
             )
             if compare is None:
                 continue
-            narrowed = nodes_matching_metric_compare(
+            narrowed = _nodes_matching_metric_compare_cached(
                 graph,
                 relation_candidates,
                 metric=compare_metric,
@@ -2449,7 +2450,7 @@ def _query_for_extreme(graph: OntologyGraph, viable: ViableExtreme) -> QueryProg
     relation_candidates = _apply_relation_clause(graph, broad_candidates, spec.relation) if spec.relation is not None else broad_candidates
     compare = None
     if viable.compare_metric and viable.compare_operator and viable.compare_value is not None:
-        compare = metric_compare_predicate(
+        compare = _metric_compare_predicate_cached(
             graph,
             relation_candidates,
             clause_id=_direct_metric_compare_clause_id(spec),
@@ -2459,7 +2460,7 @@ def _query_for_extreme(graph: OntologyGraph, viable: ViableExtreme) -> QueryProg
         )
         if compare is None:
             return None
-        relation_candidates = nodes_matching_metric_compare(
+        relation_candidates = _nodes_matching_metric_compare_cached(
             graph,
             relation_candidates,
             metric=viable.compare_metric,
@@ -2551,7 +2552,7 @@ def _viable_feature_effect_delta_extremes(
     viable: list[ViableFeatureEffectDeltaExtreme] = []
     for compare_metric in spec.metrics:
         for operator in FEATURE_EFFECT_DELTA_METRIC_OPERATORS[compare_metric]:
-            compare = metric_compare_predicate(
+            compare = _metric_compare_predicate_cached(
                 graph,
                 candidates,
                 clause_id=spec.compare_clause_id,
@@ -2561,7 +2562,7 @@ def _viable_feature_effect_delta_extremes(
             )
             if compare is None:
                 continue
-            narrowed = nodes_matching_metric_compare(
+            narrowed = _nodes_matching_metric_compare_cached(
                 graph,
                 candidates,
                 metric=compare_metric,
@@ -2611,7 +2612,7 @@ def _query_for_feature_effect_delta_extreme(
 ) -> QueryProgram | None:
     spec = viable.spec
     candidates = graph.nodes_by_type("feature")
-    compare = metric_compare_predicate(
+    compare = _metric_compare_predicate_cached(
         graph,
         candidates,
         clause_id=spec.compare_clause_id,
@@ -2621,7 +2622,7 @@ def _query_for_feature_effect_delta_extreme(
     )
     if compare is None:
         return None
-    narrowed = nodes_matching_metric_compare(
+    narrowed = _nodes_matching_metric_compare_cached(
         graph,
         candidates,
         metric=viable.compare_metric,
@@ -3283,7 +3284,7 @@ def _viable_relation_extremes(
         )
         for compare_metric in spec.metrics:
             for operator, value in _metric_thresholds(graph, relation_candidates, compare_metric):
-                compare = metric_compare_predicate(
+                compare = _metric_compare_predicate_cached(
                     graph,
                     relation_candidates,
                     clause_id=_relation_metric_compare_clause_id(spec),
@@ -3293,7 +3294,7 @@ def _viable_relation_extremes(
                 )
                 if compare is None:
                     continue
-                narrowed = nodes_matching_metric_compare(
+                narrowed = _nodes_matching_metric_compare_cached(
                     graph,
                     relation_candidates,
                     metric=compare_metric,
@@ -3389,25 +3390,25 @@ def _viable_relation_extremes_for_candidates(
             if spec.selection_mode == "rank"
             else ("argmax", "argmin")
         )
+        scored = _scored_node_ids(graph, metric_candidates, metric)
         for aggregation in aggregations:
             if spec.selection_mode == "rank":
-                for rank in range(2, min(len(metric_candidates), MAX_SYNTHESIZED_RANK) + 1):
-                    if _has_unique_rank(graph, metric_candidates, metric, aggregation, rank):
-                        viable.append(
-                            ViableRelationExtreme(
-                                spec=spec,
-                                relation=relation_name,
-                                metric=metric,
-                                aggregation=aggregation,
-                                candidate_ids=tuple(node.id for node in metric_candidates),
-                                aggregation_rank=rank,
-                                compare_metric=compare_metric,
-                                compare_operator=compare_operator,
-                                compare_value=compare_value,
-                            )
+                for rank in _unique_scored_rank_positions(scored, aggregation):
+                    viable.append(
+                        ViableRelationExtreme(
+                            spec=spec,
+                            relation=relation_name,
+                            metric=metric,
+                            aggregation=aggregation,
+                            candidate_ids=tuple(node.id for node in metric_candidates),
+                            aggregation_rank=rank,
+                            compare_metric=compare_metric,
+                            compare_operator=compare_operator,
+                            compare_value=compare_value,
                         )
+                    )
                 continue
-            if _has_unique_extreme(graph, metric_candidates, metric, aggregation):
+            if _has_unique_scored_extreme(scored, aggregation):
                 viable.append(
                     ViableRelationExtreme(
                         spec=spec,
@@ -3448,7 +3449,7 @@ def _query_for_relation_extreme(graph: OntologyGraph, viable: ViableRelationExtr
     relation_candidates = _apply_relation_clause(graph, base_candidates, viable.relation)
     compare = None
     if viable.compare_metric and viable.compare_operator and viable.compare_value is not None:
-        compare = metric_compare_predicate(
+        compare = _metric_compare_predicate_cached(
             graph,
             relation_candidates,
             clause_id=_relation_metric_compare_clause_id(spec),
@@ -3458,7 +3459,7 @@ def _query_for_relation_extreme(graph: OntologyGraph, viable: ViableRelationExtr
         )
         if compare is None:
             return None
-        relation_candidates = nodes_matching_metric_compare(
+        relation_candidates = _nodes_matching_metric_compare_cached(
             graph,
             relation_candidates,
             metric=viable.compare_metric,
@@ -4084,7 +4085,7 @@ def _related_metric_thresholds(
             thresholds.append(("<", value))
         if any(candidate_value > value for candidate_value in values):
             thresholds.append((">", value))
-    return thresholds[:24]
+    return thresholds[:MAX_RELATED_METRIC_COMPARE_THRESHOLDS]
 
 
 def _metric_thresholds(
@@ -4105,7 +4106,7 @@ def _metric_thresholds(
             thresholds.append(("<", value))
         if any(candidate_value > value for candidate_value in values):
             thresholds.append((">", value))
-    return thresholds[:24]
+    return thresholds[:MAX_METRIC_COMPARE_THRESHOLDS]
 
 
 def _nodes_with_numeric_measurement(graph: OntologyGraph, candidates: list[Node], metric: str) -> list[Node]:
@@ -4340,6 +4341,31 @@ def _has_unique_scored_rank(
     return sum(1 for _, score in scored if abs(score - target) <= GEOMETRY_MARGIN_EPSILON) == 1
 
 
+def _unique_scored_rank_positions(
+    scored: tuple[tuple[float, str], ...],
+    aggregation: str,
+) -> list[int]:
+    if len(scored) < 2:
+        return []
+    descending = aggregation == "rank_desc"
+    ordered = sorted(scored, key=lambda item: (-item[0] if descending else item[0], item[1]))
+    ranks: list[int] = []
+    for rank in range(2, min(len(ordered), MAX_SYNTHESIZED_RANK) + 1):
+        target = ordered[rank - 1][0]
+        previous_tied = rank > 1 and abs(ordered[rank - 2][0] - target) <= GEOMETRY_MARGIN_EPSILON
+        next_tied = rank < len(ordered) and abs(ordered[rank][0] - target) <= GEOMETRY_MARGIN_EPSILON
+        if not previous_tied and not next_tied:
+            ranks.append(rank)
+    return ranks
+
+
+def _has_unique_scored_extreme(scored: tuple[tuple[float, str], ...], aggregation: str) -> bool:
+    if len(scored) < 2:
+        return False
+    scores = sorted((score for score, _ in scored), reverse=aggregation == "argmax")
+    return abs(scores[0] - scores[1]) > GEOMETRY_MARGIN_EPSILON
+
+
 def _rank_nodes(
     graph: OntologyGraph,
     candidates: list[Node],
@@ -4442,6 +4468,82 @@ def _metric_compare_clause_id(target_type: str, fallback_measurement_clause_id: 
     if target_type == "void_region":
         return "has_parameterized_void_region_metric_threshold"
     return f"{fallback_measurement_clause_id}_threshold"
+
+
+def _metric_compare_predicate_cached(
+    graph: OntologyGraph,
+    candidates: list[Node],
+    *,
+    clause_id: str,
+    metric: str,
+    operator: str,
+    value: float,
+) -> PredicateInstance | None:
+    after = _nodes_matching_metric_compare_cached(
+        graph,
+        candidates,
+        metric=metric,
+        operator=operator,
+        value=value,
+    )
+    if len(after) < 2:
+        return None
+    params: dict[str, list[str]] = {
+        "narrowing_predicate_sequence": [f"metric_compare:{metric}:{operator}"],
+        "clause_metric": [metric],
+        "comparison_operator": [operator],
+        "measurement_value_bucket": [f"{metric}:{_value_bucket(value)}"],
+    }
+    axis = metric_axis(metric)
+    if axis is not None:
+        params["clause_axis"] = [axis]
+    return PredicateInstance(
+        id=f"metric_compare:{metric}:{operator}:{_value_bucket(value)}",
+        clause=Clause(
+            id=clause_id,
+            kind="metric_compare",
+            metric=metric,
+            operator=operator,
+            value=value,
+        ),
+        candidate_count_before=len(candidates),
+        candidate_count_after=len(after),
+        sampled_parameters=params,
+    )
+
+
+def _nodes_matching_metric_compare_cached(
+    graph: OntologyGraph,
+    candidates: list[Node],
+    *,
+    metric: str,
+    operator: str,
+    value: float,
+) -> list[Node]:
+    return [
+        node
+        for node in candidates
+        if _numeric_compare(_measurement_value(graph, node.id, metric), operator, value)
+    ]
+
+
+def _numeric_compare(value: Any, operator: str, threshold: float) -> bool:
+    if not isinstance(value, (int, float)):
+        return False
+    actual = float(value)
+    if operator == "<":
+        return actual < threshold
+    if operator == "<=":
+        return actual <= threshold
+    if operator == ">":
+        return actual > threshold
+    if operator == ">=":
+        return actual >= threshold
+    if operator == "==":
+        return abs(actual - threshold) <= GEOMETRY_MARGIN_EPSILON
+    if operator == "!=":
+        return abs(actual - threshold) > GEOMETRY_MARGIN_EPSILON
+    return False
 
 
 def _extreme_strategy(viable: ViableExtreme) -> str:
