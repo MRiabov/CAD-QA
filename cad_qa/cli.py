@@ -82,10 +82,48 @@ from cad_qa.source import (
     cadevolve_tar_source_rows,
     load_sources_jsonl,
     source_audit,
+    source_geometry_feature_tags,
     source_manifest,
     source_record_from_mapping,
 )
 from cad_qa.trace import trace_report, trace_sources_bounded
+
+
+RELEASE_SUPPORT_REQUIREMENTS = {
+    "path_point_families": {
+        "required_node_types": ("path_point",),
+        "required_relation_types": ("point_on_path",),
+        "required_measurement_names": ("coordinate_x", "distance_to_origin"),
+    },
+    "path_segment_families": {
+        "required_node_types": ("path_segment",),
+        "required_relation_types": ("segment_on_path",),
+        "required_measurement_names": ("segment_length", "midpoint_distance_to_origin"),
+    },
+    "kernel_vertex_families": {
+        "required_node_types": ("vertex",),
+        "required_relation_types": ("has_kernel_stable_vertex_id",),
+        "required_measurement_names": ("coordinate_x", "distance_to_origin"),
+    },
+    "void_region_families": {
+        "required_node_types": ("void_region",),
+        "required_relation_types": ("has_kernel_void_region_geometry",),
+        "required_measurement_names": ("volume", "centroid_x"),
+    },
+    "face_spatial_relation_chain_families": {
+        "required_node_types": ("face",),
+        "required_relation_types": ("has_kernel_stable_face_id",),
+        "any_relation_types": (
+            "adjacent_to",
+            "coplanar_with",
+            "intersects",
+            "opposite_to",
+            "parallel_to",
+            "perpendicular_to",
+        ),
+        "required_measurement_names": ("face_area",),
+    },
+}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -129,6 +167,22 @@ def build_parser() -> argparse.ArgumentParser:
     source_from_cadevolve_tar.add_argument("--path-contains", action="append", dest="path_contains")
     source_from_cadevolve_tar.add_argument("--code-contains", action="append", dest="code_contains")
     source_from_cadevolve_tar.add_argument("--max-member-bytes", type=int, default=1_000_000)
+    source_from_cadevolve_tar.add_argument(
+        "--stratify-geometry-tags",
+        action="store_true",
+        help="Fill limited exports with examples of rare geometry-bearing source tags before archive-order fill.",
+    )
+    source_from_cadevolve_tar.add_argument(
+        "--min-per-geometry-tag",
+        type=int,
+        default=0,
+        help="Minimum selected examples per geometry tag when --stratify-geometry-tags is set. Defaults to 1.",
+    )
+    source_from_cadevolve_tar.add_argument(
+        "--complete-stratified-scan",
+        action="store_true",
+        help="Scan the full archive for complete tag counts instead of stopping once requested strata are satisfied.",
+    )
     source_from_cadevolve_tar.set_defaults(func=_cmd_sources_from_cadevolve_tar)
 
     graph = subparsers.add_parser("graph")
@@ -402,6 +456,9 @@ def _cmd_sources_from_cadevolve_tar(args: argparse.Namespace) -> dict[str, Any]:
         path_contains=args.path_contains,
         code_contains=args.code_contains,
         max_member_bytes=args.max_member_bytes,
+        stratify_by_tags=bool(args.stratify_geometry_tags),
+        min_per_tag=args.min_per_geometry_tag,
+        complete_stratified_scan=bool(args.complete_stratified_scan),
     )
     write_jsonl(args.out, rows)
     manifest = source_manifest([source_record_from_mapping(row) for row in rows])
@@ -439,9 +496,60 @@ def _cmd_graph_build(args: argparse.Namespace) -> dict[str, Any]:
         "relation_type_counts": dict(sorted(relation_type_counts.items())),
         "measurement_scope_counts": dict(sorted(measurement_scope_counts.items())),
         "measurement_name_counts": dict(sorted(measurement_name_counts.items())),
+        "source_geometry_feature_tag_counts": dict(
+            sorted(
+                Counter(
+                    tag
+                    for source in sources
+                    for tag in (
+                        source.metadata.get("source_feature_tags")
+                        if source.metadata and isinstance(source.metadata.get("source_feature_tags"), list)
+                        else source_geometry_feature_tags(source.source_code)
+                    )
+                ).items()
+            )
+        ),
+        "release_support_coverage": _release_support_coverage(graphs),
     }
+    report["missing_release_support"] = [
+        name
+        for name, coverage in report["release_support_coverage"].items()
+        if coverage["graph_count"] == 0
+    ]
     write_json(args.out / "graph_report.json", report)
     return report
+
+
+def _release_support_coverage(graphs: list[OntologyGraph]) -> dict[str, dict[str, Any]]:
+    coverage: dict[str, dict[str, Any]] = {}
+    total = len(graphs)
+    for name, requirements in RELEASE_SUPPORT_REQUIREMENTS.items():
+        graph_ids = [
+            graph.graph_id
+            for graph in graphs
+            if _graph_satisfies_release_support(graph, requirements)
+        ]
+        coverage[name] = {
+            "graph_count": len(graph_ids),
+            "graph_share": (len(graph_ids) / total) if total else 0.0,
+            "example_graph_ids": graph_ids[:10],
+            "requirements": requirements,
+        }
+    return coverage
+
+
+def _graph_satisfies_release_support(graph: OntologyGraph, requirements: dict[str, Any]) -> bool:
+    node_types = {node.type for node in graph.nodes}
+    relation_types = {relation.type for relation in graph.relations}
+    measurement_names = {measurement.name for measurement in graph.measurements}
+    if not set(requirements.get("required_node_types", ())).issubset(node_types):
+        return False
+    if not set(requirements.get("required_relation_types", ())).issubset(relation_types):
+        return False
+    if not set(requirements.get("required_measurement_names", ())).issubset(measurement_names):
+        return False
+    any_relation_types = set(requirements.get("any_relation_types", ()))
+    return not any_relation_types or bool(any_relation_types & relation_types)
 
 
 def _trace_records_by_source(path: Path | None) -> dict[str, dict[str, Any]]:
@@ -505,6 +613,7 @@ def _cmd_query_synthesize(args: argparse.Namespace) -> dict[str, Any]:
     release_families = _release_family_ids(args.family_manifest) if not args.include_review_only else None
     records: list[dict[str, Any]] = []
     failures: list[dict[str, Any]] = []
+    family_counts: Counter[str] = Counter()
     skipped_review_only_count = 0
     for graph in graphs:
         for query in synthesize_graph_hop_queries(graph, max_per_family=args.max_per_family):
@@ -520,10 +629,12 @@ def _cmd_query_synthesize(args: argparse.Namespace) -> dict[str, Any]:
             }
             if resolution.verifier_status == "resolved":
                 records.append(record)
+                family_counts[family_id] += 1
             else:
                 failures.append(
                     {
                         "graph_id": graph.graph_id,
+                        "family_id": family_id,
                         "query_id": query.query_id,
                         "reason": resolution.candidate_trace.failure_reason,
                         "candidate_trace": resolution.candidate_trace,
@@ -540,7 +651,14 @@ def _cmd_query_synthesize(args: argparse.Namespace) -> dict[str, Any]:
         "max_per_family": max(1, args.max_per_family),
         "release_families_only": release_families is not None,
         "query_record_format": "compact_graph_sidecar_parquet_v1",
+        "family_counts": dict(sorted(family_counts.items())),
     }
+    if release_families is not None:
+        report["zero_release_families"] = [
+            family_id
+            for family_id in sorted(release_families)
+            if family_counts.get(family_id, 0) == 0
+        ]
     write_json(args.out / "query_report.json", report)
     return report
 

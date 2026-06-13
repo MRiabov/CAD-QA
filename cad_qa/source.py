@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 import hashlib
+import re
 import tarfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -22,6 +23,22 @@ PROTECTED_SOURCE_GROUP_KEYS = (
 REPORTED_SOURCE_PROVENANCE_KEYS = (
     "generator_id",
     "generator",
+)
+GEOMETRY_SOURCE_FEATURE_TAGS = (
+    "path_curve",
+    "kernel_vertex_selector",
+    "kernel_face_selector",
+    "kernel_edge_selector",
+    "void_cut",
+    "profile_polyline",
+)
+_CADQUERY_METHOD_TAGS = (
+    ("path_curve", ("spline", "splineApprox", "parametricCurve")),
+    ("kernel_vertex_selector", ("vertices",)),
+    ("kernel_face_selector", ("faces",)),
+    ("kernel_edge_selector", ("edges",)),
+    ("void_cut", ("cut", "cutThruAll", "cutBlind", "hole", "cboreHole", "cskHole")),
+    ("profile_polyline", ("polyline",)),
 )
 
 
@@ -98,6 +115,9 @@ def cadevolve_tar_source_rows(
     path_contains: list[str] | None = None,
     code_contains: list[str] | None = None,
     max_member_bytes: int = 1_000_000,
+    stratify_by_tags: bool = False,
+    min_per_tag: int = 0,
+    complete_stratified_scan: bool = False,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Extract normalized CadQuery source rows from a CADEvolve tar archive."""
 
@@ -105,10 +125,12 @@ def cadevolve_tar_source_rows(
     path_needles = tuple(value.lower() for value in path_contains or [] if value)
     code_needles = tuple(value.lower() for value in code_contains or [] if value)
     rows: list[dict[str, Any]] = []
+    candidate_rows: list[dict[str, Any]] = []
     stats = {
         "archive_path": str(tar_path),
         "member_count": 0,
         "python_member_count": 0,
+        "candidate_count": 0,
         "included_count": 0,
         "skipped_non_python_count": 0,
         "skipped_prefix_count": 0,
@@ -121,11 +143,16 @@ def cadevolve_tar_source_rows(
         "path_prefixes": list(prefixes),
         "path_contains": list(path_needles),
         "code_contains": list(code_needles),
+        "selection_policy": "geometry_tag_stratified" if stratify_by_tags else "archive_order",
+        "candidate_scan_exhausted": True,
+        "complete_stratified_scan": complete_stratified_scan,
+        "geometry_feature_tags": list(GEOMETRY_SOURCE_FEATURE_TAGS),
+        "min_per_geometry_tag": max(1, min_per_tag) if stratify_by_tags else min_per_tag,
     }
     with tarfile.open(tar_path, "r:*") as archive:
         for member in archive:
             stats["member_count"] += 1
-            if limit is not None and len(rows) >= limit:
+            if not stratify_by_tags and limit is not None and len(rows) >= limit:
                 break
             if not member.isfile():
                 continue
@@ -156,25 +183,59 @@ def cadevolve_tar_source_rows(
             source_hash = "sha256:" + hashlib.sha256(source_code.encode("utf-8")).hexdigest()
             source_id = "src_" + short_hash(f"{member_path}\n{source_hash}")
             source_subtree, source_collection = _cadevolve_path_parts(member_path)
-            rows.append(
-                {
-                    "source_id": source_id,
-                    "normalized_code": source_code,
-                    "normalized_archive_member_path": member_path,
-                    "source": "cadevolve",
-                    "source_subtree": source_subtree,
-                    "source_collection": source_collection,
-                    "path_family": source_family_from_path(member_path),
-                    "generator_id": "_".join(
-                        part.lower().replace("-", "_")
-                        for part in ("cadevolve", source_subtree, source_collection)
-                        if part
-                    ),
-                    "hashes": {"normalized_source_code_hash": source_hash},
-                }
-            )
+            row = {
+                "source_id": source_id,
+                "normalized_code": source_code,
+                "normalized_archive_member_path": member_path,
+                "source": "cadevolve",
+                "source_subtree": source_subtree,
+                "source_collection": source_collection,
+                "path_family": source_family_from_path(member_path),
+                "source_feature_tags": source_geometry_feature_tags(source_code),
+                "generator_id": "_".join(
+                    part.lower().replace("-", "_")
+                    for part in ("cadevolve", source_subtree, source_collection)
+                    if part
+                ),
+                "hashes": {"normalized_source_code_hash": source_hash},
+            }
+            if stratify_by_tags:
+                candidate_rows.append(row)
+                if (
+                    not complete_stratified_scan
+                    and _stratified_selection_ready(
+                        candidate_rows,
+                        limit=limit,
+                        min_per_tag=max(1, min_per_tag),
+                    )
+                ):
+                    stats["candidate_scan_exhausted"] = False
+                    break
+            else:
+                rows.append(row)
+    if stratify_by_tags:
+        rows = _select_stratified_source_rows(
+            candidate_rows,
+            limit=limit,
+            min_per_tag=max(1, min_per_tag),
+        )
+    else:
+        candidate_rows = rows
+    stats["candidate_count"] = len(candidate_rows)
     stats["included_count"] = len(rows)
+    stats["candidate_geometry_feature_tag_counts"] = _source_feature_tag_counts(candidate_rows)
+    stats["selected_geometry_feature_tag_counts"] = _source_feature_tag_counts(rows)
     return rows, stats
+
+
+def source_geometry_feature_tags(source_code: str) -> list[str]:
+    """Return source-level geometry hints used to keep rare release families reachable."""
+
+    tags: list[str] = []
+    for tag, methods in _CADQUERY_METHOD_TAGS:
+        if any(_calls_method(source_code, method) for method in methods):
+            tags.append(tag)
+    return tags
 
 
 def source_to_dict(source: SourceRecord) -> dict[str, Any]:
@@ -222,6 +283,77 @@ def _archive_path_matches_prefix(path: str, prefix: str) -> bool:
 def _looks_like_cadquery_source(source_code: str) -> bool:
     lowered = source_code.lower()
     return "cadquery" in lowered or "cq." in source_code
+
+
+def _calls_method(source_code: str, method: str) -> bool:
+    return re.search(rf"\.{re.escape(method)}\s*\(", source_code, flags=re.IGNORECASE) is not None
+
+
+def _source_feature_tag_counts(rows: list[dict[str, Any]]) -> dict[str, int]:
+    counts = Counter(
+        tag
+        for row in rows
+        for tag in row.get("source_feature_tags", [])
+        if isinstance(tag, str)
+    )
+    return {tag: counts.get(tag, 0) for tag in GEOMETRY_SOURCE_FEATURE_TAGS}
+
+
+def _select_stratified_source_rows(
+    rows: list[dict[str, Any]],
+    *,
+    limit: int | None,
+    min_per_tag: int,
+) -> list[dict[str, Any]]:
+    if limit is None:
+        return list(rows)
+    selected: list[dict[str, Any]] = []
+    selected_ids: set[str] = set()
+    selected_tag_counts: Counter[str] = Counter()
+
+    def add_row(row: dict[str, Any]) -> bool:
+        if len(selected) >= limit:
+            return False
+        source_id = str(row.get("source_id", ""))
+        if source_id in selected_ids:
+            return False
+        selected.append(row)
+        selected_ids.add(source_id)
+        selected_tag_counts.update(
+            tag
+            for tag in row.get("source_feature_tags", [])
+            if isinstance(tag, str)
+        )
+        return True
+
+    for tag in GEOMETRY_SOURCE_FEATURE_TAGS:
+        if len(selected) >= limit:
+            break
+        for row in rows:
+            if len(selected) >= limit or selected_tag_counts[tag] >= min_per_tag:
+                break
+            if tag in row.get("source_feature_tags", []):
+                add_row(row)
+
+    for row in rows:
+        if len(selected) >= limit:
+            break
+        add_row(row)
+    return selected
+
+
+def _stratified_selection_ready(
+    rows: list[dict[str, Any]],
+    *,
+    limit: int | None,
+    min_per_tag: int,
+) -> bool:
+    if limit is None or len(rows) < limit:
+        return False
+    tag_counts = _source_feature_tag_counts(rows)
+    if any(tag_counts[tag] < min_per_tag for tag in GEOMETRY_SOURCE_FEATURE_TAGS):
+        return False
+    return len(_select_stratified_source_rows(rows, limit=limit, min_per_tag=min_per_tag)) >= limit
 
 
 def source_manifest(sources: list[SourceRecord]) -> dict[str, Any]:

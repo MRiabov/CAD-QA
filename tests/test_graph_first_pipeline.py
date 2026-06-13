@@ -87,6 +87,7 @@ from cad_qa.source import (
     load_sources_jsonl,
     source_audit,
     source_family_from_path,
+    source_geometry_feature_tags,
     source_manifest,
     source_record_from_mapping,
 )
@@ -398,6 +399,102 @@ def test_cadevolve_tar_import_filters_by_path_and_code_substrings(tmp_path: Path
     assert len(load_sources_jsonl(out)) == 1
 
 
+def test_cadevolve_tar_import_can_stratify_rare_geometry_tags(tmp_path: Path) -> None:
+    tar_path = tmp_path / "cadevolve.tar"
+    with tarfile.open(tar_path, "w") as archive:
+        for name, text in {
+            "CADEvolve-P/CADEvolve-P-core/plain_a.py": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane('XY').box(10, 10, 2)\n"
+            ),
+            "CADEvolve-P/CADEvolve-P-core/plain_b.py": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane('XY').sphere(1)\n"
+            ),
+            "CADEvolve-P/CADEvolve-P-core/late_path.py": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane('XY').spline([(0, 0), (1, 1), (2, 0)])\n"
+            ),
+            "CADEvolve-P/CADEvolve-P-core/late_vertices.py": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane('XY').box(1, 1, 1).vertices()\n"
+            ),
+        }.items():
+            payload = text.encode("utf-8")
+            info = tarfile.TarInfo(name)
+            info.size = len(payload)
+            archive.addfile(info, io.BytesIO(payload))
+
+    archive_order_rows, _ = cadevolve_tar_source_rows(tar_path, limit=2)
+    stratified_rows, report = cadevolve_tar_source_rows(
+        tar_path,
+        limit=2,
+        stratify_by_tags=True,
+    )
+
+    assert [row["normalized_archive_member_path"] for row in archive_order_rows] == [
+        "CADEvolve-P/CADEvolve-P-core/plain_a.py",
+        "CADEvolve-P/CADEvolve-P-core/plain_b.py",
+    ]
+    assert {row["normalized_archive_member_path"] for row in stratified_rows} == {
+        "CADEvolve-P/CADEvolve-P-core/late_path.py",
+        "CADEvolve-P/CADEvolve-P-core/late_vertices.py",
+    }
+    assert report["selection_policy"] == "geometry_tag_stratified"
+    assert report["candidate_count"] == 4
+    assert report["candidate_scan_exhausted"]
+    assert report["selected_geometry_feature_tag_counts"]["path_curve"] == 1
+    assert report["selected_geometry_feature_tag_counts"]["kernel_vertex_selector"] == 1
+    assert source_geometry_feature_tags("cq.Workplane('XY').polyline([(0, 0), (1, 1)])") == [
+        "profile_polyline"
+    ]
+
+    complete_tag_tar_path = tmp_path / "complete_tags.tar"
+    with tarfile.open(complete_tag_tar_path, "w") as archive:
+        for name, text in {
+            "CADEvolve-P/CADEvolve-P-core/path.py": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane('XY').spline([(0, 0), (1, 1), (2, 0)])\n"
+            ),
+            "CADEvolve-P/CADEvolve-P-core/vertices.py": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane('XY').box(1, 1, 1).vertices()\n"
+            ),
+            "CADEvolve-P/CADEvolve-P-core/faces.py": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane('XY').box(1, 1, 1).faces('>Z')\n"
+            ),
+            "CADEvolve-P/CADEvolve-P-core/edges.py": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane('XY').box(1, 1, 1).edges()\n"
+            ),
+            "CADEvolve-P/CADEvolve-P-core/cut.py": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane('XY').box(2, 2, 2).faces('>Z').workplane().circle(1).cutThruAll()\n"
+            ),
+            "CADEvolve-P/CADEvolve-P-core/polyline.py": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane('XY').polyline([(0, 0), (1, 0), (1, 1)])\n"
+            ),
+            "CADEvolve-P/CADEvolve-P-core/trailing.py": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane('XY').box(10, 10, 10)\n"
+            ),
+        }.items():
+            payload = text.encode("utf-8")
+            info = tarfile.TarInfo(name)
+            info.size = len(payload)
+            archive.addfile(info, io.BytesIO(payload))
+
+    _, complete_tag_report = cadevolve_tar_source_rows(
+        complete_tag_tar_path,
+        limit=6,
+        stratify_by_tags=True,
+    )
+    assert not complete_tag_report["candidate_scan_exhausted"]
+    assert complete_tag_report["candidate_count"] == 6
+
+
 def test_graph_build_report_exposes_type_coverage(tmp_path: Path) -> None:
     sources_path = tmp_path / "sources.jsonl"
     graph_dir = tmp_path / "graph"
@@ -407,6 +504,15 @@ def test_graph_build_report_exposes_type_coverage(tmp_path: Path) -> None:
             {
                 "source_id": "src_graph_report",
                 "normalized_code": "import cadquery as cq\npart = cq.Workplane('XY').box(1, 2, 3)\n",
+            },
+            {
+                "source_id": "src_path_report",
+                "normalized_code": (
+                    "import cadquery as cq\n"
+                    "def hel(t):\n"
+                    "    return (t, t, t)\n"
+                    "part = cq.Workplane('XY').parametricCurve(hel)\n"
+                ),
             }
         ],
     )
@@ -414,12 +520,17 @@ def test_graph_build_report_exposes_type_coverage(tmp_path: Path) -> None:
     assert cli_main(["graph", "build", "--sources-jsonl", str(sources_path), "--out", str(graph_dir)]) == 0
     report = json.loads((graph_dir / "graph_report.json").read_text(encoding="utf-8"))
 
-    assert report["graph_count"] == 1
-    assert report["node_type_counts"]["source"] == 1
+    assert report["graph_count"] == 2
+    assert report["node_type_counts"]["source"] == 2
     assert report["node_type_counts"]["feature"] >= 1
+    assert report["node_type_counts"]["path_point"] >= 1
     assert report["relation_type_counts"]["created_by"] >= 1
     assert report["measurement_scope_counts"]["entity_geometry"] >= 1
     assert "origin_z" in report["measurement_name_counts"]
+    assert report["source_geometry_feature_tag_counts"]["path_curve"] == 1
+    assert report["release_support_coverage"]["path_point_families"]["graph_count"] == 1
+    assert report["release_support_coverage"]["path_segment_families"]["graph_count"] == 1
+    assert "kernel_vertex_families" in report["missing_release_support"]
 
 
 def test_trace_worker_executes_cadquery_source_or_reports_unavailable(tmp_path: Path) -> None:
@@ -2741,6 +2852,8 @@ def test_synthesis_can_emit_multiple_deterministic_variants_per_family(tmp_path:
     assert report["release_families_only"]
     assert report["skipped_review_only_count"] == 0
     assert report["query_record_format"] == "compact_graph_sidecar_parquet_v1"
+    assert report["family_counts"]["parameterized_kernel_face_extreme"] == 2
+    assert "parameterized_kernel_face_extreme" not in report["zero_release_families"]
 
     dataset_out = tmp_path / "dataset"
     assert cli_main(["dataset", "materialize", "--queries", str(out / "queries.parquet"), "--out", str(dataset_out)]) == 0
