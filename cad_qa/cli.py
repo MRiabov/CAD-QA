@@ -79,7 +79,6 @@ from cad_qa.query.resolver import resolve_query, smoke_queries
 from cad_qa.query.synthesis import synthesize_graph_hop_queries
 from cad_qa.query.synthesis_selfcheck import write_synthesis_selfcheck
 from cad_qa.source import (
-    cadevolve_directory_source_rows,
     cadevolve_directory_scan_stats,
     cadevolve_source_table_rows,
     cadevolve_tar_source_rows,
@@ -232,6 +231,12 @@ def build_parser() -> argparse.ArgumentParser:
     build.add_argument("--limit", type=int)
     build.add_argument("--out", type=Path, required=True)
     build.add_argument("--traces-jsonl", type=Path)
+    build.add_argument(
+        "--shard-size",
+        type=int,
+        default=0,
+        help="Write graph artifacts in parquet shards of this many graphs instead of one in-memory file.",
+    )
     build.set_defaults(func=_cmd_graph_build)
 
     trace = subparsers.add_parser("trace")
@@ -606,23 +611,34 @@ def _require_parquet_path(path: Path, label: str) -> None:
 def _cmd_graph_build(args: argparse.Namespace) -> dict[str, Any]:
     sources = load_sources_jsonl(args.sources_jsonl, limit=args.limit)
     traces_by_source = _trace_records_by_source(args.traces_jsonl)
-    graphs = [build_graph(source, trace=traces_by_source.get(source.source_id)) for source in sources]
     args.out.mkdir(parents=True, exist_ok=True)
-    write_records(record_artifact_path(args.out, "graphs"), graphs)
-    node_type_counts = Counter(node.type for graph in graphs for node in graph.nodes)
-    relation_type_counts = Counter(relation.type for graph in graphs for relation in graph.relations)
-    measurement_scope_counts = Counter(measurement.scope for graph in graphs for measurement in graph.measurements)
-    measurement_name_counts = Counter(measurement.name for graph in graphs for measurement in graph.measurements)
+    report_builder = _GraphBuildReport()
+    shard_size = max(0, int(args.shard_size or 0))
+    if shard_size:
+        _write_graph_shards(
+            args.out,
+            (
+                build_graph(source, trace=traces_by_source.get(source.source_id))
+                for source in sources
+            ),
+            shard_size=shard_size,
+            report_builder=report_builder,
+        )
+    else:
+        graphs = [build_graph(source, trace=traces_by_source.get(source.source_id)) for source in sources]
+        write_records(record_artifact_path(args.out, "graphs"), graphs)
+        for graph in graphs:
+            report_builder.add_graph(graph)
     report = {
-        "graph_count": len(graphs),
-        "node_count": sum(len(graph.nodes) for graph in graphs),
-        "relation_count": sum(len(graph.relations) for graph in graphs),
-        "measurement_count": sum(len(graph.measurements) for graph in graphs),
-        "diagnostic_count": sum(len(graph.diagnostics) for graph in graphs),
-        "node_type_counts": dict(sorted(node_type_counts.items())),
-        "relation_type_counts": dict(sorted(relation_type_counts.items())),
-        "measurement_scope_counts": dict(sorted(measurement_scope_counts.items())),
-        "measurement_name_counts": dict(sorted(measurement_name_counts.items())),
+        "graph_count": report_builder.graph_count,
+        "node_count": report_builder.node_count,
+        "relation_count": report_builder.relation_count,
+        "measurement_count": report_builder.measurement_count,
+        "diagnostic_count": report_builder.diagnostic_count,
+        "node_type_counts": dict(sorted(report_builder.node_type_counts.items())),
+        "relation_type_counts": dict(sorted(report_builder.relation_type_counts.items())),
+        "measurement_scope_counts": dict(sorted(report_builder.measurement_scope_counts.items())),
+        "measurement_name_counts": dict(sorted(report_builder.measurement_name_counts.items())),
         "source_geometry_feature_tag_counts": dict(
             sorted(
                 Counter(
@@ -636,8 +652,11 @@ def _cmd_graph_build(args: argparse.Namespace) -> dict[str, Any]:
                 ).items()
             )
         ),
-        "release_support_coverage": _release_support_coverage(graphs),
+        "release_support_coverage": report_builder.release_support_coverage(),
     }
+    if shard_size:
+        report["graph_artifact_sharded"] = True
+        report["graph_shard_size"] = shard_size
     report["missing_release_support"] = [
         name
         for name, coverage in report["release_support_coverage"].items()
@@ -645,6 +664,74 @@ def _cmd_graph_build(args: argparse.Namespace) -> dict[str, Any]:
     ]
     write_json(args.out / "graph_report.json", report)
     return report
+
+
+class _GraphBuildReport:
+    def __init__(self) -> None:
+        self.graph_count = 0
+        self.node_count = 0
+        self.relation_count = 0
+        self.measurement_count = 0
+        self.diagnostic_count = 0
+        self.node_type_counts: Counter[str] = Counter()
+        self.relation_type_counts: Counter[str] = Counter()
+        self.measurement_scope_counts: Counter[str] = Counter()
+        self.measurement_name_counts: Counter[str] = Counter()
+        self.release_support_counts: Counter[str] = Counter()
+        self.release_support_examples: dict[str, list[str]] = {name: [] for name in RELEASE_SUPPORT_REQUIREMENTS}
+
+    def add_graph(self, graph: OntologyGraph) -> None:
+        self.graph_count += 1
+        self.node_count += len(graph.nodes)
+        self.relation_count += len(graph.relations)
+        self.measurement_count += len(graph.measurements)
+        self.diagnostic_count += len(graph.diagnostics)
+        self.node_type_counts.update(node.type for node in graph.nodes)
+        self.relation_type_counts.update(relation.type for relation in graph.relations)
+        self.measurement_scope_counts.update(measurement.scope for measurement in graph.measurements)
+        self.measurement_name_counts.update(measurement.name for measurement in graph.measurements)
+        for name, requirements in RELEASE_SUPPORT_REQUIREMENTS.items():
+            if _graph_satisfies_release_support(graph, requirements):
+                self.release_support_counts[name] += 1
+                examples = self.release_support_examples[name]
+                if len(examples) < 10:
+                    examples.append(graph.graph_id)
+
+    def release_support_coverage(self) -> dict[str, dict[str, Any]]:
+        coverage: dict[str, dict[str, Any]] = {}
+        for name, requirements in RELEASE_SUPPORT_REQUIREMENTS.items():
+            graph_count = self.release_support_counts[name]
+            coverage[name] = {
+                "graph_count": graph_count,
+                "graph_share": (graph_count / self.graph_count) if self.graph_count else 0.0,
+                "example_graph_ids": self.release_support_examples[name],
+                "requirements": requirements,
+            }
+        return coverage
+
+
+def _write_graph_shards(
+    out_dir: Path,
+    graphs: Any,
+    *,
+    shard_size: int,
+    report_builder: _GraphBuildReport,
+) -> None:
+    shard_dir = out_dir / "graphs"
+    shard_dir.mkdir(parents=True, exist_ok=True)
+    for stale in shard_dir.glob("part-*.parquet"):
+        stale.unlink()
+    batch: list[OntologyGraph] = []
+    shard_index = 0
+    for graph in graphs:
+        report_builder.add_graph(graph)
+        batch.append(graph)
+        if len(batch) >= shard_size:
+            write_records(shard_dir / f"part-{shard_index:05d}.parquet", batch)
+            batch = []
+            shard_index += 1
+    if batch:
+        write_records(shard_dir / f"part-{shard_index:05d}.parquet", batch)
 
 
 def _release_support_coverage(graphs: list[OntologyGraph]) -> dict[str, dict[str, Any]]:
@@ -862,6 +949,8 @@ def _materialize_graph_lookup(args: argparse.Namespace) -> dict[str, OntologyGra
         sidecar = existing_record_artifact_path(args.queries.parent, "graphs")
         if sidecar.exists():
             graph_path = sidecar
+        elif _graph_shard_paths(args.queries.parent):
+            graph_path = args.queries.parent
     if graph_path is None:
         return {}
     return {graph.graph_id: graph for graph in _load_graphs(graph_path)}
@@ -1338,8 +1427,23 @@ def _cmd_experiment_paper_results(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _load_graphs(path: Path) -> list[OntologyGraph]:
-    graph_path = existing_record_artifact_path(path, "graphs") if path.is_dir() else path
-    return [graph_from_dict(row) for row in read_records(graph_path)]
+    return [graph_from_dict(row) for graph_path in _graph_record_paths(path) for row in read_records(graph_path)]
+
+
+def _graph_record_paths(path: Path) -> list[Path]:
+    if not path.is_dir():
+        return [path]
+    graph_path = existing_record_artifact_path(path, "graphs")
+    if graph_path.exists():
+        return [graph_path]
+    shard_paths = _graph_shard_paths(path)
+    if shard_paths:
+        return shard_paths
+    return [graph_path]
+
+
+def _graph_shard_paths(path: Path) -> list[Path]:
+    return sorted((path / "graphs").glob("part-*.parquet"))
 
 
 if __name__ == "__main__":

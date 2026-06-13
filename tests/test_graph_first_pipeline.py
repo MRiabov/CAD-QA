@@ -714,6 +714,66 @@ def test_graph_build_report_exposes_type_coverage(tmp_path: Path) -> None:
     assert "kernel_vertex_families" in report["missing_release_support"]
 
 
+def test_graph_build_can_write_and_load_sharded_graph_artifacts(tmp_path: Path) -> None:
+    sources_path = tmp_path / "sources.jsonl"
+    graph_dir = tmp_path / "graph"
+    query_dir = tmp_path / "query"
+    write_jsonl(
+        sources_path,
+        [
+            {
+                "source_id": f"src_shard_{index}",
+                "normalized_code": (
+                    "import cadquery as cq\n"
+                    "def helix(t):\n"
+                    f"    return (t, t + {index}, t * 2)\n"
+                    "path = cq.Workplane('XY').parametricCurve(helix)\n"
+                ),
+            }
+            for index in range(3)
+        ],
+    )
+
+    assert (
+        cli_main(
+            [
+                "graph",
+                "build",
+                "--sources-jsonl",
+                str(sources_path),
+                "--out",
+                str(graph_dir),
+                "--shard-size",
+                "1",
+            ]
+        )
+        == 0
+    )
+    report = json.loads((graph_dir / "graph_report.json").read_text(encoding="utf-8"))
+
+    assert report["graph_count"] == 3
+    assert report["graph_artifact_sharded"] is True
+    assert len(sorted((graph_dir / "graphs").glob("part-*.parquet"))) == 3
+    assert not (graph_dir / "graphs.parquet").exists()
+    assert (
+        cli_main(
+            [
+                "query",
+                "synthesize",
+                "--graph",
+                str(graph_dir),
+                "--out",
+                str(query_dir),
+                "--max-per-family",
+                "1",
+            ]
+        )
+        == 0
+    )
+    query_report = json.loads((query_dir / "query_report.json").read_text(encoding="utf-8"))
+    assert query_report["query_count"] > 0
+
+
 def test_trace_worker_executes_cadquery_source_or_reports_unavailable(tmp_path: Path) -> None:
     source = source_record_from_mapping({"source_id": "src_trace", "normalized_code": SOURCE})
     trace = trace_source(source, timeout_seconds=5.0)
