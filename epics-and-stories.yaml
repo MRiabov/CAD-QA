@@ -657,6 +657,9 @@ epics:
     acceptance_criteria:
       - Benchmark-release artifacts contain at least 10,000 release rows and at
         least 10,000 default SFT rows.
+      - Benchmark-release artifacts use distinct CAD model source IDs for at
+        least 10% of release rows; a 10,000-row release requires at least 1,000
+        distinct CAD models and a 90,000-row release requires at least 9,000.
       - Default SFT rows are at least 99% geometry-critical and 0% syntax-only
         calibration.
       - Benchmark rows are at least 95% geometry-hop-positive and at least 90%
@@ -758,3 +761,17 @@ epics:
             and `template_id`, while `generator_id` and `generator` remain
             reported provenance fields that do not merge unrelated source
             families into one split group.
+      - id: "15.6"
+        title: Benchmark-release gate for distinct CAD model coverage
+        status: planned
+        acceptance_criteria:
+          - Users cannot release a large dataset drawn from a tiny subset of CAD
+            models.
+          - Benchmark-release artifacts use distinct CAD model source IDs for
+            at least 10% of release rows.
+        technical_definition_of_done:
+          - The release verifier reports distinct CAD model/source-id counts and
+            required minimums, with examples such as 1,000 models for 10,000
+            rows and 9,000 models for 90,000 rows.
+          - The report distinguishes distinct model/source IDs from broad
+            provenance groups, path families, and protected split groups.

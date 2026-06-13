@@ -12,10 +12,13 @@ Before public paper or dataset release, verify:
 - Row counts are reported by hop slice, relation family, measurement scope, and
   split.
 - Benchmark-release artifacts meet the numeric tier in `specs/dataset-spec.md`:
-  at least 10,000 release rows, at least 10,000 default SFT rows, at least 95%
+  at least 10,000 release rows, distinct CAD model source IDs for at least 10%
+  of release rows, at least 10,000 default SFT rows, at least 95%
   geometry-hop-positive rows, at least 90% `logical_hop_count >= 3` rows, at
   least 99% geometry-critical default SFT rows, 0% syntax-only default SFT rows,
   and no more than 2% syntax-only benchmark rows unless calibration is separated.
+  This means at least 1,000 distinct CAD models for 10,000 rows and at least
+  9,000 distinct CAD models for 90,000 rows.
 - The benchmark-release release report has `valid_for_release=true` and no
   blocking gates, and the matching default SFT report passes
   `--release-tier benchmark-release`.

@@ -147,6 +147,7 @@ described as benchmark-release ready.
 | Gate | Benchmark-release requirement |
 | --- | --- |
 | Release rows | At least 10,000 public/private release rows. |
+| Distinct CAD model coverage | At least 10% as many distinct CAD model source IDs as release rows; for example, 10,000 rows require at least 1,000 distinct CAD models, and 90,000 rows require at least 9,000. |
 | Default SFT rows | At least 10,000 rows after default geometry-critical filtering. |
 | Generated task-family count/share | At least 10 generated release families; every generated release family is between 1% and 10% of exported rows. |
 | Zero-row intended families | 0 intended release families with zero rows, unless explicitly marked `review_only` or `calibration`. |
@@ -170,8 +171,14 @@ described as benchmark-release ready.
 These are blocking functional requirements for the benchmark-release tier, not
 aspirational diagnostics. A missing measurement family, collapsed parameter
 dimension, stale preview, absent test-evidence reference, insufficient row count,
-or failed split audit means the artifact remains a development artifact even if
-its rows are individually valid.
+insufficient distinct CAD model coverage, or failed split audit means the artifact
+remains a development artifact even if its rows are individually valid.
+
+Distinct CAD model coverage is counted over normalized source/model identifiers
+used by exported public/private rows. It is intentionally separate from broad
+provenance families and protected split groups: a large release must not be drawn
+from a small repeated subset of CAD models, because that makes overfitting to
+model-specific geometry and topology much more likely.
 
 The executable contract for these numbers is `BENCHMARK_RELEASE_PROFILE` in
 `cad_qa/dataset/release_report.py`. The default-SFT syntax-only requirement is a

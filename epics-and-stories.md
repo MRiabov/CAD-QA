@@ -63,6 +63,7 @@ prose.
 | Gate | Benchmark-release requirement |
 | --- | --- |
 | Release rows | At least 10,000 public/private release rows. |
+| Distinct CAD model coverage | At least 10% as many distinct CAD model source IDs as release rows; 10,000 rows require 1,000 models, and 90,000 rows require 9,000. |
 | Default SFT rows | At least 10,000 rows after default geometry-critical filtering. |
 | Generated task-family count/share | At least 10 generated release families; every generated release family is between 1% and 10%. |
 | Zero-row intended families | 0 intended release families with zero rows unless `review_only` or `calibration`. |
@@ -480,6 +481,9 @@ Acceptance criteria:
 
 - Benchmark-release artifacts contain at least 10,000 release rows and at least
   10,000 default SFT rows.
+- Benchmark-release artifacts use distinct CAD model source IDs for at least
+  10% of release rows, so 10,000 rows require at least 1,000 distinct CAD
+  models and 90,000 rows require at least 9,000.
 - Default SFT rows are at least 99% geometry-critical and 0% syntax-only
   calibration.
 - Benchmark rows are at least 95% geometry-hop-positive and at least 90%
@@ -509,6 +513,7 @@ Technical definition of done:
 | 15.3 Benchmark-release gates for row counts, geometry-hop coverage, geometry-critical dominance, and syntax-only caps | `implemented` | Users cannot label small or shortcut-heavy artifacts benchmark-release ready. | Verifier blocks artifacts below 10,000 release/default-SFT rows, below 95% geometry-hop-positive, below 99% default-SFT geometry-critical, above 0% default-SFT syntax-only through the explicit `default_sft_syntax_only_cap` stop gate, or above 2% benchmark syntax-only without separate calibration. |
 | 15.4 Benchmark-release gates for value-bearing, cross-feature, prompt-template, answer-diversity, and candidate-breadth targets | `implemented` | Users get datasets with enough concrete measurement reasoning, cross-feature reasoning, prompt variety, answer diversity, and distractors. | Verifier blocks artifacts outside 15%-30% value-bearing, outside 5%-15% cross-feature, below 20 prompt templates, above 5% prompt-template share, below 1,000 source-scoped answer identities for graph-local entity answers, below 8 entropy bits, or below candidate-breadth targets; release export can deterministically cap overrepresented value-bearing, cross-feature, prompt-family, prompt-template, low-hop, and under-floor prompt-family slices while preserving at least one row for every generated release family, enough value-bearing/cross-feature rows for feasible minimum-share gates, the configured benchmark release row floor when the pre-balance candidate pool can satisfy it, and source-scoped answer diversity through same-family replacement of repeated-answer rows. Release reports every balance-cap exclusion plus the pre-balance family capacity that explains whether a 10k/1%-10% benchmark export is possible from the candidate rows. |
 | 15.5 Benchmark-release gates for parameter balance, intended-family coverage, split quality, and preview/test evidence | `implemented` | Users can trust that parameterized families, intended-family coverage, splits, and manual review evidence are not collapsed or mathematically impossible to balance. | Verifier blocks train-only split collapse, fewer than 3 protected groups per split, collapsed sampled parameters, zero-row intended families, intended release-family counts outside the feasible 10-100 range for the 1%-10% family-share band, missing/stale/insufficient preview evidence, and missing family test-evidence refs for the benchmark-release tier; release export writes preview Markdown and machine-readable preview evidence for its own exported rows before verifier execution; release reports expose when value-bearing-only or cross-feature-only release-family counts make the value/cross caps infeasible under the 1% family floor; split grouping keeps true leakage groups together while reporting broad generator provenance without collapsing an entire corpus; graph build reports expose node, relation, measurement-scope, and measurement-name coverage so source/extraction gaps are visible; the default manifest is inside the basic family-count feasible range by keeping explicit fixed-reference variants review-only and replacing target-specific reference-distance release families with canonical sampled-reference-entity families where target type is a sampled parameter. |
+| 15.6 Benchmark-release gate for distinct CAD model coverage | `planned` | Users cannot release a large row set drawn from a tiny CAD model subset. | Verifier reports and blocks artifacts whose distinct CAD model source-ID count is below 10% of release row count, such as fewer than 1,000 models for 10,000 rows or fewer than 9,000 models for 90,000 rows; the report distinguishes distinct source/model IDs from broad provenance families, path subtrees, and protected split groups. |
 
 ## Manual Review Requirements Before Marking Implemented
 
