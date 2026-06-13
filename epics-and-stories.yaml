@@ -78,6 +78,7 @@ release_tiers:
       default_sft_report_passes_same_tier: true
     numeric_gates:
       min_release_rows: 10000
+      min_distinct_cad_model_share: 0.10
       min_default_sft_rows: 10000
       max_default_sft_syntax_only_share: 0.0
       min_prompt_family_count: 10
@@ -763,7 +764,7 @@ epics:
             families into one split group.
       - id: "15.6"
         title: Benchmark-release gate for distinct CAD model coverage
-        status: planned
+        status: implemented
         acceptance_criteria:
           - Users cannot release a large dataset drawn from a tiny subset of CAD
             models.

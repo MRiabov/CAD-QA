@@ -8598,6 +8598,49 @@ def test_release_balance_counts_entity_answers_in_source_context() -> None:
     assert report["answer_entropy_bits"] == 1.0
 
 
+def test_benchmark_release_blocks_low_distinct_cad_model_coverage() -> None:
+    rows = [
+        {
+            "row_id": f"row:src_shared:{index}:family_{index % 10}",
+            "source_id": "src_shared",
+            "prompt": f"geometry prompt {index}",
+            "prompt_template_id": f"template_{index}",
+            "gold_answer": f"entity:{index}",
+            "answer_format": "entity_id",
+            "difficulty_bucket": "hard",
+            "logical_hop_count": 4,
+            "geometry_hop_count": 4,
+            "static_hop_count": 0,
+            "relation_families": ["measurement"],
+            "measurement_scopes": ["feature"],
+            "verifier_status": "resolved",
+            "release_ready": True,
+            "query_program": {
+                "query_id": f"graph:src_shared:q{index}:family_{index % 10}",
+                "aggregation_metric": "volume",
+                "clauses": [{"kind": "has_measurement", "metric": "volume", "value": float(index)}],
+            },
+            "candidate_trace": {
+                "steps": [
+                    {"step": "initial", "candidate_ids": [f"entity:{candidate}" for candidate in range(4)]},
+                    {"step": "final", "before": ["entity:0", "entity:1"], "after": [f"entity:{index}"]},
+                ],
+                "final_candidates": [f"entity:{index}"],
+            },
+        }
+        for index in range(11)
+    ]
+
+    balance = release_balance_report(rows, release_tier="benchmark-release")
+    verifier = release_verifier_report(rows, release_tier="benchmark-release", family_manifest=None)
+
+    assert balance["distinct_cad_model_count"] == 1
+    assert balance["minimum_distinct_cad_model_count"] == 2
+    assert not balance["passes_distinct_cad_model_coverage"]
+    assert not verifier["stop_gates"]["distinct_cad_model_coverage"]
+    assert "distinct_cad_model_coverage" in verifier["blocking_gates"]
+
+
 def test_group_share_cap_prefers_source_scoped_answer_diversity() -> None:
     rows = []
     for index in range(10):
@@ -8925,6 +8968,10 @@ def test_benchmark_release_tier_applies_stricter_numeric_gates() -> None:
     benchmark = release_balance_report(rows, release_tier="benchmark-release")
     assert benchmark["release_tier"] == "benchmark-release"
     assert benchmark["minimum_prompt_family_count"] == 10
+    assert benchmark["minimum_distinct_cad_model_share"] == 0.10
+    assert benchmark["minimum_distinct_cad_model_count"] == 10
+    assert benchmark["distinct_cad_model_count"] == 100
+    assert benchmark["passes_distinct_cad_model_coverage"]
     assert benchmark["minimum_prompt_template_count"] == 20
     assert benchmark["maximum_prompt_template_share"] == 0.05
     assert benchmark["minimum_unique_answer_count"] == 1000
@@ -8961,6 +9008,7 @@ def test_benchmark_release_profile_matches_dataset_spec_numeric_contract() -> No
 
     assert epics["canonical_release_tier"] == "benchmark-release"
     assert profile.min_release_rows == 10_000
+    assert profile.min_distinct_cad_model_share == 0.10
     assert profile.min_default_sft_rows == 10_000
     assert profile.max_default_sft_syntax_only_share == 0.0
     assert profile.min_prompt_family_count == 10
@@ -8999,6 +9047,7 @@ def test_benchmark_release_profile_matches_dataset_spec_numeric_contract() -> No
 
     for field in [
         "min_release_rows",
+        "min_distinct_cad_model_share",
         "min_default_sft_rows",
         "max_default_sft_syntax_only_share",
         "min_prompt_family_count",
@@ -9031,6 +9080,7 @@ def test_benchmark_release_profile_matches_dataset_spec_numeric_contract() -> No
 
     for required_fragment in [
         "At least 10,000 public/private release rows.",
+        "At least 10% as many distinct CAD model source IDs as release rows",
         "At least 10,000 rows after default geometry-critical filtering.",
         "0%.",
         "At least 10 generated release families",
@@ -11315,6 +11365,7 @@ def test_release_verifier_report_stop_gates_and_cli(tmp_path: Path) -> None:
     assert "prompt_family_balance" in report["stop_gates"]
     assert "prompt_template_balance" in report["stop_gates"]
     assert "answer_entropy" in report["stop_gates"]
+    assert "distinct_cad_model_coverage" in report["stop_gates"]
     assert "geometry_hop_coverage" in report["stop_gates"]
     assert "syntax_only_calibration_cap" in report["stop_gates"]
     assert "intended_family_coverage" in report["stop_gates"]
@@ -11351,6 +11402,7 @@ def test_release_verifier_report_stop_gates_and_cli(tmp_path: Path) -> None:
     assert benchmark_report["release_gate_profile"]["min_release_rows"] == 10000
     assert benchmark_report["release_gate_profile"]["max_default_sft_syntax_only_share"] == 0.0
     assert "release_row_count" in benchmark_report["blocking_gates"]
+    assert benchmark_report["release_gate_profile"]["min_distinct_cad_model_share"] == 0.10
     assert "default_sft_row_count" in benchmark_report["blocking_gates"]
     assert "benchmark_split_group_coverage" in benchmark_report["blocking_gates"]
     assert "intended_family_coverage" in benchmark_report["blocking_gates"]

@@ -38,6 +38,7 @@ class ReleaseGateProfile:
     name: str
     min_applicable_rows: int
     min_release_rows: int | None
+    min_distinct_cad_model_share: float | None
     min_default_sft_rows: int | None
     max_default_sft_syntax_only_share: float
     min_prompt_family_count: int
@@ -72,6 +73,7 @@ SMOKE_RELEASE_PROFILE = ReleaseGateProfile(
     name="smoke",
     min_applicable_rows=20,
     min_release_rows=None,
+    min_distinct_cad_model_share=None,
     min_default_sft_rows=None,
     max_default_sft_syntax_only_share=0.0,
     min_prompt_family_count=4,
@@ -108,6 +110,7 @@ BENCHMARK_RELEASE_PROFILE = ReleaseGateProfile(
     name="benchmark-release",
     min_applicable_rows=1,
     min_release_rows=10_000,
+    min_distinct_cad_model_share=0.10,
     min_default_sft_rows=10_000,
     max_default_sft_syntax_only_share=0.0,
     min_prompt_family_count=10,
@@ -235,6 +238,7 @@ def release_verifier_report(
             profile.min_default_sft_rows,
         ),
         "default_sft_syntax_only_cap": training_readiness["passes_syntax_only_training_cap"],
+        "distinct_cad_model_coverage": release_balance["passes_distinct_cad_model_coverage"],
         "prompt_family_balance": release_balance["passes_prompt_family_balance"],
         "prompt_template_balance": release_balance["passes_prompt_template_balance"],
         "answer_entropy": release_balance["passes_answer_entropy"],
@@ -294,6 +298,13 @@ def release_balance_report(
     prompt_family_counts = Counter(prompt_family(row) for row in rows)
     prompt_template_counts = Counter(_prompt_template_id(row) for row in rows)
     answer_counts = Counter(_answer_identity_key(row) for row in rows)
+    distinct_cad_model_ids = {model_id for row in rows if (model_id := _cad_model_identity_key(row))}
+    distinct_cad_model_count = len(distinct_cad_model_ids)
+    minimum_distinct_cad_model_count = (
+        _minimum_distinct_cad_model_count(row_count, profile.min_distinct_cad_model_share)
+        if profile.min_distinct_cad_model_share is not None
+        else None
+    )
     geometry_hop_positive_count = sum(1 for row in rows if int(row.get("geometry_hop_count") or 0) > 0)
     logical_hop_ge_3_count = sum(1 for row in rows if int(row.get("logical_hop_count") or 0) >= 3)
     geometry_critical_count = sum(1 for row in rows if is_geometry_critical_row(row))
@@ -341,6 +352,15 @@ def release_balance_report(
         "release_gate_profile": release_gate_profile_report(profile),
         "applicable": applicable,
         "minimum_applicable_rows": profile.min_applicable_rows,
+        "distinct_cad_model_count": distinct_cad_model_count,
+        "minimum_distinct_cad_model_count": minimum_distinct_cad_model_count,
+        "minimum_distinct_cad_model_share": profile.min_distinct_cad_model_share,
+        "cad_model_identity_scope": "source_metadata cad_model_id/source_model_id/model_id, else source_id",
+        "passes_distinct_cad_model_coverage": (
+            None
+            if not applicable or minimum_distinct_cad_model_count is None
+            else distinct_cad_model_count >= minimum_distinct_cad_model_count
+        ),
         "prompt_family_counts": dict(sorted(prompt_family_counts.items())),
         "prompt_family_count": prompt_family_count,
         "minimum_prompt_family_count": profile.min_prompt_family_count,
@@ -645,6 +665,7 @@ def release_gate_profile_report(profile: ReleaseGateProfile) -> dict[str, Any]:
         "name": profile.name,
         "min_applicable_rows": profile.min_applicable_rows,
         "min_release_rows": profile.min_release_rows,
+        "min_distinct_cad_model_share": profile.min_distinct_cad_model_share,
         "min_default_sft_rows": profile.min_default_sft_rows,
         "max_default_sft_syntax_only_share": profile.max_default_sft_syntax_only_share,
         "min_prompt_family_count": profile.min_prompt_family_count,
@@ -728,6 +749,10 @@ def _passes_minimum_count(count: int, minimum: int | None) -> bool:
     return count >= minimum
 
 
+def _minimum_distinct_cad_model_count(row_count: int, minimum_share: float) -> int:
+    return math.ceil(row_count * minimum_share)
+
+
 def _passes_split_group_coverage(split_quality: dict[str, Any], minimum: int | None) -> bool:
     if minimum is None:
         return True
@@ -748,6 +773,18 @@ def _answer_identity_key(row: dict[str, Any]) -> str:
             default=str,
         )
     return json.dumps(answer, sort_keys=True, default=str)
+
+
+def _cad_model_identity_key(row: dict[str, Any]) -> str:
+    metadata = row.get("source_metadata")
+    if not isinstance(metadata, dict):
+        metadata = {}
+    for source in (metadata, row):
+        for key in ("cad_model_id", "source_model_id", "model_id", "source_id"):
+            value = source.get(key)
+            if value:
+                return str(value)
+    return ""
 
 
 def _prompt_template_id(row: dict[str, Any]) -> str:
