@@ -3,7 +3,7 @@
 The active smoke workflow is graph-first:
 
 ```bash
-rtk uv run cadqa sources from-cadevolve-tar --tar data/cadevolve.tar --out runs/cadevolve_sources.jsonl --path-prefix CADEvolve-P/ShapeNet-P --limit 100
+rtk uv run cadqa sources from-cadevolve-tar --tar data/cadevolve.tar --out runs/cadevolve_sources.jsonl --path-prefix CADEvolve-P/ShapeNet-P --limit 100 --stratify-geometry-tags
 rtk uv run cadqa sources inspect --sources-jsonl data/cadqa_cadevolve_rc_10/sources.jsonl
 rtk uv run cadqa graph build --sources-jsonl data/cadqa_cadevolve_rc_10/sources.jsonl --limit 10 --out runs/graph_smoke
 rtk uv run cadqa query smoke --graph runs/graph_smoke/graphs.jsonl --out runs/query_smoke
@@ -23,12 +23,19 @@ rtk uv run cadqa training export-sft --rows data/cadqa_graph_smoke/rows.jsonl --
 The first command is optional when a prepared `sources.jsonl` already exists.
 Use it when starting from the local CADEvolve archive; it writes normalized
 source JSONL plus manifest/report sidecars before the usual graph build.
+Keep `--stratify-geometry-tags` on limited source exports so rare path,
+selector, and void-bearing sources are not silently skipped by archive order.
+Use `--complete-stratified-scan` only when the sidecar report needs full
+archive-wide tag counts.
 
 Use `cadqa query smoke` for small plumbing checks that still include calibration
 and review rows. Use `cadqa query synthesize` for release-oriented graph-hop
 generation: it emits only manifest release families by default, can emit
 multiple deterministic viable variants per family, and is the path to use when
-checking sampled-parameter coverage.
+checking sampled-parameter coverage. Review `graph_report.json` for
+`missing_release_support` before synthesizing a full dataset; zero support there
+means the corresponding release families cannot be recovered by regeneration
+without changing the selected sources.
 
 The SFT command above now exports only geometry-critical rows by default and
 excludes syntax-only calibration, noncritical, and quarantined rows. A real
