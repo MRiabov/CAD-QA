@@ -3,7 +3,9 @@
 The active smoke workflow is graph-first:
 
 ```bash
-rtk uv run cadqa sources cache-cadevolve-tar --tar data/cadevolve.tar --out data/cadevolve_sources.parquet
+mkdir -p data/cadevolve_extracted
+tar -xf data/cadevolve.tar -C data/cadevolve_extracted
+rtk uv run cadqa sources cache-cadevolve-dir --root data/cadevolve_extracted --out data/cadevolve_sources.parquet
 rtk uv run cadqa sources from-cadevolve-cache --cache data/cadevolve_sources.parquet --out runs/cadevolve_sources.parquet --path-prefix CADEvolve-P/ShapeNet-P --limit 100 --stratify-geometry-tags
 rtk uv run cadqa sources inspect --sources-jsonl runs/cadevolve_sources.parquet
 rtk uv run cadqa graph build --sources-jsonl runs/cadevolve_sources.parquet --limit 10 --out runs/graph_smoke
@@ -21,11 +23,12 @@ rtk uv run cadqa evaluation baseline --rows data/cadqa_graph_smoke/rows.jsonl --
 rtk uv run cadqa training export-sft --rows data/cadqa_graph_smoke/rows.jsonl --out runs/sft_smoke
 ```
 
-The tar-to-parquet cache command is optional when `data/cadevolve_sources.parquet`
-already exists. Use it once when starting from the local CADEvolve archive; after
-that, derive limited source slices from the parquet cache instead of rescanning
-the tar. Keep `--stratify-geometry-tags` on limited source exports so rare path,
-selector, and void-bearing sources are not silently skipped by table order.
+The extraction and directory-to-parquet cache commands are optional when
+`data/cadevolve_extracted/` and `data/cadevolve_sources.parquet` already exist.
+Use them once when starting from the local CADEvolve archive; after that, derive
+limited source slices from the parquet cache instead of rescanning the tar. Keep
+`--stratify-geometry-tags` on limited source exports so rare path, selector, and
+void-bearing sources are not silently skipped by table order.
 
 Use `cadqa query smoke` for small plumbing checks that still include calibration
 and review rows. Use `cadqa query synthesize` for release-oriented graph-hop

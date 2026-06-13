@@ -568,6 +568,42 @@ def test_cadevolve_tar_cache_and_cached_selection_are_parquet_only(tmp_path: Pat
     ) == 1
 
 
+def test_cadevolve_directory_cache_writes_parquet(tmp_path: Path) -> None:
+    root = tmp_path / "extracted"
+    source_dir = root / "CADEvolve-P" / "CADEvolve-P-core"
+    source_dir.mkdir(parents=True)
+    (source_dir / "plain.py").write_text(
+        "import cadquery as cq\nresult = cq.Workplane('XY').box(10, 10, 2)\n",
+        encoding="utf-8",
+    )
+    (source_dir / "path.py").write_text(
+        "import cadquery as cq\nresult = cq.Workplane('XY').spline([(0, 0), (1, 1), (2, 0)])\n",
+        encoding="utf-8",
+    )
+    (source_dir / "notes.txt").write_text("ignore me\n", encoding="utf-8")
+
+    cache = tmp_path / "cadevolve_sources.parquet"
+    assert cli_main(
+        [
+            "sources",
+            "cache-cadevolve-dir",
+            "--root",
+            str(root),
+            "--out",
+            str(cache),
+        ]
+    ) == 0
+    rows = read_records(cache)
+    assert [row["normalized_archive_member_path"] for row in rows] == [
+        "CADEvolve-P/CADEvolve-P-core/path.py",
+        "CADEvolve-P/CADEvolve-P-core/plain.py",
+    ]
+    report = json.loads(cache.with_suffix(".report.json").read_text(encoding="utf-8"))
+    assert report["file_count"] == 3
+    assert report["python_file_count"] == 2
+    assert report["selected_geometry_feature_tag_counts"]["path_curve"] == 1
+
+
 def test_graph_build_report_exposes_type_coverage(tmp_path: Path) -> None:
     sources_path = tmp_path / "sources.jsonl"
     graph_dir = tmp_path / "graph"

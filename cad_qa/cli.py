@@ -64,6 +64,7 @@ from cad_qa.io import (
     record_artifact_path,
     write_json,
     write_jsonl,
+    write_parquet_records_batched,
     write_records,
 )
 from cad_qa.ontology import build_graph
@@ -79,8 +80,11 @@ from cad_qa.query.resolver import resolve_query, smoke_queries
 from cad_qa.query.synthesis import synthesize_graph_hop_queries
 from cad_qa.query.synthesis_selfcheck import write_synthesis_selfcheck
 from cad_qa.source import (
+    cadevolve_directory_source_rows,
+    cadevolve_directory_scan_stats,
     cadevolve_source_table_rows,
     cadevolve_tar_source_rows,
+    iter_cadevolve_directory_source_rows,
     load_sources_jsonl,
     source_audit,
     source_geometry_feature_tags,
@@ -193,6 +197,14 @@ def build_parser() -> argparse.ArgumentParser:
     source_cache_cadevolve_tar.add_argument("--code-contains", action="append", dest="code_contains")
     source_cache_cadevolve_tar.add_argument("--max-member-bytes", type=int, default=1_000_000)
     source_cache_cadevolve_tar.set_defaults(func=_cmd_sources_cache_cadevolve_tar)
+    source_cache_cadevolve_dir = sources_sub.add_parser("cache-cadevolve-dir")
+    source_cache_cadevolve_dir.add_argument("--root", type=Path, required=True)
+    source_cache_cadevolve_dir.add_argument("--out", type=Path, required=True)
+    source_cache_cadevolve_dir.add_argument("--path-prefix", action="append", dest="path_prefixes")
+    source_cache_cadevolve_dir.add_argument("--path-contains", action="append", dest="path_contains")
+    source_cache_cadevolve_dir.add_argument("--code-contains", action="append", dest="code_contains")
+    source_cache_cadevolve_dir.add_argument("--max-member-bytes", type=int, default=1_000_000)
+    source_cache_cadevolve_dir.set_defaults(func=_cmd_sources_cache_cadevolve_dir)
     source_from_cadevolve_cache = sources_sub.add_parser("from-cadevolve-cache")
     source_from_cadevolve_cache.add_argument("--cache", type=Path, required=True)
     source_from_cadevolve_cache.add_argument("--out", type=Path, required=True)
@@ -525,6 +537,36 @@ def _cmd_sources_cache_cadevolve_tar(args: argparse.Namespace) -> dict[str, Any]
         "python_member_count": report["python_member_count"],
         "skipped_non_cadquery_count": report["skipped_non_cadquery_count"],
         "manifest": str(args.out.with_suffix(".manifest.json")),
+        "report": str(args.out.with_suffix(".report.json")),
+    }
+
+
+def _cmd_sources_cache_cadevolve_dir(args: argparse.Namespace) -> dict[str, Any]:
+    _require_parquet_path(args.out, "--out")
+    report = cadevolve_directory_scan_stats(
+        args.root,
+        path_prefixes=args.path_prefixes,
+        path_contains=args.path_contains,
+        code_contains=args.code_contains,
+        max_member_bytes=args.max_member_bytes,
+    )
+    rows = iter_cadevolve_directory_source_rows(
+        args.root,
+        stats=report,
+        path_prefixes=args.path_prefixes,
+        path_contains=args.path_contains,
+        code_contains=args.code_contains,
+        max_member_bytes=args.max_member_bytes,
+    )
+    row_count = write_parquet_records_batched(args.out, rows)
+    report["included_count"] = row_count
+    write_json(args.out.with_suffix(".report.json"), report)
+    return {
+        "out": str(args.out),
+        "source_count": row_count,
+        "file_count": report["file_count"],
+        "python_file_count": report["python_file_count"],
+        "skipped_non_cadquery_count": report["skipped_non_cadquery_count"],
         "report": str(args.out.with_suffix(".report.json")),
     }
 

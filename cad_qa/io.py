@@ -57,6 +57,22 @@ def read_parquet_records(path: Path) -> list[dict[str, Any]]:
     ]
 
 
+def iter_parquet_records(path: Path, *, batch_size: int = 1000):
+    if not path.exists():
+        raise FileNotFoundError(path)
+    parquet_file = pq.ParquetFile(path)
+    if RECORD_JSON_COLUMN not in parquet_file.schema.names:
+        for batch in parquet_file.iter_batches(batch_size=batch_size):
+            for row in batch.to_pylist():
+                yield dict(row)
+        return
+    for batch in parquet_file.iter_batches(batch_size=batch_size, columns=[RECORD_JSON_COLUMN]):
+        column = batch.column(0)
+        for value in column.to_pylist():
+            if isinstance(value, str) and value.strip():
+                yield json.loads(value)
+
+
 def write_parquet_records(path: Path, rows: Iterable[Any]) -> int:
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = [json.dumps(to_jsonable(row), sort_keys=True) for row in rows]
@@ -65,11 +81,50 @@ def write_parquet_records(path: Path, rows: Iterable[Any]) -> int:
     return len(payload)
 
 
+def write_parquet_records_batched(path: Path, rows: Iterable[Any], *, batch_size: int = 1000) -> int:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    writer: pq.ParquetWriter | None = None
+    batch: list[str] = []
+    count = 0
+
+    def flush() -> None:
+        nonlocal batch, count, writer
+        if not batch:
+            return
+        table = pa.table({RECORD_JSON_COLUMN: pa.array(batch, type=pa.string())})
+        if writer is None:
+            writer = pq.ParquetWriter(path, table.schema, compression="zstd")
+        writer.write_table(table)
+        count += len(batch)
+        batch = []
+
+    try:
+        for row in rows:
+            batch.append(json.dumps(to_jsonable(row), sort_keys=True))
+            if len(batch) >= batch_size:
+                flush()
+        flush()
+    finally:
+        if writer is not None:
+            writer.close()
+    return count
+
+
 def read_records(path: Path) -> list[dict[str, Any]]:
     if path.suffix == ".parquet":
         return read_parquet_records(path)
     if path.suffix == ".jsonl":
         return read_jsonl(path)
+    raise ValueError(f"unsupported record artifact format: {path}")
+
+
+def iter_records(path: Path, *, batch_size: int = 1000):
+    if path.suffix == ".parquet":
+        yield from iter_parquet_records(path, batch_size=batch_size)
+        return
+    if path.suffix == ".jsonl":
+        yield from read_jsonl(path)
+        return
     raise ValueError(f"unsupported record artifact format: {path}")
 
 
