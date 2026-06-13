@@ -339,6 +339,7 @@ def _execute_source_trace(
         "math": math,
     }
     snapshots: list[dict[str, Any]] = []
+    operation_effects: list[dict[str, Any]] = []
     selector_results: list[dict[str, Any]] = []
     operation_index = 0
     selector_index = 0
@@ -349,7 +350,7 @@ def _execute_source_trace(
         progress(
             {
                 "snapshots": list(snapshots),
-                "operation_effects": _snapshot_effects(snapshots),
+                "operation_effects": list(operation_effects),
                 "selector_results": list(selector_results),
             }
         )
@@ -357,6 +358,8 @@ def _execute_source_trace(
     def capture_statement(statement: ast.stmt) -> None:
         nonlocal operation_index, selector_index
         before = set(namespace)
+        previous_snapshots = _latest_snapshots_by_target(snapshots)
+        operation_bases = _assigned_operation_bases(statement)
         selector_observations = _selector_results_for_statement(
             statement,
             namespace,
@@ -390,6 +393,17 @@ def _execute_source_trace(
             if snapshot is None:
                 continue
             snapshots.append(snapshot)
+            base_target = operation_bases.get(target)
+            before_snapshot = previous_snapshots.get(base_target or target)
+            if before_snapshot is not None:
+                effect = _snapshot_delta_effect(
+                    before_snapshot,
+                    snapshot,
+                    len(operation_effects),
+                    evidence="cadquery_assignment_snapshot_delta",
+                )
+                if effect is not None:
+                    operation_effects.append(effect)
             operation_index += 1
         publish_progress()
 
@@ -417,7 +431,6 @@ def _execute_source_trace(
         raise CadQueryTraceError("missing_result", "no measurable CadQuery result was produced")
     if final_snapshot.get("step") != "final":
         snapshots.append({**final_snapshot, "step": "final"})
-    operation_effects = _snapshot_effects(snapshots)
     return {"snapshots": snapshots, "operation_effects": operation_effects, "selector_results": selector_results}
 
 
@@ -590,6 +603,32 @@ def _assigned_names(statement: ast.stmt, namespace: dict[str, Any], before: set[
     return ordered
 
 
+def _assigned_operation_bases(statement: ast.stmt) -> dict[str, str]:
+    if isinstance(statement, ast.Assign) and len(statement.targets) == 1:
+        base = _call_base_name(statement.value)
+        if base is None:
+            return {}
+        return {target: base for target in _target_names(statement.targets[0])}
+    if isinstance(statement, ast.AnnAssign):
+        base = _call_base_name(statement.value) if statement.value is not None else None
+        if base is None:
+            return {}
+        return {target: base for target in _target_names(statement.target)}
+    return {}
+
+
+def _call_base_name(expr: ast.AST) -> str | None:
+    if isinstance(expr, ast.Call):
+        if isinstance(expr.func, ast.Attribute):
+            return _call_base_name(expr.func.value)
+        return None
+    if isinstance(expr, ast.Attribute):
+        return _call_base_name(expr.value)
+    if isinstance(expr, ast.Name):
+        return expr.id
+    return None
+
+
 def _target_names(target: ast.AST) -> list[str]:
     if isinstance(target, ast.Name):
         return [target.id]
@@ -651,20 +690,50 @@ def _snapshot_effects(snapshots: list[dict[str, Any]]) -> list[dict[str, Any]]:
     effects: list[dict[str, Any]] = []
     measured = [snapshot for snapshot in snapshots if snapshot.get("volume") is not None]
     for index, (before, after) in enumerate(zip(measured, measured[1:])):
-        effects.append(
-            {
-                "effect_index": index,
-                "from_target": before.get("target"),
-                "to_target": after.get("target"),
-                "source_line": after.get("source_line"),
-                "signed_volume_delta": float(after["volume"]) - float(before["volume"]),
-                "bbox_delta": _bbox_delta(before.get("bbox"), after.get("bbox")),
-                "centroid_delta": _vector_delta(before.get("centroid"), after.get("centroid")),
-                "topology_delta": _topology_delta(before.get("topology"), after.get("topology")),
-                "evidence": "cadquery_assignment_snapshot_delta",
-            }
+        effect = _snapshot_delta_effect(
+            before,
+            after,
+            index,
+            evidence="cadquery_assignment_snapshot_delta",
         )
+        if effect is not None:
+            effects.append(effect)
     return effects
+
+
+def _latest_snapshots_by_target(snapshots: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    latest: dict[str, dict[str, Any]] = {}
+    for snapshot in snapshots:
+        target = snapshot.get("target")
+        if isinstance(target, str) and snapshot.get("volume") is not None:
+            latest[target] = snapshot
+    return latest
+
+
+def _snapshot_delta_effect(
+    before: dict[str, Any],
+    after: dict[str, Any],
+    effect_index: int,
+    *,
+    evidence: str,
+) -> dict[str, Any] | None:
+    before_volume = before.get("volume")
+    after_volume = after.get("volume")
+    if not isinstance(before_volume, (int, float)) or not isinstance(after_volume, (int, float)):
+        return None
+    if not math.isfinite(float(before_volume)) or not math.isfinite(float(after_volume)):
+        return None
+    return {
+        "effect_index": effect_index,
+        "from_target": before.get("target"),
+        "to_target": after.get("target"),
+        "source_line": after.get("source_line"),
+        "signed_volume_delta": float(after_volume) - float(before_volume),
+        "bbox_delta": _bbox_delta(before.get("bbox"), after.get("bbox")),
+        "centroid_delta": _vector_delta(before.get("centroid"), after.get("centroid")),
+        "topology_delta": _topology_delta(before.get("topology"), after.get("topology")),
+        "evidence": evidence,
+    }
 
 
 def _bbox_delta(before: Any, after: Any) -> dict[str, list[float | None]]:

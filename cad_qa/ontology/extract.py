@@ -1150,6 +1150,8 @@ class _Extractor:
 
     def _attach_trace_feature_effect(self, feature_id: str, target: str, record: OperationRecord) -> None:
         effect = self._trace_effect_for_target(target, record, consume=False)
+        if record.operation.startswith("cut"):
+            effect = self._trace_base_result_effect(target, record) or effect
         if effect is None:
             return
         for name in ["signed_volume_delta", "bbox_delta", "topology_delta", "effect_index"]:
@@ -1281,6 +1283,21 @@ class _Extractor:
                         "to_target": effect.get("to_target"),
                         "source_line": effect.get("source_line"),
                     }
+        base_result_effect = self._trace_base_result_effect(target, record)
+        if base_result_effect is not None:
+            signed_delta = base_result_effect.get("signed_volume_delta")
+            if isinstance(signed_delta, (int, float)) and math.isfinite(float(signed_delta)):
+                if (is_cut and signed_delta < 0) or (is_additive and signed_delta > 0):
+                    return {
+                        "signed_volume_delta": float(signed_delta),
+                        "bbox_delta": base_result_effect.get("bbox_delta"),
+                        "topology_delta": base_result_effect.get("topology_delta"),
+                        "scalar_feature_effect": _scalar_effect_measurements(base_result_effect),
+                        "evidence": base_result_effect.get("evidence", "cadquery_base_result_snapshot_delta"),
+                        "from_target": base_result_effect.get("from_target"),
+                        "to_target": base_result_effect.get("to_target"),
+                        "source_line": base_result_effect.get("source_line"),
+                    }
         if not is_additive:
             return None
         snapshot = self._trace_snapshot_for_target(target, record)
@@ -1410,6 +1427,25 @@ class _Extractor:
     def _trace_snapshot_for_target(self, target: str, record: OperationRecord) -> dict[str, Any] | None:
         snapshots = self.trace_snapshots_by_target.get(target, [])
         return _best_trace_item(snapshots, record)
+
+    def _trace_base_result_effect(self, target: str, record: OperationRecord) -> dict[str, Any] | None:
+        if not isinstance(record.base, str) or record.base == target:
+            return None
+        result_snapshot = self._trace_snapshot_for_target(target, record)
+        if result_snapshot is None:
+            return None
+        base_snapshot = _latest_prior_trace_snapshot(
+            self.trace_snapshots_by_target.get(record.base, []),
+            result_snapshot,
+            record,
+        )
+        if base_snapshot is None:
+            return None
+        return _trace_snapshot_delta_effect(
+            base_snapshot,
+            result_snapshot,
+            evidence="cadquery_base_result_snapshot_delta",
+        )
 
     def _trace_effect_for_target(self, target: str, record: OperationRecord, *, consume: bool = True) -> dict[str, Any] | None:
         effects = self.trace_effects_by_target.get(target, [])
@@ -1741,7 +1777,11 @@ def _trace_selectors_by_line(trace: dict[str, Any] | None) -> dict[int, list[dic
 
 
 def _trace_has_usable_geometry(trace: dict[str, Any] | None) -> bool:
-    return bool(trace and trace.get("execution_status") in {"ok", "partial"})
+    if not trace:
+        return False
+    if trace.get("execution_status") in {"ok", "partial"}:
+        return True
+    return bool(trace.get("snapshots") or trace.get("operation_effects") or trace.get("selector_results"))
 
 
 def _trace_operation_nodes_by_feature_id(trace: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -1794,6 +1834,106 @@ def _best_trace_item(items: list[dict[str, Any]], record: OperationRecord) -> di
     if len(items) == 1:
         return items[0]
     return None
+
+
+def _latest_prior_trace_snapshot(
+    snapshots: list[dict[str, Any]],
+    result_snapshot: dict[str, Any],
+    record: OperationRecord,
+) -> dict[str, Any] | None:
+    if not snapshots:
+        return None
+    result_index = result_snapshot.get("operation_index")
+    if isinstance(result_index, int):
+        prior = [
+            snapshot
+            for snapshot in snapshots
+            if isinstance(snapshot.get("operation_index"), int) and snapshot["operation_index"] < result_index
+        ]
+        if prior:
+            return prior[-1]
+    result_line = result_snapshot.get("source_line")
+    line = result_line if isinstance(result_line, int) else record.source_line
+    prior_by_line = [
+        snapshot
+        for snapshot in snapshots
+        if snapshot.get("source_line") is None or snapshot.get("source_line") < line
+    ]
+    if prior_by_line:
+        return prior_by_line[-1]
+    if len(snapshots) == 1:
+        return snapshots[0]
+    return None
+
+
+def _trace_snapshot_delta_effect(
+    before: dict[str, Any],
+    after: dict[str, Any],
+    *,
+    evidence: str,
+) -> dict[str, Any] | None:
+    before_volume = before.get("volume")
+    after_volume = after.get("volume")
+    if not isinstance(before_volume, (int, float)) or not isinstance(after_volume, (int, float)):
+        return None
+    if not math.isfinite(float(before_volume)) or not math.isfinite(float(after_volume)):
+        return None
+    return {
+        "from_target": before.get("target"),
+        "to_target": after.get("target"),
+        "source_line": after.get("source_line"),
+        "signed_volume_delta": float(after_volume) - float(before_volume),
+        "bbox_delta": _bbox_delta(before.get("bbox"), after.get("bbox")),
+        "centroid_delta": _vector_delta(before.get("centroid"), after.get("centroid")),
+        "topology_delta": _topology_delta(before.get("topology"), after.get("topology")),
+        "evidence": evidence,
+    }
+
+
+def _bbox_delta(before: Any, after: Any) -> dict[str, list[float | None]]:
+    if not isinstance(before, dict) or not isinstance(after, dict):
+        return {"min": [None, None, None], "max": [None, None, None]}
+    return {
+        "min": [
+            _optional_delta(before.get("min", [None] * 3), after.get("min", [None] * 3), index)
+            for index in range(3)
+        ],
+        "max": [
+            _optional_delta(before.get("max", [None] * 3), after.get("max", [None] * 3), index)
+            for index in range(3)
+        ],
+    }
+
+
+def _vector_delta(before: Any, after: Any) -> list[float | None]:
+    if not isinstance(before, list) or not isinstance(after, list):
+        return [None, None, None]
+    return [_optional_delta(before, after, index) for index in range(3)]
+
+
+def _topology_delta(before: Any, after: Any) -> dict[str, int | None]:
+    if not isinstance(before, dict) or not isinstance(after, dict):
+        return {}
+    keys = sorted(set(before) | set(after))
+    return {
+        key: (
+            int(after[key]) - int(before[key])
+            if before.get(key) is not None and after.get(key) is not None
+            else None
+        )
+        for key in keys
+    }
+
+
+def _optional_delta(before: Any, after: Any, index: int) -> float | None:
+    try:
+        lhs = before[index]
+        rhs = after[index]
+    except Exception:
+        return None
+    if lhs is None or rhs is None:
+        return None
+    return float(rhs) - float(lhs)
 
 
 def _scalar_geometry_measurements(snapshot: dict[str, Any]) -> dict[str, float]:

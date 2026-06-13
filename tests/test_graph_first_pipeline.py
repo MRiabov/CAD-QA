@@ -891,6 +891,34 @@ def test_trace_unrolls_simple_loop_body_snapshots() -> None:
     assert all(effect["signed_volume_delta"] < 0 for effect in body_effects)
 
 
+def test_trace_direct_cut_effect_uses_operation_base_snapshot() -> None:
+    if not cadquery_available():
+        return
+    source = source_record_from_mapping(
+        {
+            "source_id": "src_trace_direct_cut_effect",
+            "normalized_code": (
+                "import cadquery as cq\n"
+                "base = cq.Workplane('XY').box(10, 10, 10)\n"
+                "tool = cq.Workplane('XY').box(2, 2, 12)\n"
+                "result = base.cut(tool)\n"
+            ),
+        }
+    )
+
+    trace = trace_source(source, timeout_seconds=5.0)
+    assert trace.execution_status == "ok"
+    result_effects = [
+        effect
+        for effect in trace.operation_effects or []
+        if effect.get("to_target") == "result" and effect.get("source_line") == 4
+    ]
+
+    assert len(result_effects) == 1
+    assert result_effects[0]["from_target"] == "base"
+    assert result_effects[0]["signed_volume_delta"] < 0
+
+
 def test_graph_build_integrates_trace_feature_effects(tmp_path: Path) -> None:
     source = source_record_from_mapping({"source_id": "src_trace_graph", "normalized_code": SOURCE})
     trace_record = {
@@ -1214,6 +1242,79 @@ def test_direct_cut_trace_effect_creates_kernel_void_region_without_profile() ->
     )
     assert not any(
         relation.type == "created_by" and relation.source_id == "void_region:result"
+        for relation in graph.relations
+    )
+
+
+def test_direct_cut_uses_base_result_snapshot_delta_when_assignment_delta_is_misleading() -> None:
+    source = source_record_from_mapping(
+        {
+            "source_id": "src_direct_kernel_void_base_result",
+            "normalized_code": (
+                "import cadquery as cq\n"
+                "base = cq.Workplane('XY').box(10, 10, 10)\n"
+                "tool = cq.Workplane('XY').box(2, 2, 12)\n"
+                "result = base.cut(tool)\n"
+            ),
+        }
+    )
+    trace_record = {
+        "source_id": "src_direct_kernel_void_base_result",
+        "execution_status": "partial",
+        "snapshots": [
+            {
+                "target": "base",
+                "source_line": 2,
+                "operation_index": 0,
+                "volume": 1000.0,
+                "bbox": {"min": [-5, -5, -5], "max": [5, 5, 5]},
+                "topology": {"faces": 6, "edges": 12, "vertices": 8},
+            },
+            {
+                "target": "tool",
+                "source_line": 3,
+                "operation_index": 1,
+                "volume": 48.0,
+                "bbox": {"min": [-1, -1, -6], "max": [1, 1, 6]},
+                "topology": {"faces": 6, "edges": 12, "vertices": 8},
+            },
+            {
+                "target": "result",
+                "source_line": 4,
+                "operation_index": 2,
+                "volume": 952.0,
+                "bbox": {"min": [-5, -5, -5], "max": [5, 5, 5]},
+                "topology": {"faces": 10, "edges": 24, "vertices": 16},
+            },
+        ],
+        "operation_effects": [
+            {
+                "from_target": "tool",
+                "to_target": "result",
+                "source_line": 4,
+                "signed_volume_delta": 904.0,
+                "bbox_delta": {"min": [-4, -4, 1], "max": [4, 4, -1]},
+                "topology_delta": {"faces": 4, "edges": 12, "vertices": 8},
+                "evidence": "cadquery_assignment_snapshot_delta",
+            }
+        ],
+        "environment": {"cadquery_available": True},
+        "failure_reason": "timeout",
+    }
+
+    graph = build_graph(source, trace=trace_record)
+    void_region = graph.node("void_region:result")
+
+    assert void_region is not None
+    assert void_region.properties["conservative"] is False
+    assert void_region.properties["trace_evidence"] == "cadquery_base_result_snapshot_delta"
+    assert graph.measurements_for("void_region:result", "volume")[0].value == 48.0
+    assert graph.measurements_for("void_region:result", "signed_volume_delta")[0].value == -48.0
+    feature_delta = graph.measurements_for("feature:result", "signed_volume_delta")[0]
+    assert feature_delta.value == -48.0
+    assert feature_delta.evidence["source"] == "cadquery_base_result_snapshot_delta"
+    assert any(
+        relation.type == "has_kernel_void_region_geometry" and relation.source_id == "void_region:result"
         for relation in graph.relations
     )
 
