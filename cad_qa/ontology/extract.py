@@ -22,6 +22,10 @@ from cad_qa.source import SourceRecord, source_to_dict
 from cad_qa.trace import TraceRecord
 
 
+_SELECTOR_OPERATIONS = {"faces", "edges", "vertices"}
+_BOUNDARY_MODIFIER_OPERATIONS = {"fillet", "chamfer"}
+
+
 @dataclass(frozen=True)
 class OperationRecord:
     id: str
@@ -213,7 +217,7 @@ class _Extractor:
             self._extract_profile(record)
         if record.operation in {"spline", "splineApprox", "parametricCurve"}:
             self._extract_path(record)
-        if record.operation in {"faces", "edges", "vertices"}:
+        if record.operation in _SELECTOR_OPERATIONS:
             self._extract_selector(record)
 
     def _add_feature(self, target: str, record: OperationRecord) -> None:
@@ -252,6 +256,8 @@ class _Extractor:
         if record.operation == "union":
             self.graph.add_node(Node(id=f"solid:{target}", type="solid", label=target))
             self.graph.add_relation(Relation(feature_id, f"solid:{target}", "adds_material_to"))
+            self._add_kernel_region_projection(feature_id, None, target, record)
+        if record.operation in _BOUNDARY_MODIFIER_OPERATIONS:
             self._add_kernel_region_projection(feature_id, None, target, record)
         if record.operation.startswith("cut"):
             self.graph.add_relation(Relation(feature_id, f"source:{self.source.source_id}", "removes_material_from"))
@@ -1151,7 +1157,7 @@ class _Extractor:
 
     def _attach_trace_feature_effect(self, feature_id: str, target: str, record: OperationRecord) -> None:
         effect = self._trace_effect_for_target(target, record, consume=False)
-        if record.operation.startswith("cut"):
+        if record.operation.startswith("cut") or record.operation in _BOUNDARY_MODIFIER_OPERATIONS:
             effect = self._trace_base_result_effect(target, record) or effect
         if effect is None:
             return
@@ -1270,11 +1276,12 @@ class _Extractor:
         is_cut = record.operation.startswith("cut")
         is_union = record.operation == "union"
         is_prismatic_additive = record.operation in {"extrude", "sweep"}
+        is_boundary_modifier = record.operation in _BOUNDARY_MODIFIER_OPERATIONS
         base_result_effect = self._trace_base_result_effect(target, record) if _operation_prefers_base_result_effect(record.operation) else None
         if base_result_effect is not None:
             signed_delta = base_result_effect.get("signed_volume_delta")
             if isinstance(signed_delta, (int, float)) and math.isfinite(float(signed_delta)):
-                if (is_cut and signed_delta < 0) or (is_union and signed_delta > 0):
+                if (is_cut and signed_delta < 0) or (is_union and signed_delta > 0) or (is_boundary_modifier and abs(float(signed_delta)) > 1e-9):
                     return {
                         "signed_volume_delta": float(signed_delta),
                         "bbox_delta": base_result_effect.get("bbox_delta"),
@@ -1431,13 +1438,14 @@ class _Extractor:
         return _best_trace_item(snapshots, record)
 
     def _trace_base_result_effect(self, target: str, record: OperationRecord) -> dict[str, Any] | None:
-        if not isinstance(record.base, str) or record.base == target:
+        base_target = self._trace_delta_base_target(record)
+        if not isinstance(base_target, str) or base_target == target:
             return None
         result_snapshot = self._trace_snapshot_for_target(target, record)
         if result_snapshot is None:
             return None
         base_snapshot = _latest_prior_trace_snapshot(
-            self.trace_snapshots_by_target.get(record.base, []),
+            self.trace_snapshots_by_target.get(base_target, []),
             result_snapshot,
             record,
         )
@@ -1448,6 +1456,62 @@ class _Extractor:
             result_snapshot,
             evidence="cadquery_base_result_snapshot_delta",
         )
+
+    def _trace_delta_base_target(self, record: OperationRecord) -> str | None:
+        if record.operation in _BOUNDARY_MODIFIER_OPERATIONS:
+            selector_base = self._selector_source_base_target(record.base, record) if isinstance(record.base, str) else None
+            if selector_base is not None:
+                return selector_base
+        return record.base if isinstance(record.base, str) else None
+
+    def _selector_source_base_target(self, target: str | None, current_record: OperationRecord) -> str | None:
+        if not isinstance(target, str):
+            return None
+        selector_record = self._latest_operation_for_target(target, before_record=current_record)
+        if selector_record is None or selector_record.operation not in _SELECTOR_OPERATIONS:
+            return None
+        return self._selector_source_base_record(selector_record)
+
+    def _selector_source_base_record(self, selector_record: OperationRecord) -> str | None:
+        base = selector_record.base
+        if not isinstance(base, str):
+            return None
+        if base == selector_record.target:
+            previous_selector = self._previous_selector_record(selector_record)
+            return self._selector_source_base_record(previous_selector) if previous_selector is not None else None
+        base_selector = self._latest_operation_for_target(base, before_record=selector_record)
+        if base_selector is not None and base_selector.operation in _SELECTOR_OPERATIONS:
+            return self._selector_source_base_record(base_selector) or base
+        return base
+
+    def _latest_operation_for_target(
+        self,
+        target: str,
+        *,
+        before_record: OperationRecord | None = None,
+    ) -> OperationRecord | None:
+        seen_boundary = before_record is None
+        for candidate in reversed(self.operations):
+            if before_record is not None and candidate.id == before_record.id:
+                seen_boundary = True
+                continue
+            if not seen_boundary:
+                continue
+            if candidate.target == target:
+                return candidate
+        return None
+
+    def _previous_selector_record(self, selector_record: OperationRecord) -> OperationRecord | None:
+        seen_boundary = False
+        for candidate in reversed(self.operations):
+            if candidate.id == selector_record.id:
+                seen_boundary = True
+                continue
+            if not seen_boundary:
+                continue
+            if candidate.target == selector_record.target and candidate.operation in _SELECTOR_OPERATIONS:
+                return candidate
+        return None
 
     def _trace_effect_for_target(self, target: str, record: OperationRecord, *, consume: bool = True) -> dict[str, Any] | None:
         effects = self.trace_effects_by_target.get(target, [])
@@ -1787,7 +1851,7 @@ def _trace_has_usable_geometry(trace: dict[str, Any] | None) -> bool:
 
 
 def _operation_prefers_base_result_effect(operation: str) -> bool:
-    return operation == "union" or operation.startswith("cut")
+    return operation == "union" or operation.startswith("cut") or operation in _BOUNDARY_MODIFIER_OPERATIONS
 
 
 def _trace_operation_nodes_by_feature_id(trace: dict[str, Any]) -> dict[str, dict[str, Any]]:

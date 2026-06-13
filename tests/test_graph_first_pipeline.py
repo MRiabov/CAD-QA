@@ -1470,6 +1470,91 @@ def test_direct_union_creates_kernel_material_region_from_base_result_snapshot_d
     )
 
 
+def test_fillet_selector_uses_parent_solid_snapshot_for_void_region() -> None:
+    source = source_record_from_mapping(
+        {
+            "source_id": "src_fillet_parent_solid_delta",
+            "normalized_code": (
+                "import cadquery as cq\n"
+                "base = cq.Workplane('XY').box(10, 10, 10)\n"
+                "selected = base.edges('|Z')\n"
+                "result = selected.fillet(1)\n"
+            ),
+        }
+    )
+    trace_record = {
+        "source_id": "src_fillet_parent_solid_delta",
+        "execution_status": "ok",
+        "snapshots": [
+            {"target": "base", "source_line": 2, "operation_index": 0, "volume": 1000.0},
+            {"target": "selected", "source_line": 3, "operation_index": 1, "volume": 12.0},
+            {"target": "result", "source_line": 4, "operation_index": 2, "volume": 970.0},
+        ],
+        "operation_effects": [
+            {
+                "from_target": "selected",
+                "to_target": "result",
+                "source_line": 4,
+                "signed_volume_delta": 958.0,
+                "evidence": "cadquery_assignment_snapshot_delta",
+            }
+        ],
+        "environment": {"cadquery_available": True},
+        "failure_reason": None,
+    }
+
+    graph = build_graph(source, trace=trace_record)
+    void_region = graph.node("void_region:result")
+
+    assert void_region is not None
+    assert void_region.properties["conservative"] is False
+    assert void_region.properties["operation"] == "fillet"
+    assert void_region.properties["trace_evidence"] == "cadquery_base_result_snapshot_delta"
+    assert graph.measurements_for("void_region:result", "volume")[0].value == 30.0
+    delta = graph.measurements_for("feature:result", "signed_volume_delta")[0]
+    assert delta.value == -30.0
+    assert delta.evidence["from_target"] == "base"
+    assert any(
+        relation.type == "has_kernel_void_region_geometry" and relation.source_id == "void_region:result"
+        for relation in graph.relations
+    )
+    assert graph.node("material_region:result") is None
+
+
+def test_chained_chamfer_selector_uses_parent_solid_snapshot_for_void_region() -> None:
+    source = source_record_from_mapping(
+        {
+            "source_id": "src_chained_chamfer_parent_solid_delta",
+            "normalized_code": (
+                "import cadquery as cq\n"
+                "base = cq.Workplane('XY').box(10, 10, 10)\n"
+                "result = base.edges('|Z').chamfer(1)\n"
+            ),
+        }
+    )
+    trace_record = {
+        "source_id": "src_chained_chamfer_parent_solid_delta",
+        "execution_status": "ok",
+        "snapshots": [
+            {"target": "base", "source_line": 2, "operation_index": 0, "volume": 1000.0},
+            {"target": "result", "source_line": 3, "operation_index": 1, "volume": 950.0},
+        ],
+        "operation_effects": [],
+        "environment": {"cadquery_available": True},
+        "failure_reason": None,
+    }
+
+    graph = build_graph(source, trace=trace_record)
+    void_region = graph.node("void_region:result")
+
+    assert void_region is not None
+    assert void_region.properties["operation"] == "chamfer"
+    assert graph.measurements_for("void_region:result", "volume")[0].value == 50.0
+    delta = graph.measurements_for("feature:result", "signed_volume_delta")[0]
+    assert delta.value == -50.0
+    assert delta.evidence["from_target"] == "base"
+
+
 def test_repeated_target_trace_effect_requires_source_line_match() -> None:
     source = source_record_from_mapping(
         {
