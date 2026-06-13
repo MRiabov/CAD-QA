@@ -3,9 +3,10 @@
 The active smoke workflow is graph-first:
 
 ```bash
-rtk uv run cadqa sources from-cadevolve-tar --tar data/cadevolve.tar --out runs/cadevolve_sources.jsonl --path-prefix CADEvolve-P/ShapeNet-P --limit 100 --stratify-geometry-tags
-rtk uv run cadqa sources inspect --sources-jsonl data/cadqa_cadevolve_rc_10/sources.jsonl
-rtk uv run cadqa graph build --sources-jsonl data/cadqa_cadevolve_rc_10/sources.jsonl --limit 10 --out runs/graph_smoke
+rtk uv run cadqa sources cache-cadevolve-tar --tar data/cadevolve.tar --out data/cadevolve_sources.parquet
+rtk uv run cadqa sources from-cadevolve-cache --cache data/cadevolve_sources.parquet --out runs/cadevolve_sources.parquet --path-prefix CADEvolve-P/ShapeNet-P --limit 100 --stratify-geometry-tags
+rtk uv run cadqa sources inspect --sources-jsonl runs/cadevolve_sources.parquet
+rtk uv run cadqa graph build --sources-jsonl runs/cadevolve_sources.parquet --limit 10 --out runs/graph_smoke
 rtk uv run cadqa query smoke --graph runs/graph_smoke/graphs.jsonl --out runs/query_smoke
 rtk uv run cadqa query synthesize --graph runs/graph_smoke/graphs.jsonl --out runs/query_synth --max-per-family 3
 rtk uv run cadqa dataset materialize --queries runs/query_smoke/queries.jsonl --out data/cadqa_graph_smoke
@@ -20,13 +21,11 @@ rtk uv run cadqa evaluation baseline --rows data/cadqa_graph_smoke/rows.jsonl --
 rtk uv run cadqa training export-sft --rows data/cadqa_graph_smoke/rows.jsonl --out runs/sft_smoke
 ```
 
-The first command is optional when a prepared `sources.jsonl` already exists.
-Use it when starting from the local CADEvolve archive; it writes normalized
-source JSONL plus manifest/report sidecars before the usual graph build.
-Keep `--stratify-geometry-tags` on limited source exports so rare path,
-selector, and void-bearing sources are not silently skipped by archive order.
-Use `--complete-stratified-scan` only when the sidecar report needs full
-archive-wide tag counts.
+The tar-to-parquet cache command is optional when `data/cadevolve_sources.parquet`
+already exists. Use it once when starting from the local CADEvolve archive; after
+that, derive limited source slices from the parquet cache instead of rescanning
+the tar. Keep `--stratify-geometry-tags` on limited source exports so rare path,
+selector, and void-bearing sources are not silently skipped by table order.
 
 Use `cadqa query smoke` for small plumbing checks that still include calibration
 and review rows. Use `cadqa query synthesize` for release-oriented graph-hop

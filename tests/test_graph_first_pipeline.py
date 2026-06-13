@@ -495,6 +495,79 @@ def test_cadevolve_tar_import_can_stratify_rare_geometry_tags(tmp_path: Path) ->
     assert complete_tag_report["candidate_count"] == 6
 
 
+def test_cadevolve_tar_cache_and_cached_selection_are_parquet_only(tmp_path: Path) -> None:
+    tar_path = tmp_path / "cadevolve.tar"
+    with tarfile.open(tar_path, "w") as archive:
+        for name, text in {
+            "CADEvolve-P/CADEvolve-P-core/plain.py": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane('XY').box(10, 10, 2)\n"
+            ),
+            "CADEvolve-P/CADEvolve-P-core/path.py": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane('XY').spline([(0, 0), (1, 1), (2, 0)])\n"
+            ),
+            "CADEvolve-P/CADEvolve-P-core/vertices.py": (
+                "import cadquery as cq\n"
+                "result = cq.Workplane('XY').box(1, 1, 1).vertices()\n"
+            ),
+        }.items():
+            payload = text.encode("utf-8")
+            info = tarfile.TarInfo(name)
+            info.size = len(payload)
+            archive.addfile(info, io.BytesIO(payload))
+
+    cache = tmp_path / "cadevolve_sources.parquet"
+    assert cli_main(
+        [
+            "sources",
+            "cache-cadevolve-tar",
+            "--tar",
+            str(tar_path),
+            "--out",
+            str(cache),
+        ]
+    ) == 0
+    assert len(read_records(cache)) == 3
+    assert cache.with_suffix(".report.json").exists()
+
+    out = tmp_path / "selected_sources.parquet"
+    assert cli_main(
+        [
+            "sources",
+            "from-cadevolve-cache",
+            "--cache",
+            str(cache),
+            "--out",
+            str(out),
+            "--limit",
+            "2",
+            "--stratify-geometry-tags",
+        ]
+    ) == 0
+    selected = read_records(out)
+    assert {row["normalized_archive_member_path"] for row in selected} == {
+        "CADEvolve-P/CADEvolve-P-core/path.py",
+        "CADEvolve-P/CADEvolve-P-core/vertices.py",
+    }
+    report = json.loads(out.with_suffix(".report.json").read_text(encoding="utf-8"))
+    assert report["selection_policy"] == "geometry_tag_stratified"
+    assert report["table_row_count"] == 3
+    assert report["selected_geometry_feature_tag_counts"]["path_curve"] == 1
+    assert report["selected_geometry_feature_tag_counts"]["kernel_vertex_selector"] == 1
+
+    assert cli_main(
+        [
+            "sources",
+            "cache-cadevolve-tar",
+            "--tar",
+            str(tar_path),
+            "--out",
+            str(tmp_path / "bad.jsonl"),
+        ]
+    ) == 1
+
+
 def test_graph_build_report_exposes_type_coverage(tmp_path: Path) -> None:
     sources_path = tmp_path / "sources.jsonl"
     graph_dir = tmp_path / "graph"

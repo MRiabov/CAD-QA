@@ -79,6 +79,7 @@ from cad_qa.query.resolver import resolve_query, smoke_queries
 from cad_qa.query.synthesis import synthesize_graph_hop_queries
 from cad_qa.query.synthesis_selfcheck import write_synthesis_selfcheck
 from cad_qa.source import (
+    cadevolve_source_table_rows,
     cadevolve_tar_source_rows,
     load_sources_jsonl,
     source_audit,
@@ -184,6 +185,33 @@ def build_parser() -> argparse.ArgumentParser:
         help="Scan the full archive for complete tag counts instead of stopping once requested strata are satisfied.",
     )
     source_from_cadevolve_tar.set_defaults(func=_cmd_sources_from_cadevolve_tar)
+    source_cache_cadevolve_tar = sources_sub.add_parser("cache-cadevolve-tar")
+    source_cache_cadevolve_tar.add_argument("--tar", type=Path, required=True)
+    source_cache_cadevolve_tar.add_argument("--out", type=Path, required=True)
+    source_cache_cadevolve_tar.add_argument("--path-prefix", action="append", dest="path_prefixes")
+    source_cache_cadevolve_tar.add_argument("--path-contains", action="append", dest="path_contains")
+    source_cache_cadevolve_tar.add_argument("--code-contains", action="append", dest="code_contains")
+    source_cache_cadevolve_tar.add_argument("--max-member-bytes", type=int, default=1_000_000)
+    source_cache_cadevolve_tar.set_defaults(func=_cmd_sources_cache_cadevolve_tar)
+    source_from_cadevolve_cache = sources_sub.add_parser("from-cadevolve-cache")
+    source_from_cadevolve_cache.add_argument("--cache", type=Path, required=True)
+    source_from_cadevolve_cache.add_argument("--out", type=Path, required=True)
+    source_from_cadevolve_cache.add_argument("--limit", type=int)
+    source_from_cadevolve_cache.add_argument("--path-prefix", action="append", dest="path_prefixes")
+    source_from_cadevolve_cache.add_argument("--path-contains", action="append", dest="path_contains")
+    source_from_cadevolve_cache.add_argument("--code-contains", action="append", dest="code_contains")
+    source_from_cadevolve_cache.add_argument(
+        "--stratify-geometry-tags",
+        action="store_true",
+        help="Fill limited exports with examples of rare geometry-bearing source tags before table-order fill.",
+    )
+    source_from_cadevolve_cache.add_argument(
+        "--min-per-geometry-tag",
+        type=int,
+        default=0,
+        help="Minimum selected examples per geometry tag when --stratify-geometry-tags is set. Defaults to 1.",
+    )
+    source_from_cadevolve_cache.set_defaults(func=_cmd_sources_from_cadevolve_cache)
 
     graph = subparsers.add_parser("graph")
     graph_sub = graph.add_subparsers(required=True)
@@ -474,6 +502,63 @@ def _cmd_sources_from_cadevolve_tar(args: argparse.Namespace) -> dict[str, Any]:
         "manifest": str(args.out.with_suffix(".manifest.json")),
         "report": str(args.out.with_suffix(".report.json")),
     }
+
+
+def _cmd_sources_cache_cadevolve_tar(args: argparse.Namespace) -> dict[str, Any]:
+    _require_parquet_path(args.out, "--out")
+    rows, report = cadevolve_tar_source_rows(
+        args.tar,
+        path_prefixes=args.path_prefixes,
+        path_contains=args.path_contains,
+        code_contains=args.code_contains,
+        max_member_bytes=args.max_member_bytes,
+    )
+    write_records(args.out, rows)
+    manifest = source_manifest([source_record_from_mapping(row) for row in rows])
+    report = {**report, "source_manifest": manifest}
+    write_json(args.out.with_suffix(".manifest.json"), manifest)
+    write_json(args.out.with_suffix(".report.json"), report)
+    return {
+        "out": str(args.out),
+        "source_count": len(rows),
+        "member_count": report["member_count"],
+        "python_member_count": report["python_member_count"],
+        "skipped_non_cadquery_count": report["skipped_non_cadquery_count"],
+        "manifest": str(args.out.with_suffix(".manifest.json")),
+        "report": str(args.out.with_suffix(".report.json")),
+    }
+
+
+def _cmd_sources_from_cadevolve_cache(args: argparse.Namespace) -> dict[str, Any]:
+    _require_parquet_path(args.cache, "--cache")
+    _require_parquet_path(args.out, "--out")
+    rows, report = cadevolve_source_table_rows(
+        args.cache,
+        limit=args.limit,
+        path_prefixes=args.path_prefixes,
+        path_contains=args.path_contains,
+        code_contains=args.code_contains,
+        stratify_by_tags=bool(args.stratify_geometry_tags),
+        min_per_tag=args.min_per_geometry_tag,
+    )
+    write_records(args.out, rows)
+    manifest = source_manifest([source_record_from_mapping(row) for row in rows])
+    report = {**report, "source_manifest": manifest}
+    write_json(args.out.with_suffix(".manifest.json"), manifest)
+    write_json(args.out.with_suffix(".report.json"), report)
+    return {
+        "out": str(args.out),
+        "source_count": len(rows),
+        "table_row_count": report["table_row_count"],
+        "candidate_count": report["candidate_count"],
+        "manifest": str(args.out.with_suffix(".manifest.json")),
+        "report": str(args.out.with_suffix(".report.json")),
+    }
+
+
+def _require_parquet_path(path: Path, label: str) -> None:
+    if path.suffix != ".parquet":
+        raise ValueError(f"{label} must be a .parquet path")
 
 
 def _cmd_graph_build(args: argparse.Namespace) -> dict[str, Any]:

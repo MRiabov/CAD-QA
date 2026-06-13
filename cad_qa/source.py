@@ -228,6 +228,73 @@ def cadevolve_tar_source_rows(
     return rows, stats
 
 
+def cadevolve_source_table_rows(
+    table_path: Path,
+    *,
+    limit: int | None = None,
+    path_prefixes: list[str] | None = None,
+    path_contains: list[str] | None = None,
+    code_contains: list[str] | None = None,
+    stratify_by_tags: bool = False,
+    min_per_tag: int = 0,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Select normalized CADEvolve source rows from a cached parquet source table."""
+
+    prefixes = tuple(_normalize_archive_path(prefix) for prefix in path_prefixes or [] if prefix)
+    path_needles = tuple(value.lower() for value in path_contains or [] if value)
+    code_needles = tuple(value.lower() for value in code_contains or [] if value)
+    candidate_rows: list[dict[str, Any]] = []
+    stats = {
+        "source_table_path": str(table_path),
+        "table_row_count": 0,
+        "candidate_count": 0,
+        "included_count": 0,
+        "skipped_prefix_count": 0,
+        "skipped_path_contains_count": 0,
+        "skipped_code_contains_count": 0,
+        "limit": limit,
+        "path_prefixes": list(prefixes),
+        "path_contains": list(path_needles),
+        "code_contains": list(code_needles),
+        "selection_policy": "geometry_tag_stratified" if stratify_by_tags else "table_order",
+        "geometry_feature_tags": list(GEOMETRY_SOURCE_FEATURE_TAGS),
+        "min_per_geometry_tag": max(1, min_per_tag) if stratify_by_tags else min_per_tag,
+    }
+    for row in read_records(table_path):
+        stats["table_row_count"] += 1
+        member_path = _normalize_archive_path(
+            str(row.get("normalized_archive_member_path") or row.get("archive_member_path") or row.get("source_path") or "")
+        )
+        source_code = str(row.get("normalized_code") or row.get("source_code") or row.get("raw_code") or "")
+        if prefixes and not any(_archive_path_matches_prefix(member_path, prefix) for prefix in prefixes):
+            stats["skipped_prefix_count"] += 1
+            continue
+        if path_needles and not any(needle in member_path.lower() for needle in path_needles):
+            stats["skipped_path_contains_count"] += 1
+            continue
+        if code_needles and not any(needle in source_code.lower() for needle in code_needles):
+            stats["skipped_code_contains_count"] += 1
+            continue
+        normalized_row = dict(row)
+        if not isinstance(normalized_row.get("source_feature_tags"), list):
+            normalized_row["source_feature_tags"] = source_geometry_feature_tags(source_code)
+        candidate_rows.append(normalized_row)
+
+    if stratify_by_tags:
+        rows = _select_stratified_source_rows(
+            candidate_rows,
+            limit=limit,
+            min_per_tag=max(1, min_per_tag),
+        )
+    else:
+        rows = candidate_rows[:limit] if limit is not None else candidate_rows
+    stats["candidate_count"] = len(candidate_rows)
+    stats["included_count"] = len(rows)
+    stats["candidate_geometry_feature_tag_counts"] = _source_feature_tag_counts(candidate_rows)
+    stats["selected_geometry_feature_tag_counts"] = _source_feature_tag_counts(rows)
+    return rows, stats
+
+
 def source_geometry_feature_tags(source_code: str) -> list[str]:
     """Return source-level geometry hints used to keep rare release families reachable."""
 
