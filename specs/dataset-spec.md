@@ -261,6 +261,7 @@ for example `A`.
 
 The gold answer is the label (`A`, `B`, `C`, ...), not the expression string.
 Generation must only use this mode when every displayed choice can be derived
-from source-visible selector operations. Evaluation compares labels and does
-not execute arbitrary selector code or accept every semantically equivalent
-CadQuery spelling.
+from source-visible selector operations and the displayed expressions are
+distinct. Otherwise the row must fall back to ordinary candidate-label choices.
+Evaluation compares labels and does not execute arbitrary selector code or
+accept every semantically equivalent CadQuery spelling.

@@ -3095,6 +3095,45 @@ def test_selector_expression_choice_falls_back_when_selectors_are_not_source_vis
     assert spec.mode == "candidate_label"
 
 
+def test_selector_expression_choice_falls_back_for_duplicate_expressions() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:selector-expression-duplicate",
+        source={"source_id": "synthetic", "source_code": "top_a = base.faces('>Z')\ntop_b = base.faces('>Z')\n"},
+    )
+    for selector_id, operation_id, selected_count in [
+        ("selector:top_a", "operation:top_a", 2),
+        ("selector:top_b", "operation:top_b", 5),
+    ]:
+        graph.add_node(
+            Node(
+                operation_id,
+                "operation",
+                operation_id,
+                properties={"target": operation_id.rsplit(":", 1)[-1], "operation": "faces", "base": "base", "args": [">Z"]},
+            )
+        )
+        graph.add_node(Node(selector_id, "selector", selector_id, properties={"selector": ">Z", "selector_kind": "faces"}))
+        graph.add_relation(Relation(selector_id, operation_id, "selected_by"))
+        graph.add_measurement(Measurement(selector_id, "snapshot_state", "selected_count", selected_count))
+    query = QueryProgram(
+        query_id="graph:selector-expression-duplicate:synth:selector",
+        target_type="selector",
+        answer_spec=synthesis_answer_spec_for_target_type("selector", graph),
+        aggregation="argmax",
+        aggregation_metric="selected_count",
+        hop_count=3,
+        difficulty="cad_browsecomp",
+    )
+
+    row = materialize_row(graph, resolve_query(graph, query))
+
+    assert query.answer_spec.mode == "selector_expression_choice"
+    assert row.query_program["answer_spec"]["mode"] == "candidate_label"
+    assert row.gold_answer == "B"
+    assert "selector-expression choices" not in row.prompt
+    assert "A: `base.faces(\">Z\")`" not in row.prompt
+
+
 def test_prompt_clause_templates_use_domain_wording() -> None:
     implementation_terms = {
         "cadquery",

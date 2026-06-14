@@ -169,7 +169,10 @@ def candidate_label_lines(graph: OntologyGraph, query: Any) -> list[str]:
 
 
 def selector_expression_choices_available(graph: OntologyGraph, candidate_ids: list[str]) -> bool:
-    return bool(candidate_ids) and all(selector_expression_for_entity(graph, entity_id) is not None for entity_id in candidate_ids)
+    if not candidate_ids:
+        return False
+    expressions = [selector_expression_for_entity(graph, entity_id) for entity_id in candidate_ids]
+    return all(expression is not None for expression in expressions) and len(set(expressions)) == len(expressions)
 
 
 def selector_expression_for_entity(graph: OntologyGraph, entity_id: str) -> str | None:

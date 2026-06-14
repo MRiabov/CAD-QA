@@ -127,9 +127,11 @@ def resolve_query(graph: OntologyGraph, query: QueryProgram) -> QueryResolution:
         elif getattr(query.answer_spec, "mode", None) == "selector_expression_choice" and not selector_expression_choices_available(
             graph, label_entity_ids
         ):
-            status = "failed"
-            failure_reason = "missing_selector_expression_choices"
-            trace = CandidateSetTrace(query.query_id, steps, final_candidate_ids, status, failure_reason)
+            query = replace(query, answer_spec=replace(query.answer_spec, mode="candidate_label"))
+            query = replace(
+                query,
+                answer_spec=answer_spec_with_candidate_labels(query.answer_spec, label_entity_ids),
+            )
         else:
             query = replace(
                 query,
