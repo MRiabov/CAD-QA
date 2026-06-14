@@ -6510,7 +6510,11 @@ def test_synthesis_generates_equal_value_region_queries() -> None:
     void_query = queries["parameterized_equal_void_region_metric_extreme"]
     void_resolution = resolve_query(graph, void_query)
     void_row = materialize_row(graph, void_resolution)
-    void_equal_step = next(step for step in void_row.candidate_trace["steps"] if step["step"] == "has_void_volume_value")
+    void_equal_step = next(
+        step
+        for step in void_row.candidate_trace["steps"]
+        if step["step"] == "has_parameterized_equal_void_region_metric_value"
+    )
 
     assert void_resolution.verifier_status == "resolved"
     assert void_resolution.gold_answer == ("b" if void_query.aggregation == "argmax" else "a")
@@ -6525,7 +6529,7 @@ def test_synthesis_generates_equal_value_region_queries() -> None:
     assert void_row.geometry_hop_count == 4
     assert void_row.query_program["sampled_parameters"]["target_type"] == ["void_region"]
     assert void_row.query_program["sampled_parameters"]["measurement_value_bucket"] == ["volume:8"]
-    assert "removed-material region has a volume of 8.0" in void_row.prompt
+    assert "removed-material region has volume equal to 8.0" in void_row.prompt
 
 
 def test_synthesis_equal_value_material_region_extreme_samples_metrics_beyond_volume_z() -> None:
