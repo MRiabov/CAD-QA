@@ -61,6 +61,7 @@ from cad_qa.dataset.validate import validate_rows
 from cad_qa.evaluation.baselines import run_baselines
 from cad_qa.evaluation.closed_book import closed_book_request_audit, run_closed_book_evaluation
 from cad_qa.evaluation.grade import grade_public_private, grade_responses
+from cad_qa.evaluation.parse import parse_answer
 from cad_qa.evaluation.requests import few_shot_requests, oracle_responses, zero_shot_requests
 from cad_qa.evaluation.tool_assisted import run_tool_assisted_upper_bound, tool_assisted_responses
 from cad_qa.experiment import (
@@ -80,6 +81,7 @@ from cad_qa.ontology.relations import RELATION_FAMILIES
 from cad_qa.ontology.workplane_frames import project_local_point
 from cad_qa.prompts.render import render_prompt
 from cad_qa.prompts.templates import prompt_template_registry
+from cad_qa.query.answers import synthesis_answer_spec_for_target_type
 from cad_qa.query.family_manifest import intended_family_coverage_report, load_family_manifest
 from cad_qa.query.ir import Clause, QueryProgram, query_from_dict
 from cad_qa.query.parameters import sampled_parameters_from_query
@@ -2927,14 +2929,41 @@ def test_prompt_template_variants_are_selected_from_sampled_parameters() -> None
 
     rendered = render_prompt("import cadquery as cq\n", query)
 
-    assert "edge group with measured geometry" in rendered.prompt
+    assert "target edge" in rendered.prompt
+    assert "model edges with measured geometry" in rendered.prompt
     assert "known edge length" in rendered.prompt
     assert "least edge length" in rendered.prompt
+    assert "Return exactly one entity_id." in rendered.prompt
     assert [clue["clue_template_id"] for clue in rendered.clue_map] == [
         "clause:has_parameterized_edge_set.variant_1",
         "clause:has_parameterized_edge_metric.variant_1",
         "aggregation:argmin.variant_1",
     ]
+
+
+def test_answer_spec_formats_recoverable_source_ref_answers() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:answer-source-ref",
+        source={"source_id": "synthetic", "source_code": "wp2 = wp1.extrude(5)\n"},
+    )
+    graph.add_node(Node("feature:wp2", "feature", "wp2", properties={"target": "wp2"}))
+    query = QueryProgram(
+        query_id="graph:answer-source-ref:synth:feature",
+        target_type="feature",
+        answer_spec=synthesis_answer_spec_for_target_type("feature"),
+    )
+
+    row = materialize_row(graph, resolve_query(graph, query))
+
+    assert row.answer_format == "text"
+    assert row.gold_answer == "wp2"
+    assert row.query_program["answer_spec"]["mode"] == "source_ref"
+    assert "Identify the target feature" in row.prompt
+    assert "Return exactly one source variable name" in row.prompt
+
+
+def test_coordinate_answer_format_parser_accepts_tuple_text() -> None:
+    assert parse_answer("(0, 1.25, -3)", "coordinate") == [0, 1.25, -3]
 
 
 def test_prompt_clause_templates_use_domain_wording() -> None:
@@ -3300,12 +3329,13 @@ def test_synthesis_generates_parameterized_kernel_face_extreme_query() -> None:
         any(rendered_id == base or rendered_id.startswith(f"{base}.variant_") for rendered_id in rendered_ids)
         for base in expected_bases
     )
+    assert "target face" in row.prompt
     assert any(
         phrase in row.prompt
         for phrase in (
-            "belongs to a measured face set",
-            "face group with measured geometry",
-            "face set with checked dimensions",
+            "Consider model faces with measured geometry.",
+            "model faces with measured geometry",
+            "checked geometric measurements",
         )
     )
     assert any(
@@ -3401,12 +3431,13 @@ def test_smoke_queries_include_parameterized_kernel_edge_synthesis() -> None:
     assert query.sampled_parameters["aggregation_axis"] == ["y"]
     assert query.sampled_parameters["target_type"] == ["edge"]
     assert row.logical_hop_count == 3
+    assert "target edge" in row.prompt
     assert any(
         phrase in row.prompt
         for phrase in (
-            "belongs to a measured edge set",
-            "edge group with measured geometry",
-            "edge set with checked dimensions",
+            "Consider model edges with measured geometry.",
+            "model edges with measured geometry",
+            "checked geometric measurements",
         )
     )
     assert any(
@@ -3641,7 +3672,9 @@ def test_synthesis_generates_void_region_rows_from_cut_delta_metrics_without_cen
         resolution = resolve_query(graph, query)
         row = materialize_row(graph, resolution)
         assert resolution.verifier_status == "resolved"
-        assert row.gold_answer.startswith("void_region:")
+        assert row.answer_format == "text"
+        assert row.query_program["answer_spec"]["mode"] == "source_ref"
+        assert row.gold_answer in {"0", "1", "2"}
         assert row.release_ready
         assert row.geometry_hop_count > 0
 
@@ -5798,6 +5831,11 @@ def test_synthesis_generates_parameterized_kernel_vertex_queries() -> None:
         assert row.query_program["sampled_parameters"]["target_type"] == ["vertex"]
         assert "has_kernel_stable_vertex_id" in row.relation_families
         assert "vertex" in row.prompt.lower()
+        assert row.answer_format == "coordinate"
+        assert row.query_program["answer_spec"]["mode"] == "coordinate"
+        assert "Return exactly one coordinate tuple" in row.prompt
+        final_vertex_id = row.candidate_trace["final_candidates"][0]
+        assert row.gold_answer == graph.measurements_for(final_vertex_id, "coordinate")[0].value
         if family.endswith("_rank"):
             assert query.aggregation_rank in {2, 3, 4, 5, 6}
             assert row.query_program["sampled_parameters"]["aggregation_rank"] == [str(query.aggregation_rank)]
@@ -6147,9 +6185,9 @@ def test_synthesis_generates_equal_value_region_queries() -> None:
     void_equal_step = next(step for step in void_row.candidate_trace["steps"] if step["step"] == "has_void_volume_value")
 
     assert void_resolution.verifier_status == "resolved"
-    assert void_resolution.gold_answer == (
-        "void_region:b" if void_query.aggregation == "argmax" else "void_region:a"
-    )
+    assert void_resolution.gold_answer == ("b" if void_query.aggregation == "argmax" else "a")
+    assert void_row.answer_format == "text"
+    assert void_row.query_program["answer_spec"]["mode"] == "source_ref"
     assert void_query.clauses[0].relation == "has_kernel_void_region_geometry"
     assert void_query.clauses[1].metric == "volume"
     assert void_query.clauses[1].value == 8.0

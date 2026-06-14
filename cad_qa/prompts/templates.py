@@ -8,6 +8,8 @@ from typing import Any, Mapping
 
 import yaml
 
+from cad_qa.query.answers import AnswerSpec, answer_instruction, normalize_answer_spec, target_type_label
+
 
 PROMPT_TEMPLATE_PATH = Path(__file__).resolve().parents[2] / "prompt-templates.yaml"
 TemplateEntry = str | list[str]
@@ -37,13 +39,23 @@ PROMPT_VERSION = str(prompt_template_registry()["version"])
 CHECKLIST_TEMPLATE_ID = str(prompt_template_registry()["checklist_template_id"])
 
 
-def checklist_prompt(source_code: str, clues: list[str], answer_format: str) -> str:
+def checklist_prompt(
+    source_code: str,
+    clues: list[str],
+    answer_format: str,
+    *,
+    target_type: str | None = None,
+    answer_spec: AnswerSpec | dict[str, Any] | None = None,
+) -> str:
     shell = _string_template("prompt_shells", "checklist")
     clue_lines = "\n".join(f"- {clue}" for clue in clues)
+    spec = normalize_answer_spec(answer_spec, target_type=target_type, answer_type=answer_format)
     return shell.format(
         source_code=source_code.rstrip(),
         clue_lines=clue_lines,
         answer_format=answer_format,
+        target_type_label=target_type_label(target_type),
+        answer_instruction=answer_instruction(spec),
     ).rstrip()
 
 

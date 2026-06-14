@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from cad_qa.query.answers import AnswerSpec, normalize_answer_spec
 from cad_qa.query.parameters import normalize_sampled_parameters
 
 
@@ -26,6 +27,7 @@ class QueryProgram:
     query_id: str
     target_type: str
     answer_type: str = "entity_id"
+    answer_spec: AnswerSpec | dict[str, Any] | None = None
     clauses: list[Clause] = field(default_factory=list)
     aggregation: str | None = None
     aggregation_metric: str | None = None
@@ -37,6 +39,11 @@ class QueryProgram:
     reject_unless_unique: bool = True
     min_individual_clause_candidates: int = 3
     sampled_parameters: dict[str, list[str]] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        spec = normalize_answer_spec(self.answer_spec, target_type=self.target_type, answer_type=self.answer_type)
+        object.__setattr__(self, "answer_spec", spec)
+        object.__setattr__(self, "answer_type", spec.answer_format)
 
 
 @dataclass(frozen=True)
@@ -63,6 +70,7 @@ def query_from_dict(data: dict[str, Any]) -> QueryProgram:
         query_id=data["query_id"],
         target_type=data["target_type"],
         answer_type=data.get("answer_type", "entity_id"),
+        answer_spec=data.get("answer_spec"),
         clauses=[Clause(**clause) for clause in data.get("clauses", [])],
         aggregation=data.get("aggregation"),
         aggregation_metric=data.get("aggregation_metric"),

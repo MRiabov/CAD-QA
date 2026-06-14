@@ -9,10 +9,10 @@ prompt_shells:
     {source_code}
     ```
 
-    Identify the target that satisfies all of these constraints:
+    Identify the target {target_type_label} that satisfies all of these constraints:
     {clue_lines}
 
-    Return exactly one {answer_format}.
+    {answer_instruction}
 
 fallback_templates:
   no_clause_target: "The target is a `{target_type}` entity from the script."
@@ -137,9 +137,9 @@ clause_templates:
   has_kernel_selector_identity: "The target face is one of the selected model faces."
   has_kernel_face_selector_identity: "The target face is one of the selected model faces."
   has_parameterized_face_set:
-    - "The target face belongs to a measured face set."
-    - "The target face is part of a face group with measured geometry."
-    - "The target face is included in a face set with checked dimensions."
+    - "Consider model faces with measured geometry."
+    - "The target face is one of the model faces with measured geometry."
+    - "The target face has checked geometric measurements."
   has_parameterized_face_metric:
     - "The target face has a measured {metric_label}."
     - "The target face has a known {metric_label}."
@@ -222,9 +222,9 @@ clause_templates:
 
   has_kernel_edge_selector_identity: "The target edge is one of the selected model edges."
   has_parameterized_edge_set:
-    - "The target edge belongs to a measured edge set."
-    - "The target edge is part of an edge group with measured geometry."
-    - "The target edge is included in an edge set with checked dimensions."
+    - "Consider model edges with measured geometry."
+    - "The target edge is one of the model edges with measured geometry."
+    - "The target edge has checked geometric measurements."
   has_parameterized_edge_metric:
     - "The target edge has a measured {metric_label}."
     - "The target edge has a known {metric_label}."
@@ -275,9 +275,9 @@ clause_templates:
   shorter_than_another_kernel_edge: "The target edge is shorter than another selected edge."
 
   has_parameterized_vertex_set:
-    - "The target vertex belongs to a measured vertex set."
-    - "The target vertex is part of a vertex group with measured coordinates."
-    - "The target vertex is included in a vertex set with checked point locations."
+    - "Consider model vertices with measured coordinates."
+    - "The target vertex is one of the model vertices with measured coordinates."
+    - "The target vertex has checked point-location measurements."
   has_parameterized_vertex_metric:
     - "The target vertex has a measured {metric_label}."
     - "The target vertex has a known {metric_label}."

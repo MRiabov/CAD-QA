@@ -61,7 +61,13 @@ def render_prompt(source_code: str, query: QueryProgram) -> RenderedPrompt:
         clues.append(no_clause_prompt(query.target_type))
         clue_ids.append("target")
         clue_template_ids.append("fallback:no_clause_target")
-    prompt = checklist_prompt(source_code, clues, query.answer_type)
+    prompt = checklist_prompt(
+        source_code,
+        clues,
+        query.answer_type,
+        target_type=query.target_type,
+        answer_spec=query.answer_spec,
+    )
     warnings = banned_terms(prompt)
     template_id = prompt_template_id(query)
     clue_map = []

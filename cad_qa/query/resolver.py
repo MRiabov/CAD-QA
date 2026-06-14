@@ -6,6 +6,7 @@ from dataclasses import replace
 from typing import Any
 
 from cad_qa.ontology.nodes import Measurement, Node, OntologyGraph
+from cad_qa.query.answers import format_gold_answer
 from cad_qa.query.candidates import candidate_ids, initial_candidates
 from cad_qa.query.difficulty import difficulty_for_hops
 from cad_qa.query.ir import CandidateSetTrace, Clause, QueryProgram, QueryResolution
@@ -110,7 +111,7 @@ def resolve_query(graph: OntologyGraph, query: QueryProgram) -> QueryResolution:
         status = "failed"
         failure_reason = "not_unique"
     trace = CandidateSetTrace(query.query_id, steps, candidate_ids(candidates), status, failure_reason)
-    gold_answer = candidates[0].id if status == "resolved" else None
+    gold_answer = format_gold_answer(graph, query, candidates[0]) if status == "resolved" else None
     return QueryResolution(
         query_program=query,
         gold_answer=gold_answer,

@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from cad_qa.io import to_jsonable
 from cad_qa.ontology.nodes import OntologyGraph
 from cad_qa.prompts.render import render_prompt
 from cad_qa.query.ir import QueryResolution
@@ -93,6 +94,7 @@ def _query_to_dict(query: Any, rendered: Any | None = None) -> dict[str, Any]:
         "query_id": query.query_id,
         "target_type": query.target_type,
         "answer_type": query.answer_type,
+        "answer_spec": to_jsonable(getattr(query, "answer_spec", None)),
         "clauses": [clause.__dict__ for clause in query.clauses],
         "aggregation": query.aggregation,
         "aggregation_metric": query.aggregation_metric,
