@@ -229,5 +229,38 @@ exclude them. The release validator treats `release_ready=false` as an error.
 
 ## Answer Formats
 
-Supported formats are `entity_id`, `integer`, `number`, `boolean`, `choice`,
-`bbox`, and compact JSON objects.
+Release rows use short, verifier-backed answers. Supported public formats
+include:
+
+- `candidate_label`: a short label such as `A`, `B`, or `C`, with the public
+  prompt providing the candidate list;
+- `coordinate`: a rounded coordinate tuple such as `(0, 1, 3)`;
+- `text`: source-visible names such as `wp7` or `result`;
+- `number`, `integer`, and `boolean` for scalar verifier outputs; and
+- `bbox` or compact JSON objects only for families whose verifier and parser
+  explicitly define those structures.
+
+Internal `entity_id` answers are reserved for debug or tool-assisted rows.
+Closed-book public benchmark rows must not require the model to predict
+colon-delimited ontology IDs.
+
+Selector-expression choices are represented as `answer_format="candidate_label"`
+with `query_program.answer_spec.mode="selector_expression_choice"`. Their public
+candidate list contains plausible canonical CadQuery selector expressions, for
+example:
+
+```text
+Candidate labels:
+- A: `base.edges(">Z")`
+- B: `base.edges("<Z")`
+- C: `base.edges()`
+
+Return exactly one candidate label from the selector-expression choices above,
+for example `A`.
+```
+
+The gold answer is the label (`A`, `B`, `C`, ...), not the expression string.
+Generation must only use this mode when every displayed choice can be derived
+from source-visible selector operations. Evaluation compares labels and does
+not execute arbitrary selector code or accept every semantically equivalent
+CadQuery spelling.

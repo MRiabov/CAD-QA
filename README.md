@@ -259,6 +259,11 @@ unless the public prompt provides the exact candidate IDs.
 
 Families may emit both selection-style rows and identification/location rows.
 Selection rows expose a public candidate list and expect a label such as `A`.
+Selector-expression selection rows are a special selection form: the public
+candidate list contains plausible canonical CadQuery selector expressions such
+as `base.edges(">Z")`, but the expected answer is still the candidate label.
+These rows train selector syntax without requiring arbitrary-code execution or
+accepting every semantically equivalent selector spelling.
 Identification/location rows ask for the entity's public representation, such
 as a coordinate tuple, endpoint pair, source variable, or scalar value. These
 styles should be sampled with quotas; they should not be produced as duplicate
