@@ -139,20 +139,18 @@ def answer_spec_with_selector_expression_choices(
     graph: OntologyGraph,
     spec: AnswerSpec,
     gold_entity_id: str,
-    *,
-    option_count: int = 4,
+    candidate_entity_ids: list[str],
 ) -> AnswerSpec | None:
-    expressions = selector_expression_choice_texts(graph, gold_entity_id, option_count=option_count)
-    if expressions is None:
+    candidate_texts = selector_expression_choice_texts(graph, gold_entity_id, candidate_entity_ids)
+    if candidate_texts is None:
         return None
-    candidate_ids = [gold_entity_id if index == 0 else f"selector_expression_distractor:{index}" for index in range(len(expressions))]
+    candidate_ids = list(candidate_texts)
     offset = _stable_index(f"{graph.graph_id}:{gold_entity_id}:selector_expression_choice", len(candidate_ids))
     ordered_ids = _rotate(candidate_ids, offset)
-    texts = dict(zip(candidate_ids, expressions, strict=True))
     return replace(
         spec,
         candidate_labels={entity_id: _candidate_label(index) for index, entity_id in enumerate(ordered_ids)},
-        candidate_texts=texts,
+        candidate_texts=candidate_texts,
     )
 
 
@@ -197,28 +195,27 @@ def candidate_label_lines(graph: OntologyGraph, query: Any) -> list[str]:
 def selector_expression_choice_texts(
     graph: OntologyGraph,
     gold_entity_id: str,
-    *,
-    option_count: int = 4,
-) -> list[str] | None:
+    candidate_entity_ids: list[str],
+) -> dict[str, str] | None:
     node = graph.node(gold_entity_id)
     if node is None or node.type != "selector":
         return None
-    parts = _selector_expression_parts(graph, node)
-    if parts is None:
+    gold = selector_expression_for_entity(graph, gold_entity_id)
+    if gold is None:
         return None
-    base, selector_kind, selector_text = parts
-    gold = _selector_expression_from_parts(base, selector_kind, selector_text)
-    distractors = [
-        _selector_expression_from_parts(base, selector_kind, candidate)
-        for candidate in _selector_text_distractors(selector_text)
-    ]
-    options = [gold]
-    for expression in distractors:
-        if expression not in options:
-            options.append(expression)
-        if len(options) >= option_count:
-            return options
-    return None
+    options = {gold_entity_id: gold}
+    seen = {gold}
+    for candidate_id in candidate_entity_ids:
+        if candidate_id == gold_entity_id:
+            continue
+        expression = selector_expression_for_entity(graph, candidate_id)
+        if expression is None or expression in seen:
+            continue
+        options[candidate_id] = expression
+        seen.add(expression)
+    if len(options) < 2:
+        return None
+    return options
 
 
 def selector_expression_for_entity(graph: OntologyGraph, entity_id: str) -> str | None:
@@ -393,12 +390,6 @@ def _snapshot_selector_base(graph: OntologyGraph, selector: Node) -> str | None:
 
 def _quoted_selector_text(value: str) -> str:
     return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
-
-
-def _selector_text_distractors(selector_text: str | None) -> list[str | None]:
-    axis_selectors: list[str | None] = [">Z", "<Z", ">X", "<X", ">Y", "<Y", None]
-    preferred = [item for item in axis_selectors if item != selector_text]
-    return preferred
 
 
 def _candidate_description(graph: OntologyGraph, entity_id: str) -> str:

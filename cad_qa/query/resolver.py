@@ -125,7 +125,12 @@ def resolve_query(graph: OntologyGraph, query: QueryProgram) -> QueryResolution:
             failure_reason = "too_many_candidate_labels"
             trace = CandidateSetTrace(query.query_id, steps, final_candidate_ids, status, failure_reason)
         elif getattr(query.answer_spec, "mode", None) == "selector_expression_choice":
-            selector_spec = answer_spec_with_selector_expression_choices(graph, query.answer_spec, candidates[0].id)
+            selector_spec = answer_spec_with_selector_expression_choices(
+                graph,
+                query.answer_spec,
+                candidates[0].id,
+                label_entity_ids,
+            )
             if selector_spec is not None:
                 query = replace(query, answer_spec=selector_spec)
             else:

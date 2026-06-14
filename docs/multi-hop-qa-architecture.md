@@ -73,10 +73,9 @@ Initial answer modes:
   the public row or prompt to include the candidate-label mapping.
 - `selector_expression_choice`: a candidate-label answer whose public choices
   are canonical CadQuery selector expressions, such as
-  `A: base.edges(">Z")`. The correct expression is derived from the resolved
-  selector, while distractors may be generated plausible alternatives from the
-  same base and selector kind. Grading still compares the selected label, not
-  arbitrary executable code.
+  `A: base.edges(">Z")`. The displayed expressions are derived from distinct
+  real measured selector candidates in the resolver trace. Grading still
+  compares the selected label, not arbitrary executable code.
 - `boolean` and `integer`: reserved for families whose verifier naturally
   produces those values.
 

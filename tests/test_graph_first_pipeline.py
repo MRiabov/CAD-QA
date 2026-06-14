@@ -3080,8 +3080,8 @@ def test_selector_expression_choice_answers_use_plausible_abcd_options() -> None
     assert answer_spec["mode"] == "selector_expression_choice"
     assert row.gold_answer == answer_spec["candidate_labels"]["selector:all"]
     assert gold_expression == "base.edges()"
-    assert len(answer_spec["candidate_texts"]) == 4
-    assert len(set(answer_spec["candidate_texts"].values())) == 4
+    assert len(answer_spec["candidate_texts"]) == 3
+    assert len(set(answer_spec["candidate_texts"].values())) == 3
     assert "`base.edges(\">Z\")`" in row.prompt
     assert "`base.edges(\"<Z\")`" in row.prompt
     assert "`base.edges()`" in row.prompt
@@ -3120,6 +3120,21 @@ def test_selector_expression_choice_uses_snapshot_selector_base() -> None:
         )
     )
     graph.add_measurement(Measurement("selector:wp10_edges_snapshot_all", "snapshot_state", "selected_count", 12))
+    graph.add_node(Node("feature:wp2", "feature", "wp2", properties={"target": "wp2"}))
+    graph.add_node(
+        Node(
+            "selector:wp2_edges_snapshot_all",
+            "selector",
+            "wp2 edges",
+            properties={
+                "feature_id": "feature:wp2",
+                "selector": None,
+                "selector_kind": "edges",
+                "selector_label": "wp2 edges",
+            },
+        )
+    )
+    graph.add_measurement(Measurement("selector:wp2_edges_snapshot_all", "snapshot_state", "selected_count", 6))
     query = QueryProgram(
         query_id="graph:selector-expression-snapshot:synth:selector",
         target_type="selector",
@@ -3136,10 +3151,10 @@ def test_selector_expression_choice_uses_snapshot_selector_base() -> None:
     assert answer_spec["mode"] == "selector_expression_choice"
     assert answer_spec["candidate_texts"]["selector:wp10_edges_snapshot_all"] == "wp10.edges()"
     assert "`wp10.edges()`" in row.prompt
-    assert "`wp10.edges(\">Z\")`" in row.prompt
+    assert "`wp2.edges()`" in row.prompt
 
 
-def test_selector_expression_choice_generates_distinct_distractors_for_duplicate_hidden_expressions() -> None:
+def test_selector_expression_choice_falls_back_for_duplicate_public_expressions() -> None:
     graph = OntologyGraph(
         graph_id="graph:selector-expression-duplicate",
         source={"source_id": "synthetic", "source_code": "top_a = base.faces('>Z')\ntop_b = base.faces('>Z')\n"},
@@ -3173,14 +3188,11 @@ def test_selector_expression_choice_generates_distinct_distractors_for_duplicate
     answer_spec = row.query_program["answer_spec"]
 
     assert query.answer_spec.mode == "selector_expression_choice"
-    assert answer_spec["mode"] == "selector_expression_choice"
+    assert answer_spec["mode"] == "candidate_label"
     assert row.gold_answer == answer_spec["candidate_labels"]["selector:top_b"]
-    assert answer_spec["candidate_texts"]["selector:top_b"] == 'base.faces(">Z")'
-    assert len(answer_spec["candidate_texts"]) == 4
-    assert len(set(answer_spec["candidate_texts"].values())) == 4
-    assert "selector-expression choices" in row.prompt
-    assert "`base.faces(\">Z\")`" in row.prompt
-    assert "`base.faces(\"<Z\")`" in row.prompt
+    assert not answer_spec.get("candidate_texts")
+    assert "selector-expression choices" not in row.prompt
+    assert "selector 'selector:top_b'" not in row.prompt
 
 
 def test_prompt_clause_templates_use_domain_wording() -> None:

@@ -262,10 +262,10 @@ Selection rows expose a public candidate list and expect a label such as `A`.
 Selector-expression selection rows are a special selection form: the public
 candidate list contains plausible canonical CadQuery selector expressions such
 as `base.edges(">Z")`, but the expected answer is still the candidate label.
-The correct option is derived from the resolved selector; distractors may be
-generated from the same source-visible base and selector kind. These rows train
-selector syntax without requiring arbitrary-code execution or accepting every
-semantically equivalent selector spelling.
+The displayed choices are derived from the real measured selector candidates
+used by the resolver; synthetic selector strings are not padded in as
+distractors. These rows train selector syntax without requiring arbitrary-code
+execution or accepting every semantically equivalent selector spelling.
 Identification/location rows ask for the entity's public representation, such
 as a coordinate tuple, endpoint pair, source variable, or scalar value. These
 styles should be sampled with quotas; they should not be produced as duplicate

@@ -262,8 +262,8 @@ for example `A`.
 The gold answer is the label (`A`, `B`, `C`, ...), not the expression string.
 Generation must only use this mode when the correct expression can be derived
 from a source-visible selector operation or compiled snapshot selector. The
-distractors may be generated plausible alternatives from the same base variable
-and selector kind, but all displayed expressions must be distinct. Otherwise
-the row must fall back to ordinary candidate-label choices. Evaluation compares
-labels and does not execute arbitrary selector code or accept every semantically
-equivalent CadQuery spelling.
+displayed expressions must come from distinct real measured selector candidates
+in the resolver trace; synthetic selector strings must not be padded in as
+distractors. Otherwise the row must fall back to ordinary candidate-label
+choices. Evaluation compares labels and does not execute arbitrary selector
+code or accept every semantically equivalent CadQuery spelling.
