@@ -52,7 +52,7 @@ def checklist_prompt(
     clue_lines = "\n".join(f"- {clue}" for clue in clues)
     rendered_candidate_lines = _candidate_lines(candidate_lines or [])
     spec = normalize_answer_spec(answer_spec, target_type=target_type, answer_type=answer_format)
-    return shell.format(
+    prompt = shell.format(
         source_code=source_code.rstrip(),
         clue_lines=clue_lines,
         candidate_lines=rendered_candidate_lines,
@@ -60,6 +60,7 @@ def checklist_prompt(
         target_type_label=target_type_label(target_type),
         answer_instruction=answer_instruction(spec, target_type=target_type),
     ).rstrip()
+    return prompt.replace("\n\n\nReturn exactly", "\n\nReturn exactly")
 
 
 def clause_prompt(clause: Any, *, query: Any | None = None) -> str:

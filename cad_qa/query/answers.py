@@ -9,6 +9,7 @@ from cad_qa.ontology.nodes import Node, OntologyGraph
 
 
 DEFAULT_DECIMALS = 6
+DEFAULT_MAX_CANDIDATE_LABELS = 7
 
 
 @dataclass(frozen=True)
@@ -20,7 +21,7 @@ class AnswerSpec:
     candidate_labels: dict[str, str] = field(default_factory=dict)
     candidate_texts: dict[str, str] = field(default_factory=dict)
     candidate_set: str = "prefinal"
-    max_candidate_labels: int = 64
+    max_candidate_labels: int = DEFAULT_MAX_CANDIDATE_LABELS
 
 
 def normalize_answer_spec(
@@ -51,7 +52,7 @@ def normalize_answer_spec(
                 for entity_id, text in (value.get("candidate_texts") or {}).items()
             },
             candidate_set=str(value.get("candidate_set") or "prefinal"),
-            max_candidate_labels=int(value.get("max_candidate_labels", 64)),
+            max_candidate_labels=int(value.get("max_candidate_labels", DEFAULT_MAX_CANDIDATE_LABELS)),
         )
     if answer_type and answer_type != "entity_id":
         return _spec_from_answer_type(answer_type)
@@ -131,8 +132,16 @@ def format_gold_answer(graph: OntologyGraph, query: Any, node: Node) -> Any:
     return node.id
 
 
-def answer_spec_with_candidate_labels(spec: AnswerSpec, candidate_ids: list[str]) -> AnswerSpec:
-    return replace(spec, candidate_labels={entity_id: _candidate_label(index) for index, entity_id in enumerate(candidate_ids)})
+def answer_spec_with_candidate_labels(
+    graph: OntologyGraph,
+    spec: AnswerSpec,
+    candidate_ids: list[str],
+    gold_entity_id: str,
+) -> AnswerSpec:
+    bounded_ids = _bounded_candidate_ids(graph, candidate_ids, gold_entity_id, spec.max_candidate_labels)
+    offset = _stable_index(f"{gold_entity_id}:candidate_label", len(bounded_ids))
+    ordered_ids = _rotate(bounded_ids, offset)
+    return replace(spec, candidate_labels={entity_id: _candidate_label(index) for index, entity_id in enumerate(ordered_ids)})
 
 
 def answer_spec_with_selector_expression_choices(
@@ -144,7 +153,10 @@ def answer_spec_with_selector_expression_choices(
     candidate_texts = selector_expression_choice_texts(graph, gold_entity_id, candidate_entity_ids)
     if candidate_texts is None:
         return None
-    candidate_ids = list(candidate_texts)
+    candidate_ids = _bounded_candidate_ids(graph, list(candidate_texts), gold_entity_id, spec.max_candidate_labels)
+    candidate_texts = {entity_id: candidate_texts[entity_id] for entity_id in candidate_ids}
+    if len(candidate_ids) < 2:
+        return None
     offset = _stable_index(f"{graph.graph_id}:{gold_entity_id}:selector_expression_choice", len(candidate_ids))
     ordered_ids = _rotate(candidate_ids, offset)
     return replace(
@@ -216,6 +228,46 @@ def selector_expression_choice_texts(
     if len(options) < 2:
         return None
     return options
+
+
+def _bounded_candidate_ids(
+    graph: OntologyGraph,
+    candidate_ids: list[str],
+    gold_entity_id: str,
+    max_candidate_labels: int,
+) -> list[str]:
+    if max_candidate_labels < 1:
+        raise ValueError("max_candidate_labels must be positive")
+    unique_ids = list(dict.fromkeys(candidate_ids))
+    if gold_entity_id not in unique_ids:
+        unique_ids.insert(0, gold_entity_id)
+    if len(unique_ids) <= max_candidate_labels:
+        return unique_ids
+    distractors = [
+        entity_id
+        for entity_id in unique_ids
+        if entity_id != gold_entity_id and _has_informative_candidate_description(graph, entity_id)
+    ]
+    if len(distractors) < max_candidate_labels - 1:
+        distractors.extend(
+            entity_id
+            for entity_id in unique_ids
+            if entity_id != gold_entity_id and entity_id not in set(distractors)
+        )
+    offset = _stable_index(f"{gold_entity_id}:candidate_distractors", len(distractors))
+    rotated = _rotate(distractors, offset)
+    return [gold_entity_id, *rotated[: max_candidate_labels - 1]]
+
+
+def _has_informative_candidate_description(graph: OntologyGraph, entity_id: str) -> bool:
+    description = _candidate_description(graph, entity_id)
+    return description not in {
+        "edge candidate",
+        "face candidate",
+        "path segment candidate",
+        "selector candidate",
+        "unlabeled candidate",
+    }
 
 
 def selector_expression_for_entity(graph: OntologyGraph, entity_id: str) -> str | None:
@@ -426,6 +478,9 @@ def _edge_description(graph: OntologyGraph, entity_id: str, node: Node | None) -
         parts.extend(_point_component_parts(graph, entity_id, "midpoint", "midpoint"))
     if isinstance(length, (int, float)):
         parts.append(f"length {_format_number(float(length))}")
+    midpoint_distance = _measurement_value(graph, entity_id, "midpoint_distance_to_origin")
+    if isinstance(midpoint_distance, (int, float)):
+        parts.append(f"midpoint distance to origin {_format_number(float(midpoint_distance))}")
     return "; ".join(parts) if parts else _fallback_description(entity_id, node)
 
 
@@ -440,6 +495,9 @@ def _face_description(graph: OntologyGraph, entity_id: str, node: Node | None) -
         parts.extend(_point_component_parts(graph, entity_id, "center", "coordinate"))
     if isinstance(area, (int, float)):
         parts.append(f"area {_format_number(float(area))}")
+    distance = _measurement_value(graph, entity_id, "distance_to_origin")
+    if isinstance(distance, (int, float)):
+        parts.append(f"distance to origin {_format_number(float(distance))}")
     bbox_text = _bbox_description(bbox)
     if bbox_text:
         parts.append(bbox_text)

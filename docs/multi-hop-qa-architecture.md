@@ -70,7 +70,8 @@ Initial answer modes:
 - `number`: a rounded scalar measurement with the same tolerance policy used by
   the verifier.
 - `candidate_label`: a short label such as `A`, `B`, or `C`; this mode requires
-  the public row or prompt to include the candidate-label mapping.
+  the public row or prompt to include a candidate-label mapping capped at 7
+  displayed choices.
 - `selector_expression_choice`: a candidate-label answer whose public choices
   are canonical CadQuery selector expressions, such as
   `A: base.edges(">Z")`. The displayed expressions are derived from distinct

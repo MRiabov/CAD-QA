@@ -233,7 +233,8 @@ Release rows use short, verifier-backed answers. Supported public formats
 include:
 
 - `candidate_label`: a short label such as `A`, `B`, or `C`, with the public
-  prompt providing the candidate list;
+  prompt providing at most 7 displayed choices sampled from the full private
+  candidate trace while always including the gold target;
 - `coordinate`: a rounded coordinate tuple such as `(0, 1, 3)`;
 - `text`: source-visible names such as `wp7` or `result`;
 - `number`, `integer`, and `boolean` for scalar verifier outputs; and

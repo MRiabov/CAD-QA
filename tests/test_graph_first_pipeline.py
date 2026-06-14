@@ -2960,6 +2960,7 @@ def test_answer_spec_formats_recoverable_source_ref_answers() -> None:
     assert row.query_program["answer_spec"]["mode"] == "source_ref"
     assert "Identify the target feature" in row.prompt
     assert "Return exactly one source variable name" in row.prompt
+    assert "\n\n\nReturn exactly" not in row.prompt
 
 
 def test_coordinate_answer_format_parser_accepts_tuple_text() -> None:
@@ -2967,7 +2968,7 @@ def test_coordinate_answer_format_parser_accepts_tuple_text() -> None:
     assert parse_answer("AA", "candidate_label") == "AA"
 
 
-def test_candidate_label_answers_reject_unbounded_label_lists() -> None:
+def test_candidate_label_answers_bound_public_label_lists() -> None:
     graph = OntologyGraph(graph_id="graph:too-many-labels", source={"source_id": "synthetic", "source_code": ""})
     for index in range(65):
         node_id = f"edge:{index}"
@@ -2983,10 +2984,39 @@ def test_candidate_label_answers_reject_unbounded_label_lists() -> None:
     )
 
     resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+    answer_spec = row.query_program["answer_spec"]
 
-    assert resolution.verifier_status == "failed"
-    assert resolution.candidate_trace.failure_reason == "too_many_candidate_labels"
-    assert resolution.gold_answer is None
+    assert resolution.verifier_status == "resolved"
+    assert resolution.gold_answer == answer_spec["candidate_labels"]["edge:64"]
+    assert len(answer_spec["candidate_labels"]) == 7
+    assert "edge:64" in answer_spec["candidate_labels"]
+    assert row.prompt.count("\n- ") == 8
+    assert validate_rows([to_jsonable(row)])["valid"]
+
+
+def test_validation_rejects_overwide_public_candidate_label_lists() -> None:
+    graph = OntologyGraph(graph_id="graph:wide-label-validation", source={"source_id": "synthetic", "source_code": ""})
+    for index in range(8):
+        node_id = f"edge:{index}"
+        graph.add_node(Node(node_id, "edge", node_id))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "edge_length", float(index), "mm"))
+    query = QueryProgram(
+        query_id="graph:wide-label-validation:synth:edge",
+        target_type="edge",
+        answer_spec=synthesis_answer_spec_for_target_type("edge", graph),
+        aggregation="argmax",
+        aggregation_metric="edge_length",
+        hop_count=2,
+    )
+    row = to_jsonable(materialize_row(graph, resolve_query(graph, query)))
+    row["query_program"]["answer_spec"]["candidate_labels"]["edge:extra"] = "H"
+
+    report = validate_rows([row])
+
+    assert not report["valid"]
+    assert report["errors"][0]["error"] == "too_many_public_candidate_labels"
+    assert report["errors"][0]["candidate_label_count"] == 8
 
 
 def test_candidate_label_selector_descriptions_include_public_selector_context() -> None:
@@ -3923,6 +3953,46 @@ def test_synthesis_generates_void_region_rows_from_cut_delta_metrics_without_cen
         assert row.gold_answer in {"0", "1", "2"}
         assert row.release_ready
         assert row.geometry_hop_count > 0
+
+
+def test_synthesis_skips_zero_volume_void_region_equal_value_rows() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:void-region-zero-volume",
+        source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
+    )
+    for index, (volume, centroid_z, faces) in enumerate(
+        [
+            (0.0, 1.0, 2.0),
+            (0.0, 2.0, 4.0),
+            (5.0, 3.0, 6.0),
+            (5.0, 4.0, 8.0),
+        ]
+    ):
+        node_id = f"void_region:{index}"
+        graph.add_node(Node(node_id, "void_region", node_id))
+        graph.add_relation(Relation(node_id, node_id, "has_kernel_void_region_geometry"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "volume", volume, "mm^3"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid_z", centroid_z, "mm"))
+        graph.add_measurement(Measurement(node_id, "feature_application_effect", "topology_delta_faces", faces, None))
+
+    queries = [
+        query
+        for query in synthesize_graph_hop_queries(graph, max_per_family=20)
+        if query.query_id.endswith("parameterized_equal_void_region_metric_extreme")
+        or query.query_id.endswith("parameterized_equal_void_region_metric_rank")
+    ]
+
+    assert queries
+    assert any(
+        clause.metric == "volume" and clause.value == 5.0
+        for query in queries
+        for clause in query.clauses
+    )
+    assert not any(
+        clause.metric == "volume" and clause.value == 0.0
+        for query in queries
+        for clause in query.clauses
+    )
 
 
 def test_synthesis_skips_tied_rank_positions_without_dropping_viable_later_ranks() -> None:

@@ -120,11 +120,7 @@ def resolve_query(graph: OntologyGraph, query: QueryProgram) -> QueryResolution:
     choice_answer_modes = {"candidate_label", "selector_expression_choice"}
     if status == "resolved" and getattr(query.answer_spec, "mode", None) in choice_answer_modes:
         label_entity_ids = candidate_label_entity_ids(steps, final_candidate_ids)
-        if len(label_entity_ids) > query.answer_spec.max_candidate_labels:
-            status = "failed"
-            failure_reason = "too_many_candidate_labels"
-            trace = CandidateSetTrace(query.query_id, steps, final_candidate_ids, status, failure_reason)
-        elif getattr(query.answer_spec, "mode", None) == "selector_expression_choice":
+        if getattr(query.answer_spec, "mode", None) == "selector_expression_choice":
             selector_spec = answer_spec_with_selector_expression_choices(
                 graph,
                 query.answer_spec,
@@ -137,12 +133,12 @@ def resolve_query(graph: OntologyGraph, query: QueryProgram) -> QueryResolution:
                 query = replace(query, answer_spec=replace(query.answer_spec, mode="candidate_label"))
                 query = replace(
                     query,
-                    answer_spec=answer_spec_with_candidate_labels(query.answer_spec, label_entity_ids),
+                    answer_spec=answer_spec_with_candidate_labels(graph, query.answer_spec, label_entity_ids, candidates[0].id),
                 )
         else:
             query = replace(
                 query,
-                answer_spec=answer_spec_with_candidate_labels(query.answer_spec, label_entity_ids),
+                answer_spec=answer_spec_with_candidate_labels(graph, query.answer_spec, label_entity_ids, candidates[0].id),
             )
     gold_answer = format_gold_answer(graph, query, candidates[0]) if status == "resolved" else None
     return QueryResolution(

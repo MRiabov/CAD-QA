@@ -13,6 +13,7 @@ from cad_qa.prompts.wording_gates import (
     clue_map_traceability_errors,
     geometry_first_prompt_policy_issues,
 )
+from cad_qa.query.answers import DEFAULT_MAX_CANDIDATE_LABELS
 
 REQUIRED_ROW_FIELDS = {
     "row_id",
@@ -68,6 +69,9 @@ def validate_rows(rows: list[dict[str, Any]], *, release: bool = False) -> dict[
                 errors.append(item)
             else:
                 warnings.append({**item, "warning": issue["error"]})
+        for issue in public_candidate_label_issues(row):
+            item = {"index": index, "row_id": row.get("row_id"), **issue}
+            errors.append(item)
         for issue in geometry_first_prompt_policy_issues(row):
             item = {
                 "index": index,
@@ -118,6 +122,25 @@ def public_answer_identity_leak_issues(row: dict[str, Any]) -> list[dict[str, An
             }
         )
     return issues
+
+
+def public_candidate_label_issues(row: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return public candidate-list contract issues for real CAD-QA prompt rows."""
+
+    prompt = str(row.get("prompt") or "")
+    is_cadqa_prompt = "Given the CadQuery script" in prompt
+    if not is_cadqa_prompt or row.get("answer_format") != "candidate_label":
+        return []
+    candidate_labels = ((row.get("query_program") or {}).get("answer_spec") or {}).get("candidate_labels") or {}
+    if len(candidate_labels) <= DEFAULT_MAX_CANDIDATE_LABELS:
+        return []
+    return [
+        {
+            "error": "too_many_public_candidate_labels",
+            "candidate_label_count": len(candidate_labels),
+            "max_candidate_labels": DEFAULT_MAX_CANDIDATE_LABELS,
+        }
+    ]
 
 
 def validate_dataset_dir(path: Path, *, release: bool = False) -> dict[str, Any]:

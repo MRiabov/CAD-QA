@@ -4103,6 +4103,7 @@ def _metric_thresholds(
             round(float(value), 6)
             for node in candidates
             if isinstance((value := _measurement_value(graph, node.id, metric)), (int, float))
+            and _is_valid_synthesis_metric_value(node, metric, value)
         }
     )
     thresholds: list[tuple[str, float]] = []
@@ -4129,7 +4130,8 @@ def _nodes_with_numeric_measurement(graph: OntologyGraph, candidates: list[Node]
     node_ids = tuple(
         node.id
         for node in candidates
-        if isinstance(_measurement_value(graph, node.id, metric), (int, float))
+        if isinstance((value := _measurement_value(graph, node.id, metric)), (int, float))
+        and _is_valid_synthesis_metric_value(node, metric, value)
     )
     cache[key] = node_ids
     return [
@@ -4146,7 +4148,10 @@ def _equal_measurement_groups(
 ) -> list[tuple[float, list[Node]]]:
     groups: dict[float, list[Node]] = {}
     for node in candidates:
-        bucket = measurement_bucket_value(_measurement_value(graph, node.id, metric))
+        value = _measurement_value(graph, node.id, metric)
+        if not _is_valid_synthesis_metric_value(node, metric, value):
+            continue
+        bucket = measurement_bucket_value(value)
         if bucket is not None:
             groups.setdefault(bucket, []).append(node)
     return sorted(
@@ -4436,6 +4441,7 @@ def _scored_node_ids(
         (float(value), node.id)
         for node in candidates
         if isinstance((value := _measurement_value(graph, node.id, metric)), (int, float))
+        and _is_valid_synthesis_metric_value(node, metric, value)
     )
     cache[key] = scored
     return scored
@@ -4638,7 +4644,11 @@ def _nodes_matching_measurement_value_cached(
     node_ids = tuple(
         node.id
         for node in candidates
-        if any(_value_matches(measured, value) for measured in _measurement_values(graph, node.id, metric))
+        if any(
+            _is_valid_synthesis_metric_value(node, metric, measured)
+            and _value_matches(measured, value)
+            for measured in _measurement_values(graph, node.id, metric)
+        )
     )
     cache[key] = node_ids
     return [
@@ -4766,6 +4776,12 @@ def _relation_extreme_strategy(viable: ViableRelationExtreme) -> str:
 def _measurement_value(graph: OntologyGraph, entity_id: str, metric: str) -> Any:
     values = _measurement_values(graph, entity_id, metric)
     return values[0] if values else None
+
+
+def _is_valid_synthesis_metric_value(node: Node, metric: str, value: Any) -> bool:
+    if metric == "volume" and node.type in {"material_region", "void_region"}:
+        return isinstance(value, (int, float)) and float(value) > GEOMETRY_MARGIN_EPSILON
+    return True
 
 
 def _measurement_values(graph: OntologyGraph, entity_id: str, metric: str) -> tuple[Any, ...]:

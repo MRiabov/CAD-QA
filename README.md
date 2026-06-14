@@ -258,7 +258,8 @@ labels. Internal `entity_id` answers are reserved for debug/tool-assisted rows
 unless the public prompt provides the exact candidate IDs.
 
 Families may emit both selection-style rows and identification/location rows.
-Selection rows expose a public candidate list and expect a label such as `A`.
+Selection rows expose a public candidate list capped at 7 displayed choices and
+expect a label such as `A`.
 Selector-expression selection rows are a special selection form: the public
 candidate list contains plausible canonical CadQuery selector expressions such
 as `base.edges(">Z")`, but the expected answer is still the candidate label.
