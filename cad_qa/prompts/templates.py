@@ -58,7 +58,7 @@ def checklist_prompt(
         candidate_lines=rendered_candidate_lines,
         answer_format=answer_format,
         target_type_label=target_type_label(target_type),
-        answer_instruction=answer_instruction(spec),
+        answer_instruction=answer_instruction(spec, target_type=target_type),
     ).rstrip()
 
 

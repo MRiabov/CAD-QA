@@ -77,11 +77,11 @@ def target_type_label(target_type: str | None) -> str:
     return str(target_type or "entity").replace("_", " ")
 
 
-def answer_instruction(spec: AnswerSpec) -> str:
+def answer_instruction(spec: AnswerSpec, *, target_type: str | None = None) -> str:
     if spec.mode == "source_ref":
         return "Return exactly one source variable name, for example `wp7`."
     if spec.mode == "coordinate":
-        return "Return exactly one coordinate tuple, for example `(0, 1, 3)`."
+        return f"Return exactly one coordinate tuple of the {target_type_label(target_type)}, for example `(0, 1, 3)`."
     if spec.mode == "number":
         return "Return exactly one number, for example `12.5`."
     if spec.mode == "candidate_label":

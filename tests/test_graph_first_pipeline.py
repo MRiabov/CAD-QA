@@ -5921,7 +5921,7 @@ def test_synthesis_generates_parameterized_kernel_vertex_queries() -> None:
         assert "vertex" in row.prompt.lower()
         assert row.answer_format == "coordinate"
         assert row.query_program["answer_spec"]["mode"] == "coordinate"
-        assert "Return exactly one coordinate tuple" in row.prompt
+        assert "Return exactly one coordinate tuple of the vertex" in row.prompt
         final_vertex_id = row.candidate_trace["final_candidates"][0]
         assert row.gold_answer == graph.measurements_for(final_vertex_id, "coordinate")[0].value
         if family.endswith("_rank"):

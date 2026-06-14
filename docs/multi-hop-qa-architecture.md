@@ -80,7 +80,7 @@ The renderer in `cad_qa/prompts/render.py` and templates in
 ```text
 Identify the target vertex that satisfies all of these constraints:
 ...
-Return exactly one coordinate tuple, for example `(0, 1, 3)`.
+Return exactly one coordinate tuple of the vertex, for example `(0, 1, 3)`.
 ```
 
 ```text
