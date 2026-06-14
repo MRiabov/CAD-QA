@@ -105,6 +105,53 @@ answers must not be used for closed-book public benchmark rows unless the
 public task provides the exact candidate IDs or the task is explicitly
 tool-assisted.
 
+### Selection And Identification Variants
+
+Most query families should support two public answer styles:
+
+- **selection** rows, where the prompt presents a public candidate list and the
+  answer is a candidate label such as `A`, `B`, or `C`;
+- **identification/location** rows, where the prompt asks the model to name or
+  locate the resolved entity directly, and the answer is a coordinate tuple,
+  endpoint pair, source variable, scalar value, or other compact public
+  representation.
+
+These styles test different skills. Selection rows test discriminative
+reasoning over a supplied candidate set. Identification/location rows test
+whether the model can produce the selected entity's public geometric or source
+representation. The dataset should include both styles, but synthesis should
+sample them under quotas rather than emitting duplicate rows for every hidden
+query.
+
+Recommended target-type mapping:
+
+| Target type | Selection answer | Identification/location answer |
+| --- | --- | --- |
+| `vertex` | candidate label | coordinate tuple `(x, y, z)` |
+| `edge_endpoint` | candidate label | coordinate tuple `(x, y, z)` |
+| `path_point` | candidate label | coordinate tuple `(x, y, z)` |
+| `edge` | candidate label | endpoint pair, or midpoint plus length when uniquely sufficient |
+| `path_segment` | candidate label | endpoint pair, or midpoint plus length |
+| `face` | candidate label | center plus area or bounding box only when uniquely sufficient |
+| `selector` | candidate label | source selector expression or selected-count summary when meaningful |
+| `feature`, `profile`, `workplane`, `material_region`, `void_region` | candidate label | source variable or operation target |
+
+Candidate-label prompts must include enough public candidate evidence to make
+the final label recoverable. For edge-like entities, prefer endpoint
+coordinates, midpoint, length, and the measurements used by the final selector
+or tie-break. For faces, prefer center, area, and bounding-box summaries. For
+selectors, prefer source-visible selector text, selected entity type, selected
+count, and any aggregate measurements used by the query.
+
+Do not expose very large initial candidate sets by default. Candidate-label
+rows should normally label the narrowed candidate set at the final decision
+point, such as the candidates before the last aggregation or tie-break. If that
+set is still too large for a compact prompt, the family should choose a direct
+identification/location answer, resample a narrower query, or mark the row
+review-only. Raw hash-like IDs such as
+`edge:kernel:snapshot_wp11_edges:964744ac2162c9e6` are private implementation
+artifacts and are not acceptable closed-book public answers.
+
 ## Graph-Hop Candidate Narrowing
 
 Generators must not treat a sparse direct extremum as evidence that a task is

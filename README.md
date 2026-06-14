@@ -257,6 +257,13 @@ variables, coordinates, numbers, booleans, integers, or exposed candidate
 labels. Internal `entity_id` answers are reserved for debug/tool-assisted rows
 unless the public prompt provides the exact candidate IDs.
 
+Families may emit both selection-style rows and identification/location rows.
+Selection rows expose a public candidate list and expect a label such as `A`.
+Identification/location rows ask for the entity's public representation, such
+as a coordinate tuple, endpoint pair, source variable, or scalar value. These
+styles should be sampled with quotas; they should not be produced as duplicate
+variants of every hidden query by default.
+
 Prediction metrics include accuracy, response coverage, missing-response rate,
 invalid-output rate, duplicate/extra response counters, optional confidence
 calibration when responses include `confidence`, and breakdowns by difficulty,
