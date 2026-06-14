@@ -2989,6 +2989,42 @@ def test_candidate_label_answers_reject_unbounded_label_lists() -> None:
     assert resolution.gold_answer is None
 
 
+def test_candidate_label_selector_descriptions_include_public_selector_context() -> None:
+    graph = OntologyGraph(graph_id="graph:selector-labels", source={"source_id": "synthetic", "source_code": ""})
+    for selector_id, selector_label, selected_count, max_z in [
+        ("selector:wp2_faces_snapshot_all", "wp2 faces", 6, 1.0),
+        ("selector:wp6_faces_snapshot_all", "wp6 faces", 7, 4.0),
+    ]:
+        graph.add_node(
+            Node(
+                selector_id,
+                "selector",
+                selector_id,
+                properties={"selector_label": selector_label, "selector_kind": "faces"},
+            )
+        )
+        graph.add_measurement(Measurement(selector_id, "snapshot_state", "selected_count", selected_count))
+        graph.add_measurement(Measurement(selector_id, "selection_geometry", "selected_face_min_coordinate_z", -7.0, "mm"))
+        graph.add_measurement(Measurement(selector_id, "selection_geometry", "selected_face_max_coordinate_z", max_z, "mm"))
+    query = QueryProgram(
+        query_id="graph:selector-labels:synth:selector",
+        target_type="selector",
+        answer_spec=synthesis_answer_spec_for_target_type("selector", graph),
+        aggregation="argmax",
+        aggregation_metric="selected_count",
+        hop_count=2,
+    )
+
+    row = materialize_row(graph, resolve_query(graph, query))
+
+    assert row.answer_format == "candidate_label"
+    assert row.gold_answer == "B"
+    assert "selector 'wp2 faces'; type faces; selected count 6" in row.prompt
+    assert "selector 'wp6 faces'; type faces; selected count 7" in row.prompt
+    assert "selected face center Z range -7 to 4" in row.prompt
+    assert "selector:" not in row.prompt
+
+
 def test_prompt_clause_templates_use_domain_wording() -> None:
     implementation_terms = {
         "cadquery",

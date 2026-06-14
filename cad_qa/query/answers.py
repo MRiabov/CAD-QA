@@ -293,14 +293,15 @@ def _path_segment_description(graph: OntologyGraph, entity_id: str, node: Node |
 
 def _selector_description(graph: OntologyGraph, entity_id: str, node: Node | None) -> str:
     if node is None:
-        return entity_id
+        return "selector candidate"
     props = node.properties
     parts = []
-    selector_text = props.get("selector_text") or props.get("stable_selector")
+    selector_text = props.get("selector_label") or props.get("selector_text") or props.get("stable_selector")
     if selector_text is not None:
         parts.append(f"selector {selector_text!r}")
-    if props.get("kind") is not None:
-        parts.append(f"type {props['kind']}")
+    selector_kind = props.get("selector_kind") or props.get("kind")
+    if selector_kind is not None:
+        parts.append(f"type {selector_kind}")
     for metric in (
         "selected_count",
         "selected_edge_count",
@@ -311,6 +312,7 @@ def _selector_description(graph: OntologyGraph, entity_id: str, node: Node | Non
         if isinstance(value, (int, float)):
             parts.append(f"{metric.replace('_', ' ')} {_format_number(float(value))}")
             break
+    parts.extend(_selection_geometry_parts(graph, entity_id))
     return "; ".join(parts) if parts else _fallback_description(entity_id, node)
 
 
@@ -331,6 +333,26 @@ def _point_component_parts(graph: OntologyGraph, entity_id: str, label: str, met
         if isinstance(value, (int, float)):
             parts.append(f"{label} {axis.upper()} {_format_number(float(value))}")
     return parts
+
+
+def _selection_geometry_parts(graph: OntologyGraph, entity_id: str) -> list[str]:
+    metric_groups = (
+        ("selected face center Z", "selected_face_min_coordinate_z", "selected_face_max_coordinate_z"),
+        ("selected face area", "selected_face_min_face_area", "selected_face_max_face_area"),
+        ("selected face distance to origin", "selected_face_min_distance_to_origin", "selected_face_max_distance_to_origin"),
+        ("selected edge length", "selected_edge_min_edge_length", "selected_edge_max_edge_length"),
+        ("selected edge midpoint Y", "selected_edge_min_midpoint_y", "selected_edge_max_midpoint_y"),
+        ("selected edge midpoint distance to origin", "selected_edge_min_midpoint_distance_to_origin", "selected_edge_max_midpoint_distance_to_origin"),
+        ("selected vertex Z", "selected_vertex_min_coordinate_z", "selected_vertex_max_coordinate_z"),
+        ("selected vertex distance to origin", "selected_vertex_min_distance_to_origin", "selected_vertex_max_distance_to_origin"),
+    )
+    parts = []
+    for label, min_metric, max_metric in metric_groups:
+        min_value = _measurement_value(graph, entity_id, min_metric)
+        max_value = _measurement_value(graph, entity_id, max_metric)
+        if isinstance(min_value, (int, float)) and isinstance(max_value, (int, float)):
+            parts.append(f"{label} range {_format_number(float(min_value))} to {_format_number(float(max_value))}")
+    return parts[:3]
 
 
 def _is_point(value: Any) -> bool:
