@@ -74,6 +74,7 @@ from cad_qa.experiment import (
 from cad_qa.harbor import grade_harbor_task, materialize_harbor_tasks
 from cad_qa.io import iter_records, read_jsonl, read_records, to_jsonable, write_json, write_jsonl, write_records
 from cad_qa.ontology import build_graph
+from cad_qa.ontology.columnar import COLUMNAR_GRAPH_DIR, read_columnar_graph_store, write_columnar_graph_store
 from cad_qa.ontology.nodes import Measurement, Node, OntologyGraph, Relation, graph_from_dict
 from cad_qa.ontology.profile_geometry import circle_profile, polyline_profile, rect_profile
 from cad_qa.ontology.relations import RELATION_FAMILIES
@@ -712,6 +713,76 @@ def test_graph_build_report_exposes_type_coverage(tmp_path: Path) -> None:
     assert report["release_support_coverage"]["path_point_families"]["graph_count"] == 1
     assert report["release_support_coverage"]["path_segment_families"]["graph_count"] == 1
     assert "kernel_vertex_families" in report["missing_release_support"]
+    columnar_dir = graph_dir / COLUMNAR_GRAPH_DIR
+    assert columnar_dir.exists()
+    assert report["columnar_graph_manifest"]["counts"]["graphs"] == 2
+    legacy_graphs = [graph_from_dict(row) for row in read_records(graph_dir / "graphs.parquet")]
+    columnar_graphs = read_columnar_graph_store(columnar_dir)
+    assert [to_jsonable(graph) for graph in columnar_graphs] == [to_jsonable(graph) for graph in legacy_graphs]
+    for path in columnar_dir.glob("*.parquet"):
+        assert b"cadqa.json_columns" not in (pq.ParquetFile(path).schema_arrow.metadata or {})
+
+
+def test_columnar_graph_store_round_trips_graphs_exactly(tmp_path: Path) -> None:
+    graph = OntologyGraph(
+        graph_id="graph:roundtrip",
+        source={
+            "source_id": "src_roundtrip",
+            "source_code": "import cadquery as cq\n",
+            "source_path": "CADEvolve-C/example.py",
+            "source_hash": "abc123",
+            "metadata": {
+                "source": "CADEvolve-C",
+                "source_subtree": "ABC-C",
+                "source_collection": "unit",
+                "path_family": "CADEvolve-C/example",
+                "source_feature_tags": ["void_cut", "kernel_edge_selector"],
+                "generator_id": "gen:test",
+                "normalized_source_code_hash": "def456",
+            },
+        },
+        diagnostics=[{"severity": "info", "payload": {"nested": [1, 2, 3]}}],
+    )
+    graph.add_node(
+        Node(
+            "edge:1",
+            "edge",
+            "edge 1",
+            source_ref="line:1",
+            properties={"stable": True, "weights": [1.0, 2.5], "nested": {"a": 1}},
+        )
+    )
+    graph.add_node(Node("face:1", "face", "face 1"))
+    graph.add_relation(
+        Relation(
+            "edge:1",
+            "face:1",
+            "contained_in",
+            properties={"rank": 1, "tags": ("a", "b")},
+            evidence={"source": "unit", "scores": [0.25, 0.75]},
+        )
+    )
+    graph.add_measurement(
+        Measurement(
+            "edge:1",
+            "entity_geometry",
+            "edge_length",
+            12.5,
+            "mm",
+            evidence={"bbox": {"min": [0, 0, 0], "max": [1, 2, 3]}},
+        )
+    )
+    graph.add_measurement(Measurement("face:1", "entity_geometry", "normal", [0.0, 0.0, 1.0]))
+
+    manifest = write_columnar_graph_store(tmp_path / COLUMNAR_GRAPH_DIR, [graph], batch_size=1)
+    reconstructed = read_columnar_graph_store(tmp_path / COLUMNAR_GRAPH_DIR)
+
+    assert manifest["format"] == "cadqa_columnar_graph_v1"
+    assert manifest["counts"]["graphs"] == 1
+    assert manifest["counts"]["nodes"] == len(graph.nodes)
+    assert manifest["counts"]["relations"] == len(graph.relations)
+    assert manifest["counts"]["measurements"] == len(graph.measurements)
+    assert [to_jsonable(item) for item in reconstructed] == [to_jsonable(graph)]
 
 
 def test_graph_build_can_write_and_load_sharded_graph_artifacts(tmp_path: Path) -> None:
@@ -753,8 +824,16 @@ def test_graph_build_can_write_and_load_sharded_graph_artifacts(tmp_path: Path) 
 
     assert report["graph_count"] == 3
     assert report["graph_artifact_sharded"] is True
+    assert report["columnar_graph_manifest"]["counts"]["graphs"] == 3
     assert len(sorted((graph_dir / "graphs").glob("part-*.parquet"))) == 3
     assert not (graph_dir / "graphs.parquet").exists()
+    legacy_graphs = [
+        graph_from_dict(row)
+        for path in sorted((graph_dir / "graphs").glob("part-*.parquet"))
+        for row in read_records(path)
+    ]
+    columnar_graphs = read_columnar_graph_store(graph_dir / COLUMNAR_GRAPH_DIR)
+    assert [to_jsonable(graph) for graph in columnar_graphs] == [to_jsonable(graph) for graph in legacy_graphs]
     assert (
         cli_main(
             [

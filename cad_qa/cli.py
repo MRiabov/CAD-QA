@@ -6,6 +6,7 @@ import argparse
 from collections import Counter
 import json
 from pathlib import Path
+import shutil
 import sys
 from typing import Any
 
@@ -67,6 +68,7 @@ from cad_qa.io import (
     write_records,
 )
 from cad_qa.ontology import build_graph
+from cad_qa.ontology.columnar import COLUMNAR_GRAPH_DIR, ColumnarGraphWriter, write_columnar_graph_manifest
 from cad_qa.ontology.nodes import OntologyGraph, graph_from_dict
 from cad_qa.query.family_manifest import (
     DEFAULT_FAMILY_MANIFEST,
@@ -613,22 +615,33 @@ def _cmd_graph_build(args: argparse.Namespace) -> dict[str, Any]:
     traces_by_source = _trace_records_by_source(args.traces_jsonl)
     args.out.mkdir(parents=True, exist_ok=True)
     report_builder = _GraphBuildReport()
+    graph_tables_dir = args.out / COLUMNAR_GRAPH_DIR
+    if graph_tables_dir.exists():
+        shutil.rmtree(graph_tables_dir)
+    columnar_writer = ColumnarGraphWriter(graph_tables_dir)
     shard_size = max(0, int(args.shard_size or 0))
-    if shard_size:
-        _write_graph_shards(
-            args.out,
-            (
-                build_graph(source, trace=traces_by_source.get(source.source_id))
-                for source in sources
-            ),
-            shard_size=shard_size,
-            report_builder=report_builder,
-        )
-    else:
-        graphs = [build_graph(source, trace=traces_by_source.get(source.source_id)) for source in sources]
-        write_records(record_artifact_path(args.out, "graphs"), graphs)
-        for graph in graphs:
-            report_builder.add_graph(graph)
+    try:
+        if shard_size:
+            _write_graph_shards(
+                args.out,
+                (
+                    build_graph(source, trace=traces_by_source.get(source.source_id))
+                    for source in sources
+                ),
+                shard_size=shard_size,
+                report_builder=report_builder,
+                columnar_writer=columnar_writer,
+            )
+        else:
+            graphs = [build_graph(source, trace=traces_by_source.get(source.source_id)) for source in sources]
+            write_records(record_artifact_path(args.out, "graphs"), graphs)
+            columnar_writer.write_batch(graphs)
+            for graph in graphs:
+                report_builder.add_graph(graph)
+    finally:
+        columnar_writer.close()
+    columnar_manifest = columnar_writer.manifest()
+    write_columnar_graph_manifest(graph_tables_dir, columnar_manifest)
     report = {
         "graph_count": report_builder.graph_count,
         "node_count": report_builder.node_count,
@@ -657,6 +670,8 @@ def _cmd_graph_build(args: argparse.Namespace) -> dict[str, Any]:
     if shard_size:
         report["graph_artifact_sharded"] = True
         report["graph_shard_size"] = shard_size
+    report["columnar_graph_artifact"] = str(graph_tables_dir)
+    report["columnar_graph_manifest"] = columnar_manifest
     report["missing_release_support"] = [
         name
         for name, coverage in report["release_support_coverage"].items()
@@ -716,6 +731,7 @@ def _write_graph_shards(
     *,
     shard_size: int,
     report_builder: _GraphBuildReport,
+    columnar_writer: ColumnarGraphWriter,
 ) -> None:
     shard_dir = out_dir / "graphs"
     shard_dir.mkdir(parents=True, exist_ok=True)
@@ -728,10 +744,12 @@ def _write_graph_shards(
         batch.append(graph)
         if len(batch) >= shard_size:
             write_records(shard_dir / f"part-{shard_index:05d}.parquet", batch)
+            columnar_writer.write_batch(batch)
             batch = []
             shard_index += 1
     if batch:
         write_records(shard_dir / f"part-{shard_index:05d}.parquet", batch)
+        columnar_writer.write_batch(batch)
 
 
 def _release_support_coverage(graphs: list[OntologyGraph]) -> dict[str, dict[str, Any]]:
