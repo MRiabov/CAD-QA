@@ -3025,6 +3025,76 @@ def test_candidate_label_selector_descriptions_include_public_selector_context()
     assert "selector:" not in row.prompt
 
 
+def test_selector_expression_choice_answers_use_plausible_abcd_options() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:selector-expression-choice",
+        source={
+            "source_id": "synthetic",
+            "source_code": (
+                "import cadquery as cq\n"
+                "base = cq.Workplane('XY').box(10, 20, 5)\n"
+                "top_edges = base.edges('>Z')\n"
+                "bottom_edges = base.edges('<Z')\n"
+                "all_edges = base.edges()\n"
+            ),
+        },
+    )
+    for selector_id, operation_id, target, base, args, selected_count in [
+        ("selector:top", "operation:top_edges", "top_edges", "base", [">Z"], 2),
+        ("selector:bottom", "operation:bottom_edges", "bottom_edges", "base", ["<Z"], 5),
+        ("selector:all", "operation:all_edges", "all_edges", "base", [], 12),
+    ]:
+        graph.add_node(
+            Node(
+                operation_id,
+                "operation",
+                target,
+                properties={"target": target, "operation": "edges", "base": base, "args": args},
+            )
+        )
+        graph.add_node(
+            Node(
+                selector_id,
+                "selector",
+                selector_id,
+                properties={"selector": args[0] if args else None, "selector_kind": "edges"},
+            )
+        )
+        graph.add_relation(Relation(selector_id, operation_id, "selected_by"))
+        graph.add_measurement(Measurement(selector_id, "snapshot_state", "selected_count", selected_count))
+    query = QueryProgram(
+        query_id="graph:selector-expression-choice:synth:selector",
+        target_type="selector",
+        answer_spec=synthesis_answer_spec_for_target_type("selector", graph),
+        aggregation="argmax",
+        aggregation_metric="selected_count",
+        hop_count=3,
+        difficulty="cad_browsecomp",
+    )
+
+    row = materialize_row(graph, resolve_query(graph, query))
+
+    assert row.answer_format == "candidate_label"
+    assert row.query_program["answer_spec"]["mode"] == "selector_expression_choice"
+    assert row.gold_answer == "C"
+    assert "A: `base.edges(\">Z\")`" in row.prompt
+    assert "B: `base.edges(\"<Z\")`" in row.prompt
+    assert "C: `base.edges()`" in row.prompt
+    assert "selector-expression choices" in row.prompt
+    assert "selector:all" not in row.prompt
+    assert validate_rows([to_jsonable(row)])["valid"]
+
+
+def test_selector_expression_choice_falls_back_when_selectors_are_not_source_visible() -> None:
+    graph = OntologyGraph(graph_id="graph:selector-expression-fallback", source={"source_id": "synthetic", "source_code": ""})
+    for selector_id in ["selector:a", "selector:b"]:
+        graph.add_node(Node(selector_id, "selector", selector_id))
+
+    spec = synthesis_answer_spec_for_target_type("selector", graph)
+
+    assert spec.mode == "candidate_label"
+
+
 def test_prompt_clause_templates_use_domain_wording() -> None:
     implementation_terms = {
         "cadquery",

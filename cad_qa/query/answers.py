@@ -63,6 +63,8 @@ def synthesis_answer_spec_for_target_type(target_type: str, graph: OntologyGraph
             return AnswerSpec(mode="coordinate", answer_format="coordinate", metric="coordinate")
         return AnswerSpec(mode="candidate_label", answer_format="candidate_label")
     if target_type in {"edge", "face", "selector", "path_segment"}:
+        if target_type == "selector" and graph is not None and _target_type_has_any_selector_expression(graph, target_type):
+            return AnswerSpec(mode="selector_expression_choice", answer_format="candidate_label")
         return AnswerSpec(mode="candidate_label", answer_format="candidate_label")
     return AnswerSpec()
 
@@ -86,6 +88,8 @@ def answer_instruction(spec: AnswerSpec, *, target_type: str | None = None) -> s
         return "Return exactly one number, for example `12.5`."
     if spec.mode == "candidate_label":
         return "Return exactly one candidate label from the list above, for example `A`."
+    if spec.mode == "selector_expression_choice":
+        return "Return exactly one candidate label from the selector-expression choices above, for example `A`."
     if spec.mode == "boolean":
         return "Return exactly one boolean value: `true` or `false`."
     if spec.mode == "integer":
@@ -113,6 +117,11 @@ def format_gold_answer(graph: OntologyGraph, query: Any, node: Node) -> Any:
         label = spec.candidate_labels.get(node.id)
         if label is None:
             raise ValueError(f"missing candidate label for {node.id}")
+        return label
+    if spec.mode == "selector_expression_choice":
+        label = spec.candidate_labels.get(node.id)
+        if label is None:
+            raise ValueError(f"missing selector-expression candidate label for {node.id}")
         return label
     return node.id
 
@@ -144,12 +153,43 @@ def candidate_label_lines(graph: OntologyGraph, query: Any) -> list[str]:
         answer_type=getattr(query, "answer_type", None),
     )
     if spec.mode != "candidate_label" or not spec.candidate_labels:
-        return []
+        if spec.mode != "selector_expression_choice" or not spec.candidate_labels:
+            return []
     ordered = sorted(spec.candidate_labels.items(), key=lambda item: _label_sort_key(item[1]))
+    if spec.mode == "selector_expression_choice":
+        return [
+            f"{label}: `{selector_expression}`"
+            for entity_id, label in ordered
+            if (selector_expression := selector_expression_for_entity(graph, entity_id)) is not None
+        ]
     return [
         f"{label}: {_candidate_description(graph, entity_id)}"
         for entity_id, label in ordered
     ]
+
+
+def selector_expression_choices_available(graph: OntologyGraph, candidate_ids: list[str]) -> bool:
+    return bool(candidate_ids) and all(selector_expression_for_entity(graph, entity_id) is not None for entity_id in candidate_ids)
+
+
+def selector_expression_for_entity(graph: OntologyGraph, entity_id: str) -> str | None:
+    node = graph.node(entity_id)
+    if node is None:
+        return None
+    if node.type == "selector":
+        return _selector_expression_for_selector(graph, node)
+    if node.type in {"edge", "face", "vertex"}:
+        selector = _selector_for_selected_entity(graph, node)
+        if selector is None:
+            return None
+        expression = _selector_expression_for_selector(graph, selector)
+        if expression is None:
+            return None
+        index = node.properties.get("selector_index")
+        if isinstance(index, int):
+            return f"{expression}[{index}]"
+        return expression
+    return None
 
 
 def _spec_from_answer_type(answer_type: str) -> AnswerSpec:
@@ -165,6 +205,8 @@ def _spec_from_answer_type(answer_type: str) -> AnswerSpec:
         return AnswerSpec(mode="source_ref", answer_format="text")
     if answer_type == "candidate_label":
         return AnswerSpec(mode="candidate_label", answer_format="candidate_label")
+    if answer_type == "selector_expression_choice":
+        return AnswerSpec(mode="selector_expression_choice", answer_format="candidate_label")
     return AnswerSpec(mode=answer_type, answer_format=answer_type)
 
 
@@ -218,6 +260,57 @@ def _target_type_has_full_coordinates(graph: OntologyGraph, target_type: str) ->
     if not nodes:
         return False
     return all(_point_value(graph, node.id, "coordinate") is not None for node in nodes)
+
+
+def _target_type_has_any_selector_expression(graph: OntologyGraph, target_type: str) -> bool:
+    nodes = graph.nodes_by_type(target_type)
+    return any(selector_expression_for_entity(graph, node.id) is not None for node in nodes)
+
+
+def _selector_expression_for_selector(graph: OntologyGraph, selector: Node) -> str | None:
+    operation = _selector_operation(graph, selector.id)
+    if operation is None:
+        return None
+    selector_kind = str(operation.properties.get("operation") or selector.properties.get("selector_kind") or "")
+    if selector_kind not in {"faces", "edges", "vertices"}:
+        return None
+    base = operation.properties.get("base")
+    if not isinstance(base, str) or not base:
+        return None
+    args = operation.properties.get("args")
+    selector_text = args[0] if isinstance(args, list) and args else selector.properties.get("selector")
+    if selector_text is None or selector_text == "":
+        return f"{base}.{selector_kind}()"
+    return f"{base}.{selector_kind}({_quoted_selector_text(str(selector_text))})"
+
+
+def _selector_operation(graph: OntologyGraph, selector_id: str) -> Node | None:
+    for relation in graph.relations:
+        if relation.source_id != selector_id or relation.type != "selected_by":
+            continue
+        node = graph.node(relation.target_id)
+        if node is not None and node.type == "operation":
+            return node
+    return None
+
+
+def _selector_for_selected_entity(graph: OntologyGraph, node: Node) -> Node | None:
+    selector_relations = {
+        "selected_by",
+        f"has_kernel_stable_{node.type}_id",
+        "has_stable_face_id",
+    }
+    for relation in graph.relations:
+        if relation.source_id != node.id or relation.type not in selector_relations:
+            continue
+        selector = graph.node(relation.target_id)
+        if selector is not None and selector.type == "selector":
+            return selector
+    return None
+
+
+def _quoted_selector_text(value: str) -> str:
+    return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
 def _candidate_description(graph: OntologyGraph, entity_id: str) -> str:

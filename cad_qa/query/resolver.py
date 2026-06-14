@@ -10,6 +10,7 @@ from cad_qa.query.answers import (
     answer_spec_with_candidate_labels,
     candidate_label_entity_ids,
     format_gold_answer,
+    selector_expression_choices_available,
 )
 from cad_qa.query.candidates import candidate_ids, initial_candidates
 from cad_qa.query.difficulty import difficulty_for_hops
@@ -116,11 +117,18 @@ def resolve_query(graph: OntologyGraph, query: QueryProgram) -> QueryResolution:
         failure_reason = "not_unique"
     final_candidate_ids = candidate_ids(candidates)
     trace = CandidateSetTrace(query.query_id, steps, final_candidate_ids, status, failure_reason)
-    if status == "resolved" and getattr(query.answer_spec, "mode", None) == "candidate_label":
+    choice_answer_modes = {"candidate_label", "selector_expression_choice"}
+    if status == "resolved" and getattr(query.answer_spec, "mode", None) in choice_answer_modes:
         label_entity_ids = candidate_label_entity_ids(steps, final_candidate_ids)
         if len(label_entity_ids) > query.answer_spec.max_candidate_labels:
             status = "failed"
             failure_reason = "too_many_candidate_labels"
+            trace = CandidateSetTrace(query.query_id, steps, final_candidate_ids, status, failure_reason)
+        elif getattr(query.answer_spec, "mode", None) == "selector_expression_choice" and not selector_expression_choices_available(
+            graph, label_entity_ids
+        ):
+            status = "failed"
+            failure_reason = "missing_selector_expression_choices"
             trace = CandidateSetTrace(query.query_id, steps, final_candidate_ids, status, failure_reason)
         else:
             query = replace(

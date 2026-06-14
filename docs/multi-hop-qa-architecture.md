@@ -71,6 +71,10 @@ Initial answer modes:
   the verifier.
 - `candidate_label`: a short label such as `A`, `B`, or `C`; this mode requires
   the public row or prompt to include the candidate-label mapping.
+- `selector_expression_choice`: a candidate-label answer whose public choices
+  are canonical CadQuery selector expressions, such as
+  `A: base.edges(">Z")`. This is for source-visible selector tasks; grading
+  still compares the selected label, not arbitrary executable code.
 - `boolean` and `integer`: reserved for families whose verifier naturally
   produces those values.
 
@@ -93,6 +97,16 @@ Return exactly one source variable name, for example `wp7`.
 Identify the target face that satisfies all of these constraints:
 ...
 Return exactly one candidate label from the list above, for example `A`.
+```
+
+```text
+Identify the target selector that satisfies all of these constraints:
+...
+Candidate labels:
+- A: `base.edges(">Z")`
+- B: `base.edges("<Z")`
+Return exactly one candidate label from the selector-expression choices above,
+for example `A`.
 ```
 
 Families should choose the most recoverable answer mode compatible with their
@@ -138,7 +152,7 @@ Recommended target-type mapping:
 | `edge` | candidate label | endpoint pair, or midpoint plus length when uniquely sufficient |
 | `path_segment` | candidate label | endpoint pair, or midpoint plus length |
 | `face` | candidate label | center plus area or bounding box only when uniquely sufficient |
-| `selector` | candidate label | source selector expression or selected-count summary when meaningful |
+| `selector` | candidate label, or selector-expression choice when source-visible | source selector expression or selected-count summary when meaningful |
 | `feature`, `profile`, `workplane`, `material_region`, `void_region` | candidate label | source variable or operation target |
 
 Candidate-label prompts must include enough public candidate evidence to make
