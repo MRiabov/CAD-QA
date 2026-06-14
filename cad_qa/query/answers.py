@@ -18,6 +18,7 @@ class AnswerSpec:
     metric: str | None = None
     decimals: int = DEFAULT_DECIMALS
     candidate_labels: dict[str, str] = field(default_factory=dict)
+    candidate_texts: dict[str, str] = field(default_factory=dict)
     candidate_set: str = "prefinal"
     max_candidate_labels: int = 64
 
@@ -44,6 +45,10 @@ def normalize_answer_spec(
             candidate_labels={
                 str(entity_id): str(label)
                 for entity_id, label in (value.get("candidate_labels") or {}).items()
+            },
+            candidate_texts={
+                str(entity_id): str(text)
+                for entity_id, text in (value.get("candidate_texts") or {}).items()
             },
             candidate_set=str(value.get("candidate_set") or "prefinal"),
             max_candidate_labels=int(value.get("max_candidate_labels", 64)),
@@ -130,6 +135,27 @@ def answer_spec_with_candidate_labels(spec: AnswerSpec, candidate_ids: list[str]
     return replace(spec, candidate_labels={entity_id: _candidate_label(index) for index, entity_id in enumerate(candidate_ids)})
 
 
+def answer_spec_with_selector_expression_choices(
+    graph: OntologyGraph,
+    spec: AnswerSpec,
+    gold_entity_id: str,
+    *,
+    option_count: int = 4,
+) -> AnswerSpec | None:
+    expressions = selector_expression_choice_texts(graph, gold_entity_id, option_count=option_count)
+    if expressions is None:
+        return None
+    candidate_ids = [gold_entity_id if index == 0 else f"selector_expression_distractor:{index}" for index in range(len(expressions))]
+    offset = _stable_index(f"{graph.graph_id}:{gold_entity_id}:selector_expression_choice", len(candidate_ids))
+    ordered_ids = _rotate(candidate_ids, offset)
+    texts = dict(zip(candidate_ids, expressions, strict=True))
+    return replace(
+        spec,
+        candidate_labels={entity_id: _candidate_label(index) for index, entity_id in enumerate(ordered_ids)},
+        candidate_texts=texts,
+    )
+
+
 def candidate_label_entity_ids(trace_steps: list[dict[str, Any]], final_candidates: list[str]) -> list[str]:
     if not final_candidates:
         return []
@@ -160,7 +186,7 @@ def candidate_label_lines(graph: OntologyGraph, query: Any) -> list[str]:
         return [
             f"{label}: `{selector_expression}`"
             for entity_id, label in ordered
-            if (selector_expression := selector_expression_for_entity(graph, entity_id)) is not None
+            if (selector_expression := spec.candidate_texts.get(entity_id) or selector_expression_for_entity(graph, entity_id)) is not None
         ]
     return [
         f"{label}: {_candidate_description(graph, entity_id)}"
@@ -168,11 +194,31 @@ def candidate_label_lines(graph: OntologyGraph, query: Any) -> list[str]:
     ]
 
 
-def selector_expression_choices_available(graph: OntologyGraph, candidate_ids: list[str]) -> bool:
-    if not candidate_ids:
-        return False
-    expressions = [selector_expression_for_entity(graph, entity_id) for entity_id in candidate_ids]
-    return all(expression is not None for expression in expressions) and len(set(expressions)) == len(expressions)
+def selector_expression_choice_texts(
+    graph: OntologyGraph,
+    gold_entity_id: str,
+    *,
+    option_count: int = 4,
+) -> list[str] | None:
+    node = graph.node(gold_entity_id)
+    if node is None or node.type != "selector":
+        return None
+    parts = _selector_expression_parts(graph, node)
+    if parts is None:
+        return None
+    base, selector_kind, selector_text = parts
+    gold = _selector_expression_from_parts(base, selector_kind, selector_text)
+    distractors = [
+        _selector_expression_from_parts(base, selector_kind, candidate)
+        for candidate in _selector_text_distractors(selector_text)
+    ]
+    options = [gold]
+    for expression in distractors:
+        if expression not in options:
+            options.append(expression)
+        if len(options) >= option_count:
+            return options
+    return None
 
 
 def selector_expression_for_entity(graph: OntologyGraph, entity_id: str) -> str | None:
@@ -271,17 +317,30 @@ def _target_type_has_any_selector_expression(graph: OntologyGraph, target_type: 
 
 
 def _selector_expression_for_selector(graph: OntologyGraph, selector: Node) -> str | None:
-    operation = _selector_operation(graph, selector.id)
-    if operation is None:
+    parts = _selector_expression_parts(graph, selector)
+    if parts is None:
         return None
-    selector_kind = str(operation.properties.get("operation") or selector.properties.get("selector_kind") or "")
+    return _selector_expression_from_parts(*parts)
+
+
+def _selector_expression_parts(graph: OntologyGraph, selector: Node) -> tuple[str, str, str | None] | None:
+    operation = _selector_operation(graph, selector.id)
+    selector_kind = str(
+        (operation.properties.get("operation") if operation is not None else None)
+        or selector.properties.get("selector_kind")
+        or ""
+    )
     if selector_kind not in {"faces", "edges", "vertices"}:
         return None
-    base = operation.properties.get("base")
+    base = operation.properties.get("base") if operation is not None else _snapshot_selector_base(graph, selector)
     if not isinstance(base, str) or not base:
         return None
-    args = operation.properties.get("args")
+    args = operation.properties.get("args") if operation is not None else None
     selector_text = args[0] if isinstance(args, list) and args else selector.properties.get("selector")
+    return base, selector_kind, str(selector_text) if selector_text not in (None, "") else None
+
+
+def _selector_expression_from_parts(base: str, selector_kind: str, selector_text: str | None) -> str:
     if selector_text is None or selector_text == "":
         return f"{base}.{selector_kind}()"
     return f"{base}.{selector_kind}({_quoted_selector_text(str(selector_text))})"
@@ -312,8 +371,34 @@ def _selector_for_selected_entity(graph: OntologyGraph, node: Node) -> Node | No
     return None
 
 
+def _snapshot_selector_base(graph: OntologyGraph, selector: Node) -> str | None:
+    feature_id = selector.properties.get("feature_id")
+    if isinstance(feature_id, str):
+        feature = graph.node(feature_id)
+        if feature is not None:
+            source_ref = _source_ref_answer(feature)
+            if source_ref and ":" not in source_ref:
+                return source_ref
+        if feature_id.startswith("feature:"):
+            candidate = feature_id.removeprefix("feature:").split(":", 1)[0]
+            if candidate:
+                return candidate
+    label = selector.properties.get("selector_label")
+    if isinstance(label, str):
+        parts = label.split()
+        if len(parts) == 2 and parts[1] in {"faces", "edges", "vertices"} and ":" not in parts[0]:
+            return parts[0]
+    return None
+
+
 def _quoted_selector_text(value: str) -> str:
     return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def _selector_text_distractors(selector_text: str | None) -> list[str | None]:
+    axis_selectors: list[str | None] = [">Z", "<Z", ">X", "<X", ">Y", "<Y", None]
+    preferred = [item for item in axis_selectors if item != selector_text]
+    return preferred
 
 
 def _candidate_description(graph: OntologyGraph, entity_id: str) -> str:
@@ -502,6 +587,19 @@ def _candidate_label(index: int) -> str:
 
 def _label_sort_key(label: str) -> tuple[int, str]:
     return (len(label), label)
+
+
+def _stable_index(key: str, count: int) -> int:
+    if count <= 0:
+        return 0
+    return sum(ord(char) for char in key) % count
+
+
+def _rotate(values: list[str], offset: int) -> list[str]:
+    if not values:
+        return []
+    shift = offset % len(values)
+    return values[shift:] + values[:shift]
 
 
 def _step_candidates(step: dict[str, Any], key: str) -> list[str]:

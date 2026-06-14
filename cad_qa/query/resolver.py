@@ -8,9 +8,9 @@ from typing import Any
 from cad_qa.ontology.nodes import Measurement, Node, OntologyGraph
 from cad_qa.query.answers import (
     answer_spec_with_candidate_labels,
+    answer_spec_with_selector_expression_choices,
     candidate_label_entity_ids,
     format_gold_answer,
-    selector_expression_choices_available,
 )
 from cad_qa.query.candidates import candidate_ids, initial_candidates
 from cad_qa.query.difficulty import difficulty_for_hops
@@ -124,14 +124,16 @@ def resolve_query(graph: OntologyGraph, query: QueryProgram) -> QueryResolution:
             status = "failed"
             failure_reason = "too_many_candidate_labels"
             trace = CandidateSetTrace(query.query_id, steps, final_candidate_ids, status, failure_reason)
-        elif getattr(query.answer_spec, "mode", None) == "selector_expression_choice" and not selector_expression_choices_available(
-            graph, label_entity_ids
-        ):
-            query = replace(query, answer_spec=replace(query.answer_spec, mode="candidate_label"))
-            query = replace(
-                query,
-                answer_spec=answer_spec_with_candidate_labels(query.answer_spec, label_entity_ids),
-            )
+        elif getattr(query.answer_spec, "mode", None) == "selector_expression_choice":
+            selector_spec = answer_spec_with_selector_expression_choices(graph, query.answer_spec, candidates[0].id)
+            if selector_spec is not None:
+                query = replace(query, answer_spec=selector_spec)
+            else:
+                query = replace(query, answer_spec=replace(query.answer_spec, mode="candidate_label"))
+                query = replace(
+                    query,
+                    answer_spec=answer_spec_with_candidate_labels(query.answer_spec, label_entity_ids),
+                )
         else:
             query = replace(
                 query,
