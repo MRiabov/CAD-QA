@@ -2964,6 +2964,7 @@ def test_answer_spec_formats_recoverable_source_ref_answers() -> None:
 
 def test_coordinate_answer_format_parser_accepts_tuple_text() -> None:
     assert parse_answer("(0, 1.25, -3)", "coordinate") == [0, 1.25, -3]
+    assert parse_answer("AA", "candidate_label") == "AA"
 
 
 def test_prompt_clause_templates_use_domain_wording() -> None:
@@ -3308,7 +3309,12 @@ def test_synthesis_generates_parameterized_kernel_face_extreme_query() -> None:
     row = materialize_row(graph, resolution)
 
     assert resolution.verifier_status == "resolved"
-    assert resolution.gold_answer in {"face:1", "face:3"}
+    final_face_id = resolution.candidate_trace.final_candidates[0]
+    assert final_face_id in {"face:1", "face:3"}
+    assert row.answer_format == "candidate_label"
+    assert row.gold_answer == row.query_program["answer_spec"]["candidate_labels"][final_face_id]
+    assert "Candidate labels:" in row.prompt
+    assert "Return exactly one candidate label" in row.prompt
     assert query.aggregation in {"argmax", "argmin"}
     assert query.aggregation_metric == "coordinate_x"
     assert query.sampled_parameters["aggregation_axis"] == ["x"]
@@ -3426,7 +3432,11 @@ def test_smoke_queries_include_parameterized_kernel_edge_synthesis() -> None:
     row = materialize_row(graph, resolution)
 
     assert resolution.verifier_status == "resolved"
-    assert resolution.gold_answer in {"edge:1", "edge:3"}
+    final_edge_id = resolution.candidate_trace.final_candidates[0]
+    assert final_edge_id in {"edge:1", "edge:3"}
+    assert row.answer_format == "candidate_label"
+    assert row.gold_answer == row.query_program["answer_spec"]["candidate_labels"][final_edge_id]
+    assert "Candidate labels:" in row.prompt
     assert query.aggregation_metric == "midpoint_y"
     assert query.sampled_parameters["aggregation_axis"] == ["y"]
     assert query.sampled_parameters["target_type"] == ["edge"]
@@ -3470,7 +3480,9 @@ def test_synthesis_generates_ranked_kernel_edge_query() -> None:
     face_resolution = resolve_query(face_graph, face_query)
 
     assert face_resolution.verifier_status == "resolved"
-    assert face_resolution.gold_answer == "face:b"
+    final_face_id = face_resolution.candidate_trace.final_candidates[0]
+    assert final_face_id == "face:b"
+    assert face_resolution.gold_answer == face_resolution.query_program.answer_spec.candidate_labels[final_face_id]
     assert face_query.aggregation_rank == 2
 
     graph = OntologyGraph(graph_id="graph:rank-sample:0", source={"source_id": "synthetic", "source_code": ""})
@@ -3494,7 +3506,9 @@ def test_synthesis_generates_ranked_kernel_edge_query() -> None:
     row = materialize_row(graph, resolution)
 
     assert resolution.verifier_status == "resolved"
-    assert resolution.gold_answer == "edge:b"
+    final_edge_id = resolution.candidate_trace.final_candidates[0]
+    assert final_edge_id == "edge:b"
+    assert resolution.gold_answer == resolution.query_program.answer_spec.candidate_labels[final_edge_id]
     assert query.aggregation in {"rank_asc", "rank_desc"}
     assert query.aggregation_metric == "edge_length"
     assert query.aggregation_rank == 2
@@ -3701,7 +3715,9 @@ def test_synthesis_skips_tied_rank_positions_without_dropping_viable_later_ranks
     assert resolution.verifier_status == "resolved"
     assert query.aggregation == "rank_asc"
     assert query.aggregation_rank == 3
-    assert resolution.gold_answer == "edge:a"
+    final_edge_id = resolution.candidate_trace.final_candidates[0]
+    assert final_edge_id == "edge:a"
+    assert resolution.gold_answer == resolution.query_program.answer_spec.candidate_labels[final_edge_id]
 
 
 def test_synthesis_skips_rank_family_when_all_rank_positions_are_tied() -> None:
@@ -4286,7 +4302,7 @@ def test_synthesis_generates_spatial_relation_tie_break_queries() -> None:
         assert query.sampled_parameters["tie_break_direction"] in (["max"], ["min"])
         assert row.candidate_trace["steps"][-1]["step"] == "tie_break_aggregation"
         assert len(row.candidate_trace["steps"][-1]["before"]) >= 2
-        assert row.candidate_trace["steps"][-1]["after"] == [resolution.gold_answer]
+        assert row.candidate_trace["steps"][-1]["after"] == row.candidate_trace["final_candidates"]
         assert len(row.candidate_trace["final_candidates"]) == 1
         assert "adjacent_to" in row.relation_families
         assert "adjacent_to" not in row.prompt
@@ -4631,7 +4647,7 @@ def test_synthesis_generates_spatial_relation_chain_tie_break_queries() -> None:
         assert len(relation_steps[-1]["after"]) < 5
         assert tie_break_step["step"] == "tie_break_aggregation"
         assert len(tie_break_step["before"]) == 2
-        assert tie_break_step["after"] == [resolution.gold_answer]
+        assert tie_break_step["after"] == row.candidate_trace["final_candidates"]
         assert len(row.candidate_trace["final_candidates"]) == 1
         assert row.logical_hop_count == 5
         assert row.geometry_hop_count == 5
@@ -4702,7 +4718,9 @@ def test_synthesis_generates_equal_value_face_and_edge_queries() -> None:
     face_equal_step = next(step for step in face_row.candidate_trace["steps"] if step["step"] == "has_parameterized_equal_face_metric_value")
 
     assert face_resolution.verifier_status == "resolved"
-    assert face_resolution.gold_answer in {"face:a", "face:b"}
+    final_face_id = face_resolution.candidate_trace.final_candidates[0]
+    assert final_face_id in {"face:a", "face:b"}
+    assert face_row.gold_answer == face_row.query_program["answer_spec"]["candidate_labels"][final_face_id]
     assert face_query.clauses[1].metric == "face_area"
     assert face_query.clauses[1].value == 12.0
     assert face_query.aggregation_metric == "coordinate_z"
@@ -4736,7 +4754,9 @@ def test_synthesis_generates_equal_value_face_and_edge_queries() -> None:
     edge_equal_step = next(step for step in edge_row.candidate_trace["steps"] if step["step"] == "has_parameterized_equal_edge_metric_value")
 
     assert edge_resolution.verifier_status == "resolved"
-    assert edge_resolution.gold_answer in {"edge:a", "edge:b"}
+    final_edge_id = edge_resolution.candidate_trace.final_candidates[0]
+    assert final_edge_id in {"edge:a", "edge:b"}
+    assert edge_row.gold_answer == edge_row.query_program["answer_spec"]["candidate_labels"][final_edge_id]
     assert edge_query.clauses[1].metric == "edge_length"
     assert edge_query.clauses[1].value == 10.0
     assert edge_query.aggregation_metric == "midpoint_y"
@@ -5363,7 +5383,10 @@ def test_synthesis_generates_equal_value_endpoint_query() -> None:
     equal_step = next(step for step in row.candidate_trace["steps"] if step["step"] == "has_parameterized_equal_endpoint_metric_value")
 
     assert resolution.verifier_status == "resolved"
-    assert resolution.gold_answer in {"edge_endpoint:a", "edge_endpoint:b"}
+    final_endpoint_id = resolution.candidate_trace.final_candidates[0]
+    assert final_endpoint_id in {"edge_endpoint:a", "edge_endpoint:b"}
+    assert row.answer_format == "candidate_label"
+    assert row.gold_answer == row.query_program["answer_spec"]["candidate_labels"][final_endpoint_id]
     assert query.target_type == "edge_endpoint"
     assert query.clauses[0].relation == "endpoint_of"
     assert query.clauses[1].metric == "coordinate_z"
@@ -5470,6 +5493,9 @@ def test_synthesis_generates_contained_endpoint_query() -> None:
     equal_step = next(step for step in row.candidate_trace["steps"] if step["step"] == "has_parameterized_equal_endpoint_metric_value")
 
     assert resolution.verifier_status == "resolved"
+    final_endpoint_id = resolution.candidate_trace.final_candidates[0]
+    assert row.answer_format == "candidate_label"
+    assert row.gold_answer == row.query_program["answer_spec"]["candidate_labels"][final_endpoint_id]
     assert query.target_type == "edge_endpoint"
     assert query.clauses[0].relation == "endpoint_of"
     assert query.clauses[1].relation == "contained_in"
@@ -8291,7 +8317,8 @@ def test_synthesis_generates_equal_related_metric_selector_count_query() -> None
     assert query.clauses[1].operator == "=="
     assert query.clauses[1].value == 2.0
     assert related_step["after"] == ["selector:a", "selector:b"]
-    assert row.gold_answer == "selector:b"
+    assert row.candidate_trace["final_candidates"] == ["selector:b"]
+    assert row.gold_answer == row.query_program["answer_spec"]["candidate_labels"]["selector:b"]
     assert row.query_program["sampled_parameters"]["comparison_operator"] == ["=="]
     assert row.query_program["sampled_parameters"]["measurement_value_bucket"] == ["midpoint_y:2"]
     assert "equal to 2.0" in row.prompt
@@ -8408,7 +8435,9 @@ def test_synthesis_generates_tie_break_edge_selector_count_query() -> None:
     tie_break_step = row.candidate_trace["steps"][-1]
 
     assert resolution.verifier_status == "resolved"
-    assert resolution.gold_answer in {"selector:a", "selector:b", "selector:c", "selector:d"}
+    final_selector_id = resolution.candidate_trace.final_candidates[0]
+    assert final_selector_id in {"selector:a", "selector:b", "selector:c", "selector:d"}
+    assert row.gold_answer == row.query_program["answer_spec"]["candidate_labels"][final_selector_id]
     assert row.release_ready
     assert query.aggregation_metric == "selected_count"
     assert query.tie_break_aggregation in {"argmax", "argmin"}
@@ -8416,7 +8445,7 @@ def test_synthesis_generates_tie_break_edge_selector_count_query() -> None:
     assert query.sampled_parameters["synthesis_strategy"] == ["selector_count_narrowing_tie_break_v1"]
     assert tie_break_step["step"] == "tie_break_aggregation"
     assert len(tie_break_step["before"]) >= 2
-    assert tie_break_step["after"] == [resolution.gold_answer]
+    assert tie_break_step["after"] == [final_selector_id]
     assert "longest selected edge length" in row.prompt
 
 
@@ -8607,7 +8636,7 @@ def test_synthesis_uses_tie_break_metric_for_tied_extrema() -> None:
     assert query.tie_break_metric in {"edge_length", "midpoint_y"}
     assert row.candidate_trace["steps"][-1]["step"] == "tie_break_aggregation"
     assert len(row.candidate_trace["steps"][-1]["before"]) == 2
-    assert row.candidate_trace["steps"][-1]["after"] == [resolution.gold_answer]
+    assert row.candidate_trace["steps"][-1]["after"] == row.candidate_trace["final_candidates"]
     assert any(
         phrase in row.prompt
         for phrase in ("If that leaves a tie", "If candidates are still tied", "For any remaining tie")

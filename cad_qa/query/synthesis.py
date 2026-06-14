@@ -2521,7 +2521,7 @@ def _query_for_extreme(graph: OntologyGraph, viable: ViableExtreme) -> QueryProg
     return QueryProgram(
         query_id=f"{graph.graph_id}:synth:{spec.family_id}",
         target_type=spec.target_type,
-        answer_spec=synthesis_answer_spec_for_target_type(spec.target_type),
+        answer_spec=synthesis_answer_spec_for_target_type(spec.target_type, graph),
         clauses=[
             clause
             for clause in (
@@ -2661,7 +2661,7 @@ def _query_for_feature_effect_delta_extreme(
     return QueryProgram(
         query_id=f"{graph.graph_id}:synth:{spec.family_id}",
         target_type="feature",
-        answer_spec=synthesis_answer_spec_for_target_type("feature"),
+        answer_spec=synthesis_answer_spec_for_target_type("feature", graph),
         clauses=[
             compare.clause,
             selector.clause,
@@ -2992,7 +2992,7 @@ def _query_for_selector_count(graph: OntologyGraph, viable: ViableSelectorCount)
     return QueryProgram(
         query_id=f"{graph.graph_id}:synth:{spec.family_id}",
         target_type="selector",
-        answer_spec=synthesis_answer_spec_for_target_type("selector"),
+        answer_spec=synthesis_answer_spec_for_target_type("selector", graph),
         clauses=[
             clause
             for clause in (
@@ -3228,7 +3228,7 @@ def _query_for_equal_value_extreme(graph: OntologyGraph, viable: ViableEqualValu
     return QueryProgram(
         query_id=f"{graph.graph_id}:synth:{spec.family_id}",
         target_type=spec.target_type,
-        answer_spec=synthesis_answer_spec_for_target_type(spec.target_type),
+        answer_spec=synthesis_answer_spec_for_target_type(spec.target_type, graph),
         clauses=[
             clause
             for clause in (
@@ -3524,7 +3524,7 @@ def _query_for_relation_extreme(graph: OntologyGraph, viable: ViableRelationExtr
     return QueryProgram(
         query_id=f"{graph.graph_id}:synth:{spec.family_id}",
         target_type=spec.target_type,
-        answer_spec=synthesis_answer_spec_for_target_type(spec.target_type),
+        answer_spec=synthesis_answer_spec_for_target_type(spec.target_type, graph),
         clauses=[
             clause
             for clause in (
@@ -3755,7 +3755,7 @@ def _query_for_relation_chain_extreme(
     return QueryProgram(
         query_id=f"{graph.graph_id}:synth:{spec.family_id}",
         target_type=spec.target_type,
-        answer_spec=synthesis_answer_spec_for_target_type(spec.target_type),
+        answer_spec=synthesis_answer_spec_for_target_type(spec.target_type, graph),
         clauses=[
             base_relation.clause,
             *(relation.clause for relation in relation_instances),
@@ -4002,7 +4002,7 @@ def _query_for_reference_distance(graph: OntologyGraph, viable: ViableReferenceD
     return QueryProgram(
         query_id=f"{graph.graph_id}:synth:{spec.family_id}",
         target_type=spec.target_type,
-        answer_spec=synthesis_answer_spec_for_target_type(spec.target_type),
+        answer_spec=synthesis_answer_spec_for_target_type(spec.target_type, graph),
         clauses=[
             clause
             for clause in (

@@ -43,7 +43,7 @@ class DatasetRow:
 
 
 def materialize_row(graph: OntologyGraph, resolution: QueryResolution) -> DatasetRow:
-    rendered = render_prompt(graph.source["source_code"], resolution.query_program)
+    rendered = render_prompt(graph.source["source_code"], resolution.query_program, graph=graph)
     source_id = graph.source["source_id"]
     source_metadata = graph.source.get("metadata") or {}
     query = resolution.query_program

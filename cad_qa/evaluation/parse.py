@@ -9,7 +9,7 @@ from typing import Any
 
 def parse_answer(text: str, answer_format: str) -> Any:
     stripped = text.strip()
-    if answer_format == "entity_id":
+    if answer_format in {"entity_id", "candidate_label"}:
         return stripped
     if answer_format == "coordinate":
         return _parse_coordinate_answer(stripped)

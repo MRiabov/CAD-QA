@@ -11,6 +11,7 @@ prompt_shells:
 
     Identify the target {target_type_label} that satisfies all of these constraints:
     {clue_lines}
+    {candidate_lines}
 
     {answer_instruction}
 

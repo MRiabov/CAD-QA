@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from cad_qa.ontology.nodes import OntologyGraph
 from cad_qa.prompts.templates import (
     CHECKLIST_TEMPLATE_ID,
     PROMPT_VERSION,
@@ -18,6 +19,7 @@ from cad_qa.prompts.templates import (
     tie_break_template_id,
 )
 from cad_qa.prompts.wording_gates import banned_terms
+from cad_qa.query.answers import candidate_label_lines
 from cad_qa.query.ir import Clause
 from cad_qa.query.ir import QueryProgram
 
@@ -31,7 +33,12 @@ class RenderedPrompt:
     warnings: list[str]
 
 
-def render_prompt(source_code: str, query: QueryProgram) -> RenderedPrompt:
+def render_prompt(
+    source_code: str,
+    query: QueryProgram,
+    *,
+    graph: OntologyGraph | None = None,
+) -> RenderedPrompt:
     clues = [clause_prompt(clause, query=query) for clause in query.clauses]
     clue_ids = [clause.id for clause in query.clauses]
     clue_template_ids = [
@@ -67,6 +74,7 @@ def render_prompt(source_code: str, query: QueryProgram) -> RenderedPrompt:
         query.answer_type,
         target_type=query.target_type,
         answer_spec=query.answer_spec,
+        candidate_lines=candidate_label_lines(graph, query) if graph is not None else None,
     )
     warnings = banned_terms(prompt)
     template_id = prompt_template_id(query)

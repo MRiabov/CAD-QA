@@ -46,13 +46,16 @@ def checklist_prompt(
     *,
     target_type: str | None = None,
     answer_spec: AnswerSpec | dict[str, Any] | None = None,
+    candidate_lines: list[str] | None = None,
 ) -> str:
     shell = _string_template("prompt_shells", "checklist")
     clue_lines = "\n".join(f"- {clue}" for clue in clues)
+    rendered_candidate_lines = _candidate_lines(candidate_lines or [])
     spec = normalize_answer_spec(answer_spec, target_type=target_type, answer_type=answer_format)
     return shell.format(
         source_code=source_code.rstrip(),
         clue_lines=clue_lines,
+        candidate_lines=rendered_candidate_lines,
         answer_format=answer_format,
         target_type_label=target_type_label(target_type),
         answer_instruction=answer_instruction(spec),
@@ -66,6 +69,13 @@ def clause_prompt(clause: Any, *, query: Any | None = None) -> str:
         clause_id = getattr(clause, "id", None) or "<missing>"
         raise KeyError(f"missing prompt template for clause id: {clause_id}")
     return _select_template(templates[template_key], query=query).format(**_clause_format_values(clause, query))
+
+
+def _candidate_lines(lines: list[str]) -> str:
+    if not lines:
+        return ""
+    rendered = "\n".join(f"- {line}" for line in lines)
+    return f"\nCandidate labels:\n{rendered}"
 
 
 def aggregation_prompt(aggregation: str, metric: str, *, rank: int | None = None, query: Any | None = None) -> str:
