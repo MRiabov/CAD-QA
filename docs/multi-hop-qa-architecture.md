@@ -23,6 +23,9 @@ OntologyGraph
 - Every clue maps to a hidden clause.
 - Public clues mention visible CadQuery constructs instead of private ontology
   jargon.
+- Public prompts must name the target entity type explicitly. For example,
+  "Identify the target vertex..." is acceptable; "Identify the target..." is
+  not.
 - Main benchmark clues should require geometry-derived ontology evidence. Clues
   answerable by assignment names, operation order, literal arguments, or source
   syntax alone are calibration-only and must be quota-limited outside smoke
@@ -36,6 +39,71 @@ OntologyGraph
 - No LLM translator is used in the trusted path.
 - Rows that fail candidate-breadth or uniqueness gates go to the failure
   manifest.
+
+## Answer Contract Abstraction
+
+Every query family must declare an answer contract. The answer contract is the
+single source of truth for:
+
+- the public answer format text rendered in the prompt;
+- the private gold-answer value emitted by the resolver;
+- the public fields needed to make that answer recoverable; and
+- the parser/comparator used by evaluation.
+
+This contract belongs in the query layer, not only in prompt templates. The
+implementation should introduce an `AnswerSpec`-style structure in
+`cad_qa/query/ir.py` or a small adjacent module such as
+`cad_qa/query/answers.py`. Query synthesis should attach that spec when it
+constructs each `QueryProgram`, and family specs in `cad_qa/query/synthesis.py`
+should list the answer modes they support. `cad_qa/query/resolver.py` should
+continue resolving a unique ontology node, then format the gold answer through
+the answer spec instead of always returning `candidates[0].id`.
+
+Initial answer modes:
+
+- `entity_id`: internal/debug rows and tool-assisted tasks where the candidate
+  IDs are available to the solver.
+- `source_ref`: source-visible variable or operation target such as `wp7` or
+  `result`.
+- `coordinate`: a rounded coordinate tuple such as `(0, 1, 3)` for vertices,
+  edge endpoints, path points, centroids, and similar point-valued answers.
+- `number`: a rounded scalar measurement with the same tolerance policy used by
+  the verifier.
+- `candidate_label`: a short label such as `A`, `B`, or `C`; this mode requires
+  the public row or prompt to include the candidate-label mapping.
+- `boolean` and `integer`: reserved for families whose verifier naturally
+  produces those values.
+
+The renderer in `cad_qa/prompts/render.py` and templates in
+`prompt-templates.yaml` should render from the same spec. Examples:
+
+```text
+Identify the target vertex that satisfies all of these constraints:
+...
+Return exactly one coordinate tuple, for example `(0, 1, 3)`.
+```
+
+```text
+Identify the target feature that satisfies all of these constraints:
+...
+Return exactly one source variable name, for example `wp7`.
+```
+
+```text
+Identify the target face that satisfies all of these constraints:
+...
+Return exactly one candidate label from the list above, for example `A`.
+```
+
+Families should choose the most recoverable answer mode compatible with their
+target type and evidence. Source-level entities such as features, profiles,
+workplanes, material regions, and void regions should usually prefer
+`source_ref`. Point-like entities should prefer `coordinate` when the coordinate
+is stable and discriminative. Kernel faces and edges should usually prefer
+`candidate_label` unless a source-visible reference exists. Raw `entity_id`
+answers must not be used for closed-book public benchmark rows unless the
+public task provides the exact candidate IDs or the task is explicitly
+tool-assisted.
 
 ## Graph-Hop Candidate Narrowing
 

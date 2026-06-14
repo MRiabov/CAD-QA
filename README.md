@@ -230,7 +230,7 @@ Every internal row is generated from a hidden query program and includes:
 - `source_id`;
 - public source code;
 - public prompt;
-- answer format;
+- answer format and answer contract;
 - gold answer;
 - hidden query program;
 - candidate-set trace;
@@ -249,6 +249,13 @@ Release directories also include `public.jsonl` and `private.jsonl`.
 `private.jsonl` contains gold answers, hidden query programs, candidate traces,
 and clue maps for grading and audit. `public_private_report.json` records row
 counts, field splits, row-ID parity, and hidden-field leak checks.
+
+The answer contract is selected by the query family and must keep prompt
+wording, resolver output, public recoverability, and grading in sync. Closed-book
+public rows should prefer source-visible or computed answers such as source
+variables, coordinates, numbers, booleans, integers, or exposed candidate
+labels. Internal `entity_id` answers are reserved for debug/tool-assisted rows
+unless the public prompt provides the exact candidate IDs.
 
 Prediction metrics include accuracy, response coverage, missing-response rate,
 invalid-output rate, duplicate/extra response counters, optional confidence
