@@ -62,6 +62,12 @@ def validate_rows(rows: list[dict[str, Any]], *, release: bool = False) -> dict[
         terms = banned_terms(str(row.get("prompt", "")))
         if terms:
             errors.append({"index": index, "row_id": row.get("row_id"), "error": "banned_prompt_terms", "terms": terms})
+        for issue in public_answer_identity_leak_issues(row):
+            item = {"index": index, "row_id": row.get("row_id"), **issue}
+            if release:
+                errors.append(item)
+            else:
+                warnings.append({**item, "warning": issue["error"]})
         for issue in geometry_first_prompt_policy_issues(row):
             item = {
                 "index": index,
@@ -85,6 +91,33 @@ def validate_rows(rows: list[dict[str, Any]], *, release: bool = False) -> dict[
             else:
                 warnings.append(item)
     return {"valid": not errors, "row_count": len(rows), "errors": errors, "warnings": warnings}
+
+
+def public_answer_identity_leak_issues(row: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return public-answer contract issues for real CAD-QA prompt rows."""
+
+    prompt = str(row.get("prompt") or "")
+    is_cadqa_prompt = "Given the CadQuery script" in prompt or "Return exactly one entity_id." in prompt
+    is_benchmark_row = row.get("difficulty_bucket") == "cad_browsecomp" or int(row.get("logical_hop_count") or 0) >= 3
+    if not is_cadqa_prompt or not is_benchmark_row:
+        return []
+    issues: list[dict[str, Any]] = []
+    if row.get("answer_format") == "entity_id" or "Return exactly one entity_id." in prompt:
+        issues.append(
+            {
+                "error": "public_internal_id_answer_contract",
+                "answer_format": row.get("answer_format"),
+            }
+        )
+    gold_answer = row.get("gold_answer")
+    if isinstance(gold_answer, str) and ":" in gold_answer:
+        issues.append(
+            {
+                "error": "public_internal_id_gold_answer",
+                "answer_format": row.get("answer_format"),
+            }
+        )
+    return issues
 
 
 def validate_dataset_dir(path: Path, *, release: bool = False) -> dict[str, Any]:

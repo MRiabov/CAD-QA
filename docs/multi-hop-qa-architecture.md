@@ -104,6 +104,11 @@ is stable and discriminative. Kernel faces and edges should usually prefer
 answers must not be used for closed-book public benchmark rows unless the
 public task provides the exact candidate IDs or the task is explicitly
 tool-assisted.
+Closed-book public benchmark rows must not expose colon-delimited internal IDs
+in the answer contract or gold answer. A string answer containing identifiers
+such as `path:wp2:segment:13`, `edge:kernel:...`, or `feature:wp7` is a release
+validation failure; use candidate labels, coordinates, endpoint pairs, or
+source-visible variable names instead.
 
 ### Selection And Identification Variants
 

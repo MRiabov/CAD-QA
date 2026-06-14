@@ -8044,6 +8044,14 @@ def test_synthesis_generates_parameterized_path_reference_distance_queries() -> 
         assert row.query_program["sampled_parameters"]["target_point_metric"] == [target_point_metric]
         assert row.query_program["sampled_parameters"]["equal_measurement_metric"][0] in expected_equal_metrics
         assert "reference" in row.prompt.lower()
+        if target_type == "path_segment":
+            assert row.answer_format == "candidate_label"
+            assert row.gold_answer in row.query_program["answer_spec"]["candidate_labels"].values()
+            assert ":" not in str(row.gold_answer)
+            assert "Candidate labels:" in row.prompt
+            assert "Return exactly one candidate label" in row.prompt
+            assert "Return exactly one entity_id" not in row.prompt
+            assert validate_rows([to_jsonable(row)], release=True)["valid"]
 
 
 def test_synthesis_skips_path_reference_distance_without_equal_distractors() -> None:
@@ -11124,6 +11132,69 @@ def test_validation_reports_geometry_first_prompt_policy() -> None:
         error.get("prompt_policy_issue") == "syntax_only_calibration_row"
         for error in release["errors"]
     )
+
+
+def test_release_validation_rejects_public_internal_id_answer_contract() -> None:
+    row = {
+        "row_id": "row:src:path_segment_reference",
+        "source_id": "src",
+        "source_code": "import cadquery as cq\n",
+        "prompt": (
+            "Given the CadQuery script below, answer the question by reasoning about the CAD construction.\n\n"
+            "Identify the target path segment that satisfies all of these constraints:\n"
+            "- The target segment belongs to a measured path.\n\n"
+            "Return exactly one entity_id."
+        ),
+        "answer_format": "entity_id",
+        "gold_answer": "path:wp2:segment:13",
+        "query_program": {
+            "query_id": "graph:src:q:path_segment_reference",
+            "target_type": "path_segment",
+            "clauses": [{"id": "segment_on_path", "kind": "has_relation", "relation": "segment_on_path"}],
+            "aggregation": "rank_desc",
+            "aggregation_metric": "distance_to_reference_feature_centroid",
+        },
+        "candidate_trace": {
+            "final_candidates": ["path:wp2:segment:13"],
+            "steps": [
+                {
+                    "step": "segment_on_path",
+                    "before": ["path:wp2:segment:13", "path:wp2:segment:14", "path:wp2:segment:15"],
+                    "after": ["path:wp2:segment:13", "path:wp2:segment:14", "path:wp2:segment:15"],
+                },
+                {
+                    "step": "aggregation",
+                    "before": ["path:wp2:segment:13", "path:wp2:segment:14", "path:wp2:segment:15"],
+                    "after": ["path:wp2:segment:13"],
+                },
+            ],
+        },
+        "relation_families": ["segment_on_path"],
+        "measurement_scopes": ["entity_geometry"],
+        "logical_hop_count": 5,
+        "static_hop_count": 0,
+        "geometry_hop_count": 5,
+        "difficulty_bucket": "cad_browsecomp",
+        "verifier_status": "resolved",
+        "evidence_tier": "kernel_or_compiled_geometry",
+        "release_ready": True,
+        "quarantine_reasons": [],
+        "clue_map": [{"clause_id": "segment_on_path"}, {"clause_id": "aggregation"}],
+    }
+
+    nonrelease = validate_rows([row])
+    release = validate_rows([row], release=True)
+
+    assert nonrelease["valid"]
+    assert {warning["warning"] for warning in nonrelease["warnings"]} >= {
+        "public_internal_id_answer_contract",
+        "public_internal_id_gold_answer",
+    }
+    assert not release["valid"]
+    assert {error["error"] for error in release["errors"]} >= {
+        "public_internal_id_answer_contract",
+        "public_internal_id_gold_answer",
+    }
 
 
 def test_prediction_grading_reports_breakdowns() -> None:
