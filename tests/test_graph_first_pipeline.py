@@ -2967,6 +2967,28 @@ def test_coordinate_answer_format_parser_accepts_tuple_text() -> None:
     assert parse_answer("AA", "candidate_label") == "AA"
 
 
+def test_candidate_label_answers_reject_unbounded_label_lists() -> None:
+    graph = OntologyGraph(graph_id="graph:too-many-labels", source={"source_id": "synthetic", "source_code": ""})
+    for index in range(65):
+        node_id = f"edge:{index}"
+        graph.add_node(Node(node_id, "edge", node_id))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "edge_length", float(index), "mm"))
+    query = QueryProgram(
+        query_id="graph:too-many-labels:synth:edge",
+        target_type="edge",
+        answer_spec=synthesis_answer_spec_for_target_type("edge", graph),
+        aggregation="argmax",
+        aggregation_metric="edge_length",
+        hop_count=2,
+    )
+
+    resolution = resolve_query(graph, query)
+
+    assert resolution.verifier_status == "failed"
+    assert resolution.candidate_trace.failure_reason == "too_many_candidate_labels"
+    assert resolution.gold_answer is None
+
+
 def test_prompt_clause_templates_use_domain_wording() -> None:
     implementation_terms = {
         "cadquery",
@@ -3315,6 +3337,8 @@ def test_synthesis_generates_parameterized_kernel_face_extreme_query() -> None:
     assert row.gold_answer == row.query_program["answer_spec"]["candidate_labels"][final_face_id]
     assert "Candidate labels:" in row.prompt
     assert "Return exactly one candidate label" in row.prompt
+    assert "face:" not in row.prompt
+    assert "center X" in row.prompt
     assert query.aggregation in {"argmax", "argmin"}
     assert query.aggregation_metric == "coordinate_x"
     assert query.sampled_parameters["aggregation_axis"] == ["x"]
@@ -3437,6 +3461,8 @@ def test_smoke_queries_include_parameterized_kernel_edge_synthesis() -> None:
     assert row.answer_format == "candidate_label"
     assert row.gold_answer == row.query_program["answer_spec"]["candidate_labels"][final_edge_id]
     assert "Candidate labels:" in row.prompt
+    assert "edge:" not in row.prompt
+    assert "midpoint Y" in row.prompt
     assert query.aggregation_metric == "midpoint_y"
     assert query.sampled_parameters["aggregation_axis"] == ["y"]
     assert query.sampled_parameters["target_type"] == ["edge"]

@@ -233,7 +233,10 @@ def _candidate_description(graph: OntologyGraph, entity_id: str) -> str:
         return _selector_description(graph, entity_id, node)
     if node_type in {"vertex", "edge_endpoint", "path_point"}:
         coordinate = _point_value(graph, entity_id, "coordinate")
-        return f"coordinates {_format_point(coordinate)}" if coordinate is not None else _fallback_description(entity_id, node)
+        parts = [f"coordinates {_format_point(coordinate)}"] if coordinate is not None else []
+        if not parts:
+            parts.extend(_point_component_parts(graph, entity_id, "coordinate", "coordinate"))
+        return "; ".join(parts) if parts else _fallback_description(entity_id, node)
     return _fallback_description(entity_id, node)
 
 
@@ -247,6 +250,8 @@ def _edge_description(graph: OntologyGraph, entity_id: str, node: Node | None) -
         parts.append(f"endpoints {_format_point(endpoints[0])} to {_format_point(endpoints[1])}")
     if midpoint is not None:
         parts.append(f"midpoint {_format_point(midpoint)}")
+    else:
+        parts.extend(_point_component_parts(graph, entity_id, "midpoint", "midpoint"))
     if isinstance(length, (int, float)):
         parts.append(f"length {_format_number(float(length))}")
     return "; ".join(parts) if parts else _fallback_description(entity_id, node)
@@ -259,6 +264,8 @@ def _face_description(graph: OntologyGraph, entity_id: str, node: Node | None) -
     parts = []
     if center is not None:
         parts.append(f"center {_format_point(center)}")
+    else:
+        parts.extend(_point_component_parts(graph, entity_id, "center", "coordinate"))
     if isinstance(area, (int, float)):
         parts.append(f"area {_format_number(float(area))}")
     bbox_text = _bbox_description(bbox)
@@ -277,6 +284,8 @@ def _path_segment_description(graph: OntologyGraph, entity_id: str, node: Node |
         parts.append(f"endpoints {_format_point(start)} to {_format_point(end)}")
     if midpoint is not None:
         parts.append(f"midpoint {_format_point(midpoint)}")
+    else:
+        parts.extend(_point_component_parts(graph, entity_id, "midpoint", "segment_midpoint"))
     if isinstance(length, (int, float)):
         parts.append(f"length {_format_number(float(length))}")
     return "; ".join(parts) if parts else _fallback_description(entity_id, node)
@@ -315,6 +324,15 @@ def _point_value(graph: OntologyGraph, entity_id: str, metric: str) -> list[floa
     return None
 
 
+def _point_component_parts(graph: OntologyGraph, entity_id: str, label: str, metric_prefix: str) -> list[str]:
+    parts = []
+    for axis in ("x", "y", "z"):
+        value = _measurement_value(graph, entity_id, f"{metric_prefix}_{axis}")
+        if isinstance(value, (int, float)):
+            parts.append(f"{label} {axis.upper()} {_format_number(float(value))}")
+    return parts
+
+
 def _is_point(value: Any) -> bool:
     return isinstance(value, (list, tuple)) and len(value) == 3 and all(isinstance(item, (int, float)) for item in value)
 
@@ -346,9 +364,11 @@ def _bbox_description(bbox: Any) -> str | None:
 
 
 def _fallback_description(entity_id: str, node: Node | None) -> str:
-    if node is not None and node.label:
+    if node is not None and node.label and node.label != entity_id and ":" not in str(node.label):
         return str(node.label)
-    return entity_id
+    if node is not None:
+        return f"{node.type.replace('_', ' ')} candidate"
+    return "unlabeled candidate"
 
 
 def _candidate_label(index: int) -> str:
