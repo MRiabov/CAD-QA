@@ -103,6 +103,16 @@ def answer_instruction(spec: AnswerSpec, *, target_type: str | None = None) -> s
     return "Return exactly one entity_id."
 
 
+def source_ref_is_publicly_unambiguous(graph: OntologyGraph, node: Node) -> bool:
+    answer = _source_ref_answer(node)
+    if not answer or ":" in answer:
+        return False
+    source = str(graph.source.get("source_code") or graph.source.get("normalized_code") or "")
+    if source:
+        return source.count(f"{answer} =") <= 1
+    return sum(1 for candidate in graph.nodes_by_type(node.type) if _source_ref_answer(candidate) == answer) <= 1
+
+
 def format_gold_answer(graph: OntologyGraph, query: Any, node: Node) -> Any:
     spec = normalize_answer_spec(
         getattr(query, "answer_spec", None),
@@ -137,8 +147,20 @@ def answer_spec_with_candidate_labels(
     spec: AnswerSpec,
     candidate_ids: list[str],
     gold_entity_id: str,
+    *,
+    aggregation: str | None = None,
+    aggregation_metric: str | None = None,
+    aggregation_rank: int | None = None,
 ) -> AnswerSpec:
-    bounded_ids = _bounded_candidate_ids(graph, candidate_ids, gold_entity_id, spec.max_candidate_labels)
+    bounded_ids = _bounded_candidate_ids(
+        graph,
+        candidate_ids,
+        gold_entity_id,
+        spec.max_candidate_labels,
+        aggregation=aggregation,
+        aggregation_metric=aggregation_metric,
+        aggregation_rank=aggregation_rank,
+    )
     offset = _stable_index(f"{gold_entity_id}:candidate_label", len(bounded_ids))
     ordered_ids = _rotate(bounded_ids, offset)
     return replace(spec, candidate_labels={entity_id: _candidate_label(index) for index, entity_id in enumerate(ordered_ids)})
@@ -149,11 +171,23 @@ def answer_spec_with_selector_expression_choices(
     spec: AnswerSpec,
     gold_entity_id: str,
     candidate_entity_ids: list[str],
+    *,
+    aggregation: str | None = None,
+    aggregation_metric: str | None = None,
+    aggregation_rank: int | None = None,
 ) -> AnswerSpec | None:
     candidate_texts = selector_expression_choice_texts(graph, gold_entity_id, candidate_entity_ids)
     if candidate_texts is None:
         return None
-    candidate_ids = _bounded_candidate_ids(graph, list(candidate_texts), gold_entity_id, spec.max_candidate_labels)
+    candidate_ids = _bounded_candidate_ids(
+        graph,
+        list(candidate_texts),
+        gold_entity_id,
+        spec.max_candidate_labels,
+        aggregation=aggregation,
+        aggregation_metric=aggregation_metric,
+        aggregation_rank=aggregation_rank,
+    )
     candidate_texts = {entity_id: candidate_texts[entity_id] for entity_id in candidate_ids}
     if len(candidate_ids) < 2:
         return None
@@ -171,9 +205,11 @@ def candidate_label_entity_ids(trace_steps: list[dict[str, Any]], final_candidat
         return []
     final_set = set(final_candidates)
     for step in reversed(trace_steps):
+        if step.get("step") == "tie_break_aggregation":
+            continue
         before = _step_candidates(step, "before") or _step_candidates(step, "candidate_ids")
         after = _step_candidates(step, "after")
-        if before and (set(after) == final_set or step.get("step") in {"aggregation", "tie_break_aggregation"}):
+        if before and (set(after) == final_set or step.get("step") == "aggregation"):
             return before
     for step in trace_steps:
         candidates = _step_candidates(step, "candidate_ids") or _step_candidates(step, "after")
@@ -198,8 +234,9 @@ def candidate_label_lines(graph: OntologyGraph, query: Any) -> list[str]:
             for entity_id, label in ordered
             if (selector_expression := spec.candidate_texts.get(entity_id) or selector_expression_for_entity(graph, entity_id)) is not None
         ]
+    metric_names = _query_description_metrics(query)
     return [
-        f"{label}: {_candidate_description(graph, entity_id)}"
+        f"{label}: {_candidate_description(graph, entity_id, metric_names=metric_names)}"
         for entity_id, label in ordered
     ]
 
@@ -235,6 +272,10 @@ def _bounded_candidate_ids(
     candidate_ids: list[str],
     gold_entity_id: str,
     max_candidate_labels: int,
+    *,
+    aggregation: str | None = None,
+    aggregation_metric: str | None = None,
+    aggregation_rank: int | None = None,
 ) -> list[str]:
     if max_candidate_labels < 1:
         raise ValueError("max_candidate_labels must be positive")
@@ -243,6 +284,17 @@ def _bounded_candidate_ids(
         unique_ids.insert(0, gold_entity_id)
     if len(unique_ids) <= max_candidate_labels:
         return unique_ids
+    consistent_ids = _aggregation_consistent_candidate_ids(
+        graph,
+        unique_ids,
+        gold_entity_id,
+        max_candidate_labels,
+        aggregation=aggregation,
+        aggregation_metric=aggregation_metric,
+        aggregation_rank=aggregation_rank,
+    )
+    if consistent_ids is not None:
+        return consistent_ids
     distractors = [
         entity_id
         for entity_id in unique_ids
@@ -257,6 +309,64 @@ def _bounded_candidate_ids(
     offset = _stable_index(f"{gold_entity_id}:candidate_distractors", len(distractors))
     rotated = _rotate(distractors, offset)
     return [gold_entity_id, *rotated[: max_candidate_labels - 1]]
+
+
+def _aggregation_consistent_candidate_ids(
+    graph: OntologyGraph,
+    candidate_ids: list[str],
+    gold_entity_id: str,
+    max_candidate_labels: int,
+    *,
+    aggregation: str | None,
+    aggregation_metric: str | None,
+    aggregation_rank: int | None,
+) -> list[str] | None:
+    if aggregation_metric is None or aggregation not in {"argmax", "argmin", "rank_desc", "rank_asc"}:
+        return None
+    scored = [
+        (entity_id, value)
+        for entity_id in candidate_ids
+        if isinstance((value := _measurement_value(graph, entity_id, aggregation_metric)), (int, float))
+    ]
+    if gold_entity_id not in {entity_id for entity_id, _ in scored}:
+        return None
+    descending = aggregation in {"argmax", "rank_desc"}
+    ordered = [
+        entity_id
+        for entity_id, _ in sorted(
+            scored,
+            key=lambda item: (-float(item[1]) if descending else float(item[1]), item[0]),
+        )
+    ]
+    if aggregation in {"rank_desc", "rank_asc"}:
+        if aggregation_rank is None or aggregation_rank < 1 or aggregation_rank > max_candidate_labels:
+            return None
+        gold_index = ordered.index(gold_entity_id)
+        if gold_index != aggregation_rank - 1:
+            return None
+        return ordered[:max_candidate_labels]
+
+    gold_score = float(next(value for entity_id, value in scored if entity_id == gold_entity_id))
+    if aggregation == "argmax":
+        eligible = [entity_id for entity_id, value in scored if float(value) <= gold_score + 1e-6]
+    else:
+        eligible = [entity_id for entity_id, value in scored if float(value) >= gold_score - 1e-6]
+    if gold_entity_id not in eligible:
+        eligible.insert(0, gold_entity_id)
+    eligible_distractors = [
+        entity_id
+        for entity_id in eligible
+        if entity_id != gold_entity_id and _has_informative_candidate_description(graph, entity_id)
+    ]
+    if len(eligible_distractors) < max_candidate_labels - 1:
+        known = set(eligible_distractors)
+        eligible_distractors.extend(
+            entity_id
+            for entity_id in eligible
+            if entity_id != gold_entity_id and entity_id not in known
+        )
+    offset = _stable_index(f"{gold_entity_id}:aggregation_consistent_distractors", len(eligible_distractors))
+    return [gold_entity_id, *_rotate(eligible_distractors, offset)[: max_candidate_labels - 1]]
 
 
 def _has_informative_candidate_description(graph: OntologyGraph, entity_id: str) -> bool:
@@ -444,7 +554,35 @@ def _quoted_selector_text(value: str) -> str:
     return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
-def _candidate_description(graph: OntologyGraph, entity_id: str) -> str:
+def _query_description_metrics(query: Any) -> list[str]:
+    metrics: list[str] = []
+    for value in (
+        getattr(query, "aggregation_metric", None),
+        getattr(query, "tie_break_metric", None),
+    ):
+        if isinstance(value, str) and value:
+            metrics.append(value)
+    for clause in getattr(query, "clauses", []) or []:
+        for attr in ("metric", "reference_metric"):
+            value = getattr(clause, attr, None)
+            if isinstance(value, str) and value:
+                metrics.append(value)
+    spec = normalize_answer_spec(
+        getattr(query, "answer_spec", None),
+        target_type=getattr(query, "target_type", None),
+        answer_type=getattr(query, "answer_type", None),
+    )
+    if spec.metric:
+        metrics.append(spec.metric)
+    return list(dict.fromkeys(metrics))
+
+
+def _candidate_description(
+    graph: OntologyGraph,
+    entity_id: str,
+    *,
+    metric_names: list[str] | None = None,
+) -> str:
     node = graph.node(entity_id)
     node_type = node.type if node is not None else entity_id.split(":", 1)[0]
     if node_type == "edge":
@@ -461,6 +599,8 @@ def _candidate_description(graph: OntologyGraph, entity_id: str) -> str:
         if not parts:
             parts.extend(_point_component_parts(graph, entity_id, "coordinate", "coordinate"))
         return "; ".join(parts) if parts else _fallback_description(entity_id, node)
+    if node_type in {"feature", "operation", "profile", "workplane", "material_region", "void_region"}:
+        return _source_like_description(graph, entity_id, node, metric_names or [])
     return _fallback_description(entity_id, node)
 
 
@@ -583,6 +723,57 @@ def _selection_geometry_parts(graph: OntologyGraph, entity_id: str) -> list[str]
         if isinstance(min_value, (int, float)) and isinstance(max_value, (int, float)):
             parts.append(f"{label} range {_format_number(float(min_value))} to {_format_number(float(max_value))}")
     return parts[:3]
+
+
+def _source_like_description(
+    graph: OntologyGraph,
+    entity_id: str,
+    node: Node | None,
+    metric_names: list[str],
+) -> str:
+    if node is None:
+        return _fallback_description(entity_id, node)
+    parts = []
+    source_ref = _source_ref_answer(node)
+    if source_ref and ":" not in source_ref:
+        parts.append(f"source variable {source_ref}")
+    if node.source_ref is not None:
+        parts.append(f"source line {node.source_ref}")
+    operation = node.properties.get("operation") or node.properties.get("kind") or node.properties.get("plane")
+    if operation is not None:
+        parts.append(f"{node.type.replace('_', ' ')} operation {operation}")
+    for key, label in (("step_index", "step"), ("operation_index", "operation index")):
+        value = node.properties.get(key)
+        if isinstance(value, (int, float)):
+            parts.append(f"{label} {_format_number(float(value))}")
+    for metric in metric_names:
+        metric_text = _metric_value_description(graph, entity_id, metric)
+        if metric_text is not None:
+            parts.append(metric_text)
+    return "; ".join(list(dict.fromkeys(parts))) if parts else _fallback_description(entity_id, node)
+
+
+def _metric_value_description(graph: OntologyGraph, entity_id: str, metric: str) -> str | None:
+    value = _measurement_value(graph, entity_id, metric)
+    if value is None:
+        node = graph.node(entity_id)
+        value = node.properties.get(metric) if node is not None else None
+    label = metric.replace("_", " ")
+    if isinstance(value, (int, float)):
+        return f"{label} {_format_candidate_metric_number(float(value))}"
+    if _is_point(value):
+        return f"{label} {_format_point(value)}"
+    bbox_text = _bbox_description(value)
+    if bbox_text:
+        return f"{label} {bbox_text}"
+    return None
+
+
+def _format_candidate_metric_number(value: float) -> str:
+    cleaned = _clean_number(value, DEFAULT_DECIMALS)
+    if cleaned == 0 and value != 0:
+        return f"{value:.6e}"
+    return str(cleaned)
 
 
 def _is_point(value: Any) -> bool:

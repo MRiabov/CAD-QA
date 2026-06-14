@@ -2963,6 +2963,46 @@ def test_answer_spec_formats_recoverable_source_ref_answers() -> None:
     assert "\n\n\nReturn exactly" not in row.prompt
 
 
+def test_reassigned_source_ref_answers_fall_back_to_candidate_labels() -> None:
+    graph = OntologyGraph(
+        graph_id="graph:ambiguous-source-ref",
+        source={
+            "source_id": "synthetic",
+            "source_code": "part = cq.Workplane('XY').box(1, 1, 1)\npart = part.faces('>Z').workplane().rect(2, 2).extrude(1)\n",
+        },
+    )
+    for index, volume in enumerate([1.0, 4.0]):
+        node_id = "feature:part" if index == 0 else f"feature:part:{index}"
+        graph.add_node(
+            Node(
+                node_id,
+                "feature",
+                "part",
+                source_ref=str(index + 1),
+                properties={"operation": "box" if index == 0 else "extrude", "target": "part", "step_index": index + 1},
+            )
+        )
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "volume", volume, "mm^3"))
+    query = QueryProgram(
+        query_id="graph:ambiguous-source-ref:synth:feature",
+        target_type="feature",
+        answer_spec=synthesis_answer_spec_for_target_type("feature"),
+        aggregation="argmax",
+        aggregation_metric="volume",
+        hop_count=2,
+    )
+
+    row = materialize_row(graph, resolve_query(graph, query))
+
+    assert row.answer_format == "candidate_label"
+    assert row.query_program["answer_spec"]["mode"] == "candidate_label"
+    assert row.gold_answer == row.query_program["answer_spec"]["candidate_labels"]["feature:part:1"]
+    assert "source variable part; source line 2; feature operation extrude" in row.prompt
+    assert "volume 4" in row.prompt
+    assert "Return exactly one source variable name" not in row.prompt
+    assert validate_rows([to_jsonable(row)])["valid"]
+
+
 def test_coordinate_answer_format_parser_accepts_tuple_text() -> None:
     assert parse_answer("(0, 1.25, -3)", "coordinate") == [0, 1.25, -3]
     assert parse_answer("AA", "candidate_label") == "AA"
@@ -2992,6 +3032,76 @@ def test_candidate_label_answers_bound_public_label_lists() -> None:
     assert len(answer_spec["candidate_labels"]) == 7
     assert "edge:64" in answer_spec["candidate_labels"]
     assert row.prompt.count("\n- ") == 8
+    assert validate_rows([to_jsonable(row)])["valid"]
+
+
+def test_candidate_label_rank_choices_preserve_visible_rank_semantics() -> None:
+    graph = OntologyGraph(graph_id="graph:rank-label-cap", source={"source_id": "synthetic", "source_code": ""})
+    for index in range(20):
+        node_id = f"edge:{index:02d}"
+        graph.add_node(Node(node_id, "edge", node_id))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "edge_length", float(index), "mm"))
+    query = QueryProgram(
+        query_id="graph:rank-label-cap:synth:edge",
+        target_type="edge",
+        answer_spec=synthesis_answer_spec_for_target_type("edge", graph),
+        aggregation="rank_asc",
+        aggregation_metric="edge_length",
+        aggregation_rank=5,
+        hop_count=3,
+    )
+
+    row = materialize_row(graph, resolve_query(graph, query))
+    labels = row.query_program["answer_spec"]["candidate_labels"]
+    displayed = sorted(
+        (
+            graph.measurements_for(entity_id, "edge_length")[0].value,
+            label,
+        )
+        for entity_id, label in labels.items()
+    )
+
+    assert len(labels) == 7
+    assert row.gold_answer == labels["edge:04"]
+    assert displayed[4][1] == row.gold_answer
+    assert validate_rows([to_jsonable(row)])["valid"]
+
+
+def test_rank_selector_choices_use_prefinal_descriptive_labels() -> None:
+    graph = OntologyGraph(graph_id="graph:selector-rank-labels", source={"source_id": "synthetic", "source_code": ""})
+    for index, (count, max_z) in enumerate([(6, 5.5), (6, 7.5), (11, 7.5), (23, 7.5), (37, 7.5)]):
+        node_id = f"selector:part_faces_snapshot_all:{index}"
+        graph.add_node(
+            Node(
+                node_id,
+                "selector",
+                node_id,
+                properties={"selector_kind": "faces", "selector_label": "part faces"},
+            )
+        )
+        graph.add_measurement(Measurement(node_id, "selection", "selected_count", count, None))
+        graph.add_measurement(Measurement(node_id, "selection", "selected_face_max_coordinate_z", max_z, "mm"))
+    query = QueryProgram(
+        query_id="graph:selector-rank-labels:synth:selector",
+        target_type="selector",
+        answer_spec=synthesis_answer_spec_for_target_type("selector", graph),
+        aggregation="rank_asc",
+        aggregation_metric="selected_count",
+        aggregation_rank=2,
+        tie_break_aggregation="argmin",
+        tie_break_metric="selected_face_max_coordinate_z",
+        hop_count=3,
+    )
+
+    row = materialize_row(graph, resolve_query(graph, query))
+    labels = row.query_program["answer_spec"]["candidate_labels"]
+
+    assert row.query_program["answer_spec"]["mode"] == "candidate_label"
+    assert len(labels) == 5
+    assert row.gold_answer == labels["selector:part_faces_snapshot_all:0"]
+    assert "Candidate labels:" in row.prompt
+    assert "selector-expression choices" not in row.prompt
+    assert "selected count 37" in row.prompt
     assert validate_rows([to_jsonable(row)])["valid"]
 
 

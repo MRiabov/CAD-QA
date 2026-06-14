@@ -11,6 +11,7 @@ from cad_qa.query.answers import (
     answer_spec_with_selector_expression_choices,
     candidate_label_entity_ids,
     format_gold_answer,
+    source_ref_is_publicly_unambiguous,
 )
 from cad_qa.query.candidates import candidate_ids, initial_candidates
 from cad_qa.query.difficulty import difficulty_for_hops
@@ -117,15 +118,24 @@ def resolve_query(graph: OntologyGraph, query: QueryProgram) -> QueryResolution:
         failure_reason = "not_unique"
     final_candidate_ids = candidate_ids(candidates)
     trace = CandidateSetTrace(query.query_id, steps, final_candidate_ids, status, failure_reason)
+    if (
+        status == "resolved"
+        and getattr(query.answer_spec, "mode", None) == "source_ref"
+        and not source_ref_is_publicly_unambiguous(graph, candidates[0])
+    ):
+        query = replace(query, answer_spec=replace(query.answer_spec, mode="candidate_label", answer_format="candidate_label"))
     choice_answer_modes = {"candidate_label", "selector_expression_choice"}
     if status == "resolved" and getattr(query.answer_spec, "mode", None) in choice_answer_modes:
         label_entity_ids = candidate_label_entity_ids(steps, final_candidate_ids)
-        if getattr(query.answer_spec, "mode", None) == "selector_expression_choice":
+        if getattr(query.answer_spec, "mode", None) == "selector_expression_choice" and query.aggregation not in {"rank_asc", "rank_desc"}:
             selector_spec = answer_spec_with_selector_expression_choices(
                 graph,
                 query.answer_spec,
                 candidates[0].id,
                 label_entity_ids,
+                aggregation=query.aggregation,
+                aggregation_metric=query.aggregation_metric,
+                aggregation_rank=query.aggregation_rank,
             )
             if selector_spec is not None:
                 query = replace(query, answer_spec=selector_spec)
@@ -133,12 +143,30 @@ def resolve_query(graph: OntologyGraph, query: QueryProgram) -> QueryResolution:
                 query = replace(query, answer_spec=replace(query.answer_spec, mode="candidate_label"))
                 query = replace(
                     query,
-                    answer_spec=answer_spec_with_candidate_labels(graph, query.answer_spec, label_entity_ids, candidates[0].id),
+                    answer_spec=answer_spec_with_candidate_labels(
+                        graph,
+                        query.answer_spec,
+                        label_entity_ids,
+                        candidates[0].id,
+                        aggregation=query.aggregation,
+                        aggregation_metric=query.aggregation_metric,
+                        aggregation_rank=query.aggregation_rank,
+                    ),
                 )
         else:
+            if getattr(query.answer_spec, "mode", None) == "selector_expression_choice":
+                query = replace(query, answer_spec=replace(query.answer_spec, mode="candidate_label"))
             query = replace(
                 query,
-                answer_spec=answer_spec_with_candidate_labels(graph, query.answer_spec, label_entity_ids, candidates[0].id),
+                answer_spec=answer_spec_with_candidate_labels(
+                    graph,
+                    query.answer_spec,
+                    label_entity_ids,
+                    candidates[0].id,
+                    aggregation=query.aggregation,
+                    aggregation_metric=query.aggregation_metric,
+                    aggregation_rank=query.aggregation_rank,
+                ),
             )
     gold_answer = format_gold_answer(graph, query, candidates[0]) if status == "resolved" else None
     return QueryResolution(
