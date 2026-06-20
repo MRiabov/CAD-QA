@@ -13216,6 +13216,7 @@ def test_release_export_cli_filters_quarantined_rows(tmp_path: Path) -> None:
 
 def test_release_feasibility_source_coverage_can_project_only_source_ids(tmp_path: Path) -> None:
     from tools.analyze_release_gate_feasibility import (
+        _iter_graph_coverage_records,
         _read_pool_source_ids,
         graph_source_coverage_report,
     )
@@ -13247,7 +13248,7 @@ def test_release_feasibility_source_coverage_can_project_only_source_ids(tmp_pat
 
     report = graph_source_coverage_report(
         _read_pool_source_ids(dataset_stream),
-        iter_records(graph_path),
+        _iter_graph_coverage_records(graph_path),
     )
 
     assert report["pool_sources_with_generated_rows"] == 2

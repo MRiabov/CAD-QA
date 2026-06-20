@@ -562,10 +562,12 @@ uv run python tools/analyze_release_gate_feasibility.py \
   --out /tmp/cadqa_source_coverage.json
 ```
 
-This mode projects only `source_id` from row shards, then streams graph shards
-for coverage and node-type counts. On the current 1000-graph run it reports the
-same 906 represented sources and 94 missing sources without decoding every
-row's `query_program`.
+This mode projects only `source_id` from row shards and only `graph_id`,
+`source`, and `nodes` from graph shards. On the current 1000-graph run it
+reports the same 906 represented sources, 94 missing sources, and missing-source
+node-type counts without decoding every row's `query_program` or every graph's
+relations/measurements. The projected check completed in about 1.2 seconds in
+the local QA worktree.
 
 Current generated-pool feasibility summary:
 

@@ -113,11 +113,16 @@ def main() -> None:
             parser.error("--source-coverage-only requires --graph-dir")
         if args.simulate_release_balance or args.simulate_parameter_repair or args.include_candidate_trace:
             parser.error("--source-coverage-only cannot be combined with simulation or candidate-trace diagnostics")
+        graph_records = (
+            _iter_graph_records(args.graph_dir)
+            if args.analyze_missing_query_counts
+            else _iter_graph_coverage_records(args.graph_dir)
+        )
         report = {
             "release_tier": args.release_tier,
             **graph_source_coverage_report(
                 _read_pool_source_ids(args.dataset_stream),
-                _iter_graph_records(args.graph_dir),
+                graph_records,
                 analyze_missing_query_counts=args.analyze_missing_query_counts,
                 max_missing_query_analysis=args.max_missing_query_analysis,
             ),
@@ -1067,6 +1072,20 @@ def _iter_graph_records(graph_dir: Path):
         yield from iter_records(path, batch_size=100)
 
 
+def _iter_graph_coverage_records(graph_dir: Path):
+    paths = _record_paths(graph_dir)
+    if not paths and (graph_dir / "graphs").is_dir():
+        paths = _record_paths(graph_dir / "graphs")
+    if not paths:
+        raise FileNotFoundError(f"no graph record parquets found under {graph_dir}")
+    requested_columns = ("graph_id", "source", "nodes")
+    for path in paths:
+        parquet_file = pq.ParquetFile(path)
+        columns = [column for column in requested_columns if column in parquet_file.schema_arrow.names]
+        for batch in parquet_file.iter_batches(batch_size=500, columns=columns):
+            yield from batch.to_pylist()
+
+
 def _record_paths(path: Path) -> list[Path]:
     if path.is_file():
         return [path]
@@ -1085,7 +1104,10 @@ def _graph_source_id(record: dict[str, Any]) -> str | None:
 
 def _node_type_counts(record: dict[str, Any]) -> Counter[str]:
     counts: Counter[str] = Counter()
-    for node in record.get("nodes") or []:
+    nodes = record.get("nodes") or []
+    if isinstance(nodes, str):
+        nodes = json.loads(nodes)
+    for node in nodes:
         if isinstance(node, dict) and node.get("type"):
             counts.update([str(node["type"])])
     return counts
