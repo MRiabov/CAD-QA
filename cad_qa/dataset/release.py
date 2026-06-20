@@ -401,7 +401,7 @@ def _cap_release_balance_rows(
             max_share=profile.max_cross_feature_value_bearing_share,
             min_prompt_family_share=profile.min_prompt_family_share,
             reason="cross_feature_value_bearing_cap",
-            prefer_keep=_high_hop_keep_priority,
+            prefer_keep=_high_hop_keep_priority(kept),
             protected_prompt_families=protected_prompt_families,
             min_total_rows=release_floor,
         )
@@ -412,7 +412,7 @@ def _cap_release_balance_rows(
             max_share=profile.max_value_bearing_measurement_share,
             min_prompt_family_share=profile.min_prompt_family_share,
             reason="value_bearing_measurement_cap",
-            prefer_keep=_cross_feature_keep_priority,
+            prefer_keep=_cross_feature_keep_priority(kept),
             protected_prompt_families=protected_prompt_families,
             min_total_rows=release_floor,
         )
@@ -1067,29 +1067,50 @@ def _minimum_group_count_for_share(max_share: float) -> int:
     return int((1 / max_share) + 0.999999)
 
 
-def _cross_feature_keep_priority(row: dict[str, Any]) -> tuple[int, int, str]:
-    return (
-        0 if _is_cross_feature_value_bearing_row(row) else 1,
-        0 if _is_main_browsecomp_hop_row(row) else 1,
-        _stable_row_key(row),
-    )
+def _cross_feature_keep_priority(rows: list[dict[str, Any]]) -> Any:
+    source_counts = _cad_model_identity_counts(rows)
+
+    def key(row: dict[str, Any]) -> tuple[int, int, int, str]:
+        return (
+            0 if _is_cross_feature_value_bearing_row(row) else 1,
+            0 if _is_main_browsecomp_hop_row(row) else 1,
+            _cad_model_identity_count(row, source_counts),
+            _stable_row_key(row),
+        )
+
+    return key
 
 
-def _high_hop_keep_priority(row: dict[str, Any]) -> tuple[int, str]:
-    return (0 if _is_main_browsecomp_hop_row(row) else 1, _stable_row_key(row))
+def _high_hop_keep_priority(rows: list[dict[str, Any]]) -> Any:
+    source_counts = _cad_model_identity_counts(rows)
+
+    def key(row: dict[str, Any]) -> tuple[int, int, str]:
+        return (
+            0 if _is_main_browsecomp_hop_row(row) else 1,
+            _cad_model_identity_count(row, source_counts),
+            _stable_row_key(row),
+        )
+
+    return key
 
 
 def _answer_diversity_keep_priority(rows: list[dict[str, Any]]) -> Any:
     answer_counts = Counter(_answer_identity_key(row) for row in rows)
+    source_counts = _cad_model_identity_counts(rows)
 
-    def key(row: dict[str, Any]) -> tuple[int, str]:
-        return (answer_counts[_answer_identity_key(row)], _stable_row_key(row))
+    def key(row: dict[str, Any]) -> tuple[int, int, str]:
+        return (
+            answer_counts[_answer_identity_key(row)],
+            _cad_model_identity_count(row, source_counts),
+            _stable_row_key(row),
+        )
 
     return key
 
 
 def _parameter_diversity_keep_priority(rows: list[dict[str, Any]]) -> Any:
     answer_counts = Counter(_answer_identity_key(row) for row in rows)
+    source_counts = _cad_model_identity_counts(rows)
     parameter_counts: Counter[tuple[str, str, str]] = Counter()
     for row in rows:
         family = _prompt_family(row)
@@ -1097,13 +1118,18 @@ def _parameter_diversity_keep_priority(rows: list[dict[str, Any]]) -> Any:
             for value in _sampled_parameter_values(row, dimension):
                 parameter_counts[(family, dimension, value)] += 1
 
-    def key(row: dict[str, Any]) -> tuple[int, int, str]:
+    def key(row: dict[str, Any]) -> tuple[int, int, int, str]:
         family = _prompt_family(row)
         parameter_frequency = 0
         for dimension in PARAMETER_DIVERSITY_DIMENSIONS:
             for value in _sampled_parameter_values(row, dimension):
                 parameter_frequency += parameter_counts[(family, dimension, value)]
-        return (parameter_frequency, answer_counts[_answer_identity_key(row)], _stable_row_key(row))
+        return (
+            parameter_frequency,
+            answer_counts[_answer_identity_key(row)],
+            _cad_model_identity_count(row, source_counts),
+            _stable_row_key(row),
+        )
 
     return key
 
@@ -1113,6 +1139,27 @@ def _answer_identity_key(row: dict[str, Any]) -> str:
     if row.get("answer_format") == "entity_id":
         return f"{row.get('source_id')}::{answer}"
     return str(answer)
+
+
+def _cad_model_identity_counts(rows: list[dict[str, Any]]) -> Counter[str]:
+    return Counter(key for row in rows if (key := _cad_model_identity_key(row)))
+
+
+def _cad_model_identity_count(row: dict[str, Any], counts: Counter[str]) -> int:
+    key = _cad_model_identity_key(row)
+    return counts[key] if key else 10**12
+
+
+def _cad_model_identity_key(row: dict[str, Any]) -> str:
+    metadata = row.get("source_metadata")
+    if not isinstance(metadata, dict):
+        metadata = {}
+    for source in (metadata, row):
+        for key in ("cad_model_id", "source_model_id", "model_id", "source_id"):
+            value = source.get(key)
+            if value:
+                return str(value)
+    return ""
 
 
 def _is_main_browsecomp_hop_row(row: dict[str, Any]) -> bool:

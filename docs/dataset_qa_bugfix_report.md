@@ -1003,6 +1003,45 @@ parameter-balance failures therefore need either a coordinated swap-based
 selector/optimizer, or query-family/generation changes that make the pool less
 skewed before selection. A small cap-order tweak is unlikely to be sufficient.
 
+### Fix: release caps could drop rare source IDs on ties
+
+Bug:
+
+The generated pool has 906 sources with successful rows, but the current
+`release_10k` only represents 900. This still cannot satisfy the benchmark
+coverage gate, which requires 1000 distinct models for 10K rows, but it shows
+that release capping can discard some available source identities unnecessarily.
+
+Failure mode:
+
+When release caps choose between otherwise similar rows, the previous tie-break
+was the stable row ID. If an overrepresented family had ten rows from
+`src_common` and one row from `src_rare`, and all rows tied on the active
+parameter/answer/cross-feature priority, a late-sorting `src_rare` row could be
+dropped before redundant `src_common` rows.
+
+Fix:
+
+Release keep-priority functions are now source-aware. They still prioritize the
+existing release objectives first:
+
+```text
+cross-feature / high-hop preservation
+sampled-parameter diversity
+answer diversity
+```
+
+Then, when those priorities tie, they prefer rows from rarer CAD model/source
+identities. The identity uses `source_metadata.cad_model_id`,
+`source_metadata.source_model_id`, `source_metadata.model_id`, or `source_id`,
+matching the release verifier's distinct-model scope.
+
+Regression coverage:
+
+```text
+test_group_share_cap_preserves_rare_source_rows_when_priorities_tie
+```
+
 Operational note:
 
 The dataset CLI can now discover generated row pools stored as

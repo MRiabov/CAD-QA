@@ -10596,6 +10596,75 @@ def test_group_share_cap_prefers_source_scoped_answer_diversity() -> None:
     }
 
 
+def test_group_share_cap_preserves_rare_source_rows_when_priorities_tie() -> None:
+    rows = []
+    for index in range(10):
+        rows.append(
+            {
+                "row_id": f"row:aaa_common:{index}:family_large",
+                "source_id": "src_common",
+                "prompt": f"geometry prompt common {index}",
+                "prompt_template_id": f"template_common_{index}",
+                "gold_answer": f"feature:common_{index}",
+                "answer_format": "text",
+                "logical_hop_count": 4,
+                "geometry_hop_count": 4,
+                "static_hop_count": 0,
+                "query_program": {
+                    "query_id": f"graph:src_common:q{index}:family_large",
+                    "sampled_parameters": {"aggregation_axis": ["x"]},
+                },
+            }
+        )
+    rows.append(
+        {
+            "row_id": "row:zzz_rare:0:family_large",
+            "source_id": "src_rare",
+            "prompt": "geometry prompt rare",
+            "prompt_template_id": "template_rare",
+            "gold_answer": "feature:rare",
+            "answer_format": "text",
+            "logical_hop_count": 4,
+            "geometry_hop_count": 4,
+            "static_hop_count": 0,
+            "query_program": {
+                "query_id": "graph:src_rare:q0:family_large",
+                "sampled_parameters": {"aggregation_axis": ["x"]},
+            },
+        }
+    )
+    for index in range(4):
+        rows.append(
+            {
+                "row_id": f"row:small:{index}:family_small",
+                "source_id": f"src_small_{index}",
+                "prompt": f"geometry prompt small {index}",
+                "prompt_template_id": f"template_small_{index}",
+                "gold_answer": f"feature:small_{index}",
+                "answer_format": "text",
+                "logical_hop_count": 4,
+                "geometry_hop_count": 4,
+                "static_hop_count": 0,
+                "query_program": {
+                    "query_id": f"graph:src_small_{index}:q0:family_small",
+                    "sampled_parameters": {"aggregation_axis": ["x"]},
+                },
+            }
+        )
+
+    capped, exclusions = _cap_group_share_rows(
+        rows,
+        group_key=prompt_family,
+        max_share=0.5,
+        reason="prompt_family_share_cap",
+        prefer_keep=_parameter_diversity_keep_priority(rows),
+    )
+
+    assert len(capped) == 8
+    assert any(item["reason"] == "prompt_family_share_cap" for item in exclusions)
+    assert "src_rare" in {row["source_id"] for row in capped}
+
+
 def test_answer_diversity_replacement_preserves_family_counts() -> None:
     all_rows = []
     kept_rows = []
