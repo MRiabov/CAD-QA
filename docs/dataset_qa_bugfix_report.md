@@ -394,6 +394,9 @@ minimum unique answer count: the public target for candidate-choice questions is
 intentionally a small label alphabet, and source-ref answers intentionally reuse
 visible source variable names.
 
+The verifier now emits this as structured `answer_format_counts` and
+`answer_entropy_by_format` fields in `release_balance`.
+
 Value-bearing/cross-feature breakdown:
 
 ```text
@@ -406,6 +409,11 @@ The release row selection is nearly uniform by prompt family. This makes all 22
 value-bearing families contribute 36.66% of rows, above the strict 30% cap, while
 the two cross-feature families contribute only 3.32%, below the strict 5% floor.
 This is a selection/balancing issue, not a malformed-row issue.
+
+The verifier now emits this as structured
+`value_bearing_prompt_family_counts` and
+`cross_feature_value_bearing_prompt_family_counts` fields in
+`release_balance`.
 
 Parameter-balance breakdown:
 

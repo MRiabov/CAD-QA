@@ -298,6 +298,7 @@ def release_balance_report(
     prompt_family_counts = Counter(prompt_family(row) for row in rows)
     prompt_template_counts = Counter(_prompt_template_id(row) for row in rows)
     answer_counts = Counter(_answer_identity_key(row) for row in rows)
+    answer_format_counts = Counter(str(row.get("answer_format") or "unknown") for row in rows)
     distinct_cad_model_ids = {model_id for row in rows if (model_id := _cad_model_identity_key(row))}
     distinct_cad_model_count = len(distinct_cad_model_ids)
     minimum_distinct_cad_model_count = (
@@ -311,6 +312,10 @@ def release_balance_report(
     syntax_only_calibration_count = sum(1 for row in rows if is_syntax_only_calibration_row(row))
     value_bearing_measurement_count = sum(1 for row in rows if _is_value_bearing_measurement_row(row))
     cross_feature_value_bearing_count = sum(1 for row in rows if _is_cross_feature_value_bearing_row(row))
+    value_bearing_family_counts = Counter(prompt_family(row) for row in rows if _is_value_bearing_measurement_row(row))
+    cross_feature_value_bearing_family_counts = Counter(
+        prompt_family(row) for row in rows if _is_cross_feature_value_bearing_row(row)
+    )
     value_bearing_only_family_count = _predicate_only_family_count(rows, _is_value_bearing_measurement_row)
     cross_feature_only_family_count = _predicate_only_family_count(rows, _is_cross_feature_value_bearing_row)
     minimum_value_bearing_share_from_family_floor = min(
@@ -343,6 +348,7 @@ def release_balance_report(
     median_pre_final_candidate_count = _median(pre_final_candidate_counts)
     applicable = row_count >= profile.min_applicable_rows
     answer_entropy_bits = _entropy_bits(answer_counts)
+    answer_entropy_by_format = _answer_entropy_by_format(rows)
     prompt_family_count = len(prompt_family_counts)
     prompt_template_count = len(prompt_template_counts)
     unique_answer_count = len(answer_counts)
@@ -393,6 +399,8 @@ def release_balance_report(
         ),
         "unique_answer_count": unique_answer_count,
         "answer_identity_scope": "source_scoped_for_entity_id_raw_public_answer_otherwise",
+        "answer_format_counts": dict(sorted(answer_format_counts.items())),
+        "answer_entropy_by_format": answer_entropy_by_format,
         "minimum_unique_answer_count": profile.min_unique_answer_count,
         "answer_entropy_bits": answer_entropy_bits,
         "minimum_answer_entropy_bits": profile.min_answer_entropy_bits,
@@ -417,6 +425,8 @@ def release_balance_report(
         "syntax_only_calibration_share": syntax_only_calibration_share,
         "value_bearing_measurement_count": value_bearing_measurement_count,
         "value_bearing_measurement_share": value_bearing_measurement_share,
+        "value_bearing_prompt_family_counts": dict(sorted(value_bearing_family_counts.items())),
+        "value_bearing_prompt_family_shares": _counter_share_reports(value_bearing_family_counts, row_count),
         "value_bearing_only_prompt_family_count": value_bearing_only_family_count,
         "minimum_value_bearing_share_from_family_floor": minimum_value_bearing_share_from_family_floor,
         "value_bearing_family_floor_feasible": (
@@ -427,6 +437,11 @@ def release_balance_report(
         "maximum_value_bearing_measurement_share": profile.max_value_bearing_measurement_share,
         "cross_feature_value_bearing_count": cross_feature_value_bearing_count,
         "cross_feature_value_bearing_share": cross_feature_value_bearing_share,
+        "cross_feature_value_bearing_prompt_family_counts": dict(sorted(cross_feature_value_bearing_family_counts.items())),
+        "cross_feature_value_bearing_prompt_family_shares": _counter_share_reports(
+            cross_feature_value_bearing_family_counts,
+            row_count,
+        ),
         "cross_feature_only_prompt_family_count": cross_feature_only_family_count,
         "minimum_cross_feature_share_from_family_floor": minimum_cross_feature_share_from_family_floor,
         "cross_feature_family_floor_feasible": (
@@ -825,6 +840,25 @@ def _entropy_bits(counts: Counter[str]) -> float:
     if total == 0:
         return 0.0
     return -sum((count / total) * math.log2(count / total) for count in counts.values())
+
+
+def _answer_entropy_by_format(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    grouped: dict[str, Counter[str]] = {}
+    for row in rows:
+        answer_format = str(row.get("answer_format") or "unknown")
+        grouped.setdefault(answer_format, Counter())[_answer_identity_key(row)] += 1
+    return {
+        answer_format: {
+            "row_count": sum(counts.values()),
+            "unique_answer_count": len(counts),
+            "answer_entropy_bits": _entropy_bits(counts),
+            "top_answer_identities": [
+                {"answer_identity": answer, "count": count}
+                for answer, count in counts.most_common(10)
+            ],
+        }
+        for answer_format, counts in sorted(grouped.items())
+    }
 
 
 def _largest_counter_item(counts: Counter[str]) -> tuple[str | None, int]:

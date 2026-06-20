@@ -9371,6 +9371,9 @@ def test_release_balance_report_checks_family_entropy_and_geometry_hops() -> Non
     assert report["prompt_family_count"] == 10
     assert report["prompt_template_count"] == 10
     assert report["unique_answer_count"] == 100
+    assert report["answer_format_counts"] == {"unknown": 100}
+    assert report["answer_entropy_by_format"]["unknown"]["row_count"] == 100
+    assert report["answer_entropy_by_format"]["unknown"]["unique_answer_count"] == 100
     assert report["geometry_critical_count"] == 100
     assert report["syntax_only_calibration_count"] == 0
     assert report["minimum_prompt_family_share"] == 0.01
@@ -9430,6 +9433,11 @@ def test_release_balance_report_checks_family_entropy_and_geometry_hops() -> Non
     assert value_report["passes_value_bearing_measurement_coverage"]
     assert value_report["passes_cross_feature_value_bearing_coverage"]
     assert value_report["cross_feature_value_bearing_count"] == 1
+    assert value_report["value_bearing_prompt_family_counts"] == {f"family_{index}": 10 for index in range(10)}
+    assert value_report["cross_feature_value_bearing_prompt_family_counts"] == {"family_0": 1}
+    assert value_report["cross_feature_value_bearing_prompt_family_shares"] == [
+        {"prompt_family": "family_0", "count": 1, "share": 0.01}
+    ]
     assert value_report["value_bearing_only_prompt_family_count"] == 10
     assert value_report["value_bearing_family_floor_feasible"]
 
@@ -9783,7 +9791,9 @@ def test_release_balance_counts_entity_answers_in_source_context() -> None:
     report = release_balance_report(rows, release_tier="smoke")
 
     assert report["unique_answer_count"] == 2
-    assert report["answer_identity_scope"] == "source_scoped_for_entity_id"
+    assert report["answer_identity_scope"] == "source_scoped_for_entity_id_raw_public_answer_otherwise"
+    assert report["answer_format_counts"] == {"entity_id": 2}
+    assert report["answer_entropy_by_format"]["entity_id"]["unique_answer_count"] == 2
     assert report["answer_entropy_bits"] == 1.0
 
 
