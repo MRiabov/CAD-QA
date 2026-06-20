@@ -868,12 +868,16 @@ the gold label is never part of a duplicated visible-description group in the
 current release. Validation now treats duplicated gold candidate descriptions as
 a hard public-answer error: if a future candidate-label row has the gold label in
 a duplicated description group, the public answer is not recoverable without
-extra evidence or an explicit tie-break.
+extra evidence or an explicit tie-break. The same validation path also rejects
+candidate-label rows whose rendered prompt has no candidate list, or whose gold
+label is not present in the rendered candidate list.
 
 Regression coverage:
 
 ```text
 test_validation_rejects_duplicated_gold_candidate_description
+test_validation_rejects_missing_rendered_candidate_labels
+test_validation_rejects_unrendered_gold_candidate_label
 ```
 
 Current next-step classification:

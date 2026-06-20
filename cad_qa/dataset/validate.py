@@ -143,6 +143,18 @@ def public_candidate_label_issues(row: dict[str, Any]) -> list[dict[str, Any]]:
                 "max_candidate_labels": DEFAULT_MAX_CANDIDATE_LABELS,
             }
         )
+    gold_label = _normalized_gold_label(row.get("gold_answer"))
+    rendered_label_texts = _rendered_candidate_label_texts(prompt)
+    if not rendered_label_texts:
+        issues.append({"error": "missing_rendered_candidate_labels"})
+    elif gold_label and gold_label not in rendered_label_texts:
+        issues.append(
+            {
+                "error": "gold_candidate_label_not_rendered",
+                "gold_label": gold_label,
+                "rendered_labels": sorted(rendered_label_texts),
+            }
+        )
     duplicate_gold = _duplicated_gold_candidate_description_issue(row)
     if duplicate_gold is not None:
         issues.append(duplicate_gold)

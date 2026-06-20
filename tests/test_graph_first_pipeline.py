@@ -3254,6 +3254,71 @@ def test_validation_rejects_duplicated_gold_candidate_description() -> None:
     assert report["errors"][0]["duplicate_labels"] == ["A", "B"]
 
 
+def test_validation_rejects_missing_rendered_candidate_labels() -> None:
+    row = _candidate_label_validation_row(
+        prompt="Given the CadQuery script below, answer the question by reasoning about the CAD construction.",
+        gold_answer="A",
+    )
+
+    report = validate_rows([row], release=True)
+
+    assert not report["valid"]
+    assert report["errors"][0]["error"] == "missing_rendered_candidate_labels"
+
+
+def test_validation_rejects_unrendered_gold_candidate_label() -> None:
+    row = _candidate_label_validation_row(
+        prompt="\n".join(
+            [
+                "Given the CadQuery script below, answer the question by reasoning about the CAD construction.",
+                "",
+                "Candidate labels:",
+                "- A: center X 0; center Y 0; center Z 1; area 4",
+                "- B: center X 0; center Y 0; center Z 2; area 4",
+            ]
+        ),
+        gold_answer="C",
+    )
+
+    report = validate_rows([row], release=True)
+
+    assert not report["valid"]
+    assert report["errors"][0]["error"] == "gold_candidate_label_not_rendered"
+    assert report["errors"][0]["gold_label"] == "C"
+
+
+def _candidate_label_validation_row(*, prompt: str, gold_answer: str) -> dict[str, object]:
+    return {
+        "row_id": f"row:candidate-label-validation:{gold_answer}",
+        "source_id": "synthetic",
+        "source_code": "import cadquery as cq\nresult = cq.Workplane('XY').box(1, 1, 1)",
+        "prompt": prompt,
+        "answer_format": "candidate_label",
+        "gold_answer": gold_answer,
+        "query_program": {
+            "answer_spec": {
+                "candidate_labels": {
+                    "face:a": "A",
+                    "face:b": "B",
+                    "face:c": "C",
+                }
+            }
+        },
+        "candidate_trace": {"final_candidates": ["face:c"]},
+        "relation_families": [],
+        "measurement_scopes": [],
+        "logical_hop_count": 3,
+        "static_hop_count": 0,
+        "geometry_hop_count": 3,
+        "difficulty_bucket": "cad_browsecomp",
+        "verifier_status": "resolved",
+        "evidence_tier": "verified",
+        "release_ready": True,
+        "quarantine_reasons": [],
+        "clue_map": [{"clue": "candidate label", "source": "prompt"}],
+    }
+
+
 def test_candidate_label_selector_descriptions_include_public_selector_context() -> None:
     graph = OntologyGraph(graph_id="graph:selector-labels", source={"source_id": "synthetic", "source_code": ""})
     for selector_id, selector_label, selected_count, max_z in [
