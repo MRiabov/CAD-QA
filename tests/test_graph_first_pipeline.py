@@ -9532,6 +9532,12 @@ def test_release_gate_feasibility_report_summarizes_generated_pool_capacity() ->
     assert report["maximum_value_bearing_rows_for_release"] == 3000
     assert "parameter_balance_full_pool_valid" in report
     assert report["parameter_balance_full_pool_dimension_counts"]
+    assert report["parameter_balance_full_pool_top_violations"]
+    assert set(report["parameter_balance_full_pool_top_violations"][0]) >= {
+        "prompt_family",
+        "dimension",
+        "reason",
+    }
 
 
 def test_graph_source_coverage_report_identifies_sources_without_generated_rows() -> None:

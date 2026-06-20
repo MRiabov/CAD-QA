@@ -170,6 +170,7 @@ def release_gate_feasibility_report(
         "parameter_balance_full_pool_reason_counts": dict(Counter(v["reason"] for v in parameter_violations)),
         "parameter_balance_full_pool_dimension_counts": dict(Counter(v["dimension"] for v in parameter_violations).most_common()),
         "parameter_balance_full_pool_family_counts": dict(Counter(v["prompt_family"] for v in parameter_violations).most_common()),
+        "parameter_balance_full_pool_top_violations": _compact_parameter_violations(parameter_violations),
     }
     if graph_records is not None:
         report.update(
@@ -218,6 +219,7 @@ def simulated_release_balance_report(rows: list[dict[str, Any]], *, release_tier
         "parameter_balance_reason_counts": dict(Counter(v["reason"] for v in parameter_violations)),
         "parameter_balance_dimension_counts": dict(Counter(v["dimension"] for v in parameter_violations).most_common()),
         "parameter_balance_family_counts": dict(Counter(v["prompt_family"] for v in parameter_violations).most_common()),
+        "parameter_balance_top_violations": _compact_parameter_violations(parameter_violations),
     }
 
 
@@ -298,6 +300,28 @@ def _read_pool_rows(dataset_stream: Path) -> list[dict[str, Any]]:
                     row["query_program"] = json.loads(query_program)
                 rows.append(row)
     return rows
+
+
+def _compact_parameter_violations(
+    violations: list[dict[str, Any]],
+    *,
+    limit: int = 25,
+) -> list[dict[str, Any]]:
+    compact = []
+    for violation in violations[:limit]:
+        item = {
+            "prompt_family": violation.get("prompt_family"),
+            "dimension": violation.get("dimension"),
+            "reason": violation.get("reason"),
+        }
+        if "largest_value" in violation:
+            item["largest_value"] = violation.get("largest_value")
+            item["largest_share"] = violation.get("largest_share")
+            item["maximum_allowed_largest_share"] = violation.get("maximum_allowed_largest_share")
+        if "undercovered_expected_values" in violation:
+            item["undercovered_expected_values"] = violation.get("undercovered_expected_values")
+        compact.append(item)
+    return compact
 
 
 def _iter_graph_records(graph_dir: Path):

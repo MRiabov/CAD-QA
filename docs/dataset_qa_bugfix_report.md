@@ -651,6 +651,16 @@ are no longer caused by impossible non-axis expected-value floors; they are
 dominance and axis/direction coverage failures under current generated
 distribution and selector policy.
 
+The feasibility tool now includes compact top-violation fields:
+
+```text
+parameter_balance_full_pool_top_violations
+simulated_release_balance.parameter_balance_top_violations
+```
+
+Use these fields to decide whether the next fix should be a selector-balancing
+algorithm change or family-specific manifest policy adjustment.
+
 Regression coverage:
 
 ```text
