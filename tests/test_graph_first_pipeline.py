@@ -99,6 +99,7 @@ from cad_qa.source import (
 )
 from cad_qa.trace import TraceRecord, cadquery_available, trace_report, trace_source, trace_sources_bounded
 from cad_qa.cli import main as cli_main
+from tools.analyze_release_gate_feasibility import release_gate_feasibility_report
 
 
 SOURCE = """
@@ -9479,6 +9480,53 @@ def test_release_balance_report_checks_family_entropy_and_geometry_hops() -> Non
     impossible_report = release_balance_report(impossible_value_mix, release_tier="benchmark-release")
     assert impossible_report["minimum_value_bearing_share_from_family_floor"] == 0.4
     assert not impossible_report["value_bearing_family_floor_feasible"]
+
+
+def test_release_gate_feasibility_report_summarizes_generated_pool_capacity() -> None:
+    rows = []
+    for index in range(20):
+        family = "parameterized_reference_entity_distance" if index < 8 else f"family_{index % 5}"
+        clauses = []
+        aggregation_metric = "volume"
+        if index < 12:
+            clauses.append({"kind": "has_measurement", "metric": "volume", "value": float(index)})
+        if index < 8:
+            clauses.append({"kind": "reference_measurement", "metric": "distance_to_reference_feature_centroid"})
+            aggregation_metric = "distance_to_reference_feature_centroid"
+        rows.append(
+            {
+                "row_id": f"row:src_{index}:q:{family}",
+                "source_id": f"src_{index}",
+                "answer_format": "candidate_label",
+                "gold_answer": "A",
+                "prompt_template_id": f"template_{index % 3}",
+                "logical_hop_count": 4,
+                "geometry_hop_count": 4,
+                "static_hop_count": 0,
+                "query_program": {
+                    "query_id": f"graph:src_{index}:q:{family}",
+                    "aggregation_metric": aggregation_metric,
+                    "clauses": clauses,
+                    "sampled_parameters": {
+                        "target_type": ["edge"],
+                        "aggregation_metric": [aggregation_metric],
+                    },
+                },
+            }
+        )
+
+    report = release_gate_feasibility_report(rows, release_tier="benchmark-release")
+
+    assert report["pool_row_count"] == 20
+    assert report["pool_source_count"] == 20
+    assert report["pool_family_count"] == 6
+    assert report["value_bearing_pool_row_count"] == 12
+    assert report["cross_feature_pool_row_count"] == 8
+    assert report["cross_feature_pool_family_counts"] == {"parameterized_reference_entity_distance": 8}
+    assert report["minimum_cross_feature_rows_for_release"] == 500
+    assert report["maximum_value_bearing_rows_for_release"] == 3000
+    assert "parameter_balance_full_pool_valid" in report
+    assert report["parameter_balance_full_pool_dimension_counts"]
 
 
 def test_release_export_balance_caps_overrepresented_training_slices() -> None:
