@@ -685,6 +685,17 @@ both before and after selection. Use the context fields to decide whether the
 next fix should be a selector-balancing algorithm change or family-specific
 manifest/query-policy adjustment.
 
+The feasibility tool also estimates per-violation replacement capacity:
+
+```text
+simulated_release_balance.parameter_balance_violation_individual_replacement_capacity_counts
+simulated_release_balance.parameter_balance_violation_classification_replacement_capacity_counts
+simulated_release_balance.parameter_balance_top_violation_individual_replacement_capacity_counts
+```
+
+This is an independent per-violation estimate, not proof that all replacements
+can be made simultaneously while preserving every other release gate.
+
 Current top-25 simulated violation classification:
 
 ```text
@@ -711,13 +722,32 @@ pool_undercovered:axis_or_direction_undercovered: 3
 mixed_pool_and_selection:axis_or_direction_undercovered: 1
 ```
 
+Current individual replacement-capacity estimate:
+
+```text
+appears_individually_fixable: 120
+not_individually_fixable: 11
+```
+
+By classification:
+
+```text
+selection_regressed:appears_individually_fixable: 60
+pool_already_violates:appears_individually_fixable: 56
+pool_already_violates:not_individually_fixable: 11
+pool_undercovered:appears_individually_fixable: 3
+mixed_pool_and_selection:appears_individually_fixable: 1
+```
+
 Interpretation:
 
 - `selection_regressed` means the generated pool has enough diversity for the
   cited value/dimension, but the simulated 10K selector lost it.
-- `pool_already_violates` means selection alone cannot fix that
-  family/dimension; it needs query-family generation changes or a manifest
-  policy decision.
+- `pool_already_violates` means the full generated pool is skewed for that
+  family/dimension. It may still be individually fixable by selecting a more
+  balanced subset if enough alternative rows exist.
+- `not_individually_fixable` is the stronger signal that a selector-only change
+  probably cannot fix the cited violation.
 
 Regression coverage:
 

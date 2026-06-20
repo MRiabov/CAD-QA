@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -235,7 +236,16 @@ def simulated_release_balance_report(rows: list[dict[str, Any]], *, release_tier
         "parameter_balance_violation_classification_reason_counts": parameter_violation_classification[
             "classification_reason_counts"
         ],
+        "parameter_balance_violation_individual_replacement_capacity_counts": parameter_violation_classification[
+            "individual_replacement_capacity_counts"
+        ],
+        "parameter_balance_violation_classification_replacement_capacity_counts": parameter_violation_classification[
+            "classification_replacement_capacity_counts"
+        ],
         "parameter_balance_top_violation_pool_context": parameter_violation_classification["top_context"],
+        "parameter_balance_top_violation_individual_replacement_capacity_counts": parameter_violation_classification[
+            "top_individual_replacement_capacity_counts"
+        ],
     }
 
 
@@ -350,6 +360,9 @@ def _parameter_violation_pool_context(
 ) -> list[dict[str, Any]]:
     pool_counters = _parameter_counters_by_family_dimension(pool_rows)
     selected_counters = _parameter_counters_by_family_dimension(selected_rows)
+    pool_row_index = _parameter_rows_by_family_dimension_value(pool_rows)
+    selected_row_index = _parameter_rows_by_family_dimension_value(selected_rows)
+    selected_row_ids = {_row_identity(row) for row in selected_rows}
     contexts = []
     for violation in violations[:limit]:
         family = str(violation.get("prompt_family") or "")
@@ -373,6 +386,16 @@ def _parameter_violation_pool_context(
                 "selected_total": sum(selected_counts.values()),
                 "pool_largest": _largest_counter_report(pool_counts),
                 "selected_largest": _largest_counter_report(selected_counts),
+                "replacement_capacity": _parameter_violation_replacement_capacity(
+                    violation,
+                    family=family,
+                    dimension=dimension,
+                    pool_row_index=pool_row_index,
+                    selected_row_index=selected_row_index,
+                    selected_row_ids=selected_row_ids,
+                    selected_counts=selected_counts,
+                    min_expected_share=min_expected_share,
+                ),
                 "values": [
                     {
                         "value": value,
@@ -415,9 +438,12 @@ def _parameter_violation_classification_report(
                 for context in all_context
             ).most_common()
         },
+        "individual_replacement_capacity_counts": _replacement_capacity_counts(all_context),
+        "classification_replacement_capacity_counts": _classification_replacement_capacity_counts(all_context),
         "top_classification_counts": dict(
             Counter(item["classification"] for item in top_context).most_common()
         ),
+        "top_individual_replacement_capacity_counts": _replacement_capacity_counts(top_context),
         "top_context": top_context,
     }
 
@@ -461,6 +487,31 @@ def _parameter_violation_classification(
     return "unclassified"
 
 
+def _replacement_capacity_counts(contexts: list[dict[str, Any]]) -> dict[str, int]:
+    return dict(Counter(_replacement_capacity_label(context) for context in contexts).most_common())
+
+
+def _classification_replacement_capacity_counts(contexts: list[dict[str, Any]]) -> dict[str, int]:
+    return dict(
+        Counter(
+            f"{context.get('classification')}:{_replacement_capacity_label(context)}"
+            for context in contexts
+        ).most_common()
+    )
+
+
+def _replacement_capacity_label(context: dict[str, Any]) -> str:
+    capacity = context.get("replacement_capacity")
+    if not isinstance(capacity, dict):
+        return "unknown"
+    value = capacity.get("appears_selection_fixable")
+    if value is True:
+        return "appears_individually_fixable"
+    if value is False:
+        return "not_individually_fixable"
+    return "unknown"
+
+
 def _parameter_counters_by_family_dimension(
     rows: list[dict[str, Any]],
 ) -> dict[tuple[str, str], Counter[str]]:
@@ -471,6 +522,113 @@ def _parameter_counters_by_family_dimension(
             counter = counters.setdefault((family, dimension), Counter())
             counter.update(values)
     return counters
+
+
+def _parameter_rows_by_family_dimension_value(
+    rows: list[dict[str, Any]],
+) -> dict[tuple[str, str, str], list[dict[str, Any]]]:
+    index: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
+    for row in rows:
+        family = prompt_family(row)
+        for dimension, values in row_sampled_parameters(row).items():
+            for value in values:
+                index.setdefault((family, dimension, value), []).append(row)
+    return index
+
+
+def _parameter_violation_replacement_capacity(
+    violation: dict[str, Any],
+    *,
+    family: str,
+    dimension: str,
+    pool_row_index: dict[tuple[str, str, str], list[dict[str, Any]]],
+    selected_row_index: dict[tuple[str, str, str], list[dict[str, Any]]],
+    selected_row_ids: set[str],
+    selected_counts: Counter[str],
+    min_expected_share: float | None,
+) -> dict[str, Any]:
+    reason = violation.get("reason")
+    selected_total = sum(selected_counts.values())
+    if reason == "parameter_value_dominates":
+        value = str(violation.get("largest_value"))
+        maximum_share = violation.get("maximum_allowed_largest_share")
+        if not isinstance(maximum_share, (int, float)):
+            return {"estimated_needed_swaps": None, "reason": "unknown_threshold"}
+        allowed_count = math.floor(float(maximum_share) * selected_total + 1e-12)
+        selected_value_count = selected_counts.get(value, 0)
+        needed_swaps = max(0, selected_value_count - allowed_count)
+        available_replacement_rows = _available_unselected_rows_excluding_value(
+            family,
+            dimension,
+            excluded_value=value,
+            pool_row_index=pool_row_index,
+            selected_row_ids=selected_row_ids,
+        )
+        removable_rows = selected_row_index.get((family, dimension, value), [])
+        return {
+            "estimated_needed_swaps": needed_swaps,
+            "available_unselected_replacement_rows": len(available_replacement_rows),
+            "selected_rows_with_dominant_value": len(removable_rows),
+            "appears_selection_fixable": (
+                needed_swaps > 0
+                and len(available_replacement_rows) >= needed_swaps
+                and len(removable_rows) >= needed_swaps
+            ),
+        }
+    if reason == "axis_or_direction_undercovered":
+        if min_expected_share is None:
+            return {"estimated_needed_additions": None, "reason": "unknown_threshold"}
+        required_count = math.ceil(min_expected_share * selected_total - 1e-12)
+        values = _violation_values(violation)
+        value_reports = []
+        total_needed = 0
+        total_available = 0
+        for value in values:
+            selected_value_count = selected_counts.get(value, 0)
+            needed = max(0, required_count - selected_value_count)
+            available = [
+                row
+                for row in pool_row_index.get((family, dimension, value), [])
+                if _row_identity(row) not in selected_row_ids
+            ]
+            total_needed += needed
+            total_available += len(available)
+            value_reports.append(
+                {
+                    "value": value,
+                    "required_count": required_count,
+                    "selected_count": selected_value_count,
+                    "estimated_needed_additions": needed,
+                    "available_unselected_rows_with_value": len(available),
+                }
+            )
+        return {
+            "estimated_needed_additions": total_needed,
+            "available_unselected_rows_with_needed_values": total_available,
+            "appears_selection_fixable": total_needed > 0 and total_available >= total_needed,
+            "values": value_reports,
+        }
+    return {"reason": "unclassified"}
+
+
+def _available_unselected_rows_excluding_value(
+    family: str,
+    dimension: str,
+    *,
+    excluded_value: str,
+    pool_row_index: dict[tuple[str, str, str], list[dict[str, Any]]],
+    selected_row_ids: set[str],
+) -> list[dict[str, Any]]:
+    available: dict[str, dict[str, Any]] = {}
+    for key, rows in pool_row_index.items():
+        key_family, key_dimension, key_value = key
+        if key_family != family or key_dimension != dimension or key_value == excluded_value:
+            continue
+        for row in rows:
+            row_id = _row_identity(row)
+            if row_id not in selected_row_ids:
+                available[row_id] = row
+    return list(available.values())
 
 
 def _violation_values(violation: dict[str, Any]) -> list[str]:
@@ -495,6 +653,10 @@ def _largest_counter_report(counts: Counter[str]) -> dict[str, Any]:
 def _counter_value_share(counts: Counter[str], value: str) -> float:
     total = sum(counts.values())
     return counts.get(value, 0) / total if total else 0.0
+
+
+def _row_identity(row: dict[str, Any]) -> str:
+    return str(row.get("row_id") or row.get("prompt") or row.get("query_program", {}).get("query_id") or id(row))
 
 
 def _iter_graph_records(graph_dir: Path):

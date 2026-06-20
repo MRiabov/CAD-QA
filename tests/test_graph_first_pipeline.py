@@ -9631,6 +9631,12 @@ def test_parameter_violation_pool_context_compares_pool_and_selected_rows() -> N
             "selected_total": 3,
             "pool_largest": {"value": "z", "count": 2, "share": 1 / 3},
             "selected_largest": {"value": "x", "count": 3, "share": 1.0},
+            "replacement_capacity": {
+                "estimated_needed_swaps": 2,
+                "available_unselected_replacement_rows": 3,
+                "selected_rows_with_dominant_value": 3,
+                "appears_selection_fixable": True,
+            },
             "values": [
                 {
                     "value": "x",
@@ -9682,6 +9688,20 @@ def test_parameter_violation_pool_context_classifies_undercoverage_regressions()
     )
 
     assert context[0]["classification"] == "selection_regressed"
+    assert context[0]["replacement_capacity"] == {
+        "estimated_needed_additions": 1,
+        "available_unselected_rows_with_needed_values": 0,
+        "appears_selection_fixable": False,
+        "values": [
+            {
+                "value": "x",
+                "required_count": 1,
+                "selected_count": 0,
+                "estimated_needed_additions": 1,
+                "available_unselected_rows_with_value": 0,
+            }
+        ],
+    }
     assert context[0]["values"] == [
         {
             "value": "x",
@@ -9744,7 +9764,12 @@ def test_parameter_violation_classification_report_counts_all_violations() -> No
         "selection_regressed:axis_or_direction_undercovered": 1,
         "selection_regressed:parameter_value_dominates": 1,
     }
+    assert report["individual_replacement_capacity_counts"] == {"appears_individually_fixable": 2}
+    assert report["classification_replacement_capacity_counts"] == {
+        "selection_regressed:appears_individually_fixable": 2
+    }
     assert report["top_classification_counts"] == {"selection_regressed": 1}
+    assert report["top_individual_replacement_capacity_counts"] == {"appears_individually_fixable": 1}
     assert len(report["top_context"]) == 1
 
 
