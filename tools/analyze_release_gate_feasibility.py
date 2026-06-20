@@ -85,6 +85,11 @@ def main() -> None:
         help="Load candidate_trace for candidate-breadth diagnostics. This is slower on large row pools.",
     )
     parser.add_argument(
+        "--source-coverage-only",
+        action="store_true",
+        help="Only project row source_id values and report graph source coverage diagnostics.",
+    )
+    parser.add_argument(
         "--simulate-parameter-repair",
         action="store_true",
         help="After release-balance simulation, run a dry-run same-family parameter-diversity repair.",
@@ -103,18 +108,33 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    rows = _read_pool_rows(args.dataset_stream, include_candidate_trace=bool(args.include_candidate_trace))
-    graph_records = _iter_graph_records(args.graph_dir) if args.graph_dir is not None else None
-    report = release_gate_feasibility_report(
-        rows,
-        release_tier=args.release_tier,
-        graph_records=graph_records,
-        analyze_missing_query_counts=args.analyze_missing_query_counts,
-        max_missing_query_analysis=args.max_missing_query_analysis,
-        simulate_release_balance=args.simulate_release_balance,
-        simulate_parameter_repair=args.simulate_parameter_repair,
-        max_parameter_repair_swaps=args.max_parameter_repair_swaps,
-    )
+    if args.source_coverage_only:
+        if args.graph_dir is None:
+            parser.error("--source-coverage-only requires --graph-dir")
+        if args.simulate_release_balance or args.simulate_parameter_repair or args.include_candidate_trace:
+            parser.error("--source-coverage-only cannot be combined with simulation or candidate-trace diagnostics")
+        report = {
+            "release_tier": args.release_tier,
+            **graph_source_coverage_report(
+                _read_pool_source_ids(args.dataset_stream),
+                _iter_graph_records(args.graph_dir),
+                analyze_missing_query_counts=args.analyze_missing_query_counts,
+                max_missing_query_analysis=args.max_missing_query_analysis,
+            ),
+        }
+    else:
+        rows = _read_pool_rows(args.dataset_stream, include_candidate_trace=bool(args.include_candidate_trace))
+        graph_records = _iter_graph_records(args.graph_dir) if args.graph_dir is not None else None
+        report = release_gate_feasibility_report(
+            rows,
+            release_tier=args.release_tier,
+            graph_records=graph_records,
+            analyze_missing_query_counts=args.analyze_missing_query_counts,
+            max_missing_query_analysis=args.max_missing_query_analysis,
+            simulate_release_balance=args.simulate_release_balance,
+            simulate_parameter_repair=args.simulate_parameter_repair,
+            max_parameter_repair_swaps=args.max_parameter_repair_swaps,
+        )
     if args.out is not None:
         write_json(args.out, report)
     if not args.quiet:
@@ -596,6 +616,23 @@ def _read_pool_rows(dataset_stream: Path, *, include_candidate_trace: bool = Fal
                     row["candidate_trace"] = json.loads(candidate_trace)
                 rows.append(row)
     return rows
+
+
+def _read_pool_source_ids(dataset_stream: Path) -> set[str]:
+    paths = [
+        *sorted((dataset_stream / "row_shards").glob("part-*.parquet")),
+        *sorted((dataset_stream / "row_graph_shards").glob("part-*.parquet")),
+    ]
+    if not paths:
+        raise FileNotFoundError(f"no row shard parquets found under {dataset_stream}")
+    source_ids: set[str] = set()
+    for path in paths:
+        parquet_file = pq.ParquetFile(path)
+        if "source_id" not in parquet_file.schema_arrow.names:
+            continue
+        for batch in parquet_file.iter_batches(batch_size=20000, columns=["source_id"]):
+            source_ids.update(str(source_id) for source_id in batch.column("source_id").to_pylist() if source_id)
+    return source_ids
 
 
 def _compact_parameter_violations(

@@ -13214,6 +13214,50 @@ def test_release_export_cli_filters_quarantined_rows(tmp_path: Path) -> None:
     assert "default_sft_geometry_critical_dominance" in verifier_report["blocking_gates"]
 
 
+def test_release_feasibility_source_coverage_can_project_only_source_ids(tmp_path: Path) -> None:
+    from tools.analyze_release_gate_feasibility import (
+        _read_pool_source_ids,
+        graph_source_coverage_report,
+    )
+
+    dataset_stream = tmp_path / "dataset_stream"
+    row_shards = dataset_stream / "row_shards"
+    row_shards.mkdir(parents=True)
+    write_records(
+        row_shards / "part-00000.parquet",
+        [
+            {"source_id": "src_a"},
+            {"source_id": "src_a"},
+            {"source_id": "src_b"},
+        ],
+    )
+    graph_path = tmp_path / "graphs" / "part-00000.parquet"
+    write_records(
+        graph_path,
+        [
+            {"graph_id": "graph:src_a", "source": {"source_id": "src_a"}, "nodes": [{"id": "source:src_a", "type": "source"}]},
+            {"graph_id": "graph:src_b", "source": {"source_id": "src_b"}, "nodes": [{"id": "source:src_b", "type": "source"}]},
+            {
+                "graph_id": "graph:src_missing",
+                "source": {"source_id": "src_missing"},
+                "nodes": [{"id": "feature:wp1", "type": "feature"}],
+            },
+        ],
+    )
+
+    report = graph_source_coverage_report(
+        _read_pool_source_ids(dataset_stream),
+        iter_records(graph_path),
+    )
+
+    assert report["pool_sources_with_generated_rows"] == 2
+    assert report["graph_source_count"] == 3
+    assert report["graph_sources_with_generated_rows"] == 2
+    assert report["graph_sources_missing_generated_rows_count"] == 1
+    assert report["graph_sources_missing_generated_rows_sample"] == ["src_missing"]
+    assert report["missing_source_node_type_counts"] == {"feature": 1}
+
+
 def test_release_export_helper_writes_reports(tmp_path: Path) -> None:
     graph = build_graph(source_record_from_mapping({"source_id": "src_loop", "normalized_code": LOOP_SOURCE}))
     rows = [

@@ -551,6 +551,22 @@ For a cheaper smoke check, add `--max-missing-query-analysis N`; source
 coverage and node-type counts remain complete, while query-count synthesis is
 limited to the first `N` missing sources.
 
+For source coverage only, avoid full row decoding:
+
+```bash
+uv run python tools/analyze_release_gate_feasibility.py \
+  --dataset-stream runs/current_cadevolve1000_10k_regen_20260613/dataset_stream \
+  --graph-dir runs/current_cadevolve1000_10k_regen_20260613/graph/graphs \
+  --source-coverage-only \
+  --quiet \
+  --out /tmp/cadqa_source_coverage.json
+```
+
+This mode projects only `source_id` from row shards, then streams graph shards
+for coverage and node-type counts. On the current 1000-graph run it reports the
+same 906 represented sources and 94 missing sources without decoding every
+row's `query_program`.
+
 Current generated-pool feasibility summary:
 
 ```text
