@@ -329,9 +329,20 @@ The default `release-candidate` verifier passes:
 ```text
 valid_for_release: true
 blocking_gates: []
+preview_evidence: true
 ```
 
-The stricter `benchmark-release` verifier still fails:
+Preview evidence has been generated for strict benchmark review:
+
+```text
+PREVIEW.md
+preview_evidence.json
+PREVIEW.preview_evidence.json
+preview_evidence_valid: true
+```
+
+The stricter `benchmark-release` verifier still fails the remaining
+distribution/selection gates:
 
 ```text
 blocking_gates:
@@ -340,7 +351,6 @@ blocking_gates:
 - value_bearing_measurement_coverage
 - cross_feature_value_bearing_coverage
 - parameter_balance
-- preview_evidence
 ```
 
 Concrete strict-gate numbers:
@@ -350,8 +360,11 @@ distinct_cad_model_count: 900
 minimum_distinct_cad_model_count: 1000
 answer_entropy_bits: 6.940893592407393
 minimum_answer_entropy_bits: 8.0
+value_bearing_measurement_share: 0.3666
+maximum_value_bearing_measurement_share: 0.3
 cross_feature_value_bearing_share: 0.0332
 minimum_cross_feature_value_bearing_share: 0.05
+parameter_balance_valid: false
 ```
 
 The public-answer fixes are complete. The remaining failures are release-scale
