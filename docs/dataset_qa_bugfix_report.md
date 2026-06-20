@@ -898,3 +898,10 @@ requires a benchmark-policy decision:
   many entity-ID answers to labels A-G; the verifier now reports this as
   `source_scoped_for_entity_id_raw_public_answer_otherwise`
 ```
+
+The current production parameter-balance cap is drop-only: it removes
+overrepresented rows when doing so preserves release floors, but it does not
+swap in underrepresented alternatives from the generated pool. The remaining
+parameter-balance failures therefore need either a coordinated swap-based
+selector/optimizer, or query-family/generation changes that make the pool less
+skewed before selection. A small cap-order tweak is unlikely to be sufficient.
