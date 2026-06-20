@@ -656,6 +656,7 @@ The feasibility tool now includes compact top-violation fields:
 ```text
 parameter_balance_full_pool_top_violations
 simulated_release_balance.parameter_balance_top_violations
+simulated_release_balance.parameter_balance_top_violation_classification_counts
 simulated_release_balance.parameter_balance_top_violation_pool_context
 ```
 
@@ -681,6 +682,21 @@ Other examples remain pool-level, such as `clause_relation=endpoint_of` at 50%
 both before and after selection. Use the context fields to decide whether the
 next fix should be a selector-balancing algorithm change or family-specific
 manifest/query-policy adjustment.
+
+Current top-25 simulated violation classification:
+
+```text
+selection_regressed: 17
+pool_already_violates: 8
+```
+
+Interpretation:
+
+- `selection_regressed` means the generated pool has enough diversity for the
+  cited value/dimension, but the simulated 10K selector lost it.
+- `pool_already_violates` means selection alone cannot fix that
+  family/dimension; it needs query-family generation changes or a manifest
+  policy decision.
 
 Regression coverage:
 

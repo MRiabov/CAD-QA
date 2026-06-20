@@ -9588,10 +9588,10 @@ def test_parameter_violation_pool_context_compares_pool_and_selected_rows() -> N
             "row_id": f"row:src:{index}:family_a",
             "query_program": {
                 "query_id": f"graph:src:q{index}:family_a",
-                "sampled_parameters": {"aggregation_axis": ["x" if index < 2 else "y"]},
+                "sampled_parameters": {"aggregation_axis": [axis]},
             },
         }
-        for index in range(4)
+        for index, axis in enumerate(["x", "x", "y", "y", "z", "z"])
     ]
     selected_rows = [
         {
@@ -9625,19 +9625,69 @@ def test_parameter_violation_pool_context_compares_pool_and_selected_rows() -> N
             "prompt_family": "family_a",
             "dimension": "aggregation_axis",
             "reason": "parameter_value_dominates",
-            "pool_total": 4,
+            "classification": "selection_regressed",
+            "pool_total": 6,
             "selected_total": 3,
-            "pool_largest": {"value": "y", "count": 2, "share": 0.5},
+            "pool_largest": {"value": "z", "count": 2, "share": 1 / 3},
             "selected_largest": {"value": "x", "count": 3, "share": 1.0},
             "values": [
                 {
                     "value": "x",
                     "pool_count": 2,
-                    "pool_share": 0.5,
+                    "pool_share": 1 / 3,
                     "selected_count": 3,
                     "selected_share": 1.0,
                 }
             ],
+        }
+    ]
+
+
+def test_parameter_violation_pool_context_classifies_undercoverage_regressions() -> None:
+    pool_rows = [
+        {
+            "row_id": f"row:src:{index}:family_a",
+            "query_program": {
+                "query_id": f"graph:src:q{index}:family_a",
+                "sampled_parameters": {"aggregation_axis": [axis]},
+            },
+        }
+        for index, axis in enumerate(["x", "x", "y", "y", "z", "z"])
+    ]
+    selected_rows = [
+        {
+            "row_id": f"row:src:{index}:family_a",
+            "query_program": {
+                "query_id": f"graph:src:q{index}:family_a",
+                "sampled_parameters": {"aggregation_axis": ["y" if index < 2 else "z"]},
+            },
+        }
+        for index in range(4)
+    ]
+    violations = [
+        {
+            "prompt_family": "family_a",
+            "dimension": "aggregation_axis",
+            "reason": "axis_or_direction_undercovered",
+            "undercovered_expected_values": [{"value": "x", "share": 0.0}],
+        }
+    ]
+
+    context = _parameter_violation_pool_context(
+        violations,
+        pool_rows=pool_rows,
+        selected_rows=selected_rows,
+        min_expected_share=0.2,
+    )
+
+    assert context[0]["classification"] == "selection_regressed"
+    assert context[0]["values"] == [
+        {
+            "value": "x",
+            "pool_count": 2,
+            "pool_share": 1 / 3,
+            "selected_count": 0,
+            "selected_share": 0.0,
         }
     ]
 

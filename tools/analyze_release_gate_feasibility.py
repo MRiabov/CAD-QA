@@ -202,6 +202,12 @@ def simulated_release_balance_report(rows: list[dict[str, Any]], *, release_tier
         enforce=profile.enforce_parameter_balance,
     )
     parameter_violations = parameter_report.get("violations", [])
+    parameter_violation_context = _parameter_violation_pool_context(
+        parameter_violations,
+        pool_rows=rows,
+        selected_rows=capped_rows,
+        min_expected_share=profile.min_axis_direction_parameter_share,
+    )
     return {
         "input_row_count": len(rows),
         "output_row_count": len(capped_rows),
@@ -220,11 +226,10 @@ def simulated_release_balance_report(rows: list[dict[str, Any]], *, release_tier
         "parameter_balance_dimension_counts": dict(Counter(v["dimension"] for v in parameter_violations).most_common()),
         "parameter_balance_family_counts": dict(Counter(v["prompt_family"] for v in parameter_violations).most_common()),
         "parameter_balance_top_violations": _compact_parameter_violations(parameter_violations),
-        "parameter_balance_top_violation_pool_context": _parameter_violation_pool_context(
-            parameter_violations,
-            pool_rows=rows,
-            selected_rows=capped_rows,
+        "parameter_balance_top_violation_classification_counts": dict(
+            Counter(item["classification"] for item in parameter_violation_context).most_common()
         ),
+        "parameter_balance_top_violation_pool_context": parameter_violation_context,
     }
 
 
@@ -334,6 +339,7 @@ def _parameter_violation_pool_context(
     *,
     pool_rows: list[dict[str, Any]],
     selected_rows: list[dict[str, Any]],
+    min_expected_share: float | None = None,
     limit: int = 25,
 ) -> list[dict[str, Any]]:
     pool_counters = _parameter_counters_by_family_dimension(pool_rows)
@@ -351,6 +357,12 @@ def _parameter_violation_pool_context(
                 "prompt_family": family,
                 "dimension": dimension,
                 "reason": violation.get("reason"),
+                "classification": _parameter_violation_classification(
+                    violation,
+                    pool_counts=pool_counts,
+                    selected_counts=selected_counts,
+                    min_expected_share=min_expected_share,
+                ),
                 "pool_total": sum(pool_counts.values()),
                 "selected_total": sum(selected_counts.values()),
                 "pool_largest": _largest_counter_report(pool_counts),
@@ -368,6 +380,45 @@ def _parameter_violation_pool_context(
             }
         )
     return contexts
+
+
+def _parameter_violation_classification(
+    violation: dict[str, Any],
+    *,
+    pool_counts: Counter[str],
+    selected_counts: Counter[str],
+    min_expected_share: float | None,
+) -> str:
+    reason = violation.get("reason")
+    if reason == "parameter_value_dominates":
+        value = str(violation.get("largest_value"))
+        maximum_share = violation.get("maximum_allowed_largest_share")
+        if not isinstance(maximum_share, (int, float)):
+            return "unknown_threshold"
+        pool_largest = _largest_counter_report(pool_counts)
+        selected_share = _counter_value_share(selected_counts, value)
+        pool_value_share = _counter_value_share(pool_counts, value)
+        if pool_largest["share"] > float(maximum_share):
+            return "pool_already_violates"
+        if selected_share > float(maximum_share) and pool_value_share <= float(maximum_share):
+            return "selection_regressed"
+        return "selected_violation"
+    if reason == "axis_or_direction_undercovered":
+        if min_expected_share is None:
+            return "unknown_threshold"
+        values = _violation_values(violation)
+        if not values:
+            return "unknown_value"
+        pool_can_cover = [
+            _counter_value_share(pool_counts, value) >= min_expected_share
+            for value in values
+        ]
+        if all(pool_can_cover):
+            return "selection_regressed"
+        if not any(pool_can_cover):
+            return "pool_undercovered"
+        return "mixed_pool_and_selection"
+    return "unclassified"
 
 
 def _parameter_counters_by_family_dimension(
