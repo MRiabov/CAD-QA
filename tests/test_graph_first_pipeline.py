@@ -101,6 +101,7 @@ from cad_qa.source import (
 from cad_qa.trace import TraceRecord, cadquery_available, trace_report, trace_source, trace_sources_bounded
 from cad_qa.cli import main as cli_main
 from tools.analyze_release_gate_feasibility import (
+    _parameter_violation_classification_report,
     _parameter_violation_pool_context,
     graph_source_coverage_report,
     release_gate_feasibility_report,
@@ -9690,6 +9691,61 @@ def test_parameter_violation_pool_context_classifies_undercoverage_regressions()
             "selected_share": 0.0,
         }
     ]
+
+
+def test_parameter_violation_classification_report_counts_all_violations() -> None:
+    pool_rows = [
+        {
+            "row_id": f"row:src:{index}:family_a",
+            "query_program": {
+                "query_id": f"graph:src:q{index}:family_a",
+                "sampled_parameters": {"aggregation_axis": [axis]},
+            },
+        }
+        for index, axis in enumerate(["x", "x", "y", "y", "z", "z"])
+    ]
+    selected_rows = [
+        {
+            "row_id": f"row:src:{index}:family_a",
+            "query_program": {
+                "query_id": f"graph:src:q{index}:family_a",
+                "sampled_parameters": {"aggregation_axis": ["x"]},
+            },
+        }
+        for index in range(3)
+    ]
+    violations = [
+        {
+            "prompt_family": "family_a",
+            "dimension": "aggregation_axis",
+            "reason": "parameter_value_dominates",
+            "largest_value": "x",
+            "largest_share": 1.0,
+            "maximum_allowed_largest_share": 0.35,
+        },
+        {
+            "prompt_family": "family_a",
+            "dimension": "aggregation_axis",
+            "reason": "axis_or_direction_undercovered",
+            "undercovered_expected_values": [{"value": "z", "share": 0.0}],
+        },
+    ]
+
+    report = _parameter_violation_classification_report(
+        violations,
+        pool_rows=pool_rows,
+        selected_rows=selected_rows,
+        min_expected_share=0.2,
+        context_limit=1,
+    )
+
+    assert report["classification_counts"] == {"selection_regressed": 2}
+    assert report["classification_reason_counts"] == {
+        "selection_regressed:axis_or_direction_undercovered": 1,
+        "selection_regressed:parameter_value_dominates": 1,
+    }
+    assert report["top_classification_counts"] == {"selection_regressed": 1}
+    assert len(report["top_context"]) == 1
 
 
 def test_release_export_balance_caps_overrepresented_training_slices() -> None:

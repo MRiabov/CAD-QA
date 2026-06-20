@@ -202,7 +202,7 @@ def simulated_release_balance_report(rows: list[dict[str, Any]], *, release_tier
         enforce=profile.enforce_parameter_balance,
     )
     parameter_violations = parameter_report.get("violations", [])
-    parameter_violation_context = _parameter_violation_pool_context(
+    parameter_violation_classification = _parameter_violation_classification_report(
         parameter_violations,
         pool_rows=rows,
         selected_rows=capped_rows,
@@ -227,9 +227,15 @@ def simulated_release_balance_report(rows: list[dict[str, Any]], *, release_tier
         "parameter_balance_family_counts": dict(Counter(v["prompt_family"] for v in parameter_violations).most_common()),
         "parameter_balance_top_violations": _compact_parameter_violations(parameter_violations),
         "parameter_balance_top_violation_classification_counts": dict(
-            Counter(item["classification"] for item in parameter_violation_context).most_common()
+            parameter_violation_classification["top_classification_counts"]
         ),
-        "parameter_balance_top_violation_pool_context": parameter_violation_context,
+        "parameter_balance_violation_classification_counts": parameter_violation_classification[
+            "classification_counts"
+        ],
+        "parameter_balance_violation_classification_reason_counts": parameter_violation_classification[
+            "classification_reason_counts"
+        ],
+        "parameter_balance_top_violation_pool_context": parameter_violation_classification["top_context"],
     }
 
 
@@ -380,6 +386,40 @@ def _parameter_violation_pool_context(
             }
         )
     return contexts
+
+
+def _parameter_violation_classification_report(
+    violations: list[dict[str, Any]],
+    *,
+    pool_rows: list[dict[str, Any]],
+    selected_rows: list[dict[str, Any]],
+    min_expected_share: float | None = None,
+    context_limit: int = 25,
+) -> dict[str, Any]:
+    all_context = _parameter_violation_pool_context(
+        violations,
+        pool_rows=pool_rows,
+        selected_rows=selected_rows,
+        min_expected_share=min_expected_share,
+        limit=len(violations),
+    )
+    top_context = all_context[:context_limit]
+    return {
+        "classification_counts": dict(
+            Counter(item["classification"] for item in all_context).most_common()
+        ),
+        "classification_reason_counts": {
+            f"{classification}:{reason}": count
+            for (classification, reason), count in Counter(
+                (context["classification"], context["reason"])
+                for context in all_context
+            ).most_common()
+        },
+        "top_classification_counts": dict(
+            Counter(item["classification"] for item in top_context).most_common()
+        ),
+        "top_context": top_context,
+    }
 
 
 def _parameter_violation_classification(

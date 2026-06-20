@@ -656,6 +656,8 @@ The feasibility tool now includes compact top-violation fields:
 ```text
 parameter_balance_full_pool_top_violations
 simulated_release_balance.parameter_balance_top_violations
+simulated_release_balance.parameter_balance_violation_classification_counts
+simulated_release_balance.parameter_balance_violation_classification_reason_counts
 simulated_release_balance.parameter_balance_top_violation_classification_counts
 simulated_release_balance.parameter_balance_top_violation_pool_context
 ```
@@ -688,6 +690,25 @@ Current top-25 simulated violation classification:
 ```text
 selection_regressed: 17
 pool_already_violates: 8
+```
+
+Current all-violation simulated classification:
+
+```text
+selection_regressed: 60
+pool_already_violates: 67
+pool_undercovered: 3
+mixed_pool_and_selection: 1
+```
+
+By reason:
+
+```text
+selection_regressed:axis_or_direction_undercovered: 40
+selection_regressed:parameter_value_dominates: 20
+pool_already_violates:parameter_value_dominates: 67
+pool_undercovered:axis_or_direction_undercovered: 3
+mixed_pool_and_selection:axis_or_direction_undercovered: 1
 ```
 
 Interpretation:
