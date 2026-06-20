@@ -636,6 +636,29 @@ def test_cadevolve_tar_cache_and_cached_selection_are_parquet_only(tmp_path: Pat
     assert report["selected_geometry_feature_tag_counts"]["path_curve"] == 1
     assert report["selected_geometry_feature_tag_counts"]["kernel_vertex_selector"] == 1
 
+    top_up = tmp_path / "top_up_sources.parquet"
+    assert cli_main(
+        [
+            "sources",
+            "from-cadevolve-cache",
+            "--cache",
+            str(cache),
+            "--out",
+            str(top_up),
+            "--limit",
+            "3",
+            "--exclude-sources",
+            str(out),
+        ]
+    ) == 0
+    top_up_rows = read_records(top_up)
+    assert [row["normalized_archive_member_path"] for row in top_up_rows] == [
+        "CADEvolve-P/CADEvolve-P-core/plain.py"
+    ]
+    top_up_report = json.loads(top_up.with_suffix(".report.json").read_text(encoding="utf-8"))
+    assert top_up_report["excluded_source_count"] == 2
+    assert top_up_report["skipped_excluded_source_count"] == 2
+
     assert cli_main(
         [
             "sources",

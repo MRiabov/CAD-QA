@@ -366,6 +366,7 @@ def cadevolve_source_table_rows(
     path_prefixes: list[str] | None = None,
     path_contains: list[str] | None = None,
     code_contains: list[str] | None = None,
+    exclude_source_ids: set[str] | None = None,
     stratify_by_tags: bool = False,
     min_per_tag: int = 0,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
@@ -374,9 +375,9 @@ def cadevolve_source_table_rows(
     prefixes = tuple(_normalize_archive_path(prefix) for prefix in path_prefixes or [] if prefix)
     path_needles = tuple(value.lower() for value in path_contains or [] if value)
     code_needles = tuple(value.lower() for value in code_contains or [] if value)
-    candidate_rows: list[dict[str, Any]] = []
     selected_rows: list[dict[str, Any]] = []
     selected_ids: set[str] = set()
+    excluded = set(exclude_source_ids or set())
     selected_tag_counts: Counter[str] = Counter()
     first_candidate_rows: list[dict[str, Any]] = []
     rows_by_tag: dict[str, list[dict[str, Any]]] = {tag: [] for tag in GEOMETRY_SOURCE_FEATURE_TAGS}
@@ -389,6 +390,8 @@ def cadevolve_source_table_rows(
         "skipped_prefix_count": 0,
         "skipped_path_contains_count": 0,
         "skipped_code_contains_count": 0,
+        "skipped_excluded_source_count": 0,
+        "excluded_source_count": len(excluded),
         "limit": limit,
         "path_prefixes": list(prefixes),
         "path_contains": list(path_needles),
@@ -414,6 +417,10 @@ def cadevolve_source_table_rows(
             stats["skipped_code_contains_count"] += 1
             continue
         normalized_row = dict(row)
+        source_id = str(normalized_row.get("source_id") or "")
+        if source_id and source_id in excluded:
+            stats["skipped_excluded_source_count"] += 1
+            continue
         if not isinstance(normalized_row.get("source_feature_tags"), list):
             normalized_row["source_feature_tags"] = source_geometry_feature_tags(source_code)
         tags = [tag for tag in normalized_row.get("source_feature_tags", []) if isinstance(tag, str)]

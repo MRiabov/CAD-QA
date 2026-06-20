@@ -1113,6 +1113,53 @@ Before the source-floor guard, the same simulated release represented only 577
 distinct sources. The remaining distinct-model failure is now a generated-pool
 coverage limit, not a release selector loss.
 
+Follow-up top-up experiment:
+
+The CadEvolve parquet cache can be used to add fresh sources instead of trying
+to rescue every missing source from the original 1000-source slice. The source
+export CLI now supports `--exclude-sources`, so a top-up slice can avoid
+duplicating previously sampled source IDs:
+
+```bash
+uv run cadqa sources from-cadevolve-cache \
+  --cache runs/hf_cadevolve_parquet_upload/cadevolve_sources.parquet \
+  --out runs/current_cadevolve1000_10k_regen_20260613_topup300/sources.parquet \
+  --limit 300 \
+  --stratify-geometry-tags \
+  --min-per-geometry-tag 30 \
+  --exclude-sources runs/current_cadevolve1000_10k_regen_20260613/sources.parquet
+```
+
+Measured result:
+
+```text
+top_up_source_count: 300
+overlap_with_original_sources: 0
+top_up_resolved_rows: 1153
+top_up_release_ready_rows: 1153
+top_up_represented_sources: 146
+combined_pool_source_count: 1052
+```
+
+The combined generated pool was tested by a lightweight symlink stream over the
+original row shards, original per-graph row shards, and top-up rows. A simulated
+benchmark-release selection from that combined pool now satisfies the distinct
+model gate:
+
+```text
+simulated_release_balance.distinct_cad_model_count: 1000
+simulated_release_balance.minimum_distinct_cad_model_count: 1000
+simulated_release_balance.distinct_cad_model_deficit_count: 0
+simulated_release_balance.passes_answer_entropy: true
+simulated_release_balance.passes_value_bearing_measurement_coverage: true
+simulated_release_balance.passes_cross_feature_value_bearing_coverage: true
+simulated_release_balance.parameter_balance_violation_count: 141
+```
+
+So the source-coverage blocker is solved by oversampling from the CadEvolve
+cache. The remaining strict benchmark blocker is sampled-parameter balance, not
+the number of distinct CAD models.
+
 Same-family parameter repair remains a weak diagnostic, not a production fix.
 On top of the source-preserving simulated release, a 200-swap dry run produced:
 

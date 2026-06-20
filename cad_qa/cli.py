@@ -209,6 +209,12 @@ def build_parser() -> argparse.ArgumentParser:
     source_from_cadevolve_cache.add_argument("--cache", type=Path, required=True)
     source_from_cadevolve_cache.add_argument("--out", type=Path, required=True)
     source_from_cadevolve_cache.add_argument("--limit", type=int)
+    source_from_cadevolve_cache.add_argument(
+        "--exclude-sources",
+        action="append",
+        type=Path,
+        help="Source artifact containing source_id values to exclude from the selected cache slice.",
+    )
     source_from_cadevolve_cache.add_argument("--path-prefix", action="append", dest="path_prefixes")
     source_from_cadevolve_cache.add_argument("--path-contains", action="append", dest="path_contains")
     source_from_cadevolve_cache.add_argument("--code-contains", action="append", dest="code_contains")
@@ -591,6 +597,7 @@ def _cmd_sources_from_cadevolve_cache(args: argparse.Namespace) -> dict[str, Any
         path_prefixes=args.path_prefixes,
         path_contains=args.path_contains,
         code_contains=args.code_contains,
+        exclude_source_ids=_source_ids_from_record_paths(args.exclude_sources or []),
         stratify_by_tags=bool(args.stratify_geometry_tags),
         min_per_tag=args.min_per_geometry_tag,
     )
@@ -607,6 +614,16 @@ def _cmd_sources_from_cadevolve_cache(args: argparse.Namespace) -> dict[str, Any
         "manifest": str(args.out.with_suffix(".manifest.json")),
         "report": str(args.out.with_suffix(".report.json")),
     }
+
+
+def _source_ids_from_record_paths(paths: list[Path]) -> set[str]:
+    source_ids: set[str] = set()
+    for path in paths:
+        for row in read_records(path):
+            source_id = row.get("source_id")
+            if source_id:
+                source_ids.add(str(source_id))
+    return source_ids
 
 
 def _require_parquet_path(path: Path, label: str) -> None:
