@@ -74,6 +74,12 @@ def validate_rows(rows: list[dict[str, Any]], *, release: bool = False) -> dict[
         for issue in public_candidate_label_issues(row):
             item = {"index": index, "row_id": row.get("row_id"), **issue}
             errors.append(item)
+        for issue in public_coordinate_answer_issues(row):
+            item = {"index": index, "row_id": row.get("row_id"), **issue}
+            errors.append(item)
+        for issue in public_source_variable_answer_issues(row):
+            item = {"index": index, "row_id": row.get("row_id"), **issue}
+            errors.append(item)
         for issue in geometry_first_prompt_policy_issues(row):
             item = {
                 "index": index,
@@ -161,6 +167,53 @@ def public_candidate_label_issues(row: dict[str, Any]) -> list[dict[str, Any]]:
     return issues
 
 
+def public_coordinate_answer_issues(row: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return public coordinate-answer contract issues for CAD-QA prompt rows."""
+
+    prompt = str(row.get("prompt") or "")
+    if "Given the CadQuery script" not in prompt or row.get("answer_format") != "coordinate":
+        return []
+    issues: list[dict[str, Any]] = []
+    if "coordinate tuple" not in prompt:
+        issues.append({"error": "missing_coordinate_tuple_return_instruction"})
+    coordinate = _normalized_coordinate_answer(row.get("gold_answer"))
+    if coordinate is None:
+        issues.append(
+            {
+                "error": "invalid_coordinate_gold_answer",
+                "gold_answer": row.get("gold_answer"),
+            }
+        )
+    return issues
+
+
+def public_source_variable_answer_issues(row: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return public source-variable answer contract issues for CAD-QA prompt rows."""
+
+    prompt = str(row.get("prompt") or "")
+    if (
+        "Given the CadQuery script" not in prompt
+        or row.get("answer_format") != "text"
+        or "source variable name" not in prompt
+    ):
+        return []
+    answer = _normalized_gold_label(row.get("gold_answer"))
+    if not answer:
+        return [{"error": "invalid_source_variable_gold_answer", "gold_answer": row.get("gold_answer")}]
+    assignment_count = _source_assignment_counts(str(row.get("source_code") or "")).get(answer, 0)
+    if assignment_count == 0:
+        return [{"error": "source_variable_gold_answer_not_assigned", "gold_answer": answer}]
+    if assignment_count > 1:
+        return [
+            {
+                "error": "source_variable_gold_answer_reassigned",
+                "gold_answer": answer,
+                "assignment_count": assignment_count,
+            }
+        ]
+    return []
+
+
 def _duplicated_gold_candidate_description_issue(row: dict[str, Any]) -> dict[str, Any] | None:
     gold_label = _normalized_gold_label(row.get("gold_answer"))
     if not gold_label:
@@ -190,6 +243,31 @@ def _normalized_gold_label(gold_answer: Any) -> str | None:
     except json.JSONDecodeError:
         decoded = gold_answer
     return decoded if isinstance(decoded, str) else None
+
+
+def _normalized_coordinate_answer(gold_answer: Any) -> list[float] | None:
+    value = gold_answer
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except json.JSONDecodeError:
+            return None
+    if not isinstance(value, (list, tuple)) or len(value) != 3:
+        return None
+    try:
+        return [float(component) for component in value]
+    except (TypeError, ValueError):
+        return None
+
+
+def _source_assignment_counts(source_code: str) -> Counter[str]:
+    assignment_counts: Counter[str] = Counter()
+    pattern = re.compile(r"^\s*([A-Za-z_]\w*)\s*=")
+    for line in source_code.splitlines():
+        match = pattern.match(line)
+        if match:
+            assignment_counts[match.group(1)] += 1
+    return assignment_counts
 
 
 def _rendered_candidate_label_texts(prompt: str) -> dict[str, str]:

@@ -334,6 +334,15 @@ Gold-answer text now goes through a shared public answer renderer. Coordinate
 answers render as tuple text, including when the parquet column stores a
 JSON-encoded coordinate internally.
 
+Validation now also rejects malformed public answer contracts for these cases:
+
+```text
+coordinate rows without a coordinate-tuple return instruction
+coordinate rows whose gold answer is not a 3-number coordinate
+source-variable text rows whose gold answer is not assigned in the shown script
+source-variable text rows whose gold answer is reassigned in the shown script
+```
+
 Current decoded examples from `release_10k/rows.parquet` now render as:
 
 ```text
@@ -348,6 +357,10 @@ Regression coverage:
 test_sft_exports_coordinate_answers_as_prompt_tuple_text
 test_tool_assisted_responses_render_coordinate_tuple_answers
 test_request_exports_render_coordinate_tuple_examples_and_oracle_answers
+test_validation_rejects_invalid_coordinate_public_answer
+test_validation_rejects_coordinate_answer_without_tuple_instruction
+test_validation_rejects_missing_source_variable_gold_answer
+test_validation_rejects_reassigned_source_variable_gold_answer
 ```
 
 ## Verification Checklist

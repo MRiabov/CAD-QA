@@ -3313,6 +3313,110 @@ def test_validation_rejects_unrendered_gold_candidate_label() -> None:
     assert report["errors"][0]["gold_label"] == "C"
 
 
+def test_validation_rejects_invalid_coordinate_public_answer() -> None:
+    row = _public_answer_validation_row(
+        answer_format="coordinate",
+        gold_answer=[1, 2],
+        prompt="\n".join(
+            [
+                "Given the CadQuery script below, answer the question by reasoning about the CAD construction.",
+                "",
+                "Return exactly one coordinate tuple of the vertex, for example `(0, 1, 3)`.",
+            ]
+        ),
+    )
+
+    report = validate_rows([row], release=True)
+
+    assert not report["valid"]
+    assert report["errors"][0]["error"] == "invalid_coordinate_gold_answer"
+
+
+def test_validation_rejects_coordinate_answer_without_tuple_instruction() -> None:
+    row = _public_answer_validation_row(
+        answer_format="coordinate",
+        gold_answer=[1, 2, 3],
+        prompt="Given the CadQuery script below, answer the question by reasoning about the CAD construction.",
+    )
+
+    report = validate_rows([row], release=True)
+
+    assert not report["valid"]
+    assert report["errors"][0]["error"] == "missing_coordinate_tuple_return_instruction"
+
+
+def test_validation_rejects_missing_source_variable_gold_answer() -> None:
+    row = _public_answer_validation_row(
+        answer_format="text",
+        gold_answer="wp9",
+        prompt="\n".join(
+            [
+                "Given the CadQuery script below, answer the question by reasoning about the CAD construction.",
+                "",
+                "Return exactly one source variable name, for example `wp7`.",
+            ]
+        ),
+        source_code="import cadquery as cq\nwp1 = cq.Workplane('XY')\nresult = wp1",
+    )
+
+    report = validate_rows([row], release=True)
+
+    assert not report["valid"]
+    assert report["errors"][0]["error"] == "source_variable_gold_answer_not_assigned"
+
+
+def test_validation_rejects_reassigned_source_variable_gold_answer() -> None:
+    row = _public_answer_validation_row(
+        answer_format="text",
+        gold_answer="part",
+        prompt="\n".join(
+            [
+                "Given the CadQuery script below, answer the question by reasoning about the CAD construction.",
+                "",
+                "Return exactly one source variable name, for example `wp7`.",
+            ]
+        ),
+        source_code=(
+            "import cadquery as cq\n"
+            "part = cq.Workplane('XY').box(1, 1, 1)\n"
+            "part = part.faces('>Z').workplane().circle(1).extrude(1)\n"
+            "result = part\n"
+        ),
+    )
+
+    report = validate_rows([row], release=True)
+
+    assert not report["valid"]
+    assert report["errors"][0]["error"] == "source_variable_gold_answer_reassigned"
+    assert report["errors"][0]["assignment_count"] == 2
+
+
+def _public_answer_validation_row(**overrides: object) -> dict[str, object]:
+    row = {
+        "row_id": "row:public-answer-validation",
+        "source_id": "synthetic",
+        "source_code": "import cadquery as cq\nwp1 = cq.Workplane('XY')\nresult = wp1",
+        "prompt": "Given the CadQuery script below, answer the question by reasoning about the CAD construction.",
+        "answer_format": "text",
+        "gold_answer": "wp1",
+        "query_program": {"answer_spec": {}},
+        "candidate_trace": {"final_candidates": ["entity:a"]},
+        "relation_families": [],
+        "measurement_scopes": [],
+        "logical_hop_count": 3,
+        "static_hop_count": 0,
+        "geometry_hop_count": 3,
+        "difficulty_bucket": "cad_browsecomp",
+        "verifier_status": "resolved",
+        "evidence_tier": "verified",
+        "release_ready": True,
+        "quarantine_reasons": [],
+        "clue_map": [{"clue": "public answer", "source": "prompt"}],
+    }
+    row.update(overrides)
+    return row
+
+
 def _candidate_label_validation_row(*, prompt: str, gold_answer: str) -> dict[str, object]:
     return {
         "row_id": f"row:candidate-label-validation:{gold_answer}",
