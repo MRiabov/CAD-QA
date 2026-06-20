@@ -10686,6 +10686,8 @@ def test_parameter_balance_report_blocks_collapsed_query_parameters(tmp_path: Pa
 
     assert not report["valid"]
     assert report["release_family_count"] == 2
+    assert "aggregation_axis" in report["minimum_expected_share_dimensions"]
+    assert "clause_relation" not in report["minimum_expected_share_dimensions"]
     assert report["sampled_parameter_metadata_missing_count"] == 0
     assert all(family["prompt_family"] != "review_fixture" for family in report["families"])
     collapsed_violations = [
@@ -10802,6 +10804,71 @@ def test_parameter_balance_report_enforces_manifest_configured_narrowing_dimensi
         violation["dimension"] == "selected_entity_type"
         and violation["reason"] == "required_parameter_dimension_missing"
         for violation in missing["violations"]
+    )
+
+
+def test_parameter_balance_min_expected_share_only_applies_to_axis_direction_dimensions(tmp_path: Path) -> None:
+    manifest = tmp_path / "family_specs.yaml"
+    manifest.write_text(
+        "\n".join(
+            [
+                "schema_version: 1",
+                "families:",
+                "  - id: relation_family",
+                "    status: release",
+                "    parameter_balance:",
+                "      required_dimensions:",
+                "        - clause_relation",
+                "        - aggregation_axis",
+                "      enforced_dimensions:",
+                "        - clause_relation",
+                "      expected_values:",
+                "        clause_relation: [adjacent_to, parallel_to, perpendicular_to, longer_than, shorter_than, intersects]",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    rows = [
+        {
+            "row_id": f"row:src:{index}:relation_family",
+            "query_program": {
+                "query_id": f"graph:src:q{index}:relation_family",
+                "sampled_parameters": {
+                    "clause_relation": ["adjacent_to" if index < 4 else "parallel_to"],
+                    "aggregation_axis": ["x" if index < 5 else "y"],
+                },
+            },
+        }
+        for index in range(6)
+    ]
+
+    report = parameter_balance_report(
+        rows,
+        family_manifest=manifest,
+        max_parameter_value_share=1.0,
+        min_axis_direction_share=0.20,
+        enforce=True,
+    )
+    violations = report["violations"]
+    relation_dimension = next(
+        dimension
+        for family in report["families"]
+        for dimension in family["dimensions"]
+        if dimension["dimension"] == "clause_relation"
+    )
+
+    assert report["valid"] is False
+    assert relation_dimension["undercovered_expected_values"] == []
+    assert relation_dimension["expected_value_shares"]["perpendicular_to"] == 0.0
+    assert not any(
+        violation["dimension"] == "clause_relation"
+        and violation["reason"] == "axis_or_direction_undercovered"
+        for violation in violations
+    )
+    assert any(
+        violation["dimension"] == "aggregation_axis"
+        and violation["reason"] == "axis_or_direction_undercovered"
+        for violation in violations
     )
 
 

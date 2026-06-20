@@ -597,6 +597,66 @@ test_release_balance_wires_sampled_parameter_cap_when_enforced
 test_release_feasibility_simulates_release_balance_caps
 ```
 
+### Fix: axis/direction floor applied to non-axis expected values
+
+Bug:
+
+`min_axis_direction_parameter_share` was applied to any manifest
+`expected_values` entry. That made relation/rank/selector expected-value lists
+use the same 20% per-value floor intended for axis/direction dimensions.
+
+Malformed gate example:
+
+```text
+clause_relation expected values:
+adjacent_to, parallel_to, perpendicular_to, longer_than, shorter_than,
+intersects, coaxial_with, opposite_to, same_length_as
+
+old interpretation:
+each relation must be at least 20% of the family
+```
+
+That is mathematically impossible for more than five expected values, and it is
+not what the benchmark contract says. The spec gate is about sampled
+axis/direction values.
+
+Fix:
+
+`parameter_balance_report` now computes expected-value shares for all configured
+expected values, but only applies `min_axis_direction_parameter_share` to:
+
+```text
+aggregation_axis
+clause_axis
+extremum_direction
+tie_break_axis
+tie_break_direction
+rank_direction
+```
+
+Current measured effect on the generated pool:
+
+```text
+full generated pool parameter violations:
+before: 142
+after: 88
+
+simulated 10K post-balance parameter violations:
+before: 185
+after: 131
+```
+
+The strict parameter-balance gate still does not pass. The remaining failures
+are no longer caused by impossible non-axis expected-value floors; they are
+dominance and axis/direction coverage failures under current generated
+distribution and selector policy.
+
+Regression coverage:
+
+```text
+test_parameter_balance_min_expected_share_only_applies_to_axis_direction_dimensions
+```
+
 Current next-step classification:
 
 ```text
@@ -604,9 +664,11 @@ requires new usable graph/query coverage, then regeneration or backfill:
 - distinct_cad_model_coverage
 
 requires selection/balancing work over generated rows:
+- parameter_balance
+
+now feasible in simulated release balancing after selector fixes:
 - value_bearing_measurement_coverage
 - cross_feature_value_bearing_coverage
-- parameter_balance
 
 requires a benchmark-policy decision:
 - answer_entropy, because public candidate-label answers intentionally collapse

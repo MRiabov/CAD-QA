@@ -82,6 +82,7 @@ def parameter_balance_report(
         "release_family_count": len(rows_by_family),
         "max_parameter_value_share": max_parameter_value_share,
         "min_axis_direction_share": min_axis_direction_share,
+        "minimum_expected_share_dimensions": sorted(AXIS_DIRECTION_DIMENSIONS),
         "default_enforced_dimensions": sorted(DEFAULT_ENFORCED_DIMENSIONS),
         "enforced_dimensions": sorted(DEFAULT_ENFORCED_DIMENSIONS),
         "axis_direction_dimensions": sorted(AXIS_DIRECTION_DIMENSIONS),
@@ -147,7 +148,8 @@ def _family_parameter_report(
         }
         expected = expected_values_by_dimension.get(dimension)
         has_single_structural_expected = False
-        if expected is not None or dimension in AXIS_DIRECTION_DIMENSIONS:
+        enforces_min_expected_share = dimension in AXIS_DIRECTION_DIMENSIONS
+        if expected is not None or enforces_min_expected_share:
             expected = expected or EXPECTED_VALUES.get(dimension, ())
             has_single_structural_expected = len(expected) == 1
             expected_shares = {
@@ -158,7 +160,8 @@ def _family_parameter_report(
                 {"value": value, "share": share}
                 for value, share in expected_shares.items()
                 if (
-                    not has_single_structural_expected
+                    enforces_min_expected_share
+                    and not has_single_structural_expected
                     and min_axis_direction_share is not None
                     and share < min_axis_direction_share
                 )
