@@ -422,10 +422,18 @@ minimum_unique_answer_count: 1000
 answer_entropy_bits: 6.940893592407393
 minimum_answer_entropy_bits: 8.0
 value_bearing_measurement_count: 3666
+minimum_value_bearing_measurement_count: 1500
+maximum_value_bearing_measurement_count: 3000
+value_bearing_measurement_deficit_count: 0
+value_bearing_measurement_excess_count: 666
 value_bearing_measurement_share: 0.3666
 minimum_value_bearing_measurement_share: 0.15
 maximum_value_bearing_measurement_share: 0.3
 cross_feature_value_bearing_count: 332
+minimum_cross_feature_value_bearing_count: 500
+maximum_cross_feature_value_bearing_count: 1500
+cross_feature_value_bearing_deficit_count: 168
+cross_feature_value_bearing_excess_count: 0
 cross_feature_value_bearing_share: 0.0332
 minimum_cross_feature_value_bearing_share: 0.05
 parameter_balance_valid: false
@@ -488,6 +496,11 @@ The verifier now emits this as structured
 `value_bearing_prompt_family_counts` and
 `cross_feature_value_bearing_prompt_family_counts` fields in
 `release_balance`.
+
+The verifier also reports count-level deficits/excesses for these gates. In the
+current release, value-bearing rows are not underrepresented; they exceed the
+benchmark cap by 666 rows. Cross-feature value-bearing rows are underrepresented
+by 168 rows.
 
 Parameter-balance breakdown:
 

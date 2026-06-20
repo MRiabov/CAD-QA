@@ -343,6 +343,26 @@ def release_balance_report(
     syntax_only_calibration_share = syntax_only_calibration_count / row_count if row_count else 0.0
     value_bearing_measurement_share = value_bearing_measurement_count / row_count if row_count else 0.0
     cross_feature_value_bearing_share = cross_feature_value_bearing_count / row_count if row_count else 0.0
+    minimum_value_bearing_measurement_count = _minimum_count_for_share(
+        row_count,
+        profile.min_value_bearing_measurement_share,
+    )
+    maximum_value_bearing_measurement_count = _maximum_count_for_share(
+        row_count,
+        profile.max_value_bearing_measurement_share,
+    )
+    minimum_cross_feature_value_bearing_share_count = _minimum_count_for_share(
+        row_count,
+        profile.min_cross_feature_value_bearing_share,
+    )
+    minimum_cross_feature_value_bearing_count = max(
+        profile.min_cross_feature_value_bearing_count,
+        minimum_cross_feature_value_bearing_share_count or 0,
+    )
+    maximum_cross_feature_value_bearing_count = _maximum_count_for_share(
+        row_count,
+        profile.max_cross_feature_value_bearing_share,
+    )
     pre_final_candidate_counts = _pre_final_candidate_counts(rows)
     minimum_pre_final_candidate_count = min(pre_final_candidate_counts) if pre_final_candidate_counts else 0
     median_pre_final_candidate_count = _median(pre_final_candidate_counts)
@@ -443,6 +463,17 @@ def release_balance_report(
             profile.max_value_bearing_measurement_share is None
             or minimum_value_bearing_share_from_family_floor <= profile.max_value_bearing_measurement_share
         ),
+        "minimum_value_bearing_measurement_count": minimum_value_bearing_measurement_count,
+        "value_bearing_measurement_deficit_count": max(
+            0,
+            minimum_value_bearing_measurement_count - value_bearing_measurement_count,
+        ),
+        "maximum_value_bearing_measurement_count": maximum_value_bearing_measurement_count,
+        "value_bearing_measurement_excess_count": (
+            None
+            if maximum_value_bearing_measurement_count is None
+            else max(0, value_bearing_measurement_count - maximum_value_bearing_measurement_count)
+        ),
         "minimum_value_bearing_measurement_share": profile.min_value_bearing_measurement_share,
         "maximum_value_bearing_measurement_share": profile.max_value_bearing_measurement_share,
         "cross_feature_value_bearing_count": cross_feature_value_bearing_count,
@@ -458,7 +489,19 @@ def release_balance_report(
             profile.max_cross_feature_value_bearing_share is None
             or minimum_cross_feature_share_from_family_floor <= profile.max_cross_feature_value_bearing_share
         ),
-        "minimum_cross_feature_value_bearing_count": profile.min_cross_feature_value_bearing_count,
+        "minimum_cross_feature_value_bearing_count": minimum_cross_feature_value_bearing_count,
+        "minimum_cross_feature_value_bearing_count_floor": profile.min_cross_feature_value_bearing_count,
+        "minimum_cross_feature_value_bearing_share_count": minimum_cross_feature_value_bearing_share_count,
+        "cross_feature_value_bearing_deficit_count": max(
+            0,
+            minimum_cross_feature_value_bearing_count - cross_feature_value_bearing_count,
+        ),
+        "maximum_cross_feature_value_bearing_count": maximum_cross_feature_value_bearing_count,
+        "cross_feature_value_bearing_excess_count": (
+            None
+            if maximum_cross_feature_value_bearing_count is None
+            else max(0, cross_feature_value_bearing_count - maximum_cross_feature_value_bearing_count)
+        ),
         "minimum_cross_feature_value_bearing_share": profile.min_cross_feature_value_bearing_share,
         "maximum_cross_feature_value_bearing_share": profile.max_cross_feature_value_bearing_share,
         "pre_final_candidate_counts": _candidate_breadth_summary(pre_final_candidate_counts),
@@ -776,6 +819,18 @@ def _passes_minimum_count(count: int, minimum: int | None) -> bool:
 
 def _minimum_distinct_cad_model_count(row_count: int, minimum_share: float) -> int:
     return math.ceil(row_count * minimum_share)
+
+
+def _minimum_count_for_share(row_count: int, minimum_share: float | None) -> int:
+    if minimum_share is None:
+        return 0
+    return math.ceil(row_count * minimum_share - 1e-12)
+
+
+def _maximum_count_for_share(row_count: int, maximum_share: float | None) -> int | None:
+    if maximum_share is None:
+        return None
+    return math.floor(row_count * maximum_share + 1e-12)
 
 
 def _passes_split_group_coverage(split_quality: dict[str, Any], minimum: int | None) -> bool:

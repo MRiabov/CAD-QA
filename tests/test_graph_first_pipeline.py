@@ -9621,6 +9621,14 @@ def test_release_balance_report_checks_family_entropy_and_geometry_hops() -> Non
     assert report["passes_syntax_only_calibration_cap"]
     assert not report["passes_value_bearing_measurement_coverage"]
     assert not report["passes_cross_feature_value_bearing_coverage"]
+    assert report["minimum_value_bearing_measurement_count"] == 5
+    assert report["value_bearing_measurement_deficit_count"] == 5
+    assert report["maximum_value_bearing_measurement_count"] is None
+    assert report["value_bearing_measurement_excess_count"] is None
+    assert report["minimum_cross_feature_value_bearing_count"] == 1
+    assert report["cross_feature_value_bearing_deficit_count"] == 1
+    assert report["maximum_cross_feature_value_bearing_count"] is None
+    assert report["cross_feature_value_bearing_excess_count"] is None
     assert report["prompt_family_count"] == 10
     assert report["prompt_template_count"] == 10
     assert report["unique_answer_count"] == 100
