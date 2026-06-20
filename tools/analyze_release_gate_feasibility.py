@@ -91,6 +91,11 @@ def main() -> None:
         help="Maximum same-family row swaps for --simulate-parameter-repair.",
     )
     parser.add_argument("--out", type=Path, help="Optional JSON output path.")
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Write --out without printing the full JSON report to stdout.",
+    )
     args = parser.parse_args()
 
     rows = _read_pool_rows(args.dataset_stream)
@@ -107,7 +112,8 @@ def main() -> None:
     )
     if args.out is not None:
         write_json(args.out, report)
-    print(json.dumps(report, indent=2, sort_keys=True))
+    if not args.quiet:
+        print(json.dumps(report, indent=2, sort_keys=True))
 
 
 def release_gate_feasibility_report(
@@ -242,6 +248,10 @@ def simulated_release_balance_report(
         "release_floor": release_floor,
         "exclusion_count": len(exclusions),
         "exclusion_reason_counts": dict(Counter(item["reason"] for item in exclusions).most_common()),
+        "distinct_cad_model_count": balance["distinct_cad_model_count"],
+        "minimum_distinct_cad_model_count": balance["minimum_distinct_cad_model_count"],
+        "distinct_cad_model_deficit_count": balance["distinct_cad_model_deficit_count"],
+        "passes_distinct_cad_model_coverage": balance["passes_distinct_cad_model_coverage"],
         "passes_prompt_family_balance": balance["passes_prompt_family_balance"],
         "passes_prompt_template_balance": balance["passes_prompt_template_balance"],
         "passes_value_bearing_measurement_coverage": balance["passes_value_bearing_measurement_coverage"],

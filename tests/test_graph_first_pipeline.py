@@ -10596,7 +10596,7 @@ def test_group_share_cap_prefers_source_scoped_answer_diversity() -> None:
     }
 
 
-def test_group_share_cap_preserves_rare_source_rows_when_priorities_tie() -> None:
+def test_group_share_cap_preserves_rare_source_rows_when_sort_key_would_drop_them() -> None:
     rows = []
     for index in range(10):
         rows.append(
@@ -10657,7 +10657,8 @@ def test_group_share_cap_preserves_rare_source_rows_when_priorities_tie() -> Non
         group_key=prompt_family,
         max_share=0.5,
         reason="prompt_family_share_cap",
-        prefer_keep=_parameter_diversity_keep_priority(rows),
+        prefer_keep=lambda row: row["row_id"],
+        min_cad_model_count=6,
     )
 
     assert len(capped) == 8

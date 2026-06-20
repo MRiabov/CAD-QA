@@ -395,6 +395,10 @@ def _cap_release_balance_rows(
     exclusions: list[dict[str, Any]] = []
     for _ in range(len(rows)):
         before = len(kept)
+        min_cad_model_count = _minimum_cad_model_count_for_target(
+            profile,
+            release_floor or len(kept),
+        )
         kept, dropped = _cap_boolean_share_rows(
             kept,
             predicate=_is_cross_feature_value_bearing_row,
@@ -404,6 +408,7 @@ def _cap_release_balance_rows(
             prefer_keep=_high_hop_keep_priority(kept),
             protected_prompt_families=protected_prompt_families,
             min_total_rows=release_floor,
+            min_cad_model_count=min_cad_model_count,
         )
         exclusions.extend(dropped)
         kept, dropped = _cap_boolean_share_rows(
@@ -415,6 +420,7 @@ def _cap_release_balance_rows(
             prefer_keep=_cross_feature_keep_priority(kept),
             protected_prompt_families=protected_prompt_families,
             min_total_rows=release_floor,
+            min_cad_model_count=min_cad_model_count,
         )
         exclusions.extend(dropped)
         kept, dropped = _cap_boolean_min_share_rows(
@@ -425,6 +431,7 @@ def _cap_release_balance_rows(
             reason="main_browsecomp_hop_cap",
             protected_prompt_families=protected_prompt_families,
             min_total_rows=release_floor,
+            min_cad_model_count=min_cad_model_count,
         )
         exclusions.extend(dropped)
         kept, dropped = _cap_group_share_rows(
@@ -434,6 +441,7 @@ def _cap_release_balance_rows(
             reason="prompt_family_share_cap",
             min_total_rows=release_floor,
             prefer_keep=_parameter_diversity_keep_priority(kept),
+            min_cad_model_count=min_cad_model_count,
         )
         exclusions.extend(dropped)
         kept, dropped = _cap_group_share_rows(
@@ -443,6 +451,7 @@ def _cap_release_balance_rows(
             reason="prompt_template_share_cap",
             min_total_rows=release_floor,
             prefer_keep=_answer_diversity_keep_priority(kept),
+            min_cad_model_count=min_cad_model_count,
         )
         exclusions.extend(dropped)
         kept, dropped = _cap_group_min_share_rows(
@@ -459,6 +468,7 @@ def _cap_release_balance_rows(
                 (_is_cross_feature_value_bearing_row, profile.max_cross_feature_value_bearing_share),
                 (_is_value_bearing_measurement_row, profile.max_value_bearing_measurement_share),
             ],
+            min_cad_model_count=min_cad_model_count,
         )
         exclusions.extend(dropped)
         kept, dropped = _cap_boolean_min_share_rows(
@@ -469,6 +479,7 @@ def _cap_release_balance_rows(
             reason="cross_feature_value_bearing_min_share_cap",
             protected_prompt_families=protected_prompt_families,
             min_total_rows=release_floor,
+            min_cad_model_count=min_cad_model_count,
         )
         exclusions.extend(dropped)
         kept, dropped = _cap_boolean_min_share_rows(
@@ -479,6 +490,7 @@ def _cap_release_balance_rows(
             reason="value_bearing_measurement_min_share_cap",
             protected_prompt_families=protected_prompt_families,
             min_total_rows=release_floor,
+            min_cad_model_count=min_cad_model_count,
         )
         exclusions.extend(dropped)
         if profile.enforce_parameter_balance:
@@ -486,6 +498,7 @@ def _cap_release_balance_rows(
                 kept,
                 profile,
                 min_total_rows=release_floor,
+                min_cad_model_count=min_cad_model_count,
             )
             exclusions.extend(dropped)
         if len(kept) == before:
@@ -505,6 +518,7 @@ def _cap_boolean_share_rows(
     prefer_keep: Any | None = None,
     protected_prompt_families: set[str] | None = None,
     min_total_rows: int | None = None,
+    min_cad_model_count: int | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     if max_share is None:
         return rows, []
@@ -524,6 +538,7 @@ def _cap_boolean_share_rows(
         min_family_share=min_prompt_family_share,
         target_total=other_count + allowed_count,
         protected_prompt_families=protected_prompt_families,
+        min_cad_model_count=min_cad_model_count,
     )
     kept_ids = {id(row) for row in kept_matched}
     dropped = [row for row in matched if id(row) not in kept_ids]
@@ -543,6 +558,7 @@ def _cap_boolean_min_share_rows(
     reason: str,
     protected_prompt_families: set[str] | None = None,
     min_total_rows: int | None = None,
+    min_cad_model_count: int | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     if min_share is None or min_share <= 0:
         return rows, []
@@ -563,6 +579,7 @@ def _cap_boolean_min_share_rows(
         min_family_share=min_prompt_family_share,
         target_total=len(matched) + allowed_unmatched_count,
         protected_prompt_families=protected_prompt_families,
+        min_cad_model_count=min_cad_model_count,
     )
     kept_unmatched_ids = {id(row) for row in kept_unmatched}
     dropped = [row for row in unmatched if id(row) not in kept_unmatched_ids]
@@ -581,6 +598,7 @@ def _cap_group_share_rows(
     reason: str,
     min_total_rows: int | None = None,
     prefer_keep: Any | None = None,
+    min_cad_model_count: int | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     if max_share <= 0:
         return rows, []
@@ -605,7 +623,13 @@ def _cap_group_share_rows(
         if len(current_group_rows) <= allowed_count:
             continue
         keep_key = prefer_keep or _stable_row_key
-        kept_group_rows = sorted(current_group_rows, key=keep_key)[:allowed_count]
+        kept_group_rows = _keep_rows_preserving_cad_model_identities(
+            rows,
+            current_group_rows,
+            allowed_count,
+            key=keep_key,
+            min_cad_model_count=min_cad_model_count,
+        )
         kept_group_ids = {id(row) for row in kept_group_rows}
         dropped = [row for row in current_group_rows if id(row) not in kept_group_ids]
         dropped_ids = {id(row) for row in dropped}
@@ -626,6 +650,7 @@ def _cap_group_min_share_rows(
     protected_boolean_minimums: list[tuple[Any, float | None]] | None = None,
     protected_boolean_maximums: list[tuple[Any, float | None]] | None = None,
     min_total_rows: int | None = None,
+    min_cad_model_count: int | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     if min_share <= 0 or not rows:
         return rows, []
@@ -658,6 +683,7 @@ def _cap_group_min_share_rows(
             protected_boolean_maximums=protected_boolean_maximums,
         )
         protected_drops = [0 for _predicate, _minimum, _current in protected_minimums]
+        source_counts = _cad_model_identity_counts(kept)
         protected_groups = set(underrepresented)
         dropped: list[dict[str, Any]] = []
         dropped_by_group: Counter[str] = Counter()
@@ -684,12 +710,15 @@ def _cap_group_min_share_rows(
                     break
                 if len(group_rows) - group_drop_count <= minimum_group_rows_after:
                     break
+                if _would_drop_last_cad_model_identity(row, source_counts, min_cad_model_count=min_cad_model_count):
+                    continue
                 if _would_violate_protected_boolean_minimum(row, protected_minimums, protected_drops):
                     continue
                 dropped.append(row)
                 group_drop_count += 1
                 dropped_by_group[group] = group_drop_count
                 _record_protected_boolean_drop(row, protected_minimums, protected_drops)
+                _record_cad_model_identity_drop(row, source_counts)
             if len(dropped) >= drop_count:
                 break
         if not dropped:
@@ -708,6 +737,7 @@ def _cap_sampled_parameter_share_rows(
     profile: Any,
     *,
     min_total_rows: int | None = None,
+    min_cad_model_count: int | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     max_share = profile.max_parameter_value_share
     if max_share is None or max_share <= 0 or len(rows) < profile.min_applicable_rows:
@@ -718,6 +748,7 @@ def _cap_sampled_parameter_share_rows(
         max_share=max_share,
         min_family_share=profile.min_prompt_family_share,
         min_total_rows=min_total_rows,
+        min_cad_model_count=min_cad_model_count,
     )
     if not drops:
         return rows, []
@@ -741,6 +772,7 @@ def _sampled_parameter_cap_drop_batch(
     max_share: float,
     min_family_share: float,
     min_total_rows: int | None,
+    min_cad_model_count: int | None,
 ) -> list[dict[str, Any]]:
     family_rows = _rows_by_group(rows, _prompt_family)
     family_minimum_rows = 1
@@ -753,6 +785,7 @@ def _sampled_parameter_cap_drop_batch(
     selected_ids: set[int] = set()
     drops: list[dict[str, Any]] = []
     family_drop_counts: Counter[str] = Counter()
+    source_counts = _cad_model_identity_counts(rows)
     for family, current_family_rows in sorted(family_rows.items()):
         if len(current_family_rows) <= family_minimum_rows:
             continue
@@ -776,9 +809,15 @@ def _sampled_parameter_cap_drop_batch(
                     continue
                 drop_count = min(len(value_rows) - allowed_count, remaining_family_budget, remaining_total_budget)
                 candidates = sorted(value_rows, key=priority, reverse=True)
-                for row in candidates[:drop_count]:
+                for row in candidates:
+                    if drop_count <= 0:
+                        break
+                    if _would_drop_last_cad_model_identity(row, source_counts, min_cad_model_count=min_cad_model_count):
+                        continue
                     selected_ids.add(id(row))
                     family_drop_counts[family] += 1
+                    drop_count -= 1
+                    _record_cad_model_identity_drop(row, source_counts)
                     drops.append(
                         {
                             "row": row,
@@ -986,6 +1025,7 @@ def _keep_rows_preserving_prompt_families(
     min_family_share: float | None = None,
     target_total: int | None = None,
     protected_prompt_families: set[str] | None = None,
+    min_cad_model_count: int | None = None,
 ) -> list[dict[str, Any]]:
     if keep_count <= 0:
         return []
@@ -1003,6 +1043,17 @@ def _keep_rows_preserving_prompt_families(
     for family, required_count in sorted(required_by_family.items()):
         family_rows = [row for row in candidates if _prompt_family(row) == family]
         kept.extend(family_rows[:required_count])
+    kept_ids = {id(row) for row in kept}
+    for source_rows in _required_cad_model_identity_rows(
+        all_rows,
+        candidates,
+        key=key,
+        min_cad_model_count=min_cad_model_count,
+    ).values():
+        if any(id(row) in kept_ids for row in source_rows):
+            continue
+        kept.append(source_rows[0])
+        kept_ids.add(id(source_rows[0]))
     if len(kept) > keep_count:
         protected = protected_prompt_families or set()
         protected_kept = [row for row in kept if _prompt_family(row) in protected]
@@ -1014,7 +1065,39 @@ def _keep_rows_preserving_prompt_families(
                 key=key,
             )
         return sorted(kept, key=key)[:keep_count]
-    kept_ids = {id(row) for row in kept}
+    for row in candidates:
+        if len(kept) >= keep_count:
+            break
+        if id(row) not in kept_ids:
+            kept.append(row)
+            kept_ids.add(id(row))
+    return sorted(kept, key=key)
+
+
+def _keep_rows_preserving_cad_model_identities(
+    all_rows: list[dict[str, Any]],
+    candidate_rows: list[dict[str, Any]],
+    keep_count: int,
+    *,
+    key: Any,
+    min_cad_model_count: int | None = None,
+) -> list[dict[str, Any]]:
+    candidates = sorted(candidate_rows, key=key)
+    if len(candidates) <= keep_count:
+        return candidates
+    kept: list[dict[str, Any]] = []
+    kept_ids: set[int] = set()
+    for source_rows in _required_cad_model_identity_rows(
+        all_rows,
+        candidates,
+        key=key,
+        min_cad_model_count=min_cad_model_count,
+    ).values():
+        row = source_rows[0]
+        kept.append(row)
+        kept_ids.add(id(row))
+    if len(kept) > keep_count:
+        return sorted(kept, key=key)[:keep_count]
     for row in candidates:
         if len(kept) >= keep_count:
             break
@@ -1053,6 +1136,30 @@ def _minimum_candidate_rows_by_prompt_family(
     return required
 
 
+def _required_cad_model_identity_rows(
+    all_rows: list[dict[str, Any]],
+    candidate_rows: list[dict[str, Any]],
+    *,
+    key: Any,
+    min_cad_model_count: int | None,
+) -> dict[str, list[dict[str, Any]]]:
+    if min_cad_model_count is None or len(_cad_model_identity_counts(all_rows)) > min_cad_model_count:
+        return {}
+    candidate_ids = {id(row) for row in candidate_rows}
+    noncandidate_identities = {
+        identity
+        for row in all_rows
+        if id(row) not in candidate_ids
+        if (identity := _cad_model_identity_key(row))
+    }
+    candidates_by_identity: dict[str, list[dict[str, Any]]] = {}
+    for row in sorted(candidate_rows, key=key):
+        identity = _cad_model_identity_key(row)
+        if identity and identity not in noncandidate_identities:
+            candidates_by_identity.setdefault(identity, []).append(row)
+    return candidates_by_identity
+
+
 def _allowed_share_count(other_count: int, max_share: float) -> int:
     if max_share <= 0:
         return 0
@@ -1065,6 +1172,13 @@ def _minimum_group_count_for_share(max_share: float) -> int:
     if max_share <= 0:
         return 1
     return int((1 / max_share) + 0.999999)
+
+
+def _minimum_cad_model_count_for_target(profile: Any, target_total: int) -> int | None:
+    min_share = getattr(profile, "min_distinct_cad_model_share", None)
+    if min_share is None:
+        return None
+    return math.ceil(target_total * min_share - 1e-12)
 
 
 def _cross_feature_keep_priority(rows: list[dict[str, Any]]) -> Any:
@@ -1110,7 +1224,6 @@ def _answer_diversity_keep_priority(rows: list[dict[str, Any]]) -> Any:
 
 def _parameter_diversity_keep_priority(rows: list[dict[str, Any]]) -> Any:
     answer_counts = Counter(_answer_identity_key(row) for row in rows)
-    source_counts = _cad_model_identity_counts(rows)
     parameter_counts: Counter[tuple[str, str, str]] = Counter()
     for row in rows:
         family = _prompt_family(row)
@@ -1118,18 +1231,13 @@ def _parameter_diversity_keep_priority(rows: list[dict[str, Any]]) -> Any:
             for value in _sampled_parameter_values(row, dimension):
                 parameter_counts[(family, dimension, value)] += 1
 
-    def key(row: dict[str, Any]) -> tuple[int, int, int, str]:
+    def key(row: dict[str, Any]) -> tuple[int, int, str]:
         family = _prompt_family(row)
         parameter_frequency = 0
         for dimension in PARAMETER_DIVERSITY_DIMENSIONS:
             for value in _sampled_parameter_values(row, dimension):
                 parameter_frequency += parameter_counts[(family, dimension, value)]
-        return (
-            parameter_frequency,
-            answer_counts[_answer_identity_key(row)],
-            _cad_model_identity_count(row, source_counts),
-            _stable_row_key(row),
-        )
+        return (parameter_frequency, answer_counts[_answer_identity_key(row)], _stable_row_key(row))
 
     return key
 
@@ -1148,6 +1256,24 @@ def _cad_model_identity_counts(rows: list[dict[str, Any]]) -> Counter[str]:
 def _cad_model_identity_count(row: dict[str, Any], counts: Counter[str]) -> int:
     key = _cad_model_identity_key(row)
     return counts[key] if key else 10**12
+
+
+def _would_drop_last_cad_model_identity(
+    row: dict[str, Any],
+    counts: Counter[str],
+    *,
+    min_cad_model_count: int | None,
+) -> bool:
+    if min_cad_model_count is None or len([count for count in counts.values() if count > 0]) > min_cad_model_count:
+        return False
+    key = _cad_model_identity_key(row)
+    return bool(key and counts[key] <= 1)
+
+
+def _record_cad_model_identity_drop(row: dict[str, Any], counts: Counter[str]) -> None:
+    key = _cad_model_identity_key(row)
+    if key:
+        counts[key] -= 1
 
 
 def _cad_model_identity_key(row: dict[str, Any]) -> str:

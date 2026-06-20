@@ -1022,25 +1022,39 @@ dropped before redundant `src_common` rows.
 
 Fix:
 
-Release keep-priority functions are now source-aware. They still prioritize the
-existing release objectives first:
-
-```text
-cross-feature / high-hop preservation
-sampled-parameter diversity
-answer diversity
-```
-
-Then, when those priorities tie, they prefer rows from rarer CAD model/source
-identities. The identity uses `source_metadata.cad_model_id`,
+Release capping now preserves source representatives inside the shared
+candidate-keep helper. If a cap is about to remove the last remaining row for a
+CAD model/source identity and the cap budget can keep one representative, the
+helper keeps one. The identity uses `source_metadata.cad_model_id`,
 `source_metadata.source_model_id`, `source_metadata.model_id`, or `source_id`,
-matching the release verifier's distinct-model scope.
+matching the release verifier's distinct-model scope. Source rarity is also
+used as a tie-break for cross-feature/high-hop and answer-diversity priorities.
+
+The sampled-parameter diversity priority intentionally does not use source
+rarity as a tie-break. That priority is the main release-selection pressure
+against the still-failing parameter-balance gate, while the distinct-model gate
+cannot pass from a pool with only 906 sources.
 
 Regression coverage:
 
 ```text
-test_group_share_cap_preserves_rare_source_rows_when_priorities_tie
+test_group_share_cap_preserves_rare_source_rows_when_sort_key_would_drop_them
 ```
+
+Current feasibility effect on the generated pool:
+
+```text
+simulated_release_balance.distinct_cad_model_count: 906
+simulated_release_balance.minimum_distinct_cad_model_count: 1000
+simulated_release_balance.distinct_cad_model_deficit_count: 94
+simulated_release_balance.passes_value_bearing_measurement_coverage: true
+simulated_release_balance.passes_cross_feature_value_bearing_coverage: true
+simulated_release_balance.parameter_balance_violation_count: 133
+```
+
+Before the source-floor guard, the same simulated release represented only 577
+distinct sources. The remaining distinct-model failure is now a generated-pool
+coverage limit, not a release selector loss.
 
 Operational note:
 
@@ -1058,3 +1072,7 @@ streaming/column-projected release export path, not more repeated full-row
 `release_verifier_report.json` and `RELEASE_VERIFIER_REPORT.md` without printing
 the full nested report to stdout. This is useful for repeated benchmark QA runs,
 where the JSON report can be megabytes of low-signal console output.
+
+`tools/analyze_release_gate_feasibility.py` now has the same `--quiet` behavior
+and includes simulated distinct-model coverage fields when
+`--simulate-release-balance` is used.
