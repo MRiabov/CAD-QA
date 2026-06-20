@@ -103,6 +103,7 @@ from cad_qa.cli import main as cli_main
 from tools.analyze_release_gate_feasibility import (
     _parameter_violation_classification_report,
     _parameter_violation_pool_context,
+    _simulate_parameter_repair_report,
     graph_source_coverage_report,
     release_gate_feasibility_report,
     simulated_release_balance_report,
@@ -9771,6 +9772,63 @@ def test_parameter_violation_classification_report_counts_all_violations() -> No
     assert report["top_classification_counts"] == {"selection_regressed": 1}
     assert report["top_individual_replacement_capacity_counts"] == {"appears_individually_fixable": 1}
     assert len(report["top_context"]) == 1
+
+
+def test_parameter_repair_simulation_runs_same_family_swaps() -> None:
+    def row(index: int, metric: str) -> dict[str, object]:
+        direction = "max" if index % 2 == 0 else "min"
+        return {
+            "row_id": f"row:src:{index}:parameterized_feature_extreme",
+            "source_id": f"src_{index}",
+            "answer_format": "text",
+            "gold_answer": f"wp{index}",
+            "logical_hop_count": 4,
+            "geometry_hop_count": 4,
+            "static_hop_count": 0,
+            "prompt_template_id": f"template_{index}",
+            "prompt": f"prompt {index}",
+            "query_program": {
+                "query_id": f"graph:src:q{index}:parameterized_feature_extreme",
+                "sampled_parameters": {
+                    "aggregation_metric": [metric],
+                    "extremum_direction": [direction],
+                    "final_selector": [f"{direction}:{metric}"],
+                    "narrowing_predicate_sequence": [f"predicate:{index % 3}"],
+                    "prompt_wording_variant": [str(index % 2)],
+                    "rendered_clue_template_sequence": [f"clue:{index % 2}"],
+                    "rendered_prompt_template_id": [f"template:{index % 2}"],
+                },
+            },
+        }
+
+    pool_rows = [
+        row(0, "centroid_x"),
+        row(1, "centroid_x"),
+        row(2, "centroid_y"),
+        row(3, "centroid_y"),
+        row(4, "centroid_z"),
+        row(5, "centroid_z"),
+    ]
+    selected_rows = [row(10, "centroid_x"), row(11, "centroid_x"), row(12, "centroid_x")]
+    profile = replace(
+        release_gate_profile("benchmark-release"),
+        min_release_rows=None,
+        max_parameter_value_share=0.35,
+    )
+
+    report = _simulate_parameter_repair_report(
+        pool_rows,
+        selected_rows,
+        profile=profile,
+        max_swaps=2,
+    )
+
+    assert report["swap_count"] > 0
+    assert report["swap_reason_counts"]["parameter_value_dominates"] > 0
+    assert (
+        report["post_parameter_balance_violation_count"]
+        <= report["pre_parameter_balance_violation_count"]
+    )
 
 
 def test_release_export_balance_caps_overrepresented_training_slices() -> None:

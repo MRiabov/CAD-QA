@@ -21,13 +21,14 @@ def parameter_balance_report(
     rows: list[dict[str, Any]],
     *,
     family_manifest: Path | None = DEFAULT_FAMILY_MANIFEST,
+    loaded_family_manifest: dict[str, Any] | None = None,
     max_parameter_value_share: float | None = None,
     min_axis_direction_share: float | None = None,
     enforce: bool = False,
 ) -> dict[str, Any]:
     """Report whether sampled query parameters collapse within release families."""
 
-    manifest = load_family_manifest(family_manifest)
+    manifest = loaded_family_manifest or load_family_manifest(family_manifest)
     specs = manifest["families"]
     release_families = {
         family_id
@@ -96,6 +97,9 @@ def parameter_balance_report(
 def row_sampled_parameters(row: dict[str, Any]) -> dict[str, list[str]]:
     """Extract currently observable sampled parameters from a row's query program."""
 
+    cached = row.get("_sampled_parameters_cache")
+    if isinstance(cached, dict):
+        return cached
     query = row.get("query_program") or {}
     return sampled_parameters_from_query(query)
 

@@ -469,7 +469,7 @@ cross_feature_pool_row_count: 33575
 minimum_cross_feature_rows_for_release: 500
 maximum_value_bearing_rows_for_release: 3000
 parameter_balance_full_pool_valid: false
-parameter_balance_full_pool_violation_count: 142
+parameter_balance_full_pool_violation_count: 88
 ```
 
 This means the generated row pool has enough rows to rebalance value-bearing and
@@ -753,6 +753,84 @@ Regression coverage:
 
 ```text
 test_parameter_balance_min_expected_share_only_applies_to_axis_direction_dimensions
+```
+
+### Diagnostic: same-family parameter repair is not enough by itself
+
+Bug:
+
+The feasibility tool could classify parameter-balance violations and estimate
+independent replacement capacity, but it did not test whether simple replacement
+swaps could actually improve the simulated 10K release while preserving the
+other release gates. A first diagnostic implementation also recomputed the
+family manifest and sampled-parameter normalization repeatedly, making the
+bounded dry run too slow for interactive QA.
+
+Fix:
+
+The feasibility tool now has an opt-in dry-run repair simulation:
+
+```bash
+uv run python tools/analyze_release_gate_feasibility.py \
+  --dataset-stream runs/current_cadevolve1000_10k_regen_20260613/dataset_stream \
+  --simulate-release-balance \
+  --simulate-parameter-repair \
+  --max-parameter-repair-swaps 50 \
+  --out /tmp/cadqa_release_gate_feasibility_repair50.json
+```
+
+The dry run performs same-family replacements only. That preserves row count and
+prompt-family distribution, then rechecks prompt-template, value-bearing, and
+cross-feature gates after the swaps. It also caches the loaded family manifest
+and private sampled-parameter metadata on rows so repeated diagnostic reports do
+not spend most of their time reparsing YAML/query metadata.
+
+Current 50-swap result on the simulated 10K release:
+
+```text
+input_selected_row_count: 10000
+output_row_count: 10000
+swap_count: 50
+stopped_reason: iteration_limit
+attempted_violation_count: 72
+successful_violation_count: 50
+failed_violation_count: 22
+swap_reason_counts:
+  axis_or_direction_undercovered: 16
+  parameter_value_dominates: 34
+
+pre_parameter_balance_valid: false
+pre_parameter_balance_violation_count: 131
+pre_parameter_balance_reason_counts:
+  axis_or_direction_undercovered: 44
+  parameter_value_dominates: 87
+
+post_parameter_balance_valid: false
+post_parameter_balance_violation_count: 128
+post_parameter_balance_reason_counts:
+  axis_or_direction_undercovered: 41
+  parameter_value_dominates: 87
+
+post_passes_prompt_family_balance: true
+post_passes_prompt_template_balance: true
+post_passes_value_bearing_measurement_coverage: true
+post_value_bearing_measurement_share: 0.247
+post_passes_cross_feature_value_bearing_coverage: true
+post_cross_feature_value_bearing_share: 0.05
+```
+
+Interpretation:
+
+This is not a sufficient production repair strategy. It proves that same-family
+swaps can preserve the other gates, but 50 swaps only reduce parameter-balance
+violations from 131 to 128. The remaining parameter issue needs release
+selection to optimize parameter diversity directly, or family/query changes that
+make the generated pool less skewed before selection.
+
+Regression coverage:
+
+```text
+test_parameter_repair_simulation_runs_same_family_swaps
 ```
 
 Current next-step classification:

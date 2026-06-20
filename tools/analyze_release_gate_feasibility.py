@@ -28,6 +28,7 @@ from cad_qa.dataset.release_report import (
 from cad_qa.dataset.sft import prompt_family
 from cad_qa.io import iter_records, write_json
 from cad_qa.ontology.nodes import graph_from_dict
+from cad_qa.query.family_manifest import load_family_manifest
 from cad_qa.query.synthesis import synthesize_graph_hop_queries
 
 
@@ -78,6 +79,17 @@ def main() -> None:
         action="store_true",
         help="Run the release balance capping pass and report compact post-cap gate diagnostics.",
     )
+    parser.add_argument(
+        "--simulate-parameter-repair",
+        action="store_true",
+        help="After release-balance simulation, run a dry-run same-family parameter-diversity repair.",
+    )
+    parser.add_argument(
+        "--max-parameter-repair-swaps",
+        type=int,
+        default=1000,
+        help="Maximum same-family row swaps for --simulate-parameter-repair.",
+    )
     parser.add_argument("--out", type=Path, help="Optional JSON output path.")
     args = parser.parse_args()
 
@@ -90,6 +102,8 @@ def main() -> None:
         analyze_missing_query_counts=args.analyze_missing_query_counts,
         max_missing_query_analysis=args.max_missing_query_analysis,
         simulate_release_balance=args.simulate_release_balance,
+        simulate_parameter_repair=args.simulate_parameter_repair,
+        max_parameter_repair_swaps=args.max_parameter_repair_swaps,
     )
     if args.out is not None:
         write_json(args.out, report)
@@ -104,6 +118,8 @@ def release_gate_feasibility_report(
     analyze_missing_query_counts: bool = False,
     max_missing_query_analysis: int | None = None,
     simulate_release_balance: bool = False,
+    simulate_parameter_repair: bool = False,
+    max_parameter_repair_swaps: int = 1000,
 ) -> dict[str, Any]:
     profile = release_gate_profile(release_tier)
     row_count = len(rows)
@@ -183,11 +199,22 @@ def release_gate_feasibility_report(
             )
         )
     if simulate_release_balance:
-        report["simulated_release_balance"] = simulated_release_balance_report(rows, release_tier=profile.name)
+        report["simulated_release_balance"] = simulated_release_balance_report(
+            rows,
+            release_tier=profile.name,
+            simulate_parameter_repair=simulate_parameter_repair,
+            max_parameter_repair_swaps=max_parameter_repair_swaps,
+        )
     return report
 
 
-def simulated_release_balance_report(rows: list[dict[str, Any]], *, release_tier: str) -> dict[str, Any]:
+def simulated_release_balance_report(
+    rows: list[dict[str, Any]],
+    *,
+    release_tier: str,
+    simulate_parameter_repair: bool = False,
+    max_parameter_repair_swaps: int = 1000,
+) -> dict[str, Any]:
     profile = release_gate_profile(release_tier)
     release_floor = (
         profile.min_release_rows
@@ -209,7 +236,7 @@ def simulated_release_balance_report(rows: list[dict[str, Any]], *, release_tier
         selected_rows=capped_rows,
         min_expected_share=profile.min_axis_direction_parameter_share,
     )
-    return {
+    report = {
         "input_row_count": len(rows),
         "output_row_count": len(capped_rows),
         "release_floor": release_floor,
@@ -247,6 +274,14 @@ def simulated_release_balance_report(rows: list[dict[str, Any]], *, release_tier
             "top_individual_replacement_capacity_counts"
         ],
     }
+    if simulate_parameter_repair:
+        report["parameter_repair_simulation"] = _simulate_parameter_repair_report(
+            rows,
+            capped_rows,
+            profile=profile,
+            max_swaps=max_parameter_repair_swaps,
+        )
+    return report
 
 
 def graph_source_coverage_report(
@@ -306,6 +341,206 @@ def graph_source_coverage_report(
         report["missing_source_query_count_skipped"] = missing_query_count_skipped
         report["missing_source_query_count_error_counts"] = dict(missing_query_count_errors.most_common())
     return report
+
+
+def _simulate_parameter_repair_report(
+    pool_rows: list[dict[str, Any]],
+    selected_rows: list[dict[str, Any]],
+    *,
+    profile: Any,
+    max_swaps: int,
+) -> dict[str, Any]:
+    _cache_sampled_parameters(pool_rows)
+    _cache_sampled_parameters(selected_rows)
+    family_manifest = load_family_manifest()
+    pre_parameter_report = parameter_balance_report(
+        selected_rows,
+        loaded_family_manifest=family_manifest,
+        max_parameter_value_share=profile.max_parameter_value_share,
+        min_axis_direction_share=profile.min_axis_direction_parameter_share,
+        enforce=profile.enforce_parameter_balance,
+    )
+    pre_violations = pre_parameter_report.get("violations", [])
+    repaired_rows, repair = _greedy_same_family_parameter_repair(
+        pool_rows,
+        selected_rows,
+        profile=profile,
+        max_swaps=max_swaps,
+        family_manifest=family_manifest,
+    )
+    balance = release_balance_report(repaired_rows, release_tier=profile.name)
+    parameter_report = parameter_balance_report(
+        repaired_rows,
+        loaded_family_manifest=family_manifest,
+        max_parameter_value_share=profile.max_parameter_value_share,
+        min_axis_direction_share=profile.min_axis_direction_parameter_share,
+        enforce=profile.enforce_parameter_balance,
+    )
+    violations = parameter_report.get("violations", [])
+    return {
+        "input_selected_row_count": len(selected_rows),
+        "output_row_count": len(repaired_rows),
+        "max_swaps": max_swaps,
+        "swap_count": repair["swap_count"],
+        "stopped_reason": repair["stopped_reason"],
+        "attempted_violation_count": repair["attempted_violation_count"],
+        "successful_violation_count": repair["successful_violation_count"],
+        "failed_violation_count": repair["failed_violation_count"],
+        "swap_reason_counts": repair["swap_reason_counts"],
+        "pre_parameter_balance_valid": bool(pre_parameter_report.get("valid")),
+        "pre_parameter_balance_violation_count": len(pre_violations),
+        "pre_parameter_balance_reason_counts": dict(Counter(v["reason"] for v in pre_violations)),
+        "pre_parameter_balance_dimension_counts": dict(Counter(v["dimension"] for v in pre_violations).most_common()),
+        "pre_parameter_balance_family_counts": dict(Counter(v["prompt_family"] for v in pre_violations).most_common()),
+        "post_parameter_balance_valid": bool(parameter_report.get("valid")),
+        "post_parameter_balance_violation_count": len(violations),
+        "post_parameter_balance_reason_counts": dict(Counter(v["reason"] for v in violations)),
+        "post_parameter_balance_dimension_counts": dict(Counter(v["dimension"] for v in violations).most_common()),
+        "post_parameter_balance_family_counts": dict(Counter(v["prompt_family"] for v in violations).most_common()),
+        "post_passes_prompt_family_balance": balance["passes_prompt_family_balance"],
+        "post_passes_prompt_template_balance": balance["passes_prompt_template_balance"],
+        "post_passes_value_bearing_measurement_coverage": balance["passes_value_bearing_measurement_coverage"],
+        "post_value_bearing_measurement_share": balance["value_bearing_measurement_share"],
+        "post_passes_cross_feature_value_bearing_coverage": balance["passes_cross_feature_value_bearing_coverage"],
+        "post_cross_feature_value_bearing_share": balance["cross_feature_value_bearing_share"],
+    }
+
+
+def _cache_sampled_parameters(rows: list[dict[str, Any]]) -> None:
+    for row in rows:
+        row["_sampled_parameters_cache"] = row_sampled_parameters(row)
+
+
+def _greedy_same_family_parameter_repair(
+    pool_rows: list[dict[str, Any]],
+    selected_rows: list[dict[str, Any]],
+    *,
+    profile: Any,
+    max_swaps: int,
+    family_manifest: dict[str, Any],
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    selected = list(selected_rows)
+    selected_ids = {_row_identity(row) for row in selected}
+    pool_by_family = _rows_by_family(pool_rows)
+    swap_count = 0
+    successful_violation_count = 0
+    attempted_violation_count = 0
+    failed_violation_count = 0
+    swap_reason_counts: Counter[str] = Counter()
+
+    for _iteration in range(max(1, max_swaps)):
+        if swap_count >= max_swaps:
+            return selected, {
+                "swap_count": swap_count,
+                "stopped_reason": "max_swaps",
+                "attempted_violation_count": attempted_violation_count,
+                "successful_violation_count": successful_violation_count,
+                "failed_violation_count": failed_violation_count,
+                "swap_reason_counts": dict(swap_reason_counts),
+            }
+        parameter_report = parameter_balance_report(
+            selected,
+            loaded_family_manifest=family_manifest,
+            max_parameter_value_share=profile.max_parameter_value_share,
+            min_axis_direction_share=profile.min_axis_direction_parameter_share,
+            enforce=profile.enforce_parameter_balance,
+        )
+        violations = parameter_report.get("violations", [])
+        if not violations:
+            return selected, {
+                "swap_count": swap_count,
+                "stopped_reason": "parameter_balance_valid",
+                "attempted_violation_count": attempted_violation_count,
+                "successful_violation_count": successful_violation_count,
+                "failed_violation_count": failed_violation_count,
+                "swap_reason_counts": dict(swap_reason_counts),
+            }
+        progress = False
+        for violation in violations:
+            if swap_count >= max_swaps:
+                break
+            attempted_violation_count += 1
+            swap = _find_same_family_parameter_swap(
+                violation,
+                selected,
+                selected_ids=selected_ids,
+                pool_by_family=pool_by_family,
+            )
+            if swap is None:
+                failed_violation_count += 1
+                continue
+            remove_index, replacement = swap
+            removed = selected[remove_index]
+            selected_ids.remove(_row_identity(removed))
+            selected[remove_index] = replacement
+            selected_ids.add(_row_identity(replacement))
+            swap_count += 1
+            successful_violation_count += 1
+            swap_reason_counts[str(violation.get("reason"))] += 1
+            progress = True
+            break
+        if not progress:
+            return selected, {
+                "swap_count": swap_count,
+                "stopped_reason": "no_progress",
+                "attempted_violation_count": attempted_violation_count,
+                "successful_violation_count": successful_violation_count,
+                "failed_violation_count": failed_violation_count,
+                "swap_reason_counts": dict(swap_reason_counts),
+            }
+    return selected, {
+        "swap_count": swap_count,
+        "stopped_reason": "iteration_limit",
+        "attempted_violation_count": attempted_violation_count,
+        "successful_violation_count": successful_violation_count,
+        "failed_violation_count": failed_violation_count,
+        "swap_reason_counts": dict(swap_reason_counts),
+    }
+
+
+def _find_same_family_parameter_swap(
+    violation: dict[str, Any],
+    selected_rows: list[dict[str, Any]],
+    *,
+    selected_ids: set[str],
+    pool_by_family: dict[str, list[dict[str, Any]]],
+) -> tuple[int, dict[str, Any]] | None:
+    family = str(violation.get("prompt_family") or "")
+    dimension = str(violation.get("dimension") or "")
+    family_pool = pool_by_family.get(family, [])
+    if not family_pool:
+        return None
+    if violation.get("reason") == "parameter_value_dominates":
+        value = str(violation.get("largest_value"))
+        remove_index = _selected_row_index_with_value(selected_rows, family, dimension, value)
+        if remove_index is None:
+            return None
+        replacement = _replacement_row_without_value(
+            family_pool,
+            selected_ids=selected_ids,
+            dimension=dimension,
+            excluded_value=value,
+        )
+        return (remove_index, replacement) if replacement is not None else None
+    if violation.get("reason") == "axis_or_direction_undercovered":
+        values = _violation_values(violation)
+        if not values:
+            return None
+        target_value = max(
+            values,
+            key=lambda value: _available_value_count(family_pool, selected_ids, dimension, value),
+        )
+        replacement = _replacement_row_with_value(
+            family_pool,
+            selected_ids=selected_ids,
+            dimension=dimension,
+            value=target_value,
+        )
+        if replacement is None:
+            return None
+        remove_index = _selected_row_index_without_value(selected_rows, family, dimension, target_value)
+        return (remove_index, replacement) if remove_index is not None else None
+    return None
 
 
 def _read_pool_rows(dataset_stream: Path) -> list[dict[str, Any]]:
@@ -522,6 +757,97 @@ def _parameter_counters_by_family_dimension(
             counter = counters.setdefault((family, dimension), Counter())
             counter.update(values)
     return counters
+
+
+def _rows_by_family(rows: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        grouped.setdefault(prompt_family(row), []).append(row)
+    return grouped
+
+
+def _selected_row_index_with_value(
+    rows: list[dict[str, Any]],
+    family: str,
+    dimension: str,
+    value: str,
+) -> int | None:
+    for index, row in enumerate(rows):
+        if prompt_family(row) != family:
+            continue
+        if value in row_sampled_parameters(row).get(dimension, []):
+            return index
+    return None
+
+
+def _selected_row_index_without_value(
+    rows: list[dict[str, Any]],
+    family: str,
+    dimension: str,
+    value: str,
+) -> int | None:
+    best_index = None
+    best_score: tuple[int, int, str] | None = None
+    for index, row in enumerate(rows):
+        if prompt_family(row) != family:
+            continue
+        values = row_sampled_parameters(row).get(dimension, [])
+        if value in values:
+            continue
+        score = (
+            0 if _is_cross_feature_value_bearing_row(row) else 1,
+            0 if _is_value_bearing_measurement_row(row) else 1,
+            _row_identity(row),
+        )
+        if best_score is None or score > best_score:
+            best_index = index
+            best_score = score
+    return best_index
+
+
+def _replacement_row_without_value(
+    rows: list[dict[str, Any]],
+    *,
+    selected_ids: set[str],
+    dimension: str,
+    excluded_value: str,
+) -> dict[str, Any] | None:
+    for row in sorted(rows, key=_row_identity):
+        if _row_identity(row) in selected_ids:
+            continue
+        values = row_sampled_parameters(row).get(dimension, [])
+        if values and excluded_value not in values:
+            return row
+    return None
+
+
+def _replacement_row_with_value(
+    rows: list[dict[str, Any]],
+    *,
+    selected_ids: set[str],
+    dimension: str,
+    value: str,
+) -> dict[str, Any] | None:
+    for row in sorted(rows, key=_row_identity):
+        if _row_identity(row) in selected_ids:
+            continue
+        if value in row_sampled_parameters(row).get(dimension, []):
+            return row
+    return None
+
+
+def _available_value_count(
+    rows: list[dict[str, Any]],
+    selected_ids: set[str],
+    dimension: str,
+    value: str,
+) -> int:
+    return sum(
+        1
+        for row in rows
+        if _row_identity(row) not in selected_ids
+        and value in row_sampled_parameters(row).get(dimension, [])
+    )
 
 
 def _parameter_rows_by_family_dimension_value(
