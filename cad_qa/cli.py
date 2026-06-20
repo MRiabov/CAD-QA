@@ -60,6 +60,7 @@ from cad_qa.harbor import (
 )
 from cad_qa.io import (
     existing_record_artifact_path,
+    iter_records,
     read_records,
     record_artifact_path,
     write_json,
@@ -970,8 +971,25 @@ def _graph_for_query_record(record: dict[str, Any], graph_lookup: dict[str, Onto
 
 
 def _load_dataset_rows(path: Path) -> list[dict[str, Any]]:
-    rows_path = existing_record_artifact_path(path, "rows") if path.is_dir() else path
+    if not path.is_dir():
+        return read_records(path)
+    rows_path = existing_record_artifact_path(path, "rows")
+    if rows_path.exists():
+        return read_records(rows_path)
+    shard_paths = _dataset_row_shard_paths(path)
+    if shard_paths:
+        rows: list[dict[str, Any]] = []
+        for shard_path in shard_paths:
+            rows.extend(iter_records(shard_path))
+        return rows
     return read_records(rows_path)
+
+
+def _dataset_row_shard_paths(path: Path) -> list[Path]:
+    return [
+        *sorted((path / "row_shards").glob("part-*.parquet")),
+        *sorted((path / "row_graph_shards").glob("part-*.parquet")),
+    ]
 
 
 def _cmd_dataset_validate(args: argparse.Namespace) -> dict[str, Any]:

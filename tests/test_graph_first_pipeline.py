@@ -99,7 +99,7 @@ from cad_qa.source import (
     source_record_from_mapping,
 )
 from cad_qa.trace import TraceRecord, cadquery_available, trace_report, trace_source, trace_sources_bounded
-from cad_qa.cli import main as cli_main
+from cad_qa.cli import _load_dataset_rows, main as cli_main
 from tools.analyze_release_gate_feasibility import (
     _parameter_violation_classification_report,
     _parameter_violation_pool_context,
@@ -13126,6 +13126,27 @@ def test_release_export_helper_writes_reports(tmp_path: Path) -> None:
     assert (tmp_path / "release" / "preview_evidence.json").exists()
     assert (tmp_path / "release" / "public.parquet").exists()
     assert (tmp_path / "release" / "private.parquet").exists()
+
+
+def test_dataset_loader_reads_stream_row_shards(tmp_path: Path) -> None:
+    first = _public_answer_validation_row(
+        row_id="row:stream:first",
+        query_program={"query_id": "graph:src:first:family_a"},
+        gold_answer="wp1",
+    )
+    second = _public_answer_validation_row(
+        row_id="row:stream:second",
+        query_program={"query_id": "graph:src:second:family_b"},
+        gold_answer="wp2",
+        source_code="import cadquery as cq\nwp2 = cq.Workplane('XY')\nresult = wp2",
+    )
+    write_records(tmp_path / "dataset_stream" / "row_shards" / "part-00000.parquet", [first])
+    write_records(tmp_path / "dataset_stream" / "row_graph_shards" / "part-00000.parquet", [second])
+
+    rows = _load_dataset_rows(tmp_path / "dataset_stream")
+
+    assert [row["row_id"] for row in rows] == ["row:stream:first", "row:stream:second"]
+    assert all(isinstance(row["query_program"], dict) for row in rows)
 
 
 def _mark_value_bearing_release_fixture_rows(rows: list[dict]) -> None:

@@ -964,3 +964,15 @@ swap in underrepresented alternatives from the generated pool. The remaining
 parameter-balance failures therefore need either a coordinated swap-based
 selector/optimizer, or query-family/generation changes that make the pool less
 skewed before selection. A small cap-order tweak is unlikely to be sufficient.
+
+Operational note:
+
+The dataset CLI can now discover generated row pools stored as
+`row_shards/part-*.parquet` and `row_graph_shards/part-*.parquet` when no
+top-level `rows.parquet` exists. That removes the need to build a combined
+`rows.parquet` just to point release/export tooling at a `dataset_stream`
+directory. However, a full 168,987-row export probe from the current generated
+pool was stopped before artifact creation because row-object decoding was still
+too slow for an interactive QA loop. The next performance fix should be a
+streaming/column-projected release export path, not more repeated full-row
+`to_pylist()` decoding.
