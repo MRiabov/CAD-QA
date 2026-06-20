@@ -481,6 +481,13 @@ def _cap_release_balance_rows(
             min_total_rows=release_floor,
         )
         exclusions.extend(dropped)
+        if profile.enforce_parameter_balance:
+            kept, dropped = _cap_sampled_parameter_share_rows(
+                kept,
+                profile,
+                min_total_rows=release_floor,
+            )
+            exclusions.extend(dropped)
         if len(kept) == before:
             break
     kept, dropped = _improve_answer_diversity_rows(rows, kept, profile)

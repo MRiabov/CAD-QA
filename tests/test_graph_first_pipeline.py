@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ast
 from collections import Counter
+from dataclasses import replace
 import io
 import json
 import math
@@ -9741,6 +9742,47 @@ def test_release_export_caps_overrepresented_sampled_parameter_values() -> None:
     assert axis_counts["x"] / len(capped) <= profile.max_parameter_value_share
     assert axis_counts["y"] > 0
     assert axis_counts["z"] > 0
+
+
+def test_release_balance_wires_sampled_parameter_cap_when_enforced() -> None:
+    rows = []
+    for index, axis in enumerate(["x"] * 14 + ["y"] * 3 + ["z"] * 3):
+        rows.append(
+            {
+                "row_id": f"row:src:{index}:parameterized_family",
+                "source_id": f"src_{index}",
+                "prompt": f"geometry prompt {index}",
+                "prompt_template_id": f"template_{index}",
+                "gold_answer": f"entity:{index}",
+                "logical_hop_count": 4,
+                "geometry_hop_count": 4,
+                "static_hop_count": 0,
+                "query_program": {
+                    "query_id": f"graph:src:q{index}:parameterized_family",
+                    "sampled_parameters": {"aggregation_axis": [axis], "aggregation_metric": [f"centroid_{axis}"]},
+                },
+            }
+        )
+    profile = replace(
+        release_gate_profile("benchmark-release"),
+        min_release_rows=None,
+        min_prompt_family_share=0.0,
+        max_prompt_family_share=1.0,
+        max_prompt_template_share=1.0,
+        min_logical_hop_ge_3_share=0.0,
+        min_value_bearing_measurement_share=0.0,
+        max_value_bearing_measurement_share=None,
+        min_cross_feature_value_bearing_share=None,
+        max_cross_feature_value_bearing_share=None,
+        min_unique_answer_count=0,
+        enforce_parameter_balance=True,
+    )
+
+    capped, exclusions = _cap_release_balance_rows(rows, profile)
+    axis_counts = Counter(row["query_program"]["sampled_parameters"]["aggregation_axis"][0] for row in capped)
+
+    assert {item["reason"] for item in exclusions} == {"sampled_parameter_share_cap"}
+    assert axis_counts["x"] / len(capped) <= profile.max_parameter_value_share
 
 
 def test_release_export_balance_caps_to_satisfy_minimum_family_share() -> None:

@@ -520,6 +520,44 @@ face/edge/vertex evidence, so these graphs do not yield release queries.
 The public-answer fixes are complete. The remaining failures are release-scale
 distribution/evidence gates, not row-level public contract bugs.
 
+### Fix: sampled-parameter cap was not wired into release balancing
+
+Bug:
+
+`_cap_sampled_parameter_share_rows` existed and had unit coverage, but
+`_cap_release_balance_rows` did not call it. That meant benchmark release export
+could cap prompt-family/template/value-bearing slices while still leaving
+sampled parameter values over the strict 35% per-family dominance limit.
+
+Example failure mode:
+
+```text
+parameterized family rows:
+aggregation_axis=x: 14 rows
+aggregation_axis=y: 3 rows
+aggregation_axis=z: 3 rows
+
+max_parameter_value_share: 0.35
+```
+
+The standalone sampled-parameter cap can reduce the `x` dominance while
+preserving nonzero `y`/`z` coverage, but the release path previously skipped it.
+
+Fix:
+
+When `profile.enforce_parameter_balance` is enabled, release balancing now calls
+`_cap_sampled_parameter_share_rows` inside the capping loop. The loop can then
+rerun the other share caps after parameter drops, so value/cross-feature/family
+constraints still get a chance to recover if a parameter drop changes the
+composition.
+
+Regression coverage:
+
+```text
+test_release_balance_wires_sampled_parameter_cap_when_enforced
+test_release_export_caps_overrepresented_sampled_parameter_values
+```
+
 Current next-step classification:
 
 ```text
