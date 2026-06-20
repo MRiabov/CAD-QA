@@ -520,6 +520,15 @@ top_violating_dimensions:
 - clause_axis: 5
 ```
 
+The verifier now emits these as structured parameter-balance summary fields:
+
+```text
+violation_count
+violation_reason_counts
+violation_dimension_counts
+violation_family_counts
+```
+
 Several dominance violations are structural under current families. Examples:
 `parameterized_equal_path_segment_metric_extreme` has
 `aggregation_metric=midpoint_distance_to_origin` for 100% of rows, and

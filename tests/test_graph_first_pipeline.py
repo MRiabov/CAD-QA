@@ -11222,6 +11222,11 @@ def test_parameter_balance_report_blocks_collapsed_query_parameters(tmp_path: Pa
     assert "aggregation_axis" in report["minimum_expected_share_dimensions"]
     assert "clause_relation" not in report["minimum_expected_share_dimensions"]
     assert report["sampled_parameter_metadata_missing_count"] == 0
+    assert report["violation_count"] == len(report["violations"])
+    assert report["violation_family_counts"]["collapsed_family"] == report["violation_count"]
+    assert report["violation_reason_counts"]["axis_or_direction_undercovered"] >= 1
+    assert report["violation_reason_counts"]["parameter_value_dominates"] >= 1
+    assert report["violation_dimension_counts"]["aggregation_axis"] >= 1
     assert all(family["prompt_family"] != "review_fixture" for family in report["families"])
     collapsed_violations = [
         violation for violation in report["violations"] if violation["prompt_family"] == "collapsed_family"
@@ -11316,6 +11321,8 @@ def test_parameter_balance_report_enforces_manifest_configured_narrowing_dimensi
         enforce=True,
     )
     assert balanced["valid"]
+    assert balanced["violation_count"] == 0
+    assert balanced["violation_reason_counts"] == {}
 
     missing_rows = [
         {

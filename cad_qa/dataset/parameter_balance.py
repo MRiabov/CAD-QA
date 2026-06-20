@@ -89,6 +89,10 @@ def parameter_balance_report(
         "axis_direction_dimensions": sorted(AXIS_DIRECTION_DIMENSIONS),
         "sampled_parameter_metadata_missing_count": len(metadata_missing_rows),
         "sampled_parameter_metadata_missing_rows": metadata_missing_rows[:50],
+        "violation_count": len(violations),
+        "violation_reason_counts": dict(Counter(violation["reason"] for violation in violations).most_common()),
+        "violation_dimension_counts": dict(Counter(violation["dimension"] for violation in violations).most_common()),
+        "violation_family_counts": dict(Counter(violation["prompt_family"] for violation in violations).most_common()),
         "violations": violations,
         "families": family_reports,
     }
