@@ -10350,6 +10350,11 @@ def test_release_feasibility_simulates_release_balance_caps() -> None:
     assert report["output_row_count"] == 9
     assert report["exclusion_reason_counts"] == {"sampled_parameter_share_cap": 11}
     assert report["release_floor"] is None
+    assert "distinct_cad_model_count" in report
+    assert "passes_answer_entropy" in report
+    assert "answer_entropy_capacity_bits" in report
+    assert report["candidate_breadth_loaded"] is False
+    assert report["passes_candidate_breadth"] is None
 
 
 def test_release_export_balance_caps_to_satisfy_minimum_family_share() -> None:

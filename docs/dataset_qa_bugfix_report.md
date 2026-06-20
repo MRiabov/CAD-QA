@@ -1047,8 +1047,11 @@ Current feasibility effect on the generated pool:
 simulated_release_balance.distinct_cad_model_count: 906
 simulated_release_balance.minimum_distinct_cad_model_count: 1000
 simulated_release_balance.distinct_cad_model_deficit_count: 94
+simulated_release_balance.passes_answer_entropy: true
+simulated_release_balance.answer_entropy_bits: 11.9766
 simulated_release_balance.passes_value_bearing_measurement_coverage: true
 simulated_release_balance.passes_cross_feature_value_bearing_coverage: true
+simulated_release_balance.candidate_breadth_loaded: false
 simulated_release_balance.parameter_balance_violation_count: 133
 ```
 
@@ -1075,4 +1078,6 @@ where the JSON report can be megabytes of low-signal console output.
 
 `tools/analyze_release_gate_feasibility.py` now has the same `--quiet` behavior
 and includes simulated distinct-model coverage fields when
-`--simulate-release-balance` is used.
+`--simulate-release-balance` is used. Candidate-breadth diagnostics require
+`--include-candidate-trace`; the default projection skips `candidate_trace`
+because loading full traces from the generated pool is materially slower.

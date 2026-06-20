@@ -80,6 +80,11 @@ def main() -> None:
         help="Run the release balance capping pass and report compact post-cap gate diagnostics.",
     )
     parser.add_argument(
+        "--include-candidate-trace",
+        action="store_true",
+        help="Load candidate_trace for candidate-breadth diagnostics. This is slower on large row pools.",
+    )
+    parser.add_argument(
         "--simulate-parameter-repair",
         action="store_true",
         help="After release-balance simulation, run a dry-run same-family parameter-diversity repair.",
@@ -98,7 +103,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    rows = _read_pool_rows(args.dataset_stream)
+    rows = _read_pool_rows(args.dataset_stream, include_candidate_trace=bool(args.include_candidate_trace))
     graph_records = _iter_graph_records(args.graph_dir) if args.graph_dir is not None else None
     report = release_gate_feasibility_report(
         rows,
@@ -242,6 +247,7 @@ def simulated_release_balance_report(
         selected_rows=capped_rows,
         min_expected_share=profile.min_axis_direction_parameter_share,
     )
+    candidate_breadth_loaded = any(isinstance(row.get("candidate_trace"), dict) for row in capped_rows)
     report = {
         "input_row_count": len(rows),
         "output_row_count": len(capped_rows),
@@ -254,10 +260,20 @@ def simulated_release_balance_report(
         "passes_distinct_cad_model_coverage": balance["passes_distinct_cad_model_coverage"],
         "passes_prompt_family_balance": balance["passes_prompt_family_balance"],
         "passes_prompt_template_balance": balance["passes_prompt_template_balance"],
+        "passes_answer_entropy": balance["passes_answer_entropy"],
+        "answer_entropy_bits": balance["answer_entropy_bits"],
+        "answer_entropy_capacity_bits": balance["answer_entropy_capacity_bits"],
+        "minimum_answer_entropy_bits": balance["minimum_answer_entropy_bits"],
         "passes_value_bearing_measurement_coverage": balance["passes_value_bearing_measurement_coverage"],
         "value_bearing_measurement_share": balance["value_bearing_measurement_share"],
         "passes_cross_feature_value_bearing_coverage": balance["passes_cross_feature_value_bearing_coverage"],
         "cross_feature_value_bearing_share": balance["cross_feature_value_bearing_share"],
+        "candidate_breadth_loaded": candidate_breadth_loaded,
+        "passes_candidate_breadth": balance["passes_candidate_breadth"] if candidate_breadth_loaded else None,
+        "minimum_required_median_pre_final_candidate_count": (
+            balance["minimum_required_median_pre_final_candidate_count"] if candidate_breadth_loaded else None
+        ),
+        "median_pre_final_candidate_count": balance["median_pre_final_candidate_count"] if candidate_breadth_loaded else None,
         "parameter_balance_valid": bool(parameter_report.get("valid")),
         "parameter_balance_violation_count": len(parameter_violations),
         "parameter_balance_reason_counts": dict(Counter(v["reason"] for v in parameter_violations)),
@@ -553,7 +569,7 @@ def _find_same_family_parameter_swap(
     return None
 
 
-def _read_pool_rows(dataset_stream: Path) -> list[dict[str, Any]]:
+def _read_pool_rows(dataset_stream: Path, *, include_candidate_trace: bool = False) -> list[dict[str, Any]]:
     paths = [
         *sorted((dataset_stream / "row_shards").glob("part-*.parquet")),
         *sorted((dataset_stream / "row_graph_shards").glob("part-*.parquet")),
@@ -561,14 +577,18 @@ def _read_pool_rows(dataset_stream: Path) -> list[dict[str, Any]]:
     if not paths:
         raise FileNotFoundError(f"no row shard parquets found under {dataset_stream}")
     rows: list[dict[str, Any]] = []
+    requested_columns = (*ROW_COLUMNS, "candidate_trace") if include_candidate_trace else ROW_COLUMNS
     for path in paths:
         parquet_file = pq.ParquetFile(path)
-        columns = [column for column in ROW_COLUMNS if column in parquet_file.schema.names]
+        columns = [column for column in requested_columns if column in parquet_file.schema_arrow.names]
         for batch in parquet_file.iter_batches(batch_size=5000, columns=columns):
             for row in batch.to_pylist():
                 query_program = row.get("query_program")
                 if isinstance(query_program, str):
                     row["query_program"] = json.loads(query_program)
+                candidate_trace = row.get("candidate_trace")
+                if isinstance(candidate_trace, str):
+                    row["candidate_trace"] = json.loads(candidate_trace)
                 rows.append(row)
     return rows
 
