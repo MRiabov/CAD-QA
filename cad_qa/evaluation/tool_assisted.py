@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import json
 from typing import Any
 
+from cad_qa.dataset.sft import format_public_answer
 from cad_qa.evaluation.grade import grade_public_private
 
 
@@ -25,7 +25,10 @@ def tool_assisted_responses(
         responses.append(
             {
                 "row_id": public["row_id"],
-                "answer": _format_answer(private["gold_answer"], private.get("answer_format", public.get("answer_format", "entity_id"))),
+                "answer": format_public_answer(
+                    private["gold_answer"],
+                    private.get("answer_format", public.get("answer_format", "entity_id")),
+                ),
                 "confidence": 1.0,
                 "tool": "private_graph_resolver",
                 "provenance": {
@@ -58,11 +61,3 @@ def run_tool_assisted_upper_bound(
         "graded": metrics["graded"],
         "responses": responses,
     }
-
-
-def _format_answer(answer: Any, answer_format: str) -> str:
-    if answer_format in {"bbox", "json"}:
-        return json.dumps(answer, sort_keys=True)
-    if answer_format == "boolean":
-        return "true" if bool(answer) else "false"
-    return str(answer)

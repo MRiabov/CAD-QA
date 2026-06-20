@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import ast
+import json
 from typing import Any
 
 
@@ -151,7 +153,7 @@ def answer_sft_rows(rows: list[dict[str, Any]]) -> list[dict[str, str]]:
         {
             "messages": [
                 {"role": "user", "content": row["prompt"]},
-                {"role": "assistant", "content": str(row["gold_answer"])},
+                {"role": "assistant", "content": public_answer_text(row)},
             ]
         }
         for row in rows
@@ -165,7 +167,7 @@ def reasoning_sft_rows(rows: list[dict[str, Any]]) -> list[dict[str, str]]:
         for step in row.get("candidate_trace", {}).get("steps", []):
             after = step.get("after") or step.get("candidate_ids") or []
             trace_lines.append(f"{step.get('step')}: {len(after)} candidates")
-        content = "\n".join([*trace_lines, f"answer: {row['gold_answer']}"])
+        content = "\n".join([*trace_lines, f"answer: {public_answer_text(row)}"])
         examples.append(
             {
                 "messages": [
@@ -175,6 +177,53 @@ def reasoning_sft_rows(rows: list[dict[str, Any]]) -> list[dict[str, str]]:
             }
         )
     return examples
+
+
+def public_answer_text(row: dict[str, Any]) -> str:
+    """Render the gold answer in the public answer syntax requested by the prompt."""
+
+    return format_public_answer(row.get("gold_answer"), str(row.get("answer_format") or ""))
+
+
+def format_public_answer(answer: Any, answer_format: str) -> str:
+    if answer_format == "coordinate":
+        return _coordinate_answer_text(answer)
+    if answer_format in {"bbox", "json"}:
+        return json.dumps(_maybe_parse_literal(answer), sort_keys=True)
+    if answer_format == "boolean":
+        return "true" if bool(_maybe_parse_literal(answer)) else "false"
+    decoded = _maybe_parse_literal(answer)
+    return str(decoded)
+
+
+def _coordinate_answer_text(answer: Any) -> str:
+    value = _maybe_parse_literal(answer)
+    if not isinstance(value, (list, tuple)) or len(value) != 3:
+        return str(answer)
+    return "(" + ", ".join(_number_text(component) for component in value) + ")"
+
+
+def _number_text(value: Any) -> str:
+    number = float(value)
+    rounded = round(number, 6)
+    if rounded == 0:
+        rounded = 0.0
+    if float(rounded).is_integer():
+        return str(int(rounded))
+    return str(rounded)
+
+
+def _maybe_parse_literal(value: Any) -> Any:
+    if not isinstance(value, str):
+        return value
+    try:
+        return json.loads(value)
+    except json.JSONDecodeError:
+        pass
+    try:
+        return ast.literal_eval(value)
+    except (SyntaxError, ValueError):
+        return value
 
 
 def ablation_sft_groups(rows: list[dict[str, Any]]) -> dict[str, list[dict[str, str]]]:

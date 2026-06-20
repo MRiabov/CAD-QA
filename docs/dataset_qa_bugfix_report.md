@@ -304,6 +304,52 @@ Regression coverage:
 test_candidate_label_extreme_uses_tie_break_for_float_noise
 ```
 
+## Bug 9: Coordinate Answer Exports Used List-Like Text
+
+### Example malformed answer text
+
+Coordinate rows instruct the model to answer with a tuple:
+
+```text
+Return exactly one coordinate tuple of the vertex, for example `(0, 1, 3)`.
+```
+
+But export helpers that used `str(row["gold_answer"])` could emit list-like
+assistant answers:
+
+```text
+[-47.584951, 0, -127.964585]
+```
+
+### Why this is wrong
+
+The parser accepts both list and tuple syntax, but the public prompt asks for a
+coordinate tuple. SFT, few-shot examples, reasoning traces, tool-assisted
+responses, and oracle responses should train/evaluate the requested public
+answer syntax, not an incidental Python/list representation.
+
+### Fix
+
+Gold-answer text now goes through a shared public answer renderer. Coordinate
+answers render as tuple text, including when the parquet column stores a
+JSON-encoded coordinate internally.
+
+Current decoded examples from `release_10k/rows.parquet` now render as:
+
+```text
+(-47.584951, 0, -127.964585)
+(98, 0, 12)
+(-68, 27, -22)
+```
+
+Regression coverage:
+
+```text
+test_sft_exports_coordinate_answers_as_prompt_tuple_text
+test_tool_assisted_responses_render_coordinate_tuple_answers
+test_request_exports_render_coordinate_tuple_examples_and_oracle_answers
+```
+
 ## Verification Checklist
 
 The rewritten release artifact has passed:

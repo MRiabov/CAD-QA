@@ -3017,6 +3017,32 @@ def test_coordinate_answer_format_parser_accepts_tuple_text() -> None:
     assert parse_answer("AA", "candidate_label") == "AA"
 
 
+def test_sft_exports_coordinate_answers_as_prompt_tuple_text() -> None:
+    rows = [
+        {
+            "row_id": "row:coordinate-answer",
+            "prompt": "Return exactly one coordinate tuple of the vertex, for example `(0, 1, 3)`.",
+            "answer_format": "coordinate",
+            "gold_answer": [0, 1.25, -3],
+            "candidate_trace": {"steps": [{"step": "filter", "after": ["vertex:a"]}]},
+        },
+        {
+            "row_id": "row:encoded-coordinate-answer",
+            "prompt": "Return exactly one coordinate tuple of the vertex, for example `(0, 1, 3)`.",
+            "answer_format": "coordinate",
+            "gold_answer": "[4, 0, -2.5]",
+            "candidate_trace": {"steps": []},
+        },
+    ]
+
+    answer_rows = answer_sft_rows(rows)
+    reasoning_rows = reasoning_sft_rows(rows)
+
+    assert answer_rows[0]["messages"][1]["content"] == "(0, 1.25, -3)"
+    assert answer_rows[1]["messages"][1]["content"] == "(4, 0, -2.5)"
+    assert reasoning_rows[0]["messages"][1]["content"].endswith("answer: (0, 1.25, -3)")
+
+
 def test_candidate_label_answers_bound_public_label_lists() -> None:
     graph = OntologyGraph(graph_id="graph:too-many-labels", source={"source_id": "synthetic", "source_code": ""})
     for index in range(65):
@@ -12377,6 +12403,31 @@ def test_tool_assisted_upper_bound_exports_and_grades_private_artifacts(tmp_path
     assert (out_dir / "tool_assisted_report.json").exists()
 
 
+def test_tool_assisted_responses_render_coordinate_tuple_answers() -> None:
+    public = [
+        {
+            "row_id": "row:coordinate-answer",
+            "prompt": "Return exactly one coordinate tuple of the vertex, for example `(0, 1, 3)`.",
+            "answer_format": "coordinate",
+        }
+    ]
+    private = [
+        {
+            "row_id": "row:coordinate-answer",
+            "answer_format": "coordinate",
+            "gold_answer": [4, 0, -2.5],
+            "query_program": {"query_id": "query:coordinate-answer"},
+            "candidate_trace": {"final_candidates": ["vertex:a"]},
+            "verifier_status": "resolved",
+            "clue_map": [],
+        }
+    ]
+
+    responses = tool_assisted_responses(public, private)
+
+    assert responses[0]["answer"] == "(4, 0, -2.5)"
+
+
 def test_request_exports_do_not_include_gold_answers() -> None:
     graph = build_graph(source_record_from_mapping({"source_id": "src_fixture", "normalized_code": SOURCE}))
     rows = [
@@ -12390,6 +12441,26 @@ def test_request_exports_do_not_include_gold_answers() -> None:
     assert "gold_answer" not in zero[0]
     assert len(few[0]["messages"]) == 5
     assert few[0]["metadata"]["shots"] == 2
+
+
+def test_request_exports_render_coordinate_tuple_examples_and_oracle_answers() -> None:
+    row = {
+        "row_id": "row:coordinate-answer",
+        "source_id": "src_fixture",
+        "prompt": "Return exactly one coordinate tuple of the vertex, for example `(0, 1, 3)`.",
+        "answer_format": "coordinate",
+        "gold_answer": [4, 0, -2.5],
+        "logical_hop_count": 3,
+        "difficulty_bucket": "cad_browsecomp",
+        "relation_families": [],
+        "measurement_scopes": [],
+    }
+
+    few = few_shot_requests([row], [row], shots=1)
+    oracle = oracle_responses([row])
+
+    assert few[0]["messages"][1]["content"] == "(4, 0, -2.5)"
+    assert oracle[0]["answer"] == "(4, 0, -2.5)"
 
 
 def test_closed_book_evaluation_audits_requests_and_grades_private_key(tmp_path: Path) -> None:

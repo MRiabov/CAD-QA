@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from cad_qa.dataset.sft import public_answer_text
+
 
 def zero_shot_requests(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [
@@ -32,7 +34,7 @@ def few_shot_requests(
         prefix_messages.extend(
             [
                 {"role": "user", "content": example["prompt"]},
-                {"role": "assistant", "content": str(example["gold_answer"])},
+                {"role": "assistant", "content": public_answer_text(example)},
             ]
         )
     return [
@@ -48,7 +50,7 @@ def few_shot_requests(
 
 
 def oracle_responses(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    return [{"row_id": row["row_id"], "answer": row["gold_answer"]} for row in rows]
+    return [{"row_id": row["row_id"], "answer": public_answer_text(row)} for row in rows]
 
 
 def _request_metadata(row: dict[str, Any]) -> dict[str, Any]:
