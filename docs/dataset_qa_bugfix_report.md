@@ -367,14 +367,56 @@ minimum_cross_feature_value_bearing_share: 0.05
 parameter_balance_valid: false
 ```
 
+Generated-pool coverage check:
+
+```text
+graph_sources: 1000
+sources_with_successful_generated_rows: 906
+sources_in_release_10k: 900
+sources_with_no_successful_generated_rows: 94
+missing_source_current_query_count_distribution: {0: 94}
+```
+
+The 94 missing sources have ontology graphs, but the current query-family
+synthesis produces zero viable queries for each of them. Therefore the
+`distinct_cad_model_coverage` failure cannot be fixed by merely reselecting rows
+from the current generated pool.
+
+The missing-source graphs are not empty graph-build failures. Aggregate evidence
+over the 94 missing sources includes:
+
+```text
+operation nodes: 3402
+feature nodes: 3402
+profile nodes: 512
+material_region nodes: 189
+void_region nodes: 22
+face nodes: 35
+edge nodes: 6
+vertex nodes: 3
+```
+
+The common pattern is usable operation/profile/region evidence but too little
+kernel-backed primitive geometry, plus many repeated or non-unique measurements.
+Current release query families lean on unique extremes/ranks and kernel-backed
+face/edge/vertex evidence, so these graphs do not yield release queries.
+
 The public-answer fixes are complete. The remaining failures are release-scale
 distribution/evidence gates, not row-level public contract bugs.
 
-Still required before replacing `release_10k`:
+Current next-step classification:
 
 ```text
-rerender selector-count rank rows after tied-rank fix
-rerun semantic candidate-label QA
-rerun release validation/report generation
-replace release_10k artifacts only after the above are clean
+requires new usable graph/query coverage, then regeneration or backfill:
+- distinct_cad_model_coverage
+
+requires selection/balancing work over generated rows:
+- value_bearing_measurement_coverage
+- cross_feature_value_bearing_coverage
+- parameter_balance
+
+requires a benchmark-policy decision:
+- answer_entropy, because public candidate-label answers intentionally collapse
+  many entity-ID answers to labels A-G; the verifier now reports this as
+  `source_scoped_for_entity_id_raw_public_answer_otherwise`
 ```

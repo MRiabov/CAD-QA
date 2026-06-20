@@ -392,7 +392,7 @@ def release_balance_report(
             and largest_prompt_template_share <= profile.max_prompt_template_share
         ),
         "unique_answer_count": unique_answer_count,
-        "answer_identity_scope": "source_scoped_for_entity_id",
+        "answer_identity_scope": "source_scoped_for_entity_id_raw_public_answer_otherwise",
         "minimum_unique_answer_count": profile.min_unique_answer_count,
         "answer_entropy_bits": answer_entropy_bits,
         "minimum_answer_entropy_bits": profile.min_answer_entropy_bits,
