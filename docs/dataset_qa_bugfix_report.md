@@ -616,6 +616,42 @@ kernel-backed primitive geometry, plus many repeated or non-unique measurements.
 Current release query families lean on unique extremes/ranks and kernel-backed
 face/edge/vertex evidence, so these graphs do not yield release queries.
 
+Investigated non-fix: allowing parameterized material-region synthesis to fall
+back from `has_kernel_material_region_geometry` to
+`has_material_region_geometry`.
+
+Why it looked plausible:
+
+- The legacy resolver already has a fallback for broad material-region queries:
+  if no kernel material-region relation exists, it can use
+  `has_material_region_geometry`.
+- Several missing-source graphs contain material-region nodes and
+  `has_material_region_geometry` relations.
+
+Why it does not fix benchmark release coverage:
+
+- Trace-backed `has_material_region_geometry` rows are intentionally
+  quarantined by materialization with `conservative_region_projection`.
+- A bounded synthesis probe over the first 20 missing-source samples recovered
+  parameterized material-region queries for only 2 sources:
+  `src_2f97a3adeeb74225` and `src_3dac547343362b42`.
+- Resolving/materializing those recovered rows produced zero release-ready rows:
+
+```text
+src_2f97a3adeeb74225: 12 recovered rows, 0 release-ready,
+  quarantine_reasons: conservative_region_projection
+src_3dac547343362b42: 12 recovered rows, 0 release-ready,
+  quarantine_reasons: conservative_region_projection
+```
+
+Representative still-missing source `src_0dfdac491c60b901` has seven
+trace-backed material regions, but all hot region metrics are tied:
+`volume=17280.0` and centroid `(0.0, 0.0, 0.0)` for the inspected material
+regions. That leaves no unique extreme/rank and no equal-value selector metric
+to break the tie. Generating additional trace-backed region rows would increase
+CPU cost and quarantined output volume without helping the strict
+`benchmark-release` distinct-source gate.
+
 The public-answer fixes are complete. The remaining failures are release-scale
 distribution/evidence gates, not row-level public contract bugs.
 
