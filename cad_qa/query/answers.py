@@ -331,20 +331,44 @@ def _aggregation_consistent_candidate_ids(
     if gold_entity_id not in {entity_id for entity_id, _ in scored}:
         return None
     descending = aggregation in {"argmax", "rank_desc"}
-    ordered = [
-        entity_id
-        for entity_id, _ in sorted(
-            scored,
-            key=lambda item: (-float(item[1]) if descending else float(item[1]), item[0]),
-        )
-    ]
+    ordered_scored = sorted(
+        ((entity_id, float(value)) for entity_id, value in scored),
+        key=lambda item: (-item[1] if descending else item[1], item[0]),
+    )
     if aggregation in {"rank_desc", "rank_asc"}:
-        if aggregation_rank is None or aggregation_rank < 1 or aggregation_rank > max_candidate_labels:
+        if (
+            aggregation_rank is None
+            or aggregation_rank < 1
+            or aggregation_rank > max_candidate_labels
+            or aggregation_rank > len(ordered_scored)
+        ):
             return None
-        gold_index = ordered.index(gold_entity_id)
-        if gold_index != aggregation_rank - 1:
+        target_score = ordered_scored[aggregation_rank - 1][1]
+        gold_score = float(next(value for entity_id, value in scored if entity_id == gold_entity_id))
+        if abs(gold_score - target_score) > 1e-6:
             return None
-        return ordered[:max_candidate_labels]
+        if descending:
+            preceding = [entity_id for entity_id, score in ordered_scored if score > target_score + 1e-6]
+            tied = [entity_id for entity_id, score in ordered_scored if abs(score - target_score) <= 1e-6]
+            following = [entity_id for entity_id, score in ordered_scored if score < target_score - 1e-6]
+        else:
+            preceding = [entity_id for entity_id, score in ordered_scored if score < target_score - 1e-6]
+            tied = [entity_id for entity_id, score in ordered_scored if abs(score - target_score) <= 1e-6]
+            following = [entity_id for entity_id, score in ordered_scored if score > target_score + 1e-6]
+        needed_tied = aggregation_rank - len(preceding)
+        if needed_tied < 1:
+            return None
+        selected_tied = tied[:needed_tied]
+        if gold_entity_id not in selected_tied:
+            selected_tied.append(gold_entity_id)
+        selected = [*preceding, *selected_tied]
+        if len(selected) > max_candidate_labels:
+            return None
+        for entity_id in following:
+            if len(selected) >= max_candidate_labels:
+                break
+            selected.append(entity_id)
+        return selected
 
     gold_score = float(next(value for entity_id, value in scored if entity_id == gold_entity_id))
     if aggregation == "argmax":

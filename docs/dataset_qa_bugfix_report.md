@@ -1,0 +1,367 @@
+# Dataset QA Bug/Fix Report
+
+This document records concrete dataset QA failures found while auditing
+`runs/current_cadevolve1000_10k_regen_20260613/release_10k/rows.parquet`, plus
+the corresponding fixes. It is intentionally example-driven so each fix can be
+reviewed against actual malformed rows.
+
+## Current Artifact Status
+
+- `release_10k/rows.parquet`: 10,000 rows, rewritten in place through the
+  current resolver/materializer code.
+- The rewrite preserves the original 10,000 selected row IDs and 900 source IDs.
+- Public-answer QA now passes for the release artifact: no internal entity-ID
+  answer contract, no colon-bearing public gold answers, no overwide candidate
+  lists, no ambiguous reassigned source-ref answers, and no duplicate prompts.
+- Default `release-candidate` validation passes. The stricter
+  `benchmark-release` verifier still fails release-scale distribution/evidence
+  gates; see "Remaining Benchmark Gates" below.
+
+## Bug 1: Public Rows Asked For Internal Entity IDs
+
+### Example malformed row
+
+Row:
+`row:graph:src_0113e9be89285bf2:synth:v3:parameterized_edge_spatial_relation_tie_break_extreme`
+
+Malformed answer:
+
+```text
+edge:kernel:snapshot_wp11_edges:964744ac2162c9e6
+```
+
+Malformed instruction:
+
+```text
+Return exactly one entity_id.
+```
+
+### Why this is wrong
+
+The public task asks a model to answer from the CadQuery script. A kernel entity
+ID with an internal hash is not recoverable from the script and trains/evaluates
+on hidden implementation identifiers instead of CAD reasoning.
+
+### Fix
+
+For public entity targets such as edges, faces, selectors, and path segments, the
+resolver now switches to public candidate labels. The prompt exposes a bounded
+choice list, and the gold answer is a label such as `A`, not an internal ID.
+
+### Evidence
+
+Row-level QA on the rewritten temp artifact:
+
+```text
+entity_id_instruction: 0
+colon_gold: 0
+```
+
+## Bug 2: Candidate Label Lists Were Too Wide
+
+### Example malformed pattern
+
+Earlier QA found candidate-label rows with more than 26 choices, including rows
+with more than 50 choices.
+
+### Why this is wrong
+
+Long ABCD-style lists become their own search task and are not realistic for a
+short-answer CAD reasoning benchmark. They also make the prompt expensive and
+hard to inspect manually.
+
+### Fix
+
+Public candidate labels are capped at `DEFAULT_MAX_CANDIDATE_LABELS = 7`.
+Validation rejects public candidate-label rows above that cap.
+
+### Evidence
+
+Current release artifact candidate-label distribution:
+
+```text
+{2: 590, 3: 383, 4: 596, 5: 236, 6: 331, 7: 3014}
+over_7_labels: 0
+```
+
+## Bug 3: Ranked Candidate Caps Could Contradict The Prompt
+
+### Example malformed row
+
+Row:
+`row:graph:src_5ca05f6a3542ab35:synth:v4:parameterized_kernel_edge_selector_count_rank`
+
+The prompt asks for the 4th selector by ascending selected-entity count, but the
+visible choices after capping had these selected counts:
+
+```text
+G: 20
+A: 30
+B: 57
+C: 60
+D: 12  <- gold
+E: 12
+F: 12
+```
+
+If the model orders the visible choices by `selected_count`, the 4th visible
+score is `20`, not the gold score `12`.
+
+### Why this is wrong
+
+The resolver ranks over the full pre-final candidate set. If the public bounded
+choice list hides enough tied or preceding candidates, the visible list no
+longer matches the ranking instruction.
+
+### Fix
+
+The candidate cap now preserves tied rank buckets. For `rank_asc`/`rank_desc`,
+the visible list must include enough candidates before/inside the rank bucket
+that the requested rank still has the same score, and it must include the gold
+tied candidate. If that cannot fit within the public cap, the sampler does not
+pretend an arbitrary distractor list is valid.
+
+### Evidence
+
+Regression coverage:
+
+```text
+test_candidate_label_rank_choices_preserve_tied_rank_bucket
+```
+
+Full rewritten release semantic QA:
+
+```text
+semantic_issues: 0
+```
+
+## Bug 4: Selector-Expression Choices Collapsed To Duplicates
+
+### Example malformed row
+
+Row:
+`row:graph:src_b956c385e28ae807:synth:parameterized_kernel_face_selector_count_rank`
+
+Malformed choices:
+
+```text
+A: `part.faces()`
+B: `part.faces()`
+```
+
+### Why this is wrong
+
+Both choices render identically, so the prompt asks the model to choose between
+indistinguishable public answers. This happened when multiple snapshot selectors
+shared the same source-level expression.
+
+### Fix
+
+Ranked selector tasks fall back to descriptive candidate labels instead of
+selector-expression choices. Descriptions include selection type, selected count,
+and relevant selection geometry measurements.
+
+## Bug 5: Reassigned Source Variables Made Text Answers Ambiguous
+
+### Example malformed row
+
+Row:
+`row:graph:src_b956c385e28ae807:synth:parameterized_feature_extreme`
+
+Malformed answer:
+
+```text
+part
+```
+
+The source script assigns `part = ...` seven times.
+
+### Why this is wrong
+
+Returning `part` does not identify which feature or operation is selected when
+the variable is reassigned repeatedly.
+
+### Fix
+
+If a source-ref answer is not publicly unambiguous, the resolver falls back to
+candidate labels. Source-like candidate descriptions include source variable,
+source line, operation, and query-relevant measurements.
+
+### Evidence
+
+Release artifact QA:
+
+```text
+ambiguous_source_ref_rows: 0
+```
+
+## Bug 6: Region References Mentioned Zero Volume As Evidence
+
+### Example malformed row
+
+Row:
+`row:graph:src_0ea1428289f29a30:synth:v2:parameterized_path_segment_reference_entity_distance_rank`
+
+Malformed clue:
+
+```text
+Use as the reference the added-material region with volume 0.0 and centroid coordinates (89.0, 0.0, -78.0).
+```
+
+### Why this is wrong
+
+For these region-reference rows, `volume 0.0` is not useful public evidence and
+looks like a broken geometry measurement. The centroid coordinates already
+identify the reference anchor.
+
+### Fix
+
+Region reference templates now omit volume and describe the reference by
+centroid or bounding-box center coordinates.
+
+### Evidence
+
+After rerendering the affected release rows:
+
+```text
+zero_volume_region_reference: 0
+```
+
+## Bug 7: Near-Zero Metric Values Rounded To `0`
+
+### Example malformed pattern
+
+Source-like candidate labels could show several centroid values as:
+
+```text
+centroid y 0
+```
+
+even when the resolver was distinguishing tiny nonzero values such as
+`1.427843e-14`.
+
+### Why this is wrong
+
+The visible prompt looked tied, so the tie-break instruction could appear to
+select a different candidate than the resolver-selected gold.
+
+### Fix
+
+Source-like candidate metric formatting now uses scientific notation when a
+nonzero value would otherwise round to `0` at the normal display precision.
+
+## Bug 8: Kernel Floating-Point Noise Could Override Visible Tie-Breaks
+
+### Example malformed row
+
+Row:
+`row:graph:src_a674edb7b5a597b0:synth:v3:parameterized_edge_spatial_relation_tie_break_extreme`
+
+Malformed visible choices:
+
+```text
+A: midpoint (57.5, 0, -100); length 5
+B: midpoint (64, -2.5, -100); length 13
+C: midpoint (70.5, 0, -100); length 5
+```
+
+Malformed gold answer:
+
+```text
+C
+```
+
+The prompt said to choose the greatest midpoint Z coordinate, then break ties by
+greatest edge length. All visible midpoint Z values are `-100`, so the public
+answer should be `B`, not `C`.
+
+### Why this is wrong
+
+The resolver compared raw kernel floats for primary `argmax`/`argmin`. In this
+row, `C` had raw midpoint Z `-99.99999999999997` while the other visible choices
+had `-100.0`. That difference is invisible at the public prompt precision and
+should not beat the stated tie-break.
+
+### Fix
+
+Primary metric aggregation now uses the same `VALUE_MATCH_TOLERANCE` already
+used for ranked aggregation and reference-distance aggregation. Display-equivalent
+floating-point noise leaves a tied candidate set, then the explicit tie-break
+aggregation resolves it.
+
+### Evidence
+
+The row above now resolves to:
+
+```text
+gold: B
+trace_final: edge:kernel:snapshot_wp18_edges:3bae1c84184e8e95
+```
+
+Regression coverage:
+
+```text
+test_candidate_label_extreme_uses_tie_break_for_float_noise
+```
+
+## Verification Checklist
+
+The rewritten release artifact has passed:
+
+```text
+rows: 10000
+validate_rows(..., release=True): valid
+entity_id_instruction: 0
+colon_gold: 0
+over_7_labels: 0
+ambiguous_source_ref_rows: 0
+duplicate_prompt_groups: 0
+zero_volume_region_reference: 0
+semantic_checked: 4997
+semantic_uncheckable: {'missing_metric': 150, 'missing_tie_metric': 3}
+semantic_issues: 0
+```
+
+## Remaining Benchmark Gates
+
+The default `release-candidate` verifier passes:
+
+```text
+valid_for_release: true
+blocking_gates: []
+```
+
+The stricter `benchmark-release` verifier still fails:
+
+```text
+blocking_gates:
+- distinct_cad_model_coverage
+- answer_entropy
+- value_bearing_measurement_coverage
+- cross_feature_value_bearing_coverage
+- parameter_balance
+- preview_evidence
+```
+
+Concrete strict-gate numbers:
+
+```text
+distinct_cad_model_count: 900
+minimum_distinct_cad_model_count: 1000
+answer_entropy_bits: 6.940893592407393
+minimum_answer_entropy_bits: 8.0
+cross_feature_value_bearing_share: 0.0332
+minimum_cross_feature_value_bearing_share: 0.05
+```
+
+The public-answer fixes are complete. The remaining failures are release-scale
+distribution/evidence gates, not row-level public contract bugs.
+
+Still required before replacing `release_10k`:
+
+```text
+rerender selector-count rank rows after tied-rank fix
+rerun semantic candidate-label QA
+rerun release validation/report generation
+replace release_10k artifacts only after the above are clean
+```

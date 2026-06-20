@@ -2404,7 +2404,7 @@ def _apply_metric_aggregation(
     if not scored:
         return []
     target = max(score for score, _ in scored) if aggregation == "argmax" else min(score for score, _ in scored)
-    return [node for score, node in scored if score == target]
+    return [node for score, node in scored if abs(score - target) <= VALUE_MATCH_TOLERANCE]
 
 
 def _apply_metric_rank_aggregation(

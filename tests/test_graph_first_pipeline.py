@@ -3035,6 +3035,37 @@ def test_candidate_label_answers_bound_public_label_lists() -> None:
     assert validate_rows([to_jsonable(row)])["valid"]
 
 
+def test_candidate_label_extreme_uses_tie_break_for_float_noise() -> None:
+    graph = OntologyGraph(graph_id="graph:float-noise-label-cap", source={"source_id": "synthetic", "source_code": ""})
+    for node_id, z_value, length in (
+        ("edge:a", -100.0, 5.0),
+        ("edge:b", -100.0, 13.0),
+        ("edge:c", -99.99999999999997, 5.0),
+    ):
+        graph.add_node(Node(node_id, "edge", node_id))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "midpoint_z", z_value, "mm"))
+        graph.add_measurement(Measurement(node_id, "entity_geometry", "edge_length", length, "mm"))
+    query = QueryProgram(
+        query_id="graph:float-noise-label-cap:synth:edge",
+        target_type="edge",
+        answer_spec=synthesis_answer_spec_for_target_type("edge", graph),
+        aggregation="argmax",
+        aggregation_metric="midpoint_z",
+        tie_break_aggregation="argmax",
+        tie_break_metric="edge_length",
+        hop_count=3,
+    )
+
+    resolution = resolve_query(graph, query)
+    row = materialize_row(graph, resolution)
+    labels = row.query_program["answer_spec"]["candidate_labels"]
+
+    assert resolution.candidate_trace.steps[-1]["step"] == "tie_break_aggregation"
+    assert resolution.candidate_trace.final_candidates == ["edge:b"]
+    assert row.gold_answer == labels["edge:b"]
+    assert validate_rows([to_jsonable(row)])["valid"]
+
+
 def test_candidate_label_rank_choices_preserve_visible_rank_semantics() -> None:
     graph = OntologyGraph(graph_id="graph:rank-label-cap", source={"source_id": "synthetic", "source_code": ""})
     for index in range(20):
@@ -3064,6 +3095,42 @@ def test_candidate_label_rank_choices_preserve_visible_rank_semantics() -> None:
     assert len(labels) == 7
     assert row.gold_answer == labels["edge:04"]
     assert displayed[4][1] == row.gold_answer
+    assert validate_rows([to_jsonable(row)])["valid"]
+
+
+def test_candidate_label_rank_choices_preserve_tied_rank_bucket() -> None:
+    graph = OntologyGraph(graph_id="graph:tied-rank-label-cap", source={"source_id": "synthetic", "source_code": ""})
+    for index, count in enumerate([12, 12, 12, 12, 20, 30, 57, 60, 70]):
+        node_id = f"selector:s{index}"
+        graph.add_node(Node(node_id, "selector", node_id, properties={"selector_kind": "edges", "selector_label": f"s{index} edges"}))
+        graph.add_measurement(Measurement(node_id, "selection", "selected_count", float(count), None))
+        graph.add_measurement(Measurement(node_id, "selection", "selected_edge_max_midpoint_y", float(index), "mm"))
+    query = QueryProgram(
+        query_id="graph:tied-rank-label-cap:synth:selector",
+        target_type="selector",
+        answer_spec=synthesis_answer_spec_for_target_type("selector", graph),
+        aggregation="rank_asc",
+        aggregation_metric="selected_count",
+        aggregation_rank=4,
+        tie_break_aggregation="argmax",
+        tie_break_metric="selected_edge_max_midpoint_y",
+        hop_count=3,
+    )
+
+    row = materialize_row(graph, resolve_query(graph, query))
+    labels = row.query_program["answer_spec"]["candidate_labels"]
+    displayed = sorted(
+        (
+            graph.measurements_for(entity_id, "selected_count")[0].value,
+            entity_id,
+            label,
+        )
+        for entity_id, label in labels.items()
+    )
+
+    assert len(labels) == 7
+    assert graph.measurements_for(next(entity_id for entity_id, label in labels.items() if label == row.gold_answer), "selected_count")[0].value == 12
+    assert displayed[3][0] == 12
     assert validate_rows([to_jsonable(row)])["valid"]
 
 
