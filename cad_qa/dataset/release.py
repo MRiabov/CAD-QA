@@ -796,10 +796,9 @@ def _sampled_parameter_cap_drop_batch(
             if len(value_groups) < _minimum_group_count_for_share(max_share):
                 continue
             for value, value_rows in sorted(value_groups.items(), key=lambda item: (-len(item[1]), item[0])):
-                remaining_family_rows = [row for row in current_family_rows if id(row) not in selected_ids]
-                remaining_value_ids = {id(row) for row in value_rows}
-                value_rows = [row for row in remaining_family_rows if id(row) in remaining_value_ids]
-                other_count = len(remaining_family_rows) - len(value_rows)
+                value_rows = [row for row in value_rows if id(row) not in selected_ids]
+                remaining_family_count = len(current_family_rows) - family_drop_counts[family]
+                other_count = remaining_family_count - len(value_rows)
                 allowed_count = max(1, _allowed_share_count(other_count, max_share))
                 if len(value_rows) <= allowed_count:
                     continue

@@ -1136,3 +1136,11 @@ and includes simulated distinct-model coverage fields when
 `--simulate-release-balance` is used. Candidate-breadth diagnostics require
 `--include-candidate-trace`; the default projection skips `candidate_trace`
 because loading full traces from the generated pool is materially slower.
+
+The sampled-parameter cap loop also no longer rebuilds the full remaining
+family row list for every parameter value. It computes the remaining family rows
+once per dimension and updates counts as rows are selected for dropping. This is
+a performance-only change: the current source-preserving simulated release still
+represents 906 sources and still has 133 parameter-balance violations, but the
+simulation now completes instead of hanging in `_sampled_parameter_cap_drop_batch`
+during interactive QA.
