@@ -23,7 +23,9 @@ from cad_qa.dataset.release_report import (
     release_gate_profile,
 )
 from cad_qa.dataset.sft import prompt_family
-from cad_qa.io import write_json
+from cad_qa.io import iter_records, write_json
+from cad_qa.ontology.nodes import graph_from_dict
+from cad_qa.query.synthesis import synthesize_graph_hop_queries
 
 
 ROW_COLUMNS = (
@@ -53,17 +55,46 @@ def main() -> None:
         default="benchmark-release",
         help="Release gate profile to analyze against.",
     )
+    parser.add_argument(
+        "--graph-dir",
+        type=Path,
+        help="Optional graph shard directory. Adds source coverage diagnostics against graph artifacts.",
+    )
+    parser.add_argument(
+        "--analyze-missing-query-counts",
+        action="store_true",
+        help="For graph sources with no generated rows, rebuild current synthesis query counts.",
+    )
+    parser.add_argument(
+        "--max-missing-query-analysis",
+        type=int,
+        help="Optional cap on missing graph sources to run through query synthesis.",
+    )
     parser.add_argument("--out", type=Path, help="Optional JSON output path.")
     args = parser.parse_args()
 
     rows = _read_pool_rows(args.dataset_stream)
-    report = release_gate_feasibility_report(rows, release_tier=args.release_tier)
+    graph_records = _iter_graph_records(args.graph_dir) if args.graph_dir is not None else None
+    report = release_gate_feasibility_report(
+        rows,
+        release_tier=args.release_tier,
+        graph_records=graph_records,
+        analyze_missing_query_counts=args.analyze_missing_query_counts,
+        max_missing_query_analysis=args.max_missing_query_analysis,
+    )
     if args.out is not None:
         write_json(args.out, report)
     print(json.dumps(report, indent=2, sort_keys=True))
 
 
-def release_gate_feasibility_report(rows: list[dict[str, Any]], *, release_tier: str) -> dict[str, Any]:
+def release_gate_feasibility_report(
+    rows: list[dict[str, Any]],
+    *,
+    release_tier: str,
+    graph_records: Any | None = None,
+    analyze_missing_query_counts: bool = False,
+    max_missing_query_analysis: int | None = None,
+) -> dict[str, Any]:
     profile = release_gate_profile(release_tier)
     row_count = len(rows)
     source_ids = {row.get("source_id") for row in rows if row.get("source_id")}
@@ -94,7 +125,7 @@ def release_gate_feasibility_report(rows: list[dict[str, Any]], *, release_tier:
         else None
     )
     parameter_violations = parameter_report.get("violations", [])
-    return {
+    report = {
         "release_tier": profile.name,
         "pool_row_count": row_count,
         "pool_source_count": len(source_ids),
@@ -131,6 +162,75 @@ def release_gate_feasibility_report(rows: list[dict[str, Any]], *, release_tier:
         "parameter_balance_full_pool_dimension_counts": dict(Counter(v["dimension"] for v in parameter_violations).most_common()),
         "parameter_balance_full_pool_family_counts": dict(Counter(v["prompt_family"] for v in parameter_violations).most_common()),
     }
+    if graph_records is not None:
+        report.update(
+            graph_source_coverage_report(
+                source_ids,
+                graph_records,
+                analyze_missing_query_counts=analyze_missing_query_counts,
+                max_missing_query_analysis=max_missing_query_analysis,
+            )
+        )
+    return report
+
+
+def graph_source_coverage_report(
+    generated_source_ids: set[str | None],
+    graph_records: Any,
+    *,
+    analyze_missing_query_counts: bool = False,
+    max_missing_sample: int = 20,
+    max_missing_query_analysis: int | None = None,
+) -> dict[str, Any]:
+    generated = {source_id for source_id in generated_source_ids if source_id}
+    graph_sources: set[str] = set()
+    graph_sources_with_rows: set[str] = set()
+    missing_sources: list[str] = []
+    missing_node_type_counts: Counter[str] = Counter()
+    missing_query_counts: Counter[int] = Counter()
+    missing_query_count_errors: Counter[str] = Counter()
+    missing_query_count_analyzed = 0
+    missing_query_count_skipped = 0
+
+    for record in graph_records:
+        source_id = _graph_source_id(record)
+        if not source_id:
+            continue
+        graph_sources.add(source_id)
+        if source_id in generated:
+            graph_sources_with_rows.add(source_id)
+            continue
+        missing_sources.append(source_id)
+        missing_node_type_counts.update(_node_type_counts(record))
+        if analyze_missing_query_counts:
+            if max_missing_query_analysis is not None and missing_query_count_analyzed >= max_missing_query_analysis:
+                missing_query_count_skipped += 1
+                continue
+            try:
+                graph = graph_from_dict(record)
+                missing_query_counts.update([len(synthesize_graph_hop_queries(graph, max_per_family=1))])
+                missing_query_count_analyzed += 1
+            except Exception as exc:  # pragma: no cover - defensive diagnostic path
+                missing_query_count_errors.update([type(exc).__name__])
+                missing_query_count_analyzed += 1
+
+    graph_sources_missing_rows = sorted(set(missing_sources))
+    report = {
+        "graph_source_count": len(graph_sources),
+        "pool_sources_with_generated_rows": len(generated),
+        "graph_sources_with_generated_rows": len(graph_sources_with_rows),
+        "graph_sources_missing_generated_rows_count": len(graph_sources_missing_rows),
+        "graph_sources_missing_generated_rows_sample": graph_sources_missing_rows[:max_missing_sample],
+        "missing_source_node_type_counts": dict(missing_node_type_counts.most_common()),
+    }
+    if analyze_missing_query_counts:
+        report["missing_source_query_count_distribution"] = {
+            str(count): total for count, total in sorted(missing_query_counts.items())
+        }
+        report["missing_source_query_count_analyzed"] = missing_query_count_analyzed
+        report["missing_source_query_count_skipped"] = missing_query_count_skipped
+        report["missing_source_query_count_error_counts"] = dict(missing_query_count_errors.most_common())
+    return report
 
 
 def _read_pool_rows(dataset_stream: Path) -> list[dict[str, Any]]:
@@ -151,6 +251,40 @@ def _read_pool_rows(dataset_stream: Path) -> list[dict[str, Any]]:
                     row["query_program"] = json.loads(query_program)
                 rows.append(row)
     return rows
+
+
+def _iter_graph_records(graph_dir: Path):
+    paths = _record_paths(graph_dir)
+    if not paths and (graph_dir / "graphs").is_dir():
+        paths = _record_paths(graph_dir / "graphs")
+    if not paths:
+        raise FileNotFoundError(f"no graph record parquets found under {graph_dir}")
+    for path in paths:
+        yield from iter_records(path, batch_size=100)
+
+
+def _record_paths(path: Path) -> list[Path]:
+    if path.is_file():
+        return [path]
+    return sorted(path.glob("part-*.parquet"))
+
+
+def _graph_source_id(record: dict[str, Any]) -> str | None:
+    source = record.get("source")
+    if isinstance(source, dict) and source.get("source_id"):
+        return str(source["source_id"])
+    graph_id = record.get("graph_id")
+    if isinstance(graph_id, str) and graph_id.startswith("graph:"):
+        return graph_id.split(":", 1)[1]
+    return None
+
+
+def _node_type_counts(record: dict[str, Any]) -> Counter[str]:
+    counts: Counter[str] = Counter()
+    for node in record.get("nodes") or []:
+        if isinstance(node, dict) and node.get("type"):
+            counts.update([str(node["type"])])
+    return counts
 
 
 if __name__ == "__main__":

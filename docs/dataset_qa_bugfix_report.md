@@ -443,14 +443,23 @@ Generated-pool strict-gate feasibility can be reproduced with:
 ```bash
 uv run python tools/analyze_release_gate_feasibility.py \
   --dataset-stream runs/current_cadevolve1000_10k_regen_20260613/dataset_stream \
+  --graph-dir runs/current_cadevolve1000_10k_regen_20260613/graph/graphs \
+  --analyze-missing-query-counts \
   --out /tmp/cadqa_release_gate_feasibility.json
 ```
+
+For a cheaper smoke check, add `--max-missing-query-analysis N`; source
+coverage and node-type counts remain complete, while query-count synthesis is
+limited to the first `N` missing sources.
 
 Current generated-pool feasibility summary:
 
 ```text
 pool_row_count: 168987
 pool_source_count: 906
+graph_source_count: 1000
+graph_sources_missing_generated_rows_count: 94
+missing_source_query_count_distribution: {"0": 94}
 pool_family_count: 60
 families_with_at_least_minimum_rows: 60
 family_min_available_rows: 272
@@ -485,14 +494,22 @@ The missing-source graphs are not empty graph-build failures. Aggregate evidence
 over the 94 missing sources includes:
 
 ```text
+source nodes: 94
+parameter nodes: 4293
 operation nodes: 3402
 feature nodes: 3402
+workplane nodes: 810
 profile nodes: 512
+centroid nodes: 419
+solid nodes: 274
+sketch nodes: 202
 material_region nodes: 189
+selector nodes: 154
 void_region nodes: 22
 face nodes: 35
 edge nodes: 6
 vertex nodes: 3
+origin nodes: 3
 ```
 
 The common pattern is usable operation/profile/region evidence but too little

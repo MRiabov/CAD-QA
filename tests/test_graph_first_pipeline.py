@@ -99,7 +99,7 @@ from cad_qa.source import (
 )
 from cad_qa.trace import TraceRecord, cadquery_available, trace_report, trace_source, trace_sources_bounded
 from cad_qa.cli import main as cli_main
-from tools.analyze_release_gate_feasibility import release_gate_feasibility_report
+from tools.analyze_release_gate_feasibility import graph_source_coverage_report, release_gate_feasibility_report
 
 
 SOURCE = """
@@ -9527,6 +9527,47 @@ def test_release_gate_feasibility_report_summarizes_generated_pool_capacity() ->
     assert report["maximum_value_bearing_rows_for_release"] == 3000
     assert "parameter_balance_full_pool_valid" in report
     assert report["parameter_balance_full_pool_dimension_counts"]
+
+
+def test_graph_source_coverage_report_identifies_sources_without_generated_rows() -> None:
+    graph_records = [
+        {
+            "graph_id": "graph:src_a",
+            "source": {"source_id": "src_a"},
+            "nodes": [{"id": "face:a", "type": "face", "label": "face:a"}],
+        },
+        {
+            "graph_id": "graph:src_b",
+            "source": {"source_id": "src_b"},
+            "nodes": [
+                {"id": "feature:b", "type": "feature", "label": "feature:b"},
+                {"id": "profile:b", "type": "profile", "label": "profile:b"},
+            ],
+        },
+        {
+            "graph_id": "graph:src_c",
+            "source": {"source_id": "src_c"},
+            "nodes": [{"id": "feature:c", "type": "feature", "label": "feature:c"}],
+        },
+    ]
+
+    report = graph_source_coverage_report({"src_a", "src_c"}, graph_records)
+
+    assert report["graph_source_count"] == 3
+    assert report["pool_sources_with_generated_rows"] == 2
+    assert report["graph_sources_with_generated_rows"] == 2
+    assert report["graph_sources_missing_generated_rows_count"] == 1
+    assert report["graph_sources_missing_generated_rows_sample"] == ["src_b"]
+    assert report["missing_source_node_type_counts"] == {"feature": 1, "profile": 1}
+
+    capped_report = graph_source_coverage_report(
+        set(),
+        graph_records,
+        analyze_missing_query_counts=True,
+        max_missing_query_analysis=1,
+    )
+    assert capped_report["missing_source_query_count_analyzed"] == 1
+    assert capped_report["missing_source_query_count_skipped"] == 2
 
 
 def test_release_export_balance_caps_overrepresented_training_slices() -> None:
