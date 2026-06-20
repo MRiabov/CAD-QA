@@ -10533,6 +10533,7 @@ def test_benchmark_release_blocks_low_distinct_cad_model_coverage() -> None:
 
     assert balance["distinct_cad_model_count"] == 1
     assert balance["minimum_distinct_cad_model_count"] == 2
+    assert balance["distinct_cad_model_deficit_count"] == 1
     assert not balance["passes_distinct_cad_model_coverage"]
     assert not verifier["stop_gates"]["distinct_cad_model_coverage"]
     assert "distinct_cad_model_coverage" in verifier["blocking_gates"]

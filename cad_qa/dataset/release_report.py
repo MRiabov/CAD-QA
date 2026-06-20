@@ -382,6 +382,11 @@ def release_balance_report(
         "minimum_applicable_rows": profile.min_applicable_rows,
         "distinct_cad_model_count": distinct_cad_model_count,
         "minimum_distinct_cad_model_count": minimum_distinct_cad_model_count,
+        "distinct_cad_model_deficit_count": (
+            None
+            if minimum_distinct_cad_model_count is None
+            else max(0, minimum_distinct_cad_model_count - distinct_cad_model_count)
+        ),
         "minimum_distinct_cad_model_share": profile.min_distinct_cad_model_share,
         "cad_model_identity_scope": "source_metadata cad_model_id/source_model_id/model_id, else source_id",
         "passes_distinct_cad_model_coverage": (

@@ -417,6 +417,7 @@ Concrete strict-gate numbers:
 ```text
 distinct_cad_model_count: 900
 minimum_distinct_cad_model_count: 1000
+distinct_cad_model_deficit_count: 100
 unique_answer_count: 2295
 minimum_unique_answer_count: 1000
 answer_entropy_bits: 6.940893592407393
