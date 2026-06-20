@@ -17,9 +17,11 @@ from typing import Any
 import pyarrow.parquet as pq
 
 from cad_qa.dataset.parameter_balance import parameter_balance_report
+from cad_qa.dataset.release import _cap_release_balance_rows
 from cad_qa.dataset.release_report import (
     _is_cross_feature_value_bearing_row,
     _is_value_bearing_measurement_row,
+    release_balance_report,
     release_gate_profile,
 )
 from cad_qa.dataset.sft import prompt_family
@@ -70,6 +72,11 @@ def main() -> None:
         type=int,
         help="Optional cap on missing graph sources to run through query synthesis.",
     )
+    parser.add_argument(
+        "--simulate-release-balance",
+        action="store_true",
+        help="Run the release balance capping pass and report compact post-cap gate diagnostics.",
+    )
     parser.add_argument("--out", type=Path, help="Optional JSON output path.")
     args = parser.parse_args()
 
@@ -81,6 +88,7 @@ def main() -> None:
         graph_records=graph_records,
         analyze_missing_query_counts=args.analyze_missing_query_counts,
         max_missing_query_analysis=args.max_missing_query_analysis,
+        simulate_release_balance=args.simulate_release_balance,
     )
     if args.out is not None:
         write_json(args.out, report)
@@ -94,6 +102,7 @@ def release_gate_feasibility_report(
     graph_records: Any | None = None,
     analyze_missing_query_counts: bool = False,
     max_missing_query_analysis: int | None = None,
+    simulate_release_balance: bool = False,
 ) -> dict[str, Any]:
     profile = release_gate_profile(release_tier)
     row_count = len(rows)
@@ -171,7 +180,45 @@ def release_gate_feasibility_report(
                 max_missing_query_analysis=max_missing_query_analysis,
             )
         )
+    if simulate_release_balance:
+        report["simulated_release_balance"] = simulated_release_balance_report(rows, release_tier=profile.name)
     return report
+
+
+def simulated_release_balance_report(rows: list[dict[str, Any]], *, release_tier: str) -> dict[str, Any]:
+    profile = release_gate_profile(release_tier)
+    release_floor = (
+        profile.min_release_rows
+        if profile.min_release_rows is not None and len(rows) >= profile.min_release_rows
+        else None
+    )
+    capped_rows, exclusions = _cap_release_balance_rows(rows, profile)
+    balance = release_balance_report(capped_rows, release_tier=profile.name)
+    parameter_report = parameter_balance_report(
+        capped_rows,
+        max_parameter_value_share=profile.max_parameter_value_share,
+        min_axis_direction_share=profile.min_axis_direction_parameter_share,
+        enforce=profile.enforce_parameter_balance,
+    )
+    parameter_violations = parameter_report.get("violations", [])
+    return {
+        "input_row_count": len(rows),
+        "output_row_count": len(capped_rows),
+        "release_floor": release_floor,
+        "exclusion_count": len(exclusions),
+        "exclusion_reason_counts": dict(Counter(item["reason"] for item in exclusions).most_common()),
+        "passes_prompt_family_balance": balance["passes_prompt_family_balance"],
+        "passes_prompt_template_balance": balance["passes_prompt_template_balance"],
+        "passes_value_bearing_measurement_coverage": balance["passes_value_bearing_measurement_coverage"],
+        "value_bearing_measurement_share": balance["value_bearing_measurement_share"],
+        "passes_cross_feature_value_bearing_coverage": balance["passes_cross_feature_value_bearing_coverage"],
+        "cross_feature_value_bearing_share": balance["cross_feature_value_bearing_share"],
+        "parameter_balance_valid": bool(parameter_report.get("valid")),
+        "parameter_balance_violation_count": len(parameter_violations),
+        "parameter_balance_reason_counts": dict(Counter(v["reason"] for v in parameter_violations)),
+        "parameter_balance_dimension_counts": dict(Counter(v["dimension"] for v in parameter_violations).most_common()),
+        "parameter_balance_family_counts": dict(Counter(v["prompt_family"] for v in parameter_violations).most_common()),
+    }
 
 
 def graph_source_coverage_report(

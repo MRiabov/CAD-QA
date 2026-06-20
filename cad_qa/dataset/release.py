@@ -758,11 +758,15 @@ def _sampled_parameter_cap_drop_batch(
             continue
         family_drop_budget = len(current_family_rows) - family_minimum_rows
         for dimension in PARAMETER_DIVERSITY_DIMENSIONS:
-            value_groups = _sampled_parameter_value_groups(current_family_rows, dimension)
+            remaining_family_rows = [row for row in current_family_rows if id(row) not in selected_ids]
+            value_groups = _sampled_parameter_value_groups(remaining_family_rows, dimension)
             if len(value_groups) < _minimum_group_count_for_share(max_share):
                 continue
             for value, value_rows in sorted(value_groups.items(), key=lambda item: (-len(item[1]), item[0])):
-                other_count = len(current_family_rows) - len(value_rows)
+                remaining_family_rows = [row for row in current_family_rows if id(row) not in selected_ids]
+                remaining_value_ids = {id(row) for row in value_rows}
+                value_rows = [row for row in remaining_family_rows if id(row) in remaining_value_ids]
+                other_count = len(remaining_family_rows) - len(value_rows)
                 allowed_count = max(1, _allowed_share_count(other_count, max_share))
                 if len(value_rows) <= allowed_count:
                     continue
@@ -771,7 +775,7 @@ def _sampled_parameter_cap_drop_batch(
                 if remaining_family_budget <= 0 or remaining_total_budget <= 0:
                     continue
                 drop_count = min(len(value_rows) - allowed_count, remaining_family_budget, remaining_total_budget)
-                candidates = [row for row in sorted(value_rows, key=priority, reverse=True) if id(row) not in selected_ids]
+                candidates = sorted(value_rows, key=priority, reverse=True)
                 for row in candidates[:drop_count]:
                     selected_ids.add(id(row))
                     family_drop_counts[family] += 1

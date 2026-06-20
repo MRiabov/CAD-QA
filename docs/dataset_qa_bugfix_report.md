@@ -445,6 +445,7 @@ uv run python tools/analyze_release_gate_feasibility.py \
   --dataset-stream runs/current_cadevolve1000_10k_regen_20260613/dataset_stream \
   --graph-dir runs/current_cadevolve1000_10k_regen_20260613/graph/graphs \
   --analyze-missing-query-counts \
+  --simulate-release-balance \
   --out /tmp/cadqa_release_gate_feasibility.json
 ```
 
@@ -556,6 +557,44 @@ Regression coverage:
 ```text
 test_release_balance_wires_sampled_parameter_cap_when_enforced
 test_release_export_caps_overrepresented_sampled_parameter_values
+```
+
+### Fix: sampled-parameter cap over-dropped correlated dimensions
+
+Bug:
+
+The sampled-parameter cap evaluated each dimension against the original family
+rows even after selecting rows to drop. Correlated dimensions could therefore
+double-count the same collapse. For example, rows with
+`aggregation_axis=x` usually also have `aggregation_metric=centroid_x`; after
+dropping enough `x` rows, the cap still evaluated `centroid_x` against the
+pre-drop counts and dropped the remaining `x` rows too.
+
+Malformed balancing behavior:
+
+```text
+input aggregation_axis counts: x=14, y=3, z=3
+old post-cap counts: x=0, y=3, z=3
+```
+
+That satisfies the max-share rule numerically, but it destroys representation
+for the overrepresented value instead of reducing it to the allowed share.
+
+Fix:
+
+The cap now recomputes each dimension/value group from the still-kept family
+rows after every drop batch. The same fixture now keeps a balanced distribution:
+
+```text
+new post-cap counts: x=3, y=3, z=3
+```
+
+Regression coverage:
+
+```text
+test_release_export_caps_overrepresented_sampled_parameter_values
+test_release_balance_wires_sampled_parameter_cap_when_enforced
+test_release_feasibility_simulates_release_balance_caps
 ```
 
 Current next-step classification:

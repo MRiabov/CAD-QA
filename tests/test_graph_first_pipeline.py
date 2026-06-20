@@ -100,7 +100,11 @@ from cad_qa.source import (
 )
 from cad_qa.trace import TraceRecord, cadquery_available, trace_report, trace_source, trace_sources_bounded
 from cad_qa.cli import main as cli_main
-from tools.analyze_release_gate_feasibility import graph_source_coverage_report, release_gate_feasibility_report
+from tools.analyze_release_gate_feasibility import (
+    graph_source_coverage_report,
+    release_gate_feasibility_report,
+    simulated_release_balance_report,
+)
 
 
 SOURCE = """
@@ -9740,6 +9744,7 @@ def test_release_export_caps_overrepresented_sampled_parameter_values() -> None:
 
     assert {item["reason"] for item in exclusions} == {"sampled_parameter_share_cap"}
     assert axis_counts["x"] / len(capped) <= profile.max_parameter_value_share
+    assert axis_counts["x"] > 0
     assert axis_counts["y"] > 0
     assert axis_counts["z"] > 0
 
@@ -9783,6 +9788,36 @@ def test_release_balance_wires_sampled_parameter_cap_when_enforced() -> None:
 
     assert {item["reason"] for item in exclusions} == {"sampled_parameter_share_cap"}
     assert axis_counts["x"] / len(capped) <= profile.max_parameter_value_share
+    assert axis_counts == {"x": 3, "y": 3, "z": 3}
+
+
+def test_release_feasibility_simulates_release_balance_caps() -> None:
+    rows = []
+    for index, axis in enumerate(["x"] * 14 + ["y"] * 3 + ["z"] * 3):
+        rows.append(
+            {
+                "row_id": f"row:src:{index}:parameterized_family",
+                "source_id": f"src_{index}",
+                "prompt": f"geometry prompt {index}",
+                "prompt_template_id": f"template_{index}",
+                "gold_answer": f"entity:{index}",
+                "answer_format": "text",
+                "logical_hop_count": 4,
+                "geometry_hop_count": 4,
+                "static_hop_count": 0,
+                "query_program": {
+                    "query_id": f"graph:src:q{index}:parameterized_family",
+                    "sampled_parameters": {"aggregation_axis": [axis], "aggregation_metric": [f"centroid_{axis}"]},
+                },
+            }
+        )
+
+    report = simulated_release_balance_report(rows, release_tier="benchmark-release")
+
+    assert report["input_row_count"] == 20
+    assert report["output_row_count"] == 9
+    assert report["exclusion_reason_counts"] == {"sampled_parameter_share_cap": 11}
+    assert report["release_floor"] is None
 
 
 def test_release_export_balance_caps_to_satisfy_minimum_family_share() -> None:
