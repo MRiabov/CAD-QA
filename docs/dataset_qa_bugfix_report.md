@@ -656,10 +656,31 @@ The feasibility tool now includes compact top-violation fields:
 ```text
 parameter_balance_full_pool_top_violations
 simulated_release_balance.parameter_balance_top_violations
+simulated_release_balance.parameter_balance_top_violation_pool_context
 ```
 
-Use these fields to decide whether the next fix should be a selector-balancing
-algorithm change or family-specific manifest policy adjustment.
+The pool-context field compares each top simulated violation against the full
+generated pool for the same family/dimension. This separates selection-induced
+problems from pool-level generation limits.
+
+Example from the current generated pool:
+
+```text
+family: parameterized_contained_endpoint_metric_extreme
+dimension: aggregation_metric
+value: distance_to_origin
+
+full pool: 831 / 2920 = 28.46%
+simulated 10K selection: 56 / 100 = 56.0%
+maximum allowed largest share: 35%
+```
+
+That specific violation is not a generated-pool impossibility; the current
+selector made a balanced-enough pool slice unbalanced in the final 10K sample.
+Other examples remain pool-level, such as `clause_relation=endpoint_of` at 50%
+both before and after selection. Use the context fields to decide whether the
+next fix should be a selector-balancing algorithm change or family-specific
+manifest/query-policy adjustment.
 
 Regression coverage:
 

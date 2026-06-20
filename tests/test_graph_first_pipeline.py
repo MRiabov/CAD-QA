@@ -101,6 +101,7 @@ from cad_qa.source import (
 from cad_qa.trace import TraceRecord, cadquery_available, trace_report, trace_source, trace_sources_bounded
 from cad_qa.cli import main as cli_main
 from tools.analyze_release_gate_feasibility import (
+    _parameter_violation_pool_context,
     graph_source_coverage_report,
     release_gate_feasibility_report,
     simulated_release_balance_report,
@@ -9579,6 +9580,66 @@ def test_graph_source_coverage_report_identifies_sources_without_generated_rows(
     )
     assert capped_report["missing_source_query_count_analyzed"] == 1
     assert capped_report["missing_source_query_count_skipped"] == 2
+
+
+def test_parameter_violation_pool_context_compares_pool_and_selected_rows() -> None:
+    pool_rows = [
+        {
+            "row_id": f"row:src:{index}:family_a",
+            "query_program": {
+                "query_id": f"graph:src:q{index}:family_a",
+                "sampled_parameters": {"aggregation_axis": ["x" if index < 2 else "y"]},
+            },
+        }
+        for index in range(4)
+    ]
+    selected_rows = [
+        {
+            "row_id": f"row:src:{index}:family_a",
+            "query_program": {
+                "query_id": f"graph:src:q{index}:family_a",
+                "sampled_parameters": {"aggregation_axis": ["x"]},
+            },
+        }
+        for index in range(3)
+    ]
+    violations = [
+        {
+            "prompt_family": "family_a",
+            "dimension": "aggregation_axis",
+            "reason": "parameter_value_dominates",
+            "largest_value": "x",
+            "largest_share": 1.0,
+            "maximum_allowed_largest_share": 0.35,
+        }
+    ]
+
+    context = _parameter_violation_pool_context(
+        violations,
+        pool_rows=pool_rows,
+        selected_rows=selected_rows,
+    )
+
+    assert context == [
+        {
+            "prompt_family": "family_a",
+            "dimension": "aggregation_axis",
+            "reason": "parameter_value_dominates",
+            "pool_total": 4,
+            "selected_total": 3,
+            "pool_largest": {"value": "y", "count": 2, "share": 0.5},
+            "selected_largest": {"value": "x", "count": 3, "share": 1.0},
+            "values": [
+                {
+                    "value": "x",
+                    "pool_count": 2,
+                    "pool_share": 0.5,
+                    "selected_count": 3,
+                    "selected_share": 1.0,
+                }
+            ],
+        }
+    ]
 
 
 def test_release_export_balance_caps_overrepresented_training_slices() -> None:

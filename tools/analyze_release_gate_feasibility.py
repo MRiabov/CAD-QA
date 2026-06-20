@@ -16,7 +16,7 @@ from typing import Any
 
 import pyarrow.parquet as pq
 
-from cad_qa.dataset.parameter_balance import parameter_balance_report
+from cad_qa.dataset.parameter_balance import parameter_balance_report, row_sampled_parameters
 from cad_qa.dataset.release import _cap_release_balance_rows
 from cad_qa.dataset.release_report import (
     _is_cross_feature_value_bearing_row,
@@ -220,6 +220,11 @@ def simulated_release_balance_report(rows: list[dict[str, Any]], *, release_tier
         "parameter_balance_dimension_counts": dict(Counter(v["dimension"] for v in parameter_violations).most_common()),
         "parameter_balance_family_counts": dict(Counter(v["prompt_family"] for v in parameter_violations).most_common()),
         "parameter_balance_top_violations": _compact_parameter_violations(parameter_violations),
+        "parameter_balance_top_violation_pool_context": _parameter_violation_pool_context(
+            parameter_violations,
+            pool_rows=rows,
+            selected_rows=capped_rows,
+        ),
     }
 
 
@@ -322,6 +327,83 @@ def _compact_parameter_violations(
             item["undercovered_expected_values"] = violation.get("undercovered_expected_values")
         compact.append(item)
     return compact
+
+
+def _parameter_violation_pool_context(
+    violations: list[dict[str, Any]],
+    *,
+    pool_rows: list[dict[str, Any]],
+    selected_rows: list[dict[str, Any]],
+    limit: int = 25,
+) -> list[dict[str, Any]]:
+    pool_counters = _parameter_counters_by_family_dimension(pool_rows)
+    selected_counters = _parameter_counters_by_family_dimension(selected_rows)
+    contexts = []
+    for violation in violations[:limit]:
+        family = str(violation.get("prompt_family") or "")
+        dimension = str(violation.get("dimension") or "")
+        key = (family, dimension)
+        pool_counts = pool_counters.get(key, Counter())
+        selected_counts = selected_counters.get(key, Counter())
+        values = _violation_values(violation)
+        contexts.append(
+            {
+                "prompt_family": family,
+                "dimension": dimension,
+                "reason": violation.get("reason"),
+                "pool_total": sum(pool_counts.values()),
+                "selected_total": sum(selected_counts.values()),
+                "pool_largest": _largest_counter_report(pool_counts),
+                "selected_largest": _largest_counter_report(selected_counts),
+                "values": [
+                    {
+                        "value": value,
+                        "pool_count": pool_counts.get(value, 0),
+                        "pool_share": _counter_value_share(pool_counts, value),
+                        "selected_count": selected_counts.get(value, 0),
+                        "selected_share": _counter_value_share(selected_counts, value),
+                    }
+                    for value in values
+                ],
+            }
+        )
+    return contexts
+
+
+def _parameter_counters_by_family_dimension(
+    rows: list[dict[str, Any]],
+) -> dict[tuple[str, str], Counter[str]]:
+    counters: dict[tuple[str, str], Counter[str]] = {}
+    for row in rows:
+        family = prompt_family(row)
+        for dimension, values in row_sampled_parameters(row).items():
+            counter = counters.setdefault((family, dimension), Counter())
+            counter.update(values)
+    return counters
+
+
+def _violation_values(violation: dict[str, Any]) -> list[str]:
+    values = []
+    largest = violation.get("largest_value")
+    if largest is not None:
+        values.append(str(largest))
+    for item in violation.get("undercovered_expected_values") or []:
+        if isinstance(item, dict) and item.get("value") is not None:
+            values.append(str(item["value"]))
+    return sorted(set(values))
+
+
+def _largest_counter_report(counts: Counter[str]) -> dict[str, Any]:
+    total = sum(counts.values())
+    if total == 0:
+        return {"value": None, "count": 0, "share": 0.0}
+    value, count = max(counts.items(), key=lambda item: (item[1], item[0]))
+    return {"value": value, "count": count, "share": count / total}
+
+
+def _counter_value_share(counts: Counter[str], value: str) -> float:
+    total = sum(counts.values())
+    return counts.get(value, 0) / total if total else 0.0
 
 
 def _iter_graph_records(graph_dir: Path):
