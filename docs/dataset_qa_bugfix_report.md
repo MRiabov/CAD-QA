@@ -418,17 +418,18 @@ The verifier now emits this as structured
 Parameter-balance breakdown:
 
 ```text
-parameter_balance_violations: 150
+parameter_balance_violations: 96
 parameter_value_dominates: 86
-axis_or_direction_undercovered: 64
+axis_or_direction_undercovered: 10
 top_violating_dimensions:
-- aggregation_rank: 29
 - rank_direction: 19
 - aggregation_metric: 17
-- clause_relation: 14
 - narrowing_predicate_sequence: 14
-- equal_measurement_metric: 12
-- narrowing_mode: 12
+- aggregation_rank: 8
+- equal_measurement_metric: 7
+- comparison_operator: 7
+- narrowing_mode: 6
+- clause_axis: 5
 ```
 
 Several dominance violations are structural under current families. Examples:
@@ -831,6 +832,48 @@ Regression coverage:
 
 ```text
 test_parameter_repair_simulation_runs_same_family_swaps
+```
+
+### QA note: duplicate visible candidate descriptions
+
+Manual prompt inspection found candidate-label rows where two or more distractor
+choices have identical rendered descriptions. This happens mostly for symmetric
+kernel faces/edges where the currently rendered public metrics do not separate
+every visible candidate.
+
+Current audit over `release_10k/rows.parquet`:
+
+```text
+candidate_label_rows: 5150
+rows_with_duplicate_visible_candidate_text: 1326
+rows_where_gold_text_is_duplicated: 0
+```
+
+Top affected families:
+
+```text
+parameterized_kernel_face_rank: 116
+parameterized_face_spatial_relation_rank: 115
+parameterized_edge_spatial_relation_rank: 106
+parameterized_kernel_edge_rank: 105
+parameterized_face_spatial_relation_chain_rank: 93
+parameterized_equal_edge_metric_rank: 90
+parameterized_equal_face_metric_rank: 84
+```
+
+Interpretation:
+
+This is currently a noise issue, not a confirmed malformed-gold issue, because
+the gold label is never part of a duplicated visible-description group in the
+current release. Validation now treats duplicated gold candidate descriptions as
+a hard public-answer error: if a future candidate-label row has the gold label in
+a duplicated description group, the public answer is not recoverable without
+extra evidence or an explicit tie-break.
+
+Regression coverage:
+
+```text
+test_validation_rejects_duplicated_gold_candidate_description
 ```
 
 Current next-step classification:

@@ -3205,6 +3205,55 @@ def test_validation_rejects_overwide_public_candidate_label_lists() -> None:
     assert report["errors"][0]["candidate_label_count"] == 8
 
 
+def test_validation_rejects_duplicated_gold_candidate_description() -> None:
+    row = {
+        "row_id": "row:duplicated-gold-label",
+        "source_id": "synthetic",
+        "source_code": "import cadquery as cq\nresult = cq.Workplane('XY').box(1, 1, 1)",
+        "prompt": "\n".join(
+            [
+                "Given the CadQuery script below, answer the question by reasoning about the CAD construction.",
+                "",
+                "Candidate labels:",
+                "- A: center X 0; center Y 0; center Z 1; area 4",
+                "- B: center X 0; center Y 0; center Z 1; area 4",
+                "- C: center X 0; center Y 0; center Z 2; area 4",
+                "",
+                "Return exactly one candidate label from the list above, for example `A`.",
+            ]
+        ),
+        "answer_format": "candidate_label",
+        "gold_answer": "B",
+        "query_program": {
+            "answer_spec": {
+                "candidate_labels": {
+                    "face:a": "A",
+                    "face:b": "B",
+                    "face:c": "C",
+                }
+            }
+        },
+        "candidate_trace": {"final_candidates": ["face:b"]},
+        "relation_families": [],
+        "measurement_scopes": [],
+        "logical_hop_count": 3,
+        "static_hop_count": 0,
+        "geometry_hop_count": 3,
+        "difficulty_bucket": "cad_browsecomp",
+        "verifier_status": "resolved",
+        "evidence_tier": "verified",
+        "release_ready": True,
+        "quarantine_reasons": [],
+        "clue_map": [{"clue": "candidate label", "source": "prompt"}],
+    }
+
+    report = validate_rows([row], release=True)
+
+    assert not report["valid"]
+    assert report["errors"][0]["error"] == "duplicated_gold_candidate_description"
+    assert report["errors"][0]["duplicate_labels"] == ["A", "B"]
+
+
 def test_candidate_label_selector_descriptions_include_public_selector_context() -> None:
     graph = OntologyGraph(graph_id="graph:selector-labels", source={"source_id": "synthetic", "source_code": ""})
     for selector_id, selector_label, selected_count, max_z in [

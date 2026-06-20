@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from collections import Counter
 from pathlib import Path
+import json
+import re
 from typing import Any
 
 from cad_qa.io import existing_record_artifact_path, read_records, write_json
@@ -131,16 +133,61 @@ def public_candidate_label_issues(row: dict[str, Any]) -> list[dict[str, Any]]:
     is_cadqa_prompt = "Given the CadQuery script" in prompt
     if not is_cadqa_prompt or row.get("answer_format") != "candidate_label":
         return []
+    issues: list[dict[str, Any]] = []
     candidate_labels = ((row.get("query_program") or {}).get("answer_spec") or {}).get("candidate_labels") or {}
-    if len(candidate_labels) <= DEFAULT_MAX_CANDIDATE_LABELS:
-        return []
-    return [
-        {
-            "error": "too_many_public_candidate_labels",
-            "candidate_label_count": len(candidate_labels),
-            "max_candidate_labels": DEFAULT_MAX_CANDIDATE_LABELS,
-        }
-    ]
+    if len(candidate_labels) > DEFAULT_MAX_CANDIDATE_LABELS:
+        issues.append(
+            {
+                "error": "too_many_public_candidate_labels",
+                "candidate_label_count": len(candidate_labels),
+                "max_candidate_labels": DEFAULT_MAX_CANDIDATE_LABELS,
+            }
+        )
+    duplicate_gold = _duplicated_gold_candidate_description_issue(row)
+    if duplicate_gold is not None:
+        issues.append(duplicate_gold)
+    return issues
+
+
+def _duplicated_gold_candidate_description_issue(row: dict[str, Any]) -> dict[str, Any] | None:
+    gold_label = _normalized_gold_label(row.get("gold_answer"))
+    if not gold_label:
+        return None
+    label_texts = _rendered_candidate_label_texts(str(row.get("prompt") or ""))
+    if gold_label not in label_texts:
+        return None
+    duplicate_labels = sorted(
+        label for label, text in label_texts.items()
+        if text == label_texts[gold_label]
+    )
+    if len(duplicate_labels) <= 1:
+        return None
+    return {
+        "error": "duplicated_gold_candidate_description",
+        "gold_label": gold_label,
+        "duplicate_labels": duplicate_labels,
+        "candidate_description": label_texts[gold_label],
+    }
+
+
+def _normalized_gold_label(gold_answer: Any) -> str | None:
+    if not isinstance(gold_answer, str):
+        return None
+    try:
+        decoded = json.loads(gold_answer)
+    except json.JSONDecodeError:
+        decoded = gold_answer
+    return decoded if isinstance(decoded, str) else None
+
+
+def _rendered_candidate_label_texts(prompt: str) -> dict[str, str]:
+    label_texts = {}
+    pattern = re.compile(r"^- ([A-Z]+): (.*)$")
+    for line in prompt.splitlines():
+        match = pattern.match(line.strip())
+        if match:
+            label_texts[match.group(1)] = match.group(2).strip()
+    return label_texts
 
 
 def validate_dataset_dir(path: Path, *, release: bool = False) -> dict[str, Any]:
