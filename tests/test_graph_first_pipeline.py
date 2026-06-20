@@ -13585,6 +13585,26 @@ def test_release_verifier_report_stop_gates_and_cli(tmp_path: Path) -> None:
     assert "family_test_evidence" not in benchmark_report["blocking_gates"]
 
 
+def test_dataset_release_report_quiet_writes_artifacts_without_stdout(tmp_path: Path, capsys) -> None:
+    rows = [
+        _public_answer_validation_row(
+            row_id="row:quiet",
+            query_program={"query_id": "graph:src:quiet:parameterized_feature_extreme"},
+            gold_answer="wp1",
+        )
+    ]
+    dataset_dir = tmp_path / "dataset"
+    write_jsonl(dataset_dir / "rows.jsonl", rows)
+
+    assert cli_main(["dataset", "release-report", str(dataset_dir), "--quiet"]) == 0
+
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err == ""
+    assert (dataset_dir / "release_verifier_report.json").exists()
+    assert (dataset_dir / "RELEASE_VERIFIER_REPORT.md").exists()
+
+
 def test_public_private_exports_do_not_leak_hidden_fields(tmp_path: Path) -> None:
     graph = build_graph(source_record_from_mapping({"source_id": "src_fixture", "normalized_code": SOURCE}))
     rows = [

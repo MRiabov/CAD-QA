@@ -1053,3 +1053,8 @@ pool was stopped before artifact creation because row-object decoding was still
 too slow for an interactive QA loop. The next performance fix should be a
 streaming/column-projected release export path, not more repeated full-row
 `to_pylist()` decoding.
+
+`cadqa dataset release-report` now also accepts `--quiet`, which writes
+`release_verifier_report.json` and `RELEASE_VERIFIER_REPORT.md` without printing
+the full nested report to stdout. This is useful for repeated benchmark QA runs,
+where the JSON report can be megabytes of low-signal console output.

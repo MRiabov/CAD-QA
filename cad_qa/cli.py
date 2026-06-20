@@ -139,7 +139,7 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as exc:
         print(f"cadqa: error: {exc}", file=sys.stderr)
         return 1
-    if result is not None:
+    if result is not None and not getattr(args, "quiet", False):
         print(json.dumps(result, indent=2, sort_keys=True))
     return 0
 
@@ -312,6 +312,11 @@ def build_parser() -> argparse.ArgumentParser:
     release_report.add_argument("--family-manifest", type=Path, default=DEFAULT_FAMILY_MANIFEST)
     release_report.add_argument("--preview-evidence", type=Path)
     release_report.add_argument("--family-test-evidence", type=Path, default=DEFAULT_FAMILY_TEST_EVIDENCE)
+    release_report.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Write report artifacts without printing the full JSON report to stdout.",
+    )
     release_report.set_defaults(func=_cmd_dataset_release_report)
     shortcut_report = dataset_sub.add_parser("shortcut-report")
     shortcut_report.add_argument("path", type=Path, help="Dataset directory or rows artifact file.")
