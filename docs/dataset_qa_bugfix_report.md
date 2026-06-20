@@ -1059,6 +1059,25 @@ Before the source-floor guard, the same simulated release represented only 577
 distinct sources. The remaining distinct-model failure is now a generated-pool
 coverage limit, not a release selector loss.
 
+Same-family parameter repair remains a weak diagnostic, not a production fix.
+On top of the source-preserving simulated release, a 200-swap dry run produced:
+
+```text
+pre_parameter_balance_violation_count: 133
+swap_count: 200
+successful_violation_count: 200
+failed_violation_count: 235
+post_parameter_balance_violation_count: 132
+post_passes_prompt_family_balance: true
+post_passes_prompt_template_balance: true
+post_passes_value_bearing_measurement_coverage: true
+post_passes_cross_feature_value_bearing_coverage: true
+```
+
+That is not enough improvement to justify productionizing the greedy repair loop
+as-is. The remaining parameter-balance problem needs either generation/family
+changes or a more global selector objective, not a simple same-family swap pass.
+
 Operational note:
 
 The dataset CLI can now discover generated row pools stored as
