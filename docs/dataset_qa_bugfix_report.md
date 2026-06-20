@@ -437,21 +437,36 @@ Answer-entropy breakdown:
 candidate_label rows: 5150
 candidate_label unique answers: 7
 candidate_label entropy_bits: 2.7273
+candidate_label max_entropy_with_observed_unique_answers: 2.8074
 candidate_label top answers: B=1081, A=1033, C=852, D=731, E=544, G=474, F=435
 
 coordinate rows: 2639
 coordinate unique answers: 2215
 coordinate entropy_bits: 11.0074
+coordinate max_entropy_with_observed_unique_answers: 11.0444
 
 text/source_ref rows: 2211
 text/source_ref unique answers: 73
 text/source_ref entropy_bits: 5.2005
+text/source_ref max_entropy_with_observed_unique_answers: 6.1897
+
+overall answer_entropy_bits: 6.9409
+overall answer_entropy_capacity_bits: 7.2106
+minimum_answer_entropy_bits: 8.0
 ```
 
 This explains why total answer entropy fails despite having more than the
 minimum unique answer count: the public target for candidate-choice questions is
 intentionally a small label alphabet, and source-ref answers intentionally reuse
 visible source variable names.
+
+The verifier now also reports `answer_entropy_capacity_bits`, the maximum
+entropy possible with the current answer-format counts and observed public
+answer identities. For the current `release_10k`, that capacity is still below
+the benchmark threshold (`7.2106 < 8.0`), so the entropy gate cannot be fixed
+only by rebalancing labels within the existing 10K answer-format mix. It needs a
+benchmark-policy decision, a different answer-format mix, or additional public
+answer identities.
 
 The verifier now emits this as structured `answer_format_counts` and
 `answer_entropy_by_format` fields in `release_balance`.

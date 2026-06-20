@@ -9627,6 +9627,8 @@ def test_release_balance_report_checks_family_entropy_and_geometry_hops() -> Non
     assert report["answer_format_counts"] == {"unknown": 100}
     assert report["answer_entropy_by_format"]["unknown"]["row_count"] == 100
     assert report["answer_entropy_by_format"]["unknown"]["unique_answer_count"] == 100
+    assert math.isclose(report["answer_entropy_capacity_bits"], report["answer_entropy_bits"])
+    assert report["passes_answer_entropy_capacity"]
     assert report["geometry_critical_count"] == 100
     assert report["syntax_only_calibration_count"] == 0
     assert report["minimum_prompt_family_share"] == 0.01
@@ -9649,8 +9651,30 @@ def test_release_balance_report_checks_family_entropy_and_geometry_hops() -> Non
     assert not skewed_report["passes_prompt_family_balance"]
     assert not skewed_report["passes_prompt_template_balance"]
     assert not skewed_report["passes_answer_entropy"]
+    assert not skewed_report["passes_answer_entropy_capacity"]
     assert not skewed_report["passes_geometry_hop_coverage"]
     assert not skewed_report["passes_syntax_only_calibration_cap"]
+
+    entropy_repairable_rows = [
+        {
+            "row_id": f"row:src:{index}:family_{index % 10}",
+            "source_id": "src",
+            "prompt": f"geometry prompt {index}",
+            "prompt_template_id": f"template_{index % 10}",
+            "gold_answer": "dominant" if index < 13 else f"rare_{index}",
+            "geometry_hop_count": 2,
+            "static_hop_count": 0,
+            "query_program": {
+                "query_id": f"graph:src:q{index}:family_{index % 10}",
+                "aggregation_metric": "volume",
+            },
+        }
+        for index in range(20)
+    ]
+    entropy_repairable_report = release_balance_report(entropy_repairable_rows)
+    assert not entropy_repairable_report["passes_answer_entropy"]
+    assert entropy_repairable_report["passes_answer_entropy_capacity"]
+    assert entropy_repairable_report["answer_entropy_capacity_bits"] > entropy_repairable_report["answer_entropy_bits"]
 
     sparse_rows = [
         {

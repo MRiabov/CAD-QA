@@ -348,7 +348,9 @@ def release_balance_report(
     median_pre_final_candidate_count = _median(pre_final_candidate_counts)
     applicable = row_count >= profile.min_applicable_rows
     answer_entropy_bits = _entropy_bits(answer_counts)
-    answer_entropy_by_format = _answer_entropy_by_format(rows)
+    answer_identity_counts_by_format = _answer_identity_counts_by_format(rows)
+    answer_entropy_by_format = _answer_entropy_by_format(answer_identity_counts_by_format)
+    answer_entropy_capacity_bits = _answer_entropy_capacity_bits(answer_identity_counts_by_format)
     prompt_family_count = len(prompt_family_counts)
     prompt_template_count = len(prompt_template_counts)
     unique_answer_count = len(answer_counts)
@@ -403,6 +405,14 @@ def release_balance_report(
         "answer_entropy_by_format": answer_entropy_by_format,
         "minimum_unique_answer_count": profile.min_unique_answer_count,
         "answer_entropy_bits": answer_entropy_bits,
+        "answer_entropy_capacity_bits": answer_entropy_capacity_bits,
+        "answer_entropy_capacity_scope": "maximum entropy with current answer_format counts and observed public answer identities",
+        "passes_answer_entropy_capacity": (
+            None
+            if not applicable
+            else unique_answer_count >= profile.min_unique_answer_count
+            and answer_entropy_capacity_bits >= profile.min_answer_entropy_bits
+        ),
         "minimum_answer_entropy_bits": profile.min_answer_entropy_bits,
         "passes_answer_entropy": (
             None
@@ -842,16 +852,24 @@ def _entropy_bits(counts: Counter[str]) -> float:
     return -sum((count / total) * math.log2(count / total) for count in counts.values())
 
 
-def _answer_entropy_by_format(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+def _answer_identity_counts_by_format(rows: list[dict[str, Any]]) -> dict[str, Counter[str]]:
     grouped: dict[str, Counter[str]] = {}
     for row in rows:
         answer_format = str(row.get("answer_format") or "unknown")
         grouped.setdefault(answer_format, Counter())[_answer_identity_key(row)] += 1
+    return grouped
+
+
+def _answer_entropy_by_format(grouped: dict[str, Counter[str]]) -> dict[str, dict[str, Any]]:
     return {
         answer_format: {
             "row_count": sum(counts.values()),
             "unique_answer_count": len(counts),
             "answer_entropy_bits": _entropy_bits(counts),
+            "maximum_entropy_bits_with_observed_unique_answers": _max_entropy_for_count_unique(
+                sum(counts.values()),
+                len(counts),
+            ),
             "top_answer_identities": [
                 {"answer_identity": answer, "count": count}
                 for answer, count in counts.most_common(10)
@@ -859,6 +877,33 @@ def _answer_entropy_by_format(rows: list[dict[str, Any]]) -> dict[str, dict[str,
         }
         for answer_format, counts in sorted(grouped.items())
     }
+
+
+def _answer_entropy_capacity_bits(grouped: dict[str, Counter[str]]) -> float:
+    total = sum(sum(counts.values()) for counts in grouped.values())
+    if total == 0:
+        return 0.0
+    entropy = 0.0
+    for counts in grouped.values():
+        row_count = sum(counts.values())
+        unique_count = len(counts)
+        for count in _even_distribution_counts(row_count, unique_count):
+            probability = count / total
+            entropy -= probability * math.log2(probability)
+    return entropy
+
+
+def _max_entropy_for_count_unique(row_count: int, unique_count: int) -> float:
+    if row_count <= 0 or unique_count <= 0:
+        return 0.0
+    return _entropy_bits(Counter({str(index): count for index, count in enumerate(_even_distribution_counts(row_count, unique_count))}))
+
+
+def _even_distribution_counts(row_count: int, unique_count: int) -> list[int]:
+    if row_count <= 0 or unique_count <= 0:
+        return []
+    base, remainder = divmod(row_count, unique_count)
+    return [base + 1] * remainder + [base] * (unique_count - remainder)
 
 
 def _largest_counter_item(counts: Counter[str]) -> tuple[str | None, int]:
