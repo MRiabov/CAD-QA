@@ -358,14 +358,77 @@ Concrete strict-gate numbers:
 ```text
 distinct_cad_model_count: 900
 minimum_distinct_cad_model_count: 1000
+unique_answer_count: 2295
+minimum_unique_answer_count: 1000
 answer_entropy_bits: 6.940893592407393
 minimum_answer_entropy_bits: 8.0
+value_bearing_measurement_count: 3666
 value_bearing_measurement_share: 0.3666
+minimum_value_bearing_measurement_share: 0.15
 maximum_value_bearing_measurement_share: 0.3
+cross_feature_value_bearing_count: 332
 cross_feature_value_bearing_share: 0.0332
 minimum_cross_feature_value_bearing_share: 0.05
 parameter_balance_valid: false
 ```
+
+Answer-entropy breakdown:
+
+```text
+candidate_label rows: 5150
+candidate_label unique answers: 7
+candidate_label entropy_bits: 2.7273
+candidate_label top answers: B=1081, A=1033, C=852, D=731, E=544, G=474, F=435
+
+coordinate rows: 2639
+coordinate unique answers: 2215
+coordinate entropy_bits: 11.0074
+
+text/source_ref rows: 2211
+text/source_ref unique answers: 73
+text/source_ref entropy_bits: 5.2005
+```
+
+This explains why total answer entropy fails despite having more than the
+minimum unique answer count: the public target for candidate-choice questions is
+intentionally a small label alphabet, and source-ref answers intentionally reuse
+visible source variable names.
+
+Value-bearing/cross-feature breakdown:
+
+```text
+prompt_families: 60
+value_bearing_families: 22
+cross_feature_value_bearing_families: 2
+```
+
+The release row selection is nearly uniform by prompt family. This makes all 22
+value-bearing families contribute 36.66% of rows, above the strict 30% cap, while
+the two cross-feature families contribute only 3.32%, below the strict 5% floor.
+This is a selection/balancing issue, not a malformed-row issue.
+
+Parameter-balance breakdown:
+
+```text
+parameter_balance_violations: 150
+parameter_value_dominates: 86
+axis_or_direction_undercovered: 64
+top_violating_dimensions:
+- aggregation_rank: 29
+- rank_direction: 19
+- aggregation_metric: 17
+- clause_relation: 14
+- narrowing_predicate_sequence: 14
+- equal_measurement_metric: 12
+- narrowing_mode: 12
+```
+
+Several dominance violations are structural under current families. Examples:
+`parameterized_equal_path_segment_metric_extreme` has
+`aggregation_metric=midpoint_distance_to_origin` for 100% of rows, and
+kernel selector-count families have `narrowing_mode=related_metric_compare` for
+nearly all rows. Several undercoverage violations also cite relation values with
+no current support in the generated distribution, such as `coaxial_with`.
 
 Generated-pool coverage check:
 
