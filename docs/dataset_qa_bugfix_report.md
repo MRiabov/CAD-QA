@@ -438,6 +438,34 @@ kernel selector-count families have `narrowing_mode=related_metric_compare` for
 nearly all rows. Several undercoverage violations also cite relation values with
 no current support in the generated distribution, such as `coaxial_with`.
 
+Generated-pool strict-gate feasibility can be reproduced with:
+
+```bash
+uv run python tools/analyze_release_gate_feasibility.py \
+  --dataset-stream runs/current_cadevolve1000_10k_regen_20260613/dataset_stream \
+  --out /tmp/cadqa_release_gate_feasibility.json
+```
+
+Current generated-pool feasibility summary:
+
+```text
+pool_row_count: 168987
+pool_source_count: 906
+pool_family_count: 60
+families_with_at_least_minimum_rows: 60
+family_min_available_rows: 272
+value_bearing_pool_row_count: 74830
+cross_feature_pool_row_count: 33575
+minimum_cross_feature_rows_for_release: 500
+maximum_value_bearing_rows_for_release: 3000
+parameter_balance_full_pool_valid: false
+parameter_balance_full_pool_violation_count: 142
+```
+
+This means the generated row pool has enough rows to rebalance value-bearing and
+cross-feature shares, but it still cannot satisfy the distinct-source gate and
+it does not satisfy parameter balance even before release selection.
+
 Generated-pool coverage check:
 
 ```text
