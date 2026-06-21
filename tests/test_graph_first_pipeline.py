@@ -2968,8 +2968,8 @@ def test_prompt_template_variants_are_selected_from_sampled_parameters() -> None
     rendered = render_prompt("import cadquery as cq\n", query)
 
     assert "target edge" in rendered.prompt
-    assert "model edges with measured geometry" in rendered.prompt
-    assert "known edge length" in rendered.prompt
+    assert "one of the model edges" in rendered.prompt
+    assert "has a value for edge length" in rendered.prompt
     assert "least edge length" in rendered.prompt
     assert "Return exactly one entity_id." in rendered.prompt
     assert [clue["clue_template_id"] for clue in rendered.clue_map] == [
@@ -4193,20 +4193,14 @@ def test_smoke_queries_include_parameterized_kernel_edge_synthesis() -> None:
     assert query.sampled_parameters["target_type"] == ["edge"]
     assert row.logical_hop_count == 3
     assert "target edge" in row.prompt
+    assert "measured geometry" not in row.prompt
+    assert "checked geometric measurements" not in row.prompt
     assert any(
         phrase in row.prompt
         for phrase in (
-            "Consider model edges with measured geometry.",
-            "model edges with measured geometry",
-            "checked geometric measurements",
-        )
-    )
-    assert any(
-        phrase in row.prompt
-        for phrase in (
-            "measured midpoint Y coordinate",
-            "known midpoint Y coordinate",
-            "verified midpoint Y coordinate",
+            "has midpoint Y coordinate",
+            "has a value for midpoint Y coordinate",
+            "described by its midpoint Y coordinate",
         )
     )
 
@@ -4582,7 +4576,8 @@ def test_synthesis_generates_parameterized_edge_spatial_relation_query() -> None
     assert query.clauses[1].relation in row.relation_families
     assert row.query_program["sampled_parameters"] == sampled_parameters_from_query(row.query_program)
     assert query.clauses[1].relation not in row.prompt
-    assert "measured edge" in row.prompt
+    assert "measured edge" not in row.prompt
+    assert "edge" in row.prompt
 
 
 def test_synthesis_generates_metric_threshold_edge_spatial_relation_query() -> None:
@@ -4836,7 +4831,8 @@ def test_synthesis_generates_parameterized_face_spatial_relation_query() -> None
     assert query.clauses[1].relation in row.relation_families
     assert row.query_program["sampled_parameters"] == sampled_parameters_from_query(row.query_program)
     assert query.clauses[1].relation not in row.prompt
-    assert "measured face" in row.prompt
+    assert "measured face" not in row.prompt
+    assert "face" in row.prompt
 
 
 def test_synthesis_generates_parallel_face_spatial_relation_query() -> None:
@@ -4978,9 +4974,9 @@ def test_synthesis_generates_spatial_relation_rank_queries() -> None:
     ]:
         edge_graph.add_relation(Relation(source_id, target_id, "adjacent_to"))
 
-    for graph, family, target_type, measured_text in [
-        (face_graph, "parameterized_face_spatial_relation_rank", "face", "measured face"),
-        (edge_graph, "parameterized_edge_spatial_relation_rank", "edge", "measured edge"),
+    for graph, family, target_type in [
+        (face_graph, "parameterized_face_spatial_relation_rank", "face"),
+        (edge_graph, "parameterized_edge_spatial_relation_rank", "edge"),
     ]:
         query = next(query for query in synthesize_graph_hop_queries(graph) if query.query_id.endswith(family))
         resolution = resolve_query(graph, query)
@@ -5008,7 +5004,8 @@ def test_synthesis_generates_spatial_relation_rank_queries() -> None:
         assert row.geometry_hop_count == 4
         assert "adjacent_to" in row.relation_families
         assert "adjacent_to" not in row.prompt
-        assert measured_text in row.prompt
+        assert f"measured {target_type}" not in row.prompt
+        assert target_type in row.prompt
         assert "candidate" in row.prompt
         assert "increasing" in row.prompt or "decreasing" in row.prompt or "ordered" in row.prompt or "sorting" in row.prompt
 
@@ -5068,9 +5065,9 @@ def test_synthesis_generates_spatial_relation_tie_break_queries() -> None:
     ]:
         edge_graph.add_relation(Relation(source_id, target_id, "adjacent_to"))
 
-    for graph, family, target_type, measured_text in [
-        (face_graph, "parameterized_face_spatial_relation_tie_break_extreme", "face", "measured face"),
-        (edge_graph, "parameterized_edge_spatial_relation_tie_break_extreme", "edge", "measured edge"),
+    for graph, family, target_type in [
+        (face_graph, "parameterized_face_spatial_relation_tie_break_extreme", "face"),
+        (edge_graph, "parameterized_edge_spatial_relation_tie_break_extreme", "edge"),
     ]:
         query = next(query for query in synthesize_graph_hop_queries(graph) if query.query_id.endswith(family))
         resolution = resolve_query(graph, query)
@@ -5098,7 +5095,8 @@ def test_synthesis_generates_spatial_relation_tie_break_queries() -> None:
         assert "adjacent_to" in row.relation_families
         assert "adjacent_to" not in row.prompt
         assert "adjacent to" in row.prompt
-        assert measured_text in row.prompt
+        assert f"measured {target_type}" not in row.prompt
+        assert target_type in row.prompt
         assert any(
             phrase in row.prompt
             for phrase in ("If that leaves a tie", "If candidates are still tied", "For any remaining tie")
@@ -5174,9 +5172,9 @@ def test_synthesis_generates_spatial_relation_chain_queries() -> None:
     ]:
         edge_graph.add_relation(Relation(source_id, target_id, "perpendicular_to"))
 
-    for graph, family, target_type, measured_text in [
-        (face_graph, "parameterized_face_spatial_relation_chain_extreme", "face", "measured face"),
-        (edge_graph, "parameterized_edge_spatial_relation_chain_extreme", "edge", "measured edge"),
+    for graph, family, target_type in [
+        (face_graph, "parameterized_face_spatial_relation_chain_extreme", "face"),
+        (edge_graph, "parameterized_edge_spatial_relation_chain_extreme", "edge"),
     ]:
         query = next(query for query in synthesize_graph_hop_queries(graph) if query.query_id.endswith(family))
         resolution = resolve_query(graph, query)
@@ -5219,7 +5217,8 @@ def test_synthesis_generates_spatial_relation_chain_queries() -> None:
         assert "perpendicular_to" not in row.prompt
         assert "adjacent to" in row.prompt
         assert "perpendicular to" in row.prompt
-        assert measured_text in row.prompt
+        assert f"measured {target_type}" not in row.prompt
+        assert target_type in row.prompt
 
 
 def test_synthesis_generates_spatial_relation_chain_rank_queries() -> None:
@@ -7338,7 +7337,7 @@ def test_synthesis_generates_region_reference_distance_queries() -> None:
         assert row.query_program["sampled_parameters"]["target_point_metric"] == ["centroid"]
         assert row.query_program["sampled_parameters"]["reference_point_metric"] == [reference_point_metric]
         assert row.query_program["sampled_parameters"]["measurement_value_bucket"] == [f"volume:{value:g}"]
-        assert "measured centroid" in row.prompt
+        assert "exists and has a solid centroid" in row.prompt
         if reference_type == "face":
             assert row.query_program["sampled_parameters"]["reference_anchor_metric"] == ["coordinate_z", "face_area"]
             assert "reference face" in row.prompt
@@ -12545,7 +12544,7 @@ def test_release_validation_rejects_public_internal_id_answer_contract() -> None
         "prompt": (
             "Given the CadQuery script below, answer the question by reasoning about the CAD construction.\n\n"
             "Identify the target path segment that satisfies all of these constraints:\n"
-            "- The target segment belongs to a measured path.\n\n"
+            "- The target segment belongs to a path.\n\n"
             "Return exactly one entity_id."
         ),
         "answer_format": "entity_id",
