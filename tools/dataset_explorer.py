@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import runpy
 import subprocess
 import sys
@@ -72,7 +73,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--cache-dir", type=Path)
-    parser.add_argument("--render-timeout", type=float, default=8.0)
+    parser.add_argument("--render-timeout", type=float, default=30.0)
     parser.add_argument("--render-worker", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--source-file", type=Path, help=argparse.SUPPRESS)
     parser.add_argument("--out-png", type=Path, help=argparse.SUPPRESS)
@@ -282,7 +283,7 @@ def render_png_for_row(row: dict[str, Any], *, cache_dir: Path, timeout: float, 
     cache_dir.mkdir(parents=True, exist_ok=True)
     key = row.get("source_hash") or row["source_id"]
     out = cache_dir / f"{_safe_filename(str(key))}.png"
-    if out.exists() and out.stat().st_size > 0:
+    if out.exists() and out.stat().st_size > 0 and _png_looks_nonblank(out):
         return out
     source_file = cache_dir / f"{_safe_filename(str(key))}.py"
     source_file.write_text(row["source_code"], encoding="utf-8")
@@ -322,8 +323,119 @@ def _render_worker(args: argparse.Namespace) -> int:
         if result is None:
             raise ValueError("source did not define result")
         exporters.export(result, str(stl))
-        _vtk_render_stl(stl, args.out_png, width=args.width, height=args.height, vtk=vtk)
+        _software_render_stl(stl, args.out_png, width=args.width, height=args.height, vtk=vtk)
     return 0
+
+
+def _png_looks_nonblank(path: Path) -> bool:
+    try:
+        from PIL import Image, ImageStat
+
+        image = Image.open(path).convert("RGB")
+        extrema = ImageStat.Stat(image).extrema
+    except Exception:
+        return True
+    return any(high > low for low, high in extrema)
+
+
+def _software_render_stl(stl: Path, png: Path, *, width: int, height: int, vtk: Any) -> None:
+    from PIL import Image, ImageDraw
+    import numpy as np
+
+    reader = vtk.vtkSTLReader()
+    reader.SetFileName(str(stl))
+    reader.Update()
+    poly = reader.GetOutput()
+    points = poly.GetPoints()
+    if points is None or poly.GetNumberOfCells() == 0:
+        _blank_render(png, width=width, height=height, text="No renderable geometry")
+        return
+
+    vertices = np.array([points.GetPoint(index) for index in range(points.GetNumberOfPoints())], dtype=float)
+    triangles: list[tuple[int, int, int]] = []
+    ids = vtk.vtkIdList()
+    for cell_index in range(poly.GetNumberOfCells()):
+        poly.GetCellPoints(cell_index, ids)
+        if ids.GetNumberOfIds() == 3:
+            triangles.append((ids.GetId(0), ids.GetId(1), ids.GetId(2)))
+    if not triangles:
+        _blank_render(png, width=width, height=height, text="No triangular facets")
+        return
+
+    centered = vertices - vertices.mean(axis=0)
+    transform = _view_transform()
+    projected = centered @ transform.T
+    xy = projected[:, :2]
+    span = np.ptp(xy, axis=0)
+    max_span = float(max(span.max(), 1.0))
+    scale = min(width * 0.78, height * 0.78) / max_span
+    screen = np.column_stack(
+        [
+            width / 2.0 + xy[:, 0] * scale,
+            height / 2.0 - xy[:, 1] * scale,
+        ]
+    )
+    depth = projected[:, 2]
+    light = np.array([0.35, -0.45, 0.82], dtype=float)
+    light /= np.linalg.norm(light)
+
+    image = Image.new("RGB", (width, height), (255, 255, 255))
+    draw = ImageDraw.Draw(image)
+    facets = []
+    for triangle in triangles:
+        p0, p1, p2 = (projected[index] for index in triangle)
+        normal = np.cross(p1 - p0, p2 - p0)
+        length = np.linalg.norm(normal)
+        if length <= 1e-9:
+            continue
+        normal /= length
+        if normal[2] < 0:
+            normal = -normal
+        shade = 0.48 + 0.42 * max(float(np.dot(normal, light)), 0.0)
+        color = tuple(max(0, min(255, int(channel * shade))) for channel in (176, 188, 204))
+        outline = tuple(max(0, int(channel * 0.72)) for channel in color)
+        polygon = [(float(screen[index, 0]), float(screen[index, 1])) for index in triangle]
+        facets.append((float(np.mean([depth[index] for index in triangle])), polygon, color, outline))
+
+    for _, polygon, color, outline in sorted(facets, key=lambda item: item[0]):
+        draw.polygon(polygon, fill=color)
+        draw.line([*polygon, polygon[0]], fill=outline, width=1)
+    png.parent.mkdir(parents=True, exist_ok=True)
+    image.save(png)
+
+
+def _view_transform() -> Any:
+    import numpy as np
+
+    azimuth = math.radians(-38.0)
+    elevation = math.radians(24.0)
+    rz = np.array(
+        [
+            [math.cos(azimuth), -math.sin(azimuth), 0.0],
+            [math.sin(azimuth), math.cos(azimuth), 0.0],
+            [0.0, 0.0, 1.0],
+        ],
+        dtype=float,
+    )
+    rx = np.array(
+        [
+            [1.0, 0.0, 0.0],
+            [0.0, math.cos(elevation), -math.sin(elevation)],
+            [0.0, math.sin(elevation), math.cos(elevation)],
+        ],
+        dtype=float,
+    )
+    return rx @ rz
+
+
+def _blank_render(png: Path, *, width: int, height: int, text: str) -> None:
+    from PIL import Image, ImageDraw
+
+    image = Image.new("RGB", (width, height), (255, 255, 255))
+    draw = ImageDraw.Draw(image)
+    draw.text((24, 24), text, fill=(80, 88, 104))
+    png.parent.mkdir(parents=True, exist_ok=True)
+    image.save(png)
 
 
 def _vtk_render_stl(stl: Path, png: Path, *, width: int, height: int, vtk: Any) -> None:

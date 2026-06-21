@@ -100,6 +100,7 @@ from cad_qa.source import (
 )
 from cad_qa.trace import TraceRecord, cadquery_available, trace_report, trace_source, trace_sources_bounded
 from cad_qa.cli import _load_dataset_rows, main as cli_main
+from tools.dataset_explorer import render_png_for_row
 from tools.analyze_release_gate_feasibility import (
     _parameter_violation_classification_report,
     _parameter_violation_pool_context,
@@ -3019,6 +3020,72 @@ def test_render_prompt_preserves_explicit_candidate_lines_without_graph() -> Non
     assert "model faces with measured geometry" not in rendered.prompt
     assert "face center's X coordinate is greater than -50.0" in rendered.prompt
     assert "smallest face center X coordinate" in rendered.prompt
+
+
+def test_render_prompt_hides_selector_set_and_count_boilerplate() -> None:
+    query = QueryProgram(
+        query_id="graph:src:q3:parameterized_kernel_edge_selector_count",
+        target_type="selector",
+        answer_spec={
+            "mode": "candidate_label",
+            "answer_format": "candidate_label",
+            "candidate_labels": {"selector:a": "A", "selector:b": "B"},
+        },
+        clauses=[
+            Clause(
+                id="has_parameterized_edge_selection",
+                kind="has_relation",
+                relation="has_kernel_stable_edge_id",
+            ),
+            Clause(
+                id="has_parameterized_selected_edge_metric_threshold",
+                kind="related_metric_compare",
+                metric="midpoint_x",
+                operator="==",
+                value=10.0,
+            ),
+            Clause(
+                id="has_parameterized_selected_count",
+                kind="has_measurement",
+                metric="selected_count",
+            ),
+        ],
+        aggregation="argmin",
+        aggregation_metric="selected_count",
+    )
+
+    rendered = render_prompt(
+        "import cadquery as cq\n",
+        query,
+        candidate_lines=["A: selector 'wp1 edges'; selected count 4", "B: selector 'wp2 edges'; selected count 6"],
+    )
+
+    assert "target edge set includes edges selected from the model" not in rendered.prompt
+    assert "target set has an item count" not in rendered.prompt
+    assert "target selection has an entity count" not in rendered.prompt
+    assert "At least one edge in the target selection has midpoint X coordinate equal to 10.0" in rendered.prompt
+    assert "smallest number of selected entities" in rendered.prompt
+    assert [clue["clue_template_id"] for clue in rendered.clue_map] == [
+        "clause:has_parameterized_selected_edge_metric_threshold",
+        "aggregation:argmin",
+    ]
+
+
+def test_dataset_explorer_render_png_is_nonblank(tmp_path: Path) -> None:
+    row = {
+        "source_id": "render-test",
+        "source_hash": "sha256:render-test",
+        "source_code": "import cadquery as cq\nresult = cq.Workplane('XY').box(10, 8, 6)\n",
+    }
+
+    png = render_png_for_row(row, cache_dir=tmp_path, timeout=20, python=sys.executable)
+
+    from PIL import Image, ImageStat
+
+    image = Image.open(png).convert("RGB")
+    extrema = ImageStat.Stat(image).extrema
+    assert image.size == (1000, 760)
+    assert any(high > low for low, high in extrema)
 
 
 def test_answer_spec_formats_recoverable_source_ref_answers() -> None:

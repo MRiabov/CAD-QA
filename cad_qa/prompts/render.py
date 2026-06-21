@@ -24,8 +24,16 @@ from cad_qa.query.ir import Clause
 from cad_qa.query.ir import QueryProgram
 
 SKIPPED_PUBLIC_CLAUSE_IDS = {
+    "has_kernel_selected_edges",
+    "has_kernel_selected_faces",
     "has_parameterized_face_set",
     "has_parameterized_face_metric",
+    "has_parameterized_face_selection",
+    "has_parameterized_edge_selection",
+    "has_parameterized_vertex_selection",
+    "has_parameterized_selected_count",
+    "has_selected_count",
+    "has_selected_edge_count",
 }
 
 
