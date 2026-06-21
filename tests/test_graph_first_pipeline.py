@@ -2979,6 +2979,48 @@ def test_prompt_template_variants_are_selected_from_sampled_parameters() -> None
     ]
 
 
+def test_render_prompt_preserves_explicit_candidate_lines_without_graph() -> None:
+    query = QueryProgram(
+        query_id="graph:src:q3:parameterized_kernel_face_extreme",
+        target_type="face",
+        answer_spec={
+            "mode": "candidate_label",
+            "answer_format": "candidate_label",
+            "candidate_labels": {"face:a": "A", "face:b": "B"},
+        },
+        clauses=[
+            Clause(
+                id="has_parameterized_face_set",
+                kind="has_relation",
+                relation="has_kernel_stable_face_id",
+                target_type="selector",
+            ),
+            Clause(
+                id="has_parameterized_face_metric_threshold",
+                kind="metric_compare",
+                metric="coordinate_x",
+                operator=">",
+                value=-50.0,
+            ),
+        ],
+        aggregation="argmin",
+        aggregation_metric="coordinate_x",
+    )
+
+    rendered = render_prompt(
+        "import cadquery as cq\n",
+        query,
+        candidate_lines=["A: center X -20; area 10", "B: center X 30; area 20"],
+    )
+
+    assert "Candidate labels:" in rendered.prompt
+    assert "- A: center X -20; area 10" in rendered.prompt
+    assert "- B: center X 30; area 20" in rendered.prompt
+    assert "model faces with measured geometry" not in rendered.prompt
+    assert "face center's X coordinate is greater than -50.0" in rendered.prompt
+    assert "smallest face center X coordinate" in rendered.prompt
+
+
 def test_answer_spec_formats_recoverable_source_ref_answers() -> None:
     graph = OntologyGraph(
         graph_id="graph:answer-source-ref",
@@ -4046,8 +4088,6 @@ def test_synthesis_generates_parameterized_kernel_face_extreme_query() -> None:
     rendered_ids = row.query_program["sampled_parameters"]["rendered_clue_template_id"]
     expected_bases = [
         f"aggregation:{query.aggregation}",
-        "clause:has_parameterized_face_metric",
-        "clause:has_parameterized_face_set",
     ]
     assert query.sampled_parameters["prompt_wording_variant"]
     assert all(
@@ -4055,22 +4095,12 @@ def test_synthesis_generates_parameterized_kernel_face_extreme_query() -> None:
         for base in expected_bases
     )
     assert "target face" in row.prompt
-    assert any(
-        phrase in row.prompt
-        for phrase in (
-            "Consider model faces with measured geometry.",
-            "model faces with measured geometry",
-            "checked geometric measurements",
-        )
-    )
-    assert any(
-        phrase in row.prompt
-        for phrase in (
-            "measured X coordinate",
-            "known X coordinate",
-            "verified X coordinate",
-        )
-    )
+    assert "checked geometric measurements" not in row.prompt
+    assert "model faces with measured geometry" not in row.prompt
+    assert "measured X coordinate" not in row.prompt
+    assert "known X coordinate" not in row.prompt
+    assert "verified X coordinate" not in row.prompt
+    assert "face center X coordinate" in row.prompt
 
 
 def test_synthesis_can_emit_multiple_deterministic_variants_per_family(tmp_path: Path) -> None:

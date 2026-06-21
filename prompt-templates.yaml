@@ -142,13 +142,13 @@ clause_templates:
     - "The target face is one of the model faces with measured geometry."
     - "The target face has checked geometric measurements."
   has_parameterized_face_metric:
-    - "The target face has a measured {metric_label}."
-    - "The target face has a known {metric_label}."
-    - "The target face has a verified {metric_label}."
+    - "The target {metric_subject_label} has a measured {metric_property_label}."
+    - "The target {metric_subject_label} has a known {metric_property_label}."
+    - "The target {metric_subject_label} has a verified {metric_property_label}."
   has_parameterized_face_metric_threshold:
-    - "The target face has {metric_label} {operator_label} {value}."
-    - "The target face's {metric_label} is {operator_label} {value}."
-    - "The target face satisfies {metric_label} {operator_label} {value}."
+    - "The target {metric_subject_label}'s {metric_property_label} is {operator_label} {value}."
+    - "The target {metric_subject_label} has a {metric_property_label} {operator_label} {value}."
+    - "The target {metric_subject_label} is positioned with {metric_property_label} {operator_label} {value}."
   has_parameterized_face_spatial_relation:
     - "The target face is {relation_label} another measured face."
     - "The target face has a measured face that is {relation_label} it."
@@ -162,9 +162,9 @@ clause_templates:
     - "The target face has a measured face that is {relation_label} it."
     - "The target face has another measured face that is {relation_label} it."
   has_parameterized_equal_face_metric_value:
-    - "The target face has {metric_label} equal to {value}."
-    - "The target face's {metric_label} is {value}."
-    - "The target face matches the {metric_label} value {value}."
+    - "The target {metric_subject_label}'s {metric_property_label} is {value}."
+    - "The target {metric_subject_label} has a {metric_property_label} of {value}."
+    - "The target {metric_subject_label} matches the {metric_property_label} value {value}."
   has_selected_face_bbox: "The target face has a measured bounding box."
   face.has_origin_distance_relation: "The target face center has a measured distance to the global origin."
   has_face_center_distance: "The target face center has a distance-to-origin measurement."
@@ -184,9 +184,9 @@ clause_templates:
 
   has_kernel_selected_faces: "The target face selection identifies measured model faces."
   has_parameterized_face_selection:
-    - "The target selection contains measured model faces."
-    - "The target face group contains model faces with measured geometry."
-    - "The target face set includes faces with checked dimensions."
+    - "The target selection contains model faces."
+    - "The target face group contains faces from the constructed model."
+    - "The target face set includes faces selected from the model."
   has_parameterized_selected_face_metric_threshold:
     - "At least one face in the target selection has {metric_label} {operator_label} {value}."
     - "At least one face in the target face group has {metric_label} {operator_label} {value}."

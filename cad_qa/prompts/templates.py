@@ -82,9 +82,10 @@ def _candidate_lines(lines: list[str]) -> str:
 def aggregation_prompt(aggregation: str, metric: str, *, rank: int | None = None, query: Any | None = None) -> str:
     templates = _template_mapping("aggregation_templates")
     template = _select_template(templates[aggregation_template_key(aggregation, metric)], query=query)
+    target_type = getattr(query, "target_type", None) if query is not None else None
     return template.format(
         metric=metric,
-        metric_label=metric_label(metric),
+        metric_label=metric_label(metric, target_type=target_type),
         rank=rank,
         rank_label=_rank_label(rank),
         target_point_label=metric_label(_sampled_parameter_value(query, "target_point_metric") or "midpoint"),
@@ -96,7 +97,8 @@ def aggregation_prompt(aggregation: str, metric: str, *, rank: int | None = None
 def tie_break_prompt(aggregation: str, metric: str, *, query: Any | None = None) -> str:
     templates = _template_mapping("tie_break_templates")
     template = _select_template(templates[tie_break_template_key(aggregation, metric)], query=query)
-    return template.format(metric=metric, metric_label=metric_label(metric))
+    target_type = getattr(query, "target_type", None) if query is not None else None
+    return template.format(metric=metric, metric_label=metric_label(metric, target_type=target_type))
 
 
 def clause_template_key(clause: Any, *, query: Any | None = None) -> str | None:
@@ -144,12 +146,49 @@ def tie_break_template_id(aggregation: str, metric: str, *, query: Any | None = 
     return _template_id_with_variant(key, _template_mapping("tie_break_templates")[key], query)
 
 
-def metric_label(metric: str) -> str:
+def metric_label(metric: str, *, target_type: str | None = None) -> str:
+    if target_type == "face":
+        face_label = _face_metric_label(metric)
+        if face_label is not None:
+            return face_label
     labels = _template_mapping("metric_labels")
     value = labels.get(metric)
     if isinstance(value, list):
         return value[0]
     return value if isinstance(value, str) else metric.replace("_", " ")
+
+
+def metric_subject_label(metric: str, *, target_type: str | None = None) -> str:
+    if target_type == "face" and metric in {
+        "coordinate_x",
+        "coordinate_y",
+        "coordinate_z",
+        "distance_to_origin",
+    }:
+        return "face center"
+    return target_type.replace("_", " ") if isinstance(target_type, str) and target_type else "entity"
+
+
+def metric_property_label(metric: str, *, target_type: str | None = None) -> str:
+    if target_type == "face":
+        return {
+            "coordinate_x": "X coordinate",
+            "coordinate_y": "Y coordinate",
+            "coordinate_z": "Z coordinate",
+            "distance_to_origin": "distance to the global origin",
+            "face_area": "surface area",
+        }.get(metric, metric_label(metric))
+    return metric_label(metric, target_type=target_type)
+
+
+def _face_metric_label(metric: str) -> str | None:
+    return {
+        "coordinate_x": "face center X coordinate",
+        "coordinate_y": "face center Y coordinate",
+        "coordinate_z": "face center Z coordinate",
+        "distance_to_origin": "face center distance to the global origin",
+        "face_area": "surface area",
+    }.get(metric)
 
 
 def _entity_type_label(entity_type: str) -> str:
@@ -196,7 +235,10 @@ def _clause_format_values(clause: Any, query: Any | None) -> dict[str, Any]:
     if isinstance(values["value"], dict):
         values.update(values["value"])
     if isinstance(values["metric"], str):
-        values["metric_label"] = metric_label(values["metric"])
+        metric_target_type = _clause_metric_target_type(clause, query)
+        values["metric_label"] = metric_label(values["metric"], target_type=metric_target_type)
+        values["metric_subject_label"] = metric_subject_label(values["metric"], target_type=metric_target_type)
+        values["metric_property_label"] = metric_property_label(values["metric"], target_type=metric_target_type)
     if isinstance(values["relation"], str):
         values["relation_label"] = relation_label(values["relation"])
     if isinstance(values["operator"], str):
@@ -205,6 +247,18 @@ def _clause_format_values(clause: Any, query: Any | None) -> dict[str, Any]:
         values["query_id"] = getattr(query, "query_id", None)
         values["query_target_type"] = getattr(query, "target_type", None)
     return values
+
+
+def _clause_metric_target_type(clause: Any, query: Any | None) -> str | None:
+    clause_id = getattr(clause, "id", None)
+    if clause_id in {
+        "has_parameterized_selected_face_metric_threshold",
+        "has_parameterized_face_metric",
+        "has_parameterized_face_metric_threshold",
+        "has_parameterized_equal_face_metric_value",
+    }:
+        return "face"
+    return getattr(query, "target_type", None) if query is not None else None
 
 
 def _string_template(section: str, key: str) -> str:

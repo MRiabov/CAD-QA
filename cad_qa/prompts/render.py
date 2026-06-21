@@ -23,6 +23,11 @@ from cad_qa.query.answers import candidate_label_lines
 from cad_qa.query.ir import Clause
 from cad_qa.query.ir import QueryProgram
 
+SKIPPED_PUBLIC_CLAUSE_IDS = {
+    "has_parameterized_face_set",
+    "has_parameterized_face_metric",
+}
+
 
 @dataclass(frozen=True)
 class RenderedPrompt:
@@ -38,12 +43,18 @@ def render_prompt(
     query: QueryProgram,
     *,
     graph: OntologyGraph | None = None,
+    candidate_lines: list[str] | None = None,
 ) -> RenderedPrompt:
-    clues = [clause_prompt(clause, query=query) for clause in query.clauses]
-    clue_ids = [clause.id for clause in query.clauses]
+    public_clauses = [
+        clause
+        for clause in query.clauses
+        if clause.id not in SKIPPED_PUBLIC_CLAUSE_IDS
+    ]
+    clues = [clause_prompt(clause, query=query) for clause in public_clauses]
+    clue_ids = [clause.id for clause in public_clauses]
     clue_template_ids = [
         f"clause:{clause_template_id(clause, query=query)}"
-        for clause in query.clauses
+        for clause in public_clauses
     ]
     if query.aggregation and query.aggregation_metric:
         clues.append(
@@ -68,13 +79,18 @@ def render_prompt(
         clues.append(no_clause_prompt(query.target_type))
         clue_ids.append("target")
         clue_template_ids.append("fallback:no_clause_target")
+    rendered_candidate_lines = (
+        candidate_lines
+        if candidate_lines is not None
+        else candidate_label_lines(graph, query) if graph is not None else None
+    )
     prompt = checklist_prompt(
         source_code,
         clues,
         query.answer_type,
         target_type=query.target_type,
         answer_spec=query.answer_spec,
-        candidate_lines=candidate_label_lines(graph, query) if graph is not None else None,
+        candidate_lines=rendered_candidate_lines,
     )
     warnings = banned_terms(prompt)
     template_id = prompt_template_id(query)
