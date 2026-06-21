@@ -13,6 +13,7 @@ Example:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import runpy
 import subprocess
@@ -110,6 +111,8 @@ class DatasetIndex:
         target_type: str = "",
         source_id: str = "",
         tag: str = "",
+        order: str = "",
+        seed: str = "",
     ) -> dict[str, Any]:
         matches = self.rows
         if search:
@@ -131,6 +134,8 @@ class DatasetIndex:
             matches = [row for row in matches if row["source_id"] == source_id]
         if tag:
             matches = [row for row in matches if tag in row["source_feature_tags"]]
+        if order == "random":
+            matches = sorted(matches, key=lambda row: _stable_random_key(row, seed))
         total = len(matches)
         page = matches[offset : offset + limit]
         return {
@@ -223,6 +228,8 @@ class DatasetExplorerHandler(BaseHTTPRequestHandler):
             target_type=_str_param(params, "target_type"),
             source_id=_str_param(params, "source_id"),
             tag=_str_param(params, "tag"),
+            order=_str_param(params, "order"),
+            seed=_str_param(params, "seed"),
         )
 
     def _api_row(self, query: str) -> dict[str, Any]:
@@ -408,6 +415,12 @@ def _str_param(params: dict[str, list[str]], name: str, default: str = "") -> st
     return params.get(name, [default])[0]
 
 
+def _stable_random_key(row: dict[str, Any], seed: str) -> str:
+    row_id = str(row.get("row_id") or "")
+    source_id = str(row.get("source_id") or "")
+    return hashlib.sha256(f"{seed}:{source_id}:{row_id}".encode("utf-8")).hexdigest()
+
+
 INDEX_HTML = r"""<!doctype html>
 <html lang="en">
 <head>
@@ -424,7 +437,7 @@ INDEX_HTML = r"""<!doctype html>
     main { display:grid; grid-template-columns: minmax(460px, 48%) minmax(460px, 52%); height:calc(100vh - 56px); }
     .left, .right { overflow:auto; }
     .left { border-right:1px solid var(--line); }
-    .filters { position:sticky; top:0; z-index:2; padding:12px; display:grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap:8px; background:rgba(247,248,251,.96); border-bottom:1px solid var(--line); }
+    .filters { position:sticky; top:0; z-index:2; padding:12px; display:grid; grid-template-columns: minmax(160px,1.6fr) minmax(110px,1fr) minmax(110px,1fr) minmax(110px,1fr) minmax(120px,.9fr) 88px; gap:8px; background:rgba(247,248,251,.96); border-bottom:1px solid var(--line); }
     input, select, button { height:34px; border:1px solid var(--line); border-radius:6px; background:white; color:var(--ink); padding:0 10px; font:inherit; font-size:13px; }
     button { cursor:pointer; background:#eef4fb; border-color:#c4d4e8; color:#123e68; font-weight:600; }
     .rows { display:flex; flex-direction:column; }
@@ -462,6 +475,8 @@ INDEX_HTML = r"""<!doctype html>
         <select id="split"><option value="">All splits</option></select>
         <select id="target"><option value="">All targets</option></select>
         <select id="tag"><option value="">All tags</option></select>
+        <select id="order"><option value="">File order</option><option value="random">Random</option></select>
+        <button id="shuffle" title="Roll a new random order">Shuffle</button>
       </div>
       <div id="rows" class="rows"></div>
       <div class="pager">
@@ -479,6 +494,7 @@ let facets = null;
 let offset = 0;
 const limit = 50;
 let activeRowId = null;
+let randomSeed = String(Date.now());
 
 async function getJson(url) {
   const res = await fetch(url);
@@ -494,10 +510,11 @@ function params() {
   const p = new URLSearchParams();
   p.set('offset', offset);
   p.set('limit', limit);
-  for (const id of ['search','split','tag']) {
+  for (const id of ['search','split','tag','order']) {
     const v = document.getElementById(id).value;
     if (v) p.set(id, v);
   }
+  if (document.getElementById('order').value === 'random') p.set('seed', randomSeed);
   const target = document.getElementById('target').value;
   if (target) p.set('target_type', target);
   return p;
@@ -578,11 +595,17 @@ function renderDetail(row) {
   `;
 }
 
-for (const id of ['search','split','target','tag']) {
+for (const id of ['search','split','target','tag','order']) {
   document.addEventListener('input', e => {
     if (e.target && e.target.id === id) { offset = 0; loadRows(); }
   });
 }
+document.getElementById('shuffle').onclick = () => {
+  randomSeed = String(Date.now()) + ':' + String(Math.random());
+  document.getElementById('order').value = 'random';
+  offset = 0;
+  loadRows();
+};
 document.getElementById('prev').onclick = () => { offset = Math.max(0, offset - limit); loadRows(); };
 document.getElementById('next').onclick = () => { offset += limit; loadRows(); };
 
