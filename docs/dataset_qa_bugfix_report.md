@@ -1209,3 +1209,50 @@ a performance-only change: the current source-preserving simulated release still
 represents 906 sources and still has 133 parameter-balance violations, but the
 simulation now completes instead of hanging in `_sampled_parameter_cap_drop_batch`
 during interactive QA.
+
+## Fix: path-segment synthesis exposes midpoint-axis metrics
+
+Bug:
+
+Path-segment release families were structurally narrow. The graph extractor
+stored `segment_midpoint` and `segment_vector` as vector-valued measurements,
+but graph-hop synthesis only treated scalar numeric measurements as sortable
+metrics. As a result, path-segment families mostly varied between
+`segment_length` and `midpoint_distance_to_origin`, which left
+`parameterized_path_segment_extreme`, `parameterized_path_segment_rank`, and
+equal path-segment metric families over-concentrated on one or two
+`aggregation_metric` values.
+
+Example malformed distribution:
+
+```text
+parameterized_path_segment_rank aggregation_metric=midpoint_distance_to_origin:
+343 / 496 selected rows
+estimated missing replacements: 170 rows
+
+parameterized_path_segment_extreme aggregation_metric=segment_length:
+309 / 516 selected rows
+estimated missing replacements: 129 rows
+```
+
+Fix:
+
+Path-segment extraction now records scalar midpoint and vector components:
+
+```text
+midpoint_x, midpoint_y, midpoint_z
+segment_vector_x, segment_vector_y, segment_vector_z
+```
+
+Synthesis uses the midpoint-axis metrics for path-segment extreme/rank
+selection and for equal path-segment metric families. The viable-choice sampler
+also seeds distinct metric keys before filling remaining family budget, so a
+small `--max-per-family` budget is less likely to be consumed by many threshold
+variants of the same metric. A focused regression test verifies that
+`max_per_family=3` can represent multiple path-segment midpoint-axis metrics.
+
+Operational note:
+
+This affects newly built graph artifacts. Existing graph parquet shards do not
+contain the new scalar path-segment measurements and need graph regeneration to
+benefit from the additional synthesis variants.

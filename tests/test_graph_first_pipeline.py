@@ -228,6 +228,12 @@ path = cq.Workplane("XY").parametricCurve(lambda t: (radius * math.cos(t), radiu
     assert len(points) == 7
     assert len(segments) == 6
     assert graph.measurements_for(points[-1].id, name="coordinate_z")[0].value == 3.0
+    assert graph.measurements_for(segments[0].id, name="midpoint_x")
+    assert graph.measurements_for(segments[0].id, name="midpoint_y")
+    assert graph.measurements_for(segments[0].id, name="midpoint_z")
+    assert graph.measurements_for(segments[0].id, name="segment_vector_x")
+    assert graph.measurements_for(segments[0].id, name="segment_vector_y")
+    assert graph.measurements_for(segments[0].id, name="segment_vector_z")
 
 
 def test_source_loading(tmp_path: Path) -> None:
@@ -8531,6 +8537,9 @@ def test_synthesis_generates_parameterized_path_queries() -> None:
         graph.add_node(Node(segment_id, "path_segment", segment_id))
         graph.add_relation(Relation(segment_id, "path:main", "segment_on_path"))
         graph.add_measurement(Measurement(segment_id, "entity_geometry", "segment_midpoint", midpoint, "mm"))
+        graph.add_measurement(Measurement(segment_id, "entity_geometry", "midpoint_x", midpoint[0], "mm"))
+        graph.add_measurement(Measurement(segment_id, "entity_geometry", "midpoint_y", midpoint[1], "mm"))
+        graph.add_measurement(Measurement(segment_id, "entity_geometry", "midpoint_z", midpoint[2], "mm"))
         graph.add_measurement(Measurement(segment_id, "relation_metric", "segment_length", length, "mm"))
 
     queries = {query.query_id.rsplit(":", 1)[-1]: query for query in synthesize_graph_hop_queries(graph)}
@@ -8559,7 +8568,13 @@ def test_synthesis_generates_parameterized_path_queries() -> None:
     assert segment_query.target_type == "path_segment"
     assert segment_query.clauses[0].relation == "segment_on_path"
     assert segment_query.clauses[0].target_type == "path"
-    assert segment_query.aggregation_metric in {"segment_length", "midpoint_distance_to_origin"}
+    assert segment_query.aggregation_metric in {
+        "segment_length",
+        "midpoint_x",
+        "midpoint_y",
+        "midpoint_z",
+        "midpoint_distance_to_origin",
+    }
     assert segment_row.logical_hop_count == 3
     assert segment_row.geometry_hop_count == 3
     assert segment_row.query_program["sampled_parameters"]["target_type"] == ["path_segment"]
@@ -8567,6 +8582,13 @@ def test_synthesis_generates_parameterized_path_queries() -> None:
     assert "relation:segment_on_path:path" in segment_row.query_program["sampled_parameters"]["narrowing_predicate_sequence"]
     assert "segment" in segment_row.prompt.lower()
     assert "path" in segment_row.prompt.lower()
+
+    segment_metrics = {
+        query.aggregation_metric
+        for query in synthesize_graph_hop_queries(graph, max_per_family=20)
+        if query.query_id.endswith("parameterized_path_segment_extreme")
+    }
+    assert {"midpoint_x", "midpoint_y"}.issubset(segment_metrics)
 
 
 def test_path_segment_extreme_can_use_midpoint_distance_when_lengths_tie() -> None:
@@ -8587,6 +8609,49 @@ def test_path_segment_extreme_can_use_midpoint_distance_when_lengths_tie() -> No
 
     assert query.tie_break_metric == "midpoint_distance_to_origin"
     assert resolution.verifier_status == "resolved"
+
+
+def test_path_segment_extreme_samples_distinct_midpoint_axis_metrics() -> None:
+    graph = OntologyGraph(graph_id="graph:path-segment-axis-diversity", source={"source_id": "synthetic"})
+    graph.add_node(Node("path:main", "path", "path"))
+    for index, midpoint in enumerate(
+        [
+            [1.0, 0.0, 0.0],
+            [2.0, 3.0, 1.0],
+            [4.0, 1.0, 2.0],
+            [8.0, 6.0, 3.0],
+            [16.0, 2.0, 4.0],
+            [32.0, 5.0, 5.0],
+        ]
+    ):
+        segment_id = f"path:main:segment:{index}"
+        graph.add_node(Node(segment_id, "path_segment", segment_id))
+        graph.add_relation(Relation(segment_id, "path:main", "segment_on_path"))
+        graph.add_measurement(Measurement(segment_id, "entity_geometry", "segment_midpoint", midpoint, "mm"))
+        graph.add_measurement(Measurement(segment_id, "entity_geometry", "midpoint_x", midpoint[0], "mm"))
+        graph.add_measurement(Measurement(segment_id, "entity_geometry", "midpoint_y", midpoint[1], "mm"))
+        graph.add_measurement(Measurement(segment_id, "entity_geometry", "midpoint_z", midpoint[2], "mm"))
+        graph.add_measurement(Measurement(segment_id, "relation_metric", "segment_length", float(index + 1), "mm"))
+        graph.add_measurement(
+            Measurement(
+                segment_id,
+                "relation_metric",
+                "midpoint_distance_to_origin",
+                math.sqrt(sum(component * component for component in midpoint)),
+                "mm",
+            )
+        )
+
+    metrics = [
+        query.aggregation_metric
+        for query in synthesize_graph_hop_queries(graph, max_per_family=3)
+        if query.query_id.endswith("parameterized_path_segment_extreme")
+    ]
+
+    midpoint_axis_metrics = {"midpoint_x", "midpoint_y", "midpoint_z"}
+    assert len(metrics) == 3
+    assert len(set(metrics)) == 3
+    assert len(set(metrics) & midpoint_axis_metrics) >= 2
 
 
 def test_synthesis_generates_parameterized_path_reference_distance_queries() -> None:
@@ -8817,6 +8882,9 @@ def test_synthesis_generates_equal_value_path_queries() -> None:
         graph.add_node(Node(segment_id, "path_segment", segment_id))
         graph.add_relation(Relation(segment_id, "path:main", "segment_on_path"))
         graph.add_measurement(Measurement(segment_id, "entity_geometry", "segment_midpoint", midpoint, "mm"))
+        graph.add_measurement(Measurement(segment_id, "entity_geometry", "midpoint_x", midpoint[0], "mm"))
+        graph.add_measurement(Measurement(segment_id, "entity_geometry", "midpoint_y", midpoint[1], "mm"))
+        graph.add_measurement(Measurement(segment_id, "entity_geometry", "midpoint_z", midpoint[2], "mm"))
         graph.add_measurement(Measurement(segment_id, "relation_metric", "segment_length", length, "mm"))
         graph.add_measurement(
             Measurement(
@@ -8838,7 +8906,7 @@ def test_synthesis_generates_equal_value_path_queries() -> None:
         "parameterized_equal_path_segment_metric_extreme": (
             "path_segment",
             "has_parameterized_equal_path_segment_metric_value",
-            {"segment_length"},
+            {"segment_length", "midpoint_x", "midpoint_y", "midpoint_z"},
         ),
     }
     for family, (target_type, equal_clause_id, equal_metrics) in expected.items():
@@ -8888,6 +8956,9 @@ def test_synthesis_generates_equal_value_path_rank_queries() -> None:
         graph.add_node(Node(segment_id, "path_segment", segment_id))
         graph.add_relation(Relation(segment_id, "path:main", "segment_on_path"))
         graph.add_measurement(Measurement(segment_id, "entity_geometry", "segment_midpoint", midpoint, "mm"))
+        graph.add_measurement(Measurement(segment_id, "entity_geometry", "midpoint_x", midpoint[0], "mm"))
+        graph.add_measurement(Measurement(segment_id, "entity_geometry", "midpoint_y", midpoint[1], "mm"))
+        graph.add_measurement(Measurement(segment_id, "entity_geometry", "midpoint_z", midpoint[2], "mm"))
         graph.add_measurement(Measurement(segment_id, "relation_metric", "segment_length", 3.0, "mm"))
         graph.add_measurement(
             Measurement(

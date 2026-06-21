@@ -327,6 +327,9 @@ EXTREME_FAMILY_SPECS = (
         measurement_clause_id="has_parameterized_path_segment_metric",
         metrics=(
             "segment_length",
+            "midpoint_x",
+            "midpoint_y",
+            "midpoint_z",
             "midpoint_distance_to_origin",
         ),
         relation_target_type="path",
@@ -486,6 +489,9 @@ RANK_FAMILY_SPECS = (
         measurement_clause_id="has_parameterized_path_segment_metric",
         metrics=(
             "segment_length",
+            "midpoint_x",
+            "midpoint_y",
+            "midpoint_z",
             "midpoint_distance_to_origin",
         ),
         relation_target_type="path",
@@ -845,8 +851,8 @@ EQUAL_VALUE_EXTREME_FAMILY_SPECS = (
         relation_clause_id="has_parameterized_path_segment_set",
         equal_value_clause_id="has_parameterized_equal_path_segment_metric_value",
         selector_metric_clause_id="has_parameterized_path_segment_metric",
-        equal_metrics=("segment_length",),
-        selector_metrics=("midpoint_distance_to_origin",),
+        equal_metrics=("segment_length", "midpoint_x", "midpoint_y", "midpoint_z"),
+        selector_metrics=("segment_length", "midpoint_x", "midpoint_y", "midpoint_z", "midpoint_distance_to_origin"),
         relation_target_type="path",
     ),
     EqualValueExtremeFamilySpec(
@@ -1020,8 +1026,8 @@ EQUAL_VALUE_RANK_FAMILY_SPECS = (
         relation_clause_id="has_parameterized_path_segment_set",
         equal_value_clause_id="has_parameterized_equal_path_segment_metric_value",
         selector_metric_clause_id="has_parameterized_path_segment_metric",
-        equal_metrics=("segment_length", "midpoint_distance_to_origin"),
-        selector_metrics=("segment_length", "midpoint_distance_to_origin"),
+        equal_metrics=("segment_length", "midpoint_x", "midpoint_y", "midpoint_z", "midpoint_distance_to_origin"),
+        selector_metrics=("segment_length", "midpoint_x", "midpoint_y", "midpoint_z", "midpoint_distance_to_origin"),
         relation_target_type="path",
         selection_mode="rank",
     ),
@@ -2212,17 +2218,61 @@ def _sample_viable_choices(
         seeded: list[T] = []
         if direct:
             seeded.append(direct[0])
-        if compared and len(seeded) < limit:
-            seeded.append(compared[0])
-        seen = {id(item) for item in seeded}
-        for item in ordered:
-            if len(seeded) >= limit:
-                break
-            if id(item) not in seen:
-                seeded.append(item)
-                seen.add(id(item))
-        return seeded
-    return ordered[:limit]
+        seeded.extend(_distinct_viable_parameter_choices(direct, limit - len(seeded), exclude=seeded))
+        seeded.extend(_distinct_viable_parameter_choices(compared, limit - len(seeded), exclude=seeded))
+        return _fill_viable_choices(seeded, ordered, limit)
+    return _fill_viable_choices(
+        _distinct_viable_parameter_choices(ordered, limit),
+        ordered,
+        limit,
+    )
+
+
+def _distinct_viable_parameter_choices(
+    choices: list[T],
+    limit: int,
+    *,
+    exclude: list[T] | None = None,
+) -> list[T]:
+    if limit <= 0:
+        return []
+    excluded_ids = {id(item) for item in exclude or []}
+    seen_keys = {
+        key
+        for item in exclude or []
+        if (key := _viable_parameter_diversity_key(item)) is not None
+    }
+    selected: list[T] = []
+    for item in choices:
+        if len(selected) >= limit or id(item) in excluded_ids:
+            continue
+        key = _viable_parameter_diversity_key(item)
+        if key is None or key in seen_keys:
+            continue
+        selected.append(item)
+        seen_keys.add(key)
+    return selected
+
+
+def _fill_viable_choices(seed: list[T], ordered: list[T], limit: int) -> list[T]:
+    selected = list(seed[:limit])
+    seen = {id(item) for item in selected}
+    for item in ordered:
+        if len(selected) >= limit:
+            break
+        if id(item) not in seen:
+            selected.append(item)
+            seen.add(id(item))
+    return selected
+
+
+def _viable_parameter_diversity_key(item: object) -> tuple[str, ...] | None:
+    values: list[str] = []
+    for attr in ("metric", "equal_metric", "selector_metric"):
+        value = getattr(item, attr, None)
+        if isinstance(value, str) and value:
+            values.append(f"{attr}:{value}")
+    return tuple(values) if values else None
 
 
 def _with_query_variant(query: QueryProgram, index: int) -> QueryProgram:

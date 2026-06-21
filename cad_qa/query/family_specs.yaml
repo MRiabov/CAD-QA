@@ -1921,8 +1921,8 @@ families:
         - final_selector
       expected_values:
         target_type: [path_segment]
-        equal_measurement_metric: [segment_length]
-    notes: Synthesized value-bearing path-segment family that narrows by repeated measured segment length before selecting by another measured segment quantity.
+        equal_measurement_metric: [segment_length, midpoint_x, midpoint_y, midpoint_z]
+    notes: Synthesized value-bearing path-segment family that narrows by repeated measured segment length or midpoint-axis values before selecting by another measured segment quantity.
   - id: parameterized_equal_path_segment_metric_rank
     status: release
     target_type: path_segment
@@ -1949,9 +1949,9 @@ families:
         - final_selector
       expected_values:
         target_type: [path_segment]
-        equal_measurement_metric: [segment_length, midpoint_distance_to_origin]
+        equal_measurement_metric: [segment_length, midpoint_x, midpoint_y, midpoint_z, midpoint_distance_to_origin]
         aggregation_rank: [2, 3, 4, 5, 6]
-    notes: Synthesized value-bearing path-segment family that narrows by repeated measured segment length or midpoint distance before selecting a sampled rank by another measured segment quantity.
+    notes: Synthesized value-bearing path-segment family that narrows by repeated measured segment length, midpoint-axis values, or midpoint distance before selecting a sampled rank by another measured segment quantity.
   - id: parameterized_path_point_reference_entity_distance
     status: review_only
     target_type: path_point
