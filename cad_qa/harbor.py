@@ -22,6 +22,10 @@ DEFAULT_HARBOR_MODEL = "openrouter/deepseek/deepseek-v4-flash"
 DEFAULT_MAX_INPUT_TOKENS = 32_768
 DEFAULT_MAX_OUTPUT_TOKENS = 16_384
 DEFAULT_MAX_TURNS = 32
+OPENROUTER_NATIVE_PROVIDER_BY_MODEL_PREFIX = {
+    "openrouter/deepseek/": "deepseek",
+    "openrouter/xiaomi/": "xiaomi",
+}
 
 
 def materialize_harbor_tasks(
@@ -35,6 +39,7 @@ def materialize_harbor_tasks(
     measurement_scope: list[str] | None = None,
     max_rows: int | None = None,
     fresh: bool = False,
+    model_name: str = DEFAULT_HARBOR_MODEL,
     verifier_timeout_sec: float = DEFAULT_VERIFIER_TIMEOUT_SEC,
 ) -> dict[str, Any]:
     """Write Harbor task directories from CAD-QA public/private release rows."""
@@ -84,7 +89,7 @@ def materialize_harbor_tasks(
         )
 
     job_config_path = out / "cadqa_harbor_job.json"
-    job_config = _job_config(out)
+    job_config = _job_config(out, model_name=model_name)
     write_json(job_config_path, job_config)
     report = {
         "task_count": len(tasks),
@@ -101,7 +106,7 @@ def materialize_harbor_tasks(
         "out": str(out),
         "recommended_run": {
             "agent": DEFAULT_HARBOR_AGENT,
-            "model": DEFAULT_HARBOR_MODEL,
+            "model": model_name,
             "max_input_tokens": DEFAULT_MAX_INPUT_TOKENS,
             "max_output_tokens": DEFAULT_MAX_OUTPUT_TOKENS,
             "max_turns": DEFAULT_MAX_TURNS,
@@ -115,7 +120,13 @@ def materialize_harbor_tasks(
     return report
 
 
-def _job_config(dataset_path: Path) -> dict[str, Any]:
+def _job_config(dataset_path: Path, *, model_name: str = DEFAULT_HARBOR_MODEL) -> dict[str, Any]:
+    llm_call_kwargs: dict[str, Any] = {
+        "max_tokens": DEFAULT_MAX_OUTPUT_TOKENS,
+    }
+    provider_routing = _openrouter_native_provider_routing(model_name)
+    if provider_routing is not None:
+        llm_call_kwargs["extra_body"] = {"provider": provider_routing}
     return {
         "job_name": "cadqa-harbor-openrouter-deepseek-v4-flash",
         "n_attempts": 1,
@@ -125,7 +136,7 @@ def _job_config(dataset_path: Path) -> dict[str, Any]:
         "agents": [
             {
                 "name": DEFAULT_HARBOR_AGENT,
-                "model_name": DEFAULT_HARBOR_MODEL,
+                "model_name": model_name,
                 "kwargs": {
                     "max_turns": DEFAULT_MAX_TURNS,
                     "suppress_max_turns_warning": True,
@@ -133,9 +144,7 @@ def _job_config(dataset_path: Path) -> dict[str, Any]:
                         "max_input_tokens": DEFAULT_MAX_INPUT_TOKENS,
                         "max_output_tokens": DEFAULT_MAX_OUTPUT_TOKENS,
                     },
-                    "llm_call_kwargs": {
-                        "max_tokens": DEFAULT_MAX_OUTPUT_TOKENS,
-                    },
+                    "llm_call_kwargs": llm_call_kwargs,
                 },
             }
         ],
@@ -145,6 +154,19 @@ def _job_config(dataset_path: Path) -> dict[str, Any]:
             }
         ],
     }
+
+
+def _openrouter_native_provider_routing(model_name: str) -> dict[str, Any] | None:
+    """Pin OpenRouter models to their native provider when cache locality matters."""
+
+    for prefix, provider in OPENROUTER_NATIVE_PROVIDER_BY_MODEL_PREFIX.items():
+        if model_name.startswith(prefix):
+            return {
+                "order": [provider],
+                "only": [provider],
+                "allow_fallbacks": False,
+            }
+    return None
 
 
 def materialize_harbor_dataset(
@@ -157,6 +179,7 @@ def materialize_harbor_dataset(
     measurement_scope: list[str] | None = None,
     max_rows: int | None = None,
     fresh: bool = False,
+    model_name: str = DEFAULT_HARBOR_MODEL,
 ) -> dict[str, Any]:
     """Materialize Harbor tasks from a CAD-QA dataset directory."""
 
@@ -180,6 +203,7 @@ def materialize_harbor_dataset(
         measurement_scope=measurement_scope,
         max_rows=max_rows,
         fresh=fresh,
+        model_name=model_name,
     )
 
 

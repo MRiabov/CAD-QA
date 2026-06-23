@@ -73,7 +73,7 @@ from cad_qa.experiment import (
     run_artifact_manifest,
     run_smoke_experiment,
 )
-from cad_qa.harbor import grade_harbor_task, materialize_harbor_tasks
+from cad_qa.harbor import _openrouter_native_provider_routing, grade_harbor_task, materialize_harbor_tasks
 from cad_qa.io import iter_records, read_jsonl, read_records, to_jsonable, write_json, write_jsonl, write_records
 from cad_qa.ontology import build_graph
 from cad_qa.ontology.nodes import Measurement, Node, OntologyGraph, Relation, graph_from_dict
@@ -13010,6 +13010,13 @@ def test_harbor_materializes_tiny_public_private_release_smoke_slice(tmp_path: P
     assert job_config["agents"][0]["kwargs"]["model_info"]["max_input_tokens"] == 32768
     assert job_config["agents"][0]["kwargs"]["model_info"]["max_output_tokens"] == 16384
     assert job_config["agents"][0]["kwargs"]["llm_call_kwargs"]["max_tokens"] == 16384
+    assert job_config["agents"][0]["kwargs"]["llm_call_kwargs"]["extra_body"] == {
+        "provider": {
+            "order": ["deepseek"],
+            "only": ["deepseek"],
+            "allow_fallbacks": False,
+        }
+    }
     assert job_config["agents"][0]["kwargs"]["max_turns"] == 32
     assert job_config["agents"][0]["kwargs"]["suppress_max_turns_warning"]
     assert job_config["retry"]["max_retries"] == 0
@@ -13033,6 +13040,46 @@ def test_harbor_materializes_tiny_public_private_release_smoke_slice(tmp_path: P
     assert "do not make network requests" in instruction
     dockerfile = (task_dir / "environment" / "Dockerfile").read_text(encoding="utf-8")
     assert "numpy" in dockerfile
+
+
+def test_harbor_openrouter_native_provider_routing_pins_deepseek_and_xiaomi() -> None:
+    assert _openrouter_native_provider_routing("openrouter/deepseek/deepseek-v4-flash") == {
+        "order": ["deepseek"],
+        "only": ["deepseek"],
+        "allow_fallbacks": False,
+    }
+    assert _openrouter_native_provider_routing("openrouter/xiaomi/mimo-v2.5-pro") == {
+        "order": ["xiaomi"],
+        "only": ["xiaomi"],
+        "allow_fallbacks": False,
+    }
+    assert _openrouter_native_provider_routing("openrouter/openai/gpt-5-mini") is None
+
+
+def test_harbor_materialize_model_override_pins_xiaomi_provider(tmp_path: Path) -> None:
+    public, private = _tiny_harbor_rows()
+    out = tmp_path / "harbor_xiaomi"
+
+    report = materialize_harbor_tasks(
+        public,
+        private,
+        out,
+        split=["test"],
+        max_rows=1,
+        fresh=True,
+        model_name="openrouter/xiaomi/mimo-v2.5-pro",
+    )
+
+    assert report["recommended_run"]["model"] == "openrouter/xiaomi/mimo-v2.5-pro"
+    job_config = json.loads((out / "cadqa_harbor_job.json").read_text(encoding="utf-8"))
+    assert job_config["agents"][0]["model_name"] == "openrouter/xiaomi/mimo-v2.5-pro"
+    assert job_config["agents"][0]["kwargs"]["llm_call_kwargs"]["extra_body"] == {
+        "provider": {
+            "order": ["xiaomi"],
+            "only": ["xiaomi"],
+            "allow_fallbacks": False,
+        }
+    }
 
 
 def test_harbor_correct_answer_gives_reward_one(tmp_path: Path) -> None:

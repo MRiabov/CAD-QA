@@ -54,6 +54,7 @@ from cad_qa.evaluation.requests import few_shot_requests, oracle_responses, zero
 from cad_qa.evaluation.tool_assisted import run_tool_assisted_upper_bound
 from cad_qa.experiment import package_run_artifacts, run_smoke_experiment, run_artifact_manifest, write_paper_results
 from cad_qa.harbor import (
+    DEFAULT_HARBOR_MODEL,
     export_harbor_atif,
     materialize_harbor_dataset,
     materialize_harbor_tasks,
@@ -467,6 +468,7 @@ def _add_harbor_filters(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--measurement-scope", action="append", dest="measurement_scope")
     parser.add_argument("--max-rows", type=int)
     parser.add_argument("--fresh", action="store_true")
+    parser.add_argument("--model", default=None, help="Harbor agent model name for the generated job config.")
 
 
 def _cmd_sources_inspect(args: argparse.Namespace) -> dict[str, Any]:
@@ -1380,6 +1382,7 @@ def _cmd_harbor_materialize(args: argparse.Namespace) -> dict[str, Any]:
         measurement_scope=args.measurement_scope,
         max_rows=args.max_rows,
         fresh=bool(args.fresh),
+        model_name=args.model or DEFAULT_HARBOR_MODEL,
     )
 
 
@@ -1393,6 +1396,7 @@ def _cmd_harbor_materialize_dataset(args: argparse.Namespace) -> dict[str, Any]:
         measurement_scope=args.measurement_scope,
         max_rows=args.max_rows,
         fresh=bool(args.fresh),
+        model_name=args.model or DEFAULT_HARBOR_MODEL,
     )
 
 

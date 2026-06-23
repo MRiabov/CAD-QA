@@ -93,9 +93,19 @@ The generated job config uses the `terminus-2` Harbor agent with model
 LLM call, `max_turns=32`, one attempt, no trial retries, and one concurrent
 trial. In Terminus-2, `max_turns` is the cap on agent interaction turns/tool-use
 rounds; Harbor `max_retries` is only a job-level retry policy for failed trials.
+For OpenRouter models with native low-cost cache hits, generated configs pin
+provider routing in `llm_call_kwargs.extra_body.provider`: DeepSeek models route
+only to the `deepseek` provider and Xiaomi Mimo models route only to the
+`xiaomi` provider, with fallbacks disabled. This prevents OpenRouter from
+load-balancing or failing over to other providers whose cached-token pricing and
+cache locality can make repeated agent loops materially more expensive.
 The materializer writes the same recommendation to `cadqa_harbor_manifest.json`
 under `recommended_run`. Agent/model/token selection is a Harbor run
 configuration, not part of the public task prompt or CAD-QA grading contract.
+Use `--model openrouter/xiaomi/mimo-v2.5-pro` or another concrete OpenRouter
+model on `cadqa harbor materialize` / `materialize-dataset` when generating a
+non-default benchmark config; the native-provider pin is inferred from the model
+prefix when supported.
 
 The verifier uses `cad_qa.evaluation.grade.grade_public_private` for the single
 row, writes the full CAD-QA artifact to `/logs/verifier/cadqa_grade.json`, and
