@@ -22,10 +22,6 @@ DEFAULT_HARBOR_MODEL = "openrouter/deepseek/deepseek-v4-flash"
 DEFAULT_MAX_INPUT_TOKENS = 32_768
 DEFAULT_MAX_OUTPUT_TOKENS = 16_384
 DEFAULT_MAX_TURNS = 32
-OPENROUTER_NATIVE_PROVIDER_BY_MODEL_PREFIX = {
-    "openrouter/deepseek/": "deepseek",
-    "openrouter/xiaomi/": "xiaomi",
-}
 
 
 def materialize_harbor_tasks(
@@ -159,14 +155,15 @@ def _job_config(dataset_path: Path, *, model_name: str = DEFAULT_HARBOR_MODEL) -
 def _openrouter_native_provider_routing(model_name: str) -> dict[str, Any] | None:
     """Pin OpenRouter models to their native provider when cache locality matters."""
 
-    for prefix, provider in OPENROUTER_NATIVE_PROVIDER_BY_MODEL_PREFIX.items():
-        if model_name.startswith(prefix):
-            return {
-                "order": [provider],
-                "only": [provider],
-                "allow_fallbacks": False,
-            }
-    return None
+    parts = model_name.split("/", maxsplit=2)
+    if len(parts) != 3 or parts[0] != "openrouter" or not parts[1]:
+        return None
+    provider = parts[1]
+    return {
+        "order": [provider],
+        "only": [provider],
+        "allow_fallbacks": False,
+    }
 
 
 def materialize_harbor_dataset(

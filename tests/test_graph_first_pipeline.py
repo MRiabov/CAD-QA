@@ -13042,7 +13042,7 @@ def test_harbor_materializes_tiny_public_private_release_smoke_slice(tmp_path: P
     assert "numpy" in dockerfile
 
 
-def test_harbor_openrouter_native_provider_routing_pins_deepseek_and_xiaomi() -> None:
+def test_harbor_openrouter_native_provider_routing_pins_openrouter_namespace() -> None:
     assert _openrouter_native_provider_routing("openrouter/deepseek/deepseek-v4-flash") == {
         "order": ["deepseek"],
         "only": ["deepseek"],
@@ -13053,7 +13053,12 @@ def test_harbor_openrouter_native_provider_routing_pins_deepseek_and_xiaomi() ->
         "only": ["xiaomi"],
         "allow_fallbacks": False,
     }
-    assert _openrouter_native_provider_routing("openrouter/openai/gpt-5-mini") is None
+    assert _openrouter_native_provider_routing("openrouter/openai/gpt-5-mini") == {
+        "order": ["openai"],
+        "only": ["openai"],
+        "allow_fallbacks": False,
+    }
+    assert _openrouter_native_provider_routing("deepseek/deepseek-v4-flash") is None
 
 
 def test_harbor_materialize_model_override_pins_xiaomi_provider(tmp_path: Path) -> None:
