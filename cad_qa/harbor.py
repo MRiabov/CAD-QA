@@ -19,6 +19,8 @@ DEFAULT_VERIFIER_TIMEOUT_SEC = 120.0
 DEFAULT_AGENT_TIMEOUT_SEC = 300.0
 DEFAULT_HARBOR_AGENT = "terminus-2"
 DEFAULT_HARBOR_MODEL = "openrouter/deepseek/deepseek-v4-flash"
+DEFAULT_HARBOR_ENVIRONMENT = "docker"
+HARBOR_ENVIRONMENTS = ("docker", "daytona")
 DEFAULT_MAX_INPUT_TOKENS = 32_768
 DEFAULT_MAX_OUTPUT_TOKENS = 16_384
 DEFAULT_MAX_TURNS = 32
@@ -36,9 +38,15 @@ def materialize_harbor_tasks(
     max_rows: int | None = None,
     fresh: bool = False,
     model_name: str = DEFAULT_HARBOR_MODEL,
+    environment: str = DEFAULT_HARBOR_ENVIRONMENT,
+    n_concurrent_trials: int = 1,
     verifier_timeout_sec: float = DEFAULT_VERIFIER_TIMEOUT_SEC,
 ) -> dict[str, Any]:
     """Write Harbor task directories from CAD-QA public/private release rows."""
+
+    _validate_harbor_environment(environment)
+    if n_concurrent_trials < 1:
+        raise ValueError("n_concurrent_trials must be at least 1")
 
     if fresh and out.exists():
         shutil.rmtree(out)
@@ -85,7 +93,12 @@ def materialize_harbor_tasks(
         )
 
     job_config_path = out / "cadqa_harbor_job.json"
-    job_config = _job_config(out, model_name=model_name)
+    job_config = _job_config(
+        out,
+        model_name=model_name,
+        environment=environment,
+        n_concurrent_trials=n_concurrent_trials,
+    )
     write_json(job_config_path, job_config)
     report = {
         "task_count": len(tasks),
@@ -103,6 +116,8 @@ def materialize_harbor_tasks(
         "recommended_run": {
             "agent": DEFAULT_HARBOR_AGENT,
             "model": model_name,
+            "environment": environment,
+            "n_concurrent_trials": n_concurrent_trials,
             "max_input_tokens": DEFAULT_MAX_INPUT_TOKENS,
             "max_output_tokens": DEFAULT_MAX_OUTPUT_TOKENS,
             "max_turns": DEFAULT_MAX_TURNS,
@@ -116,7 +131,16 @@ def materialize_harbor_tasks(
     return report
 
 
-def _job_config(dataset_path: Path, *, model_name: str = DEFAULT_HARBOR_MODEL) -> dict[str, Any]:
+def _job_config(
+    dataset_path: Path,
+    *,
+    model_name: str = DEFAULT_HARBOR_MODEL,
+    environment: str = DEFAULT_HARBOR_ENVIRONMENT,
+    n_concurrent_trials: int = 1,
+) -> dict[str, Any]:
+    _validate_harbor_environment(environment)
+    if n_concurrent_trials < 1:
+        raise ValueError("n_concurrent_trials must be at least 1")
     llm_call_kwargs: dict[str, Any] = {
         "max_tokens": DEFAULT_MAX_OUTPUT_TOKENS,
     }
@@ -126,9 +150,9 @@ def _job_config(dataset_path: Path, *, model_name: str = DEFAULT_HARBOR_MODEL) -
     return {
         "job_name": "cadqa-harbor-openrouter-deepseek-v4-flash",
         "n_attempts": 1,
-        "n_concurrent_trials": 1,
+        "n_concurrent_trials": n_concurrent_trials,
         "retry": {"max_retries": 0},
-        "environment": {"type": "docker", "delete": True},
+        "environment": {"type": environment, "delete": True},
         "agents": [
             {
                 "name": DEFAULT_HARBOR_AGENT,
@@ -150,6 +174,12 @@ def _job_config(dataset_path: Path, *, model_name: str = DEFAULT_HARBOR_MODEL) -
             }
         ],
     }
+
+
+def _validate_harbor_environment(environment: str) -> None:
+    if environment not in HARBOR_ENVIRONMENTS:
+        allowed = ", ".join(HARBOR_ENVIRONMENTS)
+        raise ValueError(f"unsupported Harbor environment {environment!r}; expected one of: {allowed}")
 
 
 def _openrouter_native_provider_routing(model_name: str) -> dict[str, Any] | None:
@@ -177,6 +207,8 @@ def materialize_harbor_dataset(
     max_rows: int | None = None,
     fresh: bool = False,
     model_name: str = DEFAULT_HARBOR_MODEL,
+    environment: str = DEFAULT_HARBOR_ENVIRONMENT,
+    n_concurrent_trials: int = 1,
 ) -> dict[str, Any]:
     """Materialize Harbor tasks from a CAD-QA dataset directory."""
 
@@ -201,6 +233,8 @@ def materialize_harbor_dataset(
         max_rows=max_rows,
         fresh=fresh,
         model_name=model_name,
+        environment=environment,
+        n_concurrent_trials=n_concurrent_trials,
     )
 
 

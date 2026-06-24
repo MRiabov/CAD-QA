@@ -47,6 +47,21 @@ rtk uv run cadqa harbor materialize \
   --fresh
 ```
 
+To generate a Harbor job config that runs trials on Daytona instead of local
+Docker:
+
+```bash
+rtk uv run cadqa harbor materialize \
+  --public data/cadqa_graph_release_smoke/public.parquet \
+  --private data/cadqa_graph_release_smoke/private.parquet \
+  --out runs/harbor_cadqa_smoke_daytona \
+  --split test \
+  --max-rows 100 \
+  --daytona \
+  --n-concurrent-trials 20 \
+  --fresh
+```
+
 From a CAD-QA dataset directory:
 
 ```bash
@@ -59,7 +74,10 @@ rtk uv run cadqa harbor materialize-dataset \
 ```
 
 Filters are available for `--split`, `--difficulty`, `--relation-family`,
-`--measurement-scope`, and `--max-rows`.
+`--measurement-scope`, and `--max-rows`. The generated Harbor job config uses
+local Docker by default. Use `--environment daytona` or its `--daytona` shortcut
+when local Docker concurrency is CPU-bound. `--n-concurrent-trials` controls the
+Harbor trial concurrency recorded in the generated job config.
 
 Each task contains `instruction.md`, `task.toml`, `environment/Dockerfile`,
 `workspace/prompt.txt`, `workspace/row_public.json`, `tests/test.sh`,
@@ -87,12 +105,30 @@ Run one task or the full materialized directory:
 harbor run -c runs/harbor_cadqa_smoke/cadqa_harbor_job.json
 ```
 
+For a config materialized with `--daytona`, the same command launches through
+Daytona because the generated `cadqa_harbor_job.json` sets the Harbor
+environment to `daytona`:
+
+```bash
+export DAYTONA_API_KEY=<YOUR-KEY>
+harbor run -c runs/harbor_cadqa_smoke_daytona/cadqa_harbor_job.json
+```
+
+Harbor also supports Daytona as a native run-time flag. For an ad hoc override,
+or if you are not using the generated CAD-QA job config, use:
+
+```bash
+export DAYTONA_API_KEY=<YOUR-KEY>
+harbor run -c runs/harbor_cadqa_smoke/cadqa_harbor_job.json --env daytona
+```
+
 The generated job config uses the `terminus-2` Harbor agent with model
 `openrouter/deepseek/deepseek-v4-flash`. It also pins conservative run limits:
 `max_input_tokens=32768`, `max_output_tokens=16384`, `max_tokens=16384` on each
 LLM call, `max_turns=32`, one attempt, no trial retries, and one concurrent
-trial. In Terminus-2, `max_turns` is the cap on agent interaction turns/tool-use
-rounds; Harbor `max_retries` is only a job-level retry policy for failed trials.
+trial unless overridden with `--n-concurrent-trials`. In Terminus-2,
+`max_turns` is the cap on agent interaction turns/tool-use rounds; Harbor
+`max_retries` is only a job-level retry policy for failed trials.
 For OpenRouter models with native low-cost cache hits, generated configs pin
 provider routing in `llm_call_kwargs.extra_body.provider`. Any model named as
 `openrouter/<provider>/<model>` routes only to the matching `<provider>`, such

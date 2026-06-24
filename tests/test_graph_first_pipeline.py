@@ -13000,6 +13000,8 @@ def test_harbor_materializes_tiny_public_private_release_smoke_slice(tmp_path: P
     manifest = json.loads((out / "cadqa_harbor_manifest.json").read_text(encoding="utf-8"))
     assert manifest["recommended_run"]["agent"] == "terminus-2"
     assert manifest["recommended_run"]["model"] == "openrouter/deepseek/deepseek-v4-flash"
+    assert manifest["recommended_run"]["environment"] == "docker"
+    assert manifest["recommended_run"]["n_concurrent_trials"] == 1
     assert manifest["recommended_run"]["max_input_tokens"] == 32768
     assert manifest["recommended_run"]["max_output_tokens"] == 16384
     assert manifest["recommended_run"]["max_turns"] == 32
@@ -13019,6 +13021,7 @@ def test_harbor_materializes_tiny_public_private_release_smoke_slice(tmp_path: P
     }
     assert job_config["agents"][0]["kwargs"]["max_turns"] == 32
     assert job_config["agents"][0]["kwargs"]["suppress_max_turns_warning"]
+    assert job_config["environment"] == {"type": "docker", "delete": True}
     assert job_config["retry"]["max_retries"] == 0
     assert job_config["n_concurrent_trials"] == 1
     task_dir = Path(manifest["tasks"][0]["task_dir"])
@@ -13040,6 +13043,44 @@ def test_harbor_materializes_tiny_public_private_release_smoke_slice(tmp_path: P
     assert "do not make network requests" in instruction
     dockerfile = (task_dir / "environment" / "Dockerfile").read_text(encoding="utf-8")
     assert "numpy" in dockerfile
+
+
+def test_harbor_materialize_can_generate_daytona_job_config(tmp_path: Path) -> None:
+    public, private = _tiny_harbor_rows()
+    public_path = tmp_path / "public.jsonl"
+    private_path = tmp_path / "private.jsonl"
+    out = tmp_path / "harbor_daytona"
+    write_jsonl(public_path, public)
+    write_jsonl(private_path, private)
+
+    assert cli_main(
+        [
+            "harbor",
+            "materialize",
+            "--public",
+            str(public_path),
+            "--private",
+            str(private_path),
+            "--out",
+            str(out),
+            "--split",
+            "test",
+            "--max-rows",
+            "1",
+            "--daytona",
+            "--n-concurrent-trials",
+            "20",
+            "--fresh",
+        ]
+    ) == 0
+
+    manifest = json.loads((out / "cadqa_harbor_manifest.json").read_text(encoding="utf-8"))
+    assert manifest["recommended_run"]["environment"] == "daytona"
+    assert manifest["recommended_run"]["n_concurrent_trials"] == 20
+    assert manifest["recommended_run"]["command"].startswith("harbor run -c ")
+    job_config = json.loads((out / "cadqa_harbor_job.json").read_text(encoding="utf-8"))
+    assert job_config["environment"] == {"type": "daytona", "delete": True}
+    assert job_config["n_concurrent_trials"] == 20
 
 
 def test_harbor_openrouter_native_provider_routing_pins_openrouter_namespace() -> None:
