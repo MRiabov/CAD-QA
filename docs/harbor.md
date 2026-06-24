@@ -108,6 +108,15 @@ model on `cadqa harbor materialize` / `materialize-dataset` when generating a
 non-default benchmark config; the native-provider pin is inferred from the
 OpenRouter provider namespace.
 
+For production benchmark runs, do not use a smaller per-call completion cap as
+a cost-control mechanism. Artificially low `max_tokens` or
+`model_info.max_output_tokens` values can truncate valid agent turns, produce
+`finish_reason=length`, and pollute the measured benchmark behavior. If the
+provider exposes a larger context/output window, set these fields to the
+provider/model limit for that benchmark run. Control spend and runaway behavior
+with row-level timeouts, `max_turns`, provider pinning, trial concurrency, and
+active monitoring instead.
+
 The verifier uses `cad_qa.evaluation.grade.grade_public_private` for the single
 row, writes the full CAD-QA artifact to `/logs/verifier/cadqa_grade.json`, and
 writes the scalar reward to `/logs/verifier/reward.txt`. Reward is `1` only for
