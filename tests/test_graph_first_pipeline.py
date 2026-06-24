@@ -13030,10 +13030,13 @@ def test_harbor_materializes_tiny_public_private_release_smoke_slice(tmp_path: P
     assert (task_dir / "environment" / "Dockerfile").exists()
     assert (task_dir / "workspace" / "prompt.txt").exists()
     assert (task_dir / "workspace" / "row_public.json").exists()
+    assert (task_dir / "tests" / "row_public.json").exists()
     assert (task_dir / "tests" / "test.sh").exists()
     assert (task_dir / "tests" / "grade_cadqa.py").exists()
     assert (task_dir / "tests" / "cad_qa" / "evaluation" / "grade.py").exists()
+    assert (task_dir / "tests" / "expected" / "private.json").exists()
     assert (task_dir / "solution" / "solve.sh").exists()
+    assert (task_dir / "solution" / "expected" / "private.json").exists()
     assert (task_dir / "expected" / "private.json").exists()
     instruction = (task_dir / "instruction.md").read_text(encoding="utf-8")
     assert "/app/answer.json" in instruction
@@ -13161,6 +13164,42 @@ def test_harbor_correct_answer_gives_reward_one(tmp_path: Path) -> None:
     )
     assert completed.returncode == 0, completed.stderr
     assert (script_logs / "reward.txt").read_text(encoding="utf-8").strip() == "1"
+
+
+def test_harbor_scripts_use_harbor_visible_fixture_copies(tmp_path: Path) -> None:
+    task_dir = _materialize_tiny_harbor_task(tmp_path)
+    (task_dir / "workspace" / "row_public.json").unlink()
+    (task_dir / "expected" / "private.json").unlink()
+    app_dir = tmp_path / "app"
+
+    completed = subprocess.run(
+        [str(task_dir / "solution" / "solve.sh")],
+        check=False,
+        text=True,
+        capture_output=True,
+        env={
+            **dict(os.environ),
+            "CADQA_APP_DIR": str(app_dir),
+        },
+    )
+    assert completed.returncode == 0, completed.stderr
+
+    logs_dir = tmp_path / "logs"
+    completed = subprocess.run(
+        [str(task_dir / "tests" / "test.sh")],
+        check=False,
+        text=True,
+        capture_output=True,
+        env={
+            **dict(os.environ),
+            "CADQA_APP_DIR": str(app_dir),
+            "CADQA_LOGS_DIR": str(logs_dir),
+            "CADQA_GRADE_SCRIPT": str(task_dir / "tests" / "grade_cadqa.py"),
+        },
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert (logs_dir / "reward.txt").read_text(encoding="utf-8").strip() == "1"
 
 
 def test_harbor_oracle_solution_writes_correct_answer(tmp_path: Path) -> None:

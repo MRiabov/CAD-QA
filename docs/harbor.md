@@ -80,10 +80,14 @@ when local Docker concurrency is CPU-bound. `--n-concurrent-trials` controls the
 Harbor trial concurrency recorded in the generated job config.
 
 Each task contains `instruction.md`, `task.toml`, `environment/Dockerfile`,
-`workspace/prompt.txt`, `workspace/row_public.json`, `tests/test.sh`,
-`tests/grade_cadqa.py`, `solution/solve.sh`, and hidden verifier data under
-`expected/private.json`. The solution script is for Harbor oracle runs only; it
-reads the private answer key and writes `/app/answer.json`.
+`workspace/prompt.txt`, `workspace/row_public.json`, `tests/row_public.json`,
+`tests/test.sh`, `tests/grade_cadqa.py`, `tests/expected/private.json`,
+`solution/solve.sh`, `solution/expected/private.json`, and hidden verifier data
+under `expected/private.json`. The canonical public/private copies stay under
+`workspace/` and `expected/` for local CAD-QA tooling. The `tests/` copies are
+the verifier-visible fixtures Harbor uploads to `/tests`; the `solution/` copy
+is only for Harbor oracle runs. The solution script reads the private answer key
+and writes `/app/answer.json`.
 The agent must write exactly one of:
 
 ```json

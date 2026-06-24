@@ -349,15 +349,19 @@ def run_harbor_verifier_cli(argv: list[str] | None = None) -> int:
     public_path = args.public or _first_existing(
         [
             Path("/app/row_public.json"),
+            Path("/tests/row_public.json"),
             Path("/workspace/row_public.json"),
             Path(__file__).resolve().parents[1] / "workspace" / "row_public.json",
+            Path(__file__).resolve().parents[1] / "tests" / "row_public.json",
         ]
     )
     private_path = args.private or _first_existing(
         [
             Path("/expected/private.json"),
             Path("/tests/expected/private.json"),
+            Path("/solution/expected/private.json"),
             Path(__file__).resolve().parents[1] / "expected" / "private.json",
+            Path(__file__).resolve().parents[1] / "tests" / "expected" / "private.json",
         ]
     )
     if public_path is None or private_path is None:
@@ -395,8 +399,10 @@ def _write_task(
     (task_dir / "environment").mkdir()
     (task_dir / "workspace").mkdir()
     (task_dir / "tests").mkdir()
+    (task_dir / "tests" / "expected").mkdir()
     (task_dir / "expected").mkdir()
     (task_dir / "solution").mkdir()
+    (task_dir / "solution" / "expected").mkdir()
 
     (task_dir / "instruction.md").write_text(_instruction(public), encoding="utf-8")
     (task_dir / "task.toml").write_text(_task_toml(public, verifier_timeout_sec=verifier_timeout_sec), encoding="utf-8")
@@ -404,6 +410,9 @@ def _write_task(
     (task_dir / "workspace" / "prompt.txt").write_text(str(public["prompt"]).rstrip() + "\n", encoding="utf-8")
     write_json(task_dir / "workspace" / "row_public.json", public)
     write_json(task_dir / "expected" / "private.json", private)
+    write_json(task_dir / "tests" / "row_public.json", public)
+    write_json(task_dir / "tests" / "expected" / "private.json", private)
+    write_json(task_dir / "solution" / "expected" / "private.json", private)
     test_sh = task_dir / "tests" / "test.sh"
     test_sh.write_text(_test_sh(), encoding="utf-8")
     test_sh.chmod(0o755)
@@ -499,8 +508,18 @@ def _test_sh() -> str:
         "LOGS_DIR=\"${CADQA_LOGS_DIR:-/logs/verifier}\"\n"
         "mkdir -p \"$LOGS_DIR\"\n"
         "TASK_DIR=\"$(cd \"$(dirname \"$0\")/..\" && pwd)\"\n"
-        "PUBLIC_PATH=\"${CADQA_PUBLIC:-$TASK_DIR/workspace/row_public.json}\"\n"
-        "PRIVATE_PATH=\"${CADQA_PRIVATE:-$TASK_DIR/expected/private.json}\"\n"
+        "PUBLIC_PATH=\"${CADQA_PUBLIC:-}\"\n"
+        "if [ -z \"$PUBLIC_PATH\" ]; then\n"
+        "  for candidate in /tests/row_public.json \"$TASK_DIR/tests/row_public.json\" \"$TASK_DIR/workspace/row_public.json\" /workspace/row_public.json; do\n"
+        "    if [ -f \"$candidate\" ]; then PUBLIC_PATH=\"$candidate\"; break; fi\n"
+        "  done\n"
+        "fi\n"
+        "PRIVATE_PATH=\"${CADQA_PRIVATE:-}\"\n"
+        "if [ -z \"$PRIVATE_PATH\" ]; then\n"
+        "  for candidate in /tests/expected/private.json \"$TASK_DIR/tests/expected/private.json\" \"$TASK_DIR/expected/private.json\" /expected/private.json; do\n"
+        "    if [ -f \"$candidate\" ]; then PRIVATE_PATH=\"$candidate\"; break; fi\n"
+        "  done\n"
+        "fi\n"
         "GRADE_SCRIPT=\"${CADQA_GRADE_SCRIPT:-/tests/grade_cadqa.py}\"\n"
         "if [ ! -f \"$GRADE_SCRIPT\" ]; then GRADE_SCRIPT=\"$TASK_DIR/tests/grade_cadqa.py\"; fi\n"
         "python3 \"$GRADE_SCRIPT\" --public \"$PUBLIC_PATH\" --private \"$PRIVATE_PATH\" --app-dir \"$APP_DIR\" --logs-dir \"$LOGS_DIR\"\n"
@@ -519,7 +538,7 @@ def _solve_sh() -> str:
         "TASK_DIR=\"$(cd \"$(dirname \"$0\")/..\" && pwd)\"\n"
         "PRIVATE_PATH=\"${CADQA_PRIVATE:-}\"\n"
         "if [ -z \"$PRIVATE_PATH\" ]; then\n"
-        "  for candidate in /expected/private.json \"$TASK_DIR/expected/private.json\" /tests/expected/private.json; do\n"
+        "  for candidate in /solution/expected/private.json \"$TASK_DIR/solution/expected/private.json\" \"$TASK_DIR/expected/private.json\" /expected/private.json /tests/expected/private.json; do\n"
         "    if [ -f \"$candidate\" ]; then PRIVATE_PATH=\"$candidate\"; break; fi\n"
         "  done\n"
         "fi\n"
