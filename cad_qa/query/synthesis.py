@@ -7,7 +7,11 @@ from dataclasses import dataclass, replace
 from typing import Any, Callable, TypeVar
 
 from cad_qa.ontology.nodes import Node, OntologyGraph
-from cad_qa.query.answers import synthesis_answer_spec_for_target_type
+from cad_qa.query.answers import (
+    DEFAULT_MAX_CANDIDATE_LABELS,
+    AnswerSpec,
+    synthesis_answer_spec_for_target_type,
+)
 from cad_qa.query.ir import Clause, QueryProgram
 from cad_qa.query.predicate_catalog import (
     PredicateInstance,
@@ -23,6 +27,7 @@ from cad_qa.query.predicate_catalog import (
 GEOMETRY_MARGIN_EPSILON = 1e-6
 REFERENCE_FEATURE_DISTANCE_METRIC = "distance_to_reference_feature_centroid"
 MAX_SYNTHESIZED_RANK = 6
+MAX_RANK_CANDIDATES = DEFAULT_MAX_CANDIDATE_LABELS
 MAX_REFERENCE_DISTANCE_ANCHORS = 64
 MAX_METRIC_COMPARE_THRESHOLDS = 12
 MAX_RELATED_METRIC_COMPARE_THRESHOLDS = 24
@@ -507,16 +512,6 @@ RANK_FAMILY_SPECS = (
         relation_target_type="material_region",
         allow_rank=True,
     ),
-    ExtremeFamilySpec(
-        family_id="parameterized_void_region_rank",
-        target_type="void_region",
-        relation="has_kernel_void_region_geometry",
-        relation_clause_id="has_void_geometry",
-        measurement_clause_id="has_parameterized_void_region_metric",
-        metrics=VOID_REGION_METRICS,
-        relation_target_type="void_region",
-        allow_rank=True,
-    ),
 )
 
 SELECTOR_COUNT_FAMILY_SPECS = (
@@ -916,18 +911,6 @@ EQUAL_VALUE_RANK_FAMILY_SPECS = (
         equal_metrics=MATERIAL_REGION_METRICS,
         selector_metrics=MATERIAL_REGION_METRICS,
         relation_target_type="material_region",
-        selection_mode="rank",
-    ),
-    EqualValueExtremeFamilySpec(
-        family_id="parameterized_equal_void_region_metric_rank",
-        target_type="void_region",
-        relation="has_kernel_void_region_geometry",
-        relation_clause_id="has_void_geometry",
-        equal_value_clause_id="has_parameterized_equal_void_region_metric_value",
-        selector_metric_clause_id="has_parameterized_void_region_metric",
-        equal_metrics=VOID_REGION_METRICS,
-        selector_metrics=VOID_REGION_METRICS,
-        relation_target_type="void_region",
         selection_mode="rank",
     ),
     EqualValueExtremeFamilySpec(
@@ -2084,6 +2067,8 @@ def _generic_reference_distance_family_specs() -> tuple[ReferenceDistanceFamilyS
                 (str(target["family_id"]), "extreme"),
                 (f"{str(target['family_id']).removesuffix('_distance')}_distance_rank", "rank"),
             ):
+                if target["target_type"] == "void_region" and selection_mode == "rank":
+                    continue
                 specs.append(
                     ReferenceDistanceFamilySpec(
                         family_id=family_id,
@@ -2174,6 +2159,82 @@ def synthesize_graph_hop_queries(
             for candidate in _viable_reference_distances(graph, spec)
         ]
         queries.extend(_queries_from_viable(graph, family_id, viable, _query_for_reference_distance, max_per_family))
+    queries.extend(_void_region_volume_queries(graph, max_per_family=max_per_family))
+    return queries
+
+
+def _void_region_volume_queries(
+    graph: OntologyGraph,
+    *,
+    max_per_family: int,
+) -> list[QueryProgram]:
+    """Create numeric volume questions keyed to an explicit modeling operation."""
+
+    regions_by_target: dict[str, list[Node]] = {}
+    for node in graph.nodes_by_type("void_region"):
+        target = node.properties.get("target")
+        if (
+            isinstance(target, str)
+            and target
+            and isinstance(_measurement_value(graph, node.id, "volume"), (int, float))
+        ):
+            regions_by_target.setdefault(target, []).append(node)
+    # Reassigned targets can have multiple region records; the target name alone
+    # cannot identify one operation in that case.
+    regions = [
+        nodes[0]
+        for target, nodes in sorted(regions_by_target.items())
+        if len(nodes) == 1
+    ]
+    choices = _sample_viable_choices(
+        graph.graph_id,
+        "parameterized_void_region_volume",
+        sorted(regions, key=lambda node: (str(node.properties["target"]), node.id)),
+        max_per_family,
+    )
+    queries: list[QueryProgram] = []
+    multi_variant = len(choices) > 1
+    for index, node in enumerate(choices):
+        target = str(node.properties["target"])
+        geometry_relation = next(
+            (
+                relation.type
+                for relation in graph.relations_from(node.id)
+                if relation.type in {"has_kernel_void_region_geometry", "has_void_region_geometry"}
+            ),
+            None,
+        )
+        if geometry_relation is None:
+            continue
+        query = QueryProgram(
+            query_id=f"{graph.graph_id}:synth:parameterized_void_region_volume",
+            target_type="void_region",
+            answer_spec=AnswerSpec(mode="number", answer_format="number", metric="volume"),
+            clauses=[
+                Clause(
+                    id="has_void_geometry",
+                    kind="has_relation",
+                    relation=geometry_relation,
+                    target_type="void_region",
+                ),
+                Clause(
+                    id="operation_target",
+                    kind="property_equals",
+                    metric="target",
+                    value=target,
+                ),
+            ],
+            hop_count=2,
+            difficulty="cad_browsecomp",
+            min_individual_clause_candidates=1,
+            sampled_parameters={
+                "target_type": ["void_region"],
+                "operation_target": [target],
+                "answer_metric": ["volume"],
+                "synthesis_strategy": ["void_region_volume_by_operation_v1"],
+            },
+        )
+        queries.append(_with_query_variant(query, index) if multi_variant else query)
     return queries
 
 
@@ -2453,6 +2514,8 @@ def _viable_ranks_for_candidates(
             continue
         metric_candidates = _nodes_with_numeric_measurement(graph, candidates, metric)
         if len(metric_candidates) < 3:
+            continue
+        if len(metric_candidates) > MAX_RANK_CANDIDATES:
             continue
         for aggregation in ("rank_desc", "rank_asc"):
             for rank in range(2, min(len(metric_candidates), MAX_SYNTHESIZED_RANK) + 1):
@@ -2843,6 +2906,8 @@ def _viable_selector_counts(graph: OntologyGraph, spec: SelectorCountFamilySpec)
                                 )
                             )
                 if spec.allow_rank:
+                    if len(narrowed) > MAX_RANK_CANDIDATES:
+                        continue
                     for aggregation in ("rank_desc", "rank_asc"):
                         for rank in range(2, min(len(narrowed), MAX_SYNTHESIZED_RANK) + 1):
                             if _has_unique_rank(graph, narrowed, "selected_count", aggregation, rank):
@@ -3138,6 +3203,8 @@ def _viable_equal_value_extremes(
                 if spec.selection_mode == "rank":
                     if len(metric_candidates) < 3:
                         continue
+                    if len(metric_candidates) > MAX_RANK_CANDIDATES:
+                        continue
                     for aggregation in ("rank_desc", "rank_asc"):
                         for rank in range(2, min(len(metric_candidates), MAX_SYNTHESIZED_RANK) + 1):
                             if _has_unique_rank(graph, metric_candidates, selector_metric, aggregation, rank):
@@ -3410,6 +3477,8 @@ def _viable_relation_extremes_for_candidates(
             continue
         if spec.selection_mode == "rank" and len(metric_candidates) < 3:
             continue
+        if spec.selection_mode == "rank" and len(metric_candidates) > MAX_RANK_CANDIDATES:
+            continue
         if spec.selection_mode == "tie_break":
             for aggregation in ("argmax", "argmin"):
                 if _has_unique_extreme(graph, metric_candidates, metric, aggregation):
@@ -3671,6 +3740,8 @@ def _viable_relation_chain_extremes(
             if spec.selection_mode == "rank":
                 if len(metric_candidates) < 3:
                     continue
+                if len(metric_candidates) > MAX_RANK_CANDIDATES:
+                    continue
                 for aggregation in ("rank_desc", "rank_asc"):
                     for rank in range(2, min(len(metric_candidates), MAX_SYNTHESIZED_RANK) + 1):
                         if _has_unique_rank(graph, metric_candidates, metric, aggregation, rank):
@@ -3881,6 +3952,8 @@ def _viable_reference_distances(
             if spec.selection_mode == "rank":
                 scored = tuple(zip((node.id for node in target_nodes), distances, strict=True))
                 if len(scored) < 2:
+                    continue
+                if len(scored) > MAX_RANK_CANDIDATES:
                     continue
                 for aggregation in ("rank_asc", "rank_desc"):
                     for rank in range(2, min(len(scored), MAX_SYNTHESIZED_RANK) + 1):

@@ -12,6 +12,7 @@ from cad_qa.query.answers import (
     candidate_label_entity_ids,
     format_gold_answer,
     source_ref_is_publicly_unambiguous,
+    synthesis_answer_spec_for_target_type,
 )
 from cad_qa.query.candidates import candidate_ids, initial_candidates
 from cad_qa.query.difficulty import difficulty_for_hops
@@ -2212,6 +2213,7 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
             QueryProgram(
                 query_id=f"{graph.graph_id}:q3:largest_removed_region",
                 target_type="void_region",
+                answer_spec=synthesis_answer_spec_for_target_type("void_region", graph),
                 clauses=[
                     Clause(
                         id="has_void_geometry",
@@ -2251,6 +2253,7 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
                 QueryProgram(
                     query_id=f"{graph.graph_id}:q4:highest_equal_volume_removed_region",
                     target_type="void_region",
+                    answer_spec=synthesis_answer_spec_for_target_type("void_region", graph),
                     clauses=[
                         Clause(
                             id="has_void_geometry",

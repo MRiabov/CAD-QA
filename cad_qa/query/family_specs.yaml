@@ -3203,7 +3203,7 @@ families:
         target_type: [void_region]
     notes: Synthesized removed-material region family that samples true region volume/centroid metrics when available and kernel cut-delta metrics such as removed-volume amount, changed-envelope span, and topology-count changes for direct tool-body cuts.
   - id: parameterized_void_region_rank
-    status: release
+    status: review_only
     target_type: void_region
     minimum_hops: 3
     maximum_hops: 4
@@ -3224,7 +3224,25 @@ families:
       expected_values:
         target_type: [void_region]
         aggregation_rank: [2, 3, 4, 5, 6]
-    notes: Synthesized removed-material region family that selects a measured region by sampled rank instead of only min/max extrema, bounded to reviewed ranks 2-6; direct tool-body cuts can use measured cut-delta envelope/topology metrics when no true cut centroid is available.
+    notes: "Retired from benchmark generation: removed-material regions are never synthesized as rank queries."
+  - id: parameterized_void_region_volume
+    status: release
+    target_type: void_region
+    minimum_hops: 2
+    maximum_hops: 2
+    parameter_balance:
+      required_dimensions:
+        - operation_target
+        - answer_metric
+        - rendered_clue_template_sequence
+        - rendered_prompt_template_id
+      enforced_dimensions:
+        - operation_target
+        - answer_metric
+      expected_values:
+        target_type: [void_region]
+        answer_metric: [volume]
+    notes: Numeric removed-volume question keyed to a specific modeling operation; this is the only non-multiple-choice void-region answer family.
   - id: parameterized_equal_void_region_metric_extreme
     status: release
     target_type: void_region
@@ -3250,7 +3268,7 @@ families:
         target_type: [void_region]
     notes: Synthesized value-bearing removed-material region family that narrows by repeated region volume before selecting by measured centroid height.
   - id: parameterized_equal_void_region_metric_rank
-    status: release
+    status: review_only
     target_type: void_region
     minimum_hops: 4
     maximum_hops: 4
@@ -3277,7 +3295,7 @@ families:
         target_type: [void_region]
         equal_measurement_metric: [volume, centroid_x, centroid_y, centroid_z, volume_delta_magnitude, bbox_delta_span_x, bbox_delta_span_y, bbox_delta_span_z, bbox_delta_center_z, bbox_delta_max_span, topology_delta_faces, topology_delta_edges, topology_delta_vertices]
         aggregation_rank: [2, 3, 4, 5, 6]
-    notes: Synthesized value-bearing removed-material region family that narrows by repeated region volume, centroid coordinate, or direct cut-delta measurement before selecting a sampled rank by another measured region quantity.
+    notes: "Retired from benchmark generation: removed-material regions are never synthesized as rank queries."
   - id: parameterized_void_region_reference_feature_distance
     status: review_only
     target_type: void_region

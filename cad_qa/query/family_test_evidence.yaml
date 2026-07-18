@@ -386,16 +386,21 @@ families:
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Initial synthesized removed-material region extremum family with sampled metrics.
-  - id: parameterized_void_region_rank
+  - id: parameterized_void_region_volume
     positive_generation:
-      - test_synthesis_generates_parameterized_region_extreme_and_rank_queries
-      - test_synthesis_samples_fifth_and_sixth_feature_and_region_rank_values_when_viable
-      - test_synthesis_generates_void_region_rows_from_cut_delta_metrics_without_centroids
+      - test_synthesis_generates_void_region_volume_query
     failure_or_quarantine:
-      - test_synthesis_skips_parameterized_region_queries_without_kernel_region_relations
+      - test_synthesis_skips_void_region_volume_without_operation_target
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
-    notes: Synthesized removed-material region rank family with sampled metrics, rank direction, and reviewed later rank positions.
+    notes: Numeric removed-volume family keyed to an explicit modeling operation.
+  - id: parameterized_void_region_rank
+    positive_generation: []
+    failure_or_quarantine:
+      - test_void_region_rank_families_are_not_generated
+    release_report_accounting:
+      - test_default_family_test_evidence_covers_synthesized_release_families
+    notes: "Retired from benchmark generation: removed-material regions are never synthesized as rank queries."
   - id: parameterized_equal_material_region_metric_extreme
     positive_generation:
       - test_synthesis_generates_equal_value_region_queries
@@ -423,14 +428,12 @@ families:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Initial synthesized value-bearing removed-material region family with equal-measurement narrowing.
   - id: parameterized_equal_void_region_metric_rank
-    positive_generation:
-      - test_synthesis_generates_equal_value_region_rank_queries
-      - test_synthesis_generates_void_region_rows_from_cut_delta_metrics_without_centroids
+    positive_generation: []
     failure_or_quarantine:
-      - test_synthesis_skips_equal_value_region_families_without_repeated_value_distractors
+      - test_void_region_rank_families_are_not_generated
     release_report_accounting:
       - test_default_family_test_evidence_covers_synthesized_release_families
-    notes: Synthesized value-bearing removed-material region rank family with equal-measurement narrowing and sampled rank selection.
+    notes: "Retired from benchmark generation: removed-material regions are never synthesized as rank queries."
   - id: parameterized_material_region_reference_feature_distance
     positive_generation:
       - test_synthesis_generates_region_reference_distance_queries
@@ -664,10 +667,10 @@ families:
       - test_default_family_test_evidence_covers_synthesized_release_families
     notes: Parameterized removed-material-region reference-distance family with sampled reference entity type.
   - id: parameterized_void_region_reference_entity_distance_rank
-    positive_generation: [test_synthesis_generates_parameterized_reference_entity_distance_rank_queries]
-    failure_or_quarantine: [test_synthesis_skips_region_reference_distance_without_region_centroids]
+    positive_generation: []
+    failure_or_quarantine: [test_void_region_rank_families_are_not_generated]
     release_report_accounting: [test_default_family_test_evidence_covers_synthesized_release_families]
-    notes: Parameterized removed-material-region reference-distance rank family with sampled reference entity type and sampled rank.
+    notes: "Retired from benchmark generation: removed-material regions are never synthesized as rank queries."
   - id: parameterized_feature_reference_material_region_distance
     positive_generation: [test_synthesis_generates_parameterized_reference_entity_distance_queries]
     failure_or_quarantine: [test_synthesis_skips_region_reference_distance_without_unique_region_anchor]

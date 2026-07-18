@@ -1221,6 +1221,7 @@ class _Extractor:
                 label=f"{record.target} kernel-measured {region_type}",
                 source_ref=str(record.source_line),
                 properties={
+                    "target": record.target,
                     "conservative": False,
                     "operation": record.operation,
                     "trace_evidence": evidence_source,
@@ -1350,7 +1351,11 @@ class _Extractor:
                 type=region_type,
                 label=f"{record.target} projected {region_type}",
                 source_ref=str(record.source_line),
-                properties={"conservative": True, "operation": record.operation},
+                properties={
+                    "target": record.target,
+                    "conservative": True,
+                    "operation": record.operation,
+                },
             )
         )
         relation = "removes_material_from" if region_type == "void_region" else "adds_material_to"
