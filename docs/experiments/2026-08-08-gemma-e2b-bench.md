@@ -1,4 +1,4 @@
-# CAD-QA Gemma-4-E2B In-Process Bench — [IN PROGRESS]
+# CAD-QA Gemma-4-E2B Bench — h1 baseline COMPLETE (RL kit ready)
 
 Date: 2026-08-08 · Status: running (fill in when complete)
 
@@ -30,4 +30,15 @@ Vast contract 47166131 — RTX 5070 Ti 16 GB, 100 GB disk, $0.1611/hr, SK.
 - Kaggle P100 (sm_60) incompatible with torch 2.10 (sm_70+); kernel error.
 
 ## Results
-(TODO fill: accuracy by harness x slice, hop counts, exec-error rate)
+- **h1 (closed-book), google/gemma-4-E2B-it, bf16 4-bit via unsloth**:
+  - rc10: **30/100 (30%)** vs expected random ~4% (7x signal, easy rows)
+  - release10k: **14/100 (14%)** vs expected random ~13% (at random, hard rows)
+  - 29-31 failures/slice were parse errors (output format non-compliance)
+- **h3 (CadQuery agent loop)**: harness works (script-context exec, <=4 turns),
+  but generation is launch-bound (~10 tok/s, profiler: ~88ms CPU vs ~8ms CUDA
+  per token; 4-bit SIMT GEMV + no CUDA graphs on Blackwell). 16K-cap full h3 is
+  impractical at this speed; deferred. torch.compile does not engage; vLLM
+  install flaky on this host.
+- **RL handoff**: `runs/gemma_bench/rl/` — reward (validated == repo grader:
+  oracle 1.0, h1 0.14), 2000-row train set (bench slices excluded), runbook
+  `docs/rl_runbook.md`. Training target: Unsloth Studio (separate Vast box).
