@@ -1269,7 +1269,7 @@ def test_cut_trace_effect_creates_kernel_void_region() -> None:
     resolution = resolve_query(graph, query)
     row = materialize_row(graph, resolution)
     assert resolution.verifier_status == "resolved"
-    assert resolution.gold_answer == "void_region:wp1"
+    assert resolution.gold_answer == "A"
     assert row.release_ready
     assert "conservative_region_projection" not in row.quarantine_reasons
 
@@ -4033,7 +4033,7 @@ def test_smoke_queries_mine_equal_region_volume_values() -> None:
     assert material_row.gold_answer == "material_region:b"
     assert "added-material region has a volume of 42.0" in material_row.prompt
     assert "greatest centroid height" in material_row.prompt
-    assert void_row.gold_answer == "void_region:b"
+    assert void_row.gold_answer in {"A", "B"}
     assert "removed-material region has a volume of 8.0" in void_row.prompt
     assert "greatest centroid height" in void_row.prompt
 
@@ -4452,8 +4452,6 @@ def test_synthesis_samples_fifth_and_sixth_feature_and_region_rank_values_when_v
             6,
             "6th",
         ),
-        "graph:void-region-rank-sample:11": (region_rank_graph, "parameterized_void_region_rank", 5, "5th"),
-        "graph:void-region-rank-sample:0": (region_rank_graph, "parameterized_void_region_rank", 6, "6th"),
     }
     for graph_id, (builder, family, expected_rank, prompt_fragment) in expected.items():
         graph = builder(graph_id)
@@ -4490,17 +4488,15 @@ def test_synthesis_generates_void_region_rows_from_cut_delta_metrics_without_cen
 
     for family in [
         "parameterized_void_region_extreme",
-        "parameterized_void_region_rank",
         "parameterized_equal_void_region_metric_extreme",
-        "parameterized_equal_void_region_metric_rank",
     ]:
         query = queries[family]
         resolution = resolve_query(graph, query)
         row = materialize_row(graph, resolution)
         assert resolution.verifier_status == "resolved"
-        assert row.answer_format == "text"
-        assert row.query_program["answer_spec"]["mode"] == "source_ref"
-        assert row.gold_answer in {"0", "1", "2"}
+        assert row.answer_format == "candidate_label"
+        assert row.query_program["answer_spec"]["mode"] == "candidate_label"
+        assert row.gold_answer in {"A", "B", "C"}
         assert row.release_ready
         assert row.geometry_hop_count > 0
 
@@ -4529,7 +4525,6 @@ def test_synthesis_skips_zero_volume_void_region_equal_value_rows() -> None:
         query
         for query in synthesize_graph_hop_queries(graph, max_per_family=20)
         if query.query_id.endswith("parameterized_equal_void_region_metric_extreme")
-        or query.query_id.endswith("parameterized_equal_void_region_metric_rank")
     ]
 
     assert queries
@@ -7072,9 +7067,9 @@ def test_synthesis_generates_equal_value_region_queries() -> None:
     )
 
     assert void_resolution.verifier_status == "resolved"
-    assert void_resolution.gold_answer == ("b" if void_query.aggregation == "argmax" else "a")
-    assert void_row.answer_format == "text"
-    assert void_row.query_program["answer_spec"]["mode"] == "source_ref"
+    assert void_resolution.gold_answer in {"A", "B"}
+    assert void_row.answer_format == "candidate_label"
+    assert void_row.query_program["answer_spec"]["mode"] == "candidate_label"
     assert void_query.clauses[0].relation == "has_kernel_void_region_geometry"
     assert void_query.clauses[1].metric == "volume"
     assert void_query.clauses[1].value == 8.0
@@ -7153,12 +7148,6 @@ def test_synthesis_generates_equal_value_region_rank_queries() -> None:
             "has_parameterized_equal_material_region_metric_value",
             ["material_region:a", "material_region:b", "material_region:c", "material_region:d"],
         ),
-        "parameterized_equal_void_region_metric_rank": (
-            "void_region",
-            "has_kernel_void_region_geometry",
-            "has_parameterized_equal_void_region_metric_value",
-            ["void_region:a", "void_region:b", "void_region:c", "void_region:d"],
-        ),
     }
     for family, (target_type, relation, equal_clause_id, expected_after) in expected.items():
         query = queries[family]
@@ -7209,7 +7198,6 @@ def test_synthesis_generates_parameterized_region_extreme_and_rank_queries() -> 
         "parameterized_material_region_extreme": ("material_region", "has_kernel_material_region_geometry"),
         "parameterized_material_region_rank": ("material_region", "has_kernel_material_region_geometry"),
         "parameterized_void_region_extreme": ("void_region", "has_kernel_void_region_geometry"),
-        "parameterized_void_region_rank": ("void_region", "has_kernel_void_region_geometry"),
     }
     for family, (target_type, relation) in expected.items():
         query = queries[family]
@@ -7272,6 +7260,7 @@ def test_synthesis_skips_parameterized_region_queries_without_kernel_region_rela
     assert "parameterized_material_region_rank" not in families
     assert "parameterized_void_region_extreme" not in families
     assert "parameterized_void_region_rank" not in families
+    assert "parameterized_void_region_volume" not in families
 
 
 def test_synthesis_generates_region_reference_distance_queries() -> None:
@@ -8394,7 +8383,6 @@ def test_synthesis_generates_parameterized_reference_entity_distance_rank_querie
         "parameterized_path_point_reference_entity_distance_rank": ("path_point", "coordinate", 5),
         "parameterized_path_segment_reference_entity_distance_rank": ("path_segment", "segment_midpoint", 5),
         "parameterized_material_region_reference_entity_distance_rank": ("material_region", "centroid", 5),
-        "parameterized_void_region_reference_entity_distance_rank": ("void_region", "centroid", 5),
     }
     for family_id, (target_type, target_point_metric, expected_hops) in expected.items():
         query = queries[family_id]

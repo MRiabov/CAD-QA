@@ -448,6 +448,7 @@ clause_templates:
   has_region_centroid_for_reference_distance: "The target added-material region exists and has a centroid."
   has_region_bbox_center_for_reference_distance: "The target added-material region exists and has a bounding-box center."
   has_void_geometry: "The target is a region of material removed by a cut."
+  void_region.operation_target: "The target removed-material region was created by the modeling operation `{value}`."
   has_void_volume: "The target removed-material region has a comparable volume."
   has_void_volume_value: "The target removed-material region has a volume of {value}."
   has_void_centroid_z: "The target removed-material region has a comparable centroid height."

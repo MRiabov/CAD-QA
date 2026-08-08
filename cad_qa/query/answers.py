@@ -61,6 +61,8 @@ def normalize_answer_spec(
 
 def synthesis_answer_spec_for_target_type(target_type: str, graph: OntologyGraph | None = None) -> AnswerSpec:
     if target_type in {"feature", "operation", "profile", "workplane", "material_region", "void_region"}:
+        if target_type == "void_region":
+            return AnswerSpec(mode="candidate_label", answer_format="candidate_label")
         return AnswerSpec(mode="source_ref", answer_format="text")
     if target_type in {"vertex", "path_point"}:
         return AnswerSpec(mode="coordinate", answer_format="coordinate", metric="coordinate")

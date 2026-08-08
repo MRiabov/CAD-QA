@@ -28,7 +28,7 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_material_region_extreme",
     "parameterized_material_region_rank",
     "parameterized_void_region_extreme",
-    "parameterized_void_region_rank",
+    "parameterized_void_region_volume",
     "parameterized_kernel_face_extreme",
     "parameterized_kernel_edge_extreme",
     "parameterized_kernel_vertex_extreme",
@@ -85,7 +85,6 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
     "parameterized_equal_material_region_metric_extreme",
     "parameterized_equal_material_region_metric_rank",
     "parameterized_equal_void_region_metric_extreme",
-    "parameterized_equal_void_region_metric_rank",
     "parameterized_material_region_reference_feature_distance",
     "parameterized_material_region_reference_face_distance",
     "parameterized_material_region_reference_edge_distance",
@@ -1318,7 +1317,14 @@ def _region_equal_metric_graph() -> OntologyGraph:
         ("void_region:d", "has_kernel_void_region_geometry", 14.0, [35.0, 5.0, 12.0]),
     ]:
         node_type = node_id.split(":", 1)[0]
-        graph.add_node(Node(node_id, node_type, node_id))
+        graph.add_node(
+            Node(
+                node_id,
+                node_type,
+                node_id,
+                properties={"target": node_id.split(":", 1)[-1]} if node_type == "void_region" else {},
+            )
+        )
         graph.add_relation(Relation(node_id, node_id, relation))
         graph.add_measurement(Measurement(node_id, "entity_geometry", "volume", volume, "mm^3"))
         graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid", centroid, "mm"))
@@ -1351,7 +1357,14 @@ def _region_equal_metric_rank_graph() -> OntologyGraph:
         ("void_region:d", "has_kernel_void_region_geometry", 8.0, [13.0, 3.0, 11.0]),
     ]:
         node_type = node_id.split(":", 1)[0]
-        graph.add_node(Node(node_id, node_type, node_id))
+        graph.add_node(
+            Node(
+                node_id,
+                node_type,
+                node_id,
+                properties={"target": node_id.split(":", 1)[-1]} if node_type == "void_region" else {},
+            )
+        )
         graph.add_relation(Relation(node_id, node_id, relation))
         graph.add_measurement(Measurement(node_id, "entity_geometry", "volume", volume, "mm^3"))
         graph.add_measurement(Measurement(node_id, "entity_geometry", "centroid", centroid, "mm"))
