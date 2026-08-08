@@ -199,6 +199,11 @@ def build_parser() -> argparse.ArgumentParser:
     source_cache_cadevolve_tar.add_argument("--path-contains", action="append", dest="path_contains")
     source_cache_cadevolve_tar.add_argument("--code-contains", action="append", dest="code_contains")
     source_cache_cadevolve_tar.add_argument("--max-member-bytes", type=int, default=1_000_000)
+    source_cache_cadevolve_tar.add_argument(
+        "--workers",
+        type=int,
+        help="Parallel workers for tar member normalization (default: min(64, cpu_count * 4)).",
+    )
     source_cache_cadevolve_tar.set_defaults(func=_cmd_sources_cache_cadevolve_tar)
     source_cache_cadevolve_dir = sources_sub.add_parser("cache-cadevolve-dir")
     source_cache_cadevolve_dir.add_argument("--root", type=Path, required=True)
@@ -207,6 +212,11 @@ def build_parser() -> argparse.ArgumentParser:
     source_cache_cadevolve_dir.add_argument("--path-contains", action="append", dest="path_contains")
     source_cache_cadevolve_dir.add_argument("--code-contains", action="append", dest="code_contains")
     source_cache_cadevolve_dir.add_argument("--max-member-bytes", type=int, default=1_000_000)
+    source_cache_cadevolve_dir.add_argument(
+        "--workers",
+        type=int,
+        help="Parallel workers for directory scan and source normalization (default: min(64, cpu_count * 4)).",
+    )
     source_cache_cadevolve_dir.set_defaults(func=_cmd_sources_cache_cadevolve_dir)
     source_from_cadevolve_cache = sources_sub.add_parser("from-cadevolve-cache")
     source_from_cadevolve_cache.add_argument("--cache", type=Path, required=True)
@@ -564,6 +574,7 @@ def _cmd_sources_cache_cadevolve_tar(args: argparse.Namespace) -> dict[str, Any]
         path_contains=args.path_contains,
         code_contains=args.code_contains,
         max_member_bytes=args.max_member_bytes,
+        workers=args.workers,
     )
     write_cadevolve_source_cache_parquet(args.out, rows)
     manifest = source_manifest([source_record_from_mapping(row) for row in rows])
@@ -597,6 +608,7 @@ def _cmd_sources_cache_cadevolve_dir(args: argparse.Namespace) -> dict[str, Any]
         path_contains=args.path_contains,
         code_contains=args.code_contains,
         max_member_bytes=args.max_member_bytes,
+        workers=args.workers,
     )
     row_count = write_cadevolve_source_cache_parquet(args.out, rows)
     report["included_count"] = row_count

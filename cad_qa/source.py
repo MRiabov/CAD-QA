@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
+from concurrent.futures import ThreadPoolExecutor
 import hashlib
+import os
 import re
 import tarfile
 from dataclasses import dataclass
@@ -27,6 +29,24 @@ REPORTED_SOURCE_PROVENANCE_KEYS = (
     "generator_id",
     "generator",
 )
+DEFAULT_CADEVOLVE_CACHE_WORKERS = min(64, max(8, (os.cpu_count() or 4) * 4))
+DEFAULT_CADEVOLVE_CACHE_READ_BATCH = 512
+DEFAULT_CADEVOLVE_SOURCE_PARQUET_BATCH = 10_000
+
+
+@dataclass(frozen=True)
+class _CadevolveDirectoryCandidate:
+    member_path: str
+    abs_path: Path
+
+
+@dataclass
+class _CadevolveDirectoryProcessResult:
+    skipped_code_contains: bool = False
+    skipped_non_cadquery: bool = False
+    row: dict[str, Any] | None = None
+
+
 GEOMETRY_SOURCE_FEATURE_TAGS = (
     "path_curve",
     "kernel_vertex_selector",
@@ -147,6 +167,43 @@ def cadevolve_tar_source_rows(
     stratify_by_tags: bool = False,
     min_per_tag: int = 0,
     complete_stratified_scan: bool = False,
+    workers: int | None = None,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Extract normalized CadQuery source rows from a CADEvolve tar archive."""
+
+    if stratify_by_tags or limit is not None:
+        return _cadevolve_tar_source_rows_sequential(
+            tar_path,
+            limit=limit,
+            path_prefixes=path_prefixes,
+            path_contains=path_contains,
+            code_contains=code_contains,
+            max_member_bytes=max_member_bytes,
+            stratify_by_tags=stratify_by_tags,
+            min_per_tag=min_per_tag,
+            complete_stratified_scan=complete_stratified_scan,
+        )
+    return _cadevolve_tar_source_rows_full_scan(
+        tar_path,
+        path_prefixes=path_prefixes,
+        path_contains=path_contains,
+        code_contains=code_contains,
+        max_member_bytes=max_member_bytes,
+        workers=workers,
+    )
+
+
+def _cadevolve_tar_source_rows_sequential(
+    tar_path: Path,
+    *,
+    limit: int | None = None,
+    path_prefixes: list[str] | None = None,
+    path_contains: list[str] | None = None,
+    code_contains: list[str] | None = None,
+    max_member_bytes: int = 1_000_000,
+    stratify_by_tags: bool = False,
+    min_per_tag: int = 0,
+    complete_stratified_scan: bool = False,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Extract normalized CadQuery source rows from a CADEvolve tar archive."""
 
@@ -239,6 +296,113 @@ def cadevolve_tar_source_rows(
     return rows, stats
 
 
+def _cadevolve_tar_source_rows_full_scan(
+    tar_path: Path,
+    *,
+    path_prefixes: list[str] | None = None,
+    path_contains: list[str] | None = None,
+    code_contains: list[str] | None = None,
+    max_member_bytes: int = 1_000_000,
+    workers: int | None = None,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    prefixes = tuple(_normalize_archive_path(prefix) for prefix in path_prefixes or [] if prefix)
+    path_needles = tuple(value.lower() for value in path_contains or [] if value)
+    code_needles = tuple(value.lower() for value in code_contains or [] if value)
+    worker_count = _resolve_cadevolve_cache_workers(workers)
+    stats = {
+        "archive_path": str(tar_path),
+        "member_count": 0,
+        "python_member_count": 0,
+        "candidate_count": 0,
+        "included_count": 0,
+        "skipped_non_python_count": 0,
+        "skipped_prefix_count": 0,
+        "skipped_path_contains_count": 0,
+        "skipped_large_member_count": 0,
+        "skipped_code_contains_count": 0,
+        "skipped_non_cadquery_count": 0,
+        "limit": None,
+        "max_member_bytes": max_member_bytes,
+        "path_prefixes": list(prefixes),
+        "path_contains": list(path_needles),
+        "code_contains": list(code_needles),
+        "selection_policy": "archive_order",
+        "candidate_scan_exhausted": True,
+        "complete_stratified_scan": False,
+        "geometry_feature_tags": list(GEOMETRY_SOURCE_FEATURE_TAGS),
+        "min_per_geometry_tag": 0,
+    }
+    candidates: list[tuple[str, tarfile.TarInfo]] = []
+    with tarfile.open(tar_path, "r:*") as archive:
+        for member in archive:
+            stats["member_count"] += 1
+            if not member.isfile():
+                continue
+            member_path = _normalize_archive_path(member.name)
+            if prefixes and not any(_archive_path_matches_prefix(member_path, prefix) for prefix in prefixes):
+                stats["skipped_prefix_count"] += 1
+                continue
+            if path_needles and not any(needle in member_path.lower() for needle in path_needles):
+                stats["skipped_path_contains_count"] += 1
+                continue
+            if not member_path.endswith(".py"):
+                stats["skipped_non_python_count"] += 1
+                continue
+            stats["python_member_count"] += 1
+            if member.size > max_member_bytes:
+                stats["skipped_large_member_count"] += 1
+                continue
+            candidates.append((member_path, member))
+
+    rows: list[dict[str, Any]] = []
+    read_batch_size = max(DEFAULT_CADEVOLVE_CACHE_READ_BATCH, worker_count * 8)
+    with tarfile.open(tar_path, "r:*") as archive:
+        for chunk in _chunked(candidates, read_batch_size):
+            payloads: list[tuple[str, str]] = []
+            for member_path, member in chunk:
+                handle = archive.extractfile(member)
+                if handle is None:
+                    continue
+                payloads.append(
+                    (
+                        member_path,
+                        handle.read().decode("utf-8", errors="replace"),
+                    )
+                )
+            if worker_count <= 1:
+                chunk_results = [
+                    _cadevolve_source_row_from_text(member_path, source_text, code_needles=code_needles)
+                    for member_path, source_text in payloads
+                ]
+            else:
+                with ThreadPoolExecutor(max_workers=worker_count) as pool:
+                    chunk_results = list(
+                        pool.map(
+                            lambda payload: _cadevolve_source_row_from_text(
+                                payload[0],
+                                payload[1],
+                                code_needles=code_needles,
+                            ),
+                            payloads,
+                        )
+                    )
+            for result in chunk_results:
+                if result.skipped_code_contains:
+                    stats["skipped_code_contains_count"] += 1
+                    continue
+                if result.skipped_non_cadquery:
+                    stats["skipped_non_cadquery_count"] += 1
+                    continue
+                if result.row is not None:
+                    rows.append(result.row)
+                    stats["included_count"] += 1
+
+    stats["candidate_count"] = len(rows)
+    stats["candidate_geometry_feature_tag_counts"] = _source_feature_tag_counts(rows)
+    stats["selected_geometry_feature_tag_counts"] = _source_feature_tag_counts(rows)
+    return rows, stats
+
+
 def cadevolve_directory_source_rows(
     root_path: Path,
     *,
@@ -310,6 +474,7 @@ def iter_cadevolve_directory_source_rows(
     path_contains: list[str] | None = None,
     code_contains: list[str] | None = None,
     max_member_bytes: int = 1_000_000,
+    workers: int | None = None,
 ):
     """Yield normalized CADEvolve source rows from an extracted archive directory."""
 
@@ -324,39 +489,51 @@ def iter_cadevolve_directory_source_rows(
             code_contains=code_contains,
             max_member_bytes=max_member_bytes,
         )
+    worker_count = _resolve_cadevolve_cache_workers(workers)
     tag_counts = Counter(stats.get("selected_geometry_feature_tag_counts", {}))
-    for path in sorted(root_path.rglob("*")):
-        if not path.is_file():
-            continue
-        stats["file_count"] += 1
-        member_path = _normalize_archive_path(str(path.relative_to(root_path)))
-        if prefixes and not any(_archive_path_matches_prefix(member_path, prefix) for prefix in prefixes):
-            stats["skipped_prefix_count"] += 1
-            continue
-        if path_needles and not any(needle in member_path.lower() for needle in path_needles):
-            stats["skipped_path_contains_count"] += 1
-            continue
-        if path.suffix != ".py":
-            stats["skipped_non_python_count"] += 1
-            continue
-        stats["python_file_count"] += 1
-        if path.stat().st_size > max_member_bytes:
-            stats["skipped_large_member_count"] += 1
-            continue
-        source_code = normalize_source_text(path.read_text(encoding="utf-8", errors="replace"))
-        if code_needles and not any(needle in source_code.lower() for needle in code_needles):
+    file_entries = _collect_cadevolve_directory_files(root_path, workers=worker_count)
+    candidates = _cadevolve_directory_candidates(
+        file_entries,
+        prefixes=prefixes,
+        path_needles=path_needles,
+        max_member_bytes=max_member_bytes,
+        stats=stats,
+    )
+    process_chunk_size = max(DEFAULT_CADEVOLVE_CACHE_READ_BATCH, worker_count * 8)
+
+    def consume_result(result: _CadevolveDirectoryProcessResult) -> dict[str, Any] | None:
+        if result.skipped_code_contains:
             stats["skipped_code_contains_count"] += 1
-            continue
-        if not _looks_like_cadquery_source(source_code):
+            return None
+        if result.skipped_non_cadquery:
             stats["skipped_non_cadquery_count"] += 1
-            continue
-        row = _cadevolve_source_row(member_path, source_code)
+            return None
+        row = result.row
+        if row is None:
+            return None
         stats["included_count"] += 1
         tag_counts.update(row.get("source_feature_tags", []))
         stats["selected_geometry_feature_tag_counts"] = {
             tag: tag_counts.get(tag, 0) for tag in GEOMETRY_SOURCE_FEATURE_TAGS
         }
-        yield row
+        return row
+
+    if worker_count <= 1:
+        for candidate in candidates:
+            row = consume_result(_process_cadevolve_directory_candidate(candidate, code_needles=code_needles))
+            if row is not None:
+                yield row
+        return
+
+    with ThreadPoolExecutor(max_workers=worker_count) as pool:
+        for chunk in _chunked(candidates, process_chunk_size):
+            for result in pool.map(
+                lambda candidate: _process_cadevolve_directory_candidate(candidate, code_needles=code_needles),
+                chunk,
+            ):
+                row = consume_result(result)
+                if row is not None:
+                    yield row
 
 
 def cadevolve_source_table_rows(
@@ -465,7 +642,7 @@ def write_cadevolve_source_cache_parquet(
     path: Path,
     rows: Iterable[dict[str, Any]],
     *,
-    batch_size: int = 1000,
+    batch_size: int = DEFAULT_CADEVOLVE_SOURCE_PARQUET_BATCH,
 ) -> int:
     """Write CADEvolve source rows as real parquet columns, not JSON blobs."""
 
@@ -587,6 +764,110 @@ def source_family_from_path(path: str) -> str:
 
 def _normalize_archive_path(path: str) -> str:
     return path.replace("\\", "/").lstrip("./")
+
+
+def _resolve_cadevolve_cache_workers(workers: int | None) -> int:
+    if workers is None:
+        return DEFAULT_CADEVOLVE_CACHE_WORKERS
+    return max(1, workers)
+
+
+def _chunked(values: list[Any], chunk_size: int) -> list[list[Any]]:
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be positive")
+    return [values[index : index + chunk_size] for index in range(0, len(values), chunk_size)]
+
+
+def _collect_cadevolve_directory_files(root_path: Path, *, workers: int) -> list[tuple[str, Path]]:
+    subtrees = [entry for entry in root_path.iterdir() if entry.is_dir()]
+    if not subtrees:
+        subtrees = [root_path]
+
+    collected: list[tuple[str, Path]] = []
+    walk_workers = min(workers, len(subtrees))
+    with ThreadPoolExecutor(max_workers=walk_workers) as pool:
+        for part in pool.map(lambda subtree: _walk_cadevolve_subtree_files(subtree, root_path), subtrees):
+            collected.extend(part)
+    collected.sort(key=lambda item: item[0])
+    return collected
+
+
+def _walk_cadevolve_subtree_files(subtree: Path, root_path: Path) -> list[tuple[str, Path]]:
+    collected: list[tuple[str, Path]] = []
+    stack = [subtree]
+    while stack:
+        current = stack.pop()
+        try:
+            with os.scandir(current) as entries:
+                for entry in entries:
+                    try:
+                        if entry.is_dir(follow_symlinks=False):
+                            stack.append(Path(entry.path))
+                            continue
+                        if not entry.is_file(follow_symlinks=False):
+                            continue
+                    except OSError:
+                        continue
+                    rel = _normalize_archive_path(str(Path(entry.path).relative_to(root_path)))
+                    collected.append((rel, Path(entry.path)))
+        except OSError:
+            continue
+    return collected
+
+
+def _cadevolve_directory_candidates(
+    file_entries: list[tuple[str, Path]],
+    *,
+    prefixes: tuple[str, ...],
+    path_needles: tuple[str, ...],
+    max_member_bytes: int,
+    stats: dict[str, Any],
+) -> list[_CadevolveDirectoryCandidate]:
+    candidates: list[_CadevolveDirectoryCandidate] = []
+    for member_path, abs_path in file_entries:
+        stats["file_count"] += 1
+        if prefixes and not any(_archive_path_matches_prefix(member_path, prefix) for prefix in prefixes):
+            stats["skipped_prefix_count"] += 1
+            continue
+        if path_needles and not any(needle in member_path.lower() for needle in path_needles):
+            stats["skipped_path_contains_count"] += 1
+            continue
+        if abs_path.suffix != ".py":
+            stats["skipped_non_python_count"] += 1
+            continue
+        stats["python_file_count"] += 1
+        try:
+            size = abs_path.stat().st_size
+        except OSError:
+            continue
+        if size > max_member_bytes:
+            stats["skipped_large_member_count"] += 1
+            continue
+        candidates.append(_CadevolveDirectoryCandidate(member_path=member_path, abs_path=abs_path))
+    return candidates
+
+
+def _process_cadevolve_directory_candidate(
+    candidate: _CadevolveDirectoryCandidate,
+    *,
+    code_needles: tuple[str, ...],
+) -> _CadevolveDirectoryProcessResult:
+    source_text = candidate.abs_path.read_text(encoding="utf-8", errors="replace")
+    return _cadevolve_source_row_from_text(candidate.member_path, source_text, code_needles=code_needles)
+
+
+def _cadevolve_source_row_from_text(
+    member_path: str,
+    source_text: str,
+    *,
+    code_needles: tuple[str, ...],
+) -> _CadevolveDirectoryProcessResult:
+    source_code = normalize_source_text(source_text)
+    if code_needles and not any(needle in source_code.lower() for needle in code_needles):
+        return _CadevolveDirectoryProcessResult(skipped_code_contains=True)
+    if not _looks_like_cadquery_source(source_code):
+        return _CadevolveDirectoryProcessResult(skipped_non_cadquery=True)
+    return _CadevolveDirectoryProcessResult(row=_cadevolve_source_row(member_path, source_code))
 
 
 def _cadevolve_path_parts(path: str) -> tuple[str, str]:
