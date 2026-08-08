@@ -1,0 +1,17 @@
+{
+  "train_size": 2000,
+  "heldout_size": 98,
+  "train_by_format": {
+    "text": 423,
+    "candidate_label": 1029,
+    "coordinate": 548
+  },
+  "train_by_difficulty": {
+    "cad_browsecomp": 2000
+  },
+  "heldout_by_format": {
+    "text": 22,
+    "candidate_label": 51,
+    "coordinate": 25
+  }
+}
