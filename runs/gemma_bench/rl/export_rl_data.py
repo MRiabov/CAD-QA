@@ -59,11 +59,17 @@ def main() -> None:
             continue
         if rec.get("release_ready") is False:
             continue
+        gold = rec["gold_answer"]
+        if isinstance(gold, str):
+            try:  # rows.parquet stores gold_answer JSON-encoded; decode it
+                gold = json.loads(gold)
+            except Exception:  # noqa: BLE001 - already plain
+                pass
         rows.append({
             "row_id": rec["row_id"],
             "prompt": rec["prompt"],
             "answer_format": rec["answer_format"],
-            "gold_answer": rec["gold_answer"],
+            "gold_answer": gold,
             "difficulty_bucket": rec.get("difficulty_bucket"),
             "logical_hop_count": rec.get("logical_hop_count"),
             "geometry_hop_count": rec.get("geometry_hop_count"),

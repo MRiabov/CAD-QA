@@ -5,17 +5,30 @@ on CAD-QA with a **verifiable exact-match reward**, then evaluate against the
 baseline slices. The training runtime is Unsloth Studio (Vast container, set up
 separately); this repo provides the data + reward + eval tooling.
 
-## Inputs (this repo)
+## Training data (HuggingFace)
 
-- `runs/gemma_bench/rl/reward_cadqa.py` — **self-contained** reward function
-  (no repo imports; embed in the training notebook). Mirrors the repo grader
-  exactly (`parse_answer` + exact match; validated: oracle=1.0, h1=0.14).
-- `runs/gemma_bench/rl/cadqa_rl/train.jsonl` — 2000 rows
-  `{row_id, prompt, answer_format, gold_answer, difficulty_bucket, logical_hop_count}`.
+**https://huggingface.co/datasets/MRiabov/cadqa-rl-2000**
+
+```python
+from datasets import load_dataset
+ds = load_dataset("MRiabov/cadqa-rl-2000")  # splits: train (2000), validation (98)
+```
+
+- `train` — 2000 rows `{row_id, prompt, answer_format, gold_answer,
+  difficulty_bucket, logical_hop_count, geometry_hop_count, relation_families}`.
   Sampled from `release_10k` train split; **bench-slice rows excluded** (no
-  train/eval leakage). Regenerate:
+  train/eval leakage).
+- `validation` — 98 bench-slice rows (eval; do NOT train on them).
+- `gold_answer` is JSON-encoded in parquet (`"wp15"`, `[1.0, 2.0, 3.0]`);
+  `reward_cadqa.py` decodes it automatically.
+- Local source + regeneration:
   `rtk uv run python runs/gemma_bench/rl/export_rl_data.py --rows <release_10k>/rows.parquet --out runs/gemma_bench/rl/cadqa_rl --train-size 2000`
-- `runs/gemma_bench/rl/cadqa_rl/heldout.jsonl` — 98 bench-slice rows (eval).
+
+## Reward
+
+- `runs/gemma_bench/rl/reward_cadqa.py` — **self-contained** (no repo imports;
+  embed in the training notebook). Mirrors the repo grader exactly
+  (`parse_answer` + exact match; validated: oracle=1.0, h1=0.14).
 
 ## Reward contract
 
@@ -25,10 +38,10 @@ reward_cadqa(gold_answer, answer_format, completion) -> 0.0 | 1.0
 ```
 
 Per GRPO step: for each rollout prompt, score the sampled completions against
-`gold_answer` using the row's `answer_format`. Unparseable output = 0.0.
-For candidate_label/entity_id answers the raw completion is matched directly;
-strip markdown fences / extra prose in the notebook's completion extraction
-before scoring (mirror the bench runner's `_strip_special`).
+`gold_answer` (decoded) using the row's `answer_format`. Unparseable output =
+0.0. For candidate_label/entity_id answers the raw completion is matched
+directly; strip markdown fences / extra prose in the notebook's completion
+extraction before scoring (mirror the bench runner's `_strip_special`).
 
 ## Unsloth Studio steps
 

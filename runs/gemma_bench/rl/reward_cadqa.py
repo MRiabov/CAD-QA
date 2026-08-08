@@ -52,13 +52,24 @@ def _clean_number(value: float) -> float | int:
     return rounded
 
 
+def _gold(gold_answer: Any) -> Any:
+    """Decode JSON-encoded gold answers (parquet stores them as JSON strings)."""
+    if isinstance(gold_answer, str):
+        try:
+            return json.loads(gold_answer)
+        except Exception:  # noqa: BLE001 - plain strings (jsonl path) stay as-is
+            return gold_answer
+    return gold_answer
+
+
 def reward_cadqa(gold_answer: Any, answer_format: str, completion: str) -> float:
     """0.0/1.0 exact-match reward for one completion."""
+    gold = _gold(gold_answer)
     try:
         parsed = parse_answer(completion, answer_format)
     except Exception:  # noqa: BLE001 - unparseable output is a wrong answer
         return 0.0
-    return 1.0 if parsed == gold_answer else 0.0
+    return 1.0 if parsed == gold else 0.0
 
 
 def reward_batch(rows: list[dict], completions: list[str]) -> list[float]:
