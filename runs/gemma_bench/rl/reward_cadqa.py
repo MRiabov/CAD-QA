@@ -1,80 +1,76 @@
-"""Self-contained CAD-QA reward function for GRPO (drop-in for Unsloth Studio).
+"""CAD-QA GRPO reward function (trl>=0.28 style: completions + **kwargs with dataset columns).
 
-This file intentionally has NO imports from the cad_qa package so it can be
-pasted into a training notebook (Unsloth Studio / Colab / Vast) and used as the
-verifiable reward for RL. It mirrors the repo grader exactly:
-`parse_answer(raw, answer_format)` + exact match against the gold answer.
-
-Reward contract for GRPO-style loops:
-    reward_cadqa(gold_answer, answer_format, completion) -> float  # 0.0 or 1.0
-
-The dataset rows must carry `answer_format` and `gold_answer` (see
-`export_rl_data.py` / `docs/rl_runbook.md`).
+Grades a completion against the gold answer using cad_qa's exact-match parser,
+mirroring cad_qa evaluation grade_public_private (per-format parsing + string equality).
+Batch API: reward_cadqa(completions, gold_answer=[...], answer_format=[...], ...) -> list[float].
 """
-
-from __future__ import annotations
-
-import ast
 import json
-from typing import Any
+import re
 
+def _strip_special(text: str) -> str:
+    return re.sub(r"<\|?[a-z_]*\|?>", "", text).strip()
 
-def parse_answer(text: str, answer_format: str) -> Any:
-    stripped = text.strip()
-    if answer_format in {"entity_id", "candidate_label"}:
-        return stripped
-    if answer_format == "coordinate":
-        return _parse_coordinate_answer(stripped)
-    if answer_format == "integer":
-        return int(stripped)
-    if answer_format == "number":
-        return float(stripped)
-    if answer_format in {"bbox", "json"}:
-        return json.loads(stripped)
-    if answer_format == "boolean":
-        return stripped.lower() in {"true", "yes", "1"}
-    return stripped
+def _parse_answer(text: str, fmt: str):
+    t = _strip_special(text)
+    if fmt == "candidate_label":
+        return t
+    if fmt == "boolean":
+        return t
+    if fmt == "text":
+        # entity ids appear inside reasoning; extract any token-ish id from the tail
+        return t
+    if fmt in ("number", "integer"):
+        m = re.search(r"-?\d+(?:\.\d+)?", t)
+        return m.group(0) if m else ""
+    if fmt == "json":
+        # extract first {...} block
+        m = re.search(r"\{.*\}", t, re.DOTALL)
+        return m.group(0) if m else ""
+    if fmt == "coordinate":
+        m = re.search(r"[-+]?\d*\.?\d+\s*,\s*[-+]?\d*\.?\d+", t)
+        return m.group(0) if m else ""
+    if fmt == "bbox":
+        m = re.search(r"\[[^\]]*\]", t)
+        return m.group(0) if m else ""
+    return t
 
-
-def _parse_coordinate_answer(text: str) -> list[float]:
-    value = ast.literal_eval(text)
-    if not isinstance(value, (list, tuple)) or len(value) != 3:
-        raise ValueError("coordinate answer must be a 3-item tuple or list")
-    return [_clean_number(float(component)) for component in value]
-
-
-def _clean_number(value: float) -> float | int:
-    rounded = round(value, 6)
-    if rounded == 0:
-        rounded = 0.0
-    if float(rounded).is_integer():
-        return int(rounded)
-    return rounded
-
-
-def _gold(gold_answer: Any) -> Any:
-    """Decode JSON-encoded gold answers (parquet stores them as JSON strings)."""
-    if isinstance(gold_answer, str):
+def _decode_gold(gold_raw: str):
+    """HF dataset stores gold_answer as a JSON string of a JSON string; decode robustly."""
+    g = gold_raw
+    for _ in range(2):
+        if not isinstance(g, str):
+            break
         try:
-            return json.loads(gold_answer)
-        except Exception:  # noqa: BLE001 - plain strings (jsonl path) stay as-is
-            return gold_answer
-    return gold_answer
+            g = json.loads(g)
+        except (json.JSONDecodeError, TypeError):
+            break
+    return g
 
+def _reward_one(pred: str, gold: object, fmt: str) -> float:
+    if isinstance(gold, list):
+        gold = [str(x) for x in gold]
+        parsed = _parse_answer(pred, fmt)
+        return 1.0 if parsed in gold else 0.0
+    gold_str = str(gold)
+    if fmt == "boolean":
+        return 1.0 if _strip_special(pred).lower() == gold_str.lower() else 0.0
+    if fmt == "text":
+        # the id is embedded in a long reasoning trace; substring presence wins
+        return 1.0 if gold_str in _strip_special(pred) else 0.0
+    if fmt == "number":
+        try:
+            return 1.0 if abs(float(_parse_answer(pred, fmt)) - float(gold_str)) < 1e-6 else 0.0
+        except ValueError:
+            return 0.0
+    return 1.0 if _parse_answer(pred, fmt) == gold_str else 0.0
 
-def reward_cadqa(gold_answer: Any, answer_format: str, completion: str) -> float:
-    """0.0/1.0 exact-match reward for one completion."""
-    gold = _gold(gold_answer)
-    try:
-        parsed = parse_answer(completion, answer_format)
-    except Exception:  # noqa: BLE001 - unparseable output is a wrong answer
-        return 0.0
-    return 1.0 if parsed == gold else 0.0
-
-
-def reward_batch(rows: list[dict], completions: list[str]) -> list[float]:
-    """Reward for a batch of (row, completion) pairs, same order."""
-    return [
-        reward_cadqa(row["gold_answer"], row["answer_format"], comp)
-        for row, comp in zip(rows, completions)
-    ]
+def reward_cadqa(completions, **kwargs) -> list[float]:
+    golds = kwargs.get("gold_answer")
+    fmts = kwargs.get("answer_format")
+    scores = []
+    for i, comp in enumerate(completions):
+        text = comp[0]["content"] if isinstance(comp, list) else comp["content"]
+        gold = _decode_gold(golds[i]) if golds is not None else None
+        fmt = fmts[i] if fmts is not None else "text"
+        scores.append(_reward_one(text, gold, fmt))
+    return scores
