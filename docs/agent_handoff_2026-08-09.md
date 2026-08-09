@@ -206,3 +206,161 @@ Commit history (recent): `b00aceb` move-to-train_and_eval → `56aa127` organize
 4. Long-term: re-sample the teacher at temp 0.3-0.6 for higher-quality traces; consider
    MTP GGUF for deployment-speed inference (Gemma 4 MTP = inference-time drafter, not a
    training objective).
+
+---
+
+# ADDENDUM 2026-08-09 ~14:45 IST — current state + the compute-tool task
+
+Everything above (sections 1-12) is still valid context. This addendum records what
+changed after ~11:45 and defines the task for the next agent. Read the prior sections
+first; this is the live state.
+
+## A. What changed since the original handoff
+
+### A1. Text-gold encoding fix (landed, `ea549b0`-era, parallel agent)
+- `v3_curriculum` + `v2_curriculum` parquets re-uploaded to HF with normalized text golds:
+  0 JSON-quoted (`"wp19"` → `wp19`) and 0 `_center`-suffixed (node-id leak `wp16_center` →
+  `wp16`). Old versions recoverable; same config names/schema.
+- Pipeline guard: `assert_text_golds_clean` raises at dataset load in
+  `rejection_sample.py`, `eval_bench.py`, `grpo_train.py`, `sft_train.py`,
+  `normalize_traces.py` — if you see it fire, the HF cache is stale (delete
+  `~/.cache/huggingface/datasets/MRiabov___cadqa-rl-2000/`), do NOT remove the guard.
+- The 22 previously-invalid center rows (exact row_ids, family
+  `argmin/argmax_origin_z_workplane`, hop 1, text format):
+  `docs/center_rows_invalid_gold_2026-08-09.md` (committed `a92479e`).
+
+### A2. Targeted center-row re-sampling → merged pool 308 → HF `sft_traces_v2`
+- `rejection_sample.py` gained `--only-rows <ids.txt> --target-count N` (committed).
+- Ran on the 22 center rows: 33 validated traces (20 unique rows, hop-1, all
+  `submit_text`, gold-matched against the FIXED golds).
+- Merged pool `sft_traces_merged.jsonl`: **308 traces**, per-hop
+  {0:50, 1:83, 2:50, 3:75, 5:50}, 251 unique row_ids (54 rows appear 2-3× — separate
+  generations, all gold-validated). Pushed to HF as **`sft_traces_v2`** config
+  (`train_and_eval/setup/publish_traces.py`, committed `9a6f11f`).
+- Per-trace preview markdowns (row prompt + model output): **`docs/trace_previews/`**
+  (308 files, tracked).
+
+### A3. Post-fix eval + train/test distribution analysis
+- Re-ran the 12-row held-out eval on the fixed dataset: **acc 41.7% (5/12),
+  tool_valid 75% (9/12)** (was 50%/58.3% pre-fix — movement is ±1-2 rows of noise).
+- **Train/test match analysis (do NOT skip this):**
+  - Row overlap eval vs train pool: **0** (exclusion works).
+  - Hop mix: eval flat {0:2,1:2,2:2,3:3,5:3} vs train {50,83,50,75,50} — eval slightly
+    harder (over-weights hop-5, under-weights hop-1).
+  - **Format mismatch — the critical finding.** deepseek per-format success
+    (from `sampling_log.jsonl`, 1340 attempts): text 23%, candidate_label 42%,
+    coordinate 23%, integer 35%, bbox 19%, **json 0% (0/113), number 0% (0/71)**.
+    → The training pool has **ZERO json and ZERO number traces**; the eval sampled a
+    `number` row (guaranteed fail, and it failed). The model cannot learn formats the
+    teacher can never produce. **This is the task below.**
+
+### A4. vLLM SOLVED (was "open" in section 7)
+- vLLM 0.26.0 in `/root/vllm-venv` now **loads and serves the merged model at
+  121-871 tok/s** (vs 19 tok/s transformers) with:
+  1. Weight rename `model.language_model.*` → `language_model.model.*`
+     (`train_and_eval/setup/convert_for_vllm.py`, committed `b062ca1`).
+  2. Shared-layer `k_norm` duplication: layers 15-34 get `k_norm[layer % 15]` (gemma-4
+     KV-sharing, `num_kv_shared_layers=20`, 35 layers → 15 unique).
+  3. `VLLM_ATTENTION_BACKEND=TORCH_SDPA` (flashinfer can't compile: needed `curand.h`/
+     `curand_kernel.h`, fixed by `apt-get install libcurand-dev-12-6` + symlink into
+     `/usr/local/cuda/include/`).
+- Converted checkpoint: `/root/cadqa-sft-merged-vllm3`. Benchmark script pattern:
+  use `llm.chat(messages)` (NOT raw strings — raw prompts produce EOS-immediately,
+  fake numbers).
+- Use vLLM for all future batched evals/rollouts.
+
+### A5. LLM-output recording rule (user standing instruction, committed `21cbf3b`)
+- Every LLM call's outputs must be persisted — record **reasoning + output text +
+  tool call** distinctly. Implemented: sampler `AttemptLog` (→ `sampling_log.jsonl`),
+  eval `EvalRow.tool_call` (→ eval jsonl). Carry this into any new rollout logging.
+
+### A6. Hygiene rule (user standing instruction)
+- **No new python in `runs/`** (gitignored — data-loss risk). All code lives in
+  tracked `train_and_eval/`; data/artifacts go to HF or tracked `docs/`.
+- Durable storage done: traces → HF `sft_traces_v2`; previews → `docs/trace_previews/`.
+
+### A7. SFT v2 (in flight at write time)
+- Training **NOW**: 308 traces, seq 6144, bs 4, grad_accum 1, lr 3e-4, 4 epochs
+  (~308 steps, ~9.5s/it → ~45-50 min total). Adapter out: `/root/cadqa-sft-v2`.
+  Recipe identical to the 50% run (loss_type="nll", eos `<turn|>`, pad `<pad>`).
+- Compute-bound (GPU 100%, ~280W) — bs 8 gains only ~10%; do NOT restart for speed.
+- After it finishes: merge → eval with `run_eval2.sh` (12 rows) for the updated number.
+
+## B. THE TASK — numpy compute tool in the harness
+
+**Goal:** stop running the harness as pure internal reasoning. Add a sandboxed
+python/numpy compute tool so the model can *compute* exact values (frames, volumes)
+instead of deriving them mentally. This is expected to rescue the **json** (0/113) and
+**number** (0/71) formats — the two with zero training traces — and improve bbox/text.
+
+**User-approved scope:** **numpy/python sandbox NOW; cadquery execution at the RL
+stage** (do not add cadquery to the sandbox yet — it would trivialize the task).
+
+### Why (evidence)
+- Harness today = 7 submit-only tools + compact_trace. **No compute tool.** Native
+  format has no `<|tool_response|>` round-trip (normalize_traces.py comment says so
+  deliberately). gemma-4-E2B is literally the E2B (code-execution) model — we're
+  running it without its native capability.
+- `submit_workplane` requires exact `origin/x_dir/normal` (6 floats, 1e-3 rel) from the
+  script's frame chain — mechanical but exact; `submit_number` requires exact volume
+  arithmetic. Neither is doable in-head reliably → teacher 0%.
+
+### Design (concrete)
+1. **`run_code(code: str) -> str`** tool in `train_and_eval/tool_calls.py` (new
+   `ToolName.RUN_CODE`). Sandbox: subprocess python, numpy preloaded, strict timeout
+   (~5-10 s), no network, no cadquery (per scope), capture stdout/stderr/exception.
+   Server-side execution — the "result" is the tool response.
+2. **Teacher harness** (`teacher.py`/`rejection_sample.py`): allow multi-turn
+   reasoning: user prompt → assistant reasoning + `run_code` call → (server runs it) →
+   tool result injected → assistant continues → `submit_*`. The trace captures the full
+   loop. (OpenRouter supports tool-call round-trips; deepseek responds to tool results.)
+3. **Native trace format** (`normalize_traces.py`): render the round-trip as
+   `<|tool_call>call:run_code{...}<tool_call|>` + `<|tool_response|>...<tool_response|>`
+   + subsequent reasoning + final submit. VERIFY the exact gemma-4 token spellings on
+   the box with the base model before committing to a format (section 3 of this doc:
+   the native flow is verified only for the one-shot case).
+4. **Re-sample json + number** with the compute tool (targeted: v3 has 16 json + 16
+   number rows; use `--only-rows` with the full json+number row_id list, generous
+   attempts, maybe temp 0.3-0.6). Validate with existing `tool_call_matches`.
+5. **SFT** on the enriched traces (recipe unchanged; seq cap 6144 still fits if the
+   round-trip is bounded — re-measure seq lengths after re-rendering).
+6. **Eval**: give the student the same `run_code` tool (native declarations + server
+   execution in `eval_bench.py`), re-run the 12-row eval and report per-format.
+
+### Files to touch (tracked only)
+- `train_and_eval/tool_calls.py` (RUN_CODE schema, extraction, sandbox)
+- `train_and_eval/teacher.py` (multi-turn tool loop)
+- `train_and_eval/train/rejection_sample.py` (tool-result capture in trace)
+- `train_and_eval/train/normalize_traces.py` (`<|tool_response|>` rendering)
+- `train_and_eval/eval/eval_bench.py` (compute tool at inference)
+- `train_and_eval/setup/publish_traces.py` (publish enriched pool as `sft_traces_v3`)
+
+### Success criteria
+- deepseek produces ≥1 validated json trace AND ≥1 validated number trace (both 0%
+  today); per-format eval shows json/number > 0 with the tool enabled; no regression on
+  the other formats; all LLM outputs recorded per A5.
+
+### Guard rails / pitfalls (from sections 7-11 + A)
+- `loss_type="nll"`, eos/pad quirks — unchanged recipe.
+- Sandbox security: subprocess isolation, no network, timeout, no cadquery (RL stage).
+- Record every run_code call + result (A5 rule).
+- Sync box `/root/cadqa-bench/` from local `train_and_eval/` before running anything
+  (box copies are stale); `.env` (OpenRouter key) lives on the box at
+  `/root/cadqa-bench/.env`.
+- If the gemma native tool-response format fights you, fall back to embedding the tool
+  result as plain text in the assistant content (still a compute-capable trace), and
+  note the deviation.
+- Cost: deepseek is $0/M (balance $160); sandbox is free. Time: re-sampling json+number
+  at 0%→20-40% teacher success will take 100-400 attempts (~1-3 h at 24 workers).
+
+## C. Live state pointers (at write time)
+
+- **git HEAD:** `21cbf3b` (recording rule); working tree clean except `.worktrees/`.
+- **HF `MRiabov/cadqa-rl-2000` configs:** `v2_curriculum`, `v3_curriculum`,
+  `sft_traces_v1` (275), `sft_traces_v2` (308).
+- **Box 47200188** (4080S 32 GB): `/root/cadqa-bench/` (scripts+data), venvs
+  `/root/cadqa-rl-venv` (unsloth stack) and `/root/vllm-venv` (vllm 0.26, working).
+  Checkpoints: `/root/cadqa-sft-final` (adapter), `/root/cadqa-sft-merged` (bf16),
+  `/root/cadqa-sft-merged-vllm3` (vLLM-ready), `/root/cadqa-sft-v2` (training NOW).
+- **Eval inputs:** `sft_texts_v2.jsonl` (308, normalized), `eval_heldout.jsonl`
+  (12 rows, 41.7%).
