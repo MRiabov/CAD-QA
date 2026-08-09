@@ -85,3 +85,22 @@ native-format SFT retrain, the eval/speed blockers, and the open decision.
   sft_traces_filtered3.jsonl 268, sft_texts.jsonl 268, sampling_log.jsonl).
 - HF: `MRiabov/cadqa-rl-2000` v2_curriculum / v3_curriculum / sft_traces_v1.
 - git: rl_progress_2026-08-09.md committed earlier; this doc pending commit.
+
+## Operational pitfalls (recurring — track these)
+
+- **pkill self-kill**: `pkill -f "pattern"` matches your own ssh/launch cmdline if it contains the
+  pattern. Always bracket (`[e]val_bench`) AND/OR put pkill inside a launch script whose own
+  cmdline doesn't contain the pattern (e.g. `bash run_eval2.sh`). Bitten ~6 times.
+- **Gemma4Processor.apply_chat_template(tokenize=True, return_tensors="pt")** returns a bare
+  `Tensor` for text-only (not a BatchFeature dict) — `inputs.items()` crashes. Guard:
+  `if hasattr(inputs, "items") else {"input_ids": inputs.to("cuda")}`.
+- **trl 1.9.2 SFTConfig**: `loss_type="nll"` (chunked_nll patches lm-head, breaks on unsloth's
+  partial forward AND requires num_valid_tokens output). No `max_seq_length` (use `max_length`),
+  no `push_to_hub_token`.
+- **gemma-4-E2B tokens**: real eos is `<turn|>`, pad `<pad>`; unsloth defaults `<EOS_TOKEN>/<PAD_TOKEN>`
+  are NOT in vocab → force via SFTConfig monkeypatch or explicit eos_token/pad_token.
+- **fast_inference=False decode is ~13-19 tok/s** on 4080S for gemma-4-E2B across ALL paths
+  (sdpa, unsloth 4-bit; FA2 unavailable). Not a config bug — stack-wide. llama.cpp/GGUF (or
+  Studio's fast kernels) is the path to 50-150 tok/s.
+- **deepseek-v4-flash**: reasoning in `message.reasoning` (content empty until thinking ends);
+  temp 1.0 tanks success to ~23% (parsed-but-wrong dominates) vs ~60-70% at greedy/lower temp.
