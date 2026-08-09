@@ -47,6 +47,11 @@ def validate_rows(rows: list[dict[str, Any]], *, release: bool = False) -> dict[
         missing = sorted(REQUIRED_ROW_FIELDS - set(row))
         if missing:
             errors.append({"index": index, "row_id": row.get("row_id"), "missing": missing})
+        if row.get("answer_format") == "json":
+            # workplane_state json family was pruned (degenerate base="cq" golds);
+            # rows in this format are unsupported and must never be re-emitted.
+            errors.append({"index": index, "row_id": row.get("row_id"),
+                           "error": "unsupported_json_format"})
         row_id = row.get("row_id")
         if row_id is None:
             errors.append({"index": index, "row_id": row_id, "error": "missing_row_id"})
