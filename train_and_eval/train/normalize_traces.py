@@ -103,10 +103,11 @@ def main() -> None:
     traces = [json.loads(line) for line in args.traces.read_text().splitlines() if line.strip()]
     processor = AutoProcessor.from_pretrained("unsloth/gemma-4-E2B-it")
 
-    # tool declarations: one per tool used in the traces
+    # tool declarations: the answer tool + ALWAYS run_code (declared but unused in
+    # plain-reasoning traces teaches the student to skip it when not needed)
     tools_used = sorted({t["tool_name"] for t in traces})
     tools = []
-    for name in tools_used:
+    for name in sorted(set(tools_used) | {ToolName.RUN_CODE.value}):
         tool = ToolName(name)
         model = _ARGS_MODELS[tool]
         description = _TOOL_DESCRIPTIONS.get(tool, f"Submit the answer for the {name} format.")
