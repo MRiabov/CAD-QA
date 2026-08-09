@@ -138,6 +138,29 @@ def tool_schema(name: ToolName) -> dict[str, Any]:
     }
 
 
+def tool_call_prompt_suffix(answer_format: str) -> str:
+    """The '[answer contract]' suffix instructing an end-with-tool-call response.
+
+    Mirrors `build_teacher_prompt` in teacher.py so eval/GRPO prompts stay
+    consistent with the teacher traces that produced the working SFT. `fmt`
+    is a row's `answer_format` (candidate_label, coordinate, text, ...); the
+    suffix names the matching submit tool and its schema.
+    """
+    return _tool_call_prompt_suffix(format_to_tool(answer_format))
+
+
+def _tool_call_prompt_suffix(tool: ToolName) -> str:
+    """Render the answer-contract suffix for an already-resolved ToolName."""
+    schema = tool_schema(tool)
+    return (
+        "\n[answer contract]\n"
+        "Your final response MUST end with exactly one JSON tool call in this envelope:\n"
+        f'{{"name": "{tool.value}", "arguments": {{...}}}}  # arguments must match the schema below\n'
+        f"Tool schema: {json.dumps(schema['parameters'], sort_keys=True)}\n"
+        "\nReason first, then emit the tool call as the last JSON object in your reply.\n"
+    )
+
+
 def validate_arguments(name: ToolName, arguments: dict[str, Any]) -> BaseModel | None:
     """Parse tool arguments against the tool's typed schema; None on mismatch."""
     try:
@@ -331,9 +354,9 @@ def tool_call_matches(name: ToolName, args: BaseModel, gold_raw: str, fmt: str) 
     gold = _decode_gold(gold_raw)
     match name:
         case ToolName.SUBMIT_LABEL:
-            return isinstance(gold, str) and args.label == gold  # type: ignore[attr-defined]
+            return isinstance(gold, (str, int, float, bool)) and args.label == str(gold)  # type: ignore[attr-defined]
         case ToolName.SUBMIT_TEXT:
-            return isinstance(gold, str) and _text_matches(args.text, gold)  # type: ignore[attr-defined]
+            return isinstance(gold, (str, int, float, bool)) and _text_matches(args.text, str(gold))  # type: ignore[attr-defined]
         case ToolName.SUBMIT_INTEGER:
             return isinstance(gold, int) and args.value == gold  # type: ignore[attr-defined]
         case ToolName.SUBMIT_NUMBER:

@@ -27,7 +27,7 @@ import random
 from collections import Counter
 from pathlib import Path
 
-import pyarrow.parquet as pq
+from rows_loader import load_local_rows  # train_and_eval is on sys.path via the shim above
 
 # The 100-row bench slices used for baseline eval — never in RL training data.
 BENCH_EVAL_ROW_IDS: set[str] = set()
@@ -51,36 +51,12 @@ def main() -> None:
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--train-size", type=int, default=2000)
     ap.add_argument("--seed", type=int, default=20260808)
+    ap.add_argument("--tool-suffix", action="store_true",
+                    help="append the per-format [answer contract] tool-call suffix to prompts")
     args = ap.parse_args()
 
     bench_ids = _load_bench_eval_ids(Path("runs/gemma_bench/slices"))
-    t = pq.read_table(args.rows)
-    names = set(t.column_names)
-    rows: list[dict] = []
-    for i in range(t.num_rows):
-        rec = {c: t.column(c)[i].as_py() for c in names}
-        if rec.get("split") != "train":
-            continue
-        if rec.get("gold_answer") is None or rec.get("prompt") is None:
-            continue
-        if rec.get("release_ready") is False:
-            continue
-        gold = rec["gold_answer"]
-        if isinstance(gold, str):
-            try:  # rows.parquet stores gold_answer JSON-encoded; decode it
-                gold = json.loads(gold)
-            except Exception:  # noqa: BLE001 - already plain
-                pass
-        rows.append({
-            "row_id": rec["row_id"],
-            "prompt": rec["prompt"],
-            "answer_format": rec["answer_format"],
-            "gold_answer": gold,
-            "difficulty_bucket": rec.get("difficulty_bucket"),
-            "logical_hop_count": rec.get("logical_hop_count"),
-            "geometry_hop_count": rec.get("geometry_hop_count"),
-            "relation_families": rec.get("relation_families"),
-        })
+    rows = load_local_rows(args.rows, split="train", tool_suffix=args.tool_suffix)
     rng = random.Random(args.seed)
     train = [r for r in rows if r["row_id"] not in bench_ids]
     # heldout = bench-slice rows (reserved eval); keep it small

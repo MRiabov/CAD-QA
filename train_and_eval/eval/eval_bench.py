@@ -32,6 +32,7 @@ from tool_calls import (
     ToolName,
     _ARGS_MODELS,
     execute_code,
+    extract_tool_call,
     format_to_tool,
     render_tool_response,
     tool_call_matches,
@@ -88,19 +89,15 @@ class EvalRow(BaseModel):
 
 
 def parse_native_tool_call(completion: str, expected: ToolName, processor) -> tuple[ToolName, object] | None:
-    """Parse the LAST native <|tool_call|> block in the completion."""
+    """Parse the LAST native <|tool_call|> block in the completion.
+
+    Falls back to the shared `extract_tool_call` for envelope
+    ({"name", "arguments"}) or bare-args JSON completions (teacher/SFT format),
+    so eval and reward grade the same accepted forms.
+    """
     blocks = list(re.finditer(r"<\|tool_call>call:(\w+)\{.*?\}<tool_call\|>", completion, re.DOTALL))
     if not blocks:
-        # fallback: bare args JSON after reasoning (old-style) -> still accept via expected tool
-        m2 = re.search(r"\{.*\}", completion, re.DOTALL)
-        if m2 is None:
-            return None
-        try:
-            args = json.loads(m2.group(0))
-            model = _ARGS_MODELS[expected]
-            return (expected, model.model_validate(args) if isinstance(args, dict) else None)
-        except Exception:
-            return None
+        return extract_tool_call(completion, expected)
     block = blocks[-1].group(0)
     try:
         parsed = processor.parse_response(block)
@@ -131,6 +128,10 @@ def main() -> None:
     ap.add_argument("--batch", type=int, default=BATCH, help="rows per generation batch (lower when modes share the GPU)")
     ap.add_argument("--mode", type=HarnessMode, default=HarnessMode.NUMPY,
                     choices=list(HarnessMode), help="harness mode: which compute tools the model gets")
+    ap.add_argument("--rows", type=Path, default=None,
+                    help="local rows.parquet|rows.jsonl (e.g. release_10k/rows.parquet); default: HF v3_curriculum")
+    ap.add_argument("--rows-split", type=str, default="train",
+                    help="split filter for --rows (train|test|validation|all); default train")
     args = ap.parse_args()
     harness_mode = args.mode      # captured: the loop unpacks into `tool_args` so `args` (Namespace) is never shadowed
     batch_size = args.batch
@@ -142,8 +143,16 @@ def main() -> None:
     tools = tools_for_mode(harness_mode)
     print(f"mode={harness_mode.value} tools={[t['function']['name'] for t in tools]}", flush=True)
 
-    ds = load_dataset("MRiabov/cadqa-rl-2000", "v3_curriculum", split="train")
-    rows = list(ds)
+    if args.rows is not None:
+        from rows_loader import load_local_rows  # train_and_eval is on sys.path via the shim above
+        rows = load_local_rows(
+            args.rows,
+            split=None if args.rows_split == "all" else args.rows_split,
+            tool_suffix=True,
+        )
+    else:
+        ds = load_dataset("MRiabov/cadqa-rl-2000", "v3_curriculum", split="train")
+        rows = list(ds)
     if args.exclude_traces:
         excluded = {json.loads(line)["row_id"] for line in open(args.exclude_traces) if line.strip()}
         rows = [r for r in rows if r["row_id"] not in excluded]

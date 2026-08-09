@@ -47,6 +47,9 @@ def _decode_gold(gold_raw: str):
     return g
 
 def _reward_one(pred: str, gold: object, fmt: str) -> float:
+    tool_reward = _tool_call_reward(pred, gold, fmt)
+    if tool_reward is not None:
+        return tool_reward
     if isinstance(gold, list):
         gold = [str(x) for x in gold]
         parsed = _parse_answer(pred, fmt)
@@ -63,6 +66,64 @@ def _reward_one(pred: str, gold: object, fmt: str) -> float:
         except ValueError:
             return 0.0
     return 1.0 if _parse_answer(pred, fmt) == gold_str else 0.0
+
+
+_NATIVE_CALL_RE = re.compile(r"<\|tool_call>call:(\w+)(\{.*?\})<tool_call\|>", re.DOTALL)
+
+
+def _normalize_native_args(args_raw: str) -> str:
+    """Turn gemma's native arg encoding into parseable JSON.
+
+    gemma-4-E2B emits args like `{label:<|"|>A<|"|>}` (strings wrapped in
+    `<|"|>`, keys unquoted); `processor.parse_response` decodes this in eval,
+    but the reward has no processor, so normalize before json.loads.
+    """
+    s = args_raw.replace("<|\"|>", "\"")
+    s = re.sub(r"([{,])\s*([A-Za-z_][A-Za-z0-9_]*)\s*:", r'\1"\2":', s)
+    return s
+
+
+def _native_tool_call(text: str):
+    """Parse the LAST native <|tool_call|> block without a processor.
+
+    Returns (ToolName, typed-args) or None. Mirrors eval_bench's
+    parse_native_tool_call but grades pure-JSON args directly; gemma's
+    `<|"|>`-encoded strings are normalized before json.loads.
+    """
+    from tool_calls import _ARGS_MODELS, ToolName  # lazy: tool_calls imports reward_cadqa at module load
+
+    blocks = list(_NATIVE_CALL_RE.finditer(text))
+    if not blocks:
+        return None
+    block = blocks[-1]
+    name_raw, args_raw = block.group(1), block.group(2)
+    try:
+        name = ToolName(name_raw)
+        args = json.loads(_normalize_native_args(args_raw))
+    except (ValueError, json.JSONDecodeError):
+        return None
+    model = _ARGS_MODELS.get(name)
+    if model is None or not isinstance(args, dict):
+        return None
+    try:
+        return name, model.model_validate(args)
+    except Exception:  # noqa: BLE001 - malformed args -> no reward
+        return None
+
+
+def _tool_call_reward(pred: str, gold: object, fmt: str) -> float | None:
+    """Grade a tool-call completion via the tool contract; None if not a tool call."""
+    from tool_calls import extract_tool_call, format_to_tool, tool_call_matches  # lazy import (module cycle)
+
+    try:
+        expected = format_to_tool(fmt)
+    except ValueError:
+        return None
+    parsed = _native_tool_call(pred) or extract_tool_call(pred, expected)
+    if parsed is None:
+        return None
+    name, args = parsed
+    return 1.0 if tool_call_matches(name, args, gold, fmt) else 0.0
 
 def reward_cadqa(completions, **kwargs) -> list[float]:
     golds = kwargs.get("gold_answer")

@@ -13,7 +13,7 @@ from typing import Any
 import requests
 from pydantic import BaseModel, Field
 
-from tool_calls import ToolName, tool_schema
+from tool_calls import ToolName, _tool_call_prompt_suffix
 
 DEFAULT_MODEL = "deepseek/deepseek-v4-flash:deepseek"  # pinned to the DeepSeek provider
 API_BASE = "https://openrouter.ai/api/v1"
@@ -142,7 +142,6 @@ class TeacherClient:
 
 def build_teacher_prompt(row_prompt: str, tool: ToolName, hop_count: int | None = None,
                          compute_tool: bool = True) -> str:
-    schema = tool_schema(tool)
     hop_line = f"\nThis question requires {hop_count} logical reasoning hops." if hop_count is not None else ""
     compute_section = (
         "\n[compute tool]\n"
@@ -158,11 +157,7 @@ def build_teacher_prompt(row_prompt: str, tool: ToolName, hop_count: int | None 
         f"{compute_section}"
         "\n[question]\n"
         f"{row_prompt}\n"
-        "\n[answer contract]\n"
-        f'Your final response MUST end with exactly one JSON tool call in this envelope:\n'
-        f'{{"name": "{tool.value}", "arguments": {{...}}}}  # arguments must match the schema below\n'
-        f"Tool schema: {json.dumps(schema['parameters'], sort_keys=True)}\n"
-        "\nReason first, then emit the tool call as the last JSON object in your reply.\n"
+        f"{_tool_call_prompt_suffix(tool)}"
     )
 
 

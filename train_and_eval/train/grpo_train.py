@@ -55,9 +55,16 @@ model = FastVisionModel.get_peft_model(
 )
 
 # --- dataset: HF cadqa-rl-2000, prompt as messages (notebook cell 41 format) ---
-raw = load_dataset("MRiabov/cadqa-rl-2000", "v2_curriculum", split="train").select(range(N_ROWS))
+# CADQA_RL_DATA overrides with a local rows.parquet/rows.jsonl (graph-first
+# artifacts, e.g. release_10k/rows.parquet); loader decodes gold and appends
+# the per-format [answer contract] tool-call suffix.
+if os.environ.get("CADQA_RL_DATA"):
+    from rows_loader import load_local_rows  # train_and_eval is on sys.path via the shim above
+    raw_rows = load_local_rows(os.environ["CADQA_RL_DATA"], split="train", tool_suffix=True)
+else:
+    raw_rows = load_dataset("MRiabov/cadqa-rl-2000", "v2_curriculum", split="train").select(range(N_ROWS))
 rows = []
-for r in raw:
+for r in raw_rows:
     rows.append({
         "prompt": r["prompt"],
         "gold_answer": r["gold_answer"],

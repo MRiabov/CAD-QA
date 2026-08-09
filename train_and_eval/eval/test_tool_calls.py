@@ -209,3 +209,50 @@ def test_execute_code_no_file_write():
     import os
     assert not os.path.exists("/tmp/cadqa_sandbox_pwn")
 
+
+
+def test_tool_call_prompt_suffix_names_matching_tool():
+    from tool_calls import tool_call_prompt_suffix
+    assert "submit_label" in tool_call_prompt_suffix("candidate_label")
+    assert "submit_coordinate" in tool_call_prompt_suffix("coordinate")
+    assert "submit_text" in tool_call_prompt_suffix("text")
+    assert "submit_number" in tool_call_prompt_suffix("number")
+    assert "[answer contract]" in tool_call_prompt_suffix("candidate_label")
+    assert "Reason first" in tool_call_prompt_suffix("candidate_label")
+
+
+def test_teacher_prompt_reuses_suffix():
+    import os as _os
+    import sys
+
+    sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))  # train_and_eval root
+    from tool_calls import ToolName, tool_call_prompt_suffix
+    import teacher
+    expected = (
+        "You are solving a CAD (CadQuery) question. Read the script carefully and reason step by step.\n"
+        "\n"
+        "\n[question]\n"
+        "Q?\n"
+        f"{tool_call_prompt_suffix('candidate_label')}"
+    )
+    assert teacher.build_teacher_prompt("Q?", ToolName.SUBMIT_LABEL, compute_tool=False) == expected
+
+
+def test_reward_tool_call_native():
+    from reward_cadqa import _reward_one
+    assert _reward_one(
+        "<|tool_call>call:submit_label{\"label\":\"A\"}<tool_call|>", "A", "candidate_label") == 1.0
+    assert _reward_one(
+        "reasoning <|tool_call>call:submit_label{\"label\":\"B\"}<tool_call|>", "A", "candidate_label") == 0.0
+    assert _reward_one(
+        "<|tool_call>call:submit_coordinate{\"value\":[-47.585,0,-127.965]}<tool_call|>",
+        [-47.584951, 0, -127.964585], "coordinate") == 1.0
+    assert _reward_one(
+        "<|tool_call>call:submit_text{\"text\":\"wp7\"}<tool_call|>", "wp7", "text") == 1.0
+
+
+def test_reward_envelope_and_fallback():
+    from reward_cadqa import _reward_one
+    assert _reward_one('{"name": "submit_label", "arguments": {"label": "A"}}', "A", "candidate_label") == 1.0
+    assert _reward_one("the answer is wp7", "wp7", "text") == 1.0  # plain-text fallback
+    assert _reward_one("A", "A", "candidate_label") == 1.0
