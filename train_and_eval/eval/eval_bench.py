@@ -20,7 +20,6 @@ sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))
 import argparse
 import json
 import re
-from enum import StrEnum
 from pathlib import Path
 
 import torch
@@ -29,6 +28,7 @@ from pydantic import BaseModel, Field
 from transformers import AutoModelForCausalLM, AutoProcessor
 
 from tool_calls import (
+    HarnessMode,
     ToolName,
     _ARGS_MODELS,
     execute_code,
@@ -42,12 +42,6 @@ ROUND_MAX_NEW = 2048   # per round-trip round (generation is truncated at the to
 MAX_TOOL_ROUNDS = 3    # prompt -> up to 2 run_code execs -> submit
 BATCH = 8              # default batch (amortize weight reads); override with --batch
 TOOL_CALL_CLOSE_ID = 49  # <tool_call|> single token (verified on gemma-4-E2B)
-
-
-class EvalMode(StrEnum):
-    NO_TOOLS = "no_tools"
-    NUMPY = "numpy"
-    CADQUERY = "cadquery"
 
 
 _SUBMIT_TOOLS = [
@@ -65,10 +59,10 @@ _RUN_CODE_TOOLS = [{
 ]
 
 
-def tools_for_mode(mode: EvalMode) -> list[dict]:
-    if mode == EvalMode.NO_TOOLS:
+def tools_for_mode(mode: HarnessMode) -> list[dict]:
+    if mode == HarnessMode.NO_TOOLS:
         return _SUBMIT_TOOLS
-    if mode == EvalMode.CADQUERY:
+    if mode == HarnessMode.CADQUERY:
         raise NotImplementedError("cadquery mode lands at the RL stage; use --mode no_tools|numpy")
     return _SUBMIT_TOOLS + _RUN_CODE_TOOLS
 
@@ -135,8 +129,8 @@ def main() -> None:
     ap.add_argument("--max-rows", type=int, default=12)
     ap.add_argument("--seed", type=int, default=3407)
     ap.add_argument("--batch", type=int, default=BATCH, help="rows per generation batch (lower when modes share the GPU)")
-    ap.add_argument("--mode", type=EvalMode, default=EvalMode.NUMPY,
-                    choices=list(EvalMode), help="harness mode: which compute tools the model gets")
+    ap.add_argument("--mode", type=HarnessMode, default=HarnessMode.NUMPY,
+                    choices=list(HarnessMode), help="harness mode: which compute tools the model gets")
     args = ap.parse_args()
     harness_mode = args.mode      # captured: `args` is rebound to tool args inside the round loop
     batch_size = args.batch
@@ -220,7 +214,7 @@ def main() -> None:
                 name, args = parsed
                 if name == ToolName.RUN_CODE and args is not None:
                     code = args.code  # type: ignore[attr-defined]
-                    if harness_mode == EvalMode.NO_TOOLS:
+                    if harness_mode == HarnessMode.NO_TOOLS:
                         # no-tools mode: compute calls are not served — failed attempt
                         finalized[j] = _finalize(batch[j], segments[j], row_rounds[j], processor, capped=False)
                         active[j] = False

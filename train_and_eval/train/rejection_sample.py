@@ -30,6 +30,7 @@ from pydantic import BaseModel, Field
 
 from teacher import TeacherCall, TeacherClient, build_teacher_prompt
 from tool_calls import (
+    HarnessMode,
     ToolName,
     TraceStep,
     TraceStepKind,
@@ -61,7 +62,7 @@ class Trace(BaseModel):
     compacted: bool = Field(default=False)
     prompt_tokens: int = Field(ge=0)
     completion_tokens: int = Field(ge=0)
-    mode: str = Field(default="no_tools", pattern="^(no_tools|numpy)$")  # harness mode that produced this trace
+    mode: HarnessMode = Field(default=HarnessMode.NO_TOOLS)  # harness mode that produced this trace
     steps: list[TraceStep] = Field(default_factory=list)  # structured round-trip (SFT rendering)
 
 
@@ -336,7 +337,7 @@ class Sampler:
                 gold=row["gold_answer"], answer_format=row["answer_format"],
                 compacted=compacted, prompt_tokens=prompt_tokens_total,
                 completion_tokens=tokens_total,
-                mode="numpy" if self.compute_tool else "no_tools",
+                mode=HarnessMode.NUMPY if self.compute_tool else HarnessMode.NO_TOOLS,
                 steps=steps if not compacted else [],
             )
             with self.lock:

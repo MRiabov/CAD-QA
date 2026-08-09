@@ -22,6 +22,8 @@ from pydantic import BaseModel, Field
 from trl import SFTConfig, SFTTrainer
 from unsloth import FastVisionModel
 
+from tool_calls import HarnessMode
+
 
 # trl 1.9.2 removed push_to_hub_token; unsloth's patched SFTTrainer may still
 # pass it via to_dict() spread. Also force eos_token=<turn|> (gemma-4 E2B's real
@@ -57,7 +59,7 @@ class Trace(BaseModel):
     compacted: bool = False
     prompt_tokens: int = Field(default=0, ge=0)
     completion_tokens: int = Field(default=0, ge=0)
-    mode: str = Field(default="no_tools")
+    mode: HarnessMode = Field(default=HarnessMode.NO_TOOLS)
     text: str | None = Field(default=None)
 
 
