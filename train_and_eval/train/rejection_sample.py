@@ -43,7 +43,7 @@ from tool_calls import (
 
 MAX_TRACE_TOKENS = 4000
 COMPACT_BOUND_TOKENS = 3500
-MAX_TOOL_ROUNDS = 5  # prompt -> up to 4 run_code execs -> submit (hop-5 chains need room)
+MAX_TOOL_ROUNDS = 10  # prompt -> up to 9 run_code execs -> submit (hop-5 chains need room)
 DEFAULT_QUOTAS = {"0": 50, "1": 50, "2": 50, "3": 75, "5": 50}
 
 RUN_CODE_TOOLS = [tool_schema(ToolName.RUN_CODE)]

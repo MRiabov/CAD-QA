@@ -39,7 +39,7 @@ from tool_calls import (
 
 MAX_NEW = 4096
 ROUND_MAX_NEW = 2048   # per round-trip round (generation is truncated at the tool call)
-MAX_TOOL_ROUNDS = 5    # prompt -> up to 4 run_code execs -> submit (hop-5 chains need room)
+MAX_TOOL_ROUNDS = 10   # prompt -> up to 9 run_code execs -> submit (hop-5 chains need room)
 BATCH = 8              # default batch (amortize weight reads); override with --batch
 TOOL_CALL_CLOSE_ID = 49  # <tool_call|> single token (verified on gemma-4-E2B)
 
