@@ -1731,6 +1731,31 @@ Checked as implemented with remaining scale caveats:
   patterns not covered by current trace snapshots/effects and conservative
   profile projections.
 - Provider submission adapters and remote/GPU experiment orchestration.
+- Derive deterministic CadQuery solutions for paper mode 3 (the CadQuery
+  tool harness: "a single successful tool call will suffice"). The golds are
+  already fully computed and traced per row — `query_program.clauses` +
+  `candidate_trace.steps` (initial set → per-clause narrowing → aggregation
+  argmax/argmin/rank over a metric) + `final_candidates` + `gold_answer` in
+  the private rows — so the derivation is an inverse replay, not a search:
+  emit one script per row from an `answer_format` snippet template
+  (`.Volume()`, `.BoundingBox()`, `.Center()`, `.Vertices().toTuple()`,
+  `.points()[i]`, point-in-solid, face selection anchored on the recorded
+  geometry), embed the source program verbatim, run it in the same CadQuery
+  kernel that produced the gold, and keep it only if the output matches
+  `gold_answer`. Repair iteration is needed only for the failure residue
+  (float-tie sensitivity in argmax/rank ordering, resolver-internal naming
+  such as `selector:sel_all_faces_all` / hashed face ids and snapshot
+  semantics, text-derived answers that need the program text rather than the
+  geometry); rows that cannot be reproduced get marked not tool-solvable and
+  excluded from mode 3. This is easy for the geometry-computed formats and
+  mechanical for entity-reference formats; the recorded trace is the search
+  half of the search+compute pairing, and the synthesized script fuses it
+  back with the computation.
+- Follow-up on the above: make the derived CadQuery tool calls concise —
+  tricks to make the CadQuery queries easier and faster to compute (shorter
+  scripts, cheaper geometry queries, avoiding full re-execution of the source
+  program where a targeted selector suffices), so the mode-3 golds stay a
+  realistic "one-shot" target for the small models the paper plans to train.
 
 ## Quarantine Policy
 
