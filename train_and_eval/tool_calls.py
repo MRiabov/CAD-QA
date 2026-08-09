@@ -96,7 +96,7 @@ class CompactTraceArgs(BaseModel):
 
 class RunCodeArgs(BaseModel):
     code: str = Field(min_length=1, max_length=4096,
-                      description="Python code to execute with numpy (np) and math preloaded; print() the result to return it.")
+                      description="Python code with numpy (np) and math preloaded; the last expression's value is returned automatically (notebook-style).")
 
 
 FORMAT_TO_TOOL: dict[AnswerFormat, ToolName] = {

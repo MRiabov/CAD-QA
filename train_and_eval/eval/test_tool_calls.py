@@ -169,6 +169,16 @@ def test_execute_code_ok():
     assert execute_code("import numpy as np\nprint(np.sqrt(16))").strip() == "4.0"
 
 
+def test_execute_code_notebook_auto_display():
+    # last-expression value is returned automatically, like a notebook cell
+    assert execute_code("2*3*4").strip() == "24"
+    assert execute_code("import numpy as np\nnp.sqrt(16)").strip() == "4.0"
+    assert execute_code("x = 5\nx*2").strip() == "10"
+    assert execute_code("print(1)\n2+2").strip() == "1\n4"
+    # None-valued last expression (e.g. a bare print call) adds nothing
+    assert execute_code("print('hi')").strip() == "hi"
+
+
 def test_execute_code_exception():
     r = execute_code("raise ValueError('boom')")
     assert r.startswith("Error:")

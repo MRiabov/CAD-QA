@@ -35,7 +35,7 @@ from tool_calls import (
 TRACE_COLUMNS = ["row_id", "prompt", "trace", "hop", "tool_name", "answer_format", "gold", "compacted", "mode"]
 
 _TOOL_DESCRIPTIONS: dict[ToolName, str] = {
-    ToolName.RUN_CODE: "Execute python code with numpy (np) and math preloaded; the printed stdout is returned to you.",
+    ToolName.RUN_CODE: "Execute python with numpy (np) and math preloaded; the last expression's value is returned automatically (notebook-style).",
 }
 
 

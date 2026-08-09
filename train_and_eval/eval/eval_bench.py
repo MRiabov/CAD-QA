@@ -54,7 +54,7 @@ _SUBMIT_TOOLS = [
 _RUN_CODE_TOOLS = [{
     "type": "function", "function": {
         "name": ToolName.RUN_CODE.value,
-        "description": "Execute python code with numpy (np) and math preloaded; the printed stdout is returned to you.",
+        "description": "Execute python with numpy (np) and math preloaded; the last expression's value is returned automatically (notebook-style).",
         "parameters": _ARGS_MODELS[ToolName.RUN_CODE].model_json_schema()}}
 ]
 

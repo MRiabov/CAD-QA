@@ -69,6 +69,44 @@ def _harden_numpy(mod: object) -> None:
         pass
 
 
+_MAX_AUTO_DISPLAY_CHARS = 2000
+
+
+def _run_with_repl(code: str, globals_dict: dict) -> None:
+    """Exec `code`; then auto-display the last expression's value (notebook-like).
+
+    IPython rule: the final expression is captured; if its value is not None it
+    is repr'd onto stdout (truncated), so `2*3*4` returns "24" without a
+    print(). Explicit print() calls still work and come first.
+    """
+    import ast
+
+    tree = ast.parse(code)
+    last_is_expr = bool(tree.body) and isinstance(tree.body[-1], ast.Expr)
+    if last_is_expr:
+        node = tree.body[-1]
+        assign = ast.Assign(targets=[ast.Name(id="_cadqa_last_expr_", ctx=ast.Store())], value=node.value)
+        ast.copy_location(assign, node)
+        tree.body[-1] = assign
+        ast.fix_missing_locations(tree)
+    exec(compile(tree, "<run_code>", "exec"), globals_dict)
+    if last_is_expr:
+        value = globals_dict.get("_cadqa_last_expr_")
+        if value is not None:
+            try:
+                if isinstance(value, np.floating):
+                    text = repr(float(value))   # np.float64(4.0) -> 4.0
+                elif isinstance(value, np.integer):
+                    text = repr(int(value))     # np.int64(10) -> 10
+                else:
+                    text = repr(value)
+            except Exception:
+                text = "<unprintable value>"
+            if len(text) > _MAX_AUTO_DISPLAY_CHARS:
+                text = text[:_MAX_AUTO_DISPLAY_CHARS] + " ... [truncated]"
+            print(text)
+
+
 def main() -> int:
     code = sys.stdin.read()
     sys.meta_path.insert(0, _BlockImports())
@@ -93,7 +131,7 @@ def main() -> int:
     except Exception:
         pass
     try:
-        exec(compile(code, "<run_code>", "exec"), globals_dict)
+        _run_with_repl(code, globals_dict)
     except BaseException:  # noqa: BLE001 - report any sandboxed failure to the harness
         import traceback
 
