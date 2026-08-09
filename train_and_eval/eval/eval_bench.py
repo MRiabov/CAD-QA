@@ -51,6 +51,7 @@ class EvalRow(BaseModel):
     completion_tokens: int = 0
     completion: str = ""          # raw decoded completion (debuggable trace)
     capped: bool = False          # True if generation hit MAX_NEW
+    tool_call: str | None = None  # extracted native tool-call JSON (name + args), if any
 
 
 def parse_native_tool_call(completion: str, expected: ToolName, processor) -> tuple[ToolName, object] | None:
@@ -132,13 +133,16 @@ def main() -> None:
             tool = format_to_tool(r["answer_format"])
             parsed = parse_native_tool_call(comp, tool, processor)
             tool_valid = parsed is not None and parsed[1] is not None
+            tool_call_json = None
+            if parsed is not None and parsed[1] is not None:
+                tool_call_json = f'{{"name": "{parsed[0].value}", "arguments": {parsed[1].model_dump_json()}}}'
             correct = tool_valid and tool_call_matches(parsed[0], parsed[1], r["gold_answer"], r["answer_format"])
             results.append(EvalRow(
                 row_id=r["row_id"], answer_format=r["answer_format"], gold=r["gold_answer"],
                 correct=correct, tool_valid=tool_valid,
                 tool_name=parsed[0].value if parsed else None,
                 completion_tokens=n_tok, capped=n_tok >= MAX_NEW,
-                completion=comp,
+                completion=comp, tool_call=tool_call_json,
             ))
         done = min(i + BATCH, len(rows))
         print(f"[eval] {done}/{len(rows)} | acc so far {sum(x.correct for x in results)/done:.3f}", flush=True)

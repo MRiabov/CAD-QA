@@ -66,6 +66,9 @@ class AttemptLog(BaseModel):
     tokens: int
     cost: float
     error: str | None = None
+    text: str = ""             # raw completion text (always recorded)
+    reasoning: str = ""        # raw reasoning field, when the provider exposes it
+    tool_call: str | None = None  # extracted tool-call JSON block (name + args), if any
 
 
 # --- compaction -------------------------------------------------------------
@@ -196,6 +199,7 @@ class Sampler:
             row = cycle.pop(0)
             cycle.append(row)
         tool = format_to_tool(row["answer_format"])
+        call: TeacherCall | None = None
         for _ in range(self.attempts_per_row):
             with self.lock:
                 if len(self.traces[hop]) >= quota:
@@ -205,12 +209,14 @@ class Sampler:
             ok = False
             compacted = False
             error = None
+            tool_call = None
             try:
                 call: TeacherCall = self.client.complete(prompt)
                 parsed_call = extract_tool_call(call.text, tool)
                 parsed = parsed_call is not None
                 if parsed:
                     name, args = parsed_call
+                    tool_call = f'{{"name": "{name.value}", "arguments": {args.model_dump_json()}}}'
                     ok = tool_call_matches(name, args, row["gold_answer"], row["answer_format"])
                 tokens = call.completion_tokens
                 cost = call.cost_usd
@@ -232,14 +238,17 @@ class Sampler:
                             self.out_fh.flush()
                     self._log_attempt(AttemptLog(
                         hop=hop, row_id=row["row_id"], ok=True, parsed=True,
-                        tool_valid=True, compacted=compacted, tokens=tokens, cost=cost))
+                        tool_valid=True, compacted=compacted, tokens=tokens, cost=cost,
+                        text=call.text, reasoning=call.reasoning, tool_call=tool_call))
                     print(f"[sampler] hop={hop} OK row={row['row_id'][:40]} compacted={compacted}", flush=True)
                     return
             except Exception as e:  # noqa: BLE001 - teacher errors are logged, not fatal
                 error = f"{type(e).__name__}: {str(e)[:100]}"
             self._log_attempt(AttemptLog(
                 hop=hop, row_id=row["row_id"], ok=ok, parsed=parsed,
-                tool_valid=parsed, compacted=compacted, tokens=0, cost=0.0, error=error))
+                tool_valid=parsed, compacted=compacted, tokens=0, cost=0.0, error=error,
+                text=call.text if call else "", reasoning=call.reasoning if call else "",
+                tool_call=tool_call))
 
 
 def main() -> None:
