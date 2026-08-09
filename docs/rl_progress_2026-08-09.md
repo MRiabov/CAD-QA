@@ -54,7 +54,14 @@ higher generation budget at eval (4096) or a format-discipline fix).
    omitted the "end with a tool call" instruction the teacher got) + trim traces to
    short-reasoning examples (use only the compacted traces for training).
 3. **RL on top** (GRPO with tool-call reward) once SFT produces the calls at all — the
-   original goal.
+   original goal. **Status (2026-08-09): the plumbing is now in place** —
+   `grpo_train.py CADQA_RL_DATA=<rows.parquet>` trains GRPO on current graph-first
+   rows (per-format `[answer contract]` suffix appended, tool-call-aware
+   `reward_cadqa` grading native `<|tool_call|>` blocks / JSON envelopes), and
+   `eval_bench.py --rows ... --rows-split test` evaluates the same rows through the
+   native tool loop; see `docs/implementation_status.md` Open Work (mode 3 bullet).
+   What is still needed is an actual SFT-then-GRPO run on the box to see whether the
+   model produces the calls.
 
 ## 5. Box/artifacts state
 

@@ -1732,8 +1732,17 @@ Checked as implemented with remaining scale caveats:
   profile projections.
 - Provider submission adapters and remote/GPU experiment orchestration.
 - Derive deterministic CadQuery solutions for paper mode 3 (the CadQuery
-  tool harness: "a single successful tool call will suffice"). The golds are
-  already fully computed and traced per row — `query_program.clauses` +
+  tool harness: "a single successful tool call will suffice"). **Status (2026-08-09):
+  the tool-call harness side is wired and verified against current graph-first
+  rows** — `train_and_eval/rows_loader.py` loads `rows.parquet`/`rows.jsonl`
+  (split filter, JSON gold decode, per-format `[answer contract]` suffix),
+  `eval_bench.py --rows/--rows-split` runs the native tool-loop eval on local
+  artifacts (default remains HF v3_curriculum), `grpo_train.py CADQA_RL_DATA`
+  trains GRPO on them, and `reward_cadqa` grades tool calls (native
+  `<|tool_call|>` blocks incl. gemma `<|"|>`-encoded args, and JSON envelopes)
+  with a plain-text fallback. What remains open is the inverse-replay
+  derivation below (emit + verify the one-shot CadQuery script per row). The
+  golds are already fully computed and traced per row — `query_program.clauses` +
   `candidate_trace.steps` (initial set → per-clause narrowing → aggregation
   argmax/argmin/rank over a metric) + `final_candidates` + `gold_answer` in
   the private rows — so the derivation is an inverse replay, not a search:
