@@ -351,6 +351,8 @@ def main() -> None:
     ap.add_argument("--out", type=Path, default=Path("sft_traces.jsonl"))
     ap.add_argument("--log", type=Path, default=Path("sampling_log.jsonl"))
     ap.add_argument("--attempts-per-row", type=int, default=5)
+    ap.add_argument("--temperature", type=float, default=1.0,
+                    help="teacher sampling temperature (re-sampling runs: use 0.3-0.6 for higher success)")
     ap.add_argument("--seed", type=int, default=3407)
     ap.add_argument("--only-rows", type=Path, default=None, help="file with row_ids (one per line); sample only these rows")
     ap.add_argument("--target-count", type=int, default=None, help="quota per hop when --only-rows is used")
@@ -358,7 +360,7 @@ def main() -> None:
                     help="no-tools mode: teacher gets no run_code compute tool (reasoning only)")
     args = ap.parse_args()
 
-    client = TeacherClient(max_tokens=16384)
+    client = TeacherClient(max_tokens=16384, temperature=args.temperature)
     print(f"balance: ${client.balance():.2f}")
     only_rows = {ln.strip() for ln in args.only_rows.read_text().splitlines() if ln.strip()} if args.only_rows else None
     sampler = Sampler(client, DEFAULT_QUOTAS, args.attempts_per_row, args.seed, log_path=args.log,
