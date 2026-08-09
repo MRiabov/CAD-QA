@@ -126,9 +126,12 @@ def _last_tool_call_block(text: str) -> str | None:
 
 class Sampler:
     def __init__(self, client: TeacherClient, quotas: dict[str, int], attempts_per_row: int, seed: int,
-                 log_path: Path | None = None, out_path: Path | None = None) -> None:
+                 log_path: Path | None = None, out_path: Path | None = None,
+                 only_rows: set[str] | None = None, target_count: int | None = None) -> None:
         self.client = client
         self.quotas = {str(k): v for k, v in quotas.items()}
+        self.only_rows = only_rows
+        self.target_count = target_count
         self.attempts_per_row = attempts_per_row
         self.seed = seed
         self.lock = threading.Lock()
@@ -156,9 +159,14 @@ class Sampler:
         ds = load_dataset("MRiabov/cadqa-rl-2000", "v3_curriculum", split="train")
         rows_by_hop: dict[int, list[dict[str, Any]]] = {}
         for r in ds:
+            if self.only_rows is not None and r["row_id"] not in self.only_rows:
+                continue
             h = int(r["logical_hop_count"])
             if str(h) in self.quotas:
                 rows_by_hop.setdefault(h, []).append(dict(r))
+        if self.only_rows is not None and self.target_count is not None:
+            self.quotas = {str(h): self.target_count for h in rows_by_hop}
+            self.traces = {h: self.traces.get(h, []) for h in rows_by_hop}
         for h, rows in rows_by_hop.items():
             rng = random.Random(self.seed + h)
             rng.shuffle(rows)
@@ -240,11 +248,15 @@ def main() -> None:
     ap.add_argument("--log", type=Path, default=Path("sampling_log.jsonl"))
     ap.add_argument("--attempts-per-row", type=int, default=5)
     ap.add_argument("--seed", type=int, default=3407)
+    ap.add_argument("--only-rows", type=Path, default=None, help="file with row_ids (one per line); sample only these rows")
+    ap.add_argument("--target-count", type=int, default=None, help="quota per hop when --only-rows is used")
     args = ap.parse_args()
 
     client = TeacherClient(max_tokens=16384)
     print(f"balance: ${client.balance():.2f}")
-    sampler = Sampler(client, DEFAULT_QUOTAS, args.attempts_per_row, args.seed, log_path=args.log, out_path=args.out)
+    only_rows = {ln.strip() for ln in args.only_rows.read_text().splitlines() if ln.strip()} if args.only_rows else None
+    sampler = Sampler(client, DEFAULT_QUOTAS, args.attempts_per_row, args.seed, log_path=args.log,
+                      out_path=args.out, only_rows=only_rows, target_count=args.target_count)
     traces = sampler.run()
 
     from collections import Counter
