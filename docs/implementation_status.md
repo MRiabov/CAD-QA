@@ -1422,6 +1422,22 @@ Checked as implemented with remaining scale caveats:
 
 ## Open Work
 
+- **TODO (2026-08-09): proper 0-hop and 1-hop question families for simple QA /
+  curriculum learning.** The current synthesis (`cad_qa/query/synthesis.py`)
+  emits only hop>=2 queries (`hop_count` formulas floor at 2), so no 0- or
+  1-hop rows can be generated for curriculum ladders (0→1→2→3→4→5). The only
+  0/1-hop families in the manifest are non-release (`first_operation`
+  calibration 0-hop, `highest_workplane`/`latest_repeated_selector`
+  review-only 1-hop), and the current `first_operation` smoke fixture is
+  degenerate (literal property_equals clauses, "junk"). `difficulty_for_hops`
+  (`low`/`bridge`) in `cad_qa/query/difficulty.py` is dead code for the
+  synthesis path — every synthesized row is `cad_browsecomp`. The GRPO run
+  collapsed at the 2-hop cliff precisely because 1-hop bridge rows were
+  missing (see `docs/rl_checkpoint_2026-08-08.md`). Design simple
+  clause-less/aggregation-only families (e.g. first/last operation, argmax/
+  argmin over a single measurement, selector count over all selectors) as
+  release or curriculum status, synthesized by the same machinery, so
+  curriculum 0→1→2→3→4→5 is generatable end-to-end.
 - Replace hard-coded query families with maximally parameterized families.
   Initial synthesized face/edge extremum families now avoid fixed axis/min-max
   semantics for that narrow slice. Current generator names such as
