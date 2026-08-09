@@ -132,7 +132,7 @@ def main() -> None:
     ap.add_argument("--mode", type=HarnessMode, default=HarnessMode.NUMPY,
                     choices=list(HarnessMode), help="harness mode: which compute tools the model gets")
     args = ap.parse_args()
-    harness_mode = args.mode      # captured: `args` is rebound to tool args inside the round loop
+    harness_mode = args.mode      # captured: the loop unpacks into `tool_args` so `args` (Namespace) is never shadowed
     batch_size = args.batch
 
     model = AutoModelForCausalLM.from_pretrained(
@@ -211,9 +211,9 @@ def main() -> None:
                     finalized[j] = _finalize(batch[j], segments[j], row_rounds[j], processor, capped=False)
                     active[j] = False
                     continue
-                name, args = parsed
-                if name == ToolName.RUN_CODE and args is not None:
-                    code = args.code  # type: ignore[attr-defined]
+                name, tool_args = parsed
+                if name == ToolName.RUN_CODE and tool_args is not None:
+                    code = tool_args.code  # type: ignore[attr-defined]
                     if harness_mode == HarnessMode.NO_TOOLS:
                         # no-tools mode: compute calls are not served — failed attempt
                         finalized[j] = _finalize(batch[j], segments[j], row_rounds[j], processor, capped=False)
@@ -223,14 +223,14 @@ def main() -> None:
                     if result is None:
                         result = execute_code(code)
                         resp_cache[code] = result
-                    row_rounds[j].append(ToolRound(name=name.value, arguments=args.model_dump(), result=result))
+                    row_rounds[j].append(ToolRound(name=name.value, arguments=tool_args.model_dump(), result=result))
                     resp_ids = processor.tokenizer.encode(
                         render_tool_response(ToolName.RUN_CODE, result), add_special_tokens=False)
                     input_ids[j] = torch.cat([row_out[:n + call_end],
                                               torch.tensor(resp_ids, dtype=torch.long, device="cuda")])
                     continue
                 # answer tool: finalize
-                row_rounds[j].append(ToolRound(name=name.value, arguments=args.model_dump()))
+                row_rounds[j].append(ToolRound(name=name.value, arguments=tool_args.model_dump()))
                 finalized[j] = _finalize(batch[j], segments[j], row_rounds[j], processor, capped=False,
                                          parsed=parsed)
                 active[j] = False
