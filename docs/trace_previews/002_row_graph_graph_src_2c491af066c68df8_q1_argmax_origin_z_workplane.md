@@ -1,0 +1,60 @@
+# row:graph:graph:src_2c491af066c68df8:q1:argmax_origin_z_workplane
+
+- **source**: center-fix
+- **hop**: 1  |  **format**: text  |  **tool**: submit_text
+- **gold**: `wp26`
+- **trace_tokens**: ?
+- **compacted**: True
+
+## Row prompt
+
+```
+Given the CadQuery script below, answer the question by reasoning about the CAD construction.
+
+```python
+import cadquery as cq
+wp1 = cq.Workplane('XY', origin=(-24, 0, 0))
+wp2 = wp1.box(247, 153, 164, centered=[1, 1, 1])
+wp3 = cq.Workplane('XY', origin=(-24, 0, 0))
+wp4 = wp3.box(242, 147, 161, centered=[1, 1, 0])
+wp5 = wp4.translate([0, 0, 3])
+wp6 = wp2.cut(wp5)
+wp7 = cq.Workplane(cq.Plane(origin=cq.Vector(-24, 0, 0), xDir=cq.Vector(1, 1, 0), normal=cq.Vector(1, -1, 0)))
+wp8 = wp7.rect(581, 328)
+wp9 = wp8.extrude(-581)
+wp10 = wp6.cut(wp9)
+wp11 = cq.Workplane(cq.Plane(origin=cq.Vector(-24, 0, 0), xDir=cq.Vector(1, 1, 0), normal=cq.Vector(1, -1, 0)))
+wp12 = wp11.rect(581, 37)
+wp13 = wp12.extrude(-3)
+wp14 = wp10.cut(wp13)
+wp15 = cq.Workplane(cq.Plane(origin=cq.Vector(-24, 0, 0), xDir=cq.Vector(1, 1, 0), normal=cq.Vector(1, -1, 0)))
+wp16 = wp15.center(0, -10)
+wp17 = wp16.rect(581, 1)
+wp18 = wp17.extrude(-3)
+wp19 = wp14.cut(wp18)
+wp20 = cq.Workplane(cq.Plane(origin=cq.Vector(-24, 0, 0), xDir=cq.Vector(1, 1, 0), normal=cq.Vector(1, -1, 0)))
+wp21 = wp20.center(0, 0)
+wp22 = wp21.rect(581, 1)
+wp23 = wp22.extrude(-3)
+wp24 = wp19.cut(wp23)
+wp25 = cq.Workplane(cq.Plane(origin=cq.Vector(-24, 0, 0), xDir=cq.Vector(1, 1, 0), normal=cq.Vector(1, -1, 0)))
+wp26 = wp25.center(0, 10)
+wp27 = wp26.rect(581, 1)
+wp28 = wp27.extrude(-3)
+wp29 = wp24.cut(wp28)
+result = wp29
+```
+
+Identify the target workplane that satisfies all of these constraints:
+- Among the remaining candidates, choose the one with the greatest workplane origin height.
+
+Return exactly one source variable name, for example `wp7`.
+```
+
+## Model output (trace)
+
+```
+The cutting workplane candidates are wp7, wp11, wp16, wp21, and wp26. Their plane has normal (1,-1,0) and xDir (1,1,0), so local y is global z. wp7, wp11, and wp21 have origin z=0; wp16 = wp15.center(0,-10) has origin z=-10; wp26 = wp25.center(0,10) has origin z=10. The greatest origin height is 10, from wp26.
+
+{"name": "submit_text", "arguments": {"text": "wp26"}}
+```
