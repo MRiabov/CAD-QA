@@ -145,9 +145,11 @@ def build_teacher_prompt(row_prompt: str, tool: ToolName, hop_count: int | None 
     hop_line = f"\nThis question requires {hop_count} logical reasoning hops." if hop_count is not None else ""
     compute_section = (
         "\n[compute tool]\n"
-        "For any arithmetic that must be exact (volumes, coordinates, frame transforms, bbox extents), "
-        "you MAY call the `run_code` tool first: it executes python with numpy preloaded (as `np`) and "
-        "returns stdout. Compute exact values there, then continue reasoning and submit the answer.\n"
+        "If the question demands exact calculations (coordinates, distances, volumes, frame "
+        "transforms), derive the answer using numpy: call the `run_code` tool, which executes "
+        "python with numpy preloaded (as `np`) and `math`. Compute the values there and "
+        "`print()` the result — the printed output is returned to you. You may call it "
+        "multiple times and iterate until the calculation is correct.\n"
     ) if compute_tool else ""
     return (
         "You are solving a CAD (CadQuery) question. Read the script carefully and reason step by step.\n"
