@@ -2,7 +2,8 @@
 
 Reads sft_traces.jsonl (Trace records: prompt + reasoning-then-tool-call trace),
 formats as single-turn chat (user: prompt, assistant: trace), and SFTs with
-FastVisionModel + 16-bit LoRA at 16K context (canonical E2B notebook recipe).
+FastVisionModel + QLoRA (4-bit NF4 base, LoRA adapters) at 16K context
+(canonical E2B notebook recipe).
 """
 
 
@@ -84,7 +85,9 @@ def main() -> None:
     model, tokenizer = FastVisionModel.from_pretrained(
         "unsloth/gemma-4-E2B-it",
         max_seq_length=SEQ,
-        load_in_4bit=False,
+        load_in_4bit=True,          # QLoRA: 4-bit NF4 base, LoRA adapters on top
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype="bfloat16",
         fast_inference=False,
     )
     # gemma-4 E2B uses <turn|> as eos; unsloth's default <EOS_TOKEN> is not in vocab
