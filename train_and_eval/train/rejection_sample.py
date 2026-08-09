@@ -106,13 +106,15 @@ def _key_facts(text: str) -> set[str]:
 
 
 def compact_trace(client: TeacherClient, trace: str, hop: int,
-                  steps: list[TraceStep] | None = None) -> tuple[str, bool]:
+                  steps: list[TraceStep] | None = None,
+                  round_logs: list[RoundLog] | None = None) -> tuple[str, bool]:
     """Compress reasoning; returns (compacted_trace_with_spliced_answer, ok).
 
     The tool round-trips (run_code calls + server results) and the answer call
     are spliced back VERBATIM — only the reasoning prose is compressed, so
     exact computed values are never re-derived or mangled. Traces without
-    steps fall back to the legacy single-answer-call splice.
+    steps fall back to the legacy single-answer-call splice. When `round_logs`
+    is given, the compactor's own LLM call is recorded there (A5).
     """
     tool_blocks = _tool_blocks_verbatim(steps) if steps else []
     answer_call = tool_blocks[-1] if tool_blocks else _last_tool_call_block(trace)
@@ -124,6 +126,11 @@ def compact_trace(client: TeacherClient, trace: str, hop: int,
     except Exception:
         return trace, False
     parsed = extract_tool_call(call.text, ToolName.COMPACT_TRACE)
+    if round_logs is not None:
+        round_logs.append(RoundLog(
+            text=call.text, reasoning=call.reasoning,
+            tool_call=(f'{{"name": "compact_trace", "arguments": {parsed[1].model_dump_json()}}}'
+                       if parsed is not None and parsed[1] is not None else None)))
     if parsed is None or parsed[0] != ToolName.COMPACT_TRACE:
         return trace, False
     reasoning = parsed[1].reasoning  # type: ignore[attr-defined]
@@ -321,7 +328,8 @@ class Sampler:
         if ok:
             trace_text = "\n\n".join(p for p in text_parts if p.strip())
             if tokens_total > MAX_TRACE_TOKENS:
-                trace_text, compacted = compact_trace(self.client, trace_text, hop, steps=steps)
+                trace_text, compacted = compact_trace(self.client, trace_text, hop, steps=steps,
+                                                      round_logs=round_logs)
             t = Trace(
                 row_id=row["row_id"], hop=hop, prompt=row["prompt"],
                 tool_name=tool.value, trace=trace_text,
