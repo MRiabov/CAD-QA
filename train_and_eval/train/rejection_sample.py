@@ -173,7 +173,7 @@ class Sampler:
     def __init__(self, client: TeacherClient, quotas: dict[str, int], attempts_per_row: int, seed: int,
                  log_path: Path | None = None, out_path: Path | None = None,
                  only_rows: set[str] | None = None, target_count: int | None = None,
-                 compute_tool: bool = True) -> None:
+                 compute_tool: bool = True, workers: int = 48) -> None:
         self.client = client
         self.quotas = {str(k): v for k, v in quotas.items()}
         self.only_rows = only_rows
@@ -181,6 +181,7 @@ class Sampler:
         self.attempts_per_row = attempts_per_row
         self.seed = seed
         self.compute_tool = compute_tool
+        self.workers = workers
         self.lock = threading.Lock()
         self.attempts: list[AttemptLog] = []
         self.traces: dict[int, list[Trace]] = {int(k): [] for k in quotas}
@@ -222,7 +223,7 @@ class Sampler:
         jobs = []
         total_needed = sum(int(q) for q in self.quotas.values())
         hop_list = sorted(self.quotas, key=int)
-        with ThreadPoolExecutor(max_workers=24) as pool:
+        with ThreadPoolExecutor(max_workers=self.workers) as pool:
             for i in range(total_needed * self.attempts_per_row * 2 + 32):
                 jobs.append(pool.submit(self._sample_row, int(hop_list[i % len(hop_list)])))
             for fut in as_completed(jobs):
@@ -362,6 +363,8 @@ def main() -> None:
     ap.add_argument("--attempts-per-row", type=int, default=5)
     ap.add_argument("--temperature", type=float, default=1.0,
                     help="teacher sampling temperature (re-sampling runs: use 0.3-0.6 for higher success)")
+    ap.add_argument("--workers", type=int, default=48,
+                    help="concurrent sampling threads (IO-bound; OpenRouter rate limits are the bound)")
     ap.add_argument("--seed", type=int, default=3407)
     ap.add_argument("--only-rows", type=Path, default=None, help="file with row_ids (one per line); sample only these rows")
     ap.add_argument("--target-count", type=int, default=None, help="quota per hop when --only-rows is used")
@@ -374,7 +377,7 @@ def main() -> None:
     only_rows = {ln.strip() for ln in args.only_rows.read_text().splitlines() if ln.strip()} if args.only_rows else None
     sampler = Sampler(client, DEFAULT_QUOTAS, args.attempts_per_row, args.seed, log_path=args.log,
                       out_path=args.out, only_rows=only_rows, target_count=args.target_count,
-                      compute_tool=not args.no_compute_tool)
+                      compute_tool=not args.no_compute_tool, workers=args.workers)
     traces = sampler.run()
 
     from collections import Counter
