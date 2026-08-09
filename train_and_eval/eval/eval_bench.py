@@ -138,7 +138,8 @@ def main() -> None:
     ap.add_argument("--mode", type=EvalMode, default=EvalMode.NUMPY,
                     choices=list(EvalMode), help="harness mode: which compute tools the model gets")
     args = ap.parse_args()
-    harness_mode = args.mode  # captured: `args` is rebound to tool args inside the round loop
+    harness_mode = args.mode      # captured: `args` is rebound to tool args inside the round loop
+    batch_size = args.batch
 
     model = AutoModelForCausalLM.from_pretrained(
         args.model, torch_dtype=torch.bfloat16, device_map="cuda", attn_implementation="sdpa")
@@ -162,8 +163,8 @@ def main() -> None:
     pad = processor.tokenizer.pad_token_id or eos
     resp_cache: dict[str, str] = {}  # run_code snippet -> last result (dedupe identical executions)
 
-    for i in range(0, len(rows), args.batch):
-        batch = rows[i:i + args.batch]
+    for i in range(0, len(rows), batch_size):
+        batch = rows[i:i + batch_size]
         msgs = [[{"role": "user", "content": [{"type": "text", "text": r["prompt"]}]}] for r in batch]
         inputs = processor.apply_chat_template(msgs, tools=tools, tokenize=True,
                                                add_generation_prompt=True, return_tensors="pt",
@@ -244,7 +245,7 @@ def main() -> None:
             if finalized[j] is None:
                 finalized[j] = _finalize(batch[j], segments[j], row_rounds[j], processor, capped=False)
             results.append(finalized[j])
-        done = min(i + args.batch, len(rows))
+        done = min(i + batch_size, len(rows))
         print(f"[eval] {done}/{len(rows)} | acc so far {sum(x.correct for x in results)/done:.3f}", flush=True)
 
     with args.out.open("w") as f:
