@@ -12,7 +12,10 @@ from __future__ import annotations
 import json
 import math
 import re
+import subprocess
+import sys
 from enum import StrEnum
+from pathlib import Path
 from typing import Any, TypeAlias
 
 from pydantic import BaseModel, Field, TypeAdapter
@@ -41,6 +44,7 @@ class ToolName(StrEnum):
     SUBMIT_BBOX = "submit_bbox"
     SUBMIT_WORKPLANE = "submit_workplane"
     COMPACT_TRACE = "compact_trace"
+    RUN_CODE = "run_code"
 
 
 # --- typed tool arguments ---------------------------------------------------
@@ -83,6 +87,10 @@ class CompactTraceArgs(BaseModel):
     reasoning: str = Field(min_length=1, max_length=8192, description="Hop-structured compressed reasoning chain.")
 
 
+class RunCodeArgs(BaseModel):
+    code: str = Field(min_length=1, max_length=4096, description="Python code to execute (numpy preloaded as np).")
+
+
 FORMAT_TO_TOOL: dict[AnswerFormat, ToolName] = {
     AnswerFormat.BBOX: ToolName.SUBMIT_BBOX,
     AnswerFormat.CANDIDATE_LABEL: ToolName.SUBMIT_LABEL,
@@ -102,6 +110,7 @@ _ARGS_MODELS: dict[ToolName, type[BaseModel]] = {
     ToolName.SUBMIT_BBOX: SubmitBboxArgs,
     ToolName.SUBMIT_WORKPLANE: SubmitWorkplaneArgs,
     ToolName.COMPACT_TRACE: CompactTraceArgs,
+    ToolName.RUN_CODE: RunCodeArgs,
 }
 
 _ADAPTERS: dict[ToolName, TypeAdapter] = {
@@ -127,6 +136,82 @@ def validate_arguments(name: ToolName, arguments: dict[str, Any]) -> BaseModel |
         return _ADAPTERS[name].validate_python(arguments)
     except Exception:
         return None
+
+
+# --- run_code compute tool --------------------------------------------------
+
+CODE_TIMEOUT = 10.0
+MAX_TOOL_RESULT_CHARS = 8000
+
+
+def execute_code(code: str, timeout: float = CODE_TIMEOUT) -> str:
+    """Run code in the sandboxed subprocess; return the tool-response value.
+
+    The result is what the model sees as the tool response: stdout on success
+    (or a short "Ok" marker), else the error text. Bounded length, strict
+    timeout, isolated interpreter (python -I), no network/files/processes.
+    """
+    runner = Path(__file__).with_name("run_code_sandbox.py")
+    try:
+        proc = subprocess.run(
+            [sys.executable, "-I", "-B", str(runner)],
+            input=code,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return f"Error: execution timed out after {timeout:.0f}s"
+    if proc.returncode == 0:
+        value = proc.stdout.strip()
+        return (value or "Ok (no output)")[:MAX_TOOL_RESULT_CHARS]
+    err = proc.stderr.strip() or f"exit code {proc.returncode}"
+    return f"Error: {err[-MAX_TOOL_RESULT_CHARS:]}"
+
+
+def render_call_tokens(name: ToolName, arguments: dict[str, Any]) -> str:
+    """Native <|tool_call|> block with JSON-encoded args (parse_response-lenient)."""
+    return f"<|tool_call>call:{name.value}{json.dumps(arguments, separators=(',', ':'))}<tool_call|>"
+
+
+def render_tool_response(name: ToolName, value: str) -> str:
+    """Native <|tool_response|> block carrying the tool's result value."""
+    escaped = json.dumps(value)[1:-1]  # JSON-escape, strip outer quotes
+    for danger in ("<tool_response|>", "<tool_call|>"):
+        escaped = escaped.replace(danger, danger.replace(">", "\\u003e"))
+    return f"<|tool_response>response:{name.value}{{value:<|\"|>{escaped}<|\"|>}}<tool_response|>"
+
+
+# --- multi-turn trace steps -------------------------------------------------
+
+class TraceStepKind(StrEnum):
+    TEXT = "text"                 # reasoning prose
+    TOOL_CALL = "tool_call"       # a tool invocation (run_code or submit_*)
+    TOOL_RESULT = "tool_result"   # the server-side result of the preceding tool call
+
+
+class TraceStep(BaseModel):
+    kind: TraceStepKind
+    text: str = Field(default="", max_length=16384)  # prose / result value
+    name: ToolName | None = Field(default=None)      # tool for TOOL_CALL / TOOL_RESULT
+    arguments: dict[str, Any] | None = Field(default=None)  # TOOL_CALL args
+
+
+def render_trace_steps(steps: list[TraceStep]) -> str:
+    """Flatten trace steps into one assistant-turn string for SFT rendering."""
+    parts: list[str] = []
+    for s in steps:
+        match s.kind:
+            case TraceStepKind.TEXT:
+                if s.text.strip():
+                    parts.append(s.text.strip())
+            case TraceStepKind.TOOL_CALL:
+                if s.name is not None:
+                    parts.append(render_call_tokens(s.name, s.arguments or {}))
+            case TraceStepKind.TOOL_RESULT:
+                if s.name is not None:
+                    parts.append(render_tool_response(s.name, s.text))
+    return "\n\n".join(parts)
 
 
 # --- extraction -------------------------------------------------------------
@@ -257,8 +342,8 @@ def tool_call_matches(name: ToolName, args: BaseModel, gold_raw: str, fmt: str) 
             )
         case ToolName.SUBMIT_WORKPLANE:
             return isinstance(gold, dict) and _json_matches(args, gold)  # type: ignore[arg-type]
-        case ToolName.COMPACT_TRACE:
-            return True
+        case ToolName.COMPACT_TRACE | ToolName.RUN_CODE:
+            return True  # non-answer tools: parseable = valid
         case _:
             return False
 

@@ -1,14 +1,24 @@
 """Unit tests for the CAD-QA tool-call contract (tool_calls.py)."""
 import json
+import os as _os
+import sys
+
+sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))  # train_and_eval root
 
 import pytest
 
 from tool_calls import (
     ToolName,
+    TraceStep,
+    TraceStepKind,
+    execute_code,
     extract_tool_call,
     format_to_tool,
-    tool_call_matches,
+    render_call_tokens,
+    render_tool_response,
+    render_trace_steps,
     tool_call_matches_raw,
+    validate_arguments,
 )
 
 BBOX_GOLD = {"min": [-25.74, 92.42, -56.0], "max": [-16.26, 95.58, -46.0]}
@@ -113,7 +123,79 @@ def test_compact_trace_validates():
     assert not tool_call_matches_raw('{"name": "compact_trace", "arguments": {"reasoning": ""}}', tool, "", "text")
 
 
+# --- run_code compute tool --------------------------------------------------
+
+def test_run_code_extract_and_validate():
+    tool = ToolName.RUN_CODE
+    parsed = extract_tool_call('{"name": "run_code", "arguments": {"code": "print(1)"}}', tool)
+    assert parsed is not None and parsed[0] == tool
+    assert parsed[1].code == "print(1)"  # type: ignore[attr-defined]
+    assert validate_arguments(tool, {"code": "x = np.array([1, 2])"}) is not None
+    assert validate_arguments(tool, {"code": ""}) is None
+    assert validate_arguments(tool, {}) is None
+    assert tool_call_matches_raw('{"name": "run_code", "arguments": {"code": "print(1)"}}', tool, "", "text")
 
 
-import sys, os as _os
-sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))  # train_and_eval root
+def test_run_code_roundtrip_in_trace_steps():
+    # a full multi-turn trace: reasoning -> run_code call -> result -> submit
+    steps = [
+        TraceStep(kind=TraceStepKind.TEXT, text="Let me compute the volume."),
+        TraceStep(kind=TraceStepKind.TOOL_CALL, name=ToolName.RUN_CODE,
+                  arguments={"code": "print(2*3*4)"}),
+        TraceStep(kind=TraceStepKind.TOOL_RESULT, name=ToolName.RUN_CODE, text="24"),
+        TraceStep(kind=TraceStepKind.TEXT, text="The volume is 24."),
+        TraceStep(kind=TraceStepKind.TOOL_CALL, name=ToolName.SUBMIT_NUMBER,
+                  arguments={"value": 24}),
+    ]
+    rendered = render_trace_steps(steps)
+    assert "<|tool_call>call:run_code{\"code\":\"print(2*3*4)\"}<tool_call|>" in rendered
+    assert "<|tool_response>response:run_code{value:<|\"|>24<|\"|>}<tool_response|>" in rendered
+    assert "<|tool_call>call:submit_number{\"value\":24}<tool_call|>" in rendered
+    assert rendered.index("run_code{") < rendered.index("response:run_code") < rendered.index("submit_number")
+
+
+def test_render_helpers():
+    assert render_call_tokens(ToolName.RUN_CODE, {"code": "print(1)"}) == (
+        '<|tool_call>call:run_code{"code":"print(1)"}<tool_call|>')
+    assert render_tool_response(ToolName.RUN_CODE, "24") == (
+        '<|tool_response>response:run_code{value:<|"|>24<|"|>}<tool_response|>')
+    # multi-line values are JSON-escaped onto one line
+    assert render_tool_response(ToolName.RUN_CODE, "a\nb") == (
+        '<|tool_response>response:run_code{value:<|"|>a\\nb<|"|>}<tool_response|>')
+
+
+def test_execute_code_ok():
+    assert execute_code("print(2*3*4)").strip() == "24"
+    assert execute_code("import numpy as np\nprint(np.sqrt(16))").strip() == "4.0"
+
+
+def test_execute_code_exception():
+    r = execute_code("raise ValueError('boom')")
+    assert r.startswith("Error:")
+    assert "boom" in r
+
+
+def test_execute_code_forbidden_import():
+    r = execute_code("import os\nprint('leak')")
+    assert r.startswith("Error:")
+    assert "blocked" in r
+    r2 = execute_code("import cadquery\nprint('leak')")
+    assert r2.startswith("Error:")
+    r3 = execute_code("import posix\nprint('leak')")
+    assert r3.startswith("Error:")
+    # numpy file-IO is stripped from the np handle
+    r4 = execute_code("import numpy as np\nnp.loadtxt('/etc/hostname')")
+    assert r4.startswith("Error:")
+
+
+def test_execute_code_timeout():
+    r = execute_code("import time\ntime.sleep(30)", timeout=1)
+    assert "timed out" in r
+
+
+def test_execute_code_no_file_write():
+    r = execute_code("open('/tmp/cadqa_sandbox_pwn', 'w').write('x')")
+    assert r.startswith("Error:")
+    import os
+    assert not os.path.exists("/tmp/cadqa_sandbox_pwn")
+

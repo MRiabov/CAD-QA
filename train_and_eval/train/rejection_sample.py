@@ -11,7 +11,8 @@ server-side. Every call is logged for monitoring (validity, tokens, cost).
 
 from __future__ import annotations
 
-import sys, os as _os
+import sys
+import os as _os
 sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))  # train_and_eval root
 
 import argparse
@@ -29,16 +30,22 @@ from pydantic import BaseModel, Field
 
 from teacher import TeacherCall, TeacherClient, build_teacher_prompt
 from tool_calls import (
-    CompactTraceArgs,
     ToolName,
+    TraceStep,
+    TraceStepKind,
+    execute_code,
     extract_tool_call,
     format_to_tool,
     tool_call_matches,
+    tool_schema,
 )
 
 MAX_TRACE_TOKENS = 4000
 COMPACT_BOUND_TOKENS = 3500
+MAX_TOOL_ROUNDS = 3  # prompt -> up to 2 run_code execs -> submit
 DEFAULT_QUOTAS = {"0": 50, "1": 50, "2": 50, "3": 75, "5": 50}
+
+RUN_CODE_TOOLS = [tool_schema(ToolName.RUN_CODE)]
 
 _ID_RE = re.compile(r"\b(?:wp\d+|workplane:\w+|face:\S+|kernel:\S+)\b")
 
@@ -48,12 +55,21 @@ class Trace(BaseModel):
     hop: int = Field(ge=0)
     prompt: str = Field(min_length=1)
     tool_name: str = Field(min_length=1)
-    trace: str = Field(min_length=1)  # reasoning + final tool call
+    trace: str = Field(min_length=1)  # flattened text: reasoning + tool calls + results
     gold: str = Field(min_length=1)
     answer_format: str = Field(min_length=1)
     compacted: bool = Field(default=False)
     prompt_tokens: int = Field(ge=0)
     completion_tokens: int = Field(ge=0)
+    mode: str = Field(default="no_tools", pattern="^(no_tools|numpy)$")  # harness mode that produced this trace
+    steps: list[TraceStep] = Field(default_factory=list)  # structured round-trip (SFT rendering)
+
+
+class RoundLog(BaseModel):
+    text: str = Field(default="")          # raw completion text of this round
+    reasoning: str = Field(default="")     # provider reasoning of this round
+    tool_call: str | None = Field(default=None)  # extracted tool-call envelope, if any
+    result: str | None = Field(default=None)     # server-side tool result, if run_code
 
 
 class AttemptLog(BaseModel):
@@ -69,6 +85,7 @@ class AttemptLog(BaseModel):
     text: str = ""             # raw completion text (always recorded)
     reasoning: str = ""        # raw reasoning field, when the provider exposes it
     tool_call: str | None = None  # extracted tool-call JSON block (name + args), if any
+    rounds: list[RoundLog] = Field(default_factory=list)  # every LLM call of the attempt (A5)
 
 
 # --- compaction -------------------------------------------------------------
@@ -88,13 +105,17 @@ def _key_facts(text: str) -> set[str]:
     return set(_ID_RE.findall(text))
 
 
-def compact_trace(client: TeacherClient, trace: str, hop: int) -> tuple[str, bool]:
+def compact_trace(client: TeacherClient, trace: str, hop: int,
+                  steps: list[TraceStep] | None = None) -> tuple[str, bool]:
     """Compress reasoning; returns (compacted_trace_with_spliced_answer, ok).
 
-    The answer tool call is extracted from the original and re-appended
-    server-side (never re-derived by the compactor).
+    The tool round-trips (run_code calls + server results) and the answer call
+    are spliced back VERBATIM — only the reasoning prose is compressed, so
+    exact computed values are never re-derived or mangled. Traces without
+    steps fall back to the legacy single-answer-call splice.
     """
-    answer_call = _last_tool_call_block(trace)
+    tool_blocks = _tool_blocks_verbatim(steps) if steps else []
+    answer_call = tool_blocks[-1] if tool_blocks else _last_tool_call_block(trace)
     if answer_call is None:
         return trace, False
     prompt = _COMPACT_PROMPT.format(hop=hop, bound=COMPACT_BOUND_TOKENS, trace=trace)
@@ -112,7 +133,20 @@ def compact_trace(client: TeacherClient, trace: str, hop: int) -> tuple[str, boo
     orig_facts = _key_facts(trace)
     if orig_facts and not (_key_facts(reasoning) & orig_facts):
         return trace, False
+    if tool_blocks:
+        return f"{reasoning.strip()}\n\n" + "\n\n".join(tool_blocks), True
     return f"{reasoning.strip()}\n\n{answer_call}", True
+
+
+def _tool_blocks_verbatim(steps: list[TraceStep]) -> list[str]:
+    """Render tool steps exactly as they appeared (envelopes + raw results)."""
+    blocks: list[str] = []
+    for s in steps:
+        if s.kind == TraceStepKind.TOOL_CALL and s.name is not None:
+            blocks.append(json.dumps({"name": s.name.value, "arguments": s.arguments or {}}))
+        elif s.kind == TraceStepKind.TOOL_RESULT:
+            blocks.append(s.text)
+    return blocks
 
 
 def _last_tool_call_block(text: str) -> str | None:
@@ -130,13 +164,15 @@ def _last_tool_call_block(text: str) -> str | None:
 class Sampler:
     def __init__(self, client: TeacherClient, quotas: dict[str, int], attempts_per_row: int, seed: int,
                  log_path: Path | None = None, out_path: Path | None = None,
-                 only_rows: set[str] | None = None, target_count: int | None = None) -> None:
+                 only_rows: set[str] | None = None, target_count: int | None = None,
+                 compute_tool: bool = True) -> None:
         self.client = client
         self.quotas = {str(k): v for k, v in quotas.items()}
         self.only_rows = only_rows
         self.target_count = target_count
         self.attempts_per_row = attempts_per_row
         self.seed = seed
+        self.compute_tool = compute_tool
         self.lock = threading.Lock()
         self.attempts: list[AttemptLog] = []
         self.traces: dict[int, list[Trace]] = {int(k): [] for k in quotas}
@@ -199,56 +235,115 @@ class Sampler:
             row = cycle.pop(0)
             cycle.append(row)
         tool = format_to_tool(row["answer_format"])
-        call: TeacherCall | None = None
         for _ in range(self.attempts_per_row):
             with self.lock:
                 if len(self.traces[hop]) >= quota:
                     return
-            prompt = build_teacher_prompt(row["prompt"], tool, row["logical_hop_count"])
-            parsed = False
-            ok = False
-            compacted = False
-            error = None
-            tool_call = None
+            attempt = self._attempt_row(row, hop, tool)
+            self._log_attempt(attempt)
+            if attempt.ok:
+                return
+
+    def _attempt_row(self, row: dict[str, Any], hop: int, tool: ToolName) -> AttemptLog:
+        """One sampling attempt: multi-turn teacher loop (reasoning + run_code -> submit).
+
+        Every round's LLM output is recorded (A5). The trace captures the full
+        loop as structured steps (text / tool_call / tool_result) plus a
+        flattened text; the run_code round-trip is executed server-side.
+        `compute_tool=False` runs the no-tools mode (reasoning only).
+        """
+        prompt = build_teacher_prompt(row["prompt"], tool, row["logical_hop_count"],
+                                      compute_tool=self.compute_tool)
+        messages: list[dict] = [{"role": "user", "content": prompt}]
+        tools = RUN_CODE_TOOLS if self.compute_tool else None
+        steps: list[TraceStep] = []
+        round_logs: list[RoundLog] = []
+        text_parts: list[str] = []
+        tokens_total = 0
+        cost_total = 0.0
+        prompt_tokens_total = 0
+        submitted: tuple[ToolName, BaseModel] | None = None
+        last_call: TeacherCall | None = None
+        error: str | None = None
+        for _ in range(MAX_TOOL_ROUNDS):
             try:
-                call: TeacherCall = self.client.complete(prompt)
-                parsed_call = extract_tool_call(call.text, tool)
-                parsed = parsed_call is not None
-                if parsed:
-                    name, args = parsed_call
-                    tool_call = f'{{"name": "{name.value}", "arguments": {args.model_dump_json()}}}'
-                    ok = tool_call_matches(name, args, row["gold_answer"], row["answer_format"])
-                tokens = call.completion_tokens
-                cost = call.cost_usd
-                if ok:
-                    trace_text = (call.reasoning + "\n\n" + call.text).strip() if call.reasoning else call.text
-                    if call.completion_tokens > MAX_TRACE_TOKENS:
-                        trace_text, compacted = compact_trace(self.client, trace_text, hop)
-                    t = Trace(
-                        row_id=row["row_id"], hop=hop, prompt=row["prompt"],
-                        tool_name=tool.value, trace=trace_text,
-                        gold=row["gold_answer"], answer_format=row["answer_format"],
-                        compacted=compacted, prompt_tokens=call.prompt_tokens,
-                        completion_tokens=call.completion_tokens,
-                    )
-                    with self.lock:
-                        self.traces[hop].append(t)
-                        if self.out_fh:
-                            self.out_fh.write(t.model_dump_json() + "\n")
-                            self.out_fh.flush()
-                    self._log_attempt(AttemptLog(
-                        hop=hop, row_id=row["row_id"], ok=True, parsed=True,
-                        tool_valid=True, compacted=compacted, tokens=tokens, cost=cost,
-                        text=call.text, reasoning=call.reasoning, tool_call=tool_call))
-                    print(f"[sampler] hop={hop} OK row={row['row_id'][:40]} compacted={compacted}", flush=True)
-                    return
+                last_call = self.client.complete_messages(messages, tools=tools)
             except Exception as e:  # noqa: BLE001 - teacher errors are logged, not fatal
                 error = f"{type(e).__name__}: {str(e)[:100]}"
-            self._log_attempt(AttemptLog(
-                hop=hop, row_id=row["row_id"], ok=ok, parsed=parsed,
-                tool_valid=parsed, compacted=compacted, tokens=0, cost=0.0, error=error,
-                text=call.text if call else "", reasoning=call.reasoning if call else "",
-                tool_call=tool_call))
+                break
+            tokens_total += last_call.completion_tokens
+            cost_total += last_call.cost_usd
+            prompt_tokens_total += last_call.prompt_tokens
+            round_log = RoundLog(text=last_call.text, reasoning=last_call.reasoning)
+            parsed_call = extract_tool_call(last_call.text, tool)
+            if parsed_call is None or (not self.compute_tool and parsed_call[0] == ToolName.RUN_CODE):
+                # no tool call (or compute call in no-tools mode): keep the prose and fail this attempt
+                prose = f"{last_call.reasoning}\n\n{last_call.text}".strip()
+                if prose:
+                    steps.append(TraceStep(kind=TraceStepKind.TEXT, text=prose))
+                    text_parts.append(prose)
+                round_logs.append(round_log)
+                break
+            name, args = parsed_call
+            round_log.tool_call = f'{{"name": "{name.value}", "arguments": {args.model_dump_json()}}}'
+            if last_call.reasoning.strip():
+                steps.append(TraceStep(kind=TraceStepKind.TEXT, text=last_call.reasoning))
+                text_parts.append(last_call.reasoning)
+            steps.append(TraceStep(kind=TraceStepKind.TOOL_CALL, name=name, arguments=args.model_dump()))
+            text_parts.append(json.dumps({"name": name.value, "arguments": args.model_dump()}, ensure_ascii=False))
+            round_logs.append(round_log)
+            if name == ToolName.RUN_CODE:
+                result = execute_code(args.code)  # type: ignore[attr-defined]
+                round_log.result = result
+                steps.append(TraceStep(kind=TraceStepKind.TOOL_RESULT, name=name, text=result))
+                text_parts.append(result)
+                # continue the conversation for the next round
+                if last_call.tool_calls:
+                    messages.append({"role": "assistant", "tool_calls": last_call.tool_calls})
+                    tool_id = last_call.tool_calls[0].get("id")
+                    if tool_id:
+                        messages.append({"role": "tool", "tool_call_id": tool_id, "content": result})
+                    else:
+                        messages.append({"role": "user", "content": f"run_code result: {result}"})
+                else:
+                    messages.append({"role": "assistant", "content": last_call.text})
+                    messages.append({"role": "user", "content": f"run_code result: {result}"})
+                continue
+            submitted = (name, args)
+            break
+
+        parsed = submitted is not None
+        ok = False
+        compacted = False
+        if submitted is not None:
+            name, args = submitted
+            ok = tool_call_matches(name, args, row["gold_answer"], row["answer_format"])
+        if ok:
+            trace_text = "\n\n".join(p for p in text_parts if p.strip())
+            if tokens_total > MAX_TRACE_TOKENS:
+                trace_text, compacted = compact_trace(self.client, trace_text, hop, steps=steps)
+            t = Trace(
+                row_id=row["row_id"], hop=hop, prompt=row["prompt"],
+                tool_name=tool.value, trace=trace_text,
+                gold=row["gold_answer"], answer_format=row["answer_format"],
+                compacted=compacted, prompt_tokens=prompt_tokens_total,
+                completion_tokens=tokens_total,
+                mode="numpy" if self.compute_tool else "no_tools",
+                steps=steps if not compacted else [],
+            )
+            with self.lock:
+                self.traces[hop].append(t)
+                if self.out_fh:
+                    self.out_fh.write(t.model_dump_json() + "\n")
+                    self.out_fh.flush()
+            print(f"[sampler] hop={hop} OK row={row['row_id'][:40]} compacted={compacted} rounds={len(round_logs)}", flush=True)
+        return AttemptLog(
+            hop=hop, row_id=row["row_id"], ok=ok, parsed=parsed,
+            tool_valid=ok or parsed, compacted=compacted, tokens=tokens_total, cost=cost_total,
+            error=error,
+            text=last_call.text if last_call else "", reasoning=last_call.reasoning if last_call else "",
+            tool_call=round_logs[-1].tool_call if round_logs else None,
+            rounds=round_logs)
 
 
 def main() -> None:
@@ -259,13 +354,16 @@ def main() -> None:
     ap.add_argument("--seed", type=int, default=3407)
     ap.add_argument("--only-rows", type=Path, default=None, help="file with row_ids (one per line); sample only these rows")
     ap.add_argument("--target-count", type=int, default=None, help="quota per hop when --only-rows is used")
+    ap.add_argument("--no-compute-tool", action="store_true",
+                    help="no-tools mode: teacher gets no run_code compute tool (reasoning only)")
     args = ap.parse_args()
 
     client = TeacherClient(max_tokens=16384)
     print(f"balance: ${client.balance():.2f}")
     only_rows = {ln.strip() for ln in args.only_rows.read_text().splitlines() if ln.strip()} if args.only_rows else None
     sampler = Sampler(client, DEFAULT_QUOTAS, args.attempts_per_row, args.seed, log_path=args.log,
-                      out_path=args.out, only_rows=only_rows, target_count=args.target_count)
+                      out_path=args.out, only_rows=only_rows, target_count=args.target_count,
+                      compute_tool=not args.no_compute_tool)
     traces = sampler.run()
 
     from collections import Counter

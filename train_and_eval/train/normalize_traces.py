@@ -13,7 +13,8 @@ and tool_calls messages (native call rendering). Output: sft_texts.jsonl.
 
 from __future__ import annotations
 
-import sys, os as _os
+import sys
+import os as _os
 sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))  # train_and_eval root
 
 import argparse
@@ -24,14 +25,18 @@ from pathlib import Path
 from transformers import AutoProcessor
 
 from tool_calls import (
-    FORMAT_TO_TOOL,
     _ARGS_MODELS,
-    _decode_gold,
-    AnswerFormat,
     ToolName,
+    TraceStep,
+    render_call_tokens,
+    render_trace_steps,
 )
 
-TRACE_COLUMNS = ["row_id", "prompt", "trace", "hop", "tool_name", "answer_format", "gold", "compacted"]
+TRACE_COLUMNS = ["row_id", "prompt", "trace", "hop", "tool_name", "answer_format", "gold", "compacted", "mode"]
+
+_TOOL_DESCRIPTIONS: dict[ToolName, str] = {
+    ToolName.RUN_CODE: "Execute python/numpy code (numpy preloaded as np) and return stdout or an error.",
+}
 
 
 def _last_valid_json(text: str) -> dict | None:
@@ -58,15 +63,34 @@ def _args_from_trace(t: dict, tool: ToolName) -> dict:
     return data
 
 
-def build_text(prompt: str, reasoning: str, tool: ToolName, args: dict, processor, tools) -> str:
-    """Assistant turn = reasoning + literal native call tokens (no tool_calls key,
-    so the template's plain-text path keeps them as-is without <|tool_response>)."""
-    call = f"<|tool_call>call:{tool.value}{json.dumps(args, separators=(',', ':'))}<tool_call|>"
+def build_text(prompt: str, content: str, processor, tools) -> str:
+    """Assistant turn = full trace content (reasoning + literal native call/response
+    tokens). No tool_calls key, so the template's plain-text path keeps the
+    literal <|tool_call|>/<|tool_response|> tokens as-is."""
     msgs = [
         {"role": "user", "content": [{"type": "text", "text": prompt}]},
-        {"role": "assistant", "content": f"{reasoning}\n{call}"},
+        {"role": "assistant", "content": content},
     ]
     return processor.apply_chat_template(msgs, tools=tools, tokenize=False)
+
+
+def _assistant_content(t: dict, tool: ToolName) -> str | None:
+    """Render the trace's assistant turn (native tokens). None if unrenderable.
+
+    Structured steps (multi-turn run_code round-trips) render via
+    render_trace_steps; legacy text traces split reasoning from the final
+    tool call and render it as one native call.
+    """
+    steps = [TraceStep.model_validate(s) for s in t.get("steps") or []]
+    if steps:
+        return render_trace_steps(steps)
+    try:
+        args_dict = _args_from_trace(t, tool)
+    except Exception:
+        return None
+    m = re.search(r"\{.*\}", t["trace"], re.DOTALL)
+    reasoning = t["trace"][: m.start()].rstrip() if m else t["trace"]
+    return f"{reasoning}\n{render_call_tokens(tool, args_dict)}"
 
 
 def main() -> None:
@@ -76,7 +100,7 @@ def main() -> None:
     ap.add_argument("--max-len", type=int, default=64000)  # keep all 275 traces as-is
     args = ap.parse_args()
 
-    traces = [json.loads(l) for l in args.traces.read_text().splitlines() if l.strip()]
+    traces = [json.loads(line) for line in args.traces.read_text().splitlines() if line.strip()]
     processor = AutoProcessor.from_pretrained("unsloth/gemma-4-E2B-it")
 
     # tool declarations: one per tool used in the traces
@@ -85,37 +109,39 @@ def main() -> None:
     for name in tools_used:
         tool = ToolName(name)
         model = _ARGS_MODELS[tool]
+        description = _TOOL_DESCRIPTIONS.get(tool, f"Submit the answer for the {name} format.")
         tools.append({"type": "function", "function": {
             "name": name,
-            "description": f"Submit the answer for the {name} format.",
+            "description": description,
             "parameters": model.model_json_schema(),
         }})
 
     n = 0
     skipped = 0
+    seq_lens: list[int] = []
     with args.out.open("w") as f:
         for t in traces:
             tool = ToolName(t["tool_name"])
-            try:
-                args_dict = _args_from_trace(t, tool)
-            except Exception:
+            content = _assistant_content(t, tool)
+            if content is None:
                 skipped += 1
                 continue
-            # split reasoning from the final tool-call block: reasoning = text before the last JSON block
-            import re
-            m = re.search(r"\{.*\}", t["trace"], re.DOTALL)
-            reasoning = t["trace"][: m.start()].rstrip() if m else t["trace"]
-            text = build_text(t["prompt"], reasoning, tool, args_dict, processor, tools)
+            text = build_text(t["prompt"], content, processor, tools)
             if len(text) > args.max_len:
-                print(f"OVERLEN {t[chr(114)+chr(111)+chr(119)+chr(95)+chr(105)+chr(100)][:40]} {len(text)}", flush=True)
+                print(f"OVERLEN {t['row_id'][:40]} {len(text)}", flush=True)
                 skipped += 1
                 continue
+            seq_lens.append(len(processor.tokenizer.encode(text, add_special_tokens=False)))
             rec = {c: t[c] for c in TRACE_COLUMNS}
             rec["text"] = text
             f.write(json.dumps(rec) + "\n")
             n += 1
-    print(f"normalized {n} traces (skipped {skipped}) -> {args.out}")
-    print("sample:", traces[0]["row_id"][:40], "| text len:", len(traces[0]["trace"]))
+    if seq_lens:
+        import statistics
+        print(f"normalized {n} traces (skipped {skipped}) -> {args.out}")
+        print(f"seq tokens: p50 {statistics.median(seq_lens):.0f} p90 "
+              f"{sorted(seq_lens)[int(len(seq_lens)*0.9)-1]} max {max(seq_lens)} | "
+              f"over-6144: {sum(1 for x in seq_lens if x > 6144)} | over-8192: {sum(1 for x in seq_lens if x > 8192)}")
 
 
 if __name__ == "__main__":

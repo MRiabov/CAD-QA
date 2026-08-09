@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+from typing import Any
 
 import requests
 from pydantic import BaseModel, Field
@@ -21,6 +22,7 @@ API_BASE = "https://openrouter.ai/api/v1"
 class TeacherCall(BaseModel):
     text: str = Field(default="", description="Answer content (may be empty if reasoning-only).")
     reasoning: str = Field(default="", description="Hidden reasoning phase (deepseek message.reasoning).")
+    tool_calls: list[dict] | None = Field(default=None, description="Raw native tool_calls from the provider, when used.")
     prompt_tokens: int = Field(ge=0)
     completion_tokens: int = Field(ge=0)
     cost_usd: float = Field(ge=0.0)
@@ -78,16 +80,26 @@ class TeacherClient:
     # -- calls --------------------------------------------------------------
 
     def complete(self, prompt: str) -> TeacherCall:
-        r = self.session.post(
-            f"{API_BASE}/chat/completions",
-            json={
-                "model": self.model,
-                "messages": [{"role": "user", "content": prompt}],
-                "temperature": self.temperature,
-                "max_tokens": self.max_tokens,
-            },
-            timeout=180,
-        )
+        """Single user-turn completion (backward-compatible wrapper)."""
+        return self.complete_messages([{"role": "user", "content": prompt}])
+
+    def complete_messages(self, messages: list[dict], tools: list[dict] | None = None) -> TeacherCall:
+        """Multi-turn completion; `tools` enables native provider tool calls.
+
+        A native tool-call response (content empty, args in tool_calls) is
+        converted to the JSON envelope in `text` so callers can parse it with
+        extract_tool_call; the raw `tool_calls` stay available for API
+        round-trip continuation (role="tool" messages).
+        """
+        payload: dict[str, Any] = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+        }
+        if tools:
+            payload["tools"] = tools
+        r = self.session.post(f"{API_BASE}/chat/completions", json=payload, timeout=180)
         if r.status_code == 402:
             raise InsufficientBalanceError("OpenRouter balance exhausted")
         if r.status_code == 429:
@@ -104,6 +116,7 @@ class TeacherClient:
         msg = data["choices"][0]["message"]
         text = msg.get("content") or ""
         reasoning = msg.get("reasoning") or ""
+        tool_calls = msg.get("tool_calls") or None
         if not text.strip():
             # native tool-call response (content empty, args in tool_calls)
             tc = msg.get("tool_calls")
@@ -119,19 +132,28 @@ class TeacherClient:
         return TeacherCall(
             text=text,
             reasoning=reasoning,
+            tool_calls=tool_calls,
             prompt_tokens=int(usage.get("prompt_tokens", 0)),
             completion_tokens=int(usage.get("completion_tokens", 0)),
             cost_usd=cost,
         )
 
 
-def build_teacher_prompt(row_prompt: str, tool: ToolName, hop_count: int | None = None) -> str:
+def build_teacher_prompt(row_prompt: str, tool: ToolName, hop_count: int | None = None,
+                         compute_tool: bool = True) -> str:
     schema = tool_schema(tool)
     hop_line = f"\nThis question requires {hop_count} logical reasoning hops." if hop_count is not None else ""
+    compute_section = (
+        "\n[compute tool]\n"
+        "For any arithmetic that must be exact (volumes, coordinates, frame transforms, bbox extents), "
+        "you MAY call the `run_code` tool first: it executes python with numpy preloaded (as `np`) and "
+        "returns stdout. Compute exact values there, then continue reasoning and submit the answer.\n"
+    ) if compute_tool else ""
     return (
         "You are solving a CAD (CadQuery) question. Read the script carefully and reason step by step.\n"
         "Be CONCISE: keep the reasoning under 250 words — just the essential steps, then the answer.\n"
         f"{hop_line}\n"
+        f"{compute_section}"
         "\n[question]\n"
         f"{row_prompt}\n"
         "\n[answer contract]\n"

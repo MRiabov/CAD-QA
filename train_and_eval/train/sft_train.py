@@ -9,10 +9,10 @@ FastVisionModel + 16-bit LoRA at 16K context (canonical E2B notebook recipe).
 
 from __future__ import annotations
 
-import sys, os as _os
+import sys
+import os as _os
 sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))  # train_and_eval root
 
-import json
 import os
 from pathlib import Path
 
@@ -56,6 +56,7 @@ class Trace(BaseModel):
     compacted: bool = False
     prompt_tokens: int = Field(default=0, ge=0)
     completion_tokens: int = Field(default=0, ge=0)
+    mode: str = Field(default="no_tools")
     text: str | None = Field(default=None)
 
 
