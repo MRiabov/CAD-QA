@@ -329,9 +329,10 @@ class Sampler:
             ok = tool_call_matches(name, args, row["gold_answer"], row["answer_format"])
         if ok:
             trace_text = "\n\n".join(p for p in text_parts if p.strip())
-            if tokens_total > MAX_TRACE_TOKENS:
-                trace_text, compacted = compact_trace(self.client, trace_text, hop, steps=steps,
-                                                      round_logs=round_logs)
+            # always compact: the teacher reasons freely, but the STUDENT trains on
+            # concise hop-step reasoning (one concise step per logical hop).
+            trace_text, compacted = compact_trace(self.client, trace_text, hop, steps=steps,
+                                                  round_logs=round_logs)
             t = Trace(
                 row_id=row["row_id"], hop=hop, prompt=row["prompt"],
                 tool_name=tool.value, trace=trace_text,

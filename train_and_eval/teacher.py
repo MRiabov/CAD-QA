@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field
 
 from tool_calls import ToolName, tool_schema
 
-DEFAULT_MODEL = "deepseek/deepseek-v4-flash"
+DEFAULT_MODEL = "deepseek/deepseek-v4-flash:deepseek"  # pinned to the DeepSeek provider
 API_BASE = "https://openrouter.ai/api/v1"
 
 
@@ -58,10 +58,11 @@ class TeacherClient:
 
     def _load_pricing(self) -> dict[str, float]:
         if self._pricing is None:
+            base_id = self.model.split(":")[0]  # strip any :provider routing suffix
             r = self.session.get(f"{API_BASE}/models", timeout=30)
             r.raise_for_status()
             for m in r.json().get("data", []):
-                if m.get("id") == self.model:
+                if m.get("id") == base_id:
                     p = m.get("pricing", {})
                     self._pricing = {
                         "prompt": float(p.get("prompt", 0.0) or 0.0),
@@ -153,7 +154,6 @@ def build_teacher_prompt(row_prompt: str, tool: ToolName, hop_count: int | None 
     ) if compute_tool else ""
     return (
         "You are solving a CAD (CadQuery) question. Read the script carefully and reason step by step.\n"
-        "Be CONCISE: keep the reasoning under 250 words — just the essential steps, then the answer.\n"
         f"{hop_line}\n"
         f"{compute_section}"
         "\n[question]\n"
