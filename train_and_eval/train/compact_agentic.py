@@ -93,3 +93,9 @@ with open("sft_traces_filtered3.jsonl", "w") as f:
     for r in out:
         f.write(json.dumps(r) + "\n")
 print(f"final: {len(out)} (compacted {n_ok}, failed {n_fail})", flush=True)
+
+
+
+
+import sys, os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))  # train_and_eval root

@@ -1,3 +1,9 @@
+
+
+
+
+import sys, os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))  # train_and_eval root
 import json, sys
 sys.path.insert(0, "/root/cadqa-bench")
 import torch

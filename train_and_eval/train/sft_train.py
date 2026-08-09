@@ -4,7 +4,13 @@ Reads sft_traces.jsonl (Trace records: prompt + reasoning-then-tool-call trace),
 formats as single-turn chat (user: prompt, assistant: trace), and SFTs with
 FastVisionModel + 16-bit LoRA at 16K context (canonical E2B notebook recipe).
 """
+
+
+
 from __future__ import annotations
+
+import sys, os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))  # train_and_eval root
 
 import json
 import os

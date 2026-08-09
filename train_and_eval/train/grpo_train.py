@@ -5,6 +5,12 @@ Follows the official Unsloth Gemma 4 E2B RL notebook exactly
 FastVisionModel, 16-bit LoRA, fast_inference=False (vLLM cannot load gemma-4), bnpo GRPO.
 Env knobs: CADQA_RL_ROWS, CADQA_RL_STEPS, CADQA_RL_GEN, CADQA_RL_BS, CADQA_RL_OUT, CADQA_RL_LOSS.
 """
+
+
+
+
+import sys, os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))  # train_and_eval root
 import json
 import os
 import sys

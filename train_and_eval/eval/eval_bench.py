@@ -4,7 +4,13 @@ Loads the merged model via plain transformers (no unsloth patching), prompts wit
 <|tool>declaration:...<tool|> blocks, and parses completions with processor.parse_response.
 Batched generation for throughput.
 """
+
+
+
 from __future__ import annotations
+
+import sys, os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))  # train_and_eval root
 
 import argparse
 import json

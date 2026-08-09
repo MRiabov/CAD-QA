@@ -6,7 +6,13 @@ A trace is kept only when the teacher's typed tool call matches the gold
 compacted via compact_trace(reasoning) and the original answer call is spliced
 server-side. Every call is logged for monitoring (validity, tokens, cost).
 """
+
+
+
 from __future__ import annotations
+
+import sys, os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))  # train_and_eval root
 
 import argparse
 import json

@@ -111,3 +111,9 @@ def test_compact_trace_validates():
     parsed = extract_tool_call('{"name": "compact_trace", "arguments": {"reasoning": "step1 -> step2"}}', tool)
     assert parsed is not None and parsed[0] == tool
     assert not tool_call_matches_raw('{"name": "compact_trace", "arguments": {"reasoning": ""}}', tool, "", "text")
+
+
+
+
+import sys, os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))  # train_and_eval root

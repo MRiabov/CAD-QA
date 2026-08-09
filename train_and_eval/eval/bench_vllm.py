@@ -1,3 +1,9 @@
+
+
+
+
+import sys, os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))  # train_and_eval root
 import glob, time
 from vllm import LLM, SamplingParams
 

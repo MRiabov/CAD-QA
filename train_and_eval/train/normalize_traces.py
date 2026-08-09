@@ -8,7 +8,13 @@ Each trace becomes a pre-rendered conversation string:
 Rendered via the model's own chat template with tools= (native declarations)
 and tool_calls messages (native call rendering). Output: sft_texts.jsonl.
 """
+
+
+
 from __future__ import annotations
+
+import sys, os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))  # train_and_eval root
 
 import argparse
 import json
