@@ -1,0 +1,41 @@
+# Evaluation
+
+**Status:** active, 2026-10-07. Part of the docs restructure
+(`plans/oct-7/restructure-docs.md`).
+
+This directory documents how CAD-QA is evaluated: the harnesses that run a model
+over dataset rows, and the baselines those results are compared against. It is the
+canonical home for the evaluation contract's mechanics; the evaluation contract's
+intent (targets, metrics, definition of done) stays in `PRD.md`.
+
+## Reading order
+
+1. **`harness.md`** — how a model is run and scored. The three harness modes
+   (`numpy` primary, `no_tools`, `cadquery` P2) and Harbor. Read this first.
+2. **`baselines.md`** — the baseline families, what is implemented, what was run,
+   and what is stale.
+
+## Scope
+
+- In scope: the local small-model harness (`train_and_eval/eval/eval_bench.py`),
+  the Harbor export and runner (`cad_qa/harbor.py`, `docs/_archive/harbor.md`), the grading
+  and answer-parsing contract (`cad_qa/evaluation/`), and the baseline families.
+- Out of scope: dataset generation and the training pipeline. Their contracts live
+  under `dataset/` and `fine-tuning/`.
+
+## Related canonical references
+
+| What you need | Where |
+|---|---|
+| Evaluation contract (targets, metrics, definition of done) | `PRD.md#evaluation-contract` |
+| Term meaning (`harness mode`, `Harbor`, `verifier`, `answer format`) | `glossary.md` |
+| Harbor export and run mechanics (older runbook, raw material) | `docs/_archive/harbor.md` |
+| Where the project is today | `development-context.md` |
+| Past experiment records | `docs/experiments/` |
+
+## Status vocabulary
+
+Status tags follow `docs-conventions.md#status-tags`: `verified` (a check ran and
+passed) · `exists` (present, unchecked) · `missing` · `stale` ·
+`[unverified — needs <env>]` · `[unknown]`. A status moves up only when a check
+passes. `baselines.md` marks every family and run with exactly one tag.

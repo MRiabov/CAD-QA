@@ -41,4 +41,4 @@ Vast contract 47166131 — RTX 5070 Ti 16 GB, 100 GB disk, $0.1611/hr, SK.
   install flaky on this host.
 - **RL handoff**: `runs/gemma_bench/rl/` — reward (validated == repo grader:
   oracle 1.0, h1 0.14), 2000-row train set (bench slices excluded), runbook
-  `docs/rl_runbook.md`. Training target: Unsloth Studio (separate Vast box).
+  `docs/_archive/rl_runbook.md`. Training target: Unsloth Studio (separate Vast box).
