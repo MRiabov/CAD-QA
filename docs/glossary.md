@@ -131,16 +131,22 @@ The geometry a feature removes.
 
 ### CAD-QA dataset row
 
-One question instance: a public rendering plus its private verifier artifacts.
+One question instance — a single record in the rows artifact holding every field: the
+public prompt plus the private verifier material (gold answer, Gold query program,
+candidate-set trace, clue map).
 
-#### Public CAD-QA dataset row
+#### Public view
 
-The answer-free model input of a CAD-QA dataset row.
+The answer-free projection of a CAD-QA dataset row: the prompt and metadata, with the gold
+answer, Gold query program, candidate-set trace, and clue map withheld.
 
-#### Private CAD-QA dataset row
+#### Private view
 
-The verifier side of a CAD-QA dataset row: gold answer, hidden query program, candidate-set
-trace, clue map.
+The verifier projection of a CAD-QA dataset row: gold answer, Gold query program,
+candidate-set trace, and clue map.
+
+A row yields one public view and one private view; they ship as separate release artifacts
+so the answer never travels with the prompt.
 
 ---
 
@@ -332,7 +338,7 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | profile (bare) | CadQuery profile | generic |
 | material region (cad_qa) / void region (cad_qa) | Added-material region / Removed-material region | unclear |
 | dataset row (cad_qa) | CAD-QA dataset row | which dataset? |
-| public row / private row | Public/Private CAD-QA dataset row | unqualified |
+| public row / private row | Public view / Private view | not separate rows; two views of one row |
 | query program (cad_qa, tools) | Gold query program | conflated with a general query |
 | clause | Gold query predicate | wrong; not a logic clause |
 | candidate trace (cad_qa, tools) | Candidate-set trace | candidate to what? |
