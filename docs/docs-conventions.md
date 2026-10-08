@@ -176,13 +176,18 @@ P0/P1 commitment.
 
 ## Lint, format, ratchets
 
-- **Don't-say checker: implemented.** `tools/check_dont_say.py` reads the `## Don't say`
-  table from `glossary.md` and fails on banned terms in `docs/`. Run
-  `uv run python tools/check_dont_say.py --roots docs`. The sweep to green is tracked in
+- **Don't-say checker: implemented and enforced.** `tools/check_dont_say.py` reads the
+  `## Don't say` table from `glossary.md` and fails on banned terms across docs and code.
+  A `(home)` annotation exempts a tree, `ALLOWLIST` exempts cross-cutting phrases, and the
+  `dont-say: allow` / `dont-say: home` markers exempt a line/file. Code matches
+  identifier-shaped tokens only. Run `uv run python tools/check_dont_say.py`.
+- **Ratchets only improve.** `tools/dont_say_baseline.txt` holds the accepted count; the
+  checker fails if hits rise, or fall without the baseline being lowered. Enforced by
+  `tests/test_dont_say_ratchet.py` (the test gate). The sweep is tracked in
   `_audit/dont-say-worklist.md`.
-- Ratchets (the Don't-say list, file-size waivers) only improve.
-- **Not implemented yet:** the Markdown formatter (`rumdl`, fallback `mdformat`) and the
-  docs-structure / ADR / decisions linters. See `development-plan.md`.
+- **Not implemented yet:** the Markdown formatter (`rumdl`, fallback `mdformat`), the
+  docs-structure / ADR / decisions linters, and a pre-commit/CI wiring. See
+  `development-plan.md`.
 
 ## Experiment records
 

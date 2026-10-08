@@ -42,10 +42,10 @@ def write_glossary(tmp_path: Path) -> Path:
 
 def test_parse_rules_splits_synonyms_and_strips_parentheticals() -> None:
     rules = parse_rules(GLOSSARY)
-    phrases = {rule.dont_say for rule in rules}
+    phrases = {rule.phrase for rule in rules}
     assert phrases == {"source", "ontology graph", "ontology", "query program"}
     assert (
-        next(rule for rule in rules if rule.dont_say == "source").say
+        next(rule for rule in rules if rule.phrase == "source").say
         == "CadQuery program"
     )
 
@@ -67,7 +67,7 @@ def test_bare_dont_say_token_is_a_hit(tmp_path: Path) -> None:
     doc = tmp_path / "doc.md"
     doc.write_text("Run the query program.\n", encoding="utf-8")
     hits = scan_file(doc, rules)
-    assert [hit.rule.dont_say for hit in hits] == ["query program"]
+    assert [hit.rule.phrase for hit in hits] == ["query program"]
 
 
 def test_bare_ontology_is_covered_by_cad_ontology(tmp_path: Path) -> None:
@@ -115,3 +115,36 @@ def test_fenced_block_is_skipped(tmp_path: Path) -> None:
     doc = tmp_path / "doc.md"
     doc.write_text("```\nthe source\n```\n", encoding="utf-8")
     assert scan_file(doc, rules) == []
+
+
+def test_bare_word_is_not_scanned_in_code(tmp_path: Path) -> None:
+    rules = parse_rules(GLOSSARY)
+    code = tmp_path / "mod.py"
+    code.write_text("source = 1\n", encoding="utf-8")
+    assert scan_file(code, rules) == []
+
+
+def test_identifier_variant_is_scanned_in_code(tmp_path: Path) -> None:
+    rules = parse_rules(GLOSSARY)
+    code = tmp_path / "mod.py"
+    code.write_text("query_program = build()\n", encoding="utf-8")
+    hits = scan_file(code, rules)
+    assert [hit.rule.phrase for hit in hits] == ["query program"]
+
+
+def test_home_annotation_exempts_tree(tmp_path: Path) -> None:
+    glossary = GLOSSARY.replace(
+        "| query program | Gold query program |",
+        "| query program (cad_qa) | Gold query program |",
+    )
+    rules = parse_rules(glossary)
+    home_code = tmp_path / "cad_qa" / "mod.py"
+    home_code.parent.mkdir()
+    home_code.write_text("QueryProgram()\n", encoding="utf-8")
+    other_code = tmp_path / "other" / "mod.py"
+    other_code.parent.mkdir()
+    other_code.write_text("QueryProgram()\n", encoding="utf-8")
+    assert scan_file(home_code, rules) == []
+    assert [hit.rule.phrase for hit in scan_file(other_code, rules)] == [
+        "query program"
+    ]

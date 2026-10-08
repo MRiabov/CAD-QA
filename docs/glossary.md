@@ -303,32 +303,35 @@ The environment and runner used to evaluate cost-effective models on the benchma
 
 A ratchet: entries are removed only when the term is engineered out of the docs and code.
 A docs sweep replaces each don't-say usage with its Say term until the checkers are green.
+A `(home)` annotation allows the token under that tree (`cad_qa`, `train_and_eval`, `tools`,
+…), for identifiers documented as `In code:`; the checker's `ALLOWLIST` exempts
+cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 
 | Don't say | Say | Why |
 |---|---|---|
 | source | CadQuery program | bare noun; "source" of what? |
 | snapshot | Trace snapshot | opaque |
 | CADEvolve | (name the corpus in prose) | proper noun, not a term |
-| ontology graph | CAD ontology graph | unqualified |
+| ontology graph (cad_qa) | CAD ontology graph | unqualified |
 | ontology (bare) | CAD ontology | generic/overloaded |
 | selector (bare) | CadQuery selector | CadQuery-specific |
 | workplane (bare) | CadQuery workplane | CadQuery-specific |
 | profile (bare) | CadQuery profile | generic |
-| material region / void region | Added-material region / Removed-material region | unclear |
-| dataset row | CAD-QA dataset row | which dataset? |
+| material region (cad_qa) / void region (cad_qa) | Added-material region / Removed-material region | unclear |
+| dataset row (cad_qa) | CAD-QA dataset row | which dataset? |
 | public row / private row | Public/Private CAD-QA dataset row | unqualified |
-| query program | Gold query program | conflated with a general query |
+| query program (cad_qa, tools) | Gold query program | conflated with a general query |
 | clause | Query clause | incoherent |
-| candidate trace | Candidate-set trace | candidate to what? |
-| hop count | Reasoning hop count | unqualified |
-| difficulty bucket | Difficulty tier | "bucket" imprecise |
+| candidate trace (cad_qa, tools) | Candidate-set trace | candidate to what? |
+| hop count (cad_qa, train_and_eval) | Reasoning hop count | unqualified |
+| difficulty bucket (cad_qa, train_and_eval, tools) | Difficulty tier | "bucket" imprecise |
 | verifier (bare) | Query verifier | unqualified |
 | quarantine | Non-release-ready row | imprecise |
 | "intent" (as a doc) | PRD | "intent" is the concept, not the artifact |
 | trace (bare) | CAD query trace / Training trace / Candidate-set trace / Trace snapshot | overloaded across concepts |
 | model (bare) | base model / adapter / merged model | ambiguous between weights, adapter, and served endpoint |
 | node (bare) | CAD ontology node / code node | ambiguous between graph and code |
-| entity id (in a public answer) | source variable | internal `entity_id` values must not leak into public answers |
+| entity id (in a public answer) (cad_qa, tools) | source variable | internal `entity_id` values must not leak into public answers |
 | "the pipeline" / "the object" / "the value" | name the concept | unspecific placeholder |
 | first/last (as family semantics) | the sampled parameter | a rendering choice, not a permanent meaning |
 

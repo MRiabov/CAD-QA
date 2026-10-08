@@ -34,9 +34,13 @@ stays in place (the designated home for dated records).
 
 **2026-10-08** — Don't-say checker implemented (`tools/check_dont_say.py` + tests), ported
 and simplified from product-launch `redo/check-dont-say.py`; pydantic added as a dev dep.
-First run over `docs/` reports 447 hits; worklist and findings in
-`_audit/dont-say-worklist.md`. D8 partially satisfied: Don't-say checker done; docs-structure
-/ ADR / decisions linters and `rumdl` still pending.
+Ported the placis exclusion mechanisms: `(home)` tree annotations, `ALLOWLIST`,
+`dont-say: allow` / `home` markers; code is scanned (identifier-shaped tokens); a hit-count
+ratchet (`tools/dont_say_baseline.txt`) is enforced by `tests/test_dont_say_ratchet.py`.
+Current: 353 hits, all in `docs/`; code is clean because the documented `In code:`
+identifiers are exempted per tree. Worklist and findings in `_audit/dont-say-worklist.md`.
+D8 partially satisfied: Don't-say checker done and gated; docs-structure / ADR / decisions
+linters, `rumdl`, and pre-commit/CI wiring still pending.
 
 ---
 

@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Don't-say checker for CAD-QA docs.
+"""Don't-say checker for CAD-QA docs and code.
 
 Reads the ``## Don't say`` table from ``docs/glossary.md`` and fails when a
-banned term appears in a scanned doc. A Say term covers its own Don't-say
-tokens (``Gold query program`` covers ``query program``); a ``dont-say: allow``
-marker exempts a line. Local run, no CI.
+banned term appears in a scanned doc or code file. A Say term covers its own
+Don't-say tokens; a ``(home)`` annotation allows the token under that tree; the
+allowlist and ``dont-say: allow`` / ``dont-say: home`` markers exempt specific
+text. In code only identifier-shaped tokens are matched, so bare English words
+stay prose-only. ``--ratchet`` enforces that the hit count never rises.
 """
 
 from __future__ import annotations
@@ -18,7 +20,10 @@ from pydantic import BaseModel, ConfigDict, Field
 
 logger = logging.getLogger("cadqa.check_dont_say")
 
+REPO = Path(__file__).resolve().parents[1]
 DONT_SAY_HEADING = "## Don't say"
+SCAN_ROOTS = ("docs", "cad_qa", "train_and_eval", "tools")
+SCAN_SUFFIXES = frozenset({".md", ".py"})
 SKIP_DIRS = frozenset(
     {
         ".git",
@@ -33,30 +38,67 @@ SKIP_DIRS = frozenset(
         "runs",
     }
 )
-SKIP_FILES = frozenset({"glossary.md", "check_dont_say.py"})
+SKIP_FILES = frozenset(
+    {
+        "glossary.md",
+        "check_dont_say.py",
+        "test_check_dont_say.py",
+        "test_dont_say_ratchet.py",
+        "dont_say_baseline.txt",
+    }
+)
 ALLOW_MARKER = re.compile(r"dont-say:\s*allow", re.IGNORECASE)
+HOME_MARKER = re.compile(r"dont-say:\s*home", re.IGNORECASE)
 ALLOW_LINE = re.compile(r"don'?t say|do not say|never say|banned:", re.IGNORECASE)
 CODE_FENCE = re.compile(r"^\s*(```|~~~)")
 INLINE_CODE = re.compile(r"`[^`]*`")
 SAY_SEPARATORS = (" / ", ";", ",", " or ", ": ")
 
+HOMES: dict[str, tuple[str, ...]] = {
+    "cad_qa": ("cad_qa",),
+    "dataset_generation": ("dataset_generation",),
+    "train_and_eval": ("train_and_eval",),
+    "fine_tuning": ("fine_tuning",),
+    "docs": ("docs",),
+    "tools": ("tools",),
+}
+
+ALLOWLIST = (
+    "open-source",
+    "open source",
+    "source of truth",
+    "source code",
+    "data source",
+)
+
 
 class Rule(BaseModel):
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
-    dont_say: str = Field(min_length=1)
+    phrase: str = Field(min_length=1)
     say: str = Field(min_length=1)
     why: str = Field(default="")
     pattern: re.Pattern[str]
+    identifiers: tuple[re.Pattern[str], ...] = ()
+    homes: tuple[str, ...] = ()
+    covers: tuple[str, ...] = ()
 
     @classmethod
-    def build(cls, dont_say: str, say: str, why: str = "") -> Rule:
-        words = [re.escape(word) for word in dont_say.split()]
-        pattern = re.compile(r"(?i)\b" + r"[ \t]+".join(words) + r"\b")
-        return cls(dont_say=dont_say, say=say, why=why, pattern=pattern)
-
-    def covers(self) -> list[str]:
-        return covering_phrases(self.say)
+    def build(cls, raw: str, say: str, why: str = "") -> Rule:
+        phrase = normalize_phrase(raw)
+        identifiers = tuple(
+            re.compile(r"\b" + re.escape(variant) + r"\b")
+            for variant in identifier_variants(phrase)
+        )
+        return cls(
+            phrase=phrase,
+            say=say,
+            why=why,
+            pattern=compile_phrase(phrase),
+            identifiers=identifiers,
+            homes=home_prefixes(parentheticals(raw)),
+            covers=tuple(covering_phrases(say)),
+        )
 
 
 class Hit(BaseModel):
@@ -66,6 +108,44 @@ class Hit(BaseModel):
     line: int = Field(ge=1)
     rule: Rule
     text: str = Field(min_length=1)
+
+
+def compile_phrase(phrase: str) -> re.Pattern[str]:
+    parts = [re.escape(part) for part in phrase.split()]
+    return re.compile(r"(?i)\b" + r"[ \t]+".join(parts) + r"\b")
+
+
+def has_identifier_shape(phrase: str) -> bool:
+    return "_" in phrase or "-" in phrase or any(ch.isupper() for ch in phrase[1:])
+
+
+def identifier_variants(phrase: str) -> list[str]:
+    words = phrase.lower().split()
+    if len(words) < 2:
+        return []
+    snake = "_".join(words)
+    kebab = "-".join(words)
+    pascal = "".join(word[:1].upper() + word[1:] for word in words)
+    camel = words[0] + "".join(word[:1].upper() + word[1:] for word in words[1:])
+    variants: list[str] = []
+    for variant in (snake, kebab, pascal, camel):
+        if variant and variant not in variants:
+            variants.append(variant)
+    return variants
+
+
+def parentheticals(raw: str) -> list[str]:
+    return [segment.strip() for segment in re.findall(r"\(([^)]*)\)", raw)]
+
+
+def home_prefixes(annotations: list[str]) -> tuple[str, ...]:
+    prefixes: list[str] = []
+    for annotation in annotations:
+        for name in annotation.split(","):
+            for folder in HOMES.get(name.strip().lower(), ()):
+                if folder not in prefixes:
+                    prefixes.append(folder)
+    return tuple(prefixes)
 
 
 def dont_say_section(src: str) -> str:
@@ -182,13 +262,21 @@ def parse_rules(src: str) -> list[Rule]:
         for raw in split_synonyms(cells[0]):
             phrase = normalize_phrase(raw)
             if phrase:
-                rules.append(Rule.build(phrase, cells[1], why))
+                rules.append(Rule.build(raw, cells[1], why))
     if not rules:
         raise ValueError("Don't-say table has no data rows")
     return rules
 
 
-def covers_match(line_lower: str, start: int, end: int, phrases: list[str]) -> bool:
+def in_code_span(start: int, end: int, spans: list[tuple[int, int]]) -> bool:
+    return any(
+        span_start <= start and end <= span_end for span_start, span_end in spans
+    )
+
+
+def covers_match(
+    line_lower: str, start: int, end: int, phrases: tuple[str, ...]
+) -> bool:
     for phrase in phrases:
         for variant in (phrase, phrase.replace(" ", "-"), phrase.replace(" ", "_")):
             search_from = 0
@@ -202,37 +290,67 @@ def covers_match(line_lower: str, start: int, end: int, phrases: list[str]) -> b
     return False
 
 
-def in_code_span(start: int, end: int, spans: list[tuple[int, int]]) -> bool:
-    return any(
-        span_start <= start and end <= span_end for span_start, span_end in spans
-    )
+def blocked_by_home(rule: Rule, path: Path) -> bool:
+    posix = path.as_posix()
+    for folder in rule.homes:
+        if posix == folder or posix.startswith(folder + "/") or f"/{folder}/" in posix:
+            return True
+    return False
+
+
+def patterns_for(rule: Rule, code: bool) -> tuple[re.Pattern[str], ...]:
+    if not code:
+        return (rule.pattern,)
+    patterns = list(rule.identifiers)
+    if "_" in rule.phrase or "-" in rule.phrase:
+        patterns.append(rule.pattern)
+    return tuple(patterns)
 
 
 def scan_file(path: Path, rules: list[Rule]) -> list[Hit]:
+    text = path.read_text(encoding="utf-8")
+    code = path.suffix == ".py"
+    if code and HOME_MARKER.search(text):
+        return []
     hits: list[Hit] = []
     in_fence = False
-    for line_no, line in enumerate(
-        path.read_text(encoding="utf-8").splitlines(), start=1
-    ):
-        if CODE_FENCE.match(line):
+    for line_no, line in enumerate(text.splitlines(), start=1):
+        if not code and CODE_FENCE.match(line):
             in_fence = not in_fence
             continue
         if in_fence or ALLOW_MARKER.search(line) or ALLOW_LINE.search(line):
             continue
         lower = line.lower()
-        spans = [(match.start(), match.end()) for match in INLINE_CODE.finditer(line)]
+        spans = (
+            [] if code else [(m.start(), m.end()) for m in INLINE_CODE.finditer(line)]
+        )
         for rule in rules:
-            if rule.pattern.search(line) is None:
+            if blocked_by_home(rule, path):
                 continue
-            phrases = rule.covers()
-            for match in rule.pattern.finditer(line):
-                if in_code_span(match.start(), match.end(), spans):
-                    continue
-                if covers_match(lower, match.start(), match.end(), phrases):
-                    continue
+            patterns = patterns_for(rule, code)
+            if not patterns:
+                continue
+            allowed = rule.covers + ALLOWLIST
+            if matched_line(patterns, line, lower, spans, allowed):
                 hits.append(Hit(path=path, line=line_no, rule=rule, text=line.strip()))
-                break
     return hits
+
+
+def matched_line(
+    patterns: tuple[re.Pattern[str], ...],
+    line: str,
+    lower: str,
+    spans: list[tuple[int, int]],
+    allowed: tuple[str, ...],
+) -> bool:
+    for pattern in patterns:
+        for match in pattern.finditer(line):
+            if in_code_span(match.start(), match.end(), spans):
+                continue
+            if covers_match(lower, match.start(), match.end(), allowed):
+                continue
+            return True
+    return False
 
 
 def iter_files(roots: list[str]) -> list[Path]:
@@ -245,7 +363,9 @@ def iter_files(roots: list[str]) -> list[Path]:
         if not path.exists():
             logger.warning("skipping missing root %s", root)
             continue
-        for candidate in sorted(path.rglob("*.md")):
+        for candidate in sorted(path.rglob("*")):
+            if candidate.suffix not in SCAN_SUFFIXES:
+                continue
             if candidate.name in SKIP_FILES:
                 continue
             if SKIP_DIRS.intersection(candidate.parts):
@@ -256,16 +376,29 @@ def iter_files(roots: list[str]) -> list[Path]:
 
 def collect_hits(roots: list[str], rules: list[Rule]) -> list[Hit]:
     hits = [hit for path in iter_files(roots) for hit in scan_file(path, rules)]
-    return sorted(hits, key=lambda hit: (str(hit.path), hit.line, hit.rule.dont_say))
+    return sorted(hits, key=lambda hit: (str(hit.path), hit.line, hit.rule.phrase))
+
+
+def load_baseline(path: Path) -> int | None:
+    if not path.exists():
+        return None
+    text = path.read_text(encoding="utf-8").strip()
+    return int(text) if text else None
 
 
 def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     parser = argparse.ArgumentParser(
-        description="Fail on Don't-say terms in CAD-QA docs."
+        description="Fail on Don't-say terms in CAD-QA docs and code."
     )
-    parser.add_argument("--glossary", type=Path, default=Path("docs/glossary.md"))
-    parser.add_argument("--roots", nargs="+", default=["docs"])
+    parser.add_argument("--glossary", type=Path, default=REPO / "docs/glossary.md")
+    parser.add_argument(
+        "--roots", nargs="+", default=[str(REPO / root) for root in SCAN_ROOTS]
+    )
+    parser.add_argument(
+        "--ratchet", type=Path, help="baseline hit-count file to enforce"
+    )
+    parser.add_argument("--update-baseline", action="store_true")
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args(argv)
 
@@ -281,14 +414,35 @@ def main(argv: list[str] | None = None) -> int:
             '%s:%d: don\'t say "%s" (say %s)',
             hit.path,
             hit.line,
-            hit.rule.dont_say,
+            hit.rule.phrase,
             hit.rule.say,
         )
-    if hits:
-        logger.error("%d Don't-say hit(s)", len(hits))
+
+    if args.ratchet is None:
+        if hits:
+            logger.error("%d Don't-say hit(s)", len(hits))
+            return 1
+        if not args.quiet:
+            logger.info("check_dont_say: clean (%d rules)", len(rules))
+        return 0
+
+    baseline = load_baseline(args.ratchet)
+    if args.update_baseline or baseline is None:
+        args.ratchet.write_text(f"{len(hits)}\n", encoding="utf-8")
+        logger.info("check_dont_say: baseline %d -> %s", len(hits), args.ratchet)
+        return 0
+    if len(hits) > baseline:
+        logger.error("check_dont_say: %d hit(s) > baseline %d", len(hits), baseline)
+        return 1
+    if len(hits) < baseline:
+        logger.error(
+            "check_dont_say: %d hit(s) < baseline %d; run --update-baseline",
+            len(hits),
+            baseline,
+        )
         return 1
     if not args.quiet:
-        logger.info("check_dont_say: clean (%d rules)", len(rules))
+        logger.info("check_dont_say: %d hit(s), at baseline", len(hits))
     return 0
 
 
