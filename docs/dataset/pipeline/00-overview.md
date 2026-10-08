@@ -95,7 +95,7 @@ formats default to Parquet with a JSONL fallback (`cad_qa/io.py::read_records`,
 `clue_map`, `evidence_tier`, `release_ready`, `quarantine_reasons`. The CLI adds `split`
 (`cad_qa/cli.py::_cmd_dataset_materialize`).
 
-**Public / private views** (`cad_qa/dataset/public.py`):
+**Public / private column sets** (`cad_qa/dataset/public.py`):
 `PUBLIC_FIELDS` and `PRIVATE_FIELDS` are the release boundary. `public` is answer-free
 model input; `private` carries `gold_answer`, `query_program`, `candidate_trace`,
 `clue_map`, `verifier_status`.

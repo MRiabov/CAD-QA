@@ -135,18 +135,18 @@ One question instance — a single record in the rows artifact holding every fie
 public prompt plus the private verifier material (gold answer, Gold query program,
 candidate-set trace, clue map).
 
-#### Public view
+#### Public column set
 
-The answer-free projection of a CAD-QA dataset row: the prompt and metadata, with the gold
+The answer-free columns of a CAD-QA dataset row: the prompt and metadata, with the gold
 answer, Gold query program, candidate-set trace, and clue map withheld.
 
-#### Private view
+#### Private column set
 
-The verifier projection of a CAD-QA dataset row: gold answer, Gold query program,
+The verifier columns of a CAD-QA dataset row: gold answer, Gold query program,
 candidate-set trace, and clue map.
 
-A row yields one public view and one private view; they ship as separate release artifacts
-so the answer never travels with the prompt.
+The two column sets are written as separate release artifacts (`public`, `private`) so the
+answer never travels with the prompt.
 
 ---
 
@@ -338,7 +338,7 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | profile (bare) | CadQuery profile | generic |
 | material region (cad_qa) / void region (cad_qa) | Added-material region / Removed-material region | unclear |
 | dataset row (cad_qa) | CAD-QA dataset row | which dataset? |
-| public row / private row | Public view / Private view | not separate rows; two views of one row |
+| public row / private row | Public column set / Private column set | not separate rows; column sets of one row |
 | query program (cad_qa, tools) | Gold query program | conflated with a general query |
 | clause | Gold query predicate | wrong; not a logic clause |
 | candidate trace (cad_qa, tools) | Candidate-set trace | candidate to what? |
