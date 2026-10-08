@@ -49,7 +49,8 @@ Legend: `[ ]` todo · `[x]` done · `(D#)` links a decision in
 
 ## D. Terminology
 
-- [ ] D1 Define the terms in `glossary.md` → "Pending additions".
+- [ ] D0 Owner term review in progress — see `term-audit.md` (working rename list).
+- [ ] D1 Define the terms in `glossary.md` → "Proposed additions".
 - [ ] D2 Legacy-term audit: walk the old docs/code and seed the Don't-say list.
 
 ## E. Dataset
