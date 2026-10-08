@@ -5,6 +5,11 @@ progress — the owner is partway through). Per the ubiquitous-language rule, a 
 does not land in `docs/glossary.md` until the owner approves it. Renames apply to docs; the
 frozen `dataset_generation` code keeps its identifiers (`In code:`).
 
+**Applied 2026-10-07:** the qualified terms are now the glossary's Say terms, and every
+flagged bare term is in its *Don't say* table. The docs sweep (replace don't-say usage in
+all docs until the checkers are green) is still pending; it needs the Don't-say checker
+(D8).
+
 ## Principles (proposed)
 
 1. **Qualify every Domain term** with its domain: `CAD-QA`, `CAD`, `CadQuery`, or the owning

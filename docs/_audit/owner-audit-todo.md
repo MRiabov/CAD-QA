@@ -51,7 +51,8 @@ Legend: `[ ]` todo · `[x]` done · `(D#)` links a decision in
 
 - [ ] D0 Owner term review in progress — see `term-audit.md` (working rename list).
 - [ ] D1 Define the terms in `glossary.md` → "Proposed additions".
-- [ ] D2 Legacy-term audit: walk the old docs/code and seed the Don't-say list.
+- [ ] D2 Legacy-term audit: sweep all docs replacing Don't-say usage with the Say term
+      until the checker is green (needs the Don't-say checker, D8).
 
 ## E. Dataset
 
