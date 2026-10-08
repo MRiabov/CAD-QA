@@ -124,6 +124,29 @@ def test_bare_word_is_not_scanned_in_code(tmp_path: Path) -> None:
     assert scan_file(code, rules) == []
 
 
+def test_comment_prose_is_scanned_in_code(tmp_path: Path) -> None:
+    rules = parse_rules(GLOSSARY)
+    code = tmp_path / "mod.py"
+    code.write_text("# the source builder\n", encoding="utf-8")
+    hits = scan_file(code, rules)
+    assert [hit.rule.phrase for hit in hits] == ["source"]
+
+
+def test_docstring_prose_is_scanned_in_code(tmp_path: Path) -> None:
+    rules = parse_rules(GLOSSARY)
+    code = tmp_path / "mod.py"
+    code.write_text('"""The source builder."""\n', encoding="utf-8")
+    hits = scan_file(code, rules)
+    assert [hit.rule.phrase for hit in hits] == ["source"]
+
+
+def test_say_term_in_comment_is_covered(tmp_path: Path) -> None:
+    rules = parse_rules(GLOSSARY)
+    code = tmp_path / "mod.py"
+    code.write_text("# the CadQuery program builder\n", encoding="utf-8")
+    assert scan_file(code, rules) == []
+
+
 def test_identifier_variant_is_scanned_in_code(tmp_path: Path) -> None:
     rules = parse_rules(GLOSSARY)
     code = tmp_path / "mod.py"

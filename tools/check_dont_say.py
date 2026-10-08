@@ -5,15 +5,19 @@ Reads the ``## Don't say`` table from ``docs/glossary.md`` and fails when a
 banned term appears in a scanned doc or code file. A Say term covers its own
 Don't-say tokens; a ``(home)`` annotation allows the token under that tree; the
 allowlist and ``dont-say: allow`` / ``dont-say: home`` markers exempt specific
-text. In code only identifier-shaped tokens are matched, so bare English words
-stay prose-only. ``--ratchet`` enforces that the hit count never rises.
+text. In code, comments and docstrings are matched as prose, and multi-word
+identifier variants are matched as identifiers; bare identifier names are not
+matched. ``--ratchet`` enforces that the hit count never rises.
 """
 
 from __future__ import annotations
 
 import argparse
+import ast
+import io
 import logging
 import re
+import tokenize
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -68,6 +72,8 @@ ALLOWLIST = (
     "source of truth",
     "source code",
     "data source",
+    "source variable",
+    "type: ignore",
 )
 
 
@@ -297,41 +303,104 @@ def blocked_by_home(rule: Rule, path: Path) -> bool:
     return False
 
 
-def patterns_for(rule: Rule, code: bool) -> tuple[re.Pattern[str], ...]:
-    if not code:
-        return (rule.pattern,)
-    patterns = list(rule.identifiers)
-    if "_" in rule.phrase or "-" in rule.phrase:
-        patterns.append(rule.pattern)
-    return tuple(patterns)
+def code_prose_lines(text: str) -> list[tuple[int, str]]:
+    """Return ``(line_number, text)`` for comments and docstrings in Python source."""
+
+    lines = text.splitlines()
+    prose: list[tuple[int, str]] = []
+    try:
+        for token in tokenize.generate_tokens(io.StringIO(text).readline):
+            if token.type == tokenize.COMMENT:
+                prose.append((token.start[0], token.string))
+    except tokenize.TokenError:
+        pass
+    try:
+        tree = ast.parse(text)
+    except SyntaxError:
+        return prose
+    for node in ast.walk(tree):
+        if not isinstance(
+            node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)
+        ):
+            continue
+        body = getattr(node, "body", [])
+        if not body:
+            continue
+        first = body[0]
+        if not (
+            isinstance(first, ast.Expr)
+            and isinstance(first.value, ast.Constant)
+            and isinstance(first.value.value, str)
+        ):
+            continue
+        start = first.lineno
+        end = getattr(first, "end_lineno", start)
+        for line_no in range(start, end + 1):
+            if 1 <= line_no <= len(lines):
+                prose.append((line_no, lines[line_no - 1]))
+    return prose
 
 
 def scan_file(path: Path, rules: list[Rule]) -> list[Hit]:
     text = path.read_text(encoding="utf-8")
-    code = path.suffix == ".py"
-    if code and HOME_MARKER.search(text):
+    if path.suffix == ".py":
+        return _scan_code(path, text, rules)
+    return _scan_markdown(path, text, rules)
+
+
+def _scan_code(path: Path, text: str, rules: list[Rule]) -> list[Hit]:
+    if HOME_MARKER.search(text):
         return []
+    hits: list[Hit] = []
+    seen: set[tuple[int, str]] = set()
+
+    def record(line_no: int, segment: str, rule: Rule) -> None:
+        key = (line_no, rule.phrase)
+        if key not in seen:
+            seen.add(key)
+            hits.append(
+                Hit(path=path, line=line_no, rule=rule, text=segment.strip())
+            )
+
+    for line_no, line in enumerate(text.splitlines(), start=1):
+        if ALLOW_MARKER.search(line) or ALLOW_LINE.search(line):
+            continue
+        lower = line.lower()
+        for rule in rules:
+            if blocked_by_home(rule, path) or not rule.identifiers:
+                continue
+            if matched_line(rule.identifiers, line, lower, [], rule.covers + ALLOWLIST):
+                record(line_no, line, rule)
+    for line_no, segment in code_prose_lines(text):
+        if ALLOW_MARKER.search(segment) or ALLOW_LINE.search(segment):
+            continue
+        lower = segment.lower()
+        for rule in rules:
+            if blocked_by_home(rule, path):
+                continue
+            if matched_line((rule.pattern,), segment, lower, [], rule.covers + ALLOWLIST):
+                record(line_no, segment, rule)
+    return hits
+
+
+def _scan_markdown(path: Path, text: str, rules: list[Rule]) -> list[Hit]:
     hits: list[Hit] = []
     in_fence = False
     for line_no, line in enumerate(text.splitlines(), start=1):
-        if not code and CODE_FENCE.match(line):
+        if CODE_FENCE.match(line):
             in_fence = not in_fence
             continue
         if in_fence or ALLOW_MARKER.search(line) or ALLOW_LINE.search(line):
             continue
         lower = line.lower()
-        spans = (
-            [] if code else [(m.start(), m.end()) for m in INLINE_CODE.finditer(line)]
-        )
+        spans = [(m.start(), m.end()) for m in INLINE_CODE.finditer(line)]
         for rule in rules:
             if blocked_by_home(rule, path):
                 continue
-            patterns = patterns_for(rule, code)
-            if not patterns:
-                continue
-            allowed = rule.covers + ALLOWLIST
-            if matched_line(patterns, line, lower, spans, allowed):
-                hits.append(Hit(path=path, line=line_no, rule=rule, text=line.strip()))
+            if matched_line((rule.pattern,), line, lower, spans, rule.covers + ALLOWLIST):
+                hits.append(
+                    Hit(path=path, line=line_no, rule=rule, text=line.strip())
+                )
     return hits
 
 
