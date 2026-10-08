@@ -248,7 +248,7 @@ Where a Measurement comes from: `profile_intrinsic`, `feature_application_effect
 
 ---
 
-### Release tier
+### Dataset release tier
 
 The readiness bar a dataset is validated against: `smoke`, `release-candidate`, or
 `benchmark-release`.
@@ -259,15 +259,15 @@ The readiness bar a dataset is validated against: `smoke`, `release-candidate`, 
 
 Which compute tools a model gets during evaluation.
 
-#### numpy
+#### numpy harness
 
 The primary harness: a Python shell with NumPy.
 
-#### no_tools
+#### no_tools harness
 
 Reasoning only; no compute.
 
-#### cadquery
+#### cadquery harness
 
 Full CadQuery kernel access; one correct call suffices.
 
@@ -310,6 +310,7 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | Don't say | Say | Why |
 |---|---|---|
 | source | CadQuery program | bare noun; "source" of what? |
+| release tier (cad_qa, train_and_eval, tools) | Dataset release tier | garbled; which release? |
 | snapshot | Trace snapshot | opaque |
 | CADEvolve | (name the corpus in prose) | proper noun, not a term |
 | ontology graph (cad_qa) | CAD ontology graph | unqualified |
