@@ -367,7 +367,7 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | quarantine | Non-release-ready CAD-QA dataset row | imprecise |
 | "intent" (as a doc) | PRD | "intent" is the concept, not the artifact |
 | trace (bare) | CAD query trace / agent training trace / answer candidate set trace | overloaded across concepts |
-| model (bare) | CAD model / LLM model / base model / adapter / merged model | geometry vs language model vs weights/adapter/served endpoint |
+| model (bare) | CAD model / LLM model / base LLM model / LLM adapter / merged LLM model | geometry vs language model vs weights/adapter/served endpoint |
 | node (bare) | CAD ontology node / code node | ambiguous between graph and code |
 | kind / kinds | predicate kind | raw noun; name the kind of what |
 | type / types | CAD ontology node type / relation type / answer format / measurement scope / harness mode | raw noun; name the type of what |
