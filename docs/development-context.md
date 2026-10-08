@@ -68,6 +68,10 @@ as a headline number.
   `benchmark-release` gates (scale, split-group coverage, parameter balance).
 - `[assumed]` **Hard-slice (3+ hop) big-model numbers meet the paper's ≤30% target.** Not
   recorded anywhere found.
+- `[unverified]` **Prompt clarity.** Public prompts are rule-rendered from LLM-authored
+  templates (`prompt-templates.yaml`), and the owner — reading as a human — cannot always
+  tell what a rendered question is actually asking. A benchmark question that is unclear to
+  a careful human reader is a defect, not just awkward wording.
 
 ## Gaps and risks
 
@@ -83,6 +87,15 @@ as a headline number.
 6. **Environment rot.** No live GPU box; the Aug-2026 stack (unsloth git-main, trl 1.9.2,
    transformers 5.14.1, vLLM 0.26) is unverified today.
 7. **Paper integrity.** No results, no figures.
+8. **Sloppy generated text in the dataset itself.** The same LLM sloppiness that made the
+   docs hard to read also went into the dataset artifact: the prompt templates and their
+   rendered questions (`prompt-templates.yaml` — `clause_templates`, `metric_labels`,
+   `aggregation_templates`, `tie_break_templates`) are not reliably clear, and the owner, as
+   a reader, often cannot tell what a question is asking. This ships in every public prompt,
+   so it is a benchmark-validity problem, not a style one: an ambiguous question cannot
+   fairly judge a model. Needs a clarification pass (rewrite to unambiguous wording, then
+   re-render and re-check) before the benchmark is frozen. Tracked in
+   `_audit/owner-audit-todo.md` (E5).
 
 ## Environment
 

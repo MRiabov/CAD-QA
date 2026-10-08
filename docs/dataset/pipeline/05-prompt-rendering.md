@@ -99,6 +99,11 @@ focused tests are `tests/test_graph_first_pipeline.py::test_prompt_templates_yam
 
 ## Open questions
 
+- **Human clarity of rendered prompts.** The templates in `prompt-templates.yaml` were
+  LLM-authored and the owner, as a reader, cannot always tell what a rendered question is
+  asking. Rewriting to unambiguous wording (then re-rendering and re-checking) is a
+  precondition for freezing the benchmark; an ambiguous question cannot fairly judge a
+  model. See `development-context.md` Gaps and risks 8 and `_audit/owner-audit-todo.md` (E5).
 - **Coupling to a root-level file.** `prompt-templates.yaml` sits at the repo root while its
   loader is inside `cad_qa/prompts/`; the path is computed with
   `parents[2]`. This is a packaging coupling worth documenting, not a bug found here.

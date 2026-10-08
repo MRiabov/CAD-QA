@@ -61,6 +61,8 @@ Legend: `[ ]` todo · `[x]` done · `(D#)` links a decision in
 - [ ] E2 Decide: freeze curriculum + held-out test, or regenerate ≥10k.
 - [ ] E3 0-hop/1-hop synthesis gap (`synthesis.py` floors hop at 2).
 - [ ] E4 `json`/`number` teacher coverage is zero — fix before training those formats.
+- [ ] E5 Prompt clarity: `prompt-templates.yaml` renders questions that are unclear even to
+      the owner as a reader — clarify the templates, re-render, re-check before freezing.
 
 ## F. Baselines
 
