@@ -36,6 +36,8 @@ SKIP_DIRS = frozenset(
 SKIP_FILES = frozenset({"glossary.md", "check_dont_say.py"})
 ALLOW_MARKER = re.compile(r"dont-say:\s*allow", re.IGNORECASE)
 ALLOW_LINE = re.compile(r"don'?t say|do not say|never say|banned:", re.IGNORECASE)
+CODE_FENCE = re.compile(r"^\s*(```|~~~)")
+INLINE_CODE = re.compile(r"`[^`]*`")
 SAY_SEPARATORS = (" / ", ";", ",", " or ", ": ")
 
 
@@ -200,19 +202,32 @@ def covers_match(line_lower: str, start: int, end: int, phrases: list[str]) -> b
     return False
 
 
+def in_code_span(start: int, end: int, spans: list[tuple[int, int]]) -> bool:
+    return any(
+        span_start <= start and end <= span_end for span_start, span_end in spans
+    )
+
+
 def scan_file(path: Path, rules: list[Rule]) -> list[Hit]:
     hits: list[Hit] = []
+    in_fence = False
     for line_no, line in enumerate(
         path.read_text(encoding="utf-8").splitlines(), start=1
     ):
-        if ALLOW_MARKER.search(line) or ALLOW_LINE.search(line):
+        if CODE_FENCE.match(line):
+            in_fence = not in_fence
+            continue
+        if in_fence or ALLOW_MARKER.search(line) or ALLOW_LINE.search(line):
             continue
         lower = line.lower()
+        spans = [(match.start(), match.end()) for match in INLINE_CODE.finditer(line)]
         for rule in rules:
             if rule.pattern.search(line) is None:
                 continue
             phrases = rule.covers()
             for match in rule.pattern.finditer(line):
+                if in_code_span(match.start(), match.end(), spans):
+                    continue
                 if covers_match(lower, match.start(), match.end(), phrases):
                     continue
                 hits.append(Hit(path=path, line=line_no, rule=rule, text=line.strip()))

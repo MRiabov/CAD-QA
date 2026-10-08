@@ -325,7 +325,7 @@ A docs sweep replaces each don't-say usage with its Say term until the checkers 
 | verifier (bare) | Query verifier | unqualified |
 | quarantine | Non-release-ready row | imprecise |
 | "intent" (as a doc) | PRD | "intent" is the concept, not the artifact |
-| trace (bare) | CAD query trace / Training trace / Candidate-set trace | overloaded across three concepts |
+| trace (bare) | CAD query trace / Training trace / Candidate-set trace / Trace snapshot | overloaded across concepts |
 | model (bare) | base model / adapter / merged model | ambiguous between weights, adapter, and served endpoint |
 | node (bare) | CAD ontology node / code node | ambiguous between graph and code |
 | entity id (in a public answer) | source variable | internal `entity_id` values must not leak into public answers |

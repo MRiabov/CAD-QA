@@ -7,50 +7,49 @@ linted. Regenerate:
 uv run python tools/check_dont_say.py --roots docs --quiet
 ```
 
-As of 2026-10-08 the checker reports **447 hits** across the canonical docs. The blanket
-ban list is fresh, so the count is expected to fall as covering rules and rewrites land.
+As of 2026-10-08 the checker reports **357 hits** across the canonical docs. The blanket ban
+list is fresh, so the count is expected to fall as covering rules and rewrites land.
+(447 → 357 after the checker learned to skip inline/fenced code: `cad_qa/trace.py::…` and
+`` `TraceRecord` `` are code, not prose.)
 
 ## By Don't-say term
 
 | Term | Hits | Notes |
 |---|---|---|
-| model | 119 | bare word; mostly generic "the model" — needs covering or a narrower Say |
-| source | 82 | bare word; "open-source", "source material", stage name "source ingestion" |
-| trace | 72 | bare word; **false-positives on the Say term "Trace snapshot"** |
-| verifier | 33 | covered by "Query verifier" only when qualified |
-| ontology | 28 | covered by "CAD ontology" when qualified |
+| model | 107 | bare word; mostly generic "the model" — needs covering or a narrower Say |
+| source | 65 | bare word; "open-source", "source material", stage name "source ingestion" |
+| trace | 44 | bare word; headings ("Trace / snapshot"), prose, code paths now skipped |
+| verifier | 31 | covered by "Query verifier" only when qualified |
 | selector | 18 | covered by "CadQuery selector" when qualified |
-| CADEvolve | 16 | proper noun; rephrase in prose |
-| clause | 15 | rename to "Query clause" |
-| quarantine | 13 | rename to "Non-release-ready row" |
-| ontology graph | 10 | covered by "CAD ontology graph" when qualified |
-| snapshot | 9 | rename to "Trace snapshot" |
-| the pipeline / the object / the value | 8 | unspecific placeholders |
+| clause | 13 | rename to "Query clause" |
+| CADEvolve | 13 | proper noun; rephrase in prose |
+| ontology | 12 | covered by "CAD ontology" when qualified |
+| snapshot | 8 | rename to "Trace snapshot" |
+| quarantine | 8 | rename to "Non-release-ready row" |
+| ontology graph | 8 | covered by "CAD ontology graph" when qualified |
+| the pipeline | 6 | unspecific placeholder |
 | workplane | 5 | covered by "CadQuery workplane" when qualified |
 | profile | 4 | covered by "CadQuery profile" when qualified |
 | public row / private row | 6 | qualify |
 | query program | 2 | covered by "Gold query program" when qualified |
-| node | 2 | qualify |
 | candidate trace | 2 | rename to "Candidate-set trace" |
-| hop count | 1 | covered by "Reasoning hop count" |
-| difficulty bucket | 1 | rename to "Difficulty tier" |
+| node, hop count, difficulty bucket, the value, the object | 5 | one each |
 
 ## By file (top)
 
 | File | Hits |
 |---|---|
-| `docs/dataset/pipeline/03-ontology-graph.md` | 43 |
-| `docs/evaluation/harness.md` | 41 |
+| `docs/evaluation/harness.md` | 40 |
 | `docs/evaluation/baselines.md` | 33 |
-| `docs/dataset/pipeline/02-trace-snapshot.md` | 32 |
-| `docs/dataset/pipeline/01-source-ingestion.md` | 26 |
-| `docs/dataset/pipeline/00-overview.md` | 26 |
-| `docs/dataset/decisions.md` | 23 |
-| `docs/dataset/requirements.md` | 19 |
-| `docs/dataset/pipeline/06-materialize-validate-release.md` | 18 |
-| `docs/dataset/pipeline/05-prompt-rendering.md` | 17 |
+| `docs/dataset/pipeline/03-ontology-graph.md` | 28 |
+| `docs/dataset/pipeline/02-trace-snapshot.md` | 20 |
+| `docs/dataset/decisions.md` | 19 |
+| `docs/dataset/requirements.md` | 18 |
+| `docs/dataset/pipeline/01-source-ingestion.md` | 18 |
+| `docs/dataset/pipeline/05-prompt-rendering.md` | 16 |
+| `docs/dataset/pipeline/06-materialize-validate-release.md` | 15 |
 | `docs/PRD.md` | 14 |
-| `docs/fine-tuning/pipeline/02-teacher-sampling.md` | 14 |
+| `docs/fine-tuning/pipeline/02-teacher-sampling.md` | 12 |
 
 ## Findings before the sweep can go green
 
@@ -59,10 +58,11 @@ ban list is fresh, so the count is expected to fall as covering rules and rewrit
    Left as-is the ban is unreachable. Two options: extend each Say cell to enumerate the
    qualified alternatives, or add a checker allowlist (product-launch precedent:
    `ALLOWLISTED`).
-2. **A Say term can trip its own ban.** `Trace snapshot` contains the banned `trace`; the
-   `trace (bare)` rule's Say must list `Trace snapshot` (or the checker must accept a
-   qualified capitalised form). Same risk for `model`, `ontology`.
-3. **Frozen code is not scanned.** `dataset_generation/` keeps its identifiers (`In code:`);
+2. **Fixed:** a Say term could trip its own ban (`Trace snapshot` contained banned `trace`);
+   `Trace snapshot` was added to the `trace (bare)` Say cell.
+3. **Fixed:** the checker skipped no code; it now ignores inline code spans and fenced
+   blocks, so `path::symbol` references and backticked identifiers do not trip the ban.
+4. **Frozen code is not scanned.** `dataset_generation/` keeps its identifiers (`In code:`);
    only docs are scanned today. `fine_tuning/` scanning is a follow-up.
 
 ## Sweep order (proposed)

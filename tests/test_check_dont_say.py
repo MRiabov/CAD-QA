@@ -101,3 +101,17 @@ def test_rule_builds_word_boundary_pattern() -> None:
     rule = Rule.build("source", "CadQuery program")
     assert rule.pattern.search("the source") is not None
     assert rule.pattern.search("sources") is None
+
+
+def test_inline_code_is_skipped(tmp_path: Path) -> None:
+    rules = parse_rules(GLOSSARY)
+    doc = tmp_path / "doc.md"
+    doc.write_text("See `source` and `cad_qa/source_ingestion.py`.\n", encoding="utf-8")
+    assert scan_file(doc, rules) == []
+
+
+def test_fenced_block_is_skipped(tmp_path: Path) -> None:
+    rules = parse_rules(GLOSSARY)
+    doc = tmp_path / "doc.md"
+    doc.write_text("```\nthe source\n```\n", encoding="utf-8")
+    assert scan_file(doc, rules) == []
