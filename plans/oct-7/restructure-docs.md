@@ -67,6 +67,16 @@ scanned. See the entry below.
 - Still outstanding: `specs/` not folded; only the Don't-say checker of D8
   exists; Phase 0a rename not started.
 
+**2026-10-08 (later still)** — docs structure and decision scoping.
+
+- `docs/fine-tuning/` → `docs/train-and-eval/fine-tuning/`; `docs/evaluation/` →
+  `docs/train-and-eval/evaluation/` — the docs now mirror the `train_and_eval/` code.
+- Decisions are per feature: `<feature>/decisions.md` (`dataset/`, `train-and-eval/`),
+  step-local decisions in the step doc, cross-cutting (D1–D14) in the plan. **No central
+  `docs/adr/`** — D12 resolved.
+- D13 revised: the generation package is **`dataset/`** (not `dataset_generation/`), and
+  **all** eval logic (grader, eval CLI, Harbor runner) moves to `train_and_eval/`.
+
 ---
 
 ## 0. Working agreement
@@ -538,8 +548,8 @@ Every `pipeline/` stage doc (named `NN-*.md` or `NNx-*.md`, e.g. `01-rows-loader
 | `docs/development-plan.md` | §7 below |
 | `docs/prior-art.md` | External — open-source training / RL / data pipelines (mined, cited) |
 | `docs/dataset/*` | `docs/_archive/implementation_status.md`, `specs/dataset-spec.md`, `specs/benchmark-task-spec.md`, `specs/multi-hop-qa-task-spec.md`, `README.md`, `docs/_archive/experiment_execution_runbook.md`, `cad_qa/` |
-| `docs/fine-tuning/*` | `docs/_archive/agent_handoff_2026-08-09.md`, `docs/_archive/rl_*.md`, `docs/_archive/text_finetune_runbook.md`, `train_and_eval/` |
-| `docs/evaluation/*` | `docs/_archive/harbor.md`, `cad_qa/harbor.py`, `cad_qa/evaluation/`, `docs/experiments/2026-08-08-gemma-e2b-bench.md` |
+| `docs/train-and-eval/fine-tuning/*` | `docs/_archive/agent_handoff_2026-08-09.md`, `docs/_archive/rl_*.md`, `docs/_archive/text_finetune_runbook.md`, `train_and_eval/` |
+| `docs/train-and-eval/evaluation/*` | `docs/_archive/harbor.md`, `cad_qa/harbor.py`, `cad_qa/evaluation/`, `docs/experiments/2026-08-08-gemma-e2b-bench.md` |
 
 ## 6. Development context (draft; becomes `docs/development-context.md`)
 
