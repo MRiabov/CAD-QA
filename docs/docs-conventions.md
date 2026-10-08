@@ -186,8 +186,12 @@ P0/P1 commitment.
 - **Don't-say checker: implemented and enforced.** `tools/check_dont_say.py` reads the
   `## Don't say` table from `glossary.md` and fails on banned terms across docs and code.
   A `(home)` annotation exempts a tree, `ALLOWLIST` exempts cross-cutting phrases, and the
-  `dont-say: allow` / `dont-say: home` markers exempt a line/file. Code matches
-  identifier-shaped tokens only. Run `uv run python tools/check_dont_say.py`.
+  `dont-say: allow` / `dont-say: home` markers exempt a line/file. In code, comments and
+  docstrings are matched as prose, and multi-word identifier name variants are matched. Run
+  `uv run python tools/check_dont_say.py`.
+- **Clean code: P2.** `--identifiers` additionally matches banned terms inside code
+  identifier names; `tools/dont_say_identifiers_baseline.txt` is the accepted count
+  (`development-plan.md` Phase 6). Visibility/ratchet only, not P0/P1.
 - **Ratchets only improve.** `tools/dont_say_baseline.txt` holds the accepted count; the
   checker fails if hits rise, or fall without the baseline being lowered. Enforced by
   `tests/test_dont_say_ratchet.py` (the test gate). The sweep is tracked in

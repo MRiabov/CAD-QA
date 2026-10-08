@@ -147,6 +147,15 @@ def test_say_term_in_comment_is_covered(tmp_path: Path) -> None:
     assert scan_file(code, rules) == []
 
 
+def test_identifier_mode_matches_single_word_names(tmp_path: Path) -> None:
+    rules = parse_rules(GLOSSARY)
+    code = tmp_path / "mod.py"
+    code.write_text("source = 1\n", encoding="utf-8")
+    assert scan_file(code, rules) == []
+    hits = scan_file(code, rules, identifiers=True)
+    assert [hit.rule.phrase for hit in hits] == ["source"]
+
+
 def test_identifier_variant_is_scanned_in_code(tmp_path: Path) -> None:
     rules = parse_rules(GLOSSARY)
     code = tmp_path / "mod.py"

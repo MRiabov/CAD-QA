@@ -57,6 +57,7 @@ HOME_MARKER = re.compile(r"dont-say:\s*home", re.IGNORECASE)
 ALLOW_LINE = re.compile(r"don'?t say|do not say|never say|banned:", re.IGNORECASE)
 CODE_FENCE = re.compile(r"^\s*(```|~~~)")
 INLINE_CODE = re.compile(r"`[^`]*`")
+IDENTIFIER_SEGMENT = re.compile(r"[A-Z]+(?=[A-Z][a-z])|[A-Z]?[a-z]+|[A-Z]+|\d+")
 SAY_SEPARATORS = (" / ", ";", ",", " or ", ": ")
 
 HOMES: dict[str, tuple[str, ...]] = {
@@ -342,14 +343,43 @@ def code_prose_lines(text: str) -> list[tuple[int, str]]:
     return prose
 
 
-def scan_file(path: Path, rules: list[Rule]) -> list[Hit]:
+def code_identifier_lines(text: str) -> list[tuple[int, str]]:
+    """Return ``(line_number, name)`` for Python identifier tokens."""
+
+    names: list[tuple[int, str]] = []
+    try:
+        for token in tokenize.generate_tokens(io.StringIO(text).readline):
+            if token.type == tokenize.NAME:
+                names.append((token.start[0], token.string))
+    except tokenize.TokenError:
+        pass
+    return names
+
+
+def identifier_match(name: str, rule: Rule) -> bool:
+    """True when the rule's words appear as a whole name segment run in ``name``."""
+
+    words = rule.phrase.lower().split()
+    segments = [segment.lower() for segment in IDENTIFIER_SEGMENT.findall(name)]
+    size = len(words)
+    for start in range(len(segments) - size + 1):
+        if segments[start : start + size] == words:
+            return True
+    return False
+
+
+def scan_file(
+    path: Path, rules: list[Rule], *, identifiers: bool = False
+) -> list[Hit]:
     text = path.read_text(encoding="utf-8")
     if path.suffix == ".py":
-        return _scan_code(path, text, rules)
+        return _scan_code(path, text, rules, identifiers=identifiers)
     return _scan_markdown(path, text, rules)
 
 
-def _scan_code(path: Path, text: str, rules: list[Rule]) -> list[Hit]:
+def _scan_code(
+    path: Path, text: str, rules: list[Rule], *, identifiers: bool = False
+) -> list[Hit]:
     if HOME_MARKER.search(text):
         return []
     hits: list[Hit] = []
@@ -363,15 +393,32 @@ def _scan_code(path: Path, text: str, rules: list[Rule]) -> list[Hit]:
                 Hit(path=path, line=line_no, rule=rule, text=segment.strip())
             )
 
-    for line_no, line in enumerate(text.splitlines(), start=1):
-        if ALLOW_MARKER.search(line) or ALLOW_LINE.search(line):
-            continue
-        lower = line.lower()
-        for rule in rules:
-            if blocked_by_home(rule, path) or not rule.identifiers:
+    if identifiers:
+        allowed_lines = {
+            line_no
+            for line_no, line in enumerate(text.splitlines(), start=1)
+            if ALLOW_MARKER.search(line) or ALLOW_LINE.search(line)
+        }
+        for line_no, name in code_identifier_lines(text):
+            if line_no in allowed_lines:
                 continue
-            if matched_line(rule.identifiers, line, lower, [], rule.covers + ALLOWLIST):
-                record(line_no, line, rule)
+            for rule in rules:
+                if blocked_by_home(rule, path):
+                    continue
+                if identifier_match(name, rule):
+                    record(line_no, name, rule)
+    else:
+        for line_no, line in enumerate(text.splitlines(), start=1):
+            if ALLOW_MARKER.search(line) or ALLOW_LINE.search(line):
+                continue
+            lower = line.lower()
+            for rule in rules:
+                if blocked_by_home(rule, path) or not rule.identifiers:
+                    continue
+                if matched_line(
+                    rule.identifiers, line, lower, [], rule.covers + ALLOWLIST
+                ):
+                    record(line_no, line, rule)
     for line_no, segment in code_prose_lines(text):
         if ALLOW_MARKER.search(segment) or ALLOW_LINE.search(segment):
             continue
@@ -443,8 +490,14 @@ def iter_files(roots: list[str]) -> list[Path]:
     return files
 
 
-def collect_hits(roots: list[str], rules: list[Rule]) -> list[Hit]:
-    hits = [hit for path in iter_files(roots) for hit in scan_file(path, rules)]
+def collect_hits(
+    roots: list[str], rules: list[Rule], *, identifiers: bool = False
+) -> list[Hit]:
+    hits = [
+        hit
+        for path in iter_files(roots)
+        for hit in scan_file(path, rules, identifiers=identifiers)
+    ]
     return sorted(hits, key=lambda hit: (str(hit.path), hit.line, hit.rule.phrase))
 
 
@@ -467,6 +520,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--ratchet", type=Path, help="baseline hit-count file to enforce"
     )
+    parser.add_argument(
+        "--identifiers",
+        action="store_true",
+        help="also match banned terms inside code identifier names (P2 clean-code mode)",
+    )
     parser.add_argument("--update-baseline", action="store_true")
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args(argv)
@@ -477,7 +535,7 @@ def main(argv: list[str] | None = None) -> int:
         logger.error("check_dont_say: %s", exc)
         return 2
 
-    hits = collect_hits(args.roots, rules)
+    hits = collect_hits(args.roots, rules, identifiers=args.identifiers)
     if not args.quiet:
         for hit in hits:
             logger.warning(

@@ -86,6 +86,14 @@ reasoning length; transfer to a second dataset; error taxonomy.
 Fill the manuscript with real numbers, tables, and figures; verify citations; add the audit
 as the thesis validation appendix.
 
+## Phase 6 — Clean code [P2]
+
+Rename code identifiers to match the glossary. `uv run python tools/check_dont_say.py
+--identifiers` reports the name collisions, and `tools/dont_say_identifiers_baseline.txt`
+holds the accepted count (**5,339** across 63 files — mostly `type`, `clause`, `source`,
+`node`, `selector`) to ratchet to zero. Deferred: it is a large mechanical rename, much of it
+inside the frozen `cad_qa/`.
+
 ## Cross-cutting rules
 
 - **Reproducibility.** Move the environment pins out of the gitignored `runs/` into tracked
