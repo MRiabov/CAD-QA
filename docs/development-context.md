@@ -93,7 +93,7 @@ as a headline number.
    `aggregation_templates`, `tie_break_templates`) are not reliably clear, and the owner, as
    a reader, often cannot tell what a question is asking. This ships in every public prompt,
    so it is a benchmark-validity problem, not a style one: an ambiguous question cannot
-   fairly judge a model. Needs a clarification pass (rewrite to unambiguous wording, then
+   fairly judge an answer. Needs a clarification pass (rewrite to unambiguous wording, then
    re-render and re-check) before the benchmark is frozen. Tracked in
    `_audit/owner-audit-todo.md` (E5).
 

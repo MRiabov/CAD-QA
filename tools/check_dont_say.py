@@ -409,14 +409,15 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     hits = collect_hits(args.roots, rules)
-    for hit in hits:
-        logger.warning(
-            '%s:%d: don\'t say "%s" (say %s)',
-            hit.path,
-            hit.line,
-            hit.rule.phrase,
-            hit.rule.say,
-        )
+    if not args.quiet:
+        for hit in hits:
+            logger.warning(
+                '%s:%d: don\'t say "%s" (say %s)',
+                hit.path,
+                hit.line,
+                hit.rule.phrase,
+                hit.rule.say,
+            )
 
     if args.ratchet is None:
         if hits:
