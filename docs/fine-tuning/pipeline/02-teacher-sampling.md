@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Produce **Agent training traces** by sampling a **teacher** model on harness rows and keeping only
+Produce **agent training traces** by sampling a **teacher** model on harness rows and keeping only
 the attempts whose typed tool call the verifier accepts (**rejection sampling**). Trace
 length is bounded by **compaction**.
 
@@ -10,7 +10,7 @@ length is bounded by **compaction**.
 
 - **In:** `harness row` (from 01) and, in the current sampler, directly HF config
   `v3_curriculum` (fields `row_id`, `prompt`, `gold_answer`, `answer_format`,
-  `logical_hop_count`). An Agent training trace's answer tool is derived from the row's
+  `logical_hop_count`). An agent training trace's answer tool is derived from the row's
   `answer_format`.
 - **Out `training trace`:** JSONL `Trace` records
   ([00-overview.md](00-overview.md#training-trace)); any trace longer than
@@ -29,7 +29,7 @@ length is bounded by **compaction**.
 
 ## Requirement
 
-A kept Agent training trace must contain a tool call that `tool_call_matches` accepts against the
+A kept agent training trace must contain a tool call that `tool_call_matches` accepts against the
 row's gold; a rejected attempt must never enter the pool. Success rate and per-format
 coverage must be known and recorded, because a format the teacher never produces cannot be
 learned by the student.

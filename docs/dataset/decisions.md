@@ -47,7 +47,7 @@ Local decisions for the `dataset_generation` unit, in ADR format
 - **Context:** Rows are code-plus-label internally, but the public benchmark surface must be
   answer-free (`specs/dataset-spec.md`).
 - **Decision:** Export two views: `public` (answer-free model input) and `private` (gold
-  answer, hidden query program, Answer candidate set trace, clue map). The split is defined by
+  answer, hidden query program, answer candidate set trace, clue map). The split is defined by
   `cad_qa/dataset/public.py::PUBLIC_FIELDS` and `::PRIVATE_FIELDS`; a hidden-field leak is
   an audit error.
 - **Consequences:** Grading uses `public` + `private`; `public_private_report.json` records
@@ -94,7 +94,7 @@ Local decisions for the `dataset_generation` unit, in ADR format
 - **Context:** `specs/generation_policy.md` requires the full clue set to resolve exactly one
   answer for main rows.
 - **Decision:** `cad_qa/query/ir.py::QueryProgram.reject_unless_unique` defaults to
-  `True`; the resolver fails a query whose Answer candidate set is empty or not exactly one.
+  `True`; the resolver fails a query whose answer candidate set is empty or not exactly one.
 - **Consequences:** Ties are rejected unless a query explicitly opts out; failures land in
   the failure manifest.
 

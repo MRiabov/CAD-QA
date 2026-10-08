@@ -116,7 +116,7 @@ and the smoke/integration tests around `experiment`. Harbor execution itself
   consume only the rows I/O contract and answer contract. Whether consumer code today reads
   anything beyond `rows`/`public`/`private` is `[unknown]`; that boundary is not enforced by
   a test here.
-- **`reasoning_sft` is not an Agent training trace.** It summarizes candidate-set sizes, not
+- **`reasoning_sft` is not an agent training trace.** It summarizes candidate-set sizes, not
   model reasoning. Whether it is useful supervision is a fine-tuning question, out of scope
   for this pipeline.
 - **Harbor agent/model config is run configuration, not part of the task contract**

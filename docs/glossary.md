@@ -27,6 +27,9 @@ invents a new word, it is wrong — the word should already be here, or be added
   a "Snapshot measurement" or "snapshot measurement".
 - **Qualify everywhere.** Use the qualified term in docs; there are no short-form aliases.
   Code keeps the documented `In code:` identifiers.
+- **Case.** A term is capitalized only in its glossary heading; in prose and definitions it
+  is lowercase, like placis's "a website term includes **website**". Proper nouns and
+  acronyms (CadQuery, CAD) keep their case.
 - **Meaning, not implementation.** An entry says what the term means, and optionally why
   that word is used (`Distinct from:`, never-say). It never says how something works —
   that belongs in the specs. Names of types, tables, routes, or `In code:` identifiers may
@@ -63,7 +66,7 @@ One CadQuery program the benchmark draws from. `In code:` `SourceRecord`.
 
 ### CAD query trace
 
-The execution record of a CadQuery program. `Distinct from:` **Agent training trace**.
+The execution record of a CadQuery program. `Distinct from:` **agent training trace**.
 
 ---
 
@@ -194,8 +197,8 @@ resolves; each Gold query predicate narrows it, and it should end at one node.
 
 ### Answer candidate set trace
 
-The record of how the Answer candidate set narrows to the gold answer.
-`In code:` `CandidateSetTrace`. `Distinct from:` **CAD query trace**, **Agent training trace**.
+The record of how the answer candidate set narrows to the gold answer.
+`In code:` `CandidateSetTrace`. `Distinct from:` **CAD query trace**, **agent training trace**.
 
 ---
 
@@ -243,7 +246,7 @@ A CAD-QA dataset row that resolves but cannot be released.
 ### Agent training trace
 
 A record of reasoning followed by a tool call, produced to train an agent and used as
-supervision. `Distinct from:` **CAD query trace**, **Answer candidate set trace**.
+supervision. `Distinct from:` **CAD query trace**, **answer candidate set trace**.
 
 ---
 
@@ -261,7 +264,7 @@ The sandboxed Python/NumPy compute tool available to the LLM model.
 
 ### compact_trace
 
-A tool that shortens reasoning while an Agent training trace is produced.
+A tool that shortens reasoning while an agent training trace is produced.
 
 ---
 
@@ -356,14 +359,14 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | public row / private row | Public CAD-QA dataset row column set / Private CAD-QA dataset row column set | not separate rows; column sets of one row |
 | query program (cad_qa, tools) | Gold query program | conflated with a general query |
 | clause | Gold query predicate | wrong; not a logic clause |
-| candidate set (cad_qa, train_and_eval, tools) | Answer candidate set | unqualified |
-| candidate trace (cad_qa, tools) | Answer candidate set trace | candidate to what? |
+| candidate set (cad_qa, train_and_eval, tools) | answer candidate set | unqualified |
+| candidate trace (cad_qa, tools) | answer candidate set trace | candidate to what? |
 | hop count (cad_qa, train_and_eval) | Reasoning hop count | unqualified |
 | difficulty bucket (cad_qa, train_and_eval, tools) | Difficulty tier | "bucket" imprecise |
 | verifier (bare) | Query verifier | unqualified |
 | quarantine | Non-release-ready CAD-QA dataset row | imprecise |
 | "intent" (as a doc) | PRD | "intent" is the concept, not the artifact |
-| trace (bare) | CAD query trace / Agent training trace / Answer candidate set trace | overloaded across concepts |
+| trace (bare) | CAD query trace / agent training trace / answer candidate set trace | overloaded across concepts |
 | model (bare) | CAD model / LLM model / base model / adapter / merged model | geometry vs language model vs weights/adapter/served endpoint |
 | node (bare) | CAD ontology node / code node | ambiguous between graph and code |
 | kind / kinds | predicate kind | raw noun; name the kind of what |

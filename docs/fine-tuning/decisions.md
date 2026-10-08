@@ -19,7 +19,7 @@ whose rationale was not recoverable.
 ## FT-D2 — Teacher is deepseek-v4-flash via OpenRouter
 
 - **Status:** accepted (2026-08).
-- **Context:** Agent training traces are produced by a stronger LLM model.
+- **Context:** agent training traces are produced by a stronger LLM model.
 - **Decision:** the teacher is `deepseek/deepseek-v4-flash` (pinned to the DeepSeek provider),
   called through OpenRouter; reasoning arrives in `message.reasoning`.
 - **Consequences:** teacher cost and rate limits bound sampling. Detail:
@@ -31,7 +31,7 @@ whose rationale was not recoverable.
 - **Context:** the base model is pretrained to emit
   `<|tool_call>call:<name>{args}<tool_call|>`; the first SFT taught a foreign JSON envelope
   and the model rambled and rarely emitted a parseable call.
-- **Decision:** both Agent training traces and the eval harness use the native format, including
+- **Decision:** both agent training traces and the eval harness use the native format, including
   literal `<|tool_call|>` / `<|tool_response|>` tokens.
 - **Consequences:** held-out accuracy went from 16.7% to 50% (12-row, non-native → native).
   Detail: [pipeline/03-trace-normalization.md](pipeline/03-trace-normalization.md),

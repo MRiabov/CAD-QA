@@ -23,7 +23,7 @@ consumed by teacher sampling, GRPO, and evaluation.
 The loader must produce, for every retained row, a prompt that names the correct **submit
 tool** for the row's `answer_format`, and a `gold_answer` that the shared matcher
 (`train_and_eval/tool_calls.py::tool_call_matches`) accepts for that tool. If either is
-wrong, every downstream Agent training trace and every eval score is wrong for that row.
+wrong, every downstream agent training trace and every eval score is wrong for that row.
 
 ## Current status
 
