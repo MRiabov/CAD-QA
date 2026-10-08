@@ -37,7 +37,7 @@ adding the bare `kind`/`type` bans).
 | trace | 44 | bare word; headings ("Trace / snapshot") and prose |
 | verifier | 31 | covered by "Query verifier" only when qualified |
 | selector | 18 | covered by "CadQuery selector" when qualified |
-| clause | 13 | rename to "Query clause" |
+| clause | 13 | rename to "Gold query predicate" |
 | CADEvolve | 13 | proper noun; rephrase in prose |
 | ontology | 12 | covered by "CAD ontology" when qualified |
 | snapshot | 8 | rename to "Trace snapshot" |

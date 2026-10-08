@@ -151,9 +151,18 @@ the gold answer.
 
 ---
 
-### Query clause
+### Gold query predicate
 
-One step of a Gold query program, mapped to exactly one public clue.
+One predicate of a Gold query program, mapped to exactly one public clue.
+`In code:` `Clause`.
+
+**Why "predicate".** A predicate is a condition that is either true or false of something.
+Each Gold query predicate is one such condition on the target entity — in plain words,
+*"the target face is adjacent to another face"*, *"the feature is made by an extrude
+operation"*, *"the selection has more than three entities"*, *"the face's surface area is
+12.5"*. The program is a short ordered list of these, and the public prompt states each as
+one clue. `Distinct from:` the aggregation and tie-break steps, which order the survivors
+rather than filter them.
 
 ---
 
@@ -322,7 +331,7 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | dataset row (cad_qa) | CAD-QA dataset row | which dataset? |
 | public row / private row | Public/Private CAD-QA dataset row | unqualified |
 | query program (cad_qa, tools) | Gold query program | conflated with a general query |
-| clause | Query clause | incoherent |
+| clause | Gold query predicate | wrong; not a logic clause |
 | candidate trace (cad_qa, tools) | Candidate-set trace | candidate to what? |
 | hop count (cad_qa, train_and_eval) | Reasoning hop count | unqualified |
 | difficulty bucket (cad_qa, train_and_eval, tools) | Difficulty tier | "bucket" imprecise |
