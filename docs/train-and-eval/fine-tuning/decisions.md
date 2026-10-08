@@ -128,10 +128,12 @@ whose rationale was not recoverable.
   - LFM2 is a non-transformer hybrid, so the current unsloth/gemma toolchain does not transfer.
   - **Lock-in / redo risk.** Adopting `liquid-finetune` and the LFM chat/tool-call format ties
     the training pipeline to Liquid. Testing another small LLM model later (Qwen3-4B,
-    Llama-3.2-3B, Phi-4-mini, Gemma 4) means redoing the training from scratch, not just
-    swapping a checkpoint. Mitigate by keeping the `Dataset file` and the prompt/answer
-    contract stack-neutral and recording a run manifest per result, so a base swap is a config
-    change plus a re-run; accept the re-run cost as small for models of this size.
+    Llama-3.2-3B, Phi-4-mini, Gemma 4) means redoing the training from scratch **including the
+    training code**: the trainer, data formatting, and tool-call rendering are stack-specific,
+    so it is not a checkpoint swap. Mitigate by keeping the `Dataset file`, the prompt/answer
+    contract, and the evaluation harness stack-neutral, and by recording a run manifest per
+    result, so a base swap rewrites only the trainer behind those contracts; accept the re-run
+    cost as small at these sizes.
   - Supersedes FT-D1 for Phase 3; FT-D1 remains the 2026-08 base.
 - Detail: [`../../prior-art.md`](../../prior-art.md) (LFM2.5 finding), research notes
   `../../research/2026-distil-labs-15-small-models-fine-tuning.md` and
