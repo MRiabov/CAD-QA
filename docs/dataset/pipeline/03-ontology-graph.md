@@ -64,9 +64,9 @@ focused tests are `tests/test_graph_first_pipeline.py::test_graph_build_report_e
 ### D2 — Trace enrichment attaches to source features by target and source line
 
 - **Status:** accepted.
-- **Context:** Trace snapshots are keyed by assignment target and source line; graph features
+- **Context:** Assignment snapshots are keyed by assignment target and source line; graph features
   are keyed by assignment target.
-- **Decision:** The extractor indexes trace snapshots/effects/selector results by target,
+- **Decision:** The extractor indexes assignment snapshots/effects/selector results by target,
   source line, and selector text+kind, then attaches `snapshot_state`,
   `feature_application_effect`, and selector-derived measurements to the matching feature
   (`cad_qa/ontology/extract.py::_attach_trace_snapshot_state`,
@@ -121,5 +121,5 @@ _(none yet)_
 
 ## Extra deliverables - P2
 
-- A per-graph provenance table mapping each measurement back to the exact trace snapshot /
+- A per-graph provenance table mapping each measurement back to the exact assignment snapshot /
   effect / selector index that produced it, for a fully reproducible audit.

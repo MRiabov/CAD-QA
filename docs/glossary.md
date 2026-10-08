@@ -62,9 +62,11 @@ The execution record of a CadQuery program. `Distinct from:` **Training trace**.
 
 ---
 
-### Trace snapshot
+### Assignment snapshot
 
-The measured state of one assignment in a CAD query trace.
+The measured state of one assignment in a CadQuery program — its volume, bounding box,
+centroid, and topology entities — captured while tracing. `In code:` a trace record's
+`snapshots` entry.
 
 ---
 
@@ -326,7 +328,7 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 |---|---|---|
 | source | CadQuery program | bare noun; "source" of what? |
 | release tier (cad_qa, train_and_eval, tools) | Dataset release tier | garbled; which release? |
-| snapshot | Trace snapshot | opaque |
+| snapshot | Assignment snapshot | opaque |
 | CADEvolve | (name the corpus in prose) | proper noun, not a term |
 | ontology graph (cad_qa) | CAD ontology graph | unqualified |
 | ontology (bare) | CAD ontology | generic/overloaded |
@@ -344,7 +346,7 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | verifier (bare) | Query verifier | unqualified |
 | quarantine | Non-release-ready row | imprecise |
 | "intent" (as a doc) | PRD | "intent" is the concept, not the artifact |
-| trace (bare) | CAD query trace / Training trace / Candidate-set trace / Trace snapshot | overloaded across concepts |
+| trace (bare) | CAD query trace / Training trace / Candidate-set trace / Assignment snapshot | overloaded across concepts |
 | model (bare) | base model / adapter / merged model | ambiguous between weights, adapter, and served endpoint |
 | node (bare) | CAD ontology node / code node | ambiguous between graph and code |
 | kind / kinds | predicate kind | raw noun; name the kind of what |
