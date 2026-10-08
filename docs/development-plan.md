@@ -25,7 +25,7 @@ Establish what the code actually does, so later numbers are trustworthy. The own
 checklist is `_audit/owner-audit-todo.md` (group C).
 
 - Highest-risk items: the grader (`cad_qa/evaluation/grade.py::grade_public_private`) versus
-  the reward (`fine_tuning/...::reward_cadqa`); `run_code` sandbox isolation; vLLM versus
+  the reward (`train_and_eval/...::reward_cadqa`); `run_code` sandbox isolation; vLLM versus
   transformers output parity; SFT prompt masking; the environment pins.
 - Consolidate one runnable verification command per pipeline step (see
   `dataset/requirements.md`, `fine-tuning/requirements.md`).
@@ -34,9 +34,9 @@ checklist is `_audit/owner-audit-todo.md` (group C).
 
 ## Phase 0a — Repo restructure (mechanical) [P1; fan-out P2]
 
-Split the code into `dataset_generation/` (today `cad_qa/`, frozen) and `fine_tuning/`
-(today `train_and_eval/`), coupled only by the rows IO contract. Do this before the audit
-settles citations. Folder fan-out CI is P2.
+Rename `cad_qa/` (frozen) to `dataset_generation/`; keep `train_and_eval/` — the two
+packages stay coupled only by the rows IO contract. Do this before the audit settles
+citations. Folder fan-out CI is P2.
 
 ## Phase 0b — Prior-art code mining [P1]
 

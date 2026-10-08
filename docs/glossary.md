@@ -324,15 +324,15 @@ The code package that builds the benchmark. `In code:` `cad_qa/`.
 
 ---
 
-### fine_tuning
+### train_and_eval
 
-The code package for training and evaluation. `In code:` `train_and_eval/`.
+The code package for training and evaluation.
 
 ---
 
 ### Rows artifact
 
-The input/output contract between `dataset_generation` and `fine_tuning`.
+The input/output contract between `dataset_generation` and `train_and_eval`.
 
 ---
 

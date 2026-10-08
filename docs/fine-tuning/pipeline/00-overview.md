@@ -1,7 +1,6 @@
 # Fine-tuning pipeline — overview
 
-**Status:** active, 2026-10-07. Code lives in `train_and_eval/` (to become `fine_tuning/`,
-per the repo restructure — see `plans/oct-7/restructure-docs.md`). This surface is **being
+**Status:** active, 2026-10-07. Code lives in `train_and_eval/`. This surface is **being
 revised**; it is not frozen.
 
 ## Purpose
@@ -174,8 +173,6 @@ how each stage uses it; they do not redefine it.
   (`train_and_eval/train/grpo_train.py::HOP_SHARES`). The stated "0→1→2→3→5 ladder" is not
   what the GRPO code schedules.
 - **No code produces `merged model`.** Name the stage, script it, or mark it out-of-scope.
-- **`fine_tuning/` rename.** All docs cite today's `train_and_eval/`; citations must be
-  updated when the mechanical split lands.
 
 ## Resolved questions
 

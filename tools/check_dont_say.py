@@ -58,7 +58,6 @@ HOMES: dict[str, tuple[str, ...]] = {
     "cad_qa": ("cad_qa",),
     "dataset_generation": ("dataset_generation",),
     "train_and_eval": ("train_and_eval",),
-    "fine_tuning": ("fine_tuning",),
     "docs": ("docs",),
     "tools": ("tools",),
 }

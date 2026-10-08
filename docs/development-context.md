@@ -19,7 +19,7 @@ marked (`[unknown]`, `[unverified — needs <env>]`, `[assumed]`).
 | 2026-05 → 06 | Dataset builder: source ingestion, CadQuery tracing, ontology graph, query synthesis/resolver, prompt rendering, release gates | `cad_qa/` (now `dataset_generation/`), `docs/_archive/implementation_status.md` (retired) |
 | 2026-06 → 07 | Harbor export, cloud runners, provider pinning | `cad_qa/harbor.py`, `docs/_archive/harbor.md` |
 | 2026-08-08 | First gemma-4-E2B baseline: rc10 (0-hop) 30%, release10k (2–5 hop) 14% | `docs/experiments/2026-08-08-gemma-e2b-bench.md` |
-| 2026-08-08/09 | Teacher rejection sampling, SFT, native tool-call format fix, 1-hop bridge, `run_code` sandbox, harness modes, a vLLM conversion | `train_and_eval/` (now `fine_tuning/`), `docs/_archive/rl_*.md`, `docs/_archive/agent_handoff_2026-08-09.md` |
+| 2026-08-08/09 | Teacher rejection sampling, SFT, native tool-call format fix, 1-hop bridge, `run_code` sandbox, harness modes, a vLLM conversion | `train_and_eval/`, `docs/_archive/rl_*.md`, `docs/_archive/agent_handoff_2026-08-09.md` |
 | 2026-08-09 | Last commit | `512a514` |
 
 ## Components
@@ -29,7 +29,7 @@ marked (`[unknown]`, `[unverified — needs <env>]`, `[assumed]`).
 synthesis and resolution (`query/`), prompt rendering (`prompts/`), materialize/validate/
 release (`dataset/`), Harbor export (`harbor.py`), CLI (`cli.py`).
 
-**Fine-tuning and evaluation** (`fine_tuning/`, today `train_and_eval/`): row loading
+**Fine-tuning and evaluation** (`train_and_eval/`): row loading
 (`rows_loader.py`), the typed tool contract (`tool_calls.py`), the teacher
 (`teacher.py`), rejection sampling (`train/rejection_sample.py`), trace normalization
 (`train/normalize_traces.py`), SFT (`train/sft_train.py`), GRPO (`train/grpo_train.py`,

@@ -112,7 +112,7 @@ and the smoke/integration tests around `experiment`. Harbor execution itself
 
 ## Open questions
 
-- **The rows artifact is the coupling.** The restructure plan intends `fine_tuning/` to
+- **The rows artifact is the coupling.** The restructure plan intends `train_and_eval/` to
   consume only the rows I/O contract and answer contract. Whether consumer code today reads
   anything beyond `rows`/`public`/`private` is `[unknown]`; that boundary is not enforced by
   a test here.

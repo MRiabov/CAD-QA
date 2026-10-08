@@ -116,7 +116,7 @@ rationale — link the ADR — and never redefine field names — match the IO c
   (`01-source-ingestion.md`, `01a-…`, `04c-…`).
 - Headings are part of the interface. Rename them deliberately; anchors are referenced
   elsewhere.
-- Code package directories use underscores (`dataset_generation`, `fine_tuning`) because
+- Code package directories use underscores (`dataset_generation`, `train_and_eval`) because
   they are Python imports. Hyphens are for docs only (`docs/fine-tuning/`).
 
 ## References

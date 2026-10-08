@@ -303,7 +303,7 @@ coupled only by an input/output interface**:
 
 - `dataset_generation/` — CAD-QA dataset/benchmark generation (today `cad_qa/`; frozen,
   see Code-change policy).
-- `fine_tuning/` — training / evaluation (today `train_and_eval/`; being revised).
+- `train_and_eval/` — training / evaluation (being revised).
 
 Rules:
 
@@ -312,9 +312,9 @@ Rules:
   only if the tree actually needs it.
 - File length: aim small and split by responsibility. The 800-line rule is advisory here
   ("to hell with 800 lines"), not blocking.
-- Coupling: `fine_tuning/` consumes `dataset_generation/` outputs through the documented
+- Coupling: `train_and_eval/` consumes `dataset_generation/` outputs through the documented
   rows I/O contract (the rows artifact + answer contract) only; no shared internals.
-- Naming: code package directories use underscores (`dataset_generation`, `fine_tuning`) —
+- Naming: code package directories use underscores (`dataset_generation`, `train_and_eval`) —
   Python import names. Hyphens are for docs only (`docs/fine-tuning/`).
 
 This restructure is mechanical (move + import fixes), so it does not violate the
@@ -543,10 +543,9 @@ priority (`P0`/`P1`/`P2`) per the tier rule above.
   vLLM parity, SFT masking, rows loader. Consolidate one runnable command per stage.
   Re-run the 12-row SFT eval. Gate: every load-bearing component is `verified` or
   explicitly `blocked`.
-- **Phase 0a — Repo restructure (mechanical). [P1; fan-out check P2]** Split the code into
-  `dataset_generation/` and `fine_tuning/` (today `cad_qa/` and `train_and_eval/`),
-  coupled only by the rows I/O contract. Do this before the audit so citations use the
-  final layout. Folder fan-out CI is P2, added only if needed.
+- **Phase 0a — Repo restructure (mechanical). [P1; fan-out check P2]** Rename `cad_qa/` to
+  `dataset_generation/` (keep `train_and_eval/`), coupled only by the rows I/O contract. Do
+  this before the audit so citations use the final layout. Folder fan-out CI is P2.
 - **Phase 0b — Prior-art code mining. [P1]** Survey established open-source training / RL /
   data pipelines; record findings in `docs/prior-art.md`; pick a base pipeline to build on
   (ADR, D11). Gate: adoption decision recorded before Phase 3 design.
@@ -597,10 +596,10 @@ settled (same rule as the per-doc sections).
 - **D10 — Harness priorities.** **`numpy` is the primary harness (P0)**; `no_tools` and
   full-CadQuery ("mode-3") are both **P2** (strict-reasoning and tool-assisted upper
   bounds). Mode-3 is implemented nowhere yet.
-- **D13 — Repo/code restructure.** **Do the top-level split** (`cad_qa/` →
-  `dataset_generation/`, `train_and_eval/` → `fine_tuning/`), coupled only by the rows I/O
-  contract, before the audit. Folder fan-out CI and file-length rules are **P2** — added
-  only if needed. Precedent: RunAudit `plans/clarify-docs-structure.md`.
+- **D13 — Repo/code restructure.** Rename `cad_qa/` → `dataset_generation/`; **keep
+  `train_and_eval/`** (it reads better than an invented `fine_tuning/`). The two packages are
+  coupled only by the rows I/O contract. Folder fan-out CI and file-length rules are **P2** —
+  added only if needed.
 
 ### Open
 

@@ -1,7 +1,6 @@
 # Fine-tuning pipeline
 
-**Status:** active, 2026-10-07. Code is `train_and_eval/` (to become `fine_tuning/` per the
-repo restructure). This surface is **being revised**; the docs describe behaviour and record
+**Status:** active, 2026-10-07. Code is `train_and_eval/`. This surface is **being revised**; the docs describe behaviour and record
 known defects as open questions rather than implying the pipeline is finished.
 
 This directory documents how CAD-QA turns a **rows artifact** into a trained small model and
