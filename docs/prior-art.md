@@ -17,7 +17,8 @@ fastest way to a number.
 ## Method
 
 For each candidate below: read the code, record what it does, what we would adopt, and what
-we deliberately reject. The base-pipeline choice becomes an ADR (restructure plan D11).
+we deliberately reject. The base-pipeline choice becomes a recorded decision (restructure plan
+D11); the current proposal is FT-D11 in `train-and-eval/fine-tuning/decisions.md`.
 Focus on:
 
 - how reasoning data is generated (teacher vs on-policy vs rejection sampling);

@@ -42,7 +42,7 @@ by the rows IO contract. Folder fan-out CI is P2.
 ## Phase 0b — Prior-art code mining [P1]
 
 Survey established open-source training/RL/data pipelines and pick a base to learn from or
-build on. See `prior-art.md`. Gate: the base-pipeline decision (ADR) is recorded before
+build on. See `prior-art.md`. Gate: the base-pipeline decision is recorded (FT-D11) before
 Phase 3 design.
 
 ## Phase 1 — Freeze the benchmark [P0; the ≥10k tier is P2]
@@ -67,7 +67,7 @@ call; grade with the audited grader. Re-run or retire the stale shortcut baselin
 
 ## Phase 3 — Reasoning-preserving fine-tuning [SFT P0; GRPO P1]
 
-Design first (a decision plus `train-and-eval/fine-tuning/pipeline/00-overview.md`):
+Design first (FT-D11 plus `train-and-eval/fine-tuning/pipeline/00-overview.md`):
 
 - format via constrained decoding where possible;
 - prompt-masked SFT, bounded epochs, if SFT is used;

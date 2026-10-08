@@ -13,7 +13,7 @@ whose rationale was not recoverable.
 - **Decision:** train `unsloth/gemma-4-E2B-it` (~2.3B active / ~5.1B total).
 - **Consequences:** the base LLM model is a code-execution (E2B) variant, which motivated the
   `run_code` compute tool. The GRPO docstring names `google/gemma-4-E2B-it`; the code loads
-  the unsloth repo. Detail: [pipeline/04-sft.md](pipeline/04-sft.md),
+  the unsloth repo. Superseded for Phase 3 by FT-D11. Detail: [pipeline/04-sft.md](pipeline/04-sft.md),
   [pipeline/05-grpo.md](pipeline/05-grpo.md).
 
 ## FT-D2 — Teacher is deepseek-v4-flash via OpenRouter
@@ -111,10 +111,35 @@ whose rationale was not recoverable.
 - **Consequences:** conversion correctness is unverified (no parity test). Detail:
   [pipeline/07-serving-vllm.md](pipeline/07-serving-vllm.md).
 
+## FT-D11 — Start Phase 3 on the Liquid AI LFM2.5 stack
+
+- **Status:** proposed (2026-10-08) — most likely, not yet accepted.
+- **Context:** Phase 3 needs a base LLM model and a fine-tuning stack. The prior-art survey
+  ([`../../prior-art.md`](../../prior-art.md)) records LFM2.5 and `Liquid4All/liquid-finetune`
+  as the lowest-setup candidate: one first-party repo covers SFT/DPO/KTO/VLM/GRPO, QAT, GGUF
+  export, and llama.cpp serving, and the models are small and advertised as fine-tunable on
+  narrow tasks. The one known open concern is the data (the agent training trace set and prompt
+  clarity), not the stack.
+- **Decision:** start Phase 3 on Liquid AI LFM2.5 LLM models (LFM2.5-1.2B or -2.6B as first
+  candidates) using the `liquid-finetune` stack, rather than assembling a pipeline around
+  gemma-4-E2B (FT-D1) or another base LLM model.
+- **Consequences:**
+  - Fastest path to a first measured run; no toolchain assembly.
+  - LFM2 is a non-transformer hybrid, so the current unsloth/gemma toolchain does not transfer.
+  - **Lock-in / redo risk.** Adopting `liquid-finetune` and the LFM chat/tool-call format ties
+    the training pipeline to Liquid. Testing another small LLM model later (Qwen3-4B,
+    Llama-3.2-3B, Phi-4-mini, Gemma 4) means redoing the training from scratch, not just
+    swapping a checkpoint. Mitigate by keeping the `Dataset file` and the prompt/answer
+    contract stack-neutral and recording a run manifest per result, so a base swap is a config
+    change plus a re-run; accept the re-run cost as small for models of this size.
+  - Supersedes FT-D1 for Phase 3; FT-D1 remains the 2026-08 base.
+- Detail: [`../../prior-art.md`](../../prior-art.md) (LFM2.5 finding), research notes
+  `../../research/2026-distil-labs-15-small-models-fine-tuning.md` and
+  `../../research/2026-distil-labs-tool-calling-families.md`.
+
 ## Open questions
 
-- Which of these decisions should become repo-wide `docs/adr/` entries? The plan reserves
-  `docs/adr/` for decisions that span both pipelines (for example the base-pipeline choice,
-  D11, is still open in `plans/oct-7/restructure-docs.md`).
+- The base-pipeline choice (D11 in `plans/oct-7/restructure-docs.md`) is recorded as FT-D11,
+  still proposed; promote it to accepted once the first Phase 3 canary runs.
 - FT-D1, FT-D3, FT-D8 have unresolved sub-questions recorded in their step docs; a decision is
   not "done" while its consequences are unresolved.
