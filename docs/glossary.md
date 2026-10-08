@@ -190,19 +190,16 @@ The verifier-backed correct answer for a CAD-QA dataset row.
 
 ### Reasoning hop count
 
-The number of reasoning steps a CAD-QA dataset row requires.
+The number of reasoning steps a CAD-QA dataset row requires. `In code:`
+`logical_hop_count` (the Gold query program stores it as `hop_count`).
 
-#### Logical hop count
+#### Syntactic reasoning hop count
 
-Reasoning hops in the question.
+Reasoning hops resolvable from the CadQuery program's structure alone, without geometry.
 
-#### Static hop count
+#### Geometry reasoning hop count
 
-Reasoning hops derivable from source syntax alone.
-
-#### Geometry hop count
-
-Reasoning hops requiring geometry evidence.
+Reasoning hops that require geometry evidence. Syntactic + geometry = Reasoning hop count.
 
 ---
 
