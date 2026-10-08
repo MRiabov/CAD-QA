@@ -7,11 +7,12 @@ linted. Regenerate:
 uv run python tools/check_dont_say.py --quiet
 ```
 
-As of 2026-10-08 the checker reports **353 hits**, all in `docs/`. Code is clean: the
+As of 2026-10-08 the checker reports **361 hits**, all in `docs/`. Code is clean: the
 identifier-shaped Don't-says that appear in code (`OntologyGraph`, `entity_id`,
 `QueryProgram`, `hop_count`, `void_region`, `difficulty_bucket`, …) are documented
 `In code:` names and are exempted per tree with `(cad_qa)`-style annotations. 447 → 357
-(after skipping inline/fenced code) → 353 (after the `(home)` annotations).
+(after skipping inline/fenced code) → 353 (after the `(home)` annotations) → 361 (after
+adding the bare `kind`/`type` bans).
 
 ## Mechanism (ported from product-launch / placis)
 
@@ -45,6 +46,8 @@ identifier-shaped Don't-says that appear in code (`OntologyGraph`, `entity_id`,
 | the pipeline | 6 | unspecific placeholder |
 | workplane, profile, public/private row, query program, candidate trace | 22 | qualifying/rename |
 | node, hop count, difficulty bucket, the value, the object | 5 | one each |
+| kind / kinds | 3 | raw noun; say "predicate kind" |
+| type / types | 5 | raw noun; qualify (node type, relation type, answer format, …) |
 
 ## By file (top)
 

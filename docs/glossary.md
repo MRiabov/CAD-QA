@@ -332,6 +332,8 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | trace (bare) | CAD query trace / Training trace / Candidate-set trace / Trace snapshot | overloaded across concepts |
 | model (bare) | base model / adapter / merged model | ambiguous between weights, adapter, and served endpoint |
 | node (bare) | CAD ontology node / code node | ambiguous between graph and code |
+| kind / kinds | predicate kind | raw noun; name the kind of what |
+| type / types | CAD ontology node type / relation type / answer format / measurement scope / harness mode | raw noun; name the type of what |
 | entity id (in a public answer) (cad_qa, tools) | source variable | internal `entity_id` values must not leak into public answers |
 | "the pipeline" / "the object" / "the value" | name the concept | unspecific placeholder |
 | first/last (as family semantics) | the sampled parameter | a rendering choice, not a permanent meaning |
