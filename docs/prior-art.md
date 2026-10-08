@@ -90,7 +90,11 @@ LFM2.5-2.6B via `liquid-finetune`, evaluated on the `numpy` LLM harness.
 Motivated by the first CAD-QA passes with gemma-4-E2B and small Qwen LLM models looking like
 "lots of effort, little gain".
 
-**Base rank does not predict fine-tuned rank.** distil labs' 12-LLM-model, 8-task benchmark
+**Base rank does not predict fine-tuned rank.** Academic work finds that selecting a
+base LLM model by size, zero-shot score, or small-subset tuned performance does not predict full
+fine-tuning performance (the correlation can even be negative) [13], and that most base LLM
+models degrade under fine-tuning while only a subset transfer well [14]. The practitioner
+benchmarks agree: distil labs' 12-LLM-model, 8-task benchmark
 (Dec 2025) [1] produced three different winners for three questions: best zero-shot — Qwen3-8B
 (rank 1.75); best after fine-tuning — Qwen3-4B-Instruct-2507 (2.25); most tunable —
 Llama-3.2-1B-Instruct (3.44), i.e. tunability inverts the size hierarchy. Their 4-LLM-model
@@ -118,7 +122,10 @@ the top for tunability [2], and LFM2.5-350M posted the highest tuned tool-callin
 that size [4]. Gemma 3 is excluded from the tool-calling catalog at every size; only Gemma 4
 E2B/E4B and FunctionGemma 270M qualify, with native function-call special tokens [4].
 Phi-4-mini (~3.8B, MIT) has the strongest reasoning chain but slightly weaker raw tool mapping
-[5].
+[5]. The peer-reviewed study of the same question finds small LLM models improve from zero- to
+few-shot and perform best with fine-tuning, with output-format adherence as the recurring
+weakness [16]; BFCL is the shared benchmark behind these numbers [17], and its results show a
+1–3B band clearly ahead of sub-1B [18].
 
 **Reasoning preservation (SFT vs RL).** "RL Squeezes, SFT Expands" (ICLR 2026) [7] finds SFT
 expands the reasoning graph while RL squeezes it into hub-like structures, and that the
@@ -150,49 +157,78 @@ variable from the recipe variable.
 ### References
 
 External sources for this section, numbered to match the markers above. One summary note per
-reference lives in [`research/`](research/README.md).
+reference lives in [`research/`](research/README.md). Provenance tags follow the standard in
+`research/README.md#sourcing-standards`: independent research is preferred, and a `[vendor]`
+reference never stands alone for a load-bearing claim.
 
 1. distil labs (2025) 'We Benchmarked 12 Small Language Models Across 8 Tasks to Find the Best
    Base LLM Model for Fine-Tuning', *distil labs blog*, 10 December.
-   `distillabs.ai/blog/we-benchmarked-12-small-language-models-across-8-tasks`. Note:
-   `research/2025-distil-labs-12-small-models-fine-tuning.md`.
+   `distillabs.ai/blog/we-benchmarked-12-small-language-models-across-8-tasks`. `[vendor]`.
+   Note: `research/2025-distil-labs-12-small-models-fine-tuning.md`.
 2. distil labs (2026) 'What Small `Language Model` Is Best for Fine-Tuning', *distil labs
    blog*, 16 March. `distillabs.ai/blog/what-small-language-model-is-best-for-fine-tuning`.
-   Note: `research/2026-distil-labs-15-small-models-fine-tuning.md`.
+   `[vendor]`. Note: `research/2026-distil-labs-15-small-models-fine-tuning.md`.
 3. distil labs (2026) 'Does `Base-Model` Accuracy Predict Fine-Tuned Performance: A Mid-Size
    MoE Benchmark', *distil labs blog*, 16 July.
-   `distillabs.ai/blog/does-base-model-accuracy-predict-fine-tuned-performance`. Note:
-   `research/2026-distil-labs-base-vs-tuned-moe.md`.
+   `distillabs.ai/blog/does-base-model-accuracy-predict-fine-tuned-performance`. `[vendor]`.
+   Note: `research/2026-distil-labs-base-vs-tuned-moe.md`.
 4. distil labs (2026) 'Qwen vs Llama vs Gemma for Tool Calling', *distil labs learn*, 2
-   August. `distillabs.ai/learn/qwen-vs-llama-vs-gemma-for-tool-calling`. Note:
+   August. `distillabs.ai/learn/qwen-vs-llama-vs-gemma-for-tool-calling`. `[vendor]`. Note:
    `research/2026-distil-labs-tool-calling-families.md`.
 5. Yang, E.X. (2026) 'Phi-4-Mini vs Gemma 4 vs Qwen3-4B: Tool Calling', *ert.as*, 10 May,
-   updated 7 August. `ertas.ai/blog/on-device-tool-calling-2026-qwen3-gemma4-phi4`. Note:
-   `research/2026-ertas-on-device-tool-calling.md`.
+   updated 7 August. `ertas.ai/blog/on-device-tool-calling-2026-qwen3-gemma4-phi4`. `[vendor]`.
+   Note: `research/2026-ertas-on-device-tool-calling.md`.
 6. Jhandi, P., Kazi, O., Subramanian, S. and Sendas, N. (2026) 'Small Language Models for
    Efficient Agentic Tool Calling: Outperforming Large Models with Targeted Fine-tuning',
-   arXiv:2512.15943; AAAI 2026 workshop. `arxiv.org/abs/2512.15943`. Note:
+   arXiv:2512.15943; AAAI 2026 workshop. `arxiv.org/abs/2512.15943`. `[workshop]`. Note:
    `research/2026-slm-agentic-tool-calling.md`.
 7. Matsutani, K., Takashiro, S., Minegishi, G., Kojima, T., Iwasawa, Y. and Matsuo, Y. (2026)
    'RL Squeezes, SFT Expands: A Comparative Study of Reasoning LLMs', ICLR 2026.
-   arXiv:2509.21128. `arxiv.org/abs/2509.21128`. Note: `research/2026-rl-squeezes-sft-expands.md`.
+   arXiv:2509.21128. `arxiv.org/abs/2509.21128`. `[peer-reviewed]`. Note:
+   `research/2026-rl-squeezes-sft-expands.md`.
 8. He, C., Zhang, R., Wang, Z. and Li, X. (2026) 'Learning What to Learn: Stage-Specific Data
    Sets for SFT-then-RL in Small `Language Model` Reasoning', arXiv:2606.04466.
-   `arxiv.org/abs/2606.04466`. Note: `research/2026-learning-what-to-learn.md`.
+   `arxiv.org/abs/2606.04466`. `[preprint]`. Note: `research/2026-learning-what-to-learn.md`.
 9. Kaur, S., Ri, N., He, Y., Fowl, L.H. and Arora, S. (2026) 'Rethinking On-Policy
    Self-Distillation for Thinking Models', ICML 2026 FoGen workshop.
-   `openreview.net/forum?id=VhCJItwQHn`. Note: `research/2026-privileged-on-policy-distillation.md`.
+   `openreview.net/forum?id=VhCJItwQHn`. `[workshop]`. Note:
+   `research/2026-privileged-on-policy-distillation.md`.
 10. Luo, S., Zhu, Z., Yuan, Y., Yang, Y., Shan, L. and Wu, Y. (2025) 'GeoGramBench:
     Benchmarking the Geometric Program Reasoning in Modern LLMs', arXiv:2505.17653.
-    `arxiv.org/abs/2505.17653`. Note: `research/2025-geogrambench-program-to-geometry.md`.
+    `arxiv.org/abs/2505.17653`. `[preprint]`. Note:
+    `research/2025-geogrambench-program-to-geometry.md`.
 11. Kienle, C. et al. (2024) 'QueryCAD: Grounded Question Answering for CAD Models',
-    arXiv:2409.08704. `arxiv.org/abs/2409.08704`. Note:
+    arXiv:2409.08704. `arxiv.org/abs/2409.08704`. `[preprint]`. Note:
     `research/2024-querycad-cad-question-answering.md`.
 12. Abdullaeva, I., Vasiliuk, A., Goncharova, E., Rahmatullaev, T., Ivan, Z., Kurkin, M. and
     Kuznetsov, A. (2026) 'NoReGeo: Non-Reasoning Geometry Benchmark', *Proceedings of the AAAI
     Conference on Artificial Intelligence*, 40(23), pp. 18901–18909. doi:
-    `10.1609/aaai.v40i23.38960`. Note:
+    `10.1609/aaai.v40i23.38960`. `[peer-reviewed]`. Note:
     `research/2026-noregeo-non-reasoning-geometry-benchmark.md`.
+13. Lin, H., Huang, B., Ye, H., Chen, Q., Wang, Z., Li, S., Ma, J., Wan, X., Zou, J. and
+    Liang, Y. (2024) 'Selecting Large `Language Model` to Fine-tune via Rectified Scaling Law',
+    ICML 2024. arXiv:2402.02314. `arxiv.org/abs/2402.02314`. `[peer-reviewed]`. Note:
+    `research/2024-selecting-llm-to-finetune-rectified-scaling-law.md`.
+14. Choshen, L., Venezian, E., Don-Yehia, S., Slonim, N. and Katz, Y. (2022) 'Where to start?
+    Analyzing the potential value of intermediate models', arXiv:2211.00107.
+    `arxiv.org/abs/2211.00107`. `[preprint]`. Note:
+    `research/2022-where-to-start-intermediate-models.md`.
+15. Zeng, H., Hui, K., Zhuang, H., Qin, Z., Yue, Z., Zamani, H. and Alon, D. (2025) 'Can
+    Pre-training Indicators Reliably Predict Fine-tuning Outcomes of LLMs?', arXiv:2504.12491.
+    `arxiv.org/abs/2504.12491`. `[preprint]`. Note:
+    `research/2025-pretraining-indicators-finetuning-outcomes.md`.
+16. Kavathekar, I., Donakanti, R., Kumaraguru, P. and Vaidhyanathan, K. (2025) 'Small Models,
+    Big Tasks: An Exploratory Empirical Study on Small Language Models for Function Calling',
+    EASE 2025. doi: `10.1145/3756681.3757001`; arXiv:2504.19277. `arxiv.org/abs/2504.19277`.
+    `[peer-reviewed]`. Note: `research/2025-small-models-big-tasks-function-calling.md`.
+17. Patil, S.G., Mao, H., Ji, C.C.-J., Yan, F., Suresh, V., Stoica, I. and Gonzalez, J.E.
+    (2025) 'The Berkeley Function Calling Leaderboard (BFCL): From Tool Use to Agentic
+    Evaluation of Large Language Models', ICML 2025. `gorilla.cs.berkeley.edu/leaderboard`.
+    `[peer-reviewed]`. Note: `research/2025-berkeley-function-calling-leaderboard.md`.
+18. Haque, M.A., Rahman, F., Gupta, K.D., Shujaee, K. and George, R. (2025) 'TinyLLM:
+    Evaluation and Optimization of Small Language Models for Agentic Tasks on Edge Devices',
+    arXiv:2511.22138. `arxiv.org/abs/2511.22138`. `[preprint]`. Note:
+    `research/2025-tinyllm-agentic-edge.md`.
 
 ## Resolved questions
 

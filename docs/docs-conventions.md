@@ -182,6 +182,9 @@ P0/P1 commitment.
 
 - **Describe logic and decisions**, in domain terms — not code. Code churns; by the end
   only the logic and the decisions matter.
+- **Citations.** Cite the strongest independent reference first; prefer peer-reviewed and lab
+  research to an interested party. The sourcing standards and provenance tags live in
+  `research/README.md#sourcing-standards`.
 - **Verification is separate.** The heavy checks (oracle grading, parity, sandbox) are the
   audit, not the writing pass.
 - **Conflicts are findings.** A doc/code disagreement is recorded and one side is fixed.
