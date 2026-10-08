@@ -25,11 +25,8 @@ invents a new word, it is wrong — the word should already be here, or be added
 - **Keep qualifiers when composing.** A term built on a qualified term keeps its
   qualifier: a Measurement over a Shape snapshot is a **Shape snapshot measurement**, never
   a "Snapshot measurement" or "snapshot measurement".
-- **Full term in product-facing text; short term in-context.** In a PRD, a user story, or
-  any product-facing or mixed sentence, a Domain term keeps its qualifier. In a technical
-  doc or code that clearly already belongs to that concept (for example the pipeline step
-  for its stage), the short word is acceptable — but never in a sentence where it could
-  mean something else.
+- **Qualify everywhere.** Use the qualified term in docs; there are no short-form aliases.
+  Code keeps the documented `In code:` identifiers.
 - **Meaning, not implementation.** An entry says what the term means, and optionally why
   that word is used (`Distinct from:`, never-say). It never says how something works —
   that belongs in the specs. Names of types, tables, routes, or `In code:` identifiers may
@@ -150,12 +147,12 @@ One question instance — a single record in the rows artifact holding every fie
 public prompt plus the private verifier material (gold answer, Gold query program,
 candidate-set trace, clue map).
 
-#### Public column set
+#### Public CAD-QA dataset row column set
 
 The answer-free columns of a CAD-QA dataset row: the prompt and metadata, with the gold
 answer, Gold query program, candidate-set trace, and clue map withheld.
 
-#### Private column set
+#### Private CAD-QA dataset row column set
 
 The verifier columns of a CAD-QA dataset row: gold answer, Gold query program,
 candidate-set trace, and clue map.
@@ -350,7 +347,7 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | profile (bare) | CadQuery profile | generic |
 | material region (cad_qa) / void region (cad_qa) | Added-material region / Removed-material region | unclear |
 | dataset row (cad_qa) | CAD-QA dataset row | which dataset? |
-| public row / private row | Public column set / Private column set | not separate rows; column sets of one row |
+| public row / private row | Public CAD-QA dataset row column set / Private CAD-QA dataset row column set | not separate rows; column sets of one row |
 | query program (cad_qa, tools) | Gold query program | conflated with a general query |
 | clause | Gold query predicate | wrong; not a logic clause |
 | candidate trace (cad_qa, tools) | Candidate-set trace | candidate to what? |
