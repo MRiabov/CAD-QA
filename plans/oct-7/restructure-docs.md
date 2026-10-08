@@ -60,6 +60,10 @@ scanned. See the entry below.
   base-pipeline ADR) is still owed.
 - New canonical trees: `docs/research/` (external study notes) and `docs/paper/` (the
   manuscript; excluded from the Don't-say lint).
+- Repo-structure decision corrected (D13): the generation package is `dataset/` (the repo is
+  CAD-QA), a sibling of `train_and_eval/`; **all** eval logic — `cad_qa/evaluation/`, the eval
+  CLI, and the Harbor runner/grader — belongs in `train_and_eval/`, and `dataset/` is
+  generation only.
 - Still outstanding: `docs/adr/` absent; `specs/` not folded; only the Don't-say checker of D8
   exists; Phase 0a rename not started.
 
@@ -319,28 +323,46 @@ reasoning datasets. We should mine those rather than hand-roll.
 
 ## Repo and code structure
 
-The repo layout is strange (vibecoded). Keep **two top-level packages** coupled only by an
-input/output interface:
+CAD-QA is the paper, and the repo *is* CAD-QA, so all code nests here; the generation package
+is `dataset/` (not `cad_qa/`, which would repeat the paper name). Two top-level code packages,
+coupled one way only by the rows I/O contract:
 
-- `dataset_generation/` — CAD-QA dataset/benchmark generation (rename of today's frozen
-  `cad_qa/`; see Code-change policy and D13).
-- `train_and_eval/` — training / evaluation (being revised; name kept as is).
+- `dataset/` — **generation only** (rename of today's frozen `cad_qa/`): `source.py`,
+  `trace.py`, `ontology/`, `query/`, `prompts/`, and the materialize→validate→release→export
+  subpackage. See Code-change policy.
+- `train_and_eval/` — **all** training and evaluation logic (being revised), including the
+  answer grader and the Harbor runner/grader.
 
 Rules:
 
-- **The rename is P1** — do it now.
+- **The move is P1** — do it now.
 - **Folder fan-out CI is P2** — a "no directory > ~10 entries" check, ratcheted down, built
   only if the tree actually needs it.
 - File length: aim small and split by responsibility. The 800-line rule is advisory here
   ("to hell with 800 lines"), not blocking.
-- Coupling: `train_and_eval/` consumes `dataset_generation/` outputs through the documented
-  rows I/O contract (the rows artifact + answer contract) only; no shared internals.
-- Naming: code package directories use underscores (`dataset_generation`, `train_and_eval`) —
-  Python import names. Hyphens are for docs only (`docs/fine-tuning/`).
+- Coupling is one-way: `train_and_eval/` consumes `dataset/` outputs through the documented
+  rows I/O contract (the rows artifact + answer contract) only; `dataset/` never imports
+  `train_and_eval/`.
+- Naming: code package directories use underscores (`dataset`, `train_and_eval`) — Python
+  import names. Hyphens are for docs only (`docs/fine-tuning/`).
 
-This rename is mechanical (move + import fixes), so it does not violate the
-dataset-generation freeze: it changes where code lives, not what it computes. Precedent:
-the RunAudit `docs-restructure` plan
+Moves:
+
+- `cad_qa/` → `dataset/` (package rename; the `cadqa = cad_qa.cli:main` entrypoint and every
+  `cad_qa.*` import rewired).
+- `cad_qa/evaluation/` → `train_and_eval/grading/` — it is eval logic (`grade`/`parse`/
+  `baselines`/`requests`/`tool_assisted`/`closed_book`), and the generation pipeline never
+  imports it.
+- `cad_qa/dataset/` → a clearer name than `dataset/dataset/` (it is the release/export stage):
+  `dataset/release/`, or split `materialize/` + `release/`.
+- Eval CLI and the Harbor runner/grader move to `train_and_eval/`; the Harbor *task export*
+  stays in `dataset/`. The `cadqa` CLI becomes a cross-package orchestrator (or a train/eval
+  CLI is added).
+- Open: `query/` is vague — consider `gold_query/` or `query_synthesis/`.
+
+The move is mechanical (move + import fixes), so it does not violate the dataset-generation
+freeze: it changes where code lives, not what it computes. Precedent: the RunAudit
+`docs-restructure` plan
 (`RunAudit/.worktrees/docs-restructure/runaudit/plans/clarify-docs-structure.md`).
 
 ## 1. The problem this restructure fixes
@@ -569,9 +591,11 @@ priority (`P0`/`P1`/`P2`) per the tier rule above.
   vLLM parity, SFT masking, rows loader. Consolidate one runnable command per stage.
   Re-run the 12-row SFT eval. Gate: every load-bearing component is `verified` or
   explicitly `blocked`.
-- **Phase 0a — Repo restructure (mechanical). [P1; fan-out check P2]** Rename `cad_qa/` to
-  `dataset_generation/` (keep `train_and_eval/`), coupled only by the rows I/O contract. Do
-  this before the audit so citations use the final layout. Folder fan-out CI is P2.
+- **Phase 0a — Repo structure (mechanical). [P1; fan-out check P2]** Rename `cad_qa/` →
+  `dataset/`; move `cad_qa/evaluation/` → `train_and_eval/grading/`; rename the inner
+  `cad_qa/dataset/` (it is the release/export stage); move the eval CLI and the Harbor
+  runner/grader to `train_and_eval/`. Keep the rows I/O contract as the only coupling. Folder
+  fan-out CI is P2.
 - **Phase 0b — Prior-art code mining. [P1]** Survey established open-source training / RL /
   data pipelines; record findings in `docs/prior-art.md`; pick a base pipeline to build on
   (ADR, D11). Gate: adoption decision recorded before Phase 3 design.
@@ -622,10 +646,13 @@ settled (same rule as the per-doc sections).
 - **D10 — Harness priorities.** **`numpy` is the primary harness (P0)**; `no_tools` and
   full-CadQuery ("mode-3") are both **P2** (strict-reasoning and tool-assisted upper
   bounds). Mode-3 is implemented nowhere yet.
-- **D13 — Repo/code restructure.** Rename `cad_qa/` → `dataset_generation/`; **keep
-  `train_and_eval/`** (it reads better than an invented `fine_tuning/`). The two packages are
-  coupled only by the rows I/O contract. Folder fan-out CI and file-length rules are **P2** —
-  added only if needed.
+- **D13 — Repo/code structure.** CAD-QA is the paper and the repo is CAD-QA, so the generation
+  package is **`dataset/`** (rename of `cad_qa/`; not `cad_qa/` or `dataset_generation/`), a
+  sibling of **`train_and_eval/`**. `dataset/` is **generation only**; **all** training and
+  eval logic — `cad_qa/evaluation/` → `train_and_eval/grading/`, the eval CLI, and the Harbor
+  runner/grader — moves to `train_and_eval/`. Coupling is one-way: `train_and_eval/` consumes
+  `dataset/` through the rows I/O contract; `dataset/` never imports `train_and_eval/`. Folder
+  fan-out CI and file-length rules are **P2**.
 
 ### Open
 
