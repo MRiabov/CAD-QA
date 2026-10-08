@@ -63,6 +63,8 @@ Legend: `[ ]` todo · `[x]` done · `(D#)` links a decision in
 - [ ] E4 `json`/`number` teacher coverage is zero — fix before training those formats.
 - [ ] E5 Prompt clarity: `prompt-templates.yaml` renders questions that are unclear even to
       the owner as a reader — clarify the templates, re-render, re-check before freezing.
+- [ ] E6 Unify the hop-count name: the row's `logical_hop_count` and the Gold query
+      program's `hop_count` are one concept under two names (frozen `cad_qa/`).
 
 ## F. Baselines
 

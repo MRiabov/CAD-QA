@@ -207,8 +207,9 @@ The verifier-backed correct answer for a CAD-QA dataset row.
 
 ### Reasoning hop count
 
-The number of reasoning steps a CAD-QA dataset row requires. `In code:`
-`logical_hop_count` (the Gold query program stores it as `hop_count`).
+The number of reasoning steps a CAD-QA dataset row requires. `In code:` `logical_hop_count`
+on the row, `hop_count` on the Gold query program — one concept under two names, a
+divergence to unify.
 
 #### Syntactic reasoning hop count
 
