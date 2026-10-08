@@ -22,7 +22,7 @@ paper/thesis.
 ## Phase 0 — Trust audit (no GPU) [P0]
 
 Establish what the code actually does, so later numbers are trustworthy. The owner-facing
-checklist is `_audit/owner-audit-todo.md` (group C).
+checklist is `_audit/owner-audit-todo.md` (group C); the program is `plans/oct-8/trust-audit.md`.
 
 - Highest-risk items: the grader (`cad_qa/evaluation/grade.py::grade_public_private`) versus
   the reward (`train_and_eval/...::reward_cadqa`); `run_code` sandbox isolation; vLLM versus
