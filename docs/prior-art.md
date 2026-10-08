@@ -91,48 +91,50 @@ Motivated by the first CAD-QA passes with gemma-4-E2B and small Qwen LLM models 
 "lots of effort, little gain".
 
 **Base rank does not predict fine-tuned rank.** distil labs' 12-LLM-model, 8-task benchmark
-(Dec 2025) produced three different winners for three questions: best zero-shot — Qwen3-8B
+(Dec 2025) [1] produced three different winners for three questions: best zero-shot — Qwen3-8B
 (rank 1.75); best after fine-tuning — Qwen3-4B-Instruct-2507 (2.25); most tunable —
 Llama-3.2-1B-Instruct (3.44), i.e. tunability inverts the size hierarchy. Their 4-LLM-model
-MoE benchmark (Jul 2026) nearly inverted the ordering: the worst zero-shot
+MoE benchmark (Jul 2026) [3] nearly inverted the ordering: the worst zero-shot
 (Nemotron-3-Nano-30B, base rank 3.43) was the most tunable (1.29) and tied for best after
 fine-tuning (1.00). Their reading: base leaderboards are a poor guide to which base LLM model
 to fine-tune; choose on deployment constraints and let training close the gap. The tunability
-crown also moves between studies and dates: Llama-3.2-1B in the Dec 2025 12-LLM-model study;
-LFM2-350M, LFM2-1.2B, and LFM2.5-1.2B-Instruct in a Mar 2026 15-LLM-model study;
-Nemotron-3-Nano-30B in the Jul 2026 MoE study.
+crown also moves between studies and dates: Llama-3.2-1B in the Dec 2025 12-LLM-model study
+[1]; LFM2-350M, LFM2-1.2B, and LFM2.5-1.2B-Instruct in a Mar 2026 15-LLM-model study [2];
+Nemotron-3-Nano-30B in the Jul 2026 MoE study [3].
 
-**Family sets the start; training sets the finish.** In a tool-calling study (Aug 2026), base
-scores spread from 9.9% to 63.2% across families on the same tasks, but tuned scores converge
-into a 90–98% band — "the starting point is a family property; the finishing point mostly
-isn't." Fine-tuning moves accuracy far more than family choice: FunctionGemma 270M goes
-9.90%→96.04% on shell commands; LFM2.5-350M goes 61.4%→98.0% and beats its ~120B teacher
-(97.03%); a fine-tuned Qwen3-4B matches or exceeds a GPT-OSS-120B teacher on 7 of 8 tasks. A
-separate AAAI 2026 workshop study reached 77.55% ToolBench pass with a single SFT epoch on
-OPT-350M, above ChatGPT-CoT (26.00%) and ToolLLaMA-DFS (30.18%).
+**Family sets the start; training sets the finish.** In a tool-calling study (Aug 2026) [4],
+base scores spread from 9.9% to 63.2% across families on the same tasks, but tuned scores
+converge into a 90–98% band — "the starting point is a family property; the finishing point
+mostly isn't." Fine-tuning moves accuracy far more than family choice: FunctionGemma 270M goes
+9.90%→96.04% on shell commands [4]; LFM2.5-350M goes 61.4%→98.0% and beats its ~120B teacher
+(97.03%) [4]; a fine-tuned Qwen3-4B matches or exceeds a GPT-OSS-120B teacher on 7 of 8 tasks
+[1]. A separate AAAI 2026 workshop study reached 77.55% ToolBench pass with a single SFT epoch
+on OPT-350M, above ChatGPT-CoT (26.00%) and ToolLLaMA-DFS (30.18%) [6].
 
 **Per-family notes (2026 tool-calling).** Qwen3/Qwen3.5 has the strongest all-round
-fine-tuned record and the best un-tuned tool-calling priors, and is eligible across 0.6B–9B.
-Llama 3.2 1B/3B is the most tunable from thin seed data. Liquid LFM2/LFM2.5 ranks in the top
-for tunability, and LFM2.5-350M posted the highest tuned tool-calling scores at that size.
-Gemma 3 is excluded from the tool-calling catalog at every size; only Gemma 4 E2B/E4B and
-FunctionGemma 270M qualify, with native function-call special tokens. Phi-4-mini (~3.8B, MIT)
-has the strongest reasoning chain but slightly weaker raw tool mapping.
+fine-tuned record and the best un-tuned tool-calling priors, and is eligible across 0.6B–9B
+[4]. Llama 3.2 1B/3B is the most tunable from thin seed data [1]. Liquid LFM2/LFM2.5 ranks in
+the top for tunability [2], and LFM2.5-350M posted the highest tuned tool-calling scores at
+that size [4]. Gemma 3 is excluded from the tool-calling catalog at every size; only Gemma 4
+E2B/E4B and FunctionGemma 270M qualify, with native function-call special tokens [4].
+Phi-4-mini (~3.8B, MIT) has the strongest reasoning chain but slightly weaker raw tool mapping
+[5].
 
-**Reasoning preservation (SFT vs RL).** "RL Squeezes, SFT Expands" (ICLR 2026) finds SFT
+**Reasoning preservation (SFT vs RL).** "RL Squeezes, SFT Expands" (ICLR 2026) [7] finds SFT
 expands the reasoning graph while RL squeezes it into hub-like structures, and that the
 two-stage SFT→RL ordering is best practice — directly relevant to CAD-QA's recorded GRPO
-collapse, which is a squeeze symptom. "Learning What to Learn" (2026) argues SFT should
+collapse, which is a squeeze symptom. "Learning What to Learn" (2026) [8] argues SFT should
 acquire not-yet-mastered skills and RL should consolidate skills already partly accessible,
 so difficulty must be aligned to the stage. Privileged on-policy distillation can degrade
 thinking LLM models (up to 17% relative drop in avg@16) by suppressing self-correction at
-high-entropy positions, so copying full teacher reasoning data is not obviously safe.
+high-entropy positions [9], so copying full teacher reasoning data is not obviously safe.
 
 **The task itself is hard, independent of the base.** GeoGramBench (500 Program-to-Geometry
 problems) found even frontier LLM models below 50% at the highest abstraction level, with
-chain-of-thought not helping; QueryCAD's CAD question-answering benchmark had GPT-4o answer
-44 of 111. For CAD-QA's hard (3+ hop) slice, a small base LLM model faces a capability
-ceiling, so "little gain" may be the task rather than the tuning.
+chain-of-thought not helping [10]; QueryCAD's CAD question-answering benchmark had GPT-4o
+answer 44 of 111 [11]; and NoReGeo reports that fine-tuning alone does not confer native
+geometric understanding [12]. For CAD-QA's hard (3+ hop) slice, a small base LLM model faces a
+capability ceiling, so "little gain" may be the task rather than the tuning.
 
 **Implication for CAD-QA.** The external evidence says a base-LLM-model swap should not be
 expected to fix a recipe/data wall. Fix the recipe first (prompt-masked SFT, bounded epochs,
@@ -145,14 +147,52 @@ the agent training trace set and recipe fixed, swap 3–4 bases, evaluate on the
 1-hop slice, and report accuracy, entropy, and completion length — this separates the base
 variable from the recipe variable.
 
-Citations (external, dated): `distillabs.ai/learn/qwen-vs-llama-vs-gemma-for-tool-calling`
-(Aug 2026); `distillabs.ai/blog/what-small-language-model-is-best-for-fine-tuning` (Mar 2026);
-`distillabs.ai/blog/does-base-model-accuracy-predict-fine-tuned-performance` (Jul 2026);
-`distillabs.ai/learn/does-base-model-accuracy-predict-fine-tuned-performance` (Aug 2026);
-`distillabs.ai/blog/we-benchmarked-12-small-language-models-across-8-tasks` (Dec 2025);
-`arxiv.org/abs/2512.15943` (AAAI 2026 workshop); `arxiv.org/abs/2509.21128` (ICLR 2026);
-`arxiv.org/abs/2606.04466`; `arxiv.org/abs/2505.17653` (GeoGramBench); `ertas.ai` on-device
-tool-calling (2026).
+### References
+
+External sources for this section, numbered to match the markers above. One summary note per
+reference lives in [`research/`](research/README.md).
+
+1. distil labs (2025) 'We Benchmarked 12 Small Language Models Across 8 Tasks to Find the Best
+   Base LLM Model for Fine-Tuning', *distil labs blog*, 10 December.
+   `distillabs.ai/blog/we-benchmarked-12-small-language-models-across-8-tasks`. Note:
+   `research/2025-distil-labs-12-small-models-fine-tuning.md`.
+2. distil labs (2026) 'What Small `Language Model` Is Best for Fine-Tuning', *distil labs
+   blog*, 16 March. `distillabs.ai/blog/what-small-language-model-is-best-for-fine-tuning`.
+   Note: `research/2026-distil-labs-15-small-models-fine-tuning.md`.
+3. distil labs (2026) 'Does `Base-Model` Accuracy Predict Fine-Tuned Performance: A Mid-Size
+   MoE Benchmark', *distil labs blog*, 16 July.
+   `distillabs.ai/blog/does-base-model-accuracy-predict-fine-tuned-performance`. Note:
+   `research/2026-distil-labs-base-vs-tuned-moe.md`.
+4. distil labs (2026) 'Qwen vs Llama vs Gemma for Tool Calling', *distil labs learn*, 2
+   August. `distillabs.ai/learn/qwen-vs-llama-vs-gemma-for-tool-calling`. Note:
+   `research/2026-distil-labs-tool-calling-families.md`.
+5. Yang, E.X. (2026) 'Phi-4-Mini vs Gemma 4 vs Qwen3-4B: Tool Calling', *ert.as*, 10 May,
+   updated 7 August. `ertas.ai/blog/on-device-tool-calling-2026-qwen3-gemma4-phi4`. Note:
+   `research/2026-ertas-on-device-tool-calling.md`.
+6. Jhandi, P., Kazi, O., Subramanian, S. and Sendas, N. (2026) 'Small Language Models for
+   Efficient Agentic Tool Calling: Outperforming Large Models with Targeted Fine-tuning',
+   arXiv:2512.15943; AAAI 2026 workshop. `arxiv.org/abs/2512.15943`. Note:
+   `research/2026-slm-agentic-tool-calling.md`.
+7. Matsutani, K., Takashiro, S., Minegishi, G., Kojima, T., Iwasawa, Y. and Matsuo, Y. (2026)
+   'RL Squeezes, SFT Expands: A Comparative Study of Reasoning LLMs', ICLR 2026.
+   arXiv:2509.21128. `arxiv.org/abs/2509.21128`. Note: `research/2026-rl-squeezes-sft-expands.md`.
+8. He, C., Zhang, R., Wang, Z. and Li, X. (2026) 'Learning What to Learn: Stage-Specific Data
+   Sets for SFT-then-RL in Small `Language Model` Reasoning', arXiv:2606.04466.
+   `arxiv.org/abs/2606.04466`. Note: `research/2026-learning-what-to-learn.md`.
+9. Kaur, S., Ri, N., He, Y., Fowl, L.H. and Arora, S. (2026) 'Rethinking On-Policy
+   Self-Distillation for Thinking Models', ICML 2026 FoGen workshop.
+   `openreview.net/forum?id=VhCJItwQHn`. Note: `research/2026-privileged-on-policy-distillation.md`.
+10. Luo, S., Zhu, Z., Yuan, Y., Yang, Y., Shan, L. and Wu, Y. (2025) 'GeoGramBench:
+    Benchmarking the Geometric Program Reasoning in Modern LLMs', arXiv:2505.17653.
+    `arxiv.org/abs/2505.17653`. Note: `research/2025-geogrambench-program-to-geometry.md`.
+11. Kienle, C. et al. (2024) 'QueryCAD: Grounded Question Answering for CAD Models',
+    arXiv:2409.08704. `arxiv.org/abs/2409.08704`. Note:
+    `research/2024-querycad-cad-question-answering.md`.
+12. Abdullaeva, I., Vasiliuk, A., Goncharova, E., Rahmatullaev, T., Ivan, Z., Kurkin, M. and
+    Kuznetsov, A. (2026) 'NoReGeo: Non-Reasoning Geometry Benchmark', *Proceedings of the AAAI
+    Conference on Artificial Intelligence*, 40(23), pp. 18901–18909. doi:
+    `10.1609/aaai.v40i23.38960`. Note:
+    `research/2026-noregeo-non-reasoning-geometry-benchmark.md`.
 
 ## Resolved questions
 
