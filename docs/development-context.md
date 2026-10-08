@@ -107,4 +107,4 @@ as a headline number.
   `trl==0.22.2`, `torch==2.10.0`, and `vllm==0.15.x`/`0.17.x`), while the RL/SFT docs cite
   `trl 1.9.2`, `transformers 5.14.1`, and `vLLM 0.26`. Which stack produced the recorded
   results is `[unknown]`; the repo cannot reproduce its training environment from tracked
-  files. See `fine-tuning/requirements.md`.
+  files. See `train-and-eval/fine-tuning/requirements.md`.

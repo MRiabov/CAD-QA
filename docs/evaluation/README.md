@@ -21,7 +21,7 @@ intent (targets, metrics, definition of done) stays in `PRD.md`.
   the Harbor export and runner (`cad_qa/harbor.py`, `docs/_archive/harbor.md`), the grading
   and answer-parsing contract (`cad_qa/evaluation/`), and the baseline families.
 - Out of scope: dataset generation and the training pipeline. Their contracts live
-  under `dataset/` and `fine-tuning/`.
+  under `dataset/` and `train-and-eval/fine-tuning/`.
 
 ## Related canonical references
 

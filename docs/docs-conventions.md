@@ -43,13 +43,14 @@ docs/
     pipeline/
       00-overview.md            # DAG + stage IO contract
       NN[a-z]-<slug>.md         # 01-source-ingestion.md, 01a-…, 04c-…
-  fine-tuning/
-    README.md
-    requirements.md
-    decisions.md
-    pipeline/
-      00-overview.md
-      NN[a-z]-<slug>.md
+  train-and-eval/
+    fine-tuning/
+      README.md
+      requirements.md
+      decisions.md
+      pipeline/
+        00-overview.md
+        NN[a-z]-<slug>.md
   evaluation/
     README.md
     harness.md
@@ -114,7 +115,7 @@ rationale — link the decision — and never redefine field names — match the
 - Record each decision at the **narrowest scope that owns it**, in this order:
   1. **Step-local** — in that step doc's `## Local decisions` (the file you are editing),
      e.g. `pipeline/02-trace-snapshot.md#local-decisions`.
-  2. **Feature-wide** — in the feature's `decisions.md` (`dataset/`, `fine-tuning/`), for
+  2. **Feature-wide** — in the feature's `decisions.md` (`dataset/`, `train-and-eval/fine-tuning/`), for
      logic that spans the feature's stages; e.g. `dataset/decisions.md#dd-01`.
   3. **Cross-cutting/plan** — D1–D14 stay in the plan / `development-plan.md`.
 - Format: `Status` / `Context` / `Decision` / `Consequences`. There is no central
@@ -128,14 +129,14 @@ rationale — link the decision — and never redefine field names — match the
 - Headings are part of the interface. Rename them deliberately; anchors are referenced
   elsewhere.
 - Code package directories use underscores (`dataset`, `train_and_eval`) because
-  they are Python imports. Hyphens are for docs only (`docs/fine-tuning/`).
+  they are Python imports. Hyphens are for docs only (`docs/train-and-eval/`).
 
 ## References
 
 Never cite line numbers — they drift. Cite in this order of preference:
 
 - code: `path::symbol`
-- another doc: a heading/anchor, e.g. `fine-tuning/pipeline/04-sft.md#requirement`
+- another doc: a heading/anchor, e.g. `train-and-eval/fine-tuning/pipeline/04-sft.md#requirement`
 - a decision: `<feature>/decisions.md#<anchor>`, or the step's local decision number
 - an artifact: its path or revision hash
 

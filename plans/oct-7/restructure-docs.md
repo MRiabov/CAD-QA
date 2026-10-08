@@ -15,7 +15,7 @@ the handoff. It is intentionally a plan, not the docs.
   `docs/development-context.md`, `docs/PRD.md`, `docs/glossary.md` (seeded; legacy-term
   audit pending).
 - Plan-level: `docs/development-plan.md`, `docs/prior-art.md` (seed).
-- Pipeline: `docs/dataset/**` (11 files), `docs/fine-tuning/**` (11 files),
+- Pipeline: `docs/dataset/**` (11 files), `docs/train-and-eval/fine-tuning/**` (11 files),
   `docs/evaluation/**` (3 files) — drafted by subagents, each step status-tagged with a
   verification command.
 - Owner checklist: `docs/_audit/owner-audit-todo.md`.
@@ -148,7 +148,7 @@ the spirit of the product-launch repo.
 ### Evidence and reproducibility
 
 - **Cite stable anchors, not lines.** When you cite code or another doc for evidence, use
-  `path::symbol`, a heading/anchor (e.g. `docs/fine-tuning/pipeline/04-sft.md#requirement`),
+  `path::symbol`, a heading/anchor (e.g. `docs/train-and-eval/fine-tuning/pipeline/04-sft.md#requirement`),
   a decision ref (`<feature>/decisions.md#<anchor>`), or an artifact path — never line
   numbers. The logic docs
   themselves describe behaviour in words; they do not mirror code or cite per sentence.
@@ -161,7 +161,7 @@ the spirit of the product-launch repo.
 
 - Record each decision at the **narrowest scope that owns it**, in this order: **step-local**
   (in that step doc's `## Local decisions`), then **feature-wide** (`<feature>/decisions.md`
-  — `dataset/`, `fine-tuning/`), then **cross-cutting** (D1–D14, in the plan /
+  — `dataset/`, `train-and-eval/`), then **cross-cutting** (D1–D14, in the plan /
   `development-plan.md`). **There is no central `docs/adr/` folder.**
 - Adopted from product-launch: high ROI, keeps docs from sprawling and always
   referenceable. Decisions are the durable *why*; pipeline docs point at them instead of
@@ -346,7 +346,7 @@ Rules:
   rows I/O contract (the rows artifact + answer contract) only; `dataset/` never imports
   `train_and_eval/`.
 - Naming: code package directories use underscores (`dataset`, `train_and_eval`) — Python
-  import names. Hyphens are for docs only (`docs/fine-tuning/`).
+  import names. Hyphens are for docs only (`docs/train-and-eval/`).
 
 Moves:
 
@@ -419,19 +419,20 @@ docs/
       05-prompt-rendering.md
       06-materialize-validate-release.md
       07-exports-harbor-sft.md
-  fine-tuning/
-    README.md
-    requirements.md
-    decisions.md                # local decisions (ADR format)
-    pipeline/
-      00-overview.md
-      01-rows-loader.md
-      02-teacher-sampling.md
-      03-trace-normalization.md
-      04-sft.md
-      05-grpo.md
-      06-harness-modes.md
-      07-serving-vllm.md
+  train-and-eval/
+    fine-tuning/
+      README.md
+      requirements.md
+      decisions.md              # local decisions (ADR format)
+      pipeline/
+        00-overview.md
+        01-rows-loader.md
+        02-teacher-sampling.md
+        03-trace-normalization.md
+        04-sft.md
+        05-grpo.md
+        06-harness-modes.md
+        07-serving-vllm.md
   evaluation/
     README.md
     harness.md
@@ -487,11 +488,11 @@ Notes:
 
 ### `docs/prior-art.md`
 - Code/implementation prior art: established training / RL / data pipelines, what we adopt
-  and what we reject. Feeds `docs/fine-tuning/` and the base-pipeline decision (D11).
+  and what we reject. Feeds `docs/train-and-eval/fine-tuning/` and the base-pipeline decision (D11).
 
 ### Decisions (`decisions.md`)
 - Per-feature decision records (ADR format), created on demand as decisions land:
-  `dataset/decisions.md`, `fine-tuning/decisions.md`. No central `docs/adr/` folder.
+  `dataset/decisions.md`, `train-and-eval/fine-tuning/decisions.md`. No central `docs/adr/` folder.
 
 ### `docs/research-scopes/`
 - Per-workstream PRDs. Only CADEditQA is a candidate today (D7).

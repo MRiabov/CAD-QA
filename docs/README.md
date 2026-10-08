@@ -19,7 +19,7 @@ procedural CAD programs (CadQuery), and a small-LLM-model fine-tuning effort on 
 6. **`prior-art.md`** — mined open-source training/RL/data pipelines.
 7. **`research/`** — external study notes and citations for related work.
 8. **`dataset/`** — the benchmark-generation pipeline, step by step.
-9. **`fine-tuning/`** — the training and evaluation pipeline.
+9. **`train-and-eval/fine-tuning/`** — the training and evaluation pipeline.
 10. **`evaluation/`** — harnesses and baselines.
 
 ## Canonical references
@@ -32,11 +32,11 @@ procedural CAD programs (CadQuery), and a small-LLM-model fine-tuning effort on 
 | What is true right now | `development-context.md` |
 | What happens next | `development-plan.md` |
 | How the dataset is built | `dataset/pipeline/00-overview.md` |
-| How the LLM model is trained | `fine-tuning/pipeline/00-overview.md` |
+| How the LLM model is trained | `train-and-eval/fine-tuning/pipeline/00-overview.md` |
 | How models are evaluated | `evaluation/harness.md` |
 | Paper citations and study notes | `research/` |
 | Past experiments | `experiments/` |
-| Decisions | `adr/` |
+| Decisions | `dataset/decisions.md`, `train-and-eval/fine-tuning/decisions.md` |
 | The written paper | `paper/CA2_Riabov_final.md` (with `paper/CA2_Riabov_final.tex`) |
 
 ## Conventions in one line

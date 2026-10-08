@@ -63,7 +63,7 @@ The step-by-step commands are in `../experiment_execution_runbook.md`.
 ## Scope boundary
 
 This pipeline ends at the rows/public/private artifacts and their exports. Training and
-evaluation of models live under `docs/fine-tuning/`; the evaluation harness and baselines
+evaluation of models live under `docs/train-and-eval/fine-tuning/`; the evaluation harness and baselines
 live under `docs/evaluation/`. The coupling is the dataset file plus the answer contract,
 nothing else.
 

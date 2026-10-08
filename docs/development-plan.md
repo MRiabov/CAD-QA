@@ -28,7 +28,7 @@ checklist is `_audit/owner-audit-todo.md` (group C).
   the reward (`train_and_eval/...::reward_cadqa`); `run_code` sandbox isolation; vLLM versus
   transformers output parity; SFT prompt masking; the environment pins.
 - Consolidate one runnable verification command per pipeline step (see
-  `dataset/requirements.md`, `fine-tuning/requirements.md`).
+  `dataset/requirements.md`, `train-and-eval/fine-tuning/requirements.md`).
 
 **Gate:** every load-bearing component is `verified` or explicitly `blocked`.
 
@@ -66,7 +66,7 @@ call; grade with the audited grader. Re-run or retire the stale shortcut baselin
 
 ## Phase 3 — Reasoning-preserving fine-tuning [SFT P0; GRPO P1]
 
-Design first (an ADR plus `fine-tuning/pipeline/00-overview.md`):
+Design first (a decision plus `train-and-eval/fine-tuning/pipeline/00-overview.md`):
 
 - format via constrained decoding where possible;
 - prompt-masked SFT, bounded epochs, if SFT is used;
