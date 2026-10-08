@@ -132,15 +132,22 @@ The 2D shape drawn on a CadQuery workplane (circle, rectangle, polyline).
 
 ---
 
+### CAD feature
+
+A modeling feature of a CadQuery program — an extrude, a cut, a fillet, and so on. A CAD
+ontology node type.
+
+---
+
 ### Added-material region
 
-The geometry a feature adds.
+The geometry a CAD feature adds.
 
 ---
 
 ### Removed-material region
 
-The geometry a feature removes.
+The geometry a CAD feature removes.
 
 ---
 
