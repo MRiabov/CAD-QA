@@ -7,7 +7,7 @@ linted. Regenerate:
 uv run python tools/check_dont_say.py --quiet
 ```
 
-As of 2026-10-08 the checker reports **361 hits**, all in `docs/`. Code is clean: the
+As of 2026-10-08 the checker reports **358 hits**, all in `docs/`. Code is clean: the
 identifier-shaped Don't-says that appear in code (`OntologyGraph`, `entity_id`,
 `QueryProgram`, `hop_count`, `void_region`, `difficulty_bucket`, …) are documented
 `In code:` names and are exempted per tree with `(cad_qa)`-style annotations. 447 → 357

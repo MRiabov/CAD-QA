@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Render each **training trace** into one gemma-native conversation string (the `text` field)
+Render each **Agent training trace** into one gemma-native conversation string (the `text` field)
 that SFT can train on directly.
 
 ## Inputs / outputs

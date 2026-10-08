@@ -63,7 +63,7 @@ One CadQuery program the benchmark draws from. `In code:` `SourceRecord`.
 
 ### CAD query trace
 
-The execution record of a CadQuery program. `Distinct from:` **Training trace**.
+The execution record of a CadQuery program. `Distinct from:` **Agent training trace**.
 
 ---
 
@@ -195,7 +195,7 @@ resolves; each Gold query predicate narrows it, and it should end at one node.
 ### Answer candidate set trace
 
 The record of how the Answer candidate set narrows to the gold answer.
-`In code:` `CandidateSetTrace`. `Distinct from:` **CAD query trace**, **Training trace**.
+`In code:` `CandidateSetTrace`. `Distinct from:` **CAD query trace**, **Agent training trace**.
 
 ---
 
@@ -240,28 +240,28 @@ A CAD-QA dataset row that resolves but cannot be released.
 
 ---
 
-### Training trace
+### Agent training trace
 
-A model-facing record of reasoning followed by a tool call, used as supervision.
-`Distinct from:` **CAD query trace**, **Candidate-set trace**.
+A record of reasoning followed by a tool call, produced to train an agent and used as
+supervision. `Distinct from:` **CAD query trace**, **Answer candidate set trace**.
 
 ---
 
 ### Submit tool
 
-The typed answer tools a model emits to answer (`submit_label`, `submit_number`, …).
+The typed answer tools an LLM model emits to answer (`submit_label`, `submit_number`, …).
 
 ---
 
 ### run_code
 
-The sandboxed Python/NumPy compute tool available to the model.
+The sandboxed Python/NumPy compute tool available to the LLM model.
 
 ---
 
 ### compact_trace
 
-A tool that shortens reasoning while a Training trace is produced.
+A tool that shortens reasoning while an Agent training trace is produced.
 
 ---
 
@@ -290,7 +290,7 @@ The readiness bar a dataset is validated against: `smoke`, `release-candidate`, 
 
 ### Harness mode
 
-Which compute tools a model gets during evaluation.
+Which compute tools an LLM model gets during evaluation.
 
 #### numpy harness
 
@@ -328,7 +328,7 @@ The input/output contract between `dataset_generation` and `fine_tuning`.
 
 ### Harbor
 
-The environment and runner used to evaluate cost-effective models on the benchmark.
+The environment and runner used to evaluate cost-effective LLM models on the benchmark.
 
 ---
 
@@ -363,8 +363,8 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | verifier (bare) | Query verifier | unqualified |
 | quarantine | Non-release-ready CAD-QA dataset row | imprecise |
 | "intent" (as a doc) | PRD | "intent" is the concept, not the artifact |
-| trace (bare) | CAD query trace / Training trace / Answer candidate set trace | overloaded across concepts |
-| model (bare) | base model / adapter / merged model | ambiguous between weights, adapter, and served endpoint |
+| trace (bare) | CAD query trace / Agent training trace / Answer candidate set trace | overloaded across concepts |
+| model (bare) | CAD model / LLM model / base model / adapter / merged model | geometry vs language model vs weights/adapter/served endpoint |
 | node (bare) | CAD ontology node / code node | ambiguous between graph and code |
 | kind / kinds | predicate kind | raw noun; name the kind of what |
 | type / types | CAD ontology node type / relation type / answer format / measurement scope / harness mode | raw noun; name the type of what |

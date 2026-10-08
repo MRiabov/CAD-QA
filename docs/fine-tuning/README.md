@@ -60,7 +60,7 @@ Supporting context: `../PRD.md` (the research contract), `../glossary.md` (canon
 ## Terms
 
 Use the canonical vocabulary in `../glossary.md`. The three easily-confused "trace" terms:
-a **training trace** is a model-facing reasoning + tool-call record (this pipeline's SFT
+an **Agent training trace** is an agent-facing reasoning + tool-call record (this pipeline's SFT
 signal); a **CAD query trace** is a source's recorded CadQuery execution; a **candidate
 trace** is a row's candidate-narrowing record.
 
