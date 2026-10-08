@@ -32,6 +32,12 @@ handoffs, RL records, runbooks, analysis reports, the paper draft, trace preview
 references in the new docs and this plan rewired to `_archive/` paths. `docs/experiments/`
 stays in place (the designated home for dated records).
 
+**2026-10-08** — Don't-say checker implemented (`tools/check_dont_say.py` + tests), ported
+and simplified from product-launch `redo/check-dont-say.py`; pydantic added as a dev dep.
+First run over `docs/` reports 447 hits; worklist and findings in
+`_audit/dont-say-worklist.md`. D8 partially satisfied: Don't-say checker done; docs-structure
+/ ADR / decisions linters and `rumdl` still pending.
+
 ---
 
 ## 0. Working agreement

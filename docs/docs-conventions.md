@@ -176,10 +176,13 @@ P0/P1 commitment.
 
 ## Lint, format, ratchets
 
-- Markdown is formatter-enforced: `rumdl` (fallback `mdformat`).
-- Linters cover docs structure, glossary/Don't-say, ADR/decisions, and code. Ratchets (for
-  example the Don't-say list, file-size waivers) only improve.
-- **Not implemented yet.** This section is the target; see `development-plan.md`.
+- **Don't-say checker: implemented.** `tools/check_dont_say.py` reads the `## Don't say`
+  table from `glossary.md` and fails on banned terms in `docs/`. Run
+  `uv run python tools/check_dont_say.py --roots docs`. The sweep to green is tracked in
+  `_audit/dont-say-worklist.md`.
+- Ratchets (the Don't-say list, file-size waivers) only improve.
+- **Not implemented yet:** the Markdown formatter (`rumdl`, fallback `mdformat`) and the
+  docs-structure / ADR / decisions linters. See `development-plan.md`.
 
 ## Experiment records
 
