@@ -31,6 +31,9 @@ docs/
   development-context.md        # history + as-of snapshot (proven vs assumed)
   development-plan.md           # phased route to completion
   prior-art.md                  # mined open-source training/RL/data pipelines
+  research/
+    README.md                   # external study notes + citations
+    YYYY-<slug>.md              # one file per external study
   adr/
     NNNN-<slug>.md              # one decision per file; referenced as (ADR-0NNN)
   research-scopes/
@@ -79,6 +82,7 @@ into two docs — link.
 | CONTRACT / IO | artifact and field names between steps | `pipeline/00-overview.md` |
 | STATUS | verification state | step-doc `Current status` |
 | TERMS | canonical vocabulary | `glossary.md` |
+| CONTEXT / external | external study notes and citations; secondary to the project docs | `research/` |
 
 Docs restate behaviour deliberately (that is the point of the WHAT layer). They never copy
 rationale — link the ADR — and never redefine field names — match the IO contract.
