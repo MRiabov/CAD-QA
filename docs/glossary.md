@@ -156,13 +156,16 @@ the gold answer.
 One predicate of a Gold query program, mapped to exactly one public clue.
 `In code:` `Clause`.
 
-**Why "predicate".** A predicate is a condition that is either true or false of something.
-Each Gold query predicate is one such condition on the target entity — in plain words,
-*"the target face is adjacent to another face"*, *"the feature is made by an extrude
-operation"*, *"the selection has more than three entities"*, *"the face's surface area is
-12.5"*. The program is a short ordered list of these, and the public prompt states each as
-one clue. `Distinct from:` the aggregation and tie-break steps, which order the survivors
-rather than filter them.
+**Why "predicate".** A predicate is the part of a statement that says something about its
+subject — describing a state or condition, and so being true or false of that subject
+(grammar and logic agree here). For the clue *"the target face is adjacent to another
+face"*, the subject is *the target face* and the predicate is *"is adjacent to another
+face"*. A Gold query predicate is that part alone — the condition with the subject left
+open — stored once and tested against every candidate: *"is adjacent to another face"*,
+*"is made by an extrude operation"*, *"has more than three entities"*, *"has a surface area
+of 12.5"*. The program is a short ordered list of these, and the public prompt states each
+as one clue. `Distinct from:` the aggregation and tie-break steps, which rank the survivors
+rather than test them.
 
 ---
 
