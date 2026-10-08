@@ -187,10 +187,15 @@ rather than test them.
 
 ---
 
-### Candidate-set trace
+### Answer candidate set
 
-The record of how the candidate set narrows to the answer.
-`Distinct from:` **CAD query trace**, **Training trace**.
+The set of CAD ontology nodes still possible as the gold answer as a Gold query program
+resolves; each Gold query predicate narrows it, and it should end at one node.
+
+### Answer candidate set trace
+
+The record of how the Answer candidate set narrows to the gold answer.
+`In code:` `CandidateSetTrace`. `Distinct from:` **CAD query trace**, **Training trace**.
 
 ---
 
@@ -350,13 +355,14 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | public row / private row | Public CAD-QA dataset row column set / Private CAD-QA dataset row column set | not separate rows; column sets of one row |
 | query program (cad_qa, tools) | Gold query program | conflated with a general query |
 | clause | Gold query predicate | wrong; not a logic clause |
-| candidate trace (cad_qa, tools) | Candidate-set trace | candidate to what? |
+| candidate set (cad_qa, train_and_eval, tools) | Answer candidate set | unqualified |
+| candidate trace (cad_qa, tools) | Answer candidate set trace | candidate to what? |
 | hop count (cad_qa, train_and_eval) | Reasoning hop count | unqualified |
 | difficulty bucket (cad_qa, train_and_eval, tools) | Difficulty tier | "bucket" imprecise |
 | verifier (bare) | Query verifier | unqualified |
 | quarantine | Non-release-ready CAD-QA dataset row | imprecise |
 | "intent" (as a doc) | PRD | "intent" is the concept, not the artifact |
-| trace (bare) | CAD query trace / Training trace / Candidate-set trace / Shape snapshot | overloaded across concepts |
+| trace (bare) | CAD query trace / Training trace / Answer candidate set trace / Shape snapshot | overloaded across concepts |
 | model (bare) | base model / adapter / merged model | ambiguous between weights, adapter, and served endpoint |
 | node (bare) | CAD ontology node / code node | ambiguous between graph and code |
 | kind / kinds | predicate kind | raw noun; name the kind of what |

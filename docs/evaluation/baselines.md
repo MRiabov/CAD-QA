@@ -39,7 +39,7 @@ at `512a514`.
 | Operation-order heuristic | Answer from operation order in the source | not found in code or artifacts; named in `specs/paper-spec.md`, `specs/research-experiment-spec.md` | none found | `missing` |
 | Symbolic primitive geometry | Closed-form volume delta from the builder operation and its literal args (box, hole, cutBlind, extrude) | historical only (pruned) | heuristic smoke 0.114 (35 rows) | `stale` |
 | AABB-only | Classify point membership using the row's own bounding box (inside / on boundary / outside) | historical only (pruned) | heuristic smoke 0.029, invalid-output 0.829 (35 rows) | `stale` |
-| First candidate | Predict the first candidate in the candidate trace | `cad_qa/evaluation/baselines.py::first_candidate_answer` | `runs/baseline_smoke/baseline_metrics.json` (0.297, 37 rows); retired `implementation_status.md` records 0.333 full-smoke and 0.667 filtered release | `exists` |
+| First candidate | Predict the first candidate in the Answer candidate set trace | `cad_qa/evaluation/baselines.py::first_candidate_answer` | `runs/baseline_smoke/baseline_metrics.json` (0.297, 37 rows); retired `implementation_status.md` records 0.333 full-smoke and 0.667 filtered release | `exists` |
 | First static filter | Predict the first candidate surviving a static filter | `cad_qa/evaluation/baselines.py::first_static_candidate_answer` | none found | `exists` |
 | Null | Always predict nothing | `cad_qa/evaluation/baselines.py::run_baselines` ("null") | `runs/baseline_smoke/baseline_metrics.json` (0.0, 37 rows) | `exists` |
 

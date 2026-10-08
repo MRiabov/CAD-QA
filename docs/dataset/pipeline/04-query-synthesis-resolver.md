@@ -18,7 +18,7 @@ unique verifier-backed gold answer with a recorded candidate-set trace.
 
 Given an ontology graph, synthesis must emit only deterministic queries that the resolver
 can actually resolve. The resolver must apply ordered clauses, then a primary aggregation,
-then an optional tie-break, and must accept a row only when the final candidate set is
+then an optional tie-break, and must accept a row only when the Answer candidate set is
 exactly one under `reject_unless_unique`. The output must include the candidate-set trace,
 the relation families and measurement scopes used, the verifier status, and a gold answer
 in the answer contract's format. High-hop queries must keep at least
@@ -88,7 +88,7 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_query_resolver_a
   (`_apply_clause`), then the primary aggregation (`_apply_primary_aggregation`), then the
   tie-break aggregation when the primary leaves more than one candidate
   (`_apply_metric_aggregation`). Each step is appended to the candidate-set trace.
-- **Consequences:** Materialized traces show exactly how the candidate set narrowed and
+- **Consequences:** Materialized traces show exactly how the Answer candidate set narrowed and
   where uniqueness came from.
 
 ### D4 — The answer contract (`AnswerSpec`) is the single source for answer format
@@ -121,7 +121,7 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_query_resolver_a
 - **Status:** accepted.
 - **Context:** A single clue that identifies the answer makes a high-hop row fake.
 - **Decision:** `QueryProgram.min_individual_clause_candidates` (default 3) causes the
-  resolver to fail a hop≥3 query whose intermediate candidate set drops below the threshold
+  resolver to fail a hop≥3 query whose intermediate Answer candidate set drops below the threshold
   (`cad_qa/query/resolver.py::resolve_query`).
 - **Consequences:** Collapsed high-hop clues become `clue_too_narrow` failures rather than
   benchmark rows.
