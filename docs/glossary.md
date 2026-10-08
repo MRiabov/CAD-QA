@@ -363,7 +363,7 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | verifier (bare) | Query verifier | unqualified |
 | quarantine | Non-release-ready CAD-QA dataset row | imprecise |
 | "intent" (as a doc) | PRD | "intent" is the concept, not the artifact |
-| trace (bare) | CAD query trace / Training trace / Answer candidate set trace / Shape snapshot | overloaded across concepts |
+| trace (bare) | CAD query trace / Training trace / Answer candidate set trace | overloaded across concepts |
 | model (bare) | base model / adapter / merged model | ambiguous between weights, adapter, and served endpoint |
 | node (bare) | CAD ontology node / code node | ambiguous between graph and code |
 | kind / kinds | predicate kind | raw noun; name the kind of what |
