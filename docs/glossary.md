@@ -139,13 +139,13 @@ ontology node type.
 
 ---
 
-### CAD feature-added volume
+### CAD feature-added region
 
 The geometry a CAD feature adds. `In code:` `material_region`.
 
 ---
 
-### CAD feature-removed volume
+### CAD feature-removed region
 
 The geometry a CAD feature removes. `In code:` `void_region`.
 
@@ -361,7 +361,7 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | selector (bare) | CadQuery selector | CadQuery-specific |
 | workplane (bare) | CadQuery workplane | CadQuery-specific |
 | profile (bare) | CadQuery profile | generic |
-| material region (cad_qa) / void region (cad_qa) | CAD feature-added volume / CAD feature-removed volume | unclear |
+| material region (cad_qa) / void region (cad_qa) | CAD feature-added region / CAD feature-removed region | unclear |
 | dataset row (cad_qa) | CAD-QA dataset row | which dataset? |
 | public row / private row | Public CAD-QA dataset row column set / Private CAD-QA dataset row column set | not separate rows; column sets of one row |
 | query program (cad_qa, tools) | Gold query program | conflated with a general query |
