@@ -35,7 +35,7 @@ blocking gates all pass at the declared tier.
 
 **exists.** Materialization, validation, audit, non-release-ready handling, split,
 public/private, preview, release export, and release reporting are present and readable
-(`cad_qa/dataset/`, `cad_qa/cli.py::_cmd_dataset_materialize` and siblings). No dataset was
+(`dataset/release/`, `dataset/cli.py::_cmd_dataset_materialize` and siblings). No dataset was
 built while writing this doc.
 
 ## Verification
@@ -64,7 +64,7 @@ tests around `materialize`/`validate`. The one-command check is
 - **Status:** accepted.
 - **Context:** Row IDs must be globally unique and traceable to the producing query, and
   earlier CadQuery-program+family IDs collided.
-- **Decision:** `cad_qa/dataset/materialize.py::materialize_row` sets
+- **Decision:** `dataset/release/materialize.py::materialize_row` sets
   `row_id = f"row:{query.query_id}"`.
 - **Consequences:** Duplicate row IDs are a validation error; public/private parity uses the
   full query ID.
@@ -84,19 +84,19 @@ tests around `materialize`/`validate`. The one-command check is
 - **Status:** accepted.
 - **Context:** Conservative region projections and CadQuery-selector surrogate identities
   are not release-grade.
-- **Decision:** `cad_qa/dataset/materialize.py::_evidence_policy` returns an `evidence_tier`
+- **Decision:** `dataset/release/materialize.py::_evidence_policy` returns an `evidence_tier`
   (`source_static_or_analytic`, `quarantine`, `unresolved`) and `quarantine_reasons`
   (`conservative_region_projection`, `selector_identity_surrogate`, `unresolved_verifier`);
   `release_ready = not quarantine_reasons`.
 - **Consequences:** Quarantined rows stay in the full dataset for diagnostics and are
-  excluded from release export (`cad_qa/dataset/quarantine.py`).
+  excluded from release export (`dataset/release/quarantine.py`).
 
 ### D4 — Splits are assigned before public/private export
 
 - **Status:** accepted.
 - **Context:** Every row needs a split and the split must be group-safe.
-- **Decision:** `cad_qa/cli.py::_cmd_dataset_materialize` calls
-  `cad_qa/dataset/split.py::assign_splits` and writes split-sharded Parquet plus a
+- **Decision:** `dataset/cli.py::_cmd_dataset_materialize` calls
+  `dataset/release/split.py::assign_splits` and writes split-sharded Parquet plus a
   `split_manifest.json`; `leakage_audit` and `split_audit` run against that manifest.
 - **Consequences:** A CadQuery-program-only dataset collapses to `train` and is reported as
   single-split.
@@ -105,7 +105,7 @@ tests around `materialize`/`validate`. The one-command check is
 
 - **Status:** accepted.
 - **Context:** Release numbers must be auditable against the broader generation surface.
-- **Decision:** `cad_qa/dataset/release.py::export_release_dataset` filters to release-ready
+- **Decision:** `dataset/release/release.py::export_release_dataset` filters to release-ready
   rows, then applies deterministic caps (syntax-only calibration, family/template/value
   shares, parameter diversity) and writes its own validation, leakage, non-release-readiness,
   preview, and Query verifier reports.
@@ -116,7 +116,7 @@ tests around `materialize`/`validate`. The one-command check is
 
 - **Status:** accepted.
 - **Context:** `specs/dataset-spec.md` fixes numeric release gates.
-- **Decision:** `cad_qa/dataset/release_report.py::{SMOKE,RELEASE_CANDIDATE,BENCHMARK}_RELEASE_PROFILE`
+- **Decision:** `dataset/release/release_report.py::{SMOKE,RELEASE_CANDIDATE,BENCHMARK}_RELEASE_PROFILE`
   encode the thresholds; `release_gate_profile` selects one by name; the default is
   `release-candidate`.
 - **Consequences:** Only `benchmark-release` requires ≥10,000 rows, ≥10% distinct CAD-model
@@ -128,7 +128,7 @@ tests around `materialize`/`validate`. The one-command check is
 - **Doc/code mismatch.** `specs/schema.md::DatasetRow` omits `source_path`, `source_hash`,
   `source_metadata`, `split_group`, `prompt_version`, `prompt_template_id`, and `clue_map`,
   all of which the code emits. The code is authoritative.
-- **Re-resolution on materialize.** `cad_qa/cli.py::_cmd_dataset_materialize` reads each
+- **Re-resolution on materialize.** `dataset/cli.py::_cmd_dataset_materialize` reads each
   record's `query` and re-runs `resolve_query`, ignoring the `resolution` already stored in
   the query record. Materialization is therefore not a pure function of the query artifact;
   it recomputes from the graph. Whether that is intended (to pick up graph changes) or an
@@ -138,7 +138,7 @@ tests around `materialize`/`validate`. The one-command check is
   `static_hop_count` is a heuristic; whether it matches the spec's intended static/geometry
   split for every family is `[unknown]`.
 - **Boolean `answer_format`.** The schema lists `boolean`, but the materializer rejects the
-  `json` format as unsupported (`cad_qa/dataset/validate.py::validate_rows`); boolean row
+  `json` format as unsupported (`dataset/release/validate.py::validate_rows`); boolean row
   coverage is not audited here.
 
 ## Resolved questions

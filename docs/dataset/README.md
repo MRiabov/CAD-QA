@@ -4,7 +4,7 @@
 
 This directory documents the CAD-QA benchmark-generation pipeline: the code that turns
 normalized CadQuery programs into verifiable QA rows. It is the
-`dataset_generation` package (today `cad_qa/`). The dataset-generation pipeline is
+`dataset_generation` package (today `dataset/`). The dataset-generation pipeline is
 **frozen**: these docs describe what the code does; they do not justify refactors
 (`plans/oct-7/restructure-docs.md`).
 

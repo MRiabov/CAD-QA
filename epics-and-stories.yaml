@@ -117,7 +117,7 @@ release_tiers:
     synchronized_sources:
       - specs/dataset-spec.md
       - epics-and-stories.md
-      - cad_qa/dataset/release_report.py
+      - dataset/release/release_report.py
       - tests/test_graph_first_pipeline.py
 epics:
   - id: epic-1

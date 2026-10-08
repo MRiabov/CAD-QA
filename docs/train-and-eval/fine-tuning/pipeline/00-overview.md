@@ -53,7 +53,7 @@ Single source of truth for artifact and field names. Step docs must match this t
 
 ### `dataset file`
 
-- **Producer:** `dataset_generation` (today `cad_qa/`). **Consumers:** 01, 05, 06.
+- **Producer:** `dataset_generation` (today `dataset/`). **Consumers:** 01, 05, 06.
 - **Persisted:** `rows.parquet` or `rows.jsonl`.
 - **Fields consumed** (`train_and_eval/rows_loader.py::RLRawRow`): `row_id`, `prompt`,
   `answer_format`, `gold_answer` (JSON-encoded string), `logical_hop_count`,

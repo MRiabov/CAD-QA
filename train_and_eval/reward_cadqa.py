@@ -1,7 +1,7 @@
 """CAD-QA GRPO reward function (trl>=0.28 style: completions + **kwargs with dataset columns).
 
-Grades a completion against the gold answer using cad_qa's exact-match parser,
-mirroring cad_qa evaluation grade_public_private (per-format parsing + string equality).
+Grades a completion against the gold answer using the dataset's exact-match parser,
+mirroring the train_and_eval grading grade_public_private (per-format parsing + string equality).
 Batch API: reward_cadqa(completions, gold_answer=[...], answer_format=[...], ...) -> list[float].
 """
 import json

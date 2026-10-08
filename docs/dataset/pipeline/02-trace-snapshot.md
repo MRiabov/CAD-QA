@@ -10,10 +10,10 @@ become geometry evidence in the CAD ontology graph.
 
 - **Input:** **sources** artifact (`pipeline/00-overview.md`).
 - **Output artifact:** **traces** (`traces.parquet` preferred), matching the contract; each
-  record is a `TraceRecord` (`cad_qa/trace.py::TraceRecord`) with `source_id`,
+  record is a `TraceRecord` (`dataset/trace.py::TraceRecord`) with `source_id`,
   `execution_status`, `snapshots`, `operation_effects`, `selector_results`, `environment`,
   `failure_reason`.
-- **Sidecar output:** `trace_report.json` (`cad_qa/trace.py::trace_report`).
+- **Sidecar output:** `trace_report.json` (`dataset/trace.py::trace_report`).
 
 ## Requirement
 
@@ -30,8 +30,8 @@ be preserved as `execution_status=partial` rather than discarded.
 ## Current status
 
 **[unverified — needs cadquery].** The code is present and readable
-(`cad_qa/trace.py::trace_sources_bounded`, `::trace_source`, `::measure_shape`,
-`::_execute_source_trace`, CLI `cad_qa/cli.py::_cmd_trace_run`), but execution requires the
+(`dataset/trace.py::trace_sources_bounded`, `::trace_source`, `::measure_shape`,
+`::_execute_source_trace`, CLI `dataset/cli.py::_cmd_trace_run`), but execution requires the
 CadQuery kernel, which is **not installed** in the current environment (import fails). No
 CadQuery program operation trace was produced while writing this doc.
 
@@ -63,10 +63,10 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_trace_worker_exe
 - **Status:** accepted.
 - **Context:** A CAD program can hang, recurse, or crash the interpreter; an in-process
   CadQuery program operation trace would take the whole run down.
-- **Decision:** `cad_qa/trace.py::trace_source` runs isolated by default
+- **Decision:** `dataset/trace.py::trace_source` runs isolated by default
   (`_trace_source_isolated`), and `trace_sources_bounded` manages a pool of worker processes
   with a per-CadQuery-program `timeout_seconds`, terminating and killing over-time workers
-  (`cad_qa/trace.py::_stop_process`).
+  (`dataset/trace.py::_stop_process`).
 - **Consequences:** Slow or hostile CadQuery programs become `failed`/`partial` records;
   results keep input order.
 
@@ -77,7 +77,7 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_trace_worker_exe
   operation.
 - **Decision:** Workers publish bounded progress (`partial` results) while executing; a
   timed-out worker whose latest result has snapshots becomes `execution_status=partial`
-  with `failure_reason=timeout` (`cad_qa/trace.py::_record_from_timed_out_worker`,
+  with `failure_reason=timeout` (`dataset/trace.py::_record_from_timed_out_worker`,
   `::_trace_record_from_worker_result`).
 - **Consequences:** Partial geometry is usable downstream; `trace_report` separates
   `partial_count` and `usable_count`.
@@ -87,7 +87,7 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_trace_worker_exe
 - **Status:** accepted.
 - **Context:** Feature effects and provenance need the difference between successive
   assignments, not only the final solid.
-- **Decision:** `cad_qa/trace.py::_execute_source_trace` compiles and executes each
+- **Decision:** `dataset/trace.py::_execute_source_trace` compiles and executes each
   statement, snapshots each measurable assigned value, and emits `operation_effects` when a
   Shape snapshot's base target had a prior Shape snapshot (`::_snapshot_delta_effect`).
 - **Consequences:** Graph extraction can attach Shape snapshot state and feature-application-effect
@@ -99,7 +99,7 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_trace_worker_exe
 - **Context:** A complex solid can have many faces/edges/vertices; serializing all of them
   would bloat traces.
 - **Decision:** `MAX_SNAPSHOT_TOPOLOGY_ENTITIES_PER_KIND = 128`
-  (`cad_qa/trace.py`) bounds signatures to 128 entities per topology entity category.
+  (`dataset/trace.py`) bounds signatures to 128 entities per topology entity category.
 - **Consequences:** Entity signatures are a sample, not a complete enumeration; graph
   evidence derived from them is bounded accordingly.
 
@@ -108,7 +108,7 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_trace_worker_exe
 - **Status:** accepted.
 - **Context:** The upstream corpus uses loops to place repeated features.
 - **Decision:** Loops without `break`/`continue` over literal iterables are unrolled
-  statement-by-statement (`cad_qa/trace.py::_can_trace_unroll_for`,
+  statement-by-statement (`dataset/trace.py::_can_trace_unroll_for`,
   `::execute_statement`); unsupported loops fall back to a plain capture.
 - **Consequences:** Repeated features get distinct snapshots; unbounded or data-dependent
   loops are not unrolled.
@@ -116,13 +116,13 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_trace_worker_exe
 ## Open questions
 
 - **Untyped CadQuery program operation trace internals.**
-  `cad_qa/trace.py::TraceRecord` stores `snapshots`, `operation_effects`, and
+  `dataset/trace.py::TraceRecord` stores `snapshots`, `operation_effects`, and
   `selector_results` as `list[dict[str, Any]]`, so what the record holds is only
   discoverable from the producer code. Typed records would document the contract the record
   is meant to express.
 - **Doc/code mismatch.** `specs/schema.md::TraceRecord` lists only `source_id`,
   `execution_status`, `snapshots`, `operation_effects`, `environment`, `failure_reason`,
-  while `cad_qa/trace.py::TraceRecord` also carries `selector_results`. The code is
+  while `dataset/trace.py::TraceRecord` also carries `selector_results`. The code is
   authoritative; the spec is stale.
 - **Skipped loop bodies.** The extractor (`extract.py`) and the tracer use different
   unrolling rules (extractor caps iterations at 64, tracer unrolls any non-break loop).

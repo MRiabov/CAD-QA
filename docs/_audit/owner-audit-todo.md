@@ -31,7 +31,7 @@ Legend: `[ ]` todo · `[x]` done · `(D#)` links a decision in
 
 ## C. Verification (Phase 0 audit) — the trust gates
 
-- [ ] C1 Grader identity: `cad_qa/evaluation/grade.py::grade_public_private` matches golds
+- [ ] C1 Grader identity: `train_and_eval/grading/grade.py::grade_public_private` matches golds
       on the oracle path (accuracy 1.0) on a frozen fixture.
 - [ ] C2 Grader vs reward divergence: the eval grader (`tool_call_matches`) and the GRPO
       reward (`reward_cadqa`) agree on a fixture set (they currently differ in `text`

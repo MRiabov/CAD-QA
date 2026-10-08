@@ -218,7 +218,7 @@ summary, generated paper-results snapshot, and artifact manifest.
 Run tests:
 
 ```bash
-rtk uv run python -m compileall -q cad_qa
+rtk uv run python -m compileall -q dataset
 rtk uv run pytest -q
 ```
 

@@ -12,7 +12,7 @@ stable `SourceRecord`s that every later stage consumes.
   CadQuery-program-like rows.
 - **Output artifact:** **sources** (`sources.parquet` preferred, `sources.jsonl`
   accepted), matching `pipeline/00-overview.md`; each record is a `SourceRecord`
-  (`cad_qa/source.py::SourceRecord`) with `source_id`, `source_code`, `source_path`,
+  (`dataset/source.py::SourceRecord`) with `source_id`, `source_code`, `source_path`,
   `source_hash`, `metadata`.
 - **Sidecar outputs:** CadQuery program manifest (`sources.manifest.json`) and
   audit (`sources.audit.json`) when the corresponding CLI commands are used.
@@ -30,9 +30,9 @@ normalized code, missing paths, and ungrouped sources rather than hiding them.
 ## Current status
 
 **exists.** The ingestion code, upstream corpus tar/directory/cache paths, manifest, and audit
-are present and readable (`cad_qa/source.py`,
-`cad_qa/cli.py::_cmd_sources_from_cadevolve_cache`,
-`cad_qa/cli.py::_cmd_sources_manifest`, `cad_qa/cli.py::_cmd_sources_audit`). No ingestion
+are present and readable (`dataset/source.py`,
+`dataset/cli.py::_cmd_sources_from_cadevolve_cache`,
+`dataset/cli.py::_cmd_sources_manifest`, `dataset/cli.py::_cmd_sources_audit`). No ingestion
 command was executed while writing this doc.
 
 ## Verification
@@ -59,16 +59,16 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_source_loading`,
 - **Status:** accepted.
 - **Context:** Corpus files can differ in line endings and trailing whitespace, which
   would produce unstable IDs across reimports.
-- **Decision:** `cad_qa/source.py::normalize_source_text` normalizes line endings and strips
+- **Decision:** `dataset/source.py::normalize_source_text` normalizes line endings and strips
   trailing whitespace, then appends a single trailing newline; the hash is taken over that
-  normalized text (`cad_qa/source.py::source_record_from_mapping`).
+  normalized text (`dataset/source.py::source_record_from_mapping`).
 - **Consequences:** Same logical program → same `source_hash` and `source_id`.
 
 ### D2 — Keep generic JSONL ingestion, not just the upstream corpus
 
 - **Status:** accepted.
 - **Context:** CadQuery programs may also come from synthetic fixtures and other corpora.
-- **Decision:** `cad_qa/source.py::source_record_from_mapping` accepts
+- **Decision:** `dataset/source.py::source_record_from_mapping` accepts
   `normalized_code`/`source_code`/`raw_code` and derives a CadQuery program ID when one is
   absent; the corpus-specific paths are separate functions.
 - **Consequences:** The same downstream stages consume either origin.
@@ -80,7 +80,7 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_source_loading`,
   CadQuery selector, and void-bearing CadQuery programs (`README.md`).
 - **Decision:** `--stratify-geometry-tags` with `--min-per-geometry-tag` selects examples
   of `GEOMETRY_SOURCE_FEATURE_TAGS` before archive-order fill
-  (`cad_qa/source.py::_select_stratified_source_rows`).
+  (`dataset/source.py::_select_stratified_source_rows`).
 - **Consequences:** Rare geometry-bearing sources survive limited slices; counts are
   reported in `selected_geometry_feature_tag_counts`.
 

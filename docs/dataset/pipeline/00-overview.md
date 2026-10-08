@@ -9,7 +9,7 @@ Audience note: terms follow `docs/glossary.md`. Read that first if a term is unc
 ## What this pipeline builds
 
 The dataset-generation pipeline turns normalized CadQuery programs into verifiable QA rows.
-It is the `dataset_generation` package (today `cad_qa/`), which is **frozen**: the docs
+It is the `dataset_generation` package (today `dataset/`), which is **frozen**: the docs
 describe what it does, not what it should do (`plans/oct-7/restructure-docs.md`). Low-hop
 rows and high-hop CAD BrowseComp rows are slices of the same machinery; there is no
 separate simple-QA pipeline (`README.md`).
@@ -46,56 +46,56 @@ A7 Exports: Harbor, SFT, evaluation
 
 A1–A4 have dedicated CLI stages; A5 is invoked by the materializer; A6 and A7 have their
 own CLI stages. The one-command `cadqa experiment smoke` runs A3–A7 end to end for a small
-slice (`cad_qa/experiment.py::run_smoke_experiment`).
+slice (`train_and_eval/experiment.py::run_smoke_experiment`).
 
 ## Stage IO contract
 
 Each stage names its producer, its input artifact, and its output artifact. Artifact
-formats default to Parquet with a JSONL fallback (`cad_qa/io.py::read_records`,
-`cad_qa/io.py::write_records`, `cad_qa/io.py::record_artifact_path`).
+formats default to Parquet with a JSONL fallback (`dataset/io.py::read_records`,
+`dataset/io.py::write_records`, `dataset/io.py::record_artifact_path`).
 
 | Stage | Producer | Input | Output artifact | Key fields |
 |---|---|---|---|---|
-| A1 CadQuery program ingestion | `cad_qa/source.py` | upstream CadQuery program corpus tar, extracted directory, cached CadQuery program Parquet, or generic JSONL | **sources** (`sources.parquet`) | `source_id`, `source_code`, `source_path`, `source_hash`, `metadata` (`SourceRecord`) |
-| A2 CadQuery program operation trace / Shape snapshot | `cad_qa/trace.py` | sources | **traces** (`traces.parquet`) | `source_id`, `execution_status`, `snapshots`, `operation_effects`, `selector_results`, `environment`, `failure_reason` (`TraceRecord`) |
-| A3 CAD ontology graph | `cad_qa/ontology/extract.py::build_graph` | sources; optional traces | **graphs** (`graphs.parquet`) | `graph_id`, `source`, `nodes`, `relations`, `measurements`, `diagnostics` (`OntologyGraph`) |
-| A4 Query synthesis + resolver | `cad_qa/query/synthesis.py::synthesize_graph_hop_queries`, `cad_qa/query/resolver.py::{smoke_queries, resolve_query}` | graphs | **queries** (`queries.parquet`) + **failure_manifest** (`failure_manifest.parquet`) | per record: `graph_id`, `query` (`QueryProgram`), `resolution` (`QueryResolution`) |
-| A5 Prompt rendering | `cad_qa/prompts/render.py::render_prompt` | source code + `QueryProgram` (+ graph) | rendered prompt embedded in the row | `prompt`, `prompt_version`, `prompt_template_id`, `clue_map`, `warnings` |
-| A6 Materialize/validate/release | `cad_qa/dataset/` | queries (+ graphs sidecar) | **rows** (`rows.parquet`), **public**/**private**, dataset + release reports | `DatasetRow` fields (below) |
-| A7 Exports | `cad_qa/harbor.py`, `cad_qa/dataset/sft.py`, `cad_qa/evaluation/`, `cad_qa/experiment.py` | rows, public/private, responses | Harbor task dirs, SFT JSONL, evaluation reports, smoke experiment tree | see step doc 07 |
+| A1 CadQuery program ingestion | `dataset/source.py` | upstream CadQuery program corpus tar, extracted directory, cached CadQuery program Parquet, or generic JSONL | **sources** (`sources.parquet`) | `source_id`, `source_code`, `source_path`, `source_hash`, `metadata` (`SourceRecord`) |
+| A2 CadQuery program operation trace / Shape snapshot | `dataset/trace.py` | sources | **traces** (`traces.parquet`) | `source_id`, `execution_status`, `snapshots`, `operation_effects`, `selector_results`, `environment`, `failure_reason` (`TraceRecord`) |
+| A3 CAD ontology graph | `dataset/ontology/extract.py::build_graph` | sources; optional traces | **graphs** (`graphs.parquet`) | `graph_id`, `source`, `nodes`, `relations`, `measurements`, `diagnostics` (`OntologyGraph`) |
+| A4 Query synthesis + resolver | `dataset/query/synthesis.py::synthesize_graph_hop_queries`, `dataset/query/resolver.py::{smoke_queries, resolve_query}` | graphs | **queries** (`queries.parquet`) + **failure_manifest** (`failure_manifest.parquet`) | per record: `graph_id`, `query` (`QueryProgram`), `resolution` (`QueryResolution`) |
+| A5 Prompt rendering | `dataset/prompts/render.py::render_prompt` | source code + `QueryProgram` (+ graph) | rendered prompt embedded in the row | `prompt`, `prompt_version`, `prompt_template_id`, `clue_map`, `warnings` |
+| A6 Materialize/validate/release | `dataset/release/` | queries (+ graphs sidecar) | **rows** (`rows.parquet`), **public**/**private**, dataset + release reports | `DatasetRow` fields (below) |
+| A7 Exports | `dataset/harbor.py`, `dataset/release/sft.py`, `train_and_eval/grading/`, `train_and_eval/experiment.py` | rows, public/private, responses | Harbor task dirs, SFT JSONL, evaluation reports, smoke experiment tree | see step doc 07 |
 
 ### Nested field names
 
-**`OntologyGraph`** (`cad_qa/ontology/nodes.py`):
+**`OntologyGraph`** (`dataset/ontology/nodes.py`):
 `Node{id, type, label, source_ref, properties}`,
 `Relation{source_id, target_id, type, properties, evidence}`,
 `Measurement{entity_id, scope, name, value, unit, evidence}`.
 
-**`QueryProgram`** (`cad_qa/query/ir.py`): `query_id`, `target_type`, `answer_type`,
+**`QueryProgram`** (`dataset/query/ir.py`): `query_id`, `target_type`, `answer_type`,
 `answer_spec` (`AnswerSpec`), `clauses` (`Clause`), `aggregation`, `aggregation_metric`,
 `aggregation_rank`, `tie_break_aggregation`, `tie_break_metric`, `hop_count`,
 `difficulty`, `reject_unless_unique`, `min_individual_clause_candidates`,
 `sampled_parameters`.
 
-**`Clause`** (`cad_qa/query/ir.py`): `id`, `kind`, `relation`, `target_type`, `metric`,
+**`Clause`** (`dataset/query/ir.py`): `id`, `kind`, `relation`, `target_type`, `metric`,
 `reference_metric`, `operator`, `value`, `text`.
 
-**`QueryResolution`** (`cad_qa/query/ir.py`): `query_program`, `gold_answer`,
+**`QueryResolution`** (`dataset/query/ir.py`): `query_program`, `gold_answer`,
 `candidate_trace` (`CandidateSetTrace`), `relation_families`, `measurement_scopes`,
 `verifier_status`.
 
-**`CandidateSetTrace`** (`cad_qa/query/ir.py`): `query_id`, `steps`, `final_candidates`,
+**`CandidateSetTrace`** (`dataset/query/ir.py`): `query_id`, `steps`, `final_candidates`,
 `status`, `failure_reason`.
 
-**`DatasetRow`** (`cad_qa/dataset/materialize.py`): `row_id`, `source_id`, `source_path`,
+**`DatasetRow`** (`dataset/release/materialize.py`): `row_id`, `source_id`, `source_path`,
 `source_hash`, `source_metadata`, `split_group`, `source_code`, `prompt`, `answer_format`,
 `gold_answer`, `query_program`, `candidate_trace`, `relation_families`,
 `measurement_scopes`, `logical_hop_count`, `static_hop_count`, `geometry_hop_count`,
 `difficulty_bucket`, `verifier_status`, `prompt_version`, `prompt_template_id`,
 `clue_map`, `evidence_tier`, `release_ready`, `quarantine_reasons`. The CLI adds `split`
-(`cad_qa/cli.py::_cmd_dataset_materialize`).
+(`dataset/cli.py::_cmd_dataset_materialize`).
 
-**Public / private column sets** (`cad_qa/dataset/public.py`):
+**Public / private column sets** (`dataset/release/public.py`):
 `PUBLIC_FIELDS` and `PRIVATE_FIELDS` are the release boundary. `public` is answer-free
 LLM model input; `private` carries `gold_answer`, `query_program`, `candidate_trace`,
 `clue_map`, `verifier_status`.
@@ -124,7 +124,7 @@ LLM model input; `private` carries `gold_answer`, `query_program`, `candidate_tr
 ## Open questions
 
 - **Doc/code schema drift.** `specs/schema.md::TraceRecord` omits `selector_results`,
-  while `cad_qa/trace.py::TraceRecord` carries it. `specs/schema.md::DatasetRow` omits
+  while `dataset/trace.py::TraceRecord` carries it. `specs/schema.md::DatasetRow` omits
   `source_path`, `source_hash`, `source_metadata`, `split_group`, `prompt_version`,
   `prompt_template_id`, and `clue_map`. The code is authoritative here; `specs/` is being
   superseded (`plans/oct-7/restructure-docs.md`).

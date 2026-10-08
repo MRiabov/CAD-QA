@@ -322,7 +322,7 @@ Full CadQuery kernel access; one correct call suffices.
 
 ### dataset_generation
 
-The code package that builds the benchmark. `In code:` `cad_qa/`.
+The code package that builds the benchmark. `In code:` `dataset/`.
 
 ---
 
@@ -349,31 +349,31 @@ The environment and runner used to evaluate cost-effective LLM models on the ben
 
 A ratchet: entries are removed only when the term is engineered out of the docs and code.
 A docs sweep replaces each don't-say usage with its Say term until the checkers are green.
-A `(home)` annotation allows the token under that tree (`cad_qa`, `train_and_eval`, `tools`,
+A `(home)` annotation allows the token under that tree (`dataset`, `train_and_eval`, `tools`,
 …), for identifiers documented as `In code:`; the checker's `ALLOWLIST` exempts
 cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 
 | Don't say | Say | Why |
 |---|---|---|
 | source | CadQuery program | bare noun; "source" of what? |
-| release tier (cad_qa, train_and_eval, tools) | Dataset release tier | garbled; which release? |
+| release tier (dataset, train_and_eval, tools) | Dataset release tier | garbled; which release? |
 | snapshot | Shape snapshot | opaque |
 | CADEvolve | (name the corpus in prose) | proper noun, not a term |
-| ontology graph (cad_qa) | CAD ontology graph | unqualified |
+| ontology graph (dataset) | CAD ontology graph | unqualified |
 | ontology (bare) | CAD ontology | generic/overloaded |
 | selector (bare) | CadQuery selector | CadQuery-specific |
 | workplane (bare) | CadQuery workplane | CadQuery-specific |
 | profile (bare) | CadQuery profile | generic |
-| material region (cad_qa) / void region (cad_qa) | CAD feature-added region / CAD feature-removed region | unclear |
-| dataset row (cad_qa) | CAD-QA dataset row | which dataset? |
+| material region (dataset) / void region (dataset) | CAD feature-added region / CAD feature-removed region | unclear |
+| dataset row (dataset) | CAD-QA dataset row | which dataset? |
 | public row / private row | Public CAD-QA dataset row column set / Private CAD-QA dataset row column set | not separate rows; column sets of one row |
-| query program (cad_qa, tools) | Gold query program | conflated with a general query |
+| query program (dataset, tools) | Gold query program | conflated with a general query |
 | clause | Gold query predicate | wrong; not a logic clause |
-| candidate set (cad_qa, train_and_eval, tools) | answer candidate set | unqualified |
-| candidate trace (cad_qa, tools) | answer candidate set trace | candidate to what? |
-| hop count (cad_qa, train_and_eval) | Reasoning hop count | unqualified |
-| difficulty bucket (cad_qa, train_and_eval, tools) | Difficulty tier | "bucket" imprecise |
-| harness mode (cad_qa, train_and_eval, tools) | LLM harness mode | unqualified |
+| candidate set (dataset, train_and_eval, tools) | answer candidate set | unqualified |
+| candidate trace (dataset, tools) | answer candidate set trace | candidate to what? |
+| hop count (dataset, train_and_eval) | Reasoning hop count | unqualified |
+| difficulty bucket (dataset, train_and_eval, tools) | Difficulty tier | "bucket" imprecise |
+| harness mode (dataset, train_and_eval, tools) | LLM harness mode | unqualified |
 | verifier (bare) | Query verifier | unqualified |
 | quarantine | Non-release-ready CAD-QA dataset row | imprecise |
 | rows artifact | Dataset file | "artifact" is vague; it is the dataset file |
@@ -384,7 +384,7 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | node (bare) | CAD ontology node / code node | ambiguous between graph and code |
 | kind / kinds | predicate kind | raw noun; name the kind of what |
 | type / types | CAD ontology node type / relation type / answer format / measurement scope / LLM harness mode | raw noun; name the type of what |
-| entity id (in a public answer) (cad_qa, tools) | source variable | internal `entity_id` values must not leak into public answers |
+| entity id (in a public answer) (dataset, tools) | source variable | internal `entity_id` values must not leak into public answers |
 | "the pipeline" / "the object" / "the value" | name the concept | unspecific placeholder |
 | first/last (as family semantics) | the sampled parameter | a rendering choice, not a permanent meaning |
 

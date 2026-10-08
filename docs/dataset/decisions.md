@@ -14,7 +14,7 @@ Local decisions for the `dataset_generation` unit, in ADR format
 - **Context:** The dataset-generation pipeline was written by an agent, a prior refactor
   was moot, and the intent behind the current code is (probably) fine
   (`plans/oct-7/restructure-docs.md`).
-- **Decision:** Treat `dataset_generation` (today `cad_qa/`) as frozen. New docs describe
+- **Decision:** Treat `dataset_generation` (today `dataset/`) as frozen. New docs describe
   executed behaviour; they do not justify refactors. Change generation code only when a P0
   thesis claim is directly blocked by a verified bug, minimally, on a branch.
 - **Consequences:** Doc/code mismatches become recorded findings (open question / local
@@ -39,7 +39,7 @@ Local decisions for the `dataset_generation` unit, in ADR format
   `source -> graph -> query -> verifier -> prompt -> row`.
 - **Decision:** LLMs are not trusted generators or judges. They may be used only for
   optional wording experiments or external LLM model evaluation.
-- **Consequences:** Prompts are rule-rendered (`cad_qa/prompts/render.py::render_prompt`);
+- **Consequences:** Prompts are rule-rendered (`dataset/prompts/render.py::render_prompt`);
   gold answers come from the resolver, not an LLM model.
 
 ## DD-04 — Public/private split is the release boundary
@@ -50,7 +50,7 @@ Local decisions for the `dataset_generation` unit, in ADR format
 - **Decision:** Export two views: `public` (answer-free LLM model input) and `private`
   (gold answer, hidden Gold query program, answer candidate set trace, clue map). The split
   is defined by
-  `cad_qa/dataset/public.py::PUBLIC_FIELDS` and `::PRIVATE_FIELDS`; a hidden-field leak is
+  `dataset/release/public.py::PUBLIC_FIELDS` and `::PRIVATE_FIELDS`; a hidden-field leak is
   an audit error.
 - **Consequences:** Grading uses `public` + `private`; `public_private_report.json` records
   row-count parity and leak checks.
@@ -62,7 +62,7 @@ Local decisions for the `dataset_generation` unit, in ADR format
   `benchmark-release`, and warns that weaker tiers must never be described as
   benchmark-release ready.
 - **Decision:** `benchmark-release` is the canonical bar, expressed as
-  `cad_qa/dataset/release_report.py::BENCHMARK_RELEASE_PROFILE`. The default CLI tier is
+  `dataset/release/release_report.py::BENCHMARK_RELEASE_PROFILE`. The default CLI tier is
   `release-candidate`.
 - **Consequences:** Release/SFT reports gate on explicit per-tier thresholds; passing smoke
   or release-candidate gates is a development checkpoint only.
@@ -72,12 +72,12 @@ Local decisions for the `dataset_generation` unit, in ADR format
 - **Status:** accepted.
 - **Context:** Large graph/query/dataset payloads (hundreds of MB as JSONL) motivated a
   compact columnar default (`docs/_archive/implementation_status.md`).
-- **Decision:** `cad_qa/io.py` writes records as Parquet when the path ends in `.parquet`
+- **Decision:** `dataset/io.py` writes records as Parquet when the path ends in `.parquet`
   and JSONL for `.jsonl`, and `record_artifact_path` prefers Parquet. Readers remain
   backward-compatible with legacy `record_json` Parquet and with JSONL.
 - **Consequences:** Downstream stages accept either format; compact query artifacts may
   store a `graphs` sidecar instead of embedding a graph per query record
-  (`cad_qa/cli.py::_materialize_graph_lookup`).
+  (`dataset/cli.py::_materialize_graph_lookup`).
 
 ## DD-07 — CadQuery program operation trace is optional for low-hop rows, required for release-grade geometry
 
@@ -85,7 +85,7 @@ Local decisions for the `dataset_generation` unit, in ADR format
 - **Context:** `specs/schema.md::TraceRecord` marks CadQuery program operation trace records
   optional for low-hop static rows but required for release-grade geometry, topology,
   CadQuery selector, material, and validity rows.
-- **Decision:** `cad_qa/ontology/extract.py::build_graph` accepts an optional
+- **Decision:** `dataset/ontology/extract.py::build_graph` accepts an optional
   CadQuery program operation trace; graph construction is AST-based and enriches from
   its evidence when present.
 - **Consequences:** Smoke runs can build graphs without CadQuery; release-grade geometry
@@ -96,7 +96,7 @@ Local decisions for the `dataset_generation` unit, in ADR format
 - **Status:** accepted.
 - **Context:** `specs/generation_policy.md` requires the full clue set to resolve exactly one
   answer for main rows.
-- **Decision:** `cad_qa/query/ir.py::QueryProgram.reject_unless_unique` defaults to
+- **Decision:** `dataset/query/ir.py::QueryProgram.reject_unless_unique` defaults to
   `True`; the resolver fails a query whose answer candidate set is empty or not exactly one.
 - **Consequences:** Ties are rejected unless a query explicitly opts out; failures land in
   the failure manifest.
@@ -107,7 +107,7 @@ Local decisions for the `dataset_generation` unit, in ADR format
 - **Context:** Conservative material/void-region projections and CadQuery-selector surrogate
   face identities can exercise the stack end to end but are not release-grade
   (`specs/dataset-spec.md#quarantine-policy`).
-- **Decision:** `cad_qa/dataset/materialize.py::_evidence_policy` assigns an evidence tier
+- **Decision:** `dataset/release/materialize.py::_evidence_policy` assigns an evidence tier
   and `release_ready=false` with `quarantine_reasons`; release export excludes them and the
   non-release-ready report counts them.
 - **Consequences:** No silent data loss: rejected and non-release-ready rows are reported.
@@ -117,7 +117,7 @@ Local decisions for the `dataset_generation` unit, in ADR format
 - **Status:** accepted.
 - **Context:** Benchmark value comes from geometry-derived reasoning, not syntax lookup
   (`specs/benchmark-task-spec.md#geometry-first-benchmark-policy`).
-- **Decision:** `cad_qa/dataset/sft.py::default_training_rows` keeps geometry-critical,
+- **Decision:** `dataset/release/sft.py::default_training_rows` keeps geometry-critical,
   non-calibration, non-quarantined rows; syntax-only calibration is excluded unless
   `--include-calibration` is passed.
 - **Consequences:** Default training reports enforce geometry-critical dominance and a zero
@@ -129,9 +129,9 @@ Local decisions for the `dataset_generation` unit, in ADR format
 - **Context:** Release-grade families must sample avoidable choices rather than bake them in;
   release reports must measure coverage (`specs/generation_policy.md#maximal-parameter-sampling`).
 - **Decision:** Serialize normalized `sampled_parameters` on each row
-  (`cad_qa/query/parameters.py::sampled_parameters_from_query`), including rendered
+  (`dataset/query/parameters.py::sampled_parameters_from_query`), including rendered
   prompt/clue template IDs added at materialization
-  (`cad_qa/dataset/materialize.py::_query_to_dict`).
+  (`dataset/release/materialize.py::_query_to_dict`).
 - **Consequences:** Benchmark-release parameter-balance gates read private metadata;
   full synthesis-layer sampling coverage remains open work.
 
@@ -140,7 +140,7 @@ Local decisions for the `dataset_generation` unit, in ADR format
 - **Status:** accepted.
 - **Context:** Splits must be safe by true leakage groups, not by broad corpus provenance
   (`specs/dataset-spec.md#splits`).
-- **Decision:** `cad_qa/dataset/split.py` unions sources that share protected labels
+- **Decision:** `dataset/release/split.py` unions sources that share protected labels
   (`split_group`, `counterfactual_group`, `source_family`, `family_id`, `template_id`, and
   path-derived family) and assigns a deterministic ~70/15/15 split across groups; broad
   `generator_id`/`generator` are reported but not merged.

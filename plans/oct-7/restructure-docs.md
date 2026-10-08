@@ -77,6 +77,17 @@ scanned. See the entry below.
 - D13 revised: the generation package is **`dataset/`** (not `dataset_generation/`), and
   **all** eval logic (grader, eval CLI, Harbor runner) moves to `train_and_eval/`.
 
+**2026-10-08 (Phase 0a landed)** — repo restructure executed on branch
+`phase-0a-repo-structure` (worktree). `cad_qa/` → `dataset/`;
+`cad_qa/dataset/` → `dataset/release/`; `cad_qa/evaluation/` →
+`train_and_eval/grading/`; `cad_qa/experiment.py` → `train_and_eval/experiment.py`;
+`cad_qa/harbor.py` split into `dataset/harbor.py` (task export) and
+`train_and_eval/harbor.py` (runner/grader). The `cadqa` CLI is now a cross-package
+orchestrator: `dataset/cli.py` registers the generation commands and `train_and_eval/cli.py`
+registers evaluation/experiment and hosts `main`. All `cad_qa.*` imports and doc references
+are rewired; `tools/check_dont_say.py` now scans `dataset/`. Tests: 309 passed, 3
+pre-existing failures (query-synthesis prompt text; they fail on `main` too).
+
 ---
 
 ## 0. Working agreement

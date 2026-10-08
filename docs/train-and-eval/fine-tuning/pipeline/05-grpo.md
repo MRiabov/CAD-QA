@@ -102,7 +102,7 @@ automated; `[unknown]` whether it should be a gate.
   v2 (`{0,2,3,4,5}`). One of code or intent must change.
 - **GRPO does not start from the SFT adapter.** `grpo_train.py` loads
   `unsloth/gemma-4-E2B-it`, not the SFT checkpoint; "SFT then GRPO" is not implemented.
-- **Grader divergence.** The reward implementation says it "mirrors cad_qa evaluation
+- **Grader divergence.** The reward implementation says it "mirrors train_and_eval grading
   grade_public_private", but the parser is self-contained (`reward_cadqa._parse_answer`).
   The eval grader uses the typed matcher (`eval_bench.py` → `tool_call_matches`), so eval and
   reward can disagree, especially via the `text` substring fallback

@@ -181,7 +181,7 @@ from a small repeated subset of CAD models, because that makes overfitting to
 model-specific geometry and topology much more likely.
 
 The executable contract for these numbers is `BENCHMARK_RELEASE_PROFILE` in
-`cad_qa/dataset/release_report.py`. The default-SFT syntax-only requirement is a
+`dataset/release/release_report.py`. The default-SFT syntax-only requirement is a
 separate profile field and stop gate (`max_default_sft_syntax_only_share=0.0`,
 reported as `default_sft_syntax_only_cap`), not just an implied part of the
 geometry-critical dominance check. The dataset spec and executable profile must

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from cad_qa.ontology import build_graph
-from cad_qa.source import source_record_from_mapping
+from dataset.ontology import build_graph
+from dataset.source import source_record_from_mapping
 
 
 CHAIN_SOURCE = """

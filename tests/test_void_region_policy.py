@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from cad_qa.dataset.materialize import materialize_row
-from cad_qa.ontology.nodes import Measurement, Node, OntologyGraph, Relation
-from cad_qa.query.resolver import resolve_query
-from cad_qa.query.synthesis import synthesize_graph_hop_queries
+from dataset.release.materialize import materialize_row
+from dataset.ontology.nodes import Measurement, Node, OntologyGraph, Relation
+from dataset.query.resolver import resolve_query
+from dataset.query.synthesis import synthesize_graph_hop_queries
 
 
 def _void_region_graph(count: int = 2, *, include_targets: bool = True) -> OntologyGraph:

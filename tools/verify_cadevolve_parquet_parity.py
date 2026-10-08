@@ -28,7 +28,7 @@ from typing import Any
 
 import pyarrow.parquet as pq
 
-from cad_qa.source import _looks_like_cadquery_source, _normalize_archive_path, normalize_source_text
+from dataset.source import _looks_like_cadquery_source, _normalize_archive_path, normalize_source_text
 
 DEFAULT_MAX_MEMBER_BYTES = 1_000_000
 DEFAULT_WORKERS = min(64, max(8, (os.cpu_count() or 4) * 4))

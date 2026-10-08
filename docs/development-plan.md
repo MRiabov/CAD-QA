@@ -24,7 +24,7 @@ paper/thesis.
 Establish what the code actually does, so later numbers are trustworthy. The owner-facing
 checklist is `_audit/owner-audit-todo.md` (group C).
 
-- Highest-risk items: the grader (`cad_qa/evaluation/grade.py::grade_public_private`) versus
+- Highest-risk items: the grader (`train_and_eval/grading/grade.py::grade_public_private`) versus
   the reward (`train_and_eval/...::reward_cadqa`); `run_code` sandbox isolation; vLLM versus
   transformers output parity; SFT prompt masking; the environment pins.
 - Consolidate one runnable verification command per pipeline step (see
@@ -34,9 +34,10 @@ checklist is `_audit/owner-audit-todo.md` (group C).
 
 ## Phase 0a — Repo restructure (mechanical) [P1; fan-out P2]
 
-Rename `cad_qa/` (frozen) to `dataset_generation/`; keep `train_and_eval/` — the two
-packages stay coupled only by the rows IO contract. Do this before the audit settles
-citations. Folder fan-out CI is P2.
+**Done (2026-10-08).** `cad_qa/` is renamed to `dataset/` (generation only), and all
+training/evaluation logic — `cad_qa/evaluation/` → `train_and_eval/grading/`, the eval CLI,
+and the Harbor runner/grader — lives in `train_and_eval/`. The two packages are coupled only
+by the rows IO contract. Folder fan-out CI is P2.
 
 ## Phase 0b — Prior-art code mining [P1]
 
@@ -92,7 +93,7 @@ Rename code identifiers to match the glossary. `uv run python tools/check_dont_s
 --identifiers` reports the name collisions, and `tools/dont_say_identifiers_baseline.txt`
 holds the accepted count (**5,339** across 63 files — mostly `type`, `clause`, `source`,
 `node`, `selector`) to ratchet to zero. Deferred: it is a large mechanical rename, much of it
-inside the frozen `cad_qa/`.
+inside the frozen `dataset/`.
 
 ## Cross-cutting rules
 

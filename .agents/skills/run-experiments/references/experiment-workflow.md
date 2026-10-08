@@ -23,7 +23,7 @@ Run only the checks relevant to the code touched, but do not rent GPU before
 basic local validation is clean.
 
 ```bash
-rtk uv run python -m compileall -q cad_qa scripts tests
+rtk uv run python -m compileall -q dataset scripts tests
 rtk uv run pytest -q
 rtk uv run python -m scripts.experiments.run_experiment_suite configs/orchestration_smoke.yaml --list
 rtk uv run python -m scripts.experiments.run_experiment_suite configs/orchestration_smoke.yaml --dry-run
