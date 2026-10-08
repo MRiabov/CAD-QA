@@ -1,4 +1,4 @@
-"""Release-scale verifier and quarantine reports."""
+"""Release-scale Query verifier reports for non-release-ready CAD-QA dataset rows."""
 
 from __future__ import annotations
 
@@ -173,7 +173,7 @@ def release_verifier_report(
     preview_evidence: dict[str, Any] | None = None,
     family_test_evidence: Path | None = DEFAULT_FAMILY_TEST_EVIDENCE,
 ) -> dict[str, Any]:
-    """Aggregate release-readiness gates and verifier/quarantine taxonomy."""
+    """Aggregate release-readiness gates and Query verifier / non-release-ready taxonomy."""
 
     profile = release_gate_profile(release_tier)
     split = split or split_manifest(rows)

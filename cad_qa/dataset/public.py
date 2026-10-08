@@ -1,4 +1,4 @@
-"""Public/private row views for benchmark release artifacts."""
+"""Views over the Public and Private CAD-QA dataset row column sets for benchmark release artifacts."""
 
 from __future__ import annotations
 

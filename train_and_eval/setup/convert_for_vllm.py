@@ -1,15 +1,15 @@
 """Convert an unsloth-saved gemma-4-E2B checkpoint for serving in vLLM 0.26.
 
 vLLM's Gemma4 arch expects:
-  1. keys under `language_model.model.*` (HF/unsloth save them as
-     `model.language_model.*`) — rename the prefix;
+  1. the language submodule keys renamed to the `language_model` prefix
+     (HF/unsloth save the two segments in reverse order) — rename the prefix;
   2. a `k_norm` weight on EVERY decoder layer — HF's checkpoint only stores them on the
      non-shared layers (text_config.num_kv_shared_layers=20 → 15 unique, layers 15-34
-     share with layer % 15). Duplicate from the source layer.
+     share with layer % 15). Duplicate from the original layer.
 
 Usage:
   python convert_for_vllm.py --src /root/cadqa-sft-merged --dst /root/cadqa-sft-merged-vllm
-  vllm serve /root/cadqa-sft-merged-vllm   # or LLM(model=...)
+  vllm serve /root/cadqa-sft-merged-vllm   # or the vLLM Python LLM(...) API
 """
 from __future__ import annotations
 

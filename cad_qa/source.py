@@ -1,4 +1,4 @@
-"""Source records and JSONL loading."""
+"""CadQuery program records and JSONL loading."""
 
 from __future__ import annotations
 
@@ -169,7 +169,7 @@ def cadevolve_tar_source_rows(
     complete_stratified_scan: bool = False,
     workers: int | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """Extract normalized CadQuery source rows from a CADEvolve tar archive."""
+    """Extract normalized CadQuery program rows from the upstream CadQuery program corpus archive."""
 
     if stratify_by_tags or limit is not None:
         return _cadevolve_tar_source_rows_sequential(
@@ -205,7 +205,7 @@ def _cadevolve_tar_source_rows_sequential(
     min_per_tag: int = 0,
     complete_stratified_scan: bool = False,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """Extract normalized CadQuery source rows from a CADEvolve tar archive."""
+    """Extract normalized CadQuery program rows from the upstream CadQuery program corpus archive."""
 
     prefixes = tuple(_normalize_archive_path(prefix) for prefix in path_prefixes or [] if prefix)
     path_needles = tuple(value.lower() for value in path_contains or [] if value)
@@ -411,7 +411,7 @@ def cadevolve_directory_source_rows(
     code_contains: list[str] | None = None,
     max_member_bytes: int = 1_000_000,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """Build normalized CADEvolve source rows from an extracted archive directory."""
+    """Build normalized CadQuery program rows from a directory extracted from the upstream CadQuery program corpus archive."""
 
     stats = cadevolve_directory_scan_stats(
         root_path,
@@ -476,7 +476,7 @@ def iter_cadevolve_directory_source_rows(
     max_member_bytes: int = 1_000_000,
     workers: int | None = None,
 ):
-    """Yield normalized CADEvolve source rows from an extracted archive directory."""
+    """Yield normalized CadQuery program rows from a directory extracted from the upstream CadQuery program corpus archive."""
 
     prefixes = tuple(_normalize_archive_path(prefix) for prefix in path_prefixes or [] if prefix)
     path_needles = tuple(value.lower() for value in path_contains or [] if value)
@@ -547,7 +547,7 @@ def cadevolve_source_table_rows(
     stratify_by_tags: bool = False,
     min_per_tag: int = 0,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """Select normalized CADEvolve source rows from a cached parquet source table."""
+    """Select normalized CadQuery program rows from a cached parquet table."""
 
     prefixes = tuple(_normalize_archive_path(prefix) for prefix in path_prefixes or [] if prefix)
     path_needles = tuple(value.lower() for value in path_contains or [] if value)
@@ -644,7 +644,7 @@ def write_cadevolve_source_cache_parquet(
     *,
     batch_size: int = DEFAULT_CADEVOLVE_SOURCE_PARQUET_BATCH,
 ) -> int:
-    """Write CADEvolve source rows as real parquet columns, not JSON blobs."""
+    """Write upstream CadQuery program corpus rows as real parquet columns, not JSON blobs."""
 
     path.parent.mkdir(parents=True, exist_ok=True)
     writer: pq.ParquetWriter | None = None
@@ -678,7 +678,7 @@ def write_cadevolve_source_cache_parquet(
 
 
 def source_geometry_feature_tags(source_code: str) -> list[str]:
-    """Return source-level geometry hints used to keep rare release families reachable."""
+    """Return CadQuery program-level geometry hints used to keep rare release families reachable."""
 
     tags: list[str] = []
     for tag, methods in _CADQUERY_METHOD_TAGS:
@@ -748,7 +748,7 @@ def source_to_dict(source: SourceRecord) -> dict[str, Any]:
 
 
 def source_family_from_path(path: str) -> str:
-    """Derive a stable CADEvolve-style family label from an archive member path."""
+    """Derive a stable family label from an archive member path in the upstream CadQuery program corpus."""
 
     normalized = path.replace("\\", "/")
     parts = [part for part in normalized.split("/") if part]
@@ -1007,7 +1007,7 @@ def _stratified_selection_ready(
 
 
 def source_manifest(sources: list[SourceRecord]) -> dict[str, Any]:
-    """Build an auditable manifest for normalized source records."""
+    """Build an auditable manifest for normalized CadQuery program records."""
 
     source_ids = [source.source_id for source in sources]
     hashes = [source.source_hash for source in sources if source.source_hash]
@@ -1084,7 +1084,7 @@ def source_manifest(sources: list[SourceRecord]) -> dict[str, Any]:
 
 
 def source_audit(sources: list[SourceRecord]) -> dict[str, Any]:
-    """Audit source manifests for identity and split-hygiene risks."""
+    """Audit CadQuery program manifests for identity and split-hygiene risks."""
 
     manifest = source_manifest(sources)
     errors: list[dict[str, Any]] = []

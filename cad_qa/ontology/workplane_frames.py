@@ -1,4 +1,4 @@
-"""Workplane frame extraction helpers."""
+"""CadQuery workplane frame extraction helpers."""
 
 from __future__ import annotations
 

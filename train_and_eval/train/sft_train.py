@@ -1,7 +1,7 @@
 """SFT gemma-4-E2B on validated CAD-QA teacher traces (tool-call style).
 
-Reads sft_traces.jsonl (Trace records: prompt + reasoning-then-tool-call trace),
-formats as single-turn chat (user: prompt, assistant: trace), and SFTs with
+Reads sft_traces.jsonl (agent training trace records: prompt + reasoning-then-tool-call),
+formats as single-turn chat (user: prompt, assistant: agent training trace), and SFTs with
 FastVisionModel + QLoRA (4-bit NF4 base, LoRA adapters) at 16K context
 (canonical E2B notebook recipe).
 """

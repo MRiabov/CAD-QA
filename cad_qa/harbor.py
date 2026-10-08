@@ -1,4 +1,4 @@
-"""Harbor task export and verifier wrappers for CAD-QA rows."""
+"""Harbor task export and Query verifier wrappers for CAD-QA rows."""
 
 from __future__ import annotations
 

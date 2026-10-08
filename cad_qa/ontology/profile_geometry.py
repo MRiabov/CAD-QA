@@ -1,4 +1,4 @@
-"""Profile geometry helpers."""
+"""CadQuery profile geometry helpers."""
 
 from __future__ import annotations
 

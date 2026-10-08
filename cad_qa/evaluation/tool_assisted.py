@@ -12,7 +12,7 @@ def tool_assisted_responses(
     public_rows: list[dict[str, Any]],
     private_rows: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    """Emit deterministic tool-assisted answers from private verifier artifacts."""
+    """Emit deterministic tool-assisted answers from private Query verifier artifacts."""
 
     private_by_id = {row["row_id"]: row for row in private_rows}
     responses: list[dict[str, Any]] = []

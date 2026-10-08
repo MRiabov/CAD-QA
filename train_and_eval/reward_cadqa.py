@@ -58,7 +58,7 @@ def _reward_one(pred: str, gold: object, fmt: str) -> float:
     if fmt == "boolean":
         return 1.0 if _strip_special(pred).lower() == gold_str.lower() else 0.0
     if fmt == "text":
-        # the id is embedded in a long reasoning trace; substring presence wins
+        # the id is embedded in a long agent training trace; substring presence wins
         return 1.0 if gold_str in _strip_special(pred) else 0.0
     if fmt == "number":
         try:

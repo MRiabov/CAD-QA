@@ -1,9 +1,9 @@
 """Analyze whether generated rows can satisfy strict release gates.
 
 This is a read-only diagnostic tool. It inspects generated row shard parquets
-before release selection and reports whether the pool has enough source,
-family, value-bearing, cross-feature, and parameter diversity capacity for the
-benchmark-release profile.
+before release selection and reports whether the pool has enough CadQuery
+program, family, value-bearing, cross-feature, and parameter diversity capacity
+for the benchmark-release tier.
 """
 
 from __future__ import annotations

@@ -1,11 +1,11 @@
 """Normalize the 275 teacher traces to gemma-native tool-call format for SFT.
 
-Each trace becomes a pre-rendered conversation string:
+Each agent training trace becomes a pre-rendered conversation string:
   <|turn>system <|tool>declaration:...<tool|> <turn|>
   <|turn>user <prompt><turn|>
-  <|turn>model <reasoning><|tool_call>call:<name>{args}<tool_call|><turn|>
+  <|turn>LLM model <reasoning><|tool_call>call:<name>{args}<tool_call|><turn|>
 
-Rendered via the model's own chat template with tools= (native declarations)
+Rendered via the LLM model's own chat template with tools= (native declarations)
 and tool_calls messages (native call rendering). Output: sft_texts.jsonl.
 """
 
@@ -54,7 +54,7 @@ def _last_valid_json(text: str) -> dict | None:
 
 
 def _args_from_trace(t: dict, tool: ToolName) -> dict:
-    """Extract the typed args from the trace's final tool call (any envelope form)."""
+    """Extract the typed args from the agent training trace's final tool call (any envelope form)."""
     data = _last_valid_json(t["trace"])
     if data is None:
         raise ValueError(f"no JSON block in trace {t['row_id']}")
@@ -64,7 +64,7 @@ def _args_from_trace(t: dict, tool: ToolName) -> dict:
 
 
 def build_text(prompt: str, content: str, processor, tools) -> str:
-    """Assistant turn = full trace content (reasoning + literal native call/response
+    """Assistant turn = full agent training trace content (reasoning + literal native call/response
     tokens). No tool_calls key, so the template's plain-text path keeps the
     literal <|tool_call|>/<|tool_response|> tokens as-is."""
     msgs = [
@@ -75,7 +75,7 @@ def build_text(prompt: str, content: str, processor, tools) -> str:
 
 
 def _assistant_content(t: dict, tool: ToolName) -> str | None:
-    """Render the trace's assistant turn (native tokens). None if unrenderable.
+    """Render the agent training trace's assistant turn (native tokens). None if unrenderable.
 
     Structured steps (multi-turn run_code round-trips) render via
     render_trace_steps; legacy text traces split reasoning from the final

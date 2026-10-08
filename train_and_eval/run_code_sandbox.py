@@ -5,9 +5,9 @@ blocked-imports meta-path hook (no network/files/processes/cadquery),
 restricted builtins (no open/eval/exec/compile), numpy file-IO removed, and
 stdout/exception capture. Exit 0 on success, exit 1 on exception.
 
-THREAT MODEL — read before relying on this: this is an ACCIDENTAL-MISUSE guard
-for model-generated snippets inside a training pipeline, NOT a security
-boundary. It stops a confused/entangled model from `import os`, `open(...)`,
+THREAT ASSESSMENT — read before relying on this: this is an ACCIDENTAL-MISUSE guard
+for LLM-model-generated snippets inside a training pipeline, NOT a security
+boundary. It stops a confused/entangled LLM model from `import os`, `open(...)`,
 `import cadquery` (task integrity: cadquery would trivialize the task), or
 from hanging via the timeout. A determined attacker can still escape a plain
 python subprocess (object introspection, loader abuse) — real isolation needs

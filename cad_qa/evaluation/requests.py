@@ -1,4 +1,4 @@
-"""Closed-book model request export."""
+"""Closed-book LLM model request export."""
 
 from __future__ import annotations
 

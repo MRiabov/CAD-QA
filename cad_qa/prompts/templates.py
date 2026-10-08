@@ -102,7 +102,7 @@ def tie_break_prompt(aggregation: str, metric: str, *, query: Any | None = None)
 
 
 def clause_template_key(clause: Any, *, query: Any | None = None) -> str | None:
-    """Return the YAML template key used for a rendered query clause."""
+    """Return the YAML template key used for a rendered Gold query predicate."""
 
     return _clause_template_key(clause, query, _template_mapping("clause_templates"))
 

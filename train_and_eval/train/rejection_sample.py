@@ -1,7 +1,7 @@
 """Rejection sampling: teacher (deepseek-v4-flash) generates successful CAD-QA traces.
 
 For each hop bucket, sample rows until the quota of *validated* tool calls is met.
-A trace is kept only when the teacher's typed tool call matches the gold
+An agent training trace is kept only when the teacher's typed tool call matches the gold
 (exact strings/ints, 1e-3 relative floats). Traces > MAX_TRACE_TOKENS are
 compacted via compact_trace(reasoning) and the original answer call is spliced
 server-side. Every call is logged for monitoring (validity, tokens, cost).
@@ -62,7 +62,7 @@ class Trace(BaseModel):
     compacted: bool = Field(default=False)
     prompt_tokens: int = Field(ge=0)
     completion_tokens: int = Field(ge=0)
-    mode: HarnessMode = Field(default=HarnessMode.NO_TOOLS)  # harness mode that produced this trace
+    mode: HarnessMode = Field(default=HarnessMode.NO_TOOLS)  # harness mode that produced this agent training trace
     steps: list[TraceStep] = Field(default_factory=list)  # structured round-trip (SFT rendering)
 
 
@@ -256,7 +256,7 @@ class Sampler:
     def _attempt_row(self, row: dict[str, Any], hop: int, tool: ToolName) -> AttemptLog:
         """One sampling attempt: multi-turn teacher loop (reasoning + run_code -> submit).
 
-        Every round's LLM output is recorded (A5). The trace captures the full
+        Every round's LLM output is recorded (A5). The agent training trace captures the full
         loop as structured steps (text / tool_call / tool_result) plus a
         flattened text; the run_code round-trip is executed server-side.
         `compute_tool=False` runs the no-tools mode (reasoning only).

@@ -1,4 +1,4 @@
-"""Ontology graph data structures."""
+"""CAD ontology graph data structures."""
 
 from __future__ import annotations
 

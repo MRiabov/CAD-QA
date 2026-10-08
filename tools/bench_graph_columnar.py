@@ -4,7 +4,8 @@ The current graph shard parquet format stores graph nodes, relations, and
 measurements as JSON strings inside top-level parquet columns. This script
 measures that hot-path cost against a flattened, no-JSON intermediate layout
 for the columns most frequently needed by graph analysis and query synthesis:
-entity/relation/measurement identity and type metadata.
+entity/relation/measurement identity and CAD ontology node type, and
+relation type metadata.
 
 Example:
     uv run python tools/bench_graph_columnar.py \

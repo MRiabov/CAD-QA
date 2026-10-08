@@ -1,4 +1,4 @@
-"""Closed-book model evaluation reports."""
+"""Closed-book LLM model evaluation reports."""
 
 from __future__ import annotations
 

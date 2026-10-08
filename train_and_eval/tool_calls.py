@@ -1,6 +1,6 @@
 """CAD-QA tool-call contract: typed answer tools, extraction, and gold validation.
 
-The model's completion is reasoning text ending with a JSON tool call envelope
+The LLM model's completion is reasoning text ending with a JSON tool call envelope
 ``{"name": "submit_bbox", "arguments": {...}}``. One tool per answer format; no
 raw-JSON emission anywhere. Comparison: exact for strings/ints, 1e-3 relative
 for floats (user-specified). The 'text' format tolerates float-formatting
@@ -178,7 +178,7 @@ MAX_TOOL_RESULT_CHARS = 8000
 def execute_code(code: str, timeout: float = CODE_TIMEOUT) -> str:
     """Run code in the sandboxed subprocess; return the tool-response value.
 
-    The result is what the model sees as the tool response: stdout on success
+    The result is what the LLM model sees as the tool response: stdout on success
     (or a short "Ok" marker), else the error text. Bounded length, strict
     timeout, isolated interpreter (python -I), no network/files/processes.
     """
@@ -213,7 +213,7 @@ def render_tool_response(name: ToolName, value: str) -> str:
     return f"<|tool_response>response:{name.value}{{value:<|\"|>{escaped}<|\"|>}}<tool_response|>"
 
 
-# --- multi-turn trace steps -------------------------------------------------
+# --- multi-turn agent training trace steps ----------------------------------
 
 class TraceStepKind(StrEnum):
     TEXT = "text"                 # reasoning prose
@@ -229,7 +229,7 @@ class TraceStep(BaseModel):
 
 
 def render_trace_steps(steps: list[TraceStep]) -> str:
-    """Flatten trace steps into one assistant-turn string for SFT rendering."""
+    """Flatten agent training trace steps into one assistant-turn string for SFT rendering."""
     parts: list[str] = []
     for s in steps:
         match s.kind:
@@ -372,7 +372,7 @@ def tool_call_matches(name: ToolName, args: BaseModel, gold_raw: str, fmt: str) 
                 and _vec_close(args.max, tuple(float(x) for x in gold["max"]))  # type: ignore[attr-defined]
             )
         case ToolName.SUBMIT_WORKPLANE:
-            return isinstance(gold, dict) and _json_matches(args, gold)  # type: ignore[arg-type]
+            return isinstance(gold, dict) and _json_matches(args, gold)  # type: ignore
         case ToolName.COMPACT_TRACE | ToolName.RUN_CODE:
             return True  # non-answer tools: parseable = valid
         case _:

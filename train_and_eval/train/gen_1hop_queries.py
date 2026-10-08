@@ -11,7 +11,7 @@ GRAPH_DIR = "runs/current_cadevolve1000_10k_regen_20260613/graph/graphs"
 OUT = sys.argv[1] if len(sys.argv) > 1 else "/tmp/1hop_queries.jsonl"
 MAX_GRAPHS = int(sys.argv[2]) if len(sys.argv) > 2 else 1000
 
-# Only workplane targets: source_ref mode resolves to script variable names (wp1),
+# Only CadQuery workplane targets: source_ref mode resolves to script variable names (wp1),
 # which the teacher can derive from the script. Face targets resolve to kernel
 # internal ids / "kernel" that are NOT present in the script (unsolvable).
 TEMPLATES = [

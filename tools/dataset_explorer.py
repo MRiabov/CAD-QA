@@ -1,7 +1,7 @@
 """Local CAD-QA dataset explorer with cached runtime PNG renders.
 
 This is intentionally dependency-light: it uses the standard-library HTTP
-server, Polars for parquet reads, CadQuery for model execution, and VTK for
+server, Polars for parquet reads, CadQuery for CAD model execution, and VTK for
 offscreen PNG rendering.
 
 Example:

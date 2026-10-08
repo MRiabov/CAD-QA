@@ -1,4 +1,4 @@
-"""Quarantine reporting for non-release-ready graph rows."""
+"""Reporting for non-release-ready CAD-QA dataset rows."""
 
 from __future__ import annotations
 

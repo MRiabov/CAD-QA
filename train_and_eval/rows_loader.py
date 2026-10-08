@@ -10,7 +10,7 @@ Bridges the graph-first dataset artifacts (`rows.parquet` / `rows.jsonl` from
 The harness expects, per row: `row_id`, `prompt`, `answer_format`,
 `gold_answer`, plus `logical_hop_count` for curriculum bucketing. The loader
 decodes the JSON-encoded `gold_answer` and, when `tool_suffix=True`, appends
-the `[answer contract]` suffix so the model is instructed to end its response
+the `[answer contract]` suffix so the LLM model is instructed to end its response
 with the matching `submit_*` tool call.
 """
 
@@ -27,7 +27,7 @@ from tool_calls import tool_call_prompt_suffix
 
 
 class RLRawRow(BaseModel):
-    """Typed view of a dataset row as the RL/eval harness consumes it."""
+    """Typed view of a CAD-QA dataset row as the RL/eval harness consumes it."""
 
     row_id: str = Field(min_length=1)
     prompt: str = Field(min_length=1)

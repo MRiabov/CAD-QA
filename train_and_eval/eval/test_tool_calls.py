@@ -137,7 +137,7 @@ def test_run_code_extract_and_validate():
 
 
 def test_run_code_roundtrip_in_trace_steps():
-    # a full multi-turn trace: reasoning -> run_code call -> result -> submit
+    # a full multi-turn agent training trace: reasoning -> run_code call -> result -> submit
     steps = [
         TraceStep(kind=TraceStepKind.TEXT, text="Let me compute the volume."),
         TraceStep(kind=TraceStepKind.TOOL_CALL, name=ToolName.RUN_CODE,

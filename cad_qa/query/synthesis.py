@@ -1,4 +1,4 @@
-"""Bounded graph-hop query synthesis over ontology graphs."""
+"""Bounded graph-hop query synthesis over CAD ontology graphs."""
 
 from __future__ import annotations
 

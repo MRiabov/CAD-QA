@@ -14,7 +14,7 @@ VALUE_MATCH_TOLERANCE = 1e-6
 
 @dataclass(frozen=True)
 class PredicateInstance:
-    """A reusable verifier clause with its candidate effect."""
+    """A reusable Gold query predicate with its candidate effect."""
 
     id: str
     clause: Clause

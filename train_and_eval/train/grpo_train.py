@@ -33,7 +33,7 @@ LOSS = os.environ.get("CADQA_RL_LOSS", "bnpo")  # notebook default; 'grpo' also 
 max_seq_length = int(os.environ.get("CADQA_RL_SEQ", "16384"))  # 16K traces (hard requirement); fits 24GB 4090 at bs=4
 lora_rank = 32
 
-# --- model load (notebook cell 6) ---
+# --- LLM model load (notebook cell 6) ---
 model, tokenizer = FastVisionModel.from_pretrained(
     model_name="unsloth/gemma-4-E2B-it",
     max_seq_length=max_seq_length,

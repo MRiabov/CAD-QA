@@ -1,4 +1,5 @@
-"""Verify parity between a CADEvolve parquet cache and an extracted tree.
+"""Verify parity between the upstream CadQuery program corpus parquet cache and
+an extracted tree.
 
 The slow naive approach rescans every Python file with normalize_source_text.
 This tool instead:

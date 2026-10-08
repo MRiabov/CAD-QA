@@ -55,7 +55,7 @@ def clue_breadth_violations(
 
 
 def clue_map_traceability_errors(row: dict[str, Any]) -> list[dict[str, Any]]:
-    """Check that public clue entries trace to hidden query clauses."""
+    """Check that public clue entries map to hidden Gold query predicates."""
 
     query = row.get("query_program") or {}
     clause_ids = [

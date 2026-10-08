@@ -1,6 +1,6 @@
 """Benchmark the SFT gemma-4-E2B (merged bf16 checkpoint) on CAD-QA with native tool calls.
 
-Loads the merged model via plain transformers (no unsloth patching), prompts with native
+Loads the merged LLM model via plain transformers (no unsloth patching), prompts with native
 <|tool>declaration:...<tool|> blocks, and parses completions with processor.parse_response.
 
 Three switchable harness modes (same grading, only the compute tools differ):
@@ -82,7 +82,7 @@ class EvalRow(BaseModel):
     tool_valid: bool
     tool_name: str | None
     completion_tokens: int = 0
-    completion: str = ""          # raw decoded completion (debuggable trace)
+    completion: str = ""          # raw decoded completion (debuggable agent training trace)
     capped: bool = False          # True if a round hit ROUND_MAX_NEW without a tool call
     tool_call: str | None = None  # extracted native tool-call JSON (name + args), if any
     rounds: list[ToolRound] = Field(default_factory=list)  # every run_code round (A5)
