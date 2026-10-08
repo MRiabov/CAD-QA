@@ -17,19 +17,19 @@ from typing import Any
 
 import pyarrow.parquet as pq
 
-from cad_qa.dataset.parameter_balance import parameter_balance_report, row_sampled_parameters
-from cad_qa.dataset.release import _cap_release_balance_rows
-from cad_qa.dataset.release_report import (
+from dataset.release.parameter_balance import parameter_balance_report, row_sampled_parameters
+from dataset.release.release import _cap_release_balance_rows
+from dataset.release.release_report import (
     _is_cross_feature_value_bearing_row,
     _is_value_bearing_measurement_row,
     release_balance_report,
     release_gate_profile,
 )
-from cad_qa.dataset.sft import prompt_family
-from cad_qa.io import iter_records, write_json
-from cad_qa.ontology.nodes import graph_from_dict
-from cad_qa.query.family_manifest import load_family_manifest
-from cad_qa.query.synthesis import synthesize_graph_hop_queries
+from dataset.release.sft import prompt_family
+from dataset.io import iter_records, write_json
+from dataset.ontology.nodes import graph_from_dict
+from dataset.query.family_manifest import load_family_manifest
+from dataset.query.synthesis import synthesize_graph_hop_queries
 
 
 ROW_COLUMNS = (

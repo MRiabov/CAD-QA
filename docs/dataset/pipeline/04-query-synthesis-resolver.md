@@ -12,7 +12,7 @@ a unique gold answer backed by the Query verifier with a recorded answer candida
   (`failure_manifest.parquet`), matching the contract. Each query record carries
   `graph_id`, `query` (`QueryProgram`), and `resolution` (`QueryResolution`).
 - **Sidecar outputs:** `query_report.json`; in compact synthesis mode a `graphs` sidecar so
-  each graph is stored once (`cad_qa/cli.py::_materialize_graph_lookup`).
+  each graph is stored once (`dataset/cli.py::_materialize_graph_lookup`).
 
 ## Requirement
 
@@ -29,9 +29,9 @@ a clue does not collapse the set to the answer.
 ## Current status
 
 **exists.** Smoke queries, the synthesis layer, the family manifest, and the resolver are
-present and readable (`cad_qa/query/synthesis.py::synthesize_graph_hop_queries`,
-`cad_qa/query/resolver.py::smoke_queries`, `::resolve_query`,
-`cad_qa/query/family_manifest.py`, `cad_qa/cli.py::_cmd_query_synthesize`). No query run was
+present and readable (`dataset/query/synthesis.py::synthesize_graph_hop_queries`,
+`dataset/query/resolver.py::smoke_queries`, `::resolve_query`,
+`dataset/query/family_manifest.py`, `dataset/cli.py::_cmd_query_synthesize`). No query run was
 executed while writing this doc.
 
 ## Verification
@@ -64,7 +64,7 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_query_resolver_a
   (`EXTREME_FAMILY_SPECS`, `RANK_FAMILY_SPECS`, `SELECTOR_COUNT_FAMILY_SPECS`,
   `EQUAL_VALUE_*`, `RELATION_*`, `FEATURE_EFFECT_DELTA_FAMILY_SPECS`, reference-distance
   specs, and `_void_region_volume_queries`) and samples viable choices deterministically
-  (`cad_qa/query/synthesis.py::_sample_viable_choices`,
+  (`dataset/query/synthesis.py::_sample_viable_choices`,
   `::_stable_choice_index`).
 - **Consequences:** A graph produces a reproducible set of queries; family identities are
   parameterized rather than hard-coded axes/directions.
@@ -74,10 +74,10 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_query_resolver_a
 - **Status:** accepted.
 - **Context:** Many early families are fixed-axis/review-only and must not leak into release
   exports.
-- **Decision:** `cad_qa/query/family_manifest.py::load_family_manifest` reads
-  `cad_qa/query/family_specs.yaml` (176 family entries; 59 `release`). `query synthesize`
+- **Decision:** `dataset/query/family_manifest.py::load_family_manifest` reads
+  `dataset/query/family_specs.yaml` (176 family entries; 59 `release`). `query synthesize`
   filters to `release` families unless `--include-review-only` is given
-  (`cad_qa/cli.py::_release_family_ids`).
+  (`dataset/cli.py::_release_family_ids`).
 - **Consequences:** Review-only/calibration families are demoted, not deleted; benchmark
   release reports block them if they appear in release rows.
 
@@ -85,7 +85,7 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_query_resolver_a
 
 - **Status:** accepted.
 - **Context:** A query is a narrowing program with a final CadQuery selector, then a tie-break.
-- **Decision:** `cad_qa/query/resolver.py::resolve_query` applies each Gold query predicate
+- **Decision:** `dataset/query/resolver.py::resolve_query` applies each Gold query predicate
   in order (`_apply_clause`), then the primary aggregation (`_apply_primary_aggregation`),
   then the tie-break aggregation when the primary leaves more than one candidate
   (`_apply_metric_aggregation`). Each step is appended to the answer candidate set trace.
@@ -97,11 +97,11 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_query_resolver_a
 - **Status:** accepted.
 - **Context:** Prompt wording, gold-answer value, public recoverability, and grading must
   agree (`docs/_archive/multi-hop-qa-architecture.md`).
-- **Decision:** `cad_qa/query/answers.py::AnswerSpec` (mode + answer format + metric +
+- **Decision:** `dataset/query/answers.py::AnswerSpec` (mode + answer format + metric +
   candidate labels) drives prompt instruction, gold formatting
   (`format_gold_answer`), and candidate-line rendering. When a `source_ref` answer is not
   publicly unambiguous, the resolver falls back to `candidate_label`
-  (`cad_qa/query/resolver.py::resolve_query` with
+  (`dataset/query/resolver.py::resolve_query` with
   `source_ref_is_publicly_unambiguous`).
 - **Consequences:** Closed-book rows never require colon-delimited internal `entity_id`
   answers; CadQuery selector-expression choices are derived from real measured candidates
@@ -115,7 +115,7 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_query_resolver_a
 - **Decision:** `DEFAULT_MAX_CANDIDATE_LABELS = 7`; `answer_spec_with_candidate_labels`
   bounds and rotates the displayed set.
 - **Consequences:** Validation rejects overwide public label lists
-  (`cad_qa/dataset/validate.py::public_candidate_label_issues`).
+  (`dataset/release/validate.py::public_candidate_label_issues`).
 
 ### D6 — High-hop hint: minimum distractors per Gold query predicate
 
@@ -123,7 +123,7 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_query_resolver_a
 - **Context:** A single clue that identifies the answer makes a high-hop row fake.
 - **Decision:** `QueryProgram.min_individual_clause_candidates` (default 3) causes the
   resolver to fail a hop≥3 query whose intermediate answer candidate set drops below the threshold
-  (`cad_qa/query/resolver.py::resolve_query`).
+  (`dataset/query/resolver.py::resolve_query`).
 - **Consequences:** Collapsed high-hop clues become `clue_too_narrow` failures rather than
   benchmark rows.
 
@@ -131,7 +131,7 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_query_resolver_a
 
 - **0/1-hop synthesis gap (documented).** `synthesis.py` floors every synthesized row at
   hop≥2, so no release 0-hop or 1-hop families exist; `difficulty_for_hops`
-  (`cad_qa/query/difficulty.py`) is effectively dead on the synthesis path, which sets
+  (`dataset/query/difficulty.py`) is effectively dead on the synthesis path, which sets
   `difficulty` directly. The implementation status log records this as open work
   (`docs/_archive/implementation_status.md#open-work`, 2026-08-09). A clean 0→1→2→3 curriculum is not
   generatable end-to-end today.

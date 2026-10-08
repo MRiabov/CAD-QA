@@ -16,7 +16,7 @@ reasoning, and the reference numbers for small and cost-effective LLM models.
 The paper's claim that models fail CAD reasoning is only credible if a shortcut
 system that exploits assignment names, operation order, literal arguments, or simple
 patterns in the CadQuery program cannot answer the benchmark. A baseline is meaningful only when it
-runs under the same grading contract as the LLM model (`cad_qa/evaluation/grade.py`)
+runs under the same grading contract as the LLM model (`train_and_eval/grading/grade.py`)
 and is reported separately from geometry-reasoning accuracy
 (`specs/research-experiment-spec.md`, "Primary Setting").
 
@@ -24,24 +24,24 @@ and is reported separately from geometry-reasoning accuracy
 
 Each family's status is one tag. "Recorded run" is what was actually executed and
 preserved; "Code" is what exists at HEAD unless marked otherwise. The historical
-heuristic families were defined in `cad_qa/baselines.py` at commit `85cb532`
+heuristic families were defined in `train_and_eval/grading/baselines.py` at commit `85cb532`
 ("Add P0 shortcut baselines") and removed in commit `a0187dd` ("Pruning and
 re-doing") when dataset generation moved to the graph-first design; they are not present
 at `512a514`.
 
 | Family | Logic | Code | Recorded run | Status |
 |---|---|---|---|---|
-| Graph-resolver oracle | Emit the private `gold_answer` (or a formatted variant of the private Query verifier artifacts) | `cad_qa/evaluation/baselines.py::oracle_answer`; `cad_qa/evaluation/tool_assisted.py::run_tool_assisted_upper_bound` | `runs/baseline_smoke/baseline_metrics.json` (1.0, 37 rows); `runs/cadqa_cadevolve_rc_10_baselines/baseline_metrics.json` (1.0, 958 rows) | `verified` |
-| Majority | Predict the most frequent gold answer | `cad_qa/evaluation/baselines.py::majority_answer` | rc10 0.333 (958 rows); heuristic smoke 0.571 (35 rows); not in `runs/baseline_smoke` | `exists` |
+| Graph-resolver oracle | Emit the private `gold_answer` (or a formatted variant of the private Query verifier artifacts) | `train_and_eval/grading/baselines.py::oracle_answer`; `train_and_eval/grading/tool_assisted.py::run_tool_assisted_upper_bound` | `runs/baseline_smoke/baseline_metrics.json` (1.0, 37 rows); `runs/cadqa_cadevolve_rc_10_baselines/baseline_metrics.json` (1.0, 958 rows) | `verified` |
+| Majority | Predict the most frequent gold answer | `train_and_eval/grading/baselines.py::majority_answer` | rc10 0.333 (958 rows); heuristic smoke 0.571 (35 rows); not in `runs/baseline_smoke` | `exists` |
 | Random | Uniform/typed random guess per answer format | historical only (pruned) | rc10 0.100 (958 rows); heuristic smoke 0.171 (35 rows) | `stale` |
 | Regex / static syntax | Count operations by regex over the prompt code, or read a static label | historical only (pruned) | rc10 `regex_operation_count` 0.331, `static_operation_count` 0.340 (958 rows); heuristic smoke 0.314 / 0.314 (35 rows) | `stale` |
 | CadQuery selector-name heuristic | Guess CadQuery selector cardinality from CadQuery selector expression tokens and CAD ontology node type | historical only (pruned) | rc10 0.301 (958 rows); heuristic smoke 0.200 (35 rows) | `stale` |
 | Operation-order heuristic | Answer from operation order in the CadQuery program | not found in code or artifacts; named in `specs/paper-spec.md`, `specs/research-experiment-spec.md` | none found | `missing` |
 | Symbolic primitive geometry | Closed-form volume delta from the builder operation and its literal args (box, hole, cutBlind, extrude) | historical only (pruned) | heuristic smoke 0.114 (35 rows) | `stale` |
 | AABB-only | Classify point membership using the row's own bounding box (inside / on boundary / outside) | historical only (pruned) | heuristic smoke 0.029, invalid-output 0.829 (35 rows) | `stale` |
-| First candidate | Predict the first candidate in the answer candidate set trace | `cad_qa/evaluation/baselines.py::first_candidate_answer` | `runs/baseline_smoke/baseline_metrics.json` (0.297, 37 rows); retired `implementation_status.md` records 0.333 full-smoke and 0.667 filtered release | `exists` |
-| First static filter | Predict the first candidate surviving a static filter | `cad_qa/evaluation/baselines.py::first_static_candidate_answer` | none found | `exists` |
-| Null | Always predict nothing | `cad_qa/evaluation/baselines.py::run_baselines` ("null") | `runs/baseline_smoke/baseline_metrics.json` (0.0, 37 rows) | `exists` |
+| First candidate | Predict the first candidate in the answer candidate set trace | `train_and_eval/grading/baselines.py::first_candidate_answer` | `runs/baseline_smoke/baseline_metrics.json` (0.297, 37 rows); retired `implementation_status.md` records 0.333 full-smoke and 0.667 filtered release | `exists` |
+| First static filter | Predict the first candidate surviving a static filter | `train_and_eval/grading/baselines.py::first_static_candidate_answer` | none found | `exists` |
+| Null | Always predict nothing | `train_and_eval/grading/baselines.py::run_baselines` ("null") | `runs/baseline_smoke/baseline_metrics.json` (0.0, 37 rows) | `exists` |
 
 Notes on interpretation:
 
@@ -91,7 +91,7 @@ not be quoted as a headline (`docs/development-context.md#proven`).
 
 - Runnable now, no GPU: the simple baselines via
   `uv run cadqa evaluation baseline --rows <rows.jsonl> --out <dir>` and the same
-  set embedded in `cad_qa/experiment.py::run_smoke_experiment`.
+  set embedded in `train_and_eval/experiment.py::run_smoke_experiment`.
 - Runnable now, with a GPU and an LLM model: the local small-LLM-model harness
   (`train_and_eval/eval/eval_bench.py`).
 - Runnable now, container/API needed: Harbor materialization and grading; a full
@@ -99,7 +99,7 @@ not be quoted as a headline (`docs/development-context.md#proven`).
 - Not runnable: the historical heuristic families. The runner module named in
   `runs/heuristic_baselines/run_status.json`
   (`scripts.evaluation.evaluate_baseline`) does not exist at HEAD, and the pruned
-  `cad_qa/baselines.py` no longer matches the current row schema.
+  `train_and_eval/grading/baselines.py` no longer matches the current row schema.
 
 ## Verification
 
@@ -155,7 +155,7 @@ Re-run every family on the frozen release test and publish the full breakdown, n
 just the headline accuracy.
 
 ### Closed-book few-shot baseline
-Export the few-shot requests (`cad_qa/evaluation/requests.py::few_shot_requests`)
+Export the few-shot requests (`train_and_eval/grading/requests.py::few_shot_requests`)
 and report cost-effective LLM model few-shot accuracy beside zero-shot.
 
 ### Hard-slice big LLM model numbers

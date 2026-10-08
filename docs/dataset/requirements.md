@@ -30,9 +30,9 @@ These are not owned by a single stage but gate the release claim.
 
 | Requirement | Home | Status | Verification |
 |---|---|---|---|
-| The trusted path contains no LLM: CadQuery program, graph, query, and Query verifier, and prompt rendering are deterministic. | `specs/generation_policy.md`, `README.md` | exists | inspect `cad_qa/` for LLM model/network calls in the generation path; `rg -n "openrouter\|requests\|httpx\|openai" cad_qa` |
-| Public release rows never expose private Query verifier fields (`gold_answer`, `query_program`, `candidate_trace`, `clue_map`, `verifier_status`). | `cad_qa/dataset/public.py::PUBLIC_FIELDS` | exists | `rtk uv run cadqa dataset export-public-private runs/dataset` and inspect `public_private_report.json` |
-| A public benchmark or real fine-tuning claim is made only from the `benchmark-release` tier with `valid_for_release=true` and no blocking gates. | `specs/dataset-spec.md#release-tiers`, `cad_qa/dataset/release_report.py::BENCHMARK_RELEASE_PROFILE` | exists | `rtk uv run cadqa dataset release-report runs/release_dataset --release-tier benchmark-release` |
+| The trusted path contains no LLM: CadQuery program, graph, query, and Query verifier, and prompt rendering are deterministic. | `specs/generation_policy.md`, `README.md` | exists | inspect `dataset/` for LLM model/network calls in the generation path; `rg -n "openrouter\|requests\|httpx\|openai" dataset` |
+| Public release rows never expose private Query verifier fields (`gold_answer`, `query_program`, `candidate_trace`, `clue_map`, `verifier_status`). | `dataset/release/public.py::PUBLIC_FIELDS` | exists | `rtk uv run cadqa dataset export-public-private runs/dataset` and inspect `public_private_report.json` |
+| A public benchmark or real fine-tuning claim is made only from the `benchmark-release` tier with `valid_for_release=true` and no blocking gates. | `specs/dataset-spec.md#release-tiers`, `dataset/release/release_report.py::BENCHMARK_RELEASE_PROFILE` | exists | `rtk uv run cadqa dataset release-report runs/release_dataset --release-tier benchmark-release` |
 
 ## Known gaps
 

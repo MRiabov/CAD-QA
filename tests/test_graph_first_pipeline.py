@@ -17,15 +17,15 @@ import pyarrow as pa
 import polars as pl
 import yaml
 
-from cad_qa.io import RECORD_JSON_COLUMN
-from cad_qa.dataset.materialize import materialize_row
-from cad_qa.dataset.audit import leakage_audit
-from cad_qa.dataset.family_test_evidence import family_test_evidence_gate_report, load_family_test_evidence
-from cad_qa.dataset.parameter_balance import parameter_balance_report
-from cad_qa.dataset.preview import dataset_preview_evidence_report, preview_evidence_gate_report
-from cad_qa.dataset.public import PRIVATE_FIELDS, PUBLIC_FIELDS, private_rows, public_private_audit, public_rows, write_public_private_artifacts
-from cad_qa.dataset.quarantine import quarantine_report
-from cad_qa.dataset.release import (
+from dataset.io import RECORD_JSON_COLUMN
+from dataset.release.materialize import materialize_row
+from dataset.release.audit import leakage_audit
+from dataset.release.family_test_evidence import family_test_evidence_gate_report, load_family_test_evidence
+from dataset.release.parameter_balance import parameter_balance_report
+from dataset.release.preview import dataset_preview_evidence_report, preview_evidence_gate_report
+from dataset.release.public import PRIVATE_FIELDS, PUBLIC_FIELDS, private_rows, public_private_audit, public_rows, write_public_private_artifacts
+from dataset.release.quarantine import quarantine_report
+from dataset.release.release import (
     _answer_diversity_keep_priority,
     _cap_group_share_rows,
     _cap_release_balance_rows,
@@ -35,21 +35,21 @@ from cad_qa.dataset.release import (
     _release_balance_capacity_report,
     export_release_dataset,
 )
-from cad_qa.dataset.release_report import (
+from dataset.release.release_report import (
     intended_family_share_feasibility_report,
     release_balance_report,
     release_gate_profile,
     release_verifier_markdown,
     release_verifier_report,
 )
-from cad_qa.dataset.report import (
+from dataset.release.report import (
     dataset_card_markdown,
     dataset_report,
     failure_report,
     shortcut_resistance_markdown,
     shortcut_resistance_report,
 )
-from cad_qa.dataset.sft import (
+from dataset.release.sft import (
     ablation_sft_groups,
     answer_sft_rows,
     default_training_rows,
@@ -57,15 +57,15 @@ from cad_qa.dataset.sft import (
     reasoning_sft_rows,
     scaling_sft_groups,
 )
-from cad_qa.dataset.split import assign_splits, split_audit, split_manifest
-from cad_qa.dataset.validate import validate_rows
-from cad_qa.evaluation.baselines import run_baselines
-from cad_qa.evaluation.closed_book import closed_book_request_audit, run_closed_book_evaluation
-from cad_qa.evaluation.grade import grade_public_private, grade_responses
-from cad_qa.evaluation.parse import parse_answer
-from cad_qa.evaluation.requests import few_shot_requests, oracle_responses, zero_shot_requests
-from cad_qa.evaluation.tool_assisted import run_tool_assisted_upper_bound, tool_assisted_responses
-from cad_qa.experiment import (
+from dataset.release.split import assign_splits, split_audit, split_manifest
+from dataset.release.validate import validate_rows
+from train_and_eval.grading.baselines import run_baselines
+from train_and_eval.grading.closed_book import closed_book_request_audit, run_closed_book_evaluation
+from train_and_eval.grading.grade import grade_public_private, grade_responses
+from train_and_eval.grading.parse import parse_answer
+from train_and_eval.grading.requests import few_shot_requests, oracle_responses, zero_shot_requests
+from train_and_eval.grading.tool_assisted import run_tool_assisted_upper_bound, tool_assisted_responses
+from train_and_eval.experiment import (
     experiment_summary,
     experiment_summary_markdown,
     package_run_artifacts,
@@ -73,23 +73,24 @@ from cad_qa.experiment import (
     run_artifact_manifest,
     run_smoke_experiment,
 )
-from cad_qa.harbor import _openrouter_native_provider_routing, grade_harbor_task, materialize_harbor_tasks
-from cad_qa.io import iter_records, read_jsonl, read_records, to_jsonable, write_json, write_jsonl, write_records
-from cad_qa.ontology import build_graph
-from cad_qa.ontology.nodes import Measurement, Node, OntologyGraph, Relation, graph_from_dict
-from cad_qa.ontology.profile_geometry import circle_profile, polyline_profile, rect_profile
-from cad_qa.ontology.relations import RELATION_FAMILIES
-from cad_qa.ontology.workplane_frames import project_local_point
-from cad_qa.prompts.render import render_prompt
-from cad_qa.prompts.templates import prompt_template_registry
-from cad_qa.query.answers import synthesis_answer_spec_for_target_type
-from cad_qa.query.family_manifest import intended_family_coverage_report, load_family_manifest
-from cad_qa.query.ir import Clause, QueryProgram, query_from_dict
-from cad_qa.query.parameters import sampled_parameters_from_query
-from cad_qa.query.resolver import resolve_query, smoke_queries
-from cad_qa.query.synthesis import synthesize_graph_hop_queries
-from cad_qa.query.synthesis_selfcheck import SYNTHESIS_SELFCHECK_FAMILIES, write_synthesis_selfcheck
-from cad_qa.source import (
+from dataset.harbor import _openrouter_native_provider_routing, materialize_harbor_tasks
+from train_and_eval.harbor import grade_harbor_task
+from dataset.io import iter_records, read_jsonl, read_records, to_jsonable, write_json, write_jsonl, write_records
+from dataset.ontology import build_graph
+from dataset.ontology.nodes import Measurement, Node, OntologyGraph, Relation, graph_from_dict
+from dataset.ontology.profile_geometry import circle_profile, polyline_profile, rect_profile
+from dataset.ontology.relations import RELATION_FAMILIES
+from dataset.ontology.workplane_frames import project_local_point
+from dataset.prompts.render import render_prompt
+from dataset.prompts.templates import prompt_template_registry
+from dataset.query.answers import synthesis_answer_spec_for_target_type
+from dataset.query.family_manifest import intended_family_coverage_report, load_family_manifest
+from dataset.query.ir import Clause, QueryProgram, query_from_dict
+from dataset.query.parameters import sampled_parameters_from_query
+from dataset.query.resolver import resolve_query, smoke_queries
+from dataset.query.synthesis import synthesize_graph_hop_queries
+from dataset.query.synthesis_selfcheck import SYNTHESIS_SELFCHECK_FAMILIES, write_synthesis_selfcheck
+from dataset.source import (
     cadevolve_tar_source_rows,
     load_sources_jsonl,
     source_audit,
@@ -98,8 +99,9 @@ from cad_qa.source import (
     source_manifest,
     source_record_from_mapping,
 )
-from cad_qa.trace import TraceRecord, cadquery_available, trace_report, trace_source, trace_sources_bounded
-from cad_qa.cli import _load_dataset_rows, main as cli_main
+from dataset.trace import TraceRecord, cadquery_available, trace_report, trace_source, trace_sources_bounded
+from dataset.cli import _load_dataset_rows
+from train_and_eval.cli import main as cli_main
 from tools.dataset_explorer import render_png_for_row
 from tools.analyze_release_gate_feasibility import (
     _parameter_violation_classification_report,
@@ -9567,7 +9569,7 @@ def test_synthesis_uses_tie_break_metric_for_tied_extrema() -> None:
 
 
 def test_resolver_does_not_inline_generated_prompt_text() -> None:
-    tree = ast.parse(Path("cad_qa/query/resolver.py").read_text(encoding="utf-8"))
+    tree = ast.parse(Path("dataset/query/resolver.py").read_text(encoding="utf-8"))
     for node in ast.walk(tree):
         if not isinstance(node, ast.Call):
             continue
@@ -13021,7 +13023,7 @@ def test_harbor_materializes_tiny_public_private_release_smoke_slice(tmp_path: P
     assert (task_dir / "tests" / "row_public.json").exists()
     assert (task_dir / "tests" / "test.sh").exists()
     assert (task_dir / "tests" / "grade_cadqa.py").exists()
-    assert (task_dir / "tests" / "cad_qa" / "evaluation" / "grade.py").exists()
+    assert (task_dir / "tests" / "train_and_eval" / "grading" / "grade.py").exists()
     assert (task_dir / "tests" / "expected" / "private.json").exists()
     assert (task_dir / "solution" / "solve.sh").exists()
     assert (task_dir / "solution" / "expected" / "private.json").exists()

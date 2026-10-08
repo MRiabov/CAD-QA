@@ -106,7 +106,7 @@ def test_rule_builds_word_boundary_pattern() -> None:
 def test_inline_code_is_skipped(tmp_path: Path) -> None:
     rules = parse_rules(GLOSSARY)
     doc = tmp_path / "doc.md"
-    doc.write_text("See `source` and `cad_qa/source_ingestion.py`.\n", encoding="utf-8")
+    doc.write_text("See `source` and `dataset/source_ingestion.py`.\n", encoding="utf-8")
     assert scan_file(doc, rules) == []
 
 
@@ -167,10 +167,10 @@ def test_identifier_variant_is_scanned_in_code(tmp_path: Path) -> None:
 def test_home_annotation_exempts_tree(tmp_path: Path) -> None:
     glossary = GLOSSARY.replace(
         "| query program | Gold query program |",
-        "| query program (cad_qa) | Gold query program |",
+        "| query program (dataset) | Gold query program |",
     )
     rules = parse_rules(glossary)
-    home_code = tmp_path / "cad_qa" / "mod.py"
+    home_code = tmp_path / "dataset" / "mod.py"
     home_code.parent.mkdir()
     home_code.write_text("QueryProgram()\n", encoding="utf-8")
     other_code = tmp_path / "other" / "mod.py"

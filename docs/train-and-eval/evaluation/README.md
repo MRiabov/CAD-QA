@@ -18,8 +18,8 @@ intent (targets, metrics, definition of done) stays in `PRD.md`.
 ## Scope
 
 - In scope: the local small-LLM-model harness (`train_and_eval/eval/eval_bench.py`),
-  the Harbor export and runner (`cad_qa/harbor.py`, `docs/_archive/harbor.md`), the grading
-  and answer-parsing contract (`cad_qa/evaluation/`), and the baseline families.
+  the Harbor export and runner (`dataset/harbor.py`, `docs/_archive/harbor.md`), the grading
+  and answer-parsing contract (`train_and_eval/grading/`), and the baseline families.
 - Out of scope: dataset generation and the training pipeline. Their contracts live
   under `dataset/` and `train-and-eval/fine-tuning/`.
 

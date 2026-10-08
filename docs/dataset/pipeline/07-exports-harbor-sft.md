@@ -12,16 +12,16 @@ orchestration.
   (`pipeline/00-overview.md`).
 - **Outputs:**
   - **Harbor:** task directories plus `cadqa_harbor_job.json`, `cadqa_harbor_manifest.json`,
-    `tasks.jsonl` (`cad_qa/harbor.py::materialize_harbor_tasks`); an ATIF export
-    (`::export_harbor_atif`).
+    `tasks.jsonl` (`dataset/harbor.py::materialize_harbor_tasks`); an ATIF export
+    (`train_and_eval/harbor.py::export_harbor_atif`).
   - **SFT:** `answer_sft.jsonl`, `reasoning_sft.jsonl`, `ablations/*.jsonl`,
-    `scaling/*.jsonl`, `sft_report.json` (`cad_qa/dataset/sft.py`,
-    `cad_qa/cli.py::_cmd_training_export_sft`).
+    `scaling/*.jsonl`, `sft_report.json` (`dataset/release/sft.py`,
+    `dataset/cli.py::_cmd_training_export_sft`).
   - **Evaluation:** request exports, oracle responses, graded metrics, closed-book reports,
-    tool-assisted upper bound (`cad_qa/evaluation/`).
+    tool-assisted upper bound (`train_and_eval/grading/`).
   - **Smoke experiment tree:** graph/query/dataset/release_dataset/baseline/requests/grade/
     tool-assisted/sft trees plus `run_summary.json`, `RUN_SUMMARY.md`, and
-    `PAPER_RESULTS.md` (`cad_qa/experiment.py::run_smoke_experiment`).
+    `PAPER_RESULTS.md` (`train_and_eval/experiment.py::run_smoke_experiment`).
 
 ## Requirement
 
@@ -35,8 +35,8 @@ syntax-calibration-heavy.
 ## Current status
 
 **exists.** Harbor, SFT, evaluation, and experiment orchestration are present and readable
-(`cad_qa/harbor.py`, `cad_qa/dataset/sft.py`, `cad_qa/evaluation/`,
-`cad_qa/experiment.py`, `cad_qa/cli.py`). No export was run while writing this doc.
+(`dataset/harbor.py`, `dataset/release/sft.py`, `train_and_eval/grading/`,
+`train_and_eval/experiment.py`, `dataset/cli.py`). No export was run while writing this doc.
 
 ## Verification
 
@@ -65,10 +65,10 @@ and the smoke/integration tests around `experiment`. Harbor execution itself
 - **Status:** accepted.
 - **Context:** Harbor is the evaluation runner; CAD-QA owns graph construction, query
   synthesis, and the Query verifier, plus public/private policy (`docs/_archive/harbor.md`).
-- **Decision:** `cad_qa/harbor.py::materialize_harbor_tasks` writes each task with
+- **Decision:** `dataset/harbor.py::materialize_harbor_tasks` writes each task with
   `instruction.md`, `task.toml`, `environment/Dockerfile`, `workspace/prompt.txt`,
   `workspace/row_public.json`, `tests/…` Query verifier fixtures, and `solution/…` oracle
-  files; the Query verifier calls `cad_qa.evaluation.grade.grade_public_private`.
+  files; the Query verifier calls `train_and_eval.grading.grade.grade_public_private`.
 - **Consequences:** Reward is `1` only for a parsed exact match to the private gold answer;
   the agent may write `/app/answer.json` or `/app/answer.txt`.
 
@@ -77,14 +77,14 @@ and the smoke/integration tests around `experiment`. Harbor execution itself
 - **Status:** accepted.
 - **Context:** A task must not leak private Query verifier fields.
 - **Decision:** the materializer writes `workspace/row_public.json` from
-  `cad_qa/dataset/public.py::PUBLIC_FIELDS` only.
+  `dataset/release/public.py::PUBLIC_FIELDS` only.
 - **Consequences:** `gold_answer`, `query_program`, `candidate_trace`, and `clue_map` never
   reach the agent workspace.
 
 ### D3 — Default SFT is geometry-critical; calibration is opt-in
 
 - **Status:** accepted (see DD-10).
-- **Decision:** `cad_qa/dataset/sft.py::default_training_rows` keeps geometry-critical,
+- **Decision:** `dataset/release/sft.py::default_training_rows` keeps geometry-critical,
   non-calibration, non-quarantined rows; `--include-calibration` bypasses the filter and
   disables training gate enforcement.
 - **Consequences:** The CLI raises a `RuntimeError` when applicable training gates fail,
@@ -95,7 +95,7 @@ and the smoke/integration tests around `experiment`. Harbor execution itself
 - **Status:** accepted.
 - **Context:** The paper wants both direct-answer supervision and reasoning-length study.
 - **Decision:** `answer_sft_rows` emits prompt→answer pairs; `reasoning_sft_rows` emits
-  prompt→(answer candidate set trace step counts + answer) pairs (`cad_qa/dataset/sft.py`).
+  prompt→(answer candidate set trace step counts + answer) pairs (`dataset/release/sft.py`).
 - **Consequences:** Both are written plus hop/difficulty ablations and size-based scaling
   subsets.
 

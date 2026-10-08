@@ -36,7 +36,7 @@ Read only what is relevant to the requested run:
 2. Prefer an existing manifest entry or config. Add or edit configs before
    writing new ad hoc shell commands.
 3. Run cheap local checks before renting GPU:
-   `rtk uv run python -m compileall -q cad_qa scripts tests`,
+   `rtk uv run python -m compileall -q dataset scripts tests`,
    focused tests for touched code, and an orchestrator `--dry-run` or tiny smoke.
 4. Use public `train` only for optimizer updates. Derive SFT/RL inner splits
    with existing group-safe helpers; never train on `validation` or `test_*`.

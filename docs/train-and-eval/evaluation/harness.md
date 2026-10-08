@@ -15,20 +15,20 @@ cost-effective external models through Harbor.
 Inputs:
 
 - **Public CAD-QA dataset row column set** — the answer-free LLM model input. The canonical
-  field set is `cad_qa.dataset.public.PUBLIC_FIELDS`
-  (`cad_qa/dataset/public.py::PUBLIC_FIELDS`):
+  field set is `dataset.release.public.PUBLIC_FIELDS`
+  (`dataset/release/public.py::PUBLIC_FIELDS`):
   `row_id`, `source_id`, `source_code`, `prompt`, `answer_format`, `split`, and
   public metadata (hop counts, difficulty tier, relation families, measurement
   scopes, prompt version).
 - **Private CAD-QA dataset row column set** — the Query verifier artifacts
-  (`cad_qa/dataset/public.py::PRIVATE_FIELDS`): `gold_answer`,
+  (`dataset/release/public.py::PRIVATE_FIELDS`): `gold_answer`,
   `query_program`, `candidate_trace`, `clue_map`, `verifier_status`, and the
   answer format. Never exposed to the LLM model.
 - **LLM model** — a local checkpoint (the merged LLM model) for the local harness, or
   an OpenRouter LLM model name for Harbor.
 - **LLM harness mode** — one of `numpy`, `no_tools`, `cadquery` (see below).
 - **requests** — answer-free request records built by
-  `cad_qa/evaluation/requests.py::zero_shot_requests` (and the few-shot variant).
+  `train_and_eval/grading/requests.py::zero_shot_requests` (and the few-shot variant).
 
 Outputs:
 
@@ -39,7 +39,7 @@ Outputs:
 - **Harbor** — the agent's `/app/answer.json` or `/app/answer.txt`, and a Query verifier
   artifact directory: `cadqa_grade.json` (reward, submission status, full metrics),
   `graded_responses.jsonl`, and `reward.txt`
-  (`cad_qa/harbor.py::grade_harbor_answer_files`).
+  (`train_and_eval/harbor.py::grade_harbor_answer_files`).
 
 The evaluation harnesses consume the dataset files, but the canonical rows IO
 contract is not yet written in the new doc tree (`dataset/pipeline/00-overview.md`
@@ -102,7 +102,7 @@ Query verifier; the public/private split; and the grading; Harbor supplies the s
 environment and the coding agent. The mechanics are documented in
 `docs/_archive/harbor.md`; this section records the contract.
 
-**How an LLM model is run.** `cad_qa/harbor.py::materialize_harbor_tasks` writes one
+**How an LLM model is run.** `dataset/harbor.py::materialize_harbor_tasks` writes one
 Harbor task directory per selected CAD-QA dataset row: `instruction.md`
 (the rule-rendered prompt plus the closed-book rules), `task.toml` (metadata,
 agent and Query verifier timeouts), `environment/Dockerfile` (`python:3.11-slim` with
@@ -115,21 +115,21 @@ private gold answer. The materializer also writes `cadqa_harbor_job.json` and
 local Docker environment, with `daytona` as an alternative. The generated config
 pins each OpenRouter LLM model to its native provider (for example `xiaomi` for
 Xiaomi Mimo), disables fallbacks, and caps turns and tokens
-(`cad_qa/harbor.py::_job_config`).
+(`dataset/harbor.py::_job_config`).
 
 **How answers are submitted.** The agent must write exactly one of:
 `/app/answer.json` containing `{"answer": "...", "confidence": optional_number}`,
 or `/app/answer.txt` containing only the answer text. Writing both, or neither,
-is a submission error. `cad_qa/harbor.py::_load_submission` classifies the
+is a submission error. `train_and_eval/harbor.py::_load_submission` classifies the
 submission as `ok`, `missing`, `duplicate`, or `invalid`.
 
 **How grading works (public/private).** The Query verifier script
-(`cad_qa/harbor.py::_grade_script`) loads the task's public and private rows,
+(`dataset/harbor.py::_grade_script`) loads the task's public and private rows,
 turns the submission into a single response record, and calls
-`cad_qa/evaluation/grade.py::grade_public_private`. That function merges the
+`train_and_eval/grading/grade.py::grade_public_private`. That function merges the
 answer-free Public CAD-QA dataset row column set with the private gold key by
 `row_id`, parses the answer by `answer_format`
-(`cad_qa/evaluation/parse.py::parse_answer`), and applies exact match. The
+(`train_and_eval/grading/parse.py::parse_answer`), and applies exact match. The
 Query verifier writes the scalar reward (1 only for a correct, non-invalid, parsed
 answer; 0 otherwise) to `reward.txt` and the full artifact to
 `cadqa_grade.json`. The same functions produce accuracy, missing-response rate,
@@ -139,13 +139,13 @@ repository grader's parse and grade modules, so the container does not import th
 dataset-generation package.
 
 Public/private hygiene is audited in the same layer:
-`cad_qa/evaluation/closed_book.py::closed_book_request_audit` fails when a request
+`train_and_eval/grading/closed_book.py::closed_book_request_audit` fails when a request
 leaks a hidden field (`gold_answer`, `query_program`, `candidate_trace`,
 `clue_map`, `verifier_status`), when request coverage is incomplete, or when the
 request's answer format disagrees with the Public CAD-QA dataset row column set;
-`closed_book.py` also calls `cad_qa.dataset.public.public_private_audit` for the
+`closed_book.py` also calls `dataset.release.public.public_private_audit` for the
 row-level split check.
-`cad_qa/evaluation/tool_assisted.py::run_tool_assisted_upper_bound` builds
+`train_and_eval/grading/tool_assisted.py::run_tool_assisted_upper_bound` builds
 deterministic responses from private Query verifier artifacts. It is an analysis upper
 bound only and is not an LLM-model-facing tool environment (`docs/_archive/harbor.md`, "Oracle
 Warning").
@@ -167,7 +167,7 @@ principle, but they do not share a grader implementation.
   only.
 - **`cadquery` mode:** `missing`. `tools_for_mode` raises `NotImplementedError`.
 - **Harbor export and grading:** `exists`. Materialization, job config, submission
-  loading, and per-row grading are implemented (`cad_qa/harbor.py`).
+  loading, and per-row grading are implemented (`train_and_eval/harbor.py`).
 - **Oracle grading path:** `verified`. The oracle baseline reproduces the gold
   answer exactly (accuracy 1.0) on the recorded slices
   (`runs/baseline_smoke/baseline_metrics.json`,

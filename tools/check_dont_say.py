@@ -26,7 +26,7 @@ logger = logging.getLogger("cadqa.check_dont_say")
 
 REPO = Path(__file__).resolve().parents[1]
 DONT_SAY_HEADING = "## Don't say"
-SCAN_ROOTS = ("docs", "cad_qa", "train_and_eval", "tools")
+SCAN_ROOTS = ("docs", "dataset", "train_and_eval", "tools")
 SCAN_SUFFIXES = frozenset({".md", ".py"})
 SKIP_DIRS = frozenset(
     {
@@ -61,8 +61,8 @@ IDENTIFIER_SEGMENT = re.compile(r"[A-Z]+(?=[A-Z][a-z])|[A-Z]?[a-z]+|[A-Z]+|\d+")
 SAY_SEPARATORS = (" / ", ";", ",", " or ", ": ")
 
 HOMES: dict[str, tuple[str, ...]] = {
-    "cad_qa": ("cad_qa",),
-    "dataset_generation": ("dataset_generation",),
+    "dataset": ("dataset",),
+    "dataset_generation": ("dataset",),
     "train_and_eval": ("train_and_eval",),
     "docs": ("docs",),
     "tools": ("tools",),
