@@ -64,7 +64,7 @@ The step-by-step commands are in `../experiment_execution_runbook.md`.
 
 This pipeline ends at the rows/public/private artifacts and their exports. Training and
 evaluation of models live under `docs/train-and-eval/fine-tuning/`; the evaluation harness and baselines
-live under `docs/evaluation/`. The coupling is the dataset file plus the answer contract,
+live under `docs/train-and-eval/evaluation/`. The coupling is the dataset file plus the answer contract,
 nothing else.
 
 ## Extra deliverables - P2

@@ -5,7 +5,7 @@ related work and citations.
 
 These are secondary notes, not our results. One file per study, named `YYYY-<slug>.md`,
 holding the citation, the method, the findings, and why the study matters for CAD-QA. The
-project's own findings stay in their home docs (`../prior-art.md`, `../evaluation/`,
+project's own findings stay in their home docs (`../prior-art.md`, `../train-and-eval/evaluation/`,
 `../fine-tuning/`); this folder links to them rather than restating them.
 
 The `Ref` column matches the numbered references in `../prior-art.md`.

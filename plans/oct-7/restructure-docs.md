@@ -16,7 +16,7 @@ the handoff. It is intentionally a plan, not the docs.
   audit pending).
 - Plan-level: `docs/development-plan.md`, `docs/prior-art.md` (seed).
 - Pipeline: `docs/dataset/**` (11 files), `docs/train-and-eval/fine-tuning/**` (11 files),
-  `docs/evaluation/**` (3 files) — drafted by subagents, each step status-tagged with a
+  `docs/train-and-eval/evaluation/**` (3 files) — drafted by subagents, each step status-tagged with a
   verification command.
 - Owner checklist: `docs/_audit/owner-audit-todo.md`.
 
@@ -433,10 +433,10 @@ docs/
         05-grpo.md
         06-harness-modes.md
         07-serving-vllm.md
-  evaluation/
-    README.md
-    harness.md
-    baselines.md
+    evaluation/
+      README.md
+      harness.md
+      baselines.md
 ```
 
 Notes:

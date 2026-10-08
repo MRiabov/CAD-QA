@@ -60,7 +60,7 @@ gates are recorded as known limitations.
 
 Run cost-effective models on the primary `numpy` harness over the hard slice; log every
 call; grade with the audited grader. Re-run or retire the stale shortcut baselines. See
-`evaluation/baselines.md`.
+`train-and-eval/evaluation/baselines.md`.
 
 **Gate:** baseline tables reproducible; grader verified; outputs archived.
 

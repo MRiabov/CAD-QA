@@ -51,10 +51,10 @@ docs/
       pipeline/
         00-overview.md
         NN[a-z]-<slug>.md
-  evaluation/
-    README.md
-    harness.md
-    baselines.md
+    evaluation/
+      README.md
+      harness.md
+      baselines.md
   paper/
     CA2_Riabov_final.md          # written manuscript; parity-kept with the .tex
     CA2_Riabov_final.tex
