@@ -34,8 +34,6 @@ docs/
   research/
     README.md                   # external study notes + citations
     YYYY-<slug>.md              # one file per external study
-  adr/
-    NNNN-<slug>.md              # one decision per file; referenced as (ADR-0NNN)
   research-scopes/
     cadedit/PRD.md              # only if CADEditQA is active (P2)
   dataset/
@@ -77,7 +75,7 @@ into two docs — link.
 
 | Layer | Holds | Home |
 |---|---|---|
-| WHY / authoritative | rationale, decisions, constraints, known holes | `adr/`, step-doc decision sections, `PRD.md` |
+| WHY / authoritative | rationale, decisions, constraints, known holes | `<feature>/decisions.md`, step-doc decision sections, `PRD.md` |
 | WHAT / mechanics | how a step behaves, in words | `pipeline/NN-*.md` |
 | CONTRACT / IO | artifact and field names between steps | `pipeline/00-overview.md` |
 | STATUS | verification state | step-doc `Current status` |
@@ -85,7 +83,7 @@ into two docs — link.
 | CONTEXT / external | external study notes and citations; secondary to the project docs | `research/` |
 
 Docs restate behaviour deliberately (that is the point of the WHAT layer). They never copy
-rationale — link the ADR — and never redefine field names — match the IO contract.
+rationale — link the decision — and never redefine field names — match the IO contract.
 
 ## Required sections
 
@@ -111,15 +109,14 @@ rationale — link the ADR — and never redefine field names — match the IO c
 - Intent; research questions; claims; deliverables; evaluation contract; scope; definition
   of done; non-goals.
 
-### ADR (`adr/NNNN-<slug>.md`)
+### Decisions (`<feature>/decisions.md`)
 
-- `Status` / `Context` / `Decision` / `Consequences`. One decision per file. Referenced
-  inline as `(ADR-0NNN)`. ADRs are forward-looking: record decisions made, not
-  archaeology.
-
-### `decisions.md`
-
-- Local decisions for a unit, in the same format as an ADR.
+- One `decisions.md` per feature (`dataset/`, `fine-tuning/`), in ADR format:
+  `Status` / `Context` / `Decision` / `Consequences`. There is no central `docs/adr/`
+  folder.
+- Cross-cutting/plan decisions (D1–D14) stay in the plan / `development-plan.md`.
+- Decisions are forward-looking: record decisions made, not archaeology. Reference one as
+  `<feature>/decisions.md#<anchor>`.
 
 ## Naming
 
@@ -127,7 +124,7 @@ rationale — link the ADR — and never redefine field names — match the IO c
   (`01-source-ingestion.md`, `01a-…`, `04c-…`).
 - Headings are part of the interface. Rename them deliberately; anchors are referenced
   elsewhere.
-- Code package directories use underscores (`dataset_generation`, `train_and_eval`) because
+- Code package directories use underscores (`dataset`, `train_and_eval`) because
   they are Python imports. Hyphens are for docs only (`docs/fine-tuning/`).
 
 ## References
@@ -136,7 +133,7 @@ Never cite line numbers — they drift. Cite in this order of preference:
 
 - code: `path::symbol`
 - another doc: a heading/anchor, e.g. `fine-tuning/pipeline/04-sft.md#requirement`
-- a decision: `(ADR-0NNN)`, or the step's decision number
+- a decision: `<feature>/decisions.md#<anchor>`, or the step's local decision number
 - an artifact: its path or revision hash
 
 ## Terminology discipline
@@ -201,7 +198,7 @@ P0/P1 commitment.
   `tests/test_dont_say_ratchet.py` (the test gate). The sweep is tracked in
   `_audit/dont-say-worklist.md`.
 - **Not implemented yet:** the Markdown formatter (`rumdl`, fallback `mdformat`), the
-  docs-structure / ADR / decisions linters, and a pre-commit/CI wiring. See
+  docs-structure / decisions linters, and a pre-commit/CI wiring. See
   `development-plan.md`.
 
 ## Experiment records

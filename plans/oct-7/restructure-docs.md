@@ -39,7 +39,7 @@ Ported the placis exclusion mechanisms: `(home)` tree annotations, `ALLOWLIST`,
 ratchet (`tools/dont_say_baseline.txt`) is enforced by `tests/test_dont_say_ratchet.py`.
 Current: 353 hits, all in `docs/`; code is clean because the documented `In code:`
 identifiers are exempted per tree. Worklist and findings in `_audit/dont-say-worklist.md`.
-D8 partially satisfied: Don't-say checker done and gated; docs-structure / ADR / decisions
+D8 partially satisfied: Don't-say checker done and gated; docs-structure / decisions
 linters, `rumdl`, and pre-commit/CI wiring still pending.
 
 Note (2026-10-08, later): the "code is clean" claim above was wrong — the checker matched
@@ -57,14 +57,14 @@ scanned. See the entry below.
   CAD feature-added/removed region, CAD-QA dataset row column sets, …).
 - Prior-art findings recorded (`docs/prior-art.md`): LFM2.5/`liquid-finetune` and external
   small-LLM-model fine-tuning evidence with a candidate base shortlist; **D11** (the
-  base-pipeline ADR) is still owed.
+  base-pipeline decision) is still owed.
 - New canonical trees: `docs/research/` (external study notes) and `docs/paper/` (the
   manuscript; excluded from the Don't-say lint).
 - Repo-structure decision corrected (D13): the generation package is `dataset/` (the repo is
   CAD-QA), a sibling of `train_and_eval/`; **all** eval logic — `cad_qa/evaluation/`, the eval
   CLI, and the Harbor runner/grader — belongs in `train_and_eval/`, and `dataset/` is
   generation only.
-- Still outstanding: `docs/adr/` absent; `specs/` not folded; only the Don't-say checker of D8
+- Still outstanding: `specs/` not folded; only the Don't-say checker of D8
   exists; Phase 0a rename not started.
 
 ---
@@ -137,7 +137,7 @@ the spirit of the product-launch repo.
 
 - **PRD** (`docs/PRD.md`) — research questions, claims, deliverables, evaluation contract,
   definition of done.
-- **Design rationale** — lives in ADRs (`docs/adr/`) and each pipeline's
+- **Design rationale** — lives in each feature's `decisions.md` and each pipeline's
   `00-overview.md`, not a separate methods doc (D4 dropped).
 - **Dated experiment records** (`docs/experiments/YYYY-MM-DD-*.md`) — purpose, hypothesis,
   dataset/splits, config/commands, hardware, outcomes, failures, artifact paths.
@@ -149,33 +149,31 @@ the spirit of the product-launch repo.
 
 - **Cite stable anchors, not lines.** When you cite code or another doc for evidence, use
   `path::symbol`, a heading/anchor (e.g. `docs/fine-tuning/pipeline/04-sft.md#requirement`),
-  a stable id (`(ADR-0NNN)`), or an artifact path — never line numbers. The logic docs
+  a decision ref (`<feature>/decisions.md#<anchor>`), or an artifact path — never line
+  numbers. The logic docs
   themselves describe behaviour in words; they do not mirror code or cite per sentence.
 - **Reproducibility.** Every result names its environment pin, seed, dataset revision, and
   exact command.
 - **No silent data loss.** Rejected/filtered rows and failed runs are recorded.
 - **Assumptions are marked** (`[unknown]`, `[unverified — needs <env>]`), never asserted.
 
-### ADRs
+### Decisions (`decisions.md`)
 
-- `docs/adr/NNNN-slug.md`, one decision per file, status/context/decision/consequences.
-- Referenced inline everywhere as `(ADR-0NNN)`; grep must find the reference.
+- One `decisions.md` per feature (`dataset/`, `fine-tuning/`), in ADR format
+  (status/context/decision/consequences). **There is no central `docs/adr/` folder.**
+  Reference one as `<feature>/decisions.md#<anchor>`.
+- Cross-cutting/plan decisions (D1–D14) stay in the plan / `development-plan.md`.
 - Adopted from product-launch: high ROI, keeps docs from sprawling and always
-  referenceable. ADRs are the durable *why*; pipeline docs point at them instead of
+  referenceable. Decisions are the durable *why*; pipeline docs point at them instead of
   restating rationale.
-- **ADRs are forward-looking.** Do not retrofit a clean architecture onto vibecoded code.
-  Record decisions we actually make. For the frozen dataset generator, document behaviour
-  *descriptively* in the pipeline docs; the only ADRs there are "we freeze X" and
-  deliberate keep-as-is choices. For fine-tuning (being revised), write ADRs as new
-  decisions land. Where existing intent is genuinely unknown, mark `[unknown]` — never
-  invent a rationale.
-
-### Local decisions (`decisions.md`)
-
-- Smaller-scope units keep a local `decisions.md` recording that unit's decisions in the
-  **same format as ADRs**.
 - For `pipeline/` steps, the local decision record lives **in the step file itself**, in
-  ADR format, and is linted by the same checker as `decisions.md` and `docs/adr/`.
+  the same format, and is linted by the same checker as `decisions.md`.
+- **Decisions are forward-looking.** Do not retrofit a clean architecture onto vibecoded
+  code. Record decisions we actually make. For the frozen dataset generator, document
+  behaviour *descriptively* in the pipeline docs; the only decisions there are "we freeze
+  X" and deliberate keep-as-is choices. For fine-tuning (being revised), write decisions as
+  they land. Where existing intent is genuinely unknown, mark `[unknown]` — never invent a
+  rationale.
 
 ### Glossary
 
@@ -216,12 +214,13 @@ Rules:
 ### Docs conventions
 
 - `docs/docs-conventions.md` — the meta doc encoding the whole structure: directories,
-  filenames, required sections, ADR/decisions/glossary rules, status and priority markers,
+  filenames, required sections, decisions/glossary rules, status and priority markers,
   and what the lint enforces.
 - Modeled on `~/Work/business/placis/.../docs-conventions.md` (that repo is a CRUD API and
   does not transfer directly; the *conventions doc* idea does).
 - Cross-references name the target by heading/anchor or stable id
-  (`.../04-sft.md#requirement`, `(ADR-0NNN)`) — never by line number, so links survive
+  (`.../04-sft.md#requirement`, `<feature>/decisions.md#<anchor>`) — never by line number, so
+  links survive
   edits. Headings are therefore part of the interface: rename deliberately, and keep
   anchors stable.
 - Markdown is formatter-enforced (`rumdl`; see lint above), so docs stay consistently
@@ -250,7 +249,7 @@ Docs are layered by role — not deduplicated into nothing. Following the `redo/
 `00-stage-interfaces.md` = the IO contract):
 
 - **WHY / authoritative** — rationale, decisions, constraints, known holes. Lives in
-  `docs/adr/` and each step doc's decision sections.
+  each feature's `decisions.md` and each step doc's decision sections.
 - **WHAT / mechanics** — a terse, flow-ordered description of how a step behaves
   (Purpose / IO / Requirement, or `READ → TRANSFORM → WRITE`). This *is* a deliberate
   restatement of behaviour, and it is valuable: an implementing agent can follow it and a
@@ -261,7 +260,7 @@ Docs are layered by role — not deduplicated into nothing. Following the `redo/
 - **STATUS** — `verified` / `exists` / `missing` / `stale` tags plus verification commands.
 
 The single-source rule: every fact has exactly one home. Step docs may restate behaviour,
-but they point at ADRs for the *why* and at the IO contract for names — they never copy
+but they point at decisions for the *why* and at the IO contract for names — they never copy
 rationale or redefine field names. Where two docs overlap, one is the source and the other
 links.
 
@@ -282,7 +281,7 @@ matter. So:
    sandbox, CLI) are Phase 0. Passing upgrades a tag to `verified`; failing records a `bug`
    with a reproduction.
 3. **Conflicts are findings.** A doc/code disagreement is recorded; fix whichever is wrong
-   (ADR / local decision).
+   (decision / local decision).
 
 Boundary: no silent intent changes; plausibility ≠ correctness; research semantics are the
 owner's; delegated exploration, directly-verified load-bearing claims.
@@ -296,9 +295,9 @@ owner's; delegated exploration, directly-verified load-bearing claims.
 
 ### Lint and ratchets (D8)
 
-- Port the product-launch linters: docs, glossary, ADR/decisions, and code — plus ratchets
+- Port the product-launch linters: docs, glossary, decisions, and code — plus ratchets
   (monotonic thresholds that only improve). They did their job and gave high ROI.
-- The doc/glossary/ADR/decisions linters are in scope. Code lint and ratchets apply where
+- The doc/glossary/decisions linters are in scope. Code lint and ratchets apply where
   they do not fight the `cad_qa/` freeze: documentation and the `train_and_eval/` surface
   first; heavy linting of the frozen dataset-generation code is deferred.
 - **Markdown formatting.** Adopt a formatter for all docs — `rumdl` (preferred: stricter
@@ -320,7 +319,7 @@ reasoning datasets. We should mine those rather than hand-roll.
   Tulu 3; `OpenThoughts` / `Bespoke-Stratos` reasoning-data pipelines; `unsloth`
   notebooks; `Axolotl`; `LLaMA-Factory`; `torchtune`; `verl` (RL).
 - Record findings in `docs/prior-art.md`: per source, what they do, what we adopt, and
-  what we deliberately reject (with an ADR for the base-pipeline choice, D11).
+  what we deliberately reject (with a decision for the base-pipeline choice, D11).
 - Goal: a correct, efficient, reasoning-preserving pipeline we understand — not the
   fastest way to a number.
 
@@ -405,8 +404,6 @@ docs/
     YYYY-<slug>.md
   paper/
     CA2_Riabov_final.{md,tex}   # the manuscript (excluded from the Don't-say lint)
-  adr/
-    NNNN-<slug>.md              # one decision per file; `(ADR-0NNN)` referenced inline
   research-scopes/
     cadedit/PRD.md              # only if CADEditQA is alive (D7)
   dataset/
@@ -445,11 +442,12 @@ Notes:
 
 - **`specs/` is superseded (D2).** Split its contents into the new `docs/` structure per
   these conventions (semantics → PRD/pipeline docs, terms → `glossary.md`, decisions →
-  `adr/`), then leave `specs/` as a pointer or remove it.
+  `<feature>/decisions.md`), then leave `specs/` as a pointer or remove it.
 - **`implementation_status.md` is removed (D3).** It was a vibecoded status log with no
   ongoing purpose; the new docs replace it. Handoffs and runbooks are kept as raw
   material and superseded with a pointer at the top of each.
-- Design rationale lives in ADRs and each pipeline's `00-overview.md`, not a separate
+- Design rationale lives in each feature's `decisions.md` and each pipeline's
+  `00-overview.md`, not a separate
   methods doc (D4).
 - Pipeline stages use `NN-<slug>.md` and may split into subletters when a stage grows
   (`01a`, `01b`, `04c`, `04d`, …). A stage that is one file needs no letter; a stage that
@@ -463,7 +461,7 @@ Notes:
 - Doc map, how to navigate, and where to start for a new contributor.
 
 ### `docs/docs-conventions.md`
-- Encodes §2 + the conventions section: naming, required sections, ADR/decisions/glossary
+- Encodes §2 + the conventions section: naming, required sections, decisions/glossary
   rules, Open/Resolved question handling, priority/status markers, anchor-based
   cross-references, the Markdown formatter (`rumdl`), and the lint/ratchet target list.
   Written first, because everything else follows it.
@@ -478,7 +476,7 @@ Notes:
 ### `docs/glossary.md`
 - Canonical terms used across PRD / pipeline docs (e.g. hop count, selector, workplane,
   material/void region, candidate trace, harness mode, rejection sampling). Enforced by
-  the same lint as ADRs/decisions.
+  the same lint as decisions.
 
 ### `docs/development-context.md`
 - The as-of snapshot + history, plus a proven-vs-assumed list. Content is drafted in §6
@@ -489,11 +487,11 @@ Notes:
 
 ### `docs/prior-art.md`
 - Code/implementation prior art: established training / RL / data pipelines, what we adopt
-  and what we reject. Feeds `docs/fine-tuning/` and the base-pipeline ADR (D11).
+  and what we reject. Feeds `docs/fine-tuning/` and the base-pipeline decision (D11).
 
-### `docs/adr/`
-- Created on demand as decisions land. First ADR candidates: dataset scope (D6), model
-  choice, reasoning-preserving training design, ADR/decisions/glossary lint adoption.
+### Decisions (`decisions.md`)
+- Per-feature decision records (ADR format), created on demand as decisions land:
+  `dataset/decisions.md`, `fine-tuning/decisions.md`. No central `docs/adr/` folder.
 
 ### `docs/research-scopes/`
 - Per-workstream PRDs. Only CADEditQA is a candidate today (D7).
@@ -523,7 +521,7 @@ Every `pipeline/` stage doc (named `NN-*.md` or `NNx-*.md`, e.g. `01-rows-loader
    (`path::symbol`, artifact path).
 5. **Verification** — the exact command that would make it `verified`.
 6. **Local decisions** — decisions scoped to this step, in ADR format (linted by the same
-   checker as `decisions.md` and `docs/adr/`).
+   checker as `decisions.md`).
 7. **Open questions** — unknowns, decisions, blockers.
 8. **Resolved questions** — settled items moved here with resolution + date (never
    deleted).
@@ -601,7 +599,7 @@ priority (`P0`/`P1`/`P2`) per the tier rule above.
   fan-out CI is P2.
 - **Phase 0b — Prior-art code mining. [P1]** Survey established open-source training / RL /
   data pipelines; record findings in `docs/prior-art.md`; pick a base pipeline to build on
-  (ADR, D11). Gate: adoption decision recorded before Phase 3 design.
+  (decision, D11). Gate: adoption decision recorded before Phase 3 design.
 - **Phase 1 — Freeze the benchmark. [P0; the ≥10k tier is P2]** Decide dataset scope
   (freeze 1,445 + new held-out test, or regenerate ≥10,000); build/freeze a group-safe
   held-out test; close the 0/1-hop synthesis gap; fix json/number teacher coverage;
@@ -609,7 +607,7 @@ priority (`P0`/`P1`/`P2`) per the tier rule above.
 - **Phase 2 — Refresh baselines. [P1; only the primary `numpy` harness, `no_tools`/mode-3
   are P2]** Big models on the primary `numpy` harness on the hard slice; log every call;
   grade with the audited grader.
-- **Phase 3 — Reasoning-preserving training. [SFT P0; GRPO P1]** Design first (an ADR +
+- **Phase 3 — Reasoning-preserving training. [SFT P0; GRPO P1]** Design first (a decision +
   the pipeline `00-overview.md`): constrained decoding for format, prompt-masked SFT if
   used, on-policy RL with shaped reward and a 0→1→2→3→5 curriculum. Canary before scale;
   monitor entropy/length/reward.
@@ -632,7 +630,8 @@ settled (same rule as the per-doc sections).
   conventions; leave a pointer (or remove).
 - **D3 — `implementation_status.md`.** **Remove.** No ongoing purpose; the new docs
   replace it.
-- **D4 — `methods.md`.** **Dropped for now.** Design rationale lives in ADRs and each
+- **D4 — `methods.md`.** **Dropped for now.** Design rationale lives in the feature
+  `decisions.md` and each
   pipeline's `00-overview.md`; reintroduce a methods doc only if a real need appears.
 - **D5 — Doc style reference.** Use the **`redo/` folder** (and `plans/`), not all of
   `math.nyle.ai` — the rest of that repo's docs are dirty; `redo/` is the clean exemplar.
@@ -640,7 +639,7 @@ settled (same rule as the per-doc sections).
   inference/fine-tuning turns out.
 - **D7 — CADEditQA.** **P2 either way.** Confirm whether it is actually alive; if alive it
   gets `docs/research-scopes/cadedit/PRD.md`.
-- **D8 — Lint.** **Port** the product-launch linters (docs, glossary, ADR/decisions, code)
+- **D8 — Lint.** **Port** the product-launch linters (docs, glossary, decisions, code)
   and ratchets; add a Markdown formatter (`rumdl` preferred, else `mdformat`). No
   formatter or CI config exists in the repo today.
 - **D9 — Delivery.** The owner states the mode when needed; there is no standing policy.
@@ -664,7 +663,7 @@ settled (same rule as the per-doc sections).
 
 - **D11 — Base pipeline to adopt.** Which established open-source stack do we build the
   fine-tuning pipeline on (TRL / Open-R1 / unsloth / `liquid-finetune` / verl / other), after
-  prior-art mining? Findings are recorded (`docs/prior-art.md`); the adoption **ADR is still
+  prior-art mining? Findings are recorded (`docs/prior-art.md`); the adoption **decision is still
   owed**.
 - **D14 — WHAT layer.** Add a terse, runnable WHAT layer per pipeline (a
   `streamlined/`-style folder: DAG + `READ/TRANSFORM/WRITE`, no rationale), or is the
@@ -678,7 +677,7 @@ settled (same rule as the per-doc sections).
    command, a local-decisions section, and Open/Resolved questions.
 3. `docs/PRD.md`, `docs/glossary.md`, `docs/development-context.md`,
    `docs/development-plan.md` exist and are consistent with each other.
-4. ADRs exist for the landed decisions and are referenced inline as `(ADR-0NNN)`.
+4. Decisions are recorded in per-feature `decisions.md`; there is no central `docs/adr/`.
 5. Superseded docs carry a pointer to their replacement (`specs/` folded; 
    `implementation_status.md` removed).
 6. The docs contain no unmarked assumptions: everything is evidence or `[unverified]`;
@@ -686,16 +685,16 @@ settled (same rule as the per-doc sections).
 7. P2 extras are collected in per-doc `## Extra deliverables - P2` blocks and are never
    treated as P0/P1 commitments.
 8. Resolved questions are moved, not deleted, in every doc that had an Open section.
-9. The ported lint (docs / glossary / ADR / decisions + ratchets) runs and gates changes.
+9. The ported lint (docs / glossary / decisions + ratchets) runs and gates changes.
 10. `docs/prior-art.md` records the surveyed pipelines and the base-pipeline adoption
-    decision (ADR, D11).
+    decision (D11).
 11. **Readability:** the owner can read a doc without pausing to ask what a term means;
     every load-bearing term is defined or on the Don't-say list; no term names two concepts.
 
-**Status (2026-10-08).** Met: 1, 2, 3, 7, 8. Partial: 5 (`implementation_status.md` removed,
-`specs/` not folded), 6, 10 (findings recorded; D11 ADR pending), 11 (prose swept to 0;
-identifier backlog parked as P2). Not met: 4 (`docs/adr/` absent), 9 (only the Don't-say
-checker/ratchet of D8 exists).
+**Status (2026-10-08).** Met: 1, 2, 3, 4, 7, 8. Partial: 5 (`implementation_status.md`
+removed, `specs/` not folded), 6, 10 (findings recorded; D11 decision pending), 11 (prose
+swept to 0; identifier backlog parked as P2). Not met: 9 (only the Don't-say checker/ratchet
+of D8 exists).
 
 ## 10. Immediate next step
 
