@@ -68,6 +68,11 @@ end-to-end result on a frozen held-out split.
   SFT and serving environments (the current split is unsloth-stack vs vLLM-stack)?
 - Is `docs/_archive/rl_runbook.md` (Unsloth Studio route) still the intended production path, or is
   `train_and_eval/` the only path? `[unknown]`.
+- Should Phase 3 swap the base LLM model? External evidence
+  (`../prior-art.md`, "External evidence on fine-tuning small LLM models") says base rank does
+  not predict fine-tuned rank and family choice matters less than fine-tuning, so the recorded
+  "effort without gain" is more likely a recipe/data problem. Decide whether to fix the recipe
+  on gemma-4-E2B first, or run a fixed recipe across 3–4 bases in parallel.
 
 ## Resolved questions
 
