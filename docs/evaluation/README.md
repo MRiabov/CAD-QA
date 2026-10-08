@@ -3,7 +3,7 @@
 **Status:** active, 2026-10-07. Part of the docs restructure
 (`plans/oct-7/restructure-docs.md`).
 
-This directory documents how CAD-QA is evaluated: the harnesses that run a model
+This directory documents how CAD-QA is evaluated: the harnesses that run an LLM model
 over dataset rows, and the baselines those results are compared against. It is the
 canonical home for the evaluation contract's mechanics; the evaluation contract's
 intent (targets, metrics, definition of done) stays in `PRD.md`.
@@ -17,7 +17,7 @@ intent (targets, metrics, definition of done) stays in `PRD.md`.
 
 ## Scope
 
-- In scope: the local small-model harness (`train_and_eval/eval/eval_bench.py`),
+- In scope: the local small-LLM-model harness (`train_and_eval/eval/eval_bench.py`),
   the Harbor export and runner (`cad_qa/harbor.py`, `docs/_archive/harbor.md`), the grading
   and answer-parsing contract (`cad_qa/evaluation/`), and the baseline families.
 - Out of scope: dataset generation and the training pipeline. Their contracts live

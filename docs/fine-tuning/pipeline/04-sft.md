@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Supervised-fine-tune a **base model** on the **normalized text** of accepted **training
+Supervised-fine-tune a **base LLM model** on the **normalized text** of accepted **training
 traces**, producing a LoRA **adapter**.
 
 ## Inputs / outputs
@@ -11,15 +11,15 @@ traces**, producing a LoRA **adapter**.
   from 03.
 - **Out `adapter`:** LoRA weights saved to `CADQA_SFT_OUT` via `model.save_pretrained`
   (`train_and_eval/train/sft_train.py::main`).
-- **Produced out-of-band:** the **merged model** (no code in this repo).
+- **Produced out-of-band:** the **merged LLM model** (no code in this repo).
 - **Config knobs (env):** `CADQA_SFT_SEQ` (default `6144`), `CADQA_SFT_EPOCHS` (`4`),
   `CADQA_SFT_LR` (`3e-4`), `CADQA_SFT_OUT`, `CADQA_SFT_TRACES`, `CADQA_SFT_ROWS` (`0`=all).
 
 ## Requirement
 
-The adapter must improve held-out exact-match accuracy over the **base model** without
+The adapter must improve held-out exact-match accuracy over the **base LLM model** without
 degenerating into over-generation. Concretely: on held-out rows, SFT should raise accuracy
-above the base baseline and keep the model emitting a parseable `submit_*` call within a
+above the base baseline and keep the LLM model emitting a parseable `submit_*` call within a
 bounded budget.
 
 ## Current status
@@ -50,7 +50,7 @@ evaluate).
 ### FT-04-D1 — QLoRA (4-bit NF4) in the current code
 
 - **Status:** accepted (2026-08) — but see the open question.
-- **Context:** the model is `unsloth/gemma-4-E2B-it` (~5.1B total / ~2.3B active).
+- **Context:** the base LLM model is `unsloth/gemma-4-E2B-it` (~5.1B total / ~2.3B active).
 - **Decision:** `FastVisionModel.from_pretrained(load_in_4bit=True, bnb_4bit_quant_type="nf4",
   bnb_4bit_compute_dtype="bfloat16")`, then `get_peft_model(r=32, lora_alpha=64,
   target_modules=[q,k,v,o,gate,up,down]_proj)`.
@@ -82,18 +82,18 @@ evaluate).
 
 - **Status:** accepted (2026-08).
 - **Context:** measured normalized sequences were p50 2221 / p90 4066 / max 5822.
-- **Decision:** `SEQ=6144` fits 100% of the 268-trace pool.
-- **Consequences:** a longer future trace pool no longer fits this budget.
+- **Decision:** `SEQ=6144` fits 100% of the agent training trace pool (268 records).
+- **Consequences:** a longer future agent training trace pool no longer fits this budget.
 
 ## Open questions
 
 - **Is the prompt masked?** `build_dataset` passes a single `text` column to `SFTTrainer`;
   no masking or completion-only collator is configured. If the prompt is not masked, the
-  model is trained to reproduce the question, which is consistent with the observed
+  LLM model is trained to reproduce the question, which is consistent with the observed
   over-generation and the earlier GRPO entropy collapse. This is a P0 correctness question.
 - **QLoRA vs 16-bit LoRA.** Code says 4-bit; the handoff narrative says 16-bit produced the
   working run. Reconcile or re-run and record.
-- **Adapter merge is missing.** No code merges the adapter into the base model; the eval
+- **Adapter merge is missing.** No code merges the adapter into the base LLM model; the eval
   expects a merged bf16 directory. Script it or document the manual step.
 - **No held-out gate in the script.** `sft_train.py` does not evaluate; `[unknown]` how the
   "improves over base" requirement is enforced.

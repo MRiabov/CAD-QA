@@ -1,23 +1,23 @@
 # Fine-tuning pipeline
 
 **Status:** active, 2026-10-07. Code is `train_and_eval/`. This surface is **being revised**; the docs describe behaviour and record
-known defects as open questions rather than implying the pipeline is finished.
+known defects as open questions rather than implying the fine-tuning pipeline is finished.
 
-This directory documents how CAD-QA turns a **dataset file** into a trained small model and
-evaluates it: teacher **rejection sampling** → **trace normalization** → **SFT**; **GRPO**
-training; the **LLM harness modes** used for evaluation; and **vLLM** serving.
+This directory documents how CAD-QA turns a **dataset file** into a trained small LLM model and
+evaluates it: teacher **rejection sampling** → **agent training trace normalization** → **SFT**;
+**GRPO** training; the **LLM harness modes** used for evaluation; and **vLLM** serving.
 
 ## Start here
 
 1. [requirements.md](requirements.md) — intended-vs-verified summary, environment, what "done"
    would need.
 2. [pipeline/00-overview.md](pipeline/00-overview.md) — the DAG and the stage IO contract
-   (the single source for artifact and field names).
+   (the single source of truth for artifact and field names).
 3. The step docs, in DAG order (below).
 4. [decisions.md](decisions.md) — unit-level decisions (ADR format).
 
 Supporting context: `../PRD.md` (the research contract), `../glossary.md` (canonical terms),
-`../development-context.md` (as-of snapshot and history).
+`../development-context.md` (as-of record and history).
 
 ## Stage index
 
@@ -25,7 +25,7 @@ Supporting context: `../PRD.md` (the research contract), `../glossary.md` (canon
 |---|---|---|---|
 | B1 | [01-rows-loader.md](pipeline/01-rows-loader.md) | `verified` | `train_and_eval/rows_loader.py` |
 | B2 | [02-teacher-sampling.md](pipeline/02-teacher-sampling.md) | `[unverified — needs OPENROUTER_API_KEY + network]` | `teacher.py`, `train/rejection_sample.py`, `train/compact_agentic.py`, `train/gen_1hop_queries.py`, `train/export_rl_data.py`, `setup/publish_traces.py` |
-| B3 | [03-trace-normalization.md](pipeline/03-trace-normalization.md) | `[unverified — needs unsloth gemma-4 processor]` | `train/normalize_traces.py`, `tool_calls.py` (rendering) |
+| B3 | [03-trace-normalization.md](pipeline/03-trace-normalization.md) | `[unverified — needs unsloth gemma-4 processor]` | `train/normalize_traces.py`, `tool_calls.py` (rendering) | <!-- dont-say: allow -->
 | B4 | [04-sft.md](pipeline/04-sft.md) | `[unverified — needs GPU + unsloth/trl]` | `train/sft_train.py` |
 | B5 | [05-grpo.md](pipeline/05-grpo.md) | `[unverified — needs GPU + unsloth/trl]` | `train/grpo_train.py`, `reward_cadqa.py` |
 | B6 | [06-harness-modes.md](pipeline/06-harness-modes.md) | `[unverified — needs GPU + merged model]`; `cadquery` not implemented | `eval/eval_bench.py`, `run_code_sandbox.py` |
@@ -58,11 +58,10 @@ Supporting context: `../PRD.md` (the research contract), `../glossary.md` (canon
 
 ## Terms
 
-Use the canonical vocabulary in `../glossary.md`. The three easily-confused "trace" terms:
+Use the canonical vocabulary in `../glossary.md`. Three overloaded terms mean different records:
 an **agent training trace** is an agent-facing reasoning + tool-call record (this pipeline's SFT
 signal); a **CadQuery program operation trace** is a CadQuery program decomposed into
-measured operations; a **candidate
-trace** is a row's candidate-narrowing record.
+measured operations; an **answer candidate set trace** is a row's candidate-narrowing record.
 
 ## Note on raw material
 

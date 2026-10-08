@@ -11,8 +11,9 @@ Local decisions for the `dataset_generation` unit, in ADR format
 ## DD-01 — Freeze dataset-generation code; document behaviour
 
 - **Status:** accepted.
-- **Context:** The pipeline was written by an agent, a prior refactor was moot, and the
-  intent behind the current code is (probably) fine (`plans/oct-7/restructure-docs.md`).
+- **Context:** The dataset-generation pipeline was written by an agent, a prior refactor
+  was moot, and the intent behind the current code is (probably) fine
+  (`plans/oct-7/restructure-docs.md`).
 - **Decision:** Treat `dataset_generation` (today `cad_qa/`) as frozen. New docs describe
   executed behaviour; they do not justify refactors. Change generation code only when a P0
   thesis claim is directly blocked by a verified bug, minimally, on a branch.
@@ -26,7 +27,7 @@ Local decisions for the `dataset_generation` unit, in ADR format
   but nothing demonstrates behaviour (`plans/oct-7/restructure-docs.md`, D2).
 - **Decision:** Fold `specs/` semantics into `docs/dataset/`; treat `specs/dataset-spec.md`,
   `specs/benchmark-task-spec.md`, `specs/multi-hop-qa-task-spec.md`,
-  `specs/generation_policy.md`, and `specs/schema.md` as source material. `specs/` is left
+  `specs/generation_policy.md`, and `specs/schema.md` as input material. `specs/` is left
   as a pointer or removed by the migration.
 - **Consequences:** Where a spec and the code disagree, the code wins and the discrepancy
   is recorded (for example `specs/schema.md` omitting `TraceRecord.selector_results`).
@@ -37,17 +38,18 @@ Local decisions for the `dataset_generation` unit, in ADR format
 - **Context:** `specs/generation_policy.md` fixes the trusted generation chain as
   `source -> graph -> query -> verifier -> prompt -> row`.
 - **Decision:** LLMs are not trusted generators or judges. They may be used only for
-  optional wording experiments or external model evaluation.
+  optional wording experiments or external LLM model evaluation.
 - **Consequences:** Prompts are rule-rendered (`cad_qa/prompts/render.py::render_prompt`);
-  gold answers come from the resolver, not a model.
+  gold answers come from the resolver, not an LLM model.
 
 ## DD-04 — Public/private split is the release boundary
 
 - **Status:** accepted.
 - **Context:** Rows are code-plus-label internally, but the public benchmark surface must be
   answer-free (`specs/dataset-spec.md`).
-- **Decision:** Export two views: `public` (answer-free model input) and `private` (gold
-  answer, hidden query program, answer candidate set trace, clue map). The split is defined by
+- **Decision:** Export two views: `public` (answer-free LLM model input) and `private`
+  (gold answer, hidden Gold query program, answer candidate set trace, clue map). The split
+  is defined by
   `cad_qa/dataset/public.py::PUBLIC_FIELDS` and `::PRIVATE_FIELDS`; a hidden-field leak is
   an audit error.
 - **Consequences:** Grading uses `public` + `private`; `public_private_report.json` records
@@ -77,18 +79,19 @@ Local decisions for the `dataset_generation` unit, in ADR format
   store a `graphs` sidecar instead of embedding a graph per query record
   (`cad_qa/cli.py::_materialize_graph_lookup`).
 
-## DD-07 — Trace is optional for low-hop rows, required for release-grade geometry
+## DD-07 — CadQuery program operation trace is optional for low-hop rows, required for release-grade geometry
 
 - **Status:** accepted.
-- **Context:** `specs/schema.md::TraceRecord` marks trace records optional for low-hop
-  static rows but required for release-grade geometry, topology, selector, material, and
-  validity rows.
-- **Decision:** `cad_qa/ontology/extract.py::build_graph` accepts an optional trace; graph
-  construction is AST-based and enriches from trace evidence when present.
+- **Context:** `specs/schema.md::TraceRecord` marks CadQuery program operation trace records
+  optional for low-hop static rows but required for release-grade geometry, topology,
+  CadQuery selector, material, and validity rows.
+- **Decision:** `cad_qa/ontology/extract.py::build_graph` accepts an optional
+  CadQuery program operation trace; graph construction is AST-based and enriches from
+  its evidence when present.
 - **Consequences:** Smoke runs can build graphs without CadQuery; release-grade geometry
-  claims require a trace.
+  claims require a CadQuery program operation trace.
 
-## DD-08 — `reject_unless_unique` is the default verifier policy
+## DD-08 — `reject_unless_unique` is the default Query verifier policy
 
 - **Status:** accepted.
 - **Context:** `specs/generation_policy.md` requires the full clue set to resolve exactly one
@@ -98,16 +101,16 @@ Local decisions for the `dataset_generation` unit, in ADR format
 - **Consequences:** Ties are rejected unless a query explicitly opts out; failures land in
   the failure manifest.
 
-## DD-09 — Quarantine conservative or surrogate-backed rows instead of silent drop
+## DD-09 — Keep conservative or surrogate-backed rows non-release-ready instead of silent drop
 
 - **Status:** accepted.
-- **Context:** Conservative material/void-region projections and selector-surrogate face
-  identities can exercise the stack end to end but are not release-grade
+- **Context:** Conservative material/void-region projections and CadQuery-selector surrogate
+  face identities can exercise the stack end to end but are not release-grade
   (`specs/dataset-spec.md#quarantine-policy`).
 - **Decision:** `cad_qa/dataset/materialize.py::_evidence_policy` assigns an evidence tier
   and `release_ready=false` with `quarantine_reasons`; release export excludes them and the
-  quarantine report counts them.
-- **Consequences:** No silent data loss: rejected/quarantined rows are reported.
+  non-release-ready report counts them.
+- **Consequences:** No silent data loss: rejected and non-release-ready rows are reported.
 
 ## DD-10 — Default SFT export is geometry-critical only
 
@@ -141,7 +144,7 @@ Local decisions for the `dataset_generation` unit, in ADR format
   (`split_group`, `counterfactual_group`, `source_family`, `family_id`, `template_id`, and
   path-derived family) and assigns a deterministic ~70/15/15 split across groups; broad
   `generator_id`/`generator` are reported but not merged.
-- **Consequences:** All rows sharing a protected group stay in one split; source-only
+- **Consequences:** All rows sharing a protected group stay in one split; CadQuery-program-only
   datasets collapse to `train` and are reported as not multi-split.
 
 ## DD-13 — Doc/code conflicts are findings, not silent fixes

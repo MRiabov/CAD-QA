@@ -1,10 +1,10 @@
-# 02 — Trace / snapshot
+# 02 — CadQuery program operation trace / Shape snapshot
 
 ## Purpose
 
-Execute a normalized CadQuery source in a bounded, isolated worker and record kernel-backed
-measurements — snapshots, effect deltas, and selector results — that later become geometry
-evidence in the ontology graph.
+Execute a normalized CadQuery program in a bounded, isolated worker and record kernel-backed
+measurements — Shape snapshots, effect deltas, and CadQuery selector results — that later
+become geometry evidence in the CAD ontology graph.
 
 ## Inputs / outputs
 
@@ -17,12 +17,14 @@ evidence in the ontology graph.
 
 ## Requirement
 
-Execution must be safe and bounded: a source cannot hang or crash the run, and every
-non-result must be classified. For the geometry claim to hold, a trace must produce either
-a usable snapshot set (possibly partial) or a classified failure. Snapshots must carry
+Execution must be safe and bounded: a CadQuery program cannot hang or crash the run, and
+every non-result must be classified. For the geometry claim, a CadQuery program operation trace
+must produce a usable Shape snapshot set (possibly partial) or a classified failure. Shape
+snapshots must carry
 volume, bounding box, centroid, and topology counts; adjacent measurable assignments must
-produce signed effect deltas; selector subexpressions must produce selected counts, shape
-types, and bbox signatures. A source that times out after producing measurable solids must
+produce signed effect deltas; CadQuery selector subexpressions must produce selected
+counts, a label for each selected shape, and bbox signatures. A CadQuery program that
+times out after producing measurable solids must
 be preserved as `execution_status=partial` rather than discarded.
 
 ## Current status
@@ -31,7 +33,7 @@ be preserved as `execution_status=partial` rather than discarded.
 (`cad_qa/trace.py::trace_sources_bounded`, `::trace_source`, `::measure_shape`,
 `::_execute_source_trace`, CLI `cad_qa/cli.py::_cmd_trace_run`), but execution requires the
 CadQuery kernel, which is **not installed** in the current environment (import fails). No
-trace was run while writing this doc.
+CadQuery program operation trace was produced while writing this doc.
 
 ## Verification
 
@@ -56,22 +58,22 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_trace_worker_exe
 
 ## Local decisions
 
-### D1 — Isolate each source in a worker process with a timeout
+### D1 — Isolate each CadQuery program in a worker process with a timeout
 
 - **Status:** accepted.
 - **Context:** A CAD program can hang, recurse, or crash the interpreter; an in-process
-  trace would take the whole run down.
+  CadQuery program operation trace would take the whole run down.
 - **Decision:** `cad_qa/trace.py::trace_source` runs isolated by default
   (`_trace_source_isolated`), and `trace_sources_bounded` manages a pool of worker processes
-  with a per-source `timeout_seconds`, terminating and killing over-time workers
+  with a per-CadQuery-program `timeout_seconds`, terminating and killing over-time workers
   (`cad_qa/trace.py::_stop_process`).
-- **Consequences:** Slow or hostile sources become `failed`/`partial` records; results keep
-  input order.
+- **Consequences:** Slow or hostile CadQuery programs become `failed`/`partial` records;
+  results keep input order.
 
 ### D2 — A timeout after measurable solids is `partial`, not `failed`
 
 - **Status:** accepted.
-- **Context:** Some CADEvolve sources build several solids before hitting an expensive tail
+- **Context:** Some upstream CadQuery programs build several solids before hitting an expensive tail
   operation.
 - **Decision:** Workers publish bounded progress (`partial` results) while executing; a
   timed-out worker whose latest result has snapshots becomes `execution_status=partial`
@@ -87,8 +89,8 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_trace_worker_exe
   assignments, not only the final solid.
 - **Decision:** `cad_qa/trace.py::_execute_source_trace` compiles and executes each
   statement, snapshots each measurable assigned value, and emits `operation_effects` when a
-  snapshot's base target had a prior snapshot (`::_snapshot_delta_effect`).
-- **Consequences:** Graph extraction can attach snapshot-state and feature-application-effect
+  Shape snapshot's base target had a prior Shape snapshot (`::_snapshot_delta_effect`).
+- **Consequences:** Graph extraction can attach Shape snapshot state and feature-application-effect
   measurements per feature.
 
 ### D4 — Bound topology entity signatures
@@ -97,14 +99,14 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_trace_worker_exe
 - **Context:** A complex solid can have many faces/edges/vertices; serializing all of them
   would bloat traces.
 - **Decision:** `MAX_SNAPSHOT_TOPOLOGY_ENTITIES_PER_KIND = 128`
-  (`cad_qa/trace.py`) bounds per-kind entity signatures.
+  (`cad_qa/trace.py`) bounds signatures to 128 entities per topology entity category.
 - **Consequences:** Entity signatures are a sample, not a complete enumeration; graph
   evidence derived from them is bounded accordingly.
 
 ### D5 — Partial unrolling for simple `for` loops
 
 - **Status:** accepted.
-- **Context:** CADEvolve uses loops to place repeated features.
+- **Context:** The upstream corpus uses loops to place repeated features.
 - **Decision:** Loops without `break`/`continue` over literal iterables are unrolled
   statement-by-statement (`cad_qa/trace.py::_can_trace_unroll_for`,
   `::execute_statement`); unsupported loops fall back to a plain capture.
@@ -113,10 +115,11 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_trace_worker_exe
 
 ## Open questions
 
-- **Untyped trace internals.** `cad_qa/trace.py::TraceRecord` stores `snapshots`,
-  `operation_effects`, and `selector_results` as `list[dict[str, Any]]`, so what the record
-  holds is only discoverable from the producer code. Typed records would document the
-  contract the record is meant to express.
+- **Untyped CadQuery program operation trace internals.**
+  `cad_qa/trace.py::TraceRecord` stores `snapshots`, `operation_effects`, and
+  `selector_results` as `list[dict[str, Any]]`, so what the record holds is only
+  discoverable from the producer code. Typed records would document the contract the record
+  is meant to express.
 - **Doc/code mismatch.** `specs/schema.md::TraceRecord` lists only `source_id`,
   `execution_status`, `snapshots`, `operation_effects`, `environment`, `failure_reason`,
   while `cad_qa/trace.py::TraceRecord` also carries `selector_results`. The code is
@@ -131,5 +134,5 @@ _(none yet)_
 
 ## Extra deliverables - P2
 
-- Optional per-source wall-clock and memory accounting persisted into `trace_report.json`
-  for capacity planning on large release builds.
+- Optional per-CadQuery-program wall-clock and memory accounting persisted into
+  `trace_report.json` for capacity planning on large release builds.

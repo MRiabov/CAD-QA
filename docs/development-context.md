@@ -15,8 +15,8 @@ marked (`[unknown]`, `[unverified — needs <env>]`, `[assumed]`).
 
 | When | What | Artifact |
 |---|---|---|
-| 2026-04-29 | Graph-first reset: one CAD ontology + a deterministic query/verifier replaces the old split between "core", "graph query", and "multi-hop" | `overnight-task.md`, `specs/` |
-| 2026-05 → 06 | Dataset builder: source ingestion, CadQuery tracing, ontology graph, query synthesis/resolver, prompt rendering, release gates | `cad_qa/` (now `dataset_generation/`), `docs/_archive/implementation_status.md` (retired) |
+| 2026-04-29 | Graph-first reset: one CAD ontology + a deterministic query and Query verifier replaces the old split between "core", "graph query", and "multi-hop" | `overnight-task.md`, `specs/` |
+| 2026-05 → 06 | Dataset builder: CadQuery program ingestion, CadQuery tracing, CAD ontology graph, query synthesis/resolver, prompt rendering, release gates | `cad_qa/` (now `dataset_generation/`), `docs/_archive/implementation_status.md` (retired) |
 | 2026-06 → 07 | Harbor export, cloud runners, provider pinning | `cad_qa/harbor.py`, `docs/_archive/harbor.md` |
 | 2026-08-08 | First gemma-4-E2B baseline: rc10 (0-hop) 30%, release10k (2–5 hop) 14% | `docs/experiments/2026-08-08-gemma-e2b-bench.md` |
 | 2026-08-08/09 | Teacher rejection sampling, SFT, native tool-call format fix, 1-hop bridge, `run_code` sandbox, harness modes, a vLLM conversion | `train_and_eval/`, `docs/_archive/rl_*.md`, `docs/_archive/agent_handoff_2026-08-09.md` |
@@ -24,14 +24,14 @@ marked (`[unknown]`, `[unverified — needs <env>]`, `[assumed]`).
 
 ## Components
 
-**Dataset generation** (`dataset_generation/`, today `cad_qa/`): source ingestion
-(`source.py`), CadQuery tracing (`trace.py`), ontology extraction (`ontology/`), query
+**Dataset generation** (`dataset_generation/`, today `cad_qa/`): CadQuery program ingestion
+(`source.py`), CadQuery tracing (`trace.py`), CAD ontology extraction (`ontology/`), query
 synthesis and resolution (`query/`), prompt rendering (`prompts/`), materialize/validate/
 release (`dataset/`), Harbor export (`harbor.py`), CLI (`cli.py`).
 
 **Fine-tuning and evaluation** (`train_and_eval/`): row loading
 (`rows_loader.py`), the typed tool contract (`tool_calls.py`), the teacher
-(`teacher.py`), rejection sampling (`train/rejection_sample.py`), trace normalization
+(`teacher.py`), rejection sampling (`train/rejection_sample.py`), agent training trace normalization
 (`train/normalize_traces.py`), SFT (`train/sft_train.py`), GRPO (`train/grpo_train.py`,
 `reward_cadqa.py`), the eval harness (`eval/eval_bench.py`), and the vLLM conversion
 (`setup/convert_for_vllm.py`).
@@ -66,7 +66,7 @@ as a headline number.
 - `[unverified]` **`run_code` sandbox isolation** (no network, timeout, no CadQuery).
 - `[assumed]` **The 1,445-row curriculum is "ready."** It does not pass the repo's own
   `benchmark-release` gates (scale, split-group coverage, parameter balance).
-- `[assumed]` **Hard-slice (3+ hop) big-model numbers meet the paper's ≤30% target.** Not
+- `[assumed]` **Hard-slice (3+ hop) big LLM model numbers meet the paper's ≤30% target.** Not
   recorded anywhere found.
 - `[unverified]` **Prompt clarity.** Public prompts are rule-rendered from LLM-authored
   templates (`prompt-templates.yaml`), and the owner — reading as a human — cannot always

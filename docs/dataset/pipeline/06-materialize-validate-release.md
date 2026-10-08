@@ -20,23 +20,23 @@ blocking-gate report.
     `quarantine_report.json`, `failure_report.json`, `failure_manifest.*`, `DATASET_CARD.md`,
     `GENERATED_PREVIEW.md`, `preview_evidence.json`.
   - a release export directory containing only `release_ready=true` rows with its own
-    validation, leakage, quarantine, preview, and verifier reports.
+    validation, leakage, non-release-readiness, preview, and Query verifier reports.
 
 ## Requirement
 
-Every row must be verifier-resolved and self-describing, and no private field may leak into
-the public view. For the release claim: rows must satisfy schema and public-answer contracts,
-record logical/static/geometry hop counts, carry evidence-tier and quarantine metadata,
-share a split only with their protected group, and the release export must be empty of
-non-release-ready rows and carry a report whose blocking gates all pass at the declared
-tier.
+Every row must be resolved by the Query verifier and self-describing, and no private field
+may leak into the public view. For the release claim: rows must satisfy schema and
+public-answer contracts, record logical/static/geometry hop counts, carry evidence-tier
+metadata and non-release-ready status, share a split only with their protected group, and
+the release export must be empty of non-release-ready rows and carry a report whose
+blocking gates all pass at the declared tier.
 
 ## Current status
 
-**exists.** Materialization, validation, audit, quarantine, split, public/private, preview,
-release export, and release reporting are present and readable (`cad_qa/dataset/`,
-`cad_qa/cli.py::_cmd_dataset_materialize` and siblings). No dataset was built while writing
-this doc.
+**exists.** Materialization, validation, audit, non-release-ready handling, split,
+public/private, preview, release export, and release reporting are present and readable
+(`cad_qa/dataset/`, `cad_qa/cli.py::_cmd_dataset_materialize` and siblings). No dataset was
+built while writing this doc.
 
 ## Verification
 
@@ -63,7 +63,7 @@ tests around `materialize`/`validate`. The one-command check is
 
 - **Status:** accepted.
 - **Context:** Row IDs must be globally unique and traceable to the producing query, and
-  earlier source+family IDs collided.
+  earlier CadQuery-program+family IDs collided.
 - **Decision:** `cad_qa/dataset/materialize.py::materialize_row` sets
   `row_id = f"row:{query.query_id}"`.
 - **Consequences:** Duplicate row IDs are a validation error; public/private parity uses the
@@ -79,11 +79,11 @@ tests around `materialize`/`validate`. The one-command check is
 - **Consequences:** Syntax-only rows have `geometry_hop_count == 0` and are calibration;
   geometry-critical gates read these fields.
 
-### D3 — Evidence tier and quarantine are computed per row
+### D3 — Evidence tier and non-release-ready status are computed per row
 
 - **Status:** accepted.
-- **Context:** Conservative region projections and selector-surrogate identities are not
-  release-grade.
+- **Context:** Conservative region projections and CadQuery-selector surrogate identities
+  are not release-grade.
 - **Decision:** `cad_qa/dataset/materialize.py::_evidence_policy` returns an `evidence_tier`
   (`source_static_or_analytic`, `quarantine`, `unresolved`) and `quarantine_reasons`
   (`conservative_region_projection`, `selector_identity_surrogate`, `unresolved_verifier`);
@@ -98,7 +98,7 @@ tests around `materialize`/`validate`. The one-command check is
 - **Decision:** `cad_qa/cli.py::_cmd_dataset_materialize` calls
   `cad_qa/dataset/split.py::assign_splits` and writes split-sharded Parquet plus a
   `split_manifest.json`; `leakage_audit` and `split_audit` run against that manifest.
-- **Consequences:** A source-only dataset collapses to `train` and is reported as
+- **Consequences:** A CadQuery-program-only dataset collapses to `train` and is reported as
   single-split.
 
 ### D5 — Release export is a filtered tree with its own evidence
@@ -107,21 +107,21 @@ tests around `materialize`/`validate`. The one-command check is
 - **Context:** Release numbers must be auditable against the broader generation surface.
 - **Decision:** `cad_qa/dataset/release.py::export_release_dataset` filters to release-ready
   rows, then applies deterministic caps (syntax-only calibration, family/template/value
-  shares, parameter diversity) and writes its own validation, leakage, quarantine, preview,
-  and verifier reports.
+  shares, parameter diversity) and writes its own validation, leakage, non-release-readiness,
+  preview, and Query verifier reports.
 - **Consequences:** Every dropped row is recorded as an exclusion; the export carries its own
   blockers.
 
-### D6 — The tier profile is the executable contract
+### D6 — The dataset release tier gates are the executable contract
 
 - **Status:** accepted.
 - **Context:** `specs/dataset-spec.md` fixes numeric release gates.
 - **Decision:** `cad_qa/dataset/release_report.py::{SMOKE,RELEASE_CANDIDATE,BENCHMARK}_RELEASE_PROFILE`
   encode the thresholds; `release_gate_profile` selects one by name; the default is
   `release-candidate`.
-- **Consequences:** Only the `benchmark-release` profile requires ≥10,000 rows, ≥10%
-  distinct CAD-model coverage, intended-family coverage, parameter balance, preview
-  evidence, and family-test evidence.
+- **Consequences:** Only `benchmark-release` requires ≥10,000 rows, ≥10% distinct CAD-model
+  coverage, intended-family coverage, parameter balance, preview evidence, and family-test
+  evidence.
 
 ## Open questions
 
@@ -149,4 +149,4 @@ _(none yet)_
 
 - A release-export "capacity report" that, before capping, states the maximum rows each
   family could contribute under the tier's share band, so a small balanced export cannot
-  hide source-limited coverage.
+  hide coverage limited by the available CadQuery programs.

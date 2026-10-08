@@ -2,8 +2,9 @@
 
 ## Purpose
 
-Render the public, answer-free prompt from a hidden query program and a source program,
-using approved YAML templates, and record which clue maps to which hidden clause.
+Render the public, answer-free prompt from a hidden Gold query program and a CadQuery
+program, using approved YAML templates, and record which clue maps to which hidden
+Gold query predicate.
 
 ## Inputs / outputs
 
@@ -17,9 +18,10 @@ using approved YAML templates, and record which clue maps to which hidden clause
 ## Requirement
 
 Prompts must be deterministic, answer-free, and faithful to the hidden query. Every public
-clue must map to exactly one hidden clause (or the aggregation/tie-break step), high-hop
-prompts must not collapse distractors, private ontology jargon must not leak, and candidate
-choices must be bounded and include the gold target. Wording is selected from approved
+clue must map to exactly one hidden Gold query predicate (or the aggregation/tie-break
+step), high-hop prompts must not collapse distractors, private CAD ontology jargon must
+not leak, and candidate choices must be bounded and include the gold target. Wording is
+selected from approved
 templates, not invented per row.
 
 ## Current status
@@ -41,8 +43,9 @@ rtk uv run cadqa dataset preview runs/dataset/rows.parquet \
   --seed 17
 ```
 
-Inspect `runs/preview.md` for prompt wording, clause→clue maps, and candidate lists. The
-focused tests are `tests/test_graph_first_pipeline.py::test_prompt_templates_yaml_controls_generated_prompt_wording`,
+Inspect `runs/preview.md` for prompt wording, Gold query predicate→clue maps, and candidate
+lists. The focused tests are
+`tests/test_graph_first_pipeline.py::test_prompt_templates_yaml_controls_generated_prompt_wording`,
 `::test_prompt_template_variants_are_selected_from_sampled_parameters`,
 `::test_render_prompt_hides_selector_set_and_count_boilerplate`, and
 `::test_candidate_label_answers_bound_public_label_lists`.
@@ -59,17 +62,20 @@ focused tests are `tests/test_graph_first_pipeline.py::test_prompt_templates_yam
 - **Consequences:** Editing wording changes `prompt_version`; a missing required key raises
   at load (`prompt_template_registry`).
 
-### D2 — Clue-to-clause traceability is a validation contract
+### D2 — Gold query predicate traceability is a validation contract
 
 - **Status:** accepted.
-- **Context:** A public clue that cannot be traced to a hidden clause is a leak or a lie.
+- **Context:** A public clue that cannot be traced to a hidden Gold query predicate is a
+  leak or a lie.
 - **Decision:** `render_prompt` emits a `clue_map` whose entries carry `clause_id`,
   `clue_template_id`, and clue text; `cad_qa/prompts/wording_gates.py::clue_map_traceability_errors`
-  checks the map against the query's clause IDs plus `aggregation`/`tie_break_aggregation`.
-- **Consequences:** Missing or unknown clue/clause mappings are validation errors
+  checks the map against the query's Gold query predicate IDs plus
+  `aggregation`/`tie_break_aggregation`.
+- **Consequences:** Missing or unknown clue/Gold query predicate mappings are validation
+  errors
   (`cad_qa/dataset/validate.py::validate_rows`).
 
-### D3 — Selector set/count boilerplate is hidden from the public prompt
+### D3 — CadQuery selector set/count boilerplate is hidden from the public prompt
 
 - **Status:** accepted.
 - **Context:** Some clauses exist to make the graph query well-formed but expose no
@@ -78,15 +84,16 @@ focused tests are `tests/test_graph_first_pipeline.py::test_prompt_templates_yam
   before rendering.
 - **Consequences:** The rendered prompt is shorter; the hidden query still contains them.
 
-### D4 — Private ontology terms are banned from public prompts
+### D4 — Private CAD ontology terms are banned from public prompts
 
 - **Status:** accepted.
 - **Context:** `specs/benchmark-task-spec.md#prompt-requirements` requires visible CadQuery
-  constructs rather than private ontology jargon.
+  constructs rather than private CAD ontology jargon.
 - **Decision:** `cad_qa/prompts/wording_gates.py::BANNED_PUBLIC_TERMS` flags terms such as
   `ontology`, `material_region`, `void_region`, and `measurement scope`; `render_prompt`
   records them as warnings and validation rejects them.
-- **Consequences:** Prompt wording must ground concepts in source-visible constructs.
+- **Consequences:** Prompt wording must ground concepts in constructs visible in the
+  CadQuery program.
 
 ### D5 — Wording variants are sampled from private parameters
 
@@ -107,8 +114,9 @@ focused tests are `tests/test_graph_first_pipeline.py::test_prompt_templates_yam
 - **Coupling to a root-level file.** `prompt-templates.yaml` sits at the repo root while its
   loader is inside `cad_qa/prompts/`; the path is computed with
   `parents[2]`. This is a packaging coupling worth documenting, not a bug found here.
-- **Coverage of clause templates.** `cad_qa/prompts/templates.py::clause_prompt` raises
-  `KeyError` when a clause has no template. Whether every clause kind emitted by every
+- **Coverage of Gold query predicate templates.**
+  `cad_qa/prompts/templates.py::clause_prompt` raises `KeyError` when a Gold query
+  predicate has no template. Whether every Gold query predicate kind emitted by every
   synthesis family has a template is `[unknown]` without running synthesis + materialize
   across the full family set; preview/selfcheck evidence is the intended check.
 

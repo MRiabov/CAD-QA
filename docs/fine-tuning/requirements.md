@@ -15,12 +15,12 @@ end-to-end result on a frozen held-out split.
 | Stage | Intended requirement | Verified? | Evidence |
 |---|---|---|---|
 | 01 rows-loader | A dataset file maps to decoded CAD-QA dataset rows with the correct `[answer contract]` and decoded gold for every format | **Yes** | 36/36 tests in `train_and_eval/test_rows_loader.py` + `train_and_eval/eval/test_tool_calls.py`; real `release_10k` artifact loads (10,000 rows) |
-| 02 teacher-sampling | Kept traces carry a verifier-accepted tool call; per-format coverage is complete | No | Code present (`rejection_sample.py`, `teacher.py`); `build_teacher_prompt` unit-tested; `json`/`number` teacher coverage was 0 historically |
-| 03 trace-normalization | Traces render to the native gemma format | Partial | Rendering primitives verified (`test_render_helpers`, `test_run_code_roundtrip_in_trace_steps`); full `normalize_traces.py` needs the gemma processor |
-| 04 SFT | Adapter beats the base model without over-generation | No | Code present (`sft_train.py`); historical 50% / 41.7% on 12 rows; no frozen held-out result |
+| 02 teacher-sampling | Kept agent training traces carry a tool call the Query verifier accepts; per-format coverage is complete | No | Code present (`rejection_sample.py`, `teacher.py`); `build_teacher_prompt` unit-tested; `json`/`number` teacher coverage was 0 historically |
+| 03 agent training trace normalization | Traces render to the native gemma format | Partial | Rendering primitives verified (`test_render_helpers`, `test_run_code_roundtrip_in_trace_steps`); full `normalize_traces.py` needs the gemma processor |
+| 04 SFT | Adapter beats the base LLM model without over-generation | No | Code present (`sft_train.py`); historical 50% / 41.7% on 12 rows; no frozen held-out result |
 | 05 GRPO | Reward faithful; policy improves without collapse | Partial | Reward grading unit-tested; training loop unrun; first historical run collapsed at hop 2 |
 | 06 harness-modes | Same grading across `no_tools`/`numpy`/`cadquery`; `run_code` round-trip | Partial | Sandbox and compute tool verified offline; full loop needs GPU; `cadquery` mode not implemented |
-| 07 serving-vllm | Served checkpoint is numerically equivalent to the merged model | No | Conversion code present; no parity check; throughput smoke exists but uses stale raw-prompt calls |
+| 07 serving-vllm | Served checkpoint is numerically equivalent to the merged LLM model | No | Conversion code present; no parity check; throughput smoke exists but uses stale raw-prompt calls |
 
 ## Cross-cutting requirements
 
@@ -30,7 +30,7 @@ end-to-end result on a frozen held-out split.
 | No silent data loss (rejected rows, failed runs recorded) | Yes | Partial | Sampling log records every attempt; eval writes per-row results; rejected traces are not persisted as a corpus |
 | Determinism (seeds, dataset revision, exact command) | Yes | No | Seeds exist (`seed=3407`, `42`, `20260808`) but no run manifest; dataset revisions are HF config names, not hashes |
 | Grader must equal the reward | Yes | No | Eval uses `tool_call_matches`; GRPO uses `reward_cadqa` with a different fallback parser; `text` uses substring presence |
-| No model in the trusted grading path | Yes | By design, unrun | Grading is exact-match code (`tool_call_matches`, `reward_cadqa`); the teacher only produces SFT traces, not evaluated answers |
+| No LLM model in the trusted grading path | Yes | By design, unrun | Grading is exact-match code (`tool_call_matches`, `reward_cadqa`); the teacher only produces SFT traces, not evaluated answers |
 
 ## Environment
 
@@ -52,7 +52,7 @@ end-to-end result on a frozen held-out split.
 ## What "done" would require
 
 1. The dataset frozen with tagged revisions; a group-safe held-out split independent of the
-   trace set.
+   agent training trace set.
 2. Every stage's end-to-end check run and recorded, including parity, sandbox, and
    per-format teacher coverage.
 3. SFT **and** GRPO documented as one measured chain (or the two avoided as a chain).

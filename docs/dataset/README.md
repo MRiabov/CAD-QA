@@ -3,16 +3,16 @@
 **Status:** active, 2026-10-07.
 
 This directory documents the CAD-QA benchmark-generation pipeline: the code that turns
-normalized CadQuery source programs into verifiable QA rows. It is the
-`dataset_generation` package (today `cad_qa/`). The pipeline is **frozen**: these docs
-describe what the code does; they do not justify refactors
+normalized CadQuery programs into verifiable QA rows. It is the
+`dataset_generation` package (today `cad_qa/`). The dataset-generation pipeline is
+**frozen**: these docs describe what the code does; they do not justify refactors
 (`plans/oct-7/restructure-docs.md`).
 
 ## Reading order
 
 1. `requirements.md` — intended-vs-verified summary: one row per pipeline stage.
 2. `pipeline/00-overview.md` — the DAG and the **stage IO contract**. Read this before any
-   step doc; it is the single source for artifact and field names between steps.
+   step doc; it is the single authority for artifact and field names between steps.
 3. `pipeline/01-source-ingestion.md` … `07-exports-harbor-sft.md` — one doc per stage.
 4. `decisions.md` — local decisions for the dataset unit, in ADR format.
 
@@ -55,9 +55,9 @@ The step-by-step commands are in `../experiment_execution_runbook.md`.
 - `specs/` is superseded and is being split into these docs
   (`plans/oct-7/restructure-docs.md`). Treat `specs/dataset-spec.md`,
   `specs/benchmark-task-spec.md`, `specs/multi-hop-qa-task-spec.md`,
-  `specs/generation_policy.md`, and `specs/schema.md` as source material, not current
+  `specs/generation_policy.md`, and `specs/schema.md` as input material, not current
   specs.
-- `../implementation_status.md` is a raw status log and is retired; it is source material
+- `../implementation_status.md` is a raw status log and is retired; it is input material
   for these docs, not a spec.
 
 ## Scope boundary

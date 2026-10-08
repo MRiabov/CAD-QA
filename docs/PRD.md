@@ -7,14 +7,14 @@
 ## One sentence
 
 Build a verifiable, closed-book benchmark for reasoning over procedural CAD programs
-(CadQuery), show that current language models fail it, show that a small open model
+(CadQuery), show that current language models fail it, show that a small open LLM model
 fine-tuned on graph-derived supervision improves substantially, and publish the result.
 
 ## Research questions
 
 Primary:
 
-- How can we improve a language model's raw capability to comprehend CAD code?
+- How can we improve the raw capability of an LLM model to comprehend CAD code?
 
 Secondary:
 
@@ -29,7 +29,7 @@ Secondary:
   reasoning over a CAD ontology (vertices, faces, selectors, boolean operations).
 - The dataset exposes the critical reasoning path, so it can also train conciseness.
 - A progressively labelled set (a hop-count curriculum) for curriculum learning.
-- Empirical: graph-derived supervision improves a small model's benchmark accuracy.
+- Empirical: graph-derived supervision improves a small LLM model's benchmark accuracy.
 
 ## Deliverables
 
@@ -37,32 +37,32 @@ Secondary:
 |---|---|---|
 | Benchmark dataset | HuggingFace dataset + card | Frozen, split (train/validation/test), reproducible from the CLI |
 | Baselines | `docs/experiments/` record | Cost-effective models on the benchmark, by hop and answer format |
-| Fine-tuned model | HuggingFace model + adapter | A small (2–4B) model that beats its base and the baselines on the hard slice |
+| Fine-tuned LLM model | HuggingFace LLM model + LLM adapter | A small (2–4B) LLM model that beats its base and the baselines on the hard slice |
 | Paper | manuscript | Complete main body with real tables and figures |
 | Thesis | manuscript + validation appendix | The trust audit becomes the implementation-validation appendix |
 
 ## Evaluation contract
 
-- **Primary setting — closed-book, no CAD kernel.** Input: CadQuery source plus a
+- **Primary setting — closed-book, no CAD kernel.** Input: CadQuery program plus a
   rule-rendered prompt. Output: a short structured answer, optionally with confidence.
   Score by exact structured-answer accuracy.
-- **Primary harness — `numpy`.** The model may run Python in a sandbox with NumPy to
+- **Primary harness — `numpy`.** The LLM model may run Python in a sandbox with NumPy to
   compute values. This is still closed-book: no CadQuery or other CAD kernel.
 - **Other harnesses (P2).** `no_tools` (pure reasoning) and `cadquery` (full kernel access,
   a single correct tool call suffices) are upper bounds, not the primary score.
 - **Targets.** Cost-effective models should score ≤30% on the benchmark; the small trained
-  model should improve from roughly 10% to 50–70%.
+  LLM model should improve from roughly 10% to 50–70%.
 - **Metrics.** Accuracy; invalid-output rate; missing-response rate; accuracy by hop slice,
   relation family, and measurement scope; static-hop versus geometry-hop breakdown;
   reasoning length; calibration when confidence is requested.
 
 ## Scope
 
-- Primary source: CADEvolve (executable CadQuery programs). Synthetic fixtures are for
+- Primary corpus: executable CadQuery programs. Synthetic fixtures are for
   tests and didactic examples only.
-- Labels are precomputed offline from the ontology graph and the CadQuery kernel. Evaluation
+- Labels are precomputed offline from the CAD ontology graph and the CadQuery kernel. Evaluation
   needs no kernel and no container.
-- Public prompts are rule-rendered from hidden query programs, never translated by a model.
+- Public prompts are rule-rendered from hidden query programs, never translated by an LLM model.
   Language models are not in the trusted generation or grading path.
 - `CADEditQA` (constrained edit prediction) is a possible extension, not required for the
   first paper.
@@ -70,8 +70,8 @@ Secondary:
 ## Definition of done
 
 1. The dataset is frozen and published with a card; held-out sources never overlap train.
-2. Baselines are recorded by hop and answer format, with every model call logged.
-3. A small model is trained and holds a clear, statistically supported improvement on the
+2. Baselines are recorded by hop and answer format, with every LLM model call logged.
+3. A small LLM model is trained and holds a clear, statistically supported improvement on the
    frozen test set over its base and the baselines — not explained by format compliance
    alone.
 4. Reasoning is not collapsed: generation entropy, output length, and diversity are

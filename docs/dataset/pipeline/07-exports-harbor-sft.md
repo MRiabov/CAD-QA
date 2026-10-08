@@ -8,7 +8,7 @@ orchestration.
 
 ## Inputs / outputs
 
-- **Input:** **dataset file**; **public**/**private** artifacts; or model response JSONL
+- **Input:** **dataset file**; **public**/**private** artifacts; or LLM model response JSONL
   (`pipeline/00-overview.md`).
 - **Outputs:**
   - **Harbor:** task directories plus `cadqa_harbor_job.json`, `cadqa_harbor_manifest.json`,
@@ -60,22 +60,22 @@ and the smoke/integration tests around `experiment`. Harbor execution itself
 
 ## Local decisions
 
-### D1 — Harbor gets ordinary task directories; CAD-QA keeps the verifier
+### D1 — Harbor gets ordinary task directories; CAD-QA keeps the Query verifier
 
 - **Status:** accepted.
-- **Context:** Harbor is the evaluation runner; CAD-QA owns the graph/query/verifier and
-  public/private policy (`docs/_archive/harbor.md`).
+- **Context:** Harbor is the evaluation runner; CAD-QA owns graph construction, query
+  synthesis, and the Query verifier, plus public/private policy (`docs/_archive/harbor.md`).
 - **Decision:** `cad_qa/harbor.py::materialize_harbor_tasks` writes each task with
   `instruction.md`, `task.toml`, `environment/Dockerfile`, `workspace/prompt.txt`,
-  `workspace/row_public.json`, `tests/…` verifier fixtures, and `solution/…` oracle files;
-  the verifier calls `cad_qa.evaluation.grade.grade_public_private`.
+  `workspace/row_public.json`, `tests/…` Query verifier fixtures, and `solution/…` oracle
+  files; the Query verifier calls `cad_qa.evaluation.grade.grade_public_private`.
 - **Consequences:** Reward is `1` only for a parsed exact match to the private gold answer;
   the agent may write `/app/answer.json` or `/app/answer.txt`.
 
 ### D2 — Public rows in Harbor come only from `PUBLIC_FIELDS`
 
 - **Status:** accepted.
-- **Context:** A task must not leak private verifier fields.
+- **Context:** A task must not leak private Query verifier fields.
 - **Decision:** the materializer writes `workspace/row_public.json` from
   `cad_qa/dataset/public.py::PUBLIC_FIELDS` only.
 - **Consequences:** `gold_answer`, `query_program`, `candidate_trace`, and `clue_map` never
@@ -95,7 +95,7 @@ and the smoke/integration tests around `experiment`. Harbor execution itself
 - **Status:** accepted.
 - **Context:** The paper wants both direct-answer supervision and reasoning-length study.
 - **Decision:** `answer_sft_rows` emits prompt→answer pairs; `reasoning_sft_rows` emits
-  prompt→(candidate-trace step counts + answer) pairs (`cad_qa/dataset/sft.py`).
+  prompt→(answer candidate set trace step counts + answer) pairs (`cad_qa/dataset/sft.py`).
 - **Consequences:** Both are written plus hop/difficulty ablations and size-based scaling
   subsets.
 
@@ -108,7 +108,7 @@ and the smoke/integration tests around `experiment`. Harbor execution itself
   `release_dataset/` tree, with baselines, requests, grades, tool-assisted runs, and SFT
   exports for both.
 - **Consequences:** A single command produces the orchestratable evidence tree; the release
-  tree passes its own verifier report.
+  tree passes its own Query verifier report.
 
 ## Open questions
 
@@ -117,9 +117,9 @@ and the smoke/integration tests around `experiment`. Harbor execution itself
   anything beyond `rows`/`public`/`private` is `[unknown]`; that boundary is not enforced by
   a test here.
 - **`reasoning_sft` is not an agent training trace.** It summarizes candidate-set sizes, not
-  model reasoning. Whether it is useful supervision is a fine-tuning question, out of scope
-  for this pipeline.
-- **Harbor agent/model config is run configuration, not part of the task contract**
+  LLM model reasoning. Whether it is useful supervision is a fine-tuning question, out of
+  scope for this pipeline.
+- **Harbor agent and LLM model config is run configuration, not part of the task contract**
   (`docs/_archive/harbor.md`); the default pin is `terminus-2` with
   `openrouter/deepseek/deepseek-v4-flash`.
 - **LLM-output recording.** The dataset-generation path contains no LLM calls, so the

@@ -1,12 +1,12 @@
 # CAD-QA documentation
 
-**Status:** being restructured (2026-10-07). The conventions below are the target model;
+**Status:** being restructured (2026-10-07). The conventions below are the target pattern;
 the existing docs (`implementation_status.md`, handoffs, runbooks, this directory's older
 files) are being migrated or retired. See `plans/oct-7/restructure-docs.md` for the plan and
 `development-context.md` for the current state.
 
 This directory is the canonical documentation for CAD-QA: a benchmark for reasoning over
-procedural CAD programs (CadQuery), and a small-model fine-tuning effort on top of it.
+procedural CAD programs (CadQuery), and a small-LLM-model fine-tuning effort on top of it.
 
 ## Reading order
 
@@ -31,7 +31,7 @@ procedural CAD programs (CadQuery), and a small-model fine-tuning effort on top 
 | What is true right now | `development-context.md` |
 | What happens next | `development-plan.md` |
 | How the dataset is built | `dataset/pipeline/00-overview.md` |
-| How the model is trained | `fine-tuning/pipeline/00-overview.md` |
+| How the LLM model is trained | `fine-tuning/pipeline/00-overview.md` |
 | How models are evaluated | `evaluation/harness.md` |
 | Past experiments | `experiments/` |
 | Decisions | `adr/` |
@@ -44,6 +44,6 @@ numbers, one concept per word, and a glossary that governs both docs and code.
 ## Archived material
 
 The pre-restructure docs — the status log, handoffs, RL checkpoints, runbooks, analysis
-reports, the paper draft, and the trace previews — now live under `_archive/`. They are
-**raw material**, not current specs; the docs above supersede them. `implementation_status.md`
+reports, the paper draft, and the agent training trace previews — now live under `_archive/`. They
+are **raw material**, not current specs; the docs above supersede them. `implementation_status.md`
 is retired.

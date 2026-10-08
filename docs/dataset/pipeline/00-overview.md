@@ -1,18 +1,18 @@
 # Dataset pipeline — overview
 
 **Status:** active, 2026-10-07. This is the DAG and the stage IO contract for the
-benchmark-generation pipeline. It is the single source for artifact and field names
+benchmark-generation pipeline. It is the single authority for artifact and field names
 between steps; the step docs restate behaviour but must match this contract.
 
 Audience note: terms follow `docs/glossary.md`. Read that first if a term is unclear.
 
 ## What this pipeline builds
 
-The pipeline turns normalized CadQuery source programs into verifiable QA rows. It is
-the `dataset_generation` package (today `cad_qa/`), which is **frozen**: the docs describe
-what it does, not what it should do (`plans/oct-7/restructure-docs.md`). Low-hop rows and
-high-hop CAD BrowseComp rows are slices of the same machinery; there is no separate
-simple-QA pipeline (`README.md`).
+The dataset-generation pipeline turns normalized CadQuery programs into verifiable QA rows.
+It is the `dataset_generation` package (today `cad_qa/`), which is **frozen**: the docs
+describe what it does, not what it should do (`plans/oct-7/restructure-docs.md`). Low-hop
+rows and high-hop CAD BrowseComp rows are slices of the same machinery; there is no
+separate simple-QA pipeline (`README.md`).
 
 ## DAG order
 
@@ -56,9 +56,9 @@ formats default to Parquet with a JSONL fallback (`cad_qa/io.py::read_records`,
 
 | Stage | Producer | Input | Output artifact | Key fields |
 |---|---|---|---|---|
-| A1 Source ingestion | `cad_qa/source.py` | CADEvolve tar, extracted directory, cached source Parquet, or generic JSONL | **sources** (`sources.parquet`) | `source_id`, `source_code`, `source_path`, `source_hash`, `metadata` (`SourceRecord`) |
-| A2 Trace/snapshot | `cad_qa/trace.py` | sources | **traces** (`traces.parquet`) | `source_id`, `execution_status`, `snapshots`, `operation_effects`, `selector_results`, `environment`, `failure_reason` (`TraceRecord`) |
-| A3 Ontology graph | `cad_qa/ontology/extract.py::build_graph` | sources; optional traces | **graphs** (`graphs.parquet`) | `graph_id`, `source`, `nodes`, `relations`, `measurements`, `diagnostics` (`OntologyGraph`) |
+| A1 CadQuery program ingestion | `cad_qa/source.py` | upstream CadQuery program corpus tar, extracted directory, cached CadQuery program Parquet, or generic JSONL | **sources** (`sources.parquet`) | `source_id`, `source_code`, `source_path`, `source_hash`, `metadata` (`SourceRecord`) |
+| A2 CadQuery program operation trace / Shape snapshot | `cad_qa/trace.py` | sources | **traces** (`traces.parquet`) | `source_id`, `execution_status`, `snapshots`, `operation_effects`, `selector_results`, `environment`, `failure_reason` (`TraceRecord`) |
+| A3 CAD ontology graph | `cad_qa/ontology/extract.py::build_graph` | sources; optional traces | **graphs** (`graphs.parquet`) | `graph_id`, `source`, `nodes`, `relations`, `measurements`, `diagnostics` (`OntologyGraph`) |
 | A4 Query synthesis + resolver | `cad_qa/query/synthesis.py::synthesize_graph_hop_queries`, `cad_qa/query/resolver.py::{smoke_queries, resolve_query}` | graphs | **queries** (`queries.parquet`) + **failure_manifest** (`failure_manifest.parquet`) | per record: `graph_id`, `query` (`QueryProgram`), `resolution` (`QueryResolution`) |
 | A5 Prompt rendering | `cad_qa/prompts/render.py::render_prompt` | source code + `QueryProgram` (+ graph) | rendered prompt embedded in the row | `prompt`, `prompt_version`, `prompt_template_id`, `clue_map`, `warnings` |
 | A6 Materialize/validate/release | `cad_qa/dataset/` | queries (+ graphs sidecar) | **rows** (`rows.parquet`), **public**/**private**, dataset + release reports | `DatasetRow` fields (below) |
@@ -97,7 +97,7 @@ formats default to Parquet with a JSONL fallback (`cad_qa/io.py::read_records`,
 
 **Public / private column sets** (`cad_qa/dataset/public.py`):
 `PUBLIC_FIELDS` and `PRIVATE_FIELDS` are the release boundary. `public` is answer-free
-model input; `private` carries `gold_answer`, `query_program`, `candidate_trace`,
+LLM model input; `private` carries `gold_answer`, `query_program`, `candidate_trace`,
 `clue_map`, `verifier_status`.
 
 ## Stage-to-CLI map

@@ -55,11 +55,11 @@ still verifies the loader logic but not the real schema.
 ### FT-01-D1 — Append the `[answer contract]` suffix at load time
 
 - **Status:** accepted (2026-08).
-- **Context:** the model must end with a `submit_*` tool call; both the teacher and the
+- **Context:** the LLM model must end with a `submit_*` tool call; both the teacher and the
   student need the same instruction.
 - **Decision:** `load_local_rows` appends `tool_call_prompt_suffix(answer_format)` to the
   prompt by default, so every consumer gets the contract without re-implementing it.
-- **Consequences:** the teacher prompt and the SFT/eval prompt share one suffix source
+- **Consequences:** the teacher prompt and the SFT/eval prompt share one suffix definition
   (`train_and_eval/tool_calls.py::tool_call_prompt_suffix`). `tool_suffix=False` exists for
   callers that want the bare prompt.
 
@@ -91,5 +91,5 @@ _(none yet)_
 
 ## Extra deliverables - P2
 
-- Emit a typed `HarnessRow` Pydantic model instead of a bare `dict` (the repo's typed-code
+- Emit a typed `HarnessRow` Pydantic class instead of a bare `dict` (the repo's typed-code
   standard prefers explicit models between functions).

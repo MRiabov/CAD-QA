@@ -1,9 +1,10 @@
-# 03 — Ontology graph
+# 03 — CAD ontology graph
 
 ## Purpose
 
-Extract a typed ontology graph — nodes, relations, and measurements — from each source
-program, enriched with kernel-backed trace evidence when a trace is available.
+Extract a typed CAD ontology graph — nodes, relations, and measurements — from each
+CadQuery program, enriched with kernel-backed evidence from a CadQuery program operation trace
+when one is available.
 
 ## Inputs / outputs
 
@@ -17,20 +18,21 @@ program, enriched with kernel-backed trace evidence when a trace is available.
 
 ## Requirement
 
-The graph must be a faithful, auditable view of the source plus whatever the kernel
-measured. For the downstream geometry claim: a source entity (feature, profile, workplane,
-selector, path, topology) must be reachable as a typed node; geometry evidence must be
-attached as measurements with a correct measurement scope; and release-family support must
-be measurable so sparse coverage is visible before synthesis. Conservative (source-derived)
-region projections and kernel-backed region evidence must be distinguishable.
+The graph must be a faithful, auditable view of the CadQuery program plus whatever the
+kernel measured. For the downstream geometry claim: a CadQuery program entity (feature,
+CadQuery profile, CadQuery workplane, CadQuery selector, path, topology) must be reachable
+as a typed CAD ontology node; geometry evidence must be attached as measurements with a
+correct measurement scope; and release-family support must be measurable so sparse coverage
+is visible before synthesis. Conservative (CadQuery-program-derived) region projections and
+kernel-backed region evidence must be distinguishable.
 
 ## Current status
 
 **exists.** Extraction is present and readable
 (`cad_qa/ontology/extract.py::build_graph`, `cad_qa/ontology/nodes.py`,
 `cad_qa/ontology/relations.py`, `cad_qa/cli.py::_cmd_graph_build`). AST-based extraction
-runs without CadQuery; trace enrichment requires it. No graph build was executed while
-writing this doc.
+runs without CadQuery; CadQuery program operation trace enrichment requires it. No graph
+build was executed while writing this doc.
 
 ## Verification
 
@@ -55,20 +57,21 @@ focused tests are `tests/test_graph_first_pipeline.py::test_graph_build_report_e
 - **Status:** accepted.
 - **Context:** Graph extraction must run on sources that fail to execute and must never run
   untrusted code.
-- **Decision:** `cad_qa/ontology/extract.py::build_graph` parses the source with `ast` and
-  walks statements; expressions are evaluated only through a restricted evaluator
+- **Decision:** `cad_qa/ontology/extract.py::build_graph` parses the CadQuery program with
+  `ast` and walks statements; expressions are evaluated only through a restricted evaluator
   (`cad_qa/ontology/extract.py::_safe_eval`, `::_compile_safe_function`).
-- **Consequences:** The graph is a static-structure view even when no trace exists;
-  execution-derived facts enter only through the optional `TraceRecord`.
+- **Consequences:** The graph is a static-structure view even when no CadQuery program operation trace
+  exists; execution-derived facts enter only through the optional `TraceRecord`.
 
-### D2 — Trace enrichment attaches to source features by target and source line
+### D2 — CadQuery program operation trace enrichment attaches to features by target and line
 
 - **Status:** accepted.
-- **Context:** Shape snapshots are keyed by assignment target and source line; graph features
-  are keyed by assignment target.
-- **Decision:** The extractor indexes shape snapshots/effects/selector results by target,
-  source line, and selector text+kind, then attaches `snapshot_state`,
-  `feature_application_effect`, and selector-derived measurements to the matching feature
+- **Context:** Shape snapshots are keyed by assignment target and CadQuery program line;
+  graph features are keyed by assignment target.
+- **Decision:** The extractor indexes shape snapshots/effects/CadQuery selector results by
+  target, CadQuery program line, and CadQuery selector text and operation, then
+  attaches `snapshot_state`, `feature_application_effect`, and CadQuery selector-derived
+  measurements to the matching feature
   (`cad_qa/ontology/extract.py::_attach_trace_snapshot_state`,
   `::_attach_trace_feature_effect`, `::_attach_profile_application_effect`).
 - **Consequences:** A feature can carry compiled volume/bbox/centroid/topology and effect
@@ -77,8 +80,9 @@ focused tests are `tests/test_graph_first_pipeline.py::test_graph_build_report_e
 ### D3 — Conservative region projections and kernel-backed regions are distinct
 
 - **Status:** accepted.
-- **Context:** A source-order projection of a cut/extrude (profile area × distance) is an
-  AABB guess, while a trace delta is kernel-backed.
+- **Context:** A CadQuery-program-order projection of a cut/extrude (CadQuery profile area
+  × distance) is an AABB guess, while a CadQuery program operation trace delta is
+  kernel-backed.
 - **Decision:** `cad_qa/ontology/material_regions.py::feature_effect_from_profile` produces
   conservative `has_material_region_geometry`/`has_void_region_geometry` evidence, while
   kernel-backed paths produce `has_kernel_material_region_geometry`/
@@ -94,8 +98,8 @@ focused tests are `tests/test_graph_first_pipeline.py::test_graph_build_report_e
 - **Decision:** `OntologyGraph.add_node`/`add_relation`/`add_measurement` deduplicate by
   structural key, and lookups are served by lazily built, mutation-safe indexes
   (`cad_qa/ontology/nodes.py`).
-- **Consequences:** Repeated selector observations do not inflate the graph; caches are not
-  serialized into graph artifacts.
+- **Consequences:** Repeated CadQuery selector observations do not inflate the graph;
+  caches are not serialized into graph artifacts.
 
 ### D5 — Graph artifacts can be sharded
 
@@ -108,9 +112,10 @@ focused tests are `tests/test_graph_first_pipeline.py::test_graph_build_report_e
 ## Open questions
 
 - `cad_qa/ontology/relations.py::RELATION_FAMILIES` and `MEASUREMENT_SCOPES` are the
-  registry of allowed types, but `assert_relation_type`/`assert_measurement_scope` are
-  available and not obviously enforced on every insertion. Whether all emitted types are
-  members, and whether the registry is intended as a hard gate, is `[unknown]`.
+  registry of allowed relation type and measurement scope values, but
+  `assert_relation_type`/`assert_measurement_scope` are available and not obviously
+  enforced on every insertion. Whether every emitted relation type and measurement scope is
+  a member, and whether the registry is intended as a hard gate, is `[unknown]`.
 - `release_support_coverage` in `graph_report.json` uses
   `cad_qa/cli.py::RELEASE_SUPPORT_REQUIREMENTS`; this is an early-warning signal, not a
   blocking gate. Whether synthesis reuses it to skip unsupported families is `[unknown]`.
@@ -122,4 +127,4 @@ _(none yet)_
 ## Extra deliverables - P2
 
 - A per-graph provenance table mapping each measurement back to the exact shape snapshot /
-  effect / selector index that produced it, for a fully reproducible audit.
+  effect / CadQuery selector index that produced it, for a fully reproducible audit.

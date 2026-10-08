@@ -2,13 +2,13 @@
 
 ## Purpose
 
-Evaluate a trained model on CAD-QA under a selectable **LLM harness mode** that controls which
-compute tools the model gets, grading every mode the same way.
+Evaluate a trained LLM model on CAD-QA under a selectable **LLM harness mode** that controls which
+compute tools the LLM model gets, grading every mode the same way.
 
 ## Inputs / outputs
 
-- **In:** a **merged model** directory, the `decoded CAD-QA dataset rows` set (from 01, either a local dataset
-  file via `--rows` or HF `v3_curriculum`), and the **LLM harness mode**
+- **In:** a **merged LLM model** directory, the `decoded CAD-QA dataset rows` set (from 01, either a
+  local dataset file via `--rows` or HF `v3_curriculum`), and the **LLM harness mode**
   (`--mode no_tools | numpy | cadquery`).
 - **Out `eval result`:** JSONL `EvalRow` records
   ([00-overview.md](00-overview.md#eval-result)); the script prints overall accuracy and
@@ -20,8 +20,8 @@ compute tools the model gets, grading every mode the same way.
 ## Requirement
 
 The mode must not change grading — only the available compute tools. A correct final answer
-must be accepted identically in every mode; `run_code` must execute the model's code
-server-side and feed the result back in the model's native format.
+must be accepted identically in every mode; `run_code` must execute the LLM model's code
+server-side and feed the result back in the LLM model's native format.
 
 ## Current status
 
@@ -61,7 +61,7 @@ rtk uv run python train_and_eval/eval/eval_bench.py \
 ### FT-06-D2 — `run_code` round-trip in the native format
 
 - **Status:** accepted (2026-08).
-- **Context:** the model emits `<|tool_call>call:run_code{...}<tool_call|>`; the harness must
+- **Context:** the LLM model emits `<|tool_call>call:run_code{...}<tool_call|>`; the harness must
   execute and return a `<|tool_response|>` block, then continue generation.
 - **Decision:** generation is truncated at the first `<tool_call|>` close token (single token
   id `TOOL_CALL_CLOSE_ID = 49`), the code is executed via `execute_code`, and
@@ -72,7 +72,7 @@ rtk uv run python train_and_eval/eval/eval_bench.py \
 ### FT-06-D3 — Sandbox is an accidental-misuse guard, not a security boundary
 
 - **Status:** accepted (2026-08).
-- **Context:** model-generated code runs in the training pipeline.
+- **Context:** LLM model-generated code runs in the training pipeline.
 - **Decision:** `run_code_sandbox.py` blocks a fixed deny-list of imports, restricts builtins
   (no `open`/`eval`/`exec`/`compile`), strips numpy file-IO, runs under `python -I -B`, and is
   bounded by a timeout. The module docstring states explicitly that a determined attacker can
@@ -85,7 +85,7 @@ rtk uv run python train_and_eval/eval/eval_bench.py \
 - **Status:** accepted (2026-08).
 - **Context:** `Gemma4Processor.apply_chat_template(tokenize=True, ...)` returns a bare
   `Tensor` for text-only input, not a `dict`; `.items()` crashes.
-- **Decision:** guard with `hasattr(inputs, "items")` else treat the value as `input_ids`
+- **Decision:** guard with `hasattr(inputs, "items")` else treat the returned tensor as `input_ids`
   (`train_and_eval/eval/eval_bench.py::main`).
 - **Consequences:** recorded as a recurring pitfall in `docs/_archive/agent_handoff_2026-08-09.md`.
 
@@ -93,7 +93,7 @@ rtk uv run python train_and_eval/eval/eval_bench.py \
 
 - **`cadquery` mode is unimplemented.** `tools_for_mode` raises `NotImplementedError`; no
   CadQuery execution path exists. The PRD lists it as a P2 upper bound.
-- **Sandbox isolation is unproven.** The threat model is accidental misuse; there is no
+- **Sandbox isolation is unproven.** The threat considered is accidental misuse; there is no
   namespace/seccomp isolation, and the sandbox tests assert blocks that a determined actor
   could bypass. Whether "no network / no files / timeout" is sufficient for the claim is
   `[unknown]`.
@@ -108,9 +108,9 @@ rtk uv run python train_and_eval/eval/eval_bench.py \
   tool-valid; the PRD's metrics (accuracy by hop, format, relation family, measurement scope)
   are not produced here.
 - **`MAX_NEW` is defined and unused**; only `ROUND_MAX_NEW` is applied.
-- **Held-out sampling.** Rows are drawn by `rng.sample` after excluding trace `row_id`s; the
-  exclusion source defaults to a box path (`sft_texts.jsonl`). `[unknown]` if a frozen
-  held-out split is enforced independently of the trace set.
+- **Held-out sampling.** Rows are drawn by `rng.sample` after excluding agent training trace
+  `row_id`s; the exclusion list defaults to a box path (`sft_texts.jsonl`). `[unknown]` if a
+  frozen held-out split is enforced independently of the agent training trace set.
 
 ## Resolved questions
 

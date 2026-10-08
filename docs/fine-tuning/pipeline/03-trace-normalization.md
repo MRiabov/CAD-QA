@@ -1,4 +1,4 @@
-# 03 — trace normalization
+# 03 — agent training trace normalization
 
 ## Purpose
 
@@ -7,7 +7,7 @@ that SFT can train on directly.
 
 ## Inputs / outputs
 
-- **In:** `training trace` JSONL (from 02) plus `mode`, `tool_name`, and optional structured
+- **In:** `agent training traces` JSONL (from 02) plus `mode`, `tool_name`, and optional structured
   `steps`.
 - **Out:** `normalized text` JSONL — `TRACE_COLUMNS`
   (`row_id`, `prompt`, `trace`, `hop`, `tool_name`, `answer_format`, `gold`, `compacted`,
@@ -17,9 +17,9 @@ that SFT can train on directly.
 
 ## Requirement
 
-The rendered assistant turn must use the base model's **native tool-call format** — literal
+The rendered assistant turn must use the base LLM model's **native tool-call format** — literal
 `<|tool_call>call:<name>{args}<tool_call|>` and `<|tool_response|>` blocks — matching what the
-base model was pretrained to emit. A foreign (OpenAI-style JSON envelope) format is the known
+base LLM model was pretrained to emit. A foreign (OpenAI-style JSON envelope) format is the known
 failure mode that tripled held-out accuracy when fixed
 (`docs/_archive/agent_handoff_2026-08-09.md` sections 3 and 5).
 

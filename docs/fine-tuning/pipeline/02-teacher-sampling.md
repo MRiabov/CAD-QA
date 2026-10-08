@@ -2,9 +2,9 @@
 
 ## Purpose
 
-Produce **agent training traces** by sampling a **teacher** model on decoded CAD-QA dataset rows and keeping only
-the attempts whose typed tool call the verifier accepts (**rejection sampling**). Trace
-length is bounded by **compaction**.
+Produce **agent training traces** by sampling a **teacher** LLM model on decoded CAD-QA dataset
+rows and keeping only the attempts whose typed tool call the Query verifier accepts
+(**rejection sampling**). Agent training trace length is bounded by **compaction**.
 
 ## Inputs / outputs
 
@@ -12,9 +12,9 @@ length is bounded by **compaction**.
   `v3_curriculum` (fields `row_id`, `prompt`, `gold_answer`, `answer_format`,
   `logical_hop_count`). An agent training trace's answer tool is derived from the row's
   `answer_format`.
-- **Out `training trace`:** JSONL `Trace` records
-  ([00-overview.md](00-overview.md#training-trace)); any trace longer than
-  `MAX_TRACE_TOKENS` (`4000`) is compacted first.
+- **Out `agent training traces`:** JSONL `Trace` records
+  ([00-overview.md](00-overview.md#agent-training-traces)); any agent training trace longer
+  than `MAX_TRACE_TOKENS` (`4000`) is compacted first.
 - **Out `sampling log`:** JSONL `AttemptLog` records
   ([00-overview.md](00-overview.md#sampling-log)), one per teacher attempt, recording
   `text`, `reasoning`, `tool_call`, and per-tool-round `rounds` distinctly (the A5 rule).
@@ -22,10 +22,11 @@ length is bounded by **compaction**.
   `train.jsonl` / `heldout.jsonl` / `report.json` from a dataset file, excluding the bench
   slices (`runs/gemma_bench/slices/release10k/public.jsonl`,
   `runs/gemma_bench/slices/rc10/rows.jsonl`).
-- **Auxiliary generation:** `train_and_eval/train/gen_1hop_queries.py` emits clause-less
-  1-hop workplane-aggregation query records for later materialization.
-- **Publication:** `train_and_eval/setup/publish_traces.py::main` pushes a trace pool to HF
-  `MRiabov/cadqa-rl-2000` as a config (`sft_traces_v1`, `sft_traces_v2`).
+- **Auxiliary generation:** `train_and_eval/train/gen_1hop_queries.py` emits 1-hop query
+  records with a CadQuery workplane aggregation and no Gold query predicate, for later
+  materialization.
+- **Publication:** `train_and_eval/setup/publish_traces.py::main` pushes an agent training trace
+  pool to HF `MRiabov/cadqa-rl-2000` as a config (`sft_traces_v1`, `sft_traces_v2`).
 
 ## Requirement
 
@@ -39,9 +40,9 @@ learned by the student.
 `[unverified — needs OPENROUTER_API_KEY + network + HF access]`. Code is present;
 `train_and_eval/teacher.py::build_teacher_prompt` is covered by a passing unit test, but no
 end-to-end sampling run was performed in this audit. Historical runs are recorded in
-`docs/_archive/rl_progress_2026-08-09.md` and `docs/_archive/agent_handoff_2026-08-09.md`, which report a 275
-→ 308-trace pool and per-format success (`text` 23%, `candidate_label` 42%, `coordinate`
-23%, `integer` 35%, `bbox` 19%, `json` 0%, `number` 0%).
+`docs/_archive/rl_progress_2026-08-09.md` and `docs/_archive/agent_handoff_2026-08-09.md`, which
+report an agent training trace pool of 275 → 308 and per-format success (`text` 23%,
+`candidate_label` 42%, `coordinate` 23%, `integer` 35%, `bbox` 19%, `json` 0%, `number` 0%).
 
 ## Verification
 
@@ -75,17 +76,17 @@ coverage gate should exist.
 ### FT-02-D2 — Multi-turn teacher loop with the `run_code` compute tool
 
 - **Status:** accepted (2026-08).
-- **Context:** exact numeric answers (workplane frames, volumes) are not reliably computable
-  in-head; the base model is a code-execution model.
+- **Context:** exact numeric answers (CadQuery workplane frames, volumes) are not reliably
+  computable in-head; the base LLM model is a code-execution variant.
 - **Decision:** the teacher may emit `run_code` tool calls; the sampler executes them
   server-side and continues the conversation until a `submit_*` call
   (`train_and_eval/train/rejection_sample.py::Sampler._attempt_row`). The full round-trip is
   captured as structured `TraceStep`s (`text` / `tool_call` / `tool_result`), with a
   flattened text rendering alongside. `--no-compute-tool` runs reasoning-only.
 - **Consequences:** traces can include literal `<|tool_response|>` blocks, which 03 must
-  render. `compute_tool` also selects the trace's `mode` (`NUMPY` vs `NO_TOOLS`).
+  render. `compute_tool` also selects the agent training trace's `mode` (`NUMPY` vs `NO_TOOLS`).
 
-### FT-02-D3 — Always compact a successful trace
+### FT-02-D3 — Always compact a successful agent training trace
 
 - **Status:** accepted (2026-08).
 - **Context:** the teacher reasons freely and can exceed 4K tokens; the intent is a concise

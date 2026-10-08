@@ -2,12 +2,12 @@
 
 ## Purpose
 
-Convert a **merged model** checkpoint so it loads in vLLM, and use vLLM for high-throughput
+Convert a **merged LLM model** checkpoint so it loads in vLLM, and use vLLM for high-throughput
 batched evaluation and rollouts.
 
 ## Inputs / outputs
 
-- **In:** a **merged model** directory in the unsloth/HF save layout (e.g.
+- **In:** a **merged LLM model** directory in the unsloth/HF save layout (e.g.
   `/root/cadqa-sft-merged`).
 - **Out `vLLM checkpoint`:** a converted safetensors directory (e.g.
   `/root/cadqa-sft-merged-vllm3`) that `vllm serve` / `LLM(model=...)` accepts.
@@ -15,7 +15,7 @@ batched evaluation and rollouts.
 
 ## Requirement
 
-The served checkpoint must be numerically equivalent to the transformers model it was merged
+The served checkpoint must be numerically equivalent to the transformers LLM model it was merged
 from. A conversion that silently alters weights (for example a wrong `k_norm` mapping) makes
 every vLLM number untrustworthy, so parity must be shown before vLLM results are used.
 
@@ -70,7 +70,7 @@ A parity check (same prompts, transformers vs vLLM, compare token logprobs or ar
 
 - **Parity is unverified.** There is no transformers-vs-vLLM comparison. If the `k_norm`
   duplication or prefix rename is wrong, every vLLM number is contaminated. P0.
-- **`bench_vllm.py` is stale and contradicts the handoff.** It loads the *base* model from a
+- **`bench_vllm.py` is stale and contradicts the handoff.** It loads the *base* LLM model from a
   hardcoded cache glob (`google/gemma-4-E2B-it`) and calls `llm.generate` with **raw string**
   prompts; `docs/_archive/agent_handoff_2026-08-09.md` A4 warns that raw prompts produce
   EOS-immediately / fake numbers and that `llm.chat(messages)` must be used. As written, the

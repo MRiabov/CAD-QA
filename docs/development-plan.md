@@ -1,12 +1,12 @@
 # Development plan
 
-**Status:** active, 2026-10-07. Source: `plans/oct-7/restructure-docs.md`. This is the
+**Status:** active, 2026-10-07. Based on the plan `plans/oct-7/restructure-docs.md`. This is the
 project-level plan (what to build and in what order); the restructure plan is about how the
 docs are organised. A live, owner-facing checklist lives in `_audit/owner-audit-todo.md`.
 
 ## Goal
 
-Complete the project: a frozen, verified benchmark; refreshed baselines; a small model that
+Complete the project: a frozen, verified benchmark; refreshed baselines; a small LLM model that
 beats its base and the baselines without collapsing reasoning; results and a finished
 paper/thesis.
 
@@ -17,7 +17,7 @@ paper/thesis.
 - Every task carries a priority: **P0** thesis-critical, **P1** thesis-important, **P2**
   venue extras (may never execute).
 - Every result names its environment pin, seed, dataset revision, and exact command.
-- Every model call records reasoning, output, and tool call distinctly.
+- Every LLM model call records reasoning, output, and tool call distinctly.
 
 ## Phase 0 — Trust audit (no GPU) [P0]
 
@@ -48,7 +48,7 @@ Phase 3 design.
 
 - Decide dataset scope: freeze the 1,445-row curriculum plus a new group-safe held-out test,
   or regenerate the ≥10,000-row `benchmark-release` tier.
-- Build and freeze the held-out test; assert no train/test row or source overlap.
+- Build and freeze the held-out test; assert no train/test row or CadQuery program overlap.
 - Close the 0-hop/1-hop synthesis gap if curriculum training needs it.
 - Fix `json`/`number` teacher coverage.
 - Publish with tagged revision hashes.

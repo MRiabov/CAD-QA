@@ -28,14 +28,14 @@ Focus on:
 
 ## Candidates
 
-| Source | What to look at | Adoption interest |
+| Project | What to look at | Adoption interest |
 |---|---|---|
 | HuggingFace `trl` examples | SFT/DPO/GRPO trainers, completion-only masking | toolchain baseline |
 | HuggingFace `alignment-handbook` | SFT/DPO recipes, masking, packing | masking + configs |
-| `smol-course` | end-to-end small-model recipes | pedagogy, canaries |
+| `smol-course` | end-to-end small-LLM-model recipes | pedagogy, canaries |
 | `Open-R1` | R1 reproduction: data pipeline + GRPO | reasoning RL loop |
 | `open-instruct` / Tulu 3 | large-scale SFT + RLHF mix | data mixing, eval |
-| `OpenThoughts` / `Bespoke-Stratos` | reasoning-data generation pipelines | trace generation |
+| `OpenThoughts` / `Bespoke-Stratos` | reasoning-data generation pipelines | agent training trace generation |
 | `unsloth` notebooks | fast QLoRA, gemma/Qwen recipes | the current stack |
 | `Axolotl` / `LLaMA-Factory` / `torchtune` | config-driven fine-tuning | alternatives |
 | `verl` | RL for LLMs at scale | GRPO implementation |
@@ -43,7 +43,7 @@ Focus on:
 
 ## Findings
 
-One subsection per source, with the adopt/reject notes. (Phase 0b.)
+One subsection per candidate, with the adopt/reject notes. (Phase 0b.)
 
 ### LFM2.5 and `liquid-finetune` (Liquid AI)
 

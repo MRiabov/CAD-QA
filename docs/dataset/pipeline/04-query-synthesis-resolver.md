@@ -2,8 +2,8 @@
 
 ## Purpose
 
-Generate deterministic query programs from graph evidence, then resolve each one to a
-unique verifier-backed gold answer with a recorded candidate-set trace.
+Generate deterministic Gold query programs from graph evidence, then resolve each one to
+a unique gold answer backed by the Query verifier with a recorded answer candidate set trace.
 
 ## Inputs / outputs
 
@@ -16,14 +16,15 @@ unique verifier-backed gold answer with a recorded candidate-set trace.
 
 ## Requirement
 
-Given an ontology graph, synthesis must emit only deterministic queries that the resolver
-can actually resolve. The resolver must apply ordered clauses, then a primary aggregation,
-then an optional tie-break, and must accept a row only when the answer candidate set is
-exactly one under `reject_unless_unique`. The output must include the candidate-set trace,
-the relation families and measurement scopes used, the verifier status, and a gold answer
-in the answer contract's format. High-hop queries must keep at least
-`min_individual_clause_candidates` distractors through individual clauses so a clue does
-not collapse the set to the answer.
+Given a CAD ontology graph, synthesis must emit only deterministic queries that the
+resolver can actually resolve. The resolver must apply ordered Gold query predicates, then
+a primary aggregation, then an optional tie-break, and must accept a row only when the
+answer candidate set is exactly one under `reject_unless_unique`. The output must include
+the answer candidate set trace, the relation families and measurement scopes used, the
+Query verifier status, and a gold answer in the answer contract's format. High-hop queries
+must keep at least
+`min_individual_clause_candidates` distractors through individual Gold query predicates so
+a clue does not collapse the set to the answer.
 
 ## Current status
 
@@ -83,15 +84,15 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_query_resolver_a
 ### D3 — Resolver order is clauses → aggregation → tie-break
 
 - **Status:** accepted.
-- **Context:** A query is a narrowing program with a final selector, then a tie-break.
-- **Decision:** `cad_qa/query/resolver.py::resolve_query` applies each clause in order
-  (`_apply_clause`), then the primary aggregation (`_apply_primary_aggregation`), then the
-  tie-break aggregation when the primary leaves more than one candidate
-  (`_apply_metric_aggregation`). Each step is appended to the candidate-set trace.
+- **Context:** A query is a narrowing program with a final CadQuery selector, then a tie-break.
+- **Decision:** `cad_qa/query/resolver.py::resolve_query` applies each Gold query predicate
+  in order (`_apply_clause`), then the primary aggregation (`_apply_primary_aggregation`),
+  then the tie-break aggregation when the primary leaves more than one candidate
+  (`_apply_metric_aggregation`). Each step is appended to the answer candidate set trace.
 - **Consequences:** Materialized traces show exactly how the answer candidate set narrowed and
   where uniqueness came from.
 
-### D4 — The answer contract (`AnswerSpec`) is the single source for answer format
+### D4 — The answer contract (`AnswerSpec`) is the single authority for answer format
 
 - **Status:** accepted.
 - **Context:** Prompt wording, gold-answer value, public recoverability, and grading must
@@ -103,7 +104,7 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_query_resolver_a
   (`cad_qa/query/resolver.py::resolve_query` with
   `source_ref_is_publicly_unambiguous`).
 - **Consequences:** Closed-book rows never require colon-delimited internal `entity_id`
-  answers; selector-expression choices are derived from real measured candidates
+  answers; CadQuery selector-expression choices are derived from real measured candidates
   (`answer_spec_with_selector_expression_choices`).
 
 ### D5 — Candidate labels are bounded to 7
@@ -116,7 +117,7 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_query_resolver_a
 - **Consequences:** Validation rejects overwide public label lists
   (`cad_qa/dataset/validate.py::public_candidate_label_issues`).
 
-### D6 — High-hop hint: minimum distractors per clause
+### D6 — High-hop hint: minimum distractors per Gold query predicate
 
 - **Status:** accepted.
 - **Context:** A single clue that identifies the answer makes a high-hop row fake.

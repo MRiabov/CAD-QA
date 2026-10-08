@@ -5,7 +5,7 @@ revised**; it is not frozen.
 
 ## Purpose
 
-Define the ordered stages that turn a **dataset file** into a trained CAD-QA model, and
+Define the ordered stages that turn a **dataset file** into a trained LLM model, and
 the single contract for the artifacts and fields that pass between those stages.
 
 ## Stage map (DAG order)
@@ -40,7 +40,7 @@ Reading the DAG:
   GRPO run does not initialize from the SFT adapter (`train_and_eval/train/grpo_train.py`
   loads `unsloth/gemma-4-E2B-it`), so "SFT then GRPO" is a stated goal, not the implemented
   chain. See [05-grpo.md](05-grpo.md#open-questions).
-- **The merge step has no code in this repo.** Producing the **merged model** from the
+- **The merge step has no code in this repo.** Producing the **merged LLM model** from the
   **adapter** is described only in `docs/_archive/agent_handoff_2026-08-09.md` section 5
   (`PeftModel.from_pretrained` → `merge_and_unload` → `save_pretrained`). This is a code
   gap; `[unknown]` whether a script ever existed.
@@ -49,7 +49,7 @@ Reading the DAG:
 
 ## Stage IO contract
 
-Single source for artifact and field names. Step docs must match this table.
+Single source of truth for artifact and field names. Step docs must match this table.
 
 ### `dataset file`
 
@@ -74,9 +74,9 @@ Single source for artifact and field names. Step docs must match this table.
   `gold_answer` (decoded from its JSON encoding), `logical_hop_count`, `difficulty_bucket`,
   `geometry_hop_count`, `relation_families`.
 
-### `training trace`
+### `agent training traces`
 
-- **Producer:** 02 teacher-sampling. **Consumer:** 03 trace-normalization.
+- **Producer:** 02 teacher-sampling. **Consumer:** 03 agent training trace normalization.
 - **Persisted:** JSONL, e.g. `runs/gemma_bench/rl/sft_traces_final.jsonl`,
   `sft_traces_filtered3.jsonl`, `sft_traces_merged.jsonl`; published to HF
   `MRiabov/cadqa-rl-2000` as `sft_traces_v1` / `sft_traces_v2`.
@@ -96,7 +96,7 @@ Single source for artifact and field names. Step docs must match this table.
 
 ### `normalized text`
 
-- **Producer:** 03 trace-normalization. **Consumer:** 04 SFT.
+- **Producer:** 03 agent training trace normalization. **Consumer:** 04 SFT.
 - **Persisted:** JSONL, e.g. `sft_texts.jsonl`.
 - **Fields** (`train_and_eval/train/normalize_traces.py::TRACE_COLUMNS` plus `text`):
   `row_id`, `prompt`, `trace`, `hop`, `tool_name`, `answer_format`, `gold`, `compacted`,
@@ -134,16 +134,16 @@ how each stage uses it; they do not redefine it.
 - **Answer format → tool** (`train_and_eval/tool_calls.py::FORMAT_TO_TOOL`): one **submit
   tool** per format — `candidate_label→submit_label`, `text→submit_text`,
   `integer→submit_integer`, `number→submit_number`, `coordinate→submit_coordinate`,
-  `bbox→submit_bbox`, `json→submit_workplane`. Note `json` maps to a *workplane* tool, not a
-  generic JSON answer.
+  `bbox→submit_bbox`, `json→submit_workplane`. Note `json` maps to a *CadQuery workplane* tool,
+  not a generic JSON answer.
 - **Typed arguments** (`train_and_eval/tool_calls.py::_ARGS_MODELS`) validated by Pydantic.
 - **Gold comparison** (`train_and_eval/tool_calls.py::tool_call_matches`): exact for
   strings/ints, `1e-3` relative tolerance for floats (`_REL_TOL`).
 - **The `[answer contract]` suffix** (`train_and_eval/tool_calls.py::tool_call_prompt_suffix`)
-  tells the model to end with the matching `submit_*` envelope. It is appended by 01 and by
+  tells the LLM model to end with the matching `submit_*` envelope. It is appended by 01 and by
   the teacher prompt (`train_and_eval/teacher.py::build_teacher_prompt`).
 - **Non-answer tools**: `run_code` (sandboxed compute, owned by 06) and `compact_trace`
-  (trace compression, owned by 02).
+  (agent training trace compression, owned by 02).
 
 ## Step docs
 
@@ -151,7 +151,7 @@ how each stage uses it; they do not redefine it.
 |---|---|---|
 | 01 | [01-rows-loader.md](01-rows-loader.md) | `train_and_eval/rows_loader.py` |
 | 02 | [02-teacher-sampling.md](02-teacher-sampling.md) | `train_and_eval/teacher.py`, `train/rejection_sample.py`, `train/compact_agentic.py`, `train/gen_1hop_queries.py`, `train/export_rl_data.py`, `setup/publish_traces.py` |
-| 03 | [03-trace-normalization.md](03-trace-normalization.md) | `train/normalize_traces.py`, `tool_calls.py` (rendering) |
+| 03 | [03-trace-normalization.md](03-trace-normalization.md) | `train/normalize_traces.py`, `tool_calls.py` (rendering) | <!-- dont-say: allow -->
 | 04 | [04-sft.md](04-sft.md) | `train/sft_train.py` |
 | 05 | [05-grpo.md](05-grpo.md) | `train/grpo_train.py`, `reward_cadqa.py` |
 | 06 | [06-harness-modes.md](06-harness-modes.md) | `eval/eval_bench.py`, `run_code_sandbox.py`, `tool_calls.py` (compute tool) |
@@ -159,7 +159,7 @@ how each stage uses it; they do not redefine it.
 
 ## Open questions
 
-- **Base-model identifier is inconsistent.** Code loads `unsloth/gemma-4-E2B-it`
+- **Base LLM model identifier is inconsistent.** Code loads `unsloth/gemma-4-E2B-it`
   (`train_and_eval/train/sft_train.py::main`,
   `train_and_eval/train/grpo_train.py`), while the GRPO docstring says
   `google/gemma-4-E2B-it`. Which repo is canonical? `[unknown]`.

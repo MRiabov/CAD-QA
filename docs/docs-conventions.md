@@ -1,6 +1,6 @@
 # CAD-QA documentation conventions
 
-**Status:** active — initial version, 2026-10-07. Source plan:
+**Status:** active — initial version, 2026-10-07. Based on the plan
 `plans/oct-7/restructure-docs.md`.
 
 This is the contract for how CAD-QA docs are structured and written. It is the meta-doc:
@@ -92,7 +92,7 @@ rationale — link the ADR — and never redefine field names — match the IO c
 
 ### `pipeline/00-overview.md`
 
-- The DAG order; the stage IO contract (single source for artifact and field names); links
+- The DAG order; the stage IO contract (single source of truth for artifact and field names); links
   to the step docs.
 
 ### `PRD.md`
@@ -132,8 +132,8 @@ Never cite line numbers — they drift. Cite in this order of preference:
 
 - **One concept, one word.** A term names one thing; a thing has one term. Split
   collisions; pick one of synonyms.
-- **Precise and scoped.** No unspecific placeholders ("the object", "the pipeline") where
-  a named concept exists.
+- **Precise and scoped.** No unspecific placeholders where a named concept exists — name
+  the concept.
 - **No overclaiming.** Describe verified behaviour, or mark it. Never assert behaviour a
   check has not confirmed.
 - **No conflation.** Do not reuse a term for a related-but-different concept; name the

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Post-train the **base model** with GRPO on the **dataset file**, scoring sampled
+Post-train the **base LLM model** with GRPO on the **dataset file**, scoring sampled
 completions against the **gold answer** with an exact-match **reward**.
 
 ## Inputs / outputs
@@ -18,10 +18,10 @@ completions against the **gold answer** with an exact-match **reward**.
 
 ## Requirement
 
-The reward must be a faithful verifier-derived score and the policy must not collapse: if
-the reward accepts wrong answers, or the policy's entropy dies, the RL phase does not
-produce a better model and no RL claim is admissible. Provenance: every reward and rollout
-must be reconstructable.
+The reward must be a faithful score derived from the Query verifier and the policy must not
+collapse: if the reward accepts wrong answers, or the policy's entropy dies, the RL phase does
+not produce a better LLM model and no RL claim is admissible. Provenance: every reward and
+rollout must be reconstructable.
 
 ## Current status
 
@@ -64,7 +64,7 @@ automated; `[unknown]` whether it should be a gate.
 ### FT-05-D2 — Exact-match reward, tool-call aware
 
 - **Status:** accepted (2026-08).
-- **Context:** the reward must mirror the verifier, not a model.
+- **Context:** the reward must mirror the Query verifier, not an LLM model.
 - **Decision:** `reward_cadqa` first tries the typed tool call
   (`_tool_call_reward` → `tool_call_matches`); if the completion is not a tool call it falls
   back to a per-format parser (`_reward_one`). Batch API:
@@ -75,7 +75,7 @@ automated; `[unknown]` whether it should be a gate.
 ### FT-05-D3 — Hop-ascending curriculum
 
 - **Status:** accepted (2026-08).
-- **Context:** difficulty spans hop count; a 0→…→5 ladder was intended to avoid the cliff.
+- **Context:** difficulty spans reasoning hop count; a 0→…→5 ladder was intended to avoid the cliff.
 - **Decision:** rows are bucketed by `logical_hop_count`, shuffled within a bucket, and
   allocated steps by `HOP_SHARES` (default `{"0":0.25,"2":0.10,"3":0.15,"4":0.25,"5":0.25}`
   in the code); the dataset order is fixed and trainer shuffling is off.
@@ -102,7 +102,7 @@ automated; `[unknown]` whether it should be a gate.
   v2 (`{0,2,3,4,5}`). One of code or intent must change.
 - **GRPO does not start from the SFT adapter.** `grpo_train.py` loads
   `unsloth/gemma-4-E2B-it`, not the SFT checkpoint; "SFT then GRPO" is not implemented.
-- **Grader divergence.** The reward source says it "mirrors cad_qa evaluation
+- **Grader divergence.** The reward implementation says it "mirrors cad_qa evaluation
   grade_public_private", but the parser is self-contained (`reward_cadqa._parse_answer`).
   The eval grader uses the typed matcher (`eval_bench.py` → `tool_call_matches`), so eval and
   reward can disagree, especially via the `text` substring fallback
