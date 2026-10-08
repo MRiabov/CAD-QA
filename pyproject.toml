@@ -62,4 +62,5 @@ dev = [
     "types-PyYAML>=6.0.12.20250915",
     "vastai>=1.0.7",
     "kaggle>=2.2.4",
+    "pydantic>=2",
 ]
