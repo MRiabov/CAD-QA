@@ -25,6 +25,10 @@ invents a new word, it is wrong — the word should already be here, or be added
 - **Keep qualifiers when composing.** A term built on a qualified term keeps its
   qualifier: a Measurement over a Shape snapshot is a **Shape snapshot measurement**, never
   a "Snapshot measurement" or "snapshot measurement".
+- **Qualify; alias only where clear.** The qualified form is canonical and is required in a
+  PRD. Internal docs, and any context where the qualifier is unambiguous, may use a shorter
+  alias — for example **Public column set** for a **CAD-QA dataset row**'s public column
+  set.
 - **Meaning, not implementation.** An entry says what the term means, and optionally why
   that word is used (`Distinct from:`, never-say). It never says how something works —
   that belongs in the specs. Names of types, tables, routes, or `In code:` identifiers may
