@@ -25,10 +25,11 @@ invents a new word, it is wrong — the word should already be here, or be added
 - **Keep qualifiers when composing.** A term built on a qualified term keeps its
   qualifier: a Measurement over a Shape snapshot is a **Shape snapshot measurement**, never
   a "Snapshot measurement" or "snapshot measurement".
-- **Qualify; alias only where clear.** The qualified form is canonical and is required in a
-  PRD. Internal docs, and any context where the qualifier is unambiguous, may use a shorter
-  alias — for example **Public column set** for a **CAD-QA dataset row**'s public column
-  set.
+- **Full term in product-facing text; short term in-context.** In a PRD, a user story, or
+  any product-facing or mixed sentence, a Domain term keeps its qualifier. In a technical
+  doc or code that clearly already belongs to that concept (for example the pipeline step
+  for its stage), the short word is acceptable — but never in a sentence where it could
+  mean something else.
 - **Meaning, not implementation.** An entry says what the term means, and optionally why
   that word is used (`Distinct from:`, never-say). It never says how something works —
   that belongs in the specs. Names of types, tables, routes, or `In code:` identifiers may
