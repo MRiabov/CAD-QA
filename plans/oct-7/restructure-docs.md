@@ -78,6 +78,9 @@ scanned. See the entry below.
   of them is fixed — never silently ignored.
 - Every load-bearing claim gets a reproducible verification command.
 - Every LLM call records reasoning + user-visible output + tool calls distinctly.
+- **Incremental quality.** We move toward "good" in small, landed passes — glossary/term
+  alignment, code-quality policies (e.g. the P2 clean-code ratchet), and checkers/ratchets —
+  not one large rewrite.
 - Long GPU / API jobs are monitored every ~3–5 minutes; artifacts are preserved before
   teardown.
 
@@ -646,6 +649,9 @@ settled (same rule as the per-doc sections).
 - **D10 — Harness priorities.** **`numpy` is the primary harness (P0)**; `no_tools` and
   full-CadQuery ("mode-3") are both **P2** (strict-reasoning and tool-assisted upper
   bounds). Mode-3 is implemented nowhere yet.
+- **D12 — Writing method.** **Confirmed.** Evidence-first, two-pass: authoritative docs
+  describe logic and decisions and mark uncertainty with status tags; the heavy verification
+  is a **later pass** (the Phase 0 audit), not the writing pass.
 - **D13 — Repo/code structure.** CAD-QA is the paper and the repo is CAD-QA, so the generation
   package is **`dataset/`** (rename of `cad_qa/`; not `cad_qa/` or `dataset_generation/`), a
   sibling of **`train_and_eval/`**. `dataset/` is **generation only**; **all** training and
@@ -660,9 +666,6 @@ settled (same rule as the per-doc sections).
   fine-tuning pipeline on (TRL / Open-R1 / unsloth / `liquid-finetune` / verl / other), after
   prior-art mining? Findings are recorded (`docs/prior-art.md`); the adoption **ADR is still
   owed**.
-- **D12 — Writing method.** Confirm the evidence-first, two-pass writing method and the
-  status-tag vocabulary in "Doc standards and conventions" (writing vs verifying vs the
-  owner's research judgement).
 - **D14 — WHAT layer.** Add a terse, runnable WHAT layer per pipeline (a
   `streamlined/`-style folder: DAG + `READ/TRANSFORM/WRITE`, no rationale), or is the
   step-doc template sufficient?
