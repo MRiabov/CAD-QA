@@ -42,6 +42,27 @@ identifiers are exempted per tree. Worklist and findings in `_audit/dont-say-wor
 D8 partially satisfied: Don't-say checker done and gated; docs-structure / ADR / decisions
 linters, `rumdl`, and pre-commit/CI wiring still pending.
 
+Note (2026-10-08, later): the "code is clean" claim above was wrong — the checker matched
+only identifier-shaped tokens, so single-word terms in code comments/docstrings were never
+scanned. See the entry below.
+
+**2026-10-08 (later)** — terminology sweep, checker hardening, prior-art findings.
+
+- The Don't-say checker now scans code **comments and docstrings** as prose; the sweep took
+  prose hits to **0** (`tools/dont_say_baseline.txt` = 0).
+- An opt-in identifier mode (`--identifiers`) records the code name collisions: **5,339** hits
+  across 63 files, parked as the **P2 clean-code** requirement
+  (`tools/dont_say_identifiers_baseline.txt`, `development-plan.md` Phase 6).
+- Glossary renames landed (CadQuery program operation trace, dataset file, LLM harness mode,
+  CAD feature-added/removed region, CAD-QA dataset row column sets, …).
+- Prior-art findings recorded (`docs/prior-art.md`): LFM2.5/`liquid-finetune` and external
+  small-LLM-model fine-tuning evidence with a candidate base shortlist; **D11** (the
+  base-pipeline ADR) is still owed.
+- New canonical trees: `docs/research/` (external study notes) and `docs/paper/` (the
+  manuscript; excluded from the Don't-say lint).
+- Still outstanding: `docs/adr/` absent; `specs/` not folded; only the Don't-say checker of D8
+  exists; Phase 0a rename not started.
+
 ---
 
 ## 0. Working agreement
@@ -298,16 +319,16 @@ reasoning datasets. We should mine those rather than hand-roll.
 
 ## Repo and code structure
 
-The repo layout is strange (vibecoded). Split the code into **two top-level packages
-coupled only by an input/output interface**:
+The repo layout is strange (vibecoded). Keep **two top-level packages** coupled only by an
+input/output interface:
 
-- `dataset_generation/` — CAD-QA dataset/benchmark generation (today `cad_qa/`; frozen,
-  see Code-change policy).
-- `train_and_eval/` — training / evaluation (being revised).
+- `dataset_generation/` — CAD-QA dataset/benchmark generation (rename of today's frozen
+  `cad_qa/`; see Code-change policy and D13).
+- `train_and_eval/` — training / evaluation (being revised; name kept as is).
 
 Rules:
 
-- **The split is P1** — do it now.
+- **The rename is P1** — do it now.
 - **Folder fan-out CI is P2** — a "no directory > ~10 entries" check, ratcheted down, built
   only if the tree actually needs it.
 - File length: aim small and split by responsibility. The 800-line rule is advisory here
@@ -317,7 +338,7 @@ Rules:
 - Naming: code package directories use underscores (`dataset_generation`, `train_and_eval`) —
   Python import names. Hyphens are for docs only (`docs/fine-tuning/`).
 
-This restructure is mechanical (move + import fixes), so it does not violate the
+This rename is mechanical (move + import fixes), so it does not violate the
 dataset-generation freeze: it changes where code lives, not what it computes. Precedent:
 the RunAudit `docs-restructure` plan
 (`RunAudit/.worktrees/docs-restructure/runaudit/plans/clarify-docs-structure.md`).
@@ -354,6 +375,11 @@ docs/
   development-context.md        # history + as-of snapshot (proven vs assumed)
   development-plan.md           # phased plan to completion
   prior-art.md                  # mined open-source training/RL/data pipelines
+  research/
+    README.md                   # external study notes + citations
+    YYYY-<slug>.md
+  paper/
+    CA2_Riabov_final.{md,tex}   # the manuscript (excluded from the Don't-say lint)
   adr/
     NNNN-<slug>.md              # one decision per file; `(ADR-0NNN)` referenced inline
   research-scopes/
@@ -604,8 +630,9 @@ settled (same rule as the per-doc sections).
 ### Open
 
 - **D11 — Base pipeline to adopt.** Which established open-source stack do we build the
-  fine-tuning pipeline on (TRL / Open-R1 / unsloth / verl / other), after prior-art
-  mining? Lead to an ADR.
+  fine-tuning pipeline on (TRL / Open-R1 / unsloth / `liquid-finetune` / verl / other), after
+  prior-art mining? Findings are recorded (`docs/prior-art.md`); the adoption **ADR is still
+  owed**.
 - **D12 — Writing method.** Confirm the evidence-first, two-pass writing method and the
   status-tag vocabulary in "Doc standards and conventions" (writing vs verifying vs the
   owner's research judgement).
@@ -634,6 +661,11 @@ settled (same rule as the per-doc sections).
     decision (ADR, D11).
 11. **Readability:** the owner can read a doc without pausing to ask what a term means;
     every load-bearing term is defined or on the Don't-say list; no term names two concepts.
+
+**Status (2026-10-08).** Met: 1, 2, 3, 7, 8. Partial: 5 (`implementation_status.md` removed,
+`specs/` not folded), 6, 10 (findings recorded; D11 ADR pending), 11 (prose swept to 0;
+identifier backlog parked as P2). Not met: 4 (`docs/adr/` absent), 9 (only the Don't-say
+checker/ratchet of D8 exists).
 
 ## 10. Immediate next step
 
