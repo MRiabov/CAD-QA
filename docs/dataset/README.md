@@ -31,7 +31,7 @@ describe what the code does; they do not justify refactors
 ## Pipeline at a glance
 
 ```text
-A1 source ingestion -> A2 CAD query trace -> A3 ontology graph
+A1 source ingestion -> A2 CadQuery program operation trace -> A3 ontology graph
   -> A4 query synthesis + resolver -> A5 prompt rendering (inside materialization)
   -> A6 materialize / validate / release -> A7 Harbor / SFT / evaluation exports
 ```

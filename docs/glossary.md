@@ -64,9 +64,11 @@ One CadQuery program the benchmark draws from. `In code:` `SourceRecord`.
 
 ---
 
-### CAD query trace
+### CadQuery program operation trace
 
-The execution record of a CadQuery program. `Distinct from:` **agent training trace**.
+A CadQuery program decomposed into its operations, each with its Shape snapshot (and Shape
+snapshot measurement), effect delta, and selector results. `In code:` `TraceRecord`.
+`Distinct from:` **agent training trace**.
 
 ---
 
@@ -205,7 +207,7 @@ resolves; each Gold query predicate narrows it, and it should end at one node.
 ### Answer candidate set trace
 
 The record of how the answer candidate set narrows to the gold answer.
-`In code:` `CandidateSetTrace`. `Distinct from:` **CAD query trace**, **agent training trace**.
+`In code:` `CandidateSetTrace`. `Distinct from:` **CadQuery program operation trace**, **agent training trace**.
 
 ---
 
@@ -253,7 +255,7 @@ A CAD-QA dataset row that resolves but cannot be released.
 ### Agent training trace
 
 A record of reasoning followed by a tool call, produced to train an agent and used as
-supervision. `Distinct from:` **CAD query trace**, **answer candidate set trace**.
+supervision. `Distinct from:` **CadQuery program operation trace**, **answer candidate set trace**.
 
 ---
 
@@ -374,7 +376,7 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | verifier (bare) | Query verifier | unqualified |
 | quarantine | Non-release-ready CAD-QA dataset row | imprecise |
 | "intent" (as a doc) | PRD | "intent" is the concept, not the artifact |
-| trace (bare) | CAD query trace / agent training trace / answer candidate set trace | overloaded across concepts |
+| trace (bare) | CadQuery program operation trace / agent training trace / answer candidate set trace | overloaded across concepts |
 | model (bare) | CAD model / LLM model / base LLM model / LLM adapter / merged LLM model | geometry vs language model vs weights/adapter/served endpoint |
 | node (bare) | CAD ontology node / code node | ambiguous between graph and code |
 | kind / kinds | predicate kind | raw noun; name the kind of what |

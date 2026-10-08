@@ -113,6 +113,10 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_trace_worker_exe
 
 ## Open questions
 
+- **Untyped trace internals.** `cad_qa/trace.py::TraceRecord` stores `snapshots`,
+  `operation_effects`, and `selector_results` as `list[dict[str, Any]]`, so what the record
+  holds is only discoverable from the producer code. Typed records would document the
+  contract the record is meant to express.
 - **Doc/code mismatch.** `specs/schema.md::TraceRecord` lists only `source_id`,
   `execution_status`, `snapshots`, `operation_effects`, `environment`, `failure_reason`,
   while `cad_qa/trace.py::TraceRecord` also carries `selector_results`. The code is

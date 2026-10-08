@@ -21,7 +21,7 @@ A1 Source ingestion
       sources artifact
         |
         v
-A2 CAD query trace (optional for low-hop rows; required for release-grade geometry)
+A2 CadQuery program operation trace (optional for low-hop rows; required for release-grade geometry)
       traces artifact
         |
         v
