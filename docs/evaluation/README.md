@@ -10,7 +10,7 @@ intent (targets, metrics, definition of done) stays in `PRD.md`.
 
 ## Reading order
 
-1. **`harness.md`** — how a model is run and scored. The three harness modes
+1. **`harness.md`** — how an LLM model is run and scored. The three LLM harness modes
    (`numpy` primary, `no_tools`, `cadquery` P2) and Harbor. Read this first.
 2. **`baselines.md`** — the baseline families, what is implemented, what was run,
    and what is stale.
@@ -28,7 +28,7 @@ intent (targets, metrics, definition of done) stays in `PRD.md`.
 | What you need | Where |
 |---|---|
 | Evaluation contract (targets, metrics, definition of done) | `PRD.md#evaluation-contract` |
-| Term meaning (`harness mode`, `Harbor`, `verifier`, `answer format`) | `glossary.md` |
+| Term meaning (`LLM harness mode`, `Harbor`, `verifier`, `answer format`) | `glossary.md` |
 | Harbor export and run mechanics (older runbook, raw material) | `docs/_archive/harbor.md` |
 | Where the project is today | `development-context.md` |
 | Past experiment records | `docs/experiments/` |

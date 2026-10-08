@@ -2,13 +2,13 @@
 
 ## Purpose
 
-Evaluate a trained model on CAD-QA under a selectable **harness mode** that controls which
+Evaluate a trained model on CAD-QA under a selectable **LLM harness mode** that controls which
 compute tools the model gets, grading every mode the same way.
 
 ## Inputs / outputs
 
 - **In:** a **merged model** directory, the `harness row` set (from 01, either a local rows
-  artifact via `--rows` or HF `v3_curriculum`), and the **harness mode**
+  artifact via `--rows` or HF `v3_curriculum`), and the **LLM harness mode**
   (`--mode no_tools | numpy | cadquery`).
 - **Out `eval result`:** JSONL `EvalRow` records
   ([00-overview.md](00-overview.md#eval-result)); the script prints overall accuracy and

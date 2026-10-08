@@ -298,19 +298,19 @@ The readiness bar a dataset is validated against: `smoke`, `release-candidate`, 
 
 ---
 
-### Harness mode
+### LLM harness mode
 
 Which compute tools an LLM model gets during evaluation.
 
-#### numpy harness
+#### numpy LLM harness
 
 The primary harness: a Python shell with NumPy.
 
-#### no_tools harness
+#### no_tools LLM harness
 
 Reasoning only; no compute.
 
-#### cadquery harness
+#### cadquery LLM harness
 
 Full CadQuery kernel access; one correct call suffices.
 
@@ -370,6 +370,7 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | candidate trace (cad_qa, tools) | answer candidate set trace | candidate to what? |
 | hop count (cad_qa, train_and_eval) | Reasoning hop count | unqualified |
 | difficulty bucket (cad_qa, train_and_eval, tools) | Difficulty tier | "bucket" imprecise |
+| harness mode (cad_qa, train_and_eval, tools) | LLM harness mode | unqualified |
 | verifier (bare) | Query verifier | unqualified |
 | quarantine | Non-release-ready CAD-QA dataset row | imprecise |
 | "intent" (as a doc) | PRD | "intent" is the concept, not the artifact |
@@ -377,7 +378,7 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | model (bare) | CAD model / LLM model / base LLM model / LLM adapter / merged LLM model | geometry vs language model vs weights/adapter/served endpoint |
 | node (bare) | CAD ontology node / code node | ambiguous between graph and code |
 | kind / kinds | predicate kind | raw noun; name the kind of what |
-| type / types | CAD ontology node type / relation type / answer format / measurement scope / harness mode | raw noun; name the type of what |
+| type / types | CAD ontology node type / relation type / answer format / measurement scope / LLM harness mode | raw noun; name the type of what |
 | entity id (in a public answer) (cad_qa, tools) | source variable | internal `entity_id` values must not leak into public answers |
 | "the pipeline" / "the object" / "the value" | name the concept | unspecific placeholder |
 | first/last (as family semantics) | the sampled parameter | a rendering choice, not a permanent meaning |
@@ -392,5 +393,5 @@ evidence tier · prompt template · clue map · release-ready · split / split g
 geometry-critical · geometry-hop-positive · shortcut resistance · stop gate · candidate
 label · source variable · path point / path segment / edge endpoint · tool declaration ·
 native tool-call format · curriculum · compaction · held-out row · tool-valid · baseline ·
-grader · closed-book · harness (the runner, distinct from **Harness mode**) · Harbor task ·
+grader · closed-book · harness (the runner, distinct from **LLM harness mode**) · Harbor task ·
 slice (rc10 / release10k / clean-100) · tool-assisted upper bound.

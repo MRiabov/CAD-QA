@@ -25,7 +25,7 @@ Inputs:
   answer format. Never exposed to the model.
 - **model** — a local checkpoint (the merged small model) for the local harness, or
   an OpenRouter model name for Harbor.
-- **harness mode** — one of `numpy`, `no_tools`, `cadquery` (see below).
+- **LLM harness mode** — one of `numpy`, `no_tools`, `cadquery` (see below).
 - **requests** — answer-free request records built by
   `cad_qa/evaluation/requests.py::zero_shot_requests` (and the few-shot variant).
 
@@ -54,9 +54,9 @@ recorded baselines on the same rows so the comparison is meaningful. The primary
 thesis claim depends specifically on the `numpy` mode and on a grader whose
 correctness is established beyond the oracle identity.
 
-## Harness modes
+## LLM harness modes
 
-A **harness mode** is which compute tools the model gets. All three modes are
+An **LLM harness mode** is which compute tools the LLM model gets. All three modes are
 closed-book CAD reasoning: the model may not call CadQuery, OCP, OpenCascade, or
 any other CAD kernel, and may not use the network. The mode changes only the
 compute surface, not the task or the grading contract.

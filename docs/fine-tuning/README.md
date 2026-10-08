@@ -6,7 +6,7 @@ known defects as open questions rather than implying the pipeline is finished.
 
 This directory documents how CAD-QA turns a **rows artifact** into a trained small model and
 evaluates it: teacher **rejection sampling** → **trace normalization** → **SFT**; **GRPO**
-training; the **harness modes** used for evaluation; and **vLLM** serving.
+training; the **LLM harness modes** used for evaluation; and **vLLM** serving.
 
 ## Start here
 

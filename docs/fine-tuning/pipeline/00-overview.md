@@ -84,7 +84,7 @@ Single source for artifact and field names. Step docs must match this table.
 - **Fields** (`train_and_eval/train/rejection_sample.py::Trace`): `row_id`, `hop`,
   `prompt`, `tool_name`, `trace` (flattened reasoning + tool calls + results), `gold`,
   `answer_format`, `compacted`, `prompt_tokens`, `completion_tokens`, `mode`
-  (a **harness mode**), `steps` (list of `TraceStep`; emptied when compacted).
+  (an **LLM harness mode**), `steps` (list of `TraceStep`; emptied when compacted).
 
 ### `sampling log`
 
