@@ -111,12 +111,15 @@ rationale — link the decision — and never redefine field names — match the
 
 ### Decisions (`<feature>/decisions.md`)
 
-- One `decisions.md` per feature (`dataset/`, `fine-tuning/`), in ADR format:
-  `Status` / `Context` / `Decision` / `Consequences`. There is no central `docs/adr/`
-  folder.
-- Cross-cutting/plan decisions (D1–D14) stay in the plan / `development-plan.md`.
-- Decisions are forward-looking: record decisions made, not archaeology. Reference one as
-  `<feature>/decisions.md#<anchor>`.
+- Record each decision at the **narrowest scope that owns it**, in this order:
+  1. **Step-local** — in that step doc's `## Local decisions` (the file you are editing),
+     e.g. `pipeline/02-trace-snapshot.md#local-decisions`.
+  2. **Feature-wide** — in the feature's `decisions.md` (`dataset/`, `fine-tuning/`), for
+     logic that spans the feature's stages; e.g. `dataset/decisions.md#dd-01`.
+  3. **Cross-cutting/plan** — D1–D14 stay in the plan / `development-plan.md`.
+- Format: `Status` / `Context` / `Decision` / `Consequences`. There is no central
+  `docs/adr/` folder.
+- Decisions are forward-looking: record decisions made, not archaeology.
 
 ## Naming
 

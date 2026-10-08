@@ -159,10 +159,10 @@ the spirit of the product-launch repo.
 
 ### Decisions (`decisions.md`)
 
-- One `decisions.md` per feature (`dataset/`, `fine-tuning/`), in ADR format
-  (status/context/decision/consequences). **There is no central `docs/adr/` folder.**
-  Reference one as `<feature>/decisions.md#<anchor>`.
-- Cross-cutting/plan decisions (D1–D14) stay in the plan / `development-plan.md`.
+- Record each decision at the **narrowest scope that owns it**, in this order: **step-local**
+  (in that step doc's `## Local decisions`), then **feature-wide** (`<feature>/decisions.md`
+  — `dataset/`, `fine-tuning/`), then **cross-cutting** (D1–D14, in the plan /
+  `development-plan.md`). **There is no central `docs/adr/` folder.**
 - Adopted from product-launch: high ROI, keeps docs from sprawling and always
   referenceable. Decisions are the durable *why*; pipeline docs point at them instead of
   restating rationale.
