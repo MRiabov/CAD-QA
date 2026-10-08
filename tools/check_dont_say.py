@@ -39,6 +39,7 @@ SKIP_DIRS = frozenset(
         "data",
         "dist",
         "node_modules",
+        "paper",
         "runs",
     }
 )

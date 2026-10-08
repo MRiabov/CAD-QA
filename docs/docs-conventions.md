@@ -53,12 +53,19 @@ docs/
     README.md
     harness.md
     baselines.md
+  paper/
+    CA2_Riabov_final.md          # written manuscript; parity-kept with the .tex
+    CA2_Riabov_final.tex
+    CA2Img-GanttChart-mermaid.png
 docs/experiments/YYYY-MM-DD-<slug>.md   # dated experiment records
 ```
 
 `_audit/` is a throwaway, owner-private working area (for example
 `_audit/owner-audit-todo.md`). `_archive/` holds superseded docs kept as raw material.
-Neither is part of the canonical tree; both are excluded from lint.
+Neither is part of the canonical tree; both are excluded from lint. `paper/` holds the
+written manuscript (Markdown and LaTeX kept in parity); it is canonical output but is also
+excluded from the Don't-say lint, because it uses academic/domain terminology rather than
+the project glossary.
 
 ## Doc layers (roles)
 

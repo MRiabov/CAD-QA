@@ -35,6 +35,7 @@ procedural CAD programs (CadQuery), and a small-LLM-model fine-tuning effort on 
 | How models are evaluated | `evaluation/harness.md` |
 | Past experiments | `experiments/` |
 | Decisions | `adr/` |
+| The written paper | `paper/CA2_Riabov_final.md` (with `paper/CA2_Riabov_final.tex`) |
 
 ## Conventions in one line
 
