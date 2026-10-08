@@ -91,7 +91,7 @@ as the thesis validation appendix.
 
 Rename code identifiers to match the glossary. `uv run python tools/check_dont_say.py
 --identifiers` reports the name collisions, and `tools/dont_say_identifiers_baseline.txt`
-holds the accepted count (**5,339** across 63 files — mostly `type`, `clause`, `source`,
+holds the accepted count (**5,339** across 64 files — mostly `type`, `clause`, `source`,
 `node`, `selector`) to ratchet to zero. Deferred: it is a large mechanical rename, much of it
 inside the frozen `dataset/`.
 

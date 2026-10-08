@@ -24,7 +24,7 @@ marked (`[unknown]`, `[unverified — needs <env>]`, `[assumed]`).
 
 ## Components
 
-**Dataset generation** (`dataset_generation/`, today `dataset/`): CadQuery program ingestion
+**Dataset generation** (`dataset/`): CadQuery program ingestion
 (`source.py`), CadQuery tracing (`trace.py`), CAD ontology extraction (`ontology/`), query
 synthesis and resolution (`query/`), prompt rendering (`prompts/`), materialize/validate/
 release (`dataset/`), Harbor export (`harbor.py`), CLI (`cli.py`).

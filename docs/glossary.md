@@ -367,10 +367,10 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | material region (dataset) / void region (dataset) | CAD feature-added region / CAD feature-removed region | unclear |
 | dataset row (dataset) | CAD-QA dataset row | which dataset? |
 | public row / private row | Public CAD-QA dataset row column set / Private CAD-QA dataset row column set | not separate rows; column sets of one row |
-| query program (dataset, tools) | Gold query program | conflated with a general query |
+| query program (dataset, train_and_eval, tools) | Gold query program | conflated with a general query |
 | clause | Gold query predicate | wrong; not a logic clause |
 | candidate set (dataset, train_and_eval, tools) | answer candidate set | unqualified |
-| candidate trace (dataset, tools) | answer candidate set trace | candidate to what? |
+| candidate trace (dataset, train_and_eval, tools) | answer candidate set trace | candidate to what? |
 | hop count (dataset, train_and_eval) | Reasoning hop count | unqualified |
 | difficulty bucket (dataset, train_and_eval, tools) | Difficulty tier | "bucket" imprecise |
 | harness mode (dataset, train_and_eval, tools) | LLM harness mode | unqualified |
@@ -384,7 +384,7 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | node (bare) | CAD ontology node / code node | ambiguous between graph and code |
 | kind / kinds | predicate kind | raw noun; name the kind of what |
 | type / types | CAD ontology node type / relation type / answer format / measurement scope / LLM harness mode | raw noun; name the type of what |
-| entity id (in a public answer) (dataset, tools) | source variable | internal `entity_id` values must not leak into public answers |
+| entity id (in a public answer) (dataset, train_and_eval, tools) | source variable | internal `entity_id` values must not leak into public answers |
 | "the pipeline" / "the object" / "the value" | name the concept | unspecific placeholder |
 | first/last (as family semantics) | the sampled parameter | a rendering choice, not a permanent meaning |
 

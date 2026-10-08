@@ -17,7 +17,7 @@ from dataset.release.public import PRIVATE_FIELDS, PUBLIC_FIELDS, private_rows a
 from dataset.io import existing_record_artifact_path, read_records, write_json, write_jsonl
 
 
-# Grader source copied into each generated Harbor task's ``tests/`` package.
+# Grader files copied into each generated Harbor task's ``tests/`` package.
 GRADER_SOURCE_DIR = Path(__file__).resolve().parents[1] / "train_and_eval" / "grading"
 
 DEFAULT_VERIFIER_TIMEOUT_SEC = 120.0

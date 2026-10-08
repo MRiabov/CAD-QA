@@ -2,7 +2,7 @@
 
 Harbor task *export* lives in ``dataset/harbor.py``; this module owns the
 run/grade side: loading an agent submission, scoring it with the CAD-QA grader,
-and writing the Harbor verifier artifacts.
+and writing the Harbor Query verifier artifacts.
 """
 
 from __future__ import annotations
