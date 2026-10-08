@@ -22,6 +22,9 @@ invents a new word, it is wrong — the word should already be here, or be added
   them in technical docs and code only.
 - **Qualify every Domain term** with its domain (`CAD-QA`, `CAD`, `CadQuery`, or the owning
   concept). A bare common English noun (`source`, `snapshot`, `selector`) is opaque.
+- **Keep qualifiers when composing.** A term built on a qualified term keeps its
+  qualifier: a Measurement over a Shape snapshot is a **Shape snapshot measurement**, never
+  a "Snapshot measurement" or "snapshot measurement".
 - **Meaning, not implementation.** An entry says what the term means, and optionally why
   that word is used (`Distinct from:`, never-say). It never says how something works —
   that belongs in the specs. Names of types, tables, routes, or `In code:` identifiers may
@@ -67,7 +70,7 @@ The execution record of a CadQuery program. `Distinct from:` **Training trace**.
 The shape a CadQuery program has built after one assignment statement, captured while
 tracing. `In code:` a trace record's `snapshots` entry.
 
-### Snapshot measurement
+### Shape snapshot measurement
 
 A Measurement taken over a Shape snapshot: its volume, bounding box, centroid, or topology
 counts. `Distinct from:` the Shape snapshot itself, which is the shape these measurements
