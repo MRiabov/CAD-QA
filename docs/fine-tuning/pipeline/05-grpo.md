@@ -2,13 +2,13 @@
 
 ## Purpose
 
-Post-train the **base model** with GRPO on the **rows artifact**, scoring sampled
+Post-train the **base model** with GRPO on the **dataset file**, scoring sampled
 completions against the **gold answer** with an exact-match **reward**.
 
 ## Inputs / outputs
 
-- **In:** `harness row` (from 01) — either HF `v2_curriculum` (default, `CADQA_RL_ROWS`
-  rows) or a local rows artifact via `CADQA_RL_DATA`
+- **In:** `decoded CAD-QA dataset rows` (from 01) — either HF `v2_curriculum` (default, `CADQA_RL_ROWS`
+  rows) or a local dataset file via `CADQA_RL_DATA`
   (`train_and_eval/train/grpo_train.py`). Each row contributes `prompt` as chat messages,
   `gold_answer`, `answer_format`, `row_id`.
 - **Out:** an RL LoRA adapter at `CADQA_RL_OUT` (saved by `model.save_pretrained`).

@@ -2,13 +2,13 @@
 
 ## Purpose
 
-Produce **agent training traces** by sampling a **teacher** model on harness rows and keeping only
+Produce **agent training traces** by sampling a **teacher** model on decoded CAD-QA dataset rows and keeping only
 the attempts whose typed tool call the verifier accepts (**rejection sampling**). Trace
 length is bounded by **compaction**.
 
 ## Inputs / outputs
 
-- **In:** `harness row` (from 01) and, in the current sampler, directly HF config
+- **In:** `decoded CAD-QA dataset rows` (from 01) and, in the current sampler, directly HF config
   `v3_curriculum` (fields `row_id`, `prompt`, `gold_answer`, `answer_format`,
   `logical_hop_count`). An agent training trace's answer tool is derived from the row's
   `answer_format`.
@@ -19,7 +19,7 @@ length is bounded by **compaction**.
   ([00-overview.md](00-overview.md#sampling-log)), one per teacher attempt, recording
   `text`, `reasoning`, `tool_call`, and per-tool-round `rounds` distinctly (the A5 rule).
 - **Auxiliary export:** `train_and_eval/train/export_rl_data.py::main` writes RL
-  `train.jsonl` / `heldout.jsonl` / `report.json` from a rows artifact, excluding the bench
+  `train.jsonl` / `heldout.jsonl` / `report.json` from a dataset file, excluding the bench
   slices (`runs/gemma_bench/slices/release10k/public.jsonl`,
   `runs/gemma_bench/slices/rc10/rows.jsonl`).
 - **Auxiliary generation:** `train_and_eval/train/gen_1hop_queries.py` emits clause-less

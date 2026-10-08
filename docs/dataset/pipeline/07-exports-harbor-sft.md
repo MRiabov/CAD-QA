@@ -2,13 +2,13 @@
 
 ## Purpose
 
-Export the row/public/private artifacts to the downstream consumers: Harbor closed-book
+Export the dataset file / public / private artifacts to the downstream consumers: Harbor closed-book
 tasks, fine-tuning SFT data, evaluation request/grade artifacts, and one-command smoke
 orchestration.
 
 ## Inputs / outputs
 
-- **Input:** **rows** artifact; **public**/**private** artifacts; or model response JSONL
+- **Input:** **dataset file**; **public**/**private** artifacts; or model response JSONL
   (`pipeline/00-overview.md`).
 - **Outputs:**
   - **Harbor:** task directories plus `cadqa_harbor_job.json`, `cadqa_harbor_manifest.json`,
@@ -112,7 +112,7 @@ and the smoke/integration tests around `experiment`. Harbor execution itself
 
 ## Open questions
 
-- **The rows artifact is the coupling.** The restructure plan intends `train_and_eval/` to
+- **The dataset file is the coupling.** The restructure plan intends `train_and_eval/` to
   consume only the rows I/O contract and answer contract. Whether consumer code today reads
   anything beyond `rows`/`public`/`private` is `[unknown]`; that boundary is not enforced by
   a test here.

@@ -7,8 +7,8 @@ compute tools the model gets, grading every mode the same way.
 
 ## Inputs / outputs
 
-- **In:** a **merged model** directory, the `harness row` set (from 01, either a local rows
-  artifact via `--rows` or HF `v3_curriculum`), and the **LLM harness mode**
+- **In:** a **merged model** directory, the `decoded CAD-QA dataset rows` set (from 01, either a local dataset
+  file via `--rows` or HF `v3_curriculum`), and the **LLM harness mode**
   (`--mode no_tools | numpy | cadquery`).
 - **Out `eval result`:** JSONL `EvalRow` records
   ([00-overview.md](00-overview.md#eval-result)); the script prints overall accuracy and

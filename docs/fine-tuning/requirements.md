@@ -14,7 +14,7 @@ end-to-end result on a frozen held-out split.
 
 | Stage | Intended requirement | Verified? | Evidence |
 |---|---|---|---|
-| 01 rows-loader | A rows artifact maps to harness rows with the correct `[answer contract]` and decoded gold for every format | **Yes** | 36/36 tests in `train_and_eval/test_rows_loader.py` + `train_and_eval/eval/test_tool_calls.py`; real `release_10k` artifact loads (10,000 rows) |
+| 01 rows-loader | A dataset file maps to decoded CAD-QA dataset rows with the correct `[answer contract]` and decoded gold for every format | **Yes** | 36/36 tests in `train_and_eval/test_rows_loader.py` + `train_and_eval/eval/test_tool_calls.py`; real `release_10k` artifact loads (10,000 rows) |
 | 02 teacher-sampling | Kept traces carry a verifier-accepted tool call; per-format coverage is complete | No | Code present (`rejection_sample.py`, `teacher.py`); `build_teacher_prompt` unit-tested; `json`/`number` teacher coverage was 0 historically |
 | 03 trace-normalization | Traces render to the native gemma format | Partial | Rendering primitives verified (`test_render_helpers`, `test_run_code_roundtrip_in_trace_steps`); full `normalize_traces.py` needs the gemma processor |
 | 04 SFT | Adapter beats the base model without over-generation | No | Code present (`sft_train.py`); historical 50% / 41.7% on 12 rows; no frozen held-out result |

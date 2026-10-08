@@ -155,7 +155,7 @@ The geometry a CAD feature removes. `In code:` `void_region`.
 
 ### CAD-QA dataset row
 
-One question instance — a single record in the rows artifact holding every field: the
+One question instance — a single record in the dataset file holding every field: the
 public prompt plus the private verifier material (gold answer, Gold query program,
 candidate-set trace, clue map).
 
@@ -332,9 +332,10 @@ The code package for training and evaluation.
 
 ---
 
-### Rows artifact
+### Dataset file
 
-The input/output contract between `dataset_generation` and `train_and_eval`.
+The file holding the CAD-QA dataset rows (`rows.parquet` or `rows.jsonl`); the
+input/output contract between `dataset_generation` and `train_and_eval`.
 
 ---
 
@@ -375,6 +376,8 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | harness mode (cad_qa, train_and_eval, tools) | LLM harness mode | unqualified |
 | verifier (bare) | Query verifier | unqualified |
 | quarantine | Non-release-ready CAD-QA dataset row | imprecise |
+| rows artifact | Dataset file | "artifact" is vague; it is the dataset file |
+| harness row | CAD-QA dataset row | same record after decoding; not a new concept |
 | "intent" (as a doc) | PRD | "intent" is the concept, not the artifact |
 | trace (bare) | CadQuery program operation trace / agent training trace / answer candidate set trace | overloaded across concepts |
 | model (bare) | CAD model / LLM model / base LLM model / LLM adapter / merged LLM model | geometry vs language model vs weights/adapter/served endpoint |

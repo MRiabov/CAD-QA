@@ -1,4 +1,4 @@
-"""Tests for rows_loader.py — local graph-first artifact -> harness row shape."""
+"""Tests for rows_loader.py — local graph-first dataset file -> decoded CAD-QA dataset rows."""
 
 import json
 import os as _os

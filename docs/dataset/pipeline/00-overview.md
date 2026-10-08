@@ -38,7 +38,7 @@ A5 Prompt rendering  (a function invoked inside A6, not a standalone artifact)
         |
         v
 A6 Materialize / validate / release
-      rows artifact, public/private artifacts, release dataset
+      dataset file, public/private artifacts, release dataset
         |
         v
 A7 Exports: Harbor, SFT, evaluation

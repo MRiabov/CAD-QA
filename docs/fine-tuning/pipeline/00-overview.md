@@ -5,16 +5,16 @@ revised**; it is not frozen.
 
 ## Purpose
 
-Define the ordered stages that turn a **rows artifact** into a trained CAD-QA model, and
+Define the ordered stages that turn a **dataset file** into a trained CAD-QA model, and
 the single contract for the artifacts and fields that pass between those stages.
 
 ## Stage map (DAG order)
 
 ```text
 dataset_generation
-   │  rows artifact: rows.parquet | rows.jsonl
+   │  dataset file: rows.parquet | rows.jsonl
    ▼
-[01 rows-loader] ── harness row ─────────────────────────────┐
+[01 rows-loader] ── decoded CAD-QA dataset rows ──────────────┐
    │                                                         │
    ▼                                                         │
 [02 teacher-sampling] ── agent training trace ──▶ [03 trace-normalization]
@@ -34,7 +34,7 @@ dataset_generation
 
 Reading the DAG:
 
-- **SFT and GRPO are parallel consumers of the rows artifact, not a chain.** SFT learns from
+- **SFT and GRPO are parallel consumers of the dataset file, not a chain.** SFT learns from
   **agent training traces** produced by the teacher; GRPO scores sampled completions against the
   **gold answer** directly (`train_and_eval/train/grpo_train.py::reward_cadqa`). The current
   GRPO run does not initialize from the SFT adapter (`train_and_eval/train/grpo_train.py`
@@ -45,13 +45,13 @@ Reading the DAG:
   (`PeftModel.from_pretrained` → `merge_and_unload` → `save_pretrained`). This is a code
   gap; `[unknown]` whether a script ever existed.
 - **Rows reach three harnesses unchanged**: teacher sampling, GRPO, and eval all consume the
-  same harness-row shape via `train_and_eval/rows_loader.py::load_local_rows`.
+  same decoded CAD-QA dataset row shape via `train_and_eval/rows_loader.py::load_local_rows`.
 
 ## Stage IO contract
 
 Single source for artifact and field names. Step docs must match this table.
 
-### `rows artifact`
+### `dataset file`
 
 - **Producer:** `dataset_generation` (today `cad_qa/`). **Consumers:** 01, 05, 06.
 - **Persisted:** `rows.parquet` or `rows.jsonl`.
@@ -65,7 +65,7 @@ Single source for artifact and field names. Step docs must match this table.
   pipeline reads only the consumed subset.
 - The artifact's own contract is owned by the dataset docs, not here.
 
-### `harness row`
+### `decoded CAD-QA dataset rows`
 
 - **Producer:** 01 rows-loader. **Consumers:** 02, 05, 06.
 - **Persisted:** no (in-memory Python `dict` per row).

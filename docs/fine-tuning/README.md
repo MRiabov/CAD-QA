@@ -3,7 +3,7 @@
 **Status:** active, 2026-10-07. Code is `train_and_eval/`. This surface is **being revised**; the docs describe behaviour and record
 known defects as open questions rather than implying the pipeline is finished.
 
-This directory documents how CAD-QA turns a **rows artifact** into a trained small model and
+This directory documents how CAD-QA turns a **dataset file** into a trained small model and
 evaluates it: teacher **rejection sampling** → **trace normalization** → **SFT**; **GRPO**
 training; the **LLM harness modes** used for evaluation; and **vLLM** serving.
 

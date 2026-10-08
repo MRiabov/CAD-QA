@@ -2,17 +2,17 @@
 
 ## Purpose
 
-Turn a **rows artifact** (`rows.parquet` / `rows.jsonl`) into the **harness row** shape
+Turn a **dataset file** (`rows.parquet` / `rows.jsonl`) into **decoded CAD-QA dataset rows**
 consumed by teacher sampling, GRPO, and evaluation.
 
 ## Inputs / outputs
 
-- **In:** `rows artifact` — `rows.parquet` or `rows.jsonl` from `dataset_generation`
-  (fields in [00-overview.md](00-overview.md#rows-artifact)).
-- **Out:** `harness row` (list of Python dicts; not persisted) — fields
+- **In:** `dataset file` — `rows.parquet` or `rows.jsonl` from `dataset_generation`
+  (fields in [00-overview.md](00-overview.md#dataset-file)).
+- **Out:** `decoded CAD-QA dataset rows` (list of Python dicts; not persisted) — fields
   `row_id`, `prompt`, `answer_format`, `gold_answer` (decoded), `logical_hop_count`,
   `difficulty_bucket`, `geometry_hop_count`, `relation_families`
-  ([00-overview.md](00-overview.md#harness-row)).
+  ([00-overview.md](00-overview.md#decoded-cad-qa-dataset-rows)).
 - **Filter semantics:** default `split="train"`; rows whose `split` is neither null nor the
   requested split are dropped; rows missing `prompt` or `gold_answer`, and rows with
   `release_ready is False`, are dropped. `[answer contract]` is appended to each prompt

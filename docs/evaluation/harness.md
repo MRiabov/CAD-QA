@@ -40,7 +40,7 @@ Outputs:
   `graded_responses.jsonl`, and `reward.txt`
   (`cad_qa/harbor.py::grade_harbor_answer_files`).
 
-The evaluation harnesses consume the rows artifacts, but the canonical rows IO
+The evaluation harnesses consume the dataset files, but the canonical rows IO
 contract is not yet written in the new doc tree (`dataset/pipeline/00-overview.md`
 is a forward reference), so the field names above are the current source of truth
 (see `## Open questions`).
