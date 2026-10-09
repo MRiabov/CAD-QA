@@ -54,9 +54,10 @@ OPENROUTER_API_KEY=... uv run python train_and_eval/train/rejection_sample.py \
   `release_balance_report`; reuse `_prompt_family()`; report `passes_*_sampling_coverage`) — not a new
   taxonomy. *Open:* key an agent training trace by the row's **primary measurement scope**, or **expand**
   each row into every `(relation_family × measurement_scope)` membership (a fatter universe)? This is a
-  **gain** question, not a cost one: extra traces are cheap (~$10–25 per 1,000 off-peak; `../training.md`
-  §5.3), so decide on (1) the **incremental gain**, measurable only if the evaluation datasets cover the
-  extra combinations, and (2) whether those combinations are **learnable** (FT-D15/Bridge). **Provisional: scope
+  **gain** question, not a cost one: extra traces are cheap (~$10–25 per 1,000 off-peak, less via the
+  `:batch` endpoint; `../training.md` §5.3), so decide on (1) the **incremental gain**, measurable only if
+  the evaluation datasets cover the extra combinations, and (2) whether those combinations are
+  **learnable** (FT-D15/Bridge). **Provisional: scope
   to the lower universe (primary scope)** until a measurable gain appears; measure first on the small test
   GPU (Modal, per-second, free credits), then scale.
 - **Q2.** Teacher settings (temperature, attempts per row). The recorded **~23% success rate was the v4

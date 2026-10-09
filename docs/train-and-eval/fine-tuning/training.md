@@ -256,7 +256,14 @@ DeepSeek-class teacher rate (pull the live rate; ~$0.30/M in + $1.20/M out at pe
 we run): ~15k input + ~3k output per attempt ≈ **$0.008/attempt peak, ~$0.004 off-peak**; rejection
 sampling at ~2–5 attempts per accepted agent training trace ⇒ **~$10–25 per 1,000 accepted traces**
 off-peak (less with prompt caching on the system/tool prefix). A full pass over the 1,445-row dataset at
-`--attempts-per-row 5` ≈ 7.2k attempts ≈ **~$30 off-peak**. Schedule teacher sampling off-peak. SFT (~10–30M tokens) and pass@k eval are
+`--attempts-per-row 5` ≈ 7.2k attempts ≈ **~$30 off-peak**. Schedule teacher sampling off-peak.
+**`deepseek-v4.1-flash:batch`** bills ~50% of standard per-token pricing and is **asynchronous** (24 h
+window, median ~minutes; per-request results) [vendor: OpenRouter Batch API, 2026-09], so a fully
+batchable pass could be **~$5–12 per 1,000**; whether it stacks with the provider off-peak discount is
+not guaranteed — check the pricing on the OpenRouter page for the exact checkpoint. **Caveat:** batch is one request → one completion, so it fits only
+single-call traces; our multi-round teacher loop (up to ~10 `run_code` round-trips, executed server-side)
+cannot be one batch request — budget the loop at sync off-peak and use `:batch` for one-shot/no-tools
+calls. SFT (~10–30M tokens) and pass@k eval are
 cents-to-a-few-dollars on the small test GPU, covered by the free credits — so the sampling cost is
 **not** the binding constraint; train/eval cycles and rollout tokens are. The GPU term is **secondary and
 class-dependent**: for LoRA on a 2.6B LLM model the card is rarely the bottleneck (teacher sampling and
