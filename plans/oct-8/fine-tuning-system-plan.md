@@ -269,11 +269,33 @@ silently.
 **Open questions.**
 
 - **Q1.** What k for the pass@k gate, and how are tiers defined from `difficulty_bucket` + hop counts?
-- **Q2.** Does the LFM2.5 chat template + `liquid-finetune` GRPO accept our custom `submit_*` tools and
-  reward callable through `rewards/` unchanged? `[unknown]`.
-- **Q3.** RFT (Training stage 2) vs GRPO (Training stage 3): at this scale and budget, does RFT already capture most of the
-  gain? Ref [25] suggests it may; test before spending on RL.
-- **Q4.** Is the `cadquery` LLM harness mode (FT-D5) needed for the RL training stage, or does `numpy` stay primary?
+
+**Owner decisions needed (cross-plan).** These block a step and need a human call; the other oct-8 open
+questions resolve by running or inspection. Labels point to the owning doc.
+
+- `evaluation-plan.md` Q2 — canonical baseline slice: rc10 clean-100, release10k, or an immutable hard test.
+- `evaluation-plan.md` Q5 — canonical BenchCAD transfer target (full `qa_code` / Spatial Reasoning axis /
+  hard family subset), and whether `edit_code` T4/T5 is in scope at 2–4B.
+- `trust-audit.md` Q1 — accept the accidental-misuse-guard threat model, or require kernel isolation before
+  the external claim.
+- `trust-audit.md` Q3 — one tracked environment, or separate SFT and serving environments.
+- `trust-audit.md` Q4 — GPU parity + SFT re-run in Phase 0, or the top of Phase 1.
+- `fine-tuning-data-plan.md` Q4 — which External dataset supplies `preserve_prior_capabilities`.
+- `fine-tuning-data-plan.md` Q5 / `docs/train-and-eval/datasets.md` Q3 — do evaluation dataset roles split
+  into `target` / `canary`.
+- `fine-tuning-data-plan.md` Q6 / `docs/train-and-eval/datasets.md` Q2 — the two `mixed_dataset_*` names.
+
+**Resolved questions.**
+
+- **Q2.** *(2026-10-09)* Framework conformance, not a research unknown. TRL / `liquid-finetune` GRPO takes
+  plain Python reward callables and forwards dataset columns, and `reward_cadqa(completions, **kwargs)`
+  already matches that signature; tool passthrough is an `apply_chat_template(tools=…)` concern. Confirm
+  both on the first GRPO smoke run (§10).
+- **Q3.** *(2026-10-09)* Answered by construction: the Training stage 2 pass@k gate decides RFT vs RL from
+  the measured reachability, not on paper (§3; FT-D13).
+- **Q4.** *(2026-10-09)* No — `cadquery` mode is not needed for RL. RL uses the same `run_code`/`numpy` tool
+  surface; `cadquery` is a P2 evaluation upper bound (`evaluation-plan.md` §2). RL itself is conditional on
+  the gate (FT-D13), so the question is moot until then.
 
 ---
 
@@ -285,5 +307,7 @@ silently.
    docs).
 3. **Training stage 2:** once an SFT checkpoint exists, run the pass@k sampling gate per tier and record
    reachability. Decide RL vs RFT from that number, not from ambition.
-4. **Only then** wire the `liquid-finetune` GRPO config with dynamic sampling and the composite
-   reward, in a Modal sandbox.
+4. **Only then** wire the `liquid-finetune` GRPO config with dynamic sampling and the composite reward, in a
+   Modal sandbox; on that smoke run, confirm our `submit_*` tool list passes through
+   `apply_chat_template(tools=…)` and that `reward_cadqa(completions, **kwargs)` matches the framework's
+   reward-callable signature (this resolves the former Q2).
