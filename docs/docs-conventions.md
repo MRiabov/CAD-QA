@@ -158,6 +158,8 @@ Never cite line numbers — they drift. Cite in this order of preference:
   distinction.
 - **Defined or banned.** Every load-bearing term is in `glossary.md`; every bad term is on
   its Don't-say list and fails lint.
+- **No bare single-letter symbol.** A quantity or an index is named, never a bare `k`, `T`,
+  `r`, or `N`; established external notation is exempt (`glossary.md`, "The rule").
 - **A term that needs a follow-up question is a defect.**
 
 ## Status tags

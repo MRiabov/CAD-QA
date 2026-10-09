@@ -96,11 +96,11 @@ than feeding an unlearnable target. Keep the general tasks in every training sta
 (format holds, pass@k > 0), then stops — it is not an accuracy target ([32]).
 (Owned by the data + architecture docs.)
 
-**Training stage 2 — sampling gate.** The new piece. After SFT, sample k rollouts per prompt with the
-tuned policy and compute the **pass rate** per tier:
+**Training stage 2 — sampling gate.** The new piece. After SFT, sample a rollout count of completions
+per prompt with the tuned policy and compute the **pass rate** per tier:
 
-- **mastered** (all k pass): RL adds nothing here (ref [20]); use as an evaluation dataset, not for training.
-- **learnable** (0 < pass < k): the RL-training set. Aim the training distribution at the
+- **mastered** (all rollouts pass): RL adds nothing here (ref [20]); use as an evaluation dataset, not for training.
+- **learnable** (some but not all rollouts pass): the RL-training set. Aim the training distribution at the
   ~0.25–0.75 band (refs [21][22]); ~0.5 maximizes reward entropy and group-filter survival.
 - **unreachable** (zero pass): no RL signal. Add via Bridge/re-distillation at the next SFT
   training stage (ref [8]) or leave out and record it.
@@ -116,8 +116,8 @@ rollouts in a sandbox (§5). Never run RL on a tier with no partial signal.
 
 > **P2 backlog — hint-based RL.** The dataset already carries a deterministic derivation: the **ordered
 > Gold query program**, with the per-row `clue_map` mapping each predicate to its public clue (a
-> **private** field, withheld from public rows). That yields a natural **hint ladder** (reveal `j` of `n`
-> predicates) to condition or anneal rollouts. P2 only; read first that privileged on-policy
+> **private** field, withheld from public rows). That yields a natural **hint ladder** (reveal a leading
+> prefix of the ordered predicates) to condition or anneal rollouts. P2 only; read first that privileged on-policy
 > distillation can *harm* thinking LLM models (ref [9]) and that hints are a reward-hacking risk
 > (refs [27][28]). There is no separate "hints" dataset field today — this is the `clue_map` +
 > Gold query program.
@@ -307,8 +307,8 @@ silently.
 **Resolved.**
 
 - **Q1.** *(2026-10-09)* Tiers are **measured** from pass@k, not derived from `difficulty_bucket` +
-  Reasoning hop count — those are priors to stratify by, not the definition. `k = 8` screen → `16`
-  confirm; gate temperature `≈ 1.0`. Definition: `pipeline/05-sampling-gate.md`.
+  Reasoning hop count — those are priors to stratify by, not the definition. A rollout count of 8 to
+  screen → 16 to confirm; rollout temperature ≈ 1.0. Definition: `pipeline/05-sampling-gate.md`.
 
 **Owner decisions needed (cross-plan).** These block a step and need a human call; the other open
 questions here resolve by running or inspection. Labels point to the owning doc.

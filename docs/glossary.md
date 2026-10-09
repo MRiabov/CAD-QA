@@ -30,6 +30,11 @@ invents a new word, it is wrong — the word should already be here, or be added
 - **Case.** A term is capitalized only in its glossary heading; in prose and definitions it
   is lowercase, like placis's "a website term includes **website**". Proper nouns and
   acronyms (CadQuery, CAD) keep their case.
+- **No bare single-letter symbol.** A quantity or an index of our own is never written as a
+  bare letter — `k`, `T`, `r`, `N`, or similar. Name the quantity (`rollout count`,
+  `rollout temperature`, `pass rate`, `sample size`); an `In code:` identifier keeps its
+  documented name. Established external notation (`pass@k`, a LoRA rank) keeps its standard
+  symbol.
 - **Meaning, not implementation.** An entry says what the term means, and optionally why
   that word is used (`Distinct from:`, never-say). It never says how something works —
   that belongs in the specs. Names of types, tables, routes, or `In code:` identifiers may

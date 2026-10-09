@@ -42,10 +42,10 @@ transfers.
 Full statements, designs, and confound controls: `train-and-eval/fine-tuning/training.md`
 §1 and `train-and-eval/evaluation/plan.md` §5.1.
 
-**Success criteria (tiered).** `T` is set only after the immutable slice is measured; the gating step is
+**Success criteria (tiered).** The target is set only after the immutable slice is measured; the gating step is
 re-measuring the base, the cost-effective baselines, and 2–3 current frontier LLM models on it.
 
-| Slice | Base | Target `T` |
+| Slice | Base | Target |
 |---|---|---|
 | 1-hop | `[to measure]` | `[to measure]` |
 | 2-hop | `[to measure]` | `[to measure]` |

@@ -364,7 +364,7 @@ whose rationale was not recoverable.
   a design doc, not a step doc. Should they become FT-D entries here (the feature-wide decision home),
   or stay in `data.md`? `[open]`
 - **Q4.** DSpark during **rollout-heavy** serving (the pass@k gate, GRPO). Rollouts are inference, so a
-  lossless speculator would help the decode-bound `k × prompts` workload; but our RL default is
+  lossless speculator would help the decode-bound rollout-count × prompts workload; but our RL default is
   `liquid-finetune` GRPO on **vLLM**, and DSpark is **SGLang/llama.cpp** only, so it needs the
   **verl + SGLang** escalation (`../system.md` §6). The draft also targets the **base** and is never
   updated, so acceptance decays as the RL policy drifts. Resolve: does verl + SGLang + DSpark actually

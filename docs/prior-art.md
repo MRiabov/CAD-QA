@@ -216,7 +216,7 @@ is actively hacked unless the shaping is optimality-preserving (GRM/ADOPS, [27])
 
 **Sampling may beat RL at this scale.** SFT with sampling can outperform on-policy RL and
 self-distillation on new-task generalization *and* prior-capability retention [25]. For a
-single-GPU thesis this is the cheapest path: after SFT, sample k rollouts per prompt, keep the
+single-GPU thesis this is the cheapest path: after SFT, sample a rollout count of completions per prompt, keep the
 correct ones, and fine-tune again (rejection-sampling SFT) — with GRPO reserved for tiers that
 remain reachable-but-unmastered.
 

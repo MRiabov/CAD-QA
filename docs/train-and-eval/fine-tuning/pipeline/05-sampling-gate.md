@@ -9,14 +9,15 @@ measured learnable (FT-D13; FT-D8 superseded).
 ## Definition
 
 - **Population:** the train rows (`01`) in the run's mix.
-- **Rollouts:** per row, `k` completions sampled at the **rollout temperature** `T` (not the 0.1
-  deployment default), each graded by the one scorer (`../../evaluation/plan.md` §4).
-- **Pass rate:** `r = passes / k`, per row.
-- **Tiers (per row):** `mastered` (`r = k`), `learnable` (`0 < r < k`), `unreachable` (`r = 0`). The
-  tiers are **measured**, not derived from `difficulty_bucket`/Reasoning hop count — those are *priors* to
-  stratify by and validate, not the definition.
-- **Defaults:** `k = 8` to screen, `k = 16` to confirm any row or tier we will RL on or report; `T ≈ 1.0`.
-  (`k` follows the all-pass/all-fail bound: at `r = 0.25`, `(1-r)^k ≈ 10%` at `k = 8`, `≈ 1%` at `k = 16`.)
+- **Rollouts:** per row, a **rollout count** of completions sampled at the **rollout temperature** (not
+  the 0.1 deployment default), each graded by the one scorer (`../../evaluation/plan.md` §4).
+- **Pass rate:** passes / rollout count, per row.
+- **Tiers (per row):** `mastered` (pass rate 1), `learnable` (0 < pass rate < 1), `unreachable`
+  (pass rate 0). The tiers are **measured**, not derived from `difficulty_bucket`/Reasoning hop count —
+  those are *priors* to stratify by and validate, not the definition.
+- **Defaults:** a rollout count of 8 to screen, 16 to confirm any row or tier we will RL on or report;
+  rollout temperature ≈ 1.0. (The rollout count follows the all-pass/all-fail bound: at a 0.25 pass
+  rate, the all-fail rate is ~10% at a rollout count of 8 and ~1% at 16.)
 - **Outputs:** pass@k per row and per stratum (Reasoning hop count, `difficulty_bucket`, Answer format,
   task family); the **learnable** pool (RL/RFT); the **unreachable** list (Bridge / re-distillation);
   **mastered** rows (evaluation-only).
@@ -52,13 +53,14 @@ uv run pytest train_and_eval/eval/test_tool_calls.py -k reward -q
 
 ## Questions for the owner
 
-- **OD-1.** Gate the **full train split** (≈8k rollouts at `k = 8`, minutes on the small test GPU;
-  recommended) or a **stratified sample** of `N` per hop/bucket?
-- **OD-2.** RL-eligible band: **~0.25–0.75** (max reward variance; recommended) or any `0 < r < k`?
-- **OD-3.** Confirm the gate temperature `T ≈ 1.0` (rollout), separate from the 0.1 accuracy runs.
+- **OD-1.** Gate the **full train split** (≈8k rollouts at a rollout count of 8, minutes on the small
+  test GPU; recommended) or a **stratified sample** with a fixed sample size per hop/bucket?
+- **OD-2.** RL-eligible band: **~0.25–0.75** (max reward variance; recommended) or any non-zero,
+  non-unity pass rate?
+- **OD-3.** Confirm the rollout temperature ≈ 1.0 (rollout), separate from the 0.1 accuracy runs.
   **Provisional** — verify against the RL exploration/sampling literature (research refs [21]–[23], [25])
   as a **P2** task; it only sets the reachability estimate, not any reported accuracy.
 - **OD-4.** When **no** tier is `learnable`: is the gate **binding** (stop and report SFT-only, FT-D13) or
   do we fall back to more **teacher re-distillation / Bridge**? Self-RFT cannot proceed here — it needs the
-  policy's own correct completions, which do not exist at `r = 0`.
+  policy's own correct completions, which do not exist at a zero pass rate.
 - **OD-5.** RFT vs GRPO at this scale — decided by the gate, not on paper (`../system.md` Q3).
