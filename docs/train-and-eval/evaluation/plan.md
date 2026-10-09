@@ -258,7 +258,9 @@ results rather than repeating the plan.
 | Reachability pilot + family-disjoint BenchCAD subset | **P0** | a target the base LLM model cannot attempt yields no transfer signal |
 | H4 dose-response: CAD-QA pass rate vs external score | **P0** | proves the dataset is a lever, not a tutorial |
 | Re-run shortcut baselines on the current schema | **P1** | current baselines are `stale` |
-| Harbor large LLM model baseline refresh on the hard slice | **P1** | the ≤30% target refers to the hard slice, currently unrecorded |
+| Harbor: external-agent baselines + untrusted-code sandbox | **P2** | deferred (D-E2 update). It was to show the tuned LLM model working in a general agent setting (`opencode`-style), but that is unwise before   the base setup works and adds sampling cost; even in P2 it may not earn its keep. External baselines
+  can run through the **same local tool-call harness**, so Harbor is only needed for genuinely untrusted
+  agent code, and its practical cost is container RAM (Daytona can replace local Docker). |
 | Few-shot baseline | **P2** | extra comparison |
 | `no_tools` and `cadquery` mode matrices | **P2** | upper-bound studies |
 

@@ -2,13 +2,14 @@
 
 **Status:** `exists` — the local three-mode harness and the Harbor export and
 runner are implemented; end-to-end verification is incomplete (per-component
-tags under `## Current status`). 2026-10-07.
+tags under `## Current status`). **Harbor is deferred to P2** (D-E2 update). 2026-10-07.
 
 ## Purpose
 
 Run an LLM model with no access to CadQuery over CAD-QA rows and score exact structured
 answers, under a switchable compute mode, both for the local fine-tuned small LLM model
-and for cost-effective external models through Harbor.
+and for cost-effective external models through the same tool-call harness (Harbor is a
+deferred P2 path; D-E2).
 
 ## Inputs / outputs
 

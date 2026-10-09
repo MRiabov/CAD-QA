@@ -23,6 +23,13 @@ the consolidated decision log. Open questions stay in `plan.md` §11.
   execution environments** sharing the CAD-QA dataset row contract — not one harness with two backends.
 - **Consequences:** grading is not literally shared; a change to one grader must be mirrored
   deliberately and is an audit item (TA-A3). Reconcile via one authoritative grader (Q1).
+- **Update (2026-10-09).** Harbor is **deferred to P2**. It was built to show the tuned LLM model
+  working in a general agent setting (`opencode`-style) rather than a confined tool call — unwise before
+  the base setup works, and it adds sampling cost; even within P2 it may not earn its keep, and its
+  practical cost is container RAM (Daytona can replace local Docker). The thesis does not depend on it:
+  **training and evaluation share one tool-call harness and the same rollout loop**, so external/teacher
+  evaluation runs through the local rollouts, not Harbor. Harbor remains the only sandbox for
+  genuinely untrusted agent code and the containerized RL reward (both optional).
 
 ## D-E3 — `run_code` is an accidental-misuse guard, not a security boundary
 
