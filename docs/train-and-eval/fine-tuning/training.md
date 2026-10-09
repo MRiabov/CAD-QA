@@ -32,7 +32,7 @@ gemma-native rendering and parsing are re-authored.
 
 **Related docs.** `system.md` (the staged post-training loop and the RL-readiness
 gate);
-`../../prior-art.md` (external evidence, refs [1]–[32]);
+`../../prior-art.md` (external evidence, refs [1]–[33]);
 `../../PRD.md` (research contract); `decisions.md`
 (FT-D* decisions); `../../../plans/oct-8/trust-audit.md` (Phase 0 gate).
 
@@ -163,7 +163,7 @@ it.
 | **Completion-only loss** | P0 | fixes the B3 flat-`text` defect; implement it the **cookbook way** — train on the `messages` format and *verify* the loss is completion-only, rather than hand-rolling a masking path |
 | **Epochs = the cookbook's, not ours** | P0 | TRL/Liquid example uses 3; the Home Assistant recipe uses 5 on a narrow 350M task; TeichAI used 1 at 4B. Start from the cookbook default, then let the evaluation dataset move it |
 | **Cookbook learning rates** | P0 | LoRA `2e-4`, full FT `2e-5`, DPO `5e-7` (TRL/Liquid examples); `bf16=True` |
-| **General-task mix (≈70%)** | P0 | xLAM precedent; the diverse general mix anchors prior ability (FT-D18). The general-task rows are a data-doc concern |
+| **General-task mix (50–70%)** | P0 | xLAM precedent; the diverse general mix anchors prior ability (FT-D18). The general-task rows are a data-doc concern |
 | **Gradient checkpointing + grad accumulation** | P0 | fits memory; the cookbook uses `gradient_accumulation_steps=4`, Unsloth uses its optimized checkpointing |
 | **Evaluate the datasets before/after each run** | P0 | measure forgetting, do not assume it away; the procedure is the evaluation doc's |
 | **KB/activation regularization (EWC, LaLoRA)** | P2 | more moving parts than a first run warrants |
@@ -180,7 +180,7 @@ evaluation dataset.
 ## 4. Training stages and contract
 
 Stack-neutral at the contract level (works for `liquid-finetune`, TRL, or Unsloth). The **contract**
-is the important artifact here. Data stages 1–5 are owned by the system plan
+is the important artifact here. Pipeline stages 1–5 are owned by the system plan
 (`system.md` §7); the evaluation doc owns pipeline stage 9.
 
 ```text
@@ -359,6 +359,12 @@ justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
 - **Q3.** LoRA-bf16 is the default (§5.4); does QLoRA change the outcome on the evaluation dataset at this scale? The repo
   `pipeline/04-sft.md` records a code/narrative conflict (4-bit vs 16-bit) from the gemma runs; settle it
   with a measured A/B on the evaluation dataset.
+- **Q4.** The §5.4 config snippet sets `learning_rate=2e-5` (the full-FT rate from §3) on a
+  `DEFAULT_LORA` run, while the §3 table gives the LoRA rate as `2e-4`. Does `DEFAULT_LORA` override
+  the snippet's rate, or is the snippet wrong? `[unknown]`
+- **Q5.** H2 (§1) expects an external reasoning-distillation mix to raise CAD-QA accuracy, while FT-D15
+  and `system.md` §0 call external general data *support*, not the lever (the task environment + scorer
+  is). Reconcile: is the reasoning third a support/anchoring term or a lever for H2? `[open]`
 
 ---
 

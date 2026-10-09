@@ -13,7 +13,7 @@ ingest/normalize/quality/dedup/sample stages).
 them into one system and adds the pieces none of the three owns: the sampling gate, the
 reward-hacking audit, and the on-policy stages.
 
-**Related docs.** `../../prior-art.md` (refs [1]–[32]);
+**Related docs.** `../../prior-art.md` (refs [1]–[33]);
 `decisions.md` (FT-D*); `../../PRD.md`;
 `../../../plans/oct-8/trust-audit.md`.
 
@@ -228,8 +228,8 @@ schema or the converter beyond what the mix and the evaluation datasets need.
 | `split` (`Split`, StrEnum) | `train` / `validation` / `test` |
 | `provenance` (`str`) | the exact field mapping/transform applied, for audit |
 
-Preparation stages (data stages 1–5; the architecture doc owns stages 6–8 and the evaluation doc
-owns pipeline stage 9):
+Preparation stages (pipeline stages 1–5; the architecture doc owns pipeline stages 6–8 and the
+evaluation doc owns pipeline stage 9):
 
 1. **Registry.** Dataset id, revision hash, license, role, size, field mapping. The data doc's
    governance section owns the policy; an External dataset without a pinned revision does not enter.
@@ -288,11 +288,14 @@ silently.
 **Open questions.**
 
 - **Q1.** What k for the pass@k gate, and how are tiers defined from `difficulty_bucket` + hop counts?
+- **Q5.** The staged loop labels the Query-verifier/eval-contract step and the pass@k sampling gate as
+  `Training stage 0`/`Training stage 2`, but neither consumes a Mixed training dataset or updates
+  weights (the glossary's Training-stage definition). Should these be renamed (for example
+  `system stage`), or is the broad use intended? `[open]`
 
 **Owner decisions needed (cross-plan).** These block a step and need a human call; the other open
 questions here resolve by running or inspection. Labels point to the owning doc.
 
-- `../evaluation/plan.md` Q2 — canonical baseline slice: rc10 clean-100, release10k, or an immutable hard test.
 - `../evaluation/plan.md` Q5 — canonical BenchCAD transfer target (full `qa_code` / Spatial Reasoning axis /
   hard family subset), and whether `edit_code` T4/T5 is in scope at 2–4B.
 - `../../../plans/oct-8/trust-audit.md` Q1 — accept the accidental-misuse-guard threat assumptions, or require kernel isolation before

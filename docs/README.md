@@ -19,8 +19,9 @@ procedural CAD programs (CadQuery), and a small-LLM-model fine-tuning effort on 
 6. **`prior-art.md`** — mined open-source training/RL/data pipelines.
 7. **`research/`** — external study notes and citations for related work.
 8. **`dataset/`** — the benchmark-generation pipeline, step by step.
-9. **`train-and-eval/fine-tuning/`** — the training and evaluation pipeline.
-10. **`train-and-eval/evaluation/`** — harnesses and baselines.
+9. **`train-and-eval/datasets.md`** — the dataset → DatasetRole assignment.
+10. **`train-and-eval/fine-tuning/`** — the training pipeline.
+11. **`train-and-eval/evaluation/`** — harnesses and baselines.
 
 ## Canonical references
 

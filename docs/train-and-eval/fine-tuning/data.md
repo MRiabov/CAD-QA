@@ -34,7 +34,7 @@ teacher-sampling of agent training traces from immutable CAD-QA dataset rows, st
 separate decision owed under FT-D11 (`decisions.md`) and
 Phase 3 of `../../development-plan.md`.
 
-**Related docs.** `../../prior-art.md` (external evidence, refs [1]–[32]);
+**Related docs.** `../../prior-art.md` (external evidence, refs [1]–[33]);
 `../../PRD.md` (research contract); `decisions.md`
 (FT-D* decisions).
 
@@ -143,8 +143,8 @@ prior ability is anchored by the **diverse general mix** — general code (`expo
 math/code reasoning (`preserve_general_math_and_code_reasoning`), and CAD (`expose_cadquery_programs`)
 — not by a replay buffer. A real replay buffer is a later (RL/distillation) concept, not an SFT role.
 
-**Ratio:** the general tasks are the majority of every mix (≈70%); the xLAM precedent (`xLAM` §3.5)
-reports 20–30% general instruction data as an anti-forgetting floor.
+**Ratio:** the general tasks dominate the first run (≈70%); the primary mix is 50/50 (§3). The xLAM
+precedent (`xLAM` §3.5) reports 20–30% general instruction data as an anti-forgetting floor.
 
 ### 2.5 Python / general coding priming (`expose_general_python_code`)
 
@@ -374,7 +374,7 @@ only the dataset:
 | Registry with pinned revisions, licenses, and dates | **P0** | reproducibility, the license audit, and the 2025+ freshness policy |
 | `mixed_dataset_general_and_easy_cadqa` data build (general tasks + low-hop `learn_the_cadqa_task`) | **P0** | feeds the first run |
 | Contamination + dedup pass against CAD-QA held-out and evaluation datasets | **P0** | held-out hygiene; a leak invalidates the thesis number |
-| General-task curation (code + math + CAD, ≈70%) | **P0** | anti-forgetting anchor (FT-D18) |
+| General-task curation (code + math + CAD, 50–70%) | **P0** | anti-forgetting anchor (FT-D18) |
 | **`learn_the_cadqa_task` generation plan** | **P0, separate** | the thesis needs it; explicitly not in this doc |
 | Permissive reasoning mix (`OpenThoughts`/`Bespoke`) | **P1** | tests H2 without license risk |
 | `run_the_tool_call_loop` / `run_code` data (`OpenThoughts-Agent`) | **P1** | needed for the primary `numpy` LLM harness behaviour |
@@ -400,15 +400,15 @@ only the dataset:
 - **`preserve_general_math_and_code_reasoning` earns a place.** It is a capability-preservation role
   (anti-collapse of general reasoning), not an ablation; content is general software / math /
   engineering tasks, and is part of the general-task mix that anchors prior ability (FT-D18).
+- **Order of training.** Decided by FT-D16: two SFT phases (elicit → preserve) with a phase-2-only
+  fallback; the first-run mix remains the format gate (FT-D16 in `decisions.md`).
 
 **Still to make:**
 
 1. **Mix ratios.** The §3 numbers are a starting hypothesis, not a result.
-2. **Order of training.** Mixed single training stage (default) vs staged format→full. Decide after the
-   `mixed_dataset_general_and_easy_cadqa` first run.
-3. **CAD-QA task dataset ownership.** Who plans the internal teacher-sampling replacement (B2), and
+2. **CAD-QA task dataset ownership.** Who plans the internal teacher-sampling replacement (B2), and
    against which immutable dataset revision?
-4. **Target `answer_format` coverage.** `json`/`number` teacher coverage was zero; the external
+3. **Target `answer_format` coverage.** `json`/`number` teacher coverage was zero; the external
    `emit_our_tool_call_format` dataset may not contain the CadQuery workplane tool. Decide whether the
    CAD-QA task dataset must synthesize it.
 
@@ -421,7 +421,17 @@ only the dataset:
 - **Q3.** Does the external `emit_our_tool_call_format` dataset teach the exact `submit_*` tool names/args,
   or only generic function calling? If only generic, `learn_the_cadqa_task` must carry the mapping.
 - **Q5.** Should evaluation dataset roles split into `target` / `guard`? `[open]`
-- **Q6.** What are the two Mixed training dataset names (`mixed_dataset_*`)? `[open]`
+- **Q6.** What are the two Mixed training dataset names (`mixed_dataset_*`)? Provisional names are
+  used in §3 and FT-D19. `[open]`
+- **Q7.** The curriculum ladder is written `0→1→2→3→5`, but the release data has Difficulty tiers
+  `{2,3,4,5}` and the GRPO default schedules hop 4 and omits hop 1. Is hop 4 intentionally excluded
+  from the ladder (and hop 1 the only gap to fill), or is the ladder string a typo? `[open]`
+
+## Resolved questions
+
+- **Q4.** *(2026-10-09)* What provides `preserve_prior_capabilities` (the anti-forgetting role)?
+  Answered by FT-D18: the role was dropped; there is no dedicated replay role, and the diverse
+  general-task mix anchors prior ability (FT-D18 in `decisions.md`).
 
 ---
 

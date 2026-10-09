@@ -38,8 +38,8 @@ floor), **periodic** (during a phase, on a subset), **phase-end** (end of a phas
 and **final** (after the last phase, the complete immutable thesis number). All are hard-excluded from
 training (§6).
 
-Run an LLM model **with no access to CadQuery** over CAD-QA dataset rows and score **exact structured answers**
-under a switchable compute mode. The evaluation harness is the whole chain:
+Run an LLM model over CAD-QA dataset rows and score **exact structured answers**
+under a switchable compute mode; the primary mode gives no access to CadQuery. The evaluation harness is the whole chain:
 LLM model → chat template → tool declarations → generation loop → tool execution → tool-call parser →
 scorer. Training and evaluation differ only in what they do with the output: training adds a
 gradient update; evaluation does not.
@@ -60,8 +60,8 @@ implementation** — a recorded defect (see §4).
 
 ## 2. LLM harness modes
 
-An LLM harness mode is which compute tools the LLM model gets. All modes have no access to CadQuery: no
-kernel, no network. Detail and status: `harness.md`.
+An LLM harness mode is which compute tools the LLM model gets. The `numpy` and `no_tools` modes give
+no access to CadQuery: no kernel, no network. Detail and status: `harness.md`.
 
 - **`numpy` (primary, P0).** Submit tools plus the sandboxed `run_code` (Python + NumPy + `math`).
   This mode gates the thesis claims.
@@ -94,7 +94,7 @@ The repo currently has **three** scoring implementations:
 
 | Scorer | Used by | Decision rule |
 |---|---|---|
-| `grading/grade.py::exact_match` (+ `grading/parse.py::parse_answer`) | eval, Harbor | parse by Answer format, then `gold == predicted`; `coordinate` rounded to 6 dp; `number` plain `float`; `boolean` handled |
+| `grading/grade.py::exact_match` (+ `grading/parse.py::parse_answer`) | Harbor, dataset CLI (`cadqa evaluation`, `experiment.py`) | parse by Answer format, then `gold == predicted`; `coordinate` rounded to 6 dp; `number` plain `float`; `boolean` handled |
 | `tool_calls.py::tool_call_matches` | local harness, teacher rejection sampling | exact strings/ints, `1e-3` relative floats, `text` tolerates float formatting; no `boolean` entry |
 | `reward_cadqa.py::reward_cadqa` | GRPO | different fallback parser; `text` uses substring presence |
 
@@ -197,12 +197,12 @@ doc holds the rows. Each is composed across Difficulty tiers, hard-excluded from
 four points in the training pipeline (§1): **baseline**, **periodic** (subset), **phase-end**
 (extensive), and **final** (complete).
 
-| Evaluation dataset | Dataset role | Serves |
+| Evaluation dataset | Training role mirrored | Serves |
 |---|---|---|
 | CAD-QA held-out | `learn_the_cadqa_task` | H2; the thesis number |
 | Tool-format held-out | `emit_our_tool_call_format` | H1 format compliance |
 | General math + code | `preserve_general_math_and_code_reasoning` | forgetting guard; H4 covariate |
-| External transfer | transfer (§5.1) | H3, H4 |
+| External transfer | — (external) | H3, H4 |
 
 Regression gate: if the `preserve_general_math_and_code_reasoning` accuracy drops beyond a
 pre-registered tolerance (suggest ≤2 points) while the CAD-QA held-out accuracy rises, the run is a

@@ -141,12 +141,13 @@ big LLM model number remains `[assumed]`/unrecorded (`docs/development-context.m
 - **Q2.** Should the historical heuristic families be re-implemented against the current
   row schema, or retired in favour of the geometry-first split audit? The spec
   still names the operation-order heuristic, which was never found in code.
-- **Q3.** Which slice is the canonical baseline slice for the paper: rc10 clean-100,
-  release10k, or an immutable hard test?
 
 ## Resolved questions
 
-None yet.
+- **Q3.** *(2026-10-09)* Which slice is the canonical baseline slice for the paper — rc10 clean-100,
+  release10k, or an immutable hard test? There is no single canonical baseline slice: evaluation is
+  the set of datasets that serve H1–H4, run at four points, and baselines run on those same datasets
+  (`plan.md` D-E7; Q2).
 
 ## Extra deliverables - P2
 

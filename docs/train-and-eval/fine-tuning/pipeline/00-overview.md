@@ -36,7 +36,8 @@ Reading the DAG:
 
 - **SFT and GRPO are parallel consumers of the dataset file, not a chain.** SFT learns from
   **agent training traces** produced by the teacher; GRPO scores sampled completions against the
-  **gold answer** directly (`train_and_eval/train/grpo_train.py::reward_cadqa`). The current
+  **gold answer** directly (`train_and_eval/reward_cadqa.py::reward_cadqa`, applied by
+  `train_and_eval/train/grpo_train.py`). The current
   GRPO run does not initialize from the SFT adapter (`train_and_eval/train/grpo_train.py`
   loads `unsloth/gemma-4-E2B-it`), so "SFT then GRPO" is a stated goal, not the implemented
   chain. See [05-grpo.md](05-grpo.md#open-questions).

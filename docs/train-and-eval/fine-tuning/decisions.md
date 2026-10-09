@@ -274,8 +274,9 @@ whose rationale was not recoverable.
   anchor to. Its candidate datasets were also thin (a base instruct mixture we do not have, a permissive
   substitute, or a slice of the evaluation set).
 - **Decision:** drop `preserve_prior_capabilities` as a dataset role. Prior ability is anchored by the
-  **diverse general-task mix** (general code + math + CAD; ≈70% of each mix), not a dedicated replay
-  role. A real replay buffer is a later RL/distillation concept, not an SFT role.
+  **diverse general-task mix** (general code + math + CAD; the majority of the first run and half the
+  primary mix), not a dedicated replay role. A real replay buffer is a later RL/distillation concept,
+  not an SFT role.
 - **Consequences:** the training roles are six; the first-run mix becomes
   `mixed_dataset_general_and_easy_cadqa` (70% general tasks + 30% low-hop `learn_the_cadqa_task`,
   rejection-sampled). Detail: `data.md` §2.4, §3.
@@ -291,7 +292,7 @@ whose rationale was not recoverable.
   ablation is the **general-only** arm (the same mix without `learn_the_cadqa_task`).
 - **Consequences:** the mix is defined by data category, not a single "general" blob; BenchCAD `code_gen`
   feeds the text2CAD third while BenchCAD `qa_code` is the H3 transfer target (keep them disjoint).
-  Detail: `data.md` §3; `evaluation/plan.md` §5.1.
+  Detail: `data.md` §3; `../evaluation/plan.md` §5.1.
 
 ## Open questions
 
@@ -299,3 +300,7 @@ whose rationale was not recoverable.
   still proposed; promote it to accepted once the first Phase 3 run completes.
 - **Q2.** FT-D1, FT-D3, FT-D8 have unresolved sub-questions recorded in their step docs; a decision is
   not "done" while its consequences are unresolved.
+- **Q3.** `data.md` §8 records two feature-wide decisions ("commercial agent training trace policy",
+  "`preserve_general_math_and_code_reasoning` earns a place") with no FT-D label, because `data.md` is
+  a design doc, not a step doc. Should they become FT-D entries here (the feature-wide decision home),
+  or stay in `data.md`? `[open]`

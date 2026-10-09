@@ -41,10 +41,10 @@ Outputs:
   `graded_responses.jsonl`, and `reward.txt`
   (`train_and_eval/harbor.py::grade_harbor_answer_files`).
 
-The evaluation harnesses consume the dataset files, but the canonical rows IO
-contract is not yet written in the new doc tree (`dataset/pipeline/00-overview.md`
-is a forward reference), so the field names above are the current source of truth
-(see `## Open questions`).
+The evaluation harnesses consume the dataset files, and the canonical rows IO
+contract now lives in `dataset/pipeline/00-overview.md`. The field names below are
+the current harness view and must be reconciled against that contract (see
+`## Open questions`).
 
 ## Requirement
 
@@ -220,8 +220,8 @@ metrics must be read from `cadqa_grade.json`.
 
 - **Q1.** Does the recorded Harbor run for big LLM models preserve raw trajectories anywhere? Not
   found in-repo; needed to re-verify the 65/63/59 rc10 clean-100 numbers.
-- **Q2.** Where does the rows IO contract live once `dataset/pipeline/00-overview.md`
-  exists, and will it rename any public/private field used here?
+- **Q2.** Will `dataset/pipeline/00-overview.md` rename any public/private field used here? The
+  contract now exists; the field names must be checked against it.
 - **Q3.** Should the local harness import the Harbor grader (or the reverse) so the two
   exact-match paths cannot drift? Currently they are independent implementations.
 

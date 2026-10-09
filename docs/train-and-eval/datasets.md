@@ -8,12 +8,13 @@ recipe (dataset role → weight) and the candidate evidence (sizes, licenses, ad
 here, then propagate.
 
 **Related docs.** `../glossary.md` (**DatasetRole**, **External dataset**, **Mixed training
-dataset**, **Training stage**); `./fine-tuning/decisions.md` (FT-D1–D15);
+dataset**, **Training stage**); `./fine-tuning/decisions.md` (FT-D1–D19);
 `./evaluation/harness.md` and `./evaluation/baselines.md`; `fine-tuning/data.md`.
 
 ## Rules
 
-- Every dataset has exactly one **DatasetRole**.
+- Every **External dataset** has exactly one **DatasetRole**; a **Mixed training dataset** is a
+  blend of roles at fixed weights.
 - Two forms: an **External dataset** (published outside CAD-QA) and a **Mixed training dataset**
   (a blend at fixed weights).
 - A dataset enters only with a pinned revision hash and a recorded license (data plan §5). Sizes
@@ -106,22 +107,21 @@ complexity (the 0→1→2→3→5 hop ladder); the first run uses the low-hop en
 
 ## Mixed training datasets
 
-A **Mixed training dataset** is `{dataset role → weight}`. Names are not yet chosen (open question).
+A **Mixed training dataset** is `{dataset role → weight}`. Its recipe and weights are owned by
+`fine-tuning/data.md` §3; the two (provisional) names are `mixed_dataset_general_and_easy_cadqa`
+(first run: 70% general / 30% low-hop `learn_the_cadqa_task`) and `mixed_dataset_full_cadqa_training`
+(primary: 50/50, the task share being the progressive curriculum).
 
-| Composition | Feeds |
-|---|---|
-| general (⅓ coding agent · ⅓ 3D math · ⅓ text2CAD + edits) + low-hop `learn_the_cadqa_task` | the first run (format + easy task) |
-| general (same thirds) + `learn_the_cadqa_task` (progressively more complex; no separate `emit_our_tool_call_format`) | H2 (the thesis number) |
-
-## Evaluation datasets by dataset role
+## Evaluation datasets
 
 Evaluation is the set of datasets that serve H1–H4; each is composed across Difficulty tiers and run
-at four points in the training pipeline (baseline, periodic subset, phase-end, final). Dataset roles
-are not yet named.
+at four points in the training pipeline (baseline, periodic subset, phase-end, final). Each evaluation
+dataset is the held-out split that mirrors a training DatasetRole; evaluation dataset roles themselves
+are not yet named (`plan.md` §6).
 
 | Serves | Evaluation dataset | Tier |
 |---|---|---|
-| H2 (headline) | CAD-QA held-out (`learn_the_cadqa_task`) | P0 |
+| H2 (thesis number) | CAD-QA held-out (`learn_the_cadqa_task`) | P0 |
 | H3, H4 | BenchCAD `qa_code` | P0 (means) |
 | H3 | BenchCAD `edit_code` T4/T5 | P1 (end) |
 | H3 | Text2CAD-Bench | P1 (end/defect) |
@@ -133,5 +133,12 @@ are not yet named.
 
 ## Open questions
 
-- **Q2.** What are the two Mixed training dataset names?
+- **Q2.** What are the two Mixed training dataset names? (Provisional names are used in
+  `fine-tuning/data.md` §3 and FT-D19.)
 - **Q3.** Do evaluation dataset roles split into `target` / `guard`?
+
+## Resolved questions
+
+- **Q1.** *(2026-10-09)* Which dataset provides `preserve_prior_capabilities`? Answered by FT-D18:
+  the role was dropped; there is no dedicated replay role, and the diverse general-task mix anchors
+  prior ability (FT-D18 in `fine-tuning/decisions.md`).

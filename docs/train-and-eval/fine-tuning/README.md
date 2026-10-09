@@ -21,8 +21,8 @@ evaluates it: teacher **rejection sampling** → **agent training trace normaliz
 3. The step docs, in DAG order (below).
 4. [decisions.md](decisions.md) — unit-level decisions (ADR format).
 
-Supporting context: `../PRD.md` (the research contract), `../glossary.md` (canonical terms),
-`../development-context.md` (as-of record and history).
+Supporting context: `../../PRD.md` (the research contract), `../../glossary.md` (canonical terms),
+`../../development-context.md` (as-of record and history).
 
 ## Pipeline-stage index
 
@@ -40,7 +40,7 @@ Supporting context: `../PRD.md` (the research contract), `../glossary.md` (canon
 
 - The strongest measured result is **directionally encouraging but statistically unusable**:
   native-format SFT reached 50% accuracy / 58.3% tool-valid on **12** held-out rows; the
-  post-gold-fix re-run was 41.7% / 75% on the same 12 (`../development-context.md`).
+  post-gold-fix re-run was 41.7% / 75% on the same 12 (`../../development-context.md`).
 - **Known defects are open questions**, not hidden. The load-bearing ones: SFT prompt masking
   unknown; GRPO entropy collapse history; vLLM parity unverified; `cadquery` harness
   unimplemented; `json`/`number` teacher coverage zero; reward and eval graders can diverge.
@@ -63,14 +63,14 @@ Supporting context: `../PRD.md` (the research contract), `../glossary.md` (canon
 
 ## Terms
 
-Use the canonical vocabulary in `../glossary.md`. Three overloaded terms mean different records:
+Use the canonical vocabulary in `../../glossary.md`. Three overloaded terms mean different records:
 an **agent training trace** is an agent-facing reasoning + tool-call record (this pipeline's SFT
 signal); a **CadQuery program operation trace** is a CadQuery program decomposed into
 measured operations; an **answer candidate set trace** is a row's candidate-narrowing record.
 
 ## Note on raw material
 
-`../agent_handoff_2026-08-09.md`, `../rl_progress_2026-08-09.md`,
-`../rl_checkpoint_2026-08-08.md`, `../rl_checkpoint_2026-08-09_2.md`,
-`../rl_state_2026-08-09_1140.md`, `../rl_runbook.md`, and `../text_finetune_runbook.md` are
+`../../_archive/agent_handoff_2026-08-09.md`, `../../_archive/rl_progress_2026-08-09.md`,
+`../../_archive/rl_checkpoint_2026-08-08.md`, `../../_archive/rl_checkpoint_2026-08-09_2.md`,
+`../../_archive/rl_state_2026-08-09_1140.md`, `../../_archive/rl_runbook.md`, and `../../_archive/text_finetune_runbook.md` are
 **raw material** for these docs, not current specs. They are superseded by this directory.
