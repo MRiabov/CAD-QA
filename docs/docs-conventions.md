@@ -60,6 +60,7 @@ docs/
       plan.md                     # harness, scorer, evaluation datasets, H3/H4 transfer
       harness.md
       baselines.md
+      decisions.md                # local decisions (ADR format)
   paper/
     CA2_Riabov_final.md          # written manuscript; parity-kept with the .tex
     CA2_Riabov_final.tex

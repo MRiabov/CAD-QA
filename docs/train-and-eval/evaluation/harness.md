@@ -194,27 +194,8 @@ principle, but they do not share a grader implementation.
 
 ## Local decisions
 
-**D-E1. `numpy` is the primary harness; `no_tools` and `cadquery` are P2.**
-Rationale: the dataset's value is geometry reasoning without a CAD kernel, and the
-thesis needs one primary, comparable score. Consequence: `numpy` is the mode that
-gates claims; the other two are upper-bound studies and are collected under
-`## Extra deliverables - P2`.
-
-**D-E2. The local harness and Harbor are separate environments sharing the row
-contract, not one harness with two backends.** Rationale: the local LLM model speaks
-native tool calls, while Harbor runs a general coding agent that writes files; the
-two answer protocols differ. Consequence: grading is not literally shared; a
-change to one grader must be mirrored deliberately and is an audit item.
-
-**D-E3. The `run_code` sandbox is an accidental-misuse guard, not a security
-boundary.** Rationale: a plain Python subprocess cannot isolate a determined
-attacker, and the training box cannot provide namespaces. Consequence: `run_code`
-must not be exposed to untrusted input; sandbox isolation remains `[unverified]`.
-
-**D-E4. Harbor reward is a scalar 0/1 exact match; diagnostics live in the
-artifact.** Rationale: the agent loop consumes a reward, while analysis needs the
-full breakdown. Consequence: `reward.txt` is the interface to Harbor; all richer
-metrics must be read from `cadqa_grade.json`.
+Consolidated in [`decisions.md`](decisions.md): **D-E1** (primary mode), **D-E2** (the split from
+Harbor), **D-E3** (the sandbox boundary), **D-E4** (the Harbor reward scalar).
 
 ## Open questions
 

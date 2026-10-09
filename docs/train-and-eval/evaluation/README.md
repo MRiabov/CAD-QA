@@ -16,6 +16,7 @@ intent (targets, metrics, definition of done) stays in `PRD.md`.
    (`numpy` primary, `no_tools`, `cadquery` P2) and Harbor. Read this first.
 3. **`baselines.md`** — the baseline families, what is implemented, what was run,
    and what is stale.
+4. **`decisions.md`** — the consolidated ADR log (**D-E1**–**D-E8**, **D-B1**–**D-B3**).
 
 ## Scope
 

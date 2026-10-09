@@ -120,20 +120,8 @@ current row schema and the artifacts are preserved.
 
 ## Local decisions
 
-**D-B1. Shortcut baselines are reported separately from geometry-reasoning
-accuracy.** Rationale: the benchmark's claim is that geometry rows are not
-answerable by syntax shortcuts, so mixing the two would hide the failure.
-Consequence: baseline tables must name the slice and schema they were measured on;
-pre-graph-first numbers are `stale`, not current.
-
-**D-B2. The oracle is a key-path check, not a capability result.** Rationale: it
-prints the answer it is given. Consequence: oracle at 1.0 is never reported as a
-LLM model baseline; it is cited only as grader/key evidence.
-
-**D-B3. LLM model baselines name the slice.** Rationale: rc10 is 0-hop and easy, while
-the thesis target is the hard (3+ hop) slice; an unlabeled "65%" is misleading.
-Consequence: every LLM model number in this doc carries its slice; the hard-slice
-big LLM model number remains `[assumed]`/unrecorded (`docs/development-context.md`).
+Consolidated in [`decisions.md`](decisions.md): **D-B1** (shortcut baselines reported separately),
+**D-B2** (the oracle is a key-path check), **D-B3** (LLM-model baselines name the slice).
 
 ## Open questions
 

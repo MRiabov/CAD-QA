@@ -266,27 +266,8 @@ results rather than repeating the plan.
 
 ## 10. Decisions (evaluation)
 
-- **D-E1** `numpy` primary; `no_tools`/`cadquery` P2. **D-E2** local harness and Harbor are
-  separate environments sharing the row contract, not one harness with two backends. **D-E3**
-  `run_code` is an accidental-misuse guard, not a security boundary. **D-E4** Harbor reward is a
-  scalar 0/1 exact match; diagnostics live in the artifact. (From
-  `harness.md`.)
-- **D-B1** shortcut baselines reported separately. **D-B2** oracle is a key-path check. **D-B3**
-  LLM model baselines name the slice. (From `baselines.md`.)
-- **D-E5** the transfer claim (H3) is evaluated against a suite of **existing, credible**
-  benchmarks — BenchCAD `qa_code` (P0 means), with BenchCAD `edit_code` and a text-in text-to-CAD
-  benchmark (P1 end/defect) — each on its official full split and metric, against
-  Base / format-only / answer-only controls. It is a P0 check: the only evidence that the dataset is
-  useful beyond its own split. Stale gaps (`GeoGramBench`, `QueryCAD`) are re-run or dropped.
-- **D-E6** the dataset's value is measured as a dose-response (H4): CAD-QA pass rate against the
-  independent-benchmark score, at fixed recipe and matched compute, with the
-  `preserve_general_math_and_code_reasoning` evaluation dataset as covariate.
-- **New (proposed):** one scorer for eval, rejection sampling, and reward; the
-  `preserve_general_math_and_code_reasoning` regression tolerance pre-registered at ≤2 points.
-- **D-E7** evaluation is the datasets that serve H1–H4, run at four points — baseline (untrained
-  instruct base LLM model), periodic (subset), phase-end (extensive), final (complete; the thesis
-  number); no canonical baseline slice, and "canary" is retired for "evaluation dataset". Owner:
-  §1/§6; `../datasets.md`.
+The consolidated decision log is [`decisions.md`](decisions.md): **D-E1**–**D-E8** (harness, transfer,
+and the one-scorer rule) and **D-B1**–**D-B3** (baselines). This section is now a pointer.
 
 ---
 

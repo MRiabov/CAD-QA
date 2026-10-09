@@ -72,7 +72,7 @@ re-litigate decisions already recorded in `dataset/decisions.md`,
 | ID | Claim to verify | Code / artifact | Check | GPU |
 |---|---|---|---|---|
 | TA-B1 | `run_code` cannot reach the network, cannot import `cadquery` / `os` / `subprocess` / `socket`, writes no files, and is timeout-bounded | `train_and_eval/run_code_sandbox.py`; `train_and_eval/tool_calls.py::execute_code` | `uv run pytest train_and_eval/eval/test_tool_calls.py -k "run_code or execute_code" -q`, plus a new explicit no-network assertion | no |
-| TA-B2 | "Accidental-misuse guard, not a security boundary" is acceptable for the stated threat assumptions | D-E3 (`train-and-eval/evaluation/harness.md`) | owner decision, not a check | decision |
+| TA-B2 | "Accidental-misuse guard, not a security boundary" is acceptable for the stated threat assumptions | D-E3 (`train-and-eval/evaluation/decisions.md`) | owner decision, not a check | decision |
 
 ### C. Serving parity (C4)
 
