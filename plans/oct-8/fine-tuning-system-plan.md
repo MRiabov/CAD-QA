@@ -276,7 +276,7 @@ questions resolve by running or inspection. Labels point to the owning doc.
 - `evaluation-plan.md` Q2 — canonical baseline slice: rc10 clean-100, release10k, or an immutable hard test.
 - `evaluation-plan.md` Q5 — canonical BenchCAD transfer target (full `qa_code` / Spatial Reasoning axis /
   hard family subset), and whether `edit_code` T4/T5 is in scope at 2–4B.
-- `trust-audit.md` Q1 — accept the accidental-misuse-guard threat model, or require kernel isolation before
+- `trust-audit.md` Q1 — accept the accidental-misuse-guard threat assumptions, or require kernel isolation before
   the external claim.
 - `trust-audit.md` Q3 — one tracked environment, or separate SFT and serving environments.
 - `trust-audit.md` Q4 — GPU parity + SFT re-run in Phase 0, or the top of Phase 1.
