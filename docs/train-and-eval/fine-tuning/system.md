@@ -122,11 +122,12 @@ collapse ("RL squeezes, SFT expands", ref [7]).
 (`data.md` §4):
 
 1. **Phase 1 — refocus on coding (plus easy tasks).** The base LLM model is already trained on code,
-   so coding/Python is not new — it is just not its focus. Phase 1 refocuses it on coding
-   (`expose_general_python_code`), adds a little text-to-CadQuery (`expose_cadquery_programs`), and
-   carries a **simple slice of our own tasks** (e.g. hop 0, `learn_the_cadqa_task`) as a safety net.
+   so coding/Python is not new — it is just not its focus. Phase 1 refocuses it on a **general mix**
+   (⅓ coding agent, ⅓ 3D math, ⅓ text2CAD + edits) and carries a **simple slice of our own tasks**
+   (e.g. hop 0, `learn_the_cadqa_task`) as a safety net.
 2. **Phase 2 — the CAD-QA task (new domain) + preserve.** CAD is very likely new to the base LLM model, and our
-   CAD-QA dataset certainly is. Phase 2 fine-tunes on `learn_the_cadqa_task` and CAD at scale, and
+   CAD-QA dataset certainly is. Phase 2 fine-tunes on `learn_the_cadqa_task` at scale alongside the
+   general mix — **no separate `emit_our_tool_call_format`**, since the format comes with the task — and
    shifts the objective from *eliciting* reasoning to *preserving* it (`preserve_general_math_and_code_reasoning`,
    `expose_*`).
 

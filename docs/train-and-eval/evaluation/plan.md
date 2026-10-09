@@ -167,6 +167,7 @@ Two rules:
 | Answer-only | CAD-QA answers, no reasoning | supervision format vs reasoning content |
 | CAD-QA reasoning | `learn_the_cadqa_task` | H2 capability |
 | Full primary (optional) | the full Mixed training dataset | external reasoning support |
+| General-only (H4 counter-arm) | the full general mix **without** `learn_the_cadqa_task` | isolates CAD-QA supervision from general capability (H4) |
 
 - **Claim.** CAD-QA reasoning > format-only **and** > Base on the P0 means target (BenchCAD
   `qa_code`, official split) is the transfer result; the end/defect targets corroborate the causal
@@ -175,8 +176,8 @@ Two rules:
   swept over `learn_the_cadqa_task` volume (0.5k→10k) or over checkpoints, measuring the CAD-QA pass
   rate and the external score at each point. Controls: fixed recipe and **matched compute**; the
   `preserve_general_math_and_code_reasoning` evaluation dataset as a covariate (transfer is claimed only if the external score tracks the CAD-QA
-  pass rate *at equal general capability*); and a **counter-arm** that raises general capability
-  without CAD-QA. RL, where used, is the means to extend the sweep to harder tiers
+  pass rate *at equal general capability*); and a **general-only counter-arm** (the same mix without
+  `learn_the_cadqa_task`). RL, where used, is the means to extend the sweep to harder tiers
   (`../fine-tuning/system.md` §3).
 - **Preconditions (pre-registered):** reachability pilot per target (the base LLM model must be
   low-but-nonzero; a zero floor yields no signal, a high floor means saturated); format-adaptation

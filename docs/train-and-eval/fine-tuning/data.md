@@ -185,6 +185,12 @@ quality gate (`system.md` §7) and a held-out overlap check before mixing.
 it enters a mix. Unverified third-party generation teaches the generating LLM model's errors and is
 P2/caution (`NeurIPS11092`, Gemini 2.0 Flash, 2025).
 
+**Where BenchCAD steps in.** `BenchCAD/BenchCAD` `code_gen` feeds the **text2CAD + edits** third
+(execution-verified CadQuery), while BenchCAD `qa_code` (and `edit_code`) is the **H3 transfer** target
+(`../evaluation/plan.md` §5.1). Because it is both a training corpus and the transfer benchmark, either
+keep the transfer split disjoint from the training rows or drop `code_gen` from training and use another
+CadQuery corpus.
+
 **Deferred (vision):** image→CAD and point-cloud/3D-vision sets (`CADCODER/GenCAD-Code`,
 `hhllzz/surprise-3d`, PointLLM/Cap3D, `hiyouga/geometry3k`) are **P2** — the primary base LLM model
 is text-only, so image and point-cloud inputs are not usable until a multimodal training stage.
@@ -197,10 +203,16 @@ found to be clean and non-overlapping.
 
 ## 3. The mix recipe
 
+**General tasks (the "general" share).** Split into equal thirds, so "general" is not a single blob:
+**coding agent** (⅓; general code + multi-turn tool loops — `expose_general_python_code`,
+`run_the_tool_call_loop`, and our tool format via `emit_our_tool_call_format` in the first run),
+**3D math** (⅓; `preserve_general_math_and_code_reasoning`), and **text2CAD + edits** (⅓;
+`expose_cadquery_programs` — text→CadQuery generation and edit tasks).
+
 | Mix | Role weights | Purpose |
 |---|---|---|
-| `mixed_dataset_general_and_easy_cadqa` (first run) | 70% general tasks (`emit_our_tool_call_format` + `expose_general_python_code` + `preserve_general_math_and_code_reasoning` + `expose_cadquery_programs`), 30% low-hop `learn_the_cadqa_task` (rejection-sampled) | first run: our tool format + easy task, cheapest signal |
-| `mixed_dataset_full_cadqa_training` (primary) | 40% `emit_our_tool_call_format` + `run_the_tool_call_loop`, 30% `preserve_general_math_and_code_reasoning`, 30% `learn_the_cadqa_task` | test H2, the thesis number |
+| `mixed_dataset_general_and_easy_cadqa` (first run) | 70% general (⅓ coding agent, ⅓ 3D math, ⅓ text2CAD + edits), 30% low-hop `learn_the_cadqa_task` (rejection-sampled) | first run: format + easy task, cheapest signal |
+| `mixed_dataset_full_cadqa_training` (primary) | 50% general (same thirds), 50% `learn_the_cadqa_task` | test H2, the thesis number; **no separate `emit_our_tool_call_format`** — the format is carried by `learn_the_cadqa_task` |
 
 Rationale and tradeoffs:
 
@@ -228,10 +240,10 @@ teacher API calls and must cover every Answer format × hop, so it sets the budg
 clock. **≥1,000 verified traces** is the target; the current ~300 is too few — `json`/`number`
 coverage was 0.
 
-| Training stage | Total | General tasks | `learn_the_cadqa_task` |
+| Training stage | Total | General (⅓ coding agent · ⅓ 3D math · ⅓ text2CAD + edits) | `learn_the_cadqa_task` |
 |---|---|---|---|
 | First run (`mixed_dataset_general_and_easy_cadqa`) | 1,000–2,000 | 700–1,400 | 300–600 |
-| Primary (`mixed_dataset_full_cadqa_training`) | 10,000 (5k–20k) | 6,000–7,000 | 3,000–4,000 |
+| Primary (`mixed_dataset_full_cadqa_training`) | 10,000 (5k–20k) | 5,000 | 5,000 |
 
 - **Why not larger.** Curated small sets match or beat large ones at this size: ACL 2026 (1,000
   selected traces beat random SFT from 100k), TeichAI (~4k), AnkitAI/Parable (~4.4k), and `ToolACE`

@@ -280,6 +280,19 @@ whose rationale was not recoverable.
   `mixed_dataset_general_and_easy_cadqa` (70% general tasks + 30% low-hop `learn_the_cadqa_task`,
   rejection-sampled). Detail: `data.md` §2.4, §3.
 
+## FT-D19 — The general mix is three equal thirds; the primary drops emit; the H4 ablation is general-only
+
+- **Status:** accepted (2026-10-09) — owner decision.
+- **Context:** "70% general code/CAD tasks" was ill-defined, and `emit_our_tool_call_format` was listed
+  for the second phase where the format is already carried by `learn_the_cadqa_task`.
+- **Decision:** the general share is split into equal thirds — **coding agent**, **3D math**,
+  **text2CAD + edits**. The first run is 70% general / 30% low-hop `learn_the_cadqa_task`; the primary
+  is 50/50, with **no separate `emit_our_tool_call_format`** (the format comes with the task). The H4
+  ablation is the **general-only** arm (the same mix without `learn_the_cadqa_task`).
+- **Consequences:** the mix is defined by data category, not a single "general" blob; BenchCAD `code_gen`
+  feeds the text2CAD third while BenchCAD `qa_code` is the H3 transfer target (keep them disjoint).
+  Detail: `data.md` §3; `evaluation/plan.md` §5.1.
+
 ## Open questions
 
 - **Q1.** The base-pipeline choice (D11 in `plans/oct-7/restructure-docs.md`) is recorded as FT-D11,

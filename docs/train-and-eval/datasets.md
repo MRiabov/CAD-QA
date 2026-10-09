@@ -109,8 +109,8 @@ A **Mixed training dataset** is `{dataset role → weight}`. Names are not yet c
 
 | Composition | Feeds |
 |---|---|
-| general tasks (`emit_our_tool_call_format` + `expose_general_python_code` + `preserve_general_math_and_code_reasoning` + `expose_cadquery_programs`) + low-hop `learn_the_cadqa_task` | the first run (format + easy task) |
-| `emit_our_tool_call_format` + `run_the_tool_call_loop` + `preserve_general_math_and_code_reasoning` + `learn_the_cadqa_task` | H2 (the thesis number) |
+| general (⅓ coding agent · ⅓ 3D math · ⅓ text2CAD + edits) + low-hop `learn_the_cadqa_task` | the first run (format + easy task) |
+| general (same thirds) + `learn_the_cadqa_task` (no separate `emit_our_tool_call_format`) | H2 (the thesis number) |
 
 ## Evaluation datasets by dataset role
 
