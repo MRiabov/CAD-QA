@@ -13,6 +13,9 @@ with `../../plans/oct-8/evaluation-plan.md` §5.1 (D-E5).
 H3: training on `cadqa_hop` raises BenchCAD `qa_code` accuracy beyond the Base, format-only, and
 answer-only controls, without a general-canary regression.
 
+H4 (means → end): the CAD-QA pass rate predicts the external score (dose-response), at fixed recipe
+and matched compute, with the `general` canary as covariate.
+
 ## Targets
 
 - **Means (P0) — BenchCAD `qa_code`:** official full split and metric.

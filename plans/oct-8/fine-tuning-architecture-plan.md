@@ -88,6 +88,13 @@ Two predictions this architecture commits to and must test:
   trained LLM model, is useful; without a gain on a credible external benchmark the improvement
   claim rests on an internal split and will not survive review. Suite, arms, and preconditions:
   `evaluation-plan.md` §5.1 (D-E5).
+- **H4 (means → end):** the pass rate a model reaches on the CAD-QA corpora predicts its performance
+  on the independent credible benchmark — the dataset is the **lever**, not a tutorial. Tested as a
+  dose-response at fixed recipe and matched compute, with the general canary as covariate and a
+  non-CAD-QA counter-arm: `evaluation-plan.md` §5.1 (D-E6).
+
+**Priority.** H3 (headline), H4 (strong mechanism), H2 (core means), H1 (control). The paper presents
+them in that order; the experiments run in the dependency order H1 → H4.
 
 If H1 holds and H2 fails, the honest result is "format compliance, not reasoning" — a finding, not
 a failure, and it must be reported as such (`../../docs/PRD.md` definition of done, item 3). If H1

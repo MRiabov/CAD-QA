@@ -165,6 +165,12 @@ Two rules:
 - **Claim.** CAD-QA reasoning > format-only **and** > Base on the P0 means target (BenchCAD
   `qa_code`, official split) is the transfer result; the end/defect targets corroborate the causal
   chain (comprehension → construction and fewer invalid shapes).
+- **H4 (means → end).** Test whether the CAD-QA pass rate is the *lever*: a dose-response swept over
+  `cadqa_hop` volume (0.5k→10k) or over checkpoints, measuring the CAD-QA pass rate and the external
+  score at each point. Controls: fixed recipe and **matched compute**; the `general` canary as a
+  covariate (transfer is claimed only if the external score tracks the CAD-QA pass rate *at equal
+  general capability*); and a **counter-arm** that raises general capability without CAD-QA. RL,
+  where used, is the means to extend the sweep to harder tiers (`fine-tuning-system-plan.md` §3).
 - **Preconditions (pre-registered):** reachability pilot per target (the base LLM model must be
   low-but-nonzero; a zero floor yields no signal, a high floor means saturated); format-adaptation
   control (BenchCAD wants a JSON array of numbers — report invalid-output rate); contamination audit
@@ -240,6 +246,7 @@ results rather than repeating the plan.
 | Public/private leak audit | **P0** | a leak invalidates the benchmark |
 | External transfer harness on BenchCAD `qa_code` (primary) and `edit_code` (secondary) | **P0** | the only evidence the dataset is useful beyond its own split; peer-review gate for H3 |
 | Reachability pilot + family-disjoint BenchCAD subset | **P0** | a target the base LLM model cannot attempt yields no transfer signal |
+| H4 dose-response: CAD-QA pass rate vs external score | **P0** | proves the dataset is a lever, not a tutorial |
 | Re-run shortcut baselines on the current schema | **P1** | current baselines are `stale` |
 | Harbor big-model baseline refresh on the hard slice | **P1** | the ≤30% target refers to the hard slice, currently unrecorded |
 | Few-shot baseline | **P2** | extra comparison |
@@ -261,6 +268,9 @@ results rather than repeating the plan.
   benchmark (P1 end/defect) — each on its official full split and metric, against
   Base / format-only / answer-only controls. It is a P0 gate: the only evidence that the dataset is
   useful beyond its own split. Stale gaps (`GeoGramBench`, `QueryCAD`) are re-run or dropped.
+- **D-E6** the dataset's value is measured as a dose-response (H4): CAD-QA pass rate against the
+  independent-benchmark score, at fixed recipe and matched compute, with the `general` canary as
+  covariate.
 - **New (proposed):** one scorer for eval, rejection sampling, and reward; canary `general`
   regression tolerance pre-registered at ≤2 points.
 

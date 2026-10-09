@@ -24,6 +24,43 @@ Secondary:
   (transfer)?
 - Is the resulting reasoning concise?
 
+## Research objective and success criteria
+
+**Objective.** Close the multi-hop CAD-reasoning gap for small LLM models on an immutable, tiered,
+verifiable slice, relative to base and cost-effective baselines — and show that the capability
+transfers.
+
+**Hypotheses (H1–H4), by role and priority:**
+
+| ID | Statement | Role | Priority |
+|---|---|---|---|
+| **H3** | training on CAD-QA transfers: the LLM model improves on an independent, credible benchmark (BenchCAD `qa_code`, `edit_code`) | transfer (end) | **P0 — headline** |
+| **H4** | a given pass rate on the CAD-QA corpora predicts performance on the independent credible benchmark (the dataset is the lever) | means → end | **P0 — strong mechanism** |
+| **H2** | graph-derived supervision raises CAD-QA hard-slice accuracy beyond format-only and answer-only controls | reasoning (means) | **P0 — core** |
+| **H1** | tool-format SFT raises tool-valid rate | format | P1 — control |
+
+Full statements, designs, and confound controls: `../plans/oct-8/fine-tuning-architecture-plan.md`
+§1 and `../plans/oct-8/evaluation-plan.md` §5.1.
+
+**Success criteria (tiered).** `T` is set only after the immutable slice is measured; the gating step is
+re-measuring the base, the cost-effective baselines, and 2–3 current frontier LLM models on it.
+
+| Slice | Base | Target `T` |
+|---|---|---|
+| 1-hop | `[to measure]` | `[to measure]` |
+| 2-hop | `[to measure]` | `[to measure]` |
+| 3-hop (headline hard slice) | `[to measure]` | `[to measure]` |
+| 5-hop | `[to measure]` | `[to measure]` |
+| 6–10-hop | — | no target until rows exist |
+
+**Minimum vs strong.** Minimum (a dataset paper): a valid immutable instrument, baselines that fail,
+and a graph-derived LLM model that improves the held-out split. Strong: the gain reaches an independent
+credible benchmark (H3) and tracks the CAD-QA pass rate (H4).
+
+**Scope.** H1 and H2 are prerequisites; H3 is the peer-review gate; H4 is the mechanism. RL is a
+**means** to raise the CAD-QA pass rate on harder tiers (subject to the pass@k accessibility gate),
+not a separate claim; conciseness is deferred to future work.
+
 ## Claims and contributions
 
 - A synthetic dataset, and an open method for building it, that drives mathematical
