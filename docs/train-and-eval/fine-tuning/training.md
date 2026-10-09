@@ -233,6 +233,10 @@ traces. Use gradient checkpointing and gradient accumulation rather than a bigge
   `../../development-context.md` calls it "RTX 4080S 32 GB"; an RTX 4080S has **16 GB**, so
   that figure is wrong and should be corrected as a finding.
 - **Headroom (P2):** A100 40 GB for long-context external data.
+- **Larger rented cards (single-GPU).** We may rent an **A100 40 GB** or, where a provider offers it, a
+  **B300 (Blackwell Ultra, ~288 GB HBM3e)**. The B300 is over-provisioned for a 2.6B LoRA but shortens
+  wall-clock and raises serving/rollout batch throughput. Pick by measured time-to-result and price, not
+  peak FLOPS; state any cost figure **per GPU class** (§5.3).
 - Serving/eval bytes are the evaluation doc's concern (vLLM needs its own allocation).
 - **Keep the GPU busy (FT-D21).** Use `liquid-finetune`'s `async_eval` (`sidecar`/`reserved`, vLLM) so
   evaluation does not block training, and vLLM rollouts (`colocate`/`server`) so one engine serves
@@ -241,8 +245,12 @@ traces. Use gradient checkpointing and gradient accumulation rather than a bigge
 ### 5.3 Cost estimate
 
 The dominant cost is **teacher API calls for `learn_the_cadqa_task`** (the data doc's out-of-scope piece, but
-it sets the budget). The external mix's ingest/filter/dedup is CPU-only; a LoRA run over ~20–50k
-examples is hours on a 4090. Budget GPU by the hour and stop on the evaluation gate.
+it sets the budget). External-mix ingest/filter/dedup is CPU-only. The GPU term is **secondary and
+class-dependent**: for LoRA on a 2.6B LLM model the card is rarely the bottleneck (teacher sampling and
+evaluation rollouts dominate), so A100-vs-B300 mostly changes wall-clock, hourly rate, and serving batch
+throughput. Vendor comparisons put the **B300 (Blackwell Ultra)** at ~7x A100 BF16 compute, ~3.6x memory,
+and ~4.1x bandwidth [vendor]; confirm price/availability on the provider. Report cost **per GPU class**
+(A100 40 GB, B300), not as one number. Budget GPU by the hour and stop on the evaluation gate.
 
 ### 5.4 What Liquid ships (checked 2026-10-08)
 

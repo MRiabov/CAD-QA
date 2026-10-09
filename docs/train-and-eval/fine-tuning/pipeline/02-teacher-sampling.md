@@ -54,7 +54,10 @@ OPENROUTER_API_KEY=... uv run python train_and_eval/train/rejection_sample.py \
   `release_balance_report`; reuse `_prompt_family()`; report `passes_*_sampling_coverage`) — not a new
   taxonomy. *Open:* key an agent training trace by the row's **primary measurement scope**, or **expand** each row into
   every `(relation_family × measurement_scope)` membership (a fatter universe)? Decide from (1) the
-  money/time cost of an extra ~1,000 traces (teacher calls + GPU train/eval) and (2) the incremental
-  gain. **Provisional: scope to the lower universe (primary scope)** until those numbers exist.
+  money/time cost of an extra ~1,000 traces (teacher calls + GPU train/eval — **GPU-class-dependent**: an
+  **A100** vs a **B300** changes wall-clock, hourly rate, and batch/serving throughput; vendor
+  comparisons put the B300 at ~7x A100 BF16 compute, ~3.6x memory, ~4.1x bandwidth) and (2) the
+  incremental gain. **Provisional: scope to the lower universe (primary scope)** until those numbers
+  exist, stated per GPU class.
 - **Q2.** Teacher settings (temperature, attempts per row). The recorded **~23% success rate was the v4
   preview**; v4.1 is materially stronger, so re-measure success and per-combination coverage.
