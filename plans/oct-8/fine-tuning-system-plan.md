@@ -49,8 +49,8 @@ The scaling asset is therefore the **CAD-QA task environment + scorer** (a task 
 single exact-match reward, and the `run_code`/kernel tool surface), not the SFT corpus. SFT's job
 is narrow: get the small LLM model to emit our `submit_*` format and produce *some* successful
 rollouts — a **readiness gate, not an accuracy target** ([32]); over-doing SFT ossifies the policy
-and collapses the exploration RL needs. External general data is support (format cold-start,
-rehearsal, canaries), not the lever.
+and collapses the exploration RL needs. External general data is support (tool-schema cold-start,
+`preserve_prior_capabilities`, canaries), not the lever.
 
 ---
 
@@ -75,7 +75,7 @@ bad scorer only miscounts; in RL it is what the LLM model climbs. So the evaluat
 ```text
 [ Stage 0  verifier + eval contract ]  <- P0, gates everything
         |
-[ Stage 1  difficulty-aligned SFT ]     <- format + easy hops + Bridge for hard traces + rehearsal
+[ Stage 1  difficulty-aligned SFT ]     <- our tool schema + easy hops + Bridge for hard traces + `preserve_prior_capabilities`
         |
 [ Stage 2  sampling gate (pass@k) ]     <- measure reachability per tier; build RFT data
         |            \___ if no tier is reachable -> stop at SFT / RFT, do not run RL
@@ -90,10 +90,10 @@ off-oracle wrong-answer/formatting fixtures (TA-A2), and freeze the held-out + c
 downstream stage is trustworthy until this passes. (Owned by `evaluation-plan.md`.)
 
 **Stage 1 — difficulty-aligned SFT.** Per ref [8]: SFT should acquire not-yet-mastered skills;
-data difficulty must be aligned to the stage. Concretely: `format_tool` + easy hops first, then
-harder `cadqa_hop`; for hard teacher traces that the small LLM model cannot imitate, apply a
+data difficulty must be aligned to the stage. Concretely: `emit_our_tool_call_format` + easy hops first, then
+harder `learn_the_cadqa_task`; for hard teacher traces that the small LLM model cannot imitate, apply a
 **Bridge** transformation (rewrite the raw teacher trace into more learnable supervision) rather
-than feeding an unlearnable target. Rehearsal every stage. SFT runs only to the **readiness gate**
+than feeding an unlearnable target. `preserve_prior_capabilities` every stage. SFT runs only to the **readiness gate**
 (format holds, pass@k > 0), then stops — it is not an accuracy target ([32]).
 (Owned by the data + architecture docs.)
 
@@ -132,7 +132,7 @@ Promote the §4.1 curriculum gate from the data doc into a system-level gate:
 - **Signal to stop:** no tier is learnable → report an SFT/RFT result; RL is not indicated. This
   is a finding, not a failure (PRD definition of done, item 3).
 
-Record pass@k per tier for every checkpoint. This is also how the `cadqa_hop` difficulty tiers earn
+Record pass@k per tier for every checkpoint. This is also how the `learn_the_cadqa_task` difficulty tiers earn
 their keep: the tiers let us measure reachability, not just train in order.
 
 ---
@@ -182,7 +182,7 @@ second framework:
 
 Escalate to **verl** (the framework behind Liquid's own agentic RL) only if we reach real
 multi-turn agentic harness RL with per-step rewards. For text
-single-turn `cadqa_hop`, `liquid-finetune` GRPO is sufficient. Modal officially supports GRPO with
+single-turn `learn_the_cadqa_task`, `liquid-finetune` GRPO is sufficient. Modal officially supports GRPO with
 both TRL and verl and provides Sandboxes for rollout isolation, so either path fits our surfaces.
 
 ---
@@ -197,7 +197,7 @@ schema or the converter beyond what the mix and the canary need.
 | Field | Type | Notes |
 |---|---|---|
 | `id` | `str` | stable, content-hashed |
-| `role` | `DataRole` (StrEnum) | `format_tool`, `agent_trace`, `reasoning_distill`, `rehearsal`, `domain_code`, `domain_3d`, `cadqa_hop` |
+| `dataset_role` | `DatasetRole` (StrEnum) | `emit_our_tool_call_format`, `run_the_tool_call_loop`, `imitate_general_reasoning_style`, `preserve_prior_capabilities`, `expose_general_python_code`, `expose_cadquery_programs`, `learn_the_cadqa_task` |
 | `messages` | `list[ChatMessage]` | the conversation; `ChatMessage{role, content, tool_calls?}` maps 1:1 to Liquid's SFT JSONL |
 | `source_id` | `str` | HF repo or internal artifact |
 | `source_revision` | `str` | **commit hash**, not a branch/config name |
@@ -205,8 +205,8 @@ schema or the converter beyond what the mix and the canary need.
 | `reasoning_text` | `str \| None` | internal reasoning, kept distinct (A5 rule) |
 | `tool_call_text` | `str \| None` | the call envelope, kept distinct (A5 rule) |
 | `tools` | `list[ToolSpec]` | declared tools for the turn |
-| `answer_format` | `AnswerFormat \| None` | for `cadqa_hop` and `format_tool` |
-| `reasoning_hop_count` | `int \| None` | for `cadqa_hop` curriculum |
+| `answer_format` | `AnswerFormat \| None` | for `learn_the_cadqa_task` and `emit_our_tool_call_format` |
+| `reasoning_hop_count` | `int \| None` | for `learn_the_cadqa_task` curriculum |
 | `split` | `Split` (StrEnum) | `train` / `validation` / `test` |
 | `provenance` | `str` | the exact field mapping/transform applied, for audit |
 
@@ -227,7 +227,7 @@ owns stage 9):
 4. **Dedup + contamination.** MinHash/LSH near-dedup within and across sources; hash-exclude the
    CAD-QA held-out rows and the eval canaries. Hard failure if any canary id appears in `train`.
 5. **Sample + mix.** Per-role quotas from the data doc §3; deterministic seed; emit a mix report
-   (counts, token totals, role weights, and per-hop/per-format coverage for `cadqa_hop`).
+   (counts, token totals, role weights, and per-hop/per-format coverage for `learn_the_cadqa_task`).
 
 **No silent data loss.** Rejected/filtered rows and failed joins are recorded, not dropped
 silently.
@@ -281,7 +281,7 @@ silently.
 
 1. **Stage 0:** reconcile the scorer (one implementation) and build the off-oracle fixtures
    (evaluation doc, P0).
-2. **Stage 1:** run the cookbook canary, then `mix-format`, then `mix-full` (architecture + data
+2. **Stage 1:** run the cookbook canary, then `mixed_dataset_our_tool_format_and_replay`, then `mixed_dataset_full_cadqa_training` (architecture + data
    docs).
 3. **Stage 2:** once an SFT checkpoint exists, run the pass@k sampling gate per tier and record
    reachability. Decide RL vs RFT from that number, not from ambition.

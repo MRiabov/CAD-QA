@@ -12,7 +12,7 @@ baselines, and evaluation P0/P1/P2.
 
 **Why it is its own doc.** The evaluation surface is *not* a sub-part of training. It is the shared
 dependency that (a) scores the final thesis number, (b) generates the teacher traces through
-rejection sampling (the data doc's `cadqa_hop`), and (c) would supply the reward if RL is run.
+rejection sampling (the data doc's `learn_the_cadqa_task`), and (c) would supply the reward if RL is run.
 Training is the extra step that adds gradients and data on top of this base; evaluation adds none.
 Single-sourcing the scorer is what makes the thesis number mean anything.
 
@@ -111,7 +111,7 @@ and parser accept the gold encoding; it does **not** establish grader correctnes
 
 ## 5. Evaluation procedure
 
-- **Held-out rows.** Evaluate on a frozen, group-safe held-out slice only (never a training mix).
+- **Held-out rows.** Evaluate on an immutable, group-safe held-out slice only (never a Mixed training dataset).
 - **Metrics.** Accuracy; invalid-output rate (parse errors); missing-response rate; accuracy by
   Reasoning hop count, Answer format, and LLM harness mode; reasoning length; calibration when
   confidence is requested; and **pass@k per prompt/tier** — the RL-readiness signal
@@ -157,20 +157,21 @@ Two rules:
 | Arm | Training data | Isolates |
 |---|---|---|
 | Base | none | floor; pretraining-contamination proxy |
-| Format-only | `format_tool` + `rehearsal` | H1 format compliance |
+| Format-only | `emit_our_tool_call_format` + `preserve_prior_capabilities` | H1 format compliance |
 | Answer-only | CAD-QA answers, no reasoning | supervision format vs reasoning content |
-| CAD-QA reasoning | `cadqa_hop` | H2 capability |
-| Mix-full (optional) | full primary mix | external reasoning support |
+| CAD-QA reasoning | `learn_the_cadqa_task` | H2 capability |
+| Full primary (optional) | the full Mixed training dataset | external reasoning support |
 
 - **Claim.** CAD-QA reasoning > format-only **and** > Base on the P0 means target (BenchCAD
   `qa_code`, official split) is the transfer result; the end/defect targets corroborate the causal
   chain (comprehension → construction and fewer invalid shapes).
-- **H4 (means → end).** Test whether the CAD-QA pass rate is the *lever*: a dose-response swept over
-  `cadqa_hop` volume (0.5k→10k) or over checkpoints, measuring the CAD-QA pass rate and the external
-  score at each point. Controls: fixed recipe and **matched compute**; the `general` canary as a
-  covariate (transfer is claimed only if the external score tracks the CAD-QA pass rate *at equal
-  general capability*); and a **counter-arm** that raises general capability without CAD-QA. RL,
-  where used, is the means to extend the sweep to harder tiers (`fine-tuning-system-plan.md` §3).
+- **H4 (means → end).** Test whether the CAD-QA pass rate tracks external transfer: a dose-response
+  swept over `learn_the_cadqa_task` volume (0.5k→10k) or over checkpoints, measuring the CAD-QA pass
+  rate and the external score at each point. Controls: fixed recipe and **matched compute**; the
+  `general` canary as a covariate (transfer is claimed only if the external score tracks the CAD-QA
+  pass rate *at equal general capability*); and a **counter-arm** that raises general capability
+  without CAD-QA. RL, where used, is the means to extend the sweep to harder tiers
+  (`fine-tuning-system-plan.md` §3).
 - **Preconditions (pre-registered):** reachability pilot per target (the base LLM model must be
   low-but-nonzero; a zero floor yields no signal, a high floor means saturated); format-adaptation
   control (BenchCAD wants a JSON array of numbers — report invalid-output rate); contamination audit
@@ -189,8 +190,8 @@ doc holds the rows.
 
 | Canary | What | Why | Frequency |
 |---|---|---|---|
-| `cadqa_heldout` | frozen held-out CAD-QA dataset rows, primary `numpy` mode | the thesis number | every run |
-| `tool_valid` | a held-out `format_tool` slice: does the emitted call parse and match? | isolates format compliance (H1) | every run |
+| `cadqa_heldout` | immutable held-out CAD-QA dataset rows, primary `numpy` mode | the thesis number | every run |
+| `tool_valid` | a held-out `emit_our_tool_call_format` slice: does the emitted call parse and match? | isolates format compliance (H1) | every run |
 | `general` | a small fixed math + instruction probe | detects forgetting | every run |
 
 Regression gate: if `general` drops beyond a pre-registered tolerance (suggest ≤2 points) while
@@ -280,7 +281,7 @@ results rather than repeating the plan.
 
 - Should the local harness import the Harbor grader (or the reverse) so the two exact-match paths
   cannot drift? (D-E2 open question.)
-- Which slice is the canonical baseline slice: rc10 clean-100, release10k, or a frozen hard test?
+- Which slice is the canonical baseline slice: rc10 clean-100, release10k, or an immutable hard test?
 - What is the exact `general` canary probe? A 500–1,000 row math+instruction set is cheap and
   enough for regression detection; a full MMLU is P2.
 - Does `liquid-finetune`'s eval config let us plug in our scorer, or do we grade its generations
@@ -298,6 +299,6 @@ results rather than repeating the plan.
    wrong-answer/formatting variants.
 3. **Freeze the held-out and canary rows** with the data doc and hard-exclude them from training.
 4. **Wire the canary procedure** (`cadqa_heldout`, `tool_valid`, `general`) into the cookbook eval
-   path once the architecture doc has the `mix-format` artifact.
+   path once the architecture doc has the `mixed_dataset_our_tool_format_and_replay` artifact.
 5. **Pilot the external transfer target** (§5.1, P0): run the base LLM model on a family-disjoint
    BenchCAD `qa_code` subset to confirm a low-but-nonzero floor before any training spend.

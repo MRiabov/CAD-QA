@@ -19,7 +19,7 @@ explicitly `blocked`; no GPU budget is spent before the offline ledger is green.
 A component is `verified` only when all of these hold:
 
 1. A check **ran and passed** — not "the code exists".
-2. It ran against a **frozen fixture or a named dataset revision**.
+2. It ran against a **immutable fixture or a named dataset revision**.
 3. The **exact command** is recorded in the owning doc's `## Verification`.
 4. The **artifact** (metrics, test output, report) is preserved and cited.
 5. The status tag in the owning doc is promoted; a passing check is the only way up.
@@ -45,7 +45,7 @@ re-litigate decisions already recorded in `dataset/decisions.md`,
   check, the evidence, the status. Not one row per file.
 - **Offline first.** Every check that can run without a GPU runs first and is committed as a
   test or a `tools/` command. `uv run` locally; the run book's `rtk uv run` wrapper on the box.
-- **Fixture first.** Checks assert on a small frozen fixture (a handful of rows covering every
+- **Fixture first.** Checks assert on a small immutable fixture (a handful of rows covering every
   answer format) rather than the live dataset, so they are fast and deterministic.
 - **GPU-gated checks are scripted, not skipped.** Parity and the SFT re-run are written now,
   marked `[blocked — needs GPU]`, and skip cleanly without CUDA. Running them is the **first
@@ -62,7 +62,7 @@ re-litigate decisions already recorded in `dataset/decisions.md`,
 
 | ID | Claim to verify | Code / artifact | Check | GPU |
 |---|---|---|---|---|
-| TA-A1 | The Query verifier's grader returns the gold answer exactly (accuracy 1.0) on the oracle key path | `cad_qa/evaluation/grade.py::grade_public_private`; `cad_qa/evaluation/parse.py::parse_answer` | frozen public/private fixture + gold submission → `grade_public_private`; assert accuracy 1.0 | no |
+| TA-A1 | The Query verifier's grader returns the gold answer exactly (accuracy 1.0) on the oracle key path | `cad_qa/evaluation/grade.py::grade_public_private`; `cad_qa/evaluation/parse.py::parse_answer` | immutable public/private fixture + gold submission → `grade_public_private`; assert accuracy 1.0 | no |
 | TA-A2 | The grader agrees on **wrong** answers and on edge encodings (decomposed `cq.Plane` text, float formatting, whitespace), not only on the gold | same | fixture of near-miss and formatting variants; assert each verdict | no |
 | TA-A3 | Eval grading and the GRPO reward agree | `train_and_eval/tool_calls.py::tool_call_matches` vs `train_and_eval/reward_cadqa.py::reward_cadqa` | parametrized fixture over every answer format, including the known divergences: `text` substring (`_reward_one`: `gold_str in pred`), float tolerance (`1e-6` absolute vs `1e-3` relative), and `boolean` (in the reward, absent from the typed contract) | no |
 | TA-A4 | The Harbor grader and the local grader give identical verdicts | `cad_qa/evaluation/grade.py` / `parse.py` vs `train_and_eval/tool_calls.py` | shared fixture through both paths (promotes the harness P2 "Query verifier parity" item into the audit) | no |
@@ -105,7 +105,7 @@ re-litigate decisions already recorded in `dataset/decisions.md`,
 | ID | Claim to verify | Code / artifact | Check | GPU |
 |---|---|---|---|---|
 | TA-F0 | The audit environment imports the generation stack | `.venv` | `uv sync`; `uv run python -c "import cadquery, pyarrow"` | no |
-| TA-F1–F7 | Each stage A1–A7 meets its stated requirement on a frozen small slice | `cad_qa/` (frozen) | the per-stage command in `docs/dataset/requirements.md`; capture the artifacts | no |
+| TA-F1–F7 | Each stage A1–A7 meets its stated requirement on a immutable small slice | `cad_qa/` (immutable) | the per-stage command in `docs/dataset/requirements.md`; capture the artifacts | no |
 | TA-F8 | The trusted path contains no LLM model or network call | `cad_qa/` | search `cad_qa/` for `openrouter`, `requests`, `httpx`, `openai` | no |
 | TA-F9 | Public rows never expose a private Query verifier field | `cad_qa/dataset/public.py::PUBLIC_FIELDS` | `uv run cadqa dataset export-public-private` and inspect the report | no |
 
@@ -171,9 +171,9 @@ re-litigate decisions already recorded in `dataset/decisions.md`,
 - **D-TA3 — The audit measures grader divergence; unifying grading is a separate decision.**
   Rationale: `grade_public_private`, `tool_call_matches`, and `reward_cadqa` are three
   implementations by design (D-E2); the audit quantifies disagreement, then we decide.
-- **D-TA4 — Fixtures are frozen and format-complete.** One small fixture covering every answer
+- **D-TA4 — Fixtures are immutable and format-complete.** One small fixture covering every answer
   format is the unit of grading trust and is committed with the checks.
-- **D-TA5 — The audit writes no behaviour change to the frozen `cad_qa/`.** Findings against
+- **D-TA5 — The audit writes no behaviour change to the immutable `cad_qa/`.** Findings against
   the generation package are recorded for Phase 1; only tests, commands, and docs are added
   now.
 

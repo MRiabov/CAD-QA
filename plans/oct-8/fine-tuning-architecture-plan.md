@@ -10,7 +10,7 @@ execution, capability preservation, the training stages and optimizer/recipe, ha
 serving/export, the surviving-code boundary (FT-D12), and training P0/P1/P2.
 
 **The data doc** (`fine-tuning-data-plan.md`) owns datasets, mix ratios, contamination/licensing,
-training order/curriculum, and the `cadqa_hop` slot. **The system doc**
+training order/curriculum, and the CAD-QA task dataset. **The system doc**
 (`fine-tuning-system-plan.md`) owns the `TrainingExample` record, its converter, and the
 ingest/normalize/quality/dedup/sample stages.
 
@@ -45,7 +45,7 @@ gate);
 Fine-tuning continues training a pretrained model on new examples, with a **much smaller** learning
 rate and a **much smaller** dataset than pretraining. Two facts drive the training recipe:
 
-1. **You are not teaching the model to think from zero.** A ~2.5B base LLM model already reasons
+1. **You are not teaching the model to think from zero.** A ~2.6B base LLM model already reasons
    and follows instructions to some degree. The recipe *steers* it toward our task shape (CAD-QA
    prompts + `submit_*` tools) and, optionally, a reasoning *style* — it does not build the
    capability.
@@ -88,10 +88,10 @@ Two predictions this architecture commits to and must test:
   trained LLM model, is useful; without a gain on a credible external benchmark the improvement
   claim rests on an internal split and will not survive review. Suite, arms, and preconditions:
   `evaluation-plan.md` §5.1 (D-E5).
-- **H4 (means → end):** the pass rate a model reaches on the CAD-QA corpora predicts its performance
-  on the independent credible benchmark — the dataset is the **lever**, not a tutorial. Tested as a
-  dose-response at fixed recipe and matched compute, with the general canary as covariate and a
-  non-CAD-QA counter-arm: `evaluation-plan.md` §5.1 (D-E6).
+- **H4 (means → end):** the pass rate an LLM model reaches on the CAD-QA task predicts its
+  performance on the independent credible benchmark (FT-D15: the lever is the task environment +
+  scorer, not the corpus). Tested as a dose-response at fixed recipe and matched compute, with the
+  general canary as covariate and a non-CAD-QA counter-arm: `evaluation-plan.md` §5.1 (D-E6).
 
 **Priority.** H3 (headline), H4 (strong mechanism), H2 (core means), H1 (control). The paper presents
 them in that order; the experiments run in the dependency order H1 → H4.
@@ -125,10 +125,11 @@ Each step below is a gate; do not start the next until the previous passes.
    fine-tunes **LFM2.5-350M** as a cheap demo — this is a **pipeline smoke test, not our model**.
    Gate: the benchmark accuracy moves. This proves the whole narrow-task loop
    data → train → merge → export → eval.
-3. **Swap in our data (`mix-format`).** Replace the cookbook dataset with our
-   `format_tool` + `rehearsal` rows in Liquid's `messages` format (built by the data doc), keep the
-   cookbook config and hyperparameters, and run the evaluation doc's `tool_valid` canary. Gate: H1.
-4. **Only if H1 holds**, expand to `mix-full` and `cadqa_hop`.
+3. **Swap in our data (`mixed_dataset_our_tool_format_and_replay`).** Replace the cookbook dataset
+   with our `emit_our_tool_call_format` + `preserve_prior_capabilities` rows in Liquid's `messages`
+   format (built by the data doc), keep the cookbook config and hyperparameters, and run the
+   evaluation doc's `tool_valid` canary. Gate: H1.
+4. **Only if H1 holds**, expand to `mixed_dataset_full_cadqa_training` and `learn_the_cadqa_task`.
 
 Rules for the whole effort:
 
@@ -158,13 +159,13 @@ it.
 
 | Mechanism | Decision | Why |
 |---|---|---|
-| **LoRA on a bf16 base, not full FT** | P0 default | matches Liquid's recipe (§5.4); full FT of 2.5B needs ~40GB and is unnecessary at this data scale |
+| **LoRA on a bf16 base, not full FT** | P0 default | matches Liquid's recipe (§5.4); full FT of 2.6B needs ~40GB and is unnecessary at this data scale |
 | **Cookbook LoRA hyperparameters** | P0 start | TRL/Liquid example: `r=16`, `lora_alpha=32`, `lora_dropout=0.05`, `target_modules=[q,k,v,o]_proj`; Unsloth adds the MLP projections (`gate/up/down_proj`) and reports better quality on small models — try both |
 | **QLoRA only as a fallback** | fallback | needed only to fit <16GB; the Unsloth cookbook uses it (`load_in_4bit=True`), but Liquid's own recipe is LoRA-bf16 and LFM ships bf16 |
 | **Completion-only loss** | P0 | fixes the B3 flat-`text` defect; implement it the **cookbook way** — train on the `messages` format and *verify* the loss is completion-only, rather than hand-rolling a masking path |
 | **Epochs = the cookbook's, not ours** | P0 | TRL/Liquid example uses 3; the Home Assistant recipe uses 5 on a narrow 350M task; TeichAI used 1 at 4B. Start from the cookbook default, then let the canary move it |
 | **Cookbook learning rates** | P0 | LoRA `2e-4`, full FT `2e-5`, DPO `5e-7` (TRL/Liquid examples); `bf16=True` |
-| **Rehearsal mix (20–30%)** | P0 | xLAM precedent; anchor general ability. The rehearsal rows are a data-doc concern |
+| **`preserve_prior_capabilities` mix (20–30%)** | P0 | xLAM precedent; anchor general ability. The `preserve_prior_capabilities` rows are a data-doc concern |
 | **Gradient checkpointing + grad accumulation** | P0 | fits memory; the cookbook uses `gradient_accumulation_steps=4`, Unsloth uses its optimized checkpointing |
 | **Canary before/after each run** | P0 | measure forgetting, do not assume it away; the procedure is the evaluation doc's |
 | **KB/activation regularization (EWC, LaLoRA)** | P2 | more moving parts than a first run warrants |
@@ -214,7 +215,7 @@ is the important artifact here. Data stages 1–5 are owned by the system plan
 
 ### 5.1 Sizing (VRAM)
 
-| Method | 2.5B model | Notes |
+| Method | 2.6B model | Notes |
 |---|---|---|
 | LoRA (bf16 base) | ~10–14 GB | **Liquid's default and our default** (§5.4); 24 GB comfortable |
 | QLoRA (4-bit NF4) | ~6–8 GB | fallback only, to fit a ≤16 GB card at moderate sequence length |
@@ -237,7 +238,7 @@ traces. Use gradient checkpointing and gradient accumulation rather than a bigge
 
 ### 5.3 Cost model
 
-The dominant cost is **teacher API calls for `cadqa_hop`** (the data doc's out-of-scope piece, but
+The dominant cost is **teacher API calls for `learn_the_cadqa_task`** (the data doc's out-of-scope piece, but
 it sets the budget). The external mix's ingest/filter/dedup is CPU-only; a LoRA run over ~20–50k
 examples is hours on a 4090. Budget GPU by the hour and stop on the canary gate.
 
@@ -268,7 +269,7 @@ Sources: `docs.liquid.ai/examples/customize-models/home-assistant`, `docs.liquid
 
 **Training and precision**
 
-- **Plain LoRA, not QLoRA.** The recipe uses LoRA on the frozen base; it runs **5 epochs on a Modal
+- **Plain LoRA, not QLoRA.** The recipe uses LoRA on the base LLM model; it runs **5 epochs on a Modal
   H100** (~$1.50 for the 350M recipe), then **merges the adapter** and converts to GGUF
   (`--quant-type q8_0`).
 - **Quantization is an export/serving step, not a training step.**
@@ -308,7 +309,7 @@ Phase 3 is expected to delete most of `train_and_eval/`, keeping:
 
 Still unconfirmed: `run_code_sandbox.py` + `eval/`, and the CLI/orchestrator (`cli.py`,
 `experiment.py`, `harbor.py`). Deletion is destructive and is done on a branch with the audit as
-justification; `dataset/` stays frozen (DD-01). Detail: FT-D12 in
+justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
 `../../docs/train-and-eval/fine-tuning/decisions.md`.
 
 ---
@@ -366,4 +367,4 @@ justification; `dataset/` stays frozen (DD-01). Detail: FT-D12 in
    merge/export GGUF → benchmark). This proves the data→train→export→eval path we will actually use.
 3. Confirm the FT-D12 boundary (what else survives besides the loader, the typed tool contract, and
    the grader — the last owned by the evaluation doc).
-4. Once the data doc delivers the `mix-format` JSONL, run the `tool_valid` canary (evaluation doc).
+4. Once the data doc delivers the `mixed_dataset_our_tool_format_and_replay` JSONL, run the `tool_valid` canary (evaluation doc).
