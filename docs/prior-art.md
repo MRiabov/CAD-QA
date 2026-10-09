@@ -186,7 +186,7 @@ variable from the recipe variable.
 
 **Status:** recorded 2026-10-08 from a targeted pass on RL post-training for small tool-calling
 LLM models. Motivated by the question "will a raw SFT-then-GRPO run work here". The answer is
-**no as-is**, and the fix is a system (`plans/oct-8/fine-tuning-system-plan.md`).
+**no as-is**, and the fix is a system (`train-and-eval/fine-tuning/system.md`).
 
 **GRPO needs something left to learn.** A controlled web-agent study [20] establishes a *null*:
 GRPO adds no credible gain on tasks the supervised LLM model has already mastered, and 22 points

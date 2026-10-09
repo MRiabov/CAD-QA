@@ -33,7 +33,7 @@ and then explains it at the level of individual weight groups.
   on a tier the SFT policy already clears (or can never clear), a group-relative advantage has no
   signal. It is not bad luck.
 - It converts our RL plan into a **conditional** one: RL only on tiers that are *reachable but not
-  mastered*. Hence the pass@k sampling gate (`fine-tuning-system-plan.md` §3).
+  mastered*. Hence the pass@k sampling gate (`../train-and-eval/fine-tuning/system.md` §3).
 - It corroborates the controlled tool-calling result [19] that SFT-then-GRPO is rarely worth it
   under a matched budget.
 

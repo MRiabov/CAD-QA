@@ -39,8 +39,8 @@ transfers.
 | **H2** | graph-derived supervision raises CAD-QA hard-slice accuracy beyond format-only and answer-only controls | reasoning (means) | **P0 — core** |
 | **H1** | tool-format SFT raises tool-valid rate | format | P1 — control |
 
-Full statements, designs, and confound controls: `../plans/oct-8/fine-tuning-architecture-plan.md`
-§1 and `../plans/oct-8/evaluation-plan.md` §5.1.
+Full statements, designs, and confound controls: `train-and-eval/fine-tuning/training.md`
+§1 and `train-and-eval/evaluation/plan.md` §5.1.
 
 **Success criteria (tiered).** `T` is set only after the immutable slice is measured; the gating step is
 re-measuring the base, the cost-effective baselines, and 2–3 current frontier LLM models on it.

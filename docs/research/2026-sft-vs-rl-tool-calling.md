@@ -66,7 +66,7 @@ load-bearing**.
 
 ## Why it matters for CAD-QA
 
-- Directly supports the plan's **SFT + LoRA default** (`fine-tuning-architecture-plan.md`, H1) and
+- Directly supports the plan's **SFT + LoRA default** (`../train-and-eval/fine-tuning/training.md`, H1) and
   its decision to **defer GRPO/RL to P2**: combining SFT and GRPO gives no consistent benefit under
   a matched budget, which matches the recorded CAD-QA GRPO collapse and refs [7]/[8].
 - "Corpus choice matters as much as the method" validates treating the data pipeline as the main

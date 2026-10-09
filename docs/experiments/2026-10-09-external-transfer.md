@@ -6,7 +6,7 @@ Date: 2026-10-09 · Status: planned (not run)
 
 Test whether graph-derived CAD-QA supervision transfers to existing, credible external benchmarks
 (H3). Means target: BenchCAD `qa_code`. End/defect: BenchCAD `edit_code`, `Text2CAD-Bench`. Owned
-with `../../plans/oct-8/evaluation-plan.md` §5.1 (D-E5).
+with `../train-and-eval/evaluation/plan.md` §5.1 (D-E5).
 
 ## Hypothesis
 

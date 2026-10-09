@@ -1,10 +1,9 @@
-# Evaluation plan (2026-10-08)
+# Evaluation
 
-**Status:** draft, 2026-10-08. This is the evaluation companion to
-`fine-tuning-architecture-plan.md` (training) and `fine-tuning-data-plan.md` (data). Evaluation is
-**not fine-tuning-specific** — the same harness, scorer, and baselines score the base LLM model, the
-tuned LLM model, and the cost-effective external models through Harbor. Written in the primary
-checkout per the repo-local rule in `plans/oct-7/restructure-docs.md` §0.
+**Status:** active, 2026-10-09. The evaluation companion to `../fine-tuning/training.md` (training)
+and `../fine-tuning/data.md` (data). Evaluation is **not fine-tuning-specific** — the same harness,
+scorer, and baselines score the base LLM model, the tuned LLM model, and the cost-effective external
+models through Harbor.
 
 **This doc owns — the shared evaluation base:** the LLM harness and its modes, the tool-call and
 answer surface, the scorer, the evaluation-dataset procedure, grading reconciliation, judge independence,
@@ -19,21 +18,21 @@ Single-sourcing the scorer is what makes the thesis number mean anything.
 **Shared interfaces, single-sourced:**
 
 - **Format contract** (Liquid `messages` SFT JSONL, and the native tool-call tokens) — owned by
-  `fine-tuning-architecture-plan.md`.
-- **`TrainingExample` + converter** — owned by `fine-tuning-system-plan.md`.
+  `../fine-tuning/training.md`.
+- **`TrainingExample` + converter** — owned by `../fine-tuning/system.md`.
 - **Evaluation-dataset procedure** — owned here; the dataset rows are produced and held by the data doc.
 - **H1/H2** — owned by the architecture doc; the mixes they test are defined by the data doc.
 
-**Related docs.** `../../docs/train-and-eval/evaluation/harness.md` and `baselines.md` (current
-descriptive docs); `../../docs/train-and-eval/fine-tuning/decisions.md`; `../../plans/oct-8/trust-audit.md`
-(Phase 0 audit units TA-A*, TA-C*); `../../docs/PRD.md` (evaluation contract).
+**Related docs.** `harness.md` and `baselines.md` (current
+descriptive docs); `../fine-tuning/decisions.md`; `../../../plans/oct-8/trust-audit.md`
+(Phase 0 audit units TA-A*, TA-C*); `../../PRD.md` (evaluation contract).
 
 ---
 
 ## 1. What "evaluation" means here
 
 **Evaluation is the set of datasets that serve H1–H4.** Each is an **evaluation dataset** with a
-dataset role (`../../docs/train-and-eval/datasets.md`), composed across Difficulty tiers. Each is run
+dataset role (`../datasets.md`), composed across Difficulty tiers. Each is run
 at four points in the training pipeline: **baseline** (the untrained instruct base LLM model — the
 floor), **periodic** (during a phase, on a subset), **phase-end** (end of a phase, more extensive),
 and **final** (after the last phase, the complete immutable thesis number). All are hard-excluded from
@@ -62,7 +61,7 @@ implementation** — a recorded defect (see §4).
 ## 2. LLM harness modes
 
 An LLM harness mode is which compute tools the LLM model gets. All modes have no access to CadQuery: no
-kernel, no network. Detail and status: `../../docs/train-and-eval/evaluation/harness.md`.
+kernel, no network. Detail and status: `harness.md`.
 
 - **`numpy` (primary, P0).** Submit tools plus the sandboxed `run_code` (Python + NumPy + `math`).
   This mode gates the thesis claims.
@@ -84,7 +83,7 @@ The `run_code` execution path is `train_and_eval/run_code_sandbox.py` (`python -
 - **The native tool-call spelling is base-specific.** The evaluation harness must be re-pointed at
   the chosen base's tokens: for LFM2.5, `<|tool_call_start|>`/`<|tool_call_end|>` with Pythonic
   calls by default. The gemma `<|tool_call>` spelling does not transfer (FT-D3;
-  `../../docs/development-context.md` "Tool-call and answer-submission format churn"). This is why
+  `../../development-context.md` "Tool-call and answer-submission format churn"). This is why
   the harness, not just the data, must change when the base changes.
 
 ---
@@ -108,7 +107,7 @@ Answer format that the typed contract omits — the union is the target.
 divergent scorer is optimized, not merely mis-counted. Query verifier audits find self-agreement as low
 as 53.8% and two configurations of the same library disagreeing on 49.9% of pairs ([24]); the
 numeric/coordinate formats need an explicit equivalent-answer (metamorphic) test. See
-`fine-tuning-system-plan.md` §4 and FT-D14.
+`../fine-tuning/system.md` §4 and FT-D14.
 
 **Oracle is not correctness.** The oracle key path returning 1.0 proves the public/private merge
 and parser accept the gold encoding; it does **not** establish grader correctness on wrong answers
@@ -122,7 +121,7 @@ and parser accept the gold encoding; it does **not** establish grader correctnes
 - **Metrics.** Accuracy; invalid-output rate (parse errors); missing-response rate; accuracy by
   Reasoning hop count, Answer format, and LLM harness mode; reasoning length; calibration when
   confidence is requested; and **pass@k per prompt/tier** — the RL-readiness signal
-  (`fine-tuning-system-plan.md` §3).
+  (`../fine-tuning/system.md` §3).
 - **Judge independence.** No LLM model in the trusted grading path (DD-03). Grading is exact-match
   code; the teacher only produces training traces, never evaluated answers.
 - **Public/private hygiene.** `grading/no_cadquery_access.py::no_cadquery_access_request_audit` fails on any
@@ -148,7 +147,7 @@ Two rules:
 
 | Role | Benchmark | In → output | Modality | Tier |
 |---|---|---|---|---|
-| Means | BenchCAD `qa_code` (`../../docs/research/2026-benchcad.md`, ref [33]) | CadQuery program + numeric question → number | text-in | **P0** |
+| Means | BenchCAD `qa_code` (`../../research/2026-benchcad.md`, ref [33]) | CadQuery program + numeric question → number | text-in | **P0** |
 | End | BenchCAD `edit_code` T4/T5 | instruction + program → edited program | code-in | P1 |
 | End | `Text2CAD-Bench` (arXiv:2605.18430) | text → CadQuery program | text-in | P1, reachability-gated |
 | End / defect | `Text-to-CadQuery` (arXiv:2505.06507); `CAD-Editor` (ICML 2025) | text → CadQuery program; text edit | text-in | P1 |
@@ -178,7 +177,7 @@ Two rules:
   `preserve_general_math_and_code_reasoning` evaluation dataset as a covariate (transfer is claimed only if the external score tracks the CAD-QA
   pass rate *at equal general capability*); and a **counter-arm** that raises general capability
   without CAD-QA. RL, where used, is the means to extend the sweep to harder tiers
-  (`fine-tuning-system-plan.md` §3).
+  (`../fine-tuning/system.md` §3).
 - **Preconditions (pre-registered):** reachability pilot per target (the base LLM model must be
   low-but-nonzero; a zero floor yields no signal, a high floor means saturated); format-adaptation
   control (BenchCAD wants a JSON array of numbers — report invalid-output rate); contamination audit
@@ -220,7 +219,7 @@ rows, a disjoint dataset, or a synthetic set.
 
 - **Shortcut families** must be reported separately from geometry-reasoning accuracy (D-B1), and
   re-run on the current row schema before any number is quoted. Current state is `stale`
-  (`../../docs/train-and-eval/evaluation/baselines.md`).
+  (`baselines.md`).
 - **Cost-effective LLM model runs** via Harbor; every number names its slice (D-B3). The recorded
   65/63/59% are the **rc10 clean-100 (0-hop, easy)** slice, not the hard target slice.
 - **Oracle / tool-assisted** is a key-path/upper-bound check, never an LLM model baseline (D-B2).
@@ -270,7 +269,7 @@ results rather than repeating the plan.
   separate surfaces sharing the row contract, not one harness with two backends. **D-E3**
   `run_code` is an accidental-misuse guard, not a security boundary. **D-E4** Harbor reward is a
   scalar 0/1 exact match; diagnostics live in the artifact. (From
-  `../../docs/train-and-eval/evaluation/harness.md`.)
+  `harness.md`.)
 - **D-B1** shortcut baselines reported separately. **D-B2** oracle is a key-path check. **D-B3**
   LLM model baselines name the slice. (From `baselines.md`.)
 - **D-E5** the transfer claim (H3) is evaluated against a suite of **existing, credible**
@@ -286,7 +285,7 @@ results rather than repeating the plan.
 - **D-E7** evaluation is the datasets that serve H1–H4, run at four points — baseline (untrained
   instruct base LLM model), periodic (subset), phase-end (extensive), final (complete; the thesis
   number); no canonical baseline slice, and "canary" is retired for "evaluation dataset". Owner:
-  §1/§6; `../../docs/train-and-eval/datasets.md`.
+  §1/§6; `../datasets.md`.
 
 ---
 
@@ -307,7 +306,7 @@ results rather than repeating the plan.
   that serve H1–H4**, each composed across Difficulty tiers and run at four points — baseline, periodic
   (subset), phase-end (extensive), final (complete). Baselines run on those same evaluation datasets,
   composed across Difficulty tiers; per-dataset composition is
-  `../../docs/train-and-eval/datasets.md`.
+  `../datasets.md`.
 
 ---
 

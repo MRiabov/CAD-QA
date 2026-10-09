@@ -1,20 +1,18 @@
-# Fine-tuning architecture (training) — plan (2026-10-08)
+# Fine-tuning — training
 
-**Status:** draft, 2026-10-08. First of a four-doc set: this doc (training),
-`fine-tuning-data-plan.md` (data + schedule), `fine-tuning-system-plan.md` (post-training loop +
-data preparation), and `evaluation-plan.md` (evaluation/harness). Written in the primary checkout per
-the repo-local rule in `plans/oct-7/restructure-docs.md` §0.
+**Status:** active, 2026-10-09. First of four fine-tuning/evaluation docs: this doc (training),
+`data.md`, `system.md`, and `../evaluation/plan.md`.
 
 **This doc owns — how we train the LLM model:** base LLM model and stack choice, cookbook-first
 execution, capability preservation, the training stages and optimizer/recipe, hardware/budget and
 serving/export, the surviving-code boundary (FT-D12), and training P0/P1/P2.
 
-**The data doc** (`fine-tuning-data-plan.md`) owns datasets, mix ratios, contamination/licensing,
+**The data doc** (`data.md`) owns datasets, mix ratios, contamination/licensing,
 training order/curriculum, and the CAD-QA task dataset. **The system doc**
-(`fine-tuning-system-plan.md`) owns the `TrainingExample` record, its converter, and the
+(`system.md`) owns the `TrainingExample` record, its converter, and the
 ingest/normalize/quality/dedup/sample stages.
 
-**The evaluation doc** (`evaluation-plan.md`) owns the LLM harness and modes, the
+**The evaluation doc** (`../evaluation/plan.md`) owns the LLM harness and modes, the
 tool-call surface, the scorer, the evaluation-dataset procedure, grading reconciliation, judge independence,
 and baselines.
 
@@ -32,11 +30,11 @@ agent-training-trace normalization, SFT, GRPO, evaluation, or vLLM code will be 
 `tool_calls.py` itself is only partly reusable: its typed definitions/mapper/matcher survive; its
 gemma-native rendering and parsing are re-authored.
 
-**Related docs.** `fine-tuning-system-plan.md` (the staged post-training loop and the RL-readiness
+**Related docs.** `system.md` (the staged post-training loop and the RL-readiness
 gate);
-`../../docs/prior-art.md` (external evidence, refs [1]–[32]);
-`../../docs/PRD.md` (research contract); `../../docs/train-and-eval/fine-tuning/decisions.md`
-(FT-D* decisions); `../../plans/oct-8/trust-audit.md` (Phase 0 gate).
+`../../prior-art.md` (external evidence, refs [1]–[32]);
+`../../PRD.md` (research contract); `decisions.md`
+(FT-D* decisions); `../../../plans/oct-8/trust-audit.md` (Phase 0 gate).
 
 ---
 
@@ -52,7 +50,7 @@ rate and a **much smaller** dataset than pretraining. Two facts drive the traini
 2. **Everything you train on, the LLM model learns to imitate — including the format and even the
    question text.** If a training example includes the prompt and it is not masked, the LLM model also
    learns to *produce the prompt*, a known cause of over-generation. The flat `text` column in step
-   B3 (`../../docs/train-and-eval/fine-tuning/pipeline/03-trace-normalization.md`) is exactly this
+   B3 (`pipeline/03-trace-normalization.md`) is exactly this
    bug: masking is currently undecided and delegated to trainer defaults.
 
 The distinction that matters for training (versus evaluation): **SFT scores only to admit an agent training trace
@@ -63,10 +61,10 @@ and train the LLM model on its own generations.** See the evaluation doc §1.
 
 ## 1. The core bet, stated plainly
 
-`../../docs/prior-art.md` records (refs [1]–[4]) that **base LLM model choice predicts little; the
+`../../prior-art.md` records (refs [1]–[4]) that **base LLM model choice predicts little; the
 recipe and the data predict most**, and that small LLM models can be driven to 90–98% on narrow
 tool-calling tasks. CAD-QA's recorded "lots of effort, little gain"
-(`../../docs/development-context.md`) is therefore most likely a **recipe/data** problem, not a base
+(`../../development-context.md`) is therefore most likely a **recipe/data** problem, not a base
 problem. So we invest in:
 
 - **Format compliance** (teach the native tool-call format and the `submit_*` contract),
@@ -87,17 +85,17 @@ Two predictions this architecture commits to and must test:
   format-only, and answer-only controls. This is the evidence that the dataset, not only the
   trained LLM model, is useful; without a gain on a credible external benchmark the improvement
   claim rests on an internal split and will not survive review. Suite, arms, and preconditions:
-  `evaluation-plan.md` §5.1 (D-E5).
+  `../evaluation/plan.md` §5.1 (D-E5).
 - **H4 (means → end):** the pass rate an LLM model reaches on the CAD-QA task predicts its
   performance on the independent credible benchmark (FT-D15: the lever is the task environment +
   scorer, not the corpus). Tested as a dose-response at fixed recipe and matched compute, with the
-  `preserve_general_math_and_code_reasoning` evaluation dataset as covariate and a non-CAD-QA counter-arm: `evaluation-plan.md` §5.1 (D-E6).
+  `preserve_general_math_and_code_reasoning` evaluation dataset as covariate and a non-CAD-QA counter-arm: `../evaluation/plan.md` §5.1 (D-E6).
 
 **Priority.** H3 (headline), H4 (strong mechanism), H2 (core means), H1 (control). The paper presents
 them in that order; the experiments run in the dependency order H1 → H4.
 
 If H1 holds and H2 fails, the honest result is "format compliance, not reasoning" — a finding, not
-a failure, and it must be reported as such (`../../docs/PRD.md` definition of done, item 3). If H1
+a failure, and it must be reported as such (`../../PRD.md` definition of done, item 3). If H1
 and H2 hold but H3 fails, the dataset improves its own split but does not transfer; that is a
 recorded finding, and the dataset's usefulness then rests on the benchmark-validity package. The
 mixes that test H1 and H2 are defined in the data doc.
@@ -183,7 +181,7 @@ evaluation dataset.
 
 Stack-neutral at the contract level (works for `liquid-finetune`, TRL, or Unsloth). The **contract**
 is the important artifact here. Data stages 1–5 are owned by the system plan
-(`fine-tuning-system-plan.md` §7); the evaluation doc owns pipeline stage 9.
+(`system.md` §7); the evaluation doc owns pipeline stage 9.
 
 ```text
 [data registry] -> [ingest] -> [normalize] -> [quality gate] -> [dedup/contamination]
@@ -197,7 +195,7 @@ is the important artifact here. Data stages 1–5 are owned by the system plan
 6. **Convert (do not hand-render).** Emit Liquid's `messages` SFT JSONL and let the cookbook /
    `liquid-finetune` apply the chat template and tokenization. The native tool-call spelling is
    base-specific and must be re-derived, never reused (FT-D3; the format churn in
-   `../../docs/development-context.md`). For LFM2.5: ChatML-like template (`<|startoftext|>`,
+   `../../development-context.md`). For LFM2.5: ChatML-like template (`<|startoftext|>`,
    `<|im_start|>`+role, `<|im_end|>`), tool calls in `<|tool_call_start|>`/`<|tool_call_end|>`, and
    **Pythonic calls by default** — so the `submit_*` answer tools must either be accepted as
    Pythonic or forced to JSON with "Output function calls as JSON" in the system prompt. This
@@ -222,7 +220,7 @@ is the important artifact here. Data stages 1–5 are owned by the system plan
 | Full FT | ~40 GB | **not** needed |
 
 Add headroom for activation at the CAD-QA agent training trace length (SFT was `SEQ=6144`,
-`../../docs/train-and-eval/fine-tuning/pipeline/04-sft.md`) and for longer external reasoning
+`pipeline/04-sft.md`) and for longer external reasoning
 traces. Use gradient checkpointing and gradient accumulation rather than a bigger card.
 
 ### 5.2 Recommendation
@@ -231,7 +229,7 @@ traces. Use gradient checkpointing and gradient accumulation rather than a bigge
 - **Primary self-managed:** a single **24 GB card (RTX 4090)** on a spot/on-demand Vast.ai instance
   running **LoRA on the bf16 base**; ~$0.35–0.60/hr.
 - **Floor:** a **16 GB RTX 4080S** is sufficient for **QLoRA** at capped sequence length. Note:
-  `../../docs/development-context.md` calls it "RTX 4080S 32 GB"; an RTX 4080S has **16 GB**, so
+  `../../development-context.md` calls it "RTX 4080S 32 GB"; an RTX 4080S has **16 GB**, so
   that figure is wrong and should be corrected as a finding.
 - **Headroom (P2):** A100 40 GB for long-context external data.
 - Serving/eval bytes are the evaluation doc's concern (vLLM needs its own allocation).
@@ -296,7 +294,7 @@ Sources: `docs.liquid.ai/examples/customize-models/home-assistant`, `docs.liquid
   (e.g. LFM2.5-1.2B-Instruct `temperature=0.1`, `top_k=50`, `repetition_penalty=1.05`), and a
   dataset validator. Adopting LFM inherits the format contract instead of hand-rolling it — the
   exact axis where the Aug-2026 gemma work burned effort
-  (`../../docs/development-context.md` "Tool-call and answer-submission format churn"). The
+  (`../../development-context.md` "Tool-call and answer-submission format churn"). The
   tradeoff is the FT-D11 lock-in: the `submit_*` rendering is authored for these tokens and is not
   portable.
 
@@ -315,7 +313,7 @@ Phase 3 is expected to delete most of `train_and_eval/`, keeping:
 Still unconfirmed: `run_code_sandbox.py` + `eval/`, and the CLI/orchestrator (`cli.py`,
 `experiment.py`, `harbor.py`). Deletion is destructive and is done on a branch with the audit as
 justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
-`../../docs/train-and-eval/fine-tuning/decisions.md`.
+`decisions.md`.
 
 ---
 
@@ -326,10 +324,10 @@ justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
 | Reproduce the Liquid SFT example verbatim (`smoltalk`, Modal) end to end | **P0** | proves the toolchain/GPU/HF path before CAD-QA data; de-risks a first-time pipeline author (§2) |
 | Reproduce the Home Assistant loop (synthetic data → train → merge → export → benchmark) | **P0** | proves the full narrow-task loop the cookbook provides |
 | Completion-only loss verified on the `messages` format | **P0** | fixes the B3 flat-`text` defect the cookbook way, without hand-rolling masking |
-| Re-author the `[answer contract]` / `submit_*` rendering for LFM2.5 native tool tokens | **P0** | base-specific; the exact Aug-2026 failure mode (`development-context.md`) |
+| Re-author the `[answer contract]` / `submit_*` rendering for LFM2.5 native tool tokens | **P0** | base-specific; the exact Aug-2026 failure mode (`../../development-context.md`) |
 | Cookbook LoRA recipe (`r=16`, `alpha=32`, `lr=2e-4`, cookbook epochs) on bf16 | **P0** | baseline that does not forget; matches Liquid (§5.4) |
 | Merge + GGUF export scripted from the cookbook | **P0** | the current repo has no merge step (FT-D10/TA-D2) |
-| DPO / GRPO second training stage | **P2** | FT-D8 ordering, superseded by FT-D13: run GRPO only after the Training stage 2 pass@k gate shows a reachable tier (`fine-tuning-system-plan.md`) |
+| DPO / GRPO second training stage | **P2** | FT-D8 ordering, superseded by FT-D13: run GRPO only after the Training stage 2 pass@k gate shows a reachable tier (`system.md`) |
 | NB-LoRA / EWC / replay-buffer forgetting control | **P2** | only if the evaluation datasets show real regression |
 | Multi-base sweep (Qwen3.5-2B, LFM2.5-2.6B, Llama-3.2-3B) | **P2** | hold recipe fixed; adopting another base leaves the cookbook |
 
@@ -338,7 +336,7 @@ justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
 ## 8. Decisions still to make (training)
 
 1. **Base LLM model.** Cookbook-first means **LFM2.5** — 2.6B as primary, 1.2B for the cheap
-   evaluation run. The `prior-art.md` shortlist (Qwen3.5-2B, Llama-3.2-3B, Phi-4-mini, Gemma 4 E2B/E4B) is
+   evaluation run. The `../../prior-art.md` shortlist (Qwen3.5-2B, Llama-3.2-3B, Phi-4-mini, Gemma 4 E2B/E4B) is
    deferred to the P2 multi-base sweep.
 2. **Fine-tuning stack.** FT-D11 proposes `liquid-finetune` + LFM2.5, and Liquid's docs name LEAP
    Finetune the recommended stack. Recommendation: **adopt `liquid-finetune` and its cookbook
@@ -359,7 +357,7 @@ justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
 - **Q2.** Does the LFM2.5 chat template + LEAP pass a custom `submit_*` tool list through unchanged, and do
   we accept Pythonic calls or force JSON via the system prompt? `[unknown]`.
 - **Q3.** LoRA-bf16 is the default (§5.4); does QLoRA change the outcome on the evaluation dataset at this scale? The repo
-  `04-sft.md` records a code/narrative conflict (4-bit vs 16-bit) from the gemma runs; settle it
+  `pipeline/04-sft.md` records a code/narrative conflict (4-bit vs 16-bit) from the gemma runs; settle it
   with a measured A/B on the evaluation dataset.
 
 ---

@@ -34,7 +34,7 @@ also release a 111-question CAD question-answering benchmark.
 The GPT-4o 44/111 figure is from 2024, and the benchmark itself predates GeoGramBench. Frontier
 capability moved sharply since — BenchCAD Vision2Code rose from about 0.3 to 0.95+ in roughly six
 months — so any saturation statement here is `[stale — verify or drop]`: re-run the current frontier
-before using QueryCAD as a transfer target (`plans/oct-8/evaluation-plan.md` §5.1).
+before using QueryCAD as a transfer target (`../train-and-eval/evaluation/plan.md` §5.1).
 
 ## Why it matters for CAD-QA
 

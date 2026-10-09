@@ -35,7 +35,7 @@ step count, across three levels:
 The "below 50%" frontier figure is from May 2025. Frontier capability moved sharply since — BenchCAD
 Vision2Code rose from about 0.3 to 0.95+ in roughly six months — so the gap is
 `[stale — verify or drop]`: re-run the current frontier on the 500 problems before using
-GeoGramBench as a transfer target (`plans/oct-8/evaluation-plan.md` §5.1).
+GeoGramBench as a transfer target (`../train-and-eval/evaluation/plan.md` §5.1).
 
 ## Why it matters for CAD-QA
 

@@ -44,8 +44,12 @@ docs/
       00-overview.md            # DAG + stage IO contract
       NN[a-z]-<slug>.md         # 01-source-ingestion.md, 01a-…, 04c-…
   train-and-eval/
+    datasets.md                   # dataset → DatasetRole assignment
     fine-tuning/
       README.md
+      training.md                 # base, stack, capability preservation, hardware
+      data.md                     # dataset roles, mix recipe, order, governance
+      system.md                   # post-training loop + data preparation
       requirements.md
       decisions.md
       pipeline/
@@ -53,6 +57,7 @@ docs/
         NN[a-z]-<slug>.md
     evaluation/
       README.md
+      plan.md                     # harness, scorer, evaluation datasets, H3/H4 transfer
       harness.md
       baselines.md
   paper/

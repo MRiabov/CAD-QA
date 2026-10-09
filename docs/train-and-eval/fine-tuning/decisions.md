@@ -139,7 +139,7 @@ whose rationale was not recoverable.
     (`training_type: grpo`, TRL v1 `GRPOTrainer`, vLLM rollouts, a `rewards/` Python-callable
     registry, and an optional OpenEnv multiturn block), so the Phase 3 stack covers the whole
     post-training loop without a second RL framework. See
-    `plans/oct-8/fine-tuning-system-plan.md`.
+    `system.md`.
 - Detail: [`../../prior-art.md`](../../prior-art.md) (LFM2.5 finding), research notes
   `../../research/2026-distil-labs-15-small-models-fine-tuning.md` and
   `../../research/2026-distil-labs-tool-calling-families.md`.
@@ -164,7 +164,7 @@ whose rationale was not recoverable.
     (`render_call_tokens`, `render_tool_response`, `render_trace_steps`, `extract_tool_call`)
     are base-specific and are re-authored for the new base LLM model's tokens (see the format
     churn recorded in `../../development-context.md`).
-  - The stack-neutral contract in `plans/oct-8/fine-tuning-system-plan.md` §7 is exactly the
+  - The stack-neutral contract in `system.md` §7 is exactly the
     retained surface; the rest of that pipeline is new code.
   - **Boundary (partly resolved).** `train_and_eval/grading/` is the **evaluation contract**
     (parse + exact-match + metrics + baselines) and is a keep candidate; it is not training code.
@@ -179,7 +179,7 @@ whose rationale was not recoverable.
   - Deletion is destructive and is done on a branch, with the audit as the justification.
     `dataset/` stays immutable (DD-01); `train_and_eval/` does not.
 - Detail: FT-D11; `plans/oct-7/restructure-docs.md` (Code-change policy);
-  `plans/oct-8/fine-tuning-system-plan.md`.
+  `system.md`.
 
 ## FT-D13 — The post-training system is staged, not raw SFT-then-GRPO
 
@@ -191,7 +191,7 @@ whose rationale was not recoverable.
   training traces are too hard or rewards too sparse ([26]), and a dense reward term is hacked
   unless the shaping is optimality-preserving ([27]).
 - **Decision:** replace the raw two-phase plan with the staged system in
-  `plans/oct-8/fine-tuning-system-plan.md`: **Training stage 0** one-scorer + off-oracle scorer audit →
+  `system.md`: **Training stage 0** one-scorer + off-oracle scorer audit →
   **Training stage 1** difficulty-aligned SFT with a Bridge for hard training traces → **Training stage 2** a
   pass@k sampling gate that also yields rejection-sampling SFT data → **Training stage 3** GRPO with
   dynamic sampling only on reachable-but-unmastered tiers, sandboxed, with full rollout logging →
@@ -200,7 +200,7 @@ whose rationale was not recoverable.
 - **Consequences:** the thesis may end at an SFT/RFT result if no tier is learnable; that is a
   recorded finding, not a failure (`../../PRD.md` definition of done, item 3). GRPO is cheap to
   attempt (FT-D11 addendum) but only after Training stage 2 says it is indicated. Supersedes FT-D8's
-  ordering. Detail: `plans/oct-8/fine-tuning-system-plan.md` §2–§3.
+  ordering. Detail: `system.md` §2–§3.
 
 ## FT-D14 — The scorer is the reward, and is audited before RL
 
@@ -214,7 +214,7 @@ whose rationale was not recoverable.
   metamorphic (equivalent-answer) test before a `1e-3` relative rule is trusted.
 - **Consequences:** adds a hard dependency from any RL Training stage to the evaluation doc's P0 items;
   a dense reward term may only be added with optimality-preserving shaping ([27]). Detail:
-  `plans/oct-8/fine-tuning-system-plan.md` §4; `plans/oct-8/evaluation-plan.md` §4.
+  `system.md` §4; `../evaluation/plan.md` §4.
 
 ## FT-D15 — The scaling lever is the environment, not the SFT corpus
 
@@ -233,7 +233,7 @@ whose rationale was not recoverable.
 - **Consequences:** effort shifts from corpus collection to **environment/scorer engineering**;
   the pass@k gate (FT-D13) is the switch from SFT to RL; external data stays bounded and
   selectively sourced (subset pulls); the CAD-QA task dataset becomes an environment (tasks +
-  reward) as well as a dataset. Detail: `plans/oct-8/fine-tuning-system-plan.md` §0, §3;
+  reward) as well as a dataset. Detail: `system.md` §0, §3;
   `../../prior-art.md` refs [30]–[32].
 
 ## FT-D16 — The training pipeline is two phases: elicit, then preserve
@@ -248,8 +248,8 @@ whose rationale was not recoverable.
   **phase-2-only fallback** applies if phase 1 shows no measured phase-end gain.
 - **Consequences:** sequential training carries higher forgetting risk (the 2026 controlled study
   found one SFT Training stage strongest); each phase must earn its place on the phase-end
-  evaluation. Detail: `plans/oct-8/fine-tuning-system-plan.md` §2;
-  `plans/oct-8/fine-tuning-data-plan.md` §4.
+  evaluation. Detail: `system.md` §2;
+  `data.md` §4.
 
 ## Open questions
 

@@ -10,9 +10,11 @@ intent (targets, metrics, definition of done) stays in `PRD.md`.
 
 ## Reading order
 
-1. **`harness.md`** — how an LLM model is run and scored. The three LLM harness modes
+1. **`plan.md`** — the evaluation design: harness modes, the one-scorer rule, evaluation datasets, and
+   the H3/H4 external-transfer suite.
+2. **`harness.md`** — how an LLM model is run and scored. The three LLM harness modes
    (`numpy` primary, `no_tools`, `cadquery` P2) and Harbor. Read this first.
-2. **`baselines.md`** — the baseline families, what is implemented, what was run,
+3. **`baselines.md`** — the baseline families, what is implemented, what was run,
    and what is stale.
 
 ## Scope

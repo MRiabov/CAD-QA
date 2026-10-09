@@ -1,24 +1,22 @@
-# Fine-tuning data and training-regime plan (2026-10-08)
+# Fine-tuning — data and schedule
 
-**Status:** draft, 2026-10-08. Part of a four-doc set: this doc (data + schedule),
-`fine-tuning-architecture-plan.md` (training), `fine-tuning-system-plan.md` (the staged
-post-training loop and data preparation), and `evaluation-plan.md` (evaluation/harness). Written in
-the primary checkout per the repo-local rule in `plans/oct-7/restructure-docs.md` §0.
+**Status:** active, 2026-10-09. Part of four fine-tuning/evaluation docs: this doc (data + schedule),
+`training.md`, `system.md`, and `../evaluation/plan.md`.
 
 **This doc owns — which data we train on and when:** dataset roles, candidate external datasets, the
 mix recipe, training order / curriculum / SFT-vs-RL scheduling, licensing and contamination policy,
 and the CAD-QA task dataset.
 
 **The architecture doc owns — how we train the LLM model:**
-`fine-tuning-architecture-plan.md` (base LLM model and stack, cookbook-first execution, capability
+`training.md` (base LLM model and stack, cookbook-first execution, capability
 preservation, the training stages, hardware/budget, and the surviving-code boundary).
 
 **The system doc owns — the post-training loop and data preparation:**
-`fine-tuning-system-plan.md` (the Query verifier → SFT → pass@k gate → RL/distillation loop, and the
+`system.md` (the Query verifier → SFT → pass@k gate → RL/distillation loop, and the
 `TrainingExample` record, converter, and the ingest/normalize/quality/dedup/sample stages).
 
 **The evaluation doc owns — the harness and scoring:**
-`evaluation-plan.md` (LLM harness and modes, tool-call surface, the scorer, the evaluation-dataset
+`../evaluation/plan.md` (LLM harness and modes, tool-call surface, the scorer, the evaluation-dataset
 procedure, grading reconciliation, judge independence, baselines).
 
 **Shared interfaces, single-sourced:**
@@ -31,13 +29,13 @@ procedure, grading reconciliation, judge independence, baselines).
 
 **Explicitly out of scope for now.** The CAD-QA **reasoning-hop dataset** itself (the internal
 teacher-sampling of agent training traces from immutable CAD-QA dataset rows, step B2 in
-`../../docs/train-and-eval/fine-tuning/pipeline/02-teacher-sampling.md`). This doc defines a
+`pipeline/02-teacher-sampling.md`). This doc defines a
 **dataset** and its **contract** (§6), but does not plan its generation. That is the
-separate decision owed under FT-D11 (`../../docs/train-and-eval/fine-tuning/decisions.md`) and
-Phase 3 of `../../docs/development-plan.md`.
+separate decision owed under FT-D11 (`decisions.md`) and
+Phase 3 of `../../development-plan.md`.
 
-**Related docs.** `../../docs/prior-art.md` (external evidence, refs [1]–[32]);
-`../../docs/PRD.md` (research contract); `../../docs/train-and-eval/fine-tuning/decisions.md`
+**Related docs.** `../../prior-art.md` (external evidence, refs [1]–[32]);
+`../../PRD.md` (research contract); `decisions.md`
 (FT-D* decisions).
 
 ---
@@ -49,7 +47,7 @@ they are mixed at fixed ratios and evaluated separately. The external roles
 (`emit_our_tool_call_format`, `run_the_tool_call_loop`, `preserve_general_math_and_code_reasoning`,
 `preserve_prior_capabilities`, `expose_general_python_code`, `expose_cadquery_programs`) are
 **support**: a tool-schema cold-start, capability preservation, and canaries. They are not the
-scaling lever — the task environment + scorer is (`fine-tuning-system-plan.md` §0) — so collect them
+scaling lever — the task environment + scorer is (`system.md` §0) — so collect them
 selectively, not blindly.
 
 | DatasetRole | What it teaches | Internal / external | Priority |
@@ -94,7 +92,7 @@ alone is not disqualifying — `xLAM/APIGen` is still the canonical reference an
   SFT+LoRA, mixture-first plan and H1. **Caveat (contamination):** the Qwen3 base likely saw these
   public corpora in post-training (zero-shot xLAM is 66–78%), so the in-distribution magnitudes are
   upper bounds and the `emit_our_tool_call_format` evaluation dataset must not be a held-out slice of them — see
-  `../../docs/research/2026-sft-vs-rl-tool-calling.md` and the evaluation plan §6.
+  `../../research/2026-sft-vs-rl-tool-calling.md` and the evaluation plan §6.
 - ACL 2026 "Skill-Aware Data Selection and Fine-Tuning for Data-Efficient Reasoning Distillation":
   1,000 selected traces beat random SFT from a 100K corpus. Supports small, quality-filtered sets.
 
@@ -182,7 +180,7 @@ CadQuery-generation capability**.
 
 **Contamination rule:** `expose_cadquery_programs` must not leak the CAD-QA held-out programs or their generating
 corpus. Any same-area set (including an owner-authored one) carries a higher leakage risk: run the
-quality gate (`fine-tuning-system-plan.md` §7) and a held-out overlap check before mixing.
+quality gate (`system.md` §7) and a held-out overlap check before mixing.
 
 **Deferred (vision):** image→CAD and point-cloud/3D-vision sets (`CADCODER/GenCAD-Code`,
 `hhllzz/surprise-3d`, PointLLM/Cap3D, `hiyouga/geometry3k`) are **P2** — the primary base LLM model
@@ -255,13 +253,13 @@ the mechanics (epochs, mixing implementation).
   (e.g. hop 0, `learn_the_cadqa_task`); then **phase 2 (CAD-QA task + preserve)**: CAD is new, so
   `mixed_dataset_full_cadqa_training` adds `learn_the_cadqa_task` + CAD at scale, with
   `preserve_prior_capabilities` and `preserve_general_math_and_code_reasoning` as the anchors.
-  Shape and rationale: `fine-tuning-system-plan.md` §2; eval cadence: `evaluation-plan.md` §6.
+  Shape and rationale: `system.md` §2; eval cadence: `../evaluation/plan.md` §6.
 - **Phase-2-only fallback.** If phase 1 shows no measured phase-end gain, drop it and run one SFT Training stage
   over `mixed_dataset_full_cadqa_training` (the cookbook default); the 2-phase pipeline must earn its
   place on the phase-end eval (ref [19]). The `mixed_dataset_our_tool_format_and_replay` H1 probe is the
   format gate before either phase.
 - **Difficulty-aligned rows.** Order or interleave the `learn_the_cadqa_task` rows by Reasoning hop count
-  (the `0→1→2→3→5` ladder in `../../docs/development-plan.md` Phase 3 and the teacher quotas in
+  (the `0→1→2→3→5` ladder in `../../development-plan.md` Phase 3 and the teacher quotas in
   FT-02-D1). Do not front-load the hard slice.
 - **`preserve_prior_capabilities` is interleaved, not appended.** Keep the `preserve_prior_capabilities` share in every training stage, so
   general ability is anchored throughout, not restored at the end.
@@ -299,7 +297,7 @@ mechanism differs by training stage:
   a tier that never clears stalls the ladder and must be recorded, not skipped.
 - **Prerequisite.** A tier needs enough rows to train *and* a held-out slice to measure; a tier
   too thin to gate cannot be advanced safely. The per-tier held-out slice is owned by
-  `evaluation-plan.md`; the ordering and the gate live here.
+  `../evaluation/plan.md`; the ordering and the gate live here.
 
 ---
 
@@ -309,7 +307,7 @@ mechanism differs by training stage:
   A dataset without a pinned revision does not enter.
 - **Contamination policy.** CAD-QA held-out rows and the evaluation datasets are hard-excluded; any
   evaluation-dataset id appearing in `train` is a hard failure. The mechanics (quality gate, near-dedup,
-  hash-exclusion, no-silent-loss) live in `fine-tuning-system-plan.md` §7.
+  hash-exclusion, no-silent-loss) live in `system.md` §7.
 - **Licensing and provenance.** Two concerns, often conflated:
   - **AGPL-3.0** (the Fable agent training trace sets) is copyleft, **not a research restriction** — training on
     it is fine. Its obligations attach to **distribution** of the material or a derivative. That
@@ -345,7 +343,7 @@ only the dataset:
   `reasoning_hop_count` set, and (once rendered) a `submit_*` tool call.
 - **Coverage requirement:** every Answer format must have at least one agent training trace, because a format the
   teacher never produces cannot be learned (the `json`/`number` zero-coverage defect in
-  `../../docs/train-and-eval/fine-tuning/pipeline/02-teacher-sampling.md`).
+  `pipeline/02-teacher-sampling.md`).
 - **Contamination:** CAD-QA held-out rows are hard-excluded (§5).
 - **Priority:** P0, but a separate plan.
 
@@ -370,7 +368,7 @@ only the dataset:
 | `expose_cadquery_programs` text→CadQuery priming (`NeurIPS11092`, `BenchCAD` code_gen) | **P1** | so the base is not 3D-blind; text→CadQuery pairs exist |
 | `expose_cadquery_programs` image→CAD / point-cloud priming (`GenCAD-Code`, `SURPRISE3D`, PointLLM) | **P2** | not usable with a text-only base today |
 | Math/reasoning scale-up (`OpenMathReasoning`, `NuminaMath`) | **P2** | scale only if H2 holds |
-| ≥10k CAD-QA Dataset release tier | **P2** | already P2 in `development-plan.md` |
+| ≥10k CAD-QA Dataset release tier | **P2** | already P2 in `../../development-plan.md` |
 
 ---
 
@@ -417,6 +415,6 @@ only the dataset:
 1. Write the `TrainingExample` record + converter (P0), reusing the surviving `rows_loader.py` and
    the typed definitions in `tool_calls.py`; emit Liquid's `messages` JSONL.
 2. Build `mixed_dataset_our_tool_format_and_replay` from `Salesforce/xlam-function-calling-60k` + a permissive `preserve_prior_capabilities` slice,
-   with the registry/quality/dedup pass (`fine-tuning-system-plan.md` §7).
+   with the registry/quality/dedup pass (`system.md` §7).
 3. Hand the artifact to the architecture doc's cookbook run for the `emit_our_tool_call_format` evaluation dataset.
 4. Only after H1 is measured, plan `learn_the_cadqa_task` (§6) and `mixed_dataset_full_cadqa_training`.

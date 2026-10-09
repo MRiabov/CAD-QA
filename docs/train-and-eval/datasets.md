@@ -4,12 +4,12 @@
 
 **What this doc owns — the dataset → DatasetRole assignment** for training and evaluation. The mix
 recipe (dataset role → weight) and the candidate evidence (sizes, licenses, adopt/reject) are in
-`../../plans/oct-8/fine-tuning-data-plan.md` §2–§3. The assignment here is canonical; change it
+`fine-tuning/data.md` §2–§3. The assignment here is canonical; change it
 here, then propagate.
 
 **Related docs.** `../glossary.md` (**DatasetRole**, **External dataset**, **Mixed training
 dataset**, **Training stage**); `./fine-tuning/decisions.md` (FT-D1–D15);
-`./evaluation/harness.md` and `./evaluation/baselines.md`; `../../plans/oct-8/fine-tuning-data-plan.md`.
+`./evaluation/harness.md` and `./evaluation/baselines.md`; `fine-tuning/data.md`.
 
 ## Rules
 

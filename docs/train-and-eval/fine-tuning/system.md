@@ -1,7 +1,6 @@
-# Fine-tuning system plan — the post-training loop (2026-10-08)
+# Fine-tuning — post-training system
 
-**Status:** draft, 2026-10-08. Fourth doc in the oct-8 fine-tuning set. Written in the primary
-checkout per the repo-local rule in `plans/oct-7/restructure-docs.md` §0.
+**Status:** active, 2026-10-09. Fourth of four fine-tuning/evaluation docs.
 
 **This doc owns — the shape of the whole post-training system:** why a raw SFT→RL run is not
 enough, the staged loop that replaces it (Query verifier → SFT → sampling gate → RL/distillation), the
@@ -9,14 +8,14 @@ RL-readiness gate, reward/Query verifier design, sandboxed rollouts, logging, th
 **data preparation** (the `TrainingExample` record, its converter, and the
 ingest/normalize/quality/dedup/sample stages).
 
-**It does not re-own** the data (`fine-tuning-data-plan.md`), the training config/hardware
-(`fine-tuning-architecture-plan.md`), or the harness/scorer (`evaluation-plan.md`). It sequences
+**It does not re-own** the data (`data.md`), the training config/hardware
+(`training.md`), or the harness/scorer (`../evaluation/plan.md`). It sequences
 them into one system and adds the pieces none of the three owns: the sampling gate, the
 reward-hacking audit, and the on-policy stages.
 
-**Related docs.** `../../docs/prior-art.md` (refs [1]–[32]);
-`../../docs/train-and-eval/fine-tuning/decisions.md` (FT-D*); `../../docs/PRD.md`;
-`../../plans/oct-8/trust-audit.md`.
+**Related docs.** `../../prior-art.md` (refs [1]–[32]);
+`decisions.md` (FT-D*); `../../PRD.md`;
+`../../../plans/oct-8/trust-audit.md`.
 
 ---
 
@@ -87,7 +86,7 @@ bad scorer only miscounts; in RL it is what the LLM model climbs. So the evaluat
 
 **Training stage 0 — Query verifier and eval contract.** Reconcile the three scorers into one (TA-A3), add the
 off-oracle wrong-answer/formatting fixtures (TA-A2), and freeze the held-out + evaluation-dataset rows. No
-downstream training stage is trustworthy until this passes. (Owned by `evaluation-plan.md`.)
+downstream training stage is trustworthy until this passes. (Owned by `../evaluation/plan.md`.)
 
 **Training stage 1 — difficulty-aligned SFT.** Per ref [8]: SFT should acquire not-yet-mastered skills;
 data difficulty must be aligned to the training stage. Concretely: `emit_our_tool_call_format` + easy hops first, then
@@ -120,7 +119,7 @@ supervises; Liquid's MOPD training stage) or another RFT round, to fold the RL g
 collapse ("RL squeezes, SFT expands", ref [7]).
 
 **The two training phases.** SFT is run as two phases, each a run over a Mixed training dataset
-(`fine-tuning-data-plan.md` §4):
+(`data.md` §4):
 
 1. **Phase 1 — refocus on coding (plus easy tasks).** The base LLM model is already trained on code,
    so coding/Python is not new — it is just not its focus. Phase 1 refocuses it on coding
@@ -131,7 +130,7 @@ collapse ("RL squeezes, SFT expands", ref [7]).
    shifts the objective from *eliciting* reasoning to *preserving* it (`preserve_prior_capabilities`,
    `preserve_general_math_and_code_reasoning`).
 
-The evaluation datasets (`evaluation-plan.md` §6) measure both phases: **baseline** before phase 1,
+The evaluation datasets (`../evaluation/plan.md` §6) measure both phases: **baseline** before phase 1,
 **periodic** subsets and a **phase-end** extensive eval in each phase, and the **final** eval after
 phase 2; iterate from the final eval. The sampling gate (§3) sits after SFT, and RL (Training stage 3)
 stays conditional on it.
@@ -238,7 +237,7 @@ owns pipeline stage 9):
    output, and tool calls **distinctly** (A5). Record the selection rule and seed for the manifest.
    Fail loudly on unknown fields.
 3. **Quality gate.** Schema validation; secrets scrub; length filter; tool-call parse under the
-   typed contract (`../../train_and_eval/tool_calls.py::tool_call_matches` semantics); language
+   typed contract (`../../../train_and_eval/tool_calls.py::tool_call_matches` semantics); language
    filter; plus the Home Assistant contamination gates (benchmark blocklist, exact/substring,
    trigram Jaccard > 0.5 discard, cross-validation).
 4. **Dedup + contamination.** MinHash/LSH near-dedup within and across sources; hash-exclude the
@@ -287,20 +286,20 @@ silently.
 
 - **Q1.** What k for the pass@k gate, and how are tiers defined from `difficulty_bucket` + hop counts?
 
-**Owner decisions needed (cross-plan).** These block a step and need a human call; the other oct-8 open
-questions resolve by running or inspection. Labels point to the owning doc.
+**Owner decisions needed (cross-plan).** These block a step and need a human call; the other open
+questions here resolve by running or inspection. Labels point to the owning doc.
 
-- `evaluation-plan.md` Q2 — canonical baseline slice: rc10 clean-100, release10k, or an immutable hard test.
-- `evaluation-plan.md` Q5 — canonical BenchCAD transfer target (full `qa_code` / Spatial Reasoning axis /
+- `../evaluation/plan.md` Q2 — canonical baseline slice: rc10 clean-100, release10k, or an immutable hard test.
+- `../evaluation/plan.md` Q5 — canonical BenchCAD transfer target (full `qa_code` / Spatial Reasoning axis /
   hard family subset), and whether `edit_code` T4/T5 is in scope at 2–4B.
-- `trust-audit.md` Q1 — accept the accidental-misuse-guard threat assumptions, or require kernel isolation before
+- `../../../plans/oct-8/trust-audit.md` Q1 — accept the accidental-misuse-guard threat assumptions, or require kernel isolation before
   the external claim.
-- `trust-audit.md` Q3 — one tracked environment, or separate SFT and serving environments.
-- `trust-audit.md` Q4 — GPU parity + SFT re-run in Phase 0, or the top of Phase 1.
-- `fine-tuning-data-plan.md` Q4 — which External dataset supplies `preserve_prior_capabilities`.
-- `fine-tuning-data-plan.md` Q5 / `docs/train-and-eval/datasets.md` Q3 — do evaluation dataset roles split
+- `../../../plans/oct-8/trust-audit.md` Q3 — one tracked environment, or separate SFT and serving environments.
+- `../../../plans/oct-8/trust-audit.md` Q4 — GPU parity + SFT re-run in Phase 0, or the top of Phase 1.
+- `data.md` Q4 — which External dataset supplies `preserve_prior_capabilities`.
+- `data.md` Q5 / `docs/train-and-eval/datasets.md` Q3 — do evaluation dataset roles split
   into `target` / `guard`.
-- `fine-tuning-data-plan.md` Q6 / `docs/train-and-eval/datasets.md` Q2 — the two `mixed_dataset_*` names.
+- `data.md` Q6 / `docs/train-and-eval/datasets.md` Q2 — the two `mixed_dataset_*` names.
 
 **Resolved questions.**
 
@@ -311,7 +310,7 @@ questions resolve by running or inspection. Labels point to the owning doc.
 - **Q3.** *(2026-10-09)* Answered by construction: the Training stage 2 pass@k gate decides RFT vs RL from
   the measured reachability, not on paper (§3; FT-D13).
 - **Q4.** *(2026-10-09)* No — `cadquery` mode is not needed for RL. RL uses the same `run_code`/`numpy` tool
-  surface; `cadquery` is a P2 evaluation upper bound (`evaluation-plan.md` §2). RL itself is conditional on
+  surface; `cadquery` is a P2 evaluation upper bound (`../evaluation/plan.md` §2). RL itself is conditional on
   the gate (FT-D13), so the question is moot until then.
 
 ---

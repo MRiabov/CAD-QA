@@ -164,7 +164,7 @@ against the immutable hard slice before any gap claim stands.
   usable independent transfer benchmark; Vision2Code/`code_gen` is image-in (not usable by a
   text-only base LLM model) and near-saturated, so it is a poor transfer target.
 - **Contamination.** BenchCAD `code_gen` is a prospective `expose_cadquery_programs` set
-  (`fine-tuning-data-plan.md` §2.6). Training on BenchCAD programs and then evaluating transfer
+  (`../train-and-eval/fine-tuning/data.md` §2.6). Training on BenchCAD programs and then evaluating transfer
   on BenchCAD Code QA leaks (shared 17,900-program / 200-part base); exclude BenchCAD items
   from training or keep the transfer evaluation disjoint.
 - **Comparable baseline.** Report the CAD-QA hard slice and BenchCAD Code QA side by side, and
@@ -205,7 +205,7 @@ end/defect axis):
 **Implication.** BenchCAD `qa_code` remains the best-fit means target; `Text2CAD-Bench` is the best
 text-in end/defect candidate. `MechReason` and `CADWorld` are credible and corroborate that
 multi-hop / agentic CAD is hard, but their modality (multi-image, GUI) is out of reach for a
-text-only base LLM model — use them as context, not targets (`plans/oct-8/evaluation-plan.md` §5.1).
+text-only base LLM model — use them as context, not targets (`../train-and-eval/evaluation/plan.md` §5.1).
 
 ## Related
 

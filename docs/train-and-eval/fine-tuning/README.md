@@ -3,6 +3,11 @@
 **Status:** active, 2026-10-07. Code is `train_and_eval/`. This surface is **being revised**; the docs describe behaviour and record
 known defects as open questions rather than implying the fine-tuning pipeline is finished.
 
+**Design docs (target).** The Phase 3 design is `training.md` (how we train), `data.md` (which data,
+in what order), and `system.md` (the post-training loop + data preparation). The `pipeline/` step docs
+below describe the **current 2026-08 gemma pipeline**, superseded by the LFM2.5 rewrite
+(FT-D11, FT-D12).
+
 This directory documents how CAD-QA turns a **dataset file** into a trained small LLM model and
 evaluates it: teacher **rejection sampling** → **agent training trace normalization** → **SFT**;
 **GRPO** training; the **LLM harness modes** used for evaluation; and **vLLM** serving.
