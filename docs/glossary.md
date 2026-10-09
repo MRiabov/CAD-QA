@@ -277,6 +277,31 @@ A tool that shortens reasoning while an agent training trace is produced.
 
 ---
 
+### External dataset
+
+A dataset published outside CAD-QA and used as support data (tool format, reasoning style,
+anti-forgetting replay, domain priming), never as the CAD-QA task itself. Registered with its
+license and a pinned revision. `Distinct from:` **Mixed training dataset** (built from these) and
+**Training stage** (a run that consumes the blend).
+
+---
+
+### Mixed training dataset
+
+The materialized set of training rows for one run: **External dataset** sources blended at fixed
+weights, defined as dataset role → weight. `Distinct from:` **External dataset** (a source, not a
+blend) and **Training stage** (a run, not a dataset). `In code:` `mixed_dataset_<composition>`.
+
+---
+
+### Training stage
+
+One run in the training schedule; it consumes a **Mixed training dataset** and has an
+advancement gate. Qualify it — a bare "stage" means a pipeline stage. `In code:`
+`training_stage_<nn>_<purpose>`, never bare `stage_<...>`.
+
+---
+
 ## Enums
 
 ### Answer format
@@ -318,6 +343,16 @@ Full CadQuery kernel access; one correct call suffices.
 
 ---
 
+### Dataset role
+
+The purpose a dataset serves: what a training dataset teaches, or how an evaluation dataset's
+score is read. `In code:` `DatasetRole`. Training dataset roles: `emit_our_tool_call_format`,
+`run_the_tool_call_loop`, `imitate_general_reasoning_style`, `preserve_prior_capabilities`,
+`expose_general_python_code`, `expose_cadquery_programs`, `learn_the_cadqa_task`. Evaluation
+dataset roles are not yet named.
+
+---
+
 ## Internal
 
 ### dataset_generation
@@ -356,6 +391,17 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | Don't say | Say | Why |
 |---|---|---|
 | source | CadQuery program | bare noun; "source" of what? |
+| source corpus | External dataset | unqualified; it is a dataset published outside CAD-QA |
+| mix-format | Mixed training dataset | a blend, not a dataset; name it `mixed_dataset_<composition>` |
+| mix-full | Mixed training dataset | a blend, not a dataset; name it `mixed_dataset_<composition>` |
+| format_tool | emit_our_tool_call_format | old garbled Dataset role name |
+| agent_trace | run_the_tool_call_loop | old garbled Dataset role name |
+| reasoning_distill | imitate_general_reasoning_style | old name; it is general, not CAD, reasoning |
+| rehearsal | preserve_prior_capabilities | opaque; name the function |
+| domain_code | expose_general_python_code | "domain" misleads; it is general Python |
+| domain_3d | expose_cadquery_programs | "domain"/"prime" jargon |
+| cadqa_hop | learn_the_cadqa_task | old garbled Dataset role name |
+| eval_canary | evaluation dataset role | old name; evaluation roles are not yet named |
 | release tier (dataset, train_and_eval, tools) | Dataset release tier | garbled; which release? |
 | snapshot | Shape snapshot | opaque |
 | CADEvolve | (name the corpus in prose) | proper noun, not a term |

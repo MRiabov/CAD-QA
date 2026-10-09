@@ -10,7 +10,7 @@ with `../../plans/oct-8/evaluation-plan.md` §5.1 (D-E5).
 
 ## Hypothesis
 
-H3: training on `cadqa_hop` raises BenchCAD `qa_code` accuracy beyond the Base, format-only, and
+H3: training on `learn_the_cadqa_task` raises BenchCAD `qa_code` accuracy beyond the Base, format-only, and
 answer-only controls, without a general-canary regression.
 
 H4 (means → end): the CAD-QA pass rate predicts the external score (dose-response), at fixed recipe
@@ -36,10 +36,10 @@ Hold base and recipe fixed; vary only training data.
 | Arm | Training data | Isolates |
 |---|---|---|
 | Base | none | floor; pretraining-contamination proxy |
-| Format-only | `format_tool` + `rehearsal` | H1 format compliance |
+| Format-only | `emit_our_tool_call_format` + `preserve_prior_capabilities` | H1 format compliance |
 | Answer-only | CAD-QA answers, no reasoning | supervision format vs reasoning content |
-| CAD-QA reasoning | `cadqa_hop` | H2 capability |
-| Mix-full (optional) | full primary mix | external reasoning support |
+| CAD-QA reasoning | `learn_the_cadqa_task` | H2 capability |
+| Full primary (optional) | the full Mixed training dataset | external reasoning support |
 
 ## Preconditions
 

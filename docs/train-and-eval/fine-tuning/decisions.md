@@ -226,13 +226,14 @@ whose rationale was not recoverable.
 - **Decision:** invest first in the **CAD-QA task environment + scorer** — a task generator over
   the immutable dataset rows (prompt + scalar gold, configurable hop/difficulty), the single verified
   exact-match scorer, and the `run_code`/kernel tool surface — and treat the external SFT mix
-  (`format_tool`, `agent_trace`, `reasoning_distill`, `rehearsal`, `domain_*`) as **support**: a
-  thin format cold-start, a capability-preservation anchor, and canaries. Teacher-distilled
-  `cadqa_hop` traces are a cold-start at most, not the primary data.
+  (`emit_our_tool_call_format`, `run_the_tool_call_loop`, `imitate_general_reasoning_style`,
+  `preserve_prior_capabilities`, `expose_general_python_code`, `expose_cadquery_programs`) as
+  **support**: a thin format cold-start, a capability-preservation anchor, and canaries.
+  Teacher-distilled `learn_the_cadqa_task` traces are a cold-start at most, not the primary data.
 - **Consequences:** effort shifts from corpus collection to **environment/scorer engineering**;
   the pass@k gate (FT-D13) is the switch from SFT to RL; external data stays bounded and
-  selectively sourced (subset pulls); the `cadqa_hop` slot becomes an environment (tasks + reward)
-  as well as a dataset. Detail: `plans/oct-8/fine-tuning-system-plan.md` §0, §3;
+  selectively sourced (subset pulls); the CAD-QA task dataset becomes an environment (tasks +
+  reward) as well as a dataset. Detail: `plans/oct-8/fine-tuning-system-plan.md` §0, §3;
   `../../prior-art.md` refs [30]–[32].
 
 ## Open questions

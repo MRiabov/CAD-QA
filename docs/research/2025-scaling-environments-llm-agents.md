@@ -34,7 +34,7 @@ and maps the landscape of environment designs.
 - It is the high-level justification for treating the **CAD-QA task environment + scorer** (a task
   generator, the exact-match reward, the `run_code`/kernel tool surface) as the primary asset —
   not the SFT mix.
-- It reframes the `cadqa_hop` slot: a **generator of CAD-QA tasks with verifiable
+- It reframes the CAD-QA task dataset: a **generator of CAD-QA tasks with verifiable
   answers**, from which both RL rollouts and (filtered) SFT cold-start data are drawn — not a fixed
   pile of teacher-distilled examples.
 - It warns that a fixed task set saturates; coverage/difficulty diversity is what sustains RL.

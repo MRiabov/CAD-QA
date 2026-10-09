@@ -34,6 +34,7 @@ procedural CAD programs (CadQuery), and a small-LLM-model fine-tuning effort on 
 | How the dataset is built | `dataset/pipeline/00-overview.md` |
 | How the LLM model is trained | `train-and-eval/fine-tuning/pipeline/00-overview.md` |
 | How models are evaluated | `train-and-eval/evaluation/harness.md` |
+| Which dataset serves which role | `train-and-eval/datasets.md` |
 | Paper citations and study notes | `research/` |
 | Past experiments | `experiments/` |
 | Decisions | `dataset/decisions.md`, `train-and-eval/fine-tuning/decisions.md` |

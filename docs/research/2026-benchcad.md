@@ -162,7 +162,7 @@ against the immutable hard slice before any gap claim stands.
 - **Transfer target.** `qa_code` is text-in and unsaturated on spatial reasoning, so it is a
   usable independent transfer benchmark; Vision2Code/`code_gen` is image-in (not usable by a
   text-only base LLM model) and near-saturated, so it is a poor transfer target.
-- **Contamination.** BenchCAD `code_gen` is a prospective `domain_3d` priming set
+- **Contamination.** BenchCAD `code_gen` is a prospective `expose_cadquery_programs` set
   (`fine-tuning-data-plan.md` §2.6). Training on BenchCAD programs and then evaluating transfer
   on BenchCAD Code QA leaks (shared 17,900-program / 200-part base); exclude BenchCAD items
   from training or keep the transfer evaluation disjoint.

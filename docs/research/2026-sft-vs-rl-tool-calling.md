@@ -70,7 +70,7 @@ load-bearing**.
   its decision to **defer GRPO/RL to P2**: combining SFT and GRPO gives no consistent benefit under
   a matched budget, which matches the recorded CAD-QA GRPO collapse and refs [7]/[8].
 - "Corpus choice matters as much as the method" validates treating the data pipeline as the main
-  lever, and **mixing corpora** rather than betting on one format set (`mix-format`).
+  lever, and **mixing corpora** rather than betting on one format set (a Mixed training dataset).
 - "LoRA beats full fine-tuning" supports the **LoRA-bf16 default** and not full fine-tuning.
 - Gives concrete per-corpus statistics (multi-turn rate, parallel-call rate, near-duplicate rate)
   that we should record for our own candidate corpora.
