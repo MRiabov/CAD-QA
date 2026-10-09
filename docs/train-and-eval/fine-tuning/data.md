@@ -181,7 +181,7 @@ corpus. Any same-area set (including an owner-authored one) carries a higher lea
 quality gate (`system.md` §7) and a held-out overlap check before mixing.
 
 **Verification rule (FT-D17).** An SFT corpus is either **rejection-sampled by us** (teacher
-`deepseek-v4-flash`, FT-D2 — keep only traces the Query verifier accepts) or **execution-verified** before
+`deepseek-v4.1-flash`, FT-D2 — keep only traces the Query verifier accepts) or **execution-verified** before
 it enters a mix. Unverified third-party generation teaches the generating LLM model's errors and is
 P2/caution (`NeurIPS11092`, Gemini 2.0 Flash, 2025).
 

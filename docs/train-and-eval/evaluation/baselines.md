@@ -68,15 +68,16 @@ small LLM model baseline in the experiment record.
 | LLM model | Setting | Recorded result | Evidence | Status |
 |---|---|---|---|---|
 | xiaomi-mimo-v2.5 (pro) | Harbor, rc10 clean-100 (0-hop) | 65% | `docs/experiments/2026-08-08-gemma-e2b-bench.md#purpose`; `docs/development-context.md#proven` | `exists` |
-| deepseek-v4-flash | Harbor, rc10 clean-100 (0-hop) | 63% | same | `exists` |
+| deepseek-v4-flash (v4 preview) | Harbor, rc10 clean-100 (0-hop) | 63% | same | `exists` |
 | Kimi (exact LLM model id not recorded) | Harbor, rc10 clean-100 (0-hop) | 59% | same | `exists` |
 | NVIDIA NemoTron super | planned cost-effective LLM model | no run found | named in `docs/_archive/paper/cadqa_draft.md` | `missing` |
 | gemma-4-E2B base (`google/gemma-4-E2B-it`) | local harness, `no_tools` LLM harness | rc10 30/100; release10k (2–5 hop) 14/100 | `docs/experiments/2026-08-08-gemma-e2b-bench.md#results` | `exists` |
 | gemma-4-E2B + native-format SFT | local harness, 12 held-out rows | 50% accuracy / 58.3% tool-valid (post-fix re-run 41.7% / 75%) | `docs/development-context.md#proven` | `exists` |
 
 The oracle-upper-bound setting (`tool_assisted.py`) is not an LLM model run; keep it
-separate from the cost-effective LLM model table. `deepseek-v4-flash` is also the
-teacher and the default Harbor LLM model (`glossary.md`, "teacher"; `docs/_archive/harbor.md`).
+separate from the cost-effective LLM model table. `deepseek-v4.1-flash` is the current teacher and the
+default Harbor LLM model (`glossary.md`, "teacher"; `docs/_archive/harbor.md`); the recorded 63% above is
+the older v4 preview and must be re-run on v4.1 before it is quoted.
 
 ## Current status
 

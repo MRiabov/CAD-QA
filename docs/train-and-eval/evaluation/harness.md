@@ -111,7 +111,7 @@ hidden `expected/private.json`, and a `solution/solve.sh` oracle that writes the
 private gold answer. The materializer also writes `cadqa_harbor_job.json` and
 `cadqa_harbor_manifest.json`. A run is launched with
 `harbor run -c <job config>` (`docs/_archive/harbor.md`). The default job runs the
-`terminus-2` agent with the LLM model `openrouter/deepseek/deepseek-v4-flash` in a
+`terminus-2` agent with the LLM model `openrouter/deepseek/deepseek-v4.1-flash` in a
 local Docker environment, with `daytona` as an alternative. The generated config
 pins each OpenRouter LLM model to its native provider (for example `xiaomi` for
 Xiaomi Mimo), disables fallbacks, and caps turns and tokens

@@ -10,7 +10,7 @@ sampling**), ordered toward the **progressive curriculum** (0→1→2→3→5).
 
 - **In:** decoded CAD-QA dataset rows (01) — `prompt`, `answer_format`, `gold_answer`,
   `reasoning_hop_count`.
-- **Teacher:** `deepseek/deepseek-v4-flash` via OpenRouter (FT-D2).
+- **Teacher:** `deepseek/deepseek-v4.1-flash` via OpenRouter (FT-D2; bumped from the v4 preview).
 - **Out `agent training traces`:** one per accepted row, `dataset_role=learn_the_cadqa_task`, carrying
   `answer_format`, `reasoning_hop_count`, and reasoning / visible output / tool call kept distinct (A5).
 - **Out `sampling log`:** one record per attempt (reasoning, output, tool call, rounds).
@@ -38,4 +38,5 @@ OPENROUTER_API_KEY=... uv run python train_and_eval/train/rejection_sample.py \
 ## Open questions
 
 - **Q1.** Per-format coverage gate: how is "every Answer format × hop is covered" enforced offline?
-- **Q2.** Teacher temperature / attempts per row at the recorded ~23% success rate.
+- **Q2.** Teacher settings (temperature, attempts per row). The recorded **~23% success rate was the v4
+  preview**; v4.1 is materially stronger, so re-measure success and per-format coverage.
