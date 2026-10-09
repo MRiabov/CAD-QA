@@ -29,9 +29,8 @@ measured learnable (FT-D13; FT-D8 superseded).
 - **Reward = the one scorer** (`../../evaluation/plan.md` §4), audited before any RL run (FT-D14).
 - **RFT** (rejection-sampling SFT on the tuned policy's **own** correct agent training traces, graded by
   the Query verifier — self-distillation / STaR) is the cheaper consolidation and may replace RL at this
-  scale. It is **not**
-  teacher distillation: 02's rejection sampling keeps the **teacher's** accepted traces; RFT keeps the
-  **policy's**. Both need accepted generations to exist at all.
+  scale. It is **not** teacher distillation: 02's rejection sampling keeps the **teacher's** accepted
+  traces; RFT keeps the **policy's**. Both need accepted generations to exist at all.
 
 ## Stop / advance
 
@@ -53,8 +52,10 @@ uv run pytest train_and_eval/eval/test_tool_calls.py -k reward -q
 
 ## Questions for the owner
 
-- **OD-1.** Gate the **full train split** (≈8k rollouts at a rollout count of 8, minutes on the small
-  test GPU; recommended) or a **stratified sample** with a fixed sample size per hop/bucket?
+- **OD-1.** Gate the **full train split** (≈958 rows × rollout count 8 ⇒ **≈7.7k rollouts total**,
+  minutes on the small test GPU; recommended) or a **stratified sample** with a fixed sample size per
+  hop/bucket? Each rollout is one episode; in an agentic harness that is several LLM calls per
+  rollout.
 - **OD-2.** RL-eligible band: **~0.25–0.75** (max reward variance; recommended) or any non-zero,
   non-unity pass rate?
 - **OD-3.** Confirm the rollout temperature ≈ 1.0 (rollout), separate from the 0.1 accuracy runs.
