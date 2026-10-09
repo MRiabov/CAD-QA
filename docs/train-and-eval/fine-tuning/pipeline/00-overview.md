@@ -92,5 +92,6 @@ There is more than one dataset; each has one role (glossary).
 - **Q1.** The on-disk artifact is a Liquid `messages` SFT set; confirm `liquid-finetune`'s validator
   accepts our `submit_*` tool declarations unchanged, and that it accepts a Parquet path (container is
   Parquet-preferred; `../training.md` §4).
-- **Q2.** Does the data campaign stay in one tracked environment, or split SFT and serving
-  (`../../../../plans/oct-8/trust-audit.md` Q3)?
+- **Q2.** One tracked **dependency environment** for the whole fine-tuning scope, or separate SFT and
+  serving environments (the old unsloth-vs-vLLM split; Phase 3 unifies on `liquid-finetune`)? This is
+  about packages, **not** about datasets (`../../../../plans/oct-8/trust-audit.md` Q3).

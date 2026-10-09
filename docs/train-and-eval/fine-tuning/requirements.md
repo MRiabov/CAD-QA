@@ -50,7 +50,8 @@ evidence. The Phase 3 code is not written yet, so most pipeline stages are `miss
 
 ## Open questions
 
-- **Q1.** One tracked environment, or separate SFT and serving environments?
+- **Q1.** One tracked **dependency environment** for the whole fine-tuning scope, or separate SFT and
+  serving environments (packages, not datasets)?
   (`../../../plans/oct-8/trust-audit.md` Q3.)
 - **Q2.** Where do the retained rows-loader and the new converter live once `train_and_eval/` is
   rewritten (FT-D12)?
