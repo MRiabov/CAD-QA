@@ -11,7 +11,7 @@ evaluates it: teacher **rejection sampling** → **agent training trace normaliz
 
 1. [requirements.md](requirements.md) — intended-vs-verified summary, environment, what "done"
    would need.
-2. [pipeline/00-overview.md](pipeline/00-overview.md) — the DAG and the stage IO contract
+2. [pipeline/00-overview.md](pipeline/00-overview.md) — the DAG and its pipeline-stage IO contract
    (the single source of truth for artifact and field names).
 3. The step docs, in DAG order (below).
 4. [decisions.md](decisions.md) — unit-level decisions (ADR format).
@@ -19,7 +19,7 @@ evaluates it: teacher **rejection sampling** → **agent training trace normaliz
 Supporting context: `../PRD.md` (the research contract), `../glossary.md` (canonical terms),
 `../development-context.md` (as-of record and history).
 
-## Stage index
+## Pipeline-stage index
 
 | Step | Doc | Status | Code |
 |---|---|---|---|

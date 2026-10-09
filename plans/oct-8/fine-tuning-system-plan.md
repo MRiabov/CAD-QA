@@ -4,8 +4,8 @@
 checkout per the repo-local rule in `plans/oct-7/restructure-docs.md` §0.
 
 **This doc owns — the shape of the whole post-training system:** why a raw SFT→RL run is not
-enough, the staged loop that replaces it (verifier → SFT → sampling gate → RL/distillation), the
-RL-readiness gate, reward/verifier design, sandboxed rollouts, logging, the framework mapping, and
+enough, the staged loop that replaces it (Query verifier → SFT → sampling gate → RL/distillation), the
+RL-readiness gate, reward/Query verifier design, sandboxed rollouts, logging, the framework mapping, and
 **data preparation** (the `TrainingExample` record, its converter, and the
 ingest/normalize/quality/dedup/sample stages).
 
@@ -24,18 +24,18 @@ reward-hacking audit, and the on-policy stages.
 
 **Raw SFT works; raw GRPO-on-top does not.** The evidence is now specific enough to say why:
 
-- **SFT with LoRA is the reliable stage.** It was best in 15 of 18 in-distribution settings and
+- **SFT with LoRA is the reliable training stage.** It was best in 15 of 18 in-distribution settings and
   never fell below zero-shot (ref [19]). We should run it.
 - **A raw SFT→GRPO run on this task is expected to be weak or null**, and the repo already
   recorded one collapse (the GRPO 2-hop collapse, FT-D6/FT-D8). Two 2026 results explain it:
   - A controlled web-agent study found **GRPO adds no credible gain on skills the supervised
-    model has already mastered, and only gains where the reward is reachable by sampling**
+    LLM model has already mastered, and only gains where the reward is reachable by sampling**
     (ref [20]). Degenerate rollout groups (all-correct or all-wrong) carry zero advantage, so the
     gradient is zero — this is the CAD-QA collapse.
   - SFT→RL can fail completely when the expert traces are too hard for the small LLM model, or
     when the SFT initialization has exponentially sparse rewards (BREAD, ref [26]).
 - **The fix is a system, not an algorithm swap.** Gate RL on measured per-tier reachability
-  (§3), keep only informative rollout groups (refs [21]–[23]), treat the verifier as a first-class
+  (§3), keep only informative rollout groups (refs [21]–[23]), treat the Query verifier as a first-class
   artifact to audit (ref [24]), and prefer sampling-based SFT as the cheaper consolidation when RL
   is not clearly reachable (ref [25]).
 
@@ -62,9 +62,9 @@ Three independent things break a naive loop, and each has a 2026 answer:
 |---|---|---|
 | **Degenerate groups** | A prompt every rollout passes or every rollout fails contributes zero advantage; GRPO spends compute to learn nothing | Dynamic sampling / group filtering (DAPO, ref [23]); keep the informative pass-rate band (refs [21][22]) |
 | **Sparse / unreachable reward** | On hard hops the SFT policy never samples a correct answer, so RLVR has no signal at all | Measure pass@k first; only train RL where it is reachable; use a Bridge to make hard traces learnable (ref [8], ref [26]) |
-| **Verifier is wrong or hackable** | Reward is the objective; a noisy or gameable scorer optimizes the wrong thing | Audit and single-source the scorer first (ref [24]); adversarial fixtures; this is TA-A3, already open |
+| **Query verifier is wrong or hackable** | Reward is the objective; a noisy or gameable scorer optimizes the wrong thing | Audit and consolidate the scorer first (ref [24]); adversarial fixtures; this is TA-A3, already open |
 
-The single most important consequence: **the verifier is the objective, not a metric.** In SFT a
+The single most important consequence: **the Query verifier is the objective, not a metric.** In SFT a
 bad scorer only miscounts; in RL it is what the LLM model climbs. So the evaluation doc's P0
 "one scorer" is not bookkeeping — it is a precondition for ever running RL.
 
@@ -73,50 +73,50 @@ bad scorer only miscounts; in RL it is what the LLM model climbs. So the evaluat
 ## 2. The system
 
 ```text
-[ Stage 0  verifier + eval contract ]  <- P0, gates everything
+[ Training stage 0  Query verifier + eval contract ]  <- P0, gates everything
         |
-[ Stage 1  difficulty-aligned SFT ]     <- our tool schema + easy hops + Bridge for hard traces + `preserve_prior_capabilities`
+[ Training stage 1  difficulty-aligned SFT ]     <- our tool schema + easy hops + Bridge for hard traces + `preserve_prior_capabilities`
         |
-[ Stage 2  sampling gate (pass@k) ]     <- measure reachability per tier; build RFT data
+[ Training stage 2  sampling gate (pass@k) ]     <- measure reachability per tier; build RFT data
         |            \___ if no tier is reachable -> stop at SFT / RFT, do not run RL
         |
-[ Stage 3  RL (GRPO + dynamic sampling, only on reachable tiers, sandboxed) ]
+[ Training stage 3  RL (GRPO + dynamic sampling, only on reachable tiers, sandboxed) ]
         |
-[ Stage 4  on-policy distillation / RFT consolidation ]  <- optional, cheaper alternative to Stage 3
+[ Training stage 4  on-policy distillation / RFT consolidation ]  <- optional, cheaper alternative to Training stage 3
 ```
 
-**Stage 0 — verifier and eval contract.** Reconcile the three scorers into one (TA-A3), add the
+**Training stage 0 — Query verifier and eval contract.** Reconcile the three scorers into one (TA-A3), add the
 off-oracle wrong-answer/formatting fixtures (TA-A2), and freeze the held-out + canary rows. No
-downstream stage is trustworthy until this passes. (Owned by `evaluation-plan.md`.)
+downstream training stage is trustworthy until this passes. (Owned by `evaluation-plan.md`.)
 
-**Stage 1 — difficulty-aligned SFT.** Per ref [8]: SFT should acquire not-yet-mastered skills;
-data difficulty must be aligned to the stage. Concretely: `emit_our_tool_call_format` + easy hops first, then
+**Training stage 1 — difficulty-aligned SFT.** Per ref [8]: SFT should acquire not-yet-mastered skills;
+data difficulty must be aligned to the training stage. Concretely: `emit_our_tool_call_format` + easy hops first, then
 harder `learn_the_cadqa_task`; for hard teacher traces that the small LLM model cannot imitate, apply a
-**Bridge** transformation (rewrite the raw teacher trace into more learnable supervision) rather
-than feeding an unlearnable target. `preserve_prior_capabilities` every stage. SFT runs only to the **readiness gate**
+**Bridge** transformation (rewrite the raw agent training trace from the teacher into more learnable supervision) rather
+than feeding an unlearnable target. `preserve_prior_capabilities` every training stage. SFT runs only to the **readiness gate**
 (format holds, pass@k > 0), then stops — it is not an accuracy target ([32]).
 (Owned by the data + architecture docs.)
 
-**Stage 2 — sampling gate.** The new piece. After SFT, sample k rollouts per prompt with the
+**Training stage 2 — sampling gate.** The new piece. After SFT, sample k rollouts per prompt with the
 tuned policy and compute the **pass rate** per tier:
 
 - **mastered** (all k pass): RL adds nothing here (ref [20]); use as canary, not training.
 - **learnable** (0 < pass < k): the RL-training set. Aim the training distribution at the
   ~0.25–0.75 band (refs [21][22]); ~0.5 maximizes reward entropy and group-filter survival.
 - **unreachable** (zero pass): no RL signal. Add via Bridge/re-distillation at the next SFT
-  stage (ref [8]) or leave out and record it.
+  training stage (ref [8]) or leave out and record it.
 
 The same rollouts, filtered to the learnable bucket, are the cheapest consolidation: **rejection
 sampling fine-tuning (RFT)** — SFT on self-generated correct traces. Ref [25] finds SFT with
 sampling can beat on-policy RL on new-task generalization *and* prior-capability retention. For a
-single-GPU thesis, Stage 2 may be the whole answer, with Stage 3 optional.
+single-GPU thesis, Training stage 2 may be the whole answer, with Training stage 3 optional.
 
-**Stage 3 — RL, only where reachable.** GRPO with **dynamic sampling** (drop all-pass/all-fail
+**Training stage 3 — RL, only where reachable.** GRPO with **dynamic sampling** (drop all-pass/all-fail
 groups, ref [23]), pass-rate-band scheduling (refs [21][22]), and a composite reward (§4). Run
 rollouts in a sandbox (§5). Never run RL on a tier with no partial signal.
 
-**Stage 4 — consolidation.** On-policy distillation (the student rolls out, a per-domain teacher
-supervises; Liquid's MOPD stage) or another RFT round, to fold the RL gains back without entropy
+**Training stage 4 — consolidation.** On-policy distillation (the student rolls out, a per-domain teacher
+supervises; Liquid's MOPD training stage) or another RFT round, to fold the RL gains back without entropy
 collapse ("RL squeezes, SFT expands", ref [7]).
 
 ---
@@ -137,7 +137,7 @@ their keep: the tiers let us measure reachability, not just train in order.
 
 ---
 
-## 4. Reward and verifier design
+## 4. Reward and Query verifier design
 
 - **Single sourced scorer** (TA-A3) is the reward and the eval metric. The `boolean` union from
   `grading/parse.py` is the target.
@@ -146,7 +146,7 @@ their keep: the tiers let us measure reachability, not just train in order.
   that is exactly the reward-hacking recipe (ref [27]): a dense heuristic reward gets optimized at
   the expense of the verifiable one. Use optimality-preserving shaping (GRM/ADOPS) if a dense term
   is added.
-- **Verifier audit is P0, not P1.** Ref [24] finds verifier self-agreement as low as 53.8% and two
+- **Query verifier audit is P0, not P1.** Ref [24] finds Query verifier self-agreement as low as 53.8% and two
   configurations of the *same* library disagreeing on 49.9% of pairs. Our three divergent scorers
   are this risk already realized. Before RL: adversarial cases, off-oracle fixtures, and a
   metamorphic check (equivalent answers must score equal).
@@ -172,7 +172,7 @@ their keep: the tiers let us measure reachability, not just train in order.
 `Liquid4All/liquid-finetune` already covers the whole loop, so the system does not require a
 second framework:
 
-| System stage | `liquid-finetune` provision |
+| System training stage | `liquid-finetune` provision |
 |---|---|
 | SFT, LoRA | `training_type: sft`, `TrainingConfig(extends="DEFAULT_SFT")`, `PeftConfig(extends="DEFAULT_LORA")` |
 | GRPO | `training_type: grpo`, TRL v1 `GRPOTrainer`, vLLM rollouts, Ray Train |
@@ -194,28 +194,28 @@ both TRL and verl and provides Sandboxes for rollout isolation, so either path f
 typed CAD-QA-side record; a small **converter** turns it into the cookbook format. Do not grow this
 schema or the converter beyond what the mix and the canary need.
 
-| Field | Type | Notes |
-|---|---|---|
-| `id` | `str` | stable, content-hashed |
-| `dataset_role` | `DatasetRole` (StrEnum) | `emit_our_tool_call_format`, `run_the_tool_call_loop`, `preserve_general_math_and_code_reasoning`, `preserve_prior_capabilities`, `expose_general_python_code`, `expose_cadquery_programs`, `learn_the_cadqa_task` |
-| `messages` | `list[ChatMessage]` | the conversation; `ChatMessage{role, content, tool_calls?}` maps 1:1 to Liquid's SFT JSONL |
-| `source_id` | `str` | HF repo or internal artifact |
-| `source_revision` | `str` | **commit hash**, not a branch/config name |
-| `license` | `str` | e.g. `apache-2.0`, `agpl-3.0`, `cc-by-4.0` |
-| `reasoning_text` | `str \| None` | internal reasoning, kept distinct (A5 rule) |
-| `tool_call_text` | `str \| None` | the call envelope, kept distinct (A5 rule) |
-| `tools` | `list[ToolSpec]` | declared tools for the turn |
-| `answer_format` | `AnswerFormat \| None` | for `learn_the_cadqa_task` and `emit_our_tool_call_format` |
-| `reasoning_hop_count` | `int \| None` | for `learn_the_cadqa_task` curriculum |
-| `split` | `Split` (StrEnum) | `train` / `validation` / `test` |
-| `provenance` | `str` | the exact field mapping/transform applied, for audit |
+| Field | Notes |
+|---|---|
+| `id` (`str`) | stable, content-hashed |
+| `dataset_role` (`DatasetRole`, StrEnum) | `emit_our_tool_call_format`, `run_the_tool_call_loop`, `preserve_general_math_and_code_reasoning`, `preserve_prior_capabilities`, `expose_general_python_code`, `expose_cadquery_programs`, `learn_the_cadqa_task` |
+| `messages` (`list[ChatMessage]`) | the conversation; `ChatMessage{role, content, tool_calls?}` maps 1:1 to Liquid's SFT JSONL |
+| `source_id` (`str`) | HF repo or internal artifact |
+| `source_revision` (`str`) | **commit hash**, not a branch/config name |
+| `license` (`str`) | e.g. `apache-2.0`, `agpl-3.0`, `cc-by-4.0` |
+| `reasoning_text` (`str \| None`) | internal reasoning, kept distinct (A5 rule) |
+| `tool_call_text` (`str \| None`) | the call envelope, kept distinct (A5 rule) |
+| `tools` (`list[ToolSpec]`) | declared tools for the turn |
+| `answer_format` (`AnswerFormat \| None`) | for `learn_the_cadqa_task` and `emit_our_tool_call_format` |
+| `reasoning_hop_count` (`int \| None`) | for `learn_the_cadqa_task` curriculum |
+| `split` (`Split`, StrEnum) | `train` / `validation` / `test` |
+| `provenance` (`str`) | the exact field mapping/transform applied, for audit |
 
 Preparation stages (data stages 1–5; the architecture doc owns stages 6–8 and the evaluation doc
-owns stage 9):
+owns pipeline stage 9):
 
 1. **Registry.** Dataset id, revision hash, license, role, size, field mapping. The data doc's
-   governance section owns the policy; a source without a pinned revision does not enter.
-2. **Ingest + normalize.** Pull a **bounded subset** of each external source — stream, select
+   governance section owns the policy; an External dataset without a pinned revision does not enter.
+2. **Ingest + normalize.** Pull a **bounded subset** of each External dataset — stream, select
    shards, or filter rows at the pinned revision, never materialize a whole multi-million-row
    corpus to keep a few thousand — then map it into `TrainingExample`. Record reasoning, visible
    output, and tool calls **distinctly** (A5). Record the selection rule and seed for the manifest.
@@ -238,7 +238,7 @@ silently.
 
 | Item | Tier | Rationale |
 |---|---|---|
-| One scorer + off-oracle fixtures (TA-A2/A3) | **P0** | the verifier is the RL objective; nothing downstream is valid without it |
+| One scorer + off-oracle fixtures (TA-A2/A3) | **P0** | the Query verifier is the RL objective; nothing downstream is valid without it |
 | Sampling gate: pass@k per tier after SFT | **P0** | decides whether RL is indicated at all (refs [8][20]) |
 | Reward-hacking audit (counterfactuals, degenerate tricks) | **P0** | RLVR's central failure mode (refs [24][27]) |
 | Sandboxed rollouts + full rollout logging | **P0** | safety + reproducibility (FT-D9) |
@@ -256,34 +256,34 @@ silently.
 
 **Proposed decisions.**
 
-- **FT-D13 — the post-training system is staged, not raw SFT→GRPO.** Stage 0 verifier → Stage 1
-  difficulty-aligned SFT → Stage 2 pass@k sampling gate → Stage 3 RL only on learnable tiers
-  (dynamic sampling) → optional Stage 4 distillation. RL on this task is *conditional on a measured
-  learnable tier*, not a default second stage.
+- **FT-D13 — the post-training system is staged, not raw SFT→GRPO.** Training stage 0 Query verifier → Training stage 1
+  difficulty-aligned SFT → Training stage 2 pass@k sampling gate → Training stage 3 RL only on learnable tiers
+  (dynamic sampling) → optional Training stage 4 distillation. RL on this task is *conditional on a measured
+  learnable tier*, not a default second training stage.
 - **FT-D14 — the scorer is the reward and is audited before RL.** The one-scorer reconciliation
   (TA-A3) and the off-oracle fixtures (TA-A2) are P0 gates for any RL run, not cleanup.
 - **FT-D11 addendum — `liquid-finetune` covers SFT *and* GRPO** (TRL v1 `GRPOTrainer`, `rewards/`,
   optional OpenEnv), so the Phase 3 stack does not need a second RL framework; FT-D8's "GRPO second
-  stage" stays deferred but is now cheap to attempt once Stage 2 says it is reachable.
+  training stage" stays deferred but is now cheap to attempt once Training stage 2 says it is reachable.
 
 **Open questions.**
 
 - What k for the pass@k gate, and how are tiers defined from `difficulty_bucket` + hop counts?
 - Does the LFM2.5 chat template + `liquid-finetune` GRPO accept our custom `submit_*` tools and
   reward callable through `rewards/` unchanged? `[unknown]`.
-- RFT (Stage 2) vs GRPO (Stage 3): at this scale and budget, does RFT already capture most of the
+- RFT (Training stage 2) vs GRPO (Training stage 3): at this scale and budget, does RFT already capture most of the
   gain? Ref [25] suggests it may; test before spending on RL.
-- Is the `cadquery` harness mode (FT-D5) needed for the RL stage, or does `numpy` stay primary?
+- Is the `cadquery` LLM harness mode (FT-D5) needed for the RL training stage, or does `numpy` stay primary?
 
 ---
 
 ## 10. Immediate next steps (system)
 
-1. **Stage 0:** reconcile the scorer (one implementation) and build the off-oracle fixtures
+1. **Training stage 0:** reconcile the scorer (one implementation) and build the off-oracle fixtures
    (evaluation doc, P0).
-2. **Stage 1:** run the cookbook canary, then `mixed_dataset_our_tool_format_and_replay`, then `mixed_dataset_full_cadqa_training` (architecture + data
+2. **Training stage 1:** run the cookbook canary, then `mixed_dataset_our_tool_format_and_replay`, then `mixed_dataset_full_cadqa_training` (architecture + data
    docs).
-3. **Stage 2:** once an SFT checkpoint exists, run the pass@k sampling gate per tier and record
+3. **Training stage 2:** once an SFT checkpoint exists, run the pass@k sampling gate per tier and record
    reachability. Decide RL vs RFT from that number, not from ambition.
 4. **Only then** wire the `liquid-finetune` GRPO config with dynamic sampling and the composite
    reward, in a Modal sandbox.

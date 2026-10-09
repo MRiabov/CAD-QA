@@ -73,7 +73,7 @@ surface, not the task or the grading contract.
 - **`cadquery` (P2, unimplemented).** Submit tools, `run_code`, and CadQuery
   execution. The intent is that one correct CadQuery call suffices. It is not
   implemented: `train_and_eval/eval/eval_bench.py::tools_for_mode` raises
-  `NotImplementedError`, and the docstring says it "lands at the RL stage". A
+  `NotImplementedError`, and the docstring says it "lands at the RL Training stage". A
   deterministic per-row CadQuery solution synthesis is planned separately, in the
   `mode3/cadquery-solutions` worktree
   (`.worktrees/mode3-cadquery-solutions/docs/mode3-solution-synthesis-plan.md`).
@@ -182,7 +182,7 @@ principle, but they do not share a grader implementation.
   `python train_and_eval/eval/eval_bench.py --model <merged-checkpoint> --mode numpy --max-rows <n> --out <file>`.
 - Run the local harness in `no_tools` and `numpy` modes concurrently:
   `bash train_and_eval/eval/run_eval_modes.sh` (a remote-run script that assumes
-  the training-box layout; `cadquery` is reserved for the RL stage).
+  the training-box layout; `cadquery` is reserved for the RL Training stage).
 - Materialize and run Harbor:
   `uv run cadqa harbor materialize --public <public.parquet> --private <private.parquet> --out <dir> --fresh`,
   then `harbor run -c <dir>/cadqa_harbor_job.json`.

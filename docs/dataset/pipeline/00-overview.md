@@ -1,7 +1,7 @@
 # Dataset pipeline — overview
 
-**Status:** active, 2026-10-07. This is the DAG and the stage IO contract for the
-benchmark-generation pipeline. It is the single authority for artifact and field names
+**Status:** active, 2026-10-07. This is the benchmark-generation pipeline DAG and its
+pipeline-stage IO contract. It is the single authority for artifact and field names
 between steps; the step docs restate behaviour but must match this contract.
 
 Audience note: terms follow `docs/glossary.md`. Read that first if a term is unclear.
@@ -48,13 +48,13 @@ A1–A4 have dedicated CLI stages; A5 is invoked by the materializer; A6 and A7 
 own CLI stages. The one-command `cadqa experiment smoke` runs A3–A7 end to end for a small
 slice (`train_and_eval/experiment.py::run_smoke_experiment`).
 
-## Stage IO contract
+## Pipeline-stage IO contract
 
-Each stage names its producer, its input artifact, and its output artifact. Artifact
+Each pipeline stage names its producer, its input artifact, and its output artifact. Artifact
 formats default to Parquet with a JSONL fallback (`dataset/io.py::read_records`,
 `dataset/io.py::write_records`, `dataset/io.py::record_artifact_path`).
 
-| Stage | Producer | Input | Output artifact | Key fields |
+| Pipeline stage | Producer | Input | Output artifact | Key fields |
 |---|---|---|---|---|
 | A1 CadQuery program ingestion | `dataset/source.py` | upstream CadQuery program corpus tar, extracted directory, cached CadQuery program Parquet, or generic JSONL | **sources** (`sources.parquet`) | `source_id`, `source_code`, `source_path`, `source_hash`, `metadata` (`SourceRecord`) |
 | A2 CadQuery program operation trace / Shape snapshot | `dataset/trace.py` | sources | **traces** (`traces.parquet`) | `source_id`, `execution_status`, `snapshots`, `operation_effects`, `selector_results`, `environment`, `failure_reason` (`TraceRecord`) |
@@ -100,9 +100,9 @@ formats default to Parquet with a JSONL fallback (`dataset/io.py::read_records`,
 LLM model input; `private` carries `gold_answer`, `query_program`, `candidate_trace`,
 `clue_map`, `verifier_status`.
 
-## Stage-to-CLI map
+## Pipeline-stage to CLI map
 
-| Stage | CLI |
+| Pipeline stage | CLI |
 |---|---|
 | A1 | `cadqa sources inspect` / `manifest` / `audit` / `from-cadevolve-tar` / `cache-cadevolve-tar` / `cache-cadevolve-dir` / `from-cadevolve-cache` |
 | A2 | `cadqa trace run` |
@@ -137,5 +137,5 @@ _(none yet)_
 
 ## Extra deliverables - P2
 
-- A machine-checked IO-contract test that fails when a stage's serialized field set
+- A machine-checked IO-contract test that fails when a pipeline stage's serialized field set
   diverges from this table.

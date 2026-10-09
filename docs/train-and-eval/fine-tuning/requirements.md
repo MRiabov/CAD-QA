@@ -1,18 +1,18 @@
 # Fine-tuning — requirements (intended vs verified)
 
 **Status:** active, 2026-10-07. This is a summary; the authoritative requirement for each
-stage is its `pipeline/` step doc. Environment facts are marked where they conflict.
+pipeline stage is its `pipeline/` step doc. Environment facts are marked where they conflict.
 
 ## How to read this
 
-Each row states the **intended** requirement for a stage, whether it is **verified**, and the
+Each row states the **intended** requirement for a pipeline stage, whether it is **verified**, and the
 evidence. "Verified" means a check ran and passed in this audit (2026-10-07) or is recorded
-as a passed run in the repository; everything else is marked. No stage currently claims an
+as a passed run in the repository; everything else is marked. No pipeline stage currently claims an
 end-to-end result on an immutable held-out split.
 
-## Intended vs verified by stage
+## Intended vs verified by pipeline stage
 
-| Stage | Intended requirement | Verified? | Evidence |
+| Pipeline stage | Intended requirement | Verified? | Evidence |
 |---|---|---|---|
 | 01 rows-loader | A dataset file maps to decoded CAD-QA dataset rows with the correct `[answer contract]` and decoded gold for every format | **Yes** | 36/36 tests in `train_and_eval/test_rows_loader.py` + `train_and_eval/eval/test_tool_calls.py`; real `release_10k` artifact loads (10,000 rows) |
 | 02 teacher-sampling | Kept agent training traces carry a tool call the Query verifier accepts; per-format coverage is complete | No | Code present (`rejection_sample.py`, `teacher.py`); `build_teacher_prompt` unit-tested; `json`/`number` teacher coverage was 0 historically |
@@ -53,7 +53,7 @@ end-to-end result on an immutable held-out split.
 
 1. The dataset is immutable with tagged revisions; a group-safe held-out split independent of the
    agent training trace set.
-2. Every stage's end-to-end check run and recorded, including parity, sandbox, and
+2. Every pipeline stage's end-to-end check run and recorded, including parity, sandbox, and
    per-format teacher coverage.
 3. SFT **and** GRPO documented as one measured chain (or the two avoided as a chain).
 4. Reward and eval grading proven to agree.

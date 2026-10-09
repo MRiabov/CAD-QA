@@ -27,7 +27,7 @@ logger = logging.getLogger("cadqa.check_dont_say")
 
 REPO = Path(__file__).resolve().parents[1]
 DONT_SAY_HEADING = "## Don't say"
-SCAN_ROOTS = ("docs", "dataset", "train_and_eval", "tools")
+SCAN_ROOTS = ("docs", "dataset", "train_and_eval", "tools", "plans")
 SCAN_SUFFIXES = frozenset({".md", ".py", ".tex"})
 SKIP_DIRS = frozenset(
     {

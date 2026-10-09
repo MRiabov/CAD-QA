@@ -39,6 +39,6 @@ and then explains it at the level of individual weight groups.
 
 ## Related
 
-- `2026-learning-what-to-learn.md` (stage-specific data, pass@k predicts RL potential)
+- `2026-learning-what-to-learn.md` (Training-stage-specific data, pass@k predicts RL potential)
 - `2025-bread-branched-rollouts.md` (SFT+RL failure when traces are too hard)
 - `2026-sft-vs-rl-tool-calling.md`

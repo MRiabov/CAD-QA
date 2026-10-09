@@ -16,7 +16,7 @@ captured at survey time.
 
 A synthesized terminal-task RL setup, reported by the environment-scaling survey [30] as the
 sharpest evidence on **why a warm-start matters** for small LLM models: RL on synthesized tasks is
-compared with and without a prior SFT stage that teaches the scaffold.
+compared with and without a prior SFT Training stage that teaches the scaffold.
 
 ## Findings
 
@@ -32,10 +32,10 @@ compared with and without a prior SFT stage that teaches the scaffold.
 
 ## Why it matters for CAD-QA
 
-- This is the crisp justification for the system plan's thin SFT stage: run SFT only until the
+- This is the crisp justification for the system plan's thin SFT Training stage: run SFT only until the
   `submit_*` format holds and pass@k > 0 on the task, then switch to RL. It also warns against
   treating SFT accuracy as the target.
-- It explains why a small CAD-QA LLM model needs a cold-start before Stage 3, and why "just do more
+- It explains why a small CAD-QA LLM model needs a cold-start before Training stage 3, and why "just do more
   SFT" is the wrong move once the gate clears.
 - It pairs with the pass@k gate (FT-D13) and the environment-first decision (FT-D15).
 

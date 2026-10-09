@@ -30,7 +30,7 @@ rollout must be reconstructable.
 `test_reward_envelope_and_fallback`); the GRPO training loop was not run in this audit.
 Historically the first GRPO run **collapsed** at the 2-hop cliff
 (`docs/_archive/rl_checkpoint_2026-08-08.md`): 0-hop reward reached 1.0 but entropy ≈ 0 and
-completions shrank to 2 tokens; the hop-2 stage then had reward 0 and
+completions shrank to 2 tokens; the hop-2 Training stage then had reward 0 and
 `frac_reward_zero_std=1`.
 
 ## Verification

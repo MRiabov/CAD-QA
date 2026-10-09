@@ -3,7 +3,7 @@
 **Status:** active, 2026-10-07.
 
 Local decisions for the `dataset_generation` unit, in ADR format
-(`../docs-conventions.md#adr`). Decisions scoped to a single stage live in that stage doc's
+(`../docs-conventions.md#adr`). Decisions scoped to a single pipeline stage live in that pipeline-stage doc's
 `Local decisions` section.
 
 ---

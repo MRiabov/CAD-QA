@@ -103,7 +103,7 @@ rationale — link the decision — and never redefine field names — match the
 
 ### `pipeline/00-overview.md`
 
-- The DAG order; the stage IO contract (single source of truth for artifact and field names); links
+- The DAG order; the IO contract between pipeline stages (single source of truth for artifact and field names); links
   to the step docs.
 
 ### `PRD.md`

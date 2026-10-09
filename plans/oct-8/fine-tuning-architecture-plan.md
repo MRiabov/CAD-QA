@@ -5,7 +5,7 @@
 data preparation), and `evaluation-plan.md` (evaluation/harness). Written in the primary checkout per
 the repo-local rule in `plans/oct-7/restructure-docs.md` §0.
 
-**This doc owns — how we train the model:** base LLM model and stack choice, cookbook-first
+**This doc owns — how we train the LLM model:** base LLM model and stack choice, cookbook-first
 execution, capability preservation, the training stages and optimizer/recipe, hardware/budget and
 serving/export, the surviving-code boundary (FT-D12), and training P0/P1/P2.
 
@@ -40,24 +40,24 @@ gate);
 
 ---
 
-## 0. For a first-time fine-tuner: the 30-second model
+## 0. For a first-time fine-tuner: the 30-second primer
 
-Fine-tuning continues training a pretrained model on new examples, with a **much smaller** learning
+Fine-tuning continues training a pretrained LLM model on new examples, with a **much smaller** learning
 rate and a **much smaller** dataset than pretraining. Two facts drive the training recipe:
 
-1. **You are not teaching the model to think from zero.** A ~2.6B base LLM model already reasons
+1. **You are not teaching the LLM model to think from zero.** A ~2.6B base LLM model already reasons
    and follows instructions to some degree. The recipe *steers* it toward our task shape (CAD-QA
    prompts + `submit_*` tools) and, optionally, a reasoning *style* — it does not build the
    capability.
-2. **Everything you train on, the model learns to imitate — including the format and even the
-   question text.** If a training example includes the prompt and it is not masked, the model also
+2. **Everything you train on, the LLM model learns to imitate — including the format and even the
+   question text.** If a training example includes the prompt and it is not masked, the LLM model also
    learns to *produce the prompt*, a known cause of over-generation. The flat `text` column in step
    B3 (`../../docs/train-and-eval/fine-tuning/pipeline/03-trace-normalization.md`) is exactly this
    bug: masking is currently undecided and delegated to trainer defaults.
 
-The distinction that matters for training (versus evaluation): **SFT scores only to admit a trace
+The distinction that matters for training (versus evaluation): **SFT scores only to admit an agent training trace
 to the dataset and trains by next-token imitation from fixed targets; RL would score as a reward
-and train the model on its own generations.** See the evaluation doc §1.
+and train the LLM model on its own generations.** See the evaluation doc §1.
 
 ---
 
@@ -78,7 +78,7 @@ Two predictions this architecture commits to and must test:
 
 - **H1 (format):** a small, curated tool-format + CAD-QA-format mix raises tool-valid rate sharply
   using the cookbook recipe (LoRA, cookbook epochs, prompt-masked).
-- **H2 (reasoning):** an external reasoning-distillation + agent-trace mix raises CAD-QA held-out
+- **H2 (reasoning):** an external reasoning-distillation + agent training trace mix raises CAD-QA held-out
   accuracy *beyond* what format-only training achieves, without a general-capability canary
   regression.
 - **H3 (transfer):** graph-derived CAD-QA supervision raises accuracy on **existing, credible**
@@ -106,7 +106,7 @@ mixes that test H1 and H2 are defined in the data doc.
 
 ## 2. Execution strategy: copy the Liquid cookbook first
 
-The biggest risk is not the model or the data — it is that the author has not built a fine-tuning
+The biggest risk is not the LLM model or the data — it is that the author has not built a fine-tuning
 pipeline before. Mitigate by **copying a working cookbook end to end before changing anything**,
 then swapping in CAD-QA data one variable at a time.
 
@@ -122,7 +122,7 @@ Each step below is a gate; do not start the next until the previous passes.
    `docs.liquid.ai/examples/customize-models/home-assistant`: generate a small synthetic JSONL,
    convert it with the cookbook's `prepare_data.py` to the LFM2 text format, train LoRA for 5
    epochs on a Modal H100 (~$1.50), merge + export GGUF, and re-run its benchmark. The cookbook
-   fine-tunes **LFM2.5-350M** as a cheap demo — this is a **pipeline smoke test, not our model**.
+   fine-tunes **LFM2.5-350M** as a cheap demo — this is a **pipeline smoke test, not our LLM model**.
    Gate: the benchmark accuracy moves. This proves the whole narrow-task loop
    data → train → merge → export → eval.
 3. **Swap in our data (`mixed_dataset_our_tool_format_and_replay`).** Replace the cookbook dataset
@@ -152,7 +152,7 @@ Rules for the whole effort:
 
 ---
 
-## 3. Capability preservation — "don't screw the model up"
+## 3. Capability preservation — "don't screw the LLM model up"
 
 The evidence is blunt: **LoRA does not reliably prevent catastrophic forgetting**, so we design for
 it.
@@ -183,7 +183,7 @@ canary.
 
 Stack-neutral at the contract level (works for `liquid-finetune`, TRL, or Unsloth). The **contract**
 is the important artifact here. Data stages 1–5 are owned by the system plan
-(`fine-tuning-system-plan.md` §7); the evaluation doc owns stage 9.
+(`fine-tuning-system-plan.md` §7); the evaluation doc owns pipeline stage 9.
 
 ```text
 [data registry] -> [ingest] -> [normalize] -> [quality gate] -> [dedup/contamination]
@@ -203,7 +203,7 @@ is the important artifact here. Data stages 1–5 are owned by the system plan
    Pythonic or forced to JSON with "Output function calls as JSON" in the system prompt. This
    replaces the hand-rolled render+mask step: completion-only loss is a cookbook/trainer concern to
    **verify**, not a bespoke pipeline to build. See §5.4.
-7. **Manifest.** One JSON per run: source revisions, row counts, role weights, seed, exact command,
+7. **Manifest.** One JSON per run: External dataset revisions, row counts, role weights, seed, exact command,
    template hash, git SHA, checksums (Phase 0 TA-E3).
 8. **Train.** Run `liquid-finetune` with the cookbook config and defaults (`DEFAULT_SFT`,
    `DEFAULT_LORA`), overriding only `model_name` and the dataset path until a canary says otherwise.
@@ -215,13 +215,13 @@ is the important artifact here. Data stages 1–5 are owned by the system plan
 
 ### 5.1 Sizing (VRAM)
 
-| Method | 2.6B model | Notes |
+| Method | 2.6B LLM model | Notes |
 |---|---|---|
 | LoRA (bf16 base) | ~10–14 GB | **Liquid's default and our default** (§5.4); 24 GB comfortable |
 | QLoRA (4-bit NF4) | ~6–8 GB | fallback only, to fit a ≤16 GB card at moderate sequence length |
 | Full FT | ~40 GB | **not** needed |
 
-Add headroom for activation at the CAD-QA trace length (SFT was `SEQ=6144`,
+Add headroom for activation at the CAD-QA agent training trace length (SFT was `SEQ=6144`,
 `../../docs/train-and-eval/fine-tuning/pipeline/04-sft.md`) and for longer external reasoning
 traces. Use gradient checkpointing and gradient accumulation rather than a bigger card.
 
@@ -236,7 +236,7 @@ traces. Use gradient checkpointing and gradient accumulation rather than a bigge
 - **Headroom (P2):** A100 40 GB for long-context external data.
 - Serving/eval bytes are the evaluation doc's concern (vLLM needs its own allocation).
 
-### 5.3 Cost model
+### 5.3 Cost estimate
 
 The dominant cost is **teacher API calls for `learn_the_cadqa_task`** (the data doc's out-of-scope piece, but
 it sets the budget). The external mix's ingest/filter/dedup is CPU-only; a LoRA run over ~20–50k
@@ -245,18 +245,23 @@ examples is hours on a 4090. Budget GPU by the hour and stop on the canary gate.
 ### 5.4 What Liquid ships (checked 2026-10-08)
 
 Sources: `docs.liquid.ai/examples/customize-models/home-assistant`, `docs.liquid.ai/lfm/key-concepts/{tool-use,chat-template,text-generation-and-prompting}`,
-`docs.liquid.ai/lfm/fine-tuning/*`, and the LFM2 model table.
+`docs.liquid.ai/lfm/fine-tuning/*`, and the LFM2 LLM model table.
 
 **Recommended stack: LEAP Finetune (`liquid-finetune`)**
 
 - The docs name LEAP Finetune (repo `Liquid4All/liquid-finetune`, formerly `leap-finetune`) as
   Liquid's recommended training stack; it builds on TRL and wraps dataset validation, config
   defaults, evals, distributed launch, checkpointing, and HF/GGUF export.
-- Config-first: `JobConfig(project_name, model_name="LFM2.5-1.2B-Instruct", training_type="sft",
-  dataset=DatasetConfig(path=..., type="sft", limit=..., test_size=0.1),
-  training_config=TrainingConfig(extends="DEFAULT_SFT", num_train_epochs=3, learning_rate=2e-5),
-  peft_config=PeftConfig(extends="DEFAULT_LORA", use_peft=True))`, run via `run_config(job)` or
-  `liquid-finetune job_configs/sft_example.yaml`.
+- Config-first:
+
+  ```python
+  JobConfig(project_name, model_name="LFM2.5-1.2B-Instruct", training_type="sft",
+      dataset=DatasetConfig(path=..., type="sft", limit=..., test_size=0.1),
+      training_config=TrainingConfig(extends="DEFAULT_SFT", num_train_epochs=3, learning_rate=2e-5),
+      peft_config=PeftConfig(extends="DEFAULT_LORA", use_peft=True))
+  ```
+
+  Run via `run_config(job)` or `liquid-finetune job_configs/sft_example.yaml`.
 - Launch: **Modal** (managed, recommended first) or **local CUDA on a rented Vast.ai box** (SSH in
   and run `liquid-finetune` with the instance Python). We have Modal + Vast only; the SLURM and
   KubeRay backends the docs list do not apply.
@@ -280,7 +285,7 @@ Sources: `docs.liquid.ai/examples/customize-models/home-assistant`, `docs.liquid
 **Tool use and chat template (the format contract this doc owns)**
 
 - **ChatML-like template**: `<|startoftext|>` … `<|im_start|>` + role + newline … `<|im_end|>`,
-  roles `system`/`user`/`assistant`/`tool`; defined in each model's `chat_template.jinja`.
+  roles `system`/`user`/`assistant`/`tool`; defined in each LLM model's `chat_template.jinja`.
 - **Tool calls**: LFM2.5 wraps calls in `<|tool_call_start|>`/`<|tool_call_end|>`; LFM2 also wraps
   tool definitions in `<|tool_list_start|>`/`<|tool_list_end|>` and results in
   `<|tool_response_start|>`/`<|tool_response_end|>`.
@@ -324,7 +329,7 @@ justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
 | Re-author the `[answer contract]` / `submit_*` rendering for LFM2.5 native tool tokens | **P0** | base-specific; the exact Aug-2026 failure mode (`development-context.md`) |
 | Cookbook LoRA recipe (`r=16`, `alpha=32`, `lr=2e-4`, cookbook epochs) on bf16 | **P0** | baseline that does not forget; matches Liquid (§5.4) |
 | Merge + GGUF export scripted from the cookbook | **P0** | the current repo has no merge step (FT-D10/TA-D2) |
-| DPO / GRPO second stage | **P2** | FT-D8 ordering, superseded by FT-D13: run GRPO only after the Stage-2 pass@k gate shows a reachable tier (`fine-tuning-system-plan.md`) |
+| DPO / GRPO second training stage | **P2** | FT-D8 ordering, superseded by FT-D13: run GRPO only after the Training stage 2 pass@k gate shows a reachable tier (`fine-tuning-system-plan.md`) |
 | NB-LoRA / EWC / replay-buffer forgetting control | **P2** | only if the canary shows real regression |
 | Multi-base sweep (Qwen3.5-2B, LFM2.5-2.6B, Llama-3.2-3B) | **P2** | hold recipe fixed; adopting another base leaves the cookbook |
 

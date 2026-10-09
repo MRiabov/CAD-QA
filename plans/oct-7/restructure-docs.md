@@ -3,7 +3,7 @@
 **Status:** active. This is the only file in `plans/oct-7/`.
 
 It plans a documentation restructure: author clearer, canonical docs under `docs/` that
-capture intent (PRD), per-stage requirements, development context, and the plan to
+capture intent (PRD), per-pipeline-stage requirements, development context, and the plan to
 completion. The docs themselves are written in later threads; this file is the plan and
 the handoff. It is intentionally a plan, not the docs.
 
@@ -21,14 +21,14 @@ the handoff. It is intentionally a plan, not the docs.
 - Owner checklist: `docs/_audit/owner-audit-todo.md`.
 
 Notable findings from drafting, to feed the audit: environment pins are untracked and
-conflict with the narrative; no tracked code produces the **merged model**; GRPO loads the
-base model, not the SFT adapter; the reward and the eval grader diverge; `json`/`number`
+conflict with the narrative; no tracked code produces the **merged LLM model**; GRPO loads the
+base LLM model, not the SFT adapter; the reward and the eval grader diverge; `json`/`number`
 teacher coverage is zero; most shortcut baselines are pre-graph-first and stale.
 
 Next: owner review, then close the audit items before Phase 1.
 
 **2026-10-07 (later)** — all pre-restructure docs moved to `docs/_archive/` (status log,
-handoffs, RL records, runbooks, analysis reports, the paper draft, trace previews); all
+handoffs, RL records, runbooks, analysis reports, the paper draft, CadQuery program operation trace previews); all
 references in the new docs and this plan rewired to `_archive/` paths. `docs/experiments/`
 stays in place (the designated home for dated records).
 
@@ -107,15 +107,15 @@ pre-existing failures (query-synthesis prompt text; they fail on `main` too).
 
 ## Code-change policy
 
-- **Dataset generation (`cad_qa/`) is frozen.** We abstain from editing it as much as
-  possible: the intent behind the pipeline already exists and is (probably) fine, and a
+- **Dataset generation (`cad_qa/`) is immutable.** We abstain from editing it as much as
+  possible: the intent behind the dataset-generation pipeline already exists and is (probably) fine, and a
   past refactor attempt was moot. The new docs *describe* it; they do not justify a
   refactor.
 - On a doc/code mismatch in `cad_qa/`: default to documenting the actual behaviour and
   recording the discrepancy. Change generation code only when a P0 thesis claim is
   directly blocked by a verified bug, then minimally, on a branch, with the audit as the
   justification.
-- **The fine-tuning/eval stack (`train_and_eval/`) is not frozen.** It is the active
+- **The fine-tuning/eval stack (`train_and_eval/`) is not immutable.** It is the active
   research surface and will be rewritten (reasoning-preserving pipeline).
 
 ## Priority tiers and standards
@@ -123,13 +123,13 @@ pre-existing failures (query-synthesis prompt text; they fail on `main` too).
 The project has two standards, and we track both explicitly:
 
 - **P0 — Thesis critical path (blocking).** Without this the Master's thesis does not
-  stand: a frozen, verified dataset; a small-model result that is real and not collapsed;
+  stand: an immutable, verified dataset; a small LLM model result that is real and not collapsed;
   the core claims supported by tracked artifacts.
 - **P1 — Thesis important (should-have).** Strengthens the thesis but is not strictly
-  blocking: a second model, transfer eval, richer ablations, the mode-3 harness.
+  blocking: a second LLM model, transfer eval, richer ablations, the mode-3 harness.
 - **P2 — Good-venue publication extras.** The higher bar for a strong venue, explicitly
   optional and potentially never executed: the ≥10,000-row `benchmark-release` tier, full
-  ontology coverage, the `no_tools`/mode-3 baseline matrix, the conciseness study,
+  CAD ontology coverage, the `no_tools`/mode-3 baseline matrix, the conciseness study,
   multimodal future work, exhaustive citation work, reviewer-proof ablations.
 
 Default: a doc, task, or phase is P0/P1 only if **the thesis** needs it. Anything that
@@ -162,7 +162,7 @@ the spirit of the product-launch repo.
   `00-overview.md`, not a separate methods doc (D4 dropped).
 - **Dated experiment records** (`docs/experiments/YYYY-MM-DD-*.md`) — purpose, hypothesis,
   dataset/splits, config/commands, hardware, outcomes, failures, artifact paths.
-- **Dataset card** and **model card** — published alongside the HF artifacts.
+- **Dataset card** and **LLM model card** — published alongside the HF artifacts.
 - **Run manifest** — env pin, seed, dataset revision, exact command, checksums.
 - **Evaluation report** — metrics by hop/format/mode.
 
@@ -190,8 +190,8 @@ the spirit of the product-launch repo.
 - For `pipeline/` steps, the local decision record lives **in the step file itself**, in
   the same format, and is linted by the same checker as `decisions.md`.
 - **Decisions are forward-looking.** Do not retrofit a clean architecture onto vibecoded
-  code. Record decisions we actually make. For the frozen dataset generator, document
-  behaviour *descriptively* in the pipeline docs; the only decisions there are "we freeze
+  code. Record decisions we actually make. For the immutable dataset generator, document
+  behaviour *descriptively* in the dataset-generation pipeline docs; the only decisions there are "we freeze
   X" and deliberate keep-as-is choices. For fine-tuning (being revised), write decisions as
   they land. Where existing intent is genuinely unknown, mark `[unknown]` — never invent a
   rationale.
@@ -202,7 +202,7 @@ the spirit of the product-launch repo.
   table of banned/vague terms (a ratchet: seeded, then trimmed only by engineering the term
   out of docs and code). Enforced: terms used in docs must be defined; no invented
   synonyms; bad terms fail lint.
-- Aligns with the ubiquitous-language practice; CAD-QA/CADEdit ontology terms get entries.
+- Aligns with the ubiquitous-language practice; CAD-QA/CADEdit CAD ontology terms get entries.
 - A **legacy-term audit** (see terminology discipline) enumerates the misleading terms in
   the existing docs/code and resolves each: a real glossary entry, a rename, or a
   Don't-say.
@@ -220,12 +220,12 @@ Rules:
 
 - **One concept, one word.** A term names exactly one thing; a thing has exactly one term.
   Two concepts sharing a word → split it; one concept with two words → pick one.
-- **Precise and scoped.** No unspecific placeholders ("the object", "the value",
-  "the pipeline") where a named concept exists.
+- **Precise and scoped.** No unspecific placeholders (`the object`, `the value`,
+  `the pipeline`) where a named concept exists.
 - **No overclaiming.** Describe what is verified, or mark it (`exists`, `[unverified]`).
   Never assert behaviour a check has not confirmed.
 - **No conflation.** Do not reuse a term for a related-but-different concept; name the
-  distinction. Model: product-launch `00-stage-interfaces.md`'s "the two failing-units are
+  distinction. Example: product-launch `00-stage-interfaces.md`'s "the two failing-units are
   different and both named".
 - **Defined or banned.** Every load-bearing term has a glossary entry; every bad term is on
   the Don't-say list and fails lint.
@@ -257,13 +257,13 @@ Rules:
 ### Pipeline ↔ code mapping
 
 - Pipeline docs are numbered steps (`NN-<slug>.md`, optionally `NNx`) and must map 1:1 to a
-  code stage (product-launch `manual-workbook/` precedent: a code-experimentation folder
+  pipeline stage in code (product-launch `manual-workbook/` precedent: a code-experimentation folder
   mapped numbered pipeline steps to runnable scripts — very useful).
 - A doc step with no code, or code with no doc, is a finding.
 - Where a runnable mapping helps, keep a code-experimentation folder whose scripts mirror
   the step numbers.
 
-### Document layers and single-source rule
+### Document layers and single source-of-truth rule
 
 Docs are layered by role — not deduplicated into nothing. Following the `redo/` convention
 (`pipeline/` = authoritative WHY; `pipeline/streamlined/` = terse executable WHAT;
@@ -275,14 +275,14 @@ Docs are layered by role — not deduplicated into nothing. Following the `redo/
   (Purpose / IO / Requirement, or `READ → TRANSFORM → WRITE`). This *is* a deliberate
   restatement of behaviour, and it is valuable: an implementing agent can follow it and a
   test can assert it. Do not fear restating behaviour; fear uncontrolled duplication.
-- **CONTRACT / IO** — one stage-interface doc per pipeline is the single source for what
+- **CONTRACT / IO** — one pipeline-stage interface doc per pipeline is the single source of truth for what
   flows between steps (artifact + field names); step docs must match it (redo
   `00-stage-interfaces.md`).
 - **STATUS** — `verified` / `exists` / `missing` / `stale` tags plus verification commands.
 
-The single-source rule: every fact has exactly one home. Step docs may restate behaviour,
+The single source-of-truth rule: every fact has exactly one home. Step docs may restate behaviour,
 but they point at decisions for the *why* and at the IO contract for names — they never copy
-rationale or redefine field names. Where two docs overlap, one is the source and the other
+rationale or redefine field names. Where two docs overlap, one is the source of truth and the other
 links.
 
 Whether CAD-QA needs a separate terse WHAT layer (a `streamlined/`-style folder) or the
@@ -320,7 +320,7 @@ owner's; delegated exploration, directly-verified load-bearing claims.
   (monotonic thresholds that only improve). They did their job and gave high ROI.
 - The doc/glossary/decisions linters are in scope. Code lint and ratchets apply where
   they do not fight the `cad_qa/` freeze: documentation and the `train_and_eval/` surface
-  first; heavy linting of the frozen dataset-generation code is deferred.
+  first; heavy linting of the immutable dataset-generation code is deferred.
 - **Markdown formatting.** Adopt a formatter for all docs — `rumdl` (preferred: stricter
   and faster) or `mdformat`. Committed config; runs in the same gate as the linters. No
   Markdown formatter or CI config exists in the repo today, so this is created from
@@ -339,7 +339,7 @@ reasoning datasets. We should mine those rather than hand-roll.
   `alignment-handbook`, `smol-course`; `Open-R1` (R1 reproduction); `open-instruct` /
   Tulu 3; `OpenThoughts` / `Bespoke-Stratos` reasoning-data pipelines; `unsloth`
   notebooks; `Axolotl`; `LLaMA-Factory`; `torchtune`; `verl` (RL).
-- Record findings in `docs/prior-art.md`: per source, what they do, what we adopt, and
+- Record findings in `docs/prior-art.md`: per surveyed project, what they do, what we adopt, and
   what we deliberately reject (with a decision for the base-pipeline choice, D11).
 - Goal: a correct, efficient, reasoning-preserving pipeline we understand — not the
   fastest way to a number.
@@ -350,7 +350,7 @@ CAD-QA is the paper, and the repo *is* CAD-QA, so all code nests here; the gener
 is `dataset/` (not `cad_qa/`, which would repeat the paper name). Two top-level code packages,
 coupled one way only by the rows I/O contract:
 
-- `dataset/` — **generation only** (rename of today's frozen `cad_qa/`): `source.py`,
+- `dataset/` — **generation only** (rename of the immutable `cad_qa/`): `source.py`,
   `trace.py`, `ontology/`, `query/`, `prompts/`, and the materialize→validate→release→export
   subpackage. See Code-change policy.
 - `train_and_eval/` — **all** training and evaluation logic (being revised), including the
@@ -364,7 +364,7 @@ Rules:
 - File length: aim small and split by responsibility. The 800-line rule is advisory here
   ("to hell with 800 lines"), not blocking.
 - Coupling is one-way: `train_and_eval/` consumes `dataset/` outputs through the documented
-  rows I/O contract (the rows artifact + answer contract) only; `dataset/` never imports
+  rows I/O contract (the Dataset file + answer contract) only; `dataset/` never imports
   `train_and_eval/`.
 - Naming: code package directories use underscores (`dataset`, `train_and_eval`) — Python
   import names. Hyphens are for docs only (`docs/train-and-eval/`).
@@ -376,7 +376,7 @@ Moves:
 - `cad_qa/evaluation/` → `train_and_eval/grading/` — it is eval logic (`grade`/`parse`/
   `baselines`/`requests`/`tool_assisted`/`no_cadquery_access`), and the generation pipeline never
   imports it.
-- `cad_qa/dataset/` → a clearer name than `dataset/dataset/` (it is the release/export stage):
+- `cad_qa/dataset/` → a clearer name than `dataset/dataset/` (it is the release/export pipeline stage):
   `dataset/release/`, or split `materialize/` + `release/`.
 - Eval CLI and the Harbor runner/grader move to `train_and_eval/`; the Harbor *task export*
   stays in `dataset/`. The `cadqa` CLI becomes a cross-package orchestrator (or a train/eval
@@ -406,7 +406,7 @@ things the current docs do not separate cleanly:
 1. **Intent** (PRD): research questions, claims, deliverables, evaluation contract.
 2. **Requirements per pipeline step**: purpose, inputs/outputs, the requirement, and
    intended-vs-verified status with a verification command.
-3. **Development context**: history and the as-of snapshot (proven vs assumed).
+3. **Development context**: history and the as-of state (proven vs assumed).
 4. **Development plan**: the phased route to completion.
 
 ## 2. Target `docs/` structure
@@ -471,8 +471,8 @@ Notes:
 - Design rationale lives in each feature's `decisions.md` and each pipeline's
   `00-overview.md`, not a separate
   methods doc (D4).
-- Pipeline stages use `NN-<slug>.md` and may split into subletters when a stage grows
-  (`01a`, `01b`, `04c`, `04d`, …). A stage that is one file needs no letter; a stage that
+- Pipeline stages use `NN-<slug>.md` and may split into subletters when a pipeline stage grows
+  (`01a`, `01b`, `04c`, `04d`, …). A pipeline stage that is one file needs no letter; a pipeline stage that
   splits keeps the numeric prefix and adds a letter per part.
 - Per the priority-tier rule, any doc may carry a trailing `## Extra deliverables - P2`
   block for the good-venue version of that step.
@@ -490,18 +490,19 @@ Notes:
 
 ### `docs/PRD.md` (product / research requirements)
 - One-sentence intent; primary + secondary research questions; claims/contributions;
-  deliverables; evaluation contract (closed-book primary, three harnesses, metrics,
+  deliverables; evaluation contract (no_tools LLM harness primary, three harnesses, metrics,
   targets); scope boundaries; definition of done; non-goals.
-- Source material: `CA2_Riabov_final.tex`, `specs/paper-spec.md`,
+- Reference material: `CA2_Riabov_final.tex`, `specs/paper-spec.md`,
   `specs/research-experiment-spec.md`, `human-paper-spec.md`.
 
 ### `docs/glossary.md`
-- Canonical terms used across PRD / pipeline docs (e.g. hop count, selector, workplane,
-  material/void region, candidate trace, harness mode, rejection sampling). Enforced by
+- Canonical terms used across PRD / pipeline docs (e.g. Reasoning hop count, CadQuery selector,
+  CadQuery workplane, CAD feature-added/removed region, answer candidate set trace, LLM harness
+  mode, rejection sampling). Enforced by
   the same lint as decisions.
 
 ### `docs/development-context.md`
-- The as-of snapshot + history, plus a proven-vs-assumed list. Content is drafted in §6
+- The as-of state + history, plus a proven-vs-assumed list. Content is drafted in §6
   below; it should be essentially ready to write.
 
 ### `docs/development-plan.md`
@@ -520,24 +521,24 @@ Notes:
 
 ### Per-pipeline docs
 Each pipeline step doc follows the same template (§4) and is grounded in code refs.
-- `00-overview.md` per pipeline holds the DAG and the **stage IO contract** — the single
-  source for artifact/field names between steps; step docs must match it (redo
+- `00-overview.md` per pipeline holds the DAG and the **pipeline-stage IO contract** — the single
+  source of truth for artifact/field names between steps; step docs must match it (redo
   `00-stage-interfaces.md` convention).
-- Dataset pipeline: A1–A7 (source → trace → graph → query → prompts → materialize →
+- Dataset pipeline: A1–A7 (CadQuery program ingestion → CadQuery program operation trace → CAD ontology graph → query → prompts → materialize →
   exports).
 - Fine-tuning pipeline: B1–B7 (rows → teacher → normalize → SFT → GRPO → harness →
   serving).
 - Evaluation: `harness.md` (three modes + Harbor; primary = `numpy`), `baselines.md`
-  (big-model runs).
+  (big LLM model runs).
 
 ## 4. Pipeline doc template
 
-Every `pipeline/` stage doc (named `NN-*.md` or `NNx-*.md`, e.g. `01-rows-loader.md`,
+Every pipeline stage doc in `pipeline/` (named `NN-*.md` or `NNx-*.md`, e.g. `01-rows-loader.md`,
 `04a-*.md`) must contain, in order:
 
 1. **Purpose** — one sentence.
 2. **Inputs / outputs** — typed artifacts (name + producer); must match the
-   `00-overview.md` stage IO contract exactly.
+   `00-overview.md` pipeline-stage IO contract exactly.
 3. **Requirement** — what must be true for the downstream claim to hold.
 4. **Current status** — `verified` | `exists` | `missing` | `stale`, with evidence
    (`path::symbol`, artifact path).
@@ -549,12 +550,12 @@ Every `pipeline/` stage doc (named `NN-*.md` or `NNx-*.md`, e.g. `01-rows-loader
    deleted).
 9. **Extra deliverables - P2** (optional) — the more ambitious version of this step.
 
-## 5. Source material to migrate
+## 5. Reference material to migrate
 
 | New doc | Primary sources |
 |---|---|
 | `docs/PRD.md` | `.tex`, `specs/paper-spec.md`, `specs/research-experiment-spec.md`, `specs/dataset-spec.md`, `human-paper-spec.md` |
-| `docs/glossary.md` | `specs/*.md`, the paper, `cad_qa/` ontology/query modules |
+| `docs/glossary.md` | `specs/*.md`, the paper, `cad_qa/` CAD ontology/query modules |
 | `docs/development-context.md` | §6 below; `docs/_archive/agent_handoff_2026-08-09.md`, `docs/_archive/rl_*.md`, `docs/experiments/2026-08-08-*` |
 | `docs/development-plan.md` | §7 below |
 | `docs/prior-art.md` | External — open-source training / RL / data pipelines (mined, cited) |
@@ -572,14 +573,14 @@ Every `pipeline/` stage doc (named `NN-*.md` or `NNx-*.md`, e.g. `01-rows-loader
 
 | When | What | Artifact |
 |---|---|---|
-| 2026-04-29 | Graph-first reset; one ontology + deterministic query/verifier | `overnight-task.md`, rewritten `specs/`, `epics-and-stories.yaml` |
-| 2026-05→06 | Dataset builder: source, trace, graph, query, prompts, release gates | `cad_qa/`, `docs/_archive/implementation_status.md` |
+| 2026-04-29 | Graph-first reset; one CAD ontology + a deterministic Query verifier | `overnight-task.md`, rewritten `specs/`, `epics-and-stories.yaml` |
+| 2026-05→06 | Dataset builder: CadQuery program ingestion, operation tracing, CAD ontology graph, query, prompts, release gates | `cad_qa/`, `docs/_archive/implementation_status.md` |
 | 2026-06→07 | Harbor export, Daytona, provider pinning | `cad_qa/harbor.py`, `docs/_archive/harbor.md` |
 | 2026-08-08 | gemma-4-E2B baseline: rc10 (0-hop) 30%, release10k (2–5 hop) 14% | `docs/experiments/2026-08-08-gemma-e2b-bench.md` |
 | 2026-08-08/09 | Teacher sampling, SFT, native format fix, 1-hop bridge, `run_code`, harness modes, vLLM | `train_and_eval/`, `docs/_archive/rl_*.md`, `docs/_archive/agent_handoff_2026-08-09.md` |
 | 2026-08-09 | Last commit | `512a514` |
 
-**Components.** Dataset/benchmark stack in `cad_qa/` (source, trace, ontology, query,
+**Components.** Dataset/benchmark stack in `cad_qa/` (CadQuery program ingestion, operation tracing, CAD ontology, query,
 prompts, dataset, harbor, cli). Fine-tuning stack in `train_and_eval/` (rows_loader,
 tool_calls, teacher, rejection_sample, normalize_traces, sft_train, grpo_train,
 eval_bench, convert_for_vllm). HF data `MRiabov/cadqa-rl-2000`: `v2/v3_curriculum` (1,445
@@ -587,7 +588,7 @@ rows), `sft_traces_v1` (275), `sft_traces_v2` (308).
 
 **Proven.** Base gemma-4-E2B rc10 30/100, release10k 14/100. Native-format SFT 50% acc /
 58.3% tool-valid on 12 held-out rows (non-native 16.7% on the same rows). Post-fix re-run
-41.7% / 75% on the same 12 rows. Big-model Harbor rc10 clean-100: Mimo 65% / DeepSeek 63%
+41.7% / 75% on the same 12 rows. Big LLM model Harbor rc10 clean-100: Mimo 65% / DeepSeek 63%
 / Kimi 59% (0-hop, easy).
 
 **Assumed / unverified.** vLLM "solved" (loads a hand-converted checkpoint; no
@@ -595,7 +596,7 @@ transformers-vs-vLLM parity check). SFT reasoning-preserving (4 epochs, 268 trac
 masking evidence; eval over-generated, GRPO went to 2-token completions, entropy ≈ 0).
 Grader correctness beyond the oracle path. `run_code` sandbox isolation. The 1,445-row
 curriculum as "ready" (it does not pass the repo's `benchmark-release` gates). Hard-slice
-(3+ hop) big-model numbers meeting the ≤30% target.
+(3+ hop) big LLM model numbers meeting the ≤30% target.
 
 **Gaps / risks.** Trust gap (primary); dataset scale vs spec's 10,000; reasoning
 collapse; serving correctness; missing orchestrator (`scripts/`/`configs/` absent at
@@ -611,12 +612,12 @@ priority (`P0`/`P1`/`P2`) per the tier rule above.
 
 - **Phase 0 — Trust audit (no GPU). [P0]** Audit every pipeline step in §5; write a
   pass/fail + verification command for each. Priority: grader/oracle, `run_code` sandbox,
-  vLLM parity, SFT masking, rows loader. Consolidate one runnable command per stage.
+  vLLM parity, SFT masking, rows loader. Consolidate one runnable command per pipeline stage.
   Re-run the 12-row SFT eval. Gate: every load-bearing component is `verified` or
   explicitly `blocked`.
 - **Phase 0a — Repo structure (mechanical). [P1; fan-out check P2]** Rename `cad_qa/` →
   `dataset/`; move `cad_qa/evaluation/` → `train_and_eval/grading/`; rename the inner
-  `cad_qa/dataset/` (it is the release/export stage); move the eval CLI and the Harbor
+  `cad_qa/dataset/` (it is the release/export pipeline stage); move the eval CLI and the Harbor
   runner/grader to `train_and_eval/`. Keep the rows I/O contract as the only coupling. Folder
   fan-out CI is P2.
 - **Phase 0b — Prior-art code mining. [P1]** Survey established open-source training / RL /
@@ -630,7 +631,7 @@ priority (`P0`/`P1`/`P2`) per the tier rule above.
   are P2]** Big models on the primary `numpy` harness on the hard slice; log every call;
   grade with the audited grader.
 - **Phase 3 — Reasoning-preserving training. [SFT P0; GRPO P1]** Design first (a decision +
-  the pipeline `00-overview.md`): constrained decoding for format, prompt-masked SFT if
+  the fine-tuning pipeline `00-overview.md`): constrained decoding for format, prompt-masked SFT if
   used, on-policy RL with shaped reward and a 0→1→2→3→5 curriculum. Canary before scale;
   monitor entropy/length/reward.
 - **Phase 4 — Evaluation and analysis. [core P0; P2 modes optional]** base/SFT/RL on the

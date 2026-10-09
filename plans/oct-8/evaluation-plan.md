@@ -32,9 +32,9 @@ descriptive docs); `../../docs/train-and-eval/fine-tuning/decisions.md`; `../../
 
 ## 1. What "evaluation" means here
 
-Run an LLM model **closed-book** over CAD-QA dataset rows and score **exact structured answers**
+Run an LLM model **with no access to CadQuery** over CAD-QA dataset rows and score **exact structured answers**
 under a switchable compute mode. The evaluation harness is the whole chain:
-model → chat template → tool declarations → generation loop → tool execution → tool-call parser →
+LLM model → chat template → tool declarations → generation loop → tool execution → tool-call parser →
 scorer. Training and evaluation differ only in what they do with the output: training adds a
 gradient update; evaluation does not.
 
@@ -42,7 +42,7 @@ gradient update; evaluation does not.
 `[answer contract]` suffix, and the Answer format → tool mapping are the same surface the training
 data uses. This is the sense in which "eval == training tool calls": the tool-call/harness layer is
 common. The difference is at the objective (see the architecture doc, §1: SFT scores only to
-*admit* a trace and trains by imitation; RL would score as a reward).
+*admit* an agent training trace and trains by imitation; RL would score as a reward).
 
 **Two execution surfaces (D-E2).** The local harness speaks the native tool-call protocol and
 grades with `tool_calls.py::tool_call_matches`; Harbor runs an external coding agent that writes
@@ -54,14 +54,14 @@ implementation** — a recorded defect (see §4).
 
 ## 2. LLM harness modes
 
-An LLM harness mode is which compute tools the model gets. All modes are closed-book: no CadQuery
+An LLM harness mode is which compute tools the LLM model gets. All modes have no access to CadQuery: no
 kernel, no network. Detail and status: `../../docs/train-and-eval/evaluation/harness.md`.
 
 - **`numpy` (primary, P0).** Submit tools plus the sandboxed `run_code` (Python + NumPy + `math`).
   This mode gates the thesis claims.
 - **`no_tools` (P2).** Submit tools only; arithmetic internal. Strict-reasoning upper bound.
 - **`cadquery` (P2, unimplemented).** Full CadQuery kernel; one correct call suffices. Reserved
-  for the RL stage; `tools_for_mode` raises `NotImplementedError`.
+  for the RL Training stage; `tools_for_mode` raises `NotImplementedError`.
 
 The `run_code` execution path is `train_and_eval/run_code_sandbox.py` (`python -I -B`), an
 **accidental-misuse guard, not a security boundary** (D-E3). Its isolation remains `[unverified]`
@@ -71,7 +71,7 @@ The `run_code` execution path is `train_and_eval/run_code_sandbox.py` (`python -
 
 ## 3. Tool-call and answer surface
 
-- **The `[answer contract]` suffix** tells the model to end with the matching `submit_*` call.
+- **The `[answer contract]` suffix** tells the LLM model to end with the matching `submit_*` call.
 - **One submit tool per Answer format** (`train_and_eval/tool_calls.py::FORMAT_TO_TOOL`); `json` is
   specifically the CadQuery workplane tool, not generic JSON (FT-D4).
 - **The native tool-call spelling is base-specific.** The evaluation harness must be re-pointed at
@@ -97,8 +97,8 @@ must share a single verified scorer, or the thesis number and the training signa
 things. Reconciling them is trust-audit **TA-A3**. `grading/parse.py` already covers the `boolean`
 Answer format that the typed contract omits — the union is the target.
 
-**Why this outranks cleanup (2026).** In RLVR the verifier *is* the objective, so a noisy or
-divergent scorer is optimized, not merely mis-counted. Verifier audits find self-agreement as low
+**Why this outranks cleanup (2026).** In RLVR the Query verifier *is* the objective, so a noisy or
+divergent scorer is optimized, not merely mis-counted. Query verifier audits find self-agreement as low
 as 53.8% and two configurations of the same library disagreeing on 49.9% of pairs ([24]); the
 numeric/coordinate formats need an explicit equivalent-answer (metamorphic) test. See
 `fine-tuning-system-plan.md` §4 and FT-D14.
@@ -197,10 +197,10 @@ doc holds the rows.
 Regression gate: if `general` drops beyond a pre-registered tolerance (suggest ≤2 points) while
 `cadqa_heldout` rises, the run is a **forgetting result** and is reported, not hidden.
 
-**Canary source hygiene ([29]).** The `tool_valid` slice must be **disjoint from the public
+**Canary provenance hygiene ([29]).** The `tool_valid` slice must be **disjoint from the public
 training corpora** (`xLAM`/`ToolACE`/`Glaive`), which the base LLM model likely saw in
 post-training; a memorized slice inflates format compliance. Prefer our own `submit_*` rows, a
-disjoint source, or a synthetic set.
+disjoint dataset, or a synthetic set.
 
 Open question: does `liquid-finetune`'s eval config cover our scorer, or do we grade offline from
 its generations? `[unknown]` — resolve on the cookbook reproduction.
@@ -214,7 +214,7 @@ its generations? `[unknown]` — resolve on the cookbook reproduction.
   (`../../docs/train-and-eval/evaluation/baselines.md`).
 - **Cost-effective LLM model runs** via Harbor; every number names its slice (D-B3). The recorded
   65/63/59% are the **rc10 clean-100 (0-hop, easy)** slice, not the hard target slice.
-- **Oracle / tool-assisted** is a key-path/upper-bound check, never a model baseline (D-B2).
+- **Oracle / tool-assisted** is a key-path/upper-bound check, never an LLM model baseline (D-B2).
 
 ---
 
@@ -228,7 +228,7 @@ its generations? `[unknown]` — resolve on the cookbook reproduction.
 | Harbor export/grading | `exists` | materialization, submission loading, per-row grading |
 | Oracle grading path | `verified` | 1.0 on recorded slices |
 | Grader off the oracle path | `[unverified]` | no wrong-answer/formatting-variant fixture (TA-A2) |
-| Harbor end-to-end big-model numbers | `[unverified — needs <env>]` | trajectories not preserved |
+| Harbor end-to-end large LLM model numbers | `[unverified — needs <env>]` | trajectories not preserved |
 | Scorers agree (eval / reward / harness) | **no** | three implementations (TA-A3) |
 
 These are exactly the Phase 0 audit units (TA-A1–A4, TA-B1, TA-C*); this doc consumes their
@@ -243,13 +243,13 @@ results rather than repeating the plan.
 | Single scorer shared by eval, rejection sampling, and reward | **P0** | otherwise the thesis number and the training signal diverge (TA-A3) |
 | Oracle + off-oracle grader fixture (near-miss and formatting variants) | **P0** | oracle 1.0 is not grader correctness (TA-A2) |
 | Canary procedure wired to the cookbook eval (`cadqa_heldout`, `tool_valid`, `general`) | **P0** | every training run needs a forgetting gate |
-| Frozen held-out rows + hard-excluded canary rows | **P0** | held-out hygiene (owned with the data doc) |
+| Immutable held-out rows + hard-excluded canary rows | **P0** | held-out hygiene (owned with the data doc) |
 | Public/private leak audit | **P0** | a leak invalidates the benchmark |
 | External transfer harness on BenchCAD `qa_code` (primary) and `edit_code` (secondary) | **P0** | the only evidence the dataset is useful beyond its own split; peer-review gate for H3 |
 | Reachability pilot + family-disjoint BenchCAD subset | **P0** | a target the base LLM model cannot attempt yields no transfer signal |
 | H4 dose-response: CAD-QA pass rate vs external score | **P0** | proves the dataset is a lever, not a tutorial |
 | Re-run shortcut baselines on the current schema | **P1** | current baselines are `stale` |
-| Harbor big-model baseline refresh on the hard slice | **P1** | the ≤30% target refers to the hard slice, currently unrecorded |
+| Harbor large LLM model baseline refresh on the hard slice | **P1** | the ≤30% target refers to the hard slice, currently unrecorded |
 | Few-shot baseline | **P2** | extra comparison |
 | `no_tools` and `cadquery` mode matrices | **P2** | upper-bound studies |
 
@@ -287,7 +287,7 @@ results rather than repeating the plan.
 - Does `liquid-finetune`'s eval config let us plug in our scorer, or do we grade its generations
   offline? `[unknown]`.
 - Which BenchCAD slice is the canonical transfer target: full `qa_code`, the Spatial Reasoning axis,
-  or a hard family subset? And is `edit_code` T4/T5 reachable by a 2–4B model? `[unknown]`.
+  or a hard family subset? And is `edit_code` T4/T5 reachable by a 2–4B LLM model? `[unknown]`.
 
 ---
 

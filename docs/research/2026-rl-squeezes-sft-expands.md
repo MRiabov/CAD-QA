@@ -24,7 +24,7 @@ on mathematical and code tasks.
   modularity — the LLM model can explore a wider solution space.
 - **RL squeezes** the graph into a few high-degree hubs: efficient traversal but reduced
   robustness and reachability.
-- The best practice of two-stage **SFT→RL** is explained by these complementary effects:
+- The best practice of two-step **SFT→RL** is explained by these complementary effects:
   SFT first establishes a broad policy, then RL sharpens it.
 - Global efficiency and algebraic connectivity correlate positively with pass@1/pass@k;
   modularity correlates negatively.

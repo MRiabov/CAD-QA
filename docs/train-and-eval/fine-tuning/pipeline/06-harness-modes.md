@@ -55,7 +55,7 @@ rtk uv run python train_and_eval/eval/eval_bench.py \
   set; `tools_for_mode` returns submit-only for `no_tools` and submit + `run_code` for
   `numpy`; grading always goes through `tool_call_matches`.
 - **Consequences:** `no_tools` treats a `run_code` call as a failed attempt
-  (`eval_bench.py::main`), not as a served tool. `cadquery` is reserved for the RL stage and
+  (`eval_bench.py::main`), not as a served tool. `cadquery` is reserved for the RL Training stage and
   is not implemented.
 
 ### FT-06-D2 — `run_code` round-trip in the native format

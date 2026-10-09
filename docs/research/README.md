@@ -40,7 +40,7 @@ The `Ref` column matches the numbered references in `../prior-art.md`.
 | [5] | `[vendor]` | ert.as: Phi-4-Mini vs Gemma 4 vs Qwen3-4B for on-device tool calling | ert.as (2026) | `2026-ertas-on-device-tool-calling.md` | post-fine-tune parity; native function-call tokens |
 | [6] | `[workshop]` | Small LLMs for agentic tool calling on OPT-350M | AAAI 2026 workshop (arXiv) | `2026-slm-agentic-tool-calling.md` | targeted single-epoch SFT beats much larger LLM models |
 | [7] | `[peer-reviewed]` | RL squeezes, SFT expands | ICLR 2026 (arXiv) | `2026-rl-squeezes-sft-expands.md` | explains the SFT→RL order and RL collapse |
-| [8] | `[preprint]` | Learning what to learn: stage-specific data for SFT-then-RL | arXiv (2026) | `2026-learning-what-to-learn.md` | align data difficulty to the stage |
+| [8] | `[preprint]` | Learning what to learn: Training-stage-specific data for SFT-then-RL | arXiv (2026) | `2026-learning-what-to-learn.md` | align data difficulty to the Training stage |
 | [9] | `[workshop]` | Privileged on-policy self-distillation harms thinking LLM models | ICML 2026 FoGen workshop | `2026-privileged-on-policy-distillation.md` | copying teacher reasoning suppresses self-correction |
 | [10] | `[preprint]` | GeoGramBench: geometric program reasoning in modern LLMs | arXiv (2025) | `2025-geogrambench-program-to-geometry.md` | program-to-geometry reasoning is a hard, unsolved capability |
 | [11] | `[preprint]` | QueryCAD: grounded question answering for CAD models | arXiv (2024) | `2024-querycad-cad-question-answering.md` | grounding in executed code; failures are perceptual |
