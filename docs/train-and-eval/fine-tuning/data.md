@@ -362,7 +362,8 @@ only the dataset:
 - **Coverage requirement:** every **task combination** (Answer format × Reasoning hop count × relation
   family × measurement scope; each task family) must have at least one agent training trace, because a
   combination the teacher never produces cannot be learned (the `json`/`number` zero-coverage defect in
-  `pipeline/02-teacher-sampling.md`).
+  `pipeline/02-teacher-sampling.md`). The gate is the dataset release report projected onto the sampling
+  log; its key grain is open (`pipeline/02-teacher-sampling.md` Q1).
 - **Contamination:** CAD-QA held-out rows are hard-excluded (§5).
 - **Priority:** P0, but a separate plan.
 

@@ -24,6 +24,15 @@ format × Reasoning hop count × relation family × measurement scope present in
 task family; on the order of hundreds of combinations) — because a combination the teacher never
 produces cannot be learned (the recorded `json`/`number` zero-coverage defect).
 
+The gate is enforced **offline** as the **dataset release report projected onto the sampling log**. It
+consumes the universe the dataset already commits to — intended release families
+(`dataset/query/family_specs.yaml`;
+`dataset/query/family_manifest.py::intended_family_coverage_report`) plus hop/scope coverage
+(`dataset/release/release_report.py::release_balance_report`) — and reuses the same `_prompt_family()`
+key, so an agent training trace's combination lines up with the row's. It reports `passes_*_sampling_coverage` in the
+`release_balance_report` style rather than introducing a second taxonomy; the remaining choice is the
+key's grain (Q1).
+
 ## Bridge
 
 Hard traces the small LLM model cannot imitate are rewritten into more learnable supervision (a
@@ -40,8 +49,12 @@ OPENROUTER_API_KEY=... uv run python train_and_eval/train/rejection_sample.py \
 
 ## Open questions
 
-- **Q1.** Coverage gate: how is a floor **per task combination** — Answer format × Reasoning hop count ×
-  relation family × measurement scope (each task family; order hundreds of combinations) — enforced
-  offline from the sampling log?
+- **Q1.** Coverage gate grain. *Direction:* the gate is the **dataset release report projected onto the
+  sampling log** (consume the intended-family/hop/scope universe from `intended_family_coverage_report` +
+  `release_balance_report`; reuse `_prompt_family()`; report `passes_*_sampling_coverage`) — not a new
+  taxonomy. *Open:* key an agent training trace by the row's **primary measurement scope**, or **expand** each row into
+  every `(relation_family × measurement_scope)` membership (a fatter universe)? Decide from (1) the
+  money/time cost of an extra ~1,000 traces (teacher calls + GPU train/eval) and (2) the incremental
+  gain. **Provisional: scope to the lower universe (primary scope)** until those numbers exist.
 - **Q2.** Teacher settings (temperature, attempts per row). The recorded **~23% success rate was the v4
   preview**; v4.1 is materially stronger, so re-measure success and per-combination coverage.
