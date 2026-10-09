@@ -276,7 +276,7 @@ results rather than repeating the plan.
 - **D-E5** the transfer claim (H3) is evaluated against a suite of **existing, credible**
   benchmarks — BenchCAD `qa_code` (P0 means), with BenchCAD `edit_code` and a text-in text-to-CAD
   benchmark (P1 end/defect) — each on its official full split and metric, against
-  Base / format-only / answer-only controls. It is a P0 gate: the only evidence that the dataset is
+  Base / format-only / answer-only controls. It is a P0 check: the only evidence that the dataset is
   useful beyond its own split. Stale gaps (`GeoGramBench`, `QueryCAD`) are re-run or dropped.
 - **D-E6** the dataset's value is measured as a dose-response (H4): CAD-QA pass rate against the
   independent-benchmark score, at fixed recipe and matched compute, with the

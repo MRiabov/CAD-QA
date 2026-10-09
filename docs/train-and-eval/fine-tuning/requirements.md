@@ -18,7 +18,7 @@ re-implemented, not reused verbatim (FT-D12).
 | 02 teacher-sampling | Kept agent training traces carry a tool call the Query verifier accepts; coverage complete across the task space (Answer format × hop × relation family × measurement scope) | No | to be ported to the `deepseek-v4.1-flash` teacher (FT-D2) |
 | 03 preparation | `TrainingExample` → Liquid `messages` SFT set; every SFT corpus is rejection-sampled by us or execution-verified (FT-D17) | No (`missing`) | converter to write (`system.md` §7) |
 | 04 SFT | Two-phase SFT raises held-out accuracy over the base without over-generation | No | `liquid-finetune` recipe to run (FT-D16) |
-| 05 sampling gate | pass@k per Difficulty tier recorded; RL only where a tier is learnable (FT-D13) | No (`missing`) | gate to build |
+| 05 RL-readiness gate | pass@k per Difficulty tier recorded; RL only where a tier is learnable (FT-D13) | No (`missing`) | RL-readiness gate to build |
 | 06 evaluation | Same grading across LLM harness modes; one scorer; evaluation datasets wired | Partial | local harness `exists`; three scorers diverge (TA-A3) |
 | 07 serving | Served checkpoint numerically equivalent to the merged LLM model | No | merge/export + parity to build (FT-D10) |
 
@@ -46,7 +46,7 @@ re-implemented, not reused verbatim (FT-D12).
 2. A `TrainingExample` → Liquid `messages` converter; a mix that is rejection-sampled or
    execution-verified (FT-D17).
 3. The two-phase SFT measured against the base on the held-out slice.
-4. The pass@k gate recorded; RL/RFT decided from it (FT-D13).
+4. The RL-readiness gate recorded; RL/RFT decided from it (FT-D13).
 5. One scorer, agreed across evaluation and reward; a run manifest per reported number.
 
 ## Open questions

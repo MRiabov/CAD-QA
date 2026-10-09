@@ -322,7 +322,7 @@ owner's; delegated exploration, directly-verified load-bearing claims.
   they do not fight the `cad_qa/` freeze: documentation and the `train_and_eval/` stack
   first; heavy linting of the immutable dataset-generation code is deferred.
 - **Markdown formatting.** Adopt a formatter for all docs — `rumdl` (preferred: stricter
-  and faster) or `mdformat`. Committed config; runs in the same gate as the linters. No
+  and faster) or `mdformat`. Committed config; runs in the same check as the linters. No
   Markdown formatter or CI config exists in the repo today, so this is created from
   scratch.
 
@@ -618,13 +618,13 @@ Python 3.12 (`uv.lock`). `.env` local `[assumed]` OpenRouter key.
 
 ## 7. Development plan (draft; becomes `docs/development-plan.md`)
 
-Phases are ordered so no GPU budget is spent before verification. Each has a gate, and a
+Phases are ordered so no GPU budget is spent before verification. Each has a pass condition, and a
 priority (`P0`/`P1`/`P2`) per the tier rule above.
 
 - **Phase 0 — Trust audit (no GPU). [P0]** Audit every pipeline step in §5; write a
   pass/fail + verification command for each. Priority: grader/oracle, `run_code` sandbox,
   vLLM parity, SFT masking, rows loader. Consolidate one runnable command per pipeline stage.
-  Re-run the 12-row SFT eval. Gate: every load-bearing component is `verified` or
+  Re-run the 12-row SFT eval. Pass condition: every load-bearing component is `verified` or
   explicitly `blocked`.
 - **Phase 0a — Repo structure (mechanical). [P1; fan-out check P2]** Rename `cad_qa/` →
   `dataset/`; move `cad_qa/evaluation/` → `train_and_eval/grading/`; rename the inner
@@ -633,7 +633,7 @@ priority (`P0`/`P1`/`P2`) per the tier rule above.
   fan-out CI is P2.
 - **Phase 0b — Prior-art code mining. [P1]** Survey established open-source training / RL /
   data pipelines; record findings in `docs/prior-art.md`; pick a base pipeline to build on
-  (decision, D11). Gate: adoption decision recorded before Phase 3 design.
+  (decision, D11). Pass condition: adoption decision recorded before Phase 3 design.
 - **Phase 1 — Freeze the benchmark. [P0; the ≥10k tier is P2]** Decide dataset scope
   (freeze 1,445 + new held-out test, or regenerate ≥10,000); build/freeze a group-safe
   held-out test; close the 0/1-hop synthesis gap; fix json/number teacher coverage;

@@ -1,14 +1,14 @@
-# 05 — sampling gate (RL deferred)
+# 05 — RL-readiness gate (RL deferred)
 
 ## Purpose
 
-After SFT, measure per-prompt reachability with a **pass@k gate** (P0). The gate decides whether RL is
-indicated and produces the RFT/RL pool. **RL is deferred**: conditional on the gate, P2 until a tier is
+After SFT, measure per-prompt reachability with the **RL-readiness gate** (P0). It decides whether RL is
+indicated and produces the RFT/RL pool. **RL is deferred**: conditional on the RL-readiness gate, P2 until a tier is
 measured learnable (FT-D13; FT-D8 superseded).
 
 ## Definition
 
-The gate is an **inference** workload (rollouts), not training — size it in decode/prefill throughput and
+The RL-readiness gate is an **inference** workload (rollouts), not training — size it in decode/prefill throughput and
 rollout latency, not SFT sequences/s.
 
 - **Population:** the train rows (`01`) in the run's mix.
@@ -49,15 +49,15 @@ rollout latency, not SFT sequences/s.
 ## Verification
 
 ```bash
-# gate to build (FT-D12); offline reward grading exists:
+# RL-readiness gate to build (FT-D12); offline reward grading exists:
 uv run pytest train_and_eval/eval/test_tool_calls.py -k reward -q
 ```
 
 ## Questions for the owner
 
-- **OD-1.** Gate the **full train split** (≈958 rows × rollout count 8 ⇒ **≈7.7k rollouts total**) or a
+- **OD-1.** Screen the **full train split** (≈958 rows × rollout count 8 ⇒ **≈7.7k rollouts total**) or a
   **stratified sample** with a fixed sample size per hop/bucket? Each rollout is one episode — several
-  LLM calls in the agentic harness — so the gate is a **throughput job**: order 10⁷ output tokens, i.e.
+  LLM calls in the agentic harness — so the RL-readiness gate is a **throughput job**: order 10⁷ output tokens, i.e.
   **hours on a small single GPU** and infeasible on CPU. **Measure** seconds-per-rollout on a small pilot
   (e.g. 50 rows) first, then size the run; do not assume minutes (the old gemma run was ~10 tok/s,
   launch-bound — a serving-config trap, not the checkpoint).
@@ -66,7 +66,7 @@ uv run pytest train_and_eval/eval/test_tool_calls.py -k reward -q
 - **OD-3.** Confirm the rollout temperature ≈ 1.0 (rollout), separate from the 0.1 accuracy runs.
   **Provisional** — verify against the RL exploration/sampling literature (research refs [21]–[23], [25])
   as a **P2** task; it only sets the reachability estimate, not any reported accuracy.
-- **OD-4.** When **no** tier is `learnable`: is the gate **binding** (stop and report SFT-only, FT-D13) or
+- **OD-4.** When **no** tier is `learnable`: is the RL-readiness gate **binding** (stop and report SFT-only, FT-D13) or
   do we fall back to more **teacher re-distillation / Bridge**? Self-RFT cannot proceed here — it needs the
   policy's own correct completions, which do not exist at a zero pass rate.
-- **OD-5.** RFT vs GRPO at this scale — decided by the gate, not on paper (`../system.md` Q3).
+- **OD-5.** RFT vs GRPO at this scale — decided by the RL-readiness gate, not on paper (`../system.md` Q3).

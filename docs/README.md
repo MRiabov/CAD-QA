@@ -35,7 +35,7 @@ procedural CAD programs (CadQuery), and a small-LLM-model fine-tuning effort on 
 | How the dataset is built | `dataset/pipeline/00-overview.md` |
 | How the LLM model is trained | `train-and-eval/fine-tuning/training.md` |
 | Which data we train on, and in what order | `train-and-eval/fine-tuning/data.md` |
-| The post-training loop (SFT → gate → RL) | `train-and-eval/fine-tuning/system.md` |
+| The post-training loop (SFT → RL-readiness gate → RL) | `train-and-eval/fine-tuning/system.md` |
 | How models are evaluated | `train-and-eval/evaluation/plan.md` |
 | Which dataset serves which role | `train-and-eval/datasets.md` |
 | Paper citations and study notes | `research/` |

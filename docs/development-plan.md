@@ -12,7 +12,7 @@ paper/thesis.
 
 ## How work proceeds
 
-- Phases run in order. Each has a gate; **no GPU budget is spent before the audit is
+- Phases run in order. Each has a pass condition; **no GPU budget is spent before the audit is
   green.**
 - Every task carries a priority: **P0** thesis-critical, **P1** thesis-important, **P2**
   venue extras (may never execute).
@@ -30,7 +30,7 @@ checklist is `_audit/owner-audit-todo.md` (group C); the program is `plans/oct-8
 - Consolidate one runnable verification command per pipeline step (see
   `dataset/requirements.md`, `train-and-eval/fine-tuning/requirements.md`).
 
-**Gate:** every load-bearing component is `verified` or explicitly `blocked`.
+**Pass condition:** every load-bearing component is `verified` or explicitly `blocked`.
 
 ## Phase 0a — Repo restructure (mechanical) [P1; fan-out P2]
 
@@ -42,7 +42,7 @@ by the rows IO contract. Folder fan-out CI is P2.
 ## Phase 0b — Prior-art code mining [P1]
 
 Survey established open-source training/RL/data pipelines and pick a base to learn from or
-build on. See `prior-art.md`. Gate: the base-pipeline decision is recorded (FT-D11) before
+build on. See `prior-art.md`. Pass condition: the base-pipeline decision is recorded (FT-D11) before
 Phase 3 design.
 
 ## Phase 1 — Freeze the benchmark [P0; the ≥10k tier is P2]
@@ -54,7 +54,7 @@ Phase 3 design.
 - Fix `json`/`number` teacher coverage.
 - Publish with tagged revision hashes.
 
-**Gate:** immutable test set with group-safe splits; the `benchmark-release` report's failing
+**Pass condition:** immutable test set with group-safe splits; the `benchmark-release` report's failing
 gates are recorded as known limitations.
 
 ## Phase 2 — Refresh baselines [P1; `no_tools`/`cadquery` P2]
@@ -63,7 +63,7 @@ Run cost-effective models on the primary `numpy` harness over the hard slice; lo
 call; grade with the audited grader. Re-run or retire the stale shortcut baselines. See
 `train-and-eval/evaluation/baselines.md`.
 
-**Gate:** baseline tables reproducible; grader verified; outputs archived.
+**Pass condition:** baseline tables reproducible; grader verified; outputs archived.
 
 ## Phase 3 — Reasoning-preserving fine-tuning [SFT P0; GRPO P1]
 
@@ -74,7 +74,7 @@ Design first (FT-D11 plus `train-and-eval/fine-tuning/pipeline/00-overview.md`):
 - on-policy reasoning (student rejection sampling and/or GRPO) with shaped reward, a
   `0→1→2→3→5` curriculum, entropy monitoring, and checkpoints.
 
-Pilot on 1-hop before scaling. **Gate:** full held-out-test number; improvement over base
+Pilot on 1-hop before scaling. **Pass condition:** full held-out-test number; improvement over base
 and baselines; entropy and length reported, not collapsed.
 
 ## Phase 4 — Evaluation and analysis [core P0; `no_tools`/`cadquery` P2]

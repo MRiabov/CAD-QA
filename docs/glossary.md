@@ -260,6 +260,15 @@ requires the policy to already produce accepted completions (`pass > 0`).
 
 ---
 
+### RL-readiness gate
+
+The post-SFT check that samples rollouts from the tuned policy and measures the per-prompt pass rate to
+classify Reasoning-hop tiers (`mastered` / `learnable` / `unreachable`) and decide whether RL is
+indicated. `In code:` to build; `train-and-eval/fine-tuning/pipeline/05-rl-readiness-gate.md`.
+`Distinct from:` the Dataset release gate and the phase gates.
+
+---
+
 ### Query verifier
 
 The deterministic authority for whether a query resolves uniquely, and what its gold
@@ -455,6 +464,9 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | node (bare) | CAD ontology node / code node | ambiguous between graph and code |
 | stage (bare) | Training stage / pipeline stage | which stage? qualify it |
 | surface (bare) | scope / interface | imprecise metaphor; name the scope or interface |
+| RL-readiness gate | RL-readiness gate | "sampling of what?" |
+| RL-readiness gate | RL-readiness gate | ambiguous |
+| gate (bare) | RL-readiness gate / release gate / phase gate / quality gate / review gate / coverage gate / regression gate / stop gate / forgetting gate / format gate / evaluation gate / test gate / advancement gate / blocking gate / freeze gate / smoke gate / trust-audit gate | name which gate |
 | kind / kinds | predicate kind | raw noun; name the kind of what |
 | type / types | CAD ontology node type / relation type / answer format / measurement scope / LLM harness mode | raw noun; name the type of what |
 | entity id (in a public answer) (dataset, train_and_eval, tools) | source variable | internal `entity_id` values must not leak into public answers |

@@ -197,19 +197,19 @@ informative prompt groups (DAPO's dynamic sampling, [23]) and aim the training d
 **pass-rate band around 0.5** (the ~0.25–0.75 intermediate-difficulty band maximizes reward
 variance, which lower-bounds the reverse KL and thus learnability, [21]; 50% pass rate maximizes
 reward entropy and group-filter survival, and a 1/8 or 7/8 group carries about half the per-rollout
-information, [22]). Consequence: gate RL on a measured **pass@k** per difficulty tier.
+information, [22]). Consequence: condition RL on a measured **pass@k** per difficulty tier.
 
 **SFT+RL can fail outright, not just underperform.** BREAD [26] shows the SFT+RL recipe fails
 completely when the expert's training traces are too difficult for the small LLM model to express,
 or when the initialization has exponentially sparse rewards — both live risks on CAD-QA's hard
 hops. The mitigations are a Bridge that rewrites hard teacher training traces into learnable
-supervision [8] and a sampling gate that refuses to run RL on an unreachable tier.
+supervision [8] and a RL-readiness gate that refuses to run RL on an unreachable tier.
 
 **The reward scorer is the objective, so audit it.** `Where the Verifier Fails` [24] audits the
 scorer rather than the LLM model over 307,420 verdicts: self-agreement on identical inputs ranges from
 53.8% to 95.2%, and two configurations of the *same* library disagree on 49.9% of pairs; a numeric
 cascade accepts off-by-one answers as a scale-dependent step function. This makes CAD-QA's three
-divergent scorers (TA-A3) a P0 gate before RL, and the equivalent-answer metamorphic fixture the
+divergent scorers (TA-A3) a P0 check before RL, and the equivalent-answer metamorphic fixture the
 right TA-A2 test. Reward hacking is the companion risk: hacking is often implicit and emerges
 gradually before dominating [28], and a dense heuristic reward layered on a sparse verifiable one
 is actively hacked unless the shaping is optimality-preserving (GRM/ADOPS, [27]).
@@ -228,7 +228,7 @@ improves generalizable reasoning, while adding RL data within a fixed set does n
 environment already generates unbounded data), and that static data yields **vanishing learning
 signal** when problems are too easy or too hard. In the same line, RL on synthesized tasks
 transfers to a held-out benchmark only when the small LLM model is first SFT'd into the scaffold —
-a **warm-start that is a readiness gate, not an accuracy target**, and over-doing it ossifies the
+a **warm-start that is a readiness check, not an accuracy target**, and over-doing it ossifies the
 policy [32]. For CAD-QA this moves the center of gravity from the SFT mix to the **task environment
 
 - scorer** (a CAD-QA task generator with verifiable answers and the `run_code`/kernel tool
@@ -236,7 +236,7 @@ interface); SFT becomes a thin cold-start and the general external data becomes 
 
 **Implication for CAD-QA.** Do not run a raw SFT→GRPO. Run **Training stage 0** one-scorer + off-oracle
 audit, **Training stage 1** difficulty-aligned SFT with a Bridge for hard traces, **Training stage 2** a pass@k
-sampling gate that also produces rejection-sampling SFT data, and **Training stage 3** GRPO with dynamic
+RL-readiness gate that also produces rejection-sampling SFT data, and **Training stage 3** GRPO with dynamic
 sampling only on learnable tiers, in a sandbox, with rollout logging. `liquid-finetune` already
 ships SFT, GRPO (TRL v1 `GRPOTrainer`), a `rewards/` callable registry, and an optional OpenEnv
 multiturn block, so the whole loop stays in one stack on Modal.

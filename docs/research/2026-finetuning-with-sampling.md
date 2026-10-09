@@ -25,7 +25,7 @@ and prior-capability retention.
 
 ## Why it matters for CAD-QA
 
-- It is the strongest argument that **Training stage 2 (sampling gate + rejection-sampling fine-tuning) may
+- It is the strongest argument that **Training stage 2 (RL-readiness gate + rejection-sampling fine-tuning) may
   be the whole answer for a single-GPU thesis**, with Training stage 3 (GRPO) optional rather than assumed.
 - It pairs with the Training-stage-specific data finding [8]: use SFT to acquire/consolidate from the
   LLM model's own correct samples, and reserve RL for what remains unreachable.

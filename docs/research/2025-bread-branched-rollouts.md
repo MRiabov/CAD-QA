@@ -30,7 +30,7 @@ toy student-expert LLM model over Markov chains to isolate when the training loo
 - Both failure conditions are live here: CAD-QA's hard (3+ hop) teacher traces may exceed what a
   ~2.5B LLM model can imitate, and the sparse exact-match reward on hard hops may be unreachable.
 - It is the formal reason the system plan inserts a **Bridge** step for hard traces [8] and a
-  **pass@k gate** before RL: without them, SFT→RL is predicted to fail, not merely underperform.
+  **RL-readiness gate** before RL: without them, SFT→RL is predicted to fail, not merely underperform.
 - Corroborates the task-difficulty evidence ([10][11][12]): the ceiling may be the task.
 
 ## Related

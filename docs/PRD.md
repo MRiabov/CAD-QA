@@ -58,7 +58,7 @@ and a graph-derived LLM model that improves the held-out split. Strong: the gain
 credible benchmark (H3) and tracks the CAD-QA pass rate (H4).
 
 **Scope.** H1 and H2 are prerequisites; H3 is the peer-review gate; H4 is the mechanism. RL is a
-**means** to raise the CAD-QA pass rate on harder tiers (subject to the pass@k accessibility gate),
+**means** to raise the CAD-QA pass rate on harder tiers (subject to the RL-readiness gate),
 not a separate claim; conciseness is deferred to future work.
 
 ## Claims and contributions

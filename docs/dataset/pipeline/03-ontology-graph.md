@@ -115,7 +115,7 @@ focused tests are `tests/test_graph_first_pipeline.py::test_graph_build_report_e
   registry of allowed relation type and measurement scope values, but
   `assert_relation_type`/`assert_measurement_scope` are available and not obviously
   enforced on every insertion. Whether every emitted relation type and measurement scope is
-  a member, and whether the registry is intended as a hard gate, is `[unknown]`.
+  a member, and whether the registry is intended as a hard prerequisite, is `[unknown]`.
 - **Q2.** `release_support_coverage` in `graph_report.json` uses
   `dataset/cli.py::RELEASE_SUPPORT_REQUIREMENTS`; this is an early-warning signal, not a
   blocking gate. Whether synthesis reuses it to skip unsupported families is `[unknown]`.

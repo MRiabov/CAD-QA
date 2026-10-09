@@ -14,7 +14,7 @@ whose rationale was not recoverable.
 - **Consequences:** the base LLM model is a code-execution (E2B) variant, which motivated the
   `run_code` compute tool. The GRPO docstring names `google/gemma-4-E2B-it`; the code loads
   the unsloth repo. Superseded for Phase 3 by FT-D11. Detail: [pipeline/04-sft.md](pipeline/04-sft.md),
-  [pipeline/05-sampling-gate.md](pipeline/05-sampling-gate.md).
+  [pipeline/05-rl-readiness-gate.md](pipeline/05-rl-readiness-gate.md).
 
 ## FT-D2 — Teacher is DeepSeek v4.1 via OpenRouter
 
@@ -70,7 +70,7 @@ whose rationale was not recoverable.
   matcher, with a tool-call-aware path that reuses `tool_call_matches`.
 - **Consequences:** the reward is sparse/binary, which is the recorded cause of the 2-hop
   collapse. Eval and reward use different parsers; see
-  [pipeline/05-sampling-gate.md](pipeline/05-sampling-gate.md#open-questions).
+  [pipeline/05-rl-readiness-gate.md](pipeline/05-rl-readiness-gate.md#open-questions).
 
 ## FT-D7 — `run_code` is a numpy-only accidental-misuse guard
 
@@ -90,7 +90,7 @@ whose rationale was not recoverable.
   and a hop curriculum.
 - **Consequences:** the current GRPO script starts from the base LLM model, not the SFT adapter,
   so the implemented chain is not the decided chain. Detail:
-  [pipeline/05-sampling-gate.md](pipeline/05-sampling-gate.md#open-questions).
+  [pipeline/05-rl-readiness-gate.md](pipeline/05-rl-readiness-gate.md#open-questions).
 
 ## FT-D9 — Record every LLM call distinctly (A5)
 
@@ -200,7 +200,7 @@ whose rationale was not recoverable.
 - **Decision:** replace the raw two-phase plan with the staged system in
   `system.md`: **Training stage 0** one-scorer + off-oracle scorer audit →
   **Training stage 1** difficulty-aligned SFT with a Bridge for hard training traces → **Training stage 2** a
-  pass@k sampling gate that also yields rejection-sampling SFT data → **Training stage 3** GRPO with
+  RL-readiness gate that also yields rejection-sampling SFT data → **Training stage 3** GRPO with
   dynamic sampling only on reachable-but-unmastered tiers, sandboxed, with full rollout logging →
   optional **Training stage 4** on-policy distillation. RL is **conditional on a measured learnable tier**,
   not a default.
@@ -229,7 +229,7 @@ whose rationale was not recoverable.
 - **Context:** 2025–2026 evidence ([30]–[32]) shows agent capability scales with the **number and
   quality of verifiable environments** and RL over them, not with SFT volume; a fixed task set
   saturates, static data gives a vanishing signal when tasks are too easy or too hard, and SFT is a
-  **warm-start readiness gate** whose over-use ossifies the policy and collapses exploration.
+  **warm-start readiness check** whose over-use ossifies the policy and collapses exploration.
 - **Decision:** invest first in the **CAD-QA task environment + scorer** — a task generator over
   the immutable dataset rows (prompt + scalar gold, configurable hop/difficulty), the single verified
   exact-match scorer, and the `run_code`/kernel tool interface — and treat the external SFT mix
@@ -238,7 +238,7 @@ whose rationale was not recoverable.
   **support**: a thin format cold-start and general-task diversity.
   Teacher-distilled `learn_the_cadqa_task` traces are a cold-start at most, not the primary data.
 - **Consequences:** effort shifts from corpus collection to **environment/scorer engineering**;
-  the pass@k gate (FT-D13) is the switch from SFT to RL; external data stays bounded and
+  the RL-readiness gate (FT-D13) is the switch from SFT to RL; external data stays bounded and
   selectively sourced (subset pulls); the CAD-QA task dataset becomes an environment (tasks +
   reward) as well as a dataset. Detail: `system.md` §0, §3;
   `../../prior-art.md` refs [30]–[32].
@@ -363,7 +363,7 @@ whose rationale was not recoverable.
   "`preserve_general_math_and_code_reasoning` earns a place") with no FT-D label, because `data.md` is
   a design doc, not a step doc. Should they become FT-D entries here (the feature-wide decision home),
   or stay in `data.md`? `[open]`
-- **Q4.** DSpark during **rollout-heavy** serving (the pass@k gate, GRPO). Rollouts are inference, so a
+- **Q4.** DSpark during **rollout-heavy** serving (the RL-readiness gate, GRPO). Rollouts are inference, so a
   lossless speculator would help the decode-bound rollout-count × prompts workload; but our RL default is
   `liquid-finetune` GRPO on **vLLM**, and DSpark is **SGLang/llama.cpp** only, so it needs the
   **verl + SGLang** escalation (`../system.md` §6). The draft also targets the **base** and is never

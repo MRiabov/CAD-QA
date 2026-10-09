@@ -64,7 +64,7 @@ Local decisions for the `dataset_generation` unit, in ADR format
 - **Decision:** `benchmark-release` is the canonical bar, expressed as
   `dataset/release/release_report.py::BENCHMARK_RELEASE_PROFILE`. The default CLI tier is
   `release-candidate`.
-- **Consequences:** Release/SFT reports gate on explicit per-tier thresholds; passing smoke
+- **Consequences:** Release/SFT reports block on explicit per-tier thresholds; passing smoke
   or release-candidate gates is a development checkpoint only.
 
 ## DD-06 — Parquet-preferred record artifacts with JSONL fallback

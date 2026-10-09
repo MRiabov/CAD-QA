@@ -3,14 +3,14 @@
 **Status:** active, 2026-10-09. Fourth of four fine-tuning/evaluation docs.
 
 **This doc owns — the shape of the whole post-training system:** why a raw SFT→RL run is not
-enough, the staged loop that replaces it (Query verifier → SFT → sampling gate → RL/distillation), the
+enough, the staged loop that replaces it (Query verifier → SFT → RL-readiness gate → RL/distillation), the
 RL-readiness gate, reward/Query verifier design, sandboxed rollouts, logging, the framework mapping, and
 **data preparation** (the `TrainingExample` record, its converter, and the
 ingest/normalize/quality/dedup/sample stages).
 
 **It does not re-own** the data (`data.md`), the training config/hardware
 (`training.md`), or the harness/scorer (`../evaluation/plan.md`). It sequences
-them into one system and adds the pieces none of the three owns: the sampling gate, the
+them into one system and adds the pieces none of the three owns: the RL-readiness gate, the
 reward-hacking audit, and the on-policy stages.
 
 **Related docs.** `../../prior-art.md` (refs [1]–[33]);
@@ -33,7 +33,7 @@ reward-hacking audit, and the on-policy stages.
     gradient is zero — this is the CAD-QA collapse.
   - SFT→RL can fail completely when the expert traces are too hard for the small LLM model, or
     when the SFT initialization has exponentially sparse rewards (BREAD, ref [26]).
-- **The fix is a system, not an algorithm swap.** Gate RL on measured per-tier reachability
+- **The fix is a system, not an algorithm swap.** Condition RL on measured per-tier reachability
   (§3), keep only informative rollout groups (refs [21]–[23]), treat the Query verifier as a first-class
   artifact to audit (ref [24]), and prefer sampling-based SFT as the cheaper consolidation when RL
   is not clearly reachable (ref [25]).
@@ -47,7 +47,7 @@ RL against rich, verifiable interactive environments — rather than from more S
 The scaling asset is therefore the **CAD-QA task environment + scorer** (a task generator, the
 single exact-match reward, and the `run_code`/kernel tool interface), not the SFT corpus. SFT's job
 is narrow: get the small LLM model to emit our `submit_*` format and produce *some* successful
-rollouts — a **readiness gate, not an accuracy target** ([32]); over-doing SFT ossifies the policy
+rollouts — a **readiness check, not an accuracy target** ([32]); over-doing SFT ossifies the policy
 and collapses the exploration RL needs. External general data is support (a tool-schema cold-start and
 general-task diversity), not the lever.
 
@@ -76,7 +76,7 @@ bad scorer only miscounts; in RL it is what the LLM model climbs. So the evaluat
         |
 [ Training stage 1  difficulty-aligned SFT ]     <- our tool schema + easy hops + Bridge for hard traces + general-task diversity
         |
-[ Training stage 2  sampling gate (pass@k) ]     <- measure reachability per tier; build RFT data
+[ Training stage 2  RL-readiness gate (pass@k) ]     <- measure reachability per tier; build RFT data
         |            \___ if no tier is reachable -> stop at SFT / RFT, do not run RL
         |
 [ Training stage 3  RL (GRPO + dynamic sampling, only on reachable tiers, sandboxed) ]
@@ -92,11 +92,11 @@ downstream training stage is trustworthy until this passes. (Owned by `../evalua
 data difficulty must be aligned to the training stage. Concretely: `emit_our_tool_call_format` + easy hops first, then
 harder `learn_the_cadqa_task`; for hard teacher traces that the small LLM model cannot imitate, apply a
 **Bridge** transformation (rewrite the raw agent training trace from the teacher into more learnable supervision) rather
-than feeding an unlearnable target. Keep the general tasks in every training stage. SFT runs only to the **readiness gate**
+than feeding an unlearnable target. Keep the general tasks in every training stage. SFT runs only to the **readiness check**
 (format holds, pass@k > 0), then stops — it is not an accuracy target ([32]).
 (Owned by the data + architecture docs.)
 
-**Training stage 2 — sampling gate.** The new piece. After SFT, sample a rollout count of completions
+**Training stage 2 — RL-readiness gate.** The new piece. After SFT, sample a rollout count of completions
 per prompt with the tuned policy and compute the **pass rate** per tier:
 
 - **mastered** (all rollouts pass): RL adds nothing here (ref [20]); use as an evaluation dataset, not for training.
@@ -142,14 +142,14 @@ collapse ("RL squeezes, SFT expands", ref [7]).
 
 The evaluation datasets (`../evaluation/plan.md` §6) measure both phases: **baseline** before phase 1,
 **periodic** subsets and a **phase-end** extensive eval in each phase, and the **final** eval after
-phase 2; iterate from the final eval. The sampling gate (§3) sits after SFT, and RL (Training stage 3)
+phase 2; iterate from the final eval. The RL-readiness gate (§3) sits after SFT, and RL (Training stage 3)
 stays conditional on it.
 
 ---
 
 ## 3. The RL-readiness gate
 
-Promote the §4.1 curriculum gate from the data doc into a system-level gate:
+Promote the §4.1 advancement gate from the data doc into a system-level advancement gate:
 
 - **Signal to advance a tier:** held-out pass rate clears the SFT floor (~80%) — the tier is
   *mastered* and becomes SFT-stable.
@@ -270,7 +270,7 @@ silently.
 | Item | Tier | Rationale |
 |---|---|---|
 | One scorer + off-oracle fixtures (TA-A2/A3) | **P0** | the Query verifier is the RL objective; nothing downstream is valid without it |
-| Sampling gate: pass@k per tier after SFT | **P0** | decides whether RL is indicated at all (refs [8][20]) |
+| RL-readiness gate: pass@k per tier after SFT | **P0** | decides whether RL is indicated at all (refs [8][20]) |
 | Reward-hacking audit (counterfactuals, degenerate tricks) | **P0** | RLVR's central failure mode (refs [24][27]) |
 | Sandboxed rollouts + full rollout logging | **P0** | safety + reproducibility (FT-D9) |
 | Dynamic-sampling GRPO (drop degenerate groups) | **P1** | cheap, principled; needed the moment RL runs (ref [23]) |
@@ -288,7 +288,7 @@ silently.
 **Proposed decisions.**
 
 - **FT-D13 — the post-training system is staged, not raw SFT→GRPO.** Training stage 0 Query verifier → Training stage 1
-  difficulty-aligned SFT → Training stage 2 pass@k sampling gate → Training stage 3 RL only on learnable tiers
+  difficulty-aligned SFT → Training stage 2 RL-readiness gate → Training stage 3 RL only on learnable tiers
   (dynamic sampling) → optional Training stage 4 distillation. RL on this task is *conditional on a measured
   learnable tier*, not a default second training stage.
 - **FT-D14 — the scorer is the reward and is audited before RL.** The one-scorer reconciliation
@@ -299,7 +299,7 @@ silently.
 
 **Open questions.**
 
-- **Q5.** The staged loop labels the Query-verifier/eval-contract step and the pass@k sampling gate as
+- **Q5.** The staged loop labels the Query-verifier/eval-contract step and the RL-readiness gate as
   `Training stage 0`/`Training stage 2`, but neither consumes a Mixed training dataset or updates
   weights (the glossary's Training-stage definition). Should these be renamed (for example
   `system stage`), or is the broad use intended? `[open]`
@@ -308,7 +308,7 @@ silently.
 
 - **Q1.** *(2026-10-09)* Tiers are **measured** from pass@k, not derived from `difficulty_bucket` +
   Reasoning hop count — those are priors to stratify by, not the definition. A rollout count of 8 to
-  screen → 16 to confirm; rollout temperature ≈ 1.0. Definition: `pipeline/05-sampling-gate.md`.
+  screen → 16 to confirm; rollout temperature ≈ 1.0. Definition: `pipeline/05-rl-readiness-gate.md`.
 
 **Owner decisions needed (cross-plan).** These block a step and need a human call; the other open
 questions here resolve by running or inspection. Labels point to the owning doc.
@@ -329,11 +329,11 @@ questions here resolve by running or inspection. Labels point to the owning doc.
   plain Python reward callables and forwards dataset columns, and `reward_cadqa(completions, **kwargs)`
   already matches that signature; tool passthrough is an `apply_chat_template(tools=…)` concern. Confirm
   both on the first GRPO smoke run (§10).
-- **Q3.** *(2026-10-09)* Answered by construction: the Training stage 2 pass@k gate decides RFT vs RL from
+- **Q3.** *(2026-10-09)* Answered by construction: the Training stage 2 RL-readiness gate decides RFT vs RL from
   the measured reachability, not on paper (§3; FT-D13).
 - **Q4.** *(2026-10-09)* No — `cadquery` mode is not needed for RL. RL uses the same `run_code`/`numpy` tool
   interface; `cadquery` is a P2 evaluation upper bound (`../evaluation/plan.md` §2). RL itself is conditional on
-  the gate (FT-D13), so the question is moot until then.
+  the RL-readiness gate (FT-D13), so the question is moot until then.
 
 ---
 
@@ -343,7 +343,7 @@ questions here resolve by running or inspection. Labels point to the owning doc.
    (evaluation doc, P0).
 2. **Training stage 1:** run the cookbook pilot, then `mixed_dataset_general_and_easy_cadqa`, then `mixed_dataset_full_cadqa_training` (training + data
    docs).
-3. **Training stage 2:** once an SFT checkpoint exists, run the pass@k sampling gate per tier and record
+3. **Training stage 2:** once an SFT checkpoint exists, run the RL-readiness gate per tier and record
    reachability. Decide RL vs RFT from that number, not from ambition.
 4. **Only then** wire the `liquid-finetune` GRPO config with dynamic sampling and the composite reward, in a
    Modal sandbox; on that smoke run, confirm our `submit_*` tool list passes through

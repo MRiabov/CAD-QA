@@ -11,7 +11,7 @@ serving — is trustworthy, without spending GPU budget. Concretely: give every 
 component a status (`verified`, `stale`, `missing`, `blocked`) backed by a recorded command
 and a preserved artifact, and leave one runnable verification command per pipeline stage.
 
-**Gate** (from `docs/development-plan.md`): every load-bearing component is `verified` or
+**Pass condition** (from `docs/development-plan.md`): every load-bearing component is `verified` or
 explicitly `blocked`; no GPU budget is spent before the offline ledger is green.
 
 ## What "verified" means
@@ -145,7 +145,7 @@ re-litigate decisions already recorded in `dataset/decisions.md`,
   re-run; each becomes a dated `docs/experiments/` record.
 - A unit's status is updated only with its evidence; the ledger is committed as units land.
 
-## Acceptance criteria (the gate)
+## Acceptance criteria (the pass condition)
 
 1. Every unit above has a status in the ledger: `verified`, or `blocked` with an explicit
    reason (for example `[blocked — needs GPU]`).

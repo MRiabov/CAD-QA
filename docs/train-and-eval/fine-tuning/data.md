@@ -12,7 +12,7 @@ and the CAD-QA task dataset.
 preservation, the training stages, hardware/budget, and the surviving-code boundary).
 
 **The system doc owns — the post-training loop and data preparation:**
-`system.md` (the Query verifier → SFT → pass@k gate → RL/distillation loop, and the
+`system.md` (the Query verifier → SFT → RL-readiness gate → RL/distillation loop, and the
 `TrainingExample` record, converter, and the ingest/normalize/quality/dedup/sample stages).
 
 **The evaluation doc owns — the harness and scoring:**
@@ -301,9 +301,9 @@ mechanism differs by training stage:
 
 - **SFT: a data decision, not a guarantee.** SFT trains by imitation, so it cannot guarantee
   mastery of a tier; but per-hop held-out accuracy at checkpoints can drive a *data* decision —
-  add the next hop's `learn_the_cadqa_task` rows only once the current hop clears the gate. A held-out floor
+  add the next hop's `learn_the_cadqa_task` rows only once the current hop clears the advancement gate. A held-out floor
   of ~80% is a reasonable default.
-- **RL: a true on-policy gate (P2).** Only RL can enforce advancement on the LLM model's own
+- **RL: a true on-policy advancement gate (P2).** Only RL can enforce advancement on the LLM model's own
   rollouts. Use a **band, not a floor**: GRPO needs reward variance, so once a tier is ~80%+
   correct most groups are fully correct and the gradient collapses. CAD-QA's recorded GRPO
   hop-2 collapse is a version of this. Advance when the tier is **saturated** (pass ≥ ~80% and no
@@ -312,8 +312,8 @@ mechanism differs by training stage:
 - **Why gates exist.** The tiers exist because pass rate, not epoch, is the real progress signal:
   a tier that never clears stalls the ladder and must be recorded, not skipped.
 - **Prerequisite.** A tier needs enough rows to train *and* a held-out slice to measure; a tier
-  too thin to gate cannot be advanced safely. The per-tier held-out slice is owned by
-  `../evaluation/plan.md`; the ordering and the gate live here.
+  too thin to judge cannot be advanced safely. The per-tier held-out slice is owned by
+  `../evaluation/plan.md`; the ordering and the advancement gate live here.
 
 ---
 
@@ -362,7 +362,7 @@ only the dataset:
 - **Coverage requirement:** every **task combination** (Answer format × Reasoning hop count × relation
   family × measurement scope; each task family) must have at least one agent training trace, because a
   combination the teacher never produces cannot be learned (the `json`/`number` zero-coverage defect in
-  `pipeline/02-teacher-sampling.md`). The gate is the dataset release report projected onto the sampling
+  `pipeline/02-teacher-sampling.md`). The coverage gate is the dataset release report projected onto the sampling
   log; its key grain is open (`pipeline/02-teacher-sampling.md` Q1).
 - **Contamination / dedup.** CAD-QA held-out rows are hard-excluded (§5). Cross-dataset dedup stays
   **simple**: the mix blends **orthogonal** datasets (distinct distillation origins/teacher paths), so

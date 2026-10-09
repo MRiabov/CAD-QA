@@ -52,7 +52,7 @@ The `Ref` column matches the numbered references in `../prior-art.md`.
 | [17] | `[peer-reviewed]` | Berkeley Function Calling Leaderboard (BFCL) | ICML 2025 | `2025-berkeley-function-calling-leaderboard.md` | the academic tool-calling benchmark |
 | [18] | `[preprint]` | TinyLLM: small LLM models for agentic tasks on edge devices | arXiv (2025) | `2025-tinyllm-agentic-edge.md` | 1–3B is the useful band; <1B falls off |
 | [19] | `[preprint]` | SFT vs RL for tool-calling agents, controlled across data/method/scale | arXiv (2026) | `2026-sft-vs-rl-tool-calling.md` | SFT+LoRA strongest; corpus choice matters as much as the method |
-| [20] | `[preprint]` | GRPO adds no gain on mastered tasks; gains where reward is reachable by sampling | arXiv (2026) | `2026-grpo-null-web-agent.md` | why the recorded GRPO collapse happened; gate RL on reachability |
+| [20] | `[preprint]` | GRPO adds no gain on mastered tasks; gains where reward is reachable by sampling | arXiv (2026) | `2026-grpo-null-web-agent.md` | why the recorded GRPO collapse happened; condition RL on reachability |
 | [21] | `[preprint]` | Online difficulty filtering for reasoning-oriented RLVR | arXiv (2025) | `2025-online-difficulty-filtering-rlvr.md` | reward variance = learnability; keep the ~0.25–0.75 pass-rate band |
 | [22] | `[preprint]` | Rollout pass-rate control for binary-reward RL | arXiv (2026) | `2026-rollout-pass-rate-control.md` | 50% pass rate maximizes signal; skewed groups are weak |
 | [23] | `[preprint]` | DAPO: decoupled clip and dynamic sampling | arXiv (2025) | `2025-dapo-decoupled-clip-dynamic-sampling.md` | drop all-pass/all-fail groups; entropy and overlong shaping |
@@ -64,7 +64,7 @@ The `Ref` column matches the numbered references in `../prior-art.md`.
 | [29] | `[peer-reviewed]` | Contamination-free evaluation of multi-step function calling (FuncBenchGen) | ICLR 2026 | `2025-contamination-free-function-calling-eval.md` | tool-call benchmarks/corpora are contamination-prone; use train-disjoint eval |
 | [30] | `[preprint]` | Scaling environments for LLM agents: a survey | arXiv (2025) | `2025-scaling-environments-llm-agents.md` | environments are the central object; RL needs verifiable interactive experience |
 | [31] | `[preprint]` | RLVE: scaling RL with adaptive verifiable environments | arXiv (2025) | `2025-rlve-adaptive-verifiable-environments.md` | environment count, not data volume, drives generalizable reasoning |
-| [32] | `[preprint]` | Warm-start then RL on synthesized terminal tasks | arXiv (2026) | `2026-endless-terminals-warm-start.md` | SFT is a readiness gate; RL cold-start barely moves a small LLM model |
+| [32] | `[preprint]` | Warm-start then RL on synthesized terminal tasks | arXiv (2026) | `2026-endless-terminals-warm-start.md` | SFT is a readiness check; RL cold-start barely moves a small LLM model |
 | [33] | `[preprint]` | BenchCAD: programmatic CAD benchmark and its Code QA overlap | arXiv (2026) | `2026-benchcad.md` | Code QA overlaps CAD-QA; generation tasks saturating, comprehension gap narrowing |
 | — | `[vendor]` | liquid-finetune: evaluation, async eval, rollouts | GitHub README (2026) | `2026-liquid-finetune.md` | `evals:` + custom metrics; async eval without blocking training; vLLM rollouts |
 | — | `[vendor]` | LFM2.5-DSpark: separate draft speculator for speculative decoding | Liquid AI blog / vLLM docs (2026) | `2026-lfm2.5-dspark.md` | no built-in MTP; spec decode is lossless and serving-only |

@@ -86,7 +86,7 @@ and the smoke/integration tests around `experiment`. Harbor execution itself
 - **Status:** accepted (see DD-10).
 - **Decision:** `dataset/release/sft.py::default_training_rows` keeps geometry-critical,
   non-calibration, non-quarantined rows; `--include-calibration` bypasses the filter and
-  disables training gate enforcement.
+  disables training-time enforcement.
 - **Consequences:** The CLI raises a `RuntimeError` when applicable training gates fail,
   unless `--allow-failing-training-gates` is passed.
 

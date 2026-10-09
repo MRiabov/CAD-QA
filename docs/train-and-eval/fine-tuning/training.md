@@ -30,11 +30,10 @@ agent-training-trace normalization, SFT, GRPO, evaluation, or vLLM code will be 
 `tool_calls.py` itself is only partly reusable: its typed definitions/mapper/matcher survive; its
 gemma-native rendering and parsing are re-authored.
 
-**Related docs.** `system.md` (the staged post-training loop and the RL-readiness
-gate);
+**Related docs.** `system.md` (the staged post-training loop and the RL-readiness gate);
 `../../prior-art.md` (external evidence, refs [1]–[33]);
 `../../PRD.md` (research contract); `decisions.md`
-(FT-D* decisions); `../../../plans/oct-8/trust-audit.md` (Phase 0 gate).
+(FT-D* decisions); `../../../plans/oct-8/trust-audit.md` (Phase 0 check).
 
 ---
 
@@ -107,11 +106,11 @@ The biggest risk is not the LLM model or the data — it is that the author has 
 pipeline before. Mitigate by **copying a working cookbook end to end before changing anything**,
 then swapping in CAD-QA data one variable at a time.
 
-Each step below is a gate; do not start the next until the previous passes.
+Each step below has a pass condition; do not start the next until the previous passes.
 
 1. **Reproduce the Liquid SFT example verbatim.** Clone `liquid-finetune` (renamed from
    `leap-finetune` on 2026-10-08), `uv sync`, and run its SFT example
-   (`job_configs/sft_example.yaml`) on `HuggingFaceTB/smoltalk` **unchanged**. Gate: training
+   (`job_configs/sft_example.yaml`) on `HuggingFaceTB/smoltalk` **unchanged**. Pass condition: training
    completes, an adapter is produced, and the standalone eval (`short_answer` metric, vLLM backend)
    writes `results.json`. This proves the toolchain, the GPU path, and the HF/Modal path before
    CAD-QA enters.
@@ -120,12 +119,12 @@ Each step below is a gate; do not start the next until the previous passes.
    convert it with the cookbook's `prepare_data.py` to the LFM2 text format, train LoRA for 5
    epochs on a Modal H100 (~$1.50), merge + export GGUF, and re-run its benchmark. The cookbook
    fine-tunes **LFM2.5-350M** as a cheap demo — this is a **pipeline smoke test, not our LLM model**.
-   Gate: the benchmark accuracy moves. This proves the whole narrow-task loop
+   Pass condition: the benchmark accuracy moves. This proves the whole narrow-task loop
    data → train → merge → export → eval.
 3. **Swap in our data (`mixed_dataset_general_and_easy_cadqa`).** Replace the cookbook dataset
    with our first-run rows (general tasks + low-hop `learn_the_cadqa_task`) in Liquid's `messages`
    format (built by the data doc), keep the cookbook config and hyperparameters, and run the
-   evaluation doc's `emit_our_tool_call_format` evaluation dataset. Gate: H1.
+   evaluation doc's `emit_our_tool_call_format` evaluation dataset. Pass condition: H1.
 4. **Only if H1 holds**, expand to `mixed_dataset_full_cadqa_training` and the progressive `learn_the_cadqa_task`.
 
 Rules for the whole effort:
@@ -368,8 +367,8 @@ justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
 | Re-author the `[answer contract]` / `submit_*` rendering for LFM2.5 native tool tokens | **P0** | base-specific; the exact Aug-2026 failure mode (`../../development-context.md`) |
 | Cookbook LoRA recipe (`r=16`, `alpha=32`, `lr=2e-4`, cookbook epochs) on bf16 | **P0** | baseline that does not forget; matches Liquid (§5.4) |
 | Merge + GGUF export scripted from the cookbook | **P0** | the current repo has no merge step (FT-D10/TA-D2) |
-| DPO / GRPO second training stage | **P2** | FT-D8 ordering, superseded by FT-D13: run GRPO only after the Training stage 2 pass@k gate shows a reachable tier (`system.md`) |
-| Gate rollout temperature (≈ 1.0) validated from research | **P2** | `05-sampling-gate.md` OD-3; sets only the reachability estimate — confirm against the RL exploration/sampling literature (research refs [21]–[23], [25]) |
+| DPO / GRPO second training stage | **P2** | FT-D8 ordering, superseded by FT-D13: run GRPO only after the Training stage 2 RL-readiness gate shows a reachable tier (`system.md`) |
+| RL-readiness gate rollout temperature (≈ 1.0) validated from research | **P2** | `05-rl-readiness-gate.md` OD-3; sets only the reachability estimate — confirm against the RL exploration/sampling literature (research refs [21]–[23], [25]) |
 | Hint-based RL / hint-annealed curriculum | **P2** | we hold a deterministic derivation (ordered Gold query program + private `clue_map`), so a hint ladder is available; risk per research refs [9][27][28] (`system.md` Training stage 3) |
 | NB-LoRA / EWC / replay-buffer forgetting control | **P2** | only if the evaluation datasets show real regression |
 | Multi-base sweep (Qwen3.5-2B, LFM2.5-2.6B, Llama-3.2-3B) | **P2** | hold recipe fixed; adopting another base leaves the cookbook |

@@ -16,7 +16,7 @@ A family comparison for tool calling: which small open LLM models are eligible a
 their base versus tuned scores, and which family to pick. Teacher for the measured numbers was
 `openai.gpt-oss-120b`.
 
-## Eligibility (a hard gate)
+## Eligibility (a hard prerequisite)
 
 - Qwen: Qwen3 (0.6B–8B), Qwen3.5 (0.8B–9B) — none excluded.
 - Llama: Llama 3.2 1B/3B, Llama 3.1 8B — none excluded.
@@ -48,7 +48,7 @@ Reported summary: "the starting point is a family property; the finishing point 
 
 ## Why it matters for CAD-QA
 
-Fine-tuning moves accuracy far more than family choice, and eligibility is a hard gate: Gemma 3
+Fine-tuning moves accuracy far more than family choice, and eligibility is a hard prerequisite: Gemma 3
 (our current family line) is excluded from tool calling at every size, while Gemma 4 and the
 purpose-built FunctionGemma qualify. Relevant to the base-selection question in Phase 3.
 

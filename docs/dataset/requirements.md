@@ -26,7 +26,7 @@ run without a fresh `uv sync`. `exists` therefore means "present and readable", 
 
 ## Requirements across pipeline stages
 
-These are not owned by a single pipeline stage but gate the release claim.
+These are not owned by a single pipeline stage but condition the release claim.
 
 | Requirement | Home | Status | Verification |
 |---|---|---|---|

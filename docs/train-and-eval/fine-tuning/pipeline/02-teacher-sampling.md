@@ -24,7 +24,7 @@ format × Reasoning hop count × relation family × measurement scope present in
 task family; on the order of hundreds of combinations) — because a combination the teacher never
 produces cannot be learned (the recorded `json`/`number` zero-coverage defect).
 
-The gate is enforced **offline** as the **dataset release report projected onto the sampling log**. It
+The coverage gate is enforced **offline** as the **dataset release report projected onto the sampling log**. It
 consumes the universe the dataset already commits to — intended release families
 (`dataset/query/family_specs.yaml`;
 `dataset/query/family_manifest.py::intended_family_coverage_report`) plus hop/scope coverage
@@ -49,7 +49,7 @@ OPENROUTER_API_KEY=... uv run python train_and_eval/train/rejection_sample.py \
 
 ## Open questions
 
-- **Q1.** Coverage gate grain. *Direction:* the gate is the **dataset release report projected onto the
+- **Q1.** Coverage gate grain. *Direction:* the coverage gate is the **dataset release report projected onto the
   sampling log** (consume the intended-family/hop/scope universe from `intended_family_coverage_report` +
   `release_balance_report`; reuse `_prompt_family()`; report `passes_*_sampling_coverage`) — not a new
   taxonomy. *Open:* key an agent training trace by the row's **primary measurement scope**, or **expand**

@@ -25,7 +25,7 @@ compared with and without a prior SFT Training stage that teaches the scaffold.
   small LLM model.
 - The job of the warm-start is narrow: get the small LLM model to reliably emit the scaffold's
   action/observation format and to acquire enough competence to produce *some* successful
-  rollouts. It is a **readiness gate, not an accuracy target** — SFT until format adherence and a
+  rollouts. It is a **readiness check, not an accuracy target** — SFT until format adherence and a
   nonzero rollout success rate, then stop.
 - **Over-doing SFT ossifies the policy** and collapses the exploration RL needs; **under-doing it**
   leaves the policy at the floor with **no reward variance**, so RL has nothing to push on.
@@ -36,8 +36,8 @@ compared with and without a prior SFT Training stage that teaches the scaffold.
   `submit_*` format holds and pass@k > 0 on the task, then switch to RL. It also warns against
   treating SFT accuracy as the target.
 - It explains why a small CAD-QA LLM model needs a cold-start before Training stage 3, and why "just do more
-  SFT" is the wrong move once the gate clears.
-- It pairs with the pass@k gate (FT-D13) and the environment-first decision (FT-D15).
+  SFT" is the wrong move once the readiness check clears.
+- It pairs with the RL-readiness gate (FT-D13) and the environment-first decision (FT-D15).
 
 ## Related
 

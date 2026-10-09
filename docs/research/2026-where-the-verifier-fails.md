@@ -28,7 +28,7 @@ adjudication.
 
 ## Why it matters for CAD-QA
 
-- This is the clearest justification for making the **one-scorer reconciliation (TA-A3) a P0 gate
+- This is the clearest justification for making the **one-scorer reconciliation (TA-A3) a P0 check
   before RL**, not cleanup: in RLVR the scorer *is* the objective.
 - CAD-QA's `number` and `coordinate` Answer formats are exactly the scale-sensitive numeric case
   the paper flags; the `1e-3` relative float rule needs an explicit metamorphic test.

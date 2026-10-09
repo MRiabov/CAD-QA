@@ -28,7 +28,7 @@ budget.
 
 - Hardens the system plan's band choice: aim the distribution at ~0.5, not merely "not degenerate".
 - For CAD-QA, a hop tier whose SFT pass rate is 7/8 is *technically* learnable but provides weak
-  gradient; the gate should prefer tiers nearer the middle, or rebalance data, before spending
+  gradient; the RL-readiness gate should prefer tiers nearer the middle, or rebalance data, before spending
   rollout compute.
 
 ## Related
