@@ -283,6 +283,10 @@ results rather than repeating the plan.
   `preserve_general_math_and_code_reasoning` evaluation dataset as covariate.
 - **New (proposed):** one scorer for eval, rejection sampling, and reward; the
   `preserve_general_math_and_code_reasoning` regression tolerance pre-registered at ≤2 points.
+- **D-E7** evaluation is the datasets that serve H1–H4, run at four points — baseline (untrained
+  instruct base LLM model), periodic (subset), phase-end (extensive), final (complete; the thesis
+  number); no canonical baseline slice, and "canary" is retired for "evaluation dataset". Owner:
+  §1/§6; `../../docs/train-and-eval/datasets.md`.
 
 ---
 

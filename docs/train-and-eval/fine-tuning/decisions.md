@@ -236,6 +236,20 @@ whose rationale was not recoverable.
   reward) as well as a dataset. Detail: `plans/oct-8/fine-tuning-system-plan.md` §0, §3;
   `../../prior-art.md` refs [30]–[32].
 
+## FT-D16 — The training pipeline is two phases: elicit, then preserve
+
+- **Status:** accepted (2026-10-09) — owner decision.
+- **Context:** the pipeline had a single mixed SFT run with a staged option (FT-D13's Training
+  stage 1); the intended shape is domain-then-task with an explicit objective shift.
+- **Decision:** SFT runs as **phase 1 (elicit / prime)** on general code + CadQuery/CAD, then
+  **phase 2 (task + preserve)** on `learn_the_cadqa_task` + CAD at scale, shifting from eliciting
+  reasoning to preserving it. A **phase-2-only fallback** applies if phase 1 shows no measured
+  phase-end gain.
+- **Consequences:** sequential training carries higher forgetting risk (the 2026 controlled study
+  found one SFT Training stage strongest); each phase must earn its place on the phase-end
+  evaluation. Detail: `plans/oct-8/fine-tuning-system-plan.md` §2;
+  `plans/oct-8/fine-tuning-data-plan.md` §4.
+
 ## Open questions
 
 - **Q1.** The base-pipeline choice (D11 in `plans/oct-7/restructure-docs.md`) is recorded as FT-D11,
