@@ -123,17 +123,35 @@ and parser accept the gold encoding; it does **not** establish grader correctnes
 
 ### 5.1 External transfer (H3)
 
-The internal held-out slice cannot show that the dataset is useful; that needs transfer to an
-**independent, credible** benchmark. Target: **BenchCAD** (`../../docs/research/2026-benchcad.md`,
-ref [33]).
+The internal held-out slice cannot show that the dataset is useful; that needs transfer to
+**existing, credible** external benchmarks. A benchmark counts only if it is **independent** of us,
+**adopted** (a publication or a leaderboard, ideally cited by other work), **deterministic** (no LLM
+judge), **reachable** by the evaluated LLM model, **construct-matched** (comprehension/reasoning,
+text-in for a text-only base LLM model), and **unsaturated**.
 
-- **Primary target — `qa_code`:** CadQuery program + numeric question → number, restricted to a
-  **family-disjoint** subset and read on the **Spatial Reasoning** axis. Text-in, deterministic, no
-  kernel, no LLM judge; unsaturated (0.537–0.731 against a 0.42 blind baseline).
-- **Secondary target — `edit_code`:** instruction + program → edited program, T4/T5 (overlapping-CSG
-  and feature-edit cases).
-- **Not targets:** Vision2Code, Vision QA, and the BenchCAD 2.0 assembly/PCB tasks — image/drawing-in,
-  generation, agentic; outside a text-only base LLM model and outside the CAD-QA construct.
+Two rules:
+
+- **No subset-shopping.** The headline is the benchmark's **official full split and official
+  metric**; spatial-axis, family, and Reasoning-hop breakdowns are diagnostics, not a hand-picked
+  result.
+- **Freshness.** No external gap is quoted without a current re-run. `GeoGramBench` (2025) and
+  `QueryCAD` (2024) gaps are `[stale — verify or drop]`.
+
+**Suite by role** (comprehension is the means; generation and defect prevention are the end):
+
+| Role | Benchmark | In → output | Modality | Tier |
+|---|---|---|---|---|
+| Means | BenchCAD `qa_code` (`../../docs/research/2026-benchcad.md`, ref [33]) | CadQuery program + numeric question → number | text-in | **P0** |
+| End | BenchCAD `edit_code` T4/T5 | instruction + program → edited program | code-in | P1 |
+| End | `Text2CAD-Bench` (arXiv:2605.18430) | text → CadQuery program | text-in | P1, reachability-gated |
+| End / defect | `Text-to-CadQuery` (arXiv:2505.06507); `CAD-Editor` (ICML 2025) | text → CadQuery program; text edit | text-in | P1 |
+| Defect | `Text2CAD-Bench` Invalidity Rate; BenchCAD `exec%` | — | text-in | P1 |
+| Motivation only | EngineerBench (ours) | — | — | not evidence |
+
+- **Not targets:** Vision2Code, Vision QA, and BenchCAD 2.0 assembly/PCB (image/drawing-in, agentic);
+  `CADBench`, `cadrille`, `CAD-Recode` (image/point-cloud → need a multimodal LLM model);
+  `MechReason` (multi-image multi-hop) and `CADWorld` (FreeCAD computer-use) are credible but
+  wrong-modality context.
 - **Arms (hold base and recipe fixed; vary only training data):**
 
 | Arm | Training data | Isolates |
@@ -144,16 +162,17 @@ ref [33]).
 | CAD-QA reasoning | `cadqa_hop` | H2 capability |
 | Mix-full (optional) | full primary mix | external reasoning support |
 
-- **Claim.** CAD-QA reasoning > format-only **and** > Base on BenchCAD `qa_code` is the transfer
-  result: the strongest "the dataset is useful" evidence, and the answer to the PRD transfer
-  question. `edit_code` is corroborating.
-- **Preconditions (pre-registered):** reachability pilot (the base must be low-but-nonzero on the
-  subset; a zero floor yields no signal, a high floor means saturated); format-adaptation control
-  (BenchCAD wants a JSON array of numbers — report invalid-output rate); contamination audit
-  (exclude every BenchCAD family from every training arm; dedup CAD-QA programs against BenchCAD).
-- **Peer-review stake.** Without a measured gain on a credible external benchmark, the
-  "dataset improves models" claim rests on an internal split and does not withstand review. A null
-  transfer is reported as a finding (comprehension supervision is task-local), not hidden.
+- **Claim.** CAD-QA reasoning > format-only **and** > Base on the P0 means target (BenchCAD
+  `qa_code`, official split) is the transfer result; the end/defect targets corroborate the causal
+  chain (comprehension → construction and fewer invalid shapes).
+- **Preconditions (pre-registered):** reachability pilot per target (the base LLM model must be
+  low-but-nonzero; a zero floor yields no signal, a high floor means saturated); format-adaptation
+  control (BenchCAD wants a JSON array of numbers — report invalid-output rate); contamination audit
+  (exclude every external benchmark's families from every training arm; dedup CAD-QA programs against
+  them).
+- **Peer-review stake.** Without a measured gain on a credible external benchmark the
+  dataset-usefulness claim rests on an internal split and does not withstand review. A null transfer
+  is reported as a finding (comprehension supervision is task-local), not hidden.
 
 ---
 
@@ -237,9 +256,11 @@ results rather than repeating the plan.
   `../../docs/train-and-eval/evaluation/harness.md`.)
 - **D-B1** shortcut baselines reported separately. **D-B2** oracle is a key-path check. **D-B3**
   LLM model baselines name the slice. (From `baselines.md`.)
-- **D-E5** the transfer claim (H3) is evaluated on BenchCAD `qa_code` (primary) and `edit_code`
-  (secondary), against Base / format-only / answer-only controls; it is a P0 gate, because it is the
-  only evidence that the dataset is useful beyond its own split.
+- **D-E5** the transfer claim (H3) is evaluated against a suite of **existing, credible**
+  benchmarks — BenchCAD `qa_code` (P0 means), with BenchCAD `edit_code` and a text-in text-to-CAD
+  benchmark (P1 end/defect) — each on its official full split and metric, against
+  Base / format-only / answer-only controls. It is a P0 gate: the only evidence that the dataset is
+  useful beyond its own split. Stale gaps (`GeoGramBench`, `QueryCAD`) are re-run or dropped.
 - **New (proposed):** one scorer for eval, rejection sampling, and reward; canary `general`
   regression tolerance pre-registered at ≤2 points.
 

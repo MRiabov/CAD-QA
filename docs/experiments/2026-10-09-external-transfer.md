@@ -1,12 +1,12 @@
-# BenchCAD transfer evaluation — H3 (stub)
+# External transfer evaluation — H3 (stub)
 
 Date: 2026-10-09 · Status: planned (not run)
 
 ## Purpose
 
-Test whether graph-derived CAD-QA supervision transfers to an independent, credible CAD benchmark
-(H3). Primary target: BenchCAD `qa_code`. Secondary: BenchCAD `edit_code` T4/T5. Owned with
-`../../plans/oct-8/evaluation-plan.md` §5.1 (D-E5).
+Test whether graph-derived CAD-QA supervision transfers to existing, credible external benchmarks
+(H3). Means target: BenchCAD `qa_code`. End/defect: BenchCAD `edit_code`, `Text2CAD-Bench`. Owned
+with `../../plans/oct-8/evaluation-plan.md` §5.1 (D-E5).
 
 ## Hypothesis
 
@@ -15,11 +15,16 @@ answer-only controls, without a general-canary regression.
 
 ## Targets
 
-- **Primary — BenchCAD `qa_code`:** CadQuery program + numeric question → number; family-disjoint
-  subset; read on the Spatial Reasoning axis.
-- **Secondary — BenchCAD `edit_code` T4/T5:** instruction + program → edited program.
-- **Not targets:** Vision2Code, Vision QA, BenchCAD 2.0 assembly/PCB (image/drawing-in, generation,
-  agentic).
+- **Means (P0) — BenchCAD `qa_code`:** official full split and metric.
+- **End (P1) — BenchCAD `edit_code` T4/T5; `Text2CAD-Bench` (arXiv:2605.18430):** text → CadQuery.
+- **Defect (P1) — `Text2CAD-Bench` Invalidity Rate; BenchCAD `exec%`.**
+- **Not targets:** Vision2Code, Vision QA, BenchCAD 2.0 assembly/PCB; `CADBench`, `cadrille`,
+  `CAD-Recode` (need a multimodal LLM model); `MechReason`, `CADWorld` (wrong modality).
+
+## Rules
+
+- Official full split and official metric; no subset-shopping.
+- Freshness: re-run the current frontier before quoting `GeoGramBench` or `QueryCAD` gaps.
 
 ## Arms
 
