@@ -111,7 +111,8 @@ six **reconstruction** tasks (T1–T6), each scored by execution with no LLM jud
 part; T2 supplied parts + assembly drawing + BOM → assembly; T3 four renders → part (orientation
 pinned); T4 mechanism renders → parts + assembly; T5 five drawings + sixteen STEPs → parts +
 assembly; T6 PCB renders → terminal-net graph. Headlines: `part_v1 = 0.5·iou_term + 0.3·surf_f1
-+ 0.2·pix_fg`, `asm_v1` (per-part leave-one-out voxel IoU gain), and `ecad_v2`. The LLM model
+
+- 0.2·pix_fg`, `asm_v1` (per-part leave-one-out voxel IoU gain), and `ecad_v2`. The LLM model
 works in a sandbox for 30 rounds per case, with `export`, `export_part`, `use_part`,
 `submit_assembly`, and `crop`; a 300-family held-out set stays private.
 

@@ -24,6 +24,7 @@ dev = [
     "pytest-cov>=7.0.0",
     "pytest-xdist>=3.8.0",
     "ruff>=0.15.12",
+    "rumdl>=0.2.78",
     "types-PyYAML>=6.0.12.20250915",
 ]
 experiment = [
@@ -62,6 +63,7 @@ dev = [
     "pytest-cov>=7.0.0",
     "pytest-xdist>=3.8.0",
     "ruff>=0.15.12",
+    "rumdl>=0.2.78",
     "types-PyYAML>=6.0.12.20250915",
     "vastai>=1.0.7",
     "kaggle>=2.2.4",

@@ -13,7 +13,7 @@ question-answering dataset from CadQuery programs, where each question requires
 comprehending a complex CAD model --- finding relationships between boolean
 operations, faces, vertices and edges, computing their volume, span or
 location. Questions range from simple lookups to challenging high reasoning hop
-questions with rich distractors, requiring chains of complex and correct reasoning. 
+questions with rich distractors, requiring chains of complex and correct reasoning.
 We evaluate open-source LLMs in three harnesses --- without tools, with a NumPy shell, and with full CadQuery access --- measuring accuracy by reasoning hop count, task family, and LLM harness mode.
 Expected contribution: a benchmark exposing
 the multi-hop geometry reasoning gap in current Large Language Models
@@ -42,9 +42,11 @@ mathematical and spatial reasoning of models in domain of deriving and locating 
 parts, boolean operations (shapes), positions of objects, as well as truthful CAD code question answering beyond simple question.
 
 The main research question is:
+
 - How to improve the raw capabilities of LLMs on comprehending of CAD code?
 
 The secondary research questions are:
+
 - How to construct such a dataset that would improve models' reasoning on 3d code?
 - Will scaling a synthetic training approach on such questions improve the actual reasoning on other datasets?
 - Will reasoning be concise?
@@ -71,10 +73,10 @@ generation of CAD models; BenchCAD (Zhang et al., 2026) is a fresh benchmark on 
 that asks models to generate and edit CAD programs and to answer numeric questions about a given
 CadQuery program. `cadrille` (Kolodiazhnyi et al., 2026), the program-evolution dataset (Elistratov et al., 2026), and CADENA (Kabisov et al., 2026) benchmarks test reconstruction of CadQuery models from parts. However, none are asking to e.g.
 find a relationship between the two geometrical primitives which (by our
-preliminary tests) leads to the LLM model emitting many more reasoning tokens than expected. 
+preliminary tests) leads to the LLM model emitting many more reasoning tokens than expected.
 
 They build on datasets such as the program-evolution dataset, DeepCAD (Elistratov et al., 2026; Wu et al., 2021) which generate
-geometry procedurally or via a LLM, which we build on too. 
+geometry procedurally or via a LLM, which we build on too.
 
 ### 2.2 Benchmarks for Geometry Comprehension
 
@@ -219,11 +221,11 @@ We classify complexity by the number of reasoning hops:
 
 ### 3.2 Measuring complexity
 
-Constrained by token costs, we avoid using frontier models, and instead benchmark our dataset on cost-effective (10-100x cheaper) models such as `deepseek-v4-flash`, `xiaomi-mimo-v2.5`, `NVidia NemoTron` super and other models for evaluation. We target at most 30% pass rate by these models; with task families being equally distributed in solve rates. 
+Constrained by token costs, we avoid using frontier models, and instead benchmark our dataset on cost-effective (10-100x cheaper) models such as `deepseek-v4-flash`, `xiaomi-mimo-v2.5`, `NVidia NemoTron` super and other models for evaluation. We target at most 30% pass rate by these models; with task families being equally distributed in solve rates.
 
 ### 3.3 Improving models and proving learning
 
-We will fine-tune LLM models using SFT & RL frameworks; in particular similar to how the program-evolution work trained its LLM models for better reconstruction, we will train models on more successful CAD mathematics using first SFT and then RL (DeepSeek-AI, 2025), first using rejection sampling (Shao et al., 2024), as well as in-place editing of the agent training trace for conciseness; later we will post-train the LLM model via frameworks like TRL or Unsloth on achieving better results on the task. We will show a graph that with training, the LLM model's solve rate improves. 
+We will fine-tune LLM models using SFT & RL frameworks; in particular similar to how the program-evolution work trained its LLM models for better reconstruction, we will train models on more successful CAD mathematics using first SFT and then RL (DeepSeek-AI, 2025), first using rejection sampling (Shao et al., 2024), as well as in-place editing of the agent training trace for conciseness; later we will post-train the LLM model via frameworks like TRL or Unsloth on achieving better results on the task. We will show a graph that with training, the LLM model's solve rate improves.
 
 After proving that the environment works and is correct through the API, we will post-train a small LLM model following that program-evolution work, whose authors have post-trained only a small — a 2-billion-parameter LLM model — to
 do CAD reconstruction. E.g. an LLM model like Gemma4-E2B or Qwen3.5-2B will be used
@@ -245,13 +247,13 @@ To evaluate baseline and then improve on capability of models - at triple of the
 - `numpy` LLM harness (a Python shell with NumPy, where the LLM model uses NumPy to compute the CAD model),
 - `cadquery` LLM harness (a Python shell with CadQuery, which allows arbitrary CAD
 operations to be executed; the LLM model is expected to use CadQuery to answer its
-question, and a single successful tool call suffices - provided the LLM model gets it right). 
+question, and a single successful tool call suffices - provided the LLM model gets it right).
 
 The advantages of the three environments are as follows:
 
 - To generalize the reasoning to three environments: the `no_tools` LLM harness requires more thinking and following through the objective and own noise to solve the problem correctly.
 - NumPy environment requires understanding of 3D environment and modeling its geometry successfully without access to CAD; which is useful for generalizing to closed CAD environments such as SolidWorks or Autodesk Inventor, more commonly used in industry.
-- The `cadquery` LLM harness allows the LLM model to answer in one shot by constructing a correct CAD operation. The research question is again conciseness, but also measuring the LLM model's ability to produce correct CAD code and reason toward it. 
+- The `cadquery` LLM harness allows the LLM model to answer in one shot by constructing a correct CAD operation. The research question is again conciseness, but also measuring the LLM model's ability to produce correct CAD code and reason toward it.
 
 We will use Harbor coding environments with TerminalBench-equivalent environments (with access to only a Linux shell and file writing; the answers are submitted as files).
 
@@ -293,6 +295,3 @@ References follow the Harvard (author–date) style. The Australian CORE ranking
 - Li, K., Zhang, Z., Yin, H., Zhang, L., Ou, L., Wu, J., Yin, W., Li, B., Tao, Z., Wang, X., Shen, W., Zhang, J., Wu, X., Jiang, Y., Yan, M., Xie, P., Huang, F. and Zhou, J. (2025) 'WebSailor: Navigating Super-Human Reasoning for Web Agent', arXiv preprint arXiv:2507.02592. Available at: <https://arxiv.org/abs/2507.02592>. [No CORE rank; 43 citations, Google Scholar]
 - Yang, J., Zhang, W., Wu, J., Cheng, J., Zheng, T., Xu, F., Gu, W., Jing, L., Du, Y., Li, J., Li, Y., Xing, Y., Hao, C., Tao, R., Gong, R., Liu, A., Li, Z., Tang, M., Lin, C., Chen, S., Zhao, W.X., Liu, X., Zhou, M., Dai, B. and Lv, W. (2026) 'InCoder-32B-Thinking: Industrial Code World Model for Thinking', arXiv preprint arXiv:2604.03144. Available at: <https://arxiv.org/abs/2604.03144>. [No CORE rank; 1 citation, Google Scholar] <!-- dont-say: allow: bibliographic title -->
 - Mallis, D., Wang, M., Karadeniz, A.S., Ricci, E., Kacem, A. and Aouada, D. (2026) 'Text-to-CAD Evaluation with CADTests', arXiv preprint arXiv:2605.07807. Available at: <https://arxiv.org/abs/2605.07807>. [No CORE rank; 1 citation, Google Scholar]
-
-
-

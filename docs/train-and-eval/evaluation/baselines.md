@@ -151,13 +151,16 @@ _(none yet)_
 ## Extra deliverables - P2
 
 ### Full baseline matrix by hop, relation family, and measurement scope
+
 Re-run every family on the immutable release test and publish the full breakdown, not
 just the headline accuracy.
 
 ### No-access-to-CadQuery few-shot baseline
+
 Export the few-shot requests (`train_and_eval/grading/requests.py::few_shot_requests`)
 and report cost-effective LLM model few-shot accuracy beside zero-shot.
 
 ### Hard-slice big LLM model numbers
+
 Record the 3+ hop cost-effective LLM model accuracy that the paper's ≤30% target
 actually refers to; it is currently assumed and unrecorded.
