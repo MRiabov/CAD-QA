@@ -252,10 +252,11 @@ Start the budget at the **test scale**: Modal serverless with per-second billing
 cents and Liquid's **~$30 free credits** cover the first loops; scale-up is a deliberate step, not the
 default. The dominant cost is **teacher API calls for `learn_the_cadqa_task`** (the data doc's out-of-scope piece, but
 it sets the budget). External-mix ingest/filter/dedup is CPU-only. Per accepted agent training trace at a
-DeepSeek-class teacher rate (pull the live rate): ~15k input + ~3k output per attempt ≈ **$0.008/attempt**; rejection
-sampling at ~2–5 attempts per accepted agent training trace ⇒ **~$20–50 per 1,000 accepted traces**
-(less with prompt caching on the system/tool prefix). A full pass over the 1,445-row dataset at
-`--attempts-per-row 5` ≈ 7.2k attempts ≈ **~$60**. SFT (~10–30M tokens) and pass@k eval are
+DeepSeek-class teacher rate (pull the live rate; ~$0.30/M in + $1.20/M out at peak, **~half off-peak**, when
+we run): ~15k input + ~3k output per attempt ≈ **$0.008/attempt peak, ~$0.004 off-peak**; rejection
+sampling at ~2–5 attempts per accepted agent training trace ⇒ **~$10–25 per 1,000 accepted traces**
+off-peak (less with prompt caching on the system/tool prefix). A full pass over the 1,445-row dataset at
+`--attempts-per-row 5` ≈ 7.2k attempts ≈ **~$30 off-peak**. Schedule teacher sampling off-peak. SFT (~10–30M tokens) and pass@k eval are
 cents-to-a-few-dollars on the small test GPU, covered by the free credits — so the sampling cost is
 **not** the binding constraint; train/eval cycles and rollout tokens are. The GPU term is **secondary and
 class-dependent**: for LoRA on a 2.6B LLM model the card is rarely the bottleneck (teacher sampling and
