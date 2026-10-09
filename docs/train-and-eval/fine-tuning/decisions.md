@@ -352,6 +352,8 @@ whose rationale was not recoverable.
   - Other classical-by-2026 optimizations are already in the recipe (LoRA-bf16, grad checkpointing +
     accumulation, packing, FlashAttention) or not applicable at 2.6B dense (MoE sharding); QLoRA stays a
     fallback (FT-D11). Detail: `pipeline/07-serving.md`, `training.md` §5.
+  - The public fine-tuning stack (`liquid-finetune`/LEAP) has **no DSpark/speculator support**
+    (checked 2026-10-09), so we could not train a drafter matched to our fine-tuned LLM model with it anyway.
 - Detail: `../../research/2026-lfm2.5-dspark.md`.
 
 ## FT-D23 — Release the adapter; Transformers is the reference runtime
