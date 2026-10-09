@@ -92,7 +92,7 @@ still verifies the loader logic but not the real schema.
 
 ## Resolved questions
 
-_(none yet)_
+None yet.
 
 ## Extra deliverables - P2
 

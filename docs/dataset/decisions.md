@@ -167,8 +167,8 @@ Local decisions for the `dataset_generation` unit, in ADR format
 
 ## Resolved questions
 
-_(none yet)_
+None yet.
 
 ## Extra deliverables - P2
 
-_(none)_
+None.

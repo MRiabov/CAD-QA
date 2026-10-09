@@ -88,7 +88,7 @@ A parity check (same prompts, transformers vs vLLM, compare token logprobs or ar
 
 ## Resolved questions
 
-_(none yet)_
+None yet.
 
 ## Extra deliverables - P2
 

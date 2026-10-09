@@ -125,7 +125,7 @@ coverage gate should exist.
   emit traces in exactly one format per row, so the student cannot learn a format with no
   teacher success. This is the P0 defect this pipeline stage carries.
 - **Q2.** **RESOLVED — keep `temperature=1.0`.** The handoff's "use 0.3–0.6 for higher
-  success" advice is stale for the current teacher family. DeepSeek-V4.1-Flash's model
+  success" advice is stale for the current teacher family. DeepSeek-V4.1-Flash's LLM model
   card recommends `temperature=1.0, top_p=0.95` for its instruct and agentic evaluations.
   See [FT-02-R1](#resolved-questions).
 - **Q3.** **`compact_trace` is not a declared tool.** The compactor is prompted to emit a
@@ -142,12 +142,12 @@ coverage gate should exist.
 
 ## Resolved questions
 
-### FT-02-R1 — `temperature=1.0`, `top_p=0.95` per the DeepSeek-V4.1-Flash model card
+### FT-02-R1 — `temperature=1.0`, `top_p=0.95` per the DeepSeek-V4.1-Flash LLM model card
 
 - **Status:** resolved (2026-10).
 - **Context:** Q2 flagged the handoff's recommendation to re-sample at 0.3–0.6,
-  which predates the current teacher model.
-- **Resolution:** the [DeepSeek-V4.1-Flash model card](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash)
+  which predates the current teacher LLM model.
+- **Resolution:** the [DeepSeek-V4.1-Flash LLM model card](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash)
   recommends `temperature=1.0, top_p=0.95` for all instruct and agentic evaluations and
   gives no lower-temperature guidance. The teacher now defaults to `deepseek/deepseek-v4.1-flash`
   with `temperature=1.0, top_p=0.95` (`train_and_eval/teacher.py::TeacherClient`), and the

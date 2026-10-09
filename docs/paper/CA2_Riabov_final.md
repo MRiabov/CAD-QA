@@ -1,6 +1,6 @@
 # CAD-QA: A Benchmark Verifying Geometry Reasoning over Complex Procedural CAD Programs
 
-**Maksym Riabov · 25194372 · Research in Computing · National College of Ireland**
+Maksym Riabov · 25194372 · Research in Computing · National College of Ireland
 
 ## Abstract
 

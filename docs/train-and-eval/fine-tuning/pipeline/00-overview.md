@@ -176,7 +176,7 @@ how each pipeline stage uses it; they do not redefine it.
 
 ## Resolved questions
 
-_(none yet)_
+None yet.
 
 ## Extra deliverables - P2
 

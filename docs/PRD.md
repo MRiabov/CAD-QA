@@ -130,4 +130,4 @@ See `development-plan.md` and the per-pipeline docs for current open questions.
 
 ## Resolved questions
 
-_(none yet)_
+None yet.

@@ -122,7 +122,7 @@ lists. The focused tests are
 
 ## Resolved questions
 
-_(none yet)_
+None yet.
 
 ## Extra deliverables - P2
 
