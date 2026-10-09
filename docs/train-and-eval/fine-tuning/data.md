@@ -388,7 +388,7 @@ only the dataset:
 | `mixed_dataset_general_and_easy_cadqa` data build (general tasks + low-hop `learn_the_cadqa_task`) | **P0** | feeds the first run |
 | Contamination + dedup pass against CAD-QA held-out and evaluation datasets | **P0** | held-out hygiene; a leak invalidates the thesis number |
 | General-task curation (code + math + CAD, 50–70%) | **P0** | anti-forgetting anchor (FT-D18) |
-| Adopt external-role verification environments (upstream Docker images / harnesses / shipped baseline LLM models; never a CAD kernel of ours) | **P1** | FT-D17 verification runs locally; adopt, do not build. High setup cost — prefer verified-at-origin corpora and stand up the minimum |
+| Adopt external-role verification environments (upstream Docker images / harnesses / shipped baseline LLM models; never a CAD kernel of ours) | **P1** | FT-D17 verification runs locally; adopt, do not build. High setup cost and a known time sink — **defer** past the cookbook + first mix, prefer verified-at-origin corpora, and stand up the minimum |
 | **`learn_the_cadqa_task` generation plan** | **P0, separate** | the thesis needs it; explicitly not in this doc |
 | Permissive reasoning mix (`OpenThoughts`/`Bespoke`) | **P1** | tests H2 without license risk |
 | `run_the_tool_call_loop` / `run_code` data (`OpenThoughts-Agent`) | **P1** | needed for the primary `numpy` LLM harness behaviour |

@@ -48,6 +48,11 @@ environments**, so one setup covers both verification and transfer evaluation. W
 itself high-effort (Docker/harness or rebuild — both a pain), so stand up the minimum and prefer
 verified-at-origin corpora; the external roles are support, not the lever (FT-D15).
 
+**Do not start there.** Wiring these environments is a known time sink: beginning with it can consume the
+budget before any CAD-QA result exists. Run the cookbook and the first mix on **verified-at-origin**
+corpora, and stand up an external environment only when a specific role's corpus demands it and the
+evaluation shows that role matters.
+
 ### `emit_our_tool_call_format`
 
 Teaching a small LLM model to emit our `submit_*` tool calls. The base is an instruct LLM model

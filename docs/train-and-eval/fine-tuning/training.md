@@ -145,6 +145,10 @@ Rules for the whole effort:
   `github.com/Liquid4All/liquid-finetune`, `docs.liquid.ai/lfm/fine-tuning/*` (LEAP Finetune,
   Datasets, TRL, Unsloth), the Home Assistant example, and the Unsloth LFM2.5 tutorial
   (`unsloth.ai/docs/models/tutorials/lfm2.5`).
+- **Do not start by wiring external benchmark environments.** Run the cookbook and the first mix on
+  **verified-at-origin** corpora first; standing up the external-role verification environments
+  (Docker/harness/shipped baseline LLM models) is a known time sink and can consume the budget before
+  any CAD-QA result exists (`data.md` §1, `datasets.md`). Add one only when a role's corpus demands it.
 
 ---
 
