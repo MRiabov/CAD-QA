@@ -8,7 +8,7 @@ stage is its `pipeline/` step doc. Environment facts are marked where they confl
 Each row states the **intended** requirement for a stage, whether it is **verified**, and the
 evidence. "Verified" means a check ran and passed in this audit (2026-10-07) or is recorded
 as a passed run in the repository; everything else is marked. No stage currently claims an
-end-to-end result on a frozen held-out split.
+end-to-end result on an immutable held-out split.
 
 ## Intended vs verified by stage
 
@@ -17,7 +17,7 @@ end-to-end result on a frozen held-out split.
 | 01 rows-loader | A dataset file maps to decoded CAD-QA dataset rows with the correct `[answer contract]` and decoded gold for every format | **Yes** | 36/36 tests in `train_and_eval/test_rows_loader.py` + `train_and_eval/eval/test_tool_calls.py`; real `release_10k` artifact loads (10,000 rows) |
 | 02 teacher-sampling | Kept agent training traces carry a tool call the Query verifier accepts; per-format coverage is complete | No | Code present (`rejection_sample.py`, `teacher.py`); `build_teacher_prompt` unit-tested; `json`/`number` teacher coverage was 0 historically |
 | 03 agent training trace normalization | Traces render to the native gemma format | Partial | Rendering primitives verified (`test_render_helpers`, `test_run_code_roundtrip_in_trace_steps`); full `normalize_traces.py` needs the gemma processor |
-| 04 SFT | Adapter beats the base LLM model without over-generation | No | Code present (`sft_train.py`); historical 50% / 41.7% on 12 rows; no frozen held-out result |
+| 04 SFT | Adapter beats the base LLM model without over-generation | No | Code present (`sft_train.py`); historical 50% / 41.7% on 12 rows; no immutable held-out result |
 | 05 GRPO | Reward faithful; policy improves without collapse | Partial | Reward grading unit-tested; training loop unrun; first historical run collapsed at hop 2 |
 | 06 harness-modes | Same grading across `no_tools`/`numpy`/`cadquery`; `run_code` round-trip | Partial | Sandbox and compute tool verified offline; full loop needs GPU; `cadquery` mode not implemented |
 | 07 serving-vllm | Served checkpoint is numerically equivalent to the merged LLM model | No | Conversion code present; no parity check; throughput smoke exists but uses stale raw-prompt calls |
@@ -51,7 +51,7 @@ end-to-end result on a frozen held-out split.
 
 ## What "done" would require
 
-1. The dataset frozen with tagged revisions; a group-safe held-out split independent of the
+1. The dataset is immutable with tagged revisions; a group-safe held-out split independent of the
    agent training trace set.
 2. Every stage's end-to-end check run and recorded, including parity, sandbox, and
    per-format teacher coverage.

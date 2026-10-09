@@ -142,7 +142,7 @@ big LLM model number remains `[assumed]`/unrecorded (`docs/development-context.m
   row schema, or retired in favour of the geometry-first split audit? The spec
   still names the operation-order heuristic, which was never found in code.
 - Which slice is the canonical baseline slice for the paper: rc10 clean-100,
-  release10k, or a frozen hard test?
+  release10k, or an immutable hard test?
 
 ## Resolved questions
 
@@ -151,7 +151,7 @@ _(none yet)_
 ## Extra deliverables - P2
 
 ### Full baseline matrix by hop, relation family, and measurement scope
-Re-run every family on the frozen release test and publish the full breakdown, not
+Re-run every family on the immutable release test and publish the full breakdown, not
 just the headline accuracy.
 
 ### No-access-to-CadQuery few-shot baseline

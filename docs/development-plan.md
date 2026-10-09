@@ -6,7 +6,7 @@ docs are organised. A live, owner-facing checklist lives in `_audit/owner-audit-
 
 ## Goal
 
-Complete the project: a frozen, verified benchmark; refreshed baselines; a small LLM model that
+Complete the project: an immutable, verified benchmark; refreshed baselines; a small LLM model that
 beats its base and the baselines without collapsing reasoning; results and a finished
 paper/thesis.
 
@@ -54,7 +54,7 @@ Phase 3 design.
 - Fix `json`/`number` teacher coverage.
 - Publish with tagged revision hashes.
 
-**Gate:** frozen test set with group-safe splits; the `benchmark-release` report's failing
+**Gate:** immutable test set with group-safe splits; the `benchmark-release` report's failing
 gates are recorded as known limitations.
 
 ## Phase 2 — Refresh baselines [P1; `no_tools`/`cadquery` P2]
@@ -93,7 +93,7 @@ Rename code identifiers to match the glossary. `uv run python tools/check_dont_s
 --identifiers` reports the name collisions, and `tools/dont_say_identifiers_baseline.txt`
 holds the accepted count (**5,339** across 64 files — mostly `type`, `clause`, `source`,
 `node`, `selector`) to ratchet to zero. Deferred: it is a large mechanical rename, much of it
-inside the frozen `dataset/`.
+inside the immutable `dataset/`.
 
 ## Cross-cutting rules
 

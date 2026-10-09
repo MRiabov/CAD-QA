@@ -40,7 +40,7 @@ The authors build `RLVE-Gym`, a suite of 400 environments.
 - The "too easy or too hard → vanishing signal" finding is the same pass-rate band the plan already
   gates on ([21][22]); RLVE adds that the fix is **adaptive/generated difficulty**, not just
   filtering.
-- The CAD-QA analogue: a task generator over the frozen dataset rows (Parquet/CSV → prompt + scalar
+- The CAD-QA analogue: a task generator over the immutable dataset rows (Parquet/CSV → prompt + scalar
   gold) with configurable hop/difficulty, plus the exact-match scorer, is our `RLVE-Gym`.
 
 ## Related

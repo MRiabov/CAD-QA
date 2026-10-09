@@ -177,7 +177,7 @@ whose rationale was not recoverable.
     `experiment.py`, `harbor.py`), are not classified. The sandbox belongs to the `run_code` tool,
     so it likely stays; confirm before deletion.
   - Deletion is destructive and is done on a branch, with the audit as the justification.
-    `dataset/` stays frozen (DD-01); `train_and_eval/` does not.
+    `dataset/` stays immutable (DD-01); `train_and_eval/` does not.
 - Detail: FT-D11; `plans/oct-7/restructure-docs.md` (Code-change policy);
   `plans/oct-8/fine-tuning-system-plan.md`.
 
@@ -224,7 +224,7 @@ whose rationale was not recoverable.
   saturates, static data gives a vanishing signal when tasks are too easy or too hard, and SFT is a
   **warm-start readiness gate** whose over-use ossifies the policy and collapses exploration.
 - **Decision:** invest first in the **CAD-QA task environment + scorer** — a task generator over
-  the frozen dataset rows (prompt + scalar gold, configurable hop/difficulty), the single verified
+  the immutable dataset rows (prompt + scalar gold, configurable hop/difficulty), the single verified
   exact-match scorer, and the `run_code`/kernel tool surface — and treat the external SFT mix
   (`format_tool`, `agent_trace`, `reasoning_distill`, `rehearsal`, `domain_*`) as **support**: a
   thin format cold-start, a capability-preservation anchor, and canaries. Teacher-distilled

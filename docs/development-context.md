@@ -150,7 +150,7 @@ Liquid tool-use docs).
    a reader, often cannot tell what a question is asking. This ships in every public prompt,
    so it is a benchmark-validity problem, not a style one: an ambiguous question cannot
    fairly judge an answer. Needs a clarification pass (rewrite to unambiguous wording, then
-   re-render and re-check) before the benchmark is frozen. Tracked in
+   re-render and re-check) before the benchmark is immutable. Tracked in
    `_audit/owner-audit-todo.md` (E5).
 9. **Fine-tuning surface is being replaced.** Most of `train_and_eval/` — teacher, rejection
    sampling, agent training trace normalization, SFT, GRPO, evaluation, serving — is expected to

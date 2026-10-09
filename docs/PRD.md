@@ -36,7 +36,7 @@ Secondary:
 
 | Deliverable | Artifact | Definition |
 |---|---|---|
-| Benchmark dataset | HuggingFace dataset + card | Frozen, split (train/validation/test), reproducible from the CLI |
+| Benchmark dataset | HuggingFace dataset + card | Immutable, split (train/validation/test), reproducible from the CLI |
 | Baselines | `docs/experiments/` record | Cost-effective models on the benchmark, by hop and answer format |
 | Fine-tuned LLM model | HuggingFace LLM model + LLM adapter | A small (2–4B) LLM model that beats its base and the baselines on the hard slice |
 | Paper | manuscript | Complete main body with real tables and figures |
@@ -70,10 +70,10 @@ Secondary:
 
 ## Definition of done
 
-1. The dataset is frozen and published with a card; held-out sources never overlap train.
+1. The dataset is immutable and published with a card; held-out sources never overlap train.
 2. Baselines are recorded by hop and answer format, with every LLM model call logged.
 3. A small LLM model is trained and holds a clear, statistically supported improvement on the
-   frozen test set over its base and the baselines — not explained by format compliance
+   immutable test set over its base and the baselines — not explained by format compliance
    alone.
 4. Reasoning is not collapsed: generation entropy, output length, and diversity are
    reported.

@@ -30,7 +30,7 @@ classification tasks.
 ## Why it matters for CAD-QA
 
 Supports two of our needs: base selection does matter (most candidates hurt), and a cheap
-linear-probe signal can rank candidates — the same diagnostic idea as NoReGeo's frozen-encoder
+linear-probe signal can rank candidates — the same diagnostic idea as NoReGeo's fixed-encoder
 probe. It is a warning against assuming any small base will fine-tune well.
 
 ## Related

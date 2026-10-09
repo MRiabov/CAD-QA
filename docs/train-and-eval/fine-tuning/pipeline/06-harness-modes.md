@@ -110,7 +110,7 @@ rtk uv run python train_and_eval/eval/eval_bench.py \
 - **`MAX_NEW` is defined and unused**; only `ROUND_MAX_NEW` is applied.
 - **Held-out sampling.** Rows are drawn by `rng.sample` after excluding agent training trace
   `row_id`s; the exclusion list defaults to a box path (`sft_texts.jsonl`). `[unknown]` if a
-  frozen held-out split is enforced independently of the agent training trace set.
+  immutable held-out split is enforced independently of the agent training trace set.
 
 ## Resolved questions
 

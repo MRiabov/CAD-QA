@@ -5,7 +5,7 @@
 This directory documents the CAD-QA benchmark-generation pipeline: the code that turns
 normalized CadQuery programs into verifiable QA rows. It is the
 `dataset_generation` package (today `dataset/`). The dataset-generation pipeline is
-**frozen**: these docs describe what the code does; they do not justify refactors
+**immutable**: these docs describe what the code does; they do not justify refactors
 (`plans/oct-7/restructure-docs.md`).
 
 ## Reading order
@@ -49,7 +49,7 @@ The step-by-step commands are in `../experiment_execution_runbook.md`.
 
 ## The freeze and doc/code conflicts
 
-- The dataset-generation code is frozen. Where a doc and the code disagree, the doc
+- The dataset-generation code is immutable. Where a doc and the code disagree, the doc
   records the actual behaviour and the discrepancy is captured as a local decision or open
   question — it is not silently fixed here.
 - `specs/` is superseded and is being split into these docs

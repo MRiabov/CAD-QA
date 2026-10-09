@@ -51,7 +51,7 @@ basic coordinates, circle properties) that a human answers by intuition.
 - Best proprietary LLM model ~65%; best open-source VLM ~55% (Phi3.5-Vision); all below the
   ~74.5% human level.
 - Fine-tuning alone does **not** confer geometric competence.
-- A frozen vision encoder plus a simple linear probe solves the tasks almost perfectly:
+- A fixed vision encoder plus a simple linear probe solves the tasks almost perfectly:
   geometric features exist in visual embeddings but current LLM architectures and training
   regimes do not access them.
 - Full visual context strongly boosts VLMs versus text-only or dotted images; math-specialised
@@ -67,7 +67,7 @@ basic coordinates, circle properties) that a human answers by intuition.
   *reasoning*; NoReGeo strips reasoning away and tests perception. CAD-QA sits mostly on the
   reasoning side, so NoReGeo is a caution rather than a direct ceiling: if a capability is
   absent, supervised imitation is unlikely to install it.
-- Its linear-probe result (frozen encoder) is a reminder that a representation may contain the
+- Its linear-probe result (fixed encoder) is a reminder that a representation may contain the
   signal while the policy does not use it — an argument for representation-aware methods over
   pure output imitation.
 

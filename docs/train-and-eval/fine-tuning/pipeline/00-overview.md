@@ -1,7 +1,7 @@
 # Fine-tuning pipeline — overview
 
 **Status:** active, 2026-10-07. Code lives in `train_and_eval/`. This surface is **being
-revised**; it is not frozen.
+revised**; it is not immutable.
 
 ## Purpose
 
