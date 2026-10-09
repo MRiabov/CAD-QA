@@ -198,10 +198,9 @@ Parquet path (open question).
    base-specific and must be re-derived, never reused (FT-D3; the format churn in
    `../../development-context.md`). For LFM2.5: ChatML-like template (`<|startoftext|>`,
    `<|im_start|>`+role, `<|im_end|>`), tool calls in `<|tool_call_start|>`/`<|tool_call_end|>`, and
-   **Pythonic calls by default** — so the `submit_*` answer tools must either be accepted as
-   Pythonic or forced to JSON with "Output function calls as JSON" in the system prompt. This
-   replaces the hand-rolled render+mask step: completion-only loss is a cookbook/trainer concern to
-   **verify**, not a bespoke pipeline to build. See §5.4.
+   **Pythonic calls by default** — the `submit_*` tools pass through as-is; force JSON via the system
+   prompt if wanted. Set `assistant_only_loss: true` (TRL's default for `messages` is full-sequence).
+   See §5.4, §10.
 7. **Manifest.** One JSON per run: External dataset revisions, row counts, role weights, seed, exact command,
    template hash, git SHA, checksums (Phase 0 TA-E3).
 8. **Train.** Run `liquid-finetune` with the cookbook config and defaults (`DEFAULT_SFT`,
@@ -391,11 +390,6 @@ justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
 
 ## 9. Open questions (training)
 
-- **Q1.** Does LEAP Finetune / TRL mask the prompt by default for `messages` SFT, or must
-  `assistant_only_loss` (or equivalent) be set? Verify on the smoltalk reproduction before trusting
-  any CAD-QA number.
-- **Q2.** Does the LFM2.5 chat template + LEAP pass a custom `submit_*` tool list through unchanged, and do
-  we accept Pythonic calls or force JSON via the system prompt? `[unknown]`.
 - **Q3.** LoRA-bf16 is the default (§5.4); does QLoRA change the outcome on the evaluation dataset at this scale? The repo
   `pipeline/04-sft.md` records a code/narrative conflict (4-bit vs 16-bit) from the gemma runs; settle it
   with a measured A/B on the evaluation dataset.
@@ -408,7 +402,24 @@ justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
 
 ---
 
-## 10. Immediate next step (training)
+## 10. Resolved questions (training)
+
+- **Q1.** *(2026-10-09)* **Prompt is not masked by default.** TRL's `SFTConfig.assistant_only_loss`
+  defaults to `False`, so conversational (`messages`) data gets full-sequence loss. Set
+  `assistant_only_loss: true` (or `completion_only_loss: true`); both require `{% generation %}` /
+  `{% endgeneration %}` in the chat template, which the LFM2.5 `chat_template.jinja` has around the
+  assistant branch (incl. `render_tool_calls`), and `liquid-finetune` ships
+  `job_configs/chat_templates/lfm2_5_chat_template.jinja`. Verify on the smoltalk reproduction before
+  trusting any CAD-QA number.
+- **Q2.** *(2026-10-09)* **The `submit_*` tool list passes through unchanged.** The LFM2.5 template
+  serializes any `tools` list into the system prompt (`List of tools: [<json>, …]`) with no name
+  allowlist. Conditions: omit `<|tool_list_start|>`/`<|tool_list_end|>` for LFM2.5 (auto-stripped);
+  pre-bake calls as `<|tool_call_start|>[name(args)]<|tool_call_end|>` (Pythonic by default; JSON via the
+  system prompt); OpenAI `tool_calls` fields auto-convert; foreign `<tool_call>` XML is rejected.
+
+---
+
+## 11. Immediate next step (training)
 
 1. **Run the Liquid SFT example verbatim** (`job_configs/sft_example.yaml` on `smoltalk`, on Modal)
    and its standalone eval. Nothing else starts until this passes.

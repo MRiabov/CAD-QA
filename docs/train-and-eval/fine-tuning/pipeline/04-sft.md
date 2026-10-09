@@ -21,7 +21,10 @@ A **phase-2-only fallback** applies if phase 1 shows no measured phase-end gain.
 - **Do not write a trainer.** Use `liquid-finetune` configs (`TrainingConfig(extends="DEFAULT_SFT")`,
   `PeftConfig(extends="DEFAULT_LORA")`); override only `model_name` and the dataset path until a measured
   result says otherwise.
-- **Completion-only loss** verified on the `messages` format (not hand-rolled masking).
+- **Assistant-only loss, set explicitly.** TRL's `assistant_only_loss` defaults to `False` and
+  conversational (`messages`) data gets full-sequence loss — set `assistant_only_loss: true` (or
+  `completion_only_loss: true`). It needs the template's `{% generation %}`/`{% endgeneration %}` markers
+  (present in LFM2.5). Not hand-rolled masking.
 - **Base + stack:** LFM2.5 (2.6B primary, 1.2B pilot) on `liquid-finetune` (FT-D11).
 
 ## Inputs / outputs
@@ -39,5 +42,17 @@ uv run python train_and_eval/train/sft_train.py   # once ported to the LFM2.5 st
 
 ## Open questions
 
-- **Q1.** Does `liquid-finetune` / TRL mask the prompt for `messages` SFT by default (`../training.md` Q1)?
-- **Q2.** Does the LFM2.5 chat template pass our `submit_*` tool list through unchanged (`../training.md` Q2)?
+_(none)_
+
+## Resolved questions
+
+- **Q1.** *(2026-10-09)* **Not masked by default.** TRL `SFTConfig.assistant_only_loss` defaults to
+  `False`; conversational `messages` data gets full-sequence loss. Set `assistant_only_loss: true` (or
+  `completion_only_loss: true`). Both need `{% generation %}`/`{% endgeneration %}` — the LFM2.5
+  `chat_template.jinja` has them around the assistant branch (incl. `render_tool_calls`); `liquid-finetune`
+  also ships `job_configs/chat_templates/lfm2_5_chat_template.jinja`. Verify on the smoltalk reproduction.
+- **Q2.** *(2026-10-09)* **Passes through.** The LFM2.5 template serializes any `tools` list into the system
+  prompt (`List of tools: [<json>, …]`), no name allowlist, so custom `submit_*` tools pass unchanged.
+  Conditions: omit `<|tool_list_start|>`/`<|tool_list_end|>` for LFM2.5 (auto-stripped); calls pre-baked as
+  `<|tool_call_start|>[name(args)]<|tool_call_end|>`; OpenAI `tool_calls` auto-converted; foreign
+  `<tool_call>` XML rejected.
