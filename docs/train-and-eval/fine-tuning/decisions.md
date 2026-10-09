@@ -109,7 +109,7 @@ whose rationale was not recoverable.
 - **Decision:** convert by renaming key prefixes and duplicating shared-layer `k_norm`, rather
   than waiting for upstream support.
 - **Consequences:** conversion correctness is unverified (no parity test). Detail:
-  [pipeline/07-serving-vllm.md](pipeline/07-serving-vllm.md).
+  [pipeline/07-serving.md](pipeline/07-serving.md).
 
 ## FT-D11 — Start Phase 3 on the Liquid AI LFM2.5 stack
 

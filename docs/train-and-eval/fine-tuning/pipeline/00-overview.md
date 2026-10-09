@@ -50,7 +50,7 @@ table.
 | 04 SFT | Liquid `messages` set | LoRA adapter → merged LLM model | `../training.md` §4 |
 | 05 sampling gate | merged LLM model | pass@k per tier (RL deferred, conditional on the gate) | `../system.md` §2–§3 |
 | 06 evaluation | trained LLM model + evaluation datasets | scores per evaluation dataset | `../../evaluation/plan.md` |
-| 07 serving | merged LLM model | GGUF / vLLM checkpoint | `07-serving-vllm.md` |
+| 07 serving | merged LLM model | GGUF / vLLM-served endpoint | `07-serving.md` |
 
 ## Datasets in play
 
@@ -85,14 +85,14 @@ There is more than one dataset; each has one role (glossary).
 | 04 | `04-sft.md` |
 | 05 | `05-grpo.md` |
 | 06 | `06-harness-modes.md` |
-| 07 | `07-serving-vllm.md` |
+| 07 | `07-serving.md` |
 
 ## Open questions
 
 - **Q1.** The on-disk artifact is a Liquid `messages` SFT set; confirm `liquid-finetune`'s validator
   accepts our `submit_*` tool declarations unchanged, and that it accepts a Parquet path (container is
   Parquet-preferred; `../training.md` §4).
-- **Q2.** Serving is a **separate inference runtime by design** — it loads the merged LLM model (weights
-  only), never the training optimizer or updating weights. The open part is packaging: one recipe
-  (`liquid-finetune`) for SFT + export, or separate serving pins (GGUF/llama.cpp, vLLM)?
-  (`../../../../plans/oct-8/trust-audit.md` Q3.)
+- **Q2.** Serving is a **separate inference runtime by design** (FT-D20). Liquid documents the runtimes
+  (`docs.liquid.ai/deployment/*`): vLLM / SGLang (GPU), llama.cpp / GGUF (CPU/edge), Transformers
+  (direct). Pick which GPU runtime serves our batched evaluation/rollouts — vLLM or SGLang
+  (`../../../../plans/oct-8/trust-audit.md` Q3).

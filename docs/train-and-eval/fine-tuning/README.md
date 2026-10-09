@@ -29,7 +29,7 @@ Liquid `messages`) → **two-phase SFT** → a **sampling gate** and optional **
 | 04 | [04-sft.md](pipeline/04-sft.md) | `[unverified — needs GPU + liquid-finetune]` |
 | 05 | [05-grpo.md](pipeline/05-grpo.md) | pass@k gate P0; RL deferred/conditional (FT-D13) |
 | 06 | [06-harness-modes.md](pipeline/06-harness-modes.md) | `exists`; `cadquery` mode `missing` |
-| 07 | [07-serving-vllm.md](pipeline/07-serving-vllm.md) | `missing` (merge/export to build) |
+| 07 | [07-serving.md](pipeline/07-serving.md) | `missing` (merge/export to build) |
 
 ## Code ↔ doc map
 

@@ -50,9 +50,9 @@ evidence. The Phase 3 code is not written yet, so most pipeline stages are `miss
 
 ## Open questions
 
-- **Q1.** Serving is a separate **inference runtime** by design (merged weights only, no optimizer). The
-  open part is packaging: one recipe (`liquid-finetune`) or separate serving pins?
-  (`../../../plans/oct-8/trust-audit.md` Q3.)
+- **Q1.** Serving is a separate **inference runtime** by design (merged weights only, no optimizer;
+  FT-D20). Liquid documents the runtimes (`docs.liquid.ai/deployment/*`); pick vLLM vs SGLang for our
+  batched evaluation/rollouts (`../../../plans/oct-8/trust-audit.md` Q3).
 - **Q2.** Where do the retained rows-loader and the new converter live once `train_and_eval/` is
   rewritten (FT-D12)?
 - **Q3.** Run-manifest format and generator (TA-E3).

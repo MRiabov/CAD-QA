@@ -183,8 +183,8 @@ re-litigate decisions already recorded in `dataset/decisions.md`,
   required before any external claim (TA-B2)?
 - **Q2.** Parity precision: argmax token ids, or logprobs within a tolerance (TA-C1)?
 - **Q3.** Serving is a separate **inference runtime** by design (merged weights only, no optimizer or
-  updating weights); the open part is packaging — one recipe or separate serving pins?
-  (see `docs/train-and-eval/fine-tuning/requirements.md#environment`).
+  updating weights; FT-D20). Liquid documents the runtimes (`docs.liquid.ai/deployment/*`); pick vLLM
+  vs SGLang for batched evaluation/rollouts.
 - **Q4.** Does the GPU parity + SFT re-run happen in Phase 0 (the first spend) or at the top of
   Phase 1?
 
