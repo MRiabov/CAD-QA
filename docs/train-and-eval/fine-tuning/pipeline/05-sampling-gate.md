@@ -26,8 +26,11 @@ measured learnable (FT-D13; FT-D8 superseded).
 - **GRPO with dynamic sampling** (drop all-pass/all-fail groups), pass-rate-band scheduling, sandboxed
   rollouts, full rollout logging (FT-D9).
 - **Reward = the one scorer** (`../../evaluation/plan.md` §4), audited before any RL run (FT-D14).
-- **RFT** (rejection-sampling SFT on self-generated correct agent training traces) is the cheaper
-  consolidation and may replace RL at this scale.
+- **RFT** (rejection-sampling SFT on the tuned policy's **own** correct agent training traces, graded by
+  the Query verifier — self-distillation / STaR) is the cheaper consolidation and may replace RL at this
+  scale. It is **not**
+  teacher distillation: 02's rejection sampling keeps the **teacher's** accepted traces; RFT keeps the
+  **policy's**. Both need accepted generations to exist at all.
 
 ## Stop / advance
 
@@ -55,6 +58,7 @@ uv run pytest train_and_eval/eval/test_tool_calls.py -k reward -q
 - **OD-3.** Confirm the gate temperature `T ≈ 1.0` (rollout), separate from the 0.1 accuracy runs.
   **Provisional** — verify against the RL exploration/sampling literature (research refs [21]–[23], [25])
   as a **P2** task; it only sets the reachability estimate, not any reported accuracy.
-- **OD-4.** Is the gate **binding** (no RL unless a `learnable` tier) or **advisory** (record it, proceed to
-  RFT regardless)?
+- **OD-4.** When **no** tier is `learnable`: is the gate **binding** (stop and report SFT-only, FT-D13) or
+  do we fall back to more **teacher re-distillation / Bridge**? Self-RFT cannot proceed here — it needs the
+  policy's own correct completions, which do not exist at `r = 0`.
 - **OD-5.** RFT vs GRPO at this scale — decided by the gate, not on paper (`../system.md` Q3).

@@ -239,6 +239,22 @@ A coarse difficulty label for a CAD-QA dataset row.
 
 ---
 
+### Rejection sampling
+
+Keeping only the sampled completions the Query verifier accepts. One technique, two sources: **teacher
+rejection sampling** keeps the **teacher's** accepted traces (distillation; pipeline step 02);
+**RFT** keeps the **policy's** accepted traces (self-distillation). Name the source when ambiguous.
+
+---
+
+### RFT (rejection-sampling fine-tuning)
+
+SFT on the **tuned policy's own** Query-verifier-correct completions — self-distillation (STaR-style).
+Distinct from teacher distillation: `02-teacher-sampling` keeps the teacher's accepted traces. It
+requires the policy to already produce accepted completions (`pass > 0`).
+
+---
+
 ### Query verifier
 
 The deterministic authority for whether a query resolves uniquely, and what its gold
