@@ -251,9 +251,10 @@ coverage was 0.
   raw count.
 - **Scale is GPU-cheap, data-expensive.** At `SEQ=6144`, 10k examples is roughly 10–30M tokens; a
   single epoch on a 2.6B base is hours on a 24 GB card. The teacher API budget is the real ceiling.
-- **Coverage beats volume.** Every Answer format and hop bucket must clear a floor; a format with
-  zero traces cannot be learned (the recorded task-corpus coverage defect). Enforce a per-format minimum,
-  not just a total.
+- **Coverage beats volume.** Every **task combination** — Answer format × Reasoning hop count ×
+  relation family × measurement scope (each task family; on the order of hundreds) — must clear a floor;
+  a combination with zero traces cannot be learned (the recorded task-corpus coverage defect). Enforce a
+  per-combination minimum, not just a total.
 
 ---
 
@@ -358,8 +359,9 @@ only the dataset:
   `reasoning_hop_count` set, and (once rendered) a `submit_*` tool call.
 - **Curriculum.** The rows are ordered by increasing complexity (the 0→1→2→3→5 hop ladder): the
   first run uses the low-hop end, the primary uses the full ladder.
-- **Coverage requirement:** every Answer format must have at least one agent training trace, because a format the
-  teacher never produces cannot be learned (the `json`/`number` zero-coverage defect in
+- **Coverage requirement:** every **task combination** (Answer format × Reasoning hop count × relation
+  family × measurement scope; each task family) must have at least one agent training trace, because a
+  combination the teacher never produces cannot be learned (the `json`/`number` zero-coverage defect in
   `pipeline/02-teacher-sampling.md`).
 - **Contamination:** CAD-QA held-out rows are hard-excluded (§5).
 - **Priority:** P0, but a separate plan.

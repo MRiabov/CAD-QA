@@ -18,8 +18,10 @@ sampling**), ordered toward the **progressive curriculum** (0→1→2→3→5).
 ## Requirement
 
 A kept **agent training trace** must contain a tool call `tool_call_matches` accepts against the row's gold; a rejected
-attempt never enters the pool. **Per-format and per-hop coverage must be complete** — a format or hop
-the teacher never produces cannot be learned (the recorded `json`/`number` zero-coverage defect).
+attempt never enters the pool. **Coverage must be complete across the whole task space** — every Answer
+format × Reasoning hop count × relation family × measurement scope present in the training set (each
+task family; on the order of hundreds of combinations) — because a combination the teacher never
+produces cannot be learned (the recorded `json`/`number` zero-coverage defect).
 
 ## Bridge
 
@@ -37,6 +39,8 @@ OPENROUTER_API_KEY=... uv run python train_and_eval/train/rejection_sample.py \
 
 ## Open questions
 
-- **Q1.** Per-format coverage gate: how is "every Answer format × hop is covered" enforced offline?
+- **Q1.** Coverage gate: how is a floor **per task combination** — Answer format × Reasoning hop count ×
+  relation family × measurement scope (each task family; order hundreds of combinations) — enforced
+  offline from the sampling log?
 - **Q2.** Teacher settings (temperature, attempts per row). The recorded **~23% success rate was the v4
-  preview**; v4.1 is materially stronger, so re-measure success and per-format coverage.
+  preview**; v4.1 is materially stronger, so re-measure success and per-combination coverage.
