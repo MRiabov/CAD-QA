@@ -28,15 +28,14 @@ dataset file (immutable CAD-QA rows)
 [04 SFT]  phase 1 (general thirds + easy) → phase 2 (task + preserve)
       │
       ▼  LoRA adapter
-[07 merge + serve]  merged LLM model (vLLM/SGLang parity); GGUF export (FT-D20, FT-D21)
+[05 RL-readiness gate] / [06 evaluation]  run the adapter on **HF Transformers** — the reference runtime (FT-D23)
       │
-      ├──▶ [05 RL-readiness gate]  pass@k per tier (P0); RL deferred, conditional on the RL-readiness gate (FT-D13)
-      │
-      └──▶ [06 evaluation]  LLM harness modes + the one scorer + the evaluation datasets
+      └─(on demand)▶ [07 merge + serve]  merged LLM model / GGUF / vLLM endpoint (FT-D20, FT-D21)
 ```
 
-File numbers are doc indices, **not** execution order: merge + serve (07) runs before the RL-readiness gate
-(05) and evaluation (06), because both need a served LLM model (FT-D21; `07-serving.md`).
+File numbers are doc indices, **not** execution order. The RL-readiness gate (05) and evaluation (06) run the **adapter
+on HF Transformers** — the reference runtime (FT-D23) — so they need no merge. Merge + serve (07) is
+**on demand**, only when a served/non-Transformers runtime is used (FT-D20, FT-D21).
 
 ## Pipeline-stage IO contract
 
@@ -49,9 +48,9 @@ table.
 | 02 teacher-sampling | decoded rows | agent training traces (`learn_the_cadqa_task`) + sampling log | `02-teacher-sampling.md` |
 | 03 preparation | traces + External datasets | `TrainingExample` set → Liquid `messages` SFT set + manifest | `03-preparation.md` |
 | 04 SFT | Liquid `messages` set | LoRA adapter | `04-sft.md` |
-| 07 merge + serve | LoRA adapter | merged LLM model → GGUF / vLLM-SGLang endpoint | `07-serving.md` |
-| 05 RL-readiness gate | merged LLM model | pass@k per tier (RL deferred, conditional on the RL-readiness gate) | `05-rl-readiness-gate.md` |
-| 06 evaluation | merged LLM model + evaluation datasets | scores per evaluation dataset | `06-harness-modes.md` |
+| 07 merge + serve | LoRA adapter | merged LLM model → GGUF / vLLM-SGLang endpoint (on demand) | `07-serving.md` |
+| 05 RL-readiness gate | LoRA adapter (HF Transformers reference) | pass@k per tier (RL deferred, conditional on the RL-readiness gate) | `05-rl-readiness-gate.md` |
+| 06 evaluation | LoRA adapter (HF Transformers reference) + evaluation datasets | scores per evaluation dataset | `06-harness-modes.md` |
 
 ## Datasets in play
 

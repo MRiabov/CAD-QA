@@ -353,6 +353,27 @@ whose rationale was not recoverable.
     fallback (FT-D11). Detail: `pipeline/07-serving.md`, `training.md` §5.
 - Detail: `../../research/2026-lfm2.5-dspark.md`.
 
+## FT-D23 — Release the adapter; Transformers is the reference runtime
+
+- **Status:** accepted (2026-10-09) — owner.
+- **Context:** FT-D10/FT-D12 treat a merged checkpoint as the output and the thing to serve. Liquid's own
+  docs disagree: LEAP Finetune exports Hugging Face **or GGUF**; its eval backends are HF Transformers
+  (default, `sync`) and vLLM (`sidecar`/`reserved`); `liquid-export-gguf` takes a **PEFT adapter** directly;
+  and vLLM serves LoRA adapters (`--enable-lora --lora-modules`, per-request `LoRARequest`) with no merge.
+  Merge is only required for GGUF **K-quant** export ("merge the adapter into the base LLM model first, then
+  export").
+- **Decision:** the training output is the **LoRA adapter** (base + adapter), **not** a merged LLM model.
+  **Evaluation runs on HF Transformers** — the same reference runtime Liquid uses — so the thesis number
+  has **no serving-parity question**. **Merge/export is on demand** (standalone checkpoint, GGUF K-quant, a
+  deployment that cannot take an adapter); vLLM serves the adapter directly.
+- **Consequences:**
+  - FT-D10's hand-conversion to vLLM is **obsolete for LFM2.5** (native `Lfm2ForCausalLM` ≥0.23, LoRA
+    supported); it applied to gemma.
+  - FT-D20's "loads the merged weights" is relaxed: a served engine may load base + adapter (still
+    weights-only, no optimizer).
+  - TA-C1 parity applies **only to numbers/rewards produced by a non-Transformers runtime** (vLLM); a
+    Transformers number needs no parity check. Detail: `pipeline/07-serving.md`.
+
 ## Open questions
 
 - **Q1.** The base-pipeline choice (D11 in `plans/oct-7/restructure-docs.md`) is recorded as FT-D11,

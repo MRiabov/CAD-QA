@@ -369,7 +369,7 @@ justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
 | Completion-only loss verified on the `messages` format | **P0** | fixes the B3 flat-`text` defect the cookbook way, without hand-rolling masking |
 | Re-author the `[answer contract]` / `submit_*` rendering for LFM2.5 native tool tokens | **P0** | base-specific; the exact Aug-2026 failure mode (`../../development-context.md`) |
 | Cookbook LoRA recipe (`r=16`, `alpha=32`, `lr=2e-4`, cookbook epochs) on bf16 | **P0** | baseline that does not forget; matches Liquid (§5.4) |
-| Merge + GGUF export scripted from the cookbook | **P0** | the current repo has no merge step (FT-D10/TA-D2) |
+| GGUF / standalone export scripted (on demand) | **P2** | adapter-first (FT-D23); merge only for a GGUF K-quant or a standalone checkpoint |
 | DPO / GRPO second training stage | **P2** | FT-D8 ordering, superseded by FT-D13: run GRPO only after the Training stage 2 RL-readiness gate shows a reachable tier (`system.md`) |
 | RL-readiness gate rollout temperature (≈ 1.0) validated from research | **P2** | `05-rl-readiness-gate.md` OD-3; sets only the reachability estimate — confirm against the RL exploration/sampling literature (research refs [21]–[23], [25]) |
 | Hint-based RL / hint-annealed curriculum | **P2** | we hold a deterministic derivation (ordered Gold query program + private `clue_map`), so a hint ladder is available; also the fallback when no tier is `learnable` (`system.md` Training stage 3); risk per research refs [9][27][28] |
