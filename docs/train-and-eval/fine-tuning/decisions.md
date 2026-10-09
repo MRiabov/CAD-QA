@@ -48,13 +48,13 @@ whose rationale was not recoverable.
   format is not in the typed contract (see [pipeline/06-harness-modes.md](pipeline/06-harness-modes.md#open-questions)).
   Detail: [pipeline/00-overview.md](pipeline/00-overview.md#shared-tool-call-contract).
 
-## FT-D5 — Primary harness is `numpy`; `cadquery` is deferred to the RL stage
+## FT-D5 — Primary harness is `numpy`; `cadquery` is deferred to the RL Training stage
 
 - **Status:** accepted (2026-08).
 - **Context:** the PRD's primary setting has no access to CadQuery; a compute tool must
   not trivialize the task.
 - **Decision:** the primary harness gives Python + NumPy (`run_code`); CadQuery execution is
-  reserved for the RL stage and is not implemented yet; `no_tools` is the pure-reasoning
+  reserved for the RL Training stage and is not implemented yet; `no_tools` is the pure-reasoning
   bound.
 - **Consequences:** `cadquery` mode is not implemented in the code. Detail:
   [pipeline/06-harness-modes.md](pipeline/06-harness-modes.md).
@@ -186,20 +186,20 @@ whose rationale was not recoverable.
 - **Status:** proposed (2026-10-08) — research-backed; not yet accepted.
 - **Context:** FT-D8 decided "teacher SFT, then GRPO", but the recorded GRPO hop-2 collapse
   (FT-D6) and the 2026 evidence (`../../prior-art.md` §"Building a proper SFT→RL system") show a
-  raw second GRPO stage is expected to be weak or null: group-relative advantage is zero on
+  raw second GRPO Training stage is expected to be weak or null: group-relative advantage is zero on
   tiers the SFT policy already clears or can never clear ([20]), SFT→RL can fail outright when
   training traces are too hard or rewards too sparse ([26]), and a dense reward term is hacked
   unless the shaping is optimality-preserving ([27]).
 - **Decision:** replace the raw two-phase plan with the staged system in
-  `plans/oct-8/fine-tuning-system-plan.md`: **Stage 0** one-scorer + off-oracle scorer audit →
-  **Stage 1** difficulty-aligned SFT with a Bridge for hard training traces → **Stage 2** a
-  pass@k sampling gate that also yields rejection-sampling SFT data → **Stage 3** GRPO with
+  `plans/oct-8/fine-tuning-system-plan.md`: **Training stage 0** one-scorer + off-oracle scorer audit →
+  **Training stage 1** difficulty-aligned SFT with a Bridge for hard training traces → **Training stage 2** a
+  pass@k sampling gate that also yields rejection-sampling SFT data → **Training stage 3** GRPO with
   dynamic sampling only on reachable-but-unmastered tiers, sandboxed, with full rollout logging →
-  optional **Stage 4** on-policy distillation. RL is **conditional on a measured learnable tier**,
+  optional **Training stage 4** on-policy distillation. RL is **conditional on a measured learnable tier**,
   not a default.
 - **Consequences:** the thesis may end at an SFT/RFT result if no tier is learnable; that is a
   recorded finding, not a failure (`../../PRD.md` definition of done, item 3). GRPO is cheap to
-  attempt (FT-D11 addendum) but only after Stage 2 says it is indicated. Supersedes FT-D8's
+  attempt (FT-D11 addendum) but only after Training stage 2 says it is indicated. Supersedes FT-D8's
   ordering. Detail: `plans/oct-8/fine-tuning-system-plan.md` §2–§3.
 
 ## FT-D14 — The scorer is the reward, and is audited before RL
@@ -212,7 +212,7 @@ whose rationale was not recoverable.
   fixtures (TA-A2) are **P0 gates for any RL run**, single-sourced with evaluation, teacher
   rejection sampling, and reward. Numeric/coordinate Answer formats get an explicit
   metamorphic (equivalent-answer) test before a `1e-3` relative rule is trusted.
-- **Consequences:** adds a hard dependency from any RL stage to the evaluation doc's P0 items;
+- **Consequences:** adds a hard dependency from any RL Training stage to the evaluation doc's P0 items;
   a dense reward term may only be added with optimality-preserving shaping ([27]). Detail:
   `plans/oct-8/fine-tuning-system-plan.md` §4; `plans/oct-8/evaluation-plan.md` §4.
 

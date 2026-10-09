@@ -8,7 +8,7 @@ revised**; it is not immutable.
 Define the ordered stages that turn a **dataset file** into a trained LLM model, and
 the single contract for the artifacts and fields that pass between those stages.
 
-## Stage map (DAG order)
+## Pipeline-stage map (DAG order)
 
 ```text
 dataset_generation
@@ -47,7 +47,7 @@ Reading the DAG:
 - **Rows reach three harnesses unchanged**: teacher sampling, GRPO, and eval all consume the
   same decoded CAD-QA dataset row shape via `train_and_eval/rows_loader.py::load_local_rows`.
 
-## Stage IO contract
+## Pipeline-stage IO contract
 
 Single source of truth for artifact and field names. Step docs must match this table.
 
@@ -129,7 +129,7 @@ Single source of truth for artifact and field names. Step docs must match this t
 ## Shared tool-call contract
 
 Defined once in `train_and_eval/tool_calls.py`; used by 02, 05, and 06. Step docs describe
-how each stage uses it; they do not redefine it.
+how each pipeline stage uses it; they do not redefine it.
 
 - **Answer format → tool** (`train_and_eval/tool_calls.py::FORMAT_TO_TOOL`): one **submit
   tool** per format — `candidate_label→submit_label`, `text→submit_text`,
@@ -172,7 +172,7 @@ how each stage uses it; they do not redefine it.
   shares omit hop `1` and include hop `4`
   (`train_and_eval/train/grpo_train.py::HOP_SHARES`). The stated "0→1→2→3→5 ladder" is not
   what the GRPO code schedules.
-- **Q4.** **No code produces `merged model`.** Name the stage, script it, or mark it out-of-scope.
+- **Q4.** **No code produces `merged model`.** Name that pipeline stage, script it, or mark it out-of-scope.
 
 ## Resolved questions
 

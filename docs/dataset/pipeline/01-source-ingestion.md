@@ -3,7 +3,7 @@
 ## Purpose
 
 Turn the raw upstream CadQuery program corpus (or a generic JSONL) into normalized,
-stable `SourceRecord`s that every later stage consumes.
+stable `SourceRecord`s that every later pipeline stage consumes.
 
 ## Inputs / outputs
 

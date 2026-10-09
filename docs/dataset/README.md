@@ -11,19 +11,19 @@ normalized CadQuery programs into verifiable QA rows. It is the
 ## Reading order
 
 1. `requirements.md` — intended-vs-verified summary: one row per pipeline stage.
-2. `pipeline/00-overview.md` — the DAG and the **stage IO contract**. Read this before any
+2. `pipeline/00-overview.md` — the DAG and the **pipeline-stage IO contract**. Read this before any
    step doc; it is the single authority for artifact and field names between steps.
-3. `pipeline/01-source-ingestion.md` … `07-exports-harbor-sft.md` — one doc per stage.
+3. `pipeline/01-source-ingestion.md` … `07-exports-harbor-sft.md` — one doc per pipeline stage.
 4. `decisions.md` — local decisions for the dataset unit, in ADR format.
 
 ## What lives where
 
 | Question | Doc |
 |---|---|
-| What must each stage do, and does it? | `requirements.md` |
+| What must each pipeline stage do, and does it? | `requirements.md` |
 | What flows between stages (artifact/field names)? | `pipeline/00-overview.md` |
-| How does a stage behave, in words? | the stage doc |
-| Why a dataset-specific choice was made | `decisions.md` and the stage doc's local decisions |
+| How does a pipeline stage behave, in words? | the step doc |
+| Why a dataset-specific choice was made | `decisions.md` and the step doc's local decisions |
 | What the project is for | `../PRD.md` |
 | What a term means | `../glossary.md` |
 | Where the project actually is | `../development-context.md` |
@@ -69,6 +69,6 @@ nothing else.
 
 ## Extra deliverables - P2
 
-- A generated stage-by-stage runnable script folder mirroring the step numbers (the
+- A generated per-pipeline-stage runnable script folder mirroring the step numbers (the
   restructure plan's "code-experimentation folder" idea), so each doc step has an
   executable counterpart.

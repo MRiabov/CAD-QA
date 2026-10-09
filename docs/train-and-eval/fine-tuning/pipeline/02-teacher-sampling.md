@@ -123,7 +123,7 @@ coverage gate should exist.
 - **Q1.** **`json` and `number` teacher coverage is zero.** Per
   `docs/_archive/agent_handoff_2026-08-09.md` A3, `json` was 0/113 and `number` 0/71. The sampler can
   emit traces in exactly one format per row, so the student cannot learn a format with no
-  teacher success. This is the P0 defect this stage carries.
+  teacher success. This is the P0 defect this pipeline stage carries.
 - **Q2.** **Teacher success is temperature-sensitive.** Default `temperature=1.0`
   (`train_and_eval/teacher.py::TeacherClient.__init__`) yields ~23% success; the handoff
   recommends 0.3–0.6. There is no default that encodes that recommendation. `[unknown]`

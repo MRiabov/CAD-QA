@@ -6,7 +6,7 @@ Loads the merged LLM model via plain transformers (no unsloth patching), prompts
 Three switchable harness modes (same grading, only the compute tools differ):
   no_tools — submit tools only (reasoning must be done internally),
   numpy    — submit tools + run_code python/numpy sandbox (DEFAULT),
-  cadquery — submit + run_code + CadQuery execution (lands at the RL stage).
+  cadquery — submit + run_code + CadQuery execution (lands at the RL Training stage).
 The run_code round-trip truncates generation at the first <tool_call|> close token
 (verified single token id 49), executes the code server-side, injects the native
 <|tool_response|> block, and continues — like the SFT v3 traces.

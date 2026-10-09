@@ -51,7 +51,7 @@ class HarnessMode(StrEnum):
     """Switchable harness compute modes (evaluated in parallel, same grading)."""
     NO_TOOLS = "no_tools"   # submit tools only — reasoning done internally
     NUMPY = "numpy"         # + run_code python/numpy sandbox
-    CADQUERY = "cadquery"   # + CadQuery execution (lands at the RL stage)
+    CADQUERY = "cadquery"   # + CadQuery execution (lands at the RL Training stage)
 
 
 # --- typed tool arguments ---------------------------------------------------

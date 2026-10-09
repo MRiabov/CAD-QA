@@ -30,7 +30,7 @@ The four DAPO techniques, as commonly summarized:
 
 ## Why it matters for CAD-QA
 
-- Gives the concrete mechanism for the system plan's Stage 3: run GRPO *with dynamic sampling*, not
+- Gives the concrete mechanism for the system plan's Training stage 3: run GRPO *with dynamic sampling*, not
   vanilla GRPO, or degenerate groups (the recorded hop-2 collapse) consume the rollout budget.
 - The entropy/overlong techniques address the "RL squeezes" entropy collapse noted in [7].
 - These are configuration-level changes with a maintained open implementation, so they are cheap to

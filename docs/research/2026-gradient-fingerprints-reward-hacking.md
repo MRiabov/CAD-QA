@@ -26,7 +26,7 @@ the detector to guide rejection fine-tuning.
   reasoning.
 - Using the score to guide **rejection fine-tuning** suppresses hacking and narrows the gap to an
   oracle environment.
-- Hacking behaviors **emerge gradually before dominating** at a late stage — early detection enables
+- Hacking behaviors **emerge gradually before dominating** late in a training run — early detection enables
   intervention.
 
 ## Why it matters for CAD-QA

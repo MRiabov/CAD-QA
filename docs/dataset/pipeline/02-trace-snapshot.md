@@ -126,7 +126,7 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_trace_worker_exe
   authoritative; the spec is stale.
 - **Q3.** **Skipped loop bodies.** The extractor (`extract.py`) and the tracer use different
   unrolling rules (extractor caps iterations at 64, tracer unrolls any non-break loop).
-  Cross-stage consistency for complex loops is `[unknown]`.
+  Cross-pipeline-stage consistency for complex loops is `[unknown]`.
 
 ## Resolved questions
 

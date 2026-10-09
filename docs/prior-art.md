@@ -145,10 +145,10 @@ weakness [16]; BFCL is the shared benchmark behind these numbers [17], and its r
 
 **Reasoning preservation (SFT vs RL).** "RL Squeezes, SFT Expands" (ICLR 2026) [7] finds SFT
 expands the reasoning graph while RL squeezes it into hub-like structures, and that the
-two-stage SFT→RL ordering is best practice — directly relevant to CAD-QA's recorded GRPO
+two-step SFT→RL ordering is best practice — directly relevant to CAD-QA's recorded GRPO
 collapse, which is a squeeze symptom. "Learning What to Learn" (2026) [8] argues SFT should
 acquire not-yet-mastered skills and RL should consolidate skills already partly accessible,
-so difficulty must be aligned to the stage. Privileged on-policy distillation can degrade
+so difficulty must be aligned to the Training stage. Privileged on-policy distillation can degrade
 thinking LLM models (up to 17% relative drop in avg@16) by suppressing self-correction at
 high-entropy positions [9], so copying full teacher reasoning data is not obviously safe.
 
@@ -233,9 +233,9 @@ policy [32]. For CAD-QA this moves the center of gravity from the SFT mix to the
 + scorer** (a CAD-QA task generator with verifiable answers and the `run_code`/kernel tool
 surface); SFT becomes a thin cold-start and the general external data becomes support/canary.
 
-**Implication for CAD-QA.** Do not run a raw SFT→GRPO. Run **Stage 0** one-scorer + off-oracle
-audit, **Stage 1** difficulty-aligned SFT with a Bridge for hard traces, **Stage 2** a pass@k
-sampling gate that also produces rejection-sampling SFT data, and **Stage 3** GRPO with dynamic
+**Implication for CAD-QA.** Do not run a raw SFT→GRPO. Run **Training stage 0** one-scorer + off-oracle
+audit, **Training stage 1** difficulty-aligned SFT with a Bridge for hard traces, **Training stage 2** a pass@k
+sampling gate that also produces rejection-sampling SFT data, and **Training stage 3** GRPO with dynamic
 sampling only on learnable tiers, in a sandbox, with rollout logging. `liquid-finetune` already
 ships SFT, GRPO (TRL v1 `GRPOTrainer`), a `rewards/` callable registry, and an optional OpenEnv
 multiturn block, so the whole loop stays in one stack on Modal.
@@ -300,7 +300,7 @@ reference never stands alone for a load-bearing claim.
    'RL Squeezes, SFT Expands: A Comparative Study of Reasoning LLMs', ICLR 2026.
    arXiv:2509.21128. `arxiv.org/abs/2509.21128`. `[peer-reviewed]`. Note:
    `research/2026-rl-squeezes-sft-expands.md`.
-8. He, C., Zhang, R., Wang, Z. and Li, X. (2026) 'Learning What to Learn: Stage-Specific Data
+8. He, C., Zhang, R., Wang, Z. and Li, X. (2026) 'Learning What to Learn: Stage-Specific Data <!-- dont-say: allow -->
    Sets for SFT-then-RL in Small `Language Model` Reasoning', arXiv:2606.04466.
    `arxiv.org/abs/2606.04466`. `[preprint]`. Note: `research/2026-learning-what-to-learn.md`.
 9. Kaur, S., Ri, N., He, Y., Fowl, L.H. and Arora, S. (2026) 'Rethinking On-Policy
