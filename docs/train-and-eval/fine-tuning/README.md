@@ -25,7 +25,7 @@ Supporting context: `../PRD.md` (the research contract), `../glossary.md` (canon
 |---|---|---|---|
 | B1 | [01-rows-loader.md](pipeline/01-rows-loader.md) | `verified` | `train_and_eval/rows_loader.py` |
 | B2 | [02-teacher-sampling.md](pipeline/02-teacher-sampling.md) | `[unverified — needs OPENROUTER_API_KEY + network]` | `teacher.py`, `train/rejection_sample.py`, `train/compact_agentic.py`, `train/gen_1hop_queries.py`, `train/export_rl_data.py`, `setup/publish_traces.py` |
-| B3 | [03-trace-normalization.md](pipeline/03-trace-normalization.md) | `[unverified — needs unsloth gemma-4 processor]` | `train/normalize_traces.py`, `tool_calls.py` (rendering) | <!-- dont-say: allow -->
+| B3 | [03-trace-normalization.md](pipeline/03-trace-normalization.md) | `[unverified — needs unsloth gemma-4 processor]` | `train/normalize_traces.py`, `tool_calls.py` (rendering) <!-- dont-say: allow --> |
 | B4 | [04-sft.md](pipeline/04-sft.md) | `[unverified — needs GPU + unsloth/trl]` | `train/sft_train.py` |
 | B5 | [05-grpo.md](pipeline/05-grpo.md) | `[unverified — needs GPU + unsloth/trl]` | `train/grpo_train.py`, `reward_cadqa.py` |
 | B6 | [06-harness-modes.md](pipeline/06-harness-modes.md) | `[unverified — needs GPU + merged model]`; `cadquery` not implemented | `eval/eval_bench.py`, `run_code_sandbox.py` |

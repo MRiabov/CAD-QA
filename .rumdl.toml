@@ -1,0 +1,26 @@
+# rumdl — Markdown linter and formatter (https://rumdl.dev).
+#
+#   uv run rumdl check docs plans   # report
+#   uv run rumdl fmt docs plans     # rewrite in place
+#
+# The docs deliberately use long lines, inline HTML (dont-say markers such as
+# <!-- dont-say: allow -->, and literal <|tool_call|> tokens), standalone emphasis
+# as a placeholder ("_(none yet)_"), and underscore emphasis ("_offline_"). So
+# MD013 (line length), MD033 (inline HTML), MD036 (emphasis as heading), and
+# MD049 (emphasis style) are off.
+
+[global]
+flavor = "gfm"
+disable = ["MD013", "MD033", "MD036", "MD049"]
+exclude = [
+  ".git",
+  ".venv",
+  ".worktrees",
+  "runs",
+  "data",
+  "dist",
+  "node_modules",
+  "_archive/",
+  "_audit/",
+]
+respect-gitignore = true

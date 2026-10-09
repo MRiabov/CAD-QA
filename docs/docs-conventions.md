@@ -207,9 +207,12 @@ P0/P1 commitment.
   checker fails if hits rise, or fall without the baseline being lowered. Enforced by
   `tests/test_dont_say_ratchet.py` (the test gate). The sweep is tracked in
   `_audit/dont-say-worklist.md`.
-- **Not implemented yet:** the Markdown formatter (`rumdl`, fallback `mdformat`), the
-  docs-structure / decisions linters, and a pre-commit/CI wiring. See
-  `development-plan.md`.
+- **Markdown formatter: `rumdl`.** `.rumdl.toml` is the committed config (GFM flavor;
+  `MD013` line length and `MD033` inline HTML off, matching the docs' style). Run
+  `uv run rumdl check docs plans` to report, or `uv run rumdl fmt docs plans` to fix.
+  The existing docs are not yet formatted to it.
+- **Not implemented yet:** the docs-structure / decisions linters, and a pre-commit/CI
+  wiring. See `development-plan.md`.
 
 ## Experiment records
 

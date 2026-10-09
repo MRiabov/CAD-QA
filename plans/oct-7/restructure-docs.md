@@ -480,15 +480,18 @@ Notes:
 ## 3. Doc specifications
 
 ### `docs/README.md`
+
 - Doc map, how to navigate, and where to start for a new contributor.
 
 ### `docs/docs-conventions.md`
+
 - Encodes §2 + the conventions section: naming, required sections, decisions/glossary
   rules, Open/Resolved question handling, priority/status markers, anchor-based
   cross-references, the Markdown formatter (`rumdl`), and the lint/ratchet target list.
   Written first, because everything else follows it.
 
 ### `docs/PRD.md` (product / research requirements)
+
 - One-sentence intent; primary + secondary research questions; claims/contributions;
   deliverables; evaluation contract (no_tools LLM harness primary, three harnesses, metrics,
   targets); scope boundaries; definition of done; non-goals.
@@ -496,31 +499,39 @@ Notes:
   `specs/research-experiment-spec.md`, `human-paper-spec.md`.
 
 ### `docs/glossary.md`
+
 - Canonical terms used across PRD / pipeline docs (e.g. Reasoning hop count, CadQuery selector,
   CadQuery workplane, CAD feature-added/removed region, answer candidate set trace, LLM harness
   mode, rejection sampling). Enforced by
   the same lint as decisions.
 
 ### `docs/development-context.md`
+
 - The as-of state + history, plus a proven-vs-assumed list. Content is drafted in §6
   below; it should be essentially ready to write.
 
 ### `docs/development-plan.md`
+
 - The phased route to completion; derived from the plan in §7.
 
 ### `docs/prior-art.md`
+
 - Code/implementation prior art: established training / RL / data pipelines, what we adopt
   and what we reject. Feeds `docs/train-and-eval/fine-tuning/` and the base-pipeline decision (D11).
 
 ### Decisions (`decisions.md`)
+
 - Per-feature decision records (ADR format), created on demand as decisions land:
   `dataset/decisions.md`, `train-and-eval/fine-tuning/decisions.md`. No central `docs/adr/` folder.
 
 ### `docs/research-scopes/`
+
 - Per-workstream PRDs. Only CADEditQA is a candidate today (D7).
 
 ### Per-pipeline docs
+
 Each pipeline step doc follows the same template (§4) and is grounded in code refs.
+
 - `00-overview.md` per pipeline holds the DAG and the **pipeline-stage IO contract** — the single
   source of truth for artifact/field names between steps; step docs must match it (redo
   `00-stage-interfaces.md` convention).
@@ -701,7 +712,7 @@ settled (same rule as the per-doc sections).
 3. `docs/PRD.md`, `docs/glossary.md`, `docs/development-context.md`,
    `docs/development-plan.md` exist and are consistent with each other.
 4. Decisions are recorded in per-feature `decisions.md`; there is no central `docs/adr/`.
-5. Superseded docs carry a pointer to their replacement (`specs/` folded; 
+5. Superseded docs carry a pointer to their replacement (`specs/` folded;
    `implementation_status.md` removed).
 6. The docs contain no unmarked assumptions: everything is evidence or `[unverified]`;
    evidence cites `path::symbol`, never line numbers.

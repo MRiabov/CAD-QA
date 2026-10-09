@@ -230,7 +230,8 @@ signal** when problems are too easy or too hard. In the same line, RL on synthes
 transfers to a held-out benchmark only when the small LLM model is first SFT'd into the scaffold —
 a **warm-start that is a readiness gate, not an accuracy target**, and over-doing it ossifies the
 policy [32]. For CAD-QA this moves the center of gravity from the SFT mix to the **task environment
-+ scorer** (a CAD-QA task generator with verifiable answers and the `run_code`/kernel tool
+
+- scorer** (a CAD-QA task generator with verifiable answers and the `run_code`/kernel tool
 surface); SFT becomes a thin cold-start and the general external data becomes support/canary.
 
 **Implication for CAD-QA.** Do not run a raw SFT→GRPO. Run **Training stage 0** one-scorer + off-oracle

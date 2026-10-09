@@ -232,15 +232,18 @@ _(none yet)_
 ## Extra deliverables - P2
 
 ### `no_tools` baseline matrix
+
 Run the tuned LLM model and cost-effective models in `no_tools` mode and report it as a
 strict-reasoning upper bound alongside the primary `numpy` score.
 
 ### `cadquery` mode and one-shot solve rate
+
 Implement the CadQuery compute tool and the deterministic per-row gold CadQuery
 solutions (the `mode3` worktree plan), then report the fraction of rows solved by a
 single correct tool call. This measures CAD-code production and conciseness.
 
 ### Query verifier parity
+
 Add a test that runs the same submissions through the local `tool_call_matches`
 path and the Harbor `grade_public_private` path and asserts identical verdicts on a
 shared fixture.

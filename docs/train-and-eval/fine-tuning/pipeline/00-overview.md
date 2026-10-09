@@ -151,7 +151,7 @@ how each pipeline stage uses it; they do not redefine it.
 |---|---|---|
 | 01 | [01-rows-loader.md](01-rows-loader.md) | `train_and_eval/rows_loader.py` |
 | 02 | [02-teacher-sampling.md](02-teacher-sampling.md) | `train_and_eval/teacher.py`, `train/rejection_sample.py`, `train/compact_agentic.py`, `train/gen_1hop_queries.py`, `train/export_rl_data.py`, `setup/publish_traces.py` |
-| 03 | [03-trace-normalization.md](03-trace-normalization.md) | `train/normalize_traces.py`, `tool_calls.py` (rendering) | <!-- dont-say: allow -->
+| 03 | [03-trace-normalization.md](03-trace-normalization.md) | `train/normalize_traces.py`, `tool_calls.py` (rendering) <!-- dont-say: allow --> |
 | 04 | [04-sft.md](04-sft.md) | `train/sft_train.py` |
 | 05 | [05-grpo.md](05-grpo.md) | `train/grpo_train.py`, `reward_cadqa.py` |
 | 06 | [06-harness-modes.md](06-harness-modes.md) | `eval/eval_bench.py`, `run_code_sandbox.py`, `tool_calls.py` (compute tool) |
