@@ -96,7 +96,7 @@ priming, not a generation capability. Must not leak the CAD-QA held-out programs
 
 | Dataset | Status |
 |---|---|
-| `ricemonster/NeurIPS11092` | Adopt (text → CadQuery) |
+| `ricemonster/NeurIPS11092` | P2 / caution — unverified Gemini 2.0 Flash generation (FT-D17) |
 | `BenchCAD/BenchCAD` `code_gen` | Adopt; exclude from the transfer evaluation (shared parts) |
 | `kulibinai/cadevolve` | Candidate (2M CadQuery programs) |
 | `CADCODER/GenCAD-Code` | P2 (image input) |

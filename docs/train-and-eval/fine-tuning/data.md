@@ -168,8 +168,8 @@ CadQuery-generation capability**.
 | Dataset | Date | Size | Shape | License | Adopt/reject |
 |---|---|---|---|---|---|
 | `CADCODER/GenCAD-Code` | 2025 | 163k | image → CadQuery Python pairs | Apache-2.0 (repo) | **P2** — image input is not useful for a text-only base today |
-| `ricemonster/NeurIPS11092` | 2025 | 170k | text → CadQuery (Text2CAD via Gemini 2.0 Flash) | see card | **Adopt**; text-to-CadQuery pairs + 90/5/5 split |
-| `BenchCAD/BenchCAD` (`code_gen`) | 2026 | 17.9k | CadQuery GT code + 5 renders, 106 part families | CC-BY-4.0 | **Adopt**; clean synthetic CadQuery |
+| `BenchCAD/BenchCAD` (`code_gen`) | 2026 | 17.9k | CadQuery GT code + 5 renders, 106 part families | CC-BY-4.0 | **Adopt**; execution-verified synthetic CadQuery — preferred corpus (keep out of the transfer eval) |
+| `ricemonster/NeurIPS11092` | 2025 | 170k | text → CadQuery (Text2CAD via Gemini 2.0 Flash) | see card | **P2 / caution** — third-party generation, unverified; execution-filter or drop (FT-D17) |
 | `azizzjr/qwen3-32b-fusion360-98k-v2` | 2025-07 | 98k | Fusion360 code | see card | **P2**; Fusion360, not CadQuery |
 | `MRiabov/IntersectionQA-15K` / `-90K` | 2026-04 | 15k / 90k | 3D intersection QA (owner's own) | see card | **Exclude (`[unknown]`)** — same area as CAD-QA and likely an unfinished release, like the benchmark; not a training candidate |
 | `sanjuhs/cadforge-cadquery-agentic-traces` | 2026-04 | 174 | agentic CadQuery traces | see card | **Study**; tiny, but exactly our agentic shape |
@@ -181,6 +181,11 @@ CadQuery-generation capability**.
 **Contamination rule:** `expose_cadquery_programs` must not leak the CAD-QA held-out programs or their generating
 corpus. Any same-area set (including an owner-authored one) carries a higher leakage risk: run the
 quality gate (`system.md` §7) and a held-out overlap check before mixing.
+
+**Verification rule (FT-D17).** An SFT corpus is either **rejection-sampled by us** (teacher
+`deepseek-v4-flash`, FT-D2 — keep only traces the Query verifier accepts) or **execution-verified** before
+it enters a mix. Unverified third-party generation teaches the generating LLM model's errors and is
+P2/caution (`NeurIPS11092`, Gemini 2.0 Flash, 2025).
 
 **Deferred (vision):** image→CAD and point-cloud/3D-vision sets (`CADCODER/GenCAD-Code`,
 `hhllzz/surprise-3d`, PointLLM/Cap3D, `hiyouga/geometry3k`) are **P2** — the primary base LLM model
@@ -365,7 +370,7 @@ only the dataset:
 | Dedup/contamination automation | **P1** | manual hashing works for the first run; automate before `mixed_dataset_full_cadqa_training` |
 | Commercial agent training trace mix (Fable/Opus/TeichAI) | **P1** | strong signal; accepted in the thesis (§8); permissive mixes remain the default |
 | `expose_general_python_code` Python/coding priming | **P1/P2** | cheap code exposure; measure the evaluation datasets |
-| `expose_cadquery_programs` text→CadQuery priming (`NeurIPS11092`, `BenchCAD` code_gen) | **P1** | so the base is not 3D-blind; text→CadQuery pairs exist |
+| `expose_cadquery_programs` text→CadQuery (`BenchCAD` code_gen, execution-verified) | **P1** | so the base is not 3D-blind; keep it out of the transfer eval |
 | `expose_cadquery_programs` image→CAD / point-cloud priming (`GenCAD-Code`, `SURPRISE3D`, PointLLM) | **P2** | not usable with a text-only base today |
 | Math/reasoning scale-up (`OpenMathReasoning`, `NuminaMath`) | **P2** | scale only if H2 holds |
 | ≥10k CAD-QA Dataset release tier | **P2** | already P2 in `../../development-plan.md` |
