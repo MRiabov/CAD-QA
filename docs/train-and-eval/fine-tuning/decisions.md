@@ -227,8 +227,8 @@ whose rationale was not recoverable.
   the immutable dataset rows (prompt + scalar gold, configurable hop/difficulty), the single verified
   exact-match scorer, and the `run_code`/kernel tool surface — and treat the external SFT mix
   (`emit_our_tool_call_format`, `run_the_tool_call_loop`, `preserve_general_math_and_code_reasoning`,
-  `preserve_prior_capabilities`, `expose_general_python_code`, `expose_cadquery_programs`) as
-  **support**: a thin format cold-start, a capability-preservation anchor, and canaries.
+  `expose_general_python_code`, `expose_cadquery_programs`) as
+  **support**: a thin format cold-start and general-task diversity.
   Teacher-distilled `learn_the_cadqa_task` traces are a cold-start at most, not the primary data.
 - **Consequences:** effort shifts from corpus collection to **environment/scorer engineering**;
   the pass@k gate (FT-D13) is the switch from SFT to RL; external data stays bounded and
@@ -265,6 +265,20 @@ whose rationale was not recoverable.
   corpus for `expose_cadquery_programs`.
 - **Consequences:** `ricemonster/NeurIPS11092` is demoted from Adopt to P2/caution; verified teacher
   traces remain the safe signal. Detail: `data.md` §2.6, §7.
+
+## FT-D18 — There is no dedicated replay role at SFT
+
+- **Status:** accepted (2026-10-09) — owner decision.
+- **Context:** `preserve_prior_capabilities` was the anti-forgetting role, but its concept is a replay
+  buffer: at SFT there is no prior checkpoint (or prior rollouts) to replay from, so there is nothing to
+  anchor to. Its candidate datasets were also thin (a base instruct mixture we do not have, a permissive
+  substitute, or a slice of the evaluation set).
+- **Decision:** drop `preserve_prior_capabilities` as a dataset role. Prior ability is anchored by the
+  **diverse general-task mix** (general code + math + CAD; ≈70% of each mix), not a dedicated replay
+  role. A real replay buffer is a later RL/distillation concept, not an SFT role.
+- **Consequences:** the training roles are six; the first-run mix becomes
+  `mixed_dataset_general_and_easy_cadqa` (70% general tasks + 30% low-hop `learn_the_cadqa_task`,
+  rejection-sampled). Detail: `data.md` §2.4, §3.
 
 ## Open questions
 

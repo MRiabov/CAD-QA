@@ -163,7 +163,7 @@ Two rules:
 | Arm | Training data | Isolates |
 |---|---|---|
 | Base | none | floor; pretraining-contamination proxy |
-| Format-only | `emit_our_tool_call_format` + `preserve_prior_capabilities` | H1 format compliance |
+| Format-only | `emit_our_tool_call_format` + the general tasks | H1 format compliance |
 | Answer-only | CAD-QA answers, no reasoning | supervision format vs reasoning content |
 | CAD-QA reasoning | `learn_the_cadqa_task` | H2 capability |
 | Full primary (optional) | the full Mixed training dataset | external reasoning support |
@@ -206,7 +206,7 @@ four points in the training pipeline (§1): **baseline**, **periodic** (subset),
 Regression gate: if the `preserve_general_math_and_code_reasoning` accuracy drops beyond a
 pre-registered tolerance (suggest ≤2 points) while the CAD-QA held-out accuracy rises, the run is a
 **forgetting result** and is reported, not hidden. Instruction-following forgetting, if gated, is a
-separate `preserve_prior_capabilities` guard.
+separate general-task guard.
 
 **Evaluation-dataset provenance hygiene ([29]).** The `emit_our_tool_call_format` held-out set must
 be **disjoint from the public training corpora** (`xLAM`/`ToolACE`/`Glaive`), which the base LLM model
@@ -319,6 +319,6 @@ results rather than repeating the plan.
 3. **Freeze the held-out and evaluation-dataset rows** with the data doc and hard-exclude them from training.
 4. **Wire the evaluation-dataset procedure** (`learn_the_cadqa_task`, `emit_our_tool_call_format`,
    `preserve_general_math_and_code_reasoning`) into the cookbook eval
-   path once the architecture doc has the `mixed_dataset_our_tool_format_and_replay` artifact.
+   path once the training doc has the `mixed_dataset_general_and_easy_cadqa` artifact.
 5. **Pilot the external transfer target** (§5.1, P0): run the base LLM model on a family-disjoint
    BenchCAD `qa_code` subset to confirm a low-but-nonzero floor before any training spend.

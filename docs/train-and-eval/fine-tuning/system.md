@@ -48,8 +48,8 @@ The scaling asset is therefore the **CAD-QA task environment + scorer** (a task 
 single exact-match reward, and the `run_code`/kernel tool surface), not the SFT corpus. SFT's job
 is narrow: get the small LLM model to emit our `submit_*` format and produce *some* successful
 rollouts — a **readiness gate, not an accuracy target** ([32]); over-doing SFT ossifies the policy
-and collapses the exploration RL needs. External general data is support (tool-schema cold-start,
-`preserve_prior_capabilities`, canaries), not the lever.
+and collapses the exploration RL needs. External general data is support (a tool-schema cold-start and
+general-task diversity), not the lever.
 
 ---
 
@@ -74,7 +74,7 @@ bad scorer only miscounts; in RL it is what the LLM model climbs. So the evaluat
 ```text
 [ Training stage 0  Query verifier + eval contract ]  <- P0, gates everything
         |
-[ Training stage 1  difficulty-aligned SFT ]     <- our tool schema + easy hops + Bridge for hard traces + `preserve_prior_capabilities`
+[ Training stage 1  difficulty-aligned SFT ]     <- our tool schema + easy hops + Bridge for hard traces + general-task diversity
         |
 [ Training stage 2  sampling gate (pass@k) ]     <- measure reachability per tier; build RFT data
         |            \___ if no tier is reachable -> stop at SFT / RFT, do not run RL
@@ -92,7 +92,7 @@ downstream training stage is trustworthy until this passes. (Owned by `../evalua
 data difficulty must be aligned to the training stage. Concretely: `emit_our_tool_call_format` + easy hops first, then
 harder `learn_the_cadqa_task`; for hard teacher traces that the small LLM model cannot imitate, apply a
 **Bridge** transformation (rewrite the raw agent training trace from the teacher into more learnable supervision) rather
-than feeding an unlearnable target. `preserve_prior_capabilities` every training stage. SFT runs only to the **readiness gate**
+than feeding an unlearnable target. Keep the general tasks in every training stage. SFT runs only to the **readiness gate**
 (format holds, pass@k > 0), then stops — it is not an accuracy target ([32]).
 (Owned by the data + architecture docs.)
 
@@ -127,8 +127,8 @@ collapse ("RL squeezes, SFT expands", ref [7]).
    carries a **simple slice of our own tasks** (e.g. hop 0, `learn_the_cadqa_task`) as a safety net.
 2. **Phase 2 — the CAD-QA task (new domain) + preserve.** CAD is very likely new to the base LLM model, and our
    CAD-QA dataset certainly is. Phase 2 fine-tunes on `learn_the_cadqa_task` and CAD at scale, and
-   shifts the objective from *eliciting* reasoning to *preserving* it (`preserve_prior_capabilities`,
-   `preserve_general_math_and_code_reasoning`).
+   shifts the objective from *eliciting* reasoning to *preserving* it (`preserve_general_math_and_code_reasoning`,
+   `expose_*`).
 
 The evaluation datasets (`../evaluation/plan.md` §6) measure both phases: **baseline** before phase 1,
 **periodic** subsets and a **phase-end** extensive eval in each phase, and the **final** eval after
@@ -213,7 +213,7 @@ schema or the converter beyond what the mix and the evaluation datasets need.
 | Field | Notes |
 |---|---|
 | `id` (`str`) | stable, content-hashed |
-| `dataset_role` (`DatasetRole`, StrEnum) | `emit_our_tool_call_format`, `run_the_tool_call_loop`, `preserve_general_math_and_code_reasoning`, `preserve_prior_capabilities`, `expose_general_python_code`, `expose_cadquery_programs`, `learn_the_cadqa_task` |
+| `dataset_role` (`DatasetRole`, StrEnum) | `emit_our_tool_call_format`, `run_the_tool_call_loop`, `preserve_general_math_and_code_reasoning`, `expose_general_python_code`, `expose_cadquery_programs`, `learn_the_cadqa_task` |
 | `messages` (`list[ChatMessage]`) | the conversation; `ChatMessage{role, content, tool_calls?}` maps 1:1 to Liquid's SFT JSONL |
 | `source_id` (`str`) | HF repo or internal artifact |
 | `source_revision` (`str`) | **commit hash**, not a branch/config name |
@@ -296,7 +296,6 @@ questions here resolve by running or inspection. Labels point to the owning doc.
   the external claim.
 - `../../../plans/oct-8/trust-audit.md` Q3 — one tracked environment, or separate SFT and serving environments.
 - `../../../plans/oct-8/trust-audit.md` Q4 — GPU parity + SFT re-run in Phase 0, or the top of Phase 1.
-- `data.md` Q4 — which External dataset supplies `preserve_prior_capabilities`.
 - `data.md` Q5 / `docs/train-and-eval/datasets.md` Q3 — do evaluation dataset roles split
   into `target` / `guard`.
 - `data.md` Q6 / `docs/train-and-eval/datasets.md` Q2 — the two `mixed_dataset_*` names.
@@ -319,7 +318,7 @@ questions here resolve by running or inspection. Labels point to the owning doc.
 
 1. **Training stage 0:** reconcile the scorer (one implementation) and build the off-oracle fixtures
    (evaluation doc, P0).
-2. **Training stage 1:** run the cookbook pilot, then `mixed_dataset_our_tool_format_and_replay`, then `mixed_dataset_full_cadqa_training` (architecture + data
+2. **Training stage 1:** run the cookbook pilot, then `mixed_dataset_general_and_easy_cadqa`, then `mixed_dataset_full_cadqa_training` (training + data
    docs).
 3. **Training stage 2:** once an SFT checkpoint exists, run the pass@k sampling gate per tier and record
    reachability. Decide RL vs RFT from that number, not from ambition.

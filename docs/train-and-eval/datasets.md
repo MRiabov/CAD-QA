@@ -66,18 +66,6 @@ collapse. Support data; FT-D15 does not treat external reasoning as the lever.
 | `Jackrong/Qwen3.5-reasoning-700x` | P2 |
 | `PrimeIntellect/NuminaMath` | Reference (pre-2025) |
 
-### `preserve_prior_capabilities`
-
-The anti-forgetting anchor: general instruction data replayed so prior ability does not regress.
-
-| Dataset | Status |
-|---|---|
-| The base LLM model's own instruct mixture | Adopt if published (best anchor) |
-| `nvidia/Llama-Nemotron-Post-Training-Dataset` | P1 substitute when the family mixture is closed |
-| A small held-out slice of the evaluation dataset's train side | Adopt as a cheap anchor |
-
-**Open:** the dataset is not chosen (data plan §9).
-
 ### `expose_general_python_code`
 
 General Python/code exposure, because the base LLM model is not recommended for programming.
@@ -121,8 +109,8 @@ A **Mixed training dataset** is `{dataset role → weight}`. Names are not yet c
 
 | Composition | Feeds |
 |---|---|
-| `emit_our_tool_call_format` + `preserve_prior_capabilities` | the H1 tool-schema probe |
-| `emit_our_tool_call_format` + `run_the_tool_call_loop` + `preserve_general_math_and_code_reasoning` + `learn_the_cadqa_task` + `preserve_prior_capabilities` | H2 (the thesis number) |
+| general tasks (`emit_our_tool_call_format` + `expose_general_python_code` + `preserve_general_math_and_code_reasoning` + `expose_cadquery_programs`) + low-hop `learn_the_cadqa_task` | the first run (format + easy task) |
+| `emit_our_tool_call_format` + `run_the_tool_call_loop` + `preserve_general_math_and_code_reasoning` + `learn_the_cadqa_task` | H2 (the thesis number) |
 
 ## Evaluation datasets by dataset role
 
@@ -144,6 +132,5 @@ are not yet named.
 
 ## Open questions
 
-- **Q1.** Which dataset provides `preserve_prior_capabilities` (data plan §9)?
 - **Q2.** What are the two Mixed training dataset names?
 - **Q3.** Do evaluation dataset roles split into `target` / `guard`?

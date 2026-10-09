@@ -123,8 +123,8 @@ Each step below is a gate; do not start the next until the previous passes.
    fine-tunes **LFM2.5-350M** as a cheap demo — this is a **pipeline smoke test, not our LLM model**.
    Gate: the benchmark accuracy moves. This proves the whole narrow-task loop
    data → train → merge → export → eval.
-3. **Swap in our data (`mixed_dataset_our_tool_format_and_replay`).** Replace the cookbook dataset
-   with our `emit_our_tool_call_format` + `preserve_prior_capabilities` rows in Liquid's `messages`
+3. **Swap in our data (`mixed_dataset_general_and_easy_cadqa`).** Replace the cookbook dataset
+   with our first-run rows (general tasks + low-hop `learn_the_cadqa_task`) in Liquid's `messages`
    format (built by the data doc), keep the cookbook config and hyperparameters, and run the
    evaluation doc's `emit_our_tool_call_format` evaluation dataset. Gate: H1.
 4. **Only if H1 holds**, expand to `mixed_dataset_full_cadqa_training` and `learn_the_cadqa_task`.
@@ -163,7 +163,7 @@ it.
 | **Completion-only loss** | P0 | fixes the B3 flat-`text` defect; implement it the **cookbook way** — train on the `messages` format and *verify* the loss is completion-only, rather than hand-rolling a masking path |
 | **Epochs = the cookbook's, not ours** | P0 | TRL/Liquid example uses 3; the Home Assistant recipe uses 5 on a narrow 350M task; TeichAI used 1 at 4B. Start from the cookbook default, then let the evaluation dataset move it |
 | **Cookbook learning rates** | P0 | LoRA `2e-4`, full FT `2e-5`, DPO `5e-7` (TRL/Liquid examples); `bf16=True` |
-| **`preserve_prior_capabilities` mix (20–30%)** | P0 | xLAM precedent; anchor general ability. The `preserve_prior_capabilities` rows are a data-doc concern |
+| **General-task mix (≈70%)** | P0 | xLAM precedent; the diverse general mix anchors prior ability (FT-D18). The general-task rows are a data-doc concern |
 | **Gradient checkpointing + grad accumulation** | P0 | fits memory; the cookbook uses `gradient_accumulation_steps=4`, Unsloth uses its optimized checkpointing |
 | **Evaluate the datasets before/after each run** | P0 | measure forgetting, do not assume it away; the procedure is the evaluation doc's |
 | **KB/activation regularization (EWC, LaLoRA)** | P2 | more moving parts than a first run warrants |
@@ -344,7 +344,7 @@ justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
 3. **Answer-submission format.** Author the `submit_*` envelope in LFM2.5's native tokens
    (`<|tool_call_start|>`/`<|tool_call_end|>`, Pythonic vs JSON). The gemma `<|tool_call>` rendering
    does not transfer; treat this as P0 (§7).
-4. **Modal vs Vast.** Recommendation: Modal for the cookbook reproduction and first canaries, then
+4. **Modal vs Vast.** Recommendation: Modal for the cookbook reproduction and first runs, then
    a rented **Vast.ai** 24 GB GPU once the loop is proven. (No SLURM/Kubernetes access.)
 
 ---
@@ -370,4 +370,4 @@ justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
    merge/export GGUF → benchmark). This proves the data→train→export→eval path we will actually use.
 3. Confirm the FT-D12 boundary (what else survives besides the loader, the typed tool contract, and
    the grader — the last owned by the evaluation doc).
-4. Once the data doc delivers the `mixed_dataset_our_tool_format_and_replay` JSONL, run the `emit_our_tool_call_format` evaluation dataset (evaluation doc).
+4. Once the data doc delivers the `mixed_dataset_general_and_easy_cadqa` JSONL, run the `emit_our_tool_call_format` evaluation dataset (evaluation doc).
