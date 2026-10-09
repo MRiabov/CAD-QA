@@ -49,9 +49,8 @@ rate and a **much smaller** dataset than pretraining. Two facts drive the traini
    capability.
 2. **Everything you train on, the LLM model learns to imitate — including the format and even the
    question text.** If a training example includes the prompt and it is not masked, the LLM model also
-   learns to *produce the prompt*, a known cause of over-generation. The flat `text` column in step
-   B3 (`pipeline/03-trace-normalization.md`) is exactly this
-   bug: masking is currently undecided and delegated to trainer defaults.
+   learns to *produce the prompt*, a known cause of over-generation. This is why completion-only loss is
+   **verified, not assumed** (`pipeline/04-sft.md`).
 
 The distinction that matters for training (versus evaluation): **SFT scores only to admit an agent training trace
 to the dataset and trains by next-token imitation from fixed targets; RL would score as a reward

@@ -1,76 +1,57 @@
 # Fine-tuning pipeline
 
-**Status:** active, 2026-10-07. Code is `train_and_eval/`. This surface is **being revised**; the docs describe behaviour and record
-known defects as open questions rather than implying the fine-tuning pipeline is finished.
+**Status:** active, 2026-10-09. Rewritten to the Phase 3 design (LFM2.5 + `liquid-finetune`); the
+2026-08 gemma pipeline is superseded (FT-D11, FT-D12). The design and rationale live in `training.md`
+(how we train), `data.md` (which data, in what order), `system.md` (the post-training loop), and
+`../evaluation/plan.md` (harness + scorer).
 
-**Design docs (target).** The Phase 3 design is `training.md` (how we train), `data.md` (which data,
-in what order), and `system.md` (the post-training loop + data preparation). The `pipeline/` step docs
-below describe the **current 2026-08 gemma pipeline**, superseded by the LFM2.5 rewrite
-(FT-D11, FT-D12).
-
-This directory documents how CAD-QA turns a **dataset file** into a trained small LLM model and
-evaluates it: teacher **rejection sampling** → **agent training trace normalization** → **SFT**;
-**GRPO** training; the **LLM harness modes** used for evaluation; and **vLLM** serving.
+This directory documents how CAD-QA turns an immutable **dataset file** plus **External datasets** into
+a trained small LLM model: teacher **rejection sampling** → **preparation** (mixing + conversion to
+Liquid `messages`) → **two-phase SFT** → a **sampling gate** and optional **RL** → **evaluation** →
+**serving**.
 
 ## Start here
 
-1. [requirements.md](requirements.md) — intended-vs-verified summary, environment, what "done"
-   would need.
-2. [pipeline/00-overview.md](pipeline/00-overview.md) — the DAG and its pipeline-stage IO contract
+1. [requirements.md](requirements.md) — intended-vs-verified summary, environment.
+2. [pipeline/00-overview.md](pipeline/00-overview.md) — the DAG and the IO contract
    (the single source of truth for artifact and field names).
-3. The step docs, in DAG order (below).
-4. [decisions.md](decisions.md) — unit-level decisions (ADR format).
-
-Supporting context: `../../PRD.md` (the research contract), `../../glossary.md` (canonical terms),
-`../../development-context.md` (as-of record and history).
+3. [decisions.md](decisions.md) — the FT-D* decisions (ADR).
+4. The design docs: [training.md](training.md) (how we train), [data.md](data.md) (which data, in what
+   order), [system.md](system.md) (the post-training loop + data preparation).
 
 ## Pipeline-stage index
 
-| Step | Doc | Status | Code |
-|---|---|---|---|
-| B1 | [01-rows-loader.md](pipeline/01-rows-loader.md) | `verified` | `train_and_eval/rows_loader.py` |
-| B2 | [02-teacher-sampling.md](pipeline/02-teacher-sampling.md) | `[unverified — needs OPENROUTER_API_KEY + network]` | `teacher.py`, `train/rejection_sample.py`, `train/compact_agentic.py`, `train/gen_1hop_queries.py`, `train/export_rl_data.py`, `setup/publish_traces.py` |
-| B3 | [03-trace-normalization.md](pipeline/03-trace-normalization.md) | `[unverified — needs unsloth gemma-4 processor]` | `train/normalize_traces.py`, `tool_calls.py` (rendering) <!-- dont-say: allow --> |
-| B4 | [04-sft.md](pipeline/04-sft.md) | `[unverified — needs GPU + unsloth/trl]` | `train/sft_train.py` |
-| B5 | [05-grpo.md](pipeline/05-grpo.md) | `[unverified — needs GPU + unsloth/trl]` | `train/grpo_train.py`, `reward_cadqa.py` |
-| B6 | [06-harness-modes.md](pipeline/06-harness-modes.md) | `[unverified — needs GPU + merged model]`; `cadquery` not implemented | `eval/eval_bench.py`, `run_code_sandbox.py` |
-| B7 | [07-serving-vllm.md](pipeline/07-serving-vllm.md) | `[unverified — needs vLLM + GPU + merged checkpoint]` | `setup/convert_for_vllm.py`, `eval/bench_vllm.py` |
-
-## Current state at a glance
-
-- The strongest measured result is **directionally encouraging but statistically unusable**:
-  native-format SFT reached 50% accuracy / 58.3% tool-valid on **12** held-out rows; the
-  post-gold-fix re-run was 41.7% / 75% on the same 12 (`../../development-context.md`).
-- **Known defects are open questions**, not hidden. The load-bearing ones: SFT prompt masking
-  unknown; GRPO entropy collapse history; vLLM parity unverified; `cadquery` harness
-  unimplemented; `json`/`number` teacher coverage zero; reward and eval graders can diverge.
-- There is **no live GPU box**; historical runs used a single RTX 4080S.
+| Step | Doc | Status |
+|---|---|---|
+| 01 | [01-rows-loader.md](pipeline/01-rows-loader.md) | `verified` (retained; hop naming to unify) |
+| 02 | [02-teacher-sampling.md](pipeline/02-teacher-sampling.md) | `[unverified — needs OPENROUTER_API_KEY + network]` |
+| 03 | [03-preparation.md](pipeline/03-preparation.md) | `missing` (converter to write) |
+| 04 | [04-sft.md](pipeline/04-sft.md) | `[unverified — needs GPU + liquid-finetune]` |
+| 05 | [05-grpo.md](pipeline/05-grpo.md) | `[unverified — needs GPU]`; gate P0, RL conditional |
+| 06 | [06-harness-modes.md](pipeline/06-harness-modes.md) | `exists`; `cadquery` mode `missing` |
+| 07 | [07-serving-vllm.md](pipeline/07-serving-vllm.md) | `missing` (merge/export to build) |
 
 ## Code ↔ doc map
 
-- `train_and_eval/rows_loader.py` → B1
-- `train_and_eval/teacher.py`, `train/rejection_sample.py`, `train/compact_agentic.py`,
-  `train/gen_1hop_queries.py`, `train/export_rl_data.py`, `setup/publish_traces.py` → B2
-- `train_and_eval/train/normalize_traces.py`, `tool_calls.py` (rendering) → B3
-- `train_and_eval/train/sft_train.py` → B4
-- `train_and_eval/train/grpo_train.py`, `reward_cadqa.py` → B5
-- `train_and_eval/eval/eval_bench.py`, `run_code_sandbox.py`, `tool_calls.py` (`HarnessMode`,
-  `execute_code`) → B6
-- `train_and_eval/setup/convert_for_vllm.py`, `eval/bench_vllm.py` → B7
-- `train_and_eval/tool_calls.py` (the typed tool contract) → shared; defined in
-  [pipeline/00-overview.md](pipeline/00-overview.md#shared-tool-call-contract)
-- Tests: `train_and_eval/test_rows_loader.py`, `train_and_eval/eval/test_tool_calls.py`
+- `train_and_eval/rows_loader.py` → 01 (retained)
+- teacher client + rejection sampling → 02 (to be ported to the LFM2.5 stack)
+- `TrainingExample` + converter → 03 (`system.md` §7)
+- `liquid-finetune` SFT configs → 04 (`training.md` §4)
+- sampling gate + GRPO → 05 (`system.md` §2–§3)
+- `train_and_eval/eval/`, `train_and_eval/grading/` → 06 (`../evaluation/plan.md`)
+- merge + export → 07 (to be scripted)
 
 ## Terms
 
 Use the canonical vocabulary in `../../glossary.md`. Three overloaded terms mean different records:
-an **agent training trace** is an agent-facing reasoning + tool-call record (this pipeline's SFT
-signal); a **CadQuery program operation trace** is a CadQuery program decomposed into
-measured operations; an **answer candidate set trace** is a row's candidate-narrowing record.
+an **agent training trace** is an agent-facing reasoning + tool-call record (this pipeline's SFT signal);
+a **CadQuery program operation trace** is a CadQuery program decomposed into measured operations; an
+**answer candidate set trace** is a row's candidate-narrowing record.
 
 ## Note on raw material
 
 `../../_archive/agent_handoff_2026-08-09.md`, `../../_archive/rl_progress_2026-08-09.md`,
 `../../_archive/rl_checkpoint_2026-08-08.md`, `../../_archive/rl_checkpoint_2026-08-09_2.md`,
-`../../_archive/rl_state_2026-08-09_1140.md`, `../../_archive/rl_runbook.md`, and `../../_archive/text_finetune_runbook.md` are
-**raw material** for these docs, not current specs. They are superseded by this directory.
+`../../_archive/rl_state_2026-08-09_1140.md`, `../../_archive/rl_runbook.md`, and
+`../../_archive/text_finetune_runbook.md` are **raw material** for these docs, not current specs. They are superseded
+by this directory.

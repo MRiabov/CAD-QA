@@ -34,7 +34,7 @@ whose rationale was not recoverable.
 - **Decision:** both agent training traces and the eval harness use the native format, including
   literal `<|tool_call|>` / `<|tool_response|>` tokens.
 - **Consequences:** held-out accuracy went from 16.7% to 50% (12-row, non-native → native).
-  Detail: [pipeline/03-trace-normalization.md](pipeline/03-trace-normalization.md), <!-- dont-say: allow -->
+  Detail: [pipeline/03-preparation.md](pipeline/03-preparation.md),
   [pipeline/06-harness-modes.md](pipeline/06-harness-modes.md).
 
 ## FT-D4 — One typed submit tool per answer format
