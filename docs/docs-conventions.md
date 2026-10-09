@@ -213,11 +213,12 @@ P0/P1 commitment.
   `tests/test_dont_say_ratchet.py` (the test gate). The sweep is tracked in
   `_audit/dont-say-worklist.md`.
 - **Markdown formatter: `rumdl`.** `.rumdl.toml` is the committed config (GFM flavor;
-  `MD013` line length and `MD033` inline HTML off, matching the docs' style). Run
-  `uv run rumdl check docs plans` to report, or `uv run rumdl fmt docs plans` to fix.
-  The existing docs are not yet formatted to it.
-- **Not implemented yet:** the docs-structure / decisions linters, and a pre-commit/CI
-  wiring. See `development-plan.md`.
+  `MD013` line length and `MD033` inline HTML off, matching the docs' style; scoped to
+  `docs/` and `plans/`). Run `uv run rumdl check` to report, or
+  `uv run rumdl fmt` to fix. Wired into pre-commit (`.pre-commit-config.yaml`); enable it
+  once with `uv run pre-commit install`.
+- **Not implemented yet:** the docs-structure / decisions linters, and CI wiring. See
+  `development-plan.md`.
 
 ## Experiment records
 

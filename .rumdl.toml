@@ -11,6 +11,7 @@
 [global]
 flavor = "gfm"
 disable = ["MD013", "MD033", "MD049"]
+include = ["docs/**/*.md", "plans/**/*.md"]
 exclude = [
   ".git",
   ".venv",
