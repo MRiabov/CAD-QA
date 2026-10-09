@@ -118,7 +118,7 @@ and parser accept the gold encoding; it does **not** establish grader correctnes
   (`fine-tuning-system-plan.md` §3).
 - **Judge independence.** No LLM model in the trusted grading path (DD-03). Grading is exact-match
   code; the teacher only produces training traces, never evaluated answers.
-- **Public/private hygiene.** `grading/closed_book.py::closed_book_request_audit` fails on any
+- **Public/private hygiene.** `grading/no_cadquery_access.py::no_cadquery_access_request_audit` fails on any
   hidden-field leak, incomplete request coverage, or Answer format disagreement.
 
 ---

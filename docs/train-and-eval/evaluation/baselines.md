@@ -71,7 +71,7 @@ small LLM model baseline in the experiment record.
 | deepseek-v4-flash | Harbor, rc10 clean-100 (0-hop) | 63% | same | `exists` |
 | Kimi (exact LLM model id not recorded) | Harbor, rc10 clean-100 (0-hop) | 59% | same | `exists` |
 | NVIDIA NemoTron super | planned cost-effective LLM model | no run found | named in `docs/_archive/paper/cadqa_draft.md` | `missing` |
-| gemma-4-E2B base (`google/gemma-4-E2B-it`) | local harness, closed-book | rc10 30/100; release10k (2–5 hop) 14/100 | `docs/experiments/2026-08-08-gemma-e2b-bench.md#results` | `exists` |
+| gemma-4-E2B base (`google/gemma-4-E2B-it`) | local harness, `no_tools` LLM harness | rc10 30/100; release10k (2–5 hop) 14/100 | `docs/experiments/2026-08-08-gemma-e2b-bench.md#results` | `exists` |
 | gemma-4-E2B + native-format SFT | local harness, 12 held-out rows | 50% accuracy / 58.3% tool-valid (post-fix re-run 41.7% / 75%) | `docs/development-context.md#proven` | `exists` |
 
 The oracle-upper-bound setting (`tool_assisted.py`) is not an LLM model run; keep it
@@ -154,7 +154,7 @@ _(none yet)_
 Re-run every family on the frozen release test and publish the full breakdown, not
 just the headline accuracy.
 
-### Closed-book few-shot baseline
+### No-access-to-CadQuery few-shot baseline
 Export the few-shot requests (`train_and_eval/grading/requests.py::few_shot_requests`)
 and report cost-effective LLM model few-shot accuracy beside zero-shot.
 

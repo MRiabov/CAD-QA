@@ -51,7 +51,7 @@ whose rationale was not recoverable.
 ## FT-D5 — Primary harness is `numpy`; `cadquery` is deferred to the RL stage
 
 - **Status:** accepted (2026-08).
-- **Context:** the PRD's primary setting is closed-book (no CAD kernel); a compute tool must
+- **Context:** the PRD's primary setting has no access to CadQuery; a compute tool must
   not trivialize the task.
 - **Decision:** the primary harness gives Python + NumPy (`run_code`); CadQuery execution is
   reserved for the RL stage and is not implemented yet; `no_tools` is the pure-reasoning
@@ -63,7 +63,7 @@ whose rationale was not recoverable.
 
 - **Status:** accepted (2026-08).
 - **Context:** the reward must reproduce the Query verifier, not an LLM model's judgement; in the
-  closed-book setting the gold is a precomputed answer.
+  no-access-to-CadQuery setting the gold is a precomputed answer.
 - **Decision:** GRPO scores completions against the decoded `gold_answer` using the per-format
   matcher, with a tool-call-aware path that reuses `tool_call_matches`.
 - **Consequences:** the reward is sparse/binary, which is the recorded cause of the 2-hop

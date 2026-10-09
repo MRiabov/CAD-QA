@@ -65,9 +65,10 @@ docs/experiments/YYYY-MM-DD-<slug>.md   # dated experiment records
 `_audit/` is a throwaway, owner-private working area (for example
 `_audit/owner-audit-todo.md`). `_archive/` holds superseded docs kept as raw material.
 Neither is part of the canonical tree; both are excluded from lint. `paper/` holds the
-written manuscript (Markdown and LaTeX kept in parity); it is canonical output but is also
-excluded from the Don't-say lint, because it uses academic/domain terminology rather than
-the project glossary.
+written manuscript (Markdown and LaTeX kept in parity); it is canonical output and is
+linted like the rest of the docs — it uses the project's domain terminology, so its
+prose follows the glossary. Literal code snippets, enum values inside `\texttt{}`, and
+bibliographic titles may carry a `dont-say: allow` marker when a term is unavoidable.
 
 ## Doc layers (roles)
 
@@ -192,7 +193,8 @@ P0/P1 commitment.
 ## Lint, format, ratchets
 
 - **Don't-say checker: implemented and enforced.** `tools/check_dont_say.py` reads the
-  `## Don't say` table from `glossary.md` and fails on banned terms across docs and code.
+  `## Don't say` table from `glossary.md` and fails on banned terms across docs and code
+  (Markdown, LaTeX, and Python).
   A `(home)` annotation exempts a tree, `ALLOWLIST` exempts cross-cutting phrases, and the
   `dont-say: allow` / `dont-say: home` markers exempt a line/file. In code, comments and
   docstrings are matched as prose, and multi-word identifier name variants are matched. Run

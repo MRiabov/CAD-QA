@@ -49,8 +49,8 @@ rtk uv run python train_and_eval/eval/eval_bench.py \
 ### FT-06-D1 — Three modes, one grading path
 
 - **Status:** accepted (2026-08).
-- **Context:** `numpy` is the primary closed-book-plus-compute harness; `no_tools` is the
-  pure-reasoning bound; `cadquery` is the full-kernel upper bound.
+- **Context:** `numpy` is the primary harness (no access to CadQuery, plus compute);
+  `no_tools` is the pure-reasoning bound; `cadquery` is the full-kernel upper bound.
 - **Decision:** `HarnessMode` (`train_and_eval/tool_calls.py::HarnessMode`) selects the tool
   set; `tools_for_mode` returns submit-only for `no_tools` and submit + `run_code` for
   `numpy`; grading always goes through `tool_call_matches`.

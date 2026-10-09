@@ -6,9 +6,9 @@ tags under `## Current status`). 2026-10-07.
 
 ## Purpose
 
-Run an LLM model closed-book over CAD-QA rows and score exact structured answers,
-under a switchable compute mode, both for the local fine-tuned small LLM model and for
-cost-effective external models through Harbor.
+Run an LLM model with no access to CadQuery over CAD-QA rows and score exact structured
+answers, under a switchable compute mode, both for the local fine-tuned small LLM model
+and for cost-effective external models through Harbor.
 
 ## Inputs / outputs
 
@@ -57,10 +57,10 @@ correctness is established beyond the oracle identity.
 
 ## LLM harness modes
 
-An **LLM harness mode** is which compute tools the LLM model gets. All three modes are
-closed-book CAD reasoning: the LLM model may not call CadQuery, OCP, OpenCascade, or
-any other CAD kernel, and may not use the network. The mode changes only the
-compute surface, not the task or the grading contract.
+An **LLM harness mode** is which compute tools the LLM model gets. The `numpy` and
+`no_tools` modes give the LLM model no access to CadQuery or any other CAD kernel, and no
+network; the `cadquery` mode adds kernel access. The mode changes only the compute
+surface, not the task or the grading contract.
 
 - **`numpy` (primary, P0).** Submit tools plus the sandboxed `run_code` tool: a
   Python interpreter with NumPy and `math` preloaded. The LLM model reasons in text,
@@ -104,7 +104,7 @@ environment and the coding agent. The mechanics are documented in
 
 **How an LLM model is run.** `dataset/harbor.py::materialize_harbor_tasks` writes one
 Harbor task directory per selected CAD-QA dataset row: `instruction.md`
-(the rule-rendered prompt plus the closed-book rules), `task.toml` (metadata,
+(the rule-rendered prompt plus the no-access-to-CadQuery rules), `task.toml` (metadata,
 agent and Query verifier timeouts), `environment/Dockerfile` (`python:3.11-slim` with
 NumPy, pyarrow, PyYAML), `workspace/row_public.json`, `tests/grade_cadqa.py`, the
 hidden `expected/private.json`, and a `solution/solve.sh` oracle that writes the
@@ -139,11 +139,11 @@ repository grader's parse and grade modules, so the container does not import th
 dataset-generation package.
 
 Public/private hygiene is audited in the same layer:
-`train_and_eval/grading/closed_book.py::closed_book_request_audit` fails when a request
+`train_and_eval/grading/no_cadquery_access.py::no_cadquery_access_request_audit` fails when a request
 leaks a hidden field (`gold_answer`, `query_program`, `candidate_trace`,
 `clue_map`, `verifier_status`), when request coverage is incomplete, or when the
 request's answer format disagrees with the Public CAD-QA dataset row column set;
-`closed_book.py` also calls `dataset.release.public.public_private_audit` for the
+`no_cadquery_access.py` also calls `dataset.release.public.public_private_audit` for the
 row-level split check.
 `train_and_eval/grading/tool_assisted.py::run_tool_assisted_upper_bound` builds
 deterministic responses from private Query verifier artifacts. It is an analysis upper
@@ -163,7 +163,7 @@ principle, but they do not share a grader implementation.
   runs (handoff, 2026-08-09) used this harness; no `numpy`-mode run is preserved in-repo
   as an experiment record (`[unverified — needs GPU]`).
 - **`no_tools` mode:** `exists`. Implemented. The 2026-08-08 bench's h1 slice is a
-  different (closed-book, no-tools) runner, not this harness; treat it as an analogue
+  different (`no_tools` LLM harness) runner, not this harness; treat it as an analogue
   only.
 - **`cadquery` mode:** `missing`. `tools_for_mode` raises `NotImplementedError`.
 - **Harbor export and grading:** `exists`. Materialization, job config, submission

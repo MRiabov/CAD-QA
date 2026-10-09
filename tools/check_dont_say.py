@@ -2,7 +2,8 @@
 """Don't-say checker for CAD-QA docs and code.
 
 Reads the ``## Don't say`` table from ``docs/glossary.md`` and fails when a
-banned term appears in a scanned doc or code file. A Say term covers its own
+banned term appears in a scanned doc or code file (``.md``, ``.tex``, ``.py``).
+A Say term covers its own
 Don't-say tokens; a ``(home)`` annotation allows the token under that tree; the
 allowlist and ``dont-say: allow`` / ``dont-say: home`` markers exempt specific
 text. In code, comments and docstrings are matched as prose, and multi-word
@@ -27,7 +28,7 @@ logger = logging.getLogger("cadqa.check_dont_say")
 REPO = Path(__file__).resolve().parents[1]
 DONT_SAY_HEADING = "## Don't say"
 SCAN_ROOTS = ("docs", "dataset", "train_and_eval", "tools")
-SCAN_SUFFIXES = frozenset({".md", ".py"})
+SCAN_SUFFIXES = frozenset({".md", ".py", ".tex"})
 SKIP_DIRS = frozenset(
     {
         ".git",
@@ -39,7 +40,6 @@ SKIP_DIRS = frozenset(
         "data",
         "dist",
         "node_modules",
-        "paper",
         "runs",
     }
 )
@@ -57,6 +57,12 @@ HOME_MARKER = re.compile(r"dont-say:\s*home", re.IGNORECASE)
 ALLOW_LINE = re.compile(r"don'?t say|do not say|never say|banned:", re.IGNORECASE)
 CODE_FENCE = re.compile(r"^\s*(```|~~~)")
 INLINE_CODE = re.compile(r"`[^`]*`")
+LATEX_VERBATIM = re.compile(
+    r"\\(?:begin|end)\{(?:verbatim|Verbatim|lstlisting|minted)\}"
+)
+LATEX_COMMENT = re.compile(r"(?<!\\)%")
+LATEX_TEXT_TT = re.compile(r"\\texttt\{[^}]*\}")
+LATEX_VERB = re.compile(r"\\verb(.)(.*?)\1")
 IDENTIFIER_SEGMENT = re.compile(r"[A-Z]+(?=[A-Z][a-z])|[A-Z]?[a-z]+|[A-Z]+|\d+")
 SAY_SEPARATORS = (" / ", ";", ",", " or ", ": ")
 
@@ -432,20 +438,36 @@ def _scan_code(
 
 
 def _scan_markdown(path: Path, text: str, rules: list[Rule]) -> list[Hit]:
+    latex = path.suffix == ".tex"
     hits: list[Hit] = []
     in_fence = False
+    in_verbatim = False
     for line_no, line in enumerate(text.splitlines(), start=1):
-        if CODE_FENCE.match(line):
-            in_fence = not in_fence
+        if latex:
+            if LATEX_VERBATIM.search(line):
+                in_verbatim = not in_verbatim
+                continue
+            if in_verbatim:
+                continue
+            probe = LATEX_COMMENT.split(line, 1)[0]
+        else:
+            if CODE_FENCE.match(line):
+                in_fence = not in_fence
+                continue
+            if in_fence:
+                continue
+            probe = line
+        if ALLOW_MARKER.search(line) or ALLOW_LINE.search(line):
             continue
-        if in_fence or ALLOW_MARKER.search(line) or ALLOW_LINE.search(line):
-            continue
-        lower = line.lower()
-        spans = [(m.start(), m.end()) for m in INLINE_CODE.finditer(line)]
+        lower = probe.lower()
+        spans = [(m.start(), m.end()) for m in INLINE_CODE.finditer(probe)]
+        if latex:
+            spans += [(m.start(), m.end()) for m in LATEX_TEXT_TT.finditer(probe)]
+            spans += [(m.start(), m.end()) for m in LATEX_VERB.finditer(probe)]
         for rule in rules:
             if blocked_by_home(rule, path):
                 continue
-            if matched_line((rule.pattern,), line, lower, spans, rule.covers + ALLOWLIST):
+            if matched_line((rule.pattern,), probe, lower, spans, rule.covers + ALLOWLIST):
                 hits.append(
                     Hit(path=path, line=line_no, rule=rule, text=line.strip())
                 )

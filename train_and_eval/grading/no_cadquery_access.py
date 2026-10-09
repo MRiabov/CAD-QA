@@ -1,4 +1,4 @@
-"""Closed-book LLM model evaluation reports."""
+"""LLM model evaluation reports for the no-access-to-CadQuery setting."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ HIDDEN_REQUEST_FIELDS = {
 }
 
 
-def run_closed_book_evaluation(
+def run_no_cadquery_access_evaluation(
     public_rows: list[dict[str, Any]],
     private_rows: list[dict[str, Any]],
     requests: list[dict[str, Any]],
@@ -27,9 +27,9 @@ def run_closed_book_evaluation(
     model_id: str,
     setting: str = "zero-shot",
 ) -> dict[str, Any]:
-    """Grade closed-book responses and audit benchmark-surface hygiene."""
+    """Grade responses and audit benchmark-surface hygiene for the no-access-to-CadQuery setting."""
 
-    request_audit = closed_book_request_audit(public_rows, requests)
+    request_audit = no_cadquery_access_request_audit(public_rows, requests)
     key_audit = public_private_audit(public_rows, private_rows)
     grade = grade_public_private(public_rows, private_rows, responses)
     metrics = {key: value for key, value in grade.items() if key != "graded"}
@@ -38,7 +38,7 @@ def run_closed_book_evaluation(
     return {
         "setting": setting,
         "model_id": model_id,
-        "closed_book": True,
+        "no_cadquery_access": True,
         "public_row_count": len(public_rows),
         "private_row_count": len(private_rows),
         "request_count": len(requests),
@@ -52,7 +52,7 @@ def run_closed_book_evaluation(
     }
 
 
-def closed_book_request_audit(
+def no_cadquery_access_request_audit(
     public_rows: list[dict[str, Any]],
     requests: list[dict[str, Any]],
 ) -> dict[str, Any]:

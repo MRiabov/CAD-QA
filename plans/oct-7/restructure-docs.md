@@ -374,7 +374,7 @@ Moves:
 - `cad_qa/` → `dataset/` (package rename; the `cadqa = cad_qa.cli:main` entrypoint and every
   `cad_qa.*` import rewired).
 - `cad_qa/evaluation/` → `train_and_eval/grading/` — it is eval logic (`grade`/`parse`/
-  `baselines`/`requests`/`tool_assisted`/`closed_book`), and the generation pipeline never
+  `baselines`/`requests`/`tool_assisted`/`no_cadquery_access`), and the generation pipeline never
   imports it.
 - `cad_qa/dataset/` → a clearer name than `dataset/dataset/` (it is the release/export stage):
   `dataset/release/`, or split `materialize/` + `release/`.

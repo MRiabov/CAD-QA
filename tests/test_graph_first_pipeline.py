@@ -60,7 +60,7 @@ from dataset.release.sft import (
 from dataset.release.split import assign_splits, split_audit, split_manifest
 from dataset.release.validate import validate_rows
 from train_and_eval.grading.baselines import run_baselines
-from train_and_eval.grading.closed_book import closed_book_request_audit, run_closed_book_evaluation
+from train_and_eval.grading.no_cadquery_access import no_cadquery_access_request_audit, run_no_cadquery_access_evaluation
 from train_and_eval.grading.grade import grade_public_private, grade_responses
 from train_and_eval.grading.parse import parse_answer
 from train_and_eval.grading.requests import few_shot_requests, oracle_responses, zero_shot_requests
@@ -12862,7 +12862,7 @@ def test_request_exports_render_coordinate_tuple_examples_and_oracle_answers() -
     assert oracle[0]["answer"] == "(4, 0, -2.5)"
 
 
-def test_closed_book_evaluation_audits_requests_and_grades_private_key(tmp_path: Path) -> None:
+def test_no_cadquery_access_evaluation_audits_requests_and_grades_private_key(tmp_path: Path) -> None:
     graph = build_graph(source_record_from_mapping({"source_id": "src_fixture", "normalized_code": SOURCE}))
     rows = [
         to_jsonable(materialize_row(graph, resolution))
@@ -12873,30 +12873,30 @@ def test_closed_book_evaluation_audits_requests_and_grades_private_key(tmp_path:
     private = private_rows(rows)
     requests = zero_shot_requests(rows)
     responses = [{"row_id": row["row_id"], "answer": key["gold_answer"]} for row, key in zip(public, private, strict=True)]
-    audit = closed_book_request_audit(public, requests)
+    audit = no_cadquery_access_request_audit(public, requests)
     assert audit["valid"]
-    result = run_closed_book_evaluation(public, private, requests, responses, model_id="fixture-model", setting="zero-shot")
+    result = run_no_cadquery_access_evaluation(public, private, requests, responses, model_id="fixture-model", setting="zero-shot")
     assert result["valid"]
-    assert result["closed_book"]
+    assert result["no_cadquery_access"]
     assert result["metrics"]["accuracy"] == 1.0
     assert result["response_coverage"] == 1.0
 
     leaked = [{**requests[0], "gold_answer": private[0]["gold_answer"]}, *requests[1:]]
-    leaked_report = run_closed_book_evaluation(public, private, leaked, responses, model_id="fixture-model")
+    leaked_report = run_no_cadquery_access_evaluation(public, private, leaked, responses, model_id="fixture-model")
     assert not leaked_report["valid"]
     assert leaked_report["request_audit"]["errors"][0]["error"] == "request_hidden_field_leak"
 
     dataset_dir = tmp_path / "dataset"
     request_path = tmp_path / "requests.jsonl"
     response_path = tmp_path / "responses.jsonl"
-    out_dir = tmp_path / "closed_book"
+    out_dir = tmp_path / "no_cadquery_access"
     write_public_private_artifacts(rows, dataset_dir)
     write_jsonl(request_path, requests)
     write_jsonl(response_path, responses)
     assert cli_main(
         [
             "evaluation",
-            "closed-book",
+            "no-cadquery-access",
             "--public",
             str(dataset_dir / "public.parquet"),
             "--private",
@@ -12911,7 +12911,7 @@ def test_closed_book_evaluation_audits_requests_and_grades_private_key(tmp_path:
             str(out_dir),
         ]
     ) == 0
-    assert (out_dir / "closed_book_report.json").exists()
+    assert (out_dir / "no_cadquery_access_report.json").exists()
     assert (out_dir / "prediction_metrics.json").exists()
 
 

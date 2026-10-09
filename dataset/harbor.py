@@ -292,7 +292,7 @@ def _write_verifier_package(tests_dir: Path) -> None:
 
 def _instruction(public: dict[str, Any]) -> str:
     return (
-        "# CAD-QA Closed-Book CAD Reasoning Task\n\n"
+        "# CAD-QA CAD Reasoning Task (no access to CadQuery)\n\n"
         f"{str(public['prompt']).rstrip()}\n\n"
         "You may use local computation while solving the task, including Python "
         "standard-library modules and installed third-party packages such as NumPy. "
@@ -307,13 +307,13 @@ def _instruction(public: dict[str, Any]) -> str:
 
 
 def _task_toml(public: dict[str, Any], *, verifier_timeout_sec: float) -> str:
-    tags = ["cad-qa", "closed-book", "cad-reasoning", str(public.get("answer_format", "answer"))]
+    tags = ["cad-qa", "no-cadquery-access", "cad-reasoning", str(public.get("answer_format", "answer"))]
     lines = [
         'version = "1.0"',
         "",
         "[task]",
         f"name = {_toml_value('cad-qa/' + _safe_registry_name(str(public['row_id'])))}",
-        f"description = {_toml_value('Closed-book CAD-QA reasoning task')}",
+        f"description = {_toml_value('CAD-QA reasoning task (no access to CadQuery)')}",
         "",
         "[metadata]",
         'author_name = "CAD-QA"',

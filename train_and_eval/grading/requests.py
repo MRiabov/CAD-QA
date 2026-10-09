@@ -1,4 +1,4 @@
-"""Closed-book LLM model request export."""
+"""LLM model request export for the no-access-to-CadQuery setting."""
 
 from __future__ import annotations
 

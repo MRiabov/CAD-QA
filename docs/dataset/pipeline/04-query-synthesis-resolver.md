@@ -103,8 +103,9 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_query_resolver_a
   publicly unambiguous, the resolver falls back to `candidate_label`
   (`dataset/query/resolver.py::resolve_query` with
   `source_ref_is_publicly_unambiguous`).
-- **Consequences:** Closed-book rows never require colon-delimited internal `entity_id`
-  answers; CadQuery selector-expression choices are derived from real measured candidates
+- **Consequences:** Rows answered with no access to CadQuery never require
+  colon-delimited internal `entity_id` answers; CadQuery selector-expression choices are
+  derived from real measured candidates
   (`answer_spec_with_selector_expression_choices`).
 
 ### D5 — Candidate labels are bounded to 7

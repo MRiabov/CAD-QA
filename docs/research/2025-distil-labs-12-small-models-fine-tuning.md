@@ -14,7 +14,7 @@ Base LLM Model for Fine-Tuning', *distil labs blog*, 10 December. Available at:
 ## What it is
 
 A controlled fine-tuning benchmark: 12 small open LLM models, 8 tasks (classification,
-information extraction, open-book QA, closed-book QA), each trained with the same recipe and
+information extraction, open-book QA, closed-book QA), each trained with the same recipe and <!-- dont-say: allow: external task taxonomy -->
 compared against the teacher that generated the synthetic data.
 
 ## Models

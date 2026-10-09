@@ -6,9 +6,10 @@
 
 ## One sentence
 
-Build a verifiable, closed-book benchmark for reasoning over procedural CAD programs
-(CadQuery), show that current language models fail it, show that a small open LLM model
-fine-tuned on graph-derived supervision improves substantially, and publish the result.
+Build a verifiable benchmark for reasoning over procedural CadQuery programs with no
+access to CadQuery, show that current language models fail it, show that a small open
+LLM model fine-tuned on graph-derived supervision improves substantially, and publish
+the result.
 
 ## Research questions
 
@@ -43,11 +44,11 @@ Secondary:
 
 ## Evaluation contract
 
-- **Primary setting — closed-book, no CAD kernel.** Input: CadQuery program plus a
+- **Primary setting — no access to CadQuery.** Input: CadQuery program plus a
   rule-rendered prompt. Output: a short structured answer, optionally with confidence.
   Score by exact structured-answer accuracy.
 - **Primary harness — `numpy`.** The LLM model may run Python in a sandbox with NumPy to
-  compute values. This is still closed-book: no CadQuery or other CAD kernel.
+  compute values. This still has no access to CadQuery.
 - **Other harnesses (P2).** `no_tools` (pure reasoning) and `cadquery` (full kernel access,
   a single correct tool call suffices) are upper bounds, not the primary score.
 - **Targets.** Cost-effective models should score ≤30% on the benchmark; the small trained
@@ -84,7 +85,7 @@ Secondary:
 - State-of-the-art CAD generation or reconstruction.
 - A public question DSL.
 - Beating frontier models on general 3D reasoning.
-- Kernel execution inside the primary (closed-book) harness.
+- Kernel execution inside the primary harness (which has no access to CadQuery).
 
 ## Open questions
 

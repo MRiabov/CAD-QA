@@ -22,7 +22,7 @@ from train_and_eval.experiment import (
     write_paper_results,
 )
 from train_and_eval.grading.baselines import run_baselines
-from train_and_eval.grading.closed_book import run_closed_book_evaluation
+from train_and_eval.grading.no_cadquery_access import run_no_cadquery_access_evaluation
 from train_and_eval.grading.grade import grade_public_private, grade_responses
 from train_and_eval.grading.requests import few_shot_requests, oracle_responses, zero_shot_requests
 from train_and_eval.grading.tool_assisted import run_tool_assisted_upper_bound
@@ -75,15 +75,15 @@ def _register_evaluation(subparsers: Any) -> None:
     grade_private.add_argument("--responses", type=Path, required=True)
     grade_private.add_argument("--out", type=Path, required=True)
     grade_private.set_defaults(func=_cmd_evaluation_grade_private)
-    closed_book = evaluation_sub.add_parser("closed-book")
-    closed_book.add_argument("--public", type=Path, required=True)
-    closed_book.add_argument("--private", type=Path, required=True)
-    closed_book.add_argument("--requests", type=Path, required=True)
-    closed_book.add_argument("--responses", type=Path, required=True)
-    closed_book.add_argument("--out", type=Path, required=True)
-    closed_book.add_argument("--model-id", required=True)
-    closed_book.add_argument("--setting", default="zero-shot")
-    closed_book.set_defaults(func=_cmd_evaluation_closed_book)
+    no_cadquery_access = evaluation_sub.add_parser("no-cadquery-access")
+    no_cadquery_access.add_argument("--public", type=Path, required=True)
+    no_cadquery_access.add_argument("--private", type=Path, required=True)
+    no_cadquery_access.add_argument("--requests", type=Path, required=True)
+    no_cadquery_access.add_argument("--responses", type=Path, required=True)
+    no_cadquery_access.add_argument("--out", type=Path, required=True)
+    no_cadquery_access.add_argument("--model-id", required=True)
+    no_cadquery_access.add_argument("--setting", default="zero-shot")
+    no_cadquery_access.set_defaults(func=_cmd_evaluation_no_cadquery_access)
     export_requests = evaluation_sub.add_parser("export-requests")
     export_requests.add_argument("--rows", type=Path, required=True)
     export_requests.add_argument("--out", type=Path, required=True)
@@ -167,12 +167,12 @@ def _cmd_evaluation_grade_private(args: argparse.Namespace) -> dict[str, Any]:
     return metrics
 
 
-def _cmd_evaluation_closed_book(args: argparse.Namespace) -> dict[str, Any]:
+def _cmd_evaluation_no_cadquery_access(args: argparse.Namespace) -> dict[str, Any]:
     public_rows = read_records(args.public)
     private_rows = read_records(args.private)
     requests = read_records(args.requests)
     responses = read_records(args.responses)
-    result = run_closed_book_evaluation(
+    result = run_no_cadquery_access_evaluation(
         public_rows,
         private_rows,
         requests,
@@ -182,7 +182,7 @@ def _cmd_evaluation_closed_book(args: argparse.Namespace) -> dict[str, Any]:
     )
     args.out.mkdir(parents=True, exist_ok=True)
     report = {key: value for key, value in result.items() if key != "graded"}
-    write_json(args.out / "closed_book_report.json", report)
+    write_json(args.out / "no_cadquery_access_report.json", report)
     write_json(args.out / "prediction_metrics.json", result["metrics"])
     write_jsonl(args.out / "graded_responses.jsonl", result["graded"])
     return report

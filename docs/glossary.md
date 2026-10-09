@@ -374,6 +374,8 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | hop count (dataset, train_and_eval) | Reasoning hop count | unqualified |
 | difficulty bucket (dataset, train_and_eval, tools) | Difficulty tier | "bucket" imprecise |
 | harness mode (dataset, train_and_eval, tools) | LLM harness mode | unqualified |
+| closed-book | no_tools LLM harness / no access to CadQuery | overloaded: "no compute tools" vs "no access to CadQuery" |
+| open-book | having access to CadQuery | bare antonym; name the access |
 | verifier (bare) | Query verifier | unqualified |
 | quarantine | Non-release-ready CAD-QA dataset row | imprecise |
 | rows artifact | Dataset file | "artifact" is vague; it is the dataset file |
@@ -398,5 +400,5 @@ evidence tier · prompt template · clue map · release-ready · split / split g
 geometry-critical · geometry-hop-positive · shortcut resistance · stop gate · candidate
 label · source variable · path point / path segment / edge endpoint · tool declaration ·
 native tool-call format · curriculum · compaction · held-out row · tool-valid · baseline ·
-grader · closed-book · harness (the runner, distinct from **LLM harness mode**) · Harbor task ·
+grader · harness (the runner, distinct from **LLM harness mode**) · Harbor task ·
 slice (rc10 / release10k / clean-100) · tool-assisted upper bound.
