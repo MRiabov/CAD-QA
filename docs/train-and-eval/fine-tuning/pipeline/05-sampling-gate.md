@@ -52,7 +52,9 @@ uv run pytest train_and_eval/eval/test_tool_calls.py -k reward -q
 - **OD-1.** Gate the **full train split** (≈8k rollouts at `k = 8`, minutes on the small test GPU;
   recommended) or a **stratified sample** of `N` per hop/bucket?
 - **OD-2.** RL-eligible band: **~0.25–0.75** (max reward variance; recommended) or any `0 < r < k`?
-- **OD-3.** Confirm the gate temperature `T ≈ 1.0` (rollout), separate from the 0.1 accuracy runs?
+- **OD-3.** Confirm the gate temperature `T ≈ 1.0` (rollout), separate from the 0.1 accuracy runs.
+  **Provisional** — verify against the RL exploration/sampling literature (research refs [21]–[23], [25])
+  as a **P2** task; it only sets the reachability estimate, not any reported accuracy.
 - **OD-4.** Is the gate **binding** (no RL unless a `learnable` tier) or **advisory** (record it, proceed to
   RFT regardless)?
 - **OD-5.** RFT vs GRPO at this scale — decided by the gate, not on paper (`../system.md` Q3).

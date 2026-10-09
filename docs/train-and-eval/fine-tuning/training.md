@@ -369,6 +369,7 @@ justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
 | Cookbook LoRA recipe (`r=16`, `alpha=32`, `lr=2e-4`, cookbook epochs) on bf16 | **P0** | baseline that does not forget; matches Liquid (§5.4) |
 | Merge + GGUF export scripted from the cookbook | **P0** | the current repo has no merge step (FT-D10/TA-D2) |
 | DPO / GRPO second training stage | **P2** | FT-D8 ordering, superseded by FT-D13: run GRPO only after the Training stage 2 pass@k gate shows a reachable tier (`system.md`) |
+| Gate rollout temperature (`T ≈ 1.0`) validated from research | **P2** | `05-sampling-gate.md` OD-3; sets only the reachability estimate — confirm against the RL exploration/sampling literature (research refs [21]–[23], [25]) |
 | NB-LoRA / EWC / replay-buffer forgetting control | **P2** | only if the evaluation datasets show real regression |
 | Multi-base sweep (Qwen3.5-2B, LFM2.5-2.6B, Llama-3.2-3B) | **P2** | hold recipe fixed; adopting another base leaves the cookbook |
 
