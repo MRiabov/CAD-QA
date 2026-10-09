@@ -125,19 +125,19 @@ tests around `materialize`/`validate`. The one-command check is
 
 ## Open questions
 
-- **Doc/code mismatch.** `specs/schema.md::DatasetRow` omits `source_path`, `source_hash`,
+- **Q1.** **Doc/code mismatch.** `specs/schema.md::DatasetRow` omits `source_path`, `source_hash`,
   `source_metadata`, `split_group`, `prompt_version`, `prompt_template_id`, and `clue_map`,
   all of which the code emits. The code is authoritative.
-- **Re-resolution on materialize.** `dataset/cli.py::_cmd_dataset_materialize` reads each
+- **Q2.** **Re-resolution on materialize.** `dataset/cli.py::_cmd_dataset_materialize` reads each
   record's `query` and re-runs `resolve_query`, ignoring the `resolution` already stored in
   the query record. Materialization is therefore not a pure function of the query artifact;
   it recomputes from the graph. Whether that is intended (to pick up graph changes) or an
   oversight is `[unknown]`; the smoke experiment path instead calls `materialize_row`
   directly with the stored resolution.
-- **Static-hop heuristic.** The `property_equals` + temporal-relation rule for
+- **Q3.** **Static-hop heuristic.** The `property_equals` + temporal-relation rule for
   `static_hop_count` is a heuristic; whether it matches the spec's intended static/geometry
   split for every family is `[unknown]`.
-- **Boolean `answer_format`.** The schema lists `boolean`, but the materializer rejects the
+- **Q4.** **Boolean `answer_format`.** The schema lists `boolean`, but the materializer rejects the
   `json` format as unsupported (`dataset/release/validate.py::validate_rows`); boolean row
   coverage is not audited here.
 

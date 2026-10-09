@@ -158,7 +158,7 @@ Local decisions for the `dataset_generation` unit, in ADR format
 
 ## Open questions
 
-- DD-14 — **Terminology ratchet.** Several load-bearing dataset terms are absent from
+- **Q1.** DD-14 — **Terminology ratchet.** Several load-bearing dataset terms are absent from
   `../glossary.md` (task family, prompt family, answer spec/contract, sampled parameters,
   evidence tier, prompt template, clue map, release-ready, split group, geometry-critical,
   shortcut resistance). They are used here because the code and existing specs use them;

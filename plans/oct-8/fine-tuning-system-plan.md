@@ -197,7 +197,7 @@ schema or the converter beyond what the mix and the canary need.
 | Field | Type | Notes |
 |---|---|---|
 | `id` | `str` | stable, content-hashed |
-| `dataset_role` | `DatasetRole` (StrEnum) | `emit_our_tool_call_format`, `run_the_tool_call_loop`, `imitate_general_reasoning_style`, `preserve_prior_capabilities`, `expose_general_python_code`, `expose_cadquery_programs`, `learn_the_cadqa_task` |
+| `dataset_role` | `DatasetRole` (StrEnum) | `emit_our_tool_call_format`, `run_the_tool_call_loop`, `preserve_general_math_and_code_reasoning`, `preserve_prior_capabilities`, `expose_general_python_code`, `expose_cadquery_programs`, `learn_the_cadqa_task` |
 | `messages` | `list[ChatMessage]` | the conversation; `ChatMessage{role, content, tool_calls?}` maps 1:1 to Liquid's SFT JSONL |
 | `source_id` | `str` | HF repo or internal artifact |
 | `source_revision` | `str` | **commit hash**, not a branch/config name |

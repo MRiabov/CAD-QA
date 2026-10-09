@@ -123,12 +123,12 @@ LLM model input; `private` carries `gold_answer`, `query_program`, `candidate_tr
 
 ## Open questions
 
-- **Doc/code schema drift.** `specs/schema.md::TraceRecord` omits `selector_results`,
+- **Q1.** **Doc/code schema drift.** `specs/schema.md::TraceRecord` omits `selector_results`,
   while `dataset/trace.py::TraceRecord` carries it. `specs/schema.md::DatasetRow` omits
   `source_path`, `source_hash`, `source_metadata`, `split_group`, `prompt_version`,
   `prompt_template_id`, and `clue_map`. The code is authoritative here; `specs/` is being
   superseded (`plans/oct-7/restructure-docs.md`).
-- Whether a terse, runnable WHAT layer per pipeline is needed in addition to these step
+- **Q2.** Whether a terse, runnable WHAT layer per pipeline is needed in addition to these step
   docs is open (D14 in the restructure plan).
 
 ## Resolved questions

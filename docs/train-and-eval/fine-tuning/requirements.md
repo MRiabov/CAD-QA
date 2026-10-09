@@ -62,13 +62,13 @@ end-to-end result on an immutable held-out split.
 
 ## Open questions
 
-- Should the untracked environment pins be moved into the repo (for example
+- **Q1.** Should the untracked environment pins be moved into the repo (for example
   `train_and_eval/requirements/`) so the environment is reproducible?
-- Should there be a single tracked environment for the whole fine-tuning surface, or separate
+- **Q2.** Should there be a single tracked environment for the whole fine-tuning surface, or separate
   SFT and serving environments (the current split is unsloth-stack vs vLLM-stack)?
-- Is `docs/_archive/rl_runbook.md` (Unsloth Studio route) still the intended production path, or is
+- **Q3.** Is `docs/_archive/rl_runbook.md` (Unsloth Studio route) still the intended production path, or is
   `train_and_eval/` the only path? `[unknown]`.
-- Should Phase 3 swap the base LLM model? External evidence
+- **Q4.** Should Phase 3 swap the base LLM model? External evidence
   (`../prior-art.md`, "External evidence on fine-tuning small LLM models") says base rank does
   not predict fine-tuned rank and family choice matters less than fine-tuning, so the recorded
   "effort without gain" is more likely a recipe/data problem. Decide whether to fix the recipe

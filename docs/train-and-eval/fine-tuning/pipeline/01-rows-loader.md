@@ -76,10 +76,10 @@ still verifies the loader logic but not the real schema.
 
 ## Open questions
 
-- **Split filtering is optimistic.** A row with `split=None` passes every split filter
+- **Q1.** **Split filtering is optimistic.** A row with `split=None` passes every split filter
   (`rec.get("split") not in (None, split)`). `[unknown]` whether any artifact row has a null
   split; if so, held-out leakage is possible.
-- **`boolean` answer format is unhandled.** `train_and_eval/rows_loader.py::RLRawRow` and
+- **Q2.** **`boolean` answer format is unhandled.** `train_and_eval/rows_loader.py::RLRawRow` and
   `train_and_eval/tool_calls.py::tool_call_prompt_suffix` route through
   `format_to_tool`, which has no `boolean` entry; the glossary lists `boolean` as an answer
   format. A `boolean` row would raise at load or eval time. See

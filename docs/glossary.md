@@ -347,7 +347,7 @@ Full CadQuery kernel access; one correct call suffices.
 
 The purpose a dataset serves: what a training dataset teaches, or how an evaluation dataset's
 score is read. `In code:` `DatasetRole`. Training dataset roles: `emit_our_tool_call_format`,
-`run_the_tool_call_loop`, `imitate_general_reasoning_style`, `preserve_prior_capabilities`,
+`run_the_tool_call_loop`, `preserve_general_math_and_code_reasoning`, `preserve_prior_capabilities`,
 `expose_general_python_code`, `expose_cadquery_programs`, `learn_the_cadqa_task`. Evaluation
 dataset roles are not yet named.
 
@@ -396,12 +396,13 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | mix-full | Mixed training dataset | a blend, not a dataset; name it `mixed_dataset_<composition>` |
 | format_tool | emit_our_tool_call_format | old garbled Dataset role name |
 | agent_trace | run_the_tool_call_loop | old garbled Dataset role name |
-| reasoning_distill | imitate_general_reasoning_style | old name; it is general, not CAD, reasoning |
+| reasoning_distill | preserve_general_math_and_code_reasoning | old name; it is general, not CAD, reasoning |
 | rehearsal | preserve_prior_capabilities | opaque; name the function |
 | domain_code | expose_general_python_code | "domain" misleads; it is general Python |
 | domain_3d | expose_cadquery_programs | "domain"/"prime" jargon |
 | cadqa_hop | learn_the_cadqa_task | old garbled Dataset role name |
 | eval_canary | evaluation dataset role | old name; evaluation roles are not yet named |
+| imitate_general_reasoning_style | preserve_general_math_and_code_reasoning | earlier name; a preservation role, not style imitation |
 | release tier (dataset, train_and_eval, tools) | Dataset release tier | garbled; which release? |
 | snapshot | Shape snapshot | opaque |
 | CADEvolve | (name the corpus in prose) | proper noun, not a term |

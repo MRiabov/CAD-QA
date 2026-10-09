@@ -87,17 +87,17 @@ evaluate).
 
 ## Open questions
 
-- **Is the prompt masked?** `build_dataset` passes a single `text` column to `SFTTrainer`;
+- **Q1.** **Is the prompt masked?** `build_dataset` passes a single `text` column to `SFTTrainer`;
   no masking or completion-only collator is configured. If the prompt is not masked, the
   LLM model is trained to reproduce the question, which is consistent with the observed
   over-generation and the earlier GRPO entropy collapse. This is a P0 correctness question.
-- **QLoRA vs 16-bit LoRA.** Code says 4-bit; the handoff narrative says 16-bit produced the
+- **Q2.** **QLoRA vs 16-bit LoRA.** Code says 4-bit; the handoff narrative says 16-bit produced the
   working run. Reconcile or re-run and record.
-- **Adapter merge is missing.** No code merges the adapter into the base LLM model; the eval
+- **Q3.** **Adapter merge is missing.** No code merges the adapter into the base LLM model; the eval
   expects a merged bf16 directory. Script it or document the manual step.
-- **No held-out gate in the script.** `sft_train.py` does not evaluate; `[unknown]` how the
+- **Q4.** **No held-out gate in the script.** `sft_train.py` does not evaluate; `[unknown]` how the
   "improves over base" requirement is enforced.
-- **Over-generation.** Historical eval completions over-generated; GRPO collapsed to 2-token
+- **Q5.** **Over-generation.** Historical eval completions over-generated; GRPO collapsed to 2-token
   completions with near-zero entropy (`docs/development-context.md`). The SFT signal is
   suspected to be imitation-heavy, not reasoning-preserving.
 

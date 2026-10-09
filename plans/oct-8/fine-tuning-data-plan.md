@@ -46,7 +46,7 @@ Phase 3 of `../../docs/development-plan.md`.
 
 Every training example is tagged with exactly one **dataset role** (glossary). Roles exist because
 they are mixed at fixed ratios and evaluated separately. The external roles
-(`emit_our_tool_call_format`, `run_the_tool_call_loop`, `imitate_general_reasoning_style`,
+(`emit_our_tool_call_format`, `run_the_tool_call_loop`, `preserve_general_math_and_code_reasoning`,
 `preserve_prior_capabilities`, `expose_general_python_code`, `expose_cadquery_programs`) are
 **support**: a tool-schema cold-start, capability preservation, and canaries. They are not the
 scaling lever — the task environment + scorer is (`fine-tuning-system-plan.md` §0) — so collect them
@@ -56,7 +56,7 @@ selectively, not blindly.
 |---|---|---|---|
 | `emit_our_tool_call_format` | emit our `submit_*` tool calls in the LLM model's native format | external | P0 |
 | `run_the_tool_call_loop` | multi-turn tool loop (call → result → call → answer), incl. `run_code` round-trip | external | P0/P1 |
-| `imitate_general_reasoning_style` | general step-by-step reasoning style (long CoT, self-check) | external | P1 |
+| `preserve_general_math_and_code_reasoning` | general step-by-step reasoning style (long CoT, self-check) | external | P1 |
 | `preserve_prior_capabilities` | replay general instructions so prior ability is not forgotten | external | P0 |
 | `expose_general_python_code` | general Python / coding exposure | external | P1/P2 |
 | `expose_cadquery_programs` | CadQuery / 3D representation exposure so the base LLM model is not CAD-blind | external | P1/P2 |
@@ -121,7 +121,7 @@ alone is not disqualifying — `xLAM/APIGen` is still the canonical reference an
 | `spitfire4794/Fable-5-traces` | 2026 | 4,665 | Pi sessions | AGPL-3.0 | shorter-list; same family |
 | `cfahlgren1/Fable-5-traces` | 2026 | 115 | raw logs | AGPL-3.0 | **Reject** for training |
 
-### 2.3 General reasoning style (`imitate_general_reasoning_style`)
+### 2.3 General reasoning style (`preserve_general_math_and_code_reasoning`)
 
 | Dataset | Date | Size | Shape | License | Adopt/reject |
 |---|---|---|---|---|---|
@@ -199,7 +199,7 @@ found to be clean and non-overlapping.
 | Mix | Role weights | Purpose |
 |---|---|---|
 | `mixed_dataset_our_tool_format_and_replay` (canary) | 70% `emit_our_tool_call_format`, 30% `preserve_prior_capabilities` | test H1 alone, cheapest signal |
-| `mixed_dataset_full_cadqa_training` (primary) | 35% `emit_our_tool_call_format` + `run_the_tool_call_loop`, 25% `imitate_general_reasoning_style`, 25% `learn_the_cadqa_task`, 15% `preserve_prior_capabilities` | test H2, the thesis number |
+| `mixed_dataset_full_cadqa_training` (primary) | 35% `emit_our_tool_call_format` + `run_the_tool_call_loop`, 25% `preserve_general_math_and_code_reasoning`, 25% `learn_the_cadqa_task`, 15% `preserve_prior_capabilities` | test H2, the thesis number |
 
 Rationale and tradeoffs:
 
@@ -227,7 +227,7 @@ teacher API calls and must cover every Answer format × hop, so it sets the budg
 clock. **≥1,000 verified traces** is the target; the current ~300 is too few — `json`/`number`
 coverage was 0.
 
-| Stage | Total | `emit_our_tool_call_format` + `run_the_tool_call_loop` | `imitate_general_reasoning_style` | `learn_the_cadqa_task` | `preserve_prior_capabilities` |
+| Stage | Total | `emit_our_tool_call_format` + `run_the_tool_call_loop` | `preserve_general_math_and_code_reasoning` | `learn_the_cadqa_task` | `preserve_prior_capabilities` |
 |---|---|---|---|---|---|
 | Canary (`mixed_dataset_our_tool_format_and_replay`) | 1,000–2,000 | 700–1,400 | — | — | 300–600 |
 | Primary (`mixed_dataset_full_cadqa_training`) | 10,000 (5k–20k) | 3,500 | 2,500 | 1,000–2,500 | 1,500 |
@@ -254,13 +254,13 @@ the mechanics (epochs, mixing implementation).
   baseline is measured.
 - **Format before reasoning (staged option, P1).** If the mixed baseline underperforms on format,
   stage it: (1) `mixed_dataset_our_tool_format_and_replay` to lock the tool format, (2) `mixed_dataset_full_cadqa_training` to add
-  `imitate_general_reasoning_style` + `learn_the_cadqa_task`. The staged option tests the H1→H2 ordering directly.
+  `preserve_general_math_and_code_reasoning` + `learn_the_cadqa_task`. The staged option tests the H1→H2 ordering directly.
 - **Difficulty-aligned rows.** Order or interleave the `learn_the_cadqa_task` rows by Reasoning hop count
   (the `0→1→2→3→5` ladder in `../../docs/development-plan.md` Phase 3 and the teacher quotas in
   FT-02-D1). Do not front-load the hard slice.
 - **`preserve_prior_capabilities` is interleaved, not appended.** Keep the `preserve_prior_capabilities` share in every stage, so
   general ability is anchored throughout, not restored at the end.
-- **Cap `imitate_general_reasoning_style` early.** Per prior-art ref [9], do not let teacher reasoning dominate
+- **Cap `preserve_general_math_and_code_reasoning` early.** Per prior-art ref [9], do not let teacher reasoning dominate
   before format and the task itself are established.
 - **Domain-first, then task (owner-proposed): CadQuery extensively, then progressively harder
   CAD-QA.** The intent is right — domain adaptation before task SFT, easy hops before hard ones —
@@ -376,6 +376,9 @@ only the dataset:
   used in the published thesis, and not only as an ablation — the work is non-commercial research and
   the source data is open. Permissive mixes remain the default; record the source LLM model and
   license per sample so the mix can be isolated if a venue objects.
+- **`preserve_general_math_and_code_reasoning` earns a place.** It is a capability-preservation role
+  (anti-collapse of general reasoning), not an ablation; content is general software / math /
+  engineering tasks. It complements `preserve_prior_capabilities` (instruction-following).
 
 **Still to make:**
 
@@ -397,8 +400,6 @@ only the dataset:
 - How much of the Fable/Opus signal survives filtering and dedup? `[unknown]`.
 - Does the external `emit_our_tool_call_format` dataset teach the exact `submit_*` tool names/args,
   or only generic function calling? If only generic, `learn_the_cadqa_task` must carry the mapping.
-- Does `imitate_general_reasoning_style` earn a place in the default mix, or is it an ablation?
-  FT-D15 treats external reasoning as support, not the lever. `[open]`
 - What is the source of `preserve_prior_capabilities` (the anti-forgetting role)? Candidates in
   §2.4; pick one. `[open]`
 - Should evaluation dataset roles split into `target` / `canary`? `[open]`

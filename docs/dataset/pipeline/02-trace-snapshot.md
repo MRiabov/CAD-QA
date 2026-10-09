@@ -115,16 +115,16 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_trace_worker_exe
 
 ## Open questions
 
-- **Untyped CadQuery program operation trace internals.**
+- **Q1.** **Untyped CadQuery program operation trace internals.**
   `dataset/trace.py::TraceRecord` stores `snapshots`, `operation_effects`, and
   `selector_results` as `list[dict[str, Any]]`, so what the record holds is only
   discoverable from the producer code. Typed records would document the contract the record
   is meant to express.
-- **Doc/code mismatch.** `specs/schema.md::TraceRecord` lists only `source_id`,
+- **Q2.** **Doc/code mismatch.** `specs/schema.md::TraceRecord` lists only `source_id`,
   `execution_status`, `snapshots`, `operation_effects`, `environment`, `failure_reason`,
   while `dataset/trace.py::TraceRecord` also carries `selector_results`. The code is
   authoritative; the spec is stale.
-- **Skipped loop bodies.** The extractor (`extract.py`) and the tracer use different
+- **Q3.** **Skipped loop bodies.** The extractor (`extract.py`) and the tracer use different
   unrolling rules (extractor caps iterations at 64, tracer unrolls any non-break loop).
   Cross-stage consistency for complex loops is `[unknown]`.
 

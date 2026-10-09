@@ -218,11 +218,11 @@ metrics must be read from `cadqa_grade.json`.
 
 ## Open questions
 
-- Does the recorded Harbor run for big LLM models preserve raw trajectories anywhere? Not
+- **Q1.** Does the recorded Harbor run for big LLM models preserve raw trajectories anywhere? Not
   found in-repo; needed to re-verify the 65/63/59 rc10 clean-100 numbers.
-- Where does the rows IO contract live once `dataset/pipeline/00-overview.md`
+- **Q2.** Where does the rows IO contract live once `dataset/pipeline/00-overview.md`
   exists, and will it rename any public/private field used here?
-- Should the local harness import the Harbor grader (or the reverse) so the two
+- **Q3.** Should the local harness import the Harbor grader (or the reverse) so the two
   exact-match paths cannot drift? Currently they are independent implementations.
 
 ## Resolved questions

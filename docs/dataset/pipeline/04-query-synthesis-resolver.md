@@ -130,16 +130,16 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_query_resolver_a
 
 ## Open questions
 
-- **0/1-hop synthesis gap (documented).** `synthesis.py` floors every synthesized row at
+- **Q1.** **0/1-hop synthesis gap (documented).** `synthesis.py` floors every synthesized row at
   hop≥2, so no release 0-hop or 1-hop families exist; `difficulty_for_hops`
   (`dataset/query/difficulty.py`) is effectively dead on the synthesis path, which sets
   `difficulty` directly. The implementation status log records this as open work
   (`docs/_archive/implementation_status.md#open-work`, 2026-08-09). A clean 0→1→2→3 curriculum is not
   generatable end-to-end today.
-- **Doc/code mismatch.** `specs/schema.md::QueryProgram` omits `answer_spec` and
+- **Q2.** **Doc/code mismatch.** `specs/schema.md::QueryProgram` omits `answer_spec` and
   `aggregation_rank`, and `specs/benchmark-task-spec.md#query-requirements` describes
   aggregation only in prose. The code is authoritative.
-- **`_void_region_volume_queries` special case.** This one family is hand-built rather than
+- **Q3.** **`_void_region_volume_queries` special case.** This one family is hand-built rather than
   produced by a family spec; whether it should be a manifest family is `[unknown]`.
 
 ## Resolved questions

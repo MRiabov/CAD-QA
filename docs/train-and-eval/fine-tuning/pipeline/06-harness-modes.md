@@ -91,24 +91,24 @@ rtk uv run python train_and_eval/eval/eval_bench.py \
 
 ## Open questions
 
-- **`cadquery` mode is unimplemented.** `tools_for_mode` raises `NotImplementedError`; no
+- **Q1.** **`cadquery` mode is unimplemented.** `tools_for_mode` raises `NotImplementedError`; no
   CadQuery execution path exists. The PRD lists it as a P2 upper bound.
-- **Sandbox isolation is unproven.** The threat considered is accidental misuse; there is no
+- **Q2.** **Sandbox isolation is unproven.** The threat considered is accidental misuse; there is no
   namespace/seccomp isolation, and the sandbox tests assert blocks that a determined actor
   could bypass. Whether "no network / no files / timeout" is sufficient for the claim is
   `[unknown]`.
-- **`TOOL_CALL_CLOSE_ID = 49` is a hardcoded single token** "verified on gemma-4-E2B". Any
+- **Q3.** **`TOOL_CALL_CLOSE_ID = 49` is a hardcoded single token** "verified on gemma-4-E2B". Any
   tokenizer change silently breaks the loop. `[unknown]` if it is asserted anywhere.
-- **Grader divergence from the reward.** Eval grades with `tool_call_matches`; GRPO grades
+- **Q4.** **Grader divergence from the reward.** Eval grades with `tool_call_matches`; GRPO grades
   with `reward_cadqa` (which has its own fallback parser). The two must agree for eval to
   measure what training optimized. See [05-grpo.md](05-grpo.md#open-questions).
-- **Stale launcher.** `train_and_eval/eval/run_eval_heldout.sh` passes `--adapter`, which
+- **Q5.** **Stale launcher.** `train_and_eval/eval/run_eval_heldout.sh` passes `--adapter`, which
   `eval_bench.py` does not accept (it takes `--model`); the script is stale.
-- **No per-format / per-hop report.** The script prints only overall accuracy and
+- **Q6.** **No per-format / per-hop report.** The script prints only overall accuracy and
   tool-valid; the PRD's metrics (accuracy by hop, format, relation family, measurement scope)
   are not produced here.
-- **`MAX_NEW` is defined and unused**; only `ROUND_MAX_NEW` is applied.
-- **Held-out sampling.** Rows are drawn by `rng.sample` after excluding agent training trace
+- **Q7.** **`MAX_NEW` is defined and unused**; only `ROUND_MAX_NEW` is applied.
+- **Q8.** **Held-out sampling.** Rows are drawn by `rng.sample` after excluding agent training trace
   `row_id`s; the exclusion list defaults to a box path (`sft_texts.jsonl`). `[unknown]` if a
   immutable held-out split is enforced independently of the agent training trace set.
 

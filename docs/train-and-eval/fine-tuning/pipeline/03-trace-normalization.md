@@ -82,12 +82,12 @@ The command actually run on 2026-10-07 for the primitives was
 
 ## Open questions
 
-- **Prompt masking.** Nothing in `normalize_traces.py` marks the user/system prefix as
+- **Q1.** **Prompt masking.** Nothing in `normalize_traces.py` marks the user/system prefix as
   masked; the output is one flat `text` string. Whether SFT masks the prompt is unknown and
   is tracked as the SFT step's primary open question.
-- **Sequence-budget policy.** `--max-len` defaults to 64000, but SFT trains at `SEQ=6144`;
+- **Q2.** **Sequence-budget policy.** `--max-len` defaults to 64000, but SFT trains at `SEQ=6144`;
   whether a normalized text above 6144 is ever intended is `[unknown]`.
-- **Legacy block extraction.** `_args_from_trace` picks the last parseable JSON object; with
+- **Q3.** **Legacy block extraction.** `_args_from_trace` picks the last parseable JSON object; with
   interleaved `run_code` envelopes the "final" call may not be the answer call.
   `[unknown]` whether legacy (no `steps`) traces still occur.
 

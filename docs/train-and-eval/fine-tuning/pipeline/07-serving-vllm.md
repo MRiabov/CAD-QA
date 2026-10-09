@@ -68,21 +68,21 @@ A parity check (same prompts, transformers vs vLLM, compare token logprobs or ar
 
 ## Open questions
 
-- **Parity is unverified.** There is no transformers-vs-vLLM comparison. If the `k_norm`
+- **Q1.** **Parity is unverified.** There is no transformers-vs-vLLM comparison. If the `k_norm`
   duplication or prefix rename is wrong, every vLLM number is contaminated. P0.
-- **`bench_vllm.py` is stale and contradicts the handoff.** It loads the *base* LLM model from a
+- **Q2.** **`bench_vllm.py` is stale and contradicts the handoff.** It loads the *base* LLM model from a
   hardcoded cache glob (`google/gemma-4-E2B-it`) and calls `llm.generate` with **raw string**
   prompts; `docs/_archive/agent_handoff_2026-08-09.md` A4 warns that raw prompts produce
   EOS-immediately / fake numbers and that `llm.chat(messages)` must be used. As written, the
   smoke number is meaningless.
-- **Hardcoded `unique_kv_layers=15`.** Derived from an assumed `num_kv_shared_layers=20`; not
+- **Q3.** **Hardcoded `unique_kv_layers=15`.** Derived from an assumed `num_kv_shared_layers=20`; not
   read from the checkpoint config. `[unknown]` how a config change would be detected.
-- **Single-shard assumption.** The converter copies non-safetensors files and processes only
+- **Q4.** **Single-shard assumption.** The converter copies non-safetensors files and processes only
   `model.safetensors`; a sharded checkpoint would not be handled.
-- **Environment pins disagree.** The untracked pins under `runs/gemma_bench/rl/env/` list
+- **Q5.** **Environment pins disagree.** The untracked pins under `runs/gemma_bench/rl/env/` list
   `vllm==0.15.1`/`0.17.0` and `transformers==4.56.2`, while the narrative docs cite
   vLLM 0.26 / transformers 5.14.1. Which stack actually served the checkpoint is `[unknown]`.
-- **Pins are not in the repo.** `runs/` is gitignored (`.gitignore`), so the requirement
+- **Q6.** **Pins are not in the repo.** `runs/` is gitignored (`.gitignore`), so the requirement
   files that define the environment are not tracked; see
   [../requirements.md](../requirements.md#environment).
 

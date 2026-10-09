@@ -120,24 +120,24 @@ coverage gate should exist.
 
 ## Open questions
 
-- **`json` and `number` teacher coverage is zero.** Per
+- **Q1.** **`json` and `number` teacher coverage is zero.** Per
   `docs/_archive/agent_handoff_2026-08-09.md` A3, `json` was 0/113 and `number` 0/71. The sampler can
   emit traces in exactly one format per row, so the student cannot learn a format with no
   teacher success. This is the P0 defect this stage carries.
-- **Teacher success is temperature-sensitive.** Default `temperature=1.0`
+- **Q2.** **Teacher success is temperature-sensitive.** Default `temperature=1.0`
   (`train_and_eval/teacher.py::TeacherClient.__init__`) yields ~23% success; the handoff
   recommends 0.3–0.6. There is no default that encodes that recommendation. `[unknown]`
   whether the recommendation was adopted.
-- **`compact_trace` is not a declared tool.** The compactor is prompted to emit a
+- **Q3.** **`compact_trace` is not a declared tool.** The compactor is prompted to emit a
   `compact_trace` JSON envelope (`_COMPACT_PROMPT`) without that tool being declared to the
   provider. `[unknown]` whether native tool-call enforcement was intended.
-- **`_last_tool_call_block` uses a greedy `\{.*\}` regex**
+- **Q4.** **`_last_tool_call_block` uses a greedy `\{.*\}` regex**
   (`train_and_eval/train/rejection_sample.py::_last_tool_call_block`); with multiple JSON
   blocks it may splice more than the answer call. `[unknown]` impact.
-- **Resume semantics.** The sampler opens the output in append mode and re-reads it as
+- **Q5.** **Resume semantics.** The sampler opens the output in append mode and re-reads it as
   "existing traces" (`Sampler.__init__`); `[unknown]` whether duplicate `row_id`s across a
   resume are intended.
-- **Box copies are stale.** `docs/_archive/agent_handoff_2026-08-09.md` states `/root/cadqa-bench/`
+- **Q6.** **Box copies are stale.** `docs/_archive/agent_handoff_2026-08-09.md` states `/root/cadqa-bench/`
   must be synced from `train_and_eval/` before running; there is no sync script in the repo.
 
 ## Resolved questions

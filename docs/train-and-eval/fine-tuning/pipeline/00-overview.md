@@ -159,20 +159,20 @@ how each stage uses it; they do not redefine it.
 
 ## Open questions
 
-- **Base LLM model identifier is inconsistent.** Code loads `unsloth/gemma-4-E2B-it`
+- **Q1.** **Base LLM model identifier is inconsistent.** Code loads `unsloth/gemma-4-E2B-it`
   (`train_and_eval/train/sft_train.py::main`,
   `train_and_eval/train/grpo_train.py`), while the GRPO docstring says
   `google/gemma-4-E2B-it`. Which repo is canonical? `[unknown]`.
-- **Dataset config is inconsistent across consumers.** 02 samples HF `v3_curriculum`
+- **Q2.** **Dataset config is inconsistent across consumers.** 02 samples HF `v3_curriculum`
   (`train_and_eval/train/rejection_sample.py::Sampler.run`), 05 defaults to `v2_curriculum`
   (`train_and_eval/train/grpo_train.py`), 06 defaults to `v3_curriculum`
   (`train_and_eval/eval/eval_bench.py::main`). v2 has no 1-hop; v3 does. See the GRPO doc.
-- **Hop-curriculum mismatch.** The teacher quotas and v3 include hop `1`
+- **Q3.** **Hop-curriculum mismatch.** The teacher quotas and v3 include hop `1`
   (`train_and_eval/train/rejection_sample.py::DEFAULT_QUOTAS`), but the GRPO curriculum
   shares omit hop `1` and include hop `4`
   (`train_and_eval/train/grpo_train.py::HOP_SHARES`). The stated "0→1→2→3→5 ladder" is not
   what the GRPO code schedules.
-- **No code produces `merged model`.** Name the stage, script it, or mark it out-of-scope.
+- **Q4.** **No code produces `merged model`.** Name the stage, script it, or mark it out-of-scope.
 
 ## Resolved questions
 

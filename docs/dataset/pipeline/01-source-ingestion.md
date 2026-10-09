@@ -86,10 +86,10 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_source_loading`,
 
 ## Open questions
 
-- Whether `_looks_like_cadquery_source` (requires `cadquery` or `cq.` in the text) drops
+- **Q1.** Whether `_looks_like_cadquery_source` (requires `cadquery` or `cq.` in the text) drops
   valid CadQuery-free-but-CAD programs is `[unknown]`; the corpus is a set of upstream
   CadQuery programs, where the heuristic is intended to hold.
-- The `metadata` bag is free-form (`dict[str, Any]`); there is no schema lock on which
+- **Q2.** The `metadata` bag is free-form (`dict[str, Any]`); there is no schema lock on which
   provenance keys are guaranteed. Downstream code treats protected keys as optional and
   falls back to `path_family`.
 

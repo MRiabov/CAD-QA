@@ -106,15 +106,15 @@ lists. The focused tests are
 
 ## Open questions
 
-- **Human clarity of rendered prompts.** The templates in `prompt-templates.yaml` were
+- **Q1.** **Human clarity of rendered prompts.** The templates in `prompt-templates.yaml` were
   LLM-authored and the owner, as a reader, cannot always tell what a rendered question is
   asking. Rewriting to unambiguous wording (then re-rendering and re-checking) is a
   precondition for freezing the benchmark; an ambiguous question cannot fairly judge an
   answer. See `development-context.md` Gaps and risks 8 and `_audit/owner-audit-todo.md` (E5).
-- **Coupling to a root-level file.** `prompt-templates.yaml` sits at the repo root while its
+- **Q2.** **Coupling to a root-level file.** `prompt-templates.yaml` sits at the repo root while its
   loader is inside `dataset/prompts/`; the path is computed with
   `parents[2]`. This is a packaging coupling worth documenting, not a bug found here.
-- **Coverage of Gold query predicate templates.**
+- **Q3.** **Coverage of Gold query predicate templates.**
   `dataset/prompts/templates.py::clause_prompt` raises `KeyError` when a Gold query
   predicate has no template. Whether every Gold query predicate kind emitted by every
   synthesis family has a template is `[unknown]` without running synthesis + materialize

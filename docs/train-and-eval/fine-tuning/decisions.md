@@ -226,7 +226,7 @@ whose rationale was not recoverable.
 - **Decision:** invest first in the **CAD-QA task environment + scorer** — a task generator over
   the immutable dataset rows (prompt + scalar gold, configurable hop/difficulty), the single verified
   exact-match scorer, and the `run_code`/kernel tool surface — and treat the external SFT mix
-  (`emit_our_tool_call_format`, `run_the_tool_call_loop`, `imitate_general_reasoning_style`,
+  (`emit_our_tool_call_format`, `run_the_tool_call_loop`, `preserve_general_math_and_code_reasoning`,
   `preserve_prior_capabilities`, `expose_general_python_code`, `expose_cadquery_programs`) as
   **support**: a thin format cold-start, a capability-preservation anchor, and canaries.
   Teacher-distilled `learn_the_cadqa_task` traces are a cold-start at most, not the primary data.
@@ -238,7 +238,7 @@ whose rationale was not recoverable.
 
 ## Open questions
 
-- The base-pipeline choice (D11 in `plans/oct-7/restructure-docs.md`) is recorded as FT-D11,
+- **Q1.** The base-pipeline choice (D11 in `plans/oct-7/restructure-docs.md`) is recorded as FT-D11,
   still proposed; promote it to accepted once the first Phase 3 canary runs.
-- FT-D1, FT-D3, FT-D8 have unresolved sub-questions recorded in their step docs; a decision is
+- **Q2.** FT-D1, FT-D3, FT-D8 have unresolved sub-questions recorded in their step docs; a decision is
   not "done" while its consequences are unresolved.

@@ -167,8 +167,9 @@ A status only moves up when a check passes.
 ## Open and resolved questions
 
 Docs that carry uncertainty have `## Open questions` and, once settled,
-`## Resolved questions`. Resolving moves the item (resolution + date); it is never
-deleted.
+`## Resolved questions`. Label each item **`Q1`, `Q2`, …** in document order (a bullet begins
+`- **Q1.** …`). Resolving moves the item to `## Resolved questions`, keeping its label and adding
+the resolution + date; it is never deleted. Reference an item by its label, not by line number.
 
 ## Priority
 

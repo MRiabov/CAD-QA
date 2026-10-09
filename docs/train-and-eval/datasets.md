@@ -50,7 +50,7 @@ Multi-turn call → result → call → answer, including the `run_code` round-t
 | `Glint-Research/Fable-5-traces` | Adopt with caution (AGPL-3.0) |
 | `spitfire4794/Fable-5-traces` | Same family |
 
-### `imitate_general_reasoning_style`
+### `preserve_general_math_and_code_reasoning`
 
 General (not CAD) step-by-step reasoning style. Support data; FT-D15 does not treat external
 reasoning as the lever.
@@ -122,7 +122,7 @@ A **Mixed training dataset** is `{dataset role → weight}`. Names are not yet c
 | Composition | Feeds |
 |---|---|
 | `emit_our_tool_call_format` + `preserve_prior_capabilities` | the H1 tool-schema probe |
-| `emit_our_tool_call_format` + `run_the_tool_call_loop` + `imitate_general_reasoning_style` + `learn_the_cadqa_task` + `preserve_prior_capabilities` | H2 (the thesis number) |
+| `emit_our_tool_call_format` + `run_the_tool_call_loop` + `preserve_general_math_and_code_reasoning` + `learn_the_cadqa_task` + `preserve_prior_capabilities` | H2 (the thesis number) |
 
 ## Evaluation datasets by dataset role
 
@@ -142,7 +142,6 @@ Evaluation dataset roles are not yet named. Provisional grouping:
 
 ## Open questions
 
-- Which dataset provides `preserve_prior_capabilities` (data plan §9)?
-- What are the two Mixed training dataset names?
-- Do evaluation dataset roles split into `target` / `canary`?
-- Does `imitate_general_reasoning_style` earn a place, or is it an ablation (FT-D15)?
+- **Q1.** Which dataset provides `preserve_prior_capabilities` (data plan §9)?
+- **Q2.** What are the two Mixed training dataset names?
+- **Q3.** Do evaluation dataset roles split into `target` / `canary`?

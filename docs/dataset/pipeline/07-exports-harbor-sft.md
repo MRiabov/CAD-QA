@@ -112,17 +112,17 @@ and the smoke/integration tests around `experiment`. Harbor execution itself
 
 ## Open questions
 
-- **The dataset file is the coupling.** The restructure plan intends `train_and_eval/` to
+- **Q1.** **The dataset file is the coupling.** The restructure plan intends `train_and_eval/` to
   consume only the rows I/O contract and answer contract. Whether consumer code today reads
   anything beyond `rows`/`public`/`private` is `[unknown]`; that boundary is not enforced by
   a test here.
-- **`reasoning_sft` is not an agent training trace.** It summarizes candidate-set sizes, not
+- **Q2.** **`reasoning_sft` is not an agent training trace.** It summarizes candidate-set sizes, not
   LLM model reasoning. Whether it is useful supervision is a fine-tuning question, out of
   scope for this pipeline.
-- **Harbor agent and LLM model config is run configuration, not part of the task contract**
+- **Q3.** **Harbor agent and LLM model config is run configuration, not part of the task contract**
   (`docs/_archive/harbor.md`); the default pin is `terminus-2` with
   `openrouter/deepseek/deepseek-v4-flash`.
-- **LLM-output recording.** The dataset-generation path contains no LLM calls, so the
+- **Q4.** **LLM-output recording.** The dataset-generation path contains no LLM calls, so the
   "record every LLM call" rule applies to the fine-tuning/evaluation surface, not here.
 
 ## Resolved questions

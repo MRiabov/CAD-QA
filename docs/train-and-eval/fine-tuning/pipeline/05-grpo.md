@@ -91,32 +91,32 @@ automated; `[unknown]` whether it should be a gate.
 
 ## Open questions
 
-- **Entropy collapse history.** The first run died at 2-hop (entropy ≈ 1e-5). Mitigations
+- **Q1.** **Entropy collapse history.** The first run died at 2-hop (entropy ≈ 1e-5). Mitigations
   named in `docs/_archive/rl_checkpoint_2026-08-08.md` (reward shaping/partial credit, entropy term,
   higher KL, the 1-hop bridge) were not all landed. Whether the current config avoids it is
   unverified.
-- **Reward is sparse and unshaped.** Binary exact match with no partial credit is the
+- **Q2.** **Reward is sparse and unshaped.** Binary exact match with no partial credit is the
   recorded cause of shortcut learning; no shaping exists in the code.
-- **Curriculum mismatch.** `HOP_SHARES` omits hop `1` and includes hop `4`; the v3 dataset
+- **Q3.** **Curriculum mismatch.** `HOP_SHARES` omits hop `1` and includes hop `4`; the v3 dataset
   has `{0,1,2,3,5}` and the handoff describes a "0→1→2→3→5 ladder". The code's default is
   v2 (`{0,2,3,4,5}`). One of code or intent must change.
-- **GRPO does not start from the SFT adapter.** `grpo_train.py` loads
+- **Q4.** **GRPO does not start from the SFT adapter.** `grpo_train.py` loads
   `unsloth/gemma-4-E2B-it`, not the SFT checkpoint; "SFT then GRPO" is not implemented.
-- **Grader divergence.** The reward implementation says it "mirrors train_and_eval grading
+- **Q5.** **Grader divergence.** The reward implementation says it "mirrors train_and_eval grading
   grade_public_private", but the parser is self-contained (`reward_cadqa._parse_answer`).
   The eval grader uses the typed matcher (`eval_bench.py` → `tool_call_matches`), so eval and
   reward can disagree, especially via the `text` substring fallback
   (`_reward_one`: `gold_str in pred`) and number tolerance (`1e-6` absolute in the reward vs
   `1e-3` relative in `tool_call_matches`).
-- **`boolean` format.** `reward_cadqa._parse_answer`/`_reward_one` handle `boolean`, but the
+- **Q6.** **`boolean` format.** `reward_cadqa._parse_answer`/`_reward_one` handle `boolean`, but the
   typed contract (`train_and_eval/tool_calls.py::AnswerFormat`) has no `boolean`; a boolean
   row cannot map to a submit tool.
-- **No checkpoints saved.** `save_strategy="no"` in `grpo_train.py`; a collapsed run
+- **Q7.** **No checkpoints saved.** `save_strategy="no"` in `grpo_train.py`; a collapsed run
   preserves nothing mid-training (noted in `docs/_archive/rl_checkpoint_2026-08-08.md`).
-- **Runbook signature is stale.** `docs/_archive/rl_runbook.md` documents
+- **Q8.** **Runbook signature is stale.** `docs/_archive/rl_runbook.md` documents
   `reward_cadqa(gold_answer, answer_format, completion)`, which is not the implemented batch
   API.
-- **Default dataset is v2.** The default GRPO config trains on v2 (`v2_curriculum`), while
+- **Q9.** **Default dataset is v2.** The default GRPO config trains on v2 (`v2_curriculum`), while
   the teacher and eval default to v3. See
   [00-overview.md](00-overview.md#open-questions).
 

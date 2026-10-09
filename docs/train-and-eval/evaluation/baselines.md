@@ -136,12 +136,12 @@ big LLM model number remains `[assumed]`/unrecorded (`docs/development-context.m
 
 ## Open questions
 
-- Are the recorded cost-effective LLM model Harbor artifacts (trajectories, graded
+- **Q1.** Are the recorded cost-effective LLM model Harbor artifacts (trajectories, graded
   rows) preserved anywhere, or only the headline percentages? Not found in-repo.
-- Should the historical heuristic families be re-implemented against the current
+- **Q2.** Should the historical heuristic families be re-implemented against the current
   row schema, or retired in favour of the geometry-first split audit? The spec
   still names the operation-order heuristic, which was never found in code.
-- Which slice is the canonical baseline slice for the paper: rc10 clean-100,
+- **Q3.** Which slice is the canonical baseline slice for the paper: rc10 clean-100,
   release10k, or an immutable hard test?
 
 ## Resolved questions
