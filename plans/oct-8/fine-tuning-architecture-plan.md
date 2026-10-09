@@ -81,9 +81,17 @@ Two predictions this architecture commits to and must test:
 - **H2 (reasoning):** an external reasoning-distillation + agent-trace mix raises CAD-QA held-out
   accuracy *beyond* what format-only training achieves, without a general-capability canary
   regression.
+- **H3 (transfer):** graph-derived CAD-QA supervision raises accuracy on an independent, credible
+  CAD benchmark — **BenchCAD `qa_code`** (primary) and **`edit_code`** (secondary) — *beyond* the
+  Base, format-only, and answer-only controls. This is the evidence that the dataset, not only the
+  trained LLM model, is useful; without a gain on a credible external benchmark the improvement
+  claim rests on an internal split and will not survive review. Arms, subset, and preconditions:
+  `evaluation-plan.md` §5.1 (D-E5).
 
 If H1 holds and H2 fails, the honest result is "format compliance, not reasoning" — a finding, not
-a failure, and it must be reported as such (`../../docs/PRD.md` definition of done, item 3). The
+a failure, and it must be reported as such (`../../docs/PRD.md` definition of done, item 3). If H1
+and H2 hold but H3 fails, the dataset improves its own split but does not transfer; that is a
+recorded finding, and the dataset's usefulness then rests on the benchmark-validity package. The
 mixes that test H1 and H2 are defined in the data doc.
 
 ---

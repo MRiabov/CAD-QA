@@ -121,6 +121,40 @@ and parser accept the gold encoding; it does **not** establish grader correctnes
 - **Public/private hygiene.** `grading/closed_book.py::closed_book_request_audit` fails on any
   hidden-field leak, incomplete request coverage, or Answer format disagreement.
 
+### 5.1 External transfer (H3)
+
+The internal held-out slice cannot show that the dataset is useful; that needs transfer to an
+**independent, credible** benchmark. Target: **BenchCAD** (`../../docs/research/2026-benchcad.md`,
+ref [33]).
+
+- **Primary target — `qa_code`:** CadQuery program + numeric question → number, restricted to a
+  **family-disjoint** subset and read on the **Spatial Reasoning** axis. Text-in, deterministic, no
+  kernel, no LLM judge; unsaturated (0.537–0.731 against a 0.42 blind baseline).
+- **Secondary target — `edit_code`:** instruction + program → edited program, T4/T5 (overlapping-CSG
+  and feature-edit cases).
+- **Not targets:** Vision2Code, Vision QA, and the BenchCAD 2.0 assembly/PCB tasks — image/drawing-in,
+  generation, agentic; outside a text-only base LLM model and outside the CAD-QA construct.
+- **Arms (hold base and recipe fixed; vary only training data):**
+
+| Arm | Training data | Isolates |
+|---|---|---|
+| Base | none | floor; pretraining-contamination proxy |
+| Format-only | `format_tool` + `rehearsal` | H1 format compliance |
+| Answer-only | CAD-QA answers, no reasoning | supervision format vs reasoning content |
+| CAD-QA reasoning | `cadqa_hop` | H2 capability |
+| Mix-full (optional) | full primary mix | external reasoning support |
+
+- **Claim.** CAD-QA reasoning > format-only **and** > Base on BenchCAD `qa_code` is the transfer
+  result: the strongest "the dataset is useful" evidence, and the answer to the PRD transfer
+  question. `edit_code` is corroborating.
+- **Preconditions (pre-registered):** reachability pilot (the base must be low-but-nonzero on the
+  subset; a zero floor yields no signal, a high floor means saturated); format-adaptation control
+  (BenchCAD wants a JSON array of numbers — report invalid-output rate); contamination audit
+  (exclude every BenchCAD family from every training arm; dedup CAD-QA programs against BenchCAD).
+- **Peer-review stake.** Without a measured gain on a credible external benchmark, the
+  "dataset improves models" claim rests on an internal split and does not withstand review. A null
+  transfer is reported as a finding (comprehension supervision is task-local), not hidden.
+
 ---
 
 ## 6. Canaries
@@ -185,6 +219,8 @@ results rather than repeating the plan.
 | Canary procedure wired to the cookbook eval (`cadqa_heldout`, `tool_valid`, `general`) | **P0** | every training run needs a forgetting gate |
 | Frozen held-out rows + hard-excluded canary rows | **P0** | held-out hygiene (owned with the data doc) |
 | Public/private leak audit | **P0** | a leak invalidates the benchmark |
+| External transfer harness on BenchCAD `qa_code` (primary) and `edit_code` (secondary) | **P0** | the only evidence the dataset is useful beyond its own split; peer-review gate for H3 |
+| Reachability pilot + family-disjoint BenchCAD subset | **P0** | a target the base LLM model cannot attempt yields no transfer signal |
 | Re-run shortcut baselines on the current schema | **P1** | current baselines are `stale` |
 | Harbor big-model baseline refresh on the hard slice | **P1** | the ≤30% target refers to the hard slice, currently unrecorded |
 | Few-shot baseline | **P2** | extra comparison |
@@ -201,6 +237,9 @@ results rather than repeating the plan.
   `../../docs/train-and-eval/evaluation/harness.md`.)
 - **D-B1** shortcut baselines reported separately. **D-B2** oracle is a key-path check. **D-B3**
   LLM model baselines name the slice. (From `baselines.md`.)
+- **D-E5** the transfer claim (H3) is evaluated on BenchCAD `qa_code` (primary) and `edit_code`
+  (secondary), against Base / format-only / answer-only controls; it is a P0 gate, because it is the
+  only evidence that the dataset is useful beyond its own split.
 - **New (proposed):** one scorer for eval, rejection sampling, and reward; canary `general`
   regression tolerance pre-registered at ≤2 points.
 
@@ -215,6 +254,8 @@ results rather than repeating the plan.
   enough for regression detection; a full MMLU is P2.
 - Does `liquid-finetune`'s eval config let us plug in our scorer, or do we grade its generations
   offline? `[unknown]`.
+- Which BenchCAD slice is the canonical transfer target: full `qa_code`, the Spatial Reasoning axis,
+  or a hard family subset? And is `edit_code` T4/T5 reachable by a 2–4B model? `[unknown]`.
 
 ---
 
@@ -227,3 +268,5 @@ results rather than repeating the plan.
 3. **Freeze the held-out and canary rows** with the data doc and hard-exclude them from training.
 4. **Wire the canary procedure** (`cadqa_heldout`, `tool_valid`, `general`) into the cookbook eval
    path once the architecture doc has the `mix-format` artifact.
+5. **Pilot the external transfer target** (§5.1, P0): run the base LLM model on a family-disjoint
+   BenchCAD `qa_code` subset to confirm a low-but-nonzero floor before any training spend.
