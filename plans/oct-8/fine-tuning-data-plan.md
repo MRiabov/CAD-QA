@@ -312,14 +312,19 @@ mechanism differs by stage:
 - **Contamination policy.** CAD-QA held-out rows and the eval canaries are hard-excluded; any
   canary id appearing in `train` is a hard failure. The mechanics (quality gate, near-dedup,
   hash-exclusion, no-silent-loss) live in `fine-tuning-system-plan.md` §7.
-- **Licensing and provenance.** Several strong candidate sets are **traces of commercial
-  assistant models** (Claude/Fable, GPT-5.5, Opus) and warn that provider terms may apply to
-  downstream training/distillation; the Fable sets are **AGPL-3.0**. For a published Master's
-  thesis this is a real risk. Mitigation, in order:
+- **Licensing and provenance.** Two concerns, often conflated:
+  - **AGPL-3.0** (the Fable trace sets) is copyleft, **not a research restriction** — training on
+    it is fine. Its obligations attach to **distribution** of the material or a derivative. That
+    matters only if we redistribute those rows (or a work held to derive from them; whether trained
+    weights are a derivative is legally unsettled).
+  - **Provider terms** on commercial-assistant outputs (Claude/Fable, GPT-5.5, Opus) — several sets
+    warn that provider terms may restrict downstream training/distillation. This, not AGPL, is the
+    real risk.
+  Mitigation, in order:
   1. Prefer permissively licensed, fully-open sources (`OpenThoughts`, `Bespoke-Stratos`, `xLAM`,
      `Hermes`) for the primary mix.
-  2. Treat Claude/Fable/Opus distill sets as **P1/P2 and attribution-dependent**; record their
-     terms in the registry and the model card.
+  2. Record each source's license and provider terms in the registry and the model card, and keep
+     AGPL / commercial-trace rows separable so a redistribution or a venue objection is tractable.
   3. If a commercial-trace mix is used, disclose it in the manuscript's data statement.
 
 ---
