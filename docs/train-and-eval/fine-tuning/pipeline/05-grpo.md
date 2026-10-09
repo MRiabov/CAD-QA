@@ -1,8 +1,9 @@
-# 05 — sampling gate and RL
+# 05 — sampling gate (RL deferred)
 
 ## Purpose
 
-After SFT, measure per-tier reachability and run RL **only where it is learnable** (`../system.md` §2–§3).
+After SFT, measure per-tier reachability with the **pass@k gate** (P0). **RL is deferred**: it is
+conditional on the gate and stays P2 until a tier is measured learnable (FT-D13; FT-D8 superseded).
 
 ## Sampling gate (P0)
 
@@ -12,7 +13,7 @@ Sample k rollouts per prompt with the tuned policy and compute the pass rate per
 - **learnable** (`0 < pass < k`, ideally ~0.25–0.75): the RL-training set.
 - **unreachable** (zero pass): no RL signal; add via Bridge / re-distillation or record it.
 
-## RL (conditional, P1)
+## RL (deferred, conditional)
 
 - **GRPO with dynamic sampling** (drop all-pass/all-fail groups), pass-rate-band scheduling, sandboxed
   rollouts, full rollout logging (FT-D9).

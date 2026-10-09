@@ -28,7 +28,7 @@ dataset file (immutable CAD-QA rows)
 [04 SFT]  phase 1 (general thirds + easy) → phase 2 (task + preserve)
       │
       ▼  adapter → merged LLM model
-[05 sampling gate + RL]  pass@k gate → optional GRPO (learnable tiers only)
+[05 sampling gate]  pass@k per tier (P0); RL deferred, conditional on the gate (FT-D13)
       │
       ▼
 [06 evaluation]  LLM harness modes + the one scorer + the evaluation datasets
@@ -48,7 +48,7 @@ table.
 | 02 teacher-sampling | decoded rows | agent training traces (`learn_the_cadqa_task`) + sampling log | `02-teacher-sampling.md` |
 | 03 preparation | traces + External datasets | `TrainingExample` set → Liquid `messages` SFT JSONL + manifest | `../system.md` §7 |
 | 04 SFT | Liquid `messages` JSONL | LoRA adapter → merged LLM model | `../training.md` §4 |
-| 05 sampling gate + RL | merged LLM model | pass@k per tier; optional RL adapter | `../system.md` §2–§3 |
+| 05 sampling gate | merged LLM model | pass@k per tier (RL deferred, conditional on the gate) | `../system.md` §2–§3 |
 | 06 evaluation | trained LLM model + evaluation datasets | scores per evaluation dataset | `../../evaluation/plan.md` |
 | 07 serving | merged LLM model | GGUF / vLLM checkpoint | `07-serving-vllm.md` |
 
