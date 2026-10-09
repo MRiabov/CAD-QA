@@ -114,7 +114,7 @@ single-GPU thesis, Training stage 2 may be the whole answer, with Training stage
 groups, ref [23]), RL-eligible pass-rate scheduling (refs [21][22]), and a composite reward (§4). Run
 rollouts in a sandbox (§5). Never run RL on a tier with no partial signal. RL runs on the **single CAD-QA
 task environment**, using the **same tool-call harness as evaluation** (`../evaluation/decisions.md`
-D-E2) — blending multiple datasets is an SFT concern (`data.md` §4); multi-task RL is P2.
+D-E9) — blending multiple datasets is an SFT concern (`data.md` §4); multi-task RL is P2.
 
 > **P2 backlog — hint-based rollouts.** The dataset already carries a deterministic derivation: the
 > **ordered Gold query program**, with the per-row `clue_map` mapping each predicate to its public clue (a

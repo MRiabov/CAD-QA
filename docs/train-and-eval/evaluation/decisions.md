@@ -23,13 +23,7 @@ the consolidated decision log. Open questions stay in `plan.md` §11.
   execution environments** sharing the CAD-QA dataset row contract — not one harness with two backends.
 - **Consequences:** grading is not literally shared; a change to one grader must be mirrored
   deliberately and is an audit item (TA-A3). Reconcile via one authoritative grader (Q1).
-- **Update (2026-10-09).** Harbor is **deferred to P2**. It was built to show the tuned LLM model
-  working in a general agent setting (`opencode`-style) rather than a confined tool call — unwise before
-  the base setup works, and it adds sampling cost; even within P2 it may not earn its keep, and its
-  practical cost is container RAM (Daytona can replace local Docker). The thesis does not depend on it:
-  **training and evaluation share one tool-call harness and the same rollout loop**, so external/teacher
-  evaluation runs through the local rollouts, not Harbor. Harbor remains the only sandbox for
-  genuinely untrusted agent code and the containerized RL reward (both optional).
+- **Update (2026-10-09).** Harbor is deferred to P2 and the tool-call harness is unified — see **D-E9**.
 
 ## D-E3 — `run_code` is an accidental-misuse guard, not a security boundary
 
@@ -84,6 +78,20 @@ the consolidated decision log. Open questions stay in `plan.md` §11.
 - **Decision:** one scorer for evaluation, rejection sampling, and reward; the
   `preserve_general_math_and_code_reasoning` regression tolerance pre-registered at ≤2 points.
 - **Consequences:** pending the TA-A3 reconciliation (`plan.md` Q1); detail: `plan.md` §4.
+
+## D-E9 — Harbor is deferred (P2); training and evaluation share one tool-call harness
+
+- **Status:** accepted (2026-10-09) — owner.
+- **Context:** Harbor (a containerized general-agent runner) was built to show the tuned LLM model working
+  in a general agent setting (`opencode`-style), to give an untrusted-code sandbox, and to produce
+  external-agent baselines. All are optional for the thesis; it adds sampling cost and container RAM
+  (Docker; Daytona is an alternative). D-E2 had framed the local harness and Harbor as two environments.
+- **Decision:** Harbor is **deferred to P2** and is off the thesis path. **Training and evaluation use the
+  same tool-call harness, scorer, and rollout loop**; external/teacher evaluation runs through the
+  local rollouts, not Harbor. RL runs on the **single CAD-QA task environment** — blending multiple
+  datasets is an SFT concern; multi-task RL is P2.
+- **Consequences:** H1–H4 are provable without Harbor; the grader-drift question (D-E2 Q1) narrows to the
+  one local scorer (D-E8). Harbor remains the only sandbox for genuinely untrusted agent code (optional).
 
 ## D-B1 — Shortcut baselines are reported separately from geometry-reasoning accuracy
 

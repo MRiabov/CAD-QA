@@ -9,7 +9,7 @@ tags under `## Current status`). **Harbor is deferred to P2** (D-E2 update). 202
 Run an LLM model with no access to CadQuery over CAD-QA rows and score exact structured
 answers, under a switchable compute mode, both for the local fine-tuned small LLM model
 and for cost-effective external models through the same tool-call harness (Harbor is a
-deferred P2 path; D-E2).
+deferred P2 path; D-E9).
 
 ## Inputs / outputs
 
