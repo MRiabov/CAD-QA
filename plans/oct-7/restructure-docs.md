@@ -643,7 +643,7 @@ priority (`P0`/`P1`/`P2`) per the tier rule above.
   grade with the audited grader.
 - **Phase 3 — Reasoning-preserving training. [SFT P0; GRPO P1]** Design first (a decision +
   the fine-tuning pipeline `00-overview.md`): constrained decoding for format, prompt-masked SFT if
-  used, on-policy RL with shaped reward and a 0→1→2→3→5 curriculum. Canary before scale;
+  used, on-policy RL with shaped reward and a 0→1→2→3→5 curriculum. Pilot before scale;
   monitor entropy/length/reward.
 - **Phase 4 — Evaluation and analysis. [core P0; P2 modes optional]** base/SFT/RL on the
   primary `numpy` harness × hop/format (plus `no_tools`/mode-3 as P2); learning curve;

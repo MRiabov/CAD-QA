@@ -11,10 +11,11 @@ with `../../plans/oct-8/evaluation-plan.md` §5.1 (D-E5).
 ## Hypothesis
 
 H3: training on `learn_the_cadqa_task` raises BenchCAD `qa_code` accuracy beyond the Base, format-only, and
-answer-only controls, without a general-canary regression.
+answer-only controls, without a regression on the `preserve_general_math_and_code_reasoning` evaluation
+dataset.
 
 H4 (means → end): the CAD-QA pass rate predicts the external score (dose-response), at fixed recipe
-and matched compute, with the `general` canary as covariate.
+and matched compute, with the `preserve_general_math_and_code_reasoning` evaluation dataset as covariate.
 
 ## Targets
 

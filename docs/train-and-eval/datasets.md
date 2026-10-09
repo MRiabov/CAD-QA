@@ -19,7 +19,7 @@ dataset**, **Training stage**); `./fine-tuning/decisions.md` (FT-D1–D15);
 - A dataset enters only with a pinned revision hash and a recorded license (data plan §5). Sizes
   and licenses are survey-time and must be re-verified.
 - `learn_the_cadqa_task` is generated internally (data plan §6); it is not an external dataset.
-- Held-out and canary rows are hard-excluded from every training dataset (data plan §5).
+- Held-out and evaluation-dataset rows are hard-excluded from every training dataset (data plan §5).
 
 ## Training datasets by dataset role
 
@@ -74,7 +74,7 @@ The anti-forgetting anchor: general instruction data replayed so prior ability d
 |---|---|
 | The base LLM model's own instruct mixture | Adopt if published (best anchor) |
 | `nvidia/Llama-Nemotron-Post-Training-Dataset` | P1 substitute when the family mixture is closed |
-| A small held-out slice of the canary's train side | Adopt as a cheap anchor |
+| A small held-out slice of the evaluation dataset's train side | Adopt as a cheap anchor |
 
 **Open:** the dataset is not chosen (data plan §9).
 
@@ -126,22 +126,24 @@ A **Mixed training dataset** is `{dataset role → weight}`. Names are not yet c
 
 ## Evaluation datasets by dataset role
 
-Evaluation dataset roles are not yet named. Provisional grouping:
+Evaluation is the set of datasets that serve H1–H4; each is composed across Difficulty tiers and run
+in two forms — mid-run (during training) and final/complete (the immutable thesis number). Dataset roles
+are not yet named.
 
-| Group | Dataset | Tier |
+| Serves | Evaluation dataset | Tier |
 |---|---|---|
-| target | CAD-QA held-out slice | P0 (the headline) |
-| target | BenchCAD `qa_code` | P0 (H3, means) |
-| target | BenchCAD `edit_code` T4/T5 | P1 (end) |
-| target | Text2CAD-Bench | P1 (end/defect) |
-| target | Text-to-CadQuery | P1 |
-| target | CAD-Editor | P1 |
-| guard | `tool_valid` slice (our `submit_*` rows) | P0 canary (H1) |
-| guard | general math + instruction probe | P0 canary (forgetting) |
-| guard | eval canary rows | P0 (never trained) |
+| H2 (headline) | CAD-QA held-out (`learn_the_cadqa_task`) | P0 |
+| H3, H4 | BenchCAD `qa_code` | P0 (means) |
+| H3 | BenchCAD `edit_code` T4/T5 | P1 (end) |
+| H3 | Text2CAD-Bench | P1 (end/defect) |
+| H3 | Text-to-CadQuery | P1 |
+| H3 | CAD-Editor | P1 |
+| H1 | Tool-format held-out (`emit_our_tool_call_format`) | P0 |
+| guard | General math + code (`preserve_general_math_and_code_reasoning`) | P0 |
+| guard | Evaluation-dataset rows (never trained) | P0 |
 
 ## Open questions
 
 - **Q1.** Which dataset provides `preserve_prior_capabilities` (data plan §9)?
 - **Q2.** What are the two Mixed training dataset names?
-- **Q3.** Do evaluation dataset roles split into `target` / `canary`?
+- **Q3.** Do evaluation dataset roles split into `target` / `guard`?

@@ -18,14 +18,14 @@ preservation, the training stages, hardware/budget, and the surviving-code bound
 `TrainingExample` record, converter, and the ingest/normalize/quality/dedup/sample stages).
 
 **The evaluation doc owns — the harness and scoring:**
-`evaluation-plan.md` (LLM harness and modes, tool-call surface, the scorer, the canary
+`evaluation-plan.md` (LLM harness and modes, tool-call surface, the scorer, the evaluation-dataset
 procedure, grading reconciliation, judge independence, baselines).
 
 **Shared interfaces, single-sourced:**
 
 - **Format contract** (Liquid `messages` SFT JSONL) — owned by the architecture doc.
 - **`TrainingExample` + converter** — owned by the system doc.
-- **Eval canaries** — the procedure is owned by the evaluation doc; the canary rows are produced and
+- **Evaluation datasets** — the procedure is owned by the evaluation doc; the dataset rows are produced and
   held here.
 - **H1/H2** — owned by the architecture doc; the mixes they test are defined here (§3).
 
@@ -61,9 +61,9 @@ selectively, not blindly.
 | `expose_general_python_code` | general Python / coding exposure | external | P1/P2 |
 | `expose_cadquery_programs` | CadQuery / 3D representation exposure so the base LLM model is not CAD-blind | external | P1/P2 |
 | `learn_the_cadqa_task` | the CAD-QA task itself: prompt → `submit_*` with hop reasoning | internal (**§6 only defines the dataset**) | P0 (separate plan) |
-| eval canary | never trained on; used to detect regression | external + internal | P0 |
+| evaluation dataset | never trained on; used to detect regression | external + internal | P0 |
 
-**Rule:** eval canary examples must be **hashed and excluded** from every training mix. Any
+**Rule:** evaluation-dataset rows must be **hashed and excluded** from every training mix. Any
 overlap is contamination (`No silent data loss` and held-out hygiene).
 
 ---
@@ -93,7 +93,7 @@ alone is not disqualifying — `xLAM/APIGen` is still the canonical reference an
   and **LoRA beats full fine-tuning** (it preserves pretrained tool use). Direct support for our
   SFT+LoRA, mixture-first plan and H1. **Caveat (contamination):** the Qwen3 base likely saw these
   public corpora in post-training (zero-shot xLAM is 66–78%), so the in-distribution magnitudes are
-  upper bounds and the `tool_valid` canary must not be a held-out slice of them — see
+  upper bounds and the `emit_our_tool_call_format` evaluation dataset must not be a held-out slice of them — see
   `../../docs/research/2026-sft-vs-rl-tool-calling.md` and the evaluation plan §6.
 - ACL 2026 "Skill-Aware Data Selection and Fine-Tuning for Data-Efficient Reasoning Distillation":
   1,000 selected traces beat random SFT from a 100K corpus. Supports small, quality-filtered sets.
@@ -113,7 +113,7 @@ alone is not disqualifying — `xLAM/APIGen` is still the canonical reference an
 
 | Dataset | Date | Size | Shape | License | Adopt/reject |
 |---|---|---|---|---|---|
-| `open-thoughts/OpenThoughts-Agent-SFT-{1K,3.16K,10K,…}` | 2026 | ladder 316→100K | task + agent trajectory (`terminus-2`) | Apache-2.0 | **Adopt**; pick a rung to match the canary budget |
+| `open-thoughts/OpenThoughts-Agent-SFT-{1K,3.16K,10K,…}` | 2026 | ladder 316→100K | task + agent trajectory (`terminus-2`) | Apache-2.0 | **Adopt**; pick a rung to match the first run's budget |
 | `RESMP-DEV/Fable-GPT-5.5-Distillation-Traces` | 2026 | 9.06M | unified 2026 corpus: agentic coding, reasoning, tool use, preference | see card | **Adopt with sampling**; one-stop but huge, mixed provenance |
 | `nvidia/Open-SWE-Traces` | 2026 | 207k | multilingual software-engineering agent trajectories | permissive (MIT/Apache/BSD filtered) | **P1**; engineering-flavored, not CAD |
 | `AlicanKiraz0/Agentic-Chain-of-Thought-Coding-SFT-Dataset` | 2026 | 429 | Minimax-M2-distilled coding CoT + tool calls | MIT | **P2**; tiny but license-clean |
@@ -137,7 +137,7 @@ alone is not disqualifying — `xLAM/APIGen` is still the canonical reference an
 **Caution from prior art (ref [9]):** copying full teacher reasoning can *suppress* the student's
 self-correction at high-entropy positions (up to 17% relative `avg@16` drop). So
 reasoning-distill data is not automatically safe: prefer **filtered/verified** traces, cap their
-weight, and measure the canary.
+weight, and measure the evaluation dataset.
 
 ### 2.4 Anti-forgetting replay (`preserve_prior_capabilities`)
 
@@ -145,7 +145,7 @@ weight, and measure the canary.
 |---|---|---|---|---|---|
 | LLM model-family own instruct mix (e.g. the base's instruct SFT mixture if published) | current | varies | general chat | family license | **Adopt if available** — same distribution as the base is the best anchor |
 | `nvidia/Llama-Nemotron-Post-Training-Dataset` (or a permissive general SFT set) | 2025-05 | large | general | permissive | **P1** substitute when the family mix is closed |
-| A small held-out slice of the canary's *train* side | current | small | general instruction | permissive | **Adopt** as a cheap anchor |
+| A small held-out slice of the evaluation dataset's *train* side | current | small | general instruction | permissive | **Adopt** as a cheap anchor |
 
 **Ratio:** 20–30% of the mix, per the xLAM precedent (`xLAM` paper §3.5 reports 20–30% general
 instruction data).
@@ -198,7 +198,7 @@ found to be clean and non-overlapping.
 
 | Mix | Role weights | Purpose |
 |---|---|---|
-| `mixed_dataset_our_tool_format_and_replay` (canary) | 70% `emit_our_tool_call_format`, 30% `preserve_prior_capabilities` | test H1 alone, cheapest signal |
+| `mixed_dataset_our_tool_format_and_replay` (H1 probe) | 70% `emit_our_tool_call_format`, 30% `preserve_prior_capabilities` | test H1 alone, cheapest signal |
 | `mixed_dataset_full_cadqa_training` (primary) | 35% `emit_our_tool_call_format` + `run_the_tool_call_loop`, 25% `preserve_general_math_and_code_reasoning`, 25% `learn_the_cadqa_task`, 15% `preserve_prior_capabilities` | test H2, the thesis number |
 
 Rationale and tradeoffs:
@@ -221,7 +221,7 @@ Rationale and tradeoffs:
 
 ### 3.1 Corpus size targets
 
-Aim **~10,000 examples (band 5,000–20,000)** for the primary run, with a **~1,000–2,000 canary**.
+Aim **~10,000 examples (band 5,000–20,000)** for the primary run, with a **~1,000–2,000 H1 probe**.
 The binding constraint is the internal `learn_the_cadqa_task` set, not the external data: it is generated by
 teacher API calls and must cover every Answer format × hop, so it sets the budget and the wall
 clock. **≥1,000 verified traces** is the target; the current ~300 is too few — `json`/`number`
@@ -229,7 +229,7 @@ coverage was 0.
 
 | Training stage | Total | `emit_our_tool_call_format` + `run_the_tool_call_loop` | `preserve_general_math_and_code_reasoning` | `learn_the_cadqa_task` | `preserve_prior_capabilities` |
 |---|---|---|---|---|---|
-| Canary (`mixed_dataset_our_tool_format_and_replay`) | 1,000–2,000 | 700–1,400 | — | — | 300–600 |
+| H1 probe (`mixed_dataset_our_tool_format_and_replay`) | 1,000–2,000 | 700–1,400 | — | — | 300–600 |
 | Primary (`mixed_dataset_full_cadqa_training`) | 10,000 (5k–20k) | 3,500 | 2,500 | 1,000–2,500 | 1,500 |
 
 - **Why not larger.** Curated small sets match or beat large ones at this size: ACL 2026 (1,000
@@ -270,13 +270,13 @@ the mechanics (epochs, mixing implementation).
     public corpora (`NeurIPS11092`, `GenCAD-Code`) are useful only as SFT signal that teaches
     CadQuery syntax and semantics — representation priming. Whether that transfer reaches
     *reading/reasoning* over a given CadQuery program is the hypothesis to test, not a given, so
-    keep `expose_cadquery_programs` out of the first canary and A/B it.
+    keep `expose_cadquery_programs` out of the first run and A/B it.
   - **Staging is an ablation, not an assumption.** Sequential fine-tuning spans multiple
     training stages: higher forgetting risk and cost, and the 2026 controlled study (ref [19]) found a
     single SFT training stage strongest with no consistent gain from a second training stage. Keep `preserve_prior_capabilities` in
-    *every* training stage and canary each; implement as either a curriculum *order* within one run
+    *every* training stage and evaluate each; implement as either a curriculum *order* within one run
     (cheaper) or a checkpoint-resumed second training stage, and measure both before committing.
-  Keep it P1 and measure the canary.
+  Keep it P1 and measure the evaluation datasets.
 - **SFT → RL/DPO only after SFT is measured (P2).** The recorded ordering ("RL squeezes, SFT
   expands", prior-art refs [7]/[8]; FT-D8) is a second training stage, deferred until the SFT number is
   real.
@@ -309,8 +309,8 @@ mechanism differs by training stage:
 
 - **Registry.** Every dataset has id, revision hash, license, dataset role, size, and field mapping.
   A dataset without a pinned revision does not enter.
-- **Contamination policy.** CAD-QA held-out rows and the eval canaries are hard-excluded; any
-  canary id appearing in `train` is a hard failure. The mechanics (quality gate, near-dedup,
+- **Contamination policy.** CAD-QA held-out rows and the evaluation datasets are hard-excluded; any
+  evaluation-dataset id appearing in `train` is a hard failure. The mechanics (quality gate, near-dedup,
   hash-exclusion, no-silent-loss) live in `fine-tuning-system-plan.md` §7.
 - **Licensing and provenance.** Two concerns, often conflated:
   - **AGPL-3.0** (the Fable agent training trace sets) is copyleft, **not a research restriction** — training on
@@ -359,16 +359,16 @@ only the dataset:
 |---|---|---|
 | `TrainingExample` record + Liquid `messages` JSONL converter (owned by the system plan) | **P0** | the only custom data code we should need; cookbook-compatible |
 | Registry with pinned revisions, licenses, and dates | **P0** | reproducibility, the license audit, and the 2025+ freshness policy |
-| `mixed_dataset_our_tool_format_and_replay` data build (`emit_our_tool_call_format` + `preserve_prior_capabilities`) | **P0** | feeds the first canary (H1) |
+| `mixed_dataset_our_tool_format_and_replay` data build (`emit_our_tool_call_format` + `preserve_prior_capabilities`) | **P0** | feeds the first H1 probe |
 | Contamination + dedup pass against CAD-QA held-out and canaries | **P0** | held-out hygiene; a leak invalidates the thesis number |
 | `preserve_prior_capabilities` slice curation (20–30%) | **P0** | anti-forgetting anchor |
 | **`learn_the_cadqa_task` generation plan** | **P0, separate** | the thesis needs it; explicitly not in this doc |
 | Permissive reasoning mix (`OpenThoughts`/`Bespoke`) | **P1** | tests H2 without license risk |
 | `run_the_tool_call_loop` / `run_code` data (`OpenThoughts-Agent`) | **P1** | needed for the primary `numpy` LLM harness behaviour |
 | Staged training order (`mixed_dataset_our_tool_format_and_replay` → `mixed_dataset_full_cadqa_training`) | **P1** | tests H1→H2 ordering if the mixed baseline underperforms |
-| Dedup/contamination automation | **P1** | manual hashing works for the canary; automate before `mixed_dataset_full_cadqa_training` |
+| Dedup/contamination automation | **P1** | manual hashing works for the first run; automate before `mixed_dataset_full_cadqa_training` |
 | Commercial agent training trace mix (Fable/Opus/TeichAI) | **P1** | strong signal; accepted in the thesis (§8); permissive mixes remain the default |
-| `expose_general_python_code` Python/coding priming | **P1/P2** | cheap code exposure; measure the canary |
+| `expose_general_python_code` Python/coding priming | **P1/P2** | cheap code exposure; measure the evaluation datasets |
 | `expose_cadquery_programs` text→CadQuery priming (`NeurIPS11092`, `BenchCAD` code_gen) | **P1** | so the base is not 3D-blind; text→CadQuery pairs exist |
 | `expose_cadquery_programs` image→CAD / point-cloud priming (`GenCAD-Code`, `SURPRISE3D`, PointLLM) | **P2** | not usable with a text-only base today |
 | Math/reasoning scale-up (`OpenMathReasoning`, `NuminaMath`) | **P2** | scale only if H2 holds |
@@ -392,7 +392,7 @@ only the dataset:
 
 1. **Mix ratios.** The §3 numbers are a starting hypothesis, not a result.
 2. **Order of training.** Mixed single training stage (default) vs staged format→full. Decide after the
-   `mixed_dataset_our_tool_format_and_replay` canary.
+   `mixed_dataset_our_tool_format_and_replay` H1 probe.
 3. **CAD-QA task dataset ownership.** Who plans the internal teacher-sampling replacement (B2), and
    against which immutable dataset revision?
 4. **Target `answer_format` coverage.** `json`/`number` teacher coverage was zero; the external
@@ -409,7 +409,7 @@ only the dataset:
   or only generic function calling? If only generic, `learn_the_cadqa_task` must carry the mapping.
 - **Q4.** What provides `preserve_prior_capabilities` (the anti-forgetting role)? Candidates in
   §2.4; pick one. `[open]`
-- **Q5.** Should evaluation dataset roles split into `target` / `canary`? `[open]`
+- **Q5.** Should evaluation dataset roles split into `target` / `guard`? `[open]`
 - **Q6.** What are the two Mixed training dataset names (`mixed_dataset_*`)? `[open]`
 
 ---
@@ -420,5 +420,5 @@ only the dataset:
    the typed definitions in `tool_calls.py`; emit Liquid's `messages` JSONL.
 2. Build `mixed_dataset_our_tool_format_and_replay` from `Salesforce/xlam-function-calling-60k` + a permissive `preserve_prior_capabilities` slice,
    with the registry/quality/dedup pass (`fine-tuning-system-plan.md` §7).
-3. Hand the artifact to the architecture doc's cookbook run for the `tool_valid` canary.
+3. Hand the artifact to the architecture doc's cookbook run for the `emit_our_tool_call_format` evaluation dataset.
 4. Only after H1 is measured, plan `learn_the_cadqa_task` (§6) and `mixed_dataset_full_cadqa_training`.

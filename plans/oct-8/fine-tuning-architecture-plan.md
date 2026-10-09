@@ -15,14 +15,14 @@ training order/curriculum, and the CAD-QA task dataset. **The system doc**
 ingest/normalize/quality/dedup/sample stages.
 
 **The evaluation doc** (`evaluation-plan.md`) owns the LLM harness and modes, the
-tool-call surface, the scorer, the canary procedure, grading reconciliation, judge independence,
+tool-call surface, the scorer, the evaluation-dataset procedure, grading reconciliation, judge independence,
 and baselines.
 
 **Shared interfaces, single-sourced:**
 
 - **Format contract** (Liquid `messages` SFT JSONL and the native tool-call tokens) — owned here.
 - **`TrainingExample` + converter** — owned by the system plan.
-- **Canary procedure** — owned by the evaluation doc; canary rows held by the data doc.
+- **Evaluation-dataset procedure** — owned by the evaluation doc; dataset rows held by the data doc.
 - **H1/H2** — owned here; the mixes they test are defined by the data doc.
 
 **Presumed surviving code.** The Phase 3 rewrite is expected to delete most of `train_and_eval/`,
@@ -79,8 +79,8 @@ Two predictions this architecture commits to and must test:
 - **H1 (format):** a small, curated tool-format + CAD-QA-format mix raises tool-valid rate sharply
   using the cookbook recipe (LoRA, cookbook epochs, prompt-masked).
 - **H2 (reasoning):** an external reasoning-distillation + agent training trace mix raises CAD-QA held-out
-  accuracy *beyond* what format-only training achieves, without a general-capability canary
-  regression.
+  accuracy *beyond* what format-only training achieves, without a regression on the general-capability
+  evaluation dataset.
 - **H3 (transfer):** graph-derived CAD-QA supervision raises accuracy on **existing, credible**
   external benchmarks — **BenchCAD `qa_code`** (primary means, official split), with BenchCAD
   `edit_code` and a text-in text-to-CAD benchmark as end/defect corroboration — *beyond* the Base,
@@ -91,7 +91,7 @@ Two predictions this architecture commits to and must test:
 - **H4 (means → end):** the pass rate an LLM model reaches on the CAD-QA task predicts its
   performance on the independent credible benchmark (FT-D15: the lever is the task environment +
   scorer, not the corpus). Tested as a dose-response at fixed recipe and matched compute, with the
-  general canary as covariate and a non-CAD-QA counter-arm: `evaluation-plan.md` §5.1 (D-E6).
+  `preserve_general_math_and_code_reasoning` evaluation dataset as covariate and a non-CAD-QA counter-arm: `evaluation-plan.md` §5.1 (D-E6).
 
 **Priority.** H3 (headline), H4 (strong mechanism), H2 (core means), H1 (control). The paper presents
 them in that order; the experiments run in the dependency order H1 → H4.
@@ -128,14 +128,14 @@ Each step below is a gate; do not start the next until the previous passes.
 3. **Swap in our data (`mixed_dataset_our_tool_format_and_replay`).** Replace the cookbook dataset
    with our `emit_our_tool_call_format` + `preserve_prior_capabilities` rows in Liquid's `messages`
    format (built by the data doc), keep the cookbook config and hyperparameters, and run the
-   evaluation doc's `tool_valid` canary. Gate: H1.
+   evaluation doc's `emit_our_tool_call_format` evaluation dataset. Gate: H1.
 4. **Only if H1 holds**, expand to `mixed_dataset_full_cadqa_training` and `learn_the_cadqa_task`.
 
 Rules for the whole effort:
 
 - **Do not write a trainer.** Use `liquid-finetune` configs (`TrainingConfig(extends="DEFAULT_SFT")`,
   `PeftConfig(extends="DEFAULT_LORA")`); override only `model_name` and the dataset path until a
-  canary says otherwise.
+  measured result says otherwise.
 - **Do not invent a dataset format.** Consume Liquid's `messages` SFT JSONL. The repo's
   `rows_loader` and `tool_calls` typed contract are the converter's input, not a parallel schema
   (the converter is owned by the data doc).
@@ -163,19 +163,19 @@ it.
 | **Cookbook LoRA hyperparameters** | P0 start | TRL/Liquid example: `r=16`, `lora_alpha=32`, `lora_dropout=0.05`, `target_modules=[q,k,v,o]_proj`; Unsloth adds the MLP projections (`gate/up/down_proj`) and reports better quality on small models — try both |
 | **QLoRA only as a fallback** | fallback | needed only to fit <16GB; the Unsloth cookbook uses it (`load_in_4bit=True`), but Liquid's own recipe is LoRA-bf16 and LFM ships bf16 |
 | **Completion-only loss** | P0 | fixes the B3 flat-`text` defect; implement it the **cookbook way** — train on the `messages` format and *verify* the loss is completion-only, rather than hand-rolling a masking path |
-| **Epochs = the cookbook's, not ours** | P0 | TRL/Liquid example uses 3; the Home Assistant recipe uses 5 on a narrow 350M task; TeichAI used 1 at 4B. Start from the cookbook default, then let the canary move it |
+| **Epochs = the cookbook's, not ours** | P0 | TRL/Liquid example uses 3; the Home Assistant recipe uses 5 on a narrow 350M task; TeichAI used 1 at 4B. Start from the cookbook default, then let the evaluation dataset move it |
 | **Cookbook learning rates** | P0 | LoRA `2e-4`, full FT `2e-5`, DPO `5e-7` (TRL/Liquid examples); `bf16=True` |
 | **`preserve_prior_capabilities` mix (20–30%)** | P0 | xLAM precedent; anchor general ability. The `preserve_prior_capabilities` rows are a data-doc concern |
 | **Gradient checkpointing + grad accumulation** | P0 | fits memory; the cookbook uses `gradient_accumulation_steps=4`, Unsloth uses its optimized checkpointing |
-| **Canary before/after each run** | P0 | measure forgetting, do not assume it away; the procedure is the evaluation doc's |
+| **Evaluate the datasets before/after each run** | P0 | measure forgetting, do not assume it away; the procedure is the evaluation doc's |
 | **KB/activation regularization (EWC, LaLoRA)** | P2 | more moving parts than a first run warrants |
-| **Null-Basis LoRA (NB-LoRA)** | P2 | constrained LoRA that preserves RL-acquired reasoning (`arXiv:2609.25618`); only if the canary shows real loss |
+| **Null-Basis LoRA (NB-LoRA)** | P2 | constrained LoRA that preserves RL-acquired reasoning (`arXiv:2609.25618`); only if the evaluation datasets show real loss |
 | **Replay buffer / LwF distillation loss** | P2 | stronger forgetting control once the baseline recipe is measured |
 
 **Do-not-do list:** no full fine-tuning at this size; no epoch/LR/rank value we picked ourselves
-while the cookbook default is untested; no training on the unmasked flat `text`; no mixing the eval
-canary into training; no "Claude-style" reasoning copy at high weight without a filtered set and a
-canary.
+while the cookbook default is untested; no training on the unmasked flat `text`; no mixing the evaluation
+dataset into training; no "Claude-style" reasoning copy at high weight without a filtered set and an
+evaluation dataset.
 
 ---
 
@@ -206,7 +206,7 @@ is the important artifact here. Data stages 1–5 are owned by the system plan
 7. **Manifest.** One JSON per run: External dataset revisions, row counts, role weights, seed, exact command,
    template hash, git SHA, checksums (Phase 0 TA-E3).
 8. **Train.** Run `liquid-finetune` with the cookbook config and defaults (`DEFAULT_SFT`,
-   `DEFAULT_LORA`), overriding only `model_name` and the dataset path until a canary says otherwise.
+   `DEFAULT_LORA`), overriding only `model_name` and the dataset path until a measured result says otherwise.
    Not a hand-rolled trainer.
 
 ---
@@ -240,7 +240,7 @@ traces. Use gradient checkpointing and gradient accumulation rather than a bigge
 
 The dominant cost is **teacher API calls for `learn_the_cadqa_task`** (the data doc's out-of-scope piece, but
 it sets the budget). The external mix's ingest/filter/dedup is CPU-only; a LoRA run over ~20–50k
-examples is hours on a 4090. Budget GPU by the hour and stop on the canary gate.
+examples is hours on a 4090. Budget GPU by the hour and stop on the evaluation gate.
 
 ### 5.4 What Liquid ships (checked 2026-10-08)
 
@@ -330,7 +330,7 @@ justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
 | Cookbook LoRA recipe (`r=16`, `alpha=32`, `lr=2e-4`, cookbook epochs) on bf16 | **P0** | baseline that does not forget; matches Liquid (§5.4) |
 | Merge + GGUF export scripted from the cookbook | **P0** | the current repo has no merge step (FT-D10/TA-D2) |
 | DPO / GRPO second training stage | **P2** | FT-D8 ordering, superseded by FT-D13: run GRPO only after the Training stage 2 pass@k gate shows a reachable tier (`fine-tuning-system-plan.md`) |
-| NB-LoRA / EWC / replay-buffer forgetting control | **P2** | only if the canary shows real regression |
+| NB-LoRA / EWC / replay-buffer forgetting control | **P2** | only if the evaluation datasets show real regression |
 | Multi-base sweep (Qwen3.5-2B, LFM2.5-2.6B, Llama-3.2-3B) | **P2** | hold recipe fixed; adopting another base leaves the cookbook |
 
 ---
@@ -338,7 +338,7 @@ justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
 ## 8. Decisions still to make (training)
 
 1. **Base LLM model.** Cookbook-first means **LFM2.5** — 2.6B as primary, 1.2B for the cheap
-   canary. The `prior-art.md` shortlist (Qwen3.5-2B, Llama-3.2-3B, Phi-4-mini, Gemma 4 E2B/E4B) is
+   evaluation run. The `prior-art.md` shortlist (Qwen3.5-2B, Llama-3.2-3B, Phi-4-mini, Gemma 4 E2B/E4B) is
    deferred to the P2 multi-base sweep.
 2. **Fine-tuning stack.** FT-D11 proposes `liquid-finetune` + LFM2.5, and Liquid's docs name LEAP
    Finetune the recommended stack. Recommendation: **adopt `liquid-finetune` and its cookbook
@@ -358,9 +358,9 @@ justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
   any CAD-QA number.
 - **Q2.** Does the LFM2.5 chat template + LEAP pass a custom `submit_*` tool list through unchanged, and do
   we accept Pythonic calls or force JSON via the system prompt? `[unknown]`.
-- **Q3.** LoRA-bf16 is the default (§5.4); does QLoRA change the canary outcome at this scale? The repo
+- **Q3.** LoRA-bf16 is the default (§5.4); does QLoRA change the outcome on the evaluation dataset at this scale? The repo
   `04-sft.md` records a code/narrative conflict (4-bit vs 16-bit) from the gemma runs; settle it
-  with a measured A/B on the canary.
+  with a measured A/B on the evaluation dataset.
 
 ---
 
@@ -372,4 +372,4 @@ justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
    merge/export GGUF → benchmark). This proves the data→train→export→eval path we will actually use.
 3. Confirm the FT-D12 boundary (what else survives besides the loader, the typed tool contract, and
    the grader — the last owned by the evaluation doc).
-4. Once the data doc delivers the `mixed_dataset_our_tool_format_and_replay` JSONL, run the `tool_valid` canary (evaluation doc).
+4. Once the data doc delivers the `mixed_dataset_our_tool_format_and_replay` JSONL, run the `emit_our_tool_call_format` evaluation dataset (evaluation doc).

@@ -239,6 +239,6 @@ whose rationale was not recoverable.
 ## Open questions
 
 - **Q1.** The base-pipeline choice (D11 in `plans/oct-7/restructure-docs.md`) is recorded as FT-D11,
-  still proposed; promote it to accepted once the first Phase 3 canary runs.
+  still proposed; promote it to accepted once the first Phase 3 run completes.
 - **Q2.** FT-D1, FT-D3, FT-D8 have unresolved sub-questions recorded in their step docs; a decision is
   not "done" while its consequences are unresolved.

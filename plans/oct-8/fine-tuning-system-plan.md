@@ -86,7 +86,7 @@ bad scorer only miscounts; in RL it is what the LLM model climbs. So the evaluat
 ```
 
 **Training stage 0 — Query verifier and eval contract.** Reconcile the three scorers into one (TA-A3), add the
-off-oracle wrong-answer/formatting fixtures (TA-A2), and freeze the held-out + canary rows. No
+off-oracle wrong-answer/formatting fixtures (TA-A2), and freeze the held-out + evaluation-dataset rows. No
 downstream training stage is trustworthy until this passes. (Owned by `evaluation-plan.md`.)
 
 **Training stage 1 — difficulty-aligned SFT.** Per ref [8]: SFT should acquire not-yet-mastered skills;
@@ -100,7 +100,7 @@ than feeding an unlearnable target. `preserve_prior_capabilities` every training
 **Training stage 2 — sampling gate.** The new piece. After SFT, sample k rollouts per prompt with the
 tuned policy and compute the **pass rate** per tier:
 
-- **mastered** (all k pass): RL adds nothing here (ref [20]); use as canary, not training.
+- **mastered** (all k pass): RL adds nothing here (ref [20]); use as an evaluation dataset, not for training.
 - **learnable** (0 < pass < k): the RL-training set. Aim the training distribution at the
   ~0.25–0.75 band (refs [21][22]); ~0.5 maximizes reward entropy and group-filter survival.
 - **unreachable** (zero pass): no RL signal. Add via Bridge/re-distillation at the next SFT
@@ -192,7 +192,7 @@ both TRL and verl and provides Sandboxes for rollout isolation, so either path f
 **The on-disk training artifact is Liquid's `messages` SFT JSONL** — the format the cookbook and
 `liquid-finetune` validate (the architecture doc owns that contract). `TrainingExample` is the
 typed CAD-QA-side record; a small **converter** turns it into the cookbook format. Do not grow this
-schema or the converter beyond what the mix and the canary need.
+schema or the converter beyond what the mix and the evaluation datasets need.
 
 | Field | Notes |
 |---|---|
@@ -225,7 +225,7 @@ owns pipeline stage 9):
    filter; plus the Home Assistant contamination gates (benchmark blocklist, exact/substring,
    trigram Jaccard > 0.5 discard, cross-validation).
 4. **Dedup + contamination.** MinHash/LSH near-dedup within and across sources; hash-exclude the
-   CAD-QA held-out rows and the eval canaries. Hard failure if any canary id appears in `train`.
+   CAD-QA held-out rows and the evaluation datasets. Hard failure if any evaluation-dataset id appears in `train`.
 5. **Sample + mix.** Per-role quotas from the data doc §3; deterministic seed; emit a mix report
    (counts, token totals, role weights, and per-hop/per-format coverage for `learn_the_cadqa_task`).
 
@@ -282,7 +282,7 @@ questions resolve by running or inspection. Labels point to the owning doc.
 - `trust-audit.md` Q4 — GPU parity + SFT re-run in Phase 0, or the top of Phase 1.
 - `fine-tuning-data-plan.md` Q4 — which External dataset supplies `preserve_prior_capabilities`.
 - `fine-tuning-data-plan.md` Q5 / `docs/train-and-eval/datasets.md` Q3 — do evaluation dataset roles split
-  into `target` / `canary`.
+  into `target` / `guard`.
 - `fine-tuning-data-plan.md` Q6 / `docs/train-and-eval/datasets.md` Q2 — the two `mixed_dataset_*` names.
 
 **Resolved questions.**
@@ -303,7 +303,7 @@ questions resolve by running or inspection. Labels point to the owning doc.
 
 1. **Training stage 0:** reconcile the scorer (one implementation) and build the off-oracle fixtures
    (evaluation doc, P0).
-2. **Training stage 1:** run the cookbook canary, then `mixed_dataset_our_tool_format_and_replay`, then `mixed_dataset_full_cadqa_training` (architecture + data
+2. **Training stage 1:** run the cookbook pilot, then `mixed_dataset_our_tool_format_and_replay`, then `mixed_dataset_full_cadqa_training` (architecture + data
    docs).
 3. **Training stage 2:** once an SFT checkpoint exists, run the pass@k sampling gate per tier and record
    reachability. Decide RL vs RFT from that number, not from ambition.

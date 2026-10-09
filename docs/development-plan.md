@@ -74,7 +74,7 @@ Design first (FT-D11 plus `train-and-eval/fine-tuning/pipeline/00-overview.md`):
 - on-policy reasoning (student rejection sampling and/or GRPO) with shaped reward, a
   `0→1→2→3→5` curriculum, entropy monitoring, and checkpoints.
 
-Canary on 1-hop before scaling. **Gate:** full held-out-test number; improvement over base
+Pilot on 1-hop before scaling. **Gate:** full held-out-test number; improvement over base
 and baselines; entropy and length reported, not collapsed.
 
 ## Phase 4 — Evaluation and analysis [core P0; `no_tools`/`cadquery` P2]

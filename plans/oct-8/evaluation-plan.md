@@ -7,7 +7,7 @@ tuned LLM model, and the cost-effective external models through Harbor. Written 
 checkout per the repo-local rule in `plans/oct-7/restructure-docs.md` §0.
 
 **This doc owns — the shared evaluation base:** the LLM harness and its modes, the tool-call and
-answer surface, the scorer, the canary procedure, grading reconciliation, judge independence,
+answer surface, the scorer, the evaluation-dataset procedure, grading reconciliation, judge independence,
 baselines, and evaluation P0/P1/P2.
 
 **Why it is its own doc.** The evaluation surface is *not* a sub-part of training. It is the shared
@@ -21,7 +21,7 @@ Single-sourcing the scorer is what makes the thesis number mean anything.
 - **Format contract** (Liquid `messages` SFT JSONL, and the native tool-call tokens) — owned by
   `fine-tuning-architecture-plan.md`.
 - **`TrainingExample` + converter** — owned by `fine-tuning-system-plan.md`.
-- **Canary procedure** — owned here; the canary **rows** are produced and held by the data doc.
+- **Evaluation-dataset procedure** — owned here; the dataset rows are produced and held by the data doc.
 - **H1/H2** — owned by the architecture doc; the mixes they test are defined by the data doc.
 
 **Related docs.** `../../docs/train-and-eval/evaluation/harness.md` and `baselines.md` (current
@@ -31,6 +31,11 @@ descriptive docs); `../../docs/train-and-eval/fine-tuning/decisions.md`; `../../
 ---
 
 ## 1. What "evaluation" means here
+
+**Evaluation is the set of datasets that serve H1–H4.** Each is an **evaluation dataset** with a
+dataset role (`../../docs/train-and-eval/datasets.md`), composed across Difficulty tiers, and exists
+in two forms: **mid-run** (every run, during training) and **final/complete** (the immutable thesis
+number). All are hard-excluded from training (§6).
 
 Run an LLM model **with no access to CadQuery** over CAD-QA dataset rows and score **exact structured answers**
 under a switchable compute mode. The evaluation harness is the whole chain:
@@ -168,7 +173,7 @@ Two rules:
 - **H4 (means → end).** Test whether the CAD-QA pass rate tracks external transfer: a dose-response
   swept over `learn_the_cadqa_task` volume (0.5k→10k) or over checkpoints, measuring the CAD-QA pass
   rate and the external score at each point. Controls: fixed recipe and **matched compute**; the
-  `general` canary as a covariate (transfer is claimed only if the external score tracks the CAD-QA
+  `preserve_general_math_and_code_reasoning` evaluation dataset as a covariate (transfer is claimed only if the external score tracks the CAD-QA
   pass rate *at equal general capability*); and a **counter-arm** that raises general capability
   without CAD-QA. RL, where used, is the means to extend the sweep to harder tiers
   (`fine-tuning-system-plan.md` §3).
@@ -183,27 +188,28 @@ Two rules:
 
 ---
 
-## 6. Canaries
+## 6. Evaluation datasets
 
-Every run evaluates three surfaces; the architecture doc owns the training mechanics and the data
-doc holds the rows.
+The datasets that serve H1–H4 (§5.1). The architecture doc owns the training mechanics; the data
+doc holds the rows. Each is composed across Difficulty tiers, run in both forms (mid-run and
+final/complete), and is hard-excluded from training.
 
-| Canary | What | Why | Frequency |
+| Evaluation dataset | Dataset role | Serves | Form |
 |---|---|---|---|
-| `cadqa_heldout` | immutable held-out CAD-QA dataset rows, primary `numpy` mode | the thesis number | every run |
-| `tool_valid` | a held-out `emit_our_tool_call_format` slice: does the emitted call parse and match? | isolates format compliance (H1) | every run |
-| `general` | a small fixed math + instruction probe | detects forgetting | every run |
+| CAD-QA held-out | `learn_the_cadqa_task` | H2; the thesis number | mid-run + final |
+| Tool-format held-out | `emit_our_tool_call_format` | H1 format compliance | mid-run + final |
+| General math + code | `preserve_general_math_and_code_reasoning` | forgetting guard; H4 covariate | mid-run + final |
+| External transfer | transfer (§5.1) | H3, H4 | final |
 
-Regression gate: if `general` drops beyond a pre-registered tolerance (suggest ≤2 points) while
-`cadqa_heldout` rises, the run is a **forgetting result** and is reported, not hidden.
+Regression gate: if the `preserve_general_math_and_code_reasoning` accuracy drops beyond a
+pre-registered tolerance (suggest ≤2 points) while the CAD-QA held-out accuracy rises, the run is a
+**forgetting result** and is reported, not hidden. Instruction-following forgetting, if gated, is a
+separate `preserve_prior_capabilities` guard.
 
-**Canary provenance hygiene ([29]).** The `tool_valid` slice must be **disjoint from the public
-training corpora** (`xLAM`/`ToolACE`/`Glaive`), which the base LLM model likely saw in
-post-training; a memorized slice inflates format compliance. Prefer our own `submit_*` rows, a
-disjoint dataset, or a synthetic set.
-
-Open question: does `liquid-finetune`'s eval config cover our scorer, or do we grade offline from
-its generations? `[unknown]` — resolve on the cookbook reproduction.
+**Evaluation-dataset provenance hygiene ([29]).** The `emit_our_tool_call_format` held-out set must
+be **disjoint from the public training corpora** (`xLAM`/`ToolACE`/`Glaive`), which the base LLM model
+likely saw in post-training; a memorized set inflates format compliance. Prefer our own `submit_*`
+rows, a disjoint dataset, or a synthetic set.
 
 ---
 
@@ -242,8 +248,8 @@ results rather than repeating the plan.
 |---|---|---|
 | Single scorer shared by eval, rejection sampling, and reward | **P0** | otherwise the thesis number and the training signal diverge (TA-A3) |
 | Oracle + off-oracle grader fixture (near-miss and formatting variants) | **P0** | oracle 1.0 is not grader correctness (TA-A2) |
-| Canary procedure wired to the cookbook eval (`cadqa_heldout`, `tool_valid`, `general`) | **P0** | every training run needs a forgetting gate |
-| Immutable held-out rows + hard-excluded canary rows | **P0** | held-out hygiene (owned with the data doc) |
+| Evaluation-dataset procedure wired to the cookbook eval (`learn_the_cadqa_task`, `emit_our_tool_call_format`, `preserve_general_math_and_code_reasoning`) | **P0** | every training run needs a forgetting gate |
+| Immutable held-out rows + hard-excluded evaluation-dataset rows | **P0** | held-out hygiene (owned with the data doc) |
 | Public/private leak audit | **P0** | a leak invalidates the benchmark |
 | External transfer harness on BenchCAD `qa_code` (primary) and `edit_code` (secondary) | **P0** | the only evidence the dataset is useful beyond its own split; peer-review gate for H3 |
 | Reachability pilot + family-disjoint BenchCAD subset | **P0** | a target the base LLM model cannot attempt yields no transfer signal |
@@ -270,10 +276,10 @@ results rather than repeating the plan.
   Base / format-only / answer-only controls. It is a P0 gate: the only evidence that the dataset is
   useful beyond its own split. Stale gaps (`GeoGramBench`, `QueryCAD`) are re-run or dropped.
 - **D-E6** the dataset's value is measured as a dose-response (H4): CAD-QA pass rate against the
-  independent-benchmark score, at fixed recipe and matched compute, with the `general` canary as
-  covariate.
-- **New (proposed):** one scorer for eval, rejection sampling, and reward; canary `general`
-  regression tolerance pre-registered at ≤2 points.
+  independent-benchmark score, at fixed recipe and matched compute, with the
+  `preserve_general_math_and_code_reasoning` evaluation dataset as covariate.
+- **New (proposed):** one scorer for eval, rejection sampling, and reward; the
+  `preserve_general_math_and_code_reasoning` regression tolerance pre-registered at ≤2 points.
 
 ---
 
@@ -281,13 +287,20 @@ results rather than repeating the plan.
 
 - **Q1.** Should the local harness import the Harbor grader (or the reverse) so the two exact-match paths
   cannot drift? (D-E2 open question.)
-- **Q2.** Which slice is the canonical baseline slice: rc10 clean-100, release10k, or an immutable hard test?
-- **Q3.** What is the exact `general` canary probe? A 500–1,000 row math+instruction set is cheap and
-  enough for regression detection; a full MMLU is P2.
+- **Q3.** Which rows make up the `preserve_general_math_and_code_reasoning` evaluation dataset? A
+  500–1,000 row math + code set is cheap and enough for regression detection; a full MMLU is P2.
 - **Q4.** Does `liquid-finetune`'s eval config let us plug in our scorer, or do we grade its generations
   offline? `[unknown]`.
 - **Q5.** Which BenchCAD slice is the canonical transfer target: full `qa_code`, the Spatial Reasoning axis,
   or a hard family subset? And is `edit_code` T4/T5 reachable by a 2–4B LLM model? `[unknown]`.
+
+## Resolved questions (evaluation)
+
+- **Q2.** *(2026-10-09)* Not a single "canonical baseline slice". **Evaluation is the set of datasets
+  that serve H1–H4**, each composed across Difficulty tiers and run in two forms — mid-run (during
+  training) and final/complete (the immutable thesis number). Baselines run on those same evaluation
+  datasets, composed across Difficulty tiers; per-dataset composition is
+  `../../docs/train-and-eval/datasets.md`.
 
 ---
 
@@ -297,8 +310,9 @@ results rather than repeating the plan.
    with the `boolean` union from `parse.py`.
 2. **Build the oracle + off-oracle fixture** (P0) and assert both the identity path and the
    wrong-answer/formatting variants.
-3. **Freeze the held-out and canary rows** with the data doc and hard-exclude them from training.
-4. **Wire the canary procedure** (`cadqa_heldout`, `tool_valid`, `general`) into the cookbook eval
+3. **Freeze the held-out and evaluation-dataset rows** with the data doc and hard-exclude them from training.
+4. **Wire the evaluation-dataset procedure** (`learn_the_cadqa_task`, `emit_our_tool_call_format`,
+   `preserve_general_math_and_code_reasoning`) into the cookbook eval
    path once the architecture doc has the `mixed_dataset_our_tool_format_and_replay` artifact.
 5. **Pilot the external transfer target** (§5.1, P0): run the base LLM model on a family-disjoint
    BenchCAD `qa_code` subset to confirm a low-but-nonzero floor before any training spend.
