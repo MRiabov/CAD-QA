@@ -114,13 +114,20 @@ single-GPU thesis, Training stage 2 may be the whole answer, with Training stage
 groups, ref [23]), RL-eligible pass-rate scheduling (refs [21][22]), and a composite reward (§4). Run
 rollouts in a sandbox (§5). Never run RL on a tier with no partial signal.
 
-> **P2 backlog — hint-based RL.** The dataset already carries a deterministic derivation: the **ordered
-> Gold query program**, with the per-row `clue_map` mapping each predicate to its public clue (a
+> **P2 backlog — hint-based rollouts.** The dataset already carries a deterministic derivation: the
+> **ordered Gold query program**, with the per-row `clue_map` mapping each predicate to its public clue (a
 > **private** field, withheld from public rows). That yields a natural **hint ladder** (reveal a leading
-> prefix of the ordered predicates) to condition or anneal rollouts. P2 only; read first that privileged on-policy
+> prefix of the ordered predicates) to condition or anneal rollouts. It is also the designated
+> **fallback** when the RL-readiness gate finds no `learnable` tier: rather than stopping, roll out with
+> the hints (teacher, or a student that passed an easier tier) and anneal toward un-hinted RFT
+> (`pipeline/05-rl-readiness-gate.md`). P2 only; read first that privileged on-policy
 > distillation can *harm* thinking LLM models (ref [9]) and that hints are a reward-hacking risk
 > (refs [27][28]). There is no separate "hints" dataset field today — this is the `clue_map` +
 > Gold query program.
+>
+> **Related P2 — step-level verification.** Check that a pass *followed the Gold query program's
+> predicates* (via `clue_map` traceability) rather than guessing the answer, so a pass is a correct
+> trajectory, not a lucky sample (refs [27][28]).
 
 **Training stage 4 — consolidation.** On-policy distillation (the student rolls out, a per-domain teacher
 supervises; Liquid's MOPD training stage) or another RFT round, to fold the RL gains back without entropy

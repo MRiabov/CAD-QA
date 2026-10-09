@@ -38,8 +38,13 @@ rollout latency, not SFT sequences/s.
 ## Stop / advance
 
 - any `learnable` row → RL **or** RFT is indicated;
-- no `learnable` row → stop at SFT/RFT, RL not indicated (FT-D13);
-- `unreachable` rows → Bridge / re-distillation at the next SFT run, or record.
+- **no** `learnable` row → the **fallback ladder**, in order: (1) **oversample** (a row at zero pass at a
+  rollout count of 8 may pass at 16 or 32) and keep any accepted completion as RFT data; (2)
+  **hint-conditioned rollouts** — a teacher, or a student that passed an easier tier, rolls out with the
+  private `clue_map` / Gold query predicates as hints, then anneal the hints toward un-hinted RFT (the P2
+  hint-based direction, `../system.md` Training stage 3); (3) if neither yields accepted completions,
+  **record and exclude** the tier (FT-D13).
+- RL is **not** indicated when no tier is `learnable`; the fallback is data generation, not RL.
 
 ## Inputs / outputs
 
@@ -66,7 +71,8 @@ uv run pytest train_and_eval/eval/test_tool_calls.py -k reward -q
 - **OD-3.** Confirm the rollout temperature ≈ 1.0 (rollout), separate from the 0.1 accuracy runs.
   **Provisional** — verify against the RL exploration/sampling literature (research refs [21]–[23], [25])
   as a **P2** task; it only sets the reachability estimate, not any reported accuracy.
-- **OD-4.** When **no** tier is `learnable`: is the RL-readiness gate **binding** (stop and report SFT-only, FT-D13) or
-  do we fall back to more **teacher re-distillation / Bridge**? Self-RFT cannot proceed here — it needs the
-  policy's own correct completions, which do not exist at a zero pass rate.
+- **OD-4.** When **no** tier is `learnable`: is the fallback **hint-conditioned teacher/student rollouts**
+  (then anneal the hints), with **oversampling** as the cheap first try — or a hard stop with SFT-only
+  reporting (FT-D13)? Plain self-RFT cannot proceed (no accepted completions at a zero pass rate). The
+  owner leans to hint-conditioned rollouts; confirm.
 - **OD-5.** RFT vs GRPO at this scale — decided by the RL-readiness gate, not on paper (`../system.md` Q3).

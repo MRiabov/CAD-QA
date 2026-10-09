@@ -369,7 +369,8 @@ justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
 | Merge + GGUF export scripted from the cookbook | **P0** | the current repo has no merge step (FT-D10/TA-D2) |
 | DPO / GRPO second training stage | **P2** | FT-D8 ordering, superseded by FT-D13: run GRPO only after the Training stage 2 RL-readiness gate shows a reachable tier (`system.md`) |
 | RL-readiness gate rollout temperature (≈ 1.0) validated from research | **P2** | `05-rl-readiness-gate.md` OD-3; sets only the reachability estimate — confirm against the RL exploration/sampling literature (research refs [21]–[23], [25]) |
-| Hint-based RL / hint-annealed curriculum | **P2** | we hold a deterministic derivation (ordered Gold query program + private `clue_map`), so a hint ladder is available; risk per research refs [9][27][28] (`system.md` Training stage 3) |
+| Hint-based RL / hint-annealed curriculum | **P2** | we hold a deterministic derivation (ordered Gold query program + private `clue_map`), so a hint ladder is available; also the fallback when no tier is `learnable` (`system.md` Training stage 3); risk per research refs [9][27][28] |
+| Step-level (process) verification: a pass followed the Gold query program, not a lucky guess | **P2** | `clue_map` gives per-predicate traceability; guards answer-only guessing (research refs [27][28]) |
 | NB-LoRA / EWC / replay-buffer forgetting control | **P2** | only if the evaluation datasets show real regression |
 | Multi-base sweep (Qwen3.5-2B, LFM2.5-2.6B, Llama-3.2-3B) | **P2** | hold recipe fixed; adopting another base leaves the cookbook |
 
