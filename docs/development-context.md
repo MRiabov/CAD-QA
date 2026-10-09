@@ -22,6 +22,33 @@ marked (`[unknown]`, `[unverified — needs <env>]`, `[assumed]`).
 | 2026-08-08/09 | Teacher rejection sampling, SFT, native tool-call format fix, 1-hop bridge, `run_code` sandbox, harness modes, a vLLM conversion | `train_and_eval/`, `docs/_archive/rl_*.md`, `docs/_archive/agent_handoff_2026-08-09.md` |
 | 2026-08-09 | Last commit | `512a514` |
 
+## Motivation — the EngineerBench origin
+
+**Status:** first-hand, `[own, unbacked]`, recorded 2026-10-09. Motivation, not evidence.
+
+CAD-QA grew out of **EngineerBench** (`github.com/MRiabov/EngineerBench`), an earlier construction
+benchmark. While building it (roughly 2026-H1, 6–8 months before 2026-10), proprietary LLM models
+consistently failed to:
+
+- make proper shapes;
+- use anything beyond boxes;
+- make non-overlapping shapes;
+- reason about dimensions in CAD.
+
+Indicative pass rate was about **10%**, with a consistent shape in **under 40%** (not 50%).
+
+**Stale and unbacked.** These numbers are first-hand and are not reproducible from tracked
+artifacts, and they are **stale**: the frontier moved from about 0.3 to **0.95+** on BenchCAD in
+roughly six months, so a 2026-H1 construction estimate does not describe today's LLM models. Use them
+as history, not as a result.
+
+**Why CAD-QA.** EngineerBench could not separate "the LLM model reasoned incorrectly" from "the
+LLM model failed to execute", so CAD-QA removes construction from the loop: it is no-kernel and
+code-comprehension. The long-run aim is that training comprehension **improves generation and
+prevents invalid or overlapping geometry** — the original EngineerBench failure modes. That is why
+the external transfer suite targets both comprehension (BenchCAD `qa_code`) and construction /
+defect (`edit_code`, text-to-CAD).
+
 ## Components
 
 **Dataset generation** (`dataset/`): CadQuery program ingestion
