@@ -29,6 +29,13 @@ also release a 111-question CAD question-answering benchmark.
 - Larger LLM models (GPT-4o, Llama 3.1 405B) outperform smaller open LLM models on the same
   benchmark.
 
+## Staleness (2026-10-09)
+
+The GPT-4o 44/111 figure is from 2024, and the benchmark itself predates GeoGramBench. Frontier
+capability moved sharply since — BenchCAD Vision2Code rose from about 0.3 to 0.95+ in roughly six
+months — so any saturation statement here is `[stale — verify or drop]`: re-run the current frontier
+before using QueryCAD as a transfer target (`plans/oct-8/evaluation-plan.md` §5.1).
+
 ## Why it matters for CAD-QA
 
 The nearest published CAD question-answering prior art. Two lessons: grounding the LLM model in

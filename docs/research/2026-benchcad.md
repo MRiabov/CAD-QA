@@ -170,6 +170,42 @@ against the frozen hard slice before any gap claim stands.
   run the current frontier models on the frozen CAD-QA hard slice to establish whether the
   multi-hop gap is still live.
 
+## Landscape — works citing BenchCAD and adjacent benchmarks (2026-10-09)
+
+BenchCAD is already cited by a set of 2026 works, which confirms it as a reference point and
+surfaces adjacent benchmarks (Semantic Scholar, 2026-10-09):
+
+| Work | arXiv | What it is | Modality |
+|---|---|---|---|
+| CADFather | 2610.09127 | agentic reconstruction coordinating tools; evaluates on CADENA-Bench, CADBench, BenchCAD | mesh |
+| CADWorld | 2609.16251 | long-horizon FreeCAD computer-use, 200 tasks, executable checks; best agent 17.5% vs 87% expert | GUI |
+| RealCADBench | 2609.03773 | parametric CAD from industrial design intents; executability + IoU + visual-semantic | text/image |
+| MechReason | 2609.16012 | multi-image multi-hop reasoning in mechanical engineering; best 62.89% | multi-image |
+| P3D-Bench | 2606.11152 | parametric 3D generation and structural reasoning from a text/visual spec | text/visual |
+| DepthBenchCAD | 2609.15122 | how audit depth changes conclusions for CAD parameter edits | — |
+| 3DHarnessBench | 2609.06535 | agentic 3D-to-code (Blender Python) from frontier vision-language agents | vision |
+| VisCAD | 2609.03811 | multimodal industrial CAD foundation suite | multimodal |
+| CAD-CodeVerify | ICLR | self-verification of VLMs on CAD code generation | vision + code |
+
+**Additional text-in candidates** (not in the citation pull above, but credible for the transfer
+end/defect axis):
+
+- **Text2CAD-Bench** (arXiv:2605.18430): 600 human-curated text→CadQuery examples in four tiers
+  L1–L4; Chamfer distance, Invalidity Rate, IoU; sandboxed execution with retries. Best fit for the
+  end/defect axis.
+- **Text-to-CadQuery** (arXiv:2505.06507): 170K text–CadQuery pairs; Chamfer distance, Invalid Rate,
+  exact match.
+- **CAD-Editor** (ICML 2025, arXiv:2502.03997): locate-then-infill text-based CAD editing.
+- **CAD-Coder** (NeurIPS 2025, arXiv:2505.19713): text-to-CAD with chain-of-thought + geometric
+  reward; reconstruction IoU ~92% on legacy DeepCAD splits (saturated).
+- **Zero-to-CAD** (arXiv:2604.24479) and **3DCodeBench** (arXiv:2606.01057): agentic program
+  synthesis with executability and geometric metrics.
+
+**Implication.** BenchCAD `qa_code` remains the best-fit means target; `Text2CAD-Bench` is the best
+text-in end/defect candidate. `MechReason` and `CADWorld` are credible and corroborate that
+multi-hop / agentic CAD is hard, but their modality (multi-image, GUI) is out of reach for a
+text-only base LLM model — use them as context, not targets (`plans/oct-8/evaluation-plan.md` §5.1).
+
 ## Related
 
 - `2025-geogrambench-program-to-geometry.md`
