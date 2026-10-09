@@ -36,7 +36,7 @@ teacher-sampling of agent training traces from frozen CAD-QA dataset rows, step 
 separate decision owed under FT-D11 (`../../docs/train-and-eval/fine-tuning/decisions.md`) and
 Phase 3 of `../../docs/development-plan.md`.
 
-**Related docs.** `../../docs/prior-art.md` (external evidence, refs [1]–[28]);
+**Related docs.** `../../docs/prior-art.md` (external evidence, refs [1]–[29]);
 `../../docs/PRD.md` (research contract); `../../docs/train-and-eval/fine-tuning/decisions.md`
 (FT-D* decisions).
 
@@ -86,7 +86,10 @@ alone is not disqualifying — `xLAM/APIGen` is still the canonical reference an
   `Glaive-FC-v2`. It finds **SFT+LoRA strongest in 15/18** in-distribution settings; **corpus
   choice changes accuracy by up to 55 points**; a **uniform mixture** is the best transfer default;
   and **LoRA beats full fine-tuning** (it preserves pretrained tool use). Direct support for our
-  SFT+LoRA, mixture-first plan and H1.
+  SFT+LoRA, mixture-first plan and H1. **Caveat (contamination):** the Qwen3 base likely saw these
+  public corpora in post-training (zero-shot xLAM is 66–78%), so the in-distribution magnitudes are
+  upper bounds and the `tool_valid` canary must not be a held-out slice of them — see
+  `../../docs/research/2026-sft-vs-rl-tool-calling.md` and the evaluation plan §6.
 - ACL 2026 "Skill-Aware Data Selection and Fine-Tuning for Data-Efficient Reasoning Distillation":
   1,000 selected traces beat random SFT from a 100K corpus. Supports small, quality-filtered sets.
 
@@ -200,6 +203,7 @@ Rationale and tradeoffs:
 - **Mix corpora; corpus choice matters.** The 2026 controlled study (arXiv:2609.17848) found
   corpus choice swings tool-calling accuracy by up to 55 points and a uniform mixture is the best
   transfer default — so `mix-format` blends `format_tool` sources rather than betting on one.
+  (Magnitude is contamination-affected; see §2.)
 - **Rehearsal is not optional.** Without it, the LoRA-only setting still risks regression (see the
   architecture doc, capability preservation); it is cheap insurance.
 - **`cadqa_hop` weight is a placeholder.** Until its generation is planned (§6), `mix-full` is not

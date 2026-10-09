@@ -14,7 +14,7 @@ ingest/normalize/quality/dedup/sample stages).
 them into one system and adds the pieces none of the three owns: the sampling gate, the
 reward-hacking audit, and the on-policy stages.
 
-**Related docs.** `../../docs/prior-art.md` (refs [1]–[28]);
+**Related docs.** `../../docs/prior-art.md` (refs [1]–[29]);
 `../../docs/train-and-eval/fine-tuning/decisions.md` (FT-D*); `../../docs/PRD.md`;
 `../../plans/oct-8/trust-audit.md`.
 

@@ -137,6 +137,11 @@ doc holds the rows.
 Regression gate: if `general` drops beyond a pre-registered tolerance (suggest ≤2 points) while
 `cadqa_heldout` rises, the run is a **forgetting result** and is reported, not hidden.
 
+**Canary source hygiene ([29]).** The `tool_valid` slice must be **disjoint from the public
+training corpora** (`xLAM`/`ToolACE`/`Glaive`), which the base LLM model likely saw in
+post-training; a memorized slice inflates format compliance. Prefer our own `submit_*` rows, a
+disjoint source, or a synthetic set.
+
 Open question: does `liquid-finetune`'s eval config cover our scorer, or do we grade offline from
 its generations? `[unknown]` — resolve on the cookbook reproduction.
 

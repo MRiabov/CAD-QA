@@ -61,3 +61,4 @@ The `Ref` column matches the numbered references in `../prior-art.md`.
 | [26] | `[peer-reviewed]` | BREAD: branched rollouts bridge SFT and RL | NeurIPS 2025 | `2025-bread-branched-rollouts.md` | SFT+RL fails when traces are too hard or rewards too sparse |
 | [27] | `[workshop]` | Preventing process-reward hacking on verifiable rewards | AAMAS 2026 | `2026-prm-reward-hacking-aamas.md` | dense reward terms are hacked unless optimality-preserving |
 | [28] | `[peer-reviewed]` | Detecting and suppressing reward hacking with gradient fingerprints | COLM 2026 | `2026-gradient-fingerprints-reward-hacking.md` | hacking is implicit; detect early, use counterfactuals |
+| [29] | `[peer-reviewed]` | Contamination-free evaluation of multi-step function calling (FuncBenchGen) | ICLR 2026 | `2025-contamination-free-function-calling-eval.md` | tool-call benchmarks/corpora are contamination-prone; use train-disjoint eval |

@@ -38,6 +38,32 @@ in-distribution and under cross-dataset transfer.
   54.2% parallel calls); `ToolACE` 9,715 (4.5% multi-turn, 17.2% parallel); `Glaive` 46,204
   (92.6% multi-turn, 0% parallel; 58.5% of rows removed as near-duplicates).
 
+## Caveats (contamination)
+
+**Status:** raised 2026-10-08; not resolved by the authors. This study is **corroborating, not
+load-bearing**.
+
+- **The base likely saw the corpora.** The study adapts **Qwen3** (0.6B–32B) on `xLAM/APIGen`,
+  `ToolACE`, and `Glaive-FC-v2` and evaluates on held-out splits of the *same* three corpora. Qwen3
+  is very likely to have been exposed to these public tool-calling corpora during its own
+  post-training, so the **in-distribution** test splits are plausibly contaminated for the base.
+- **The study's own zero-shot numbers suggest it.** Its Table 2 reports zero-shot xLAM accuracy of
+  66.0% (0.6B), 68.1% (1.7B), 76.6% (4B), 75.3% (8B), 77.8% (14B), 78.3% (32B) with no tool-specific
+  training. A cold base does not score 66–78% on a held-out function-calling set; that is consistent
+  with prior exposure.
+- **What this weakens.** The **SFT-vs-GRPO ranking** and the **55-point corpus effect** are
+  confounded: if the base already mastered the distribution, "SFT improves over zero-shot" partly
+  measures recall, and GRPO has little to add. Read the in-distribution magnitudes as upper bounds.
+- **What it does not change.** The conclusion that a raw SFT→GRPO loop is not automatically better
+  rests on the mechanism results ([20], [21]–[23], [26]), not on this study. The confound is in fact
+  *consistent* with that mechanism: GRPO gives no gain where the base already mastered the
+  distribution, and only a small gain under cross-dataset transfer — what [20] predicts.
+- **Contamination is a recognized problem.** A dedicated ICLR 2026 paper on contamination-free
+  function-calling evaluation exists ([29]).
+- **For CAD-QA.** The task evaluation is internal and contamination-free; the exposure is the
+  external format canary, so a `tool_valid` slice drawn from `xLAM`/`ToolACE`/`Glaive` may be
+  memorized — use disjoint or our own `submit_*` rows.
+
 ## Why it matters for CAD-QA
 
 - Directly supports the plan's **SFT + LoRA default** (`fine-tuning-architecture-plan.md`, H1) and

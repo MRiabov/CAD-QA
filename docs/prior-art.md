@@ -166,7 +166,10 @@ in-distribution settings; GRPO and SFT-then-GRPO rarely beat it and sometimes fe
 zero-shot. Two findings matter here: **training-corpus choice moved accuracy by up to 55 points**,
 as much as the method, and a **uniform mixture** was the best cross-dataset transfer default. It
 also found **LoRA beat full fine-tuning** at 4B (88.0% vs 80.4% on `xLAM`), read as LoRA better
-preserving pretrained tool use.
+preserving pretrained tool use. **Caveat (contamination, raised 2026-10-08).** The base (Qwen3)
+likely saw these public corpora during post-training — its own zero-shot xLAM scores are 66–78%,
+and a dedicated contamination-free function-calling evaluation now exists [29] — so the
+in-distribution magnitudes are upper bounds and this study is corroborating, not load-bearing.
 
 **Implication for CAD-QA.** The external evidence says a base-LLM-model swap should not be
 expected to fix a recipe/data wall. Fix the recipe first (prompt-masked SFT, bounded epochs,
@@ -332,6 +335,10 @@ reference never stands alone for a load-bearing claim.
     and Suppressing Reward Hacking with Gradient Fingerprints', COLM 2026. arXiv:2604.16242.
     `arxiv.org/pdf/2604.16242`. `[peer-reviewed]`. Note:
     `research/2026-gradient-fingerprints-reward-hacking.md`.
+29. (2025) 'Towards Reliable Benchmarking: A Contamination Free, Controllable Evaluation Framework
+    for Multi-step LLM Function Calling', arXiv:2509.26553; ICLR 2026.
+    `arxiv.org/html/2509.26553v2`. `[peer-reviewed]`. Note:
+    `research/2025-contamination-free-function-calling-eval.md`.
 
 ## Resolved questions
 
