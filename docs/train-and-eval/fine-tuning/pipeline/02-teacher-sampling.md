@@ -57,7 +57,8 @@ OPENROUTER_API_KEY=... uv run python train_and_eval/train/rejection_sample.py \
   money/time cost of an extra ~1,000 traces (teacher calls + GPU train/eval — **GPU-class-dependent**: an
   **A100** vs a **B300** changes wall-clock, hourly rate, and batch/serving throughput; vendor
   comparisons put the B300 at ~7x A100 BF16 compute, ~3.6x memory, ~4.1x bandwidth) and (2) the
-  incremental gain. **Provisional: scope to the lower universe (primary scope)** until those numbers
-  exist, stated per GPU class.
+  incremental gain, measured first on the **small test GPU** (Modal, per-second billing, free credits)
+  and only then scaled to A100/B300. **Provisional: scope to the lower universe (primary scope)** until
+  those numbers exist, stated per GPU class.
 - **Q2.** Teacher settings (temperature, attempts per row). The recorded **~23% success rate was the v4
   preview**; v4.1 is materially stronger, so re-measure success and per-combination coverage.

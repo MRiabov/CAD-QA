@@ -226,6 +226,10 @@ traces. Use gradient checkpointing and gradient accumulation rather than a bigge
 
 ### 5.2 Recommendation
 
+- **Test small first, then scale up.** Tests and iteration run on a **small serverless GPU (Modal)** with
+  **per-second billing** and Liquid's **free credits (~$30)** — a smoke run is cents, not dollars. Scale
+  to a rented **A100 / B300** only after a measured need appears (long context, wall-clock, batch/serving
+  throughput). Do not rent a large card to run tests.
 - **First runs: Modal** (serverless), following the cookbook; ~$1.50 per Home Assistant-scale run.
 - **Primary self-managed:** a single **24 GB card (RTX 4090)** on a spot/on-demand Vast.ai instance
   running **LoRA on the bf16 base**; ~$0.35–0.60/hr.
@@ -244,7 +248,9 @@ traces. Use gradient checkpointing and gradient accumulation rather than a bigge
 
 ### 5.3 Cost estimate
 
-The dominant cost is **teacher API calls for `learn_the_cadqa_task`** (the data doc's out-of-scope piece, but
+Start the budget at the **test scale**: Modal serverless with per-second billing, so a smoke run is
+cents and Liquid's **~$30 free credits** cover the first loops; scale-up is a deliberate step, not the
+default. The dominant cost is **teacher API calls for `learn_the_cadqa_task`** (the data doc's out-of-scope piece, but
 it sets the budget). External-mix ingest/filter/dedup is CPU-only. The GPU term is **secondary and
 class-dependent**: for LoRA on a 2.6B LLM model the card is rarely the bottleneck (teacher sampling and
 evaluation rollouts dominate), so A100-vs-B300 mostly changes wall-clock, hourly rate, and serving batch
