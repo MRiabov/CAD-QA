@@ -2,100 +2,45 @@
 
 ## Purpose
 
-Turn the **CAD-QA dataset file** (`rows.parquet`) into **decoded CAD-QA dataset rows**
-consumed by teacher sampling, preparation, and evaluation.
+Turn the **CAD-QA dataset file** (`rows.parquet`) into **decoded CAD-QA dataset rows** consumed by
+teacher sampling, preparation, and evaluation.
 
 ## Inputs / outputs
 
-- **In:** the **CAD-QA dataset file** — `rows.parquet` from `dataset_generation`
-  (the immutable benchmark rows; see [00-overview.md](00-overview.md#datasets-in-play)). The External
-  datasets and the Mixed training dataset enter later, at 03.
-- **Out:** `decoded CAD-QA dataset rows` (list of Python dicts; not persisted) — fields
-  `row_id`, `prompt`, `answer_format`, `gold_answer` (decoded), `logical_hop_count`,
-  `difficulty_bucket`, `geometry_hop_count`, `relation_families`
-  ([00-overview.md](00-overview.md#datasets-in-play)).
-- **Filter semantics:** default `split="train"`; rows whose `split` is neither null nor the
-  requested split are dropped; rows missing `prompt` or `gold_answer`, and rows with
-  `release_ready is False`, are dropped. `[answer contract]` is appended to each prompt
-  unless `tool_suffix=False`.
-
-**Not the curriculum.** The loader exposes `logical_hop_count` (and `difficulty_bucket`) per row but does
-not filter or order by it. The progressive curriculum (low-hop first run, full ladder primary) is a mix
-concern, applied in the Sample + mix step (`../system.md` §7) and the trainer's shuffle/sampler config — not
-here.
+- **In:** the **CAD-QA dataset file** — `rows.parquet` from `dataset_generation` (the immutable benchmark
+  rows; see [00-overview.md](00-overview.md#datasets-in-play)). The External datasets and the Mixed
+  training dataset enter later, at 03.
+- **Out:** decoded CAD-QA dataset rows — `row_id`, `prompt`, `answer_format`, `gold_answer` (decoded),
+  `reasoning_hop_count`, `difficulty_bucket`, `geometry_hop_count`, `relation_families`.
+- **Filter semantics:** by `split`; rows missing `prompt` or `gold_answer`, and rows with
+  `release_ready is False`, are dropped. The `[answer contract]` suffix is appended to each prompt.
 
 ## Requirement
 
-The loader must produce, for every retained row, a prompt that names the correct **submit
-tool** for the row's `answer_format`, and a `gold_answer` that the shared matcher
-(`train_and_eval/tool_calls.py::tool_call_matches`) accepts for that tool. If either is
-wrong, every downstream agent training trace and every eval score is wrong for that row.
+Every retained row gets a prompt that names the correct **submit tool** for its `answer_format`, and a
+`gold_answer` the shared matcher (`train_and_eval/tool_calls.py::tool_call_matches`) accepts for that
+tool. If either is wrong, every downstream agent training trace and every evaluation score is wrong for
+that row.
+
+The loader exposes `reasoning_hop_count` (and `difficulty_bucket`) per row but does not filter or order
+by it — the progressive curriculum is a mix concern, applied in the Sample + mix step (`../system.md`
+§7).
 
 ## Current status
 
-`verified` — `train_and_eval/rows_loader.py::load_local_rows` exercised by its test suite
-against the real `runs/current_cadevolve1000_10k_regen_20260613/release_10k/rows.parquet`
-(10,000 rows; formats `candidate_label`/`coordinate`/`text`; hops `{2,3,4,5}`). 36/36 tests
-passing across `train_and_eval/test_rows_loader.py` and
-`train_and_eval/eval/test_tool_calls.py`.
+`missing` — the Phase 3 loader is to be written; the 2026-08 gemma `train_and_eval/` is dumped (FT-D12).
 
 ## Verification
 
 ```bash
-rtk uv run pytest train_and_eval/test_rows_loader.py -q
+uv run pytest <loader test> -q
 ```
-
-The full command actually run on 2026-10-07 was:
-
-```bash
-python -m pytest train_and_eval/test_rows_loader.py train_and_eval/eval/test_tool_calls.py -q
-# 36 passed
-```
-
-`jsonl`-only paths are covered by synthetic fixtures in the same test file; the
-`release_10k` fixture skips itself if the artifact is absent, so an artifact-less checkout
-still verifies the loader logic but not the real schema.
-
-## Local decisions
-
-### FT-01-D1 — Append the `[answer contract]` suffix at load time
-
-- **Status:** accepted (2026-08).
-- **Context:** the LLM model must end with a `submit_*` tool call; both the teacher and the
-  student need the same instruction.
-- **Decision:** `load_local_rows` appends `tool_call_prompt_suffix(answer_format)` to the
-  prompt by default, so every consumer gets the contract without re-implementing it.
-- **Consequences:** the teacher prompt and the SFT/eval prompt share one suffix definition
-  (`train_and_eval/tool_calls.py::tool_call_prompt_suffix`). `tool_suffix=False` exists for
-  callers that want the bare prompt.
-
-### FT-01-D2 — Decode the JSON-encoded gold once, in the loader
-
-- **Status:** accepted (2026-08).
-- **Context:** `rows.parquet` stores `gold_answer` as a JSON string (e.g. `"wp19"` for text,
-  `[-1.5, 0, 2.25]` for coordinate).
-- **Decision:** `_decode_gold` decodes a string gold once; downstream compares the decoded
-  value. `reward_cadqa._decode_gold` independently double-decodes because HF rows can be
-  double-encoded.
-- **Consequences:** two decoders exist for the same concept. If the encodings diverge, the
-  loader and the reward can disagree.
 
 ## Open questions
 
-- **Q1.** **Split filtering is optimistic.** A row with `split=None` passes every split filter
-  (`rec.get("split") not in (None, split)`). `[unknown]` whether any artifact row has a null
-  split; if so, held-out leakage is possible.
-- **Q2.** **`boolean` answer format is unhandled.** `train_and_eval/rows_loader.py::RLRawRow` and
-  `train_and_eval/tool_calls.py::tool_call_prompt_suffix` route through
-  `format_to_tool`, which has no `boolean` entry; the glossary lists `boolean` as an answer
-  format. A `boolean` row would raise at load or eval time. See
-  [06-harness-modes.md](06-harness-modes.md#open-questions).
+- **Q1.** Unify the `logical_hop_count` (row) / `hop_count` (Gold query program) naming (glossary).
+- **Q2.** Confirm every Answer format maps to a submit tool — the old typed contract omitted `boolean`.
 
 ## Resolved questions
 
-None yet.
-
-## Extra deliverables - P2
-
-- Emit a typed `HarnessRow` Pydantic class instead of a bare `dict` (the repo's typed-code
-  standard prefers explicit models between functions).
+_(none yet)_

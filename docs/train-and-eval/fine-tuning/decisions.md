@@ -181,6 +181,11 @@ whose rationale was not recoverable.
 - Detail: FT-D11; `plans/oct-7/restructure-docs.md` (Code-change policy);
   `system.md`.
 
+  **Update (2026-10-09).** The old `train_and_eval/` implementation is **deleted wholesale**; the loader
+  and the typed tool/answer contract are carried as **shared interfaces, re-implemented** for the Phase 3
+  stack — their 2026-08 defects (for example the optimistic split filter, the missing `boolean` submit
+  tool) do **not** carry.
+
 ## FT-D13 — The post-training system is staged, not raw SFT-then-GRPO
 
 - **Status:** proposed (2026-10-08) — research-backed; not yet accepted.

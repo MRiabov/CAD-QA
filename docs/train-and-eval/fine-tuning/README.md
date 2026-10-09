@@ -23,7 +23,7 @@ Liquid `messages`) → **two-phase SFT** → a **sampling gate** and optional **
 
 | Step | Doc | Status |
 |---|---|---|
-| 01 | [01-rows-loader.md](pipeline/01-rows-loader.md) | `verified` (retained; hop naming to unify) |
+| 01 | [01-rows-loader.md](pipeline/01-rows-loader.md) | `missing` (re-implemented for Phase 3) |
 | 02 | [02-teacher-sampling.md](pipeline/02-teacher-sampling.md) | `[unverified — needs OPENROUTER_API_KEY + network]` |
 | 03 | [03-preparation.md](pipeline/03-preparation.md) | `missing` (converter to write) |
 | 04 | [04-sft.md](pipeline/04-sft.md) | `[unverified — needs GPU + liquid-finetune]` |

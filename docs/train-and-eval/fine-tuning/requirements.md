@@ -13,7 +13,7 @@ evidence. The Phase 3 code is not written yet, so most pipeline stages are `miss
 
 | Pipeline stage | Intended requirement | Verified? | Evidence |
 |---|---|---|---|
-| 01 rows-loader | A dataset file maps to decoded CAD-QA dataset rows with the correct `[answer contract]` and decoded gold for every format | **Yes (retained)** | 36/36 tests in `train_and_eval/test_rows_loader.py` + `train_and_eval/eval/test_tool_calls.py`; hop naming to unify |
+| 01 rows-loader | A dataset file maps to decoded CAD-QA dataset rows with the correct `[answer contract]` and decoded gold for every format | No (`missing`) | Phase 3 loader to write; the 2026-08 gemma implementation is dumped (FT-D12) |
 | 02 teacher-sampling | Kept agent training traces carry a tool call the Query verifier accepts; per-format and per-hop coverage complete | No | to be ported to the `deepseek-v4-flash` teacher (FT-D2) |
 | 03 preparation | `TrainingExample` → Liquid `messages` SFT set; every SFT corpus is rejection-sampled by us or execution-verified (FT-D17) | No (`missing`) | converter to write (`system.md` §7) |
 | 04 SFT | Two-phase SFT raises held-out accuracy over the base without over-generation | No | `liquid-finetune` recipe to run (FT-D16) |
