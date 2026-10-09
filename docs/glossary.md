@@ -369,7 +369,7 @@ The code package for training and evaluation.
 
 ### Dataset file
 
-The file holding the CAD-QA dataset rows (`rows.parquet` or `rows.jsonl`); the
+The file holding the CAD-QA dataset rows (`rows.parquet`); the
 input/output contract between `dataset_generation` and `train_and_eval`.
 
 ---

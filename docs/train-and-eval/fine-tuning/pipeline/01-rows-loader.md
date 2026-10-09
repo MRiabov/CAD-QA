@@ -2,12 +2,12 @@
 
 ## Purpose
 
-Turn the **CAD-QA dataset file** (`rows.parquet` / `rows.jsonl`) into **decoded CAD-QA dataset rows**
+Turn the **CAD-QA dataset file** (`rows.parquet`) into **decoded CAD-QA dataset rows**
 consumed by teacher sampling, preparation, and evaluation.
 
 ## Inputs / outputs
 
-- **In:** the **CAD-QA dataset file** — `rows.parquet` or `rows.jsonl` from `dataset_generation`
+- **In:** the **CAD-QA dataset file** — `rows.parquet` from `dataset_generation`
   (the immutable benchmark rows; see [00-overview.md](00-overview.md#datasets-in-play)). The External
   datasets and the Mixed training dataset enter later, at 03.
 - **Out:** `decoded CAD-QA dataset rows` (list of Python dicts; not persisted) — fields

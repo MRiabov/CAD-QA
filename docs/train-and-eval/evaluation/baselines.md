@@ -90,7 +90,7 @@ not be quoted as a headline (`docs/development-context.md#proven`).
 ## What is runnable vs not
 
 - Runnable now, no GPU: the simple baselines via
-  `uv run cadqa evaluation baseline --rows <rows.jsonl> --out <dir>` and the same
+  `uv run cadqa evaluation baseline --rows <rows.parquet> --out <dir>` and the same
   set embedded in `train_and_eval/experiment.py::run_smoke_experiment`.
 - Runnable now, with a GPU and an LLM model: the local small-LLM-model harness
   (`train_and_eval/eval/eval_bench.py`).
@@ -104,7 +104,7 @@ not be quoted as a headline (`docs/development-context.md#proven`).
 ## Verification
 
 - Regenerate the simple baselines:
-  `uv run cadqa evaluation baseline --rows <rows.jsonl> --out <dir>`, then compare
+  `uv run cadqa evaluation baseline --rows <rows.parquet> --out <dir>`, then compare
   `baseline_metrics.json` to `runs/baseline_smoke/baseline_metrics.json` for the
   same rows.
 - Re-run the current-schema oracle check:
