@@ -18,6 +18,11 @@ consumed by teacher sampling, GRPO, and evaluation.
   `release_ready is False`, are dropped. `[answer contract]` is appended to each prompt
   unless `tool_suffix=False`.
 
+**Not the curriculum.** The loader exposes `logical_hop_count` (and `difficulty_bucket`) per row but does
+not filter or order by it. The progressive curriculum (low-hop first run, full ladder primary) is a mix
+concern, applied in the Sample + mix step (`system.md` §7) and the trainer's shuffle/sampler config — not
+here.
+
 ## Requirement
 
 The loader must produce, for every retained row, a prompt that names the correct **submit

@@ -244,7 +244,8 @@ owns pipeline stage 9):
    trigram Jaccard > 0.5 discard, cross-validation).
 4. **Dedup + contamination.** MinHash/LSH near-dedup within and across sources; hash-exclude the
    CAD-QA held-out rows and the evaluation datasets. Hard failure if any evaluation-dataset id appears in `train`.
-5. **Sample + mix.** Per-role quotas from the data doc §3; deterministic seed; emit a mix report
+5. **Sample + mix.** Per-role quotas from the data doc §3; deterministic seed; **order/interleave the
+   `learn_the_cadqa_task` rows by Reasoning hop count** (the progressive curriculum, data plan §4); emit a mix report
    (counts, token totals, role weights, and per-hop/per-format coverage for `learn_the_cadqa_task`).
 
 **No silent data loss.** Rejected/filtered rows and failed joins are recorded, not dropped
