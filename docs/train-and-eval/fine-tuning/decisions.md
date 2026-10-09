@@ -328,6 +328,30 @@ whose rationale was not recoverable.
   and even then llama.cpp can run on CPU to avoid contending for the device. Detail:
   `pipeline/07-serving.md`.
 
+## FT-D22 — No MTP/draft training; speculative decoding is serving-only
+
+- **Status:** accepted (2026-10-09) — owner question, resolved.
+- **Context:** LFM2.5 is next-token-prediction and has **no built-in MTP head**. Liquid ships a
+  **separate** ~300M DSpark draft checkpoint
+  (`LiquidAI/LFM2.5-{1.2B-Instruct,2.6B,8B-A1B}-DSpark`; safetensors + GGUF), day-one in llama.cpp and
+  SGLang. `liquid-finetune`/LEAP is a TRL wrapper (SFT/DPO/GRPO + `evals:` + GGUF export) and has **no**
+  speculator path.
+- **Decision:** training **never** touches a draft/MTP head — no MTP training objective, no MTP heads to
+  attach, no speculator to fit. Speculative decoding is an **optional, serving-only** latency
+  optimization, not part of training, the merge, or any reported number. Default: no speculation (keep
+  vLLM, FT-D21).
+- **Consequences:**
+  - Speculation is **lossless** (greedy output identical to the target; verified tokens preserve the
+    sampling distribution), so it cannot change pass@k or exact-match and is irrelevant to H1–H4.
+  - The shipped DSpark draft targets the **base** LLM model; after LoRA SFT + merge the target drifts and
+    acceptance falls, so any speedup is re-measured post-SFT, not assumed.
+  - DSpark is served by **SGLang** (GPU) and **llama.cpp** (GGUF/CPU), not vLLM; adopting it would move
+    the serving runtime to SGLang. Adopt only if evaluation throughput measurably matters.
+  - Other classical-by-2026 optimizations are already in the recipe (LoRA-bf16, grad checkpointing +
+    accumulation, packing, FlashAttention) or not applicable at 2.6B dense (MoE sharding); QLoRA stays a
+    fallback (FT-D11). Detail: `pipeline/07-serving.md`, `training.md` §5.
+- Detail: `../../research/2026-lfm2.5-dspark.md`.
+
 ## Open questions
 
 - **Q1.** The base-pipeline choice (D11 in `plans/oct-7/restructure-docs.md`) is recorded as FT-D11,

@@ -283,6 +283,10 @@ Sources: `docs.liquid.ai/examples/customize-models/home-assistant`, `docs.liquid
 - **LFM2/LFM2.5 checkpoints ship in `bfloat16`.** No fp4/fp8 default; quantized variants (GGUF
   `Q4_0`/`Q4_K_M`/`Q8_0`, MLX 8-bit, and the Aug-2026 **QAD Q4_0** ~97% of BF16) are separate
   artifacts. Fine-tune the **bf16** checkpoint; do not fine-tune a QAD Q4_0 checkpoint.
+- **No MTP/draft training.** LFM2.5 has **no built-in MTP head**; Liquid's separate ~300M
+  **DSpark** draft is a serving artifact, and `liquid-finetune`/LEAP does not train it (FT-D22).
+  Speculative decoding is lossless and serving-only — it never enters training, the merge, or a
+  reported number. Do not add an MTP objective or fit a speculator at this scale.
 
 #### Tool use and chat template (the format contract this doc owns)
 

@@ -20,6 +20,10 @@ Liquid documents serving in `docs.liquid.ai/deployment/*`:
 - **Direct Python / analysis:** **Transformers**.
 - **Formats:** GGUF (`Q4_0`, `Q4_K_M`, `Q5_K_M`, `Q6_K`, `Q8_0`, `BF16`, `F16`), ONNX, MLX
   (Apple Silicon).
+- **Speculative decoding (optional, serving-only).** LFM2.5 has no built-in MTP head; Liquid's DSpark
+  draft (`LiquidAI/LFM2.5-{1.2B-Instruct,2.6B,8B-A1B}-DSpark`) is a separate ~300M checkpoint served by
+  **SGLang** or **llama.cpp** (not vLLM). Speculation is lossless and cannot change accuracy, so it is
+  off by default; the draft targets the base LLM model, so acceptance is re-measured after SFT (FT-D22).
 
 ## Inputs / outputs
 
@@ -51,4 +55,5 @@ llama-server -m <merged>.gguf -c 4096 --port 8080
 ## Open questions
 
 - **Q1.** Parity precision: argmax token ids, or logprobs within a tolerance (TA-C1)?
-- **Q2.** Which GPU runtime for our batched rollouts — vLLM or SGLang (both documented for LFM2.5)?
+- **Q2.** Which GPU runtime for our batched rollouts — vLLM or SGLang (both documented for LFM2.5;
+  SGLang also serves the DSpark draft if speculation is adopted, FT-D22)?

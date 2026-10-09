@@ -67,3 +67,4 @@ The `Ref` column matches the numbered references in `../prior-art.md`.
 | [32] | `[preprint]` | Warm-start then RL on synthesized terminal tasks | arXiv (2026) | `2026-endless-terminals-warm-start.md` | SFT is a readiness gate; RL cold-start barely moves a small LLM model |
 | [33] | `[preprint]` | BenchCAD: programmatic CAD benchmark and its Code QA overlap | arXiv (2026) | `2026-benchcad.md` | Code QA overlaps CAD-QA; generation tasks saturating, comprehension gap narrowing |
 | — | `[vendor]` | liquid-finetune: evaluation, async eval, rollouts | GitHub README (2026) | `2026-liquid-finetune.md` | `evals:` + custom metrics; async eval without blocking training; vLLM rollouts |
+| — | `[vendor]` | LFM2.5-DSpark: separate draft speculator for speculative decoding | Liquid AI blog / vLLM docs (2026) | `2026-lfm2.5-dspark.md` | no built-in MTP; spec decode is lossless and serving-only |
