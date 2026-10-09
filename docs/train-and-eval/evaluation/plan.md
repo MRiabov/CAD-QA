@@ -292,8 +292,11 @@ results rather than repeating the plan.
 
 ## 11. Open questions (evaluation)
 
-- **Q1.** Should the local harness import the Harbor grader (or the reverse) so the two exact-match paths
-  cannot drift? (D-E2 open question.)
+- **Q1.** Should the local harness (`train_and_eval/eval/eval_bench.py`, which grades with
+  `tool_calls.py::tool_call_matches`) import the **Harbor grader**
+  (`train_and_eval/grading/grade.py::grade_public_private`, copied into the container as
+  `tests/grade_cadqa.py`) — or the reverse — so the two exact-match paths cannot drift? (D-E2 open
+  question.)
 - **Q3.** Which rows make up the `preserve_general_math_and_code_reasoning` evaluation dataset? A
   500–1,000 row math + code set is cheap and enough for regression detection; a full MMLU is P2.
 - **Q5.** Which BenchCAD slice is the canonical transfer target: full `qa_code`, the Spatial Reasoning axis,

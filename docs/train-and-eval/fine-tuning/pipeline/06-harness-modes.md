@@ -37,5 +37,9 @@ by the audit (TA-B1).
 
 ## Open questions
 
-- **Q2.** Does the local harness import the Harbor grader (or the reverse) so the two exact-match paths
-  cannot drift (`../../evaluation/plan.md` Q1)?
+- **Q2.** Reconciling the two exact-match paths: should the local harness
+  (`train_and_eval/eval/eval_bench.py`, grades with `tool_calls.py::tool_call_matches`) import the
+  **Harbor grader** (`train_and_eval/grading/grade.py::grade_public_private`, copied into the container as
+  `tests/grade_cadqa.py`) — or the reverse — so they cannot drift (`../../evaluation/plan.md` Q1)? (The
+  "local harness" is the in-repo executor; an **LLM harness mode** is the tool access it selects — do not
+  conflate them.)
