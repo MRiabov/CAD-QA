@@ -9,10 +9,11 @@ sampling**), ordered toward the **progressive curriculum** (0→1→2→3→5).
 ## Inputs / outputs
 
 - **In:** decoded CAD-QA dataset rows (01) — `prompt`, `answer_format`, `gold_answer`,
-  `reasoning_hop_count`.
+  `reasoning_hop_count`, `relation_families`, `measurement_scopes`.
 - **Teacher:** `deepseek/deepseek-v4.1-flash` via OpenRouter (FT-D2; bumped from the v4 preview).
 - **Out `agent training traces`:** one per accepted row, `dataset_role=learn_the_cadqa_task`, carrying
-  `answer_format`, `reasoning_hop_count`, and reasoning / visible output / tool call kept distinct (A5).
+  `answer_format`, `reasoning_hop_count`, `relation_families`, `measurement_scopes`, and reasoning /
+  visible output / tool call kept distinct (A5).
 - **Out `sampling log`:** one record per attempt (reasoning, output, tool call, rounds).
 
 ## Requirement

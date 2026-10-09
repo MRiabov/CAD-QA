@@ -27,15 +27,16 @@ dataset file (immutable CAD-QA rows)
       ▼  Liquid `messages` SFT set + manifest
 [04 SFT]  phase 1 (general thirds + easy) → phase 2 (task + preserve)
       │
-      ▼  adapter → merged LLM model
-[05 sampling gate]  pass@k per tier (P0); RL deferred, conditional on the gate (FT-D13)
+      ▼  LoRA adapter
+[07 merge + serve]  merged LLM model (vLLM/SGLang parity); GGUF export (FT-D20, FT-D21)
       │
-      ▼
-[06 evaluation]  LLM harness modes + the one scorer + the evaluation datasets
+      ├──▶ [05 sampling gate]  pass@k per tier (P0); RL deferred, conditional on the gate (FT-D13)
       │
-      ▼
-[07 serving]  merge + GGUF/llama.cpp export; vLLM parity
+      └──▶ [06 evaluation]  LLM harness modes + the one scorer + the evaluation datasets
 ```
+
+File numbers are doc indices, **not** execution order: merge + serve (07) runs before the sampling gate
+(05) and evaluation (06), because both need a served LLM model (FT-D21; `07-serving.md`).
 
 ## Pipeline-stage IO contract
 
@@ -46,11 +47,11 @@ table.
 |---|---|---|---|
 | 01 rows-loader | CAD-QA dataset file (`rows.parquet`) | decoded CAD-QA dataset rows | `01-rows-loader.md` |
 | 02 teacher-sampling | decoded rows | agent training traces (`learn_the_cadqa_task`) + sampling log | `02-teacher-sampling.md` |
-| 03 preparation | traces + External datasets | `TrainingExample` set → Liquid `messages` SFT set + manifest | `../system.md` §7 |
-| 04 SFT | Liquid `messages` set | LoRA adapter → merged LLM model | `../training.md` §4 |
-| 05 sampling gate | merged LLM model | pass@k per tier (RL deferred, conditional on the gate) | `../system.md` §2–§3 |
-| 06 evaluation | trained LLM model + evaluation datasets | scores per evaluation dataset | `../../evaluation/plan.md` |
-| 07 serving | merged LLM model | GGUF / vLLM-served endpoint | `07-serving.md` |
+| 03 preparation | traces + External datasets | `TrainingExample` set → Liquid `messages` SFT set + manifest | `03-preparation.md` |
+| 04 SFT | Liquid `messages` set | LoRA adapter | `04-sft.md` |
+| 07 merge + serve | LoRA adapter | merged LLM model → GGUF / vLLM-SGLang endpoint | `07-serving.md` |
+| 05 sampling gate | merged LLM model | pass@k per tier (RL deferred, conditional on the gate) | `05-sampling-gate.md` |
+| 06 evaluation | merged LLM model + evaluation datasets | scores per evaluation dataset | `06-harness-modes.md` |
 
 ## Datasets in play
 
@@ -83,7 +84,7 @@ There is more than one dataset; each has one role (glossary).
 | 02 | `02-teacher-sampling.md` |
 | 03 | `03-preparation.md` |
 | 04 | `04-sft.md` |
-| 05 | `05-grpo.md` |
+| 05 | `05-sampling-gate.md` |
 | 06 | `06-harness-modes.md` |
 | 07 | `07-serving.md` |
 

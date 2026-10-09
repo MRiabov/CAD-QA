@@ -14,7 +14,7 @@ whose rationale was not recoverable.
 - **Consequences:** the base LLM model is a code-execution (E2B) variant, which motivated the
   `run_code` compute tool. The GRPO docstring names `google/gemma-4-E2B-it`; the code loads
   the unsloth repo. Superseded for Phase 3 by FT-D11. Detail: [pipeline/04-sft.md](pipeline/04-sft.md),
-  [pipeline/05-grpo.md](pipeline/05-grpo.md).
+  [pipeline/05-sampling-gate.md](pipeline/05-sampling-gate.md).
 
 ## FT-D2 — Teacher is DeepSeek v4.1 via OpenRouter
 
@@ -70,7 +70,7 @@ whose rationale was not recoverable.
   matcher, with a tool-call-aware path that reuses `tool_call_matches`.
 - **Consequences:** the reward is sparse/binary, which is the recorded cause of the 2-hop
   collapse. Eval and reward use different parsers; see
-  [pipeline/05-grpo.md](pipeline/05-grpo.md#open-questions).
+  [pipeline/05-sampling-gate.md](pipeline/05-sampling-gate.md#open-questions).
 
 ## FT-D7 — `run_code` is a numpy-only accidental-misuse guard
 
@@ -90,7 +90,7 @@ whose rationale was not recoverable.
   and a hop curriculum.
 - **Consequences:** the current GRPO script starts from the base LLM model, not the SFT adapter,
   so the implemented chain is not the decided chain. Detail:
-  [pipeline/05-grpo.md](pipeline/05-grpo.md#open-questions).
+  [pipeline/05-sampling-gate.md](pipeline/05-sampling-gate.md#open-questions).
 
 ## FT-D9 — Record every LLM call distinctly (A5)
 

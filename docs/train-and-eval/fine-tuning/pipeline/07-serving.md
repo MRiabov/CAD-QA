@@ -4,6 +4,8 @@
 
 Merge the SFT adapter into LFM2.5 and serve the merged LLM model. Serving is a **separate inference
 runtime**: it loads the merged weights only, never the training optimizer or updating weights (FT-D20).
+Run **one serving engine per rented GPU window** and sequence train → merge → serve → evaluate rather
+than co-running training and serving (FT-D21).
 
 ## Where the runtimes are documented
 

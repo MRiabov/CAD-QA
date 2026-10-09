@@ -7,7 +7,7 @@ set, then render it to **Liquid's `messages` SFT set** — the on-disk training 
 
 ## Inputs / outputs
 
-- **In:** agent training traces (02), External datasets (`../data.md` §2), the CAD-QA task rows.
+- **In:** agent training traces (02), External datasets (`../data.md` §2).
 - **Out:** the `TrainingExample` set (`../system.md` §7) → **Liquid `messages` SFT set** + **manifest**.
 - **Fields** (`../system.md` §7): `id`, `dataset_role`, `messages`, `source_id`, `source_revision`,
   `license`, `reasoning_text`, `tool_call_text`, `tools`, `answer_format`, `reasoning_hop_count`,
@@ -33,5 +33,6 @@ uv run python -m <converter> --in <training_examples.jsonl> --out <sft.parquet>
 
 ## Open questions
 
-- **Q1.** Unify the `logical_hop_count` (row) / `hop_count` (Gold query program) naming (glossary).
+- **Q1.** Whether preparation needs the raw CAD-QA task rows at all, or only the 02 traces (the phase-1
+  low-hop slice is a slice of the traces, not of the rows) — confirm against the mix (`../data.md` §4).
 - **Q2.** Contamination/dedup mechanics (MinHash/LSH, benchmark blocklist) at the scale of the mix.

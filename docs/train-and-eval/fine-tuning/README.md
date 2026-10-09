@@ -27,13 +27,13 @@ Liquid `messages`) → **two-phase SFT** → a **sampling gate** and optional **
 | 02 | [02-teacher-sampling.md](pipeline/02-teacher-sampling.md) | `[unverified — needs OPENROUTER_API_KEY + network]` |
 | 03 | [03-preparation.md](pipeline/03-preparation.md) | `missing` (converter to write) |
 | 04 | [04-sft.md](pipeline/04-sft.md) | `[unverified — needs GPU + liquid-finetune]` |
-| 05 | [05-grpo.md](pipeline/05-grpo.md) | pass@k gate P0; RL deferred/conditional (FT-D13) |
+| 05 | [05-sampling-gate.md](pipeline/05-sampling-gate.md) | pass@k gate P0; RL deferred/conditional (FT-D13) |
 | 06 | [06-harness-modes.md](pipeline/06-harness-modes.md) | `exists`; `cadquery` mode `missing` |
 | 07 | [07-serving.md](pipeline/07-serving.md) | `missing` (merge/export to build) |
 
 ## Code ↔ doc map
 
-- `train_and_eval/rows_loader.py` → 01 (retained)
+- `train_and_eval/rows_loader.py` → 01 (contract carried forward, re-implemented)
 - teacher client + rejection sampling → 02 (to be ported to the LFM2.5 stack)
 - `TrainingExample` + converter → 03 (`system.md` §7)
 - `liquid-finetune` SFT configs → 04 (`training.md` §4)

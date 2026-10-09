@@ -11,7 +11,8 @@ teacher sampling, preparation, and evaluation.
   rows; see [00-overview.md](00-overview.md#datasets-in-play)). The External datasets and the Mixed
   training dataset enter later, at 03.
 - **Out:** decoded CAD-QA dataset rows — `row_id`, `prompt`, `answer_format`, `gold_answer` (decoded),
-  `reasoning_hop_count`, `difficulty_bucket`, `geometry_hop_count`, `relation_families`.
+  `reasoning_hop_count` (the `DatasetRow.logical_hop_count` column, under the glossary term),
+  `geometry_hop_count`, `difficulty_bucket`, `relation_families`, `measurement_scopes`.
 - **Filter semantics:** by `split`; rows missing `prompt` or `gold_answer`, and rows with
   `release_ready is False`, are dropped. The `[answer contract]` suffix is appended to each prompt.
 
@@ -28,7 +29,8 @@ by it — the progressive curriculum is a mix concern, applied in the Sample + m
 
 ## Current status
 
-`missing` — the Phase 3 loader is to be written; the 2026-08 gemma `train_and_eval/` is dumped (FT-D12).
+`missing` — the Phase 3 loader is to be written (re-implemented from the retained loader/tool contract;
+FT-D12); the 2026-08 gemma stack is dropped.
 
 ## Verification
 
@@ -38,9 +40,10 @@ uv run pytest <loader test> -q
 
 ## Open questions
 
-- **Q1.** Unify the `logical_hop_count` (row) / `hop_count` (Gold query program) naming (glossary).
-- **Q2.** Confirm every Answer format maps to a submit tool — the old typed contract omitted `boolean`.
+- **Q1.** Confirm every Answer format maps to a submit tool — the old typed contract omitted `boolean`.
 
 ## Resolved questions
 
-_(none yet)_
+- **Q1.** *(2026-10-09)* The decoded hop field is `reasoning_hop_count` (glossary) and reads the row
+  column `logical_hop_count`; the Gold query program's unqualified `hop_count` stays internal to the
+  dataset and is not exposed to the fine-tuning stages.
