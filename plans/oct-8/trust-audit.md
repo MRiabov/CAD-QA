@@ -182,8 +182,9 @@ re-litigate decisions already recorded in `dataset/decisions.md`,
 - **Q1.** Is "no network, no files, timeout" a sufficient sandbox claim, or is kernel isolation
   required before any external claim (TA-B2)?
 - **Q2.** Parity precision: argmax token ids, or logprobs within a tolerance (TA-C1)?
-- **Q3.** Which canonical **dependency environment**: one tracked stack, or separate SFT and serving
-  environments (packages, not datasets; see `docs/train-and-eval/fine-tuning/requirements.md#environment`)?
+- **Q3.** Serving is a separate **inference runtime** by design (merged weights only, no optimizer or
+  updating weights); the open part is packaging — one recipe or separate serving pins?
+  (see `docs/train-and-eval/fine-tuning/requirements.md#environment`).
 - **Q4.** Does the GPU parity + SFT re-run happen in Phase 0 (the first spend) or at the top of
   Phase 1?
 

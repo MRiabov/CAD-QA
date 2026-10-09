@@ -294,6 +294,18 @@ whose rationale was not recoverable.
   feeds the text2CAD third while BenchCAD `qa_code` is the H3 transfer target (keep them disjoint).
   Detail: `data.md` §3; `../evaluation/plan.md` §5.1.
 
+## FT-D20 — Serving is a separate inference runtime
+
+- **Status:** accepted (2026-10-09) — owner.
+- **Context:** the "one tracked environment, or split SFT and serving" question conflated *packages* with
+  *runtime*.
+- **Decision:** serving is a **separate inference runtime** by design: it loads the **merged LLM model**
+  (weights only) and never the training optimizer / updating weights or gradients. Training and serving
+  are split as processes regardless of packaging.
+- **Consequences:** the remaining question is only packaging — whether one recipe (`liquid-finetune`)
+  produces the served artifact or serving needs its own pins (GGUF/llama.cpp, vLLM). Detail:
+  `pipeline/00-overview.md` Q2.
+
 ## Open questions
 
 - **Q1.** The base-pipeline choice (D11 in `plans/oct-7/restructure-docs.md`) is recorded as FT-D11,
