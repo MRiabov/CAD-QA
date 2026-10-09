@@ -1,17 +1,21 @@
-# Fine-tuning data plan (2026-10-08)
+# Fine-tuning data and training-regime plan (2026-10-08)
 
-**Status:** draft, 2026-10-08. Part of a three-doc set: this doc (data),
-`fine-tuning-architecture-plan.md` (training), `evaluation-plan.md`
-(evaluation/harness). Written in the primary checkout per the repo-local rule in
-`plans/oct-7/restructure-docs.md` §0.
+**Status:** draft, 2026-10-08. Part of a four-doc set: this doc (data + schedule),
+`fine-tuning-architecture-plan.md` (training), `fine-tuning-system-plan.md` (the staged
+post-training loop and data preparation), and `evaluation-plan.md` (evaluation/harness). Written in
+the primary checkout per the repo-local rule in `plans/oct-7/restructure-docs.md` §0.
 
-**This doc owns — what we feed the model and in what order:** data roles, candidate external
-datasets, the mix recipe, training order/curriculum, contamination/quality/licensing, the
-`TrainingExample` record and its converter to Liquid's format, and the `cadqa_hop` slot.
+**This doc owns — which data we train on and when:** data roles, candidate external datasets, the
+mix recipe, training order / curriculum / SFT-vs-RL scheduling, licensing and contamination policy,
+and the `cadqa_hop` slot.
 
 **The architecture doc owns — how we train the model:**
 `fine-tuning-architecture-plan.md` (base LLM model and stack, cookbook-first execution, capability
 preservation, the training stages, hardware/budget, and the surviving-code boundary).
+
+**The system doc owns — the post-training loop and data preparation:**
+`fine-tuning-system-plan.md` (the verifier → SFT → pass@k gate → RL/distillation loop, and the
+`TrainingExample` record, converter, and the ingest/normalize/quality/dedup/sample stages).
 
 **The evaluation doc owns — the harness and scoring:**
 `evaluation-plan.md` (LLM harness and modes, tool-call surface, the scorer, the canary
@@ -20,7 +24,7 @@ procedure, grading reconciliation, judge independence, baselines).
 **Shared interfaces, single-sourced:**
 
 - **Format contract** (Liquid `messages` SFT JSONL) — owned by the architecture doc.
-- **`TrainingExample` + converter** — owned here.
+- **`TrainingExample` + converter** — owned by the system doc.
 - **Eval canaries** — the procedure is owned by the evaluation doc; the canary rows are produced and
   held here.
 - **H1/H2** — owned by the architecture doc; the mixes they test are defined here (§3).
@@ -28,11 +32,11 @@ procedure, grading reconciliation, judge independence, baselines).
 **Explicitly out of scope for now.** The CAD-QA **reasoning-hop dataset** itself (the internal
 teacher-sampling of agent training traces from frozen CAD-QA dataset rows, step B2 in
 `../../docs/train-and-eval/fine-tuning/pipeline/02-teacher-sampling.md`). This doc defines a
-**slot** and a **contract** for that data (§7), but does not plan its generation. That is the
+**slot** and a **contract** for that data (§6), but does not plan its generation. That is the
 separate decision owed under FT-D11 (`../../docs/train-and-eval/fine-tuning/decisions.md`) and
 Phase 3 of `../../docs/development-plan.md`.
 
-**Related docs.** `../../docs/prior-art.md` (external evidence, refs [1]–[18]);
+**Related docs.** `../../docs/prior-art.md` (external evidence, refs [1]–[28]);
 `../../docs/PRD.md` (research contract); `../../docs/train-and-eval/fine-tuning/decisions.md`
 (FT-D* decisions).
 
@@ -51,7 +55,7 @@ fixed ratios and evaluated separately.
 | `rehearsal` | anchor general instruction-following so it is not forgotten | external | P0 |
 | `domain_code` | Python / general coding priming | external | P1/P2 |
 | `domain_3d` | 3D / CAD / geometry priming so the base is not 3D-blind | external | P1/P2 |
-| `cadqa_hop` | the CAD-QA task itself: prompt → `submit_*` with hop reasoning | internal (**§7 only defines the slot**) | P0 (separate plan) |
+| `cadqa_hop` | the CAD-QA task itself: prompt → `submit_*` with hop reasoning | internal (**§6 only defines the slot**) | P0 (separate plan) |
 | `eval_canary` | never trained on; used to detect regression | external + internal | P0 |
 
 **Rule:** `eval_canary` examples must be **hashed and excluded** from every training mix. Any
@@ -170,7 +174,7 @@ CadQuery-generation capability**.
 
 **Contamination rule:** `domain_3d` must not leak the CAD-QA held-out programs or their generating
 corpus. Any same-area set (including an owner-authored one) carries a higher leakage risk: run the
-§5 quality gate and a held-out overlap check before mixing.
+quality gate (`fine-tuning-system-plan.md` §7) and a held-out overlap check before mixing.
 
 **Deferred (vision):** image→CAD and point-cloud/3D-vision sets (`CADCODER/GenCAD-Code`,
 `hhllzz/surprise-3d`, PointLLM/Cap3D, `hiyouga/geometry3k`) are **P2** — the primary base LLM model
@@ -198,7 +202,7 @@ Rationale and tradeoffs:
   transfer default — so `mix-format` blends `format_tool` sources rather than betting on one.
 - **Rehearsal is not optional.** Without it, the LoRA-only setting still risks regression (see the
   architecture doc, capability preservation); it is cheap insurance.
-- **`cadqa_hop` weight is a placeholder.** Until its generation is planned (§7), `mix-full` is not
+- **`cadqa_hop` weight is a placeholder.** Until its generation is planned (§6), `mix-full` is not
   runnable; `mix-format` is runnable immediately from public data and is the first GPU spend.
 - **Sample, don't ingest wholesale.** Cap each source (e.g. 5–20k examples) by quality score and
   dedup; xLAM and TeichAI both report that quality beats quantity at this size.
@@ -289,18 +293,13 @@ mechanism differs by stage:
 
 ---
 
-## 5. Contamination, quality, and licensing
+## 5. Governance: registry, licensing, and contamination
 
 - **Registry.** Every source has id, revision hash, license, role, size, and field mapping. A
   source without a pinned revision does not enter.
-- **Quality gate.** Schema validation; secrets scrub; length filter; tool-call parse under the
-  typed contract (`../../train_and_eval/tool_calls.py::tool_call_matches` semantics); language
-  filter; plus the Home Assistant contamination gates (benchmark blocklist, exact/substring,
-  trigram Jaccard > 0.5 discard, cross-validation).
-- **Dedup + contamination.** MinHash/LSH near-dedup within and across sources; hash-exclude the
-  CAD-QA held-out rows and the eval canaries. Hard failure if any canary id appears in `train`.
-- **No silent data loss.** Rejected/filtered rows and failed joins are recorded, not dropped
-  silently.
+- **Contamination policy.** CAD-QA held-out rows and the eval canaries are hard-excluded; any
+  canary id appearing in `train` is a hard failure. The mechanics (quality gate, near-dedup,
+  hash-exclusion, no-silent-loss) live in `fine-tuning-system-plan.md` §7.
 - **Licensing and provenance.** Several strong candidate sets are **traces of commercial
   assistant models** (Claude/Fable, GPT-5.5, Opus) and warn that provider terms may apply to
   downstream training/distillation; the Fable sets are **AGPL-3.0**. For a published Master's
@@ -313,42 +312,7 @@ mechanism differs by stage:
 
 ---
 
-## 6. The `TrainingExample` record and the converter
-
-**The on-disk training artifact is Liquid's `messages` SFT JSONL** — the format the cookbook and
-`liquid-finetune` validate (the architecture doc owns that contract). `TrainingExample` is the
-typed CAD-QA-side record; a small **converter** turns it into the cookbook format. Do not grow
-this schema or the converter beyond what the mix and the canary need.
-
-| Field | Type | Notes |
-|---|---|---|
-| `id` | `str` | stable, content-hashed |
-| `role` | `DataRole` (StrEnum) | `format_tool`, `agent_trace`, `reasoning_distill`, `rehearsal`, `domain_code`, `domain_3d`, `cadqa_hop` |
-| `messages` | `list[ChatMessage]` | the conversation; `ChatMessage{role, content, tool_calls?}` maps 1:1 to Liquid's SFT JSONL |
-| `source_id` | `str` | HF repo or internal artifact |
-| `source_revision` | `str` | **commit hash**, not a branch/config name |
-| `license` | `str` | e.g. `apache-2.0`, `agpl-3.0`, `cc-by-4.0` |
-| `reasoning_text` | `str \| None` | internal reasoning, kept distinct (A5 rule) |
-| `tool_call_text` | `str \| None` | the call envelope, kept distinct (A5 rule) |
-| `tools` | `list[ToolSpec]` | declared tools for the turn |
-| `answer_format` | `AnswerFormat \| None` | for `cadqa_hop` and `format_tool` |
-| `reasoning_hop_count` | `int \| None` | for `cadqa_hop` curriculum |
-| `split` | `Split` (StrEnum) | `train` / `validation` / `test` |
-| `provenance` | `str` | the exact field mapping/transform applied, for audit |
-
-Data stages (1–5); stages 6–8 are owned by the architecture doc and stage 9 by the evaluation doc:
-
-1. **Registry** (§5).
-2. **Ingest + normalize.** Map each source into `TrainingExample`. Record reasoning, visible
-   output, and tool calls **distinctly** (A5). Fail loudly on unknown fields.
-3. **Quality gate** (§5).
-4. **Dedup + contamination** (§5).
-5. **Sample + mix.** Per-role quotas from §3; deterministic seed; emit a mix report (counts, token
-   totals, role weights, and per-hop/per-format coverage for `cadqa_hop`).
-
----
-
-## 7. The `cadqa_hop` slot
+## 6. The `cadqa_hop` slot
 
 `cadqa_hop` is the CAD-QA task itself: one row of a frozen CAD-QA dataset file → a prompt plus a
 typed `submit_*` answer, with hop reasoning. This doc fixes only the slot:
@@ -368,11 +332,11 @@ typed `submit_*` answer, with hop reasoning. This doc fixes only the slot:
 
 ---
 
-## 8. P0 / P1 / P2 (data)
+## 7. P0 / P1 / P2 (data)
 
 | Item | Tier | Rationale |
 |---|---|---|
-| `TrainingExample` record + Liquid `messages` JSONL converter | **P0** | the only custom data code we should need; cookbook-compatible |
+| `TrainingExample` record + Liquid `messages` JSONL converter (owned by the system plan) | **P0** | the only custom data code we should need; cookbook-compatible |
 | Registry with pinned revisions, licenses, and dates | **P0** | reproducibility, the license audit, and the 2025+ freshness policy |
 | `mix-format` data build (`format_tool` + `rehearsal`) | **P0** | feeds the first canary (H1) |
 | Contamination + dedup pass against CAD-QA held-out and canaries | **P0** | held-out hygiene; a leak invalidates the thesis number |
@@ -391,7 +355,7 @@ typed `submit_*` answer, with hop reasoning. This doc fixes only the slot:
 
 ---
 
-## 9. Decisions still to make (data)
+## 8. Decisions still to make (data)
 
 1. **Commercial-trace policy.** Do we accept Claude/Fable/Opus distill data in a published thesis?
    Recommendation: permissive-first, commercial-trace only as an ablation.
@@ -406,7 +370,7 @@ typed `submit_*` answer, with hop reasoning. This doc fixes only the slot:
 
 ---
 
-## 10. Open questions (data)
+## 9. Open questions (data)
 
 - Is there a public CadQuery instruction corpus worth using, or is the internal set the only source
   of the `submit_workplane` (`json`) format? `[unverified]`.
@@ -417,11 +381,11 @@ typed `submit_*` answer, with hop reasoning. This doc fixes only the slot:
 
 ---
 
-## 11. Immediate next step (data)
+## 10. Immediate next step (data)
 
 1. Write the `TrainingExample` record + converter (P0), reusing the surviving `rows_loader.py` and
    the typed definitions in `tool_calls.py`; emit Liquid's `messages` JSONL.
 2. Build `mix-format` from `Salesforce/xlam-function-calling-60k` + a permissive rehearsal slice,
-   with the §5 registry/quality/dedup pass.
+   with the registry/quality/dedup pass (`fine-tuning-system-plan.md` §7).
 3. Hand the artifact to the architecture doc's cookbook run for the `tool_valid` canary.
-4. Only after H1 is measured, plan `cadqa_hop` (§7) and `mix-full`.
+4. Only after H1 is measured, plan `cadqa_hop` (§6) and `mix-full`.

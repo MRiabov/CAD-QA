@@ -1,15 +1,18 @@
 # Fine-tuning architecture (training) — plan (2026-10-08)
 
-**Status:** draft, 2026-10-08. First of a three-doc set: this doc (training),
-`evaluation-plan.md` (evaluation/harness), `fine-tuning-data-plan.md` (data). Written
-in the primary checkout per the repo-local rule in `plans/oct-7/restructure-docs.md` §0.
+**Status:** draft, 2026-10-08. First of a four-doc set: this doc (training),
+`fine-tuning-data-plan.md` (data + schedule), `fine-tuning-system-plan.md` (post-training loop +
+data preparation), and `evaluation-plan.md` (evaluation/harness). Written in the primary checkout per
+the repo-local rule in `plans/oct-7/restructure-docs.md` §0.
 
 **This doc owns — how we train the model:** base LLM model and stack choice, cookbook-first
 execution, capability preservation, the training stages and optimizer/recipe, hardware/budget and
 serving/export, the surviving-code boundary (FT-D12), and training P0/P1/P2.
 
 **The data doc** (`fine-tuning-data-plan.md`) owns datasets, mix ratios, contamination/licensing,
-training order/curriculum, the `TrainingExample` record + converter, and the `cadqa_hop` slot.
+training order/curriculum, and the `cadqa_hop` slot. **The system doc**
+(`fine-tuning-system-plan.md`) owns the `TrainingExample` record, its converter, and the
+ingest/normalize/quality/dedup/sample stages.
 
 **The evaluation doc** (`evaluation-plan.md`) owns the LLM harness and modes, the
 tool-call surface, the scorer, the canary procedure, grading reconciliation, judge independence,
@@ -18,7 +21,7 @@ and baselines.
 **Shared interfaces, single-sourced:**
 
 - **Format contract** (Liquid `messages` SFT JSONL and the native tool-call tokens) — owned here.
-- **`TrainingExample` + converter** — owned by the data doc.
+- **`TrainingExample` + converter** — owned by the system plan.
 - **Canary procedure** — owned by the evaluation doc; canary rows held by the data doc.
 - **H1/H2** — owned here; the mixes they test are defined by the data doc.
 
@@ -162,13 +165,13 @@ canary.
 ## 4. Training stages and contract
 
 Stack-neutral at the contract level (works for `liquid-finetune`, TRL, or Unsloth). The **contract**
-is the important artifact here. Data stages 1–5 are owned by the data doc; the evaluation doc owns
-stage 9.
+is the important artifact here. Data stages 1–5 are owned by the system plan
+(`fine-tuning-system-plan.md` §7); the evaluation doc owns stage 9.
 
 ```text
 [data registry] -> [ingest] -> [normalize] -> [quality gate] -> [dedup/contamination]
       -> [sample/mix] -> [convert to Liquid messages] -> [manifest] -> [train] -> [eval]
-       \____________ data doc ____________/          \_____ this doc _____/   \_ eval doc _/
+       \___________ system plan __________/          \_____ this doc _____/   \_ eval doc _/
 ```
 
 **The on-disk training artifact is Liquid's `messages` SFT JSONL** — the format the cookbook and

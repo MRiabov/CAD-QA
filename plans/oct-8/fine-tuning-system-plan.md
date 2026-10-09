@@ -5,14 +5,16 @@ checkout per the repo-local rule in `plans/oct-7/restructure-docs.md` §0.
 
 **This doc owns — the shape of the whole post-training system:** why a raw SFT→RL run is not
 enough, the staged loop that replaces it (verifier → SFT → sampling gate → RL/distillation), the
-RL-readiness gate, reward/verifier design, sandboxed rollouts, logging, and the framework mapping.
+RL-readiness gate, reward/verifier design, sandboxed rollouts, logging, the framework mapping, and
+**data preparation** (the `TrainingExample` record, its converter, and the
+ingest/normalize/quality/dedup/sample stages).
 
 **It does not re-own** the data (`fine-tuning-data-plan.md`), the training config/hardware
 (`fine-tuning-architecture-plan.md`), or the harness/scorer (`evaluation-plan.md`). It sequences
 them into one system and adds the pieces none of the three owns: the sampling gate, the
 reward-hacking audit, and the on-policy stages.
 
-**Related docs.** `../../docs/prior-art.md` (refs [1]–[25]);
+**Related docs.** `../../docs/prior-art.md` (refs [1]–[28]);
 `../../docs/train-and-eval/fine-tuning/decisions.md` (FT-D*); `../../docs/PRD.md`;
 `../../plans/oct-8/trust-audit.md`.
 
@@ -174,7 +176,51 @@ both TRL and verl and provides Sandboxes for rollout isolation, so either path f
 
 ---
 
-## 7. P0 / P1 / P2 (system)
+## 7. Data preparation (the record and the converter)
+
+**The on-disk training artifact is Liquid's `messages` SFT JSONL** — the format the cookbook and
+`liquid-finetune` validate (the architecture doc owns that contract). `TrainingExample` is the
+typed CAD-QA-side record; a small **converter** turns it into the cookbook format. Do not grow this
+schema or the converter beyond what the mix and the canary need.
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | `str` | stable, content-hashed |
+| `role` | `DataRole` (StrEnum) | `format_tool`, `agent_trace`, `reasoning_distill`, `rehearsal`, `domain_code`, `domain_3d`, `cadqa_hop` |
+| `messages` | `list[ChatMessage]` | the conversation; `ChatMessage{role, content, tool_calls?}` maps 1:1 to Liquid's SFT JSONL |
+| `source_id` | `str` | HF repo or internal artifact |
+| `source_revision` | `str` | **commit hash**, not a branch/config name |
+| `license` | `str` | e.g. `apache-2.0`, `agpl-3.0`, `cc-by-4.0` |
+| `reasoning_text` | `str \| None` | internal reasoning, kept distinct (A5 rule) |
+| `tool_call_text` | `str \| None` | the call envelope, kept distinct (A5 rule) |
+| `tools` | `list[ToolSpec]` | declared tools for the turn |
+| `answer_format` | `AnswerFormat \| None` | for `cadqa_hop` and `format_tool` |
+| `reasoning_hop_count` | `int \| None` | for `cadqa_hop` curriculum |
+| `split` | `Split` (StrEnum) | `train` / `validation` / `test` |
+| `provenance` | `str` | the exact field mapping/transform applied, for audit |
+
+Preparation stages (data stages 1–5; the architecture doc owns stages 6–8 and the evaluation doc
+owns stage 9):
+
+1. **Registry.** Dataset id, revision hash, license, role, size, field mapping. The data doc's
+   governance section owns the policy; a source without a pinned revision does not enter.
+2. **Ingest + normalize.** Map each source into `TrainingExample`. Record reasoning, visible
+   output, and tool calls **distinctly** (A5). Fail loudly on unknown fields.
+3. **Quality gate.** Schema validation; secrets scrub; length filter; tool-call parse under the
+   typed contract (`../../train_and_eval/tool_calls.py::tool_call_matches` semantics); language
+   filter; plus the Home Assistant contamination gates (benchmark blocklist, exact/substring,
+   trigram Jaccard > 0.5 discard, cross-validation).
+4. **Dedup + contamination.** MinHash/LSH near-dedup within and across sources; hash-exclude the
+   CAD-QA held-out rows and the eval canaries. Hard failure if any canary id appears in `train`.
+5. **Sample + mix.** Per-role quotas from the data doc §3; deterministic seed; emit a mix report
+   (counts, token totals, role weights, and per-hop/per-format coverage for `cadqa_hop`).
+
+**No silent data loss.** Rejected/filtered rows and failed joins are recorded, not dropped
+silently.
+
+---
+
+## 8. P0 / P1 / P2 (system)
 
 | Item | Tier | Rationale |
 |---|---|---|
@@ -192,7 +238,7 @@ both TRL and verl and provides Sandboxes for rollout isolation, so either path f
 
 ---
 
-## 8. Decisions and open questions (system)
+## 9. Decisions and open questions (system)
 
 **Proposed decisions.**
 
@@ -217,7 +263,7 @@ both TRL and verl and provides Sandboxes for rollout isolation, so either path f
 
 ---
 
-## 9. Immediate next steps (system)
+## 10. Immediate next steps (system)
 
 1. **Stage 0:** reconcile the scorer (one implementation) and build the off-oracle fixtures
    (evaluation doc, P0).

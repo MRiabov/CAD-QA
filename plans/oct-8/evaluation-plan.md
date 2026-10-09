@@ -20,7 +20,7 @@ Single-sourcing the scorer is what makes the thesis number mean anything.
 
 - **Format contract** (Liquid `messages` SFT JSONL, and the native tool-call tokens) — owned by
   `fine-tuning-architecture-plan.md`.
-- **`TrainingExample` + converter** — owned by `fine-tuning-data-plan.md`.
+- **`TrainingExample` + converter** — owned by `fine-tuning-system-plan.md`.
 - **Canary procedure** — owned here; the canary **rows** are produced and held by the data doc.
 - **H1/H2** — owned by the architecture doc; the mixes they test are defined by the data doc.
 

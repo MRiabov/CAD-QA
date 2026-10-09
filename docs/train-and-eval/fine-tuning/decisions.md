@@ -164,7 +164,7 @@ whose rationale was not recoverable.
     (`render_call_tokens`, `render_tool_response`, `render_trace_steps`, `extract_tool_call`)
     are base-specific and are re-authored for the new base LLM model's tokens (see the format
     churn recorded in `../../development-context.md`).
-  - The stack-neutral contract in `plans/oct-8/fine-tuning-data-plan.md` §6 is exactly the
+  - The stack-neutral contract in `plans/oct-8/fine-tuning-system-plan.md` §7 is exactly the
     retained surface; the rest of that pipeline is new code.
   - **Boundary (partly resolved).** `train_and_eval/grading/` is the **evaluation contract**
     (parse + exact-match + metrics + baselines) and is a keep candidate; it is not training code.
@@ -179,7 +179,7 @@ whose rationale was not recoverable.
   - Deletion is destructive and is done on a branch, with the audit as the justification.
     `dataset/` stays frozen (DD-01); `train_and_eval/` does not.
 - Detail: FT-D11; `plans/oct-7/restructure-docs.md` (Code-change policy);
-  `plans/oct-8/fine-tuning-data-plan.md`.
+  `plans/oct-8/fine-tuning-system-plan.md`.
 
 ## FT-D13 — The post-training system is staged, not raw SFT-then-GRPO
 
