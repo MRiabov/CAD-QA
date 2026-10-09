@@ -93,7 +93,7 @@ The command actually run on 2026-10-07 for the primitives was
 
 ## Resolved questions
 
-_(none yet)_
+None yet.
 
 ## Extra deliverables - P2
 

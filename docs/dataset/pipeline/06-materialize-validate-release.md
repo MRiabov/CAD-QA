@@ -143,7 +143,7 @@ tests around `materialize`/`validate`. The one-command check is
 
 ## Resolved questions
 
-_(none yet)_
+None yet.
 
 ## Extra deliverables - P2
 

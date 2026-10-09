@@ -95,7 +95,7 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_source_loading`,
 
 ## Resolved questions
 
-_(none yet)_
+None yet.
 
 ## Extra deliverables - P2
 

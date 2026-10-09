@@ -133,7 +133,7 @@ LLM model input; `private` carries `gold_answer`, `query_program`, `candidate_tr
 
 ## Resolved questions
 
-_(none yet)_
+None yet.
 
 ## Extra deliverables - P2
 

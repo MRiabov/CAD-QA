@@ -146,7 +146,7 @@ big LLM model number remains `[assumed]`/unrecorded (`docs/development-context.m
 
 ## Resolved questions
 
-_(none yet)_
+None yet.
 
 ## Extra deliverables - P2
 

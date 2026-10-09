@@ -270,7 +270,7 @@ Sources: `docs.liquid.ai/examples/customize-models/home-assistant`, `docs.liquid
 - Cookbook: `github.com/Liquid4All/cookbook`; the Home Assistant example is the end-to-end template
   (synthetic data → `prepare_data.py` → train → merge/export GGUF → benchmark).
 
-**Training and precision**
+#### Training and precision
 
 - **Plain LoRA, not QLoRA.** The recipe uses LoRA on the base LLM model; it runs **5 epochs on a Modal
   H100** (~$1.50 for the 350M recipe), then **merges the adapter** and converts to GGUF
@@ -280,7 +280,7 @@ Sources: `docs.liquid.ai/examples/customize-models/home-assistant`, `docs.liquid
   `Q4_0`/`Q4_K_M`/`Q8_0`, MLX 8-bit, and the Aug-2026 **QAD Q4_0** ~97% of BF16) are separate
   artifacts. Fine-tune the **bf16** checkpoint; do not fine-tune a QAD Q4_0 checkpoint.
 
-**Tool use and chat template (the format contract this doc owns)**
+#### Tool use and chat template (the format contract this doc owns)
 
 - **ChatML-like template**: `<|startoftext|>` … `<|im_start|>` + role + newline … `<|im_end|>`,
   roles `system`/`user`/`assistant`/`tool`; defined in each LLM model's `chat_template.jinja`.

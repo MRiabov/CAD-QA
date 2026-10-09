@@ -3,7 +3,7 @@
 Calls deepseek/deepseek-v4.1-flash with a row prompt + the row's tool schema;
 returns the completion text and per-call usage/cost for spend monitoring.
 
-Sampling follows the DeepSeek-V4.1-Flash model card: temperature=1.0, top_p=0.95.
+Sampling follows the DeepSeek-V4.1-Flash LLM model card: temperature=1.0, top_p=0.95.
 Do NOT lower the temperature for higher success — the card's instruct/agentic
 guidance recommends 1.0.
 """
@@ -20,8 +20,8 @@ from pydantic import BaseModel, Field
 from tool_calls import ToolName, _tool_call_prompt_suffix
 
 DEFAULT_MODEL = "deepseek/deepseek-v4.1-flash:deepseek"  # pinned to the DeepSeek provider
-DEFAULT_TEMPERATURE = 1.0  # DeepSeek-V4.1-Flash model card recommendation
-DEFAULT_TOP_P = 0.95  # DeepSeek-V4.1-Flash model card recommendation
+DEFAULT_TEMPERATURE = 1.0  # DeepSeek-V4.1-Flash LLM model card recommendation
+DEFAULT_TOP_P = 0.95  # DeepSeek-V4.1-Flash LLM model card recommendation
 API_BASE = "https://openrouter.ai/api/v1"
 
 

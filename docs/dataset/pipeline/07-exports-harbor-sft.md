@@ -127,7 +127,7 @@ and the smoke/integration tests around `experiment`. Harbor execution itself
 
 ## Resolved questions
 
-_(none yet)_
+None yet.
 
 ## Extra deliverables - P2
 

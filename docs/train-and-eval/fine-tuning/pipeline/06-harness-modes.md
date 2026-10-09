@@ -114,7 +114,7 @@ rtk uv run python train_and_eval/eval/eval_bench.py \
 
 ## Resolved questions
 
-_(none yet)_
+None yet.
 
 ## Extra deliverables - P2
 

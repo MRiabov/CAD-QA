@@ -76,7 +76,7 @@ end-to-end result on an immutable held-out split.
 
 ## Resolved questions
 
-_(none yet)_
+None yet.
 
 ## Extra deliverables - P2
 

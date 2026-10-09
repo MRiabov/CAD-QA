@@ -144,7 +144,7 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_query_resolver_a
 
 ## Resolved questions
 
-_(none yet)_
+None yet.
 
 ## Extra deliverables - P2
 

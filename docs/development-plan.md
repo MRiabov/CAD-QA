@@ -110,4 +110,4 @@ See `_audit/owner-audit-todo.md`. This doc adopts decisions as they resolve.
 
 ## Resolved questions
 
-_(none yet)_
+None yet.

@@ -227,7 +227,7 @@ metrics must be read from `cadqa_grade.json`.
 
 ## Resolved questions
 
-_(none yet)_
+None yet.
 
 ## Extra deliverables - P2
 

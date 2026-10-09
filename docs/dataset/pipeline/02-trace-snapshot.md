@@ -130,7 +130,7 @@ The focused tests are `tests/test_graph_first_pipeline.py::test_trace_worker_exe
 
 ## Resolved questions
 
-_(none yet)_
+None yet.
 
 ## Extra deliverables - P2
 

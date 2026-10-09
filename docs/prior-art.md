@@ -395,4 +395,4 @@ reference never stands alone for a load-bearing claim.
 
 ## Resolved questions
 
-_(none yet)_
+None yet.
