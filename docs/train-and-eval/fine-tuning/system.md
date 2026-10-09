@@ -291,11 +291,16 @@ silently.
 
 **Open questions.**
 
-- **Q1.** What k for the pass@k gate, and how are tiers defined from `difficulty_bucket` + hop counts?
 - **Q5.** The staged loop labels the Query-verifier/eval-contract step and the pass@k sampling gate as
   `Training stage 0`/`Training stage 2`, but neither consumes a Mixed training dataset or updates
   weights (the glossary's Training-stage definition). Should these be renamed (for example
   `system stage`), or is the broad use intended? `[open]`
+
+**Resolved.**
+
+- **Q1.** *(2026-10-09)* Tiers are **measured** from pass@k, not derived from `difficulty_bucket` +
+  Reasoning hop count — those are priors to stratify by, not the definition. `k = 8` screen → `16`
+  confirm; gate temperature `≈ 1.0`. Definition: `pipeline/05-sampling-gate.md`.
 
 **Owner decisions needed (cross-plan).** These block a step and need a human call; the other open
 questions here resolve by running or inspection. Labels point to the owning doc.
