@@ -114,6 +114,14 @@ single-GPU thesis, Training stage 2 may be the whole answer, with Training stage
 groups, ref [23]), pass-rate-band scheduling (refs [21][22]), and a composite reward (§4). Run
 rollouts in a sandbox (§5). Never run RL on a tier with no partial signal.
 
+> **P2 backlog — hint-based RL.** The dataset already carries a deterministic derivation: the **ordered
+> Gold query program**, with the per-row `clue_map` mapping each predicate to its public clue (a
+> **private** field, withheld from public rows). That yields a natural **hint ladder** (reveal `j` of `n`
+> predicates) to condition or anneal rollouts. P2 only; read first that privileged on-policy
+> distillation can *harm* thinking LLM models (ref [9]) and that hints are a reward-hacking risk
+> (refs [27][28]). There is no separate "hints" dataset field today — this is the `clue_map` +
+> Gold query program.
+
 **Training stage 4 — consolidation.** On-policy distillation (the student rolls out, a per-domain teacher
 supervises; Liquid's MOPD training stage) or another RFT round, to fold the RL gains back without entropy
 collapse ("RL squeezes, SFT expands", ref [7]).
