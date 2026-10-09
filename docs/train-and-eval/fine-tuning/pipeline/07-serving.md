@@ -21,8 +21,9 @@ Liquid documents serving in `docs.liquid.ai/deployment/*`:
 - **Formats:** GGUF (`Q4_0`, `Q4_K_M`, `Q5_K_M`, `Q6_K`, `Q8_0`, `BF16`, `F16`), ONNX, MLX
   (Apple Silicon).
 - **Speculative decoding (optional, serving-only).** LFM2.5 has no built-in MTP head; Liquid's DSpark
-  draft (`LiquidAI/LFM2.5-{1.2B-Instruct,2.6B,8B-A1B}-DSpark`) is a separate ~300M checkpoint served by
-  **SGLang** or **llama.cpp** (not vLLM). Speculation is lossless and cannot change accuracy, so it is
+  draft (`LiquidAI/LFM2.5-{1.2B-Instruct,2.6B,8B-A1B}-DSpark`) is a separate ~300M checkpoint that runs for
+  LFM2.5 on **SGLang** (PR #31041) or **llama.cpp**. vLLM has a `dspark` method but only for
+  Qwen3/Qwen3-Omni, Gemma4, K3, and DeepSeek-V4 drafters — not the LFM drafter. Speculation is lossless and cannot change accuracy, so it is
   off by default; the draft targets the base LLM model, so acceptance is re-measured after SFT (FT-D22).
 
 ## Inputs / outputs

@@ -345,8 +345,9 @@ whose rationale was not recoverable.
     sampling distribution), so it cannot change pass@k or exact-match and is irrelevant to H1–H4.
   - The shipped DSpark draft targets the **base** LLM model; after LoRA SFT + merge the target drifts and
     acceptance falls, so any speedup is re-measured post-SFT, not assumed.
-  - DSpark is served by **SGLang** (GPU) and **llama.cpp** (GGUF/CPU), not vLLM; adopting it would move
-    the serving runtime to SGLang. Adopt only if evaluation **or rollout** throughput measurably matters
+  - DSpark runs for LFM2.5 on **SGLang** (PR #31041) and **llama.cpp** (GGUF/CPU); vLLM's `dspark` method
+    exists but only for Qwen3/Qwen3-Omni, Gemma4, K3, and DeepSeek-V4 drafters — **not** the LFM drafter —
+    so adopting it would move the serving runtime to SGLang. Adopt only if evaluation **or rollout** throughput measurably matters
     (rollouts are inference too — but see Q4: our RL default is vLLM).
   - Other classical-by-2026 optimizations are already in the recipe (LoRA-bf16, grad checkpointing +
     accumulation, packing, FlashAttention) or not applicable at 2.6B dense (MoE sharding); QLoRA stays a
@@ -386,7 +387,7 @@ whose rationale was not recoverable.
   or stay in `data.md`? `[open]`
 - **Q4.** DSpark during **rollout-heavy** serving (the RL-readiness gate, GRPO). Rollouts are inference, so a
   lossless speculator would help the decode-bound rollout-count × prompts workload; but our RL default is
-  `liquid-finetune` GRPO on **vLLM**, and DSpark is **SGLang/llama.cpp** only, so it needs the
-  **verl + SGLang** escalation (`../system.md` §6). The draft also targets the **base** and is never
+  `liquid-finetune` GRPO on **vLLM**, and DSpark for LFM2.5 is **SGLang/llama.cpp** (vLLM's `dspark` does
+  not cover the LFM drafter), so it needs the **verl + SGLang** escalation (`../system.md` §6). The draft also targets the **base** and is never
   updated, so acceptance decays as the RL policy drifts. Resolve: does verl + SGLang + DSpark actually
   run our rollouts, and what is the acceptance/speedup on the SFT policy and over an RL run? `[open]`

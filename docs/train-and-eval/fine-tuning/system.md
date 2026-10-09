@@ -220,7 +220,8 @@ multi-turn agentic harness RL with per-step rewards. For text
 single-turn `learn_the_cadqa_task`, `liquid-finetune` GRPO is sufficient. Modal officially supports GRPO with
 both TRL and verl and provides Sandboxes for rollout isolation, so either path fits our environment.
 
-Note: the **DSpark** speculator is **SGLang-only** (not vLLM), so accelerating GRPO rollouts with it would
+Note: the **DSpark** speculator for LFM2.5 is **SGLang/llama.cpp** only (vLLM's `dspark` does not cover
+the LFM drafter), so accelerating GRPO rollouts with it would
 ride the **verl + SGLang** path, not the default TRL + vLLM one (FT-D22 Q4).
 
 ---
