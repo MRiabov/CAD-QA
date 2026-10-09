@@ -506,7 +506,7 @@ def iter_files(roots: list[str]) -> list[Path]:
                 continue
             if candidate.name in SKIP_FILES:
                 continue
-            if SKIP_DIRS.intersection(candidate.parts):
+            if SKIP_DIRS.intersection(candidate.relative_to(path).parts):
                 continue
             files.append(candidate)
     return files

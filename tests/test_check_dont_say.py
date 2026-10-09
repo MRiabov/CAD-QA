@@ -214,3 +214,11 @@ def test_iter_files_scans_paper_and_tex(tmp_path: Path) -> None:
     (paper / "draft.tex").write_text("The source builder.\n", encoding="utf-8")
     found = {path.name for path in iter_files([str(tmp_path)])}
     assert "draft.tex" in found
+
+
+def test_iter_files_ignores_skip_dir_names_above_the_root(tmp_path: Path) -> None:
+    root = tmp_path / ".worktrees" / "wt" / "docs"
+    root.mkdir(parents=True)
+    (root / "doc.md").write_text("hi\n", encoding="utf-8")
+    found = {path.name for path in iter_files([str(root)])}
+    assert found == {"doc.md"}
