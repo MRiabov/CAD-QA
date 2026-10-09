@@ -52,6 +52,19 @@ table.
 | 06 evaluation | trained LLM model + evaluation datasets | scores per evaluation dataset | `../../evaluation/plan.md` |
 | 07 serving | merged LLM model | GGUF / vLLM checkpoint | `07-serving-vllm.md` |
 
+## Datasets in play
+
+There is more than one dataset; each has one role (glossary).
+
+- **CAD-QA dataset file** — the immutable benchmark rows (`rows.parquet` / `rows.jsonl`) from
+  `dataset_generation`; the input to the fine-tuning pipeline, read by 01. (The Dataset file.)
+- **External dataset** — a dataset published outside CAD-QA (tool format, general tasks, priming),
+  registered with a pinned revision; ingested by 03.
+- **`TrainingExample` set** — the typed training records produced by 03.
+- **Mixed training dataset** — the materialized `{dataset_role → weight}` blend for a run (03).
+- **Liquid `messages` SFT JSONL** — the on-disk training artifact (03 → 04).
+- **Evaluation datasets** — the datasets that serve H1–H4, hard-excluded from training (06).
+
 ## Shared interfaces (single-sourced)
 
 - **Format contract** (Liquid `messages` SFT JSONL, native tool tokens) — `../training.md`.

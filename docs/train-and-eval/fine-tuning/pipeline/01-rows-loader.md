@@ -2,17 +2,18 @@
 
 ## Purpose
 
-Turn a **dataset file** (`rows.parquet` / `rows.jsonl`) into **decoded CAD-QA dataset rows**
-consumed by teacher sampling, GRPO, and evaluation.
+Turn the **CAD-QA dataset file** (`rows.parquet` / `rows.jsonl`) into **decoded CAD-QA dataset rows**
+consumed by teacher sampling, preparation, and evaluation.
 
 ## Inputs / outputs
 
-- **In:** `dataset file` — `rows.parquet` or `rows.jsonl` from `dataset_generation`
-  (fields in [00-overview.md](00-overview.md#dataset-file)).
+- **In:** the **CAD-QA dataset file** — `rows.parquet` or `rows.jsonl` from `dataset_generation`
+  (the immutable benchmark rows; see [00-overview.md](00-overview.md#datasets-in-play)). The External
+  datasets and the Mixed training dataset enter later, at 03.
 - **Out:** `decoded CAD-QA dataset rows` (list of Python dicts; not persisted) — fields
   `row_id`, `prompt`, `answer_format`, `gold_answer` (decoded), `logical_hop_count`,
   `difficulty_bucket`, `geometry_hop_count`, `relation_families`
-  ([00-overview.md](00-overview.md#decoded-cad-qa-dataset-rows)).
+  ([00-overview.md](00-overview.md#datasets-in-play)).
 - **Filter semantics:** default `split="train"`; rows whose `split` is neither null nor the
   requested split are dropped; rows missing `prompt` or `gold_answer`, and rows with
   `release_ready is False`, are dropped. `[answer contract]` is appended to each prompt
