@@ -46,8 +46,10 @@ whose rationale was not recoverable.
 - **Decision:** the tool contract in `train_and_eval/tool_calls.py` maps each `answer_format`
   to one `submit_*` tool with Pydantic-typed arguments; comparison is exact for strings and
   integers and `1e-3` relative for floats. `json` is specifically the CadQuery workplane tool.
-- **Consequences:** the contract is shared by teacher, SFT data, and eval. The `boolean`
-  format is not in the typed contract (see [pipeline/06-harness-modes.md](pipeline/06-harness-modes.md#open-questions)).
+- **Consequences:** the contract is shared by teacher, SFT data, and eval. The 2026-08 contract omitted
+  `boolean` (and `entity_id`); the Phase 3 rewrite defines the contract over the **full** `answer_format`
+  enum, so every Answer format maps to exactly one `submit_*` tool (FT-D12;
+  [pipeline/01-rows-loader.md](pipeline/01-rows-loader.md)).
   Detail: [pipeline/00-overview.md](pipeline/00-overview.md#shared-tool-call-contract).
 
 ## FT-D5 — Primary harness is `numpy`; `cadquery` is deferred to the RL Training stage

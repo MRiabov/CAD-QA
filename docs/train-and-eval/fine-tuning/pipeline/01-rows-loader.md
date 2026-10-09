@@ -23,6 +23,11 @@ Every retained row gets a prompt that names the correct **submit tool** for its 
 tool. If either is wrong, every downstream agent training trace and every evaluation score is wrong for
 that row.
 
+The Phase 3 typed contract is defined over the **full** `answer_format` enum the dataset emits — the
+union of the 2026-08 `tool_calls.py::FORMAT_TO_TOOL` and `grading/parse.py::parse_answer`, explicitly
+adding the formats the old contract omitted (`boolean`, `entity_id`) — so every retained row maps to
+exactly one `submit_*` tool by construction (FT-D4, FT-D12; D-E8).
+
 The loader exposes `reasoning_hop_count` (and `difficulty_bucket`) per row but does not filter or order
 by it — the progressive curriculum is a mix concern, applied in the Sample + mix step (`../system.md`
 §7).
@@ -40,10 +45,14 @@ uv run pytest <loader test> -q
 
 ## Open questions
 
-- **Q1.** Confirm every Answer format maps to a submit tool — the old typed contract omitted `boolean`.
+_(none)_
 
 ## Resolved questions
 
+- **Q1.** *(2026-10-09)* A **scope** decision, not an open verification: Phase 3 rewrites the contract
+  (FT-D12), so it is defined over the full `answer_format` enum the dataset emits — including the
+  `boolean` and `entity_id` formats the 2026-08 typed contract omitted — and every Answer format maps to
+  a submit tool (FT-D4; D-E8, the one-scorer target).
 - **Q2.** *(2026-10-09)* The decoded hop field is `reasoning_hop_count` (glossary) and reads the row
   column `logical_hop_count`; the Gold query program's unqualified `hop_count` stays internal to the
   dataset and is not exposed to the fine-tuning stages.
