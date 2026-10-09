@@ -165,7 +165,7 @@ whose rationale was not recoverable.
     are base-specific and are re-authored for the new base LLM model's tokens (see the format
     churn recorded in `../../development-context.md`).
   - The stack-neutral contract in `system.md` §7 is exactly the
-    retained surface; the rest of that pipeline is new code.
+    retained part; the rest of that pipeline is new code.
   - **Boundary (partly resolved).** `train_and_eval/grading/` is the **evaluation contract**
     (parse + exact-match + metrics + baselines) and is a keep candidate; it is not training code.
     It currently decides with `parse_answer` + `==` (`grading/grade.py::exact_match`) while the
@@ -225,7 +225,7 @@ whose rationale was not recoverable.
   **warm-start readiness gate** whose over-use ossifies the policy and collapses exploration.
 - **Decision:** invest first in the **CAD-QA task environment + scorer** — a task generator over
   the immutable dataset rows (prompt + scalar gold, configurable hop/difficulty), the single verified
-  exact-match scorer, and the `run_code`/kernel tool surface — and treat the external SFT mix
+  exact-match scorer, and the `run_code`/kernel tool interface — and treat the external SFT mix
   (`emit_our_tool_call_format`, `run_the_tool_call_loop`, `preserve_general_math_and_code_reasoning`,
   `expose_general_python_code`, `expose_cadquery_programs`) as
   **support**: a thin format cold-start and general-task diversity.

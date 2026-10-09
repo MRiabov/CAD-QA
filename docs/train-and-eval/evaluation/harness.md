@@ -59,8 +59,8 @@ correctness is established beyond the oracle identity.
 
 An **LLM harness mode** is which compute tools the LLM model gets. The `numpy` and
 `no_tools` modes give the LLM model no access to CadQuery or any other CAD kernel, and no
-network; the `cadquery` mode adds kernel access. The mode changes only the compute
-surface, not the task or the grading contract.
+network; the `cadquery` mode adds kernel access. The mode changes only the available compute
+tools, not the task or the grading contract.
 
 - **`numpy` (primary, P0).** Submit tools plus the sandboxed `run_code` tool: a
   Python interpreter with NumPy and `math` preloaded. The LLM model reasons in text,
@@ -150,7 +150,7 @@ deterministic responses from private Query verifier artifacts. It is an analysis
 bound only and is not an LLM-model-facing tool environment (`docs/_archive/harbor.md`, "Oracle
 Warning").
 
-The local harness and Harbor are two different execution surfaces. The local
+The local harness and Harbor are two different execution environments. The local
 harness speaks the native `<|tool_call|>` protocol and grades with
 `tool_calls.py::tool_call_matches`; Harbor runs an external coding agent that
 writes answer files and grades with `grade_public_private`. Both share the
@@ -200,7 +200,7 @@ thesis needs one primary, comparable score. Consequence: `numpy` is the mode tha
 gates claims; the other two are upper-bound studies and are collected under
 `## Extra deliverables - P2`.
 
-**D-E2. The local harness and Harbor are separate surfaces sharing the row
+**D-E2. The local harness and Harbor are separate environments sharing the row
 contract, not one harness with two backends.** Rationale: the local LLM model speaks
 native tool calls, while Harbor runs a general coding agent that writes files; the
 two answer protocols differ. Consequence: grading is not literally shared; a

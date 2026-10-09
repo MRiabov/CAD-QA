@@ -102,7 +102,7 @@ and the smoke/integration tests around `experiment`. Harbor execution itself
 ### D5 — The smoke experiment emits both full and filtered trees
 
 - **Status:** accepted.
-- **Context:** Release numbers must be auditable against the broader generation surface
+- **Context:** Release numbers must be auditable against the broader generation scope
   (`specs/dataset-spec.md`).
 - **Decision:** `run_smoke_experiment` writes a full `dataset/` tree and a filtered
   `release_dataset/` tree, with baselines, requests, grades, tool-assisted runs, and SFT
@@ -123,7 +123,7 @@ and the smoke/integration tests around `experiment`. Harbor execution itself
   (`docs/_archive/harbor.md`); the default pin is `terminus-2` with
   `openrouter/deepseek/deepseek-v4-flash`.
 - **Q4.** **LLM-output recording.** The dataset-generation path contains no LLM calls, so the
-  "record every LLM call" rule applies to the fine-tuning/evaluation surface, not here.
+  "record every LLM call" rule applies to the fine-tuning/evaluation code, not here.
 
 ## Resolved questions
 

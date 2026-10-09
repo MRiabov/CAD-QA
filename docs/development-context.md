@@ -152,7 +152,7 @@ Liquid tool-use docs).
    fairly judge an answer. Needs a clarification pass (rewrite to unambiguous wording, then
    re-render and re-check) before the benchmark is immutable. Tracked in
    `_audit/owner-audit-todo.md` (E5).
-9. **Fine-tuning surface is being replaced.** Most of `train_and_eval/` — teacher, rejection
+9. **The fine-tuning stack is being replaced.** Most of `train_and_eval/` — teacher, rejection
    sampling, agent training trace normalization, SFT, GRPO, evaluation, serving — is expected to
    be deleted in Phase 3, keeping only the rows loader and the typed tool/answer contract
    ([FT-D12](train-and-eval/fine-tuning/decisions.md#ft-d12--the-phase-3-rewrite-retains-only-the-loader-and-the-typed-tool-contract)).

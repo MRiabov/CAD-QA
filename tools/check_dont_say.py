@@ -81,6 +81,7 @@ ALLOWLIST = (
     "source code",
     "data source",
     "source variable",
+    "surface area",
     "type: ignore",
 )
 

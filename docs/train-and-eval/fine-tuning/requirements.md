@@ -64,7 +64,7 @@ end-to-end result on an immutable held-out split.
 
 - **Q1.** Should the untracked environment pins be moved into the repo (for example
   `train_and_eval/requirements/`) so the environment is reproducible?
-- **Q2.** Should there be a single tracked environment for the whole fine-tuning surface, or separate
+- **Q2.** Should there be a single tracked environment for the whole fine-tuning stack, or separate
   SFT and serving environments (the current split is unsloth-stack vs vLLM-stack)?
 - **Q3.** Is `docs/_archive/rl_runbook.md` (Unsloth Studio route) still the intended production path, or is
   `train_and_eval/` the only path? `[unknown]`.

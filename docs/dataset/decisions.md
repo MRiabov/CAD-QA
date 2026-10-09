@@ -45,7 +45,7 @@ Local decisions for the `dataset_generation` unit, in ADR format
 ## DD-04 — Public/private split is the release boundary
 
 - **Status:** accepted.
-- **Context:** Rows are code-plus-label internally, but the public benchmark surface must be
+- **Context:** Rows are code-plus-label internally, but the public benchmark release must be
   answer-free (`specs/dataset-spec.md`).
 - **Decision:** Export two views: `public` (answer-free LLM model input) and `private`
   (gold answer, hidden Gold query program, answer candidate set trace, clue map). The split

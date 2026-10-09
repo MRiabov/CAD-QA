@@ -433,6 +433,7 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | model (bare) | CAD model / LLM model / base LLM model / LLM adapter / merged LLM model | geometry vs language model vs weights/adapter/served endpoint |
 | node (bare) | CAD ontology node / code node | ambiguous between graph and code |
 | stage (bare) | Training stage / pipeline stage | which stage? qualify it |
+| surface (bare) | scope / interface | imprecise metaphor; name the scope or interface |
 | kind / kinds | predicate kind | raw noun; name the kind of what |
 | type / types | CAD ontology node type / relation type / answer format / measurement scope / LLM harness mode | raw noun; name the type of what |
 | entity id (in a public answer) (dataset, train_and_eval, tools) | source variable | internal `entity_id` values must not leak into public answers |

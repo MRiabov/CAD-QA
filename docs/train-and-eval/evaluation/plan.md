@@ -6,10 +6,10 @@ scorer, and baselines score the base LLM model, the tuned LLM model, and the cos
 models through Harbor.
 
 **This doc owns — the shared evaluation base:** the LLM harness and its modes, the tool-call and
-answer surface, the scorer, the evaluation-dataset procedure, grading reconciliation, judge independence,
+answer contract, the scorer, the evaluation-dataset procedure, grading reconciliation, judge independence,
 baselines, and evaluation P0/P1/P2.
 
-**Why it is its own doc.** The evaluation surface is *not* a sub-part of training. It is the shared
+**Why it is its own doc.** The evaluation concern is *not* a sub-part of training. It is the shared
 dependency that (a) scores the final thesis number, (b) generates the teacher traces through
 rejection sampling (the data doc's `learn_the_cadqa_task`), and (c) would supply the reward if RL is run.
 Training is the extra step that adds gradients and data on top of this base; evaluation adds none.
@@ -45,12 +45,12 @@ scorer. Training and evaluation differ only in what they do with the output: tra
 gradient update; evaluation does not.
 
 **Tools are shared with training.** The `submit_*` tools, the `run_code` compute tool, the
-`[answer contract]` suffix, and the Answer format → tool mapping are the same surface the training
+`[answer contract]` suffix, and the Answer format → tool mapping are the same interface the training
 data uses. This is the sense in which "eval == training tool calls": the tool-call/harness layer is
 common. The difference is at the objective (see the architecture doc, §1: SFT scores only to
 *admit* an agent training trace and trains by imitation; RL would score as a reward).
 
-**Two execution surfaces (D-E2).** The local harness speaks the native tool-call protocol and
+**Two execution environments (D-E2).** The local harness speaks the native tool-call protocol and
 grades with `tool_calls.py::tool_call_matches`; Harbor runs an external coding agent that writes
 `/app/answer.json|txt` and grades with `grading/grade.py::grade_public_private`. They share the
 CAD-QA dataset row contract and the exact-answer principle but **do not share a grader
@@ -75,7 +75,7 @@ The `run_code` execution path is `train_and_eval/run_code_sandbox.py` (`python -
 
 ---
 
-## 3. Tool-call and answer surface
+## 3. Tool-call and answer contract
 
 - **The `[answer contract]` suffix** tells the LLM model to end with the matching `submit_*` call.
 - **One submit tool per Answer format** (`train_and_eval/tool_calls.py::FORMAT_TO_TOOL`); `json` is
@@ -229,7 +229,7 @@ rows, a disjoint dataset, or a synthetic set.
 
 ## 8. Current status
 
-| Surface | Status | Note |
+| Scope | Status | Note |
 |---|---|---|
 | `numpy` mode | `exists` | implemented and runnable; no preserved `numpy` run (`[unverified — needs GPU]`) |
 | `no_tools` mode | `exists` | implemented |
@@ -267,7 +267,7 @@ results rather than repeating the plan.
 ## 10. Decisions (evaluation)
 
 - **D-E1** `numpy` primary; `no_tools`/`cadquery` P2. **D-E2** local harness and Harbor are
-  separate surfaces sharing the row contract, not one harness with two backends. **D-E3**
+  separate environments sharing the row contract, not one harness with two backends. **D-E3**
   `run_code` is an accidental-misuse guard, not a security boundary. **D-E4** Harbor reward is a
   scalar 0/1 exact match; diagnostics live in the artifact. (From
   `harness.md`.)

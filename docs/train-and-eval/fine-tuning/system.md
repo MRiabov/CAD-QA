@@ -45,7 +45,7 @@ single-GPU analogue.
 **Scaling thesis (2025–2026).** Capability gains increasingly come from **environmental scaling** —
 RL against rich, verifiable interactive environments — rather than from more SFT data ([30][31]).
 The scaling asset is therefore the **CAD-QA task environment + scorer** (a task generator, the
-single exact-match reward, and the `run_code`/kernel tool surface), not the SFT corpus. SFT's job
+single exact-match reward, and the `run_code`/kernel tool interface), not the SFT corpus. SFT's job
 is narrow: get the small LLM model to emit our `submit_*` format and produce *some* successful
 rollouts — a **readiness gate, not an accuracy target** ([32]); over-doing SFT ossifies the policy
 and collapses the exploration RL needs. External general data is support (a tool-schema cold-start and
@@ -177,7 +177,7 @@ their keep: the tiers let us measure reachability, not just train in order.
 ## 5. Sandboxed rollouts and logging
 
 - **Rollouts run generated code**, so they need real isolation, not the `python -I -B`
-  accidental-misuse guard (FT-D7, TA-B1). Use **Modal Sandboxes** (already our surface) or
+  accidental-misuse guard (FT-D7, TA-B1). Use **Modal Sandboxes** (already our environment) or
   `liquid-finetune`'s optional **OpenEnv** block for stateful multi-turn tool use.
 - **Log every rollout** — internal reasoning, visible output, tool calls, reward, and the
   pass/fail — to JSONL/DB, per the repo standing rule (FT-D9): easy to reconstruct, one record
@@ -201,7 +201,7 @@ second framework:
 Escalate to **verl** (the framework behind Liquid's own agentic RL) only if we reach real
 multi-turn agentic harness RL with per-step rewards. For text
 single-turn `learn_the_cadqa_task`, `liquid-finetune` GRPO is sufficient. Modal officially supports GRPO with
-both TRL and verl and provides Sandboxes for rollout isolation, so either path fits our surfaces.
+both TRL and verl and provides Sandboxes for rollout isolation, so either path fits our environment.
 
 ---
 
@@ -315,7 +315,7 @@ questions here resolve by running or inspection. Labels point to the owning doc.
 - **Q3.** *(2026-10-09)* Answered by construction: the Training stage 2 pass@k gate decides RFT vs RL from
   the measured reachability, not on paper (§3; FT-D13).
 - **Q4.** *(2026-10-09)* No — `cadquery` mode is not needed for RL. RL uses the same `run_code`/`numpy` tool
-  surface; `cadquery` is a P2 evaluation upper bound (`../evaluation/plan.md` §2). RL itself is conditional on
+  interface; `cadquery` is a P2 evaluation upper bound (`../evaluation/plan.md` §2). RL itself is conditional on
   the gate (FT-D13), so the question is moot until then.
 
 ---

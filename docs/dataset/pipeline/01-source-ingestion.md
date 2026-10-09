@@ -24,7 +24,7 @@ ingestion. Concretely: `source_id` is derived from archive path plus a normalize
 `source_hash` is a SHA-256 of the normalized code, and protected split-group metadata
 (`split_group`, `counterfactual_group`, `source_family`, `family_id`, `template_id`) plus a
 path-derived `path_family` are carried so later leakage audits and group-safe splits are
-possible. The audit must surface duplicate IDs, CadQuery program ID/hash conflicts, duplicate
+possible. The audit must report duplicate IDs, CadQuery program ID/hash conflicts, duplicate
 normalized code, missing paths, and ungrouped sources rather than hiding them.
 
 ## Current status

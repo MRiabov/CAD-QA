@@ -130,7 +130,7 @@ unoccupied corner.
 | Input | CadQuery program + rule-rendered prompt | CadQuery program + numeric question | part/assembly drawings, renders, supplied STEP + BOM |
 | Output | short structured answer (entity references, CadQuery selectors, coordinates, numbers, integers, booleans, candidate labels, JSON) | one number (JSON array of numbers) | CadQuery solid / assembly / terminal-net graph |
 | Reasoning depth | Reasoning hops 0→10, distractors, candidate resolution | single-fact lookup + light arithmetic; hardest is a one-step counterfactual | generation/assembly planning with agentic iteration |
-| Grading | exact structured-answer match | symmetric ratio accuracy (partial credit) | voxel IoU, surface F1, netlist — execution-grounded |
+| Grading | exact structured-answer match | symmetric ratio accuracy (partial credit) | voxel IoU, surface F1, netlist — execution-grounded <!-- dont-say: allow: BenchCAD metric name --> |
 | Construction | automated graph-derived (AST → CAD ontology → Gold query program) | hand-authored 6–12 templates per family | parametric generator per design family |
 | Scale | 1,445 now; 10,000 target | 2,400 questions over 200 parts | ~100 public / ~100 private cases; 150 public families + 300 held-out |
 | Curriculum / conciseness | Reasoning hop curriculum + critical-path labels | capability axes L1–L4 only | none |
@@ -139,7 +139,7 @@ unoccupied corner.
 
 The base task shape of BenchCAD 1.0 Code QA — read a CadQuery program, answer a geometry
 question, grade deterministically with no LLM judge and no kernel — is the same as CAD-QA.
-CAD-QA differs in reasoning depth, answer surface, and automated construction; BenchCAD 2.0 is
+CAD-QA differs in reasoning depth, answer contract, and automated construction; BenchCAD 2.0 is
 a different construct entirely (reconstruction).
 
 ## Saturation and timing
@@ -174,7 +174,7 @@ against the immutable hard slice before any gap claim stands.
 ## Landscape — works citing BenchCAD and adjacent benchmarks (2026-10-09)
 
 BenchCAD is already cited by a set of 2026 works, which confirms it as a reference point and
-surfaces adjacent benchmarks (Semantic Scholar, 2026-10-09):
+lists adjacent benchmarks (Semantic Scholar, 2026-10-09):
 
 | Work | arXiv | What it is | Modality |
 |---|---|---|---|

@@ -232,7 +232,7 @@ a **warm-start that is a readiness gate, not an accuracy target**, and over-doin
 policy [32]. For CAD-QA this moves the center of gravity from the SFT mix to the **task environment
 
 - scorer** (a CAD-QA task generator with verifiable answers and the `run_code`/kernel tool
-surface); SFT becomes a thin cold-start and the general external data becomes support/canary.
+interface); SFT becomes a thin cold-start and the general external data becomes support/canary.
 
 **Implication for CAD-QA.** Do not run a raw SFT→GRPO. Run **Training stage 0** one-scorer + off-oracle
 audit, **Training stage 1** difficulty-aligned SFT with a Bridge for hard traces, **Training stage 2** a pass@k

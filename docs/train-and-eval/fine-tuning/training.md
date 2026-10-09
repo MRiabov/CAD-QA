@@ -13,7 +13,7 @@ training order/curriculum, and the CAD-QA task dataset. **The system doc**
 ingest/normalize/quality/dedup/sample stages.
 
 **The evaluation doc** (`../evaluation/plan.md`) owns the LLM harness and modes, the
-tool-call surface, the scorer, the evaluation-dataset procedure, grading reconciliation, judge independence,
+tool-call contract, the scorer, the evaluation-dataset procedure, grading reconciliation, judge independence,
 and baselines.
 
 **Shared interfaces, single-sourced:**
@@ -25,7 +25,7 @@ and baselines.
 
 **Presumed surviving code.** The Phase 3 rewrite is expected to delete most of `train_and_eval/`,
 keeping only the rows loader, the typed tool/answer contract, and (probably) the grader (FT-D12).
-This plan builds on exactly that surviving surface — it does not assume the teacher,
+This plan builds on exactly that surviving code — it does not assume the teacher,
 agent-training-trace normalization, SFT, GRPO, evaluation, or vLLM code will be ported.
 `tool_calls.py` itself is only partly reusable: its typed definitions/mapper/matcher survive; its
 gemma-native rendering and parsing are re-authored.
@@ -140,7 +140,7 @@ Rules for the whole effort:
   (`finetune/export.py`, `--quant-type q8_0`).
 - **Use Modal for the first runs** — it is Liquid's recommended serverless path and the Home
   Assistant run costs ~$1.50. Move to a rented **Vast.ai** 24 GB GPU once the loop is proven and
-  hourly cost matters. (Modal + Vast are our only surfaces; the docs' SLURM/KubeRay backends do not
+  hourly cost matters. (Modal + Vast are our only environments; the docs' SLURM/KubeRay backends do not
   apply.)
 - **Reference cookbooks:** `github.com/Liquid4All/cookbook`,
   `github.com/Liquid4All/liquid-finetune`, `docs.liquid.ai/lfm/fine-tuning/*` (LEAP Finetune,

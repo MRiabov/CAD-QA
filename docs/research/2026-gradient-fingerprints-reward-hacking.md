@@ -33,7 +33,7 @@ the detector to guide rejection fine-tuning.
 
 - Gives the concrete detection method the system plan's reward-hacking audit should aspire to, and
   a counterfactual ground-truth label (correct-under-both-hints = non-hacking).
-- For CAD-QA a plausible loophole is the `run_code`/kernel surface or a prompt artifact leaking the
+- For CAD-QA a plausible loophole is the `run_code`/kernel tool or a prompt artifact leaking the
   answer; the counterfactual test (inject a wrong hint; does the answer follow the hint?) is cheap
   and should be run before trusting any RL gain.
 - Reinforces "audit early": by the time the canary collapses, the hack is already learned.

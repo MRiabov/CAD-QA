@@ -16,7 +16,7 @@ preservation, the training stages, hardware/budget, and the surviving-code bound
 `TrainingExample` record, converter, and the ingest/normalize/quality/dedup/sample stages).
 
 **The evaluation doc owns — the harness and scoring:**
-`../evaluation/plan.md` (LLM harness and modes, tool-call surface, the scorer, the evaluation-dataset
+`../evaluation/plan.md` (LLM harness and modes, tool-call contract, the scorer, the evaluation-dataset
 procedure, grading reconciliation, judge independence, baselines).
 
 **Shared interfaces, single-sourced:**

@@ -32,7 +32,7 @@ and maps the landscape of environment designs.
 ## Why it matters for CAD-QA
 
 - It is the high-level justification for treating the **CAD-QA task environment + scorer** (a task
-  generator, the exact-match reward, the `run_code`/kernel tool surface) as the primary asset —
+  generator, the exact-match reward, the `run_code`/kernel tool interface) as the primary asset —
   not the SFT mix.
 - It reframes the CAD-QA task dataset: a **generator of CAD-QA tasks with verifiable
   answers**, from which both RL rollouts and (filtered) SFT cold-start data are drawn — not a fixed

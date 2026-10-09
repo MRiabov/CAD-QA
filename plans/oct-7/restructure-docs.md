@@ -116,7 +116,7 @@ pre-existing failures (query-synthesis prompt text; they fail on `main` too).
   directly blocked by a verified bug, then minimally, on a branch, with the audit as the
   justification.
 - **The fine-tuning/eval stack (`train_and_eval/`) is not immutable.** It is the active
-  research surface and will be rewritten (reasoning-preserving pipeline).
+  research area and will be rewritten (reasoning-preserving pipeline).
 
 ## Priority tiers and standards
 
@@ -319,7 +319,7 @@ owner's; delegated exploration, directly-verified load-bearing claims.
 - Port the product-launch linters: docs, glossary, decisions, and code — plus ratchets
   (monotonic thresholds that only improve). They did their job and gave high ROI.
 - The doc/glossary/decisions linters are in scope. Code lint and ratchets apply where
-  they do not fight the `cad_qa/` freeze: documentation and the `train_and_eval/` surface
+  they do not fight the `cad_qa/` freeze: documentation and the `train_and_eval/` stack
   first; heavy linting of the immutable dataset-generation code is deferred.
 - **Markdown formatting.** Adopt a formatter for all docs — `rumdl` (preferred: stricter
   and faster) or `mdformat`. Committed config; runs in the same gate as the linters. No
@@ -658,7 +658,7 @@ settled (same rule as the per-doc sections).
 
 ### Resolved
 
-- **D1 — Work surface.** This docs thread works in the **primary checkout** (sequential and
+- **D1 — Work location.** This docs thread works in the **primary checkout** (sequential and
   blocking, so no worktree spam). General rule: D9.
 - **D2 — `specs/`.** **Supersede and split.** Fold `specs/` into `docs/` per these
   conventions; leave a pointer (or remove).

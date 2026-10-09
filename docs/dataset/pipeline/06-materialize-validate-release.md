@@ -104,7 +104,7 @@ tests around `materialize`/`validate`. The one-command check is
 ### D5 — Release export is a filtered tree with its own evidence
 
 - **Status:** accepted.
-- **Context:** Release numbers must be auditable against the broader generation surface.
+- **Context:** Release numbers must be auditable against the broader generation scope.
 - **Decision:** `dataset/release/release.py::export_release_dataset` filters to release-ready
   rows, then applies deterministic caps (syntax-only calibration, family/template/value
   shares, parameter diversity) and writes its own validation, leakage, non-release-readiness,

@@ -27,7 +27,7 @@ def run_no_cadquery_access_evaluation(
     model_id: str,
     setting: str = "zero-shot",
 ) -> dict[str, Any]:
-    """Grade responses and audit benchmark-surface hygiene for the no-access-to-CadQuery setting."""
+    """Grade responses and audit benchmark hygiene for the no-access-to-CadQuery setting."""
 
     request_audit = no_cadquery_access_request_audit(public_rows, requests)
     key_audit = public_private_audit(public_rows, private_rows)

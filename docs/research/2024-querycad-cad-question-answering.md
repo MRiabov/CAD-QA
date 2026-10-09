@@ -42,7 +42,7 @@ The nearest published CAD question-answering prior art. Two lessons: grounding t
 executed code/measurements is what makes CAD QA tractable, and the dominant failure is
 perception/grounding (part selection), not reasoning. That aligns with CAD-QA's `numpy` harness
 and with NoReGeo's perception-vs-reasoning split, and it warns that small LLM models need the
-grounded tool surface to compete.
+grounded tool interface to compete.
 
 ## Related
 
