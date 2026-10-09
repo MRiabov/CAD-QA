@@ -256,7 +256,7 @@ matter for CAD-QA:
   200 parts; symmetric-ratio grading). Code QA is the CAD-QA base task shape, so the paper's
   "no open dataset" claim no longer holds.
 - **Generation tasks are saturating; comprehension is not.** Re-graded Vision2Code voxel IoU is
-  ~0.27, but provider-reported closed-book IoU is now ~0.49–0.75 and agentic ~0.87–0.96 (a
+  ~0.27, but provider-reported IoU with no access to CadQuery is now ~0.49–0.75 and agentic ~0.87–0.96 (a
   different metric and split, not re-graded). Code QA total is 0.80–0.84, with a Spatial
   Reasoning axis of 0.537–0.731 against a 0.42 blind baseline.
 - **CAD-QA is differentiated by depth, not task shape.** Code QA is single-pass numeric lookup;

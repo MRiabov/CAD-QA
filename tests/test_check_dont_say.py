@@ -180,3 +180,37 @@ def test_home_annotation_exempts_tree(tmp_path: Path) -> None:
     assert [hit.rule.phrase for hit in scan_file(other_code, rules)] == [
         "query program"
     ]
+
+
+def test_latex_prose_is_scanned(tmp_path: Path) -> None:
+    rules = parse_rules(GLOSSARY)
+    doc = tmp_path / "paper.tex"
+    doc.write_text("The source builder.\n", encoding="utf-8")
+    hits = scan_file(doc, rules)
+    assert [hit.rule.phrase for hit in hits] == ["source"]
+
+
+def test_latex_code_verbatim_and_comments_are_skipped(tmp_path: Path) -> None:
+    rules = parse_rules(GLOSSARY)
+    doc = tmp_path / "paper.tex"
+    doc.write_text(
+        "A \\texttt{source:value} is literal.\n"
+        "\\begin{verbatim}\n"
+        "source = 1\n"
+        "\\end{verbatim}\n"
+        "% the source comment\n"
+        "The source builder.\n",
+        encoding="utf-8",
+    )
+    hits = scan_file(doc, rules)
+    assert [hit.rule.phrase for hit in hits] == ["source"]
+    assert hits[0].line == 6
+
+
+def test_iter_files_scans_paper_and_tex(tmp_path: Path) -> None:
+    write_glossary(tmp_path)
+    paper = tmp_path / "paper"
+    paper.mkdir()
+    (paper / "draft.tex").write_text("The source builder.\n", encoding="utf-8")
+    found = {path.name for path in iter_files([str(tmp_path)])}
+    assert "draft.tex" in found

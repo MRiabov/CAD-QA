@@ -2,9 +2,9 @@
 
 ## Purpose
 
-Export the dataset file / public / private artifacts to the downstream consumers: Harbor closed-book
-tasks, fine-tuning SFT data, evaluation request/grade artifacts, and one-command smoke
-orchestration.
+Export the dataset file / public / private artifacts to the downstream consumers: Harbor
+tasks with no access to CadQuery, fine-tuning SFT data, evaluation request/grade
+artifacts, and one-command smoke orchestration.
 
 ## Inputs / outputs
 
@@ -17,17 +17,17 @@ orchestration.
   - **SFT:** `answer_sft.jsonl`, `reasoning_sft.jsonl`, `ablations/*.jsonl`,
     `scaling/*.jsonl`, `sft_report.json` (`dataset/release/sft.py`,
     `dataset/cli.py::_cmd_training_export_sft`).
-  - **Evaluation:** request exports, oracle responses, graded metrics, closed-book reports,
-    tool-assisted upper bound (`train_and_eval/grading/`).
+  - **Evaluation:** request exports, oracle responses, graded metrics, reports for the
+    no-access-to-CadQuery setting, tool-assisted upper bound (`train_and_eval/grading/`).
   - **Smoke experiment tree:** graph/query/dataset/release_dataset/baseline/requests/grade/
     tool-assisted/sft trees plus `run_summary.json`, `RUN_SUMMARY.md`, and
     `PAPER_RESULTS.md` (`train_and_eval/experiment.py::run_smoke_experiment`).
 
 ## Requirement
 
-Exports must preserve the public/private boundary. Harbor tasks must be closed-book: the
-agent sees only the public prompt and may not import CadQuery or OCP, and the grader scores
-`1` only for a parsed exact match to the private gold answer. The default SFT export must be
+Exports must preserve the public/private boundary. Harbor tasks must give the agent no
+access to CadQuery: the agent sees only the public prompt and may not import CadQuery or
+OCP, and the grader scores `1` only for a parsed exact match to the private gold answer. The default SFT export must be
 the geometry-critical subset, and its readiness report must not pass when the set is
 geometry-light, prompt-family collapsed, answer-collapsed, geometry-hop-light, or
 syntax-calibration-heavy.

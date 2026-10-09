@@ -69,7 +69,7 @@ release (`dataset/`), Harbor export (`harbor.py`), CLI (`cli.py`).
 
 ## Proven
 
-- Base gemma-4-E2B, closed-book: rc10 (0-hop) 30/100; release10k (2–5 hop) 14/100
+- Base gemma-4-E2B, `no_tools` LLM harness: rc10 (0-hop) 30/100; release10k (2–5 hop) 14/100
   (`docs/experiments/2026-08-08-gemma-e2b-bench.md`).
 - Native-format SFT: 50% accuracy / 58.3% tool-valid on **12** held-out rows; the earlier
   non-native format scored 16.7% on the same rows.

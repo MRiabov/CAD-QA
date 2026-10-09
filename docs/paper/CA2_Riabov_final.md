@@ -14,7 +14,7 @@ comprehending a complex CAD model --- finding relationships between boolean
 operations, faces, vertices and edges, computing their volume, span or
 location. Questions range from simple lookups to challenging high reasoning hop
 questions with rich distractors, requiring chains of complex and correct reasoning. 
-We evaluate open-source LLMs in three harnesses --- without tools, with a NumPy shell, and with full CadQuery access --- measuring accuracy by hop count, task type, and tool setting.
+We evaluate open-source LLMs in three harnesses --- without tools, with a NumPy shell, and with full CadQuery access --- measuring accuracy by reasoning hop count, task family, and LLM harness mode.
 Expected contribution: a benchmark exposing
 the multi-hop geometry reasoning gap in current Large Language Models
 
@@ -29,7 +29,7 @@ datasets, but LLMs still struggle with generation of useful, complex CAD models,
 in particular with problems such as overlapping parts, impossible geometry (on top
 of simple code correctness problems) (Khan et al., 2024; Doris et al., 2026) as
 well as identifying the correct edge or face to select to build geometry upon; a
-mistake in one selector is destructive to the whole part.
+mistake in one CadQuery selector is destructive to the whole part.
 
 Furthermore, LLMs are too often struggling with generating and coding of CAD models with
 anything beyond box geometry in part due to lack of datasets that would have other geometry primitives (Elistratov et al., 2026); and even then, computing intersections between them requires
@@ -51,8 +51,8 @@ The secondary research questions are:
 
 The main expected contributions are:
 
-- A synthetic dataset and an open-source method of constructing the dataset to reliably drive mathematical reasoning on CAD models and CAD-specific ontology, such as vertices, faces, selectors
-- The dataset can be reused for training of models for conciseness of reasoning on the tasks- as graphs are provided; one can train the LLM to follow the shortest/critical path necessary to achieve the result; aiding in evaluation of model on achieving correct intermediary steps faster.
+- A synthetic dataset and an open-source method of constructing the dataset to reliably drive mathematical reasoning on CAD models and the CAD ontology, such as vertices, faces, selectors
+- The dataset can be reused for training of models for conciseness of reasoning on the tasks- as graphs are provided; one can train the LLM to follow the shortest/critical path necessary to achieve the result; aiding in evaluation of the LLM model on achieving correct intermediary steps faster.
 - A dataset of progressively challenging and labeled tasks for 3D code & geometry reasoning aiding in curriculum learning.
 
 The remainder of the document is structured as Literature review reviewing most relevant SOTA of the field, and our methodology and evaluation setting is explained in Section 3.
@@ -69,11 +69,11 @@ provides a means of generating substantial SFT-training data. Works such as "Tex
 generate CAD designs from text prompts; CADBench (Doris et al., 2026) is a benchmark advancing
 generation of CAD models; BenchCAD (Zhang et al., 2026) is a fresh benchmark on programmatic CAD
 that asks models to generate and edit CAD programs and to answer numeric questions about a given
-CadQuery program. `cadrille` (Kolodiazhnyi et al., 2026), CADEvolve (Elistratov et al., 2026), and CADENA (Kabisov et al., 2026) benchmarks test reconstruction of CadQuery models from parts. However, none are asking to e.g.
+CadQuery program. `cadrille` (Kolodiazhnyi et al., 2026), the program-evolution dataset (Elistratov et al., 2026), and CADENA (Kabisov et al., 2026) benchmarks test reconstruction of CadQuery models from parts. However, none are asking to e.g.
 find a relationship between the two geometrical primitives which (by our
-preliminary tests) leads to the model emitting many more reasoning tokens than expected. 
+preliminary tests) leads to the LLM model emitting many more reasoning tokens than expected. 
 
-They build on datasets such as CADEvolve, DeepCAD (Elistratov et al., 2026; Wu et al., 2021) which generate
+They build on datasets such as the program-evolution dataset, DeepCAD (Elistratov et al., 2026; Wu et al., 2021) which generate
 geometry procedurally or via a LLM, which we build on too. 
 
 ### 2.2 Benchmarks for Geometry Comprehension
@@ -106,17 +106,17 @@ whereas we propose up to ten.
 
 ### 2.4 Research Niche
 
-As such, we survey the field and find that existing benchmarks evaluate models' reconstruction abilities, simple comprehension or question answering, but rarely dig deeper on model mathematics capabilities or deriving complex relationships between CAD parts in code. Nor they evaluate - or provide means to measure the shortest required reasoning for solving the problem. The problems are also relatively "clean" - one-step tasks that don't require discerning real-world noise or larger problems. These are three problems that we aim to improve on.
+As such, we survey the field and find that existing benchmarks evaluate models' reconstruction abilities, simple comprehension or question answering, but rarely dig deeper on the mathematical capabilities of models or deriving complex relationships between CAD parts in code. Nor they evaluate - or provide means to measure the shortest required reasoning for solving the problem. The problems are also relatively "clean" - one-step tasks that don't require discerning real-world noise or larger problems. These are three problems that we aim to improve on.
 
 Table 1 compares CAD-QA with the closest prior work. The differentiators are reasoning depth (up to ten hops), a code-only setting, exact verifiable answers, and a hop-labelled curriculum.
 
-| Work | Task | Input → output | Grading | Max hops | Curriculum / critical path |
+| Work | Task | Input → output | Grading | Max reasoning hop count | Curriculum / critical path |
 |---|---|---|---|---|---|
 | DeepCAD (Wu et al., 2021) | CAD generation | command sequences → shape | reconstruction error | — | no |
 | Text2CAD (Khan et al., 2024) | text-to-CAD generation | text → CAD sequence | similarity / validity | — | no |
 | CAD-Recode (Rukhovich et al., 2025) | reverse engineering | point cloud → CadQuery code | code + geometry match | — | no |
 | cadrille (Kolodiazhnyi et al., 2026) | reconstruction (RL) | image / points → CAD code | geometry match | — | no |
-| CADEvolve (Elistratov et al., 2026) | corpus + reconstruction | CAD program → CAD program | geometry match | — | no |
+| program-evolution corpus (Elistratov et al., 2026) | corpus + reconstruction | CAD program → CAD program | geometry match | — | no |
 | CADENA (Kabisov et al., 2026) | stepwise reverse engineering | shape → CAD code | stepwise match | — | no |
 | CADBench (Doris et al., 2026) | generation benchmark | image / text → CAD program | geometric metrics | — | no |
 | CADTestBench (Mallis et al., 2026) | test-verified text-to-CAD | text → CAD program | executable tests | 2–3 | no |
@@ -173,11 +173,11 @@ As such the answer has to be: 7
 ```
 
 Notably, unlike many other CAD benchmarks which use realtime execution, our benchmark is meant to be generated and trained on _offline_, as we can precompute labels, positions, volumes and other
-numerics ahead of time. This simplifies execution and verification thanks to the tabular data model (and no need for setup of e.g. docker containers.)
+numerics ahead of time. This simplifies execution and verification thanks to the tabular data layout (and no need for setup of e.g. docker containers.)
 
-We distinguish the following answer types:
+We distinguish the following answer formats:
 
-- **Entity references** — a source code variable name or unique entity id (`wp3`,
+- **Entity references** — a source code variable name or unique source variable (`wp3`,
   `feature:wp3`, `path:wp2:point:6`, `selector:sel_all_faces_all`) for
   "which feature/face/edge/path-point …" questions.
 - **Coordinates** — a `(x, y, z)` tuple for vertex position questions.
@@ -188,16 +188,16 @@ We distinguish the following answer types:
 - **Booleans** — `true`/`false` for correctness/validity and point-membership answers (is the point in a volume/on a face?).
 - **Enums and candidate choices** — one token from a fixed vocabulary or the
   presented candidates: coordinate frames (`XY`, `YZ`, `XZ`, …), point
-  membership (`inside`, `outside`, `on_boundary`, `ambiguous`), or labels `A`, `B`, … (including selector expressions) when a target is not readily nameable.
+  membership (`inside`, `outside`, `on_boundary`, `ambiguous`), or labels `A`, `B`, … (including CadQuery selector expressions) when a target is not readily nameable.
 - **Structured JSON** — axis-aligned bounding boxes (`{"min": […], "max": […]}`)
-  and workplane-state snapshots.
+  and CadQuery workplane-state snapshots.
 
-We extract this ontology:
+We extract this CAD ontology:
 
 - Nodes: sources, features, operations, parameters, workplanes, sketches, profiles, solids, faces, edges, vertices, axes, directions, points, centroids, centerlines, paths, selectors, measurements, material/void regions.
 - Relations:
   - Temporal/dataflow: `before`, `after`, `input_to`, `combines`.
-  - Parent/child node relationship: `created_by`, `modified_by`, `deleted_by`, `adds_material_to`, `removes_material_from`.
+  - Parent/child CAD ontology node relationship: `created_by`, `modified_by`, `deleted_by`, `adds_material_to`, `removes_material_from`.
   - Construction: `uses_profile`, `used_by`, `parameter_of`, `selected_by`, `located_on`, `bounded_by`.
   - Measurement: `has_measurement`, `has_centroid`, `has_coordinate`, `has_normal`.
   - Geometry: `distance_to`, `nearest_tangent_to`, `parallel_to`, `not_parallel_to`, `perpendicular_to`, `orthogonal_to`, `coaxial_with`, `adjacent_to`, `opposite_to`, `contained_in`, `intersects`.
@@ -206,13 +206,13 @@ We extract this ontology:
   - `feature_application_effect` — signed volume delta, topology delta, circular-edge delta, bounding-box delta.
   - `entity_geometry`, `snapshot_state`, `relation_metric`.
 
-When multiple objects are resolved (e.g., 8 vertices at the same Z height (a flat face parallel to the XY plane)), we further add classifiers like "select the 2nd highest on Y and lowest on X axes" to make the object unique (and further challenging to reason about).
+When multiple objects are resolved (e.g., 8 vertices at the same Z height (a flat face parallel to the XY plane)), we further add classifiers like "select the 2nd highest on Y and lowest on X axes" to make the target unique (and further challenging to reason about).
 
-The goal is to create an exhaustive ontology extraction from which a set of truly complex reasoning questions can be derived.
+The goal is to create an exhaustive CAD ontology extraction from which a set of truly complex reasoning questions can be derived.
 
 We classify complexity by the number of reasoning hops:
 
-- 0 hops: direct code source or mathematical lookup ("what's the length of `box1`?": 10).
+- 0 hops: direct code lookup or mathematical lookup ("what's the length of `box1`?": 10).
 - 1 hop: resolve one entity and read or calculate one metric ("A sphere has a center rightmost to some box with parameters (1,2,3). What is the label of the sphere operation?": `sphere1`)
 - 2 hops: traverse one relation and read or compare a metric. (as above, but with added reasoning hops)
 - 3~10 hops: BrowseComp (Wei et al., 2025)-style rows where obfuscated, distractor-rich questions and code require a successful answer to identify and calculate a number of variables.
@@ -223,10 +223,10 @@ Constrained by token costs, we avoid using frontier models, and instead benchmar
 
 ### 3.3 Improving models and proving learning
 
-We will fine-tune LLM models using SFT & RL frameworks; in particular similar to how CADEvolve trained the models for better reconstruction, we will train models on more successful CAD mathematics using first SFT and then RL (DeepSeek-AI, 2025), first using rejection sampling (Shao et al., 2024), as well as in-place reasoning trace editing for conciseness; later we will post-train the model via frameworks like TRL or Unsloth on achieving better results on the task. We will show a graph that with training, the model's solve rate improves. 
+We will fine-tune LLM models using SFT & RL frameworks; in particular similar to how the program-evolution work trained its LLM models for better reconstruction, we will train models on more successful CAD mathematics using first SFT and then RL (DeepSeek-AI, 2025), first using rejection sampling (Shao et al., 2024), as well as in-place editing of the agent training trace for conciseness; later we will post-train the LLM model via frameworks like TRL or Unsloth on achieving better results on the task. We will show a graph that with training, the LLM model's solve rate improves. 
 
-After proving that the environment works and is correct through the API, we will post-train a small model following CADEvolve whose authors have post-trained only a small — a 2 billion parameter - model to
-do CAD reconstruction. E.g. a model like Gemma4-E2B or Qwen3.5-2B will be used
+After proving that the environment works and is correct through the API, we will post-train a small LLM model following that program-evolution work, whose authors have post-trained only a small — a 2-billion-parameter LLM model — to
+do CAD reconstruction. E.g. an LLM model like Gemma4-E2B or Qwen3.5-2B will be used
 owing to us attempting to save on compute expenses. If base models of this size
 can solve these tasks with 10% success rates, this would be a good baseline. Our goal is to
 improve their pass rates from 10% to 50-70%. RL is an expensive process, and as
@@ -235,23 +235,23 @@ models.
 
 It could be that world modeling as done in InCoder-32B/InCoder-32B-Thinking
 (Yang et al., 2026) will be used instead of SFT pipelines as it
-has a higher potential to teach the model more correct answers.
+has a higher potential to teach the LLM model more correct answers.
 
-### 3.4 Model harness and modes
+### 3.4 LLM harness modes
 
-To evaluate baseline and then improve on capability of models - at triple of the compute cost - we propose to use three harnesses for the model:
+To evaluate baseline and then improve on capability of models - at triple of the compute cost - we propose to evaluate the LLM model under three LLM harness modes:
 
-- No tools (reasoning only, where the model has to compute mathematics internally),
-- A Python shell with NumPy (where the model has NumPy as a means to calculate the 3D model),
-- A Python shell with CadQuery which will allow arbitrary CAD operations
-to be executed, and the model is expected to use CadQuery to answer its question;
-a single successful tool call will suffice - provided the model can get it right. 
+- `no_tools` LLM harness (reasoning only, where the LLM model computes mathematics internally),
+- `numpy` LLM harness (a Python shell with NumPy, where the LLM model uses NumPy to compute the CAD model),
+- `cadquery` LLM harness (a Python shell with CadQuery, which allows arbitrary CAD
+operations to be executed; the LLM model is expected to use CadQuery to answer its
+question, and a single successful tool call suffices - provided the LLM model gets it right). 
 
 The advantages of the three environments are as follows:
 
-- To generalize the reasoning to three environments: the no tools mode requires more thinking and following through the objective and own noise to solve the problem correctly.
+- To generalize the reasoning to three environments: the `no_tools` LLM harness requires more thinking and following through the objective and own noise to solve the problem correctly.
 - NumPy environment requires understanding of 3D environment and modeling its geometry successfully without access to CAD; which is useful for generalizing to closed CAD environments such as SolidWorks or Autodesk Inventor, more commonly used in industry.
-- CadQuery environment allows the model to answer in one shot by only constructing a correct CAD operation. The research question is again, conciseness, but also measuring the model ability to produce correct CAD code and reasoning on achieving it. 
+- The `cadquery` LLM harness allows the LLM model to answer in one shot by constructing a correct CAD operation. The research question is again conciseness, but also measuring the LLM model's ability to produce correct CAD code and reason toward it. 
 
 We will use Harbor coding environments with TerminalBench-equivalent environments (with access to only a Linux shell and file writing; the answers are submitted as files).
 
@@ -285,13 +285,13 @@ References follow the Harvard (author–date) style. The Australian CORE ranking
 - DeepSeek-AI (2025) 'DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning', *Nature*, 645, pp. 633–638. doi: 10.1038/s41586-025-09422-z. [No CORE rank (multidisciplinary journal); ~918 citations, Crossref]
 - Shao, Z., Wang, P., Zhu, Q., Xu, R., Song, J., Bi, X., Zhang, H., Zhang, M., Li, Y.K., Wu, Y. and Guo, D. (2024) 'DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models', arXiv preprint arXiv:2402.03300. Available at: <https://arxiv.org/abs/2402.03300>. [No CORE rank; 7557 citations, Google Scholar]
 - Wu, R., Xiao, C. and Zheng, C. (2021) 'DeepCAD: A Deep Generative Network for Computer-Aided Design Models', *Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)*, pp. 6772–6782. doi: 10.1109/ICCV48922.2021.00670. [CORE: A*; ~362 citations, Semantic Scholar]
-- Elistratov, M., Barannikov, M., Ivanov, G., Khrulkov, V., Konushin, A., Kuznetsov, A. and Zhemchuzhnikov, D. (2026) 'CADEvolve: Creating Realistic CAD via Program Evolution', arXiv preprint arXiv:2602.16317. Available at: <https://arxiv.org/abs/2602.16317>. [No CORE rank; 3 citations, Google Scholar]
+- Elistratov, M., Barannikov, M., Ivanov, G., Khrulkov, V., Konushin, A., Kuznetsov, A. and Zhemchuzhnikov, D. (2026) 'CADEvolve: Creating Realistic CAD via Program Evolution', arXiv preprint arXiv:2602.16317. Available at: <https://arxiv.org/abs/2602.16317>. [No CORE rank; 3 citations, Google Scholar] <!-- dont-say: allow: bibliographic title -->
 - Kolodiazhnyi, M., Tarasov, D., Zhemchuzhnikov, D., Nikulin, A., Zisman, I., Vorontsova, A., Konushin, A., Kurenkov, V. and Rukhovich, D. (2026) 'cadrille: Multi-modal CAD Reconstruction with Reinforcement Learning', *Proceedings of the International Conference on Learning Representations (ICLR)* (Oral). [Not in CORE database; ~1 citation, OpenAlex]
 - Rukhovich, D., Dupont, E., Mallis, D., Cherenkova, K., Kacem, A. and Aouada, D. (2025) 'CAD-Recode: Reverse Engineering CAD Code From Point Clouds', *Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)*. doi: 10.1109/ICCV51701.2025.00914. [CORE: A*; ~66 citations, Semantic Scholar]
 - Kabisov, S., Savrasov, G., Elistratov, M., Rodriguez, A., Ignatiev, D., Gavrilov, N., Uzdenov, R., Boyko, A.I., Pasechnik, I., Konushin, A. and Kuznetsov, A. (2026) 'CADENA: Stepwise CAD Reverse Engineering', arXiv preprint arXiv:2608.00799. Available at: <https://arxiv.org/abs/2608.00799>. [No CORE rank; new, ~0 citations]
 - Wei, J., Wang, X., Schuurmans, D., Bosma, M., Ichter, B., Xia, F., Chi, E., Le, Q. and Zhou, D. (2022) 'Chain-of-Thought Prompting Elicits Reasoning in Large Language Models', *Advances in Neural Information Processing Systems*, 35 (NeurIPS 2022), pp. 24824–24837. [CORE: A*]
 - Li, K., Zhang, Z., Yin, H., Zhang, L., Ou, L., Wu, J., Yin, W., Li, B., Tao, Z., Wang, X., Shen, W., Zhang, J., Wu, X., Jiang, Y., Yan, M., Xie, P., Huang, F. and Zhou, J. (2025) 'WebSailor: Navigating Super-Human Reasoning for Web Agent', arXiv preprint arXiv:2507.02592. Available at: <https://arxiv.org/abs/2507.02592>. [No CORE rank; 43 citations, Google Scholar]
-- Yang, J., Zhang, W., Wu, J., Cheng, J., Zheng, T., Xu, F., Gu, W., Jing, L., Du, Y., Li, J., Li, Y., Xing, Y., Hao, C., Tao, R., Gong, R., Liu, A., Li, Z., Tang, M., Lin, C., Chen, S., Zhao, W.X., Liu, X., Zhou, M., Dai, B. and Lv, W. (2026) 'InCoder-32B-Thinking: Industrial Code World Model for Thinking', arXiv preprint arXiv:2604.03144. Available at: <https://arxiv.org/abs/2604.03144>. [No CORE rank; 1 citation, Google Scholar]
+- Yang, J., Zhang, W., Wu, J., Cheng, J., Zheng, T., Xu, F., Gu, W., Jing, L., Du, Y., Li, J., Li, Y., Xing, Y., Hao, C., Tao, R., Gong, R., Liu, A., Li, Z., Tang, M., Lin, C., Chen, S., Zhao, W.X., Liu, X., Zhou, M., Dai, B. and Lv, W. (2026) 'InCoder-32B-Thinking: Industrial Code World Model for Thinking', arXiv preprint arXiv:2604.03144. Available at: <https://arxiv.org/abs/2604.03144>. [No CORE rank; 1 citation, Google Scholar] <!-- dont-say: allow: bibliographic title -->
 - Mallis, D., Wang, M., Karadeniz, A.S., Ricci, E., Kacem, A. and Aouada, D. (2026) 'Text-to-CAD Evaluation with CADTests', arXiv preprint arXiv:2605.07807. Available at: <https://arxiv.org/abs/2605.07807>. [No CORE rank; 1 citation, Google Scholar]
 
 

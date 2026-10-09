@@ -29,7 +29,7 @@ Read only what is relevant to the requested run:
 
 ## Workflow
 
-1. Identify the experiment family: dataset report, baseline, closed-book
+1. Identify the experiment family: dataset report, baseline, no-access-to-CadQuery
    zero/few-shot, answer-only SFT, reasoning-SFT, scaling/ablation,
    counterfactual sensitivity, task transfer, CADEditQA, bounded
    verifier/rejection-sampling, evaluation, or analysis.

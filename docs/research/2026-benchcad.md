@@ -84,8 +84,8 @@ resolving an intermediate entity whose identity must be discovered before the fi
 chaining two or more dependent resolutions, selecting among distractor candidates, or
 disambiguating a CadQuery selector. The published L1–L4 labels are a capability hierarchy
 (recognition → operation understanding → parametric abstraction → synthesis), not a count of
-Reasoning hops. BenchCAD Code QA therefore occupies the *closed-book numeric QA over CadQuery,
-deterministic grading* base task, but not the multi-hop, CAD ontology resolution space CAD-QA
+Reasoning hops. BenchCAD Code QA therefore occupies the *numeric QA over CadQuery programs
+with no access to CadQuery, deterministic grading* base task, but not the multi-hop, CAD ontology resolution space CAD-QA
 targets.
 
 ### Vision2Code scores and the saturation trajectory
@@ -144,7 +144,7 @@ a different construct entirely (reconstruction).
 ## Saturation and timing
 
 Generation-task scores rose fast through 2026: re-graded Vision2Code voxel IoU is still ~0.27,
-but provider-reported closed-book voxel IoU is now ~0.49–0.75 and agentic is ~0.87–0.96. The
+but provider-reported voxel IoU with no access to CadQuery is now ~0.49–0.75 and agentic is ~0.87–0.96. The
 BenchCAD generation framing is therefore approaching saturation. The **comprehension** framing
 is not: BenchCAD's own Code QA Spatial Reasoning axis is 0.537–0.731 against a 0.42 blind
 baseline, so a comprehension gap remains open. CAD-QA's premise is comprehension, not
@@ -153,9 +153,9 @@ against the frozen hard slice before any gap claim stands.
 
 ## Why it matters for CAD-QA
 
-- **Positioning.** The paper's claim that no open dataset reliably measures closed-book CAD
-  program comprehension is now false: BenchCAD Code QA already does closed-book, exact/
-  deterministic, code-conditioned numeric QA. The paper cites BenchCAD only as a
+- **Positioning.** The paper's claim that no open dataset reliably measures CAD program
+  comprehension with no access to CadQuery is now false: BenchCAD Code QA already does
+  no-access-to-CadQuery, exact/deterministic, code-conditioned numeric QA. The paper cites BenchCAD only as a
   generate-and-edit benchmark and must cite the Code QA/Vision QA tasks. The defensible
   contribution shifts to multi-hop, distractor-rich, non-numeric-typed reasoning over the
   CAD ontology with automated graph-derived synthesis and a hop curriculum / critical path.

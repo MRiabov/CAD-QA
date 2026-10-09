@@ -13,7 +13,7 @@ distil labs (2026) 'What Small `Language Model` Is Best for Fine-Tuning', *disti
 ## What it is
 
 The follow-up to the 12-LLM-model benchmark: 15 small open LLM models across 9 tasks
-(classification, information extraction, document understanding, open-book QA, closed-book
+(classification, information extraction, document understanding, open-book QA, closed-book <!-- dont-say: allow: external task taxonomy -->
 QA, tool calling), same training recipe, compared against the teacher.
 
 ## Findings

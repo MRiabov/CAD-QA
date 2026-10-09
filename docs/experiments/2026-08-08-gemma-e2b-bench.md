@@ -4,7 +4,7 @@ Date: 2026-08-08 · Status: running (fill in when complete)
 
 ## Purpose
 Baseline accuracy of `google/gemma-4-E2B-it` on CAD-QA under two harnesses:
-- **h1** closed-book zero-shot (no tools)
+- **h1** `no_tools` LLM harness, zero-shot
 - **h3** minimal Python+CadQuery shell, agent loop (≤4 turns, 15 s exec timeout)
 
 Two slices: legacy `cadqa_cadevolve_rc_10` (100 rows, comparable to the
@@ -30,7 +30,7 @@ Vast contract 47166131 — RTX 5070 Ti 16 GB, 100 GB disk, $0.1611/hr, SK.
 - Kaggle P100 (sm_60) incompatible with torch 2.10 (sm_70+); kernel error.
 
 ## Results
-- **h1 (closed-book), google/gemma-4-E2B-it, bf16 4-bit via unsloth**:
+- **h1 (`no_tools` LLM harness), google/gemma-4-E2B-it, bf16 4-bit via unsloth**:
   - rc10: **30/100 (30%)** vs expected random ~4% (7x signal, easy rows)
   - release10k: **14/100 (14%)** vs expected random ~13% (at random, hard rows)
   - 29-31 failures/slice were parse errors (output format non-compliance)

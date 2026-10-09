@@ -7,7 +7,7 @@ proposal that the code, dataset, and fine-tuning work implement.
 
 ## Files
 
-- `CA2_Riabov_final.tex` — **authoritative source.** LaTeX manuscript; the
+- `CA2_Riabov_final.tex` — **authoritative manuscript.** LaTeX manuscript; the
   version submitted to Moodle.
 - `CA2_Riabov_final.md` — Markdown mirror, kept in **parity** with the `.tex`
   (same prose, same Harvard reference list; only section-number prefixes and
