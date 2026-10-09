@@ -29,6 +29,11 @@ hop-count and difficulty slices of the same system:
 
 ## 2. Paper Positioning
 
+The paper must include a related-work comparison table placing CAD-QA against prior CAD and
+geometry benchmarks across task, input/output, grading, reasoning depth (max hops), and
+curriculum / critical path. The table is the reader's evidence that the multi-hop,
+code-only niche is unoccupied.
+
 The paper should argue that CAD agents need a benchmark for uncertainty
 reduction over program-derived geometry, not merely final-shape similarity or
 code fluency. The benchmark measures whether models understand:

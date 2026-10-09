@@ -3,6 +3,7 @@
 Before public paper or dataset release, verify:
 
 - The paper states the CAD BrowseComp thesis clearly.
+- The paper includes a related-work comparison table (task, input/output, grading, reasoning depth, curriculum) positioning CAD-QA against prior CAD and geometry benchmarks.
 - The artifact is being judged against the `benchmark-release` tier. Smoke and
   release-candidate artifacts are development evidence and are not sufficient
   for public benchmark or real fine-tuning claims.
