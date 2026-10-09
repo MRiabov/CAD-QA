@@ -249,12 +249,15 @@ coverage was 0.
 This section owns the *order* the roles and difficulty are presented in. The architecture doc owns
 the mechanics (epochs, mixing implementation).
 
-- **Default: one mixed supervised training stage (`mixed_dataset_full_cadqa_training`).** The cookbook trains a single SFT training stage, so
-  the default is one pass over the mixed data. This is the baseline; do not use staged training until the
-  baseline is measured.
-- **Format before reasoning (staged option, P1).** If the mixed baseline underperforms on format,
-  use staged training: (1) `mixed_dataset_our_tool_format_and_replay` to lock the tool format, (2) `mixed_dataset_full_cadqa_training` to add
-  `preserve_general_math_and_code_reasoning` + `learn_the_cadqa_task`. The staged option tests the H1→H2 ordering directly.
+- **Two training phases.** SFT runs as **phase 1 (elicit/prime)**: general code and
+  CadQuery/CAD in particular (`expose_general_python_code`, `expose_cadquery_programs`, plus the
+  tool-format/loop support); then **phase 2 (task + preserve)**: `mixed_dataset_full_cadqa_training`,
+  with `preserve_prior_capabilities` and `preserve_general_math_and_code_reasoning` as the anchors.
+  Shape and rationale: `fine-tuning-system-plan.md` §2; eval cadence: `evaluation-plan.md` §6.
+- **Phase-2-only fallback.** If phase 1 shows no measured phase-end gain, drop it and run one SFT Training stage
+  over `mixed_dataset_full_cadqa_training` (the cookbook default); the 2-phase pipeline must earn its
+  place on the phase-end eval (ref [19]). The `mixed_dataset_our_tool_format_and_replay` H1 probe is the
+  format gate before either phase.
 - **Difficulty-aligned rows.** Order or interleave the `learn_the_cadqa_task` rows by Reasoning hop count
   (the `0→1→2→3→5` ladder in `../../docs/development-plan.md` Phase 3 and the teacher quotas in
   FT-02-D1). Do not front-load the hard slice.
@@ -262,21 +265,14 @@ the mechanics (epochs, mixing implementation).
   general ability is anchored throughout, not restored at the end.
 - **Cap `preserve_general_math_and_code_reasoning` early.** Per prior-art ref [9], do not let teacher reasoning dominate
   before format and the task itself are established.
-- **Domain-first, then task (owner-proposed): CadQuery extensively, then progressively harder
-  CAD-QA.** The intent is right — domain adaptation before task SFT, easy hops before hard ones —
-  and it maps to `expose_cadquery_programs` → `mixed_dataset_full_cadqa_training` with the `learn_the_cadqa_task` rows ordered by Reasoning hop count.
-  Two caveats:
-  - **Priming, not a generation capability.** We do not need the LLM model to *write* CadQuery; the
-    public corpora (`NeurIPS11092`, `GenCAD-Code`) are useful only as SFT signal that teaches
-    CadQuery syntax and semantics — representation priming. Whether that transfer reaches
-    *reading/reasoning* over a given CadQuery program is the hypothesis to test, not a given, so
-    keep `expose_cadquery_programs` out of the first run and A/B it.
-  - **Staging is an ablation, not an assumption.** Sequential fine-tuning spans multiple
-    training stages: higher forgetting risk and cost, and the 2026 controlled study (ref [19]) found a
-    single SFT training stage strongest with no consistent gain from a second training stage. Keep `preserve_prior_capabilities` in
-    *every* training stage and evaluate each; implement as either a curriculum *order* within one run
-    (cheaper) or a checkpoint-resumed second training stage, and measure both before committing.
-  Keep it P1 and measure the evaluation datasets.
+- **Priming is representation, not generation (phase 1 caveat).** We do not need the LLM model to
+  *write* CadQuery; `expose_cadquery_programs` teaches syntax and semantics. Whether that transfer
+  reaches *reading/reasoning* over a given CadQuery program is the H2 hypothesis, not a given — A/B it on
+  the phase-end eval.
+- **Sequencing must earn its place.** Sequential fine-tuning spans two Training stages: higher forgetting
+  risk and cost, and the 2026 controlled study (ref [19]) found a single SFT training stage strongest with
+  no consistent gain from a second. Keep `preserve_prior_capabilities` in *every* phase and advance only
+  on a measured phase-end gain (§4.1).
 - **SFT → RL/DPO only after SFT is measured (P2).** The recorded ordering ("RL squeezes, SFT
   expands", prior-art refs [7]/[8]; FT-D8) is a second training stage, deferred until the SFT number is
   real.

@@ -127,7 +127,7 @@ A **Mixed training dataset** is `{dataset role → weight}`. Names are not yet c
 ## Evaluation datasets by dataset role
 
 Evaluation is the set of datasets that serve H1–H4; each is composed across Difficulty tiers and run
-in two forms — mid-run (during training) and final/complete (the immutable thesis number). Dataset roles
+at four points in the training pipeline (baseline, periodic subset, phase-end, final). Dataset roles
 are not yet named.
 
 | Serves | Evaluation dataset | Tier |

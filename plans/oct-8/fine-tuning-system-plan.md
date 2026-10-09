@@ -119,6 +119,21 @@ rollouts in a sandbox (§5). Never run RL on a tier with no partial signal.
 supervises; Liquid's MOPD training stage) or another RFT round, to fold the RL gains back without entropy
 collapse ("RL squeezes, SFT expands", ref [7]).
 
+**The two training phases.** SFT is run as two phases, each a run over a Mixed training dataset
+(`fine-tuning-data-plan.md` §4):
+
+1. **Phase 1 — elicit / prime.** General code and CadQuery/CAD in particular (`expose_general_python_code`,
+   `expose_cadquery_programs`, plus the tool-format/loop support). Goal: elicit reasoning and give the
+   base LLM model CAD/CadQuery representation.
+2. **Phase 2 — task + preserve.** `learn_the_cadqa_task` and CAD mixed in more extensively; the
+   objective shifts from *eliciting* reasoning to *preserving* it (`preserve_prior_capabilities`,
+   `preserve_general_math_and_code_reasoning`).
+
+The evaluation datasets (`evaluation-plan.md` §6) measure both phases: **baseline** before phase 1,
+**periodic** subsets and a **phase-end** extensive eval in each phase, and the **final** eval after
+phase 2; iterate from the final eval. The sampling gate (§3) sits after SFT, and RL (Training stage 3)
+stays conditional on it.
+
 ---
 
 ## 3. The RL-readiness gate

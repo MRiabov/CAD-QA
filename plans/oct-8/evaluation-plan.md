@@ -33,9 +33,11 @@ descriptive docs); `../../docs/train-and-eval/fine-tuning/decisions.md`; `../../
 ## 1. What "evaluation" means here
 
 **Evaluation is the set of datasets that serve H1–H4.** Each is an **evaluation dataset** with a
-dataset role (`../../docs/train-and-eval/datasets.md`), composed across Difficulty tiers, and exists
-in two forms: **mid-run** (every run, during training) and **final/complete** (the immutable thesis
-number). All are hard-excluded from training (§6).
+dataset role (`../../docs/train-and-eval/datasets.md`), composed across Difficulty tiers. Each is run
+at four points in the training pipeline: **baseline** (the untrained instruct base LLM model — the
+floor), **periodic** (during a phase, on a subset), **phase-end** (end of a phase, more extensive),
+and **final** (after the last phase, the complete immutable thesis number). All are hard-excluded from
+training (§6).
 
 Run an LLM model **with no access to CadQuery** over CAD-QA dataset rows and score **exact structured answers**
 under a switchable compute mode. The evaluation harness is the whole chain:
@@ -191,15 +193,16 @@ Two rules:
 ## 6. Evaluation datasets
 
 The datasets that serve H1–H4 (§5.1). The architecture doc owns the training mechanics; the data
-doc holds the rows. Each is composed across Difficulty tiers, run in both forms (mid-run and
-final/complete), and is hard-excluded from training.
+doc holds the rows. Each is composed across Difficulty tiers, hard-excluded from training, and run at
+four points in the training pipeline (§1): **baseline**, **periodic** (subset), **phase-end**
+(extensive), and **final** (complete).
 
-| Evaluation dataset | Dataset role | Serves | Form |
-|---|---|---|---|
-| CAD-QA held-out | `learn_the_cadqa_task` | H2; the thesis number | mid-run + final |
-| Tool-format held-out | `emit_our_tool_call_format` | H1 format compliance | mid-run + final |
-| General math + code | `preserve_general_math_and_code_reasoning` | forgetting guard; H4 covariate | mid-run + final |
-| External transfer | transfer (§5.1) | H3, H4 | final |
+| Evaluation dataset | Dataset role | Serves |
+|---|---|---|
+| CAD-QA held-out | `learn_the_cadqa_task` | H2; the thesis number |
+| Tool-format held-out | `emit_our_tool_call_format` | H1 format compliance |
+| General math + code | `preserve_general_math_and_code_reasoning` | forgetting guard; H4 covariate |
+| External transfer | transfer (§5.1) | H3, H4 |
 
 Regression gate: if the `preserve_general_math_and_code_reasoning` accuracy drops beyond a
 pre-registered tolerance (suggest ≤2 points) while the CAD-QA held-out accuracy rises, the run is a
@@ -297,9 +300,9 @@ results rather than repeating the plan.
 ## Resolved questions (evaluation)
 
 - **Q2.** *(2026-10-09)* Not a single "canonical baseline slice". **Evaluation is the set of datasets
-  that serve H1–H4**, each composed across Difficulty tiers and run in two forms — mid-run (during
-  training) and final/complete (the immutable thesis number). Baselines run on those same evaluation
-  datasets, composed across Difficulty tiers; per-dataset composition is
+  that serve H1–H4**, each composed across Difficulty tiers and run at four points — baseline, periodic
+  (subset), phase-end (extensive), final (complete). Baselines run on those same evaluation datasets,
+  composed across Difficulty tiers; per-dataset composition is
   `../../docs/train-and-eval/datasets.md`.
 
 ---
