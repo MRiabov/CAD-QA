@@ -72,24 +72,24 @@ re-litigate decisions already recorded in `dataset/decisions.md`,
 | ID | Claim to verify | Code / artifact | Check | GPU |
 |---|---|---|---|---|
 | TA-B1 | `run_code` cannot reach the network, cannot import `cadquery` / `os` / `subprocess` / `socket`, writes no files, and is timeout-bounded | `train_and_eval/run_code_sandbox.py`; `train_and_eval/tool_calls.py::execute_code` | `uv run pytest train_and_eval/eval/test_tool_calls.py -k "run_code or execute_code" -q`, plus a new explicit no-network assertion | no |
-| TA-B2 | "Accidental-misuse guard, not a security boundary" is acceptable for the stated threat model | D-E3 (`train-and-eval/evaluation/harness.md`) | owner decision, not a check | decision |
+| TA-B2 | "Accidental-misuse guard, not a security boundary" is acceptable for the stated threat assumptions | D-E3 (`train-and-eval/evaluation/harness.md`) | owner decision, not a check | decision |
 
 ### C. Serving parity (C4)
 
 | ID | Claim to verify | Code / artifact | Check | GPU |
 |---|---|---|---|---|
-| TA-C1 | A served vLLM checkpoint is numerically equivalent to the transformers model it was merged from (greedy parity on a fixed prompt set) | `train_and_eval/setup/convert_for_vllm.py`; `train_and_eval/eval/bench_vllm.py` | new parity test (same prompts, compare argmax tokens / logprobs at tolerance); skips without CUDA | yes |
+| TA-C1 | A served vLLM checkpoint is numerically equivalent to the transformers LLM model it was merged from (greedy parity on a fixed prompt set) | `train_and_eval/setup/convert_for_vllm.py`; `train_and_eval/eval/bench_vllm.py` | new parity test (same prompts, compare argmax tokens / logprobs at tolerance); skips without CUDA | yes |
 | TA-C2 | Conversion is asserted, not hand-checked: the output key set matches vLLM's Gemma4 expectation and `unique_kv_layers` is read from the checkpoint config | `train_and_eval/setup/convert_for_vllm.py::main` | offline assertion on a tiny fixture checkpoint; remove the hardcoded `15` | no |
-| TA-C3 | The smoke script measures the converted checkpoint with `llm.chat` (not raw string prompts against the base model) | `train_and_eval/eval/bench_vllm.py` | code fix + re-record throughput | yes |
+| TA-C3 | The smoke script measures the converted checkpoint with `llm.chat` (not raw string prompts against the base LLM model) | `train_and_eval/eval/bench_vllm.py` | code fix + re-record throughput | yes |
 
 ### D. Training chain (C5–C7)
 
 | ID | Claim to verify | Code / artifact | Check | GPU |
 |---|---|---|---|---|
-| TA-D1 | Is the SFT prompt masked (completion-only loss)? | `train_and_eval/train/sft_train.py::main` (`build_dataset`) plus the trainer/collator default | trace the labels the trainer sees on a tiny CPU run; record masked vs unmasked | no |
-| TA-D2 | A tracked step produces the merged model from the adapter | none today (documented gap) | write `train_and_eval/setup/merge_adapter.py` + a test, or record the manual step and mark the stage | no |
-| TA-D3 | Confirm GRPO loads the base model, not the SFT adapter, and record the intended chain | `train_and_eval/train/grpo_train.py` | code inspection; decide SFT→GRPO vs parallel consumers | no |
-| TA-D4 | Consumers agree on the dataset config and the hop curriculum | stage 02/05/06; `HOP_SHARES`, `DEFAULT_QUOTAS` | code inspection; pick v2 or v3 and one ladder; record a decision (feeds Phase 1) | no |
+| TA-D1 | Is the SFT prompt masked (completion-only loss)? | `train_and_eval/train/sft_train.py::main` (`build_dataset`) plus the trainer/collator default | record the labels the trainer sees on a tiny CPU run; record masked vs unmasked | no |
+| TA-D2 | A tracked step produces the merged LLM model from the adapter | none today (documented gap) | write `train_and_eval/setup/merge_adapter.py` + a test, or record the manual step and mark the Training stage | no |
+| TA-D3 | Confirm GRPO loads the base LLM model, not the SFT adapter, and record the intended chain | `train_and_eval/train/grpo_train.py` | code inspection; decide SFT→GRPO vs parallel consumers | no |
+| TA-D4 | Consumers agree on the dataset config and the hop curriculum | pipeline stages 02/05/06; `HOP_SHARES`, `DEFAULT_QUOTAS` | code inspection; pick v2 or v3 and one ladder; record a decision (feeds Phase 1) | no |
 | TA-D5 | One canonical base LLM model identifier | `sft_train.py`, `grpo_train.py` (`unsloth/` vs `google/`) | code inspection; pick one | no |
 
 ### E. Reproducibility and environment (C8, C9)
@@ -100,12 +100,12 @@ re-litigate decisions already recorded in `dataset/decisions.md`,
 | TA-E2 | Dataset revisions are pinned to hashes, not config names | HF `MRiabov/cadqa-rl-2000` | resolve the `revision` for each config; record in a tracked file | net |
 | TA-E3 | Every reported number has a run manifest (env, seed, dataset revision, command, checksums) | none today | build the generator (fine-tuning P2, promoted to audit P1) | no |
 
-### F. Dataset pipeline (A1–A7 and cross-stage)
+### F. Dataset pipeline (A1–A7, across pipeline stages)
 
 | ID | Claim to verify | Code / artifact | Check | GPU |
 |---|---|---|---|---|
 | TA-F0 | The audit environment imports the generation stack | `.venv` | `uv sync`; `uv run python -c "import cadquery, pyarrow"` | no |
-| TA-F1–F7 | Each stage A1–A7 meets its stated requirement on a immutable small slice | `cad_qa/` (immutable) | the per-stage command in `docs/dataset/requirements.md`; capture the artifacts | no |
+| TA-F1–F7 | Each pipeline stage A1–A7 meets its stated requirement on an immutable small slice | `cad_qa/` (immutable) | the command per pipeline stage in `docs/dataset/requirements.md`; capture the artifacts | no |
 | TA-F8 | The trusted path contains no LLM model or network call | `cad_qa/` | search `cad_qa/` for `openrouter`, `requests`, `httpx`, `openai` | no |
 | TA-F9 | Public rows never expose a private Query verifier field | `cad_qa/dataset/public.py::PUBLIC_FIELDS` | `uv run cadqa dataset export-public-private` and inspect the report | no |
 
@@ -153,7 +153,7 @@ re-litigate decisions already recorded in `dataset/decisions.md`,
 3. Grading is trustworthy: oracle identity passes, the grader is correct off the oracle path,
    and eval / reward / Harbor agree on the fixture — or the divergence is a recorded,
    scheduled fix.
-4. `run_code` isolation is either proven for the stated threat model or explicitly accepted as
+4. `run_code` isolation is either proven for the stated threat assumptions or explicitly accepted as
    out of scope by decision.
 5. The environment is reproducible from tracked files; every dataset revision is a hash.
 6. The `tests/` and `train_and_eval/` suites are green.
