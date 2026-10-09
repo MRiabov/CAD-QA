@@ -240,6 +240,34 @@ sampling only on learnable tiers, in a sandbox, with rollout logging. `liquid-fi
 ships SFT, GRPO (TRL v1 `GRPOTrainer`), a `rewards/` callable registry, and an optional OpenEnv
 multiturn block, so the whole loop stays in one stack on Modal.
 
+### BenchCAD and the CAD benchmark saturation (2026)
+
+**Status:** recorded 2026-10-09 from the public BenchCAD leaderboard and task docs. Detail and
+citations: `research/2026-benchcad.md` (ref [33]).
+
+BenchCAD (Zhang et al., 2026) has two lines on 17,900 execution-verified CadQuery programs,
+graded deterministically with no LLM judge: **1.0** (four tasks, including the **Code QA**
+comprehension task) and **2.0** (six reconstruction-only tasks — parts, assemblies, PCB
+wiring). The repo's research note holds a full three-way comparison table. Four findings
+matter for CAD-QA:
+
+- **It now does comprehension, not only generation.** Besides Vision2Code and Code Edit, it has
+  Vision QA and **Code QA** (CadQuery program + numeric question → number; 2,400 questions over
+  200 parts; symmetric-ratio grading). Code QA is the CAD-QA base task shape, so the paper's
+  "no open dataset" claim no longer holds.
+- **Generation tasks are saturating; comprehension is not.** Re-graded Vision2Code voxel IoU is
+  ~0.27, but provider-reported closed-book IoU is now ~0.49–0.75 and agentic ~0.87–0.96 (a
+  different metric and split, not re-graded). Code QA total is 0.80–0.84, with a Spatial
+  Reasoning axis of 0.537–0.731 against a 0.42 blind baseline.
+- **CAD-QA is differentiated by depth, not task shape.** Code QA is single-pass numeric lookup;
+  CAD-QA is multi-hop, distractor-rich reasoning beyond numeric answers, over the CAD ontology,
+  with automated graph-derived synthesis and a Reasoning hop curriculum / critical path. Use
+  BenchCAD `qa_code` as an independent transfer benchmark (text-in, unsaturated), keep its
+  programs out of training (contamination), and run frontier LLM models on the frozen CAD-QA
+  hard slice to establish whether the multi-hop gap is still live.
+- **2.0 is a different construct.** BenchCAD 2.0 is reconstruction-only (assemblies, PCB
+  wiring) and adds no comprehension or multi-hop task, so it does not deepen the overlap.
+
 ### References
 
 External sources for this section, numbered to match the markers above. One summary note per
@@ -360,6 +388,9 @@ reference never stands alone for a load-bearing claim.
     `research/2025-rlve-adaptive-verifiable-environments.md`.
 32. (2026) 'Endless Terminals', arXiv:2601.16443. Cited by the environment-scaling survey [30].
     `[preprint]`. Note: `research/2026-endless-terminals-warm-start.md`.
+33. Zhang, H., Liu, K., Chen, M., Li, L., Yang, S., Peng, C. and Chen, H. (2026) 'BenchCAD: A
+    Comprehensive, Industry-Standard Benchmark for Programmatic CAD', arXiv:2605.10865.
+    `arxiv.org/abs/2605.10865`. `[preprint]`. Note: `research/2026-benchcad.md`.
 
 ## Resolved questions
 
