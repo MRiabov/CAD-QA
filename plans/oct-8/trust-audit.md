@@ -179,12 +179,12 @@ re-litigate decisions already recorded in `dataset/decisions.md`,
 
 ## Open questions
 
-- Is "no network, no files, timeout" a sufficient sandbox claim, or is kernel isolation
+- **Q1.** Is "no network, no files, timeout" a sufficient sandbox claim, or is kernel isolation
   required before any external claim (TA-B2)?
-- Parity precision: argmax token ids, or logprobs within a tolerance (TA-C1)?
-- Which environment is canonical: one tracked stack, or separate SFT and serving environments
+- **Q2.** Parity precision: argmax token ids, or logprobs within a tolerance (TA-C1)?
+- **Q3.** Which environment is canonical: one tracked stack, or separate SFT and serving environments
   (see `train-and-eval/fine-tuning/requirements.md#environment`)?
-- Does the GPU parity + SFT re-run happen in Phase 0 (the first spend) or at the top of
+- **Q4.** Does the GPU parity + SFT re-run happen in Phase 0 (the first spend) or at the top of
   Phase 1?
 
 ## Progress log

@@ -52,8 +52,8 @@ Multi-turn call → result → call → answer, including the `run_code` round-t
 
 ### `preserve_general_math_and_code_reasoning`
 
-General (not CAD) step-by-step reasoning style. Support data; FT-D15 does not treat external
-reasoning as the lever.
+General (not CAD) software / math / engineering reasoning tasks, replayed to prevent reasoning
+collapse. Support data; FT-D15 does not treat external reasoning as the lever.
 
 | Dataset | Status |
 |---|---|

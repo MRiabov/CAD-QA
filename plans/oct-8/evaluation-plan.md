@@ -279,14 +279,14 @@ results rather than repeating the plan.
 
 ## 11. Open questions (evaluation)
 
-- Should the local harness import the Harbor grader (or the reverse) so the two exact-match paths
+- **Q1.** Should the local harness import the Harbor grader (or the reverse) so the two exact-match paths
   cannot drift? (D-E2 open question.)
-- Which slice is the canonical baseline slice: rc10 clean-100, release10k, or an immutable hard test?
-- What is the exact `general` canary probe? A 500–1,000 row math+instruction set is cheap and
+- **Q2.** Which slice is the canonical baseline slice: rc10 clean-100, release10k, or an immutable hard test?
+- **Q3.** What is the exact `general` canary probe? A 500–1,000 row math+instruction set is cheap and
   enough for regression detection; a full MMLU is P2.
-- Does `liquid-finetune`'s eval config let us plug in our scorer, or do we grade its generations
+- **Q4.** Does `liquid-finetune`'s eval config let us plug in our scorer, or do we grade its generations
   offline? `[unknown]`.
-- Which BenchCAD slice is the canonical transfer target: full `qa_code`, the Spatial Reasoning axis,
+- **Q5.** Which BenchCAD slice is the canonical transfer target: full `qa_code`, the Spatial Reasoning axis,
   or a hard family subset? And is `edit_code` T4/T5 reachable by a 2–4B LLM model? `[unknown]`.
 
 ---

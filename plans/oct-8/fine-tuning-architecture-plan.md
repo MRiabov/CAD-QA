@@ -353,12 +353,12 @@ justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
 
 ## 9. Open questions (training)
 
-- Does LEAP Finetune / TRL mask the prompt by default for `messages` SFT, or must
+- **Q1.** Does LEAP Finetune / TRL mask the prompt by default for `messages` SFT, or must
   `assistant_only_loss` (or equivalent) be set? Verify on the smoltalk reproduction before trusting
   any CAD-QA number.
-- Does the LFM2.5 chat template + LEAP pass a custom `submit_*` tool list through unchanged, and do
+- **Q2.** Does the LFM2.5 chat template + LEAP pass a custom `submit_*` tool list through unchanged, and do
   we accept Pythonic calls or force JSON via the system prompt? `[unknown]`.
-- LoRA-bf16 is the default (§5.4); does QLoRA change the canary outcome at this scale? The repo
+- **Q3.** LoRA-bf16 is the default (§5.4); does QLoRA change the canary outcome at this scale? The repo
   `04-sft.md` records a code/narrative conflict (4-bit vs 16-bit) from the gemma runs; settle it
   with a measured A/B on the canary.
 

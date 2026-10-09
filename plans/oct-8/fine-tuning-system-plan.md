@@ -268,12 +268,12 @@ silently.
 
 **Open questions.**
 
-- What k for the pass@k gate, and how are tiers defined from `difficulty_bucket` + hop counts?
-- Does the LFM2.5 chat template + `liquid-finetune` GRPO accept our custom `submit_*` tools and
+- **Q1.** What k for the pass@k gate, and how are tiers defined from `difficulty_bucket` + hop counts?
+- **Q2.** Does the LFM2.5 chat template + `liquid-finetune` GRPO accept our custom `submit_*` tools and
   reward callable through `rewards/` unchanged? `[unknown]`.
-- RFT (Training stage 2) vs GRPO (Training stage 3): at this scale and budget, does RFT already capture most of the
+- **Q3.** RFT (Training stage 2) vs GRPO (Training stage 3): at this scale and budget, does RFT already capture most of the
   gain? Ref [25] suggests it may; test before spending on RL.
-- Is the `cadquery` LLM harness mode (FT-D5) needed for the RL training stage, or does `numpy` stay primary?
+- **Q4.** Is the `cadquery` LLM harness mode (FT-D5) needed for the RL training stage, or does `numpy` stay primary?
 
 ---
 

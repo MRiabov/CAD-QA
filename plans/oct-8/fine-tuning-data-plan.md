@@ -56,7 +56,7 @@ selectively, not blindly.
 |---|---|---|---|
 | `emit_our_tool_call_format` | emit our `submit_*` tool calls in the LLM model's native format | external | P0 |
 | `run_the_tool_call_loop` | multi-turn tool loop (call → result → call → answer), incl. `run_code` round-trip | external | P0/P1 |
-| `preserve_general_math_and_code_reasoning` | general step-by-step reasoning style (long CoT, self-check) | external | P1 |
+| `preserve_general_math_and_code_reasoning` | general software / math / engineering reasoning tasks, replayed to prevent reasoning collapse | external | P1 |
 | `preserve_prior_capabilities` | replay general instructions so prior ability is not forgotten | external | P0 |
 | `expose_general_python_code` | general Python / coding exposure | external | P1/P2 |
 | `expose_cadquery_programs` | CadQuery / 3D representation exposure so the base LLM model is not CAD-blind | external | P1/P2 |
@@ -121,7 +121,7 @@ alone is not disqualifying — `xLAM/APIGen` is still the canonical reference an
 | `spitfire4794/Fable-5-traces` | 2026 | 4,665 | Pi sessions | AGPL-3.0 | shorter-list; same family |
 | `cfahlgren1/Fable-5-traces` | 2026 | 115 | raw logs | AGPL-3.0 | **Reject** for training |
 
-### 2.3 General reasoning style (`preserve_general_math_and_code_reasoning`)
+### 2.3 General math / code reasoning (`preserve_general_math_and_code_reasoning`)
 
 | Dataset | Date | Size | Shape | License | Adopt/reject |
 |---|---|---|---|---|---|
@@ -403,14 +403,14 @@ only the dataset:
 
 ## 9. Open questions (data)
 
-- Is there a public CadQuery instruction corpus worth using, or does the internal set alone provide the `submit_workplane` (`json`) format? `[unverified]`.
-- How much of the Fable/Opus signal survives filtering and dedup? `[unknown]`.
-- Does the external `emit_our_tool_call_format` dataset teach the exact `submit_*` tool names/args,
+- **Q1.** Is there a public CadQuery instruction corpus worth using, or does the internal set alone provide the `submit_workplane` (`json`) format? `[unverified]`.
+- **Q2.** How much of the Fable/Opus signal survives filtering and dedup? `[unknown]`.
+- **Q3.** Does the external `emit_our_tool_call_format` dataset teach the exact `submit_*` tool names/args,
   or only generic function calling? If only generic, `learn_the_cadqa_task` must carry the mapping.
-- What provides `preserve_prior_capabilities` (the anti-forgetting role)? Candidates in
+- **Q4.** What provides `preserve_prior_capabilities` (the anti-forgetting role)? Candidates in
   §2.4; pick one. `[open]`
-- Should evaluation dataset roles split into `target` / `canary`? `[open]`
-- What are the two Mixed training dataset names (`mixed_dataset_*`)? `[open]`
+- **Q5.** Should evaluation dataset roles split into `target` / `canary`? `[open]`
+- **Q6.** What are the two Mixed training dataset names (`mixed_dataset_*`)? `[open]`
 
 ---
 
