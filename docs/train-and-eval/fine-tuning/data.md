@@ -212,7 +212,7 @@ found to be clean and non-overlapping.
 | Mix | Role weights | Purpose |
 |---|---|---|
 | `mixed_dataset_general_and_easy_cadqa` (first run) | 70% general (⅓ coding agent, ⅓ 3D math, ⅓ text2CAD + edits), 30% low-hop `learn_the_cadqa_task` (rejection-sampled) | first run: format + easy task, cheapest signal |
-| `mixed_dataset_full_cadqa_training` (primary) | 50% general (same thirds), 50% `learn_the_cadqa_task` | test H2, the thesis number; **no separate `emit_our_tool_call_format`** — the format is carried by `learn_the_cadqa_task` |
+| `mixed_dataset_full_cadqa_training` (primary) | 50% general (same thirds), 50% `learn_the_cadqa_task` (progressively more complex) | test H2, the thesis number; **no separate `emit_our_tool_call_format`** — the format is carried by `learn_the_cadqa_task`. The task share is the **curriculum** — rows ordered by increasing complexity (the 0→1→2→3→5 hop ladder), not a flat sample |
 
 Rationale and tradeoffs:
 

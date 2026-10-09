@@ -126,8 +126,9 @@ collapse ("RL squeezes, SFT expands", ref [7]).
    (⅓ coding agent, ⅓ 3D math, ⅓ text2CAD + edits) and carries a **simple slice of our own tasks**
    (e.g. hop 0, `learn_the_cadqa_task`) as a safety net.
 2. **Phase 2 — the CAD-QA task (new domain) + preserve.** CAD is very likely new to the base LLM model, and our
-   CAD-QA dataset certainly is. Phase 2 fine-tunes on `learn_the_cadqa_task` at scale alongside the
-   general mix — **no separate `emit_our_tool_call_format`**, since the format comes with the task — and
+   CAD-QA dataset certainly is. Phase 2 fine-tunes on `learn_the_cadqa_task` at scale — progressively
+   more complex rows (the 0→1→2→3→5 hop ladder) — alongside the general mix, with **no separate
+   `emit_our_tool_call_format`** (the format comes with the task), and
    shifts the objective from *eliciting* reasoning to *preserving* it (`preserve_general_math_and_code_reasoning`,
    `expose_*`).
 
