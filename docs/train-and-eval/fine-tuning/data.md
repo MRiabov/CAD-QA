@@ -50,18 +50,26 @@ they are mixed at fixed ratios and evaluated separately. The external roles
 scaling lever — the task environment + scorer is (`system.md` §0) — so collect them
 selectively, not blindly.
 
-| DatasetRole | What it teaches | Internal / external | Priority |
-|---|---|---|---|
-| `emit_our_tool_call_format` | emit our `submit_*` tool calls in the LLM model's native format | external | P0 |
-| `run_the_tool_call_loop` | multi-turn tool loop (call → result → call → answer), incl. `run_code` round-trip | external | P0/P1 |
-| `preserve_general_math_and_code_reasoning` | general software / math / engineering reasoning tasks, replayed to prevent reasoning collapse | external | P1 |
-| `expose_general_python_code` | general Python / coding exposure | external | P1/P2 |
-| `expose_cadquery_programs` | CadQuery / 3D representation exposure so the base LLM model is not CAD-blind | external | P1/P2 |
-| `learn_the_cadqa_task` | the CAD-QA task itself: prompt → `submit_*` with hop reasoning | internal (**§6 only defines the dataset**) | P0 (separate plan) |
-| evaluation dataset | never trained on; used to detect regression | external + internal | P0 |
+| DatasetRole | What it teaches | Internal / external | Supervision | Priority |
+|---|---|---|---|---|
+| `emit_our_tool_call_format` | emit our `submit_*` tool calls in the LLM model's native format | external | native corpus | P0 |
+| `run_the_tool_call_loop` | multi-turn tool loop (call → result → call → answer), incl. `run_code` round-trip | external | native corpus | P0/P1 |
+| `preserve_general_math_and_code_reasoning` | general software / math / engineering tasks, replayed to prevent reasoning collapse | external | native corpus | P1 |
+| `expose_general_python_code` | general Python / coding exposure | external | native corpus | P1/P2 |
+| `expose_cadquery_programs` | CadQuery / 3D representation exposure so the base LLM model is not CAD-blind | external | native corpus | P1/P2 |
+| `learn_the_cadqa_task` | the CAD-QA task itself: prompt → `submit_*` with hop reasoning | internal (**§6 only defines the dataset**) | **teacher-generated (`02`)** | P0 (separate plan) |
+| evaluation dataset | never trained on; used to detect regression | external + internal | not trained on | P0 |
 
 **Rule:** evaluation-dataset rows must be **hashed and excluded** from every training mix. Any
 overlap is contamination (`No silent data loss` and held-out hygiene).
+
+**Supervision and verification.** Only `learn_the_cadqa_task` is **teacher-generated** (pipeline `02`);
+every other role is a **native corpus** that already carries its target agent training trace or tool
+call, normalized in `03`. FT-D17 still applies — a corpus enters a mix only if it is **execution-verified** or **teacher
+rejection-sampled** — and verification runs **locally**, so each role needs an executor **beyond** the
+CAD-QA task environment (the CadQuery kernel for `expose_cadquery_programs` and the text2CAD / CAD-edit
+tasks, a Python sandbox for the code roles, a math answer checker, the tool sandbox for
+`run_the_tool_call_loop`). The per-role mapping is in `../datasets.md`.
 
 ---
 
@@ -381,6 +389,7 @@ only the dataset:
 | `mixed_dataset_general_and_easy_cadqa` data build (general tasks + low-hop `learn_the_cadqa_task`) | **P0** | feeds the first run |
 | Contamination + dedup pass against CAD-QA held-out and evaluation datasets | **P0** | held-out hygiene; a leak invalidates the thesis number |
 | General-task curation (code + math + CAD, 50–70%) | **P0** | anti-forgetting anchor (FT-D18) |
+| Local verification environments (CadQuery kernel, Python sandbox, math answer checker, tool sandbox) | **P0** | FT-D17 verification runs locally; without them the external-role rows are unverified or need teacher sampling |
 | **`learn_the_cadqa_task` generation plan** | **P0, separate** | the thesis needs it; explicitly not in this doc |
 | Permissive reasoning mix (`OpenThoughts`/`Bespoke`) | **P1** | tests H2 without license risk |
 | `run_the_tool_call_loop` / `run_code` data (`OpenThoughts-Agent`) | **P1** | needed for the primary `numpy` LLM harness behaviour |
