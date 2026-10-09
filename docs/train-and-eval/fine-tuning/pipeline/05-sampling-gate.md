@@ -8,6 +8,9 @@ measured learnable (FT-D13; FT-D8 superseded).
 
 ## Definition
 
+The gate is an **inference** workload (rollouts), not training — size it in decode/prefill throughput and
+rollout latency, not SFT sequences/s.
+
 - **Population:** the train rows (`01`) in the run's mix.
 - **Rollouts:** per row, a **rollout count** of completions sampled at the **rollout temperature** (not
   the 0.1 deployment default), each graded by the one scorer (`../../evaluation/plan.md` §4).
