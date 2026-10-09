@@ -17,7 +17,8 @@ mode the same way with the one scorer.
 
 One scorer (`../../evaluation/plan.md` §4). Both execution surfaces share the row contract but **do not
 share a grader implementation** (D-E2) until reconciled (TA-A3): the local harness grades with
-`tool_call_matches`; Harbor grades with the public/private grader.
+`tool_call_matches`; Harbor grades with the public/private grader. **Harbor is deferred to P2** (D-E9),
+so the local harness is the live grader; the reconciliation (Q2) applies only if Harbor is revived.
 
 ## Evaluation datasets
 

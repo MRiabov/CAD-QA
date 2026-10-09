@@ -192,6 +192,9 @@ and `liquid-finetune` validate. `messages` is a **schema, not a container**: the
 but Parquet loads through HF `datasets` and is preferred (DD-06) — confirm `liquid-finetune` accepts a
 Parquet path (open question).
 
+The steps below continue from `system.md` §7 (steps 1–5); steps 6–8 are this doc's
+contract:
+
 6. **Convert (do not hand-render).** Emit Liquid's `messages` SFT set and let the cookbook /
    `liquid-finetune` apply the chat template and tokenization. The native tool-call spelling is
    base-specific and must be re-derived, never reused (FT-D3; the format churn in

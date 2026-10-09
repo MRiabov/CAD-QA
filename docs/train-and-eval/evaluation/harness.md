@@ -151,10 +151,11 @@ deterministic responses from private Query verifier artifacts. It is an analysis
 bound only and is not an LLM-model-facing tool environment (`docs/_archive/harbor.md`, "Oracle
 Warning").
 
-The local harness and Harbor are two different execution environments. The local
-harness speaks the native `<|tool_call|>` protocol and grades with
-`tool_calls.py::tool_call_matches`; Harbor runs an external coding agent that
-writes answer files and grades with `grade_public_private`. Both share the
+The local harness and Harbor were designed as two execution environments; **Harbor is deferred to P2**
+(D-E9), so the local harness is the live one. It grades with `tool_calls.py::tool_call_matches` (its
+native tool spelling is currently the gemma-era `<|tool_call|>`; the Phase 3 target is LFM2.5
+`<|tool_call_start|>`/`<|tool_call_end|>` — `../fine-tuning/training.md` §5.4). Harbor ran an external
+coding agent that writes answer files and grades with `grade_public_private`. Both share the
 CAD-QA dataset row contract (public and private column sets) and the exact-answer
 principle, but they do not share a grader implementation.
 

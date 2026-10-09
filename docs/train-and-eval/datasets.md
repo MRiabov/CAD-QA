@@ -8,7 +8,7 @@ recipe (dataset role → weight) and the candidate evidence (sizes, licenses, ad
 here, then propagate.
 
 **Related docs.** `../glossary.md` (**DatasetRole**, **External dataset**, **Mixed training
-dataset**, **Training stage**); `./fine-tuning/decisions.md` (FT-D1–D19);
+dataset**, **Training stage**); `./fine-tuning/decisions.md` (FT-D1–D22);
 `./evaluation/harness.md` and `./evaluation/baselines.md`; `fine-tuning/data.md`.
 
 ## Rules

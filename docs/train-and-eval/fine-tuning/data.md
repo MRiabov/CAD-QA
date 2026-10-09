@@ -307,7 +307,7 @@ mechanism differs by training stage:
   rollouts. Use an **RL-eligible pass rate, not a floor**: GRPO needs reward variance, so once a tier is ~80%+
   correct most groups are fully correct and the gradient collapses. CAD-QA's recorded GRPO
   hop-2 collapse is a version of this. Advance when the tier is **saturated** (pass ≥ ~80% and no
-  learning signal remains) or sits in the RL-eligible pass rate (~30–70%); never run RL on an all-correct
+  learning signal remains) or sits in the RL-eligible pass rate (~0.25–0.75); never run RL on an all-correct
   tier.
 - **Why gates exist.** The tiers exist because pass rate, not epoch, is the real progress signal:
   a tier that never clears stalls the ladder and must be recorded, not skipped.

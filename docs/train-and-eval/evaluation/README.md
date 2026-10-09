@@ -13,15 +13,15 @@ intent (targets, metrics, definition of done) stays in `PRD.md`.
 1. **`plan.md`** — the evaluation design: harness modes, the one-scorer rule, evaluation datasets, and
    the H3/H4 external-transfer suite.
 2. **`harness.md`** — how an LLM model is run and scored. The three LLM harness modes
-   (`numpy` primary, `no_tools`, `cadquery` P2) and Harbor. Read this first.
+   (`numpy` primary, `no_tools`, `cadquery` P2); Harbor is a **deferred P2** path (D-E9). Read this first.
 3. **`baselines.md`** — the baseline families, what is implemented, what was run,
    and what is stale.
-4. **`decisions.md`** — the consolidated ADR log (**D-E1**–**D-E8**, **D-B1**–**D-B3**).
+4. **`decisions.md`** — the consolidated ADR log (**D-E1**–**D-E9**, **D-B1**–**D-B3**).
 
 ## Scope
 
 - In scope: the local small-LLM-model harness (`train_and_eval/eval/eval_bench.py`),
-  the Harbor export and runner (`dataset/harbor.py`, `docs/_archive/harbor.md`), the grading
+  the Harbor export and runner (`dataset/harbor.py`, `docs/_archive/harbor.md`; **deferred P2**, D-E9), the grading
   and answer-parsing contract (`train_and_eval/grading/`), and the baseline families.
 - Out of scope: dataset generation and the training pipeline. Their contracts live
   under `dataset/` and `train-and-eval/fine-tuning/`.

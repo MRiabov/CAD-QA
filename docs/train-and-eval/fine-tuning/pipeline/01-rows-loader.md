@@ -44,6 +44,6 @@ uv run pytest <loader test> -q
 
 ## Resolved questions
 
-- **Q1.** *(2026-10-09)* The decoded hop field is `reasoning_hop_count` (glossary) and reads the row
+- **Q2.** *(2026-10-09)* The decoded hop field is `reasoning_hop_count` (glossary) and reads the row
   column `logical_hop_count`; the Gold query program's unqualified `hop_count` stays internal to the
   dataset and is not exposed to the fine-tuning stages.

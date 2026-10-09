@@ -269,7 +269,7 @@ results rather than repeating the plan.
 
 ## 10. Decisions (evaluation)
 
-The consolidated decision log is [`decisions.md`](decisions.md): **D-E1**–**D-E8** (harness, transfer,
+The consolidated decision log is [`decisions.md`](decisions.md): **D-E1**–**D-E9** (harness, transfer,
 and the one-scorer rule) and **D-B1**–**D-B3** (baselines). This section is now a pointer.
 
 ---
