@@ -66,3 +66,4 @@ The `Ref` column matches the numbered references in `../prior-art.md`.
 | [31] | `[preprint]` | RLVE: scaling RL with adaptive verifiable environments | arXiv (2025) | `2025-rlve-adaptive-verifiable-environments.md` | environment count, not data volume, drives generalizable reasoning |
 | [32] | `[preprint]` | Warm-start then RL on synthesized terminal tasks | arXiv (2026) | `2026-endless-terminals-warm-start.md` | SFT is a readiness gate; RL cold-start barely moves a small LLM model |
 | [33] | `[preprint]` | BenchCAD: programmatic CAD benchmark and its Code QA overlap | arXiv (2026) | `2026-benchcad.md` | Code QA overlaps CAD-QA; generation tasks saturating, comprehension gap narrowing |
+| — | `[vendor]` | liquid-finetune: evaluation, async eval, rollouts | GitHub README (2026) | `2026-liquid-finetune.md` | `evals:` + custom metrics; async eval without blocking training; vLLM rollouts |

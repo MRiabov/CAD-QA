@@ -296,8 +296,6 @@ results rather than repeating the plan.
   cannot drift? (D-E2 open question.)
 - **Q3.** Which rows make up the `preserve_general_math_and_code_reasoning` evaluation dataset? A
   500–1,000 row math + code set is cheap and enough for regression detection; a full MMLU is P2.
-- **Q4.** Does `liquid-finetune`'s eval config let us plug in our scorer, or do we grade its generations
-  offline? `[unknown]`.
 - **Q5.** Which BenchCAD slice is the canonical transfer target: full `qa_code`, the Spatial Reasoning axis,
   or a hard family subset? And is `edit_code` T4/T5 reachable by a 2–4B LLM model? `[unknown]`.
 
@@ -308,6 +306,10 @@ results rather than repeating the plan.
   (subset), phase-end (extensive), final (complete). Baselines run on those same evaluation datasets,
   composed across Difficulty tiers; per-dataset composition is
   `../datasets.md`.
+- **Q4.** *(2026-10-09)* Liquid Finetune runs `evals:` with pluggable metrics (the Evaluation Guide) and a
+  standalone `eval` subcommand writing `results.json`; wire our exact-match scorer as a custom metric, or
+  grade its generations offline. `async_eval` runs evals without blocking training.
+  (`../../research/2026-liquid-finetune.md`.)
 
 ---
 

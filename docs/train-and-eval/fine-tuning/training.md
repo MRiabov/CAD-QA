@@ -234,6 +234,9 @@ traces. Use gradient checkpointing and gradient accumulation rather than a bigge
   that figure is wrong and should be corrected as a finding.
 - **Headroom (P2):** A100 40 GB for long-context external data.
 - Serving/eval bytes are the evaluation doc's concern (vLLM needs its own allocation).
+- **Keep the GPU busy (FT-D21).** Use `liquid-finetune`'s `async_eval` (`sidecar`/`reserved`, vLLM) so
+  evaluation does not block training, and vLLM rollouts (`colocate`/`server`) so one engine serves
+  rollouts and eval. See `../../research/2026-liquid-finetune.md`.
 
 ### 5.3 Cost estimate
 

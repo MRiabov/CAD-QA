@@ -306,6 +306,21 @@ whose rationale was not recoverable.
   produces the served artifact or serving needs its own pins (GGUF/llama.cpp, vLLM). Detail:
   `pipeline/00-overview.md` Q2.
 
+## FT-D21 — One GPU serving engine per rented window
+
+- **Status:** accepted (2026-10-09) — owner direction.
+- **Context:** evaluation and RL rollouts both need a serving engine, and the owner rents GPU by the
+  hour. Running several engines at once fragments device memory and leaves the rented GPU idle.
+- **Decision:** on a rented GPU, run **one** serving engine at a time — **vLLM** (native LFM2.5; the
+  engine `liquid-finetune`/TRL already use for rollouts). Use **llama.cpp / GGUF on CPU** for
+  local/edge, not on the rented box. Sequence a window as train → merge → serve → evaluate with the
+  engine loaded once and reused; prepare data and configs ahead of time so nothing waits on the GPU; do not run
+  training and serving concurrently on one 24 GB card. Prefer **Modal** (pay-per-second) for short
+  jobs so no GPU sits idle.
+- **Consequences:** two GPU engines at once only as a deliberate A/B (for example quantized vs bf16),
+  and even then llama.cpp can run on CPU to avoid contending for the device. Detail:
+  `pipeline/07-serving.md`.
+
 ## Open questions
 
 - **Q1.** The base-pipeline choice (D11 in `plans/oct-7/restructure-docs.md`) is recorded as FT-D11,

@@ -29,8 +29,13 @@ phase-end, and final; all hard-excluded from training.
 `run_code` is an **accidental-misuse guard, not a security boundary** (D-E3); its isolation is measured
 by the audit (TA-B1).
 
+## Resolved questions
+
+- **Q1.** *(2026-10-09)* Liquid Finetune runs `evals:` with pluggable metrics and a standalone `eval`
+  subcommand writing `results.json`; wire our exact-match scorer as a custom metric (or grade its
+  generations offline). `async_eval` runs evals without blocking training.
+
 ## Open questions
 
-- **Q1.** Does `liquid-finetune`'s eval config take our scorer, or do we grade its generations offline?
 - **Q2.** Does the local harness import the Harbor grader (or the reverse) so the two exact-match paths
   cannot drift (`../../evaluation/plan.md` Q1)?
