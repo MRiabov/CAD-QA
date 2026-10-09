@@ -329,9 +329,11 @@ Sources: `docs.liquid.ai/examples/customize-models/home-assistant`, `docs.liquid
 - **Calls are Pythonic by default**; JSON requires "Output function calls as JSON" in the system
   prompt. Tools are declared as JSON in the system prompt (recommended) or via
   `.apply_chat_template(tools=...)`.
-- **Why this matters:** the provider ships the tool-call format, chat template, prompt settings
-  (e.g. LFM2.5-1.2B-Instruct `temperature=0.1`, `top_k=50`, `repetition_penalty=1.05`), and a
-  dataset validator. Adopting LFM inherits the format contract instead of hand-rolling it — the
+- **Why this matters:** the provider ships the tool-call format, chat template, prompt settings, and a
+  dataset validator. Prompt settings are **per-checkpoint**: `LFM2.5-2.6B/generation_config.json` sets
+  `temperature=0.1`, `do_sample=true`, `top_k=50`, `repetition_penalty=1.1` (the 2.6B card lists the
+  same), while `LFM2.5-1.2B-Instruct/generation_config.json` has **no** sampling defaults. Adopting LFM
+  inherits the format contract instead of hand-rolling it — the
   exact axis where the Aug-2026 gemma work burned effort
   (`../../development-context.md` "Tool-call and answer-submission format churn"). The
   tradeoff is the FT-D11 lock-in: the `submit_*` rendering is authored for these tokens and is not
