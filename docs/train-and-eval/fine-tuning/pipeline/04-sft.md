@@ -30,7 +30,9 @@ A **phase-2-only fallback** applies if phase 1 shows no measured phase-end gain.
 ## Inputs / outputs
 
 - **In:** Liquid `messages` SFT set (03).
-- **Out:** a LoRA **adapter**, then a **merged LLM model** (merge step to be scripted; FT-D12).
+- **Out:** a LoRA **adapter** (base + adapter) — the training output (FT-D23). A **merged LLM model** is
+  produced **on demand** for a standalone checkpoint or a GGUF K-quant export (07). Evaluation runs the
+  adapter on **HF Transformers** (the reference runtime, FT-D23), so no merge is needed to measure.
 
 ## Verification
 

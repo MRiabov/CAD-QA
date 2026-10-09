@@ -29,7 +29,7 @@ Liquid `messages`) → **two-phase SFT** → a **RL-readiness gate** and optiona
 | 04 | [04-sft.md](pipeline/04-sft.md) | `[unverified — needs GPU + liquid-finetune]` |
 | 05 | [05-rl-readiness-gate.md](pipeline/05-rl-readiness-gate.md) | RL-readiness gate P0; RL deferred/conditional (FT-D13) |
 | 06 | [06-harness-modes.md](pipeline/06-harness-modes.md) | `exists`; `cadquery` mode `missing` |
-| 07 | [07-serving.md](pipeline/07-serving.md) | `missing` (merge/export to build) |
+| 07 | [07-serving.md](pipeline/07-serving.md) | adapter-first `exists`; merge/export on demand (FT-D23) |
 
 ## Code ↔ doc map
 

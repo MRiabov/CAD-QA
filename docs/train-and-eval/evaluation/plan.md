@@ -3,7 +3,7 @@
 **Status:** active, 2026-10-09. The evaluation companion to `../fine-tuning/training.md` (training)
 and `../fine-tuning/data.md` (data). Evaluation is **not fine-tuning-specific** — the same harness,
 scorer, and baselines score the base LLM model, the tuned LLM model, and the cost-effective external
-models through Harbor.
+models through the **same local tool-call harness** (Harbor is a deferred P2 path, D-E9).
 
 **This doc owns — the shared evaluation base:** the LLM harness and its modes, the tool-call and
 answer contract, the scorer, the evaluation-dataset procedure, grading reconciliation, judge independence,
@@ -222,7 +222,8 @@ rows, a disjoint dataset, or a synthetic set.
 - **Shortcut families** must be reported separately from geometry-reasoning accuracy (D-B1), and
   re-run on the current row schema before any number is quoted. Current state is `stale`
   (`baselines.md`).
-- **Cost-effective LLM model runs** via Harbor; every number names its slice (D-B3). The recorded
+- **Cost-effective LLM model runs** via the **same local tool-call harness** (Harbor is deferred P2,
+  D-E9); every number names its slice (D-B3). The recorded
   65/63/59% are the **rc10 clean-100 (0-hop, easy)** slice, not the hard target slice.
 - **Oracle / tool-assisted** is a key-path/upper-bound check, never an LLM model baseline (D-B2).
 
@@ -280,7 +281,8 @@ and the one-scorer rule) and **D-B1**–**D-B3** (baselines). This section is no
   `tool_calls.py::tool_call_matches`) import the **Harbor grader**
   (`train_and_eval/grading/grade.py::grade_public_private`, copied into the container as
   `tests/grade_cadqa.py`) — or the reverse — so the two exact-match paths cannot drift? (D-E2 open
-  question.)
+  question.) Applies only if Harbor is revived; while Harbor is deferred (D-E9), the one local
+  scorer (D-E8) is the target.
 - **Q3.** Which rows make up the `preserve_general_math_and_code_reasoning` evaluation dataset? A
   500–1,000 row math + code set is cheap and enough for regression detection; a full MMLU is P2.
 - **Q5.** Which BenchCAD slice is the canonical transfer target: full `qa_code`, the Spatial Reasoning axis,

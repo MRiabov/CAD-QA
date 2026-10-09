@@ -18,9 +18,9 @@ re-implemented, not reused verbatim (FT-D12).
 | 02 teacher-sampling | Kept agent training traces carry a tool call the Query verifier accepts; coverage complete across the task space (Answer format × hop × relation family × measurement scope) | No | to be ported to the `deepseek-v4.1-flash` teacher (FT-D2) |
 | 03 preparation | `TrainingExample` → Liquid `messages` SFT set; every SFT corpus is rejection-sampled by us or execution-verified (FT-D17) | No (`missing`) | converter to write (`system.md` §7) |
 | 04 SFT | Two-phase SFT raises held-out accuracy over the base without over-generation | No | `liquid-finetune` recipe to run (FT-D16) |
-| 05 RL-readiness gate | pass@k per Difficulty tier recorded; RL only where a tier is learnable (FT-D13) | No (`missing`) | RL-readiness gate to build |
-| 06 evaluation | Same grading across LLM harness modes; one scorer; evaluation datasets wired | Partial | local harness `exists`; three scorers diverge (TA-A3) |
-| 07 serving | Served checkpoint numerically equivalent to the merged LLM model | No | merge/export + parity to build (FT-D10) |
+| 05 RL-readiness gate | pass@k per **measured** tier recorded (not derived from `difficulty_bucket`/hop); RL only where a tier is learnable (FT-D13) | No (`missing`) | RL-readiness gate to build |
+| 06 evaluation | Same grading across LLM harness modes; one scorer; evaluation datasets wired | Partial | local harness `exists` (the live grader; Harbor deferred P2, D-E9); one-scorer reconciliation pending (TA-A3, D-E8) |
+| 07 serving | The training output is the LoRA adapter; evaluation runs on HF Transformers (the reference runtime) so there is no serving-parity check; merge/export is on demand | No | adapter-first + on-demand merge/export to build (FT-D23) |
 
 ## Cross-cutting requirements
 
@@ -51,13 +51,17 @@ re-implemented, not reused verbatim (FT-D12).
 
 ## Open questions
 
-- **Q1.** Serving is a separate **inference runtime** by design (merged weights only, no optimizer;
-  FT-D20). Liquid documents the runtimes (`docs.liquid.ai/deployment/*`); pick vLLM vs SGLang for our
-  batched evaluation/rollouts (`../../../plans/oct-8/trust-audit.md` Q3).
 - **Q2.** Where do the retained rows-loader and the new converter live once `train_and_eval/` is
   rewritten (FT-D12)?
 - **Q3.** Run-manifest format and generator (TA-E3).
+- **Q4.** Reconcile the `liquid-finetune` CUDA pin (`vllm==0.22.0`) with the serving need (LFM2.5
+  native `Lfm2ForCausalLM` ≥0.23) — one tracked environment or two (`pipeline/07-serving.md` Q2;
+  `../../../plans/oct-8/trust-audit.md` Q3).
 
 ## Resolved questions
 
-_(none yet)_
+- **Q1.** *(2026-10-09)* **vLLM is the default GPU runtime** (native LFM2.5; matches the LEAP/TRL
+  rollouts); **SGLang** only if the DSpark speculator is adopted (FT-D22 Q4). Serving is a separate
+  inference runtime that loads the **adapter** (base + adapter), not a merged LLM model, and never the
+  optimizer (FT-D20, FT-D23); evaluation runs on **HF Transformers** (the reference runtime), so it
+  needs no serving-parity check.

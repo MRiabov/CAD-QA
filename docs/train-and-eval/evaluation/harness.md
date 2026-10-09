@@ -25,8 +25,8 @@ Inputs:
   (`dataset/release/public.py::PRIVATE_FIELDS`): `gold_answer`,
   `query_program`, `candidate_trace`, `clue_map`, `verifier_status`, and the
   answer format. Never exposed to the LLM model.
-- **LLM model** — a local checkpoint (the merged LLM model) for the local harness, or
-  an OpenRouter LLM model name for Harbor.
+- **LLM model** — a local checkpoint for the local harness (base + LoRA **adapter**, FT-D23; a merged
+  LLM model also works), or an OpenRouter LLM model name for Harbor (**deferred P2**, D-E9).
 - **LLM harness mode** — one of `numpy`, `no_tools`, `cadquery` (see below).
 - **requests** — answer-free request records built by
   `train_and_eval/grading/requests.py::zero_shot_requests` (and the few-shot variant).
@@ -197,7 +197,8 @@ principle, but they do not share a grader implementation.
 ## Local decisions
 
 Consolidated in [`decisions.md`](decisions.md): **D-E1** (primary mode), **D-E2** (the split from
-Harbor), **D-E3** (the sandbox boundary), **D-E4** (the Harbor reward scalar).
+Harbor), **D-E3** (the sandbox boundary), **D-E4** (the Harbor reward scalar), **D-E9** (Harbor deferred;
+one shared tool-call harness).
 
 ## Open questions
 
@@ -206,7 +207,8 @@ Harbor), **D-E3** (the sandbox boundary), **D-E4** (the Harbor reward scalar).
 - **Q2.** Will `dataset/pipeline/00-overview.md` rename any public/private field used here? The
   contract now exists; the field names must be checked against it.
 - **Q3.** Should the local harness import the Harbor grader (or the reverse) so the two
-  exact-match paths cannot drift? Currently they are independent implementations.
+  exact-match paths cannot drift? Currently they are independent implementations. Applies only if
+  Harbor is revived; while Harbor is deferred (D-E9), the one local scorer (D-E8) is the target.
 
 ## Resolved questions
 

@@ -1,6 +1,6 @@
 # Evaluation
 
-**Status:** active, 2026-10-07. Part of the docs restructure
+**Status:** active, 2026-10-09. Part of the docs restructure
 (`plans/oct-7/restructure-docs.md`).
 
 This directory documents how CAD-QA is evaluated: the harnesses that run an LLM model

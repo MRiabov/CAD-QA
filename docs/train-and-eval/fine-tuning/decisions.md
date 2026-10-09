@@ -306,9 +306,9 @@ whose rationale was not recoverable.
 - **Status:** accepted (2026-10-09) — owner.
 - **Context:** the "one tracked environment, or split SFT and serving" question conflated *packages* with
   *runtime*.
-- **Decision:** serving is a **separate inference runtime** by design: it loads the **merged LLM model**
-  (weights only) and never the training optimizer / updating weights or gradients. Training and serving
-  are split as processes regardless of packaging.
+- **Decision:** serving is a **separate inference runtime** by design: it loads the **adapter or a merged
+  LLM model** (weights only; FT-D23) and never the training optimizer / updating weights or gradients.
+  Training and serving are split as processes regardless of packaging.
 - **Consequences:** the remaining question is only packaging — whether one recipe (`liquid-finetune`)
   produces the served artifact or serving needs its own pins (GGUF/llama.cpp, vLLM). Detail:
   `pipeline/00-overview.md` Q2.

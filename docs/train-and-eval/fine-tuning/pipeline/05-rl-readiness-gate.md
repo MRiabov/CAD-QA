@@ -48,7 +48,7 @@ rollout latency, not SFT sequences/s.
 
 ## Inputs / outputs
 
-- **In:** the merged LLM model (04) + decoded rows (01).
+- **In:** the LoRA adapter (04) run on **HF Transformers** (the reference runtime, FT-D23) + decoded rows (01).
 - **Out:** pass@k per tier; the learnable pool; optionally an RL adapter; RFT data.
 
 ## Verification
