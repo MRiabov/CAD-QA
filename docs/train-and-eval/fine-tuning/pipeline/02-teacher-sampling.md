@@ -52,13 +52,12 @@ OPENROUTER_API_KEY=... uv run python train_and_eval/train/rejection_sample.py \
 - **Q1.** Coverage gate grain. *Direction:* the gate is the **dataset release report projected onto the
   sampling log** (consume the intended-family/hop/scope universe from `intended_family_coverage_report` +
   `release_balance_report`; reuse `_prompt_family()`; report `passes_*_sampling_coverage`) — not a new
-  taxonomy. *Open:* key an agent training trace by the row's **primary measurement scope**, or **expand** each row into
-  every `(relation_family × measurement_scope)` membership (a fatter universe)? Decide from (1) the
-  money/time cost of an extra ~1,000 traces (teacher calls + GPU train/eval — **GPU-class-dependent**: an
-  **A100** vs a **B300** changes wall-clock, hourly rate, and batch/serving throughput; vendor
-  comparisons put the B300 at ~7x A100 BF16 compute, ~3.6x memory, ~4.1x bandwidth) and (2) the
-  incremental gain, measured first on the **small test GPU** (Modal, per-second billing, free credits)
-  and only then scaled to A100/B300. **Provisional: scope to the lower universe (primary scope)** until
-  those numbers exist, stated per GPU class.
+  taxonomy. *Open:* key an agent training trace by the row's **primary measurement scope**, or **expand**
+  each row into every `(relation_family × measurement_scope)` membership (a fatter universe)? This is a
+  **gain** question, not a cost one: extra traces are cheap (~$20–50 per 1,000; `../training.md` §5.3), so
+  decide on (1) the **incremental gain**, measurable only if the evaluation datasets cover the extra
+  combinations, and (2) whether those combinations are **learnable** (FT-D15/Bridge). **Provisional: scope
+  to the lower universe (primary scope)** until a measurable gain appears; measure first on the small test
+  GPU (Modal, per-second, free credits), then scale.
 - **Q2.** Teacher settings (temperature, attempts per row). The recorded **~23% success rate was the v4
   preview**; v4.1 is materially stronger, so re-measure success and per-combination coverage.
