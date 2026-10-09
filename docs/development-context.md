@@ -53,6 +53,35 @@ release (`dataset/`), Harbor export (`harbor.py`), CLI (`cli.py`).
 The 12-row result is directionally encouraging but statistically unusable; do not quote it
 as a headline number.
 
+## Tool-call and answer-submission format churn
+
+Answer submission was changed twice in the Aug-2026 push, and the first choice was
+**incompatible with the base LLM model's pretrained tool tokens**. Recorded because this is a
+recurring failure mode, not a one-off.
+
+- **Foreign JSON envelope (first SFT).** The first agent training traces and the eval harness
+  taught an OpenAI-style JSON tool-call envelope, which the gemma-4 base LLM model was not
+  pretrained to emit. The base LLM model rambled and rarely produced a parseable call;
+  held-out accuracy on the 12-row set was 16.7%
+  ([FT-D3](train-and-eval/fine-tuning/decisions.md#ft-d3--native-gemma-tool-call-format-not-an-openai-json-envelope)).
+- **Native format (fix).** Rendering the base LLM model's own tool-call tokens
+  (`<|tool_call>call:<name>{args}<tool_call|>`, `<|tool_response|>`) raised the same 12-row
+  accuracy to 50% / 58.3% tool-valid (`experiments/`, `_archive/agent_handoff_2026-08-09.md`).
+- **`json` is not generic JSON.** The `json` Answer format maps to `submit_workplane`, a CadQuery workplane tool
+  (`train_and_eval/tool_calls.py::FORMAT_TO_TOOL`), so "answer as JSON" is misleading in the contract
+  ([FT-D4](train-and-eval/fine-tuning/decisions.md#ft-d4--one-typed-submit-tool-per-answer-format)).
+- **`boolean` is declared but unrouted.** `boolean` is listed as an Answer format in
+  `glossary.md` but has no entry in the typed tool contract, so a boolean CAD-QA dataset row
+  would fail at load or eval
+  ([open question](train-and-eval/fine-tuning/pipeline/01-rows-loader.md#open-questions)).
+
+**Lesson.** The answer-submission format is a property of the base LLM model, not of CAD-QA. It
+must be re-derived for each base LLM model and cannot be assumed to transfer. For LFM2.5 the
+native tokens are `<|tool_call_start|>` / `<|tool_call_end|>` with **Pythonic** calls by default
+(JSON only when the system prompt asks), so the gemma `<|tool_call>` rendering does not carry
+over ([FT-D11](train-and-eval/fine-tuning/decisions.md#ft-d11--start-phase-3-on-the-liquid-ai-lfm25-stack);
+Liquid tool-use docs).
+
 ## Assumed or unverified
 
 - `[unverified]` **vLLM.** The engine loads a hand-converted checkpoint (weight rename plus
@@ -96,6 +125,11 @@ as a headline number.
    fairly judge an answer. Needs a clarification pass (rewrite to unambiguous wording, then
    re-render and re-check) before the benchmark is frozen. Tracked in
    `_audit/owner-audit-todo.md` (E5).
+9. **Fine-tuning surface is being replaced.** Most of `train_and_eval/` — teacher, rejection
+   sampling, agent training trace normalization, SFT, GRPO, evaluation, serving — is expected to
+   be deleted in Phase 3, keeping only the rows loader and the typed tool/answer contract
+   ([FT-D12](train-and-eval/fine-tuning/decisions.md#ft-d12--the-phase-3-rewrite-retains-only-the-loader-and-the-typed-tool-contract)).
+   The component list above is the 2026-08 state, not the target.
 
 ## Environment
 

@@ -71,6 +71,21 @@ ships QAT profiles (including `gguf_q4_0`/`gguf_q8_0`) and GGUF export through a
 checkout; and evaluates with lmms-eval. The intended loop is train on GPU (torch/vLLM) →
 quantize to GGUF → serve on llama.cpp. `[assumed]` — we have not run it.
 
+**The format contract is shipped too (checked 2026-10-08).** `docs.liquid.ai/lfm/key-concepts/`
+documents the LFM2 ChatML-like chat template, the native tool-call tokens
+(`<|tool_call_start|>`/`<|tool_call_end|>`; LFM2 additionally `<|tool_list_*|>` and
+`<|tool_response_*|>`), Pythonic-by-default calls with a JSON mode selected by a system-prompt
+phrase, and reference generation settings; `docs.liquid.ai/lfm/fine-tuning/datasets` documents
+the SFT (`messages`), DPO (`prompt`/`chosen`/`rejected`), GRPO (prompt-only), and tool-calling
+dataset shapes that `liquid-finetune` validates. This makes the "batteries" claim concrete: the
+tool/format contract is inherited, not hand-rolled — the exact axis where the Aug-2026 gemma
+work burned effort (`development-context.md`, "Tool-call and answer-submission format churn").
+It also sharpens the lock-in caution below: the CAD-QA `submit_*` answer tools must be
+re-authored for these tokens and are not portable. (The docs briefly showed the repo as
+`leap-finetune`; Liquid renamed it to `Liquid4All/liquid-finetune` on 2026-10-08.) LFM2/LFM2.5
+checkpoints ship in `bfloat16`; 4-bit GGUF (including the QAD Q4_0 checkpoints, ~97% of BF16)
+are separate deployment artifacts, so training is done on the bf16 base LLM model.
+
 **Adoption interest.** Candidate base pipeline for Phase 3; could replace or complement the
 current unsloth/trl gemma-4-E2B stack (FT-D1).
 
@@ -144,6 +159,15 @@ answer 44 of 111 [11]; and NoReGeo reports that fine-tuning alone does not confe
 geometric understanding [12]. For CAD-QA's hard (3+ hop) slice, a small base LLM model faces a
 capability ceiling, so "little gain" may be the task rather than the tuning.
 
+**Method and corpus choice for tool calling (2026).** A controlled study across six Qwen3 sizes
+(0.6B–32B) compared SFT with LoRA, GRPO, and SFT-then-GRPO on three public tool-calling corpora
+(`xLAM/APIGen 60k`, `ToolACE`, `Glaive-FC-v2`) [19]. SFT with LoRA was strongest in 15 of 18
+in-distribution settings; GRPO and SFT-then-GRPO rarely beat it and sometimes fell below
+zero-shot. Two findings matter here: **training-corpus choice moved accuracy by up to 55 points**,
+as much as the method, and a **uniform mixture** was the best cross-dataset transfer default. It
+also found **LoRA beat full fine-tuning** at 4B (88.0% vs 80.4% on `xLAM`), read as LoRA better
+preserving pretrained tool use.
+
 **Implication for CAD-QA.** The external evidence says a base-LLM-model swap should not be
 expected to fix a recipe/data wall. Fix the recipe first (prompt-masked SFT, bounded epochs,
 SFT→RL ordering, difficulty-aligned data, a teacher that clears the task) and then, if still
@@ -154,6 +178,51 @@ Gemma 4 E2B/E4B to stay in today's family with native tool tokens. Cheapest expe
 the agent training trace set and recipe fixed, swap 3–4 bases, evaluate on the same held-out
 1-hop slice, and report accuracy, entropy, and completion length — this separates the base
 variable from the recipe variable.
+
+### Building a proper SFT→RL system (2026)
+
+**Status:** recorded 2026-10-08 from a targeted pass on RL post-training for small tool-calling
+LLM models. Motivated by the question "will a raw SFT-then-GRPO run work here". The answer is
+**no as-is**, and the fix is a system (`plans/oct-8/fine-tuning-system-plan.md`).
+
+**GRPO needs something left to learn.** A controlled web-agent study [20] establishes a *null*:
+GRPO adds no credible gain on tasks the supervised LLM model has already mastered, and 22 points
+where the reward is reachable by sampling; the failure is learning-rate-gated at the weights. This
+is the mechanism behind CAD-QA's recorded GRPO hop-2 collapse — a group whose rollouts all pass or
+all fail has zero advantage, so the gradient is zero. Two results turn this into a rule: keep only
+informative prompt groups (DAPO's dynamic sampling, [23]) and aim the training distribution at the
+**pass-rate band around 0.5** (the ~0.25–0.75 intermediate-difficulty band maximizes reward
+variance, which lower-bounds the reverse KL and thus learnability, [21]; 50% pass rate maximizes
+reward entropy and group-filter survival, and a 1/8 or 7/8 group carries about half the per-rollout
+information, [22]). Consequence: gate RL on a measured **pass@k** per difficulty tier.
+
+**SFT+RL can fail outright, not just underperform.** BREAD [26] shows the SFT+RL recipe fails
+completely when the expert's training traces are too difficult for the small LLM model to express,
+or when the initialization has exponentially sparse rewards — both live risks on CAD-QA's hard
+hops. The mitigations are a Bridge that rewrites hard teacher training traces into learnable
+supervision [8] and a sampling gate that refuses to run RL on an unreachable tier.
+
+**The reward scorer is the objective, so audit it.** `Where the Verifier Fails` [24] audits the
+scorer rather than the LLM model over 307,420 verdicts: self-agreement on identical inputs ranges from
+53.8% to 95.2%, and two configurations of the *same* library disagree on 49.9% of pairs; a numeric
+cascade accepts off-by-one answers as a scale-dependent step function. This makes CAD-QA's three
+divergent scorers (TA-A3) a P0 gate before RL, and the equivalent-answer metamorphic fixture the
+right TA-A2 test. Reward hacking is the companion risk: hacking is often implicit and emerges
+gradually before dominating [28], and a dense heuristic reward layered on a sparse verifiable one
+is actively hacked unless the shaping is optimality-preserving (GRM/ADOPS, [27]).
+
+**Sampling may beat RL at this scale.** SFT with sampling can outperform on-policy RL and
+self-distillation on new-task generalization *and* prior-capability retention [25]. For a
+single-GPU thesis this is the cheapest path: after SFT, sample k rollouts per prompt, keep the
+correct ones, and fine-tune again (rejection-sampling SFT) — with GRPO reserved for tiers that
+remain reachable-but-unmastered.
+
+**Implication for CAD-QA.** Do not run a raw SFT→GRPO. Run **Stage 0** one-scorer + off-oracle
+audit, **Stage 1** difficulty-aligned SFT with a Bridge for hard traces, **Stage 2** a pass@k
+sampling gate that also produces rejection-sampling SFT data, and **Stage 3** GRPO with dynamic
+sampling only on learnable tiers, in a sandbox, with rollout logging. `liquid-finetune` already
+ships SFT, GRPO (TRL v1 `GRPOTrainer`), a `rewards/` callable registry, and an optional OpenEnv
+multiturn block, so the whole loop stays in one stack on Modal.
 
 ### References
 
@@ -230,6 +299,39 @@ reference never stands alone for a load-bearing claim.
     Evaluation and Optimization of Small Language Models for Agentic Tasks on Edge Devices',
     arXiv:2511.22138. `arxiv.org/abs/2511.22138`. `[preprint]`. Note:
     `research/2025-tinyllm-agentic-edge.md`.
+19. Laskar, M.T.R., Fu, X.-Y. and Shashi Bhushan, T.N. (2026) 'SFT or RL for Tool-Calling Agents?
+    A Controlled Study Across Data, Method, and Scale', arXiv:2609.17848.
+    `arxiv.org/abs/2609.17848`. `[preprint]`. Note:
+    `research/2026-sft-vs-rl-tool-calling.md`.
+20. (2026) 'A Learning-Rate-Gated Failure of GRPO in a Small Language and Vision-Language Model <!-- dont-say: allow -->
+    Web Agent: A Controlled Null and Its Mechanism', arXiv:2607.12640.
+    `arxiv.org/html/2607.12640v1`. `[preprint]`. Note:
+    `research/2026-grpo-null-web-agent.md`.
+21. (2025) 'Online Difficulty Filtering for Reasoning Oriented Reinforcement Learning',
+    arXiv:2504.03380. `arxiv.org/html/2504.03380v2`. `[preprint]`. Note:
+    `research/2025-online-difficulty-filtering-rlvr.md`.
+22. (2026) 'Rollout Pass-Rate Control: Steering Binary-Reward RL Toward Its Most Informative
+    Regime', arXiv:2605.05112. `arxiv.org/pdf/2605.05112`. `[preprint]`. Note:
+    `research/2026-rollout-pass-rate-control.md`.
+23. Yu, Q. et al. (2025) 'DAPO: An Open-Source LLM Reinforcement Learning System at Scale',
+    arXiv:2503.14476. `arxiv.org/abs/2503.14476`. `[preprint]`. Note:
+    `research/2025-dapo-decoupled-clip-dynamic-sampling.md`.
+24. Xin, E. (2026) 'Where the Verifier Fails: A Category-Level Audit of Reward Signals in RLVR', <!-- dont-say: allow -->
+    arXiv:2609.01354. `arxiv.org/abs/2609.01354`. `[preprint]`. Note:
+    `research/2026-where-the-verifier-fails.md`.
+25. (2026) 'Finetuning with Sampling: SFT Learns Better Than You Think', arXiv:2610.02140.
+    `arxiv.org/html/2610.02140`. `[preprint]`. Note: `research/2026-finetuning-with-sampling.md`.
+26. (2025) 'BREAD: Branched Rollouts from Expert Anchors Bridge SFT & RL for Reasoning', NeurIPS
+    2025 poster 118358; OpenReview `forum?id=NUDaln2vCe`. `[peer-reviewed]`. Note:
+    `research/2025-bread-branched-rollouts.md`.
+27. Forbes, G.C., Villalobos-Arias, L., Wang, J., Jhala, A. and Roberts, D.L. (2026) 'Preventing
+    Process Reward Model Hacking When Training Large Language Models on Verifiable Rewards', <!-- dont-say: allow -->
+    AAMAS 2026 (extended abstract). doi: `10.65109/BWFN6920`. `[workshop]`. Note:
+    `research/2026-prm-reward-hacking-aamas.md`.
+28. Wang, S., Pham, Q.H., Yin, F., Wang, X., Chen, J.Q., Durrett, G. and Ye, X. (2026) 'Detecting
+    and Suppressing Reward Hacking with Gradient Fingerprints', COLM 2026. arXiv:2604.16242.
+    `arxiv.org/pdf/2604.16242`. `[peer-reviewed]`. Note:
+    `research/2026-gradient-fingerprints-reward-hacking.md`.
 
 ## Resolved questions
 

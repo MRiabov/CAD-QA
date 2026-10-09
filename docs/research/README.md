@@ -51,3 +51,13 @@ The `Ref` column matches the numbered references in `../prior-art.md`.
 | [16] | `[peer-reviewed]` | Small Models, Big Tasks: small LLM models for function calling | EASE 2025 (ACM) | `2025-small-models-big-tasks-function-calling.md` | fine-tuning works; output-format adherence is the weakness |
 | [17] | `[peer-reviewed]` | Berkeley Function Calling Leaderboard (BFCL) | ICML 2025 | `2025-berkeley-function-calling-leaderboard.md` | the academic tool-calling benchmark |
 | [18] | `[preprint]` | TinyLLM: small LLM models for agentic tasks on edge devices | arXiv (2025) | `2025-tinyllm-agentic-edge.md` | 1–3B is the useful band; <1B falls off |
+| [19] | `[preprint]` | SFT vs RL for tool-calling agents, controlled across data/method/scale | arXiv (2026) | `2026-sft-vs-rl-tool-calling.md` | SFT+LoRA strongest; corpus choice matters as much as the method |
+| [20] | `[preprint]` | GRPO adds no gain on mastered tasks; gains where reward is reachable by sampling | arXiv (2026) | `2026-grpo-null-web-agent.md` | why the recorded GRPO collapse happened; gate RL on reachability |
+| [21] | `[preprint]` | Online difficulty filtering for reasoning-oriented RLVR | arXiv (2025) | `2025-online-difficulty-filtering-rlvr.md` | reward variance = learnability; keep the ~0.25–0.75 pass-rate band |
+| [22] | `[preprint]` | Rollout pass-rate control for binary-reward RL | arXiv (2026) | `2026-rollout-pass-rate-control.md` | 50% pass rate maximizes signal; skewed groups are weak |
+| [23] | `[preprint]` | DAPO: decoupled clip and dynamic sampling | arXiv (2025) | `2025-dapo-decoupled-clip-dynamic-sampling.md` | drop all-pass/all-fail groups; entropy and overlong shaping |
+| [24] | `[preprint]` | Where the reward scorer fails: category-level audit of RLVR reward signals | arXiv (2026) | `2026-where-the-verifier-fails.md` | scorer self-agreement as low as 53.8%; audit before RL |
+| [25] | `[preprint]` | Finetuning with sampling: SFT learns better than you think | arXiv (2026) | `2026-finetuning-with-sampling.md` | sampling SFT can beat on-policy RL on generalization and retention |
+| [26] | `[peer-reviewed]` | BREAD: branched rollouts bridge SFT and RL | NeurIPS 2025 | `2025-bread-branched-rollouts.md` | SFT+RL fails when traces are too hard or rewards too sparse |
+| [27] | `[workshop]` | Preventing process-reward hacking on verifiable rewards | AAMAS 2026 | `2026-prm-reward-hacking-aamas.md` | dense reward terms are hacked unless optimality-preserving |
+| [28] | `[peer-reviewed]` | Detecting and suppressing reward hacking with gradient fingerprints | COLM 2026 | `2026-gradient-fingerprints-reward-hacking.md` | hacking is implicit; detect early, use counterfactuals |
