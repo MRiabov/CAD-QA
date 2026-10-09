@@ -26,7 +26,7 @@ A **phase-2-only fallback** applies if phase 1 shows no measured phase-end gain.
 
 ## Inputs / outputs
 
-- **In:** Liquid `messages` SFT JSONL (03).
+- **In:** Liquid `messages` SFT set (03).
 - **Out:** a LoRA **adapter**, then a **merged LLM model** (merge step to be scripted; FT-D12).
 
 ## Verification

@@ -21,7 +21,7 @@ procedure, grading reconciliation, judge independence, baselines).
 
 **Shared interfaces, single-sourced:**
 
-- **Format contract** (Liquid `messages` SFT JSONL) — owned by the architecture doc.
+- **Format contract** (Liquid `messages` SFT set) — owned by the architecture doc.
 - **`TrainingExample` + converter** — owned by the system doc.
 - **Evaluation datasets** — the procedure is owned by the evaluation doc; the dataset rows are produced and
   held here.
@@ -370,7 +370,7 @@ only the dataset:
 
 | Item | Tier | Rationale |
 |---|---|---|
-| `TrainingExample` record + Liquid `messages` JSONL converter (owned by the system plan) | **P0** | the only custom data code we should need; cookbook-compatible |
+| `TrainingExample` record + Liquid `messages` set converter (owned by the system plan) | **P0** | the only custom data code we should need; cookbook-compatible |
 | Registry with pinned revisions, licenses, and dates | **P0** | reproducibility, the license audit, and the 2025+ freshness policy |
 | `mixed_dataset_general_and_easy_cadqa` data build (general tasks + low-hop `learn_the_cadqa_task`) | **P0** | feeds the first run |
 | Contamination + dedup pass against CAD-QA held-out and evaluation datasets | **P0** | held-out hygiene; a leak invalidates the thesis number |
@@ -438,7 +438,7 @@ only the dataset:
 ## 10. Immediate next step (data)
 
 1. Write the `TrainingExample` record + converter (P0), reusing the surviving `rows_loader.py` and
-   the typed definitions in `tool_calls.py`; emit Liquid's `messages` JSONL.
+   the typed definitions in `tool_calls.py`; emit Liquid's `messages` set.
 2. Build `mixed_dataset_general_and_easy_cadqa` (general tasks + low-hop `learn_the_cadqa_task`) from
    permissive sources, with the registry/quality/dedup pass (`system.md` §7).
 3. Hand the artifact to the training doc's cookbook run for the `emit_our_tool_call_format` evaluation dataset.

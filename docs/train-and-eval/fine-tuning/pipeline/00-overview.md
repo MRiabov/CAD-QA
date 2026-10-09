@@ -24,7 +24,7 @@ dataset file (immutable CAD-QA rows)
 [03 preparation]  registry → ingest/normalize (`TrainingExample`) → quality → dedup/contamination
                   → sample/mix (the progressive curriculum)
       │
-      ▼  Liquid `messages` SFT JSONL + manifest
+      ▼  Liquid `messages` SFT set + manifest
 [04 SFT]  phase 1 (general thirds + easy) → phase 2 (task + preserve)
       │
       ▼  adapter → merged LLM model
@@ -46,8 +46,8 @@ table.
 |---|---|---|---|
 | 01 rows-loader | CAD-QA dataset file (`rows.parquet`) | decoded CAD-QA dataset rows | `01-rows-loader.md` |
 | 02 teacher-sampling | decoded rows | agent training traces (`learn_the_cadqa_task`) + sampling log | `02-teacher-sampling.md` |
-| 03 preparation | traces + External datasets | `TrainingExample` set → Liquid `messages` SFT JSONL + manifest | `../system.md` §7 |
-| 04 SFT | Liquid `messages` JSONL | LoRA adapter → merged LLM model | `../training.md` §4 |
+| 03 preparation | traces + External datasets | `TrainingExample` set → Liquid `messages` SFT set + manifest | `../system.md` §7 |
+| 04 SFT | Liquid `messages` set | LoRA adapter → merged LLM model | `../training.md` §4 |
 | 05 sampling gate | merged LLM model | pass@k per tier (RL deferred, conditional on the gate) | `../system.md` §2–§3 |
 | 06 evaluation | trained LLM model + evaluation datasets | scores per evaluation dataset | `../../evaluation/plan.md` |
 | 07 serving | merged LLM model | GGUF / vLLM checkpoint | `07-serving-vllm.md` |
@@ -63,13 +63,13 @@ There is more than one dataset; each has one role (glossary).
 - **`TrainingExample` set** — the typed training records produced by 03.
 - **Mixed training dataset** — the `{dataset_role → weight}` blend we **train on**
   (`mixed_dataset_<composition>`); we almost always load a Mixed training dataset, not raw External
-  datasets. Materialized to Liquid `messages` JSONL for the run.
-- **Liquid `messages` SFT JSONL** — the on-disk training artifact (03 → 04).
+  datasets. Materialized to Liquid `messages` set for the run.
+- **Liquid `messages` SFT set** — the on-disk training artifact (03 → 04).
 - **Evaluation datasets** — the datasets that serve H1–H4, hard-excluded from training (06).
 
 ## Shared interfaces (single-sourced)
 
-- **Format contract** (Liquid `messages` SFT JSONL, native tool tokens) — `../training.md`.
+- **Format contract** (Liquid `messages` SFT set, native tool tokens) — `../training.md`.
 - **`TrainingExample` + converter** — `../system.md` §7.
 - **Evaluation datasets + the one scorer** — `../../evaluation/plan.md`.
 - **H1–H4** — `../training.md` §1 and `../../evaluation/plan.md` §5.1.
@@ -89,7 +89,8 @@ There is more than one dataset; each has one role (glossary).
 
 ## Open questions
 
-- **Q1.** The on-disk artifact is Liquid's `messages` SFT JSONL; confirm `liquid-finetune`'s validator
-  accepts our `submit_*` tool declarations unchanged (`../training.md` Q2).
+- **Q1.** The on-disk artifact is a Liquid `messages` SFT set; confirm `liquid-finetune`'s validator
+  accepts our `submit_*` tool declarations unchanged, and that it accepts a Parquet path (container is
+  Parquet-preferred; `../training.md` §4).
 - **Q2.** Does the data campaign stay in one tracked environment, or split SFT and serving
   (`../../../../plans/oct-8/trust-audit.md` Q3)?

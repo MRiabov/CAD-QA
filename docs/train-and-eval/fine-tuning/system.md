@@ -207,8 +207,9 @@ both TRL and verl and provides Sandboxes for rollout isolation, so either path f
 
 ## 7. Data preparation (the record and the converter)
 
-**The on-disk training artifact is Liquid's `messages` SFT JSONL** — the format the cookbook and
-`liquid-finetune` validate (the architecture doc owns that contract). `TrainingExample` is the
+**The on-disk training artifact is a Liquid `messages` SFT set** — the `messages` schema the cookbook
+and `liquid-finetune` validate (the architecture doc owns that contract). `messages` is a **schema,
+not a container** (Parquet preferred / JSONL fallback; `../training.md` §4). `TrainingExample` is the
 typed CAD-QA-side record; a small **converter** turns it into the cookbook format. Do not grow this
 schema or the converter beyond what the mix and the evaluation datasets need.
 
@@ -216,7 +217,7 @@ schema or the converter beyond what the mix and the evaluation datasets need.
 |---|---|
 | `id` (`str`) | stable, content-hashed |
 | `dataset_role` (`DatasetRole`, StrEnum) | `emit_our_tool_call_format`, `run_the_tool_call_loop`, `preserve_general_math_and_code_reasoning`, `expose_general_python_code`, `expose_cadquery_programs`, `learn_the_cadqa_task` |
-| `messages` (`list[ChatMessage]`) | the conversation; `ChatMessage{role, content, tool_calls?}` maps 1:1 to Liquid's SFT JSONL |
+| `messages` (`list[ChatMessage]`) | the conversation; `ChatMessage{role, content, tool_calls?}` maps 1:1 to Liquid's `messages` schema |
 | `source_id` (`str`) | HF repo or internal artifact |
 | `source_revision` (`str`) | **commit hash**, not a branch/config name |
 | `license` (`str`) | e.g. `apache-2.0`, `agpl-3.0`, `cc-by-4.0` |

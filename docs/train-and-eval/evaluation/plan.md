@@ -17,7 +17,7 @@ Single-sourcing the scorer is what makes the thesis number mean anything.
 
 **Shared interfaces, single-sourced:**
 
-- **Format contract** (Liquid `messages` SFT JSONL, and the native tool-call tokens) — owned by
+- **Format contract** (Liquid `messages` SFT set, and the native tool-call tokens) — owned by
   `../fine-tuning/training.md`.
 - **`TrainingExample` + converter** — owned by `../fine-tuning/system.md`.
 - **Evaluation-dataset procedure** — owned here; the dataset rows are produced and held by the data doc.

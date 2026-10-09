@@ -18,7 +18,7 @@ and baselines.
 
 **Shared interfaces, single-sourced:**
 
-- **Format contract** (Liquid `messages` SFT JSONL and the native tool-call tokens) — owned here.
+- **Format contract** (Liquid `messages` SFT set and the native tool-call tokens) — owned here.
 - **`TrainingExample` + converter** — owned by the system plan.
 - **Evaluation-dataset procedure** — owned by the evaluation doc; dataset rows held by the data doc.
 - **H1/H2** — owned here; the mixes they test are defined by the data doc.
@@ -133,7 +133,7 @@ Rules for the whole effort:
 - **Do not write a trainer.** Use `liquid-finetune` configs (`TrainingConfig(extends="DEFAULT_SFT")`,
   `PeftConfig(extends="DEFAULT_LORA")`); override only `model_name` and the dataset path until a
   measured result says otherwise.
-- **Do not invent a dataset format.** Consume Liquid's `messages` SFT JSONL. The repo's
+- **Do not invent a dataset format.** Consume Liquid's `messages` SFT set. The repo's
   `rows_loader` and `tool_calls` typed contract are the converter's input, not a parallel schema
   (the converter is owned by the data doc).
 - **Do not hand-convert checkpoints.** Use the cookbook's merge + GGUF export
@@ -188,10 +188,12 @@ is the important artifact here. Pipeline stages 1–5 are owned by the system pl
        \___________ system plan __________/          \_____ this doc _____/   \_ eval doc _/
 ```
 
-**The on-disk training artifact is Liquid's `messages` SFT JSONL** — the format the cookbook and
-`liquid-finetune` validate.
+**The on-disk training artifact is a Liquid `messages` SFT set** — the `messages` schema the cookbook
+and `liquid-finetune` validate. `messages` is a **schema, not a container**: the cookbook ships JSONL,
+but Parquet loads through HF `datasets` and is preferred (DD-06) — confirm `liquid-finetune` accepts a
+Parquet path (open question).
 
-6. **Convert (do not hand-render).** Emit Liquid's `messages` SFT JSONL and let the cookbook /
+6. **Convert (do not hand-render).** Emit Liquid's `messages` SFT set and let the cookbook /
    `liquid-finetune` apply the chat template and tokenization. The native tool-call spelling is
    base-specific and must be re-derived, never reused (FT-D3; the format churn in
    `../../development-context.md`). For LFM2.5: ChatML-like template (`<|startoftext|>`,
