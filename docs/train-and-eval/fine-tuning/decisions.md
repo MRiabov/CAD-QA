@@ -346,7 +346,8 @@ whose rationale was not recoverable.
   - The shipped DSpark draft targets the **base** LLM model; after LoRA SFT + merge the target drifts and
     acceptance falls, so any speedup is re-measured post-SFT, not assumed.
   - DSpark is served by **SGLang** (GPU) and **llama.cpp** (GGUF/CPU), not vLLM; adopting it would move
-    the serving runtime to SGLang. Adopt only if evaluation throughput measurably matters.
+    the serving runtime to SGLang. Adopt only if evaluation **or rollout** throughput measurably matters
+    (rollouts are inference too — but see Q4: our RL default is vLLM).
   - Other classical-by-2026 optimizations are already in the recipe (LoRA-bf16, grad checkpointing +
     accumulation, packing, FlashAttention) or not applicable at 2.6B dense (MoE sharding); QLoRA stays a
     fallback (FT-D11). Detail: `pipeline/07-serving.md`, `training.md` §5.
@@ -362,3 +363,9 @@ whose rationale was not recoverable.
   "`preserve_general_math_and_code_reasoning` earns a place") with no FT-D label, because `data.md` is
   a design doc, not a step doc. Should they become FT-D entries here (the feature-wide decision home),
   or stay in `data.md`? `[open]`
+- **Q4.** DSpark during **rollout-heavy** serving (the pass@k gate, GRPO). Rollouts are inference, so a
+  lossless speculator would help the decode-bound `k × prompts` workload; but our RL default is
+  `liquid-finetune` GRPO on **vLLM**, and DSpark is **SGLang/llama.cpp** only, so it needs the
+  **verl + SGLang** escalation (`../system.md` §6). The draft also targets the **base** and is never
+  updated, so acceptance decays as the RL policy drifts. Resolve: does verl + SGLang + DSpark actually
+  run our rollouts, and what is the acceptance/speedup on the SFT policy and over an RL run? `[open]`
