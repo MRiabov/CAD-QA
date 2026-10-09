@@ -89,7 +89,7 @@ Presently, the relevant literature in the field of LLM and CAD modeling is split
 
 \subsection{LLMs for CAD: Text-, Image- and Mesh reconstruction}
 
-The most prominent line of work in our field are Text2CAD, and Image2CAD, and Mesh2Cad tuned reconstruction LLM models (Rukhovich et al., 2025). This is useful for the field of science as it provides a means of generating substantial SFT-training data. Works such as ``Text2CAD'' (Khan et al., 2024) generate CAD designs from text prompts; CADBench (Doris et al., 2026) is a benchmark advancing generation of CAD models; BenchCAD (Zhang et al., 2026) is a fresh benchmark asking to generate and edit CAD programs. \textit{cadrille} (Kolodiazhnyi et al., 2026), CADEvolve (Elistratov et al., 2026), and CADENA (Kabisov et al., 2026) benchmarks test reconstruction of CadQuery models from parts. However, none are asking to e.g.\ find a relationship between the two geometrical primitives which (by our preliminary tests) leads to the model emitting many more reasoning tokens than expected.
+The most prominent line of work in our field are Text2CAD, and Image2CAD, and Mesh2Cad tuned reconstruction LLM models (Rukhovich et al., 2025). This is useful for the field of science as it provides a means of generating substantial SFT-training data. Works such as ``Text2CAD'' (Khan et al., 2024) generate CAD designs from text prompts; CADBench (Doris et al., 2026) is a benchmark advancing generation of CAD models; BenchCAD (Zhang et al., 2026) is a fresh benchmark on programmatic CAD that asks models to generate and edit CAD programs and to answer numeric questions about a given CadQuery program. \textit{cadrille} (Kolodiazhnyi et al., 2026), CADEvolve (Elistratov et al., 2026), and CADENA (Kabisov et al., 2026) benchmarks test reconstruction of CadQuery models from parts. However, none are asking to e.g.\ find a relationship between the two geometrical primitives which (by our preliminary tests) leads to the model emitting many more reasoning tokens than expected.
 
 They build on datasets such as CADEvolve, DeepCAD (Elistratov et al., 2026; Wu et al., 2021) which generate geometry procedurally or via a LLM, which we build on too.
 
@@ -111,6 +111,35 @@ CADTestBench (Mallis et al., 2026) can be notably close to ours --- it verifies 
 \subsection{Research Niche}
 
 As such, we survey the field and find that existing benchmarks evaluate models' reconstruction abilities, simple comprehension or question answering, but rarely dig deeper on model mathematics capabilities or deriving complex relationships between CAD parts in code. Nor they evaluate - or provide means to measure the shortest required reasoning for solving the problem. The problems are also relatively ``clean'' - one-step tasks that don't require discerning real-world noise or larger problems. These are three problems that we aim to improve on.
+
+Table~\ref{tab:related} compares CAD-QA with the closest prior work. The differentiators are reasoning depth (up to ten hops), a code-only setting, exact verifiable answers, and a hop-labelled curriculum.
+
+\begin{table}[h]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{Comparison of related CAD and geometry-reasoning benchmarks.}
+\label{tab:related}
+\begin{tabular}{p{2.2cm}p{2.2cm}p{3.4cm}p{2.2cm}p{0.9cm}p{2.3cm}}
+\hline
+Work & Task & Input $\to$ output & Grading & Max hops & Curriculum / critical path \\
+\hline
+DeepCAD (Wu et al., 2021) & CAD generation & command sequences $\to$ shape & reconstruction error & --- & no \\
+Text2CAD (Khan et al., 2024) & text-to-CAD generation & text $\to$ CAD sequence & similarity / validity & --- & no \\
+CAD-Recode (Rukhovich et al., 2025) & reverse engineering & point cloud $\to$ CadQuery code & code + geometry match & --- & no \\
+cadrille (Kolodiazhnyi et al., 2026) & reconstruction (RL) & image / points $\to$ CAD code & geometry match & --- & no \\
+CADEvolve (Elistratov et al., 2026) & corpus + reconstruction & CAD program $\to$ CAD program & geometry match & --- & no \\
+CADENA (Kabisov et al., 2026) & stepwise reverse engineering & shape $\to$ CAD code & stepwise match & --- & no \\
+CADBench (Doris et al., 2026) & generation benchmark & image / text $\to$ CAD program & geometric metrics & --- & no \\
+CADTestBench (Mallis et al., 2026) & test-verified text-to-CAD & text $\to$ CAD program & executable tests & 2--3 & no \\
+DesignQA (Doris et al., 2025) & engineering-doc VQA & document $\to$ short answer & accuracy & --- & no \\
+SiT-Bench (Guo et al., 2026) & spatial intelligence & scene text $\to$ answer & accuracy & --- & no \\
+Real-3DQA (Ma et al., 2026) & 3D spatial relations & scene text $\to$ answer & accuracy & --- & no \\
+BenchCAD (Zhang et al., 2026) & generation, edit, numeric QA & image / CadQuery code $\to$ program / number & IoU, ratio accuracy & 1--2 & no \\
+\textbf{CAD-QA (ours)} & code-only geometry reasoning & CadQuery code $\to$ structured answer & exact match & \textbf{0--10} & hop curriculum + critical path \\
+\hline
+\end{tabular}
+\end{table}
 
 \section{Research Methods \& Specifications}
 
