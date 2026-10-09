@@ -204,8 +204,11 @@ owns stage 9):
 
 1. **Registry.** Dataset id, revision hash, license, role, size, field mapping. The data doc's
    governance section owns the policy; a source without a pinned revision does not enter.
-2. **Ingest + normalize.** Map each source into `TrainingExample`. Record reasoning, visible
-   output, and tool calls **distinctly** (A5). Fail loudly on unknown fields.
+2. **Ingest + normalize.** Pull a **bounded subset** of each external source — stream, select
+   shards, or filter rows at the pinned revision, never materialize a whole multi-million-row
+   corpus to keep a few thousand — then map it into `TrainingExample`. Record reasoning, visible
+   output, and tool calls **distinctly** (A5). Record the selection rule and seed for the manifest.
+   Fail loudly on unknown fields.
 3. **Quality gate.** Schema validation; secrets scrub; length filter; tool-call parse under the
    typed contract (`../../train_and_eval/tool_calls.py::tool_call_matches` semantics); language
    filter; plus the Home Assistant contamination gates (benchmark blocklist, exact/substring,

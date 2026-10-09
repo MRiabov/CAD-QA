@@ -205,7 +205,10 @@ Rationale and tradeoffs:
 - **`cadqa_hop` weight is a placeholder.** Until its generation is planned (§6), `mix-full` is not
   runnable; `mix-format` is runnable immediately from public data and is the first GPU spend.
 - **Sample, don't ingest wholesale.** Cap each source (e.g. 5–20k examples) by quality score and
-  dedup; xLAM and TeichAI both report that quality beats quantity at this size.
+  dedup; xLAM and TeichAI both report that quality beats quantity at this size. **Pull a subset,
+  not the whole corpus** — stream or select shards/rows at the pinned revision instead of
+  downloading a multi-million-row dataset to keep a few thousand; record the selection rule and
+  seed so the manifest reproduces it.
 
 ### 3.1 Corpus size targets
 
