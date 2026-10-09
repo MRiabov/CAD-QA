@@ -1,7 +1,11 @@
 """OpenRouter teacher client for CAD-QA rejection sampling.
 
-Calls deepseek/deepseek-v4-flash with a row prompt + the row's tool schema;
+Calls deepseek/deepseek-v4.1-flash with a row prompt + the row's tool schema;
 returns the completion text and per-call usage/cost for spend monitoring.
+
+Sampling follows the DeepSeek-V4.1-Flash model card: temperature=1.0, top_p=0.95.
+Do NOT lower the temperature for higher success — the card's instruct/agentic
+guidance recommends 1.0.
 """
 from __future__ import annotations
 
@@ -15,7 +19,9 @@ from pydantic import BaseModel, Field
 
 from tool_calls import ToolName, _tool_call_prompt_suffix
 
-DEFAULT_MODEL = "deepseek/deepseek-v4-flash:deepseek"  # pinned to the DeepSeek provider
+DEFAULT_MODEL = "deepseek/deepseek-v4.1-flash:deepseek"  # pinned to the DeepSeek provider
+DEFAULT_TEMPERATURE = 1.0  # DeepSeek-V4.1-Flash model card recommendation
+DEFAULT_TOP_P = 0.95  # DeepSeek-V4.1-Flash model card recommendation
 API_BASE = "https://openrouter.ai/api/v1"
 
 
@@ -41,7 +47,8 @@ class TeacherClient:
         self,
         api_key: str | None = None,
         model: str = DEFAULT_MODEL,
-        temperature: float = 1.0,
+        temperature: float = DEFAULT_TEMPERATURE,
+        top_p: float = DEFAULT_TOP_P,
         max_tokens: int = 8192,
     ) -> None:
         self.api_key = api_key or os.environ.get("OPENROUTER_API_KEY") or _key_from_env_file()
@@ -49,6 +56,7 @@ class TeacherClient:
             raise TeacherError("OPENROUTER_API_KEY not set")
         self.model = model
         self.temperature = temperature
+        self.top_p = top_p
         self.max_tokens = max_tokens
         self.session = requests.Session()
         self.session.headers.update({"Authorization": f"Bearer {self.api_key}"})
@@ -96,6 +104,7 @@ class TeacherClient:
             "model": self.model,
             "messages": messages,
             "temperature": self.temperature,
+            "top_p": self.top_p,
             "max_tokens": self.max_tokens,
         }
         if tools:

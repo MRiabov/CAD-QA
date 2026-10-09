@@ -363,7 +363,7 @@ def main() -> None:
     ap.add_argument("--log", type=Path, default=Path("sampling_log.jsonl"))
     ap.add_argument("--attempts-per-row", type=int, default=5)
     ap.add_argument("--temperature", type=float, default=1.0,
-                    help="teacher sampling temperature (re-sampling runs: use 0.3-0.6 for higher success)")
+                    help="teacher sampling temperature (keep 1.0: DeepSeek-V4.1-Flash model card recommendation)")
     ap.add_argument("--workers", type=int, default=48,
                     help="concurrent sampling threads (IO-bound; OpenRouter rate limits are the bound)")
     ap.add_argument("--seed", type=int, default=3407)

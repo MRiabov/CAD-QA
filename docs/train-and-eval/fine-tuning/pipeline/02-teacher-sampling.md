@@ -124,10 +124,10 @@ coverage gate should exist.
   `docs/_archive/agent_handoff_2026-08-09.md` A3, `json` was 0/113 and `number` 0/71. The sampler can
   emit traces in exactly one format per row, so the student cannot learn a format with no
   teacher success. This is the P0 defect this pipeline stage carries.
-- **Q2.** **Teacher success is temperature-sensitive.** Default `temperature=1.0`
-  (`train_and_eval/teacher.py::TeacherClient.__init__`) yields ~23% success; the handoff
-  recommends 0.3–0.6. There is no default that encodes that recommendation. `[unknown]`
-  whether the recommendation was adopted.
+- **Q2.** **RESOLVED — keep `temperature=1.0`.** The handoff's "use 0.3–0.6 for higher
+  success" advice is stale for the current teacher family. DeepSeek-V4.1-Flash's model
+  card recommends `temperature=1.0, top_p=0.95` for its instruct and agentic evaluations.
+  See [FT-02-R1](#resolved-questions).
 - **Q3.** **`compact_trace` is not a declared tool.** The compactor is prompted to emit a
   `compact_trace` JSON envelope (`_COMPACT_PROMPT`) without that tool being declared to the
   provider. `[unknown]` whether native tool-call enforcement was intended.
@@ -142,7 +142,17 @@ coverage gate should exist.
 
 ## Resolved questions
 
-_(none yet)_
+### FT-02-R1 — `temperature=1.0`, `top_p=0.95` per the DeepSeek-V4.1-Flash model card
+
+- **Status:** resolved (2026-10).
+- **Context:** Q2 flagged the handoff's recommendation to re-sample at 0.3–0.6,
+  which predates the current teacher model.
+- **Resolution:** the [DeepSeek-V4.1-Flash model card](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash)
+  recommends `temperature=1.0, top_p=0.95` for all instruct and agentic evaluations and
+  gives no lower-temperature guidance. The teacher now defaults to `deepseek/deepseek-v4.1-flash`
+  with `temperature=1.0, top_p=0.95` (`train_and_eval/teacher.py::TeacherClient`), and the
+  stale CLI help text was corrected. Low `json`/`number` yield must be addressed with the
+  compute tool, not by lowering temperature.
 
 ## Extra deliverables - P2
 
