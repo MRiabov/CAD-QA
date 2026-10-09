@@ -467,6 +467,7 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | RL-readiness gate | RL-readiness gate | "sampling of what?" |
 | RL-readiness gate | RL-readiness gate | ambiguous |
 | gate (bare) | RL-readiness gate / release gate / phase gate / quality gate / review gate / coverage gate / regression gate / stop gate / forgetting gate / format gate / evaluation gate / test gate / advancement gate / blocking gate / freeze gate / smoke gate / trust-audit gate | name which gate |
+| band | RL-eligible pass rate / range | imprecise; name the RL-eligible pass rate, or the range |
 | kind / kinds | predicate kind | raw noun; name the kind of what |
 | type / types | CAD ontology node type / relation type / answer format / measurement scope / LLM harness mode | raw noun; name the type of what |
 | entity id (in a public answer) (dataset, train_and_eval, tools) | source variable | internal `entity_id` values must not leak into public answers |

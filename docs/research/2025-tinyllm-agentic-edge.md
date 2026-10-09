@@ -28,7 +28,7 @@ TinyLlama, Qwen, and xLAM.
 
 ## Why it matters for CAD-QA
 
-Academic evidence for the useful size band: below ~1B the capability falls off, while 1–3B is
+Academic evidence for the useful size range: below ~1B the capability falls off, while 1–3B is
 competitive on tool calling. Useful when deciding whether a very small base is worth trying, and
 it confirms multi-turn/tool formatting as the hard part rather than single-call mapping.
 

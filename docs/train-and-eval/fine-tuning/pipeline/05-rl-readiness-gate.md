@@ -27,7 +27,7 @@ rollout latency, not SFT sequences/s.
 
 ## RL (deferred, conditional)
 
-- **GRPO with dynamic sampling** (drop all-pass/all-fail groups), pass-rate-band scheduling, sandboxed
+- **GRPO with dynamic sampling** (drop all-pass/all-fail groups), RL-eligible pass-rate scheduling, sandboxed
   rollouts, full rollout logging (FT-D9).
 - **Reward = the one scorer** (`../../evaluation/plan.md` §4), audited before any RL run (FT-D14).
 - **RFT** (rejection-sampling SFT on the tuned policy's **own** correct agent training traces, graded by
@@ -61,7 +61,7 @@ uv run pytest train_and_eval/eval/test_tool_calls.py -k reward -q
   **hours on a small single GPU** and infeasible on CPU. **Measure** seconds-per-rollout on a small pilot
   (e.g. 50 rows) first, then size the run; do not assume minutes (the old gemma run was ~10 tok/s,
   launch-bound — a serving-config trap, not the checkpoint).
-- **OD-2.** RL-eligible band: **~0.25–0.75** (max reward variance; recommended) or any non-zero,
+- **OD-2.** RL-eligible pass rate: **~0.25–0.75** (max reward variance; recommended) or any non-zero,
   non-unity pass rate?
 - **OD-3.** Confirm the rollout temperature ≈ 1.0 (rollout), separate from the 0.1 accuracy runs.
   **Provisional** — verify against the RL exploration/sampling literature (research refs [21]–[23], [25])

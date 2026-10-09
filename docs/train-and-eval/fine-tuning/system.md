@@ -59,7 +59,7 @@ Three independent things break a naive loop, and each has a 2026 answer:
 
 | Failure | What happens | Answer |
 |---|---|---|
-| **Degenerate groups** | A prompt every rollout passes or every rollout fails contributes zero advantage; GRPO spends compute to learn nothing | Dynamic sampling / group filtering (DAPO, ref [23]); keep the informative pass-rate band (refs [21][22]) |
+| **Degenerate groups** | A prompt every rollout passes or every rollout fails contributes zero advantage; GRPO spends compute to learn nothing | Dynamic sampling / group filtering (DAPO, ref [23]); keep the informative RL-eligible pass rate (refs [21][22]) |
 | **Sparse / unreachable reward** | On hard hops the SFT policy never samples a correct answer, so RLVR has no signal at all | Measure pass@k first; only train RL where it is reachable; use a Bridge to make hard traces learnable (ref [8], ref [26]) |
 | **Query verifier is wrong or hackable** | Reward is the objective; a noisy or gameable scorer optimizes the wrong thing | Audit and consolidate the scorer first (ref [24]); adversarial fixtures; this is TA-A3, already open |
 
@@ -101,7 +101,7 @@ per prompt with the tuned policy and compute the **pass rate** per tier:
 
 - **mastered** (all rollouts pass): RL adds nothing here (ref [20]); use as an evaluation dataset, not for training.
 - **learnable** (some but not all rollouts pass): the RL-training set. Aim the training distribution at the
-  ~0.25–0.75 band (refs [21][22]); ~0.5 maximizes reward entropy and group-filter survival.
+  ~0.25–0.75 RL-eligible pass rate (refs [21][22]); ~0.5 maximizes reward entropy and group-filter survival.
 - **unreachable** (zero pass): no RL signal. Add via Bridge/re-distillation at the next SFT
   training stage (ref [8]) or leave out and record it.
 
@@ -111,7 +111,7 @@ sampling can beat on-policy RL on new-task generalization *and* prior-capability
 single-GPU thesis, Training stage 2 may be the whole answer, with Training stage 3 optional.
 
 **Training stage 3 — RL, only where reachable.** GRPO with **dynamic sampling** (drop all-pass/all-fail
-groups, ref [23]), pass-rate-band scheduling (refs [21][22]), and a composite reward (§4). Run
+groups, ref [23]), RL-eligible pass-rate scheduling (refs [21][22]), and a composite reward (§4). Run
 rollouts in a sandbox (§5). Never run RL on a tier with no partial signal.
 
 > **P2 backlog — hint-based RL.** The dataset already carries a deterministic derivation: the **ordered
@@ -154,7 +154,7 @@ Promote the §4.1 advancement gate from the data doc into a system-level advance
 - **Signal to advance a tier:** held-out pass rate clears the SFT floor (~80%) — the tier is
   *mastered* and becomes SFT-stable.
 - **Signal to run RL on a tier:** it is *learnable* — `0 < pass@k < 1`, and preferably in the
-  ~0.25–0.75 band. Use **pass@k, not greedy accuracy**, to predict RL potential (ref [8]).
+  ~0.25–0.75 RL-eligible pass rate. Use **pass@k, not greedy accuracy**, to predict RL potential (ref [8]).
 - **Signal to stop:** no tier is learnable → report an SFT/RFT result; RL is not indicated. This
   is a finding, not a failure (PRD definition of done, item 3).
 
@@ -274,7 +274,7 @@ silently.
 | Reward-hacking audit (counterfactuals, degenerate tricks) | **P0** | RLVR's central failure mode (refs [24][27]) |
 | Sandboxed rollouts + full rollout logging | **P0** | safety + reproducibility (FT-D9) |
 | Dynamic-sampling GRPO (drop degenerate groups) | **P1** | cheap, principled; needed the moment RL runs (ref [23]) |
-| Pass-rate-band scheduling (~0.25–0.75) | **P1** | keeps batches informative (refs [21][22]) |
+| RL-eligible pass-rate scheduling (~0.25–0.75) | **P1** | keeps batches informative (refs [21][22]) |
 | RFT / SFT-with-sampling consolidation | **P1** | cheapest consolidation; can beat on-policy RL (ref [25]) |
 | Bridge for unlearnable hard traces | **P1** | turns all-fail tiers into SFT signal (ref [8]) |
 | On-policy distillation (MOPD-style) | **P2** | Liquid's recipe; heavy for one GPU |

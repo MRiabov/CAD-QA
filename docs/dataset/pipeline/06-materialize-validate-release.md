@@ -148,5 +148,5 @@ None yet.
 ## Extra deliverables - P2
 
 - A release-export "capacity report" that, before capping, states the maximum rows each
-  family could contribute under the tier's share band, so a small balanced export cannot
+  family could contribute under the tier's share range, so a small balanced export cannot
   hide coverage limited by the available CadQuery programs.

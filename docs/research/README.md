@@ -50,10 +50,10 @@ The `Ref` column matches the numbered references in `../prior-art.md`.
 | [15] | `[preprint]` | Pre-training indicators and fine-tuning outcomes | arXiv (2025) | `2025-pretraining-indicators-finetuning-outcomes.md` | perplexity is misleading; proxy metrics cut prediction error |
 | [16] | `[peer-reviewed]` | Small Models, Big Tasks: small LLM models for function calling | EASE 2025 (ACM) | `2025-small-models-big-tasks-function-calling.md` | fine-tuning works; output-format adherence is the weakness |
 | [17] | `[peer-reviewed]` | Berkeley Function Calling Leaderboard (BFCL) | ICML 2025 | `2025-berkeley-function-calling-leaderboard.md` | the academic tool-calling benchmark |
-| [18] | `[preprint]` | TinyLLM: small LLM models for agentic tasks on edge devices | arXiv (2025) | `2025-tinyllm-agentic-edge.md` | 1–3B is the useful band; <1B falls off |
+| [18] | `[preprint]` | TinyLLM: small LLM models for agentic tasks on edge devices | arXiv (2025) | `2025-tinyllm-agentic-edge.md` | 1–3B is the useful range; <1B falls off |
 | [19] | `[preprint]` | SFT vs RL for tool-calling agents, controlled across data/method/scale | arXiv (2026) | `2026-sft-vs-rl-tool-calling.md` | SFT+LoRA strongest; corpus choice matters as much as the method |
 | [20] | `[preprint]` | GRPO adds no gain on mastered tasks; gains where reward is reachable by sampling | arXiv (2026) | `2026-grpo-null-web-agent.md` | why the recorded GRPO collapse happened; condition RL on reachability |
-| [21] | `[preprint]` | Online difficulty filtering for reasoning-oriented RLVR | arXiv (2025) | `2025-online-difficulty-filtering-rlvr.md` | reward variance = learnability; keep the ~0.25–0.75 pass-rate band |
+| [21] | `[preprint]` | Online difficulty filtering for reasoning-oriented RLVR | arXiv (2025) | `2025-online-difficulty-filtering-rlvr.md` | reward variance = learnability; keep the ~0.25–0.75 RL-eligible pass rate |
 | [22] | `[preprint]` | Rollout pass-rate control for binary-reward RL | arXiv (2026) | `2026-rollout-pass-rate-control.md` | 50% pass rate maximizes signal; skewed groups are weak |
 | [23] | `[preprint]` | DAPO: decoupled clip and dynamic sampling | arXiv (2025) | `2025-dapo-decoupled-clip-dynamic-sampling.md` | drop all-pass/all-fail groups; entropy and overlong shaping |
 | [24] | `[preprint]` | Where the reward scorer fails: category-level audit of RLVR reward signals | arXiv (2026) | `2026-where-the-verifier-fails.md` | scorer self-agreement as low as 53.8%; audit before RL |

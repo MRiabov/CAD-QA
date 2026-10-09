@@ -35,7 +35,7 @@ their base versus tuned scores, and which family to pick. Teacher for the measur
 | LFM2.5-350M | Smart home | 63.2% | 96.7% | 92.11% |
 | LFM2.5-350M | Voice assistant | 34.5% | 95.9% | 96.95% |
 
-Base scores spread 9.9%–63.2% across families; tuned scores converge into a 90–98% band.
+Base scores spread 9.9%–63.2% across families; tuned scores converge into a 90–98% range.
 Reported summary: "the starting point is a family property; the finishing point mostly isn't."
 
 ## Family guidance

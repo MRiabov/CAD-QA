@@ -58,7 +58,7 @@ dense sizes 230M, 350M, 1.2B, and 2.6B, an `8B-A1B` MoE, and vision-language, au
 and retriever variants. There is no LFM2.6 generation — "2.6B" is a size.
 
 **Why it is a candidate.** FT-D1 targets a small (2–4B) open LLM model trainable on one GPU.
-LFM2.5-2.6B and LFM2.5-8B-A1B sit in that band. Liquid positions the family for agentic
+LFM2.5-2.6B and LFM2.5-8B-A1B sit in that range. Liquid positions the family for agentic
 tasks, tool calls, and data extraction, and recommends fine-tuning the small LLM models on
 narrow use cases — the same shape as CAD-QA's agent training trace and submit tools. Small
 LLM models are cheap to benchmark and fine-tune, so a canary is cheap.
@@ -124,7 +124,7 @@ Nemotron-3-Nano-30B in the Jul 2026 MoE study [3].
 
 **Family sets the start; training sets the finish.** In a tool-calling study (Aug 2026) [4],
 base scores spread from 9.9% to 63.2% across families on the same tasks, but tuned scores
-converge into a 90–98% band — "the starting point is a family property; the finishing point
+converge into a 90–98% range — "the starting point is a family property; the finishing point
 mostly isn't." Fine-tuning moves accuracy far more than family choice: FunctionGemma 270M goes
 9.90%→96.04% on shell commands [4]; LFM2.5-350M goes 61.4%→98.0% and beats its ~120B teacher
 (97.03%) [4]; a fine-tuned Qwen3-4B matches or exceeds a GPT-OSS-120B teacher on 7 of 8 tasks
@@ -141,7 +141,7 @@ Phi-4-mini (~3.8B, MIT) has the strongest reasoning chain but slightly weaker ra
 [5]. The peer-reviewed study of the same question finds small LLM models improve from zero- to
 few-shot and perform best with fine-tuning, with output-format adherence as the recurring
 weakness [16]; BFCL is the shared benchmark behind these numbers [17], and its results show a
-1–3B band clearly ahead of sub-1B [18].
+1–3B range clearly ahead of sub-1B [18].
 
 **Reasoning preservation (SFT vs RL).** "RL Squeezes, SFT Expands" (ICLR 2026) [7] finds SFT
 expands the reasoning graph while RL squeezes it into hub-like structures, and that the
@@ -194,7 +194,7 @@ where the reward is reachable by sampling; the failure is learning-rate-gated at
 is the mechanism behind CAD-QA's recorded GRPO hop-2 collapse — a group whose rollouts all pass or
 all fail has zero advantage, so the gradient is zero. Two results turn this into a rule: keep only
 informative prompt groups (DAPO's dynamic sampling, [23]) and aim the training distribution at the
-**pass-rate band around 0.5** (the ~0.25–0.75 intermediate-difficulty band maximizes reward
+**RL-eligible pass rate around 0.5** (the ~0.25–0.75 intermediate-difficulty range maximizes reward
 variance, which lower-bounds the reverse KL and thus learnability, [21]; 50% pass rate maximizes
 reward entropy and group-filter survival, and a 1/8 or 7/8 group carries about half the per-rollout
 information, [22]). Consequence: condition RL on a measured **pass@k** per difficulty tier.
