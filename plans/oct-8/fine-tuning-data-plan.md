@@ -356,7 +356,7 @@ typed `submit_*` answer, with hop reasoning. This doc fixes only the slot:
 | `agent_trace` / `run_code` data (`OpenThoughts-Agent`) | **P1** | needed for the primary `numpy` LLM harness behaviour |
 | Staged training order (`mix-format` → `mix-full`) | **P1** | tests H1→H2 ordering if the mixed baseline underperforms |
 | Dedup/contamination automation | **P1** | manual hashing works for the canary; automate before `mix-full` |
-| Commercial-trace mix (Fable/Opus/TeichAI) | **P1/P2** | strong signal, attribution risk; only if the P0 path is green |
+| Commercial-trace mix (Fable/Opus/TeichAI) | **P1** | strong signal; accepted in the thesis (§8); permissive mixes remain the default |
 | `domain_code` Python/coding priming | **P1/P2** | cheap code exposure; measure the canary |
 | `domain_3d` text→CadQuery priming (`NeurIPS11092`, `BenchCAD` code_gen) | **P1** | so the base is not 3D-blind; text→CadQuery pairs exist |
 | `domain_3d` image→CAD / point-cloud priming (`GenCAD-Code`, `SURPRISE3D`, PointLLM) | **P2** | not usable with a text-only base today |
@@ -365,16 +365,23 @@ typed `submit_*` answer, with hop reasoning. This doc fixes only the slot:
 
 ---
 
-## 8. Decisions still to make (data)
+## 8. Decisions (data)
 
-1. **Commercial-trace policy.** Do we accept Claude/Fable/Opus distill data in a published thesis?
-   Recommendation: permissive-first, commercial-trace only as an ablation.
-2. **Mix ratios.** The §3 numbers are a starting hypothesis, not a result.
-3. **Order of training.** Mixed single stage (default) vs staged format→full. Decide after the
+**Resolved:**
+
+- **Commercial-trace policy.** Accepted: commercial-trace distill data (Fable/Opus/TeichAI) may be
+  used in the published thesis, and not only as an ablation — the work is non-commercial research and
+  the source data is open. Permissive mixes remain the default; record the source LLM model and
+  license per sample so the mix can be isolated if a venue objects.
+
+**Still to make:**
+
+1. **Mix ratios.** The §3 numbers are a starting hypothesis, not a result.
+2. **Order of training.** Mixed single stage (default) vs staged format→full. Decide after the
    `mix-format` canary.
-4. **`cadqa_hop` ownership.** Who plans the internal teacher-sampling replacement (B2), and
+3. **`cadqa_hop` ownership.** Who plans the internal teacher-sampling replacement (B2), and
    against which frozen dataset revision?
-5. **Target `answer_format` coverage.** `json`/`number` teacher coverage was zero; the external
+4. **Target `answer_format` coverage.** `json`/`number` teacher coverage was zero; the external
    `format_tool` mix may not contain the CadQuery workplane tool. Decide whether `cadqa_hop` must
    synthesize it.
 
@@ -384,10 +391,15 @@ typed `submit_*` answer, with hop reasoning. This doc fixes only the slot:
 
 - Is there a public CadQuery instruction corpus worth using, or is the internal set the only source
   of the `submit_workplane` (`json`) format? `[unverified]`.
-- How much of the Fable/Opus signal survives filtering and dedup, and is the remaining license
-  risk acceptable for publication? `[unknown]`.
-- Does the external `format_tool` mix teach the exact `submit_*` tool names/args, or only generic
-  function calling? If only generic, `cadqa_hop` must carry the mapping.
+- How much of the Fable/Opus signal survives filtering and dedup? `[unknown]`.
+- Does the external `emit_our_tool_call_format` dataset teach the exact `submit_*` tool names/args,
+  or only generic function calling? If only generic, `learn_the_cadqa_task` must carry the mapping.
+- Does `imitate_general_reasoning_style` earn a place in the default mix, or is it an ablation?
+  FT-D15 treats external reasoning as support, not the lever. `[open]`
+- What is the source of `preserve_prior_capabilities` (the anti-forgetting role)? Candidates in
+  §2.4; pick one. `[open]`
+- Should evaluation dataset roles split into `target` / `canary`, and does the §6 slot need a new
+  name now that `cadqa_hop` is retired? `[open]`
 
 ---
 
