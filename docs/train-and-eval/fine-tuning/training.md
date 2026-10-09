@@ -308,9 +308,13 @@ Sources: `docs.liquid.ai/examples/customize-models/home-assistant`, `docs.liquid
   H100** (~$1.50 for the 350M recipe), then **merges the adapter** and converts to GGUF
   (`--quant-type q8_0`).
 - **Quantization is an export/serving step, not a training step.**
-- **LFM2/LFM2.5 checkpoints ship in `bfloat16`.** No fp4/fp8 default; quantized variants (GGUF
-  `Q4_0`/`Q4_K_M`/`Q8_0`, MLX 8-bit, and the Aug-2026 **QAD Q4_0** ~97% of BF16) are separate
-  artifacts. Fine-tune the **bf16** checkpoint; do not fine-tune a QAD Q4_0 checkpoint.
+- **LFM2/LFM2.5 checkpoints ship in `bfloat16`.** Verified from the HF configs
+  (`LFM2.5-2.6B/config.json`, `LFM2.5-1.2B-Instruct/config.json`: `"dtype": "bfloat16"`; the usage
+  snippet sets `dtype="bfloat16"`). No native fp8/fp4 — dtype is a **per-family** property (DeepSeek
+  ships native fp8 and its serving stack drops further at inference), so verify a family's `dtype` before
+  assuming it. Quantized variants (GGUF `Q4_0`/`Q4_K_M`/`Q8_0`, MLX 8-bit, and the Aug-2026 **QAD Q4_0**
+  ~97% of BF16) are separate artifacts. Fine-tune the **bf16** checkpoint; do not fine-tune a QAD Q4_0
+  checkpoint.
 - **No MTP/draft training.** LFM2.5 has **no built-in MTP head**; Liquid's separate ~300M
   **DSpark** draft is a serving artifact, and `liquid-finetune`/LEAP does not train it (FT-D22).
   Speculative decoding is lossless and serving-only — it never enters training, the merge, or a
