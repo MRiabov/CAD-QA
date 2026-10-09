@@ -9,7 +9,7 @@ Audience note: terms follow `docs/glossary.md`. Read that first if a term is unc
 ## What this pipeline builds
 
 The dataset-generation pipeline turns normalized CadQuery programs into verifiable QA rows.
-It is the `dataset_generation` package (today `dataset/`), which is **frozen**: the docs
+It is the `dataset_generation` package (today `dataset/`), which is **immutable**: the docs
 describe what it does, not what it should do (`plans/oct-7/restructure-docs.md`). Low-hop
 rows and high-hop CAD BrowseComp rows are slices of the same machinery; there is no
 separate simple-QA pipeline (`README.md`).

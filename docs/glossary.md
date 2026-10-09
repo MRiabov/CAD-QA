@@ -378,6 +378,7 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | open-book | having access to CadQuery | bare antonym; name the access |
 | verifier (bare) | Query verifier | unqualified |
 | quarantine | Non-release-ready CAD-QA dataset row | imprecise |
+| frozen | immutable | imprecise metaphor; name the state |
 | rows artifact | Dataset file | "artifact" is vague; it is the dataset file |
 | harness row | CAD-QA dataset row | same record after decoding; not a new concept |
 | "intent" (as a doc) | PRD | "intent" is the concept, not the artifact |

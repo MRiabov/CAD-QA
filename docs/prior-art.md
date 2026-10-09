@@ -263,7 +263,7 @@ matter for CAD-QA:
   CAD-QA is multi-hop, distractor-rich reasoning beyond numeric answers, over the CAD ontology,
   with automated graph-derived synthesis and a Reasoning hop curriculum / critical path. Use
   BenchCAD `qa_code` as an independent transfer benchmark (text-in, unsaturated), keep its
-  programs out of training (contamination), and run frontier LLM models on the frozen CAD-QA
+  programs out of training (contamination), and run frontier LLM models on the immutable CAD-QA
   hard slice to establish whether the multi-hop gap is still live.
 - **2.0 is a different construct.** BenchCAD 2.0 is reconstruction-only (assemblies, PCB
   wiring) and adds no comprehension or multi-hop task, so it does not deepen the overlap.

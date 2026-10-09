@@ -149,7 +149,7 @@ BenchCAD generation framing is therefore approaching saturation. The **comprehen
 is not: BenchCAD's own Code QA Spatial Reasoning axis is 0.537–0.731 against a 0.42 blind
 baseline, so a comprehension gap remains open. CAD-QA's premise is comprehension, not
 generation; the window is narrower than the original proposal assumed and must be measured
-against the frozen hard slice before any gap claim stands.
+against the immutable hard slice before any gap claim stands.
 
 ## Why it matters for CAD-QA
 
@@ -167,7 +167,7 @@ against the frozen hard slice before any gap claim stands.
   on BenchCAD Code QA leaks (shared 17,900-program / 200-part base); exclude BenchCAD items
   from training or keep the transfer evaluation disjoint.
 - **Comparable baseline.** Report the CAD-QA hard slice and BenchCAD Code QA side by side, and
-  run the current frontier models on the frozen CAD-QA hard slice to establish whether the
+  run the current frontier models on the immutable CAD-QA hard slice to establish whether the
   multi-hop gap is still live.
 
 ## Landscape — works citing BenchCAD and adjacent benchmarks (2026-10-09)

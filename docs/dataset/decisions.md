@@ -14,7 +14,7 @@ Local decisions for the `dataset_generation` unit, in ADR format
 - **Context:** The dataset-generation pipeline was written by an agent, a prior refactor
   was moot, and the intent behind the current code is (probably) fine
   (`plans/oct-7/restructure-docs.md`).
-- **Decision:** Treat `dataset_generation` (today `dataset/`) as frozen. New docs describe
+- **Decision:** Treat `dataset_generation` (today `dataset/`) as immutable. New docs describe
   executed behaviour; they do not justify refactors. Change generation code only when a P0
   thesis claim is directly blocked by a verified bug, minimally, on a branch.
 - **Consequences:** Doc/code mismatches become recorded findings (open question / local
@@ -151,7 +151,7 @@ Local decisions for the `dataset_generation` unit, in ADR format
 
 - **Status:** accepted.
 - **Context:** The restructure plan and the working agreement make conflicts findings.
-- **Decision:** When a doc and the frozen code disagree, document the actual behaviour and
+- **Decision:** When a doc and the immutable code disagree, document the actual behaviour and
   record the discrepancy as a local decision or open question.
 - **Consequences:** This file and the step docs carry explicit known mismatches (see
   `pipeline/00-overview.md#open-questions`).
