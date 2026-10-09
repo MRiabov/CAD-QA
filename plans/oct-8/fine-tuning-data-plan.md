@@ -36,7 +36,7 @@ teacher-sampling of agent training traces from frozen CAD-QA dataset rows, step 
 separate decision owed under FT-D11 (`../../docs/train-and-eval/fine-tuning/decisions.md`) and
 Phase 3 of `../../docs/development-plan.md`.
 
-**Related docs.** `../../docs/prior-art.md` (external evidence, refs [1]–[29]);
+**Related docs.** `../../docs/prior-art.md` (external evidence, refs [1]–[32]);
 `../../docs/PRD.md` (research contract); `../../docs/train-and-eval/fine-tuning/decisions.md`
 (FT-D* decisions).
 
@@ -45,7 +45,10 @@ Phase 3 of `../../docs/development-plan.md`.
 ## 1. Data roles (taxonomy)
 
 Every training example is tagged with exactly one **role**. Roles exist because they are mixed at
-fixed ratios and evaluated separately.
+fixed ratios and evaluated separately. The external roles (`format_tool`, `agent_trace`,
+`reasoning_distill`, `rehearsal`, `domain_*`) are **support**: a format cold-start, capability
+preservation, and canaries. They are not the scaling lever — the task environment + scorer is
+(`fine-tuning-system-plan.md` §0) — so collect them selectively, not blindly.
 
 | Role | What it teaches | Internal / external | Priority |
 |---|---|---|---|

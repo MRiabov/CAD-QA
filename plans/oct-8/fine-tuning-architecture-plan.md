@@ -34,7 +34,7 @@ gemma-native rendering and parsing are re-authored.
 
 **Related docs.** `fine-tuning-system-plan.md` (the staged post-training loop and the RL-readiness
 gate);
-`../../docs/prior-art.md` (external evidence, refs [1]–[29]);
+`../../docs/prior-art.md` (external evidence, refs [1]–[32]);
 `../../docs/PRD.md` (research contract); `../../docs/train-and-eval/fine-tuning/decisions.md`
 (FT-D* decisions); `../../plans/oct-8/trust-audit.md` (Phase 0 gate).
 

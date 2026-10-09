@@ -62,3 +62,6 @@ The `Ref` column matches the numbered references in `../prior-art.md`.
 | [27] | `[workshop]` | Preventing process-reward hacking on verifiable rewards | AAMAS 2026 | `2026-prm-reward-hacking-aamas.md` | dense reward terms are hacked unless optimality-preserving |
 | [28] | `[peer-reviewed]` | Detecting and suppressing reward hacking with gradient fingerprints | COLM 2026 | `2026-gradient-fingerprints-reward-hacking.md` | hacking is implicit; detect early, use counterfactuals |
 | [29] | `[peer-reviewed]` | Contamination-free evaluation of multi-step function calling (FuncBenchGen) | ICLR 2026 | `2025-contamination-free-function-calling-eval.md` | tool-call benchmarks/corpora are contamination-prone; use train-disjoint eval |
+| [30] | `[preprint]` | Scaling environments for LLM agents: a survey | arXiv (2025) | `2025-scaling-environments-llm-agents.md` | environments are the central object; RL needs verifiable interactive experience |
+| [31] | `[preprint]` | RLVE: scaling RL with adaptive verifiable environments | arXiv (2025) | `2025-rlve-adaptive-verifiable-environments.md` | environment count, not data volume, drives generalizable reasoning |
+| [32] | `[preprint]` | Warm-start then RL on synthesized terminal tasks | arXiv (2026) | `2026-endless-terminals-warm-start.md` | SFT is a readiness gate; RL cold-start barely moves a small LLM model |

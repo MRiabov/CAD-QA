@@ -220,6 +220,19 @@ single-GPU thesis this is the cheapest path: after SFT, sample k rollouts per pr
 correct ones, and fine-tune again (rejection-sampling SFT) — with GRPO reserved for tiers that
 remain reachable-but-unmastered.
 
+**Environment scaling is the lever (2025–2026).** The agent-RL literature reframes the scaling
+target: RL needs verifiable interactive experience at a scale hand-built benchmarks cannot supply,
+so **environments became the central object** and *scaling environments is how agent capability
+scales* [30]. RLVE [31] shows expanding the **collection of verifiable environments** consistently
+improves generalizable reasoning, while adding RL data within a fixed set does not (a single
+environment already generates unbounded data), and that static data yields **vanishing learning
+signal** when problems are too easy or too hard. In the same line, RL on synthesized tasks
+transfers to a held-out benchmark only when the small LLM model is first SFT'd into the scaffold —
+a **warm-start that is a readiness gate, not an accuracy target**, and over-doing it ossifies the
+policy [32]. For CAD-QA this moves the center of gravity from the SFT mix to the **task environment
++ scorer** (a CAD-QA task generator with verifiable answers and the `run_code`/kernel tool
+surface); SFT becomes a thin cold-start and the general external data becomes support/canary.
+
 **Implication for CAD-QA.** Do not run a raw SFT→GRPO. Run **Stage 0** one-scorer + off-oracle
 audit, **Stage 1** difficulty-aligned SFT with a Bridge for hard traces, **Stage 2** a pass@k
 sampling gate that also produces rejection-sampling SFT data, and **Stage 3** GRPO with dynamic
@@ -339,6 +352,14 @@ reference never stands alone for a load-bearing claim.
     for Multi-step LLM Function Calling', arXiv:2509.26553; ICLR 2026.
     `arxiv.org/html/2509.26553v2`. `[peer-reviewed]`. Note:
     `research/2025-contamination-free-function-calling-eval.md`.
+30. (2025) 'Scaling Environments for LLM Agents in the Era of Learning from Interaction: A Survey',
+    arXiv:2511.09586. `arxiv.org/html/2511.09586v1`. `[preprint]`. Note:
+    `research/2025-scaling-environments-llm-agents.md`.
+31. (2025) 'RLVE: Scaling Up Reinforcement Learning for Language Models with Adaptive Verifiable
+    Environments', arXiv:2511.07317. `arxiv.org/html/2511.07317v1`. `[preprint]`. Note:
+    `research/2025-rlve-adaptive-verifiable-environments.md`.
+32. (2026) 'Endless Terminals', arXiv:2601.16443. Cited by the environment-scaling survey [30].
+    `[preprint]`. Note: `research/2026-endless-terminals-warm-start.md`.
 
 ## Resolved questions
 

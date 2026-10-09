@@ -216,6 +216,25 @@ whose rationale was not recoverable.
   a dense reward term may only be added with optimality-preserving shaping ([27]). Detail:
   `plans/oct-8/fine-tuning-system-plan.md` §4; `plans/oct-8/evaluation-plan.md` §4.
 
+## FT-D15 — The scaling lever is the environment, not the SFT corpus
+
+- **Status:** proposed (2026-10-08) — research-backed; not yet accepted.
+- **Context:** 2025–2026 evidence ([30]–[32]) shows agent capability scales with the **number and
+  quality of verifiable environments** and RL over them, not with SFT volume; a fixed task set
+  saturates, static data gives a vanishing signal when tasks are too easy or too hard, and SFT is a
+  **warm-start readiness gate** whose over-use ossifies the policy and collapses exploration.
+- **Decision:** invest first in the **CAD-QA task environment + scorer** — a task generator over
+  the frozen dataset rows (prompt + scalar gold, configurable hop/difficulty), the single verified
+  exact-match scorer, and the `run_code`/kernel tool surface — and treat the external SFT mix
+  (`format_tool`, `agent_trace`, `reasoning_distill`, `rehearsal`, `domain_*`) as **support**: a
+  thin format cold-start, a capability-preservation anchor, and canaries. Teacher-distilled
+  `cadqa_hop` traces are a cold-start at most, not the primary data.
+- **Consequences:** effort shifts from corpus collection to **environment/scorer engineering**;
+  the pass@k gate (FT-D13) is the switch from SFT to RL; external data stays bounded and
+  selectively sourced (subset pulls); the `cadqa_hop` slot becomes an environment (tasks + reward)
+  as well as a dataset. Detail: `plans/oct-8/fine-tuning-system-plan.md` §0, §3;
+  `../../prior-art.md` refs [30]–[32].
+
 ## Open questions
 
 - The base-pipeline choice (D11 in `plans/oct-7/restructure-docs.md`) is recorded as FT-D11,

@@ -14,7 +14,7 @@ ingest/normalize/quality/dedup/sample stages).
 them into one system and adds the pieces none of the three owns: the sampling gate, the
 reward-hacking audit, and the on-policy stages.
 
-**Related docs.** `../../docs/prior-art.md` (refs [1]–[29]);
+**Related docs.** `../../docs/prior-art.md` (refs [1]–[32]);
 `../../docs/train-and-eval/fine-tuning/decisions.md` (FT-D*); `../../docs/PRD.md`;
 `../../plans/oct-8/trust-audit.md`.
 
@@ -42,6 +42,15 @@ reward-hacking audit, and the on-policy stages.
 This is what Liquid's own LFM2.5 post-training recipe does at scale: **SFT → teacher-specialist
 RLVR → on-policy distillation → agentic RL (GRPO) in sandboxes**. The system below is the
 single-GPU analogue.
+
+**Scaling thesis (2025–2026).** Capability gains increasingly come from **environmental scaling** —
+RL against rich, verifiable interactive environments — rather than from more SFT data ([30][31]).
+The scaling asset is therefore the **CAD-QA task environment + scorer** (a task generator, the
+single exact-match reward, and the `run_code`/kernel tool surface), not the SFT corpus. SFT's job
+is narrow: get the small LLM model to emit our `submit_*` format and produce *some* successful
+rollouts — a **readiness gate, not an accuracy target** ([32]); over-doing SFT ossifies the policy
+and collapses the exploration RL needs. External general data is support (format cold-start,
+rehearsal, canaries), not the lever.
 
 ---
 
@@ -84,7 +93,9 @@ downstream stage is trustworthy until this passes. (Owned by `evaluation-plan.md
 data difficulty must be aligned to the stage. Concretely: `format_tool` + easy hops first, then
 harder `cadqa_hop`; for hard teacher traces that the small LLM model cannot imitate, apply a
 **Bridge** transformation (rewrite the raw teacher trace into more learnable supervision) rather
-than feeding an unlearnable target. Rehearsal every stage. (Owned by the data + architecture docs.)
+than feeding an unlearnable target. Rehearsal every stage. SFT runs only to the **readiness gate**
+(format holds, pass@k > 0), then stops — it is not an accuracy target ([32]).
+(Owned by the data + architecture docs.)
 
 **Stage 2 — sampling gate.** The new piece. After SFT, sample k rollouts per prompt with the
 tuned policy and compute the **pass rate** per tier:
