@@ -122,11 +122,13 @@ collapse ("RL squeezes, SFT expands", ref [7]).
 **The two training phases.** SFT is run as two phases, each a run over a Mixed training dataset
 (`fine-tuning-data-plan.md` §4):
 
-1. **Phase 1 — elicit / prime.** General code and CadQuery/CAD in particular (`expose_general_python_code`,
-   `expose_cadquery_programs`, plus the tool-format/loop support). Goal: elicit reasoning and give the
-   base LLM model CAD/CadQuery representation.
-2. **Phase 2 — task + preserve.** `learn_the_cadqa_task` and CAD mixed in more extensively; the
-   objective shifts from *eliciting* reasoning to *preserving* it (`preserve_prior_capabilities`,
+1. **Phase 1 — refocus on coding (plus easy tasks).** The base LLM model is already trained on code,
+   so coding/Python is not new — it is just not its focus. Phase 1 refocuses it on coding
+   (`expose_general_python_code`), adds a little text-to-CadQuery (`expose_cadquery_programs`), and
+   carries a **simple slice of our own tasks** (e.g. hop 0, `learn_the_cadqa_task`) as a safety net.
+2. **Phase 2 — the CAD-QA task (new domain) + preserve.** CAD is very likely new to the base LLM model, and our
+   CAD-QA dataset certainly is. Phase 2 fine-tunes on `learn_the_cadqa_task` and CAD at scale, and
+   shifts the objective from *eliciting* reasoning to *preserving* it (`preserve_prior_capabilities`,
    `preserve_general_math_and_code_reasoning`).
 
 The evaluation datasets (`evaluation-plan.md` §6) measure both phases: **baseline** before phase 1,

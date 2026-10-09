@@ -249,10 +249,12 @@ coverage was 0.
 This section owns the *order* the roles and difficulty are presented in. The architecture doc owns
 the mechanics (epochs, mixing implementation).
 
-- **Two training phases.** SFT runs as **phase 1 (elicit/prime)**: general code and
-  CadQuery/CAD in particular (`expose_general_python_code`, `expose_cadquery_programs`, plus the
-  tool-format/loop support); then **phase 2 (task + preserve)**: `mixed_dataset_full_cadqa_training`,
-  with `preserve_prior_capabilities` and `preserve_general_math_and_code_reasoning` as the anchors.
+- **Two training phases.** SFT runs as **phase 1 (refocus on coding + easy tasks)**: the base already
+  trains on code, so coding/Python is not new — phase 1 refocuses it (`expose_general_python_code`),
+  adds a little text-to-CadQuery (`expose_cadquery_programs`), and carries a simple slice of our tasks
+  (e.g. hop 0, `learn_the_cadqa_task`); then **phase 2 (CAD-QA task + preserve)**: CAD is new, so
+  `mixed_dataset_full_cadqa_training` adds `learn_the_cadqa_task` + CAD at scale, with
+  `preserve_prior_capabilities` and `preserve_general_math_and_code_reasoning` as the anchors.
   Shape and rationale: `fine-tuning-system-plan.md` §2; eval cadence: `evaluation-plan.md` §6.
 - **Phase-2-only fallback.** If phase 1 shows no measured phase-end gain, drop it and run one SFT Training stage
   over `mixed_dataset_full_cadqa_training` (the cookbook default); the 2-phase pipeline must earn its
@@ -265,10 +267,10 @@ the mechanics (epochs, mixing implementation).
   general ability is anchored throughout, not restored at the end.
 - **Cap `preserve_general_math_and_code_reasoning` early.** Per prior-art ref [9], do not let teacher reasoning dominate
   before format and the task itself are established.
-- **Priming is representation, not generation (phase 1 caveat).** We do not need the LLM model to
-  *write* CadQuery; `expose_cadquery_programs` teaches syntax and semantics. Whether that transfer
-  reaches *reading/reasoning* over a given CadQuery program is the H2 hypothesis, not a given — A/B it on
-  the phase-end eval.
+- **Text-to-CadQuery exposure is representation, not generation.** We do not need the LLM model to
+  *write* CadQuery well; a little text-to-CadQuery (`expose_cadquery_programs`) teaches syntax and
+  semantics. Whether that transfer reaches *reading/reasoning* over a given CadQuery program is the H2
+  hypothesis, not a given — A/B it on the phase-end eval.
 - **Sequencing must earn its place.** Sequential fine-tuning spans two Training stages: higher forgetting
   risk and cost, and the 2026 controlled study (ref [19]) found a single SFT training stage strongest with
   no consistent gain from a second. Keep `preserve_prior_capabilities` in *every* phase and advance only

@@ -241,10 +241,11 @@ whose rationale was not recoverable.
 - **Status:** accepted (2026-10-09) — owner decision.
 - **Context:** training had a single mixed SFT run with a staged option (FT-D13's Training stage 1);
   the intended shape is domain-then-task with an explicit objective shift.
-- **Decision:** SFT runs as **phase 1 (elicit / prime)** on general code + CadQuery/CAD, then
-  **phase 2 (task + preserve)** on `learn_the_cadqa_task` + CAD at scale, shifting from eliciting
-  reasoning to preserving it. A **phase-2-only fallback** applies if phase 1 shows no measured
-  phase-end gain.
+- **Decision:** SFT runs as **phase 1 (refocus on coding)** — the base already trains on code, so
+  coding/Python is not new, only unfocused; phase 1 also carries a simple slice of our tasks (e.g.
+  hop 0) and a little text-to-CadQuery — then **phase 2 (CAD-QA task + preserve)** introducing CAD and
+  `learn_the_cadqa_task` at scale, shifting from eliciting reasoning to preserving it. A
+  **phase-2-only fallback** applies if phase 1 shows no measured phase-end gain.
 - **Consequences:** sequential training carries higher forgetting risk (the 2026 controlled study
   found one SFT Training stage strongest); each phase must earn its place on the phase-end
   evaluation. Detail: `plans/oct-8/fine-tuning-system-plan.md` §2;
