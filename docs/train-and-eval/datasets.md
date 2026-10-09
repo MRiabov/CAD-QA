@@ -28,24 +28,25 @@ dataset**, **Training stage**); `./fine-tuning/decisions.md` (FT-D1–D23);
 
 Only `learn_the_cadqa_task` is **teacher-generated** (pipeline `02`); every other role is a **native
 corpus** that already carries its supervision (an agent training trace and/or a tool call), normalized in `03`.
-Under FT-D17 a corpus enters a mix only if **execution-verified** or **teacher rejection-sampled** — and
-that verification runs **locally**, so each role needs an executor **beyond** the CAD-QA task environment:
+Under FT-D17 a corpus enters a mix only if **execution-verified** or **teacher rejection-sampled**.
+Verification **adopts the upstream project's environment** — a Docker image, a reproducible harness, or a
+shipped baseline LLM model we inference over — rather than building an executor. We do **not** build a CAD
+kernel.
 
-| DatasetRole | Supervision | Verification | Local environment |
+| DatasetRole | Supervision | Verification | Environment (adopted, not built) |
 |---|---|---|---|
-| `emit_our_tool_call_format` | native (tool-call turns) | schema/parse against the `submit_*` contract; generic calls re-targeted | tool-call contract validator (no execution) |
-| `run_the_tool_call_loop` | native (agent trajectories) | re-run the tool calls; check the final answer | tool sandbox (`run_code`; Modal Sandbox) |
-| `preserve_general_math_and_code_reasoning` | native (R1/Claude reasoning) | check the final answer; execute code | math answer checker + Python executor |
-| `expose_general_python_code` | native (Python + R1 CoT) | execute against unit tests | Python executor / sandbox |
-| `expose_cadquery_programs` | native (code/label pairs; no CoT) | execute the CadQuery program (`BenchCAD` is already execution-verified) | **CadQuery kernel** (OpenCASCADE) |
-| `learn_the_cadqa_task` | **teacher-generated (`02`)** | the Query verifier accepts the call | CAD-QA task environment (Query verifier) |
+| `emit_our_tool_call_format` | native (tool-call turns) | schema/parse against the `submit_*` contract; generic calls re-targeted | our tool-call contract validator (no execution) |
+| `run_the_tool_call_loop` | native (agent trajectories) | re-run the tool calls; check the final answer | our tool sandbox (`run_code`; Modal Sandbox) |
+| `preserve_general_math_and_code_reasoning` | native (R1/Claude reasoning) | check the final answer; execute code | standard math/code checker (library) |
+| `expose_general_python_code` | native (Python + R1 CoT) | execute against unit tests | standard Python sandbox (library) |
+| `expose_cadquery_programs` | native (code/label pairs; no CoT) | `BenchCAD code_gen` is verified at origin; text2CAD/edit tasks | **the external benchmark's environment** (Docker/harness/baseline LLM model) — no kernel of ours |
+| `learn_the_cadqa_task` | **teacher-generated (`02`)** | the Query verifier accepts the call | our CAD-QA task environment (Query verifier) |
 
-The **text2CAD + edits** third shares the **CadQuery kernel** environment: a generated program is verified
-by executing it, and an edit by executing the result and comparing geometry. These executors overlap with
-the H3 transfer harness (`../evaluation/plan.md` §5.1), which also runs CadQuery (`Text2CAD-Bench`,
-`Text-to-CadQuery`, `CAD-Editor`, BenchCAD `edit_code`). The `dataset/` CadQuery stack already provides the
-kernel; `run_code_sandbox.py` is only an accidental-misuse guard (D-E3), so untrusted execution needs a
-real sandbox (Modal Sandbox).
+The **text2CAD + edits** third and the H3 transfer targets (`Text2CAD-Bench`, `Text-to-CadQuery`,
+`CAD-Editor`, BenchCAD `edit_code`; `../evaluation/plan.md` §5.1) are served by the **same adopted upstream
+environments**, so one setup covers both verification and transfer evaluation. Wiring these environments is
+itself high-effort (Docker/harness or rebuild — both a pain), so stand up the minimum and prefer
+verified-at-origin corpora; the external roles are support, not the lever (FT-D15).
 
 ### `emit_our_tool_call_format`
 

@@ -64,12 +64,11 @@ selectively, not blindly.
 overlap is contamination (`No silent data loss` and held-out hygiene).
 
 **Supervision and verification.** Only `learn_the_cadqa_task` is **teacher-generated** (pipeline `02`);
-every other role is a **native corpus** that already carries its target agent training trace or tool
-call, normalized in `03`. FT-D17 still applies — a corpus enters a mix only if it is **execution-verified** or **teacher
-rejection-sampled** — and verification runs **locally**, so each role needs an executor **beyond** the
-CAD-QA task environment (the CadQuery kernel for `expose_cadquery_programs` and the text2CAD / CAD-edit
-tasks, a Python sandbox for the code roles, a math answer checker, the tool sandbox for
-`run_the_tool_call_loop`). The per-role mapping is in `../datasets.md`.
+every other role is a **native corpus** that already carries its target agent training trace or tool call,
+normalized in `03`. FT-D17 still applies — a corpus enters a mix only if **execution-verified** or
+**teacher rejection-sampled**. Verification **adopts the upstream project's environment** (a Docker image, a
+reproducible harness, or a shipped baseline LLM model we inference over) rather than building an executor:
+we do **not** build a CAD kernel. The per-role mapping is in `../datasets.md`.
 
 ---
 
@@ -389,7 +388,7 @@ only the dataset:
 | `mixed_dataset_general_and_easy_cadqa` data build (general tasks + low-hop `learn_the_cadqa_task`) | **P0** | feeds the first run |
 | Contamination + dedup pass against CAD-QA held-out and evaluation datasets | **P0** | held-out hygiene; a leak invalidates the thesis number |
 | General-task curation (code + math + CAD, 50–70%) | **P0** | anti-forgetting anchor (FT-D18) |
-| Local verification environments (CadQuery kernel, Python sandbox, math answer checker, tool sandbox) | **P0** | FT-D17 verification runs locally; without them the external-role rows are unverified or need teacher sampling |
+| Adopt external-role verification environments (upstream Docker images / harnesses / shipped baseline LLM models; never a CAD kernel of ours) | **P1** | FT-D17 verification runs locally; adopt, do not build. High setup cost — prefer verified-at-origin corpora and stand up the minimum |
 | **`learn_the_cadqa_task` generation plan** | **P0, separate** | the thesis needs it; explicitly not in this doc |
 | Permissive reasoning mix (`OpenThoughts`/`Bespoke`) | **P1** | tests H2 without license risk |
 | `run_the_tool_call_loop` / `run_code` data (`OpenThoughts-Agent`) | **P1** | needed for the primary `numpy` LLM harness behaviour |
