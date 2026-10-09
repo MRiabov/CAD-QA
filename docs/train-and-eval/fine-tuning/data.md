@@ -364,7 +364,10 @@ only the dataset:
   combination the teacher never produces cannot be learned (the `json`/`number` zero-coverage defect in
   `pipeline/02-teacher-sampling.md`). The gate is the dataset release report projected onto the sampling
   log; its key grain is open (`pipeline/02-teacher-sampling.md` Q1).
-- **Contamination:** CAD-QA held-out rows are hard-excluded (§5).
+- **Contamination / dedup.** CAD-QA held-out rows are hard-excluded (§5). Cross-dataset dedup stays
+  **simple**: the mix blends **orthogonal** datasets (distinct distillation origins/teacher paths), so
+  duplicates are unlikely — exact/near-dup (normalized hash) within the mix, no MinHash/LSH unless a
+  measured collision appears (`pipeline/03-preparation.md` Q2).
 - **Priority:** P0, but a separate plan.
 
 ---

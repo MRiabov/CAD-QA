@@ -33,6 +33,14 @@ uv run python -m <converter> --in <training_examples.jsonl> --out <sft.parquet>
 
 ## Open questions
 
-- **Q1.** Whether preparation needs the raw CAD-QA task rows at all, or only the 02 traces (the phase-1
-  low-hop slice is a slice of the traces, not of the rows) — confirm against the mix (`../data.md` §4).
-- **Q2.** Contamination/dedup mechanics (MinHash/LSH, benchmark blocklist) at the scale of the mix.
+_(none)_
+
+## Resolved questions
+
+- **Q1.** *(2026-10-09)* Preparation consumes **only the 02 agent training traces + External datasets**; the
+  raw CAD-QA task rows are **not** an input — we SFT on traces, and the phase-1 low-hop slice is a slice of
+  the traces. The rows are already consumed at 01/02.
+- **Q2.** *(2026-10-09)* Dedup/contamination stays **simple**: the mix blends **orthogonal** datasets
+  (distinct distillation origins/teacher paths), so cross-dataset duplicates are unlikely — use exact/near-dup
+  (normalized hash) within the mix plus the hard CAD-QA held-out blocklist (`../data.md` §5). No MinHash/LSH
+  unless a measured collision appears.
