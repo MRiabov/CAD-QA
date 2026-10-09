@@ -97,7 +97,8 @@ priming, not a generation capability. Must not leak the CAD-QA held-out programs
 
 The CAD-QA task itself: a CAD-QA dataset row → a rule-rendered prompt plus a typed `submit_*`
 answer with hop reasoning. This is the comprehension corpus and the dataset contribution; there is
-no external equivalent.
+no external equivalent. Its rows are the **progressive curriculum** — ordered by increasing
+complexity (the 0→1→2→3→5 hop ladder); the first run uses the low-hop end only.
 
 | Dataset | Status |
 |---|---|

@@ -39,7 +39,7 @@ Hold base and recipe fixed; vary only training data.
 | Base | none | floor; pretraining-contamination proxy |
 | Format-only | `emit_our_tool_call_format` + the general tasks | H1 format compliance |
 | Answer-only | CAD-QA answers, no reasoning | supervision format vs reasoning content |
-| CAD-QA reasoning | `learn_the_cadqa_task` | H2 capability |
+| CAD-QA reasoning | progressively complex `learn_the_cadqa_task` | H2 capability |
 | Full primary (optional) | the full Mixed training dataset | external reasoning support |
 
 ## Preconditions

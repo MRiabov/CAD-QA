@@ -127,7 +127,7 @@ Each step below is a gate; do not start the next until the previous passes.
    with our first-run rows (general tasks + low-hop `learn_the_cadqa_task`) in Liquid's `messages`
    format (built by the data doc), keep the cookbook config and hyperparameters, and run the
    evaluation doc's `emit_our_tool_call_format` evaluation dataset. Gate: H1.
-4. **Only if H1 holds**, expand to `mixed_dataset_full_cadqa_training` and `learn_the_cadqa_task`.
+4. **Only if H1 holds**, expand to `mixed_dataset_full_cadqa_training` and the progressive `learn_the_cadqa_task`.
 
 Rules for the whole effort:
 

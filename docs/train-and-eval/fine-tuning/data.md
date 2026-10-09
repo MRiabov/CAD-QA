@@ -356,6 +356,8 @@ only the dataset:
   under FT-D11.
 - **Contract:** each example is a `TrainingExample` with `dataset_role=learn_the_cadqa_task`, `answer_format` set,
   `reasoning_hop_count` set, and (once rendered) a `submit_*` tool call.
+- **Curriculum.** The rows are ordered by increasing complexity (the 0→1→2→3→5 hop ladder): the
+  first run uses the low-hop end, the primary uses the full ladder.
 - **Coverage requirement:** every Answer format must have at least one agent training trace, because a format the
   teacher never produces cannot be learned (the `json`/`number` zero-coverage defect in
   `pipeline/02-teacher-sampling.md`).
