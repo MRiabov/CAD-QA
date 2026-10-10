@@ -48,8 +48,8 @@ One subsection per candidate, with the adopt/reject notes. (Phase 0b.)
 
 ### LFM2.5 and `liquid-finetune` (Liquid AI)
 
-**Status:** candidate, recorded 2026-10-08, not yet trialed. Likely a stack we use during
-fine-tuning; we will see how well or poorly it works.
+**Status:** selected by FT-D11 (accepted 2026-10-10); not yet trialed. We will see how well or poorly
+it works.
 
 **What it is.** LFM (`Liquid Foundation Model`) is Liquid AI's family of small, on-device LLM
 models. The architecture is a non-transformer hybrid: gated short convolutions plus

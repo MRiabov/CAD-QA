@@ -117,7 +117,8 @@ whose rationale was not recoverable.
 
 ## FT-D11 — Start Phase 3 on the Liquid AI LFM2.5 stack
 
-- **Status:** proposed (2026-10-08) — most likely, not yet accepted.
+- **Status:** accepted (2026-10-10) — owner. Confirmed unless we hit **genuine trouble** with the
+  LFM2.5 + `liquid-finetune` stack; reversal requires the owner.
 - **Context:** Phase 3 needs a base LLM model and a fine-tuning stack. The prior-art survey
   ([`../../prior-art.md`](../../prior-art.md)) records LFM2.5 and `Liquid4All/liquid-finetune`
   as the lowest-setup candidate: one first-party repo covers SFT/DPO/KTO/VLM/GRPO, QAT, GGUF
@@ -383,8 +384,6 @@ whose rationale was not recoverable.
 
 ## Open questions
 
-- **Q1.** The base-pipeline choice (D11 in `plans/oct-7/restructure-docs.md`) is recorded as FT-D11,
-  still proposed; promote it to accepted once the first Phase 3 run completes.
 - **Q2.** FT-D1, FT-D3, FT-D8 have unresolved sub-questions recorded in their step docs; a decision is
   not "done" while its consequences are unresolved.
 - **Q3.** `data.md` §8 records two feature-wide decisions ("commercial agent training trace policy",
@@ -397,3 +396,8 @@ whose rationale was not recoverable.
   not cover the LFM drafter), so it needs the **verl + SGLang** escalation (`../system.md` §6). The draft also targets the **base** and is never
   updated, so acceptance decays as the RL policy drifts. Resolve: does verl + SGLang + DSpark actually
   run our rollouts, and what is the acceptance/speedup on the SFT policy and over an RL run? `[open]`
+
+## Resolved questions
+
+- **Q1.** *(2026-10-10)* FT-D11 promoted to `accepted` (owner): the LFM2.5 + `liquid-finetune` stack is
+  confirmed for Phase 3, reversible only on genuine trouble (see FT-D11).
