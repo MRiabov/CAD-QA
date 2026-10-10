@@ -53,7 +53,8 @@ fine-tuning; we will see how well or poorly it works.
 
 **What it is.** LFM (`Liquid Foundation Model`) is Liquid AI's family of small, on-device LLM
 models. The architecture is a non-transformer hybrid: gated short convolutions plus
-grouped-query attention with QK layer norm. The current generation is **LFM2.5** (2026), with
+grouped-query attention with QK layer norm — most layers are convolutions, a minority are
+attention (not a standard transformer, and not Mamba/SSM). The current generation is **LFM2.5** (2026), with
 dense sizes 230M, 350M, 1.2B, and 2.6B, an `8B-A1B` MoE, and vision-language, audio, encoder,
 and retriever variants. There is no LFM2.6 generation — "2.6B" is a size.
 

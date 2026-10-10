@@ -129,7 +129,9 @@ whose rationale was not recoverable.
   gemma-4-E2B (FT-D1) or another base LLM model.
 - **Consequences:**
   - Fastest path to a first measured run; no toolchain assembly.
-  - LFM2 is a non-transformer hybrid, so the current unsloth/gemma toolchain does not transfer.
+  - LFM2 is a non-transformer hybrid (double-gated short convolutions for most layers plus a minority of
+    grouped-query attention layers — not a standard transformer, and not Mamba/SSM), so the current
+    unsloth/gemma toolchain does not transfer.
   - **Lock-in / redo risk.** Adopting `liquid-finetune` and the LFM chat/tool-call format ties
     the training pipeline to Liquid. Testing another small LLM model later (Qwen3-4B,
     Llama-3.2-3B, Phi-4-mini, Gemma 4) means redoing the training from scratch **including the
