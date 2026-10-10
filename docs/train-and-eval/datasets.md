@@ -19,7 +19,8 @@ dataset**, **Training stage**); `./fine-tuning/decisions.md` (FT-D1–D23);
   (a blend at fixed weights).
 - A dataset enters only with a pinned revision hash and a recorded license (data plan §5). Sizes
   and licenses are survey-time and must be re-verified.
-- `learn_the_cadqa_task` is generated internally (data plan §6); it is not an external dataset.
+- `learn_the_cadqa_task` is generated internally (dataset rows in `../../dataset/`; agent training trace distillation in
+  `fine-tuning/pipeline/02-teacher-sampling.md`); it is not an external dataset.
 - Held-out and evaluation-dataset rows are hard-excluded from every training dataset (data plan §5).
 
 ## Training datasets by dataset role
@@ -128,11 +129,12 @@ priming, not a generation capability. Must not leak the CAD-QA held-out programs
 The CAD-QA task itself: a CAD-QA dataset row → a rule-rendered prompt plus a typed `submit_*`
 answer with hop reasoning. This is the comprehension corpus and the dataset contribution; there is
 no external equivalent. Its rows are the **progressive curriculum** — ordered by increasing
-complexity (the 0→1→2→3→5 hop ladder); the first run uses the low-hop end only.
+complexity (the 0→1→2→3→5 hop ladder); the first run uses the low-hop end only. Row generation is
+planned and owned in `../../dataset/`; the agent training trace distillation is `fine-tuning/pipeline/02-teacher-sampling.md`.
 
 | Dataset | Status |
 |---|---|
-| The CAD-QA task dataset (teacher-distilled) | Internal; producer TBD (data plan §6; FT-D11, FT-D15) |
+| The CAD-QA task dataset (teacher-distilled) | Internal; dataset rows **regenerated** — the current release is superseded — with row generation planned/owned in `../../dataset/`; agent training trace distillation in `fine-tuning/pipeline/02-teacher-sampling.md` |
 
 ## Mixed training datasets
 

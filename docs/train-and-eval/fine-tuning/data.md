@@ -27,12 +27,12 @@ procedure, grading reconciliation, judge independence, baselines).
   held here.
 - **H1/H2** — owned by the architecture doc; the mixes they test are defined here (§3).
 
-**Explicitly out of scope for now.** The CAD-QA **reasoning-hop dataset** itself (the internal
-teacher-sampling of agent training traces from immutable CAD-QA dataset rows, step B2 in
-`pipeline/02-teacher-sampling.md`). This doc defines a
-**dataset** and its **contract** (§6), but does not plan its generation. That is the
-separate decision owed under FT-D11 (`decisions.md`) and
-Phase 3 of `../../development-plan.md`.
+**Scope boundary.** The CAD-QA **dataset rows** themselves (the benchmark) are generated and planned in
+`docs/dataset/` (`../../dataset/README.md`, `../../dataset/pipeline/00-overview.md`); this directory
+consumes the Dataset file and owns the **agent training trace distillation** (`pipeline/02-teacher-sampling.md`) and the
+`learn_the_cadqa_task` contract (§6). The dataset is to be **regenerated** — the current 1,445-row release
+is superseded — and that regeneration plan is owned in `docs/dataset/`. Pin the regenerated Dataset file
+revision before any teacher pass.
 
 **Related docs.** `../../prior-art.md` (external evidence, refs [1]–[33]);
 `../../PRD.md` (research contract); `decisions.md`
@@ -364,8 +364,10 @@ only the dataset:
 - **This is the comprehension corpus.** CAD-QA *is* the program → question (comprehension) data;
   there is no large public equivalent, which is the dataset contribution. That is why the external
   `expose_cadquery_programs` sets are generation-only proxies, and this dataset — not they — carries the task signal.
-- **Producer (not planned here):** the Phase 3 replacement for step B2 teacher sampling, owed
-  under FT-D11.
+- **Producer.** The CAD-QA dataset rows come from `docs/dataset/` (`../../dataset/README.md`); the
+  agent training trace distillation from those rows is this directory's
+  `pipeline/02-teacher-sampling.md`. The dataset is to be
+  **regenerated** (the current release is superseded) — pin the regenerated revision.
 - **Contract:** each example is a `TrainingExample` with `dataset_role=learn_the_cadqa_task`, `answer_format` set,
   `reasoning_hop_count` set, and (once rendered) a `submit_*` tool call.
 - **Curriculum.** The rows are ordered by increasing complexity (the 0→1→2→3→5 hop ladder): the
@@ -422,13 +424,16 @@ only the dataset:
   engineering tasks, and is part of the general-task mix that anchors prior ability (FT-D18).
 - **Order of training.** Decided by FT-D16: two SFT phases (elicit → preserve) with a phase-2-only
   fallback; the first-run mix remains the format gate (FT-D16 in `decisions.md`).
+- **CAD-QA task dataset ownership.** *(2026-10-10)* Dataset-row generation is planned and owned in
+  `docs/dataset/` (`../../dataset/`); agent training trace distillation is this directory's
+  `pipeline/02-teacher-sampling.md`. The dataset is to be **regenerated** — the current 1,445-row release
+  is superseded — so pin the regenerated Dataset file revision, and make the regenerated set cover the
+  previously-zero `json`/`number` Answer formats (or 02's coverage gate still fails).
 
 **Still to make:**
 
 1. **Mix ratios.** The §3 numbers are a starting hypothesis, not a result.
-2. **CAD-QA task dataset ownership.** Who plans the internal teacher-sampling replacement (B2), and
-   against which immutable dataset revision?
-3. **Target `answer_format` coverage.** `json`/`number` teacher coverage was zero; the external
+2. **Target `answer_format` coverage.** `json`/`number` teacher coverage was zero; the external
    `emit_our_tool_call_format` dataset may not contain the CadQuery workplane tool. Decide whether the
    CAD-QA task dataset must synthesize it.
 
