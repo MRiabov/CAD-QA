@@ -33,8 +33,9 @@ The fine-tuning + evaluation work is one epic. It is not accepted until:
   **must** be rejected;
 - the **External datasets** — pinned local slices of the tool-format, tool-loop, reasoning, Python, and
   CadQuery corpora, not live Hub pulls;
-- **weights** — a tiny checkpoint (the cookbook's LFM2.5-350M), or the tokenizer + chat template only; no
-  Hub weight download in CI;
+- **weights** — CI downloads **no weights**: the masking/tokenization layers need only the LFM2.5
+  tokenizer + chat template (a few MB). Only the local GPU smoke (layer 6) loads a real checkpoint — the
+  cookbook's LFM2.5-350M (350M **parameters**, ~0.7 GB in bf16), not 350 MB;
 - the **served policy** during the RL-readiness gate — scripted completions, not a live vLLM endpoint.
 
 **Real (never mocked):**
