@@ -343,8 +343,20 @@ The shape of an answer: `candidate_label`, `coordinate`, `text`, `number`, `inte
 
 ### Measurement scope
 
-Where a Measurement comes from: `profile_intrinsic`, `feature_application_effect`,
-`entity_geometry`, `snapshot_state`, or `relation_metric`. Used to avoid category errors.
+The provenance category of a Measurement — the aspect of the CAD program the fact describes.
+Each Measurement has exactly one:
+
+- `profile_intrinsic` — a property of the profile itself: area, perimeter, local bbox, counts.
+- `feature_application_effect` — the delta a CAD feature causes: volume, bbox, topology.
+- `entity_geometry` — a node's coordinates, normals, axes, bbox.
+- `snapshot_state` — a Shape snapshot's volume, bbox, topology, validity.
+- `relation_metric` — a Relation's distance, angle, containment, intersection.
+
+`Distinct from:` the Measurement itself — this names the category, not the value. It keeps
+categories from being conflated (an effect delta is `feature_application_effect`, never
+`profile_intrinsic`), so attach an effect Measurement to the feature that caused it, not to the
+profile it used. A CAD-QA dataset row carries the **set** of scopes its Measurements use.
+`In code:` `measurement_scopes` (the per-row set; one Measurement's `scope`).
 
 ---
 
