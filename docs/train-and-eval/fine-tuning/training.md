@@ -225,9 +225,9 @@ contract:
 | QLoRA (4-bit NF4) | ~6–8 GB | fallback only, to fit a ≤16 GB card at moderate sequence length |
 | Full FT | ~40 GB | **not** needed |
 
-Add headroom for activation at the CAD-QA agent training trace length (SFT was `SEQ=6144`,
-`pipeline/04-sft.md`) and for longer external reasoning
-traces. Use gradient checkpointing and gradient accumulation rather than a bigger card.
+Add headroom for activation at the CAD-QA agent training trace length and its **long tail** — a
+multi-round agent training trace (up to ~10 `run_code` round-trips) can fill the `SEQ=6144` window — and for longer
+external reasoning traces. Use gradient checkpointing and gradient accumulation rather than a bigger card.
 
 ### 5.2 Recommendation
 
@@ -268,7 +268,7 @@ batchable pass could be **~$5–12 per 1,000**; whether it stacks with the provi
 not guaranteed — check the pricing on the OpenRouter page for the exact checkpoint. **Caveat:** batch is one request → one completion, so it fits only
 single-call traces; our multi-round teacher loop (up to ~10 `run_code` round-trips, executed server-side)
 cannot be one batch request — budget the loop at sync off-peak and use `:batch` for one-shot/no-tools
-calls. SFT (~10–30M tokens) and pass@k eval are
+calls. SFT (~30–60M tokens with multi-round traces; §5.1) and pass@k eval are
 cents-to-a-few-dollars on the small test GPU, covered by the free credits — so the sampling cost is
 **not** the binding constraint; train/eval cycles and rollout tokens are. The GPU term is **secondary and
 class-dependent**: for LoRA on a 2.6B LLM model the card is rarely the bottleneck (teacher sampling and
@@ -276,6 +276,10 @@ evaluation rollouts dominate), so A100-vs-B300 mostly changes wall-clock, hourly
 throughput. Vendor comparisons put the **B300 (Blackwell Ultra)** at ~7x A100 BF16 compute, ~3.6x memory,
 and ~4.1x bandwidth [vendor]; confirm price/availability on the provider. Report cost **per GPU class**
 (A100 40 GB, B300), not as one number. Budget GPU by the hour and stop on the evaluation gate.
+
+**Re-sampling allowance.** Phase 3 is a rewrite (FT-D3, FT-D12), so a change to the tool-call contract or
+chat template invalidates the sampled agent training traces and costs another teacher pass — budget one;
+do not treat the first pass as final.
 
 ### 5.4 What Liquid ships (checked 2026-10-08)
 

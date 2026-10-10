@@ -256,8 +256,10 @@ coverage was 0.
   selected traces beat random SFT from 100k), TeichAI (~4k), AnkitAI/Parable (~4.4k), and `ToolACE`
   9.7k competed with `xLAM` 56k in the 2026 controlled study. The gain is coverage + quality, not
   raw count.
-- **Scale is GPU-cheap, data-expensive.** At `SEQ=6144`, 10k examples is roughly 10–30M tokens; a
-  single epoch on a 2.6B base is hours on a 24 GB card. The teacher API budget is the real ceiling.
+- **Scale is GPU-cheap, data-expensive.** The single-turn estimate (10k examples ≈ 10–30M tokens) is a
+  **floor**: an agent training trace is multi-round (up to ~10 `run_code` round-trips), so it approaches the
+  `SEQ=6144` window and the real total is closer to **~30–60M tokens**, dominated by a long tail. A single
+  epoch on a 2.6B base is still hours on a 24 GB card. The teacher API budget is the real ceiling.
 - **Coverage beats volume.** Every **task combination** — Answer format × Reasoning hop count ×
   relation family × measurement scope (each task family; on the order of hundreds) — must clear a floor;
   a combination with zero traces cannot be learned (the recorded task-corpus coverage defect). Enforce a
@@ -343,7 +345,9 @@ mechanism differs by training stage:
     consideration, not a blocker.
   Defensible posture, in order:
   1. Prefer permissively licensed, fully-open sources (`OpenThoughts`, `Bespoke-Stratos`, `xLAM`,
-     `Hermes`) for the primary mix.
+     `Hermes`) **where a role has an equivalent permissive option**. The specified mixes still draw the
+     tool-loop and reasoning roles partly from the accepted AGPL / commercial agent training trace corpora
+     (Fable/Opus/TeichAI, §8), so the built mix is **not guaranteed fully permissive**.
   2. Record each External dataset's license and provider terms in the registry and the LLM model
      card, and keep AGPL / commercial agent training trace rows separable so a redistribution or a
      venue objection is tractable.
@@ -409,7 +413,9 @@ only the dataset:
 
 - **Commercial agent training trace policy.** Accepted: agent training traces distilled from commercial models (Fable/Opus/TeichAI) may be
   used in the published thesis, and not only as an ablation — the work is non-commercial research and
-  the External dataset is open. Permissive mixes remain the default; record the originating LLM model and
+  the External dataset is open. Permissive sources are **preferred where an equivalent option exists**, but
+  the first and primary mixes do include commercial/AGPL agent training trace corpora in the tool-loop and reasoning
+  roles — so permissive is a **preference, not the built default**; record the originating LLM model and
   license per sample so the mix can be isolated if a venue objects.
 - **`preserve_general_math_and_code_reasoning` earns a place.** It is a capability-preservation role
   (anti-collapse of general reasoning), not an ablation; content is general software / math /

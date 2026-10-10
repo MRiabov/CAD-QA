@@ -250,6 +250,12 @@ schema or the converter beyond what the mix and the evaluation datasets need.
 | `split` (`Split`, StrEnum) | `train` / `validation` / `test` |
 | `provenance` (`str`) | the exact field mapping/transform applied, for audit |
 
+**One source of truth (LE-15 resolved).** `messages` is authoritative for training: the converter
+renders the SFT target from `messages` **only**. `reasoning_text` and `tool_call_text` are **derived,
+audit-only views** for the A5 record — they must be asserted equal to the assistant turn's reasoning and
+rendered tool call, and are never rendered independently, so they can never become a second target that
+drifts from `messages`.
+
 Preparation stages (pipeline stages 1–5; the architecture doc owns pipeline stages 6–8 and the
 evaluation doc owns pipeline stage 9):
 
