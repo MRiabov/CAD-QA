@@ -50,6 +50,7 @@ docs/
       training.md                 # base, stack, capability preservation, hardware
       data.md                     # dataset roles, mix recipe, order, governance
       system.md                   # post-training loop + data preparation
+      testing.md                  # integration + end-to-end tests
       requirements.md
       decisions.md
       pipeline/

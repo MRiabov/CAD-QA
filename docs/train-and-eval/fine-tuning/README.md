@@ -2,8 +2,8 @@
 
 **Status:** active, 2026-10-09. Rewritten to the Phase 3 design (LFM2.5 + `liquid-finetune`); the
 2026-08 gemma pipeline is superseded (FT-D11, FT-D12). The design and rationale live in `training.md`
-(how we train), `data.md` (which data, in what order), `system.md` (the post-training loop), and
-`../evaluation/plan.md` (harness + scorer).
+(how we train), `data.md` (which data, in what order), `system.md` (the post-training loop), `testing.md`
+(the integration + end-to-end tests), and `../evaluation/plan.md` (harness + scorer).
 
 This directory documents how CAD-QA turns an immutable **dataset file** plus **External datasets** into
 a trained small LLM model: teacher **rejection sampling** → **preparation** (mixing + conversion to
@@ -17,7 +17,8 @@ Liquid `messages`) → **two-phase SFT** → a **RL-readiness gate** and optiona
    (the single source of truth for artifact and field names).
 3. [decisions.md](decisions.md) — the FT-D* decisions (ADR).
 4. The design docs: [training.md](training.md) (how we train), [data.md](data.md) (which data, in what
-   order), [system.md](system.md) (the post-training loop + data preparation).
+   order), [system.md](system.md) (the post-training loop + data preparation), [testing.md](testing.md)
+   (the integration + end-to-end tests).
 
 ## Pipeline-stage index
 
