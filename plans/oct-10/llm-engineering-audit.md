@@ -39,7 +39,7 @@ that the dataset the entire stack is built around has no owner and no generation
 | LE-9 | High | No statistics plan (CIs, variance, power, multiple comparisons) | `plan.md:176-182` (none elsewhere) |
 | LE-10 | High | BenchCAD train/eval leakage handled by hand-wave "keep disjoint" | `data.md:195-199`, `plan.md:184-187` |
 | LE-11 | High | GRPO on the LFM2.5 hybrid via TRL+vLLM is assumed, never verified | `system.md:205-225`, `05-rl-readiness-gate.md:56-59`, `requirements.md:57-59` |
-| LE-12 | High | No optimizer/LR schedule/effective batch; the documented LoRA LR contradicts itself | `training.md:212`, `training.md:409` |
+| LE-12 | Closed | Optimizer/schedule/effective batch are inherited from `liquid-finetune`; resolved config is recorded (was: no optimizer/LR schedule/effective batch; LR contradicted itself) | `training.md:212`, `training.md:409` |
 | LE-13 | Medium | Token/VRAM budget understates multi-turn trace length | `data.md:260`, `training.md:220-230` |
 | LE-14 | Medium | "Permissive default" contradicts the mixes actually specified | `data.md:344-350`, `data.md:280-291` |
 | LE-15 | Medium | `messages` vs `reasoning_text`/`tool_call_text` is a dual source of truth | `system.md:241-246` |
@@ -169,6 +169,15 @@ set. Stage 8 says "override only `model_name` and the dataset path" (`training.m
 forgetting the docs are worried about; deferring them all to "cookbook defaults" for a first-time author is
 the wrong axis to leave unmeasured.
 
+**Resolution (2026-10-19, owner).** `liquid-finetune`'s `DEFAULT_SFT`/`DEFAULT_LORA` supply optimizer
+(AdamW), LR, scheduler, warmup, and batch/accumulation; the plan inherits them and overrides only
+`model_name`/dataset path. The snippet's `2e-5` was the full-FT rate copied onto a LoRA run — it is
+removed, and the LoRA rate is inherited (`2e-4` in the documented recipe). Effective batch is the
+invariant `micro_batch × grad_accum × world_size`, not a per-GPU env var: hold it constant across GPU
+classes or record the GPU class as a hyperparameter; the resolved config goes in the manifest. Muon is a
+P2 ablation, not a first-run default: its LR scale is not comparable to AdamW, and Muon+LoRA is not a
+validated/supported path in this stack. Finding closed.
+
 ## Medium findings
 
 ### LE-13 — The budget understates multi-turn traces
@@ -224,12 +233,12 @@ assignments will flip between runs; the gate's downstream RL/RFT decision inheri
    drops the final `submit_*` call.
 4. **A named checkpoint-selection rule** and a concrete eval/save cadence, chosen so the thesis number is
    not selected on its own held-out set.
-5. **A real forgetting control** (at minimum a replay slice or a base-anchoring term) plus a guard sized for
-   the tolerance it is asked to detect.
+5. **A specialization-tradeoff monitor** — paired CIs and reported deltas on the general-task guard;
+   diagnostic, not a non-inferiority gate.
 6. **An analysis plan** — per-arm CIs, seed variance, and a pre-registered primary comparison — before any
    H2/H3 number is quoted.
-7. **A written optimizer recipe** (optimizer, LR, warmup, scheduler, effective batch) tied to the measured
-   data scale, not to an unverified upstream default.
+7. **A recorded optimizer recipe** — the inherited optimizer/LR/schedule/batch, with resolved values and
+   the effective-batch invariant in the manifest.
 
 ## Recommended next steps
 
@@ -244,6 +253,7 @@ assignments will flip between runs; the gate's downstream RL/RFT decision inheri
 
 Doc-level resolutions landed after the review commit (`d214850`): LE-1 (`2dd2a29`), LE-2/LE-4/LE-5 test
 plan (`8ea133a`), LE-13/14/15 (`e5f3a71`), LE-17 (`3121830`), LE-6/LE-7 wording and doc claims (this
-pass), and LE-8 (preservation supports training/monitoring; it is not a target). LE-4 and LE-5 now have a specified check
+pass), LE-8 (preservation supports training/monitoring; it is not a target), and LE-12 (optimizer/LR/
+schedule inherited from `liquid-finetune`; resolved config recorded). LE-4 and LE-5 now have a specified check
 and an explicit sequence/truncation policy, but no converter, fixture, or test exists yet — they are
 **spec-closed and code-open**. The findings above intentionally remain the point-in-time review.

@@ -75,23 +75,24 @@ Two predictions this architecture commits to and must test:
 
 - **H1 (format):** a small, curated tool-format + CAD-QA-format mix raises tool-valid rate sharply
   using the cookbook recipe (LoRA, cookbook epochs, prompt-masked).
-- **H2 (reasoning):** an external reasoning-distillation + agent training trace mix raises CAD-QA held-out
-  accuracy *beyond* what format-only training achieves, without a regression on the general-capability
-  evaluation dataset.
-- **H3 (transfer):** graph-derived CAD-QA supervision raises accuracy on **existing, credible**
-  external benchmarks — **BenchCAD `qa_code`** (primary means, official split), with BenchCAD
-  `edit_code` and a text-in text-to-CAD benchmark as end/defect corroboration — *beyond* the Base,
-  format-only, and answer-only controls. This is the evidence that the dataset, not only the
-  trained LLM model, is useful; without a gain on a credible external benchmark the improvement
-  claim rests on an internal split and will not survive review. Suite, arms, and preconditions:
-  `../evaluation/plan.md` §5.1 (D-E5).
-- **H4 (means → end):** the pass rate an LLM model reaches on the CAD-QA task predicts its
+- **H2 (reasoning, P0 core):** an external reasoning-distillation + agent training trace mix raises CAD-QA held-out
+  accuracy *beyond* what format-only and answer-only training achieves; the general-capability tradeoff
+  is reported, not gated.
+- **H3 (transfer, P1):** graph-derived CAD-QA supervision raises accuracy on **existing, credible**
+  external benchmarks — **BenchCAD `qa_code`** (official split, reported in percentage points), with
+  BenchCAD `edit_code` and a text-in text-to-CAD benchmark as end/defect corroboration — *beyond* the
+  Base, format-only, and answer-only controls. This is the evidence that the dataset, not only the
+  trained LLM model, is useful; a null transfer is reported and weakens the dataset-usefulness claim
+  to an internal-split result. Suite, arms, and preconditions: `../evaluation/plan.md` §5.1 (D-E5).
+- **H4 (means → end, P1 mechanism):** the pass rate an LLM model reaches on the CAD-QA task predicts its
   performance on the independent credible benchmark (FT-D15: the lever is the task environment +
   scorer, not the corpus). Tested as a dose-response at fixed recipe and matched compute, with the
   `preserve_general_math_and_code_reasoning` evaluation dataset as covariate and a non-CAD-QA counter-arm: `../evaluation/plan.md` §5.1 (D-E6).
 
-**Priority.** H3 (headline), H4 (strong mechanism), H2 (core means), H1 (control). The paper presents
-them in that order; the experiments run in the dependency order H1 → H4.
+**Priority.** H2 (P0 core), H3 (P1 transfer), H4 (P1 mechanism), H1 (P1 control). The experiments run
+in dependency order H1 → H2 → H4, with H3 measured on the same arms. **P2 stretch:** under the
+identical harness and slice, test whether the tuned model surpasses its teacher (`deepseek-v4.1-flash`;
+name any additional teacher models explicitly).
 
 If H1 holds and H2 fails, the honest result is "format compliance, not reasoning" — a finding, not
 a failure, and it must be reported as such (`../../PRD.md` definition of done, item 3). If H1
@@ -126,7 +127,8 @@ Each step below has a pass condition; do not start the next until the previous p
    with our first-run rows (general tasks + low-hop `learn_the_cadqa_task`) in Liquid's `messages`
    format (built by the data doc), keep the cookbook config and hyperparameters, and run the
    evaluation doc's `emit_our_tool_call_format` evaluation dataset. Pass condition: H1.
-4. **Only if H1 holds**, expand to `mixed_dataset_full_cadqa_training` and the progressive `learn_the_cadqa_task`.
+4. **Only if H1 holds**, expand to `mixed_dataset_full_cadqa_training` and the release-hop tiers of
+   `learn_the_cadqa_task`.
 
 Rules for the whole effort:
 
@@ -166,7 +168,7 @@ We do not claim non-inferiority; a measured tradeoff is reported, not treated as
 | **QLoRA only as a fallback** | fallback | needed only to fit <16GB; the Unsloth cookbook uses it (`load_in_4bit=True`), but Liquid's own recipe is LoRA-bf16 and LFM ships bf16 |
 | **Completion-only loss** | P0 | fixes the B3 flat-`text` defect; implement it the **cookbook way** — train on the `messages` format and *verify* the loss is completion-only, rather than hand-rolling a masking path |
 | **Epochs = the cookbook's, not ours** | P0 | TRL/Liquid example uses 3; the Home Assistant recipe uses 5 on a narrow 350M task; TeichAI used 1 at 4B. Start from the cookbook default, then let the evaluation dataset move it |
-| **Cookbook learning rates** | P0 | LoRA `2e-4`, full FT `2e-5`, DPO `5e-7` (TRL/Liquid examples); `bf16=True` |
+| **Cookbook learning rates** | P0 | LoRA `2e-4`, full FT `2e-5`, DPO `5e-7` (TRL/Liquid examples); `bf16=True`. Do not copy the full-FT `2e-5` onto a LoRA run — inherit `DEFAULT_LORA`'s rate |
 | **General-task mix (50–70%)** | P0 | xLAM precedent; the diverse general mix anchors prior ability (FT-D18). The general-task rows are a data-doc concern |
 | **Gradient checkpointing + grad accumulation** | P0 | fits memory; the cookbook uses `gradient_accumulation_steps=4`, Unsloth uses its optimized checkpointing |
 | **Evaluate the datasets before/after each run** | P0 monitor | measure the tradeoff, do not assume it away; a diagnostic and H4 covariate, not a non-inferiority gate; the procedure is the evaluation doc's |
@@ -211,7 +213,9 @@ contract:
    See §5.4, §10.
 7. **Manifest.** One JSON per run: External dataset revisions, row counts, role weights, seed, exact command,
    `liquid-finetune` revision (code and template come from that package), git SHA, checksums (Phase 0
-   TA-E3), and for `learn_the_cadqa_task` the hop tiers **generated** vs **trained**.
+   TA-E3), the resolved training config (optimizer, LR, scheduler, warmup, per-device batch,
+   accumulation, world size, effective batch), and for `learn_the_cadqa_task` the hop tiers
+   **generated** vs **trained**.
 8. **Train.** Run `liquid-finetune` with the cookbook config and defaults (`DEFAULT_SFT`,
    `DEFAULT_LORA`), overriding only `model_name` and the dataset path until a measured result says otherwise.
    Not a hand-rolled trainer.
@@ -302,7 +306,7 @@ Sources: `docs.liquid.ai/examples/customize-models/home-assistant`, `docs.liquid
   ```python
   JobConfig(project_name, model_name="LFM2.5-1.2B-Instruct", training_type="sft",
       dataset=DatasetConfig(path=..., type="sft", limit=..., test_size=0.1),
-      training_config=TrainingConfig(extends="DEFAULT_SFT", num_train_epochs=3, learning_rate=2e-5),
+      training_config=TrainingConfig(extends="DEFAULT_SFT"),  # inherit optimizer/LR/schedule/batch
       peft_config=PeftConfig(extends="DEFAULT_LORA", use_peft=True))
   ```
 
@@ -319,6 +323,16 @@ Sources: `docs.liquid.ai/examples/customize-models/home-assistant`, `docs.liquid
 
 #### Training and precision
 
+- **Optimizer: inherit AdamW.** TRL/`liquid-finetune` defaults are AdamW, which is the tested LoRA path:
+  adaptive per coordinate, stable with zero-initialized adapters, and no trainer code. Do not add Muon
+  to the first run: its LR scale is not comparable to AdamW, Muon+LoRA is not a validated/supported
+  path in this stack, and it would confound the baseline. Muon is a P2 ablation (§7), not a default.
+- **Effective batch is an invariant.** `per_device_batch × gradient_accumulation_steps × world_size`.
+  Per-device batch may vary by GPU class; hold the effective batch constant by adjusting accumulation,
+  or record the GPU class as a hyperparameter. Never compare runs with different effective batches.
+- **Record the resolved config.** Print and store the optimizer, LR, scheduler, warmup, per-device
+  batch, accumulation, world size, and effective batch in the manifest. A cookbook default can change
+  between `liquid-finetune` revisions.
 - **Plain LoRA, not QLoRA.** The recipe uses LoRA on the base LLM model; it runs **5 epochs on a Modal
   H100** (~$1.50 for the 350M recipe), then **merges the adapter** and converts to GGUF
   (`--quant-type q8_0`).
@@ -382,7 +396,7 @@ justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
 | Reproduce the Home Assistant loop (synthetic data → train → merge → export → benchmark) | **P0** | proves the full narrow-task loop the cookbook provides |
 | Completion-only loss verified on the `messages` format | **P0** | fixes the B3 flat-`text` defect the cookbook way, without hand-rolling masking |
 | Re-author the `[answer contract]` / `submit_*` rendering for LFM2.5 native tool tokens | **P0** | base-specific; the exact Aug-2026 failure mode (`../../development-context.md`) |
-| Cookbook LoRA recipe (`r=16`, `alpha=32`, `lr=2e-4`, cookbook epochs) on bf16 | **P0** | baseline that does not forget; matches Liquid (§5.4) |
+| Cookbook LoRA recipe (`r=16`, `alpha=32`, `lr=2e-4`, cookbook epochs) on bf16 | **P0** | baseline recipe; matches Liquid (§5.4); specialization tradeoff is monitored, not gated |
 | GGUF / standalone export scripted (on demand) | **P2** | adapter-first (FT-D23); merge only for a GGUF K-quant or a standalone checkpoint |
 | DPO / GRPO second training stage | **P2** | FT-D8 ordering, superseded by FT-D13: run GRPO only after the Training stage 2 RL-readiness gate shows a reachable tier (`system.md`) |
 | RL-readiness gate rollout temperature (≈ 1.0) validated from research | **P2** | `05-rl-readiness-gate.md` OD-3; sets only the reachability estimate — confirm against the RL exploration/sampling literature (research refs [21]–[23], [25]) |
@@ -390,6 +404,7 @@ justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
 | Step-level (process) verification: a pass followed the Gold query program, not a lucky guess | **P2** | `clue_map` gives per-predicate traceability; guards answer-only guessing (research refs [27][28]) |
 | NB-LoRA / EWC / replay-buffer forgetting control | **P2** | only if the evaluation datasets show real regression |
 | Multi-base sweep (Qwen3.5-2B, LFM2.5-2.6B, Llama-3.2-3B) | **P2** | hold recipe fixed; adopting another base leaves the cookbook |
+| Muon optimizer ablation (AdamW for embeddings/norms/scalars) | **P2** | only after the AdamW baseline; Muon+LoRA is unvalidated in this stack and its LR scale is not comparable |
 
 ---
 
@@ -414,9 +429,6 @@ justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
 - **Q3.** LoRA-bf16 is the default (§5.4); does QLoRA change the outcome on the evaluation dataset at this scale? The repo
   `pipeline/04-sft.md` records a code/narrative conflict (4-bit vs 16-bit) from the gemma runs; settle it
   with a measured A/B on the evaluation dataset.
-- **Q4.** The §5.4 config snippet sets `learning_rate=2e-5` (the full-FT rate from §3) on a
-  `DEFAULT_LORA` run, while the §3 table gives the LoRA rate as `2e-4`. Does `DEFAULT_LORA` override
-  the snippet's rate, or is the snippet wrong? `[unknown]`
 - **Q5.** H2 (§1) expects an external reasoning-distillation mix to raise CAD-QA accuracy, while FT-D15
   and `system.md` §0 call external general data *support*, not the lever (the task environment + scorer
   is). Reconcile: is the reasoning third a support/anchoring term or a lever for H2? `[open]`
@@ -424,6 +436,11 @@ justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
 ---
 
 ## 10. Resolved questions (training)
+
+- **Q4.** *(2026-10-19)* **Inherit the LoRA rate; the `2e-5` was a full-FT value.** Do not override
+  `learning_rate` on a `DEFAULT_LORA` run. The documented LoRA rate is `2e-4`; if the resolved config
+  shows otherwise on the first run, record it and fix the doc rather than hand-setting a value. The
+  snippet now inherits optimizer/LR/schedule/batch, and the resolved config goes in the manifest.
 
 - **Q1.** *(2026-10-09)* **Prompt is not masked by default.** TRL's `SFTConfig.assistant_only_loss`
   defaults to `False`, so conversational (`messages`) data gets full-sequence loss. Set
