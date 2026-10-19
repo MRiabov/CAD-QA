@@ -170,9 +170,15 @@ Two rules:
 | Full primary (optional) | the full Mixed training dataset | external reasoning support |
 | General-only (H4 counter-arm) | the full general mix **without** `learn_the_cadqa_task` | isolates CAD-QA supervision from general capability (H4) |
 
-- **Claim.** CAD-QA reasoning > format-only **and** > Base on the P0 means target (BenchCAD
-  `qa_code`, official split) is the transfer result; the end/defect targets corroborate the causal
-  chain (comprehension → construction and fewer invalid shapes).
+- **Primary result (P0, H2).** CAD-QA reasoning > Base, Format-only, and Answer-only on the CAD-QA
+  hard slice, reported with a paired CI. This is the instrument result; it is not conditioned on
+  external transfer.
+- **Transfer result (P1, H3).** The same tuned arm improves on BenchCAD `qa_code` (official split)
+  relative to Base / Format-only / Answer-only, reported in percentage points with a paired CI;
+  `edit_code` corroborates. A null transfer is reported as a finding, not hidden.
+- **Stretch (P2).** Under the identical harness and slice, test whether the tuned model surpasses its
+  teacher (`deepseek-v4.1-flash`; name any additional teacher models explicitly). Exploratory, with a
+  CI — not a pre-registered gate.
 - **H4 (means → end).** Test whether the CAD-QA pass rate tracks external transfer: a dose-response
   swept over `learn_the_cadqa_task` volume (0.5k→10k) or over checkpoints, measuring the CAD-QA pass
   rate and the external score at each point. Controls: fixed recipe and **matched compute**; the
@@ -185,7 +191,7 @@ Two rules:
   control (BenchCAD wants a JSON array of numbers — report invalid-output rate); contamination audit
   (exclude every external benchmark's families from every training arm; dedup CAD-QA programs against
   them).
-- **Peer-review stake.** Without a measured gain on a credible external benchmark the
+- **Peer-review stake (P1 transfer).** Without a measured gain on a credible external benchmark the
   dataset-usefulness claim rests on an internal split and does not withstand review. A null transfer
   is reported as a finding (comprehension supervision is task-local), not hidden.
 
@@ -257,9 +263,9 @@ results rather than repeating the plan.
 | Evaluation-dataset procedure wired to the cookbook eval (`learn_the_cadqa_task`, `emit_our_tool_call_format`, `preserve_general_math_and_code_reasoning`) | **P0** | every training run needs the specialization-tradeoff monitor, not a gate |
 | Immutable held-out rows + hard-excluded evaluation-dataset rows | **P0** | held-out hygiene (owned with the data doc) |
 | Public/private leak audit | **P0** | a leak invalidates the benchmark |
-| External transfer harness on BenchCAD `qa_code` (primary) and `edit_code` (secondary) | **P0** | the only evidence the dataset is useful beyond its own split; peer-review gate for H3 |
+| External transfer harness on BenchCAD `qa_code` (primary) and `edit_code` (secondary) | **P1** | the evidence that the dataset is useful beyond its own split; transfer gate for H3 |
 | Reachability pilot + family-disjoint BenchCAD subset | **P0** | a target the base LLM model cannot attempt yields no transfer signal |
-| H4 dose-response: CAD-QA pass rate vs external score | **P0** | proves the dataset is a lever, not a tutorial |
+| H4 dose-response: CAD-QA pass rate vs external score | **P1** | proves the dataset is a lever, not a tutorial |
 | Re-run shortcut baselines on the current schema | **P1** | current baselines are `stale` |
 | Harbor: external-agent baselines + untrusted-code sandbox | **P2** | deferred (D-E9). It was to show the tuned LLM model working in a general agent setting (`opencode`-style), but that is unwise before   the base setup works and adds sampling cost; even in P2 it may not earn its keep. External baselines
   can run through the **same local tool-call harness**, so Harbor is only needed for genuinely untrusted

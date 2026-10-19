@@ -47,11 +47,11 @@ the consolidated decision log. Open questions stay in `plan.md` §11.
 - **Status:** accepted.
 - **Context:** the dataset's usefulness must be shown on data it was not built from.
 - **Decision:** the transfer claim (H3) is evaluated against **existing, credible** benchmarks — BenchCAD
-  `qa_code` (P0 means), with BenchCAD `edit_code` and a text-in text-to-CAD benchmark (P1) — each on its
+  `qa_code` (P1 means), with BenchCAD `edit_code` and a text-in text-to-CAD benchmark (P1) — each on its
   official full split and metric, against Base / format-only / answer-only controls. Stale gaps
   (`GeoGramBench`, `QueryCAD`) are re-run or dropped.
-- **Consequences:** it is a P0 check — the only evidence the dataset is useful beyond its own split.
-  Detail: `plan.md` §5.1.
+- **Consequences:** it is a P1 thesis-important check — the evidence that the dataset is useful beyond
+  its own split. Detail: `plan.md` §5.1.
 
 ## D-E6 — H4 is a dose-response
 

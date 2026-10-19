@@ -230,8 +230,14 @@ We will fine-tune LLM models using SFT & RL frameworks; in particular similar to
 After proving that the environment works and is correct through the API, we will post-train a small LLM model following that program-evolution work, whose authors have post-trained only a small — a 2-billion-parameter LLM model — to
 do CAD reconstruction. E.g. an LLM model like Gemma4-E2B or Qwen3.5-2B will be used
 owing to us attempting to save on compute expenses. If base models of this size
-can solve these tasks with 10% success rates, this would be a good baseline. Our goal is to
-improve their pass rates from 10% to 50-70%. RL is an expensive process, and as
+can solve these tasks at around 10%, that is a useful baseline. We treat 10% and 50–70% as
+**planning estimates, not pre-registered targets**: the base rate is measured on the frozen slice
+first (a small-model run through OpenRouter or manual inference is sufficient), and the success
+threshold is set from that measurement. The primary result (P0) is a substantial,
+uncertainty-quantified improvement over the base and the format-only/answer-only controls on CAD-QA.
+The transfer result (P1) is a percentage-point improvement on BenchCAD `qa_code` against no-CAD-QA
+controls; as a P2 stretch we test whether the tuned model surpasses its teacher under the same
+harness. RL is an expensive process, and as
 such, and in our position, it is infeasible to train larger
 models.
 

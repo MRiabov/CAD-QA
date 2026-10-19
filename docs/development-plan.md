@@ -7,8 +7,8 @@ docs are organised. A live, owner-facing checklist lives in `_audit/owner-audit-
 ## Goal
 
 Complete the project: an immutable, verified benchmark; refreshed baselines; a small LLM model that
-beats its base and the baselines without collapsing reasoning; results and a finished
-paper/thesis.
+beats its base and the baselines without collapsing reasoning (H2, P0); a measured transfer to
+BenchCAD (H3, P1); and, as a P2 stretch, a tuned model that beats its teacher on the same harness.
 
 ## How work proceeds
 
@@ -50,7 +50,8 @@ Phase 3 design.
 - Decide dataset scope: freeze the 1,445-row curriculum plus a new group-safe held-out test,
   or regenerate the ≥10,000-row `benchmark-release` tier.
 - Build and freeze the held-out test; assert no train/test row or CadQuery program overlap.
-- Close the 0-hop/1-hop synthesis gap if curriculum training needs it.
+- Close the 0-hop/1-hop synthesis gap if needed; the current release floors at `hop≥2` (documented
+  gap), so the working ladder is `{2,3,4,5}`.
 - Fix `json`/`number` teacher coverage.
 - Publish with tagged revision hashes.
 
@@ -71,11 +72,11 @@ Design first (FT-D11 plus `train-and-eval/fine-tuning/pipeline/00-overview.md`):
 
 - format via constrained decoding where possible;
 - prompt-masked SFT, bounded epochs, if SFT is used;
-- on-policy reasoning (student rejection sampling and/or GRPO) with shaped reward, a
-  `0→1→2→3→5` curriculum, entropy monitoring, and checkpoints.
+- on-policy reasoning (student rejection sampling and/or GRPO) with shaped reward, release-hop
+  `{2,3,4,5}` tier gating, entropy monitoring, and checkpoints.
 
-Pilot on 1-hop before scaling. **Pass condition:** full held-out-test number; improvement over base
-and baselines; entropy and length reported, not collapsed.
+Pilot on the lowest release tier (hop 2) before scaling. **Pass condition:** full held-out-test number;
+improvement over base and baselines; H3 transfer reported.
 
 ## Phase 4 — Evaluation and analysis [core P0; `no_tools`/`cadquery` P2]
 
