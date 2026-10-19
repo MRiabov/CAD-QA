@@ -8,9 +8,9 @@ Supervised-fine-tune **LFM2.5** with LoRA (bf16) via `liquid-finetune`, in **two
 
 - **Phase 1 — refocus on coding (plus easy tasks):** the general mix (⅓ coding agent, ⅓ 3D math,
   ⅓ text2CAD + edits) + a low-hop slice of `learn_the_cadqa_task`.
-- **Phase 2 — CAD-QA task + preserve:** the full **progressive** `learn_the_cadqa_task` (0→1→2→3→5)
-  alongside the general mix. **No separate `emit_our_tool_call_format`** — the format is carried by the
-  task.
+- **Phase 2 — CAD-QA task + preserve:** the remaining release hop tiers (`{3,4,5}`, added through the
+  §4.1 advancement gate) alongside the general mix. **No separate `emit_our_tool_call_format`** — the
+  format is carried by the task.
 
 A **phase-2-only fallback** applies if phase 1 shows no measured phase-end gain.
 

@@ -29,8 +29,8 @@ adding the formats the old contract omitted (`boolean`, `entity_id`) — so ever
 exactly one `submit_*` tool by construction (FT-D4, FT-D12; D-E8).
 
 The loader exposes `reasoning_hop_count` (and `difficulty_bucket`) per row but does not filter or order
-by it — the progressive curriculum is a mix concern, applied in the Sample + mix step (`../system.md`
-§7).
+by it — tier inclusion is a mix/training-phase concern, applied through the measured advancement gate
+(`../data.md` §4.1), not by ordering a static dataset.
 
 ## Current status
 

@@ -4,7 +4,7 @@
 `training.md`, `system.md`, and `../evaluation/plan.md`.
 
 **This doc owns — which data we train on and when:** dataset roles, candidate external datasets, the
-mix recipe, training order / curriculum / SFT-vs-RL scheduling, licensing and contamination policy,
+mix recipe, training-phase / tier-gating schedule, licensing and contamination policy,
 and the CAD-QA task dataset.
 
 **The architecture doc owns — how we train the LLM model:**
@@ -219,7 +219,7 @@ found to be clean and non-overlapping.
 | Mix | Role weights | Purpose |
 |---|---|---|
 | `mixed_dataset_general_and_easy_cadqa` (first run) | 70% general (⅓ coding agent, ⅓ 3D math, ⅓ text2CAD + edits), 30% low-hop `learn_the_cadqa_task` (rejection-sampled) | first run: format + easy task, cheapest signal |
-| `mixed_dataset_full_cadqa_training` (primary) | 50% general (same thirds), 50% `learn_the_cadqa_task` (progressively more complex) | test H2, the thesis number; **no separate `emit_our_tool_call_format`** — the format is carried by `learn_the_cadqa_task`. The task share is the **curriculum** — rows ordered by increasing complexity (the 0→1→2→3→5 hop ladder), not a flat sample |
+| `mixed_dataset_full_cadqa_training` (primary) | 50% general (same thirds), 50% `learn_the_cadqa_task` (release hop tiers) | test H2, the thesis number; **no separate `emit_our_tool_call_format`** — the format is carried by `learn_the_cadqa_task`. The task share covers the release hops `{2,3,4,5}`; later tiers are added through the measured advancement gate (§4.1), not by within-run ordering |
 
 Rationale and tradeoffs:
 
@@ -268,15 +268,15 @@ coverage was 0.
 
 ---
 
-## 4. Order and curriculum of training
+## 4. Training phases and tier gating
 
-This section owns the *order* the roles and difficulty are presented in. The architecture doc owns
+This section owns the *phase and tier-inclusion schedule*. The architecture doc owns
 the mechanics (epochs, mixing implementation).
 
 - **Two training phases.** SFT runs as **phase 1 (refocus on coding + easy tasks)**: the base already
   trains on code, so coding/Python is not new — phase 1 refocuses it (`expose_general_python_code`),
   adds a little text-to-CadQuery (`expose_cadquery_programs`), and carries a simple slice of our tasks
-  (e.g. hop 0, `learn_the_cadqa_task`); then **phase 2 (CAD-QA task + preserve)**: CAD is new, so
+  (e.g. hop 2, the lowest release tier, `learn_the_cadqa_task`); then **phase 2 (CAD-QA task + preserve)**: CAD is new, so
   `mixed_dataset_full_cadqa_training` adds `learn_the_cadqa_task` + CAD at scale, with
   the general tasks (`preserve_general_math_and_code_reasoning`, `expose_*`) as the anchor.
   Shape and rationale: `system.md` §2; eval cadence: `../evaluation/plan.md` §6.
@@ -284,9 +284,11 @@ the mechanics (epochs, mixing implementation).
   over `mixed_dataset_full_cadqa_training` (the cookbook default); the 2-phase pipeline must earn its
   place on the phase-end eval (ref [19]). The `mixed_dataset_general_and_easy_cadqa` first run is the
   format gate before either phase.
-- **Difficulty-aligned rows.** Order or interleave the `learn_the_cadqa_task` rows by Reasoning hop count
-  (the `0→1→2→3→5` ladder in `../../development-plan.md` Phase 3 and the teacher quotas in
-  FT-02-D1). Do not front-load the hard slice.
+- **Tier-gated inclusion, not within-run ordering.** Under TRL SFT with a shuffled single epoch, ordering
+  a static dataset is a no-op. Include a hop tier's `learn_the_cadqa_task` rows only after §4.1's measured
+  advancement gate, and keep the ladder to the release hops `{2,3,4,5}` — synthesis floors at `hop≥2`
+  (`../../dataset/pipeline/04-query-synthesis-resolver.md` Q1), so 0/1 are not generatable. Do not
+  front-load the hard slice.
 - **The general tasks are interleaved, not appended.** Keep the general-task share in every phase, so
   general ability is anchored throughout, not restored at the end.
 - **Cap `preserve_general_math_and_code_reasoning` early.** Per prior-art ref [9], do not let teacher reasoning dominate
@@ -323,7 +325,7 @@ mechanism differs by training stage:
   a tier that never clears stalls the ladder and must be recorded, not skipped.
 - **Prerequisite.** A tier needs enough rows to train *and* a held-out slice to measure; a tier
   too thin to judge cannot be advanced safely. The per-tier held-out slice is owned by
-  `../evaluation/plan.md`; the ordering and the advancement gate live here.
+  `../evaluation/plan.md`; the tier-inclusion schedule and the advancement gate live here.
 
 ---
 
@@ -371,8 +373,9 @@ only the dataset:
   **regenerated** (the current release is superseded) — pin the regenerated revision.
 - **Contract:** each example is a `TrainingExample` with `dataset_role=learn_the_cadqa_task`, `answer_format` set,
   `reasoning_hop_count` set, and (once rendered) a `submit_*` tool call.
-- **Curriculum.** The rows are ordered by increasing complexity (the 0→1→2→3→5 hop ladder): the
-  first run uses the low-hop end, the primary uses the full ladder.
+- **Tier gating.** Rows carry a release hop tier (`{2,3,4,5}`): the first run uses the low-hop end, the
+  primary covers the release tiers, and later tiers are added through §4.1's gate — not by ordering a
+  static dataset.
 - **Coverage requirement:** every **task combination** (Answer format × Reasoning hop count × relation
   family × measurement scope; each task family) must have at least one agent training trace, because a
   combination the teacher never produces cannot be learned (the `json`/`number` zero-coverage defect in
@@ -449,11 +452,13 @@ only the dataset:
 - **Q5.** Should evaluation dataset roles split into `target` / `guard`? `[open]`
 - **Q6.** What are the two Mixed training dataset names (`mixed_dataset_*`)? Provisional names are
   used in §3 and FT-D19. `[open]`
-- **Q7.** The curriculum ladder is written `0→1→2→3→5`, but the release data has Difficulty tiers
-  `{2,3,4,5}` and the GRPO default schedules hop 4 and omits hop 1. Is hop 4 intentionally excluded
-  from the ladder (and hop 1 the only gap to fill), or is the ladder string a typo? `[open]`
 
 ## Resolved questions
+
+- **Q7.** *(2026-10-19)* The hop ladder is `{2,3,4,5}`, not `0→1→2→3→5`: synthesis floors at
+  `hop≥2`, so no release 0- or 1-hop families exist (`../../dataset/pipeline/04-query-synthesis-resolver.md`
+  Q1), and the release tiers are `{2,3,4,5}`. Hop 4 is included; hop 1 is not a gap to fill. Within-run
+  ordering is not used (§4).
 
 - **Q4.** *(2026-10-09)* What provides `preserve_prior_capabilities` (the anti-forgetting role)?
   Answered by FT-D18: the role was dropped; there is no dedicated replay role, and the diverse

@@ -26,8 +26,8 @@ Traces above the 16,384-token admission window are rejected here and counted —
 (`04-sft.md` §Sequence and truncation policy).
 
 Preparation stages (`../system.md` §7): registry → ingest/normalize → quality gate → dedup/contamination →
-sample/mix. The **sample/mix** step applies per-role quotas and orders the `learn_the_cadqa_task` rows
-by Reasoning hop count (the progressive curriculum, `../data.md` §4).
+sample/mix. The **sample/mix** step applies per-role quotas and includes hop tiers only through the
+measured advancement gate (`../data.md` §4.1), not by ordering a static dataset.
 
 ## Verification
 

@@ -22,7 +22,7 @@ dataset file (immutable CAD-QA rows)
       │
       ▼
 [03 preparation]  registry → ingest/normalize (`TrainingExample`) → quality → dedup/contamination
-                  → sample/mix (the progressive curriculum)
+                  → sample/mix (tier-gated inclusion)
       │
       ▼  Liquid `messages` SFT set + manifest
 [04 SFT]  phase 1 (general thirds + easy) → phase 2 (task + preserve)

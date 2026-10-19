@@ -141,10 +141,10 @@ collapse ("RL squeezes, SFT expands", ref [7]).
 1. **Phase 1 — refocus on coding (plus easy tasks).** The base LLM model is already trained on code,
    so coding/Python is not new — it is just not its focus. Phase 1 refocuses it on a **general mix**
    (⅓ coding agent, ⅓ 3D math, ⅓ text2CAD + edits) and carries a **simple slice of our own tasks**
-   (e.g. hop 0, `learn_the_cadqa_task`) as a safety net.
+   (e.g. hop 2, the lowest release tier, `learn_the_cadqa_task`) as a safety net.
 2. **Phase 2 — the CAD-QA task (new domain) + preserve.** CAD is very likely new to the base LLM model, and our
-   CAD-QA dataset certainly is. Phase 2 fine-tunes on `learn_the_cadqa_task` at scale — progressively
-   more complex rows (the 0→1→2→3→5 hop ladder) — alongside the general mix, with **no separate
+   CAD-QA dataset certainly is. Phase 2 fine-tunes on `learn_the_cadqa_task` at scale — the remaining
+   release hops (`{3,4,5}`, added through the §4.1 advancement gate) — alongside the general mix, with **no separate
    `emit_our_tool_call_format`** (the format comes with the task), and
    shifts the objective from *eliciting* reasoning to *preserving* it (`preserve_general_math_and_code_reasoning`,
    `expose_*`).
@@ -246,7 +246,7 @@ schema or the converter beyond what the mix and the evaluation datasets need.
 | `tool_call_text` (`str \| None`) | the call envelope, kept distinct (A5 rule) |
 | `tools` (`list[ToolSpec]`) | declared tools for the turn |
 | `answer_format` (`AnswerFormat \| None`) | for `learn_the_cadqa_task` and `emit_our_tool_call_format` |
-| `reasoning_hop_count` (`int \| None`) | for `learn_the_cadqa_task` curriculum |
+| `reasoning_hop_count` (`int \| None`) | for `learn_the_cadqa_task` tier gating |
 | `split` (`Split`, StrEnum) | `train` / `validation` / `test` |
 | `provenance` (`str`) | the exact field mapping/transform applied, for audit |
 
@@ -274,8 +274,9 @@ evaluation doc owns pipeline stage 9):
    (`data.md` §6), so cross-dataset duplicates are unlikely — exact/near-dup (normalized hash) within the
    mix, no MinHash/LSH unless a measured collision appears. Hash-exclude the
    CAD-QA held-out rows and the evaluation datasets. Hard failure if any evaluation-dataset id appears in `train`.
-5. **Sample + mix.** Per-role quotas from the data doc §3; deterministic seed; **order/interleave the
-   `learn_the_cadqa_task` rows by Reasoning hop count** (the progressive curriculum, data plan §4); emit a mix report
+5. **Sample + mix.** Per-role quotas from the data doc §3; deterministic seed; include
+   `learn_the_cadqa_task` hop tiers only through the measured advancement gate (data plan §4.1), not by
+   ordering a static dataset; emit a mix report
    (counts, token totals, role weights, and per-hop/per-format coverage for `learn_the_cadqa_task`).
 
 **No silent data loss.** Rejected/filtered rows and failed joins are recorded, not dropped

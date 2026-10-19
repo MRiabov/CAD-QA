@@ -8,7 +8,7 @@ execution, capability preservation, the training stages and optimizer/recipe, ha
 serving/export, the surviving-code boundary (FT-D12), and training P0/P1/P2.
 
 **The data doc** (`data.md`) owns datasets, mix ratios, contamination/licensing,
-training order/curriculum, and the CAD-QA task dataset. **The system doc**
+training-phase/tier-gating schedule, and the CAD-QA task dataset. **The system doc**
 (`system.md`) owns the `TrainingExample` record, its converter, and the
 ingest/normalize/quality/dedup/sample stages.
 

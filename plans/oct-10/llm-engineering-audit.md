@@ -102,18 +102,20 @@ the only supervised target — silently. This is a data-integrity hazard, not a 
 
 ### LE-6 — The "curriculum" is a no-op, and the ladder is inconsistent
 
-The docs repeatedly "order/interleave the `learn_the_cadqa_task` rows by hop count"
+The docs repeatedly say to "order/interleave the `learn_the_cadqa_task` rows by hop count"
 (`data.md:284`, `system.md:271-272`, `03-preparation.md:25`). Under TRL SFT with a shuffled single epoch,
-ordering a static dataset has no effect; a curriculum requires a sampler or per-hop phases, neither of
-which is defined. The ladder itself is unresolved: written `0→1→2→3→5` while the release tiers are
-`{2,3,4,5}` and GRPO omits hop 1 (`data.md:440-442`). A curriculum that is both a no-op and internally
-inconsistent cannot be said to exist.
+ordering a static dataset has no effect; §4.1's advancement gate is **data inclusion**, not ordering, and
+no sampler or per-hop phase is defined. The ladder as written is also unbuildable: synthesis floors at
+`hop≥2`, so no release 0- or 1-hop families exist
+(`docs/dataset/pipeline/04-query-synthesis-resolver.md:130-136`), and the release tiers are `{2,3,4,5}`.
+A curriculum that is both a no-op and cannot be generated cannot be said to exist.
 
 ### LE-7 — Coverage is treated as learnability
 
 `data.md:262-264` treats "at least one agent training trace per combination" as sufficient, over a
 combination space "on the order of hundreds." Across a 1,000–2,000-row first run that is ~2–10 examples per
-combination — far below what is needed to acquire a format. No per-combination minimum is computed. Worse,
+combination — too few to establish the per-combination mapping unless transfer across combinations is
+demonstrated. No per-combination minimum is computed. Worse,
 the coverage gate lives at stage 02 (`02-teacher-sampling.md:21-25`) and is never re-checked after
 `sample + mix` (`system.md:271-273`), so the step that actually determines what is trained can silently
 destroy the coverage the gate certified.
@@ -236,6 +238,7 @@ assignments will flip between runs; the gate's downstream RL/RFT decision inheri
 ## Status addendum (2026-10-19)
 
 Doc-level resolutions landed after the review commit (`d214850`): LE-1 (`2dd2a29`), LE-2/LE-4/LE-5 test
-plan (`8ea133a`), LE-13/14/15 (`e5f3a71`), LE-17 (`3121830`). LE-4 and LE-5 now have a specified check
+plan (`8ea133a`), LE-13/14/15 (`e5f3a71`), LE-17 (`3121830`), and LE-6/LE-7 wording and doc claims (this
+pass). LE-4 and LE-5 now have a specified check
 and an explicit sequence/truncation policy, but no converter, fixture, or test exists yet — they are
 **spec-closed and code-open**. The findings above intentionally remain the point-in-time review.

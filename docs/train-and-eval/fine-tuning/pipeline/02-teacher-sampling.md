@@ -4,7 +4,8 @@
 
 Produce **agent training traces** for `learn_the_cadqa_task` by sampling a **teacher** LLM model over
 decoded CAD-QA dataset rows and keeping only attempts the Query verifier accepts (**rejection
-sampling**), ordered toward the **progressive curriculum** (0→1→2→3→5).
+sampling**), tagged with the release hop tier (`{2,3,4,5}`) for later tier gating; sampling does not
+depend on row order.
 
 ## Inputs / outputs
 
