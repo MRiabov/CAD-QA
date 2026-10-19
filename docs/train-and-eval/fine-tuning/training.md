@@ -257,9 +257,11 @@ a bigger card.
   wall-clock and raises serving/rollout batch throughput. Pick by measured time-to-result and price, not
   peak FLOPS; state any cost figure **per GPU class** (§5.3).
 - Serving/eval bytes are the evaluation doc's concern (vLLM needs its own allocation).
-- **Keep the GPU busy (FT-D21).** Use `liquid-finetune`'s `async_eval` (`sidecar`/`reserved`, vLLM) so
-  evaluation does not block training, and vLLM rollouts (`colocate`/`server`) so one engine serves
-  rollouts and eval. See `../../research/2026-liquid-finetune.md`.
+- **Keep the GPU busy (FT-D21), only with memory headroom.** Use `liquid-finetune`'s `async_eval`
+  (`sidecar`/`reserved`, vLLM) so evaluation does not block training, and vLLM rollouts
+  (`colocate`/`server`) so one engine serves rollouts and eval. `sidecar` shares the training GPU: on a
+  24 GB card at 8k/2.6B it likely OOMs or cuts throughput. Use `sync` at epoch/phase boundaries, or
+  `reserved` on a separate GPU. See `../../research/2026-liquid-finetune.md`.
 
 ### 5.3 Cost estimate
 

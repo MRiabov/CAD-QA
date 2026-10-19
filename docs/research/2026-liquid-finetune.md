@@ -27,6 +27,9 @@ GPU-utilization problem: evaluation can run **without blocking training**.
 - `async_eval` runs benchmarks **without pausing training**, using vLLM. Modes: `sync` (HF
   transformers, blocks), `sidecar` (vLLM, no pause, scheduled per cycle), `reserved` (vLLM, dedicated
   GPUs, single machine). Sidecar falls back to an HF LLM model for logprob scoring; failures are isolated.
+- **Memory caveat:** `sidecar` shares the training GPU. A second 2.6B copy plus KV cache at 8k will not
+  fit beside LoRA training on 24 GB; even when it fits (A100 40 GB), it competes for bandwidth and slows
+  training. Use `sync` at epoch/phase boundaries or `reserved` on dedicated GPUs.
 - This is how a rented GPU is kept busy during evaluation (FT-D21).
 
 ## GRPO rollouts (vLLM)

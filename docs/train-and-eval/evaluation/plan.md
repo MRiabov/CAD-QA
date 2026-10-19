@@ -214,6 +214,14 @@ doc holds the rows. Each is composed across Difficulty tiers, hard-excluded from
 four points in the training pipeline (§1): **baseline**, **periodic** (subset), **phase-end**
 (extensive), and **final** (complete).
 
+**Cadence and GPU isolation (proposed).** Evaluate **once per epoch** on a **64-row** stratified subset;
+run the **full validation** split at each phase end; run the **final test** once after phase 2. Save at
+eval points and keep the last two checkpoints. Do **not** run a vLLM `sidecar` on the same 24 GB GPU as
+2.6B LoRA training at 8k: a second model copy plus KV cache likely OOMs, and the contention slows
+training even when it fits. On a single 24 GB card use `sync` eval at those boundaries, or put eval on a
+separate GPU; `sidecar`/`reserved` require headroom or dedicated GPUs. The full validation pass
+(~1,159 rows) is a phase-end pause, not a periodic one.
+
 | Evaluation dataset | Training role mirrored | Serves |
 |---|---|---|
 | CAD-QA held-out | `learn_the_cadqa_task` | H2; the thesis number |
