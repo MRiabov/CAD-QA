@@ -236,7 +236,9 @@ CI, not `c/n` relabeled as `pass@k`. `pass@k` is reported only with the unbiased
 `n=16/32` confirmation, `0/8` is `not observed` rather than `unreachable`, and BH/FDR applies across
 confirmed tiers. **Chance correction:** bounded answers (`candidate_label`, `boolean`, fixed enums) report
 a `p_chance`-corrected rate and tier assignment tests `c ~ Binomial(n, p_chance)`; one lucky guess on a
-6–7-option row is not reachable evidence. Status: **doc-closed, gate implementation pending.**
+6–7-option row is not reachable evidence. Per-row tests are underpowered, so the RL go/no-go uses the
+**pooled tier-level** corrected rate; 8 is a screen, and categorical rows confirm at 32/64 with the
+documented α=0.05 `c` thresholds. Status: **doc-closed, gate implementation pending.**
 
 ## What "adequate" would minimally require
 

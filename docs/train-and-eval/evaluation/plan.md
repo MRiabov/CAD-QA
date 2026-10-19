@@ -123,8 +123,9 @@ and parser accept the gold encoding; it does **not** establish grader correctnes
   Reasoning hop count, Answer format, and LLM harness mode; reasoning length; calibration when
   confidence is requested; and **`pass@1` with a CI per prompt/tier**, plus a chance-corrected rate for
   bounded answer spaces (`p_chance` per row: `1/K` for `candidate_label`/fixed enums, `1/2` for
-  `boolean`, `0` otherwise) — the RL-readiness signal
-  (report `pass@k` only for `k < n` with the unbiased estimator; `c/n` is not `pass@k`)
+  `boolean`, `0` otherwise). The RL go/no-go uses the **pooled tier-level** corrected rate; per-row
+  chance tests only decide which rows need confirmation. Report `pass@k` only for `k < n` with the
+  unbiased estimator; `c/n` is not `pass@k`.
   (`../fine-tuning/system.md` §3).
 - **Judge independence.** No LLM model in the trusted grading path (DD-03). Grading is exact-match
   code; the teacher only produces training traces, never evaluated answers.

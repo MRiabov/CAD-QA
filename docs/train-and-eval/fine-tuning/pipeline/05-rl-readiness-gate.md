@@ -25,26 +25,41 @@ rollout latency, not SFT sequences/s.
   6–7-option row is not evidence of capability**: under `Binomial(n, p_chance)` it is consistent with
   guessing, so reachability/tiering requires the chance null to be rejected (one-sided), not just `c>0`.
   The raw 0/1 reward stays uncorrected; correction is for measurement and tier assignment.
+- **Power: pool before tiering.** Per-row chance tests are underpowered at `n=8`; the RL go/no-go uses the
+  **pooled** chance-corrected rate over the tier (`Σc` vs `Σn·p_chance`, cluster bootstrap). Per-row
+  labels only decide which rows need more rollouts. Minimum `c` to reject chance at one-sided α=0.05:
+
+  | `K` options | `n=8` | `n=16` | `n=32` | `n=64` |
+  |---|---|---|---|---|
+  | 2 | 7 | 12 | 22 | 40 |
+  | 4 | 5 | 8 | 13 | 23 |
+  | 6 | 4 | 6 | 10 | 17 |
+  | 7 | 4 | 6 | 9 | 15 |
+
+  `n=16` is not enough to confirm a 6–7-option row; go to 32/64.
 - **Reachability:** `reach@n = (c > 0)` — whether any rollout passed. It is a screening signal, not a rate.
 - **`pass@k` (optional, reported separately):** if a "solves within `k` attempts" number is wanted, use the
   unbiased estimator `1 − C(n−c, k)/C(n, k)` with `n ≫ k` (e.g. `n=32` for `k=8`) and state `n` and `k`.
   `k=n` saturates at 1 whenever `c>0` and is never reported.
-- **Tiers (per row), provisional then confirmed:** screen at `n=8`; confirm at `n=16`, and `n=32` for
-  rows near a boundary or entering RL/a reported tier. Use the CI, not the point estimate:
+- **Tiers (per row), provisional then confirmed:** screen at `n=8`; confirm only `uncertain` rows at
+  `n=32/64` (the table above). Use the CI, not the point estimate:
   - `mastered`: confirmed, CI lower bound ≥ 0.80 (suggested).
-  - `learnable`: confirmed `0 < c < n` and not mastered; `rl-eligible` when the CI overlaps 0.25–0.75.
-  - `unreachable`: only after `0/32` (or `0/64`); `0/8` is `not observed`, not unreachable.
-  - `uncertain`: CI spans a boundary → oversample or exclude from RL, and record it.
+  - `learnable`: confirmed above chance and not mastered; `rl-eligible` when the CI overlaps 0.25–0.75.
+  - `unreachable`: only after `0/32` (or `0/64`, `K≤7`); `0/8` is `not observed`, not unreachable.
+  - `uncertain`: fails the chance test or the CI spans a boundary → oversample or exclude from RL, and
+    record it.
   The tiers are **measured**, not derived from `difficulty_bucket`/Reasoning hop count — those are
   *priors* to stratify by and validate, not the definition.
-- **Noise control:** an `n=8` screen is provisional; never report a tier from it. Apply BH/FDR across
-  confirmed rows/tiers before making a tier-level claim, and always report the raw `c/n` counts.
-- **Defaults:** `n=8` screen, 16 confirm, 32/64 for zeros and borderline rows; rollout temperature ≈ 1.0.
-  (At a 0.25 pass rate, the all-fail rate is ~10% at `n=8` and ~1% at `n=16` — this is why the screen is
-  provisional.)
+- **Noise control:** an `n=8` screen is provisional; never report a tier from it. The tier-level RL
+  decision uses the pooled chance-corrected rate, and BH/FDR applies across confirmed tiers; always
+  report the raw `c/n` counts.
+- **Defaults:** `n=8` screen; 32/64 confirm for `uncertain` rows; rollout temperature ≈ 1.0. (At a 0.25
+  pass rate, the all-fail rate is ~10% at `n=8` and ~1% at `n=16` — this is why the screen is
+  provisional, and why categorical rows need the chance table.)
 - **Outputs:** `pass@1` + CI per row and per stratum (Reasoning hop count, `difficulty_bucket`, Answer
-  format, task family); the **learnable/RL-eligible** pool (RL/RFT); the **not-observed/unreachable**
-  list (Bridge / re-distillation); **mastered** rows (evaluation-only).
+  format, task family) and the **pooled chance-corrected rate per tier**; the **learnable/RL-eligible**
+  pool (RL/RFT); the **not-observed/unreachable** list (Bridge / re-distillation); **mastered** rows
+  (evaluation-only).
 
 ## RL (deferred, conditional)
 
