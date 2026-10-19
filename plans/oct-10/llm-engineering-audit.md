@@ -35,7 +35,7 @@ that the dataset the entire stack is built around has no owner and no generation
 | LE-5 | Blocking | No sequence-length/truncation/packing policy; target can be truncated away | `training.md:228`, `data.md:260` |
 | LE-6 | High | The "curriculum" is a data-sort no-op; the hop ladder is internally inconsistent | `data.md:284`, `system.md:271-272`, `data.md:440-442` |
 | LE-7 | High | Coverage is conflated with learnability; no gate re-checks coverage after mix | `data.md:262-264`, `02-teacher-sampling.md:21-25` |
-| LE-8 | High | Capability preservation is relabeling, not a mechanism; the guard is underpowered | `training.md:157-159`, `decisions.md:278-291`, `plan.md:208-211` |
+| LE-8 | Closed | Capability preservation is training support/monitoring, not a target (was: relabeling, not a mechanism; guard underpowered) | `training.md:157-159`, `decisions.md:278-291`, `plan.md:208-211` |
 | LE-9 | High | No statistics plan (CIs, variance, power, multiple comparisons) | `plan.md:176-182` (none elsewhere) |
 | LE-10 | High | BenchCAD train/eval leakage handled by hand-wave "keep disjoint" | `data.md:195-199`, `plan.md:184-187` |
 | LE-11 | High | GRPO on the LFM2.5 hybrid via TRL+vLLM is assumed, never verified | `system.md:205-225`, `05-rl-readiness-gate.md:56-59`, `requirements.md:57-59` |
@@ -128,6 +128,11 @@ is no replay, no distillation loss, no KL anchor, and no regularization — by t
 this is the weakest available control, yet it is P0. The detection gate is a blanket "≤2 points" tolerance
 on a 500–1,000-row guard (`plan.md:208-211`) with no power analysis; at that size the binomial standard
 error is ~1.5 points, so the gate is dominated by noise and will "pass" a real regression.
+
+**Resolution (2026-10-19, owner).** Capability preservation exists to support training and prevent
+collapse of reasoning, and to monitor training — it is **not a target**. The general-task guard is
+therefore a diagnostic/covariate, not a non-inferiority gate; the thesis reports a measured tradeoff
+rather than claiming no capability loss, and no replay/KL mechanism is required. Finding closed.
 
 ### LE-9 — No statistics plan
 
@@ -238,7 +243,7 @@ assignments will flip between runs; the gate's downstream RL/RFT decision inheri
 ## Status addendum (2026-10-19)
 
 Doc-level resolutions landed after the review commit (`d214850`): LE-1 (`2dd2a29`), LE-2/LE-4/LE-5 test
-plan (`8ea133a`), LE-13/14/15 (`e5f3a71`), LE-17 (`3121830`), and LE-6/LE-7 wording and doc claims (this
-pass). LE-4 and LE-5 now have a specified check
+plan (`8ea133a`), LE-13/14/15 (`e5f3a71`), LE-17 (`3121830`), LE-6/LE-7 wording and doc claims (this
+pass), and LE-8 (preservation supports training/monitoring; it is not a target). LE-4 and LE-5 now have a specified check
 and an explicit sequence/truncation policy, but no converter, fixture, or test exists yet — they are
 **spec-closed and code-open**. The findings above intentionally remain the point-in-time review.

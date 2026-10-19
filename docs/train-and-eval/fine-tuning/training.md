@@ -67,7 +67,8 @@ problem. So we invest in:
 
 - **Format compliance** (teach the native tool-call format and the `submit_*` contract),
 - **Reasoning style** (teach a short, correct hop-by-hop style),
-- **Capability preservation** (do not trade general reasoning for CAD-QA format),
+- **Reasoning-collapse monitoring** (watch for collapse of reasoning during specialization; it supports
+  training and is not a target),
 - **Evaluation hygiene** (prove the gain is real and is not format compliance alone).
 
 Two predictions this architecture commits to and must test:
@@ -154,8 +155,9 @@ Rules for the whole effort:
 
 ## 3. Capability preservation — "don't screw the LLM model up"
 
-The evidence is blunt: **LoRA does not reliably prevent catastrophic forgetting**, so we design for
-it.
+**Purpose: support training, prevent collapse of reasoning, and monitor it — not a thesis target.**
+The evidence is blunt: **LoRA does not reliably prevent catastrophic forgetting**, so we watch for it.
+We do not claim non-inferiority; a measured tradeoff is reported, not treated as a failed run.
 
 | Mechanism | Decision | Why |
 |---|---|---|
@@ -167,7 +169,7 @@ it.
 | **Cookbook learning rates** | P0 | LoRA `2e-4`, full FT `2e-5`, DPO `5e-7` (TRL/Liquid examples); `bf16=True` |
 | **General-task mix (50–70%)** | P0 | xLAM precedent; the diverse general mix anchors prior ability (FT-D18). The general-task rows are a data-doc concern |
 | **Gradient checkpointing + grad accumulation** | P0 | fits memory; the cookbook uses `gradient_accumulation_steps=4`, Unsloth uses its optimized checkpointing |
-| **Evaluate the datasets before/after each run** | P0 | measure forgetting, do not assume it away; the procedure is the evaluation doc's |
+| **Evaluate the datasets before/after each run** | P0 monitor | measure the tradeoff, do not assume it away; a diagnostic and H4 covariate, not a non-inferiority gate; the procedure is the evaluation doc's |
 | **KB/activation regularization (EWC, LaLoRA)** | P2 | more moving parts than a first run warrants |
 | **Null-Basis LoRA (NB-LoRA)** | P2 | constrained LoRA that preserves RL-acquired reasoning (`arXiv:2609.25618`); only if the evaluation datasets show real loss |
 | **Replay buffer / LwF distillation loss** | P2 | stronger forgetting control once the baseline recipe is measured |
@@ -208,7 +210,8 @@ contract:
    prompt if wanted. Set `assistant_only_loss: true` (TRL's default for `messages` is full-sequence).
    See §5.4, §10.
 7. **Manifest.** One JSON per run: External dataset revisions, row counts, role weights, seed, exact command,
-   template hash, git SHA, checksums (Phase 0 TA-E3).
+   `liquid-finetune` revision (code and template come from that package), git SHA, checksums (Phase 0
+   TA-E3), and for `learn_the_cadqa_task` the hop tiers **generated** vs **trained**.
 8. **Train.** Run `liquid-finetune` with the cookbook config and defaults (`DEFAULT_SFT`,
    `DEFAULT_LORA`), overriding only `model_name` and the dataset path until a measured result says otherwise.
    Not a hand-rolled trainer.

@@ -264,7 +264,9 @@ coverage was 0.
 - **Coverage beats volume.** Every **task combination** — Answer format × Reasoning hop count ×
   relation family × measurement scope (each task family; on the order of hundreds) — must clear a floor;
   a combination with zero traces cannot be learned (the recorded task-corpus coverage defect). Enforce a
-  per-combination minimum, not just a total.
+  per-combination minimum, not just a total. If the teacher cannot fill a combination or a whole hop tier
+  after the planned attempts, report it as a finding (tier/combination, attempts, failure reason) — never
+  a silent gap.
 
 ---
 

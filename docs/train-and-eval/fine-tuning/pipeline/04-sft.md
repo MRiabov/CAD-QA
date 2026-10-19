@@ -27,6 +27,23 @@ A **phase-2-only fallback** applies if phase 1 shows no measured phase-end gain.
   (present in LFM2.5). Not hand-rolled masking.
 - **Base + stack:** LFM2.5 (2.6B primary, 1.2B pilot) on `liquid-finetune` (FT-D11).
 
+## Input pipeline (keep the GPU fed)
+
+Loading is prefetch, not asyncio: TRL/HF `TrainingArguments` default to `dataloader_num_workers=0`, so
+batches are built in the main process unless `liquid-finetune` overrides it. Confirm the effective config
+on the first run.
+
+- Materialize the final SFT set as local Parquet/Arrow (memory-mapped); never stream from the Hub during
+  a run. 30–60M tokens fits in RAM.
+- Pre-tokenize once through the trainer's init-time map, so the hot loop does not apply the chat template
+  per batch.
+- Set `dataloader_num_workers=2–4`, `persistent_workers=True`, `prefetch_factor=2–4`,
+  `pin_memory=True`, and dynamic padding. These are `TrainingConfig`/`TrainingArguments` fields — still
+  do not write a trainer.
+- Measure GPU utilization and step time on the first real run; raise workers/prefetch only if utilization
+  dips between steps. With gradient checkpointing + accumulation the loop is usually compute-bound, so
+  this is a cheap check, not a tuning axis.
+
 ## Sequence and truncation policy
 
 Working policy (2026-10-19; confirm against the measured trace-length distribution on the first

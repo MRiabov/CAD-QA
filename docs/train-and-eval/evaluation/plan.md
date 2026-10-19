@@ -202,13 +202,14 @@ four points in the training pipeline (§1): **baseline**, **periodic** (subset),
 |---|---|---|
 | CAD-QA held-out | `learn_the_cadqa_task` | H2; the thesis number |
 | Tool-format held-out | `emit_our_tool_call_format` | H1 format compliance |
-| General math + code | `preserve_general_math_and_code_reasoning` | forgetting guard; H4 covariate |
+| General math + code | `preserve_general_math_and_code_reasoning` | specialization-tradeoff monitor; H4 covariate |
 | External transfer | — (external) | H3, H4 |
 
-Regression gate: if the `preserve_general_math_and_code_reasoning` accuracy drops beyond a
-pre-registered tolerance (suggest ≤2 points) while the CAD-QA held-out accuracy rises, the run is a
-**forgetting result** and is reported, not hidden. Instruction-following forgetting, if gated, is a
-separate general-task guard.
+Regression monitor: if the `preserve_general_math_and_code_reasoning` accuracy drops by more than a
+pre-registered review threshold (suggest ≤2 points) while the CAD-QA held-out accuracy rises, report the
+run as a **specialization tradeoff** (with the paired CI) — it is a monitoring signal, not a failed run or
+a non-inferiority gate. Instruction-following forgetting, if measured, is a separate general-task
+diagnostic.
 
 **Evaluation-dataset provenance hygiene ([29]).** The `emit_our_tool_call_format` held-out set must
 be **disjoint from the public training corpora** (`xLAM`/`ToolACE`/`Glaive`), which the base LLM model
@@ -253,7 +254,7 @@ results rather than repeating the plan.
 |---|---|---|
 | Single scorer shared by eval, rejection sampling, and reward | **P0** | otherwise the thesis number and the training signal diverge (TA-A3) |
 | Oracle + off-oracle grader fixture (near-miss and formatting variants) | **P0** | oracle 1.0 is not grader correctness (TA-A2) |
-| Evaluation-dataset procedure wired to the cookbook eval (`learn_the_cadqa_task`, `emit_our_tool_call_format`, `preserve_general_math_and_code_reasoning`) | **P0** | every training run needs a forgetting gate |
+| Evaluation-dataset procedure wired to the cookbook eval (`learn_the_cadqa_task`, `emit_our_tool_call_format`, `preserve_general_math_and_code_reasoning`) | **P0** | every training run needs the specialization-tradeoff monitor, not a gate |
 | Immutable held-out rows + hard-excluded evaluation-dataset rows | **P0** | held-out hygiene (owned with the data doc) |
 | Public/private leak audit | **P0** | a leak invalidates the benchmark |
 | External transfer harness on BenchCAD `qa_code` (primary) and `edit_code` (secondary) | **P0** | the only evidence the dataset is useful beyond its own split; peer-review gate for H3 |
@@ -284,7 +285,8 @@ and the one-scorer rule) and **D-B1**–**D-B3** (baselines). This section is no
   question.) Applies only if Harbor is revived; while Harbor is deferred (D-E9), the one local
   scorer (D-E8) is the target.
 - **Q3.** Which rows make up the `preserve_general_math_and_code_reasoning` evaluation dataset? A
-  500–1,000 row math + code set is cheap and enough for regression detection; a full MMLU is P2.
+  500–1,000 row math + code set is a cheap monitoring signal; report paired CIs and do not treat it as a
+  powered non-inferiority test. A full MMLU is P2.
 - **Q5.** Which BenchCAD slice is the canonical transfer target: full `qa_code`, the Spatial Reasoning axis,
   or a hard family subset? And is `edit_code` T4/T5 reachable by a 2–4B LLM model? `[unknown]`.
 

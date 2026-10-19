@@ -34,6 +34,10 @@ key, so an agent training trace's combination lines up with the row's. It report
 `release_balance_report` style rather than introducing a second taxonomy; the remaining choice is the
 key's grain (Q1).
 
+**A failed tier is a finding.** If the teacher cannot produce an accepted trace for a hop tier after the
+planned attempts, record the tier, attempts, and failure reason in the sampling log and report it as a
+finding to the owner — never a silent coverage miss. Do not advance past it or drop it without saying so.
+
 ## Bridge
 
 Hard traces the small LLM model cannot imitate are rewritten into more learnable supervision (a
