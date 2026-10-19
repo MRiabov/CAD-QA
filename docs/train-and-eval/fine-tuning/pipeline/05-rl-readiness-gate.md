@@ -74,10 +74,12 @@ uv run pytest train_and_eval/eval/test_tool_calls.py -k reward -q
 
 ## Questions for the owner
 
-- **OD-1.** Screen the **full train split** (≈958 rows × rollout count 8 ⇒ **≈7.7k rollouts total**) or a
+- **OD-1.** Screen the **full train split** (`N_release × rollout count 8`; the superseded 958-row
+  slice gave ≈7.7k rollouts, while a 10k release gives ≈80k) or a
   **stratified sample** with a fixed sample size per hop/bucket? Each rollout is one episode — several
-  LLM calls in the agentic harness — so the RL-readiness gate is a **throughput job**: order 10⁷ output tokens, i.e.
-  **hours on a small single GPU** and infeasible on CPU. **Measure** seconds-per-rollout on a small pilot
+  LLM calls in the agentic harness — so the RL-readiness gate is a **throughput job**: order
+  10⁷–10⁸ output tokens depending on `N_release` and the sample, i.e. **hours to days on a small single
+  GPU** and infeasible on CPU. **Measure** seconds-per-rollout on a small pilot
   (e.g. 50 rows) first, then size the run; do not assume minutes (the old gemma run was ~10 tok/s,
   launch-bound — a serving-config trap, not the checkpoint).
 - **OD-2.** RL-eligible pass rate: **~0.25–0.75** (max reward variance; recommended) or any non-zero,

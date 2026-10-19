@@ -167,12 +167,18 @@ Two rules:
 | Base | none | floor; pretraining-contamination proxy |
 | Format-only | `emit_our_tool_call_format` + the general tasks | H1 format compliance |
 | Answer-only | CAD-QA answers, no reasoning | supervision format vs reasoning content |
-| CAD-QA reasoning | progressively complex `learn_the_cadqa_task` | H2 capability |
+| CAD-QA reasoning | release-hop tiers of `learn_the_cadqa_task` | H2 capability |
 | Full primary (optional) | the full Mixed training dataset | external reasoning support |
 | General-only (H4 counter-arm) | the full general mix **without** `learn_the_cadqa_task` | isolates CAD-QA supervision from general capability (H4) |
 
-- **Primary result (P0, H2).** CAD-QA reasoning > Base, Format-only, and Answer-only on the CAD-QA
-  hard slice, reported with a paired CI. This is the instrument result; it is not conditioned on
+- **Tier selection (exploratory, before confirmation).** On a group-safe **selection batch** from the
+  regenerated release, measure base and teacher accuracy across hops `3,4,5,6–10`, rows per tier,
+  teacher acceptance, and admitted-trace rate at 16,384 tokens. Choose the highest tier satisfying
+  teacher ≥ `[to measure]`, base ≤ `[to measure]`, `n` ≥ `[to measure]`, and admitted traces; freeze the
+  tier before confirmation. A fresh, family-disjoint **confirmation batch** supplies the thesis number.
+  These values are filled after the pilot, not before.
+- **Primary result (P0, H2).** CAD-QA reasoning > Base, Format-only, and Answer-only on the chosen
+  CAD-QA hard tier, reported with a paired CI. This is the instrument result; it is not conditioned on
   external transfer.
 - **Transfer result (P1, H3).** The same tuned arm improves on BenchCAD `qa_code` (official split)
   relative to Base / Format-only / Answer-only, reported in percentage points with a paired CI;

@@ -45,13 +45,13 @@ Survey established open-source training/RL/data pipelines and pick a base to lea
 build on. See `prior-art.md`. Pass condition: the base-pipeline decision is recorded (FT-D11) before
 Phase 3 design.
 
-## Phase 1 — Freeze the benchmark [P0; the ≥10k tier is P2]
+## Phase 1 — Freeze the benchmark [P0]
 
-- Decide dataset scope: freeze the 1,445-row curriculum plus a new group-safe held-out test,
-  or regenerate the ≥10,000-row `benchmark-release` tier.
+- Freeze the regenerated `benchmark-release` tier (~10,000 rows) with a group-safe held-out split; the
+  1,445-row release is superseded.
 - Build and freeze the held-out test; assert no train/test row or CadQuery program overlap.
-- Close the 0-hop/1-hop synthesis gap if needed; the current release floors at `hop≥2` (documented
-  gap), so the working ladder is `{2,3,4,5}`.
+- Close the 0-hop/1-hop synthesis gap if needed; the working ladder is `{2,3,4,5}`, with generated
+  6–10 tiers admissible only if the selection pilot supports them (evaluation plan §5.1).
 - Fix `json`/`number` teacher coverage.
 - Publish with tagged revision hashes.
 
