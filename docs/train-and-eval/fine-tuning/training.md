@@ -298,9 +298,10 @@ do not treat the first pass as final.
 
 ### 5.4 What Liquid ships (checked 2026-10-19)
 
-- **vLLM pin (checked 2026-10-19).** `liquid-finetune` `main` still pins `vllm==0.22.0`, while LFM2.5
-  serving requires ≥0.23.0. SFT/evaluation are HF Transformers and unaffected; async eval/GRPO need a
-  separate `vllm>=0.23` environment or an upstream bump.
+- **vLLM pin (checked 2026-10-19).** `liquid-finetune` `main` still pins `vllm==0.22.0`, while the
+  LFM2.5 vLLM recipe states ≥0.23.0. SFT/evaluation are HF Transformers and unaffected. 0.22 may still
+  load LFM2.5 (same `Lfm2ForCausalLM` family); that is **unverified**, so smoke-test it before async
+  eval/GRPO, and fall back to a separate ≥0.23 environment if it fails.
 
 Sources: `docs.liquid.ai/examples/customize-models/home-assistant`, `docs.liquid.ai/lfm/key-concepts/{tool-use,chat-template,text-generation-and-prompting}`,
 `docs.liquid.ai/lfm/fine-tuning/*`, and the LFM2 LLM model table.

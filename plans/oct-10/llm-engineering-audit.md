@@ -156,9 +156,10 @@ peer-review gate, and its validity rests entirely on a disjointness rule that is
 **hybrid** (conv + attention) architecture, and the exact risk points — vLLM GRPO weight synchronization and
 the `lfm2` tool-call parser agreement — are unaddressed. The only stage-05 verification is a stub
 (`05-rl-readiness-gate.md:56-59`), and `requirements.md:57-59` already records a version conflict
-(`liquid-finetune` pins `vllm==0.22.0`, LFM2 needs ≥0.23). **Confirmed 2026-10-19:** upstream `main` still
-pins 0.22.0; SFT/HF eval are unaffected, but async eval/GRPO need a separate `vllm>=0.23` environment or
-an upstream bump. Compounding this, FT-D21 mandates one serving
+(`liquid-finetune` pins `vllm==0.22.0`, LFM2 needs ≥0.23). **Checked 2026-10-19:** upstream `main` still
+pins 0.22.0; the official LFM2.5 recipe says ≥0.23.0. SFT/HF eval are unaffected, and 0.22 may still load
+LFM2.5 (same `Lfm2ForCausalLM` family), so this is **unverified, not proven broken** — smoke-test
+async/GRPO on 0.22 before adding a separate environment. Compounding this, FT-D21 mandates one serving
 engine per window while evaluation is Transformers and rollouts are vLLM — two runtimes, unaddressed. RL is
 P2 and conditional, but it is presented as solved when it is a load-bearing unknown.
 
