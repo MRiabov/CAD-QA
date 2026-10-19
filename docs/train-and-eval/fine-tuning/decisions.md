@@ -323,8 +323,10 @@ whose rationale was not recoverable.
 - **Status:** accepted (2026-10-09) — owner direction.
 - **Context:** evaluation and RL rollouts both need a serving engine, and the owner rents GPU by the
   hour. Running several engines at once fragments device memory and leaves the rented GPU idle.
-- **Decision:** on a rented GPU, run **one** serving engine at a time — **vLLM** (native LFM2.5; the
-  engine `liquid-finetune`/TRL already use for rollouts). Use **llama.cpp / GGUF on CPU** for
+- **Decision:** on a rented GPU, run **one** serving engine at a time — **vLLM** (native LFM2.5 from
+  ≥0.23; the current `liquid-finetune` lock pins 0.22, so the 0.22 smoke test gates async eval/GRPO —
+  `requirements.md` Q4; the engine `liquid-finetune`/TRL already use for rollouts). Use
+  **llama.cpp / GGUF on CPU** for
   local/edge, not on the rented box. Sequence a window as train → merge → serve → evaluate with the
   engine loaded once and reused; prepare data and configs ahead of time so nothing waits on the GPU; do not run
   training and serving concurrently on one 24 GB card. Prefer **Modal** (pay-per-second) for short
@@ -376,7 +378,7 @@ whose rationale was not recoverable.
   deployment that cannot take an adapter); vLLM serves the adapter directly.
 - **Consequences:**
   - FT-D10's hand-conversion to vLLM is **obsolete for LFM2.5** (native `Lfm2ForCausalLM` ≥0.23, LoRA
-    supported); it applied to gemma.
+    supported; the Linux lock still pins 0.22, so verify before relying on it); it applied to gemma.
   - FT-D20's "loads the merged weights" is relaxed: a served engine may load base + adapter (still
     weights-only, no optimizer).
   - TA-C1 parity applies **only to numbers/rewards produced by a non-Transformers runtime** (vLLM); a

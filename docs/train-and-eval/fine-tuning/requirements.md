@@ -65,8 +65,9 @@ re-implemented, not reused verbatim (FT-D12).
 
 ## Resolved questions
 
-- **Q1.** *(2026-10-09)* **vLLM is the default GPU runtime** (native LFM2.5; matches the LEAP/TRL
-  rollouts); **SGLang** only if the DSpark speculator is adopted (FT-D22 Q4). Serving is a separate
+- **Q1.** *(2026-10-09)* **vLLM is the default GPU runtime** (native LFM2.5 from ≥0.23; the current
+  `liquid-finetune` lock pins 0.22, so the 0.22 smoke test in Q4 gates async eval/GRPO; matches the
+  LEAP/TRL rollouts); **SGLang** only if the DSpark speculator is adopted (FT-D22 Q4). Serving is a separate
   inference runtime that loads the **adapter** (base + adapter), not a merged LLM model, and never the
   optimizer (FT-D20, FT-D23); evaluation runs on **HF Transformers** (the reference runtime), so it
   needs no serving-parity check.

@@ -13,7 +13,8 @@ Liquid documents serving in `docs.liquid.ai/deployment/*`:
 
 - **GPU (high throughput):** **vLLM** or **SGLang**. LFM2.5 is native to vLLM (`Lfm2ForCausalLM`) since
   v0.23.0 — no `--trust-remote-code`, nothing to patch; set the `lfm2` tool-call parser for tool use.
-  This is the path for batched evaluation and RL rollouts.
+  This is the path for batched evaluation and RL rollouts. The current `liquid-finetune` lock pins
+  v0.22.0, so 0.22-vs-0.23 is **unverified** until the smoke test in Q2; SFT/HF eval are unaffected.
 - **CPU / on-device / local:** **llama.cpp** + GGUF (`llama-server -hf LiquidAI/LFM2.5-…-GGUF`,
   OpenAI-compatible); also Ollama and LM Studio. (The LEAP Edge SDK is deprecated — build on
   llama.cpp.)
@@ -65,5 +66,7 @@ llama-server -m <merged>.gguf -c 4096 --port 8080
   **argmax token-id agreement** on a fixed prompt set in bf16, with a **logprob tolerance** for near-ties;
   report the disagreement rate. Quantized GGUF is out of scope (not bit-exact by design). `TA-C1`.
 - **Q2.** *(2026-10-09)* **vLLM by default** (native LFM2.5; matches LEAP/TRL rollouts); **SGLang** only if
-  the DSpark draft is adopted (FT-D22 Q4). Reconcile the `liquid-finetune` pin (`vllm==0.22.0`) with the
-  serving need (≥0.23).
+  the DSpark draft is adopted (FT-D22 Q4). The `liquid-finetune` pin is still `vllm==0.22.0` while the
+  official LFM2.5 support starts at ≥0.23. **Unverified, not proven broken:** 0.22 may load LFM2.5
+  (same `Lfm2ForCausalLM` family), so smoke-test async eval/GRPO on the pin before adding a separate
+  ≥0.23 environment.

@@ -94,5 +94,6 @@ There is more than one dataset; each has one role (glossary).
   Parquet-preferred; `../training.md` §4).
 - **Q2.** Serving is a **separate inference runtime by design** (FT-D20). Liquid documents the runtimes
   (`docs.liquid.ai/deployment/*`): vLLM / SGLang (GPU), llama.cpp / GGUF (CPU/edge), Transformers
-  (direct). Pick which GPU runtime serves our batched evaluation/rollouts — vLLM or SGLang
-  (`../../../../plans/oct-8/trust-audit.md` Q3).
+  (direct). **vLLM is the default** for batched evaluation/rollouts (FT-D21); SGLang only for the DSpark
+  draft. The current `liquid-finetune` lock pins vLLM 0.22, while official LFM2.5 support is ≥0.23 —
+  smoke-test 0.22 before relying on async eval/GRPO (`../requirements.md` Q4, `07-serving.md` Q2).
