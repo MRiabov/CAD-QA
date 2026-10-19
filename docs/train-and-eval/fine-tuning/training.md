@@ -270,7 +270,10 @@ it sets the budget). External-mix ingest/filter/dedup is CPU-only. Per accepted 
 DeepSeek-class teacher rate (pull the live rate; ~$0.30/M in + $1.20/M out at peak, **~half off-peak**, when
 we run): ~15k input + ~3k output per attempt ≈ **$0.008/attempt peak, ~$0.004 off-peak**; rejection
 sampling at ~2–5 attempts per accepted agent training trace ⇒ **~$10–25 per 1,000 accepted traces**
-off-peak (less with prompt caching on the system/tool prefix). A full pass over the 1,445-row dataset at
+off-peak (less with prompt caching on the system/tool prefix). **Measure before committing:** confirm on
+a ~50-row pilot whether the ~15k/~3k figures are cumulative across the multi-round loop or per call, and
+include every teacher call (compaction is an extra call) in the cost log; record p50/p90 tokens and cost
+per accepted trace. A full pass over the 1,445-row dataset at
 `--attempts-per-row 5` ≈ 7.2k attempts ≈ **~$30 off-peak**. Schedule teacher sampling off-peak.
 **`deepseek-v4.1-flash:batch`** bills ~50% of standard per-token pricing and is **asynchronous** (24 h
 window, median ~minutes; per-request results) [vendor: OpenRouter Batch API, 2026-09], so a fully

@@ -40,7 +40,7 @@ that the dataset the entire stack is built around has no owner and no generation
 | LE-10 | High | BenchCAD train/eval leakage handled by hand-wave "keep disjoint" | `data.md:195-199`, `plan.md:184-187` |
 | LE-11 | High | GRPO on the LFM2.5 hybrid via TRL+vLLM is assumed, never verified | `system.md:205-225`, `05-rl-readiness-gate.md:56-59`, `requirements.md:57-59` |
 | LE-12 | Closed | Optimizer/schedule/effective batch are inherited from `liquid-finetune`; resolved config is recorded (was: no optimizer/LR schedule/effective batch; LR contradicted itself) | `training.md:212`, `training.md:409` |
-| LE-13 | Medium | Token/VRAM budget understates multi-turn trace length | `data.md:260`, `training.md:220-230` |
+| LE-13 | Doc-closed | Token/VRAM budget corrected; per-attempt numbers still need a pilot (was: budget understates multi-turn trace length) | `data.md:260`, `training.md:220-230` |
 | LE-14 | Medium | "Permissive default" contradicts the mixes actually specified | `data.md:344-350`, `data.md:280-291` |
 | LE-15 | Medium | `messages` vs `reasoning_text`/`tool_call_text` is a dual source of truth | `system.md:241-246` |
 | LE-16 | Medium | The H2 "answer-only" control is not derivable from the specified dataset | `plan.md:168`, `data.md:365-366` |
@@ -187,6 +187,13 @@ agent trace with repeated `run_code` results at the window named in `training.md
 VRAM table (`training.md:220-230`) sizes for 6144 without a long-trace tail. The teacher-cost model
 (`training.md:254-278`) is careful about per-attempt pricing but budgets nothing for re-sampling after the
 next contract/template rewrite — and Phase 3 is a rewrite by definition (FT-D3/FT-D12).
+
+**Resolution (2026-10-19, partial).** `e5f3a71` relabeled the single-turn estimate as a floor, raised
+the working total to ~30–60M tokens, added long-tail VRAM headroom, and budgeted one re-sampling pass;
+the later sequence policy sets the 16,384-token admission window. Remaining: the 30–60M and 15k/3k
+figures are estimates — run a ~50-row pilot and record p50/p90 tokens and cost per accepted trace,
+including every teacher call (the compactor is an extra call), before fixing the budget. Status:
+**doc-closed, numeric validation pending.**
 
 ### LE-14 — "Permissive default" is not what is built
 
