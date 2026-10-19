@@ -121,7 +121,9 @@ and parser accept the gold encoding; it does **not** establish grader correctnes
 - **Held-out rows.** Evaluate on an immutable, group-safe held-out slice only (never a Mixed training dataset).
 - **Metrics.** Accuracy; invalid-output rate (parse errors); missing-response rate; accuracy by
   Reasoning hop count, Answer format, and LLM harness mode; reasoning length; calibration when
-  confidence is requested; and **`pass@1` with a CI per prompt/tier** — the RL-readiness signal
+  confidence is requested; and **`pass@1` with a CI per prompt/tier**, plus a chance-corrected rate for
+  bounded answer spaces (`p_chance` per row: `1/K` for `candidate_label`/fixed enums, `1/2` for
+  `boolean`, `0` otherwise) — the RL-readiness signal
   (report `pass@k` only for `k < n` with the unbiased estimator; `c/n` is not `pass@k`)
   (`../fine-tuning/system.md` §3).
 - **Judge independence.** No LLM model in the trusted grading path (DD-03). Grading is exact-match

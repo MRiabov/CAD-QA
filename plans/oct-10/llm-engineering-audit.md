@@ -234,7 +234,9 @@ assignments will flip between runs; the gate's downstream RL/RFT decision inheri
 CI, not `c/n` relabeled as `pass@k`. `pass@k` is reported only with the unbiased estimator
 `1 − C(n−c,k)/C(n,k)` and `n ≫ k`; `k=n` is never reported. `n=8` is a provisional screen; tiers require
 `n=16/32` confirmation, `0/8` is `not observed` rather than `unreachable`, and BH/FDR applies across
-confirmed tiers. Status: **doc-closed, gate implementation pending.**
+confirmed tiers. **Chance correction:** bounded answers (`candidate_label`, `boolean`, fixed enums) report
+a `p_chance`-corrected rate and tier assignment tests `c ~ Binomial(n, p_chance)`; one lucky guess on a
+6–7-option row is not reachable evidence. Status: **doc-closed, gate implementation pending.**
 
 ## What "adequate" would minimally require
 

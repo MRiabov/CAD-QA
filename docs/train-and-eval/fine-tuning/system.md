@@ -98,7 +98,9 @@ than feeding an unlearnable target. Keep the general tasks in every training sta
 
 **Training stage 2 — RL-readiness gate.** The new piece. After SFT, sample a rollout count of completions
 per prompt with the tuned policy and compute **`pass@1` = `c/n` with a 95% CI** per tier (not `c/n`
-relabeled as `pass@k`):
+relabeled as `pass@k`). For bounded answers, also report the chance-corrected rate with per-row
+`p_chance` (`1/K` for `candidate_label`/enums, `1/2` for `boolean`, `0` otherwise) and test `c` against
+`Binomial(n, p_chance)`: one lucky guess on a 6–7-option row is not `learnable` evidence.
 
 - **mastered** (all rollouts pass): RL adds nothing here (ref [20]); use as an evaluation dataset, not for training.
 - **learnable** (some but not all rollouts pass): the RL-training set. Aim the training distribution at the

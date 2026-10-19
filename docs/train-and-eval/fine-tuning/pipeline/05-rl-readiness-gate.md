@@ -17,6 +17,14 @@ rollout latency, not SFT sequences/s.
 - **Primary metric — `pass@1` (per-attempt success):** `c/n` for `c` passes in `n` rollouts, reported
   with a 95% CI (Wilson or Jeffreys). This is the quantity RL cares about; **do not label `c/n` as
   `pass@k`.**
+- **Chance correction for bounded answer spaces.** Each row carries a per-row chance probability
+  `p_chance`: `1/K` for `candidate_label` with `K` rendered candidates, `1/2` for `boolean`, `1/K` for a
+  fixed enum, and `0` for open-ended/numeric/coordinate/JSON formats where a random guess is not
+  meaningful. Report both raw `pass@1` and the chance-corrected rate
+  `(Σc − Σn·p_chance) / (Σn·(1 − p_chance))`, with the same cluster bootstrap CI. **A single pass on a
+  6–7-option row is not evidence of capability**: under `Binomial(n, p_chance)` it is consistent with
+  guessing, so reachability/tiering requires the chance null to be rejected (one-sided), not just `c>0`.
+  The raw 0/1 reward stays uncorrected; correction is for measurement and tier assignment.
 - **Reachability:** `reach@n = (c > 0)` — whether any rollout passed. It is a screening signal, not a rate.
 - **`pass@k` (optional, reported separately):** if a "solves within `k` attempts" number is wanted, use the
   unbiased estimator `1 − C(n−c, k)/C(n, k)` with `n ≫ k` (e.g. `n=32` for `k=8`) and state `n` and `k`.
@@ -62,8 +70,10 @@ rollout latency, not SFT sequences/s.
 
 ## Inputs / outputs
 
-- **In:** the LoRA adapter (04) run on **HF Transformers** (the reference runtime, FT-D23) + decoded rows (01).
-- **Out:** `pass@1` + CI per tier; the learnable/RL-eligible pool; optionally an RL adapter; RFT data.
+- **In:** the LoRA adapter (04) run on **HF Transformers** (the reference runtime, FT-D23) + decoded rows (01)
+  with a per-row `p_chance` (or the candidate count needed to derive it).
+- **Out:** `pass@1` + CI and the chance-corrected rate per tier; the learnable/RL-eligible pool;
+  optionally an RL adapter; RFT data.
 
 ## Verification
 
