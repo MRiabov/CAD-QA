@@ -260,8 +260,10 @@ a bigger card.
   (`sidecar`/`reserved`, vLLM) so evaluation does not block training, and vLLM rollouts
   (`colocate`/`server`) so one engine serves rollouts and eval. `sidecar` shares the training GPU: on a
   24 GB prototype it likely OOMs or cuts throughput. Use `sync` there; on an A100 40 GB sidecar may fit
-  but still contends, so prefer `reserved` on a second GPU/B300 for reported runs. See
-  `../../research/2026-liquid-finetune.md`.
+  but still contends, so prefer `reserved` on a second GPU/B300 for reported runs. **Async eval does not
+  buy a higher cadence:** the budget is the evaluation plan's (`../evaluation/plan.md` §6) — 64 rows at
+  most once per epoch, only for epochs ≥250 steps, capped at 3/phase; full validation at phase end; one
+  final test. See `../../research/2026-liquid-finetune.md`.
 
 ### 5.3 Cost estimate
 

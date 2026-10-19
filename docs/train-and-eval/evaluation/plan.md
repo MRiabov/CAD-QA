@@ -214,13 +214,26 @@ doc holds the rows. Each is composed across Difficulty tiers, hard-excluded from
 four points in the training pipeline (§1): **baseline**, **periodic** (subset), **phase-end**
 (extensive), and **final** (complete).
 
-**Cadence and GPU isolation (proposed).** Evaluate **once per epoch** on a **64-row** stratified subset;
-run the **full validation** split at each phase end; run the **final test** once after phase 2. Save at
-eval points and keep the last two checkpoints. Do **not** run a vLLM `sidecar` on the same 24 GB GPU as
-2.6B LoRA training at 8k: a second model copy plus KV cache likely OOMs, and the contention slows
-training even when it fits. On a **24 GB prototype** use `sync` eval at those boundaries; on an **A100
-40 GB** a sidecar may fit but still contends, so prefer a separate GPU or `reserved` on a B300 for
-reported runs. The full validation pass (~1,159 rows) is a phase-end pause, not a periodic one.
+**Cadence, checkpoint selection, and GPU isolation (encoded 2026-10-19).**
+
+- **Periodic:** evaluate a **64-row** stratified subset **once per epoch**, but only when
+  `steps_per_epoch = ceil(N_train / effective_batch) >= 250`; cap at **3 evaluations per phase**.
+  If an epoch is shorter than 250 optimizer steps, run **no periodic eval** and rely on the phase-end
+  validation. This rejects a 50-step or 128-row-every-50-step cadence: at first-run scale that is more
+  evaluation than training. Set `eval_steps` and `save_steps` to `steps_per_epoch` and record the
+  resolved values in the manifest.
+- **Phase-end:** the full validation split (**1,159 rows**) once per phase, as a paused eval; it decides
+  phase 1→2 advancement and is not a checkpoint-selection signal.
+- **Final:** the test split (**708 rows**) once after phase 2; this is the thesis number.
+- **Checkpoint:** the thesis checkpoint is the **final optimizer step of phase 2** (or the final step of
+  phase 1 if the phase-2 fallback is used). Do **not** select the best checkpoint on validation/test, and
+  do **not** early-stop on periodic eval. Keep the last two checkpoints for recovery only.
+- **Budget guard:** measure an 8-row pilot (seconds/episode, eval batch size, peak VRAM) before the run.
+  Periodic eval must stay **≤10% of phase wall-clock** and fit beside training at batch 1 on 24 GB; if it
+  does not, cut the subset to 32 rows or move it to phase end. Full validation is a phase-end pause;
+  budget hours, not minutes. On 24 GB use HF `sync` at batch 1 with `torch.no_grad`; do **not** run a
+  vLLM `sidecar`. For reported runs, use A100 40 GB `sync` or a `reserved` second GPU/B300. The full
+  validation pass is a phase-end pause, not a periodic one.
 
 | Evaluation dataset | Training role mirrored | Serves |
 |---|---|---|

@@ -26,6 +26,10 @@ A **phase-2-only fallback** applies if phase 1 shows no measured phase-end gain.
   `completion_only_loss: true`). It needs the template's `{% generation %}`/`{% endgeneration %}` markers
   (present in LFM2.5). Not hand-rolled masking.
 - **Base + stack:** LFM2.5 (2.6B primary, 1.2B pilot) on `liquid-finetune` (FT-D11).
+- **Eval/save cadence is not a local choice.** Use the evaluation plan's rule
+  (`../../evaluation/plan.md` §6): periodic eval only when an epoch is ≥250 optimizer steps, at most
+  once per epoch and 3× per phase; `eval_steps = save_steps = steps_per_epoch`. Periodic eval is a trend
+  monitor, not a checkpoint-selection signal; the thesis checkpoint is the final phase-2 step.
 
 ## Input pipeline (keep the GPU fed)
 

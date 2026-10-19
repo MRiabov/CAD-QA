@@ -30,7 +30,7 @@ that the dataset the entire stack is built around has no owner and no generation
 |---|---|---|---|
 | LE-1 | Blocking | The central task dataset is out of scope and unowned; the primary run is not runnable | `data.md:30-35`, `data.md:234`, `datasets.md:135`, `decisions.md:120` |
 | LE-2 | Blocking | No end-to-end test of our own pipeline; verification hooks are stubs | `requirements.md:13-23`, `training.md:111-128` |
-| LE-3 | Blocking | Checkpoint-selection rule and eval/save cadence undefined | `plan.md:33-39`, `system.md:170` |
+| LE-3 | Doc-closed | Cadence/checkpoint fixed: 64-row periodic only for epochs ≥250 steps, ≤3/phase; final phase-2 checkpoint is the thesis number (was: undefined) | `evaluation/plan.md` §6, `04-sft.md` §Recipe |
 | LE-4 | Blocking | Reasoning-supervision vs completion-only masking is unspecified; the verifying fixture has no tools | `system.md:241-246`, `training.md:418-424`, `04-sft.md:24-27` |
 | LE-5 | Blocking | No sequence-length/truncation/packing policy; target can be truncated away | `training.md:228`, `data.md:260` |
 | LE-6 | High | The "curriculum" is a data-sort no-op; the hop ladder is internally inconsistent | `data.md:284`, `system.md:271-272`, `data.md:440-442` |
@@ -77,6 +77,16 @@ define `save_steps`, `eval_steps`, or which checkpoint *is* the thesis number. `
 pass@k per tier for every checkpoint," which is not a selection rule. Selecting the best checkpoint on the
 CAD-QA held-out is exactly the held-out contamination the docs forbid elsewhere; selecting by default is
 arbitrary. H2's headline number depends on this and cannot be reproduced without it.
+
+**Resolution (2026-10-19).** Cadence and checkpoint selection are encoded in `evaluation/plan.md` §6:
+periodic eval is a **64-row** subset, only when `steps_per_epoch >= 250`, at most once per epoch and
+**3× per phase**; `eval_steps = save_steps = steps_per_epoch` (resolved values go in the manifest). Full
+validation (**1,159 rows**) runs once at each phase end and decides phase 1→2 advancement; the test split
+(**708 rows**) runs once after phase 2. The thesis checkpoint is the **final phase-2 optimizer step**
+(or phase-1 final step under the phase-2 fallback), never a best-on-validation/test checkpoint; the last
+two checkpoints are kept for recovery only. This rejects the proposed 128-row/50-step cadence as too
+frequent. Budget guard: 8-row pilot, periodic eval ≤10% of phase wall-clock, HF `sync` at batch 1 on
+24 GB, no vLLM sidecar. Status: **doc-closed, resolved config values pending the first run.**
 
 ### LE-4 — The supervised target is unspecified, and the check cannot catch the bug
 
@@ -272,9 +282,10 @@ documented α=0.05 `c` thresholds. Status: **doc-closed, gate implementation pen
 ## Status addendum (2026-10-19)
 
 Doc-level resolutions landed after the review commit (`d214850`): LE-1 (`2dd2a29`), LE-2/LE-4/LE-5 test
-plan (`8ea133a`), LE-13/14/15 (`e5f3a71`), LE-17 (`3121830`), LE-6/LE-7 wording and doc claims (this
-pass), LE-8 (preservation supports training/monitoring; it is not a target), LE-12 (optimizer/LR/
-schedule inherited from `liquid-finetune`; resolved config recorded), and LE-18 (`pass@1` + CI; `pass@k`
-only for `k<n`; screen/confirm separated). LE-4 and LE-5 now have a specified check
-and an explicit sequence/truncation policy, but no converter, fixture, or test exists yet — they are
+plan (`8ea133a`), LE-3 (cadence/checkpoint rule), LE-13/14/15 (`e5f3a71`), LE-17 (`3121830`),
+LE-6/LE-7 wording and doc claims (this pass), LE-8 (preservation supports training/monitoring; it is not
+a target), LE-12 (optimizer/LR/schedule inherited from `liquid-finetune`; resolved config recorded), and
+LE-18 (`pass@1` + CI; `pass@k` only for `k<n`; screen/confirm separated). LE-4 and LE-5 now have a
+specified check and an explicit sequence/truncation policy, but no converter, fixture, or test exists
+yet — they are
 **spec-closed and code-open**. The findings above intentionally remain the point-in-time review.

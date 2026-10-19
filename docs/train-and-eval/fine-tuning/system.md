@@ -172,7 +172,9 @@ Promote the §4.1 advancement gate from the data doc into a system-level advance
 - **Signal to stop:** no tier is learnable → report an SFT/RFT result; RL is not indicated. This
   is a finding, not a failure (PRD definition of done, item 3).
 
-Record `pass@1` with a CI per tier for every checkpoint. This is also how the `learn_the_cadqa_task` difficulty tiers earn
+Record `pass@1` with a CI per tier at each **phase-end** checkpoint and the fixed final checkpoint, not at
+every periodic eval. The thesis checkpoint is fixed in advance (final phase-2 step; evaluation plan §6);
+do not choose it by held-out score. This is also how the `learn_the_cadqa_task` difficulty tiers earn
 their keep: the tiers let us measure reachability, not just train in order.
 
 ---
