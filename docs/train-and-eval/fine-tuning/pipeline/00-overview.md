@@ -49,7 +49,7 @@ table.
 | 03 preparation | traces + External datasets | `TrainingExample` set → Liquid `messages` SFT set + manifest | `03-preparation.md` |
 | 04 SFT | Liquid `messages` set | LoRA adapter | `04-sft.md` |
 | 07 merge + serve | LoRA adapter | merged LLM model → GGUF / vLLM-SGLang endpoint (on demand) | `07-serving.md` |
-| 05 RL-readiness gate | LoRA adapter (HF Transformers reference) | pass@k per tier (RL deferred, conditional on the RL-readiness gate) | `05-rl-readiness-gate.md` |
+| 05 RL-readiness gate | LoRA adapter (HF Transformers reference) | `pass@1` + CI per tier (RL deferred, conditional on the RL-readiness gate) | `05-rl-readiness-gate.md` |
 | 06 evaluation | LoRA adapter (HF Transformers reference) + evaluation datasets | scores per evaluation dataset | `06-harness-modes.md` |
 
 ## Datasets in play

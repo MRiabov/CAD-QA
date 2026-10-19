@@ -45,7 +45,7 @@ that the dataset the entire stack is built around has no owner and no generation
 | LE-15 | Medium | `messages` vs `reasoning_text`/`tool_call_text` is a dual source of truth | `system.md:241-246` |
 | LE-16 | Medium | The H2 "answer-only" control is not derivable from the specified dataset | `plan.md:168`, `data.md:365-366` |
 | LE-17 | Medium | Decision statuses lag the design (FT-D11 still "proposed"; stack treated as settled) | `decisions.md:120`, `requirements.md:31,40-41` |
-| LE-18 | Medium | `pass@k` is reported empirically without the estimator or CIs; rollout-count noise ignored | `05-rl-readiness-gate.md:21-23` |
+| LE-18 | Doc-closed | `pass@1` + CI specified; `pass@k` only for `k<n`; screen/confirm separated (was: `pass@k` reported empirically without estimator or CIs) | `05-rl-readiness-gate.md:21-23` |
 
 ## Blocking findings
 
@@ -230,6 +230,12 @@ that is an empirical pass@n, not the unbiased pass@k estimator, and no confidenc
 confirming correction is applied. With the all-fail bound quoted at ~10% for count 8, per-row tier
 assignments will flip between runs; the gate's downstream RL/RFT decision inherits that noise unquantified.
 
+**Resolution (2026-10-19).** The gate's primary metric is now `pass@1 = c/n` with a 95% Wilson/Jeffreys
+CI, not `c/n` relabeled as `pass@k`. `pass@k` is reported only with the unbiased estimator
+`1 − C(n−c,k)/C(n,k)` and `n ≫ k`; `k=n` is never reported. `n=8` is a provisional screen; tiers require
+`n=16/32` confirmation, `0/8` is `not observed` rather than `unreachable`, and BH/FDR applies across
+confirmed tiers. Status: **doc-closed, gate implementation pending.**
+
 ## What "adequate" would minimally require
 
 1. **An owned generator** for `learn_the_cadqa_task`, with a coverage gate that runs **after** `sample + mix`
@@ -260,7 +266,8 @@ assignments will flip between runs; the gate's downstream RL/RFT decision inheri
 
 Doc-level resolutions landed after the review commit (`d214850`): LE-1 (`2dd2a29`), LE-2/LE-4/LE-5 test
 plan (`8ea133a`), LE-13/14/15 (`e5f3a71`), LE-17 (`3121830`), LE-6/LE-7 wording and doc claims (this
-pass), LE-8 (preservation supports training/monitoring; it is not a target), and LE-12 (optimizer/LR/
-schedule inherited from `liquid-finetune`; resolved config recorded). LE-4 and LE-5 now have a specified check
+pass), LE-8 (preservation supports training/monitoring; it is not a target), LE-12 (optimizer/LR/
+schedule inherited from `liquid-finetune`; resolved config recorded), and LE-18 (`pass@1` + CI; `pass@k`
+only for `k<n`; screen/confirm separated). LE-4 and LE-5 now have a specified check
 and an explicit sequence/truncation policy, but no converter, fixture, or test exists yet — they are
 **spec-closed and code-open**. The findings above intentionally remain the point-in-time review.

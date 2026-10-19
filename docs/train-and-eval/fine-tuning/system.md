@@ -60,7 +60,7 @@ Three independent things break a naive loop, and each has a 2026 answer:
 | Failure | What happens | Answer |
 |---|---|---|
 | **Degenerate groups** | A prompt every rollout passes or every rollout fails contributes zero advantage; GRPO spends compute to learn nothing | Dynamic sampling / group filtering (DAPO, ref [23]); keep the informative RL-eligible pass rate (refs [21][22]) |
-| **Sparse / unreachable reward** | On hard hops the SFT policy never samples a correct answer, so RLVR has no signal at all | Measure pass@k first; only train RL where it is reachable; use a Bridge to make hard traces learnable (ref [8], ref [26]) |
+| **Sparse / unreachable reward** | On hard hops the SFT policy never samples a correct answer, so RLVR has no signal at all | Measure sampled `pass@1` with a CI first; only train RL where it is reachable; use a Bridge to make hard traces learnable (ref [8], ref [26]) |
 | **Query verifier is wrong or hackable** | Reward is the objective; a noisy or gameable scorer optimizes the wrong thing | Audit and consolidate the scorer first (ref [24]); adversarial fixtures; this is TA-A3, already open |
 
 The single most important consequence: **the Query verifier is the objective, not a metric.** In SFT a
@@ -76,7 +76,7 @@ bad scorer only miscounts; in RL it is what the LLM model climbs. So the evaluat
         |
 [ Training stage 1  difficulty-aligned SFT ]     <- our tool schema + easy hops + Bridge for hard traces + general-task diversity
         |
-[ Training stage 2  RL-readiness gate (pass@k) ]     <- measure reachability per tier; build RFT data
+[ Training stage 2  RL-readiness gate (pass@1 + CI) ]     <- measure reachability per tier; build RFT data
         |            \___ if no tier is reachable -> stop at SFT / RFT, do not run RL
         |
 [ Training stage 3  RL (GRPO + dynamic sampling, only on reachable tiers, sandboxed) ]
@@ -93,11 +93,12 @@ data difficulty must be aligned to the training stage. Concretely: `emit_our_too
 harder `learn_the_cadqa_task`; for hard teacher traces that the small LLM model cannot imitate, apply a
 **Bridge** transformation (rewrite the raw agent training trace from the teacher into more learnable supervision) rather
 than feeding an unlearnable target. Keep the general tasks in every training stage. SFT runs only to the **readiness check**
-(format holds, pass@k > 0), then stops — it is not an accuracy target ([32]).
+(format holds and at least one rollout passes), then stops — it is not an accuracy target ([32]).
 (Owned by the data + architecture docs.)
 
 **Training stage 2 — RL-readiness gate.** The new piece. After SFT, sample a rollout count of completions
-per prompt with the tuned policy and compute the **pass rate** per tier:
+per prompt with the tuned policy and compute **`pass@1` = `c/n` with a 95% CI** per tier (not `c/n`
+relabeled as `pass@k`):
 
 - **mastered** (all rollouts pass): RL adds nothing here (ref [20]); use as an evaluation dataset, not for training.
 - **learnable** (some but not all rollouts pass): the RL-training set. Aim the training distribution at the
@@ -162,12 +163,12 @@ Promote the §4.1 advancement gate from the data doc into a system-level advance
 
 - **Signal to advance a tier:** held-out pass rate clears the SFT floor (~80%) — the tier is
   *mastered* and becomes SFT-stable.
-- **Signal to run RL on a tier:** it is *learnable* — `0 < pass@k < 1`, and preferably in the
-  ~0.25–0.75 RL-eligible pass rate. Use **pass@k, not greedy accuracy**, to predict RL potential (ref [8]).
+- **Signal to run RL on a tier:** it is *learnable* — `0 < pass@1 < 1` (confirmed, not a screen-only row), and preferably in the
+  ~0.25–0.75 RL-eligible pass rate. Use **sampled `pass@1`, not greedy accuracy**, to predict RL potential (ref [8]).
 - **Signal to stop:** no tier is learnable → report an SFT/RFT result; RL is not indicated. This
   is a finding, not a failure (PRD definition of done, item 3).
 
-Record pass@k per tier for every checkpoint. This is also how the `learn_the_cadqa_task` difficulty tiers earn
+Record `pass@1` with a CI per tier for every checkpoint. This is also how the `learn_the_cadqa_task` difficulty tiers earn
 their keep: the tiers let us measure reachability, not just train in order.
 
 ---
@@ -289,7 +290,7 @@ silently.
 | Item | Tier | Rationale |
 |---|---|---|
 | One scorer + off-oracle fixtures (TA-A2/A3) | **P0** | the Query verifier is the RL objective; nothing downstream is valid without it |
-| RL-readiness gate: pass@k per tier after SFT | **P0** | decides whether RL is indicated at all (refs [8][20]) |
+| RL-readiness gate: sampled `pass@1` + CI per tier after SFT | **P0** | decides whether RL is indicated at all (refs [8][20]) |
 | Reward-hacking audit (counterfactuals, degenerate tricks) | **P0** | RLVR's central failure mode (refs [24][27]) |
 | Sandboxed rollouts + full rollout logging | **P0** | safety + reproducibility (FT-D9) |
 | Dynamic-sampling GRPO (drop degenerate groups) | **P1** | cheap, principled; needed the moment RL runs (ref [23]) |
@@ -325,9 +326,9 @@ silently.
 
 **Resolved.**
 
-- **Q1.** *(2026-10-09)* Tiers are **measured** from pass@k, not derived from `difficulty_bucket` +
+- **Q1.** *(2026-10-09)* Tiers are **measured** from sampled `pass@1` with a CI, not derived from `difficulty_bucket` +
   Reasoning hop count — those are priors to stratify by, not the definition. A rollout count of 8 to
-  screen → 16 to confirm; rollout temperature ≈ 1.0. Definition: `pipeline/05-rl-readiness-gate.md`.
+  screen → 16/32 to confirm; rollout temperature ≈ 1.0. Definition: `pipeline/05-rl-readiness-gate.md`.
 
 **Owner decisions needed (cross-plan).** These block a step and need a human call; the other open
 questions here resolve by running or inspection. Labels point to the owning doc.

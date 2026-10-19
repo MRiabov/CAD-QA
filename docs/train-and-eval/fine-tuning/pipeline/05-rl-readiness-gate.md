@@ -12,18 +12,31 @@ The RL-readiness gate is an **inference** workload (rollouts), not training — 
 rollout latency, not SFT sequences/s.
 
 - **Population:** the train rows (`01`) in the run's mix.
-- **Rollouts:** per row, a **rollout count** of completions sampled at the **rollout temperature** (not
+- **Rollouts:** per row, a **rollout count** `n` of completions sampled at the **rollout temperature** (not
   the 0.1 deployment default), each graded by the one scorer (`../../evaluation/plan.md` §4).
-- **Pass rate:** passes / rollout count, per row.
-- **Tiers (per row):** `mastered` (pass rate 1), `learnable` (0 < pass rate < 1), `unreachable`
-  (pass rate 0). The tiers are **measured**, not derived from `difficulty_bucket`/Reasoning hop count —
-  those are *priors* to stratify by and validate, not the definition.
-- **Defaults:** a rollout count of 8 to screen, 16 to confirm any row or tier we will RL on or report;
-  rollout temperature ≈ 1.0. (The rollout count follows the all-pass/all-fail bound: at a 0.25 pass
-  rate, the all-fail rate is ~10% at a rollout count of 8 and ~1% at 16.)
-- **Outputs:** pass@k per row and per stratum (Reasoning hop count, `difficulty_bucket`, Answer format,
-  task family); the **learnable** pool (RL/RFT); the **unreachable** list (Bridge / re-distillation);
-  **mastered** rows (evaluation-only).
+- **Primary metric — `pass@1` (per-attempt success):** `c/n` for `c` passes in `n` rollouts, reported
+  with a 95% CI (Wilson or Jeffreys). This is the quantity RL cares about; **do not label `c/n` as
+  `pass@k`.**
+- **Reachability:** `reach@n = (c > 0)` — whether any rollout passed. It is a screening signal, not a rate.
+- **`pass@k` (optional, reported separately):** if a "solves within `k` attempts" number is wanted, use the
+  unbiased estimator `1 − C(n−c, k)/C(n, k)` with `n ≫ k` (e.g. `n=32` for `k=8`) and state `n` and `k`.
+  `k=n` saturates at 1 whenever `c>0` and is never reported.
+- **Tiers (per row), provisional then confirmed:** screen at `n=8`; confirm at `n=16`, and `n=32` for
+  rows near a boundary or entering RL/a reported tier. Use the CI, not the point estimate:
+  - `mastered`: confirmed, CI lower bound ≥ 0.80 (suggested).
+  - `learnable`: confirmed `0 < c < n` and not mastered; `rl-eligible` when the CI overlaps 0.25–0.75.
+  - `unreachable`: only after `0/32` (or `0/64`); `0/8` is `not observed`, not unreachable.
+  - `uncertain`: CI spans a boundary → oversample or exclude from RL, and record it.
+  The tiers are **measured**, not derived from `difficulty_bucket`/Reasoning hop count — those are
+  *priors* to stratify by and validate, not the definition.
+- **Noise control:** an `n=8` screen is provisional; never report a tier from it. Apply BH/FDR across
+  confirmed rows/tiers before making a tier-level claim, and always report the raw `c/n` counts.
+- **Defaults:** `n=8` screen, 16 confirm, 32/64 for zeros and borderline rows; rollout temperature ≈ 1.0.
+  (At a 0.25 pass rate, the all-fail rate is ~10% at `n=8` and ~1% at `n=16` — this is why the screen is
+  provisional.)
+- **Outputs:** `pass@1` + CI per row and per stratum (Reasoning hop count, `difficulty_bucket`, Answer
+  format, task family); the **learnable/RL-eligible** pool (RL/RFT); the **not-observed/unreachable**
+  list (Bridge / re-distillation); **mastered** rows (evaluation-only).
 
 ## RL (deferred, conditional)
 
@@ -37,19 +50,20 @@ rollout latency, not SFT sequences/s.
 
 ## Stop / advance
 
-- any `learnable` row → RL **or** RFT is indicated;
-- **no** `learnable` row → the **fallback ladder**, in order: (1) **oversample** (a row at zero pass at a
-  rollout count of 8 may pass at 16 or 32) and keep any accepted completion as RFT data; (2)
+- any confirmed `learnable` row → RL **or** RFT is indicated; a screen-only `learnable` row is not enough;
+- **no** confirmed `learnable` row → the **fallback ladder**, in order: (1) **oversample** (a row at zero
+  passes at `n=8` may pass at 16/32; `0/8` is not `unreachable`) and keep any accepted completion as RFT
+  data; (2)
   **hint-conditioned rollouts** — a teacher, or a student that passed an easier tier, rolls out with the
   private `clue_map` / Gold query predicates as hints, then anneal the hints toward un-hinted RFT (the P2
   hint-based direction, `../system.md` Training stage 3); (3) if neither yields accepted completions,
   **record and exclude** the tier (FT-D13).
-- RL is **not** indicated when no tier is `learnable`; the fallback is data generation, not RL.
+- RL is **not** indicated when no tier is confirmed `learnable`; the fallback is data generation, not RL.
 
 ## Inputs / outputs
 
 - **In:** the LoRA adapter (04) run on **HF Transformers** (the reference runtime, FT-D23) + decoded rows (01).
-- **Out:** pass@k per tier; the learnable pool; optionally an RL adapter; RFT data.
+- **Out:** `pass@1` + CI per tier; the learnable/RL-eligible pool; optionally an RL adapter; RFT data.
 
 ## Verification
 

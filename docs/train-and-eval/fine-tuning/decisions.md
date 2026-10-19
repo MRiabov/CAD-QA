@@ -347,7 +347,7 @@ whose rationale was not recoverable.
   vLLM, FT-D21).
 - **Consequences:**
   - Speculation is **lossless** (greedy output identical to the target; verified tokens preserve the
-    sampling distribution), so it cannot change pass@k or exact-match and is irrelevant to H1–H4.
+    sampling distribution), so it cannot change pass@1 or exact-match and is irrelevant to H1–H4.
   - The shipped DSpark draft targets the **base** LLM model; after LoRA SFT + merge the target drifts and
     acceptance falls, so any speedup is re-measured post-SFT, not assumed.
   - DSpark runs for LFM2.5 on **SGLang** (PR #31041) and **llama.cpp** (GGUF/CPU); vLLM's `dspark` method

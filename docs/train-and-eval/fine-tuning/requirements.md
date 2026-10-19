@@ -18,7 +18,7 @@ re-implemented, not reused verbatim (FT-D12).
 | 02 teacher-sampling | Kept agent training traces carry a tool call the Query verifier accepts; coverage complete across the task space (Answer format × hop × relation family × measurement scope) | No | to be ported to the `deepseek-v4.1-flash` teacher (FT-D2) |
 | 03 preparation | `TrainingExample` → Liquid `messages` SFT set; every SFT corpus is rejection-sampled by us or execution-verified (FT-D17) | No (`missing`) | converter to write (`system.md` §7) |
 | 04 SFT | Two-phase SFT raises held-out accuracy over the base without over-generation | No | `liquid-finetune` recipe to run (FT-D16) |
-| 05 RL-readiness gate | pass@k per **measured** tier recorded (not derived from `difficulty_bucket`/hop); RL only where a tier is learnable (FT-D13) | No (`missing`) | RL-readiness gate to build |
+| 05 RL-readiness gate | sampled `pass@1` + CI per **measured** tier recorded (not derived from `difficulty_bucket`/hop); RL only where a tier is learnable (FT-D13) | No (`missing`) | RL-readiness gate to build |
 | 06 evaluation | Same grading across LLM harness modes; one scorer; evaluation datasets wired | Partial | local harness `exists` (the live grader; Harbor deferred P2, D-E9); one-scorer reconciliation pending (TA-A3, D-E8) |
 | 07 serving | The training output is the LoRA adapter; evaluation runs on HF Transformers (the reference runtime) so there is no serving-parity check; merge/export is on demand | No | adapter-first + on-demand merge/export to build (FT-D23) |
 
