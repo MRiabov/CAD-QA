@@ -74,8 +74,8 @@ uv run pytest train_and_eval/eval/test_tool_calls.py -k reward -q
 
 ## Questions for the owner
 
-- **OD-1.** Screen the **full train split** (`N_release × rollout count 8`; the superseded 958-row
-  slice gave ≈7.7k rollouts, while a 10k release gives ≈80k) or a
+- **OD-1.** Screen the **full training split** (`N_train × rollout count 8`; the first run is ~1–2k rows
+  ⇒ ≈8–16k rollouts; the superseded 958-row slice gave ≈7.7k, and a 10k scale-up would give ≈80k) or a
   **stratified sample** with a fixed sample size per hop/bucket? Each rollout is one episode — several
   LLM calls in the agentic harness — so the RL-readiness gate is a **throughput job**: order
   10⁷–10⁸ output tokens depending on `N_release` and the sample, i.e. **hours to days on a small single

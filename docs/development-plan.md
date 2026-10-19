@@ -47,8 +47,10 @@ Phase 3 design.
 
 ## Phase 1 — Freeze the benchmark [P0]
 
-- Freeze the regenerated `benchmark-release` tier (~10,000 rows) with a group-safe held-out split; the
-  1,445-row release is superseded.
+- Freeze the dataset actually used for training (first run ~1–2k rows) with a group-safe held-out split.
+  The regenerated ~10,000-row `benchmark-release` tier is a **contingency** for scale/public release, not
+  a prerequisite for the first SFT; the 1,445-row release is superseded. (A public benchmark-release
+  claim still follows the release-tier rule in `dataset/requirements.md`.)
 - Build and freeze the held-out test; assert no train/test row or CadQuery program overlap.
 - Close the 0-hop/1-hop synthesis gap if needed; the working ladder is `{2,3,4,5}`, with generated
   6–10 tiers admissible only if the selection pilot supports them (evaluation plan §5.1).

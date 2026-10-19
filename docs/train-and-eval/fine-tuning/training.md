@@ -273,7 +273,7 @@ sampling at ~2–5 attempts per accepted agent training trace ⇒ **~$10–25 pe
 off-peak (less with prompt caching on the system/tool prefix). **Measure before committing:** confirm on
 a ~50-row pilot whether the ~15k/~3k figures are cumulative across the multi-round loop or per call, and
 include every teacher call (compaction is an extra call) in the cost log; record p50/p90 tokens and cost
-per accepted trace. A full teacher pass over the **frozen release** (row count `[to measure]`; the old
+per accepted trace. A full teacher pass over the **frozen training set** (row count `[to measure]`; the old
 1,445-row pass at `--attempts-per-row 5` was ≈7.2k attempts ≈ **~$30 off-peak**, scaling linearly). Schedule teacher sampling off-peak.
 **`deepseek-v4.1-flash:batch`** bills ~50% of standard per-token pricing and is **asynchronous** (24 h
 window, median ~minutes; per-request results) [vendor: OpenRouter Batch API, 2026-09], so a fully

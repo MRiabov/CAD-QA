@@ -172,7 +172,7 @@ Two rules:
 | General-only (H4 counter-arm) | the full general mix **without** `learn_the_cadqa_task` | isolates CAD-QA supervision from general capability (H4) |
 
 - **Tier selection (exploratory, before confirmation).** On a group-safe **selection batch** from the
-  regenerated release, measure base and teacher accuracy across hops `3,4,5,6–10`, rows per tier,
+  generated pool (first-run or scale-up), measure base and teacher accuracy across hops `3,4,5,6–10`, rows per tier,
   teacher acceptance, and admitted-trace rate at 16,384 tokens. Choose the highest tier satisfying
   teacher ≥ `[to measure]`, base ≤ `[to measure]`, `n` ≥ `[to measure]`, and admitted traces; freeze the
   tier before confirmation. A fresh, family-disjoint **confirmation batch** supplies the thesis number.

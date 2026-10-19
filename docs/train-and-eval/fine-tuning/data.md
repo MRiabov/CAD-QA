@@ -252,6 +252,9 @@ coverage was 0.
 | First run (`mixed_dataset_general_and_easy_cadqa`) | 1,000–2,000 | 700–1,400 | 300–600 |
 | Primary (`mixed_dataset_full_cadqa_training`) | 10,000 (5k–20k) | 5,000 | 5,000 |
 
+The ~10k primary is a **scale/contingency target**, not a prerequisite for the first SFT; freeze the
+first-run mix first and scale only if the measured result asks for it.
+
 - **Why not larger.** Curated small sets match or beat large ones at this size: ACL 2026 (1,000
   selected traces beat random SFT from 100k), TeichAI (~4k), AnkitAI/Parable (~4.4k), and `ToolACE`
   9.7k competed with `xLAM` 56k in the 2026 controlled study. The gain is coverage + quality, not
