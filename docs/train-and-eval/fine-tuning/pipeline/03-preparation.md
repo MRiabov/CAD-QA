@@ -18,7 +18,12 @@ set, then render it to **Liquid's `messages` SFT set** — the on-disk training 
 The assistant turn must use LFM2.5's native tool tokens (`<|tool_call_start|>`/`<|tool_call_end|>`,
 **Pythonic by default**); base-specific rendering is re-derived, never reused (FT-D3, FT-D11). The
 converter does **not** hand-render the chat template — `liquid-finetune` applies it, and
-completion-only loss is a trainer concern to **verify**, not a bespoke pipeline to build.
+completion-only loss is a trainer concern to **verify**, not a bespoke pipeline to build. Use the
+installed `liquid-finetune` template unmodified; do not vendor, patch, or override it
+(`04-sft.md` §Template rule).
+
+Traces above the 16,384-token admission window are rejected here and counted — never right-truncated
+(`04-sft.md` §Sequence and truncation policy).
 
 Preparation stages (`../system.md` §7): registry → ingest/normalize → quality gate → dedup/contamination →
 sample/mix. The **sample/mix** step applies per-role quotas and orders the `learn_the_cadqa_task` rows

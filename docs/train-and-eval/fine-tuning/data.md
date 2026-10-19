@@ -258,7 +258,8 @@ coverage was 0.
   raw count.
 - **Scale is GPU-cheap, data-expensive.** The single-turn estimate (10k examples ≈ 10–30M tokens) is a
   **floor**: an agent training trace is multi-round (up to ~10 `run_code` round-trips), so it approaches the
-  `SEQ=6144` window and the real total is closer to **~30–60M tokens**, dominated by a long tail. A single
+  16,384-token admission window (`pipeline/04-sft.md` §sequence policy) and the real total is closer to
+  **~30–60M tokens**, dominated by a long tail. A single
   epoch on a 2.6B base is still hours on a 24 GB card. The teacher API budget is the real ceiling.
 - **Coverage beats volume.** Every **task combination** — Answer format × Reasoning hop count ×
   relation family × measurement scope (each task family; on the order of hundreds) — must clear a floor;

@@ -226,8 +226,11 @@ contract:
 | Full FT | ~40 GB | **not** needed |
 
 Add headroom for activation at the CAD-QA agent training trace length and its **long tail** — a
-multi-round agent training trace (up to ~10 `run_code` round-trips) can fill the `SEQ=6144` window — and for longer
-external reasoning traces. Use gradient checkpointing and gradient accumulation rather than a bigger card.
+multi-round agent training trace (up to ~10 `run_code` round-trips) can fill the 16,384-token admission
+window (`pipeline/04-sft.md`; individual assistant responses are capped at 6,144) — and for longer external
+reasoning traces. The card must fit `max_seq_length=16,384`; re-check the VRAM figure on the first real
+batch before committing to a 24 GB card. Use gradient checkpointing and gradient accumulation rather than
+a bigger card.
 
 ### 5.2 Recommendation
 
@@ -424,8 +427,11 @@ justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
   `assistant_only_loss: true` (or `completion_only_loss: true`); both require `{% generation %}` /
   `{% endgeneration %}` in the chat template, which the LFM2.5 `chat_template.jinja` has around the
   assistant branch (incl. `render_tool_calls`), and `liquid-finetune` ships
-  `job_configs/chat_templates/lfm2_5_chat_template.jinja`. Verify on the smoltalk reproduction before
-  trusting any CAD-QA number.
+  `job_configs/chat_templates/lfm2_5_chat_template.jinja`. Smoltalk cannot verify this: it is
+  single-turn with no tools and no `tool`-role turns, so the template's `render_tool_calls` branch never
+  runs. Verify with a tool-bearing fixture through the **installed** `liquid-finetune` template
+  (token/label-level assertion, `pipeline/04-sft.md` §Verification) before trusting any CAD-QA number.
+  Do not vendor, patch, or override the template to make the check pass.
 - **Q2.** *(2026-10-09)* **The `submit_*` tool list passes through unchanged.** The LFM2.5 template
   serializes any `tools` list into the system prompt (`List of tools: [<json>, …]`) with no name
   allowlist. Conditions: omit `<|tool_list_start|>`/`<|tool_list_end|>` for LFM2.5 (auto-stripped);

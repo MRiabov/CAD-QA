@@ -112,8 +112,8 @@ invariant, [`system.md`](system.md) §7).
   production read path;
 - the Liquid `messages` set has assistant-only loss: reasoning and the tool call are supervised, tool
   responses are masked (asserted at the token/label level, not assumed);
-- no agent training trace is truncated past its final `submit_*` call; over-length agent training traces
-  are rejected and counted;
+- no agent training trace is truncated past its final `submit_*` call; traces above the 16,384-token
+  admission window are rejected, not truncated, and counted;
 - the 5 rows' Answer formats all appear (incl. `submit_workplane`);
 - every evaluation/held-out row is excluded from the mix (contamination is a hard failure);
 - the coverage gate passes and is re-checked **after** sample + mix;

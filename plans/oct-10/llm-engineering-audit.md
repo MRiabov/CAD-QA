@@ -232,3 +232,10 @@ assignments will flip between runs; the gate's downstream RL/RFT decision inheri
 - Reconcile FT-D11/FT-D12 statuses with the Phase-3 docs (LE-17) in the same pass.
 - Treat LE-11 as a go/no-go smoke test **before** any RL spend: a scripted LFM2.5 + vLLM + TRL GRPO
   weight-sync round-trip that skips cleanly without a GPU.
+
+## Status addendum (2026-10-19)
+
+Doc-level resolutions landed after the review commit (`d214850`): LE-1 (`2dd2a29`), LE-2/LE-4/LE-5 test
+plan (`8ea133a`), LE-13/14/15 (`e5f3a71`), LE-17 (`3121830`). LE-4 and LE-5 now have a specified check
+and an explicit sequence/truncation policy, but no converter, fixture, or test exists yet — they are
+**spec-closed and code-open**. The findings above intentionally remain the point-in-time review.

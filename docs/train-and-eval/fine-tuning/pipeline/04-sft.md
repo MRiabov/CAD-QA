@@ -27,6 +27,21 @@ A **phase-2-only fallback** applies if phase 1 shows no measured phase-end gain.
   (present in LFM2.5). Not hand-rolled masking.
 - **Base + stack:** LFM2.5 (2.6B primary, 1.2B pilot) on `liquid-finetune` (FT-D11).
 
+## Sequence and truncation policy
+
+Working policy (2026-10-19; confirm against the measured trace-length distribution on the first
+fine-tuning runs):
+
+- **Admission window: 16,384 tokens** for the whole tokenized trace (system prompt + tool declarations +
+  all turns). A trace above the window is **rejected, not truncated**, and counted
+  (`{dropped,total,rate}`; the no-silent-data-loss invariant).
+- **Per-response cap: 6,144 tokens** on each assistant turn, enforced during teacher sampling. This is not
+  the training window; do not reuse it as `max_seq_length`.
+- **Turn cap: 10** `run_code`/tool round-trips.
+- **`max_seq_length=16,384`**, equal to the admission window, so an admitted trace cannot lose its final
+  `submit_*` call to truncation. No right-truncation, ever. Packing is **off** for agent traces until a
+  measured need appears (cross-example attention would change the target).
+
 ## Inputs / outputs
 
 - **In:** Liquid `messages` SFT set (03).
@@ -37,10 +52,26 @@ A **phase-2-only fallback** applies if phase 1 shows no measured phase-end gain.
 ## Verification
 
 ```bash
-# smoke: reproduce the Liquid SFT example verbatim on smoltalk, then the Home Assistant loop
+# toolchain smoke (not masking evidence): reproduce the Liquid SFT example verbatim on smoltalk,
+# then the Home Assistant loop
 liquid-finetune job_configs/sft_example.yaml
 uv run python train_and_eval/train/sft_train.py   # once ported to the LFM2.5 stack
 ```
+
+**Masking evidence is a separate, mandatory check.** Smoltalk is single-turn with no tools and no
+`tool`-role turns, so it never executes the template's `render_tool_calls` branch. A tool-bearing fixture
+must be rendered through the **installed** `liquid-finetune` template
+(`job_configs/chat_templates/lfm2_5_chat_template.jinja`) and asserted at the token/label level:
+assistant reasoning **and** the tool call are loss-bearing; system/user/tool-response tokens are masked;
+the final `submit_*` survives tokenization. [`../testing.md`](../testing.md) owns the fixture and
+assertions.
+
+**Template rule (strong guidance, not absolute).** Use the template `liquid-finetune` ships and applies;
+do not vendor, patch, or pass a `chat_template` override. A local change invalidates the sampled traces
+(`../training.md` §5.3), and the format contract is the provider's (`../training.md` §5.4). Any override
+is an explicit, documented decision settled by measurement on the first fine-tuning runs — never a silent
+workaround to make a check pass. Record the `liquid-finetune` revision in the run manifest; the template
+comes from that package, not this repo.
 
 ## Open questions
 
@@ -52,7 +83,9 @@ _(none)_
   `False`; conversational `messages` data gets full-sequence loss. Set `assistant_only_loss: true` (or
   `completion_only_loss: true`). Both need `{% generation %}`/`{% endgeneration %}` — the LFM2.5
   `chat_template.jinja` has them around the assistant branch (incl. `render_tool_calls`); `liquid-finetune`
-  also ships `job_configs/chat_templates/lfm2_5_chat_template.jinja`. Verify on the smoltalk reproduction.
+  also ships `job_configs/chat_templates/lfm2_5_chat_template.jinja`. Smoltalk cannot verify this: it is
+  single-turn with no tools, so `render_tool_calls` never runs. Verify with a tool-bearing fixture through
+  the installed template (token/label level); see §Verification.
 - **Q2.** *(2026-10-09)* **Passes through.** The LFM2.5 template serializes any `tools` list into the system
   prompt (`List of tools: [<json>, …]`), no name allowlist, so custom `submit_*` tools pass unchanged.
   Conditions: omit `<|tool_list_start|>`/`<|tool_list_end|>` for LFM2.5 (auto-stripped); calls pre-baked as
