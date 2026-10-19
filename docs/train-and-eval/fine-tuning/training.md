@@ -281,7 +281,7 @@ batchable pass could be **~$5–12 per 1,000**; whether it stacks with the provi
 not guaranteed — check the pricing on the OpenRouter page for the exact checkpoint. **Caveat:** batch is one request → one completion, so it fits only
 single-call traces; our multi-round teacher loop (up to ~10 `run_code` round-trips, executed server-side)
 cannot be one batch request — budget the loop at sync off-peak and use `:batch` for one-shot/no-tools
-calls. SFT (~30–60M tokens with multi-round traces; §5.1) and pass@1 eval are
+calls. SFT (~80M tokens per epoch at the 8k average; §5.1) and pass@1 eval are
 cents-to-a-few-dollars on the small test GPU, covered by the free credits — so the sampling cost is
 **not** the binding constraint; train/eval cycles and rollout tokens are. The GPU term is **secondary and
 class-dependent**: for LoRA on a 2.6B LLM model the card is rarely the bottleneck (teacher sampling and

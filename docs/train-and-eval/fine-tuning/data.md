@@ -259,12 +259,11 @@ first-run mix first and scale only if the measured result asks for it.
   selected traces beat random SFT from 100k), TeichAI (~4k), AnkitAI/Parable (~4.4k), and `ToolACE`
   9.7k competed with `xLAM` 56k in the 2026 controlled study. The gain is coverage + quality, not
   raw count.
-- **Scale is GPU-cheap, data-expensive.** The single-turn estimate (10k examples ≈ 10–30M tokens) is a
-  **floor**: an agent training trace is multi-round (up to ~10 `run_code` round-trips), so it approaches the
-  16,384-token admission window (`pipeline/04-sft.md` §sequence policy) and the real total is closer to
-  **~30–60M tokens**, dominated by a long tail. Measure p50/p90 token length on the first ~50 accepted
-  traces and replace this estimate before fixing the budget. A single
-  epoch on a 2.6B base is still hours on a 24 GB card. The teacher API budget is the real ceiling.
+- **Scale is GPU-cheap, data-expensive.** At the working **8k-token average trace**, 10k rows ≈ **80M
+  tokens per epoch** (first run 1–2k ≈ 8–16M), before padding/long-tail effects. That is a planning
+  assumption, not a measurement: record p50/p90 token length on the first ~50 accepted traces and replace
+  it before fixing the budget. An epoch on a 2.6B base is still hours on a 24 GB card; the teacher API
+  budget is the real ceiling.
 - **Coverage beats volume.** Every **task combination** — Answer format × Reasoning hop count ×
   relation family × measurement scope (each task family; on the order of hundreds) — must clear a floor;
   a combination with zero traces cannot be learned (the recorded task-corpus coverage defect). Enforce a

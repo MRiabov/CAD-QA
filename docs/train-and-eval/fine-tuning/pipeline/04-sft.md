@@ -34,7 +34,7 @@ batches are built in the main process unless `liquid-finetune` overrides it. Con
 on the first run.
 
 - Materialize the final SFT set as local Parquet/Arrow (memory-mapped); never stream from the Hub during
-  a run. 30–60M tokens fits in RAM.
+  a run. ~80M tokens (8k average) fits in RAM.
 - Pre-tokenize once through the trainer's init-time map, so the hot loop does not apply the chat template
   per batch.
 - Set `dataloader_num_workers=2–4`, `persistent_workers=True`, `prefetch_factor=2–4`,

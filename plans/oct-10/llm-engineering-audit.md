@@ -188,12 +188,12 @@ VRAM table (`training.md:220-230`) sizes for 6144 without a long-trace tail. The
 (`training.md:254-278`) is careful about per-attempt pricing but budgets nothing for re-sampling after the
 next contract/template rewrite — and Phase 3 is a rewrite by definition (FT-D3/FT-D12).
 
-**Resolution (2026-10-19, partial).** `e5f3a71` relabeled the single-turn estimate as a floor, raised
-the working total to ~30–60M tokens, added long-tail VRAM headroom, and budgeted one re-sampling pass;
-the later sequence policy sets the 16,384-token admission window. Remaining: the 30–60M and 15k/3k
-figures are estimates — run a ~50-row pilot and record p50/p90 tokens and cost per accepted trace,
-including every teacher call (the compactor is an extra call), before fixing the budget. Status:
-**doc-closed, numeric validation pending.**
+**Resolution (2026-10-19, partial).** `e5f3a71` relabeled the single-turn estimate, added long-tail VRAM
+headroom, and budgeted one re-sampling pass; the later sequence policy sets the 16,384-token admission
+window. The working assumption is now an **8k average trace** (~80M tokens per epoch for 10k rows;
+~8–16M for the first run). Remaining: those figures are estimates — run a ~50-row pilot and record
+p50/p90 tokens and cost per accepted trace, including every teacher call (the compactor is an extra
+call), before fixing the budget. Status: **doc-closed, numeric validation pending.**
 
 ### LE-14 — "Permissive default" is not what is built
 
