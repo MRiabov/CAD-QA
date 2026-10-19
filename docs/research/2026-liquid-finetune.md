@@ -43,8 +43,9 @@ GPU-utilization problem: evaluation can run **without blocking training**.
 
 - Backends: local CUDA (Ray Train), Modal, SLURM, KubeRay.
 - GGUF eval: `job_configs/eval_gguf_example.yaml` (llama.cpp). QAT profiles target vLLM FP8.
-- **Version note:** the CUDA lock pins `vllm==0.22.0`, while the LFM deployment docs cite vLLM ≥0.23.0
-  for native LFM2.5 serving — reconcile the training pin with the serving runtime.
+- **Version note (checked 2026-10-19):** the CUDA lock still pins `vllm==0.22.0`, while the LFM2.5
+  recipes require vLLM ≥0.23.0 for native `Lfm2ForCausalLM` serving. SFT/HF eval do not need vLLM; use a
+  separate ≥0.23 environment for async eval/GRPO until upstream bumps the pin.
 
 ## Related
 

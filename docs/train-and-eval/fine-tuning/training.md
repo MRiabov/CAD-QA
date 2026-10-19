@@ -296,7 +296,11 @@ and ~4.1x bandwidth [vendor]; confirm price/availability on the provider. Report
 chat template invalidates the sampled agent training traces and costs another teacher pass — budget one;
 do not treat the first pass as final.
 
-### 5.4 What Liquid ships (checked 2026-10-08)
+### 5.4 What Liquid ships (checked 2026-10-19)
+
+- **vLLM pin (checked 2026-10-19).** `liquid-finetune` `main` still pins `vllm==0.22.0`, while LFM2.5
+  serving requires ≥0.23.0. SFT/evaluation are HF Transformers and unaffected; async eval/GRPO need a
+  separate `vllm>=0.23` environment or an upstream bump.
 
 Sources: `docs.liquid.ai/examples/customize-models/home-assistant`, `docs.liquid.ai/lfm/key-concepts/{tool-use,chat-template,text-generation-and-prompting}`,
 `docs.liquid.ai/lfm/fine-tuning/*`, and the LFM2 LLM model table.

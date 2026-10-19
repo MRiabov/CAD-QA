@@ -56,7 +56,11 @@ re-implemented, not reused verbatim (FT-D12).
 - **Q3.** Run-manifest format and generator (TA-E3).
 - **Q4.** Reconcile the `liquid-finetune` CUDA pin (`vllm==0.22.0`) with the serving need (LFM2.5
   native `Lfm2ForCausalLM` ≥0.23) — one tracked environment or two (`pipeline/07-serving.md` Q2;
-  `../../../plans/oct-8/trust-audit.md` Q3).
+  `../../../plans/oct-8/trust-audit.md` Q3). **Current state (2026-10-19):** upstream `main` still pins
+  `vllm==0.22.0` (`pyproject.toml`/`uv.lock`); the LFM2.5 recipes require ≥0.23.0. SFT and evaluation use
+  HF Transformers and do not need vLLM; async eval/GRPO do. Plan: **two environments** — training/eval on
+  HF, serving/rollouts in a separate `vllm>=0.23` environment — until upstream bumps. Do not override the
+  pin in the training environment without an RL smoke test.
 
 ## Resolved questions
 
