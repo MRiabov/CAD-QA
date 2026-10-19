@@ -218,9 +218,9 @@ four points in the training pipeline (§1): **baseline**, **periodic** (subset),
 run the **full validation** split at each phase end; run the **final test** once after phase 2. Save at
 eval points and keep the last two checkpoints. Do **not** run a vLLM `sidecar` on the same 24 GB GPU as
 2.6B LoRA training at 8k: a second model copy plus KV cache likely OOMs, and the contention slows
-training even when it fits. On a single 24 GB card use `sync` eval at those boundaries, or put eval on a
-separate GPU; `sidecar`/`reserved` require headroom or dedicated GPUs. The full validation pass
-(~1,159 rows) is a phase-end pause, not a periodic one.
+training even when it fits. On a **24 GB prototype** use `sync` eval at those boundaries; on an **A100
+40 GB** a sidecar may fit but still contends, so prefer a separate GPU or `reserved` on a B300 for
+reported runs. The full validation pass (~1,159 rows) is a phase-end pause, not a periodic one.
 
 | Evaluation dataset | Training role mirrored | Serves |
 |---|---|---|

@@ -141,9 +141,9 @@ Rules for the whole effort:
 - **Do not hand-convert checkpoints.** Use the cookbook's merge + GGUF export
   (`finetune/export.py`, `--quant-type q8_0`).
 - **Use Modal for the first runs** — it is Liquid's recommended serverless path and the Home
-  Assistant run costs ~$1.50. Move to a rented **Vast.ai** 24 GB GPU once the loop is proven and
-  hourly cost matters. (Modal + Vast are our only environments; the docs' SLURM/KubeRay backends do not
-  apply.)
+  Assistant run costs ~$1.50. Move to a rented **A100 40 GB** (Vast.ai) for reported runs once the loop
+  is proven; a 24 GB card is only a prototype. (Modal + Vast are our only environments; the docs'
+  SLURM/KubeRay backends do not apply.)
 - **Reference cookbooks:** `github.com/Liquid4All/cookbook`,
   `github.com/Liquid4All/liquid-finetune`, `docs.liquid.ai/lfm/fine-tuning/*` (LEAP Finetune,
   Datasets, TRL, Unsloth), the Home Assistant example, and the Unsloth LFM2.5 tutorial
@@ -241,27 +241,27 @@ a bigger card.
 
 ### 5.2 Recommendation
 
-- **Test small first, then scale up.** Tests and iteration run on a **small serverless GPU (Modal)** with
-  **per-second billing** and Liquid's **free credits (~$30)** — a smoke run is cents, not dollars. Scale
-  to a rented **A100 / B300** only after a measured need appears (long context, wall-clock, batch/serving
-  throughput). Do not rent a large card to run tests.
-- **First runs: Modal** (serverless), following the cookbook; ~$1.50 per Home Assistant-scale run.
-- **Primary self-managed:** a single **24 GB card (RTX 4090)** on a spot/on-demand Vast.ai instance
-  running **LoRA on the bf16 base**; ~$0.35–0.60/hr.
-- **Floor:** a **16 GB RTX 4080S** is sufficient for **QLoRA** at capped sequence length. Note:
+- **Test small first.** Smoke runs and iteration run on a **small serverless GPU (Modal)** with
+  **per-second billing** and Liquid's **free credits (~$30)** — cents, not dollars. Do not rent a large
+  card to run smoke tests.
+- **24 GB is for prototyping, not the target.** An RTX 4090/5090 is fine for capped-sequence or QLoRA
+  prototypes, but do not design the paid run or the eval cadence around it.
+- **Real SFT runs: A100 40 GB.** It is only ~25% more expensive than a 4090 in the current market and
+  roughly 2x faster, while fitting 2.6B LoRA at 8k with headroom. Prefer it for anything whose result is
+  reported.
+- **Throughput / reserved eval: B300 (or A100 80 GB).** Over-provisioned for a 2.6B LoRA, but it
+  shortens wall-clock and supports a `reserved` eval GPU. Pick by measured time-to-result and price, not
+  peak FLOPS; state cost **per GPU class** (§5.3).
+- **Floor:** a **16 GB RTX 4080S** is sufficient only for **QLoRA** at capped sequence length. Note:
   `../../development-context.md` calls it "RTX 4080S 32 GB"; an RTX 4080S has **16 GB**, so
   that figure is wrong and should be corrected as a finding.
-- **Headroom (P2):** A100 40 GB for long-context external data.
-- **Larger rented cards (single-GPU).** We may rent an **A100 40 GB** or, where a provider offers it, a
-  **B300 (Blackwell Ultra, ~288 GB HBM3e)**. The B300 is over-provisioned for a 2.6B LoRA but shortens
-  wall-clock and raises serving/rollout batch throughput. Pick by measured time-to-result and price, not
-  peak FLOPS; state any cost figure **per GPU class** (§5.3).
 - Serving/eval bytes are the evaluation doc's concern (vLLM needs its own allocation).
 - **Keep the GPU busy (FT-D21), only with memory headroom.** Use `liquid-finetune`'s `async_eval`
   (`sidecar`/`reserved`, vLLM) so evaluation does not block training, and vLLM rollouts
   (`colocate`/`server`) so one engine serves rollouts and eval. `sidecar` shares the training GPU: on a
-  24 GB card at 8k/2.6B it likely OOMs or cuts throughput. Use `sync` at epoch/phase boundaries, or
-  `reserved` on a separate GPU. See `../../research/2026-liquid-finetune.md`.
+  24 GB prototype it likely OOMs or cuts throughput. Use `sync` there; on an A100 40 GB sidecar may fit
+  but still contends, so prefer `reserved` on a second GPU/B300 for reported runs. See
+  `../../research/2026-liquid-finetune.md`.
 
 ### 5.3 Cost estimate
 
@@ -424,8 +424,8 @@ justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
 3. **Answer-submission format.** Author the `submit_*` envelope in LFM2.5's native tokens
    (`<|tool_call_start|>`/`<|tool_call_end|>`, Pythonic vs JSON). The gemma `<|tool_call>` rendering
    does not transfer; treat this as P0 (§7).
-4. **Modal vs Vast.** Recommendation: Modal for the cookbook reproduction and first runs, then
-   a rented **Vast.ai** 24 GB GPU once the loop is proven. (No SLURM/Kubernetes access.)
+4. **Modal vs Vast.** Recommendation: Modal for the cookbook reproduction and smoke runs, then a rented
+   **Vast.ai A100 40 GB** for reported runs; a 24 GB card is only a prototype. (No SLURM/Kubernetes access.)
 
 ---
 
