@@ -58,34 +58,58 @@ credibility risk, independent of the six blocking gates.
 report the full intended set as designed but not instantiated. Add a numeric
 answer family only if time remains after the chance and split fixes.
 
-### M2 — The multiple-choice answer distribution creates a 10% chance floor
+### M2 — The multiple-choice answer distribution has a 10% chance floor
 
-**Status:** verified; open; highest-priority data defect.
+**Status:** verified; reporting requirement. Chance correction is already
+specified in the evaluation plan.
 
 43% of rows are `candidate_label`. The expected random-guess accuracy over the
 release is 10.4%, computed as the sum over candidate-label rows of
 1 / (presented candidate count), divided by 10,000. Answering `"A"` on every
-candidate-label row scores 10.1%. The planned base LLM model rate is about 10%,
-so the raw headline is at chance without correction.
+candidate-label row scores 10.1%.
 
-Two mechanisms cause this:
+This is exactly what the specified chance-corrected rate is for. Each row
+carries `p_chance` (`1 / presented candidate count` for `candidate_label`, `1/2`
+for `boolean`, `0` otherwise), and the reported metric is
+`(Σc − Σn·p_chance) / (Σn·(1 − p_chance))`
+(`../train-and-eval/fine-tuning/pipeline/05-rl-readiness-gate.md`;
+`../train-and-eval/evaluation/plan.md`). Under that metric a 10.4% raw rate on
+this release is approximately 0, as expected.
 
-- `dataset/query/answers.py::_stable_index` uses `sum(ord(char)) % count`. The
-  sum of character codes is not uniform, and the gold label is skewed: `A`
-  1,008, `B` 1,063, `C` 784, `D` 579, `E` 380, `F` 295, `G` 191.
-- `dataset/query/answers.py::_bounded_candidate_ids` always places the gold
-  entity first and permits a presented candidate count as low as 2. Presented
-  counts are 2: 519 rows, 3: 527, 4: 995, 5: 374, 6: 487, 7: 1,398.
+The `A`-to-`G` decline is mostly structural, not a hash defect. The renderer
+assigns labels in order from `A`, so a row with two presented candidates can
+only produce `A` or `B`. Under uniform-within-count assignment the expected
+counts are `A` 1,040, `B` 1,040, `C` 780, `D` 604, `E` 356, `F` 281, `G` 200;
+the observed counts are `A` 1,008, `B` 1,063, `C` 784, `D` 579, `E` 380, `F`
+295, `G` 191. The decline from `A` to `G` is therefore expected.
 
-**Impact:** an examiner can argue that a 10% base rate is chance. A constant
-`"A"` answer is competitive with the planned base LLM model.
+`dataset/query/answers.py::_stable_index` adds a secondary within-count bias.
+For the 1,398 rows with seven presented candidates, `A` 168 against about 200
+expected and `B` 228; for the 487 rows with six, `F` 94 against about 81. This
+is small relative to the structural effect.
 
-**Disposition:** report chance-corrected accuracy plus random-guess and
-constant-answer baselines, per answer format and presented candidate count; the
-PRD already requires chance correction. Then enforce a minimum presented
-candidate count and balance label positions, and re-run query synthesis,
-materialization, and release export from the cached CAD ontology graphs and
-CadQuery program operation traces. Do not retrace or rewrite the
+Two data issues remain:
+
+- The chance floor is 10.4%. Always-`A` is 10.1%, slightly below the uniform
+  random baseline, so the issue is the floor itself, not a favored letter.
+- The candidate lists are narrow: 2 options on 519 rows, 3 on 527, 4 on 995.
+  Those rows carry little signal even after correction.
+
+**Impact:** the raw headline cannot be interpreted without the chance-corrected
+rate, and the paper must report both. The raw floor is high enough that a
+random guesser looks competitive with the planned base LLM model.
+
+**Disposition:** use the specified chance-corrected rate for H2, H4, and the
+RL-readiness gate, and report raw and corrected rates side by side with
+random-guess and constant-answer baselines. Enforce a minimum presented
+candidate count to improve per-row signal; this is more valuable than a flat
+label distribution because it adds information rather than only relabeling. If
+the marginal distribution is still a presentation concern, assign each row a
+random subset of labels or give every row the same presented candidate count;
+both flatten the marginal, but neither replaces chance correction. A proper
+hash removes the within-count bias but not the structural decline. Re-run query
+synthesis, materialization, and release export from the cached CAD ontology
+graphs and CadQuery program operation traces. Do not retrace or rewrite the
 dataset-generation code.
 
 ### M3 — Answer entropy is below the benchmark-release threshold
@@ -264,7 +288,7 @@ Do not report it as benchmark data.
 | Internal SFT | yes, with a non-release warmup slice | train on `sft_train` only (M4); hop 2 is 457 `sft_train` rows; add the 0/1 warmup (M10) |
 | H3 transfer to BenchCAD | yes | report the three-format scope (M1) |
 | H4 dose-response | yes, with the resplit | use 748 validation / 754 test and state the family-disjointness gap (M5) |
-| P0 H2 hard-slice result | yes, with chance correction | pre-register pooled hop 3+4 (626 test rows); no single hop has >=500 test rows; report chance-corrected accuracy and the 10.4% floor (M2, M10) |
+| P0 H2 hard-slice result | yes, with chance correction | pre-register pooled hop 3+4 (626 test rows); no single hop has >=500 test rows; report raw and chance-corrected rates per the evaluation plan; the raw floor is 10.4% (M2, M10) |
 | Public benchmark-release claim | no | six blocking gates (M6) |
 | Paper claims as written on 2026-10-20 | no | claims exceed the release (M1, M7) |
 
@@ -273,16 +297,38 @@ Do not report it as benchmark data.
 1. Create the non-release 0/1 warmup slice (M10) for the first SFT and smoke
    runs; keep it out of the benchmark release.
 2. Fix M4: export SFT from the train split only.
-3. Fix M2: report the chance floor and add the candidate-breadth and
-   label-balance changes; re-run from cached CAD ontology graphs.
-4. Adopt M5: record the resplit and its split/leakage audits.
+3. Adopt M5: use the resplit and run the split and leakage audits.
+4. Use the chance-corrected rate from M2 for every reported result; defer the
+   candidate-breadth and label-balance changes.
 5. Fix M7 and M8 in the paper: claim only what the release contains.
-6. Add one numeric answer family only if steps 1-5 are complete and time
-   remains.
+6. Run the first SFT/RL cycle and measure improvement.
 
-A ground-up rewrite is not required for any item above. The limiting defects are
-localized to answer-format assignment, release selection, SFT export, and paper
-wording.
+The candidate-breadth, label-balance, and numeric-answer-family changes are
+deferred dataset work, not prerequisites for the first cycle.
+
+## Decision — 2026-10-20
+
+**Status:** accepted.
+
+The release has the known major issues recorded above. A ground-up redo is weeks
+of work, and the first thesis result does not require it.
+
+1. Train on the existing release.
+2. Treat the release as known-imperfect; do not describe it as
+   benchmark-release grade.
+3. Prioritize honing the SFT/RL pipeline and measuring improvement.
+4. Keep the release if the first cycle produces a meaningful result: a
+   chance-corrected gain over base and the format-only/answer-only controls with
+   a confidence interval excluding zero, and a result usable for the thesis.
+   Comparison with the teacher is a strong signal if reached, not a
+   prerequisite.
+5. A ground-up redo remains a possible post-thesis action. It is deferred until
+   after the first result and is not a blocker.
+
+**Consequences:** the paper must report the limitations and the chance-corrected
+metric. No public benchmark-release claim is made. The M4 train-only export and
+the M5 resplit are still required for a valid experiment. Dataset rework stops
+until the first SFT/RL result is measured.
 
 ## How to reproduce the counts
 
