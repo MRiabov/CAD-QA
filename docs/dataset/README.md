@@ -14,7 +14,8 @@ normalized CadQuery programs into verifiable QA rows. It is the
 2. `pipeline/00-overview.md` — the DAG and the **pipeline-stage IO contract**. Read this before any
    step doc; it is the single authority for artifact and field names between steps.
 3. `pipeline/01-source-ingestion.md` … `07-exports-harbor-sft.md` — one doc per pipeline stage.
-4. `decisions.md` — local decisions for the dataset unit, in ADR format.
+4. `answer-formats.md` — intended answer formats, current coverage, and the history of the formats that were cut.
+5. `decisions.md` — local decisions for the dataset unit, in ADR format.
 
 ## What lives where
 
@@ -24,6 +25,7 @@ normalized CadQuery programs into verifiable QA rows. It is the
 | What flows between stages (artifact/field names)? | `pipeline/00-overview.md` |
 | How does a pipeline stage behave, in words? | the step doc |
 | Why a dataset-specific choice was made | `decisions.md` and the step doc's local decisions |
+| Which answer formats exist, which are generated, and why some were cut? | `answer-formats.md` |
 | What the project is for | `../PRD.md` |
 | What a term means | `../glossary.md` |
 | Where the project actually is | `../development-context.md` |
