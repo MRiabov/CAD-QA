@@ -12,9 +12,12 @@ teacher sampling, preparation, and evaluation.
   training dataset enter later, at 03.
 - **Out:** decoded CAD-QA dataset rows — `row_id`, `prompt`, `answer_format`, `gold_answer` (decoded),
   `reasoning_hop_count` (the `DatasetRow.logical_hop_count` column, under the glossary term),
-  `geometry_hop_count`, `difficulty_bucket`, `relation_families`, `measurement_scopes`.
+  `geometry_hop_count`, `difficulty_bucket`, `relation_families`, `measurement_scopes`, `split`, and
+  `pool` (`sft_train` / `rl_train` / `eval`, joined from `split_manifest.json`; `../data.md` §5).
 - **Filter semantics:** by `split`; rows missing `prompt` or `gold_answer`, and rows with
-  `release_ready is False`, are dropped. The `[answer contract]` suffix is appended to each prompt.
+  `release_ready is False`, are dropped. The `[answer contract]` suffix is appended to each prompt. The
+  loader exposes all three pools; it does **not** drop `rl_train` or `eval` — downstream stages select
+  `sft_train` for SFT and `rl_train` for the gate.
 
 ## Requirement
 
@@ -45,7 +48,7 @@ uv run pytest <loader test> -q
 
 ## Open questions
 
-_(none)_
+None.
 
 ## Resolved questions
 

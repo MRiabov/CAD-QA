@@ -2,7 +2,9 @@
 
 ## Purpose
 
-Supervised-fine-tune **LFM2.5** with LoRA (bf16) via `liquid-finetune`, in **two phases**.
+Supervised-fine-tune **LFM2.5** with LoRA (bf16) via `liquid-finetune`, in **two phases**. The SFT set is
+built **only from `sft_train`**; `rl_train` (the RL-readiness gate/RL pool) and `eval` are excluded
+(`../data.md` §5).
 
 ## Two phases (FT-D16)
 
@@ -96,7 +98,7 @@ comes from that package, not this repo.
 
 ## Open questions
 
-_(none)_
+None.
 
 ## Resolved questions
 

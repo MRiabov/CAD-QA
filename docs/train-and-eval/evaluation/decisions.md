@@ -93,6 +93,18 @@ the consolidated decision log. Open questions stay in `plan.md` §11.
 - **Consequences:** H1–H4 are provable without Harbor; the grader-drift question (D-E2 Q1) narrows to the
   one local scorer (D-E8). Harbor remains the only sandbox for genuinely untrusted agent code (optional).
 
+## D-E10 — Evaluation uses the frozen `eval` pool
+
+- **Status:** accepted (2026-10-20).
+- **Context:** evaluation must be disjoint from SFT and from the RL-readiness gate; otherwise the thesis
+  number is contaminated by prompt memorization or gate selection.
+- **Decision:** evaluation uses only the frozen `eval` pool (validation+test). `sft_train` and `rl_train`
+  are never used as the thesis number; mastered `rl_train` rows are not moved into `eval`. The gate is a
+  selection statistic, not a reported accuracy. Detail: `../fine-tuning/decisions.md` FT-D24;
+  `plan.md` §6.
+- **Consequences:** the three pools are recorded in `split_manifest.json`; the SFT mix is built only from
+  `sft_train`; the gate runs only on `rl_train`.
+
 ## D-B1 — Shortcut baselines are reported separately from geometry-reasoning accuracy
 
 - **Status:** accepted.

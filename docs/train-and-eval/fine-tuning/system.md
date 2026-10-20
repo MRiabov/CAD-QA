@@ -97,14 +97,16 @@ than feeding an unlearnable target. Keep the general tasks in every training sta
 (Owned by the data + architecture docs.)
 
 **Training stage 2 — RL-readiness gate.** The new piece. After SFT, sample a rollout count of completions
-per prompt with the tuned policy and compute **`pass@1` = `c/n` with a 95% CI** per tier (not `c/n`
+per prompt **on the `rl_train` pool** (group-disjoint from `sft_train`; never the rows the SFT policy was
+trained on) with the tuned policy and compute **`pass@1` = `c/n` with a 95% CI** per tier (not `c/n`
 relabeled as `pass@k`). For bounded answers, also report the chance-corrected rate with per-row
 `p_chance` (`1/K` for `candidate_label`/enums, `1/2` for `boolean`, `0` otherwise) and test `c` against
 `Binomial(n, p_chance)`: one lucky guess on a 6–7-option row is not `learnable` evidence. The RL go/no-go
 uses the **pooled** tier-level corrected rate; 8 rollouts is only a screen, and categorical rows need
 32/64 to confirm.
 
-- **mastered** (all rollouts pass): RL adds nothing here (ref [20]); use as an evaluation dataset, not for training.
+- **mastered** (all rollouts pass): RL adds nothing here (ref [20]); record and exclude from RL. Do not
+  move these rows into the frozen `eval` pool — that would contaminate the thesis number.
 - **learnable** (some but not all rollouts pass): the RL-training set. Aim the training distribution at the
   ~0.25–0.75 RL-eligible pass rate (refs [21][22]); ~0.5 maximizes reward entropy and group-filter survival.
 - **unreachable** (zero pass): no RL signal. Add via Bridge/re-distillation at the next SFT
@@ -118,8 +120,9 @@ single-GPU thesis, Training stage 2 may be the whole answer, with Training stage
 **Training stage 3 — RL, only where reachable.** GRPO with **dynamic sampling** (drop all-pass/all-fail
 groups, ref [23]), RL-eligible pass-rate scheduling (refs [21][22]), and a composite reward (§4). Run
 rollouts in a sandbox (§5). Never run RL on a tier with no partial signal. RL runs on the **single CAD-QA
-task environment**, using the **same tool-call harness as evaluation** (`../evaluation/decisions.md`
-D-E9) — blending multiple datasets is an SFT concern (`data.md` §4); multi-task RL is P2.
+task environment**, on the **`rl_train` pool**, using the **same tool-call harness as evaluation**
+(`../evaluation/decisions.md` D-E9) — blending multiple datasets is an SFT concern (`data.md` §4);
+multi-task RL is P2.
 
 > **P2 backlog — hint-based rollouts.** The dataset already carries a deterministic derivation: the
 > **ordered Gold query program**, with the per-row `clue_map` mapping each predicate to its public clue (a
@@ -165,6 +168,9 @@ stays conditional on it.
 
 Promote the §4.1 advancement gate from the data doc into a system-level advancement gate:
 
+- **Population:** the RL-readiness gate is measured on the **`rl_train` pool**, never the `sft_train`
+  rows. The data-advancement gate (SFT tier inclusion) uses the held-out `eval` slice. They are
+  different populations and must not be conflated.
 - **Signal to advance a tier:** held-out pass rate clears the SFT floor (~80%) — the tier is
   *mastered* and becomes SFT-stable.
 - **Signal to run RL on a tier:** it is *learnable* — `0 < pass@1 < 1` (confirmed, not a screen-only row), and preferably in the
@@ -260,7 +266,16 @@ schema or the converter beyond what the mix and the evaluation datasets need.
 | `answer_format` (`AnswerFormat \| None`) | for `learn_the_cadqa_task` and `emit_our_tool_call_format` |
 | `reasoning_hop_count` (`int \| None`) | for `learn_the_cadqa_task` tier gating |
 | `split` (`Split`, StrEnum) | `train` / `validation` / `test` |
+| `pool` (`DataPool`, StrEnum) | `sft_train` / `rl_train` / `eval`; only `sft_train` enters an SFT mix (`../data.md` §5) |
 | `provenance` (`str`) | the exact field mapping/transform applied, for audit |
+
+**Three-way pool (`DataPool`).** `pool` is orthogonal to `split`: `split` is the dataset's
+train/validation/test, while `pool` is the pipeline's assignment owned by `../data.md` §5 and recorded in
+`split_manifest.json`. Only `pool=sft_train` examples are converted into the SFT set; the converter asserts
+this. `pool=rl_train` is the RL-readiness gate and RL/RFT pool; `pool=eval` is never trained. The gate,
+RFT, and any RL run read `rl_train`, never `sft_train`. External **training** datasets are SFT-only
+support and carry `pool=sft_train`; they are never in `rl_train` or `eval` (external evaluation datasets
+are separate `eval` rows).
 
 **One source of truth (LE-15 resolved).** `messages` is authoritative for training: the converter
 renders the SFT target from `messages` **only**. `reasoning_text` and `tool_call_text` are **derived,
@@ -284,9 +299,11 @@ evaluation doc owns pipeline stage 9):
    trigram Jaccard > 0.5 discard, cross-validation).
 4. **Dedup + contamination.** Keep it **simple**: the mix blends orthogonal datasets
    (`data.md` §6), so cross-dataset duplicates are unlikely — exact/near-dup (normalized hash) within the
-   mix, no MinHash/LSH unless a measured collision appears. Hash-exclude the
-   CAD-QA held-out rows and the evaluation datasets. Hard failure if any evaluation-dataset id appears in `train`.
-5. **Sample + mix.** Per-role quotas from the data doc §3; deterministic seed; include
+   mix, no MinHash/LSH unless a measured collision appears. Hash-exclude the `eval` and `rl_train` rows.
+   Hard failure if any `eval` row appears in `sft_train`/`rl_train`, or any `rl_train` row appears in the
+   SFT mix.
+5. **Sample + mix.** Operates **only on `sft_train`** (`data.md` §5); per-role quotas from the data doc
+   §3; deterministic seed; include
    `learn_the_cadqa_task` hop tiers only through the measured advancement gate (data plan §4.1), not by
    ordering a static dataset; emit a mix report
    (counts, token totals, role weights, and per-intended-combination coverage — Answer format × hop ×
@@ -380,8 +397,9 @@ questions here resolve by running or inspection. Labels point to the owning doc.
    (evaluation doc, P0).
 2. **Training stage 1:** run the cookbook pilot, then `mixed_dataset_general_and_easy_cadqa`, then `mixed_dataset_full_cadqa_training` (training + data
    docs).
-3. **Training stage 2:** once an SFT checkpoint exists, run the RL-readiness gate per tier and record
-   reachability. Decide RL vs RFT from that number, not from ambition.
+3. **Training stage 2:** once an SFT checkpoint exists, run the RL-readiness gate per tier **on the
+   `rl_train` pool** and record reachability plus the `sft_train` vs `rl_train` memorization gap. Decide
+   RL vs RFT from that number, not from ambition.
 4. **Only then** wire the `liquid-finetune` GRPO config with dynamic sampling and the composite reward, in a
    Modal sandbox; on that smoke run, confirm our `submit_*` tool list passes through
    `apply_chat_template(tools=…)` and that `reward_cadqa(completions, **kwargs)` matches the framework's

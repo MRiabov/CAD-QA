@@ -16,7 +16,7 @@ intent (targets, metrics, definition of done) stays in `PRD.md`.
    (`numpy` primary, `no_tools`, `cadquery` P2); Harbor is a **deferred P2** path (D-E9). Read this first.
 3. **`baselines.md`** — the baseline families, what is implemented, what was run,
    and what is stale.
-4. **`decisions.md`** — the consolidated ADR log (**D-E1**–**D-E9**, **D-B1**–**D-B3**).
+4. **`decisions.md`** — the consolidated ADR log (**D-E1**–**D-E10**, **D-B1**–**D-B3**).
 
 ## Scope
 

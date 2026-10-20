@@ -44,13 +44,13 @@ table.
 
 | Pipeline stage | In | Out | Owner |
 |---|---|---|---|
-| 01 rows-loader | CAD-QA dataset file (`rows.parquet`) | decoded CAD-QA dataset rows | `01-rows-loader.md` |
-| 02 teacher-sampling | decoded rows | agent training traces (`learn_the_cadqa_task`) + sampling log | `02-teacher-sampling.md` |
-| 03 preparation | traces + External datasets | `TrainingExample` set → Liquid `messages` SFT set + manifest | `03-preparation.md` |
-| 04 SFT | Liquid `messages` set | LoRA adapter | `04-sft.md` |
+| 01 rows-loader | CAD-QA dataset file (`rows.parquet`) | decoded CAD-QA dataset rows + `split` + pool assignment | `01-rows-loader.md` |
+| 02 teacher-sampling | decoded rows in `sft_train` | agent training traces (`learn_the_cadqa_task`) for `sft_train` + sampling log | `02-teacher-sampling.md` |
+| 03 preparation | traces + External datasets + pool assignment | `TrainingExample` set (`pool=sft_train`) → Liquid `messages` SFT set + manifest | `03-preparation.md` |
+| 04 SFT | Liquid `messages` set from `sft_train` | LoRA adapter | `04-sft.md` |
 | 07 merge + serve | LoRA adapter | merged LLM model → GGUF / vLLM-SGLang endpoint (on demand) | `07-serving.md` |
-| 05 RL-readiness gate | LoRA adapter (HF Transformers reference) | `pass@1` + CI per tier (RL deferred, conditional on the RL-readiness gate) | `05-rl-readiness-gate.md` |
-| 06 evaluation | LoRA adapter (HF Transformers reference) + evaluation datasets | scores per evaluation dataset | `06-harness-modes.md` |
+| 05 RL-readiness gate | LoRA adapter (HF Transformers reference) + decoded rows in `rl_train` | `pass@1` + CI per tier on `rl_train` + memorization gap (RL deferred, conditional) | `05-rl-readiness-gate.md` |
+| 06 evaluation | LoRA adapter (HF Transformers reference) + `eval` datasets | scores per evaluation dataset | `06-harness-modes.md` |
 
 ## Datasets in play
 
@@ -58,6 +58,10 @@ There is more than one dataset; each has one role (glossary).
 
 - **CAD-QA dataset file** — the immutable benchmark rows (`rows.parquet`) from `dataset_generation`;
   the input to the fine-tuning pipeline, read by 01. (The Dataset file.)
+- **Data pools** — every eligible CAD-QA row is assigned to `sft_train`, `rl_train`, or `eval`
+  (target ~70/15/15); the assignment is owned by `../data.md` §5, recorded in `split_manifest.json`,
+  and orthogonal to the dataset's `train`/`validation`/`test` split. SFT uses `sft_train` only; the
+  RL-readiness gate and RL/RFT use `rl_train`; `eval` is never trained.
 - **External dataset** — a dataset published outside CAD-QA (tool format, general tasks, priming),
   registered with a pinned revision; blended into a Mixed training dataset at 03.
 - **`TrainingExample` set** — the typed training records produced by 03.

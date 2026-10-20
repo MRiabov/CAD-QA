@@ -118,7 +118,9 @@ and parser accept the gold encoding; it does **not** establish grader correctnes
 
 ## 5. Evaluation procedure
 
-- **Held-out rows.** Evaluate on an immutable, group-safe held-out slice only (never a Mixed training dataset).
+- **Held-out rows.** Evaluate on the immutable `eval` pool only — the group-safe held-out slice,
+  disjoint from `sft_train` and `rl_train` at the DD-12 group level. Never evaluate on a Mixed training
+  dataset, the SFT rows, or the RL gate pool.
 - **Metrics.** Accuracy; invalid-output rate (parse errors); missing-response rate; accuracy by
   Reasoning hop count, Answer format, and LLM harness mode; reasoning length; calibration when
   confidence is requested; and **`pass@1` with a CI per prompt/tier**, plus a chance-corrected rate for
@@ -216,7 +218,10 @@ and the code/config commit.
   row. At freeze, choose the largest release tier with `n >= 500`; if the hard tier is smaller, pool the
   top two tiers and name that pooled tier in the pre-registration. No best-slice or best-checkpoint
   selection. Report the risk difference in percentage points with a 95% paired CI, raw and
-  chance-corrected.
+  chance-corrected. The `n >= 500` rule is conditional on the frozen `eval` test split; if the 70/15/15
+  assignment leaves fewer hard-tier rows, generate more `eval` rows **before** the freeze or pre-register
+  the pooled tier and the recomputed MDE. Never move `sft_train`/`rl_train` rows into `eval` after seeing
+  results.
 - **Secondary H2.** CAD-QA reasoning vs Base and vs Answer-only, same tier. Holm within the three H2
   comparisons (`alpha = 0.05` two-sided family-wise).
 - **Primary H3 (P1).** Tuned arm vs **Format-only** on BenchCAD `qa_code`, official split, paired by
@@ -252,6 +257,11 @@ sign in at least 2 of 3 seeds. Do not hide a sign flip behind an average.
 | 1,159 (CAD-QA validation) | 5.8 pp | 3.7 pp | 4.5 pp |
 | 2,400 (BenchCAD QA) | 4.0 pp | 2.6 pp | 3.1 pp |
 
+The 708/1,159 rows are an illustrative older candidate, **not** the 70/15/15 target and **not** the current
+regenerated release's 205/54. For a 10k release the target shape is ~750 validation / ~750 test. Replace
+these rows with the frozen `split_manifest.json` values and recompute the MDE before the final test. The
+2,400 BenchCAD QA count is the official benchmark, not our split.
+
 Formula: `MDE_unpaired = (z_.975 + z_.8) * sqrt(2p(1-p)/n)`; paired `MDE ~= (z_.975 + z_.8) *
 sqrt(pi_d/n)`, where `pi_d` is the discordance rate. For a tier with `n < 500` or observed discordance
 outside the table, compute the actual MDE from the pilot and report it before the final test; an effect
@@ -267,21 +277,34 @@ pre-registration freeze, and is never used to choose a checkpoint or tier.
 ## 6. Evaluation datasets
 
 The datasets that serve H1–H4 (§5.1). The architecture doc owns the training mechanics; the data
-doc holds the rows. Each is composed across Difficulty tiers, hard-excluded from training, and run at
-four points in the training pipeline (§1): **baseline**, **periodic** (subset), **phase-end**
-(extensive), and **final** (complete).
+doc holds the rows. Each is composed across Difficulty tiers, drawn from the frozen `eval` pool and
+hard-excluded from training, and run at four points in the training pipeline (§1): **baseline**,
+**periodic** (subset), **phase-end** (extensive), and **final** (complete).
+
+**Three-way pool assignment (2026-10-20).** The frozen release is partitioned into `sft_train` (~70%),
+`rl_train` (~15%), and `eval` (~15%) (`../fine-tuning/data.md` §5). `eval` is the validation+test pool;
+the final thesis number uses the test portion. `rl_train` is the RL-readiness gate and RL/RFT pool; it is
+group-disjoint from `sft_train` at the source-program/counterfactual-group level and from `eval` at the
+DD-12 protected-group level. The SFT mix is built only from `sft_train`, and the gate is run only on
+`rl_train`. At 10k rows the 70/15/15 target is ~7,000 SFT / 1,500 RL / 1,500 eval (for example ~750
+validation + ~750 test); the exact counts are frozen in `split_manifest.json`. All counts below are read
+from that manifest; the 1,159/708 values are the current candidate and are replaced if the manifest
+differs. The current regenerated release (54 validation / 205 test) does not meet the 70/15/15 target and
+must be re-split or expanded before the primary run.
 
 **Cadence, checkpoint selection, and GPU isolation (encoded 2026-10-19).**
 
-- **Periodic:** evaluate a **64-row** stratified subset **once per epoch**, but only when
+- **Periodic:** evaluate a **64-row** stratified subset of the `eval` validation rows **once per epoch**, but only when
   `steps_per_epoch = ceil(N_train / effective_batch) >= 250`; cap at **3 evaluations per phase**.
   If an epoch is shorter than 250 optimizer steps, run **no periodic eval** and rely on the phase-end
   validation. This rejects a 50-step or 128-row-every-50-step cadence: at first-run scale that is more
   evaluation than training. Set `eval_steps` and `save_steps` to `steps_per_epoch` and record the
   resolved values in the manifest.
-- **Phase-end:** the full validation split (**1,159 rows**) once per phase, as a paused eval; it decides
-  phase 1→2 advancement and is not a checkpoint-selection signal.
-- **Final:** the test split (**708 rows**) once after phase 2; this is the thesis number.
+- **Phase-end:** the full validation portion of the `eval` pool (count read from the frozen
+  `split_manifest.json`; the 1,159-row table value is illustrative) once per phase, as a paused eval; it
+  decides phase 1→2 advancement and is not a checkpoint-selection signal.
+- **Final:** the test portion of the `eval` pool (count read from the frozen manifest; the 708-row table
+  value is illustrative) once after phase 2; this is the thesis number.
 - **Checkpoint:** the thesis checkpoint is the **final optimizer step of phase 2** (or the final step of
   phase 1 if the phase-2 fallback is used). Do **not** select the best checkpoint on validation/test, and
   do **not** early-stop on periodic eval. Keep the last two checkpoints for recovery only.
@@ -294,7 +317,7 @@ four points in the training pipeline (§1): **baseline**, **periodic** (subset),
 
 | Evaluation dataset | Training role mirrored | Serves |
 |---|---|---|
-| CAD-QA held-out | `learn_the_cadqa_task` | H2; the thesis number |
+| CAD-QA held-out (`eval` pool) | `learn_the_cadqa_task` | H2; the thesis number |
 | Tool-format held-out | `emit_our_tool_call_format` | H1 format compliance |
 | General math + code | `preserve_general_math_and_code_reasoning` | specialization-tradeoff monitor; H4 covariate |
 | External transfer | — (external) | H3, H4 |
@@ -355,9 +378,7 @@ results rather than repeating the plan.
 | Reachability pilot + family-disjoint BenchCAD subset | **P0** | a target the base LLM model cannot attempt yields no transfer signal |
 | H4 dose-response: CAD-QA pass rate vs external score | **P1** | proves the dataset is a lever, not a tutorial |
 | Re-run shortcut baselines on the current schema | **P1** | current baselines are `stale` |
-| Harbor: external-agent baselines + untrusted-code sandbox | **P2** | deferred (D-E9). It was to show the tuned LLM model working in a general agent setting (`opencode`-style), but that is unwise before   the base setup works and adds sampling cost; even in P2 it may not earn its keep. External baselines
-  can run through the **same local tool-call harness**, so Harbor is only needed for genuinely untrusted
-  agent code, and its practical cost is container RAM (Daytona can replace local Docker). |
+| Harbor: external-agent baselines + untrusted-code sandbox | **P2** | deferred (D-E9). It was to show the tuned LLM model working in a general agent setting (`opencode`-style), but that is unwise before the base setup works and adds sampling cost; even in P2 it may not earn its keep. External baselines can run through the **same local tool-call harness**, so Harbor is only needed for genuinely untrusted agent code, and its practical cost is container RAM (Daytona can replace local Docker). |
 | Few-shot baseline | **P2** | extra comparison |
 | `no_tools` and `cadquery` mode matrices | **P2** | upper-bound studies |
 
@@ -365,8 +386,8 @@ results rather than repeating the plan.
 
 ## 10. Decisions (evaluation)
 
-The consolidated decision log is [`decisions.md`](decisions.md): **D-E1**–**D-E9** (harness, transfer,
-and the one-scorer rule) and **D-B1**–**D-B3** (baselines). This section is now a pointer.
+The consolidated decision log is [`decisions.md`](decisions.md): **D-E1**–**D-E10** (harness, transfer,
+the one-scorer rule, and the `eval` pool) and **D-B1**–**D-B3** (baselines). This section is now a pointer.
 
 ---
 

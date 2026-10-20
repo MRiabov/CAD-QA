@@ -7,11 +7,13 @@ set, then render it to **Liquid's `messages` SFT set** — the on-disk training 
 
 ## Inputs / outputs
 
-- **In:** agent training traces (02), External datasets (`../data.md` §2).
+- **In:** agent training traces (02), External datasets (`../data.md` §2), and the frozen pool assignment
+  (`../data.md` §5). Only `sft_train` CAD-QA rows enter; External **training** datasets are SFT-only
+  support and are treated as `sft_train`. `rl_train` and `eval` are excluded.
 - **Out:** the `TrainingExample` set (`../system.md` §7) → **Liquid `messages` SFT set** + **manifest**.
 - **Fields** (`../system.md` §7): `id`, `dataset_role`, `messages`, `source_id`, `source_revision`,
   `license`, `reasoning_text`, `tool_call_text`, `tools`, `answer_format`, `reasoning_hop_count`,
-  `split`, `provenance`. Reasoning, visible output, and tool calls stay distinct (A5).
+  `split`, `pool`, `provenance`. Reasoning, visible output, and tool calls stay distinct (A5).
 
 ## Requirement
 
@@ -27,7 +29,9 @@ Traces above the 16,384-token admission window are rejected here and counted —
 
 Preparation stages (`../system.md` §7): registry → ingest/normalize → quality gate → dedup/contamination →
 sample/mix. The **sample/mix** step applies per-role quotas and includes hop tiers only through the
-measured advancement gate (`../data.md` §4.1), not by ordering a static dataset.
+measured advancement gate (`../data.md` §4.1), not by ordering a static dataset. It operates **only on
+`sft_train`**; the converter asserts `pool == sft_train` and rejects any `rl_train` or `eval` row. The
+pool assignment is read from `split_manifest.json`, not re-derived from `split`.
 
 ## Verification
 
@@ -38,7 +42,7 @@ uv run python -m <converter> --in <training_examples.jsonl> --out <sft.parquet>
 
 ## Open questions
 
-_(none)_
+None.
 
 ## Resolved questions
 

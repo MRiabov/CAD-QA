@@ -221,6 +221,9 @@ found to be clean and non-overlapping.
 | `mixed_dataset_general_and_easy_cadqa` (first run) | 70% general (⅓ coding agent, ⅓ 3D math, ⅓ text2CAD + edits), 30% low-hop `learn_the_cadqa_task` (rejection-sampled) | first run: format + easy task, cheapest signal |
 | `mixed_dataset_full_cadqa_training` (primary) | 50% general (same thirds), 50% `learn_the_cadqa_task` (release hop tiers) | test H2, the thesis number; **no separate `emit_our_tool_call_format`** — the format is carried by `learn_the_cadqa_task`. The task share covers the release hops `{2,3,4,5}`; later tiers are added through the measured advancement gate (§4.1), not by within-run ordering |
 
+Both mixes are built **only from `sft_train`** (§5). `rl_train` rows are excluded from every SFT mix and
+`eval` rows are never trained on; the role percentages are shares of `sft_train`, not of the full release.
+
 Rationale and tradeoffs:
 
 - **Format before reasoning.** If the LLM model cannot emit a valid `submit_*` call, accuracy is zero
@@ -335,16 +338,18 @@ mechanism differs by training stage:
   add the next hop's `learn_the_cadqa_task` rows only once the current hop clears the advancement gate. A held-out floor
   of ~80% is a reasonable default.
 - **RL: a true on-policy advancement gate (P2).** Only RL can enforce advancement on the LLM model's own
-  rollouts. Use an **RL-eligible pass rate, not a floor**: GRPO needs reward variance, so once a tier is ~80%+
-  correct most groups are fully correct and the gradient collapses. CAD-QA's recorded GRPO
-  hop-2 collapse is a version of this. Advance when the tier is **saturated** (pass ≥ ~80% and no
-  learning signal remains) or sits in the RL-eligible pass rate (~0.25–0.75); never run RL on an all-correct
-  tier.
+  rollouts. The gate rollouts use the **`rl_train` pool** (§5), not the SFT rows. Use an **RL-eligible
+  pass rate, not a floor**: GRPO needs reward variance, so once a tier is ~80%+ correct most groups are
+  fully correct and the gradient collapses. CAD-QA's recorded GRPO hop-2 collapse is a version of this.
+  Advance when the tier is **saturated** (pass ≥ ~80% and no learning signal remains) or sits in the
+  RL-eligible pass rate (~0.25–0.75); never run RL on an all-correct tier.
 - **Why gates exist.** The tiers exist because pass rate, not epoch, is the real progress signal:
   a tier that never clears stalls the ladder and must be recorded, not skipped.
-- **Prerequisite.** A tier needs enough rows to train *and* a held-out slice to measure; a tier
-  too thin to judge cannot be advanced safely. The per-tier held-out slice is owned by
-  `../evaluation/plan.md`; the tier-inclusion schedule and the advancement gate live here.
+- **Prerequisite.** A tier needs enough rows to train *and* a held-out slice to measure; the SFT
+  advancement gate reads the `eval` slice, while the RL gate reads `rl_train`. A tier too thin in
+  either pool cannot be advanced safely; record it. The per-tier `eval` slice is owned by
+  `../evaluation/plan.md`; the pool assignment is §5; the tier-inclusion schedule and the advancement
+  gate live here.
 
 ---
 
@@ -352,9 +357,27 @@ mechanism differs by training stage:
 
 - **Registry.** Every dataset has id, revision hash, license, dataset role, size, and field mapping.
   A dataset without a pinned revision does not enter.
-- **Contamination policy.** CAD-QA held-out rows and the evaluation datasets are hard-excluded; any
-  evaluation-dataset id appearing in `train` is a hard failure. The mechanics (quality gate, near-dedup,
-  hash-exclusion, no-silent-loss) live in `system.md` §7.
+- **Three-way data pools (SFT / RL / eval).** The eligible CAD-QA rows are partitioned into three
+  group-disjoint pools, targeting approximately **70% `sft_train` / 15% `rl_train` / 15% `eval`**:
+  - `sft_train` — the only rows that enter an SFT mix; teacher sampling (`pipeline/02-teacher-sampling.md`)
+    samples these rows.
+  - `rl_train` — held out from SFT. The RL-readiness gate and any RL/RFT run use these rows, so the SFT
+    policy has not seen their prompts or teacher traces. This is the **gate population**.
+  - `eval` — the validation and test rows; never trained on, never used for the gate or checkpoint
+    selection. The final thesis number uses the test portion.
+  SFT↔RL is split by **source program / counterfactual group**, keeping the task families in both pools,
+  so the gate measures new programs in known families rather than family transfer. `eval` is split by the
+  full DD-12 protected groups (source family, family id, template id, counterfactual group) and is
+  disjoint from both. Record the assignment (`pool`, group key, counts, seed) in `split_manifest.json`
+  and the run manifest. If the gate needs more RL rows, generate additional group-disjoint rows ad hoc
+  into `rl_train` and record them; never reassign `sft_train` or `eval` rows. The 70/15/15 target applies
+  to the frozen release; all counts in the training/evaluation docs are read from the frozen manifest,
+  not hardcoded. The current 54-validation / 205-test release is not a 15% eval pool and must be
+  re-split or expanded before the primary run.
+- **Contamination policy.** `sft_train`, `rl_train`, and `eval` must be disjoint at the group level;
+  any eval row in `sft_train` or `rl_train` is a hard failure, as is any `rl_train` row in the SFT mix.
+  CAD-QA held-out rows and the evaluation datasets are hard-excluded. The mechanics (quality gate,
+  near-dedup, hash-exclusion, no-silent-loss) live in `system.md` §7.
 - **Licensing and provenance.** Two concerns, often conflated:
   - **AGPL-3.0** (the Fable agent training trace sets) is copyleft, **not a research restriction** — training on
     it is fine. Its obligations attach to **distribution** of the material or a derivative. That
@@ -402,7 +425,8 @@ only the dataset:
   per combination; the first run may be `coverage_limited` under §3. The coverage gate is the dataset
   release report projected onto the sampling log and is **re-run after `sample + mix`**; its key grain is
   open (`pipeline/02-teacher-sampling.md` Q1).
-- **Contamination / dedup.** CAD-QA held-out rows are hard-excluded (§5). Cross-dataset dedup stays
+- **Contamination / dedup.** CAD-QA `eval` rows and `rl_train` rows are hard-excluded from the SFT mix;
+  only `sft_train` enters (§5). Cross-dataset dedup stays
   **simple**: the mix blends **orthogonal** datasets (distinct distillation origins/teacher paths), so
   duplicates are unlikely — exact/near-dup (normalized hash) within the mix, no MinHash/LSH unless a
   measured collision appears (`pipeline/03-preparation.md` Q2).

@@ -95,10 +95,11 @@ invariant, [`system.md`](system.md) §7).
 | Test | Contract | Key assertions |
 |---|---|---|
 | `test_01_loader_decodes_all_answer_formats` | [`pipeline/01-rows-loader.md`](pipeline/01-rows-loader.md) | decoded `gold_answer` + `[answer contract]`; **every** Answer format maps to one `submit_*` tool incl. `boolean`/`entity_id`; rows missing `prompt`/`gold_answer` and non-release-ready rows dropped **and counted** |
-| `test_02_rejection_sampling` | [`pipeline/02-teacher-sampling.md`](pipeline/02-teacher-sampling.md) | only Query-verifier-accepted agent training traces kept; a rejected attempt never enters the pool; the sampling log records reasoning, output, and tool call **distinctly** (A5); the coverage gate runs on the projected universe |
-| `test_03_converter_masks_non_assistant_turns` | [`pipeline/03-preparation.md`](pipeline/03-preparation.md), [`system.md`](system.md) §7 | **highest-risk**: `messages` is authoritative; assistant reasoning + the tool call are loss-bearing, system/user/tool-response turns are masked; the final `submit_*` survives tokenization; evaluation/held-out rows hard-excluded; dedup recorded |
+| `test_02_rejection_sampling` | [`pipeline/02-teacher-sampling.md`](pipeline/02-teacher-sampling.md) | only Query-verifier-accepted agent training traces kept; a rejected attempt never enters the pool; the sampling log records reasoning, output, and tool call **distinctly** (A5); the coverage gate runs on the projected universe; **only `sft_train` rows are sampled** |
+| `test_02b_pool_split_disjoint` | [`data.md`](data.md) §5, [`system.md`](system.md) §7 | every eligible row gets exactly one `pool`; `sft_train`, `rl_train`, and `eval` are group-disjoint at the declared keys; the SFT mix contains **no** `rl_train` or `eval` row; the gate population is `rl_train`; the `split_manifest.json` counts/hashes/seed are recorded |
+| `test_03_converter_masks_non_assistant_turns` | [`pipeline/03-preparation.md`](pipeline/03-preparation.md), [`system.md`](system.md) §7 | **highest-risk**: `messages` is authoritative; assistant reasoning + the tool call are loss-bearing, system/user/tool-response turns are masked; the final `submit_*` survives tokenization; `pool == sft_train` asserted; evaluation/held-out rows hard-excluded; dedup recorded |
 | `test_04_sft_cpu_smoke` (layer 6 skips) | [`pipeline/04-sft.md`](pipeline/04-sft.md) | the config sets `assistant_only_loss: true`; the LLM adapter is saved; a second run with the same seed is identical |
-| `test_05_rl_gate_tiers` | [`pipeline/05-rl-readiness-gate.md`](pipeline/05-rl-readiness-gate.md) | scripted policy rollouts → `pass@1` + CI; per-row chance test + **pooled tier-level** chance-corrected rate (`p_chance` per row; α=0.05 table); `0/8` not unreachable; unbiased `pass@k` only when `k<n`; no tier from a screen-only row; no weights updated |
+| `test_05_rl_gate_tiers` | [`pipeline/05-rl-readiness-gate.md`](pipeline/05-rl-readiness-gate.md) | only `rl_train` rows are rolled out (never `sft_train`); scripted policy rollouts → `pass@1` + CI; per-row chance test + **pooled tier-level** chance-corrected rate (`p_chance` per row; α=0.05 table); `0/8` not unreachable; unbiased `pass@k` only when `k<n`; no tier from a screen-only row; the `sft_train` vs `rl_train` memorization gap is reported; no weights updated |
 | `test_06_harness_modes` | [`pipeline/06-harness-modes.md`](pipeline/06-harness-modes.md), [`../evaluation/plan.md`](../evaluation/plan.md) §4 | `numpy` and `no_tools` graded by the **one scorer**; the oracle is a key-path check; off-oracle wrong-answer/formatting fixtures fail as expected |
 | `test_07_serving_parity` | [`pipeline/07-serving.md`](pipeline/07-serving.md) | the LLM adapter loads via HF Transformers (the reference runtime); a parity check runs only for a non-Transformers runtime (argmax agreement on a fixed prompt set) |
 | `test_07b_hosted_reference_deploy_sanity` | [`pipeline/07-serving.md`](pipeline/07-serving.md) | local served base and OpenRouter `liquid/lfm-2.5-2.6b:free` on the same 32-row easy math set (GSM8K or basic arithmetic), `no_tools`, greedy; exact-match accuracy within 5 points and no collapse/invalid-output failure; no adapter; endpoint/model/date recorded in the manifest |
@@ -121,6 +122,9 @@ invariant, [`system.md`](system.md) §7).
 - no agent training trace is truncated past its final `submit_*` call; traces above the 16,384-token
   admission window are rejected, not truncated, and counted;
 - the 5 rows' Answer formats all appear (incl. `submit_workplane`);
+- the `sft_train` / `rl_train` / `eval` pools are group-disjoint and recorded; the SFT mix contains no
+  `rl_train` or `eval` row; the RL-readiness gate reads `rl_train` and reports the memorization gap against
+  a `sft_train` sample;
 - every evaluation/held-out row is excluded from the mix (contamination is a hard failure);
 - the coverage gate passes and is re-checked **after** sample + mix; an intended combination dropped by
   the mix is a hard failure, and a first-run mix with every combination at least 1 but some `< 8` is
@@ -134,6 +138,8 @@ invariant, [`system.md`](system.md) §7).
   `render_tool_calls`. This fixture is the only test that does.
 - **Truncation (LE-5).** A multi-round agent training trace can fill the window; right-truncation would
   silently drop the only supervised target.
+- **Pool leakage (LR-2).** If the RL-readiness gate runs on the SFT rows, its `pass@1` measures
+  memorization; the three pools and the gate population are asserted in `test_02b` and the E2E.
 - **Contamination.** One leaked row from an evaluation dataset invalidates the thesis number.
 - **Coverage after mix (LE-7).** `sample + mix` is where coverage can be destroyed; the coverage gate
   must be re-checked there.

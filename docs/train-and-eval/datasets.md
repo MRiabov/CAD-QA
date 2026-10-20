@@ -8,7 +8,7 @@ recipe (dataset role → weight) and the candidate evidence (sizes, licenses, ad
 here, then propagate.
 
 **Related docs.** `../glossary.md` (**DatasetRole**, **External dataset**, **Mixed training
-dataset**, **Training stage**); `./fine-tuning/decisions.md` (FT-D1–D23);
+dataset**, **Training stage**); `./fine-tuning/decisions.md` (FT-D1–D24);
 `./evaluation/harness.md` and `./evaluation/baselines.md`; `fine-tuning/data.md`.
 
 ## Rules
@@ -22,6 +22,11 @@ dataset**, **Training stage**); `./fine-tuning/decisions.md` (FT-D1–D23);
 - `learn_the_cadqa_task` is generated internally (dataset rows in `../../dataset/`; agent training trace distillation in
   `fine-tuning/pipeline/02-teacher-sampling.md`); it is not an external dataset.
 - Held-out and evaluation-dataset rows are hard-excluded from every training dataset (data plan §5).
+- **DatasetRole is not a data pool.** The SFT/RL/eval pool assignment (`sft_train` / `rl_train` /
+  `eval`, target ~70/15/15) is owned by `fine-tuning/data.md` §5 and recorded in the split manifest;
+  `sft_train` is the only pool that enters an SFT mix, and `rl_train` is the RL-readiness gate/RL pool.
+  External **training** datasets are SFT-only support and are assigned `pool=sft_train`; they never enter
+  `rl_train` or `eval`. External evaluation datasets are separate `eval` rows.
 
 ## Training datasets by dataset role
 

@@ -50,7 +50,7 @@ whose rationale was not recoverable.
   `boolean` (and `entity_id`); the Phase 3 rewrite defines the contract over the **full** `answer_format`
   enum, so every Answer format maps to exactly one `submit_*` tool (FT-D12;
   [pipeline/01-rows-loader.md](pipeline/01-rows-loader.md)).
-  Detail: [pipeline/00-overview.md](pipeline/00-overview.md#shared-tool-call-contract).
+  Detail: [pipeline/00-overview.md](pipeline/00-overview.md#shared-interfaces-single-sourced).
 
 ## FT-D5 — Primary harness is `numpy`; `cadquery` is deferred to the RL Training stage
 
@@ -72,7 +72,7 @@ whose rationale was not recoverable.
   matcher, with a tool-call-aware path that reuses `tool_call_matches`.
 - **Consequences:** the reward is sparse/binary, which is the recorded cause of the 2-hop
   collapse. Eval and reward use different parsers; see
-  [pipeline/05-rl-readiness-gate.md](pipeline/05-rl-readiness-gate.md#open-questions).
+  [pipeline/05-rl-readiness-gate.md](pipeline/05-rl-readiness-gate.md#questions-for-the-owner).
 
 ## FT-D7 — `run_code` is a numpy-only accidental-misuse guard
 
@@ -92,7 +92,7 @@ whose rationale was not recoverable.
   and a hop curriculum.
 - **Consequences:** the current GRPO script starts from the base LLM model, not the SFT adapter,
   so the implemented chain is not the decided chain. Detail:
-  [pipeline/05-rl-readiness-gate.md](pipeline/05-rl-readiness-gate.md#open-questions).
+  [pipeline/05-rl-readiness-gate.md](pipeline/05-rl-readiness-gate.md#questions-for-the-owner).
 
 ## FT-D9 — Record every LLM call distinctly (A5)
 
@@ -383,6 +383,23 @@ whose rationale was not recoverable.
     weights-only, no optimizer).
   - TA-C1 parity applies **only to numbers/rewards produced by a non-Transformers runtime** (vLLM); a
     Transformers number needs no parity check. Detail: `pipeline/07-serving.md`.
+
+## FT-D24 — Three-way SFT / RL / eval pools
+
+- **Status:** accepted (2026-10-20) — owner.
+- **Context:** the RL-readiness gate originally measured the same train rows used for SFT, so `pass@1`
+  measured memorization rather than reachability; the final evaluation also needs a pool disjoint from
+  both. A two-pool split is not enough.
+- **Decision:** partition eligible CAD-QA rows into group-disjoint `sft_train` (~70%), `rl_train` (~15%),
+  and `eval` (~15%). SFT and teacher sampling use `sft_train`; the RL-readiness gate and RL/RFT use
+  `rl_train`; `eval` is validation+test and is never trained or used for the gate. SFT↔RL splits by
+  **source program / counterfactual group** (keeping task families in both); `eval` splits by the full
+  DD-12 protected groups. External **training** datasets are SFT-only (`pool=sft_train`). If the gate
+  needs more RL rows, generate additional group-disjoint rows ad hoc into `rl_train`; never reassign
+  `sft_train` or `eval` rows.
+- **Consequences:** the gate reports `rl_train` `pass@1` plus the `sft_train` vs `rl_train` memorization
+  gap; the thesis number stays on `eval`; the assignment is recorded in `split_manifest.json` and the run
+  manifest. Detail: `data.md` §5; `pipeline/05-rl-readiness-gate.md`; `system.md` §7.
 
 ## Open questions
 

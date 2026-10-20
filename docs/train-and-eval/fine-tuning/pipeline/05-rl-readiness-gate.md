@@ -2,21 +2,28 @@
 
 ## Purpose
 
-After SFT, measure per-prompt reachability with the **RL-readiness gate** (P0). It decides whether RL is
-indicated and produces the RFT/RL pool. **RL is deferred**: conditional on the RL-readiness gate, P2 until a tier is
-measured learnable (FT-D13; FT-D8 superseded).
+After SFT, measure per-prompt reachability with the **RL-readiness gate** (P0) on the **`rl_train` pool**.
+It decides whether RL is indicated and produces the RFT/RL pool. **RL is deferred**: conditional on the
+RL-readiness gate, P2 until a tier is measured learnable (FT-D13; FT-D8 superseded).
 
 ## Definition
 
 The RL-readiness gate is an **inference** workload (rollouts), not training — size it in decode/prefill throughput and
 rollout latency, not SFT sequences/s.
 
-- **Population:** the train rows (`01`) in the run's mix.
+- **Population:** the **`rl_train` pool** — rows group-disjoint from `sft_train` at the source-program /
+  counterfactual-group level and never used to train the SFT policy (`../data.md` §5). **Never the
+  `sft_train` rows:** the SFT policy has already seen their prompts and teacher traces, so `pass@1` there
+  measures memorization, not reachability. If `rl_train` is too small, generate additional group-disjoint
+  rows into it ad hoc and record them; do not move `sft_train` or `eval` rows.
 - **Rollouts:** per row, a **rollout count** `n` of completions sampled at the **rollout temperature** (not
   the 0.1 deployment default), each graded by the one scorer (`../../evaluation/plan.md` §4).
 - **Primary metric — `pass@1` (per-attempt success):** `c/n` for `c` passes in `n` rollouts, reported
   with a 95% CI (Wilson or Jeffreys). This is the quantity RL cares about; **do not label `c/n` as
   `pass@k`.**
+- **Memorization diagnostic.** Also report `pass@1` on a fixed sample of `sft_train` rows (the rows the
+  SFT policy saw) beside the `rl_train` number. The gap is the memorization gap. The gate's go/no-go
+  uses **only** `rl_train`; the `sft_train` number is diagnostic and is never quoted as capability.
 - **Chance correction for bounded answer spaces.** Each row carries a per-row chance probability
   `p_chance`: `1/K` for `candidate_label` with `K` rendered candidates, `1/2` for `boolean`, `1/K` for a
   fixed enum, and `0` for open-ended/numeric/coordinate/JSON formats where a random guess is not
@@ -59,17 +66,18 @@ rollout latency, not SFT sequences/s.
 - **Outputs:** `pass@1` + CI per row and per stratum (Reasoning hop count, `difficulty_bucket`, Answer
   format, task family) and the **pooled chance-corrected rate per tier**; the **learnable/RL-eligible**
   pool (RL/RFT); the **not-observed/unreachable** list (Bridge / re-distillation); **mastered** rows
-  (evaluation-only).
+  (excluded from RL; not moved into the frozen `eval` pool).
 
 ## RL (deferred, conditional)
 
 - **GRPO with dynamic sampling** (drop all-pass/all-fail groups), RL-eligible pass-rate scheduling, sandboxed
-  rollouts, full rollout logging (FT-D9).
+  rollouts, full rollout logging (FT-D9), **on `rl_train`**.
 - **Reward = the one scorer** (`../../evaluation/plan.md` §4), audited before any RL run (FT-D14).
 - **RFT** (rejection-sampling SFT on the tuned policy's **own** correct agent training traces, graded by
   the Query verifier — self-distillation / STaR) is the cheaper consolidation and may replace RL at this
   scale. It is **not** teacher distillation: 02's rejection sampling keeps the **teacher's** accepted
-  traces; RFT keeps the **policy's**. Both need accepted generations to exist at all.
+  traces; RFT keeps the **policy's**. Both need accepted generations to exist at all. RFT runs **on
+  `rl_train`**; its traces never enter `sft_train` or `eval`.
 
 ## Stop / advance
 
@@ -86,9 +94,10 @@ rollout latency, not SFT sequences/s.
 ## Inputs / outputs
 
 - **In:** the LoRA adapter (04) run on **HF Transformers** (the reference runtime, FT-D23) + decoded rows (01)
-  with a per-row `p_chance` (or the candidate count needed to derive it).
-- **Out:** `pass@1` + CI and the chance-corrected rate per tier; the learnable/RL-eligible pool;
-  optionally an RL adapter; RFT data.
+  in the `rl_train` pool, with a per-row `p_chance` (or the candidate count needed to derive it).
+- **Out:** `pass@1` + CI and the chance-corrected rate per tier on `rl_train`; the learnable/RL-eligible
+  pool (a subset of `rl_train`); the memorization gap against a `sft_train` sample; optionally an RL
+  adapter; RFT data.
 
 ## Verification
 
@@ -99,9 +108,11 @@ uv run pytest train_and_eval/eval/test_tool_calls.py -k reward -q
 
 ## Questions for the owner
 
-- **OD-1.** Screen the **full training split** (`N_train × rollout count 8`; the first run is ~1–2k rows
-  ⇒ ≈8–16k rollouts; the superseded 958-row slice gave ≈7.7k, and a 10k scale-up would give ≈80k) or a
-  **stratified sample** with a fixed sample size per hop/bucket? Each rollout is one episode — several
+- **OD-1.** Screen the **full `rl_train` pool** (`N_rl × rollout count 8`; the first SFT run is ~1–2k rows,
+  so its 15% `rl_train` pool is ≈150–300 rows ⇒ ≈1.2–2.4k rollouts; a 10k release has ≈1.5k `rl_train`
+  rows ⇒ ≈12k rollouts; the superseded 958-row slice gave ≈7.7k) or a **stratified sample** with a fixed
+  sample size per hop/bucket? If the pool is too small to power the gate, generate more group-disjoint
+  `rl_train` rows ad hoc (`../data.md` §5) rather than moving SFT/eval rows. Each rollout is one episode — several
   LLM calls in the agentic harness — so the RL-readiness gate is a **throughput job**: order
   10⁷–10⁸ output tokens depending on `N_release` and the sample, i.e. **hours to days on a small single
   GPU** and infeasible on CPU. **Measure** seconds-per-rollout on a small pilot

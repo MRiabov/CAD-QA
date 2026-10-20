@@ -395,6 +395,15 @@ dataset roles are not yet named.
 
 ---
 
+### Data pool
+
+The three-way split of eligible CAD-QA rows: `sft_train` (the only rows that enter an SFT mix),
+`rl_train` (the RL-readiness gate and RL/RFT pool, held out from SFT), and `eval`
+(validation+test; never trained on). `In code:` `DataPool`. The assignment is owned by
+`train-and-eval/fine-tuning/data.md` §5 and recorded in `split_manifest.json`.
+
+---
+
 ## Internal
 
 ### dataset_generation

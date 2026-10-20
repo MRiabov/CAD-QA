@@ -9,18 +9,21 @@ depend on row order.
 
 ## Inputs / outputs
 
-- **In:** decoded CAD-QA dataset rows (01) — `prompt`, `answer_format`, `gold_answer`,
-  `reasoning_hop_count`, `relation_families`, `measurement_scopes`.
+- **In:** decoded CAD-QA dataset rows (01) **in the `sft_train` pool** — `prompt`, `answer_format`,
+  `gold_answer`, `reasoning_hop_count`, `relation_families`, `measurement_scopes`. `rl_train` rows are
+  **not** sampled for SFT; the RL gate uses their gold answers directly, and any teacher sampling of
+  `rl_train` (a teacher ceiling or post-gate RFT) must never enter the SFT mix.
 - **Teacher:** `deepseek/deepseek-v4.1-flash` via OpenRouter (FT-D2; bumped from the v4 preview).
-- **Out `agent training traces`:** one per accepted row, `dataset_role=learn_the_cadqa_task`, carrying
-  `answer_format`, `reasoning_hop_count`, `relation_families`, `measurement_scopes`, and reasoning /
-  visible output / tool call kept distinct (A5).
+- **Out `agent training traces`:** one per accepted `sft_train` row, `dataset_role=learn_the_cadqa_task`,
+  carrying `answer_format`, `reasoning_hop_count`, `relation_families`, `measurement_scopes`, and
+  reasoning / visible output / tool call kept distinct (A5).
 - **Out `sampling log`:** one record per attempt (reasoning, output, tool call, rounds).
 
 ## Requirement
 
 A kept **agent training trace** must contain a tool call `tool_call_matches` accepts against the row's gold; a rejected
-attempt never enters the pool. **Coverage must be complete across the whole task space** — every Answer
+attempt never enters the pool. **Only `sft_train` rows are sampled for SFT**; `rl_train` and `eval` rows
+never enter the SFT trace pool (`../data.md` §5). **Coverage must be complete across the whole task space** — every Answer
 format × Reasoning hop count × relation family × measurement scope present in the training set (each
 task family; on the order of hundreds of combinations) — because a combination the teacher never
 produces cannot be learned (the recorded `json`/`number` zero-coverage defect).
