@@ -3,7 +3,9 @@
 **Status:** active, 2026-10-10. New. Defines the integration and end-to-end tests for the training
 pipeline and the local evaluation harness. It closes audit findings **LE-2** (no end-to-end test of our
 own pipeline), **LE-4** (the supervised target and masking were untested), and **LE-5** (truncation was
-untested) in [`plans/oct-10/llm-engineering-audit.md`](../../../plans/oct-10/llm-engineering-audit.md).
+untested) in [`plans/oct-10/llm-engineering-audit.md`](../../../plans/oct-10/llm-engineering-audit.md);
+the second-pass pool finding is **LR-2** in
+[`plans/oct-20/llm-engineering-audit.md`](../../../plans/oct-20/llm-engineering-audit.md).
 
 **Related docs.** [`training.md`](training.md) §2 (cookbook-first) and §7 (the P0 list);
 [`system.md`](system.md) §7 (the `TrainingExample` record and converter);
@@ -139,7 +141,8 @@ invariant, [`system.md`](system.md) §7).
 - **Truncation (LE-5).** A multi-round agent training trace can fill the window; right-truncation would
   silently drop the only supervised target.
 - **Pool leakage (LR-2).** If the RL-readiness gate runs on the SFT rows, its `pass@1` measures
-  memorization; the three pools and the gate population are asserted in `test_02b` and the E2E.
+  memorization; the three pools and the gate population are asserted in `test_02b` and the E2E
+  ([second-pass audit](../../../plans/oct-20/llm-engineering-audit.md) LR-2).
 - **Contamination.** One leaked row from an evaluation dataset invalidates the thesis number.
 - **Coverage after mix (LE-7).** `sample + mix` is where coverage can be destroyed; the coverage gate
   must be re-checked there.
