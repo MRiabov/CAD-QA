@@ -58,15 +58,20 @@ The fine-tuning + evaluation work is one epic. It is not accepted until:
 | 4. Masking/truncation fixture (CPU) | the LFM2.5 template + tokenizer assert assistant-only loss and target survival | weights | template, tokenizer | required (LE-4/LE-5) |
 | 5. Real-teacher eval (not CI) | 3× real teacher on immutable rows; records the sampling log | nothing | real teacher provider | local only; CI never runs it |
 | 6. GPU smoke (skipped without GPU) | a few real SFT steps on the tiny LLM model | teacher | trainer, GPU | skipped in CI |
+| 7. Hosted-reference deploy sanity (not CI) | local served base vs OpenRouter `liquid/lfm-2.5-2.6b:free` on a 32-row easy math set (GSM8K or basic arithmetic), `no_tools`, greedy | none (the network call is real) | local served endpoint, hosted endpoint, one scorer | local only; never CI |
 
 Layers 1–4 are **CPU-only** and run on a laptop; layer 6 is the only GPU-shaped one and skips cleanly.
-(Layer 4 is the LE-2 answer: the load-bearing assertions need no GPU.)
+Layer 7 is local-only and needs `OPENROUTER_API_KEY`; it is the deploy-stack sanity check, not adapter
+parity (TA-C1) and not a thesis number. (Layer 4 is the LE-2 answer: the load-bearing assertions need
+no GPU.)
 
 ## The fixture and seeding contract
 
 - a **5-row CAD-QA dataset fixture**, immutable, pinned by revision, covering at least one row per Answer
   format — `candidate_label`, `coordinate`, `text`, `number`, `integer`, `boolean`, `bbox`, and `json`
   (the `submit_workplane` tool) — so the format the legacy pool never covered is exercised;
+- a separate **32-row easy math set** (GSM8K or a pinned basic-arithmetic slice) for the layer-7 deploy
+  check; CAD-QA rows are not used because the base model is near chance there;
 - a **scripted teacher** keyed by prompt, returning accepted agent training traces and one rejected one;
 - **local External-dataset slices** so 03 preparation has real mix inputs without a network call;
 - the fixture **materializes real files** (the Dataset file, the External slices, the scripted responses)
@@ -96,6 +101,7 @@ invariant, [`system.md`](system.md) §7).
 | `test_05_rl_gate_tiers` | [`pipeline/05-rl-readiness-gate.md`](pipeline/05-rl-readiness-gate.md) | scripted policy rollouts → `pass@1` + CI; per-row chance test + **pooled tier-level** chance-corrected rate (`p_chance` per row; α=0.05 table); `0/8` not unreachable; unbiased `pass@k` only when `k<n`; no tier from a screen-only row; no weights updated |
 | `test_06_harness_modes` | [`pipeline/06-harness-modes.md`](pipeline/06-harness-modes.md), [`../evaluation/plan.md`](../evaluation/plan.md) §4 | `numpy` and `no_tools` graded by the **one scorer**; the oracle is a key-path check; off-oracle wrong-answer/formatting fixtures fail as expected |
 | `test_07_serving_parity` | [`pipeline/07-serving.md`](pipeline/07-serving.md) | the LLM adapter loads via HF Transformers (the reference runtime); a parity check runs only for a non-Transformers runtime (argmax agreement on a fixed prompt set) |
+| `test_07b_hosted_reference_deploy_sanity` | [`pipeline/07-serving.md`](pipeline/07-serving.md) | local served base and OpenRouter `liquid/lfm-2.5-2.6b:free` on the same 32-row easy math set (GSM8K or basic arithmetic), `no_tools`, greedy; exact-match accuracy within 5 points and no collapse/invalid-output failure; no adapter; endpoint/model/date recorded in the manifest |
 | `test_train_and_eval_e2e_pipeline` | [`pipeline/00-overview.md`](pipeline/00-overview.md) | the full chain, below |
 
 ## End-to-end test
@@ -106,7 +112,7 @@ invariant, [`system.md`](system.md) §7).
 
 **When** the DAG runs loader → teacher → preparation → SFT (1-step CPU) → RL-readiness gate → evaluation;
 
-**Then**
+**Then** the run must satisfy:
 
 - every pipeline stage's durable artifact exists and is read back through the next pipeline stage's
   production read path;
@@ -139,13 +145,16 @@ invariant, [`system.md`](system.md) §7).
 2. write each pipeline stage's adversarial integration test **first** (red);
 3. implement that pipeline stage until green;
 4. add the failure-mode test;
-5. no `skip`/`xfail` and no weakened assertions — the only permitted `skip` is the GPU marker (layer 6).
+5. no `skip`/`xfail` and no weakened assertions — the only permitted skips are the GPU marker (layer 6)
+   and the local-only hosted-reference marker (layer 7).
 
 ## How tests run
 
 - `uv run pytest tests/integration/train_and_eval -n auto` — CPU-only, no network, no GPU;
 - the GPU smoke is marked and skipped unless a GPU is present;
-- the real-teacher eval (layer 5) is local-only and never runs in CI.
+- the real-teacher eval (layer 5) is local-only and never runs in CI;
+- the hosted-reference deploy sanity (layer 7) is local-only, needs `OPENROUTER_API_KEY` + network, and
+  never runs in CI.
 
 ## Where it lives
 

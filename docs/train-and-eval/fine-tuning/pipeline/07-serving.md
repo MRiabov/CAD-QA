@@ -40,6 +40,20 @@ serving-parity check**. A number produced by a **non-Transformers runtime** (vLL
 numerically equivalent to Transformers before it is quoted (FT-D10, TA-C1). Merge is a tracked step
 (FT-D12; TA-D2).
 
+**Hosted-reference deploy sanity (base model).** Separately from TA-C1, check that our deploy stack
+actually reproduces the public base model: compare the locally served base (`vLLM`/`llama.cpp`) with
+OpenRouter's hosted `liquid/lfm-2.5-2.6b:free` on a small **easy math** set — for example, 32 GSM8K
+items or a pinned basic-arithmetic slice — in `no_tools` mode, greedy decoding, with the identical
+system prompt. Do not use CAD-QA rows: this base model's CAD-QA accuracy is near chance, so CAD-QA has
+no discriminative power for a deploy check. The point is a **collapse check**: after serving, the model
+must still produce sane answers, not near-zero accuracy, empty output, or degenerate repetition. Report
+exact-match accuracy and the invalid/empty-output rate for both runtimes plus per-row agreement. Accept
+when local accuracy is within **5 percentage points** of the hosted reference and the local run shows no
+collapse (near-zero accuracy, mass invalid output, or a template/parser failure). Exact token agreement
+is diagnostic only: the hosted provider may use a different runtime or quantization. Record the row
+IDs, dataset revision, endpoint, model slug, provider, and request settings in the run manifest. A
+failure indicts the deploy stack, not the checkpoint.
+
 ## Recipe
 
 - **Adapter-first:** ship base + adapter; load it with PEFT/Transformers for evaluation, or serve it with
@@ -70,3 +84,12 @@ llama-server -m <merged>.gguf -c 4096 --port 8080
   official LFM2.5 support starts at ≥0.23. **Unverified, not proven broken:** 0.22 may load LFM2.5
   (same `Lfm2ForCausalLM` family), so smoke-test async eval/GRPO on the pin before adding a separate
   ≥0.23 environment.
+- **Q3.** *(2026-10-20)* **The hosted-reference check is the deploy-stack sanity test.** Compare the
+  locally served base with OpenRouter `liquid/lfm-2.5-2.6b:free` on a 32-row easy math set (for example,
+  GSM8K or a pinned basic-arithmetic slice) in `no_tools` mode, greedy; accept when local exact-match
+  accuracy is within 5 percentage points of the hosted reference and the local run shows no collapse
+  (near-zero accuracy, mass invalid/empty output, or a template/parser failure). CAD-QA rows are
+  excluded because the base model is near chance there, which would only measure noise. Token agreement
+  is diagnostic. This is a base-deploy check, not adapter parity (TA-C1 still covers vLLM vs
+  Transformers) and not a thesis number; it is local-only because it makes a network call to an external
+  provider.
