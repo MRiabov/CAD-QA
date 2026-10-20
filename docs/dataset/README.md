@@ -26,6 +26,7 @@ normalized CadQuery programs into verifiable QA rows. It is the
 | How does a pipeline stage behave, in words? | the step doc |
 | Why a dataset-specific choice was made | `decisions.md` and the step doc's local decisions |
 | Which answer formats exist, which are generated, and why some were cut? | `answer-formats.md` |
+| Which known major issues affect the generated dataset? | `known-major-issues.md` |
 | What the project is for | `../PRD.md` |
 | What a term means | `../glossary.md` |
 | Where the project actually is | `../development-context.md` |
