@@ -124,9 +124,11 @@ Each step below has a pass condition; do not start the next until the previous p
    Pass condition: the benchmark accuracy moves. This proves the whole narrow-task loop
    data → train → merge → export → eval.
 3. **Swap in our data (`mixed_dataset_general_and_easy_cadqa`).** Replace the cookbook dataset
-   with our first-run rows (general tasks + low-hop `learn_the_cadqa_task`) in Liquid's `messages`
+   with our first-run rows (general tasks + hop-2 `learn_the_cadqa_task`) in Liquid's `messages`
    format (built by the data doc), keep the cookbook config and hyperparameters, and run the
-   evaluation doc's `emit_our_tool_call_format` evaluation dataset. Pass condition: H1.
+   evaluation doc's `emit_our_tool_call_format` evaluation dataset. Pass condition: H1. The release
+   has no 0/1-hop rows, so use the **non-release 0/1 warmup slice** (`data.md` §5) for the first
+   CadQuery/task-shape exposure and smoke runs; it is not H1/H2 data.
 4. **Only if H1 holds**, expand to `mixed_dataset_full_cadqa_training` and the release-hop tiers of
    `learn_the_cadqa_task`.
 
@@ -453,7 +455,6 @@ justification; `dataset/` stays immutable (DD-01). Detail: FT-D12 in
   `learning_rate` on a `DEFAULT_LORA` run. The documented LoRA rate is `2e-4`; if the resolved config
   shows otherwise on the first run, record it and fix the doc rather than hand-setting a value. The
   snippet now inherits optimizer/LR/schedule/batch, and the resolved config goes in the manifest.
-
 - **Q1.** *(2026-10-09)* **Prompt is not masked by default.** TRL's `SFTConfig.assistant_only_loss`
   defaults to `False`, so conversational (`messages`) data gets full-sequence loss. Set
   `assistant_only_loss: true` (or `completion_only_loss: true`); both require `{% generation %}` /

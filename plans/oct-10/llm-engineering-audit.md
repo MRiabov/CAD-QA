@@ -391,8 +391,8 @@ on `rl_train` and reports the memorization gap, `system.md` §7 adds `DataPool`,
 pool disjointness. LR-1 is partially resolved: the split code is now row-weighted, and the 10k pool
 re-exports as dataset split **8,498 train / 748 validation / 754 test** and pools **6,999 `sft_train` /
 1,499 `rl_train` / 1,502 `eval`** (748 validation + 754 test), with a valid split audit. The remaining
-LR-1 blockers are the **3/8 answer formats** and the failed non-split benchmark gates, not the split
-sizes.
+LR-1 blockers are the **3/8 answer formats**, the **no-0/1-hop warmup gap** (dataset M10; hop 2 is only
+457 `sft_train` rows), and the failed non-split benchmark gates, not the split sizes.
 
 ### LR-1 — The plan is written against a dataset that does not exist
 
@@ -422,7 +422,9 @@ dataset split: **8,498 train / 748 validation / 754 test**, with pools **6,999 `
 `rl_train` / 1,502 `eval`** (748 validation + 754 test); `split_audit` is valid. A 64-row periodic subset
 is now drawable, a ~750-row final test gives an unpaired MDE of ~7.3 pp, and the 54/205 split is stale.
 The remaining blockers are the **3/8 answer formats** (the release has `candidate_label`, `coordinate`,
-`text` only) and the failed benchmark gates (answer entropy, family coverage/balance, model coverage).
+`text` only), the **no-0/1-hop warmup gap** (dataset M10), and the failed benchmark gates (answer entropy,
+family coverage/balance, model coverage). The H2 test tier must pre-register pooled hop 3+4 (626 test
+rows), because no single hop reaches 500.
 
 ### LR-2 — The RL-readiness gate measures the rows SFT trained on
 

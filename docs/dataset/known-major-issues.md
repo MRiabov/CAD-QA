@@ -32,7 +32,8 @@ there; this document is its current record.
 | Evidence tier | `source_static_or_analytic` on all 10,000 rows |
 | `valid_for_release` | false |
 | Split in `release_10k` | train 9,741; validation 54; test 205 |
-| Split in `release_10k_resplit_20261020` | train 7,000; validation 1,500; test 1,500 |
+| Split in `release_10k_resplit_20261020` | train 8,498; validation 748; test 754 |
+| Pools in `release_10k_resplit_20261020` | `sft_train` 6,999; `rl_train` 1,499; `eval` 1,502 |
 
 ## Issue register
 
@@ -123,8 +124,7 @@ remaining bounded pool. Record the chosen boundary before the final run.
 
 ### M5 — The original split is too small for the planned analysis
 
-**Status:** verified; resplit exists but is undocumented and not
-family-disjoint.
+**Status:** verified; resplit documented; not family-disjoint.
 
 The `release_10k` split is 9,741 train / 54 validation / 205 test. The
 evaluation plan's power table assumes 1,159 validation rows and 708 test rows
@@ -132,24 +132,25 @@ evaluation plan's power table assumes 1,159 validation rows and 708 test rows
 smaller than planned, which blocks the dose-response analysis (H4) and the
 pre-registered H2 power calculation.
 
-`release_10k_resplit_20261020` re-splits the same 10,000 rows into 7,000 train /
-1,500 validation / 1,500 test. No CadQuery program and no split group crosses
-splits: 515 / 231 / 234 distinct CAD models and 136 / 29 / 29 split groups. The
-directory has no `split_audit.json`, `leakage_audit.json`, or
-`dataset_report.json`.
+`release_10k_resplit_20261020` re-splits the same 10,000 rows into 8,498 train /
+748 validation / 754 test, with pools 6,999 `sft_train` / 1,499 `rl_train` /
+1,502 `eval`. No CadQuery program and no split group crosses splits: 716 / 139 /
+125 distinct CAD models and 121 / 53 / 20 split groups. The directory has
+`split_audit.json`, `leakage_audit.json`, and `dataset_report.json`; the split
+audit is valid with no warnings.
 
-The resplit is not family-disjoint: all 16 relation families and 811
+The resplit is not family-disjoint: all 16 relation families and 425 of 3,519
 `prompt_template_id` values appear in more than one split. It is
 CadQuery-program-disjoint and split-group-disjoint, which is the stronger
 leakage control for the thesis, but it does not supply the family-disjoint
 confirmation batch named in the evaluation plan.
 
-**Impact:** the resplit is usable for a thesis evaluation with 1,500 test rows,
-but its provenance and family-disjointness must be stated.
+**Impact:** the resplit is usable for a thesis evaluation with 748 validation
+and 754 test rows, but its provenance and family-disjointness must be stated.
 
-**Disposition:** rerun the split and leakage audits on the resplit, record the
-data file and its checksums, and state the disjointness property in the paper.
-Do not use the 54-row validation split for training decisions.
+**Disposition:** record the data file and its checksums, and state the
+disjointness property in the paper. Do not use the 54-row validation split for
+training decisions.
 
 ### M6 — Six blocking gates keep the release out of benchmark-release status
 
@@ -228,25 +229,55 @@ kernel measurement. The paper should not imply that it is.
 **Disposition:** describe the tier accurately, and sample-audit gold answers
 against the CadQuery program operation trace before the final result.
 
+### M10 — The release has no 0/1-hop rows for warmup or smoke runs
+
+**Status:** verified; open; first-run blocker.
+
+The graph-first release contains only hops 2–5: `2: 552; 3: 3,111; 4: 5,409;
+5: 928`. Hops 0 and 1 are absent because the query-synthesis resolver floors at
+`hop >= 2` (`pipeline/04-query-synthesis-resolver.md` Q1). The old legacy
+1,445-row release had `0: 100` and `1: 342`, but it is superseded.
+
+This is not only a benchmark gap. The 2.6B base needs an easy, short
+task-shape/CadQuery-representation warmup before hop-2 SFT, and smoke runs need
+cheap examples. The lowest release tier is hop 2: 552 rows total and 457 in
+`sft_train`. The first-run task share is 300–600, so it cannot be filled with
+hop-2 alone at the top of the range. The external `expose_cadquery_programs`
+corpus teaches CadQuery syntax but not the CAD-QA task shape.
+
+**Impact:** the first SFT run has no true easy tier; hop 2 is a 457-row
+`sft_train` ceiling and does not replace a 0/1 syntax/representation warmup. A
+format-only first run may be harder than intended.
+
+**Disposition:** create a **non-release warmup slice** of 0/1-hop or synthetic
+CadQuery syntax/representation examples for SFT warmup and smoke runs. Keep it
+out of the benchmark release and out of H2/H3 evaluation; record it in the split
+and run manifests; make it group-disjoint and contamination-checked. Candidate
+sources: the legacy 0/1 rows (schema-checked and re-verified) or synthetic
+syntax/representation examples from `expose_cadquery_programs`; keep it small.
+Do not report it as benchmark data.
+
 ## What the dataset is sufficient for
 
 | Use | Sufficient? | Condition |
 |---|---|---|
-| Internal SFT | yes | train on the train split only (M4) |
+| Internal SFT | yes, with a non-release warmup slice | train on `sft_train` only (M4); hop 2 is 457 `sft_train` rows; add the 0/1 warmup (M10) |
 | H3 transfer to BenchCAD | yes | report the three-format scope (M1) |
-| H4 dose-response | yes, with the resplit | use 1,500 validation / 1,500 test and state the family-disjointness gap (M5) |
-| P0 H2 hard-slice result | yes, with chance correction | report chance-corrected accuracy and the 10.4% chance floor (M2) |
+| H4 dose-response | yes, with the resplit | use 748 validation / 754 test and state the family-disjointness gap (M5) |
+| P0 H2 hard-slice result | yes, with chance correction | pre-register pooled hop 3+4 (626 test rows); no single hop has >=500 test rows; report chance-corrected accuracy and the 10.4% floor (M2, M10) |
 | Public benchmark-release claim | no | six blocking gates (M6) |
 | Paper claims as written on 2026-10-20 | no | claims exceed the release (M1, M7) |
 
 ## Recommended order of work
 
-1. Fix M4: export SFT from the train split only.
-2. Fix M2: report the chance floor and add the candidate-breadth and
+1. Create the non-release 0/1 warmup slice (M10) for the first SFT and smoke
+   runs; keep it out of the benchmark release.
+2. Fix M4: export SFT from the train split only.
+3. Fix M2: report the chance floor and add the candidate-breadth and
    label-balance changes; re-run from cached CAD ontology graphs.
-3. Adopt M5: run the split and leakage audits on the resplit and record it.
-4. Fix M7 and M8 in the paper: claim only what the release contains.
-5. Add one numeric answer family only if steps 1-4 are complete and time
+4. Adopt M5: record the resplit and its split/leakage audits.
+5. Fix M7 and M8 in the paper: claim only what the release contains.
+6. Add one numeric answer family only if steps 1-5 are complete and time
    remains.
 
 A ground-up rewrite is not required for any item above. The limiting defects are
@@ -269,6 +300,14 @@ total = len(rows["answer_format"])
 print("answer formats", collections.Counter(rows["answer_format"]))
 print("reasoning hop count", collections.Counter(rows["logical_hop_count"]))
 print("split", collections.Counter(rows["split"]))
+print("pool", collections.Counter(rows["pool"]))
+for split in sorted(set(rows["split"])):
+    hops = collections.Counter(
+        hop
+        for row_split, hop in zip(rows["split"], rows["logical_hop_count"])
+        if row_split == split
+    )
+    print("hops by split", split, dict(sorted(hops.items())))
 
 candidate_counts = collections.Counter()
 expected_random = 0.0

@@ -218,10 +218,12 @@ and the code/config commit.
   row. At freeze, choose the largest release tier with `n >= 500`; if the hard tier is smaller, pool the
   top two tiers and name that pooled tier in the pre-registration. No best-slice or best-checkpoint
   selection. Report the risk difference in percentage points with a 95% paired CI, raw and
-  chance-corrected. The `n >= 500` rule is conditional on the frozen `eval` test split; if the 70/15/15
-  assignment leaves fewer hard-tier rows, generate more `eval` rows **before** the freeze or pre-register
-  the pooled tier and the recomputed MDE. Never move `sft_train`/`rl_train` rows into `eval` after seeing
-  results.
+  chance-corrected. On the frozen resplit the test split has hop 2: 35, hop 3: 252, hop 4: 374, hop 5:
+  93; **no single hop reaches 500**. Pre-register **pooled hop 3+4 (626 test rows)** as the primary tier;
+  hop 4+5 is only 467 and does not meet the floor. The `n >= 500` rule is conditional on the frozen `eval`
+  test split; if a different split leaves fewer rows, generate more `eval` rows **before** the freeze or
+  pre-register the pooled tier and the recomputed MDE. Never move `sft_train`/`rl_train` rows into `eval`
+  after seeing results.
 - **Secondary H2.** CAD-QA reasoning vs Base and vs Answer-only, same tier. Holm within the three H2
   comparisons (`alpha = 0.05` two-sided family-wise).
 - **Primary H3 (P1).** Tuned arm vs **Format-only** on BenchCAD `qa_code`, official split, paired by

@@ -223,6 +223,9 @@ found to be clean and non-overlapping.
 
 Both mixes are built **only from `sft_train`** (§5). `rl_train` rows are excluded from every SFT mix and
 `eval` rows are never trained on; the role percentages are shares of `sft_train`, not of the full release.
+The graph-first release has no 0/1-hop rows: the first run's low-hop end is **hop 2 only** (552 rows; 457
+in `sft_train`), so the 30% task share is capped at 457 if hop-2-only. A non-release 0/1 warmup slice is
+separate (§5).
 
 Rationale and tradeoffs:
 
@@ -376,6 +379,13 @@ mechanism differs by training stage:
   the 10k pool as approximately **7,000 `sft_train` / 1,500 `rl_train` / 1,500 `eval`** (the eval pool
   splits into ~750 validation + ~750 test; read the exact counts from the manifest). Freeze that
   re-exported revision before the teacher pass; the old 54/205 split is stale.
+- **0/1-hop warmup slice (non-release).** The graph-first release has no 0/1-hop rows; the resolver floors
+  at `hop >= 2` and the lowest release tier is hop 2 (552 rows; 457 in `sft_train`). For the 2.6B model's
+  initial CadQuery/task-shape warmup and cheap CAD-QA smoke runs, use a **non-release warmup slice** of
+  0/1-hop or synthetic syntax/representation examples (legacy 0/1 rows re-verified, or synthetic examples
+  from `expose_cadquery_programs`). It is not benchmark data, is excluded from H2/H3 evaluation, is
+  group-disjoint and contamination-checked, and is recorded in the manifest. See
+  `../../dataset/known-major-issues.md` M10.
 - **Contamination policy.** `sft_train`, `rl_train`, and `eval` must be disjoint at the group level;
   any eval row in `sft_train` or `rl_train` is a hard failure, as is any `rl_train` row in the SFT mix.
   CAD-QA held-out rows and the evaluation datasets are hard-excluded. The mechanics (quality gate,
