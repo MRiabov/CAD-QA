@@ -21,7 +21,7 @@ roles are not verifiable as written. These are not polish items; each changes wh
 |---|---|---|---|
 | LR-1 | Blocking | The plan's split sizes, format coverage, and power analysis do not match the actual regenerated release. | `evaluation/plan.md` §5.2/§6; `docs/experiments/2026-10-19-cadqa-regen-1300.md` |
 | LR-2 | Blocking | The RL-readiness gate is measured on the SFT training rows, so it measures memorization, not reachability. | `pipeline/05-rl-readiness-gate.md:14`; `pipeline/02-teacher-sampling.md:15-18` |
-| LR-3 | Blocking | The H2/H3 arms change general data, task data, format data, and volume at once; H2's stated hypothesis does not match its primary arm. | `evaluation/plan.md:166-175`; `training.md:78-80` |
+| LR-3 | Blocking → doc-closed | H2a is Reasoning vs Answer-only; Format-only is a P1 bundle; H2b/full factorial are P3. Original: the arms changed general data, task data, format data, and volume at once; H2's hypothesis did not match its arm. | `evaluation/plan.md` §5.1/§5.2; `training.md:78-80` |
 | LR-4 | Blocking | Teacher rejection sampling verifies only the final answer; wrong intermediate reasoning/tool calls enter SFT (and RFT). | `pipeline/02-teacher-sampling.md:22`; `system.md:135-137` |
 | LR-5 | High | The "verified" external data roles are not verifiable as written: tool-loop traces need their own tool environments, and the format corpus is generic function calling, not our `submit_*` schema. | `datasets.md:39-43`; `data.md:55,68-71,471-472` |
 | LR-6 | High | Contamination is not closed for the source corpus (cadevolve), BenchCAD families, or the general eval guard. | `data.md:186-188`; `datasets.md:120`; `docs/dataset/decisions.md:138-148`; extends LE-10 |
@@ -39,7 +39,10 @@ pool disjointness. LR-1 is partially resolved: the split code is now row-weighte
 re-exports as dataset split **8,498 train / 748 validation / 754 test** and pools **6,999 `sft_train` /
 1,499 `rl_train` / 1,502 `eval`** (748 validation + 754 test), with a valid split audit. The remaining
 LR-1 blockers are the **3/8 answer formats**, the **no-0/1-hop warmup gap** (dataset M10; hop 2 is only
-457 `sft_train` rows), and the failed non-split benchmark gates, not the split sizes.
+457 `sft_train` rows), and the failed non-split benchmark gates, not the split sizes. LR-3 is doc-closed
+for the primary claim: **H2a is Reasoning vs Answer-only** on the same general mix, task rows, and
+token budget; Format-only is a secondary **bundle** control; H2b (external reasoning) and the full
+factorial are **P3/optional**.
 
 ### LR-1 — The plan is written against a dataset that does not exist
 
@@ -101,10 +104,13 @@ is `answer_sft_rows` with no reasoning. The three arms differ in **general data,
 row count, and token count** at the same time, and only H4 specifies matched compute
 (`plan.md:192-198`). A difference between them cannot be attributed to reasoning.
 
-**Fix.** Hold the general mix constant across arms; vary only the CAD-QA/reasoning component; match total
-tokens or optimizer steps; define the primary treatment as the full primary mix vs Format-only (or add a
-"General + CAD-QA reasoning" arm). Pre-register the exact rows and token counts per arm, not only the arm
-names.
+**Fix.** Hold the general mix, task prompt set, and loss-bearing token budget constant across arms; vary
+only the target content. Primary **H2a = Reasoning vs Answer-only**; secondary = vs Base and vs
+Format-only (the latter is a **bundle**, not a reasoning isolation). H2b (external reasoning) and the
+full factorial are **P3/optional** and not required for the thesis. Pre-register the exact rows and token
+counts per arm, not only the arm names.
+
+**Status (2026-10-20):** doc-closed for the primary claim; H2b/full factorial are P3.
 
 ### LR-4 — Teacher traces are accepted on the final answer only
 
@@ -236,7 +242,8 @@ the multi-turn reward aggregation and the group-size/batch arithmetic.
 
 1. Freeze a dataset with enough test rows and all Answer formats to test H2. (LR-1)
 2. Measure reachability on data the model has not seen. (LR-2)
-3. Run an H2 arm comparison that isolates reasoning. (LR-3)
+3. Run H2a (Reasoning vs Answer-only) with the same general mix and token budget; H2b/full
+   factorial are P3. (LR-3)
 4. Generate a verified reasoning corpus rather than an outcome-filtered one. (LR-4, LR-9)
 5. Verify the external tool-loop and format corpora. (LR-5)
 6. Prove the external corpora do not overlap the benchmark. (LR-6)

@@ -167,14 +167,18 @@ Two rules:
   wrong-modality context.
 - **Arms (hold base and recipe fixed; vary only training data):**
 
-| Arm | Training data | Isolates |
-|---|---|---|
-| Base | none | floor; pretraining-contamination proxy |
-| Format-only | `emit_our_tool_call_format` + the general tasks | H1 format compliance |
-| Answer-only | `answer_sft_rows` export (CAD-QA answers, no reasoning) | supervision format vs reasoning content |
-| CAD-QA reasoning | release-hop tiers of `learn_the_cadqa_task` | H2 capability |
-| Full primary (optional) | the full Mixed training dataset | external reasoning support |
-| General-only (H4 counter-arm) | the full general mix **without** `learn_the_cadqa_task` | isolates CAD-QA supervision from general capability (H4) |
+| Arm | Training data | Isolates | Tier |
+|---|---|---|---|
+| Base | none | floor; pretraining-contamination proxy | P0 (inference) |
+| Format-only | `emit_our_tool_call_format` + the general tasks | H1 format compliance; H2 bundle control | P1 |
+| Answer-only | `answer_sft_rows` export (CAD-QA answers, no reasoning) + the same general mix | H2a control | P0 |
+| CAD-QA reasoning | release-hop tiers of `learn_the_cadqa_task` + the same general mix | H2a treatment | P0 |
+| Full primary (optional) | the full Mixed training dataset | external reasoning support / H2b bundle | P3 |
+| General-only (H4 counter-arm) | the full general mix **without** `learn_the_cadqa_task` | isolates CAD-QA supervision from general capability (H4) | P1 |
+
+H2a holds the general mix, task prompt set, and loss-bearing token budget fixed; only the target content
+changes. H2b (external reasoning) and the full factorial are **P3**: run them only if H2a holds and
+budget remains; they are not required for the thesis.
 
 - **Tier selection (exploratory, before confirmation).** On a group-safe **selection batch** from the
   generated pool (first-run or scale-up), measure base and teacher accuracy across hops `3,4,5,6–10`, rows per tier,
@@ -182,12 +186,13 @@ Two rules:
   teacher ≥ `[to measure]`, base ≤ `[to measure]`, `n` ≥ `[to measure]`, and admitted traces; freeze the
   tier before confirmation. A fresh, family-disjoint **confirmation batch** supplies the thesis number.
   These values are filled after the pilot, not before.
-- **Primary result (P0, H2).** CAD-QA reasoning > Base, Format-only, and Answer-only on the chosen
-  CAD-QA hard tier, reported with a paired CI. This is the instrument result; it is not conditioned on
+- **Primary result (P0, H2a).** CAD-QA reasoning > **Answer-only** on the chosen CAD-QA hard tier,
+  reported with a paired CI. Also report the differences vs Base and vs Format-only (the latter is a
+  **bundle**, not a reasoning isolation). This is the instrument result; it is not conditioned on
   external transfer.
 - **Transfer result (P1, H3).** The same tuned arm improves on BenchCAD `qa_code` (official split)
-  relative to Base / Format-only / Answer-only, reported in percentage points with a paired CI;
-  `edit_code` corroborates. A null transfer is reported as a finding, not hidden.
+  relative to **Answer-only**, reported in percentage points with a paired CI; Base and Format-only
+  (bundle) are secondary; `edit_code` corroborates. A null transfer is reported as a finding, not hidden.
 - **Stretch (P2).** Under the identical harness and slice, test whether the tuned model surpasses its
   teacher (`deepseek-v4.1-flash`; name any additional teacher models explicitly). Exploratory, with a
   CI — not a pre-registered gate.
@@ -214,23 +219,27 @@ the final test; no final-test number is computed before that freeze. The frozen 
 arms, dataset/split revision hashes, tier, `n`, seeds, computed MDE, alpha/multiplicity, stopping rule,
 and the code/config commit.
 
-- **Primary H2 (P0).** CAD-QA reasoning vs **Format-only** on the pre-registered CAD-QA tier, paired by
-  row. At freeze, choose the largest release tier with `n >= 500`; if the hard tier is smaller, pool the
-  top two tiers and name that pooled tier in the pre-registration. No best-slice or best-checkpoint
-  selection. Report the risk difference in percentage points with a 95% paired CI, raw and
-  chance-corrected. On the frozen resplit the test split has hop 2: 35, hop 3: 252, hop 4: 374, hop 5:
-  93; **no single hop reaches 500**. Pre-register **pooled hop 3+4 (626 test rows)** as the primary tier;
-  hop 4+5 is only 467 and does not meet the floor. The `n >= 500` rule is conditional on the frozen `eval`
-  test split; if a different split leaves fewer rows, generate more `eval` rows **before** the freeze or
-  pre-register the pooled tier and the recomputed MDE. Never move `sft_train`/`rl_train` rows into `eval`
-  after seeing results.
-- **Secondary H2.** CAD-QA reasoning vs Base and vs Answer-only, same tier. Holm within the three H2
-  comparisons (`alpha = 0.05` two-sided family-wise).
-- **Primary H3 (P1).** Tuned arm vs **Format-only** on BenchCAD `qa_code`, official split, paired by
-  `qa_id`; metric is the official symmetric ratio accuracy. Report the mean paired difference in
+- **Primary H2a (P0).** CAD-QA reasoning vs **Answer-only** on the pre-registered CAD-QA tier, paired by
+  row, holding the general mix, task prompt set, and loss-bearing token budget fixed. At freeze, choose
+  the largest release tier with `n >= 500`; if the hard tier is smaller, pool the top two tiers and name
+  that pooled tier in the pre-registration. No best-slice or best-checkpoint selection. Report the risk
+  difference in percentage points with a 95% paired CI, raw and chance-corrected. On the frozen resplit
+  the test split has hop 2: 35, hop 3: 252, hop 4: 374, hop 5: 93; **no single hop reaches 500**.
+  Pre-register **pooled hop 3+4 (626 test rows)** as the primary tier; hop 4+5 is only 467 and does not
+  meet the floor. The `n >= 500` rule is conditional on the frozen `eval` test split; if a different split
+  leaves fewer rows, generate more `eval` rows **before** the freeze or pre-register the pooled tier and
+  the recomputed MDE. Never move `sft_train`/`rl_train` rows into `eval` after seeing results.
+- **Secondary H2.** CAD-QA reasoning vs Base and vs **Format-only** (the task + format + reasoning
+  **bundle**, not a reasoning isolation), same tier. Holm within the three H2 comparisons (`alpha = 0.05`
+  two-sided family-wise).
+- **H2b (P3, optional).** Reasoning + external reasoning vs Reasoning, same task rows and token budget;
+  run only if H2a holds and budget remains. Not required for the thesis and not part of the confirmatory
+  family.
+- **Primary H3 (P1).** CAD-QA reasoning vs **Answer-only** on BenchCAD `qa_code`, official split, paired
+  by `qa_id`; metric is the official symmetric ratio accuracy. Report the mean paired difference in
   percentage points with a 95% paired CI.
-- **Secondary H3.** Tuned vs Base and vs Answer-only, same split; Holm within the three H3 comparisons.
-  H3 is reported as a transfer result even if H2 is null; it is not a substitute for H2.
+- **Secondary H3.** Reasoning vs Base and vs **Format-only** (bundle), same split; Holm within the three
+  H3 comparisons. H3 is reported as a transfer result even if H2 is null; it is not a substitute for H2.
 - **H1 (format).** Tool-valid rate is a separate endpoint; report it descriptively with a CI. Do not
   fold it into the H2/H3 multiplicity families.
 - **H4 (mechanism).** Dose-response is exploratory: report the trend and paired CIs at each volume, but
@@ -368,7 +377,7 @@ results rather than repeating the plan.
 
 ---
 
-## 9. P0 / P1 / P2 (evaluation)
+## 9. P0 / P1 / P2 / P3 (evaluation)
 
 | Item | Tier | Rationale |
 |---|---|---|
@@ -384,6 +393,8 @@ results rather than repeating the plan.
 | Harbor: external-agent baselines + untrusted-code sandbox | **P2** | deferred (D-E9). It was to show the tuned LLM model working in a general agent setting (`opencode`-style), but that is unwise before the base setup works and adds sampling cost; even in P2 it may not earn its keep. External baselines can run through the **same local tool-call harness**, so Harbor is only needed for genuinely untrusted agent code, and its practical cost is container RAM (Daytona can replace local Docker). |
 | Few-shot baseline | **P2** | extra comparison |
 | `no_tools` and `cadquery` mode matrices | **P2** | upper-bound studies |
+| H2b — external reasoning arm (Reasoning+external vs Reasoning) | **P3** | optional decomposition; not required for a strong thesis; run only if H2a holds and budget remains |
+| Full all-arm factorial / Full primary decomposition | **P3** | optional; a bundle result is not needed for the thesis |
 
 ---
 

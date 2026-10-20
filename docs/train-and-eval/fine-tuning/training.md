@@ -75,9 +75,11 @@ Two predictions this architecture commits to and must test:
 
 - **H1 (format):** a small, curated tool-format + CAD-QA-format mix raises tool-valid rate sharply
   using the cookbook recipe (LoRA, cookbook epochs, prompt-masked).
-- **H2 (reasoning, P0 core):** an external reasoning-distillation + agent training trace mix raises CAD-QA held-out
-  accuracy *beyond* what format-only and answer-only training achieves; the general-capability tradeoff
-  is reported, not gated.
+- **H2 (reasoning, P0 core):** CAD-QA reasoning traces raise held-out accuracy *beyond* an
+  answer-only control on the same task rows, general mix, and loss-bearing token budget. The primary
+  comparison is **Reasoning vs Answer-only (H2a)**; Reasoning vs Format-only is a secondary *bundle*
+  control (task + format + reasoning), not a reasoning isolation. External reasoning-distillation
+  (**H2b**) is **P3/optional** and is not required for the thesis.
 - **H3 (transfer, P1):** graph-derived CAD-QA supervision raises accuracy on **existing, credible**
   external benchmarks — **BenchCAD `qa_code`** (official split, reported in percentage points), with
   BenchCAD `edit_code` and a text-in text-to-CAD benchmark as end/defect corroboration — *beyond* the
