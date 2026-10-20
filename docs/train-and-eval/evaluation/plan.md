@@ -286,11 +286,12 @@ hard-excluded from training, and run at four points in the training pipeline (§
 the final thesis number uses the test portion. `rl_train` is the RL-readiness gate and RL/RFT pool; it is
 group-disjoint from `sft_train` at the source-program/counterfactual-group level and from `eval` at the
 DD-12 protected-group level. The SFT mix is built only from `sft_train`, and the gate is run only on
-`rl_train`. At 10k rows the 70/15/15 target is ~7,000 SFT / 1,500 RL / 1,500 eval (for example ~750
-validation + ~750 test); the exact counts are frozen in `split_manifest.json`. All counts below are read
-from that manifest; the 1,159/708 values are the current candidate and are replaced if the manifest
-differs. The current regenerated release (54 validation / 205 test) does not meet the 70/15/15 target and
-must be re-split or expanded before the primary run.
+`rl_train`. At 10k rows the 70/15/15 target is ~7,000 SFT / 1,500 RL / 1,500 eval, split into ~750
+validation + ~750 test; the exact counts are frozen in `split_manifest.json`. All counts
+below are read from that manifest; the 1,159/708 values are the current candidate and are replaced if the
+manifest differs. The pre-resplit release was 54 validation / 205 test; the row-weighted re-split yields
+748 validation / 754 test (and ~7,000/1,500 SFT/RL). Freeze that re-exported revision before the primary
+run; the old 54/205 split is stale.
 
 **Cadence, checkpoint selection, and GPU isolation (encoded 2026-10-19).**
 

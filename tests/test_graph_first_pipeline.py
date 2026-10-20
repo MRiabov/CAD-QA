@@ -12443,6 +12443,65 @@ def test_group_safe_splits_do_not_collapse_shared_generator_metadata() -> None:
     assert split_audit(rows, manifest)["valid"]
 
 
+def test_row_weighted_splits_hit_row_targets() -> None:
+    group_sizes = [100] * 7 + [20] * 3
+    rows = [
+        {
+            "row_id": f"row:{group_index}:{row_index}",
+            "source_id": f"src_{group_index}",
+            "source_metadata": {"source_family": f"g{group_index}"},
+        }
+        for group_index, size in enumerate(group_sizes)
+        for row_index in range(size)
+    ]
+    manifest = split_manifest(rows)
+
+    assert manifest["row_count"] == 760
+    assert manifest["row_counts_by_pool"] == {
+        "sft_train": 520,
+        "rl_train": 100,
+        "eval": 140,
+    }
+    assert manifest["row_counts_by_split"] == {"train": 620, "validation": 100, "test": 40}
+    assert math.isclose(manifest["row_shares_by_pool"]["sft_train"], 520 / 760, abs_tol=1e-9)
+    assert manifest["group_counts_by_pool"] == {
+        "sft_train": 6,
+        "rl_train": 1,
+        "eval": 3,
+    }
+    assert split_audit(rows, manifest)["valid"]
+
+    source_splits: dict[str, set[str]] = {}
+    for split, items in assign_splits(rows).items():
+        for row in items:
+            source_splits.setdefault(row["source_id"], set()).add(split)
+    assert set(source_splits) == {f"src_{index}" for index in range(len(group_sizes))}
+    assert all(len(splits) == 1 for splits in source_splits.values())
+
+
+def test_split_audit_warns_when_row_share_cannot_hit_target() -> None:
+    rows = [
+        {
+            "row_id": f"row:0:{index}",
+            "source_id": "src_0",
+            "source_metadata": {"source_family": "g0"},
+        }
+        for index in range(1000)
+    ] + [
+        {
+            "row_id": f"row:{group_index}:0",
+            "source_id": f"src_{group_index}",
+            "source_metadata": {"source_family": f"g{group_index}"},
+        }
+        for group_index in range(1, 10)
+    ]
+    manifest = split_manifest(rows)
+    audit = split_audit(rows, manifest)
+
+    assert audit["valid"]
+    assert any(warning["warning"] == "row_share_deviation" for warning in audit["warnings"])
+
+
 def test_quarantine_policy_marks_non_release_ready_rows() -> None:
     graph = build_graph(source_record_from_mapping({"source_id": "src_loop", "normalized_code": LOOP_SOURCE}))
     rows = [

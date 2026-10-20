@@ -388,14 +388,17 @@ roles are not verifiable as written. These are not polish items; each changes wh
 **Encoding status (2026-10-20).** LR-2's split design is now encoded: `data.md` §5 defines the three-way
 pools (`sft_train` / `rl_train` / `eval`, target ~70/15/15), `05-rl-readiness-gate.md` measures the gate
 on `rl_train` and reports the memorization gap, `system.md` §7 adds `DataPool`, and `testing.md` asserts
-pool disjointness. LR-1 is partially encoded: the docs now name the 70/15/15 target and the current
-54/205 release's non-compliance, but the actual frozen split/re-split remains open.
+pool disjointness. LR-1 is partially resolved: the split code is now row-weighted, and the 10k pool
+re-exports as dataset split **8,498 train / 748 validation / 754 test** and pools **6,999 `sft_train` /
+1,499 `rl_train` / 1,502 `eval`** (748 validation + 754 test), with a valid split audit. The remaining
+LR-1 blockers are the **3/8 answer formats** and the failed non-split benchmark gates, not the split
+sizes.
 
 ### LR-1 — The plan is written against a dataset that does not exist
 
 `evaluation/plan.md` fixes the phase-end validation at **1,159 rows**, the final test at **708 rows**, a
 **64-row** periodic subset, and a **`n >= 500`** hard tier (`plan.md:215-218,251-252,276-284`). The
-regenerated release actually produced **train 9,741 / validation 54 / test 205** and only **three** answer
+regenerated release originally produced **train 9,741 / validation 54 / test 205** (pre-resplit) and only **three** answer
 formats (`candidate_label`, `coordinate`, `text`) — not the eight the loader and test fixture require
 (`docs/experiments/2026-10-19-cadqa-regen-1300.md:96-101`). It also **fails** the benchmark release gates:
 distinct model coverage 980/1,000, prompt-family balance 10.43% > 10%, answer entropy 7.50 < 8.0
@@ -413,6 +416,13 @@ that the regenerated release exists and is incompatible with the plan.
 formats, or pre-register a smaller, honest claim and a larger MDE. Replace every hardcoded 1,159/708/64/500
 number with values read from the frozen `split_manifest.json`, and add a test that the plan and the manifest
 agree. Do not run the H2 test on a 205-row split and call it the thesis number.
+
+**Partial resolution (2026-10-20).** The split code now assigns row-weighted pools and derives the
+dataset split: **8,498 train / 748 validation / 754 test**, with pools **6,999 `sft_train` / 1,499
+`rl_train` / 1,502 `eval`** (748 validation + 754 test); `split_audit` is valid. A 64-row periodic subset
+is now drawable, a ~750-row final test gives an unpaired MDE of ~7.3 pp, and the 54/205 split is stale.
+The remaining blockers are the **3/8 answer formats** (the release has `candidate_label`, `coordinate`,
+`text` only) and the failed benchmark gates (answer entropy, family coverage/balance, model coverage).
 
 ### LR-2 — The RL-readiness gate measures the rows SFT trained on
 

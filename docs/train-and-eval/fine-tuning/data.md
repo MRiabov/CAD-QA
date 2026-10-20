@@ -372,8 +372,10 @@ mechanism differs by training stage:
   and the run manifest. If the gate needs more RL rows, generate additional group-disjoint rows ad hoc
   into `rl_train` and record them; never reassign `sft_train` or `eval` rows. The 70/15/15 target applies
   to the frozen release; all counts in the training/evaluation docs are read from the frozen manifest,
-  not hardcoded. The current 54-validation / 205-test release is not a 15% eval pool and must be
-  re-split or expanded before the primary run.
+  not hardcoded. The pre-resplit release was 54 validation / 205 test; the row-weighted split re-exports
+  the 10k pool as approximately **7,000 `sft_train` / 1,500 `rl_train` / 1,500 `eval`** (the eval pool
+  splits into ~750 validation + ~750 test; read the exact counts from the manifest). Freeze that
+  re-exported revision before the teacher pass; the old 54/205 split is stale.
 - **Contamination policy.** `sft_train`, `rl_train`, and `eval` must be disjoint at the group level;
   any eval row in `sft_train` or `rl_train` is a hard failure, as is any `rl_train` row in the SFT mix.
   CAD-QA held-out rows and the evaluation datasets are hard-excluded. The mechanics (quality gate,

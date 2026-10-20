@@ -142,10 +142,16 @@ Local decisions for the `dataset_generation` unit, in ADR format
   (`specs/dataset-spec.md#splits`).
 - **Decision:** `dataset/release/split.py` unions sources that share protected labels
   (`split_group`, `counterfactual_group`, `source_family`, `family_id`, `template_id`, and
-  path-derived family) and assigns a deterministic ~70/15/15 split across groups; broad
+  path-derived family) and assigns a deterministic **row-weighted** pool split: `sft_train` ~70%,
+  `rl_train` ~15%, `eval` ~15%. The `eval` pool is internally split into validation/test (~7.5% each)
+  so phase-end and final evaluation stay separate. Each group is assigned to the pool with the largest
+  remaining target row share, so row shares approach target while every group stays intact; the dataset
+  `split` is derived as train (sft + rl), validation (eval validation), and test (eval test). Broad
   `generator_id`/`generator` are reported but not merged.
-- **Consequences:** All rows sharing a protected group stay in one split; CadQuery-program-only
-  datasets collapse to `train` and are reported as not multi-split.
+- **Consequences:** All rows sharing a protected group stay in one split. `split_manifest.json` reports
+  source/group/row counts and shares for both `pool` and `split`, and `split_audit` warns when a group
+  structure makes a pool or split row share drift more than 5 percentage points from target.
+  CadQuery-program-only datasets collapse to `train` and are reported as not multi-split.
 
 ## DD-13 — Doc/code conflicts are findings, not silent fixes
 

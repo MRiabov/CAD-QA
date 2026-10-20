@@ -97,9 +97,16 @@ tests around `materialize`/`validate`. The one-command check is
 - **Context:** Every row needs a split and the split must be group-safe.
 - **Decision:** `dataset/cli.py::_cmd_dataset_materialize` calls
   `dataset/release/split.py::assign_splits` and writes split-sharded Parquet plus a
-  `split_manifest.json`; `leakage_audit` and `split_audit` run against that manifest.
+  `split_manifest.json`; `leakage_audit` and `split_audit` run against that manifest. Assignment is
+  **row-weighted** over three pools: `sft_train` ~70%, `rl_train` ~15%, `eval` ~15%. The `eval` pool is
+  internally split into validation/test (~7.5% each). Groups are kept intact but assigned to the pool
+  with the largest remaining target row share; the dataset `split` is derived as train (sft + rl),
+  validation (eval validation), test (eval test). The manifest reports source/group/row counts and shares
+  for both `pool` and `split`, and the audit warns on pool or split row-share drift above 5 percentage
+  points.
 - **Consequences:** A CadQuery-program-only dataset collapses to `train` and is reported as
-  single-split.
+  single-split. A very large group can make the target shares unreachable; that is reported as a
+  `pool_row_share_deviation` warning, not silently hidden.
 
 ### D5 — Release export is a filtered tree with its own evidence
 
