@@ -45,9 +45,9 @@ deferred, but still unverified.
 | LE-4 | Blocking | Spec-closed / code-open | `messages` is the supervised target; tool-bearing masking fixture specified; no converter/test yet | `system.md` §7, `testing.md` |
 | LE-5 | Blocking | Spec-closed / code-open | 16,384-token admission, reject-not-truncate, packing off; no fixture/test yet | `04-sft.md` |
 | LE-6 | High | Closed | Tier-gated inclusion replaces the no-op ordering; ladder limited to release hops `{2,3,4,5}` | `data.md` §4 |
-| LE-7 | High | Open — minimum + post-mix gate | Mix report exists, but no per-combination minimum is computed and coverage is not re-checked after `sample + mix` | `data.md`, `system.md` §7 |
+| LE-7 | High | Doc-closed — gate implementation pending | Per-combination minima (`m_cover=1`, `m_train=8`), first-run `coverage_limited`, and a post-mix coverage gate are specified | `data.md` §3/§6, `system.md` §7, `02-teacher-sampling.md` |
 | LE-8 | High | Closed | Preservation is training support/monitoring, not a thesis target | `training.md`, `decisions.md` |
-| LE-9 | High | Open — analysis plan | Per-arm CIs exist; seed variance, power/MDE, multiplicity, and a written pre-registration are still missing | `evaluation/plan.md` Qs |
+| LE-9 | High | Doc-closed — freeze before final test | Analysis plan written: 3 seeds, paired McNemar/bootstrap, Holm within H2/H3, MDE table, pre-registration block | `evaluation/plan.md` §5.2 |
 | LE-10 | High | Open — family split artifact | No family-level BenchCAD `code_gen`/`qa_code` split artifact or overlap command | `data.md`, `evaluation/plan.md` |
 | LE-11 | High | Open (P2) — RL smoke test | vLLM 0.22 vs LFM2.5 ≥0.23 and GRPO weight-sync/parser agreement are unverified | `requirements.md` Q4, `05-rl-readiness-gate.md` |
 | LE-12 | High | Closed | Optimizer/LR/schedule/effective batch inherited from `liquid-finetune`; resolved config recorded | `training.md` §5.4 |
@@ -59,8 +59,8 @@ deferred, but still unverified.
 | LE-18 | Medium | Doc-closed — gate implementation pending | `pass@1` + CI, unbiased `pass@k` only for `k<n`, screen/confirm, chance correction | `05-rl-readiness-gate.md` |
 
 **Remaining open items (not doc-closable without code/data/measurement):** LE-1 dataset freeze; LE-2/4/5
-test code; LE-7 per-combination minimum and post-mix gate; LE-9 analysis plan; LE-10 family split; LE-11
-RL smoke test; LE-16 Answer-only control run. Everything else is `Closed` or `Doc-closed` with its
+test code; LE-10 family split; LE-11 RL smoke test; LE-16 Answer-only control run. LE-7 and LE-9 are
+doc-closed with implementation/freeze pending. Everything else is `Closed` or `Doc-closed` with its
 remaining implementation step named.
 
 ## Blocking findings
@@ -162,8 +162,9 @@ the coverage gate lives at stage 02 (`02-teacher-sampling.md:21-25`) and is neve
 `sample + mix` (`system.md:271-273`), so the step that actually determines what is trained can silently
 destroy the coverage the gate certified.
 
-**Status (2026-10-19):** open. The mix report records per-hop/per-format counts, but no per-combination
-minimum is computed and coverage is not re-gated after `sample + mix`.
+**Status (2026-10-20):** doc-closed, gate implementation pending. `m_cover=1`, `m_train=8`, the
+first-run `coverage_limited` exception, and the post-mix coverage gate are specified in `data.md` §3/§6,
+`system.md` §7, and `02-teacher-sampling.md`.
 
 ### LE-8 — Capability preservation is assertion, not mechanism
 
@@ -187,8 +188,9 @@ comparison control, effect sizes, or a pre-registered primary endpoint. The H3/H
 a dose-response (`plan.md:176-182`); none of these is analyzable as specified. A "thesis number" without an
 uncertainty statement and a comparison plan cannot support the headline claim.
 
-**Status (2026-10-19):** open. Per-arm/paired CIs and chance-corrected rates exist; seed variance,
-power/MDE, multiplicity, and a written pre-registration do not.
+**Status (2026-10-20):** doc-closed, freeze pending. `evaluation/plan.md` §5.2 specifies 3 seeds,
+paired McNemar/bootstrap tests, Holm within the H2/H3 families, the MDE table/formula, and the
+pre-registration block (endpoint, arms, hashes, tier, n, seeds, MDE, alpha, stopping).
 
 ### LE-10 — BenchCAD train/eval leakage is hand-waved
 
@@ -313,7 +315,7 @@ documented α=0.05 `c` thresholds. Status: **doc-closed, gate implementation pen
 
 1. **An owned generator** for `learn_the_cadqa_task`, with a coverage gate that runs **after** `sample + mix`
    and a computed per-combination minimum — or an explicit decision to accept a coverage-limited first run.
-   *(Ownership done; freeze and minimum open — LE-1/LE-7.)*
+   *(Ownership + minimum done; dataset freeze open — LE-1; gate implementation pending — LE-7.)*
 2. **A 5-row E2E fixture** (mock teacher, real loader and converter) committed as a test, asserting
    tool-call masking (reasoning supervised, tool responses masked) and non-truncated targets.
    *(Specified; code open — LE-2/LE-4/LE-5.)*
@@ -324,17 +326,16 @@ documented α=0.05 `c` thresholds. Status: **doc-closed, gate implementation pen
 5. **A specialization-tradeoff monitor** — paired CIs and reported deltas on the general-task guard;
    diagnostic, not a non-inferiority gate. *(Done — LE-8.)*
 6. **An analysis plan** — per-arm CIs, seed variance, and a pre-registered primary comparison — before any
-   H2/H3 number is quoted. *(Open — LE-9.)*
+   H2/H3 number is quoted. *(Done — LE-9; freeze at first run.)*
 7. **A recorded optimizer recipe** — the inherited optimizer/LR/schedule/batch, with resolved values and
    the effective-batch invariant in the manifest. *(Done — LE-12.)*
 
 ## Remaining next steps
 
-- Freeze the regenerated dataset revision (LE-1) and compute the per-combination minimum + post-mix gate
+- Freeze the regenerated dataset revision (LE-1) and implement the per-combination/post-mix coverage gate
   (LE-7).
 - Implement the E2E/integration tests, converter, and tool-bearing masking/truncation fixture (LE-2/LE-4/LE-5).
-- Write the analysis plan: seeds, variance, power/MDE, multiplicity, and a pre-registered primary comparison
-  (LE-9).
+- Freeze the pre-registration block (endpoint, hashes, tier, n, seeds, MDE) before the final test (LE-9).
 - Build the BenchCAD family-disjoint split artifact/overlap check (LE-10).
 - Run the scripted LFM2.5 + vLLM + TRL GRPO weight-sync/parser smoke test before any RL spend (LE-11).
 - Produce the Answer-only control run from `answer_sft_rows` (LE-16).
@@ -345,9 +346,9 @@ documented α=0.05 `c` thresholds. Status: **doc-closed, gate implementation pen
 
 Doc-level resolutions landed after the review commit (`d214850`): LE-1 (`2dd2a29`), LE-2/LE-4/LE-5 test
 plan (`8ea133a`), LE-3 (cadence/checkpoint rule, `9b5931f`), LE-13/14/15 (`e5f3a71`), LE-17 (`3121830`),
-LE-6 wording/claims plus LE-7 mix-report wording (LE-7 minimum still open), LE-8 (preservation supports
-training/monitoring; it is not a target), LE-12 (optimizer/LR/schedule inherited from `liquid-finetune`;
-resolved config recorded), and LE-18 (`pass@1` + CI; `pass@k` only for `k<n`; screen/confirm separated).
-LE-4 and LE-5 now have a specified check and an explicit sequence/truncation policy, but no converter,
-fixture, or test exists yet — they are **spec-closed and code-open**. The summary table is the current
-status; the findings above intentionally remain the point-in-time review.
+LE-6 wording/claims plus LE-7 coverage minima/post-mix gate and LE-9 analysis plan (2026-10-20), LE-8
+(preservation supports training/monitoring; it is not a target), LE-12 (optimizer/LR/schedule inherited
+from `liquid-finetune`; resolved config recorded), and LE-18 (`pass@1` + CI; `pass@k` only for `k<n`;
+screen/confirm separated). LE-4 and LE-5 now have a specified check and an explicit sequence/truncation
+policy, but no converter, fixture, or test exists yet — they are **spec-closed and code-open**. The
+summary table is the current status; the findings above intentionally remain the point-in-time review.

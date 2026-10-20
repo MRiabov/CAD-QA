@@ -205,6 +205,63 @@ Two rules:
   dataset-usefulness claim rests on an internal split and does not withstand review. A null transfer
   is reported as a finding (comprehension supervision is task-local), not hidden.
 
+### 5.2 Analysis plan (pre-registered)
+
+This is the written analysis plan for H1–H4. Freeze the resolved values in the run manifest **before**
+the final test; no final-test number is computed before that freeze. The frozen block names: endpoint,
+arms, dataset/split revision hashes, tier, `n`, seeds, computed MDE, alpha/multiplicity, stopping rule,
+and the code/config commit.
+
+- **Primary H2 (P0).** CAD-QA reasoning vs **Format-only** on the pre-registered CAD-QA tier, paired by
+  row. At freeze, choose the largest release tier with `n >= 500`; if the hard tier is smaller, pool the
+  top two tiers and name that pooled tier in the pre-registration. No best-slice or best-checkpoint
+  selection. Report the risk difference in percentage points with a 95% paired CI, raw and
+  chance-corrected.
+- **Secondary H2.** CAD-QA reasoning vs Base and vs Answer-only, same tier. Holm within the three H2
+  comparisons (`alpha = 0.05` two-sided family-wise).
+- **Primary H3 (P1).** Tuned arm vs **Format-only** on BenchCAD `qa_code`, official split, paired by
+  `qa_id`; metric is the official symmetric ratio accuracy. Report the mean paired difference in
+  percentage points with a 95% paired CI.
+- **Secondary H3.** Tuned vs Base and vs Answer-only, same split; Holm within the three H3 comparisons.
+  H3 is reported as a transfer result even if H2 is null; it is not a substitute for H2.
+- **H1 (format).** Tool-valid rate is a separate endpoint; report it descriptively with a CI. Do not
+  fold it into the H2/H3 multiplicity families.
+- **H4 (mechanism).** Dose-response is exploratory: report the trend and paired CIs at each volume, but
+  make no confirmatory alpha claim.
+
+**Tests and estimation.**
+
+- Binary CAD-QA outcomes: **McNemar exact** two-sided test on discordant rows, plus a paired bootstrap
+  (10,000 resamples over rows) 95% CI for the risk difference.
+- BenchCAD ratio accuracy: paired bootstrap over `qa_id` for the mean difference; report a paired
+  permutation p-value as a robustness check.
+- Chance-corrected CAD-QA rate: cluster bootstrap over rows; report raw and corrected rates, never only
+  the corrected one.
+- Invalid output is a **failure**, not an exclusion; report the invalid-output rate per arm.
+
+**Seeds.** Three seeds for every training arm in a confirmatory H2/H3 comparison (Base is inference-only;
+screening/first-run arms may use one). Report every seed separately and the mean. The pooled 95% CI is a
+prompt-stratified bootstrap within seeds; a claim requires the pooled CI to exclude zero **and** the same
+sign in at least 2 of 3 seeds. Do not hide a sign flip behind an average.
+
+**Power / MDE.** Planning values at `p = 0.5`, 80% power, two-sided `alpha = 0.05`:
+
+| n | unpaired MDE | paired MDE, 20% discordance | paired MDE, 30% discordance |
+|---|---|---|---|
+| 708 (CAD-QA test) | 7.5 pp | 4.7 pp | 5.8 pp |
+| 1,159 (CAD-QA validation) | 5.8 pp | 3.7 pp | 4.5 pp |
+| 2,400 (BenchCAD QA) | 4.0 pp | 2.6 pp | 3.1 pp |
+
+Formula: `MDE_unpaired = (z_.975 + z_.8) * sqrt(2p(1-p)/n)`; paired `MDE ~= (z_.975 + z_.8) *
+sqrt(pi_d/n)`, where `pi_d` is the discordance rate. For a tier with `n < 500` or observed discordance
+outside the table, compute the actual MDE from the pilot and report it before the final test; an effect
+below the computed MDE is reported as **exploratory**, not as a confirmed gain.
+
+**Multiplicity and stopping.** Holm within the three H2 comparisons and separately within the three H3
+comparisons; no alpha is spent across H2/H3/H4. Periodic and phase-end evals are descriptive trend
+monitors, not hypothesis tests; no early stopping on them. The final test is run **once**, after the
+pre-registration freeze, and is never used to choose a checkpoint or tier.
+
 ---
 
 ## 6. Evaluation datasets

@@ -34,6 +34,13 @@ key, so an agent training trace's combination lines up with the row's. It report
 `release_balance_report` style rather than introducing a second taxonomy; the remaining choice is the
 key's grain (Q1).
 
+**Per-combination minima (2026-10-20).** `m_cover = 1` (every intended combination) and
+`m_train = 8` (primary). The first run may ship `coverage_limited` with `m_cover = 1` and every
+combination below 8 listed; it makes no per-combination learning claim. This gate is **pre-mix**: it
+certifies the sampled pool, not the final training set. Stage 05 **re-runs the same projection after
+`sample + mix`**; zero in an intended combination is a hard failure, and `< 8` is reported as
+undercovered (`system.md` §7 step 5).
+
 **A failed tier is a finding.** If the teacher cannot produce an accepted trace for a hop tier after the
 planned attempts, record the tier, attempts, and failure reason in the sampling log and report it as a
 finding to the owner — never a silent coverage miss. Do not advance past it or drop it without saying so.

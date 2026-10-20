@@ -116,7 +116,9 @@ invariant, [`system.md`](system.md) §7).
   admission window are rejected, not truncated, and counted;
 - the 5 rows' Answer formats all appear (incl. `submit_workplane`);
 - every evaluation/held-out row is excluded from the mix (contamination is a hard failure);
-- the coverage gate passes and is re-checked **after** sample + mix;
+- the coverage gate passes and is re-checked **after** sample + mix; an intended combination dropped by
+  the mix is a hard failure, and a first-run mix with every combination at least 1 but some `< 8` is
+  accepted only as `coverage_limited` (listed, not silently passed);
 - two runs with the same seed are byte-identical (determinism);
 - zero live calls to any external provider (the teacher/weights mocks' live-call counters are zero).
 

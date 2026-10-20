@@ -289,7 +289,13 @@ evaluation doc owns pipeline stage 9):
 5. **Sample + mix.** Per-role quotas from the data doc §3; deterministic seed; include
    `learn_the_cadqa_task` hop tiers only through the measured advancement gate (data plan §4.1), not by
    ordering a static dataset; emit a mix report
-   (counts, token totals, role weights, and per-hop/per-format coverage for `learn_the_cadqa_task`).
+   (counts, token totals, role weights, and per-intended-combination coverage — Answer format × hop ×
+   relation family × measurement scope).
+   **Re-run the intended-family/hop/scope coverage projection on the final mixed set.** Zero in an
+   intended combination is a hard failure; `< 8` is undercovered and listed. The first run may be
+   `coverage_limited` (every combination at least 1, list all `< 8`); the primary may not pass without
+   either `m_train = 8` or an explicit owner sign-off. Record `coverage_limited`,
+   `combinations_below_floor`, and the count in the mix report.
 
 **No silent data loss.** Rejected/filtered rows and failed joins are recorded, not dropped
 silently.
