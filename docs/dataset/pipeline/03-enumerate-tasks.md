@@ -1,0 +1,36 @@
+# Pipeline stage 03 — Enumerate tasks
+
+**Purpose:** turn CAD graphs into task candidates: task target, ordered task
+clues, task reasoning step count, canonical identity, and gold answer.
+
+**Input/output contract:** [`io-contracts.md`](io-contracts.md).
+
+## Scope
+
+- Define the task tuple and canonical identity.
+- Define the valid-task universe.
+- Define exact task reasoning step accounting.
+- Define the typed clue predicate schema.
+- Resolve the gold answer and its evidence.
+- Reject ambiguous or invalid tasks.
+
+## Resolved questions
+
+- **Q4.** *Resolved 2026-10-21.* Multiple choice is valid for every answer
+  meaning; it is a presentation wrapper, not a separate answer meaning. The
+  native answer format is recorded with the answer meaning; multiple choice may
+  be used when enough choices can be generated.
+
+## Open questions
+
+- **Q2.** Is a chain clue one task reasoning step or one step per relation? Is a
+  clue that combines a relation and a property one condition or two?
+  - **Recommendation:** Option B: atomic predicates. Each relation or property
+    is one clue and one step.
+
+- **Q5.** When is a task a duplicate of another task?
+  - **Recommendation:** Option A: canonical tuple, with canonical clue order.
+
+## Not here
+
+Prompt rendering, multiple-choice choices, release selection, and export.

@@ -182,7 +182,7 @@ Likewise, add an evidence table only if evidence becomes too large for one row.
 The manifest is not a table. It describes the release and is never passed to
 the LLM model.
 
-## 8. Implementation questions
+## 8. Generation pipeline
 
-The questions that determine how this contract is generated are in
-[`../implementation/task-enumeration.md`](../implementation/task-enumeration.md).
+Dataset generation starts at
+[`../pipeline/00-end-to-end.md`](../pipeline/00-end-to-end.md).

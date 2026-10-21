@@ -205,7 +205,7 @@ category, clue type, and answer meaning.
 ## 9. Implementation questions
 
 The graph implementation questions are in
-[`../implementation/graph-implementation.md`](../implementation/graph-implementation.md).
+[`../pipeline/02c-build-cad-graph.md`](../pipeline/02c-build-cad-graph.md).
 Q1 and Q4 are resolved below.
 
 ## 10. Resolved questions
