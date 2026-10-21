@@ -90,8 +90,8 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
   identity, volume, area, length, distance, angle, count, rank, membership,
   position, extent, CadQuery workplane state, material change, topology change,
   or validity. An **answer format** is the syntax the LLM model returns:
-  multiple choice, variable name, number, integer, yes or no, 3D coordinate,
-  bounding box, or structured object.
+  multiple choice, number, integer, yes or no, 3D coordinate, bounding box, or
+  structured object.
 - **Consequences:** A position is returned as a 3D coordinate; an extent is
   returned as a bounding box. The technical specification needs a compatibility
   table from answer meaning to valid answer formats.
@@ -213,6 +213,23 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
 
 ---
 
+## DS-15 — Task text does not use variable names
+
+- **Status:** accepted (2026-10-21).
+- **Context:** Variable names are code-level identifiers. A BrowseComp-style
+  task states the domain problem, not the implementation's internal names.
+- **Decision:** Questions, task clues, multiple-choice descriptions, and answer
+  instructions do not name variables. They describe an entity by its geometry or
+  its role in the construction. The program text is the only place variable
+  names appear. The answer format "variable name" is removed; identity answers
+  use multiple choice.
+- **Consequences:** Multiple-choice descriptions are geometric or construction
+  descriptions. An LLM model cannot answer by matching a variable name; it must
+  identify the entity from the construction. Internal graph identities may still
+  use variable names.
+
+---
+
 ## Open questions
 
 - **Q1.** Is the release a selected subset of the valid-task universe, or must
@@ -260,14 +277,13 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
 - **Q4.** Which answer formats are valid for each answer meaning, and how are
   multiple-choice distractors selected deterministically?
   - **Option A — one answer format per answer meaning.** Simple, but identity
-    would lose either variable-name or multiple-choice coverage.
+    would be limited to multiple choice.
   - **Option B — a compatibility table.** Each answer meaning lists its allowed
     answer formats.
   - **Option C — the generator chooses any format.** Flexible, but hard to
     audit.
-  - **Recommendation:** B. Example mapping: identity -> multiple choice
-    (default) or variable name; volume, area, length, distance, angle ->
-    number; count or rank -> integer; membership or validity -> yes or no;
+  - **Recommendation:** B. Example mapping: identity -> multiple choice;
+    volume, area, length, distance, angle -> number; count or rank -> integer; membership or validity -> yes or no;
     position -> 3D coordinate; extent -> bounding box; CadQuery workplane state
     -> structured object; material change -> number; topology change ->
     structured object. Distractors are real graph candidates from the same

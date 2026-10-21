@@ -66,9 +66,9 @@ corresponds to one task clue step.
    language.
 8. A task clue must not say "first" or "last" unless the program has a clear
    order and the phrase is defined. Prefer "the operation that appears last in
-   the program" or name the operation by its visible variable.
-9. A task clue must not repeat the program text. Refer to the visible variable
-   or the entity the program builds.
+   the program" or describe the operation by what it does.
+9. A task clue must not repeat the program text. Refer to the entity the program
+   builds, not to its variable name.
 10. If the answer is a measurement of the task target, do not write that
     measurement as a task clue. Put it in the answer instruction.
 
@@ -94,8 +94,8 @@ When the answer format is multiple choice:
 - label the choices `A`, `B`, `C`, and so on;
 - include the correct choice;
 - draw every choice from the same task target category;
-- describe each choice by a visible program name or a distinguishing property,
-  never by an internal identifier;
+- describe each choice by a distinguishing geometric or construction property,
+  never by a variable name or an internal identifier;
 - make every description unique;
 - do not let any description contain the answer or say that it is correct;
 - use a deterministic order.
@@ -111,7 +111,6 @@ the answer format.
 | Answer format | Instruction |
 |---|---|
 | Multiple choice | "Return exactly one label from the list above, for example `A`." |
-| Variable name | "Return exactly one variable name from the program." |
 | Number | "Return exactly one number. Use <unit>; round to 4 significant figures." |
 | Integer | "Return exactly one integer." |
 | Yes or no | "Return exactly one of `true` or `false`." |
@@ -252,34 +251,3 @@ Before a prompt is accepted:
   - **Recommendation:** A. The order is the intended reasoning order, each clue
     maps to one step, and review is easier. Option B also combines two
     conditions in one sentence, which rule 1 forbids.
-
-- **Q3.** Should multiple-choice descriptions use variable names, geometric
-  descriptions, or both?
-  - **Option A — variable names only.**
-
-    ```text
-    A. result
-    B. cut_hole
-    C. top_face
-    ```
-
-  - **Option B — geometric descriptions only.**
-
-    ```text
-    A. the outer box
-    B. the cylindrical hole cut into the box
-    C. the top face of the box
-    ```
-
-  - **Option C — both, where the name is useful.**
-
-    ```text
-    A. `result` — the outer box
-    B. `cut_hole` — the cylindrical hole cut into the box
-    C. `top_face` — the top face of the box
-    ```
-
-  - **Recommendation:** C with a leak check. The variable name gives a stable
-    anchor; the description makes the choice readable. If the variable name
-    gives away the answer, use the geometric description only. Every choice
-    still comes from the same target category and must be a real candidate.

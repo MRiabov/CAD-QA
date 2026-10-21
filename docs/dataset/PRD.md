@@ -153,8 +153,7 @@ The dataset must support all of the following answer formats.
 
 | Answer format | What the user sees | Requirements |
 |---|---|---|
-| Multiple choice | A short list of choices, one of which is correct. | At least five choices, with seven as the goal, for the benchmark dataset release; the correct answer is always present; choices are real options drawn from the program, not padding; descriptions do not repeat; no choice leaks the answer. |
-| Variable name | A name that appears in the CadQuery program. | The name is visible in the program and identifies one object. |
+| Multiple choice | A short list of choices, one of which is correct. | At least five choices, with seven as the goal, for the benchmark dataset release; the correct answer is always present; choices are real candidates from the construction, not padding; descriptions do not repeat; no choice leaks the answer. |
 | Number | A finite numeric value. | Unit, precision, and tolerance are stated; the default precision is 4 significant figures; the number is measured from the real geometry. |
 | Integer | A whole number, usually a count or a rank. | Exact and non-negative where it is a count. |
 | Yes or no | A boolean answer. | Exactly one of true or false is correct. |
@@ -204,7 +203,7 @@ a result on steps 2 through 5 alone.
 |---|---|---|
 | **R-1** | Every answer is correct. | The answer is produced by running the CadQuery program or derived by an exact rule, and recorded with evidence. No LLM writes or judges the answer. |
 | **R-2** | Every task has exactly one correct answer. | Ambiguous tasks and tasks with ties are rejected. |
-| **R-3** | Multiple-choice tasks are fair. | The correct answer is present; there are enough choices that guessing does not look competitive; choices are real options drawn from the program; choices do not give the answer away. |
+| **R-3** | Multiple-choice tasks are fair. | The correct answer is present; there are enough choices that guessing does not look competitive; choices are real candidates from the construction; choices do not give the answer away. |
 | **R-4** | Benchmark tasks require reasoning about the actual shape. | At least one task clue depends on the geometry or topology the program builds, not only on the text of the program. |
 | **R-5** | Trivial shortcuts do not win. | An LLM model cannot answer a benchmark task by reading variable names, literal arguments, or operation order alone. |
 | **R-6** | Answers are not leaked. | The task file never contains the answer or hidden identifiers. |

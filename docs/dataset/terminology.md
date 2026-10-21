@@ -29,7 +29,7 @@ the user-visible outcome.
 | **Task reasoning step** | Domain | A task clue step or a task answer step. |
 | **Task reasoning step count** | Domain | The number of task reasoning steps a task requires. |
 | **Task solution sequence** | Domain | The ordered task clue steps and task answer step that solve the task. |
-| **Answer format** | Domain | The form of the answer: multiple choice, variable name, number, integer, yes or no, 3D coordinate, bounding box, or structured object. |
+| **Answer format** | Domain | The form of the answer: multiple choice, number, integer, yes or no, 3D coordinate, bounding box, or structured object. |
 | **Multiple-choice choices** | Domain | The short list of options shown for a multiple-choice answer. |
 | **Answer instruction** | Domain | The part of the prompt that tells the LLM model which answer format to return and in what syntax. |
 | **Program text** | Domain | The CadQuery program shown in the prompt. |
@@ -120,6 +120,8 @@ Terms that were replaced because they were not composed from the domain:
 ## 4. Naming decisions
 
 - The prompt condition is a **task clue**.
+- Task text and choice descriptions use geometry or construction role, never
+  variable names. The program text is the only place variable names appear.
 - The step that applies a task clue is a **task clue step**.
 - The step that produces the answer is a **task answer step**.
 - The ordered steps that solve the task are the **task solution sequence**.
@@ -164,6 +166,8 @@ In product text, do not use internal terms:
 - **`reasoning depth`**; say task reasoning step count;
 - **`answer key`** for the correct answers; the dataset has tasks and their
   correct answers, with no separate answer-key object;
+- **`variable name`** in task text or choices; describe the entity by its geometry
+  or construction role.
 - **`conditional release share`**; it is a technical calculation detail;
 - **`CAD graph element`** or **`graph entity`**; say CAD graph when the product
   needs the concept.

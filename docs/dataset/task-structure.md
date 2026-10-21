@@ -88,7 +88,6 @@ The answer format is what the LLM model must return.
 | Answer format | What the LLM model returns |
 |---|---|
 | Multiple choice | One label from a short list of choices. |
-| Variable name | One name that appears in the CadQuery program. |
 | Number | One finite numeric value. |
 | Integer | One whole number. |
 | Yes or no | One boolean value. |
@@ -97,8 +96,8 @@ The answer format is what the LLM model must return.
 | Structured object | One small object with named fields. |
 
 The answer format is independent of the task target and the task clue. A task about a
-face can have a multiple-choice answer, a variable-name answer, a coordinate
-answer, or a bounding-box answer.
+face can have a multiple-choice answer, a coordinate answer, or a
+bounding-box answer.
 
 ### 2.4 Answer meaning
 
@@ -125,8 +124,8 @@ returned. The answer format says "number" or "boolean"; the answer meaning says
 | Validity | Whether a shape is valid. |
 
 The answer meaning is not the answer format. A volume can be returned as a
-number; a membership result can be returned as yes or no; an identity can be
-returned as a variable name or a multiple-choice label; a position can be
+number; a membership result can be returned as yes or no; an identity is
+returned as a multiple-choice label; a position can be
 returned as a 3D coordinate; an extent can be returned as a bounding box.
 
 ### 2.5 Task reasoning step count

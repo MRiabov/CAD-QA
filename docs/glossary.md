@@ -52,6 +52,9 @@ invents a new word, it is wrong — the word should already be here, or be added
 - **Do not use permission words for dataset parts.** `public` and `private` are access
   scopes. For dataset content, say **prompt** or **task file** for what the LLM model
   sees, and **answer** or **answer data** for the gold answer and scoring material.
+- **Task text stays domain-level.** Do not use variable names, internal IDs, or generator
+  terms in questions, clues, choices, or answer instructions. Describe an entity by its
+  geometry or its role in the construction. Code belongs in the program text.
 
 | Shared word | 3D model term | Software, code, or reasoning term |
 |---|---|---|
