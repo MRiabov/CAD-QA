@@ -9,13 +9,17 @@ release from the external dataset metadata.
 
 - Input: program metadata records from `01a` plus the selection policy.
 - Output: a Parquet selection artifact with active and reserve program IDs,
-  supplemental deltas, the policy, counts, and exclusions.
+  supplemental deltas, derived `tier`, `cadevolve_program_family_id`, the policy,
+  counts, and exclusions.
 
 ## Selection policy
 
 For P0/P1, select from C only:
 
-1. Deduplicate by `normalized_source_code_hash`.
+1. Deduplicate by `normalized_source_code_hash` within each collection. Do not
+   deduplicate across collections or across P and C. Within each duplicate group,
+   keep the record with the lexicographically smallest `source_id`; record the
+   discarded IDs and any family conflict. The survivor's family is used.
 2. Give each collection a minimum quota of 300 active programs.
 3. Allocate the remaining active slots proportionally to collection size.
 4. Within each collection, order by `sha256(seed || source_id)`.
@@ -34,29 +38,43 @@ The cache also has a rare `kernel_vertex_selector` tag. It is diagnostic, not a
 quota: only 89 C records carry it, and requiring a fixed minimum would consume
 almost all of them.
 
-## Split group derivation
+## Tier derivation
 
-`cadevolve_program_family_id` is derived from the CADEvolve cache path, not from
-the cache's collection-level `generator_id`.
+The cache has no `tier` column. Derive it from `source_subtree`:
 
-1. Take the last component of `path_family` or
-   `normalized_archive_member_path`.
+| `source_subtree` | `tier` |
+|---|---|
+| `CADEvolve-C` | `C` |
+| `CADEvolve-P` | `P` |
+
+Any other value is rejected and recorded as a cache-schema failure. Do not infer
+`tier` from the collection name or `generator_id`.
+
+## Family derivation
+
+`cadevolve_program_family_id` is derived from the cache's `path_family` column
+only, not from `normalized_archive_member_path` and not from `generator_id`.
+`path_family` is populated for every cache row.
+
+1. Take the last component of `path_family`.
 2. Remove a trailing `.py`.
-3. For CADEvolve core, remove a trailing `_<digits>` sample suffix, lowercase
-   the name, and remove non-alphanumeric characters. The result is the generator
-   family, prefixed with `cadevolve:`.
-4. For ABC, remove a trailing `_trimesh_<digits>` variant suffix and prefix the
-   ABC mesh identifier with `abc:`.
-5. For ShapeNet, keep the ShapeNet mesh identifier and prefix it with
-   `shapenet:`.
-6. If the path cannot be parsed, use `unknown:<source_id>` and record the
-   fallback.
+3. For `*-core`, remove a trailing `_<digits>` sample suffix, lowercase the
+   name, and remove non-alphanumeric characters. Prefix it with `cadevolve:`.
+4. For ABC, remove a trailing `_trimesh_<digits>` variant suffix. Prefix the
+   remaining mesh identifier with `abc:`.
+5. For ShapeNet, keep the last component as the mesh identifier and prefix it
+   with `shapenet:`.
+6. If the component is empty or the collection is unknown, use
+   `unknown:<source_id>` and record the fallback.
 
 P and C versions use the same normalized family name, so they share the group
-when the names match.
+when the names match. A duplicate group that spans families uses the survivor's
+family and records the conflict.
 
 ## Behavior
 
+- Derive `tier` and `cadevolve_program_family_id` from the metadata before
+  selection.
 - Apply the selection policy to the program metadata.
 - Use C for P0 and P1. Add P at P2 for scale variation. Do not deduplicate P
   against C; they are separate populations.
