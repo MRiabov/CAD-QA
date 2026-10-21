@@ -14,8 +14,8 @@ release from the external dataset metadata.
 ## Behavior
 
 - Apply the selection policy to the program metadata.
-- Select within the chosen CADEvolve tier: P, C, or an explicit mix. Do not
-  deduplicate P against C; they are separate populations.
+- Use C for P0 and P1. Add P at P2 for scale variation. Do not deduplicate P
+  against C; they are separate populations.
 - Select at most the target program count for the release.
 - Use only metadata columns; do not download program text.
 - Assign `split_group_id`: for CADEvolve core, the generator family; for
@@ -24,22 +24,19 @@ release from the external dataset metadata.
   counts.
 - Do not normalize or execute CadQuery.
 
+## Tier decision
+
+P0 and P1 use C only. C is canonical, centered, scaled, and binarized; it keeps
+normalization, graph build, and prompt review simpler.
+
+P2 adds P. C scales the longest bounding-box side to 200 units, so absolute scale
+does not vary. P preserves the original pose and scale. Adding P at P2 gives the
+release scale variation and arbitrary code style.
+
+P and C versions of one generator or mesh family share a split group; P2 must
+not put one version in train and the other in test.
+
 ## Open questions
-
-### Which tier or tier mix?
-
-- **C only.** Canonical, centered, scaled, and binarized; easier to parse and
-  graph; one prompt style; about 929k programs and 7k generator families.
-- **P only.** Arbitrary code style and original pose/scale; more realistic
-  prompts; more normalization work and more prompt variance; about 1.07M
-  programs and 7.5k generator families.
-- **P and C mix.** Adds style diversity, but doubles the prompt distribution and
-  the split-group bookkeeping. It is not useful for the first release unless
-  prompt-style diversity is an explicit goal.
-
-**Recommendation:** C only for the first release. It gives enough programs and
-families, and keeps normalization, graph build, and prompt review simpler. Treat
-P as a later realism slice.
 
 ### What is the target program count?
 
@@ -54,8 +51,9 @@ about 7.7 tasks per program, so 1,000 programs is too close to the release floor
   graph work for no clear first-release benefit.
 - **Full cache:** excessive.
 
-**Recommendation:** select 1,500 programs, with 1,000 usable programs as the
-floor. Keep a reserve for failures.
+**Recommendation:** select 1,500 C programs for P0/P1, with 1,000 usable
+programs as the floor. Keep a reserve for failures. P2 adds a separately sized P
+pool.
 
 ### Which metadata dimensions drive stratification?
 

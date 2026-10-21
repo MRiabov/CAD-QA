@@ -399,7 +399,7 @@ prefix is `DS-`.
   contains canonicalized, centered, scaled, and binarized programs used for
   training. P and C have no program-hash overlap.
 - **Decision:** The dataset treats P and C as separate program populations.
-  `01b` selects one tier or an explicit mix; it never deduplicates P against C or
+  P0 and P1 use C only; P2 adds P. `01b` never deduplicates P against C or
   assumes one is a duplicate. G is not ingested. The program pool records the
   tier mix.
 - **Consequences:** Prompt style and geometry scale depend on the tier. C is
@@ -422,3 +422,16 @@ prefix is `DS-`.
   sizes are balanced by group size, not program count. Unmatched P/C families
   become their own groups. The cache's `generator_id` column is not the
   generator identity; derive the group from `path_family`.
+
+## DS-27 — P2 adds P for scale variation
+
+- **Status:** accepted (2026-10-21).
+- **Context:** C canonicalization scales the longest bounding-box side to 200
+  units, so C programs do not vary in absolute scale. P preserves the original
+  pose and scale and uses arbitrary code style.
+- **Decision:** P0 and P1 use C only. P2 adds P. P and C versions of one
+  generator or mesh family share a split group, so P2 cannot split them across
+  train and test.
+- **Consequences:** P0/P1 keep canonical prompts and simpler normalization. P2
+  gains absolute scale variation and arbitrary code style. The split-group
+  mapping must cover both tiers before P2 is built.

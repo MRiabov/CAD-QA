@@ -37,10 +37,10 @@ The Parquet cache contains 1,998,810 programs:
 
 P and C are separate program populations: they have no program-hash overlap.
 They are not duplicates of each other. P preserves arbitrary code style and
-original pose/scale; C is canonical, centered, and scaled. The selection policy
-must choose P, C, or an explicit mix, and must not treat the tiers as
-interchangeable. P and C versions of one generator or mesh family share a split
-group; split assignment never crosses groups.
+original pose/scale; C is canonical, centered, and scaled. The selection policy is C only for P0 and P1, and C plus P for P2. C is scaled to a fixed
+bounding-box extent; P preserves the original scale. P and C versions of one
+generator or mesh family share a split group; split assignment never crosses
+groups.
 
 ## Cache scope
 
