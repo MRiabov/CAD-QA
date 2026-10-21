@@ -45,6 +45,7 @@ Steps 1 and 2 are in `requirements/`. Step 3 starts in `implementation/`.
 | Document | What it defines |
 |---|---|
 | [`implementation/task-enumeration.md`](implementation/task-enumeration.md) | Technical contract for task identity, selection, step accounting, format compatibility, and deduplication. |
+| [`implementation/graph-implementation.md`](implementation/graph-implementation.md) | Technical questions for CadQuery selector-result representation and derived-versus-measured evidence. |
 
 ### Feature-wide
 
