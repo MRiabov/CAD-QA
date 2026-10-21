@@ -24,5 +24,7 @@ significant trouble during the last dataset regeneration.
 - Preserve `source_id`, `normalized_archive_member_path`, `source_subtree`,
   `source_collection`, `path_family`, `source_feature_tags`, `generator_id`, and
   `normalized_source_code_hash`.
+- The `path_family` column is a CADEvolve path label, not a CAD-QA domain term.
+  `01b` derives `cadevolve_split_group_id` from it.
 - Read every metadata row; do not apply a local "looks like CadQuery" heuristic.
 - Do not normalize or execute CadQuery.

@@ -39,8 +39,8 @@ P and C are separate program populations: they have no program-hash overlap.
 They are not duplicates of each other. P preserves arbitrary code style and
 original pose/scale; C is canonical, centered, and scaled. The selection policy is C only for P0 and P1, and C plus P for P2. C is scaled to a fixed
 bounding-box extent; P preserves the original scale. P and C versions of one
-generator or mesh family share a split group; split assignment never crosses
-groups.
+generator or mesh family share a CADEvolve split group; split assignment never
+crosses groups.
 
 ## Cache scope
 

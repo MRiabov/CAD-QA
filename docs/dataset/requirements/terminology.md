@@ -17,7 +17,7 @@ the user-visible outcome.
 | **Question** | Domain | The interrogative sentence in the prompt. It is not the whole task. |
 | **Clue type** | Domain | The category of condition a task clue states: property, relation, comparison, aggregation, or provenance. A chain is a P2 sequence of relation clues, not a clue type. |
 | **Answer meaning** | Domain | What the answer is about, independent of how it is returned: identity, volume, area, length, distance, angle, count, rank, membership, position, extent, CadQuery workplane state, material change, topology change, or validity. |
-| **Split group** | Domain | A stable group that stays in one split: a CADEvolve generator family or an ABC/ShapeNet mesh family. P and C versions of one family share a group. |
+| **CADEvolve split group** | Domain | A stable group that stays in one split: a CADEvolve generator family or a CADEvolve-predicted ABC/ShapeNet mesh family. P and C versions of one family share a group. |
 | **Task reasoning step support table** | Domain | The release artifact that records which dimension values can occur at each task reasoning step count, and why an unsupported value cannot occur there. |
 | **Task reasoning step count coverage** | Internal | Every value supported at a task reasoning step count appears at that count. |
 | **Conditional release share** | Internal | A value's share among the values supported at a task reasoning step count, used as the comparison base for task reasoning step count balance. |

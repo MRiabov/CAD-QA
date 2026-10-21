@@ -21,10 +21,11 @@ release from the external dataset metadata.
 - Start from a larger metadata shortlist when review needs it; the active and
   reserve sets are the safety pool, not every fetched program.
 - Use only metadata columns; do not download program text.
-- Assign `split_group_id`: for CADEvolve core, the generator family; for
-  ABC/ShapeNet, the mesh family. P and C versions of one family share the group.
-- Record the policy, seed, collection counts, split-group counts, and excluded
-  counts.
+- Assign `cadevolve_split_group_id`: for CADEvolve core, the generator family;
+  for CADEvolve-predicted ABC/ShapeNet, the mesh family. P and C versions of one
+  family share the group.
+- Record the policy, seed, collection counts, CADEvolve split group counts, and
+  excluded counts.
 - Do not normalize or execute CadQuery.
 
 ## Tier decision
@@ -36,8 +37,8 @@ P2 adds P. C scales the longest bounding-box side to 200 units, so absolute scal
 does not vary. P preserves the original pose and scale. Adding P at P2 gives the
 release scale variation and arbitrary code style.
 
-P and C versions of one generator or mesh family share a split group; P2 must
-not put one version in train and the other in test.
+P and C versions of one generator or mesh family share a CADEvolve split group;
+P2 must not put one version in train and the other in test.
 
 ## Resolved questions
 
@@ -54,13 +55,14 @@ not put one version in train and the other in test.
   `kernel_face_selector`, `kernel_edge_selector`, `profile_polyline`,
   `path_curve`, and `kernel_vertex_selector`.
 - **Split group** is mandatory for decontamination, but not a quota by itself.
-- **Path family** is too fine for ABC/ShapeNet; use the split group instead.
+- **CADEvolve `path_family`** is too fine for ABC/ShapeNet; use
+  `cadevolve_split_group_id` instead.
 - **Generator ID** in the cache is collection-level, not the real generator.
 
 A full collection × tag cross-product is too sparse. Use a minimum per
 collection and a minimum for each required tag, then fill the remainder
-proportionally. Cap programs per split group so one generator or mesh family
-does not dominate.
+proportionally. Cap programs per CADEvolve split group so one generator or mesh
+family does not dominate.
 
 **Recommendation:** collection + required feature tags, with a per-group cap.
 
