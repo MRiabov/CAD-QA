@@ -31,3 +31,5 @@ release from the external dataset metadata.
 - Which metadata dimensions drive stratification: collection, generator,
   path family, geometry tags, or a combination?
 - Should the selection reserve a program pool for later releases?
+- Does the release need the paper's code-rewrite diversity, which the cache does
+  not contain?

@@ -42,6 +42,14 @@ must choose P, C, or an explicit mix, and must not treat the tiers as
 interchangeable. P and C versions of one generator or mesh family share a split
 group; split assignment never crosses groups.
 
+## Cache scope
+
+The cache is a clean Parquet copy of the P and C program rows. It is not the
+full paper corpus: it does not contain G or the 744,780 code-rewrite
+augmentation, and its C count is lower than the paper's 1,002,002
+post-canonicalization count. It is a valid program pool for CAD-QA; it is not a
+claim of reproducing CADEvolve end to end.
+
 ## Input scale
 
 The Parquet cache contains 1,998,810 programs. A release does not need all of
