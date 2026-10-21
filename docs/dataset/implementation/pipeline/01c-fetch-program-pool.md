@@ -21,6 +21,12 @@
 - Record selected IDs that are missing from the cache.
 - Do not normalize or execute CadQuery.
 
-## Open questions
+## Missing IDs
 
-- What is the rejection policy for a selected ID missing from the pinned cache?
+A selected ID that is missing from the pinned cache is a cache revision or
+integrity error, not a normal rejection.
+
+- Record the missing ID with the pinned cache revision.
+- Backfill the active slot from the reserve list in deterministic order.
+- If fewer than 1,000 active programs remain usable, fail the run.
+- Do not silently drop the ID or fetch from an unpinned revision.

@@ -34,6 +34,27 @@ The cache also has a rare `kernel_vertex_selector` tag. It is diagnostic, not a
 quota: only 89 C records carry it, and requiring a fixed minimum would consume
 almost all of them.
 
+## Split group derivation
+
+`cadevolve_split_group_id` is derived from the CADEvolve cache path, not from
+the cache's collection-level `generator_id`.
+
+1. Take the last component of `path_family` or
+   `normalized_archive_member_path`.
+2. Remove a trailing `.py`.
+3. For CADEvolve core, remove a trailing `_<digits>` sample suffix, lowercase
+   the name, and remove non-alphanumeric characters. The result is the generator
+   family, prefixed with `cadevolve:`.
+4. For ABC, remove a trailing `_trimesh_<digits>` variant suffix and prefix the
+   ABC mesh identifier with `abc:`.
+5. For ShapeNet, keep the ShapeNet mesh identifier and prefix it with
+   `shapenet:`.
+6. If the path cannot be parsed, use `unknown:<source_id>` and record the
+   fallback.
+
+P and C versions use the same normalized family name, so they share the group
+when the names match.
+
 ## Behavior
 
 - Apply the selection policy to the program metadata.
