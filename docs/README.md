@@ -33,6 +33,7 @@ procedural CAD programs (CadQuery), and a small-LLM-model fine-tuning effort on 
 | What is true right now | `development-context.md` |
 | What happens next | `development-plan.md` |
 | What the dataset generator must produce | `dataset/PRD.md` |
+| How the release dataset is laid out | `dataset/release-dataset-structure.md` |
 | How the LLM model is trained | `train-and-eval/fine-tuning/training.md` |
 | Which data we train on, and in what order | `train-and-eval/fine-tuning/data.md` |
 | The post-training loop (SFT → RL-readiness gate → RL) | `train-and-eval/fine-tuning/system.md` |

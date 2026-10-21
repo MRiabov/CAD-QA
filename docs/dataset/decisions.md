@@ -153,7 +153,7 @@ prefix is `DS-`.
 - **Consequences:** Implementation should not start from the current
   conceptual docs alone. `task-structure.md` and this file define the target;
   the enumeration contract defines the implementable space. The open questions
-  that affect it are in `task-structure.md` Q1-Q5.
+  that affect it are in `release-dataset-structure.md` Q1-Q5.
 
 ---
 
@@ -249,7 +249,7 @@ prefix is `DS-`.
 ## DS-17 — Comparison clues may name an entity or reuse one selected earlier
 
 - **Status:** accepted (2026-10-21).
-- **Context:** `task-structure.md` Q6 asked whether a comparison task clue must
+- **Context:** `task-structure.md` Q1 asked whether a comparison task clue must
   name both entities. BrowseComp-style composition lets a later step use a
   result from an earlier step, and the dataset needs the same freedom without
   ambiguous references.
@@ -304,3 +304,21 @@ prefix is `DS-`.
   `same_as`. No second graph is needed; the relation lives in the same graph.
 
 ---
+
+## DS-20 — A release dataset has a task table and an answer table
+
+- **Status:** accepted (2026-10-21).
+- **Context:** A single table would put the prompt and the gold answer in the
+  same rows. R-6 and DS-12 require the answer to stay out of the task file.
+  Parquet stores one table per file, and column-level hiding is not a release
+  boundary.
+- **Decision:** A release dataset has two tables joined 1:1 by `task_id`: a
+  **task file** with the prompt and selection metadata, and **answer data** with
+  the gold answer, scoring fields, and evidence. Parquet is canonical; JSONL is
+  an optional export. One task table is enough for the LLM-facing side; one
+  physical file for the whole release is not enough.
+- **Consequences:** The minimum artifacts are `tasks.parquet`,
+  `answers.parquet`, `manifest.json`, `dataset-card.md`, and `failures.jsonl`.
+  No program table or evidence table is needed initially; add one only if size
+  or review requires it. The structure is defined in
+  `release-dataset-structure.md`.

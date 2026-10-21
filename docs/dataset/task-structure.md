@@ -302,78 +302,9 @@ affected values; it is not resolved by silently dropping coverage.
 Those are properties of a task. A task must state the task target, task clues,
 answer format, answer meaning, and task reasoning step count that tie them together.
 
-## 8. Open questions
+## 8. Resolved questions
 
-- **Q1.** This is an implementation choice. The release is a deterministic subset of the
-  valid-task universe. Should the generator enumerate the universe and cut it,
-  or plan quotas and generate into them?
-  - **Option A — enumerate and cut.** Generate the valid tasks, then select a
-    release that meets coverage and balance. Simple, but may do unused work.
-  - **Option B — quota plan.** Allocate counts per task reasoning step count and
-    dimension, then generate into the quotas with deterministic randomness.
-    Avoids unused work, but must detect when the universe cannot fill a cell.
-  - **Option C — hybrid.** Enumerate small cells and plan large cells.
-  - **Recommendation:** Treat A and B as implementation choices, not a product
-    decision. The contract fixes the release constraints and reproducibility;
-    it does not mandate either strategy. "Required enumeration" means the
-    required cells, not every tuple.
-
-- **Q2.** Is a chain clue one task reasoning step or one step per relation? Is a
-  clue that combines a relation and a property one condition or two?
-  - **Option A — chain is one step; a compound sentence is one clue.** The
-    current text allows “the face adjacent to X whose area is larger than X” as
-    one clue.
-  - **Option B — atomic predicates.** Each relation or property is one clue and
-    one task reasoning step. The compound sentence becomes two clues; the chain
-    becomes one clue per relation.
-  - **Option C — hybrid.** Chains count per relation, but a relation plus a
-    property in one sentence counts as one clue.
-  - **Recommendation:** B. Example: “the face adjacent to X whose area is
-    larger than X” is two steps; `A -> B -> C` is two steps. Split the prompt
-    task clues accordingly. This makes the step count auditable.
-
-- **Q3.** Is the conditional release share computed from the valid-task universe,
-  or allocated from the global targets before selection?
-  - **Option A — universe share.** Compute each value's share in the universe
-    among the values supported at that step count, then require the release to
-    approximate it.
-  - **Option B — allocate quotas from the global targets, then fill from the
-    universe.** Choose the target mix first, allocate counts per step count and
-    dimension, then select tasks that fill the quotas.
-  - **Option C — select, compute, repair.** Select a draft release, measure it,
-    and move tasks until the targets hold.
-  - **Recommendation:** B. Example: at step count 2, supported answer meanings
-    `A`, `B`, and `C` have target shares 20%, 30%, and 50%; allocate the step-2
-    quota in those proportions, fill from the universe, and report a conflict if
-    the universe cannot fill a cell. This avoids the circular definition.
-
-- **Q4.** Which answer formats are valid for each answer meaning?
-  - **Option A — one answer format per answer meaning.** Simple, but identity
-    would be limited to multiple choice.
-  - **Option B — a compatibility table.** Each answer meaning lists its allowed
-    answer formats.
-  - **Option C — the generator chooses any format.** Flexible, but hard to
-    audit.
-  - **Recommendation:** B. Example mapping: identity -> multiple choice;
-    volume, area, length, distance, angle -> number; count or rank -> integer;
-    membership or validity -> yes or no; position -> 3D coordinate; extent ->
-    bounding box; CadQuery workplane state -> structured object; material change
-    -> number; topology change -> structured object.
-
-- **Q5.** When is a task a duplicate of another task?
-  - **Option A — canonical tuple.**
-    `(program, target entity, clue sequence, task answer step, answer format)`.
-  - **Option B — rendered prompt text.** Two tasks with the same prompt are
-    duplicates.
-  - **Option C — answer value.** Two tasks with the same answer are duplicates.
-  - **Recommendation:** A, with canonical clue order. Example: the same target,
-    clues, and answer but multiple choice vs number are two tasks. The same
-    tuple rendered twice is one task. The same prompt text with two different
-    answers is an ambiguity defect, not two tasks.
-
-## 9. Resolved questions
-
-- **Q6.** *Resolved 2026-10-21: Option C.* A comparison task clue may name both
+- **Q1.** *Resolved 2026-10-21: Option C.* A comparison task clue may name both
   entities or refer to an entity selected by an earlier task clue. Every
   referenced entity is either named in the program or already in the set of
   possible answers. A reference to an earlier selected entity must resolve to
