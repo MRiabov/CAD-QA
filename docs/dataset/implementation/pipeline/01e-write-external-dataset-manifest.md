@@ -17,7 +17,7 @@ rows.
 - `manifest_version`, `created_at`, `status`;
 - `cache_revision`, `cache_uri`, and `cache_schema_version`;
 - selection policy version, seed, active count, reserve count, and exclusions;
-- counts by tier, collection, and `cadevolve_split_group_id`;
+- counts by tier, collection, and `cadevolve_program_family_id`;
 - normalized program count and distinct program count;
 - normalization version;
 - input and output hash summary;

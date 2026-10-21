@@ -251,7 +251,7 @@ to a later implementation scope is not a coverage gap in the current release.
 
 | ID | Requirement | How the user can tell |
 |---|---|---|
-| **R-13** | Training, validation, and test sets do not overlap. | The same CADEvolve split group — a CADEvolve generator family or a CADEvolve-predicted ABC/ShapeNet mesh family — never appears in both training and evaluation. |
+| **R-13** | Training, validation, and test sets do not overlap. | The same CADEvolve program family — a CADEvolve generator family or a CADEvolve-predicted ABC/ShapeNet mesh family — never appears in both training and evaluation. |
 | **R-14** | The test set is never trained on. | The dataset card names the test set and the training recipe excludes it. |
 | **R-15** | The warmup subset is labeled, not excluded. | Warmup tasks are marked as tasks with one task reasoning step and may be used for training; every benchmark result names the task reasoning steps it covers. |
 | **R-16** (P1) | Transfer results are not contaminated. | No program from the external benchmark used for transfer appears in training or evaluation. |
@@ -337,9 +337,9 @@ introduced it.
 - **Validation**: tasks used to tune training decisions;
 - **Test**: tasks used only for the final result.
 
-The same CADEvolve split group must not appear in more than one part. A CADEvolve
-split group is a CADEvolve generator family or a CADEvolve-predicted
-ABC/ShapeNet mesh family; P and C versions of the same family share a group. The
+The same CADEvolve program family must not appear in more than one part. A CADEvolve
+program family is a CADEvolve generator family or a CADEvolve-predicted
+ABC/ShapeNet mesh family; P and C versions of the same family share a family ID. The
 test part must never be used for training, tuning, or choosing an LLM model.
 
 The no-overlap rule is P0. The intended proportions are approximately 70%

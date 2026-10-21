@@ -14,7 +14,7 @@ Selection math: [`../selection-math.md`](../selection-math.md).
 - Apply task reasoning step count mix.
 - Apply answer format, clue type, answer meaning, and target category coverage
   and balance.
-- Assign training, validation, and test splits by CADEvolve split group, not by
+- Assign training, validation, and test splits by CADEvolve program family, not by
   program.
 - Apply the CAD model and correct-answer caps.
 

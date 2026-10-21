@@ -11,16 +11,16 @@ this document owns ownership, lifecycle, and format, not field definitions.
 |---|---|---|---|---|---|
 | CADEvolve Parquet cache | External | `01a` | Upstream dataset commit plus cache version | Parquet | Immutable external input. |
 | Program metadata | `01a` | `01b` | Cache revision plus metadata schema | Parquet | No program text. |
-| Program selection | `01b` | `01c`, `01e` | Selection policy version plus seed | Parquet | Active and reserve IDs, `cadevolve_split_group_id`, counts, and exclusions. |
-| Program pool | `01c` | `01d` | Selection identity plus cache revision | Parquet | Only selected rows, including program text and `cadevolve_split_group_id`. |
-| Normalized program | `01d` | `02a`, `02b` | `program_sha256` plus normalization version | Parquet | Carries `program_id`, `cadevolve_split_group_id`, and canonical text. |
+| Program selection | `01b` | `01c`, `01e` | Selection policy version plus seed | Parquet | Active and reserve IDs, `cadevolve_program_family_id`, counts, and exclusions. |
+| Program pool | `01c` | `01d` | Selection identity plus cache revision | Parquet | Only selected rows, including program text and `cadevolve_program_family_id`. |
+| Normalized program | `01d` | `02a`, `02b` | `program_sha256` plus normalization version | Parquet | Carries `program_id`, `cadevolve_program_family_id`, and canonical text. |
 | External dataset manifest | `01e` | `06`, dataset card | External dataset version | JSON | Counts, hashes, and rejected records. |
 | Static CadQuery model | `02a` | `02c` | Program hash plus extractor version | Parquet tables | No geometry measurements. |
 | Execution result | `02b` | `02c` | Program hash, CadQuery/OCP version, and environment | Parquet plus shape snapshot files | Either execution snapshots or a failure tombstone. |
 | CAD graph | `02c` | `03` | Program hash, graph schema version, and execution result hash | Parquet tables | One graph per program. |
 | Task candidate | `03` | `04` | Canonical task identity | Parquet | Exactly one gold answer; invalid candidates are rejected. |
 | Prompted task | `04` | `05` | Task identity plus prompt and choice versions | Parquet | Prompt is answer-free. |
-| Release table | `05` | `06` | `release_id` | Parquet | One row per task; carries `cadevolve_split_group_id`. |
+| Release table | `05` | `06` | `release_id` | Parquet | One row per task; carries `cadevolve_program_family_id`. |
 | Release artifacts | `06` | Dataset consumers | `release_id` | Parquet, JSON, Markdown | `release.parquet`, `failures.parquet`, `manifest.json`, `dataset-card.md`. |
 
 `Failures` is a multi-writer record: every pipeline stage appends a failure with

@@ -25,7 +25,7 @@ significant trouble during the last dataset regeneration.
   `source_collection`, `path_family`, `source_feature_tags`, `generator_id`, and
   `normalized_source_code_hash`.
 - The `path_family` column is a CADEvolve path label, not a CAD-QA domain term.
-  `01b` derives `cadevolve_split_group_id` from it.
+  `01b` derives `cadevolve_program_family_id` from it.
 - `source_feature_tags` is cache metadata, not a CADEvolve paper term. Its values
   include `void_cut`, `kernel_face_selector`, `kernel_edge_selector`,
   `profile_polyline`, `path_curve`, and `kernel_vertex_selector`.

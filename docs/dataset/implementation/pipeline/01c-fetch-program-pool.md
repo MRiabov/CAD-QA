@@ -17,7 +17,7 @@
   to normalization and execution.
 - Do not normalize unselected rows.
 - Preserve the metadata columns selected by `01a`, including the tier,
-  collection, and `cadevolve_split_group_id`.
+  collection, and `cadevolve_program_family_id`.
 - Record selected IDs that are missing from the cache.
 - Do not normalize or execute CadQuery.
 

@@ -19,7 +19,7 @@ For P0/P1, select from C only:
 2. Give each collection a minimum quota of 300 active programs.
 3. Allocate the remaining active slots proportionally to collection size.
 4. Within each collection, order by `sha256(seed || source_id)`.
-5. Cap selection at two programs per `cadevolve_split_group_id`.
+5. Cap selection at two programs per `cadevolve_program_family_id`.
 6. Ensure at least 50 active programs for each required feature tag:
    `void_cut`, `kernel_face_selector`, `kernel_edge_selector`,
    `profile_polyline`, and `path_curve`. Select all available if a tag has fewer
@@ -36,7 +36,7 @@ almost all of them.
 
 ## Split group derivation
 
-`cadevolve_split_group_id` is derived from the CADEvolve cache path, not from
+`cadevolve_program_family_id` is derived from the CADEvolve cache path, not from
 the cache's collection-level `generator_id`.
 
 1. Take the last component of `path_family` or
@@ -65,10 +65,10 @@ when the names match.
 - Start from a larger metadata shortlist when review needs it; the active and
   reserve sets are the safety pool, not every fetched program.
 - Use only metadata columns; do not download program text.
-- Assign `cadevolve_split_group_id`: for CADEvolve core, the generator family;
+- Assign `cadevolve_program_family_id`: for CADEvolve core, the generator family;
   for CADEvolve-predicted ABC/ShapeNet, the mesh family. P and C versions of one
   family share the group.
-- Record the policy, seed, collection counts, CADEvolve split group counts, and
+- Record the policy, seed, collection counts, CADEvolve program family counts, and
   excluded counts.
 - Do not normalize or execute CadQuery.
 
@@ -81,7 +81,7 @@ P2 adds P. C scales the longest bounding-box side to 200 units, so absolute scal
 does not vary. P preserves the original pose and scale. Adding P at P2 gives the
 release scale variation and arbitrary code style.
 
-P and C versions of one generator or mesh family share a CADEvolve split group;
+P and C versions of one generator or mesh family share a program family ID;
 P2 must not put one version in train and the other in test.
 
 ## Resolved questions

@@ -406,23 +406,23 @@ prefix is `DS-`.
   canonical and normalized; P preserves arbitrary style and original pose/scale.
   Counts from P and C are not additive as if they were the same programs.
 
-## DS-26 — Split by CADEvolve family
+## DS-26 — Split by CADEvolve program family
 
 - **Status:** accepted (2026-10-21).
 - **Context:** Splitting by CadQuery program is not enough. Different programs
   sampled from one CADEvolve generator share a code template and parameter
   family; P and C versions of one mesh or generator are also related. A
   program-level split can put near-duplicates in both training and evaluation.
-- **Decision:** Split by `cadevolve_split_group_id`. For CADEvolve core, the
-  group is the generator family taken from the path. For CADEvolve-predicted
-  ABC/ShapeNet, the group is the mesh family. P and C versions of one family
-  share a group. Assign train, validation, and test at the group level; every
-  task inherits the group split. The release table records
-  `cadevolve_split_group_id`.
+- **Decision:** Split by `cadevolve_program_family_id`. For CADEvolve core, the
+  family is the generator family taken from the path. For CADEvolve-predicted
+  ABC/ShapeNet, the family is the mesh family. P and C versions of one family
+  share an ID. Assign train, validation, and test at the family level; every
+  task inherits the family split. The release table records
+  `cadevolve_program_family_id`.
 - **Consequences:** Split isolation is stricter than program isolation. Split
-  sizes are balanced by group size, not program count. Unmatched P/C families
-  become their own groups. The cache's `generator_id` column is not the
-  generator identity; derive the group from the CADEvolve `path_family` cache
+  sizes are balanced by family size, not program count. Unmatched P/C families
+  become their own families. The cache's `generator_id` column is not the
+  generator identity; derive the family from the CADEvolve `path_family` cache
   column.
 
 ## DS-27 — P2 adds P for scale variation
@@ -432,8 +432,8 @@ prefix is `DS-`.
   units, so C programs do not vary in absolute scale. P preserves the original
   pose and scale and uses arbitrary code style.
 - **Decision:** P0 and P1 use C only. P2 adds P. P and C versions of one
-  generator or mesh family share a CADEvolve split group, so P2 cannot split
+  generator or mesh family share a program family ID, so P2 cannot split
   them across train and test.
 - **Consequences:** P0/P1 keep canonical prompts and simpler normalization. P2
-  gains absolute scale variation and arbitrary code style. The CADEvolve split
-  group mapping must cover both tiers before P2 is built.
+  gains absolute scale variation and arbitrary code style. The CADEvolve program
+  family mapping must cover both tiers before P2 is built.

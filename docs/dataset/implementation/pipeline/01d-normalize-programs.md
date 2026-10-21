@@ -9,7 +9,7 @@ used by graph build, overlap checks, and release grouping.
 
 - Input: the selected program pool from `01c`.
 - Output: normalized program records with `program_id`, canonical text,
-  normalization version, and `cadevolve_split_group_id`.
+  normalization version, and `cadevolve_program_family_id`.
 
 ## Behavior
 

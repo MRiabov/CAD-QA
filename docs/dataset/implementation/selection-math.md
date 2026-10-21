@@ -73,9 +73,9 @@ the split rule.
 
 ## Splits
 
-The split unit is the CADEvolve split group, not the program or the task. A
-CADEvolve split group is a CADEvolve generator family or a CADEvolve-predicted
-ABC/ShapeNet mesh family; P and C versions of the same family share a group. All
+The split unit is the CADEvolve program family, not the program or the task. A
+CADEvolve program family is a CADEvolve generator family or a CADEvolve-predicted
+ABC/ShapeNet mesh family; P and C versions of the same family share a family ID. All
 tasks from one group share one split, and no group appears in both training and
 evaluation.
 
