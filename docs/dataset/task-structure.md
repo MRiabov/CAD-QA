@@ -292,3 +292,24 @@ answer format, answer meaning, and task reasoning step count that tie them toget
 
 - **Q1.** Should a comparison task clue always name both entities, or may one
   entity be selected by an earlier task clue?
+  - **Option A — name both entities.**
+
+    ```text
+    The area of the face created by `cutBlind` is larger than the area of the
+    face created by `box`.
+    ```
+
+  - **Option B — refer to the entity selected earlier.**
+
+    ```text
+    1. The selected face is the face created by `cutBlind`.
+    2. The task target is adjacent to the selected face and has a larger area
+       than the selected face.
+    ```
+
+  - **Option C — allow both.**
+  - **Recommendation:** C, with a rule: every referenced entity is either named
+    in the program or already in the candidate set. Prefer B for multi-step
+    tasks; prefer A for a self-contained single-step task. Example: a two-clue
+    task can say “the selected face” in clue 2 because clue 1 selected it. A
+    one-clue task must name the reference face.

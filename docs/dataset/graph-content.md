@@ -194,9 +194,51 @@ category, clue type, and answer meaning.
 
 - **Q1.** How stable are face, edge, and vertex identities across two
   operations, and when should the graph use `same_as`?
+  - **Option A — kernel stable identities.** Use the kernel's stable IDs when
+    available.
+  - **Option B — geometric fingerprints.** Match by centroid, area, normal, and
+    adjacency within tolerance.
+  - **Option C — recompute per operation, no identity.** Treat each solid
+    state's topology as independent.
+  - **Recommendation:** A with B as a fallback, recording `same_as` when the
+    match is confident. Example: a face keeps its area and normal after a
+    fillet but gets a new kernel ID; the fingerprint matches, so the graph
+    records `same_as`. If the match is ambiguous, reject tasks that need that
+    identity.
+
 - **Q2.** Should CadQuery selector results be stored as entities, as a relation,
   or both?
+  - **Option A — entity only.** A CadQuery selector-result entity, with no membership
+    edges.
+  - **Option B — relation only.** `selected_by` edges from entities, with no
+    result-set entity.
+  - **Option C — both.** A CadQuery selector-result entity for counts and aggregation,
+    plus `selected_by` edges for membership.
+  - **Recommendation:** C. Example: `.faces(">Z")` produces one CadQuery selector-result
+    entity, a `selected_from` edge to the solid state, and `selected_by` edges to
+    the selected faces. Counts read the CadQuery selector-result entity; “which face was selected” reads
+    the edges.
+
 - **Q3.** Which measurements can be derived exactly from the program text, and
   which must always be measured by CadQuery?
+  - **Option A — measure everything.** Simple, but loses exact syntax evidence.
+  - **Option B — derive everything possible from syntax.** Fast, but wrong when
+    later operations change the geometry.
+  - **Option C — derive only exact syntax values; measure geometry.** Use exact
+    rules for literals, operation counts, and selector membership; measure
+    volumes, areas, distances, and topology after operations.
+  - **Recommendation:** C, with the evidence recording which path was used.
+    Example: `.box(10, 20, 5)` gives a volume of 1000 only if no later
+    operation changes it; a fillet volume is measured. A derived value must
+    carry the rule that produced it.
+
 - **Q4.** How should the graph represent a shape that cannot be measured, such
   as a failed operation?
+  - **Option A — omit the program.** No record, no explanation.
+  - **Option B — record a failed state and reject its tasks.** Keep the error
+    and the program identity.
+  - **Option C — keep a partial graph with missing measurements.**
+  - **Recommendation:** B. Example: a `cutBlind` raises; the graph records a
+    failed solid state with the error, no task is generated, and the failure
+    manifest counts it. Do not guess the missing value or drop the program
+    silently.

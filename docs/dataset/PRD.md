@@ -388,9 +388,27 @@ The dataset is done when:
 
 - **Q7** (P1). When checking that the dataset does not overlap the independent
   benchmark used to test transfer (BenchCAD `qa_code` and `edit_code`), how
-  exact must the check be: identical CadQuery program text, the same CAD model,
-  or only the same clue type and answer meaning? Proposed default: identical CadQuery
-  program and the same CAD model where it can be identified.
+  exact must the check be?
+  - **Option A — identical CadQuery program text.** Fast, but misses renamed
+    variables and formatting changes.
+  - **Option B — the same CAD model.** Normalize the program or compare the
+    resulting shape. Catches:
+
+    ```python
+    box = cq.Workplane("XY").box(10, 20, 5)
+    ```
+
+    and
+
+    ```python
+    b = cq.Workplane("XY").box(10, 20, 5)
+    ```
+
+  - **Option C — only the same clue type and answer meaning.** Too coarse:
+    two unrelated programs that both ask for a volume would collide.
+  - **Recommendation:** B, with A as a fast pre-check. Two different programs
+    that both ask for a volume are not overlap. Two programs that build the same
+    CAD model under different names are overlap.
 
 ## 16. Resolved questions
 

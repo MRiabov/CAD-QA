@@ -204,6 +204,82 @@ Before a prompt is accepted:
 
 - **Q1.** Should the question always name the task target category, or may it
   be part of the first task clue?
+  - **Option A — the question names the category.**
+
+    ```text
+    What is the volume of the final solid?
+
+    1. The final solid is the result of the last operation.
+    ```
+
+  - **Option B — the first clue names the category.**
+
+    ```text
+    What is the volume?
+
+    1. The task target is the final solid.
+    2. The final solid is the result of the last operation.
+    ```
+
+  - **Option C — the question names the category only when it is not obvious.**
+
+    ```text
+    What is the volume?
+
+    1. The final solid is the result of the last operation.
+    ```
+
+  - **Recommendation:** A. The question then has one job: name the target
+    category and the answer meaning. Every clue performs narrowing. B makes the
+    first clue do two jobs; C makes the prompt shape inconsistent.
+
 - **Q2.** Should task clues be numbered, or presented as a paragraph?
-- **Q4.** Should multiple-choice descriptions use variable names, geometric
+  - **Option A — numbered list.**
+
+    ```text
+    1. The operation cuts a cylindrical hole.
+    2. The operation is the last operation in the program.
+    ```
+
+  - **Option B — paragraph.**
+
+    ```text
+    The operation cuts a cylindrical hole and is the last operation in the
+    program.
+    ```
+
+  - **Option C — bulleted list without numbers.**
+  - **Recommendation:** A. The order is the intended reasoning order, each clue
+    maps to one step, and review is easier. Option B also combines two
+    conditions in one sentence, which rule 1 forbids.
+
+- **Q3.** Should multiple-choice descriptions use variable names, geometric
   descriptions, or both?
+  - **Option A — variable names only.**
+
+    ```text
+    A. result
+    B. cut_hole
+    C. top_face
+    ```
+
+  - **Option B — geometric descriptions only.**
+
+    ```text
+    A. the outer box
+    B. the cylindrical hole cut into the box
+    C. the top face of the box
+    ```
+
+  - **Option C — both, where the name is useful.**
+
+    ```text
+    A. `result` — the outer box
+    B. `cut_hole` — the cylindrical hole cut into the box
+    C. `top_face` — the top face of the box
+    ```
+
+  - **Recommendation:** C with a leak check. The variable name gives a stable
+    anchor; the description makes the choice readable. If the variable name
+    gives away the answer, use the geometric description only. Every choice
+    still comes from the same target category and must be a real candidate.
