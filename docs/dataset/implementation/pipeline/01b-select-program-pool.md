@@ -14,22 +14,47 @@ release from the external dataset metadata.
 
 ## Selection policy
 
-For P0/P1, select from C only:
+For P0/P1, the in-scope set is C only: `ABC-C`, `CADEvolve-C-core`, and
+`ShapeNet-C`. P2 adds P as a separately sized pool; this policy applies inside
+each tier pool, not across a combined C+P total.
+
+Within the in-scope pool:
 
 1. Deduplicate by `normalized_source_code_hash` within each collection. Do not
    deduplicate across collections or across P and C. Within each duplicate group,
    keep the record with the lexicographically smallest `source_id`; record the
    discarded IDs and any family conflict. The survivor's family is used.
-2. Give each collection a minimum quota of 300 active programs.
-3. Allocate the remaining active slots proportionally to collection size.
-4. Within each collection, order by `sha256(seed || source_id)`.
-5. Cap selection at two programs per `cadevolve_program_family_id`.
-6. Ensure at least 50 active programs for each required feature tag:
+2. Apply the hard family cap: at most two programs per
+   `cadevolve_program_family_id`.
+3. Reserve at least 50 active seats for each required feature tag:
    `void_cut`, `kernel_face_selector`, `kernel_edge_selector`,
-   `profile_polyline`, and `path_curve`. Select all available if a tag has fewer
-   than 50.
-7. Select 1,500 active programs. Select the next 300–450 by the same policy as
-   reserve.
+   `profile_polyline`, and `path_curve`. A program may satisfy several tags.
+4. Give each in-scope collection a target minimum of 300 active programs. Tag
+   reservations count toward this minimum.
+5. Allocate the remaining active slots proportionally to collection size.
+6. Within each collection, order by `sha256(seed || source_id)`.
+7. Select 1,500 active C programs for P0/P1. Select the next 300–450 by the same
+   policy as reserve.
+
+## Constraint precedence
+
+The order is:
+
+1. Scope, deduplication, and the hard family cap.
+2. The hard 1,500-program cap.
+3. Feature-tag minima, because they preserve task capability.
+4. Collection minima, because they preserve collection diversity.
+5. Proportional fill.
+
+A program may count toward a tag minimum and a collection minimum at the same
+time. If a tag has fewer than 50 eligible programs after the family cap, select
+all eligible and record the shortfall. If a collection cannot reach 300 after the
+family cap, tag reservations, and the hard cap, record the shortfall. Never
+exceed the hard cap to satisfy a lower-priority target.
+
+The three C collections need 900 programs at their minimum, within the 1,500 cap.
+P2 does not combine six collections under one 1,500 cap; its P pool is sized
+separately.
 
 The policy is deterministic for a given cache revision, seed, and metadata
 schema. It records unmet quotas instead of silently under-filling.

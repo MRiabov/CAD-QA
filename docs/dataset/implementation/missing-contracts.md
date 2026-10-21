@@ -9,7 +9,6 @@ doc, delete the row. Open questions remain in
 
 | ID | Owner | Missing contract | Why it blocks |
 |---|---|---|---|
-| MC-03 | [`01b`](pipeline/01b-select-program-pool.md) | Precedence when collection minima, feature-tag minima, family cap, and the 1,500-program target conflict. | The selection policy can be over-constrained with no stated resolution. |
 | MC-04 | [`02a`](pipeline/02a-extract-cadquery-ast.md) | Static expression tree for nested constructors such as `cq.Plane(cq.Vector(...))`; method allowlist; CadQuery selector timing. | “Typed literal values” cannot represent real C-tier programs, and graph coverage depends on the allowlist. |
 | MC-06 | [`02c`](pipeline/02c-build-cad-graph.md) | Typed attributes per graph entity category and graph table scope. | The graph attribute schema and table layout are undefined. |
 | MC-07 | [`03a`](pipeline/03a-plan-release.md) | Quota allocator equations for marginal cells, step mix, clue occurrences, family capacity, caps, and coverage minima; cell-to-family budget division. | The plan lists steps but no computable allocation. |
