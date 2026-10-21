@@ -12,7 +12,10 @@ results, or a failure tombstone when execution fails.
 
 ## Execution boundary
 
-- Run in an isolated Python worker with no network access.
+- Run each program in a child Python process. This is process isolation for
+  crash cleanup and resource control, not a security sandbox.
+- Treat CADEvolve programs as trusted build inputs; do not add a network,
+  filesystem, or prompt-injection boundary.
 - Pin the CadQuery and OCP versions and record them in the result.
 - Apply a wall-clock timeout and a memory limit.
 - Execute only the accepted static subset from `02a`.
@@ -68,8 +71,14 @@ the same key.
 
 ## Open questions
 
-- What are the timeout and memory limits for the first release?
+- What are the default timeout and memory limits for the first release?
 - Are kernel entity handles stable enough inside one shape snapshot, or should
   graph assembly use geometric fingerprints?
-- Should selector evaluation failures reject the whole program or only the
-  affected selector result?
+- Should CadQuery selector evaluation failures reject the whole program or only
+  the affected CadQuery selector result?
+
+## Resolved questions
+
+- **Sandbox.** *Resolved 2026-10-21.* No security sandbox. Run each program in a
+  child process with a timeout and memory limit. CADEvolve programs are trusted
+  build inputs, so network and filesystem isolation are not requirements.
