@@ -224,10 +224,9 @@ dataset must contain:
 - both syntax-based and geometry-based steps where supported at depths that
   have steps, with geometry required for benchmark tasks.
 
-A **depth support table** — the public **difficulty coverage plan** — records
-which values can occur at each depth and why an unsupported value cannot occur
-there. It is part of the release documentation and is versioned with the
-generator. "Supported" is a property of the task
+A **depth support table** records which values can occur at each depth and why
+an unsupported value cannot occur there. It is part of the release documentation
+and is versioned with the generator. "Supported" is a property of the task
 structure, not of the current generator: a value may be marked unsupported only
 when no valid task can express it at that depth. A value that is valid but not
 implemented is a gap, not an unsupported value.

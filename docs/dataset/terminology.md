@@ -5,9 +5,9 @@ edit `docs/glossary.md`. A term becomes canonical only after the owner approves
 it.
 
 **Scope:** a **domain term** may appear in the PRD. An **internal term** describes
-how the generator represents or computes something and must not appear in the
-PRD. If a product document needs an internal concept, use the domain term or
-describe the user-visible outcome.
+how the generator computes coverage or balance and must not appear in the PRD.
+If a product document needs an internal concept, use the domain term or describe
+the user-visible outcome.
 
 ## 1. Core terms
 
@@ -15,23 +15,20 @@ describe the user-visible outcome.
 |---|---|---|
 | **Task** | Domain | One dataset instance: a CadQuery program, a task target, a set of task clues, and one answer. Use "dataset task" when it could be confused with an internal task. |
 | **Question** | Domain | The interrogative sentence in the prompt. It is not the whole task. |
-| **Difficulty step** | Domain | One step of reasoning a task requires. The PRD uses this; the technical specification derives it from the task solution sequence. |
-| **Difficulty level** | Domain | One of the step-count groups used to describe difficulty: 0, 1, 2, 3, 4, 5. |
-| **Difficulty coverage plan** | Domain | The published table that states which target categories, clue types, answer meanings, and answer formats are available at each difficulty level, and why a value is not available. |
 | **Clue type** | Domain | The category of condition a task clue states: property, relation, comparison, aggregation, provenance, or chain. |
 | **Answer meaning** | Domain | What the answer is about, independent of how it is returned: identity, volume, area, length, distance, angle, count, rank, membership, position, extent, CadQuery workplane state, material change, topology change, or validity. |
+| **Depth support table** | Domain | The release artifact that records which dimension values can occur at each task reasoning step count, and why an unsupported value cannot occur there. |
+| **Per-depth coverage** | Internal | Every value supported at a task reasoning step count appears at that count. |
+| **Conditional release share** | Internal | A value's share among the values supported at a task reasoning step count, used as the comparison base for per-depth balance. |
+| **Per-depth balance** | Internal | For clue type, answer meaning, and answer format, a supported value's share at a task reasoning step count is between half and twice its conditional release share. |
 | **Task target** | Domain | The entity or value the task asks about. |
-| **Task target category** | Domain | The category of the task target. It is a coverage dimension, not a percentage-balance dimension at each difficulty level. |
+| **Task target category** | Domain | The category of the task target. It is a coverage dimension, not a percentage-balance dimension at each task reasoning step count. |
 | **Task clue** | Domain | One public sentence in the prompt that states a condition the answer must satisfy. |
-| **Task reasoning step** | Internal | A task clue step or a task answer step. Public documents say difficulty step. |
-| **Task reasoning depth** | Internal | The number of task reasoning steps; computed from the task solution sequence. Public documents say difficulty. |
-| **Task clue step** | Internal | The hidden graph operation that applies one task clue and reduces the set of possible answers. |
-| **Task answer step** | Internal | The hidden operation that produces the answer once the task target is identified. |
-| **Task solution sequence** | Internal | The ordered task clue steps and task answer step that solve the task. |
-| **Depth support table** | Internal | The generator-side table that records which dimension values can occur at each task reasoning depth, and why not. The public form is the difficulty coverage plan. |
-| **Per-depth coverage** | Internal | Every value supported at a task reasoning depth appears at that depth. Public documents say coverage at every difficulty level. |
-| **Conditional release share** | Internal | A value's share among the values supported at a depth, used as the comparison base for per-depth balance. |
-| **Per-depth balance** | Internal | For clue type, answer meaning, and answer format, a supported value's share at a depth is between half and twice its conditional release share. Public documents say balance at every difficulty level. |
+| **Task clue step** | Domain | The hidden graph operation that applies one task clue and reduces the set of possible answers. |
+| **Task answer step** | Domain | The hidden operation that produces the answer once the task target is identified. |
+| **Task reasoning step** | Domain | A task clue step or a task answer step. |
+| **Task reasoning depth** | Domain | The number of task reasoning steps a task requires. |
+| **Task solution sequence** | Domain | The ordered task clue steps and task answer step that solve the task. |
 | **Answer format** | Domain | The form of the answer: multiple choice, variable name, number, integer, yes or no, 3D coordinate, bounding box, or structured object. |
 | **Multiple-choice choices** | Domain | The short list of options shown for a multiple-choice answer. |
 | **Answer instruction** | Domain | The part of the prompt that tells the LLM model which answer format to return and in what syntax. |
@@ -53,15 +50,11 @@ describe the user-visible outcome.
 
 | Internal term | Domain term |
 |---|---|
-| Task reasoning step | Difficulty step |
-| Task reasoning depth | Difficulty |
-| Depth support table | Difficulty coverage plan |
-| Per-depth coverage | Coverage at every difficulty level |
-| Per-depth balance | Balance at every difficulty level |
+| Per-depth coverage | Coverage at every task reasoning step count |
+| Per-depth balance | Balance at every task reasoning step count |
 
-A domain term may appear in the PRD. An internal term must not. If a product
-document needs an internal concept, use the domain term or describe the
-user-visible outcome.
+`Conditional release share` is a calculation detail for the technical
+specification and has no domain equivalent.
 
 ## 2. How terms compose
 
@@ -79,9 +72,6 @@ magic word.
 | Task reasoning step | task + reasoning + step | A task clue step or a task answer step. |
 | Task solution sequence | task + solution + sequence | The ordered task clue steps and task answer step that solve the task. |
 | Task reasoning depth | task + reasoning + depth | The number of task reasoning steps a task requires. |
-| Difficulty step | difficulty + step | One step of reasoning a task requires. |
-| Difficulty level | difficulty + level | A step-count group used to describe difficulty. |
-| Difficulty coverage plan | difficulty + coverage + plan | The published support table by difficulty level. |
 | Clue type | clue + `type` | The category of condition a task clue states. |
 | Answer meaning | answer + meaning | What the answer is about. |
 | Answer format | answer + format | The form of the answer. |
@@ -135,12 +125,8 @@ Terms that were replaced because they were not composed from the domain:
 - The ordered steps that solve the task are the **task solution sequence**.
 - The form of the answer is the **answer format**.
 - Target category is a **coverage** dimension. Clue type, answer meaning, and
-  answer format are **coverage and balance** dimensions. Difficulty uses the
-  target mix.
-- The PRD uses **difficulty**, **difficulty step**, **difficulty level**, and
-  **difficulty coverage plan**. Technical documents may use **task reasoning
-  depth**, **task reasoning step**, and **depth support table** for the same
-  concepts. Internal terms do not appear in the PRD.
+  answer format are **coverage and balance** dimensions. Task reasoning depth
+  uses the target mix.
 
 There are no task types, task families, or task patterns. The old generator used
 hard-coded task families; the replacement chooses a task target and a task
@@ -149,8 +135,7 @@ solution sequence from the CAD graph.
 Coverage and balance are checked per task reasoning depth. Target category has
 per-depth coverage and a release-level cap. Clue type, answer meaning, and
 answer format are balanced per depth and over the release, using the conditional
-release share. A value may not be concentrated at one depth. In public text,
-say "at every difficulty level."
+release share. A value may not be concentrated at one depth.
 
 ## 5. Terms to avoid
 
@@ -169,9 +154,10 @@ These words caused ambiguity in the previous documentation:
 - **`question`** for the whole task rather than the interrogative sentence;
 - **`type`** or **`pattern`** as a way to group tasks; use clue type and answer meaning.
 
-In product text, use the domain term:
+In product text, do not use internal terms:
 
-- **`depth`** for difficulty level;
-- **`depth support table`** for difficulty coverage plan;
-- **`task reasoning depth`** for difficulty;
-- **`task reasoning step`** for difficulty step.
+- **`per-depth coverage`** or **`per-depth balance`**; say coverage or balance at
+  every task reasoning step count;
+- **`conditional release share`**; it is a technical calculation detail;
+- **`CAD graph element`** or **`graph entity`**; say CAD graph when the product
+  needs the concept.
