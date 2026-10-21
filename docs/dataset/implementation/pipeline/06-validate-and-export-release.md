@@ -14,12 +14,17 @@ Artifact ownership: [`../artifacts.md`](../artifacts.md).
 - Check that the prompt is answer-free.
 - Check that task and answer rows are 1:1.
 - Check split isolation by CADEvolve program family.
-- Check the transfer overlap: exact normalized program text at P0; same-CAD-model
-  check at P1.
+- Check the transfer overlap: exact normalized program text at P0; the P1
+  same-CAD-model check is Q1 below.
 - Write `release.parquet`, `failures.parquet`, `manifest.json`, and
   `dataset-card.md`.
 - Copy the embedded support JSON files into `support/` and record their hashes in
   the manifest.
+
+## Open questions
+
+- **Q1** (P1). How is same-CAD-model transfer overlap checked: AST-normalized
+  program hash, CadQuery shape comparison, or both?
 
 ## Not here
 

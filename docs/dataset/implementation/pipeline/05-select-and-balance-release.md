@@ -1,7 +1,7 @@
 # Pipeline stage 05 — Select and balance release
 
 **Purpose:** select tasks into a release that meets the size, coverage, balance,
-split, coverage, balance, and implementation-scope constraints.
+split, and implementation-scope constraints.
 
 **Input/output contract:** [`io-contracts.md`](io-contracts.md).
 

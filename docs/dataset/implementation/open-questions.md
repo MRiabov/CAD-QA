@@ -37,7 +37,10 @@ when it is resolved.
 - [ ] Selection strategy: enumerate-and-cut or quota planning — [open questions](pipeline/05-select-and-balance-release.md#open-questions).
 - [ ] Conditional release share allocation — [open questions](pipeline/05-select-and-balance-release.md#open-questions).
 
+## 06 — Validate and export release
+
+- [ ] P1 same-CAD-model transfer-overlap check — [open questions](pipeline/06-validate-and-export-release.md#open-questions).
+
 ## None
 
 - `01` has no open questions.
-- `06` has no open questions.

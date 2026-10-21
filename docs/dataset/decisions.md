@@ -128,15 +128,16 @@ prefix is `DS-`.
 
 ## DS-09 — Warmup and splits
 
-- **Status:** accepted (2026-10-21).
+- **Status:** accepted (2026-10-21); corrected (2026-10-21).
 - **Context:** A small LLM model needs a lower-step entry point, and evaluation
   must not see training programs.
 - **Decision:** The warmup subset is the 1-step bucket: 5% of tasks, drawn from
-  the same programs and labeled inside the dataset.
-  Training, validation, and test are split by CadQuery program at approximately
-  70/15/15; the same program never appears in more than one part.
+  the same program pool and labeled inside the dataset.
+  Training, validation, and test are split by CADEvolve program family at
+  approximately 70/15/15; the same family never appears in more than one part.
 - **Consequences:** Warmup tasks may be used for training. The test part is never
-  trained on, tuned on, or used to choose an LLM model.
+  trained on, tuned on, or used to choose an LLM model. `DS-26` defines the
+  program-family identity.
 
 ## DS-10 — The next technical deliverable is a task enumeration contract
 
@@ -316,7 +317,7 @@ prefix is `DS-`.
   prompt-only view is derived when a consumer needs one. Parquet is canonical;
   JSONL is an optional export.
 - **Consequences:** The minimum artifacts are `release.parquet`,
-  `manifest.json`, `dataset-card.md`, and `failures.parquet`. No separate answer
+  `manifest.json`, `dataset-card.md`, `failures.parquet`, and `support/`. No separate answer
   table, program table, or evidence table is needed initially. The evaluation
   harness must pass only `prompt` to the LLM model. The structure is defined in
   `requirements/release-dataset-contract.md`.
@@ -370,9 +371,9 @@ prefix is `DS-`.
   Rejections use `failures.parquet`; the release table remains `release.parquet`.
 - **Consequences:** Pipeline stages exchange columnar tables, not JSON rows.
   Large tables are partitioned by program family or release where useful. The release
-  artifacts are `release.parquet`, `failures.parquet`, `manifest.json`, and
-  `dataset-card.md`. Schema versions are recorded in Parquet metadata and the
-  manifest.
+  artifacts are `release.parquet`, `failures.parquet`, `manifest.json`,
+  `dataset-card.md`, and `support/`. Schema versions are recorded in Parquet
+  metadata and the manifest.
 
 ## DS-24 — Start from the prepared CADEvolve Parquet cache
 
