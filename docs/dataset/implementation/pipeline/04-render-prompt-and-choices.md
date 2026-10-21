@@ -16,6 +16,14 @@ and, for multiple choice, the rendered choice set.
   `03`.
 - Emit release rows with the prompt and answer columns.
 
+## Language and parallelism
+
+- **Go:** prompt and choice rendering.
+- Rendering is parallel per task; a task definition is immutable and rendering
+  has no shared mutable state.
+- The release table has one deterministic writer. Parallel output is merged by
+  `task_id`.
+
 ## No rejection
 
 Rendering must not reject a task definition. Choice availability, choice

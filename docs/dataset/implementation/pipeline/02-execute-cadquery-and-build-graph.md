@@ -13,6 +13,17 @@ clues and answers can be checked against.
 | `02b` | Execute CadQuery and capture snapshots or a failure tombstone. | [`02b-execute-cadquery.md`](02b-execute-cadquery.md) |
 | `02c` | Build graph entities, relations, measurements, and evidence. | [`02c-build-cad-graph.md`](02c-build-cad-graph.md) |
 
+## Language and parallelism
+
+- **Python:** `02a` static extraction and `02b` CadQuery execution.
+- **Go:** `02c` graph construction.
+- `02a`, `02b`, and `02c` are parallel per program; each program has independent
+  input and output.
+- `02b` uses a bounded process pool because CadQuery/OCP execution is memory
+  heavy. Do not oversubscribe it.
+- Parallel graph outputs are merged by `program_id`; graph construction does not
+  mutate shared state.
+
 ## Why three steps
 
 Static extraction is cheap and can succeed when execution fails. Execution is

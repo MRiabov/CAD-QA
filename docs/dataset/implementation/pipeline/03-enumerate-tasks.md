@@ -27,6 +27,17 @@ program data when the plan has deficits.
 the deficit is filled, the expansion budget is exhausted, or the remaining miss
 is accepted and recorded.
 
+## Language and parallelism
+
+- **Go:** `03a`, `03b`, `03c`; no Python is needed after graph construction.
+- `03a` release planning is a global allocation and is not parallelizable.
+  Family profile building may be parallel per family, with one merge step.
+- `03b` task-definition construction is parallel per program, family, and quota
+  cell. Each batch is independent; accepted definitions are merged with
+  deterministic ordering.
+- `03c` is a serial controller. Its delegated `01b`/`01c`/`02` work is parallel
+  inside those stages.
+
 ## No full enumeration
 
 The valid-task set is not materialized. `03` samples task definitions into a

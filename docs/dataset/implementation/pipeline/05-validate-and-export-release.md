@@ -22,6 +22,14 @@ Artifact ownership: [`../artifacts.md`](../artifacts.md).
 - Copy the generated task reasoning step support JSON files into `support/` and
   record their hashes in the manifest.
 
+## Language and parallelism
+
+- **Go:** validation, manifest, and export.
+- Independent validation checks are parallel per row, program, or program family.
+- The final release write, manifest assembly, and support-table copy are single
+  writer steps.
+- Parallel validation results are reduced into one summary before export.
+
 ## Open questions
 
 - **Q1** (P1). How is same-CAD-model transfer overlap checked: AST-normalized

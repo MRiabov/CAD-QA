@@ -15,6 +15,17 @@ manifest that later pipeline stages can consume.
 | `01d` | Normalize program text, assign stable IDs and hashes. | [`01d-normalize-programs.md`](01d-normalize-programs.md) |
 | `01e` | Write counts, provenance, hashes, and rejects. | [`01e-write-external-dataset-manifest.md`](01e-write-external-dataset-manifest.md) |
 
+## Language and parallelism
+
+- **Go:** `01a`, `01b`, `01c`, `01e`.
+- **Python:** `01d` only, because normalization needs the Python tokenizer and AST.
+- `01a` metadata reading is parallel over row groups or shards.
+- `01c` fetching is parallel over selected IDs or range reads.
+- `01d` normalization is parallel per program through a Python worker pool.
+- `01b` selection and `01e` manifest writing are global reductions with a single
+  writer; they are not clearly parallelizable.
+- Parallel outputs are merged by stable program ID.
+
 ## Dataset semantics
 
 CADEvolve-3L has three tiers:

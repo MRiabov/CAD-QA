@@ -25,6 +25,33 @@ of these exceptions.
 Pipeline stage contracts are language-agnostic. The language boundary does not
 change their models.
 
+## Parallelism
+
+The Go entry point owns orchestration and worker pools. Python work runs in
+separate processes; it is never loaded into the Go process.
+
+Clearly parallel per program:
+
+- `01c` fetch;
+- `01d` normalize;
+- `02a` static extraction;
+- `02b` CadQuery execution, bounded by OCP memory;
+- `02c` graph construction;
+- `03b` task-definition construction;
+- `04` prompt and choice rendering.
+
+Global or mostly serial:
+
+- `01b` selection, because quotas and caps are global;
+- `01e` external manifest writing;
+- `03a` release planning;
+- `03c` deficit control loop;
+- `05` final export, manifest assembly, and support-table copy.
+
+`05` may run validation checks in parallel, but the release write is single
+writer. Parallel output is always merged by a stable key so reruns are
+deterministic.
+
 ## Process boundary
 
 The Go entry point invokes Python workers. Bulk data crosses the boundary as
