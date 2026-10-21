@@ -48,6 +48,7 @@ not product requirements.
 | Document | What it defines |
 |---|---|
 | [`implementation/README.md`](implementation/README.md) | Scope of implementation docs and where to start. |
+| [`implementation/python-and-golang.md`](implementation/python-and-golang.md) | The Python and Go language boundary for the dataset generator. |
 
 #### Pipeline
 

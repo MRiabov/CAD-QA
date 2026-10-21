@@ -40,5 +40,3 @@ Sub-steps have their own typed models in their parent pipeline stage doc.
   set.
 - A `ReleaseTable` has one row per task and exactly one answer set per task.
 - Answer columns never appear in the prompt.
-- Python workers and Go dataset code exchange only serialized, versioned
-  contract models; they do not share process memory.

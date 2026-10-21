@@ -352,7 +352,7 @@ prefix is `DS-`.
   Python program normalization. The CLI, orchestration, manifests, graph
   assembly, task enumeration, prompt and choice assembly, release selection,
   validation, and export are Go. The boundary is defined in
-  `implementation/README.md`.
+  `implementation/python-and-golang.md`.
 - **Consequences:** The Go entry point invokes Python workers through typed,
   versioned artifacts. Go code does not import CadQuery or OCP. Python code does
   not own release state. New Python code outside the allowed list needs a
