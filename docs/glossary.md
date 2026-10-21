@@ -466,6 +466,7 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | Don't say | Say | Why |
 |---|---|---|
 | source | CadQuery program | bare noun; "source" of what? |
+| universe | valid-task set, or the named set | metaphor; name the set instead |
 | source corpus | External dataset | unqualified; it is a dataset published outside CAD-QA |
 | mix-format | Mixed training dataset | a blend, not a dataset; name it `mixed_dataset_<composition>` |
 | mix-full | Mixed training dataset | a blend, not a dataset; name it `mixed_dataset_<composition>` |

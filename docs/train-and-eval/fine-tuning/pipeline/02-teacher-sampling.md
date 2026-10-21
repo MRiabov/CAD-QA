@@ -29,7 +29,7 @@ task family; on the order of hundreds of combinations) — because a combination
 produces cannot be learned (the recorded `json`/`number` zero-coverage defect).
 
 The coverage gate is enforced **offline** as the **dataset release report projected onto the sampling log**. It
-consumes the universe the dataset already commits to — intended release families
+consumes the set the dataset already commits to — intended release families
 (`dataset/query/family_specs.yaml`;
 `dataset/query/family_manifest.py::intended_family_coverage_report`) plus hop/scope coverage
 (`dataset/release/release_report.py::release_balance_report`) — and reuses the same `_prompt_family()`
@@ -65,15 +65,15 @@ OPENROUTER_API_KEY=... uv run python train_and_eval/train/rejection_sample.py \
 ## Open questions
 
 - **Q1.** Coverage gate grain. *Direction:* the coverage gate is the **dataset release report projected onto the
-  sampling log** (consume the intended-family/hop/scope universe from `intended_family_coverage_report` +
+  sampling log** (consume the intended-family/hop/scope set from `intended_family_coverage_report` +
   `release_balance_report`; reuse `_prompt_family()`; report `passes_*_sampling_coverage`) — not a new
   taxonomy. *Open:* key an agent training trace by the row's **primary measurement scope**, or **expand**
-  each row into every `(relation_family × measurement_scope)` membership (a fatter universe)? This is a
+  each row into every `(relation_family × measurement_scope)` membership (a larger set)? This is a
   **gain** question, not a cost one: extra traces are cheap (~$10–25 per 1,000 off-peak, less via the
   `:batch` endpoint; `../training.md` §5.3), so decide on (1) the **incremental gain**, measurable only if
   the evaluation datasets cover the extra combinations, and (2) whether those combinations are
   **learnable** (FT-D15/Bridge). **Provisional: scope
-  to the lower universe (primary scope)** until a measurable gain appears; measure first on the small test
+  to the smaller set (primary scope)** until a measurable gain appears; measure first on the small test
   GPU (Modal, per-second, free credits), then scale.
 - **Q2.** Teacher settings (temperature, attempts per row). The recorded **~23% success rate was the v4
   preview**; v4.1 is materially stronger, so re-measure success and per-combination coverage.

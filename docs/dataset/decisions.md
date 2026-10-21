@@ -143,11 +143,11 @@ prefix is `DS-`.
 - **Status:** accepted direction (2026-10-21); details open.
 - **Context:** The dimensions and balance rules do not define the set of tasks.
   "Enumerate all tasks" is ambiguous until the task identity, the valid-task
-  universe, and the selection of the release are defined.
+  set, and the selection of the release are defined.
 - **Decision:** The next specification defines: the task tuple and canonical
-  identity; the valid-task universe versus the release subset; the validity
+  identity; the valid-task set versus the release subset; the validity
   oracle; exact task reasoning step count accounting; the typed clue predicate
-  schema; the answer meaning to answer format map; support as existence in the universe; the
+  schema; the answer meaning to answer format map; support as existence in the valid-task set; the
   release selection algorithm; and deterministic ordering, deduplication,
   serialization, and split assignment.
 - **Consequences:** Implementation should not start from the current

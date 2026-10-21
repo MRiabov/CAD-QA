@@ -8,7 +8,7 @@ clues, task reasoning step count, canonical identity, and gold answer.
 ## Scope
 
 - Define the task tuple and canonical identity.
-- Define the valid-task universe.
+- Define the valid-task set.
 - Define exact task reasoning step accounting.
 - Define the typed clue predicate schema.
 - Resolve the gold answer and its evidence.

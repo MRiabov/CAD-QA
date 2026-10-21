@@ -23,9 +23,9 @@ split, and priority constraints.
     deterministic output, not the strategy.
 
 - **Q3.** Is the conditional release share computed from the valid-task
-  universe, or allocated from the global targets before selection?
+  set, or allocated from the global targets before selection?
   - **Recommendation:** Option B: allocate quotas from the global targets, then
-    fill from the universe.
+    fill from the valid-task set.
 
 ## Not here
 
