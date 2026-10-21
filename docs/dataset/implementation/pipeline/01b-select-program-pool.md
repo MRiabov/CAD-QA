@@ -24,13 +24,15 @@ For P0/P1, select from C only:
    `void_cut`, `kernel_face_selector`, `kernel_edge_selector`,
    `profile_polyline`, and `path_curve`. Select all available if a tag has fewer
    than 50.
-7. Treat `kernel_vertex_selector` as best effort: select all available, up to
-   50.
-8. Select 1,500 active programs. Select the next 300–450 by the same policy as
+7. Select 1,500 active programs. Select the next 300–450 by the same policy as
    reserve.
 
 The policy is deterministic for a given cache revision, seed, and metadata
 schema. It records unmet quotas instead of silently under-filling.
+
+The cache also has a rare `kernel_vertex_selector` tag. It is diagnostic, not a
+quota: only 89 C records carry it, and requiring a fixed minimum would consume
+almost all of them.
 
 ## Behavior
 
