@@ -153,6 +153,11 @@ There is no fixed set of question shapes to instantiate. A task is produced by
 choosing a task target, a set of task clues, and an answer format from the CAD
 graph.
 
+Enumerating every combination of target, clue type, answer meaning, answer
+format, and depth would be limiting and useless: it would ask an engineer to
+write logic for each possible combination. The generator composes these
+dimensions instead.
+
 The task's properties are recorded for coverage and balance:
 
 - task target category;

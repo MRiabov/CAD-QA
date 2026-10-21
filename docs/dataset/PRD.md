@@ -128,8 +128,13 @@ meanings, answer formats, depth rules, and the precise description of a task, is
 [`task-structure.md`](task-structure.md).
 
 A task is described by its task target, task clues, answer format, answer
-meaning, and task reasoning depth. The dataset does not use task families, task types, or task patterns. Coverage and balance are reported by clue type, answer
+meaning, and task reasoning depth. The dataset does not use task families,
+task types, or task patterns. Coverage and balance are reported by clue type, answer
 meaning, answer format, and task reasoning depth.
+
+The dataset is not a list of predefined task types. Enumerating every
+combination of clue type, answer meaning, and depth would be limiting and would
+force per-combination logic. The generator composes these dimensions instead.
 
 New combinations of task target, task clues, answer format, and answer meaning
 may be added if they follow the structure and meet the same quality rules.
