@@ -59,19 +59,6 @@ product requirements.
     quota in those proportions, fill from the universe, and report a conflict if
     the universe cannot fill a cell. This avoids the circular definition.
 
-- **Q4.** Which answer formats are valid for each answer meaning?
-  - **Option A — one answer format per answer meaning.** Simple, but identity
-    would be limited to multiple choice.
-  - **Option B — a compatibility table.** Each answer meaning lists its allowed
-    answer formats.
-  - **Option C — the generator chooses any format.** Flexible, but hard to
-    audit.
-  - **Recommendation:** B. Example mapping: identity -> multiple choice;
-    volume, area, length, distance, angle -> number; count or rank -> integer;
-    membership or validity -> yes or no; position -> 3D coordinate; extent ->
-    bounding box; CadQuery workplane state -> structured object; material change
-    -> number; topology change -> structured object.
-
 - **Q5.** When is a task a duplicate of another task?
   - **Option A — canonical tuple.**
     `(program, target entity, clue sequence, task answer step, answer format)`.
@@ -82,3 +69,15 @@ product requirements.
     clues, and answer but multiple choice vs number are two tasks. The same
     tuple rendered twice is one task. The same prompt text with two different
     answers is an ambiguity defect, not two tasks.
+
+## 3. Resolved questions
+
+- **Q4.** *Resolved 2026-10-21.* Multiple choice is valid for every answer
+  meaning. It is a presentation wrapper: it changes the return syntax and the
+  choices, not the answer meaning or the correct answer. The native formats
+  remain: identity -> multiple choice; volume, area, length, distance, angle,
+  material change -> number; count or rank -> integer; membership or validity
+  -> yes or no; position -> 3D coordinate; extent -> bounding box;
+  CadQuery workplane state -> structured object; topology change -> integer or
+  structured object. Every answer meaning may also use multiple choice when enough choices
+  can be generated.

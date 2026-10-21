@@ -99,11 +99,14 @@ When the answer format is multiple choice, P0 and P1 require:
 - at least five choices, with seven as the goal;
 - labels `A`, `B`, `C`, and so on;
 - the correct choice present;
-- every choice drawn from the same task target category;
-- every choice described by a distinguishing geometric or construction property,
-  never by a variable name or an internal identifier;
-- every description unique;
-- no description containing the answer or saying that it is correct;
+- every choice a valid answer in the same answer space: same target category
+  for identity, same unit and precision for numbers, same frame for coordinates,
+  and the documented fields for structured answers;
+- for identity choices, describe each by a distinguishing geometric or
+  construction property, never by a variable name or an internal identifier;
+- every choice unique;
+- no choice description saying that it is correct or explaining how to select
+  it;
 - every choice a real candidate from the construction, not padding;
 - a deterministic order.
 
@@ -230,9 +233,9 @@ Before a prompt is accepted:
     different measurement, or an off-by-one count. Validate the result against
     the same graph, then order the choices by a stable hash.
   - **Recommendation:** C. For a multi-step task, a distractor should satisfy
-    most task clues and fail at least one. For a one-step task, use a
-    same-category neighbor. “80% correct” is a useful heuristic, not a literal
-    threshold. The generator must be able to state why each distractor is wrong.
-    If enough plausible distractors cannot be generated, reject the task.
-    P0 and P1 do not require this near-miss audit; they require real, unique,
-    non-leaking choices.
+    most task clues and fail at least one. For a one-step task, use a neighbor in
+    the same answer space: another entity for identity, another value for a
+    measurement. “80% correct” is a useful heuristic, not a literal threshold.
+    The generator must be able to state why each distractor is wrong. If enough
+    plausible distractors cannot be generated, reject the task. P0 and P1 do not
+    require this near-miss audit; they require real, unique, non-leaking choices.
