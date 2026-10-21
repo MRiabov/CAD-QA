@@ -17,17 +17,17 @@ the user-visible outcome.
 | **Question** | Domain | The interrogative sentence in the prompt. It is not the whole task. |
 | **Clue type** | Domain | The category of condition a task clue states: property, relation, comparison, aggregation, provenance, or chain. |
 | **Answer meaning** | Domain | What the answer is about, independent of how it is returned: identity, volume, area, length, distance, angle, count, rank, membership, position, extent, CadQuery workplane state, material change, topology change, or validity. |
-| **Depth support table** | Domain | The release artifact that records which dimension values can occur at each task reasoning step count, and why an unsupported value cannot occur there. |
-| **Per-depth coverage** | Internal | Every value supported at a task reasoning step count appears at that count. |
-| **Conditional release share** | Internal | A value's share among the values supported at a task reasoning step count, used as the comparison base for per-depth balance. |
-| **Per-depth balance** | Internal | For clue type, answer meaning, and answer format, a supported value's share at a task reasoning step count is between half and twice its conditional release share. |
+| **Task reasoning step support table** | Domain | The release artifact that records which dimension values can occur at each task reasoning step count, and why an unsupported value cannot occur there. |
+| **Task reasoning step count coverage** | Internal | Every value supported at a task reasoning step count appears at that count. |
+| **Conditional release share** | Internal | A value's share among the values supported at a task reasoning step count, used as the comparison base for task reasoning step count balance. |
+| **Task reasoning step count balance** | Internal | For clue type, answer meaning, and answer format, a supported value's share at a task reasoning step count is between half and twice its conditional release share. |
 | **Task target** | Domain | The entity or value the task asks about. |
 | **Task target category** | Domain | The category of the task target. It is a coverage dimension, not a percentage-balance dimension at each task reasoning step count. |
 | **Task clue** | Domain | One public sentence in the prompt that states a condition the answer must satisfy. |
 | **Task clue step** | Domain | The hidden graph operation that applies one task clue and reduces the set of possible answers. |
 | **Task answer step** | Domain | The hidden operation that produces the answer once the task target is identified. |
 | **Task reasoning step** | Domain | A task clue step or a task answer step. |
-| **Task reasoning depth** | Domain | The number of task reasoning steps a task requires. |
+| **Task reasoning step count** | Domain | The number of task reasoning steps a task requires. |
 | **Task solution sequence** | Domain | The ordered task clue steps and task answer step that solve the task. |
 | **Answer format** | Domain | The form of the answer: multiple choice, variable name, number, integer, yes or no, 3D coordinate, bounding box, or structured object. |
 | **Multiple-choice choices** | Domain | The short list of options shown for a multiple-choice answer. |
@@ -50,8 +50,8 @@ the user-visible outcome.
 
 | Internal term | Domain term |
 |---|---|
-| Per-depth coverage | Coverage at every task reasoning step count |
-| Per-depth balance | Balance at every task reasoning step count |
+| Task reasoning step count coverage | Coverage at every task reasoning step count |
+| Task reasoning step count balance | Balance at every task reasoning step count |
 
 `Conditional release share` is a calculation detail for the technical
 specification and has no domain equivalent.
@@ -71,7 +71,7 @@ magic word.
 | Task answer step | task + answer + step | The hidden step that produces the task answer. |
 | Task reasoning step | task + reasoning + step | A task clue step or a task answer step. |
 | Task solution sequence | task + solution + sequence | The ordered task clue steps and task answer step that solve the task. |
-| Task reasoning depth | task + reasoning + depth | The number of task reasoning steps a task requires. |
+| Task reasoning step count | task reasoning + step count | The number of task reasoning steps a task requires. |
 | Clue type | clue + `type` | The category of condition a task clue states. |
 | Answer meaning | answer + meaning | What the answer is about. |
 | Answer format | answer + format | The form of the answer. |
@@ -105,7 +105,7 @@ Terms that were replaced because they were not composed from the domain:
 | `question family` | removed; use clue type and answer meaning |
 | `target` | task target |
 | `clue` | task clue |
-| `hop count` | task reasoning step count, or task reasoning depth |
+| `hop count` | task reasoning step count |
 | `dataset row` | task, or dataset entry |
 | `candidate` | multiple-choice choice (public), or possible answer (hidden) |
 | `release` | dataset release |
@@ -125,17 +125,18 @@ Terms that were replaced because they were not composed from the domain:
 - The ordered steps that solve the task are the **task solution sequence**.
 - The form of the answer is the **answer format**.
 - Target category is a **coverage** dimension. Clue type, answer meaning, and
-  answer format are **coverage and balance** dimensions. Task reasoning depth
-  uses the target mix.
+  answer format are **coverage and balance** dimensions. Task reasoning step
+  count uses the target mix.
 
 There are no task types, task families, or task patterns. The old generator used
 hard-coded task families; the replacement chooses a task target and a task
 solution sequence from the CAD graph.
 
-Coverage and balance are checked per task reasoning depth. Target category has
-per-depth coverage and a release-level cap. Clue type, answer meaning, and
-answer format are balanced per depth and over the release, using the conditional
-release share. A value may not be concentrated at one depth.
+Coverage and balance are checked at each task reasoning step count. Target
+category has coverage at each task reasoning step count and a release-level cap.
+Clue type, answer meaning, and answer format are balanced at each task reasoning
+step count and over the release, using the conditional release share. A value
+may not be concentrated at one task reasoning step count.
 
 ## 5. Terms to avoid
 
@@ -152,12 +153,33 @@ These words caused ambiguity in the previous documentation:
 - **`stage`** without saying pipeline stage or training stage;
 - **`gate`** without naming the requirement;
 - **`question`** for the whole task rather than the interrogative sentence;
-- **`type`** or **`pattern`** as a way to group tasks; use clue type and answer meaning.
+- **`type`** or **`pattern`** as a way to group tasks; use clue type and answer meaning;
+- **`reasoning depth`** for task reasoning step count; **depth** is also a CAD
+  measurement.
 
 In product text, do not use internal terms:
 
-- **`per-depth coverage`** or **`per-depth balance`**; say coverage or balance at
-  every task reasoning step count;
+- **`task reasoning step count coverage`** or **`task reasoning step count
+  balance`**; say coverage or balance at every task reasoning step count;
+- **`reasoning depth`**; say task reasoning step count;
 - **`conditional release share`**; it is a technical calculation detail;
 - **`CAD graph element`** or **`graph entity`**; say CAD graph when the product
   needs the concept.
+
+## 6. 3D model terms and software terms
+
+A 3D model term and a software or code term are different terms even when they
+share a word. Qualify the term with its domain; do not use a 3D word as a
+metaphor for a software concept.
+
+| Shared word | 3D model term | Software, code, or reasoning term |
+|---|---|---|
+| `depth` | cut depth, hole depth | task reasoning step count |
+| `edge` | CAD edge | graph edge |
+| `feature` | CAD feature | software feature |
+| `path` | CadQuery path | file path |
+| `profile` | CadQuery profile | performance profile |
+| `vertex` | CAD vertex | graph vertex |
+
+The reasoning measure is **task reasoning step count**, never "reasoning depth,"
+because **depth** is already a CAD measurement.

@@ -180,7 +180,7 @@ What is the volume of material removed by an operation?
 Return exactly one number.
 ````
 
-Answer: `25.132741` (the volume of a cylinder of radius 2 and depth 2).
+Answer: `25.132741` (the volume of a cylinder of radius 2 and cut depth 2).
 
 The question names the task target category and asks for the measurement. The
 task clue names the operation. The answer instruction asks for the number. The

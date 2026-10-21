@@ -44,6 +44,20 @@ invents a new word, it is wrong — the word should already be here, or be added
   added or changed with the owner's agreement, never autonomously.
 - Don't-say words appear only in the *Don't say* table and in never-say listings. A docs
   sweep replaces don't-say usage with the Say term until the checkers are green.
+- **Separate 3D model terms from software terms.** A 3D model term and a software or
+  code term are different terms even when they share a word. Qualify the term with its
+  domain, and do not use a 3D word as a metaphor for a software concept. For example,
+  **depth** is a CAD measurement (`cut depth`, `hole depth`); the reasoning measure is
+  **task reasoning step count**, never "reasoning depth."
+
+| Shared word | 3D model term | Software, code, or reasoning term |
+|---|---|---|
+| depth | cut depth, hole depth | task reasoning step count |
+| edge | CAD edge | graph edge |
+| feature | CAD feature | software feature |
+| path | CadQuery path | file path |
+| profile | CadQuery profile | performance profile |
+| vertex | CAD vertex | graph vertex |
 
 ---
 
@@ -226,7 +240,9 @@ The verifier-backed correct answer for a CAD-QA dataset row.
 
 The number of reasoning steps a CAD-QA dataset row requires. `In code:` `logical_hop_count`
 on the row, `hop_count` on the Gold query program — one concept under two names, a
-divergence to unify.
+divergence to unify. `Distinct from:` **task reasoning step count**, the dataset
+terminology's clearer name; the glossary will adopt it when that terminology is
+merged. **depth** is a CAD measurement and is not used for this count.
 
 #### Syntactic reasoning hop count
 

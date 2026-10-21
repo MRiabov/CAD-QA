@@ -32,7 +32,7 @@ yet.
 | Document | What it defines |
 |---|---|
 | [`PRD.md`](PRD.md) | What the user gets, what the dataset must contain, quality promises, size, splits, deliverables, and priorities. |
-| [`task-structure.md`](task-structure.md) | The dimensions of a task, coverage and balance at every task reasoning depth, clue types, answer meanings, depth rules, and uniqueness rules. |
+| [`task-structure.md`](task-structure.md) | The dimensions of a task, coverage and balance at every task reasoning step count, clue types, answer meanings, task reasoning step count rules, and uniqueness rules. |
 | [`prompt-content.md`](prompt-content.md) | What the LLM model sees: program text, question, task clues, choices, and answer instruction. |
 | [`graph-content.md`](graph-content.md) | The graph elements the tasks rely on: graph entities, relations, measurements, states, and evidence. |
 | [`terminology.md`](terminology.md) | Proposed terms, replacements for old terms, and naming decisions that still need owner approval. |

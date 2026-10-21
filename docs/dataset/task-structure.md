@@ -11,7 +11,7 @@ the prompt; it is not the whole task.
 
 The previous list mixed several different things:
 
-- "Direct lookup" described task reasoning depth.
+- "Direct lookup" described task reasoning step count.
 - "Give a coordinate" described an answer format.
 - "Measure a distance" described a measurement.
 - "Follow a chain" described a chain of task clues.
@@ -129,23 +129,23 @@ number; a membership result can be returned as yes or no; an identity can be
 returned as a variable name or a multiple-choice label; a position can be
 returned as a 3D coordinate; an extent can be returned as a bounding box.
 
-### 2.5 Task reasoning depth
+### 2.5 Task reasoning step count
 
-Task reasoning depth is the number of task reasoning steps a task requires:
+Task reasoning step count is the number of task reasoning steps a task requires:
 
 - **Task clue step**: applies one task clue and reduces the set of possible answers.
 - **Task answer step**: produces the answer once the task target is identified.
 - **Task reasoning step**: either a task clue step or a task answer step.
 
-The depth is the number of task clue steps plus one if the task needs a task
+The step count is the number of task clue steps plus one if the task needs a task
 answer step. For example:
 
 - A task that names the target and asks for its volume has one task answer
-  step, so depth 1.
+  step, so step count 1.
 - A task with two task clues and a count answer has two task clue steps and one
-  task answer step, so depth 3.
+  task answer step, so step count 3.
 
-The depth is computed from the actual task solution sequence, not from a label.
+The step count is computed from the actual task solution sequence, not from a label.
 
 ## 3. There are no task types or task patterns
 
@@ -155,7 +155,7 @@ choosing a task target, a set of task clues, and an answer format from the CAD
 graph.
 
 Enumerating every combination of target, clue type, answer meaning, answer
-format, and depth would be limiting and useless: it would ask an engineer to
+format, and task reasoning step count would be limiting and useless: it would ask an engineer to
 write logic for each possible combination. The generator composes these
 dimensions instead.
 
@@ -167,17 +167,18 @@ The task's properties are recorded for different reasons:
 | Task clue type | Coverage and balance |
 | Answer meaning | Coverage and balance |
 | Answer format | Coverage and balance |
-| Task reasoning depth | Coverage and depth mix |
+| Task reasoning step count | Coverage and mix across task reasoning step counts |
 | Uniqueness rule | Quality |
 | Geometry requirement | Quality |
 
 Those properties do not create separate generation paths. A new combination of
 properties does not require a new code path.
 
-Coverage and balance are checked **inside each task reasoning depth**, not only
+Coverage and balance are checked **at each task reasoning step count**, not only
 over the whole release. A global target may not be met by concentrating a value
-at one depth. The technical specification records a depth support table that
-states which values can occur at each depth.
+at one task reasoning step count. The technical specification records a **task
+reasoning step support table** that states which values can occur at each step
+count.
 
 ## 4. Describing a task
 
@@ -189,7 +190,7 @@ task from it. It must state:
 - the answer format;
 - the answer meaning;
 - the task answer step, if any;
-- the task reasoning depth;
+- the task reasoning step count;
 - the uniqueness rule;
 - the geometry requirement.
 
@@ -214,33 +215,36 @@ that does not satisfy the uniqueness rule is not generated.
 
 ## 5. Coverage
 
-Coverage is checked per task reasoning depth. For each depth in the release, the
+Coverage is checked at each task reasoning step count. For each step count in
+the release, the
 dataset must contain:
 
-- every task target category supported at that depth;
-- every task clue type supported at that depth;
-- every answer meaning supported at that depth;
-- every answer format supported at that depth;
-- both syntax-based and geometry-based steps where supported at depths that
-  have steps, with geometry required for benchmark tasks.
+- every task target category supported at that task reasoning step count;
+- every task clue type supported at that task reasoning step count;
+- every answer meaning supported at that task reasoning step count;
+- every answer format supported at that task reasoning step count;
+- both syntax-based and geometry-based steps where supported, with geometry
+  required for benchmark tasks.
 
-A **depth support table** records which values can occur at each depth and why
-an unsupported value cannot occur there. It is part of the release documentation
+A **task reasoning step support table** records which values can occur at each
+step count and why an unsupported value cannot occur there. It is part of the release documentation
 and is versioned with the generator. "Supported" is a property of the task
 structure, not of the current generator: a value may be marked unsupported only
-when no valid task can express it at that depth. A value that is valid but not
-implemented is a gap, not an unsupported value.
+when no valid task can express it at that step count. A value that is valid but
+not implemented is a gap, not an unsupported value.
 
-Coverage is reported per depth and per dimension. Global coverage is the union of
-the per-depth reports; it does not replace them. A value that appears only at
-depth 5 does not cover depth 2.
+Coverage is reported at each task reasoning step count and per dimension. Global
+coverage is the union of the task reasoning step count reports; it does not
+replace them. A value that appears only at step count 5 does not cover step
+count 2.
 
 ## 6. Balance
 
-Balance is also checked per task reasoning depth. The release-level targets
-remain, but they may not be met by concentrating a value at one depth.
+Balance is also checked at each task reasoning step count. The release-level
+targets remain, but they may not be met by concentrating a value at one task
+reasoning step count.
 
-| Dimension | Per-depth coverage | Per-depth balance | Release balance |
+| Dimension | Coverage at each task reasoning step count | Balance at each task reasoning step count | Release balance |
 |---|---|---|---|
 | Task target category | Every supported category appears. | None; coverage only. | No category above 25% of tasks. |
 | Answer format | Every supported format appears. | Between half and twice its conditional release share. | Each format 5-25% of tasks. |
@@ -250,27 +254,27 @@ remain, but they may not be met by concentrating a value at one depth.
 Answer format and answer meaning shares are over tasks. Clue type shares are
 over task clues, because one task can contain several task clues.
 
-The **conditional release share** of a value at a depth is its share among the
-values supported at that depth, not its share of the whole release. This makes
-the check possible when a depth supports only some values. For example, if
-`identity` is 5% of the release and is supported at depth 1, it may not become
-more than 10% of depth 1 tasks.
+The **conditional release share** of a value at a task reasoning step count is
+its share among the values supported at that step count, not its share of the
+whole release. This makes the check possible when a step count supports only
+some values. For example, if `identity` is 5% of the release and is supported at
+step count 1, it may not become more than 10% of step count 1 tasks.
 
-Absolute release percentages are not used inside a depth because support sets
-differ. If depth 1 supports only two answer formats, requiring every format to
-be 5-25% of depth 1 tasks would make the targets impossible to satisfy. The
-conditional share compares like with like.
+Absolute release percentages are not used for one task reasoning step count
+because support sets differ. If step count 1 supports only two answer formats,
+requiring every format to be 5-25% of step count 1 tasks would make the targets
+impossible to satisfy. The conditional share compares like with like.
 
-A depth with zero or one supported value for a dimension is coverage-only for
-that dimension; there is no mix to balance. If half of a value's conditional
+A step count with zero or one supported value for a dimension is coverage-only
+for that dimension; there is no mix to balance. If half of a value's conditional
 release share is less than one task, one task satisfies the lower bound.
 
-Target categories are not percentage-balanced per depth because their
-availability differs by depth. The release-level 25% cap prevents one target
-category from dominating the whole dataset.
+Target categories are not percentage-balanced at each task reasoning step count
+because their availability differs by step count. The release-level 25% cap
+prevents one target category from dominating the whole dataset.
 
-Per-depth coverage and balance can conflict, for example when an answer format
-can express only a few answer meanings. A conflict is reported with the
+Coverage and balance at each task reasoning step count can conflict, for example
+when an answer format can express only a few answer meanings. A conflict is reported with the
 affected values; it is not resolved by silently dropping coverage.
 
 ## 7. What a task is not
@@ -278,10 +282,10 @@ affected values; it is not resolved by silently dropping coverage.
 - An answer format alone, such as "coordinate task".
 - A measurement alone, such as "volume task".
 - A task target alone, such as "face task".
-- A task reasoning depth alone, such as "3-step task".
+- A task reasoning step count alone, such as "3-step task".
 
 Those are properties of a task. A task must state the task target, task clues,
-answer format, answer meaning, and task reasoning depth that tie them together.
+answer format, answer meaning, and task reasoning step count that tie them together.
 
 ## 8. Open questions
 

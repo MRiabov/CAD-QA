@@ -69,7 +69,7 @@ priority.
 | User | What they need |
 |---|---|
 | Researcher or trainer | A dataset that teaches CAD program comprehension and geometry reasoning, with a clear answer key. |
-| Evaluator | A held-out benchmark with several task reasoning depths and a fair way to compare models. |
+| Evaluator | A held-out benchmark with several task reasoning step counts and a fair way to compare models. |
 | Reviewer | Tasks a careful human can read and check, plus a documented answer key. |
 | Dataset maintainer | A dataset that can be regenerated, extended with new tasks, clue types, or answer meanings, and reviewed without redoing everything. |
 
@@ -117,31 +117,31 @@ separate dimensions:
 - the **task clues** the answer must satisfy;
 - the **answer format** the LLM model must return;
 - the **answer meaning** the answer is about;
-- the **task reasoning depth** the task requires.
+- the **task reasoning step count** the task requires.
 
 The previous flat list mixed these dimensions. For example, "direct lookup"
-described depth, "give a coordinate" described an answer format, and "measure a
+described task reasoning step count, "give a coordinate" described an answer format, and "measure a
 distance" described a measurement. Those are not peers.
 
 The full structure, including task target categories, task clue types, answer
-meanings, answer formats, depth rules, and the precise description of a task, is in
+meanings, answer formats, task reasoning step count rules, and the precise description of a task, is in
 [`task-structure.md`](task-structure.md).
 
 A task is described by its task target, task clues, answer format, answer
-meaning, and task reasoning depth. The dataset does not use task families,
+meaning, and task reasoning step count. The dataset does not use task families,
 task types, or task patterns. Target category is a coverage dimension.
 Clue type, answer meaning, and answer format are coverage and balance
-dimensions. Task reasoning depth has a coverage and target-mix requirement.
+dimensions. task reasoning step count has a coverage and target-mix requirement.
 
-Coverage and balance are checked at each task reasoning depth, not only over the
-whole release. A value that appears only at one task reasoning depth does not
+Coverage and balance are checked at each task reasoning step count, not only over the
+whole release. A value that appears only at one task reasoning step count does not
 cover the other depths, and a global target may not be met by concentrating a
-value at one task reasoning depth. Target category has no percentage target at
-each task reasoning depth; it has coverage at each depth and a release-level
+value at one task reasoning step count. Target category has no percentage target at
+each task reasoning step count; it has coverage at each task reasoning step count and a release-level
 diversity cap.
 
 The dataset is not a list of predefined task types. Enumerating every
-combination of clue type, answer meaning, and depth would be limiting and would
+combination of clue type, answer meaning, and task reasoning step count would be limiting and would
 force per-combination logic. The generator composes these dimensions instead.
 
 New combinations of task target, task clues, answer format, and answer meaning
@@ -211,12 +211,12 @@ a result on steps 2 through 5 alone.
 
 | ID | Requirement | How the user can tell |
 |---|---|---|
-| **R-7** | The dataset balances answer formats at every depth. | Every answer format in section 5 appears at every depth where it is supported. No format is more than twice or less than half its share among the formats supported at that depth. Over the release, each format is between 5% and 25% of tasks. |
-| **R-8** | The dataset covers all target categories, clue types, and answer meanings. | Every target category, clue type, and answer meaning supported at a depth appears at that depth. A value that is valid but missing is a gap; the depth support table lists only values that cannot occur. |
+| **R-7** | The dataset balances answer formats at every task reasoning step count. | Every answer format in section 5 appears at every task reasoning step count where it is supported. No format is more than twice or less than half its share among the formats supported at that task reasoning step count. Over the release, each format is between 5% and 25% of tasks. |
+| **R-8** | The dataset covers all target categories, clue types, and answer meanings. | Every target category, clue type, and answer meaning supported at a task reasoning step count appears at that task reasoning step count. A value that is valid but missing is a gap; the task reasoning step support table lists only values that cannot occur. |
 | **R-9** | The dataset covers the full difficulty range. | Steps 0 through 5 all appear in the target mix in section 8, with steps 3 and 4 carrying the headline slices. |
 | **R-10** | The dataset is diverse. | It draws from at least one thousand distinct CAD models, and no single CAD model dominates. |
 | **R-11** (P1) | The dataset has varied answers. | At least one thousand different correct answers appear, and no answer is repeated so often that guessing wins. |
-| **R-12** (P1) | The dataset is balanced at every depth. | No clue type is above 25% of clues at a depth or over the release, and no clue type is more than twice or less than half its share among the clue types supported at a depth. Every answer meaning is between 1% and 10% over the release, and no answer meaning is more than twice or less than half its share among the meanings supported at a depth. No target category is above 25% of the release. |
+| **R-12** (P1) | The dataset is balanced at every task reasoning step count. | No clue type is above 25% of clues at a task reasoning step count or over the release, and no clue type is more than twice or less than half its share among the clue types supported at a task reasoning step count. Every answer meaning is between 1% and 10% over the release, and no answer meaning is more than twice or less than half its share among the meanings supported at a task reasoning step count. No target category is above 25% of the release. |
 
 ### 7.3 Splits and reuse
 
@@ -249,13 +249,13 @@ tasks and meet the following targets.
 |---|---|---|
 | Tasks | At least 10,000 | P0 |
 | Distinct CAD models | At least 1,000 | P0 |
-| Target category coverage | Every supported category at every depth | P0 |
+| Target category coverage | Every supported category at every task reasoning step count | P0 |
 | Target category dominance | No category above 25% of tasks | P1 |
-| Answer format coverage | Every supported format at every depth | P0 |
+| Answer format coverage | Every supported format at every task reasoning step count | P0 |
 | Answer format balance | Each 5-25% over the release; mix at each task reasoning step count within the tolerance in `task-structure.md` | P0 |
-| Clue type coverage | Every supported clue type at every depth | P0 |
-| Clue type balance | No clue type above 25% of clues at a depth or over the release; mix at each task reasoning step count within the tolerance in `task-structure.md` | P1 |
-| Answer meaning coverage | Every supported meaning at every depth | P0 |
+| Clue type coverage | Every supported clue type at every task reasoning step count | P0 |
+| Clue type balance | No clue type above 25% of clues at a task reasoning step count or over the release; mix at each task reasoning step count within the tolerance in `task-structure.md` | P1 |
+| Answer meaning coverage | Every supported meaning at every task reasoning step count | P0 |
 | Answer meaning balance | Each 1-10% over the release; mix at each task reasoning step count within the tolerance in `task-structure.md` | P1 |
 | Difficulty | Target mix: 0–1 5%, 2 15%, 3 40%, 4 25%, 5 15% | P0 |
 | Geometry-based tasks | At least 95% | P0 |
@@ -264,8 +264,8 @@ tasks and meet the following targets.
 | Different correct answers | At least 1,000 | P1 |
 | Evidence for the answer | Available for every task | P0 |
 
-The depth target is a mix, not a hard quota. A miss is documented and accepted
-by the owner; it is not hidden by changing the definition of a depth.
+The task reasoning step count mix is a target, not a hard quota. A miss is documented and accepted
+by the owner; it is not hidden by changing the definition of a task reasoning step count.
 
 These are product targets. The technical specification will define how they are
 measured and what happens when a requirement cannot be met.
@@ -321,7 +321,7 @@ change.
 | Validation dataset | Tasks and answer keys for tuning. | P0 |
 | Test dataset | Held-out tasks and answer keys for the final result. | P0 |
 | Warmup subset | Labeled easy tasks for warmup. | P0 |
-| Depth support table | Which target categories, clue types, answer meanings, and answer formats are supported at each depth, and why not. | P0 |
+| Task reasoning step support table | Which target categories, clue types, answer meanings, and answer formats are supported at each task reasoning step count, and why not. | P0 |
 | Dataset card | A plain description of what the dataset contains, how it was made, what it is for, and what it is not for. | P0 |
 | Evaluation material | The answer keys and instructions needed to score an LLM model. | P0 |
 | Documentation | How to reproduce the dataset release and how to review it. | P1 |
@@ -333,16 +333,16 @@ change.
 The dataset is done when:
 
 1. a small sample produces every target category, clue type, answer meaning,
-   and answer format at every depth where it is supported;
+   and answer format at every task reasoning step count where it is supported;
 2. a benchmark dataset release of at least ten thousand tasks meets the
    coverage and balance targets at every task reasoning step count in section 8, or every miss is
    documented and accepted by the owner;
-3. the depth support table is published and reviewed;
+3. the task reasoning step support table is published and reviewed;
 4. a labeled warmup subset exists;
 5. training, validation, and test sets do not share a CAD model;
-6. a reviewer can read sampled tasks covering every depth, target category,
-   clue type, answer meaning, and answer format and understand them without
-   asking what they mean;
+6. a reviewer can read sampled tasks covering every task reasoning step count,
+   target category, clue type, answer meaning, and answer format and understand
+   them without asking what they mean;
 7. the answers can be checked without an LLM in the loop;
 8. the dataset release can be regenerated and the result matches what is
    documented;
@@ -403,11 +403,12 @@ The dataset is done when:
   training material.
 - **Q5** (P1). *Resolved 2026-10-21.* Yes. Every answer format must reach five
   percent; a balanced and diverse dataset is the default.
-- **Q6** (P1). *Resolved 2026-10-21.* Coverage is per depth for target
-  categories, clue types, answer meanings, and answer formats. Balance is per
-  depth and over the release for clue types, answer meanings, and answer
-  formats. Target category is coverage-only per depth, with a release cap.
-  Task reasoning depth uses the target mix in section 8.
+- **Q6** (P1). *Resolved 2026-10-21.* Coverage is at each task reasoning step
+  count for target categories, clue types, answer meanings, and answer formats.
+  Balance is at each task reasoning step count and over the release for
+  clue types, answer meanings, and answer formats. Target category is coverage-only
+  at each task reasoning step count, with a release cap. Task reasoning step
+  count uses the target mix in section 8.
 - **Q8** (P1). *Resolved 2026-10-21.* The same CadQuery programs. The warmup
   subset is a label for easier tasks, not a separate generation path. The
   dataset is designed for curriculum learning.

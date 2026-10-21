@@ -37,7 +37,7 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
 ## DS-03 — Compose tasks; do not enumerate task families, task types, or task patterns
 
 - **Status:** accepted (2026-10-21).
-- **Context:** A flat list of task labels mixed the target, the reasoning depth,
+- **Context:** A flat list of task labels mixed the target, the task reasoning step count,
   the answer format, and the measurement. Enumerating every combination would be
   limiting and would force an engineer to write logic for each combination.
 - **Decision:** A task is composed from separate dimensions: the task target, the
@@ -48,21 +48,23 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
   a flat label list. A new combination of dimensions does not require a new code
   path.
 
-## DS-04 — Check coverage and balance at every task reasoning depth
+## DS-04 — Check coverage and balance at every task reasoning step count
 
 - **Status:** accepted (2026-10-21).
-- **Context:** Global balance can hide a value that is concentrated at one
-  reasoning depth. Absolute percentages inside a depth do not work when each
-  depth supports a different set of values.
-- **Decision:** Coverage is checked at every task reasoning depth: every value
-  supported at that depth must appear. Balance is checked at every depth using a
-  **conditional release share**: a supported value's share at a depth is between
-  half and twice its share among the values supported at that depth. A depth with
-  zero or one supported value for a dimension is coverage-only.
-- **Consequences:** The release needs a depth support table. The technical
-  specification must define how support and the conditional share are computed,
-  and must report conflicts instead of dropping coverage. Target category stays
-  coverage-only at each depth, with a release-level cap.
+- **Context:** Global balance can hide a value concentrated at one task
+  reasoning step count. Absolute percentages for a single step count do not work
+  when each step count supports a different set of values.
+- **Decision:** Coverage is checked at every task reasoning step count: every
+  value supported at that step count must appear. Balance is checked at every
+  step count using a **conditional release share**: a supported value's share at
+  a task reasoning step count is between half and twice its share among the
+  values supported at that step count. A step count with zero or one supported
+  value for a dimension is coverage-only.
+- **Consequences:** The release needs a task reasoning step support table. The
+  technical specification must define how support and the conditional share are
+  computed, and must report conflicts instead of dropping coverage. Target
+  category stays coverage-only at each task reasoning step count, with a
+  release-level cap.
 
 ## DS-05 — Task reasoning step count is the difficulty measure
 
@@ -70,13 +72,13 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
 - **Context:** The previous difficulty targets were mathematically inconsistent,
   and "difficulty level" is ambiguous about what is being counted.
 - **Decision:** A **task reasoning step** is either a task clue step or a task
-  answer step. **Task reasoning depth** is the number of task reasoning steps.
+  answer step. **Task reasoning step count** is the number of task reasoning steps.
   The target mix is: 0–1 steps 5%, 2 steps 15%, 3 steps 40%, 4 steps 25%, and 5
   steps 15%. At least 80% of the release needs three or more task reasoning
   steps. Steps 0 and 1 form the labeled warmup subset.
 - **Consequences:** A 10,000-task release contains about 500 warmup tasks and
   8,000 tasks at three or more steps. Product text says "task reasoning step
-  count" or "task reasoning depth," not "difficulty level."
+  count," not "difficulty level" or "reasoning depth."
 
 ## DS-06 — Answer meaning and answer format are separate
 
@@ -114,12 +116,13 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
 - **Decision:** The terminology document marks each term as **domain** or
   **internal**. Domain terms may appear in the PRD. Internal terms must not;
   product text uses the domain term or describes the user-visible outcome.
-  `task reasoning step`, `task reasoning depth`, `task clue step`, and `task
-  answer step` are domain terms. `per-depth coverage`, `per-depth balance`, and
-  `conditional release share` are internal terms.
-- **Consequences:** The PRD uses task reasoning step count and task reasoning
-  depth. Technical documents may use the internal terms. The terminology is
-  still a proposal; it has not been merged into `docs/glossary.md`.
+  `task reasoning step`, `task reasoning step count`, `task clue step`, and `task
+  answer step` are domain terms. `task reasoning step count coverage`,
+  `task reasoning step count balance`, and `conditional release share` are
+  internal terms.
+- **Consequences:** The PRD uses task reasoning step count. Technical documents
+  may use the internal terms. The terminology is still a proposal; it has not
+  been merged into `docs/glossary.md`.
 
 ## DS-09 — Warmup and splits
 
@@ -141,8 +144,8 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
   universe, and the selection of the release are defined.
 - **Decision:** The next specification defines: the task tuple and canonical
   identity; the valid-task universe versus the release subset; the validity
-  oracle; exact depth accounting; the typed clue predicate schema; the answer
-  meaning to answer format map; support as existence in the universe; the
+  oracle; exact task reasoning step count accounting; the typed clue predicate
+  schema; the answer meaning to answer format map; support as existence in the universe; the
   release selection algorithm; and deterministic ordering, deduplication,
   serialization, and split assignment.
 - **Consequences:** Implementation should not start from the current
@@ -158,7 +161,7 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
   meaning of "required enumeration."
 - **Q2.** Is a chain clue one task reasoning step or one step per relation? Is a
   clue that combines a relation and a property one condition or two? These
-  determine task reasoning depth.
+  determine task reasoning step count.
 - **Q3.** Is the conditional release share computed from the valid-task universe,
   or allocated from the global targets before selection? The current definition
   depends on the release, which is what selection produces.
