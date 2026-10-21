@@ -316,7 +316,7 @@ prefix is `DS-`.
   prompt-only view is derived when a consumer needs one. Parquet is canonical;
   JSONL is an optional export.
 - **Consequences:** The minimum artifacts are `release.parquet`,
-  `manifest.json`, `dataset-card.md`, and `failures.jsonl`. No separate answer
+  `manifest.json`, `dataset-card.md`, and `failures.parquet`. No separate answer
   table, program table, or evidence table is needed initially. The evaluation
   harness must pass only `prompt` to the LLM model. The structure is defined in
   `requirements/release-dataset-contract.md`.
@@ -354,3 +354,22 @@ prefix is `DS-`.
   versioned artifacts. Go code does not import CadQuery or OCP. Python code does
   not own release state. New Python code outside the allowed list needs a
   decision.
+
+## DS-23 — Bulk artifacts are columnar
+
+- **Status:** accepted (2026-10-21).
+- **Context:** Per-row JSON parsing and serialization dominated CPU time, and
+  row-oriented JSON artifacts add IO. Most dataset artifacts have many rows with
+  a stable schema.
+- **Decision:** Parquet is the default for artifacts with many rows. Use typed
+  nested structs and lists for schemas that are known. Do not store bulk
+  artifacts as JSONL or as one JSON string per row. JSON is limited to small
+  control documents and opaque versioned payloads that cannot be typed. JSONL
+  is an optional inspection export, never part of a pipeline stage or release
+  contract.
+  Rejections use `failures.parquet`; the release table remains `release.parquet`.
+- **Consequences:** Pipeline stages exchange columnar tables, not JSON rows.
+  Large tables are partitioned by program or release where useful. The release
+  artifacts are `release.parquet`, `failures.parquet`, `manifest.json`, and
+  `dataset-card.md`. Schema versions are recorded in Parquet metadata and the
+  manifest.

@@ -16,8 +16,8 @@ Artifact ownership: [`../artifacts.md`](../artifacts.md).
 - Check split isolation by program.
 - Check the transfer overlap: exact normalized program text at P0; same-CAD-model
   check at P1.
-- Write `release.parquet`, `manifest.json`, `dataset-card.md`, and
-  `failures.jsonl`.
+- Write `release.parquet`, `failures.parquet`, `manifest.json`, and
+  `dataset-card.md`.
 
 ## Not here
 

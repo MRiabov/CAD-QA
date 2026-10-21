@@ -36,15 +36,17 @@ A release directory contains:
 | `release.parquet` | Release table: prompt and answer columns. | One per task. |
 | `manifest.json` | Release counts, versions, hashes, split counts, and coverage summaries. | One file. |
 | `dataset-card.md` | Human-readable dataset card. | One file. |
-| `failures.jsonl` | Rejected programs and tasks with reasons. | One per rejection; may be empty. |
+| `failures.parquet` | Rejected programs and tasks with reasons. | One per rejection; may be empty. |
 
 `release.parquet` is the release dataset. It contains the gold answer because the
 release is used for training, scoring, and audit. The `prompt` column is the only
 LLM-facing column; the evaluation harness selects that column and does not pass
 the answer columns to the LLM model.
 
-Parquet is canonical. JSONL is an optional export for streaming or inspection;
-it is not a second release format.
+Parquet is canonical. JSONL is an optional export for inspection; it is not a
+second release format. Structured fields with a fixed schema use nested Parquet
+column types; fields whose shape depends on an enum or version remain canonical JSON
+strings.
 
 ## 3. Row count
 

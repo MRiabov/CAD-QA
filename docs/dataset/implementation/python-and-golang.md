@@ -27,7 +27,8 @@ change their models.
 
 ## Process boundary
 
-The Go entry point invokes Python workers. Data crosses the boundary as
-versioned typed artifacts; Go and Python do not share process memory. Go code
+The Go entry point invokes Python workers. Bulk data crosses the boundary as
+versioned Parquet tables; small control documents may use JSON. Go and Python do
+not share process memory. Go code
 does not import CadQuery or OCP. Python code does not own release state. New
 Python code outside this list needs a decision.
