@@ -70,6 +70,13 @@ Every task clue has one of these clue types:
 | Provenance | The task target was created by an operation, uses a CadQuery profile, or sits on a CadQuery workplane. |
 | Chain | The task target is reached through an ordered sequence of relations. |
 
+A comparison task clue may name both entities, or it may refer to one entity
+selected by an earlier task clue. A reference must resolve to exactly one
+entity. If earlier task clues leave several possible entities, the comparison
+must say how it applies to them (for example, "larger than every remaining
+entity") or the task is rejected. The reference does not add a task clue step;
+the comparison is still one task clue.
+
 A task clue may combine a relation with a property, for example "the face adjacent
 to the selected face whose area is larger than the selected face". It is still
 one task clue if it names one condition.
@@ -286,28 +293,25 @@ affected values; it is not resolved by silently dropping coverage.
 Those are properties of a task. A task must state the task target, task clues,
 answer format, answer meaning, and task reasoning step count that tie them together.
 
-## 8. Open questions
+## 8. Resolved questions
 
-- **Q1.** Should a comparison task clue always name both entities, or may one
-  entity be selected by an earlier task clue?
-  - **Option A — name both entities.**
+- **Q1.** *Resolved 2026-10-21: Option C.* A comparison task clue may name both
+  entities or refer to an entity selected by an earlier task clue. Every
+  referenced entity is either named in the program or already in the set of
+  possible answers. A reference to an earlier selected entity must resolve to
+  exactly one entity. If the earlier clue leaves several, the comparison must
+  state an explicit aggregation, or the task is rejected. Prefer the reference
+  form for multi-step tasks and the named form for a self-contained one-step
+  task. This is the same composition pattern as BrowseComp: a later step can
+  build on an earlier result without restating it.
 
-    ```text
-    The area of the face created by `cutBlind` is larger than the area of the
-    face created by `box`.
-    ```
+  ```text
+  The area of the face created by `cutBlind` is larger than the area of the
+  face created by `box`.
+  ```
 
-  - **Option B — refer to the entity selected earlier.**
-
-    ```text
-    1. The selected face is the face created by `cutBlind`.
-    2. The task target is adjacent to the selected face and has a larger area
-       than the selected face.
-    ```
-
-  - **Option C — allow both.**
-  - **Recommendation:** C, with a rule: every referenced entity is either named
-    in the program or already in the candidate set. Prefer B for multi-step
-    tasks; prefer A for a self-contained single-step task. Example: a two-clue
-    task can say “the selected face” in clue 2 because clue 1 selected it. A
-    one-clue task must name the reference face.
+  ```text
+  1. The selected face is the face created by `cutBlind`.
+  2. The task target is adjacent to the selected face and has a larger area
+     than the selected face.
+  ```

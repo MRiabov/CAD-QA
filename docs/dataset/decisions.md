@@ -243,6 +243,26 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
 
 ---
 
+## DS-17 — Comparison clues may name an entity or reuse one selected earlier
+
+- **Status:** accepted (2026-10-21).
+- **Context:** `task-structure.md` Q1 asked whether a comparison task clue must
+  name both entities. BrowseComp-style composition lets a later step use a
+  result from an earlier step, and the dataset needs the same freedom without
+  ambiguous references.
+- **Decision:** A comparison task clue may name both entities or refer to one
+  entity selected by an earlier task clue. Every reference is either named in
+  the program or selected earlier. A reference must resolve to exactly one
+  entity; if earlier clues leave several, the clue needs an explicit aggregation
+  or the task is rejected. The reference does not add a task reasoning step.
+- **Consequences:** A task is evaluated over one CAD graph per program. The
+  per-task evaluation carries the current set of possible answers and bindings
+  for entities selected by earlier clues. It does not need one graph per clue or
+  one graph per solid state; earlier and later solid states and their
+  relationships already live in the same graph.
+
+---
+
 ## Open questions
 
 - **Q1.** Is the release a selected subset of the valid-task universe, or must
