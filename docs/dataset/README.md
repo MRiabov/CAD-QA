@@ -48,6 +48,8 @@ not product requirements.
 | Document | What it defines |
 |---|---|
 | [`implementation/README.md`](implementation/README.md) | Scope of implementation docs and where to start. |
+| [`implementation/artifacts.md`](implementation/artifacts.md) | Who writes and reads each dataset artifact, and how artifacts are versioned. |
+| [`implementation/selection-math.md`](implementation/selection-math.md) | Priority, coverage, balance, split, and release-cap math. |
 | [`implementation/python-and-golang.md`](implementation/python-and-golang.md) | The Python and Go language boundary for the dataset generator. |
 
 #### Pipeline

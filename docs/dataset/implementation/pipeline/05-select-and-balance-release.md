@@ -5,6 +5,8 @@ split, and priority constraints.
 
 **Input/output contract:** [`io-contracts.md`](io-contracts.md).
 
+Selection math: [`../selection-math.md`](../selection-math.md).
+
 ## Scope
 
 - Apply the P0/P1/P2 priority slice.

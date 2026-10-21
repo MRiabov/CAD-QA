@@ -45,6 +45,11 @@ CADEvolve export
   → release.parquet + manifest + dataset card
 ```
 
+## Supporting docs
+
+- Artifact ownership: [`../artifacts.md`](../artifacts.md).
+- Selection math: [`../selection-math.md`](../selection-math.md).
+
 ## What is not here
 
 - Product requirements: [`../../requirements/PRD.md`](../../requirements/PRD.md).

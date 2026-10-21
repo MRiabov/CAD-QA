@@ -13,15 +13,20 @@ The generation pipeline starts at
 between pipeline stages is
 [`pipeline/io-contracts.md`](pipeline/io-contracts.md).
 
-## Language boundary
+## Supporting docs
 
-The boundary between Python and Go is in
-[`python-and-golang.md`](python-and-golang.md).
+| Document | What it defines |
+|---|---|
+| [`artifacts.md`](artifacts.md) | Artifact ownership, identity, and lifecycle. |
+| [`selection-math.md`](selection-math.md) | Priority, coverage, balance, split, and cap math. |
+| [`python-and-golang.md`](python-and-golang.md) | The Python and Go language boundary. |
 
 ## What belongs here
 
 - pipeline stage docs, implementation contracts, and test contracts;
 - typed I/O between pipeline stages;
+- artifact, selection-math, and language-boundary explanations shared across
+  pipeline stages;
 - execution, graph-building, and release-building details.
 
 ## What does not belong here

@@ -6,6 +6,7 @@
 
 Consumer contract:
 [`../../requirements/release-dataset-contract.md`](../../requirements/release-dataset-contract.md).
+Artifact ownership: [`../artifacts.md`](../artifacts.md).
 
 ## Scope
 
