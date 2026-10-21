@@ -9,13 +9,15 @@ A prompt has five parts, in this order:
 
 1. **Program text**: the complete CadQuery program, unchanged except for
    normalization.
-2. **Task statement**: one sentence that names the target category and says
-   what the question is about.
-3. **Clues**: an ordered list of conditions the answer must satisfy.
+2. **Question**: the interrogative sentence that asks what to answer.
+3. **Task clues**: an ordered list of conditions the answer must satisfy.
 4. **Choices**: a short list of multiple-choice options, only when the answer
    shape is multiple choice.
 5. **Answer instruction**: the required answer shape and an exact example of
    its syntax.
+
+The question is only the interrogative sentence. It is not the whole task. The
+task is the program, the task target, the task clues, and the answer.
 
 The prompt does not contain the answer, the answer key, or any hidden
 identifier.
@@ -29,59 +31,61 @@ understand the construction.
 The program text must be the same program that produced the answer. It must
 not be replaced by a simplified description.
 
-## 3. Task statement
+## 3. Question
 
-The task statement names the target category and the question in plain
-language. It does not contain a condition and does not narrow the candidates.
+The question is the interrogative sentence in the prompt. It names the task
+target category and asks what to answer. It does not contain a condition and
+does not narrow the candidates.
 
-Examples of a task statement:
+Examples of a question:
 
-- "The question is about a face of the final solid."
-- "The question is about the operation that removed material to produce the
-  hole."
-- "The question is about the CadQuery workplane used by the selected sketch."
+- "What is the volume of the final solid?"
+- "What is the volume of material removed by the task target?"
+- "What is the CadQuery workplane used by the task target?"
 
-The task statement is not a clue. It only tells the LLM model what category of entity
-the answer is about.
+The question is not a task clue. It tells the LLM model what task target
+category the answer is about and what to answer.
 
-## 4. Clues
+## 4. Task clues
 
-A clue is one condition the answer must satisfy. Every clue corresponds to one
-narrowing step.
+A task clue is one condition the answer must satisfy. Every task clue
+corresponds to one narrowing step.
 
-### 4.1 Clue rules
+### 4.1 Task clue rules
 
-1. One clue states one condition. If a sentence contains two independent
-   conditions, split it into two clues.
-2. Clues are ordered from broad to narrow. The order is the intended reasoning
-   order.
-3. Each clue must be checkable against the program and the shape it builds.
-4. Each clue must be understandable without internal terms.
-5. A clue must not name the answer.
-6. A clue must not say how many steps the question has.
-7. A clue must not use words such as `candidate`, `graph`, `node`, `relation`,
-   `measurement scope`, or `selector result`. Say the thing in plain language.
-8. A clue must not say "first" or "last" unless the program has a clear order
-   and the phrase is defined. Prefer "the operation that appears last in the
-   program" or name the operation by its visible variable.
-9. A clue must not repeat the program text. Refer to the visible variable or
-   the entity the program builds.
-10. If the question needs a measurement of the target, do not write the
-    measurement as a clue. Put it in the answer instruction.
+1. One task clue states one condition. If a sentence contains two independent
+   conditions, split it into two task clues.
+2. Task clues are ordered from broad to narrow. The order is the intended
+   reasoning order.
+3. Each task clue must be checkable against the program and the shape it
+   builds.
+4. Each task clue must be understandable without internal terms.
+5. A task clue must not name the answer.
+6. A task clue must not say how many steps the task has.
+7. A task clue must not use words such as `candidate`, `graph`, `node`,
+   `relation`, `measurement scope`, or `selector result`. Say the thing in plain
+   language.
+8. A task clue must not say "first" or "last" unless the program has a clear
+   order and the phrase is defined. Prefer "the operation that appears last in
+   the program" or name the operation by its visible variable.
+9. A task clue must not repeat the program text. Refer to the visible variable
+   or the entity the program builds.
+10. If the task needs a measurement of the task target, do not write the
+    measurement as a task clue. Put it in the answer instruction.
 
-### 4.2 Clue forms
+### 4.2 Task clue forms
 
 | Form | Wording pattern |
 |---|---|
-| Property | "The target has a <measurement> <comparison> <value>." |
-| Relation | "The target is <relation> <other entity>." |
-| Comparison | "The target's <measurement> is <comparison> the <measurement> of <reference>." |
-| Aggregation | "Among the targets that satisfy the previous clues, choose the one with the <extreme> <measurement>." |
-| Provenance | "The target was created by <operation>." or "The target uses <CadQuery profile>." |
-| Chain | "The target is <relation> <entity A>, which is <relation> <entity B>." |
+| Property | "The task target has a <measurement> <comparison> <value>." |
+| Relation | "The task target is <relation> <other entity>." |
+| Comparison | "The task target's <measurement> is <comparison> the <measurement> of <reference>." |
+| Aggregation | "Among the task targets that satisfy the previous task clues, choose the one with the <extreme> <measurement>." |
+| Provenance | "The task target was created by <operation>." or "The task target uses <CadQuery profile>." |
+| Chain | "The task target is <relation> <entity A>, which is <relation> <entity B>." |
 
-The placeholders are filled with real entities and measurements when a
-question is built. A clue is never a template with placeholder text left in it.
+The placeholders are filled with real entities and measurements when a task is
+built. A task clue is never a template with placeholder text left in it.
 
 ## 5. Multiple-choice choices
 
@@ -90,7 +94,7 @@ When the answer shape is multiple choice:
 - show at least five and at most seven choices;
 - label the choices `A`, `B`, `C`, and so on;
 - include the correct choice;
-- draw every choice from the same target category;
+- draw every choice from the same task target category;
 - describe each choice by a visible program name or a distinguishing property,
   never by an internal identifier;
 - make every description unique;
@@ -98,7 +102,7 @@ When the answer shape is multiple choice:
 - use a deterministic order.
 
 A choice is not padding. If there are not enough real candidates to fill the
-minimum, the question is not generated.
+minimum, the task is not generated.
 
 ## 6. Answer instruction
 
@@ -117,7 +121,7 @@ the answer shape.
 | Structured object | "Return exactly one JSON object with fields <field list>." |
 
 The answer instruction always states the frame and precision when they matter.
-It never gives the answer, and it never explains how to find the target.
+It never gives the answer, and it never explains how to find the task target.
 
 ## 7. What the prompt must not contain
 
@@ -125,8 +129,8 @@ It never gives the answer, and it never explains how to find the target.
 - The answer key or any hidden field.
 - Internal identifiers.
 - The number of reasoning steps.
-- A hidden clue that is not in the clue list.
-- A clue that is not in the hidden solution path.
+- A hidden task clue that is not in the task clue list.
+- A task clue that is not in the hidden solution path.
 - A description of the graph or the generator.
 - A hint that identifies the correct multiple-choice choice.
 - A named entity that does not appear in the program or cannot be identified
@@ -134,7 +138,7 @@ It never gives the answer, and it never explains how to find the target.
 
 ## 8. Worked example
 
-This example uses a real CadQuery program and a real question. It is not a
+This example uses a real CadQuery program and a real task. It is not a
 placeholder.
 
 Program:
@@ -169,38 +173,38 @@ CAD construction.
         .cutBlind(-2)
     )
 
-The question is about the operation that removed material to produce the hole.
+What is the volume of material removed by the task target?
 
-1. The target operation is the one that cut the cylindrical hole.
-2. Report the volume of material that operation removed.
+1. The task target is the operation that cut the cylindrical hole.
 
 Return exactly one number.
 ````
 
 Answer: `25.132741` (the volume of a cylinder of radius 2 and depth 2).
 
-The task statement names the target category. The clue names the operation. The
-answer instruction asks for the measurement. The prompt does not say "the
-answer is 8 pi".
+The question names the task target category and asks for the measurement. The
+task clue names the operation. The answer instruction asks for the number. The
+prompt does not say "the answer is 8 pi".
 
 ## 9. Review checklist
 
 Before a prompt is accepted:
 
-- every clue is one condition;
-- every clue has a matching narrowing step;
-- the clue order is the intended reasoning order;
+- the question is the interrogative sentence, not the whole task;
+- every task clue is one condition;
+- every task clue has a matching narrowing step;
+- the task clue order is the intended reasoning order;
 - the answer instruction matches the answer shape;
 - the prompt does not leak the answer;
 - the prompt does not use internal terms;
 - the prompt is readable by a careful human without the answer key;
-- a real dataset row, not an invented example, is used for the review sample.
+- a real dataset task, not an invented example, is used for the review sample.
 
 ## 10. Open questions
 
-- **Q1.** Should the task statement always name the target category, or may it
-  be part of the first clue?
-- **Q2.** Should clues be numbered, or presented as a paragraph?
+- **Q1.** Should the question always name the task target category, or may it
+  be part of the first task clue?
+- **Q2.** Should task clues be numbered, or presented as a paragraph?
 - **Q3.** Should the answer instruction include the unit and precision for every
   numeric answer, or only when the unit is not obvious?
 - **Q4.** Should multiple-choice descriptions use variable names, geometric

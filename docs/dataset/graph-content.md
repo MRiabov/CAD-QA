@@ -1,20 +1,20 @@
 # Graph content
 
 **Status:** draft, 2026-10-21. This document defines what the CAD fact graph
-must contain for a question to be answerable. It does not define storage or
+must contain for a task to be answerable. It does not define storage or
 code.
 
 ## 1. Purpose
 
-The graph is the answerable representation of a CadQuery program. Every clue in a prompt
+The graph is the answerable representation of a CadQuery program. Every task clue in a prompt
 must be checkable against the graph. Every answer must be produced from the
 graph.
 
-If a clue cannot be checked against the graph, the question is not generated.
-If an answer cannot be produced from the graph, the question is not generated.
+If a task clue cannot be checked against the graph, the task is not generated.
+If an answer cannot be produced from the graph, the task is not generated.
 
 The graph is not a copy of the program text. It is the set of facts the
-questions need, derived from the program and from running it.
+tasks need, derived from the program and from running it.
 
 ## 2. Graph entities
 
@@ -22,7 +22,7 @@ The graph contains these entity categories.
 
 | Entity | What it represents | Identity |
 |---|---|---|
-| CadQuery program | The program under test. | One per question. |
+| CadQuery program | The program under test. | One per task. |
 | Operation | One modeling call in the program. | Visible variable name and position in the program. |
 | Feature | The modeling feature an operation creates or changes. | The operation that creates it. |
 | Solid state | The shape after one operation, and the final shape. | The operation that produced it. |
@@ -40,7 +40,7 @@ The graph contains these entity categories.
 | Measurement | A numeric or geometric fact about an entity or a pair of entities. | The measured entity or pair, and the measurement name. |
 
 Every entity belongs to exactly one CadQuery program. An entity without a
-program is not part of a question.
+program is not part of a task.
 
 ## 3. Relations
 
@@ -103,7 +103,7 @@ defect, not a fact.
 
 ## 4. Measurements
 
-Measurements are the numeric and geometric facts a question can use. The graph
+Measurements are the numeric and geometric facts a task can use. The graph
 must support at least these.
 
 | Measurement | Applies to | Notes |
@@ -137,7 +137,7 @@ cannot support a benchmark answer.
 
 ## 5. States and timing
 
-A program builds a shape over time. The graph must keep the states the questions
+A program builds a shape over time. The graph must keep the states the tasks
 need.
 
 - the state before an operation;
@@ -145,8 +145,8 @@ need.
 - the final state;
 - the CadQuery selector result at the point where the CadQuery selector runs.
 
-A question about an effect must refer to the state before and the state after
-the operation. A question about the final shape must refer to the final state.
+A task about an effect must refer to the state before and the state after
+the operation. A task about the final shape must refer to the final state.
 A face in an earlier state and a face in a later state are not the same entity
 unless the graph records that they are the same.
 
@@ -159,10 +159,10 @@ unless the graph records that they are the same.
 4. No entity is duplicated under two identities unless the graph records a
    `same_as` relation.
 5. No fact is orphaned.
-6. Every fact used by a clue or answer is present.
+6. Every fact used by a task clue or answer is present.
 7. Every fact that cannot be measured is recorded as missing, not guessed.
-8. The graph can answer every question family the dataset claims to support.
-9. A question that needs a missing fact is rejected, not softened.
+8. The graph can answer every task family the dataset claims to support.
+9. A task that needs a missing fact is rejected, not softened.
 
 ## 7. What the graph is not
 
@@ -170,17 +170,17 @@ unless the graph records that they are the same.
 - It is not a replacement for the program text.
 - It is not a general-purpose knowledge graph.
 - It is not a place to store guessed measurements.
-- It is not a database of every possible question; it is the facts the
-  questions need.
+- It is not a database of every possible task; it is the facts the
+  tasks need.
 
 ## 8. Coverage check
 
-For every question family in `question-structure.md`, the graph must answer these
-questions:
+For every task family in `task-structure.md`, the graph must answer these
+checks:
 
-- Which target entities can this family use?
-- Which clue forms does the family need?
-- Which relations does each clue need?
+- Which task target entities can this family use?
+- Which task clue forms does the family need?
+- Which relations does each task clue need?
 - Which measurements does the answer need?
 - Which states does the family need?
 - Which of those facts are measured, and which are derived?

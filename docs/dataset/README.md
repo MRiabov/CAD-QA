@@ -5,7 +5,7 @@ dataset documentation is archived under
 `docs/_archive/dataset-pre-rebuild-2026-10-21/` and is not a specification.
 
 This directory defines what the CAD-QA dataset is for, what a user gets from
-training and evaluating on it, and the concepts needed to describe a question.
+training and evaluating on it, and the concepts needed to describe a task.
 The technical specification is not written yet.
 
 ## Why the product comes first
@@ -32,9 +32,9 @@ yet.
 | Document | What it defines |
 |---|---|
 | [`PRD.md`](PRD.md) | What the user gets, what the dataset must contain, quality promises, size, splits, deliverables, and priorities. |
-| [`question-structure.md`](question-structure.md) | The dimensions of a question, the canonical question families, depth rules, and uniqueness rules. |
+| [`task-structure.md`](task-structure.md) | The dimensions of a task, the canonical task families, depth rules, and uniqueness rules. |
 | [`prompt-content.md`](prompt-content.md) | What the LLM model sees: program text, task statement, clues, choices, and answer instruction. |
-| [`graph-content.md`](graph-content.md) | The facts the questions rely on: graph entities, relations, measurements, states, and evidence. |
+| [`graph-content.md`](graph-content.md) | The facts the tasks rely on: graph entities, relations, measurements, states, and evidence. |
 | [`terminology.md`](terminology.md) | Proposed terms, replacements for old terms, and naming decisions that still need owner approval. |
 
 ## Relation to the project PRD
