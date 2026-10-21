@@ -199,6 +199,20 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
 
 ---
 
+## DS-14 — Numeric answers use 4 significant figures
+
+- **Status:** accepted (2026-10-21).
+- **Context:** The worked example printed `25.132741`, which implies eight
+  significant figures and an unnecessarily tight grader.
+- **Decision:** Numeric answers are rounded to 4 significant figures by default.
+  Coordinates and bounding-box components use the same default. A task may state
+  a different precision only with a documented reason.
+- **Consequences:** The worked example answer is `25.13`. The answer data stores
+  the rounded value; grading uses half a unit in the last stated place unless
+  the task states another tolerance.
+
+---
+
 ## Open questions
 
 - **Q1.** Is the release a selected subset of the valid-task universe, or must it

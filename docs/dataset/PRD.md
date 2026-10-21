@@ -155,12 +155,16 @@ The dataset must support all of the following answer formats.
 |---|---|---|
 | Multiple choice | A short list of choices, one of which is correct. | At least five choices, with seven as the goal, for the benchmark dataset release; the correct answer is always present; choices are real options drawn from the program, not padding; descriptions do not repeat; no choice leaks the answer. |
 | Variable name | A name that appears in the CadQuery program. | The name is visible in the program and identifies one object. |
-| Number | A finite numeric value. | Unit, precision, and tolerance are stated; the number is measured from the real geometry. |
+| Number | A finite numeric value. | Unit, precision, and tolerance are stated; the default precision is 4 significant figures; the number is measured from the real geometry. |
 | Integer | A whole number, usually a count or a rank. | Exact and non-negative where it is a count. |
 | Yes or no | A boolean answer. | Exactly one of true or false is correct. |
-| 3D coordinate | A point such as `(x, y, z)`. | Three finite numbers in a stated coordinate frame, with a stated tolerance. |
-| Bounding box | A minimum and maximum corner. | Two three-dimensional points in a stated frame, with a stated tolerance. |
+| 3D coordinate | A point such as `(x, y, z)`. | Three finite numbers in a stated coordinate frame, with a stated tolerance; 4 significant figures per component by default. |
+| Bounding box | A minimum and maximum corner. | Two three-dimensional points in a stated frame, with a stated tolerance; 4 significant figures per component by default. |
 | Structured object | A small object with named fields, such as a CadQuery workplane state. | The fields are meaningful and documented; the answer is not an internal object dump. |
+
+Numbers, coordinates, and bounding-box components are rounded to 4 significant
+figures by default. A task may state a different precision only with a
+documented reason.
 
 All answers must be objectively checkable. An answer that requires an LLM to
 judge is not allowed.

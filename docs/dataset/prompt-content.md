@@ -112,14 +112,15 @@ the answer format.
 |---|---|
 | Multiple choice | "Return exactly one label from the list above, for example `A`." |
 | Variable name | "Return exactly one variable name from the program." |
-| Number | "Return exactly one number. Use <unit>; round to <precision>." |
+| Number | "Return exactly one number. Use <unit>; round to 4 significant figures." |
 | Integer | "Return exactly one integer." |
 | Yes or no | "Return exactly one of `true` or `false`." |
-| 3D coordinate | "Return exactly one coordinate tuple `(x, y, z)` in <frame>; round to <precision>." |
-| Bounding box | "Return exactly one bounding box as `{\"min\": [x, y, z], \"max\": [x, y, z]}` in <frame>; round to <precision>." |
+| 3D coordinate | "Return exactly one coordinate tuple `(x, y, z)` in <frame>; round each value to 4 significant figures." |
+| Bounding box | "Return exactly one bounding box as `{\"min\": [x, y, z], \"max\": [x, y, z]}` in <frame>; round each value to 4 significant figures." |
 | Structured object | "Return exactly one JSON object with fields <field list>." |
 
-The answer instruction always states the frame and precision when they matter.
+The answer instruction always states the frame when it matters. The default
+numeric precision is 4 significant figures.
 It never gives the answer, and it never explains how to find the task target.
 
 ## 7. What the prompt must not contain
@@ -176,10 +177,10 @@ What is the volume of material removed by an operation?
 
 1. The operation cut the cylindrical hole.
 
-Return exactly one number.
+Return exactly one number, rounded to 4 significant figures.
 ````
 
-Answer: `25.132741` (the volume of a cylinder of radius 2 and cut depth 2).
+Answer: `25.13` (the volume of a cylinder of radius 2 and cut depth 2, rounded to 4 significant figures).
 
 The question names the task target category and asks for the measurement. The
 task clue names the operation. The answer instruction asks for the number. The
@@ -204,7 +205,5 @@ Before a prompt is accepted:
 - **Q1.** Should the question always name the task target category, or may it
   be part of the first task clue?
 - **Q2.** Should task clues be numbered, or presented as a paragraph?
-- **Q3.** Should the answer instruction include the unit and precision for every
-  numeric answer, or only when the unit is not obvious?
 - **Q4.** Should multiple-choice descriptions use variable names, geometric
   descriptions, or both?
