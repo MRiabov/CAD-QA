@@ -19,7 +19,7 @@ procedural CAD programs (CadQuery), and a small-LLM-model fine-tuning effort on 
 6. **`prior-art.md`** — mined open-source training/RL/data pipelines.
 7. **`research/`** — external study notes and citations for related work.
 8. **`dataset/requirements/PRD.md`** — what the replacement dataset generator must produce. The old pipeline docs are archived.
-9. **`dataset/implementation/`** — release layout and future technical contracts.
+9. **`dataset/implementation/`** — task enumeration and future technical contracts.
 10. **`train-and-eval/datasets.md`** — the dataset → DatasetRole assignment.
 11. **`train-and-eval/fine-tuning/`** — the training pipeline.
 12. **`train-and-eval/evaluation/`** — harnesses and baselines.
@@ -34,7 +34,7 @@ procedural CAD programs (CadQuery), and a small-LLM-model fine-tuning effort on 
 | What is true right now | `development-context.md` |
 | What happens next | `development-plan.md` |
 | What the dataset generator must produce | `dataset/requirements/PRD.md` |
-| How the release dataset is laid out | `dataset/implementation/release-dataset-structure.md` |
+| How the release dataset is laid out | `dataset/requirements/release-dataset-contract.md` |
 | How the LLM model is trained | `train-and-eval/fine-tuning/training.md` |
 | Which data we train on, and in what order | `train-and-eval/fine-tuning/data.md` |
 | The post-training loop (SFT → RL-readiness gate → RL) | `train-and-eval/fine-tuning/system.md` |

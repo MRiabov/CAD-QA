@@ -121,6 +121,8 @@ The structure of a task is defined in [`task-structure.md`](task-structure.md).
 The content of the prompt is defined in [`prompt-content.md`](prompt-content.md).
 The CAD graph the tasks rely on is defined in [`graph-content.md`](graph-content.md).
 The proposed vocabulary is in [`terminology.md`](terminology.md).
+The consumer contract for the release dataset is in
+[`release-dataset-contract.md`](release-dataset-contract.md).
 
 ---
 

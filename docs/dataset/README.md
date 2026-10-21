@@ -6,8 +6,8 @@ dataset documentation is archived under
 
 This directory defines what the CAD-QA dataset is for, what a user gets from
 training and evaluating on it, and the concepts needed to describe a task.
-The product requirements are in `requirements/`. Technical structure is in
-`implementation/`.
+The product requirements and consumer contract are in `requirements/`.
+Implementation contracts are in `implementation/`.
 
 ## Why the product comes first
 
@@ -38,12 +38,13 @@ Steps 1 and 2 are in `requirements/`. Step 3 starts in `implementation/`.
 | [`requirements/prompt-content.md`](requirements/prompt-content.md) | What the LLM model sees: program text, question, task clues, choices, and answer instruction. |
 | [`requirements/graph-content.md`](requirements/graph-content.md) | The graph elements the tasks rely on: graph entities, relations, measurements, states, evidence, and P0/P1/P2 priorities. |
 | [`requirements/terminology.md`](requirements/terminology.md) | Proposed terms, replacements for old terms, and naming decisions that still need owner approval. |
+| [`requirements/release-dataset-contract.md`](requirements/release-dataset-contract.md) | Consumer contract: release artifacts, row counts, release table columns, and why one table is enough. |
 
 ### Implementation
 
 | Document | What it defines |
 |---|---|
-| [`implementation/release-dataset-structure.md`](implementation/release-dataset-structure.md) | Release artifacts, row counts, release table columns, and why one table is enough. |
+| [`implementation/task-enumeration.md`](implementation/task-enumeration.md) | Technical contract for task identity, selection, step accounting, format compatibility, and deduplication. |
 
 ### Feature-wide
 

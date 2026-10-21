@@ -153,7 +153,7 @@ prefix is `DS-`.
 - **Consequences:** Implementation should not start from the current
   conceptual docs alone. `requirements/task-structure.md` and this file define the target;
   the enumeration contract defines the implementable space. The open questions
-  that affect it are in `implementation/release-dataset-structure.md` Q1-Q5.
+  that affect it are in `implementation/task-enumeration.md` Q1-Q5.
 
 ---
 
@@ -321,4 +321,4 @@ prefix is `DS-`.
   `manifest.json`, `dataset-card.md`, and `failures.jsonl`. No separate answer
   table, program table, or evidence table is needed initially. The evaluation
   harness must pass only `prompt` to the LLM model. The structure is defined in
-  `implementation/release-dataset-structure.md`.
+  `requirements/release-dataset-contract.md`.
