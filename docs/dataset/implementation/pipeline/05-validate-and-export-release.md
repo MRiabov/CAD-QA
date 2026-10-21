@@ -12,8 +12,9 @@ Artifact ownership: [`../artifacts.md`](../artifacts.md).
 
 - Validate the release table schema and row counts.
 - Check that the prompt is answer-free.
-- Check that task and answer rows are 1:1.
-- Check split isolation by CADEvolve program family.
+- Check `task_id` uniqueness and exactly one answer set per row.
+- Recheck split isolation by CADEvolve program family on the final release
+  table. `03a` assigns the split; `03b` stamps it; `04` carries it.
 - Check released values against the task reasoning step support tables.
 - Check the transfer overlap: exact normalized program text at P0; the P1
   same-CAD-model check is Q1 below.

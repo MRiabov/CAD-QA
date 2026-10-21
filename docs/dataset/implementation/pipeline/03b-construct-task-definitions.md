@@ -18,6 +18,8 @@ task. It is not prompt text and not a loose task tuple. It is what `04` renders.
 | `task_id` | Stable identity derived from the canonical task identity. It does not encode the gold answer. |
 | `definition_sha256` | Hash of the canonical task definition, including the answer and evidence. |
 | `program_id`, `program_sha256` | CadQuery program identity. |
+| `cadevolve_program_family_id` | Program family used for split isolation. |
+| `split`, `subset` | Split and warmup/main label assigned by `03a`. |
 | `graph_schema_version`, `definition_schema_version` | Versions needed to reproduce the definition. |
 | `target_category` | Task target category from `requirements/task-structure.md`. |
 | `target_binding` | The concrete graph entity or scalar value the task asks about. |
@@ -138,6 +140,9 @@ A task definition is valid only when all of these hold:
 - the final possible-answer set contains exactly one answer;
 - the answer step produces exactly one answer;
 - the target binding is unambiguous;
+- the program family and split are present;
+- the split matches the family assignment from `03a`;
+- the subset is consistent with the task reasoning step count;
 - the answer has evidence;
 - for multiple choice, the choice pool has at least five real choices;
 - for P2 multiple choice, every near-miss choice fails a task clue or the answer

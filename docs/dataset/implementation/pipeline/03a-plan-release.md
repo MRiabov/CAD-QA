@@ -127,7 +127,9 @@ Assign families before task construction because a family cannot cross splits.
 7. Keep a reserve of families for `03c`.
 
 A family receives a task budget and a set of cells, not one task type. If it
-cannot fill an assigned cell, the remainder returns to the plan.
+cannot fill an assigned cell, the remainder returns to the plan. `03b` stamps the
+family ID, split, and subset on each definition; `05` rechecks family isolation
+on the final release table.
 
 Exact split and cell assignment is a bin-packing problem and can be hard. The
 contract does not require an exact optimum. Deterministic greedy allocation,
