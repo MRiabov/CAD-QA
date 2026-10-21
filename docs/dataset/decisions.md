@@ -381,11 +381,12 @@ prefix is `DS-`.
   Parquet cache is published at `MRiabov/cadevolve-parquet`, contains the same
   program records in typed columns, and is about 508 MB. Archive extraction and
   row parsing are avoidable work.
-- **Decision:** `01a` reads `cadevolve_sources.parquet` from
-  `MRiabov/cadevolve-parquet`. The cache commit and conversion version are
-  recorded in the external dataset manifest. The tar archive and JSONL are not
-  primary inputs; they are provenance checks only. `01b` still applies our own
-  normalization version and program hash.
+- **Decision:** `01a` reads metadata from `cadevolve_sources.parquet` from
+  `MRiabov/cadevolve-parquet`; `01b` selects the program pool; `01c` fetches only
+  the selected rows; `01d` applies our own normalization version and program
+  hash. The cache commit and conversion version are recorded in the external
+  dataset manifest. The tar archive and JSONL are not primary inputs; they are
+  provenance checks only.
 - **Consequences:** No archive extraction in the normal path. The cache schema
   is part of the external input contract. A cache change is a new external
   dataset version, not an in-place update. Program identity remains ours.

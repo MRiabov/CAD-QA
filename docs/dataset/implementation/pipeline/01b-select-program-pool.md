@@ -1,0 +1,27 @@
+# 01b — Select program pool
+
+**Parent:** [`01-external-dataset-etl.md`](01-external-dataset-etl.md).
+
+**Purpose:** choose a deterministic, bounded pool of CadQuery programs for the
+release from the external dataset metadata.
+
+## Input / output
+
+- Input: program metadata records from `01a` plus the selection policy.
+- Output: a Parquet selection artifact with selected program IDs, the policy,
+  counts, and exclusions.
+
+## Behavior
+
+- Apply the selection policy to the program metadata.
+- Select at most the target program count for the release.
+- Use only metadata columns; do not download program text.
+- Record the policy, seed, collection counts, and excluded counts.
+- Do not normalize or execute CadQuery.
+
+## Open questions
+
+- What is the target program count for the first release?
+- Which metadata dimensions drive stratification: collection, generator,
+  path family, geometry tags, or a combination?
+- Should the selection reserve a program pool for later releases?

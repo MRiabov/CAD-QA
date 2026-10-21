@@ -15,8 +15,8 @@ of these exceptions.
 | Work | Language | Why |
 |---|---|---|
 | CLI, orchestration, caching, manifests | Go | File, process, and data-flow work. |
-| `01a` extract, `01c` manifest | Go | Archive and metadata handling; no Python semantics. |
-| `01b` normalize programs | Python | Needs the Python tokenizer and AST to canonicalize Python program text. |
+| `01a` metadata, `01b` select, `01c` fetch, `01e` manifest | Go | Metadata, selection, and file handling; no Python semantics. |
+| `01d` normalize programs | Python | Needs the Python tokenizer and AST to canonicalize Python program text. |
 | `02a` static extraction | Python | Reads the Python AST and CadQuery calls. |
 | `02b` execute CadQuery | Python | Needs the CadQuery and OCP runtime. |
 | `02c` build graph | Go | Consumes typed execution output; does not import CadQuery. |

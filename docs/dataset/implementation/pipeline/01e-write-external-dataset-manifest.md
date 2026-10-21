@@ -1,4 +1,4 @@
-# 01c — Write external dataset manifest
+# 01e — Write external dataset manifest
 
 **Parent:** [`01-external-dataset-etl.md`](01-external-dataset-etl.md).
 
@@ -7,7 +7,7 @@ rows.
 
 ## Input / output
 
-- Input: normalized program records.
+- Input: normalized program records plus the selection artifact.
 - Output: external dataset manifest.
 
 ## Manifest content

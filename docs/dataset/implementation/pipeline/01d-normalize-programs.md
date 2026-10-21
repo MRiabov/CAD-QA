@@ -1,4 +1,4 @@
-# 01b — Normalize programs
+# 01d — Normalize programs
 
 **Parent:** [`01-external-dataset-etl.md`](01-external-dataset-etl.md).
 
@@ -7,7 +7,7 @@ used by graph build, overlap checks, and release grouping.
 
 ## Input / output
 
-- Input: extracted program records from the Parquet cache.
+- Input: the selected program pool from `01c`.
 - Output: normalized program records with `program_id`, canonical text, and
   normalization version.
 
@@ -23,6 +23,6 @@ used by graph build, overlap checks, and release grouping.
 
 ## Why it exists
 
-The Parquet cache carries upstream normalization, but it is not our contract.
+The program pool carries upstream normalization, but it is not our contract.
 The step may pass most records through unchanged, but it still stamps the version
 and hash that define our program identity.

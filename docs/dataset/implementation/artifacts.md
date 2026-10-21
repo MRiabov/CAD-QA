@@ -10,9 +10,11 @@ this document owns ownership, lifecycle, and format, not field definitions.
 | Artifact | Writer | Readers | Identity | Preferred format | Notes |
 |---|---|---|---|---|---|
 | CADEvolve Parquet cache | External | `01a` | Upstream dataset commit plus cache version | Parquet | Immutable external input. |
-| Raw program record | `01a` | `01b` | Export member or row plus upstream version | Parquet | Preserves collection metadata. |
-| Normalized program | `01b` | `02a`, `02b` | `program_sha256` plus normalization version | Parquet | Carries `program_id` and canonical text. |
-| External dataset manifest | `01c` | `06`, dataset card | External dataset version | JSON | Counts, hashes, and rejected records. |
+| Program metadata | `01a` | `01b` | Cache revision plus metadata schema | Parquet | No program text. |
+| Program selection | `01b` | `01c`, `01e` | Selection policy version plus seed | Parquet | Selected IDs, counts, and exclusions. |
+| Program pool | `01c` | `01d` | Selection identity plus cache revision | Parquet | Only selected rows, including program text. |
+| Normalized program | `01d` | `02a`, `02b` | `program_sha256` plus normalization version | Parquet | Carries `program_id` and canonical text. |
+| External dataset manifest | `01e` | `06`, dataset card | External dataset version | JSON | Counts, hashes, and rejected records. |
 | Static CadQuery model | `02a` | `02c` | Program hash plus extractor version | Parquet tables | No geometry measurements. |
 | Execution result | `02b` | `02c` | Program hash, CadQuery/OCP version, and environment | Parquet plus shape snapshot files | Either execution snapshots or a failure tombstone. |
 | CAD graph | `02c` | `03` | Program hash, graph schema version, and execution result hash | Parquet tables | One graph per program. |

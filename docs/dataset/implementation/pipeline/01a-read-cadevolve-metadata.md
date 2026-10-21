@@ -1,15 +1,16 @@
-# 01a — Read CADEvolve Parquet cache
+# 01a — Read CADEvolve metadata
 
 **Parent:** [`01-external-dataset-etl.md`](01-external-dataset-etl.md).
 
-**Purpose:** read the prepared CADEvolve Parquet cache and expose its program
-records, without executing them.
+**Purpose:** read the metadata columns of the prepared CADEvolve Parquet cache,
+without downloading program text or executing anything.
 
 ## Input / output
 
 - Input: the `cadevolve_sources.parquet` file from
   [`MRiabov/cadevolve-parquet`](https://huggingface.co/datasets/MRiabov/cadevolve-parquet).
-- Output: program records with path, collection metadata, and program text.
+- Output: program metadata records with path, collection, path family, geometry
+  tags, generator, and upstream hash.
 
 The cache is already cleaned: all 1,998,810 rows are `.py` records, all import
 CadQuery, and all have non-empty program text. There is no non-program-record
@@ -18,11 +19,10 @@ significant trouble during the last dataset regeneration.
 
 ## Behavior
 
-- Read rows from the Parquet cache.
-- Use `normalized_code` as the program text.
+- Read metadata columns with column projection and streaming/range reads.
+- Do not download `normalized_code`; `01c` fetches it only for selected rows.
 - Preserve `source_id`, `normalized_archive_member_path`, `source_subtree`,
   `source_collection`, `path_family`, `source_feature_tags`, `generator_id`, and
   `normalized_source_code_hash`.
-- Read every row; do not apply a local "looks like CadQuery" heuristic.
-- Record malformed rows with a reason.
-- Do not assign the final program hash; `01b` decides that.
+- Read every metadata row; do not apply a local "looks like CadQuery" heuristic.
+- Do not normalize or execute CadQuery.

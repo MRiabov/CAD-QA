@@ -9,16 +9,18 @@ manifest that later pipeline stages can consume.
 
 | Step | Responsibility | Doc |
 |---|---|---|
-| `01a` | Read CadQuery programs from the Parquet cache. | [`01a-read-cadevolve-parquet.md`](01a-read-cadevolve-parquet.md) |
-| `01b` | Normalize program text, assign stable IDs and hashes. | [`01b-normalize-programs.md`](01b-normalize-programs.md) |
-| `01c` | Write counts, provenance, hashes, and rejects. | [`01c-write-external-dataset-manifest.md`](01c-write-external-dataset-manifest.md) |
+| `01a` | Read external dataset metadata. | [`01a-read-cadevolve-metadata.md`](01a-read-cadevolve-metadata.md) |
+| `01b` | Select the deterministic program pool. | [`01b-select-program-pool.md`](01b-select-program-pool.md) |
+| `01c` | Fetch the selected program rows. | [`01c-fetch-program-pool.md`](01c-fetch-program-pool.md) |
+| `01d` | Normalize program text, assign stable IDs and hashes. | [`01d-normalize-programs.md`](01d-normalize-programs.md) |
+| `01e` | Write counts, provenance, hashes, and rejects. | [`01e-write-external-dataset-manifest.md`](01e-write-external-dataset-manifest.md) |
 
 ## Input scale
 
 The Parquet cache contains 1,998,810 programs. A release does not need all of
 them. The 2026-10-19 regeneration used 1,300 programs; smaller runs used a
 smaller subset. Normalizing the full cache is not a release requirement. `01b`
-operates on the selected program pool.
+selects the pool; `01d` normalizes only that pool.
 
 ## Why normalization is a step
 

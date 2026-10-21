@@ -22,7 +22,7 @@ pipeline stage is specified.
 
 | Pipeline stage | Sub-steps |
 |---|---|
-| `01` | `01a` read cache, `01b` normalize programs, `01c` write manifest. |
+| `01` | `01a` read metadata, `01b` select pool, `01c` fetch pool, `01d` normalize programs, `01e` write manifest. |
 | `02` | `02a` static extraction, `02b` execute CadQuery, `02c` build graph. |
 
 Sub-steps have their own typed models in their parent pipeline stage doc.
