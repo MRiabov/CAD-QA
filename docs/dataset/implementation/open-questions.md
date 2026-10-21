@@ -2,7 +2,8 @@
 
 **Status:** ephemeral developer index, 2026-10-21. This file only links to the
 owning docs. Each question is resolved in its owning doc; remove the entry here
-when it is resolved.
+when it is resolved. Absent contracts are tracked separately in
+[`missing-contracts.md`](missing-contracts.md).
 
 ## 02a — Extract CadQuery AST
 
@@ -32,4 +33,5 @@ when it is resolved.
 
 ## None
 
-- `01`, `03a`, `03c`, and `04` have no open questions.
+- `01`, `03a`, `03c`, and `04` have no open questions. They do have missing
+  contracts, tracked in [`missing-contracts.md`](missing-contracts.md).

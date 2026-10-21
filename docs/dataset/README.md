@@ -52,6 +52,8 @@ not product requirements.
 | [`implementation/planning-math.md`](implementation/planning-math.md) | Priority, coverage, balance, split, and release-cap math. |
 | [`implementation/task-step-support.md`](implementation/task-step-support.md) | Derived task reasoning step support tables used to check coverage, not generator inputs. |
 | [`implementation/python-and-golang.md`](implementation/python-and-golang.md) | The Python and Go language boundary for the dataset generator. |
+| [`implementation/open-questions.md`](implementation/open-questions.md) | Ephemeral index of unresolved questions across pipeline docs. |
+| [`implementation/missing-contracts.md`](implementation/missing-contracts.md) | Ephemeral audit backlog of absent contracts by owning doc. |
 
 #### Pipeline
 

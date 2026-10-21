@@ -22,6 +22,7 @@ between pipeline stages is
 | [`task-step-support.md`](task-step-support.md) | Derived task reasoning step support tables used for coverage checks. |
 | [`python-and-golang.md`](python-and-golang.md) | The Python and Go language boundary. |
 | [`open-questions.md`](open-questions.md) | Ephemeral index of unresolved questions across pipeline docs. |
+| [`missing-contracts.md`](missing-contracts.md) | Ephemeral audit backlog of absent contracts by owning doc. |
 
 ## What belongs here
 
