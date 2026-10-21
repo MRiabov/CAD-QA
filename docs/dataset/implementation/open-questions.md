@@ -22,19 +22,14 @@ when it is resolved.
 - [ ] Entity node ID strategy — [open questions](pipeline/02c-build-cad-graph.md#open-questions).
 - [ ] Unmapped CadQuery selector result behavior — [open questions](pipeline/02c-build-cad-graph.md#open-questions).
 
-## 03 — Enumerate tasks
+## 03b — Construct task definitions
 
-- [ ] P2 near-miss choice generation and validation — [open questions](pipeline/03-enumerate-tasks.md#open-questions).
+- [ ] P2 near-miss choice generation and validation — [open questions](pipeline/03b-construct-task-definitions.md#open-questions).
 
-## 04 — Select and balance release
+## 05 — Validate and export release
 
-- [ ] Selection strategy: enumerate-and-cut or quota planning — [open questions](pipeline/04-select-and-balance-release.md#open-questions).
-- [ ] Conditional release share allocation — [open questions](pipeline/04-select-and-balance-release.md#open-questions).
-
-## 06 — Validate and export release
-
-- [ ] P1 same-CAD-model transfer-overlap check — [open questions](pipeline/06-validate-and-export-release.md#open-questions).
+- [ ] P1 same-CAD-model transfer-overlap check — [open questions](pipeline/05-validate-and-export-release.md#open-questions).
 
 ## None
 
-- `01` and `05` have no open questions.
+- `01`, `03a`, `03c`, and `04` have no open questions.

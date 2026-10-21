@@ -15,7 +15,7 @@ artifacts with different failure modes and caching behavior:
 - the CAD graph is expensive to build and can be cached per program;
 - task enumeration and answer resolution can fail per task;
 - choices and prompts are derived per task;
-- selection and validation operate on the whole release.
+- planning and validation operate on the whole release.
 
 Splitting these into pipeline stages gives each artifact a typed contract,
 isolates failures, and makes retries and cache hits possible. Pipeline stage
@@ -28,10 +28,9 @@ generator.
 |---|---|---|
 | [`01-external-dataset-etl.md`](01-external-dataset-etl.md) | CADEvolve Parquet cache → normalized programs and manifest. | Normalized programs. |
 | [`02-execute-cadquery-and-build-graph.md`](02-execute-cadquery-and-build-graph.md) | Static extraction and CadQuery execution → CAD graph. | CAD graph. |
-| [`03-enumerate-tasks.md`](03-enumerate-tasks.md) | Graph → task definition, clues, step count, identity, gold answer. | Task definitions. |
-| [`04-select-and-balance-release.md`](04-select-and-balance-release.md) | Task definitions → selected definitions with splits. | Selected tasks. |
-| [`05-render-prompt-and-choices.md`](05-render-prompt-and-choices.md) | Selected tasks → prompt and choices. | Release table. |
-| [`06-validate-and-export-release.md`](06-validate-and-export-release.md) | Release table → validated release artifacts. | Release dataset. |
+| [`03-enumerate-tasks.md`](03-enumerate-tasks.md) | Plan quotas, construct task definitions, and expand data on deficits. | Task definitions. |
+| [`04-render-prompt-and-choices.md`](04-render-prompt-and-choices.md) | Task definitions → prompt and choices. | Release table. |
+| [`05-validate-and-export-release.md`](05-validate-and-export-release.md) | Release table → validated release artifacts. | Release dataset. |
 
 ## Flow
 
@@ -39,8 +38,9 @@ generator.
 CADEvolve Parquet cache
   → normalized programs
   → CAD graphs
+  → release plan
   → task definitions with gold answers
-  → selected task definitions
+  → [deficit loop: 03c → 01b/01c/02 → 03a/03b]
   → release table with prompts and choices
   → release.parquet + failures.parquet + manifest + dataset card + support/
 ```
@@ -48,7 +48,7 @@ CADEvolve Parquet cache
 ## Supporting docs
 
 - Artifact ownership: [`../artifacts.md`](../artifacts.md).
-- Selection math: [`../selection-math.md`](../selection-math.md).
+- Planning math: [`../planning-math.md`](../planning-math.md).
 
 ## What is not here
 

@@ -13,10 +13,9 @@ pipeline stage is specified.
 |---|---|---|---|
 | `01-external-dataset-etl` | Read and normalize the CADEvolve Parquet cache. | CADEvolve Parquet cache | `NormalizedProgram`, `ExternalDatasetManifest` |
 | `02-execute-cadquery-and-build-graph` | Extract static structure, execute CadQuery, build the graph. | `NormalizedProgram` | `CadGraph` |
-| `03-enumerate-tasks` | Build task definitions and resolve gold answers. | `CadGraph` | `TaskDefinition` |
-| `04-select-and-balance-release` | Select, balance, and split the release. | `TaskDefinition` | `SelectedTask` |
-| `05-render-prompt-and-choices` | Render the prompt and choices. | `SelectedTask` | `ReleaseTable` |
-| `06-validate-and-export-release` | Validate and export the release dataset. | `ReleaseTable` | `ReleaseArtifacts` |
+| `03-enumerate-tasks` | Plan the release, construct task definitions, expand data on deficits. | `CadGraph` | `TaskDefinition` |
+| `04-render-prompt-and-choices` | Render the prompt and choices. | `TaskDefinition` | `ReleaseTable` |
+| `05-validate-and-export-release` | Validate and export the release dataset. | `ReleaseTable` | `ReleaseArtifacts` |
 
 ## Sub-steps
 
@@ -24,6 +23,7 @@ pipeline stage is specified.
 |---|---|
 | `01` | `01a` read metadata, `01b` select pool, `01c` fetch pool, `01d` normalize programs, `01e` write manifest. |
 | `02` | `02a` static extraction, `02b` execute CadQuery, `02c` build graph. |
+| `03` | `03a` plan release, `03b` construct task definitions, `03c` expand data for deficits. |
 
 Sub-steps have their own typed models in their parent pipeline stage doc.
 
@@ -36,8 +36,6 @@ Sub-steps have their own typed models in their parent pipeline stage doc.
   Failure is data, not an exception across a pipeline stage boundary.
 - A `TaskDefinition` is the persisted, answer-bearing construction record. It has
   exactly one gold answer; ambiguous definitions are rejected.
-- A `SelectedTask` references a task definition and adds the split, subset, and
-  selection metadata. Selection does not change the definition.
 - A `ReleaseTable` has one row per task, an answer-free prompt, and exactly one
   answer set per task. Rendering does not change the task definition.
 - Answer columns never appear in the prompt.

@@ -139,23 +139,20 @@ prefix is `DS-`.
   trained on, tuned on, or used to choose an LLM model. `DS-26` defines the
   program-family identity.
 
-## DS-10 — The next technical deliverable is a task enumeration contract
+## DS-10 — Task definitions and release planning are specified together
 
-- **Status:** accepted direction (2026-10-21); details open.
+- **Status:** accepted (2026-10-21); delivered in `03a`–`03c`.
 - **Context:** The dimensions and balance rules do not define the set of tasks.
   "Enumerate all tasks" is ambiguous until the task identity, the valid-task
-  set, and the selection of the release are defined.
-- **Decision:** The next specification defines: the task tuple and canonical
-  identity; the valid-task set versus the release subset; the validity
-  oracle; exact task reasoning step count accounting; the typed clue predicate
-  schema; the answer meaning to answer format map; support as existence in the valid-task set; the
-  release selection algorithm; and deterministic ordering, deduplication,
-  serialization, and split assignment.
-- **Consequences:** Implementation should not start from the current
-  conceptual docs alone. `requirements/task-structure.md` and this file define the target;
-  the enumeration contract defines the implementable space. The open questions
-  that affect it are in
-  `implementation/pipeline/04-select-and-balance-release.md` Q1/Q3.
+  set, and the release plan are defined.
+- **Decision:** The task-definition contract defines the task tuple and canonical
+  identity, the valid-task set, the validity oracle, exact task reasoning step
+  count accounting, the typed clue predicate schema, the answer meaning to
+  answer format map, the release planning and sampling algorithm, deterministic
+  ordering, deduplication, serialization, and split assignment.
+- **Consequences:** Implementation starts from the `03` contract.
+  `requirements/task-structure.md` and this file define the target; `03a`
+  defines planning and `03b` defines construction.
 
 ---
 
@@ -335,7 +332,7 @@ prefix is `DS-`.
   generated, the task is rejected.
 - **Consequences:** P0 and P1 can ship without the near-miss audit. P2 adds the
   error-mode catalog, choice audit, and review. The open question is Q6 in
-  `implementation/pipeline/03-enumerate-tasks.md` until P2 is implemented.
+  `implementation/pipeline/03b-construct-task-definitions.md` until P2 is implemented.
 
 ## DS-22 — Go is the default implementation language
 
@@ -348,7 +345,7 @@ prefix is `DS-`.
   allowed only for work that requires the Python runtime or a Python-only
   library: CadQuery/OCP execution, Python AST or tokenizer work, and canonical
   Python program normalization. The CLI, orchestration, manifests, graph
-  assembly, task enumeration, prompt and choice assembly, release selection,
+  assembly, task enumeration, prompt and choice rendering, release planning,
   validation, and export are Go. The boundary is defined in
   `implementation/python-and-golang.md`.
 - **Consequences:** The Go entry point invokes Python workers through typed,
@@ -449,9 +446,23 @@ prefix is `DS-`.
 - **Decision:** `03` defines task definitions and emits persisted
   `TaskDefinition` records. The task reasoning step support tables are derived
   from those rules as a separate QA baseline. They are not a pipeline stage and
-  not a generator input; `04` selects, `05` renders, and `04`/`06` use the tables
-  to check the release.
+  not a generator input; `03a` plans, `03b` constructs, `04` renders, and
+  `03a`/`05` use the tables to check the release.
 - **Consequences:** `03` does not read the task reasoning step support tables. A feasible value
   missing from the dataset is a coverage gap; a released value marked infeasible
   is a specification or generator defect. Dataset quantity remains a separate
   coverage question.
+
+## DS-29 — Plan quotas before constructing task definitions
+
+- **Status:** accepted (2026-10-21).
+- **Context:** The valid-task set is combinatorial. Enumerating every task and
+  selecting afterward wastes work and can exceed any practical budget.
+- **Decision:** Plan the release first with marginal quota cells, family
+  profiles, split assignment, and attempt budgets. Construct and sample task
+  definitions into that plan. Use `03c` to expand the program data when quotas
+  cannot be filled.
+- **Consequences:** There is no separate post-construction release-selection
+  pipeline stage. `03c` is a bounded loop back through supplemental `01b` selection,
+  `01c`/`01d` delta processing, `02` graph building, and an updated plan.
+  Deficits are recorded and either filled or accepted.

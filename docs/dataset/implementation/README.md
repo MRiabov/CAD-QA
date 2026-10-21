@@ -18,7 +18,7 @@ between pipeline stages is
 | Document | What it defines |
 |---|---|
 | [`artifacts.md`](artifacts.md) | Artifact ownership, identity, and lifecycle. |
-| [`selection-math.md`](selection-math.md) | Priority, coverage, balance, split, and cap math. |
+| [`planning-math.md`](planning-math.md) | Priority, coverage, balance, split, and cap math. |
 | [`task-step-support.md`](task-step-support.md) | Derived task reasoning step support tables used for coverage checks. |
 | [`python-and-golang.md`](python-and-golang.md) | The Python and Go language boundary. |
 | [`open-questions.md`](open-questions.md) | Ephemeral index of unresolved questions across pipeline docs. |
@@ -27,7 +27,7 @@ between pipeline stages is
 
 - pipeline stage docs, implementation contracts, and test contracts;
 - typed I/O between pipeline stages;
-- artifact, selection-math, and language-boundary explanations shared across
+- artifact, planning-math, and language-boundary explanations shared across
   pipeline stages;
 - execution, graph-building, and release-building details.
 

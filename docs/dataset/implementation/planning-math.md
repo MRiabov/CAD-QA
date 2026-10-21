@@ -1,12 +1,12 @@
-# Release selection math
+# Release planning math
 
 **Status:** draft, 2026-10-21. This document centralizes the arithmetic used to
-select and balance a release. Product requirements remain authoritative; this
+plan and balance a release. Product requirements remain authoritative; this
 document explains how the constraints combine.
 
 ## Inputs
 
-- The valid-task set from `03-enumerate-tasks`.
+- The task-definition rules from `pipeline/03b-construct-task-definitions.md`.
 - The [task reasoning step support tables](task-step-support.md) for the release implementation scope.
 - The release targets in the PRD and the release contract.
 - The split rule: a CADEvolve program family belongs to one split.
@@ -62,14 +62,13 @@ documented and accepted by the owner.
 ## Per-step balance
 
 At each step count, a value is checked against its conditional release share,
-within half to twice that share. The definition of the conditional share and
-whether it is allocated from global targets or computed from the valid-task set
-is Q3 in
-[`pipeline/04-select-and-balance-release.md`](pipeline/04-select-and-balance-release.md).
+within half to twice that share. The conditional share is allocated from the
+global targets before task construction, then filled from available data; the
+plan is in
+[`pipeline/03a-plan-release.md`](pipeline/03a-plan-release.md).
 
-This document does not fix an allocation formula until Q3 is resolved. It fixes
-the coverage rule, the implementation-scope rule, the release-level bounds, and
-the split rule.
+This document fixes the coverage rule, the implementation-scope rule, the
+release-level bounds, and the split rule. The quota allocator applies them.
 
 ## Splits
 
@@ -79,9 +78,9 @@ ABC/ShapeNet mesh family; P and C versions of the same family share a family ID.
 tasks from one group share one split, and no group appears in both training and
 evaluation.
 
-## Open implementation choices
+## Implementation choices
 
-- **Selection strategy:** enumerate and cut, or plan quotas and generate into
-  them (Q1 in pipeline stage `04`).
-- **Conditional share allocation:** Q3 in pipeline stage `04`.
-- **Tie-break rule:** must be deterministic; it belongs to pipeline stage `04`.
+- **Planning strategy:** quota planning, not enumerate-and-cut; see pipeline stage `03a`.
+- **Conditional share allocation:** allocated from the global targets before
+  construction; see pipeline stage `03a`.
+- **Tie-break rule:** deterministic; see pipeline stage `03a`.

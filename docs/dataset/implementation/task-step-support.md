@@ -17,7 +17,7 @@ They exist to check the dataset:
 - actual task counts are a separate coverage question.
 
 The tables are derived from the task-definition rules in
-[`pipeline/03-enumerate-tasks.md`](pipeline/03-enumerate-tasks.md). They are not
+[`pipeline/03b-construct-task-definitions.md`](pipeline/03b-construct-task-definitions.md). They are not
 hand-authored, and `03` does not read them to decide what to attempt.
 
 ## Derivation
@@ -93,7 +93,7 @@ is structurally supported. Unsupported rows use one of:
 - `ambiguous_target`;
 - `no_valid_construction`.
 
-The four files are generated from the task-definition rules. `06` copies them
+The four files are generated from the task-definition rules. `05` copies them
 into the release and `manifest.json` records their schema versions and hashes.
 
 ## Validation use
@@ -107,11 +107,11 @@ For each task reasoning step count and dimension:
 5. Report balance against the release targets separately.
 
 The table does not say how many tasks are needed. That belongs to coverage and
-selection.
+release planning.
 
 ## What this is not
 
 - It is not a generator input.
-- It is not a release selection policy.
+- It is not a release planning policy.
 - It is not evidence that the corpus contains enough instances.
 - It is not the valid-task set.

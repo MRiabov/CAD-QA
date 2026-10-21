@@ -20,7 +20,7 @@ of these exceptions.
 | `02a` static extraction | Python | Reads the Python AST and CadQuery calls. |
 | `02b` execute CadQuery | Python | Needs the CadQuery and OCP runtime. |
 | `02c` build graph | Go | Consumes typed execution output; does not import CadQuery. |
-| Pipeline stages `03`–`06` | Go | Task enumeration, prompt rendering, selection, validation, and export. |
+| Pipeline stages `03`–`05` | Go | Task planning, task enumeration, prompt rendering, validation, and export. |
 
 Pipeline stage contracts are language-agnostic. The language boundary does not
 change their models.

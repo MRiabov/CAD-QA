@@ -1,6 +1,6 @@
-# Pipeline stage 06 — Validate and export release
+# Pipeline stage 05 — Validate and export release
 
-**Purpose:** validate the selected release and write the consumer artifacts.
+**Purpose:** validate the release and write the consumer artifacts.
 
 **Input/output contract:** [`io-contracts.md`](io-contracts.md).
 
@@ -29,4 +29,4 @@ Artifact ownership: [`../artifacts.md`](../artifacts.md).
 
 ## Not here
 
-Task generation, answer resolution, choice generation, and release selection.
+Task generation, answer resolution, choice generation, and release planning.

@@ -8,8 +8,8 @@ release from the external dataset metadata.
 ## Input / output
 
 - Input: program metadata records from `01a` plus the selection policy.
-- Output: a Parquet selection artifact with active and reserve program IDs, the
-  policy, counts, and exclusions.
+- Output: a Parquet selection artifact with active and reserve program IDs,
+  supplemental deltas, the policy, counts, and exclusions.
 
 ## Selection policy
 
@@ -83,6 +83,23 @@ release scale variation and arbitrary code style.
 
 P and C versions of one generator or mesh family share a program family ID;
 P2 must not put one version in train and the other in test.
+
+## Supplemental selection
+
+`03c` may request more programs when the release plan has a deficit. A
+supplemental selection produces a `ProgramSelectionDelta`; it does not replace
+the original selection.
+
+- **Extend:** continue the existing deterministic hash order beyond the active
+  and reserve sets.
+- **Target:** select programs by missing feature tag, collection, or family.
+
+A targeted request is deterministic for the request, policy version, and seed.
+Record the request ID, policy version, added IDs, and reason. The original
+selection remains immutable.
+
+The delta must preserve family split assignment: a program in an already assigned
+family inherits its split. A new family is assigned in `03a` before generation.
 
 ## Resolved questions
 

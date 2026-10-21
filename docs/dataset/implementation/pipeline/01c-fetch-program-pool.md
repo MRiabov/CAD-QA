@@ -6,13 +6,15 @@
 
 ## Input / output
 
-- Input: the selection artifact from `01b` plus the pinned cache revision.
+- Input: the selection artifact from `01b`, including supplemental selection
+  deltas, plus the pinned cache revision.
 - Output: a Parquet program pool with fetched rows marked active or reserve.
 
 ## Behavior
 
-- Fetch the active and reserve rows. A larger C shortlist, or the full C tier,
-  is allowed when review needs it.
+- Fetch the active and reserve rows. A supplemental delta is fetched as a delta;
+  do not refetch the original pool. A larger C shortlist, or the full C tier, is
+  allowed when review needs it.
 - Use Parquet column projection and HF range reads. Fetching is cheap relative
   to normalization and execution.
 - Do not normalize unselected rows.
