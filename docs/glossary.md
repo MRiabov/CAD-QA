@@ -256,7 +256,9 @@ Reasoning hops that require geometry evidence. Syntactic + geometry = Reasoning 
 
 ### Difficulty tier
 
-A coarse difficulty label for a CAD-QA dataset row.
+A coarse difficulty label for an older CAD-QA dataset row. `Distinct from:`
+**task reasoning step count**, the measure the replacement dataset uses; the
+replacement does not use a difficulty label or score.
 
 ---
 

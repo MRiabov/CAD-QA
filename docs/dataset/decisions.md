@@ -66,11 +66,11 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
   category stays coverage-only at each task reasoning step count, with a
   release-level cap.
 
-## DS-05 — Task reasoning step count is the difficulty measure
+## DS-05 — Task reasoning step count is the only measure
 
 - **Status:** accepted (2026-10-21).
-- **Context:** The previous difficulty targets were mathematically inconsistent,
-  and "difficulty level" is ambiguous about what is being counted.
+- **Context:** The previous step-count targets were mathematically inconsistent,
+  and the earlier "difficulty level" label was ambiguous about what is counted.
 - **Decision:** A **task reasoning step** is either a task clue step or a task
   answer step. **Task reasoning step count** is the number of task reasoning steps.
   The target mix is: 1 step 5%, 2 steps 15%, 3 steps 40%, 4 steps 25%, and 5
@@ -127,7 +127,7 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
 ## DS-09 — Warmup and splits
 
 - **Status:** accepted (2026-10-21).
-- **Context:** A small LLM model needs an easier entry point, and evaluation
+- **Context:** A small LLM model needs a lower-step entry point, and evaluation
   must not see training programs.
 - **Decision:** The warmup subset contains 500 to 1,000 tasks with one task
   reasoning step, drawn from the same programs and labeled inside the dataset.
@@ -158,12 +158,12 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
 
 - **Status:** accepted (2026-10-21).
 - **Context:** The previous docs allowed a task with no task clue step and no
-  task answer step, so the lowest difficulty bucket was ambiguous and could be
+  task answer step, so the lowest step count bucket was ambiguous and could be
   read as "no clue."
 - **Decision:** Every task has at least one task reasoning step. The lowest step
   count in the release is 1. The warmup subset is the 1-step tasks. There is no
   0-step category.
-- **Consequences:** The difficulty target mix starts at 1 step (5%). The PRD no
+- **Consequences:** The step-count target mix starts at 1 step (5%). The PRD no
   longer defines or generates 0-step tasks. The warmup subset is still 500 to
   1,000 tasks at the target release size.
 
