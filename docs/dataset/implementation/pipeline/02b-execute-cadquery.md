@@ -17,7 +17,7 @@ results, or a failure tombstone when execution fails.
 - Treat CADEvolve programs as trusted build inputs; do not add a network,
   filesystem, or prompt-injection boundary.
 - Pin the CadQuery and OCP versions and record them in the result.
-- Use stable defaults: 120 seconds wall clock and 2 GiB address space per child
+- Use stable defaults: 30 seconds wall clock and 2 GiB address space per child
   process. A changed limit is a new execution environment and a new cache key.
 - Kill the child on timeout and record a `timeout` failure. A memory-limit failure
   records a `memory` failure.
@@ -91,7 +91,7 @@ the same key.
 - **Sandbox.** *Resolved 2026-10-21.* No security sandbox. Run each program in a
   child process with a timeout and memory limit. CADEvolve programs are trusted
   build inputs, so network and filesystem isolation are not requirements.
-- **Execution limits.** *Resolved 2026-10-21.* Use 120 seconds and 2 GiB per
+- **Execution limits.** *Resolved 2026-10-21.* Use 30 seconds and 2 GiB per
   child as stable defaults.
 - **Entity identity.** *Resolved 2026-10-21.* Do not persist kernel handles. Use
   the stable geometric entity ID emitted by `02b`; reject fingerprint collisions.

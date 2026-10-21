@@ -41,7 +41,7 @@ selects from.
 
 ## Accepted subset
 
-The P0/P1 input is the canonical C tier, so the accepted subset is deliberately
+The P0/P1 input is the CADEvolve-C programs, so the accepted subset is deliberately
 narrow:
 
 - module-level `import cadquery as cq`;
