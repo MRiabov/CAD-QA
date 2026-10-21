@@ -263,6 +263,43 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
 
 ---
 
+## DS-18 — Generation inputs carry P0/P1/P2 priority
+
+- **Status:** accepted (2026-10-21).
+- **Context:** Not every task target category, clue type, answer meaning,
+  answer format, graph entity, relation, or measurement is needed for the first
+  benchmark. Without priorities, the generator either builds everything at once
+  or hides the build order in code.
+- **Decision:** The generation inputs carry the project P0/P1/P2 priorities. A
+  task is P0 only when every input it uses is P0. A P1 input makes the task P1;
+  a P2 input makes it P2. P0 tasks use only P0 inputs; P1 tasks may use P0 and
+  P1 inputs; P2 tasks may use any input. The priority columns in
+  `task-structure.md` and `graph-content.md` are authoritative. Coverage and
+  balance apply to the priority slice being built; a value deferred to a later
+  priority is not a gap in the current slice.
+- **Consequences:** The first benchmark is the P0 slice. P1 adds richer
+  relations, clues, and answers. P2 is optional. A P1 or P2 value cannot be
+  required by a P0 task.
+
+---
+
+## DS-19 — Cross-state `same_as` is P2
+
+- **Status:** accepted (2026-10-21).
+- **Context:** Cross-state topology identity is ambiguous: kernel IDs change,
+  faces can split or merge, and geometric fingerprints can collide. P0 does not
+  need persistence to compare before and after states, count topology changes,
+  or reason about material change.
+- **Decision:** P0 and P1 use independent topology per solid state (Option C).
+  `same_as` is P2 only, for explicit persistence tasks. When used, it records
+  evidence (kernel identity or a geometric fingerprint) and rejects ambiguous
+  matches.
+- **Consequences:** P0 and P1 tasks refer to an entity in a named solid state
+  and do not depend on cross-state identity. A P2 persistence task may use
+  `same_as`. No second graph is needed; the relation lives in the same graph.
+
+---
+
 ## Open questions
 
 - **Q1.** Is the release a selected subset of the valid-task universe, or must

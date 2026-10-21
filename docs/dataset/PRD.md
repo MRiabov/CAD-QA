@@ -61,6 +61,13 @@ The project uses three priorities:
 Requirements below are P0 unless the requirement ID is followed by a
 priority.
 
+Priority also applies to these generation inputs: task target categories,
+clue types, answer meanings, answer formats, graph entities, relations, and
+measurements. A task is P0 only when every input it uses is P0; a P1 input makes
+it P1, and a P2 input makes it P2. The authoritative tables are in
+[`task-structure.md`](task-structure.md) and
+[`graph-content.md`](graph-content.md).
+
 ---
 
 ## 2. Who it is for
@@ -151,15 +158,15 @@ may be added if they follow the structure and meet the same quality rules.
 
 The dataset must support all of the following answer formats.
 
-| Answer format | What the user sees | Requirements |
-|---|---|---|
-| Multiple choice | A short list of choices, one of which is correct. | At least five choices, with seven as the goal, for the benchmark dataset release; the correct answer is always present; choices are real candidates from the construction, not padding; descriptions do not repeat; no choice leaks the answer. |
-| Number | A finite numeric value. | Unit, precision, and tolerance are stated; the default precision is 4 significant figures; the number is measured from the real geometry. |
-| Integer | A whole number, usually a count or a rank. | Exact and non-negative where it is a count. |
-| Yes or no | A boolean answer. | Exactly one of true or false is correct. |
-| 3D coordinate | A point such as `(x, y, z)`. | Three finite numbers in a stated coordinate frame, with a stated tolerance; 4 significant figures per component by default. |
-| Bounding box | A minimum and maximum corner. | Two three-dimensional points in a stated frame, with a stated tolerance; 4 significant figures per component by default. |
-| Structured object | A small object with named fields, such as a CadQuery workplane state. | The fields are meaningful and documented; the answer is not an internal object dump. |
+| Answer format | What the user sees | Requirements | Priority |
+|---|---|---|---|
+| Multiple choice | A short list of choices, one of which is correct. | At least five choices, with seven as the goal, for the benchmark dataset release; the correct answer is always present; choices are real candidates from the construction, not padding; descriptions do not repeat; no choice leaks the answer. | P0 |
+| Number | A finite numeric value. | Unit, precision, and tolerance are stated; the default precision is 4 significant figures; the number is measured from the real geometry. | P0 |
+| Integer | A whole number, usually a count or a rank. | Exact and non-negative where it is a count. | P0 |
+| Yes or no | A boolean answer. | Exactly one of true or false is correct. | P0 |
+| 3D coordinate | A point such as `(x, y, z)`. | Three finite numbers in a stated coordinate frame, with a stated tolerance; 4 significant figures per component by default. | P0 |
+| Bounding box | A minimum and maximum corner. | Two three-dimensional points in a stated frame, with a stated tolerance; 4 significant figures per component by default. | P0 |
+| Structured object | A small object with named fields, such as a CadQuery workplane state. | The fields are meaningful and documented; the answer is not an internal object dump. | P1 |
 
 Numbers, coordinates, and bounding-box components are rounded to 4 significant
 figures by default. A task may state a different precision only with a
@@ -209,6 +216,11 @@ a result on steps 2 through 5 alone.
 | **R-6** | Answers are not leaked. | The task file never contains the answer or hidden identifiers. |
 
 ### 7.2 Coverage and balance
+
+Coverage and balance apply to the priority slice being built. The P0 slice
+supports only P0 values; the P1 slice adds P1 values; the P2 slice adds the
+rest. A value deferred to a later slice is not a coverage gap in the current
+slice. "Supported" below means supported by the priority slice being checked.
 
 | ID | Requirement | How the user can tell |
 |---|---|---|

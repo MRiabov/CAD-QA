@@ -32,9 +32,9 @@ yet.
 | Document | What it defines |
 |---|---|
 | [`PRD.md`](PRD.md) | What the user gets, what the dataset must contain, quality promises, size, splits, deliverables, and priorities. |
-| [`task-structure.md`](task-structure.md) | The dimensions of a task, coverage and balance at every task reasoning step count, clue types, answer meanings, task reasoning step count rules, and uniqueness rules. |
+| [`task-structure.md`](task-structure.md) | The dimensions of a task, P0/P1/P2 priorities for generation inputs, coverage and balance at every task reasoning step count, clue types, answer meanings, task reasoning step count rules, and uniqueness rules. |
 | [`prompt-content.md`](prompt-content.md) | What the LLM model sees: program text, question, task clues, choices, and answer instruction. |
-| [`graph-content.md`](graph-content.md) | The graph elements the tasks rely on: graph entities, relations, measurements, states, and evidence. |
+| [`graph-content.md`](graph-content.md) | The graph elements the tasks rely on: graph entities, relations, measurements, states, evidence, and P0/P1/P2 priorities. |
 | [`terminology.md`](terminology.md) | Proposed terms, replacements for old terms, and naming decisions that still need owner approval. |
 | [`decisions.md`](decisions.md) | Feature-wide dataset decisions in ADR format, plus open questions. |
 

@@ -16,28 +16,33 @@ If an answer cannot be produced from the graph, the task is not generated.
 The graph is not a copy of the program text. It is the set of graph elements the
 tasks need, derived from the program and from running it.
 
+Priority follows the PRD. P0 graph inputs are required for the first benchmark,
+P1 inputs strengthen it, and P2 inputs are optional. A task is P0 only when
+every input it needs is P0; a P1 input makes the task P1, and a P2 input makes
+it P2.
+
 ## 2. Graph entities
 
 The graph contains these entity categories.
 
-| Entity | What it represents | Identity |
-|---|---|---|
-| CadQuery program | The program under test. | One per task. |
-| Operation | One modeling call in the program. | Visible variable name and position in the program. |
-| Feature | The modeling feature an operation creates or changes. | The operation that creates it. |
-| Solid state | The shape after one operation, and the final shape. | The operation that produced it. |
-| Face | A face of a solid state. | Stable face identity when available; otherwise a stable description tied to a solid state. |
-| Edge | An edge of a solid state. | Stable edge identity when available; otherwise a stable description. |
-| Vertex | A vertex of a solid state. | Stable vertex identity when available; otherwise a stable description. |
-| Edge endpoint | One end of an edge. | The edge and the end. |
-| CadQuery profile | The two-dimensional shape a sketch draws. | The sketch operation that creates it. |
-| CadQuery workplane | The frame a sketch or feature is built on. | The operation that creates or uses it. |
-| Path | A curve used by a sweep or path operation. | The operation that creates it. |
-| Path point | A point on a path. | The path and a stable point identity. |
-| Path segment | A segment of a path. | The path and a stable segment identity. |
-| Region | Material a feature adds or removes. | The feature and the sign of the change. |
-| CadQuery selector result | The entities a CadQuery selector actually selected. | The CadQuery selector expression and the solid state it ran on. |
-| Measurement | A numeric or geometric value about an entity or a pair of entities. | The measured entity or pair, and the measurement name. |
+| Entity | What it represents | Identity | Priority |
+|---|---|---|---|
+| CadQuery program | The program under test. | One per task. | P0 |
+| Operation | One modeling call in the program. | Visible variable name and position in the program. | P0 |
+| Feature | The modeling feature an operation creates or changes. | The operation that creates it. | P0 |
+| Solid state | The shape after one operation, and the final shape. | The operation that produced it. | P0 |
+| Face | A face of a solid state. | Stable face identity when available; otherwise a stable description tied to a solid state. | P0 |
+| Edge | An edge of a solid state. | Stable edge identity when available; otherwise a stable description. | P0 |
+| Vertex | A vertex of a solid state. | Stable vertex identity when available; otherwise a stable description. | P0 |
+| Edge endpoint | One end of an edge. | The edge and the end. | P1 |
+| CadQuery profile | The two-dimensional shape a sketch draws. | The sketch operation that creates it. | P0 |
+| CadQuery workplane | The frame a sketch or feature is built on. | The operation that creates or uses it. | P0 |
+| Path | A curve used by a sweep or path operation. | The operation that creates it. | P1 |
+| Path point | A point on a path. | The path and a stable point identity. | P1 |
+| Path segment | A segment of a path. | The path and a stable segment identity. | P1 |
+| Region | Material a feature adds or removes. | The feature and the sign of the change. | P0 |
+| CadQuery selector result | The entities a CadQuery selector actually selected. | The CadQuery selector expression and the solid state it ran on. | P1 |
+| Measurement | A numeric or geometric value about an entity or a pair of entities. | The measured entity or pair, and the measurement name. | P0 |
 
 Every entity belongs to exactly one CadQuery program. An entity without a
 program is not part of a task.
@@ -49,54 +54,54 @@ relation categories.
 
 ### 3.1 Program and provenance
 
-| Relation | From | To | Meaning |
-|---|---|---|---|
-| before | Operation | Operation | The first operation appears before the second in the program. |
-| after | Operation | Operation | The inverse of `before`. |
-| creates | Operation | Feature | The operation creates the feature. |
-| creates | Operation | Solid state | The operation produces the solid state. |
-| uses | Feature | CadQuery profile | The feature uses the CadQuery profile. |
-| uses | Feature | CadQuery workplane | The feature is built on the CadQuery workplane. |
-| derived_from | CadQuery profile | CadQuery workplane | The CadQuery profile is drawn on the CadQuery workplane. |
-| derived_from | Path point or segment | Path | The point or segment belongs to the path. |
+| Relation | From | To | Meaning | Priority |
+|---|---|---|---|---|
+| before | Operation | Operation | The first operation appears before the second in the program. | P0 |
+| after | Operation | Operation | The inverse of `before`. | P0 |
+| creates | Operation | Feature | The operation creates the feature. | P0 |
+| creates | Operation | Solid state | The operation produces the solid state. | P0 |
+| uses | Feature | CadQuery profile | The feature uses the CadQuery profile. | P0 |
+| uses | Feature | CadQuery workplane | The feature is built on the CadQuery workplane. | P0 |
+| derived_from | CadQuery profile | CadQuery workplane | The CadQuery profile is drawn on the CadQuery workplane. | P0 |
+| derived_from | Path point or segment | Path | The point or segment belongs to the path. | P1 |
 
 ### 3.2 Topology
 
-| Relation | From | To | Meaning |
-|---|---|---|---|
-| has_face | Solid state | Face | The solid state contains the face. |
-| has_edge | Face | Edge | The face contains the edge. |
-| has_vertex | Edge | Vertex | The edge contains the vertex. |
-| adjacent_to | Face | Face | The faces share an edge. |
-| endpoint_of | Edge endpoint | Edge | The endpoint is one end of the edge. |
-| same_as | Face or edge or vertex | Same category | Two records describe the same entity across two solid states. |
+| Relation | From | To | Meaning | Priority |
+|---|---|---|---|---|
+| has_face | Solid state | Face | The solid state contains the face. | P0 |
+| has_edge | Face | Edge | The face contains the edge. | P0 |
+| has_vertex | Edge | Vertex | The edge contains the vertex. | P0 |
+| adjacent_to | Face | Face | The faces share an edge. | P0 |
+| endpoint_of | Edge endpoint | Edge | The endpoint is one end of the edge. | P1 |
+| same_as | Face or edge or vertex | Same category | Two records describe the same entity across two solid states. | P2 |
 
 ### 3.3 Space and shape
 
-| Relation | From | To | Meaning |
-|---|---|---|---|
-| parallel_to | Face, edge, or path segment | Face, edge, or path segment | The two are parallel within tolerance. |
-| perpendicular_to | Face, edge, or path segment | Face, edge, or path segment | The two are perpendicular within tolerance. |
-| coplanar_with | Face | Face | The two faces lie in the same plane within tolerance. |
-| coaxial_with | Edge or path segment | Edge or path segment | The two share an axis within tolerance. |
-| contains | Solid state or face | Point or entity | The first contains the second. |
-| intersects | Entity | Entity | The two intersect. |
-| distance_to | Entity | Entity | The shortest distance between the two. |
+| Relation | From | To | Meaning | Priority |
+|---|---|---|---|---|
+| parallel_to | Face, edge, or path segment | Face, edge, or path segment | The two are parallel within tolerance. | P0 |
+| perpendicular_to | Face, edge, or path segment | Face, edge, or path segment | The two are perpendicular within tolerance. | P0 |
+| coplanar_with | Face | Face | The two faces lie in the same plane within tolerance. | P1 |
+| coaxial_with | Edge or path segment | Edge or path segment | The two share an axis within tolerance. | P1 |
+| contains | Solid state or face | Point or entity | The first contains the second. | P0 |
+| intersects | Entity | Entity | The two intersect. | P1 |
+| distance_to | Entity | Entity | The shortest distance between the two. | P0 |
 
 ### 3.4 Material change
 
-| Relation | From | To | Meaning |
-|---|---|---|---|
-| adds_material | Feature | Region | The feature adds the region. |
-| removes_material | Feature | Region | The feature removes the region. |
-| part_of | Region | Feature | The region belongs to the feature. |
+| Relation | From | To | Meaning | Priority |
+|---|---|---|---|---|
+| adds_material | Feature | Region | The feature adds the region. | P0 |
+| removes_material | Feature | Region | The feature removes the region. | P0 |
+| part_of | Region | Feature | The region belongs to the feature. | P0 |
 
 ### 3.5 Selection
 
-| Relation | From | To | Meaning |
-|---|---|---|---|
-| selected_by | Face, edge, or vertex | CadQuery selector result | The entity was selected by the CadQuery selector. |
-| selected_from | CadQuery selector result | Solid state | The CadQuery selector ran on the solid state. |
+| Relation | From | To | Meaning | Priority |
+|---|---|---|---|---|
+| selected_by | Face, edge, or vertex | CadQuery selector result | The entity was selected by the CadQuery selector. | P1 |
+| selected_from | CadQuery selector result | Solid state | The CadQuery selector ran on the solid state. | P1 |
 
 Every relation has two endpoints. A relation with a missing endpoint is a graph
 defect, not a graph element.
@@ -106,21 +111,21 @@ defect, not a graph element.
 Measurements are the numeric and geometric values a task can use. The graph
 must support at least these.
 
-| Measurement | Applies to | Notes |
-|---|---|---|
-| Volume | Solid state, region | Positive for a shape; signed for an effect. |
-| Area | Face, CadQuery profile, region | Face area and CadQuery profile area are different scopes. |
-| Length | Edge, path segment | Straight or curve length. |
-| Distance | Two entities, or an entity and a point | Shortest distance. |
-| Angle | Two faces, two edges, or a path tangent | Degrees or radians, stated once. |
-| Bounding box | Solid state, entity, region | Minimum and maximum corners in the program frame. |
-| Centroid | Solid state, entity, region | Point in the program frame. |
-| Count | Solid state, face, CadQuery selector result | Faces, edges, vertices, selected entities. |
-| Validity | Solid state | Whether the shape is a valid solid or compound. |
-| Volume change | Operation | Signed volume added or removed. |
-| Bounding-box change | Operation | Change caused by the operation. |
-| Topology change | Operation | Change in face, edge, or vertex counts. |
-| CadQuery workplane frame | CadQuery workplane | Origin, x direction, and normal. |
+| Measurement | Applies to | Notes | Priority |
+|---|---|---|---|
+| Volume | Solid state, region | Positive for a shape; signed for an effect. | P0 |
+| Area | Face, CadQuery profile, region | Face area and CadQuery profile area are different scopes. | P0 |
+| Length | Edge, path segment | Straight or curve length. | P0 |
+| Distance | Two entities, or an entity and a point | Shortest distance. | P0 |
+| Angle | Two faces, two edges, or a path tangent | Degrees or radians, stated once. | P0 |
+| Bounding box | Solid state, entity, region | Minimum and maximum corners in the program frame. | P0 |
+| Centroid | Solid state, entity, region | Point in the program frame. | P0 |
+| Count | Solid state, face, CadQuery selector result | Faces, edges, vertices, selected entities. | P0 |
+| Validity | Solid state | Whether the shape is a valid solid or compound. | P2 |
+| Volume change | Operation | Signed volume added or removed. | P0 |
+| Bounding-box change | Operation | Change caused by the operation. | P1 |
+| Topology change | Operation | Change in face, edge, or vertex counts. | P0 |
+| CadQuery workplane frame | CadQuery workplane | Origin, x direction, and normal. | P1 |
 
 Every measurement has:
 
@@ -147,8 +152,9 @@ need.
 
 A task about an effect must refer to the solid state before and the solid state
 after the operation. A task about the final shape must refer to the final solid
-state. A face in an earlier solid state and a face in a later solid state are not
-the same entity unless the graph records that they are the same.
+state. Entities in different solid states are distinct. The P2 `same_as`
+relation may record persistence for P2 tasks; P0 and P1 tasks must not depend on
+cross-state identity.
 
 ## 6. Graph quality rules
 
@@ -156,8 +162,8 @@ the same entity unless the graph records that they are the same.
    operation, or a CadQuery selector expression.
 2. Every relation has two endpoints.
 3. Every measurement has an entity or pair, a name, and evidence.
-4. No entity is duplicated under two identities unless the graph records a
-   `same_as` relation.
+4. No entity is duplicated within one solid state. Entities in different solid
+   states are distinct; only the P2 `same_as` relation may link them.
 5. No graph element is orphaned.
 6. Every graph element used by a task clue or answer is present.
 7. Every graph element that cannot be measured is recorded as missing, not guessed.
@@ -175,9 +181,9 @@ the same entity unless the graph records that they are the same.
 
 ## 8. Coverage check
 
-For every task reasoning step count, and every task target category, clue type, and
-answer meaning supported at that task reasoning step count in `task-structure.md`, the graph must
-answer these checks:
+For every task reasoning step count and every priority slice, and every task
+target category, clue type, and answer meaning supported at that task reasoning
+step count in `task-structure.md`, the graph must answer these checks:
 
 - Which task target entities can the task use?
 - Which task clue types does the task need?
@@ -191,20 +197,6 @@ report lists the missing graph elements by task reasoning step count, task targe
 category, clue type, and answer meaning.
 
 ## 9. Open questions
-
-- **Q1.** How stable are face, edge, and vertex identities across two
-  operations, and when should the graph use `same_as`?
-  - **Option A — kernel stable identities.** Use the kernel's stable IDs when
-    available.
-  - **Option B — geometric fingerprints.** Match by centroid, area, normal, and
-    adjacency within tolerance.
-  - **Option C — recompute per operation, no identity.** Treat each solid
-    state's topology as independent.
-  - **Recommendation:** A with B as a fallback, recording `same_as` when the
-    match is confident. Example: a face keeps its area and normal after a
-    fillet but gets a new kernel ID; the fingerprint matches, so the graph
-    records `same_as`. If the match is ambiguous, reject tasks that need that
-    identity.
 
 - **Q2.** Should CadQuery selector results be stored as entities, as a relation,
   or both?
@@ -242,3 +234,14 @@ category, clue type, and answer meaning.
     failed solid state with the error, no task is generated, and the failure
     manifest counts it. Do not guess the missing value or drop the program
     silently.
+
+## 10. Resolved questions
+
+- **Q1.** *Resolved 2026-10-21.* P0 and P1 use independent topology per solid
+  state (Option C). A face, edge, or vertex in one solid state is not the same
+  entity as one in another solid state. `same_as` is P2 only, for explicit
+  persistence tasks. When a P2 task uses it, record the evidence (kernel
+  identity or a geometric fingerprint) and reject ambiguous matches. Example: a
+  face keeps its area and normal after a fillet but gets a new kernel ID; a
+  confident fingerprint may support a P2 `same_as` link. P0 and P1 tasks that
+  need cross-state identity are not generated.

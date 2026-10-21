@@ -24,30 +24,35 @@ A task is a combination of separate dimensions. Once the dimensions are
 separate, every task can be described precisely, and the dataset can be
 checked for real coverage instead of counting labels.
 
+Each value below has a priority. P0 values are required for the first benchmark,
+P1 values strengthen it, and P2 values are optional. A task is P0 only when
+every value it uses is P0; a P1 value makes the task P1, and a P2 value makes it
+P2.
+
 ## 2. The dimensions of a task
 
 ### 2.1 Task target
 
 The task target is the entity or value the task asks about.
 
-| Task target category | What it is |
-|---|---|
-| CadQuery program | The program as a whole. |
-| Operation | One modeling call in the program. |
-| Feature | The modeling feature an operation creates or changes. |
-| Solid state | The shape after an operation, including the final shape. |
-| Face | A face of a solid state. |
-| Edge | An edge of a solid state. |
-| Vertex | A vertex of a solid state. |
-| Edge endpoint | One end of an edge. |
-| CadQuery profile | The two-dimensional shape a sketch draws. |
-| CadQuery workplane | The frame a sketch or feature is built on. |
-| Path | A curve used by a sweep or a path operation. |
-| Path point | A point on a path. |
-| Path segment | A segment of a path. |
-| Region | The material a feature adds, or the material it removes. |
-| CadQuery selector result | The entities a CadQuery selector actually selected. |
-| Scalar value | A measurement or count with no entity chosen as the answer. |
+| Task target category | What it is | Priority |
+|---|---|---|
+| CadQuery program | The program as a whole. | P1 |
+| Operation | One modeling call in the program. | P0 |
+| Feature | The modeling feature an operation creates or changes. | P0 |
+| Solid state | The shape after an operation, including the final shape. | P0 |
+| Face | A face of a solid state. | P0 |
+| Edge | An edge of a solid state. | P0 |
+| Vertex | A vertex of a solid state. | P0 |
+| Edge endpoint | One end of an edge. | P1 |
+| CadQuery profile | The two-dimensional shape a sketch draws. | P0 |
+| CadQuery workplane | The frame a sketch or feature is built on. | P0 |
+| Path | A curve used by a sweep or a path operation. | P1 |
+| Path point | A point on a path. | P1 |
+| Path segment | A segment of a path. | P1 |
+| Region | The material a feature adds, or the material it removes. | P0 |
+| CadQuery selector result | The entities a CadQuery selector actually selected. | P1 |
+| Scalar value | A measurement or count with no entity chosen as the answer. | P0 |
 
 A task has exactly one task target category. If the answer is a measurement
 taken from an entity, the entity is the task target and the measurement is the
@@ -61,14 +66,14 @@ can be checked against the graph.
 
 Every task clue has one of these clue types:
 
-| Task clue type | What it says |
-|---|---|
-| Property | The task target has a property or measurement with a stated value or range. |
-| Relation | The task target stands in a named relation to another entity. |
-| Comparison | The task target's measurement compares to a reference measurement. |
-| Aggregation | The task target is the extreme, the rank, or the count of a set. |
-| Provenance | The task target was created by an operation, uses a CadQuery profile, or sits on a CadQuery workplane. |
-| Chain | The task target is reached through an ordered sequence of relations. |
+| Task clue type | What it says | Priority |
+|---|---|---|
+| Property | The task target has a property or measurement with a stated value or range. | P0 |
+| Relation | The task target stands in a named relation to another entity. | P0 |
+| Comparison | The task target's measurement compares to a reference measurement. | P0 |
+| Aggregation | The task target is the extreme, the rank, or the count of a set. | P1 |
+| Provenance | The task target was created by an operation, uses a CadQuery profile, or sits on a CadQuery workplane. | P0 |
+| Chain | The task target is reached through an ordered sequence of relations. | P2 |
 
 A comparison task clue may name both entities, or it may refer to one entity
 selected by an earlier task clue. A reference must resolve to exactly one
@@ -92,15 +97,15 @@ not a task clue and is not written as one. It belongs in the answer instruction.
 
 The answer format is what the LLM model must return.
 
-| Answer format | What the LLM model returns |
-|---|---|
-| Multiple choice | One label from a short list of choices. |
-| Number | One finite numeric value. |
-| Integer | One whole number. |
-| Yes or no | One boolean value. |
-| 3D coordinate | One point. |
-| Bounding box | One minimum corner and one maximum corner. |
-| Structured object | One small object with named fields. |
+| Answer format | What the LLM model returns | Priority |
+|---|---|---|
+| Multiple choice | One label from a short list of choices. | P0 |
+| Number | One finite numeric value. | P0 |
+| Integer | One whole number. | P0 |
+| Yes or no | One boolean value. | P0 |
+| 3D coordinate | One point. | P0 |
+| Bounding box | One minimum corner and one maximum corner. | P0 |
+| Structured object | One small object with named fields. | P1 |
 
 The answer format is independent of the task target and the task clue. A task about a
 face can have a multiple-choice answer, a coordinate answer, or a
@@ -112,23 +117,23 @@ The answer meaning is what the answer is about, independent of how it is
 returned. The answer format says "number" or "boolean"; the answer meaning says
 "volume" or "membership".
 
-| Answer meaning | What it describes |
-|---|---|
-| Identity | Which entity is the answer. |
-| Volume | A volume or volume change. |
-| Area | An area. |
-| Length | A length. |
-| Distance | A distance between two entities or a point and an entity. |
-| Angle | An angle between faces, edges, or a path tangent. |
-| Count | A number of entities. |
-| Rank | A position in an ordered set. |
-| Membership | Whether a point is inside, outside, or on a boundary. |
-| Position | A point location in space. |
-| Extent | A minimum and maximum corner. |
-| CadQuery workplane state | The frame of a CadQuery workplane. |
-| Material change | Material added or removed. |
-| Topology change | A change in faces, edges, or vertices. |
-| Validity | Whether a shape is valid. |
+| Answer meaning | What it describes | Priority |
+|---|---|---|
+| Identity | Which entity is the answer. | P0 |
+| Volume | A volume or volume change. | P0 |
+| Area | An area. | P0 |
+| Length | A length. | P0 |
+| Distance | A distance between two entities or a point and an entity. | P0 |
+| Angle | An angle between faces, edges, or a path tangent. | P0 |
+| Count | A number of entities. | P0 |
+| Rank | A position in an ordered set. | P1 |
+| Membership | Whether a point is inside, outside, or on a boundary. | P0 |
+| Position | A point location in space. | P0 |
+| Extent | A minimum and maximum corner. | P0 |
+| CadQuery workplane state | The frame of a CadQuery workplane. | P1 |
+| Material change | Material added or removed. | P0 |
+| Topology change | A change in faces, edges, or vertices. | P0 |
+| Validity | Whether a shape is valid. | P2 |
 
 The answer meaning is not the answer format. A volume can be returned as a
 number; a membership result can be returned as yes or no; an identity is
@@ -223,9 +228,10 @@ that does not satisfy the uniqueness rule is not generated.
 
 ## 5. Coverage
 
-Coverage is checked at each task reasoning step count. For each step count in
-the release, the
-dataset must contain:
+Coverage is checked at each task reasoning step count and per priority slice.
+The P0 slice checks P0 values; the P1 slice checks P0 and P1 values; the P2
+slice checks all values. For each step count in the slice, the dataset must
+contain:
 
 - every task target category supported at that task reasoning step count;
 - every task clue type supported at that task reasoning step count;
@@ -236,8 +242,10 @@ A **task reasoning step support table** records which values can occur at each
 step count and why an unsupported value cannot occur there. It is part of the release documentation
 and is versioned with the generator. "Supported" is a property of the task
 structure, not of the current generator: a value may be marked unsupported only
-when no valid task can express it at that step count. A value that is valid but
-not implemented is a gap, not an unsupported value.
+when no valid task can express it at that step count. Structural support is
+separate from priority. A value may be structurally supported but deferred to
+P1 or P2; that is not a P0 gap. A value that is structurally valid, in the
+current priority slice, and not implemented is a gap.
 
 Coverage is reported at each task reasoning step count and per dimension. Global
 coverage is the union of the task reasoning step count reports; it does not
@@ -246,9 +254,10 @@ count 2.
 
 ## 6. Balance
 
-Balance is also checked at each task reasoning step count. The release-level
-targets remain, but they may not be met by concentrating a value at one task
-reasoning step count.
+Balance is also checked at each task reasoning step count and per priority
+slice. The release-level targets remain, but they may not be met by
+concentrating a value at one task reasoning step count. A slice balances only
+the values it supports.
 
 | Dimension | Coverage at each task reasoning step count | Balance at each task reasoning step count | Release balance |
 |---|---|---|---|
