@@ -45,6 +45,9 @@ P2 must not put one version in train and the other in test.
 - **Program count.** *Resolved 2026-10-21.* Select 1,500 active C programs for P0
   and P1, with 1,000 usable programs as the release floor, plus 300–450 reserve
   IDs. P2 adds a separately sized P pool.
+- **Code-rewrite augmentation.** *Resolved 2026-10-21.* Skip it for the first
+  release. The release samples a bounded set of families; the 744,780 rewrites
+  add code-style variants, not new families, geometry, or task capabilities.
 
 ## Open questions
 
@@ -65,21 +68,3 @@ proportionally. Cap programs per CADEvolve split group so one generator or mesh
 family does not dominate.
 
 **Recommendation:** collection + required feature tags, with a per-group cap.
-
-### Does the release need the paper's code-rewrite augmentation?
-
-The paper's rewrite augmentation took the generator scripts and asked
-`gpt-5-mini` to produce up to 10 semantically equivalent code rewrites per
-script, keeping only executable variants. It produced 744,780 scripts. They
-preserve the same geometry but vary code structure and style.
-
-The cache does not contain those rewrites. They add code-style diversity, not
-new shapes or task capabilities.
-
-- **Skip for the first release:** C is already canonical and template-like, but
-  the task prompt is generated from the graph, not from code style alone.
-- **Add later:** use the original tar or rewrite artifacts if prompt-style
-  diversity becomes a measured problem.
-
-**Recommendation:** defer the rewrite augmentation to P1. It is not a
-first-release blocker.
