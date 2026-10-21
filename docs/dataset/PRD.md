@@ -173,11 +173,9 @@ judge is not allowed.
 
 Difficulty is described by how many task reasoning steps a task needs.
 
-- **0 steps**: no task clue step and no task answer step. The answer is a named
-  object or a value directly visible in the program. This is format warmup, not
-  a reasoning task.
 - **1 step**: exactly one task clue step with an identity answer, or exactly one
-  task answer step about a named task target. This is the main warmup step.
+  task answer step about a named task target. This is the warmup subset and the
+  curriculum entry point (P0).
 - **2 to 5 steps**: the main benchmark range (P0). The LLM model must combine
   task clues about geometry, relationships, measurements, and operations.
 - **6 or more steps**: optional future work (P2).
@@ -186,9 +184,9 @@ A task's difficulty must come from the work it actually requires, not from
 a label attached to it. A task that looks long but can be answered from a
 variable name or an operation order is not a hard task.
 
-The benchmark dataset release covers steps 0 through 5. Steps 0 and 1 form the
-labeled warmup subset and are also useful training material. Steps 2 through 5
-carry the main benchmark claim. Every benchmark result must name the reasoning
+The benchmark dataset release covers steps 1 through 5. Step 1 forms the labeled
+warmup subset and is also useful training material. Steps 2 through 5 carry the
+main benchmark claim. Every benchmark result must name the reasoning
 steps it covers, so a result that includes warmup tasks is not mistaken for
 a result on steps 2 through 5 alone.
 
@@ -213,7 +211,7 @@ a result on steps 2 through 5 alone.
 |---|---|---|
 | **R-7** | The dataset balances answer formats at every task reasoning step count. | Every answer format in section 5 appears at every task reasoning step count where it is supported. No format is more than twice or less than half its share among the formats supported at that task reasoning step count. Over the release, each format is between 5% and 25% of tasks. |
 | **R-8** | The dataset covers all target categories, clue types, and answer meanings. | Every target category, clue type, and answer meaning supported at a task reasoning step count appears at that task reasoning step count. A value that is valid but missing is a gap; the task reasoning step support table lists only values that cannot occur. |
-| **R-9** | The dataset covers the full difficulty range. | Steps 0 through 5 all appear in the target mix in section 8, with steps 3 and 4 carrying the headline slices. |
+| **R-9** | The dataset covers the full difficulty range. | Steps 1 through 5 all appear in the target mix in section 8, with steps 3 and 4 carrying the headline slices. |
 | **R-10** | The dataset is diverse. | It draws from at least one thousand distinct CAD models, and no single CAD model dominates. |
 | **R-11** (P1) | The dataset has varied answers. | At least one thousand different correct answers appear, and no answer is repeated so often that guessing wins. |
 | **R-12** (P1) | The dataset is balanced at every task reasoning step count. | No clue type is above 25% of clues at a task reasoning step count or over the release, and no clue type is more than twice or less than half its share among the clue types supported at a task reasoning step count. Every answer meaning is between 1% and 10% over the release, and no answer meaning is more than twice or less than half its share among the meanings supported at a task reasoning step count. No target category is above 25% of the release. |
@@ -224,7 +222,7 @@ a result on steps 2 through 5 alone.
 |---|---|---|
 | **R-13** | Training, validation, and test sets do not overlap. | The same CAD model (the same CadQuery program) never appears in both training and evaluation. |
 | **R-14** | The test set is never trained on. | The dataset card names the test set and the training recipe excludes it. |
-| **R-15** | The warmup subset is labeled, not excluded. | Warmup tasks are marked as tasks with 0 or 1 task reasoning steps and may be used for training; every benchmark result names the task reasoning steps it covers. |
+| **R-15** | The warmup subset is labeled, not excluded. | Warmup tasks are marked as tasks with one task reasoning step and may be used for training; every benchmark result names the task reasoning steps it covers. |
 | **R-16** (P1) | Transfer results are not contaminated. | No program from the external benchmark used for transfer appears in training or evaluation. |
 
 ### 7.4 Usability and trust
@@ -257,7 +255,7 @@ tasks and meet the following targets.
 | Clue type balance | No clue type above 25% of clues at a task reasoning step count or over the release; mix at each task reasoning step count within the tolerance in `task-structure.md` | P1 |
 | Answer meaning coverage | Every supported meaning at every task reasoning step count | P0 |
 | Answer meaning balance | Each 1-10% over the release; mix at each task reasoning step count within the tolerance in `task-structure.md` | P1 |
-| Difficulty | Target mix: 0–1 5%, 2 15%, 3 40%, 4 25%, 5 15% | P0 |
+| Difficulty | Target mix: 1 step 5%, 2 15%, 3 40%, 4 25%, 5 15% | P0 |
 | Geometry-based tasks | At least 95% | P0 |
 | Tasks needing at least three steps | At least 80% | P0 |
 | Multiple-choice choices | At least five; aim for seven | P0 |
@@ -280,7 +278,7 @@ subset is P0 for the first training cycle.
 
 - 500 to 1,000 tasks, drawn from the same CadQuery programs and the same
   dataset as the benchmark;
-- 0 or 1 task reasoning steps;
+- one task reasoning step;
 - all answer formats;
 - the same prompt and answer-key format as the benchmark;
 - the same correctness and fairness rules;
@@ -398,9 +396,9 @@ The dataset is done when:
 - **Q3** (P0). *Resolved 2026-10-21.* The same CAD model means the same CadQuery
   program. Tasks that come from the same program stay in one part of
   the split.
-- **Q4** (P1). *Resolved 2026-10-21.* Zero- and one-step tasks appear in the
-  dataset release. They form the labeled warmup subset and are also useful
-  training material.
+- **Q4** (P1). *Resolved 2026-10-21.* One-step tasks appear in the dataset
+  release. They form the labeled warmup subset and are also useful training
+  material.
 - **Q5** (P1). *Resolved 2026-10-21.* Yes. Every answer format must reach five
   percent; a balanced and diverse dataset is the default.
 - **Q6** (P1). *Resolved 2026-10-21.* Coverage is at each task reasoning step

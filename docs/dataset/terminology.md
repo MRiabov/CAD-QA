@@ -42,7 +42,7 @@ the user-visible outcome.
 | **Measurement** | Domain | A numeric or geometric value about a graph entity or a pair of entities. |
 | **Evidence** | Domain | The record of how a measurement was obtained: measured by running CadQuery, or derived exactly from the program. |
 | **Solid state** | Domain | The shape before or after an operation, or the final shape. |
-| **Warmup subset** | Domain | The labeled set of 0- and 1-step tasks inside the dataset. It is useful for training, not a separate dataset. |
+| **Warmup subset** | Domain | The labeled set of 1-step tasks inside the dataset. It is useful for training, not a separate dataset. |
 | **Curriculum** | Domain | The order in which tasks are presented, from easier to harder. |
 | **Dataset release** | Domain | An immutable, validated, versioned set of tasks and answer keys. |
 

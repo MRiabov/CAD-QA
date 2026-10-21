@@ -145,7 +145,8 @@ answer step. For example:
 - A task with two task clues and a count answer has two task clue steps and one
   task answer step, so step count 3.
 
-The step count is computed from the actual task solution sequence, not from a label.
+The step count is computed from the actual task solution sequence, not from a
+label. The lowest step count in the release is 1; there are no 0-step tasks.
 
 ## 3. There are no task types or task patterns
 

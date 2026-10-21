@@ -73,9 +73,9 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
   and "difficulty level" is ambiguous about what is being counted.
 - **Decision:** A **task reasoning step** is either a task clue step or a task
   answer step. **Task reasoning step count** is the number of task reasoning steps.
-  The target mix is: 0–1 steps 5%, 2 steps 15%, 3 steps 40%, 4 steps 25%, and 5
+  The target mix is: 1 step 5%, 2 steps 15%, 3 steps 40%, 4 steps 25%, and 5
   steps 15%. At least 80% of the release needs three or more task reasoning
-  steps. Steps 0 and 1 form the labeled warmup subset.
+  steps. One-step tasks form the labeled warmup subset.
 - **Consequences:** A 10,000-task release contains about 500 warmup tasks and
   8,000 tasks at three or more steps. Product text says "task reasoning step
   count," not "difficulty level" or "reasoning depth."
@@ -129,8 +129,8 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
 - **Status:** accepted (2026-10-21).
 - **Context:** A small LLM model needs an easier entry point, and evaluation
   must not see training programs.
-- **Decision:** The warmup subset contains 500 to 1,000 tasks with 0 or 1 task
-  reasoning steps, drawn from the same programs and labeled inside the dataset.
+- **Decision:** The warmup subset contains 500 to 1,000 tasks with one task
+  reasoning step, drawn from the same programs and labeled inside the dataset.
   Training, validation, and test are split by CadQuery program at approximately
   70/15/15; the same program never appears in more than one part.
 - **Consequences:** Warmup tasks may be used for training. The test part is never
@@ -154,6 +154,21 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
 
 ---
 
+## DS-11 — Drop 0-step tasks
+
+- **Status:** accepted (2026-10-21).
+- **Context:** The previous docs allowed a task with no task clue step and no
+  task answer step, so the lowest difficulty bucket was ambiguous and could be
+  read as "no clue."
+- **Decision:** Every task has at least one task reasoning step. The lowest step
+  count in the release is 1. The warmup subset is the 1-step tasks. There is no
+  0-step category.
+- **Consequences:** The difficulty target mix starts at 1 step (5%). The PRD no
+  longer defines or generates 0-step tasks. The warmup subset is still 500 to
+  1,000 tasks at the target release size.
+
+---
+
 ## Open questions
 
 - **Q1.** Is the release a selected subset of the valid-task universe, or must it
@@ -169,36 +184,3 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
   multiple-choice distractors selected deterministically?
 - **Q5.** When is a task a duplicate of another task? The canonical task identity
   is not yet fixed.
-- **Q6.** What defines a 0-step task? Two definitions conflict:
-  - **Strict step count:** 0 steps means no task clue step and no task answer
-    step; the answer is a named object or a value directly visible in the
-    program. A property filter such as "which operation has a `faces()`
-    CadQuery selector" is one task clue step, so it is 1 step.
-  - **Syntax-only evidence:** 0 steps means any task answerable from Python
-    syntax alone, including a filter over entities. That would make "which
-    operation has a `faces()` CadQuery selector" 0 steps, but it classifies by
-    evidence origin rather than by reasoning steps.
-
-  "Which box has a length of 10" is 0 steps only if 10 is a literal argument
-  read from the syntax; if the length is measured from geometry, it is a
-  geometry step. The specification must choose. The current leaning is to keep
-  the step count as the number of atomic task reasoning steps: syntax-only
-  filters are 1-step syntax tasks, and 0-step is a direct named lookup.
-
-  **Prior art.** The archived dataset already separated three counts:
-  `logical_hop_count`, `static_hop_count`, and `geometry_hop_count`
-  (`docs/_archive/dataset-pre-rebuild-2026-10-21/pipeline/06-materialize-validate-release.md`
-  D2; `dataset/release/materialize.py::materialize_row`). `static_hop_count`
-  counted `property_equals` clauses and `before` / `after` / `input_to` /
-  `parameter_of` relations; `geometry_hop_count` was the remainder. A row was
-  syntax-only calibration when `geometry_hop_count == 0` or the prompt family
-  was `first_operation`
-  (`dataset/release/sft.py::is_syntax_only_calibration_row`). The old
-  static/geometry split was a heuristic and was left open.
-
-  **Resolution candidate.** Drop `0-step` as a category. Keep **task reasoning
-  step count** as the logical count for difficulty. Add **syntax step count**
-  and **geometry step count**; define a syntax-only task as geometry step count
-  0. A syntax-only task may still have one or more logical steps. Benchmark
-  tasks require geometry step count greater than 0. Warmup is syntax-only or
-  one geometry step, not logical 0 steps.
