@@ -17,7 +17,10 @@ results, or a failure tombstone when execution fails.
 - Treat CADEvolve programs as trusted build inputs; do not add a network,
   filesystem, or prompt-injection boundary.
 - Pin the CadQuery and OCP versions and record them in the result.
-- Apply a wall-clock timeout and a memory limit.
+- Use stable defaults: 120 seconds wall clock and 2 GiB address space per child
+  process. A changed limit is a new execution environment and a new cache key.
+- Kill the child on timeout and record a `timeout` failure. A memory-limit failure
+  records a `memory` failure.
 - Execute only the accepted static subset from `02a`.
 - Execute top-level statements in program order.
 
@@ -37,13 +40,26 @@ Each `ShapeSnapshot` contains:
 - `shape_hash`;
 - `solid`, `valid`;
 - `volume`, `bbox_min`, `bbox_max`, and `centroid`;
-- `face_count`, `edge_count`, and `vertex_count`.
+- `face_count`, `edge_count`, and `vertex_count`;
+- `entity_table_ref`, the canonical entity table for this state.
+
+The entity table carries one row per face, edge, and vertex with a stable
+`entity_id`. The ID is a hash of `state_id`, entity category, and a canonical
+geometric fingerprint:
+
+- vertex: point;
+- edge: endpoints and length;
+- face: centroid, area, normal, and bounding box.
+
+Raw kernel handles are internal to the child process and are never persisted. Two
+entities in one state with the same fingerprint are a collision; reject the
+program as ambiguous topology.
 
 Each `SelectorResult` contains:
 
 - `selector_result_id` and `selector_id`;
 - `state_id`;
-- `selected_entity_handles`, the kernel handles or stable in-state indices;
+- `selected_entity_ids`, the stable entity IDs;
 - `count`.
 
 Each `OperationEffect` contains:
@@ -56,7 +72,8 @@ Each `OperationEffect` contains:
 
 `ExecutionFailure` contains:
 
-- `program_id`, `operation_id`, and `error_kind`;
+- `program_id`, `operation_id`, and `error_kind`, including `timeout` and
+  `memory`;
 - `message` and `source_line`;
 - environment record;
 - `cache_key`.
@@ -69,16 +86,15 @@ The cache key includes the normalized program hash, CadQuery and OCP versions,
 the execution environment, and the timeout. A failure tombstone is reusable for
 the same key.
 
-## Open questions
-
-- What are the default timeout and memory limits for the first release?
-- Are kernel entity handles stable enough inside one shape snapshot, or should
-  graph assembly use geometric fingerprints?
-- Should CadQuery selector evaluation failures reject the whole program or only
-  the affected CadQuery selector result?
-
 ## Resolved questions
 
 - **Sandbox.** *Resolved 2026-10-21.* No security sandbox. Run each program in a
   child process with a timeout and memory limit. CADEvolve programs are trusted
   build inputs, so network and filesystem isolation are not requirements.
+- **Execution limits.** *Resolved 2026-10-21.* Use 120 seconds and 2 GiB per
+  child as stable defaults.
+- **Entity identity.** *Resolved 2026-10-21.* Do not persist kernel handles. Use
+  the stable geometric entity ID emitted by `02b`; reject fingerprint collisions.
+- **CadQuery selector failure.** *Resolved 2026-10-21.* A CadQuery selector exception
+  rejects the whole program. A valid selector with zero matches is a successful
+  result with count 0.

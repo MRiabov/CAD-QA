@@ -30,7 +30,7 @@ graph.
 - `node_id` is `program_id:node_type:local_id`.
 - Operation nodes use the `operation_id` from `02a`.
 - State nodes use the `state_id` from `02b`.
-- Entity nodes use the in-state kernel handle or fingerprint from `02b`.
+- Entity nodes use the stable `entity_id` from `02b`; raw kernel handles are not used.
 - `relation_id` is a deterministic hash of
   `(program_id, relation_type, from_node_id, to_node_id)`.
 
@@ -45,7 +45,7 @@ number of `selected_by` edges.
 - Join operations to shape snapshots by `operation_id`.
 - Create entity graph nodes for each shape snapshot and relation records for
   operation order, containment, adjacency, provenance, and measurements.
-- Map CadQuery selector handles to entity graph nodes in the same shape snapshot.
+- Map `selected_entity_ids` to entity graph nodes in the same shape snapshot.
 - Attach evidence at the same time as each measurement: derived or measured,
   the rule, and references.
 - Compute operation effects from before/after shape snapshots.
@@ -67,10 +67,13 @@ number of `selected_by` edges.
   execution, including selector membership. Evidence records whether a
   measurement was derived or measured, the exact rule, and the references.
 
+- **Entity identity.** *Resolved 2026-10-21.* Entity graph nodes use the stable
+  geometric `entity_id` from `02b`. Kernel handles are not persisted.
+
+- **CadQuery selector mapping.** *Resolved 2026-10-21.* A selected entity ID that
+  cannot be mapped to an entity graph node rejects the graph. The CadQuery selector
+  count invariant must hold; do not drop a partial selector result.
+
 ## Open questions
 
 - What is the typed `attributes` schema for each graph node type?
-- Are kernel handles stable enough for `node_id`, or should entity graph nodes
-  use a geometric fingerprint?
-- If a CadQuery selector handle cannot be mapped to an entity graph node, should
-  the graph be rejected, or should only that CadQuery selector result be dropped?

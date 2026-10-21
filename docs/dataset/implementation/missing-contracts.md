@@ -11,8 +11,7 @@ doc, delete the row. Open questions remain in
 |---|---|---|---|
 | MC-03 | [`01b`](pipeline/01b-select-program-pool.md) | Precedence when collection minima, feature-tag minima, family cap, and the 1,500-program target conflict. | The selection policy can be over-constrained with no stated resolution. |
 | MC-04 | [`02a`](pipeline/02a-extract-cadquery-ast.md) | Static expression tree for nested constructors such as `cq.Plane(cq.Vector(...))`; method allowlist; CadQuery selector timing. | “Typed literal values” cannot represent real C-tier programs, and graph coverage depends on the allowlist. |
-| MC-05 | [`02b`](pipeline/02b-execute-cadquery.md) | Timeout/memory values, kernel-handle stability, and CadQuery selector-failure scope. | Execution limits and graph identity are not buildable. |
-| MC-06 | [`02c`](pipeline/02c-build-cad-graph.md) | Typed attributes per graph entity category, entity ID strategy, CadQuery selector mapping failure, and table scope. | The graph schema and graph artifact layout are undefined. |
+| MC-06 | [`02c`](pipeline/02c-build-cad-graph.md) | Typed attributes per graph entity category and graph table scope. | The graph attribute schema and table layout are undefined. |
 | MC-07 | [`03a`](pipeline/03a-plan-release.md) | Quota allocator equations for marginal cells, step mix, clue occurrences, family capacity, caps, and coverage minima; cell-to-family budget division. | The plan lists steps but no computable allocation. |
 | MC-08 | [`03b`](pipeline/03b-construct-task-definitions.md) | Construction grammar: possible-answer sets, target binding order, clue constructors, answer resolvers, sampling order, and support-table derivation. | `03b` currently defines rejection, not construction. |
 | MC-09 | [`03b`](pipeline/03b-construct-task-definitions.md) | Canonical serialization and hash inputs for `task_id`, `definition_sha256`, and `answer_sha256`. | Duplicate identity and reproducibility are undefined. |
