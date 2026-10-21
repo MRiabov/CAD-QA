@@ -23,7 +23,7 @@ the user-visible outcome.
 | **Task reasoning step count balance** | Internal | For clue type, answer meaning, and answer format, a supported value's share at a task reasoning step count is between half and twice its conditional release share. |
 | **Task target** | Domain | The entity or value the task asks about. |
 | **Task target category** | Domain | The category of the task target. It is a coverage dimension, not a percentage-balance dimension at each task reasoning step count. |
-| **Task clue** | Domain | One public sentence in the prompt that states a condition the answer must satisfy. |
+| **Task clue** | Domain | One sentence in the prompt that states a condition the answer must satisfy. |
 | **Task clue step** | Domain | The hidden graph operation that applies one task clue and reduces the set of possible answers. |
 | **Task answer step** | Domain | The hidden operation that produces the answer once the task target is identified. |
 | **Task reasoning step** | Domain | A task clue step or a task answer step. |
@@ -34,7 +34,7 @@ the user-visible outcome.
 | **Answer instruction** | Domain | The part of the prompt that tells the LLM model which answer format to return and in what syntax. |
 | **Program text** | Domain | The CadQuery program shown in the prompt. |
 | **Prompt** | Domain | Everything the LLM model sees for one task: program text, question, task clues, optional choices, and answer instruction. |
-| **Gold answer** | Domain | The correct answer for one task. It is kept out of the public task file. |
+| **Gold answer** | Domain | The correct answer for one task. It is kept out of the task file. |
 | **CAD graph** | Domain | The graph of CAD entities, relations, and measurements for one CadQuery program and the shape it builds. |
 | **CAD graph element** | Internal | One entity, relation, or measurement in the CAD graph. |
 | **Graph entity** | Internal | One entity in the CAD graph, such as a face, edge, operation, or region. |
@@ -107,7 +107,7 @@ Terms that were replaced because they were not composed from the domain:
 | `clue` | task clue |
 | `hop count` | task reasoning step count |
 | `dataset row` | task, or dataset entry |
-| `candidate` | multiple-choice choice (public), or possible answer (hidden) |
+| `candidate` | multiple-choice choice, or possible answer (hidden) |
 | `release` | dataset release |
 | `quarantine` | non-release-ready |
 | `selector` | CadQuery selector |
@@ -119,7 +119,7 @@ Terms that were replaced because they were not composed from the domain:
 
 ## 4. Naming decisions
 
-- The public condition is a **task clue**.
+- The prompt condition is a **task clue**.
 - The step that applies a task clue is a **task clue step**.
 - The step that produces the answer is a **task answer step**.
 - The ordered steps that solve the task are the **task solution sequence**.
@@ -146,7 +146,7 @@ These words caused ambiguity in the previous documentation:
 - **`trace`** for anything other than a program execution record;
 - **`node`** for a graph entity;
 - **`clause`** for a task clue or a task clue step;
-- **`candidate`** for both a hidden possible answer and a public choice;
+- **`candidate`** for both a hidden possible answer and a multiple-choice choice;
 - **`hop`** for a task reasoning step;
 - **`family`** for a group of tasks; use clue type and answer meaning;
 - **`release`** without saying dataset release;

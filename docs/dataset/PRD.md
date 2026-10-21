@@ -44,7 +44,6 @@ The user also gets:
 - a held-out benchmark for comparing LLM models fairly;
 - a labeled warmup subset of lower-step tasks for teaching an LLM model the
   task format before the higher-step tasks;
-- tasks with their correct answers kept private;
 - training, validation, and test sets that do not overlap;
 - a dataset card that explains what the dataset contains and what it does not;
 - enough documentation to reproduce and review the dataset release.
@@ -88,7 +87,7 @@ The dataset contains:
 - a dataset card and evaluation material.
 
 Each task shows the CadQuery program and asks for one answer. The correct
-answer is never part of the public task file.
+answer is never part of the task file.
 
 In this document, a CAD model means one CadQuery program. Two tasks
 share a CAD model when they come from the same program.
@@ -233,7 +232,7 @@ a result on steps 2 through 5 alone.
 | **R-17** | A careful human can understand every task. | Sampled tasks covering every clue type, answer meaning, and answer format are reviewed before a dataset release; unclear wording is a defect. |
 | **R-18** | The dataset can be reproduced. | The same programs and the same generator version produce the same dataset; the dataset card documents versions, settings, and how to regenerate it. |
 | **R-19** | Nothing disappears silently. | Every rejected program or task is reported with a reason, and the counts add up. |
-| **R-20** (P2) | The dataset can grow without breaking users. | New tasks, clue types, or answer meanings can be added without changing the task file, the private answer data, or the evaluation interface. |
+| **R-20** (P2) | The dataset can grow without breaking users. | New tasks, clue types, or answer meanings can be added without changing the task file, the answer data, or the evaluation interface. |
 | **R-21** (P1) | The dataset is fast enough to iterate on. | A reviewer can change a task description and produce a new reviewable sample without re-running the entire corpus from scratch. |
 | **R-22** (P2) | The dataset can support a kernel-assisted upper bound. | The same tasks can be evaluated with CadQuery access as an optional upper bound, without changing the primary no-kernel setting. |
 
@@ -281,7 +280,7 @@ subset is P0 for the first training cycle.
   dataset as the benchmark;
 - one task reasoning step;
 - all answer formats;
-- the same prompt and private-answer format as the benchmark;
+- the same prompt and answer format as the benchmark;
 - the same correctness and fairness rules;
 - may be used for training, especially to teach an LLM model that knows little
   about CadQuery reasoning;
@@ -347,14 +346,14 @@ The dataset is done when:
    documented;
 9. the dataset card states clearly what the dataset is and is not suitable for;
 10. an LLM model can be trained on the training set and evaluated on the test
-    set without touching the private answers.
+    set without touching the answers.
 
 ---
 
 ## 13. Non-goals
 
 - Training or evaluating an LLM model. This document stops at the dataset.
-- A public question language.
+- A user-facing question language.
 - A dataset written or judged by an LLM.
 - CAD generation or editing.
 - Making CadQuery or a CAD kernel the primary evaluation setting. A
@@ -375,7 +374,7 @@ The dataset is done when:
   `docs/_archive/dataset-pre-rebuild-2026-10-21/`.
 - The previous dataset release may be used for a first training cycle while the
   replacement is built. It must not be extended or repaired.
-- The replacement dataset may use a new task and private-answer layout.
+- The replacement dataset may use a new task and answer layout.
   Training and evaluation code moves to the new layout; no compatibility file is
   kept.
 

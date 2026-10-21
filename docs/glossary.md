@@ -49,6 +49,9 @@ invents a new word, it is wrong — the word should already be here, or be added
   domain, and do not use a 3D word as a metaphor for a software concept. For example,
   **depth** is a CAD measurement (`cut depth`, `hole depth`); the reasoning measure is
   **task reasoning step count**, never "reasoning depth."
+- **Do not use permission words for dataset parts.** `public` and `private` are access
+  scopes. For dataset content, say **prompt** or **task file** for what the LLM model
+  sees, and **answer** or **answer data** for the gold answer and scoring material.
 
 | Shared word | 3D model term | Software, code, or reasoning term |
 |---|---|---|
@@ -174,22 +177,22 @@ The geometry a CAD feature removes. `In code:` `void_region`.
 
 ### CAD-QA dataset row
 
-One question instance — a single record in the dataset file holding every field: the
-public prompt plus the private verifier material (gold answer, Gold query program,
-candidate-set trace, clue map).
+One task instance — a single record in the dataset file holding every field: the
+prompt plus the answer data (gold answer, Gold query program, candidate-set trace,
+clue map).
 
-#### Public CAD-QA dataset row column set
+#### CAD-QA dataset row prompt column set
 
-The answer-free columns of a CAD-QA dataset row: the prompt and metadata, with the gold
-answer, Gold query program, candidate-set trace, and clue map withheld.
+The columns the LLM model sees: the prompt and metadata, with the gold answer,
+Gold query program, candidate-set trace, and clue map withheld.
 
-#### Private CAD-QA dataset row column set
+#### CAD-QA dataset row answer column set
 
-The verifier columns of a CAD-QA dataset row: gold answer, Gold query program,
-candidate-set trace, and clue map.
+The columns used for scoring: gold answer, Gold query program, candidate-set
+trace, and clue map.
 
-The two column sets are written as separate release artifacts (`public`, `private`) so the
-answer never travels with the prompt.
+The two column sets are written as separate release artifacts so the answer never
+travels with the prompt.
 
 ---
 
@@ -202,7 +205,7 @@ the gold answer.
 
 ### Gold query predicate
 
-One predicate of a Gold query program, mapped to exactly one public clue.
+One predicate of a Gold query program, mapped to exactly one task clue.
 `In code:` `Clause`.
 
 **Why "predicate".** A predicate is the part of a statement that says something about its
@@ -212,7 +215,7 @@ face"*, the subject is *the target face* and the predicate is *"is adjacent to a
 face"*. A Gold query predicate is that part alone — the condition with the subject left
 open — stored once and tested against every candidate: *"is adjacent to another face"*,
 *"is made by an extrude operation"*, *"has more than three entities"*, *"has a surface area
-of 12.5"*. The program is a short ordered list of these, and the public prompt states each
+of 12.5"*. The program is a short ordered list of these, and the prompt states each
 as one clue. `Distinct from:` the aggregation and tie-break steps, which rank the survivors
 rather than test them.
 
@@ -482,7 +485,7 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | profile (bare) | CadQuery profile | generic |
 | material region (dataset) / void region (dataset) | CAD feature-added region / CAD feature-removed region | unclear |
 | dataset row (dataset) | CAD-QA dataset row | which dataset? |
-| public row / private row | Public CAD-QA dataset row column set / Private CAD-QA dataset row column set | not separate rows; column sets of one row |
+| public row / private row | CAD-QA dataset row prompt column set / CAD-QA dataset row answer column set | permission words; not separate rows |
 | query program (dataset, train_and_eval, tools) | Gold query program | conflated with a general query |
 | clause | Gold query predicate | wrong; not a logic clause |
 | candidate set (dataset, train_and_eval, tools) | answer candidate set | unqualified |
@@ -509,7 +512,7 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | band | RL-eligible pass rate / range | imprecise; name the RL-eligible pass rate, or the range |
 | kind (bare) / kinds (bare) | predicate kind | raw noun; qualify it |
 | type (bare) / types (bare) | CAD ontology node type / relation type / clue type / answer format / measurement scope / LLM harness mode | raw noun; qualify it |
-| entity id (in a public answer) (dataset, train_and_eval, tools) | source variable | internal `entity_id` values must not leak into public answers |
+| entity id (in an answer) (dataset, train_and_eval, tools) | source variable | internal `entity_id` values must not leak into answers |
 | "the pipeline" / "the object" / "the value" | name the concept | unspecific placeholder |
 | first/last (as family semantics) | the sampled parameter | a rendering choice, not a permanent meaning |
 

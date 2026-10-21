@@ -125,7 +125,7 @@ It never gives the answer, and it never explains how to find the task target.
 ## 7. What the prompt must not contain
 
 - The correct answer.
-- Any private answer data or hidden field.
+- Any answer data or hidden field.
 - Internal identifiers.
 - The number of task reasoning steps.
 - A hidden task clue that is not in the task clue list.
@@ -196,7 +196,7 @@ Before a prompt is accepted:
 - the answer instruction matches the answer format;
 - the prompt does not leak the answer;
 - the prompt does not use internal terms;
-- the prompt is readable by a careful human without the private answers;
+- the prompt is readable by a careful human without the answers;
 - a real dataset task, not an invented example, is used for the review sample.
 
 ## 10. Open questions

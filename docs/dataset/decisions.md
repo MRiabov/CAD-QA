@@ -19,7 +19,7 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
   documentation at `docs/_archive/dataset-pre-rebuild-2026-10-21/`; mark the old
   generator superseded; freeze the old release; keep no compatibility layer.
 - **Consequences:** The replacement dataset may use a new task-file and
-  private-answer layout. The old release may support a first training cycle, but it
+  answer layout. The old release may support a first training cycle, but it
   is not extended or repaired.
 
 ## DS-02 — A task and a question are different
@@ -176,12 +176,26 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
   as a file-layout concept before the dataset data model existed, which implied a
   separate container that the product does not need.
 - **Decision:** The dataset has tasks and their correct answers. The correct
-  answer is private and never appears in the public task file. There is no
-  separate answer-key object at the PRD level. The technical specification may
-  choose how private answer fields are stored.
+  answer never appears in the task file. There is no separate answer-key object
+  at the PRD level. The technical specification may
+  choose how answer fields are stored.
 - **Consequences:** Product and terminology text say "correct answer" or "gold
   answer," not "answer key." A human-readable answer listing, if needed, is a
   release artifact chosen by the technical specification, not a dataset concept.
+
+---
+
+## DS-13 — Do not use public/private for dataset parts
+
+- **Status:** accepted (2026-10-21).
+- **Context:** "Public" and "private" are access scopes. Using them for dataset
+  columns conflates visibility with permission and makes the data model sound
+  like an access-control model.
+- **Decision:** Use **prompt** or **task file** for what the LLM model sees.
+  Use **answer** or **answer data** for the gold answer and scoring material.
+  Access control, if any, is a separate concern.
+- **Consequences:** Dataset docs do not use "public" or "private" for dataset
+  parts. The glossary marks the old column-set names as legacy.
 
 ---
 

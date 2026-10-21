@@ -55,7 +55,7 @@ answer. The task target category is not the answer format.
 
 ### 2.2 Task clue
 
-A task clue is one public sentence in the prompt that states a condition the
+A task clue is one sentence in the prompt that states a condition the
 answer must satisfy. A task clue is not a hint and not an example. It is a condition that
 can be checked against the graph.
 
@@ -75,7 +75,7 @@ to the selected face whose area is larger than the selected face". It is still
 one task clue if it names one condition.
 
 A task clue narrows the set of possible answers. The canonical term for the
-public object is **task clue**.
+condition is **task clue**.
 
 A task may also need a **task answer step** after the task target is identified,
 such as reporting the volume of the selected solid state. A task answer step is
