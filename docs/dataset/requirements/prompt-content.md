@@ -53,12 +53,13 @@ category the answer is about and what to answer.
 ## 4. Task clues
 
 A task clue is one condition the answer must satisfy. Every task clue
-corresponds to one task clue step.
+corresponds to one task clue step. Task clues are numbered list items, not
+prose paragraphs.
 
 ### 4.1 Task clue rules
 
-1. One task clue states one condition. If a sentence contains two independent
-   conditions, split it into two task clues.
+1. One task clue states one condition. If a list item contains two conditions,
+   split it into two task clues.
 2. Task clues are ordered from broad to narrow. The order is the intended
    reasoning order. They are presented as a numbered list; the number is
    presentation, not a task reasoning step count.
@@ -87,7 +88,9 @@ corresponds to one task clue step.
 | Comparison | "The task target's <measurement> is <comparison> the <measurement> of <reference>." |
 | Aggregation | "Among the task targets that satisfy the previous task clues, choose the one with the <extreme> <measurement>." |
 | Provenance | "The task target was created by <operation>." or "The task target uses <CadQuery profile>." |
-| Chain | "The task target is <relation> <entity A>, which is <relation> <entity B>." |
+
+A chain is not a clue type. It is a P2 sequence of relation clues: each relation
+is its own numbered list item and one task clue step.
 
 The placeholders are filled with real entities and measurements when a task is
 built. A task clue is never a template with placeholder text left in it.

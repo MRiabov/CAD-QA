@@ -60,7 +60,7 @@ answer. The task target category is not the answer format.
 
 ### 2.2 Task clue
 
-A task clue is one sentence in the prompt that states a condition the
+A task clue is one numbered list item in the prompt that states a condition the
 answer must satisfy. A task clue is not a hint and not an example. It is a condition that
 can be checked against the graph.
 
@@ -73,7 +73,6 @@ Every task clue has one of these clue types:
 | Comparison | The task target's measurement compares to a reference measurement. | P0 |
 | Aggregation | The task target is the extreme, the rank, or the count of a set. | P1 |
 | Provenance | The task target was created by an operation, uses a CadQuery profile, or sits on a CadQuery workplane. | P0 |
-| Chain | The task target is reached through an ordered sequence of relations. | P2 |
 
 A comparison task clue may name both entities, or it may refer to one entity
 selected by an earlier task clue. A reference must resolve to exactly one
@@ -82,9 +81,12 @@ must say how it applies to them (for example, "larger than every remaining
 entity") or the task is rejected. The reference does not add a task clue step;
 the comparison is still one task clue.
 
-A task clue may combine a relation with a property, for example "the face adjacent
-to the selected face whose area is larger than the selected face". It is still
-one task clue if it names one condition.
+A task clue states one condition. A list item that combines a relation with a
+property is two task clues and is split into two list items.
+
+A chain is not a task clue type. It is a P2 ordered sequence of relation task
+clues: each relation is one task clue and one task clue step, and the chain
+structure makes the task P2.
 
 A task clue narrows the set of possible answers. The canonical term for the
 condition is **task clue**.

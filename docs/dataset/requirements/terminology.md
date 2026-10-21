@@ -15,7 +15,7 @@ the user-visible outcome.
 |---|---|---|
 | **Task** | Domain | One dataset instance: a CadQuery program, a task target, a set of task clues, and one answer. Use "dataset task" when it could be confused with an internal task. |
 | **Question** | Domain | The interrogative sentence in the prompt. It is not the whole task. |
-| **Clue type** | Domain | The category of condition a task clue states: property, relation, comparison, aggregation, provenance, or chain. |
+| **Clue type** | Domain | The category of condition a task clue states: property, relation, comparison, aggregation, or provenance. A chain is a P2 sequence of relation clues, not a clue type. |
 | **Answer meaning** | Domain | What the answer is about, independent of how it is returned: identity, volume, area, length, distance, angle, count, rank, membership, position, extent, CadQuery workplane state, material change, topology change, or validity. |
 | **Task reasoning step support table** | Domain | The release artifact that records which dimension values can occur at each task reasoning step count, and why an unsupported value cannot occur there. |
 | **Task reasoning step count coverage** | Internal | Every value supported at a task reasoning step count appears at that count. |
@@ -23,7 +23,7 @@ the user-visible outcome.
 | **Task reasoning step count balance** | Internal | For clue type, answer meaning, and answer format, a supported value's share at a task reasoning step count is between half and twice its conditional release share. |
 | **Task target** | Domain | The entity or value the task asks about. |
 | **Task target category** | Domain | The category of the task target. It is a coverage dimension, not a percentage-balance dimension at each task reasoning step count. |
-| **Task clue** | Domain | One sentence in the prompt that states a condition the answer must satisfy. |
+| **Task clue** | Domain | One numbered list item in the prompt that states a condition the answer must satisfy. |
 | **Task clue step** | Domain | The hidden graph operation that applies one task clue and reduces the set of possible answers. |
 | **Task answer step** | Domain | The hidden operation that produces the answer once the task target is identified. |
 | **Task reasoning step** | Domain | A task clue step or a task answer step. |

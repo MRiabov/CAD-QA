@@ -16,6 +16,12 @@ clues, task reasoning step count, canonical identity, and gold answer.
 
 ## Resolved questions
 
+- **Q2.** *Resolved 2026-10-21.* Option B: atomic predicates. Each relation or
+  property is one task clue and one task clue step. A list item that states a
+  relation and a property is split into two task clues. A chain is not one task
+  clue; it is a P2 ordered sequence of relation task clues, one step per
+  relation. Task clues are rendered as numbered list items, not prose.
+
 - **Q4.** *Resolved 2026-10-21.* Multiple choice is valid for every answer
   meaning; it is a presentation wrapper, not a separate answer meaning. The
   native answer format is recorded with the answer meaning; multiple choice may
@@ -28,13 +34,6 @@ clues, task reasoning step count, canonical identity, and gold answer.
   required by references, then sort independent clues deterministically. Answer
   format, multiple-choice choices, prompt wording, and answer instruction are
   excluded because multiple choice is a presentation wrapper.
-
-## Open questions
-
-- **Q2.** Is a chain clue one task reasoning step or one step per relation? Is a
-  clue that combines a relation and a property one condition or two?
-  - **Recommendation:** Option B: atomic predicates. Each relation or property
-    is one clue and one step.
 
 ## Not here
 
