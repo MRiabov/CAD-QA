@@ -20,7 +20,7 @@ The previous list mixed several different things:
 Those are not peers. Treating them as one list makes some tasks look
 similar when they are not, and hides gaps.
 
-A task is a combination of independent dimensions. Once the dimensions are
+A task is a combination of separate dimensions. Once the dimensions are
 separate, every task can be described precisely, and the dataset can be
 checked for real coverage instead of counting labels.
 
@@ -59,7 +59,7 @@ A task clue is one public sentence in the prompt that states a condition the
 answer must satisfy. A task clue is not a hint and not an example. It is a condition that
 can be checked against the graph.
 
-Every task clue has one of these forms:
+Every task clue has one of these clue types:
 
 | Task clue type | What it says |
 |---|---|
@@ -117,8 +117,8 @@ returned. The answer format says "number" or "boolean"; the answer meaning says
 | Count | A number of entities. |
 | Rank | A position in an ordered set. |
 | Membership | Whether a point is inside, outside, or on a boundary. |
-| Coordinate | A point. |
-| Bounding box | A minimum and maximum corner. |
+| Position | A point location in space. |
+| Extent | A minimum and maximum corner. |
 | CadQuery workplane state | The frame of a CadQuery workplane. |
 | Material change | Material added or removed. |
 | Topology change | A change in faces, edges, or vertices. |
@@ -126,7 +126,8 @@ returned. The answer format says "number" or "boolean"; the answer meaning says
 
 The answer meaning is not the answer format. A volume can be returned as a
 number; a membership result can be returned as yes or no; an identity can be
-returned as a variable name or a multiple-choice label.
+returned as a variable name or a multiple-choice label; a position can be
+returned as a 3D coordinate; an extent can be returned as a bounding box.
 
 ### 2.5 Task reasoning depth
 
@@ -158,18 +159,25 @@ format, and depth would be limiting and useless: it would ask an engineer to
 write logic for each possible combination. The generator composes these
 dimensions instead.
 
-The task's properties are recorded for coverage and balance:
+The task's properties are recorded for different reasons:
 
-- task target category;
-- task clue types;
-- answer meaning;
-- answer format;
-- task reasoning depth;
-- uniqueness rule;
-- geometry requirement.
+| Property | Role |
+|---|---|
+| Task target category | Coverage and release diversity |
+| Task clue type | Coverage and balance |
+| Answer meaning | Coverage and balance |
+| Answer format | Coverage and balance |
+| Task reasoning depth | Coverage and depth mix |
+| Uniqueness rule | Quality |
+| Geometry requirement | Quality |
 
 Those properties do not create separate generation paths. A new combination of
 properties does not require a new code path.
+
+Coverage and balance are checked **inside each task reasoning depth**, not only
+over the whole release. A global target may not be met by concentrating a value
+at one depth. The technical specification records a depth support table that
+states which values can occur at each depth.
 
 ## 4. Describing a task
 
@@ -194,10 +202,10 @@ Task clue 2: the face is adjacent to the face created by a named operation.
 Task clue 3: among the faces that satisfy task clues 1 and 2, the face with the
             largest area.
 Answer: the area of the selected face, as a number.
-Depth: 3 (two task clue steps and one task answer step).
+Depth: 4 (three task clue steps and one task answer step).
 Uniqueness: exactly one face satisfies task clues 1 and 2, and the largest area is
             achieved by exactly one of them. Otherwise the task is rejected.
-Geometry: all three steps are geometry-based.
+Geometry: all four steps are geometry-based.
 ```
 
 This is a task description, not an example. The named CadQuery workplane, the
@@ -206,20 +214,66 @@ that does not satisfy the uniqueness rule is not generated.
 
 ## 5. Coverage
 
-The dataset must cover:
+Coverage is checked per task reasoning depth. For each depth in the release, the
+dataset must contain:
 
-- every task target category that the PRD claims;
-- every task clue type;
-- every answer meaning;
-- every answer format;
-- every task reasoning depth from 0 to 5;
-- both syntax-based and geometry-based steps, with geometry required for
-  benchmark tasks.
+- every task target category supported at that depth;
+- every task clue type supported at that depth;
+- every answer meaning supported at that depth;
+- every answer format supported at that depth;
+- both syntax-based and geometry-based steps where supported at depths that
+  have steps, with geometry required for benchmark tasks.
 
-Coverage is reported by dimension, not by old flat labels. A dimension value
-that produces zero tasks is a gap.
+A **depth support table** records which values can occur at each depth and why
+an unsupported value cannot occur there. It is part of the release documentation
+and is versioned with the generator. "Supported" is a property of the task
+structure, not of the current generator: a value may be marked unsupported only
+when no valid task can express it at that depth. A value that is valid but not
+implemented is a gap, not an unsupported value.
 
-## 6. What a task is not
+Coverage is reported per depth and per dimension. Global coverage is the union of
+the per-depth reports; it does not replace them. A value that appears only at
+depth 5 does not cover depth 2.
+
+## 6. Balance
+
+Balance is also checked per task reasoning depth. The release-level targets
+remain, but they may not be met by concentrating a value at one depth.
+
+| Dimension | Per-depth coverage | Per-depth balance | Release balance |
+|---|---|---|---|
+| Task target category | Every supported category appears. | None; coverage only. | No category above 25% of tasks. |
+| Answer format | Every supported format appears. | Between half and twice its conditional release share. | Each format 5-25% of tasks. |
+| Answer meaning | Every supported meaning appears. | Between half and twice its conditional release share. | Each meaning 1-10% of tasks. |
+| Clue type | Every supported clue type appears. | Between half and twice its conditional release share. | No clue type above 25% of task clues. |
+
+Answer format and answer meaning shares are over tasks. Clue type shares are
+over task clues, because one task can contain several task clues.
+
+The **conditional release share** of a value at a depth is its share among the
+values supported at that depth, not its share of the whole release. This makes
+the check possible when a depth supports only some values. For example, if
+`identity` is 5% of the release and is supported at depth 1, it may not become
+more than 10% of depth 1 tasks.
+
+Absolute release percentages are not used inside a depth because support sets
+differ. If depth 1 supports only two answer formats, requiring every format to
+be 5-25% of depth 1 tasks would make the targets impossible to satisfy. The
+conditional share compares like with like.
+
+A depth with zero or one supported value for a dimension is coverage-only for
+that dimension; there is no mix to balance. If half of a value's conditional
+release share is less than one task, one task satisfies the lower bound.
+
+Target categories are not percentage-balanced per depth because their
+availability differs by depth. The release-level 25% cap prevents one target
+category from dominating the whole dataset.
+
+Per-depth coverage and balance can conflict, for example when an answer format
+can express only a few answer meanings. A conflict is reported with the
+affected values; it is not resolved by silently dropping coverage.
+
+## 7. What a task is not
 
 - An answer format alone, such as "coordinate task".
 - A measurement alone, such as "volume task".
@@ -227,11 +281,9 @@ that produces zero tasks is a gap.
 - A task reasoning depth alone, such as "3-step task".
 
 Those are properties of a task. A task must state the task target, task clues,
-answer format, and task reasoning depth that tie them together.
+answer format, answer meaning, and task reasoning depth that tie them together.
 
-## 7. Open questions
+## 8. Open questions
 
 - **Q1.** Should a comparison task clue always name both entities, or may one
   entity be selected by an earlier task clue?
-- **Q2.** Should a task that reports a property of a named task target count as
-  depth 0, or as one task answer step?

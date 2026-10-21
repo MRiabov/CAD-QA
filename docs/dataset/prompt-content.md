@@ -5,7 +5,7 @@ a CAD-QA prompt. It does not define how the prompt is rendered.
 
 ## 1. Prompt parts
 
-A prompt has five parts, in this order:
+A prompt has up to five parts, in this order:
 
 1. **Program text**: the complete CadQuery program, unchanged except for
    normalization.
@@ -40,8 +40,8 @@ does not narrow the candidates.
 Examples of a question:
 
 - "What is the volume of the final solid?"
-- "What is the volume of material removed by the task target?"
-- "What is the CadQuery workplane used by the task target?"
+- "What is the volume of material removed by an operation?"
+- "What is the CadQuery workplane used by an operation?"
 
 The question is not a task clue. It tells the LLM model what task target
 category the answer is about and what to answer.
@@ -70,12 +70,12 @@ corresponds to one task clue step.
    the program" or name the operation by its visible variable.
 9. A task clue must not repeat the program text. Refer to the visible variable
    or the entity the program builds.
-10. If the task needs a measurement of the task target, do not write the
+10. If the answer is a measurement of the task target, do not write that
     measurement as a task clue. Put it in the answer instruction.
 
-### 4.2 Task clue forms
+### 4.2 Task clue types
 
-| Form | Wording pattern |
+| Clue type | Wording pattern |
 |---|---|
 | Property | "The task target has a <measurement> <comparison> <value>." |
 | Relation | "The task target is <relation> <other entity>." |
@@ -91,7 +91,7 @@ built. A task clue is never a template with placeholder text left in it.
 
 When the answer format is multiple choice:
 
-- show at least five and at most seven choices;
+- show at least five choices, with seven as the goal;
 - label the choices `A`, `B`, `C`, and so on;
 - include the correct choice;
 - draw every choice from the same task target category;
@@ -173,9 +173,9 @@ CAD construction.
         .cutBlind(-2)
     )
 
-What is the volume of material removed by the task target?
+What is the volume of material removed by an operation?
 
-1. The task target is the operation that cut the cylindrical hole.
+1. The operation cut the cylindrical hole.
 
 Return exactly one number.
 ````

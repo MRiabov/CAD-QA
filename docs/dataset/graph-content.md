@@ -161,7 +161,7 @@ the same entity unless the graph records that they are the same.
 5. No graph element is orphaned.
 6. Every graph element used by a task clue or answer is present.
 7. Every graph element that cannot be measured is recorded as missing, not guessed.
-8. The graph can answer every task target category, clue type, and answer meaning the dataset claims to support.
+8. The graph can answer every task target category, clue type, and answer meaning the dataset claims to support at each task reasoning depth.
 9. A task that needs a missing graph element is rejected, not softened.
 
 ## 7. What the graph is not
@@ -175,8 +175,9 @@ the same entity unless the graph records that they are the same.
 
 ## 8. Coverage check
 
-For every task target category, clue type, and answer meaning in `task-structure.md`, the graph must answer these
-checks:
+For every task reasoning depth, and every task target category, clue type, and
+answer meaning supported at that depth in `task-structure.md`, the graph must
+answer these checks:
 
 - Which task target entities can the task use?
 - Which task clue types does the task need?
@@ -185,8 +186,9 @@ checks:
 - Which solid states does the task need?
 - Which of those graph elements are measured, and which are derived?
 
-A task is not supported if any required graph element is missing. The coverage report
-lists the missing graph elements by task target category, clue type, and answer meaning.
+A task is not supported if any required graph element is missing. The coverage
+report lists the missing graph elements by task reasoning depth, task target
+category, clue type, and answer meaning.
 
 ## 9. Open questions
 

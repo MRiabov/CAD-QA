@@ -11,8 +11,13 @@ it.
 | **Task** | One dataset instance: a CadQuery program, a task target, a set of task clues, and one answer. Use "dataset task" when it could be confused with an internal task. |
 | **Question** | The interrogative sentence in the prompt. It is not the whole task. |
 | **Clue type** | The category of condition a task clue states: property, relation, comparison, aggregation, provenance, or chain. |
-| **Answer meaning** | What the answer is about, independent of how it is returned: identity, volume, area, length, distance, angle, count, rank, membership, coordinate, bounding box, CadQuery workplane state, material change, topology change, or validity. |
+| **Answer meaning** | What the answer is about, independent of how it is returned: identity, volume, area, length, distance, angle, count, rank, membership, position, extent, CadQuery workplane state, material change, topology change, or validity. |
+| **Depth support table** | The release artifact that records which dimension values can occur at each task reasoning depth, and why an unsupported value cannot occur there. |
+| **Per-depth coverage** | Every value supported at a task reasoning depth appears at that depth. |
+| **Conditional release share** | A value's share among the values supported at a depth, used as the comparison base for per-depth balance. |
+| **Per-depth balance** | For clue type, answer meaning, and answer format, a supported value's share at a depth is between half and twice its conditional release share. |
 | **Task target** | The entity or value the task asks about. |
+| **Task target category** | The category of the task target. It is a coverage dimension, not a per-depth percentage-balance dimension. |
 | **Task clue** | One public sentence in the prompt that states a condition the answer must satisfy. |
 | **Task clue step** | The hidden graph operation that applies one task clue and reduces the set of possible answers. |
 | **Task answer step** | The hidden operation that produces the answer once the task target is identified. |
@@ -44,6 +49,7 @@ magic word.
 | Composed term | Parts | Meaning |
 |---|---|---|
 | Task target | task + target | The target of a task. |
+| Task target category | task target + category | The category of the task target. |
 | Task clue | task + clue | A clue in a task prompt. |
 | Task clue step | task + clue + step | The hidden step that applies one task clue. |
 | Task answer step | task + answer + step | The hidden step that produces the task answer. |
@@ -102,10 +108,18 @@ Terms that were replaced because they were not composed from the domain:
 - The step that produces the answer is a **task answer step**.
 - The ordered steps that solve the task are the **task solution sequence**.
 - The form of the answer is the **answer format**.
+- Target category is a **coverage** dimension. Clue type, answer meaning, and
+  answer format are **coverage and balance** dimensions. Task reasoning depth
+  uses the target mix.
+
 There are no task types, task families, or task patterns. The old generator used
 hard-coded task families; the replacement chooses a task target and a task
-solution sequence from the CAD graph. Coverage and balance are reported by
-clue type, answer meaning, answer format, and task reasoning depth.
+solution sequence from the CAD graph.
+
+Coverage and balance are checked per task reasoning depth. Target category has
+per-depth coverage and a release-level cap. Clue type, answer meaning, and
+answer format are balanced per depth and over the release, using the conditional
+release share. A value may not be concentrated at one depth.
 
 ## 5. Terms to avoid
 

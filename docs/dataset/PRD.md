@@ -111,7 +111,7 @@ The proposed vocabulary is in [`terminology.md`](terminology.md).
 ## 4. Task structure
 
 A task is not one of a flat list of labels. It is a combination of five
-independent dimensions:
+separate dimensions:
 
 - the **task target** the task asks about;
 - the **task clues** the answer must satisfy;
@@ -129,8 +129,15 @@ meanings, answer formats, depth rules, and the precise description of a task, is
 
 A task is described by its task target, task clues, answer format, answer
 meaning, and task reasoning depth. The dataset does not use task families,
-task types, or task patterns. Coverage and balance are reported by clue type, answer
-meaning, answer format, and task reasoning depth.
+task types, or task patterns. Target category is a coverage dimension.
+Clue type, answer meaning, and answer format are coverage and balance
+dimensions. Task reasoning depth has a coverage and target-mix requirement.
+
+Coverage and balance are checked inside each task reasoning depth, not only over
+the whole release. A value that appears only at one depth does not cover the
+other depths, and a global target may not be met by concentrating a value at one
+depth. Target category has no per-depth percentage target; it has per-depth
+coverage and a release-level diversity cap.
 
 The dataset is not a list of predefined task types. Enumerating every
 combination of clue type, answer meaning, and depth would be limiting and would
@@ -165,9 +172,11 @@ judge is not allowed.
 
 Difficulty is described by how many task reasoning steps a task needs.
 
-- **0 to 1 steps**: a direct lookup about a named object (0 steps), or one
-  inference such as finding a feature by a property (1 step). This is the
-  warmup subset and the curriculum entry point (P0).
+- **0 steps**: no task clue step and no task answer step. The answer is a named
+  object or a value directly visible in the program. This is format warmup, not
+  a reasoning task.
+- **1 step**: exactly one task clue step with an identity answer, or exactly one
+  task answer step about a named task target. This is the main warmup step.
 - **2 to 5 steps**: the main benchmark range (P0). The LLM model must combine
   task clues about geometry, relationships, measurements, and operations.
 - **6 or more steps**: optional future work (P2).
@@ -190,7 +199,7 @@ a result on steps 2 through 5 alone.
 
 | ID | Requirement | How the user can tell |
 |---|---|---|
-| **R-1** | Every answer is correct. | The answer is produced by running the CadQuery program during dataset creation and measuring the real geometry. No LLM writes or judges the answer. |
+| **R-1** | Every answer is correct. | The answer is produced by running the CadQuery program or derived by an exact rule, and recorded with evidence. No LLM writes or judges the answer. |
 | **R-2** | Every task has exactly one correct answer. | Ambiguous tasks and tasks with ties are rejected. |
 | **R-3** | Multiple-choice tasks are fair. | The correct answer is present; there are enough choices that guessing does not look competitive; choices are real options drawn from the program; choices do not give the answer away. |
 | **R-4** | Benchmark tasks require reasoning about the actual shape. | At least one task clue depends on the geometry or topology the program builds, not only on the text of the program. |
@@ -201,12 +210,12 @@ a result on steps 2 through 5 alone.
 
 | ID | Requirement | How the user can tell |
 |---|---|---|
-| **R-7** | The dataset covers all answer formats. | Every answer format in section 5 appears in the benchmark dataset release, including the warmup subset. |
-| **R-8** (P1) | The dataset covers all clue types and answer meanings. | Every clue type and every answer meaning appears in the benchmark dataset release. |
-| **R-9** | The dataset covers the full difficulty range. | Steps 0 through 5 all appear, with steps 3 and 4 carrying the headline slices. |
+| **R-7** | The dataset balances answer formats at every depth. | Every answer format in section 5 appears at every depth where it is supported. No format is more than twice or less than half its share among the formats supported at that depth. Over the release, each format is between 5% and 25% of tasks. |
+| **R-8** | The dataset covers all target categories, clue types, and answer meanings. | Every target category, clue type, and answer meaning supported at a depth appears at that depth. A value that is valid but missing is a gap; the depth support table lists only values that cannot occur. |
+| **R-9** | The dataset covers the full difficulty range. | Steps 0 through 5 all appear in the target mix in section 8, with steps 3 and 4 carrying the headline slices. |
 | **R-10** | The dataset is diverse. | It draws from at least one thousand distinct CAD models, and no single CAD model dominates. |
 | **R-11** (P1) | The dataset has varied answers. | At least one thousand different correct answers appear, and no answer is repeated so often that guessing wins. |
-| **R-12** (P1) | The dataset is balanced across clue types and answer meanings. | Every clue type appears, no clue type accounts for more than 25% of all task clues, and every answer meaning is between one and ten percent of the benchmark dataset release. |
+| **R-12** (P1) | The dataset is balanced at every depth. | No clue type is above 25% of clues at a depth or over the release, and no clue type is more than twice or less than half its share among the clue types supported at a depth. Every answer meaning is between 1% and 10% over the release, and no answer meaning is more than twice or less than half its share among the meanings supported at a depth. No target category is above 25% of the release. |
 
 ### 7.3 Splits and reuse
 
@@ -239,18 +248,23 @@ tasks and meet the following targets.
 |---|---|---|
 | Tasks | At least 10,000 | P0 |
 | Distinct CAD models | At least 1,000 | P0 |
-| Answer formats | Every format in section 5; each at least 5% and none above 25% | P0 |
-| Clue types | Every clue type appears; no clue type above 25% of all task clues | P1 |
-| Answer meanings | Every answer meaning appears; each between 1% and 10% | P1 |
-| Difficulty | Steps 0–1: at least 5%; steps 2–5 cover the remainder, with 3 and 4 carrying the headline slices | P0 |
+| Target category coverage | Every supported category at every depth | P0 |
+| Target category dominance | No category above 25% of tasks | P1 |
+| Answer format coverage | Every supported format at every depth | P0 |
+| Answer format balance | Each 5-25% over the release; per-depth mix within the tolerance in `task-structure.md` | P0 |
+| Clue type coverage | Every supported clue type at every depth | P0 |
+| Clue type balance | No clue type above 25% of clues at a depth or over the release; per-depth mix within the tolerance in `task-structure.md` | P1 |
+| Answer meaning coverage | Every supported meaning at every depth | P0 |
+| Answer meaning balance | Each 1-10% over the release; per-depth mix within the tolerance in `task-structure.md` | P1 |
+| Difficulty | Target mix: 0–1 5%, 2 15%, 3 40%, 4 25%, 5 15% | P0 |
 | Geometry-based tasks | At least 95% | P0 |
-| Tasks needing at least three steps | At least 90% | P0 |
+| Tasks needing at least three steps | At least 80% | P0 |
 | Multiple-choice choices | At least five; aim for seven | P0 |
 | Different correct answers | At least 1,000 | P1 |
 | Evidence for the answer | Available for every task | P0 |
 
-Within steps 2–5, aim for roughly 2: 20–30%, 3: 30–40%, 4: 20–30%, and 5:
-10–20%.
+The depth target is a mix, not a hard quota. A miss is documented and accepted
+by the owner; it is not hidden by changing the definition of a depth.
 
 These are product targets. The technical specification will define how they are
 measured and what happens when a requirement cannot be met.
@@ -306,6 +320,7 @@ change.
 | Validation dataset | Tasks and answer keys for tuning. | P0 |
 | Test dataset | Held-out tasks and answer keys for the final result. | P0 |
 | Warmup subset | Labeled easy tasks for warmup. | P0 |
+| Depth support table | Which target categories, clue types, answer meanings, and answer formats are supported at each depth, and why not. | P0 |
 | Dataset card | A plain description of what the dataset contains, how it was made, what it is for, and what it is not for. | P0 |
 | Evaluation material | The answer keys and instructions needed to score an LLM model. | P0 |
 | Documentation | How to reproduce the dataset release and how to review it. | P1 |
@@ -316,20 +331,23 @@ change.
 
 The dataset is done when:
 
-1. a small sample produces every clue type, answer meaning, and answer format;
+1. a small sample produces every target category, clue type, answer meaning,
+   and answer format at every depth where it is supported;
 2. a benchmark dataset release of at least ten thousand tasks meets the
-   targets in section 8, or every miss is documented and accepted by the owner;
-3. a labeled warmup subset exists;
-4. training, validation, and test sets do not share a CAD model;
-5. a reviewer can read sampled tasks covering every clue type, answer meaning,
-   and answer format and understand
-   them without asking what they mean;
-6. the answers can be checked without an LLM in the loop;
-7. the dataset release can be regenerated and the result matches what is
+   per-depth coverage and balance targets in section 8, or every miss is
+   documented and accepted by the owner;
+3. the depth support table is published and reviewed;
+4. a labeled warmup subset exists;
+5. training, validation, and test sets do not share a CAD model;
+6. a reviewer can read sampled tasks covering every depth, target category,
+   clue type, answer meaning, and answer format and understand them without
+   asking what they mean;
+7. the answers can be checked without an LLM in the loop;
+8. the dataset release can be regenerated and the result matches what is
    documented;
-8. the dataset card states clearly what the dataset is and is not suitable for;
-9. an LLM model can be trained on the training set and evaluated on the test set
-   without touching the answer key.
+9. the dataset card states clearly what the dataset is and is not suitable for;
+10. an LLM model can be trained on the training set and evaluated on the test
+    set without touching the answer key.
 
 ---
 
@@ -384,8 +402,11 @@ The dataset is done when:
   training material.
 - **Q5** (P1). *Resolved 2026-10-21.* Yes. Every answer format must reach five
   percent; a balanced and diverse dataset is the default.
-- **Q6** (P1). *Resolved 2026-10-21.* All clue types and answer meanings. Balance is by clue type, answer meaning,
-  and task reasoning depth.
+- **Q6** (P1). *Resolved 2026-10-21.* Coverage is per depth for target
+  categories, clue types, answer meanings, and answer formats. Balance is per
+  depth and over the release for clue types, answer meanings, and answer
+  formats. Target category is coverage-only per depth, with a release cap.
+  Task reasoning depth uses the target mix in section 8.
 - **Q8** (P1). *Resolved 2026-10-21.* The same CadQuery programs. The warmup
   subset is a label for easier tasks, not a separate generation path. The
   dataset is designed for curriculum learning.
