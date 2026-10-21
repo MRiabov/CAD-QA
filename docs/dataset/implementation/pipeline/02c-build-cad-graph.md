@@ -28,14 +28,8 @@ CAD graph.
   builder enforces one invariant: the result count equals the number of its
   membership edges.
 
-## Open questions
-
-- **Q3.** Which measurements can be derived exactly from the program text, and
-  which must always be measured by CadQuery?
-  - **Option A — measure everything.** Simple, but loses exact syntax evidence.
-  - **Option B — derive everything possible from syntax.** Fast, but wrong when
-    later operations change the geometry.
-  - **Option C — derive only exact syntax values; measure geometry.** Use exact
-    rules for literals, operation counts, and selector membership; measure
-    volumes, areas, distances, and topology after operations.
-  - **Recommendation:** C, with the evidence recording which path was used.
+- **Q3.** *Resolved 2026-10-21.* Option C. Derive a measurement only when the
+  program text fixes it and no later operation can change it: literals, operation
+  counts, and similar syntax facts. Measure geometry and topology from CadQuery
+  execution, including selector membership. Evidence records whether a measurement was
+  derived or measured, the exact rule, and the references.
