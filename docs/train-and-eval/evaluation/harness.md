@@ -44,7 +44,7 @@ Outputs:
 
 The evaluation harnesses consume the dataset files. The dataset generator is being
 re-specified, so the old rows IO contract is archived and the current requirements
-live in `docs/dataset/PRD.md`. The field names below are the current harness view and
+live in `docs/dataset/requirements/PRD.md`. The field names below are the current harness view and
 must be reconciled with the new technical specification.
 
 ## Requirement

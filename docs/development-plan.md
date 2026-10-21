@@ -28,7 +28,7 @@ checklist is `_audit/owner-audit-todo.md` (group C); the program is `plans/oct-8
   the reward (`train_and_eval/...::reward_cadqa`); `run_code` sandbox isolation; vLLM versus
   transformers output parity; SFT prompt masking; the environment pins.
 - Consolidate one runnable verification command per pipeline step (see
-  `docs/dataset/PRD.md`, `train-and-eval/fine-tuning/requirements.md`).
+  `docs/dataset/requirements/PRD.md`, `train-and-eval/fine-tuning/requirements.md`).
 
 **Pass condition:** every load-bearing component is `verified` or explicitly `blocked`.
 
@@ -50,7 +50,7 @@ Phase 3 design.
 - Freeze the dataset actually used for training (first run ~1–2k rows) with a group-safe held-out split.
   The regenerated ~10,000-row `benchmark-release` tier is a **contingency** for scale/public release, not
   a prerequisite for the first SFT; the 1,445-row release is superseded. (A public benchmark-release
-  claim still follows the release requirements in `docs/dataset/PRD.md`.)
+  claim still follows the release requirements in `docs/dataset/requirements/PRD.md`.)
 - Build and freeze the held-out test; assert no train/test row or CadQuery program overlap.
 - Close the 0-hop/1-hop synthesis gap if needed; the working ladder is `{2,3,4,5}`, with generated
   6–10 tiers admissible only if the selection pilot supports them (evaluation plan §5.1).

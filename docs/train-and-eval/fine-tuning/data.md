@@ -28,10 +28,10 @@ procedure, grading reconciliation, judge independence, baselines).
 - **H1/H2** — owned by the architecture doc; the mixes they test are defined here (§3).
 
 **Scope boundary.** The CAD-QA **dataset rows** themselves (the benchmark) are generated and planned in
-`docs/dataset/` (now a fresh PRD at `../../dataset/PRD.md`; the old pipeline docs are archived); this directory
+`docs/dataset/` (now a fresh PRD at `../../dataset/requirements/PRD.md`; the old pipeline docs are archived); this directory
 consumes the Dataset file and owns the **agent training trace distillation** (`pipeline/02-teacher-sampling.md`) and the
 `learn_the_cadqa_task` contract (§6). The dataset is to be **regenerated** — the current 1,445-row release
-is superseded — and that regeneration plan is owned in `docs/dataset/PRD.md`. Pin the regenerated Dataset file
+is superseded — and that regeneration plan is owned in `docs/dataset/requirements/PRD.md`. Pin the regenerated Dataset file
 revision before any teacher pass.
 
 **Related docs.** `../../prior-art.md` (external evidence, refs [1]–[33]);
@@ -421,7 +421,7 @@ only the dataset:
 - **This is the comprehension corpus.** CAD-QA *is* the program → question (comprehension) data;
   there is no large public equivalent, which is the dataset contribution. That is why the external
   `expose_cadquery_programs` sets are generation-only proxies, and this dataset — not they — carries the task signal.
-- **Producer.** The CAD-QA dataset rows come from the replacement generator (`docs/dataset/PRD.md`); the
+- **Producer.** The CAD-QA dataset rows come from the replacement generator (`docs/dataset/requirements/PRD.md`); the
   agent training trace distillation from those rows is this directory's
   `pipeline/02-teacher-sampling.md`. The dataset is to be
   **regenerated** (the current release is superseded) — pin the regenerated revision.

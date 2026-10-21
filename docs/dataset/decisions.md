@@ -151,9 +151,9 @@ prefix is `DS-`.
   release selection algorithm; and deterministic ordering, deduplication,
   serialization, and split assignment.
 - **Consequences:** Implementation should not start from the current
-  conceptual docs alone. `task-structure.md` and this file define the target;
+  conceptual docs alone. `requirements/task-structure.md` and this file define the target;
   the enumeration contract defines the implementable space. The open questions
-  that affect it are in `release-dataset-structure.md` Q1-Q5.
+  that affect it are in `implementation/release-dataset-structure.md` Q1-Q5.
 
 ---
 
@@ -249,7 +249,7 @@ prefix is `DS-`.
 ## DS-17 — Comparison clues may name an entity or reuse one selected earlier
 
 - **Status:** accepted (2026-10-21).
-- **Context:** `task-structure.md` Q1 asked whether a comparison task clue must
+- **Context:** `requirements/task-structure.md` Q1 asked whether a comparison task clue must
   name both entities. BrowseComp-style composition lets a later step use a
   result from an earlier step, and the dataset needs the same freedom without
   ambiguous references.
@@ -278,7 +278,7 @@ prefix is `DS-`.
   reasoning steps. A P1 input makes the task P1; a P2 input makes it P2, and a
   task with six or more steps is P2. P0 tasks use only P0 inputs; P1 tasks may
   use P0 and P1 inputs; P2 tasks may use any input. The priority columns in
-  `task-structure.md` and `graph-content.md` are authoritative. Requirement
+  `requirements/task-structure.md` and `requirements/graph-content.md` are authoritative. Requirement
   priority and input priority are separate: a P1 requirement can apply to the
   P0 slice. Coverage and balance apply to the priority slice being built; a
   value deferred to a later priority is not a gap in the current slice.
@@ -321,4 +321,4 @@ prefix is `DS-`.
   `manifest.json`, `dataset-card.md`, and `failures.jsonl`. No separate answer
   table, program table, or evidence table is needed initially. The evaluation
   harness must pass only `prompt` to the LLM model. The structure is defined in
-  `release-dataset-structure.md`.
+  `implementation/release-dataset-structure.md`.

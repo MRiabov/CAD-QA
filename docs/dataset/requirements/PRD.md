@@ -7,7 +7,7 @@ CAD-QA dataset. It describes what a user gets from training and evaluating on
 the dataset. It does not describe how the dataset is produced; that belongs in
 the technical specification.
 
-**Relation to the project PRD.** [`../PRD.md`](../PRD.md) remains the authority
+**Relation to the project PRD.** [`../../PRD.md`](../../PRD.md) remains the authority
 for the research questions, hypotheses, and evaluation goals. This document
 defines the dataset those goals need. It does not change the research goals.
 

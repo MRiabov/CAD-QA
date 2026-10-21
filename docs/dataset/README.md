@@ -6,7 +6,8 @@ dataset documentation is archived under
 
 This directory defines what the CAD-QA dataset is for, what a user gets from
 training and evaluating on it, and the concepts needed to describe a task.
-The technical specification is not written yet.
+The product requirements are in `requirements/`. Technical structure is in
+`implementation/`.
 
 ## Why the product comes first
 
@@ -24,19 +25,30 @@ The order is:
 4. Build the smallest complete sample.
 5. Produce the first dataset release.
 
-Steps 1 and 2 are in this directory. The technical specification is not written
-yet.
+Steps 1 and 2 are in `requirements/`. Step 3 starts in `implementation/`.
 
 ## Documents
 
+### Requirements
+
 | Document | What it defines |
 |---|---|
-| [`PRD.md`](PRD.md) | What the user gets, what the dataset must contain, quality promises, size, splits, deliverables, and priorities. |
-| [`task-structure.md`](task-structure.md) | The dimensions of a task, P0/P1/P2 priorities for generation inputs, coverage and balance at every task reasoning step count, clue types, answer meanings, task reasoning step count rules, and uniqueness rules. |
-| [`prompt-content.md`](prompt-content.md) | What the LLM model sees: program text, question, task clues, choices, and answer instruction. |
-| [`release-dataset-structure.md`](release-dataset-structure.md) | Release artifacts, row counts, release table columns, and why one table is enough. |
-| [`graph-content.md`](graph-content.md) | The graph elements the tasks rely on: graph entities, relations, measurements, states, evidence, and P0/P1/P2 priorities. |
-| [`terminology.md`](terminology.md) | Proposed terms, replacements for old terms, and naming decisions that still need owner approval. |
+| [`requirements/PRD.md`](requirements/PRD.md) | What the user gets, what the dataset must contain, quality promises, size, splits, deliverables, and priorities. |
+| [`requirements/task-structure.md`](requirements/task-structure.md) | The dimensions of a task, P0/P1/P2 priorities for generation inputs, coverage and balance at every task reasoning step count, clue types, answer meanings, task reasoning step count rules, and uniqueness rules. |
+| [`requirements/prompt-content.md`](requirements/prompt-content.md) | What the LLM model sees: program text, question, task clues, choices, and answer instruction. |
+| [`requirements/graph-content.md`](requirements/graph-content.md) | The graph elements the tasks rely on: graph entities, relations, measurements, states, evidence, and P0/P1/P2 priorities. |
+| [`requirements/terminology.md`](requirements/terminology.md) | Proposed terms, replacements for old terms, and naming decisions that still need owner approval. |
+
+### Implementation
+
+| Document | What it defines |
+|---|---|
+| [`implementation/release-dataset-structure.md`](implementation/release-dataset-structure.md) | Release artifacts, row counts, release table columns, and why one table is enough. |
+
+### Feature-wide
+
+| Document | What it defines |
+|---|---|
 | [`decisions.md`](decisions.md) | Feature-wide dataset decisions in ADR format. |
 
 ## Relation to the project PRD
