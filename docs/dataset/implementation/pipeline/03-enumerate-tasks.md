@@ -8,8 +8,8 @@ task clues, answer step, gold answer, validity evidence, and canonical identity.
 ## Task definition
 
 A `TaskDefinition` is the complete, answer-bearing construction record for one
-task. It is not prompt text and not a loose task tuple. It is what `04` renders
-and what `05` selects through a `PromptedTask`.
+task. It is not prompt text and not a loose task tuple. It is what `04` selects
+and what `05` renders.
 
 | Field | Meaning |
 |---|---|
@@ -137,6 +137,7 @@ A task definition is valid only when all of these hold:
 - the answer step produces exactly one answer;
 - the target binding is unambiguous;
 - the answer has evidence;
+- for multiple choice, the choice pool has at least five real choices;
 - the task definition is unique under canonical identity;
 - `geometry_required` is recorded: at least one task clue depends on the built
   shape.

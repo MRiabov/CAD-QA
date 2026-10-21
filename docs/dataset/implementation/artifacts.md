@@ -19,9 +19,9 @@ this document owns ownership, lifecycle, and format, not field definitions.
 | Execution result | `02b` | `02c` | Program hash, CadQuery/OCP version, and environment | Parquet plus shape snapshot files | Either execution snapshots or a failure tombstone. |
 | CAD graph | `02c` | `03` | Program hash, graph schema version, and execution result hash | Parquet tables | One graph per program. |
 | Task definition | `03` | `04`, `05` | Canonical task identity plus definition hash | Parquet | Persisted, answer-bearing construction record; invalid definitions are rejected. |
-| Prompted task | `04` | `05` | Task identity plus prompt and choice versions | Parquet | Prompt is answer-free. |
-| Release table | `05` | `06` | `release_id` | Parquet | One row per task; carries `cadevolve_program_family_id`. |
-| Task reasoning step support tables | Task-step support QA | `05`, `06`, reviewers | Schema version | JSON | Four derived files used to check coverage; not generator inputs. |
+| Selected task | `04` | `05` | `task_id` plus selection version | Parquet | Task definition plus split, subset, and selection metadata. |
+| Release table | `05` | `06` | `release_id` | Parquet | One row per task; prompt is answer-free; carries `cadevolve_program_family_id`. |
+| Task reasoning step support tables | Task-step support QA | `04`, `06`, reviewers | Schema version | JSON | Four derived files used to check coverage; not generator inputs. |
 | Release artifacts | `06` | Dataset consumers | `release_id` | Parquet, JSON, Markdown | `release.parquet`, `failures.parquet`, `manifest.json`, `dataset-card.md`, `support/`. |
 
 `Failures` is a multi-writer record: every pipeline stage appends a failure with

@@ -62,8 +62,8 @@ not product requirements.
 | [`implementation/pipeline/01-external-dataset-etl.md`](implementation/pipeline/01-external-dataset-etl.md) | CADEvolve Parquet cache → normalized programs and manifest. |
 | [`implementation/pipeline/02-execute-cadquery-and-build-graph.md`](implementation/pipeline/02-execute-cadquery-and-build-graph.md) | Static extraction and CadQuery execution → CAD graph. |
 | [`implementation/pipeline/03-enumerate-tasks.md`](implementation/pipeline/03-enumerate-tasks.md) | Task definitions, step counts, identity, and gold answers. |
-| [`implementation/pipeline/04-assemble-prompt-and-choices.md`](implementation/pipeline/04-assemble-prompt-and-choices.md) | Prompt rendering and multiple-choice choices. |
-| [`implementation/pipeline/05-select-and-balance-release.md`](implementation/pipeline/05-select-and-balance-release.md) | Release selection, balance, and splits. |
+| [`implementation/pipeline/04-select-and-balance-release.md`](implementation/pipeline/04-select-and-balance-release.md) | Release selection, balance, and splits. |
+| [`implementation/pipeline/05-assemble-prompt-and-choices.md`](implementation/pipeline/05-assemble-prompt-and-choices.md) | Prompt rendering and multiple-choice choices. |
 | [`implementation/pipeline/06-validate-and-export-release.md`](implementation/pipeline/06-validate-and-export-release.md) | Validation, export, manifest, and dataset card. |
 
 ### Feature-wide

@@ -65,7 +65,7 @@ At each step count, a value is checked against its conditional release share,
 within half to twice that share. The definition of the conditional share and
 whether it is allocated from global targets or computed from the valid-task set
 is Q3 in
-[`pipeline/05-select-and-balance-release.md`](pipeline/05-select-and-balance-release.md).
+[`pipeline/04-select-and-balance-release.md`](pipeline/04-select-and-balance-release.md).
 
 This document does not fix an allocation formula until Q3 is resolved. It fixes
 the coverage rule, the implementation-scope rule, the release-level bounds, and
@@ -82,6 +82,6 @@ evaluation.
 ## Open implementation choices
 
 - **Selection strategy:** enumerate and cut, or plan quotas and generate into
-  them (Q1 in pipeline stage `05`).
-- **Conditional share allocation:** Q3 in pipeline stage `05`.
-- **Tie-break rule:** must be deterministic; it belongs to pipeline stage `05`.
+  them (Q1 in pipeline stage `04`).
+- **Conditional share allocation:** Q3 in pipeline stage `04`.
+- **Tie-break rule:** must be deterministic; it belongs to pipeline stage `04`.

@@ -155,7 +155,7 @@ prefix is `DS-`.
   conceptual docs alone. `requirements/task-structure.md` and this file define the target;
   the enumeration contract defines the implementable space. The open questions
   that affect it are in
-  `implementation/pipeline/05-select-and-balance-release.md` Q1/Q3.
+  `implementation/pipeline/04-select-and-balance-release.md` Q1/Q3.
 
 ---
 
@@ -449,8 +449,8 @@ prefix is `DS-`.
 - **Decision:** `03` defines task definitions and emits persisted
   `TaskDefinition` records. The task reasoning step support tables are derived
   from those rules as a separate QA baseline. They are not a pipeline stage and
-  not a generator input; `04` renders the task definition and `05`/`06` use the
-  tables to check the release.
+  not a generator input; `04` selects, `05` renders, and `04`/`06` use the tables
+  to check the release.
 - **Consequences:** `03` does not read the task reasoning step support tables. A feasible value
   missing from the dataset is a coverage gap; a released value marked infeasible
   is a specification or generator defect. Dataset quantity remains a separate
