@@ -13,8 +13,8 @@ records, without executing them.
 
 The cache is already cleaned: all 1,998,810 rows are `.py` records, all import
 CadQuery, and all have non-empty program text. There is no non-program-record
-filter to apply, and no program-size cutoff: the corpus is cheap to execute in
-full.
+filter to apply, and no program-size cutoff: the corpus executed without
+significant trouble during the last dataset regeneration.
 
 ## Behavior
 
