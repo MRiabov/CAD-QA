@@ -104,9 +104,11 @@ When the answer format is multiple choice:
   never by a variable name or an internal identifier;
 - make every description unique;
 - do not let any description contain the answer or say that it is correct;
+- make every distractor a plausible near miss, not random padding;
+- ensure every distractor fails at least one task clue or the answer step;
 - use a deterministic order.
 
-A choice is not padding. If there are not enough real candidates to fill the
+A choice is not padding. If there are not enough plausible choices to fill the
 minimum, the task is not generated.
 
 ## 6. Answer instruction
@@ -208,16 +210,20 @@ Before a prompt is accepted:
 
 ## 10. Open questions
 
-- **Q1.** How are multiple-choice distractors selected deterministically?
+- **Q1.** How are plausible, deterministic distractors generated and validated?
   - **Option A — fixed candidate order.** Take the first N candidates by a
     stable identifier. Simple, but the choices may be clustered and easy to
     eliminate.
   - **Option B — hash order.** Order candidates by a stable hash and take the
     first N. Deterministic, but still no guarantee that the choices are
     distinguishable.
-  - **Option C — property coverage, then hash order.** Prefer candidates that
-    differ from the correct answer in at least one geometric or construction
-    property; break ties by a stable hash. Deterministic and more discriminative.
-  - **Recommendation:** C. Example: for a face identity task, prefer faces with
-    different areas, normals, or creating operations; if fewer than five real
-    candidates exist, reject the task.
+  - **Option C — near-miss perturbation, then deterministic order.** Start from
+    the correct task solution and apply one controlled error: use an adjacent
+    entity, the wrong solid state, the wrong operation, a swapped comparison, a
+    different measurement, or an off-by-one count. Validate the result against
+    the same graph, then order the choices by a stable hash.
+  - **Recommendation:** C. For a multi-step task, a distractor should satisfy
+    most task clues and fail at least one. For a one-step task, use a
+    same-category neighbor. “80% correct” is a useful heuristic, not a literal
+    threshold. The generator must be able to state why each distractor is wrong.
+    If enough plausible distractors cannot be generated, reject the task.
