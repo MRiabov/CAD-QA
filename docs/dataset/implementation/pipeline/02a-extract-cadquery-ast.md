@@ -29,9 +29,16 @@ it.
 - `order`, `source_line`, and `result_var`;
 - `receiver`, the variable or expression the call is made on;
 - `method`, the CadQuery method name;
-- `args` and `kwargs`, as typed literal values;
+- `args` and `kwargs`, as `StaticExpression` trees;
 - `operation_kind`: CadQuery workplane, sketch, solid, CadQuery selector,
   boolean, modifier, or transform.
+
+`StaticExpression` is a typed expression tree, not a literal value. Its expression kinds
+are literal, name, attribute, subscript, call, list, tuple, and dict. A call
+records the callee and its argument and keyword expression trees. This represents
+nested constructors such as
+`cq.Plane(origin=cq.Vector(28, 85, -71), normal=cq.Vector(1, 3, 0))` without
+evaluating them.
 
 `StaticWorkplane` records its origin, x direction, and normal.
 `StaticProfile` records its CadQuery profile kind and dimensions or points.

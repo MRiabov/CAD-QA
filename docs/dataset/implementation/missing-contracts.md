@@ -9,7 +9,7 @@ doc, delete the row. Open questions remain in
 
 | ID | Owner | Missing contract | Why it blocks |
 |---|---|---|---|
-| MC-04 | [`02a`](pipeline/02a-extract-cadquery-ast.md) | Static expression tree for nested constructors such as `cq.Plane(cq.Vector(...))`; method allowlist; CadQuery selector timing. | “Typed literal values” cannot represent real CADEvolve-C programs, and graph coverage depends on the allowlist. |
+| MC-04 | [`02a`](pipeline/02a-extract-cadquery-ast.md) | Method allowlist and CadQuery selector timing. The expression tree is now defined; this row is narrowed to those two items. | Graph coverage depends on the allowlist, and selector timing affects execution. |
 | MC-06 | [`02c`](pipeline/02c-build-cad-graph.md) | Typed attributes per graph entity category and graph table scope. | The graph attribute schema and table layout are undefined. |
 | MC-07 | [`03a`](pipeline/03a-plan-release.md) | Quota allocator equations for marginal cells, step mix, clue occurrences, family capacity, caps, and coverage minima; cell-to-family budget division. | The plan lists steps but no computable allocation. |
 | MC-08 | [`03b`](pipeline/03b-construct-task-definitions.md) | Construction grammar: possible-answer sets, target binding order, clue constructors, answer resolvers, sampling order, and support-table derivation. | `03b` currently defines rejection, not construction. |
