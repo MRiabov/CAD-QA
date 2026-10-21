@@ -124,6 +124,10 @@ answer-derived evidence, hidden entity identifiers, or scoring data.
 Tolerance is explicit for every non-exact answer. This avoids relying on a
 reader to infer the last stated place. For a numeric answer, a typical tolerance
 is `{"kind": "absolute", "value": 0.005}`.
+P2 choice audit: a P2 release adds `choice_audit_json` for
+multiple-choice tasks. It records the correct label, each distractor's error
+mode, and which task clue or answer step it fails. P0 and P1 do not require this
+column.
 
 Evidence is nested in the answer columns because the first release has 10,000
 tasks and the evidence is small enough to keep with the task. Split evidence

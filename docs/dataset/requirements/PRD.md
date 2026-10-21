@@ -187,6 +187,10 @@ documented reason.
 
 All answers must be objectively checkable. An answer that requires an LLM to
 judge is not allowed.
+Multiple-choice choices are P0 when they are real, unique, and non-leaking. P2
+adds examiner-style plausible near misses: each distractor should fail one task
+clue or the answer step, and the release should record why. P0 and P1 do not
+require the near-miss audit.
 
 ---
 

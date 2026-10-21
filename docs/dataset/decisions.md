@@ -322,3 +322,18 @@ prefix is `DS-`.
   table, program table, or evidence table is needed initially. The evaluation
   harness must pass only `prompt` to the LLM model. The structure is defined in
   `requirements/release-dataset-contract.md`.
+
+## DS-21 — Plausible near-miss distractors are P2
+
+- **Status:** accepted (2026-10-21).
+- **Context:** Multiple-choice choices must be real, unique, and non-leaking for
+  P0 and P1. Examiner-style plausible near misses improve difficulty and audit,
+  but they add an error-mode catalog, validation, and review work that is not
+  needed for the thesis.
+- **Decision:** P0 and P1 require real candidates. P2 requires every distractor
+  to be a plausible near miss that fails at least one task clue or the answer
+  step, with a recorded error mode. If enough plausible distractors cannot be
+  generated, the task is rejected.
+- **Consequences:** P0 and P1 can ship without the near-miss audit. P2 adds the
+  error-mode catalog, choice audit, and review. The open question stays in
+  `requirements/prompt-content.md` Q1 until P2 is implemented.

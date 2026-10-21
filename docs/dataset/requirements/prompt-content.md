@@ -94,22 +94,28 @@ built. A task clue is never a template with placeholder text left in it.
 
 ## 5. Multiple-choice choices
 
-When the answer format is multiple choice:
+When the answer format is multiple choice, P0 and P1 require:
 
-- show at least five choices, with seven as the goal;
-- label the choices `A`, `B`, `C`, and so on;
-- include the correct choice;
-- draw every choice from the same task target category;
-- describe each choice by a distinguishing geometric or construction property,
+- at least five choices, with seven as the goal;
+- labels `A`, `B`, `C`, and so on;
+- the correct choice present;
+- every choice drawn from the same task target category;
+- every choice described by a distinguishing geometric or construction property,
   never by a variable name or an internal identifier;
-- make every description unique;
-- do not let any description contain the answer or say that it is correct;
-- make every distractor a plausible near miss, not random padding;
-- ensure every distractor fails at least one task clue or the answer step;
-- use a deterministic order.
+- every description unique;
+- no description containing the answer or saying that it is correct;
+- every choice a real candidate from the construction, not padding;
+- a deterministic order.
 
-A choice is not padding. If there are not enough plausible choices to fill the
-minimum, the task is not generated.
+P2 adds examiner-style distractor quality:
+
+- every distractor is a plausible near miss, not random padding;
+- every distractor fails at least one task clue or the answer step;
+- the generator records why each distractor is wrong.
+
+A choice is not padding. For P0 and P1, if there are not enough real candidates
+to fill the minimum, the task is not generated. For P2, if there are not enough
+plausible distractors, the task is not generated.
 
 ## 6. Answer instruction
 
@@ -210,7 +216,8 @@ Before a prompt is accepted:
 
 ## 10. Open questions
 
-- **Q1.** How are plausible, deterministic distractors generated and validated?
+- **Q1** (P2). How are plausible, deterministic distractors generated and
+  validated?
   - **Option A — fixed candidate order.** Take the first N candidates by a
     stable identifier. Simple, but the choices may be clustered and easy to
     eliminate.
@@ -227,3 +234,5 @@ Before a prompt is accepted:
     same-category neighbor. “80% correct” is a useful heuristic, not a literal
     threshold. The generator must be able to state why each distractor is wrong.
     If enough plausible distractors cannot be generated, reject the task.
+    P0 and P1 do not require this near-miss audit; they require real, unique,
+    non-leaking choices.
