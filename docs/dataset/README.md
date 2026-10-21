@@ -36,6 +36,7 @@ yet.
 | [`prompt-content.md`](prompt-content.md) | What the LLM model sees: program text, question, task clues, choices, and answer instruction. |
 | [`graph-content.md`](graph-content.md) | The graph elements the tasks rely on: graph entities, relations, measurements, states, and evidence. |
 | [`terminology.md`](terminology.md) | Proposed terms, replacements for old terms, and naming decisions that still need owner approval. |
+| [`decisions.md`](decisions.md) | Feature-wide dataset decisions in ADR format, plus open questions. |
 
 ## Relation to the project PRD
 
