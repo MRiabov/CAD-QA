@@ -11,6 +11,27 @@ release from the external dataset metadata.
 - Output: a Parquet selection artifact with active and reserve program IDs, the
   policy, counts, and exclusions.
 
+## Selection policy
+
+For P0/P1, select from C only:
+
+1. Deduplicate by `normalized_source_code_hash`.
+2. Give each collection a minimum quota of 300 active programs.
+3. Allocate the remaining active slots proportionally to collection size.
+4. Within each collection, order by `sha256(seed || source_id)`.
+5. Cap selection at two programs per `cadevolve_split_group_id`.
+6. Ensure at least 50 active programs for each required feature tag:
+   `void_cut`, `kernel_face_selector`, `kernel_edge_selector`,
+   `profile_polyline`, and `path_curve`. Select all available if a tag has fewer
+   than 50.
+7. Treat `kernel_vertex_selector` as best effort: select all available, up to
+   50.
+8. Select 1,500 active programs. Select the next 300–450 by the same policy as
+   reserve.
+
+The policy is deterministic for a given cache revision, seed, and metadata
+schema. It records unmet quotas instead of silently under-filling.
+
 ## Behavior
 
 - Apply the selection policy to the program metadata.
@@ -48,23 +69,3 @@ P2 must not put one version in train and the other in test.
 - **Code-rewrite augmentation.** *Resolved 2026-10-21.* Skip it for the first
   release. The release samples a bounded set of families; the 744,780 rewrites
   add code-style variants, not new families, geometry, or task capabilities.
-
-## Open questions
-
-### Which metadata dimensions drive stratification?
-
-- **Collection** is mandatory: ABC, ShapeNet, and CADEvolve core.
-- **Feature tags** are the cheap coverage signal: `void_cut`,
-  `kernel_face_selector`, `kernel_edge_selector`, `profile_polyline`,
-  `path_curve`, and `kernel_vertex_selector`.
-- **Split group** is mandatory for decontamination, but not a quota by itself.
-- **CADEvolve `path_family`** is too fine for ABC/ShapeNet; use
-  `cadevolve_split_group_id` instead.
-- **Generator ID** in the cache is collection-level, not the real generator.
-
-A full collection × tag cross-product is too sparse. Use a minimum per
-collection and a minimum for each required tag, then fill the remainder
-proportionally. Cap programs per CADEvolve split group so one generator or mesh
-family does not dominate.
-
-**Recommendation:** collection + required feature tags, with a per-group cap.
