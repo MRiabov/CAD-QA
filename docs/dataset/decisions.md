@@ -184,3 +184,21 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
   geometry step. The specification must choose. The current leaning is to keep
   the step count as the number of atomic task reasoning steps: syntax-only
   filters are 1-step syntax tasks, and 0-step is a direct named lookup.
+
+  **Prior art.** The archived dataset already separated three counts:
+  `logical_hop_count`, `static_hop_count`, and `geometry_hop_count`
+  (`docs/_archive/dataset-pre-rebuild-2026-10-21/pipeline/06-materialize-validate-release.md`
+  D2; `dataset/release/materialize.py::materialize_row`). `static_hop_count`
+  counted `property_equals` clauses and `before` / `after` / `input_to` /
+  `parameter_of` relations; `geometry_hop_count` was the remainder. A row was
+  syntax-only calibration when `geometry_hop_count == 0` or the prompt family
+  was `first_operation`
+  (`dataset/release/sft.py::is_syntax_only_calibration_row`). The old
+  static/geometry split was a heuristic and was left open.
+
+  **Resolution candidate.** Drop `0-step` as a category. Keep **task reasoning
+  step count** as the logical count for difficulty. Add **syntax step count**
+  and **geometry step count**; define a syntax-only task as geometry step count
+  0. A syntax-only task may still have one or more logical steps. Benchmark
+  tasks require geometry step count greater than 0. Warmup is syntax-only or
+  one geometry step, not logical 0 steps.
