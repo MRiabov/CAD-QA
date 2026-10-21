@@ -16,7 +16,8 @@ release from the external dataset metadata.
 - Apply the selection policy to the program metadata.
 - Use C for P0 and P1. Add P at P2 for scale variation. Do not deduplicate P
   against C; they are separate populations.
-- Select at most the target program count for the release.
+- Select 1,500 active C programs for P0 and P1, plus 300–450 reserve IDs
+  (20–30%). If fewer are available, select all and record the shortfall.
 - Use only metadata columns; do not download program text.
 - Assign `split_group_id`: for CADEvolve core, the generator family; for
   ABC/ShapeNet, the mesh family. P and C versions of one family share the group.
@@ -36,24 +37,13 @@ release scale variation and arbitrary code style.
 P and C versions of one generator or mesh family share a split group; P2 must
 not put one version in train and the other in test.
 
+## Resolved questions
+
+- **Program count.** *Resolved 2026-10-21.* Select 1,500 active C programs for P0
+  and P1, with 1,000 usable programs as the release floor, plus 300–450 reserve
+  IDs. P2 adds a separately sized P pool.
+
 ## Open questions
-
-### What is the target program count?
-
-The last regeneration used 1,300 programs and produced 10,000 tasks. That is
-about 7.7 tasks per program, so 1,000 programs is too close to the release floor.
-
-- **1,300:** proven once, but little headroom for execution or task-generation
-  failures.
-- **1,500:** about 11.5k expected tasks, leaving room for rejects and split
-  balance.
-- **2,000+:** more diversity, but more download, normalization, execution, and
-  graph work for no clear first-release benefit.
-- **Full cache:** excessive.
-
-**Recommendation:** select 1,500 C programs for P0/P1, with 1,000 usable
-programs as the floor. Keep a reserve for failures. P2 adds a separately sized P
-pool.
 
 ### Which metadata dimensions drive stratification?
 
@@ -71,18 +61,6 @@ proportionally. Cap programs per split group so one generator or mesh family
 does not dominate.
 
 **Recommendation:** collection + required feature tags, with a per-group cap.
-
-### Should the selection reserve a program pool for later releases?
-
-- **No reserve:** smallest pool, but execution or task-generation failures can
-  force a new selection.
-- **Reserve 20–30%:** selection is metadata-only, so reserving IDs is cheap.
-  Fetch, normalize, and execute reserved programs only if needed.
-- **Reserve a full later slice:** more planning now, but later releases may want
-  a different tier or coverage.
-
-**Recommendation:** reserve 20–30% of IDs now; do not fetch or normalize them
-until needed.
 
 ### Does the release need the paper's rewrite diversity?
 

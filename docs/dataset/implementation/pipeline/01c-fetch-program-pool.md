@@ -11,7 +11,8 @@
 
 ## Behavior
 
-- Read only the selected rows and the columns needed for normalization.
+- Read only the active selected rows and the columns needed for normalization;
+  leave reserve IDs unfetched.
 - Use Parquet column projection and HF range reads; do not download the full
   cache.
 - Preserve the metadata columns selected by `01a`, including the tier,

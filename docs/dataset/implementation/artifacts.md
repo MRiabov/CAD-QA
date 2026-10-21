@@ -11,7 +11,7 @@ this document owns ownership, lifecycle, and format, not field definitions.
 |---|---|---|---|---|---|
 | CADEvolve Parquet cache | External | `01a` | Upstream dataset commit plus cache version | Parquet | Immutable external input. |
 | Program metadata | `01a` | `01b` | Cache revision plus metadata schema | Parquet | No program text. |
-| Program selection | `01b` | `01c`, `01e` | Selection policy version plus seed | Parquet | Selected IDs, `split_group_id`, counts, and exclusions. |
+| Program selection | `01b` | `01c`, `01e` | Selection policy version plus seed | Parquet | Active and reserve IDs, `split_group_id`, counts, and exclusions. |
 | Program pool | `01c` | `01d` | Selection identity plus cache revision | Parquet | Only selected rows, including program text and `split_group_id`. |
 | Normalized program | `01d` | `02a`, `02b` | `program_sha256` plus normalization version | Parquet | Carries `program_id`, `split_group_id`, and canonical text. |
 | External dataset manifest | `01e` | `06`, dataset card | External dataset version | JSON | Counts, hashes, and rejected records. |
