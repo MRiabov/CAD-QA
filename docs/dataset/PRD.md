@@ -97,34 +97,48 @@ share a CAD model when they come from the same program.
 A question is built from clues: conditions the answer must satisfy. Clues are
 written in plain language, and their variety is a requirement in its own right.
 
+The structure of a question is defined in [`question-structure.md`](question-structure.md).
+The content of the prompt is defined in [`prompt-content.md`](prompt-content.md).
+The facts the questions rely on are defined in [`graph-content.md`](graph-content.md).
+The proposed vocabulary is in [`terminology.md`](terminology.md).
+
 ---
 
-## 4. Categories of questions
+## 4. Question structure
 
-The dataset must support the following categories of questions. The examples
-are illustrative, not exact wording.
+A question is not one of a flat list of labels. It is a combination of five
+independent dimensions:
 
-| Category | What the user sees | Typical answer | Reasoning steps |
-|---|---|---|---|
-| Direct fact | What is the volume of the final solid? | Number | 0 |
-| Locate by property | Which feature adds the most material? | Multiple choice or variable name | 1 |
-| Follow provenance | Which CadQuery profile was used by the feature that created the final solid? | Variable name | 1–2 |
-| Filter and locate | Which face is parallel to the base and has the largest area? | Multiple choice or variable name | 2 |
-| Count | How many faces are parallel to the XY plane? | Integer | 1–2 |
-| Compare | Is the selected face larger than the face it shares an edge with? | Yes or no | 2 |
-| Measure an effect | What is the volume removed by the cut that made the hole? | Number | 2 |
-| Measure a distance | How far is the feature centroid from the nearest point on the path? | Number | 3 |
-| Give a coordinate | Give the centroid of the face adjacent to the top face. | 3D coordinate | 1–2 |
-| Give a bounding box | Give the bounding box of the solid after the final operation. | Bounding box | 1–2 |
-| Describe a CadQuery workplane | Describe the CadQuery workplane of the sketch that produced the feature. | Structured object | 2 |
-| Check membership | Is the point inside the final solid? | Yes or no | 1–2 |
-| Rank | What is the rank of this edge among the edges of its face by length? | Integer | 2 |
-| Follow a chain | Follow the face adjacency chain to the face created by the last cut. | Multiple choice or variable name | 3–5 |
-| Measure geometry after an operation | How much material did the fillet remove? | Number | 2 |
+- the **target** the question asks about;
+- the **clues** the answer must satisfy;
+- the **answer shape** the LLM model must return;
+- the **reasoning pattern** that finds the target;
+- the **reasoning depth** the question requires.
 
-The dataset must not be limited to this list. New question categories may be
-added later, provided they keep the same user-facing shape: a CadQuery program,
-a clear question, one correct answer, and a way to check it.
+The previous flat list mixed these dimensions. For example, "direct fact"
+described depth, "give a coordinate" described an answer shape, and "measure a
+distance" described a measurement. Those are not peers.
+
+The full structure, including target categories, clue forms, reasoning patterns,
+depth rules, and the precise definition of a question family, is in
+[`question-structure.md`](question-structure.md).
+
+The dataset must cover these reasoning patterns:
+
+- Direct
+- Locate
+- Measure
+- Compare
+- Count
+- Rank
+- Effect
+- Membership
+- CadQuery workplane
+- Chain
+
+The list is not a closed set of question labels. A question family is defined by
+its pattern, target, clues, answer shape, depth, and uniqueness rule. New
+families may be added if they follow the structure and meet the same quality rules.
 
 ---
 

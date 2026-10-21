@@ -4,16 +4,16 @@
 dataset documentation is archived under
 `docs/_archive/dataset-pre-rebuild-2026-10-21/` and is not a specification.
 
-This directory defines what the CAD-QA dataset is for and what a user gets from
-training and evaluating on it. Start with [`PRD.md`](PRD.md). The technical
-specification is not written yet.
+This directory defines what the CAD-QA dataset is for, what a user gets from
+training and evaluating on it, and the concepts needed to describe a question.
+The technical specification is not written yet.
 
 ## Why the product comes first
 
 The previous dataset grew from a mixture of good ideas, inherited names, and
 implementation-first decisions. The result was hard to explain to a user and
 hard to check against its own claims. This rewrite starts with the user outcome:
-what the dataset must let an LLM model do, what a reviewer must be able to check, and
+what the dataset must let an LLM do, what a reviewer must be able to check, and
 what the dataset must contain. The implementation is chosen after that.
 
 The order is:
@@ -24,7 +24,18 @@ The order is:
 4. Build the smallest complete sample.
 5. Produce the first dataset release.
 
-Only step 1 is in this directory today.
+Steps 1 and 2 are in this directory. The technical specification is not written
+yet.
+
+## Documents
+
+| Document | What it defines |
+|---|---|
+| [`PRD.md`](PRD.md) | What the user gets, what the dataset must contain, quality promises, size, splits, deliverables, and priorities. |
+| [`question-structure.md`](question-structure.md) | The dimensions of a question, the canonical question families, depth rules, and uniqueness rules. |
+| [`prompt-content.md`](prompt-content.md) | What the LLM model sees: program text, task statement, clues, choices, and answer instruction. |
+| [`graph-content.md`](graph-content.md) | The facts the questions rely on: graph entities, relations, measurements, states, and evidence. |
+| [`terminology.md`](terminology.md) | Proposed terms, replacements for old terms, and naming decisions that still need owner approval. |
 
 ## Relation to the project PRD
 
