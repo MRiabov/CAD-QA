@@ -86,9 +86,9 @@ P2 must not put one version in train and the other in test.
 
 ## Supplemental selection
 
-`03c` may request more programs when the release plan has a deficit. A
-supplemental selection produces a `ProgramSelectionDelta`; it does not replace
-the original selection.
+`03c` sends a `ProgramRequest` when the release plan has a deficit that the
+current pool cannot fill. A supplemental selection produces a
+`ProgramSelectionDelta`; it does not replace the original selection.
 
 - **Extend:** continue the existing deterministic hash order beyond the active
   and reserve sets.

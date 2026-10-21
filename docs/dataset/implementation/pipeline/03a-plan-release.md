@@ -9,8 +9,8 @@ are generated.
 ## Input / output
 
 - Input: CAD graphs for the selected program pool, program metadata, the
-  [task reasoning step support tables](../task-step-support.md), and release
-  targets.
+  [task reasoning step support tables](../task-step-support.md), release
+  targets, and `ReplanRequest` records from `03c`.
 - Output: `ReleasePlan`.
 
 ## Release plan
@@ -106,6 +106,21 @@ cannot fill an assigned cell, the remainder returns to the plan.
 Exact split and cell assignment is a bin-packing problem and can be hard. The
 contract does not require an exact optimum. Deterministic greedy allocation,
 reserves, and recorded misses are sufficient.
+
+## Replanning
+
+`03a` accepts a `ReplanRequest` from `03c` when the current graphs can supply a
+deficit but the plan does not use them.
+
+It can:
+
+- assign an unassigned family to a quota cell;
+- move task budget from a saturated family to one with spare capacity;
+- relax an internal family budget;
+- change a quota cell within its release bounds.
+
+It does not fetch, normalize, or execute. It increments the plan version and
+returns control to `03b`.
 
 ## Deficits
 

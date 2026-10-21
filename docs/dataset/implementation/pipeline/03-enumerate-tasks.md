@@ -11,18 +11,16 @@ program data when the plan has deficits.
 |---|---|---|
 | `03a` | Plan quotas, family assignment, splits, and attempt budgets. | [`03a-plan-release.md`](03a-plan-release.md) |
 | `03b` | Construct and validate task definitions into the plan. | [`03b-construct-task-definitions.md`](03b-construct-task-definitions.md) |
-| `03c` | Expand the program data when the plan has deficits. | [`03c-expand-data-for-deficits.md`](03c-expand-data-for-deficits.md) |
+| `03c` | Resolve deficits by replanning or expanding program data. | [`03c-resolve-deficits.md`](03c-resolve-deficits.md) |
 
 ## Flow
 
 ```text
 03a plan
   → 03b construct/sample
-  → if deficits: 03c data request
-  → 01b supplemental selection
-  → 01c/01d/02 delta processing
-  → 03a update plan and family profiles
-  → 03b resume
+  → if deficits: 03c
+      fast: ReplanRequest → 03a → 03b
+      slow: ProgramRequest → 01b → 01c/01d/02 → 03a → 03b
 ```
 
 `03c` is a bounded loop back, not a terminal reconciliation step. It stops when

@@ -28,7 +28,7 @@ generator.
 |---|---|---|
 | [`01-external-dataset-etl.md`](01-external-dataset-etl.md) | CADEvolve Parquet cache → normalized programs and manifest. | Normalized programs. |
 | [`02-execute-cadquery-and-build-graph.md`](02-execute-cadquery-and-build-graph.md) | Static extraction and CadQuery execution → CAD graph. | CAD graph. |
-| [`03-enumerate-tasks.md`](03-enumerate-tasks.md) | Plan quotas, construct task definitions, and expand data on deficits. | Task definitions. |
+| [`03-enumerate-tasks.md`](03-enumerate-tasks.md) | Plan quotas, construct task definitions, and resolve deficits by replanning or expanding data. | Task definitions. |
 | [`04-render-prompt-and-choices.md`](04-render-prompt-and-choices.md) | Task definitions → prompt and choices. | Release table. |
 | [`05-validate-and-export-release.md`](05-validate-and-export-release.md) | Release table → validated release artifacts. | Release dataset. |
 
@@ -40,7 +40,7 @@ CADEvolve Parquet cache
   → CAD graphs
   → release plan
   → task definitions with gold answers
-  → [deficit loop: 03c → 01b/01c/02 → 03a/03b]
+  → [deficit loops: 03c → 03a → 03b, or 03c → 01b/01c/02 → 03a → 03b]
   → release table with prompts and choices
   → release.parquet + failures.parquet + manifest + dataset card + support/
 ```

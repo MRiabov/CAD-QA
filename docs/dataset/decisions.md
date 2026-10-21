@@ -460,7 +460,7 @@ prefix is `DS-`.
   selecting afterward wastes work and can exceed any practical budget.
 - **Decision:** Plan the release first with marginal quota cells, family
   profiles, split assignment, and attempt budgets. Construct and sample task
-  definitions into that plan. Use `03c` to expand the program data when quotas
+  definitions into that plan. Use `03c` to replan or expand the program data when quotas
   cannot be filled.
 - **Consequences:** There is no separate post-construction release-selection
   pipeline stage. `03c` is a bounded loop back through supplemental `01b` selection,
