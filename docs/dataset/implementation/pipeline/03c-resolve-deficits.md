@@ -9,7 +9,7 @@ replanning the current data, or expanding the program pool.
 
 - Input: the deficit ledger from `03b`, the current `ReleasePlan`, current family
   profiles, and program metadata.
-- Output: a `ReplanRequest`, a `ProgramRequest`, or an accepted miss.
+- Output: a `ProgramReassignmentRequest`, a `ProgramRequest`, or an accepted miss.
 
 `03c` is a controller, not a terminal reconciliation step. It does not render
 anything and does not write release rows.
@@ -21,7 +21,7 @@ There are two distinct loops with different costs.
 ### Fast loop: replan current data
 
 ```text
-03c ReplanRequest
+03c ProgramReassignmentRequest
   → 03a update quotas and family assignment
   → 03b resume
 ```
@@ -50,17 +50,17 @@ only loop that pays fetch, normalization, and execution cost.
 | Class | Response |
 |---|---|
 | More samples may help | Let `03b` try more constructors, bindings, or parameter values on existing graphs. |
-| Current pool has unused capacity | `ReplanRequest` to `03a`; reassign families or quotas. |
-| Current family budget or cap blocks the cell | `ReplanRequest`; change the plan, not the data. |
+| Current pool has unused capacity | `ProgramReassignmentRequest` to `03a`; reassign families or quotas. |
+| Current family budget or cap blocks the cell | `ProgramReassignmentRequest`; change the plan, not the data. |
 | Reserve or new capability needed | `ProgramRequest` to `01b`; expand the pool. |
 | Constructor limitation | Fix `03b`; neither loop helps. |
 | Structural infeasibility | Fix the plan or support table; no data can supply it. |
 | Release cap conflict | Reconcile the plan; expanding data will not remove the cap. |
 
-## ReplanRequest
+## ProgramReassignmentRequest
 
-Use `ReplanRequest` when the current graphs can supply the deficit but the current
-plan does not use them.
+Use `ProgramReassignmentRequest` when the current graphs can supply the deficit
+but the current plan does not use them.
 
 It contains:
 
@@ -98,7 +98,7 @@ in an assigned family inherits its split. A genuinely new family is assigned in
 `03c` tries the cheapest response first:
 
 1. More sampling in `03b`.
-2. `ReplanRequest` to `03a`.
+2. `ProgramReassignmentRequest` to `03a`.
 3. `ProgramRequest` to `01b`.
 4. Accept and record the miss.
 

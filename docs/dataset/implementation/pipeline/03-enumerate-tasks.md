@@ -19,7 +19,7 @@ program data when the plan has deficits.
 03a plan
   → 03b construct/sample
   → if deficits: 03c
-      fast: ReplanRequest → 03a → 03b
+      fast: ProgramReassignmentRequest → 03a → 03b
       slow: ProgramRequest → 01b → 01c/01d/02 → 03a → 03b
 ```
 

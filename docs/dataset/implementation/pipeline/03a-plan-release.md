@@ -10,7 +10,7 @@ are generated.
 
 - Input: CAD graphs for the selected program pool, program metadata, the
   [task reasoning step support tables](../task-step-support.md), release
-  targets, and `ReplanRequest` records from `03c`.
+  targets, and `ProgramReassignmentRequest` records from `03c`.
 - Output: `ReleasePlan`.
 
 ## Release plan
@@ -107,10 +107,10 @@ Exact split and cell assignment is a bin-packing problem and can be hard. The
 contract does not require an exact optimum. Deterministic greedy allocation,
 reserves, and recorded misses are sufficient.
 
-## Replanning
+## Program reassignment
 
-`03a` accepts a `ReplanRequest` from `03c` when the current graphs can supply a
-deficit but the plan does not use them.
+`03a` accepts a `ProgramReassignmentRequest` from `03c` when the current graphs
+can supply a deficit but the plan does not use them.
 
 It can:
 
