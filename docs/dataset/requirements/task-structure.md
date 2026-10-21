@@ -24,10 +24,10 @@ A task is a combination of separate dimensions. Once the dimensions are
 separate, every task can be described precisely, and the dataset can be
 checked for real coverage instead of counting labels.
 
-Each value below has a priority. P0 values are required for the first benchmark,
-P1 values strengthen it, and P2 values are optional. A task is P0 only when
-every value it uses is P0; a P1 value makes the task P1, and a P2 value makes it
-P2. A task with six or more task reasoning steps is P2 regardless of its inputs.
+Each value below has a priority. P0 values are required for the first release,
+P1 values strengthen it, and P2 values are optional. Priority is implementation
+order for that input; it is not a task label. A task that uses a later-priority
+value belongs to a later release scope, not to a different task category.
 
 ## 2. The dimensions of a task
 
@@ -84,9 +84,9 @@ the comparison is still one task clue.
 A task clue states one condition. A list item that combines a relation with a
 property is two task clues and is split into two list items.
 
-A chain is not a task clue type. It is a P2 ordered sequence of relation task
-clues: each relation is one task clue and one task clue step, and the chain
-structure makes the task P2.
+A chain is not a task clue type. It is a P2 implementation of an ordered
+sequence of relation task clues: each relation is one task clue and one task
+clue step.
 
 A task clue narrows the set of possible answers. The canonical term for the
 condition is **task clue**.
@@ -230,10 +230,9 @@ that does not satisfy the uniqueness rule is not generated.
 
 ## 5. Coverage
 
-Coverage is checked at each task reasoning step count and per priority slice.
-The P0 slice checks P0 values; the P1 slice checks P0 and P1 values; the P2
-slice checks all values. For each step count in the slice, the dataset must
-contain:
+Coverage is checked at each task reasoning step count and per release
+implementation scope. The first release checks P0 values; later releases add P1
+and P2 values. For each step count in the release, the dataset must contain:
 
 - every task target category supported at that task reasoning step count;
 - every task clue type supported at that task reasoning step count;
@@ -245,9 +244,9 @@ step count and why an unsupported value cannot occur there. It is part of the re
 and is versioned with the generator. "Supported" is a property of the task
 structure, not of the current generator: a value may be marked unsupported only
 when no valid task can express it at that step count. Structural support is
-separate from priority. A value may be structurally supported but deferred to
-P1 or P2; that is not a P0 gap. A value that is structurally valid, in the
-current priority slice, and not implemented is a gap.
+separate from implementation priority. A value may be structurally supported but deferred to
+P1 or P2; that is not a gap in the current release. A value that is structurally
+valid, in the release implementation scope, and not implemented is a gap.
 
 Coverage is reported at each task reasoning step count and per dimension. Global
 coverage is the union of the task reasoning step count reports; it does not
@@ -256,10 +255,10 @@ count 2.
 
 ## 6. Balance
 
-Balance is also checked at each task reasoning step count and per priority
-slice. The release-level targets remain, but they may not be met by
-concentrating a value at one task reasoning step count. A slice balances only
-the values it supports.
+Balance is also checked at each task reasoning step count and per release
+implementation scope. The release-level targets remain, but they may not be met
+by concentrating a value at one task reasoning step count. A release balances
+only the values it implements.
 
 | Dimension | Coverage at each task reasoning step count | Balance at each task reasoning step count | Release balance |
 |---|---|---|---|

@@ -1,7 +1,7 @@
 # Pipeline stage 05 — Select and balance release
 
 **Purpose:** select tasks into a release that meets the size, coverage, balance,
-split, and priority constraints.
+split, coverage, balance, and implementation-scope constraints.
 
 **Input/output contract:** [`io-contracts.md`](io-contracts.md).
 
@@ -9,7 +9,7 @@ Selection math: [`../selection-math.md`](../selection-math.md).
 
 ## Scope
 
-- Apply the P0/P1/P2 priority slice.
+- Generate for the release implementation scope.
 - Select a deterministic release subset.
 - Apply task reasoning step count mix.
 - Apply answer format, clue type, answer meaning, and target category coverage

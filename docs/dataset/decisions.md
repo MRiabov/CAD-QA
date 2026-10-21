@@ -267,27 +267,23 @@ prefix is `DS-`.
 
 ---
 
-## DS-18 — Generation inputs carry P0/P1/P2 priority
+## DS-18 — P0/P1/P2 are implementation order, not task labels
 
-- **Status:** accepted (2026-10-21).
-- **Context:** Not every task target category, clue type, answer meaning,
-  answer format, graph entity, relation, or measurement is needed for the first
-  benchmark. Without priorities, the generator either builds everything at once
-  or hides the build order in code.
-- **Decision:** The generation inputs carry the project P0/P1/P2 priorities. A
-  task is P0 only when every input it uses is P0 and it has at most five task
-  reasoning steps. A P1 input makes the task P1; a P2 input makes it P2, and a
-  task with six or more steps is P2. P0 tasks use only P0 inputs; P1 tasks may
-  use P0 and P1 inputs; P2 tasks may use any input. The priority columns in
-  `requirements/task-structure.md` and `requirements/graph-content.md` are authoritative. Requirement
-  priority and input priority are separate: a P1 requirement can apply to the
-  P0 slice. Coverage and balance apply to the priority slice being built; a
-  value deferred to a later priority is not a gap in the current slice.
-- **Consequences:** The first benchmark is the P0 slice. P1 adds richer
-  relations, clues, and answers. P2 is optional. A P1 or P2 value cannot be
-  required by a P0 task.
-
----
+- **Status:** accepted (2026-10-21); corrected (2026-10-21).
+- **Context:** Priorities on requirements and generation inputs were being
+  converted into a task priority. That made the release table carry a label with
+  no product meaning and made the same task change priority depending on which
+  inputs happened to be used.
+- **Decision:** P0/P1/P2 describe the order in which requirements and generation
+  inputs are implemented. A task is never labelled P0, P1, or P2. A release is
+  defined by the generator scope that produced it; later releases add tasks from
+  later scopes. Coverage and balance are checked against the values implemented
+  by that release. A value deferred to a later scope is not a gap in the current
+  release. No release column records implementation priority.
+- **Consequences:** The release table has no `task_priority` column. Six or more
+  task reasoning steps and P2 inputs belong to later implementation scope, not
+  to a task label. The first benchmark release implements the P0 scope; later
+  releases add P1 and P2 values.
 
 ## DS-19 — Cross-state `same_as` is P2
 
@@ -300,9 +296,10 @@ prefix is `DS-`.
   `same_as` is P2 only, for explicit persistence tasks. When used, it records
   evidence (kernel identity or a geometric fingerprint) and rejects ambiguous
   matches.
-- **Consequences:** P0 and P1 tasks refer to an entity in a named solid state
-  and do not depend on cross-state identity. A P2 persistence task may use
-  `same_as`. No second graph is needed; the relation lives in the same graph.
+- **Consequences:** P0 and P1 implementation refers to an entity in a named
+  solid state and does not depend on cross-state identity. P2 persistence work
+  may use `same_as`. No second graph is needed; the relation lives in the same
+  graph.
 
 ---
 

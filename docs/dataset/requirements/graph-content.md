@@ -16,10 +16,10 @@ If an answer cannot be produced from the graph, the task is not generated.
 The graph is not a copy of the program text. It is the set of graph elements the
 tasks need, derived from the program and from running it.
 
-Priority follows the PRD. P0 graph inputs are required for the first benchmark,
-P1 inputs strengthen it, and P2 inputs are optional. A task is P0 only when
-every input it needs is P0 and it has at most five task reasoning steps; a P1
-input makes the task P1, and a P2 input makes it P2.
+Priority follows the PRD. P0 graph inputs are required for the first release,
+P1 inputs strengthen it, and P2 inputs are optional. Priority is implementation
+order for the input; it is not a task label. A task that uses a later-priority
+input belongs to a later release scope.
 
 ## 2. Graph entities
 
@@ -153,8 +153,8 @@ need.
 A task about an effect must refer to the solid state before and the solid state
 after the operation. A task about the final shape must refer to the final solid
 state. Entities in different solid states are distinct. The P2 `same_as`
-relation may record persistence for P2 tasks; P0 and P1 tasks must not depend on
-cross-state identity.
+relation may record persistence; earlier releases must not depend on cross-state
+identity.
 
 A failed operation does not produce a measurable solid state. The graph records
 a **failure tombstone** instead: program identity, operation, error,
@@ -187,7 +187,7 @@ depends on the failed output is rejected.
 
 ## 8. Coverage check
 
-For every task reasoning step count and every priority slice, and every task
+For every task reasoning step count and every release implementation scope, and every task
 target category, clue type, and answer meaning supported at that task reasoning
 step count in `task-structure.md`, the graph must answer these checks:
 
@@ -210,14 +210,14 @@ Q1 and Q4 are resolved below.
 
 ## 10. Resolved questions
 
-- **Q1.** *Resolved 2026-10-21.* P0 and P1 use independent topology per solid
+- **Q1.** *Resolved 2026-10-21.* P0 and P1 implementation use independent topology per solid
   state (Option C). A face, edge, or vertex in one solid state is not the same
   entity as one in another solid state. `same_as` is P2 only, for explicit
-  persistence tasks. When a P2 task uses it, record the evidence (kernel
+  persistence tasks. When P2 persistence uses it, record the evidence (kernel
   identity or a geometric fingerprint) and reject ambiguous matches. Example: a
   face keeps its area and normal after a fillet but gets a new kernel ID; a
-  confident fingerprint may support a P2 `same_as` link. P0 and P1 tasks that
-  need cross-state identity are not generated.
+  confident fingerprint may support a P2 `same_as` link. P0 and P1 work that
+  needs cross-state identity is not generated.
 
 - **Q4.** *Resolved 2026-10-21.* Record a failure tombstone for a failed
   operation. Do not create measurements, answers, or tasks from the failed

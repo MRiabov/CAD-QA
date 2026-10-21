@@ -7,39 +7,26 @@ document explains how the constraints combine.
 ## Inputs
 
 - The valid-task set from `03-enumerate-tasks`.
-- The task reasoning step support table for the priority slice.
+- The task reasoning step support table for the release implementation scope.
 - The release targets in the PRD and the release contract.
 - The split rule: a CadQuery program belongs to one split.
 
-## Task priority
+## Implementation scope
 
-A task inherits the highest priority of its inputs. Six or more task reasoning
-steps force P2.
+P0/P1/P2 describe implementation order for requirements and generation inputs.
+They are not task labels. The first release implements the P0 values and
+contains tasks with task reasoning step counts 1 through 5. Later releases add P1 and P2 values and are
+cumulative. A task is never labelled P0, P1, or P2.
 
-```text
-if any input is P2 or step_count >= 6:  priority = P2
-else if any input is P1:                priority = P1
-else:                                   priority = P0
-```
-
-A P0 task uses only P0 inputs and has at most five steps. A P1 task may use P0
-and P1 inputs. A P2 task may use any input.
-
-## Priority slices
-
-```text
-P0 release = tasks with priority P0
-P1 release = tasks with priority P0 or P1
-P2 release = tasks with priority P0, P1, or P2
-```
-
-P1 and P2 are cumulative. A later slice keeps the split assignment of a task it
-inherits from an earlier slice.
+Coverage and balance are checked against the values implemented by the release.
+A value deferred to a later implementation scope is not a gap in the current
+release.
 
 ## Coverage
 
-Coverage is checked at every task reasoning step count and per priority slice.
-For each step count in the slice, every supported value must appear:
+Coverage is checked at every task reasoning step count and per release
+implementation scope. For each step count in the release, every supported value
+must appear:
 
 - target category;
 - clue type;
@@ -47,15 +34,14 @@ For each step count in the slice, every supported value must appear:
 - answer format.
 
 Support is structural: a value is unsupported only when no valid task can
-express it at that step count. A value deferred to a later priority is not a gap
-in the current slice.
+express it at that step count.
 
 ## Release-level targets
 
 | Property | Target |
 |---|---|
-| Tasks | At least 10,000 in P0 |
-| Distinct CAD programs | At least 1,000 in P0 |
+| Tasks | At least 10,000 in the first release |
+| Distinct CAD programs | At least 1,000 in the first release |
 | Warmup | 5% of tasks |
 | Splits | Approximately 70% train, 15% validation, 15% test |
 | One step | 5% target |
@@ -82,8 +68,8 @@ is Q3 in
 [`pipeline/05-select-and-balance-release.md`](pipeline/05-select-and-balance-release.md).
 
 This document does not fix an allocation formula until Q3 is resolved. It fixes
-the coverage rule, the priority rule, the release-level bounds, and the split
-rule.
+the coverage rule, the implementation-scope rule, the release-level bounds, and
+the split rule.
 
 ## Splits
 

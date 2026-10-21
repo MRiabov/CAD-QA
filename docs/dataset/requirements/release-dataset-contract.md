@@ -5,19 +5,17 @@
 dataset, LLM reasoning-output datasets, training artifacts, or evaluation
 responses.
 
-A release dataset is the tasks and answers for one priority slice, validated
-and versioned for release. It is one table with task and answer columns. The
+A release dataset is the tasks and answers produced by one implementation scope,
+validated and versioned for release. It is one table with task and answer columns. The
 LLM model sees the prompt column only; the answer columns are for training,
 scoring, and audit.
 
 ## 1. Scope
 
-A release dataset contains one priority slice:
-
-- P0: the first benchmark release;
-- P1: the P0 tasks plus tasks with P1 inputs and at most five task reasoning
-  steps;
-- P2: all tasks, including tasks with six or more task reasoning steps.
+A release dataset contains the tasks produced by one generator implementation
+scope. The first release implements the P0 scope; later releases add P1 and P2
+values and are cumulative. P0/P1/P2 are implementation order, not row labels: a
+task is never P0, P1, or P2, and the release table has no task-priority column.
 
 The release dataset is not:
 
@@ -50,7 +48,7 @@ it is not a second release format.
 
 ## 3. Row count
 
-For the first P0 release:
+For the first release (P0 implementation scope):
 
 | Property | Target |
 |---|---|
@@ -66,9 +64,9 @@ The release table has one row per task, and every row has exactly one answer set
 `task_id` is unique within a release. One CAD program may produce many tasks, so
 `program_id` repeats.
 
-P1 and P2 are later cumulative releases. Their exact counts are recorded in
-`manifest.json`. Warmup is 5% of the release, with no absolute cap. No CAD model
-and no correct answer is above 1% of tasks.
+Later releases add P1 and P2 values and are cumulative. Their exact counts are
+recorded in `manifest.json`. Warmup is 5% of the release, with no absolute cap.
+No CAD model and no correct answer is above 1% of tasks.
 
 ## 4. Release table columns
 
@@ -83,7 +81,6 @@ and no correct answer is above 1% of tasks.
 | `prompt_sha256` | string | yes | Content hash of `prompt`. |
 | `program_id` | string | yes | Stable program key shared by tasks from the same CadQuery program. |
 | `program_sha256` | string | yes | Hash of the normalized CadQuery program text. |
-| `task_priority` | enum `P0`, `P1`, `P2` | yes | Task priority from its inputs and task reasoning step count. |
 | `task_reasoning_step_count` | integer | yes | Number of task clue steps plus the task answer step, if any. |
 | `target_category` | enum | yes | Task target category. |
 | `clue_types` | list of enum | yes | Ordered task clue types; empty for a task with no task clue. |
@@ -98,7 +95,7 @@ and no correct answer is above 1% of tasks.
 | `answer_sha256` | string | yes | Hash of the canonical answer and scoring fields. |
 | `evidence_json` | string | yes | Canonical JSON evidence: measured or derived, references, and rule. |
 
-The first fourteen columns identify the task and support selection, review, and
+The first thirteen columns identify the task and support selection, review, and
 reporting. The answer columns hold the gold answer, scoring fields, and
 evidence. `prompt` is the only LLM-facing column; every other column stays out
 of the LLM model input.
@@ -124,9 +121,9 @@ answer-derived evidence, hidden entity identifiers, or scoring data.
 Tolerance is explicit for every non-exact answer. This avoids relying on a
 reader to infer the last stated place. For a numeric answer, a typical tolerance
 is `{"kind": "absolute", "value": 0.005}`.
-P2 choice audit: a P2 release adds `choice_audit_json` for
+P2 choice audit: P2 implementation adds `choice_audit_json` for
 multiple-choice tasks. It records the correct label, each distractor's error
-mode, and which task clue or answer step it fails. P0 and P1 do not require this
+mode, and which task clue or answer step it fails. The P0 and P1 scopes do not require this
 column.
 
 Evidence is nested in the answer columns because the first release has 10,000
@@ -168,7 +165,7 @@ Likewise, add an evidence table only if evidence becomes too large for one row.
 `manifest.json` records:
 
 - `release_id`, `schema_version`, `created_at`;
-- `priority_slice`;
+- `implementation_scope`;
 - `generator_version` and upstream dataset version;
 - task count and split counts;
 - task counts by task reasoning step count;

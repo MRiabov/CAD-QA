@@ -47,8 +47,8 @@ the user-visible outcome.
 | **Warmup subset** | Domain | The labeled set of 1-step tasks inside the dataset. It is useful for training, not a separate dataset. |
 | **Curriculum** | Domain | The order in which tasks are presented, from lower to higher task reasoning step counts. |
 | **Dataset release** | Domain | An immutable, validated, versioned set of tasks and correct answers. |
-| **Release dataset** | Domain | The one release table for a priority slice, with prompt and answer columns. Use it when distinguishing the release from external datasets and LLM reasoning-output datasets. |
-| **Priority slice** | Domain | The set of tasks built for one priority level: P0 tasks only, P0 plus P1 tasks, or all tasks. |
+| **Release dataset** | Domain | The one release table for one implementation scope, with prompt and answer columns. Use it when distinguishing the release from external datasets and LLM reasoning-output datasets. |
+| **Implementation priority** | Domain | P0/P1/P2 order for requirements and generation inputs. It is not a task property and never appears as a row label. |
 
 ### Internal and domain pairs
 

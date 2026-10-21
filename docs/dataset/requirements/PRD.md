@@ -63,21 +63,16 @@ priority.
 
 Priority also applies to these generation inputs: task target categories,
 clue types, answer meanings, answer formats, graph entities, relations, and
-measurements. A task is P0 only when every input it uses is P0; a P1 input makes
-it P1, and a P2 input makes it P2. The authoritative tables are in
+measurements. It records the order in which those inputs are implemented. It is
+not a task label: a task is never P0, P1, or P2, and no release column records an
+implementation priority. The authoritative tables are in
 [`task-structure.md`](task-structure.md) and
 [`graph-content.md`](graph-content.md).
 
-Priority has two separate uses. On a requirement, it means importance. On a
-generation input, it means the slice in which the input is built. A P1
-requirement can therefore apply to the P0 slice, while a P1 input belongs to the
-P1 slice.
-
-The P0 slice contains tasks whose inputs are all P0 and whose task reasoning
-step count is 1 through 5. The P1 slice contains the P0 tasks plus tasks that use
-a P1 input, use no P2 input, and have at most five task reasoning steps. The P2
-slice contains all tasks, including tasks with six or more steps. The first
-benchmark dataset release is the P0 slice; P1 and P2 are later releases.
+The first benchmark dataset release implements the P0 requirements and input
+values. Later releases add P1 and P2 values. Coverage and balance are checked
+against the values implemented by that release; a value deferred to a later
+implementation scope is not a gap in the current release.
 
 ---
 
@@ -207,15 +202,15 @@ is a count of the task solution sequence, not a score or a label.
   task clues about geometry, relationships, measurements, or operations.
 - **6 or more steps**: optional future work (P2).
 
-Other P2 inputs can appear at lower step counts; a task is P2 when any input is
-P2, not only when it reaches six steps.
+P2 inputs are deferred to later implementation; a task that uses one is part of a
+later release, not a different task label.
 
 The task reasoning step count comes from the task solution sequence defined in
 [`task-structure.md`](task-structure.md), not from the number of sentences in
 the prompt. A task that looks long but can be answered from a variable name or
 an operation order does not have a high step count.
 
-The P0 benchmark dataset release covers steps 1 through 5. Step 1 forms the
+The first benchmark dataset release covers steps 1 through 5. Step 1 forms the
 labeled warmup subset and is also useful training material. Steps 2 through 5
 carry the main benchmark claim. Every benchmark result must name the task
 reasoning step counts it covers, so a result that includes warmup tasks is not
@@ -238,16 +233,16 @@ mistaken for a result on steps 2 through 5 alone.
 
 ### 7.2 Coverage and balance
 
-Coverage and balance apply to the priority slice being built. The P0 slice
-supports only P0 values; the P1 slice adds P1 values; the P2 slice adds the
-rest. A value deferred to a later slice is not a coverage gap in the current
-slice. "Supported" below means supported by the priority slice being checked.
+Coverage and balance apply to the implementation scope of the release. The first
+release covers P0 values; later releases add P1 and P2 values. A value deferred
+to a later implementation scope is not a coverage gap in the current release.
+"Supported" below means supported by the release's implementation scope.
 
 | ID | Requirement | How the user can tell |
 |---|---|---|
 | **R-7** | The dataset balances answer formats at every task reasoning step count. | Every answer format in section 5 appears at every task reasoning step count where it is supported. No format is more than twice or less than half its share among the formats supported at that task reasoning step count. Over the release, each format is between 5% and 25% of tasks. |
-| **R-8** | The dataset covers all target categories, clue types, and answer meanings. | Every target category, clue type, and answer meaning supported at a task reasoning step count appears at that task reasoning step count. A value that is valid, supported by the slice, and missing is a gap; the task reasoning step support table lists only values that cannot occur. |
-| **R-9** | The dataset covers the full task reasoning step count range. | Steps 1 through 5 all appear in the target mix in section 8, with steps 3 and 4 carrying the headline slices. |
+| **R-8** | The dataset covers all target categories, clue types, and answer meanings. | Every target category, clue type, and answer meaning supported at a task reasoning step count appears at that task reasoning step count. A value that is valid, implemented by the release, and missing is a gap; the task reasoning step support table lists only values that cannot occur. |
+| **R-9** | The dataset covers the full task reasoning step count range. | Steps 1 through 5 all appear in the target mix in section 8, with steps 3 and 4 carrying most benchmark tasks. |
 | **R-10** | The dataset is diverse. | It draws from at least one thousand distinct CAD models, and no single CAD model is above 1% of tasks. |
 | **R-11** (P1) | The dataset has varied answers. | At least one thousand different correct answers appear, and no correct answer is above 1% of tasks. |
 | **R-12** (P1) | The dataset is balanced at every task reasoning step count. | No clue type is above 25% of clues at a task reasoning step count or over the release, and no clue type is more than twice or less than half its share among the clue types supported at a task reasoning step count. Every answer meaning is between 1% and 10% over the release, and no answer meaning is more than twice or less than half its share among the meanings supported at a task reasoning step count. No target category is above 25% of the release. |
@@ -276,8 +271,9 @@ slice. "Supported" below means supported by the priority slice being checked.
 
 ## 8. Size and mix of the benchmark dataset release
 
-The first benchmark dataset release is the P0 slice and must contain at least
+The first benchmark dataset release implements the P0 requirements and must contain at least
 ten thousand tasks and meet the following targets at their stated priorities.
+Priority in this table is implementation order, not a task label.
 
 | Property | Target | Priority |
 |---|---|---|
@@ -332,9 +328,10 @@ counts first, higher counts later.
 
 ## 10. Training, validation, and test
 
-Each priority slice is a separate dataset release and is divided into three
-parts. When a later slice includes a task from an earlier slice, its split
-assignment is preserved.
+Each implementation milestone produces a dataset release. Later releases are
+cumulative: when a later release includes a task from an earlier release, its
+split assignment is preserved. A task is never labelled by the milestone that
+introduced it.
 
 - **Training**: tasks an LLM model may learn from;
 - **Validation**: tasks used to tune training decisions;
@@ -359,7 +356,7 @@ change.
 | Validation dataset | Tasks and correct answers for tuning. | P0 |
 | Test dataset | Held-out tasks and correct answers for the final result. | P0 |
 | Warmup subset | Labeled 1-step tasks for warmup. | P0 |
-| Task reasoning step support table | Which target categories, clue types, answer meanings, and answer formats are supported at each task reasoning step count and priority slice, and why not. | P0 |
+| Task reasoning step support table | Which target categories, clue types, answer meanings, and answer formats are supported at each task reasoning step count and implementation scope, and why not. | P0 |
 | Dataset card | A plain description of what the dataset contains, how it was made, what it is for, and what it is not for. | P0 |
 | Evaluation material | The correct answers and instructions needed to score an LLM model. | P0 |
 | Documentation | How to reproduce the dataset release and how to review it. | P1 |
@@ -371,9 +368,9 @@ change.
 The dataset is done when:
 
 1. a small sample produces every target category, clue type, answer meaning,
-   and answer format supported in the P0 slice at every task reasoning step
+   and answer format supported in the P0 implementation scope at every task reasoning step
    count where that value is structurally supported;
-2. the P0 benchmark dataset release of at least ten thousand tasks meets the
+2. the first benchmark dataset release of at least ten thousand tasks meets the
    coverage and balance targets at every task reasoning step count in section 8,
    or every miss is documented and accepted by the owner;
 3. the task reasoning step support table is published and reviewed;
@@ -381,7 +378,7 @@ The dataset is done when:
 5. training, validation, and test sets do not share a CAD model;
 6. a reviewer can read sampled tasks covering every task reasoning step count,
    target category, clue type, answer meaning, and answer format supported in the
-   released priority slice and understand them without asking what they mean;
+   released dataset and understand them without asking what they mean;
 7. the answers can be checked without an LLM in the loop;
 8. the dataset release can be regenerated and the result matches what is
    documented;
