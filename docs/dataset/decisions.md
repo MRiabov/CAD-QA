@@ -153,7 +153,7 @@ prefix is `DS-`.
 - **Consequences:** Implementation should not start from the current
   conceptual docs alone. `requirements/task-structure.md` and this file define the target;
   the enumeration contract defines the implementable space. The open questions
-  that affect it are in `pipeline/03-enumerate-tasks.md` Q2/Q5 and
+  that affect it are in `pipeline/03-enumerate-tasks.md` Q2 and
   `pipeline/05-select-and-balance-release.md` Q1/Q3.
 
 ---
