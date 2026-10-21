@@ -118,7 +118,7 @@ separate dimensions:
 - the **task reasoning step count** the task requires.
 
 The previous flat list mixed these dimensions. For example, "direct lookup"
-described task reasoning step count, "give a coordinate" described an answer format, and "measure a
+described a low task reasoning step count, "give a coordinate" described an answer format, and "measure a
 distance" described a measurement. Those are not peers.
 
 The full structure, including task target categories, task clue types, answer
@@ -129,12 +129,12 @@ A task is described by its task target, task clues, answer format, answer
 meaning, and task reasoning step count. The dataset does not use task families,
 task types, or task patterns. Target category is a coverage dimension.
 Clue type, answer meaning, and answer format are coverage and balance
-dimensions. task reasoning step count has a coverage and target-mix requirement.
+dimensions. Task reasoning step count has a coverage and target-mix requirement.
 
 Coverage and balance are checked at each task reasoning step count, not only over the
 whole release. A value that appears only at one task reasoning step count does not
-cover the other depths, and a global target may not be met by concentrating a
-value at one task reasoning step count. Target category has no percentage target at
+cover the other task reasoning step counts, and a global target may not be met
+by concentrating a value at one task reasoning step count. Target category has no percentage target at
 each task reasoning step count; it has coverage at each task reasoning step count and a release-level
 diversity cap.
 
@@ -259,7 +259,7 @@ tasks and meet the following targets.
 | Answer meaning coverage | Every supported meaning at every task reasoning step count | P0 |
 | Answer meaning balance | Each 1-10% over the release; mix at each task reasoning step count within the tolerance in `task-structure.md` | P1 |
 | Task reasoning step count | Target mix: 1 step 5%, 2 15%, 3 40%, 4 25%, 5 15% | P0 |
-| Geometry-based tasks | At least 95% | P0 |
+| Tasks that require the built shape | At least 95% | P0 |
 | Tasks needing at least three steps | At least 80% | P0 |
 | Multiple-choice choices | At least five; aim for seven | P0 |
 | Different correct answers | At least 1,000 | P1 |

@@ -41,7 +41,7 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
   the answer format, and the measurement. Enumerating every combination would be
   limiting and would force an engineer to write logic for each combination.
 - **Decision:** A task is composed from separate dimensions: the task target, the
-  ordered task clues, the answer operation, the answer format, and the answer
+  ordered task clues, the task answer step, the answer format, and the answer
   meaning. The generator composes these dimensions from the CAD graph. There are
   no task families, task types, or task patterns.
 - **Consequences:** Coverage and balance are reported by the dimensions, not by
@@ -269,8 +269,8 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
   - **Option C — hybrid.** Chains count per relation, but a relation plus a
     property in one sentence counts as one clue.
   - **Recommendation:** B. Example: “the face adjacent to X whose area is
-    larger than X” is two steps; `A -> B -> C` is two steps. Split the public
-    clues accordingly. This makes the step count auditable.
+    larger than X” is two steps; `A -> B -> C` is two steps. Split the prompt
+    task clues accordingly. This makes the step count auditable.
 
 - **Q3.** Is the conditional release share computed from the valid-task universe,
   or allocated from the global targets before selection?
@@ -305,7 +305,7 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
 
 - **Q5.** When is a task a duplicate of another task?
   - **Option A — canonical tuple.**
-    `(program, target entity, clue sequence, answer operation, answer format)`.
+    `(program, target entity, clue sequence, task answer step, answer format)`.
   - **Option B — rendered prompt text.** Two tasks with the same prompt are
     duplicates.
   - **Option C — answer value.** Two tasks with the same answer are duplicates.

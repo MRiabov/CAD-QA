@@ -203,4 +203,5 @@ Before a prompt is accepted:
 - the prompt does not leak the answer;
 - the prompt does not use internal terms;
 - the prompt is readable by a careful human without the answers;
-- a real dataset task, not an invented example, is used for the review sample.
+- a task drawn from the dataset release, not the illustrative example above, is
+  used for the review sample.

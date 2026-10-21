@@ -203,10 +203,11 @@ Task clue 2: the face is adjacent to the face created by a named operation.
 Task clue 3: among the faces that satisfy task clues 1 and 2, the face with the
             largest area.
 Answer: the area of the selected face, as a number.
-Depth: 4 (three task clue steps and one task answer step).
+Task reasoning step count: 4 (three task clue steps and one task answer step).
 Uniqueness: exactly one face satisfies task clues 1 and 2, and the largest area is
             achieved by exactly one of them. Otherwise the task is rejected.
-Geometry: all four steps are geometry-based.
+Geometry requirement: every task clue depends on the built shape, not only on
+                    the program text.
 ```
 
 This is a task description, not an example. The named CadQuery workplane, the
@@ -223,8 +224,6 @@ dataset must contain:
 - every task clue type supported at that task reasoning step count;
 - every answer meaning supported at that task reasoning step count;
 - every answer format supported at that task reasoning step count;
-- both syntax-based and geometry-based steps where supported, with geometry
-  required for benchmark tasks.
 
 A **task reasoning step support table** records which values can occur at each
 step count and why an unsupported value cannot occur there. It is part of the release documentation
