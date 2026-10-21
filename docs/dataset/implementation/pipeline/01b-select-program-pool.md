@@ -26,10 +26,75 @@ release from the external dataset metadata.
 
 ## Open questions
 
-- Which tier or tier mix does the first release use: P, C, or both?
-- What is the target program count for the first release?
-- Which metadata dimensions drive stratification: collection, generator,
-  path family, geometry tags, or a combination?
-- Should the selection reserve a program pool for later releases?
-- Does the release need the paper's code-rewrite diversity, which the cache does
-  not contain?
+### Which tier or tier mix?
+
+- **C only.** Canonical, centered, scaled, and binarized; easier to parse and
+  graph; one prompt style; about 929k programs and 7k generator families.
+- **P only.** Arbitrary code style and original pose/scale; more realistic
+  prompts; more normalization work and more prompt variance; about 1.07M
+  programs and 7.5k generator families.
+- **P and C mix.** Adds style diversity, but doubles the prompt distribution and
+  the split-group bookkeeping. It is not useful for the first release unless
+  prompt-style diversity is an explicit goal.
+
+**Recommendation:** C only for the first release. It gives enough programs and
+families, and keeps normalization, graph build, and prompt review simpler. Treat
+P as a later realism slice.
+
+### What is the target program count?
+
+The last regeneration used 1,300 programs and produced 10,000 tasks. That is
+about 7.7 tasks per program, so 1,000 programs is too close to the release floor.
+
+- **1,300:** proven once, but little headroom for execution or task-generation
+  failures.
+- **1,500:** about 11.5k expected tasks, leaving room for rejects and split
+  balance.
+- **2,000+:** more diversity, but more download, normalization, execution, and
+  graph work for no clear first-release benefit.
+- **Full cache:** excessive.
+
+**Recommendation:** select 1,500 programs, with 1,000 usable programs as the
+floor. Keep a reserve for failures.
+
+### Which metadata dimensions drive stratification?
+
+- **Collection** is mandatory: ABC, ShapeNet, and CADEvolve core.
+- **Feature tags** are the cheap coverage signal: `void_cut`,
+  `kernel_face_selector`, `kernel_edge_selector`, `profile_polyline`,
+  `path_curve`, and `kernel_vertex_selector`.
+- **Split group** is mandatory for decontamination, but not a quota by itself.
+- **Path family** is too fine for ABC/ShapeNet; use the split group instead.
+- **Generator ID** in the cache is collection-level, not the real generator.
+
+A full collection × tag cross-product is too sparse. Use a minimum per
+collection and a minimum for each required tag, then fill the remainder
+proportionally. Cap programs per split group so one generator or mesh family
+does not dominate.
+
+**Recommendation:** collection + required feature tags, with a per-group cap.
+
+### Should the selection reserve a program pool for later releases?
+
+- **No reserve:** smallest pool, but execution or task-generation failures can
+  force a new selection.
+- **Reserve 20–30%:** selection is metadata-only, so reserving IDs is cheap.
+  Fetch, normalize, and execute reserved programs only if needed.
+- **Reserve a full later slice:** more planning now, but later releases may want
+  a different tier or coverage.
+
+**Recommendation:** reserve 20–30% of IDs now; do not fetch or normalize them
+until needed.
+
+### Does the release need the paper's rewrite diversity?
+
+The cache does not contain the 744,780 code rewrites. They add semantically
+equivalent code styles, not new geometry.
+
+- **Skip for the first release:** C is already canonical and template-like, but
+  the task prompt is generated from the graph, not from code style alone.
+- **Add later:** use the original tar or rewrite artifacts if prompt-style
+  diversity becomes a measured problem.
+
+**Recommendation:** defer rewrite diversity to P1. It is not a first-release
+blocker.
