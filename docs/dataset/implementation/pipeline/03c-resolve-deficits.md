@@ -49,7 +49,8 @@ only loop that pays fetch, normalization, and execution cost.
 
 | Class | Response |
 |---|---|
-| More samples may help | Let `03b` try more constructors, bindings, or parameter values on existing graphs. |
+| Sample batch underfilled | `ProgramReassignmentRequest` to `03a`; adjust the sample budget or family assignment. |
+| High rejection rate | Fix the constructor or validity rule in `03b`; expanding data will not help. |
 | Current pool has unused capacity | `ProgramReassignmentRequest` to `03a`; reassign families or quotas. |
 | Current family budget or cap blocks the cell | `ProgramReassignmentRequest`; change the plan, not the data. |
 | Reserve or new capability needed | `ProgramRequest` to `01b`; expand the pool. |
@@ -97,10 +98,10 @@ in an assigned family inherits its split. A genuinely new family is assigned in
 
 `03c` tries the cheapest response first:
 
-1. More sampling in `03b`.
-2. `ProgramReassignmentRequest` to `03a`.
-3. `ProgramRequest` to `01b`.
-4. Accept and record the miss.
+1. `ProgramReassignmentRequest` to `03a`; adjust family assignment or sample
+   budget using current graphs.
+2. `ProgramRequest` to `01b`; expand the program pool.
+3. Accept and record the miss.
 
 The fast loop comes first because reassigning existing families is cheaper than
 fetching and executing more programs. The slow loop is used only when the current

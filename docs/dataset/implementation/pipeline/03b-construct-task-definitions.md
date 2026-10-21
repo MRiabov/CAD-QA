@@ -192,6 +192,21 @@ Definitions with identical canonical identity are duplicates. `03b` keeps one
 and records the duplicate. Invalid definitions go to the failure record and do
 not consume quota.
 
+## Sampling budget
+
+Each quota cell receives a sample budget of
+`ceil(target * oversample_factor)`. `03b` constructs the full batch, validates
+it, and accepts up to the target. It does not top up a cell incrementally within
+the same plan revision.
+
+The batch is parallelizable. Extra accepted definitions become reserve; they are
+not release rows. Track accepted and rejected counts per cell, family, and
+rejection reason. A high rejection rate is a constructor or validity signal; it
+is not automatically a reason to expand the program pool.
+
+An underfilled cell is a deficit for `03c` after the batch, not a reason to loop
+inside `03b`.
+
 ## Relationship to task reasoning step support
 
 The **task reasoning step support tables** are a separate derived QA baseline.

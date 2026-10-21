@@ -25,7 +25,8 @@ are generated.
 | `clue_quotas` | Clue type counts over clue occurrences. |
 | `family_profiles` | Graph capabilities and capacity per CADEvolve program family. |
 | `family_assignment` | Family to split, task budget, and assigned quota cells. |
-| `attempt_budgets` | Generation attempts allowed per cell and family. |
+| `sample_budgets` | One construction batch per cell and family. |
+| `oversample_factor` | Sample multiplier over the accepted quota; default 1.5, or 2.0 for high-rejection cells. |
 | `expansion_tier` | Current data tier before a deficit triggers `03c`. |
 
 The plan is a target. It does not prove that the corpus can supply every cell.
@@ -63,10 +64,33 @@ Clue quotas are over clue occurrences, because one task has several clues.
 5. Allocate clue quotas over the planned clue occurrences.
 6. Reserve capacity for warmup tasks, CAD model caps, and correct-answer caps.
 7. Record any cell whose minimum cannot be allocated.
+8. Set each sample budget to `ceil(target * oversample_factor)`.
+
+Oversampling applies to one task-definition construction batch, not to the
+accepted release count. It also does not imply fetching or executing more
+programs.
 
 The conditional release share is allocated from the global targets and then
 filled from available data. It is not recomputed after seeing the whole
 valid-task set.
+
+## Oversampling
+
+Rejected definitions are expected. A cell should not receive exactly its target
+number of construction attempts, because every rejection would become a deficit.
+
+- Use `1.5` as the default oversample factor.
+- Use `2.0` for cells with a known high rejection rate.
+- Construct the whole batch once. Accepted definitions are capped at the target.
+- Do not top up a cell incrementally inside the same plan revision. That is more
+  coordination work than constructing the batch and accepting the result.
+- Track accepted and rejected counts per cell and family.
+- Treat a high rejection rate as a constructor or validity issue before treating
+  it as a data-supply issue.
+
+The batch is parallelizable across programs, families, and cells. The factor is a
+starting policy, not a guarantee. A cell still becomes a deficit if its batch is
+underfilled.
 
 ## Family profiles
 
@@ -117,7 +141,7 @@ It can:
 - assign an unassigned family to a quota cell;
 - move task budget from a saturated family to one with spare capacity;
 - relax an internal family budget;
-- change a quota cell within its release bounds.
+- change a quota cell or sample budget within its release bounds.
 
 It does not fetch, normalize, or execute. It increments the plan version and
 returns control to `03b`.
@@ -126,7 +150,7 @@ returns control to `03b`.
 
 A cell enters the deficit ledger when:
 
-- its minimum or target is not met after the attempt budget;
+- its minimum or target is not met after the sample budget;
 - the current graphs lack the required capability;
 - family budgets or release caps block it;
 - the requested value is structurally infeasible.
