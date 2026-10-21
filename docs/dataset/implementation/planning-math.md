@@ -59,7 +59,7 @@ over clues. Target category is coverage-only at each step count; its 25% cap is
 release-level. The step count mix is a target, not a hard quota. A miss is
 documented and accepted by the owner.
 
-Sample budgets oversample the accepted quota in one batch:
+Sample budgets oversample the accepted quota in one batch per plan revision:
 `ceil(target * 1.5)` by default, or `2.0` for cells with a high rejection rate.
 Rejections consume sample attempts, not release rows. An underfilled batch is a
 deficit; there is no per-cell top-up loop inside one plan revision.

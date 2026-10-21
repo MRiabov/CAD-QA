@@ -81,7 +81,8 @@ number of construction attempts, because every rejection would become a deficit.
 
 - Use `1.5` as the default oversample factor.
 - Use `2.0` for cells with a known high rejection rate.
-- Construct the whole batch once. Accepted definitions are capped at the target.
+- Construct one whole batch per plan revision. Accepted definitions are capped at
+  the target.
 - Do not top up a cell incrementally inside the same plan revision. That is more
   coordination work than constructing the batch and accepting the result.
 - Track accepted and rejected counts per cell and family.
@@ -89,8 +90,9 @@ number of construction attempts, because every rejection would become a deficit.
   it as a data-supply issue.
 
 The batch is parallelizable across programs, families, and cells. The factor is a
-starting policy, not a guarantee. A cell still becomes a deficit if its batch is
-underfilled.
+starting policy, not a guarantee. Sampling remains iterative at the plan level:
+a batch is one iteration, and `03c` may trigger another revision. A cell still
+becomes a deficit if its batch is underfilled.
 
 ## Family profiles
 

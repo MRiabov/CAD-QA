@@ -199,8 +199,8 @@ Each quota cell receives a sample budget of
 it, and accepts up to the target. It does not top up a cell incrementally within
 the same plan revision.
 
-The batch is parallelizable. Extra accepted definitions become reserve; they are
-not release rows. Track accepted and rejected counts per cell, family, and
+The batch is one iteration and is parallelizable. Extra accepted definitions
+become reserve; they are not release rows. Track accepted and rejected counts per cell, family, and
 rejection reason. A high rejection rate is a constructor or validity signal; it
 is not automatically a reason to expand the program pool.
 
