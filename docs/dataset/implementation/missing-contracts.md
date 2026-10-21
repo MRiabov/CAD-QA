@@ -9,7 +9,6 @@ doc, delete the row. Open questions remain in
 
 | ID | Owner | Missing contract | Why it blocks |
 |---|---|---|---|
-| MC-01 | [`01d`](pipeline/01d-normalize-programs.md) | Exact normalization rules and canonical hashing: encoding, line endings, trailing newline, token normalization, and hash input. | Program identity, duplicate detection, transfer overlap, and split grouping are undefined. |
 | MC-02 | [`01b`](pipeline/01b-select-program-pool.md) | Derive `tier` from `source_subtree`; use `path_family` exclusively; define the duplicate-survivor tie-break. | The cache has no `tier` column, member-path suffixes do not match the stated rules, and duplicate hashes are common. |
 | MC-03 | [`01b`](pipeline/01b-select-program-pool.md) | Precedence when collection minima, feature-tag minima, family cap, and the 1,500-program target conflict. | The selection policy can be over-constrained with no stated resolution. |
 | MC-04 | [`02a`](pipeline/02a-extract-cadquery-ast.md) | Static expression tree for nested constructors such as `cq.Plane(cq.Vector(...))`; method allowlist; CadQuery selector timing. | “Typed literal values” cannot represent real C-tier programs, and graph coverage depends on the allowlist. |
