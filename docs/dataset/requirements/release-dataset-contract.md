@@ -185,4 +185,4 @@ the LLM model.
 ## 8. Generation pipeline
 
 Dataset generation starts at
-[`../pipeline/00-end-to-end.md`](../pipeline/00-end-to-end.md).
+[`../implementation/pipeline/00-end-to-end.md`](../implementation/pipeline/00-end-to-end.md).

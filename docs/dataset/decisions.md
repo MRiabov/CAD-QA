@@ -154,7 +154,7 @@ prefix is `DS-`.
   conceptual docs alone. `requirements/task-structure.md` and this file define the target;
   the enumeration contract defines the implementable space. The open questions
   that affect it are in
-  `pipeline/05-select-and-balance-release.md` Q1/Q3.
+  `implementation/pipeline/05-select-and-balance-release.md` Q1/Q3.
 
 ---
 

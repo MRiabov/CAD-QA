@@ -5,7 +5,7 @@
 **Input/output contract:** [`io-contracts.md`](io-contracts.md).
 
 Consumer contract:
-[`../requirements/release-dataset-contract.md`](../requirements/release-dataset-contract.md).
+[`../../requirements/release-dataset-contract.md`](../../requirements/release-dataset-contract.md).
 
 ## Scope
 

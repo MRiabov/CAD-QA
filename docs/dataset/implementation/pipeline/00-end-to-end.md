@@ -3,8 +3,8 @@
 **Status:** draft, 2026-10-21. This document is the narrative overview of the
 dataset pipeline. The authoritative pipeline stage I/O is in
 [`io-contracts.md`](io-contracts.md). Requirements are in
-[`../requirements/`](../requirements/), and the consumer contract is in
-[`../requirements/release-dataset-contract.md`](../requirements/release-dataset-contract.md).
+[`../../requirements/`](../../requirements/), and the consumer contract is in
+[`../../requirements/release-dataset-contract.md`](../../requirements/release-dataset-contract.md).
 
 ## Why a pipeline
 
@@ -47,9 +47,9 @@ CADEvolve export
 
 ## What is not here
 
-- Product requirements: [`../requirements/PRD.md`](../requirements/PRD.md).
+- Product requirements: [`../../requirements/PRD.md`](../../requirements/PRD.md).
 - Consumer columns and row counts:
-  [`../requirements/release-dataset-contract.md`](../requirements/release-dataset-contract.md).
-- Feature-wide decisions: [`../decisions.md`](../decisions.md).
+  [`../../requirements/release-dataset-contract.md`](../../requirements/release-dataset-contract.md).
+- Feature-wide decisions: [`../../decisions.md`](../../decisions.md).
 - The archived generator:
   `docs/_archive/dataset-pre-rebuild-2026-10-21/`.

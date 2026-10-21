@@ -7,7 +7,7 @@ dataset documentation is archived under
 This directory defines what the CAD-QA dataset is for, what a user gets from
 training and evaluating on it, and the concepts needed to describe a task.
 The product requirements and consumer contract are in `requirements/`. The
-generation pipeline is in `pipeline/`.
+implementation docs, including the generation pipeline, are in `implementation/`.
 
 ## Why the product comes first
 
@@ -25,7 +25,7 @@ The order is:
 4. Build the smallest complete sample.
 5. Produce the first dataset release.
 
-Steps 1 and 2 are in `requirements/`. Step 3 starts in `pipeline/`.
+Steps 1 and 2 are in `requirements/`. Step 3 starts in `implementation/pipeline/`.
 
 ## Documents
 
@@ -40,18 +40,27 @@ Steps 1 and 2 are in `requirements/`. Step 3 starts in `pipeline/`.
 | [`requirements/terminology.md`](requirements/terminology.md) | Proposed terms, replacements for old terms, and naming decisions that still need owner approval. |
 | [`requirements/release-dataset-contract.md`](requirements/release-dataset-contract.md) | Consumer contract: release artifacts, row counts, release table columns, and why one table is enough. |
 
-### Pipeline
+### Implementation
+
+Implementation docs state how the generator satisfies the requirements. They are
+not product requirements.
 
 | Document | What it defines |
 |---|---|
-| [`pipeline/00-end-to-end.md`](pipeline/00-end-to-end.md) | Why the dataset pipeline exists, pipeline stage order, and data flow. |
-| [`pipeline/io-contracts.md`](pipeline/io-contracts.md) | Authoritative typed I/O between pipeline stages. |
-| [`pipeline/01-external-dataset-etl.md`](pipeline/01-external-dataset-etl.md) | CADEvolve export → normalized programs and manifest. |
-| [`pipeline/02-execute-cadquery-and-build-graph.md`](pipeline/02-execute-cadquery-and-build-graph.md) | Static extraction and CadQuery execution → CAD graph. |
-| [`pipeline/03-enumerate-tasks.md`](pipeline/03-enumerate-tasks.md) | Task candidates, step counts, identity, and gold answers. |
-| [`pipeline/04-assemble-prompt-and-choices.md`](pipeline/04-assemble-prompt-and-choices.md) | Prompt rendering and multiple-choice choices. |
-| [`pipeline/05-select-and-balance-release.md`](pipeline/05-select-and-balance-release.md) | Release selection, balance, and splits. |
-| [`pipeline/06-validate-and-export-release.md`](pipeline/06-validate-and-export-release.md) | Validation, export, manifest, and dataset card. |
+| [`implementation/README.md`](implementation/README.md) | Scope of implementation docs and where to start. |
+
+#### Pipeline
+
+| Document | What it defines |
+|---|---|
+| [`implementation/pipeline/00-end-to-end.md`](implementation/pipeline/00-end-to-end.md) | Why the dataset pipeline exists, pipeline stage order, and data flow. |
+| [`implementation/pipeline/io-contracts.md`](implementation/pipeline/io-contracts.md) | Authoritative typed I/O between pipeline stages. |
+| [`implementation/pipeline/01-external-dataset-etl.md`](implementation/pipeline/01-external-dataset-etl.md) | CADEvolve export → normalized programs and manifest. |
+| [`implementation/pipeline/02-execute-cadquery-and-build-graph.md`](implementation/pipeline/02-execute-cadquery-and-build-graph.md) | Static extraction and CadQuery execution → CAD graph. |
+| [`implementation/pipeline/03-enumerate-tasks.md`](implementation/pipeline/03-enumerate-tasks.md) | Task candidates, step counts, identity, and gold answers. |
+| [`implementation/pipeline/04-assemble-prompt-and-choices.md`](implementation/pipeline/04-assemble-prompt-and-choices.md) | Prompt rendering and multiple-choice choices. |
+| [`implementation/pipeline/05-select-and-balance-release.md`](implementation/pipeline/05-select-and-balance-release.md) | Release selection, balance, and splits. |
+| [`implementation/pipeline/06-validate-and-export-release.md`](implementation/pipeline/06-validate-and-export-release.md) | Validation, export, manifest, and dataset card. |
 
 ### Feature-wide
 
