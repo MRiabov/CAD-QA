@@ -10,7 +10,8 @@ A prompt has up to five parts, in this order:
 1. **Program text**: the complete CadQuery program, unchanged except for
    normalization.
 2. **Question**: the interrogative sentence that asks what to answer.
-3. **Task clues**: an ordered list of conditions the answer must satisfy.
+3. **Task clues**: a numbered list of conditions the answer must satisfy, in
+   reasoning order.
 4. **Choices**: a short list of multiple-choice options, only when the answer
    format is multiple choice.
 5. **Answer instruction**: the required answer format and an exact example of
@@ -27,14 +28,18 @@ The program text is shown as normal CadQuery code. It is not shortened,
 rewritten, or explained by the prompt. The LLM model reads the program to
 understand the construction.
 
+The programs come from the CADEvolve dataset. The program text is the CADEvolve
+code after normalization, exactly as supplied in the CADEvolve record. It is not
+reformatted into the example style below.
+
 The program text must be the same program that produced the answer. It must
 not be replaced by a simplified description.
 
 ## 3. Question
 
-The question is the interrogative sentence in the prompt. It names the task
-target category and asks what to answer. It does not contain a condition and
-does not narrow the candidates.
+The question is the interrogative sentence in the prompt. It always names the
+task target category and asks what to answer. It does not contain a condition
+and does not narrow the candidates.
 
 Examples of a question:
 
@@ -55,7 +60,8 @@ corresponds to one task clue step.
 1. One task clue states one condition. If a sentence contains two independent
    conditions, split it into two task clues.
 2. Task clues are ordered from broad to narrow. The order is the intended
-   reasoning order.
+   reasoning order. They are presented as a numbered list; the number is
+   presentation, not a task reasoning step count.
 3. Each task clue must be checkable against the program and the shape it
    builds.
 4. Each task clue must be understandable without internal terms.
@@ -137,8 +143,8 @@ It never gives the answer, and it never explains how to find the task target.
 
 ## 8. Worked example
 
-This example uses a real CadQuery program and a real task. It is not a
-placeholder.
+This example uses a short CadQuery program and a realistic task shape. It is
+illustrative; real program text comes from the CADEvolve dataset.
 
 Program:
 
@@ -198,56 +204,3 @@ Before a prompt is accepted:
 - the prompt does not use internal terms;
 - the prompt is readable by a careful human without the answers;
 - a real dataset task, not an invented example, is used for the review sample.
-
-## 10. Open questions
-
-- **Q1.** Should the question always name the task target category, or may it
-  be part of the first task clue?
-  - **Option A — the question names the category.**
-
-    ```text
-    What is the volume of the final solid?
-
-    1. The final solid is the result of the last operation.
-    ```
-
-  - **Option B — the first clue names the category.**
-
-    ```text
-    What is the volume?
-
-    1. The task target is the final solid.
-    2. The final solid is the result of the last operation.
-    ```
-
-  - **Option C — the question names the category only when it is not obvious.**
-
-    ```text
-    What is the volume?
-
-    1. The final solid is the result of the last operation.
-    ```
-
-  - **Recommendation:** A. The question then has one job: name the target
-    category and the answer meaning. Every clue performs narrowing. B makes the
-    first clue do two jobs; C makes the prompt shape inconsistent.
-
-- **Q2.** Should task clues be numbered, or presented as a paragraph?
-  - **Option A — numbered list.**
-
-    ```text
-    1. The operation cuts a cylindrical hole.
-    2. The operation is the last operation in the program.
-    ```
-
-  - **Option B — paragraph.**
-
-    ```text
-    The operation cuts a cylindrical hole and is the last operation in the
-    program.
-    ```
-
-  - **Option C — bulleted list without numbers.**
-  - **Recommendation:** A. The order is the intended reasoning order, each clue
-    maps to one step, and review is easier. Option B also combines two
-    conditions in one sentence, which rule 1 forbids.

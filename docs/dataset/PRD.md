@@ -78,7 +78,7 @@ priority.
 
 The dataset contains:
 
-- a curated collection of CadQuery programs;
+- a curated collection of CadQuery programs from the CADEvolve dataset;
 - tasks about those programs;
 - one correct answer for each task;
 - enough recorded evidence to show why the answer is correct;

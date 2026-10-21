@@ -480,7 +480,6 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | imitate_general_reasoning_style | preserve_general_math_and_code_reasoning | earlier name; a preservation role, not style imitation |
 | release tier (dataset, train_and_eval, tools) | Dataset release tier | garbled; which release? |
 | snapshot | Shape snapshot | opaque |
-| CADEvolve | (name the corpus in prose) | proper noun, not a term |
 | ontology graph (dataset) | CAD ontology graph | unqualified |
 | ontology (bare) | CAD ontology | generic/overloaded |
 | selector (bare) | CadQuery selector | CadQuery-specific |

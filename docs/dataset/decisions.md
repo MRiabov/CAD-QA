@@ -230,6 +230,19 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
 
 ---
 
+## DS-16 — Question names the category; task clues are numbered
+
+- **Status:** accepted (2026-10-21).
+- **Context:** Prompt-content Q1 and Q2 were open. The question and the clue
+  list need a fixed shape before prompt rendering can be specified.
+- **Decision:** The question always names the task target category and the
+  answer meaning. Task clues are a numbered list in reasoning order. The number
+  is presentation, not a task reasoning step count.
+- **Consequences:** The prompt renderer has one layout. The question does not
+  narrow candidates; every task clue still maps to one task clue step.
+
+---
+
 ## Open questions
 
 - **Q1.** Is the release a selected subset of the valid-task universe, or must
