@@ -23,6 +23,6 @@ used by graph build, overlap checks, and release grouping.
 
 ## Why it exists
 
-The program pool carries upstream normalization, but it is not our contract.
+The C tier carries upstream normalization; P does not. Neither is our contract.
 The step may pass most records through unchanged, but it still stamps the version
 and hash that define our program identity.

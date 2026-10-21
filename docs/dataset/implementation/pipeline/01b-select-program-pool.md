@@ -14,6 +14,8 @@ release from the external dataset metadata.
 ## Behavior
 
 - Apply the selection policy to the program metadata.
+- Select within the chosen CADEvolve tier: P, C, or an explicit mix. Do not
+  deduplicate P against C; they are separate populations.
 - Select at most the target program count for the release.
 - Use only metadata columns; do not download program text.
 - Record the policy, seed, collection counts, and excluded counts.
@@ -21,6 +23,7 @@ release from the external dataset metadata.
 
 ## Open questions
 
+- Which tier or tier mix does the first release use: P, C, or both?
 - What is the target program count for the first release?
 - Which metadata dimensions drive stratification: collection, generator,
   path family, geometry tags, or a combination?

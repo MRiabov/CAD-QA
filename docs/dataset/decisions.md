@@ -390,3 +390,18 @@ prefix is `DS-`.
 - **Consequences:** No archive extraction in the normal path. The cache schema
   is part of the external input contract. A cache change is a new external
   dataset version, not an in-place update. Program identity remains ours.
+
+## DS-25 — CADEvolve P and C are separate program populations
+
+- **Status:** accepted (2026-10-21).
+- **Context:** CADEvolve-3L is a three-tier corpus. G contains parametric
+  generators, P contains executable programs with arbitrary code style, and C
+  contains canonicalized, centered, scaled, and binarized programs used for
+  training. P and C have no program-hash overlap.
+- **Decision:** The dataset treats P and C as separate program populations.
+  `01b` selects one tier or an explicit mix; it never deduplicates P against C or
+  assumes one is a duplicate. G is not ingested. The program pool records the
+  tier mix.
+- **Consequences:** Prompt style and geometry scale depend on the tier. C is
+  canonical and normalized; P preserves arbitrary style and original pose/scale.
+  Counts from P and C are not additive as if they were the same programs.
