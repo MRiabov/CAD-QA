@@ -158,7 +158,9 @@ a label attached to it. A question that looks long but can be answered from a
 variable name or an operation order is not a hard question.
 
 The benchmark dataset release must cover steps 2 through 5. The warmup set
-covers steps 0 and 1.
+covers steps 0 and 1. Every benchmark result must name the reasoning steps it
+covers, so a result that includes warmup questions is not mistaken for a result
+on steps 2 through 5 alone.
 
 ---
 
@@ -192,7 +194,7 @@ covers steps 0 and 1.
 |---|---|---|
 | **R-13** | Training, validation, and test sets do not overlap. | The same CAD model never appears in both training and evaluation. |
 | **R-14** | The test set is never trained on. | The dataset card names the test set and the training recipe excludes it. |
-| **R-15** | The warmup set is separate from the benchmark. | Warmup questions are not counted in benchmark results and are not described as benchmark data. |
+| **R-15** | The warmup set is separate from the benchmark. | Every benchmark result names the number of reasoning steps it covers, including any warmup questions that were used. |
 | **R-16** (P1) | Transfer results are not contaminated. | No program from the external benchmark used for transfer appears in training or evaluation. |
 
 ### 7.4 Usability and trust
@@ -242,7 +244,8 @@ first training cycle.
 - all answer shapes;
 - the same question and answer-key format as the benchmark;
 - the same correctness and fairness rules;
-- never included in benchmark results or benchmark claims;
+- may be included in a benchmark run, but every benchmark result must name
+  the number of reasoning steps it covers;
 - built from CAD models that do not also appear in the benchmark dataset release.
 
 ---
