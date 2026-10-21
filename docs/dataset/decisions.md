@@ -177,11 +177,11 @@ prefix is `DS-`.
 - **Status:** accepted (2026-10-21).
 - **Context:** "Answer key" is an assessment-artifact term. It entered the PRD
   as a file-layout concept before the dataset data model existed, which implied a
-  separate container that the product does not need.
-- **Decision:** The dataset has tasks and their correct answers. The correct
-  answer never appears in the task file. There is no separate answer-key object
-  at the PRD level. The technical specification may
-  choose how answer fields are stored.
+  separate container that the product does not need. The release still contains
+  answers for training and scoring; the prompt does not.
+- **Decision:** The release dataset has tasks and their correct answers. The
+  prompt contains no answer. There is no separate answer-key object. The
+  technical specification chooses how answer columns are represented.
 - **Consequences:** Product and terminology text say "correct answer" or "gold
   answer," not "answer key." A human-readable answer listing, if needed, is a
   release artifact chosen by the technical specification, not a dataset concept.
@@ -194,9 +194,9 @@ prefix is `DS-`.
 - **Context:** "Public" and "private" are access scopes. Using them for dataset
   columns conflates visibility with permission and makes the data model sound
   like an access-control model.
-- **Decision:** Use **prompt** or **task file** for what the LLM model sees.
-  Use **answer** or **answer data** for the gold answer and scoring material.
-  Access control, if any, is a separate concern.
+- **Decision:** Use **prompt** for what the LLM model sees. Use **answer
+  columns** or **answer data** for the gold answer and scoring material. Access
+  control, if any, is a separate concern.
 - **Consequences:** Dataset docs do not use "public" or "private" for dataset
   parts. The glossary marks the old column-set names as legacy.
 
@@ -305,20 +305,20 @@ prefix is `DS-`.
 
 ---
 
-## DS-20 — A release dataset has a task table and an answer table
+## DS-20 — A release dataset is one table
 
 - **Status:** accepted (2026-10-21).
-- **Context:** A single table would put the prompt and the gold answer in the
-  same rows. R-6 and DS-12 require the answer to stay out of the task file.
-  Parquet stores one table per file, and column-level hiding is not a release
-  boundary.
-- **Decision:** A release dataset has two tables joined 1:1 by `task_id`: a
-  **task file** with the prompt and selection metadata, and **answer data** with
-  the gold answer, scoring fields, and evidence. Parquet is canonical; JSONL is
-  an optional export. One task table is enough for the LLM-facing side; one
-  physical file for the whole release is not enough.
-- **Consequences:** The minimum artifacts are `tasks.parquet`,
-  `answers.parquet`, `manifest.json`, `dataset-card.md`, and `failures.jsonl`.
-  No program table or evidence table is needed initially; add one only if size
-  or review requires it. The structure is defined in
+- **Context:** Earlier drafts split the task and answer into two tables to keep
+  the answer out of the LLM-facing artifact. That conflated the prompt, which
+  is what the LLM model sees, with the release artifact. The release must
+  contain answers for training and scoring; the evaluator selects columns.
+- **Decision:** A release dataset is one `release.parquet` table, one row per
+  task, with prompt and answer columns. The prompt column is answer-free. The
+  answer columns hold the gold answer, scoring fields, and evidence. A
+  prompt-only view is derived when a consumer needs one. Parquet is canonical;
+  JSONL is an optional export.
+- **Consequences:** The minimum artifacts are `release.parquet`,
+  `manifest.json`, `dataset-card.md`, and `failures.jsonl`. No separate answer
+  table, program table, or evidence table is needed initially. The evaluation
+  harness must pass only `prompt` to the LLM model. The structure is defined in
   `release-dataset-structure.md`.

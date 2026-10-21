@@ -34,9 +34,8 @@ the user-visible outcome.
 | **Answer instruction** | Domain | The part of the prompt that tells the LLM model which answer format to return and in what syntax. |
 | **Program text** | Domain | The CadQuery program shown in the prompt. |
 | **Prompt** | Domain | Everything the LLM model sees for one task: program text, question, task clues, optional choices, and answer instruction. |
-| **Gold answer** | Domain | The correct answer for one task. It is kept out of the task file. |
-| **Task file** | Domain | The release table with the prompt and selection metadata. It never contains the gold answer or answer-derived evidence. |
-| **Answer data** | Domain | The release table with the gold answer, scoring fields, and evidence, joined to the task file by task ID. |
+| **Gold answer** | Domain | The correct answer for one task. It is kept out of the prompt. |
+| **Answer data** | Domain | The answer columns in the release dataset: gold answer, scoring fields, and evidence. |
 | **CAD graph** | Domain | The graph of CAD entities, relations, and measurements for one CadQuery program and the shape it builds. |
 | **CAD graph element** | Internal | One entity, relation, or measurement in the CAD graph. |
 | **Graph entity** | Internal | One entity in the CAD graph, such as a face, edge, operation, or region. |
@@ -47,7 +46,7 @@ the user-visible outcome.
 | **Warmup subset** | Domain | The labeled set of 1-step tasks inside the dataset. It is useful for training, not a separate dataset. |
 | **Curriculum** | Domain | The order in which tasks are presented, from lower to higher task reasoning step counts. |
 | **Dataset release** | Domain | An immutable, validated, versioned set of tasks and correct answers. |
-| **Release dataset** | Domain | The task file and answer data for one priority slice. Use it when distinguishing the release from external datasets and LLM reasoning-output datasets. |
+| **Release dataset** | Domain | The one release table for a priority slice, with prompt and answer columns. Use it when distinguishing the release from external datasets and LLM reasoning-output datasets. |
 | **Priority slice** | Domain | The set of tasks built for one priority level: P0 tasks only, P0 plus P1 tasks, or all tasks. |
 
 ### Internal and domain pairs

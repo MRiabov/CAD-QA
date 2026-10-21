@@ -5,9 +5,9 @@ only. It does not define external datasets, the CADEvolve dataset, LLM
 reasoning-output datasets, training artifacts, or evaluation responses.
 
 A release dataset is the tasks and answers for one priority slice, validated
-and versioned for release. The task file and the answer data are separate
-tables. The LLM model sees the prompt column only; answer data is used for scoring
-and audit.
+and versioned for release. It is one table with task and answer columns. The
+LLM model sees the prompt column only; the answer columns are for training,
+scoring, and audit.
 
 ## 1. Scope
 
@@ -34,14 +34,15 @@ A release directory contains:
 
 | Artifact | Role | Rows |
 |---|---|---|
-| `tasks.parquet` | Task file: prompt and selection metadata. | One per task. |
-| `answers.parquet` | Answer data: gold answer, scoring, and evidence. | One per task. |
+| `release.parquet` | Release table: prompt and answer columns. | One per task. |
 | `manifest.json` | Release counts, versions, hashes, split counts, and coverage summaries. | One file. |
 | `dataset-card.md` | Human-readable dataset card. | One file. |
 | `failures.jsonl` | Rejected programs and tasks with reasons. | One per rejection; may be empty. |
 
-`tasks.parquet` and `answers.parquet` are joined 1:1 by `task_id`. Neither table
-may contain a task without a matching row in the other table.
+`release.parquet` is the release dataset. It contains the gold answer because the
+release is used for training, scoring, and audit. The `prompt` column is the only
+LLM-facing column; the evaluation harness selects that column and does not pass
+the answer columns to the LLM model.
 
 Parquet is canonical. JSONL is an optional export for streaming or inspection;
 it is not a second release format.
@@ -53,24 +54,24 @@ For the first P0 release:
 | Property | Target |
 |---|---|
 | Tasks | At least 10,000 |
-| Answers | Exactly the task count |
+| Answer sets | Exactly one per task, in the same row |
 | Distinct CAD programs | At least 1,000 |
 | Warmup tasks | 500 to 1,000, included in the task count |
 | Training / validation / test | Approximately 70% / 15% / 15% |
 | One task reasoning step | 5% target |
 | Three or more task reasoning steps | At least 80% |
 
-The task table and answer table have the same row count. `task_id` is unique
-within a release. One CAD program may produce many tasks, so `program_id`
-repeats.
+The release table has one row per task, and every row has exactly one answer set.
+`task_id` is unique within a release. One CAD program may produce many tasks, so
+`program_id` repeats.
 
 P1 and P2 are later cumulative releases. Their exact counts are recorded in
 `manifest.json`. The warmup-size question for releases above 20,000 tasks is
 PRD Q10; the caps for a dominant CAD model and repeated answers are PRD Q11.
 
-## 4. Task file columns
+## 4. Release table columns
 
-`tasks.parquet` has one row per task.
+`release.parquet` has one row per task.
 
 | Column | Format | Required | Meaning |
 |---|---|---|---|
@@ -88,26 +89,6 @@ PRD Q10; the caps for a dominant CAD model and repeated answers are PRD Q11.
 | `answer_format` | enum | yes | Format the LLM model must return. |
 | `answer_meaning` | enum | yes | What the answer is about. |
 | `geometry_required` | boolean | yes | Whether at least one task clue depends on the built shape. |
-
-The prompt is the only LLM-facing column. The other columns are release
-metadata for selection, review, and reporting; the evaluation harness must not
-pass them to the LLM model.
-
-Question text, task clues, choices, and the answer instruction are not
-duplicated as separate columns. They are part of `prompt`, which is the exact
-LLM model input. A structured prompt record can be regenerated for audit if needed.
-
-Every task in `tasks.parquet` is answer-free. It must not contain the gold
-answer, answer-derived evidence, hidden entity identifiers, or scoring data.
-
-## 5. Answer data columns
-
-`answers.parquet` has one row per task.
-
-| Column | Format | Required | Meaning |
-|---|---|---|---|
-| `task_id` | string | yes | Join key to `tasks.parquet`. |
-| `answer_format` | enum | yes | Duplicated for validation against the task file. |
 | `gold_answer_json` | string | yes | Canonical JSON for the gold answer. |
 | `answer_unit` | string or null | yes | Unit; null means unitless. |
 | `tolerance_json` | string or null | yes | Canonical JSON tolerance; null means exact. |
@@ -115,6 +96,19 @@ answer, answer-derived evidence, hidden entity identifiers, or scoring data.
 | `answer_schema_version` | string | yes | Version of the answer representation. |
 | `answer_sha256` | string | yes | Hash of the canonical answer and scoring fields. |
 | `evidence_json` | string | yes | Canonical JSON evidence: measured or derived, references, and rule. |
+
+The first fourteen columns identify the task and support selection, review, and
+reporting. The answer columns hold the gold answer, scoring fields, and
+evidence. `prompt` is the only LLM-facing column; every other column stays out
+of the LLM model input.
+
+Question text, task clues, choices, and the answer instruction are not
+duplicated as separate columns. They are part of `prompt`, which is the exact
+LLM model input. A structured prompt record can be regenerated for audit if
+needed.
+
+The `prompt` column is answer-free. It must not contain the gold answer,
+answer-derived evidence, hidden entity identifiers, or scoring data.
 
 `gold_answer_json` is parsed according to `answer_format`:
 
@@ -130,33 +124,39 @@ Tolerance is explicit for every non-exact answer. This avoids relying on a
 reader to infer the last stated place. For a numeric answer, a typical tolerance
 is `{"kind": "absolute", "value": 0.005}`.
 
-Evidence is nested in the answer row because the first release has 10,000 tasks
-and the evidence is small enough to keep with the answer. Split evidence into a
-separate table only if a row becomes too large to scan or transport.
+Evidence is nested in the answer columns because the first release has 10,000
+tasks and the evidence is small enough to keep with the task. Split evidence
+into a separate table only if a row becomes too large to scan or transport.
 
-## 6. One table or two?
+## 5. Who consumes it
 
-A single **task** table is enough for the LLM-facing side. Parquet supports
-nested lists and structs, so prompt metadata, clue types, and choices do not
-need extra tables.
+The release dataset is one artifact, but consumers read different columns:
 
-A single **physical file** for the whole release is not enough. Parquet stores
-one table per file. Putting the gold answer in `tasks.parquet` would put answers
-in the same file the LLM model input comes from, which violates R-6 and DS-12.
-Column-level hiding is not a release boundary.
+- **Training:** reads `prompt` and the answer columns; the training recipe
+  excludes the test split.
+- **Evaluation:** passes only `prompt` to the LLM model; the scorer reads the
+  answer columns.
+- **Audit and review:** reads all columns.
+- **Publishing:** the release includes answers. The held-out property comes from
+  the split rule, not from hiding answer columns.
 
-The minimum clean release is therefore:
+If a consumer needs a file without answers, derive a prompt-only view from the
+release table. That view is a serving artifact, not the canonical release
+dataset.
 
-- `tasks.parquet`;
-- `answers.parquet`;
-- `manifest.json`;
-- `dataset-card.md`;
-- `failures.jsonl`.
+## 6. One table is enough
 
-That is one release dataset with two tables. A program table is not needed
-initially: program text repeats inside `prompt`, and `program_id` plus
-`program_sha256` support grouping and split checks. Add a program table only if
-the repeated text becomes a storage or review problem.
+One Parquet table is enough. Parquet supports nested lists and structs, so
+prompt metadata, clue types, choices, and evidence do not need extra tables.
+
+A separate answer table is not required. The release must contain answers for
+training and scoring, and the evaluation harness selects the prompt column. The
+file boundary is not the leak boundary; column selection is.
+
+A program table is not needed initially: program text repeats inside `prompt`,
+and `program_id` plus `program_sha256` support grouping and split checks. Add a
+program table only if the repeated text becomes a storage or review problem.
+Likewise, add an evidence table only if evidence becomes too large for one row.
 
 ## 7. Manifest
 
@@ -165,11 +165,11 @@ the repeated text becomes a storage or review problem.
 - `release_id`, `schema_version`, `created_at`;
 - `priority_slice`;
 - `generator_version` and upstream dataset version;
-- task count, answer count, and split counts;
+- task count and split counts;
 - task counts by task reasoning step count;
 - warmup task count;
 - distinct CAD program count;
-- task-file and answer-data hashes;
+- release-table hash and answer hash summary;
 - coverage and balance summaries;
 - known misses accepted by the owner;
 - failure count.

@@ -105,7 +105,7 @@ The dataset contains:
 - a dataset card and evaluation material.
 
 Each task shows the CadQuery program and asks for one answer. The correct
-answer is never part of the task file.
+answer is never part of the prompt.
 
 In this document, a CAD model means one CadQuery program. Two tasks
 share a CAD model when they come from the same program.
@@ -228,7 +228,7 @@ mistaken for a result on steps 2 through 5 alone.
 | **R-3** | Multiple-choice tasks are fair. | The correct answer is present; there are enough choices that guessing does not look competitive; choices are real candidates from the construction; choices do not give the answer away. |
 | **R-4** | At least 95% of benchmark tasks require reasoning about the actual shape. | At least one task clue depends on the geometry or topology the program builds, not only on the text of the program. |
 | **R-5** | Trivial shortcuts do not win on shape-required tasks. | For a task that requires the built shape, an LLM model cannot answer by reading variable names, literal arguments, or operation order alone. |
-| **R-6** | Answers are not leaked. | The task file never contains the answer or hidden identifiers. |
+| **R-6** | Answers are not leaked. | The prompt never contains the answer or hidden identifiers. |
 
 ### 7.2 Coverage and balance
 
@@ -262,7 +262,7 @@ slice. "Supported" below means supported by the priority slice being checked.
 | **R-17** | A careful human can understand every task. | Sampled tasks covering every clue type, answer meaning, and answer format are reviewed before a dataset release; unclear wording is a defect. |
 | **R-18** | The dataset can be reproduced. | The same programs and the same generator version produce the same dataset; the dataset card documents versions, settings, and how to regenerate it. |
 | **R-19** | Nothing disappears silently. | Every rejected program or task is reported with a reason, and the counts add up. |
-| **R-20** (P2) | The dataset can grow without breaking users. | New tasks, clue types, or answer meanings can be added without changing the task file, the answer data, or the evaluation interface. |
+| **R-20** (P2) | The dataset can grow without breaking users. | New tasks, clue types, or answer meanings can be added without changing the release dataset layout or the evaluation interface. |
 | **R-21** (P1) | The dataset is fast enough to iterate on. | A reviewer can change a task description and produce a new reviewable sample without re-running the entire corpus from scratch. |
 | **R-22** (P2) | The dataset can support a kernel-assisted upper bound. | The same tasks can be evaluated with CadQuery access as an optional upper bound, without changing the primary no-kernel setting. |
 
