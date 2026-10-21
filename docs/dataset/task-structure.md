@@ -11,10 +11,10 @@ the prompt; it is not the whole task.
 
 The previous list mixed several different things:
 
-- "Direct fact" described reasoning depth.
-- "Give a coordinate" described an answer shape.
+- "Direct fact" described task reasoning depth.
+- "Give a coordinate" described an answer format.
 - "Measure a distance" described a measurement.
-- "Follow a chain" described a reasoning pattern.
+- "Follow a chain" described a task reasoning pattern.
 - "Locate by property" described how the task target is found.
 
 Those are not peers. Treating them as one list makes some tasks look
@@ -51,7 +51,7 @@ The task target is the entity or value the task asks about.
 
 A task has exactly one task target category. If the answer is a measurement
 taken from an entity, the entity is the task target and the measurement is the
-answer. The task target category is not the answer shape.
+answer. The task target category is not the answer format.
 
 ### 2.2 Task clue
 
@@ -74,19 +74,18 @@ A task clue may combine a relation with a property, for example "the face adjace
 to the selected face whose area is larger than the selected face". It is still
 one task clue if it names one condition.
 
-The information in a task clue that rules out candidates is its **disambiguating
-information**. "Disambiguator" is a useful word in conversation, but the
-canonical term for the public object is **task clue**.
+A task clue narrows the set of possible answers. The canonical term for the
+public object is **task clue**.
 
-A task may also need a **computation** after the task target is identified, such
-as reporting the volume of the selected solid state. A computation is not a
-task clue and is not written as one. It belongs in the answer instruction.
+A task may also need a **task answer step** after the task target is identified,
+such as reporting the volume of the selected solid state. A task answer step is
+not a task clue and is not written as one. It belongs in the answer instruction.
 
-### 2.3 Answer shape
+### 2.3 Answer format
 
-The answer shape is what the LLM model must return.
+The answer format is what the LLM model must return.
 
-| Answer shape | What the LLM model returns |
+| Answer format | What the LLM model returns |
 |---|---|
 | Multiple choice | One label from a short list of choices. |
 | Variable name | One name that appears in the CadQuery program. |
@@ -97,13 +96,13 @@ The answer shape is what the LLM model must return.
 | Bounding box | One minimum corner and one maximum corner. |
 | Structured object | One small object with named fields. |
 
-The answer shape is independent of the task target and the task clue. A task about a
+The answer format is independent of the task target and the task clue. A task about a
 face can have a multiple-choice answer, a variable-name answer, a coordinate
 answer, or a bounding-box answer.
 
-### 2.4 Reasoning pattern
+### 2.4 Task reasoning pattern
 
-The reasoning pattern is how the task target is found.
+The task reasoning pattern is how the task target is found.
 
 | Pattern | What happens |
 |---|---|
@@ -113,36 +112,36 @@ The reasoning pattern is how the task target is found.
 | Compare | Two targets are located, then compared. |
 | Count | A set is located, then counted. |
 | Rank | A set is located, then ordered and ranked. |
-| Effect | An operation is located, then its effect is measured. |
-| Membership | A solid state and a point are located, then tested. |
-| CadQuery workplane | A feature or sketch is located, then its CadQuery workplane is described. |
+| Effect measurement | An operation is located, then its effect is measured. |
+| Membership test | A solid state and a point are located, then tested. |
+| CadQuery workplane description | A feature or sketch is located, then its CadQuery workplane is described. |
 | Chain | The task target is reached through several relations in order. |
 
-The pattern is not the same as the answer shape. A locate task can return a
-variable name or a multiple-choice label. A measure task can return a
+The task reasoning pattern is not the same as the answer format. A locate task
+can return a variable name or a multiple-choice label. A measure task can return a
 number, a coordinate, or a bounding box.
 
-### 2.5 Reasoning depth
+### 2.5 Task reasoning depth
 
-Reasoning depth is the number of steps a task requires:
+Task reasoning depth is the number of task reasoning steps a task requires:
 
-- **Narrowing step**: applies one task clue and reduces the set of possible answers.
-- **Computation step**: produces the answer once the task target is identified.
-- **Reasoning step**: either a narrowing step or a computation step.
+- **Task clue step**: applies one task clue and reduces the set of possible answers.
+- **Task answer step**: produces the answer once the task target is identified.
+- **Task reasoning step**: either a task clue step or a task answer step.
 
-The depth is computed from the actual solution path, not from a label.
+The depth is computed from the actual task solution sequence, not from a label.
 
 | Pattern | Depth |
 |---|---|
 | Direct | 0 |
-| Locate | Number of narrowing steps. |
-| Measure | Narrowing steps plus 1 for the measurement. |
-| Compare | Narrowing steps plus 1 for the comparison. |
-| Count | Narrowing steps plus 1 for the count. |
-| Rank | Narrowing steps plus 1 for the ranking. |
-| Effect | Narrowing steps plus 1 for the effect measurement. |
-| Membership | Narrowing steps plus 1 for the test. |
-| CadQuery workplane | Narrowing steps plus 1 for the CadQuery workplane description. |
+| Locate | Number of task clue steps. |
+| Measure | Task clue steps plus 1 for the measurement. |
+| Compare | Task clue steps plus 1 for the comparison. |
+| Count | Task clue steps plus 1 for the count. |
+| Rank | Task clue steps plus 1 for the ranking. |
+| Effect measurement | Task clue steps plus 1 for the effect measurement. |
+| Membership test | Task clue steps plus 1 for the test. |
+| CadQuery workplane description | Task clue steps plus 1 for the CadQuery workplane description. |
 | Chain | Number of relations followed, plus 1 for the final answer if it is computed. |
 
 A task that names a task target and asks for its volume has depth 1, not depth
@@ -165,27 +164,27 @@ A **task family** is a precise pattern with five parts:
 
 1. a task target category;
 2. an ordered list of task clue forms;
-3. an answer shape;
+3. an answer format;
 4. a depth rule;
 5. a uniqueness rule.
 
-The family is the reasoning pattern; the task target, the task clues, and the answer
-shape are chosen when a task is built. This is why a family is not a flat
+The task family is the reusable task reasoning pattern; the task target, the task
+clues, and the answer format are chosen when a task is built. This is why a task family is not a flat
 label.
 
-The canonical families are:
+The canonical task families are:
 
 | Family | Target | Clues | Answer | Depth |
 |---|---|---|---|---|
-| Direct | Any named entity | None | Any answer shape | 0 |
+| Direct | Any named entity | None | Any answer format | 0 |
 | Locate | Any entity | Property, relation, comparison, aggregation, provenance, or chain | Variable name or multiple choice | Number of task clues |
 | Measure | Any entity | Clues that locate it | Number, integer, coordinate, or bounding box | Clues plus 1 |
 | Compare | Two entities | Clues that locate both | Yes or no, or one of the two | Clues plus 1 |
 | Count | A set | Clues that define the set | Integer | Clues plus 1 |
 | Rank | A set | Clues that define the set, plus an order | Integer or an entity | Clues plus 1 |
-| Effect | An operation | Clues that locate the operation | Number, integer, coordinate, or bounding box | Clues plus 1 |
-| Membership | A solid state and a point | Clues that locate both | Yes or no | Clues plus 1 |
-| CadQuery workplane | A feature or sketch | Clues that locate it | Structured object | Clues plus 1 |
+| Effect measurement | An operation | Clues that locate the operation | Number, integer, coordinate, or bounding box | Clues plus 1 |
+| Membership test | A solid state and a point | Clues that locate both | Yes or no | Clues plus 1 |
+| CadQuery workplane description | A feature or sketch | Clues that locate it | Structured object | Clues plus 1 |
 | Chain | Any entity | An ordered sequence of relations | Variable name, multiple choice, or a measurement | Chain length plus 1 if computed |
 
 ## 4. Writing a family definition
@@ -195,7 +194,7 @@ tasks from it. It must state:
 
 - the task target category;
 - each task clue in order, with placeholders for sampled values;
-- the answer shape and the computation, if any;
+- the answer format and the task answer step, if any;
 - the depth rule;
 - the uniqueness rule;
 - the geometry requirement.
@@ -209,7 +208,7 @@ Task clue 2: the face is adjacent to the face created by a named operation.
 Task clue 3: among the faces that satisfy task clues 1 and 2, the face with the
             largest area.
 Answer: the area of the selected face, as a number.
-Depth: 3 (two narrowing task clues and one computation).
+Depth: 3 (two task clue steps and one task answer step).
 Uniqueness: exactly one face satisfies task clues 1 and 2, and the largest area is
             achieved by exactly one of them. Otherwise the task is rejected.
 Geometry: all three steps are geometry-based.
@@ -225,8 +224,8 @@ The dataset must cover:
 
 - every task target category that the PRD claims;
 - every task clue form;
-- every answer shape;
-- every reasoning pattern;
+- every answer format;
+- every task reasoning pattern;
 - every depth from 0 to 5;
 - both syntax-based and geometry-based steps, with geometry required for
   benchmark tasks.
@@ -236,7 +235,7 @@ family that produces zero tasks is a gap, not a category.
 
 ## 6. What is not a task family
 
-- An answer shape alone, such as "coordinate task".
+- An answer format alone, such as "coordinate task".
 - A measurement alone, such as "volume task".
 - A task target alone, such as "face task".
 - A depth alone, such as "3-step task".
@@ -248,8 +247,8 @@ them together.
 
 - **Q1.** Is "task family" the right term, or should this be "task
   pattern"?
-- **Q2.** Is "task clue" the right public term, or should the PRD use
-  "disambiguator"?
+- **Q2.** Is "task clue" the right public term, or should it be something
+  else?
 - **Q3.** Should a comparison task clue always name both entities, or may one
   entity be selected by an earlier task clue?
 - **Q4.** Should "direct" be a family, or is every direct task just a

@@ -12,8 +12,8 @@ A prompt has five parts, in this order:
 2. **Question**: the interrogative sentence that asks what to answer.
 3. **Task clues**: an ordered list of conditions the answer must satisfy.
 4. **Choices**: a short list of multiple-choice options, only when the answer
-   shape is multiple choice.
-5. **Answer instruction**: the required answer shape and an exact example of
+   format is multiple choice.
+5. **Answer instruction**: the required answer format and an exact example of
    its syntax.
 
 The question is only the interrogative sentence. It is not the whole task. The
@@ -49,7 +49,7 @@ category the answer is about and what to answer.
 ## 4. Task clues
 
 A task clue is one condition the answer must satisfy. Every task clue
-corresponds to one narrowing step.
+corresponds to one task clue step.
 
 ### 4.1 Task clue rules
 
@@ -89,7 +89,7 @@ built. A task clue is never a template with placeholder text left in it.
 
 ## 5. Multiple-choice choices
 
-When the answer shape is multiple choice:
+When the answer format is multiple choice:
 
 - show at least five and at most seven choices;
 - label the choices `A`, `B`, `C`, and so on;
@@ -107,9 +107,9 @@ minimum, the task is not generated.
 ## 6. Answer instruction
 
 The answer instruction tells the LLM model exactly what to return. It must match
-the answer shape.
+the answer format.
 
-| Answer shape | Instruction |
+| Answer format | Instruction |
 |---|---|
 | Multiple choice | "Return exactly one label from the list above, for example `A`." |
 | Variable name | "Return exactly one variable name from the program." |
@@ -128,9 +128,9 @@ It never gives the answer, and it never explains how to find the task target.
 - The correct answer.
 - The answer key or any hidden field.
 - Internal identifiers.
-- The number of reasoning steps.
+- The number of task reasoning steps.
 - A hidden task clue that is not in the task clue list.
-- A task clue that is not in the hidden solution path.
+- A task clue that is not in the hidden task solution sequence.
 - A description of the graph or the generator.
 - A hint that identifies the correct multiple-choice choice.
 - A named entity that does not appear in the program or cannot be identified
@@ -192,9 +192,9 @@ Before a prompt is accepted:
 
 - the question is the interrogative sentence, not the whole task;
 - every task clue is one condition;
-- every task clue has a matching narrowing step;
+- every task clue has a matching task clue step;
 - the task clue order is the intended reasoning order;
-- the answer instruction matches the answer shape;
+- the answer instruction matches the answer format;
 - the prompt does not leak the answer;
 - the prompt does not use internal terms;
 - the prompt is readable by a careful human without the answer key;

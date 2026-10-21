@@ -137,18 +137,18 @@ cannot support a benchmark answer.
 
 ## 5. States and timing
 
-A program builds a shape over time. The graph must keep the states the tasks
+A program builds a shape over time. The graph must keep the solid states the tasks
 need.
 
-- the state before an operation;
-- the state after an operation;
-- the final state;
+- the solid state before an operation;
+- the solid state after an operation;
+- the final solid state;
 - the CadQuery selector result at the point where the CadQuery selector runs.
 
-A task about an effect must refer to the state before and the state after
-the operation. A task about the final shape must refer to the final state.
-A face in an earlier state and a face in a later state are not the same entity
-unless the graph records that they are the same.
+A task about an effect must refer to the solid state before and the solid state
+after the operation. A task about the final shape must refer to the final solid
+state. A face in an earlier solid state and a face in a later solid state are not
+the same entity unless the graph records that they are the same.
 
 ## 6. Graph quality rules
 

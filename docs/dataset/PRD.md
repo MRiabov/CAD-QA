@@ -12,7 +12,7 @@ for the research questions, hypotheses, and evaluation goals. This document
 defines the dataset those goals need. It does not change the research goals.
 
 **Supersedes.** All previous dataset-generation specifications. The old
-dataset documentation, answer-shape notes, decisions, and issue register are
+dataset documentation, answer-format notes, decisions, and issue register are
 archived at `docs/_archive/dataset-pre-rebuild-2026-10-21/` and are history,
 not requirements.
 
@@ -43,7 +43,7 @@ The user also gets:
 
 - a held-out benchmark for comparing LLM models fairly;
 - a labeled warmup subset of easier tasks for teaching an LLM model the task
-  shape before the hard tasks;
+  pattern before the hard tasks;
 - tasks and answer keys in separate files;
 - training, validation, and test sets that do not overlap;
 - a dataset card that explains what the dataset contains and what it does not;
@@ -115,19 +115,19 @@ independent dimensions:
 
 - the **task target** the task asks about;
 - the **task clues** the answer must satisfy;
-- the **answer shape** the LLM model must return;
-- the **reasoning pattern** that finds the task target;
-- the **reasoning depth** the task requires.
+- the **answer format** the LLM model must return;
+- the **task reasoning pattern** that finds the task target;
+- the **task reasoning depth** the task requires.
 
 The previous flat list mixed these dimensions. For example, "direct fact"
-described depth, "give a coordinate" described an answer shape, and "measure a
+described depth, "give a coordinate" described an answer format, and "measure a
 distance" described a measurement. Those are not peers.
 
-The full structure, including task target categories, task clue forms, reasoning patterns,
+The full structure, including task target categories, task clue forms, task reasoning patterns,
 depth rules, and the precise definition of a task family, is in
 [`task-structure.md`](task-structure.md).
 
-The dataset must cover these reasoning patterns:
+The dataset must cover these task reasoning patterns:
 
 - Direct
 - Locate
@@ -135,22 +135,22 @@ The dataset must cover these reasoning patterns:
 - Compare
 - Count
 - Rank
-- Effect
-- Membership
-- CadQuery workplane
+- Effect measurement
+- Membership test
+- CadQuery workplane description
 - Chain
 
 The list is not a closed set of task labels. A task family is defined by
-its pattern, task target, task clues, answer shape, depth, and uniqueness rule. New
+its task reasoning pattern, task target, task clues, answer format, depth, and uniqueness rule. New
 families may be added if they follow the structure and meet the same quality rules.
 
 ---
 
-## 5. Categories of answers
+## 5. Answer formats
 
-The dataset must support all of the following answer shapes.
+The dataset must support all of the following answer formats.
 
-| Answer shape | What the user sees | Requirements |
+| Answer format | What the user sees | Requirements |
 |---|---|---|
 | Multiple choice | A short list of choices, one of which is correct. | At least five choices, with seven as the goal, for the benchmark dataset release; the correct answer is always present; choices are real options drawn from the program, not padding; descriptions do not repeat; no choice leaks the answer. |
 | Variable name | A name that appears in the CadQuery program. | The name is visible in the program and identifies one object. |
@@ -168,7 +168,7 @@ judge is not allowed.
 
 ## 6. Difficulty
 
-Difficulty is described by how many reasoning steps a task needs.
+Difficulty is described by how many task reasoning steps a task needs.
 
 - **0 to 1 steps**: a direct fact about a named object (0 steps), or one
   inference such as finding a feature by a property (1 step). This is the
@@ -206,7 +206,7 @@ a result on steps 2 through 5 alone.
 
 | ID | Requirement | How the user can tell |
 |---|---|---|
-| **R-7** | The dataset covers all answer shapes. | Every answer shape in section 5 appears in the benchmark dataset release, including the warmup subset. |
+| **R-7** | The dataset covers all answer formats. | Every answer format in section 5 appears in the benchmark dataset release, including the warmup subset. |
 | **R-8** (P1) | The dataset covers all task categories in section 4. | Every category in section 4 appears in the benchmark dataset release, and no category dominates. |
 | **R-9** | The dataset covers the full difficulty range. | Steps 0 through 5 all appear, with steps 3 and 4 carrying the headline slices. |
 | **R-10** | The dataset is diverse. | It draws from at least one thousand distinct CAD models, and no single CAD model or task category dominates. |
@@ -220,7 +220,7 @@ a result on steps 2 through 5 alone.
 |---|---|---|
 | **R-13** | Training, validation, and test sets do not overlap. | The same CAD model (the same CadQuery program) never appears in both training and evaluation. |
 | **R-14** | The test set is never trained on. | The dataset card names the test set and the training recipe excludes it. |
-| **R-15** | The warmup subset is labeled, not excluded. | Warmup tasks are marked as steps 0–1 and may be used for training; every benchmark result names the reasoning steps it covers. |
+| **R-15** | The warmup subset is labeled, not excluded. | Warmup tasks are marked as steps 0–1 and may be used for training; every benchmark result names the task reasoning steps it covers. |
 | **R-16** (P1) | Transfer results are not contaminated. | No program from the external benchmark used for transfer appears in training or evaluation. |
 
 ### 7.4 Usability and trust
@@ -245,7 +245,7 @@ tasks and meet the following targets.
 |---|---|---|
 | Tasks | At least 10,000 | P0 |
 | Distinct CAD models | At least 1,000 | P0 |
-| Answer shapes | Every shape in section 5; each at least 5% and none above 25% | P0 |
+| Answer formats | Every format in section 5; each at least 5% and none above 25% | P0 |
 | Task categories | All categories in section 4; each between 1% and 10% | P1 |
 | Task-clue variety | No single task-clue pattern dominates | P1 |
 | Difficulty | Steps 0–1: at least 5%; steps 2–5 cover the remainder, with 3 and 4 carrying the headline slices | P0 |
@@ -271,14 +271,14 @@ subset is P0 for the first training cycle.
 
 - 500 to 1,000 tasks, drawn from the same CadQuery programs and the same
   dataset as the benchmark;
-- 0 or 1 reasoning steps;
-- all answer shapes;
+- 0 or 1 task reasoning steps;
+- all answer formats;
 - the same prompt and answer-key format as the benchmark;
 - the same correctness and fairness rules;
 - may be used for training, especially to teach an LLM model that knows little
   about CadQuery reasoning;
 - may be included in a benchmark run, but every benchmark result must name the
-  number of reasoning steps it covers.
+  number of task reasoning steps it covers.
 
 The dataset is designed for curriculum learning: easy tasks first, harder
 tasks later.
@@ -311,7 +311,7 @@ change.
 | Training dataset | Tasks and answer keys for training. | P0 |
 | Validation dataset | Tasks and answer keys for tuning. | P0 |
 | Test dataset | Held-out tasks and answer keys for the final result. | P0 |
-| Warmup subset | Labeled easy tasks for teaching the task shape. | P0 |
+| Warmup subset | Labeled easy tasks for teaching the task pattern. | P0 |
 | Dataset card | A plain description of what the dataset contains, how it was made, what it is for, and what it is not for. | P0 |
 | Evaluation material | The answer keys and instructions needed to score an LLM model. | P0 |
 | Documentation | How to reproduce the dataset release and how to review it. | P1 |
@@ -322,7 +322,7 @@ change.
 
 The dataset is done when:
 
-1. a small sample produces every task category and every answer shape;
+1. a small sample produces every task category and every answer format;
 2. a benchmark dataset release of at least ten thousand tasks meets the
    targets in section 8, or every miss is documented and accepted by the owner;
 3. a labeled warmup subset exists;
@@ -387,7 +387,7 @@ The dataset is done when:
 - **Q4** (P1). *Resolved 2026-10-21.* Zero- and one-step tasks appear in the
   dataset release. They form the labeled warmup subset and are also useful
   training material.
-- **Q5** (P1). *Resolved 2026-10-21.* Yes. Every answer shape must reach five
+- **Q5** (P1). *Resolved 2026-10-21.* Yes. Every answer format must reach five
   percent; a balanced and diverse dataset is the default.
 - **Q6** (P1). *Resolved 2026-10-21.* All task categories in section 4.
   Clue variety is a separate requirement (R-23), because the conditions inside
