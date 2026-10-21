@@ -13,6 +13,13 @@ manifest that later pipeline stages can consume.
 | `01b` | Normalize program text, assign stable IDs and hashes. | [`01b-normalize-programs.md`](01b-normalize-programs.md) |
 | `01c` | Write counts, provenance, hashes, and rejects. | [`01c-write-external-dataset-manifest.md`](01c-write-external-dataset-manifest.md) |
 
+## Input scale
+
+The Parquet cache contains 1,998,810 programs. A release does not need all of
+them. The 2026-10-19 regeneration used 1,300 programs; smaller runs used a
+smaller subset. Normalizing the full cache is not a release requirement. `01b`
+operates on the selected program pool.
+
 ## Why normalization is a step
 
 The prepared Parquet cache already carries normalized code and a hash, but that

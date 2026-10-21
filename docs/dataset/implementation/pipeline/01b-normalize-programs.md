@@ -13,7 +13,8 @@ used by graph build, overlap checks, and release grouping.
 
 ## Behavior
 
-- Apply a deterministic, semantics-preserving normalization.
+- Apply a deterministic, semantics-preserving normalization to the selected
+  program pool. Full-cache normalization is not required for a release.
 - Record the normalization version.
 - Compute the normalized program hash.
 - Assign a stable program ID from the normalized identity.
