@@ -6,7 +6,8 @@ banned term appears in a scanned doc or code file (``.md``, ``.tex``, ``.py``).
 A Say term covers its own
 Don't-say tokens; a ``(home)`` annotation allows the token under that tree; the
 allowlist and ``dont-say: allow`` / ``dont-say: home`` markers exempt specific
-text. In code, comments and docstrings are matched as prose, and multi-word
+text. A ``(bare)`` annotation bans only the unqualified word: ``clue type`` and
+``CAD ontology`` are allowed, while ``the type`` is still a hit. In code, comments and docstrings are matched as prose, and multi-word
 identifier variants are matched as identifiers; bare identifier names are not
 matched. ``--ratchet`` enforces that the hit count never rises.
 """
@@ -85,6 +86,85 @@ ALLOWLIST = (
     "type: ignore",
 )
 
+BARE_QUALIFIER_STOPWORDS = frozenset(
+    {
+        "a",
+        "an",
+        "the",
+        "this",
+        "that",
+        "these",
+        "those",
+        "any",
+        "some",
+        "one",
+        "all",
+        "both",
+        "each",
+        "every",
+        "another",
+        "such",
+        "same",
+        "own",
+        "its",
+        "their",
+        "our",
+        "your",
+        "my",
+        "his",
+        "her",
+        "it",
+        "we",
+        "you",
+        "they",
+        "i",
+        "he",
+        "she",
+        "of",
+        "in",
+        "on",
+        "at",
+        "for",
+        "with",
+        "as",
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "been",
+        "being",
+        "not",
+        "no",
+        "than",
+        "then",
+        "so",
+        "too",
+        "very",
+        "more",
+        "most",
+        "less",
+        "least",
+        "only",
+        "also",
+        "just",
+        "from",
+        "to",
+        "by",
+        "into",
+        "over",
+        "under",
+        "about",
+        "after",
+        "before",
+        "between",
+        "through",
+        "during",
+        "without",
+        "within",
+    }
+)
+
 
 class Rule(BaseModel):
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
@@ -96,6 +176,7 @@ class Rule(BaseModel):
     identifiers: tuple[re.Pattern[str], ...] = ()
     homes: tuple[str, ...] = ()
     covers: tuple[str, ...] = ()
+    bare: bool = False
 
     @classmethod
     def build(cls, raw: str, say: str, why: str = "") -> Rule:
@@ -112,6 +193,7 @@ class Rule(BaseModel):
             identifiers=identifiers,
             homes=home_prefixes(parentheticals(raw)),
             covers=tuple(covering_phrases(say)),
+            bare=any(part.lower() == "bare" for part in parentheticals(raw)),
         )
 
 
@@ -304,6 +386,16 @@ def covers_match(
     return False
 
 
+def preceding_word(text: str, start: int) -> str | None:
+    match = re.search(r"([A-Za-z][A-Za-z0-9_-]*)\s+$", text[:start])
+    return match.group(1).lower() if match else None
+
+
+def is_qualified_bare(text: str, start: int) -> bool:
+    word = preceding_word(text, start)
+    return word is not None and word not in BARE_QUALIFIER_STOPWORDS
+
+
 def blocked_by_home(rule: Rule, path: Path) -> bool:
     posix = path.as_posix()
     for folder in rule.homes:
@@ -423,7 +515,12 @@ def _scan_code(
                 if blocked_by_home(rule, path) or not rule.identifiers:
                     continue
                 if matched_line(
-                    rule.identifiers, line, lower, [], rule.covers + ALLOWLIST
+                    rule.identifiers,
+                    line,
+                    lower,
+                    [],
+                    rule.covers + ALLOWLIST,
+                    bare=rule.bare,
                 ):
                     record(line_no, line, rule)
     for line_no, segment in code_prose_lines(text):
@@ -433,7 +530,14 @@ def _scan_code(
         for rule in rules:
             if blocked_by_home(rule, path):
                 continue
-            if matched_line((rule.pattern,), segment, lower, [], rule.covers + ALLOWLIST):
+            if matched_line(
+                (rule.pattern,),
+                segment,
+                lower,
+                [],
+                rule.covers + ALLOWLIST,
+                bare=rule.bare,
+            ):
                 record(line_no, segment, rule)
     return hits
 
@@ -468,7 +572,14 @@ def _scan_markdown(path: Path, text: str, rules: list[Rule]) -> list[Hit]:
         for rule in rules:
             if blocked_by_home(rule, path):
                 continue
-            if matched_line((rule.pattern,), probe, lower, spans, rule.covers + ALLOWLIST):
+            if matched_line(
+                (rule.pattern,),
+                probe,
+                lower,
+                spans,
+                rule.covers + ALLOWLIST,
+                bare=rule.bare,
+            ):
                 hits.append(
                     Hit(path=path, line=line_no, rule=rule, text=line.strip())
                 )
@@ -481,15 +592,31 @@ def matched_line(
     lower: str,
     spans: list[tuple[int, int]],
     allowed: tuple[str, ...],
+    *,
+    bare: bool = False,
 ) -> bool:
     for pattern in patterns:
         for match in pattern.finditer(line):
             if in_code_span(match.start(), match.end(), spans):
                 continue
+            if bare and is_qualified_bare(lower, match.start()):
+                continue
             if covers_match(lower, match.start(), match.end(), allowed):
                 continue
             return True
     return False
+
+
+def format_hit(hit: Hit) -> str:
+    if hit.rule.bare:
+        return (
+            f'{hit.path}:{hit.line}: don\'t say bare "{hit.rule.phrase}" '
+            f"(qualify it; for example: {hit.rule.say})"
+        )
+    return (
+        f'{hit.path}:{hit.line}: don\'t say "{hit.rule.phrase}" '
+        f"(say {hit.rule.say})"
+    )
 
 
 def iter_files(roots: list[str]) -> list[Path]:
@@ -561,13 +688,7 @@ def main(argv: list[str] | None = None) -> int:
     hits = collect_hits(args.roots, rules, identifiers=args.identifiers)
     if not args.quiet:
         for hit in hits:
-            logger.warning(
-                '%s:%d: don\'t say "%s" (say %s)',
-                hit.path,
-                hit.line,
-                hit.rule.phrase,
-                hit.rule.say,
-            )
+            logger.warning(format_hit(hit))
 
     if args.ratchet is None:
         if hits:

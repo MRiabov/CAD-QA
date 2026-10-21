@@ -6,6 +6,7 @@ from tools.check_dont_say import (
     Rule,
     collect_hits,
     covering_phrases,
+    format_hit,
     iter_files,
     parse_rules,
     scan_file,
@@ -27,6 +28,8 @@ A program.
 | ontology graph | CAD ontology graph | unqualified |
 | ontology (bare) | CAD ontology | generic |
 | query program | Gold query program | conflated |
+| type (bare) / types (bare) | clue type | raw noun |
+| kind (bare) / kinds (bare) | predicate kind | raw noun |
 
 ## Proposed additions
 
@@ -43,7 +46,16 @@ def write_glossary(tmp_path: Path) -> Path:
 def test_parse_rules_splits_synonyms_and_strips_parentheticals() -> None:
     rules = parse_rules(GLOSSARY)
     phrases = {rule.phrase for rule in rules}
-    assert phrases == {"source", "ontology graph", "ontology", "query program"}
+    assert phrases == {
+        "source",
+        "ontology graph",
+        "ontology",
+        "query program",
+        "type",
+        "types",
+        "kind",
+        "kinds",
+    }
     assert (
         next(rule for rule in rules if rule.phrase == "source").say
         == "CadQuery program"
@@ -77,6 +89,45 @@ def test_bare_ontology_is_covered_by_cad_ontology(tmp_path: Path) -> None:
         "The CAD ontology node and the CAD ontology graph.\n", encoding="utf-8"
     )
     assert scan_file(doc, rules) == []
+
+
+def test_qualified_bare_type_is_allowed(tmp_path: Path) -> None:
+    rules = parse_rules(GLOSSARY)
+    doc = tmp_path / "doc.md"
+    doc.write_text("The clue type and the task type are clear.\n", encoding="utf-8")
+    assert scan_file(doc, rules) == []
+
+
+def test_bare_type_is_a_hit(tmp_path: Path) -> None:
+    rules = parse_rules(GLOSSARY)
+    doc = tmp_path / "doc.md"
+    doc.write_text("The type is unclear.\n", encoding="utf-8")
+    hits = scan_file(doc, rules)
+    assert [hit.rule.phrase for hit in hits] == ["type"]
+
+
+def test_bare_kind_is_a_hit(tmp_path: Path) -> None:
+    rules = parse_rules(GLOSSARY)
+    doc = tmp_path / "doc.md"
+    doc.write_text("The kind is unclear.\n", encoding="utf-8")
+    hits = scan_file(doc, rules)
+    assert [hit.rule.phrase for hit in hits] == ["kind"]
+
+
+def test_qualified_bare_kind_is_allowed(tmp_path: Path) -> None:
+    rules = parse_rules(GLOSSARY)
+    doc = tmp_path / "doc.md"
+    doc.write_text("The predicate kind is clear.\n", encoding="utf-8")
+    assert scan_file(doc, rules) == []
+
+
+def test_bare_hit_message_asks_for_qualification(tmp_path: Path) -> None:
+    rules = parse_rules(GLOSSARY)
+    doc = tmp_path / "doc.md"
+    doc.write_text("The type is unclear.\n", encoding="utf-8")
+    hit = scan_file(doc, rules)[0]
+    assert 'don\'t say bare "type"' in format_hit(hit)
+    assert "qualify it" in format_hit(hit)
 
 
 def test_allow_marker_exempts_line(tmp_path: Path) -> None:
