@@ -57,7 +57,7 @@ For the first P0 release:
 | Tasks | At least 10,000 |
 | Answer sets | Exactly one per task, in the same row |
 | Distinct CAD programs | At least 1,000 |
-| Warmup tasks | 500 to 1,000, included in the task count |
+| Warmup tasks | 5% of tasks, included in the task count |
 | Training / validation / test | Approximately 70% / 15% / 15% |
 | One task reasoning step | 5% target |
 | Three or more task reasoning steps | At least 80% |
@@ -67,8 +67,8 @@ The release table has one row per task, and every row has exactly one answer set
 `program_id` repeats.
 
 P1 and P2 are later cumulative releases. Their exact counts are recorded in
-`manifest.json`. The warmup-size question for releases above 20,000 tasks is
-PRD Q10; the caps for a dominant CAD model and repeated answers are PRD Q11.
+`manifest.json`. Warmup is 5% of the release, with no absolute cap. No CAD model
+and no correct answer is above 1% of tasks.
 
 ## 4. Release table columns
 

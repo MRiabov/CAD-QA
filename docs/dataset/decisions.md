@@ -131,8 +131,8 @@ prefix is `DS-`.
 - **Status:** accepted (2026-10-21).
 - **Context:** A small LLM model needs a lower-step entry point, and evaluation
   must not see training programs.
-- **Decision:** The warmup subset contains 500 to 1,000 tasks with one task
-  reasoning step, drawn from the same programs and labeled inside the dataset.
+- **Decision:** The warmup subset is the 1-step bucket: 5% of tasks, drawn from
+  the same programs and labeled inside the dataset.
   Training, validation, and test are split by CadQuery program at approximately
   70/15/15; the same program never appears in more than one part.
 - **Consequences:** Warmup tasks may be used for training. The test part is never
@@ -153,7 +153,7 @@ prefix is `DS-`.
 - **Consequences:** Implementation should not start from the current
   conceptual docs alone. `requirements/task-structure.md` and this file define the target;
   the enumeration contract defines the implementable space. The open questions
-  that affect it are in `implementation/task-enumeration.md` Q1-Q5.
+  that affect it are in `implementation/task-enumeration.md` Q1-Q3 and Q5.
 
 ---
 
@@ -167,8 +167,8 @@ prefix is `DS-`.
   count in the release is 1. The warmup subset is the 1-step tasks. There is no
   0-step category.
 - **Consequences:** The step-count target mix starts at 1 step (5%). The PRD no
-  longer defines or generates 0-step tasks. The warmup subset is still 500 to
-  1,000 tasks at the target release size.
+  longer defines or generates 0-step tasks. The warmup subset is still the
+  1-step bucket at 5% of the release.
 
 ---
 

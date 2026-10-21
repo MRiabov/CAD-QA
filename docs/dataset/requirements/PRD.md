@@ -248,8 +248,8 @@ slice. "Supported" below means supported by the priority slice being checked.
 | **R-7** | The dataset balances answer formats at every task reasoning step count. | Every answer format in section 5 appears at every task reasoning step count where it is supported. No format is more than twice or less than half its share among the formats supported at that task reasoning step count. Over the release, each format is between 5% and 25% of tasks. |
 | **R-8** | The dataset covers all target categories, clue types, and answer meanings. | Every target category, clue type, and answer meaning supported at a task reasoning step count appears at that task reasoning step count. A value that is valid, supported by the slice, and missing is a gap; the task reasoning step support table lists only values that cannot occur. |
 | **R-9** | The dataset covers the full task reasoning step count range. | Steps 1 through 5 all appear in the target mix in section 8, with steps 3 and 4 carrying the headline slices. |
-| **R-10** | The dataset is diverse. | It draws from at least one thousand distinct CAD models, and no single CAD model dominates (see Q11). |
-| **R-11** (P1) | The dataset has varied answers. | At least one thousand different correct answers appear, and no answer is repeated so often that guessing wins (see Q11). |
+| **R-10** | The dataset is diverse. | It draws from at least one thousand distinct CAD models, and no single CAD model is above 1% of tasks. |
+| **R-11** (P1) | The dataset has varied answers. | At least one thousand different correct answers appear, and no correct answer is above 1% of tasks. |
 | **R-12** (P1) | The dataset is balanced at every task reasoning step count. | No clue type is above 25% of clues at a task reasoning step count or over the release, and no clue type is more than twice or less than half its share among the clue types supported at a task reasoning step count. Every answer meaning is between 1% and 10% over the release, and no answer meaning is more than twice or less than half its share among the meanings supported at a task reasoning step count. No target category is above 25% of the release. |
 
 ### 7.3 Splits and reuse
@@ -283,6 +283,7 @@ ten thousand tasks and meet the following targets at their stated priorities.
 |---|---|---|
 | Tasks | At least 10,000 | P0 |
 | Distinct CAD models | At least 1,000 | P0 |
+| CAD model dominance | No CAD model above 1% of tasks | P1 |
 | Target category coverage | Every supported category at every task reasoning step count | P0 |
 | Target category dominance | No category above 25% of tasks | P1 |
 | Answer format coverage | Every supported format at every task reasoning step count | P0 |
@@ -296,6 +297,7 @@ ten thousand tasks and meet the following targets at their stated priorities.
 | Tasks needing at least three steps | At least 80% | P0 |
 | Multiple-choice choices | At least five; aim for seven | P0 |
 | Different correct answers | At least 1,000 | P1 |
+| Answer dominance | No correct answer above 1% of tasks | P1 |
 | Evidence for the answer | Available for every task | P0 |
 
 The task reasoning step count mix is a target, not a hard quota. A miss is documented and accepted
@@ -312,8 +314,8 @@ A small LLM model needs a lower-step introduction before the higher-step tasks.
 The dataset therefore labels its lowest-step tasks as the warmup subset. The warmup
 subset is P0 for the first training cycle.
 
-- for the first 10,000-task release, 500 to 1,000 tasks, drawn from the same
-  CadQuery programs and the same dataset as the benchmark (see Q10);
+- 5% of tasks, drawn from the same CadQuery programs and the same dataset as the
+  benchmark;
 - one task reasoning step;
 - all P0 answer formats;
 - the same prompt and answer format as the benchmark;
@@ -419,55 +421,7 @@ The dataset is done when:
 
 ---
 
-## 15. Open questions
-
-- **Q7** (P1). When checking that the dataset does not overlap the independent
-  benchmark used to test transfer (BenchCAD `qa_code` and `edit_code`), how
-  exact must the check be?
-  - **Option A — identical CadQuery program text.** Fast, but misses renamed
-    variables and formatting changes.
-  - **Option B — the same CAD model.** Normalize the program or compare the
-    resulting shape. Catches:
-
-    ```python
-    box = cq.Workplane("XY").box(10, 20, 5)
-    ```
-
-    and
-
-    ```python
-    b = cq.Workplane("XY").box(10, 20, 5)
-    ```
-
-  - **Option C — only the same clue type and answer meaning.** Too coarse:
-    two unrelated programs that both ask for a volume would collide.
-  - **Recommendation:** B, with A as a fast pre-check. Two different programs
-    that both ask for a volume are not overlap. Two programs that build the same
-    CAD model under different names are overlap.
-
-- **Q10** (P1). When a later release exceeds 20,000 tasks, is the warmup subset still
-  every 1-step task, or is it capped at 1,000?
-  - **Option A — warmup = every 1-step task.** The 1-step mix is 5%, so the
-    warmup grows with the release. The 500-1,000 range describes the first
-    10,000-task P0 release.
-  - **Option B — warmup is a capped sample.** Keep the warmup at 1,000 and
-    leave the remaining 1-step tasks as ordinary training tasks.
-  - **Option C — cap the release at 20,000 tasks.** Keep the 5% mix and the
-    1,000 warmup cap aligned.
-  - **Recommendation:** A. The warmup is a label for the 1-step bucket, not a
-    fixed-size dataset.
-
-- **Q11** (P1). What thresholds define "no single CAD model dominates" and "no answer
-  is repeated so often that guessing wins"?
-  - **Option A — percentage caps.** No CAD model above 1% of tasks; no answer
-    above 1% of tasks.
-  - **Option B — count caps.** No CAD model above 100 tasks; no answer above
-    100 tasks.
-  - **Option C — no numeric cap.** Rely on the coverage and balance checks.
-  - **Recommendation:** A, with the exact percentages reviewed against the
-    first release. A 1% cap is 100 tasks at the 10,000-task P0 size.
-
-## 16. Resolved questions
+## 15. Resolved questions
 
 - **Q1** (P0). *Resolved 2026-10-21.* The first benchmark dataset release targets
   ten thousand tasks. Scale is not a constraint if generation is efficient.
@@ -486,9 +440,20 @@ The dataset is done when:
   clue types, answer meanings, and answer formats. Target category is coverage-only
   at each task reasoning step count, with a release cap. Task reasoning step
   count uses the target mix in section 8.
+- **Q7** (P0/P1). *Resolved 2026-10-21.* P0 uses Option A: compare normalized
+  CadQuery program text. This is a hash/text check and does not run CadQuery or
+  parse an AST. P1 uses Option B: normalize variable names and formatting with
+  an AST, hash the result, and run CadQuery to compare the shape only for
+  candidates that survive the cheap check or for a final audit. The shape check
+  is not a P0 requirement.
 - **Q8** (P1). *Resolved 2026-10-21.* The same CadQuery programs. The warmup
   subset is a label for easier tasks, not a separate generation path. The
   dataset is designed for curriculum learning.
 - **Q9** (P0). *Resolved 2026-10-21.* No backward compatibility. Training and
   evaluation code moves to the new dataset layout; no compatibility file is
   kept.
+- **Q10** (P1). *Resolved 2026-10-21.* Warmup is the 1-step bucket: 5% of the
+  release, with no absolute cap. A larger release gets a proportionally larger
+  warmup.
+- **Q11** (P1). *Resolved 2026-10-21.* Use percentage caps: no CAD model above
+  1% of tasks, and no correct answer above 1% of tasks.
