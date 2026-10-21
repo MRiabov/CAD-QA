@@ -66,15 +66,20 @@ family does not dominate.
 
 **Recommendation:** collection + required feature tags, with a per-group cap.
 
-### Does the release need the paper's rewrite diversity?
+### Does the release need the paper's code-rewrite augmentation?
 
-The cache does not contain the 744,780 code rewrites. They add semantically
-equivalent code styles, not new geometry.
+The paper's rewrite augmentation took the generator scripts and asked
+`gpt-5-mini` to produce up to 10 semantically equivalent code rewrites per
+script, keeping only executable variants. It produced 744,780 scripts. They
+preserve the same geometry but vary code structure and style.
+
+The cache does not contain those rewrites. They add code-style diversity, not
+new shapes or task capabilities.
 
 - **Skip for the first release:** C is already canonical and template-like, but
   the task prompt is generated from the graph, not from code style alone.
 - **Add later:** use the original tar or rewrite artifacts if prompt-style
   diversity becomes a measured problem.
 
-**Recommendation:** defer rewrite diversity to P1. It is not a first-release
-blocker.
+**Recommendation:** defer the rewrite augmentation to P1. It is not a
+first-release blocker.
