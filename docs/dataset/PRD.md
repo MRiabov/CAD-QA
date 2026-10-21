@@ -1,614 +1,330 @@
-# PRD — CAD-QA dataset generator
+# PRD — CAD-QA dataset
 
 **Status:** draft for owner review, 2026-10-21.
 
-**Authority.** This PRD defines the replacement dataset generator. It replaces
-all previous dataset-generation specifications. The previous pipeline docs,
-answer-format record, decisions, and issue register are archived at
-`docs/_archive/dataset-pre-rebuild-2026-10-21/` and are historical input only.
-The project PRD (`docs/PRD.md`) remains authoritative for the research
-questions, hypotheses, and evaluation contract. This PRD only defines the
-instrument those goals need.
+**What this document is.** This is the product requirements document for the
+CAD-QA dataset. It describes what a user gets from training and evaluating on
+the dataset. It does not describe how the dataset is produced; that belongs in
+the technical specification.
 
-**Scope of this document.** This is a product requirements document, not a
-technical specification. It defines what the generator is for, what a task is,
-what tasks the dataset must contain, and what properties the result must have.
-Architecture, data schema, language boundaries, algorithms, and migration
-mechanics are deliberately deferred. The technical specification follows after
-this PRD is agreed.
+**Relation to the project PRD.** [`../PRD.md`](../PRD.md) remains the authority
+for the research questions, hypotheses, and evaluation goals. This document
+defines the dataset those goals need. It does not change the research goals.
 
----
-
-## 1. Purpose
-
-Build a verifiable, deterministic dataset of questions about CadQuery programs,
-suitable for training and evaluating a small LLM model that has no access to a
-CAD kernel.
-
-The dataset is the instrument for the project's research questions. It is not a
-collection of prompts. Every question must be backed by a reproducible
-computation over the program and its geometry, and the answer must be uniquely
-determined by that computation.
-
-The generator is successful when:
-
-1. an immutable dataset release exists that an LLM model can be trained on and evaluated
-   against;
-2. every answer can be recomputed from the program and recorded facts without
-   an LLM in the loop;
-3. the release contains the task shapes, answer formats, and reasoning depths
-   the project claims;
-4. a reviewer can reconstruct any dataset entry from tracked manifests and
-   hashes;
-5. the generation loop is fast enough to iterate on a laptop.
+**Supersedes.** All previous dataset-generation specifications. The old
+dataset documentation, answer-shape notes, decisions, and issue register are
+archived at `docs/_archive/dataset-pre-rebuild-2026-10-21/` and are history,
+not requirements.
 
 ---
 
-## 2. Why the generator is being rebuilt
+## 1. What the user gets
 
-The previous generator produced a usable internal release but did not match its
-own specification. The rebuild is not a refactor. The following properties are
-non-negotiable in the replacement:
+The user gets a training dataset and a separate evaluation benchmark for LLMs
+that read CadQuery programs and reason about the three-dimensional shapes those
+programs produce.
 
-- tasks are compositions of a small set of typed operations, not hard-coded
-  per-family code paths;
-- all intended answer formats are first-class, not three formats plus
-  aspirational branches;
-- reasoning depth is computed from the actual selection procedure, not declared
-  by a constant;
-- a low-depth warmup tier exists and is separate from the benchmark release;
-- the trusted core is fast, typed, and independently testable, and CadQuery is
-  confined to an execution boundary;
-- vocabulary describes the problem, not an implementation accident;
-- rejected programs and questions are recorded, never silently dropped;
-- the dataset release is reproducible from a manifest and finite inputs.
+Training on the dataset should make an LLM model better at:
 
-The old release remains immutable and tagged. It may be used for a first training
-cycle while the replacement is built. It must not be extended or repaired.
+- reading a CadQuery program and predicting what shape it builds;
+- finding the feature, face, edge, vertex, CadQuery profile, CadQuery workplane, path, or region a question asks about;
+- answering quantitative questions about volume, area, length, distance,
+  angle, bounding box, centroid, and counts;
+- reasoning about relationships such as adjacent, contained, parallel,
+  perpendicular, closer, farther, before, and after;
+- reasoning about what an operation changed, including material added, material
+  removed, volume change, and topology change;
+- following several clues in order until only one answer remains;
+- answering without access to CadQuery, OpenCascade, or any other CAD kernel.
+
+The user also gets:
+
+- a held-out benchmark for comparing LLM models fairly;
+- a small warmup dataset for teaching an LLM model the task shape before the hard
+  questions;
+- questions and answer keys in separate files;
+- training, validation, and test sets that do not overlap;
+- a dataset card that explains what the dataset contains and what it does not;
+- enough documentation to reproduce and review the dataset release.
 
 ---
 
-## 3. Users and consumers
+## 2. Who it is for
 
 | User | What they need |
 |---|---|
-| Dataset owner | Define tasks, inspect samples, finalize releases, and understand why an entry exists. |
-| Training pipeline | Public prompts, private gold answers, splits/pools, and a stable machine-readable contract. |
-| Evaluation pipeline | Held-out entries, typed answers, chance metadata, and per-slice breakdowns. |
-| Reviewer or replicator | A manifest, hashes, commands, and reproducible generation. |
-| Future contributor or agent | One clear task definition and a small set of extension points. |
+| Researcher or trainer | A dataset that teaches CAD program comprehension and geometry reasoning, with a clear answer key. |
+| Evaluator | A held-out benchmark with several difficulty levels and a fair way to compare models. |
+| Reviewer | Questions a careful human can read and check, plus a documented answer key. |
+| Dataset maintainer | A dataset that can be regenerated, extended with new question categories, and reviewed without redoing everything. |
 
 ---
 
-## 4. Product scope
+## 3. What is in the dataset
 
-### In scope
+The dataset contains:
 
-- curating and fingerprinting the CadQuery program corpus;
-- executing programs and recording geometry, topology, CadQuery selector results, and
-  operation effects;
-- building a typed CAD fact graph per program;
-- defining composable task templates;
-- instantiating tasks, verifying answers, and preserving distractors;
-- rendering public prompts and private answer keys;
-- assembling, validating, splitting, and freezing dataset releases;
-- exporting public/private rows, warmup slices, and training/evaluation views;
-- reporting coverage, balance, failures, and reproducibility metadata.
+- a curated collection of CadQuery programs;
+- questions about those programs;
+- one correct answer for each question;
+- enough recorded evidence to show why the answer is correct;
+- a separate answer key;
+- training, validation, and test sets;
+- a warmup set;
+- a dataset card and evaluation material.
 
-### Out of scope
-
-- LLM model training, fine-tuning, reinforcement learning, and inference;
-- LLM-authored prompts, LLM judges, or any LLM in the trusted path;
-- CAD generation, editing, or reconstruction;
-- a public query language or user-facing question DSL;
-- running CadQuery inside the evaluation harness;
-- reproducing the previous generator's internal schema or module layout.
+Each question shows the CadQuery program and asks for one answer. The answer
+key is never part of the question file.
 
 ---
 
-## 5. Provisional vocabulary
+## 4. Categories of questions
 
-The previous vocabulary was difficult to reason about because it mixed domain
-concepts with implementation details. The following terms are the proposed
-replacement. They are provisional until the owner approves them for the
-glossary. Code and later specs must use the approved terms, not synonyms.
+The dataset must support the following categories of questions. The examples
+are illustrative, not exact wording.
 
-| Term | Meaning |
+| Category | What the user sees | Typical answer | Reasoning steps |
+|---|---|---|---|
+| Direct fact | What is the volume of the final solid? | Number | 0 |
+| Locate by property | Which feature adds the most material? | Multiple choice or variable name | 1 |
+| Follow provenance | Which CadQuery profile was used by the feature that created the final solid? | Variable name | 1–2 |
+| Filter and locate | Which face is parallel to the base and has the largest area? | Multiple choice or variable name | 2 |
+| Count | How many faces are parallel to the XY plane? | Integer | 1–2 |
+| Compare | Is the selected face larger than the face it shares an edge with? | Yes or no | 2 |
+| Measure an effect | What is the volume removed by the cut that made the hole? | Number | 2 |
+| Measure a distance | How far is the feature centroid from the nearest point on the path? | Number | 3 |
+| Give a coordinate | Give the centroid of the face adjacent to the top face. | 3D coordinate | 1–2 |
+| Give a bounding box | Give the bounding box of the solid after the final operation. | Bounding box | 1–2 |
+| Describe a CadQuery workplane | Describe the CadQuery workplane of the sketch that produced the feature. | Structured object | 2 |
+| Check membership | Is the point inside the final solid? | Yes or no | 1–2 |
+| Rank | What is the rank of this edge among the edges of its face by length? | Integer | 2 |
+| Follow a chain | Follow the face adjacency chain to the face created by the last cut. | Multiple choice or variable name | 3–5 |
+| Measure geometry after an operation | How much material did the fillet remove? | Number | 2 |
+
+The dataset must not be limited to this list. New question categories may be
+added later, provided they keep the same user-facing shape: a CadQuery program,
+a clear question, one correct answer, and a way to check it.
+
+---
+
+## 5. Categories of answers
+
+The dataset must support all of the following answer shapes.
+
+| Answer shape | What the user sees | Requirements |
+|---|---|---|
+| Multiple choice | A short list of choices, one of which is correct. | Five to seven choices for the benchmark dataset release; the correct answer is always present; choices are real options drawn from the program, not padding; descriptions do not repeat; no choice leaks the answer. |
+| Variable name | A name that appears in the CadQuery program. | The name is visible in the program and identifies one object. |
+| Number | A finite numeric value. | Unit, precision, and tolerance are stated; the number is measured from the real geometry. |
+| Integer | A whole number, usually a count or a rank. | Exact and non-negative where it is a count. |
+| Yes or no | A boolean answer. | Exactly one of true or false is correct. |
+| 3D coordinate | A point such as `(x, y, z)`. | Three finite numbers in a stated coordinate frame, with a stated tolerance. |
+| Bounding box | A minimum and maximum corner. | Two three-dimensional points in a stated frame, with a stated tolerance. |
+| Structured object | A small object with named fields, such as a CadQuery workplane state. | The fields are meaningful and documented; the answer is not an internal object dump. |
+
+All answers must be objectively checkable. An answer that requires an LLM to
+judge is not allowed.
+
+---
+
+## 6. Difficulty
+
+Difficulty is described by how many reasoning steps a question needs.
+
+- **0 steps**: a direct fact about a named object, such as the volume of the
+  final solid.
+- **1 step**: one inference, such as finding a feature by a property.
+- **2 to 5 steps**: the benchmark range. The LLM model must combine clues about
+  geometry, relationships, measurements, and operations.
+- **6 or more steps**: optional future work.
+
+A question's difficulty must come from the work it actually requires, not from
+a label attached to it. A question that looks long but can be answered from a
+variable name or an operation order is not a hard question.
+
+The benchmark dataset release must cover steps 2 through 5. The warmup set
+covers steps 0 and 1.
+
+---
+
+## 7. Product requirements
+
+### 7.1 Correctness and fairness
+
+| ID | Requirement | How the user can tell |
+|---|---|---|
+| **R-1** | Every answer is correct. | The answer is produced by running the CadQuery program during dataset creation and measuring the real geometry. No LLM writes or judges the answer. |
+| **R-2** | Every question has exactly one correct answer. | Ambiguous questions and questions with ties are rejected. |
+| **R-3** | Multiple-choice questions are fair. | The correct answer is present; there are enough choices that guessing does not look competitive; choices are real options drawn from the program; choices do not give the answer away. |
+| **R-4** | Benchmark questions require reasoning about the actual shape. | At least one clue depends on the geometry or topology the program builds, not only on the text of the program. |
+| **R-5** | Trivial shortcuts do not win. | An LLM model cannot answer a benchmark question by reading variable names, literal arguments, or operation order alone. |
+| **R-6** | Answers are not leaked. | The question file never contains the answer or hidden identifiers. |
+
+### 7.2 Coverage and balance
+
+| ID | Requirement | How the user can tell |
+|---|---|---|
+| **R-7** | The dataset covers all answer shapes. | Every answer shape in section 5 appears in both the warmup set and the benchmark dataset release. |
+| **R-8** | The dataset covers many question categories. | At least twelve question categories appear in the benchmark dataset release, and no category dominates. |
+| **R-9** | The dataset covers the full difficulty range. | Steps 2, 3, 4, and 5 all appear, with steps 3 and 4 carrying the headline slices. |
+| **R-10** | The dataset is diverse. | It draws from at least one thousand distinct CAD models, and no single CAD model or question category dominates. |
+| **R-11** | The dataset has varied answers. | At least one thousand different correct answers appear, and no answer is repeated so often that guessing wins. |
+| **R-12** | The dataset is balanced across question categories. | No question category is below one percent or above ten percent of the benchmark dataset release. |
+
+### 7.3 Splits and reuse
+
+| ID | Requirement | How the user can tell |
+|---|---|---|
+| **R-13** | Training, validation, and test sets do not overlap. | The same CAD model never appears in both training and evaluation. |
+| **R-14** | The test set is never trained on. | The dataset card names the test set and the training recipe excludes it. |
+| **R-15** | The warmup set is separate from the benchmark. | Warmup questions are not counted in benchmark results and are not described as benchmark data. |
+| **R-16** | Transfer results are not contaminated. | No program from the external benchmark used for transfer appears in training or evaluation. |
+
+### 7.4 Usability and trust
+
+| ID | Requirement | How the user can tell |
+|---|---|---|
+| **R-17** | A careful human can understand every question. | Sampled questions from every category are reviewed before a dataset release; unclear wording is a defect. |
+| **R-18** | The dataset can be reproduced. | The same programs and the same generator version produce the same dataset; the dataset card documents versions, settings, and how to regenerate it. |
+| **R-19** | Nothing disappears silently. | Every rejected program or question is reported with a reason, and the counts add up. |
+| **R-20** | The dataset can grow without breaking users. | New question categories can be added without changing the question file, the answer key, or the evaluation interface. |
+| **R-21** | The dataset is fast enough to iterate on. | A reviewer can change a question category and produce a new reviewable sample without re-running the entire corpus from scratch. |
+
+---
+
+## 8. Size and mix of the benchmark dataset release
+
+The first benchmark dataset release must contain at least ten thousand
+questions and meet the following targets.
+
+| Property | Target |
 |---|---|
-| **CadQuery program** | One program from the corpus, written in CadQuery. |
-| **Program execution record** | The facts captured by running one CadQuery program: shape states, operation effects, CadQuery selector results, and failures. |
-| **CAD fact** | A typed, verifiable statement about a program or its geometry, such as an entity, a relation, a measurement, or a validity result. |
-| **CAD fact graph** | The collection of CAD facts for one CadQuery program. |
-| **Task template** | A parameterized pattern of reasoning steps that can produce many questions. |
-| **Task shape** | The structural pattern of a task template, for example *filter then traverse then aggregate*. |
-| **Question** | One concrete instance of a task template bound to a program, a target, and sampled parameters. |
-| **Target** | The entity or value the question asks about. |
-| **Selection step** | One composable operation in the hidden reasoning procedure. |
-| **Hidden selection procedure** | The deterministic procedure that starts from all candidates and narrows them to the target. |
-| **Clue** | One public statement corresponding to exactly one selection step. |
-| **Gold answer** | The answer produced by executing the hidden selection procedure. |
-| **Shortlist** | The public list of candidate labels when the answer is a label rather than a value. |
-| **Witness** | The facts and steps that prove the gold answer is unique. |
-| **Reasoning depth** | The number of inference steps a question requires, computed from the witness. |
-| **Dataset entry** | One generated question with its public and private column sets. |
-| **Dataset release** | An immutable, validated, versioned set of dataset entries. |
-| **Warmup slice** | A separate low-depth set used for task-shape and format warmup; not part of the benchmark release. |
-| **Leakage group** | The unit that must not cross train/validation/test boundaries. |
-| **Evidence tier** | The strength of the origin of a fact: kernel-backed, exact analytic, or surrogate. |
+| Questions | At least 10,000 |
+| Distinct CAD models | At least 1,000 |
+| Answer shapes | Every shape in section 5; each at least 5% and none above 25% |
+| Question categories | At least 12; each between 1% and 10% |
+| Difficulty | Steps 2: 20–30%; 3: 30–40%; 4: 20–30%; 5: 10–20% |
+| Geometry-based questions | At least 95% |
+| Questions needing at least three steps | At least 90% |
+| Multiple-choice choices | Five to seven |
+| Different correct answers | At least 1,000 |
+| Evidence for the answer | Available for every question |
 
-The most important renames are:
-
-| Previous term | Proposed term |
-|---|---|
-| `source` | CadQuery program |
-| `trace` | program execution record |
-| `ontology graph` | CAD fact graph |
-| `query program` | hidden selection procedure |
-| `clause` | selection step, or clue when public |
-| `candidate trace` | witness |
-| `task family` | task template |
-| `hop count` | reasoning depth |
-| dataset row | dataset entry |
-| resolver | selection engine |
-| `quarantine` | non-release-ready |
-| release gate | quality requirement or release check |
-
-A full glossary pass is a separate owner-approved step. This PRD uses the
-proposed terms but does not edit `docs/glossary.md`.
+These are product targets. The technical specification will define how they are
+measured and what happens when a target cannot be met.
 
 ---
 
-## 6. The task definition
+## 9. Warmup dataset
 
-A question is defined by four things:
+A small LLM model needs an easy introduction before the benchmark questions. The
+dataset therefore includes a separate warmup set.
 
-1. **Target**: the entity or value being asked about.
-2. **Hidden selection procedure**: an ordered composition of selection steps
-   that narrows candidates to the target or computes the target value.
-3. **Gold answer**: the target projected into one answer format.
-4. **Public clues**: one clue per selection step, rendered in plain language,
-   plus the answer instruction.
-
-### 6.1 Selection steps
-
-Every task is built from the same small step vocabulary. A step consumes a
-candidate set and produces a candidate set, a value, or a truth value.
-
-| Step | What it does | Example |
-|---|---|---|
-| **Select** | Start from all CAD facts of one category. | All faces of the final solid. |
-| **Filter** | Keep candidates that satisfy a typed predicate. | Faces whose area is greater than a sampled value. |
-| **Traverse** | Move from candidates along one typed relation. | Faces adjacent to the selected face. |
-| **Compare** | Keep candidates whose measure compares to a reference. | Edges longer than the selected edge. |
-| **Aggregate** | Choose or compute over candidates by a measure. | The face with the largest area; the count of edges. |
-| **Compute** | Derive a value from the current candidates. | Volume removed by the selected cut; bounding box. |
-| **Answer** | Project the final result into an answer format. | A label, a number, a coordinate, a boolean, or a JSON object. |
-
-A step may use syntax-derived facts, geometry-derived facts, or both. For a
-main benchmark task, at least one step must depend on geometry, topology,
-CadQuery selector results, or execution measurements.
-
-### 6.2 Composition rules
-
-Every task template must satisfy these rules:
-
-1. Steps are typed: the output of one step must be valid input to the next.
-2. The procedure must end with exactly one target, or with a value computed from
-   a uniquely determined set.
-3. Every public clue maps to exactly one selection step, and every step has
-   exactly one public clue.
-4. Every step before the final answer must preserve distractors, except in
-   explicitly low-depth warmup tasks.
-5. No step may hard-code an avoidable choice. Target category, relation, metric,
-   comparison, direction, reference, and answer format are sampled parameters
-   where the evidence allows.
-6. The procedure must be executable from the recorded CAD facts alone.
-7. The gold answer must be recomputable and must match the stored answer.
-8. A template that cannot satisfy these rules on enough programs is invalid and
-   must be reported, not patched with special cases.
-
-### 6.3 Reasoning depth
-
-Reasoning depth is the number of inference steps in the witness:
-
-- `Select` and `Answer` are not inference steps.
-- Each `Filter`, `Traverse`, `Compare`, `Aggregate`, and `Compute` is one
-  inference step.
-- Depth is computed from the procedure, never declared as metadata.
-- **Static depth** counts steps that use only syntax-derived facts.
-- **Geometry depth** counts steps that use geometry-derived facts.
-- Total depth is static depth plus geometry depth.
-
-The release target is depth 2 to 5. Depth 0 and 1 are warmup and calibration
-tasks and are kept in the separate warmup slice. Depth 6 or more may be added
-later if the evidence supports it and the release remains balanced.
-
-A depth label alone is not a difficulty claim. Difficulty also depends on the
-number of distractors, the density of the relation graph, and whether the
-required facts are kernel-backed.
-
-### 6.4 Sampled parameters
-
-A task template declares which parts of the pattern vary. The generator samples
-those parts from evidence; it must not bake an avoidable choice into the
-template.
-
-| Parameter | Examples |
-|---|---|
-| Target category | face, edge, feature, vertex, endpoint, region, solid. |
-| Relation | adjacency, containment, incidence, parallelism, perpendicularity, distance, order, provenance. |
-| Measurement | area, volume, length, angle, distance, centroid, bounding box, topology count, delta. |
-| Comparison | greater, smaller, equal within tolerance, parallel, perpendicular, before, after. |
-| Direction | minimum, maximum, ascending, descending, nearest, farthest. |
-| Reference | another entity, a sampled value, a CadQuery workplane, a point, a path. |
-| Threshold | exact value, tolerance bucket, quantile, or category boundary. |
-| Answer format | one of the eight answer formats. |
-| Shortlist size | five to seven presented candidates. |
-| Wording variant | a reviewed phrasing variant for the same clue. |
-
-A template that hard-codes any of these choices is not release-grade. It may
-still be useful as a warmup or calibration template, or as a negative test.
+- 500 to 1,000 questions;
+- 0 or 1 reasoning steps;
+- all answer shapes;
+- the same question and answer-key format as the benchmark;
+- the same correctness and fairness rules;
+- never included in benchmark results or benchmark claims;
+- built from CAD models that do not also appear in the benchmark dataset release.
 
 ---
 
-## 7. Task requirements
+## 10. Training, validation, and test
 
-Requirements are grouped by task semantics, answers, dataset composition, and
-operations. Each requirement has an acceptance check. The technical
-specification will turn these checks into executable tests.
+The benchmark dataset release is divided into three parts:
 
-### 7.1 Task semantics
+- **Training**: questions an LLM model may learn from;
+- **Validation**: questions used to tune training decisions;
+- **Test**: questions used only for the final result.
 
-| ID | Requirement | Acceptance |
-|---|---|---|
-| **T-1** | Tasks are compositions of the step vocabulary. Adding a task shape or parameter combination must not require a new bespoke generation path. | A new valid task template can be added as data and produces questions without changing the core engine. |
-| **T-2** | Every step is typed. Invalid compositions fail at template validation, not at row generation. | The template validator rejects a composition whose output category does not match the next step's input category. |
-| **T-3** | Reasoning depth is computed from the witness, not declared. | Recomputing the witness reproduces the stored depth. |
-| **T-4** | Main benchmark tasks are geometry-first: at least one step depends on geometry or execution evidence. | A syntax-only solver cannot determine the answer from names, literal arguments, or operation order. |
-| **T-5** | The hidden procedure resolves exactly one target or value. Ties are rejected unless the template declares a deterministic tie-break that preserves uniqueness. | The selection engine returns one answer for every accepted question. |
-| **T-6** | Intermediate steps preserve distractors. High-depth tasks keep at least two candidates before the final narrowing step. | Candidate counts are recorded per step and checked against the template's breadth policy. |
-| **T-7** | Public clues are traceable. Each clue corresponds to one step, and each step has one clue. | Clue identifiers and step identifiers match exactly in both directions. |
-| **T-8** | The task set covers the target categories the project claims: features, faces, edges, vertices, endpoints, CadQuery profiles, CadQuery workplanes, paths, regions, solids, and scalar facts. | Coverage report by target category, with explicit gaps. |
-| **T-9** | The task set covers the relation categories the project claims: incidence, adjacency, containment, parallelism, perpendicularity, distance, order, provenance, and material/void relations. | Coverage report by relation category, with explicit gaps. |
-| **T-10** | The task set covers the measurements the project claims: volume, area, length, angle, distance, centroid, bounding box, topology counts, and deltas. | Coverage report by measurement category and scope. |
-| **T-11** | Feature-effect tasks are first-class: questions can ask for the volume, bounding box, topology, or centroid effect of an operation. | At least one feature-effect shape produces numeric answers, not only labels. |
-| **T-12** | CadQuery selector and topology tasks are first-class: questions can depend on what a CadQuery selector actually selected. | CadQuery-selector-derived questions record the CadQuery selector result as evidence and cannot use surrogate identities. |
-| **T-13** | A careful human can understand every rendered question without knowing the generator. | Human review of sampled prompts per template; ambiguous wording is a defect. |
-| **T-14** | No public clue, shortlist, or prompt leaks the gold answer or private identifiers. | Leakage checks on prompt text, shortlist descriptions, and answer instructions. |
-| **T-15** | Low-depth tasks exist for warmup and smoke runs, separate from the benchmark release. | A warmup slice contains depth 0 and 1 tasks across all answer formats. |
-| **T-16** | A task template is viable only if it produces enough questions across enough CAD models to meet its release share. A non-viable template is reported, not silently omitted or patched. | Template viability report with generation counts and failure reasons. |
-| **T-17** | Every public clue is rendered from a reviewed, versioned wording template. An unseen combination of step and wording fails validation instead of rendering ad hoc text. | Prompt-template coverage and review evidence per task template. |
+The same CAD model must not appear in more than one part. The test part must
+never be used for training, tuning, or choosing an LLM model.
 
-### 7.2 Answers
-
-| ID | Requirement | Acceptance |
-|---|---|---|
-| **A-1** | All eight answer formats are first-class: `candidate_label`, `coordinate`, `text`, `number`, `integer`, `boolean`, `bbox`, and `json`. | Each format appears in the warmup slice and in the release at or above its minimum share. |
-| **A-2** | Identity answers use either a public program-visible name or a shortlist label. Internal CAD ontology identifiers are never public answers. | No public gold answer contains an internal identifier. |
-| **A-3** | A `candidate_label` question shows a shortlist of real candidates from the same target set. The gold is always present, labels are unique, and descriptions do not collide. | Shortlist audit passes for every candidate-label entry. |
-| **A-4** | For a benchmark release, a shortlist has at least five and at most seven candidates. | Shortlist size distribution satisfies the release requirement. |
-| **A-5** | `number` answers are finite, unit-typed, rounded to a declared precision, and graded with a declared tolerance. | Numeric contract check per task template. |
-| **A-6** | `integer` answers are exact non-negative counts or ranks with a declared range. | Integer contract check per task template. |
-| **A-7** | `boolean` answers are true or false and have a typed submission tool. | Boolean tool round-trips through extraction and grading. |
-| **A-8** | `coordinate` answers are three finite numbers with a declared frame and tolerance. | Coordinate contract check. |
-| **A-9** | `bbox` answers are a minimum and maximum three-vector with a declared frame and tolerance. | Bounding-box contract check. |
-| **A-10** | `json` answers have a template-specific schema with non-degenerate fields, such as a CadQuery workplane state. A JSON answer must not be a relabeled internal object dump. | JSON schema check and sampled human review. |
-| **A-11** | `text` answers are program-visible variable names or program-visible entity names. They are unique in their program and do not require internal graph knowledge. | Text contract check. |
-| **A-12** | Every answer format maps to one typed submission tool and one grading path. | Format/tool/grading parity test. |
-| **A-13** | Candidate-label entries record the chance probability of a random correct guess. | Each entry carries enough metadata to compute chance-corrected accuracy. |
-
-### 7.3 Dataset composition
-
-These are release-level targets. Exact numbers belong in the technical
-specification and the executable release rule set, but the PRD fixes the shape.
-
-| ID | Requirement | Acceptance |
-|---|---|---|
-| **D-1** | A benchmark release contains at least 10,000 dataset entries. | Release count check. |
-| **D-2** | A release draws from at least 1,000 distinct CAD model identities, not merely 1,000 program files. | CAD model coverage report keyed by CAD model identity. |
-| **D-3** | Every answer format appears in the release. No format is a decorative branch with zero entries. | Format distribution check. |
-| **D-4** | The release has at least 12 task templates and no template exceeds 10% of entries; every template contributes at least 1%. | Template distribution check. |
-| **D-5** | The release covers reasoning depths 2 through 5 with no depth collapsed to zero. Depth 3 and 4 carry the headline slices. | Depth distribution check. |
-| **D-6** | At least 95% of benchmark entries have geometry depth greater than zero, and at least 90% have total depth at least 3. | Geometry-depth and total-depth checks. |
-| **D-7** | At least 15% and at most 30% of entries are value-bearing measurement tasks; at least 5% and at most 15% are cross-feature value-bearing tasks. | Value-bearing coverage checks. |
-| **D-8** | Within a parameterized task template, no sampled parameter value exceeds 35% unless the template is explicitly marked geometry-limited. | Parameter-balance report. |
-| **D-9** | The release has at least 1,000 unique gold answers and at least 8 bits of answer entropy. | Answer-diversity checks. |
-| **D-10** | Candidate-label entries keep enough presented candidates that the chance floor is defensible. | Shortlist-size distribution and chance-floor report. |
-| **D-11** | Every release entry records its evidence tier. Surrogate-backed entries are not release-ready. | Evidence-tier distribution and exclusion report. |
-| **D-12** | The release is split into train, validation, and test; the training side is further split into SFT and RL pools. Evaluated entries are never trained on. | Split and pool manifests with disjointness checks. |
-| **D-13** | Splits are group-safe by leakage group, and the leakage group is the CAD model, not the program file. | No CAD model crosses splits. |
-| **D-14** | The release is contamination-checked against the external evaluation corpus used for transfer claims. | Overlap report by program hash and CAD model. |
-| **D-15** | A separate warmup slice contains depth 0 and 1 tasks and is never included in benchmark-release metrics or claims. | Warmup manifest and exclusion check. |
-| **D-16** | Every release entry has a complete provenance record: CadQuery program, execution record, task template, sampled parameters, witness, and hashes. | Provenance completeness check. |
-| **D-17** | No intended release task template produces zero entries. | Template coverage report; zero-entry intended templates are release blockers. |
-| **D-18** | No single prompt-wording template exceeds 5% of release entries, and the release has at least 20 distinct prompt-wording templates. | Prompt-template distribution check. |
-
-### 7.4 Operations and quality
-
-| ID | Requirement | Acceptance |
-|---|---|---|
-| **Q-1** | Generation is deterministic for a fixed corpus, generator version, and seed. | A replay produces the same release hash. |
-| **Q-2** | Every accepted or rejected program and question is accounted for. There is no silent data loss. | Reconciliation report: input count equals accepted plus rejected plus skipped, with reasons. |
-| **Q-3** | The trusted path contains no LLM. Generation and verification are deterministic. | Static check for network and LLM model clients in the trusted path. |
-| **Q-4** | The generator is fast enough to iterate on a laptop. Program execution is cached and resumable; reruns do not re-execute unchanged programs; the deterministic core does not require CadQuery. | Pipeline-stage timing and memory report; a cached rerun of an unchanged corpus avoids re-execution. |
-| **Q-5** | The core is typed and independently testable. The CadQuery boundary is small, explicit, and replaceable. | Core tests run without CadQuery installed; the execution adapter has its own contract tests. |
-| **Q-6** | Adding a task template, a parameter dimension, or an answer-format adapter is a small, documented change with tests. | Extension guide and a worked example. |
-| **Q-7** | Every release entry can be reconstructed from tracked manifests and hashes. | Reconstruction test from the manifest on a sample. |
-| **Q-8** | A human review pass covers every changed task template and every new answer format before a release is finalized. | Review evidence stored with the release. |
-| **Q-9** | The generator emits a stable public/private export that the training and evaluation pipeline can consume without re-deriving answers. | Downstream loader and grading smoke test. |
-| **Q-10** | A small end-to-end run exercises every pipeline stage, every answer format, and depths 0 through 5. | E2E test with a small program corpus. |
-
----
-
-## 8. Task catalog
-
-This catalog is the rough shape of the tasks the generator must support. It is
-not a closed list. New tasks are new compositions of the same steps. The
-examples are illustrative, not literal prompt text.
-
-| ID | Shape | Rough question | Typical answer formats | Depth |
-|---|---|---|---|---|
-| **C-1** | Select → Answer | What is the volume of the final solid? | `number` | 0 |
-| **C-2** | Select → Filter → Answer | Which feature adds the most material? | `text`, `candidate_label` | 1 |
-| **C-3** | Select → Traverse → Answer | Which CadQuery profile was used by the feature that created the final solid? | `text` | 1–2 |
-| **C-4** | Select → Traverse → Filter → Answer | Which face of the final solid is parallel to the base plane and has the largest area? | `candidate_label`, `text` | 2 |
-| **C-5** | Select → Filter → Aggregate → Answer | What is the rank of the selected edge among the edges of its face by length? | `integer` | 2 |
-| **C-6** | Select → Filter → Count → Answer | How many faces of the final solid are parallel to the XY plane? | `integer` | 1–2 |
-| **C-7** | Select → Compute → Answer | What is the volume removed by the cut that produced the hole? | `number` | 2 |
-| **C-8** | Select + Select reference → Compare → Answer | Is the selected face larger than the face it shares an edge with? | `boolean` | 2 |
-| **C-9** | Select + Select reference → Compute distance → Answer | What is the distance between the feature centroid and the nearest point on the path? | `number` | 3 |
-| **C-10** | Select → Compute centroid → Answer | Give the centroid of the face that is adjacent to the top face. | `coordinate` | 1–2 |
-| **C-11** | Select → Compute box → Answer | Give the bounding box of the solid after the final operation. | `bbox` | 1–2 |
-| **C-12** | Select → Compute CadQuery workplane → Answer | Describe the CadQuery workplane of the sketch that produced the selected feature. | `json` | 2 |
-| **C-13** | Select solid + point → Predicate → Answer | Is the point inside the final solid? | `boolean` | 1–2 |
-| **C-14** | Select → Traverse → Traverse → Filter → Answer | Follow the face adjacency chain to the face created by the last cut. | `candidate_label`, `text` | 3–5 |
-| **C-15** | Select → Traverse chain → Aggregate → Answer | Among the edges reachable through the selected faces, which is longest? | `candidate_label` | 4–5 |
-
-### 8.1 Composability matrix
-
-Every row is a task shape; every column is an answer format. A cell is
-supported when the final target can be projected into that format without
-changing the reasoning.
-
-| Shape | label | text | number | integer | boolean | coordinate | bbox | json |
-|---|---|---|---|---|---|---|---|---|
-| Direct fact | — | — | yes | yes | yes | yes | yes | yes |
-| Locate by filter | yes | yes | — | — | — | yes | yes | yes |
-| One relation | yes | yes | yes | yes | yes | yes | yes | yes |
-| Relation + filter | yes | yes | — | — | — | — | — | — |
-| Aggregate or rank | yes | yes | yes | yes | yes | yes | yes | — |
-| Compare | yes | yes | yes | yes | yes | yes | yes | — |
-| Count | — | — | — | yes | — | — | — | — |
-| Feature effect | yes | yes | yes | yes | yes | yes | yes | — |
-| Distance | yes | yes | yes | — | yes | yes | — | — |
-| Membership or validity | — | — | — | — | yes | — | — | — |
-| CadQuery workplane state | — | — | — | — | — | — | — | yes |
-| Multi-hop chain | yes | yes | yes | yes | yes | yes | yes | yes |
-
-The matrix is a coverage requirement, not a promise that every cell is
-instantiated in the first release. A cell that is not instantiated must be
-reported as a known gap.
-
----
-
-## 9. Dataset composition requirements
-
-### 9.1 Benchmark release
-
-The first replacement release must contain at least 10,000 entries and meet the
-composition targets in section 7.3. The intended mix is:
-
-| Dimension | Target |
-|---|---|
-| Reasoning depth | 2: 20–30%; 3: 30–40%; 4: 20–30%; 5: 10–20% |
-| Answer format | every format at least 5%; no format above 25% |
-| Task template | at least 12 templates; each 1–10% |
-| Geometry depth | at least 95% of entries with geometry depth > 0 |
-| Total depth | at least 90% of entries with depth at least 3 |
-| Shortlist size | 5–7 candidates for `candidate_label` |
-| Candidate breadth | at least 2 candidates before the final step; median at least 4 |
-| Unique answers | at least 1,000 |
-| Answer entropy | at least 8 bits |
-| Distinct CAD model identities | at least 1,000 |
-| Evidence | kernel-backed or exact analytic for release entries; no surrogates |
-
-These are product targets. The technical specification will make them
-executable and will define what happens when a target is infeasible.
-
-### 9.2 Warmup slice
-
-The warmup slice is a separate, non-release artifact. It exists because a small
-LLM model needs an easy task-shape and format warmup, and because smoke runs need
-cheap examples.
-
-- 500 to 1,000 entries;
-- depth 0 and 1 only;
-- all eight answer formats;
-- same public/private contract as the release;
-- same provenance and verification rules;
-- never counted in benchmark-release metrics or paper claims;
-- group-disjoint from the release.
-
-### 9.3 Splits and pools
-
-The release is split by leakage group, where a leakage group is a CAD model, not
-a program file and not a broad corpus provenance label.
-
-- `sft_train`: entries that may enter an SFT mix;
-- `rl_train`: entries held out from SFT for the RL-readiness gate and RL/RFT;
-- `eval`: validation and test entries, never trained on.
-
-The intended entry shares are approximately 70% `sft_train`, 15% `rl_train`, and
-15% `eval`, with validation and test splitting the eval pool evenly. The exact
-assignment algorithm belongs in the technical specification. The PRD requires
-that no CAD model crosses splits and that the manifests report program, leakage-group,
-and entry counts.
-
-### 9.4 Corpus requirements
-
-The corpus is the finite input to the generator. It must be:
-
-- valid CadQuery that parses and executes within the execution budget;
-- deduplicated by normalized code hash and by CAD model identity;
-- grouped by CAD model so that variants of the same CAD model cannot cross splits;
-- balanced enough to cover flat emitted programs and programs with control
-  flow, functions, and math;
-- licensed and provenance-recorded;
-- stable under a content hash so a release can be reproduced.
-
-The corpus manifest must report how many programs were considered, included,
-duplicated, unsupported, timed out, or excluded, with reasons.
-
----
-
-## 10. Quality attributes
-
-### 10.1 Determinism and auditability
-
-Given the same corpus, generator version, CadQuery/OCP version, and seed, the
-generator must produce the same release hash. Every release must carry:
-
-- the generator version and commit;
-- the corpus manifest and content hashes;
-- the CadQuery/OCP/Python versions;
-- the task-template versions and sampled parameters;
-- the selection seed;
-- the command lines and pipeline-stage timings;
-- the counts of accepted, rejected, and skipped programs and questions.
-
-### 10.2 Performance and iteration
-
-The previous generator was slow, repeatedly re-executed unchanged programs, and
-could overheat a laptop. The replacement must make iteration cheap:
-
-- tracing is cached by program content and environment version;
-- a cached rerun of an unchanged corpus never re-executes;
-- long stages are sharded and resumable;
-- the deterministic core does not import CadQuery;
-- the generator reports wall time and peak memory per pipeline stage;
-- the default local workflow does not require re-executing the full corpus to
-  change a task template or a prompt.
-
-Exact timing budgets belong in the technical specification. The product
-requirement is that a task-template change can be evaluated without paying the
-full execution cost again.
-
-### 10.3 Typed, testable core
-
-The trusted core must be strongly typed, with explicit data records for facts,
-steps, templates, questions, answers, and manifests. It must be testable
-without CadQuery installed. CadQuery may appear only in the execution adapter
-and in the tests that exercise that adapter.
-
-This is a product requirement because the previous generator's untyped,
-deeply coupled modules made it impossible to tell what a row depended on. The
-choice of implementation language is deferred to the technical specification.
-
-### 10.4 Extensibility
-
-Adding a new task template or a new parameter dimension should be a data
-change plus tests, not a new bespoke generator. Adding a new answer format
-should require one typed value definition, one renderer, one submission tool, and
-one grading path.
-
-### 10.5 Failure accounting
-
-Every program and every candidate question has one outcome: accepted, rejected
-with a reason, or skipped with a reason. Failure reports are part of the
-release, not a debugging afterthought. A release with unexplained missing entries
-is invalid.
+The intended proportions are approximately 70% training, 15% validation, and
+15% test. The exact proportions may change if the available CAD models make
+them impractical, but the no-overlap rule may not change.
 
 ---
 
 ## 11. Deliverables
 
-| Deliverable | Definition |
+| Deliverable | What the user receives |
 |---|---|
-| Corpus manifest | The fingerprint, provenance, deduplication, and grouping record for the CadQuery program corpus. |
-| Execution cache | Program execution records keyed by program hash and environment version, with failures included. |
-| CAD fact graphs | Typed facts for every accepted program. |
-| Task templates | Versioned, parameterized, composable task definitions with validation rules. |
-| Question set | Generated, verified questions with witnesses and sampled parameters. |
-| Dataset release | Immutable entries with public/private column sets, splits, pools, manifests, and reports. |
-| Warmup slice | Separate depth 0/1 entries for task-shape and format warmup. |
-| Exports | Public/private entries, SFT views, evaluation requests, and the training/evaluation loader contract. |
-| Reports | Coverage, balance, failures, evidence tiers, shortlist audit, leakage, split audit, and reproducibility manifest. |
-| Tests | Unit tests for the typed core, adapter tests for CadQuery, property tests for composition rules, and one end-to-end run. |
-| Docs | This PRD, the approved glossary delta, and the technical specification. |
+| Training dataset | Questions and answer keys for training. |
+| Validation dataset | Questions and answer keys for tuning. |
+| Test dataset | Held-out questions and answer keys for the final result. |
+| Warmup dataset | Easy questions for teaching the task shape. |
+| Dataset card | A plain description of what the dataset contains, how it was made, what it is for, and what it is not for. |
+| Evaluation material | The answer keys and instructions needed to score an LLM model. |
+| Documentation | How to reproduce the dataset release and how to review it. |
 
 ---
 
 ## 12. Definition of done
 
-The replacement generator is done when:
+The dataset is done when:
 
-1. a small end-to-end run produces every answer format and depths 0 through 5;
-2. a 10,000-entry benchmark release meets the composition targets in section
-   9.1, or every miss is recorded and explicitly accepted by the owner;
-3. a separate warmup slice exists and is excluded from release claims;
-4. the release is deterministic on replay and reconstructible from its
-   manifest;
-5. the training and evaluation pipeline can load the public/private export and
-   grade a sample without re-deriving answers;
-6. a human review of sampled prompts per task template finds no unclear or
-   leaking questions;
-7. the cached iteration loop is fast enough that changing a task template does
-   not require retracing the corpus;
-8. the old release remains immutable and the old generator is marked superseded.
+1. a small sample produces every question category and every answer shape;
+2. a benchmark dataset release of at least ten thousand questions meets the
+   targets in section 8, or every miss is documented and accepted by the owner;
+3. a separate warmup set exists;
+4. training, validation, and test sets do not share a CAD model;
+5. a reviewer can read sampled questions from every category and understand
+   them without asking what they mean;
+6. the answers can be checked without an LLM in the loop;
+7. the dataset release can be regenerated and the result matches what is
+   documented;
+8. the dataset card states clearly what the dataset is and is not suitable for;
+9. an LLM model can be trained on the training set and evaluated on the test set
+   without touching the answer key.
 
 ---
 
 ## 13. Non-goals
 
-- An LLM-model quality result. This PRD stops at the dataset; training and evaluation
-  are separate.
+- Training or evaluating an LLM model. This document stops at the dataset.
 - A public question language.
-- An LLM-generated or LLM-judged dataset.
-- Kernel access during evaluation.
+- A dataset written or judged by an LLM.
 - CAD generation or editing.
-- Backward compatibility with the previous generator's internal schema. The
-  public/private export may change, but downstream consumers must be migrated in
-  the same effort.
-- Preserving old task names, old family names, or old field names for their own
-  sake.
+- Giving the LLM model CadQuery or a CAD kernel during evaluation.
+- A general three-dimensional reasoning benchmark.
+- A replacement for an independent transfer benchmark.
+- Preserving the previous dataset's internal names or file layout.
 
 ---
 
 ## 14. Legacy and migration
 
-- The old release is tagged
-  `before-throwing-out-the-existing-dataset-generator` and is immutable.
-- The old package is marked superseded by `dataset/SUPERSEDED.md`.
-- The old documentation is archived under
+- The previous dataset release is tagged
+  `before-throwing-out-the-existing-dataset-generator` and is fixed.
+- The previous dataset generator is marked superseded by
+  `dataset/SUPERSEDED.md`.
+- The previous documentation is archived under
   `docs/_archive/dataset-pre-rebuild-2026-10-21/`.
-- The replacement must export a stable public/private view. The training and
-  evaluation pipeline is migrated after the replacement can produce that view,
-  not before.
-- Old code may be read for algorithmic lessons, especially execution and
-  CadQuery selector measurement, but it must not be copied wholesale into the
-  replacement. Any reused logic gets a fresh contract and tests.
+- The previous dataset release may be used for a first training cycle while the
+  replacement is built. It must not be extended or repaired.
+- The replacement dataset may use a new question file and answer-key layout.
+  Users of the previous layout must be migrated as part of the replacement.
 
 ---
 
 ## 15. Open questions
 
-- **Q1.** Is the benchmark-release target 10,000 entries, or should the first
-  replacement release be smaller and the 10,000 target be a later scale-up?
-- **Q2.** Is the minimum shortlist size five, or should it be seven for a lower
-  chance floor?
-- **Q3.** What exactly identifies a CAD model for leakage grouping: the base
-  file stem, the path family, the normalized geometry, or a combination?
-- **Q4.** Should depth 0 and 1 appear in the benchmark release at all, or only
-  in the warmup slice? This PRD proposes warmup only.
-- **Q5.** Should every answer format be required at a 5% share, or should the
-  mix follow the task shapes and only require non-zero coverage?
-- **Q6.** How many task templates should the first release target: 12, 20, or a
-  smaller set with more parameter variation?
-- **Q7.** Which external corpus must the contamination check cover for the
-  transfer claim, and at what granularity?
-- **Q8.** Should the warmup slice be generated from the same corpus and task
-  engine, or from a separate small syntax/representation corpus?
-- **Q9.** Does the training pipeline require a compatibility export in the old
-  dataset-entry schema, or can it migrate to the new public/private schema immediately?
-- **Q10.** Which of the proposed terms in section 5 are approved, and which
-  need different names before they enter the glossary?
+- **Q1.** Is the first benchmark dataset release ten thousand questions, or
+  should the first dataset release be smaller and ten thousand be a later scale-up?
+- **Q2.** Should a multiple-choice question show five or seven choices?
+- **Q3.** What counts as the same CAD model when keeping training and
+  evaluation apart?
+- **Q4.** Should zero- and one-step questions appear in the benchmark dataset release
+  at all, or only in the warmup set? This document proposes warmup only.
+- **Q5.** Should every answer shape be required to reach five percent, or is
+  non-zero coverage enough for some shapes?
+- **Q6.** How many question categories should the first dataset release target?
+- **Q7.** Which independent benchmark must the overlap check cover, and at what
+  level of detail?
+- **Q8.** Should the warmup set come from the same CadQuery programs as the
+  benchmark, or from a separate small set of syntax examples?
+- **Q9.** Must the replacement keep a file in the old layout for the current
+  training setup, or can the training setup move to the new layout at the same
+  time?
