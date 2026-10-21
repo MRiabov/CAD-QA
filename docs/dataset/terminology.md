@@ -1,4 +1,4 @@
-# Dataset terminology
+# CAD-QA dataset terminology
 
 **Status:** proposal for owner approval, 2026-10-21. This document does not
 edit `docs/glossary.md`. A term becomes canonical only after the owner approves
@@ -24,10 +24,11 @@ it.
 | **Program text** | The CadQuery program shown in the prompt. |
 | **Prompt** | Everything the LLM model sees for one task: program text, question, task clues, optional choices, and answer instruction. |
 | **Answer key** | The private record of the correct answer and the evidence for it. |
-| **CAD fact graph** | The typed facts about one CadQuery program and the shape it builds. |
-| **Graph entity** | One entity in the CAD fact graph, such as a face, edge, operation, or region. |
-| **Relation** | A typed link between two graph entities. |
-| **Measurement** | A numeric or geometric fact about a graph entity or a pair of entities. |
+| **CAD graph** | The graph of CAD entities, relations, and measurements for one CadQuery program and the shape it builds. |
+| **CAD graph element** | One entity, relation, or measurement in the CAD graph. |
+| **Graph entity** | One entity in the CAD graph, such as a face, edge, operation, or region. |
+| **Relation** | A named link between two graph entities. |
+| **Measurement** | A numeric or geometric value about a graph entity or a pair of entities. |
 | **Evidence** | The record of how a measurement was obtained: measured by running CadQuery, or derived exactly from the program. |
 | **Solid state** | The shape before or after an operation, or the final shape. |
 | **Warmup subset** | The labeled set of 0- and 1-step tasks inside the dataset. It is useful for training, not a separate dataset. |
@@ -54,7 +55,7 @@ magic word.
 | Answer format | answer + format | The form of the answer. |
 | Answer instruction | answer + instruction | The prompt part that states the answer format. |
 | Solid state | solid + state | The shape before or after an operation, or the final shape. |
-| CAD fact graph | CAD + fact + graph | The graph of facts about a CadQuery program and its shape. |
+| CAD graph | CAD + graph | The graph of CAD entities, relations, and measurements for a CadQuery program and its shape. |
 | Warmup subset | warmup + subset | A labeled subset of easier tasks. |
 | Dataset release | dataset + release | An immutable, validated dataset. |
 
@@ -74,7 +75,7 @@ Terms that were replaced because they were not composed from the domain:
 |---|---|
 | `source` | CadQuery program |
 | `execution record` | program execution record |
-| `ontology graph` | CAD fact graph |
+| `ontology graph` | CAD graph |
 | `node` | graph entity |
 | `clause` | task clue |
 | `candidate trace` | task solution sequence |
@@ -94,20 +95,16 @@ Terms that were replaced because they were not composed from the domain:
 | `gate` | quality requirement |
 | `tracked` | recorded or documented |
 
-## 4. Naming decisions needed
+## 4. Naming decisions
 
-- **Q1.** Should the graph be called the **CAD fact graph**, the **CAD model
-  graph**, or something else?
-- **Q2.** Should the public condition be called a **task clue**, or is there a
-  clearer composed term?
-- **Q3.** Should the reusable task pattern be called a **task family**, a
-  **task pattern**, or a **task category**?
-- **Q4.** Should "direct" be a task family, or is a direct task a measure
-  family with a named task target and one task answer step?
-- **Q5.** Is "task clue step" clear, or should it be "graph step", "filter
-  step", or "constraint step"?
-- **Q6.** Should "multiple-choice choices" be shortened to "choices" after the
-  first use?
+- The public condition is a **task clue**.
+- The reusable pattern is a **task family**.
+- The step that applies a task clue is a **task clue step**.
+- The step that produces the answer is a **task answer step**.
+- The ordered steps that solve the task are the **task solution sequence**.
+- The form of the answer is the **answer format**.
+- "Direct" is a task reasoning pattern. Whether it is a family is a task-design
+  question, not a naming question.
 
 ## 5. Terms to avoid
 

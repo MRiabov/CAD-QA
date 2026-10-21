@@ -1,6 +1,6 @@
-# Graph content
+# CAD graph content
 
-**Status:** draft, 2026-10-21. This document defines what the CAD fact graph
+**Status:** draft, 2026-10-21. This document defines what the CAD graph
 must contain for a task to be answerable. It does not define storage or
 code.
 
@@ -13,7 +13,7 @@ graph.
 If a task clue cannot be checked against the graph, the task is not generated.
 If an answer cannot be produced from the graph, the task is not generated.
 
-The graph is not a copy of the program text. It is the set of facts the
+The graph is not a copy of the program text. It is the set of graph elements the
 tasks need, derived from the program and from running it.
 
 ## 2. Graph entities
@@ -37,7 +37,7 @@ The graph contains these entity categories.
 | Path segment | A segment of a path. | The path and a stable segment identity. |
 | Region | Material a feature adds or removes. | The feature and the sign of the change. |
 | CadQuery selector result | The entities a CadQuery selector actually selected. | The CadQuery selector expression and the solid state it ran on. |
-| Measurement | A numeric or geometric fact about an entity or a pair of entities. | The measured entity or pair, and the measurement name. |
+| Measurement | A numeric or geometric value about an entity or a pair of entities. | The measured entity or pair, and the measurement name. |
 
 Every entity belongs to exactly one CadQuery program. An entity without a
 program is not part of a task.
@@ -99,11 +99,11 @@ relation categories.
 | selected_from | CadQuery selector result | Solid state | The CadQuery selector ran on the solid state. |
 
 Every relation has two endpoints. A relation with a missing endpoint is a graph
-defect, not a fact.
+defect, not a graph element.
 
 ## 4. Measurements
 
-Measurements are the numeric and geometric facts a task can use. The graph
+Measurements are the numeric and geometric values a task can use. The graph
 must support at least these.
 
 | Measurement | Applies to | Notes |
@@ -132,7 +132,7 @@ Every measurement has:
 
 The record of how it was obtained is the **evidence**. Evidence is either
 **measured** by running CadQuery, or **derived** from the program text and
-geometry by an exact rule. A guessed or approximate fact is not evidence and
+geometry by an exact rule. A guessed or approximate value is not evidence and
 cannot support a benchmark answer.
 
 ## 5. States and timing
@@ -158,11 +158,11 @@ the same entity unless the graph records that they are the same.
 3. Every measurement has an entity or pair, a name, and evidence.
 4. No entity is duplicated under two identities unless the graph records a
    `same_as` relation.
-5. No fact is orphaned.
-6. Every fact used by a task clue or answer is present.
-7. Every fact that cannot be measured is recorded as missing, not guessed.
+5. No graph element is orphaned.
+6. Every graph element used by a task clue or answer is present.
+7. Every graph element that cannot be measured is recorded as missing, not guessed.
 8. The graph can answer every task family the dataset claims to support.
-9. A task that needs a missing fact is rejected, not softened.
+9. A task that needs a missing graph element is rejected, not softened.
 
 ## 7. What the graph is not
 
@@ -170,7 +170,7 @@ the same entity unless the graph records that they are the same.
 - It is not a replacement for the program text.
 - It is not a general-purpose knowledge graph.
 - It is not a place to store guessed measurements.
-- It is not a database of every possible task; it is the facts the
+- It is not a database of every possible task; it is the graph elements the
   tasks need.
 
 ## 8. Coverage check
@@ -182,21 +182,19 @@ checks:
 - Which task clue forms does the family need?
 - Which relations does each task clue need?
 - Which measurements does the answer need?
-- Which states does the family need?
-- Which of those facts are measured, and which are derived?
+- Which solid states does the task family need?
+- Which of those graph elements are measured, and which are derived?
 
-A family is not supported if any required fact is missing. The coverage report
-lists the missing facts by family.
+A task family is not supported if any required graph element is missing. The coverage report
+lists the missing graph elements by task family.
 
 ## 9. Open questions
 
-- **Q1.** Is "CAD fact graph" the right name, or should this be "CAD model
-  graph"?
-- **Q2.** How stable are face, edge, and vertex identities across two
+- **Q1.** How stable are face, edge, and vertex identities across two
   operations, and when should the graph use `same_as`?
-- **Q3.** Should CadQuery selector results be stored as entities, as a relation,
+- **Q2.** Should CadQuery selector results be stored as entities, as a relation,
   or both?
-- **Q4.** Which measurements can be derived exactly from the program text, and
+- **Q3.** Which measurements can be derived exactly from the program text, and
   which must always be measured by CadQuery?
-- **Q5.** How should the graph represent a shape that cannot be measured, such
+- **Q4.** How should the graph represent a shape that cannot be measured, such
   as a failed operation?

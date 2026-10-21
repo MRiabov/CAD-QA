@@ -103,7 +103,7 @@ written in plain language, and their variety is a requirement in its own right.
 
 The structure of a task is defined in [`task-structure.md`](task-structure.md).
 The content of the prompt is defined in [`prompt-content.md`](prompt-content.md).
-The facts the tasks rely on are defined in [`graph-content.md`](graph-content.md).
+The CAD graph the tasks rely on is defined in [`graph-content.md`](graph-content.md).
 The proposed vocabulary is in [`terminology.md`](terminology.md).
 
 ---
@@ -119,7 +119,7 @@ independent dimensions:
 - the **task reasoning pattern** that finds the task target;
 - the **task reasoning depth** the task requires.
 
-The previous flat list mixed these dimensions. For example, "direct fact"
+The previous flat list mixed these dimensions. For example, "direct lookup"
 described depth, "give a coordinate" described an answer format, and "measure a
 distance" described a measurement. Those are not peers.
 
@@ -170,7 +170,7 @@ judge is not allowed.
 
 Difficulty is described by how many task reasoning steps a task needs.
 
-- **0 to 1 steps**: a direct fact about a named object (0 steps), or one
+- **0 to 1 steps**: a direct lookup about a named object (0 steps), or one
   inference such as finding a feature by a property (1 step). This is the
   warmup subset and the curriculum entry point (P0).
 - **2 to 5 steps**: the main benchmark range (P0). The LLM model must combine

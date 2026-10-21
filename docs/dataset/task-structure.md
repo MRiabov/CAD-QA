@@ -11,7 +11,7 @@ the prompt; it is not the whole task.
 
 The previous list mixed several different things:
 
-- "Direct fact" described task reasoning depth.
+- "Direct lookup" described task reasoning depth.
 - "Give a coordinate" described an answer format.
 - "Measure a distance" described a measurement.
 - "Follow a chain" described a task reasoning pattern.
@@ -47,7 +47,7 @@ The task target is the entity or value the task asks about.
 | Path segment | A segment of a path. |
 | Region | The material a feature adds, or the material it removes. |
 | CadQuery selector result | The entities a CadQuery selector actually selected. |
-| Scalar fact | A measurement or count with no entity chosen as the answer. |
+| Scalar value | A measurement or count with no entity chosen as the answer. |
 
 A task has exactly one task target category. If the answer is a measurement
 taken from an entity, the entity is the task target and the measurement is the
@@ -106,7 +106,7 @@ The task reasoning pattern is how the task target is found.
 
 | Pattern | What happens |
 |---|---|
-| Direct | The task target is named, and the task asks for a fact about it. |
+| Direct | The task target is named, and the task asks for a property of it. |
 | Locate | One or more task clues narrow the candidates to one task target. |
 | Measure | The task target is located, then a measurement of it is reported. |
 | Compare | Two targets are located, then compared. |
@@ -245,11 +245,7 @@ them together.
 
 ## 7. Open questions
 
-- **Q1.** Is "task family" the right term, or should this be "task
-  pattern"?
-- **Q2.** Is "task clue" the right public term, or should it be something
-  else?
-- **Q3.** Should a comparison task clue always name both entities, or may one
+- **Q1.** Should a comparison task clue always name both entities, or may one
   entity be selected by an earlier task clue?
-- **Q4.** Should "direct" be a family, or is every direct task just a
+- **Q2.** Should "direct" be a family, or is every direct task just a
   measure with depth 1?
