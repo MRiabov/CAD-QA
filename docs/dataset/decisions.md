@@ -338,3 +338,22 @@ prefix is `DS-`.
 - **Consequences:** P0 and P1 can ship without the near-miss audit. P2 adds the
   error-mode catalog, choice audit, and review. The open question stays in
   `requirements/prompt-content.md` Q1 until P2 is implemented.
+
+## DS-22 — Go is the default implementation language
+
+- **Status:** accepted (2026-10-21).
+- **Context:** The dataset generator is mostly file, graph, coverage, and export
+  work. Python is required only where CadQuery/OCP or Python semantics are
+  involved. Mixing languages without a boundary would duplicate models and make
+  the generator harder to operate.
+- **Decision:** Go is the default for all dataset implementation work. Python is
+  allowed only for work that requires the Python runtime or a Python-only
+  library: CadQuery/OCP execution, Python AST or tokenizer work, and canonical
+  Python program normalization. The CLI, orchestration, manifests, graph
+  assembly, task enumeration, prompt and choice assembly, release selection,
+  validation, and export are Go. The boundary is defined in
+  `implementation/README.md`.
+- **Consequences:** The Go entry point invokes Python workers through typed,
+  versioned artifacts. Go code does not import CadQuery or OCP. Python code does
+  not own release state. New Python code outside the allowed list needs a
+  decision.
