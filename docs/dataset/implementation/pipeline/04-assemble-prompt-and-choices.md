@@ -14,7 +14,7 @@ multiple choice, the choice set.
 - Add plausible near-miss distractors for P2.
 - Reject the task if enough choices cannot be generated.
 
-## P2 open question
+## Open questions
 
 - **Q1.** How are plausible, deterministic distractors generated and validated?
   - **Recommendation:** start from the correct task solution and apply one
