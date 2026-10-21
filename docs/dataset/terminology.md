@@ -10,8 +10,8 @@ it.
 |---|---|
 | **Task** | One dataset instance: a CadQuery program, a task target, a set of task clues, and one answer. Use "dataset task" when it could be confused with an internal task. |
 | **Question** | The interrogative sentence in the prompt. It is not the whole task. |
-| **Task reasoning pattern** | How the task target is found: direct, locate, measure, compare, count, rank, effect measurement, membership test, CadQuery workplane description, or chain. |
-| **Task pattern** | A descriptive label for a task's combination of task target category, task clue forms, task reasoning pattern, answer format, and task reasoning depth. It is recorded for coverage and balance, not used as a generation template. |
+| **Clue type** | The category of condition a task clue states: property, relation, comparison, aggregation, provenance, or chain. |
+| **Answer meaning** | What the answer is about, independent of how it is returned: identity, volume, area, length, distance, angle, count, rank, membership, coordinate, bounding box, CadQuery workplane state, material change, topology change, or validity. |
 | **Task target** | The entity or value the task asks about. |
 | **Task clue** | One public sentence in the prompt that states a condition the answer must satisfy. |
 | **Task clue step** | The hidden graph operation that applies one task clue and reduces the set of possible answers. |
@@ -50,8 +50,8 @@ magic word.
 | Task reasoning step | task + reasoning + step | A task clue step or a task answer step. |
 | Task solution sequence | task + solution + sequence | The ordered task clue steps and task answer step that solve the task. |
 | Task reasoning depth | task + reasoning + depth | The number of task reasoning steps a task requires. |
-| Task reasoning pattern | task + reasoning + pattern | The way the task target is found. |
-| Task pattern | task + pattern | A descriptive label for the properties of a task. |
+| Clue type | clue + `type` | The category of condition a task clue states. |
+| Answer meaning | answer + meaning | What the answer is about. |
 | Answer format | answer + format | The form of the answer. |
 | Answer instruction | answer + instruction | The prompt part that states the answer format. |
 | Solid state | solid + state | The shape before or after an operation, or the final shape. |
@@ -80,7 +80,7 @@ Terms that were replaced because they were not composed from the domain:
 | `clause` | task clue |
 | `candidate trace` | task solution sequence |
 | `question` (the whole instance) | task |
-| `question family` | task pattern |
+| `question family` | removed; use clue type and answer meaning |
 | `target` | task target |
 | `clue` | task clue |
 | `hop count` | task reasoning step count, or task reasoning depth |
@@ -102,12 +102,10 @@ Terms that were replaced because they were not composed from the domain:
 - The step that produces the answer is a **task answer step**.
 - The ordered steps that solve the task are the **task solution sequence**.
 - The form of the answer is the **answer format**.
-- "Direct" is a task reasoning pattern.
-
-There is no task family in the generator. The old generator used
+There are no task types, task families, or task patterns. The old generator used
 hard-coded task families; the replacement chooses a task target and a task
-solution sequence from the CAD graph. Task pattern is only a descriptive label
-for reporting.
+solution sequence from the CAD graph. Coverage and balance are reported by
+clue type, answer meaning, answer format, and task reasoning depth.
 
 ## 5. Terms to avoid
 
@@ -119,8 +117,9 @@ These words caused ambiguity in the previous documentation:
 - **`clause`** for a task clue or a task clue step;
 - **`candidate`** for both a hidden possible answer and a public choice;
 - **`hop`** for a task reasoning step;
-- **`family`** for a group of tasks; use task pattern for a descriptive label;
+- **`family`** for a group of tasks; use clue type and answer meaning;
 - **`release`** without saying dataset release;
 - **`stage`** without saying pipeline stage or training stage;
 - **`gate`** without naming the requirement;
-- **`question`** for the whole task rather than the interrogative sentence.
+- **`question`** for the whole task rather than the interrogative sentence;
+- **`type`** or **`pattern`** as a way to group tasks; use clue type and answer meaning.

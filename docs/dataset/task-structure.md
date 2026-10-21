@@ -14,7 +14,7 @@ The previous list mixed several different things:
 - "Direct lookup" described task reasoning depth.
 - "Give a coordinate" described an answer format.
 - "Measure a distance" described a measurement.
-- "Follow a chain" described a task reasoning pattern.
+- "Follow a chain" described a chain of task clues.
 - "Locate by property" described how the task target is found.
 
 Those are not peers. Treating them as one list makes some tasks look
@@ -61,7 +61,7 @@ can be checked against the graph.
 
 Every task clue has one of these forms:
 
-| Task clue form | What it says |
+| Task clue type | What it says |
 |---|---|
 | Property | The task target has a property or measurement with a stated value or range. |
 | Relation | The task target stands in a named relation to another entity. |
@@ -100,26 +100,33 @@ The answer format is independent of the task target and the task clue. A task ab
 face can have a multiple-choice answer, a variable-name answer, a coordinate
 answer, or a bounding-box answer.
 
-### 2.4 Task reasoning pattern
+### 2.4 Answer meaning
 
-The task reasoning pattern is how the task target is found.
+The answer meaning is what the answer is about, independent of how it is
+returned. The answer format says "number" or "boolean"; the answer meaning says
+"volume" or "membership".
 
-| Pattern | What happens |
+| Answer meaning | What it describes |
 |---|---|
-| Direct | The task target is named, and the task asks for a property of it. |
-| Locate | One or more task clues narrow the candidates to one task target. |
-| Measure | The task target is located, then a measurement of it is reported. |
-| Compare | Two targets are located, then compared. |
-| Count | A set is located, then counted. |
-| Rank | A set is located, then ordered and ranked. |
-| Effect measurement | An operation is located, then its effect is measured. |
-| Membership test | A solid state and a point are located, then tested. |
-| CadQuery workplane description | A feature or sketch is located, then its CadQuery workplane is described. |
-| Chain | The task target is reached through several relations in order. |
+| Identity | Which entity is the answer. |
+| Volume | A volume or volume change. |
+| Area | An area. |
+| Length | A length. |
+| Distance | A distance between two entities or a point and an entity. |
+| Angle | An angle between faces, edges, or a path tangent. |
+| Count | A number of entities. |
+| Rank | A position in an ordered set. |
+| Membership | Whether a point is inside, outside, or on a boundary. |
+| Coordinate | A point. |
+| Bounding box | A minimum and maximum corner. |
+| CadQuery workplane state | The frame of a CadQuery workplane. |
+| Material change | Material added or removed. |
+| Topology change | A change in faces, edges, or vertices. |
+| Validity | Whether a shape is valid. |
 
-The task reasoning pattern is not the same as the answer format. A locate task
-can return a variable name or a multiple-choice label. A measure task can return a
-number, a coordinate, or a bounding box.
+The answer meaning is not the answer format. A volume can be returned as a
+number; a membership result can be returned as yes or no; an identity can be
+returned as a variable name or a multiple-choice label.
 
 ### 2.5 Task reasoning depth
 
@@ -129,58 +136,34 @@ Task reasoning depth is the number of task reasoning steps a task requires:
 - **Task answer step**: produces the answer once the task target is identified.
 - **Task reasoning step**: either a task clue step or a task answer step.
 
+The depth is the number of task clue steps plus one if the task needs a task
+answer step. For example:
+
+- A task that names the target and asks for its volume has one task answer
+  step, so depth 1.
+- A task with two task clues and a count answer has two task clue steps and one
+  task answer step, so depth 3.
+
 The depth is computed from the actual task solution sequence, not from a label.
 
-| Pattern | Depth |
-|---|---|
-| Direct | 0 |
-| Locate | Number of task clue steps. |
-| Measure | Task clue steps plus 1 for the measurement. |
-| Compare | Task clue steps plus 1 for the comparison. |
-| Count | Task clue steps plus 1 for the count. |
-| Rank | Task clue steps plus 1 for the ranking. |
-| Effect measurement | Task clue steps plus 1 for the effect measurement. |
-| Membership test | Task clue steps plus 1 for the test. |
-| CadQuery workplane description | Task clue steps plus 1 for the CadQuery workplane description. |
-| Chain | Number of relations followed, plus 1 for the final answer if it is computed. |
+## 3. There are no task types or task patterns
 
-A task that names a task target and asks for its volume has depth 1, not depth
-0, because the volume must still be measured. A task that names a task target
-and asks which operation created it may have depth 1.
+The dataset is not organized into task families, task types, or task patterns.
+There is no fixed set of question shapes to instantiate. A task is produced by
+choosing a task target, a set of task clues, and an answer format from the CAD
+graph.
 
-### 2.6 Geometry requirement
-
-A step is **geometry-based** when it needs the shape the program builds:
-measurements, topology, CadQuery selector results, or operation effects. A step
-is **syntax-based** when it can be answered from the program text alone:
-variable names, literal arguments, or operation order.
-
-A benchmark task must have at least one geometry-based step. The share of
-geometry steps is reported with the task.
-
-## 3. Task patterns are descriptions, not generators
-
-There is no task family in this dataset. The previous generator used hard-coded
-task families; that architecture is not part of the replacement.
-
-A task is produced by choosing, from the CAD graph:
-
-1. a task target;
-2. an ordered task solution sequence of task clue steps and a task answer step;
-3. an answer format.
-
-The resulting task is then described by its properties:
+The task's properties are recorded for coverage and balance:
 
 - task target category;
-- task clue forms;
-- task reasoning pattern;
+- task clue types;
+- answer meaning;
 - answer format;
 - task reasoning depth;
 - uniqueness rule;
 - geometry requirement.
 
-Those properties are recorded for coverage, balance, and reporting. They are
-not templates and do not create separate generation paths. A new combination of
+Those properties do not create separate generation paths. A new combination of
 properties does not require a new code path.
 
 ## 4. Describing a task
@@ -190,7 +173,9 @@ task from it. It must state:
 
 - the task target category;
 - each task clue in order, with placeholders for sampled values;
-- the answer format and the task answer step, if any;
+- the answer format;
+- the answer meaning;
+- the task answer step, if any;
 - the task reasoning depth;
 - the uniqueness rule;
 - the geometry requirement.
@@ -219,9 +204,9 @@ that does not satisfy the uniqueness rule is not generated.
 The dataset must cover:
 
 - every task target category that the PRD claims;
-- every task clue form;
+- every task clue type;
+- every answer meaning;
 - every answer format;
-- every task reasoning pattern;
 - every task reasoning depth from 0 to 5;
 - both syntax-based and geometry-based steps, with geometry required for
   benchmark tasks.
@@ -243,5 +228,5 @@ answer format, and task reasoning depth that tie them together.
 
 - **Q1.** Should a comparison task clue always name both entities, or may one
   entity be selected by an earlier task clue?
-- **Q2.** Should "direct" be a task reasoning pattern, or is every direct task
-  just a measure task with a named task target and one task answer step?
+- **Q2.** Should a task that reports a property of a named task target count as
+  depth 0, or as one task answer step?
