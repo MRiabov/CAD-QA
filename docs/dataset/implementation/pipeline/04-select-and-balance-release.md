@@ -33,10 +33,11 @@ All semantic validity is decided in `03`:
 - the target is identified;
 - every task clue narrows;
 - a multiple-choice definition has at least five real choices in its choice
-  pool.
+  pool;
+- for P2 multiple choice, near-miss choices and their error modes are already
+  validated.
 
 `05` must not discover a new semantic reason to reject a selected definition.
-P2 near-miss distractors are the exception described in `05` Q1.
 
 ## Open questions
 

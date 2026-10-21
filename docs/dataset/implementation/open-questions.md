@@ -22,14 +22,14 @@ when it is resolved.
 - [ ] Entity node ID strategy — [open questions](pipeline/02c-build-cad-graph.md#open-questions).
 - [ ] Unmapped CadQuery selector result behavior — [open questions](pipeline/02c-build-cad-graph.md#open-questions).
 
+## 03 — Enumerate tasks
+
+- [ ] P2 near-miss choice generation and validation — [open questions](pipeline/03-enumerate-tasks.md#open-questions).
+
 ## 04 — Select and balance release
 
 - [ ] Selection strategy: enumerate-and-cut or quota planning — [open questions](pipeline/04-select-and-balance-release.md#open-questions).
 - [ ] Conditional release share allocation — [open questions](pipeline/04-select-and-balance-release.md#open-questions).
-
-## 05 — Render prompt and choices
-
-- [ ] P2 distractor generation and validation — [open questions](pipeline/05-render-prompt-and-choices.md#open-questions). Same question as `prompt-content.md` Q1.
 
 ## 06 — Validate and export release
 
@@ -37,4 +37,4 @@ when it is resolved.
 
 ## None
 
-- `01` and `03` have no open questions.
+- `01` and `05` have no open questions.

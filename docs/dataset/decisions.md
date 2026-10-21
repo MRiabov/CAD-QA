@@ -334,8 +334,8 @@ prefix is `DS-`.
   step, with a recorded error mode. If enough plausible distractors cannot be
   generated, the task is rejected.
 - **Consequences:** P0 and P1 can ship without the near-miss audit. P2 adds the
-  error-mode catalog, choice audit, and review. The open question stays in
-  `requirements/prompt-content.md` Q1 until P2 is implemented.
+  error-mode catalog, choice audit, and review. The open question is Q6 in
+  `implementation/pipeline/03-enumerate-tasks.md` until P2 is implemented.
 
 ## DS-22 — Go is the default implementation language
 

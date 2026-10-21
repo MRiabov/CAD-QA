@@ -12,23 +12,16 @@ and, for multiple choice, the rendered choice set.
 - Keep the prompt answer-free.
 - For multiple choice, order and label the selected definition's choice pool. Do
   not re-bind entities or recompute answers.
-- Add plausible near-miss distractors for P2.
+- For P2 multiple choice, render the validated near-miss choice pool produced by
+  `03`.
 - Emit release rows with the prompt and answer columns.
 
-## No rejection on the P0/P1 path
+## No rejection
 
-P0/P1 rendering must not reject a selected definition. Choice availability,
-target ambiguity, answer evidence, and uniqueness are decided in `03`. Selection
-is decided in `04`. A P0/P1 rejection at `05` is a defect in an earlier stage.
-
-P2 near-miss distractor generation may fail after selection; that is Q1.
-
-## Open questions
-
-- **Q1.** How are plausible, deterministic distractors generated and validated?
-  - **Recommendation:** start from the correct task solution and apply one
-    controlled error; validate against the graph; record the error mode. P0 and
-    P1 do not require the near-miss audit.
+Rendering must not reject a selected definition. Choice availability, choice
+validity, target ambiguity, answer evidence, and uniqueness are decided in `03`.
+Selection is decided in `04`. A rejection at `05` is a defect in an earlier
+pipeline stage.
 
 ## Not here
 

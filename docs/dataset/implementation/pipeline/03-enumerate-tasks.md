@@ -24,7 +24,7 @@ and what `05` renders.
 | `native_answer_format`, `answer_format` | The meaning's native format and the format the prompt will request. |
 | `gold_answer`, `unit`, `tolerance`, `scoring_rule` | Answer data. |
 | `answer_evidence` | Measured or derived answer evidence with rule and references. |
-| `choice_pool` | Real answer-space candidates and their distinguishing graph facts, when multiple choice is planned. |
+| `choice_pool` | Real answer-space candidates and their distinguishing graph facts, when multiple choice is planned. For P2, it includes validated near-miss choices. |
 | `clue_step_count`, `task_reasoning_step_count` | Step accounting. |
 | `validity` | Uniqueness, final possible-answer count, geometry requirement, and check results. |
 | `provenance` | Constructor, sampled parameters, and input versions. |
@@ -138,6 +138,8 @@ A task definition is valid only when all of these hold:
 - the target binding is unambiguous;
 - the answer has evidence;
 - for multiple choice, the choice pool has at least five real choices;
+- for P2 multiple choice, every near-miss choice fails a task clue or the answer
+  step, and its error mode is recorded;
 - the task definition is unique under canonical identity;
 - `geometry_required` is recorded: at least one task clue depends on the built
   shape.
@@ -192,6 +194,17 @@ The **task reasoning step support tables** are a separate derived QA baseline.
 They are computed from the rules in this document and are not an input to this
 pipeline stage. They are used to check release coverage in
 [`../task-step-support.md`](../task-step-support.md).
+
+## Open questions
+
+- **Q6** (P2). How are plausible, deterministic near-miss choices generated and
+  validated?
+  - **Recommendation:** start from the correct task solution and apply one
+    controlled error: an adjacent entity, the wrong solid state, the wrong
+    operation, a swapped comparison, a different measurement, or an off-by-one
+    count. Validate against the graph, then order the choices by a stable hash.
+    For a multi-step task, a near miss should satisfy most task clues and fail at
+    least one. Record the error mode. P0 and P1 do not require this audit.
 
 ## Resolved questions
 

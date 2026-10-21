@@ -220,25 +220,9 @@ Before a prompt is accepted:
 - a task drawn from the dataset release, not the illustrative example above, is
   used for the review sample.
 
-## 10. Open questions
+## 10. P2 near-miss implementation
 
-- **Q1** (P2). How are plausible, deterministic distractors generated and
-  validated?
-  - **Option A — fixed candidate order.** Take the first N candidates by a
-    stable identifier. Simple, but the choices may be clustered and easy to
-    eliminate.
-  - **Option B — hash order.** Order candidates by a stable hash and take the
-    first N. Deterministic, but still no guarantee that the choices are
-    distinguishable.
-  - **Option C — near-miss perturbation, then deterministic order.** Start from
-    the correct task solution and apply one controlled error: use an adjacent
-    entity, the wrong solid state, the wrong operation, a swapped comparison, a
-    different measurement, or an off-by-one count. Validate the result against
-    the same graph, then order the choices by a stable hash.
-  - **Recommendation:** C. For a multi-step task, a distractor should satisfy
-    most task clues and fail at least one. For a one-step task, use a neighbor in
-    the same answer space: another entity for identity, another value for a
-    measurement. “80% correct” is a useful heuristic, not a literal threshold.
-    The generator must be able to state why each distractor is wrong. If enough
-    plausible distractors cannot be generated, reject the task. P0 and P1 do not
-    require this near-miss audit; they require real, unique, non-leaking choices.
+The generation and validation rule for P2 near-miss choices belongs to pipeline stage
+`03`; it is tracked as Q6 in
+[`../implementation/pipeline/03-enumerate-tasks.md`](../implementation/pipeline/03-enumerate-tasks.md).
+P0 and P1 require real, unique, non-leaking choices.
