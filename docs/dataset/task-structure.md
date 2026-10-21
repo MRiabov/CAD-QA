@@ -158,48 +158,44 @@ variable names, literal arguments, or operation order.
 A benchmark task must have at least one geometry-based step. The share of
 geometry steps is reported with the task.
 
-## 3. Task families
+## 3. Task patterns are descriptions, not generators
 
-A **task family** is a precise pattern with five parts:
+There is no task family in this dataset. The previous generator used hard-coded
+task families; that architecture is not part of the replacement.
 
-1. a task target category;
-2. an ordered list of task clue forms;
-3. an answer format;
-4. a depth rule;
-5. a uniqueness rule.
+A task is produced by choosing, from the CAD graph:
 
-The task family is the reusable task reasoning pattern; the task target, the task
-clues, and the answer format are chosen when a task is built. This is why a task family is not a flat
-label.
+1. a task target;
+2. an ordered task solution sequence of task clue steps and a task answer step;
+3. an answer format.
 
-The canonical task families are:
+The resulting task is then described by its properties:
 
-| Family | Target | Clues | Answer | Depth |
-|---|---|---|---|---|
-| Direct | Any named entity | None | Any answer format | 0 |
-| Locate | Any entity | Property, relation, comparison, aggregation, provenance, or chain | Variable name or multiple choice | Number of task clues |
-| Measure | Any entity | Clues that locate it | Number, integer, coordinate, or bounding box | Clues plus 1 |
-| Compare | Two entities | Clues that locate both | Yes or no, or one of the two | Clues plus 1 |
-| Count | A set | Clues that define the set | Integer | Clues plus 1 |
-| Rank | A set | Clues that define the set, plus an order | Integer or an entity | Clues plus 1 |
-| Effect measurement | An operation | Clues that locate the operation | Number, integer, coordinate, or bounding box | Clues plus 1 |
-| Membership test | A solid state and a point | Clues that locate both | Yes or no | Clues plus 1 |
-| CadQuery workplane description | A feature or sketch | Clues that locate it | Structured object | Clues plus 1 |
-| Chain | Any entity | An ordered sequence of relations | Variable name, multiple choice, or a measurement | Chain length plus 1 if computed |
+- task target category;
+- task clue forms;
+- task reasoning pattern;
+- answer format;
+- task reasoning depth;
+- uniqueness rule;
+- geometry requirement.
 
-## 4. Writing a family definition
+Those properties are recorded for coverage, balance, and reporting. They are
+not templates and do not create separate generation paths. A new combination of
+properties does not require a new code path.
 
-A family definition must be precise enough that two people would build the same
-tasks from it. It must state:
+## 4. Describing a task
+
+A task description must be precise enough that two people would build the same
+task from it. It must state:
 
 - the task target category;
 - each task clue in order, with placeholders for sampled values;
 - the answer format and the task answer step, if any;
-- the depth rule;
+- the task reasoning depth;
 - the uniqueness rule;
 - the geometry requirement.
 
-For example, a measure family is defined like this:
+For example, a measure task is described like this:
 
 ```text
 Task target: a face of the final solid state.
@@ -214,8 +210,8 @@ Uniqueness: exactly one face satisfies task clues 1 and 2, and the largest area 
 Geometry: all three steps are geometry-based.
 ```
 
-This is a definition, not an example. The named CadQuery workplane, the named
-operation, and the area value are chosen when a task is built. A task
+This is a task description, not an example. The named CadQuery workplane, the
+named operation, and the area value are chosen when a task is built. A task
 that does not satisfy the uniqueness rule is not generated.
 
 ## 5. Coverage
@@ -226,26 +222,26 @@ The dataset must cover:
 - every task clue form;
 - every answer format;
 - every task reasoning pattern;
-- every depth from 0 to 5;
+- every task reasoning depth from 0 to 5;
 - both syntax-based and geometry-based steps, with geometry required for
   benchmark tasks.
 
-Coverage is reported by dimension, not by the old flat labels. A task
-family that produces zero tasks is a gap, not a category.
+Coverage is reported by dimension, not by old flat labels. A dimension value
+that produces zero tasks is a gap.
 
-## 6. What is not a task family
+## 6. What a task is not
 
 - An answer format alone, such as "coordinate task".
 - A measurement alone, such as "volume task".
 - A task target alone, such as "face task".
-- A depth alone, such as "3-step task".
+- A task reasoning depth alone, such as "3-step task".
 
-Those are properties of a task. A family must state the pattern that ties
-them together.
+Those are properties of a task. A task must state the task target, task clues,
+answer format, and task reasoning depth that tie them together.
 
 ## 7. Open questions
 
 - **Q1.** Should a comparison task clue always name both entities, or may one
   entity be selected by an earlier task clue?
-- **Q2.** Should "direct" be a family, or is every direct task just a
-  measure with depth 1?
+- **Q2.** Should "direct" be a task reasoning pattern, or is every direct task
+  just a measure task with a named task target and one task answer step?

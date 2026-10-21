@@ -71,7 +71,7 @@ priority.
 | Researcher or trainer | A dataset that teaches CAD program comprehension and geometry reasoning, with a clear answer key. |
 | Evaluator | A held-out benchmark with several difficulty levels and a fair way to compare models. |
 | Reviewer | Tasks a careful human can read and check, plus a documented answer key. |
-| Dataset maintainer | A dataset that can be regenerated, extended with new task categories, and reviewed without redoing everything. |
+| Dataset maintainer | A dataset that can be regenerated, extended with new task patterns, and reviewed without redoing everything. |
 
 ---
 
@@ -124,7 +124,7 @@ described depth, "give a coordinate" described an answer format, and "measure a
 distance" described a measurement. Those are not peers.
 
 The full structure, including task target categories, task clue forms, task reasoning patterns,
-depth rules, and the precise definition of a task family, is in
+depth rules, and the precise description of a task, is in
 [`task-structure.md`](task-structure.md).
 
 The dataset must cover these task reasoning patterns:
@@ -140,9 +140,10 @@ The dataset must cover these task reasoning patterns:
 - CadQuery workplane description
 - Chain
 
-The list is not a closed set of task labels. A task family is defined by
-its task reasoning pattern, task target, task clues, answer format, depth, and uniqueness rule. New
-families may be added if they follow the structure and meet the same quality rules.
+The list is not a closed set of task labels. A task is described by its task
+reasoning pattern, task target, task clues, answer format, and task reasoning
+depth. New combinations may be added if they follow the structure and meet the
+same quality rules.
 
 ---
 
@@ -207,11 +208,11 @@ a result on steps 2 through 5 alone.
 | ID | Requirement | How the user can tell |
 |---|---|---|
 | **R-7** | The dataset covers all answer formats. | Every answer format in section 5 appears in the benchmark dataset release, including the warmup subset. |
-| **R-8** (P1) | The dataset covers all task categories in section 4. | Every category in section 4 appears in the benchmark dataset release, and no category dominates. |
+| **R-8** (P1) | The dataset covers all task reasoning patterns in section 4. | Every pattern in section 4 appears in the benchmark dataset release, and no pattern dominates. |
 | **R-9** | The dataset covers the full difficulty range. | Steps 0 through 5 all appear, with steps 3 and 4 carrying the headline slices. |
-| **R-10** | The dataset is diverse. | It draws from at least one thousand distinct CAD models, and no single CAD model or task category dominates. |
+| **R-10** | The dataset is diverse. | It draws from at least one thousand distinct CAD models, and no single CAD model or task reasoning pattern dominates. |
 | **R-11** (P1) | The dataset has varied answers. | At least one thousand different correct answers appear, and no answer is repeated so often that guessing wins. |
-| **R-12** (P1) | The dataset is balanced across task categories. | No task category is below one percent or above ten percent of the benchmark dataset release. |
+| **R-12** (P1) | The dataset is balanced across task reasoning patterns. | No task reasoning pattern is below one percent or above ten percent of the benchmark dataset release. |
 | **R-23** (P1) | The task clues are diverse. | No single task-clue pattern, such as "largest area" or "parallel to Z", dominates the benchmark dataset release; task-clue variety is reported beside task variety. |
 
 ### 7.3 Splits and reuse
@@ -230,8 +231,8 @@ a result on steps 2 through 5 alone.
 | **R-17** | A careful human can understand every task. | Sampled tasks from every category are reviewed before a dataset release; unclear wording is a defect. |
 | **R-18** | The dataset can be reproduced. | The same programs and the same generator version produce the same dataset; the dataset card documents versions, settings, and how to regenerate it. |
 | **R-19** | Nothing disappears silently. | Every rejected program or task is reported with a reason, and the counts add up. |
-| **R-20** (P2) | The dataset can grow without breaking users. | New task categories can be added without changing the task file, the answer key, or the evaluation interface. |
-| **R-21** (P1) | The dataset is fast enough to iterate on. | A reviewer can change a task category and produce a new reviewable sample without re-running the entire corpus from scratch. |
+| **R-20** (P2) | The dataset can grow without breaking users. | New task patterns can be added without changing the task file, the answer key, or the evaluation interface. |
+| **R-21** (P1) | The dataset is fast enough to iterate on. | A reviewer can change a task pattern and produce a new reviewable sample without re-running the entire corpus from scratch. |
 | **R-22** (P2) | The dataset can support a kernel-assisted upper bound. | The same tasks can be evaluated with CadQuery access as an optional upper bound, without changing the primary no-kernel setting. |
 
 ---
@@ -246,7 +247,7 @@ tasks and meet the following targets.
 | Tasks | At least 10,000 | P0 |
 | Distinct CAD models | At least 1,000 | P0 |
 | Answer formats | Every format in section 5; each at least 5% and none above 25% | P0 |
-| Task categories | All categories in section 4; each between 1% and 10% | P1 |
+| Task reasoning patterns | All patterns in section 4; each between 1% and 10% | P1 |
 | Task-clue variety | No single task-clue pattern dominates | P1 |
 | Difficulty | Steps 0–1: at least 5%; steps 2–5 cover the remainder, with 3 and 4 carrying the headline slices | P0 |
 | Geometry-based tasks | At least 95% | P0 |
@@ -322,7 +323,7 @@ change.
 
 The dataset is done when:
 
-1. a small sample produces every task category and every answer format;
+1. a small sample produces every task reasoning pattern and every answer format;
 2. a benchmark dataset release of at least ten thousand tasks meets the
    targets in section 8, or every miss is documented and accepted by the owner;
 3. a labeled warmup subset exists;
@@ -389,9 +390,9 @@ The dataset is done when:
   training material.
 - **Q5** (P1). *Resolved 2026-10-21.* Yes. Every answer format must reach five
   percent; a balanced and diverse dataset is the default.
-- **Q6** (P1). *Resolved 2026-10-21.* All task categories in section 4.
+- **Q6** (P1). *Resolved 2026-10-21.* All task reasoning patterns in section 4.
   Clue variety is a separate requirement (R-23), because the conditions inside
-  tasks should be as varied as the task categories.
+  tasks should be as varied as the task reasoning patterns.
 - **Q8** (P1). *Resolved 2026-10-21.* The same CadQuery programs. The warmup
   subset is a label for easier tasks, not a separate generation path. The
   dataset is designed for curriculum learning.

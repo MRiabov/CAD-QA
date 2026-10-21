@@ -11,7 +11,7 @@ it.
 | **Task** | One dataset instance: a CadQuery program, a task target, a set of task clues, and one answer. Use "dataset task" when it could be confused with an internal task. |
 | **Question** | The interrogative sentence in the prompt. It is not the whole task. |
 | **Task reasoning pattern** | How the task target is found: direct, locate, measure, compare, count, rank, effect measurement, membership test, CadQuery workplane description, or chain. |
-| **Task family** | A reusable task reasoning pattern with a task target category, an ordered list of task clue forms, an answer format, a depth rule, and a uniqueness rule. |
+| **Task pattern** | A descriptive label for a task's combination of task target category, task clue forms, task reasoning pattern, answer format, and task reasoning depth. It is recorded for coverage and balance, not used as a generation template. |
 | **Task target** | The entity or value the task asks about. |
 | **Task clue** | One public sentence in the prompt that states a condition the answer must satisfy. |
 | **Task clue step** | The hidden graph operation that applies one task clue and reduces the set of possible answers. |
@@ -51,7 +51,7 @@ magic word.
 | Task solution sequence | task + solution + sequence | The ordered task clue steps and task answer step that solve the task. |
 | Task reasoning depth | task + reasoning + depth | The number of task reasoning steps a task requires. |
 | Task reasoning pattern | task + reasoning + pattern | The way the task target is found. |
-| Task family | task + family | A reusable task reasoning pattern that produces tasks. |
+| Task pattern | task + pattern | A descriptive label for the properties of a task. |
 | Answer format | answer + format | The form of the answer. |
 | Answer instruction | answer + instruction | The prompt part that states the answer format. |
 | Solid state | solid + state | The shape before or after an operation, or the final shape. |
@@ -80,7 +80,7 @@ Terms that were replaced because they were not composed from the domain:
 | `clause` | task clue |
 | `candidate trace` | task solution sequence |
 | `question` (the whole instance) | task |
-| `question family` | task family |
+| `question family` | task pattern |
 | `target` | task target |
 | `clue` | task clue |
 | `hop count` | task reasoning step count, or task reasoning depth |
@@ -98,13 +98,16 @@ Terms that were replaced because they were not composed from the domain:
 ## 4. Naming decisions
 
 - The public condition is a **task clue**.
-- The reusable pattern is a **task family**.
 - The step that applies a task clue is a **task clue step**.
 - The step that produces the answer is a **task answer step**.
 - The ordered steps that solve the task are the **task solution sequence**.
 - The form of the answer is the **answer format**.
-- "Direct" is a task reasoning pattern. Whether it is a family is a task-design
-  question, not a naming question.
+- "Direct" is a task reasoning pattern.
+
+There is no task family in the generator. The old generator used
+hard-coded task families; the replacement chooses a task target and a task
+solution sequence from the CAD graph. Task pattern is only a descriptive label
+for reporting.
 
 ## 5. Terms to avoid
 
@@ -116,7 +119,7 @@ These words caused ambiguity in the previous documentation:
 - **`clause`** for a task clue or a task clue step;
 - **`candidate`** for both a hidden possible answer and a public choice;
 - **`hop`** for a task reasoning step;
-- **`family`** without saying task family;
+- **`family`** for a group of tasks; use task pattern for a descriptive label;
 - **`release`** without saying dataset release;
 - **`stage`** without saying pipeline stage or training stage;
 - **`gate`** without naming the requirement;
