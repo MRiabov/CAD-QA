@@ -13,7 +13,8 @@ records, without executing them.
 
 The cache is already cleaned: all 1,998,810 rows are `.py` records, all import
 CadQuery, and all have non-empty program text. There is no non-program-record
-filter to apply.
+filter to apply, and no program-size cutoff: the corpus is cheap to execute in
+full.
 
 ## Behavior
 
@@ -25,8 +26,3 @@ filter to apply.
 - Read every row; do not apply a local "looks like CadQuery" heuristic.
 - Record malformed rows with a reason.
 - Do not assign the final program hash; `01b` decides that.
-
-## Open questions
-
-- What is the maximum accepted program length or operation count before the
-  execution budget rejects it?
