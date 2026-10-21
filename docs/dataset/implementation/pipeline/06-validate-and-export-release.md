@@ -18,6 +18,8 @@ Artifact ownership: [`../artifacts.md`](../artifacts.md).
   check at P1.
 - Write `release.parquet`, `failures.parquet`, `manifest.json`, and
   `dataset-card.md`.
+- Copy the embedded support JSON files into `support/` and record their hashes in
+  the manifest.
 
 ## Not here
 

@@ -21,7 +21,8 @@ this document owns ownership, lifecycle, and format, not field definitions.
 | Task candidate | `03` | `04` | Canonical task identity | Parquet | Exactly one gold answer; invalid candidates are rejected. |
 | Prompted task | `04` | `05` | Task identity plus prompt and choice versions | Parquet | Prompt is answer-free. |
 | Release table | `05` | `06` | `release_id` | Parquet | One row per task; carries `cadevolve_program_family_id`. |
-| Release artifacts | `06` | Dataset consumers | `release_id` | Parquet, JSON, Markdown | `release.parquet`, `failures.parquet`, `manifest.json`, `dataset-card.md`. |
+| Support tables | Generator build | `03`, `05`, `06`, reviewers | Schema version | JSON | Four typed files embedded in the Go binary. |
+| Release artifacts | `06` | Dataset consumers | `release_id` | Parquet, JSON, Markdown | `release.parquet`, `failures.parquet`, `manifest.json`, `dataset-card.md`, `support/`. |
 
 `Failures` is a multi-writer record: every pipeline stage appends a failure with
 the input identity and reason, and `06` exports the records as

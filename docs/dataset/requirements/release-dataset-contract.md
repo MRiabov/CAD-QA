@@ -37,6 +37,7 @@ A release directory contains:
 | `manifest.json` | Release counts, versions, hashes, split counts, and coverage summaries. | One file. |
 | `dataset-card.md` | Human-readable dataset card. | One file. |
 | `failures.parquet` | Rejected programs and tasks with reasons. | One per rejection; may be empty. |
+| `support/` | Four typed JSON support tables: target category, clue type, answer meaning, answer format. | Four files. |
 
 `release.parquet` is the release dataset. It contains the gold answer because the
 release is used for training, scoring, and audit. The `prompt` column is the only
@@ -178,6 +179,7 @@ Likewise, add an evidence table only if evidence becomes too large for one row.
 - distinct CAD program count;
 - release-table hash and answer hash summary;
 - coverage and balance summaries;
+- support-table schema versions and hashes;
 - known misses accepted by the owner;
 - failure count.
 

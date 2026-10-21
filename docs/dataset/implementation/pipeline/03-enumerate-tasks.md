@@ -36,7 +36,7 @@ Each file has a versioned envelope and typed rows:
       "target_category": "face",
       "structurally_supported": true,
       "implementation_scope": "P0",
-      "reason": "..."
+      "reason_code": null
     }
   ]
 }
@@ -46,20 +46,28 @@ The row field is named after the file: `target_category`, `clue_type`,
 `answer_meaning`, or `answer_format`. There is no generic
 `(dimension, value)` map.
 
+`reason_code` is a low-cardinality enum, not free text. It is null when the row
+is structurally supported. Unsupported rows use one of:
+
+- `step_count_too_low`;
+- `prior_candidates_required`;
+- `reference_entity_required`;
+- `answer_format_incompatible`;
+- `target_not_identifiable`;
+- `ambiguous_target`;
+- `no_valid_construction`.
+
 The tables are derived from the task rules: target identification, clue
 preconditions, answer-step accounting, answer meaning to answer format
-compatibility, and implementation scope. The `reason` records why a value is
-unsupported or which construction supports it.
+compatibility, and implementation scope.
 
 The Go binary embeds the four files with `//go:embed support/*.json`, parses them
 into typed structs, and validates the schema version, enum values, and primary
 key `(task_reasoning_step_count, <typed value>)`. The files are compile-time
 generator inputs, not mutable runtime configuration.
 
-The four files are pipeline definitions for now. When they are generated, the
-release is expected to copy them into its `support/` directory and record their
-schema versions and hashes in `manifest.json`. That release-contract change is
-deferred until the tables exist.
+The release copies the four files into its `support/` directory. `manifest.json`
+records their schema versions and hashes.
 
 ## Resolved questions
 
@@ -81,6 +89,12 @@ deferred until the tables exist.
   required by references, then sort independent clues deterministically. Answer
   format, multiple-choice choices, prompt wording, and answer instruction are
   excluded because multiple choice is a presentation wrapper.
+
+## Open questions
+
+- Which target categories are identifiable at each task reasoning step count?
+- Which answer meanings require an answer step?
+- Which answer formats can express each answer meaning?
 
 ## Not here
 
