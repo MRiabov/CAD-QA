@@ -58,7 +58,7 @@ not product requirements.
 |---|---|
 | [`implementation/pipeline/00-end-to-end.md`](implementation/pipeline/00-end-to-end.md) | Why the dataset pipeline exists, pipeline stage order, and data flow. |
 | [`implementation/pipeline/io-contracts.md`](implementation/pipeline/io-contracts.md) | Authoritative typed I/O between pipeline stages. |
-| [`implementation/pipeline/01-external-dataset-etl.md`](implementation/pipeline/01-external-dataset-etl.md) | CADEvolve export → normalized programs and manifest. |
+| [`implementation/pipeline/01-external-dataset-etl.md`](implementation/pipeline/01-external-dataset-etl.md) | CADEvolve Parquet cache → normalized programs and manifest. |
 | [`implementation/pipeline/02-execute-cadquery-and-build-graph.md`](implementation/pipeline/02-execute-cadquery-and-build-graph.md) | Static extraction and CadQuery execution → CAD graph. |
 | [`implementation/pipeline/03-enumerate-tasks.md`](implementation/pipeline/03-enumerate-tasks.md) | Task candidates, step counts, identity, and gold answers. |
 | [`implementation/pipeline/04-assemble-prompt-and-choices.md`](implementation/pipeline/04-assemble-prompt-and-choices.md) | Prompt rendering and multiple-choice choices. |

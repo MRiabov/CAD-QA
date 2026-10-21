@@ -7,7 +7,7 @@ used by graph build, overlap checks, and release grouping.
 
 ## Input / output
 
-- Input: raw program records.
+- Input: extracted program records from the Parquet cache.
 - Output: normalized program records with `program_id`, canonical text, and
   normalization version.
 
@@ -22,6 +22,6 @@ used by graph build, overlap checks, and release grouping.
 
 ## Why it exists
 
-Upstream normalization is not guaranteed. The step may pass most CADEvolve
-records through unchanged, but it still stamps the version and hash that define
-our program identity.
+The Parquet cache carries upstream normalization, but it is not our contract.
+The step may pass most records through unchanged, but it still stamps the version
+and hash that define our program identity.

@@ -373,3 +373,19 @@ prefix is `DS-`.
   artifacts are `release.parquet`, `failures.parquet`, `manifest.json`, and
   `dataset-card.md`. Schema versions are recorded in Parquet metadata and the
   manifest.
+
+## DS-24 — Start from the prepared CADEvolve Parquet cache
+
+- **Status:** accepted (2026-10-21).
+- **Context:** The raw CADEvolve release is a 4.7 GB tar archive. A prepared
+  Parquet cache is published at `MRiabov/cadevolve-parquet`, contains the same
+  program records in typed columns, and is about 508 MB. Archive extraction and
+  row parsing are avoidable work.
+- **Decision:** `01a` reads `cadevolve_sources.parquet` from
+  `MRiabov/cadevolve-parquet`. The cache commit and conversion version are
+  recorded in the external dataset manifest. The tar archive and JSONL are not
+  primary inputs; they are provenance checks only. `01b` still applies our own
+  normalization version and program hash.
+- **Consequences:** No archive extraction in the normal path. The cache schema
+  is part of the external input contract. A cache change is a new external
+  dataset version, not an in-place update. Program identity remains ours.

@@ -26,7 +26,7 @@ generator.
 
 | Pipeline stage | Responsibility | Output |
 |---|---|---|
-| [`01-external-dataset-etl.md`](01-external-dataset-etl.md) | CADEvolve export → normalized programs and manifest. | Normalized programs. |
+| [`01-external-dataset-etl.md`](01-external-dataset-etl.md) | CADEvolve Parquet cache → normalized programs and manifest. | Normalized programs. |
 | [`02-execute-cadquery-and-build-graph.md`](02-execute-cadquery-and-build-graph.md) | Static extraction and CadQuery execution → CAD graph. | CAD graph. |
 | [`03-enumerate-tasks.md`](03-enumerate-tasks.md) | Graph → task tuple, clues, step count, identity, gold answer. | Task candidates. |
 | [`04-assemble-prompt-and-choices.md`](04-assemble-prompt-and-choices.md) | Task candidate → prompt and multiple-choice choices. | Prompted tasks. |
@@ -36,7 +36,7 @@ generator.
 ## Flow
 
 ```text
-CADEvolve export
+CADEvolve Parquet cache
   → normalized programs
   → CAD graphs
   → task candidates with gold answers

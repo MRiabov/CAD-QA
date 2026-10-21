@@ -12,7 +12,7 @@ rows.
 
 ## Manifest content
 
-- export identity and version;
+- external dataset identity and version;
 - program count and distinct program count;
 - normalization version;
 - hash summary;

@@ -11,7 +11,7 @@ pipeline stage is specified.
 
 | Pipeline stage | Responsibility | Input model | Output model |
 |---|---|---|---|
-| `01-external-dataset-etl` | Read and normalize the CADEvolve export. | CADEvolve export | `NormalizedProgram`, `ExternalDatasetManifest` |
+| `01-external-dataset-etl` | Read and normalize the CADEvolve Parquet cache. | CADEvolve Parquet cache | `NormalizedProgram`, `ExternalDatasetManifest` |
 | `02-execute-cadquery-and-build-graph` | Extract static structure, execute CadQuery, build the graph. | `NormalizedProgram` | `CadGraph` |
 | `03-enumerate-tasks` | Build task candidates and resolve gold answers. | `CadGraph` | `TaskCandidate` |
 | `04-assemble-prompt-and-choices` | Render the prompt and generate choices. | `TaskCandidate` | `PromptedTask` |
@@ -22,7 +22,7 @@ pipeline stage is specified.
 
 | Pipeline stage | Sub-steps |
 |---|---|
-| `01` | `01a` extract export, `01b` normalize programs, `01c` write manifest. |
+| `01` | `01a` read cache, `01b` normalize programs, `01c` write manifest. |
 | `02` | `02a` static extraction, `02b` execute CadQuery, `02c` build graph. |
 
 Sub-steps have their own typed models in their parent pipeline stage doc.

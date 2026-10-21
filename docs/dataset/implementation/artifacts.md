@@ -9,7 +9,7 @@ this document owns ownership, lifecycle, and format, not field definitions.
 
 | Artifact | Writer | Readers | Identity | Preferred format | Notes |
 |---|---|---|---|---|---|
-| CADEvolve export | External | `01a` | Upstream dataset version | External format | Immutable external input. |
+| CADEvolve Parquet cache | External | `01a` | Upstream dataset commit plus cache version | Parquet | Immutable external input. |
 | Raw program record | `01a` | `01b` | Export member or row plus upstream version | Parquet | Preserves collection metadata. |
 | Normalized program | `01b` | `02a`, `02b` | `program_sha256` plus normalization version | Parquet | Carries `program_id` and canonical text. |
 | External dataset manifest | `01c` | `06`, dataset card | External dataset version | JSON | Counts, hashes, and rejected records. |
