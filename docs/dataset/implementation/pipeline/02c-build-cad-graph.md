@@ -19,18 +19,16 @@ CAD graph.
 - Skip failure tombstones; tasks that need the failed output are rejected.
 - Reject ambiguous topology rather than guessing.
 
-## Open questions
+## Resolved questions
 
-- **Q2.** Should CadQuery selector results be stored as entities, as a relation,
-  or both?
-  - **Option A — entity only.** A CadQuery selector-result entity, with no
-    membership edges.
-  - **Option B — relation only.** `selected_by` edges from entities, with no
-    result-set entity.
-  - **Option C — both.** A CadQuery selector-result entity for counts and
-    aggregation, plus `selected_by` edges for membership.
-  - **Recommendation:** C. The result entity supports counts; the edges support
-    membership.
+- **Q2.** *Resolved 2026-10-21.* Option C. Store a CadQuery selector-result
+  entity plus `selected_by` membership edges. The result entity carries the set
+  identity, its `selected_from` solid state, and its count; the edges carry
+  membership for graph traversal. Both come from one extraction, and the graph
+  builder enforces one invariant: the result count equals the number of its
+  membership edges.
+
+## Open questions
 
 - **Q3.** Which measurements can be derived exactly from the program text, and
   which must always be measured by CadQuery?
