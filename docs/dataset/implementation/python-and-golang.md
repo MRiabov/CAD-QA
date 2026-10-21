@@ -25,6 +25,17 @@ of these exceptions.
 Pipeline stage contracts are language-agnostic. The language boundary does not
 change their models.
 
+## Prompt text
+
+All LLM-facing prompt text is data in `prompts.yaml`, not code:
+
+- dataset question, clue, choice, and answer-instruction templates;
+- evaluation-harness instructions.
+
+Go and Python select template IDs and fill typed placeholders. Neither language
+hardcodes prompt copy. The dataset and evaluation sections are separate
+namespaces in the same file. Template changes bump the prompt version and hash.
+
 ## Parallelism
 
 The Go entry point owns orchestration and worker pools. Python work runs in

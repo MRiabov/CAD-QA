@@ -178,6 +178,7 @@ Likewise, add an evidence table only if evidence becomes too large for one row.
 - warmup task count;
 - distinct CAD program count;
 - release-table hash and answer hash summary;
+- prompt template version and `prompts.yaml` hash;
 - coverage and balance summaries;
 - support-table schema versions and hashes;
 - known misses accepted by the owner;

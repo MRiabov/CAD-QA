@@ -19,6 +19,7 @@ this document owns ownership, lifecycle, and format, not field definitions.
 | Execution result | `02b` | `02c` | Program hash, CadQuery/OCP version, and environment | Parquet plus shape snapshot files | Either execution snapshots or a failure tombstone. |
 | CAD graph | `02c` | `03` | Program hash, graph schema version, and execution result hash | Parquet tables | One graph per program. |
 | Release plan | `03a` | `03b`, `03c` | Plan version plus seed | Parquet or JSON | Quotas, family profiles, split assignment, and sample budgets. |
+| Prompt templates | Prompt authoring | `04`, evaluation harness | Template version plus file hash | YAML | `prompts.yaml`; all LLM-facing copy, with dataset and evaluation namespaces. |
 | Task definition | `03b` | `04` | Canonical task identity plus definition hash | Parquet | Persisted, answer-bearing construction record; invalid definitions are rejected. |
 | Release table | `04` | `05` | `release_id` | Parquet | One row per task; prompt is answer-free; carries `cadevolve_program_family_id`. |
 | Task reasoning step support tables | Task-step support QA | `03a`, `05`, reviewers | Schema version | JSON | Four derived files used to check coverage; not generator inputs. |

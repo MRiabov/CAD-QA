@@ -21,6 +21,7 @@ Artifact ownership: [`../artifacts.md`](../artifacts.md).
   `dataset-card.md`.
 - Copy the generated task reasoning step support JSON files into `support/` and
   record their hashes in the manifest.
+- Record the prompt template version and `prompts.yaml` hash in the manifest.
 
 ## Language and parallelism
 

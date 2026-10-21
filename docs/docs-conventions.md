@@ -139,6 +139,18 @@ rationale — link the decision — and never redefine field names — match the
 - Code package directories use underscores (`dataset`, `train_and_eval`) because
   they are Python imports. Hyphens are for docs only (`docs/train-and-eval/`).
 
+## Prompt text
+
+All LLM-facing prompt text is data, not code. Put it in the root `prompts.yaml`.
+
+- The dataset and evaluation harnesses use separate namespaces in that file.
+- Code selects template IDs and fills typed placeholders. Go and Python do not
+  hardcode question, clue, choice, system, or evaluation instruction strings.
+- A template change bumps the prompt version. The rendered prompt hash and the
+  `prompts.yaml` hash are recorded in the relevant artifact or run manifest.
+- Prompt templates are answer-free; they never contain gold answers or hidden
+  identifiers.
+
 ## References
 
 Never cite line numbers — they drift. Cite in this order of preference:

@@ -16,6 +16,28 @@ and, for multiple choice, the rendered choice set.
   `03`.
 - Emit release rows with the prompt and answer columns.
 
+## Prompt copy comes from YAML
+
+LLM-facing wording is data, not Go code. Pipeline stage `04` renders from
+`prompts.yaml`; it does not contain hardcoded question, clue, choice, or answer
+instruction strings.
+
+- Templates cover the question, each clue type, choice descriptions, and the
+  answer instruction.
+- Each template has a stable ID and typed placeholders. Validation rejects a
+  missing, extra, or untyped placeholder.
+- Template variants are selected deterministically from the template ID and
+  seed, not by an LLM.
+- The template version and `prompts.yaml` hash are recorded with the release so
+  the rendered prompt is reproducible.
+- The YAML is answer-free. It must not contain gold answers, hidden identifiers,
+  or generated answer data.
+- P2 near-miss choice copy uses the same template mechanism.
+
+Evaluation prompts outside the dataset follow the same rule: they live in
+`prompts.yaml`, not in Python strings. Dataset and evaluation templates use
+separate namespaces in that file.
+
 ## Language and parallelism
 
 - **Go:** prompt and choice rendering.
