@@ -34,7 +34,7 @@ the user-visible outcome.
 | **Answer instruction** | Domain | The part of the prompt that tells the LLM model which answer format to return and in what syntax. |
 | **Program text** | Domain | The CadQuery program shown in the prompt. |
 | **Prompt** | Domain | Everything the LLM model sees for one task: program text, question, task clues, optional choices, and answer instruction. |
-| **Answer key** | Domain | The private record of the correct answer and the evidence for it. |
+| **Gold answer** | Domain | The correct answer for one task. It is kept out of the public task file. |
 | **CAD graph** | Domain | The graph of CAD entities, relations, and measurements for one CadQuery program and the shape it builds. |
 | **CAD graph element** | Internal | One entity, relation, or measurement in the CAD graph. |
 | **Graph entity** | Internal | One entity in the CAD graph, such as a face, edge, operation, or region. |
@@ -44,7 +44,7 @@ the user-visible outcome.
 | **Solid state** | Domain | The shape before or after an operation, or the final shape. |
 | **Warmup subset** | Domain | The labeled set of 1-step tasks inside the dataset. It is useful for training, not a separate dataset. |
 | **Curriculum** | Domain | The order in which tasks are presented, from lower to higher task reasoning step counts. |
-| **Dataset release** | Domain | An immutable, validated, versioned set of tasks and answer keys. |
+| **Dataset release** | Domain | An immutable, validated, versioned set of tasks and correct answers. |
 
 ### Internal and domain pairs
 
@@ -162,6 +162,8 @@ In product text, do not use internal terms:
 - **`task reasoning step count coverage`** or **`task reasoning step count
   balance`**; say coverage or balance at every task reasoning step count;
 - **`reasoning depth`**; say task reasoning step count;
+- **`answer key`** for the correct answers; the dataset has tasks and their
+  correct answers, with no separate answer-key object;
 - **`conditional release share`**; it is a technical calculation detail;
 - **`CAD graph element`** or **`graph entity`**; say CAD graph when the product
   needs the concept.

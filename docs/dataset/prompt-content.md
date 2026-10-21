@@ -19,8 +19,7 @@ A prompt has up to five parts, in this order:
 The question is only the interrogative sentence. It is not the whole task. The
 task is the program, the task target, the task clues, and the answer.
 
-The prompt does not contain the answer, the answer key, or any hidden
-identifier.
+The prompt does not contain the answer or any hidden identifier.
 
 ## 2. Program text
 
@@ -126,7 +125,7 @@ It never gives the answer, and it never explains how to find the task target.
 ## 7. What the prompt must not contain
 
 - The correct answer.
-- The answer key or any hidden field.
+- Any private answer data or hidden field.
 - Internal identifiers.
 - The number of task reasoning steps.
 - A hidden task clue that is not in the task clue list.
@@ -197,7 +196,7 @@ Before a prompt is accepted:
 - the answer instruction matches the answer format;
 - the prompt does not leak the answer;
 - the prompt does not use internal terms;
-- the prompt is readable by a careful human without the answer key;
+- the prompt is readable by a careful human without the private answers;
 - a real dataset task, not an invented example, is used for the review sample.
 
 ## 10. Open questions

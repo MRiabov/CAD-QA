@@ -19,7 +19,7 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
   documentation at `docs/_archive/dataset-pre-rebuild-2026-10-21/`; mark the old
   generator superseded; freeze the old release; keep no compatibility layer.
 - **Consequences:** The replacement dataset may use a new task-file and
-  answer-key layout. The old release may support a first training cycle, but it
+  private-answer layout. The old release may support a first training cycle, but it
   is not extended or repaired.
 
 ## DS-02 — A task and a question are different
@@ -100,7 +100,7 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
 
 - **Status:** accepted (2026-10-21).
 - **Context:** The dataset must be objectively checkable, and an LLM in the
-  trusted path would make the answer key unauditable.
+  trusted path would make the correct answer unauditable.
 - **Decision:** Every answer is produced by running the CadQuery program or by an
   exact derivation from the program and its geometry, and is recorded with
   evidence. No LLM writes or judges an answer.
@@ -166,6 +166,22 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
 - **Consequences:** The step-count target mix starts at 1 step (5%). The PRD no
   longer defines or generates 0-step tasks. The warmup subset is still 500 to
   1,000 tasks at the target release size.
+
+---
+
+## DS-12 — No separate answer-key container
+
+- **Status:** accepted (2026-10-21).
+- **Context:** "Answer key" is an assessment-artifact term. It entered the PRD
+  as a file-layout concept before the dataset data model existed, which implied a
+  separate container that the product does not need.
+- **Decision:** The dataset has tasks and their correct answers. The correct
+  answer is private and never appears in the public task file. There is no
+  separate answer-key object at the PRD level. The technical specification may
+  choose how private answer fields are stored.
+- **Consequences:** Product and terminology text say "correct answer" or "gold
+  answer," not "answer key." A human-readable answer listing, if needed, is a
+  release artifact chosen by the technical specification, not a dataset concept.
 
 ---
 

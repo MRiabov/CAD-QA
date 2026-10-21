@@ -42,9 +42,9 @@ Training on the dataset should make an LLM model better at:
 The user also gets:
 
 - a held-out benchmark for comparing LLM models fairly;
-- a labeled warmup subset of easier tasks for teaching an LLM model the task
-  format before the hard tasks;
-- tasks and answer keys in separate files;
+- a labeled warmup subset of lower-step tasks for teaching an LLM model the
+  task format before the higher-step tasks;
+- tasks with their correct answers kept private;
 - training, validation, and test sets that do not overlap;
 - a dataset card that explains what the dataset contains and what it does not;
 - enough documentation to reproduce and review the dataset release.
@@ -68,9 +68,9 @@ priority.
 
 | User | What they need |
 |---|---|
-| Researcher or trainer | A dataset that teaches CAD program comprehension and geometry reasoning, with a clear answer key. |
+| Researcher or trainer | A dataset that teaches CAD program comprehension and geometry reasoning, with clear correct answers. |
 | Evaluator | A held-out benchmark with several task reasoning step counts and a fair way to compare models. |
-| Reviewer | Tasks a careful human can read and check, plus a documented answer key. |
+| Reviewer | Tasks a careful human can read and check, plus documented correct answers. |
 | Dataset maintainer | A dataset that can be regenerated, extended with new tasks, clue types, or answer meanings, and reviewed without redoing everything. |
 
 ---
@@ -83,13 +83,12 @@ The dataset contains:
 - tasks about those programs;
 - one correct answer for each task;
 - enough recorded evidence to show why the answer is correct;
-- a separate answer key;
 - training, validation, and test sets;
 - a labeled warmup subset;
 - a dataset card and evaluation material.
 
-Each task shows the CadQuery program and asks for one answer. The answer
-key is never part of the task file.
+Each task shows the CadQuery program and asks for one answer. The correct
+answer is never part of the public task file.
 
 In this document, a CAD model means one CadQuery program. Two tasks
 share a CAD model when they come from the same program.
@@ -234,7 +233,7 @@ a result on steps 2 through 5 alone.
 | **R-17** | A careful human can understand every task. | Sampled tasks covering every clue type, answer meaning, and answer format are reviewed before a dataset release; unclear wording is a defect. |
 | **R-18** | The dataset can be reproduced. | The same programs and the same generator version produce the same dataset; the dataset card documents versions, settings, and how to regenerate it. |
 | **R-19** | Nothing disappears silently. | Every rejected program or task is reported with a reason, and the counts add up. |
-| **R-20** (P2) | The dataset can grow without breaking users. | New tasks, clue types, or answer meanings can be added without changing the task file, the answer key, or the evaluation interface. |
+| **R-20** (P2) | The dataset can grow without breaking users. | New tasks, clue types, or answer meanings can be added without changing the task file, the private answer data, or the evaluation interface. |
 | **R-21** (P1) | The dataset is fast enough to iterate on. | A reviewer can change a task description and produce a new reviewable sample without re-running the entire corpus from scratch. |
 | **R-22** (P2) | The dataset can support a kernel-assisted upper bound. | The same tasks can be evaluated with CadQuery access as an optional upper bound, without changing the primary no-kernel setting. |
 
@@ -282,7 +281,7 @@ subset is P0 for the first training cycle.
   dataset as the benchmark;
 - one task reasoning step;
 - all answer formats;
-- the same prompt and answer-key format as the benchmark;
+- the same prompt and private-answer format as the benchmark;
 - the same correctness and fairness rules;
 - may be used for training, especially to teach an LLM model that knows little
   about CadQuery reasoning;
@@ -317,13 +316,13 @@ change.
 
 | Deliverable | What the user receives | Priority |
 |---|---|---|
-| Training dataset | Tasks and answer keys for training. | P0 |
-| Validation dataset | Tasks and answer keys for tuning. | P0 |
-| Test dataset | Held-out tasks and answer keys for the final result. | P0 |
-| Warmup subset | Labeled easy tasks for warmup. | P0 |
+| Training dataset | Tasks and correct answers for training. | P0 |
+| Validation dataset | Tasks and correct answers for tuning. | P0 |
+| Test dataset | Held-out tasks and correct answers for the final result. | P0 |
+| Warmup subset | Labeled 1-step tasks for warmup. | P0 |
 | Task reasoning step support table | Which target categories, clue types, answer meanings, and answer formats are supported at each task reasoning step count, and why not. | P0 |
 | Dataset card | A plain description of what the dataset contains, how it was made, what it is for, and what it is not for. | P0 |
-| Evaluation material | The answer keys and instructions needed to score an LLM model. | P0 |
+| Evaluation material | The correct answers and instructions needed to score an LLM model. | P0 |
 | Documentation | How to reproduce the dataset release and how to review it. | P1 |
 
 ---
@@ -348,7 +347,7 @@ The dataset is done when:
    documented;
 9. the dataset card states clearly what the dataset is and is not suitable for;
 10. an LLM model can be trained on the training set and evaluated on the test
-    set without touching the answer key.
+    set without touching the private answers.
 
 ---
 
@@ -376,7 +375,7 @@ The dataset is done when:
   `docs/_archive/dataset-pre-rebuild-2026-10-21/`.
 - The previous dataset release may be used for a first training cycle while the
   replacement is built. It must not be extended or repaired.
-- The replacement dataset may use a new task file and answer-key layout.
+- The replacement dataset may use a new task and private-answer layout.
   Training and evaluation code moves to the new layout; no compatibility file is
   kept.
 
