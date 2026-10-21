@@ -7,7 +7,7 @@ document explains how the constraints combine.
 ## Inputs
 
 - The valid-task set from `03-enumerate-tasks`.
-- The task reasoning step support tables for the release implementation scope.
+- The [task reasoning step support tables](task-step-support.md) for the release implementation scope.
 - The release targets in the PRD and the release contract.
 - The split rule: a CADEvolve program family belongs to one split.
 

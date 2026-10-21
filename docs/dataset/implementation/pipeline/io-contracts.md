@@ -13,8 +13,8 @@ pipeline stage is specified.
 |---|---|---|---|
 | `01-external-dataset-etl` | Read and normalize the CADEvolve Parquet cache. | CADEvolve Parquet cache | `NormalizedProgram`, `ExternalDatasetManifest` |
 | `02-execute-cadquery-and-build-graph` | Extract static structure, execute CadQuery, build the graph. | `NormalizedProgram` | `CadGraph` |
-| `03-enumerate-tasks` | Build task candidates and resolve gold answers. | `CadGraph` | `TaskCandidate` |
-| `04-assemble-prompt-and-choices` | Render the prompt and generate choices. | `TaskCandidate` | `PromptedTask` |
+| `03-enumerate-tasks` | Build task definitions and resolve gold answers. | `CadGraph` | `TaskDefinition` |
+| `04-assemble-prompt-and-choices` | Render the prompt and generate choices. | `TaskDefinition` | `PromptedTask` |
 | `05-select-and-balance-release` | Select, balance, and split the release. | `PromptedTask` | `ReleaseTable` |
 | `06-validate-and-export-release` | Validate and export the release dataset. | `ReleaseTable` | `ReleaseArtifacts` |
 
@@ -34,9 +34,9 @@ Sub-steps have their own typed models in their parent pipeline stage doc.
   stable program hash.
 - `ExecutionResult` is either execution snapshots or a failure tombstone.
   Failure is data, not an exception across a pipeline stage boundary.
-- A `TaskCandidate` has exactly one gold answer; ambiguous candidates are
-  rejected.
-- A `PromptedTask` has an answer-free prompt and, for multiple choice, a choice
-  set.
+- A `TaskDefinition` is the persisted, answer-bearing construction record. It has
+  exactly one gold answer; ambiguous definitions are rejected.
+- A `PromptedTask` references a task definition, has an answer-free prompt, and
+  for multiple choice has a choice set. Rendering does not change the definition.
 - A `ReleaseTable` has one row per task and exactly one answer set per task.
 - Answer columns never appear in the prompt.

@@ -240,13 +240,15 @@ and P2 values. For each step count in the release, the dataset must contain:
 - every answer format supported at that task reasoning step count;
 
 A **task reasoning step support table** records which values can occur at each
-step count and why an unsupported value cannot occur there. It is part of the release documentation
-and is versioned with the generator. "Supported" is a property of the task
-structure, not of the current generator: a value may be marked unsupported only
-when no valid task can express it at that step count. Structural support is
-separate from implementation priority. A value may be structurally supported but deferred to
-P1 or P2; that is not a gap in the current release. A value that is structurally
-valid, in the release implementation scope, and not implemented is a gap.
+step count and why an unsupported value cannot occur there. The four tables are
+derived from the task-definition rules; they are not authored as an independent
+input. They are part of the release documentation and are versioned with the
+generator. "Supported" is a property of the task structure, not of the current
+generator: a value may be marked unsupported only when no valid task can express
+it at that step count. Structural support is separate from implementation
+priority. A value may be structurally supported but deferred to P1 or P2; that
+is not a gap in the current release. A value that is structurally valid, in the
+release implementation scope, and not implemented is a gap.
 
 Coverage is reported at each task reasoning step count and per dimension. Global
 coverage is the union of the task reasoning step count reports; it does not

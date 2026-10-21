@@ -22,12 +22,6 @@ when it is resolved.
 - [ ] Entity node ID strategy — [open questions](pipeline/02c-build-cad-graph.md#open-questions).
 - [ ] Unmapped CadQuery selector result behavior — [open questions](pipeline/02c-build-cad-graph.md#open-questions).
 
-## 03 — Enumerate tasks
-
-- [ ] Target categories identifiable at each task reasoning step count — [open questions](pipeline/03-enumerate-tasks.md#open-questions).
-- [ ] Answer meanings requiring an answer step — [open questions](pipeline/03-enumerate-tasks.md#open-questions).
-- [ ] Answer meaning to answer format compatibility — [open questions](pipeline/03-enumerate-tasks.md#open-questions).
-
 ## 04 — Assemble prompt and choices
 
 - [ ] P2 distractor generation and validation — [open questions](pipeline/04-assemble-prompt-and-choices.md#open-questions). Same question as `prompt-content.md` Q1.
@@ -43,4 +37,4 @@ when it is resolved.
 
 ## None
 
-- `01` has no open questions.
+- `01` and `03` have no open questions.

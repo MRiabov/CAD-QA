@@ -1,6 +1,6 @@
 # Pipeline stage 04 — Assemble prompt and choices
 
-**Purpose:** turn a task candidate into the exact model-facing prompt and, for
+**Purpose:** turn a task definition into the exact model-facing prompt and, for
 multiple choice, the choice set.
 
 **Input/output contract:** [`io-contracts.md`](io-contracts.md).
@@ -10,9 +10,10 @@ multiple choice, the choice set.
 - Render the prompt from program text, question, task clues, choices, and answer
   instruction.
 - Keep the prompt answer-free.
-- Generate real multiple-choice choices for P0 and P1.
+- For multiple choice, order and label the task definition's choice pool. Do not
+  re-bind entities or recompute answers.
 - Add plausible near-miss distractors for P2.
-- Reject the task if enough choices cannot be generated.
+- Reject the task if the choice pool is too small.
 
 ## Open questions
 

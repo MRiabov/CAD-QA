@@ -37,7 +37,7 @@ A release directory contains:
 | `manifest.json` | Release counts, versions, hashes, split counts, and coverage summaries. | One file. |
 | `dataset-card.md` | Human-readable dataset card. | One file. |
 | `failures.parquet` | Rejected programs and tasks with reasons. | One per rejection; may be empty. |
-| `support/` | Four typed JSON support tables: target category, clue type, answer meaning, answer format. | Four files. |
+| `support/` | Four task reasoning step support tables: `target-category-by-step.json`, `clue-type-by-step.json`, `answer-meaning-by-step.json`, `answer-format-by-step.json`. | Four files. |
 
 `release.parquet` is the release dataset. It contains the gold answer because the
 release is used for training, scoring, and audit. The `prompt` column is the only

@@ -62,7 +62,7 @@ prefix is `DS-`.
   a task reasoning step count is between half and twice its share among the
   values supported at that step count. A step count with zero or one supported
   value for a dimension is coverage-only.
-- **Consequences:** The release needs a task reasoning step support table. The
+- **Consequences:** The release needs the task reasoning step support tables. The
   technical specification must define how support and the conditional share are
   computed, and must report conflicts instead of dropping coverage. Target
   category stays coverage-only at each task reasoning step count, with a
@@ -438,3 +438,20 @@ prefix is `DS-`.
 - **Consequences:** P0/P1 keep canonical prompts and simpler normalization. P2
   gains absolute scale variation and arbitrary code style. The CADEvolve program
   family mapping must cover both tiers before P2 is built.
+
+## DS-28 — `03` writes task definitions; task reasoning step support tables are a QA projection
+
+- **Status:** accepted (2026-10-21).
+- **Context:** The task reasoning step support tables had become a hand-authored
+  generator input and crowded out the actual task-definition contract. That
+  inverted the source of truth: a value is feasible because the task rules can
+  construct it, not because a support row allows it.
+- **Decision:** `03` defines task definitions and emits persisted
+  `TaskDefinition` records. The task reasoning step support tables are derived
+  from those rules as a separate QA baseline. They are not a pipeline stage and
+  not a generator input; `04` renders the task definition and `05`/`06` use the
+  tables to check the release.
+- **Consequences:** `03` does not read the task reasoning step support tables. A feasible value
+  missing from the dataset is a coverage gap; a released value marked infeasible
+  is a specification or generator defect. Dataset quantity remains a separate
+  coverage question.

@@ -28,7 +28,7 @@ generator.
 |---|---|---|
 | [`01-external-dataset-etl.md`](01-external-dataset-etl.md) | CADEvolve Parquet cache → normalized programs and manifest. | Normalized programs. |
 | [`02-execute-cadquery-and-build-graph.md`](02-execute-cadquery-and-build-graph.md) | Static extraction and CadQuery execution → CAD graph. | CAD graph. |
-| [`03-enumerate-tasks.md`](03-enumerate-tasks.md) | Graph → task tuple, clues, step count, identity, gold answer. | Task candidates. |
+| [`03-enumerate-tasks.md`](03-enumerate-tasks.md) | Graph → task definition, clues, step count, identity, gold answer. | Task definitions. |
 | [`04-assemble-prompt-and-choices.md`](04-assemble-prompt-and-choices.md) | Task candidate → prompt and multiple-choice choices. | Prompted tasks. |
 | [`05-select-and-balance-release.md`](05-select-and-balance-release.md) | Prompted tasks → selected release table. | Release table. |
 | [`06-validate-and-export-release.md`](06-validate-and-export-release.md) | Release table → validated release artifacts. | Release dataset. |
@@ -39,7 +39,7 @@ generator.
 CADEvolve Parquet cache
   → normalized programs
   → CAD graphs
-  → task candidates with gold answers
+  → task definitions with gold answers
   → prompted tasks with choices
   → release table
   → release.parquet + manifest + dataset card

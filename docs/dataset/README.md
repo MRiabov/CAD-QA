@@ -50,6 +50,7 @@ not product requirements.
 | [`implementation/README.md`](implementation/README.md) | Scope of implementation docs and where to start. |
 | [`implementation/artifacts.md`](implementation/artifacts.md) | Who writes and reads each dataset artifact, and how artifacts are versioned. |
 | [`implementation/selection-math.md`](implementation/selection-math.md) | Priority, coverage, balance, split, and release-cap math. |
+| [`implementation/task-step-support.md`](implementation/task-step-support.md) | Derived task reasoning step support tables used to check coverage, not generator inputs. |
 | [`implementation/python-and-golang.md`](implementation/python-and-golang.md) | The Python and Go language boundary for the dataset generator. |
 
 #### Pipeline
@@ -60,7 +61,7 @@ not product requirements.
 | [`implementation/pipeline/io-contracts.md`](implementation/pipeline/io-contracts.md) | Authoritative typed I/O between pipeline stages. |
 | [`implementation/pipeline/01-external-dataset-etl.md`](implementation/pipeline/01-external-dataset-etl.md) | CADEvolve Parquet cache → normalized programs and manifest. |
 | [`implementation/pipeline/02-execute-cadquery-and-build-graph.md`](implementation/pipeline/02-execute-cadquery-and-build-graph.md) | Static extraction and CadQuery execution → CAD graph. |
-| [`implementation/pipeline/03-enumerate-tasks.md`](implementation/pipeline/03-enumerate-tasks.md) | Task candidates, step counts, identity, and gold answers. |
+| [`implementation/pipeline/03-enumerate-tasks.md`](implementation/pipeline/03-enumerate-tasks.md) | Task definitions, step counts, identity, and gold answers. |
 | [`implementation/pipeline/04-assemble-prompt-and-choices.md`](implementation/pipeline/04-assemble-prompt-and-choices.md) | Prompt rendering and multiple-choice choices. |
 | [`implementation/pipeline/05-select-and-balance-release.md`](implementation/pipeline/05-select-and-balance-release.md) | Release selection, balance, and splits. |
 | [`implementation/pipeline/06-validate-and-export-release.md`](implementation/pipeline/06-validate-and-export-release.md) | Validation, export, manifest, and dataset card. |

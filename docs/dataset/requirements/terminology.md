@@ -14,6 +14,7 @@ the user-visible outcome.
 | Term | Scope | Meaning |
 |---|---|---|
 | **Task** | Domain | One dataset instance: a CadQuery program, a task target, a set of task clues, and one answer. Use "dataset task" when it could be confused with an internal task. |
+| **Task definition** | Internal | The persisted, answer-bearing construction record for one task: target binding, ordered clues, answer step, answer, validity evidence, and identity. It is not prompt text. |
 | **Question** | Domain | The interrogative sentence in the prompt. It is not the whole task. |
 | **Clue type** | Domain | The category of condition a task clue states: property, relation, comparison, aggregation, or provenance. A chain is a P2 sequence of relation clues, not a clue type. |
 | **Answer meaning** | Domain | What the answer is about, independent of how it is returned: identity, volume, area, length, distance, angle, count, rank, membership, position, extent, CadQuery workplane state, material change, topology change, or validity. |
