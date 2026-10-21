@@ -14,6 +14,53 @@ clues, task reasoning step count, canonical identity, and gold answer.
 - Resolve the gold answer and its evidence.
 - Reject ambiguous or invalid tasks.
 
+## Support tables
+
+The task reasoning step support table is four small JSON files:
+
+```text
+support/target-category.json
+support/clue-type.json
+support/answer-meaning.json
+support/answer-format.json
+```
+
+Each file has a versioned envelope and typed rows:
+
+```json
+{
+  "schema_version": "1",
+  "rows": [
+    {
+      "task_reasoning_step_count": 1,
+      "target_category": "face",
+      "structurally_supported": true,
+      "implementation_scope": "P0",
+      "reason": "..."
+    }
+  ]
+}
+```
+
+The row field is named after the file: `target_category`, `clue_type`,
+`answer_meaning`, or `answer_format`. There is no generic
+`(dimension, value)` map.
+
+The tables are derived from the task rules: target identification, clue
+preconditions, answer-step accounting, answer meaning to answer format
+compatibility, and implementation scope. The `reason` records why a value is
+unsupported or which construction supports it.
+
+The Go binary embeds the four files with `//go:embed support/*.json`, parses them
+into typed structs, and validates the schema version, enum values, and primary
+key `(task_reasoning_step_count, <typed value>)`. The files are compile-time
+generator inputs, not mutable runtime configuration.
+
+The four files are pipeline definitions for now. When they are generated, the
+release is expected to copy them into its `support/` directory and record their
+schema versions and hashes in `manifest.json`. That release-contract change is
+deferred until the tables exist.
+
 ## Resolved questions
 
 - **Q2.** *Resolved 2026-10-21.* Option B: atomic predicates. Each relation or
