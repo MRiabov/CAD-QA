@@ -14,7 +14,8 @@
 - Read only the selected rows and the columns needed for normalization.
 - Use Parquet column projection and HF range reads; do not download the full
   cache.
-- Preserve the metadata columns selected by `01a`, including the tier and collection.
+- Preserve the metadata columns selected by `01a`, including the tier,
+  collection, and `split_group_id`.
 - Record selected IDs that are missing from the cache.
 - Do not normalize or execute CadQuery.
 

@@ -14,7 +14,7 @@ Selection math: [`../selection-math.md`](../selection-math.md).
 - Apply task reasoning step count mix.
 - Apply answer format, clue type, answer meaning, and target category coverage
   and balance.
-- Assign training, validation, and test splits by program.
+- Assign training, validation, and test splits by split group, not by program.
 - Apply the CAD model and correct-answer caps.
 
 ## Open questions

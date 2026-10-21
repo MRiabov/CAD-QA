@@ -13,7 +13,7 @@ Artifact ownership: [`../artifacts.md`](../artifacts.md).
 - Validate the release table schema and row counts.
 - Check that the prompt is answer-free.
 - Check that task and answer rows are 1:1.
-- Check split isolation by program.
+- Check split isolation by split group.
 - Check the transfer overlap: exact normalized program text at P0; same-CAD-model
   check at P1.
 - Write `release.parquet`, `failures.parquet`, `manifest.json`, and

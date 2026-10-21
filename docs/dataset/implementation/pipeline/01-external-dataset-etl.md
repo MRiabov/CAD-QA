@@ -39,7 +39,8 @@ P and C are separate program populations: they have no program-hash overlap.
 They are not duplicates of each other. P preserves arbitrary code style and
 original pose/scale; C is canonical, centered, and scaled. The selection policy
 must choose P, C, or an explicit mix, and must not treat the tiers as
-interchangeable.
+interchangeable. P and C versions of one generator or mesh family share a split
+group; split assignment never crosses groups.
 
 ## Input scale
 

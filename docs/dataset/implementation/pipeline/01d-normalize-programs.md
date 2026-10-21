@@ -8,8 +8,8 @@ used by graph build, overlap checks, and release grouping.
 ## Input / output
 
 - Input: the selected program pool from `01c`.
-- Output: normalized program records with `program_id`, canonical text, and
-  normalization version.
+- Output: normalized program records with `program_id`, canonical text,
+  normalization version, and `split_group_id`.
 
 ## Behavior
 

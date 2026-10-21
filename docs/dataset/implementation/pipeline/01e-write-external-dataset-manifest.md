@@ -17,6 +17,7 @@ rows.
 - normalization version;
 - hash summary;
 - collection and path provenance;
+- split-group count and counts by group;
 - rejection counts and reasons.
 
 ## Open questions

@@ -18,7 +18,10 @@ release from the external dataset metadata.
   deduplicate P against C; they are separate populations.
 - Select at most the target program count for the release.
 - Use only metadata columns; do not download program text.
-- Record the policy, seed, collection counts, and excluded counts.
+- Assign `split_group_id`: for CADEvolve core, the generator family; for
+  ABC/ShapeNet, the mesh family. P and C versions of one family share the group.
+- Record the policy, seed, collection counts, split-group counts, and excluded
+  counts.
 - Do not normalize or execute CadQuery.
 
 ## Open questions

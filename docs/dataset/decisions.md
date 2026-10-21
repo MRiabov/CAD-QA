@@ -369,7 +369,7 @@ prefix is `DS-`.
   contract.
   Rejections use `failures.parquet`; the release table remains `release.parquet`.
 - **Consequences:** Pipeline stages exchange columnar tables, not JSON rows.
-  Large tables are partitioned by program or release where useful. The release
+  Large tables are partitioned by program family or release where useful. The release
   artifacts are `release.parquet`, `failures.parquet`, `manifest.json`, and
   `dataset-card.md`. Schema versions are recorded in Parquet metadata and the
   manifest.
@@ -405,3 +405,20 @@ prefix is `DS-`.
 - **Consequences:** Prompt style and geometry scale depend on the tier. C is
   canonical and normalized; P preserves arbitrary style and original pose/scale.
   Counts from P and C are not additive as if they were the same programs.
+
+## DS-26 — Split by generator or mesh family
+
+- **Status:** accepted (2026-10-21).
+- **Context:** Splitting by CadQuery program is not enough. Different programs
+  sampled from one CADEvolve generator share a code template and parameter
+  family; P and C versions of one mesh or generator are also related. A
+  program-level split can put near-duplicates in both training and evaluation.
+- **Decision:** Split by `split_group_id`. For CADEvolve core, the group is the
+  generator family taken from the path. For ABC/ShapeNet, the group is the mesh
+  family. P and C versions of one family share a group. Assign train,
+  validation, and test at the group level; every task inherits the group split.
+  The release table records `split_group_id`.
+- **Consequences:** Split isolation is stricter than program isolation. Split
+  sizes are balanced by group size, not program count. Unmatched P/C families
+  become their own groups. The cache's `generator_id` column is not the
+  generator identity; derive the group from `path_family`.
