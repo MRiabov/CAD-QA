@@ -156,6 +156,12 @@ state. Entities in different solid states are distinct. The P2 `same_as`
 relation may record persistence for P2 tasks; P0 and P1 tasks must not depend on
 cross-state identity.
 
+A failed operation does not produce a measurable solid state. The graph records
+a **failure tombstone** instead: program identity, operation, error,
+environment, and a cache key. The tombstone supports debugging and cache hits.
+It is not a graph entity, it never supports an answer, and every task that
+depends on the failed output is rejected.
+
 ## 6. Graph quality rules
 
 1. Every entity has a program and a visible origin: a variable name, an
@@ -224,17 +230,6 @@ category, clue type, and answer meaning.
     operation changes it; a fillet volume is measured. A derived value must
     carry the rule that produced it.
 
-- **Q4.** How should the graph represent a shape that cannot be measured, such
-  as a failed operation?
-  - **Option A — omit the program.** No record, no explanation.
-  - **Option B — record a failed state and reject its tasks.** Keep the error
-    and the program identity.
-  - **Option C — keep a partial graph with missing measurements.**
-  - **Recommendation:** B. Example: a `cutBlind` raises; the graph records a
-    failed solid state with the error, no task is generated, and the failure
-    manifest counts it. Do not guess the missing value or drop the program
-    silently.
-
 ## 10. Resolved questions
 
 - **Q1.** *Resolved 2026-10-21.* P0 and P1 use independent topology per solid
@@ -245,3 +240,9 @@ category, clue type, and answer meaning.
   face keeps its area and normal after a fillet but gets a new kernel ID; a
   confident fingerprint may support a P2 `same_as` link. P0 and P1 tasks that
   need cross-state identity are not generated.
+
+- **Q4.** *Resolved 2026-10-21.* Record a failure tombstone for a failed
+  operation. Do not create measurements, answers, or tasks from the failed
+  output. Use the tombstone for debugging and for cache hits when the same
+  program, operation, and environment are seen again. The failure manifest
+  counts it.

@@ -42,6 +42,7 @@ the user-visible outcome.
 | **Relation** | Domain | A named link between two graph entities. |
 | **Measurement** | Domain | A numeric or geometric value about a graph entity or a pair of entities. |
 | **Evidence** | Domain | The record of how a measurement was obtained: measured by running CadQuery, or derived exactly from the program. |
+| **Failure tombstone** | Internal | A recorded failed program or operation, with the error and cache key, used for debugging and cache hits. It is not a graph entity and never supports an answer. |
 | **Solid state** | Domain | The shape before or after an operation, or the final shape. |
 | **Warmup subset** | Domain | The labeled set of 1-step tasks inside the dataset. It is useful for training, not a separate dataset. |
 | **Curriculum** | Domain | The order in which tasks are presented, from lower to higher task reasoning step counts. |
