@@ -169,3 +169,18 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
   multiple-choice distractors selected deterministically?
 - **Q5.** When is a task a duplicate of another task? The canonical task identity
   is not yet fixed.
+- **Q6.** What defines a 0-step task? Two definitions conflict:
+  - **Strict step count:** 0 steps means no task clue step and no task answer
+    step; the answer is a named object or a value directly visible in the
+    program. A property filter such as "which operation has a `faces()`
+    CadQuery selector" is one task clue step, so it is 1 step.
+  - **Syntax-only evidence:** 0 steps means any task answerable from Python
+    syntax alone, including a filter over entities. That would make "which
+    operation has a `faces()` CadQuery selector" 0 steps, but it classifies by
+    evidence origin rather than by reasoning steps.
+
+  "Which box has a length of 10" is 0 steps only if 10 is a literal argument
+  read from the syntax; if the length is measured from geometry, it is a
+  geometry step. The specification must choose. The current leaning is to keep
+  the step count as the number of atomic task reasoning steps: syntax-only
+  filters are 1-step syntax tasks, and 0-step is a direct named lookup.
