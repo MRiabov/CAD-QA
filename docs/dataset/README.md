@@ -1,77 +1,42 @@
-# Dataset generation
+# Dataset generator
 
-**Status:** active, 2026-10-07.
+**Status:** rebuilt from first principles, 2026-10-21. The previous generator,
+its pipeline docs, and its issue register are archived under
+`docs/_archive/dataset-pre-rebuild-2026-10-21/` and are not a specification.
 
-This directory documents the CAD-QA benchmark-generation pipeline: the code that turns
-normalized CadQuery programs into verifiable QA rows. It is the
-`dataset_generation` package (today `dataset/`). The dataset-generation pipeline is
-**immutable**: these docs describe what the code does; they do not justify refactors
-(`plans/oct-7/restructure-docs.md`).
+This directory defines the replacement dataset generator. Start with
+[`PRD.md`](PRD.md). Technical specifications — architecture, data schema,
+language boundaries, algorithms, and migration mechanics — are deliberately not
+written yet.
 
-## Reading order
+## Why there is only a PRD
 
-1. `requirements.md` — intended-vs-verified summary: one row per pipeline stage.
-2. `pipeline/00-overview.md` — the DAG and the **pipeline-stage IO contract**. Read this before any
-   step doc; it is the single authority for artifact and field names between steps.
-3. `pipeline/01-source-ingestion.md` … `07-exports-harbor-sft.md` — one doc per pipeline stage.
-4. `answer-formats.md` — intended answer formats, current coverage, and the history of the formats that were cut.
-5. `decisions.md` — local decisions for the dataset unit, in ADR format.
+The previous generator was built from a mixture of good ideas, inherited
+vocabulary, and code-first decisions. That produced a pipeline whose task
+families were hard-coded, whose terminology often described implementation
+accidents, and whose quality gates did not match the data. Re-specifying the
+product first prevents the replacement from repeating that pattern.
 
-## What lives where
+The order is:
 
-| Question | Doc |
-|---|---|
-| What must each pipeline stage do, and does it? | `requirements.md` |
-| What flows between stages (artifact/field names)? | `pipeline/00-overview.md` |
-| How does a pipeline stage behave, in words? | the step doc |
-| Why a dataset-specific choice was made | `decisions.md` and the step doc's local decisions |
-| Which answer formats exist, which are generated, and why some were cut? | `answer-formats.md` |
-| Which known major issues affect the generated dataset? | `known-major-issues.md` |
-| What the project is for | `../PRD.md` |
-| What a term means | `../glossary.md` |
-| Where the project actually is | `../development-context.md` |
+1. Re-define what the generator is for and what tasks the dataset must contain.
+2. Establish the vocabulary the implementation will use.
+3. Write the technical specification.
+4. Build the smallest complete slice.
+5. Scale to a release.
 
-## Pipeline at a glance
+Only step 1 is in this directory today.
 
-```text
-A1 source ingestion -> A2 CadQuery program operation trace -> A3 ontology graph
-  -> A4 query synthesis + resolver -> A5 prompt rendering (inside materialization)
-  -> A6 materialize / validate / release -> A7 Harbor / SFT / evaluation exports
-```
+## Relation to the project PRD
 
-The one-command entry point for a small end-to-end run is:
+[`../PRD.md`](../PRD.md) remains authoritative for the research questions,
+hypotheses, and the evaluation contract. This PRD is subordinate to it: it
+defines the instrument the project PRD needs, and it does not change the
+research goals.
 
-```bash
-rtk uv run cadqa experiment smoke \
-  --sources-jsonl data/cadqa_cadevolve_rc_10/sources.jsonl \
-  --limit 10 \
-  --out runs/experiment_smoke
-```
+## Archived material
 
-The step-by-step commands are in `../experiment_execution_runbook.md`.
-
-## The freeze and doc/code conflicts
-
-- The dataset-generation code is immutable. Where a doc and the code disagree, the doc
-  records the actual behaviour and the discrepancy is captured as a local decision or open
-  question — it is not silently fixed here.
-- `specs/` is superseded and is being split into these docs
-  (`plans/oct-7/restructure-docs.md`). Treat `specs/dataset-spec.md`,
-  `specs/benchmark-task-spec.md`, `specs/multi-hop-qa-task-spec.md`,
-  `specs/generation_policy.md`, and `specs/schema.md` as input material, not current
-  specs.
-- `../implementation_status.md` is a raw status log and is retired; it is input material
-  for these docs, not a spec.
-
-## Scope boundary
-
-This pipeline ends at the rows/public/private artifacts and their exports. Training and
-evaluation of models live under `docs/train-and-eval/fine-tuning/`; the evaluation harness and baselines
-live under `docs/train-and-eval/evaluation/`. The coupling is the dataset file plus the answer contract,
-nothing else.
-
-## Extra deliverables - P2
-
-- A generated per-pipeline-stage runnable script folder mirroring the step numbers (the
-  restructure plan's "code-experimentation folder" idea), so each doc step has an
-  executable counterpart.
+The archive is input material, not current truth. It contains the old pipeline
+docs, the old answer-format record, the old decisions, and the known-major-issues
+register. Useful historical facts are carried into the new PRD where they change
+a requirement; everything else stays archived.

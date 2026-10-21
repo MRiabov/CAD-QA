@@ -124,7 +124,7 @@ rationale — link the decision — and never redefine field names — match the
   1. **Step-local** — in that step doc's `## Local decisions` (the file you are editing),
      e.g. `pipeline/02-trace-snapshot.md#local-decisions`.
   2. **Feature-wide** — in the feature's `decisions.md` (`dataset/`, `train-and-eval/fine-tuning/`), for
-     logic that spans the feature's stages; e.g. `dataset/decisions.md#dd-01`.
+     logic that spans the feature's stages; e.g. `train-and-eval/fine-tuning/decisions.md#ft-d01`.
   3. **Cross-cutting/plan** — D1–D14 stay in the plan / `development-plan.md`.
 - Format: `Status` / `Context` / `Decision` / `Consequences`. There is no central
   `docs/adr/` folder.

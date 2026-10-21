@@ -42,10 +42,10 @@ Outputs:
   `graded_responses.jsonl`, and `reward.txt`
   (`train_and_eval/harbor.py::grade_harbor_answer_files`).
 
-The evaluation harnesses consume the dataset files, and the canonical rows IO
-contract now lives in `dataset/pipeline/00-overview.md`. The field names below are
-the current harness view and must be reconciled against that contract (see
-`## Open questions`).
+The evaluation harnesses consume the dataset files. The dataset generator is being
+re-specified, so the old rows IO contract is archived and the current requirements
+live in `docs/dataset/PRD.md`. The field names below are the current harness view and
+must be reconciled with the new technical specification.
 
 ## Requirement
 
@@ -204,8 +204,8 @@ one shared tool-call harness).
 
 - **Q1.** Does the recorded Harbor run for big LLM models preserve raw trajectories anywhere? Not
   found in-repo; needed to re-verify the 65/63/59 rc10 clean-100 numbers.
-- **Q2.** Will `dataset/pipeline/00-overview.md` rename any public/private field used here? The
-  contract now exists; the field names must be checked against it.
+- **Q2.** Will the replacement dataset generator rename any public/private field used here? The
+  new PRD exists; the field names must be checked against the technical specification.
 - **Q3.** Should the local harness import the Harbor grader (or the reverse) so the two
   exact-match paths cannot drift? Currently they are independent implementations. Applies only if
   Harbor is revived; while Harbor is deferred (D-E9), the one local scorer (D-E8) is the target.

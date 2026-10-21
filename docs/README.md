@@ -18,7 +18,7 @@ procedural CAD programs (CadQuery), and a small-LLM-model fine-tuning effort on 
 5. **`development-plan.md`** — the phased route to completion.
 6. **`prior-art.md`** — mined open-source training/RL/data pipelines.
 7. **`research/`** — external study notes and citations for related work.
-8. **`dataset/`** — the benchmark-generation pipeline, step by step.
+8. **`dataset/PRD.md`** — what the replacement dataset generator must produce. The old pipeline docs are archived.
 9. **`train-and-eval/datasets.md`** — the dataset → DatasetRole assignment.
 10. **`train-and-eval/fine-tuning/`** — the training pipeline.
 11. **`train-and-eval/evaluation/`** — harnesses and baselines.
@@ -32,7 +32,7 @@ procedural CAD programs (CadQuery), and a small-LLM-model fine-tuning effort on 
 | What a term means | `glossary.md` |
 | What is true right now | `development-context.md` |
 | What happens next | `development-plan.md` |
-| How the dataset is built | `dataset/pipeline/00-overview.md` |
+| What the dataset generator must produce | `dataset/PRD.md` |
 | How the LLM model is trained | `train-and-eval/fine-tuning/training.md` |
 | Which data we train on, and in what order | `train-and-eval/fine-tuning/data.md` |
 | The post-training loop (SFT → RL-readiness gate → RL) | `train-and-eval/fine-tuning/system.md` |
@@ -40,7 +40,7 @@ procedural CAD programs (CadQuery), and a small-LLM-model fine-tuning effort on 
 | Which dataset serves which role | `train-and-eval/datasets.md` |
 | Paper citations and study notes | `research/` |
 | Past experiments | `experiments/` |
-| Decisions | `dataset/decisions.md`, `train-and-eval/fine-tuning/decisions.md` |
+| Decisions | `train-and-eval/fine-tuning/decisions.md`; dataset decisions are pending the new technical specification |
 | The written paper | `paper/CA2_Riabov_final.md` (with `paper/CA2_Riabov_final.tex`) |
 
 ## Conventions in one line

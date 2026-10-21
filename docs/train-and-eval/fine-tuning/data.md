@@ -28,10 +28,10 @@ procedure, grading reconciliation, judge independence, baselines).
 - **H1/H2** — owned by the architecture doc; the mixes they test are defined here (§3).
 
 **Scope boundary.** The CAD-QA **dataset rows** themselves (the benchmark) are generated and planned in
-`docs/dataset/` (`../../dataset/README.md`, `../../dataset/pipeline/00-overview.md`); this directory
+`docs/dataset/` (now a fresh PRD at `../../dataset/PRD.md`; the old pipeline docs are archived); this directory
 consumes the Dataset file and owns the **agent training trace distillation** (`pipeline/02-teacher-sampling.md`) and the
 `learn_the_cadqa_task` contract (§6). The dataset is to be **regenerated** — the current 1,445-row release
-is superseded — and that regeneration plan is owned in `docs/dataset/`. Pin the regenerated Dataset file
+is superseded — and that regeneration plan is owned in `docs/dataset/PRD.md`. Pin the regenerated Dataset file
 revision before any teacher pass.
 
 **Related docs.** `../../prior-art.md` (external evidence, refs [1]–[33]);
@@ -312,7 +312,7 @@ the mechanics (epochs, mixing implementation).
 - **Tier-gated inclusion, not within-run ordering.** Under TRL SFT with a shuffled single epoch, ordering
   a static dataset is a no-op. Include a hop tier's `learn_the_cadqa_task` rows only after §4.1's measured
   advancement gate, and keep the ladder to the release hops `{2,3,4,5}` — synthesis floors at `hop≥2`
-  (`../../dataset/pipeline/04-query-synthesis-resolver.md` Q1), so 0/1 are not generatable. Do not
+  (`../../_archive/dataset-pre-rebuild-2026-10-21/pipeline/04-query-synthesis-resolver.md` Q1), so 0/1 are not generatable. Do not
   front-load the hard slice.
 - **The general tasks are interleaved, not appended.** Keep the general-task share in every phase, so
   general ability is anchored throughout, not restored at the end.
@@ -385,7 +385,7 @@ mechanism differs by training stage:
   0/1-hop or synthetic syntax/representation examples (legacy 0/1 rows re-verified, or synthetic examples
   from `expose_cadquery_programs`). It is not benchmark data, is excluded from H2/H3 evaluation, is
   group-disjoint and contamination-checked, and is recorded in the manifest. See
-  `../../dataset/known-major-issues.md` M10.
+  `../../_archive/dataset-pre-rebuild-2026-10-21/known-major-issues.md` M10.
 - **Contamination policy.** `sft_train`, `rl_train`, and `eval` must be disjoint at the group level;
   any eval row in `sft_train` or `rl_train` is a hard failure, as is any `rl_train` row in the SFT mix.
   CAD-QA held-out rows and the evaluation datasets are hard-excluded. The mechanics (quality gate,
@@ -421,7 +421,7 @@ only the dataset:
 - **This is the comprehension corpus.** CAD-QA *is* the program → question (comprehension) data;
   there is no large public equivalent, which is the dataset contribution. That is why the external
   `expose_cadquery_programs` sets are generation-only proxies, and this dataset — not they — carries the task signal.
-- **Producer.** The CAD-QA dataset rows come from `docs/dataset/` (`../../dataset/README.md`); the
+- **Producer.** The CAD-QA dataset rows come from the replacement generator (`docs/dataset/PRD.md`); the
   agent training trace distillation from those rows is this directory's
   `pipeline/02-teacher-sampling.md`. The dataset is to be
   **regenerated** (the current release is superseded) — pin the regenerated revision.
@@ -513,7 +513,7 @@ only the dataset:
 ## Resolved questions
 
 - **Q7.** *(2026-10-19)* The hop ladder is `{2,3,4,5}`, not `0→1→2→3→5`: synthesis floors at
-  `hop≥2`, so no release 0- or 1-hop families exist (`../../dataset/pipeline/04-query-synthesis-resolver.md`
+  `hop≥2`, so no release 0- or 1-hop families exist (`../../_archive/dataset-pre-rebuild-2026-10-21/pipeline/04-query-synthesis-resolver.md`
   Q1), and the release tiers are `{2,3,4,5}`. Hop 4 is included; hop 1 is not a gap to fill. Within-run
   ordering is not used (§4).
 
