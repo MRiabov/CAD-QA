@@ -1,4 +1,4 @@
-# Pipeline stage 05 — Assemble prompt and choices
+# Pipeline stage 05 — Render prompt and choices
 
 **Purpose:** turn a selected task definition into the exact model-facing prompt
 and, for multiple choice, the rendered choice set.

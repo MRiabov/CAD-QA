@@ -15,7 +15,7 @@ pipeline stage is specified.
 | `02-execute-cadquery-and-build-graph` | Extract static structure, execute CadQuery, build the graph. | `NormalizedProgram` | `CadGraph` |
 | `03-enumerate-tasks` | Build task definitions and resolve gold answers. | `CadGraph` | `TaskDefinition` |
 | `04-select-and-balance-release` | Select, balance, and split the release. | `TaskDefinition` | `SelectedTask` |
-| `05-assemble-prompt-and-choices` | Render the prompt and choices. | `SelectedTask` | `ReleaseTable` |
+| `05-render-prompt-and-choices` | Render the prompt and choices. | `SelectedTask` | `ReleaseTable` |
 | `06-validate-and-export-release` | Validate and export the release dataset. | `ReleaseTable` | `ReleaseArtifacts` |
 
 ## Sub-steps

@@ -30,7 +30,7 @@ generator.
 | [`02-execute-cadquery-and-build-graph.md`](02-execute-cadquery-and-build-graph.md) | Static extraction and CadQuery execution → CAD graph. | CAD graph. |
 | [`03-enumerate-tasks.md`](03-enumerate-tasks.md) | Graph → task definition, clues, step count, identity, gold answer. | Task definitions. |
 | [`04-select-and-balance-release.md`](04-select-and-balance-release.md) | Task definitions → selected definitions with splits. | Selected tasks. |
-| [`05-assemble-prompt-and-choices.md`](05-assemble-prompt-and-choices.md) | Selected tasks → prompt and choices. | Release table. |
+| [`05-render-prompt-and-choices.md`](05-render-prompt-and-choices.md) | Selected tasks → prompt and choices. | Release table. |
 | [`06-validate-and-export-release.md`](06-validate-and-export-release.md) | Release table → validated release artifacts. | Release dataset. |
 
 ## Flow

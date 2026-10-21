@@ -27,9 +27,9 @@ when it is resolved.
 - [ ] Selection strategy: enumerate-and-cut or quota planning — [open questions](pipeline/04-select-and-balance-release.md#open-questions).
 - [ ] Conditional release share allocation — [open questions](pipeline/04-select-and-balance-release.md#open-questions).
 
-## 05 — Assemble prompt and choices
+## 05 — Render prompt and choices
 
-- [ ] P2 distractor generation and validation — [open questions](pipeline/05-assemble-prompt-and-choices.md#open-questions). Same question as `prompt-content.md` Q1.
+- [ ] P2 distractor generation and validation — [open questions](pipeline/05-render-prompt-and-choices.md#open-questions). Same question as `prompt-content.md` Q1.
 
 ## 06 — Validate and export release
 
