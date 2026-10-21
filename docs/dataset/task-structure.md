@@ -304,18 +304,19 @@ answer format, answer meaning, and task reasoning step count that tie them toget
 
 ## 8. Open questions
 
-- **Q1.** Is the release a selected subset of the valid-task universe, or must
-  it contain every valid task?
-  - **Option A — release = universe.** Every valid task is released. Simple,
-    but the size is uncontrolled and balance may be impossible.
-  - **Option B — release ⊆ universe.** The universe is every valid task; the
-    release is a deterministic selection that meets the size and balance
-    targets.
-  - **Option C — exhaustive for small programs, selected for large programs.**
-    Keeps small programs complete but needs two rules.
-  - **Recommendation:** B. Example: a program produces 120,000 valid tasks; the
-    release takes 10,000 selected to meet the step-count and dimension quotas.
-    "Required enumeration" means the required cells, not every tuple.
+- **Q1.** This is an implementation choice. The release is a deterministic subset of the
+  valid-task universe. Should the generator enumerate the universe and cut it,
+  or plan quotas and generate into them?
+  - **Option A — enumerate and cut.** Generate the valid tasks, then select a
+    release that meets coverage and balance. Simple, but may do unused work.
+  - **Option B — quota plan.** Allocate counts per task reasoning step count and
+    dimension, then generate into the quotas with deterministic randomness.
+    Avoids unused work, but must detect when the universe cannot fill a cell.
+  - **Option C — hybrid.** Enumerate small cells and plan large cells.
+  - **Recommendation:** Treat A and B as implementation choices, not a product
+    decision. The contract fixes the release constraints and reproducibility;
+    it does not mandate either strategy. "Required enumeration" means the
+    required cells, not every tuple.
 
 - **Q2.** Is a chain clue one task reasoning step or one step per relation? Is a
   clue that combines a relation and a property one condition or two?
