@@ -35,7 +35,9 @@ Training on the dataset should make an LLM model better at:
 - reasoning about what an operation changed, including material added, material
   removed, volume change, and topology change;
 - following several clues in order until only one answer remains;
-- answering without access to CadQuery, OpenCascade, or any other CAD kernel.
+- answering without access to CadQuery, OpenCascade, or any other CAD kernel
+  (P0);
+- as a P2 goal, answering with access to CadQuery as an upper-bound setting.
 
 The user also gets:
 
@@ -46,6 +48,19 @@ The user also gets:
 - training, validation, and test sets that do not overlap;
 - a dataset card that explains what the dataset contains and what it does not;
 - enough documentation to reproduce and review the dataset release.
+
+### Priorities
+
+The project uses three priorities:
+
+| Priority | Meaning for the dataset |
+|---|---|
+| **P0** | Required for the thesis. Without it, the dataset cannot support the primary no-kernel training and evaluation claim. |
+| **P1** | Important for the thesis. It strengthens the result or its credibility but does not block the first training cycle. |
+| **P2** | Venue extra. It may never execute and must not delay P0 or P1 work. |
+
+Requirements below are P0 unless the requirement ID is followed by a
+priority.
 
 ---
 
@@ -134,9 +149,9 @@ Difficulty is described by how many reasoning steps a question needs.
 - **0 steps**: a direct fact about a named object, such as the volume of the
   final solid.
 - **1 step**: one inference, such as finding a feature by a property.
-- **2 to 5 steps**: the benchmark range. The LLM model must combine clues about
-  geometry, relationships, measurements, and operations.
-- **6 or more steps**: optional future work.
+- **2 to 5 steps**: the benchmark range (P0). The LLM model must combine clues
+  about geometry, relationships, measurements, and operations.
+- **6 or more steps**: optional future work (P2).
 
 A question's difficulty must come from the work it actually requires, not from
 a label attached to it. A question that looks long but can be answered from a
@@ -165,11 +180,11 @@ covers steps 0 and 1.
 | ID | Requirement | How the user can tell |
 |---|---|---|
 | **R-7** | The dataset covers all answer shapes. | Every answer shape in section 5 appears in both the warmup set and the benchmark dataset release. |
-| **R-8** | The dataset covers many question categories. | At least twelve question categories appear in the benchmark dataset release, and no category dominates. |
+| **R-8** (P1) | The dataset covers many question categories. | At least twelve question categories appear in the benchmark dataset release, and no category dominates. |
 | **R-9** | The dataset covers the full difficulty range. | Steps 2, 3, 4, and 5 all appear, with steps 3 and 4 carrying the headline slices. |
 | **R-10** | The dataset is diverse. | It draws from at least one thousand distinct CAD models, and no single CAD model or question category dominates. |
-| **R-11** | The dataset has varied answers. | At least one thousand different correct answers appear, and no answer is repeated so often that guessing wins. |
-| **R-12** | The dataset is balanced across question categories. | No question category is below one percent or above ten percent of the benchmark dataset release. |
+| **R-11** (P1) | The dataset has varied answers. | At least one thousand different correct answers appear, and no answer is repeated so often that guessing wins. |
+| **R-12** (P1) | The dataset is balanced across question categories. | No question category is below one percent or above ten percent of the benchmark dataset release. |
 
 ### 7.3 Splits and reuse
 
@@ -178,7 +193,7 @@ covers steps 0 and 1.
 | **R-13** | Training, validation, and test sets do not overlap. | The same CAD model never appears in both training and evaluation. |
 | **R-14** | The test set is never trained on. | The dataset card names the test set and the training recipe excludes it. |
 | **R-15** | The warmup set is separate from the benchmark. | Warmup questions are not counted in benchmark results and are not described as benchmark data. |
-| **R-16** | Transfer results are not contaminated. | No program from the external benchmark used for transfer appears in training or evaluation. |
+| **R-16** (P1) | Transfer results are not contaminated. | No program from the external benchmark used for transfer appears in training or evaluation. |
 
 ### 7.4 Usability and trust
 
@@ -187,8 +202,9 @@ covers steps 0 and 1.
 | **R-17** | A careful human can understand every question. | Sampled questions from every category are reviewed before a dataset release; unclear wording is a defect. |
 | **R-18** | The dataset can be reproduced. | The same programs and the same generator version produce the same dataset; the dataset card documents versions, settings, and how to regenerate it. |
 | **R-19** | Nothing disappears silently. | Every rejected program or question is reported with a reason, and the counts add up. |
-| **R-20** | The dataset can grow without breaking users. | New question categories can be added without changing the question file, the answer key, or the evaluation interface. |
-| **R-21** | The dataset is fast enough to iterate on. | A reviewer can change a question category and produce a new reviewable sample without re-running the entire corpus from scratch. |
+| **R-20** (P2) | The dataset can grow without breaking users. | New question categories can be added without changing the question file, the answer key, or the evaluation interface. |
+| **R-21** (P1) | The dataset is fast enough to iterate on. | A reviewer can change a question category and produce a new reviewable sample without re-running the entire corpus from scratch. |
+| **R-22** (P2) | The dataset can support a kernel-assisted upper bound. | The same questions can be evaluated with CadQuery access as an optional upper bound, without changing the primary no-kernel setting. |
 
 ---
 
@@ -197,18 +213,18 @@ covers steps 0 and 1.
 The first benchmark dataset release must contain at least ten thousand
 questions and meet the following targets.
 
-| Property | Target |
-|---|---|
-| Questions | At least 10,000 |
-| Distinct CAD models | At least 1,000 |
-| Answer shapes | Every shape in section 5; each at least 5% and none above 25% |
-| Question categories | At least 12; each between 1% and 10% |
-| Difficulty | Steps 2: 20–30%; 3: 30–40%; 4: 20–30%; 5: 10–20% |
-| Geometry-based questions | At least 95% |
-| Questions needing at least three steps | At least 90% |
-| Multiple-choice choices | Five to seven |
-| Different correct answers | At least 1,000 |
-| Evidence for the answer | Available for every question |
+| Property | Target | Priority |
+|---|---|---|
+| Questions | At least 10,000 | P0 |
+| Distinct CAD models | At least 1,000 | P0 |
+| Answer shapes | Every shape in section 5; each at least 5% and none above 25% | P0 |
+| Question categories | At least 12; each between 1% and 10% | P1 |
+| Difficulty | Steps 2: 20–30%; 3: 30–40%; 4: 20–30%; 5: 10–20% | P0 |
+| Geometry-based questions | At least 95% | P0 |
+| Questions needing at least three steps | At least 90% | P0 |
+| Multiple-choice choices | Five to seven | P0 |
+| Different correct answers | At least 1,000 | P1 |
+| Evidence for the answer | Available for every question | P0 |
 
 These are product targets. The technical specification will define how they are
 measured and what happens when a target cannot be met.
@@ -218,7 +234,8 @@ measured and what happens when a target cannot be met.
 ## 9. Warmup dataset
 
 A small LLM model needs an easy introduction before the benchmark questions. The
-dataset therefore includes a separate warmup set.
+dataset therefore includes a separate warmup set. The warmup set is P0 for the
+first training cycle.
 
 - 500 to 1,000 questions;
 - 0 or 1 reasoning steps;
@@ -241,23 +258,24 @@ The benchmark dataset release is divided into three parts:
 The same CAD model must not appear in more than one part. The test part must
 never be used for training, tuning, or choosing an LLM model.
 
-The intended proportions are approximately 70% training, 15% validation, and
-15% test. The exact proportions may change if the available CAD models make
-them impractical, but the no-overlap rule may not change.
+The no-overlap rule is P0. The intended proportions are approximately 70%
+training, 15% validation, and 15% test (P1). The exact proportions may change if
+the available CAD models make them impractical, but the no-overlap rule may not
+change.
 
 ---
 
 ## 11. Deliverables
 
-| Deliverable | What the user receives |
-|---|---|
-| Training dataset | Questions and answer keys for training. |
-| Validation dataset | Questions and answer keys for tuning. |
-| Test dataset | Held-out questions and answer keys for the final result. |
-| Warmup dataset | Easy questions for teaching the task shape. |
-| Dataset card | A plain description of what the dataset contains, how it was made, what it is for, and what it is not for. |
-| Evaluation material | The answer keys and instructions needed to score an LLM model. |
-| Documentation | How to reproduce the dataset release and how to review it. |
+| Deliverable | What the user receives | Priority |
+|---|---|---|
+| Training dataset | Questions and answer keys for training. | P0 |
+| Validation dataset | Questions and answer keys for tuning. | P0 |
+| Test dataset | Held-out questions and answer keys for the final result. | P0 |
+| Warmup dataset | Easy questions for teaching the task shape. | P0 |
+| Dataset card | A plain description of what the dataset contains, how it was made, what it is for, and what it is not for. | P0 |
+| Evaluation material | The answer keys and instructions needed to score an LLM model. | P0 |
+| Documentation | How to reproduce the dataset release and how to review it. | P1 |
 
 ---
 
@@ -287,7 +305,8 @@ The dataset is done when:
 - A public question language.
 - A dataset written or judged by an LLM.
 - CAD generation or editing.
-- Giving the LLM model CadQuery or a CAD kernel during evaluation.
+- Making CadQuery or a CAD kernel the primary evaluation setting. A
+  kernel-assisted upper bound is a P2 goal.
 - A general three-dimensional reasoning benchmark.
 - A replacement for an independent transfer benchmark.
 - Preserving the previous dataset's internal names or file layout.
@@ -311,20 +330,20 @@ The dataset is done when:
 
 ## 15. Open questions
 
-- **Q1.** Is the first benchmark dataset release ten thousand questions, or
+- **Q1** (P0). Is the first benchmark dataset release ten thousand questions, or
   should the first dataset release be smaller and ten thousand be a later scale-up?
-- **Q2.** Should a multiple-choice question show five or seven choices?
-- **Q3.** What counts as the same CAD model when keeping training and
+- **Q2** (P0). Should a multiple-choice question show five or seven choices?
+- **Q3** (P0). What counts as the same CAD model when keeping training and
   evaluation apart?
-- **Q4.** Should zero- and one-step questions appear in the benchmark dataset release
+- **Q4** (P1). Should zero- and one-step questions appear in the benchmark dataset release
   at all, or only in the warmup set? This document proposes warmup only.
-- **Q5.** Should every answer shape be required to reach five percent, or is
+- **Q5** (P1). Should every answer shape be required to reach five percent, or is
   non-zero coverage enough for some shapes?
-- **Q6.** How many question categories should the first dataset release target?
-- **Q7.** Which independent benchmark must the overlap check cover, and at what
+- **Q6** (P1). How many question categories should the first dataset release target?
+- **Q7** (P1). Which independent benchmark must the overlap check cover, and at what
   level of detail?
-- **Q8.** Should the warmup set come from the same CadQuery programs as the
+- **Q8** (P1). Should the warmup set come from the same CadQuery programs as the
   benchmark, or from a separate small set of syntax examples?
-- **Q9.** Must the replacement keep a file in the old layout for the current
+- **Q9** (P0). Must the replacement keep a file in the old layout for the current
   training setup, or can the training setup move to the new layout at the same
   time?
