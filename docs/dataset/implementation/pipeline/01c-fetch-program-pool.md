@@ -2,19 +2,20 @@
 
 **Parent:** [`01-external-dataset-etl.md`](01-external-dataset-etl.md).
 
-**Purpose:** fetch the selected program rows from the external dataset cache.
+**Purpose:** fetch the safety pool from the external dataset cache.
 
 ## Input / output
 
 - Input: the selection artifact from `01b` plus the pinned cache revision.
-- Output: a Parquet program pool containing only the selected program rows.
+- Output: a Parquet program pool with fetched rows marked active or reserve.
 
 ## Behavior
 
-- Read only the active selected rows and the columns needed for normalization;
-  leave reserve IDs unfetched.
-- Use Parquet column projection and HF range reads; do not download the full
-  cache.
+- Fetch the active and reserve rows. A larger C shortlist, or the full C tier,
+  is allowed when review needs it.
+- Use Parquet column projection and HF range reads. Fetching is cheap relative
+  to normalization and execution.
+- Do not normalize unselected rows.
 - Preserve the metadata columns selected by `01a`, including the tier,
   collection, and `split_group_id`.
 - Record selected IDs that are missing from the cache.
@@ -22,6 +23,4 @@
 
 ## Open questions
 
-- Does the cache row-group layout make selected-row fetches cheap enough, or is
-  a sorted/indexed pool artifact needed?
 - What is the rejection policy for a selected ID missing from the pinned cache?

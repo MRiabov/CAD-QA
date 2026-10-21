@@ -8,8 +8,8 @@ release from the external dataset metadata.
 ## Input / output
 
 - Input: program metadata records from `01a` plus the selection policy.
-- Output: a Parquet selection artifact with selected program IDs, the policy,
-  counts, and exclusions.
+- Output: a Parquet selection artifact with active and reserve program IDs, the
+  policy, counts, and exclusions.
 
 ## Behavior
 
@@ -18,6 +18,8 @@ release from the external dataset metadata.
   against C; they are separate populations.
 - Select 1,500 active C programs for P0 and P1, plus 300–450 reserve IDs
   (20–30%). If fewer are available, select all and record the shortfall.
+- Start from a larger metadata shortlist when review needs it; the active and
+  reserve sets are the safety pool, not every fetched program.
 - Use only metadata columns; do not download program text.
 - Assign `split_group_id`: for CADEvolve core, the generator family; for
   ABC/ShapeNet, the mesh family. P and C versions of one family share the group.

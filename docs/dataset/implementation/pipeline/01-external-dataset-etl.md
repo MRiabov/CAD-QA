@@ -50,6 +50,13 @@ augmentation, and its C count is lower than the paper's 1,002,002
 post-canonicalization count. It is a valid program pool for CAD-QA; it is not a
 claim of reproducing CADEvolve end to end.
 
+## Fetch and processing budget
+
+Fetching the 508 MB cache, or a larger C shortlist, is cheap. The expensive work
+is normalization, execution, graph build, and task generation. Fetch a generous
+safety pool; normalize and execute only the active pool. Do not materialize
+derived artifacts for unselected programs.
+
 ## Input scale
 
 The Parquet cache contains 1,998,810 programs. A release does not need all of
