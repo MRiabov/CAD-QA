@@ -27,7 +27,7 @@ checked for real coverage instead of counting labels.
 Each value below has a priority. P0 values are required for the first benchmark,
 P1 values strengthen it, and P2 values are optional. A task is P0 only when
 every value it uses is P0; a P1 value makes the task P1, and a P2 value makes it
-P2.
+P2. A task with six or more task reasoning steps is P2 regardless of its inputs.
 
 ## 2. The dimensions of a task
 
@@ -302,9 +302,77 @@ affected values; it is not resolved by silently dropping coverage.
 Those are properties of a task. A task must state the task target, task clues,
 answer format, answer meaning, and task reasoning step count that tie them together.
 
-## 8. Resolved questions
+## 8. Open questions
 
-- **Q1.** *Resolved 2026-10-21: Option C.* A comparison task clue may name both
+- **Q1.** Is the release a selected subset of the valid-task universe, or must
+  it contain every valid task?
+  - **Option A — release = universe.** Every valid task is released. Simple,
+    but the size is uncontrolled and balance may be impossible.
+  - **Option B — release ⊆ universe.** The universe is every valid task; the
+    release is a deterministic selection that meets the size and balance
+    targets.
+  - **Option C — exhaustive for small programs, selected for large programs.**
+    Keeps small programs complete but needs two rules.
+  - **Recommendation:** B. Example: a program produces 120,000 valid tasks; the
+    release takes 10,000 selected to meet the step-count and dimension quotas.
+    "Required enumeration" means the required cells, not every tuple.
+
+- **Q2.** Is a chain clue one task reasoning step or one step per relation? Is a
+  clue that combines a relation and a property one condition or two?
+  - **Option A — chain is one step; a compound sentence is one clue.** The
+    current text allows “the face adjacent to X whose area is larger than X” as
+    one clue.
+  - **Option B — atomic predicates.** Each relation or property is one clue and
+    one task reasoning step. The compound sentence becomes two clues; the chain
+    becomes one clue per relation.
+  - **Option C — hybrid.** Chains count per relation, but a relation plus a
+    property in one sentence counts as one clue.
+  - **Recommendation:** B. Example: “the face adjacent to X whose area is
+    larger than X” is two steps; `A -> B -> C` is two steps. Split the prompt
+    task clues accordingly. This makes the step count auditable.
+
+- **Q3.** Is the conditional release share computed from the valid-task universe,
+  or allocated from the global targets before selection?
+  - **Option A — universe share.** Compute each value's share in the universe
+    among the values supported at that step count, then require the release to
+    approximate it.
+  - **Option B — allocate quotas from the global targets, then fill from the
+    universe.** Choose the target mix first, allocate counts per step count and
+    dimension, then select tasks that fill the quotas.
+  - **Option C — select, compute, repair.** Select a draft release, measure it,
+    and move tasks until the targets hold.
+  - **Recommendation:** B. Example: at step count 2, supported answer meanings
+    `A`, `B`, and `C` have target shares 20%, 30%, and 50%; allocate the step-2
+    quota in those proportions, fill from the universe, and report a conflict if
+    the universe cannot fill a cell. This avoids the circular definition.
+
+- **Q4.** Which answer formats are valid for each answer meaning?
+  - **Option A — one answer format per answer meaning.** Simple, but identity
+    would be limited to multiple choice.
+  - **Option B — a compatibility table.** Each answer meaning lists its allowed
+    answer formats.
+  - **Option C — the generator chooses any format.** Flexible, but hard to
+    audit.
+  - **Recommendation:** B. Example mapping: identity -> multiple choice;
+    volume, area, length, distance, angle -> number; count or rank -> integer;
+    membership or validity -> yes or no; position -> 3D coordinate; extent ->
+    bounding box; CadQuery workplane state -> structured object; material change
+    -> number; topology change -> structured object.
+
+- **Q5.** When is a task a duplicate of another task?
+  - **Option A — canonical tuple.**
+    `(program, target entity, clue sequence, task answer step, answer format)`.
+  - **Option B — rendered prompt text.** Two tasks with the same prompt are
+    duplicates.
+  - **Option C — answer value.** Two tasks with the same answer are duplicates.
+  - **Recommendation:** A, with canonical clue order. Example: the same target,
+    clues, and answer but multiple choice vs number are two tasks. The same
+    tuple rendered twice is one task. The same prompt text with two different
+    answers is an ambiguity defect, not two tasks.
+
+## 9. Resolved questions
+
+- **Q6.** *Resolved 2026-10-21: Option C.* A comparison task clue may name both
   entities or refer to an entity selected by an earlier task clue. Every
   referenced entity is either named in the program or already in the set of
   possible answers. A reference to an earlier selected entity must resolve to

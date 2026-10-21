@@ -4,7 +4,9 @@
 
 Feature-wide decisions for the CAD-QA dataset, in ADR format
 (`../docs-conventions.md`). Decisions scoped to one pipeline stage belong in
-that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
+that pipeline stage's `Local decisions` section. Open questions live in the
+document that owns the uncertainty; this file records decisions. The decision
+prefix is `DS-`.
 
 ---
 
@@ -150,7 +152,8 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
   serialization, and split assignment.
 - **Consequences:** Implementation should not start from the current
   conceptual docs alone. `task-structure.md` and this file define the target;
-  the enumeration contract defines the implementable space.
+  the enumeration contract defines the implementable space. The open questions
+  that affect it are in `task-structure.md` Q1-Q5.
 
 ---
 
@@ -246,7 +249,7 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
 ## DS-17 — Comparison clues may name an entity or reuse one selected earlier
 
 - **Status:** accepted (2026-10-21).
-- **Context:** `task-structure.md` Q1 asked whether a comparison task clue must
+- **Context:** `task-structure.md` Q6 asked whether a comparison task clue must
   name both entities. BrowseComp-style composition lets a later step use a
   result from an earlier step, and the dataset needs the same freedom without
   ambiguous references.
@@ -271,12 +274,14 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
   benchmark. Without priorities, the generator either builds everything at once
   or hides the build order in code.
 - **Decision:** The generation inputs carry the project P0/P1/P2 priorities. A
-  task is P0 only when every input it uses is P0. A P1 input makes the task P1;
-  a P2 input makes it P2. P0 tasks use only P0 inputs; P1 tasks may use P0 and
-  P1 inputs; P2 tasks may use any input. The priority columns in
-  `task-structure.md` and `graph-content.md` are authoritative. Coverage and
-  balance apply to the priority slice being built; a value deferred to a later
-  priority is not a gap in the current slice.
+  task is P0 only when every input it uses is P0 and it has at most five task
+  reasoning steps. A P1 input makes the task P1; a P2 input makes it P2, and a
+  task with six or more steps is P2. P0 tasks use only P0 inputs; P1 tasks may
+  use P0 and P1 inputs; P2 tasks may use any input. The priority columns in
+  `task-structure.md` and `graph-content.md` are authoritative. Requirement
+  priority and input priority are separate: a P1 requirement can apply to the
+  P0 slice. Coverage and balance apply to the priority slice being built; a
+  value deferred to a later priority is not a gap in the current slice.
 - **Consequences:** The first benchmark is the P0 slice. P1 adds richer
   relations, clues, and answers. P2 is optional. A P1 or P2 value cannot be
   required by a P0 task.
@@ -299,74 +304,3 @@ that pipeline stage's `Local decisions` section. The decision prefix is `DS-`.
   `same_as`. No second graph is needed; the relation lives in the same graph.
 
 ---
-
-## Open questions
-
-- **Q1.** Is the release a selected subset of the valid-task universe, or must
-  it contain every valid task?
-  - **Option A — release = universe.** Every valid task is released. Simple,
-    but the size is uncontrolled and balance may be impossible.
-  - **Option B — release ⊆ universe.** The universe is every valid task; the
-    release is a deterministic selection that meets the size and balance
-    targets.
-  - **Option C — exhaustive for small programs, selected for large programs.**
-    Keeps small programs complete but needs two rules.
-  - **Recommendation:** B. Example: a program produces 120,000 valid tasks; the
-    release takes 10,000 selected to meet the step-count and dimension quotas.
-    "Required enumeration" means the required cells, not every tuple.
-
-- **Q2.** Is a chain clue one task reasoning step or one step per relation? Is a
-  clue that combines a relation and a property one condition or two?
-  - **Option A — chain is one step; a compound sentence is one clue.** The
-    current text allows “the face adjacent to X whose area is larger than X” as
-    one clue.
-  - **Option B — atomic predicates.** Each relation or property is one clue and
-    one task reasoning step. The compound sentence becomes two clues; the chain
-    becomes one clue per relation.
-  - **Option C — hybrid.** Chains count per relation, but a relation plus a
-    property in one sentence counts as one clue.
-  - **Recommendation:** B. Example: “the face adjacent to X whose area is
-    larger than X” is two steps; `A -> B -> C` is two steps. Split the prompt
-    task clues accordingly. This makes the step count auditable.
-
-- **Q3.** Is the conditional release share computed from the valid-task universe,
-  or allocated from the global targets before selection?
-  - **Option A — universe share.** Compute each value's share in the universe
-    among the values supported at that step count, then require the release to
-    approximate it.
-  - **Option B — allocate quotas from the global targets, then fill from the
-    universe.** Choose the target mix first, allocate counts per step count and
-    dimension, then select tasks that fill the quotas.
-  - **Option C — select, compute, repair.** Select a draft release, measure it,
-    and move tasks until the targets hold.
-  - **Recommendation:** B. Example: at step count 2, supported answer meanings
-    `A`, `B`, and `C` have target shares 20%, 30%, and 50%; allocate the step-2
-    quota in those proportions, fill from the universe, and report a conflict if
-    the universe cannot fill a cell. This avoids the circular definition.
-
-- **Q4.** Which answer formats are valid for each answer meaning, and how are
-  multiple-choice distractors selected deterministically?
-  - **Option A — one answer format per answer meaning.** Simple, but identity
-    would be limited to multiple choice.
-  - **Option B — a compatibility table.** Each answer meaning lists its allowed
-    answer formats.
-  - **Option C — the generator chooses any format.** Flexible, but hard to
-    audit.
-  - **Recommendation:** B. Example mapping: identity -> multiple choice;
-    volume, area, length, distance, angle -> number; count or rank -> integer; membership or validity -> yes or no;
-    position -> 3D coordinate; extent -> bounding box; CadQuery workplane state
-    -> structured object; material change -> number; topology change ->
-    structured object. Distractors are real graph candidates from the same
-    target category, unique, non-leaking, deterministically ordered; if fewer
-    than five exist, reject the task.
-
-- **Q5.** When is a task a duplicate of another task?
-  - **Option A — canonical tuple.**
-    `(program, target entity, clue sequence, task answer step, answer format)`.
-  - **Option B — rendered prompt text.** Two tasks with the same prompt are
-    duplicates.
-  - **Option C — answer value.** Two tasks with the same answer are duplicates.
-  - **Recommendation:** A, with canonical clue order. Example: the same target,
-    clues, and answer but multiple choice vs number are two tasks. The same
-    tuple rendered twice is one task. The same prompt text with two different
-    answers is an ambiguity defect, not two tasks.

@@ -45,6 +45,7 @@ the user-visible outcome.
 | **Warmup subset** | Domain | The labeled set of 1-step tasks inside the dataset. It is useful for training, not a separate dataset. |
 | **Curriculum** | Domain | The order in which tasks are presented, from lower to higher task reasoning step counts. |
 | **Dataset release** | Domain | An immutable, validated, versioned set of tasks and correct answers. |
+| **Priority slice** | Domain | The set of tasks built for one priority level: P0 tasks only, P0 plus P1 tasks, or all tasks. |
 
 ### Internal and domain pairs
 

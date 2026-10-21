@@ -18,8 +18,8 @@ tasks need, derived from the program and from running it.
 
 Priority follows the PRD. P0 graph inputs are required for the first benchmark,
 P1 inputs strengthen it, and P2 inputs are optional. A task is P0 only when
-every input it needs is P0; a P1 input makes the task P1, and a P2 input makes
-it P2.
+every input it needs is P0 and it has at most five task reasoning steps; a P1
+input makes the task P1, and a P2 input makes it P2.
 
 ## 2. Graph entities
 

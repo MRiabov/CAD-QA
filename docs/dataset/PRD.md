@@ -68,6 +68,17 @@ it P1, and a P2 input makes it P2. The authoritative tables are in
 [`task-structure.md`](task-structure.md) and
 [`graph-content.md`](graph-content.md).
 
+Priority has two separate uses. On a requirement, it means importance. On a
+generation input, it means the slice in which the input is built. A P1
+requirement can therefore apply to the P0 slice, while a P1 input belongs to the
+P1 slice.
+
+The P0 slice contains tasks whose inputs are all P0 and whose task reasoning
+step count is 1 through 5. The P1 slice contains the P0 tasks plus tasks that use
+a P1 input, use no P2 input, and have at most five task reasoning steps. The P2
+slice contains all tasks, including tasks with six or more steps. The first
+benchmark dataset release is the P0 slice; P1 and P2 are later releases.
+
 ---
 
 ## 2. Who it is for
@@ -156,11 +167,11 @@ may be added if they follow the structure and meet the same quality rules.
 
 ## 5. Answer formats
 
-The dataset must support all of the following answer formats.
+The dataset must support all of the following answer formats at the priority shown.
 
 | Answer format | What the user sees | Requirements | Priority |
 |---|---|---|---|
-| Multiple choice | A short list of choices, one of which is correct. | At least five choices, with seven as the goal, for the benchmark dataset release; the correct answer is always present; choices are real candidates from the construction, not padding; descriptions do not repeat; no choice leaks the answer. | P0 |
+| Multiple choice | A short list of choices, one of which is correct. | At least five choices, with seven as the goal, for every multiple-choice task; the correct answer is always present; choices are real candidates from the construction, not padding; descriptions do not repeat; no choice leaks the answer. | P0 |
 | Number | A finite numeric value. | Unit, precision, and tolerance are stated; the default precision is 4 significant figures; the number is measured from the real geometry. | P0 |
 | Integer | A whole number, usually a count or a rank. | Exact and non-negative where it is a count. | P0 |
 | Yes or no | A boolean answer. | Exactly one of true or false is correct. | P0 |
@@ -183,22 +194,26 @@ Task reasoning step count is the number of task reasoning steps a task needs. It
 is a count of the task solution sequence, not a score or a label.
 
 - **1 step**: exactly one task clue step with an identity answer, or exactly one
-  task answer step about a named task target. This is the warmup subset and the
-  curriculum entry point (P0).
+  task answer step about a task target the question identifies directly (for
+  example, the final solid state). This is the warmup subset and the curriculum
+  entry point (P0).
 - **2 to 5 steps**: the main benchmark range (P0). The LLM model must combine
-  task clues about geometry, relationships, measurements, and operations.
+  task clues about geometry, relationships, measurements, or operations.
 - **6 or more steps**: optional future work (P2).
 
-The task reasoning step count must come from the work the task actually
-requires, not from the number of sentences in the prompt. A task that looks long
-but can be answered from a variable name or an operation order does not have a
-high step count.
+Other P2 inputs can appear at lower step counts; a task is P2 when any input is
+P2, not only when it reaches six steps.
 
-The benchmark dataset release covers steps 1 through 5. Step 1 forms the labeled
-warmup subset and is also useful training material. Steps 2 through 5 carry the
-main benchmark claim. Every benchmark result must name the reasoning
-steps it covers, so a result that includes warmup tasks is not mistaken for
-a result on steps 2 through 5 alone.
+The task reasoning step count comes from the task solution sequence defined in
+[`task-structure.md`](task-structure.md), not from the number of sentences in
+the prompt. A task that looks long but can be answered from a variable name or
+an operation order does not have a high step count.
+
+The P0 benchmark dataset release covers steps 1 through 5. Step 1 forms the
+labeled warmup subset and is also useful training material. Steps 2 through 5
+carry the main benchmark claim. Every benchmark result must name the task
+reasoning step counts it covers, so a result that includes warmup tasks is not
+mistaken for a result on steps 2 through 5 alone.
 
 ---
 
@@ -211,8 +226,8 @@ a result on steps 2 through 5 alone.
 | **R-1** | Every answer is correct. | The answer is produced by running the CadQuery program or derived by an exact rule, and recorded with evidence. No LLM writes or judges the answer. |
 | **R-2** | Every task has exactly one correct answer. | Ambiguous tasks and tasks with ties are rejected. |
 | **R-3** | Multiple-choice tasks are fair. | The correct answer is present; there are enough choices that guessing does not look competitive; choices are real candidates from the construction; choices do not give the answer away. |
-| **R-4** | Benchmark tasks require reasoning about the actual shape. | At least one task clue depends on the geometry or topology the program builds, not only on the text of the program. |
-| **R-5** | Trivial shortcuts do not win. | An LLM model cannot answer a benchmark task by reading variable names, literal arguments, or operation order alone. |
+| **R-4** | At least 95% of benchmark tasks require reasoning about the actual shape. | At least one task clue depends on the geometry or topology the program builds, not only on the text of the program. |
+| **R-5** | Trivial shortcuts do not win on shape-required tasks. | For a task that requires the built shape, an LLM model cannot answer by reading variable names, literal arguments, or operation order alone. |
 | **R-6** | Answers are not leaked. | The task file never contains the answer or hidden identifiers. |
 
 ### 7.2 Coverage and balance
@@ -225,10 +240,10 @@ slice. "Supported" below means supported by the priority slice being checked.
 | ID | Requirement | How the user can tell |
 |---|---|---|
 | **R-7** | The dataset balances answer formats at every task reasoning step count. | Every answer format in section 5 appears at every task reasoning step count where it is supported. No format is more than twice or less than half its share among the formats supported at that task reasoning step count. Over the release, each format is between 5% and 25% of tasks. |
-| **R-8** | The dataset covers all target categories, clue types, and answer meanings. | Every target category, clue type, and answer meaning supported at a task reasoning step count appears at that task reasoning step count. A value that is valid but missing is a gap; the task reasoning step support table lists only values that cannot occur. |
+| **R-8** | The dataset covers all target categories, clue types, and answer meanings. | Every target category, clue type, and answer meaning supported at a task reasoning step count appears at that task reasoning step count. A value that is valid, supported by the slice, and missing is a gap; the task reasoning step support table lists only values that cannot occur. |
 | **R-9** | The dataset covers the full task reasoning step count range. | Steps 1 through 5 all appear in the target mix in section 8, with steps 3 and 4 carrying the headline slices. |
-| **R-10** | The dataset is diverse. | It draws from at least one thousand distinct CAD models, and no single CAD model dominates. |
-| **R-11** (P1) | The dataset has varied answers. | At least one thousand different correct answers appear, and no answer is repeated so often that guessing wins. |
+| **R-10** | The dataset is diverse. | It draws from at least one thousand distinct CAD models, and no single CAD model dominates (see Q11). |
+| **R-11** (P1) | The dataset has varied answers. | At least one thousand different correct answers appear, and no answer is repeated so often that guessing wins (see Q11). |
 | **R-12** (P1) | The dataset is balanced at every task reasoning step count. | No clue type is above 25% of clues at a task reasoning step count or over the release, and no clue type is more than twice or less than half its share among the clue types supported at a task reasoning step count. Every answer meaning is between 1% and 10% over the release, and no answer meaning is more than twice or less than half its share among the meanings supported at a task reasoning step count. No target category is above 25% of the release. |
 
 ### 7.3 Splits and reuse
@@ -255,8 +270,8 @@ slice. "Supported" below means supported by the priority slice being checked.
 
 ## 8. Size and mix of the benchmark dataset release
 
-The first benchmark dataset release must contain at least ten thousand
-tasks and meet the following targets.
+The first benchmark dataset release is the P0 slice and must contain at least
+ten thousand tasks and meet the following targets at their stated priorities.
 
 | Property | Target | Priority |
 |---|---|---|
@@ -291,16 +306,16 @@ A small LLM model needs a lower-step introduction before the higher-step tasks.
 The dataset therefore labels its lowest-step tasks as the warmup subset. The warmup
 subset is P0 for the first training cycle.
 
-- 500 to 1,000 tasks, drawn from the same CadQuery programs and the same
-  dataset as the benchmark;
+- for the first 10,000-task release, 500 to 1,000 tasks, drawn from the same
+  CadQuery programs and the same dataset as the benchmark (see Q10);
 - one task reasoning step;
-- all answer formats;
+- all P0 answer formats;
 - the same prompt and answer format as the benchmark;
 - the same correctness and fairness rules;
 - may be used for training, especially to teach an LLM model that knows little
   about CadQuery reasoning;
 - may be included in a benchmark run, but every benchmark result must name the
-  number of task reasoning steps it covers.
+  task reasoning step counts it covers.
 
 The dataset is designed for curriculum learning: lower task reasoning step
 counts first, higher counts later.
@@ -309,7 +324,9 @@ counts first, higher counts later.
 
 ## 10. Training, validation, and test
 
-The benchmark dataset release is divided into three parts:
+Each priority slice is a separate dataset release and is divided into three
+parts. When a later slice includes a task from an earlier slice, its split
+assignment is preserved.
 
 - **Training**: tasks an LLM model may learn from;
 - **Validation**: tasks used to tune training decisions;
@@ -334,7 +351,7 @@ change.
 | Validation dataset | Tasks and correct answers for tuning. | P0 |
 | Test dataset | Held-out tasks and correct answers for the final result. | P0 |
 | Warmup subset | Labeled 1-step tasks for warmup. | P0 |
-| Task reasoning step support table | Which target categories, clue types, answer meanings, and answer formats are supported at each task reasoning step count, and why not. | P0 |
+| Task reasoning step support table | Which target categories, clue types, answer meanings, and answer formats are supported at each task reasoning step count and priority slice, and why not. | P0 |
 | Dataset card | A plain description of what the dataset contains, how it was made, what it is for, and what it is not for. | P0 |
 | Evaluation material | The correct answers and instructions needed to score an LLM model. | P0 |
 | Documentation | How to reproduce the dataset release and how to review it. | P1 |
@@ -346,16 +363,17 @@ change.
 The dataset is done when:
 
 1. a small sample produces every target category, clue type, answer meaning,
-   and answer format at every task reasoning step count where it is supported;
-2. a benchmark dataset release of at least ten thousand tasks meets the
-   coverage and balance targets at every task reasoning step count in section 8, or every miss is
-   documented and accepted by the owner;
+   and answer format supported in the P0 slice at every task reasoning step
+   count where that value is structurally supported;
+2. the P0 benchmark dataset release of at least ten thousand tasks meets the
+   coverage and balance targets at every task reasoning step count in section 8,
+   or every miss is documented and accepted by the owner;
 3. the task reasoning step support table is published and reviewed;
 4. a labeled warmup subset exists;
 5. training, validation, and test sets do not share a CAD model;
 6. a reviewer can read sampled tasks covering every task reasoning step count,
-   target category, clue type, answer meaning, and answer format and understand
-   them without asking what they mean;
+   target category, clue type, answer meaning, and answer format supported in the
+   released priority slice and understand them without asking what they mean;
 7. the answers can be checked without an LLM in the loop;
 8. the dataset release can be regenerated and the result matches what is
    documented;
@@ -420,6 +438,28 @@ The dataset is done when:
   - **Recommendation:** B, with A as a fast pre-check. Two different programs
     that both ask for a volume are not overlap. Two programs that build the same
     CAD model under different names are overlap.
+
+- **Q10** (P1). When a later release exceeds 20,000 tasks, is the warmup subset still
+  every 1-step task, or is it capped at 1,000?
+  - **Option A — warmup = every 1-step task.** The 1-step mix is 5%, so the
+    warmup grows with the release. The 500-1,000 range describes the first
+    10,000-task P0 release.
+  - **Option B — warmup is a capped sample.** Keep the warmup at 1,000 and
+    leave the remaining 1-step tasks as ordinary training tasks.
+  - **Option C — cap the release at 20,000 tasks.** Keep the 5% mix and the
+    1,000 warmup cap aligned.
+  - **Recommendation:** A. The warmup is a label for the 1-step bucket, not a
+    fixed-size dataset.
+
+- **Q11** (P1). What thresholds define "no single CAD model dominates" and "no answer
+  is repeated so often that guessing wins"?
+  - **Option A — percentage caps.** No CAD model above 1% of tasks; no answer
+    above 1% of tasks.
+  - **Option B — count caps.** No CAD model above 100 tasks; no answer above
+    100 tasks.
+  - **Option C — no numeric cap.** Rely on the coverage and balance checks.
+  - **Recommendation:** A, with the exact percentages reviewed against the
+    first release. A 1% cap is 100 tasks at the 10,000-task P0 size.
 
 ## 16. Resolved questions
 

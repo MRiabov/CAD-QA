@@ -205,3 +205,19 @@ Before a prompt is accepted:
 - the prompt is readable by a careful human without the answers;
 - a task drawn from the dataset release, not the illustrative example above, is
   used for the review sample.
+
+## 10. Open questions
+
+- **Q1.** How are multiple-choice distractors selected deterministically?
+  - **Option A — fixed candidate order.** Take the first N candidates by a
+    stable identifier. Simple, but the choices may be clustered and easy to
+    eliminate.
+  - **Option B — hash order.** Order candidates by a stable hash and take the
+    first N. Deterministic, but still no guarantee that the choices are
+    distinguishable.
+  - **Option C — property coverage, then hash order.** Prefer candidates that
+    differ from the correct answer in at least one geometric or construction
+    property; break ties by a stable hash. Deterministic and more discriminative.
+  - **Recommendation:** C. Example: for a face identity task, prefer faces with
+    different areas, normals, or creating operations; if fewer than five real
+    candidates exist, reject the task.
