@@ -39,7 +39,7 @@ A point expression is accepted as fixed only when it is:
 
 If a point contains a non-literal expression, `points` and the segment point
 fields are omitted; the expression remains in the operation arguments. Do not
-evaluate it statically.
+evaluate it during AST extraction.
 
 ## CadQuery profile derivation
 

@@ -19,8 +19,8 @@ the receiver binding, argument names, and arity match this table.
 - `CALLABLE` is the narrow filter lambda.
 - Unknown keyword arguments, excess positional arguments, and missing required
   arguments reject the program.
-- Argument value categories are not evaluated statically. A category mismatch is a
-  runtime failure in `02b`.
+- Argument value categories are not evaluated during AST extraction. A category
+  mismatch is a runtime failure in `02b`.
 
 ## Constructors
 

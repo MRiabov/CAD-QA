@@ -187,7 +187,7 @@ decision explains why the contract has that shape.
 | [`cadquery/features/effects.md`](cadquery/features/effects.md) | Before/after effects. |
 | [`cadquery/features/evidence.md`](cadquery/features/evidence.md) | Extraction evidence references for effects, topology, and selectors. |
 | [`canonicalization.md`](canonicalization.md) | Numbers, JSON, hashes, and ordering. |
-| [`validation.md`](validation.md) | Static, runtime, and cross-pipeline stage invariants. |
+| [`validation.md`](validation.md) | AST, runtime, and cross-pipeline stage invariants. |
 | [`artifacts.md`](artifacts.md) | Logical tables, keys, and artifact identities. |
 | [`ast-schema.md`](ast-schema.md) | AST extraction artifact columns, nested models, and CadQuery program AST extraction result hash. |
 | [`runtime-schema.md`](runtime-schema.md) | Runtime artifact columns, nested models, and runtime model hash. |
