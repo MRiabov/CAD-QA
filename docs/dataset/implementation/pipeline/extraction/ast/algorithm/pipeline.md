@@ -112,14 +112,14 @@ receiver is the `Name` `wpN`; for `cq.Workplane("XY")`, the receiver is `cq`.
   is rejected in P0/P1.
 - `receiver_var` is the receiver name when the receiver is a `Name`; otherwise
   null.
-- The receiver expression is retained as a `StaticExpression` tree for review
+- The receiver expression is retained as a `AstExpression` tree for review
   and `02c` provenance.
 
 A call whose callee is a plain name, such as `list(...)`, has no receiver.
 
 ## Expression subset
 
-`StaticExpression` accepts:
+`AstExpression` accepts:
 
 - constant `int`, `float`, `str`, `bool`, and `None`;
 - unary `-` and `+` over a numeric constant or numeric expression;
@@ -239,7 +239,7 @@ Any other `list` use is rejected.
 
 ### Workplanes
 
-A `Workplane` constructor creates a `StaticWorkplane`:
+A `Workplane` constructor creates a `AstWorkplane`:
 
 - `cq.Workplane("XY"|"YZ"|"XZ", origin=...)`:
   - named plane;
@@ -278,7 +278,7 @@ frame from the executed `Workplane`; `02c` uses that measurement.
 | `offset2D` | `other` | `distance` | yes |
 | `pushPoints` | `other` | `points` | no |
 
-Dimensions are `StaticExpression` trees. `points` is present only when every
+Dimensions are `AstExpression` trees. `points` is present only when every
 point is a literal or nested `cq.Vector`/tuple of literals. The CadQuery workplane is the
 receiver binding's current `workplane_id`.
 
@@ -304,7 +304,7 @@ receiver is a CadQuery workplane; otherwise null for a standalone constructor pa
 
 ### Selectors
 
-`faces`, `edges`, and `vertices` create one `StaticSelector`:
+`faces`, `edges`, and `vertices` create one `AstSelector`:
 
 - `selector_kind = implicit` when the call has no arguments;
 - `selector_kind = string` when the first argument is a string literal;

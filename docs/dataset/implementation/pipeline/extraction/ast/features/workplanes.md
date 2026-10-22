@@ -19,7 +19,7 @@ frame is captured by [`../../cadquery/algorithm/runtime.md`](../../cadquery/algo
 | `source_selector_id` | string or null | AST | no | Face CadQuery selector that defines a face frame. | 02c |
 | `offset` | double or null | AST | no | CadQuery workplane offset. | review |
 | `tag` | string or null | AST | no | Tag used by `workplaneFromTagged` or `tag`. | review |
-| `args` | list of StaticExpression | AST | yes | Unevaluated constructor or transform arguments. | review |
+| `args` | list of AstExpression | AST | yes | Unevaluated constructor or transform arguments. | review |
 | `source_span` | SourceSpan | AST | yes | Creating call span. | review |
 
 ## AST derivation

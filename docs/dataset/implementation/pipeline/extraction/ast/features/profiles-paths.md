@@ -9,7 +9,7 @@
 | `profile_id` | string | AST | yes | `{operation_id}:{ordinal}`. | 02c |
 | `operation_id` | string | AST | yes | Creating operation. | 02b, 02c |
 | `profile_kind` | ProfileKind | AST | yes | Rectangle, circle, ellipse, polygon, slot, or other. | 02c |
-| `dimensions` | map of string to StaticExpression | AST | yes | Unevaluated dimensions. | 02c |
+| `dimensions` | map of string to AstExpression | AST | yes | Unevaluated dimensions. | 02c |
 | `points` | list of Point2D | AST | no | CadQuery profile points, when fixed. | 02c |
 | `is_closed` | boolean | AST | yes | Closed boundary flag. | 02c |
 | `workplane_id` | string or null | AST | no | CadQuery workplane used. | 02c |

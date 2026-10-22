@@ -6,7 +6,7 @@ This document fixes the AST extraction artifact schema produced by `02a`. Physic
 partitioning is in [`artifacts.md`](artifacts.md); field meanings are in the
 `ast/` documents.
 
-`static_schema_version = "cadqa-static-v1"`.
+`ast_schema_version = "cadqa-ast-v1"`.
 
 ## Common columns
 
@@ -16,26 +16,26 @@ Every AST extraction table carries:
 - `program_sha256: STRING`;
 - `normalization_version: STRING`;
 - `extractor_version: STRING`;
-- `static_schema_version: STRING`;
+- `ast_schema_version: STRING`;
 - `canonicalization_version: STRING`.
 
 No AST extraction table carries timestamps, hostnames, process IDs, absolute paths, or
 kernel handles.
 
-## `static_program`
+## `ast_program`
 
 | Column | Parquet value category | Null | Meaning |
 |---|---|---|---|
-| `static_status` | `STRING` enum `success`, `failure` | not null | Terminal result. |
+| `ast_status` | `STRING` enum `success`, `failure` | not null | Terminal result. |
 | `import_alias` | `STRING` | null | Always `cq` on success. |
-| `static_model_sha256` | `STRING` | null | Canonical hash of the complete CadQuery program AST extraction result. |
+| `ast_extraction_result_sha256` | `STRING` | null | Canonical hash of the complete CadQuery program AST extraction result. |
 | `failure_kind` | `STRING` | null | AST rejection category. |
 | `failure_message` | `STRING` | null | Failure message. |
 | `failure_line` | `INT64` | null | One-based CadQuery program line. |
 
 Exactly one row exists per `program_id`.
 
-## `static_operations`
+## `ast_operations`
 
 | Column | Parquet value category | Null | Meaning |
 |---|---|---|---|
@@ -46,16 +46,16 @@ Exactly one row exists per `program_id`.
 | `result_var` | `STRING` | not null | Assigned variable. |
 | `method` | `STRING` | not null | Allowlisted method or qualified constructor. |
 | `operation_kind` | `STRING` enum `OperationKind` | not null | Operation category. |
-| `receiver` | `StaticExpression` | null | Receiver expression. |
+| `receiver` | `AstExpression` | null | Receiver expression. |
 | `receiver_var` | `STRING` | null | Receiver name when it is a `Name`. |
-| `args` | `LIST<StaticExpression>` | not null | Positional arguments. |
-| `kwargs` | `MAP<STRING, StaticExpression>` | not null | Keyword arguments. |
+| `args` | `LIST<AstExpression>` | not null | Positional arguments. |
+| `kwargs` | `MAP<STRING, AstExpression>` | not null | Keyword arguments. |
 | `input_vars` | `LIST<STRING>` | not null | Read variables in program order. |
 | `is_state_producing` | `BOOLEAN` | not null | Solid state producing flag. |
 | `feature_kind` | `STRING` | null | Required for solid state producing operations. |
 | `solid_kind` | `STRING` | null | Required for solid state producing operations. |
 
-## `static_aliases`
+## `ast_aliases`
 
 | Column | Parquet value category | Null | Meaning |
 |---|---|---|---|
@@ -65,10 +65,10 @@ Exactly one row exists per `program_id`.
 | `source_line` | `INT64` | not null | One-based assignment line. |
 | `result_var` | `STRING` | not null | New variable. |
 | `target_var` | `STRING` | null | Root target name. |
-| `target_expression` | `StaticExpression` | null | Subscript target. |
+| `target_expression` | `AstExpression` | null | Subscript target. |
 | `source_span` | `SourceSpan` | not null | Assignment span. |
 
-## `static_workplanes`
+## `ast_workplanes`
 
 | Column | Parquet value category | Null | Meaning |
 |---|---|---|---|
@@ -84,23 +84,23 @@ Exactly one row exists per `program_id`.
 | `source_selector_id` | `STRING` | null | Face CadQuery selector. |
 | `offset` | `DOUBLE` | null | Offset. |
 | `tag` | `STRING` | null | Tag. |
-| `args` | `LIST<StaticExpression>` | not null | Unevaluated arguments. |
+| `args` | `LIST<AstExpression>` | not null | Unevaluated arguments. |
 | `source_span` | `SourceSpan` | not null | Creating call span. |
 
-## `static_profiles`
+## `ast_profiles`
 
 | Column | Parquet value category | Null | Meaning |
 |---|---|---|---|
 | `profile_id` | `STRING` | not null | `<operation_id>:<ordinal>`. |
 | `operation_id` | `STRING` | not null | Creating operation. |
 | `profile_kind` | `STRING` enum `ProfileKind` | not null | CadQuery profile category. |
-| `dimensions` | `MAP<STRING, StaticExpression>` | not null | Named dimensions. |
+| `dimensions` | `MAP<STRING, AstExpression>` | not null | Named dimensions. |
 | `points` | `LIST<Point2D>` | null | Fixed points. |
 | `is_closed` | `BOOLEAN` | not null | Closed boundary flag. |
 | `workplane_id` | `STRING` | null | CadQuery workplane. |
 | `source_span` | `SourceSpan` | not null | Creating call span. |
 
-## `static_paths`
+## `ast_paths`
 
 | Column | Parquet value category | Null | Meaning |
 |---|---|---|---|
@@ -116,7 +116,7 @@ Exactly one row exists per `program_id`.
 `PathSegment` is defined in
 [`ast/algorithm/shape-derivation.md`](ast/algorithm/shape-derivation.md).
 
-## `static_selectors`
+## `ast_selectors`
 
 | Column | Parquet value category | Null | Meaning |
 |---|---|---|---|
@@ -144,8 +144,8 @@ Point3D = STRUCT<x: DOUBLE, y: DOUBLE, z: DOUBLE>
 Vector3D = STRUCT<x: DOUBLE, y: DOUBLE, z: DOUBLE>
 
 DictEntry = STRUCT<
-  key: StaticExpression,
-  value: StaticExpression
+  key: AstExpression,
+  value: AstExpression
 >
 
 FilterPredicate = STRUCT<
@@ -154,23 +154,23 @@ FilterPredicate = STRUCT<
   threshold: DOUBLE
 >
 
-StaticExpression = STRUCT<
+AstExpression = STRUCT<
   expression_kind: STRING,
   source_span: SourceSpan,
   literal_value: STRING | NULL,
   name: STRING | NULL,
-  value_expression: StaticExpression | NULL,
+  value_expression: AstExpression | NULL,
   attribute: STRING | NULL,
-  subscript: StaticExpression | NULL,
-  callee: StaticExpression | NULL,
-  args: LIST<StaticExpression>,
-  kwargs: MAP<STRING, StaticExpression>,
-  elements: LIST<StaticExpression>,
+  subscript: AstExpression | NULL,
+  callee: AstExpression | NULL,
+  args: LIST<AstExpression>,
+  kwargs: MAP<STRING, AstExpression>,
+  elements: LIST<AstExpression>,
   entries: LIST<DictEntry>,
   operator: STRING | NULL,
-  operand: StaticExpression | NULL,
+  operand: AstExpression | NULL,
   lambda_parameter: STRING | NULL,
-  lambda_body: StaticExpression | NULL
+  lambda_body: AstExpression | NULL
 >
 ```
 
@@ -183,9 +183,9 @@ data path.
 
 ## AST extraction result hash
 
-`static_model_sha256` is the SHA-256 of the canonical JSON of all AST extraction rows for
+`ast_extraction_result_sha256` is the SHA-256 of the canonical JSON of all AST extraction rows for
 one program, using [`canonicalization.md`](canonicalization.md). Rows are sorted
 by their table key. It covers the program row, operations, aliases, CadQuery
 workplanes, CadQuery profiles, paths, and CadQuery selectors.
 
-An AST rejection has `static_model_sha256 = null` and no downstream table rows.
+An AST rejection has `ast_extraction_result_sha256 = null` and no downstream table rows.

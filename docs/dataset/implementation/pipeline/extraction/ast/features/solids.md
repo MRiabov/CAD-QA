@@ -2,7 +2,7 @@
 
 **Parent:** [`../algorithm/pipeline.md`](../algorithm/pipeline.md).
 
-These fields specialize a `StaticOperation` for solid-producing calls.
+These fields specialize a `AstOperation` for solid-producing calls.
 
 | Field | Field type | Origin | Required | Meaning | Consumer |
 |---|---|---|---|---|---|
@@ -11,7 +11,7 @@ These fields specialize a `StaticOperation` for solid-producing calls.
 | `solid_kind` | SolidKind | AST | yes | Primitive, extrude, loft, sweep, revolve, twist, text, boolean, assembly, modifier, or transform. | 02c |
 | `receiver_var` | string or null | AST | no | Input solid variable. | 02b |
 | `operand_vars` | list of string | AST | yes | Other solid variables read by the call. | 02b |
-| `parameters` | map of string to StaticExpression | AST | yes | Unevaluated feature parameters. | 02c |
+| `parameters` | map of string to AstExpression | AST | yes | Unevaluated feature parameters. | 02c |
 | `result_var` | string or null | AST | no | Output variable. | 02b, 02c |
 | `source_span` | SourceSpan | AST | yes | Span of the call. | review |
 

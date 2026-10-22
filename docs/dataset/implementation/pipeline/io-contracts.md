@@ -32,7 +32,7 @@ Sub-steps have their own typed models in their parent pipeline stage doc.
 - A pipeline stage output is immutable once written for a given input and version.
 - A `NormalizedProgram` has canonical text, a normalization version, and a
   stable program hash.
-- `ExecutionResult` is either execution snapshots or a failure tombstone.
+- `CadQueryRuntimeExtractionResult` is either runtime captures or a failure tombstone.
   Failure is data, not an exception across a pipeline stage boundary.
 - A `TaskDefinition` is the persisted, answer-bearing construction record. It has
   exactly one gold answer; ambiguous definitions are rejected.

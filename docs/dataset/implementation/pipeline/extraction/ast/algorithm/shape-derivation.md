@@ -74,7 +74,7 @@ operation.
 - `cursor_end` is the current point;
 - `segments` is the ordered segment list for the current path.
 
-A path-producing operation creates one `StaticPath` record and appends one or
+A path-producing operation creates one `AstPath` record and appends one or
 more `PathSegment` records. `path_id` is `<operation_id>:<ordinal>`.
 
 | Method | `path_kind` | Segment | Points |

@@ -139,10 +139,10 @@ is absent from the state entity table rejects the state.
 
 ## Artifact hashes
 
-- `static_model_sha256` is the canonical hash of the complete
-  `StaticCadQueryModel` after AST ordering.
-- `execution_result_sha256` is the canonical hash of the complete successful
-  `ExecutionResult` or failure tombstone.
+- `ast_extraction_result_sha256` is the canonical hash of the complete
+  `CadQueryAstExtractionResult` after AST ordering.
+- `runtime_extraction_result_sha256` is the canonical hash of the complete successful
+  `CadQueryRuntimeExtractionResult` or failure tombstone.
 - `entity_table_ref = "entity:<state_id>"` is a logical reference; the physical
   artifact path is defined in [`artifacts.md`](artifacts.md).
 

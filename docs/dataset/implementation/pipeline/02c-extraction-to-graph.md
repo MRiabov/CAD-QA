@@ -8,9 +8,9 @@ this document defines which rows and relations are created.
 
 ## Inputs
 
-- `StaticCadQueryModel` from
+- `CadQueryAstExtractionResult` from
   [`extraction/README.md`](extraction/README.md);
-- `ExecutionResult` from `02b`;
+- `CadQueryRuntimeExtractionResult` from `02b`;
 - program metadata from `01d`.
 
 Reject the pair if either hash or any required reference is missing.

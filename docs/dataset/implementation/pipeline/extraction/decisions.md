@@ -271,7 +271,7 @@ missing endpoint or measurement rejects the graph.
 validation, and hash inputs unambiguous.
 
 **Consequence:** Expression trees are nested structs, and a schema change bumps
-`static_schema_version`.
+`ast_schema_version`.
 
 ## EX-21 — Runtime artifacts are typed
 
@@ -283,6 +283,23 @@ schema makes state, entity, evidence, and hash inputs unambiguous.
 
 **Consequence:** Runtime rows are Parquet tables, not JSON payloads. A schema
 change bumps `runtime_schema_version`.
+
+## EX-22 — Code names mirror extraction terms
+
+**Decision:** Class names, table prefixes, and hash fields use the approved
+extraction terms: `CadQueryAstExtractionResult`, the `Ast*` record types,
+`CadQueryRuntimeExtractionResult`, `CadQueryRuntimeExtractionSuccess`,
+`FailureTombstone`, `CadFeatureSolidStateEffectDelta`,
+`CadQuerySelectorResult`, `ast_*` and `runtime_*` tables,
+`ast_extraction_result_sha256`, and `runtime_extraction_result_sha256`.
+
+**Why:** A greenfield contract should not teach an implementation a synonym for a
+term the glossary defines. The old `Static*` and `Execution*` names described the
+implementation technique, not the extraction result.
+
+**Consequence:** `Static*`, `static_*`, and `Execution*` are not code names in the
+extraction contract. A later code-name change is a schema or implementation
+change, not a terminology rewrite.
 
 ## Superseded decisions
 

@@ -2,7 +2,7 @@
 
 **Parent:** [`../algorithm/pipeline.md`](../algorithm/pipeline.md).
 
-`StaticExpression` is a typed, unevaluated expression tree. Its accepted forms
+`AstExpression` is a typed, unevaluated expression tree. Its accepted forms
 and nesting rules are defined in [`pipeline.md`](../algorithm/pipeline.md).
 
 | Field | Field type | Origin | Required | Meaning | Consumer |
@@ -11,20 +11,20 @@ and nesting rules are defined in [`pipeline.md`](../algorithm/pipeline.md).
 | `source_span` | SourceSpan | AST | yes | Exact span; end exclusive. | review, failures |
 | `literal_value` | typed value or null | AST | no | Integer, double, string, boolean, or null. | 02b |
 | `name` | string or null | AST | no | Identifier for a name. | 02b |
-| `value_expression` | StaticExpression or null | AST | no | Base of an attribute or subscript. | 02b |
+| `value_expression` | AstExpression or null | AST | no | Base of an attribute or subscript. | 02b |
 | `attribute` | string or null | AST | no | Attribute name. | 02b |
-| `subscript` | StaticExpression or null | AST | no | Subscript expression. | 02b |
-| `callee` | StaticExpression or null | AST | no | Call target. | 02b |
-| `args` | list of StaticExpression | AST | yes | Positional call arguments; empty for non-calls. | 02b |
-| `kwargs` | map of string to StaticExpression | AST | yes | Keyword call arguments; empty for non-calls. | 02b |
-| `elements` | list of StaticExpression | AST | yes | List or tuple elements; empty otherwise. | 02b |
+| `subscript` | AstExpression or null | AST | no | Subscript expression. | 02b |
+| `callee` | AstExpression or null | AST | no | Call target. | 02b |
+| `args` | list of AstExpression | AST | yes | Positional call arguments; empty for non-calls. | 02b |
+| `kwargs` | map of string to AstExpression | AST | yes | Keyword call arguments; empty for non-calls. | 02b |
+| `elements` | list of AstExpression | AST | yes | List or tuple elements; empty otherwise. | 02b |
 | `entries` | list of DictEntry | AST | yes | Dict keys and values; empty otherwise. | 02b |
 | `operator` | `neg` or `pos` or null | AST | no | Unary operator. | 02b |
-| `operand` | StaticExpression or null | AST | no | Unary operand. | 02b |
+| `operand` | AstExpression or null | AST | no | Unary operand. | 02b |
 | `lambda_parameter` | string or null | AST | no | Filter predicate parameter; always `e`. | 02b |
-| `lambda_body` | StaticExpression or null | AST | no | Filter predicate body. | 02b |
+| `lambda_body` | AstExpression or null | AST | no | Filter predicate body. | 02b |
 
-`DictEntry` has `key` and `value` `StaticExpression` fields.
+`DictEntry` has `key` and `value` `AstExpression` fields.
 
 ## ExpressionKind
 

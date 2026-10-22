@@ -17,7 +17,7 @@ extraction-local model; `02c` translates it into CAD graph evidence references.
 | `span` | `SourceSpan` | CadQuery program span. |
 | `kernel_call` | `call` | Exact CadQuery/OCP call string, such as `Face.Edges()` or `Shape.Volume()`. |
 | `selector` | `selector_result_id` | CadQuery selector membership used by the record. |
-| `execution` | `artifact_uri`, `field` | Execution artifact and field used by the record. |
+| `runtime_artifact` | `artifact_uri`, `field` | Runtime extraction artifact and field used by the record. |
 
 `call` is the exact API name and argument shape used at capture. It is not a
 free-form explanation.
@@ -49,7 +49,7 @@ invent an incidence that the kernel did not return.
 
 ## CadQuery selector evidence
 
-A `SelectorResult` carries its `selector_id`, `selector_result_id`, `state_id`,
+A `CadQuerySelectorResult` carries its `selector_id`, `selector_result_id`, `state_id`,
 and `source_span`. Its membership list is the evidence; a count without
 membership is not sufficient for a face, edge, or vertex CadQuery selector.
 
@@ -58,10 +58,10 @@ membership is not sufficient for a face, edge, or vertex CadQuery selector.
 `02c` converts:
 
 - `state` and `entity` references to CAD graph entity IDs;
-- `operation` references to operation node IDs;
+- `operation` references to operation CAD graph entity IDs;
 - `span` references to graph `source_line` evidence;
-- `selector` references to CadQuery selector-result node IDs;
-- `kernel_call` and `execution` references to execution-artifact evidence.
+- `selector` references to CadQuery selector-result CAD graph entity IDs;
+- `kernel_call` and `runtime_artifact` references to runtime-artifact evidence.
 
 A reference that does not resolve to a CAD graph entity, measurement, operation, or
 artifact rejects the graph. `02c` does not drop an unresolved reference.

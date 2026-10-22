@@ -7,7 +7,7 @@ graph.
 
 ## Input / output
 
-- Input: `StaticCadQueryModel` plus `ExecutionResult`.
+- Input: `CadQueryAstExtractionResult` plus `CadQueryRuntimeExtractionResult`.
 - Output: `CadGraph`.
 
 ## Graph tables
@@ -145,15 +145,15 @@ the release `tolerance_json` field.
 
 | Evidence reference type | Fields |
 |---|---|
-| `EvidenceRef` | `kind: EvidenceRefKind`; exactly one non-null group: `node: NodeEvidenceRef`, `measurement: MeasurementEvidenceRef`, `operation: OperationEvidenceRef`, `source_line: SourceLineEvidenceRef`, `execution_artifact: ExecutionArtifactEvidenceRef` |
+| `EvidenceRef` | `kind: EvidenceRefKind`; exactly one non-null group: `node: NodeEvidenceRef`, `measurement: MeasurementEvidenceRef`, `operation: OperationEvidenceRef`, `source_line: SourceLineEvidenceRef`, `runtime_artifact: RuntimeArtifactEvidenceRef` |
 | `NodeEvidenceRef` | `node_id: UUID` |
 | `MeasurementEvidenceRef` | `measurement_id: UUID` |
 | `OperationEvidenceRef` | `operation_id: STRING` |
 | `SourceLineEvidenceRef` | `source_line: int64` |
-| `ExecutionArtifactEvidenceRef` | `artifact_uri: STRING`, `artifact_field: STRING \| null` |
+| `RuntimeArtifactEvidenceRef` | `artifact_uri: STRING`, `artifact_field: STRING \| null` |
 
 `EvidenceRefKind`: `node`, `measurement`, `operation`, `source_line`,
-`execution_artifact`.
+`runtime_artifact`.
 
 ### Parquet struct declarations
 
@@ -209,7 +209,7 @@ NodeEvidenceRef = STRUCT<node_id: UUID>
 MeasurementEvidenceRef = STRUCT<measurement_id: UUID>
 OperationEvidenceRef = STRUCT<operation_id: STRING>
 SourceLineEvidenceRef = STRUCT<source_line: INT64>
-ExecutionArtifactEvidenceRef = STRUCT<artifact_uri: STRING, artifact_field: STRING | NULL>
+RuntimeArtifactEvidenceRef = STRUCT<artifact_uri: STRING, artifact_field: STRING | NULL>
 
 EvidenceRef = STRUCT<
   kind: STRING,
@@ -217,7 +217,7 @@ EvidenceRef = STRUCT<
   measurement: MeasurementEvidenceRef | NULL,
   operation: OperationEvidenceRef | NULL,
   source_line: SourceLineEvidenceRef | NULL,
-  execution_artifact: ExecutionArtifactEvidenceRef | NULL
+  runtime_artifact: RuntimeArtifactEvidenceRef | NULL
 >
 ```
 
@@ -348,7 +348,7 @@ count is a non-negative 64-bit integer.
 
 | `node_type` | Attributes struct | Fields |
 |---|---|---|
-| `cadquery_program` | `CadQueryProgramAttributes` | `program_sha256: Sha256`, `normalization_version: str`, `extractor_version: str`, `execution_result_sha256: Sha256` |
+| `cadquery_program` | `CadQueryProgramAttributes` | `program_sha256: Sha256`, `normalization_version: str`, `extractor_version: str`, `runtime_extraction_result_sha256: Sha256` |
 | `operation` | `OperationAttributes` | `operation_kind: OperationKind`, `method: str`, `order: int`, `source_line: int`, `result_var: str \| None` |
 | `feature` | `FeatureAttributes` | `feature_kind: FeatureKind` |
 | `solid_state` | `SolidStateAttributes` | `sequence_index: int`, `is_final: bool`, `is_solid: bool`, `shape_hash: Sha256 \| None` |
@@ -398,8 +398,8 @@ of an edge. These names are a graph schema change from an earlier `SurfaceKind`
   `02b` provides only `entity_id`, `02c` recomputes the hash from the canonical
   entity table. A mismatch between the attribute hash, the entity table, and
   `entity_id` rejects the graph.
-- `execution_result_sha256` is computed by `02c` over the canonical execution
-  result from `02b`.
+- `runtime_extraction_result_sha256` is computed by `02c` over the canonical runtime
+  extraction result from `02b`.
 - `shape_hash` is the shape identity hash from `02b`. It is not a measurement.
 - `is_final` is true for exactly one solid-state CAD graph entity when the graph has at
   least one solid state.
@@ -437,7 +437,7 @@ of an edge. These names are a graph schema change from an earlier `SurfaceKind`
   [Graph ID derivation](#graph-id-derivation).
 
 The graph includes a `cadquery_selector_result` CAD graph entity for each
-`SelectorResult`. `selected_by` relations link a CAD graph entity to its
+`CadQuerySelectorResult`. `selected_by` relations link a CAD graph entity to its
 CadQuery selector result; `selected_from` links the CadQuery selector result to
 its state. The CadQuery selector result carries a count measurement equal to the
 number of `selected_by` edges.
@@ -491,10 +491,10 @@ The deterministic node, relation, and measurement mapping is in
   the closed catalog above. Tolerances are a run-level `TolerancePolicy` stored
   once in the run manifest, with per-measurement overrides. CAD graph evidence
   references are a tagged union of CAD graph entity, measurement, operation, program line, and
-  execution artifact. Answer-scoring tolerance remains separate.
+  runtime extraction artifact. Answer-scoring tolerance remains separate.
 
 - **Extraction input contract.** *Resolved 2026-10-22.* `02c` consumes the
-  complete `StaticCadQueryModel` and `ExecutionResult` from
+  complete `CadQueryAstExtractionResult` and `CadQueryRuntimeExtractionResult` from
   [`extraction/README.md`](extraction/README.md). The AST and runtime
   algorithms, canonical ordering, and cross-boundary validation are owned by that
   contract. P0/P1 CadQuery selectors are limited to face, edge, and vertex membership.

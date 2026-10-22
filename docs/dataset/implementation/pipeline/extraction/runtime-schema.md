@@ -22,13 +22,13 @@ Every runtime table carries:
 No runtime table carries timestamps, hostnames, process IDs, absolute paths, or
 kernel handles.
 
-## `execution_program`
+## `runtime_program`
 
 | Column | Parquet value category | Null | Meaning |
 |---|---|---|---|
-| `static_model_sha256` | `STRING` | not null | Input CadQuery program AST extraction result hash. |
-| `execution_status` | `STRING` enum `success`, `failure` | not null | Terminal result. |
-| `execution_result_sha256` | `STRING` | null | Canonical runtime hash. |
+| `ast_extraction_result_sha256` | `STRING` | not null | Input CadQuery program AST extraction result hash. |
+| `runtime_status` | `STRING` enum `success`, `failure` | not null | Terminal result. |
+| `runtime_extraction_result_sha256` | `STRING` | null | Canonical runtime hash. |
 | `python_version` | `STRING` | not null | Pinned Python version. |
 | `cadquery_version` | `STRING` | not null | Pinned CadQuery version. |
 | `ocp_version` | `STRING` | not null | Pinned OCP version. |
@@ -39,7 +39,7 @@ kernel handles.
 
 Exactly one row exists per `program_id`.
 
-## `execution_recordings`
+## `runtime_recordings`
 
 | Column | Parquet value category | Null | Meaning |
 |---|---|---|---|
@@ -52,7 +52,7 @@ Exactly one row exists per `program_id`.
 
 Every AST call operation has exactly one row.
 
-## `execution_states`
+## `runtime_states`
 
 | Column | Parquet value category | Null | Meaning |
 |---|---|---|---|
@@ -71,7 +71,7 @@ Every AST call operation has exactly one row.
 | `entity_table_ref` | `STRING` | not null | `entity:<state_id>`. |
 | `source_span` | `SourceSpan` | not null | Producing assignment span. |
 
-## `execution_entities`
+## `runtime_entities`
 
 | Column | Parquet value category | Null | Meaning |
 |---|---|---|---|
@@ -84,7 +84,7 @@ Every AST call operation has exactly one row.
 | `edge_curve_kind` | `STRING` | null | Edge curve category. |
 | `is_closed` | `BOOLEAN` | null | Closed edge flag. |
 
-## `execution_topology`
+## `runtime_topology`
 
 | Column | Parquet value category | Null | Meaning |
 |---|---|---|---|
@@ -95,7 +95,7 @@ Every AST call operation has exactly one row.
 | `to_entity_id` | `STRING` | not null | Target entity. |
 | `evidence` | `TopologyEvidence` | not null | Traversal evidence. |
 
-## `execution_workplanes`
+## `runtime_workplanes`
 
 | Column | Parquet value category | Null | Meaning |
 |---|---|---|---|
@@ -108,7 +108,7 @@ Every AST call operation has exactly one row.
 | `named_plane` | `STRING` enum `xy`, `yz`, `xz` | null | Named plane. |
 | `source_span` | `SourceSpan` | not null | Creating call span. |
 
-## `execution_selectors`
+## `runtime_selectors`
 
 | Column | Parquet value category | Null | Meaning |
 |---|---|---|---|
@@ -120,7 +120,7 @@ Every AST call operation has exactly one row.
 | `count` | `INT64` | not null | Selected count. |
 | `source_span` | `SourceSpan` | not null | Evaluating call span. |
 
-## `execution_effects`
+## `runtime_effects`
 
 | Column | Parquet value category | Null | Meaning |
 |---|---|---|---|
@@ -133,7 +133,7 @@ Every AST call operation has exactly one row.
 | `topology_change` | `TopologyDelta` | null | Count changes. |
 | `evidence` | `EffectEvidence` | not null | Effect evidence. |
 
-## `execution_failures`
+## `runtime_failures`
 
 | Column | Parquet value category | Null | Meaning |
 |---|---|---|---|
@@ -212,7 +212,7 @@ vertex uses `point`; edge uses `start`, `end`, and `length`; face uses
 
 ## Runtime model hash
 
-`execution_result_sha256` is the SHA-256 of the canonical JSON of all runtime
+`runtime_extraction_result_sha256` is the SHA-256 of the canonical JSON of all runtime
 rows for one program, using [`canonicalization.md`](canonicalization.md). Rows
 are sorted by their table key. A failure tombstone hashes only
-`execution_program` and `execution_failures`.
+`runtime_program` and `runtime_failures`.

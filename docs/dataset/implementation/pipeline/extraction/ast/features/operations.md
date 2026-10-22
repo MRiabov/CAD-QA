@@ -2,7 +2,7 @@
 
 **Parent:** [`../algorithm/pipeline.md`](../algorithm/pipeline.md).
 
-These fields describe one top-level call assignment. A `StaticOperation` is a
+These fields describe one top-level call assignment. A `AstOperation` is a
 statement about the program, not a measured shape. The deterministic passes are
 in [`pipeline.md`](../algorithm/pipeline.md).
 
@@ -15,10 +15,10 @@ in [`pipeline.md`](../algorithm/pipeline.md).
 | `result_var` | string | AST | yes | Assigned variable. | 02b, 02c |
 | `method` | string | AST | yes | Allowlisted CadQuery method or qualified constructor name. | 02c |
 | `operation_kind` | OperationKind | AST | yes | CadQuery workplane, sketch, path, solid, CadQuery selector, boolean, assembly, modifier, transform, or accessor. | 02c |
-| `receiver` | StaticExpression or null | AST | no | Receiver expression; null for a plain-name call. | review |
+| `receiver` | AstExpression or null | AST | no | Receiver expression; null for a plain-name call. | review |
 | `receiver_var` | string or null | AST | no | Receiver name when the receiver is a `Name`. | 02b |
-| `args` | list of StaticExpression | AST | yes | Positional arguments, unevaluated. | 02b, 02c |
-| `kwargs` | map of string to StaticExpression | AST | yes | Keyword arguments, unevaluated. | 02b, 02c |
+| `args` | list of AstExpression | AST | yes | Positional arguments, unevaluated. | 02b, 02c |
+| `kwargs` | map of string to AstExpression | AST | yes | Keyword arguments, unevaluated. | 02b, 02c |
 | `input_vars` | list of string | AST | yes | Variables read by the call, in first-use order. | 02b |
 | `is_state_producing` | boolean | AST | yes | True only for the methods marked solid state producing in the algorithm. | 02b |
 | `feature_kind` | FeatureKind or null | AST | no | Required when `is_state_producing` is true. | 02c |
@@ -30,7 +30,7 @@ belong to the program record.
 
 ## Aliases
 
-A top-level assignment without a CadQuery call records a `StaticAlias`:
+A top-level assignment without a CadQuery call records a `AstAlias`:
 
 | Field | Field type | Origin | Required | Meaning |
 |---|---|---|---|---|
@@ -40,7 +40,7 @@ A top-level assignment without a CadQuery call records a `StaticAlias`:
 | `source_line` | integer | AST | yes | One-based start line. |
 | `result_var` | string | AST | yes | New variable. |
 | `target_var` | string or null | AST | no | Root target name for either alias form, when the target starts from a binding. |
-| `target_expression` | StaticExpression or null | AST | no | Target expression for `alias_kind = subscript`. |
+| `target_expression` | AstExpression or null | AST | no | Target expression for `alias_kind = subscript`. |
 | `source_span` | SourceSpan | AST | yes | Assignment span; end exclusive. |
 
 An alias copies the target binding's kind, CadQuery workplane ID, selected category, and
@@ -55,4 +55,4 @@ The last assignment must be `result`; it may be a call or an alias.
   not operations.
 - Unknown methods, chained calls, and unsupported nested calls reject the whole
   program.
-- A `StaticOperation` row exists only for a call assignment.
+- A `AstOperation` row exists only for a call assignment.

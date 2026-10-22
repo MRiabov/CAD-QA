@@ -2,8 +2,8 @@
 
 **Parent:** [`extraction/README.md`](../../README.md).
 
-This document defines how `02b` turns an accepted `StaticCadQueryModel` into an
-`ExecutionResult`. It specifies the instrumentation ABI, runtime recorder,
+This document defines how `02b` turns an accepted `CadQueryAstExtractionResult` into a
+`CadQueryRuntimeExtractionResult`. It specifies the instrumentation ABI, runtime recorder,
 capture rules, and failure boundary.
 
 ## Execution boundary
@@ -112,9 +112,9 @@ The recorder maintains:
 - `bindings`: variable name to `RuntimeBinding`;
 - `states`: state ID to `ShapeSnapshot`;
 - `entities`: state ID to entity table;
-- `selectors`: CadQuery selector result ID to `SelectorResult`;
+- `selectors`: CadQuery selector result ID to `CadQuerySelectorResult`;
 - `frames`: CadQuery workplane ID to `WorkplaneFrameCapture`;
-- `effects`: operation ID to `OperationEffect`;
+- `effects`: operation ID to `CadFeatureSolidStateEffectDelta`;
 - `operations`: operation ID to `RecordedAssignment`.
 
 `RuntimeBinding` carries:
@@ -275,7 +275,7 @@ Rows are sorted by that tuple.
 
 ## Failure tombstone
 
-`ExecutionFailure` carries:
+`FailureTombstone` carries:
 
 - `program_id`, `program_sha256`, `extractor_version`;
 - `stage = 02b`;
@@ -291,12 +291,12 @@ execution as a graph input.
 
 ## CadQuery program runtime extraction result identity
 
-`execution_result_sha256` is the canonical hash of the complete successful
+`runtime_extraction_result_sha256` is the canonical hash of the complete successful
 result or failure tombstone, using
 [`../../canonicalization.md`](../../canonicalization.md). The cache key includes:
 
 - `program_sha256`;
-- `static_model_sha256`;
+- `ast_extraction_result_sha256`;
 - extractor, AST extraction, runtime, and canonicalization versions;
 - Python, CadQuery, and OCP versions;
 - timeout and memory limit;

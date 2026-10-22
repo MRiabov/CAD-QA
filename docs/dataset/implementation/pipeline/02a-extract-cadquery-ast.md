@@ -8,41 +8,41 @@ it.
 ## Input / output
 
 - Input: normalized program text.
-- Output: `StaticCadQueryModel`.
+- Output: `CadQueryAstExtractionResult`.
 
 ## AST extraction result
 
-`StaticCadQueryModel` contains:
+`CadQueryAstExtractionResult` contains:
 
 - `program_id`, `program_sha256`, and `normalization_version`;
 - `imports`: the accepted CadQuery imports;
-- `operations`: ordered `StaticOperation` records;
-- `workplanes`: `StaticWorkplane` records;
-- `profiles`: `StaticProfile` records;
-- `paths`: `StaticPath` records;
-- `selectors`: `StaticSelector` records.
+- `operations`: ordered `AstOperation` records;
+- `workplanes`: `AstWorkplane` records;
+- `profiles`: `AstProfile` records;
+- `paths`: `AstPath` records;
+- `selectors`: `AstSelector` records.
 
-`StaticOperation` contains:
+`AstOperation` contains:
 
 - `operation_id`, stable within the program;
 - `order`, `source_line`, and `result_var`;
 - `receiver`, the variable or expression the call is made on;
 - `method`, the CadQuery method name;
-- `args` and `kwargs`, as `StaticExpression` trees;
+- `args` and `kwargs`, as `AstExpression` trees;
 - `operation_kind`: CadQuery workplane, sketch, path, solid, CadQuery selector,
   boolean, assembly, modifier, transform, or accessor.
 
-`StaticExpression` is a typed expression tree, not a literal value. The
+`AstExpression` is a typed expression tree, not a literal value. The
 expression tree contains literal, name, attribute, subscript, call, list, tuple,
 dict, and the narrow `filter` lambda. A call records the callee and its argument and keyword
 expression trees. This represents nested constructors such as
 `cq.Plane(origin=cq.Vector(28, 85, -71), normal=cq.Vector(1, 3, 0))` without
 evaluating them.
 
-`StaticWorkplane` records its origin, x direction, and normal.
-`StaticProfile` records its CadQuery profile kind and dimensions or points.
-`StaticPath` records its CadQuery path kind, points, or curve expression.
-`StaticSelector` records the CadQuery selector expression and the variable it
+`AstWorkplane` records its origin, x direction, and normal.
+`AstProfile` records its CadQuery profile kind and dimensions or points.
+`AstPath` records its CadQuery path kind, points, or curve expression.
+`AstSelector` records the CadQuery selector expression and the variable it
 selects from.
 
 ## Field contracts

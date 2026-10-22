@@ -15,7 +15,7 @@ the receiver binding, argument names, and arity match this table.
   `cq.Wire.*`.
 - `MODULE` means the `cq` alias.
 - Required arguments are bare; optional arguments are in brackets.
-- `EXPR` is any accepted [`StaticExpression`](../features/expressions.md).
+- `EXPR` is any accepted [`AstExpression`](../features/expressions.md).
 - `CALLABLE` is the narrow filter lambda.
 - Unknown keyword arguments, excess positional arguments, and missing required
   arguments reject the program.

@@ -7,8 +7,8 @@ results, or a failure tombstone when execution fails.
 
 ## Input / output
 
-- Input: normalized program text plus `StaticCadQueryModel`.
-- Output: `ExecutionResult`, either success or a failure tombstone.
+- Input: normalized program text plus `CadQueryAstExtractionResult`.
+- Output: `CadQueryRuntimeExtractionResult`, either success or a failure tombstone.
 
 ## Execution boundary
 
@@ -26,16 +26,16 @@ results, or a failure tombstone when execution fails.
 
 ## Success result
 
-`ExecutionSuccess` contains:
+`CadQueryRuntimeExtractionSuccess` contains:
 
-- `program_id`, `program_sha256`, `static_model_sha256`, and the environment record;
+- `program_id`, `program_sha256`, `ast_extraction_result_sha256`, and the environment record;
 - `operation_recordings`: one per AST operation;
 - `shape_snapshots`: one per solid-producing assignment;
 - `workplane_frames`: one per workplane-producing operation;
 - `selector_results`: one per evaluated CadQuery selector;
-- `operation_effects`: before/after state pairs and measured deltas;
+- `effect_deltas`: before/after state pairs and measured deltas;
 - `final_state_id`;
-- `execution_result_sha256`.
+- `runtime_extraction_result_sha256`.
 
 Each `ShapeSnapshot` contains:
 
@@ -58,14 +58,14 @@ Raw kernel handles are internal to the child process and are never persisted. Tw
 entities in one state with the same fingerprint are a collision; reject the
 program as ambiguous topology.
 
-Each `SelectorResult` contains:
+Each `CadQuerySelectorResult` contains:
 
 - `selector_result_id` and `selector_id`;
 - `state_id`;
 - `selected_entity_ids`, the stable entity IDs;
 - `count`.
 
-Each `OperationEffect` contains:
+Each `CadFeatureSolidStateEffectDelta` contains:
 
 - `operation_id`;
 - `before_state_id` and `after_state_id`;
@@ -89,7 +89,7 @@ and [`extraction/validation.md`](extraction/validation.md).
 
 ## Failure tombstone
 
-`ExecutionFailure` contains:
+`FailureTombstone` contains:
 
 - `program_id`, `program_sha256`, `operation_id` when known, and `error_kind`;
 - `error_kind` from [`extraction/validation.md`](extraction/validation.md),
@@ -103,7 +103,7 @@ A failed result is never passed to graph assembly as a measurable state.
 
 ## Caching
 
-The cache key includes the normalized program hash, `static_model_sha256`,
+The cache key includes the normalized program hash, `ast_extraction_result_sha256`,
 extractor and canonicalization versions, CadQuery and OCP versions, the execution
 environment, timeout, and memory limit. A failure tombstone is reusable for the
 same key. A change to the CadQuery program AST extraction result or canonicalization is a cache miss.

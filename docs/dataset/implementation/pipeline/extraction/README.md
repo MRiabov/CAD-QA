@@ -28,9 +28,9 @@ for crash isolation and resource limits, but it is not a security sandbox.
 
 Extraction produces two logical results:
 
-- `StaticCadQueryModel`, written by `02a` without running CadQuery;
-- `ExecutionResult`, written by `02b`, either successful runtime captures or a
-  failure tombstone.
+- `CadQueryAstExtractionResult`, written by `02a` without running CadQuery;
+- `CadQueryRuntimeExtractionResult`, written by `02b`, either successful runtime
+  captures or a failure tombstone.
 
 `02c` joins them on `program_id` and `operation_id`. Artifact tables and hashes
 are defined in [`artifacts.md`](artifacts.md).
@@ -40,10 +40,10 @@ are defined in [`artifacts.md`](artifacts.md).
 ```text
 NormalizedProgram
   → 02a parse, validate, classify, assign AST IDs
-      → StaticCadQueryModel
+      → CadQueryAstExtractionResult
       → instrumented program
   → 02b execute instrumented program in a child process
-      → ExecutionResult
+      → CadQueryRuntimeExtractionResult
   → 02c graph assembly
 ```
 
@@ -97,12 +97,26 @@ program-scoped strings as scope columns.
 Do not use random UUIDv4 in extraction. Do not add a UUID layer to AST or
 runtime records unless a value leaves program scope.
 
+## Code names
+
+Class and table names mirror the extraction terms:
+
+- `CadQueryAstExtractionResult`, `AstOperation`, `AstWorkplane`, `AstProfile`,
+  `AstPath`, `AstSelector`, `AstAlias`, `AstExpression`;
+- `CadQueryRuntimeExtractionResult`, `CadQueryRuntimeExtractionSuccess`,
+  `FailureTombstone`, `CadFeatureSolidStateEffectDelta`,
+  `CadQuerySelectorResult`;
+- `ast_*` and `runtime_*` artifact tables;
+- `ast_extraction_result_sha256` and `runtime_extraction_result_sha256`.
+
+`Static*`, `static_*`, and `Execution*` are not extraction code names.
+
 ## Versions
 
 Every artifact carries:
 
 - `extractor_version`: the implementation version;
-- `static_schema_version`, `runtime_schema_version`;
+- `ast_schema_version`, `runtime_schema_version`;
 - `canonicalization_version`;
 - pinned Python, CadQuery, OCP, and Ruff versions where relevant;
 - `program_sha256` and `normalization_version` from `01d`.

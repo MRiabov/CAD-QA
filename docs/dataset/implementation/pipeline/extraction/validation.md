@@ -8,7 +8,7 @@ program.
 
 ## AST validation
 
-`02a` emits a `StaticCadQueryModel` only when all checks pass:
+`02a` emits a `CadQueryAstExtractionResult` only when all checks pass:
 
 | Area | Invariant |
 |---|---|
@@ -42,7 +42,7 @@ selectors, or diagnostics that consumers could mistake for a CadQuery program AS
 
 ## Runtime validation
 
-`02b` emits an `ExecutionResult` only when all checks pass:
+`02b` emits a `CadQueryRuntimeExtractionResult` only when all checks pass:
 
 | Area | Invariant |
 |---|---|
@@ -72,7 +72,7 @@ selectors, or diagnostics that consumers could mistake for a CadQuery program AS
 - a solid state producing operation's effect is missing;
 - the final state differs from the last state in operation order;
 - the CadQuery program AST extraction result hash or CadQuery program runtime extraction result hash does not match the artifact;
-- an CAD topology entity ID hash does not match its fingerprint fields.
+- a CAD topology entity ID hash does not match its fingerprint fields.
 
 This is a rejection, not a partial graph. `02c` does not repair, interpolate, or
 drop a subset of the records.

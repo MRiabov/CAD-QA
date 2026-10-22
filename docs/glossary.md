@@ -146,7 +146,8 @@ A CadQuery expression that picks topology entities (for example `.faces(">Z")`).
 ### CadQuery selector result
 
 The CAD topology entities selected by one CadQuery selector, with the selector and the
-solid state it ran on. `Distinct from:` the CadQuery selector itself.
+solid state it ran on. `In code:` `CadQuerySelectorResult`. `Distinct from:` the CadQuery
+selector itself.
 
 ---
 
@@ -184,8 +185,9 @@ The geometry a CAD feature removes. `In code:` `void_region`.
 ### CAD feature solid state effect delta
 
 The measured before/after volume, bounding box, and topology change caused by a CAD
-feature. `Distinct from:` the Measurement scope `feature_application_effect`, which names
-where a Measurement belongs rather than the delta record.
+feature. `In code:` `CadFeatureSolidStateEffectDelta`. `Distinct from:` the Measurement
+scope `feature_application_effect`, which names where a Measurement belongs rather than
+the delta record.
 
 ---
 
@@ -450,7 +452,7 @@ The three-way split of eligible CAD-QA rows: `sft_train` (the only rows that ent
 ### CadQuery program AST extraction result
 
 The result of extracting a CadQuery program without running it: its operations, CadQuery
-workplanes, CadQuery profiles, CadQuery paths, CadQuery selectors, and their relationships in the CadQuery program. `In code:` `StaticCadQueryModel`. `Distinct from:` **CadQuery program runtime
+workplanes, CadQuery profiles, CadQuery paths, CadQuery selectors, and their relationships in the CadQuery program. `In code:` `CadQueryAstExtractionResult`. `Distinct from:` **CadQuery program runtime
 extraction result**.
 
 ---
@@ -459,8 +461,8 @@ extraction result**.
 
 The result of executing a CadQuery program and extracting each operation's Shape snapshots,
 CAD feature solid state effect deltas, CadQuery selector results, and evidence. `In code:`
-`ExecutionResult`. `Distinct from:` **CadQuery program AST extraction result**, **agent
-training trace**, **answer candidate set trace**.
+`CadQueryRuntimeExtractionResult`. `Distinct from:` **CadQuery program AST extraction result**,
+**agent training trace**, **answer candidate set trace**.
 
 ---
 
@@ -512,8 +514,8 @@ A CAD graph entity, CAD graph relation, or CAD graph measurement.
 ### failure tombstone
 
 The failed `02b` result: program identity, terminal operation, error category, environment,
-and cache key. It is not a CAD graph entity and supports no answer. `Distinct from:`
-**CadQuery program runtime extraction result**.
+and cache key. `In code:` `FailureTombstone`. It is not a CAD graph entity and supports no
+answer. `Distinct from:` **CadQuery program runtime extraction result**.
 
 ---
 
