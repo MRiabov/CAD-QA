@@ -155,24 +155,11 @@ P0/P1 accept only the flat CADEvolve-C subset:
 P2 control flow and chained calls are outside this contract. A P2 extension must
 define its own static and runtime rules rather than weakening these.
 
-## Design decisions
+## Decisions
 
-- **No standalone service.** The extraction service precedent does not apply:
-  extraction is a deterministic module in `02`, with no independent API, tables,
-  or trigger.
-- **Strings inside extraction, UUIDs at graph storage.** This preserves readable
-  provenance and avoids double hashing.
-- **No kernel handles.** Persist only canonical fingerprints, IDs, and
-  measurements.
-- **No raw BRep requirement.** State identity is the canonical entity table plus
-  shape hash; raw shapes are not a pipeline artifact.
-- **Static frames may be incomplete.** Derived CadQuery workplane frames are measured at
-  runtime; static extraction records only frames it can derive from the program.
-- **No runtime argument capture.** The recorder records the result, receiver
-  binding, and static operation identity. Argument values are not needed for
-  graph assembly and are not captured.
-- **Fail closed.** An unsupported construct rejects the program; there is no
-  best-effort extraction.
+Accepted extraction decisions, rationale, and consequences are in
+[`decisions.md`](decisions.md). The contract rules above remain normative; a
+decision explains why the contract has that shape.
 
 ## Contract index
 
@@ -195,3 +182,4 @@ define its own static and runtime rules rather than weakening these.
 | [`canonicalization.md`](canonicalization.md) | Numbers, JSON, hashes, and ordering. |
 | [`validation.md`](validation.md) | Static, runtime, and cross-pipeline stage invariants. |
 | [`artifacts.md`](artifacts.md) | Logical tables, keys, and artifact identities. |
+| [`decisions.md`](decisions.md) | Accepted extraction decisions, rationale, and consequences. |
