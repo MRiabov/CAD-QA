@@ -39,4 +39,4 @@ Artifact ownership: [`../artifacts.md`](../artifacts.md).
 
 ## Not here
 
-Task generation, answer resolution, choice generation, and release planning.
+Task generation, answer resolution, choice generation, and task quota planning.

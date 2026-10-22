@@ -287,6 +287,22 @@ replacement does not use a difficulty label or score.
 
 ---
 
+### Task reasoning step count
+
+The number of task reasoning steps a task requires: its task clue steps plus its
+task answer step, when one is present. `Distinct from:` **Reasoning hop count**,
+the older row-level measure.
+
+---
+
+### Task target category
+
+The category of the task target, such as feature, face, edge, or CadQuery
+workplane. It is a coverage dimension, not a balance dimension. `In code:`
+`target_category`.
+
+---
+
 ### Rejection sampling
 
 Keeping only the sampled completions the Query verifier accepts. One technique, two sources: **teacher
@@ -381,6 +397,21 @@ advancement gate. Qualify it — a bare "stage" means a pipeline stage. `In code
 
 The shape of an answer: `candidate_label`, `coordinate`, `text`, `number`, `integer`,
 `boolean`, `bbox`, or `json`.
+
+---
+
+### Answer meaning
+
+What an answer is about, independent of how it is returned: identity, volume,
+area, length, distance, angle, count, rank, membership, position, extent,
+CadQuery workplane state, material change, topology change, or validity.
+
+---
+
+### Clue type
+
+The category of condition a task clue states: property, relation, comparison,
+aggregation, or provenance.
 
 ---
 
@@ -519,6 +550,68 @@ answer. `Distinct from:` **CadQuery program runtime extraction result**.
 
 ---
 
+### Quota
+
+An allowed or required count at a stated scope, such as tasks at a task reasoning
+step count or task clue occurrences for a clue type.
+
+---
+
+### Task quota
+
+A quota counted in tasks.
+
+---
+
+### Clue quota
+
+A quota counted in task clue occurrences.
+
+---
+
+### Quota dimension
+
+One independent way tasks are counted for coverage and balance: task target
+category, clue type, answer meaning, or answer format.
+
+---
+
+### Quota target
+
+A count target for one quota dimension value at one task reasoning step count:
+minimum, target count, and maximum. It is not a task. `In code:` `QuotaTarget`;
+the plan field is `quota_targets`.
+
+---
+
+### Task quota plan
+
+The plan for task quotas, family assignment, split assignment, and construction
+attempt budgets for one dataset release. `In code:` `TaskQuotaPlan`.
+`Distinct from:` the **Dataset release**, which is the validated output.
+
+---
+
+### Family task capacity
+
+The estimated maximum number of tasks a CADEvolve program family can supply.
+
+---
+
+### Construction attempt budget
+
+The number of task-definition construction attempts allocated to a quota target
+before accepted tasks are counted. `Distinct from:` **Task quota**.
+
+---
+
+### Probe success rate
+
+The share of bounded-probe construction attempts that produced accepted task
+definitions.
+
+---
+
 ### dataset_generation
 
 The code package that builds the benchmark. `In code:` `dataset/`.
@@ -625,6 +718,15 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | entity id (in an answer) (dataset, train_and_eval, tools) | source variable | internal `entity_id` values must not leak into answers |
 | "the pipeline" / "the object" / "the value" | name the concept | unspecific placeholder |
 | first/last (as family semantics) | the sampled parameter | a rendering choice, not a permanent meaning |
+| quota cell | Quota target | a count target, not a container of tasks |
+| quota bucket | Quota target | "bucket" implies a container |
+| cell target | Quota target count | target of what? |
+| marginal quota | independent quota target | name the target, not the mathematical technique |
+| release plan | Task quota plan | qualify the plan; the Dataset release is the output |
+| sample budget | Construction attempt budget | budget of what? |
+| probe yield | Probe success rate | "yield" is a metaphor |
+| split target | Split task target | target of what count? |
+| family capacity | Family task capacity | capacity for what? |
 
 ---
 

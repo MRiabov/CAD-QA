@@ -55,7 +55,7 @@ Global or mostly serial:
 
 - `01b` selection, because quotas and caps are global;
 - `01e` external manifest writing;
-- `03a` release planning;
+- `03a` task quota planning;
 - `03c` deficit control loop;
 - `05` final export, manifest assembly, and support-table copy.
 

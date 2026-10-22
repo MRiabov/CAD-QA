@@ -107,11 +107,11 @@ For each task reasoning step count and dimension:
 5. Report balance against the release targets separately.
 
 The table does not say how many tasks are needed. That belongs to coverage and
-release planning.
+task quota planning.
 
 ## What this is not
 
 - It is not a generator input.
-- It is not a release planning policy.
+- It is not a task quota planning policy.
 - It does not prove that the corpus contains enough instances.
 - It is not the valid-task set.

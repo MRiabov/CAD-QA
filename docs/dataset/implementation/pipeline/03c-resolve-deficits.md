@@ -7,12 +7,12 @@ replanning the current data, or expanding the program pool.
 
 ## Input / output
 
-- Input: the deficit ledger from `03b`, the current `ReleasePlan`, current family
+- Input: the deficit ledger from `03b`, the current `TaskQuotaPlan`, current family
   profiles, and program metadata.
 - Output: a `ProgramReassignmentRequest`, a `ProgramRequest`, or an accepted miss.
 
 `03c` is a controller, not a terminal reconciliation step. It does not render
-anything and does not write release rows.
+anything and does not write dataset release rows.
 
 ## Two loops
 
@@ -28,7 +28,7 @@ There are two distinct loops with different costs.
 
 This loop uses the graphs and families already in the pool. It does not fetch or
 execute anything. `03a` can move quota to unassigned families, relax an internal family
-quota, or try a different family for a quota cell.
+quota, or try a different family for a quota target.
 
 ### Slow loop: expand the program pool
 
@@ -49,14 +49,14 @@ only loop that pays fetch, normalization, and execution cost.
 
 | Class | Response |
 |---|---|
-| Sample batch underfilled | `ProgramReassignmentRequest` to `03a`; adjust the sample budget or family assignment. |
+| Construction batch underfilled | `ProgramReassignmentRequest` to `03a`; adjust the construction attempt budget or family assignment. |
 | High rejection rate | Fix the constructor or validity rule in `03b`; expanding data will not help. |
 | Current pool has unused capacity | `ProgramReassignmentRequest` to `03a`; reassign families or quotas. |
-| Current family quota or cap blocks the cell | `ProgramReassignmentRequest`; change the plan, not the data. |
+| Current family quota or cap blocks the quota target | `ProgramReassignmentRequest`; change the plan, not the data. |
 | Reserve or new capability needed | `ProgramRequest` to `01b`; expand the pool. |
 | Constructor limitation | Fix `03b`; neither loop helps. |
 | Structural infeasibility | Fix the plan or support table; no data can supply it. |
-| Release cap conflict | Reconcile the plan; expanding data will not remove the cap. |
+| Plan cap conflict | Reconcile the plan; expanding data will not remove the cap. |
 
 ## ProgramReassignmentRequest
 
@@ -65,10 +65,10 @@ but the current plan does not use them.
 
 It contains:
 
-- the originating quota cell: step count, dimension, value;
-- the current family assignment and quota that block the cell;
+- the originating quota target: task reasoning step count, quota dimension, dimension value;
+- the current family assignment and quota that block the quota target;
 - unassigned families or unused capacity that could help;
-- the requested change: quota cell, family assignment, or internal quota;
+- the requested change: quota target, family assignment, or internal quota;
 - the retry budget;
 - the plan version.
 
@@ -81,7 +81,7 @@ Use `ProgramRequest` when the current pool cannot supply the deficit.
 
 It contains:
 
-- the originating quota cell: step count, dimension, value;
+- the originating quota target: task reasoning step count, quota dimension, dimension value;
 - the missing graph capability;
 - useful feature tags, collections, or family constraints;
 - whether to extend the existing selection order or target metadata;

@@ -2,7 +2,7 @@
 
 **Parent:** [`03-enumerate-tasks.md`](03-enumerate-tasks.md).
 
-**Purpose:** construct persisted task definitions into the release plan: task
+**Purpose:** construct persisted task definitions into the task quota plan: task
 target, ordered task clues, answer step, gold answer, validity record, and
 canonical identity.
 
@@ -10,7 +10,7 @@ canonical identity.
 
 ## Input / output
 
-- Input: `CadGraph` and `ReleasePlan`.
+- Input: `CadGraph` and `TaskQuotaPlan`.
 - Output: `TaskDefinition` records and a `DeficitLedger`.
 
 ## Task definition
@@ -44,7 +44,7 @@ a new target, compute the answer, or decide validity.
 
 ## Graph input boundary
 
-`03b` reads the CAD graph and the `ReleasePlan`. Every task target, clue operand,
+`03b` reads the CAD graph and the `TaskQuotaPlan`. Every task target, clue operand,
 answer value, and piece of answer evidence must resolve to a graph entity, a
 graph relation, or a measurement. A task definition that needs a missing graph element
 is rejected; it is not softened or filled with program-text heuristics.
@@ -56,12 +56,12 @@ step. If a task clue states the observation, that clue is a step.
 
 The task target is bound in one of two ways:
 
-- directly, when the question names a target category with exactly one instance
+- directly, when the question names a task target category with exactly one instance
   in the program, such as the final solid state;
 - by the ordered task clues, when the first clues narrow the possible answers to
   one target.
 
-The binding must resolve to exactly one entity or scalar value. A target category
+The binding must resolve to exactly one entity or scalar value. A task target category
 whose binding is ambiguous is rejected. A task target and an answer measurement
 are different: the target is the entity or value the task asks about; the answer
 meaning says what is reported about it.
@@ -182,10 +182,10 @@ observation -> clue A -> clue B -> clue C
 
 ## Enumeration and identity
 
-`03b` constructs task definitions from the graph into the quota plan using typed
+`03b` constructs task definitions from the graph into the task quota plan using typed
 constructors. Construction is deterministic for a given graph, plan version,
 definition-schema version, and seed. Constructor order is stable and recorded in
-provenance. A quota cell that cannot be filled becomes a deficit for `03c`.
+provenance. A quota target that cannot be filled becomes a deficit for `03c`.
 
 Canonical task identity is:
 
@@ -202,19 +202,18 @@ Definitions with identical canonical identity are duplicates. `03b` keeps one
 and records the duplicate. Invalid definitions go to the failure record and do
 not consume quota.
 
-## Sampling budget
+## Construction attempt budget
 
-Each quota cell receives a sample budget of
-`ceil(target * oversample_factor)`. `03b` constructs the full batch, validates
-it, and accepts up to the target. It does not top up a cell incrementally within
+Each quota target receives a construction attempt budget of
+`ceil(target_count * construction_attempt_multiplier)`. `03b` constructs the full
+batch, validates it, and accepts up to the target count. It does not top up a quota target incrementally within
 the same plan revision.
 
 The batch is one iteration and is parallelizable. Extra accepted definitions
-become reserve; they are not release rows. Track accepted and rejected counts per cell, family, and
-rejection reason. A high rejection rate is a constructor or validity signal; it
+become reserve; they are not dataset release rows. Track accepted and rejected counts per quota target, family, and rejection reason. A high rejection rate is a constructor or validity signal; it
 is not automatically a reason to expand the program pool.
 
-An underfilled cell is a deficit for `03c` after the batch, not a reason to loop
+An underfilled quota target is a deficit for `03c` after the batch, not a reason to loop
 inside `03b`.
 
 ## Relationship to task reasoning step support
@@ -255,11 +254,11 @@ They are used to check release coverage in
 
 ## Deficits
 
-A quota cell that cannot be filled is recorded in the deficit ledger. `03c`
+A quota target that cannot be filled is recorded in the deficit ledger. `03c`
 decides whether to sample more from existing graphs, use unused or reserve
 programs, request supplemental `01b` selection, or accept the miss.
 
 ## Not here
 
-Release planning, data expansion, prompt rendering, choice rendering, and
+Task quota planning, data expansion, prompt rendering, choice rendering, and
 export.

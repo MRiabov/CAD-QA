@@ -1,14 +1,14 @@
-# Release planning math
+# Task quota planning math
 
 **Status:** draft, 2026-10-21. This document centralizes the arithmetic used to
-plan and balance a release. Product requirements remain authoritative; this
-document explains how the constraints combine.
+plan and balance a dataset release. Product requirements remain authoritative;
+this document explains how the constraints combine.
 
 ## Inputs
 
 - The task-definition rules from `pipeline/03b-construct-task-definitions.md`.
 - The [task reasoning step support tables](task-step-support.md) for the release implementation scope.
-- The release targets in the PRD and the release contract.
+- The task-count targets in the PRD and the release contract.
 - The split rule: a CADEvolve program family belongs to one split.
 
 ## Implementation scope
@@ -28,7 +28,7 @@ Coverage is checked at every task reasoning step count and per release
 implementation scope. For each step count in the release, every supported value
 must appear:
 
-- target category;
+- task target category;
 - clue type;
 - answer meaning;
 - answer format.
@@ -36,7 +36,7 @@ must appear:
 Support is structural: a value is unsupported only when no valid task can
 express it at that step count.
 
-## Release-level targets
+## Plan-level targets
 
 | Property | Target |
 |---|---|
@@ -49,20 +49,21 @@ express it at that step count.
 | Built shape required | At least 95% |
 | Answer format | 5–25% each |
 | Answer meaning | 1–10% each |
-| Target category | No category above 25% |
+| Task target category | No category above 25% |
 | Clue type | No clue type above 25% of clues |
 | CAD model | No CAD model above 1% of tasks |
 | Correct answer | No correct answer above 1% of tasks |
 
 Answer format and answer meaning shares are over tasks; clue type shares are
-over clues. Target category is coverage-only at each step count; its 25% cap is
-release-level. The step count mix is a target, not a hard quota. A miss is
+over clues. Task target category is coverage-only at each step count; its 25%
+cap is plan-level. The step count mix is a target, not a hard quota. A miss is
 documented and accepted by the owner.
 
-Sample budgets oversample the accepted quota in one batch per plan revision:
-`ceil(target * 1.5)` by default, or `2.0` for cells with a high rejection rate.
-Rejections consume sample attempts, not release rows. An underfilled batch is a
-deficit; there is no per-cell top-up loop inside one plan revision.
+Construction attempt budgets multiply the accepted quota in one batch per plan revision:
+`ceil(target_count * construction_attempt_multiplier)` by default, or `2.0` for
+quota targets with a high rejection rate.
+Rejections consume construction attempts, not dataset release rows. An underfilled batch is a
+deficit; there is no per-quota-target top-up loop inside one plan revision.
 
 ## Per-step balance
 
@@ -73,7 +74,7 @@ plan is in
 [`pipeline/03a-allocate-task-quotas.md`](pipeline/03a-allocate-task-quotas.md).
 
 This document fixes the coverage rule, the implementation-scope rule, the
-release-level bounds, and the split rule. The quota allocator applies them.
+plan-level bounds, and the split rule. The quota allocator applies them.
 
 ## Splits
 

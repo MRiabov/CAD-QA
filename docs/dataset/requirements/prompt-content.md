@@ -102,7 +102,7 @@ When the answer format is multiple choice, P0 and P1 require:
 - at least five choices, with seven as the goal;
 - labels `A`, `B`, `C`, and so on;
 - the correct choice present;
-- every choice a valid answer in the same answer space: same target category
+- every choice a valid answer in the same answer space: same task target category
   for identity, same unit and precision for numbers, same frame for coordinates,
   and the documented fields for structured answers;
 - for identity choices, describe each by a distinguishing geometric or

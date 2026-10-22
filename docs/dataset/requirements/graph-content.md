@@ -187,9 +187,9 @@ depends on the failed output is rejected.
 
 ## 8. Coverage check
 
-For every task reasoning step count and every release implementation scope, and every task
-target category, clue type, and answer meaning supported at that task reasoning
-step count in `task-structure.md`, the graph must answer these checks:
+For every task reasoning step count, every release implementation scope, and every
+task target category, clue type, and answer meaning supported at that task
+reasoning step count in `task-structure.md`, the graph must answer these checks:
 
 - Which task target entities can the task use?
 - Which task clue types does the task need?

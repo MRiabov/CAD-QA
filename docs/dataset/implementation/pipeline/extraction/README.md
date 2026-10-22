@@ -61,7 +61,7 @@ The process is fail-fast per program and deterministic:
 8. Validate the CadQuery program runtime extraction result against the CadQuery program AST extraction result.
 9. Emit a complete CadQuery program AST extraction result or one failure record.
 
-No pipeline stage produces a partial CadQuery program AST extraction result, partial graph, or partial release row.
+No pipeline stage produces a partial CadQuery program AST extraction result, partial graph, or partial dataset release row.
 
 ## Two extraction paths, no guessing
 

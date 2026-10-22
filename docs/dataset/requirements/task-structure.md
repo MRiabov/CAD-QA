@@ -287,9 +287,9 @@ A step count with zero or one supported value for a dimension is coverage-only
 for that dimension; there is no mix to balance. If half of a value's conditional
 release share is less than one task, one task satisfies the lower bound.
 
-Target categories are not percentage-balanced at each task reasoning step count
+Task target categories are not percentage-balanced at each task reasoning step count
 because their availability differs by step count. The release-level 25% cap
-prevents one target category from dominating the whole dataset.
+prevents one task target category from dominating the whole dataset.
 
 Coverage and balance at each task reasoning step count can conflict, for example
 when an answer format can express only a few answer meanings. A conflict is reported with the
@@ -300,7 +300,7 @@ affected values; it is not resolved by silently dropping coverage.
 - An answer format alone, such as "coordinate task".
 - A measurement alone, such as "volume task".
 - A task target alone, such as "face task".
-- A task reasoning step count alone, such as "3-step task".
+- A task reasoning step count alone, such as "task with a task reasoning step count of 3".
 
 Those are properties of a task. A task must state the task target, task clues,
 answer format, answer meaning, and task reasoning step count that tie them together.

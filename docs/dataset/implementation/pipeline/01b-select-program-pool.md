@@ -129,7 +129,7 @@ P2 must not put one version in train and the other in test.
 
 ## Supplemental selection
 
-`03c` sends a `ProgramRequest` when the release plan has a deficit that the
+`03c` sends a `ProgramRequest` when the task quota plan has a deficit that the
 current pool cannot fill. A supplemental selection produces a
 `ProgramSelectionDelta`; it does not replace the original selection.
 

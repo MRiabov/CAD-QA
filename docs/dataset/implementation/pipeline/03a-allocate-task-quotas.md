@@ -2,42 +2,43 @@
 
 **Parent:** [`03-enumerate-tasks.md`](03-enumerate-tasks.md).
 
-**Purpose:** allocate task quotas and quota cells to CADEvolve program
-families, assign splits, and set sampling budgets before task definitions are
-generated.
+**Purpose:** allocate task quotas and quota targets to CADEvolve program
+families, assign splits, and set construction attempt budgets before task
+definitions are generated.
 
 ## Input / output
 
 - Input: CAD graphs for the selected program pool, program metadata, the
   [task reasoning step support tables](../task-step-support.md), dataset release
   targets, and `ProgramReassignmentRequest` records from `03c`.
-- Output: `ReleasePlan`.
+- Output: `TaskQuotaPlan`.
 
-## Release plan
+## Task quota plan
 
-`ReleasePlan` contains:
+`TaskQuotaPlan` contains:
 
 | Field | Meaning |
 |---|---|
 | `plan_version`, `seed` | Version and deterministic ordering seed. |
 | `step_quotas` | Target task count for each task reasoning step count. |
-| `quota_cells` | Dimension values with minimum, target, maximum, and priority. |
-| `clue_quotas` | Clue type counts over clue occurrences. |
+| `quota_targets` | Quota targets: task reasoning step count, quota dimension, dimension value, minimum, target count, maximum, and priority. |
+| `clue_quotas` | Clue quotas counted over clue occurrences. |
 | `clue_occurrences` | Planned clue occurrences for each task reasoning step count. |
-| `family_profiles` | Graph capabilities, capacity, and probe yield per CADEvolve program family. |
-| `family_assignment` | Family to split, task quota, per-step task quotas, and assigned quota cells. |
-| `sample_budgets` | One construction batch per cell and family. |
-| `oversample_factor` | Sample multiplier over the accepted quota; default 1.5, or 2.0 for high-rejection cells. |
+| `family_profiles` | Graph capabilities, family task capacity, and probe success rate per CADEvolve program family. |
+| `family_assignment` | Family to split, task quota, per-step task quotas, and assigned quota targets. |
+| `construction_attempt_budgets` | One construction batch per quota target and family. |
+| `construction_attempt_multiplier` | Construction attempt multiplier over the accepted quota; default 1.5, or 2.0 for high-rejection quota targets. |
 | `expansion_tier` | Current data tier before a deficit triggers `03c`. |
 
-The plan is a target. It does not prove that the corpus can supply every cell.
+The plan is a target. It does not prove that the corpus can supply every quota target.
 
-## Quota cells
+## Quota targets
 
-A quota cell is `(step count, dimension, value)`. It is a marginal quota bucket,
-not a complete task. For example, a 3-step task with target category `face`,
-answer meaning `area`, answer format `number`, and clue types `relation` and
-`property` contributes to these cells:
+A quota target is a count target for one quota dimension value at one task
+reasoning step count. It is not a complete task. For example, a task with a task
+reasoning step count of 3, task target category `face`, answer meaning `area`,
+answer format `number`, and clue types `relation` and `property` contributes to
+these quota targets:
 
 - `(3, target_category, face)`;
 - `(3, answer_meaning, area)`;
@@ -45,26 +46,27 @@ answer meaning `area`, answer format `number`, and clue types `relation` and
 - `(3, clue_type, relation)`;
 - `(3, clue_type, property)`.
 
-The task is one task, counted in several cells. A cell records:
+The task is one task, counted in several quota targets. A quota target records:
 
 - `minimum`: coverage requirement;
-- `target`: desired count;
+- `target_count`: desired count;
 - `maximum`: balance or cap limit;
 - `priority`: coverage first, then balance, then volume.
 
-Plan four separate dimensions:
+Plan four separate quota dimensions:
 
-- target category;
+- task target category;
 - clue type;
 - answer meaning;
 - answer format.
 
-Do not create a full target × clue × meaning × format cross-product. The
-requirements are marginal: coverage and balance at each step count, not every
-joint combination. A task contributes to one target category, one answer format,
-one answer meaning, one step count, and one or more clue occurrences.
+Do not create a full task target category × clue type × answer meaning × answer
+format cross-product. The requirements are independent: coverage and balance at
+each task reasoning step count, not every joint combination. A task contributes
+to one task target category, one answer format, one answer meaning, one task
+reasoning step count, and one or more clue occurrences.
 
-Clue quotas are over clue occurrences, because one task has several clues.
+Clue quotas are over clue occurrences, because one task has several task clues.
 
 ## Allocation equations
 
@@ -81,30 +83,31 @@ Use the fixed step shares 5%, 15%, 40%, 25%, and 15%. `step_quota[1]` is the
 warmup quota. Allocate the exact dataset release task count; do not round each
 step independently and leave a residual.
 
-### Marginal cell targets
+### Quota target counts
 
-For each task reasoning step count and dimension:
+For each task reasoning step count and quota dimension:
 
-- `supported_values(step, dimension)` comes from the task reasoning step support
-  table and the release implementation scope.
-- `conditional_share(step, dimension, value)` is the dimension value's global release
-  share divided by the sum of the global shares of values supported at that step.
-  The global release share is the release target for that dimension value. When the release
+- `supported_values(step, quota_dimension)` comes from the task reasoning step
+  support table and the dataset release implementation scope.
+- `conditional_share(step, quota_dimension, dimension_value)` is the dimension
+  value's global share divided by the sum of the global shares of values supported at that step.
+  The global quota share is the quota share target for that dimension value. When the target
   target does not name a share, use an equal share among implemented values in
-  that dimension.
-- `cell_target(step, dimension, value) = 1 + largest_remainder(step_quota[step] - supported_count, conditional_share(step, dimension, value))`.
+  that quota dimension.
+- `target_count(step, quota_dimension, dimension_value) = 1 + largest_remainder(step_quota[step] - supported_value_count, conditional_share(step, quota_dimension, dimension_value))`.
 
 For clue type, replace `step_quota[step]` with `planned_clue_occurrences[step]`
-and `supported_count` with the number of supported clue types.
+and `supported_value_count` with the number of supported clue types.
 
 The `+1` is the coverage minimum and is taken before the remainder allocation.
-This guarantees at least one task per supported target category, answer meaning,
-and answer format, and at least one clue occurrence per supported clue type.
+This guarantees at least one task per supported task target category, answer
+meaning, and answer format, and at least one clue occurrence for each supported clue type.
 
-Allocate the four dimensions separately. Do not divide `step_quota` by four and do
-not create a full target × clue × meaning × format cross-product.
+Allocate the four quota dimensions separately. Do not divide `step_quota` by four
+and do not create a full task target category × clue type × answer meaning ×
+answer format cross-product.
 
-If `supported_count` exceeds the available task or clue count, record
+If `supported_value_count` exceeds the available task or clue count, record
 `coverage_infeasible`; do not drop a supported value. A support-table conflict
 cannot be repaired by `03c`.
 
@@ -116,7 +119,7 @@ answer-step baseline:
 
 `baseline_clue_occurrences[step] = step_quota[step] * (step_count - 1)`.
 
-`identity_tasks[step] = max(cell_target(step, answer_meaning, identity), identity_floor, clue_floor)`
+`identity_tasks[step] = max(target_count(step, answer_meaning, identity), identity_floor, clue_floor)`
 
 where `identity_floor` is 1 when identity is supported and 0 otherwise, and
 `clue_floor = max(0, supported_clue_count - baseline_clue_occurrences[step])`.
@@ -126,12 +129,12 @@ If identity is not supported and `clue_floor` is positive, record
 
 `planned_clue_occurrences[step] = baseline_clue_occurrences[step] + identity_tasks[step]`.
 
-Adjust the identity answer-meaning target to `identity_tasks[step]`. Let
+Adjust the identity answer-meaning target count to `identity_tasks[step]`. Let
 `remaining_task_quota = step_quota[step] - identity_tasks[step]` and
 `remaining_supported_count` be the number of other supported answer meanings.
 For each remaining answer meaning, use:
 
-`answer_meaning_target = 1 + largest_remainder(remaining_task_quota - remaining_supported_count, remaining_conditional_share)`,
+`target_count = 1 + largest_remainder(remaining_task_quota - remaining_supported_count, remaining_conditional_share)`,
 
 where `remaining_conditional_share` is the answer meaning's global share
 normalized over the remaining supported answer meanings. If
@@ -142,25 +145,25 @@ This adjustment is the only exception to the equal/global-share target. It
 exists because an identity answer is the only answer meaning that can add a clue
 occurrence at step count 1.
 
-### Coverage bounds and caps
+### Coverage bounds and plan caps
 
-Each quota cell records `minimum` and `maximum`:
+Each quota target records `minimum` and `maximum`:
 
-- target category: `minimum = 1`; no step-level balance bound; release maximum
+- task target category: `minimum = 1`; no step-level balance bound; plan maximum
   `floor(0.25 * dataset_release_task_count)`.
-- answer format: `minimum = max(1, floor(0.5 * cell_target))`;
-  `maximum = min(ceil(2 * cell_target), floor(0.25 * dataset_release_task_count))`;
-  release minimum `ceil(0.05 * dataset_release_task_count)`.
-- answer meaning: `minimum = max(1, floor(0.5 * cell_target))`;
-  `maximum = min(ceil(2 * cell_target), floor(0.10 * dataset_release_task_count))`;
-  release minimum `ceil(0.01 * dataset_release_task_count)`.
+- answer format: `minimum = max(1, floor(0.5 * target_count))`;
+  `maximum = min(ceil(2 * target_count), floor(0.25 * dataset_release_task_count))`;
+  plan minimum `ceil(0.05 * dataset_release_task_count)`.
+- answer meaning: `minimum = max(1, floor(0.5 * target_count))`;
+  `maximum = min(ceil(2 * target_count), floor(0.10 * dataset_release_task_count))`;
+  plan minimum `ceil(0.01 * dataset_release_task_count)`.
 - clue type: `minimum = 1`; `maximum = floor(0.25 * planned_clue_occurrences[step])`.
 
-The target is the desired count; the minimum and maximum are acceptance bounds.
-When a target violates a release cap, move units to values with slack. If no value
-has slack, record `cap_conflict`; do not silently exceed the cap.
+The target count is the desired count; the minimum and maximum are acceptance
+bounds. When a target count violates a plan cap, move units to values with slack.
+If no value has slack, record `cap_conflict`; do not silently exceed the cap.
 
-### Family capacity
+### Family task capacity
 
 Use `usable_program_count = max(1, active_programs_with_graph)` for active programs
 with a CAD graph:
@@ -170,19 +173,19 @@ with a CAD graph:
 The first term enforces the no-CAD-model-above-1% cap. The second term gives each
 program enough average quota to reach the dataset release size.
 
-`family_probe_yield = (accepted_probe_tasks + 1) / (attempted_probe_tasks + 2)`
+`family_probe_success_rate = (accepted_probe_tasks + 1) / (attempted_probe_tasks + 2)`
 when a probe ran, otherwise 1.0.
 
-`family_capacity = floor(program_count * per_program_task_quota * family_probe_yield)`.
+`family_task_capacity = floor(program_count * per_program_task_quota * family_probe_success_rate)`.
 
-Use the same smoothed ratio for `family_cell_probe_yield`, with 1.0 when no probe
-ran for that family and cell.
+Use the same smoothed ratio for `family_target_probe_success_rate`, with 1.0
+when no probe ran for that family and quota target.
 
 ### Split and family quotas
 
-`split_target = largest_remainder(dataset_release_task_count, split_share)`; use
-split shares 0.70, 0.15, and 0.15. `split_target` is a map with one count per
-split, not one scalar. For 10,000 tasks the map is 7,000 / 1,500 / 1,500. For
+`split_task_target = largest_remainder(dataset_release_task_count, split_share)`;
+use split shares 0.70, 0.15, and 0.15. `split_task_target` is a map with one
+count per split, not one scalar. For 10,000 tasks the map is 7,000 / 1,500 / 1,500. For
 10,001 tasks the exact shares are 7,000.7 / 1,500.15 / 1,500.15; the three floors
 sum to 10,000, so the one remaining task goes to train because it has the largest
 fractional remainder.
@@ -191,75 +194,76 @@ Assign each CADEvolve program family to exactly one split with deterministic
 greedy balancing. Order families by capacity descending, then by
 `sha256(seed || family_id)`. A family is atomic and cannot cross splits.
 
-`split_capacity[split] = sum(family_capacity[family])` over families assigned to
-that split. If `split_capacity[split]` is zero, record `split_capacity_short` and
-leave the split unfilled. If `split_capacity[split] < split_target[split]`,
+`split_capacity[split] = sum(family_task_capacity[family])` over families assigned
+to that split. If `split_capacity[split]` is zero, record `split_capacity_short`
+and leave the split unfilled. If `split_capacity[split] < split_task_target[split]`,
 record `split_capacity_short`.
 
 `family_task_quota` is the largest-remainder allocation of
-`split_target[split]` across the capacities of the families in that split,
-capped by each family capacity. If the total is short, record
+`split_task_target[split]` across the capacities of the families in that split,
+capped by each family task capacity. If the total is short, record
 `family_quota_short`.
 
 `family_step_quota[family] = largest_remainder(family_task_quota[family], step_quota)`,
 capped by `family_task_quota[family]`. The per-step quotas sum to
 `family_task_quota[family]`.
 
-### Cell-to-family division
+### Quota target allocation to families
 
-For each step, dimension, and cell:
+For each task reasoning step count, quota dimension, and quota target:
 
-1. Find families in the split that have the cell capability and
+1. Find families in the split that have the quota target capability and
    `family_step_quota > 0`.
-2. Set `family_cell_weight = family_step_quota * family_cell_probe_yield`.
-3. Set `family_cell_target = largest_remainder(cell_target, family_cell_weight)`.
-4. If no family is eligible, record `cell_family_unassigned`.
+2. Set `family_target_weight = family_step_quota * family_target_probe_success_rate`.
+3. Set `family_target_count = largest_remainder(target_count, family_target_weight)`.
+4. If no family is eligible, record `quota_target_family_unassigned`.
 
-The family cell targets are marginal targets. Do not sum them across dimensions
-to derive `family_task_quota`. A family's constructed tasks at a step never
-exceed `family_step_quota`; `03b` samples definitions that jointly satisfy the
-marginal targets. If the row total exceeds `family_step_quota`, move the smallest
-over-allocation to a family with slack in the same cell. If no family has slack,
-record `family_cell_conflict`.
+Family target counts are independent across quota dimensions. Do not sum them to
+derive `family_task_quota`. A family's constructed tasks at a step never exceed
+`family_step_quota`; `03b` samples definitions that jointly satisfy the independent
+targets. If a family's target counts sum to more than `family_step_quota`, move
+the smallest over-allocation to a family with slack in the same quota target. If no family has
+slack, record `family_target_conflict`.
 
-Set each sample budget to `ceil(family_cell_target * oversample_factor)`.
+Set each construction attempt budget to `ceil(family_target_count * construction_attempt_multiplier)`.
 
 ### Plan acceptance
 
 The allocator is complete only when all of these hold:
 
 - `step_quota` sums to `dataset_release_task_count`;
-- every supported value has a target of at least 1;
-- every answer format, answer meaning, clue type, and target category is within
-  its bounds, or a conflict is recorded;
-- every family has a split and a task quota no greater than its capacity;
-- every cell has at least one eligible family, or a deficit is recorded;
-- every family cell target is a marginal target, and the family row balance
-  holds.
+- every supported value has a target count of at least 1;
+- every answer format, answer meaning, clue type, and task target category is
+  within its bounds, or a conflict is recorded;
+- every family has a split and a task quota no greater than its family task capacity;
+- every quota target has at least one eligible family, or a deficit is recorded;
+- every family target count is independent, and a family's target counts sum to no
+  more than `family_step_quota`.
 
-The conditional release share is allocated from the global targets and then
+The conditional release share is allocated from the global quota shares and then
 filled from available data. It is not recomputed after seeing the whole
 valid-task set.
 
-## Oversampling
+## Construction attempt budgets
 
-Rejected definitions are expected. A cell should not receive exactly its target
-number of construction attempts, because every rejection would become a deficit.
+Rejected definitions are expected. A quota target should not receive exactly its
+target count of construction attempts, because every rejection would become a
+deficit.
 
-- Use `1.5` as the default oversample factor.
-- Use `2.0` for cells with a known high rejection rate.
+- Use `1.5` as the default construction attempt multiplier.
+- Use `2.0` for quota targets with a known high rejection rate.
 - Construct one whole batch per plan revision. Accepted definitions are capped at
-  the target.
-- Do not top up a cell incrementally inside the same plan revision. That is more
+  the target count.
+- Do not top up a quota target incrementally inside the same plan revision. That is more
   coordination work than constructing the batch and accepting the result.
-- Track accepted and rejected counts per cell and family.
+- Track accepted and rejected counts per quota target and family.
 - Treat a high rejection rate as a constructor or validity issue before treating
   it as a data-supply issue.
 
-The batch is parallelizable across programs, families, and cells. The factor is a
-starting policy, not a guarantee. Sampling remains iterative at the plan level:
-a batch is one iteration, and `03c` may trigger another revision. A cell still
-becomes a deficit if its batch is underfilled.
+The batch is parallelizable across programs, families, and quota targets. The
+multiplier is a starting policy, not a guarantee. Sampling remains iterative at the
+plan level: a batch is one iteration, and `03c` may trigger another revision. A
+quota target still becomes a deficit if its batch is underfilled.
 
 ## Family profiles
 
@@ -267,37 +271,38 @@ Build a family profile from the graphs in the selected pool:
 
 - CADEvolve program family and program count;
 - split status, if already assigned;
-- available target categories;
+- available task target categories;
 - available clue predicates and relations;
 - available measurements and answer meanings;
 - available answer formats;
 - approximate maximum task reasoning step count;
 - task quota per program and family;
-- probe acceptance yield per family and cell.
+- probe success rate per family and quota target.
 
 Profiles describe capability, not a list of all tasks. A bounded probe may
 construct a small deterministic sample of task definitions per family to improve
-yield estimates. That is sampling, not full enumeration.
+success-rate estimates. That is sampling, not full enumeration.
 
 ## Family assignment order
 
-The equations above define capacity, split quotas, and cell division. This order
-is normative:
+The equations above define family task capacity, split task targets, and quota
+target allocation. This order is normative:
 
 1. Treat each CADEvolve program family as atomic.
 2. Assign families to train, validation, and test before task construction.
 3. Order families by capacity descending, then by `sha256(seed || family_id)`.
-4. Fill each split target with families while preserving family isolation.
-5. Assign quota cells scarcity-first: rare values first, then common values.
+4. Fill each split task target with families while preserving family isolation.
+5. Assign quota targets scarcity-first: rare values first, then common values.
 6. Prefer families with the required capability and remaining quota.
 7. Keep a reserve of families for `03c`.
 
-A family receives a task quota, per-step task quotas, and a set of cells, not one
-task type. If it cannot fill an assigned cell, the remainder returns to the plan.
+A family receives a task quota, per-step task quotas, and a set of quota targets,
+not one task type. If it cannot fill an assigned quota target, the remainder
+returns to the plan.
 `03b` stamps the family ID, split, and subset on each definition; `05` rechecks
 family isolation on the final release table.
 
-Exact split and cell assignment is a bin-packing problem and can be hard. The
+Exact split and quota target assignment is a bin-packing problem and can be hard. The
 contract does not require an exact optimum. Deterministic greedy allocation,
 reserves, and recorded misses are sufficient.
 
@@ -308,26 +313,26 @@ can supply a deficit but the plan does not use them.
 
 It can:
 
-- assign an unassigned family to a quota cell;
+- assign an unassigned family to a quota target;
 - move task quota from a saturated family to one with spare capacity;
 - relax an internal family quota;
-- change a quota cell or sample budget within its release bounds.
+- change a quota target or construction attempt budget within its plan bounds.
 
 It does not fetch, normalize, or execute. It increments the plan version and
 returns control to `03b`.
 
 ## Deficits
 
-A cell enters the deficit ledger when:
+A quota target enters the deficit ledger when:
 
-- its minimum or target is not met after the sample budget;
+- its minimum or target count is not met after the construction attempt budget;
 - the current graphs lack the required capability;
-- family quotas or release caps block it;
+- family quotas or plan caps block it;
 - the requested value is structurally infeasible.
 
 Record the reason code from the allocation step: `coverage_infeasible`,
 `answer_meaning_infeasible`, `cap_conflict`, `split_capacity_short`,
-`family_quota_short`, `cell_family_unassigned`, or `family_cell_conflict`.
+`family_quota_short`, `quota_target_family_unassigned`, or `family_target_conflict`.
 
 `03c` decides whether to sample more from existing graphs, use unused or reserve
 programs, request a supplemental `01b` selection, or accept the miss.
@@ -335,11 +340,11 @@ programs, request a supplemental `01b` selection, or accept the miss.
 ## Resolved questions
 
 - **Q1.** *Resolved 2026-10-21.* Use quota planning, not enumerate-and-cut.
-  Select and sample into a release plan.
+  Select and sample into a task quota plan.
 - **Q3.** *Resolved 2026-10-21.* Allocate the conditional release share from the
-  global targets before task construction, then fill from available data.
+  global quota shares before task construction, then fill from available data.
 
 ## Not here
 
 Task definition validity, clue predicates, answer resolution, prompt rendering,
-and release validation.
+and dataset release validation.

@@ -61,6 +61,16 @@ the user-visible outcome.
 | **Dataset release** | Domain | An immutable, validated, versioned set of tasks and correct answers. |
 | **Release dataset** | Domain | The one release table for one implementation scope, with prompt and answer columns. Use it when distinguishing the release from external datasets and LLM reasoning-output datasets. |
 | **Implementation priority** | Domain | P0/P1/P2 order for requirements and generation inputs. It is not a task property and never appears as a row label. |
+| **Quota** | Internal | An allowed or required count at a stated scope. |
+| **Task quota** | Internal | A quota counted in tasks. |
+| **Clue quota** | Internal | A quota counted in task clue occurrences. |
+| **Quota dimension** | Internal | One independent way tasks are counted for coverage and balance: task target category, clue type, answer meaning, or answer format. |
+| **Quota target** | Internal | A count target for one quota dimension value at one task reasoning step count: minimum, target count, and maximum. It is not a task. |
+| **Task quota plan** | Internal | The plan for task quotas, family assignment, split assignment, and construction attempt budgets for one dataset release. |
+| **Family task capacity** | Internal | The estimated maximum number of tasks a CADEvolve program family can supply. |
+| **Split task target** | Internal | The planned number of tasks for one split. |
+| **Construction attempt budget** | Internal | The number of task-definition construction attempts allocated to a quota target before accepted tasks are counted. |
+| **Probe success rate** | Internal | The share of bounded-probe construction attempts that produced accepted task definitions. |
 
 ### Internal and domain pairs
 

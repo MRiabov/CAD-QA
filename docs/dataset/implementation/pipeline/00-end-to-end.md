@@ -38,7 +38,7 @@ generator.
 CADEvolve Parquet cache
   → normalized programs
   → CAD graphs
-  → release plan
+  → task quota plan
   → task definitions with gold answers
   → [deficit loops: 03c → 03a → 03b, or 03c → 01b/01c/02 → 03a → 03b]
   → release table with prompts and choices

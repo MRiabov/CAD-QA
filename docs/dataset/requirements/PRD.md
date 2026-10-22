@@ -241,11 +241,11 @@ to a later implementation scope is not a coverage gap in the current release.
 | ID | Requirement | How the user can tell |
 |---|---|---|
 | **R-7** | The dataset balances answer formats at every task reasoning step count. | Every answer format in section 5 appears at every task reasoning step count where it is supported. No format is more than twice or less than half its share among the formats supported at that task reasoning step count. Over the release, each format is between 5% and 25% of tasks. |
-| **R-8** | The dataset covers all target categories, clue types, and answer meanings. | Every target category, clue type, and answer meaning supported at a task reasoning step count appears at that task reasoning step count. A value that is valid, implemented by the release, and missing is a gap; the task reasoning step support tables record which values cannot occur at that step count and why. |
+| **R-8** | The dataset covers all target categories, clue types, and answer meanings. | Every task target category, clue type, and answer meaning supported at a task reasoning step count appears at that task reasoning step count. A value that is valid, implemented by the release, and missing is a gap; the task reasoning step support tables record which values cannot occur at that step count and why. |
 | **R-9** | The dataset covers the full task reasoning step count range. | Steps 1 through 5 all appear in the target mix in section 8, with steps 3 and 4 carrying most benchmark tasks. |
 | **R-10** | The dataset is diverse. | It draws from at least one thousand distinct CAD models, and no single CAD model is above 1% of tasks. |
 | **R-11** (P1) | The dataset has varied answers. | At least one thousand different correct answers appear, and no correct answer is above 1% of tasks. |
-| **R-12** (P1) | The dataset is balanced at every task reasoning step count. | No clue type is above 25% of clues at a task reasoning step count or over the release, and no clue type is more than twice or less than half its share among the clue types supported at a task reasoning step count. Every answer meaning is between 1% and 10% over the release, and no answer meaning is more than twice or less than half its share among the meanings supported at a task reasoning step count. No target category is above 25% of the release. |
+| **R-12** (P1) | The dataset is balanced at every task reasoning step count. | No clue type is above 25% of clues at a task reasoning step count or over the release, and no clue type is more than twice or less than half its share among the clue types supported at a task reasoning step count. Every answer meaning is between 1% and 10% over the release, and no answer meaning is more than twice or less than half its share among the meanings supported at a task reasoning step count. No task target category is above 25% of the release. |
 
 ### 7.3 Splits and reuse
 
@@ -368,7 +368,7 @@ change.
 
 The dataset is done when:
 
-1. a small sample produces every target category, clue type, answer meaning,
+1. a small sample produces every task target category, clue type, answer meaning,
    and answer format supported in the P0 implementation scope at every task reasoning step
    count where that value is structurally supported;
 2. the first benchmark dataset release of at least ten thousand tasks meets the
@@ -378,7 +378,7 @@ The dataset is done when:
 4. a labeled warmup subset exists;
 5. training, validation, and test sets do not share a CAD model;
 6. a reviewer can read sampled tasks covering every task reasoning step count,
-   target category, clue type, answer meaning, and answer format supported in the
+   task target category, clue type, answer meaning, and answer format supported in the
    released dataset and understand them without asking what they mean;
 7. the answers can be checked without an LLM in the loop;
 8. the dataset release can be regenerated and the result matches what is

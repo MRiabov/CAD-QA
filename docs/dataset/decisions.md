@@ -139,16 +139,16 @@ prefix is `DS-`.
   trained on, tuned on, or used to choose an LLM model. `DS-26` defines the
   program-family identity.
 
-## DS-10 — Task definitions and release planning are specified together
+## DS-10 — Task definitions and task quota planning are specified together
 
 - **Status:** accepted (2026-10-21); delivered in `03a`–`03c`.
 - **Context:** The dimensions and balance rules do not define the set of tasks.
   "Enumerate all tasks" is ambiguous until the task identity, the valid-task
-  set, and the release plan are defined.
+  set, and the task quota plan are defined.
 - **Decision:** The task-definition contract defines the task tuple and canonical
   identity, the valid-task set, the validity oracle, exact task reasoning step
   count accounting, the typed clue predicate schema, the answer meaning to
-  answer format map, the release planning and sampling algorithm, deterministic
+  answer format map, the task quota planning and sampling algorithm, deterministic
   ordering, deduplication, serialization, and split assignment.
 - **Consequences:** Implementation starts from the `03` contract.
   `requirements/task-structure.md` and this file define the target; `03a`
@@ -345,7 +345,7 @@ prefix is `DS-`.
   allowed only for work that requires the Python runtime or a Python-only
   library: CadQuery/OCP execution, Python AST or tokenizer work, and canonical
   Python program normalization. The CLI, orchestration, manifests, graph
-  assembly, task enumeration, prompt and choice rendering, release planning,
+  assembly, task enumeration, prompt and choice rendering, task quota planning,
   validation, and export are Go. The boundary is defined in
   `implementation/python-and-golang.md`.
 - **Consequences:** The Go entry point invokes Python workers through typed,
@@ -458,7 +458,7 @@ prefix is `DS-`.
 - **Status:** accepted (2026-10-21).
 - **Context:** The valid-task set is combinatorial. Enumerating every task and
   selecting afterward wastes work and can exceed any practical budget.
-- **Decision:** Plan the release first with marginal quota cells, family
+- **Decision:** Plan task quotas first with independent quota targets, family
   profiles, split assignment, and attempt budgets. Construct and sample task
   definitions into that plan. Use `03c` to replan or expand the program data when quotas
   cannot be filled.

@@ -97,4 +97,4 @@ step may be close to a no-op for C records; it is still a real contract boundary
 
 ## Not here
 
-This pipeline stage does not build graphs, enumerate tasks, or write release rows.
+This pipeline stage does not build graphs, enumerate tasks, or write dataset release rows.
