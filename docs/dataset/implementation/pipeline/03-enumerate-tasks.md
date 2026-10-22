@@ -9,7 +9,7 @@ program data when the plan has deficits.
 
 | Sub-step | Responsibility | Doc |
 |---|---|---|
-| `03a` | Plan quotas, family assignment, splits, and attempt budgets. | [`03a-plan-release.md`](03a-plan-release.md) |
+| `03a` | Allocate task budgets and quota cells to families; assign splits and sampling budgets. | [`03a-allocate-task-budgets.md`](03a-allocate-task-budgets.md) |
 | `03b` | Construct and validate task definitions into the plan. | [`03b-construct-task-definitions.md`](03b-construct-task-definitions.md) |
 | `03c` | Resolve deficits by replanning or expanding program data. | [`03c-resolve-deficits.md`](03c-resolve-deficits.md) |
 
@@ -17,7 +17,7 @@ program data when the plan has deficits.
 
 | Sub-step | Input model | Output model | Persisted artifact |
 |---|---|---|---|
-| `03a` | `CadGraph`, `ProgramMetadata`, task reasoning step support tables, release targets, `ProgramReassignmentRequest` | `ReleasePlan` | Release plan Parquet or JSON. |
+| `03a` | `CadGraph`, `ProgramMetadata`, task reasoning step support tables, dataset release targets, `ProgramReassignmentRequest` | `ReleasePlan` | Release plan Parquet or JSON. |
 | `03b` | `CadGraph`, `ReleasePlan` | `TaskDefinition`, `DeficitLedger` | Task definitions Parquet and failure records. |
 | `03c` | `DeficitLedger`, `ReleasePlan`, family profiles, `ProgramMetadata` | `ProgramReassignmentRequest`, `ProgramRequest`, or `AcceptedMiss` | Control records. |
 
@@ -27,7 +27,7 @@ artifact crosses each sub-step boundary.
 ## Flow
 
 ```text
-03a plan
+03a allocate
   → 03b construct/sample
   → if deficits: 03c
       fast: ProgramReassignmentRequest → 03a → 03b
@@ -41,7 +41,7 @@ is accepted and recorded.
 ## Language and parallelism
 
 - **Go:** `03a`, `03b`, `03c`; no Python is needed after graph construction.
-- `03a` release planning is a global allocation and is not parallelizable.
+- `03a` task-budget allocation is a global allocation and is not parallelizable.
   Family profile building may be parallel per family, with one merge step.
 - `03b` task-definition construction is parallel per program, family, and quota
   cell. Each batch is independent; accepted definitions are merged with

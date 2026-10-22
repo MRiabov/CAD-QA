@@ -1,15 +1,15 @@
-# 03a — Plan release
+# 03a — Allocate task budgets to program families
 
 **Parent:** [`03-enumerate-tasks.md`](03-enumerate-tasks.md).
 
-**Purpose:** turn release targets and the bounded program pool into a quota plan,
-family assignment, split assignment, and sampling budget before task definitions
-are generated.
+**Purpose:** allocate task budgets and quota cells to CADEvolve program
+families, assign splits, and set sampling budgets before task definitions are
+generated.
 
 ## Input / output
 
 - Input: CAD graphs for the selected program pool, program metadata, the
-  [task reasoning step support tables](../task-step-support.md), release
+  [task reasoning step support tables](../task-step-support.md), dataset release
   targets, and `ProgramReassignmentRequest` records from `03c`.
 - Output: `ReleasePlan`.
 
