@@ -26,5 +26,6 @@ These fields specialize a `StaticOperation` for solid-producing calls.
   `chamfer`, `shell`, `split`, `clean`, `rarray`.
 - Transforms: `translate`, `rotate`, `mirror`, `transformed`.
 
-`feature_kind` is a static classification. Runtime material change and topology
+`feature_kind` and `solid_kind` are static classifications. The complete method
+table is in [`algorithm.md`](algorithm.md). Runtime material change and topology
 change are measured in [`cadquery/effects.md`](../cadquery/effects.md).

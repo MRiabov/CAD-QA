@@ -68,7 +68,7 @@ program; there is no best-effort fallback.
 
 | Method or constructor | Static mapping | Operation kind | Effect |
 |---|---|---|---|
-| `faces`, `edges`, `vertices`, `wires`, `solids` | `StaticSelector` | CadQuery selector | Select graph entities from the current shape. |
+| `faces`, `edges`, `vertices` | `StaticSelector` | CadQuery selector | Select graph entities from the current shape. |
 | `filter` | `StaticSelector` with a narrow lambda predicate | CadQuery selector | Filter selected entities by `e.Length()` comparison. |
 | `cq.NearestToPointSelector` | `StaticSelector` | CadQuery selector | Select by proximity. |
 
@@ -79,7 +79,7 @@ shapes, or measurements for later clues and answers.
 
 | Method or constructor | Static mapping | Operation kind | Effect |
 |---|---|---|---|
-| `val`, `vals`, `all`, `first`, `wire`, `Edges`, `Solids`, `findSolid`, `Length` | `StaticOperation` | accessor | Read a shape, list, or scalar. |
+| `val`, `vals`, `all`, `first`, `Edges`, `findSolid`, `Length` | `StaticOperation` | accessor | Read a shape, list, or scalar. |
 | `list(<accessor>.vals())` | `StaticExpression` | accessor | Convert a shape list to a Python list. |
 
 ## Expressions and special forms
@@ -105,5 +105,14 @@ Reject the whole program when:
 not in the allowlist and is not rewritten as `combine`; a program that calls it is
 rejected at static extraction. This affected 701 CADEvolve-C-core, 41 ABC-C, and
 3 ShapeNet-C programs in the local cache.
+
+`wires`, `solids`, `wire`, and `Solids` are observed but rejected in P0/P1
+because `02c` has no wire or solid entity category. The affected CADEvolve-C
+programs are 750/508 CADEvolve-C-core, 5,245/3 ABC-C, and 421/2 ShapeNet-C in the
+local cache. They are not recorded as partial selector results.
+
+The deterministic assignment, receiver, expression, and classification rules are
+in [`extraction/ast/algorithm.md`](extraction/ast/algorithm.md). CadQuery selector kinds
+`implicit`, `string`, `call`, and `filter` are all defined there.
 
 The allowlist version changes whenever a method, call form, or mapping changes.

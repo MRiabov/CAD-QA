@@ -379,7 +379,7 @@ count is a non-negative 64-bit integer.
 | `PathKind` | `line`, `polyline`, `spline`, `arc`, `helix`, `other` |
 | `PathSegmentKind` | `line`, `arc`, `spline`, `other` |
 | `RegionSign` | `added`, `removed` |
-| `SelectorKind` | `string`, `call` |
+| `SelectorKind` | `string`, `call`, `filter`, `implicit` |
 
 ### Attribute rules
 
@@ -484,6 +484,12 @@ number of `selected_by` edges.
   once in the run manifest, with per-measurement overrides. CAD graph evidence
   references are a tagged union of graph node, measurement, operation, program line, and
   execution artifact. Answer-scoring tolerance remains separate.
+
+- **Extraction input contract.** *Resolved 2026-10-22.* `02c` consumes the
+  complete `StaticCadQueryModel` and `ExecutionResult` from
+  [`extraction/README.md`](extraction/README.md). The static and runtime
+  algorithms, canonical ordering, and cross-boundary validation are owned by that
+  contract. P0/P1 CadQuery selectors are limited to face, edge, and vertex membership.
 
 - **Typed graph attributes and table scope.** *Resolved 2026-10-22.* Option A.
   Keep the three-table layout. Store all graph entities in `nodes.parquet`, with a

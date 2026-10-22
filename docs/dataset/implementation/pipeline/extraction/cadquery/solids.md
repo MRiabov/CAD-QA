@@ -23,7 +23,11 @@ Each state has an entity table with one row per face, edge, and vertex.
 | Edge | `start: Point3`, `end: Point3`, `length: double` |
 | Face | `centroid: Point3`, `area: double`, `normal: Vector3`, `bbox: BoundingBox` |
 
-`entity_id` is a hash of `state_id`, `entity_category`, and the canonical
-fingerprint. Rounding and canonical encoding are fixed by the extraction version.
-Two entities in one state with the same fingerprint reject the program as
-ambiguous topology; do not add an arbitrary ordinal.
+`fingerprint_sha256` and `entity_id` are derived exactly as defined in
+[`../canonicalization.md`](../canonicalization.md). The fingerprint fields are
+the only geometry inputs; kernel handles and enumeration order are not inputs.
+
+Two entities in one state and category with the same fingerprint reject the
+program as ambiguous topology; do not add an arbitrary ordinal. The entity table
+is sorted canonically, and `selector_result.selected_entity_ids` uses the same
+order.

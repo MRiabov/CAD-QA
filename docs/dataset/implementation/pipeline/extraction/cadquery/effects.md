@@ -18,8 +18,12 @@ Effects describe what a state-producing operation changed.
 ## Rules
 
 - Effects are measured from recorded states, not inferred from method names.
-- A missing before state means the operation created the first state; the change
-  fields are null.
+- `before_state_id` is the receiver binding's state immediately before the
+  operation. A missing before state means the operation created the first state;
+  the change fields are null.
+- `after_state_id` is the state produced by the operation. A state-producing
+  operation with a receiver state but no after state is a failure; the runtime
+  never drops the state or emits a partial effect.
 - A failed operation produces no effect.
 - Topology counts may be equal while individual entities changed; the count delta
   is not a persistence claim.

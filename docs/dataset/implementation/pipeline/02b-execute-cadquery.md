@@ -28,11 +28,14 @@ results, or a failure tombstone when execution fails.
 
 `ExecutionSuccess` contains:
 
-- `program_id`, `program_sha256`, and the environment record;
+- `program_id`, `program_sha256`, `static_model_sha256`, and the environment record;
+- `operation_recordings`: one per static operation;
 - `shape_snapshots`: one per solid-producing assignment;
+- `workplane_frames`: one per workplane-producing operation;
 - `selector_results`: one per evaluated CadQuery selector;
 - `operation_effects`: before/after state pairs and measured deltas;
-- `final_state_id`.
+- `final_state_id`;
+- `execution_result_sha256`.
 
 Each `ShapeSnapshot` contains:
 
@@ -70,20 +73,26 @@ Each `OperationEffect` contains:
 
 ## Field contracts
 
-The complete runtime field sets and capture rules are in
+The complete runtime algorithm is in
+[`extraction/cadquery/runtime.md`](extraction/cadquery/runtime.md). Field sets and
+canonical rules are in
 [`extraction/cadquery/states.md`](extraction/cadquery/states.md),
 [`extraction/cadquery/solids.md`](extraction/cadquery/solids.md),
 [`extraction/cadquery/topology.md`](extraction/cadquery/topology.md),
-[`extraction/cadquery/selectors.md`](extraction/cadquery/selectors.md), and
-[`extraction/cadquery/effects.md`](extraction/cadquery/effects.md).
+[`extraction/cadquery/selectors.md`](extraction/cadquery/selectors.md),
+[`extraction/cadquery/effects.md`](extraction/cadquery/effects.md),
+[`extraction/canonicalization.md`](extraction/canonicalization.md), and
+[`extraction/validation.md`](extraction/validation.md).
 
 ## Failure tombstone
 
 `ExecutionFailure` contains:
 
-- `program_id`, `operation_id`, and `error_kind`, including `timeout` and
-  `memory`;
-- `message` and `source_line`;
+- `program_id`, `program_sha256`, `operation_id` when known, and `error_kind`;
+- `error_kind` from [`extraction/validation.md`](extraction/validation.md),
+  including `timeout`, `memory`, `cadquery_exception`, `recorder`,
+  `non_solid_result`, `missing_state`, and `fingerprint_collision`;
+- `message`, `source_line`, and `source_span` when known;
 - environment record;
 - `cache_key`.
 
@@ -91,9 +100,10 @@ A failed result is never passed to graph assembly as a measurable state.
 
 ## Caching
 
-The cache key includes the normalized program hash, CadQuery and OCP versions,
-the execution environment, and the timeout. A failure tombstone is reusable for
-the same key.
+The cache key includes the normalized program hash, `static_model_sha256`,
+extractor and canonicalization versions, CadQuery and OCP versions, the execution
+environment, timeout, and memory limit. A failure tombstone is reusable for the
+same key. A change to the static model or canonicalization is a cache miss.
 
 ## Resolved questions
 
@@ -105,5 +115,9 @@ the same key.
 - **Entity identity.** *Resolved 2026-10-21.* Do not persist kernel handles. Use
   the stable geometric entity ID emitted by `02b`; reject fingerprint collisions.
 - **CadQuery selector failure.** *Resolved 2026-10-21.* A CadQuery selector exception
-  rejects the whole program. A valid selector with zero matches is a successful
+  rejects the whole program. A valid CadQuery selector with zero matches is a successful
   result with count 0.
+- **Runtime capture algorithm.** *Resolved 2026-10-22.* The exact instrumentation
+  ABI, capture classes, state/CadQuery selector/entity/effect algorithms, final-state rule,
+  and failure taxonomy are in
+  [`extraction/cadquery/runtime.md`](extraction/cadquery/runtime.md).
