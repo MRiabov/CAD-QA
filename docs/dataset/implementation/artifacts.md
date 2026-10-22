@@ -10,7 +10,7 @@ this document owns ownership, lifecycle, and format, not field definitions.
 | Artifact | Writer | Readers | Identity | Preferred format | Notes |
 |---|---|---|---|---|---|
 | CADEvolve Parquet cache | External | `01a` | Upstream dataset commit plus cache version | Parquet | Immutable external input. |
-| Program metadata | `01a` | `01b` | Cache revision plus metadata schema | Parquet | No program text. |
+| Program metadata | `01a` | `01b`, `03a` | Cache revision plus metadata schema | Parquet | No program text. |
 | Program selection | `01b` | `01c`, `01e` | Selection policy version plus seed | Parquet | Active and reserve IDs, supplemental deltas, `cadevolve_program_family_id`, counts, and exclusions. |
 | Program pool | `01c` | `01d` | Selection identity plus cache revision | Parquet | Only selected rows, including program text and `cadevolve_program_family_id`. |
 | Normalized program | `01d` | `02a`, `02b` | `program_sha256` plus normalization version | Parquet | Carries `program_id`, `cadevolve_program_family_id`, and canonical text. |

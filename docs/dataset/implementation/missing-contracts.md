@@ -9,7 +9,6 @@ doc, delete the row. Open questions remain in
 
 | ID | Owner | Missing contract | Why it blocks |
 |---|---|---|---|
-| MC-07 | [`03a`](pipeline/03a-allocate-task-quotas.md) | Quota allocator equations for marginal cells, step mix, clue occurrences, family capacity, caps, and coverage minima; cell-to-family quota division. | The plan lists steps but no computable allocation. |
 | MC-08 | [`03b`](pipeline/03b-construct-task-definitions.md) | Construction grammar: possible-answer sets, target binding order, clue constructors, answer resolvers, sampling order, and support-table derivation. | `03b` currently defines rejection, not construction. |
 | MC-09 | [`03b`](pipeline/03b-construct-task-definitions.md) | Canonical serialization and hash inputs for `task_id`, `definition_sha256`, and `answer_sha256`. | Duplicate identity and reproducibility are undefined. |
 | MC-10 | [`03b`](pipeline/03b-construct-task-definitions.md) | Provenance needed to reproduce a definition: CadQuery program runtime extraction result hash, graph artifact hash, plan version, render seed, and template version. | The definition cannot reproduce its answer evidence or prompt. |
@@ -29,7 +28,6 @@ doc, delete the row. Open questions remain in
 | MC-18 | [`01c`](pipeline/01c-fetch-program-pool.md), [`02`](pipeline/02-execute-cadquery-and-build-graph.md), [`05`](pipeline/05-validate-and-export-release.md) | Program-floor backfill after execution failures. | A 10k-task release can ship with fewer than 1,000 usable programs. |
 | MC-19 | [`01c`](pipeline/01c-fetch-program-pool.md) | Post-execution backfill path when the 1,000-program floor is missed. | Fetch-time “usable” is not execution-time usable. |
 | MC-20 | [`01b`](pipeline/01b-select-program-pool.md), [`03b`](pipeline/03b-construct-task-definitions.md) | Family/split reconciliation for duplicate normalized text with different family IDs. | Duplicate identity can arbitrarily choose a family and split. |
-| MC-21 | [`03a`](pipeline/03a-allocate-task-quotas.md) | Owner and artifact for program metadata input. | `03a` needs metadata, but `artifacts.md` lists `01b` as the only reader. |
 | MC-22 | [`03b`](pipeline/03b-construct-task-definitions.md) | Geometry-required rule for 1-step no-clue tasks, plus the aggregate 95% check. | The current definition marks some geometry-dependent tasks false. |
 | MC-23 | [`03c`](pipeline/03c-resolve-deficits.md) | Numeric retry, expansion, and stop budgets. | The loop has no computable stop rule. |
 | MC-24 | [`03b`](pipeline/03b-construct-task-definitions.md) | P0 choice fairness beyond pool size. | This overlaps MC-15; the owner split is unclear. |
@@ -45,5 +43,4 @@ doc, delete the row. Open questions remain in
 |---|---|---|
 | MC-31 | [`00`](pipeline/00-end-to-end.md) | Slow loop omits `01d`. |
 | MC-32 | [`01e`](pipeline/01e-write-external-dataset-manifest.md) | Manifest link path points one directory too shallow. |
-| MC-33 | [`03a`](pipeline/03a-allocate-task-quotas.md) | “Chain depth” conflicts with the terminology rule against “depth” for reasoning. |
 | MC-34 | [`README.md`](../README.md) | Does not list `open-questions.md`, `missing-contracts.md`, `testing/`, or `streamlined/`. |
