@@ -59,8 +59,8 @@ Clue quotas are over clue occurrences, because one task has several clues.
 
 Define `largest_remainder(total, weights, seed, key)` as: normalize the weights,
 floor each weighted share, then distribute the remaining units one at a time to
-the largest fractional remainders; break ties by `sha256(seed || key)`. The
-result sums exactly to `total`.
+the largest fractional remainders; break ties by `sha256(seed || key)`. It returns
+one integer count per weight, and the counts sum exactly to `total`.
 
 ### Step quotas
 
@@ -170,22 +170,29 @@ ran for that family and cell.
 ### Split and family quotas
 
 `split_target = largest_remainder(dataset_release_task_count, split_share)`; use
-split shares 0.70, 0.15, and 0.15.
+split shares 0.70, 0.15, and 0.15. `split_target` is a map with one count per
+split, not one scalar. For 10,000 tasks the map is 7,000 / 1,500 / 1,500. For
+10,001 tasks the exact shares are 7,000.7 / 1,500.15 / 1,500.15; the three floors
+sum to 10,000, so the one remaining task goes to train because it has the largest
+fractional remainder.
 
 Assign each CADEvolve program family to exactly one split with deterministic
 greedy balancing. Order families by capacity descending, then by
 `sha256(seed || family_id)`. A family is atomic and cannot cross splits.
 
-`split_capacity = sum(family_capacity)` over families assigned to the split. If
-`split_capacity` is zero, record `split_capacity_short` and leave the split
-unfilled. If `split_capacity < split_target`, record `split_capacity_short`.
+`split_capacity[split] = sum(family_capacity[family])` over families assigned to
+that split. If `split_capacity[split]` is zero, record `split_capacity_short` and
+leave the split unfilled. If `split_capacity[split] < split_target[split]`,
+record `split_capacity_short`.
 
-`family_task_quota = largest_remainder(split_target, family_capacity)`, capped by
-`family_capacity`. If the total is short, record `family_quota_short`.
+`family_task_quota` is the largest-remainder allocation of
+`split_target[split]` across the capacities of the families in that split,
+capped by each family capacity. If the total is short, record
+`family_quota_short`.
 
-`family_step_quota = largest_remainder(family_task_quota, step_quota)` for each
-step, capped by `family_task_quota`. The per-step quotas sum to
-`family_task_quota`.
+`family_step_quota[family] = largest_remainder(family_task_quota[family], step_quota)`,
+capped by `family_task_quota[family]`. The per-step quotas sum to
+`family_task_quota[family]`.
 
 ### Cell-to-family division
 
