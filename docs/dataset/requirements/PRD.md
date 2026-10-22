@@ -474,7 +474,10 @@ The dataset is done when:
     kernel also sets a baseline for future work.
   - *Why the P0 harness is `numpy`.* When the project began, the available LLM
     models did not know CadQuery, so NumPy seemed the easier tool for them.
-    Fine-tuning removes that reason. A fine-tuned LLM model that writes a short
+    NumPy was also meant to keep the task independent of any one CAD tool, so
+    the same skill would apply in Blender, Maya, CadQuery, or build123d. That
+    goal was a preference, not a requirement. Fine-tuning removes the first
+    reason. A fine-tuned LLM model that writes a short
     CadQuery query is cheaper and easier to grade than one that rebuilds the
     geometry in NumPy.
   - *Not resolved.* The project is considering a pivot to a kernel-query task:
