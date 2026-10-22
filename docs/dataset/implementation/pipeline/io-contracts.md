@@ -4,6 +4,10 @@
 between pipeline stages. Pipeline stage docs describe why and how; they do not restate
 these interfaces. If a pipeline stage doc disagrees with this file, this file wins.
 
+This file covers stage boundaries only. Sub-step boundaries are owned by the
+parent document, which defines the sub-step models and artifacts without
+restating the parent interface.
+
 Typed model names are provisional. Their fields are defined when the owning
 pipeline stage is specified.
 
@@ -25,7 +29,7 @@ pipeline stage is specified.
 | `02` | `02a` AST extraction, `02b` execute CadQuery, `02c` build graph. |
 | `03` | `03a` plan release, `03b` construct task definitions, `03c` resolve deficits by replanning or expanding data. |
 
-Sub-steps have their own typed models in their parent pipeline stage doc.
+Sub-steps have their own typed models and I/O tables in their parent document.
 
 ## Contract invariants
 

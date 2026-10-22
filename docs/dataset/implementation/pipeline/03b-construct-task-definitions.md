@@ -8,6 +8,11 @@ canonical identity.
 
 **Input/output contract:** [`io-contracts.md`](io-contracts.md).
 
+## Input / output
+
+- Input: `CadGraph` and `ReleasePlan`.
+- Output: `TaskDefinition` records and a `DeficitLedger`.
+
 ## Task definition
 
 A `TaskDefinition` is the complete, answer-bearing construction record for one

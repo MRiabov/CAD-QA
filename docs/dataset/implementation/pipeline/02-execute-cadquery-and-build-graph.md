@@ -15,6 +15,17 @@ clues and answers can be checked against.
 | `02b` | Execute CadQuery and capture snapshots or a failure tombstone. | [`02b-execute-cadquery.md`](02b-execute-cadquery.md) |
 | `02c` | Build graph entities, relations, measurements, and CAD graph evidence. | [`02c-build-cad-graph.md`](02c-build-cad-graph.md) |
 
+## Sub-step contracts
+
+| Sub-step | Input model | Output model | Persisted artifact |
+|---|---|---|---|
+| `02a` | `NormalizedProgram` | `CadQueryAstExtractionResult` | `ast_*` tables. |
+| `02b` | `NormalizedProgram`, `CadQueryAstExtractionResult` | `CadQueryRuntimeExtractionResult` | `runtime_*` tables or a `FailureTombstone`. |
+| `02c` | `CadQueryAstExtractionResult`, `CadQueryRuntimeExtractionResult`, `NormalizedProgram` | `CadGraph` | `nodes.parquet`, `relations.parquet`, `measurements.parquet`. |
+
+The sub-step docs own the fields and algorithms. This table owns which model and
+artifact crosses each sub-step boundary.
+
 ## Language and parallelism
 
 - **Python:** `02a` AST extraction and `02b` CadQuery execution.

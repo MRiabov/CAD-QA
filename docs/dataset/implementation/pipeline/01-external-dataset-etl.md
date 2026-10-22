@@ -15,6 +15,19 @@ manifest that later pipeline stages can consume.
 | `01d` | Normalize program text, assign stable IDs and hashes. | [`01d-normalize-programs.md`](01d-normalize-programs.md) |
 | `01e` | Write counts, provenance, hashes, and rejects. | [`01e-write-external-dataset-manifest.md`](01e-write-external-dataset-manifest.md) |
 
+## Sub-step contracts
+
+| Sub-step | Input model | Output model | Persisted artifact |
+|---|---|---|---|
+| `01a` | CADEvolve Parquet cache | `ProgramMetadata` | Program metadata Parquet. |
+| `01b` | `ProgramMetadata`, `SelectionPolicy` | `ProgramSelection` | Program selection Parquet. |
+| `01c` | `ProgramSelection`, pinned cache revision | `ProgramPool` | Program pool Parquet. |
+| `01d` | `ProgramPool` | `NormalizedProgram` | Normalized program Parquet. |
+| `01e` | `NormalizedProgram`, `ProgramSelection` | `ExternalDatasetManifest` | `manifest.json`. |
+
+The sub-step docs own the fields and algorithms. This table owns which model and
+artifact crosses each sub-step boundary.
+
 ## Language and parallelism
 
 - **Go:** `01a`, `01b`, `01c`, `01e`.

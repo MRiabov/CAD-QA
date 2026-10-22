@@ -13,6 +13,17 @@ program data when the plan has deficits.
 | `03b` | Construct and validate task definitions into the plan. | [`03b-construct-task-definitions.md`](03b-construct-task-definitions.md) |
 | `03c` | Resolve deficits by replanning or expanding program data. | [`03c-resolve-deficits.md`](03c-resolve-deficits.md) |
 
+## Sub-step contracts
+
+| Sub-step | Input model | Output model | Persisted artifact |
+|---|---|---|---|
+| `03a` | `CadGraph`, `ProgramMetadata`, task reasoning step support tables, release targets, `ProgramReassignmentRequest` | `ReleasePlan` | Release plan Parquet or JSON. |
+| `03b` | `CadGraph`, `ReleasePlan` | `TaskDefinition`, `DeficitLedger` | Task definitions Parquet and failure records. |
+| `03c` | `DeficitLedger`, `ReleasePlan`, family profiles, `ProgramMetadata` | `ProgramReassignmentRequest`, `ProgramRequest`, or `AcceptedMiss` | Control records. |
+
+The sub-step docs own the fields and algorithms. This table owns which model and
+artifact crosses each sub-step boundary.
+
 ## Flow
 
 ```text

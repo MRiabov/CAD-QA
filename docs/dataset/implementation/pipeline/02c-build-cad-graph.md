@@ -11,7 +11,8 @@ construction algorithm and persistence schema live in the
 
 ## Input / output
 
-- Input: `CadQueryAstExtractionResult` plus `CadQueryRuntimeExtractionResult`.
+- Input: `CadQueryAstExtractionResult`, `CadQueryRuntimeExtractionResult`, and
+  `NormalizedProgram`.
 - Output: `CadGraph`.
 
 A failure tombstone from `02b` never enters graph assembly as a measurable state.
