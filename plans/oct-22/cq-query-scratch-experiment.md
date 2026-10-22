@@ -258,7 +258,10 @@ CadQuery, with only the LLM mocked. The test covers:
 
 - **No `02c` graph build.** Tasks read the `02b`-slice records directly. The relations they use
   (`has_edge`, `adjacent_to`, `parallel_to`, `perpendicular_to`, `creates`) are computed by the
-  `graph-construction.md` rules in Python. The Go `02c` implementation is not built.
+  `graph-construction.md` rules in Python. The Go `02c` implementation is not built. The old graph
+  artifacts in `runs/regen_1300_traced_20261019/graph/` are **not** reused. They come from the
+  superseded generator, use a different entity and relation vocabulary, have no `02b` entity IDs,
+  and nothing in them can be checked against the `02` contracts.
 - **Small pool.** 80 programs instead of the `01b` 1,500. The tag reservations and collection
   minima are recorded, not enforced.
 - **No release planning or splits.** `03a` and `03c` are skipped, and the 60-per-level quota is
