@@ -106,7 +106,7 @@ the graph; it is not dropped.
 
 Use the measurement catalog in [`02c-build-cad-graph.md`](02c-build-cad-graph.md).
 Every measurement carries `evidence_kind`, `evidence_rule`, and `evidence_refs`
-from [`extraction/cadquery/records/evidence.md`](extraction/cadquery/records/evidence.md).
+from [`extraction/cadquery/features/evidence.md`](extraction/cadquery/features/evidence.md).
 
 From the execution result:
 

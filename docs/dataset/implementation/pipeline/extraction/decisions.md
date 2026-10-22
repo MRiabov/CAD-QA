@@ -241,7 +241,7 @@ Do not substitute zero, null, or a guessed category.
 
 **Decision:** Effects, topology, and CadQuery selector results carry typed
 evidence references at capture time, defined in
-[`cadquery/records/evidence.md`](cadquery/records/evidence.md).
+[`cadquery/features/evidence.md`](cadquery/features/evidence.md).
 
 **Why:** A measurement without a reproducible state, entity, operation, span,
 kernel call, or selector reference is not sufficient for answer evidence.

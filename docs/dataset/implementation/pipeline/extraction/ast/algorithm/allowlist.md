@@ -1,6 +1,6 @@
 # 02a — CadQuery allowlist
 
-**Parent:** [`02a-extract-cadquery-ast.md`](02a-extract-cadquery-ast.md).
+**Parent:** [`pipeline.md`](pipeline.md).
 
 **Purpose:** state exactly which CadQuery calls the P0/P1 CADEvolve-C programs
 may use and how each maps into the static model.
@@ -112,12 +112,12 @@ has no wire or solid entity category. The unique affected set is 1,208 of 60,896
 CADEvolve-C-core, 5,248 of 763,062 ABC-C, and 423 of 105,200 ShapeNet-C programs:
 6,879 of the 929,158 C programs (0.74%). They are not recorded as partial
 CadQuery selector results. `wire`, `Edges`, and `Solids` are allowed only in the
-forms in [`extraction/ast/algorithm/method-signatures.md`](extraction/ast/algorithm/method-signatures.md).
+forms in [`method-signatures.md`](method-signatures.md).
 
 The deterministic assignment, receiver, expression, and classification rules are
-in [`extraction/ast/algorithm/pipeline.md`](extraction/ast/algorithm/pipeline.md). The closed
+in [`pipeline.md`](pipeline.md). The closed
 receiver/argument/result contract is in
-[`extraction/ast/algorithm/method-signatures.md`](extraction/ast/algorithm/method-signatures.md). CadQuery selector kinds
+[`method-signatures.md`](method-signatures.md). CadQuery selector kinds
 `implicit`, `string`, `call`, and `filter` are all defined there.
 
 The allowlist version changes whenever a method, call form, or mapping changes.

@@ -28,4 +28,4 @@ These fields specialize a `StaticOperation` for solid-producing calls.
 
 `feature_kind` and `solid_kind` are static classifications. The complete method
 table is in [`pipeline.md`](../algorithm/pipeline.md). Runtime material change and topology
-change are measured in [`cadquery/records/effects.md`](../../cadquery/records/effects.md).
+change are measured in [`cadquery/features/effects.md`](../../cadquery/features/effects.md).

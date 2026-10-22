@@ -53,13 +53,13 @@ columns are in [`extraction/static-schema.md`](extraction/static-schema.md). In 
 
 - [`extraction/ast/algorithm/pipeline.md`](extraction/ast/algorithm/pipeline.md);
 - [`extraction/ast/algorithm/method-signatures.md`](extraction/ast/algorithm/method-signatures.md);
-- [`extraction/ast/records/operations.md`](extraction/ast/records/operations.md);
-- [`extraction/ast/records/expressions.md`](extraction/ast/records/expressions.md);
-- [`extraction/ast/records/workplanes.md`](extraction/ast/records/workplanes.md);
-- [`extraction/ast/records/profiles-paths.md`](extraction/ast/records/profiles-paths.md);
+- [`extraction/ast/features/operations.md`](extraction/ast/features/operations.md);
+- [`extraction/ast/features/expressions.md`](extraction/ast/features/expressions.md);
+- [`extraction/ast/features/workplanes.md`](extraction/ast/features/workplanes.md);
+- [`extraction/ast/features/profiles-paths.md`](extraction/ast/features/profiles-paths.md);
 - [`extraction/ast/algorithm/shape-derivation.md`](extraction/ast/algorithm/shape-derivation.md);
-- [`extraction/ast/records/selectors.md`](extraction/ast/records/selectors.md);
-- [`extraction/ast/records/instrumentation.md`](extraction/ast/records/instrumentation.md).
+- [`extraction/ast/features/selectors.md`](extraction/ast/features/selectors.md);
+- [`extraction/ast/features/instrumentation.md`](extraction/ast/features/instrumentation.md).
 
 ## Accepted subset
 
@@ -83,7 +83,7 @@ A program outside this subset is rejected as a whole. The static model is never
 partial: a rejected program records the reason and produces no operations.
 
 The closed method allowlist and its static mapping are in
-[`02a-cadquery-allowlist.md`](02a-cadquery-allowlist.md).
+[`extraction/ast/algorithm/allowlist.md`](extraction/ast/algorithm/allowlist.md).
 
 ## Behavior
 
@@ -104,7 +104,7 @@ The closed method allowlist and its static mapping are in
 ## Resolved questions
 
 - **Method allowlist.** *Resolved 2026-10-21.* The closed CADEvolve-C allowlist is
-  in [`02a-cadquery-allowlist.md`](02a-cadquery-allowlist.md). Unknown methods and
+  in [`extraction/ast/algorithm/allowlist.md`](extraction/ast/algorithm/allowlist.md). Unknown methods and
   call forms reject the whole program.
 - **CadQuery selector timing.** *Resolved 2026-10-21.* Static extraction records
   the CadQuery selector expression and receiver. Evaluation happens in `02b` at

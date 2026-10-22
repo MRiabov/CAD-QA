@@ -76,12 +76,12 @@ Each `OperationEffect` contains:
 The complete runtime algorithm is in
 [`extraction/cadquery/algorithm/runtime.md`](extraction/cadquery/algorithm/runtime.md). Field sets and
 canonical rules are in
-[`extraction/cadquery/records/states.md`](extraction/cadquery/records/states.md),
-[`extraction/cadquery/records/entities.md`](extraction/cadquery/records/entities.md),
-[`extraction/cadquery/records/topology.md`](extraction/cadquery/records/topology.md),
-[`extraction/cadquery/records/selectors.md`](extraction/cadquery/records/selectors.md),
-[`extraction/cadquery/records/effects.md`](extraction/cadquery/records/effects.md),
-[`extraction/cadquery/records/evidence.md`](extraction/cadquery/records/evidence.md),
+[`extraction/cadquery/features/states.md`](extraction/cadquery/features/states.md),
+[`extraction/cadquery/features/entities.md`](extraction/cadquery/features/entities.md),
+[`extraction/cadquery/features/topology.md`](extraction/cadquery/features/topology.md),
+[`extraction/cadquery/features/selectors.md`](extraction/cadquery/features/selectors.md),
+[`extraction/cadquery/features/effects.md`](extraction/cadquery/features/effects.md),
+[`extraction/cadquery/features/evidence.md`](extraction/cadquery/features/evidence.md),
 [`extraction/canonicalization.md`](extraction/canonicalization.md),
 [`extraction/runtime-schema.md`](extraction/runtime-schema.md),
 [`extraction/cadquery/algorithm/geometry-classification.md`](extraction/cadquery/algorithm/geometry-classification.md),

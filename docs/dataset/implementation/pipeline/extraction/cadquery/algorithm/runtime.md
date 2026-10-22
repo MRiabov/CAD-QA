@@ -166,7 +166,7 @@ For `capture = state`:
 6. Capture the shape snapshot.
 
 The Shape snapshot carries the fields in
-[`../records/states.md`](../records/states.md), including `is_solid = true`, `is_valid`, volume,
+[`../features/states.md`](../features/states.md), including `is_solid = true`, `is_valid`, volume,
 bounding box, centroid, counts, and `entity_table_ref`.
 
 The state is recorded after the assignment returns, using the returned value.
@@ -254,7 +254,7 @@ For each state:
   [`../../canonicalization.md`](../../canonicalization.md).
 
 Entity fields and fingerprint inputs are defined in
-[`../records/entities.md`](../records/entities.md). The entity table is the only basis for CadQuery selector
+[`../features/entities.md`](../features/entities.md). The entity table is the only basis for CadQuery selector
 membership and entity graph nodes.
 
 ## Topology
