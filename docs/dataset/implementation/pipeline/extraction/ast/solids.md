@@ -21,7 +21,7 @@ These fields specialize a `StaticOperation` for solid-producing calls.
 - Swept solids: `extrude`, `loft`, `sweep`, `revolve`, `twistExtrude`.
 - Text: `text`.
 - Booleans: `union`, `cut`, `intersect`.
-- Assembly: `combine`, `combineSolids`, `newObject`, `add`, `fuse`.
+- Assembly: `combine`, `newObject`, `add`, `fuse`.
 - Modifiers: `cutBlind`, `cutThruAll`, `hole`, `cskHole`, `cboreHole`, `fillet`,
   `chamfer`, `shell`, `split`, `clean`, `rarray`.
 - Transforms: `translate`, `rotate`, `mirror`, `transformed`.

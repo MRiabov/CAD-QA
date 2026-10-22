@@ -55,7 +55,7 @@ program; there is no best-effort fallback.
 | Method or constructor | Static mapping | Operation kind | Effect |
 |---|---|---|---|
 | `union`, `cut`, `intersect` | `StaticOperation` | boolean | Combine two solid states. |
-| `combine`, `combineSolids`, `newObject`, `add`, `fuse` | `StaticOperation` | assembly | Combine or collect existing solid states. |
+| `combine`, `newObject`, `add`, `fuse` | `StaticOperation` | assembly | Combine or collect existing solid states. |
 
 ## Modifiers
 
@@ -100,5 +100,10 @@ Reject the whole program when:
 - `list` is used for anything other than `vals()`;
 - an argument contains an unsupported expression;
 - a required graph mapping is absent.
+
+`combineSolids` is observed in CADEvolve-C but is not a CadQuery 2.7 method. It is
+not in the allowlist and is not rewritten as `combine`; a program that calls it is
+rejected at static extraction. This affected 701 CADEvolve-C-core, 41 ABC-C, and
+3 ShapeNet-C programs in the local cache.
 
 The allowlist version changes whenever a method, call form, or mapping changes.
