@@ -89,18 +89,11 @@ One CadQuery program the benchmark draws from. `In code:` `SourceRecord`.
 
 ---
 
-### CadQuery program operation trace
-
-A CadQuery program decomposed into its operations, each with its Shape snapshot (and Shape
-snapshot measurement), effect delta, and selector results. `In code:` `TraceRecord`.
-`Distinct from:` **agent training trace**.
-
----
-
 ### Shape snapshot
 
-The shape a CadQuery program has built after one assignment statement, captured while
-tracing. `In code:` a trace record's `snapshots` entry.
+The shape a CadQuery program has built after one assignment statement, captured during
+runtime extraction. `In code:` a runtime extraction result's `snapshots` entry.
+`Distinct from:` **solid state**, the CAD graph entity that represents the same shape.
 
 ### Shape snapshot measurement
 
@@ -120,6 +113,9 @@ The typed graph of a CadQuery program.
 
 A typed entity in a CAD ontology graph (for example feature, workplane, profile, face,
 edge, vertex, path, selector). `Distinct from:` code node.
+
+Use **CAD graph entity** for this concept in prose; `node_id` and `nodes.parquet` are
+code and schema names.
 
 ---
 
@@ -144,6 +140,13 @@ A typed numeric or geometric fact about a CAD ontology node.
 ### CadQuery selector
 
 A CadQuery expression that picks topology entities (for example `.faces(">Z")`).
+
+---
+
+### CadQuery selector result
+
+The CAD topology entities selected by one CadQuery selector, with the selector and the
+solid state it ran on. `Distinct from:` the CadQuery selector itself.
 
 ---
 
@@ -175,6 +178,20 @@ The geometry a CAD feature adds. `In code:` `material_region`.
 ### CAD feature-removed region
 
 The geometry a CAD feature removes. `In code:` `void_region`.
+
+---
+
+### CAD feature effect delta
+
+The measured before/after volume, bounding box, and topology change caused by a CAD
+feature. `Distinct from:` the Measurement scope `feature_application_effect`, which names
+where a Measurement belongs rather than the delta record.
+
+---
+
+### CAD topology entity
+
+A face, edge, or vertex of a solid state.
 
 ---
 
@@ -232,7 +249,7 @@ resolves; each Gold query predicate narrows it, and it should end at one node.
 ### Answer candidate set trace
 
 The record of how the answer candidate set narrows to the gold answer.
-`In code:` `CandidateSetTrace`. `Distinct from:` **CadQuery program operation trace**, **agent training trace**.
+`In code:` `CandidateSetTrace`. `Distinct from:` **CadQuery program runtime extraction result**, **agent training trace**.
 
 ---
 
@@ -309,7 +326,7 @@ A CAD-QA dataset row that resolves but cannot be released.
 ### Agent training trace
 
 A record of reasoning followed by a tool call, produced to train an agent and used as
-supervision. `Distinct from:` **CadQuery program operation trace**, **answer candidate set trace**.
+supervision. `Distinct from:` **CadQuery program runtime extraction result**, **answer candidate set trace**.
 
 ---
 
@@ -430,6 +447,64 @@ The three-way split of eligible CAD-QA rows: `sft_train` (the only rows that ent
 
 ## Internal
 
+### CadQuery program AST extraction result
+
+The result of extracting a CadQuery program without running it: its operations, CadQuery
+workplanes, CadQuery profiles, CadQuery paths, CadQuery selectors, and their static
+relationships. `In code:` `StaticCadQueryModel`. `Distinct from:` **CadQuery program runtime
+extraction result**.
+
+---
+
+### CadQuery program runtime extraction result
+
+The result of executing a CadQuery program and extracting each operation's Shape snapshots,
+CAD feature effect deltas, CadQuery selector results, and evidence. `In code:`
+`ExecutionResult`. `Distinct from:` **CadQuery program AST extraction result**, **agent
+training trace**, **answer candidate set trace**.
+
+---
+
+### CadQuery program AST extraction
+
+The extraction of a CadQuery program without running it. Its output is a **CadQuery program
+AST extraction result**.
+
+---
+
+### CadQuery program runtime extraction
+
+The extraction of a CadQuery program by running it. Its output is a **CadQuery program
+runtime extraction result** or a **failure tombstone**.
+
+---
+
+### solid state producing operation
+
+A CadQuery program operation that can produce a **solid state**.
+
+---
+
+### CadQuery accessor
+
+A CadQuery call that reads or converts existing values without creating geometry.
+
+---
+
+### CAD topology entity ID
+
+The stable identity of a CAD topology entity within one solid state. `In code:` `entity_id`.
+
+---
+
+### failure tombstone
+
+The failed `02b` result: program identity, terminal operation, error category, environment,
+and cache key. It is not a CAD graph entity and supports no answer. `Distinct from:`
+**CadQuery program runtime extraction result**.
+
+---
+
 ### dataset_generation
 
 The code package that builds the benchmark. `In code:` `dataset/`.
@@ -504,7 +579,7 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | rows artifact | Dataset file | "artifact" is vague; it is the dataset file |
 | harness row | CAD-QA dataset row | same record after decoding; not a new concept |
 | "intent" (as a doc) | PRD | "intent" is the concept, not the artifact |
-| trace (bare) | CadQuery program operation trace / agent training trace / answer candidate set trace | overloaded across concepts |
+| trace (bare) | CadQuery program runtime extraction result / agent training trace / answer candidate set trace | overloaded across concepts |
 | model (bare) | CAD model / LLM model / base LLM model / LLM adapter / merged LLM model | geometry vs language model vs weights/adapter/served endpoint |
 | node (bare) | CAD ontology node / code node | ambiguous between graph and code |
 | stage (bare) | Training stage / pipeline stage | which stage? qualify it |

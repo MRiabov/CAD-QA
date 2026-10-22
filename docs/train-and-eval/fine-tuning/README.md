@@ -46,7 +46,7 @@ Liquid `messages`) → **two-phase SFT** → a **RL-readiness gate** and optiona
 
 Use the canonical vocabulary in `../../glossary.md`. Three overloaded terms mean different records:
 an **agent training trace** is an agent-facing reasoning + tool-call record (this pipeline's SFT signal);
-a **CadQuery program operation trace** is a CadQuery program decomposed into measured operations; an
+a **CadQuery program runtime extraction result** is a CadQuery program decomposed into measured operations; an
 **answer candidate set trace** is a row's candidate-narrowing record.
 
 ## Note on raw material
