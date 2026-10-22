@@ -68,6 +68,15 @@ Each `OperationEffect` contains:
 - `before_state_id` and `after_state_id`;
 - volume change, bounding-box change, and topology counts.
 
+## Field contracts
+
+The complete runtime field sets and capture rules are in
+[`extraction/cadquery/states.md`](extraction/cadquery/states.md),
+[`extraction/cadquery/solids.md`](extraction/cadquery/solids.md),
+[`extraction/cadquery/topology.md`](extraction/cadquery/topology.md),
+[`extraction/cadquery/selectors.md`](extraction/cadquery/selectors.md), and
+[`extraction/cadquery/effects.md`](extraction/cadquery/effects.md).
+
 ## Failure tombstone
 
 `ExecutionFailure` contains:

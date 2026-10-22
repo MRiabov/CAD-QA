@@ -38,7 +38,6 @@ doc, delete the row. Open questions remain in
 | MC-27 | [`05`](pipeline/05-validate-and-export-release.md) | Reconcile Q1 with PRD Q7 and define the external benchmark input/revision for R-16. | Q1 is stale and transfer overlap has no input. |
 | MC-28 | [`05`](pipeline/05-validate-and-export-release.md) | Human review and evaluation-material stage ownership. | R-17 and §11 have no pipeline stage or artifact. |
 | MC-29 | [`00`](pipeline/00-end-to-end.md), [`artifacts.md`](artifacts.md) | Run manifest, completion markers, cache lookup, atomic writes, resume semantics, and the run-level graph tolerance policy. | Retries and cache hits are promised but not specified. |
-| MC-30 | [`02`](pipeline/02-execute-cadquery-and-build-graph.md) | Per-program dependency order `02a → 02b → 02c`; parallel across programs, not across sub-steps. | Current wording can be read as three independent parallel steps. |
 
 ## Minor
 

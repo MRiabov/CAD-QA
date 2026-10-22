@@ -5,6 +5,8 @@ clues and answers can be checked against.
 
 **Input/output contract:** [`io-contracts.md`](io-contracts.md).
 
+**Extraction field contracts:** [`extraction/README.md`](extraction/README.md).
+
 ## Sub-steps
 
 | Step | Responsibility | Doc |
@@ -17,8 +19,8 @@ clues and answers can be checked against.
 
 - **Python:** `02a` static extraction and `02b` CadQuery execution.
 - **Go:** `02c` graph construction.
-- `02a`, `02b`, and `02c` are parallel per program; each program has independent
-  input and output.
+- Each program runs `02a → 02b → 02c` in order; different programs run in
+  parallel. The three sub-steps are not independent parallel steps.
 - `02b` uses a bounded process pool because CadQuery/OCP execution is memory
   heavy. Do not oversubscribe it.
 - Parallel graph outputs are merged by `program_id`; graph construction does not

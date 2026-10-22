@@ -14,8 +14,8 @@ program; there is no best-effort fallback.
 - Root assignments are `wpN = <expression>` or `result = <expression>`.
 - `cq.Workplane`, `cq.Plane`, and `cq.Vector` may appear as nested constructor
   expressions.
-- Method calls may be chained; the CADEvolve-C corpus uses flat assignments, but
-  the expression model does not need to reject chains.
+- P0/P1 use one CadQuery call per top-level assignment. Chained calls are a P2
+  extension; the CADEvolve-C corpus uses flat assignments.
 - Arguments and keyword arguments are `StaticExpression` trees, not literals.
 - `filter` accepts one narrow lambda form:
   `filter(lambda e: e.Length() < <number>)` or `<=`.

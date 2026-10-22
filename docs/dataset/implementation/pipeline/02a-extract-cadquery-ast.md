@@ -46,6 +46,18 @@ evaluating them.
 `StaticSelector` records the CadQuery selector expression and the variable it
 selects from.
 
+## Field contracts
+
+The complete field sets, expression typing, instrumentation rewrite, and runtime
+join keys are in [`extraction/README.md`](extraction/README.md). In particular:
+
+- [`extraction/ast/operations.md`](extraction/ast/operations.md);
+- [`extraction/ast/expressions.md`](extraction/ast/expressions.md);
+- [`extraction/ast/workplanes.md`](extraction/ast/workplanes.md);
+- [`extraction/ast/profiles-paths.md`](extraction/ast/profiles-paths.md);
+- [`extraction/ast/selectors.md`](extraction/ast/selectors.md);
+- [`extraction/ast/instrumentation.md`](extraction/ast/instrumentation.md).
+
 ## Accepted subset
 
 The P0/P1 input is the CADEvolve-C programs, so the accepted subset is deliberately
@@ -54,7 +66,7 @@ narrow:
 - module-level `import cadquery as cq`;
 - module-level assignments;
 - literals, names, attributes, subscripts, and calls;
-- calls on CadQuery objects, including chained calls;
+- one CadQuery call per top-level assignment; no chained calls in P0/P1;
 - CadQuery selectors written as strings or selector calls;
 - no function or class definitions;
 - no loops, conditionals, comprehensions, `try`, or `with`;

@@ -19,13 +19,13 @@ program. Every row carries `program_id` and `graph_schema_version`.
 `graph_schema_version` is constant across the artifact. Physical partitioning and
 file paths are artifact concerns in [`../artifacts.md`](../artifacts.md).
 
-Types are Parquet/Arrow types, not a SQL dialect. `UUID` is
+Parquet and Arrow types are used, not a SQL dialect. `UUID` is
 `FIXED_LEN_BYTE_ARRAY(16)` with the UUID logical type. `STRING` is UTF-8. `LIST<T>`
 and `STRUCT<...>` are the standard three-level list and nested group encodings.
 
-Parquet has no `LowCardinality` type. The equivalent is dictionary encoding
+Parquet has no `LowCardinality` logical type. The equivalent is dictionary encoding
 (`RLE_DICTIONARY`), which is an encoding rather than a logical type. Parquet's
-`ENUM` logical annotation is still a string and carries neither the value set nor
+`ENUM` logical annotation is still a string and carries neither the enum value set nor
 a compact code. Closed enum columns here are `STRING` with a closed value set and
 must use dictionary encoding. This maps to `LowCardinality(String)` in ClickHouse.
 Join keys are UUID, never enum strings.
@@ -39,8 +39,8 @@ Join keys are UUID, never enum strings.
 | `node_id` | `UUID` | not null | Deterministic UUIDv5 of `(program_id, node_type, local_id)`. |
 | `node_type` | `STRING` enum `GraphNodeType` | not null | Graph entity category. |
 | `local_id` | `STRING` | not null | Stable ID within the program and node type. |
-| `state_id` | `STRING` | nullable | Containing or selected solid state, when the type requires one. |
-| `operation_id` | `STRING` | nullable | Creating or evaluated operation, when the type requires one. |
+| `state_id` | `STRING` | nullable | Containing or selected solid state, when the graph node type requires one. |
+| `operation_id` | `STRING` | nullable | Creating or evaluated operation, when the graph node type requires one. |
 | `label` | `STRING` | not null | Display string; not used for identity or binding. |
 | `attributes` | `STRUCT` tagged union | not null | Exactly one group is non-null and matches `node_type`. |
 
@@ -67,7 +67,7 @@ Join keys are UUID, never enum strings.
 | `measurement_type` | `STRING` enum `MeasurementType` | not null | Measurement category. |
 | `value` | `MeasurementValue` | not null | Typed measurement payload. |
 | `unit` | `STRING` enum `MeasurementUnit` | not null | Unit or stated frame; use `unitless` when there is no unit. |
-| `evidence_kind` | `STRING` enum `derived`, `measured` | not null | How the value was obtained. |
+| `evidence_kind` | `STRING` enum `derived`, `measured` | not null | How the measurement was obtained. |
 | `evidence_rule` | `STRING` | not null | Exact rule or kernel operation used. |
 | `evidence_refs` | `LIST<EvidenceRef>` | not null | References that reproduce the measurement. |
 | `tolerance` | `Tolerance` | nullable | Null means inherit the run tolerance policy; otherwise an override. |
@@ -77,7 +77,7 @@ Join keys are UUID, never enum strings.
 These are closed tagged unions. A row with zero or several non-null groups
 rejects the graph.
 
-| Type | Fields |
+| Payload type | Fields |
 |---|---|
 | `Point3D` | `x: double`, `y: double`, `z: double` |
 | `Vector3D` | `x: double`, `y: double`, `z: double` |
@@ -119,7 +119,7 @@ unitless.
 
 #### Tolerance
 
-| Type | Fields |
+| Tolerance type | Fields |
 |---|---|
 | `Tolerance` | `kind: ToleranceKind`, `value: double \| null`, `unit: MeasurementUnit \| null` |
 | `TolerancePolicy` | `millimetre: Tolerance`, `square_millimetre: Tolerance`, `cubic_millimetre: Tolerance`, `degree: Tolerance`, `radian: Tolerance`, `unitless: Tolerance` |
@@ -138,12 +138,12 @@ policy. A measurement `tolerance` of null inherits the policy entry for its
 `unit`; a non-null value overrides it. Counts and validity are exact by default
 through the `unitless` policy. A literal length may carry an `exact` override.
 
-Answer-scoring tolerance is not this type. It belongs to the task definition and
+Answer-scoring tolerance is not this tolerance type. It belongs to the task definition and
 the release `tolerance_json` field.
 
 #### CAD graph evidence references
 
-| Type | Fields |
+| Evidence reference type | Fields |
 |---|---|
 | `EvidenceRef` | `kind: EvidenceRefKind`; exactly one non-null group: `node: NodeEvidenceRef`, `measurement: MeasurementEvidenceRef`, `operation: OperationEvidenceRef`, `source_line: SourceLineEvidenceRef`, `execution_artifact: ExecutionArtifactEvidenceRef` |
 | `NodeEvidenceRef` | `node_id: UUID` |
@@ -157,7 +157,7 @@ the release `tolerance_json` field.
 
 ### Parquet struct declarations
 
-The type tables above are the field lists. The nested Parquet groups are written
+The schema tables above are the field lists. The nested Parquet groups are written
 out here so the physical schema is unambiguous. `TolerancePolicy` is not a
 Parquet column; it is a run-manifest model listed with the tolerance types.
 
@@ -258,7 +258,7 @@ remain MC-35, and answer-scoring tolerance remains the task definition's
 - `measurements.parquet` stores measurements. A measurement is a graph element,
   not a graph entity: it has a `measurement_id` and never a `node_id`.
 - A graph entity never appears as a measurement row, and a measurement never
-  appears as a node row. `graph-content.md` lists Measurement as an entity
+  appears as a graph node row. `graph-content.md` lists Measurement as an entity
   category; in storage it is a `measurements.parquet` row, not a graph node.
 - `state_id` and `operation_id` are scope columns, not attributes. Their
   nullability is defined per node type below.
@@ -268,7 +268,7 @@ remain MC-35, and answer-scoring tolerance remains the task definition's
 - `label` is a non-empty display string. It is stable but not unique, and it is
   never used for identity, binding, or prompt text.
 
-## ID types and derivation
+## Graph ID derivation
 
 `program_id` remains a string of the form `cadqaprog:<program_sha256>`. It is a
 domain key used by the release contract, not a graph-local UUID.
@@ -288,7 +288,7 @@ The UUIDv5 name is the UTF-8 encoding of the canonical components joined by one
 NUL byte (`0x00`), with no trailing NUL. No component may contain a NUL byte. A
 null optional component is encoded as the empty component.
 
-| ID | Type | Canonical components |
+| ID | ID type | Canonical components |
 |---|---|---|
 | `node_id` | UUID | `program_id`, `node_type`, `local_id` |
 | `relation_id` | UUID | `program_id`, `relation_type`, `from_node_id`, `to_node_id` |
@@ -300,7 +300,7 @@ null optional component is encoded as the empty component.
 `from_node_id`, `to_node_id`, `subject_node_id`, and `object_node_id` are
 canonical lowercase hyphenated UUID strings when they are used as UUIDv5 name
 components. Measurement identity follows `graph-content.md`: the subject or pair
-plus the measurement name. The value, unit, tolerance, and CAD graph evidence do
+plus the measurement name. The measurement value, unit, tolerance, and CAD graph evidence do
 not participate in `measurement_id`.
 
 `node_id` is not parsed. `node_type` and `local_id` are separate columns, so the
@@ -313,11 +313,11 @@ map keys, comparisons, or joins. Convert to canonical lowercase hyphenated text
 only when forming a UUIDv5 name component or writing inspection output.
 `program_id` and the `02a`/`02b` IDs remain strings.
 
-## Node types and local identity
+## Graph node types and local identity
 
 `local_id` is defined as follows. `node_id` is derived from it, `program_id`, and
-`node_type` as specified in [ID types and derivation](#id-types-and-derivation).
-`ordinal` is a zero-based position in the static-model list for the creating
+`node_type` as specified in [Graph ID derivation](#graph-id-derivation).
+`ordinal` is a zero-based position in the static extraction list for the creating
 operation. `index` and `sequence_index` are zero-based. `source_line` is one-based.
 
 | `node_type` | `local_id` | `state_id` | `operation_id` |
@@ -338,7 +338,7 @@ operation. `index` and `sequence_index` are zero-based. `source_line` is one-bas
 | `region` | `{feature_local_id}:{added\|removed}` | state after the feature | creating operation of the feature |
 | `cadquery_selector_result` | `selector_result_id` from `02b` | selected state | evaluated operation |
 
-## Node attributes
+## Graph node attributes
 
 `GraphNodeType` is the closed enum of the `node_type` values in the table above.
 `NodeAttributes` is a tagged union with one group per `GraphNodeType` value. The
@@ -368,7 +368,7 @@ count is a non-negative 64-bit integer.
 
 | Enum | Values |
 |---|---|
-| `OperationKind` | `workplane`, `sketch`, `solid`, `cadquery_selector`, `boolean`, `modifier`, `transform` |
+| `OperationKind` | `workplane`, `sketch`, `path`, `solid`, `cadquery_selector`, `boolean`, `assembly`, `modifier`, `transform`, `accessor` |
 | `FeatureKind` | `add_material`, `remove_material`, `modify`, `construction` |
 | `SurfaceKind` | `plane`, `cylinder`, `cone`, `sphere`, `torus`, `bspline`, `other` |
 | `CurveKind` | `line`, `circle`, `ellipse`, `hyperbola`, `parabola`, `bspline`, `other` |
@@ -396,12 +396,12 @@ count is a non-negative 64-bit integer.
 - `execution_result_sha256` is computed by `02c` over the canonical execution
   result from `02b`.
 - `shape_hash` is the shape identity hash from `02b`. It is not a measurement.
-- `is_final` is true for exactly one `solid_state` node when the graph has at
+- `is_final` is true for exactly one solid-state graph node when the graph has at
   least one solid state.
-- `is_closed` is the closed flag reported by the source entity. `02c` does not
+- `is_closed` is the closed flag reported by the origin graph entity. `02c` does not
   recompute it from geometry.
 - `result_var` is internal provenance. It is never rendered into a prompt.
-- A null optional field means the value is absent. Empty strings and sentinel
+- A null optional field means the measurement value is absent. Empty strings and sentinel
   values such as `-1` are invalid.
 
 ### Validation invariants
@@ -413,15 +413,15 @@ count is a non-negative 64-bit integer.
 - Every relation endpoint is an existing `node_id`; every measurement subject and
   every non-null object is an existing `node_id`; a missing reference rejects the
   graph.
-- Every P0 node category has a row when the source model or execution result has
+- Every P0 node category has a row when the static extraction result or execution result has
   an instance. P1 categories may be absent in a P0 graph.
 - `MeasurementValue`, `Tolerance`, and `EvidenceRef` each have exactly one
   non-null group matching their `kind`.
-- `measurement_type` determines the `value` kind and `unit` through the catalog;
+- `measurement_type` determines the measurement value kind and `unit` through the catalog;
   a mismatch rejects the graph.
 - `TolerancePolicy`, `tolerance_policy_version`, and `tolerance_policy_sha256` are present in the run manifest.
 - `Tolerance` obeys its `exact`, `absolute`, and `relative` field rules.
-- A change to a node type, attribute field, measurement type, enum value, or
+- A change to a graph node type, attribute field, measurement type, enum value, or
   payload field is a `graph_schema_version` change. Readers reject an unknown
   version.
 
@@ -429,7 +429,7 @@ count is a non-negative 64-bit integer.
 
 - `relation_id` is the UUIDv5 of
   `(program_id, relation_type, from_node_id, to_node_id)` as defined in
-  [ID types and derivation](#id-types-and-derivation).
+  [Graph ID derivation](#graph-id-derivation).
 
 The graph includes a `cadquery_selector_result` graph node for each
 `SelectorResult`. `selected_by` relations link an entity graph node to its
@@ -482,7 +482,7 @@ number of `selected_by` edges.
   bounding-box change, topology delta, and workplane frame. Measurement types are
   the closed catalog above. Tolerances are a run-level `TolerancePolicy` stored
   once in the run manifest, with per-measurement overrides. CAD graph evidence
-  references are a tagged union of node, measurement, operation, source line, and
+  references are a tagged union of graph node, measurement, operation, program line, and
   execution artifact. Answer-scoring tolerance remains separate.
 
 - **Typed graph attributes and table scope.** *Resolved 2026-10-22.* Option A.
