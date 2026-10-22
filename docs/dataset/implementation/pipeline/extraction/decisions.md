@@ -87,10 +87,11 @@ programs.
 without stable membership would be a partial CadQuery selector result and would
 break the graph invariant that selected membership maps to entity nodes.
 
-**Consequence:** The local cache loses 750/508 CADEvolve-C-core, 5,245/3 ABC-C,
-and 421/2 ShapeNet-C programs for wire/solid selector or accessor use. Supporting
-them later requires new graph entity categories, fingerprints, topology records,
-and task bindings.
+**Consequence:** The unique affected set is 1,391 of 60,896 CADEvolve-C-core,
+6,172 of 763,062 ABC-C, and 646 of 105,200 ShapeNet-C programs: 8,209 of the
+929,158 C programs (0.88%). The P pool is unaffected because P0/P1 uses
+CADEvolve-C only. Supporting wire/solid selection later requires new graph entity
+categories, fingerprints, topology records, and task bindings.
 
 ## EX-7 — Static workplane frames are intent; runtime frames are measurements
 

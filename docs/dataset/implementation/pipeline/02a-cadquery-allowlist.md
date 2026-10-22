@@ -107,9 +107,10 @@ rejected at static extraction. This affected 701 CADEvolve-C-core, 41 ABC-C, and
 3 ShapeNet-C programs in the local cache.
 
 `wires`, `solids`, `wire`, and `Solids` are observed but rejected in P0/P1
-because `02c` has no wire or solid entity category. The affected CADEvolve-C
-programs are 750/508 CADEvolve-C-core, 5,245/3 ABC-C, and 421/2 ShapeNet-C in the
-local cache. They are not recorded as partial selector results.
+because `02c` has no wire or solid entity category. The unique affected set is
+1,391 of 60,896 CADEvolve-C-core, 6,172 of 763,062 ABC-C, and 646 of 105,200
+ShapeNet-C programs: 8,209 of the 929,158 C programs (0.88%). They are not
+recorded as partial CadQuery selector results.
 
 The deterministic assignment, receiver, expression, and classification rules are
 in [`extraction/ast/algorithm.md`](extraction/ast/algorithm.md). CadQuery selector kinds
