@@ -472,7 +472,7 @@ The deterministic node, relation, and measurement mapping is in
   execution, including selector membership. CAD graph evidence records whether a
   measurement was derived or measured, the exact rule, and the references.
 
-- **Entity identity.** *Resolved 2026-10-21.* Entity CAD graph entities use the stable
+- **CAD topology identity.** *Resolved 2026-10-21.* CAD topology entities use the stable
   geometric `entity_id` from `02b`. Kernel handles are not persisted.
 
 - **CadQuery selector mapping.** *Resolved 2026-10-21.* A selected entity ID that

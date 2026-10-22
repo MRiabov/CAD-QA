@@ -64,7 +64,7 @@ selectors, or diagnostics that consumers could mistake for a CadQuery program AS
 
 `02c` rejects the pair when:
 
-- a AST operation has no recording;
+- an AST operation has no recording;
 - a recording has no AST operation;
 - a state ID does not match its producing operation ID;
 - a CadQuery selector result's `selector_id` does not match a CadQuery selector in the AST extraction result;

@@ -104,7 +104,7 @@ Build a family profile from the graphs in the selected pool:
 - available clue predicates and relations;
 - available measurements and answer meanings;
 - available answer formats;
-- approximate chain depth;
+- approximate maximum task reasoning step count;
 - task budget per program and family;
 - estimated yield per dimension cell.
 

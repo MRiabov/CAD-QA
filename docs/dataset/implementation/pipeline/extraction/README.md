@@ -68,7 +68,7 @@ No pipeline stage produces a partial CadQuery program AST extraction result, par
 - **CadQuery extraction** records what the executed shape is. It never infers
   intent from method names when runtime evidence is required.
 
-A AST field and a runtime field with similar names are different facts. The
+An AST field and a runtime field with similar names are different facts. The
 CadQuery program AST extraction result may say `extrude`; only execution says whether the result was a
 valid solid. Neither side fills the other's missing fields.
 

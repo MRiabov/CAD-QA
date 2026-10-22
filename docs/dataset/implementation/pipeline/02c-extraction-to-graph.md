@@ -36,7 +36,7 @@ rules in [`02c-build-cad-graph.md`](02c-build-cad-graph.md).
 | `cadquery_path_point` | `<path_local_id>:<ordinal>` | Path point in the AST extraction result. |
 | `cadquery_path_segment` | `<path_local_id>:<ordinal>` | Path segment in the AST extraction result. |
 | `region` | `<feature_local_id>:added` or `:removed` | Feature effect region. |
-| `cadquery_selector_result` | `selector_result_id` | Runtime CadQuery CadQuery selector result. |
+| `cadquery_selector_result` | `selector_result_id` | CadQuery selector result from the runtime extraction result. |
 
 An alias has no CAD graph entity. It is consumed when resolving the target binding.
 
@@ -53,8 +53,9 @@ An alias has no CAD graph entity. It is consumed when resolving the target bindi
 5. Create face, edge, vertex, and edge-endpoint CAD graph entities from every state entity
    table.
 6. Create CadQuery profile, CadQuery workplane, path, path-point, path-segment,
-   and CadQuery selector-result nodes from the AST and runtime records.
-7. Create `region` nodes from solid state producing operations that have a state:
+   and CadQuery selector-result CAD graph entities from the AST and runtime records.
+7. Create `region` CAD graph entities for solid state producing operations that
+   have a state:
    - `added` for an operation whose `feature_kind` is `add_material` or
      `construction`;
    - `removed` for an operation whose `feature_kind` is `remove_material`;
@@ -139,7 +140,7 @@ an override. Do not write a per-program tolerance policy.
 
 - Create one `cadquery_workplane` CAD graph entity for every CadQuery workplane in the AST extraction result.
 - Attach the measured `workplane_frame` when the runtime result provides it.
-- A AST frame that is `unknown` is not a measurement; do not invent one.
+- An AST frame that is `unknown` is not a measurement; do not invent one.
 - A runtime frame without a CadQuery workplane in the AST extraction result rejects the graph.
 
 ## CAD feature solid state effect deltas
@@ -151,8 +152,8 @@ an override. Do not write a per-program tolerance policy.
 
 ## Ordering and duplicate handling
 
-- Nodes, relations, and measurements are sorted by their graph keys before
-  writing.
+- CAD graph entities, relations, and measurements are sorted by their graph keys
+  before writing.
 - Duplicate `node_id`, `relation_id`, or `measurement_id` is a graph error, not
   a merge.
 - A duplicate extraction row is rejected; it is not resolved by last-write-wins.
@@ -161,7 +162,7 @@ an override. Do not write a per-program tolerance policy.
 
 Reject before writing when:
 
-- a AST operation has no runtime recording;
+- an AST operation has no runtime recording;
 - a solid state producing operation has no state or effect;
 - a CadQuery selector result has no state or a selected ID outside that state;
 - a CadQuery workplane frame has no AST record;
