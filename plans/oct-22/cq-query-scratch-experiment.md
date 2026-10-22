@@ -1,173 +1,288 @@
-# Scratch experiment: can a frontier LLM model write CadQuery queries, by hop count?
+# Scratch experiment: can a frontier LLM model write CadQuery queries, by task reasoning step count?
 
-**Status:** plan, 2026-10-22. A disposable experiment, not a dataset release. It decides whether
-the kernel-query pivot (`docs/dataset/requirements/PRD.md`, KI1) has headroom, and it tests the
-query-chain idea on real CADEvolve programs before any spec is rewritten.
+**Status:** plan, 2026-10-22. This is a disposable experiment, not a dataset release. It answers
+one question: does the kernel-query pivot (`docs/dataset/requirements/PRD.md`, KI1) have headroom?
+It runs on real CADEvolve programs before any spec is rewritten.
+
+**Spec alignment.** The experiment follows the dataset specs in `docs/dataset/`, in their
+terminology (`requirements/terminology.md`), so its logic rests on reviewed contracts rather than
+new inventions. Confidence differs by pipeline stage:
+
+| Pipeline stage | Spec state | How this experiment uses it |
+|---|---|---|
+| `01` ETL (`01b`, `01d`) | mostly reviewed | Follows the selection and normalization rules on a small pool. |
+| `02` extraction (`02a`, `02b`) | most reviewed | Follows the accepted AST subset, entity identity, topology, and canonicalization contracts for every fact a task uses. |
+| `03b` task definitions | draft, not yet reviewed | Uses the typed task-clue schema, the narrowing and uniqueness rules, and step accounting. A deviation is listed under *Deviations* below, never silent. |
+| `04` rendering | draft, not yet reviewed | Uses the rule that prompt copy lives in YAML and variants are chosen deterministically. |
 
 ## Question
 
-Given a CadQuery program and a natural-language question, can `deepseek/deepseek-v4.1-flash-1017`
-(OpenRouter, $0.30 / $1.20 per million input/output tokens) write a CadQuery query that, run after
-the program, produces the right answer? How does accuracy fall as the hop count rises from 1 to 10?
+Given the program text and a task, can `deepseek/deepseek-v4.1-flash-1017` write a CadQuery query
+that, run after the program, returns the gold answer? How does accuracy change with the task
+reasoning step count? The model is called through OpenRouter at $0.30 / $1.20 per million
+input/output tokens.
 
 ## Scope
 
-- 300 tasks: 30 per hop count, 1–10.
-- About 60 programs from the existing 2026-10-19 regeneration (`runs/regen_1300_traced_20261019/`):
-  `sources.parquet`, `traces_combined.parquet`, and `graph/graphs/*.parquet`. The extracted data is
-  imperfect, so the graph only *proposes* tasks. The CadQuery kernel computes every gold answer.
-- One model and one sample per task, with no execution feedback (single shot, one tool call).
-- Out of scope: training, other models, release gates, and task-structure spec changes.
+- **300 tasks** at task reasoning step counts **1, 3, 5, 7, 9**, 60 tasks per count. That gives a
+  Wilson 95% CI of about ±12.5 percentage points per level.
+- One model and one sample per task. The model gets no execution feedback: it makes one tool call
+  and is graded on it.
+- **Task generation is deterministic.** The same inputs, seed, and versions must give a
+  byte-identical `tasks.jsonl`, and a test asserts this. The model's outputs are not deterministic;
+  they are recorded instead.
+- Out of scope: training, other models, release planning (`03a`), deficit handling (`03c`), and
+  multiple-choice answers.
 
-## Definitions
+## Inputs and the existing extracted data
 
-**Query chain.** A task is a chain of set operators over CadQuery entities, ending in one
-aggregate. Every operator compiles to CadQuery code, so the chain is also the gold query.
+- The program pool comes from the 2026-10-19 regeneration (`runs/regen_1300_traced_20261019/`).
+  Its `sources.parquet` and `traces_combined.parquet` are used only to pick programs that already
+  executed successfully.
+- That data came from the superseded generator (`dataset/SUPERSEDED.md`). It does not follow the
+  `02` contracts, so it is not used as the source of any task fact.
+- Every fact a task clue or gold answer depends on is recomputed with the CadQuery kernel, following
+  the `02b` rules:
+  - shape snapshots per solid state;
+  - CAD topology entity IDs from the `entities.md` fingerprints, using the `canonicalization.md`
+    hashing and 9-decimal rounding;
+  - the topology records from `topology.md` (`face_has_edge`, `edge_has_vertex`,
+    `face_adjacent_to_face`);
+  - CAD feature solid state effect deltas.
+- This is a minimal, spec-conformant slice of `02b`, kept inside the experiment. It is not the
+  production `02` implementation, and it is not imported by `dataset/`.
 
-**Hop.** One operator in the chain that changes the result. The final aggregate is not a hop.
-Sub-chains that resolve a reference entity add their hops to the total. Each hop must be
-*necessary*: removing it must change the kernel-computed answer, otherwise the task is rejected.
-This makes "hop count" mean "reasoning steps the query actually needs".
+## Program pool (`01b`/`01d` rules on a small pool)
 
-### Operators (hops)
+1. Candidates: programs in the 1,300-program regeneration that are tier C (from `source_subtree`)
+   and whose trace succeeded.
+2. Keep a program only if it passes the `02a` accepted subset (flat, one CadQuery call per
+   assignment, no control flow, face/edge/vertex selectors only), checked with the Python AST.
+   Rejected programs are recorded with the reason.
+3. Apply the `01b` rules:
+   - dedupe by `normalized_source_code_hash` within each collection, keeping the smallest
+     `source_id`;
+   - cap programs at two per `cadevolve_program_family_id`, derived from `path_family` as `01b`
+     defines;
+   - order by `sha256(seed || source_id)` with seed `cadqa-cq-scratch-20261022`.
+4. Normalize with `01d` (`ast.unparse`, pinned `ruff format`, one trailing newline). The program
+   text in the prompt is the normalized text.
+5. Take the first **80 programs** in hash order with at least 8 faces in the final solid state,
+   trying to cover all three C collections. Record any collection shortfall.
 
-| Operator | Meaning, rendered in words | CadQuery form | Graph source used for proposal |
-|---|---|---|---|
-| `state_of` | the part as it was after a given operation, not the final part | the program variable at that step | `operation`, `before`/`after`, trace snapshots |
-| `axis_extreme` | topmost / leftmost / ... | `faces(">Z")`, `edges("<X")` | `selected_by`, bbox measurements |
-| `axis_orientation` | vertical / horizontal / facing +Y | `"\|Z"`, `"#Z"`, `"+Y"` | `parallel_to`, `perpendicular_to` |
-| `geom_type` | circular / straight / planar / cylindrical | `"%CIRCLE"`, `"%LINE"`, `"%PLANE"` | edge and face kinds |
-| `traverse` | edges of / faces bordering / faces adjacent to | `.edges()`, shared-edge filter | `adjacent_to`, `contained_in`, `endpoint_of` |
-| `relate_to_ref` | parallel / perpendicular / opposite to a reference entity | normal and direction comparison | `parallel_to`, `perpendicular_to`, `opposite_to` |
-| `compare_to_ref` | longer / shorter / same length as a reference | a length or area filter | `longer_than`, `shorter_than`, `same_length_as` |
-| `rank` | largest / smallest / nearest to the origin | `max(..., key=...)` | measurements |
-| `created_by` | faces made by the operation on line N | before/after state difference by `isSame` | `created_by`, operation effects |
+## Task definitions (`03b` schema)
 
-**Aggregates** (exactly one per task, not a hop): count; total length or area; a single
-measurement of a size-1 set (area, length, radius, or a centroid coordinate); the minimum distance
-between two resolved sets.
+Each task is a `TaskDefinition` with these fields:
 
-**Hop 1–10 construction.** Short chains (1–4) are a target chain only. Longer chains (5–10) add one
-or two reference sub-chains (`relate_to_ref`, `compare_to_ref`, distance). Chains are built by a
-seeded random walk per program. At each step, the kernel checks that the candidate set is non-empty,
-smaller than the previous set (for filters), and at most 50 entities.
+- `target_category`;
+- `target_binding`;
+- ordered `clues`, each a typed `TaskClue` with `clue_type`, `subject`, `check`, and `result`;
+- `answer_meaning`, `answer_step`, `native_answer_format`;
+- `gold_answer`, `tolerance`, `answer_evidence`;
+- `clue_step_count`, `task_reasoning_step_count`;
+- `validity`, `provenance`.
 
-## Pipeline (scratch code in `experiments/cq_query_scratch/`)
+It also carries one experiment-only field, `gold_query`: the CadQuery code the definition compiles
+to.
 
-1. **Select programs** (`select.py`). Pick programs whose trace succeeded and whose final part has
-   at least 8 faces. Stratify across CADEvolve-C/P and the ABC/ShapeNet/core collections; 60
-   programs, seed 20261022.
-2. **Generate tasks** (`chain.py`, `generate.py`). For each hop count, propose chains from graph
-   relations and compile each to gold CadQuery. Execute the program once per worker and cache the
-   shapes. Keep a task only if:
-   - the gold query executes;
-   - every hop passes the necessity check;
-   - the answer is finite.
+**Step accounting** (`task-structure.md` §2.5):
+`task_reasoning_step_count = clue_step_count + 1` when there is an answer step. So:
 
-   Cap tasks at 5 per program per hop count, and sample 30 per hop count. Where the graph has a
-   comparable value, log whether the graph and the kernel agree; this measures graph quality as a
-   by-product.
-3. **Render the question** from the chain with rule-based templates. The question never contains
-   selector strings (`>Z`, `%CIRCLE`) or variable names the model could copy, so the task is not
-   string translation. It may cite a line number for `created_by`/`state_of`.
-4. **Prompt.**
-   - **System prompt:** the role, plus a fixed CadQuery cheat sheet (selector grammar, `.vals()`,
-     `Area()`, `Length()`, `radius()`, `Center()`, `distance`). Any later model sees the same sheet.
-   - **User prompt:** the program, the question, and the contract. One `submit_query(code: str)`
-     tool call; the code runs after the program in the same namespace and must assign a number to
-     `answer`.
-5. **Call the model** (`run_eval.py`). Reuse `train_and_eval/teacher.py::TeacherClient` with
+| Step count | Clue steps | Example |
+|---|---|---|
+| 1 | 0, answer step only | "the volume of the final solid state" |
+| 3 | 2 | |
+| 5 | 4 | |
+| 7 | 6 | |
+| 9 | 8 | |
+
+The comparison reference rule in task-structure Q1 applies: a reference to an earlier result does
+not add a step.
+
+**Scope of values.** Only P0 inputs that compile to CadQuery are used:
+
+| Dimension | Values |
+|---|---|
+| Task target category | face, edge, vertex, solid state, operation (via its solid state), scalar value |
+| Clue type: property | surface or curve kind; orientation relative to a named workplane axis; measurement threshold |
+| Clue type: relation | `has_edge`, `has_vertex`, `adjacent_to`, `parallel_to`, `perpendicular_to` |
+| Clue type: comparison | measurement against a reference |
+| Clue type: provenance | created by the operation on line N, using the before/after entity difference from the effect delta |
+| Clue type: aggregation (P1) | extreme, used only as the final clue |
+| Answer meaning | volume, area, length, distance, count, position, material change, topology change |
+| Answer format | number, integer, 3D coordinate (no multiple choice in the scratch run) |
+
+**Validity** follows `03b`:
+
+- every clue narrows the set of possible answers (`after < before`);
+- the final possible-answer set has exactly one entity;
+- the answer step produces exactly one answer;
+- at least one clue depends on the built shape (`geometry_required`).
+
+The experiment adds one rule: the `gold_query`, executed in a fresh child process, must reproduce
+`gold_answer`. A definition that fails any check is written to `failures.jsonl` with its reason.
+
+**Deterministic construction.**
+
+- Constructors run in a fixed order.
+- Candidate operands are ordered by the canonical entity order (category rank, then
+  `fingerprint_json`, then `entity_id`).
+- Every sampling choice takes the first item in `sha256(seed || program_id || step_count || slot)`
+  order. Python's `random` module is not used.
+- Duplicates are removed by the `03b` canonical identity, and up to 60 tasks are accepted per step
+  count in identity-hash order, with at most 3 per program per step count.
+
+## Rendering (`04` rules)
+
+- **Prompt copy.** All wording lives in `experiments/cq_query_scratch/prompts.yaml`, with
+  separate `dataset` and `eval` namespaces, stable template IDs, and typed placeholders. Template
+  variants are chosen by `sha256(template_id || seed)`. The YAML hash is recorded in the run
+  manifest.
+- **Prompt layout.** The prompt contains the normalized program text, one question, the task clues
+  as a numbered list (one condition per item), and the answer instruction.
+- **Clue wording.** Clues name operations as the specs do (`` the face created by `cutBlind` on
+  line 12 ``). They never contain CadQuery selector strings such as `>Z` or `%CIRCLE`, so the task
+  is not string translation.
+- **Answer instruction (`eval` namespace).** Call `submit_query(code: str)` once. The code runs
+  after the program in the same namespace and must assign the answer to `answer`. A fixed CadQuery
+  cheat sheet (selector grammar, `.vals()`, `Area()`, `Length()`, `Center()`, `distance`) is part of
+  the eval template, identical for any model that is evaluated later.
+
+## Running the model and grading
+
+1. **Call.** Reuse `train_and_eval/teacher.py::TeacherClient` with
    `model="deepseek/deepseek-v4.1-flash-1017"`, temperature 1.0 and top-p 0.95 (model card), and a
-   native `tools=[submit_query]`. Check `balance()` before each stage. Write one JSONL record per
-   call holding the reasoning, the visible content, the raw tool calls, tokens, cost and latency.
-   Resume by `task_id`.
-6. **Execute and grade.** Run `program + query` in a subprocess with CadQuery, a 60 s timeout, a
-   memory rlimit, and no network. Grade with 1e-3 relative / 1e-6 absolute tolerance for floats and
-   an exact match for counts. Flag `literal_answer` when an AST check shows `answer` assigned a bare
-   number. The outcome is one of: `no_tool_call`, `exec_error`, `timeout`, `literal_answer`, `wrong`,
-   `correct`.
-7. **Report** (`report.py`). Produce a funnel per hop count:
-   - generated → gold-verified → sampled → tool call returned → executed → correct;
-   - accuracy with a Wilson 95% CI;
-   - reasoning tokens, cost, and the `exec_error` subtypes (hallucinated API, selector syntax,
-     other).
+   native `tools=[submit_query]`. Check `balance()` before each stage. Write one `calls.jsonl`
+   record per call, holding the reasoning, the visible content, the raw tool calls, tokens, cost and
+   latency. Resume by `task_id`.
+2. **Execute.** Run `program + query` in a child process with the `02b` limits (30 s, 2 GiB). As in
+   `02b`, this is process isolation, not a security sandbox; that is acceptable for a scratch run
+   with a hosted model.
+3. **Grade** with the definition's `tolerance` and scoring rule: 1e-3 relative / 1e-6 absolute for
+   numbers, exact for integers, per component for coordinates. Flag `literal_answer` when an AST
+   check finds `answer` assigned a bare constant.
+4. **Outcomes:** `no_tool_call`, `exec_error`, `timeout`, `literal_answer`, `wrong`, `correct`.
+
+## Report (per task reasoning step count)
+
+- **Funnel:**
+  - definitions constructed;
+  - valid definitions, with rejections by reason;
+  - definitions accepted;
+  - calls that returned a tool call;
+  - queries that executed;
+  - correct answers.
+- Accuracy with a Wilson 95% CI.
+- Breakdowns by clue type, answer meaning, and target category. These are informative only; with
+  60 tasks per level they are too small to support claims.
+- Reasoning tokens, cost, and `exec_error` subtypes: hallucinated API, selector syntax, other.
 
 ## Staged run (difficulty gates)
 
-Each stage runs only after the previous one passes. A failed gate means: fix the generator, prompt,
-or harness, then rerun the same stage.
-
 | Stage | Tasks | Purpose |
 |---|---|---|
-| 0. Smoke | 5 tasks at hop 1 | End-to-end plumbing; about $0.01 |
-| A | 30 at hop 3 | First real level |
-| B | 30 at hop 5 | |
-| C | 30 at hop 7 | |
-| D | the remaining 210 (hops 1, 2, 4, 6, 8, 9, 10) | Fill in the full curve |
+| 0. Smoke | 5 at step count 1 | End-to-end plumbing; about $0.01 |
+| A | 60 at step count 3 | First real level |
+| B | 60 at step count 5 | |
+| C | 60 at step count 7 | |
+| D | 60 at step count 1, 60 at step count 9 | Ends of the curve |
 
-**Gate for stages A–C (a level "passes adequately"):**
+**Gate for stages A–C.** A level passes only when all of these hold:
 
-- 30/30 gold queries verified, and all hops necessary.
-- At least 95% of calls return a parseable tool call.
-- Every failed task is triaged as a model error, a harness bug, or a gold/prompt bug. Zero harness
-  or gold/prompt bugs may remain, since those are fixed and the level rerun.
-- A manual read of 10 questions at this level finds them unambiguous.
-- Model accuracy is **at least 50%**. This is the starting assumption; adjust it after stage A. If
-  accuracy is below 50%, stop and check whether the failures come from question ambiguity or real
-  difficulty before raising the hop count.
+- 60/60 definitions are valid and the gold queries reproduce the gold answers;
+- at least 95% of calls return a parseable tool call;
+- every failed task is triaged as a model error, a harness bug, or a definition/prompt bug, and no
+  harness or definition/prompt bugs remain (they are fixed and the level is rerun);
+- a manual read of 10 prompts finds them unambiguous;
+- model accuracy is **at least 50%** (an assumption; adjust after stage A).
+
+If accuracy is below 50%, stop and check whether the failures come from prompt ambiguity or real
+difficulty before moving to a higher step count.
 
 ## Cost and time
 
-About 300 calls × (~3k input + ~4k output tokens) ≈ $2 in total, with a hard stop at $5. Kernel
-execution is CPU-only: about 600 subprocess runs (gold plus model), well under an hour on 8 cores.
-Monitor the long runs every 3–5 minutes, not continuously.
+- Model calls: about 300 × (~3k input + ~4k output tokens) ≈ $2, with a hard stop at $5.
+- Kernel work is CPU-only: the `02b`-slice extraction for 80 programs, plus about 600 query
+  executions, takes well under an hour on 8 cores.
+- Monitor long runs every 3–5 minutes.
 
-## Code rules
+## Code (`experiments/cq_query_scratch/`)
 
-Use typed Pydantic models: `ChainStep`, `QueryTask`, `ModelCall`, `GradeResult`, with `Field()`
-constraints. Use StrEnums for `OperatorKind`, `AggregateKind` and `Outcome`, and stdlib `logging`
-(the repo has no structlog). Keep modules under 800 lines. Read inputs with `dataset/io.py` record
-readers. The scratch code is not imported by `dataset/` or `train_and_eval/`.
+| Module | Responsibility |
+|---|---|
+| `pool.py` | Program pool: `01b`/`01d` rules and the `02a` subset check. |
+| `extract.py` | The `02b` slice: states, entities, topology, effects, canonical IDs. |
+| `definitions.py` | `TaskDefinition`, `TaskClue`, and the constructors. |
+| `compile_query.py` | Clue and answer step → CadQuery. |
+| `render.py` | Rendering from `prompts.yaml`. |
+| `run_eval.py` | Model calls, execution, grading. |
+| `report.py` | Funnel and accuracy report. |
 
-**E2E test** (`tests/test_cq_query_scratch.py`). Use a small fixture program and real CadQuery,
-with only the LLM mocked. The test covers:
+Code rules:
 
-- generating chains at hops 1/3/5;
-- the necessity check rejecting a no-op hop;
-- the gold query grading `correct`;
-- a literal answer grading `literal_answer`;
+- Use Pydantic models with `Field()` constraints.
+- Use StrEnums for clue type, answer meaning, answer format, target category, and outcome, with
+  values spelled as in the specs.
+- Use stdlib `logging`; the repo has no structlog.
+- Keep each module under 800 lines.
+
+**E2E test** (`tests/test_cq_query_scratch.py`). Use a small flat CADEvolve-C-style fixture and real
+CadQuery, with only the LLM mocked. The test covers:
+
+- the pool checks;
+- the extraction IDs matching the `canonicalization.md` formulas;
+- constructing tasks at step counts 1, 3 and 5;
+- a non-narrowing clue being rejected;
+- a gold query grading `correct`;
+- a constant answer grading `literal_answer`;
+- **two generation runs giving byte-identical `tasks.jsonl`**;
 - the report funnel counts.
 
 ## Outputs
 
-- Data (gitignored): `runs/cq_query_scratch_20261022/` holding `programs.parquet`, `tasks.jsonl`,
-  `calls.jsonl`, `grades.jsonl`, and `report.md`.
+- Data (gitignored): `runs/cq_query_scratch_20261022/` holding:
+  - `pool.parquet`;
+  - `extraction/`;
+  - `tasks.jsonl` and `failures.jsonl`;
+  - `calls.jsonl` and `grades.jsonl`;
+  - `report.md`;
+  - `manifest.json`, recording the seed, versions, and the `prompts.yaml` hash.
 - Record: `docs/experiments/2026-10-22-cq-query-scratch.md`, containing:
-  - the funnel and accuracy tables per hop;
+  - the funnel and accuracy tables;
   - the failure taxonomy;
-  - graph–kernel agreement;
   - cost;
   - five example tasks with model outputs;
-  - a headroom verdict for the pivot.
+  - the headroom verdict.
+
+## Deviations from the specs (deliberate)
+
+- **No `02c` graph build.** Tasks read the `02b`-slice records directly. The relations they use
+  (`has_edge`, `adjacent_to`, `parallel_to`, `perpendicular_to`, `creates`) are computed by the
+  `graph-construction.md` rules in Python. The Go `02c` implementation is not built.
+- **Small pool.** 80 programs instead of the `01b` 1,500. The tag reservations and collection
+  minima are recorded, not enforced.
+- **No release planning or splits.** `03a` and `03c` are skipped, and the 60-per-level quota is
+  fixed.
+- **`gold_query` is an extra `TaskDefinition` field.** It does not exist in `03b` yet. If the pivot
+  goes ahead, it becomes a spec change.
+- **No multiple choice.** The scratch run uses native answer formats only.
 
 ## Decision this informs
 
-- **Accuracy is high (≥ 90%) through hop 10:** writing queries is not the bottleneck. The pivot needs
-  harder grounding (descriptive references, provenance) or becomes a dataset-only paper.
-- **Accuracy falls steadily with hop count:** there is headroom, and the hop axis is a valid
+- **Accuracy stays high (≥ 90%) up to step count 9:** writing queries is not the bottleneck. The
+  pivot needs harder grounding, or it becomes a dataset-only paper.
+- **Accuracy falls steadily with step count:** there is headroom, and step count is a valid
   difficulty measure. Proceed to the spike in
-  `~/.claude/plans/product-thesis-decision-and-a-rustling-snowflake.md` (base small model, more
-  frontier models).
-- **Accuracy is low already at hop 3:** check question wording and the cheat sheet before
-  concluding anything.
+  `~/.claude/plans/product-thesis-decision-and-a-rustling-snowflake.md`: the base small model and
+  more frontier models.
+- **Accuracy is low already at step count 3:** audit the clue wording and the cheat sheet before
+  drawing conclusions.
 
 ## Known limitations
 
-- 30 tasks per level gives a ±~18 percentage-point CI; this is enough to see a trend, not to
-  separate close levels.
-- One model, one sample.
-- Rule-rendered questions are stilted.
-- Model code runs in a subprocess, not a hardened sandbox; that is acceptable for a scratch run
-  with a hosted model.
-- No perturbation (test-suite) grading yet, so a coincidental correct answer can pass. The literal
-  check covers only the cheapest cheat.
+- One model and one sample.
+- Rule-rendered clues read stiffly.
+- There is no perturbation (test-suite) grading, so a coincidentally correct value passes; the
+  constant-answer check only catches the cheapest cheat.
+- Restricting programs to CADEvolve-C under the `02a` subset excludes the P-tier programs with
+  loops.
