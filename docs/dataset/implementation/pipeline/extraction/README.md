@@ -99,7 +99,8 @@ runtime records unless a value leaves program scope.
 
 ## Code names
 
-Class and table names mirror the extraction terms:
+Class and table names mirror the extraction terms (see
+[`DS-30`](../../../decisions.md)):
 
 - `CadQueryAstExtractionResult`, `AstOperation`, `AstWorkplane`, `AstProfile`,
   `AstPath`, `AstSelector`, `AstAlias`, `AstExpression`;
@@ -109,7 +110,7 @@ Class and table names mirror the extraction terms:
 - `ast_*` and `runtime_*` artifact tables;
 - `ast_extraction_result_sha256` and `runtime_extraction_result_sha256`.
 
-`Static*`, `static_*`, and `Execution*` are not extraction code names.
+The old `Static*` and `Execution*` names are retired under DS-30.
 
 ## Versions
 

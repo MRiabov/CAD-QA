@@ -466,3 +466,24 @@ prefix is `DS-`.
   pipeline stage. `03c` is a bounded loop back through supplemental `01b` selection,
   `01c`/`01d` delta processing, `02` graph building, and an updated plan.
   Deficits are recorded and either filled or accepted.
+
+## DS-30 — Code and schema names mirror approved terms
+
+- **Status:** accepted (2026-10-22).
+- **Context:** The dataset generator is greenfield and docs-only. An implementation that
+  invents a synonym for a glossary term creates a second vocabulary, and
+  persisted names are expensive to change later. Extraction had inherited
+  `Static*` and `Execution*` names from an earlier implementation choice.
+- **Decision:** Every pipeline stage uses the approved glossary term, or its
+  documented `In code:` identifier, for class, function, artifact, table, field,
+  and hash names. Do not retain a synonym from an earlier implementation.
+  Preserve the term's qualifiers and do not introduce a new short form. If an
+  approved term changes, rename the affected names in the same change and bump
+  the affected schema version when the artifact schema changes.
+- **Consequences:** Extraction is the first application: `Static*`, `static_*`,
+  and `Execution*` are retired, and extraction uses
+  `CadQueryAstExtractionResult`, `Ast*`, `CadQueryRuntimeExtractionResult`,
+  `CadQueryRuntimeExtractionSuccess`, `FailureTombstone`,
+  `CadFeatureSolidStateEffectDelta`, `CadQuerySelectorResult`, `ast_*` and
+  `runtime_*` tables, and the matching hash fields. Every later pipeline stage
+  follows the same rule.

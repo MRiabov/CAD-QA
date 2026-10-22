@@ -30,7 +30,8 @@ between pipeline stages is
 - typed I/O between pipeline stages;
 - artifact, planning-math, and language-boundary explanations shared across
   pipeline stages;
-- execution, graph-building, and release-building details.
+- execution, graph-building, and release-building details;
+- code and schema naming under [`DS-30`](../decisions.md).
 
 ## What does not belong here
 
