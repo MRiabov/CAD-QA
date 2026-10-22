@@ -37,16 +37,16 @@ the user-visible outcome.
 | **Prompt** | Domain | Everything the LLM model sees for one task: program text, question, task clues, optional choices, and answer instruction. |
 | **Gold answer** | Domain | The correct answer for one task. It is kept out of the prompt. |
 | **Answer data** | Domain | The answer columns in the release dataset: gold answer, scoring fields, and answer evidence. |
-| **CAD graph** | Domain | The graph of CAD entities, relations, and measurements for one CadQuery program and the shape it builds. |
-| **CAD graph element** | Internal | One entity, relation, or measurement in the CAD graph. |
-| **Graph entity** | Internal | One entity in the CAD graph, such as a face, edge, operation, or region. |
-| **Relation** | Domain | A named link between two graph entities. |
-| **Measurement** | Domain | A numeric or geometric value about a graph entity or a pair of entities. |
-| **CAD graph evidence** | Internal | The record of how a graph element (relation or measurement) was obtained: measured by running CadQuery, or derived by an exact rule, with the rule and references. |
+| **CAD graph** | Domain | The typed graph of CAD graph entities, CAD graph relations, and CAD graph measurements for one CadQuery program and the shape it builds. |
+| **CAD graph element** | Internal | One CAD graph entity, CAD graph relation, or CAD graph measurement. |
+| **CAD graph entity** | Internal | One entity in the CAD graph, such as a face, edge, operation, or region. |
+| **CAD graph relation** | Domain | A named link between two CAD graph entities. |
+| **CAD graph measurement** | Domain | A numeric or geometric value about a CAD graph entity or a pair of CAD graph entities. |
+| **CAD graph evidence** | Internal | The record of how a CAD graph element (CAD graph relation or CAD graph measurement) was obtained: measured by running CadQuery, or derived by an exact rule, with the rule and references. |
 | **Answer evidence** | Domain | The record of how a task's gold answer was obtained: the referenced CAD graph evidence and the rule that produces the answer. |
 | **Validity record** | Internal | The check results that establish a task definition's uniqueness, target binding, clue narrowing, and geometry requirement. It is not answer evidence. |
 | **Failure tombstone** | Internal | A recorded failed program or operation, with the error and cache key, used for debugging and cache hits. It is not a graph entity and never supports an answer. |
-| **CadQuery program AST extraction result** | Internal | The result of extracting a CadQuery program without running it: operations, CadQuery workplanes, CadQuery profiles, CadQuery paths, CadQuery selectors, and their static relationships. |
+| **CadQuery program AST extraction result** | Internal | The result of extracting a CadQuery program without running it: operations, CadQuery workplanes, CadQuery profiles, CadQuery paths, CadQuery selectors, and their relationships in the CadQuery program. |
 | **CadQuery program runtime extraction result** | Internal | The result of executing a CadQuery program and extracting Shape snapshots, CAD feature effect deltas, CadQuery selector results, and evidence. |
 | **solid state producing operation** | Internal | A CadQuery program operation that can produce a solid state. |
 | **CAD feature effect delta** | Domain | The measured before/after volume, bounding box, and topology change caused by a CAD feature. Distinct from the Measurement scope `feature_application_effect`. |
@@ -54,6 +54,7 @@ the user-visible outcome.
 | **CadQuery accessor** | Internal | A CadQuery call that reads or converts existing values without creating geometry. |
 | **CAD topology entity** | Domain | A face, edge, or vertex of a solid state. |
 | **CAD topology entity ID** | Internal | The stable identity of a CAD topology entity within one solid state; `In code:` `entity_id`. |
+| **AST rejection** | Internal | A rejected `02a` CadQuery program with no CadQuery program AST extraction result, distinct from a `02b` failure tombstone. |
 | **Solid state** | Domain | The shape before or after an operation, or the final shape. |
 | **Warmup subset** | Domain | The labeled set of 1-step tasks inside the dataset. It is useful for training, not a separate dataset. |
 | **Curriculum** | Domain | The order in which tasks are presented, from lower to higher task reasoning step counts. |
@@ -115,6 +116,9 @@ Terms that were replaced because they were not composed from the domain:
 | `CadQuery program operation trace` | CadQuery program runtime extraction result |
 | `operation trace` | CadQuery program runtime extraction result |
 | `static CadQuery model` | CadQuery program AST extraction result |
+| `CAD ontology graph` | CAD graph |
+| `CAD ontology node` | CAD graph entity |
+| `CAD graph edge` | CAD graph relation |
 | `state-producing operation` | solid state producing operation |
 | `execution result` | CadQuery program runtime extraction result |
 | `operation effect` | CAD feature effect delta |

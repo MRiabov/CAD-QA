@@ -535,7 +535,7 @@ Each pipeline step doc follows the same template (§4) and is grounded in code r
 - `00-overview.md` per pipeline holds the DAG and the **pipeline-stage IO contract** — the single
   source of truth for artifact/field names between steps; step docs must match it (redo
   `00-stage-interfaces.md` convention).
-- Dataset pipeline: A1–A7 (CadQuery program ingestion → CadQuery program operation trace → CAD ontology graph → query → prompts → materialize →
+- Dataset pipeline: A1–A7 (CadQuery program ingestion → CadQuery program operation trace → CAD graph → query → prompts → materialize →
   exports).
 - Fine-tuning pipeline: B1–B7 (rows → teacher → normalize → SFT → GRPO → harness →
   serving).
@@ -585,7 +585,7 @@ Every pipeline stage doc in `pipeline/` (named `NN-*.md` or `NNx-*.md`, e.g. `01
 | When | What | Artifact |
 |---|---|---|
 | 2026-04-29 | Graph-first reset; one CAD ontology + a deterministic Query verifier | `overnight-task.md`, rewritten `specs/`, `epics-and-stories.yaml` |
-| 2026-05→06 | Dataset builder: CadQuery program ingestion, operation tracing, CAD ontology graph, query, prompts, release gates | `cad_qa/`, `docs/_archive/implementation_status.md` |
+| 2026-05→06 | Dataset builder: CadQuery program ingestion, operation tracing, CAD graph, query, prompts, release gates | `cad_qa/`, `docs/_archive/implementation_status.md` |
 | 2026-06→07 | Harbor export, Daytona, provider pinning | `cad_qa/harbor.py`, `docs/_archive/harbor.md` |
 | 2026-08-08 | gemma-4-E2B baseline: rc10 (0-hop) 30%, release10k (2–5 hop) 14% | `docs/experiments/2026-08-08-gemma-e2b-bench.md` |
 | 2026-08-08/09 | Teacher sampling, SFT, native format fix, 1-hop bridge, `run_code`, harness modes, vLLM | `train_and_eval/`, `docs/_archive/rl_*.md`, `docs/_archive/agent_handoff_2026-08-09.md` |

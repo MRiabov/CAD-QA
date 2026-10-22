@@ -35,7 +35,7 @@ at `512a514`.
 | Majority | Predict the most frequent gold answer | `train_and_eval/grading/baselines.py::majority_answer` | rc10 0.333 (958 rows); heuristic smoke 0.571 (35 rows); not in `runs/baseline_smoke` | `exists` |
 | Random | Uniform/typed random guess per answer format | historical only (pruned) | rc10 0.100 (958 rows); heuristic smoke 0.171 (35 rows) | `stale` |
 | Regex / static syntax | Count operations by regex over the prompt code, or read a static label | historical only (pruned) | rc10 `regex_operation_count` 0.331, `static_operation_count` 0.340 (958 rows); heuristic smoke 0.314 / 0.314 (35 rows) | `stale` |
-| CadQuery selector-name heuristic | Guess CadQuery selector cardinality from CadQuery selector expression tokens and CAD ontology node type | historical only (pruned) | rc10 0.301 (958 rows); heuristic smoke 0.200 (35 rows) | `stale` |
+| CadQuery selector-name heuristic | Guess CadQuery selector cardinality from CadQuery selector expression tokens and CAD graph entity type | historical only (pruned) | rc10 0.301 (958 rows); heuristic smoke 0.200 (35 rows) | `stale` |
 | Operation-order heuristic | Answer from operation order in the CadQuery program | not found in code or artifacts; named in `specs/paper-spec.md`, `specs/research-experiment-spec.md` | none found | `missing` |
 | Symbolic primitive geometry | Closed-form volume delta from the builder operation and its literal args (box, hole, cutBlind, extrude) | historical only (pruned) | heuristic smoke 0.114 (35 rows) | `stale` |
 | AABB-only | Classify point membership using the row's own bounding box (inside / on boundary / outside) | historical only (pruned) | heuristic smoke 0.029, invalid-output 0.829 (35 rows) | `stale` |

@@ -98,7 +98,7 @@ subprocess can still be escaped.
 ## Harbor
 
 Harbor is the environment and runner used to evaluate cost-effective external
-models (`glossary.md`). CAD-QA keeps the CAD ontology graph, query synthesis, and
+models (`glossary.md`). CAD-QA keeps the CAD graph, query synthesis, and
 Query verifier; the public/private split; and the grading; Harbor supplies the shell
 environment and the coding agent. The mechanics are documented in
 `docs/_archive/harbor.md`; this section records the contract.

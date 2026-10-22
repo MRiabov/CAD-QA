@@ -103,37 +103,37 @@ describe. Measurement scope `snapshot_state`.
 
 ---
 
-### CAD ontology graph
+### CAD graph
 
-The typed graph of a CadQuery program.
+The typed graph of CAD graph entities, CAD graph relations, and CAD graph measurements for
+one CadQuery program.
 
 ---
 
-### CAD ontology node
+### CAD graph entity
 
-A typed entity in a CAD ontology graph (for example feature, workplane, profile, face,
-edge, vertex, path, selector). `Distinct from:` code node.
-
-Use **CAD graph entity** for this concept in prose; `node_id` and `nodes.parquet` are
+A typed entity in a CAD graph (for example feature, workplane, profile, face, edge,
+vertex, path, selector). `Distinct from:` code node. `node_id` and `nodes.parquet` are
 code and schema names.
 
 ---
 
-### Relation
+### CAD graph relation
 
-A typed edge between two CAD ontology nodes.
-
----
-
-### Relation family
-
-A group of relation types, used to categorize a CAD-QA dataset row.
+A typed link between two CAD graph entities.
 
 ---
 
-### Measurement
+### CAD graph relation family
 
-A typed numeric or geometric fact about a CAD ontology node.
+A group of CAD graph relation types, used to categorize a CAD-QA dataset row.
+
+---
+
+### CAD graph measurement
+
+A typed numeric or geometric fact about a CAD graph entity or a pair of CAD graph
+entities.
 
 ---
 
@@ -165,7 +165,7 @@ The 2D shape drawn on a CadQuery workplane (circle, rectangle, polyline).
 ### CAD feature
 
 A modeling feature of a CadQuery program — an extrude, a cut, a fillet, and so on. A CAD
-ontology node type.
+graph entity type.
 
 ---
 
@@ -243,7 +243,7 @@ rather than test them.
 
 ### Answer candidate set
 
-The set of CAD ontology nodes still possible as the gold answer as a Gold query program
+The set of CAD graph entities still possible as the gold answer as a Gold query program
 resolves; each Gold query predicate narrows it, and it should end at one node.
 
 ### Answer candidate set trace
@@ -450,8 +450,7 @@ The three-way split of eligible CAD-QA rows: `sft_train` (the only rows that ent
 ### CadQuery program AST extraction result
 
 The result of extracting a CadQuery program without running it: its operations, CadQuery
-workplanes, CadQuery profiles, CadQuery paths, CadQuery selectors, and their static
-relationships. `In code:` `StaticCadQueryModel`. `Distinct from:` **CadQuery program runtime
+workplanes, CadQuery profiles, CadQuery paths, CadQuery selectors, and their relationships in the CadQuery program. `In code:` `StaticCadQueryModel`. `Distinct from:` **CadQuery program runtime
 extraction result**.
 
 ---
@@ -491,9 +490,22 @@ A CadQuery call that reads or converts existing values without creating geometry
 
 ---
 
+### AST rejection
+
+A rejected `02a` CadQuery program: program identity, reason, location, and cache key, with
+no CadQuery program AST extraction result. `Distinct from:` **failure tombstone**.
+
+---
+
 ### CAD topology entity ID
 
 The stable identity of a CAD topology entity within one solid state. `In code:` `entity_id`.
+
+---
+
+### CAD graph element
+
+A CAD graph entity, CAD graph relation, or CAD graph measurement.
 
 ---
 
@@ -556,8 +568,8 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | imitate_general_reasoning_style | preserve_general_math_and_code_reasoning | earlier name; a preservation role, not style imitation |
 | release tier (dataset, train_and_eval, tools) | Dataset release tier | garbled; which release? |
 | snapshot | Shape snapshot | opaque |
-| ontology graph (dataset) | CAD ontology graph | unqualified |
-| ontology (bare) | CAD ontology | generic/overloaded |
+| ontology graph (dataset) | CAD graph | unqualified |
+| ontology (bare) | CAD graph | generic/overloaded |
 | selector (bare) | CadQuery selector | CadQuery-specific |
 | workplane (bare) | CadQuery workplane | CadQuery-specific |
 | profile (bare) | CadQuery profile | generic |
@@ -581,7 +593,7 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | "intent" (as a doc) | PRD | "intent" is the concept, not the artifact |
 | trace (bare) | CadQuery program runtime extraction result / agent training trace / answer candidate set trace | overloaded across concepts |
 | model (bare) | CAD model / LLM model / base LLM model / LLM adapter / merged LLM model | geometry vs language model vs weights/adapter/served endpoint |
-| node (bare) | CAD ontology node / code node | ambiguous between graph and code |
+| node (bare) | CAD graph entity / code node | ambiguous between graph and code |
 | stage (bare) | Training stage / pipeline stage | which stage? qualify it |
 | surface (bare) | scope / interface | imprecise metaphor; name the scope or interface |
 | RL-readiness gate | RL-readiness gate | "sampling of what?" |
@@ -589,7 +601,7 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | gate (bare) | RL-readiness gate / release gate / phase gate / quality gate / review gate / coverage gate / regression gate / stop gate / forgetting gate / format gate / evaluation gate / test gate / advancement gate / blocking gate / freeze gate / smoke gate / trust-audit gate | name which gate |
 | band | RL-eligible pass rate / range | imprecise; name the RL-eligible pass rate, or the range |
 | kind (bare) / kinds (bare) | predicate kind | raw noun; qualify it |
-| type (bare) / types (bare) | CAD ontology node type / relation type / clue type / answer format / measurement scope / LLM harness mode | raw noun; qualify it |
+| type (bare) / types (bare) | CAD graph entity type / CAD graph relation type / clue type / answer format / measurement scope / LLM harness mode | raw noun; qualify it |
 | entity id (in an answer) (dataset, train_and_eval, tools) | source variable | internal `entity_id` values must not leak into answers |
 | "the pipeline" / "the object" / "the value" | name the concept | unspecific placeholder |
 | first/last (as family semantics) | the sampled parameter | a rendering choice, not a permanent meaning |

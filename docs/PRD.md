@@ -104,7 +104,7 @@ RL-readiness gate), not a separate claim; conciseness is deferred to future work
 
 - Primary corpus: executable CadQuery programs. Synthetic fixtures are for
   tests and didactic examples only.
-- Labels are precomputed offline from the CAD ontology graph and the CadQuery kernel. Evaluation
+- Labels are precomputed offline from the CAD graph and the CadQuery kernel. Evaluation
   needs no kernel and no container.
 - Public prompts are rule-rendered from hidden query programs, never translated by an LLM model.
   Language models are not in the trusted generation or grading path.

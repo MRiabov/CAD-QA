@@ -16,7 +16,7 @@ marked (`[unknown]`, `[unverified — needs <env>]`, `[assumed]`).
 | When | What | Artifact |
 |---|---|---|
 | 2026-04-29 | Graph-first reset: one CAD ontology + a deterministic query and Query verifier replaces the old split between "core", "graph query", and "multi-hop" | `overnight-task.md`, `specs/` |
-| 2026-05 → 06 | Dataset builder: CadQuery program ingestion, CadQuery tracing, CAD ontology graph, query synthesis/resolver, prompt rendering, release gates | `dataset/` (now `dataset_generation/`), `docs/_archive/implementation_status.md` (retired) |
+| 2026-05 → 06 | Dataset builder: CadQuery program ingestion, CadQuery tracing, CAD graph, query synthesis/resolver, prompt rendering, release gates | `dataset/` (now `dataset_generation/`), `docs/_archive/implementation_status.md` (retired) |
 | 2026-06 → 07 | Harbor export, cloud runners, provider pinning | `dataset/harbor.py`, `docs/_archive/harbor.md` |
 | 2026-08-08 | First gemma-4-E2B baseline: rc10 (0-hop) 30%, release10k (2–5 hop) 14% | `docs/experiments/2026-08-08-gemma-e2b-bench.md` |
 | 2026-08-08/09 | Teacher rejection sampling, SFT, native tool-call format fix, 1-hop bridge, `run_code` sandbox, harness modes, a vLLM conversion | `train_and_eval/`, `docs/_archive/rl_*.md`, `docs/_archive/agent_handoff_2026-08-09.md` |
