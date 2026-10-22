@@ -1,9 +1,9 @@
 # Method signatures
 
-**Parent:** [`extraction/README.md`](../README.md).
+**Parent:** [`extraction/README.md`](../../README.md).
 
 This document is the closed P0/P1 call contract. It complements the operation
-classification in [`algorithm.md`](algorithm.md). `02a` accepts a call only when
+classification in [`pipeline.md`](pipeline.md). `02a` accepts a call only when
 the receiver binding, argument names, and arity match this table.
 
 ## Notation
@@ -15,7 +15,7 @@ the receiver binding, argument names, and arity match this table.
   `cq.Wire.*`.
 - `MODULE` means the `cq` alias.
 - Required arguments are bare; optional arguments are in brackets.
-- `EXPR` is any accepted [`StaticExpression`](expressions.md).
+- `EXPR` is any accepted [`StaticExpression`](../records/expressions.md).
 - `CALLABLE` is the narrow filter lambda.
 - Unknown keyword arguments, excess positional arguments, and missing required
   arguments reject the program.

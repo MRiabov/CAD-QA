@@ -74,17 +74,17 @@ Each `OperationEffect` contains:
 ## Field contracts
 
 The complete runtime algorithm is in
-[`extraction/cadquery/runtime.md`](extraction/cadquery/runtime.md). Field sets and
+[`extraction/cadquery/algorithm/runtime.md`](extraction/cadquery/algorithm/runtime.md). Field sets and
 canonical rules are in
-[`extraction/cadquery/states.md`](extraction/cadquery/states.md),
-[`extraction/cadquery/solids.md`](extraction/cadquery/solids.md),
-[`extraction/cadquery/topology.md`](extraction/cadquery/topology.md),
-[`extraction/cadquery/selectors.md`](extraction/cadquery/selectors.md),
-[`extraction/cadquery/effects.md`](extraction/cadquery/effects.md),
-[`extraction/cadquery/evidence.md`](extraction/cadquery/evidence.md),
+[`extraction/cadquery/records/states.md`](extraction/cadquery/records/states.md),
+[`extraction/cadquery/records/entities.md`](extraction/cadquery/records/entities.md),
+[`extraction/cadquery/records/topology.md`](extraction/cadquery/records/topology.md),
+[`extraction/cadquery/records/selectors.md`](extraction/cadquery/records/selectors.md),
+[`extraction/cadquery/records/effects.md`](extraction/cadquery/records/effects.md),
+[`extraction/cadquery/records/evidence.md`](extraction/cadquery/records/evidence.md),
 [`extraction/canonicalization.md`](extraction/canonicalization.md),
 [`extraction/runtime-schema.md`](extraction/runtime-schema.md),
-[`extraction/cadquery/geometry-classification.md`](extraction/cadquery/geometry-classification.md),
+[`extraction/cadquery/algorithm/geometry-classification.md`](extraction/cadquery/algorithm/geometry-classification.md),
 and [`extraction/validation.md`](extraction/validation.md).
 
 ## Failure tombstone
@@ -123,4 +123,4 @@ same key. A change to the static model or canonicalization is a cache miss.
 - **Runtime capture algorithm.** *Resolved 2026-10-22.* The exact instrumentation
   ABI, capture classes, state/CadQuery selector/entity/effect algorithms, final-state rule,
   and failure taxonomy are in
-  [`extraction/cadquery/runtime.md`](extraction/cadquery/runtime.md).
+  [`extraction/cadquery/algorithm/runtime.md`](extraction/cadquery/algorithm/runtime.md).

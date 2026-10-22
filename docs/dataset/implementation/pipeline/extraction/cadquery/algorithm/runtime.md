@@ -1,6 +1,6 @@
 # CadQuery runtime extraction
 
-**Parent:** [`extraction/README.md`](../README.md).
+**Parent:** [`extraction/README.md`](../../README.md).
 
 This document defines how `02b` turns an accepted `StaticCadQueryModel` into an
 `ExecutionResult`. It specifies the instrumentation ABI, runtime recorder,
@@ -22,7 +22,7 @@ uncaught exception becomes a failure tombstone.
 ## Parent/child protocol
 
 The parent creates a per-program temporary directory and passes its path to the
-child. The child writes the runtime tables from [`../artifacts.md`](../artifacts.md)
+child. The child writes the runtime tables from [`../../artifacts.md`](../../artifacts.md)
 there and exits zero only after all tables are closed. The parent reads nothing
 until the child exits, then validates the status, schema, and hashes. A non-zero
 exit without a failure table becomes an `internal` failure; the parent keeps only
@@ -51,7 +51,7 @@ wpN = __cadqa_record(
     receiver_var="wp0" or None,
     selector_category="face" or "edge" or "vertex" or None,
     capture="state" | "workplane" | "selector" | "value" | "none",
-    thunk=lambda: <rhs>,
+    evaluate=lambda: <rhs>,
 )
 ```
 
@@ -69,7 +69,7 @@ result = __cadqa_alias(
     alias_id="alias:<order:06d>",
     result_var="result",
     target_var="wpN" or None,
-    thunk=lambda: <rhs>,
+    evaluate=lambda: <rhs>,
 )
 ```
 
@@ -80,10 +80,10 @@ The rewrite obeys these rules:
   the static `receiver_var` to look up the current runtime state; it does not
   capture argument values.
 - Nested `cq.Plane`, `cq.Vector`, `cq.Edge`, `cq.Wire`, filter, and `list`
-  expressions stay inside the thunk.
+  expressions stay inside the `evaluate` callable.
 - The instrumented text is generated with the pinned Python AST and is not a
   string substitution.
-- A name used by a thunk is the runtime value at the call point. The static model forbids
+- A name used by an `evaluate` callable is the runtime value at the call point. The static model forbids
   rebinding, so closure timing is unambiguous.
 
 `__cadqa_alias` propagates the target binding's state, CadQuery workplane, and selected
@@ -131,7 +131,7 @@ A binding is replaced only by its own assignment. Rebinding is rejected by
 
 ## Runtime classification
 
-After `thunk()` returns, classify the runtime value once:
+After `evaluate()` returns, classify the runtime value once:
 
 | Value | `result_kind` |
 |---|---|
@@ -160,13 +160,13 @@ For `capture = state`:
 2. Require `len(shape.Solids()) >= 1`; otherwise fail with `non_solid_result`.
 3. Compute `state_id = state:<operation_id>`.
 4. Compute the entity table and shape hash using
-   [`../canonicalization.md`](../canonicalization.md) and
+   [`../../canonicalization.md`](../../canonicalization.md) and
    [`geometry-classification.md`](geometry-classification.md).
 5. Build topology records for the state.
 6. Capture the shape snapshot.
 
 The Shape snapshot carries the fields in
-[`states.md`](states.md), including `is_solid = true`, `is_valid`, volume,
+[`../records/states.md`](../records/states.md), including `is_solid = true`, `is_valid`, volume,
 bounding box, centroid, counts, and `entity_table_ref`.
 
 The state is recorded after the assignment returns, using the returned value.
@@ -251,10 +251,10 @@ For each state:
 - Reject the program if two entities in the same state and category have the
   same fingerprint.
 - Sort rows in the canonical order from
-  [`../canonicalization.md`](../canonicalization.md).
+  [`../../canonicalization.md`](../../canonicalization.md).
 
 Entity fields and fingerprint inputs are defined in
-[`solids.md`](solids.md). The entity table is the only basis for CadQuery selector
+[`../records/entities.md`](../records/entities.md). The entity table is the only basis for CadQuery selector
 membership and entity graph nodes.
 
 ## Topology
@@ -293,7 +293,7 @@ execution as a graph input.
 
 `execution_result_sha256` is the canonical hash of the complete successful
 result or failure tombstone, using
-[`../canonicalization.md`](../canonicalization.md). The cache key includes:
+[`../../canonicalization.md`](../../canonicalization.md). The cache key includes:
 
 - `program_sha256`;
 - `static_model_sha256`;

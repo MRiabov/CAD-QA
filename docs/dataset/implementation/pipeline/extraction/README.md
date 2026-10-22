@@ -4,8 +4,10 @@
 
 This document is the entry point for the `02` extraction module. It defines the
 input, the deterministic process, the outputs, the versions, and the failure
-boundary. Field definitions live in the linked documents; the algorithms that
-populate them live in `ast/algorithm.md` and `cadquery/runtime.md`.
+boundary. The algorithms that populate the records live in `ast/algorithm/` and
+`cadquery/algorithm/`. The per-record field contracts live in `ast/records/` and
+`cadquery/records/`. Cross-cutting schemas, validation, and decisions stay at the
+extraction root.
 
 Extraction is a module inside pipeline stage `02`, not a standalone service. It
 has no network API, no service database, and no independent trigger. Its outputs
@@ -165,24 +167,24 @@ decision explains why the contract has that shape.
 
 | Document | Responsibility |
 |---|---|
-| [`ast/algorithm.md`](ast/algorithm.md) | Deterministic AST passes, assignment rules, binding classification, and method classification. |
-| [`ast/method-signatures.md`](ast/method-signatures.md) | Closed receiver, argument, result, and state contract for every allowlisted call. |
-| [`ast/operations.md`](ast/operations.md) | Static operation and alias fields. |
-| [`ast/expressions.md`](ast/expressions.md) | Typed expression trees and literals. |
-| [`ast/workplanes.md`](ast/workplanes.md) | Static CadQuery workplane records and frame derivation. |
-| [`ast/profiles-paths.md`](ast/profiles-paths.md) | CadQuery profile and path records. |
-| [`CadQuery shape and path derivation`](ast/shape-derivation.md) | Point, segment, CadQuery shape, and path derivation rules. |
-| [`ast/selectors.md`](ast/selectors.md) | Static CadQuery selector records and filter predicates. |
-| [`ast/solids.md`](ast/solids.md) | Static feature classification. |
-| [`ast/instrumentation.md`](ast/instrumentation.md) | Exact AST rewrite and recorder ABI. |
-| [`cadquery/runtime.md`](cadquery/runtime.md) | Execution, state, CadQuery selector, entity, topology, effect, and frame capture. |
-| [`cadquery/geometry-classification.md`](cadquery/geometry-classification.md) | Kernel API calls and surface, curve, centroid, and shape classification. |
-| [`cadquery/states.md`](cadquery/states.md) | Shape snapshot fields and final-state rule. |
-| [`cadquery/solids.md`](cadquery/solids.md) | Entity tables and fingerprints. |
-| [`cadquery/topology.md`](cadquery/topology.md) | Incidence and adjacency records. |
-| [`cadquery/selectors.md`](cadquery/selectors.md) | Runtime CadQuery selector results. |
-| [`cadquery/effects.md`](cadquery/effects.md) | Before/after effects. |
-| [`cadquery/evidence.md`](cadquery/evidence.md) | Extraction evidence references for effects, topology, and selectors. |
+| [`ast/algorithm/pipeline.md`](ast/algorithm/pipeline.md) | Deterministic AST passes, assignment rules, binding classification, and method classification. |
+| [`ast/algorithm/method-signatures.md`](ast/algorithm/method-signatures.md) | Closed receiver, argument, result, and state contract for every allowlisted call. |
+| [`ast/records/operations.md`](ast/records/operations.md) | Static operation and alias fields. |
+| [`ast/records/expressions.md`](ast/records/expressions.md) | Typed expression trees and literals. |
+| [`ast/records/workplanes.md`](ast/records/workplanes.md) | Static CadQuery workplane records and frame derivation. |
+| [`ast/records/profiles-paths.md`](ast/records/profiles-paths.md) | CadQuery profile and path records. |
+| [`ast/algorithm/shape-derivation.md`](ast/algorithm/shape-derivation.md) | Point, segment, CadQuery shape, and path derivation rules. |
+| [`ast/records/selectors.md`](ast/records/selectors.md) | Static CadQuery selector records and filter predicates. |
+| [`ast/records/solids.md`](ast/records/solids.md) | Static feature classification. |
+| [`ast/records/instrumentation.md`](ast/records/instrumentation.md) | Exact AST rewrite and recorder ABI. |
+| [`cadquery/algorithm/runtime.md`](cadquery/algorithm/runtime.md) | Execution, state, CadQuery selector, entity, topology, effect, and frame capture. |
+| [`cadquery/algorithm/geometry-classification.md`](cadquery/algorithm/geometry-classification.md) | Kernel API calls and surface, curve, centroid, and shape classification. |
+| [`cadquery/records/states.md`](cadquery/records/states.md) | Shape snapshot fields and final-state rule. |
+| [`cadquery/records/entities.md`](cadquery/records/entities.md) | Entity tables and fingerprints. |
+| [`cadquery/records/topology.md`](cadquery/records/topology.md) | Incidence and adjacency records. |
+| [`cadquery/records/selectors.md`](cadquery/records/selectors.md) | Runtime CadQuery selector results. |
+| [`cadquery/records/effects.md`](cadquery/records/effects.md) | Before/after effects. |
+| [`cadquery/records/evidence.md`](cadquery/records/evidence.md) | Extraction evidence references for effects, topology, and selectors. |
 | [`canonicalization.md`](canonicalization.md) | Numbers, JSON, hashes, and ordering. |
 | [`validation.md`](validation.md) | Static, runtime, and cross-pipeline stage invariants. |
 | [`artifacts.md`](artifacts.md) | Logical tables, keys, and artifact identities. |

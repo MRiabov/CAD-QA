@@ -62,9 +62,9 @@ Every static call operation has exactly one row.
 | `is_solid` | `BOOLEAN` | not null | Contains at least one solid. |
 | `is_valid` | `BOOLEAN` | not null | Kernel validity. |
 | `volume` | `DOUBLE` | not null | Volume. |
-| `bbox_min` | `Point3` | not null | Minimum bounding-box corner. |
-| `bbox_max` | `Point3` | not null | Maximum bounding-box corner. |
-| `centroid` | `Point3` | not null | Centroid. |
+| `bbox_min` | `Point3D` | not null | Minimum bounding-box corner. |
+| `bbox_max` | `Point3D` | not null | Maximum bounding-box corner. |
+| `centroid` | `Point3D` | not null | Centroid. |
 | `face_count` | `INT64` | not null | Face count. |
 | `edge_count` | `INT64` | not null | Edge count. |
 | `vertex_count` | `INT64` | not null | Vertex count. |
@@ -80,8 +80,8 @@ Every static call operation has exactly one row.
 | `entity_category` | `STRING` enum `face`, `edge`, `vertex` | not null | Entity category. |
 | `fingerprint` | `EntityFingerprint` | not null | Canonical geometry. |
 | `fingerprint_sha256` | `STRING` | not null | Fingerprint hash. |
-| `surface_kind` | `STRING` | null | Face surface category. |
-| `curve_kind` | `STRING` | null | Edge curve category. |
+| `face_surface_kind` | `STRING` | null | Face surface category. |
+| `edge_curve_kind` | `STRING` | null | Edge curve category. |
 | `is_closed` | `BOOLEAN` | null | Closed edge flag. |
 
 ## `execution_topology`
@@ -101,9 +101,9 @@ Every static call operation has exactly one row.
 |---|---|---|---|
 | `workplane_id` | `STRING` | not null | Static CadQuery workplane ID. |
 | `operation_id` | `STRING` | not null | Creating operation. |
-| `origin` | `Point3` | not null | Measured origin. |
-| `x_direction` | `Vector3` | not null | Measured x direction. |
-| `normal` | `Vector3` | not null | Measured normal. |
+| `origin` | `Point3D` | not null | Measured origin. |
+| `x_direction` | `Vector3D` | not null | Measured x direction. |
+| `normal` | `Vector3D` | not null | Measured normal. |
 | `workplane_kind` | `STRING` enum `named`, `custom`, `face` | not null | CadQuery workplane category. |
 | `named_plane` | `STRING` enum `xy`, `yz`, `xz` | null | Named plane. |
 | `source_span` | `SourceSpan` | not null | Creating call span. |
@@ -157,9 +157,9 @@ SourceSpan = STRUCT<
   end_column: INT64
 >
 
-Point3 = STRUCT<x: DOUBLE, y: DOUBLE, z: DOUBLE>
-Vector3 = STRUCT<x: DOUBLE, y: DOUBLE, z: DOUBLE>
-BoundingBox = STRUCT<min: Point3, max: Point3>
+Point3D = STRUCT<x: DOUBLE, y: DOUBLE, z: DOUBLE>
+Vector3D = STRUCT<x: DOUBLE, y: DOUBLE, z: DOUBLE>
+BoundingBox = STRUCT<min: Point3D, max: Point3D>
 BoundingBoxChange = STRUCT<before: BoundingBox, after: BoundingBox>
 TopologyDelta = STRUCT<
   face_delta: INT64,
@@ -168,13 +168,13 @@ TopologyDelta = STRUCT<
 >
 
 EntityFingerprint = STRUCT<
-  point: Point3 | NULL,
-  start: Point3 | NULL,
-  end: Point3 | NULL,
+  point: Point3D | NULL,
+  start: Point3D | NULL,
+  end: Point3D | NULL,
   length: DOUBLE | NULL,
-  centroid: Point3 | NULL,
+  centroid: Point3D | NULL,
   area: DOUBLE | NULL,
-  normal: Vector3 | NULL,
+  normal: Vector3D | NULL,
   bbox: BoundingBox | NULL
 >
 

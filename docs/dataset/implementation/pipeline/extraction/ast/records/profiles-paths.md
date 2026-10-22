@@ -1,6 +1,6 @@
 # AST profiles and paths
 
-**Parent:** [`extraction/README.md`](../README.md).
+**Parent:** [`../algorithm/pipeline.md`](../algorithm/pipeline.md).
 
 ## CadQuery profile
 
@@ -10,7 +10,7 @@
 | `operation_id` | string | AST | yes | Creating operation. | 02b, 02c |
 | `profile_kind` | ProfileKind | AST | yes | Rectangle, circle, ellipse, polygon, slot, or other. | 02c |
 | `dimensions` | map of string to StaticExpression | AST | yes | Unevaluated dimensions. | 02c |
-| `points` | list of Point2 | AST | no | CadQuery profile points, when fixed. | 02c |
+| `points` | list of Point2D | AST | no | CadQuery profile points, when fixed. | 02c |
 | `is_closed` | boolean | AST | yes | Closed boundary flag. | 02c |
 | `workplane_id` | string or null | AST | no | CadQuery workplane used. | 02c |
 | `source_span` | SourceSpan | AST | yes | Span of the creating call. | review |
@@ -22,7 +22,7 @@
 | `path_id` | string | AST | yes | `{operation_id}:{ordinal}`. | 02c |
 | `operation_id` | string | AST | yes | Creating operation. | 02b, 02c |
 | `path_kind` | PathKind | AST | yes | Line, polyline, spline, arc, helix, or other. | 02c |
-| `points` | list of Point3 | AST | no | Fixed control or sample points. | 02c |
+| `points` | list of Point3D | AST | no | Fixed control or sample points. | 02c |
 | `segments` | list of PathSegment | AST | no | Segment records. | 02c |
 | `is_closed` | boolean | AST | yes | Closed path flag. | 02c |
 | `workplane_id` | string or null | AST | no | CadQuery workplane used. | 02c |
@@ -42,7 +42,7 @@ other path operation is a CadQuery path. Both records may reference the same
 operation.
 
 The derivation tables, point models, and literal-point rules are in
-[`CadQuery shape and path derivation`](shape-derivation.md).
+[`CadQuery shape and path derivation`](../algorithm/shape-derivation.md).
 `profile_id` and `path_id` use `<operation_id>:<ordinal>`; the ordinal is the
 program order within the operation. `workplane_id` is the receiver binding's
 current CadQuery workplane, or null for a standalone constructor path.

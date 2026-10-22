@@ -1,10 +1,10 @@
 # AST operations
 
-**Parent:** [`extraction/README.md`](../README.md).
+**Parent:** [`../algorithm/pipeline.md`](../algorithm/pipeline.md).
 
 These fields describe one top-level call assignment. A `StaticOperation` is a
 statement about the program, not a measured shape. The deterministic passes are
-in [`algorithm.md`](algorithm.md).
+in [`pipeline.md`](../algorithm/pipeline.md).
 
 | Field | Field type | Origin | Required | Meaning | Consumer |
 |---|---|---|---|---|---|

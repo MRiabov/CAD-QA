@@ -1,6 +1,6 @@
 # AST solids
 
-**Parent:** [`extraction/README.md`](../README.md).
+**Parent:** [`../algorithm/pipeline.md`](../algorithm/pipeline.md).
 
 These fields specialize a `StaticOperation` for solid-producing calls.
 
@@ -27,5 +27,5 @@ These fields specialize a `StaticOperation` for solid-producing calls.
 - Transforms: `translate`, `rotate`, `mirror`, `transformed`.
 
 `feature_kind` and `solid_kind` are static classifications. The complete method
-table is in [`algorithm.md`](algorithm.md). Runtime material change and topology
-change are measured in [`cadquery/effects.md`](../cadquery/effects.md).
+table is in [`pipeline.md`](../algorithm/pipeline.md). Runtime material change and topology
+change are measured in [`cadquery/records/effects.md`](../../cadquery/records/effects.md).

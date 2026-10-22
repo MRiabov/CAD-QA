@@ -1,9 +1,9 @@
 # AST expressions
 
-**Parent:** [`extraction/README.md`](../README.md).
+**Parent:** [`../algorithm/pipeline.md`](../algorithm/pipeline.md).
 
 `StaticExpression` is a typed, unevaluated expression tree. Its accepted forms
-and nesting rules are defined in [`algorithm.md`](algorithm.md).
+and nesting rules are defined in [`pipeline.md`](../algorithm/pipeline.md).
 
 | Field | Field type | Origin | Required | Meaning | Consumer |
 |---|---|---|---|---|---|

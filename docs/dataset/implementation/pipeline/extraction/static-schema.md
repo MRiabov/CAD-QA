@@ -76,9 +76,9 @@ Exactly one row exists per `program_id`.
 | `operation_id` | `STRING` | not null | Creating operation. |
 | `workplane_kind` | `STRING` enum `named`, `custom`, `face` | not null | CadQuery workplane category. |
 | `named_plane` | `STRING` enum `xy`, `yz`, `xz` | null | Named plane. |
-| `origin` | `Point3` | null | Static frame origin. |
-| `x_direction` | `Vector3` | null | Static x direction. |
-| `normal` | `Vector3` | null | Static normal. |
+| `origin` | `Point3D` | null | Static frame origin. |
+| `x_direction` | `Vector3D` | null | Static x direction. |
+| `normal` | `Vector3D` | null | Static normal. |
 | `frame_status` | `STRING` enum `explicit`, `derived`, `unknown` | not null | Static frame confidence. |
 | `derived_from_workplane_id` | `STRING` | null | Receiver CadQuery workplane. |
 | `source_selector_id` | `STRING` | null | Face CadQuery selector. |
@@ -95,7 +95,7 @@ Exactly one row exists per `program_id`.
 | `operation_id` | `STRING` | not null | Creating operation. |
 | `profile_kind` | `STRING` enum `ProfileKind` | not null | CadQuery profile category. |
 | `dimensions` | `MAP<STRING, StaticExpression>` | not null | Named dimensions. |
-| `points` | `LIST<Point2>` | null | Fixed points. |
+| `points` | `LIST<Point2D>` | null | Fixed points. |
 | `is_closed` | `BOOLEAN` | not null | Closed boundary flag. |
 | `workplane_id` | `STRING` | null | CadQuery workplane. |
 | `source_span` | `SourceSpan` | not null | Creating call span. |
@@ -107,14 +107,14 @@ Exactly one row exists per `program_id`.
 | `path_id` | `STRING` | not null | `<operation_id>:<ordinal>`. |
 | `operation_id` | `STRING` | not null | Creating operation. |
 | `path_kind` | `STRING` enum `PathKind` | not null | Path category. |
-| `points` | `LIST<Point3>` | null | Fixed points. |
+| `points` | `LIST<Point3D>` | null | Fixed points. |
 | `segments` | `LIST<PathSegment>` | not null | Segment records. |
 | `is_closed` | `BOOLEAN` | not null | Closed path flag. |
 | `workplane_id` | `STRING` | null | CadQuery workplane. |
 | `source_span` | `SourceSpan` | not null | Creating call span. |
 
 `PathSegment` is defined in
-[`ast/shape-derivation.md`](ast/shape-derivation.md).
+[`ast/algorithm/shape-derivation.md`](ast/algorithm/shape-derivation.md).
 
 ## `static_selectors`
 
@@ -139,9 +139,9 @@ SourceSpan = STRUCT<
   end_column: INT64
 >
 
-Point2 = STRUCT<x: DOUBLE, y: DOUBLE>
-Point3 = STRUCT<x: DOUBLE, y: DOUBLE, z: DOUBLE>
-Vector3 = STRUCT<x: DOUBLE, y: DOUBLE, z: DOUBLE>
+Point2D = STRUCT<x: DOUBLE, y: DOUBLE>
+Point3D = STRUCT<x: DOUBLE, y: DOUBLE, z: DOUBLE>
+Vector3D = STRUCT<x: DOUBLE, y: DOUBLE, z: DOUBLE>
 
 DictEntry = STRUCT<
   key: StaticExpression,

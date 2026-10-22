@@ -1,6 +1,6 @@
 # AST CadQuery selectors
 
-**Parent:** [`extraction/README.md`](../README.md).
+**Parent:** [`../algorithm/pipeline.md`](../algorithm/pipeline.md).
 
 P0/P1 selectors are limited to faces, edges, and vertices. Wire and solid
 selectors have no graph entity category and reject the program.

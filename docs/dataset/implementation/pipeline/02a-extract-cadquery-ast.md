@@ -51,15 +51,15 @@ The complete field sets, expression typing, instrumentation rewrite, and runtime
 join keys are in [`extraction/README.md`](extraction/README.md). Exact static
 columns are in [`extraction/static-schema.md`](extraction/static-schema.md). In particular:
 
-- [`extraction/ast/algorithm.md`](extraction/ast/algorithm.md);
-- [`extraction/ast/method-signatures.md`](extraction/ast/method-signatures.md);
-- [`extraction/ast/operations.md`](extraction/ast/operations.md);
-- [`extraction/ast/expressions.md`](extraction/ast/expressions.md);
-- [`extraction/ast/workplanes.md`](extraction/ast/workplanes.md);
-- [`extraction/ast/profiles-paths.md`](extraction/ast/profiles-paths.md);
-- [`extraction/ast/shape-derivation.md`](extraction/ast/shape-derivation.md);
-- [`extraction/ast/selectors.md`](extraction/ast/selectors.md);
-- [`extraction/ast/instrumentation.md`](extraction/ast/instrumentation.md).
+- [`extraction/ast/algorithm/pipeline.md`](extraction/ast/algorithm/pipeline.md);
+- [`extraction/ast/algorithm/method-signatures.md`](extraction/ast/algorithm/method-signatures.md);
+- [`extraction/ast/records/operations.md`](extraction/ast/records/operations.md);
+- [`extraction/ast/records/expressions.md`](extraction/ast/records/expressions.md);
+- [`extraction/ast/records/workplanes.md`](extraction/ast/records/workplanes.md);
+- [`extraction/ast/records/profiles-paths.md`](extraction/ast/records/profiles-paths.md);
+- [`extraction/ast/algorithm/shape-derivation.md`](extraction/ast/algorithm/shape-derivation.md);
+- [`extraction/ast/records/selectors.md`](extraction/ast/records/selectors.md);
+- [`extraction/ast/records/instrumentation.md`](extraction/ast/records/instrumentation.md).
 
 ## Accepted subset
 
@@ -88,7 +88,7 @@ The closed method allowlist and its static mapping are in
 ## Behavior
 
 - Parse the normalized program with the Python AST.
-- Run the passes in [`extraction/ast/algorithm.md`](extraction/ast/algorithm.md)
+- Run the passes in [`extraction/ast/algorithm/pipeline.md`](extraction/ast/algorithm/pipeline.md)
   in order.
 - Resolve names to earlier assignments in program order.
 - Preserve assignment order and program line numbers.
@@ -110,8 +110,10 @@ The closed method allowlist and its static mapping are in
   the CadQuery selector expression and receiver. Evaluation happens in `02b` at
   the call point. Static extraction does not resolve selector strings.
 - **P0/P1 selector scope.** *Resolved 2026-10-22.* Only face, edge, and vertex
-  selectors are graph-addressable. Wire and solid selectors/accessors reject the
-  program until `02c` models those entities.
+  CadQuery selectors are graph-addressable. `wires` and `solids` CadQuery
+  selectors reject the program until `02c` models those entities. `wire`, `Edges`,
+  and `Solids` are allowed only in the shape-accessor/path forms in the method
+  signatures.
 - **Algorithm completeness.** *Resolved 2026-10-22.* The deterministic pass
   order, assignment rules, expression subset, binding classification, and method
-  classification are in [`extraction/ast/algorithm.md`](extraction/ast/algorithm.md).
+  classification are in [`extraction/ast/algorithm/pipeline.md`](extraction/ast/algorithm/pipeline.md).

@@ -1,6 +1,6 @@
 # AST extraction algorithm
 
-**Parent:** [`extraction/README.md`](../README.md).
+**Parent:** [`extraction/README.md`](../../README.md).
 
 This document defines the deterministic `02a` passes. It is the implementation
 contract; the field docs define record shapes. The closed receiver/argument

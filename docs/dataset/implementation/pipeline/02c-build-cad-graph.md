@@ -352,8 +352,8 @@ count is a non-negative 64-bit integer.
 | `operation` | `OperationAttributes` | `operation_kind: OperationKind`, `method: str`, `order: int`, `source_line: int`, `result_var: str \| None` |
 | `feature` | `FeatureAttributes` | `feature_kind: FeatureKind` |
 | `solid_state` | `SolidStateAttributes` | `sequence_index: int`, `is_final: bool`, `is_solid: bool`, `shape_hash: Sha256 \| None` |
-| `face` | `FaceAttributes` | `fingerprint_sha256: Sha256`, `surface_kind: SurfaceKind` |
-| `edge` | `EdgeAttributes` | `fingerprint_sha256: Sha256`, `curve_kind: CurveKind`, `is_closed: bool` |
+| `face` | `FaceAttributes` | `fingerprint_sha256: Sha256`, `face_surface_kind: FaceSurfaceKind` |
+| `edge` | `EdgeAttributes` | `fingerprint_sha256: Sha256`, `edge_curve_kind: EdgeCurveKind`, `is_closed: bool` |
 | `vertex` | `VertexAttributes` | `fingerprint_sha256: Sha256` |
 | `edge_endpoint` | `EdgeEndpointAttributes` | `end: EdgeEnd` |
 | `cadquery_profile` | `CadQueryProfileAttributes` | `profile_kind: ProfileKind`, `is_closed: bool` |
@@ -370,8 +370,8 @@ count is a non-negative 64-bit integer.
 |---|---|
 | `OperationKind` | `workplane`, `sketch`, `path`, `solid`, `cadquery_selector`, `boolean`, `assembly`, `modifier`, `transform`, `accessor` |
 | `FeatureKind` | `add_material`, `remove_material`, `modify`, `construction` |
-| `SurfaceKind` | `plane`, `cylinder`, `cone`, `sphere`, `torus`, `bspline`, `other` |
-| `CurveKind` | `line`, `circle`, `ellipse`, `hyperbola`, `parabola`, `bspline`, `other` |
+| `FaceSurfaceKind` | `plane`, `cylinder`, `cone`, `sphere`, `torus`, `bspline`, `other` |
+| `EdgeCurveKind` | `line`, `circle`, `ellipse`, `hyperbola`, `parabola`, `bspline`, `other` |
 | `EdgeEnd` | `start`, `end` |
 | `ProfileKind` | `rectangle`, `circle`, `ellipse`, `polygon`, `slot`, `other` |
 | `WorkplaneKind` | `named`, `custom`, `face` |
@@ -380,6 +380,11 @@ count is a non-negative 64-bit integer.
 | `PathSegmentKind` | `line`, `arc`, `spline`, `other` |
 | `RegionSign` | `added`, `removed` |
 | `SelectorKind` | `string`, `call`, `filter`, `implicit` |
+
+`FaceSurfaceKind` names the geometric surface of a face; `FaceKind` would
+conflate the entity category with its geometry. `EdgeCurveKind` names the curve
+of an edge. These names are a graph schema change from an earlier `SurfaceKind`
+/ `CurveKind` draft.
 
 ### Attribute rules
 

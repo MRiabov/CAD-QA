@@ -1,9 +1,9 @@
 # AST workplanes
 
-**Parent:** [`extraction/README.md`](../README.md).
+**Parent:** [`../algorithm/pipeline.md`](../algorithm/pipeline.md).
 
 The static CadQuery workplane record describes the program's intended frame. The measured
-frame is captured by [`../cadquery/runtime.md`](../cadquery/runtime.md).
+frame is captured by [`../../cadquery/algorithm/runtime.md`](../../cadquery/algorithm/runtime.md).
 
 | Field | Field type | Origin | Required | Meaning | Consumer |
 |---|---|---|---|---|---|
@@ -11,9 +11,9 @@ frame is captured by [`../cadquery/runtime.md`](../cadquery/runtime.md).
 | `operation_id` | string | AST | yes | Creating operation. | 02c |
 | `workplane_kind` | WorkplaneKind | AST | yes | Named, custom, or face. | 02c |
 | `named_plane` | NamedPlane or null | AST | no | `xy`, `yz`, or `xz`. | 02c |
-| `origin` | Point3 or null | AST | no | Explicit or derived origin, when known. | review |
-| `x_direction` | Vector3 or null | AST | no | Explicit or derived x direction, when known. | review |
-| `normal` | Vector3 or null | AST | no | Explicit or derived normal, when known. | review |
+| `origin` | Point3D or null | AST | no | Explicit or derived origin, when known. | review |
+| `x_direction` | Vector3D or null | AST | no | Explicit or derived x direction, when known. | review |
+| `normal` | Vector3D or null | AST | no | Explicit or derived normal, when known. | review |
 | `frame_status` | `explicit`, `derived`, or `unknown` | AST | yes | Confidence in the static frame. | review, 02b |
 | `derived_from_workplane_id` | string or null | AST | no | Receiver CadQuery workplane for a derived frame. | review |
 | `source_selector_id` | string or null | AST | no | Face CadQuery selector that defines a face frame. | 02c |

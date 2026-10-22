@@ -1,6 +1,6 @@
 # CadQuery topology
 
-**Parent:** [`extraction/README.md`](../README.md).
+**Parent:** [`../algorithm/runtime.md`](../algorithm/runtime.md).
 
 Topology records connect entities inside one state. They are extracted from the
 kernel, not inferred from the program text.
@@ -37,6 +37,6 @@ For each state:
    emits one `face_adjacent_to_face` pair in canonical order.
 
 `topology_id` and row order are defined in
-[`../canonicalization.md`](../canonicalization.md). Every endpoint must be in the
+[`../canonicalization.md`](../../canonicalization.md). Every endpoint must be in the
 entity table for the same state. A missing endpoint rejects the state. Kernel
 enumeration order is never persisted.

@@ -56,7 +56,7 @@ All hashes are SHA-256 lowercase hexadecimal over UTF-8 bytes.
 
 ## Fingerprints
 
-The fingerprint fields are defined in [`cadquery/solids.md`](cadquery/solids.md).
+The fingerprint fields are defined in [`cadquery/records/entities.md`](cadquery/records/entities.md).
 The canonical fingerprint object is:
 
 ```json

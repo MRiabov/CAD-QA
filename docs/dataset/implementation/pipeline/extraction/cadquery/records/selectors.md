@@ -1,9 +1,9 @@
 # CadQuery selector results
 
-**Parent:** [`extraction/README.md`](../README.md).
+**Parent:** [`../algorithm/runtime.md`](../algorithm/runtime.md).
 
 A CadQuery selector result is the membership produced by one evaluated static CadQuery selector.
-It is not a solid state. The capture algorithm is in [`runtime.md`](runtime.md).
+It is not a solid state. The capture algorithm is in [`../algorithm/runtime.md`](../algorithm/runtime.md).
 
 | Field | Field type | Origin | Required | Meaning | Consumer |
 |---|---|---|---|---|---|
@@ -25,6 +25,6 @@ It is not a solid state. The capture algorithm is in [`runtime.md`](runtime.md).
 - A CadQuery selector exception rejects the whole program.
 - `count` equals `len(selected_entity_ids)`.
 - IDs are sorted by category rank and entity ID, as defined in
-  [`../canonicalization.md`](../canonicalization.md).
+  [`../../canonicalization.md`](../../canonicalization.md).
 - Wire and solid selectors are outside P0/P1; they are rejected before
   execution rather than recorded with incomplete membership.

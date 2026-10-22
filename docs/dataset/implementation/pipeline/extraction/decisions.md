@@ -110,14 +110,14 @@ record. `02c` uses the measured workplane frame for graph measurements.
 ## EX-8 — Capture the result, not the arguments
 
 **Decision:** Instrumentation passes the operation ID, result variable, receiver
-variable, CadQuery selector category, capture class, and a thunk. It does not
+variable, CadQuery selector category, capture class, and an `evaluate` callable. It does not
 pass evaluated receiver or argument values.
 
 **Why:** The graph needs the produced state, CadQuery selector membership, and before/after
 effect. Argument values are not required, and evaluating them separately would
 risk double evaluation or require rewriting every argument expression.
 
-**Consequence:** The thunk is evaluated exactly once. The recorder uses the static
+**Consequence:** The `evaluate` callable is evaluated exactly once. The recorder uses the static
 `receiver_var` to look up the current runtime state. A `RecordedAssignment` has no
 `receiver_value` or `argument_values` field.
 
@@ -211,7 +211,7 @@ does not reserve partial P2 fields or accept P2 programs as best effort.
 ## EX-16 — Method names are not enough
 
 **Decision:** Every allowlisted call has a receiver, argument, result, and state
-contract in [`ast/method-signatures.md`](ast/method-signatures.md). `fuse` is a
+contract in [`ast/algorithm/method-signatures.md`](ast/algorithm/method-signatures.md). `fuse` is a
 qualified shape method, `Edges` and `Solids` are shape accessors, `wire` returns
 a CadQuery workplane, and `newObject`/`add` are not state-producing.
 
@@ -228,7 +228,7 @@ state; `combine` does.
 
 **Decision:** Face surface and edge curve categories, centroids, bounding boxes,
 counts, validity, and solid detection use the exact calls and closed mappings in
-[`cadquery/geometry-classification.md`](cadquery/geometry-classification.md).
+[`cadquery/algorithm/geometry-classification.md`](cadquery/algorithm/geometry-classification.md).
 
 **Why:** CadQuery and OCP expose several plausible calls. A guessed mapping would
 make extraction artifacts depend on an implementation choice rather than a
@@ -241,7 +241,7 @@ Do not substitute zero, null, or a guessed category.
 
 **Decision:** Effects, topology, and CadQuery selector results carry typed
 evidence references at capture time, defined in
-[`cadquery/evidence.md`](cadquery/evidence.md).
+[`cadquery/records/evidence.md`](cadquery/records/evidence.md).
 
 **Why:** A measurement without a reproducible state, entity, operation, span,
 kernel call, or selector reference is not sufficient for answer evidence.

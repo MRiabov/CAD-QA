@@ -66,7 +66,7 @@ CadQuery selector row for the failed operation.
   result, including sorted recordings, states, entities, topology, frames,
   selectors, effects, and final state.
 - `cache_key` is defined in
-  [`cadquery/runtime.md`](cadquery/runtime.md).
+  [`cadquery/algorithm/runtime.md`](cadquery/algorithm/runtime.md).
 - `entity_table_ref` is `entity:<state_id>`. The `execution_entities` rows for
   that state are the table.
 

@@ -1,6 +1,6 @@
 # CadQuery geometry classification
 
-**Parent:** [`extraction/README.md`](../README.md).
+**Parent:** [`extraction/README.md`](../../README.md).
 
 This document fixes the runtime API calls and mappings used to populate shape,
 entity, and evidence fields. A failure in any required call is a
@@ -65,7 +65,7 @@ is a `geometry_capture` failure.
 
 Map `face.geomType()` case-insensitively:
 
-| CadQuery value | `SurfaceKind` |
+| CadQuery value | `FaceSurfaceKind` |
 |---|---|
 | `PLANE` | `plane` |
 | `CYLINDER` | `cylinder` |
@@ -81,7 +81,7 @@ The mapping is closed. Do not infer a face category from its normal or area.
 
 Map `edge.geomType()` case-insensitively:
 
-| CadQuery value | `CurveKind` |
+| CadQuery value | `EdgeCurveKind` |
 |---|---|
 | `LINE` | `line` |
 | `CIRCLE` | `circle` |
@@ -123,4 +123,4 @@ from the static model.
 
 Any exception from a required kernel call is a `geometry_capture` failure with
 the operation ID and program span. Do not substitute zero, null, or a guessed
-category. The failure kinds are listed in [`../validation.md`](../validation.md).
+category. The failure kinds are listed in [`../../validation.md`](../../validation.md).

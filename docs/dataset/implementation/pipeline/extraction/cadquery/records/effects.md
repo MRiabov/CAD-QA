@@ -1,6 +1,6 @@
 # CadQuery operation effects
 
-**Parent:** [`extraction/README.md`](../README.md).
+**Parent:** [`../algorithm/runtime.md`](../algorithm/runtime.md).
 
 Effects describe what a state-producing operation changed.
 

@@ -1,6 +1,6 @@
 # Extraction evidence
 
-**Parent:** [`extraction/README.md`](../README.md).
+**Parent:** [`../algorithm/runtime.md`](../algorithm/runtime.md).
 
 Evidence makes a measurement, effect, or topology record reproducible. It is an
 extraction-local model; `02c` translates it into CAD graph evidence references.
@@ -72,4 +72,4 @@ artifact rejects the graph. `02c` does not drop an unresolved reference.
 - Evidence is captured once, at the same time as the record.
 - Do not reconstruct evidence from prompt text, task text, or a later run.
 - Do not store a kernel handle as evidence.
-- Canonical ordering of `refs` follows [`../canonicalization.md`](../canonicalization.md).
+- Canonical ordering of `refs` follows [`../canonicalization.md`](../../canonicalization.md).

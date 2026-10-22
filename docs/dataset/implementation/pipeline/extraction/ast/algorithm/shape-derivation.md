@@ -1,6 +1,6 @@
 # CadQuery shape and path derivation
 
-**Parent:** [`extraction/README.md`](../README.md).
+**Parent:** [`extraction/README.md`](../../README.md).
 
 This document fixes the derived fields for CadQuery profile and path records.
 The accepted call forms and argument names are in
@@ -8,25 +8,25 @@ The accepted call forms and argument names are in
 
 ## Point and segment models
 
-`Point2` has `x` and `y` doubles.
+`Point2D` has `x` and `y` doubles.
 
-`Point3` has `x`, `y`, and `z` doubles.
+`Point3D` has `x`, `y`, and `z` doubles.
 
-`Vector3` has `x`, `y`, and `z` doubles.
+`Vector3D` has `x`, `y`, and `z` doubles.
 
 `PathSegment` has:
 
 | Field | Field type | Required | Meaning |
 |---|---|---|---|
 | `segment_kind` | `line`, `arc`, `spline`, or `other` | yes | Segment category. |
-| `start` | Point2 or Point3 or null | no | Start point when fixed. |
-| `end` | Point2 or Point3 or null | no | End point when fixed. |
-| `control_points` | list of Point2 or Point3 | yes | Points supplied to the call; empty when none. |
-| `center` | Point2 or Point3 or null | no | Arc or circle center when fixed. |
+| `start` | Point2D or Point3D or null | no | Start point when fixed. |
+| `end` | Point2D or Point3D or null | no | End point when fixed. |
+| `control_points` | list of Point2D or Point3D | yes | Points supplied to the call; empty when none. |
+| `center` | Point2D or Point3D or null | no | Arc or circle center when fixed. |
 | `radius` | double or null | no | Arc or circle radius when fixed. |
 | `start_angle` | double or null | no | Start angle in degrees when fixed. |
 | `end_angle` | double or null | no | End angle in degrees when fixed. |
-| `normal` | Vector3 or null | no | Plane normal for a 3D arc or circle. |
+| `normal` | Vector3D or null | no | Plane normal for a 3D arc or circle. |
 | `is_closed` | boolean | yes | Segment closes on itself. |
 
 ## Literal point extraction

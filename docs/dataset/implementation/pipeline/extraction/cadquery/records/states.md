@@ -1,10 +1,10 @@
 # CadQuery states
 
-**Parent:** [`extraction/README.md`](../README.md).
+**Parent:** [`../algorithm/runtime.md`](../algorithm/runtime.md).
 
 A state is the shape after a state-producing operation. States are recorded after
 the instrumented assignment returns. The capture algorithm is in
-[`runtime.md`](runtime.md).
+[`../algorithm/runtime.md`](../algorithm/runtime.md).
 
 | Field | Field type | Origin | Required | Meaning | Consumer |
 |---|---|---|---|---|---|
@@ -14,9 +14,9 @@ the instrumented assignment returns. The capture algorithm is in
 | `is_solid` | boolean | CadQuery | yes | Shape contains at least one solid. | 02c |
 | `is_valid` | boolean | CadQuery | yes | Kernel validity result. | 02c |
 | `volume` | double | CadQuery | yes | Volume in cubic millimetres. | 02c |
-| `bbox_min` | Point3 | CadQuery | yes | Minimum bounding-box corner. | 02c |
-| `bbox_max` | Point3 | CadQuery | yes | Maximum bounding-box corner. | 02c |
-| `centroid` | Point3 | CadQuery | yes | Centroid in the program frame. | 02c |
+| `bbox_min` | Point3D | CadQuery | yes | Minimum bounding-box corner. | 02c |
+| `bbox_max` | Point3D | CadQuery | yes | Maximum bounding-box corner. | 02c |
+| `centroid` | Point3D | CadQuery | yes | Centroid in the program frame. | 02c |
 | `face_count` | integer | CadQuery | yes | Face count. | 02c |
 | `edge_count` | integer | CadQuery | yes | Edge count. | 02c |
 | `vertex_count` | integer | CadQuery | yes | Vertex count. | 02c |
@@ -24,7 +24,7 @@ the instrumented assignment returns. The capture algorithm is in
 | `source_span` | SourceSpan | AST | yes | Producing assignment span. | review |
 
 The kernel calls for volume, bounding box, centroid, counts, validity, and
-solid detection are in [`geometry-classification.md`](geometry-classification.md).
+solid detection are in [`../algorithm/geometry-classification.md`](../algorithm/geometry-classification.md).
 
 ## Capture rules
 
