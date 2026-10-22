@@ -208,7 +208,7 @@ not consume quota.
 Use the plan's `construction_attempt_budgets`. `03a` computes each from the
 remaining target count. On resume, use the accepted count in the `DeficitLedger`
 and construct only the remaining target count. Accepted definitions are not
-regenerated or revalidated. It does not top up a quota target incrementally within
+regenerated or revalidated while the input versions are unchanged. It does not top up a quota target incrementally within
 the same plan revision.
 
 The batch is one iteration and is parallelizable. Extra accepted definitions

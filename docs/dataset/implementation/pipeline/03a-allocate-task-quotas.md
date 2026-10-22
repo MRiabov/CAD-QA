@@ -316,10 +316,20 @@ reserves, and recorded misses are sufficient.
 and a `ProgramReassignmentRequest`. It emits a new plan version; it does not
 construct or validate task definitions.
 
-Accepted definitions are immutable. The `DeficitLedger` carries accepted and
-rejected counts by quota target, family, and task reasoning step count. A task
-can contribute to several quota targets, so accepted quota-target counts are
-independent and must not be added together.
+Accepted definitions are immutable while the program, CAD graph, task reasoning
+step support table, and task-definition rule versions are unchanged. If any of
+those inputs changes, accepted definitions from the old inputs are not reused;
+`03a` starts a new plan instead.
+
+The `DeficitLedger` carries accepted and rejected counts by quota target, family,
+and task reasoning step count. A task can contribute to several quota targets, so
+accepted quota-target counts are independent and must not be added together.
+
+A rare quota target is a residual target, not a reason to rewrite an accepted
+definition. If the capable family has no unused capacity, `03a` uses unused
+capacity in another capable family, adds a family or program in the same split
+through the slow loop, or records the deficit. Split isolation and plan caps are
+hard constraints; moving or regenerating accepted tasks does not solve them.
 
 For each new absolute target, compute the remaining amount:
 
