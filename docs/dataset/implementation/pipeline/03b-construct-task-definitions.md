@@ -10,8 +10,9 @@ canonical identity.
 
 ## Input / output
 
-- Input: `CadGraph` and `TaskQuotaPlan`.
-- Output: `TaskDefinition` records and a `DeficitLedger`.
+- Input: `CadGraph`, `TaskQuotaPlan`, and the current `DeficitLedger` on resume
+  (empty on the first run).
+- Output: `TaskDefinition` records and the updated `DeficitLedger`.
 
 ## Task definition
 
@@ -204,9 +205,10 @@ not consume quota.
 
 ## Construction attempt budget
 
-Each quota target receives a construction attempt budget of
-`ceil(quota_target_count * construction_attempt_multiplier)`. `03b` constructs the full
-batch, validates it, and accepts up to the target count. It does not top up a quota target incrementally within
+Use the plan's `construction_attempt_budgets`. `03a` computes each from the
+remaining target count. On resume, use the accepted count in the `DeficitLedger`
+and construct only the remaining target count. Accepted definitions are not
+regenerated or revalidated. It does not top up a quota target incrementally within
 the same plan revision.
 
 The batch is one iteration and is parallelizable. Extra accepted definitions

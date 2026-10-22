@@ -17,8 +17,8 @@ program data when the plan has deficits.
 
 | Sub-step | Input model | Output model | Persisted artifact |
 |---|---|---|---|
-| `03a` | `CadGraph`, `ProgramMetadata`, task reasoning step support tables, dataset release targets, `ProgramReassignmentRequest` | `TaskQuotaPlan` | Task quota plan Parquet or JSON. |
-| `03b` | `CadGraph`, `TaskQuotaPlan` | `TaskDefinition`, `DeficitLedger` | Task definitions Parquet and failure records. |
+| `03a` | `CadGraph`, `ProgramMetadata`, task reasoning step support tables, dataset release targets, `DeficitLedger`, `ProgramReassignmentRequest` | `TaskQuotaPlan` | Task quota plan Parquet or JSON. |
+| `03b` | `CadGraph`, `TaskQuotaPlan`, `DeficitLedger` | `TaskDefinition`, `DeficitLedger` | Task definitions Parquet and failure records. |
 | `03c` | `DeficitLedger`, `TaskQuotaPlan`, family profiles, `ProgramMetadata` | `ProgramReassignmentRequest`, `ProgramRequest`, or `AcceptedMiss` | Control records. |
 
 The sub-step docs own the fields and algorithms. This table owns which model and
@@ -27,7 +27,7 @@ artifact crosses each sub-step boundary.
 ## Flow
 
 ```text
-03a allocate
+03a allocate or residual replan
   → 03b construct/sample
   → if deficits: 03c
       fast: ProgramReassignmentRequest → 03a → 03b

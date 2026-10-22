@@ -601,6 +601,14 @@ attempt budgets for one dataset release. `In code:` `TaskQuotaPlan`.
 
 ---
 
+### Deficit ledger
+
+The record of accepted and rejected task-definition counts, accepted clue
+occurrences, and remaining deficits by quota target, family, and task reasoning
+step count. `In code:` `DeficitLedger`. `Distinct from:` the **Task quota plan**, which sets the targets.
+
+---
+
 ### Family task capacity
 
 The estimated maximum number of tasks a CADEvolve program family can supply.

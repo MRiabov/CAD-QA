@@ -68,6 +68,7 @@ the user-visible outcome.
 | **Quota dimension** | Internal | One independent way tasks are counted for coverage and balance: task target category, clue type, answer meaning, or answer format. |
 | **Quota target** | Internal | A count target for one quota dimension value at one task reasoning step count: minimum, target count, and maximum. It is not a task. |
 | **Task quota plan** | Internal | The plan for task quotas, family assignment, split assignment, and construction attempt budgets for one dataset release. |
+| **Deficit ledger** | Internal | The record of accepted and rejected task-definition counts, accepted clue occurrences, and remaining deficits by quota target, family, and task reasoning step count. |
 | **Family task capacity** | Internal | The estimated maximum number of tasks a CADEvolve program family can supply. |
 | **Split task target** | Internal | The planned number of tasks for one split. |
 | **Construction attempt budget** | Internal | The number of task-definition construction attempts allocated to a quota target before accepted tasks are counted. |

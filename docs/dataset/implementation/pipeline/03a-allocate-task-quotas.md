@@ -10,7 +10,8 @@ definitions are generated.
 
 - Input: CAD graphs for the selected program pool, program metadata, the
   [task reasoning step support tables](../task-step-support.md), dataset release
-  targets, and `ProgramReassignmentRequest` records from `03c`.
+  targets, the current `DeficitLedger` (empty on the first plan), and
+  `ProgramReassignmentRequest` records from `03c`.
 - Output: `TaskQuotaPlan`.
 
 ## Task quota plan
@@ -19,18 +20,20 @@ definitions are generated.
 
 | Field | Meaning |
 |---|---|
-| `plan_version`, `seed` | Version and deterministic ordering seed. |
+| `plan_version`, `parent_plan_version`, `seed` | Version, previous version, and deterministic ordering seed. |
 | `task_reasoning_step_quotas` | Target task count for each task reasoning step count. |
 | `quota_targets` | Quota targets: task reasoning step count, quota dimension, dimension value, minimum, target count, maximum, and priority. |
 | `clue_quotas` | Clue quotas counted over clue occurrences. |
 | `clue_occurrences` | Planned clue occurrences for each task reasoning step count. |
 | `family_profiles` | Graph capabilities, family task capacity, and probe success rate per CADEvolve program family. |
 | `family_assignment` | Family to split, task quota, per-task-reasoning-step task quotas, and assigned quota targets. |
-| `construction_attempt_budgets` | One construction batch per quota target and family. |
+| `construction_attempt_budgets` | One construction batch per quota target and family for the remaining work in this plan revision. |
 | `construction_attempt_multiplier` | Construction attempt multiplier over the accepted quota; default 1.5, or 2.0 for high-rejection quota targets. |
 | `expansion_tier` | Current data tier before a deficit triggers `03c`. |
 
-The plan is a target. It does not prove that the corpus can supply every quota target.
+The plan stores absolute targets; accepted and remaining counts live in the
+`DeficitLedger`. The plan is a target; it does not prove that the corpus can
+supply every quota target.
 
 ## Quota targets
 
@@ -307,20 +310,73 @@ Exact split and quota target assignment is a bin-packing problem and can be hard
 contract does not require an exact optimum. Deterministic greedy allocation,
 reserves, and recorded misses are sufficient.
 
-## Program reassignment
+## Replanning after a deficit
 
-`03a` accepts a `ProgramReassignmentRequest` from `03c` when the current graphs
-can supply a deficit but the plan does not use them.
+`03a` is re-entered with the current `TaskQuotaPlan`, the current `DeficitLedger`,
+and a `ProgramReassignmentRequest`. It emits a new plan version; it does not
+construct or validate task definitions.
 
-It can:
+Accepted definitions are immutable. The `DeficitLedger` carries accepted and
+rejected counts by quota target, family, and task reasoning step count. A task
+can contribute to several quota targets, so accepted quota-target counts are
+independent and must not be added together.
 
-- assign an unassigned family to a quota target;
-- move task quota from a saturated family to one with spare capacity;
+For each new absolute target, compute the remaining amount:
+
+`remaining_quota_target_count = max(0, new_quota_target_count - accepted_quota_target_count)`
+
+`remaining_task_reasoning_step_quota = max(0, new_task_reasoning_step_quota - accepted_task_reasoning_step_count)`
+
+`remaining_family_task_quota = max(0, new_family_task_quota - accepted_family_task_count)`
+
+`remaining_family_task_reasoning_step_quota = max(0, new_family_task_reasoning_step_quota - accepted_family_task_reasoning_step_count)`
+
+`remaining_quota_target_minimum = max(0, minimum - accepted_quota_target_count)`
+
+`remaining_clue_occurrence_count = max(0, planned_clue_occurrences - accepted_clue_occurrence_count)`
+
+`remaining_construction_attempt_budget = ceil(remaining_quota_target_count * construction_attempt_multiplier)`
+
+`construction_attempt_budgets` in the new plan use these remaining amounts.
+Accepted definitions are not retried.
+
+Allocate the remaining amounts with the same equations used for the first plan,
+but use `remaining_quota_target_minimum` instead of the original coverage
+minimum. For clue type, use `remaining_clue_occurrence_count` instead of
+`planned_clue_occurrences`. A clue type with accepted clue occurrences has a
+remaining minimum of zero. Do not allocate the new absolute targets again: accepted definitions
+already consume part of every applicable target and satisfy coverage.
+
+The new absolute plan must satisfy all of these, or `03a` rejects the request and
+keeps the current plan version:
+
+- `new_task_reasoning_step_quota` sums to `dataset_release_task_count`;
+- every `new_quota_target_count` is at least its `accepted_quota_target_count`;
+- every `new_family_task_quota` is at least `accepted_family_task_count`;
+- every `new_family_task_reasoning_step_quota` is at least
+  `accepted_family_task_reasoning_step_count`;
+- every target stays within its `minimum` and `maximum`;
+- a family with accepted tasks keeps its split.
+
+`03a` may apply the request to unused capacity only:
+
+- assign an unassigned family to a residual quota target;
+- move unused task quota from a saturated family to one with spare capacity;
 - relax an internal family quota;
 - change a quota target or construction attempt budget within its plan bounds.
 
-It does not fetch, normalize, or execute. It increments the plan version and
-returns control to `03b`.
+It does not move an accepted task to another family or split. It does not fetch,
+normalize, or execute.
+
+The fast loop keeps the current graphs and recomputes only the residual plan. The
+slow loop adds the new families or programs from `01b`/`01c`/`02`, updates their
+family task capacity and probe success rate, assigns a split to each new family,
+and then recomputes the residual plan. In both loops, `03b` resumes with the new
+plan version and the same `DeficitLedger`; accepted definitions are not
+regenerated.
+
+The plan version increments and `parent_plan_version` names the previous version.
+The previous plan and the accepted definitions remain immutable.
 
 ## Deficits
 

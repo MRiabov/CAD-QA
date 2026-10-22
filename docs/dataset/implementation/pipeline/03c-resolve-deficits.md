@@ -22,7 +22,7 @@ There are two distinct loops with different costs.
 
 ```text
 03c ProgramReassignmentRequest
-  → 03a update quotas and family assignment
+  → 03a residual replan
   → 03b resume
 ```
 
@@ -38,7 +38,7 @@ quota, or try a different family for a quota target.
   → 01c fetch delta
   → 01d normalize delta
   → 02 build graphs for delta
-  → 03a update family profiles and plan
+  → 03a update family profiles and residual plan
   → 03b resume
 ```
 
@@ -67,12 +67,14 @@ It contains:
 
 - the originating quota target: task reasoning step count, quota dimension, dimension value;
 - the current family assignment and quota that block the quota target;
+- accepted and remaining counts for the affected quota targets, families, and
+  task reasoning step counts;
 - unassigned families or unused capacity that could help;
 - the requested change: quota target, family assignment, or internal quota;
 - the retry budget;
 - the plan version.
 
-`03a` applies the change, increments the plan version, and returns control to
+`03a` applies the residual change, increments the plan version, and returns control to
 `03b`. It does not fetch, normalize, or execute.
 
 ## ProgramRequest
@@ -83,6 +85,8 @@ It contains:
 
 - the originating quota target: task reasoning step count, quota dimension, dimension value;
 - the missing graph capability;
+- accepted and remaining counts for the affected quota targets, families, and
+  task reasoning step counts;
 - useful feature tags, collections, or family constraints;
 - whether to extend the existing selection order or target metadata;
 - the number of programs requested;
@@ -98,8 +102,8 @@ in an assigned family inherits its split. A genuinely new family is assigned in
 
 `03c` tries the cheapest response first:
 
-1. `ProgramReassignmentRequest` to `03a`; adjust family assignment or sample
-   budget using current graphs.
+1. `ProgramReassignmentRequest` to `03a`; adjust family assignment or
+   construction attempt budget using current graphs.
 2. `ProgramRequest` to `01b`; expand the program pool.
 3. Accept and record the miss.
 
