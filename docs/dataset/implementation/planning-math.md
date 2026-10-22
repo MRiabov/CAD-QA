@@ -60,7 +60,7 @@ cap is plan-level. The step count mix is a target, not a hard quota. A miss is
 documented and accepted by the owner.
 
 Construction attempt budgets multiply the accepted quota in one batch per plan revision:
-`ceil(target_count * construction_attempt_multiplier)` by default, or `2.0` for
+`ceil(quota_target_count * construction_attempt_multiplier)` by default, or `2.0` for
 quota targets with a high rejection rate.
 Rejections consume construction attempts, not dataset release rows. An underfilled batch is a
 deficit; there is no per-quota-target top-up loop inside one plan revision.

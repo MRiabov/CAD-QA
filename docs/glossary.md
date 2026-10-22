@@ -563,6 +563,14 @@ A quota counted in tasks.
 
 ---
 
+### Task reasoning step quota
+
+The task quota for one task reasoning step count. `In code:`
+`task_reasoning_step_quota`. `Distinct from:` **Task quota**, which is not tied to
+a step count.
+
+---
+
 ### Clue quota
 
 A quota counted in task clue occurrences.
@@ -572,7 +580,8 @@ A quota counted in task clue occurrences.
 ### Quota dimension
 
 One independent way tasks are counted for coverage and balance: task target
-category, clue type, answer meaning, or answer format.
+category, clue type, answer meaning, or answer format. `In code:`
+`quota_dimension`.
 
 ---
 
@@ -595,13 +604,15 @@ attempt budgets for one dataset release. `In code:` `TaskQuotaPlan`.
 ### Family task capacity
 
 The estimated maximum number of tasks a CADEvolve program family can supply.
+`In code:` `family_task_capacity`.
 
 ---
 
 ### Construction attempt budget
 
 The number of task-definition construction attempts allocated to a quota target
-before accepted tasks are counted. `Distinct from:` **Task quota**.
+before accepted tasks are counted. `In code:` `construction_attempt_budgets`.
+`Distinct from:` **Task quota**.
 
 ---
 
@@ -727,6 +738,7 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | probe yield | Probe success rate | "yield" is a metaphor |
 | split target | Split task target | target of what count? |
 | family capacity | Family task capacity | capacity for what? |
+| step quota | Task reasoning step quota | quota for which step? |
 
 ---
 

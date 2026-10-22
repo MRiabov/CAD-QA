@@ -85,7 +85,7 @@ The row field is named after the file: `target_category`, `clue_type`,
 `reason_code` is a low-cardinality enum, not free text. It is null when the row
 is structurally supported. Unsupported rows use one of:
 
-- `step_count_too_low`;
+- `task_reasoning_step_count_too_low`;
 - `prior_candidates_required`;
 - `reference_entity_required`;
 - `answer_format_incompatible`;

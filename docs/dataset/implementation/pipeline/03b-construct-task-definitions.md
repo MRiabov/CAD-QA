@@ -160,7 +160,7 @@ An invalid definition is recorded as a failure with a reason and is not passed t
 `04`. A task with a tie, an ambiguous target, or an unverifiable answer is
 invalid.
 
-## Step accounting
+## Task reasoning step accounting
 
 `task_reasoning_step_count` is:
 
@@ -205,7 +205,7 @@ not consume quota.
 ## Construction attempt budget
 
 Each quota target receives a construction attempt budget of
-`ceil(target_count * construction_attempt_multiplier)`. `03b` constructs the full
+`ceil(quota_target_count * construction_attempt_multiplier)`. `03b` constructs the full
 batch, validates it, and accepts up to the target count. It does not top up a quota target incrementally within
 the same plan revision.
 

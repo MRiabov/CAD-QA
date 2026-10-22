@@ -63,6 +63,7 @@ the user-visible outcome.
 | **Implementation priority** | Domain | P0/P1/P2 order for requirements and generation inputs. It is not a task property and never appears as a row label. |
 | **Quota** | Internal | An allowed or required count at a stated scope. |
 | **Task quota** | Internal | A quota counted in tasks. |
+| **Task reasoning step quota** | Internal | The task quota for one task reasoning step count. |
 | **Clue quota** | Internal | A quota counted in task clue occurrences. |
 | **Quota dimension** | Internal | One independent way tasks are counted for coverage and balance: task target category, clue type, answer meaning, or answer format. |
 | **Quota target** | Internal | A count target for one quota dimension value at one task reasoning step count: minimum, target count, and maximum. It is not a task. |

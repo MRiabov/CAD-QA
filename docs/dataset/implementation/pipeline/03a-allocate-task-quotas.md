@@ -20,12 +20,12 @@ definitions are generated.
 | Field | Meaning |
 |---|---|
 | `plan_version`, `seed` | Version and deterministic ordering seed. |
-| `step_quotas` | Target task count for each task reasoning step count. |
+| `task_reasoning_step_quotas` | Target task count for each task reasoning step count. |
 | `quota_targets` | Quota targets: task reasoning step count, quota dimension, dimension value, minimum, target count, maximum, and priority. |
 | `clue_quotas` | Clue quotas counted over clue occurrences. |
 | `clue_occurrences` | Planned clue occurrences for each task reasoning step count. |
 | `family_profiles` | Graph capabilities, family task capacity, and probe success rate per CADEvolve program family. |
-| `family_assignment` | Family to split, task quota, per-step task quotas, and assigned quota targets. |
+| `family_assignment` | Family to split, task quota, per-task-reasoning-step task quotas, and assigned quota targets. |
 | `construction_attempt_budgets` | One construction batch per quota target and family. |
 | `construction_attempt_multiplier` | Construction attempt multiplier over the accepted quota; default 1.5, or 2.0 for high-rejection quota targets. |
 | `expansion_tier` | Current data tier before a deficit triggers `03c`. |
@@ -49,7 +49,7 @@ these quota targets:
 The task is one task, counted in several quota targets. A quota target records:
 
 - `minimum`: coverage requirement;
-- `target_count`: desired count;
+- `quota_target_count`: desired count;
 - `maximum`: balance or cap limit;
 - `priority`: coverage first, then balance, then volume.
 
@@ -75,35 +75,35 @@ floor each weighted share, then distribute the remaining units one at a time to
 the largest fractional remainders; break ties by `sha256(seed || key)`. It returns
 one integer count per weight, and the counts sum exactly to `total`.
 
-### Step quotas
+### Task reasoning step quotas
 
-`step_quota[step] = largest_remainder(dataset_release_task_count, step_share[step])`.
+`task_reasoning_step_quota[task_reasoning_step_count] = largest_remainder(dataset_release_task_count, task_reasoning_step_share[task_reasoning_step_count])`.
 
-Use the fixed step shares 5%, 15%, 40%, 25%, and 15%. `step_quota[1]` is the
-warmup quota. Allocate the exact dataset release task count; do not round each
-step independently and leave a residual.
+Use the fixed task reasoning step shares 5%, 15%, 40%, 25%, and 15%. `task_reasoning_step_quota[1]` is the
+warmup quota. Allocate the exact dataset release task count; do not round each task
+reasoning step count independently and leave a residual.
 
 ### Quota target counts
 
 For each task reasoning step count and quota dimension:
 
-- `supported_values(step, quota_dimension)` comes from the task reasoning step
+- `supported_values(task_reasoning_step_count, quota_dimension)` comes from the task reasoning step
   support table and the dataset release implementation scope.
-- `conditional_share(step, quota_dimension, dimension_value)` is the dimension
-  value's global share divided by the sum of the global shares of values supported at that step.
+- `conditional_share(task_reasoning_step_count, quota_dimension, dimension_value)` is the dimension
+  value's global share divided by the sum of the global shares of values supported at that task reasoning step count.
   The global quota share is the quota share target for that dimension value. When the target
-  target does not name a share, use an equal share among implemented values in
+  does not name a share, use an equal share among implemented values in
   that quota dimension.
-- `target_count(step, quota_dimension, dimension_value) = 1 + largest_remainder(step_quota[step] - supported_value_count, conditional_share(step, quota_dimension, dimension_value))`.
+- `quota_target_count(task_reasoning_step_count, quota_dimension, dimension_value) = 1 + largest_remainder(task_reasoning_step_quota[task_reasoning_step_count] - supported_value_count, conditional_share(task_reasoning_step_count, quota_dimension, dimension_value))`.
 
-For clue type, replace `step_quota[step]` with `planned_clue_occurrences[step]`
+For clue type, replace `task_reasoning_step_quota[task_reasoning_step_count]` with `planned_clue_occurrences[task_reasoning_step_count]`
 and `supported_value_count` with the number of supported clue types.
 
 The `+1` is the coverage minimum and is taken before the remainder allocation.
 This guarantees at least one task per supported task target category, answer
 meaning, and answer format, and at least one clue occurrence for each supported clue type.
 
-Allocate the four quota dimensions separately. Do not divide `step_quota` by four
+Allocate the four quota dimensions separately. Do not divide `task_reasoning_step_quota` by four
 and do not create a full task target category × clue type × answer meaning ×
 answer format cross-product.
 
@@ -113,28 +113,28 @@ cannot be repaired by `03c`.
 
 ### Clue occurrence budget
 
-An answer-step task at step count `step_count` has `step_count - 1` task clue
-steps. An identity answer task has `step_count` task clue steps. Start from the
+An answer-step task at task reasoning step count `task_reasoning_step_count` has `task_reasoning_step_count - 1` task clue
+steps. An identity answer task has `task_reasoning_step_count` task clue steps. Start from the
 answer-step baseline:
 
-`baseline_clue_occurrences[step] = step_quota[step] * (step_count - 1)`.
+`baseline_clue_occurrences[task_reasoning_step_count] = task_reasoning_step_quota[task_reasoning_step_count] * (task_reasoning_step_count - 1)`.
 
-`identity_tasks[step] = max(target_count(step, answer_meaning, identity), identity_floor, clue_floor)`
+`identity_tasks[task_reasoning_step_count] = max(quota_target_count(task_reasoning_step_count, answer_meaning, identity), identity_floor, clue_floor)`
 
 where `identity_floor` is 1 when identity is supported and 0 otherwise, and
-`clue_floor = max(0, supported_clue_count - baseline_clue_occurrences[step])`.
+`clue_floor = max(0, supported_clue_count - baseline_clue_occurrences[task_reasoning_step_count])`.
 If identity is not supported and `clue_floor` is positive, record
-`clue_coverage_infeasible`. If `identity_tasks[step] > step_quota[step]`, record
+`clue_coverage_infeasible`. If `identity_tasks[task_reasoning_step_count] > task_reasoning_step_quota[task_reasoning_step_count]`, record
 `identity_quota_infeasible`.
 
-`planned_clue_occurrences[step] = baseline_clue_occurrences[step] + identity_tasks[step]`.
+`planned_clue_occurrences[task_reasoning_step_count] = baseline_clue_occurrences[task_reasoning_step_count] + identity_tasks[task_reasoning_step_count]`.
 
-Adjust the identity answer-meaning target count to `identity_tasks[step]`. Let
-`remaining_task_quota = step_quota[step] - identity_tasks[step]` and
+Adjust the identity answer-meaning target count to `identity_tasks[task_reasoning_step_count]`. Let
+`remaining_task_quota = task_reasoning_step_quota[task_reasoning_step_count] - identity_tasks[task_reasoning_step_count]` and
 `remaining_supported_count` be the number of other supported answer meanings.
 For each remaining answer meaning, use:
 
-`target_count = 1 + largest_remainder(remaining_task_quota - remaining_supported_count, remaining_conditional_share)`,
+`quota_target_count = 1 + largest_remainder(remaining_task_quota - remaining_supported_count, remaining_conditional_share)`,
 
 where `remaining_conditional_share` is the answer meaning's global share
 normalized over the remaining supported answer meanings. If
@@ -143,21 +143,21 @@ normalized over the remaining supported answer meanings. If
 
 This adjustment is the only exception to the equal/global-share target. It
 exists because an identity answer is the only answer meaning that can add a clue
-occurrence at step count 1.
+occurrence at task reasoning step count 1.
 
 ### Coverage bounds and plan caps
 
 Each quota target records `minimum` and `maximum`:
 
-- task target category: `minimum = 1`; no step-level balance bound; plan maximum
+- task target category: `minimum = 1`; no task-reasoning-step balance bound; plan maximum
   `floor(0.25 * dataset_release_task_count)`.
-- answer format: `minimum = max(1, floor(0.5 * target_count))`;
-  `maximum = min(ceil(2 * target_count), floor(0.25 * dataset_release_task_count))`;
+- answer format: `minimum = max(1, floor(0.5 * quota_target_count))`;
+  `maximum = min(ceil(2 * quota_target_count), floor(0.25 * dataset_release_task_count))`;
   plan minimum `ceil(0.05 * dataset_release_task_count)`.
-- answer meaning: `minimum = max(1, floor(0.5 * target_count))`;
-  `maximum = min(ceil(2 * target_count), floor(0.10 * dataset_release_task_count))`;
+- answer meaning: `minimum = max(1, floor(0.5 * quota_target_count))`;
+  `maximum = min(ceil(2 * quota_target_count), floor(0.10 * dataset_release_task_count))`;
   plan minimum `ceil(0.01 * dataset_release_task_count)`.
-- clue type: `minimum = 1`; `maximum = floor(0.25 * planned_clue_occurrences[step])`.
+- clue type: `minimum = 1`; `maximum = floor(0.25 * planned_clue_occurrences[task_reasoning_step_count])`.
 
 The target count is the desired count; the minimum and maximum are acceptance
 bounds. When a target count violates a plan cap, move units to values with slack.
@@ -178,7 +178,7 @@ when a probe ran, otherwise 1.0.
 
 `family_task_capacity = floor(program_count * per_program_task_quota * family_probe_success_rate)`.
 
-Use the same smoothed ratio for `family_target_probe_success_rate`, with 1.0
+Use the same smoothed ratio for `family_quota_target_probe_success_rate`, with 1.0
 when no probe ran for that family and quota target.
 
 ### Split and family quotas
@@ -204,8 +204,8 @@ record `split_capacity_short`.
 capped by each family task capacity. If the total is short, record
 `family_quota_short`.
 
-`family_step_quota[family] = largest_remainder(family_task_quota[family], step_quota)`,
-capped by `family_task_quota[family]`. The per-step quotas sum to
+`family_task_reasoning_step_quota[family] = largest_remainder(family_task_quota[family], task_reasoning_step_quota)`,
+capped by `family_task_quota[family]`. The per-task-reasoning-step quotas sum to
 `family_task_quota[family]`.
 
 ### Quota target allocation to families
@@ -213,32 +213,32 @@ capped by `family_task_quota[family]`. The per-step quotas sum to
 For each task reasoning step count, quota dimension, and quota target:
 
 1. Find families in the split that have the quota target capability and
-   `family_step_quota > 0`.
-2. Set `family_target_weight = family_step_quota * family_target_probe_success_rate`.
-3. Set `family_target_count = largest_remainder(target_count, family_target_weight)`.
+   `family_task_reasoning_step_quota[family][task_reasoning_step_count] > 0`.
+2. Set `family_quota_target_weight = family_task_reasoning_step_quota[family][task_reasoning_step_count] * family_quota_target_probe_success_rate`.
+3. Set `family_quota_target_count = largest_remainder(quota_target_count, family_quota_target_weight)`.
 4. If no family is eligible, record `quota_target_family_unassigned`.
 
 Family target counts are independent across quota dimensions. Do not sum them to
-derive `family_task_quota`. A family's constructed tasks at a step never exceed
-`family_step_quota`; `03b` samples definitions that jointly satisfy the independent
-targets. If a family's target counts sum to more than `family_step_quota`, move
+derive `family_task_quota`. A family's constructed tasks at a task reasoning step count never exceed
+`family_task_reasoning_step_quota[family][task_reasoning_step_count]`; `03b` samples definitions that jointly satisfy the independent
+targets. If a family's target counts sum to more than `family_task_reasoning_step_quota[family][task_reasoning_step_count]`, move
 the smallest over-allocation to a family with slack in the same quota target. If no family has
-slack, record `family_target_conflict`.
+slack, record `family_quota_target_conflict`.
 
-Set each construction attempt budget to `ceil(family_target_count * construction_attempt_multiplier)`.
+Set each construction attempt budget to `ceil(family_quota_target_count * construction_attempt_multiplier)`.
 
 ### Plan acceptance
 
 The allocator is complete only when all of these hold:
 
-- `step_quota` sums to `dataset_release_task_count`;
+- `task_reasoning_step_quota` sums to `dataset_release_task_count`;
 - every supported value has a target count of at least 1;
 - every answer format, answer meaning, clue type, and task target category is
   within its bounds, or a conflict is recorded;
 - every family has a split and a task quota no greater than its family task capacity;
 - every quota target has at least one eligible family, or a deficit is recorded;
 - every family target count is independent, and a family's target counts sum to no
-  more than `family_step_quota`.
+  more than `family_task_reasoning_step_quota[family][task_reasoning_step_count]`.
 
 The conditional release share is allocated from the global quota shares and then
 filled from available data. It is not recomputed after seeing the whole
@@ -296,7 +296,8 @@ target allocation. This order is normative:
 6. Prefer families with the required capability and remaining quota.
 7. Keep a reserve of families for `03c`.
 
-A family receives a task quota, per-step task quotas, and a set of quota targets,
+A family receives a task quota, per-task-reasoning-step task quotas, and a set of
+quota targets,
 not one task type. If it cannot fill an assigned quota target, the remainder
 returns to the plan.
 `03b` stamps the family ID, split, and subset on each definition; `05` rechecks
@@ -330,9 +331,9 @@ A quota target enters the deficit ledger when:
 - family quotas or plan caps block it;
 - the requested value is structurally infeasible.
 
-Record the reason code from the allocation step: `coverage_infeasible`,
+Record the reason code from the allocation pass: `coverage_infeasible`,
 `answer_meaning_infeasible`, `cap_conflict`, `split_capacity_short`,
-`family_quota_short`, `quota_target_family_unassigned`, or `family_target_conflict`.
+`family_quota_short`, `quota_target_family_unassigned`, or `family_quota_target_conflict`.
 
 `03c` decides whether to sample more from existing graphs, use unused or reserve
 programs, request a supplemental `01b` selection, or accept the miss.
