@@ -1,8 +1,8 @@
-# 03a — Allocate task budgets to program families
+# 03a — Allocate task quotas to program families
 
 **Parent:** [`03-enumerate-tasks.md`](03-enumerate-tasks.md).
 
-**Purpose:** allocate task budgets and quota cells to CADEvolve program
+**Purpose:** allocate task quotas and quota cells to CADEvolve program
 families, assign splits, and set sampling budgets before task definitions are
 generated.
 
@@ -24,7 +24,7 @@ generated.
 | `quota_cells` | Dimension values with minimum, target, maximum, and priority. |
 | `clue_quotas` | Clue type counts over clue occurrences. |
 | `family_profiles` | Graph capabilities and capacity per CADEvolve program family. |
-| `family_assignment` | Family to split, task budget, and assigned quota cells. |
+| `family_assignment` | Family to split, task quota, and assigned quota cells. |
 | `sample_budgets` | One construction batch per cell and family. |
 | `oversample_factor` | Sample multiplier over the accepted quota; default 1.5, or 2.0 for high-rejection cells. |
 | `expansion_tier` | Current data tier before a deficit triggers `03c`. |
@@ -105,7 +105,7 @@ Build a family profile from the graphs in the selected pool:
 - available measurements and answer meanings;
 - available answer formats;
 - approximate maximum task reasoning step count;
-- task budget per program and family;
+- task quota per program and family;
 - estimated yield per dimension cell.
 
 Profiles describe capability, not a list of all tasks. A bounded probe may
@@ -123,10 +123,10 @@ Assign families before task construction because a family cannot cross splits.
    balancing, with largest-remainder rounding for the approximate 70/15/15 split.
 4. Use `sha256(seed || family_id)` for ordering and tie-breaks.
 5. Assign quota cells scarcity-first: rare values first, then common values.
-6. Prefer families with the required capability and remaining budget.
+6. Prefer families with the required capability and remaining quota.
 7. Keep a reserve of families for `03c`.
 
-A family receives a task budget and a set of cells, not one task type. If it
+A family receives a task quota and a set of cells, not one task type. If it
 cannot fill an assigned cell, the remainder returns to the plan. `03b` stamps the
 family ID, split, and subset on each definition; `05` rechecks family isolation
 on the final release table.
@@ -143,8 +143,8 @@ can supply a deficit but the plan does not use them.
 It can:
 
 - assign an unassigned family to a quota cell;
-- move task budget from a saturated family to one with spare capacity;
-- relax an internal family budget;
+- move task quota from a saturated family to one with spare capacity;
+- relax an internal family quota;
 - change a quota cell or sample budget within its release bounds.
 
 It does not fetch, normalize, or execute. It increments the plan version and
@@ -156,7 +156,7 @@ A cell enters the deficit ledger when:
 
 - its minimum or target is not met after the sample budget;
 - the current graphs lack the required capability;
-- family budgets or release caps block it;
+- family quotas or release caps block it;
 - the requested value is structurally infeasible.
 
 `03c` decides whether to sample more from existing graphs, use unused or reserve

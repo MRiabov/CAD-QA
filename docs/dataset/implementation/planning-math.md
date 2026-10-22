@@ -70,7 +70,7 @@ At each step count, a value is checked against its conditional release share,
 within half to twice that share. The conditional share is allocated from the
 global targets before task construction, then filled from available data; the
 plan is in
-[`pipeline/03a-allocate-task-budgets.md`](pipeline/03a-allocate-task-budgets.md).
+[`pipeline/03a-allocate-task-quotas.md`](pipeline/03a-allocate-task-quotas.md).
 
 This document fixes the coverage rule, the implementation-scope rule, the
 release-level bounds, and the split rule. The quota allocator applies them.

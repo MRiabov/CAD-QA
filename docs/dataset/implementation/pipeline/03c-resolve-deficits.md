@@ -27,8 +27,8 @@ There are two distinct loops with different costs.
 ```
 
 This loop uses the graphs and families already in the pool. It does not fetch or
-execute anything. `03a` can move budget to unassigned families, relax an internal
-family budget, or try a different family for a quota cell.
+execute anything. `03a` can move quota to unassigned families, relax an internal family
+quota, or try a different family for a quota cell.
 
 ### Slow loop: expand the program pool
 
@@ -52,7 +52,7 @@ only loop that pays fetch, normalization, and execution cost.
 | Sample batch underfilled | `ProgramReassignmentRequest` to `03a`; adjust the sample budget or family assignment. |
 | High rejection rate | Fix the constructor or validity rule in `03b`; expanding data will not help. |
 | Current pool has unused capacity | `ProgramReassignmentRequest` to `03a`; reassign families or quotas. |
-| Current family budget or cap blocks the cell | `ProgramReassignmentRequest`; change the plan, not the data. |
+| Current family quota or cap blocks the cell | `ProgramReassignmentRequest`; change the plan, not the data. |
 | Reserve or new capability needed | `ProgramRequest` to `01b`; expand the pool. |
 | Constructor limitation | Fix `03b`; neither loop helps. |
 | Structural infeasibility | Fix the plan or support table; no data can supply it. |
@@ -66,9 +66,9 @@ but the current plan does not use them.
 It contains:
 
 - the originating quota cell: step count, dimension, value;
-- the current family assignment and budget that block the cell;
+- the current family assignment and quota that block the cell;
 - unassigned families or unused capacity that could help;
-- the requested change: quota, family assignment, or internal budget;
+- the requested change: quota cell, family assignment, or internal quota;
 - the retry budget;
 - the plan version.
 

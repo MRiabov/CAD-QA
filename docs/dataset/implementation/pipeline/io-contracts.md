@@ -27,7 +27,7 @@ pipeline stage is specified.
 |---|---|
 | `01` | `01a` read metadata, `01b` select pool, `01c` fetch pool, `01d` normalize programs, `01e` write manifest. |
 | `02` | `02a` AST extraction, `02b` execute CadQuery, `02c` build graph. |
-| `03` | `03a` allocate task budgets, `03b` construct task definitions, `03c` resolve deficits by replanning or expanding data. |
+| `03` | `03a` allocate task quotas, `03b` construct task definitions, `03c` resolve deficits by replanning or expanding data. |
 
 Sub-steps have their own typed models and I/O tables in their parent document.
 
