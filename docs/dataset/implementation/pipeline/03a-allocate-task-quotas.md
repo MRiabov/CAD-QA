@@ -34,7 +34,18 @@ The plan is a target. It does not prove that the corpus can supply every cell.
 
 ## Quota cells
 
-A quota cell is `(step count, dimension, value)`. It records:
+A quota cell is `(step count, dimension, value)`. It is a marginal quota bucket,
+not a complete task. For example, a 3-step task with target category `face`,
+answer meaning `area`, answer format `number`, and clue types `relation` and
+`property` contributes to these cells:
+
+- `(3, target_category, face)`;
+- `(3, answer_meaning, area)`;
+- `(3, answer_format, number)`;
+- `(3, clue_type, relation)`;
+- `(3, clue_type, property)`.
+
+The task is one task, counted in several cells. A cell records:
 
 - `minimum`: coverage requirement;
 - `target`: desired count;
