@@ -149,7 +149,7 @@ P0/P1 accept only the flat CADEvolve-C subset:
 - no chained CadQuery calls;
 - no control flow, functions, classes, comprehensions, or dynamic evaluation;
 - selectors limited to faces, edges, and vertices;
-- no wire or solid selectors/accessors until the graph models those entities;
+- no wire or solid CadQuery selectors; shape accessors are limited to the method-signature contract;
 - no `combineSolids`; it is not a CadQuery 2.7 method.
 
 P2 control flow and chained calls are outside this contract. A P2 extension must
@@ -166,20 +166,26 @@ decision explains why the contract has that shape.
 | Document | Responsibility |
 |---|---|
 | [`ast/algorithm.md`](ast/algorithm.md) | Deterministic AST passes, assignment rules, binding classification, and method classification. |
+| [`ast/method-signatures.md`](ast/method-signatures.md) | Closed receiver, argument, result, and state contract for every allowlisted call. |
 | [`ast/operations.md`](ast/operations.md) | Static operation and alias fields. |
 | [`ast/expressions.md`](ast/expressions.md) | Typed expression trees and literals. |
 | [`ast/workplanes.md`](ast/workplanes.md) | Static CadQuery workplane records and frame derivation. |
 | [`ast/profiles-paths.md`](ast/profiles-paths.md) | CadQuery profile and path records. |
+| [`CadQuery shape and path derivation`](ast/shape-derivation.md) | Point, segment, CadQuery shape, and path derivation rules. |
 | [`ast/selectors.md`](ast/selectors.md) | Static CadQuery selector records and filter predicates. |
 | [`ast/solids.md`](ast/solids.md) | Static feature classification. |
 | [`ast/instrumentation.md`](ast/instrumentation.md) | Exact AST rewrite and recorder ABI. |
 | [`cadquery/runtime.md`](cadquery/runtime.md) | Execution, state, CadQuery selector, entity, topology, effect, and frame capture. |
+| [`cadquery/geometry-classification.md`](cadquery/geometry-classification.md) | Kernel API calls and surface, curve, centroid, and shape classification. |
 | [`cadquery/states.md`](cadquery/states.md) | Shape snapshot fields and final-state rule. |
 | [`cadquery/solids.md`](cadquery/solids.md) | Entity tables and fingerprints. |
 | [`cadquery/topology.md`](cadquery/topology.md) | Incidence and adjacency records. |
 | [`cadquery/selectors.md`](cadquery/selectors.md) | Runtime CadQuery selector results. |
 | [`cadquery/effects.md`](cadquery/effects.md) | Before/after effects. |
+| [`cadquery/evidence.md`](cadquery/evidence.md) | Extraction evidence references for effects, topology, and selectors. |
 | [`canonicalization.md`](canonicalization.md) | Numbers, JSON, hashes, and ordering. |
 | [`validation.md`](validation.md) | Static, runtime, and cross-pipeline stage invariants. |
 | [`artifacts.md`](artifacts.md) | Logical tables, keys, and artifact identities. |
+| [`static-schema.md`](static-schema.md) | Static artifact columns, nested models, and static model hash. |
+| [`runtime-schema.md`](runtime-schema.md) | Runtime artifact columns, nested models, and runtime model hash. |
 | [`decisions.md`](decisions.md) | Accepted extraction decisions, rationale, and consequences. |

@@ -13,7 +13,9 @@ Effects describe what a state-producing operation changed.
 | `volume_change` | double or null | CadQuery | no | Signed volume change. | 02c |
 | `bbox_change` | BoundingBoxChange or null | CadQuery | no | Bounding-box change. | 02c |
 | `topology_change` | TopologyDelta or null | CadQuery | no | Face, edge, and vertex count changes. | 02c |
-| `evidence` | EffectEvidence | CadQuery | yes | Before/after state IDs and measurement rule. | 02c |
+| `evidence` | EffectEvidence | CadQuery | yes | Before/after state IDs, measurement rule, and evidence refs. | 02c |
+
+`EffectEvidence` is defined in [`evidence.md`](evidence.md).
 
 ## Rules
 

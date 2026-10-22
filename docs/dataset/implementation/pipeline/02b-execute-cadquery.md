@@ -81,8 +81,11 @@ canonical rules are in
 [`extraction/cadquery/topology.md`](extraction/cadquery/topology.md),
 [`extraction/cadquery/selectors.md`](extraction/cadquery/selectors.md),
 [`extraction/cadquery/effects.md`](extraction/cadquery/effects.md),
-[`extraction/canonicalization.md`](extraction/canonicalization.md), and
-[`extraction/validation.md`](extraction/validation.md).
+[`extraction/cadquery/evidence.md`](extraction/cadquery/evidence.md),
+[`extraction/canonicalization.md`](extraction/canonicalization.md),
+[`extraction/runtime-schema.md`](extraction/runtime-schema.md),
+[`extraction/cadquery/geometry-classification.md`](extraction/cadquery/geometry-classification.md),
+and [`extraction/validation.md`](extraction/validation.md).
 
 ## Failure tombstone
 

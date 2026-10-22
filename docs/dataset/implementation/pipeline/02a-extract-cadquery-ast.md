@@ -20,8 +20,7 @@ it.
 - `workplanes`: `StaticWorkplane` records;
 - `profiles`: `StaticProfile` records;
 - `paths`: `StaticPath` records;
-- `selectors`: `StaticSelector` records;
-- `diagnostics`: recoverable observations that do not reject the program.
+- `selectors`: `StaticSelector` records.
 
 `StaticOperation` contains:
 
@@ -49,13 +48,16 @@ selects from.
 ## Field contracts
 
 The complete field sets, expression typing, instrumentation rewrite, and runtime
-join keys are in [`extraction/README.md`](extraction/README.md). In particular:
+join keys are in [`extraction/README.md`](extraction/README.md). Exact static
+columns are in [`extraction/static-schema.md`](extraction/static-schema.md). In particular:
 
 - [`extraction/ast/algorithm.md`](extraction/ast/algorithm.md);
+- [`extraction/ast/method-signatures.md`](extraction/ast/method-signatures.md);
 - [`extraction/ast/operations.md`](extraction/ast/operations.md);
 - [`extraction/ast/expressions.md`](extraction/ast/expressions.md);
 - [`extraction/ast/workplanes.md`](extraction/ast/workplanes.md);
 - [`extraction/ast/profiles-paths.md`](extraction/ast/profiles-paths.md);
+- [`extraction/ast/shape-derivation.md`](extraction/ast/shape-derivation.md);
 - [`extraction/ast/selectors.md`](extraction/ast/selectors.md);
 - [`extraction/ast/instrumentation.md`](extraction/ast/instrumentation.md).
 
@@ -75,7 +77,7 @@ narrow:
 - no lambdas except the narrow `filter` predicate;
 - no `eval`, `exec`, dynamic imports, file access, or network access;
 - no CadQuery method or constructor outside the allowlist;
-- no wire or solid selector/accessor.
+- no wire or solid CadQuery selector; shape accessors `Edges` and `Solids` are allowed only on shape bindings.
 
 A program outside this subset is rejected as a whole. The static model is never
 partial: a rejected program records the reason and produces no operations.

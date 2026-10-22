@@ -88,8 +88,8 @@ evaluate the receiver or arguments a second time.
 
 ## ResultKind
 
-`workplane`, `shape`, `shape_list`, `list`, `scalar`, `plane`, `vector`, `edge`,
-`wire`, `none`.
+`workplane`, `workplane_list`, `shape`, `shape_list`, `list`, `scalar`, `plane`,
+`vector`, `edge`, `wire`, `none`.
 
 ## Rules
 

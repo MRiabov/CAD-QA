@@ -12,7 +12,7 @@ kernel, not inferred from the program text.
 | `relation_kind` | TopologyRelationKind | CadQuery | yes | Face-edge, edge-vertex, or face-face adjacency. | 02c |
 | `from_entity_id` | string | CadQuery | yes | From entity. | 02c |
 | `to_entity_id` | string | CadQuery | yes | Target entity. | 02c |
-| `evidence` | TopologyEvidence | CadQuery | yes | Kernel call or traversal that produced the record. | 02c |
+| `evidence` | TopologyEvidence | CadQuery | yes | Kernel call, entities, and traversal that produced the record. | 02c |
 
 ## Records
 
@@ -22,6 +22,8 @@ kernel, not inferred from the program text.
 - `solid_has_face`: solid state to face.
 - `solid_has_edge`: solid state to edge.
 - `solid_has_vertex`: solid state to vertex.
+
+`TopologyEvidence` is defined in [`evidence.md`](evidence.md).
 
 ## Extraction algorithm
 

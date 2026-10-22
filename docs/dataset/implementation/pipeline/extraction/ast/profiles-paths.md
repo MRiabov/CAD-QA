@@ -41,7 +41,8 @@ A closed CadQuery profile may be used as a CadQuery profile. A path used by a sw
 other path operation is a CadQuery path. Both records may reference the same
 operation.
 
-The derivation tables and literal-point rules are in [`algorithm.md`](algorithm.md).
+The derivation tables, point models, and literal-point rules are in
+[`CadQuery shape and path derivation`](shape-derivation.md).
 `profile_id` and `path_id` use `<operation_id>:<ordinal>`; the ordinal is the
 program order within the operation. `workplane_id` is the receiver binding's
 current CadQuery workplane, or null for a standalone constructor path.

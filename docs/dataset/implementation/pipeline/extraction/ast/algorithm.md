@@ -3,7 +3,8 @@
 **Parent:** [`extraction/README.md`](../README.md).
 
 This document defines the deterministic `02a` passes. It is the implementation
-contract; the field docs define record shapes.
+contract; the field docs define record shapes. The closed receiver/argument
+contract is [`method-signatures.md`](method-signatures.md).
 
 ## Pass order
 
@@ -81,13 +82,14 @@ Nested constructor and accessor calls are allowed only in the forms in
 | Binding kind | Created by | Used for |
 |---|---|---|
 | `module` | `cq` | Qualified constructor names. |
-| `workplane` | `cq.Workplane`, CadQuery workplane methods, sketch/path/solid/boolean/assembly/modifier/transform methods, selectors. | Receiver of later operations. |
-| `shape` | `val`, `first`, `findSolid`, `cq.Solid.makeSphere`. | Shape accessors. |
-| `shape_list` | `vals`, `all`, `Edges`. | `list(...)` and CadQuery selector membership. |
+| `workplane` | `cq.Workplane`, CadQuery workplane methods, `first`, sketch/path/solid/boolean/assembly/modifier/transform methods, CadQuery selectors. | Receiver of later operations. |
+| `shape` | `val`, `findSolid`, `cq.Solid.makeSphere`. | Shape accessors. |
+| `shape_list` | `vals`, `Edges`, `Solids`. | `list(...)` and shape accessors. |
 | `edge` | `cq.Edge.*`. | Path construction. |
 | `wire` | `cq.Wire.*`. | Path construction. |
 | `scalar` | `Length`. | Measurements and filter predicates. |
 | `list` | `list(vals())`. | Accessor results. |
+| `workplane_list` | `all`. | CadQuery workplane list. |
 | `none` | `val` when the runtime value is absent. | Final-state handling. |
 
 A CadQuery workplane binding also carries:
@@ -168,7 +170,7 @@ row group below.
 | Method | `operation_kind` | `result_kind` | State-producing | Notes |
 |---|---|---|---|---|
 | `center`, `circle`, `rect`, `ellipse`, `polygon`, `slot2D`, `offset2D`, `pushPoints` | `sketch` | `workplane` | no | CadQuery profile or sketch record. |
-| `moveTo`, `lineTo`, `hLine`, `vLine`, `threePointArc`, `polyline`, `close`, `line`, `spline`, `splineApprox` | `path` | `workplane` | no | Path record. |
+| `moveTo`, `lineTo`, `hLine`, `vLine`, `threePointArc`, `polyline`, `close`, `line`, `spline`, `splineApprox`, `wire` | `path` | `workplane` | no | Path record; `wire` finalizes the pending path. |
 | `makeLine`, `makeSpline`, `makeCircle`, `makePolygon`, `assembleEdges` | `path` | `edge` or `wire` | no | Constructor path record. |
 
 `makeLine`, `makeSpline`, `makeCircle`, `makePolygon`, and `assembleEdges` are
@@ -198,8 +200,9 @@ qualified constructors: `cq.Edge.makeLine`, `cq.Edge.makeSpline`,
 | `cut` | `boolean` | `workplane` | yes | `remove_material` | `boolean` |
 | `intersect` | `boolean` | `workplane` | yes | `modify` | `boolean` |
 | `combine` | `assembly` | `workplane` | yes | `construction` | `assembly` |
-| `newObject` | `assembly` | `workplane` | yes | `construction` | `assembly` |
-| `add`, `fuse` | `assembly` | `workplane` | yes | `add_material` | `assembly` |
+| `newObject` | `assembly` | `workplane` | no | `construction` | `assembly` |
+| `add` | `assembly` | `workplane` | no | `add_material` | `assembly` |
+| `fuse` | `assembly` | `shape` | yes | `add_material` | `assembly` |
 | `cutBlind`, `cutThruAll`, `hole`, `cskHole`, `cboreHole` | `modifier` | `workplane` | yes | `remove_material` | `modifier` |
 | `fillet`, `chamfer`, `shell`, `split`, `clean`, `rarray` | `modifier` | `workplane` | yes | `modify` | `modifier` |
 | `translate`, `rotate`, `mirror` | `transform` | `workplane` | yes | `modify` | `transform` |
@@ -212,15 +215,19 @@ qualified constructors: `cq.Edge.makeLine`, `cq.Edge.makeSpline`,
 | `faces`, `edges`, `vertices` | `cadquery_selector` | `workplane` | no | Faces, edges, or vertices only. |
 | `filter` | `cadquery_selector` | `workplane` | no | Receiver must carry a face/edge/vertex category. |
 | `val` | `accessor` | `shape` or `none` | no | |
-| `vals`, `all` | `accessor` | `shape_list` | no | |
-| `first` | `accessor` | `shape` or `none` | no | |
+| `vals` | `accessor` | `shape_list` | no | |
+| `all` | `accessor` | `workplane_list` | no | |
+| `first` | `accessor` | `workplane` | no | |
 | `findSolid` | `accessor` | `shape` | no | |
-| `Length` | `accessor` | `scalar` | no | Also allowed inside filter. |
+| `Edges`, `Solids` | `accessor` | `shape_list` | no | Shape receiver; not graph-addressable. |
+| `Length` | `accessor` | `scalar` | no | Edge receiver; also allowed inside filter. |
 | `list` | `accessor` | `list` | no | Special `list(<accessor>.vals())` form only. |
 
-`wires`, `solids`, `wire`, `Solids`, and `combineSolids` are not in the P0/P1
-contract. `combineSolids` is not a CadQuery 2.7 method. The others have no graph
-entity category; they are rejected rather than recorded as partial selections.
+`wires` and `solids` are not P0/P1 selectors. They have no graph entity
+category and are rejected rather than recorded as partial selections.
+`combineSolids` is not a CadQuery 2.7 method and is rejected. `wire`, `Edges`,
+and `Solids` are allowed only in the forms in
+[`method-signatures.md`](method-signatures.md).
 
 ### Special list form
 

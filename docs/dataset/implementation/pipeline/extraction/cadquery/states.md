@@ -23,6 +23,9 @@ the instrumented assignment returns. The capture algorithm is in
 | `entity_table_ref` | string | CadQuery | yes | `entity:<state_id>`. | cadquery/solids |
 | `source_span` | SourceSpan | AST | yes | Producing assignment span. | review |
 
+The kernel calls for volume, bounding box, centroid, counts, validity, and
+solid detection are in [`geometry-classification.md`](geometry-classification.md).
+
 ## Capture rules
 
 - Record a state only for an operation classified `state-producing` and only

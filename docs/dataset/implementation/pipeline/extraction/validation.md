@@ -92,6 +92,7 @@ drop a subset of the records.
 | `unmapped_entity` | A selected value has no entity row in the current state. |
 | `fingerprint_collision` | Two entities in one state and category have the same fingerprint. |
 | `no_state` | A successful program produced no solid state. |
+| `geometry_capture` | A required kernel classification or measurement call failed. |
 | `internal` | An extractor bug or unexpected process failure. |
 
 ## Failure precedence
@@ -124,7 +125,7 @@ the chosen failure.
 
 These are validation failures, not deferred features:
 
-- `wires`, `solids`, `wire`, and `Solids` accessors/selectors;
+- `wires` and `solids` CadQuery selectors;
 - `combineSolids`;
 - chained CadQuery calls;
 - arbitrary control flow;

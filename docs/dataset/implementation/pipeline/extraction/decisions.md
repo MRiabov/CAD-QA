@@ -78,18 +78,19 @@ Silently rewriting it would change the CadQuery program.
 local cache contains 701 CADEvolve-C-core, 41 ABC-C, and 3 ShapeNet-C affected
 programs.
 
-## EX-6 — Reject wire and solid selectors/accessors
+## EX-6 — Reject wire and solid CadQuery selectors
 
-**Decision:** P0/P1 accept `faces`, `edges`, and `vertices` selectors only.
-`wires`, `solids`, `wire`, and `Solids` are rejected.
+**Decision:** P0/P1 accept `faces`, `edges`, and `vertices` CadQuery selectors
+only. `wires` and `solids` are rejected. `wire`, `Edges`, and `Solids` are
+accessor/path forms governed by the method-signature contract, not selectors.
 
 **Why:** `02c` has no wire or solid entity category. Recording a selected count
 without stable membership would be a partial CadQuery selector result and would
 break the graph invariant that selected membership maps to entity nodes.
 
-**Consequence:** The unique affected set is 1,391 of 60,896 CADEvolve-C-core,
-6,172 of 763,062 ABC-C, and 646 of 105,200 ShapeNet-C programs: 8,209 of the
-929,158 C programs (0.88%). The P pool is unaffected because P0/P1 uses
+**Consequence:** The unique affected set is 1,208 of 60,896 CADEvolve-C-core,
+5,248 of 763,062 ABC-C, and 423 of 105,200 ShapeNet-C programs: 6,879 of the
+929,158 C programs (0.74%). The P pool is unaffected because P0/P1 uses
 CADEvolve-C only. Supporting wire/solid selection later requires new graph entity
 categories, fingerprints, topology records, and task bindings.
 
@@ -206,6 +207,82 @@ way that would weaken the P0/P1 invariants if added implicitly.
 
 **Consequence:** P2 must add its own decisions and algorithms. The P0/P1 contract
 does not reserve partial P2 fields or accept P2 programs as best effort.
+
+## EX-16 — Method names are not enough
+
+**Decision:** Every allowlisted call has a receiver, argument, result, and state
+contract in [`ast/method-signatures.md`](ast/method-signatures.md). `fuse` is a
+qualified shape method, `Edges` and `Solids` are shape accessors, `wire` returns
+a CadQuery workplane, and `newObject`/`add` are not state-producing.
+
+**Why:** CadQuery exposes the same method name on different receivers, and the
+CADEvolve-C programs use shape-level accessors after `val()`. Method-name-only
+classification would accept calls that cannot exist or would assign the wrong
+result binding.
+
+**Consequence:** Receiver mismatch, unknown keyword arguments, and wrong arity
+reject the program before execution. `newObject` and `add` do not create a solid
+state; `combine` does.
+
+## EX-17 — Kernel classification is explicit
+
+**Decision:** Face surface and edge curve categories, centroids, bounding boxes,
+counts, validity, and solid detection use the exact calls and closed mappings in
+[`cadquery/geometry-classification.md`](cadquery/geometry-classification.md).
+
+**Why:** CadQuery and OCP expose several plausible calls. A guessed mapping would
+make extraction artifacts depend on an implementation choice rather than a
+contract.
+
+**Consequence:** A failed required kernel call is a `geometry_capture` failure.
+Do not substitute zero, null, or a guessed category.
+
+## EX-18 — Evidence is captured, not reconstructed
+
+**Decision:** Effects, topology, and CadQuery selector results carry typed
+evidence references at capture time, defined in
+[`cadquery/evidence.md`](cadquery/evidence.md).
+
+**Why:** A measurement without a reproducible state, entity, operation, span,
+kernel call, or selector reference is not sufficient for answer evidence.
+
+**Consequence:** An unresolved evidence reference rejects `02c`; it is not
+dropped or repaired.
+
+## EX-19 — Extraction-to-graph mapping is a separate algorithm
+
+**Decision:** `02c` uses the graph node, relation, and measurement mapping in
+[`../02c-extraction-to-graph.md`](../02c-extraction-to-graph.md).
+
+**Why:** The extraction contract owns extraction IDs and records. The graph
+contract owns UUIDs, graph node types, relation categories, and measurements.
+Keeping the mapping separate prevents either contract from silently redefining
+the other.
+
+**Consequence:** Every extraction record has a defined graph destination, and a
+missing endpoint or measurement rejects the graph.
+
+## EX-20 — Static artifacts are typed
+
+**Decision:** The static model uses the table columns and nested models in
+[`static-schema.md`](static-schema.md), not JSON strings on the bulk data path.
+
+**Why:** Go and Python exchange Parquet tables. A typed schema makes joins,
+validation, and hash inputs unambiguous.
+
+**Consequence:** Expression trees are nested structs, and a schema change bumps
+`static_schema_version`.
+
+## EX-21 — Runtime artifacts are typed
+
+**Decision:** The runtime model uses the table columns and nested models in
+[`runtime-schema.md`](runtime-schema.md).
+
+**Why:** `02c` consumes runtime tables across the Python/Go boundary. A typed
+schema makes state, entity, evidence, and hash inputs unambiguous.
+
+**Consequence:** Runtime rows are Parquet tables, not JSON payloads. A schema
+change bumps `runtime_schema_version`.
 
 ## Superseded decisions
 

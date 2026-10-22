@@ -39,7 +39,7 @@ program; there is no best-effort fallback.
 
 | Method or constructor | Static mapping | Operation kind | Effect |
 |---|---|---|---|
-| `moveTo`, `lineTo`, `hLine`, `vLine`, `threePointArc`, `polyline`, `close`, `line`, `spline`, `splineApprox` | `StaticPath`; also feeds `StaticProfile` when used as a sketch boundary | path | Build a 2D path or sketch boundary. |
+| `moveTo`, `lineTo`, `hLine`, `vLine`, `threePointArc`, `polyline`, `close`, `line`, `spline`, `splineApprox`, `wire` | `StaticPath`; also feeds `StaticProfile` when used as a sketch boundary | path | Build or finalize a 2D path or sketch boundary. |
 | `circle`, `rect`, `ellipse`, `polygon`, `slot2D`, `offset2D`, `pushPoints` | `StaticProfile` or pending-point record | sketch | Build or position a 2D profile. |
 | `cq.Edge.makeLine`, `cq.Edge.makeSpline`, `cq.Edge.makeCircle`, `cq.Wire.makePolygon`, `cq.Wire.assembleEdges` | `StaticPath` | path | Build a path object for a sweep or other path operation. |
 
@@ -55,7 +55,8 @@ program; there is no best-effort fallback.
 | Method or constructor | Static mapping | Operation kind | Effect |
 |---|---|---|---|
 | `union`, `cut`, `intersect` | `StaticOperation` | boolean | Combine two solid states. |
-| `combine`, `newObject`, `add`, `fuse` | `StaticOperation` | assembly | Combine or collect existing solid states. |
+| `combine`, `newObject`, `add` | `StaticOperation` | assembly | Combine or collect existing solid states. |
+| `cq.Solid.fuse`, `cq.Compound.fuse` | `StaticOperation` | assembly | Fuse shape objects into a shape result. |
 
 ## Modifiers
 
@@ -79,7 +80,7 @@ shapes, or measurements for later clues and answers.
 
 | Method or constructor | Static mapping | Operation kind | Effect |
 |---|---|---|---|
-| `val`, `vals`, `all`, `first`, `Edges`, `findSolid`, `Length` | `StaticOperation` | accessor | Read a shape, list, or scalar. |
+| `val`, `vals`, `all`, `first`, `Edges`, `Solids`, `findSolid`, `Length` | `StaticOperation` | accessor | Read a CadQuery workplane, shape, list, or scalar. `Edges`/`Solids` require a shape receiver; `Length` requires an edge receiver. |
 | `list(<accessor>.vals())` | `StaticExpression` | accessor | Convert a shape list to a Python list. |
 
 ## Expressions and special forms
@@ -106,14 +107,17 @@ not in the allowlist and is not rewritten as `combine`; a program that calls it 
 rejected at static extraction. This affected 701 CADEvolve-C-core, 41 ABC-C, and
 3 ShapeNet-C programs in the local cache.
 
-`wires`, `solids`, `wire`, and `Solids` are observed but rejected in P0/P1
-because `02c` has no wire or solid entity category. The unique affected set is
-1,391 of 60,896 CADEvolve-C-core, 6,172 of 763,062 ABC-C, and 646 of 105,200
-ShapeNet-C programs: 8,209 of the 929,158 C programs (0.88%). They are not
-recorded as partial CadQuery selector results.
+`wires` and `solids` are observed but rejected as P0/P1 selectors because `02c`
+has no wire or solid entity category. The unique affected set is 1,208 of 60,896
+CADEvolve-C-core, 5,248 of 763,062 ABC-C, and 423 of 105,200 ShapeNet-C programs:
+6,879 of the 929,158 C programs (0.74%). They are not recorded as partial
+CadQuery selector results. `wire`, `Edges`, and `Solids` are allowed only in the
+forms in [`extraction/ast/method-signatures.md`](extraction/ast/method-signatures.md).
 
 The deterministic assignment, receiver, expression, and classification rules are
-in [`extraction/ast/algorithm.md`](extraction/ast/algorithm.md). CadQuery selector kinds
+in [`extraction/ast/algorithm.md`](extraction/ast/algorithm.md). The closed
+receiver/argument/result contract is in
+[`extraction/ast/method-signatures.md`](extraction/ast/method-signatures.md). CadQuery selector kinds
 `implicit`, `string`, `call`, and `filter` are all defined there.
 
 The allowlist version changes whenever a method, call form, or mapping changes.

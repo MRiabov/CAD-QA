@@ -102,7 +102,7 @@ category. It creates no operation, state, CadQuery selector result, or effect.
 | `none` | sketch, path, `tag`, `toPending` | `Workplane` or path constructor | Binding propagation only. |
 
 A state-producing operation that returns no solid is a `non_solid_result`
-failure. A CadQuery selector operation whose receiver has no current state is a
+failure. A failed kernel classification call is a `geometry_capture` failure. A CadQuery selector operation whose receiver has no current state is a
 `missing_state` failure.
 
 ## Recorder state
@@ -121,7 +121,7 @@ The recorder maintains:
 
 | Field | Meaning |
 |---|---|
-| `result_kind` | CadQuery workplane, shape, shape list, list, scalar, edge, wire, or none. |
+| `result_kind` | CadQuery workplane, CadQuery workplane list, shape, shape list, list, scalar, plane, vector, edge, wire, or none. |
 | `state_id` | Current containing solid state, or null. |
 | `workplane_id` | Current CadQuery workplane, or null. |
 | `selected_category` | Face, edge, vertex, or null. |
@@ -137,7 +137,8 @@ After `thunk()` returns, classify the runtime value once:
 |---|---|
 | `cadquery.Workplane` | `workplane` |
 | `cadquery.ShapeList` | `shape_list` |
-| Python `list` | `list` |
+| Python `list` when the static operation is `all` | `workplane_list` |
+| Python `list` otherwise | `list` |
 | `int`, `float`, `bool`, `str` | `scalar` |
 | `None` | `none` |
 | `cadquery.Plane` | `plane` |
@@ -159,7 +160,8 @@ For `capture = state`:
 2. Require `len(shape.Solids()) >= 1`; otherwise fail with `non_solid_result`.
 3. Compute `state_id = state:<operation_id>`.
 4. Compute the entity table and shape hash using
-   [`../canonicalization.md`](../canonicalization.md).
+   [`../canonicalization.md`](../canonicalization.md) and
+   [`geometry-classification.md`](geometry-classification.md).
 5. Build topology records for the state.
 6. Capture the shape snapshot.
 

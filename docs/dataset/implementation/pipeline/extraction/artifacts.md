@@ -32,7 +32,8 @@ No table carries timestamps, hostnames, process IDs, or kernel handles.
 | `static_failures` | `(program_id)` | Static rejection reason and location. |
 
 Expression trees are nested Parquet structs on the owning operation, alias, or
-CadQuery selector row. They are not JSON strings.
+CadQuery selector row. They are not JSON strings. Exact columns and nested models
+are in [`static-schema.md`](static-schema.md).
 
 A static failure writes only `static_program` and `static_failures`. It writes no
 operation, alias, CadQuery workplane, CadQuery profile, path, or CadQuery selector rows.
@@ -50,6 +51,8 @@ operation, alias, CadQuery workplane, CadQuery profile, path, or CadQuery select
 | `execution_selectors` | `(program_id, selector_result_id)` | Static CadQuery selector, state, selected entity IDs, count. |
 | `execution_effects` | `(program_id, effect_id)` | Before/after states and measured deltas. |
 | `execution_failures` | `(program_id)` | Runtime tombstone: error category, message, operation, program span, cache key. |
+
+Exact runtime columns and nested models are in [`runtime-schema.md`](runtime-schema.md).
 
 `execution_recordings` is the join table between static operations and runtime
 capture. It is written even when a later operation fails; the failure record

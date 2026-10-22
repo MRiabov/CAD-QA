@@ -24,7 +24,8 @@ Each state has an entity table with one row per face, edge, and vertex.
 | Face | `centroid: Point3`, `area: double`, `normal: Vector3`, `bbox: BoundingBox` |
 
 `fingerprint_sha256` and `entity_id` are derived exactly as defined in
-[`../canonicalization.md`](../canonicalization.md). The fingerprint fields are
+[`../canonicalization.md`](../canonicalization.md). The kernel calls and surface
+and curve mappings are in [`geometry-classification.md`](geometry-classification.md). The fingerprint fields are
 the only geometry inputs; kernel handles and enumeration order are not inputs.
 
 Two entities in one state and category with the same fingerprint reject the

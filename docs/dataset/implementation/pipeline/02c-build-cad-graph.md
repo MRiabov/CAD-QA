@@ -439,7 +439,10 @@ number of `selected_by` edges.
 
 ## Behavior
 
-- Join operations to shape snapshots by `operation_id`.
+The deterministic node, relation, and measurement mapping is in
+[`02c-extraction-to-graph.md`](02c-extraction-to-graph.md).
+
+- Join operations to Shape snapshots by `operation_id`.
 - Create entity graph nodes for each shape snapshot and relation records for
   operation order, containment, adjacency, provenance, and measurements.
 - Map `selected_entity_ids` to entity graph nodes in the same shape snapshot.
