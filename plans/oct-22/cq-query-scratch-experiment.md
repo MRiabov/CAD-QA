@@ -37,10 +37,26 @@ input/output tokens.
 ## Inputs and the existing extracted data
 
 - The program pool comes from the 2026-10-19 regeneration (`runs/regen_1300_traced_20261019/`).
-  Its `sources.parquet` and `traces_combined.parquet` are used only to pick programs that already
-  executed successfully.
-- That data came from the superseded generator (`dataset/SUPERSEDED.md`). It does not follow the
-  `02` contracts, so it is not used as the source of any task fact.
+  Its `sources.parquet`, `traces_combined.parquet`, and `graph/graphs/*.parquet` are used only to
+  pick programs. A program qualifies if its trace succeeded and its graph has final-state faces
+  whose count matches the trace.
+- That data came from the superseded generator (`dataset/SUPERSEDED.md`). A 2026-10-22 audit found
+  it unfit as a source of task facts:
+
+  | Fact | Old graphs |
+  |---|---|
+  | Final-state faces present | 776 of 1,259 CADEvolve-C graphs (750 with an exact face count) |
+  | Graph faces matched one-to-one to kernel faces by bounding box | 787/787 (30-program kernel sample) |
+  | `parallel_to` / `perpendicular_to` correct | 100%, but only planar faces carry them |
+  | `adjacent_to` claims that are true | 765/784 (98%) |
+  | Real adjacencies the graph contains | 765/1,706 (45%) |
+  | Face area present / correct where present | 462/787 (59%) / 332/462 (72%) |
+  | Face→edge relation | missing in all 1,300 graphs |
+  | Face provenance (which operation created a face) | missing in all 1,300 graphs |
+
+  With adjacency incomplete and areas wrong, narrowing and uniqueness checks computed from the
+  graph would be wrong, and provenance clues would be impossible. So no task fact is read from the
+  old graph.
 - Every fact a task clue or gold answer depends on is recomputed with the CadQuery kernel, following
   the `02b` rules:
   - shape snapshots per solid state;
@@ -54,8 +70,9 @@ input/output tokens.
 
 ## Program pool (`01b`/`01d` rules on a small pool)
 
-1. Candidates: programs in the 1,300-program regeneration that are tier C (from `source_subtree`)
-   and whose trace succeeded.
+1. Candidates: programs in the 1,300-program regeneration that are tier C (from `source_subtree`),
+   whose trace succeeded, and whose old graph has final-state faces matching the trace face count.
+   The final state is found by following `result = wpN` aliases.
 2. Keep a program only if it passes the `02a` accepted subset (flat, one CadQuery call per
    assignment, no control flow, face/edge/vertex selectors only), checked with the Python AST.
    Rejected programs are recorded with the reason.
@@ -107,10 +124,31 @@ not add a step.
 | Clue type: property | surface or curve kind; orientation relative to a named workplane axis; measurement threshold |
 | Clue type: relation | `has_edge`, `has_vertex`, `adjacent_to`, `parallel_to`, `perpendicular_to` |
 | Clue type: comparison | measurement against a reference |
-| Clue type: provenance | created by the operation on line N, using the before/after entity difference from the effect delta |
+| Clue type: provenance | created by the operation on line N (definition below) |
 | Clue type: aggregation (P1) | extreme, used only as the final clue |
 | Answer meaning | volume, area, length, distance, count, position, material change, topology change |
 | Answer format | number, integer, 3D coordinate (no multiple choice in the scratch run) |
+
+`has_edge` and `has_vertex` are used only as one step inside a longer chain (for example, "the
+longest edge of the face adjacent to …"), never as a whole task.
+
+**Exact clue meanings.** Every clue whose meaning depends on a tolerance or a convention carries
+its definition in the prompt, so a model failure cannot come from guessing our convention:
+
+| Clue | Definition stated in the prompt |
+|---|---|
+| parallel / perpendicular | Angle between normals (faces) or directions (edges) within 0.1° of 0° / 90°; planar faces and straight edges only. |
+| same length / same area, larger / smaller | Relative tolerance 1e-3. |
+| adjacent faces | The faces share an edge. |
+| created by the operation on line N | A face of the shape after line N whose geometry (centroid, area, normal, bounding box at 1e-6) matches no face of the shape before line N. A face that was only trimmed or split counts as created, because its geometry changed. |
+
+**Provenance is expected to be the hardest clue type.** CadQuery 2.7 has no public selector for
+"faces made by this operation". OpenCascade's `Modified()`/`Generated()` history is used only
+internally (`occ_impl/assembly.py`, `occ_impl/shapes.py`), and the CADEvolve programs discard the
+builder. So the model must compare the before and after shapes by geometry itself. Gold provenance
+uses the same geometric rule at extraction time. build123d's `Select.LAST`/`Select.NEW`
+(recalled from memory, not checked here) would make this clue nearly a one-liner. That difference is
+worth reporting if a build123d variant is ever run.
 
 **Validity** follows `03b`:
 
@@ -142,7 +180,8 @@ The experiment adds one rule: the `gold_query`, executed in a fresh child proces
   as a numbered list (one condition per item), and the answer instruction.
 - **Clue wording.** Clues name operations as the specs do (`` the face created by `cutBlind` on
   line 12 ``). They never contain CadQuery selector strings such as `>Z` or `%CIRCLE`, so the task
-  is not string translation.
+  is not string translation. Each clue that needs one is followed by its definition from the table
+  above.
 - **Answer instruction (`eval` namespace).** Call `submit_query(code: str)` once. The code runs
   after the program in the same namespace and must assign the answer to `answer`. A fixed CadQuery
   cheat sheet (selector grammar, `.vals()`, `Area()`, `Length()`, `Center()`, `distance`) is part of
@@ -202,21 +241,35 @@ difficulty before moving to a higher step count.
 ## Cost and time
 
 - Model calls: about 300 × (~3k input + ~4k output tokens) ≈ $2, with a hard stop at $5.
-- Kernel work is CPU-only: the `02b`-slice extraction for 80 programs, plus about 600 query
-  executions, takes well under an hour on 8 cores.
+- Kernel work is CPU-only: the `02b`-slice extraction for 80 programs plus about 600 query
+  executions.
+- **Thermal limits.** The laptop overheated during the first full audit run. All kernel work runs
+  throttled:
+  - `nice -n 19`, `OMP_NUM_THREADS=1`;
+  - at most 2 child processes at a time;
+  - a 1–2 s pause between programs;
+  - no loading of all graph shards at once.
+
+  At this rate the work takes roughly 1–2 hours, and it runs in the background.
 - Monitor long runs every 3–5 minutes.
 
 ## Code (`experiments/cq_query_scratch/`)
 
 | Module | Responsibility |
 |---|---|
-| `pool.py` | Program pool: `01b`/`01d` rules and the `02a` subset check. |
-| `extract.py` | The `02b` slice: states, entities, topology, effects, canonical IDs. |
-| `definitions.py` | `TaskDefinition`, `TaskClue`, and the constructors. |
-| `compile_query.py` | Clue and answer step → CadQuery. |
-| `render.py` | Rendering from `prompts.yaml`. |
-| `run_eval.py` | Model calls, execution, grading. |
-| `report.py` | Funnel and accuracy report. |
+| Module | Responsibility | Lines (estimate) |
+|---|---|---|
+| `pool.py` | Program pool: `01b`/`01d` rules, the `02a` subset check, old-graph final-face filter. | ~120 |
+| `extract.py` | The `02b`/`02c` slice: states, entities, face→edge, adjacency, parallel/perpendicular, provenance, effects, canonical IDs. | ~250 |
+| `definitions.py` | `TaskDefinition`, `TaskClue`, and the constructors. | ~350 |
+| `compile_query.py` | Clue and answer step → CadQuery. | ~200 |
+| `render.py` (+ `prompts.yaml`, ~60 lines) | Rendering from `prompts.yaml`. | ~80 |
+| `run_eval.py` | Model calls, execution, grading. | ~200 |
+| `report.py` | Funnel and accuracy report. | ~100 |
+| `tests/test_cq_query_scratch.py` | E2E test. | ~150 |
+
+Total: about **1.4–1.9k lines**. Most of the bug risk sits in `definitions.py` and
+`compile_query.py`, which the stage gates are designed to catch.
 
 Code rules:
 
@@ -260,10 +313,9 @@ CadQuery, with only the LLM mocked. The test covers:
   (`has_edge`, `adjacent_to`, `parallel_to`, `perpendicular_to`, `creates`) and the `02b`
   measurements. They are computed in Python by the `graph-construction.md` rules, without UUIDv5
   graph IDs or graph Parquet persistence. This is a partial `02c`, written for the experiment and
-  deleted or replaced when the real Go `02c` exists. The old graph
-  artifacts in `runs/regen_1300_traced_20261019/graph/` are **not** reused. They come from the
-  superseded generator, use a different entity and relation vocabulary, have no `02b` entity IDs,
-  and nothing in them can be checked against the `02` contracts.
+  deleted or replaced when the real Go `02c` exists.
+- **Old graph artifacts select programs only.** They are not used for task facts; the audit numbers
+  are under *Inputs* above.
 - **Small pool.** 80 programs instead of the `01b` 1,500. The tag reservations and collection
   minima are recorded, not enforced.
 - **No release planning or splits.** `03a` and `03c` are skipped, and the 60-per-level quota is
@@ -271,6 +323,23 @@ CadQuery, with only the LLM mocked. The test covers:
 - **`gold_query` is an extra `TaskDefinition` field.** It does not exist in `03b` yet. If the pivot
   goes ahead, it becomes a spec change.
 - **No multiple choice.** The scratch run uses native answer formats only.
+
+## Expected results (guesses, recorded before the run)
+
+| Step count | Guessed accuracy |
+|---|---|
+| 1 | 90–98% |
+| 3 | 80–90% |
+| 5 | 70–85% |
+| 7 | 60–80% |
+| 9 | 50–75% |
+
+- Expected failure types:
+  - wrong CadQuery API calls (10–20% before cheat-sheet tuning, independent of step count);
+  - adjacency and provenance clues, which have no direct CadQuery selector;
+  - definition and wording bugs found in stage A.
+- The base 2–4B model is expected to score far lower; that is measured in the follow-up spike, not
+  here.
 
 ## Decision this informs
 
