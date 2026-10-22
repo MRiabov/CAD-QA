@@ -11,7 +11,9 @@ extraction root.
 
 Extraction is a module inside pipeline stage `02`, not a standalone service. It
 has no network API, no service database, and no independent trigger. Its outputs
-are artifacts consumed by `02c` and `03`.
+are artifacts consumed by `02c` and `03`. The `02c` pipeline stage contract is
+[`../02c-build-cad-graph.md`](../02c-build-cad-graph.md); its construction and
+persistence contracts are supporting docs in this directory.
 
 ## Input
 
@@ -206,4 +208,6 @@ decision explains why the contract has that shape.
 | [`artifacts.md`](artifacts.md) | Logical tables, keys, and artifact identities. |
 | [`ast-schema.md`](ast-schema.md) | AST extraction artifact columns, nested models, and CadQuery program AST extraction result hash. |
 | [`runtime-schema.md`](runtime-schema.md) | Runtime artifact columns, nested models, and runtime model hash. |
+| [`graph-construction.md`](graph-construction.md) | Deterministic `02c` mapping from extraction records to CAD graph elements. |
+| [`graph-persistence.md`](graph-persistence.md) | `02c` CAD graph tables, IDs, attributes, enums, tolerances, and evidence payloads. |
 | [`decisions.md`](decisions.md) | Accepted extraction decisions, rationale, and consequences. |

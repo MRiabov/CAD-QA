@@ -1,15 +1,15 @@
-# 02c — Extraction-to-graph mapping
+# CAD graph construction
 
-**Parent:** [`02c-build-cad-graph.md`](02c-build-cad-graph.md).
+**Parent:** [`02c — Build CAD graph`](../02c-build-cad-graph.md).
 
 **Purpose:** define the deterministic mapping from the extraction contract to
-the CAD graph. Table schemas are in [`02c-build-cad-graph.md`](02c-build-cad-graph.md);
+the CAD graph. Table schemas are in [`graph-persistence.md`](graph-persistence.md);
 this document defines which rows and relations are created.
 
 ## Inputs
 
 - `CadQueryAstExtractionResult` from
-  [`extraction/README.md`](extraction/README.md);
+  [`README.md`](README.md);
 - `CadQueryRuntimeExtractionResult` from `02b`;
 - program metadata from `01d`.
 
@@ -18,7 +18,7 @@ Reject the pair if either hash or any required reference is missing.
 ## IDs
 
 Extraction IDs are local identities. Graph IDs are UUIDv5 values derived by the
-rules in [`02c-build-cad-graph.md`](02c-build-cad-graph.md).
+rules in [`graph-persistence.md`](graph-persistence.md).
 
 | CAD graph entity category | `local_id` | From |
 |---|---|---|
@@ -105,9 +105,9 @@ the graph; it is not dropped.
 
 ## Measurement construction
 
-Use the measurement catalog in [`02c-build-cad-graph.md`](02c-build-cad-graph.md).
+Use the measurement catalog in [`graph-persistence.md`](graph-persistence.md).
 Every measurement carries `evidence_kind`, `evidence_rule`, and `evidence_refs`
-from [`extraction/cadquery/features/evidence.md`](extraction/cadquery/features/evidence.md).
+from [`cadquery/features/evidence.md`](cadquery/features/evidence.md).
 
 From the CadQuery program runtime extraction result:
 

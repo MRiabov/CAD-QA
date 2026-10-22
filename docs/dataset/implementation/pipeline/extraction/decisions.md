@@ -252,7 +252,7 @@ dropped or repaired.
 ## EX-19 — Extraction-to-graph mapping is a separate algorithm
 
 **Decision:** `02c` uses the CAD graph entity, relation, and measurement mapping in
-[`../02c-extraction-to-graph.md`](../02c-extraction-to-graph.md).
+[`graph-construction.md`](graph-construction.md).
 
 **Why:** The extraction contract owns extraction IDs and records. The graph
 contract owns UUIDs, CAD graph entity types, relation categories, and measurements.
