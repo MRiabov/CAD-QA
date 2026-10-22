@@ -199,7 +199,7 @@ We extract this CAD ontology:
 - Nodes: sources, features, operations, parameters, workplanes, sketches, profiles, solids, faces, edges, vertices, axes, directions, points, centroids, centerlines, paths, selectors, measurements, material/void regions.
 - Relations:
   - Temporal/dataflow: `before`, `after`, `input_to`, `combines`.
-  - Parent/child CAD ontology node relationship: `created_by`, `modified_by`, `deleted_by`, `adds_material_to`, `removes_material_from`.
+  - Parent/child CAD graph entity relationship: `created_by`, `modified_by`, `deleted_by`, `adds_material_to`, `removes_material_from`.
   - Construction: `uses_profile`, `used_by`, `parameter_of`, `selected_by`, `located_on`, `bounded_by`.
   - Measurement: `has_measurement`, `has_centroid`, `has_coordinate`, `has_normal`.
   - Geometry: `distance_to`, `nearest_tangent_to`, `parallel_to`, `not_parallel_to`, `perpendicular_to`, `orthogonal_to`, `coaxial_with`, `adjacent_to`, `opposite_to`, `contained_in`, `intersects`.

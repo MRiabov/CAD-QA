@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 from typing import Any, Mapping
 
-from dataset.ontology.nodes import Node, OntologyGraph
+from dataset.ontology.nodes import Node, CadGraph
 
 
 DEFAULT_DECIMALS = 6
@@ -59,7 +59,7 @@ def normalize_answer_spec(
     return AnswerSpec()
 
 
-def synthesis_answer_spec_for_target_type(target_type: str, graph: OntologyGraph | None = None) -> AnswerSpec:
+def synthesis_answer_spec_for_target_type(target_type: str, graph: CadGraph | None = None) -> AnswerSpec:
     if target_type in {"feature", "operation", "profile", "workplane", "material_region", "void_region"}:
         if target_type == "void_region":
             return AnswerSpec(mode="candidate_label", answer_format="candidate_label")
@@ -105,7 +105,7 @@ def answer_instruction(spec: AnswerSpec, *, target_type: str | None = None) -> s
     return "Return exactly one entity_id."
 
 
-def source_ref_is_publicly_unambiguous(graph: OntologyGraph, node: Node) -> bool:
+def source_ref_is_publicly_unambiguous(graph: CadGraph, node: Node) -> bool:
     answer = _source_ref_answer(node)
     if not answer or ":" in answer:
         return False
@@ -115,7 +115,7 @@ def source_ref_is_publicly_unambiguous(graph: OntologyGraph, node: Node) -> bool
     return sum(1 for candidate in graph.nodes_by_type(node.type) if _source_ref_answer(candidate) == answer) <= 1
 
 
-def format_gold_answer(graph: OntologyGraph, query: Any, node: Node) -> Any:
+def format_gold_answer(graph: CadGraph, query: Any, node: Node) -> Any:
     spec = normalize_answer_spec(
         getattr(query, "answer_spec", None),
         target_type=getattr(query, "target_type", None),
@@ -145,7 +145,7 @@ def format_gold_answer(graph: OntologyGraph, query: Any, node: Node) -> Any:
 
 
 def answer_spec_with_candidate_labels(
-    graph: OntologyGraph,
+    graph: CadGraph,
     spec: AnswerSpec,
     candidate_ids: list[str],
     gold_entity_id: str,
@@ -169,7 +169,7 @@ def answer_spec_with_candidate_labels(
 
 
 def answer_spec_with_selector_expression_choices(
-    graph: OntologyGraph,
+    graph: CadGraph,
     spec: AnswerSpec,
     gold_entity_id: str,
     candidate_entity_ids: list[str],
@@ -220,7 +220,7 @@ def candidate_label_entity_ids(trace_steps: list[dict[str, Any]], final_candidat
     return list(final_candidates)
 
 
-def candidate_label_lines(graph: OntologyGraph, query: Any) -> list[str]:
+def candidate_label_lines(graph: CadGraph, query: Any) -> list[str]:
     spec = normalize_answer_spec(
         getattr(query, "answer_spec", None),
         target_type=getattr(query, "target_type", None),
@@ -244,7 +244,7 @@ def candidate_label_lines(graph: OntologyGraph, query: Any) -> list[str]:
 
 
 def selector_expression_choice_texts(
-    graph: OntologyGraph,
+    graph: CadGraph,
     gold_entity_id: str,
     candidate_entity_ids: list[str],
 ) -> dict[str, str] | None:
@@ -270,7 +270,7 @@ def selector_expression_choice_texts(
 
 
 def _bounded_candidate_ids(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidate_ids: list[str],
     gold_entity_id: str,
     max_candidate_labels: int,
@@ -314,7 +314,7 @@ def _bounded_candidate_ids(
 
 
 def _aggregation_consistent_candidate_ids(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidate_ids: list[str],
     gold_entity_id: str,
     max_candidate_labels: int,
@@ -395,7 +395,7 @@ def _aggregation_consistent_candidate_ids(
     return [gold_entity_id, *_rotate(eligible_distractors, offset)[: max_candidate_labels - 1]]
 
 
-def _has_informative_candidate_description(graph: OntologyGraph, entity_id: str) -> bool:
+def _has_informative_candidate_description(graph: CadGraph, entity_id: str) -> bool:
     description = _candidate_description(graph, entity_id)
     return description not in {
         "edge candidate",
@@ -406,7 +406,7 @@ def _has_informative_candidate_description(graph: OntologyGraph, entity_id: str)
     }
 
 
-def selector_expression_for_entity(graph: OntologyGraph, entity_id: str) -> str | None:
+def selector_expression_for_entity(graph: CadGraph, entity_id: str) -> str | None:
     node = graph.node(entity_id)
     if node is None:
         return None
@@ -454,7 +454,7 @@ def _source_ref_answer(node: Node) -> str:
     return node.label or node.id
 
 
-def _coordinate_answer(graph: OntologyGraph, node: Node, spec: AnswerSpec) -> list[float]:
+def _coordinate_answer(graph: CadGraph, node: Node, spec: AnswerSpec) -> list[float]:
     metric = spec.metric or "coordinate"
     value = _measurement_value(graph, node.id, metric)
     if value is None:
@@ -471,7 +471,7 @@ def _coordinate_answer(graph: OntologyGraph, node: Node, spec: AnswerSpec) -> li
     return [_clean_number(float(component), spec.decimals) for component in value]
 
 
-def _number_answer(graph: OntologyGraph, node: Node, spec: AnswerSpec) -> float:
+def _number_answer(graph: CadGraph, node: Node, spec: AnswerSpec) -> float:
     if not spec.metric:
         raise ValueError("number answer spec requires a metric")
     value = _measurement_value(graph, node.id, spec.metric)
@@ -482,33 +482,33 @@ def _number_answer(graph: OntologyGraph, node: Node, spec: AnswerSpec) -> float:
     return _clean_number(float(value), spec.decimals)
 
 
-def _measurement_value(graph: OntologyGraph, entity_id: str, metric: str) -> Any:
+def _measurement_value(graph: CadGraph, entity_id: str, metric: str) -> Any:
     measurements = graph.measurements_for(entity_id, metric)
     if not measurements:
         return None
     return measurements[0].value
 
 
-def _target_type_has_full_coordinates(graph: OntologyGraph, target_type: str) -> bool:
+def _target_type_has_full_coordinates(graph: CadGraph, target_type: str) -> bool:
     nodes = graph.nodes_by_type(target_type)
     if not nodes:
         return False
     return all(_point_value(graph, node.id, "coordinate") is not None for node in nodes)
 
 
-def _target_type_has_any_selector_expression(graph: OntologyGraph, target_type: str) -> bool:
+def _target_type_has_any_selector_expression(graph: CadGraph, target_type: str) -> bool:
     nodes = graph.nodes_by_type(target_type)
     return any(selector_expression_for_entity(graph, node.id) is not None for node in nodes)
 
 
-def _selector_expression_for_selector(graph: OntologyGraph, selector: Node) -> str | None:
+def _selector_expression_for_selector(graph: CadGraph, selector: Node) -> str | None:
     parts = _selector_expression_parts(graph, selector)
     if parts is None:
         return None
     return _selector_expression_from_parts(*parts)
 
 
-def _selector_expression_parts(graph: OntologyGraph, selector: Node) -> tuple[str, str, str | None] | None:
+def _selector_expression_parts(graph: CadGraph, selector: Node) -> tuple[str, str, str | None] | None:
     operation = _selector_operation(graph, selector.id)
     selector_kind = str(
         (operation.properties.get("operation") if operation is not None else None)
@@ -531,7 +531,7 @@ def _selector_expression_from_parts(base: str, selector_kind: str, selector_text
     return f"{base}.{selector_kind}({_quoted_selector_text(str(selector_text))})"
 
 
-def _selector_operation(graph: OntologyGraph, selector_id: str) -> Node | None:
+def _selector_operation(graph: CadGraph, selector_id: str) -> Node | None:
     for relation in graph.relations:
         if relation.source_id != selector_id or relation.type != "selected_by":
             continue
@@ -541,7 +541,7 @@ def _selector_operation(graph: OntologyGraph, selector_id: str) -> Node | None:
     return None
 
 
-def _selector_for_selected_entity(graph: OntologyGraph, node: Node) -> Node | None:
+def _selector_for_selected_entity(graph: CadGraph, node: Node) -> Node | None:
     selector_relations = {
         "selected_by",
         f"has_kernel_stable_{node.type}_id",
@@ -556,7 +556,7 @@ def _selector_for_selected_entity(graph: OntologyGraph, node: Node) -> Node | No
     return None
 
 
-def _snapshot_selector_base(graph: OntologyGraph, selector: Node) -> str | None:
+def _snapshot_selector_base(graph: CadGraph, selector: Node) -> str | None:
     feature_id = selector.properties.get("feature_id")
     if isinstance(feature_id, str):
         feature = graph.node(feature_id)
@@ -604,7 +604,7 @@ def _query_description_metrics(query: Any) -> list[str]:
 
 
 def _candidate_description(
-    graph: OntologyGraph,
+    graph: CadGraph,
     entity_id: str,
     *,
     metric_names: list[str] | None = None,
@@ -630,7 +630,7 @@ def _candidate_description(
     return _fallback_description(entity_id, node)
 
 
-def _edge_description(graph: OntologyGraph, entity_id: str, node: Node | None) -> str:
+def _edge_description(graph: CadGraph, entity_id: str, node: Node | None) -> str:
     midpoint = _point_value(graph, entity_id, "midpoint")
     length = _measurement_value(graph, entity_id, "edge_length")
     bbox = node.properties.get("bbox") if node is not None else None
@@ -650,7 +650,7 @@ def _edge_description(graph: OntologyGraph, entity_id: str, node: Node | None) -
     return "; ".join(parts) if parts else _fallback_description(entity_id, node)
 
 
-def _face_description(graph: OntologyGraph, entity_id: str, node: Node | None) -> str:
+def _face_description(graph: CadGraph, entity_id: str, node: Node | None) -> str:
     center = _point_value(graph, entity_id, "coordinate")
     area = _measurement_value(graph, entity_id, "face_area")
     bbox = node.properties.get("bbox") if node is not None else None
@@ -670,7 +670,7 @@ def _face_description(graph: OntologyGraph, entity_id: str, node: Node | None) -
     return "; ".join(parts) if parts else _fallback_description(entity_id, node)
 
 
-def _path_segment_description(graph: OntologyGraph, entity_id: str, node: Node | None) -> str:
+def _path_segment_description(graph: CadGraph, entity_id: str, node: Node | None) -> str:
     start = node.properties.get("start") if node is not None else None
     end = node.properties.get("end") if node is not None else None
     midpoint = _point_value(graph, entity_id, "segment_midpoint") or _point_value(graph, entity_id, "midpoint")
@@ -687,7 +687,7 @@ def _path_segment_description(graph: OntologyGraph, entity_id: str, node: Node |
     return "; ".join(parts) if parts else _fallback_description(entity_id, node)
 
 
-def _selector_description(graph: OntologyGraph, entity_id: str, node: Node | None) -> str:
+def _selector_description(graph: CadGraph, entity_id: str, node: Node | None) -> str:
     if node is None:
         return "selector candidate"
     props = node.properties
@@ -712,7 +712,7 @@ def _selector_description(graph: OntologyGraph, entity_id: str, node: Node | Non
     return "; ".join(parts) if parts else _fallback_description(entity_id, node)
 
 
-def _point_value(graph: OntologyGraph, entity_id: str, metric: str) -> list[float | int] | None:
+def _point_value(graph: CadGraph, entity_id: str, metric: str) -> list[float | int] | None:
     value = _measurement_value(graph, entity_id, metric)
     node = graph.node(entity_id)
     if value is None and node is not None:
@@ -722,7 +722,7 @@ def _point_value(graph: OntologyGraph, entity_id: str, metric: str) -> list[floa
     return None
 
 
-def _point_component_parts(graph: OntologyGraph, entity_id: str, label: str, metric_prefix: str) -> list[str]:
+def _point_component_parts(graph: CadGraph, entity_id: str, label: str, metric_prefix: str) -> list[str]:
     parts = []
     for axis in ("x", "y", "z"):
         value = _measurement_value(graph, entity_id, f"{metric_prefix}_{axis}")
@@ -731,7 +731,7 @@ def _point_component_parts(graph: OntologyGraph, entity_id: str, label: str, met
     return parts
 
 
-def _selection_geometry_parts(graph: OntologyGraph, entity_id: str) -> list[str]:
+def _selection_geometry_parts(graph: CadGraph, entity_id: str) -> list[str]:
     metric_groups = (
         ("selected face center Z", "selected_face_min_coordinate_z", "selected_face_max_coordinate_z"),
         ("selected face area", "selected_face_min_face_area", "selected_face_max_face_area"),
@@ -752,7 +752,7 @@ def _selection_geometry_parts(graph: OntologyGraph, entity_id: str) -> list[str]
 
 
 def _source_like_description(
-    graph: OntologyGraph,
+    graph: CadGraph,
     entity_id: str,
     node: Node | None,
     metric_names: list[str],
@@ -779,7 +779,7 @@ def _source_like_description(
     return "; ".join(list(dict.fromkeys(parts))) if parts else _fallback_description(entity_id, node)
 
 
-def _metric_value_description(graph: OntologyGraph, entity_id: str, metric: str) -> str | None:
+def _metric_value_description(graph: CadGraph, entity_id: str, metric: str) -> str | None:
     value = _measurement_value(graph, entity_id, metric)
     if value is None:
         node = graph.node(entity_id)

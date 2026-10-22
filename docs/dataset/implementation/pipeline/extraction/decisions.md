@@ -58,13 +58,13 @@ contract. It must not weaken P0/P1.
 validation failure rejects the whole CadQuery program. There is no best-effort
 or partial extraction.
 
-**Why:** A partial static model or partial execution result is worse than a
+**Why:** A partial CadQuery program AST extraction result or partial CadQuery program runtime extraction result is worse than a
 failure record because downstream stages cannot tell which fields are missing by
 design and which are missing by accident.
 
 **Consequence:** A failure emits no operations, aliases, CadQuery workplanes,
 CadQuery profiles, paths, CadQuery selectors, states, or entities that a consumer
-could mistake for a static model.
+could mistake for a CadQuery program AST extraction result.
 
 ## EX-5 — Reject `combineSolids`
 
@@ -74,7 +74,7 @@ as `combine`.
 **Why:** It is observed in CADEvolve-C programs but is not a CadQuery 2.7 method.
 Silently rewriting it would change the CadQuery program.
 
-**Consequence:** Programs that call `combineSolids` fail static extraction. The
+**Consequence:** Programs that call `combineSolids` fail AST extraction. The
 local cache contains 701 CADEvolve-C-core, 41 ABC-C, and 3 ShapeNet-C affected
 programs.
 
@@ -94,17 +94,17 @@ break the graph invariant that selected membership maps to entity nodes.
 CADEvolve-C only. Supporting wire/solid selection later requires new graph entity
 categories, fingerprints, topology records, and task bindings.
 
-## EX-7 — Static workplane frames are intent; runtime frames are measurements
+## EX-7 — AST workplane frames are intent; runtime frames are measurements
 
-**Decision:** Static extraction records a CadQuery workplane frame only when it
+**Decision:** AST extraction records a CadQuery workplane frame only when it
 can derive it from the CadQuery program. Otherwise `frame_status = unknown`.
 `02b` always measures the executed frame.
 
 **Why:** `workplaneFromTagged`, `transformed`, and face-derived workplanes need
-runtime state. Guessing their frame in static extraction would contaminate
+runtime state. Guessing their frame in AST extraction would contaminate
 intent with an unverified measurement.
 
-**Consequence:** `origin`, `x_direction`, and `normal` are nullable in the static
+**Consequence:** `origin`, `x_direction`, and `normal` are nullable in the AST extraction result
 record. `02c` uses the measured workplane frame for graph measurements.
 
 ## EX-8 — Capture the result, not the arguments
@@ -117,7 +117,7 @@ pass evaluated receiver or argument values.
 effect. Argument values are not required, and evaluating them separately would
 risk double evaluation or require rewriting every argument expression.
 
-**Consequence:** The `evaluate` callable is evaluated exactly once. The recorder uses the static
+**Consequence:** The `evaluate` callable is evaluated exactly once. The recorder uses the AST extraction result's
 `receiver_var` to look up the current runtime state. A `RecordedAssignment` has no
 `receiver_value` or `argument_values` field.
 
@@ -152,10 +152,10 @@ creates no state, CadQuery selector result, effect, or graph operation.
 edges, and vertices.
 
 **Why:** Those are the entity categories in the CAD graph. A selected wire or
-solid has no graph node to receive a `selected_by` relation.
+solid has no CAD graph entity to receive a `selected_by` relation.
 
 **Consequence:** The runtime rejects a CadQuery selector category outside this set during
-static extraction, before execution. A selected value that has no matching
+AST extraction, before execution. A selected value that has no matching
 entity row is an `unmapped_entity` failure.
 
 ## EX-12 — Canonicalization is explicit and versioned
@@ -173,9 +173,9 @@ invalidates extraction caches and graph artifacts.
 
 ## EX-13 — Failure is data; no partial artifacts
 
-**Decision:** Static rejection produces a static failure record. Runtime failure
-produces a failure tombstone. Neither produces a partial static model, partial
-execution result, or partial graph.
+**Decision:** AST rejection produces an AST rejection record. Runtime failure
+produces a failure tombstone. Neither produces a partial CadQuery program AST extraction result, partial
+CadQuery program runtime extraction result, or partial graph.
 
 **Why:** Downstream stages must distinguish rejected CadQuery programs from
 successful ones without guessing. Failure reuse also needs an explicit cache key.
@@ -202,7 +202,7 @@ key.
 **Decision:** Arbitrary Python control flow, chained CadQuery calls, near-miss
 choices, and P-tier expansion are not P0/P1 extraction features.
 
-**Why:** Each changes static identity, runtime capture, or task construction in a
+**Why:** Each changes AST identity, runtime capture, or task construction in a
 way that would weaken the P0/P1 invariants if added implicitly.
 
 **Consequence:** P2 must add its own decisions and algorithms. The P0/P1 contract
@@ -213,7 +213,7 @@ does not reserve partial P2 fields or accept P2 programs as best effort.
 **Decision:** Every allowlisted call has a receiver, argument, result, and state
 contract in [`ast/algorithm/method-signatures.md`](ast/algorithm/method-signatures.md). `fuse` is a
 qualified shape method, `Edges` and `Solids` are shape accessors, `wire` returns
-a CadQuery workplane, and `newObject`/`add` are not state-producing.
+a CadQuery workplane, and `newObject`/`add` are not solid state producing.
 
 **Why:** CadQuery exposes the same method name on different receivers, and the
 CADEvolve-C programs use shape-level accessors after `val()`. Method-name-only
@@ -251,21 +251,21 @@ dropped or repaired.
 
 ## EX-19 — Extraction-to-graph mapping is a separate algorithm
 
-**Decision:** `02c` uses the graph node, relation, and measurement mapping in
+**Decision:** `02c` uses the CAD graph entity, relation, and measurement mapping in
 [`../02c-extraction-to-graph.md`](../02c-extraction-to-graph.md).
 
 **Why:** The extraction contract owns extraction IDs and records. The graph
-contract owns UUIDs, graph node types, relation categories, and measurements.
+contract owns UUIDs, CAD graph entity types, relation categories, and measurements.
 Keeping the mapping separate prevents either contract from silently redefining
 the other.
 
 **Consequence:** Every extraction record has a defined graph destination, and a
 missing endpoint or measurement rejects the graph.
 
-## EX-20 — Static artifacts are typed
+## EX-20 — AST extraction artifacts are typed
 
-**Decision:** The static model uses the table columns and nested models in
-[`static-schema.md`](static-schema.md), not JSON strings on the bulk data path.
+**Decision:** The CadQuery program AST extraction result uses the table columns and nested models in
+[`ast-schema.md`](ast-schema.md), not JSON strings on the bulk data path.
 
 **Why:** Go and Python exchange Parquet tables. A typed schema makes joins,
 validation, and hash inputs unambiguous.

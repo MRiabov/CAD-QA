@@ -1,6 +1,6 @@
-"""CAD ontology extraction."""
+"""CAD graph extraction."""
 
 from dataset.ontology.extract import build_graph
-from dataset.ontology.nodes import Measurement, Node, OntologyGraph, Relation
+from dataset.ontology.nodes import Measurement, Node, CadGraph, Relation
 
-__all__ = ["Measurement", "Node", "OntologyGraph", "Relation", "build_graph"]
+__all__ = ["Measurement", "Node", "CadGraph", "Relation", "build_graph"]

@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from dataset.io import to_jsonable
-from dataset.ontology.nodes import OntologyGraph
+from dataset.ontology.nodes import CadGraph
 from dataset.prompts.render import render_prompt
 from dataset.query.ir import QueryResolution
 from dataset.query.parameters import normalize_sampled_parameters, sampled_parameters_from_query
@@ -42,7 +42,7 @@ class DatasetRow:
     quarantine_reasons: list[str]
 
 
-def materialize_row(graph: OntologyGraph, resolution: QueryResolution) -> DatasetRow:
+def materialize_row(graph: CadGraph, resolution: QueryResolution) -> DatasetRow:
     rendered = render_prompt(graph.source["source_code"], resolution.query_program, graph=graph)
     source_id = graph.source["source_id"]
     source_metadata = graph.source.get("metadata") or {}

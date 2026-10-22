@@ -18,50 +18,50 @@ Every table carries:
 
 No table carries timestamps, hostnames, process IDs, or kernel handles.
 
-## `02a` static tables
+## `02a` AST extraction tables
 
 | Table | Key | Contents |
 |---|---|---|
-| `static_program` | `program_id` | Program identity, normalization version, import alias, static status, `static_model_sha256`. |
+| `static_program` | `program_id` | Program identity, normalization version, import alias, AST extraction status, `static_model_sha256`. |
 | `static_operations` | `(program_id, operation_id)` | Call operations, classification, receiver, expression trees, program span. |
 | `static_aliases` | `(program_id, alias_id)` | Name and subscript aliases. |
-| `static_workplanes` | `(program_id, workplane_id)` | Static CadQuery workplane kind, named plane, frame status, derivations, tags. |
+| `static_workplanes` | `(program_id, workplane_id)` | CadQuery workplane kind in the AST extraction result, named plane, frame status, derivations, tags. |
 | `static_profiles` | `(program_id, profile_id)` | CadQuery profile kind, dimensions, points, closed flag, CadQuery workplane reference. |
 | `static_paths` | `(program_id, path_id)` | Path kind, points, segments, closed flag, CadQuery workplane reference. |
 | `static_selectors` | `(program_id, selector_id)` | CadQuery selector kind, expression, category, filter predicate. |
-| `static_failures` | `(program_id)` | Static rejection reason and location. |
+| `static_failures` | `(program_id)` | AST rejection reason and location. |
 
 Expression trees are nested Parquet structs on the owning operation, alias, or
 CadQuery selector row. They are not JSON strings. Exact columns and nested models
-are in [`static-schema.md`](static-schema.md).
+are in [`ast-schema.md`](ast-schema.md).
 
-A static failure writes only `static_program` and `static_failures`. It writes no
+An AST rejection writes only `static_program` and `static_failures`. It writes no
 operation, alias, CadQuery workplane, CadQuery profile, path, or CadQuery selector rows.
 
 ## `02b` runtime tables
 
 | Table | Key | Contents |
 |---|---|---|
-| `execution_program` | `program_id` | Environment, static model hash, execution status, `execution_result_sha256`. |
-| `execution_recordings` | `(program_id, operation_id)` | One row per static operation: result kind, state, CadQuery selector result, program span. |
+| `execution_program` | `program_id` | Environment, CadQuery program AST extraction result hash, execution status, `execution_result_sha256`. |
+| `execution_recordings` | `(program_id, operation_id)` | One row per AST operation: result kind, state, CadQuery selector result, program span. |
 | `execution_states` | `(program_id, state_id)` | Shape snapshot: shape hash, validity, solid flag, volume, bbox, centroid, counts. |
 | `execution_entities` | `(program_id, state_id, entity_id)` | Entity table: category, fingerprint, fingerprint hash, face surface and edge curve category. |
 | `execution_topology` | `(program_id, topology_id)` | Face-edge, edge-vertex, face-face, and state incidence records. |
 | `execution_workplanes` | `(program_id, workplane_id)` | Measured origin, x direction, normal, CadQuery workplane category, named plane. |
-| `execution_selectors` | `(program_id, selector_result_id)` | Static CadQuery selector, state, selected entity IDs, count. |
+| `execution_selectors` | `(program_id, selector_result_id)` | CadQuery selector in the AST extraction result, state, selected entity IDs, count. |
 | `execution_effects` | `(program_id, effect_id)` | Before/after states and measured deltas. |
 | `execution_failures` | `(program_id)` | Runtime tombstone: error category, message, operation, program span, cache key. |
 
 Exact runtime columns and nested models are in [`runtime-schema.md`](runtime-schema.md).
 
-`execution_recordings` is the join table between static operations and runtime
+`execution_recordings` is the join table between AST operations and runtime
 capture. It is written even when a later operation fails; the failure record
 marks the terminal operation. A failed execution still writes no state or
 CadQuery selector row for the failed operation.
 
 ## Identity
 
-- `static_model_sha256` is the canonical hash of the complete static model.
+- `static_model_sha256` is the canonical hash of the complete CadQuery program AST extraction result.
 - `execution_result_sha256` is the canonical hash of the complete execution
   result, including sorted recordings, states, entities, topology, frames,
   selectors, effects, and final state.
@@ -75,7 +75,7 @@ row whose `program_id` does not match the artifact.
 
 ## Physical shape policy
 
-- Static and runtime tables are Parquet.
+- AST extraction and runtime tables are Parquet.
 - Large tables may be partitioned by `program_id`.
 - One program's rows are merged by `program_id`; parallel writers never append to
   a shared file.

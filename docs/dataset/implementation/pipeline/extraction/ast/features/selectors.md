@@ -37,5 +37,5 @@ selectors have no graph entity category and reject the program.
 The CadQuery selector ID ordinal is zero for every P0/P1 operation. A later operation
 with more than one CadQuery selector numbers them in program order.
 
-Static extraction records the expression and category. `02b` evaluates at the
+AST extraction records the expression and category. `02b` evaluates at the
 call point. Zero matches is a valid result. An exception rejects the program.

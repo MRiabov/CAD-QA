@@ -2,7 +2,7 @@
 
 **Parent:** [`02-execute-cadquery-and-build-graph.md`](02-execute-cadquery-and-build-graph.md).
 
-**Purpose:** combine the static CadQuery model and execution result into the CAD
+**Purpose:** combine the CadQuery program AST extraction result and CadQuery program runtime extraction result into the CAD
 graph.
 
 ## Input / output
@@ -39,8 +39,8 @@ Join keys are UUID, never enum strings.
 | `node_id` | `UUID` | not null | Deterministic UUIDv5 of `(program_id, node_type, local_id)`. |
 | `node_type` | `STRING` enum `GraphNodeType` | not null | Graph entity category. |
 | `local_id` | `STRING` | not null | Stable ID within the program and node type. |
-| `state_id` | `STRING` | nullable | Containing or selected solid state, when the graph node type requires one. |
-| `operation_id` | `STRING` | nullable | Creating or evaluated operation, when the graph node type requires one. |
+| `state_id` | `STRING` | nullable | Containing or selected solid state, when the CAD graph entity type requires one. |
+| `operation_id` | `STRING` | nullable | Creating or evaluated operation, when the CAD graph entity type requires one. |
 | `label` | `STRING` | not null | Display string; not used for identity or binding. |
 | `attributes` | `STRUCT` tagged union | not null | Exactly one group is non-null and matches `node_type`. |
 
@@ -258,8 +258,8 @@ remain MC-35, and answer-scoring tolerance remains the task definition's
 - `measurements.parquet` stores measurements. A measurement is a graph element,
   not a graph entity: it has a `measurement_id` and never a `node_id`.
 - A graph entity never appears as a measurement row, and a measurement never
-  appears as a graph node row. `graph-content.md` lists Measurement as an entity
-  category; in storage it is a `measurements.parquet` row, not a graph node.
+  appears as a CAD graph entity row. `graph-content.md` lists Measurement as an entity
+  category; in storage it is a `measurements.parquet` row, not a CAD graph entity.
 - `state_id` and `operation_id` are scope columns, not attributes. Their
   nullability is defined per node type below.
 - `attributes` is one Parquet struct with one nullable group per node type.
@@ -313,11 +313,11 @@ map keys, comparisons, or joins. Convert to canonical lowercase hyphenated text
 only when forming a UUIDv5 name component or writing inspection output.
 `program_id` and the `02a`/`02b` IDs remain strings.
 
-## Graph node types and local identity
+## CAD graph entity types and local identity
 
 `local_id` is defined as follows. `node_id` is derived from it, `program_id`, and
 `node_type` as specified in [Graph ID derivation](#graph-id-derivation).
-`ordinal` is a zero-based position in the static extraction list for the creating
+`ordinal` is a zero-based position in the AST extraction list for the creating
 operation. `index` and `sequence_index` are zero-based. `source_line` is one-based.
 
 | `node_type` | `local_id` | `state_id` | `operation_id` |
@@ -338,7 +338,7 @@ operation. `index` and `sequence_index` are zero-based. `source_line` is one-bas
 | `region` | `{feature_local_id}:{added\|removed}` | state after the feature | creating operation of the feature |
 | `cadquery_selector_result` | `selector_result_id` from `02b` | selected state | evaluated operation |
 
-## Graph node attributes
+## CAD graph entity attributes
 
 `GraphNodeType` is the closed enum of the `node_type` values in the table above.
 `NodeAttributes` is a tagged union with one group per `GraphNodeType` value. The
@@ -401,7 +401,7 @@ of an edge. These names are a graph schema change from an earlier `SurfaceKind`
 - `execution_result_sha256` is computed by `02c` over the canonical execution
   result from `02b`.
 - `shape_hash` is the shape identity hash from `02b`. It is not a measurement.
-- `is_final` is true for exactly one solid-state graph node when the graph has at
+- `is_final` is true for exactly one solid-state CAD graph entity when the graph has at
   least one solid state.
 - `is_closed` is the closed flag reported by the origin graph entity. `02c` does not
   recompute it from geometry.
@@ -418,7 +418,7 @@ of an edge. These names are a graph schema change from an earlier `SurfaceKind`
 - Every relation endpoint is an existing `node_id`; every measurement subject and
   every non-null object is an existing `node_id`; a missing reference rejects the
   graph.
-- Every P0 node category has a row when the static extraction result or execution result has
+- Every P0 CAD graph entity category has a row when the AST extraction result or CadQuery program runtime extraction result has
   an instance. P1 categories may be absent in a P0 graph.
 - `MeasurementValue`, `Tolerance`, and `EvidenceRef` each have exactly one
   non-null group matching their `kind`.
@@ -426,7 +426,7 @@ of an edge. These names are a graph schema change from an earlier `SurfaceKind`
   a mismatch rejects the graph.
 - `TolerancePolicy`, `tolerance_policy_version`, and `tolerance_policy_sha256` are present in the run manifest.
 - `Tolerance` obeys its `exact`, `absolute`, and `relative` field rules.
-- A change to a graph node type, attribute field, measurement type, enum value, or
+- A change to a CAD graph entity type, attribute field, measurement type, enum value, or
   payload field is a `graph_schema_version` change. Readers reject an unknown
   version.
 
@@ -436,8 +436,8 @@ of an edge. These names are a graph schema change from an earlier `SurfaceKind`
   `(program_id, relation_type, from_node_id, to_node_id)` as defined in
   [Graph ID derivation](#graph-id-derivation).
 
-The graph includes a `cadquery_selector_result` graph node for each
-`SelectorResult`. `selected_by` relations link an entity graph node to its
+The graph includes a `cadquery_selector_result` CAD graph entity for each
+`SelectorResult`. `selected_by` relations link a CAD graph entity to its
 CadQuery selector result; `selected_from` links the CadQuery selector result to
 its state. The CadQuery selector result carries a count measurement equal to the
 number of `selected_by` edges.
@@ -448,12 +448,12 @@ The deterministic node, relation, and measurement mapping is in
 [`02c-extraction-to-graph.md`](02c-extraction-to-graph.md).
 
 - Join operations to Shape snapshots by `operation_id`.
-- Create entity graph nodes for each shape snapshot and relation records for
+- Create CAD graph entities for each shape snapshot and relation records for
   operation order, containment, adjacency, provenance, and measurements.
-- Map `selected_entity_ids` to entity graph nodes in the same shape snapshot.
+- Map `selected_entity_ids` to CAD graph entities in the same shape snapshot.
 - Attach CAD graph evidence at the same time as each measurement: derived or
   measured, the rule, and references.
-- Compute operation effects from before/after shape snapshots.
+- Compute CAD feature solid state effect deltas from before/after shape snapshots.
 - Skip failure tombstones; tasks that need the failed output are rejected.
 - Reject ambiguous topology rather than guessing.
 
@@ -472,11 +472,11 @@ The deterministic node, relation, and measurement mapping is in
   execution, including selector membership. CAD graph evidence records whether a
   measurement was derived or measured, the exact rule, and the references.
 
-- **Entity identity.** *Resolved 2026-10-21.* Entity graph nodes use the stable
+- **Entity identity.** *Resolved 2026-10-21.* Entity CAD graph entities use the stable
   geometric `entity_id` from `02b`. Kernel handles are not persisted.
 
 - **CadQuery selector mapping.** *Resolved 2026-10-21.* A selected entity ID that
-  cannot be mapped to an entity graph node rejects the graph. The CadQuery selector
+  cannot be mapped to a CAD graph entity rejects the graph. The CadQuery selector
   count invariant must hold; do not drop a partial selector result.
 
 - **Graph ID type.** *Resolved 2026-10-22.* Graph-local IDs use deterministic
@@ -490,12 +490,12 @@ The deterministic node, relation, and measurement mapping is in
   bounding-box change, topology delta, and workplane frame. Measurement types are
   the closed catalog above. Tolerances are a run-level `TolerancePolicy` stored
   once in the run manifest, with per-measurement overrides. CAD graph evidence
-  references are a tagged union of graph node, measurement, operation, program line, and
+  references are a tagged union of CAD graph entity, measurement, operation, program line, and
   execution artifact. Answer-scoring tolerance remains separate.
 
 - **Extraction input contract.** *Resolved 2026-10-22.* `02c` consumes the
   complete `StaticCadQueryModel` and `ExecutionResult` from
-  [`extraction/README.md`](extraction/README.md). The static and runtime
+  [`extraction/README.md`](extraction/README.md). The AST and runtime
   algorithms, canonical ordering, and cross-boundary validation are owned by that
   contract. P0/P1 CadQuery selectors are limited to face, edge, and vertex membership.
 

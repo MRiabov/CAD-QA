@@ -39,7 +39,7 @@ are defined in [`artifacts.md`](artifacts.md).
 
 ```text
 NormalizedProgram
-  → 02a parse, validate, classify, assign static IDs
+  → 02a parse, validate, classify, assign AST IDs
       → StaticCadQueryModel
       → instrumented program
   → 02b execute instrumented program in a child process
@@ -51,15 +51,15 @@ The process is fail-fast per program and deterministic:
 
 1. Parse and validate the module.
 2. Process top-level assignments in program order.
-3. Build typed static records and expression trees.
-4. Validate the static model.
+3. Build typed AST records and expression trees.
+4. Validate the CadQuery program AST extraction result.
 5. Rewrite the program for runtime recording.
 6. Execute once in a child process.
 7. Classify and capture runtime values.
-8. Validate the execution result against the static model.
-9. Emit a complete static model or one failure record.
+8. Validate the CadQuery program runtime extraction result against the CadQuery program AST extraction result.
+9. Emit a complete CadQuery program AST extraction result or one failure record.
 
-No pipeline stage produces a partial static model, partial graph, or partial release row.
+No pipeline stage produces a partial CadQuery program AST extraction result, partial graph, or partial release row.
 
 ## Two extraction paths, no guessing
 
@@ -68,8 +68,8 @@ No pipeline stage produces a partial static model, partial graph, or partial rel
 - **CadQuery extraction** records what the executed shape is. It never infers
   intent from method names when runtime evidence is required.
 
-A static field and a runtime field with similar names are different facts. The
-static model may say `extrude`; only execution says whether the result was a
+A AST field and a runtime field with similar names are different facts. The
+CadQuery program AST extraction result may say `extrude`; only execution says whether the result was a
 valid solid. Neither side fills the other's missing fields.
 
 ## Identity
@@ -94,7 +94,7 @@ Every persisted reference carries `program_id`. Extraction IDs are never global
 join keys. `02c` derives deterministic UUIDv5 graph IDs from them and stores the
 program-scoped strings as scope columns.
 
-Do not use random UUIDv4 in extraction. Do not add a UUID layer to static or
+Do not use random UUIDv4 in extraction. Do not add a UUID layer to AST or
 runtime records unless a value leaves program scope.
 
 ## Versions
@@ -108,7 +108,7 @@ Every artifact carries:
 - `program_sha256` and `normalization_version` from `01d`.
 
 The cache key includes the program hash, extractor and canonicalization
-versions, CadQuery/OCP versions, execution limits, and the static model hash. A
+versions, CadQuery/OCP versions, execution limits, and the CadQuery program AST extraction result hash. A
 change to the parser, allowlist, classification, instrumentation, capture,
 rounding, ordering, or hash input is a new `extractor_version` and a cache miss.
 
@@ -124,15 +124,15 @@ rounding, ordering, or hash input is a new `extractor_version` and a cache miss.
 
 ## Failure model
 
-A program either produces a complete static model or one failure record. Failure is
+A program either produces a complete CadQuery program AST extraction result or one failure record. Failure is
 data, not an exception across the dataset pipeline boundary.
 
-Static failures reject before execution: syntax, import, statement shape,
+AST rejection happens before execution: syntax, import, statement shape,
 unsupported call, unknown method, chained call, invalid expression, unresolved
-name, duplicate target, missing final `result`, or invalid static model.
+name, duplicate target, missing final `result`, or invalid CadQuery program AST extraction result.
 
 Runtime failures produce a tombstone: timeout, memory, CadQuery exception,
-recorder failure, non-solid result for a state-producing operation, CadQuery selector
+recorder failure, non-solid result for a solid state producing operation, CadQuery selector
 failure, unmapped selected entity, missing runtime state, or fingerprint
 collision.
 
@@ -155,7 +155,7 @@ P0/P1 accept only the flat CADEvolve-C subset:
 - no `combineSolids`; it is not a CadQuery 2.7 method.
 
 P2 control flow and chained calls are outside this contract. A P2 extension must
-define its own static and runtime rules rather than weakening these.
+define its own AST and runtime rules rather than weakening these.
 
 ## Decisions
 
@@ -170,13 +170,13 @@ decision explains why the contract has that shape.
 | [`ast/algorithm/pipeline.md`](ast/algorithm/pipeline.md) | Deterministic AST passes, assignment rules, binding classification, and method classification. |
 | [`ast/algorithm/allowlist.md`](ast/algorithm/allowlist.md) | Closed CadQuery method and constructor allowlist. |
 | [`ast/algorithm/method-signatures.md`](ast/algorithm/method-signatures.md) | Closed receiver, argument, result, and state contract for every allowlisted call. |
-| [`ast/features/operations.md`](ast/features/operations.md) | Static operation and alias fields. |
+| [`ast/features/operations.md`](ast/features/operations.md) | AST operation and alias fields. |
 | [`ast/features/expressions.md`](ast/features/expressions.md) | Typed expression trees and literals. |
-| [`ast/features/workplanes.md`](ast/features/workplanes.md) | Static CadQuery workplane records and frame derivation. |
+| [`ast/features/workplanes.md`](ast/features/workplanes.md) | CadQuery workplane records in the AST extraction result and frame derivation. |
 | [`ast/features/profiles-paths.md`](ast/features/profiles-paths.md) | CadQuery profile and path records. |
 | [`ast/algorithm/shape-derivation.md`](ast/algorithm/shape-derivation.md) | Point, segment, CadQuery shape, and path derivation rules. |
-| [`ast/features/selectors.md`](ast/features/selectors.md) | Static CadQuery selector records and filter predicates. |
-| [`ast/features/solids.md`](ast/features/solids.md) | Static feature classification. |
+| [`ast/features/selectors.md`](ast/features/selectors.md) | CadQuery selector records in the AST extraction result and filter predicates. |
+| [`ast/features/solids.md`](ast/features/solids.md) | AST feature classification. |
 | [`ast/features/instrumentation.md`](ast/features/instrumentation.md) | Exact AST rewrite and recorder ABI. |
 | [`cadquery/algorithm/runtime.md`](cadquery/algorithm/runtime.md) | Execution, state, CadQuery selector, entity, topology, effect, and frame capture. |
 | [`cadquery/algorithm/geometry-classification.md`](cadquery/algorithm/geometry-classification.md) | Kernel API calls and surface, curve, centroid, and shape classification. |
@@ -189,6 +189,6 @@ decision explains why the contract has that shape.
 | [`canonicalization.md`](canonicalization.md) | Numbers, JSON, hashes, and ordering. |
 | [`validation.md`](validation.md) | Static, runtime, and cross-pipeline stage invariants. |
 | [`artifacts.md`](artifacts.md) | Logical tables, keys, and artifact identities. |
-| [`static-schema.md`](static-schema.md) | Static artifact columns, nested models, and static model hash. |
+| [`ast-schema.md`](ast-schema.md) | AST extraction artifact columns, nested models, and CadQuery program AST extraction result hash. |
 | [`runtime-schema.md`](runtime-schema.md) | Runtime artifact columns, nested models, and runtime model hash. |
 | [`decisions.md`](decisions.md) | Accepted extraction decisions, rationale, and consequences. |

@@ -67,7 +67,7 @@ from dataset.io import (
     write_records,
 )
 from dataset.ontology import build_graph
-from dataset.ontology.nodes import OntologyGraph, graph_from_dict
+from dataset.ontology.nodes import CadGraph, graph_from_dict
 from dataset.query.family_manifest import (
     DEFAULT_FAMILY_MANIFEST,
     RELEASE_STATUSES,
@@ -651,7 +651,7 @@ class _GraphBuildReport:
         self.release_support_counts: Counter[str] = Counter()
         self.release_support_examples: dict[str, list[str]] = {name: [] for name in RELEASE_SUPPORT_REQUIREMENTS}
 
-    def add_graph(self, graph: OntologyGraph) -> None:
+    def add_graph(self, graph: CadGraph) -> None:
         self.graph_count += 1
         self.node_count += len(graph.nodes)
         self.relation_count += len(graph.relations)
@@ -692,7 +692,7 @@ def _write_graph_shards(
     shard_dir.mkdir(parents=True, exist_ok=True)
     for stale in shard_dir.glob("part-*.parquet"):
         stale.unlink()
-    batch: list[OntologyGraph] = []
+    batch: list[CadGraph] = []
     shard_index = 0
     for graph in graphs:
         report_builder.add_graph(graph)
@@ -705,7 +705,7 @@ def _write_graph_shards(
         write_records(shard_dir / f"part-{shard_index:05d}.parquet", batch)
 
 
-def _release_support_coverage(graphs: list[OntologyGraph]) -> dict[str, dict[str, Any]]:
+def _release_support_coverage(graphs: list[CadGraph]) -> dict[str, dict[str, Any]]:
     coverage: dict[str, dict[str, Any]] = {}
     total = len(graphs)
     for name, requirements in RELEASE_SUPPORT_REQUIREMENTS.items():
@@ -723,7 +723,7 @@ def _release_support_coverage(graphs: list[OntologyGraph]) -> dict[str, dict[str
     return coverage
 
 
-def _graph_satisfies_release_support(graph: OntologyGraph, requirements: dict[str, Any]) -> bool:
+def _graph_satisfies_release_support(graph: CadGraph, requirements: dict[str, Any]) -> bool:
     node_types = {node.type for node in graph.nodes}
     relation_types = {relation.type for relation in graph.relations}
     measurement_names = {measurement.name for measurement in graph.measurements}
@@ -914,7 +914,7 @@ def _cmd_dataset_materialize(args: argparse.Namespace) -> dict[str, Any]:
     return report
 
 
-def _materialize_graph_lookup(args: argparse.Namespace) -> dict[str, OntologyGraph]:
+def _materialize_graph_lookup(args: argparse.Namespace) -> dict[str, CadGraph]:
     graph_path = args.graphs
     if graph_path is None:
         sidecar = existing_record_artifact_path(args.queries.parent, "graphs")
@@ -927,7 +927,7 @@ def _materialize_graph_lookup(args: argparse.Namespace) -> dict[str, OntologyGra
     return {graph.graph_id: graph for graph in _load_graphs(graph_path)}
 
 
-def _graph_for_query_record(record: dict[str, Any], graph_lookup: dict[str, OntologyGraph]) -> OntologyGraph:
+def _graph_for_query_record(record: dict[str, Any], graph_lookup: dict[str, CadGraph]) -> CadGraph:
     embedded = record.get("graph")
     if embedded is not None:
         return graph_from_dict(embedded)
@@ -1296,7 +1296,7 @@ def _blocking_gates(stop_gates: dict[str, Any]) -> list[str]:
     return [name for name, passed in stop_gates.items() if passed is False]
 
 
-def _load_graphs(path: Path) -> list[OntologyGraph]:
+def _load_graphs(path: Path) -> list[CadGraph]:
     return [graph_from_dict(row) for graph_path in _graph_record_paths(path) for row in read_records(graph_path)]
 
 

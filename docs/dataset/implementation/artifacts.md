@@ -15,9 +15,9 @@ this document owns ownership, lifecycle, and format, not field definitions.
 | Program pool | `01c` | `01d` | Selection identity plus cache revision | Parquet | Only selected rows, including program text and `cadevolve_program_family_id`. |
 | Normalized program | `01d` | `02a`, `02b` | `program_sha256` plus normalization version | Parquet | Carries `program_id`, `cadevolve_program_family_id`, and canonical text. |
 | External dataset manifest | `01e` | `05`, dataset card | External dataset version | JSON | Counts, hashes, and rejected records. |
-| Static CadQuery model | `02a` | `02c` | Program hash plus extractor version | Parquet tables | No geometry measurements. |
-| Execution result | `02b` | `02c` | Program hash, CadQuery/OCP version, and environment | Parquet tables | Either execution snapshots or a failure tombstone; no raw BRep. |
-| CAD graph | `02c` | `03` | Program hash, graph schema version, and execution result hash | Parquet tables | One graph per program. |
+| CadQuery program AST extraction result | `02a` | `02c` | Program hash plus extractor version | Parquet tables | No geometry measurements. |
+| CadQuery program runtime extraction result | `02b` | `02c` | Program hash, CadQuery/OCP version, and environment | Parquet tables | Either execution snapshots or a failure tombstone; no raw BRep. |
+| CAD graph | `02c` | `03` | Program hash, graph schema version, and CadQuery program runtime extraction result hash | Parquet tables | One graph per program. |
 | Release plan | `03a` | `03b`, `03c` | Plan version plus seed | Parquet or JSON | Quotas, family profiles, split assignment, and sample budgets. |
 | Prompt templates | Prompt authoring | `04`, evaluation harness | Template version plus file hash | YAML | `prompts.yaml`; all LLM-facing copy, with dataset and evaluation namespaces. |
 | Task definition | `03b` | `04` | Canonical task identity plus definition hash | Parquet | Persisted, answer-bearing construction record; invalid definitions are rejected. |

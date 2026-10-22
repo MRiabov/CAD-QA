@@ -47,9 +47,9 @@ the user-visible outcome.
 | **Validity record** | Internal | The check results that establish a task definition's uniqueness, target binding, clue narrowing, and geometry requirement. It is not answer evidence. |
 | **Failure tombstone** | Internal | A recorded failed program or operation, with the error and cache key, used for debugging and cache hits. It is not a graph entity and never supports an answer. |
 | **CadQuery program AST extraction result** | Internal | The result of extracting a CadQuery program without running it: operations, CadQuery workplanes, CadQuery profiles, CadQuery paths, CadQuery selectors, and their relationships in the CadQuery program. |
-| **CadQuery program runtime extraction result** | Internal | The result of executing a CadQuery program and extracting Shape snapshots, CAD feature effect deltas, CadQuery selector results, and evidence. |
+| **CadQuery program runtime extraction result** | Internal | The result of executing a CadQuery program and extracting Shape snapshots, CAD feature solid state effect deltas, CadQuery selector results, and evidence. |
 | **solid state producing operation** | Internal | A CadQuery program operation that can produce a solid state. |
-| **CAD feature effect delta** | Domain | The measured before/after volume, bounding box, and topology change caused by a CAD feature. Distinct from the Measurement scope `feature_application_effect`. |
+| **CAD feature solid state effect delta** | Domain | The measured before/after volume, bounding box, and topology change caused by a CAD feature. Distinct from the Measurement scope `feature_application_effect`. |
 | **CadQuery selector result** | Internal | The CAD topology entities selected by one CadQuery selector, with the CadQuery selector and the solid state it ran on. |
 | **CadQuery accessor** | Internal | A CadQuery call that reads or converts existing values without creating geometry. |
 | **CAD topology entity** | Domain | A face, edge, or vertex of a solid state. |
@@ -115,16 +115,24 @@ Terms that were replaced because they were not composed from the domain:
 | `execution record` | CadQuery program runtime extraction result |
 | `CadQuery program operation trace` | CadQuery program runtime extraction result |
 | `operation trace` | CadQuery program runtime extraction result |
+| `execution result` | CadQuery program runtime extraction result |
 | `static CadQuery model` | CadQuery program AST extraction result |
+| `static model` | CadQuery program AST extraction result |
+| `static schema` | AST extraction schema |
+| `static rejection` | AST rejection |
+| `static failure` | AST rejection |
+| `state-producing operation` | solid state producing operation |
+| `operation effect` | CAD feature solid state effect delta |
+| `CAD feature effect delta` | CAD feature solid state effect delta |
+| `entity fingerprint` | CAD topology entity ID |
 | `CAD ontology graph` | CAD graph |
 | `CAD ontology node` | CAD graph entity |
-| `CAD graph edge` | CAD graph relation |
-| `state-producing operation` | solid state producing operation |
-| `execution result` | CadQuery program runtime extraction result |
-| `operation effect` | CAD feature effect delta |
-| `entity fingerprint` | CAD topology entity ID |
 | `ontology graph` | CAD graph |
-| `node` | graph entity |
+| `ontology node` | CAD graph entity |
+| `CAD graph edge` | CAD graph relation |
+| `graph node` | CAD graph entity |
+| `graph edge` | CAD graph relation |
+| `node` | CAD graph entity |
 | `clause` | task clue |
 | `candidate trace` | task solution sequence |
 | `question` (the whole instance) | task |
@@ -148,7 +156,7 @@ Terms that were replaced because they were not composed from the domain:
 - **CadQuery program AST extraction result** is the `02a` output; **CadQuery program runtime extraction result** is the `02b` success output.
 - A **Shape snapshot** is the runtime capture; a **solid state** is the CAD graph entity. Do not write bare `state`.
 - Use **CAD graph entity** in prose; `node_id` and `nodes.parquet` are code and schema names.
-- **CAD feature effect delta** is the delta record; `feature_application_effect` is a Measurement scope.
+- **CAD feature solid state effect delta** is the delta record; `feature_application_effect` is a Measurement scope.
 - The prompt condition is a **task clue**.
 - Task text and choice descriptions use geometry or construction role, never
   variable names. The program text is the only place variable names appear.
@@ -213,7 +221,7 @@ metaphor for a software concept.
 | Shared word | 3D model term | Software, code, or reasoning term |
 |---|---|---|
 | `depth` | cut depth, hole depth | task reasoning step count |
-| `edge` | CAD edge | graph edge |
+| `edge` | CAD edge | CAD graph relation |
 | `feature` | CAD feature | software feature |
 | `path` | CadQuery path | file path |
 | `profile` | CadQuery profile | performance profile |

@@ -33,7 +33,7 @@ not part of the extraction contract and may be discarded.
 
 ## Instrumentation ABI
 
-The static model supplies one rewrite descriptor per assignment. `02a` rewrites
+The CadQuery program AST extraction result supplies one rewrite descriptor per assignment. `02a` rewrites
 each assignment without changing evaluation order.
 
 A call assignment:
@@ -77,13 +77,13 @@ The rewrite obeys these rules:
 
 - `<rhs>` appears exactly once and is evaluated exactly once.
 - The receiver and arguments are not separately evaluated. The recorder uses
-  the static `receiver_var` to look up the current runtime state; it does not
+  the `receiver_var` from the AST extraction result to look up the current runtime state; it does not
   capture argument values.
 - Nested `cq.Plane`, `cq.Vector`, `cq.Edge`, `cq.Wire`, filter, and `list`
   expressions stay inside the `evaluate` callable.
 - The instrumented text is generated with the pinned Python AST and is not a
   string substitution.
-- A name used by an `evaluate` callable is the runtime value at the call point. The static model forbids
+- A name used by an `evaluate` callable is the runtime value at the call point. The CadQuery program AST extraction result forbids
   rebinding, so closure timing is unambiguous.
 
 `__cadqa_alias` propagates the target binding's state, CadQuery workplane, and selected
@@ -91,17 +91,17 @@ category. It creates no operation, state, CadQuery selector result, or effect.
 
 ## Capture classes
 
-`capture` is static and comes from the operation classification:
+`capture` comes from the operation classification in the AST extraction result:
 
 | Capture | Methods | Required result | Produces |
 |---|---|---|---|
-| `state` | solid, boolean, assembly, modifier, transform methods marked state-producing | `Workplane` with a solid, or a solid `Shape` | Shape snapshot, entity table, topology, effect. |
+| `state` | solid, boolean, assembly, modifier, transform methods marked solid state producing | `Workplane` with a solid, or a solid `Shape` | Shape snapshot, entity table, topology, effect. |
 | `workplane` | `Workplane`, `workplane`, `workplaneFromTagged`, `transformed` | `Workplane` | CadQuery workplane frame; no shape snapshot. |
 | `selector` | `faces`, `edges`, `vertices`, `filter` | `Workplane` | CadQuery selector result; no shape snapshot. |
 | `value` | `val`, `vals`, `all`, `first`, `findSolid`, `Length`, `list(vals())` | Any allowed value | Recorded result kind; no state. |
 | `none` | sketch, path, `tag`, `toPending` | `Workplane` or path constructor | Binding propagation only. |
 
-A state-producing operation that returns no solid is a `non_solid_result`
+A solid state producing operation that returns no solid is a `non_solid_result`
 failure. A failed kernel classification call is a `geometry_capture` failure. A CadQuery selector operation whose receiver has no current state is a
 `missing_state` failure.
 
@@ -137,7 +137,7 @@ After `evaluate()` returns, classify the runtime value once:
 |---|---|
 | `cadquery.Workplane` | `workplane` |
 | `cadquery.ShapeList` | `shape_list` |
-| Python `list` when the static operation is `all` | `workplane_list` |
+| Python `list` when the AST operation is `all` | `workplane_list` |
 | Python `list` otherwise | `list` |
 | `int`, `float`, `bool`, `str` | `scalar` |
 | `None` | `none` |
@@ -183,10 +183,10 @@ For `capture = workplane`:
 - Read `frame = result.plane`.
 - Record `origin = frame.origin`, `x_direction = frame.xDir`,
   `normal = frame.zDir`.
-- Record the static `workplane_id`, operation ID, CadQuery workplane kind, named plane,
+- Record the `workplane_id` from the AST extraction result, operation ID, CadQuery workplane kind, named plane,
   and program span.
 
-This is a measured frame, not a static derivation. It is the frame used by
+This is a measured frame, not a derivation from the CadQuery program. It is the frame used by
 `02c` for `workplane_frame` measurements.
 
 ## CadQuery selector capture
@@ -197,7 +197,7 @@ For `capture = selector`:
 2. Read `selected_values = result.vals()` once.
 3. Require `state_id = bindings[receiver_var].state_id`; null is
    `missing_state`.
-4. Require the static CadQuery selector category to be `face`, `edge`, or `vertex`.
+4. Require the CadQuery selector in the AST extraction result category to be `face`, `edge`, or `vertex`.
 5. For each selected value, compute its canonical fingerprint and look up the
    entity ID in that state's entity table. A value with no matching entity is an
    `unmapped_entity` failure.
@@ -219,7 +219,7 @@ selected category, so an accessor does not lose the state it reads from. A
 `list` produced by `list(vals())` is a Python list of shapes; it is not a shape
 list.
 
-`val` may return null; that is a successful `none` result. A later state-producing
+`val` may return null; that is a successful `none` result. A later solid state producing
 operation on that binding fails with `missing_shape`.
 
 ## Effects
@@ -237,7 +237,7 @@ For every `capture = state` operation:
   null.
 - `effect_id = effect:<operation_id>`.
 
-A failed operation produces no effect. A state-producing operation with a
+A failed operation produces no effect. A solid state producing operation with a
 receiver state but no after state is a failure; the recorder does not silently
 drop the state.
 
@@ -255,7 +255,7 @@ For each state:
 
 Entity fields and fingerprint inputs are defined in
 [`../features/entities.md`](../features/entities.md). The entity table is the only basis for CadQuery selector
-membership and entity graph nodes.
+membership and CAD graph entities.
 
 ## Topology
 
@@ -289,7 +289,7 @@ Rows are sorted by that tuple.
 A failure contains no partial state list. `02c` never receives a failed
 execution as a graph input.
 
-## Execution result identity
+## CadQuery program runtime extraction result identity
 
 `execution_result_sha256` is the canonical hash of the complete successful
 result or failure tombstone, using
@@ -297,22 +297,22 @@ result or failure tombstone, using
 
 - `program_sha256`;
 - `static_model_sha256`;
-- extractor, static, runtime, and canonicalization versions;
+- extractor, AST extraction, runtime, and canonicalization versions;
 - Python, CadQuery, and OCP versions;
 - timeout and memory limit;
 - execution environment identifier.
 
 A change to any input produces a new cache entry.
 
-## Cross-check with static extraction
+## Cross-check with AST extraction
 
 After execution, `02b` validates:
 
-- every static operation has exactly one recording;
+- every AST operation has exactly one recording;
 - every recording has the expected operation ID, result variable, and method;
 - no extra operation or alias was recorded;
-- every state-producing operation has a state, unless the failure is terminal;
-- every CadQuery selector result references a state and an existing static CadQuery selector;
+- every solid state producing operation has a state, unless the failure is terminal;
+- every CadQuery selector result references a state and an existing CadQuery selector in the AST extraction result;
 - every selected entity ID exists in the state entity table;
 - every effect references existing before/after states;
 - the final state is the last state in operation order.

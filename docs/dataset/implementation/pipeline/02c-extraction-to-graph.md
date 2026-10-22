@@ -20,47 +20,47 @@ Reject the pair if either hash or any required reference is missing.
 Extraction IDs are local identities. Graph IDs are UUIDv5 values derived by the
 rules in [`02c-build-cad-graph.md`](02c-build-cad-graph.md).
 
-| Graph node category | `local_id` | From |
+| CAD graph entity category | `local_id` | From |
 |---|---|---|
 | `cadquery_program` | `program` | Program row. |
 | `operation` | `operation_id` | Every call operation. |
-| `feature` | `operation_id` | Every state-producing operation. |
+| `feature` | `operation_id` | Every solid state producing operation. |
 | `solid_state` | `state_id` | Every shape snapshot. |
 | `face` | `entity_id` | Face entity row. |
 | `edge` | `entity_id` | Edge entity row. |
 | `vertex` | `entity_id` | Vertex entity row. |
 | `edge_endpoint` | `<edge_local_id>:start` or `:end` | Edge endpoints. |
-| `cadquery_profile` | `profile_id` | Static CadQuery profile. |
-| `cadquery_workplane` | `workplane_id` | Static and measured CadQuery workplane. |
-| `cadquery_path` | `path_id` | Static path. |
-| `cadquery_path_point` | `<path_local_id>:<ordinal>` | Static path point. |
-| `cadquery_path_segment` | `<path_local_id>:<ordinal>` | Static path segment. |
+| `cadquery_profile` | `profile_id` | CadQuery profile in the AST extraction result. |
+| `cadquery_workplane` | `workplane_id` | CadQuery workplane in the AST extraction result and measured. |
+| `cadquery_path` | `path_id` | CadQuery path in the AST extraction result. |
+| `cadquery_path_point` | `<path_local_id>:<ordinal>` | Path point in the AST extraction result. |
+| `cadquery_path_segment` | `<path_local_id>:<ordinal>` | Path segment in the AST extraction result. |
 | `region` | `<feature_local_id>:added` or `:removed` | Feature effect region. |
 | `cadquery_selector_result` | `selector_result_id` | Runtime CadQuery CadQuery selector result. |
 
-An alias has no graph node. It is consumed when resolving the target binding.
+An alias has no CAD graph entity. It is consumed when resolving the target binding.
 
-## Graph node construction
+## CAD graph entity construction
 
-1. Create one `cadquery_program` graph node with the program hashes, normalization
-   version, extractor version, and execution result hash.
-2. Create one `operation` graph node for every static call operation. Use the static
+1. Create one `cadquery_program` CAD graph entity with the program hashes, normalization
+   version, extractor version, and CadQuery program runtime extraction result hash.
+2. Create one `operation` CAD graph entity for every AST call operation. Use the AST extraction result's
    `operation_kind`, `method`, `order`, `source_line`, and `result_var`.
-3. Create one `feature` graph node for every state-producing operation. Use the
-   static `feature_kind`.
-4. Create one `solid_state` graph node for every Shape snapshot. Set `is_final` on
+3. Create one `feature` CAD graph entity for every solid state producing operation. Use the
+   `feature_kind` from the AST extraction result.
+4. Create one `solid_state` CAD graph entity for every Shape snapshot. Set `is_final` on
    the last Shape snapshot in operation order.
-5. Create face, edge, vertex, and edge-endpoint graph nodes from every state entity
+5. Create face, edge, vertex, and edge-endpoint CAD graph entities from every state entity
    table.
 6. Create CadQuery profile, CadQuery workplane, path, path-point, path-segment,
-   and CadQuery selector-result nodes from the static and runtime records.
-7. Create `region` nodes from state-producing operations that have a state:
+   and CadQuery selector-result nodes from the AST and runtime records.
+7. Create `region` nodes from solid state producing operations that have a state:
    - `added` for an operation whose `feature_kind` is `add_material` or
      `construction`;
    - `removed` for an operation whose `feature_kind` is `remove_material`;
    - `modify` operations create no region.
    A first state with no before state creates only the region implied by its
-   static feature kind.
+   AST feature kind.
 
 ## Relation construction
 
@@ -108,7 +108,7 @@ Use the measurement catalog in [`02c-build-cad-graph.md`](02c-build-cad-graph.md
 Every measurement carries `evidence_kind`, `evidence_rule`, and `evidence_refs`
 from [`extraction/cadquery/features/evidence.md`](extraction/cadquery/features/evidence.md).
 
-From the execution result:
+From the CadQuery program runtime extraction result:
 
 - solid state: `volume`, `bounding_box`, `centroid`, `face_count`,
   `edge_count`, `vertex_count`, `validity`;
@@ -117,9 +117,9 @@ From the execution result:
 - vertex: `centroid`;
 - CadQuery selector result: `selected_count`;
 - CadQuery workplane: `workplane_frame`;
-- operation effect: `volume_change`, `bounding_box_change`, `topology_change`.
+- CAD feature solid state effect delta: `volume_change`, `bounding_box_change`, `topology_change`.
 
-From the static model, create only exact derived measurements for operation
+From the CadQuery program AST extraction result, create only exact derived measurements for operation
 counts or literal facts that the catalog allows. Do not derive geometry from
 method names.
 
@@ -137,17 +137,17 @@ an override. Do not write a per-program tolerance policy.
 
 ## CadQuery workplane mapping
 
-- Create one `cadquery_workplane` graph node for every static CadQuery workplane.
+- Create one `cadquery_workplane` CAD graph entity for every CadQuery workplane in the AST extraction result.
 - Attach the measured `workplane_frame` when the runtime result provides it.
-- A static frame that is `unknown` is not a measurement; do not invent one.
-- A runtime frame without a static CadQuery workplane rejects the graph.
+- A AST frame that is `unknown` is not a measurement; do not invent one.
+- A runtime frame without a CadQuery workplane in the AST extraction result rejects the graph.
 
-## Operation effects
+## CAD feature solid state effect deltas
 
-- Create one effect measurement set for every state-producing operation with a
+- Create one effect measurement set for every solid state producing operation with a
   captured effect.
-- A state-producing operation without an effect rejects the graph.
-- A non-state-producing operation has no effect measurements.
+- A solid state producing operation without an effect rejects the graph.
+- A non-solid state producing operation has no effect measurements.
 
 ## Ordering and duplicate handling
 
@@ -161,10 +161,10 @@ an override. Do not write a per-program tolerance policy.
 
 Reject before writing when:
 
-- a static operation has no runtime recording;
-- a state-producing operation has no state or effect;
+- a AST operation has no runtime recording;
+- a solid state producing operation has no state or effect;
 - a CadQuery selector result has no state or a selected ID outside that state;
-- a CadQuery workplane frame has no static record;
+- a CadQuery workplane frame has no AST record;
 - a measurement or relation endpoint is missing;
 - a graph ID is not deterministic from its documented components;
 - an extraction entity or measurement has an unknown schema version.

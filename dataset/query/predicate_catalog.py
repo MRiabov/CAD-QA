@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from dataset.ontology.nodes import Node, OntologyGraph
+from dataset.ontology.nodes import Node, CadGraph
 from dataset.query.ir import Clause
 
 VALUE_BUCKET_DECIMALS = 6
@@ -24,7 +24,7 @@ class PredicateInstance:
 
 
 def relation_predicate(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     *,
     clause_id: str,
@@ -63,7 +63,7 @@ def relation_predicate(
 
 
 def measurement_predicate(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     *,
     clause_id: str,
@@ -98,7 +98,7 @@ def measurement_predicate(
     )
 
 
-def _has_measurement(graph: OntologyGraph, entity_id: str, metric: str) -> bool:
+def _has_measurement(graph: CadGraph, entity_id: str, metric: str) -> bool:
     if graph.measurements_for(entity_id, metric):
         return True
     return all(graph.measurements_for(entity_id, component) for component in _point_metric_components(metric))
@@ -114,7 +114,7 @@ def _point_metric_components(metric: str) -> tuple[str, ...]:
 
 
 def measurement_value_predicate(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     *,
     clause_id: str,
@@ -151,7 +151,7 @@ def measurement_value_predicate(
 
 
 def metric_compare_predicate(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     *,
     clause_id: str,
@@ -195,7 +195,7 @@ def metric_compare_predicate(
 
 
 def related_metric_compare_predicate(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     *,
     clause_id: str,
@@ -247,7 +247,7 @@ def related_metric_compare_predicate(
 
 
 def nodes_matching_measurement_value(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     *,
     metric: str,
@@ -261,7 +261,7 @@ def nodes_matching_measurement_value(
 
 
 def nodes_matching_metric_compare(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     *,
     metric: str,
@@ -276,7 +276,7 @@ def nodes_matching_metric_compare(
 
 
 def nodes_matching_related_metric_compare(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     *,
     relation: str,

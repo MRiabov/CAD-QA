@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from dataset.ontology.nodes import OntologyGraph
+from dataset.ontology.nodes import CadGraph
 from dataset.prompts.templates import (
     CHECKLIST_TEMPLATE_ID,
     PROMPT_VERSION,
@@ -50,7 +50,7 @@ def render_prompt(
     source_code: str,
     query: QueryProgram,
     *,
-    graph: OntologyGraph | None = None,
+    graph: CadGraph | None = None,
     candidate_lines: list[str] | None = None,
 ) -> RenderedPrompt:
     public_clauses = [

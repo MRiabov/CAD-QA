@@ -27,7 +27,7 @@ generator.
 | Pipeline stage | Responsibility | Output |
 |---|---|---|
 | [`01-external-dataset-etl.md`](01-external-dataset-etl.md) | CADEvolve Parquet cache → normalized programs and manifest. | Normalized programs. |
-| [`02-execute-cadquery-and-build-graph.md`](02-execute-cadquery-and-build-graph.md) | Static extraction and CadQuery execution → CAD graph. | CAD graph. |
+| [`02-execute-cadquery-and-build-graph.md`](02-execute-cadquery-and-build-graph.md) | AST extraction and CadQuery execution → CAD graph. | CAD graph. |
 | [`03-enumerate-tasks.md`](03-enumerate-tasks.md) | Plan quotas, construct task definitions, and resolve deficits by replanning or expanding data. | Task definitions. |
 | [`04-render-prompt-and-choices.md`](04-render-prompt-and-choices.md) | Task definitions → prompt and choices. | Release table. |
 | [`05-validate-and-export-release.md`](05-validate-and-export-release.md) | Release table → validated release artifacts. | Release dataset. |

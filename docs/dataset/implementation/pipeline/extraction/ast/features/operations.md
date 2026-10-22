@@ -20,12 +20,12 @@ in [`pipeline.md`](../algorithm/pipeline.md).
 | `args` | list of StaticExpression | AST | yes | Positional arguments, unevaluated. | 02b, 02c |
 | `kwargs` | map of string to StaticExpression | AST | yes | Keyword arguments, unevaluated. | 02b, 02c |
 | `input_vars` | list of string | AST | yes | Variables read by the call, in first-use order. | 02b |
-| `is_state_producing` | boolean | AST | yes | True only for the methods marked state-producing in the algorithm. | 02b |
+| `is_state_producing` | boolean | AST | yes | True only for the methods marked solid state producing in the algorithm. | 02b |
 | `feature_kind` | FeatureKind or null | AST | no | Required when `is_state_producing` is true. | 02c |
 | `solid_kind` | SolidKind or null | AST | no | Required when `is_state_producing` is true. | 02c |
 
 `operation_id` is derived only from `order`; it does not encode method or result.
-`cadevolve_program_family_id` and `split` are not static operation fields; they
+`cadevolve_program_family_id` and `split` are not AST operation fields; they
 belong to the program record.
 
 ## Aliases

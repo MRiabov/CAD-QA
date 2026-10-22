@@ -21,7 +21,7 @@ results, or a failure tombstone when execution fails.
   process. A changed limit is a new execution environment and a new cache key.
 - Kill the child on timeout and record a `timeout` failure. A memory-limit failure
   records a `memory` failure.
-- Execute only the accepted static subset from `02a`.
+- Execute only the accepted AST subset from `02a`.
 - Execute top-level statements in program order.
 
 ## Success result
@@ -29,7 +29,7 @@ results, or a failure tombstone when execution fails.
 `ExecutionSuccess` contains:
 
 - `program_id`, `program_sha256`, `static_model_sha256`, and the environment record;
-- `operation_recordings`: one per static operation;
+- `operation_recordings`: one per AST operation;
 - `shape_snapshots`: one per solid-producing assignment;
 - `workplane_frames`: one per workplane-producing operation;
 - `selector_results`: one per evaluated CadQuery selector;
@@ -106,7 +106,7 @@ A failed result is never passed to graph assembly as a measurable state.
 The cache key includes the normalized program hash, `static_model_sha256`,
 extractor and canonicalization versions, CadQuery and OCP versions, the execution
 environment, timeout, and memory limit. A failure tombstone is reusable for the
-same key. A change to the static model or canonicalization is a cache miss.
+same key. A change to the CadQuery program AST extraction result or canonicalization is a cache miss.
 
 ## Resolved questions
 

@@ -112,7 +112,7 @@ a non-null `obj`, and accepting it would make the initial state ambiguous.
 | `rarray` | `WP` | `xSpacing`, `ySpacing`, `xCount`, `yCount` | `center` | `workplane` | `modifier` | yes |
 
 `newObject` and `add` are stack assembly operations. They may produce an empty
-CadQuery workplane, so they are not state-producing. `combine` is state-producing
+CadQuery workplane, so they are not solid state producing. `combine` is solid state producing
 because it resolves the stack into one shape.
 
 ## Selectors and accessors

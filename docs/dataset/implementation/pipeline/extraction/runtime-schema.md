@@ -26,7 +26,7 @@ kernel handles.
 
 | Column | Parquet value category | Null | Meaning |
 |---|---|---|---|
-| `static_model_sha256` | `STRING` | not null | Input static model hash. |
+| `static_model_sha256` | `STRING` | not null | Input CadQuery program AST extraction result hash. |
 | `execution_status` | `STRING` enum `success`, `failure` | not null | Terminal result. |
 | `execution_result_sha256` | `STRING` | null | Canonical runtime hash. |
 | `python_version` | `STRING` | not null | Pinned Python version. |
@@ -43,14 +43,14 @@ Exactly one row exists per `program_id`.
 
 | Column | Parquet value category | Null | Meaning |
 |---|---|---|---|
-| `operation_id` | `STRING` | not null | Static operation ID. |
+| `operation_id` | `STRING` | not null | AST operation ID. |
 | `result_var` | `STRING` | not null | Assigned variable. |
 | `result_kind` | `STRING` enum `ResultKind` | not null | Runtime result category. |
 | `state_id` | `STRING` | null | Produced state, when any. |
 | `selector_result_id` | `STRING` | null | CadQuery selector result, when any. |
 | `source_span` | `SourceSpan` | not null | Assignment span. |
 
-Every static call operation has exactly one row.
+Every AST call operation has exactly one row.
 
 ## `execution_states`
 
@@ -99,7 +99,7 @@ Every static call operation has exactly one row.
 
 | Column | Parquet value category | Null | Meaning |
 |---|---|---|---|
-| `workplane_id` | `STRING` | not null | Static CadQuery workplane ID. |
+| `workplane_id` | `STRING` | not null | CadQuery workplane ID in the AST extraction result. |
 | `operation_id` | `STRING` | not null | Creating operation. |
 | `origin` | `Point3D` | not null | Measured origin. |
 | `x_direction` | `Vector3D` | not null | Measured x direction. |
@@ -113,7 +113,7 @@ Every static call operation has exactly one row.
 | Column | Parquet value category | Null | Meaning |
 |---|---|---|---|
 | `selector_result_id` | `STRING` | not null | `sres:<operation_id>:<ordinal>`. |
-| `selector_id` | `STRING` | not null | Static CadQuery selector ID. |
+| `selector_id` | `STRING` | not null | CadQuery selector ID in the AST extraction result. |
 | `selected_entity_category` | `STRING` enum `face`, `edge`, `vertex` | not null | Selected entity category. |
 | `state_id` | `STRING` | not null | State it ran on. |
 | `selected_entity_ids` | `LIST<STRING>` | not null | Stable entity IDs. |

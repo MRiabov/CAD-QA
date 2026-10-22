@@ -1,8 +1,8 @@
-# CadQuery operation effects
+# CadQuery CAD feature solid state effect deltas
 
 **Parent:** [`../algorithm/runtime.md`](../algorithm/runtime.md).
 
-Effects describe what a state-producing operation changed.
+Effects describe what a solid state producing operation changed.
 
 | Field | Field type | Origin | Required | Meaning | Consumer |
 |---|---|---|---|---|---|
@@ -23,7 +23,7 @@ Effects describe what a state-producing operation changed.
 - `before_state_id` is the receiver binding's state immediately before the
   operation. A missing before state means the operation created the first state;
   the change fields are null.
-- `after_state_id` is the state produced by the operation. A state-producing
+- `after_state_id` is the state produced by the operation. A solid state producing
   operation with a receiver state but no after state is a failure; the runtime
   never drops the state or emits a partial effect.
 - A failed operation produces no effect.

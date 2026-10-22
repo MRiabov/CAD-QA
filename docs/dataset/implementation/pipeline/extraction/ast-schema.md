@@ -1,8 +1,8 @@
-# Static model schema
+# AST extraction result schema
 
 **Parent:** [`README.md`](README.md).
 
-This document fixes the static artifact schema produced by `02a`. Physical
+This document fixes the AST extraction artifact schema produced by `02a`. Physical
 partitioning is in [`artifacts.md`](artifacts.md); field meanings are in the
 `ast/` documents.
 
@@ -10,7 +10,7 @@ partitioning is in [`artifacts.md`](artifacts.md); field meanings are in the
 
 ## Common columns
 
-Every static table carries:
+Every AST extraction table carries:
 
 - `program_id: STRING`;
 - `program_sha256: STRING`;
@@ -19,7 +19,7 @@ Every static table carries:
 - `static_schema_version: STRING`;
 - `canonicalization_version: STRING`.
 
-No static table carries timestamps, hostnames, process IDs, absolute paths, or
+No AST extraction table carries timestamps, hostnames, process IDs, absolute paths, or
 kernel handles.
 
 ## `static_program`
@@ -28,8 +28,8 @@ kernel handles.
 |---|---|---|---|
 | `static_status` | `STRING` enum `success`, `failure` | not null | Terminal result. |
 | `import_alias` | `STRING` | null | Always `cq` on success. |
-| `static_model_sha256` | `STRING` | null | Canonical hash of the complete static model. |
-| `failure_kind` | `STRING` | null | Static failure category. |
+| `static_model_sha256` | `STRING` | null | Canonical hash of the complete CadQuery program AST extraction result. |
+| `failure_kind` | `STRING` | null | AST rejection category. |
 | `failure_message` | `STRING` | null | Failure message. |
 | `failure_line` | `INT64` | null | One-based CadQuery program line. |
 
@@ -51,9 +51,9 @@ Exactly one row exists per `program_id`.
 | `args` | `LIST<StaticExpression>` | not null | Positional arguments. |
 | `kwargs` | `MAP<STRING, StaticExpression>` | not null | Keyword arguments. |
 | `input_vars` | `LIST<STRING>` | not null | Read variables in program order. |
-| `is_state_producing` | `BOOLEAN` | not null | State-producing flag. |
-| `feature_kind` | `STRING` | null | Required for state-producing operations. |
-| `solid_kind` | `STRING` | null | Required for state-producing operations. |
+| `is_state_producing` | `BOOLEAN` | not null | Solid state producing flag. |
+| `feature_kind` | `STRING` | null | Required for solid state producing operations. |
+| `solid_kind` | `STRING` | null | Required for solid state producing operations. |
 
 ## `static_aliases`
 
@@ -76,10 +76,10 @@ Exactly one row exists per `program_id`.
 | `operation_id` | `STRING` | not null | Creating operation. |
 | `workplane_kind` | `STRING` enum `named`, `custom`, `face` | not null | CadQuery workplane category. |
 | `named_plane` | `STRING` enum `xy`, `yz`, `xz` | null | Named plane. |
-| `origin` | `Point3D` | null | Static frame origin. |
-| `x_direction` | `Vector3D` | null | Static x direction. |
-| `normal` | `Vector3D` | null | Static normal. |
-| `frame_status` | `STRING` enum `explicit`, `derived`, `unknown` | not null | Static frame confidence. |
+| `origin` | `Point3D` | null | AST frame origin. |
+| `x_direction` | `Vector3D` | null | AST x direction. |
+| `normal` | `Vector3D` | null | AST normal. |
+| `frame_status` | `STRING` enum `explicit`, `derived`, `unknown` | not null | AST frame confidence. |
 | `derived_from_workplane_id` | `STRING` | null | Receiver CadQuery workplane. |
 | `source_selector_id` | `STRING` | null | Face CadQuery selector. |
 | `offset` | `DOUBLE` | null | Offset. |
@@ -181,11 +181,11 @@ StaticExpression = STRUCT<
 Expression trees are nested values. They are never JSON strings on the bulk
 data path.
 
-## Static model hash
+## AST extraction result hash
 
-`static_model_sha256` is the SHA-256 of the canonical JSON of all static rows for
+`static_model_sha256` is the SHA-256 of the canonical JSON of all AST extraction rows for
 one program, using [`canonicalization.md`](canonicalization.md). Rows are sorted
 by their table key. It covers the program row, operations, aliases, CadQuery
 workplanes, CadQuery profiles, paths, and CadQuery selectors.
 
-A static failure has `static_model_sha256 = null` and no downstream table rows.
+An AST rejection has `static_model_sha256 = null` and no downstream table rows.

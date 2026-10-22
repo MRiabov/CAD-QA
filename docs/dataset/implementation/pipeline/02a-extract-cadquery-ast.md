@@ -2,7 +2,7 @@
 
 **Parent:** [`02-execute-cadquery-and-build-graph.md`](02-execute-cadquery-and-build-graph.md).
 
-**Purpose:** extract the static structure of a CadQuery program without running
+**Purpose:** extract the AST structure of a CadQuery program without running
 it.
 
 ## Input / output
@@ -10,7 +10,7 @@ it.
 - Input: normalized program text.
 - Output: `StaticCadQueryModel`.
 
-## Static model
+## AST extraction result
 
 `StaticCadQueryModel` contains:
 
@@ -48,8 +48,8 @@ selects from.
 ## Field contracts
 
 The complete field sets, expression typing, instrumentation rewrite, and runtime
-join keys are in [`extraction/README.md`](extraction/README.md). Exact static
-columns are in [`extraction/static-schema.md`](extraction/static-schema.md). In particular:
+join keys are in [`extraction/README.md`](extraction/README.md). Exact AST extraction
+columns are in [`extraction/ast-schema.md`](extraction/ast-schema.md). In particular:
 
 - [`extraction/ast/algorithm/pipeline.md`](extraction/ast/algorithm/pipeline.md);
 - [`extraction/ast/algorithm/method-signatures.md`](extraction/ast/algorithm/method-signatures.md);
@@ -79,10 +79,10 @@ narrow:
 - no CadQuery method or constructor outside the allowlist;
 - no wire or solid CadQuery selector; shape accessors `Edges` and `Solids` are allowed only on shape bindings.
 
-A program outside this subset is rejected as a whole. The static model is never
+A program outside this subset is rejected as a whole. The CadQuery program AST extraction result is never
 partial: a rejected program records the reason and produces no operations.
 
-The closed method allowlist and its static mapping are in
+The closed method allowlist and its AST mapping are in
 [`extraction/ast/algorithm/allowlist.md`](extraction/ast/algorithm/allowlist.md).
 
 ## Behavior
@@ -106,9 +106,9 @@ The closed method allowlist and its static mapping are in
 - **Method allowlist.** *Resolved 2026-10-21.* The closed CADEvolve-C allowlist is
   in [`extraction/ast/algorithm/allowlist.md`](extraction/ast/algorithm/allowlist.md). Unknown methods and
   call forms reject the whole program.
-- **CadQuery selector timing.** *Resolved 2026-10-21.* Static extraction records
+- **CadQuery selector timing.** *Resolved 2026-10-21.* AST extraction records
   the CadQuery selector expression and receiver. Evaluation happens in `02b` at
-  the call point. Static extraction does not resolve selector strings.
+  the call point. AST extraction does not resolve selector strings.
 - **P0/P1 selector scope.** *Resolved 2026-10-22.* Only face, edge, and vertex
   CadQuery selectors are graph-addressable. `wires` and `solids` CadQuery
   selectors reject the program until `02c` models those entities. `wire`, `Edges`,

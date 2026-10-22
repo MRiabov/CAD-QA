@@ -3,7 +3,7 @@
 **Parent:** [`pipeline.md`](pipeline.md).
 
 **Purpose:** state exactly which CadQuery calls the P0/P1 CADEvolve-C programs
-may use and how each maps into the static model.
+may use and how each maps into the CadQuery program AST extraction result.
 
 The allowlist is closed. An unlisted method or constructor rejects the whole
 program; there is no best-effort fallback.
@@ -25,7 +25,7 @@ program; there is no best-effort fallback.
 
 ## Constructors and workplanes
 
-| Method or constructor | Static mapping | Operation kind | Effect |
+| Method or constructor | AST mapping | Operation kind | Effect |
 |---|---|---|---|
 | `cq.Workplane` | `StaticWorkplane` plus `StaticOperation` | `workplane` | Start or replace a CadQuery workplane state. |
 | `workplane`, `workplaneFromTagged` | `StaticWorkplane` plus `StaticOperation` | `workplane` | Derive a CadQuery workplane from the current solid or tag. |
@@ -37,7 +37,7 @@ program; there is no best-effort fallback.
 
 ## Sketch, CadQuery profile, and path
 
-| Method or constructor | Static mapping | Operation kind | Effect |
+| Method or constructor | AST mapping | Operation kind | Effect |
 |---|---|---|---|
 | `moveTo`, `lineTo`, `hLine`, `vLine`, `threePointArc`, `polyline`, `close`, `line`, `spline`, `splineApprox`, `wire` | `StaticPath`; also feeds `StaticProfile` when used as a sketch boundary | path | Build or finalize a 2D path or sketch boundary. |
 | `circle`, `rect`, `ellipse`, `polygon`, `slot2D`, `offset2D`, `pushPoints` | `StaticProfile` or pending-point record | sketch | Build or position a 2D profile. |
@@ -45,14 +45,14 @@ program; there is no best-effort fallback.
 
 ## Solid features
 
-| Method or constructor | Static mapping | Operation kind | Effect |
+| Method or constructor | AST mapping | Operation kind | Effect |
 |---|---|---|---|
 | `box`, `cylinder`, `sphere`, `extrude`, `loft`, `sweep`, `revolve`, `twistExtrude`, `text` | `StaticOperation` | solid | Create a solid state. |
 | `cq.Solid.makeSphere` | `StaticOperation` | solid | Create a solid state. |
 
 ## Boolean and assembly
 
-| Method or constructor | Static mapping | Operation kind | Effect |
+| Method or constructor | AST mapping | Operation kind | Effect |
 |---|---|---|---|
 | `union`, `cut`, `intersect` | `StaticOperation` | boolean | Combine two solid states. |
 | `combine`, `newObject`, `add` | `StaticOperation` | assembly | Combine or collect existing solid states. |
@@ -60,14 +60,14 @@ program; there is no best-effort fallback.
 
 ## Modifiers
 
-| Method or constructor | Static mapping | Operation kind | Effect |
+| Method or constructor | AST mapping | Operation kind | Effect |
 |---|---|---|---|
 | `cutBlind`, `cutThruAll`, `hole`, `cskHole`, `cboreHole` | `StaticOperation` | modifier | Remove material from the current solid state. |
 | `fillet`, `chamfer`, `shell`, `split`, `clean`, `rarray` | `StaticOperation` | modifier | Change topology or repeat a feature. |
 
 ## Selectors
 
-| Method or constructor | Static mapping | Operation kind | Effect |
+| Method or constructor | AST mapping | Operation kind | Effect |
 |---|---|---|---|
 | `faces`, `edges`, `vertices` | `StaticSelector` | CadQuery selector | Select graph entities from the current shape. |
 | `filter` | `StaticSelector` with a narrow lambda predicate | CadQuery selector | Filter selected entities by `e.Length()` comparison. |
@@ -78,7 +78,7 @@ program; there is no best-effort fallback.
 Accessors do not create a solid state. They expose shape lists, individual
 shapes, or measurements for later clues and answers.
 
-| Method or constructor | Static mapping | Operation kind | Effect |
+| Method or constructor | AST mapping | Operation kind | Effect |
 |---|---|---|---|
 | `val`, `vals`, `all`, `first`, `Edges`, `Solids`, `findSolid`, `Length` | `StaticOperation` | accessor | Read a CadQuery workplane, shape, list, or scalar. `Edges`/`Solids` require a shape receiver; `Length` requires an edge receiver. |
 | `list(<accessor>.vals())` | `StaticExpression` | accessor | Convert a shape list to a Python list. |
@@ -90,7 +90,7 @@ dict, and the narrow `lambda` predicate used by `filter`.
 
 `cq.Plane` and `cq.Vector` are expression constructors, not operations. Their
 nested calls are preserved in the expression tree and are not evaluated during
-static extraction.
+AST extraction.
 
 ## Rejection
 
@@ -104,7 +104,7 @@ Reject the whole program when:
 
 `combineSolids` is observed in CADEvolve-C but is not a CadQuery 2.7 method. It is
 not in the allowlist and is not rewritten as `combine`; a program that calls it is
-rejected at static extraction. This affected 701 CADEvolve-C-core, 41 ABC-C, and
+rejected at AST extraction. This affected 701 CADEvolve-C-core, 41 ABC-C, and
 3 ShapeNet-C programs in the local cache.
 
 `wires` and `solids` are observed but rejected as P0/P1 selectors because `02c`

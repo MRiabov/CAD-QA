@@ -13,7 +13,7 @@ extraction-local model; `02c` translates it into CAD graph evidence references.
 |---|---|---|
 | `state` | `state_id` | Shape snapshot used by the record. |
 | `entity` | `state_id`, `entity_id` | Entity row used by the record. |
-| `operation` | `operation_id` | Static operation that produced the record. |
+| `operation` | `operation_id` | AST operation that produced the record. |
 | `span` | `SourceSpan` | CadQuery program span. |
 | `kernel_call` | `call` | Exact CadQuery/OCP call string, such as `Face.Edges()` or `Shape.Volume()`. |
 | `selector` | `selector_result_id` | CadQuery selector membership used by the record. |
@@ -57,13 +57,13 @@ membership is not sufficient for a face, edge, or vertex CadQuery selector.
 
 `02c` converts:
 
-- `state` and `entity` references to graph node IDs;
+- `state` and `entity` references to CAD graph entity IDs;
 - `operation` references to operation node IDs;
 - `span` references to graph `source_line` evidence;
 - `selector` references to CadQuery selector-result node IDs;
 - `kernel_call` and `execution` references to execution-artifact evidence.
 
-A reference that does not resolve to a graph node, measurement, operation, or
+A reference that does not resolve to a CAD graph entity, measurement, operation, or
 artifact rejects the graph. `02c` does not drop an unresolved reference.
 
 ## Rules

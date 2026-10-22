@@ -28,7 +28,7 @@ teacher coverage is zero; most shortcut baselines are pre-graph-first and stale.
 Next: owner review, then close the audit items before Phase 1.
 
 **2026-10-07 (later)** — all pre-restructure docs moved to `docs/_archive/` (status log,
-handoffs, RL records, runbooks, analysis reports, the paper draft, CadQuery program operation trace previews); all
+handoffs, RL records, runbooks, analysis reports, the paper draft, CadQuery program runtime extraction result previews); all
 references in the new docs and this plan rewired to `_archive/` paths. `docs/experiments/`
 stays in place (the designated home for dated records).
 
@@ -53,7 +53,7 @@ scanned. See the entry below.
 - An opt-in identifier mode (`--identifiers`) records the code name collisions: **5,339** hits
   across 63 files, parked as the **P2 clean-code** requirement
   (`tools/dont_say_identifiers_baseline.txt`, `development-plan.md` Phase 6).
-- Glossary renames landed (CadQuery program operation trace, dataset file, LLM harness mode,
+- Glossary renames landed (CadQuery program runtime extraction result, dataset file, LLM harness mode,
   CAD feature-added/removed region, CAD-QA dataset row column sets, …).
 - Prior-art findings recorded (`docs/prior-art.md`): LFM2.5/`liquid-finetune` and external
   small-LLM-model fine-tuning evidence with a candidate base shortlist; **D11** (the
@@ -535,7 +535,7 @@ Each pipeline step doc follows the same template (§4) and is grounded in code r
 - `00-overview.md` per pipeline holds the DAG and the **pipeline-stage IO contract** — the single
   source of truth for artifact/field names between steps; step docs must match it (redo
   `00-stage-interfaces.md` convention).
-- Dataset pipeline: A1–A7 (CadQuery program ingestion → CadQuery program operation trace → CAD graph → query → prompts → materialize →
+- Dataset pipeline: A1–A7 (CadQuery program ingestion → CadQuery program runtime extraction result → CAD graph → query → prompts → materialize →
   exports).
 - Fine-tuning pipeline: B1–B7 (rows → teacher → normalize → SFT → GRPO → harness →
   serving).

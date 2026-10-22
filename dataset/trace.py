@@ -1,4 +1,4 @@
-"""CadQuery program operation trace execution and Shape snapshot measurement."""
+"""CadQuery program runtime extraction result execution and Shape snapshot measurement."""
 
 from __future__ import annotations
 
@@ -89,7 +89,7 @@ def trace_source(
     timeout_seconds: float = 10.0,
     isolated: bool = True,
 ) -> TraceRecord:
-    """Execute one CadQuery program and return bounded kernel-backed CadQuery program operation trace evidence."""
+    """Execute one CadQuery program and return bounded kernel-backed CadQuery program runtime extraction result evidence."""
 
     record = _coerce_source(source)
     if isolated:
@@ -105,7 +105,7 @@ def trace_sources_bounded(
     progress: Callable[[int, int], None] | None = None,
     on_result: Callable[[int, SourceRecord, TraceRecord], None] | None = None,
 ) -> list[TraceRecord]:
-    """Build CadQuery program operation traces from CadQuery programs with bounded isolated workers and input-order results."""
+    """Build CadQuery program runtime extraction results from CadQuery programs with bounded isolated workers and input-order results."""
 
     records = [_coerce_source(source) for source in sources]
     if not records:

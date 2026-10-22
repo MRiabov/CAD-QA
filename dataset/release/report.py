@@ -265,7 +265,7 @@ def dataset_card_markdown(
         "",
         "## Framing",
         "",
-        "Rows are public prompts rendered from hidden deterministic CAD ontology query programs. Low-hop rows and high-hop BrowseComp-style rows share the same graph extraction, resolver, verifier, and materialization path.",
+        "Rows are public prompts rendered from hidden deterministic CAD graph query programs. Low-hop rows and high-hop BrowseComp-style rows share the same graph extraction, resolver, verifier, and materialization path.",
         "",
         "## Composition",
         "",

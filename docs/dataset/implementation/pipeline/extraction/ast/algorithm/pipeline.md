@@ -9,15 +9,15 @@ contract is [`method-signatures.md`](method-signatures.md).
 ## Pass order
 
 `02a` runs these passes in order. A failure stops the program; no later pass
-runs and no partial static model is emitted.
+runs and no partial CadQuery program AST extraction result is emitted.
 
 1. Parse the normalized text with the pinned Python `ast`.
 2. Validate the module shape and the single import.
 3. Walk top-level assignments in order and build bindings.
 4. Build expression trees and classify each assignment.
 5. Derive workplanes, profiles, paths, selectors, and aliases.
-6. Validate the static model.
-7. Emit the static model and the instrumented program.
+6. Validate the CadQuery program AST extraction result.
+7. Emit the CadQuery program AST extraction result and the instrumented program.
 
 ## Module validation
 
@@ -94,7 +94,7 @@ Nested constructor and accessor calls are allowed only in the forms in
 
 A CadQuery workplane binding also carries:
 
-- `workplane_id`: the current static CadQuery workplane, if known;
+- `workplane_id`: the current CadQuery workplane in the AST extraction result, if known;
 - `selected_category`: `face`, `edge`, `vertex`, or null;
 - `frame_status`: `explicit`, `derived`, or `unknown`.
 
@@ -158,16 +158,16 @@ row group below.
 
 ### Constructors and workplanes
 
-| Method | `operation_kind` | `result_kind` | State-producing | Notes |
+| Method | `operation_kind` | `result_kind` | Solid state producing | Notes |
 |---|---|---|---|---|
-| `Workplane` | `workplane` | `workplane` | no | New static CadQuery workplane; named or custom. |
+| `Workplane` | `workplane` | `workplane` | no | New CadQuery workplane in the AST extraction result; named or custom. |
 | `workplane` | `workplane` | `workplane` | no | Derived frame from receiver. |
 | `workplaneFromTagged` | `workplane` | `workplane` | no | Frame resolved at runtime. |
 | `transformed` | `workplane` | `workplane` | no | Frame resolved at runtime. |
 
 ### Sketch, CadQuery profile, and path
 
-| Method | `operation_kind` | `result_kind` | State-producing | Notes |
+| Method | `operation_kind` | `result_kind` | Solid state producing | Notes |
 |---|---|---|---|---|
 | `center`, `circle`, `rect`, `ellipse`, `polygon`, `slot2D`, `offset2D`, `pushPoints` | `sketch` | `workplane` | no | CadQuery profile or sketch record. |
 | `moveTo`, `lineTo`, `hLine`, `vLine`, `threePointArc`, `polyline`, `close`, `line`, `spline`, `splineApprox`, `wire` | `path` | `workplane` | no | Path record; `wire` finalizes the pending path. |
@@ -179,7 +179,7 @@ qualified constructors: `cq.Edge.makeLine`, `cq.Edge.makeSpline`,
 
 ### Solid features
 
-| Method | `operation_kind` | `result_kind` | State-producing | `feature_kind` | `solid_kind` |
+| Method | `operation_kind` | `result_kind` | Solid state producing | `feature_kind` | `solid_kind` |
 |---|---|---|---|---|---|
 | `box`, `cylinder`, `sphere` | `solid` | `workplane` | yes | `add_material` | `primitive` |
 | `makeSphere` | `solid` | `shape` | yes | `add_material` | `primitive` |
@@ -194,7 +194,7 @@ qualified constructors: `cq.Edge.makeLine`, `cq.Edge.makeSpline`,
 
 ### Boolean, assembly, modifiers, transforms
 
-| Method | `operation_kind` | `result_kind` | State-producing | `feature_kind` | `solid_kind` |
+| Method | `operation_kind` | `result_kind` | Solid state producing | `feature_kind` | `solid_kind` |
 |---|---|---|---|---|---|
 | `union` | `boolean` | `workplane` | yes | `add_material` | `boolean` |
 | `cut` | `boolean` | `workplane` | yes | `remove_material` | `boolean` |
@@ -210,7 +210,7 @@ qualified constructors: `cq.Edge.makeLine`, `cq.Edge.makeSpline`,
 
 ### Selectors and accessors
 
-| Method | `operation_kind` | `result_kind` | State-producing | Notes |
+| Method | `operation_kind` | `result_kind` | Solid state producing | Notes |
 |---|---|---|---|---|
 | `faces`, `edges`, `vertices` | `cadquery_selector` | `workplane` | no | Faces, edges, or vertices only. |
 | `filter` | `cadquery_selector` | `workplane` | no | Receiver must carry a face/edge/vertex category. |
@@ -235,7 +235,7 @@ and `Solids` are allowed only in the forms in
 binding with a face/edge/vertex selection. It produces a Python `list` of shapes.
 Any other `list` use is rejected.
 
-## Static derivation
+## AST derivation
 
 ### Workplanes
 
@@ -263,7 +263,7 @@ normal are unchanged. Otherwise it records `frame_status = unknown`.
 A subsequent `.workplane()` on a face selection records `workplane_kind = face`
 and `frame_status = unknown` unless a later runtime frame is captured.
 
-The static frame is intent, not a measurement. `02b` always measures the CadQuery workplane
+The AST frame is intent, not a measurement. `02b` always measures the CadQuery workplane
 frame from the executed `Workplane`; `02c` uses that measurement.
 
 ### Profiles
@@ -328,7 +328,7 @@ binding. An alias copies the target binding's kind, CadQuery workplane ID,
 selected category, frame status, and runtime state. It creates no state and no
 graph operation.
 
-## Static validation
+## AST validation
 
 After derivation:
 
@@ -337,10 +337,10 @@ After derivation:
 - every receiver and input variable resolves to an earlier binding;
 - every CadQuery profile, path, and CadQuery selector references an existing operation;
 - every CadQuery workplane reference resolves within the program;
-- every state-producing method has `feature_kind` and `solid_kind`;
+- every solid state producing method has `feature_kind` and `solid_kind`;
 - every CadQuery selector has a known category;
 - the final assignment targets `result`;
-- no static field is null when the field docs require a value.
+- no AST field is null when the field docs require a value.
 
 A failed check rejects the whole program with the first failing assignment and
 the exact reason.

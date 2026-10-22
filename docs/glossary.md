@@ -59,7 +59,7 @@ invents a new word, it is wrong — the word should already be here, or be added
 | Shared word | 3D model term | Software, code, or reasoning term |
 |---|---|---|
 | depth | cut depth, hole depth | task reasoning step count |
-| edge | CAD edge | graph edge |
+| edge | CAD edge | CAD graph relation |
 | feature | CAD feature | software feature |
 | path | CadQuery path | file path |
 | profile | CadQuery profile | performance profile |
@@ -181,7 +181,7 @@ The geometry a CAD feature removes. `In code:` `void_region`.
 
 ---
 
-### CAD feature effect delta
+### CAD feature solid state effect delta
 
 The measured before/after volume, bounding box, and topology change caused by a CAD
 feature. `Distinct from:` the Measurement scope `feature_application_effect`, which names
@@ -458,7 +458,7 @@ extraction result**.
 ### CadQuery program runtime extraction result
 
 The result of executing a CadQuery program and extracting each operation's Shape snapshots,
-CAD feature effect deltas, CadQuery selector results, and evidence. `In code:`
+CAD feature solid state effect deltas, CadQuery selector results, and evidence. `In code:`
 `ExecutionResult`. `Distinct from:` **CadQuery program AST extraction result**, **agent
 training trace**, **answer candidate set trace**.
 
@@ -568,7 +568,7 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | imitate_general_reasoning_style | preserve_general_math_and_code_reasoning | earlier name; a preservation role, not style imitation |
 | release tier (dataset, train_and_eval, tools) | Dataset release tier | garbled; which release? |
 | snapshot | Shape snapshot | opaque |
-| ontology graph (dataset) | CAD graph | unqualified |
+| CAD ontology graph (dataset) | CAD graph | unqualified |
 | ontology (bare) | CAD graph | generic/overloaded |
 | selector (bare) | CadQuery selector | CadQuery-specific |
 | workplane (bare) | CadQuery workplane | CadQuery-specific |
@@ -591,6 +591,24 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | rows artifact | Dataset file | "artifact" is vague; it is the dataset file |
 | harness row | CAD-QA dataset row | same record after decoding; not a new concept |
 | "intent" (as a doc) | PRD | "intent" is the concept, not the artifact |
+| CAD ontology graph | CAD graph | the ontology word is redundant |
+| CAD ontology node | CAD graph entity | the ontology word is redundant |
+| ontology graph | CAD graph | unqualified |
+| ontology node | CAD graph entity | unqualified |
+| graph node / graph nodes | CAD graph entity / CAD graph entities | graph relation to CAD graph entity |
+| graph edge | CAD graph relation | an edge is a CAD topology entity, not a graph link |
+| CadQuery program operation trace | CadQuery program runtime extraction result | old extraction term |
+| operation trace | CadQuery program runtime extraction result | old extraction term |
+| execution result | CadQuery program runtime extraction result | sounds like one value, not an extraction result |
+| static CadQuery model | CadQuery program AST extraction result | static is not the qualifier; AST is |
+| static model | CadQuery program AST extraction result | static is not the qualifier; AST is |
+| static schema | AST extraction schema | static is not the qualifier; AST is |
+| static rejection | AST rejection | static is not the qualifier; AST is |
+| static failure | AST rejection | static is not the qualifier; AST is |
+| state-producing operation | solid state producing operation | solid state is what is produced |
+| operation effect | CAD feature solid state effect delta | qualify the actor and the changed object |
+| CAD feature effect delta | CAD feature solid state effect delta | qualify the changed object |
+| entity fingerprint | CAD topology entity ID | fingerprint is an implementation detail |
 | trace (bare) | CadQuery program runtime extraction result / agent training trace / answer candidate set trace | overloaded across concepts |
 | model (bare) | CAD model / LLM model / base LLM model / LLM adapter / merged LLM model | geometry vs language model vs weights/adapter/served endpoint |
 | node (bare) | CAD graph entity / code node | ambiguous between graph and code |

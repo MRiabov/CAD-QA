@@ -15,7 +15,7 @@ from dataset.release.preview import (
 from dataset.release.sft import prompt_family
 from dataset.io import record_artifact_path, to_jsonable, write_json, write_records
 from dataset.ontology import build_graph
-from dataset.ontology.nodes import Measurement, Node, OntologyGraph, Relation
+from dataset.ontology.nodes import Measurement, Node, CadGraph, Relation
 from dataset.query.resolver import resolve_query
 from dataset.query.synthesis import synthesize_graph_hop_queries
 from dataset.source import source_record_from_mapping
@@ -130,7 +130,7 @@ SYNTHESIS_SELFCHECK_FAMILIES = (
 )
 
 
-def synthesis_selfcheck_graphs() -> list[OntologyGraph]:
+def synthesis_selfcheck_graphs() -> list[CadGraph]:
     """Return deterministic synthetic graphs that exercise synthesized families."""
 
     return [
@@ -204,7 +204,7 @@ def synthesis_selfcheck_graphs() -> list[OntologyGraph]:
     ]
 
 
-def synthesis_selfcheck_rows() -> tuple[list[dict[str, Any]], list[OntologyGraph], list[dict[str, Any]]]:
+def synthesis_selfcheck_rows() -> tuple[list[dict[str, Any]], list[CadGraph], list[dict[str, Any]]]:
     """Materialize resolved rows for all currently implemented synthesized families."""
 
     rows: list[dict[str, Any]] = []
@@ -281,7 +281,7 @@ def _query_prompt_family(query: Any) -> str:
     return str(getattr(query, "query_id", "")).rsplit(":", 1)[-1]
 
 
-def _add_reference_endpoint_nodes(graph: OntologyGraph) -> None:
+def _add_reference_endpoint_nodes(graph: CadGraph) -> None:
     for endpoint_id, coordinate in [
         ("edge_endpoint:ref", [0.0, -4.0, 0.0]),
         ("edge_endpoint:far", [50.0, 4.0, 0.0]),
@@ -293,7 +293,7 @@ def _add_reference_endpoint_nodes(graph: OntologyGraph) -> None:
         graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
 
 
-def _add_reference_region_nodes(graph: OntologyGraph) -> None:
+def _add_reference_region_nodes(graph: CadGraph) -> None:
     for region_id, region_type, volume, centroid in [
         ("material_region:ref", "material_region", 33.0, [0.0, -6.0, 1.0]),
         ("void_region:ref", "void_region", 11.0, [45.0, 3.0, 2.0]),
@@ -306,7 +306,7 @@ def _add_reference_region_nodes(graph: OntologyGraph) -> None:
         graph.add_measurement(Measurement(region_id, "entity_geometry", "centroid_z", centroid[2], "mm"))
 
 
-def _snapshot_topology_graph() -> OntologyGraph:
+def _snapshot_topology_graph() -> CadGraph:
     source_code = "import cadquery as cq\nbase = cq.Workplane('XY').box(2, 2, 2)\n"
     trace_record = {
         "source_id": "src_selfcheck_snapshot_topology",
@@ -378,8 +378,8 @@ def _box_edge_entities() -> list[dict[str, Any]]:
     ]
 
 
-def _face_metric_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _face_metric_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-face-metric",
         source={
             "source_id": "selfcheck-face-metric",
@@ -397,8 +397,8 @@ def _face_metric_graph() -> OntologyGraph:
     return graph
 
 
-def _edge_metric_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _edge_metric_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-edge-metric",
         source={
             "source_id": "selfcheck-edge-metric",
@@ -416,8 +416,8 @@ def _edge_metric_graph() -> OntologyGraph:
     return graph
 
 
-def _face_rank_graph(graph_id: str) -> OntologyGraph:
-    graph = OntologyGraph(
+def _face_rank_graph(graph_id: str) -> CadGraph:
+    graph = CadGraph(
         graph_id=graph_id,
         source={
             "source_id": graph_id.rsplit(":", 1)[-1],
@@ -435,8 +435,8 @@ def _face_rank_graph(graph_id: str) -> OntologyGraph:
     return graph
 
 
-def _face_deep_rank_graph(graph_id: str) -> OntologyGraph:
-    graph = OntologyGraph(
+def _face_deep_rank_graph(graph_id: str) -> CadGraph:
+    graph = CadGraph(
         graph_id=graph_id,
         source={
             "source_id": graph_id.rsplit(":", 1)[-1],
@@ -455,8 +455,8 @@ def _face_deep_rank_graph(graph_id: str) -> OntologyGraph:
     return graph
 
 
-def _edge_rank_graph(graph_id: str) -> OntologyGraph:
-    graph = OntologyGraph(
+def _edge_rank_graph(graph_id: str) -> CadGraph:
+    graph = CadGraph(
         graph_id=graph_id,
         source={
             "source_id": graph_id.rsplit(":", 1)[-1],
@@ -474,8 +474,8 @@ def _edge_rank_graph(graph_id: str) -> OntologyGraph:
     return graph
 
 
-def _edge_deep_rank_graph(graph_id: str) -> OntologyGraph:
-    graph = OntologyGraph(
+def _edge_deep_rank_graph(graph_id: str) -> CadGraph:
+    graph = CadGraph(
         graph_id=graph_id,
         source={
             "source_id": graph_id.rsplit(":", 1)[-1],
@@ -494,8 +494,8 @@ def _edge_deep_rank_graph(graph_id: str) -> OntologyGraph:
     return graph
 
 
-def _vertex_metric_graph(graph_id: str) -> OntologyGraph:
-    graph = OntologyGraph(
+def _vertex_metric_graph(graph_id: str) -> CadGraph:
+    graph = CadGraph(
         graph_id=graph_id,
         source={
             "source_id": graph_id.rsplit(":", 1)[-1],
@@ -528,8 +528,8 @@ def _vertex_metric_graph(graph_id: str) -> OntologyGraph:
     return graph
 
 
-def _vertex_equal_metric_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _vertex_equal_metric_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-vertex-equal-metric",
         source={
             "source_id": "selfcheck-vertex-equal-metric",
@@ -560,8 +560,8 @@ def _vertex_equal_metric_graph() -> OntologyGraph:
     return graph
 
 
-def _feature_rank_graph(graph_id: str) -> OntologyGraph:
-    graph = OntologyGraph(
+def _feature_rank_graph(graph_id: str) -> CadGraph:
+    graph = CadGraph(
         graph_id=graph_id,
         source={
             "source_id": graph_id.rsplit(":", 1)[-1],
@@ -587,8 +587,8 @@ def _feature_rank_graph(graph_id: str) -> OntologyGraph:
     return graph
 
 
-def _region_rank_graph(graph_id: str) -> OntologyGraph:
-    graph = OntologyGraph(
+def _region_rank_graph(graph_id: str) -> CadGraph:
+    graph = CadGraph(
         graph_id=graph_id,
         source={
             "source_id": graph_id.rsplit(":", 1)[-1],
@@ -616,8 +616,8 @@ def _region_rank_graph(graph_id: str) -> OntologyGraph:
     return graph
 
 
-def _edge_spatial_relation_graph(graph_id: str) -> OntologyGraph:
-    graph = OntologyGraph(
+def _edge_spatial_relation_graph(graph_id: str) -> CadGraph:
+    graph = CadGraph(
         graph_id=graph_id,
         source={
             "source_id": graph_id.rsplit(":", 1)[-1],
@@ -656,8 +656,8 @@ def _edge_spatial_relation_graph(graph_id: str) -> OntologyGraph:
     return graph
 
 
-def _edge_spatial_relation_rank_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _edge_spatial_relation_rank_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-edge-spatial-relation-rank",
         source={
             "source_id": "selfcheck-edge-spatial-relation-rank",
@@ -692,8 +692,8 @@ def _edge_spatial_relation_rank_graph() -> OntologyGraph:
     return graph
 
 
-def _edge_spatial_relation_tie_break_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _edge_spatial_relation_tie_break_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-edge-spatial-relation-tie-break",
         source={
             "source_id": "selfcheck-edge-spatial-relation-tie-break",
@@ -728,8 +728,8 @@ def _edge_spatial_relation_tie_break_graph() -> OntologyGraph:
     return graph
 
 
-def _edge_spatial_relation_chain_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _edge_spatial_relation_chain_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-edge-spatial-relation-chain",
         source={
             "source_id": "selfcheck-edge-spatial-relation-chain",
@@ -771,8 +771,8 @@ def _edge_spatial_relation_chain_graph() -> OntologyGraph:
     return graph
 
 
-def _edge_spatial_relation_chain_tie_break_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _edge_spatial_relation_chain_tie_break_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-edge-spatial-relation-chain-tie-break",
         source={
             "source_id": "selfcheck-edge-spatial-relation-chain-tie-break",
@@ -814,8 +814,8 @@ def _edge_spatial_relation_chain_tie_break_graph() -> OntologyGraph:
     return graph
 
 
-def _edge_same_length_relation_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _edge_same_length_relation_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-edge-same-length-relation",
         source={
             "source_id": "selfcheck-edge-same-length-relation",
@@ -850,8 +850,8 @@ def _edge_same_length_relation_graph() -> OntologyGraph:
     return graph
 
 
-def _edge_single_relation_graph(graph_id: str, relation: str) -> OntologyGraph:
-    graph = OntologyGraph(
+def _edge_single_relation_graph(graph_id: str, relation: str) -> CadGraph:
+    graph = CadGraph(
         graph_id=graph_id,
         source={
             "source_id": graph_id.rsplit(":", 1)[-1],
@@ -887,8 +887,8 @@ def _single_relation_pairs(relation: str) -> list[tuple[str, str]]:
     return [("edge:a", "edge:b"), ("edge:c", "edge:d")]
 
 
-def _face_spatial_relation_graph(graph_id: str) -> OntologyGraph:
-    graph = OntologyGraph(
+def _face_spatial_relation_graph(graph_id: str) -> CadGraph:
+    graph = CadGraph(
         graph_id=graph_id,
         source={
             "source_id": graph_id.rsplit(":", 1)[-1],
@@ -927,8 +927,8 @@ def _face_spatial_relation_graph(graph_id: str) -> OntologyGraph:
     return graph
 
 
-def _face_spatial_relation_rank_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _face_spatial_relation_rank_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-face-spatial-relation-rank",
         source={
             "source_id": "selfcheck-face-spatial-relation-rank",
@@ -963,8 +963,8 @@ def _face_spatial_relation_rank_graph() -> OntologyGraph:
     return graph
 
 
-def _face_spatial_relation_tie_break_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _face_spatial_relation_tie_break_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-face-spatial-relation-tie-break",
         source={
             "source_id": "selfcheck-face-spatial-relation-tie-break",
@@ -999,8 +999,8 @@ def _face_spatial_relation_tie_break_graph() -> OntologyGraph:
     return graph
 
 
-def _face_spatial_relation_chain_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _face_spatial_relation_chain_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-face-spatial-relation-chain",
         source={
             "source_id": "selfcheck-face-spatial-relation-chain",
@@ -1042,8 +1042,8 @@ def _face_spatial_relation_chain_graph() -> OntologyGraph:
     return graph
 
 
-def _face_spatial_relation_chain_tie_break_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _face_spatial_relation_chain_tie_break_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-face-spatial-relation-chain-tie-break",
         source={
             "source_id": "selfcheck-face-spatial-relation-chain-tie-break",
@@ -1085,8 +1085,8 @@ def _face_spatial_relation_chain_tie_break_graph() -> OntologyGraph:
     return graph
 
 
-def _face_single_relation_graph(graph_id: str, relation: str) -> OntologyGraph:
-    graph = OntologyGraph(
+def _face_single_relation_graph(graph_id: str, relation: str) -> CadGraph:
+    graph = CadGraph(
         graph_id=graph_id,
         source={
             "source_id": graph_id.rsplit(":", 1)[-1],
@@ -1116,8 +1116,8 @@ def _face_single_relation_graph(graph_id: str, relation: str) -> OntologyGraph:
     return graph
 
 
-def _feature_equal_metric_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _feature_equal_metric_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-feature-equal-metric",
         source={
             "source_id": "selfcheck-feature-equal-metric",
@@ -1167,8 +1167,8 @@ def _feature_equal_metric_graph() -> OntologyGraph:
     return graph
 
 
-def _feature_equal_metric_rank_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _feature_equal_metric_rank_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-feature-equal-metric-rank",
         source={
             "source_id": "selfcheck-feature-equal-metric-rank",
@@ -1195,8 +1195,8 @@ def _feature_equal_metric_rank_graph() -> OntologyGraph:
     return graph
 
 
-def _feature_effect_delta_graph(graph_id: str) -> OntologyGraph:
-    graph = OntologyGraph(
+def _feature_effect_delta_graph(graph_id: str) -> CadGraph:
+    graph = CadGraph(
         graph_id=graph_id,
         source={
             "source_id": graph_id.rsplit(":", 1)[-1],
@@ -1261,8 +1261,8 @@ def _feature_effect_delta_graph(graph_id: str) -> OntologyGraph:
     return graph
 
 
-def _region_equal_metric_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _region_equal_metric_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-region-equal-metric",
         source={
             "source_id": "selfcheck-region-equal-metric",
@@ -1334,8 +1334,8 @@ def _region_equal_metric_graph() -> OntologyGraph:
     return graph
 
 
-def _region_equal_metric_rank_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _region_equal_metric_rank_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-region-equal-metric-rank",
         source={
             "source_id": "selfcheck-region-equal-metric-rank",
@@ -1374,8 +1374,8 @@ def _region_equal_metric_rank_graph() -> OntologyGraph:
     return graph
 
 
-def _face_equal_metric_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _face_equal_metric_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-face-equal-metric",
         source={
             "source_id": "selfcheck-face-equal-metric",
@@ -1419,8 +1419,8 @@ def _face_equal_metric_graph() -> OntologyGraph:
     return graph
 
 
-def _face_equal_metric_rank_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _face_equal_metric_rank_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-face-equal-metric-rank",
         source={
             "source_id": "selfcheck-face-equal-metric-rank",
@@ -1444,8 +1444,8 @@ def _face_equal_metric_rank_graph() -> OntologyGraph:
     return graph
 
 
-def _edge_equal_metric_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _edge_equal_metric_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-edge-equal-metric",
         source={
             "source_id": "selfcheck-edge-equal-metric",
@@ -1490,8 +1490,8 @@ def _edge_equal_metric_graph() -> OntologyGraph:
     return graph
 
 
-def _edge_equal_metric_rank_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _edge_equal_metric_rank_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-edge-equal-metric-rank",
         source={
             "source_id": "selfcheck-edge-equal-metric-rank",
@@ -1515,8 +1515,8 @@ def _edge_equal_metric_rank_graph() -> OntologyGraph:
     return graph
 
 
-def _endpoint_equal_metric_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _endpoint_equal_metric_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-endpoint-equal-metric",
         source={
             "source_id": "selfcheck-endpoint-equal-metric",
@@ -1570,8 +1570,8 @@ def _endpoint_equal_metric_graph() -> OntologyGraph:
     return graph
 
 
-def _endpoint_equal_metric_rank_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _endpoint_equal_metric_rank_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-endpoint-equal-metric-rank",
         source={
             "source_id": "selfcheck-endpoint-equal-metric-rank",
@@ -1600,8 +1600,8 @@ def _endpoint_equal_metric_rank_graph() -> OntologyGraph:
     return graph
 
 
-def _path_metric_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _path_metric_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-path-metric",
         source={
             "source_id": "selfcheck-path-metric",
@@ -1681,8 +1681,8 @@ def _path_metric_graph() -> OntologyGraph:
     return graph
 
 
-def _path_equal_metric_rank_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _path_equal_metric_rank_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-path-equal-metric-rank",
         source={
             "source_id": "selfcheck-path-equal-metric-rank",
@@ -1736,8 +1736,8 @@ def _path_equal_metric_rank_graph() -> OntologyGraph:
     return graph
 
 
-def _reference_entity_distance_rank_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _reference_entity_distance_rank_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-reference-entity-distance-rank",
         source={
             "source_id": "selfcheck-reference-entity-distance-rank",
@@ -1863,8 +1863,8 @@ def _reference_entity_distance_rank_graph() -> OntologyGraph:
     return graph
 
 
-def _face_selector_count_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _face_selector_count_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-face-selector-count",
         source={
             "source_id": "selfcheck-face-selector-count",
@@ -1891,8 +1891,8 @@ def _face_selector_count_graph() -> OntologyGraph:
     return graph
 
 
-def _edge_selector_count_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _edge_selector_count_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-edge-selector-count",
         source={
             "source_id": "selfcheck-edge-selector-count",
@@ -1919,8 +1919,8 @@ def _edge_selector_count_graph() -> OntologyGraph:
     return graph
 
 
-def _vertex_selector_count_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _vertex_selector_count_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-vertex-selector-count",
         source={
             "source_id": "selfcheck-vertex-selector-count",
@@ -1947,8 +1947,8 @@ def _vertex_selector_count_graph() -> OntologyGraph:
     return graph
 
 
-def _selector_count_rank_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _selector_count_rank_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-selector-count-rank",
         source={
             "source_id": "selfcheck-selector-count-rank",
@@ -2003,8 +2003,8 @@ def _selector_count_rank_graph() -> OntologyGraph:
     return graph
 
 
-def _face_selector_relation_count_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _face_selector_relation_count_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-face-selector-relation-count",
         source={
             "source_id": "selfcheck-face-selector-relation-count",
@@ -2035,8 +2035,8 @@ def _face_selector_relation_count_graph() -> OntologyGraph:
     return graph
 
 
-def _edge_selector_relation_count_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _edge_selector_relation_count_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-edge-selector-relation-count",
         source={
             "source_id": "selfcheck-edge-selector-relation-count",
@@ -2067,8 +2067,8 @@ def _edge_selector_relation_count_graph() -> OntologyGraph:
     return graph
 
 
-def _edge_selector_equal_metric_count_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _edge_selector_equal_metric_count_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selector-count-equal-2",
         source={
             "source_id": "selfcheck-edge-selector-equal-metric-count",
@@ -2096,8 +2096,8 @@ def _edge_selector_equal_metric_count_graph() -> OntologyGraph:
     return graph
 
 
-def _edge_selector_tie_break_count_graph() -> OntologyGraph:
-    graph = OntologyGraph(
+def _edge_selector_tie_break_count_graph() -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:selfcheck-edge-selector-count-tie-break",
         source={
             "source_id": "selfcheck-edge-selector-count-tie-break",

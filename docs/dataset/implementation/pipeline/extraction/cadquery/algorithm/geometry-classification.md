@@ -26,13 +26,13 @@ case because they are shape subclasses.
 
 ## Solid state
 
-A state-producing result is a `Workplane` whose `val()` returns a shape, or a
+A solid state producing result is a `Workplane` whose `val()` returns a shape, or a
 shape returned directly by a shape constructor.
 
 - `is_solid = len(shape.Solids()) >= 1`.
 - `is_valid = shape.isValid()`.
 - A `Compound` is valid as a state when it contains at least one solid.
-- A `Shell`, `Face`, `Edge`, `Wire`, or empty `Compound` is not a state-producing
+- A `Shell`, `Face`, `Edge`, `Wire`, or empty `Compound` is not a solid state producing
   result.
 
 Use the returned shape once. Do not call `val()` a second time.
@@ -105,8 +105,8 @@ points; they may be equal.
 - `Length()` is an edge accessor and returns a scalar.
 - `wire()` returns a CadQuery workplane; it does not return a `Wire`.
 - `newObject()` and `add()` return a CadQuery workplane but are not
-  state-producing.
-- `combine()` is state-producing because it resolves the stack.
+  solid state producing.
+- `combine()` is solid state producing because it resolves the stack.
 
 ## CadQuery workplane frames
 
@@ -117,7 +117,7 @@ For a captured CadQuery workplane:
 - `normal = workplane.plane.zDir`.
 
 The frame is measured after the CadQuery workplane operation returns. It is not derived
-from the static model.
+from the CadQuery program AST extraction result.
 
 ## Failure behavior
 

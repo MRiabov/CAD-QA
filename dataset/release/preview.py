@@ -1,4 +1,4 @@
-"""Markdown previews for generated CAD-QA rows and graph nodes."""
+"""Markdown previews for generated CAD-QA rows and CAD graph entities."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import random
 from typing import Any
 
 from dataset.release.sft import is_geometry_critical_row, is_syntax_only_calibration_row, prompt_family
-from dataset.ontology.nodes import OntologyGraph
+from dataset.ontology.nodes import CadGraph
 from dataset.query.family_manifest import DEFAULT_FAMILY_MANIFEST, load_family_manifest
 
 DEFAULT_PREVIEW_EVIDENCE_FILENAME = "preview_evidence.json"
@@ -19,7 +19,7 @@ DEFAULT_PREVIEW_EVIDENCE_FILENAME = "preview_evidence.json"
 def dataset_preview_markdown(
     rows: list[dict[str, Any]],
     *,
-    graphs: list[OntologyGraph] | None = None,
+    graphs: list[CadGraph] | None = None,
     sample_per_family: int = 1,
     families: list[str] | None = None,
     node_types: list[str] | None = None,

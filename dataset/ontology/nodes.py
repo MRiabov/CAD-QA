@@ -1,4 +1,4 @@
-"""CAD ontology graph data structures."""
+"""CAD graph data structures."""
 
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ class Measurement:
 
 
 @dataclass
-class OntologyGraph:
+class CadGraph:
     graph_id: str
     source: dict[str, Any]
     nodes: list[Node] = field(default_factory=list)
@@ -196,8 +196,8 @@ def _freeze_value(value: Any) -> Any:
         return tuple(sorted(_freeze_value(item) for item in value))
     return value
 
-def graph_from_dict(data: dict[str, Any]) -> OntologyGraph:
-    return OntologyGraph(
+def graph_from_dict(data: dict[str, Any]) -> CadGraph:
+    return CadGraph(
         graph_id=data["graph_id"],
         source=data["source"],
         nodes=[Node(**node) for node in data.get("nodes", [])],

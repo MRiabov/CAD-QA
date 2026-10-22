@@ -1,4 +1,4 @@
-"""Bounded graph-hop query synthesis over CAD ontology graphs."""
+"""Bounded graph-hop query synthesis over CAD graphs."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import hashlib
 from dataclasses import dataclass, replace
 from typing import Any, Callable, TypeVar
 
-from dataset.ontology.nodes import Node, OntologyGraph
+from dataset.ontology.nodes import Node, CadGraph
 from dataset.query.answers import (
     DEFAULT_MAX_CANDIDATE_LABELS,
     AnswerSpec,
@@ -2098,7 +2098,7 @@ REFERENCE_DISTANCE_FAMILY_SPECS = (
 
 
 def synthesize_graph_hop_queries(
-    graph: OntologyGraph,
+    graph: CadGraph,
     *,
     max_per_family: int = 1,
 ) -> list[QueryProgram]:
@@ -2164,7 +2164,7 @@ def synthesize_graph_hop_queries(
 
 
 def _void_region_volume_queries(
-    graph: OntologyGraph,
+    graph: CadGraph,
     *,
     max_per_family: int,
 ) -> list[QueryProgram]:
@@ -2239,10 +2239,10 @@ def _void_region_volume_queries(
 
 
 def _queries_from_viable(
-    graph: OntologyGraph,
+    graph: CadGraph,
     family_id: str,
     viable: list[T],
-    builder: Callable[[OntologyGraph, T], QueryProgram | None],
+    builder: Callable[[CadGraph, T], QueryProgram | None],
     max_per_family: int,
 ) -> list[QueryProgram]:
     choices = _sample_viable_choices(graph.graph_id, family_id, viable, max_per_family)
@@ -2348,7 +2348,7 @@ def _reference_distance_specs_by_family() -> tuple[tuple[str, tuple[ReferenceDis
     return tuple((family_id, tuple(specs)) for family_id, specs in grouped.items())
 
 
-def _viable_extremes(graph: OntologyGraph, spec: ExtremeFamilySpec) -> list[ViableExtreme]:
+def _viable_extremes(graph: CadGraph, spec: ExtremeFamilySpec) -> list[ViableExtreme]:
     candidates = graph.nodes_by_type(spec.target_type)
     relation_candidates = _relation_filtered_candidates(graph, candidates, spec)
     if relation_candidates is None:
@@ -2389,7 +2389,7 @@ def _viable_extremes(graph: OntologyGraph, spec: ExtremeFamilySpec) -> list[Viab
 
 
 def _viable_extremes_for_candidates(
-    graph: OntologyGraph,
+    graph: CadGraph,
     spec: ExtremeFamilySpec,
     candidates: list[Node],
     *,
@@ -2449,7 +2449,7 @@ def _viable_extremes_for_candidates(
     return viable
 
 
-def _viable_ranks(graph: OntologyGraph, spec: ExtremeFamilySpec) -> list[ViableExtreme]:
+def _viable_ranks(graph: CadGraph, spec: ExtremeFamilySpec) -> list[ViableExtreme]:
     candidates = graph.nodes_by_type(spec.target_type)
     if not spec.allow_rank:
         return []
@@ -2492,7 +2492,7 @@ def _viable_ranks(graph: OntologyGraph, spec: ExtremeFamilySpec) -> list[ViableE
 
 
 def _viable_ranks_for_candidates(
-    graph: OntologyGraph,
+    graph: CadGraph,
     spec: ExtremeFamilySpec,
     candidates: list[Node],
     *,
@@ -2552,7 +2552,7 @@ def _sort_viable_extremes(viable: list[ViableExtreme]) -> list[ViableExtreme]:
     )
 
 
-def _query_for_extreme(graph: OntologyGraph, viable: ViableExtreme) -> QueryProgram | None:
+def _query_for_extreme(graph: CadGraph, viable: ViableExtreme) -> QueryProgram | None:
     spec = viable.spec
     broad_candidates = graph.nodes_by_type(spec.target_type)
     relation = _relation_instance(graph, broad_candidates, spec)
@@ -2657,7 +2657,7 @@ def _query_for_extreme(graph: OntologyGraph, viable: ViableExtreme) -> QueryProg
 
 
 def _viable_feature_effect_delta_extremes(
-    graph: OntologyGraph,
+    graph: CadGraph,
     spec: FeatureEffectDeltaFamilySpec,
 ) -> list[ViableFeatureEffectDeltaExtreme]:
     candidates = graph.nodes_by_type("feature")
@@ -2719,7 +2719,7 @@ def _viable_feature_effect_delta_extremes(
 
 
 def _query_for_feature_effect_delta_extreme(
-    graph: OntologyGraph,
+    graph: CadGraph,
     viable: ViableFeatureEffectDeltaExtreme,
 ) -> QueryProgram | None:
     spec = viable.spec
@@ -2789,7 +2789,7 @@ def _query_for_feature_effect_delta_extreme(
 
 
 def _relation_instance(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     spec: ExtremeFamilySpec,
 ) -> Any | None:
@@ -2805,7 +2805,7 @@ def _relation_instance(
 
 
 def _relation_filtered_candidates(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     spec: ExtremeFamilySpec,
 ) -> list[Node] | None:
@@ -2817,7 +2817,7 @@ def _relation_filtered_candidates(
     return _apply_relation_clause(graph, candidates, spec.relation)
 
 
-def _viable_selector_counts(graph: OntologyGraph, spec: SelectorCountFamilySpec) -> list[ViableSelectorCount]:
+def _viable_selector_counts(graph: CadGraph, spec: SelectorCountFamilySpec) -> list[ViableSelectorCount]:
     selectors = _nodes_with_numeric_measurement(graph, graph.nodes_by_type("selector"), "selected_count")
     relation = relation_predicate(
         graph,
@@ -2962,7 +2962,7 @@ def _viable_selector_counts(graph: OntologyGraph, spec: SelectorCountFamilySpec)
 
 
 def _selector_count_contexts(
-    graph: OntologyGraph,
+    graph: CadGraph,
     relation_candidates: list[Node],
     spec: SelectorCountFamilySpec,
 ) -> list[tuple[str | None, list[Node]]]:
@@ -2984,7 +2984,7 @@ def _selector_count_contexts(
 
 
 def _related_metric_equal_values(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     *,
     relation: str,
@@ -3004,7 +3004,7 @@ def _related_metric_equal_values(
     return sorted(value for value, count in counts.items() if count >= 2)[:24]
 
 
-def _query_for_selector_count(graph: OntologyGraph, viable: ViableSelectorCount) -> QueryProgram | None:
+def _query_for_selector_count(graph: CadGraph, viable: ViableSelectorCount) -> QueryProgram | None:
     spec = viable.spec
     selectors = _nodes_with_numeric_measurement(graph, graph.nodes_by_type("selector"), "selected_count")
     relation = relation_predicate(
@@ -3142,7 +3142,7 @@ def _selector_count_synthesis_strategy(viable: ViableSelectorCount) -> str:
 
 
 def _viable_equal_value_extremes(
-    graph: OntologyGraph,
+    graph: CadGraph,
     spec: EqualValueExtremeFamilySpec,
 ) -> list[ViableEqualValueExtreme]:
     candidates = graph.nodes_by_type(spec.target_type)
@@ -3245,7 +3245,7 @@ def _viable_equal_value_extremes(
     )
 
 
-def _query_for_equal_value_extreme(graph: OntologyGraph, viable: ViableEqualValueExtreme) -> QueryProgram | None:
+def _query_for_equal_value_extreme(graph: CadGraph, viable: ViableEqualValueExtreme) -> QueryProgram | None:
     spec = viable.spec
     broad_candidates = graph.nodes_by_type(spec.target_type)
     relation = None
@@ -3367,7 +3367,7 @@ def _query_for_equal_value_extreme(graph: OntologyGraph, viable: ViableEqualValu
 
 
 def _viable_relation_extremes(
-    graph: OntologyGraph,
+    graph: CadGraph,
     spec: RelationExtremeFamilySpec,
 ) -> list[ViableRelationExtreme]:
     candidates = graph.nodes_by_type(spec.target_type)
@@ -3451,7 +3451,7 @@ def _viable_relation_extremes(
 
 
 def _viable_relation_extremes_for_candidates(
-    graph: OntologyGraph,
+    graph: CadGraph,
     spec: RelationExtremeFamilySpec,
     *,
     relation_name: str,
@@ -3545,7 +3545,7 @@ def _viable_relation_extremes_for_candidates(
     return viable
 
 
-def _query_for_relation_extreme(graph: OntologyGraph, viable: ViableRelationExtreme) -> QueryProgram | None:
+def _query_for_relation_extreme(graph: CadGraph, viable: ViableRelationExtreme) -> QueryProgram | None:
     spec = viable.spec
     broad_candidates = graph.nodes_by_type(spec.target_type)
     base_relation = relation_predicate(
@@ -3667,7 +3667,7 @@ def _query_for_relation_extreme(graph: OntologyGraph, viable: ViableRelationExtr
 
 
 def _viable_relation_chain_extremes(
-    graph: OntologyGraph,
+    graph: CadGraph,
     spec: RelationChainFamilySpec,
 ) -> list[ViableRelationChainExtreme]:
     candidates = graph.nodes_by_type(spec.target_type)
@@ -3782,7 +3782,7 @@ def _viable_relation_chain_extremes(
 
 
 def _query_for_relation_chain_extreme(
-    graph: OntologyGraph,
+    graph: CadGraph,
     viable: ViableRelationChainExtreme,
 ) -> QueryProgram | None:
     spec = viable.spec
@@ -3895,7 +3895,7 @@ def _query_for_relation_chain_extreme(
 
 
 def _viable_reference_distances(
-    graph: OntologyGraph,
+    graph: CadGraph,
     spec: ReferenceDistanceFamilySpec,
 ) -> list[ViableReferenceDistance]:
     candidates = graph.nodes_by_type(spec.target_type)
@@ -4024,7 +4024,7 @@ def _sample_reference_distance_anchors(
     return ordered[:MAX_REFERENCE_DISTANCE_ANCHORS]
 
 
-def _query_for_reference_distance(graph: OntologyGraph, viable: ViableReferenceDistance) -> QueryProgram | None:
+def _query_for_reference_distance(graph: CadGraph, viable: ViableReferenceDistance) -> QueryProgram | None:
     spec = viable.spec
     broad_candidates = graph.nodes_by_type(spec.target_type)
     relation = None
@@ -4159,7 +4159,7 @@ def _canonical_reference_distance_family(spec: ReferenceDistanceFamilySpec) -> s
     return None
 
 
-def _apply_relation_clause(graph: OntologyGraph, candidates: list[Node], relation_type: str) -> list[Node]:
+def _apply_relation_clause(graph: CadGraph, candidates: list[Node], relation_type: str) -> list[Node]:
     return [
         node
         for node in candidates
@@ -4192,7 +4192,7 @@ def _relation_chains_of_length(
 
 
 def _related_metric_thresholds(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     *,
     relation: str,
@@ -4217,7 +4217,7 @@ def _related_metric_thresholds(
 
 
 def _metric_thresholds(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     metric: str,
 ) -> list[tuple[str, float]]:
@@ -4238,7 +4238,7 @@ def _metric_thresholds(
     return thresholds[:MAX_METRIC_COMPARE_THRESHOLDS]
 
 
-def _nodes_with_numeric_measurement(graph: OntologyGraph, candidates: list[Node], metric: str) -> list[Node]:
+def _nodes_with_numeric_measurement(graph: CadGraph, candidates: list[Node], metric: str) -> list[Node]:
     cache = getattr(graph, "_cached_query_numeric_node_ids", None)
     if cache is None:
         cache = {}
@@ -4265,7 +4265,7 @@ def _nodes_with_numeric_measurement(graph: OntologyGraph, candidates: list[Node]
 
 
 def _equal_measurement_groups(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     metric: str,
 ) -> list[tuple[float, list[Node]]]:
@@ -4288,7 +4288,7 @@ def _equal_measurement_groups(
 
 
 def _unique_reference_anchors(
-    graph: OntologyGraph,
+    graph: CadGraph,
     references: list[Node],
     *,
     reference_type: str,
@@ -4315,7 +4315,7 @@ def _unique_reference_anchors(
 
 
 def _reference_anchor_prompt_value(
-    graph: OntologyGraph,
+    graph: CadGraph,
     reference: Node,
     *,
     reference_type: str,
@@ -4374,7 +4374,7 @@ def _reference_anchor_metrics(
 
 
 def _reference_anchor_key(
-    graph: OntologyGraph,
+    graph: CadGraph,
     reference_id: str,
     *,
     reference_type: str,
@@ -4401,7 +4401,7 @@ def _reference_anchor_signature(reference_value: dict[str, Any]) -> str:
     return f"{reference_type}:{parts}"
 
 
-def _point_measurement(graph: OntologyGraph, entity_id: str, metric: str) -> list[float] | None:
+def _point_measurement(graph: CadGraph, entity_id: str, metric: str) -> list[float] | None:
     cache = getattr(graph, "_cached_query_point_measurements", None)
     if cache is None:
         cache = {}
@@ -4449,7 +4449,7 @@ def _value_bucket(value: Any) -> str:
 
 
 def _has_unique_extreme(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     metric: str,
     aggregation: str,
@@ -4462,7 +4462,7 @@ def _has_unique_extreme(
 
 
 def _extreme_nodes(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     metric: str,
     aggregation: str,
@@ -4480,7 +4480,7 @@ def _extreme_nodes(
 
 
 def _has_unique_rank(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     metric: str,
     aggregation: str,
@@ -4528,7 +4528,7 @@ def _has_unique_scored_extreme(scored: tuple[tuple[float, str], ...], aggregatio
 
 
 def _rank_nodes(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     metric: str,
     aggregation: str,
@@ -4549,7 +4549,7 @@ def _rank_nodes(
 
 
 def _scored_node_ids(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     metric: str,
 ) -> tuple[tuple[float, str], ...]:
@@ -4571,7 +4571,7 @@ def _scored_node_ids(
 
 
 def _viable_tie_breaks(
-    graph: OntologyGraph,
+    graph: CadGraph,
     spec: ExtremeFamilySpec,
     tied: list[Node],
     *,
@@ -4581,7 +4581,7 @@ def _viable_tie_breaks(
 
 
 def _viable_tie_break_metrics(
-    graph: OntologyGraph,
+    graph: CadGraph,
     metrics: tuple[str, ...],
     tied: list[Node],
     *,
@@ -4633,7 +4633,7 @@ def _metric_compare_clause_id(target_type: str, fallback_measurement_clause_id: 
 
 
 def _measurement_predicate_cached(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     *,
     clause_id: str,
@@ -4663,7 +4663,7 @@ def _measurement_predicate_cached(
 
 
 def _measurement_value_predicate_cached(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     *,
     clause_id: str,
@@ -4703,7 +4703,7 @@ def _measurement_value_predicate_cached(
 
 
 def _nodes_with_measurement_cached(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     metric: str,
 ) -> list[Node]:
@@ -4731,7 +4731,7 @@ def _nodes_with_measurement_cached(
     ]
 
 
-def _has_measurement_cached(graph: OntologyGraph, entity_id: str, metric: str) -> bool:
+def _has_measurement_cached(graph: CadGraph, entity_id: str, metric: str) -> bool:
     if _measurement_values(graph, entity_id, metric):
         return True
     return all(_measurement_values(graph, entity_id, component) for component in _point_metric_components(metric))
@@ -4747,7 +4747,7 @@ def _point_metric_components(metric: str) -> tuple[str, ...]:
 
 
 def _nodes_matching_measurement_value_cached(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     *,
     metric: str,
@@ -4782,7 +4782,7 @@ def _nodes_matching_measurement_value_cached(
 
 
 def _metric_compare_predicate_cached(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     *,
     clause_id: str,
@@ -4824,7 +4824,7 @@ def _metric_compare_predicate_cached(
 
 
 def _nodes_matching_metric_compare_cached(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     *,
     metric: str,
@@ -4896,7 +4896,7 @@ def _relation_extreme_strategy(viable: ViableRelationExtreme) -> str:
     return f"{prefix}_extreme_v1"
 
 
-def _measurement_value(graph: OntologyGraph, entity_id: str, metric: str) -> Any:
+def _measurement_value(graph: CadGraph, entity_id: str, metric: str) -> Any:
     values = _measurement_values(graph, entity_id, metric)
     return values[0] if values else None
 
@@ -4907,7 +4907,7 @@ def _is_valid_synthesis_metric_value(node: Node, metric: str, value: Any) -> boo
     return True
 
 
-def _measurement_values(graph: OntologyGraph, entity_id: str, metric: str) -> tuple[Any, ...]:
+def _measurement_values(graph: CadGraph, entity_id: str, metric: str) -> tuple[Any, ...]:
     cache = getattr(graph, "_cached_query_measurement_values", None)
     if cache is None:
         cache = {}

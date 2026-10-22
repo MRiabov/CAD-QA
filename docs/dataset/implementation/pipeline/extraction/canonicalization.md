@@ -125,9 +125,9 @@ This makes CadQuery selector membership order independent of kernel enumeration 
 - Shape snapshots: operation order.
 - CadQuery workplane frames: operation order.
 - CadQuery selector results: operation order, then `ordinal`.
-- Operation effects: operation order.
+- CAD feature solid state effect deltas: operation order.
 - Topology records: relation kind, then `from_entity_id`, then `to_entity_id`.
-- Failure records: one per program; the static or runtime failure is terminal.
+- Failure records: one per program; the AST or runtime failure is terminal.
 
 ## Topology identity
 
@@ -140,7 +140,7 @@ is absent from the state entity table rejects the state.
 ## Artifact hashes
 
 - `static_model_sha256` is the canonical hash of the complete
-  `StaticCadQueryModel` after static ordering.
+  `StaticCadQueryModel` after AST ordering.
 - `execution_result_sha256` is the canonical hash of the complete successful
   `ExecutionResult` or failure tombstone.
 - `entity_table_ref = "entity:<state_id>"` is a logical reference; the physical

@@ -26,6 +26,6 @@ These fields specialize a `StaticOperation` for solid-producing calls.
   `chamfer`, `shell`, `split`, `clean`, `rarray`.
 - Transforms: `translate`, `rotate`, `mirror`, `transformed`.
 
-`feature_kind` and `solid_kind` are static classifications. The complete method
+`feature_kind` and `solid_kind` are AST classifications. The complete method
 table is in [`pipeline.md`](../algorithm/pipeline.md). Runtime material change and topology
 change are measured in [`cadquery/features/effects.md`](../../cadquery/features/effects.md).

@@ -106,7 +106,7 @@ edges are expressions. The edge expressions remain in the operation arguments.
 
 ## CadQuery workplane reference
 
-The static CadQuery workplane reference is:
+The CadQuery workplane in the AST extraction result reference is:
 
 - the receiver binding's current `workplane_id` for a CadQuery workplane method;
 - null for a standalone `cq.Edge.*` or `cq.Wire.*` constructor.

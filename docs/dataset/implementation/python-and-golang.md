@@ -17,7 +17,7 @@ of these exceptions.
 | CLI, orchestration, caching, manifests | Go | File, process, and data-flow work. |
 | `01a` metadata, `01b` select, `01c` fetch, `01e` manifest | Go | Metadata, selection, and file handling; no Python semantics. |
 | `01d` normalize programs | Python | Needs the Python tokenizer and AST to canonicalize Python program text. |
-| `02a` static extraction | Python | Reads the Python AST and CadQuery calls. |
+| `02a` AST extraction | Python | Reads the Python AST and CadQuery calls. |
 | `02b` execute CadQuery | Python | Needs the CadQuery and OCP runtime. |
 | `02c` build graph | Go | Consumes typed execution output; does not import CadQuery. |
 | Pipeline stages `03`–`05` | Go | Task planning, task enumeration, prompt rendering, validation, and export. |
@@ -45,7 +45,7 @@ Clearly parallel per program:
 
 - `01c` fetch;
 - `01d` normalize;
-- `02a` static extraction;
+- `02a` AST extraction;
 - `02b` CadQuery execution, bounded by OCP memory;
 - `02c` graph construction;
 - `03b` task-definition construction;

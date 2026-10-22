@@ -77,7 +77,7 @@ from dataset.harbor import _openrouter_native_provider_routing, materialize_harb
 from train_and_eval.harbor import grade_harbor_task
 from dataset.io import iter_records, read_jsonl, read_records, to_jsonable, write_json, write_jsonl, write_records
 from dataset.ontology import build_graph
-from dataset.ontology.nodes import Measurement, Node, OntologyGraph, Relation, graph_from_dict
+from dataset.ontology.nodes import Measurement, Node, CadGraph, Relation, graph_from_dict
 from dataset.ontology.profile_geometry import circle_profile, polyline_profile, rect_profile
 from dataset.ontology.relations import RELATION_FAMILIES
 from dataset.ontology.workplane_frames import project_local_point
@@ -248,7 +248,7 @@ def test_source_loading(tmp_path: Path) -> None:
 
 
 def test_graph_exact_duplicate_measurements_are_idempotent() -> None:
-    graph = OntologyGraph(graph_id="graph:src", source={"source_id": "src", "source_code": ""})
+    graph = CadGraph(graph_id="graph:src", source={"source_id": "src", "source_code": ""})
     measurement = Measurement(
         "face:kernel:a",
         "entity_geometry",
@@ -273,7 +273,7 @@ def test_graph_exact_duplicate_measurements_are_idempotent() -> None:
 
 
 def test_graph_exact_duplicate_relations_are_idempotent() -> None:
-    graph = OntologyGraph(graph_id="graph:src", source={"source_id": "src", "source_code": ""})
+    graph = CadGraph(graph_id="graph:src", source={"source_id": "src", "source_code": ""})
     relation = Relation(
         "face:kernel:a",
         "origin:global",
@@ -294,7 +294,7 @@ def test_graph_exact_duplicate_relations_are_idempotent() -> None:
 
 
 def test_graph_lookup_indexes_update_after_mutation_and_do_not_serialize() -> None:
-    graph = OntologyGraph(graph_id="graph:src", source={"source_id": "src", "source_code": ""})
+    graph = CadGraph(graph_id="graph:src", source={"source_id": "src", "source_code": ""})
     graph.add_node(Node("edge:a", "edge", "edge a"))
     assert graph.node("edge:a") is not None
     assert graph.nodes_by_type("edge") == [Node("edge:a", "edge", "edge a")]
@@ -2791,7 +2791,7 @@ def test_query_resolver_argmax_and_reject_unless_unique() -> None:
 
 
 def test_query_resolver_uses_tie_break_aggregation() -> None:
-    graph = OntologyGraph(graph_id="graph:tie", source={"source_id": "tie", "source_code": ""})
+    graph = CadGraph(graph_id="graph:tie", source={"source_id": "tie", "source_code": ""})
     for node_id, primary, secondary in [
         ("edge:a", 10.0, 2.0),
         ("edge:b", 10.0, 8.0),
@@ -2825,7 +2825,7 @@ def test_query_resolver_uses_tie_break_aggregation() -> None:
 
 
 def test_query_resolver_rank_aggregation_and_ambiguity() -> None:
-    graph = OntologyGraph(graph_id="graph:rank", source={"source_id": "rank", "source_code": ""})
+    graph = CadGraph(graph_id="graph:rank", source={"source_id": "rank", "source_code": ""})
     for node_id, length in [
         ("edge:a", 10.0),
         ("edge:b", 8.0),
@@ -2857,7 +2857,7 @@ def test_query_resolver_rank_aggregation_and_ambiguity() -> None:
     assert "2nd candidate when ordered from greatest to smallest edge length" in row.prompt
     assert row.clue_map[-1]["clue_template_id"] == "aggregation:rank_desc"
 
-    tie_graph = OntologyGraph(graph_id="graph:rank-tie", source={"source_id": "rank_tie", "source_code": ""})
+    tie_graph = CadGraph(graph_id="graph:rank-tie", source={"source_id": "rank_tie", "source_code": ""})
     for node_id, length in [
         ("edge:a", 10.0),
         ("edge:b", 10.0),
@@ -3091,7 +3091,7 @@ def test_dataset_explorer_render_png_is_nonblank(tmp_path: Path) -> None:
 
 
 def test_answer_spec_formats_recoverable_source_ref_answers() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:answer-source-ref",
         source={"source_id": "synthetic", "source_code": "wp2 = wp1.extrude(5)\n"},
     )
@@ -3113,7 +3113,7 @@ def test_answer_spec_formats_recoverable_source_ref_answers() -> None:
 
 
 def test_reassigned_source_ref_answers_fall_back_to_candidate_labels() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:ambiguous-source-ref",
         source={
             "source_id": "synthetic",
@@ -3184,7 +3184,7 @@ def test_sft_exports_coordinate_answers_as_prompt_tuple_text() -> None:
 
 
 def test_candidate_label_answers_bound_public_label_lists() -> None:
-    graph = OntologyGraph(graph_id="graph:too-many-labels", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:too-many-labels", source={"source_id": "synthetic", "source_code": ""})
     for index in range(65):
         node_id = f"edge:{index}"
         graph.add_node(Node(node_id, "edge", node_id))
@@ -3211,7 +3211,7 @@ def test_candidate_label_answers_bound_public_label_lists() -> None:
 
 
 def test_candidate_label_extreme_uses_tie_break_for_float_noise() -> None:
-    graph = OntologyGraph(graph_id="graph:float-noise-label-cap", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:float-noise-label-cap", source={"source_id": "synthetic", "source_code": ""})
     for node_id, z_value, length in (
         ("edge:a", -100.0, 5.0),
         ("edge:b", -100.0, 13.0),
@@ -3242,7 +3242,7 @@ def test_candidate_label_extreme_uses_tie_break_for_float_noise() -> None:
 
 
 def test_candidate_label_rank_choices_preserve_visible_rank_semantics() -> None:
-    graph = OntologyGraph(graph_id="graph:rank-label-cap", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:rank-label-cap", source={"source_id": "synthetic", "source_code": ""})
     for index in range(20):
         node_id = f"edge:{index:02d}"
         graph.add_node(Node(node_id, "edge", node_id))
@@ -3274,7 +3274,7 @@ def test_candidate_label_rank_choices_preserve_visible_rank_semantics() -> None:
 
 
 def test_candidate_label_rank_choices_preserve_tied_rank_bucket() -> None:
-    graph = OntologyGraph(graph_id="graph:tied-rank-label-cap", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:tied-rank-label-cap", source={"source_id": "synthetic", "source_code": ""})
     for index, count in enumerate([12, 12, 12, 12, 20, 30, 57, 60, 70]):
         node_id = f"selector:s{index}"
         graph.add_node(Node(node_id, "selector", node_id, properties={"selector_kind": "edges", "selector_label": f"s{index} edges"}))
@@ -3310,7 +3310,7 @@ def test_candidate_label_rank_choices_preserve_tied_rank_bucket() -> None:
 
 
 def test_rank_selector_choices_use_prefinal_descriptive_labels() -> None:
-    graph = OntologyGraph(graph_id="graph:selector-rank-labels", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:selector-rank-labels", source={"source_id": "synthetic", "source_code": ""})
     for index, (count, max_z) in enumerate([(6, 5.5), (6, 7.5), (11, 7.5), (23, 7.5), (37, 7.5)]):
         node_id = f"selector:part_faces_snapshot_all:{index}"
         graph.add_node(
@@ -3348,7 +3348,7 @@ def test_rank_selector_choices_use_prefinal_descriptive_labels() -> None:
 
 
 def test_validation_rejects_overwide_public_candidate_label_lists() -> None:
-    graph = OntologyGraph(graph_id="graph:wide-label-validation", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:wide-label-validation", source={"source_id": "synthetic", "source_code": ""})
     for index in range(8):
         node_id = f"edge:{index}"
         graph.add_node(Node(node_id, "edge", node_id))
@@ -3590,7 +3590,7 @@ def _candidate_label_validation_row(*, prompt: str, gold_answer: str) -> dict[st
 
 
 def test_candidate_label_selector_descriptions_include_public_selector_context() -> None:
-    graph = OntologyGraph(graph_id="graph:selector-labels", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:selector-labels", source={"source_id": "synthetic", "source_code": ""})
     for selector_id, selector_label, selected_count, max_z in [
         ("selector:wp2_faces_snapshot_all", "wp2 faces", 6, 1.0),
         ("selector:wp6_faces_snapshot_all", "wp6 faces", 7, 4.0),
@@ -3626,7 +3626,7 @@ def test_candidate_label_selector_descriptions_include_public_selector_context()
 
 
 def test_selector_expression_choice_answers_use_plausible_abcd_options() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:selector-expression-choice",
         source={
             "source_id": "synthetic",
@@ -3691,7 +3691,7 @@ def test_selector_expression_choice_answers_use_plausible_abcd_options() -> None
 
 
 def test_selector_expression_choice_falls_back_when_selectors_are_not_source_visible() -> None:
-    graph = OntologyGraph(graph_id="graph:selector-expression-fallback", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:selector-expression-fallback", source={"source_id": "synthetic", "source_code": ""})
     for selector_id in ["selector:a", "selector:b"]:
         graph.add_node(Node(selector_id, "selector", selector_id))
 
@@ -3701,7 +3701,7 @@ def test_selector_expression_choice_falls_back_when_selectors_are_not_source_vis
 
 
 def test_selector_expression_choice_uses_snapshot_selector_base() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:selector-expression-snapshot",
         source={"source_id": "synthetic", "source_code": "wp10 = wp2.box(1, 2, 3)\n"},
     )
@@ -3755,7 +3755,7 @@ def test_selector_expression_choice_uses_snapshot_selector_base() -> None:
 
 
 def test_selector_expression_choice_falls_back_for_duplicate_public_expressions() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:selector-expression-duplicate",
         source={"source_id": "synthetic", "source_code": "top_a = base.faces('>Z')\ntop_b = base.faces('>Z')\n"},
     )
@@ -3834,7 +3834,7 @@ def test_prompt_metric_labels_hide_internal_measurement_names() -> None:
 
 
 def test_value_bearing_measurement_clause_resolves_and_renders() -> None:
-    graph = OntologyGraph(graph_id="graph:value", source={"source_id": "src_value", "source_code": "import cadquery as cq\n"})
+    graph = CadGraph(graph_id="graph:value", source={"source_id": "src_value", "source_code": "import cadquery as cq\n"})
     for node_id, volume, centroid_z in [
         ("feature:a", 12.0, 1.0),
         ("feature:b", 12.0 + 1e-7, 3.0),
@@ -3885,7 +3885,7 @@ def test_value_bearing_measurement_clause_resolves_and_renders() -> None:
 
 
 def test_smoke_queries_mine_equal_value_measurement_distractors() -> None:
-    graph = OntologyGraph(graph_id="graph:equal", source={"source_id": "src_equal", "source_code": "import cadquery as cq\n"})
+    graph = CadGraph(graph_id="graph:equal", source={"source_id": "src_equal", "source_code": "import cadquery as cq\n"})
     for node_id, volume, centroid_z in [
         ("feature:a", 20.0, 1.0),
         ("feature:b", 20.0, 4.0),
@@ -3909,7 +3909,7 @@ def test_smoke_queries_mine_equal_value_measurement_distractors() -> None:
 
 
 def test_smoke_queries_mine_equal_centroid_and_height_values() -> None:
-    graph = OntologyGraph(graph_id="graph:equal_more", source={"source_id": "src_equal_more", "source_code": "import cadquery as cq\n"})
+    graph = CadGraph(graph_id="graph:equal_more", source={"source_id": "src_equal_more", "source_code": "import cadquery as cq\n"})
     for node_id, volume, centroid_z, bbox_span_z in [
         ("feature:a", 10.0, -0.0, 5.0),
         ("feature:b", 20.0, 0.0, 5.0),
@@ -3936,7 +3936,7 @@ def test_smoke_queries_mine_equal_centroid_and_height_values() -> None:
 
 
 def test_smoke_queries_mine_equal_feature_axis_coordinate_values() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:equal_axis",
         source={"source_id": "src_equal_axis", "source_code": "import cadquery as cq\n"},
     )
@@ -3963,7 +3963,7 @@ def test_smoke_queries_mine_equal_feature_axis_coordinate_values() -> None:
 
 
 def test_smoke_queries_mine_equal_face_and_endpoint_coordinate_values() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:equal_coordinates",
         source={"source_id": "src_equal_coordinates", "source_code": "import cadquery as cq\n"},
     )
@@ -4005,7 +4005,7 @@ def test_smoke_queries_mine_equal_face_and_endpoint_coordinate_values() -> None:
 
 
 def test_smoke_queries_mine_equal_region_volume_values() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:equal_regions",
         source={"source_id": "src_equal_regions", "source_code": "import cadquery as cq\n"},
     )
@@ -4041,7 +4041,7 @@ def test_smoke_queries_mine_equal_region_volume_values() -> None:
 
 
 def test_smoke_queries_generate_cross_feature_reference_distance_tasks() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:cross_value",
         source={"source_id": "src_cross_value", "source_code": "import cadquery as cq\n"},
     )
@@ -4120,7 +4120,7 @@ def test_generated_smoke_query_clauses_are_yaml_backed() -> None:
 
 
 def test_synthesis_generates_parameterized_kernel_face_extreme_query() -> None:
-    graph = OntologyGraph(graph_id="graph:synthetic-face", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:synthetic-face", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("selector:faces", "selector", "faces"))
     for index, x_value in enumerate([0.0, 5.0, 11.0], start=1):
         face_id = f"face:{index}"
@@ -4173,7 +4173,7 @@ def test_synthesis_generates_parameterized_kernel_face_extreme_query() -> None:
 
 
 def test_synthesis_can_emit_multiple_deterministic_variants_per_family(tmp_path: Path) -> None:
-    graph = OntologyGraph(graph_id="graph:synthetic-face-variants", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:synthetic-face-variants", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("selector:faces", "selector", "faces"))
     for index, x_value in enumerate([0.0, 5.0, 11.0], start=1):
         face_id = f"face:{index}"
@@ -4233,7 +4233,7 @@ def test_synthesis_can_emit_multiple_deterministic_variants_per_family(tmp_path:
 
 
 def test_smoke_queries_include_parameterized_kernel_edge_synthesis() -> None:
-    graph = OntologyGraph(graph_id="graph:synthetic-edge", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:synthetic-edge", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("selector:edges", "selector", "edges"))
     for index, y_value in enumerate([-2.0, 0.0, 8.0], start=1):
         edge_id = f"edge:{index}"
@@ -4275,7 +4275,7 @@ def test_smoke_queries_include_parameterized_kernel_edge_synthesis() -> None:
 
 
 def test_synthesis_generates_ranked_kernel_edge_query() -> None:
-    face_graph = OntologyGraph(graph_id="graph:synthetic-face-rank", source={"source_id": "synthetic", "source_code": ""})
+    face_graph = CadGraph(graph_id="graph:synthetic-face-rank", source={"source_id": "synthetic", "source_code": ""})
     face_graph.add_node(Node("selector:faces", "selector", "faces"))
     for face_id, area in [
         ("face:a", 30.0),
@@ -4299,7 +4299,7 @@ def test_synthesis_generates_ranked_kernel_edge_query() -> None:
     assert face_resolution.gold_answer == face_resolution.query_program.answer_spec.candidate_labels[final_face_id]
     assert face_query.aggregation_rank == 2
 
-    graph = OntologyGraph(graph_id="graph:rank-sample:0", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:rank-sample:0", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("selector:edges", "selector", "edges"))
     for edge_id, length in [
         ("edge:a", 10.0),
@@ -4348,7 +4348,7 @@ def test_synthesis_samples_later_rank_values_when_viable() -> None:
         "graph:rank-sample:4": ("edge", "parameterized_kernel_edge_rank", 4, "4th candidate"),
     }
     for graph_id, (target_type, family, expected_rank, prompt_fragment) in expected.items():
-        graph = OntologyGraph(graph_id=graph_id, source={"source_id": "synthetic", "source_code": ""})
+        graph = CadGraph(graph_id=graph_id, source={"source_id": "synthetic", "source_code": ""})
         selector_id = "selector:faces" if target_type == "face" else "selector:edges"
         graph.add_node(Node(selector_id, "selector", selector_id.rsplit(":", 1)[-1]))
         values = (
@@ -4381,7 +4381,7 @@ def test_synthesis_samples_fifth_and_sixth_rank_values_when_viable() -> None:
         "graph:rank-sample:7": ("edge", "parameterized_kernel_edge_rank", 6, "6th candidate"),
     }
     for graph_id, (target_type, family, expected_rank, prompt_fragment) in expected.items():
-        graph = OntologyGraph(graph_id=graph_id, source={"source_id": "synthetic", "source_code": ""})
+        graph = CadGraph(graph_id=graph_id, source={"source_id": "synthetic", "source_code": ""})
         selector_id = "selector:faces" if target_type == "face" else "selector:edges"
         graph.add_node(Node(selector_id, "selector", selector_id.rsplit(":", 1)[-1]))
         relation = "has_kernel_stable_face_id" if target_type == "face" else "has_kernel_stable_edge_id"
@@ -4405,8 +4405,8 @@ def test_synthesis_samples_fifth_and_sixth_rank_values_when_viable() -> None:
 
 
 def test_synthesis_samples_fifth_and_sixth_feature_and_region_rank_values_when_viable() -> None:
-    def feature_rank_graph(graph_id: str) -> OntologyGraph:
-        graph = OntologyGraph(graph_id=graph_id, source={"source_id": "synthetic", "source_code": ""})
+    def feature_rank_graph(graph_id: str) -> CadGraph:
+        graph = CadGraph(graph_id=graph_id, source={"source_id": "synthetic", "source_code": ""})
         for index, volume in enumerate([60.0, 50.0, 40.0, 30.0, 20.0, 10.0]):
             feature_id = f"feature:{index}"
             centroid = [float(index), float(index * 2), float(index * 3)]
@@ -4421,8 +4421,8 @@ def test_synthesis_samples_fifth_and_sixth_feature_and_region_rank_values_when_v
             graph.add_measurement(Measurement(feature_id, "snapshot_state", "topology_edges", float(index + 8), "count"))
         return graph
 
-    def region_rank_graph(graph_id: str) -> OntologyGraph:
-        graph = OntologyGraph(graph_id=graph_id, source={"source_id": "synthetic", "source_code": ""})
+    def region_rank_graph(graph_id: str) -> CadGraph:
+        graph = CadGraph(graph_id=graph_id, source={"source_id": "synthetic", "source_code": ""})
         for target_type, relation in [
             ("material_region", "has_kernel_material_region_geometry"),
             ("void_region", "has_kernel_void_region_geometry"),
@@ -4469,7 +4469,7 @@ def test_synthesis_samples_fifth_and_sixth_feature_and_region_rank_values_when_v
 
 
 def test_synthesis_generates_void_region_rows_from_cut_delta_metrics_without_centroids() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:void-region-cut-delta-metrics",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -4504,7 +4504,7 @@ def test_synthesis_generates_void_region_rows_from_cut_delta_metrics_without_cen
 
 
 def test_synthesis_skips_zero_volume_void_region_equal_value_rows() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:void-region-zero-volume",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -4543,7 +4543,7 @@ def test_synthesis_skips_zero_volume_void_region_equal_value_rows() -> None:
 
 
 def test_synthesis_skips_tied_rank_positions_without_dropping_viable_later_ranks() -> None:
-    graph = OntologyGraph(graph_id="graph:tied-rank", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:tied-rank", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("selector:edges", "selector", "edges"))
     for edge_id, length in [
         ("edge:a", 10.0),
@@ -4570,7 +4570,7 @@ def test_synthesis_skips_tied_rank_positions_without_dropping_viable_later_ranks
 
 
 def test_synthesis_skips_rank_family_when_all_rank_positions_are_tied() -> None:
-    graph = OntologyGraph(graph_id="graph:all-tied-rank", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:all-tied-rank", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("selector:edges", "selector", "edges"))
     for edge_id in ["edge:a", "edge:b", "edge:c"]:
         graph.add_node(Node(edge_id, "edge", edge_id))
@@ -4583,7 +4583,7 @@ def test_synthesis_skips_rank_family_when_all_rank_positions_are_tied() -> None:
 
 
 def test_synthesis_generates_parameterized_edge_spatial_relation_query() -> None:
-    graph = OntologyGraph(graph_id="graph:edge-spatial-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:edge-spatial-synth", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("selector:edges", "selector", "edges"))
     for edge_id, length, midpoint in [
         ("edge:a", 10.0, [0.0, 0.0, 0.0]),
@@ -4645,7 +4645,7 @@ def test_synthesis_generates_parameterized_edge_spatial_relation_query() -> None
 
 
 def test_synthesis_generates_metric_threshold_edge_spatial_relation_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:edge-spatial-threshold-synth",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -4704,7 +4704,7 @@ def test_synthesis_generates_metric_threshold_edge_spatial_relation_query() -> N
 
 
 def test_synthesis_generates_same_length_edge_spatial_relation_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:edge-same-length-spatial-synth",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -4750,7 +4750,7 @@ def test_synthesis_generates_same_length_edge_spatial_relation_query() -> None:
 
 
 def test_synthesis_generates_comparative_edge_spatial_relation_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:edge-comparative-spatial-synth",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -4793,7 +4793,7 @@ def test_synthesis_generates_comparative_edge_spatial_relation_query() -> None:
 
 
 def test_synthesis_generates_coaxial_edge_spatial_relation_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:edge-coaxial-spatial-synth",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -4838,7 +4838,7 @@ def test_synthesis_generates_coaxial_edge_spatial_relation_query() -> None:
 
 
 def test_synthesis_generates_parameterized_face_spatial_relation_query() -> None:
-    graph = OntologyGraph(graph_id="graph:face-spatial-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:face-spatial-synth", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("selector:faces", "selector", "faces"))
     for face_id, area, center in [
         ("face:a", 60.0, [0.0, 0.0, 0.0]),
@@ -4900,7 +4900,7 @@ def test_synthesis_generates_parameterized_face_spatial_relation_query() -> None
 
 
 def test_synthesis_generates_parallel_face_spatial_relation_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:face-parallel-spatial-synth",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -4942,7 +4942,7 @@ def test_synthesis_generates_parallel_face_spatial_relation_query() -> None:
 
 
 def test_synthesis_generates_coplanar_face_spatial_relation_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:face-coplanar-spatial-synth",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -4984,7 +4984,7 @@ def test_synthesis_generates_coplanar_face_spatial_relation_query() -> None:
 
 
 def test_synthesis_generates_spatial_relation_rank_queries() -> None:
-    face_graph = OntologyGraph(
+    face_graph = CadGraph(
         graph_id="graph:face-spatial-rank-synth",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -5011,7 +5011,7 @@ def test_synthesis_generates_spatial_relation_rank_queries() -> None:
     ]:
         face_graph.add_relation(Relation(source_id, target_id, "adjacent_to"))
 
-    edge_graph = OntologyGraph(
+    edge_graph = CadGraph(
         graph_id="graph:edge-spatial-rank-synth",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -5075,7 +5075,7 @@ def test_synthesis_generates_spatial_relation_rank_queries() -> None:
 
 
 def test_synthesis_generates_spatial_relation_tie_break_queries() -> None:
-    face_graph = OntologyGraph(
+    face_graph = CadGraph(
         graph_id="graph:face-spatial-tie-break-synth",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -5102,7 +5102,7 @@ def test_synthesis_generates_spatial_relation_tie_break_queries() -> None:
     ]:
         face_graph.add_relation(Relation(source_id, target_id, "adjacent_to"))
 
-    edge_graph = OntologyGraph(
+    edge_graph = CadGraph(
         graph_id="graph:edge-spatial-tie-break-synth",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -5168,7 +5168,7 @@ def test_synthesis_generates_spatial_relation_tie_break_queries() -> None:
 
 
 def test_synthesis_generates_spatial_relation_chain_queries() -> None:
-    face_graph = OntologyGraph(
+    face_graph = CadGraph(
         graph_id="graph:face-spatial-chain-synth",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -5202,7 +5202,7 @@ def test_synthesis_generates_spatial_relation_chain_queries() -> None:
     ]:
         face_graph.add_relation(Relation(source_id, target_id, "perpendicular_to"))
 
-    edge_graph = OntologyGraph(
+    edge_graph = CadGraph(
         graph_id="graph:edge-spatial-chain-synth",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -5286,7 +5286,7 @@ def test_synthesis_generates_spatial_relation_chain_queries() -> None:
 
 
 def test_synthesis_generates_spatial_relation_chain_rank_queries() -> None:
-    face_graph = OntologyGraph(
+    face_graph = CadGraph(
         graph_id="graph:face-spatial-chain-rank-synth",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -5320,7 +5320,7 @@ def test_synthesis_generates_spatial_relation_chain_rank_queries() -> None:
     ]:
         face_graph.add_relation(Relation(source_id, target_id, "perpendicular_to"))
 
-    edge_graph = OntologyGraph(
+    edge_graph = CadGraph(
         graph_id="graph:edge-spatial-chain-rank-synth",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -5399,7 +5399,7 @@ def test_synthesis_generates_spatial_relation_chain_rank_queries() -> None:
 
 
 def test_synthesis_generates_spatial_relation_chain_tie_break_queries() -> None:
-    face_graph = OntologyGraph(
+    face_graph = CadGraph(
         graph_id="graph:face-spatial-chain-tie-break-synth",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -5433,7 +5433,7 @@ def test_synthesis_generates_spatial_relation_chain_tie_break_queries() -> None:
     ]:
         face_graph.add_relation(Relation(source_id, target_id, "perpendicular_to"))
 
-    edge_graph = OntologyGraph(
+    edge_graph = CadGraph(
         graph_id="graph:edge-spatial-chain-tie-break-synth",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -5516,7 +5516,7 @@ def test_synthesis_generates_spatial_relation_chain_tie_break_queries() -> None:
 
 
 def test_synthesis_skips_edge_spatial_relation_family_without_viable_relation_subset() -> None:
-    graph = OntologyGraph(graph_id="graph:no-edge-spatial-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:no-edge-spatial-synth", source={"source_id": "synthetic", "source_code": ""})
     for edge_id, length in [("edge:a", 10.0), ("edge:b", 10.0), ("edge:c", 10.0)]:
         graph.add_node(Node(edge_id, "edge", edge_id))
         graph.add_measurement(Measurement(edge_id, "entity_geometry", "edge_length", length, "mm"))
@@ -5533,7 +5533,7 @@ def test_synthesis_skips_edge_spatial_relation_family_without_viable_relation_su
 
 
 def test_synthesis_skips_face_spatial_relation_family_without_viable_relation_subset() -> None:
-    graph = OntologyGraph(graph_id="graph:no-face-spatial-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:no-face-spatial-synth", source={"source_id": "synthetic", "source_code": ""})
     for face_id, area in [("face:a", 10.0), ("face:b", 10.0), ("face:c", 10.0)]:
         graph.add_node(Node(face_id, "face", face_id))
         graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", area, "mm^2"))
@@ -5550,7 +5550,7 @@ def test_synthesis_skips_face_spatial_relation_family_without_viable_relation_su
 
 
 def test_synthesis_generates_equal_value_face_and_edge_queries() -> None:
-    face_graph = OntologyGraph(graph_id="graph:equal-face-synth", source={"source_id": "synthetic", "source_code": ""})
+    face_graph = CadGraph(graph_id="graph:equal-face-synth", source={"source_id": "synthetic", "source_code": ""})
     face_graph.add_node(Node("selector:faces", "selector", "faces"))
     for face_id, area, coordinate_z in [
         ("face:a", 12.0, 0.0),
@@ -5586,7 +5586,7 @@ def test_synthesis_generates_equal_value_face_and_edge_queries() -> None:
     assert dataset_report([face_row])["quality_flags"]["value_bearing_measurement"] == 1
     assert "12.0" in face_row.prompt
 
-    edge_graph = OntologyGraph(graph_id="graph:equal-edge-synth", source={"source_id": "synthetic", "source_code": ""})
+    edge_graph = CadGraph(graph_id="graph:equal-edge-synth", source={"source_id": "synthetic", "source_code": ""})
     edge_graph.add_node(Node("selector:edges", "selector", "edges"))
     for edge_id, length, midpoint_y in [
         ("edge:a", 10.0, -3.0),
@@ -5621,7 +5621,7 @@ def test_synthesis_generates_equal_value_face_and_edge_queries() -> None:
 
 
 def test_synthesis_generates_equal_value_face_and_edge_rank_queries() -> None:
-    face_graph = OntologyGraph(
+    face_graph = CadGraph(
         graph_id="graph:equal-face-rank-synth",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -5637,7 +5637,7 @@ def test_synthesis_generates_equal_value_face_and_edge_rank_queries() -> None:
         face_graph.add_measurement(Measurement(face_id, "entity_geometry", "face_area", area, "mm^2"))
         face_graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_z", coordinate_z, "mm"))
 
-    edge_graph = OntologyGraph(
+    edge_graph = CadGraph(
         graph_id="graph:equal-edge-rank-synth",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -5703,7 +5703,7 @@ def test_synthesis_generates_equal_value_face_and_edge_rank_queries() -> None:
 
 
 def test_synthesis_generates_equal_value_feature_query() -> None:
-    graph = OntologyGraph(graph_id="graph:equal-feature-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:equal-feature-synth", source={"source_id": "synthetic", "source_code": ""})
     for feature_id, volume, centroid_z, bbox_span_z in [
         ("feature:base", 240.0, 2.0, 4.0),
         ("feature:upper", 240.0 + 1e-7, 8.0, 5.0),
@@ -5740,7 +5740,7 @@ def test_synthesis_generates_equal_value_feature_query() -> None:
 
 
 def test_synthesis_generates_equal_value_feature_rank_query() -> None:
-    graph = OntologyGraph(graph_id="graph:equal-feature-rank-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:equal-feature-rank-synth", source={"source_id": "synthetic", "source_code": ""})
     for feature_id, centroid, bbox_span_z in [
         ("feature:a", [1.0, 0.0, 2.0], 4.0),
         ("feature:b", [3.0, 1.0, 5.0], 5.0),
@@ -5784,7 +5784,7 @@ def test_synthesis_generates_equal_value_feature_rank_query() -> None:
 
 
 def test_synthesis_generates_parameterized_feature_extreme_and_rank_queries() -> None:
-    graph = OntologyGraph(graph_id="graph:feature-extreme-rank-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:feature-extreme-rank-synth", source={"source_id": "synthetic", "source_code": ""})
     for feature_id, volume, centroid, bbox_span_z, topology_faces in [
         ("feature:base", 240.0, [0.0, 0.0, 2.0], 4.0, 6.0),
         ("feature:upper", 240.0 + 1e-7, [0.0, 0.0, 8.0], 5.0, 8.0),
@@ -5841,7 +5841,7 @@ def test_synthesis_generates_parameterized_feature_extreme_and_rank_queries() ->
 
 
 def test_synthesis_generates_parameterized_feature_effect_delta_query() -> None:
-    graph = OntologyGraph(graph_id="graph:feature-effect-delta-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:feature-effect-delta-synth", source={"source_id": "synthetic", "source_code": ""})
     for feature_id, values in {
         "feature:add_a": {
             "signed_volume_delta": 60.0,
@@ -5928,7 +5928,7 @@ def test_synthesis_generates_parameterized_feature_effect_delta_query() -> None:
 
 
 def test_synthesis_generates_feature_effect_delta_from_prepared_trace_geometry() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:feature-effect-prepared-trace-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -5960,7 +5960,7 @@ def test_synthesis_generates_feature_effect_delta_from_prepared_trace_geometry()
     assert row.query_program["sampled_parameters"]["aggregation_metric"] == [query.aggregation_metric]
 
 
-def _add_reference_endpoint_nodes(graph: OntologyGraph) -> None:
+def _add_reference_endpoint_nodes(graph: CadGraph) -> None:
     for endpoint_id, coordinate in [
         ("edge_endpoint:ref", [0.0, -4.0, 0.0]),
         ("edge_endpoint:far", [50.0, 4.0, 0.0]),
@@ -5972,7 +5972,7 @@ def _add_reference_endpoint_nodes(graph: OntologyGraph) -> None:
         graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
 
 
-def _add_reference_region_nodes(graph: OntologyGraph) -> None:
+def _add_reference_region_nodes(graph: CadGraph) -> None:
     for region_id, region_type, volume, centroid in [
         ("material_region:ref", "material_region", 33.0, [0.0, -6.0, 1.0]),
         ("void_region:ref", "void_region", 11.0, [45.0, 3.0, 2.0]),
@@ -5986,7 +5986,7 @@ def _add_reference_region_nodes(graph: OntologyGraph) -> None:
 
 
 def test_synthesis_generates_feature_reference_feature_distance_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:feature-reference-distance-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -6033,7 +6033,7 @@ def test_synthesis_generates_feature_reference_feature_distance_query() -> None:
 
 
 def test_synthesis_generates_feature_reference_face_distance_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:feature-reference-face-distance-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -6100,7 +6100,7 @@ def test_synthesis_generates_feature_reference_face_distance_query() -> None:
 
 
 def test_synthesis_generates_feature_reference_edge_distance_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:feature-reference-edge-distance-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -6162,7 +6162,7 @@ def test_synthesis_generates_feature_reference_edge_distance_query() -> None:
 
 
 def test_synthesis_generates_feature_reference_endpoint_distance_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:feature-reference-endpoint-distance-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -6214,7 +6214,7 @@ def test_synthesis_generates_feature_reference_endpoint_distance_query() -> None
 
 
 def test_synthesis_generates_equal_value_endpoint_query() -> None:
-    graph = OntologyGraph(graph_id="graph:equal-endpoint-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:equal-endpoint-synth", source={"source_id": "synthetic", "source_code": ""})
     for edge_id in ["edge:a", "edge:b", "edge:c"]:
         graph.add_node(Node(edge_id, "edge", edge_id))
     for endpoint_id, edge_id, coordinate_z, distance_to_origin in [
@@ -6258,7 +6258,7 @@ def test_synthesis_generates_equal_value_endpoint_query() -> None:
 
 
 def test_synthesis_generates_equal_value_endpoint_rank_queries() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:equal-endpoint-rank-synth",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -6322,7 +6322,7 @@ def test_synthesis_generates_equal_value_endpoint_rank_queries() -> None:
 
 
 def test_synthesis_generates_contained_endpoint_query() -> None:
-    graph = OntologyGraph(graph_id="graph:contained-endpoint-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:contained-endpoint-synth", source={"source_id": "synthetic", "source_code": ""})
     for edge_id in ["edge:a", "edge:b", "edge:c"]:
         graph.add_node(Node(edge_id, "edge", edge_id))
     for endpoint_id, edge_id, coordinate_z, distance_to_origin in [
@@ -6369,7 +6369,7 @@ def test_synthesis_generates_contained_endpoint_query() -> None:
 
 
 def test_synthesis_generates_endpoint_containment_relation_query() -> None:
-    graph = OntologyGraph(graph_id="graph:endpoint-containment-relation-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:endpoint-containment-relation-synth", source={"source_id": "synthetic", "source_code": ""})
     for edge_id in ["edge:a", "edge:b", "edge:c", "edge:d"]:
         graph.add_node(Node(edge_id, "edge", edge_id))
     for endpoint_id, edge_id, coordinate, distance_to_origin in [
@@ -6413,7 +6413,7 @@ def test_synthesis_generates_endpoint_containment_relation_query() -> None:
 
 
 def test_synthesis_generates_endpoint_containment_relation_rank_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:endpoint-containment-relation-rank-synth",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -6473,7 +6473,7 @@ def test_synthesis_generates_endpoint_containment_relation_rank_query() -> None:
 
 
 def test_synthesis_skips_equal_value_endpoint_family_without_repeated_value_distractors() -> None:
-    graph = OntologyGraph(graph_id="graph:no-equal-endpoint-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:no-equal-endpoint-synth", source={"source_id": "synthetic", "source_code": ""})
     for edge_id in ["edge:a", "edge:b", "edge:c"]:
         graph.add_node(Node(edge_id, "edge", edge_id))
     for endpoint_id, edge_id, coordinate_z, distance_to_origin in [
@@ -6493,7 +6493,7 @@ def test_synthesis_skips_equal_value_endpoint_family_without_repeated_value_dist
 
 
 def test_synthesis_skips_contained_endpoint_family_without_containment_evidence() -> None:
-    graph = OntologyGraph(graph_id="graph:no-contained-endpoint-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:no-contained-endpoint-synth", source={"source_id": "synthetic", "source_code": ""})
     for edge_id in ["edge:a", "edge:b", "edge:c"]:
         graph.add_node(Node(edge_id, "edge", edge_id))
     for endpoint_id, edge_id, coordinate_z, distance_to_origin in [
@@ -6515,7 +6515,7 @@ def test_synthesis_skips_contained_endpoint_family_without_containment_evidence(
 
 
 def test_synthesis_generates_endpoint_and_path_rank_queries() -> None:
-    endpoint_graph = OntologyGraph(graph_id="graph:endpoint-path-rank-synth", source={"source_id": "synthetic", "source_code": ""})
+    endpoint_graph = CadGraph(graph_id="graph:endpoint-path-rank-synth", source={"source_id": "synthetic", "source_code": ""})
     for edge_id in ["edge:a", "edge:b", "edge:c", "edge:d"]:
         endpoint_graph.add_node(Node(edge_id, "edge", edge_id))
     for endpoint_id, edge_id, coordinate, distance_to_origin in [
@@ -6532,7 +6532,7 @@ def test_synthesis_generates_endpoint_and_path_rank_queries() -> None:
         endpoint_graph.add_measurement(Measurement(endpoint_id, "entity_geometry", "coordinate_z", coordinate[2], "mm"))
         endpoint_graph.add_measurement(Measurement(endpoint_id, "relation_metric", "distance_to_origin", distance_to_origin, "mm"))
 
-    path_graph = OntologyGraph(graph_id="graph:path-rank-synth", source={"source_id": "synthetic", "source_code": ""})
+    path_graph = CadGraph(graph_id="graph:path-rank-synth", source={"source_id": "synthetic", "source_code": ""})
     path_graph.add_node(Node("path:main", "path", "path"))
     for point_id, coordinate in [
         ("path:main:point:0", [0.0, 0.0, 0.0]),
@@ -6602,7 +6602,7 @@ def test_synthesis_generates_endpoint_and_path_rank_queries() -> None:
 
 
 def test_synthesis_generates_metric_threshold_endpoint_rank_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:endpoint-metric-threshold-rank",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -6652,7 +6652,7 @@ def test_synthesis_generates_metric_threshold_endpoint_rank_query() -> None:
 
 
 def test_synthesis_generates_parameterized_kernel_vertex_queries() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:vertex-synth",
         source={"source_id": "synthetic", "source_code": "result = cq.Workplane('XY').box(2, 4, 6).vertices()"},
     )
@@ -6723,7 +6723,7 @@ def test_synthesis_generates_parameterized_kernel_vertex_queries() -> None:
 
 
 def test_synthesis_skips_parameterized_kernel_vertex_without_unique_geometry() -> None:
-    graph = OntologyGraph(graph_id="graph:tied-vertex-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:tied-vertex-synth", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("selector:vertices", "selector", "vertices"))
     for index in range(3):
         vertex_id = f"vertex:{index}"
@@ -6741,7 +6741,7 @@ def test_synthesis_skips_parameterized_kernel_vertex_without_unique_geometry() -
 
 
 def test_synthesis_generates_equal_value_vertex_queries() -> None:
-    graph = OntologyGraph(graph_id="graph:equal-vertex-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:equal-vertex-synth", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("selector:vertices", "selector", "vertices"))
     for index, coordinate in enumerate(
         [
@@ -6795,7 +6795,7 @@ def test_synthesis_generates_equal_value_vertex_queries() -> None:
 
 
 def test_synthesis_skips_equal_value_vertex_family_without_repeated_value_distractors() -> None:
-    graph = OntologyGraph(graph_id="graph:no-equal-vertex-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:no-equal-vertex-synth", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("selector:vertices", "selector", "vertices"))
     for index, coordinate_z in enumerate([1.0, 2.0, 3.0]):
         vertex_id = f"vertex:{index}"
@@ -6812,7 +6812,7 @@ def test_synthesis_skips_equal_value_vertex_family_without_repeated_value_distra
 
 
 def test_synthesis_generates_parameterized_vertex_reference_entity_distance_queries() -> None:
-    graph = OntologyGraph(graph_id="graph:vertex-reference-entity-distance-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:vertex-reference-entity-distance-synth", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("selector:vertices", "selector", "vertices"))
     for index, coordinate in enumerate(
         [
@@ -6865,7 +6865,7 @@ def test_synthesis_generates_parameterized_vertex_reference_entity_distance_quer
 
 
 def test_synthesis_skips_vertex_reference_distance_without_vertex_locations() -> None:
-    graph = OntologyGraph(graph_id="graph:no-vertex-reference-distance-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:no-vertex-reference-distance-synth", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("selector:vertices", "selector", "vertices"))
     for index in range(3):
         vertex_id = f"vertex:{index}"
@@ -6884,7 +6884,7 @@ def test_synthesis_skips_vertex_reference_distance_without_vertex_locations() ->
 
 
 def test_synthesis_skips_endpoint_and_path_rank_families_without_unique_rank_positions() -> None:
-    graph = OntologyGraph(graph_id="graph:tied-endpoint-path-rank-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:tied-endpoint-path-rank-synth", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("path:main", "path", "path"))
     for edge_id in ["edge:a", "edge:b", "edge:c"]:
         graph.add_node(Node(edge_id, "edge", edge_id))
@@ -6916,7 +6916,7 @@ def test_synthesis_skips_endpoint_and_path_rank_families_without_unique_rank_pos
 
 
 def test_synthesis_skips_equal_value_feature_family_without_repeated_value_distractors() -> None:
-    graph = OntologyGraph(graph_id="graph:no-equal-feature-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:no-equal-feature-synth", source={"source_id": "synthetic", "source_code": ""})
     for feature_id, volume, centroid_z in [
         ("feature:base", 240.0, 2.0),
         ("feature:upper", 180.0, 8.0),
@@ -6933,7 +6933,7 @@ def test_synthesis_skips_equal_value_feature_family_without_repeated_value_distr
 
 
 def test_synthesis_skips_parameterized_feature_queries_without_measured_distractors() -> None:
-    graph = OntologyGraph(graph_id="graph:no-feature-extreme-rank-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:no-feature-extreme-rank-synth", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("feature:only", "feature", "feature:only"))
     graph.add_measurement(Measurement("feature:only", "snapshot_state", "volume", 240.0, "mm^3"))
 
@@ -6944,7 +6944,7 @@ def test_synthesis_skips_parameterized_feature_queries_without_measured_distract
 
 
 def test_synthesis_skips_feature_effect_delta_without_measured_distractors() -> None:
-    graph = OntologyGraph(graph_id="graph:no-feature-effect-delta-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:no-feature-effect-delta-synth", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("feature:only", "feature", "feature:only"))
     graph.add_measurement(Measurement("feature:only", "snapshot_delta", "signed_volume_delta", 10.0, "mm^3"))
 
@@ -6954,7 +6954,7 @@ def test_synthesis_skips_feature_effect_delta_without_measured_distractors() -> 
 
 
 def test_synthesis_skips_feature_reference_distance_without_feature_centroids() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:no-feature-reference-distance-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -6973,7 +6973,7 @@ def test_synthesis_skips_feature_reference_distance_without_feature_centroids() 
 
 
 def test_synthesis_generates_feature_reference_distance_from_bbox_centers() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:feature-reference-bbox-center-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -7015,7 +7015,7 @@ def test_synthesis_generates_feature_reference_distance_from_bbox_centers() -> N
 
 
 def test_synthesis_generates_equal_value_region_queries() -> None:
-    graph = OntologyGraph(graph_id="graph:equal-region-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:equal-region-synth", source={"source_id": "synthetic", "source_code": ""})
     for node_id, relation, volume, centroid in [
         ("material_region:a", "has_kernel_material_region_geometry", 42.0, [1.0, 0.0, 1.0]),
         ("material_region:b", "has_kernel_material_region_geometry", 42.0 + 1e-7, [4.0, 1.0, 7.0]),
@@ -7085,7 +7085,7 @@ def test_synthesis_generates_equal_value_region_queries() -> None:
 
 
 def test_synthesis_equal_value_material_region_extreme_samples_metrics_beyond_volume_z() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:equal-region-extreme-metric-sampling",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -7122,7 +7122,7 @@ def test_synthesis_equal_value_material_region_extreme_samples_metrics_beyond_vo
 
 
 def test_synthesis_generates_equal_value_region_rank_queries() -> None:
-    graph = OntologyGraph(graph_id="graph:equal-region-rank-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:equal-region-rank-synth", source={"source_id": "synthetic", "source_code": ""})
     for node_id, relation, volume, centroid in [
         ("material_region:a", "has_kernel_material_region_geometry", 42.0, [1.0, 0.0, 1.0]),
         ("material_region:b", "has_kernel_material_region_geometry", 42.0, [4.0, 1.0, 4.0]),
@@ -7175,7 +7175,7 @@ def test_synthesis_generates_equal_value_region_rank_queries() -> None:
 
 
 def test_synthesis_generates_parameterized_region_extreme_and_rank_queries() -> None:
-    graph = OntologyGraph(graph_id="graph:region-extreme-rank-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:region-extreme-rank-synth", source={"source_id": "synthetic", "source_code": ""})
     for node_id, relation, volume, centroid in [
         ("material_region:a", "has_kernel_material_region_geometry", 12.0, [1.0, 0.0, 1.0]),
         ("material_region:b", "has_kernel_material_region_geometry", 16.0, [6.0, 2.0, 7.0]),
@@ -7224,7 +7224,7 @@ def test_synthesis_generates_parameterized_region_extreme_and_rank_queries() -> 
 
 
 def test_synthesis_skips_equal_value_region_families_without_repeated_value_distractors() -> None:
-    graph = OntologyGraph(graph_id="graph:no-equal-region-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:no-equal-region-synth", source={"source_id": "synthetic", "source_code": ""})
     for node_id, relation, volume, centroid_z in [
         ("material_region:a", "has_kernel_material_region_geometry", 42.0, 1.0),
         ("material_region:b", "has_kernel_material_region_geometry", 24.0, 7.0),
@@ -7246,7 +7246,7 @@ def test_synthesis_skips_equal_value_region_families_without_repeated_value_dist
 
 
 def test_synthesis_skips_parameterized_region_queries_without_kernel_region_relations() -> None:
-    graph = OntologyGraph(graph_id="graph:no-region-extreme-rank-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:no-region-extreme-rank-synth", source={"source_id": "synthetic", "source_code": ""})
     for node_id, node_type in [
         ("material_region:a", "material_region"),
         ("material_region:b", "material_region"),
@@ -7266,7 +7266,7 @@ def test_synthesis_skips_parameterized_region_queries_without_kernel_region_rela
 
 
 def test_synthesis_generates_region_reference_distance_queries() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:region-reference-distance-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -7421,7 +7421,7 @@ def test_synthesis_generates_region_reference_distance_queries() -> None:
 
 
 def test_synthesis_skips_region_reference_distance_without_region_centroids() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:no-region-reference-distance-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -7447,7 +7447,7 @@ def test_synthesis_skips_region_reference_distance_without_region_centroids() ->
 
 
 def test_synthesis_skips_equal_value_family_without_repeated_value_distractors() -> None:
-    graph = OntologyGraph(graph_id="graph:no-equal-edge-synth", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:no-equal-edge-synth", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("selector:edges", "selector", "edges"))
     for edge_id, length, midpoint_y in [
         ("edge:a", 10.0, -3.0),
@@ -7466,7 +7466,7 @@ def test_synthesis_skips_equal_value_family_without_repeated_value_distractors()
 
 
 def test_synthesis_generates_reference_feature_distance_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:reference-distance-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -7521,7 +7521,7 @@ def test_synthesis_generates_reference_feature_distance_query() -> None:
 
 
 def test_synthesis_generates_edge_reference_face_distance_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:edge-reference-face-distance-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -7579,7 +7579,7 @@ def test_synthesis_generates_edge_reference_face_distance_query() -> None:
 
 
 def test_synthesis_generates_edge_reference_edge_distance_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:edge-reference-edge-distance-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -7636,7 +7636,7 @@ def test_synthesis_generates_edge_reference_edge_distance_query() -> None:
 
 
 def test_synthesis_generates_edge_reference_endpoint_distance_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:edge-reference-endpoint-distance-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -7690,7 +7690,7 @@ def test_synthesis_generates_edge_reference_endpoint_distance_query() -> None:
 
 
 def test_synthesis_generates_face_reference_feature_distance_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:face-reference-distance-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -7741,7 +7741,7 @@ def test_synthesis_generates_face_reference_feature_distance_query() -> None:
 
 
 def test_synthesis_generates_face_reference_face_distance_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:face-reference-face-distance-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -7794,7 +7794,7 @@ def test_synthesis_generates_face_reference_face_distance_query() -> None:
 
 
 def test_synthesis_generates_face_reference_edge_distance_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:face-reference-edge-distance-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -7856,7 +7856,7 @@ def test_synthesis_generates_face_reference_edge_distance_query() -> None:
 
 
 def test_synthesis_generates_face_reference_endpoint_distance_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:face-reference-endpoint-distance-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -7908,7 +7908,7 @@ def test_synthesis_generates_face_reference_endpoint_distance_query() -> None:
 
 
 def test_synthesis_generates_endpoint_reference_feature_distance_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:endpoint-reference-distance-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -7962,7 +7962,7 @@ def test_synthesis_generates_endpoint_reference_feature_distance_query() -> None
 
 
 def test_synthesis_generates_endpoint_reference_face_distance_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:endpoint-reference-face-distance-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -8019,7 +8019,7 @@ def test_synthesis_generates_endpoint_reference_face_distance_query() -> None:
 
 
 def test_synthesis_generates_endpoint_reference_edge_distance_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:endpoint-reference-edge-distance-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -8082,7 +8082,7 @@ def test_synthesis_generates_endpoint_reference_edge_distance_query() -> None:
 
 
 def test_synthesis_generates_endpoint_reference_endpoint_distance_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:endpoint-reference-endpoint-distance-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -8140,7 +8140,7 @@ def test_synthesis_generates_endpoint_reference_endpoint_distance_query() -> Non
 
 
 def test_synthesis_generates_parameterized_reference_entity_distance_queries() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:reference-entity-distance-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -8272,7 +8272,7 @@ def test_synthesis_generates_parameterized_reference_entity_distance_queries() -
 
 
 def test_synthesis_generates_parameterized_reference_entity_distance_rank_queries() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:reference-entity-distance-rank-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -8414,7 +8414,7 @@ def test_synthesis_generates_parameterized_reference_entity_distance_rank_querie
 
 
 def test_synthesis_generates_reference_entity_distance_with_region_reference() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:reference-entity-region-anchor-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -8453,7 +8453,7 @@ def test_synthesis_generates_reference_entity_distance_with_region_reference() -
 
 
 def test_synthesis_skips_face_reference_distance_without_face_centers() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:no-face-reference-distance-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -8480,7 +8480,7 @@ def test_synthesis_skips_face_reference_distance_without_face_centers() -> None:
 
 
 def test_synthesis_skips_endpoint_reference_distance_without_endpoint_locations() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:no-endpoint-reference-distance-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -8501,7 +8501,7 @@ def test_synthesis_skips_endpoint_reference_distance_without_endpoint_locations(
 
 
 def test_synthesis_skips_reference_distance_without_unique_reference_anchor() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:no-reference-distance-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -8526,7 +8526,7 @@ def test_synthesis_skips_reference_distance_without_unique_reference_anchor() ->
 
 
 def test_synthesis_skips_region_reference_distance_without_unique_region_anchor() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:no-region-reference-anchor-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -8587,7 +8587,7 @@ def test_synthesis_skips_region_reference_distance_without_unique_region_anchor(
 
 
 def test_synthesis_generates_parameterized_path_queries() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:path-synth",
         source={
             "source_id": "synthetic",
@@ -8678,7 +8678,7 @@ def test_synthesis_generates_parameterized_path_queries() -> None:
 
 
 def test_path_segment_extreme_can_use_midpoint_distance_when_lengths_tie() -> None:
-    graph = OntologyGraph(graph_id="graph:path-segment-equal-length", source={"source_id": "synthetic"})
+    graph = CadGraph(graph_id="graph:path-segment-equal-length", source={"source_id": "synthetic"})
     graph.add_node(Node("path:main", "path", "path"))
     for index, midpoint_distance in enumerate([1.0, 2.0, 3.0]):
         segment_id = f"path:main:segment:{index}"
@@ -8698,7 +8698,7 @@ def test_path_segment_extreme_can_use_midpoint_distance_when_lengths_tie() -> No
 
 
 def test_path_segment_extreme_samples_distinct_midpoint_axis_metrics() -> None:
-    graph = OntologyGraph(graph_id="graph:path-segment-axis-diversity", source={"source_id": "synthetic"})
+    graph = CadGraph(graph_id="graph:path-segment-axis-diversity", source={"source_id": "synthetic"})
     graph.add_node(Node("path:main", "path", "path"))
     for index, midpoint in enumerate(
         [
@@ -8741,7 +8741,7 @@ def test_path_segment_extreme_samples_distinct_midpoint_axis_metrics() -> None:
 
 
 def test_synthesis_generates_parameterized_path_reference_distance_queries() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:path-reference-distance-synth",
         source={
             "source_id": "synthetic",
@@ -8903,7 +8903,7 @@ def test_synthesis_generates_parameterized_path_reference_distance_queries() -> 
 
 
 def test_synthesis_skips_path_reference_distance_without_equal_distractors() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:no-path-reference-distance-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -8935,7 +8935,7 @@ def test_synthesis_skips_path_reference_distance_without_equal_distractors() -> 
 
 
 def test_synthesis_generates_equal_value_path_queries() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:equal-path-synth",
         source={
             "source_id": "synthetic",
@@ -9014,7 +9014,7 @@ def test_synthesis_generates_equal_value_path_queries() -> None:
 
 
 def test_synthesis_generates_equal_value_path_rank_queries() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:equal-path-rank-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -9093,7 +9093,7 @@ def test_synthesis_generates_equal_value_path_rank_queries() -> None:
 
 
 def test_synthesis_skips_equal_value_path_queries_without_equal_distractors() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:no-equal-path-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -9122,7 +9122,7 @@ def test_synthesis_skips_equal_value_path_queries_without_equal_distractors() ->
 
 
 def test_synthesis_skips_path_families_without_unique_geometry() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:tied-path-synth",
         source={"source_id": "synthetic", "source_code": "import cadquery as cq\n"},
     )
@@ -9149,7 +9149,7 @@ def test_synthesis_skips_path_families_without_unique_geometry() -> None:
 
 
 def test_synthesis_generates_geometry_narrowed_selector_count_query() -> None:
-    face_graph = OntologyGraph(graph_id="graph:face-selector-count", source={"source_id": "synthetic", "source_code": ""})
+    face_graph = CadGraph(graph_id="graph:face-selector-count", source={"source_id": "synthetic", "source_code": ""})
     for selector_id, selected_count, coordinate_x in [
         ("selector:a", 3, -5.0),
         ("selector:b", 4, -1.0),
@@ -9172,7 +9172,7 @@ def test_synthesis_generates_geometry_narrowed_selector_count_query() -> None:
     assert face_resolution.verifier_status == "resolved"
     assert face_query.sampled_parameters["selected_entity_type"] == ["face"]
 
-    graph = OntologyGraph(graph_id="graph:selector-count", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:selector-count", source={"source_id": "synthetic", "source_code": ""})
     selector_specs = [
         ("selector:a", 3, -5.0),
         ("selector:b", 4, -1.0),
@@ -9210,7 +9210,7 @@ def test_synthesis_generates_geometry_narrowed_selector_count_query() -> None:
 
 
 def test_synthesis_generates_equal_related_metric_selector_count_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:selector-count-equal-2",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -9249,7 +9249,7 @@ def test_synthesis_generates_equal_related_metric_selector_count_query() -> None
 
 
 def test_synthesis_generates_relation_narrowed_face_selector_count_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:face-selector-relation-count",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -9289,7 +9289,7 @@ def test_synthesis_generates_relation_narrowed_face_selector_count_query() -> No
 
 
 def test_synthesis_generates_relation_narrowed_edge_selector_count_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:edge-selector-relation-count",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -9328,7 +9328,7 @@ def test_synthesis_generates_relation_narrowed_edge_selector_count_query() -> No
 
 
 def test_synthesis_generates_tie_break_edge_selector_count_query() -> None:
-    graph = OntologyGraph(
+    graph = CadGraph(
         graph_id="graph:edge-selector-count-tie-break",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -9374,7 +9374,7 @@ def test_synthesis_generates_tie_break_edge_selector_count_query() -> None:
 
 
 def test_synthesis_generates_ranked_selector_count_queries() -> None:
-    face_graph = OntologyGraph(
+    face_graph = CadGraph(
         graph_id="graph:face-selector-count-rank",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -9391,7 +9391,7 @@ def test_synthesis_generates_ranked_selector_count_queries() -> None:
         face_graph.add_measurement(Measurement(selector_id, "snapshot_state", "selected_count", selected_count))
         face_graph.add_measurement(Measurement(face_id, "entity_geometry", "coordinate_x", coordinate_x, "mm"))
 
-    edge_graph = OntologyGraph(
+    edge_graph = CadGraph(
         graph_id="graph:edge-selector-count-rank",
         source={"source_id": "synthetic", "source_code": ""},
     )
@@ -9445,7 +9445,7 @@ def test_synthesis_generates_ranked_selector_count_queries() -> None:
 
 
 def test_synthesis_generates_vertex_selector_count_queries() -> None:
-    graph = OntologyGraph(graph_id="graph:vertex-selector-count", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:vertex-selector-count", source={"source_id": "synthetic", "source_code": ""})
     for selector_id, selected_count, coordinate_z in [
         ("selector:a", 2, -5.0),
         ("selector:b", 4, -1.0),
@@ -9494,7 +9494,7 @@ def test_synthesis_generates_vertex_selector_count_queries() -> None:
 
 
 def test_synthesis_skips_vertex_selector_count_when_narrowing_has_no_unique_count() -> None:
-    graph = OntologyGraph(graph_id="graph:tied-vertex-selector-count", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:tied-vertex-selector-count", source={"source_id": "synthetic", "source_code": ""})
     for selector_id, coordinate_z in [
         ("selector:a", -5.0),
         ("selector:b", -1.0),
@@ -9514,7 +9514,7 @@ def test_synthesis_skips_vertex_selector_count_when_narrowing_has_no_unique_coun
 
 
 def test_synthesis_skips_selector_count_when_narrowing_has_no_unique_count() -> None:
-    graph = OntologyGraph(graph_id="graph:tied-selector-count", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:tied-selector-count", source={"source_id": "synthetic", "source_code": ""})
     for selector_id, selected_count, midpoint_y in [
         ("selector:a", 4, -5.0),
         ("selector:b", 4, -1.0),
@@ -9534,7 +9534,7 @@ def test_synthesis_skips_selector_count_when_narrowing_has_no_unique_count() -> 
 
 
 def test_synthesis_uses_tie_break_metric_for_tied_extrema() -> None:
-    graph = OntologyGraph(graph_id="graph:tied-edge-extreme", source={"source_id": "synthetic", "source_code": ""})
+    graph = CadGraph(graph_id="graph:tied-edge-extreme", source={"source_id": "synthetic", "source_code": ""})
     graph.add_node(Node("selector:edges", "selector", "edges"))
     edge_specs = [
         ("edge:a", 10.0, 2.0),

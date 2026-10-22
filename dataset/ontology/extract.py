@@ -1,4 +1,4 @@
-"""AST-backed CAD ontology graph extraction."""
+"""AST-backed CAD graph extraction."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from dataset.ontology.material_regions import feature_effect_from_profile
-from dataset.ontology.nodes import Measurement, Node, OntologyGraph, Relation
+from dataset.ontology.nodes import Measurement, Node, CadGraph, Relation
 from dataset.ontology.profile_geometry import circle_profile, polyline_profile, rect_profile
 from dataset.ontology.workplane_frames import (
     default_workplane_frame,
@@ -38,7 +38,7 @@ class OperationRecord:
     chain_index: int
 
 
-def build_graph(source: SourceRecord, trace: TraceRecord | Mapping[str, Any] | None = None) -> OntologyGraph:
+def build_graph(source: SourceRecord, trace: TraceRecord | Mapping[str, Any] | None = None) -> CadGraph:
     tree = ast.parse(source.source_code)
     extractor = _Extractor(source, tree, trace)
     return extractor.build()
@@ -49,7 +49,7 @@ class _Extractor:
         self.source = source
         self.tree = tree
         self.trace = _trace_mapping(trace)
-        self.graph = OntologyGraph(
+        self.graph = CadGraph(
             graph_id=f"graph:{source.source_id}",
             source=source_to_dict(source),
         )
@@ -69,7 +69,7 @@ class _Extractor:
         self.trace_effect_use_counts: dict[tuple[str, int | None], int] = {}
         self.trace_selector_use_counts: dict[int, int] = {}
 
-    def build(self) -> OntologyGraph:
+    def build(self) -> CadGraph:
         self.graph.add_node(
             Node(
                 id=f"source:{self.source.source_id}",

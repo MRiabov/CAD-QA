@@ -2,7 +2,7 @@
 
 **Parent:** [`../algorithm/runtime.md`](../algorithm/runtime.md).
 
-A state is the shape after a state-producing operation. States are recorded after
+A state is the shape after a solid state producing operation. States are recorded after
 the instrumented assignment returns. The capture algorithm is in
 [`../algorithm/runtime.md`](../algorithm/runtime.md).
 
@@ -28,9 +28,9 @@ solid detection are in [`../algorithm/geometry-classification.md`](../algorithm/
 
 ## Capture rules
 
-- Record a state only for an operation classified `state-producing` and only
+- Record a state only for an operation classified `solid state producing` and only
   when its runtime result contains a solid.
-- A non-solid result for a state-producing operation is a `non_solid_result`
+- A non-solid result for a solid state producing operation is a `non_solid_result`
   failure.
 - An invalid shape is recorded with `is_valid = false`; it cannot support an
   answer.

@@ -1,10 +1,10 @@
 """Benchmark current graph JSON payloads against a columnar Polars projection.
 
-The current graph shard parquet format stores graph nodes, relations, and
+The current graph shard parquet format stores CAD graph entities, relations, and
 measurements as JSON strings inside top-level parquet columns. This script
 measures that hot-path cost against a flattened, no-JSON intermediate layout
 for the columns most frequently needed by graph analysis and query synthesis:
-entity/relation/measurement identity and CAD ontology node type, and
+entity/relation/measurement identity and CAD graph entity type, and
 relation type metadata.
 
 Example:
@@ -53,7 +53,7 @@ def main() -> int:
         "shard": str(args.shard),
         "out_dir": str(args.out_dir),
         "repeats": args.repeats,
-        "workload": "graph node/relation/measurement count aggregates",
+        "workload": "CAD graph entity/relation/measurement count aggregates",
         "notes": [
             "current-json reads the existing graph shard and json.loads nodes/relations/measurements.",
             "columnar-polars reads flattened node/relation/measurement parquet tables with Polars lazy scans.",

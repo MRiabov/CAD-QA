@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from dataset.release.materialize import materialize_row
-from dataset.ontology.nodes import Measurement, Node, OntologyGraph, Relation
+from dataset.ontology.nodes import Measurement, Node, CadGraph, Relation
 from dataset.query.resolver import resolve_query
 from dataset.query.synthesis import synthesize_graph_hop_queries
 
 
-def _void_region_graph(count: int = 2, *, include_targets: bool = True) -> OntologyGraph:
-    graph = OntologyGraph(
+def _void_region_graph(count: int = 2, *, include_targets: bool = True) -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:void-region-policy",
         source={
             "source_id": "void-region-policy",
@@ -34,8 +34,8 @@ def _void_region_graph(count: int = 2, *, include_targets: bool = True) -> Ontol
     return graph
 
 
-def _feature_graph(count: int) -> OntologyGraph:
-    graph = OntologyGraph(
+def _feature_graph(count: int) -> CadGraph:
+    graph = CadGraph(
         graph_id="graph:rank-budget",
         source={
             "source_id": "rank-budget",

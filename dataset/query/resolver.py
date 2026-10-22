@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import Any
 
-from dataset.ontology.nodes import Measurement, Node, OntologyGraph
+from dataset.ontology.nodes import Measurement, Node, CadGraph
 from dataset.query.answers import (
     answer_spec_with_candidate_labels,
     answer_spec_with_selector_expression_choices,
@@ -27,7 +27,7 @@ VALUE_BUCKET_DECIMALS = 6
 REFERENCE_FEATURE_DISTANCE_METRIC = "distance_to_reference_feature_centroid"
 
 
-def resolve_query(graph: OntologyGraph, query: QueryProgram) -> QueryResolution:
+def resolve_query(graph: CadGraph, query: QueryProgram) -> QueryResolution:
     query = replace(query, difficulty=query.difficulty or difficulty_for_hops(query.hop_count))
     candidates = initial_candidates(graph, query.target_type)
     steps: list[dict[str, Any]] = [
@@ -180,7 +180,7 @@ def resolve_query(graph: OntologyGraph, query: QueryProgram) -> QueryResolution:
     )
 
 
-def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
+def smoke_queries(graph: CadGraph) -> list[QueryProgram]:
     queries: list[QueryProgram] = []
     operations = graph.nodes_by_type("operation")
     profiles = graph.nodes_by_type("profile")
@@ -2284,7 +2284,7 @@ def smoke_queries(graph: OntologyGraph) -> list[QueryProgram]:
     return queries
 
 
-def _nodes_with_numeric_measurement(graph: OntologyGraph, nodes: list[Node], metric: str) -> list[Node]:
+def _nodes_with_numeric_measurement(graph: CadGraph, nodes: list[Node], metric: str) -> list[Node]:
     result: list[Node] = []
     for node in nodes:
         value = _measurement_value(graph, node.id, metric)
@@ -2294,7 +2294,7 @@ def _nodes_with_numeric_measurement(graph: OntologyGraph, nodes: list[Node], met
 
 
 def _has_unique_extreme(
-    graph: OntologyGraph,
+    graph: CadGraph,
     nodes: list[Node],
     metric: str,
     aggregation: str,
@@ -2314,7 +2314,7 @@ def _has_unique_extreme(
     return abs(ordered[0] - ordered[1]) > min_margin
 
 
-def _apply_clause(graph: OntologyGraph, candidates: list[Node], clause: Clause) -> list[Node]:
+def _apply_clause(graph: CadGraph, candidates: list[Node], clause: Clause) -> list[Node]:
     if clause.kind == "property_equals" and clause.metric:
         return [
             node
@@ -2371,7 +2371,7 @@ def _apply_clause(graph: OntologyGraph, candidates: list[Node], clause: Clause) 
     return candidates
 
 
-def _apply_primary_aggregation(graph: OntologyGraph, candidates: list[Node], query: QueryProgram) -> list[Node]:
+def _apply_primary_aggregation(graph: CadGraph, candidates: list[Node], query: QueryProgram) -> list[Node]:
     if not query.aggregation_metric or not candidates:
         return candidates
     if query.aggregation_metric == REFERENCE_FEATURE_DISTANCE_METRIC:
@@ -2393,7 +2393,7 @@ def _apply_primary_aggregation(graph: OntologyGraph, candidates: list[Node], que
 
 
 def _apply_metric_aggregation(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     *,
     aggregation: str | None,
@@ -2411,7 +2411,7 @@ def _apply_metric_aggregation(
 
 
 def _apply_metric_rank_aggregation(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     *,
     aggregation: str | None,
@@ -2439,7 +2439,7 @@ def _ranked_nodes(scored: list[tuple[float, Node]], *, rank: int, descending: bo
 
 
 def _apply_reference_feature_distance_aggregation(
-    graph: OntologyGraph,
+    graph: CadGraph,
     candidates: list[Node],
     query: QueryProgram,
 ) -> list[Node]:
@@ -2464,12 +2464,12 @@ def _apply_reference_feature_distance_aggregation(
     return [node for score, node in scored if abs(score - target) <= VALUE_MATCH_TOLERANCE]
 
 
-def _measurement_value(graph: OntologyGraph, entity_id: str, metric: str) -> Any:
+def _measurement_value(graph: CadGraph, entity_id: str, metric: str) -> Any:
     measurements: list[Measurement] = graph.measurements_for(entity_id, metric)
     return measurements[0].value if measurements else None
 
 
-def _measurement_scopes_for_clause(graph: OntologyGraph, candidates: list[Node], clause: Clause) -> set[str]:
+def _measurement_scopes_for_clause(graph: CadGraph, candidates: list[Node], clause: Clause) -> set[str]:
     if not clause.metric:
         return set()
     if clause.kind == "related_metric_compare" and clause.relation and clause.target_type:
@@ -2489,7 +2489,7 @@ def _measurement_scopes_for_clause(graph: OntologyGraph, candidates: list[Node],
     }
 
 
-def _has_measurement(graph: OntologyGraph, entity_id: str, metric: str) -> bool:
+def _has_measurement(graph: CadGraph, entity_id: str, metric: str) -> bool:
     if graph.measurements_for(entity_id, metric):
         return True
     return all(graph.measurements_for(entity_id, component) for component in _point_metric_components(metric))
@@ -2509,14 +2509,14 @@ def _point_metric_components(metric: str) -> tuple[str, ...]:
     }.get(metric, ())
 
 
-def _measurement_matches(graph: OntologyGraph, entity_id: str, metric: str, expected: Any) -> bool:
+def _measurement_matches(graph: CadGraph, entity_id: str, metric: str, expected: Any) -> bool:
     value = _measurement_value(graph, entity_id, metric)
     if isinstance(value, (int, float)) and isinstance(expected, (int, float)):
         return abs(float(value) - float(expected)) <= VALUE_MATCH_TOLERANCE
     return value == expected
 
 
-def _reference_clause_matches(graph: OntologyGraph, clause: Clause) -> bool:
+def _reference_clause_matches(graph: CadGraph, clause: Clause) -> bool:
     if not isinstance(clause.value, dict):
         return False
     reference_id = clause.value.get("reference_id")
@@ -2543,7 +2543,7 @@ def _reference_clause_matches(graph: OntologyGraph, clause: Clause) -> bool:
     )
 
 
-def _largest_equal_value_group(graph: OntologyGraph, nodes: list[Node], metric: str) -> list[Node]:
+def _largest_equal_value_group(graph: CadGraph, nodes: list[Node], metric: str) -> list[Node]:
     groups: dict[float, list[Node]] = {}
     for node in nodes:
         bucket = _measurement_bucket_value(graph, node.id, metric)
@@ -2555,7 +2555,7 @@ def _largest_equal_value_group(graph: OntologyGraph, nodes: list[Node], metric: 
 
 
 def _reference_feature_for_unique_nearest(
-    graph: OntologyGraph,
+    graph: CadGraph,
     reference_features: list[Node],
     target_nodes: list[Node],
     *,
@@ -2587,7 +2587,7 @@ def _reference_feature_for_unique_nearest(
     return None
 
 
-def _reference_feature_prompt_value(graph: OntologyGraph, reference: Node) -> dict[str, Any]:
+def _reference_feature_prompt_value(graph: CadGraph, reference: Node) -> dict[str, Any]:
     return {
         "reference_id": reference.id,
         "reference_volume": _measurement_bucket_value(graph, reference.id, "volume"),
@@ -2595,7 +2595,7 @@ def _reference_feature_prompt_value(graph: OntologyGraph, reference: Node) -> di
     }
 
 
-def _reference_feature_key_counts(graph: OntologyGraph, features: list[Node]) -> dict[tuple[float | None, float | None], int]:
+def _reference_feature_key_counts(graph: CadGraph, features: list[Node]) -> dict[tuple[float | None, float | None], int]:
     counts: dict[tuple[float | None, float | None], int] = {}
     for feature in features:
         key = _reference_feature_key(graph, feature.id)
@@ -2603,14 +2603,14 @@ def _reference_feature_key_counts(graph: OntologyGraph, features: list[Node]) ->
     return counts
 
 
-def _reference_feature_key(graph: OntologyGraph, feature_id: str) -> tuple[float | None, float | None]:
+def _reference_feature_key(graph: CadGraph, feature_id: str) -> tuple[float | None, float | None]:
     return (
         _measurement_bucket_value(graph, feature_id, "volume"),
         _measurement_bucket_value(graph, feature_id, "centroid_z"),
     )
 
 
-def _reference_point_from_query(graph: OntologyGraph, query: QueryProgram) -> list[float] | None:
+def _reference_point_from_query(graph: CadGraph, query: QueryProgram) -> list[float] | None:
     reference_point_metric = _sampled_parameter_value(query, "reference_point_metric") or "centroid"
     for clause in query.clauses:
         if clause.kind == "reference_measurement" and isinstance(clause.value, dict):
@@ -2633,7 +2633,7 @@ def _sampled_parameter_value(query: QueryProgram, key: str) -> str | None:
     return None
 
 
-def _point_measurement(graph: OntologyGraph, entity_id: str, metric: str) -> list[float] | None:
+def _point_measurement(graph: CadGraph, entity_id: str, metric: str) -> list[float] | None:
     value = _measurement_value(graph, entity_id, metric)
     if isinstance(value, list) and len(value) >= 3:
         return _numeric_point(value[:3])
@@ -2663,7 +2663,7 @@ def _point_distance(first: list[float] | None, second: list[float] | None) -> fl
     return sum((first[index] - second[index]) ** 2 for index in range(3)) ** 0.5
 
 
-def _measurement_bucket_value(graph: OntologyGraph, entity_id: str, metric: str) -> float | None:
+def _measurement_bucket_value(graph: CadGraph, entity_id: str, metric: str) -> float | None:
     value = _measurement_value(graph, entity_id, metric)
     if not isinstance(value, (int, float)):
         return None

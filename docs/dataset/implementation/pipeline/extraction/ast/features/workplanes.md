@@ -2,7 +2,7 @@
 
 **Parent:** [`../algorithm/pipeline.md`](../algorithm/pipeline.md).
 
-The static CadQuery workplane record describes the program's intended frame. The measured
+The CadQuery workplane in the AST extraction result record describes the program's intended frame. The measured
 frame is captured by [`../../cadquery/algorithm/runtime.md`](../../cadquery/algorithm/runtime.md).
 
 | Field | Field type | Origin | Required | Meaning | Consumer |
@@ -14,7 +14,7 @@ frame is captured by [`../../cadquery/algorithm/runtime.md`](../../cadquery/algo
 | `origin` | Point3D or null | AST | no | Explicit or derived origin, when known. | review |
 | `x_direction` | Vector3D or null | AST | no | Explicit or derived x direction, when known. | review |
 | `normal` | Vector3D or null | AST | no | Explicit or derived normal, when known. | review |
-| `frame_status` | `explicit`, `derived`, or `unknown` | AST | yes | Confidence in the static frame. | review, 02b |
+| `frame_status` | `explicit`, `derived`, or `unknown` | AST | yes | Confidence in the AST frame. | review, 02b |
 | `derived_from_workplane_id` | string or null | AST | no | Receiver CadQuery workplane for a derived frame. | review |
 | `source_selector_id` | string or null | AST | no | Face CadQuery selector that defines a face frame. | 02c |
 | `offset` | double or null | AST | no | CadQuery workplane offset. | review |
@@ -22,7 +22,7 @@ frame is captured by [`../../cadquery/algorithm/runtime.md`](../../cadquery/algo
 | `args` | list of StaticExpression | AST | yes | Unevaluated constructor or transform arguments. | review |
 | `source_span` | SourceSpan | AST | yes | Creating call span. | review |
 
-## Static derivation
+## AST derivation
 
 - `cq.Workplane('XY'|'YZ'|'XZ', origin=...)` is explicit. The named-plane
   constants are `XY` x `(1, 0, 0)` / normal `(0, 0, 1)`, `YZ` x `(0, 1, 0)` /
@@ -39,7 +39,7 @@ frame is captured by [`../../cadquery/algorithm/runtime.md`](../../cadquery/algo
 - A CadQuery workplane derived from a face CadQuery selector is `workplane_kind = face` and
   unknown until runtime; it carries `source_selector_id`.
 
-`frame_status = unknown` is valid. It means the static model does not claim a
+`frame_status = unknown` is valid. It means the CadQuery program AST extraction result does not claim a
 frame, not that the program is invalid. `02b` always measures the executed frame.
 
 ## CadQuery workplane IDs
