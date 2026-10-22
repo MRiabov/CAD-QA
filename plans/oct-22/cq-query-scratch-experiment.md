@@ -256,9 +256,11 @@ CadQuery, with only the LLM mocked. The test covers:
 
 ## Deviations from the specs (deliberate)
 
-- **No `02c` graph build.** Tasks read the `02b`-slice records directly. The relations they use
-  (`has_edge`, `adjacent_to`, `parallel_to`, `perpendicular_to`, `creates`) are computed by the
-  `graph-construction.md` rules in Python. The Go `02c` implementation is not built. The old graph
+- **A throwaway Python slice of `02c`, not the Go implementation.** Tasks need five relations
+  (`has_edge`, `adjacent_to`, `parallel_to`, `perpendicular_to`, `creates`) and the `02b`
+  measurements. They are computed in Python by the `graph-construction.md` rules, without UUIDv5
+  graph IDs or graph Parquet persistence. This is a partial `02c`, written for the experiment and
+  deleted or replaced when the real Go `02c` exists. The old graph
   artifacts in `runs/regen_1300_traced_20261019/graph/` are **not** reused. They come from the
   superseded generator, use a different entity and relation vocabulary, have no `02b` entity IDs,
   and nothing in them can be checked against the `02` contracts.
