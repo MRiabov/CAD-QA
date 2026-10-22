@@ -32,6 +32,24 @@ AST extraction assigns `operation_id` values. The instrumented program and the
 runtime records join on those IDs. Program-level IDs come from `01d`; graph-level
 UUIDs are assigned only in `02c`.
 
+## Identity
+
+Extraction IDs are **program-scoped strings**, not global IDs. Examples are
+`op:000001`, `state:op:000001`, and `ent:<sha256>`. They stay readable because
+they are used in extraction records, failures, and review output.
+
+- Every persisted reference to an extraction ID also carries `program_id`.
+- An extraction ID is never used as a global join key across programs.
+- `02c` owns graph IDs and converts the scoped components into deterministic
+  UUIDv5 `node_id`, `relation_id`, and `measurement_id` values.
+- Do not use random UUIDv4 for extraction records.
+- Do not add a UUID layer to extraction records unless a field leaves
+  program scope. The graph UUIDs are already the cross-table join keys.
+
+Using UUIDs everywhere would double-hash the same content and make failures and
+review harder to read. Keeping strings here preserves the boundary: readable
+provenance in extraction, compact deterministic UUIDs in graph storage.
+
 ## Field contract format
 
 Each field doc uses:
