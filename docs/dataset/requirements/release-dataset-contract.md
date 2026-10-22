@@ -98,10 +98,10 @@ No CAD model and no correct answer is above 1% of tasks.
 | `scoring_rule` | enum `exact`, `numeric_tolerance`, `structured_exact` | yes | How the answer is checked. |
 | `answer_schema_version` | string | yes | Version of the answer representation. |
 | `answer_sha256` | string | yes | Hash of the canonical answer and scoring fields. |
-| `evidence_json` | string | yes | Canonical JSON evidence: measured or derived, references, and rule. |
+| `evidence_json` | string | yes | Canonical JSON answer evidence: measured or derived, references, and rule. |
 
 The first fourteen columns identify the task and support selection, review, and
-reporting. The answer columns hold the gold answer, scoring fields, and
+reporting. The answer columns hold the gold answer, scoring fields, and answer
 evidence. `prompt` is the only LLM-facing column; every other column stays out
 of the LLM model input.
 
@@ -110,8 +110,8 @@ duplicated as separate columns. They are part of `prompt`, which is the exact
 LLM model input. A structured prompt record can be regenerated for audit if
 needed.
 
-The `prompt` column is answer-free. It must not contain the gold answer,
-answer-derived evidence, hidden entity identifiers, or scoring data.
+The `prompt` column is answer-free. It must not contain the gold answer, content
+derived from the answer, hidden entity identifiers, or scoring data.
 
 `gold_answer_json` is parsed according to `answer_format`:
 
@@ -131,9 +131,10 @@ multiple-choice tasks. It records the correct label, each distractor's error
 mode, and which task clue or answer step it fails. The P0 and P1 scopes do not require this
 column.
 
-Evidence is nested in the answer columns because the first release has 10,000
-tasks and the evidence is small enough to keep with the task. Split evidence
-into a separate table only if a row becomes too large to scan or transport.
+Answer evidence is nested in the answer columns because the first release has
+10,000 tasks and the answer evidence is small enough to keep with the task. Split
+answer evidence into a separate table only if a row becomes too large to scan or
+transport.
 
 ## 5. Who consumes it
 
@@ -154,7 +155,7 @@ dataset.
 ## 6. One table is enough
 
 One Parquet table is enough. Parquet supports nested lists and structs, so
-prompt metadata, clue types, choices, and evidence do not need extra tables.
+prompt metadata, clue types, choices, and answer evidence do not need extra tables.
 
 A separate answer table is not required. The release must contain answers for
 training and scoring, and the evaluation harness selects the prompt column. The
@@ -163,7 +164,8 @@ file boundary is not the leak boundary; column selection is.
 A program table is not needed initially: program text repeats inside `prompt`,
 and `program_id` plus `program_sha256` support grouping and split checks. Add a
 program table only if the repeated text becomes a storage or review problem.
-Likewise, add an evidence table only if evidence becomes too large for one row.
+Likewise, add an answer evidence table only if answer evidence becomes too large
+for one row.
 
 ## 7. Manifest
 

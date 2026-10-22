@@ -1,23 +1,17 @@
 # Open questions
 
-**Status:** ephemeral developer index, 2026-10-21. This file only links to the
-owning docs. Each question is resolved in its owning doc; remove the entry here
-when it is resolved. Absent contracts are tracked separately in
+**Status:** ephemeral centralized inventory, 2026-10-22. The owning document is
+authoritative; this file mirrors every unresolved question so the whole set can
+be reviewed in one place. When a question is resolved, remove it here and in the
+owning document. Absent contracts are tracked separately in
 [`missing-contracts.md`](missing-contracts.md).
 
-## 02a — Extract CadQuery AST
+| Owner | ID | Priority | Open question |
+|---|---|---|---|
+| [`02a`](pipeline/02a-extract-cadquery-ast.md) | — | P2 | Should P2 support arbitrary Python control flow in P-tier programs, or keep the canonical-flat restriction and reject non-flat programs? |
+| [`03b`](pipeline/03b-construct-task-definitions.md) | Q6 | P2 | How are plausible, deterministic near-miss choices generated and validated? |
+| [`05`](pipeline/05-validate-and-export-release.md) | Q1 | P1 | How is same-CAD-model transfer overlap checked: AST-normalized program hash, CadQuery shape comparison, or both? |
 
-- [ ] P2 control flow in P-tier programs — [open questions](pipeline/02a-extract-cadquery-ast.md#open-questions).
-
-## 03b — Construct task definitions
-
-- [ ] P2 near-miss choice generation and validation — [open questions](pipeline/03b-construct-task-definitions.md#open-questions).
-
-## 05 — Validate and export release
-
-- [ ] P1 same-CAD-model transfer-overlap check — [open questions](pipeline/05-validate-and-export-release.md#open-questions).
-
-## None
-
-- `01`, `02b`, `02c`, `03a`, `03c`, and `04` have no open questions. They do have
-  missing contracts, tracked in [`missing-contracts.md`](missing-contracts.md).
+Every pipeline stage not listed above has no open questions in its owning
+document. The detailed context, recommendations, and resolution rules stay in
+the owning document; this table is the cross-document inventory.

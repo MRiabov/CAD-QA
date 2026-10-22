@@ -12,15 +12,14 @@ doc, delete the row. Open questions remain in
 | MC-07 | [`03a`](pipeline/03a-plan-release.md) | Quota allocator equations for marginal cells, step mix, clue occurrences, family capacity, caps, and coverage minima; cell-to-family budget division. | The plan lists steps but no computable allocation. |
 | MC-08 | [`03b`](pipeline/03b-construct-task-definitions.md) | Construction grammar: possible-answer sets, target binding order, clue constructors, answer resolvers, sampling order, and support-table derivation. | `03b` currently defines rejection, not construction. |
 | MC-09 | [`03b`](pipeline/03b-construct-task-definitions.md) | Canonical serialization and hash inputs for `task_id`, `definition_sha256`, and `answer_sha256`. | Duplicate identity and reproducibility are undefined. |
-| MC-10 | [`03b`](pipeline/03b-construct-task-definitions.md) | Provenance needed to reproduce a definition: execution result hash, graph artifact hash, plan version, render seed, and template version. | The definition cannot reproduce its evidence or prompt. |
+| MC-10 | [`03b`](pipeline/03b-construct-task-definitions.md) | Provenance needed to reproduce a definition: execution result hash, graph artifact hash, plan version, render seed, and template version. | The definition cannot reproduce its answer evidence or prompt. |
 | MC-11 | [`04`](pipeline/04-render-prompt-and-choices.md) | Program text, render seed, and template file in the input contract. | `04` cannot render the program or choose a template variant from `TaskDefinition` alone. |
 | MC-12 | [`04`](pipeline/04-render-prompt-and-choices.md) | Mapping from `TaskDefinition` to release-table fields: `answer_schema_version`, `answer_sha256`, `prompt_sha256`, `evidence_json`, `clue_types`, tolerance, and scoring. | No pipeline stage owns the release projection. |
 | MC-13 | [`05`](pipeline/05-validate-and-export-release.md) | Release coverage and balance: step mix, warmup, program floor, format/meaning/clue/target balance, 1% and 25% caps. | The first release can pass the current checks without meeting R-7–R-12. |
 | MC-14 | [`05`](pipeline/05-validate-and-export-release.md) | `failures.parquet` schema: columns, identity, dedupe, order, merge from parallel writers, and aggregation. | R-19 is not enforceable and parallel failures cannot be combined safely. |
 | MC-15 | [`03b`](pipeline/03b-construct-task-definitions.md), [`05`](pipeline/05-validate-and-export-release.md) | P0 multiple-choice fairness checks: correct choice present, choices unique, same answer space, unit/frame/precision, non-leaking descriptions, deterministic labels. | P0 choices can be invalid even when the choice pool has five entries. |
 | MC-16 | [`03a`](pipeline/03a-plan-release.md), [`03b`](pipeline/03b-construct-task-definitions.md) | P0/P1/P2 implementation-scope filter for generation and validation. | Later-scope values can enter the first release. |
-| MC-35 | [`02c`](pipeline/02c-build-cad-graph.md) | Relation payloads: tolerance, evidence kind/rule/refs per relation type, and which relations are derived rather than measured. | P0 parallel, perpendicular, containment, and intersection clues cannot be checked reproducibly. |
-| MC-36 | [`02c`](pipeline/02c-build-cad-graph.md) | Measurement payload and type catalog: `value` union (scalar, point, vector, bounding box), `unit` and frame, tolerance, `evidence_refs`, and allowed measurement types by subject/object category. | `value` is untyped and measurement names are not closed. |
+| MC-35 | [`02c`](pipeline/02c-build-cad-graph.md) | Relation payloads: tolerance, CAD graph evidence kind/rule/refs per relation type, and which relations are derived rather than measured. | P0 parallel, perpendicular, containment, and intersection clues cannot be checked reproducibly. |
 
 ## P1
 
@@ -38,7 +37,7 @@ doc, delete the row. Open questions remain in
 | MC-26 | [`05`](pipeline/05-validate-and-export-release.md) | Manifest, dataset-card, `release_id`, generator version, upstream version, external-manifest linkage, and evaluation material. | The release contract requires artifacts with no owner or content spec. |
 | MC-27 | [`05`](pipeline/05-validate-and-export-release.md) | Reconcile Q1 with PRD Q7 and define the external benchmark input/revision for R-16. | Q1 is stale and transfer overlap has no input. |
 | MC-28 | [`05`](pipeline/05-validate-and-export-release.md) | Human review and evaluation-material stage ownership. | R-17 and §11 have no pipeline stage or artifact. |
-| MC-29 | [`00`](pipeline/00-end-to-end.md), [`artifacts.md`](artifacts.md) | Run manifest, completion markers, cache lookup, atomic writes, and resume semantics. | Retries and cache hits are promised but not specified. |
+| MC-29 | [`00`](pipeline/00-end-to-end.md), [`artifacts.md`](artifacts.md) | Run manifest, completion markers, cache lookup, atomic writes, resume semantics, and the run-level graph tolerance policy. | Retries and cache hits are promised but not specified. |
 | MC-30 | [`02`](pipeline/02-execute-cadquery-and-build-graph.md) | Per-program dependency order `02a → 02b → 02c`; parallel across programs, not across sub-steps. | Current wording can be read as three independent parallel steps. |
 
 ## Minor

@@ -21,7 +21,7 @@ between pipeline stages is
 | [`planning-math.md`](planning-math.md) | Priority, coverage, balance, split, and cap math. |
 | [`task-step-support.md`](task-step-support.md) | Derived task reasoning step support tables used for coverage checks. |
 | [`python-and-golang.md`](python-and-golang.md) | The Python and Go language boundary. |
-| [`open-questions.md`](open-questions.md) | Ephemeral index of unresolved questions across pipeline docs. |
+| [`open-questions.md`](open-questions.md) | Centralized inventory of unresolved questions across pipeline docs. |
 | [`missing-contracts.md`](missing-contracts.md) | Ephemeral audit backlog of absent contracts by owning doc. |
 
 ## What belongs here

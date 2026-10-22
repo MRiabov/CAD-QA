@@ -11,7 +11,7 @@ clues and answers can be checked against.
 |---|---|---|
 | `02a` | Extract static CadQuery structure without execution. | [`02a-extract-cadquery-ast.md`](02a-extract-cadquery-ast.md) |
 | `02b` | Execute CadQuery and capture snapshots or a failure tombstone. | [`02b-execute-cadquery.md`](02b-execute-cadquery.md) |
-| `02c` | Build graph entities, relations, measurements, and evidence. | [`02c-build-cad-graph.md`](02c-build-cad-graph.md) |
+| `02c` | Build graph entities, relations, measurements, and CAD graph evidence. | [`02c-build-cad-graph.md`](02c-build-cad-graph.md) |
 
 ## Language and parallelism
 
@@ -27,9 +27,9 @@ clues and answers can be checked against.
 ## Why three steps
 
 Static extraction is cheap and can succeed when execution fails. Execution is
-expensive and cacheable. Graph assembly needs both. Evidence is part of graph
-assembly, not a separate pipeline stage: a measurement without evidence is not a graph
-measurement.
+expensive and cacheable. Graph assembly needs both. CAD graph evidence is part of
+graph assembly, not a separate pipeline stage: a measurement without CAD graph
+evidence is not a graph measurement.
 
 Failures are execution results, not a pipeline stage. The execution boundary returns
 either snapshots or a failure tombstone.

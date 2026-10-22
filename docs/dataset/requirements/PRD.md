@@ -94,7 +94,7 @@ The dataset contains:
 - a curated collection of CadQuery programs from the CADEvolve dataset;
 - tasks about those programs;
 - one correct answer for each task;
-- enough recorded evidence to show why the answer is correct;
+- enough recorded answer evidence to show why the answer is correct;
 - training, validation, and test sets;
 - a labeled warmup subset;
 - a dataset card and evaluation material.
@@ -224,7 +224,7 @@ mistaken for a result on steps 2 through 5 alone.
 
 | ID | Requirement | How the user can tell |
 |---|---|---|
-| **R-1** | Every answer is correct. | The answer is produced by running the CadQuery program or derived by an exact rule, and recorded with evidence. No LLM writes or judges the answer. |
+| **R-1** | Every answer is correct. | The answer is produced by running the CadQuery program or derived by an exact rule, and recorded with answer evidence. No LLM writes or judges the answer. |
 | **R-2** | Every task has exactly one correct answer. | Ambiguous tasks and tasks with ties are rejected. |
 | **R-3** | Multiple-choice tasks are fair. | The correct answer is present; there are enough choices that guessing does not look competitive; choices are real candidates from the construction; choices do not give the answer away. |
 | **R-4** | At least 95% of benchmark tasks require reasoning about the actual shape. | At least one task clue depends on the geometry or topology the program builds, not only on the text of the program. |
@@ -294,7 +294,7 @@ Priority in this table is implementation order, not a task label.
 | Multiple-choice choices | At least five; aim for seven | P0 |
 | Different correct answers | At least 1,000 | P1 |
 | Answer dominance | No correct answer above 1% of tasks | P1 |
-| Evidence for the answer | Available for every task | P0 |
+| Answer evidence | Available for every task | P0 |
 
 The task reasoning step count mix is a target, not a hard quota. A miss is documented and accepted
 by the owner; it is not hidden by changing the definition of a task reasoning step count.

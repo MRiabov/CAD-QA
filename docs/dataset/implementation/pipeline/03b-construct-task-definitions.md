@@ -3,7 +3,7 @@
 **Parent:** [`03-enumerate-tasks.md`](03-enumerate-tasks.md).
 
 **Purpose:** construct persisted task definitions into the release plan: task
-target, ordered task clues, answer step, gold answer, validity evidence, and
+target, ordered task clues, answer step, gold answer, validity record, and
 canonical identity.
 
 **Input/output contract:** [`io-contracts.md`](io-contracts.md).
@@ -16,7 +16,7 @@ task. It is not prompt text and not a loose task tuple. It is what `04` renders.
 | Field | Meaning |
 |---|---|
 | `task_id` | Stable identity derived from the canonical task identity. It does not encode the gold answer. |
-| `definition_sha256` | Hash of the canonical task definition, including the answer and evidence. |
+| `definition_sha256` | Hash of the canonical task definition, including the answer and answer evidence. |
 | `program_id`, `program_sha256` | CadQuery program identity. |
 | `cadevolve_program_family_id` | Program family used for split isolation. |
 | `split`, `subset` | Split and warmup/main label assigned by `03a`. |
@@ -40,8 +40,8 @@ a new target, compute the answer, or decide validity.
 ## Graph input boundary
 
 `03b` reads the CAD graph and the `ReleasePlan`. Every task target, clue operand,
-answer value, and piece of evidence must resolve to a graph entity, a graph
-relation, or a measurement. A task definition that needs a missing graph element
+answer value, and piece of answer evidence must resolve to a graph entity, a
+graph relation, or a measurement. A task definition that needs a missing graph element
 is rejected; it is not softened or filled with program-text heuristics.
 
 The graph observation that starts a chain is input. It is not a task reasoning
@@ -74,7 +74,7 @@ Every `TaskClue` has:
 | `clue_type` | Property, relation, comparison, aggregation, or provenance. |
 | `subject` | Binding reference the clue constrains. |
 | `check` | One typed check variant. |
-| `result` | Before/after possible-answer counts, bound entities, and evidence. |
+| `result` | Before/after possible-answer counts, bound entities, and answer evidence. |
 
 A `BindingRef` is one of:
 
@@ -128,8 +128,8 @@ A format that cannot express the meaning is not used; for example, identity is
 not returned as a number and position is not returned as a scalar.
 
 The answer must be produced by CadQuery execution or by an exact derivation from
-the program and its geometry, with evidence. A guessed or approximate answer is
-not valid.
+the program and its geometry, with answer evidence. A guessed or approximate
+answer is not valid.
 
 ## Validity
 
@@ -143,7 +143,7 @@ A task definition is valid only when all of these hold:
 - the program family and split are present;
 - the split matches the family assignment from `03a`;
 - the subset is consistent with the task reasoning step count;
-- the answer has evidence;
+- the answer has answer evidence;
 - for multiple choice, the choice pool has at least five real choices;
 - for P2 multiple choice, every near-miss choice fails a task clue or the answer
   step, and its error mode is recorded;

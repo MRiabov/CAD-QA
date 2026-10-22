@@ -14,7 +14,7 @@ the user-visible outcome.
 | Term | Scope | Meaning |
 |---|---|---|
 | **Task** | Domain | One dataset instance: a CadQuery program, a task target, a set of task clues, and one answer. Use "dataset task" when it could be confused with an internal task. |
-| **Task definition** | Internal | The persisted, answer-bearing construction record for one task: target binding, ordered clues, answer step, answer, validity evidence, and identity. It is not prompt text. |
+| **Task definition** | Internal | The persisted, answer-bearing construction record for one task: target binding, ordered clues, answer step, answer, validity record, and identity. It is not prompt text. |
 | **Question** | Domain | The interrogative sentence in the prompt. It is not the whole task. |
 | **Clue type** | Domain | The category of condition a task clue states: property, relation, comparison, aggregation, or provenance. A chain is a P2 sequence of relation clues, not a clue type. |
 | **Answer meaning** | Domain | What the answer is about, independent of how it is returned: identity, volume, area, length, distance, angle, count, rank, membership, position, extent, CadQuery workplane state, material change, topology change, or validity. |
@@ -37,13 +37,15 @@ the user-visible outcome.
 | **Program text** | Domain | The CadQuery program shown in the prompt. |
 | **Prompt** | Domain | Everything the LLM model sees for one task: program text, question, task clues, optional choices, and answer instruction. |
 | **Gold answer** | Domain | The correct answer for one task. It is kept out of the prompt. |
-| **Answer data** | Domain | The answer columns in the release dataset: gold answer, scoring fields, and evidence. |
+| **Answer data** | Domain | The answer columns in the release dataset: gold answer, scoring fields, and answer evidence. |
 | **CAD graph** | Domain | The graph of CAD entities, relations, and measurements for one CadQuery program and the shape it builds. |
 | **CAD graph element** | Internal | One entity, relation, or measurement in the CAD graph. |
 | **Graph entity** | Internal | One entity in the CAD graph, such as a face, edge, operation, or region. |
 | **Relation** | Domain | A named link between two graph entities. |
 | **Measurement** | Domain | A numeric or geometric value about a graph entity or a pair of entities. |
-| **Evidence** | Domain | The record of how a measurement was obtained: measured by running CadQuery, or derived exactly from the program. |
+| **CAD graph evidence** | Internal | The record of how a graph element (relation or measurement) was obtained: measured by running CadQuery, or derived by an exact rule, with the rule and references. |
+| **Answer evidence** | Domain | The record of how a task's gold answer was obtained: the referenced CAD graph evidence and the rule that produces the answer. |
+| **Validity record** | Internal | The check results that establish a task definition's uniqueness, target binding, clue narrowing, and geometry requirement. It is not answer evidence. |
 | **Failure tombstone** | Internal | A recorded failed program or operation, with the error and cache key, used for debugging and cache hits. It is not a graph entity and never supports an answer. |
 | **Solid state** | Domain | The shape before or after an operation, or the final shape. |
 | **Warmup subset** | Domain | The labeled set of 1-step tasks inside the dataset. It is useful for training, not a separate dataset. |
@@ -163,7 +165,9 @@ These words caused ambiguity in the previous documentation:
 - **`question`** for the whole task rather than the interrogative sentence;
 - **`type`** or **`pattern`** as a way to group tasks; use clue type and answer meaning;
 - **`reasoning depth`** for task reasoning step count; **depth** is also a CAD
-  measurement.
+  measurement;
+- **`evidence`** without a qualifier; use **CAD graph evidence** for a graph
+  element and **answer evidence** for a task answer.
 
 In product text, do not use internal terms:
 

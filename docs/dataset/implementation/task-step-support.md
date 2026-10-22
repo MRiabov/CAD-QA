@@ -113,5 +113,5 @@ release planning.
 
 - It is not a generator input.
 - It is not a release planning policy.
-- It is not evidence that the corpus contains enough instances.
+- It does not prove that the corpus contains enough instances.
 - It is not the valid-task set.

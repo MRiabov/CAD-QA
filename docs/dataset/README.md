@@ -36,7 +36,7 @@ Steps 1 and 2 are in `requirements/`. Step 3 starts in `implementation/pipeline/
 | [`requirements/PRD.md`](requirements/PRD.md) | What the user gets, what the dataset must contain, quality promises, size, splits, deliverables, and priorities. |
 | [`requirements/task-structure.md`](requirements/task-structure.md) | The dimensions of a task, P0/P1/P2 implementation order for generation inputs, coverage and balance at every task reasoning step count, clue types, answer meanings, task reasoning step count rules, and uniqueness rules. |
 | [`requirements/prompt-content.md`](requirements/prompt-content.md) | What the LLM model sees: program text, question, task clues, choices, and answer instruction. |
-| [`requirements/graph-content.md`](requirements/graph-content.md) | The graph elements the tasks rely on: graph entities, relations, measurements, states, evidence, and P0/P1/P2 implementation order. |
+| [`requirements/graph-content.md`](requirements/graph-content.md) | The graph elements the tasks rely on: graph entities, relations, measurements, states, CAD graph evidence, and P0/P1/P2 implementation order. |
 | [`requirements/terminology.md`](requirements/terminology.md) | Proposed terms, replacements for old terms, and naming decisions that still need owner approval. |
 | [`requirements/release-dataset-contract.md`](requirements/release-dataset-contract.md) | Consumer contract: release artifacts, row counts, release table columns, and why one table is enough. |
 
@@ -52,7 +52,7 @@ not product requirements.
 | [`implementation/planning-math.md`](implementation/planning-math.md) | Priority, coverage, balance, split, and release-cap math. |
 | [`implementation/task-step-support.md`](implementation/task-step-support.md) | Derived task reasoning step support tables used to check coverage, not generator inputs. |
 | [`implementation/python-and-golang.md`](implementation/python-and-golang.md) | The Python and Go language boundary for the dataset generator. |
-| [`implementation/open-questions.md`](implementation/open-questions.md) | Ephemeral index of unresolved questions across pipeline docs. |
+| [`implementation/open-questions.md`](implementation/open-questions.md) | Centralized inventory of unresolved questions across pipeline docs. |
 | [`implementation/missing-contracts.md`](implementation/missing-contracts.md) | Ephemeral audit backlog of absent contracts by owning doc. |
 
 #### Pipeline

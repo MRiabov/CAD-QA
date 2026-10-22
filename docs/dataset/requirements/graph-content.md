@@ -135,10 +135,10 @@ Every measurement has:
 - a precision or tolerance;
 - a record of how it was obtained.
 
-The record of how it was obtained is the **evidence**. Evidence is either
-**measured** by running CadQuery, or **derived** from the program text and
-geometry by an exact rule. A guessed or approximate value is not evidence and
-cannot support a benchmark answer.
+The record of how it was obtained is the **CAD graph evidence**. CAD graph
+evidence is either **measured** by running CadQuery, or **derived** from the
+program text and geometry by an exact rule. A guessed or approximate value is not
+CAD graph evidence and cannot support a benchmark answer.
 
 ## 5. States and timing
 
@@ -167,7 +167,7 @@ depends on the failed output is rejected.
 1. Every entity has a program and a visible origin: a variable name, an
    operation, or a CadQuery selector expression.
 2. Every relation has two endpoints.
-3. Every measurement has an entity or pair, a name, and evidence.
+3. Every measurement has an entity or pair, a name, and CAD graph evidence.
 4. No entity is duplicated within one solid state. Entities in different solid
    states are distinct; only the P2 `same_as` relation may link them.
 5. No graph element is orphaned.
@@ -213,7 +213,7 @@ Q1 and Q4 are resolved below.
 - **Q1.** *Resolved 2026-10-21.* P0 and P1 implementation use independent topology per solid
   state (Option C). A face, edge, or vertex in one solid state is not the same
   entity as one in another solid state. `same_as` is P2 only, for explicit
-  persistence tasks. When P2 persistence uses it, record the evidence (kernel
+  persistence tasks. When P2 persistence uses it, record the CAD graph evidence (kernel
   identity or a geometric fingerprint) and reject ambiguous matches. Example: a
   face keeps its area and normal after a fillet but gets a new kernel ID; a
   confident fingerprint may support a P2 `same_as` link. P0 and P1 work that

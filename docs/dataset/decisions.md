@@ -105,9 +105,9 @@ prefix is `DS-`.
   trusted path would make the correct answer unauditable.
 - **Decision:** Every answer is produced by running the CadQuery program or by an
   exact derivation from the program and its geometry, and is recorded with
-  evidence. No LLM writes or judges an answer.
-- **Consequences:** A guessed or approximate value is not evidence. A task whose
-  answer cannot be produced with evidence is rejected.
+  answer evidence. No LLM writes or judges an answer.
+- **Consequences:** A guessed or approximate value is not answer evidence. A task
+  whose answer cannot be produced with answer evidence is rejected.
 
 ## DS-08 — Domain terms may appear in the PRD; internal terms may not
 
@@ -292,8 +292,8 @@ prefix is `DS-`.
   or reason about material change.
 - **Decision:** P0 and P1 use independent topology per solid state (Option C).
   `same_as` is P2 only, for explicit persistence tasks. When used, it records
-  evidence (kernel identity or a geometric fingerprint) and rejects ambiguous
-  matches.
+  CAD graph evidence (kernel identity or a geometric fingerprint) and rejects
+  ambiguous matches.
 - **Consequences:** P0 and P1 implementation refers to an entity in a named
   solid state and does not depend on cross-state identity. P2 persistence work
   may use `same_as`. No second graph is needed; the relation lives in the same
@@ -310,12 +310,12 @@ prefix is `DS-`.
   contain answers for training and scoring; the evaluator selects columns.
 - **Decision:** A release dataset is one `release.parquet` table, one row per
   task, with prompt and answer columns. The prompt column is answer-free. The
-  answer columns hold the gold answer, scoring fields, and evidence. A
+  answer columns hold the gold answer, scoring fields, and answer evidence. A
   prompt-only view is derived when a consumer needs one. Parquet is canonical;
   JSONL is an optional export.
 - **Consequences:** The minimum artifacts are `release.parquet`,
   `manifest.json`, `dataset-card.md`, `failures.parquet`, and `support/`. No separate answer
-  table, program table, or evidence table is needed initially. The evaluation
+  table, program table, or answer evidence table is needed initially. The evaluation
   harness must pass only `prompt` to the LLM model. The structure is defined in
   `requirements/release-dataset-contract.md`.
 

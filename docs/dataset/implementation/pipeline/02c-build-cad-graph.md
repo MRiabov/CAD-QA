@@ -64,32 +64,169 @@ Join keys are UUID, never enum strings.
 | `measurement_id` | `UUID` | not null | Deterministic UUIDv5 of `(program_id, subject_node_id, object_node_id or "", measurement_type)`. |
 | `subject_node_id` | `UUID` | not null | Existing `nodes.parquet.node_id`. |
 | `object_node_id` | `UUID` | nullable | Existing `nodes.parquet.node_id`; null for a one-entity measurement. |
-| `measurement_type` | `STRING` enum from `graph-content.md` | not null | Measurement category. |
-| `value` | `MeasurementValue` | not null | Typed measurement payload; see the pending types below. |
-| `unit` | `STRING` | nullable | Unit or stated frame; null means unitless. |
+| `measurement_type` | `STRING` enum `MeasurementType` | not null | Measurement category. |
+| `value` | `MeasurementValue` | not null | Typed measurement payload. |
+| `unit` | `STRING` enum `MeasurementUnit` | not null | Unit or stated frame; use `unitless` when there is no unit. |
 | `evidence_kind` | `STRING` enum `derived`, `measured` | not null | How the value was obtained. |
 | `evidence_rule` | `STRING` | not null | Exact rule or kernel operation used. |
 | `evidence_refs` | `LIST<EvidenceRef>` | not null | References that reproduce the measurement. |
-| `tolerance` | `Tolerance` | nullable | Null means exact; otherwise the comparison tolerance. |
+| `tolerance` | `Tolerance` | nullable | Null means inherit the run tolerance policy; otherwise an override. |
 
-### Pending measurement types
+### Measurement payload types
 
-These three types are named in the table but are not closed yet. They belong to
-the measurement payload contract, tracked as MC-36 in
-[`../missing-contracts.md`](../missing-contracts.md).
+These are closed tagged unions. A row with zero or several non-null groups
+rejects the graph.
 
-| Type | What must be defined |
+| Type | Fields |
 |---|---|
-| `MeasurementValue` | Union of scalar, point, vector, and bounding-box payloads with their units and canonical encoding. |
-| `Tolerance` | Exact or numeric tolerance, including absolute versus relative mode and unit. |
-| `EvidenceRef` | Typed reference to a graph node, measurement, operation, source line, or execution artifact. |
+| `Point3D` | `x: double`, `y: double`, `z: double` |
+| `Vector3D` | `x: double`, `y: double`, `z: double` |
+| `BoundingBox` | `min: Point3D`, `max: Point3D` |
+| `BoundingBoxChange` | `before: BoundingBox`, `after: BoundingBox` |
+| `TopologyDelta` | `face_delta: int64`, `edge_delta: int64`, `vertex_delta: int64` |
+| `WorkplaneFrame` | `origin: Point3D`, `x_direction: Vector3D`, `normal: Vector3D` |
+| `MeasurementValue` | `kind: MeasurementValueKind`; exactly one non-null group: `scalar: double`, `integer: int64`, `boolean: bool`, `point: Point3D`, `bounding_box: BoundingBox`, `bounding_box_change: BoundingBoxChange`, `topology_delta: TopologyDelta`, `workplane_frame: WorkplaneFrame` |
+
+`MeasurementValueKind`: `scalar`, `integer`, `boolean`, `point`,
+`bounding_box`, `bounding_box_change`, `topology_delta`, `workplane_frame`.
+
+`MeasurementUnit`: `millimetre`, `square_millimetre`, `cubic_millimetre`,
+`degree`, `radian`, `unitless`.
+
+#### Measurement type catalog
+
+| `measurement_type` | Value kind | Unit | Subject | Object |
+|---|---|---|---|---|
+| `volume` | `scalar` | `cubic_millimetre` | `solid_state`, `region` | null |
+| `area` | `scalar` | `square_millimetre` | `face`, `cadquery_profile`, `region` | null |
+| `length` | `scalar` | `millimetre` | `edge`, `cadquery_path_segment` | null |
+| `distance` | `scalar` | `millimetre` | graph entity | graph entity |
+| `angle` | `scalar` | `degree` or `radian` | `face`, `edge`, `cadquery_path_segment` | same category, or null for a path tangent |
+| `bounding_box` | `bounding_box` | `millimetre` | `solid_state`, `face`, `edge`, `vertex`, `region` | null |
+| `centroid` | `point` | `millimetre` | `solid_state`, `face`, `edge`, `vertex`, `region` | null |
+| `face_count` | `integer` | `unitless` | `solid_state` | null |
+| `edge_count` | `integer` | `unitless` | `solid_state`, `face` | null |
+| `vertex_count` | `integer` | `unitless` | `solid_state`, `face` | null |
+| `selected_count` | `integer` | `unitless` | `cadquery_selector_result` | null |
+| `validity` | `boolean` | `unitless` | `solid_state` | null |
+| `volume_change` | `scalar` | `cubic_millimetre` | `operation` | null |
+| `bounding_box_change` | `bounding_box_change` | `millimetre` | `operation` | null |
+| `topology_change` | `topology_delta` | `unitless` | `operation` | null |
+| `workplane_frame` | `workplane_frame` | `millimetre` | `cadquery_workplane` | null |
+
+For `workplane_frame`, `unit` describes the origin; the direction components are
+unitless.
+
+#### Tolerance
+
+| Type | Fields |
+|---|---|
+| `Tolerance` | `kind: ToleranceKind`, `value: double \| null`, `unit: MeasurementUnit \| null` |
+| `TolerancePolicy` | `millimetre: Tolerance`, `square_millimetre: Tolerance`, `cubic_millimetre: Tolerance`, `degree: Tolerance`, `radian: Tolerance`, `unitless: Tolerance` |
+
+`ToleranceKind`: `exact`, `absolute`, `relative`.
+
+- `exact`: `value` and `unit` are null.
+- `absolute`: `value` is non-negative and `unit` is required and is not
+  `unitless`.
+- `relative`: `value` is a non-negative fraction and `unit` is null.
+
+`TolerancePolicy` is resolved once per run, not per measurement and not per
+program. It is stored once in the run manifest with `tolerance_policy_version`
+and `tolerance_policy_sha256`; every graph artifact in the run reads the same
+policy. A measurement `tolerance` of null inherits the policy entry for its
+`unit`; a non-null value overrides it. Counts and validity are exact by default
+through the `unitless` policy. A literal length may carry an `exact` override.
+
+Answer-scoring tolerance is not this type. It belongs to the task definition and
+the release `tolerance_json` field.
+
+#### CAD graph evidence references
+
+| Type | Fields |
+|---|---|
+| `EvidenceRef` | `kind: EvidenceRefKind`; exactly one non-null group: `node: NodeEvidenceRef`, `measurement: MeasurementEvidenceRef`, `operation: OperationEvidenceRef`, `source_line: SourceLineEvidenceRef`, `execution_artifact: ExecutionArtifactEvidenceRef` |
+| `NodeEvidenceRef` | `node_id: UUID` |
+| `MeasurementEvidenceRef` | `measurement_id: UUID` |
+| `OperationEvidenceRef` | `operation_id: STRING` |
+| `SourceLineEvidenceRef` | `source_line: int64` |
+| `ExecutionArtifactEvidenceRef` | `artifact_uri: STRING`, `artifact_field: STRING \| null` |
+
+`EvidenceRefKind`: `node`, `measurement`, `operation`, `source_line`,
+`execution_artifact`.
+
+### Parquet struct declarations
+
+The type tables above are the field lists. The nested Parquet groups are written
+out here so the physical schema is unambiguous. `TolerancePolicy` is not a
+Parquet column; it is a run-manifest model listed with the tolerance types.
+
+```text
+NodeAttributes = STRUCT<
+  cadquery_program: CadQueryProgramAttributes | NULL,
+  operation: OperationAttributes | NULL,
+  feature: FeatureAttributes | NULL,
+  solid_state: SolidStateAttributes | NULL,
+  face: FaceAttributes | NULL,
+  edge: EdgeAttributes | NULL,
+  vertex: VertexAttributes | NULL,
+  edge_endpoint: EdgeEndpointAttributes | NULL,
+  cadquery_profile: CadQueryProfileAttributes | NULL,
+  cadquery_workplane: CadQueryWorkplaneAttributes | NULL,
+  cadquery_path: CadQueryPathAttributes | NULL,
+  cadquery_path_point: CadQueryPathPointAttributes | NULL,
+  cadquery_path_segment: CadQueryPathSegmentAttributes | NULL,
+  region: RegionAttributes | NULL,
+  cadquery_selector_result: CadQuerySelectorResultAttributes | NULL
+>
+
+Point3D = STRUCT<x: DOUBLE, y: DOUBLE, z: DOUBLE>
+Vector3D = STRUCT<x: DOUBLE, y: DOUBLE, z: DOUBLE>
+BoundingBox = STRUCT<min: Point3D, max: Point3D>
+BoundingBoxChange = STRUCT<before: BoundingBox, after: BoundingBox>
+TopologyDelta = STRUCT<face_delta: INT64, edge_delta: INT64, vertex_delta: INT64>
+WorkplaneFrame = STRUCT<origin: Point3D, x_direction: Vector3D, normal: Vector3D>
+
+MeasurementValue = STRUCT<
+  kind: STRING,
+  scalar: DOUBLE | NULL,
+  integer: INT64 | NULL,
+  boolean: BOOLEAN | NULL,
+  point: Point3D | NULL,
+  bounding_box: BoundingBox | NULL,
+  bounding_box_change: BoundingBoxChange | NULL,
+  topology_delta: TopologyDelta | NULL,
+  workplane_frame: WorkplaneFrame | NULL
+>
+
+Tolerance = STRUCT<
+  kind: STRING,
+  value: DOUBLE | NULL,
+  unit: STRING | NULL
+>
+
+NodeEvidenceRef = STRUCT<node_id: UUID>
+MeasurementEvidenceRef = STRUCT<measurement_id: UUID>
+OperationEvidenceRef = STRUCT<operation_id: STRING>
+SourceLineEvidenceRef = STRUCT<source_line: INT64>
+ExecutionArtifactEvidenceRef = STRUCT<artifact_uri: STRING, artifact_field: STRING | NULL>
+
+EvidenceRef = STRUCT<
+  kind: STRING,
+  node: NodeEvidenceRef | NULL,
+  measurement: MeasurementEvidenceRef | NULL,
+  operation: OperationEvidenceRef | NULL,
+  source_line: SourceLineEvidenceRef | NULL,
+  execution_artifact: ExecutionArtifactEvidenceRef | NULL
+>
+```
 
 ### Encoding requirements
 
 | Columns | Encoding | Reason |
 |---|---|---|
-| `node_type`, `relation_type`, `measurement_type`, `evidence_kind` | dictionary (`RLE_DICTIONARY`) required | Closed low-cardinality enums. |
-| `graph_schema_version`, `unit` | dictionary required | Repeated low-cardinality values. |
+| `node_type`, `relation_type`, `measurement_type`, `evidence_kind`, `unit`, `MeasurementValue.kind`, `Tolerance.kind`, `EvidenceRef.kind` | dictionary (`RLE_DICTIONARY`) required | Closed low-cardinality enums. |
+| `graph_schema_version` | dictionary required | Repeated low-cardinality value. |
 | `program_id`, `state_id`, `operation_id` | dictionary recommended | Repeated within a program's row groups. |
 | `node_id`, `relation_id`, `measurement_id`, `from_node_id`, `to_node_id`, `subject_node_id`, `object_node_id` | none; fixed-width UUID | High-cardinality join keys; dictionaries add no value. |
 | `label`, `selector_expression`, `evidence_rule` | plain | High-cardinality text. |
@@ -97,6 +234,21 @@ the measurement payload contract, tracked as MC-36 in
 ClickHouse may expose a closed string enum as `LowCardinality(String)`.
 `Enum8` or `Enum16` is optional; it is a ClickHouse storage choice, not part of
 the Parquet contract.
+
+## Run-level tolerance policy
+
+`TolerancePolicy` is resolved once per run. It is not derived per program and is
+not stored on each measurement. The run manifest carries the policy,
+`tolerance_policy_version`, and `tolerance_policy_sha256`; every graph artifact in
+the run references the same policy.
+
+The policy is part of the graph artifact identity. A change to any tolerance is a
+new policy version and a new graph artifact; it never edits an existing graph.
+Measurement `tolerance` null inherits the policy; a non-null value overrides it.
+
+This policy covers measurement precision only. Relation comparison tolerances
+remain MC-35, and answer-scoring tolerance remains the task definition's
+`Tolerance` and the release `tolerance_json` field.
 
 ## Table scope
 
@@ -148,8 +300,8 @@ null optional component is encoded as the empty component.
 `from_node_id`, `to_node_id`, `subject_node_id`, and `object_node_id` are
 canonical lowercase hyphenated UUID strings when they are used as UUIDv5 name
 components. Measurement identity follows `graph-content.md`: the subject or pair
-plus the measurement name. The value, unit, tolerance, and evidence do not
-participate in `measurement_id`.
+plus the measurement name. The value, unit, tolerance, and CAD graph evidence do
+not participate in `measurement_id`.
 
 `node_id` is not parsed. `node_type` and `local_id` are separate columns, so the
 readable identity components remain available for debugging and filtering.
@@ -263,8 +415,15 @@ count is a non-negative 64-bit integer.
   graph.
 - Every P0 node category has a row when the source model or execution result has
   an instance. P1 categories may be absent in a P0 graph.
-- A change to a node type, attribute field, or enum value is a
-  `graph_schema_version` change. Readers reject an unknown version.
+- `MeasurementValue`, `Tolerance`, and `EvidenceRef` each have exactly one
+  non-null group matching their `kind`.
+- `measurement_type` determines the `value` kind and `unit` through the catalog;
+  a mismatch rejects the graph.
+- `TolerancePolicy`, `tolerance_policy_version`, and `tolerance_policy_sha256` are present in the run manifest.
+- `Tolerance` obeys its `exact`, `absolute`, and `relative` field rules.
+- A change to a node type, attribute field, measurement type, enum value, or
+  payload field is a `graph_schema_version` change. Readers reject an unknown
+  version.
 
 ## Relation identity
 
@@ -284,8 +443,8 @@ number of `selected_by` edges.
 - Create entity graph nodes for each shape snapshot and relation records for
   operation order, containment, adjacency, provenance, and measurements.
 - Map `selected_entity_ids` to entity graph nodes in the same shape snapshot.
-- Attach evidence at the same time as each measurement: derived or measured,
-  the rule, and references.
+- Attach CAD graph evidence at the same time as each measurement: derived or
+  measured, the rule, and references.
 - Compute operation effects from before/after shape snapshots.
 - Skip failure tombstones; tasks that need the failed output are rejected.
 - Reject ambiguous topology rather than guessing.
@@ -302,7 +461,7 @@ number of `selected_by` edges.
 - **Q3.** *Resolved 2026-10-21.* Option C. Derive a measurement only when the
   program text fixes it and no later operation can change it: literals, operation
   counts, and similar syntax facts. Measure geometry and topology from CadQuery
-  execution, including selector membership. Evidence records whether a
+  execution, including selector membership. CAD graph evidence records whether a
   measurement was derived or measured, the exact rule, and the references.
 
 - **Entity identity.** *Resolved 2026-10-21.* Entity graph nodes use the stable
@@ -318,11 +477,19 @@ number of `selected_by` edges.
   `02a`/`02b` IDs stay strings. Random UUIDv4 is rejected because it would break
   deterministic reruns, cache hits, and duplicate detection.
 
+- **Measurement payload and type catalog.** *Resolved 2026-10-22.* Measurement
+  values are a tagged union of scalar, integer, boolean, point, bounding box,
+  bounding-box change, topology delta, and workplane frame. Measurement types are
+  the closed catalog above. Tolerances are a run-level `TolerancePolicy` stored
+  once in the run manifest, with per-measurement overrides. CAD graph evidence
+  references are a tagged union of node, measurement, operation, source line, and
+  execution artifact. Answer-scoring tolerance remains separate.
+
 - **Typed graph attributes and table scope.** *Resolved 2026-10-22.* Option A.
   Keep the three-table layout. Store all graph entities in `nodes.parquet`, with a
   closed `node_type` discriminator and a tagged `NodeAttributes` union whose one
   non-null group matches the discriminator. Define `local_id`, scope columns, and
   one typed attribute struct for every entity category in `graph-content.md`.
   Attributes carry identity, classification, and scope; geometry values remain in
-  `measurements.parquet` with evidence. This makes the schema typed, keeps one
-  entity identity per row, and prevents an untyped property bag.
+  `measurements.parquet` with CAD graph evidence. This makes the schema typed,
+  keeps one entity identity per row, and prevents an untyped property bag.
