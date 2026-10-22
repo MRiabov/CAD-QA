@@ -455,3 +455,24 @@ The dataset is done when:
   warmup.
 - **Q11** (P1). *Resolved 2026-10-21.* Use percentage caps: no CAD model above
   1% of tasks, and no correct answer above 1% of tasks.
+
+---
+
+## 16. Known issues
+
+- **KI1** (P0). *Open, 2026-10-22.* **Why not run the CAD kernel?** The P0
+  setting answers geometry questions about a CadQuery program without access to
+  CadQuery. A reviewer will ask why: in practice CadQuery is usually available,
+  free, and deterministic, so a kernel call gives the exact answer.
+  - *Counter-argument.* A kernel call is not free for an LLM agent. It costs a
+    tool round trip, sandbox latency, and extra context. Many questions are
+    obvious from the program text, and reasoning about them directly is cheaper
+    than executing it.
+  - *Partial answer.* Writing CadQuery selectors and answering factual geometry
+    questions (the distance from A to B; which component is heaviest) is useful
+    work in its own right. Measuring how well an LLM model does it without a
+    kernel also sets a baseline for future work.
+  - *Not resolved.* The project is considering a pivot to a kernel-query task:
+    given a question, generate the CadQuery query whose execution produces the
+    answer, scored by execution. That task removes this objection but changes the
+    P0 setting and the non-goals in section 13.
