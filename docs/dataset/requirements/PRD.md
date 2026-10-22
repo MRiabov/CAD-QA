@@ -472,6 +472,11 @@ The dataset is done when:
     questions (the distance from A to B; which component is heaviest) is useful
     work in its own right. Measuring how well an LLM model does it without a
     kernel also sets a baseline for future work.
+  - *Why the P0 harness is `numpy`.* When the project began, the available LLM
+    models did not know CadQuery, so NumPy seemed the easier tool for them.
+    Fine-tuning removes that reason. A fine-tuned LLM model that writes a short
+    CadQuery query is cheaper and easier to grade than one that rebuilds the
+    geometry in NumPy.
   - *Not resolved.* The project is considering a pivot to a kernel-query task:
     given a question, generate the CadQuery query whose execution produces the
     answer, scored by execution. That task removes this objection but changes the
