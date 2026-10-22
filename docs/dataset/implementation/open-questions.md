@@ -7,15 +7,7 @@ when it is resolved. Absent contracts are tracked separately in
 
 ## 02a — Extract CadQuery AST
 
-- [ ] CadQuery method allowlist — [open questions](pipeline/02a-extract-cadquery-ast.md#open-questions).
 - [ ] P2 control flow in P-tier programs — [open questions](pipeline/02a-extract-cadquery-ast.md#open-questions).
-- [ ] Reject or defer unresolved CadQuery selector strings — [open questions](pipeline/02a-extract-cadquery-ast.md#open-questions).
-
-## 02c — Build CAD graph
-
-- [ ] Typed `attributes` schema per graph node type — [open questions](pipeline/02c-build-cad-graph.md#open-questions).
-- [ ] Entity node ID strategy — [open questions](pipeline/02c-build-cad-graph.md#open-questions).
-- [ ] Unmapped CadQuery selector result behavior — [open questions](pipeline/02c-build-cad-graph.md#open-questions).
 
 ## 03b — Construct task definitions
 
@@ -27,5 +19,5 @@ when it is resolved. Absent contracts are tracked separately in
 
 ## None
 
-- `01`, `02b`, `03a`, `03c`, and `04` have no open questions. They do have
+- `01`, `02b`, `02c`, `03a`, `03c`, and `04` have no open questions. They do have
   missing contracts, tracked in [`missing-contracts.md`](missing-contracts.md).

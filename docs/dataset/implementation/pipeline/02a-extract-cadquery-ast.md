@@ -30,13 +30,13 @@ it.
 - `receiver`, the variable or expression the call is made on;
 - `method`, the CadQuery method name;
 - `args` and `kwargs`, as `StaticExpression` trees;
-- `operation_kind`: CadQuery workplane, sketch, solid, CadQuery selector,
-  boolean, modifier, or transform.
+- `operation_kind`: CadQuery workplane, sketch, path, solid, CadQuery selector,
+  boolean, assembly, modifier, transform, or accessor.
 
-`StaticExpression` is a typed expression tree, not a literal value. Its expression kinds
-are literal, name, attribute, subscript, call, list, tuple, and dict. A call
-records the callee and its argument and keyword expression trees. This represents
-nested constructors such as
+`StaticExpression` is a typed expression tree, not a literal value. The
+expression tree contains literal, name, attribute, subscript, call, list, tuple,
+dict, and the narrow `filter` lambda. A call records the callee and its argument and keyword
+expression trees. This represents nested constructors such as
 `cq.Plane(origin=cq.Vector(28, 85, -71), normal=cq.Vector(1, 3, 0))` without
 evaluating them.
 
@@ -57,11 +57,16 @@ narrow:
 - calls on CadQuery objects, including chained calls;
 - CadQuery selectors written as strings or selector calls;
 - no function or class definitions;
-- no loops, conditionals, comprehensions, lambdas, `try`, or `with`;
-- no `eval`, `exec`, dynamic imports, file access, or network access.
+- no loops, conditionals, comprehensions, `try`, or `with`;
+- no lambdas except the narrow `filter` predicate;
+- no `eval`, `exec`, dynamic imports, file access, or network access;
+- no CadQuery method or constructor outside the allowlist.
 
 A program outside this subset is rejected as a whole. The static model is never
 partial: a rejected program records the reason and produces no operations.
+
+The closed method allowlist and its static mapping are in
+[`02a-cadquery-allowlist.md`](02a-cadquery-allowlist.md).
 
 ## Behavior
 
@@ -73,9 +78,14 @@ partial: a rejected program records the reason and produces no operations.
 
 ## Open questions
 
-- Which CadQuery methods form the supported allowlist? The allowlist must cover
-  the operations in `graph-content.md` and reject everything else.
 - Should P2 support arbitrary Python control flow in P-tier programs, or keep
   the canonical-flat restriction and reject non-flat programs?
-- Should an unresolved selector string be rejected at static extraction, or
-  deferred to execution and recorded as a failure tombstone?
+
+## Resolved questions
+
+- **Method allowlist.** *Resolved 2026-10-21.* The closed CADEvolve-C allowlist is
+  in [`02a-cadquery-allowlist.md`](02a-cadquery-allowlist.md). Unknown methods and
+  call forms reject the whole program.
+- **CadQuery selector timing.** *Resolved 2026-10-21.* Static extraction records
+  the CadQuery selector expression and receiver. Evaluation happens in `02b` at
+  the call point. Static extraction does not resolve selector strings.
