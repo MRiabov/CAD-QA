@@ -24,31 +24,39 @@ the working picture:
 ## The working picture: a decision tree over possible answers
 
 For one CadQuery program and one state scope, a target category defines a
-finite **possible-answer set** `U`. A clue is a typed predicate over `U`:
+finite **possible-answer set**:
 
 ```text
-P: U -> {true, false, unknown}
+possible_answers = all possible answers for target_category in state_scope
 ```
 
-Applying a clue to the current set gives the next set:
+A clue is a typed predicate: for each possible answer it returns true, false,
+or unknown. Applying a clue keeps only the answers for which it returns true:
 
 ```text
-S' = {x in S | P(x) = true}
+narrowed = {answer in possible_answers | clue(answer) is true}
 ```
 
 A task is a sequence of clues followed by an answer step:
 
 ```text
-U = S0 --clue 1--> S1 --clue 2--> S2 ... --clue n--> Sn --answer step--> answer
+possible_answers
+  --clue_1--> narrowed_1
+  --clue_2--> narrowed_2
+  ...
+  --clue_last--> final_set
+  --answer_step--> answer
 ```
 
 The constraints are:
 
-- every clue narrows the set: `|S_i| < |S_{i-1}|`;
-- the final set is answer-unique: all members of `Sn` produce the same answer
-  within tolerance;
+- every clue strictly shrinks the set:
+  `len(narrowed_after) < len(narrowed_before)`;
+- the final set is answer-unique: every remaining possible answer produces the
+  same answer within tolerance;
 - the answer step produces exactly one answer;
-- the step count is `n + 1` when an answer step is needed, otherwise `n`.
+- the step count is the number of clues plus one when an answer step is
+  needed.
 
 This makes four properties fall out of one structure:
 
@@ -106,36 +114,36 @@ and the search is local.
 For one quota target:
 
 ```text
-U = possible_answers(graph, target_category, state_scope)
+possible_answers = possible_answers(graph, target_category, state_scope)
 
-for each answer a in stable_order(U):
-    D = U \ {a}
-    facts = true_facts(graph, a)          # typed predicates true of a
-    chain = cover(D, facts, target_depth = step_count - answer_step)
+for each answer_entity in stable_order(possible_answers):
+    distractors = possible_answers without answer_entity
+    facts = true_facts(graph, answer_entity)   # predicates true of answer_entity
+    chain = cover(distractors, facts, target_depth = step_count - answer_step)
     if chain is empty: continue
 
-    S = apply(chain, U)
-    if not answer_unique(S): continue
+    narrowed = apply(chain, possible_answers)
+    if not answer_unique(narrowed): continue
 
-    answer = resolve(S, answer_meaning)
-    definition = build(a, chain, answer, S)
+    answer = resolve(narrowed, answer_meaning)
+    definition = build(answer_entity, chain, answer, narrowed)
     if valid(definition): yield definition
 ```
 
 Two details matter.
 
-**`cover(D, facts, target_depth)` is a bounded set-cover search.** Each fact
-has a precomputed set of possible answers it selects, so applying a clue is a
-set intersection. A greedy cover gives the shortest chain; a less greedy cover
-gives a longer chain. The target step count is therefore a search parameter,
-not an outcome. If the plan asks for a four-step task, the search looks for a
-three-clue cover plus the answer step. If no such cover exists, the quota
-target is a deficit.
+**`cover(distractors, facts, target_depth)` is a bounded set-cover search.**
+Each fact has a precomputed set of possible answers it selects, so applying a
+clue is a set intersection. A greedy cover gives the shortest chain; a less
+greedy cover gives a longer chain. The target step count is therefore a search
+parameter, not an outcome. If the plan asks for a four-step task, the search
+looks for a three-clue cover plus the answer step. If no such cover exists, the
+quota target is a deficit.
 
-**`answer_unique(S)` is not necessarily "one entity."** For a measurement
-answer, two symmetric faces can both produce the same area; the task is still
-answerable. The final set is a witness set, and the answer evidence records it.
-Identity answers still require one entity.
+**`answer_unique(narrowed)` is not necessarily "one entity."** For a
+measurement answer, two symmetric faces can both produce the same area; the
+task is still answerable. The final set is a witness set, and the answer
+evidence records it. Identity answers still require one entity.
 
 ## Worked example
 
@@ -155,8 +163,8 @@ result = (
 Target: an edge of the final solid. Answer: edge length, as a number. Target
 step count: 4.
 
-Initial set `U`: all edges of the final solid — the box edges plus the two
-circular edges of the hole.
+Initial possible-answer set: all edges of the final solid — the box edges plus
+the two circular edges of the hole.
 
 Intended answer: the top circular edge of the hole.
 
@@ -264,9 +272,9 @@ A task is described by:
 
 ```text
 step_count = number of clue steps + (answer step ? 1 : 0)
-clue_stratum_profile = [s1, s2, ..., sn]      # ordered, one per clue
-max_clue_stratum = max(profile)
-answer_stratum = A0..A3
+clue_stratum_profile = [clue 1 stratum, clue 2 stratum, ...]   # one per clue
+max_clue_stratum = max(clue_stratum_profile)
+answer_stratum = one of A0, A1, A2, A3
 ```
 
 The step count remains the chain length. The clue profile is the per-clue
@@ -340,7 +348,7 @@ That gives a clue-first engine without losing the coverage contract.
 | D2 | Does the question name the solid state? | Question names it; first clue names it | Question names it; add `state_scope` to `TaskDefinition` | Question templates, possible-answer set |
 | D3 | How is a clue evaluated when a measurement is missing? | Unknown means false; clue is invalid | Clue is applicable only when the predicate is total on the current set | Chain search, rejection reasons |
 | D4 | What counts as a separation? | Any difference; answer tolerance; separate margin | One separation margin derived from the answer tolerance | Uniqueness, tie rejection, clue validity |
-| D5 | How are clues ordered? | Search order; broad-to-narrow; dependency order | Topological order with a broad-to-narrow key (`|S_after|` descending, then hash) | Comparison references, prompt order |
+| D5 | How are clues ordered? | Search order; broad-to-narrow; dependency order | Topological order with a broad-to-narrow key: the size of the narrowed set, descending, then hash | Comparison references, prompt order |
 | D6 | What is the minimum narrowing? | One possible answer; at least k | Each non-final clue leaves at least 2–3 possible answers | Task quality, step count |
 | D7 | Where do multiple-choice choices come from? | Penultimate set; sibling measurements | Identity from the penultimate set; numeric only when at least 5 distinct values exist | Multiple-choice availability |
 | D8 | How does the scheduler fill the plan? | Per-cell greedy; global selection | Greedy coverage-first: minimum, then target, then volume | Quota filling, deficits |
