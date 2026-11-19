@@ -312,33 +312,44 @@ measure; otherwise the per-stratum number is noise.
 The warmup subset should be **one step and `max_clue_stratum <= 1`**, not just
 one step. A one-step S3 aggregation is not warmup.
 
-## Clue-first versus target-first
+## Construction strategy: supply-driven, capability-aware deficits
 
-The current `03b` is target-first: choose a target category and answer meaning,
-then find clues that isolate it. The end goal is the seed.
+The default construction strategy is **supply-driven**. `03b` iterates
+programs and builds natural clue chains from what each graph actually has. The
+clue chain is still the primary object and the target and answer are the leaf,
+but the selection is local: the program supplies the facts, and the chain grows
+from them.
 
-If the clue chain is the primary object, the flow should be clue-first:
+A full demand-driven planner was considered and rejected. It would have
+specified a task cell up front, queried a capability index for programs that
+can support it, and synthesized into the cell. The reasons to reject it:
 
-1. The plan asks for a `(step_count, clue_stratum_profile, clue_type)` quota
-   target.
-2. The synthesizer builds a clue chain from graph facts.
-3. The chain's leaf determines the target category and answer meaning.
-4. The scheduler checks the leaf against the target and answer coverage
-   targets.
+- the capability census needs the graph, but `01b` selects the pool before
+  `02` builds graphs; a pre-selection census reverses pipeline stage order or
+  forces a larger execution pass;
+- a capability in the pool is not a constructed task, so the guarantee is
+  necessary but not sufficient;
+- a pool-level guarantee crowds the 1,500-program budget with tag reservations
+  and can conflict with the two-programs-per-family cap;
+- the fallback concentrates forced, unnatural tasks in the rarest cells,
+  exactly where review is hardest.
 
-The target is the result of the chain, not the seed. This is a real change to
-the "Target binding" section of `03b`, and it is the right change if the clue
-chain is the learning signal.
+What remains is a **capability-aware deficit loop**:
 
-The tradeoff: target-category coverage becomes an acceptance filter, so rare
-target categories may need more search. The practical answer is a hybrid:
+1. `01b` stays metadata-based.
+2. `02c` emits a `ProgramCapabilityProfile` as a by-product of the graph:
+   available target categories, clue constructors, maximum clue stratum per
+   constructor, measurement types, relation types, answer meanings, maximum
+   step count, and entity counts.
+3. `03b` is supply-driven by default.
+4. `03a` and `03c` use the census for deficits. When a quota target is
+   underfilled, query the census for capable programs and request supplemental
+   programs through the existing slow loop.
+5. A cell-level demand query is a last resort. It carries a `forced` flag and
+   a naturalness check, and a miss is recorded rather than forced.
 
-- **Default:** plan by clue profile, search clue-first, bind the leaf, check
-  target and answer coverage.
-- **Fallback:** when a rare target category is underfilled, run a target-first
-  search for that quota target.
-
-That gives a clue-first engine without losing the coverage contract.
+This preserves pipeline stage order, keeps task construction natural, and
+confines the demand logic to the deficit path where it belongs.
 
 ## Open decisions
 
@@ -354,6 +365,7 @@ That gives a clue-first engine without losing the coverage contract.
 | D8 | How does the scheduler fill the plan? | Per-cell greedy; global selection | Greedy coverage-first: minimum, then target, then volume | Quota filling, deficits |
 | D9 | How are strata weighted? | Equal; weighted by derivation depth | Equal first, then calibrate against LLM model results | Coverage and balance |
 | D10 | Does `DS-05` change? | Keep step count as the only measure; add clue stratum | Add clue stratum as a second measure; neither is a task label | PRD section 6, R-9, benchmark reporting |
+| D11 | What is the construction strategy? | Supply-driven; full demand-driven; supply-driven with capability-aware deficits | Supply-driven with capability-aware deficits | `01b`, `02c`, `03a`, `03b`, `03c` |
 
 ## Proposed document and schema changes
 
@@ -365,6 +377,10 @@ That gives a clue-first engine without losing the coverage contract.
 | Add `support/clue-stratum-by-step.json` | `05`, task-step support |
 | Add `clue_strata` and `max_clue_stratum` to the release table | release contract, `04` |
 | Check coverage and balance over `(clue_type, clue_stratum)` | `05` |
+| Emit `ProgramCapabilityProfile` as a by-product of graph construction | `02c` |
+| Use the census to allocate quota targets to capable families, not to pre-select the pool | `03a` |
+| Add a `capability_deficit` reason and a supplemental-program request path | `03c` |
+| Keep supply-driven construction as the default; add a cell-level demand query only as a fallback with a `forced` flag | `03b` |
 | Add `DS-31`: step count is the chain length; clue stratum is the per-clue derivation depth; neither is a task label | `decisions.md` |
 | State that every benchmark result names the step counts and clue strata it covers | PRD |
 
@@ -396,9 +412,11 @@ answers), a replay test, and one end-to-end test.
 
 ## Next
 
-The two decisions that block the schema are `D1` (uniqueness unit) and `D2`
-(state scope). Once they are settled, the construction grammar can be written
-with the box-and-hole example as the first golden record.
+The construction strategy is settled (`D11`): supply-driven with a
+capability-aware deficit loop. The two decisions that still block the schema
+are `D1` (uniqueness unit) and `D2` (state scope). Once they are settled, the
+construction grammar can be written with the box-and-hole example as the first
+golden record.
 
 ## References
 
