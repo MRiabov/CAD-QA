@@ -145,50 +145,6 @@ measurement answer, two symmetric faces can both produce the same area; the
 task is still answerable. The final set is a witness set, and the answer
 evidence records it. Identity answers still require one entity.
 
-## Worked example
-
-Program:
-
-```python
-result = (
-    cq.Workplane("XY")
-    .box(10, 20, 5)
-    .faces(">Z")
-    .workplane()
-    .circle(2)
-    .cutBlind(-2)
-)
-```
-
-Target: an edge of the final solid. Answer: edge length, as a number. Target
-step count: 4.
-
-Initial possible-answer set: all edges of the final solid — the box edges plus
-the two circular edges of the hole.
-
-Intended answer: the top circular edge of the hole.
-
-| Step | Clue | Set after | Clue stratum |
-|---|---|---|---|
-| 1 | The edge is adjacent to a planar face. | Many edges | S2 |
-| 2 | The edge is adjacent to the cylindrical face. | 2 circular edges | S2 |
-| 3 | The edge has a larger z-coordinate than the other edge adjacent to the cylindrical face. | 1 edge | S4 |
-| Answer | Return the length. | `12.57` | A1 |
-
-Each clue narrows. Clue 3 is a comparison whose reference is the other circular
-edge selected by clue 2. The chain is broad-to-narrow. The answer is `2πr`
-rounded to 4 significant figures. The answer evidence points to the edge, the
-measurement, and the rule.
-
-If the hole were a through-hole, both circular edges would have the same
-length. Then:
-
-- **entity-unique** would require clue 3, making a four-step task;
-- **answer-unique** would stop after clue 2, because both remaining edges give
-  `12.57`, making a three-step task.
-
-That is the first schema decision (`D1` below).
-
 ## Clue stratification
 
 "Stratify" is the right word. The unit is a **clue stratum** (plural: strata),
@@ -284,6 +240,51 @@ item as a two-step task of two S4 clues.
 This is the `DS-05` tension. `DS-05` says task reasoning step count is the only
 measure. The proposal is to amend it: step count is the length measure; clue
 stratum is the per-clue measure; neither is a task label. See `D10`.
+
+## Worked example
+
+Program:
+
+```python
+result = (
+    cq.Workplane("XY")
+    .box(10, 20, 5)
+    .faces(">Z")
+    .workplane()
+    .circle(2)
+    .cutBlind(-2)
+)
+```
+
+Task shape: a four-step chain on the final solid, with clue strata
+`[S2, S2, S4]` and answer stratum `A1`. The chain resolves to an edge; the
+answer is its length, as a number.
+
+Initial possible-answer set: all edges of the final solid — the box edges plus
+the two circular edges of the hole.
+
+Witness answer: the top circular edge of the hole.
+
+| Step | Clue | Set after | Clue stratum |
+|---|---|---|---|
+| 1 | The edge is adjacent to a planar face. | Many edges | S2 |
+| 2 | The edge is adjacent to the cylindrical face. | 2 circular edges | S2 |
+| 3 | The edge has a larger z-coordinate than the other edge adjacent to the cylindrical face. | 1 edge | S4 |
+| Answer | Return the length. | `12.57` | A1 |
+
+Each clue narrows. Clue 3 is a comparison whose reference is the other circular
+edge selected by clue 2. The chain is broad-to-narrow. The answer is `2πr`
+rounded to 4 significant figures. The answer evidence points to the edge, the
+measurement, and the rule.
+
+If the hole were a through-hole, both circular edges would have the same
+length. Then:
+
+- **entity-unique** would require clue 3, making a four-step task;
+- **answer-unique** would stop after clue 2, because both remaining edges give
+  `12.57`, making a three-step task.
+
+That is the first schema decision (`D1` below).
 
 ## Three uses of stratification
 
