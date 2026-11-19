@@ -147,9 +147,14 @@ evidence records it. Identity answers still require one entity.
 
 ## Clue stratification
 
-"Stratify" is the right word. The unit is a **clue stratum** (plural: strata),
-not a "difficulty level." `DS-05` retired the difficulty label, and the stratum
-should not bring it back.
+**Terminology.** A **clue stratum** is a subgroup of clues defined by how many
+derivation steps one clue needs. It is a partition, not a frequency. The
+frequency target — how often a clue type or a stratum should appear — is a
+**clue quota** or **clue share**, and it lives in `03a`. "Stratify" is the act
+of sampling within those subgroups.
+
+The unit is a **clue stratum** (plural: strata), not a "difficulty level."
+`DS-05` retired the difficulty label, and the stratum should not bring it back.
 
 ### Clue type is not a difficulty axis
 
