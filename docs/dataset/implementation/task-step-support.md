@@ -44,19 +44,65 @@ needs an answer step:
 - The same chain, asking for a measurement of `C`: 4 steps.
 - `observation -> A`, asking for the identity of `A`: 1 step.
 
-For a dimension value, support is an existential:
+A dimension value is **supported** at a task reasoning step count when the
+constructor produces at least one valid definition of exactly that many steps for
+it, over the coverage fixture set:
 
 ```text
 support(dimension_value, task_reasoning_step_count)
-  = there exists a feasible derivation of exactly task_reasoning_step_count steps
+  = the fixture set produced at least one valid definition with that value
+    and exactly that task reasoning step count
 ```
 
-Dependency depth is a lower bound. A value may have feasible derivations at more
-than one step count. The table records feasibility; the release report records
-availability and count.
+Support is an observation, not an abstraction of the grammar. There is one
+implementation, the constructor, and the table records what it did. A second
+description of what the grammar permits would be a second implementation that
+can disagree with the first.
+
+Dependency depth is a lower bound. A value may be supported at more than one
+task reasoning step count. The table records feasibility; the release report
+records availability and count.
 
 `implementation_scope` comes from the product priority declarations. It is not
 derived from the graph.
+
+## Coverage fixture set
+
+The fixture set is what makes "supported" concrete. It is part of the contract,
+not a test detail.
+
+- A fixture is a CadQuery program and its `program_sha256`, committed under
+  [`pipeline/testing/fixtures/`](pipeline/testing/fixtures/). The hash is
+  checked, so an edited fixture fails.
+- A fixture is chosen from the pinned pool for a capability it exercises:
+  several solid states, a pair relation, a CadQuery profile, a CadQuery workplane,
+  and a feature-added region. One program may cover several capabilities.
+- A fixture is representative, not degenerate. A solid built only to make one
+  cell true is not a fixture.
+- The graph is derived, not committed: `02a` extract CadQuery AST, `02b` execute
+  CadQuery, `02c` build CAD graph, cached under `data/` by program hash and
+  versions. No Parquet enters the repository, and a graph schema change
+  regenerates the cache instead of invalidating a binary fixture.
+
+The fixture set follows the vocabulary, not the cell count. A new value adds
+rows to the table; if no fixture can produce them, the test names the missing
+capability and the set grows by one program.
+
+## The checked-in table
+
+The expected table is `pipeline/testing/support-table.json`, one row per
+dimension value and task reasoning step count. It is reviewed like code:
+a diff claims that a value became possible or impossible, and the reviewer asks
+which fixture or rule changed.
+
+The table is not re-derived on every run. A table that follows the current pool
+would change whenever a program was added or removed, which would make coverage
+gaps and specification defects indistinguishable. The pool is used once, when a
+fixture or an expected row is added.
+
+An absent cell is not an observed absence. Every absent cell carries a reason
+code from the closed set below, so a missing fixture cannot hide behind "not
+produced".
 
 ## Files
 
@@ -90,7 +136,7 @@ The row field is named after the file: `target_category`, `clue_type`,
 `answer_meaning`, or `answer_format`.
 
 `reason_code` is a low-cardinality enum, not free text. It is null when the row
-is structurally supported. Unsupported rows use one of:
+is supported. Unsupported rows use one of:
 
 - `task_reasoning_step_count_too_low`;
 - `prior_candidates_required`;
@@ -100,10 +146,15 @@ is structurally supported. Unsupported rows use one of:
 - `ambiguous_target`;
 - `no_valid_construction`.
 
-The four files are generated from the task-definition rules. `05` copies them
-into the release and `manifest.json` records their schema versions and hashes.
+The four files are generated from the constructor over the coverage fixture set.
+`05` copies them into the release and `manifest.json` records their schema
+versions and hashes.
 
 ## Validation use
+
+The structural floor is checked in every run, and the witness check runs in the
+generation job. The two-tier test contract is
+[`pipeline/testing/task-step-support.md`](pipeline/testing/task-step-support.md).
 
 For each task reasoning step count and dimension:
 

@@ -13,7 +13,7 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 15 open entries: 11 P0 technical and 4 P1 technical. No product
+There are 14 open entries: 10 P0 technical and 4 P1 technical. No product
 decision remains open, and P2 is empty.
 
 ## Decisions needed from the owner
@@ -30,44 +30,22 @@ None.
 
 Work order:
 
-1. `MC-44` — feasibility derivation; it produces the support tables `MC-13`
-   checks against.
-2. `MC-46` — the capability census artifact; `03c` resolve deficits cannot route
+1. `MC-46` — the capability census artifact; `03c` resolve deficits cannot route
    a capability deficit without it.
-3. `MC-25` — the prompt template file; `04` render prompt and choices has
+2. `MC-25` — the prompt template file; `04` render prompt and choices has
    nothing to render from without it.
-4. `MC-11` — the rendering inputs; a prompt cannot be reproduced from the
+3. `MC-11` — the rendering inputs; a prompt cannot be reproduced from the
    declared input without them.
-5. `MC-12` — the release projection; the release columns have no writer without
+4. `MC-12` — the release projection; the release columns have no writer without
    it.
-6. `MC-13` — the coverage and balance checks; they compare the release against
+5. `MC-13` — the coverage and balance checks; they compare the release against
    the support tables and `balance.yaml`.
-7. `MC-15` — multiple-choice fairness; the choice check.
-8. `MC-38` — the release fields and fifth support file; the consumer contract.
-9. `MC-26` — the manifest and dataset card fields; the release ships both.
-10. `MC-41` — the construction test contract; it locks the invariants the other
-    entries introduce.
-11. `MC-42` — the golden record; the first end-to-end comparison.
-
-#### MC-44 — Feasibility derivation
-
-Feasibility derivation is not computable: `task-step-support.md` defines support
-existentially ("there exists a feasible derivation of exactly
-`task_reasoning_step_count` steps") and says the tables are derived from `03b`
-construct task definitions, but it gives no reachability rule over the clue
-grammar. Four support tables ship today and a
-fifth is planned (`MC-38`); none has a computable derivation, so their rows are
-assertions rather than computed facts.
-
-**Recommendation:** define feasibility as an existential over the clue grammar,
-not over a concrete graph: a value is supported at a task reasoning step count
-when a symbolic construction can produce a valid definition of exactly that many
-steps using only that value's allowed clue operand forms and the structural rules
-in `03b` construct task definitions (`selected` needs an earlier clue, `cross_state` is P2,
-property has no clue operand form, answer-format compatibility). Implement it as the
-same cover search as construction, with the graph replaced by the grammar's full
-fact set and the validity rules unchanged, and derive all five tables from that
-one search.
+6. `MC-15` — multiple-choice fairness; the choice check.
+7. `MC-38` — the release fields and fifth support file; the consumer contract.
+8. `MC-26` — the manifest and dataset card fields; the release ships both.
+9. `MC-41` — the construction test contract; it locks the invariants the other
+   entries introduce.
+10. `MC-42` — the golden record; the first end-to-end comparison.
 
 #### MC-46 — Capability census artifact
 
@@ -288,6 +266,11 @@ when its completion marker and identity match.
 
 ## Closed or merged in the 2026-11-20 pass
 
+- `MC-44` — feasibility is the constructor's output over a committed coverage
+  fixture set, not an abstraction of the grammar. The fixture set and the checked-in
+  expected table are in `task-step-support.md`, and the structural and witness
+  tiers are in `pipeline/testing/task-step-support.md`. Fixtures are programs, so
+  no Parquet enters the repository.
 - `MC-14` — `failure-record.md` owns the row schema, the dedupe key, the merge,
   the order, the reconciliation rule, and the aggregation. The record is one
   partition per rejecting pipeline stage, merged by `05`.
