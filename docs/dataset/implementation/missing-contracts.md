@@ -5,7 +5,22 @@ Each row names an absent contract. When the contract is written into its owner
 doc, delete the row. Open questions remain in
 [`open-questions.md`](open-questions.md).
 
+Rows are grouped by priority, and within a priority by whether the missing
+contract needs a **product decision** — a policy, threshold, or scope choice — or
+only a **technical decision** that engineering can settle from the decisions
+already recorded. Product rows block more than they appear to, because they
+cannot be closed by writing code.
+
 ## P0
+
+### Product decisions
+
+| ID | Owner | Missing contract | Why it blocks |
+|---|---|---|---|
+| MC-36 | [`graph-content.md`](../requirements/graph-content.md), [`graph-construction.md`](pipeline/extraction/graph-construction.md) | The `max_state_entities` value and the derived list of named endpoints per state. The endpoint rule and the no-cap policy are written; the limit is provisional. | Distance and angle are P0 answer meanings, so a pair the graph never enumerated makes a P0 task unanswerable and looks like a missing measurement rather than a missing rule. |
+| MC-39 | [`03a`](pipeline/03-task-generation/03a-allocate-task-quotas.md) | The coverage minimum for clue operand form at each step count. `DS-37` makes it a coverage dimension but does not give the minimum. | Without a number, `03a` cannot allocate the dimension. |
+
+### Technical decisions
 
 | ID | Owner | Missing contract | Why it blocks |
 |---|---|---|---|
@@ -19,9 +34,17 @@ doc, delete the row. Open questions remain in
 | MC-15 | [`03b`](pipeline/03-task-generation/03b-construct-task-definitions.md), [`05`](pipeline/05-validate-and-export-release.md) | P0 multiple-choice fairness checks: correct choice present, choices unique, same answer space, unit/frame/precision, non-leaking descriptions, deterministic labels. | P0 choices can be invalid even when the choice pool has five entries. |
 | MC-16 | [`03a`](pipeline/03-task-generation/03a-allocate-task-quotas.md), [`03b`](pipeline/03-task-generation/03b-construct-task-definitions.md) | P0/P1/P2 implementation-scope filter for generation and validation. | Later-scope values can enter the first release. |
 | MC-35 | [`02c`](pipeline/02c-build-cad-graph.md) | Relation payload schema: the evidence fields per relation, and the tolerance field for the relations that carry one. Which relations are measured and which are derived is written in `graph-content.md` section 4.3. | P0 parallel and perpendicular clues cannot be checked reproducibly. |
-| MC-36 | [`graph-content.md`](../requirements/graph-content.md), [`graph-construction.md`](pipeline/extraction/graph-construction.md) | The `max_state_entities` value and the derived list of named endpoints per state. The endpoint rule and the no-cap policy are written; the limit is provisional. | Distance and angle are P0 answer meanings, so a pair the graph never enumerated makes a P0 task unanswerable and looks like a missing measurement rather than a missing rule. |
+| MC-37 | [`03b`](pipeline/03-task-generation/03b-construct-task-definitions.md) | `TaskDefinition` fields required by the recorded decisions: `state_scope`, `clue_form_profile`, `answer_equivalent_set`, and the membership point. | The field table predates `DS-32`, `DS-34`, and `DS-38`, so the definition cannot carry what the decisions require. |
+| MC-38 | [`release contract`](../requirements/release-dataset-contract.md) | Release-table fields `clue_form_profile` and `answer_equivalent_set`, and the fifth support table for clue forms. | `DS-32` and `DS-38` require the fields, and the release contract lists four support tables. |
+| MC-40 | [`03c`](pipeline/03-task-generation/03c-resolve-deficits.md) | Deficit classes for a missing capability and a missing pair. `03c` predates `DS-33` and `MC-36`. | A capability deficit would be classified as a construction underfill, which sends the loop to the wrong place. |
+| MC-41 | [`03`](pipeline/03-task-generation/README.md) | Test contract for the construction invariants: pair-domain completeness, `is_inside` reproducibility from a probe, clear-case margin rejection, and redundant-clue rejection. | The invariants are written, but nothing verifies them. |
+| MC-42 | [`03`](pipeline/03-task-generation/README.md) | Golden-record file format for the box-with-hole example. | The first end-to-end test needs a fixed record to compare against. |
+| MC-43 | [`02c`](pipeline/02c-build-cad-graph.md) | Builder work for the pair domain: named endpoints, `distance_to` pair rows, point probes, and the `max_state_entities` rejection. | The requirement is written in `graph-content.md`; the builder contract does not mention it. |
+| MC-44 | [`05`](pipeline/05-validate-and-export-release.md), [`task-step-support.md`](task-step-support.md) | Feasibility derivation: how a support table decides that a dimension value is feasible at a step count, as reachability over the clue grammar. | The release ships support tables whose derivation is not defined. |
 
 ## P1
+
+### Product decisions
 
 | ID | Owner | Missing contract | Why it matters |
 |---|---|---|---|
@@ -32,13 +55,18 @@ doc, delete the row. Open questions remain in
 | MC-22 | [`03b`](pipeline/03-task-generation/03b-construct-task-definitions.md) | Geometry-required rule for 1-step no-clue tasks, plus the aggregate 95% check. | The current definition marks some geometry-dependent tasks false. |
 | MC-23 | [`03c`](pipeline/03-task-generation/03c-resolve-deficits.md) | Numeric retry, expansion, and stop budgets. | The loop has no computable stop rule. |
 | MC-24 | [`03b`](pipeline/03-task-generation/03b-construct-task-definitions.md) | P0 choice fairness beyond pool size. | This overlaps MC-15; the owner split is unclear. |
-| MC-25 | [`04`](pipeline/04-render-prompt-and-choices.md) | Root `prompts.yaml` file and schema. | The convention exists in docs, but the artifact does not. |
-| MC-26 | [`05`](pipeline/05-validate-and-export-release.md) | Manifest, dataset-card, `release_id`, generator version, upstream version, external-manifest linkage, and evaluation material. | The release contract requires artifacts with no owner or content spec. |
 | MC-27 | [`05`](pipeline/05-validate-and-export-release.md) | Reconcile Q1 with PRD Q7 and define the external benchmark input/revision for R-16. | Q1 is stale and transfer overlap has no input. |
 | MC-28 | [`05`](pipeline/05-validate-and-export-release.md) | Human review and evaluation-material stage ownership. | R-17 and §11 have no pipeline stage or artifact. |
+
+### Technical decisions
+
+| ID | Owner | Missing contract | Why it matters |
+|---|---|---|---|
+| MC-25 | [`04`](pipeline/04-render-prompt-and-choices.md) | Root `prompts.yaml` file and schema. | The convention exists in docs, but the artifact does not. |
+| MC-26 | [`05`](pipeline/05-validate-and-export-release.md) | Manifest, dataset-card, `release_id`, generator version, upstream version, external-manifest linkage, and evaluation material. | The release contract requires artifacts with no owner or content spec. |
 | MC-29 | [`00`](pipeline/00-end-to-end.md), [`artifacts.md`](artifacts.md) | Run manifest, completion markers, cache lookup, atomic writes, resume semantics, and the run-level graph tolerance policy. | Retries and cache hits are promised but not specified. |
 
-## Minor
+## P2 — minor
 
 | ID | Owner | Missing contract |
 |---|---|---|
