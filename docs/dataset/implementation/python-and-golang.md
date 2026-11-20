@@ -25,6 +25,57 @@ of these exceptions.
 Pipeline stage contracts are language-agnostic. The language boundary does not
 change their models.
 
+## Libraries
+
+One library per job. A second Parquet or UUID library is a defect, not a
+preference.
+
+### Go
+
+| Need | Library | Status |
+|---|---|---|
+| Parquet read and write | `github.com/parquet-go/parquet-go` | decided, `DS-40` |
+| Graph-local IDs | `github.com/google/uuid` | decided, `DS-40` |
+| Logging | `log/slog` | standard library |
+| CLI, processes, cancellation | `flag`, `os/exec`, `context` | standard library |
+
+No other Go dependency is decided. Add one with a decision, not with an import.
+No Go code exists yet, so these rows are decisions rather than observations.
+
+### Python
+
+| Need | Library | Status |
+|---|---|---|
+| Parquet read and write | `pyarrow` | in use |
+| Columnar analysis | `polars` | in use, never on the graph path (`DS-41`) |
+| Typed models | `pydantic` | in use in `train_and_eval` |
+| Prompt templates | `PyYAML` | in use |
+| CAD execution | `cadquery`, `OCP` | `02b` only |
+| Program AST and tokens | `ast`, `tokenize` | `01d` and `02a` only |
+
+`DS-22` limits Python to work that needs Python execution semantics. The table
+lists what that work may import; it is not a general permission for new Python
+code.
+
+## Parquet at the boundary
+
+Both languages write the same typed tables. `DS-23` forbids JSON columns, and
+`graph-persistence.md` defines the graph tables.
+
+- Columns are typed. A struct, list, or tagged union is a Parquet struct, list,
+  or nullable group, never a JSON string.
+- Graph-local IDs are the native UUID logical type, never text.
+- Go writes UUIDs with `parquet-go`, which maps `uuid.UUID` with no tag.
+  `arrow-go` would need the `arrow.uuid` extension registered; it is not adopted.
+- Python reads a Go-written UUID column as `fixed_size_binary[16]`. PyArrow
+  reports `pa.uuid()` only for files it wrote itself, because the extension lives
+  in `ARROW:schema` metadata. Cast when the extension type matters.
+- Polars rewrites a UUID column as `large_binary` and drops the logical type. No
+  Python stage rewrites a graph table.
+- Read graph tables in batches, not whole. On the 6.39M-relation table, Go
+  materializing every row costs 4.96 s and 2.16 GB, while streaming and keeping
+  one program costs 3.27 s and 218 MB.
+
 ## Prompt text
 
 All LLM-facing prompt text is data in `prompts.yaml`, not code:

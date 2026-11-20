@@ -686,3 +686,52 @@ prefix is `DS-`.
   introduced on the graph path without superseding this decision. The ClickHouse
   column type mapping in `graph-persistence.md` is a compatibility note for a
   hypothetical loader, not a deployment commitment.
+
+## DS-40 — Go reads and writes Parquet with parquet-go
+
+- **Status:** accepted (2026-11-20).
+- **Context:** `DS-22` makes Go the default implementation language, and
+  `graph-persistence.md` requires graph-local IDs to be the native Parquet UUID
+  logical type, read and written directly. `02c` writes the three graph tables in
+  Go and `03` reads them in Go, so the Parquet library decides whether that
+  requirement is cheap or a trap. Two pure-Go libraries are viable. In
+  `apache/arrow-go`, `parquet/pqarrow/schema.go` maps the Parquet UUID logical
+  type to the `arrow.uuid` extension only when that extension is registered, and
+  otherwise falls back to `FixedSizeBinary(16)`; on write it maps
+  `FIXED_SIZE_BINARY` to `FIXED_LEN_BYTE_ARRAY` with no logical type. The
+  extension type exists in `arrow/extensions`, but nothing registers it, so the
+  annotation is lost silently. `parquet-go` maps `uuid.UUID` from
+  `github.com/google/uuid` to the UUID logical type with no tag and no
+  registration. Both were measured on the 6.39M-relation table: materializing
+  every row costs 4.96 s and 2.16 GB, streaming in batches and keeping one
+  program costs 3.27 s and 218 MB.
+- **Decision:** Go reads and writes Parquet with
+  `github.com/parquet-go/parquet-go`, and carries graph-local IDs as `uuid.UUID`
+  from `github.com/google/uuid`. `arrow-go` is not adopted. It returns only if a
+  measured need for Arrow compute appears, and then the UUID extension must be
+  registered and every UUID field typed as that extension.
+- **Consequences:** The Go schema is a struct with `parquet` tags, where `dict`,
+  `optional`, `zstd`, and `list` express the encoding requirements in
+  `graph-persistence.md`. Graph tables are read by streaming through
+  `parquet.GenericReader` in batches; `parquet.ReadFile` materializes the whole
+  table and is not used on them. A schema mismatch is an error at the boundary,
+  which is where `graph_schema_version` is enforced.
+
+## DS-41 — UUID columns are written by Go and never rewritten by Polars
+
+- **Status:** accepted (2026-11-20).
+- **Context:** The graph artifact stores graph-local IDs as the native UUID
+  logical type, and Python also reads these tables. Verified on PyArrow 24.0 and
+  Polars 1.41: PyArrow restores `pa.uuid()` only because it embeds an
+  `ARROW:schema` metadata blob in the file it wrote. A `parquet-go` file carries
+  no such blob, so PyArrow reports `fixed_size_binary[16]` and Polars reports
+  `Binary`. Rewriting that column through Polars emits `large_binary`, which
+  drops the UUID logical type with no error and no change to the values.
+- **Decision:** UUID columns are written by Go and read by Go. A Python stage may
+  read a UUID column as `fixed_size_binary[16]`; if it must preserve the logical
+  type, it writes with PyArrow. No Python stage rewrites a graph table, and no
+  Polars job is on the graph path.
+- **Consequences:** `02b` may emit UUID columns from PyArrow and `02c` reads them
+  unchanged. A Polars round-trip of a graph table is a defect even when the
+  values are correct, because the type annotation is lost. A test that compares
+  values will not catch it; the check must compare the Parquet schema.
