@@ -586,17 +586,22 @@ Blocks: the `03b` choice pool and `04` rendering.
 
 ### 8. `D8` — In what order are quota targets filled, and when is a task accepted?
 
-Options: per-target greedy in plan order; scarcity-first across targets; global
-selection over the whole plan.
+Accepted as `TG-2`.
 
-Recommendation: scarcity-first across targets, which `03a` already requires,
-with greedy acceptance inside each target. A task is accepted when it fills an
-unfilled target and does not push any cell past its maximum; an overfill is
-recorded rather than silently accepted.
+Options: per-target greedy in plan order; priority order with the scarcest
+target first; global selection over the whole plan.
 
-The earlier wording said "minimum, then target, then the volume". `03a` defines
-a minimum, a target count, and a maximum for each target, so "volume" was
-undefined.
+Recommendation: fill targets in the `03a` priority order — coverage, then
+balance, then volume — and within a tier process the scarcest targets first,
+where scarcity is the number of active programs whose graph can support the
+target. A task is accepted when it fills an unfilled target and does not push
+any cell past its maximum. An acceptance that would overfill is rejected and
+recorded.
+
+`03a` defines the priority tiers and the minimum, target count, and maximum for
+each target, but not the fill order or the acceptance rule for one task that
+affects several targets. The earlier wording said "minimum, then target, then
+the volume"; `03a` has no volume, so that was undefined.
 
 Blocks: quota filling, overfill handling, and deficits.
 
@@ -700,7 +705,7 @@ rates.
 The construction strategy is settled (`D11`): supply-driven with a
 capability-aware deficit loop. The two schema blockers are settled as well:
 `D1` (the equality relation for answer uniqueness) and `D2` (state scope). The
-remaining open decisions are `D8` to `D10`, and the construction grammar can
+remaining open decisions are `D9` and `D10`, and the construction grammar can
 be written with the box-and-hole example as the first golden record.
 
 The concern that the vocabulary may be growing without a stopping rule is

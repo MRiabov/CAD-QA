@@ -30,14 +30,32 @@ the document that owns them.
   continuous answers need a candidate set that shrinks gradually, so
   continuous-answer tasks are shorter on average than identity tasks.
 
+## TG-2 — Fill targets by priority, then scarcity, and reject overfill
+
+- **Status:** accepted (2026-11-20).
+- **Context:** One task counts toward several quota targets at once: target
+  category, clue type, answer meaning, answer format, and task reasoning step
+  count. `03a` defines a minimum, a target count, and a maximum for each target,
+  plus a priority tier (coverage, then balance, then volume), but it does not
+  define the order in which targets are filled or what to do when one acceptance
+  would affect several targets at once.
+- **Decision:** Fill targets in the `03a` priority order, and within a tier
+  process the scarcest targets first, where scarcity is the number of active
+  programs whose graph can support the target. A task is accepted when it fills
+  an unfilled target and does not push any cell past its maximum. An acceptance
+  that would overfill is rejected and recorded.
+- **Consequences:** The scheduler is deterministic given the plan, the ledger,
+  and the program order. Scarcity-first takes rare targets early, so a later
+  supply-driven sweep cannot starve them. Overfill is visible in the ledger
+  rather than silently absorbed.
+
 ## Pending
 
-One module-scoped decision is accepted. The remaining candidates are the
+Two module-scoped decisions are accepted. The remaining candidates are the
 construction questions in `plans/nov-19/03b-task-construction-design.md`:
 
 | Candidate | Question |
 |---|---|
-| `D8` | In what order are quota targets filled, and when is a task accepted? |
 | `D9` | Is clue operand form a coverage dimension, a balance dimension, or both? |
 | `D10` | What role does clue form play in reporting? |
 

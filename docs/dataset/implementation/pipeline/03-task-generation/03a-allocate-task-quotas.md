@@ -166,6 +166,11 @@ The target count is the desired count; the minimum and maximum are acceptance
 bounds. When a target count violates a plan cap, move units to values with slack.
 If no value has slack, record `cap_conflict`; do not silently exceed the cap.
 
+Fill targets in the priority order above, and within a tier process the
+scarcest targets first. A task is accepted when it fills an unfilled target and
+does not push any cell past its maximum; an acceptance that would overfill is
+rejected and recorded.
+
 ### Family task capacity
 
 Use `usable_program_count = max(1, active_programs_with_graph)` for active programs
