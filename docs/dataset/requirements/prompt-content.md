@@ -191,14 +191,12 @@ Program:
 ```python
 import cadquery as cq
 
-result = (
-    cq.Workplane("XY")
-    .box(10, 20, 5)
-    .faces(">Z")
-    .workplane()
-    .circle(2)
-    .cutBlind(-2)
-)
+wp = cq.Workplane("XY")
+box = wp.box(10, 20, 5)
+top = box.faces(">Z")
+plane = top.workplane()
+hole = plane.circle(2)
+result = hole.cutBlind(-2)
 ```
 
 Prompt:
@@ -209,14 +207,12 @@ CAD construction.
 
     import cadquery as cq
 
-    result = (
-        cq.Workplane("XY")
-        .box(10, 20, 5)
-        .faces(">Z")
-        .workplane()
-        .circle(2)
-        .cutBlind(-2)
-    )
+    wp = cq.Workplane("XY")
+    box = wp.box(10, 20, 5)
+    top = box.faces(">Z")
+    plane = top.workplane()
+    hole = plane.circle(2)
+    result = hole.cutBlind(-2)
 
 What is the volume of material removed by an operation?
 
