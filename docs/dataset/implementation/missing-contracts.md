@@ -13,7 +13,7 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 16 open entries: 12 P0 technical and 4 P1 technical. No product
+There are 15 open entries: 11 P0 technical and 4 P1 technical. No product
 decision remains open, and P2 is empty.
 
 ## Decisions needed from the owner
@@ -30,36 +30,24 @@ None.
 
 Work order:
 
-1. `MC-14` — the failure record; every pipeline stage that rejects writes to it.
-2. `MC-44` — feasibility derivation; it produces the support tables `MC-13`
+1. `MC-44` — feasibility derivation; it produces the support tables `MC-13`
    checks against.
-3. `MC-46` — the capability census artifact; `03c` resolve deficits cannot route
+2. `MC-46` — the capability census artifact; `03c` resolve deficits cannot route
    a capability deficit without it.
-4. `MC-25` — the prompt template file; `04` render prompt and choices has
+3. `MC-25` — the prompt template file; `04` render prompt and choices has
    nothing to render from without it.
-5. `MC-11` — the rendering inputs; a prompt cannot be reproduced from the
+4. `MC-11` — the rendering inputs; a prompt cannot be reproduced from the
    declared input without them.
-6. `MC-12` — the release projection; the release columns have no writer without
+5. `MC-12` — the release projection; the release columns have no writer without
    it.
-7. `MC-13` — the coverage and balance checks; they compare the release against
+6. `MC-13` — the coverage and balance checks; they compare the release against
    the support tables and `balance.yaml`.
-8. `MC-15` — multiple-choice fairness; the choice check.
-9. `MC-38` — the release fields and fifth support file; the consumer contract.
-10. `MC-26` — the manifest and dataset card fields; the release ships both.
-11. `MC-41` — the construction test contract; it locks the invariants the other
+7. `MC-15` — multiple-choice fairness; the choice check.
+8. `MC-38` — the release fields and fifth support file; the consumer contract.
+9. `MC-26` — the manifest and dataset card fields; the release ships both.
+10. `MC-41` — the construction test contract; it locks the invariants the other
     entries introduce.
-12. `MC-42` — the golden record; the first end-to-end comparison.
-
-#### MC-14 — Failure record schema
-
-The `failures.parquet` schema is not specified: columns, identity, dedupe,
-order, merge from parallel writers, and aggregation. R-19 is not enforceable,
-and parallel failure records cannot be combined safely.
-
-**Recommendation:** one row per rejection with pipeline stage, input identity,
-reason code, detail, and `task_id` when a task exists; dedupe on the tuple of
-pipeline stage, input identity, `task_id`, and reason; sort by pipeline stage
-then identity.
+11. `MC-42` — the golden record; the first end-to-end comparison.
 
 #### MC-44 — Feasibility derivation
 
@@ -299,6 +287,9 @@ when its completion marker and identity match.
 
 ## Closed or merged in the 2026-11-20 pass
 
+- `MC-14` — `failure-record.md` owns the row schema, the dedupe key, the merge,
+  the order, the reconciliation rule, and the aggregation. The record is one
+  partition per rejecting pipeline stage, merged by `05`.
 - `MC-40` — `DeficitClass` is a closed set of seven classes in `03c` resolve
   deficits, `03a` records the allocation detail instead of a class, and the
   census decides between a capability and a capacity deficit. A probe deficit

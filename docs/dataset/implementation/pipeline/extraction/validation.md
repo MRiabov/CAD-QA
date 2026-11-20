@@ -26,16 +26,13 @@ program.
 | Workplanes | Every CadQuery workplane reference resolves; frame status is explicit, derived, or unknown. |
 | Final state | The last assignment is `result`; it is a call or alias that can produce or copy a value. |
 
-An AST rejection record carries:
-
-- `program_id`, `program_sha256`, `extractor_version`;
-- `stage = 02a`;
-- `error_kind`: `syntax`, `import`, `module_shape`, `assignment_shape`,
-  `unsupported_expression`, `unsupported_call`, `chained_call`, `unknown_method`,
-  `unresolved_name`, `duplicate_target`, `missing_result`, `invalid_id`,
-  `invalid_reference`, or `internal`;
-- `message`, `source_line`, and `source_span` when known;
-- `cache_key`.
+An AST rejection is a [`failure record`](../../failure-record.md) with the
+subject program, `pipeline_stage` `02a_extract_cadquery_ast`, and
+`reason_code` from this set: `syntax`, `import`, `module_shape`,
+`assignment_shape`, `unsupported_expression`, `unsupported_call`,
+`chained_call`, `unknown_method`, `unresolved_name`, `duplicate_target`,
+`missing_result`, `invalid_id`, `invalid_reference`, or `internal`. It sets
+`source_line` and `source_span` when known.
 
 An AST rejection emits no operations, aliases, workplanes, profiles, paths,
 selectors, or diagnostics that consumers could mistake for a CadQuery program AST extraction result.

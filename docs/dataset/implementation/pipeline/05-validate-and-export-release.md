@@ -16,6 +16,8 @@ Artifact ownership: [`../artifacts.md`](../artifacts.md).
 - Recheck split isolation by CADEvolve program family on the final release
   table. `03a` assigns the split; `03b` stamps it; `04` carries it.
 - Check released values against the task reasoning step support tables.
+- Merge the per-pipeline-stage failure partitions and reconcile the counts
+  (R-19).
 - Validate the balance policy file and check the release against it.
 - Check the transfer overlap: exact normalized program text at P0; the P1
   same-CAD-model check is PRD Q7.
@@ -38,6 +40,19 @@ Artifact ownership: [`../artifacts.md`](../artifacts.md).
 - The final release write, manifest assembly, and support-table copy are single
   writer steps.
 - Parallel validation results are reduced into one summary before export.
+
+## Failure record
+
+Each rejecting stage appends to its own failure partition. `05` merges them into
+`failures.parquet`: group by `failure_id`, sum `occurrence_count`, require the
+other columns to agree, and sort by pipeline stage, program, task, and reason.
+The schema
+and the merge rules are in [`../failure-record.md`](../failure-record.md).
+
+`05` also reconciles the counts. For each chain step, the count entering the step
+must equal the count leaving it plus the failures recorded at that step. A
+mismatch blocks the export and names the step and the counts, because a failure
+row cannot report its own absence.
 
 ## Balance policy
 

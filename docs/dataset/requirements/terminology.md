@@ -60,6 +60,7 @@ the user-visible outcome.
 | **Demand-driven construction** | Internal | Specifying a task cell first and querying for programs that can support it. It is used only for deficits. |
 | **Forced task** | Internal | A task produced by a cell-level demand query rather than by a natural clue chain, flagged for review. |
 | **Failure tombstone** | Internal | A recorded failed program or operation, with the error and cache key, used for debugging and cache hits. It is not a graph entity and never supports an answer. |
+| **Failure record** | Internal | One row per distinct rejection of a program or task, with its pipeline stage, subject, reason, and occurrence count. `05` merges the per-pipeline-stage partitions into `failures.parquet`. `In code:` `FailureRecord`. |
 | **CadQuery program AST extraction result** | Internal | The result of extracting a CadQuery program without running it: operations, CadQuery workplanes, CadQuery profiles, CadQuery paths, CadQuery selectors, and their relationships in the CadQuery program. |
 | **CadQuery program runtime extraction result** | Internal | The result of executing a CadQuery program and extracting Shape snapshots, CAD feature solid state effect deltas, CadQuery selector results, and evidence. |
 | **solid state producing operation** | Internal | A CadQuery program operation that can produce a solid state. |

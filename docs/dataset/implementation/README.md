@@ -20,6 +20,7 @@ between pipeline stages is
 | [`artifacts.md`](artifacts.md) | Artifact ownership, identity, and lifecycle. |
 | [`planning-math.md`](planning-math.md) | Priority, coverage, balance, split, and cap math. |
 | [`task-step-support.md`](task-step-support.md) | Derived task reasoning step support tables used for coverage checks. |
+| [`failure-record.md`](failure-record.md) | The row schema for a rejected program or task, and the rules that merge it. |
 | [`python-and-golang.md`](python-and-golang.md) | The Python and Go language boundary. |
 | [`open-questions.md`](open-questions.md) | Centralized inventory of unresolved questions across pipeline docs. |
 | [`missing-contracts.md`](missing-contracts.md) | Ephemeral audit backlog of absent contracts by priority and decision owner. |

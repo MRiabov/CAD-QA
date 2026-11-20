@@ -25,11 +25,14 @@ this document owns ownership, lifecycle, and format, not field definitions.
 | Deficit ledger | `03b` | `03a`, `03c` | Plan version plus update sequence | JSON | Accepted and rejected counts and remaining deficits by quota target, family, task reasoning step count, and deficit class. |
 | Release table | `04` | `05` | `release_id` | Parquet | One row per task; prompt is answer-free; carries `cadevolve_program_family_id`. |
 | Task reasoning step support tables | Task-step support QA | `05`, reviewers | Schema version | JSON | Four derived files used to check coverage; not generator inputs. |
+| Pipeline stage failure record | Every rejecting pipeline stage | `05` | `failure_id` | Parquet | One partition per pipeline stage, appended and never rewritten. Schema in [`failure-record.md`](failure-record.md). |
 | Release artifacts | `05` | Dataset consumers | `release_id` | Parquet, JSON, Markdown | `release.parquet`, `failures.parquet`, `manifest.json`, `dataset-card.md`, `support/`. |
 
-`Failures` is a multi-writer record: every pipeline stage appends a failure with
-the input identity and reason, and `05` exports the records as
-`failures.parquet`.
+`Failures` is one partition per rejecting pipeline stage. Each pipeline stage
+appends to its own partition, and `05` merges the partitions into
+`failures.parquet`. The row schema,
+dedupe key, merge, and reconciliation rules are in
+[`failure-record.md`](failure-record.md).
 
 ## Format policy
 
@@ -45,7 +48,8 @@ the input identity and reason, and `05` exports the records as
 
 ## Lifecycle rules
 
-- An artifact has exactly one writer, except the failure record.
+- An artifact has exactly one writer. The failure record is one partition per
+  pipeline stage, so each partition has one writer.
 - A written artifact is immutable. A changed input or version produces a new
   artifact, not an in-place edit.
 - Identity includes the input hash and the version of the code or schema that

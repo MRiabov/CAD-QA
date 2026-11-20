@@ -66,8 +66,9 @@ identities.
 
 ## Failures
 
-Record a normalization failure with the input identity, failure stage, reason,
-and input line when available. Do not emit a partial normalized program.
+Record a normalization failure as a
+[`failure record`](../failure-record.md) with the subject program, the reason,
+and `source_line` when available. Do not emit a partial normalized program.
 
 ## Why it exists
 
