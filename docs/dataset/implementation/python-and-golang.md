@@ -67,11 +67,13 @@ Both languages write the same typed tables. `DS-23` forbids JSON columns, and
 - Graph-local IDs are the native UUID logical type, never text.
 - Go writes UUIDs with `parquet-go`, which maps `uuid.UUID` with no tag.
   `arrow-go` would need the `arrow.uuid` extension registered; it is not adopted.
-- Python reads a Go-written UUID column as `fixed_size_binary[16]`. PyArrow
-  reports `pa.uuid()` only for files it wrote itself, because the extension lives
-  in `ARROW:schema` metadata. Cast when the extension type matters.
-- Polars rewrites a UUID column as `large_binary` and drops the logical type. No
-  Python stage rewrites a graph table.
+- Python reads a Go-written UUID column with PyArrow and gets `pa.uuid()`. The
+  Parquet logical type is enough; no `ARROW:schema` metadata is needed. On
+  PyArrow 24.0.0 and earlier, `read_schema` is the exception
+  (`apache/arrow#48254`, fixed in 25.0.0); use `ParquetFile(...).schema_arrow`.
+- Polars has no UUID type (`pola-rs/polars#7175`, open). It reads the column as
+  `Binary` and writes it back as `BYTE_ARRAY`, dropping both the physical type and
+  the logical type. No Python stage rewrites a graph table.
 - Read graph tables in batches, not whole. On the 6.39M-relation table, Go
   materializing every row costs 4.96 s and 2.16 GB, while streaming and keeping
   one program costs 3.27 s and 218 MB.

@@ -719,19 +719,28 @@ prefix is `DS-`.
 
 ## DS-41 — UUID columns are written by Go and never rewritten by Polars
 
-- **Status:** accepted (2026-11-20).
+- **Status:** accepted (2026-11-20), corrected (2026-11-20).
 - **Context:** The graph artifact stores graph-local IDs as the native UUID
-  logical type, and Python also reads these tables. Verified on PyArrow 24.0 and
-  Polars 1.41: PyArrow restores `pa.uuid()` only because it embeds an
-  `ARROW:schema` metadata blob in the file it wrote. A `parquet-go` file carries
-  no such blob, so PyArrow reports `fixed_size_binary[16]` and Polars reports
-  `Binary`. Rewriting that column through Polars emits `large_binary`, which
-  drops the UUID logical type with no error and no change to the values.
-- **Decision:** UUID columns are written by Go and read by Go. A Python stage may
-  read a UUID column as `fixed_size_binary[16]`; if it must preserve the logical
-  type, it writes with PyArrow. No Python stage rewrites a graph table, and no
-  Polars job is on the graph path.
+  logical type, and Python also reads these tables. The two Python readers behave
+  differently. Polars has no UUID data type at all: `pola-rs/polars#7175` has been
+  open since February 2023 and is labelled `needs decision` as of August 2026,
+  and Polars 2.1.0 has no UUID type. Verified on Polars 1.41.0: a UUID column
+  reads as `Binary`, and writing it back produces `optional binary` in the
+  Parquet schema, so the write drops both the `FIXED_LEN_BYTE_ARRAY(16)` physical
+  type and the UUID logical type, with no error and no change to the values.
+  PyArrow does not have this problem. `pq.read_table` returns
+  `extension<arrow.uuid>` from a `parquet-go` file that carries no `ARROW:schema`
+  metadata, so the Parquet logical type is sufficient. `pq.read_schema` is the
+  exception, and only on PyArrow 24.0.0 and earlier: `apache/arrow#48254` tracks
+  it and it was fixed in 25.0.0, and `ParquetFile(...).schema_arrow` is correct
+  on the affected versions.
+- **Decision:** UUID columns are written by Go and read by Go. A Python stage
+  reads them with PyArrow and gets `pa.uuid()`. On PyArrow 24.0.0 and earlier it
+  inspects the schema through `ParquetFile(...).schema_arrow`, not `read_schema`.
+  No Python stage rewrites a graph table, and no Polars job is on the graph path.
 - **Consequences:** `02b` may emit UUID columns from PyArrow and `02c` reads them
   unchanged. A Polars round-trip of a graph table is a defect even when the
-  values are correct, because the type annotation is lost. A test that compares
-  values will not catch it; the check must compare the Parquet schema.
+  values are correct, because both the physical type and the logical type are
+  lost. A test that compares values will not catch it; the check must compare the
+  Parquet schema. The Polars limitation is upstream and tracked, not something
+  the graph contract works around.
