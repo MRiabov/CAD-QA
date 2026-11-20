@@ -29,9 +29,9 @@ assert-from-the-artifact rule, and the test-first order — are in
 | [`04-render-prompt-and-choices.md`](04-render-prompt-and-choices.md) | `04` render prompt and choices. | draft |
 | [`05-validate-and-export-release.md`](05-validate-and-export-release.md) | `05` validate and export release. | draft |
 
-A name in backticks is a test doc that is not written yet. That is a missing
-test, not a pipeline stage without tests. The group docs (`01`, `02`, `03`) are
-overviews; the tests pin the sub-stages.
+`draft` means the contract is written and no test enforces it yet. It becomes
+`enforced` when a test in the repository pins it. The group docs (`01`, `02`,
+`03`) are overviews; the tests pin the sub-stages.
 
 ## Fixtures and records
 

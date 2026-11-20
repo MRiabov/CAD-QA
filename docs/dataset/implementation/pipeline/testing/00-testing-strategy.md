@@ -70,8 +70,8 @@ are the executable units.
 | [`04-render-prompt-and-choices.md`](04-render-prompt-and-choices.md) | [`../04-render-prompt-and-choices.md`](../04-render-prompt-and-choices.md) |
 | [`05-validate-and-export-release.md`](05-validate-and-export-release.md) | [`../05-validate-and-export-release.md`](../05-validate-and-export-release.md) |
 
-A name in backticks is a test doc that is not written yet. That is a missing
-test, not a pipeline stage without tests.
+Every doc in this table is written. A missing row would be a missing test, not a
+pipeline stage without tests.
 
 `00-support-tables.md` is the one cross-cutting test: the support tables are an
 observation over the fixture set, not a pipeline stage output.
