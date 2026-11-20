@@ -19,6 +19,7 @@ TRANSFORM:
 - capability lookup: read `family_profiles`; at least one family has the capability → `capacity_deficit`; no family has it → `capability_deficit`; a capability that yields no valid task is a `construction_deficit` or `constructor_deficit`
 - `capacity_deficit` → `ProgramReassignmentRequest` first; `ProgramRequest` only when the split itself is short
 - `construction_deficit` → `ProgramReassignmentRequest` to raise the attempt budget; a persistent high rate is a `03b` fix
+- `program_floor_short` → `capacity_deficit`: promote reserve programs through the slow loop until `policy.usable_floor` is met or the reserve is exhausted; an exhausted reserve records an `AcceptedMiss`
 - `constructor_deficit`, `plan_conflict`, and `structural_deficit` → neither loop helps; fix `03b` or the plan
 - `probe_deficit` is per state: drop membership for that state and record it; escalate only when no family profile reports a state with a surviving probe
 - escalation order: `ProgramReassignmentRequest` to `03a`, then `ProgramRequest` to `01b`, then accept the miss

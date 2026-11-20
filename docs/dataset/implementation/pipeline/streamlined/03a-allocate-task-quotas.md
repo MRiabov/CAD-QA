@@ -64,7 +64,9 @@ WRITE:
 
 TRANSFORM:
 
+- count one program per `program_id`: when two selection rows share a `program_id`, use the row with the lexicographically smallest `source_id`, use its family, and exclude the other row from the plan with the conflict recorded
 - `usable_program_count = max(1, active_programs_with_graph)`
+- `usable_program_count` below `policy.usable_floor` → `capacity_deficit` with detail `program_floor_short`; `03c` promotes reserve programs, and an exhausted reserve leaves an `AcceptedMiss`
 - `per_program_task_quota = min(max(1, floor(0.01 * dataset_release_task_count)), max(1, ceil(dataset_release_task_count / usable_program_count)))`
 - `family_probe_success_rate = (accepted_probe_tasks + 1) / (attempted_probe_tasks + 2)` when a probe ran, else `1.0`
 - `family_task_capacity = floor(program_count * per_program_task_quota * family_probe_success_rate)`

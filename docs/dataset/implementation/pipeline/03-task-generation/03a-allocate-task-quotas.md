@@ -262,6 +262,20 @@ rejected and recorded.
 
 ### Family task capacity
 
+`active_programs_with_graph` counts one program per `program_id`. Two selection
+rows can share a `program_id` when the same normalized text appears in two
+collections, because `01d` normalize programs gives identical bytes one identity.
+The row with the lexicographically smallest `source_id` is used and its family is
+the program's family; the other row is excluded from the plan and the conflict is
+recorded, because `task_id` is keyed on `program_sha256` and two families for one
+program would put one task in two splits.
+
+When `usable_program_count` is below `policy.usable_floor` from `01b`, the plan
+records a `capacity_deficit` with detail `program_floor_short`. `03c` resolve
+deficits resolves it by promoting reserve programs through the slow loop; when
+the reserve is exhausted and the floor is still missed, it records an
+`AcceptedMiss` and the `programs_min` check blocks the export.
+
 Use `usable_program_count = max(1, active_programs_with_graph)` for active programs
 with a CAD graph:
 

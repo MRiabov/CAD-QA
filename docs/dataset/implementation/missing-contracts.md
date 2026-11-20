@@ -13,7 +13,7 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 5 open entries: all P1 technical. No product decision and no P0
+There are 3 open entries: all P1 technical. No product decision and no P0
 technical contract remains open, and P2 is empty.
 
 ## Decisions needed from the owner
@@ -40,28 +40,12 @@ None.
 
 Work order:
 
-1. `MC-18` — program-floor backfill; it keeps the floor after execution
-   failures.
-2. `MC-22` — geometry-required for 1-step tasks; it changes what the first
+1. `MC-22` — geometry-required for 1-step tasks; it changes what the first
    release counts.
-3. `MC-20` — duplicate normalized text; it can put the same `task_id` in two
-   splits.
-4. `MC-29` — run-level execution contract; retries and cache hits are promised
+2. `MC-29` — run-level execution contract; retries and cache hits are promised
    without it.
-5. `MC-49` — external benchmark program set; the transfer overlap check has no
+3. `MC-49` — external benchmark program set; the transfer overlap check has no
    declared input.
-
-#### MC-18 — Program floor backfill
-
-Program-floor backfill after execution failures is undefined, including the
-post-execution path when the 1,000-program floor is missed. `01c` fetch program
-pool checks the floor before execution; execution failures can still drop the
-usable count below 1,000. It absorbs `MC-19`. A 10k-task release can currently
-ship with fewer than 1,000 usable programs.
-
-**Recommendation:** one backfill loop triggered by the usable-program count:
-promote reserve, graph it, replan; record the count in the deficit ledger so the
-trigger is data, not a manual check.
 
 #### MC-22 — Geometry-required for 1-step tasks
 
@@ -75,21 +59,6 @@ from the program text alone", which covers the answer step; a 1-step membership
 task then counts as geometry-required and the 95% check applies to all tasks.
 Restate R-4 the same way, or the check measures a different property from the
 requirement.
-
-#### MC-20 — Duplicate normalized text across collections
-
-Duplicate normalized text across collections is unresolved. `01d` normalize
-programs gives identical normalized bytes one `program_id` and says later stages
-must not treat the records as distinct, but `01b` select program pool keeps both
-rows with different families and no pipeline stage enforces the rule. `task_id`
-is keyed on `program_sha256`, so the release can hold two rows with the same
-`task_id` and different splits.
-
-**Recommendation:** keep both selection rows for collection accounting, but
-graph and construct once per `program_id` and use the survivor's family, which
-is the rule `01b` select program pool already applies within a collection. State
-which stage enforces it (`03a` allocate task quotas at graph selection or `03b`
-construct task definitions at construction).
 
 #### MC-49 — External benchmark program set
 
@@ -119,6 +88,20 @@ with the tolerance policy and its hash, one completion marker per artifact,
 write to a temporary path then rename, and a cache key of input hash plus every
 version that affects the output. State the resume rule: skip an artifact only
 when its completion marker and identity match.
+
+## Closed in the 2026-11-20 streamlined pass
+
+- `MC-20` — `03a` allocate task quotas counts one program per `program_id`. When
+  two selection rows share a `program_id`, the row with the lexicographically
+  smallest `source_id` is used and its family is the program's family; the other
+  row is excluded from the plan and the conflict is recorded. `01b` still keeps
+  both rows for collection accounting, and one `program_id` now produces one
+  family and one set of `task_id` values.
+- `MC-18` — the post-execution program floor is data. `03a` records a
+  `capacity_deficit` with detail `program_floor_short` when
+  `usable_program_count` is below `policy.usable_floor`; `03c` promotes reserve
+  programs through the slow loop, and an exhausted reserve records an
+  `AcceptedMiss` that the `programs_min` check turns into a blocked export.
 
 ## Closed or merged in the 2026-11-20 pass
 
