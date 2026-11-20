@@ -6,7 +6,7 @@ this document explains how the constraints combine.
 
 ## Inputs
 
-- The task-definition rules from `pipeline/03b-construct-task-definitions.md`.
+- The task-definition rules from `pipeline/03-task-generation/03b-construct-task-definitions.md`.
 - The [task reasoning step support tables](task-step-support.md) for the release implementation scope.
 - The task-count targets in the PRD and the release contract.
 - The split rule: a CADEvolve program family belongs to one split.
@@ -71,7 +71,7 @@ At each step count, a value is checked against its conditional release share,
 within half to twice that share. The conditional share is allocated from the
 global targets before task construction, then filled from available data; the
 plan is in
-[`pipeline/03a-allocate-task-quotas.md`](pipeline/03a-allocate-task-quotas.md).
+[`pipeline/03-task-generation/03a-allocate-task-quotas.md`](pipeline/03-task-generation/03a-allocate-task-quotas.md).
 
 This document fixes the coverage rule, the implementation-scope rule, the
 plan-level bounds, and the split rule. The quota allocator applies them.

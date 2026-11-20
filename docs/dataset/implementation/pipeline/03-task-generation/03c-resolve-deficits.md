@@ -1,6 +1,6 @@
 # 03c — Resolve deficits
 
-**Parent:** [`03-enumerate-tasks.md`](03-enumerate-tasks.md).
+**Parent:** [`03-task-generation.md`](../03-task-generation.md).
 
 **Purpose:** respond to quota deficits with the cheapest effective loop:
 replanning the current data, or expanding the program pool.

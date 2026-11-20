@@ -17,7 +17,7 @@ pipeline stage is specified.
 |---|---|---|---|
 | `01-external-dataset-etl` | Read and normalize the CADEvolve Parquet cache. | CADEvolve Parquet cache | `NormalizedProgram`, `ExternalDatasetManifest` |
 | `02-execute-cadquery-and-build-graph` | Extract AST structure, execute CadQuery, build the graph. | `NormalizedProgram` | `CadGraph` |
-| `03-enumerate-tasks` | Plan the release, construct task definitions, resolve deficits by replanning or expanding data. | `CadGraph` | `TaskDefinition` |
+| `03-task-generation` | Plan the release, construct task definitions, resolve deficits by replanning or expanding data. | `CadGraph` | `TaskDefinition` |
 | `04-render-prompt-and-choices` | Render the prompt and choices. | `TaskDefinition` | `ReleaseTable` |
 | `05-validate-and-export-release` | Validate and export the release dataset. | `ReleaseTable` | `ReleaseArtifacts` |
 

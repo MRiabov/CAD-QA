@@ -43,6 +43,12 @@ docs/
     pipeline/
       00-overview.md            # DAG + stage IO contract
       NN[a-z]-<slug>.md         # 01-source-ingestion.md, 01a-…, 04c-…
+      NN-<module>/              # module-sized step: 02 extraction, 03 task generation
+        README.md               # entry point: input, output, process, status
+        NNx-<slug>.md           # sub-step docs
+        decisions.md            # module-local decisions (ADR format)
+        algorithm/<slug>.md     # how each mechanism works
+        features/<slug>.md      # per-item contract for each feature field
   train-and-eval/
     datasets.md                   # dataset → DatasetRole assignment
     fine-tuning/
@@ -107,6 +113,13 @@ rationale — link the decision — and never redefine field names — match the
 7. **Open questions**.
 8. **Resolved questions** — moved here with resolution + date; never deleted.
 9. **Extra deliverables - P2** (optional).
+
+A step that owns a module — a sub-pipeline with its own algorithms and per-item
+contracts — is a folder instead of one file. The folder holds `README.md` for the
+module contract, `NNx-*.md` for sub-steps, `algorithm/` for how each mechanism
+works, `features/` for per-item field contracts, and `decisions.md` for decisions
+scoped to the module. `pipeline/extraction/` and
+`pipeline/03-task-generation/` are the current examples.
 
 ### `pipeline/00-overview.md`
 

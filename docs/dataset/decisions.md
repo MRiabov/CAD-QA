@@ -332,7 +332,7 @@ prefix is `DS-`.
   generated, the task is rejected.
 - **Consequences:** P0 and P1 can ship without the near-miss audit. P2 adds the
   error-mode catalog, choice audit, and review. The open question is Q6 in
-  `implementation/pipeline/03b-construct-task-definitions.md` until P2 is implemented.
+  `implementation/pipeline/03-task-generation/03b-construct-task-definitions.md` until P2 is implemented.
 
 ## DS-22 — Go is the default implementation language
 

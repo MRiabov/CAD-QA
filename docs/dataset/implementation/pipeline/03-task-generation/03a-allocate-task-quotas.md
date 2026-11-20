@@ -1,6 +1,6 @@
 # 03a — Allocate task quotas to program families
 
-**Parent:** [`03-enumerate-tasks.md`](03-enumerate-tasks.md).
+**Parent:** [`03-task-generation.md`](../03-task-generation.md).
 
 **Purpose:** allocate task quotas and quota targets to CADEvolve program
 families, assign splits, and set construction attempt budgets before task
@@ -9,7 +9,7 @@ definitions are generated.
 ## Input / output
 
 - Input: CAD graphs for the selected program pool, program metadata, the
-  [task reasoning step support tables](../task-step-support.md), dataset release
+  [task reasoning step support tables](../../task-step-support.md), dataset release
   targets, the current `DeficitLedger` (empty on the first plan), and
   `ProgramReassignmentRequest` records from `03c`.
 - Output: `TaskQuotaPlan`.

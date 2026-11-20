@@ -9,28 +9,28 @@ doc, delete the row. Open questions remain in
 
 | ID | Owner | Missing contract | Why it blocks |
 |---|---|---|---|
-| MC-08 | [`03b`](pipeline/03b-construct-task-definitions.md) | Construction grammar: possible-answer sets, target binding order, clue constructors, answer resolvers, sampling order, and support-table derivation. | `03b` currently defines rejection, not construction. |
-| MC-09 | [`03b`](pipeline/03b-construct-task-definitions.md) | Canonical serialization and hash inputs for `task_id`, `definition_sha256`, and `answer_sha256`. | Duplicate identity and reproducibility are undefined. |
-| MC-10 | [`03b`](pipeline/03b-construct-task-definitions.md) | Provenance needed to reproduce a definition: CadQuery program runtime extraction result hash, graph artifact hash, plan version, render seed, and template version. | The definition cannot reproduce its answer evidence or prompt. |
+| MC-08 | [`03b`](pipeline/03-task-generation/03b-construct-task-definitions.md) | Construction grammar: possible-answer sets, target binding order, clue constructors, answer resolvers, sampling order, and support-table derivation. | `03b` currently defines rejection, not construction. |
+| MC-09 | [`03b`](pipeline/03-task-generation/03b-construct-task-definitions.md) | Canonical serialization and hash inputs for `task_id`, `definition_sha256`, and `answer_sha256`. | Duplicate identity and reproducibility are undefined. |
+| MC-10 | [`03b`](pipeline/03-task-generation/03b-construct-task-definitions.md) | Provenance needed to reproduce a definition: CadQuery program runtime extraction result hash, graph artifact hash, plan version, render seed, and template version. | The definition cannot reproduce its answer evidence or prompt. |
 | MC-11 | [`04`](pipeline/04-render-prompt-and-choices.md) | Program text, render seed, and template file in the input contract. | `04` cannot render the program or choose a template variant from `TaskDefinition` alone. |
 | MC-12 | [`04`](pipeline/04-render-prompt-and-choices.md) | Mapping from `TaskDefinition` to release-table fields: `answer_schema_version`, `answer_sha256`, `prompt_sha256`, `evidence_json`, `clue_types`, tolerance, and scoring. | No pipeline stage owns the release projection. |
 | MC-13 | [`05`](pipeline/05-validate-and-export-release.md) | Release coverage and balance: step mix, warmup, program floor, format/meaning/clue/target balance, 1% and 25% caps. | The first release can pass the current checks without meeting R-7–R-12. |
 | MC-14 | [`05`](pipeline/05-validate-and-export-release.md) | `failures.parquet` schema: columns, identity, dedupe, order, merge from parallel writers, and aggregation. | R-19 is not enforceable and parallel failures cannot be combined safely. |
-| MC-15 | [`03b`](pipeline/03b-construct-task-definitions.md), [`05`](pipeline/05-validate-and-export-release.md) | P0 multiple-choice fairness checks: correct choice present, choices unique, same answer space, unit/frame/precision, non-leaking descriptions, deterministic labels. | P0 choices can be invalid even when the choice pool has five entries. |
-| MC-16 | [`03a`](pipeline/03a-allocate-task-quotas.md), [`03b`](pipeline/03b-construct-task-definitions.md) | P0/P1/P2 implementation-scope filter for generation and validation. | Later-scope values can enter the first release. |
+| MC-15 | [`03b`](pipeline/03-task-generation/03b-construct-task-definitions.md), [`05`](pipeline/05-validate-and-export-release.md) | P0 multiple-choice fairness checks: correct choice present, choices unique, same answer space, unit/frame/precision, non-leaking descriptions, deterministic labels. | P0 choices can be invalid even when the choice pool has five entries. |
+| MC-16 | [`03a`](pipeline/03-task-generation/03a-allocate-task-quotas.md), [`03b`](pipeline/03-task-generation/03b-construct-task-definitions.md) | P0/P1/P2 implementation-scope filter for generation and validation. | Later-scope values can enter the first release. |
 | MC-35 | [`02c`](pipeline/02c-build-cad-graph.md) | Relation payloads: tolerance, CAD graph evidence kind/rule/refs per relation type, and which relations are derived rather than measured. | P0 parallel, perpendicular, containment, and intersection clues cannot be checked reproducibly. |
 
 ## P1
 
 | ID | Owner | Missing contract | Why it matters |
 |---|---|---|---|
-| MC-17 | [`01`](pipeline/01-external-dataset-etl.md), [`01c`](pipeline/01c-fetch-program-pool.md), [`03c`](pipeline/03c-resolve-deficits.md) | Active/reserve lifecycle: whether reserve programs get graphs, and whether the fast loop can use them. | Current docs assume both, which is contradictory. |
+| MC-17 | [`01`](pipeline/01-external-dataset-etl.md), [`01c`](pipeline/01c-fetch-program-pool.md), [`03c`](pipeline/03-task-generation/03c-resolve-deficits.md) | Active/reserve lifecycle: whether reserve programs get graphs, and whether the fast loop can use them. | Current docs assume both, which is contradictory. |
 | MC-18 | [`01c`](pipeline/01c-fetch-program-pool.md), [`02`](pipeline/02-execute-cadquery-and-build-graph.md), [`05`](pipeline/05-validate-and-export-release.md) | Program-floor backfill after execution failures. | A 10k-task release can ship with fewer than 1,000 usable programs. |
 | MC-19 | [`01c`](pipeline/01c-fetch-program-pool.md) | Post-execution backfill path when the 1,000-program floor is missed. | Fetch-time “usable” is not execution-time usable. |
-| MC-20 | [`01b`](pipeline/01b-select-program-pool.md), [`03b`](pipeline/03b-construct-task-definitions.md) | Family/split reconciliation for duplicate normalized text with different family IDs. | Duplicate identity can arbitrarily choose a family and split. |
-| MC-22 | [`03b`](pipeline/03b-construct-task-definitions.md) | Geometry-required rule for 1-step no-clue tasks, plus the aggregate 95% check. | The current definition marks some geometry-dependent tasks false. |
-| MC-23 | [`03c`](pipeline/03c-resolve-deficits.md) | Numeric retry, expansion, and stop budgets. | The loop has no computable stop rule. |
-| MC-24 | [`03b`](pipeline/03b-construct-task-definitions.md) | P0 choice fairness beyond pool size. | This overlaps MC-15; the owner split is unclear. |
+| MC-20 | [`01b`](pipeline/01b-select-program-pool.md), [`03b`](pipeline/03-task-generation/03b-construct-task-definitions.md) | Family/split reconciliation for duplicate normalized text with different family IDs. | Duplicate identity can arbitrarily choose a family and split. |
+| MC-22 | [`03b`](pipeline/03-task-generation/03b-construct-task-definitions.md) | Geometry-required rule for 1-step no-clue tasks, plus the aggregate 95% check. | The current definition marks some geometry-dependent tasks false. |
+| MC-23 | [`03c`](pipeline/03-task-generation/03c-resolve-deficits.md) | Numeric retry, expansion, and stop budgets. | The loop has no computable stop rule. |
+| MC-24 | [`03b`](pipeline/03-task-generation/03b-construct-task-definitions.md) | P0 choice fairness beyond pool size. | This overlaps MC-15; the owner split is unclear. |
 | MC-25 | [`04`](pipeline/04-render-prompt-and-choices.md) | Root `prompts.yaml` file and schema. | The convention exists in docs, but the artifact does not. |
 | MC-26 | [`05`](pipeline/05-validate-and-export-release.md) | Manifest, dataset-card, `release_id`, generator version, upstream version, external-manifest linkage, and evaluation material. | The release contract requires artifacts with no owner or content spec. |
 | MC-27 | [`05`](pipeline/05-validate-and-export-release.md) | Reconcile Q1 with PRD Q7 and define the external benchmark input/revision for R-16. | Q1 is stale and transfer overlap has no input. |

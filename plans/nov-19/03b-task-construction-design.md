@@ -5,7 +5,7 @@ It records the construction picture and the clue-form proposal from the
 2026-11-19 discussion so the construction grammar can be written next.
 
 **Companion docs:** `plans/nov-19/dataset-kernel-known-issues.md` (KI-DS-01,
-KI-DS-02, KI-DS-03), `docs/dataset/implementation/pipeline/03b-construct-task-definitions.md`,
+KI-DS-02, KI-DS-03), `docs/dataset/implementation/pipeline/03-task-generation/03b-construct-task-definitions.md`,
 and `docs/dataset/requirements/task-structure.md`.
 
 ## Purpose
@@ -595,7 +595,7 @@ box-and-hole example as the first golden record.
 
 ## References
 
-- `docs/dataset/implementation/pipeline/03b-construct-task-definitions.md`
+- `docs/dataset/implementation/pipeline/03-task-generation/03b-construct-task-definitions.md`
 - `docs/dataset/requirements/task-structure.md`
 - `docs/dataset/requirements/graph-content.md`
 - `docs/dataset/implementation/task-step-support.md`

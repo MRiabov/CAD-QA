@@ -1,12 +1,12 @@
 # 03b — Construct task definitions
 
-**Parent:** [`03-enumerate-tasks.md`](03-enumerate-tasks.md).
+**Parent:** [`03-task-generation.md`](../03-task-generation.md).
 
 **Purpose:** construct persisted task definitions into the task quota plan: task
 target, ordered task clues, answer step, gold answer, validity record, and
 canonical identity.
 
-**Input/output contract:** [`io-contracts.md`](io-contracts.md).
+**Input/output contract:** [`io-contracts.md`](../io-contracts.md).
 
 ## Input / output
 
@@ -223,7 +223,7 @@ inside `03b`.
 The **task reasoning step support tables** are a separate derived QA baseline.
 They are computed from the rules in this document and are not an input to `03b`.
 They are used to check release coverage in
-[`../task-step-support.md`](../task-step-support.md).
+[`../task-step-support.md`](../../task-step-support.md).
 
 ## Open questions
 

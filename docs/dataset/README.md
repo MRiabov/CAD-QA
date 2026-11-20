@@ -63,7 +63,7 @@ not product requirements.
 | [`implementation/pipeline/io-contracts.md`](implementation/pipeline/io-contracts.md) | Authoritative typed I/O between pipeline stages. |
 | [`implementation/pipeline/01-external-dataset-etl.md`](implementation/pipeline/01-external-dataset-etl.md) | CADEvolve Parquet cache → normalized programs and manifest. |
 | [`implementation/pipeline/02-execute-cadquery-and-build-graph.md`](implementation/pipeline/02-execute-cadquery-and-build-graph.md) | AST extraction and CadQuery execution → CAD graph. |
-| [`implementation/pipeline/03-enumerate-tasks.md`](implementation/pipeline/03-enumerate-tasks.md) | Task quota planning, task definitions, deficit resolution, step counts, identity, and gold answers. |
+| [`implementation/pipeline/03-task-generation.md`](implementation/pipeline/03-task-generation.md) | Task quota planning, task definitions, deficit resolution, step counts, identity, and gold answers. |
 | [`implementation/pipeline/04-render-prompt-and-choices.md`](implementation/pipeline/04-render-prompt-and-choices.md) | Prompt rendering and multiple-choice choices. |
 | [`implementation/pipeline/05-validate-and-export-release.md`](implementation/pipeline/05-validate-and-export-release.md) | Validation, export, manifest, and dataset card. |
 
