@@ -13,7 +13,7 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 25 open entries: 16 P0 technical, 5 P1 product, and 4 P1 technical. No
+There are 26 open entries: 17 P0 technical, 5 P1 product, and 4 P1 technical. No
 P0 product decision remains open, and P2 is empty.
 
 ## Decisions needed from the owner
@@ -85,21 +85,23 @@ Work order:
    without them.
 6. `MC-44` — feasibility derivation; it produces the support tables `MC-13`
    checks against.
-7. `MC-46` — the capability census artifact; `03c` resolve deficits cannot route
+7. `MC-48` — support-table ownership; it decides whether `03a` reads the tables
+   or derives supported values from the task-definition rules.
+8. `MC-46` — the capability census artifact; `03c` resolve deficits cannot route
    a capability deficit without it.
-8. `MC-25` — the prompt template file; `04` render prompt and choices has
+9. `MC-25` — the prompt template file; `04` render prompt and choices has
    nothing to render from without it.
-9. `MC-11` — the rendering inputs; a prompt cannot be reproduced from the
-   declared input without them.
-10. `MC-12` — the release projection; the release columns have no writer without
+10. `MC-11` — the rendering inputs; a prompt cannot be reproduced from the
+    declared input without them.
+11. `MC-12` — the release projection; the release columns have no writer without
     it.
-11. `MC-13` — the coverage and balance checks; the first release gate.
-12. `MC-15` — multiple-choice fairness; the choice gate.
-13. `MC-38` — the release fields and fifth support file; the consumer contract.
-14. `MC-26` — the manifest and dataset card fields; the release ships both.
-15. `MC-41` — the construction test contract; it locks the invariants the other
+12. `MC-13` — the coverage and balance checks; the first release gate.
+13. `MC-15` — multiple-choice fairness; the choice gate.
+14. `MC-38` — the release fields and fifth support file; the consumer contract.
+15. `MC-26` — the manifest and dataset card fields; the release ships both.
+16. `MC-41` — the construction test contract; it locks the invariants the other
     entries introduce.
-16. `MC-42` — the golden record; the first end-to-end comparison.
+17. `MC-42` — the golden record; the first end-to-end comparison.
 
 #### MC-16 — Implementation-scope filter
 
@@ -197,6 +199,24 @@ property has no clue operand form, answer-format compatibility). Implement it as
 same cover search as construction, with the graph replaced by the grammar's full
 fact set and the validity rules unchanged, and derive all five tables from that
 one search.
+
+#### MC-48 — Support-table ownership in `03a`
+
+`DS-28` is internally split. Its decision says `03a` allocate task quotas and
+`05` validate and export release use the task reasoning step support tables to
+check the release, but its consequences say `03` does not read them and they are
+not a generator input. `03a` previously used the tables for `supported_values`
+and listed the table version as an immutability input, which follows the
+decision sentence and contradicts the consequence. The current docs follow the
+consequence: `03a` derives `supported_values` from the `03b` construct task
+definitions rules, `05` remains the table reader, and the tables are not a `03a`
+input or immutability key. `MC-44` still tracks the computable derivation.
+
+**Recommendation:** settle the rule in `DS-28` rather than leaving two readings.
+Keep the consequence: `03a` derives supported values from the task-definition
+rules and the implementation scope, and `05` uses the derived tables as the QA
+projection. If `03a` must read the tables directly, say so in `DS-28` and restore
+them as a `03a` input and immutability key.
 
 #### MC-46 — Capability census artifact
 

@@ -150,7 +150,10 @@ state, then:
 The row uses the relation or measurement id from
 [`graph-persistence.md`](graph-persistence.md), which already includes the
 program, the element name, and both endpoints. A measurement row carries the
-value, unit, and tolerance; a relation row carries its evidence.
+value, unit, and tolerance; a relation row carries its `tolerance` and CAD graph
+evidence. The relation `tolerance` is null unless the relation is a
+geometry-classification relation, as [`graph-persistence.md`](graph-persistence.md)
+defines.
 
 An empty candidate set emits no rows. It is not an error and not a gap.
 
@@ -163,6 +166,9 @@ When the count exceeds `max_state_entities`, reject the program: no graph is
 emitted for it, and the failure records the state, the count, and the limit. Do
 not truncate the state and do not emit a partial graph, because a task that
 references the dropped entities would look unanswerable rather than invalid.
+`max_state_entities` is the implementation-scope constant defined in
+[`graph-content.md` §4.1](../../../requirements/graph-content.md#41-emission-rules);
+read the recorded number and do not recompute it per run.
 
 ## Measurement construction
 
@@ -228,5 +234,7 @@ Reject before writing when:
 - a CadQuery selector result has no state or a selected ID outside that state;
 - a CadQuery workplane frame has no AST record;
 - a measurement or relation endpoint is missing;
+- a relation carries a non-null `tolerance` outside the geometry-classification
+  relations, or is missing a relation evidence field;
 - a graph ID is not deterministic from its documented components;
 - an extraction entity or measurement has an unknown schema version.

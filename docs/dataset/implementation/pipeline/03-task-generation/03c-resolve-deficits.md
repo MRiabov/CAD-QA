@@ -55,7 +55,7 @@ only loop that pays fetch, normalization, and execution cost.
 | Current family quota or cap blocks the quota target | `ProgramReassignmentRequest`; change the plan, not the data. |
 | Reserve or new capability needed | `ProgramRequest` to `01b`; expand the pool. |
 | Constructor limitation | Fix `03b`; neither loop helps. |
-| Structural infeasibility | Fix the plan or support table; no data can supply it. |
+| Structural infeasibility | Fix the plan or task-definition rules; no data can supply it. |
 | Plan cap conflict | Reconcile the plan; expanding data will not remove the cap. |
 
 ## ProgramReassignmentRequest

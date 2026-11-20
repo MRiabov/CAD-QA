@@ -142,7 +142,8 @@ meanings, answer formats, task reasoning step count rules, and the precise descr
 
 A task is described by its task target, task clues, answer format, answer
 meaning, and task reasoning step count. The dataset does not use task families,
-task types, or task patterns. Target category is a coverage dimension.
+task types, or task patterns. Target category is a coverage dimension. Clue
+operand form is a coverage dimension in P0 and gains a balance target in P1.
 Clue type, answer meaning, and answer format are coverage and balance
 dimensions. Task reasoning step count has a coverage and target-mix requirement.
 
@@ -151,7 +152,9 @@ whole release. A value that appears only at one task reasoning step count does n
 cover the other task reasoning step counts, and a global target may not be met
 by concentrating a value at one task reasoning step count. Target category has no percentage target at
 each task reasoning step count; it has coverage at each task reasoning step count and a release-level
-diversity cap.
+diversity cap. Clue operand form is coverage-only in P0: it has no percentage
+target at each task reasoning step count, and its P1 balance target is set from
+the first release distribution.
 
 The dataset is not a list of predefined task types. Enumerating every
 combination of clue type, answer meaning, and task reasoning step count would be limiting and would
@@ -245,7 +248,7 @@ to a later implementation scope is not a coverage gap in the current release.
 | **R-9** | The dataset covers the full task reasoning step count range. | Steps 1 through 5 all appear in the target mix in section 8, with steps 3 and 4 carrying most benchmark tasks. |
 | **R-10** | The dataset is diverse. | It draws from at least one thousand distinct CAD models, and no single CAD model is above 1% of tasks. |
 | **R-11** (P1) | The dataset has varied answers. | At least one thousand different correct answers appear, and no correct answer is above 1% of tasks. |
-| **R-12** (P1) | The dataset is balanced at every task reasoning step count. | No clue type is above 25% of clues at a task reasoning step count or over the release, and no clue type is more than twice or less than half its share among the clue types supported at a task reasoning step count. Every answer meaning is between 1% and 10% over the release, and no answer meaning is more than twice or less than half its share among the meanings supported at a task reasoning step count. No task target category is above 25% of the release. |
+| **R-12** (P1) | The dataset is balanced at every task reasoning step count. | No clue type is above 25% of clues at a task reasoning step count or over the release, and no clue type is more than twice or less than half its share among the clue types supported at a task reasoning step count. Every answer meaning is between 1% and 10% over the release, and no answer meaning is more than twice or less than half its share among the meanings supported at a task reasoning step count. No task target category is above 25% of the release. In P1, clue operand form is balanced once its target is set from the first release distribution. |
 
 ### 7.3 Splits and reuse
 
@@ -285,6 +288,7 @@ Priority in this table is implementation order, not a task label.
 | Answer format coverage | Every supported format at every task reasoning step count | P0 |
 | Answer format balance | Each 5-25% over the release; mix at each task reasoning step count within the tolerance in `task-structure.md` | P0 |
 | Clue type coverage | Every supported clue type at every task reasoning step count | P0 |
+| Clue operand form coverage | Every supported form at every task reasoning step count, for task clues that carry a reference | P0 |
 | Clue type balance | No clue type above 25% of clues at a task reasoning step count or over the release; mix at each task reasoning step count within the tolerance in `task-structure.md` | P1 |
 | Answer meaning coverage | Every supported meaning at every task reasoning step count | P0 |
 | Answer meaning balance | Each 1-10% over the release; mix at each task reasoning step count within the tolerance in `task-structure.md` | P1 |
@@ -435,11 +439,12 @@ The dataset is done when:
 - **Q5** (P1). *Resolved 2026-10-21.* Yes. Every answer format must reach five
   percent; a balanced and diverse dataset is the default.
 - **Q6** (P1). *Resolved 2026-10-21.* Coverage is at each task reasoning step
-  count for target categories, clue types, answer meanings, and answer formats.
-  Balance is at each task reasoning step count and over the release for
-  clue types, answer meanings, and answer formats. Target category is coverage-only
-  at each task reasoning step count, with a release cap. Task reasoning step
-  count uses the target mix in section 8.
+  count for target categories, clue types, clue operand forms, answer meanings,
+  and answer formats. Balance is at each task reasoning step count and over the
+  release for clue types, answer meanings, and answer formats. Clue operand form
+  is coverage-only in P0 and gains a balance target in P1. Target category is
+  coverage-only at each task reasoning step count, with a release cap. Task
+  reasoning step count uses the target mix in section 8.
 - **Q7** (P0/P1). *Resolved 2026-10-21.* P0 uses Option A: compare normalized
   CadQuery program text. This is a hash/text check and does not run CadQuery or
   parse an AST. P1 uses Option B: normalize variable names and formatting with

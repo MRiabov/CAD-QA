@@ -85,6 +85,17 @@ Every task clue has one of these clue types:
 | Aggregation | The task target is the extreme, the rank, or the count of a set. | P1 |
 | Provenance | The task target was created by an operation, uses a CadQuery profile, or sits on a CadQuery workplane. | P0 |
 
+A task clue with a reference is also described by its **clue operand form**. A
+task clue with no reference has no operand form. The operand form belongs to the
+reference, not to the clue type, so a property clue carries none.
+
+| Clue operand form | Reference binding | Priority |
+|---|---|---|
+| `named` | A named graph element. | P0 |
+| `selected` | A result of an earlier task clue. | P0 |
+| `aggregated` | An extreme, rank, or count over a set. | P0 |
+| `cross_state` | A before/after solid state pair. | P2 |
+
 A comparison task clue may name both entities, or it may refer to one entity
 selected by an earlier task clue. A reference must resolve to exactly one
 entity. If earlier task clues leave several possible entities, the comparison
@@ -198,6 +209,7 @@ The task's properties are recorded for different reasons:
 |---|---|
 | Task target category | Coverage and release diversity |
 | Task clue type | Coverage and balance |
+| Clue operand form | Coverage in P0; balance target in P1 |
 | Answer meaning | Coverage and balance |
 | Answer format | Coverage and balance |
 | Task reasoning step count | Coverage and mix across task reasoning step counts |

@@ -199,7 +199,8 @@ Terms that were replaced because they were not composed from the domain:
 - The step that produces the answer is a **task answer step**.
 - The ordered steps that solve the task are the **task solution sequence**.
 - The form of the answer is the **answer format**.
-- Target category is a **coverage** dimension. Clue type, answer meaning, and
+- Target category and clue operand form are **coverage** dimensions in P0; clue
+  operand form gains a balance target in P1. Clue type, answer meaning, and
   answer format are **coverage and balance** dimensions. Task reasoning step
   count uses the target mix.
 

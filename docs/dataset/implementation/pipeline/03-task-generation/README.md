@@ -15,8 +15,8 @@ construction algorithm and the program capability census live in `algorithm/`, a
 
 - `CadGraph` from `02c`, one per active program;
 - `ProgramMetadata` from `01b`, including family, split, and program tier;
-- task reasoning step support tables from `05`;
 - dataset release targets from the release contract;
+- the release implementation scope;
 - `DeficitLedger` from the previous pass, empty on the first pass;
 - `ProgramReassignmentRequest` when `03c` chose the fast loop.
 
