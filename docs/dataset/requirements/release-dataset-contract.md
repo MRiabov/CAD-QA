@@ -134,8 +134,9 @@ from the definition's answer and scoring fields, and copied by `04` render
 prompt and choices. Export does not recompute it. The hash covers a fixed set of answer
 fields in a canonical form, so recomputing it in `04` would be a second
 implementation of that canonical form, and a mismatch would be ambiguous between
-a changed answer column and two serializers that drifted. The release-table hash in the manifest protects the
-exported bytes, and `answer_sha256` identifies the answer across releases.
+a changed answer column and two serializers that drifted. `release_table_sha256`
+protects the exported bytes, and `answer_sha256` identifies the answer across
+releases.
 
 Question text, task clues, choices, and the answer instruction are not
 duplicated as separate columns. They are part of `prompt`, which is the exact
@@ -205,13 +206,14 @@ for one row.
 
 | Field | Value |
 |---|---|
-| `release_id` | `cadqarel:<sha256>` over the release table content. |
+| `release_id` | `cadqarel:<sha256>` over the release inputs. |
 | `schema_version` | The manifest schema version. |
 | `created_at` | UTC timestamp of the export. It is not part of `release_id`. |
 | `implementation_scope` | The release implementation scope; `P0` for the first release. |
-| `generator_version` | The git commit SHA of the tree that built the release. |
+| `generator_version` | The declared generator version. |
 | `upstream_dataset_version` | `cache_revision` from the external dataset manifest, verbatim. |
 | `external_dataset_manifest_sha256` | SHA-256 of the external dataset manifest. |
+| `release_table_sha256` | SHA-256 of the `release.parquet` file bytes. |
 | `external_benchmark_id`, `external_benchmark_revision` | The transfer benchmark and its revision (R-16, P1). |
 | `task_count`, `split_counts` | Tasks in the release, and tasks per `split`. |
 | `program_family_count`, `program_family_split_counts` | CADEvolve program families in the release, and per `split`. |
@@ -231,34 +233,48 @@ the LLM model.
 
 ### 7.1 Release identity
 
-`release_id` is `cadqarel:<sha256>` over the release table content: every row
-encoded in canonical form and hashed in `task_id` ascending order.
+`release_id` is `cadqarel:<sha256>` over the canonical JSON of the release
+inputs:
 
-- The canonical row encoding is the one in
-  [`03b` construct task definitions](../implementation/pipeline/03-task-generation/03b-construct-task-definitions.md).
-  A release row has no float field, so two languages encode it the same way.
-- The encoding is a hash input only. It is never written to disk.
-- Row order is fixed before hashing, so the digest does not depend on the order
-  the writer emitted.
-- The manifest is not part of `release_id`, and neither is `created_at`.
-  Re-exporting the same table keeps the id; a changed table always gets a new
-  one.
+| Input | What it pins |
+|---|---|
+| `generator_version` | The generator rules. |
+| `implementation_scope` | Which requirement values the release implements. |
+| `external_dataset_manifest_sha256` | The program pool and the upstream dataset. |
+| `balance_policy_sha256` | The quota and balance policy. |
+| `prompt_template_version`, `prompts_yaml_sha256` | The LLM-facing copy. |
+| `release_seed` | The wording and order choices. |
 
-A file hash is not used, because two Parquet writers can emit different bytes for
-the same rows, and then the identity would change without the dataset changing.
-A file hash is a transport check a publisher can compute; it is not the identity.
+The same inputs give the same id, so two runs of the same generation are the same
+release. `created_at` is not an input, so re-exporting a generation keeps its id.
+
+The id names the generation, not the bytes. A table that differs while every
+input matches is a generator defect: the fix is a `generator_version` bump, not a
+new id. Byte integrity is `release_table_sha256`, which is a file hash and is
+deliberately not the identity, because two Parquet writers emit different bytes
+for the same rows.
 
 ### 7.2 Generator version
 
-`generator_version` is the full git commit SHA of the tree that built the
-release. `05` validate and export release refuses to export from a dirty tree, or
-when the SHA is not readable, because a release without a code version cannot
-satisfy R-18.
+`generator_version` is a declared version string for the generator code, in the
+form `cadqa-generator/<major>.<minor>.<patch>`, bumped when the generator's
+behaviour changes. It is a constant in the code.
 
-The commit identifies the generator as a whole. The component versions stay
-separate, so a mismatch names the component: `constructor_version` on each
-definition, the graph schema version, the prompt template version, and the
-balance policy version.
+- It is not the git commit. A commit changes for docs, tests, and unrelated
+  pipeline stages, and keying a release on it makes every commit look like a new
+  generator.
+- The component versions are what make a missed bump visible, and they stay on
+  the artifacts that carry them: the graph schema version on the graph,
+  `constructor_version` and `definition_schema_version` on each definition, and
+  `answer_schema_version` on each release row. `05` validate and export release
+  records the template and balance policy versions itself, because it also
+  records their file hashes.
+- A dirty working tree does not block the export. The declared version is the
+  contract; the working tree is not.
+
+A behaviour change without a version bump is a defect, and the release identity
+inherits it. Recording the git commit instead would make every documentation and
+test commit look like a new generator, which is the wrong trade for a dataset.
 
 ### 7.3 Answer set summary
 

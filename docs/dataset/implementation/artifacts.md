@@ -53,9 +53,7 @@ dedupe key, merge, and reconciliation rules are in
 - A written artifact is immutable. A changed input or version produces a new
   artifact, not an in-place edit.
 - Identity includes the input hash and the version of the code or schema that
-  produced the artifact. The release artifacts are the exception: they are
-  identified by `release_id`, the content digest of the release table, and the
-  manifest records the code version separately.
+  produced the artifact.
 - A pipeline stage reads only the artifacts listed for it. It does not reach into another
   pipeline stage's private intermediate state.
 - A rejected program or task is recorded with its pipeline stage and reason. It is never

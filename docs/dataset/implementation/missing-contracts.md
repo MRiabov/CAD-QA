@@ -166,7 +166,8 @@ when its completion marker and identity match.
 - `MC-26` — release contract section 7 is a field table with `release_id`,
   `generator_version`, `upstream_dataset_version`, the external-manifest hash,
   and the benchmark identity fields; `release_id` is `cadqarel:<sha256>` over the
-  canonical release rows in `task_id` order. Section 8 is the dataset card
+  release inputs, with `release_table_sha256` kept separately for byte integrity.
+  Section 8 is the dataset card
   outline, including the answer conventions. `05` owns both and writes the card
   from the manifest. The benchmark program set the fields name is `MC-49`.
 - `MC-12` — `04` render prompt and choices owns the projection, and the release
