@@ -89,6 +89,19 @@ A `BindingRef` is one of:
 - a named graph element;
 - a literal value.
 
+When a clue has a reference binding other than the task target, the binding
+carries `clue_operand_form` (`DS-31`):
+
+| Clue operand form | Binding | Example |
+|---|---|---|
+| `named` | a named graph element | "adjacent to the cylindrical face" |
+| `selected` | a result of an earlier task clue | "adjacent to the face selected in step 1" |
+| `aggregated` | an extreme, rank, or count over a set | "adjacent to the largest face of the hole" |
+| `cross_state` | a before/after solid state pair | P2 only |
+
+A clue with no reference has no operand form. A property clue that refers to
+another entity is two clues and is split into two list items.
+
 The typed check variants are:
 
 | Clue type | Check fields |
@@ -133,9 +146,42 @@ the definition carries enough real choices. The native format is still recorded.
 A format that cannot express the meaning is not used; for example, identity is
 not returned as a number and position is not returned as a scalar.
 
+The option pool is a construction output (`DS-36`). Identity answers draw options
+from the penultimate answer candidate set; numeric answers draw them from the
+distinct answers of that set. Fewer than five real options rejects the task.
+`04` orders and labels the pool and must not re-bind, extend, or pad it.
+
 The answer must be produced by CadQuery execution or by an exact derivation from
 the program and its geometry, with answer evidence. A guessed or approximate
 answer is not valid.
+
+### Answer equality
+
+`same_answer(a, b)` is the comparison used for answer uniqueness and for scoring
+(`DS-32`). It is not a margin; it is canonical equality at the answer's stated
+precision.
+
+| Answer meaning | `same_answer(a, b)` |
+|---|---|
+| identity | `a` is `b` |
+| volume, area, length, distance, angle | same canonical string at the stated precision |
+| count, rank | same integer |
+| membership | same label: inside, outside, or on the boundary |
+| validity | same boolean |
+| position | same point at the stated precision, component by component |
+| extent | same minimum and maximum corner at the stated precision |
+| CadQuery workplane state | same origin and frame at the stated precision |
+| material change | same added and removed volume at the stated precision |
+| topology change | same face, edge, and vertex counts, and the same changed set |
+
+The precision comes from the answer format and the release scoring rule:
+
+| Answer format | Precision |
+|---|---|
+| integer, count, rank | exact integer equality |
+| number, coordinate, bounding box | canonical rounding, 4 significant figures by default |
+| yes or no, membership, validity | label equality |
+| structured object | componentwise under the same rules |
 
 ## Validity
 

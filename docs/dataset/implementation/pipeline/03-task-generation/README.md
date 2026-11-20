@@ -9,8 +9,8 @@ and where each contract lives. The sub-step input/output table stays in
 
 Task generation is a module rather than a single step because it owns three
 sub-steps, a search, a validity contract, and a bounded feedback loop. The
-mechanisms live in `algorithm/`, the per-item field contracts live in
-`features/`, and decisions scoped to this module live in `decisions.md`.
+construction algorithm lives in `algorithm/`, the support table contract lives in
+`support/`, and decisions scoped to this module live in `decisions.md`.
 
 ## Input
 
@@ -57,21 +57,15 @@ is exhausted, or the remaining miss is accepted and recorded.
 | [`03c-resolve-deficits.md`](03c-resolve-deficits.md) | Deficit classification, replanning, and program requests. |
 | [`decisions.md`](decisions.md) | Decisions scoped to this module. |
 
-## Planned splits
+## Algorithm and support
 
-The module contract is being written now. These documents will carry the detail
-that does not belong in the sub-step contracts:
-
-| Planned doc | Scope |
+| Doc | Contract |
 |---|---|
-| `algorithm/clue-grammar.md` | A clue is one narrowing statement; clue type and clue operand form; the support grid. |
-| `algorithm/possible-answer-sets.md` | How the target category and state scope define the candidate set. |
-| `algorithm/chain-search.md` | Cover search, clue ordering, and termination. |
-| `algorithm/uniqueness.md` | The answer-equivalent set and the equality relation per answer meaning. |
-| `algorithm/answer-resolution.md` | How the answer step turns the final set into one answer. |
-| `algorithm/quota-scheduling.md` | Plan filling, the deficit ledger, and the forced-task flag. |
-| `algorithm/choice-pool.md` | Where multiple-choice options come from and when they are available. |
-| `features/clue-types.md` | Per clue type: what it asserts, support, and examples. |
-| `features/answer-meanings.md` | Per answer meaning: equality rule and compatible answer formats. |
-| `features/target-categories.md` | Per target category: entity set and available measurements. |
-| `support/clue-form-by-step.md` | Contract for the clue-form support table. |
+| [`algorithm/construction.md`](algorithm/construction.md) | How a task is found: possible answers, facts, cover search, validity checks, acceptance. |
+| [`support/clue-form-by-step.md`](support/clue-form-by-step.md) | Which clue forms are supported at each task reasoning step count. |
+
+The clue model itself is in
+[`03b-construct-task-definitions.md`](03b-construct-task-definitions.md): the
+clue types, the reference binding, and the clue operand form. The vocabulary is
+owned by `docs/dataset/requirements/task-structure.md`; this module references it
+and does not restate it.

@@ -710,9 +710,10 @@ rates.
 
 All construction decisions are settled. `D1`, `D2`, `D5`, `D6`, `D7`, `D8`,
 `D9`, `D10`, and `D11` are recorded as decisions, `D3` was withdrawn into graph
-completeness, and `D4` was folded into `DS-32`. The construction grammar can now
-be written, starting with `algorithm/clue-grammar.md` and the box-and-hole
-example as the first golden record.
+completeness, and `D4` was folded into `DS-32`. The algorithm is written in
+`03-task-generation/algorithm/construction.md`, the clue model is in `03b`, and
+the support contract is in `03-task-generation/support/clue-form-by-step.md`.
+The box-and-hole example is the first golden record.
 
 The concern that the vocabulary may be growing without a stopping rule is
 recorded in `plans/nov-20/vocabulary-scope-risk.md`. Its mitigation is to
