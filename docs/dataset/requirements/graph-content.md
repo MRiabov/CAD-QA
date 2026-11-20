@@ -103,7 +103,6 @@ relation categories.
 | perpendicular_to | Face, edge, or path segment | Face, edge, or path segment | The two are perpendicular within tolerance. | P0 |
 | coplanar_with | Face | Face | The two faces lie in the same plane within tolerance. | P1 |
 | coaxial_with | Edge or path segment | Edge or path segment | The two share an axis within tolerance. | P1 |
-| distance_to | Face, edge, vertex, or solid state | Face, edge, vertex, or solid state | The shortest distance between the two. | P0 |
 
 Point membership is not a relation. It is computed by `is_inside` from a point
 literal and a solid state; see `03b`. Entity containment stays with `has_face`,
@@ -176,7 +175,7 @@ every edge has a length, every path segment has a length, every solid state has
 a volume and a bounding box. A missing row for a per-entity measurement is a
 graph defect, not a data condition.
 
-**Pair emission rule.** `distance_to`, `angle`, `coplanar_with`, and `coaxial_with`
+**Pair emission rule.** `distance`, `angle`, `coplanar_with`, and `coaxial_with`
 apply to pairs, and a solid state can hold thousands of pairs. A pair element is
 emitted only when at least one endpoint is a **named entity** and the other is of
 the declared **endpoint entity kind**. The emitted pairs are not the full pair set.
@@ -256,7 +255,7 @@ what produced it.
 | `has_face`, `has_edge`, `has_vertex` | derived from the topology records |
 | `adjacent_to` | derived from the topology records |
 | `parallel_to`, `perpendicular_to`, `coplanar_with`, `coaxial_with` | derived from geometry, with the tolerance from section 4.2 |
-| `distance_to` | measured by the kernel |
+| `distance` | measured by the kernel |
 | `adds_material`, `removes_material`, `part_of` | derived from the feature and region records |
 | `is_inside` | measured by the kernel, from the solid state and a point literal |
 
