@@ -122,6 +122,21 @@ when its completion marker and identity match.
 
 ## Closed or merged in the 2026-11-20 pass
 
+- `MC-41` — the construction test contract is
+  `pipeline/testing/construction-tests.md`: a definition tier that re-evaluates
+  every validity rule the definition decides, a graph tier for pair emission,
+  point probes, and the clear-case margin, and an end-to-end tier that constructs
+  the golden record and compares its counts against the graph. `03b` now names
+  every validity rule and owns its failure reason set, so a skipped rule is a
+  visible defect rather than an absent check. Rejection fixtures are kept apart
+  from coverage fixtures, so a degenerate program cannot make a support-table
+  cell look supported.
+- `MC-15` — multiple choice is checked against a named list of nine P0 rules and
+  one P2 rule. `choice_pool` is typed and labeled at construction, so a label is
+  a position and `gold_answer` is a label before the definition is hashed. The
+  release table carries a `choices` column of label and answer value, so `05`
+  rechecks the pool without parsing the prompt, and a label counts by the answer
+  value it denotes. It absorbs `MC-24`.
 - `MC-42` — the golden record is a versioned JSON file per task, defined in
   `pipeline/testing/golden-records.md` with the program, construction input,
   task description, canonical clue sequence, answer, and evidence. The first
