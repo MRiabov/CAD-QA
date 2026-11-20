@@ -166,7 +166,7 @@ evidence is either **measured** by running CadQuery, or **derived** from the
 program text and geometry by an exact rule. A guessed or approximate value is not
 CAD graph evidence and cannot support a benchmark answer.
 
-### 4.1 Emitted elements
+### 4.1 Emission rules
 
 A measurement kind is declared for a scope, not for every member of that scope.
 Two rules decide what is emitted.
@@ -176,20 +176,22 @@ every edge has a length, every path segment has a length, every solid state has
 a volume and a bounding box. A missing row for a per-entity measurement is a
 graph defect, not a data condition.
 
-**Pair measurements and pair relations have one named endpoint.** `distance_to`,
-`angle`, `coplanar_with`, and `coaxial_with` apply to pairs, and a solid state can
-hold thousands of pairs. The emitted pairs are not the full pair set.
+**Pair emission rule.** `distance_to`, `angle`, `coplanar_with`, and `coaxial_with`
+apply to pairs, and a solid state can hold thousands of pairs. A pair element is
+emitted only when at least one endpoint is a **named entity** and the other is of
+the declared **endpoint entity kind**. The emitted pairs are not the full pair set.
 
-A pair element exists only when at least one endpoint is a **named entity**: an
-entity a clue can name directly, by face surface kind, by position, or by
-the operation or feature that created it. "The cylindrical face", "the top face",
-and "the face created by `cutBlind`" are named entities.
+A named entity is one a clue can name directly: by face surface kind, by
+position, or by the operation or feature that created it. "The cylindrical face",
+"the top face", and "the face created by `cutBlind`" are named entities.
 
 The other endpoint must be of an **endpoint entity kind** that the relation or
 measurement declares in section 3 or section 4. `coplanar_with` declares faces,
 `coaxial_with` declares edges and path segments, and `angle` declares faces or
 edges. An endpoint entity kind is a per-relation declaration, not the global
-entity category. The emitted pairs are then
+entity category.
+
+The emitted pairs for one solid state are then
 
 ```text
 named endpoint × candidate endpoints of the declared endpoint entity kinds
@@ -207,21 +209,20 @@ vocabulary:
   row is needed;
 - a `cross_state` reference needs the per-entity values in both states.
 
-A named endpoint must resolve to exactly one entity in the solid state. It is
-identified by face surface kind, by position, or by the operation or feature that
-created it. Zero matches or several matches means the pair is not emitted, and a
-task clue that needs it is invalid.
+A named endpoint must resolve to exactly one entity in the solid state. Zero
+matches or several matches means the pair is not emitted, and a task clue that
+needs it is invalid.
 
 There is no cap on pairs per named endpoint: the number of emitted pairs is
-linear in the entity count for each endpoint. A program whose solid state exceeds `max_state_entities`
-is rejected at graph construction rather than truncated, so every accepted graph
-carries all of its emitted pairs. `max_state_entities` is provisional at 500. It is
-a scope constant: it is measured once, offline, from the selected program pool
-when an implementation scope starts, and recorded with the distribution that
-produced it. Graph construction and planning read the recorded number and never
-recompute it, so the limit is not a per-run cost and a run stays reproducible.
-The constant is revised deliberately when the graph content grows, for example
-when P1 adds relations and states.
+linear in the entity count for each endpoint. A program whose solid state exceeds
+`max_state_entities` is rejected at graph construction rather than truncated, so
+every accepted graph carries all of its emitted pairs. `max_state_entities` is
+provisional at 500. It is a scope constant: it is measured once, offline, from
+the selected program pool when an implementation scope starts, and recorded with
+the distribution that produced it. Graph construction and planning read the
+recorded number and never recompute it, so the limit is not a per-run cost and a
+run stays reproducible. The constant is revised deliberately when the graph
+content grows, for example when P1 adds relations and states.
 
 A pair that is not emitted is not a missing measurement; it is not a candidate.
 
@@ -295,11 +296,11 @@ depends on the failed output is rejected.
 5. No graph element is orphaned.
 6. Every graph element used by a task clue or answer is present.
 7. A graph element is either present with a measured or derived value, or
-   outside the emitted elements. A gap is the emitted elements minus the
-   rows, computed by the coverage check; the graph stores no missing-value
-   record.
+   outside the emission rules. A gap is what the emission rules require minus
+   the rows present, computed by the coverage check; the graph stores no
+   missing-value record.
 8. The graph can answer every task target category, clue type, and answer meaning the dataset claims to support at each task reasoning step count.
-9. A task that needs a graph element outside the emitted elements is rejected,
+9. A task that needs a graph element outside the emission rules is rejected,
    not softened.
 
 ## 7. What the graph is not

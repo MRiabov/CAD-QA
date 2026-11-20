@@ -31,7 +31,7 @@ grammar permits at a step count. The census answers what one graph offers.
 
 - Per-entity measurements are total over their scope, so a measurement capability
   is present when the entity kind is present.
-- Pair elements exist only for the named endpoints in the emitted pairs
+- Pair elements exist only for the pairs the pair emission rule allows
   (`graph-content.md` section 4.1).
 - Structural rules: the property clue type has no operand form; `selected` needs
   an earlier clue, so it is absent at step count 1; `aggregation` with an
