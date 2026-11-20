@@ -21,23 +21,27 @@ task. It is not prompt text and not a loose task tuple. It is what `04` renders.
 
 | Field | Meaning |
 |---|---|
-| `task_id` | Stable identity derived from the canonical task identity. It does not encode the gold answer. |
-| `definition_sha256` | Hash of the canonical task definition, including the answer and answer evidence. |
+| `task_id` | `cadqatask:<sha256>` over the canonical task identity. It does not encode the gold answer. |
+| `definition_sha256` | Hash of the canonical task content and the inputs that change it. Assignment and provenance are excluded. |
 | `program_id`, `program_sha256` | CadQuery program identity. |
 | `cadevolve_program_family_id` | Program family used for split isolation. |
 | `split`, `subset` | Split and warmup/main label assigned by `03a`. |
 | `graph_schema_version`, `definition_schema_version` | Versions needed to reproduce the definition. |
+| `state_scope` | Which solid states the task may refer to. `final` in P0 (`DS-34`). |
 | `target_category` | Task target category from `requirements/task-structure.md`. |
 | `target_binding` | The concrete graph entity or measurement instance the task asks about. |
 | `task_clues` | Ordered typed task clues. |
+| `clue_operand_form_profile` | The ordered `(clue_type, clue_operand_form)` pair for every clue. Derived from `task_clues`. |
 | `answer_meaning`, `task_answer_step` | What the answer is about and the step that produces it. |
+| `answer_parameter` | The point for a position, the category for a topology change, null otherwise. |
 | `native_answer_format`, `answer_format` | The meaning's native format and the format the prompt will request. |
 | `gold_answer`, `answer_unit`, `tolerance`, `scoring_rule` | Answer data. |
-| `answer_evidence` | Measured or derived answer evidence with rule and references. |
+| `answer_evidence` | Measured or derived evidence: rule, references, the answer-equivalent set, and the point probe. |
 | `choice_pool` | Real answer-space candidates and their distinguishing graph facts, when multiple choice is planned. For P2, it includes validated near-miss choices. |
 | `task_clue_step_count`, `task_reasoning_step_count` | Step accounting. |
-| `validity_record` | Uniqueness, answer-equivalent set and `same_answer` result, geometry requirement, and check results. |
-| `provenance` | Constructor, sampled parameters, and input versions. |
+| `geometry_required` | Whether at least one task clue depends on the built shape. |
+| `validity_record` | Typed check results and the answer-uniqueness result. |
+| `provenance` | Constructor version, seed, and input versions. Assignment, not content. |
 
 The definition must be sufficient to reproduce the task without re-running task
 construction. `04` may render text and order the choice pool, but it must not bind
@@ -118,6 +122,11 @@ Every task clue must narrow the possible answers: its `after` count is smaller
 than its `before` count. A clue that does not narrow is not a task clue step and
 the definition is rejected. A list item that states two conditions is two task
 clues.
+
+The definition also records `clue_operand_form_profile`, the ordered
+`(clue_type, clue_operand_form)` pair for every clue. It is derived from
+`task_clues` at construction and never authored separately; `05` recomputes it
+and compares.
 
 A comparison may name both entities or refer to one selected by an earlier task
 clue. The reference must resolve to exactly one entity; otherwise the comparison
@@ -201,6 +210,24 @@ clear-case margin of the face surface is not used, because "on the boundary" is 
 that the binary answer cannot express. The classification is measured evidence
 and records the point, the solid state hash, and the classifier.
 
+### Answer evidence
+
+`answer_evidence` is one typed record:
+
+| Field | Meaning |
+|---|---|
+| `evidence_kind` | `measured` or `derived`, from `graph-content.md` section 4.3. |
+| `evidence_rule` | The rule that produced the answer. |
+| `evidence_refs` | The graph entity, relation, and measurement references the rule used. |
+| `answer_equivalent_set` | The final possible-answer set: one entry per remaining candidate, with its subject and its answer. |
+| `point_probe` | The point, its classification, the solid state reference, and the classifier. Null unless the answer is membership. |
+
+`answer_equivalent_set` is stored so answer uniqueness can be rechecked from the
+definition alone, without the graph. Every entry's answer must equal the gold
+answer under `same_answer`; an identity answer requires exactly one entry. An
+entry's subject is a `node_id` for an entity target and the measurement name for
+a scalar target.
+
 ### Answer equality
 
 `same_answer(a, b)` is the comparison used for answer uniqueness and for scoring
@@ -258,6 +285,19 @@ An invalid definition is recorded as a failure with a reason and is not passed t
 `04`. A task with an ambiguous target, an answer-equivalent set that disagrees
 under `same_answer`, or an unverifiable answer is invalid.
 
+### Validity record
+
+`validity_record` is typed, not prose:
+
+| Field | Meaning |
+|---|---|
+| `checks` | One entry per validity rule below: the check name, the outcome, and a detail string. |
+| `answer_equivalent_size` | The number of entries in `answer_equivalent_set`. |
+| `same_answer_holds` | Whether every entry's answer equals the gold answer. |
+
+The check name is a closed set, one name per rule. `geometry_required` is its own
+field rather than a check entry, because `04` copies it to the release row.
+
 ## Task reasoning step accounting
 
 `task_reasoning_step_count` is:
@@ -288,8 +328,8 @@ quota target above that count is a deficit, not a reason to keep a redundant clu
 constructors. Construction is supply-driven: it builds from the facts the graph
 has and samples them into the quota targets (`DS-33`). A cell-level demand query
 is a deficit-path last resort, not the default. Construction is deterministic for
-a given graph, plan version, definition-schema version, and seed. Constructor order is stable and recorded in
-provenance. A quota target that cannot be filled becomes a deficit for `03c`.
+a given graph, plan version, definition-schema version, and seed. Constructor
+order is stable and fixed by `constructor_version`. A quota target that cannot be filled becomes a deficit for `03c`.
 
 Canonical task identity is:
 
@@ -315,6 +355,70 @@ positions.
 Definitions with identical canonical identity are duplicates. `03b` keeps one
 and records the duplicate. Invalid definitions go to the failure record and do
 not consume quota.
+
+### Canonical serialization
+
+One definition serializes to one canonical JSON object. Its bytes are the hash
+input, so every rule below is part of the contract:
+
+- keys sorted by byte order, so the field table can be reordered without changing
+  a hash;
+- UTF-8, no byte-order mark, `,` and `:` with no surrounding space, no trailing
+  newline;
+- non-ASCII characters escaped, so Go and Python produce the same bytes;
+- absent values written as `null`, never omitted;
+- numbers written as the canonical decimal string for the answer format, never
+  as a binary float, because the two languages format floats differently;
+- UUIDs as lowercase hyphenated text;
+- lists keep their recorded order, and the clue list is the canonical clue
+  sequence.
+
+`task_id` and `definition_sha256` are excluded from their own hash input.
+
+### Three hashes
+
+| Hash | Input | Used for |
+|---|---|---|
+| `task_id` | the canonical task identity | duplicate detection, release key, split-isolation check |
+| `definition_sha256` | the canonical task content | accepted-definition immutability, duplicate content, reproduction check |
+| `answer_sha256` | the answer and scoring fields | release answer column integrity |
+
+`definition_sha256` covers `state_scope`, `target_binding`, `task_clues`,
+`clue_operand_form_profile`, `answer_meaning`, `answer_parameter`,
+`gold_answer`, `answer_unit`, `tolerance`, `scoring_rule`, `answer_evidence`,
+and `choice_pool` in construction order. It also covers the inputs that change
+that content: `program_sha256`, `graph_schema_version`,
+`runtime_extraction_sha256`, `constructor_version`, `definition_schema_version`,
+and `construction_seed`.
+
+It does not cover `plan_version`, `cadevolve_program_family_id`, `split`, or
+`subset`. Those are assignment: `03a` re-enters with a new plan version without
+changing an accepted definition, so hashing them would invalidate every accepted
+definition on every replan (`TG-3`).
+
+`answer_sha256` covers `gold_answer`, `answer_unit`, `tolerance`,
+`scoring_rule`, and `answer_schema_version`. It excludes `answer_evidence`,
+because evidence is audit data and a change to its representation must not change
+the answer identity. `04` copies the hash; it does not recompute it.
+
+`04` orders and labels a copy of `choice_pool`. It must not write the order back,
+because the order is part of the hash.
+
+### Provenance
+
+`provenance` records the inputs the hash depends on, so a mismatch names the input
+that moved:
+
+| Field | Meaning |
+|---|---|
+| `runtime_extraction_sha256` | The CadQuery program runtime extraction result the graph was built from. |
+| `constructor_version` | The typed constructor set that produced the definition. |
+| `construction_seed` | The seed the constructor sampled with. |
+| `plan_version` | The `TaskQuotaPlan` that assigned the quota target. |
+| `balance_policy_version` | The balance policy the plan was computed from. |
+
+Rendering provenance — render seed, template version, and `prompts.yaml` hash —
+belongs to `04` render prompt and choices, not to the definition (`DS-35`).
 
 ## Construction attempt budget
 

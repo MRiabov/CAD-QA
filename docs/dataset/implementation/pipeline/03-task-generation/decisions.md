@@ -49,8 +49,30 @@ the document that owns them.
   supply-driven sweep cannot starve them. Overfill is visible in the ledger
   rather than silently absorbed.
 
+## TG-3 — Definition identity excludes assignment
+
+- **Status:** accepted (2026-11-20).
+- **Context:** A definition carries both content and assignment. The content is
+  the task: state scope, binding, clues, answer, evidence, choices. The
+  assignment is which plan version, family, split, and subset the task landed
+  in. `03a` re-enters with a new plan version whenever a deficit is resolved,
+  and accepted definitions must stay valid across that re-entry. Hashing the
+  whole record would change every `definition_sha256` on every replan, so the
+  immutability rule in `03a` could never hold.
+- **Decision:** `definition_sha256` covers the content and the inputs that
+  change it — program hash, graph schema version, runtime extraction hash,
+  constructor version, definition schema version, and construction seed. It
+  excludes `plan_version`, the program family, the split, and the subset.
+  `task_id` covers the canonical task identity only, so it is stable across a
+  replan. `answer_sha256` covers the answer and scoring fields and excludes
+  answer evidence.
+- **Consequences:** A replan preserves accepted definitions and their hashes. A
+  hash mismatch means the content or one of its inputs changed, and the
+  provenance block names which. Assignment changes are visible in the plan and
+  the release row, not in the definition hash.
+
 ## Pending
 
-Two module-scoped decisions are accepted, and no module-scoped question is
+Three module-scoped decisions are accepted, and no module-scoped question is
 pending. Feature-wide construction decisions live in
 [`../../../decisions.md`](../../../decisions.md).

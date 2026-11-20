@@ -105,6 +105,11 @@ reporting. The answer columns hold the gold answer, scoring fields, and answer
 evidence. `prompt` is the only LLM-facing column; every other column stays out
 of the LLM model input.
 
+`answer_sha256` is computed by
+[`03b` construct task definitions](../implementation/pipeline/03-task-generation/03b-construct-task-definitions.md)
+from the definition's answer and scoring fields, and copied by `04` render
+prompt and choices. Export does not recompute it.
+
 Question text, task clues, choices, and the answer instruction are not
 duplicated as separate columns. They are part of `prompt`, which is the exact
 LLM model input. A structured prompt record can be regenerated for audit if

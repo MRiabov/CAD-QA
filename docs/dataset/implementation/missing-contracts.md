@@ -13,7 +13,7 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 19 open entries: 15 P0 technical and 4 P1 technical. No product
+There are 17 open entries: 13 P0 technical and 4 P1 technical. No product
 decision remains open, and P2 is empty.
 
 ## Decisions needed from the owner
@@ -30,62 +30,27 @@ None.
 
 Work order:
 
-1. `MC-37` — the definition fields; a definition cannot carry the new decisions
+1. `MC-14` — the failure record; every pipeline stage that rejects writes to it.
+2. `MC-40` — the deficit classes; `03c` resolve deficits cannot route a deficit
    without them.
-2. `MC-09` — identity and provenance; a definition cannot be persisted or
-   reproduced without them.
-3. `MC-14` — the failure record; every pipeline stage that rejects writes to it.
-4. `MC-40` — the deficit classes; `03c` resolve deficits cannot route a deficit
-   without them.
-5. `MC-44` — feasibility derivation; it produces the support tables `MC-13`
+3. `MC-44` — feasibility derivation; it produces the support tables `MC-13`
    checks against.
-6. `MC-46` — the capability census artifact; `03c` resolve deficits cannot route
+4. `MC-46` — the capability census artifact; `03c` resolve deficits cannot route
    a capability deficit without it.
-7. `MC-25` — the prompt template file; `04` render prompt and choices has
+5. `MC-25` — the prompt template file; `04` render prompt and choices has
    nothing to render from without it.
-8. `MC-11` — the rendering inputs; a prompt cannot be reproduced from the
+6. `MC-11` — the rendering inputs; a prompt cannot be reproduced from the
    declared input without them.
-9. `MC-12` — the release projection; the release columns have no writer without
+7. `MC-12` — the release projection; the release columns have no writer without
    it.
-10. `MC-13` — the coverage and balance checks; they compare the release against
-    the support tables and `balance.yaml`.
-11. `MC-15` — multiple-choice fairness; the choice check.
-12. `MC-38` — the release fields and fifth support file; the consumer contract.
-13. `MC-26` — the manifest and dataset card fields; the release ships both.
-14. `MC-41` — the construction test contract; it locks the invariants the other
+8. `MC-13` — the coverage and balance checks; they compare the release against
+   the support tables and `balance.yaml`.
+9. `MC-15` — multiple-choice fairness; the choice check.
+10. `MC-38` — the release fields and fifth support file; the consumer contract.
+11. `MC-26` — the manifest and dataset card fields; the release ships both.
+12. `MC-41` — the construction test contract; it locks the invariants the other
     entries introduce.
-15. `MC-42` — the golden record; the first end-to-end comparison.
-
-#### MC-37 — Definition fields for the new decisions
-
-The `TaskDefinition` fields required by the recorded decisions are absent:
-`state_scope` and `clue_operand_form_profile` are not fields, `answer_parameter` is not
-a field, and `answer_evidence` does not define the `answer_equivalent_set` or
-membership-probe field. The field table predates `DS-32`, `DS-34`, and
-`DS-38`, and `validity_record` is still a prose field with no typed check-result
-field.
-
-**Recommendation:** add `state_scope`, `clue_operand_form_profile`, and
-`answer_parameter` as definition fields; add typed `answer_equivalent_set` and
-membership-probe fields to `answer_evidence`, with the set holding entity ids
-and their answers so answer uniqueness can be rechecked from the definition
-alone; and give `validity_record` a typed check-result field. `answer_parameter` is
-the point, direction, or category a parameterized answer declares.
-
-#### MC-09 — Definition identity and provenance
-
-Definition reproducibility is not specified: the canonical serialization and
-hash inputs for `task_id`, `definition_sha256`, and the release `answer_sha256`,
-plus the provenance a definition must carry — runtime extraction hash, graph
-hash, plan version, constructor version, and seed. Without it, duplicate
-identity and reproduction are both undefined. Render seed and template version
-are rendering provenance in `04` render prompt and choices, not the construction
-definition (`DS-35`). It absorbs `MC-10`.
-
-**Recommendation:** serialize one canonical JSON per definition, hash that
-serialization, and put the construction provenance block inside it, so a hash
-mismatch names the changed input. Record rendering provenance separately in the
-`04` render prompt and choices output.
+13. `MC-42` — the golden record; the first end-to-end comparison.
 
 #### MC-14 — Failure record schema
 
@@ -361,6 +326,13 @@ when its completion marker and identity match.
 
 ## Closed or merged in the 2026-11-20 pass
 
+- `MC-37` — the definition fields are written: `state_scope`,
+  `clue_operand_form_profile`, `answer_parameter`, and `geometry_required` are
+  fields; `answer_evidence` carries `answer_equivalent_set` and `point_probe`;
+  `validity_record` is typed.
+- `MC-09` — canonical JSON, three hash inputs, and the provenance block are
+  written in `03b`, with `TG-3` recording why assignment is excluded from
+  `definition_sha256`.
 - `MC-16` — dissolved. The implementation-scope filter is the support-table
   derivation: it takes `implementation_scope` from the requirement marks, so a
   value above the release scope has no row and is neither planned nor accepted.
