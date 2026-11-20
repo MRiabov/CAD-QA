@@ -13,7 +13,11 @@ TRANSFORM:
   - `cap_conflict` → `plan_conflict`
   - `split_capacity_short`, `family_quota_short`, `family_quota_target_conflict` → `capacity_deficit`
   - `quota_target_family_unassigned` → `capability_deficit` when no family profile has the capability, otherwise `capacity_deficit`
+- `DeficitClass` is closed: `capability_deficit, probe_deficit, capacity_deficit, construction_deficit, constructor_deficit, plan_conflict, structural_deficit`
 - capability lookup: read `family_profiles`; at least one family has the capability → `capacity_deficit`; no family has it → `capability_deficit`; a capability that yields no valid task is a `construction_deficit` or `constructor_deficit`
+- `capacity_deficit` → `ProgramReassignmentRequest` first; `ProgramRequest` only when the split itself is short
+- `construction_deficit` → `ProgramReassignmentRequest` to raise the attempt budget; a persistent high rate is a `03b` fix
+- `constructor_deficit`, `plan_conflict`, and `structural_deficit` → neither loop helps; fix `03b` or the plan
 - `probe_deficit` is per state: drop membership for that state and record it; escalate only when no family profile reports a state with a surviving probe
 - escalation order: `ProgramReassignmentRequest` to `03a`, then `ProgramRequest` to `01b`, then accept the miss
 - fast loop: `03a` residual replan → `03b` resume; no fetch, normalize, or execute

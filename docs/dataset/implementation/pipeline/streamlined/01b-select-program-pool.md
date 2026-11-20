@@ -31,7 +31,7 @@ TRANSFORM:
 - fill remaining active slots proportionally to collection size
 - select 1500 active; take the next 300-450 by the same order as reserve
 - precedence: scope/dedupe/family cap → hard 1500 cap → tag minima → collection minima → proportional fill
-- never exceed 1500; a tag or collection below its minimum → select all eligible and record the shortfall
+- never exceed 1500; a tag with fewer than 50 eligible after the family cap → select all eligible and record the shortfall; a collection that cannot reach 300 after the family cap, tag reservations, and the hard cap → record the shortfall
 
 WRITE:
 - (none)
