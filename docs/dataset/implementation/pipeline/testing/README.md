@@ -25,7 +25,7 @@ assert-from-the-artifact rule, and the test-first order — are in
 | [`02c-build-cad-graph.md`](02c-build-cad-graph.md) | `02c` build CAD graph. | draft |
 | [`03a-allocate-task-quotas.md`](03a-allocate-task-quotas.md) | `03a` allocate task quotas. | draft |
 | [`03b-construct-task-definitions.md`](03b-construct-task-definitions.md) | `03b` construct task definitions. | draft |
-| `03c-resolve-deficits.md` | `03c` resolve deficits. | missing |
+| [`03c-resolve-deficits.md`](03c-resolve-deficits.md) | `03c` resolve deficits. | draft |
 | `04-render-prompt-and-choices.md` | `04` render prompt and choices. | missing |
 | `05-validate-and-export-release.md` | `05` validate and export release. | missing |
 
