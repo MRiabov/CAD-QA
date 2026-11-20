@@ -13,7 +13,7 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 10 open entries: 6 P0 technical and 4 P1 technical. No product
+There are 9 open entries: 5 P0 technical and 4 P1 technical. No product
 decision remains open, and P2 is empty.
 
 ## Decisions needed from the owner
@@ -32,13 +32,11 @@ Work order:
 
 1. `MC-11` — the rendering inputs; a prompt cannot be reproduced from the
    declared input without them.
-2. `MC-12` — the release projection; the release columns have no writer without
-   it.
-3. `MC-15` — multiple-choice fairness; the choice check.
-4. `MC-26` — the manifest and dataset card fields; the release ships both.
-5. `MC-41` — the construction test contract; it locks the invariants the other
+2. `MC-15` — multiple-choice fairness; the choice check.
+3. `MC-26` — the manifest and dataset card fields; the release ships both.
+4. `MC-41` — the construction test contract; it locks the invariants the other
    entries introduce.
-6. `MC-42` — the golden record; the first end-to-end comparison.
+5. `MC-42` — the golden record; the first end-to-end comparison.
 
 #### MC-11 — Rendering inputs
 
@@ -52,21 +50,6 @@ rendering cannot reproduce a prompt from the declared input alone.
 the render seed, and the prompt template version to the `04` render prompt and
 choices row of `io-contracts.md`; `04` render prompt and choices already owns
 the rendering contract for `prompts.yaml`.
-
-#### MC-12 — Release projection
-
-The `TaskDefinition` to release-table projection is unowned:
-`answer_schema_version`, `answer_sha256`, `prompt_sha256`, `answer_evidence_json`,
-`clue_types`, tolerance, and scoring have no writer. `04` render prompt and
-choices emits release rows and `05` validate and export release checks them, but
-neither owns the field mapping.
-
-**Recommendation:** assign the projection to `04` render prompt and choices,
-which already emits release rows, and let `05` validate and export release check
-the result; keep the field mapping in the release contract so it is written
-once. `answer_schema_version` and `answer_sha256` are release-only fields, so
-`04` render prompt and choices must compute them; `answer_evidence_json` and
-`clue_types` are projections of definition fields.
 
 #### MC-15 — Multiple-choice fairness checks
 
@@ -195,6 +178,12 @@ when its completion marker and identity match.
 
 ## Closed or merged in the 2026-11-20 pass
 
+- `MC-12` — `04` render prompt and choices owns the projection, and the release
+  contract carries one `Carries` row per column. Answer text is copied, never
+  re-serialized; `clue_types` comes from `clue_operand_form_profile`;
+  `prompt_sha256` is over the `prompt` UTF-8 bytes; `answer_sha256` is copied and
+  not recomputed. `answer_schema_version` is now a `TaskDefinition` field, which
+  `answer_sha256` already hashed.
 - `MC-25` — `prompts.yaml` and its schema are written in `prompt-templates.md`;
   `tests/test_prompt_templates.py` validates the file. The file carries template
   IDs, typed placeholders, label tables, and dataset and evaluation namespaces;

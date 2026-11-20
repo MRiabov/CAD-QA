@@ -36,7 +36,8 @@ task. It is not prompt text and not a loose task tuple. It is what `04` renders.
 | `answer_parameter` | The point for a position, the category for a topology change, null otherwise. |
 | `native_answer_format`, `answer_format` | The meaning's native format and the format the prompt will request. |
 | `gold_answer`, `answer_unit`, `tolerance`, `scoring_rule` | Answer data. `gold_answer` and `tolerance` are canonical text, matching the release columns. |
-| `answer_evidence` | Measured or derived evidence: rule, references, the answer-equivalent set, and the point probe. |
+| `answer_schema_version` | Version of the answer representation: the answer formats, the canonical text rules, and the answer evidence shape. Hashed by `answer_sha256`. |
+| `answer_evidence` | Measured or derived evidence as canonical JSON text: rule, references, the answer-equivalent set, and the point probe. `04` copies it into the release column. |
 | `choice_pool` | Real answer-space candidates and their distinguishing graph facts, when multiple choice is planned. For P2, it includes validated near-miss choices. |
 | `task_clue_step_count`, `task_reasoning_step_count` | Step accounting. |
 | `geometry_required` | Whether at least one task clue depends on the built shape. |
@@ -213,7 +214,7 @@ and records the point, the solid state hash, and the classifier.
 
 ### Answer evidence
 
-`answer_evidence` is one typed record:
+`answer_evidence` is one typed record, persisted as canonical JSON text:
 
 | Field | Meaning |
 |---|---|

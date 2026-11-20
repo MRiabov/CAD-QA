@@ -79,30 +79,49 @@ No CAD model and no correct answer is above 1% of tasks.
 
 `release.parquet` has one row per task.
 
-| Column | Format | Required | Meaning |
-|---|---|---|---|
-| `task_id` | string | yes | Stable release key. It must not encode the answer. |
-| `split` | enum `train`, `validation`, `test` | yes | Split assignment. The same CADEvolve program family stays in one split. |
-| `subset` | enum `warmup`, `main` | yes | Warmup is the labeled 1-step subset. |
-| `prompt` | string | yes | Exact LLM model input, including program text, question, task clues, choices, and answer instruction. |
-| `prompt_sha256` | string | yes | Content hash of `prompt`. |
-| `program_id` | string | yes | Stable program key shared by tasks from the same CadQuery program. |
-| `program_sha256` | string | yes | Hash of the normalized CadQuery program text. |
-| `cadevolve_program_family_id` | string | yes | Stable program family used as the split unit: a CADEvolve generator family or a CADEvolve-predicted ABC/ShapeNet mesh family. |
-| `task_reasoning_step_count` | integer | yes | Number of task clue steps plus the task answer step, if any. |
-| `target_category` | enum | yes | Task target category. |
-| `clue_types` | list of enum | yes | Ordered task clue types; empty for a task with no task clue. |
-| `clue_operand_form_profile` | list of struct `{clue_type, clue_operand_form}` | yes | Ordered clue type and clue operand form of every task clue, one entry per `clue_types` entry. `clue_operand_form` is null for a clue that carries no reference. |
-| `answer_format` | enum | yes | Format the LLM model must return. |
-| `answer_meaning` | enum | yes | What the answer is about. |
-| `geometry_required` | boolean | yes | Whether at least one task clue depends on the built shape. |
-| `gold_answer_json` | string | yes | Canonical JSON for the gold answer. |
-| `answer_unit` | string or null | yes | Unit; null means unitless. |
-| `tolerance_json` | string or null | yes | Canonical JSON tolerance; null means exact. |
-| `scoring_rule` | enum `exact`, `numeric_tolerance`, `structured_exact` | yes | How the answer is checked. |
-| `answer_schema_version` | string | yes | Version of the answer representation. |
-| `answer_sha256` | string | yes | Hash of the canonical answer and scoring fields. |
-| `answer_evidence_json` | string | yes | Canonical JSON answer evidence: measured or derived, references, and rule. |
+| Column | Format | Required | Meaning | Carries |
+|---|---|---|---|---|
+| `task_id` | string | yes | Stable release key. It must not encode the answer. | `TaskDefinition.task_id` |
+| `split` | enum `train`, `validation`, `test` | yes | Split assignment. The same CADEvolve program family stays in one split. | `TaskDefinition.split` |
+| `subset` | enum `warmup`, `main` | yes | Warmup is the labeled 1-step subset. | `TaskDefinition.subset` |
+| `prompt` | string | yes | Exact LLM model input, including program text, question, task clues, choices, and answer instruction. | Rendered by `04` render prompt and choices |
+| `prompt_sha256` | string | yes | Content hash of `prompt`. | SHA-256 of the `prompt` UTF-8 bytes |
+| `program_id` | string | yes | Stable program key shared by tasks from the same CadQuery program. | `TaskDefinition.program_id` |
+| `program_sha256` | string | yes | Hash of the normalized CadQuery program text. | `TaskDefinition.program_sha256` |
+| `cadevolve_program_family_id` | string | yes | Stable program family used as the split unit: a CADEvolve generator family or a CADEvolve-predicted ABC/ShapeNet mesh family. | `TaskDefinition.cadevolve_program_family_id` |
+| `task_reasoning_step_count` | integer | yes | Number of task clue steps plus the task answer step, if any. | `TaskDefinition.task_reasoning_step_count` |
+| `target_category` | enum | yes | Task target category. | `TaskDefinition.target_category` |
+| `clue_types` | list of enum | yes | Ordered task clue types; empty for a task with no task clue. | The clue type sequence of `clue_operand_form_profile` |
+| `clue_operand_form_profile` | list of struct `{clue_type, clue_operand_form}` | yes | Ordered clue type and clue operand form of every task clue, one entry per `clue_types` entry. `clue_operand_form` is null for a clue that carries no reference. | `TaskDefinition.clue_operand_form_profile` |
+| `answer_format` | enum | yes | Format the LLM model must return. | `TaskDefinition.answer_format` |
+| `answer_meaning` | enum | yes | What the answer is about. | `TaskDefinition.answer_meaning` |
+| `geometry_required` | boolean | yes | Whether at least one task clue depends on the built shape. | `TaskDefinition.geometry_required` |
+| `gold_answer_json` | string | yes | Canonical JSON for the gold answer. | `TaskDefinition.gold_answer`, copied as canonical text |
+| `answer_unit` | string or null | yes | Unit; null means unitless. | `TaskDefinition.answer_unit` |
+| `tolerance_json` | string or null | yes | Canonical JSON tolerance; null means exact. | `TaskDefinition.tolerance`, copied as canonical text |
+| `scoring_rule` | enum `exact`, `numeric_tolerance`, `structured_exact` | yes | How the answer is checked. | `TaskDefinition.scoring_rule` |
+| `answer_schema_version` | string | yes | Version of the answer representation. | `TaskDefinition.answer_schema_version` |
+| `answer_sha256` | string | yes | Hash of the canonical answer and scoring fields. | `TaskDefinition.answer_sha256`, copied |
+| `answer_evidence_json` | string | yes | Canonical JSON answer evidence: measured or derived, references, and rule. | `TaskDefinition.answer_evidence`, copied as canonical text |
+
+The `Carries` column says what the column is, not how it is produced: a column
+either carries a `TaskDefinition` field unchanged or carries a value that `04`
+render prompt and choices computes from the definition. `04` writes every column
+of the release table.
+
+`04` copies the answer text and never re-serializes it. `03b` construct task
+definitions already wrote `gold_answer`, `tolerance`, and `answer_evidence` as
+canonical text, and a second serializer could reorder keys or format a number
+differently. `04` has no serializer for an answer value.
+
+`clue_types` is the clue type sequence of `clue_operand_form_profile`, not a
+second derivation from `task_clues`. The two columns then cannot disagree, and
+`05` validate and export release still checks them, because a release file can be
+corrupted after it is written.
+
+`prompt_sha256` is SHA-256 over the UTF-8 bytes of the `prompt` string, with no
+normalization and no added trailing newline. A consumer that normalizes the
+prompt before hashing it gets a different value.
 
 The first fifteen columns identify the task and support selection, review, and
 reporting. The answer columns hold the gold answer, scoring fields, and answer
@@ -112,7 +131,11 @@ of the LLM model input.
 `answer_sha256` is computed by
 [`03b` construct task definitions](../implementation/pipeline/03-task-generation/03b-construct-task-definitions.md)
 from the definition's answer and scoring fields, and copied by `04` render
-prompt and choices. Export does not recompute it.
+prompt and choices. Export does not recompute it. The hash covers a fixed set of answer
+fields in a canonical form, so recomputing it in `04` would be a second
+implementation of that canonical form, and a mismatch would be ambiguous between
+a changed answer column and two serializers that drifted. The release-table hash in the manifest protects the
+exported bytes, and `answer_sha256` identifies the answer across releases.
 
 Question text, task clues, choices, and the answer instruction are not
 duplicated as separate columns. They are part of `prompt`, which is the exact

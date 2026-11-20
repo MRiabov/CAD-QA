@@ -23,6 +23,11 @@ Coverage and balance checks:
 - Validate the release table schema and row counts.
 - Check that the prompt is answer-free.
 - Check `task_id` uniqueness and exactly one answer set per row.
+- Check the release projection: recompute `prompt_sha256` from the `prompt`
+  bytes, check `clue_types` against `clue_operand_form_profile`, parse
+  `gold_answer_json` according to `answer_format`, and require `tolerance_json`
+  for every non-exact answer. `05` does not recompute `answer_sha256`; the
+  release-table hash covers the answer columns.
 - Recheck split isolation by CADEvolve program family on the final release
   table. `03a` assigns the split; `03b` stamps it; `04` carries it.
 - Run the coverage and balance checks in

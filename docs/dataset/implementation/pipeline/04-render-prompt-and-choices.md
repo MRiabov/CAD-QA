@@ -20,9 +20,29 @@ and, for multiple choice, the rendered choice set.
 - For P2 multiple choice, render the validated near-miss choice pool produced by
   `03`.
 - Emit dataset release rows with the prompt and answer columns.
-- Copy `clue_operand_form_profile` from the definition. Rendering does not
-  change it, and `05` validate and export release reads it for clue operand
-  form coverage.
+
+## Release projection
+
+`04` owns the `TaskDefinition` to release-table projection. The column mapping is
+in the
+[release contract](../../requirements/release-dataset-contract.md), one row per
+column, so it is written once.
+
+- Copy the definition fields unchanged, including `clue_operand_form_profile`,
+  which `05` validate and export release reads for clue operand form coverage.
+- Copy the answer text. `gold_answer`, `tolerance`, and `answer_evidence` are
+  already canonical text from `03b` construct task definitions, and `04` never
+  re-serializes an answer value.
+- Compute `prompt_sha256` over the `prompt` UTF-8 bytes after rendering.
+- Derive `clue_types` from `clue_operand_form_profile`, so the two columns cannot
+  disagree.
+- Copy `answer_sha256`. Do not recompute it: it covers a fixed set of answer
+  fields in a canonical form, and a second implementation would make a mismatch
+  ambiguous between a changed answer column and two serializers that drifted.
+
+Rendering may not invent a value. A projection that needs a field the definition
+does not carry is a `03b` construct task definitions defect, not a rendering
+decision.
 
 ## Prompt copy comes from YAML
 
