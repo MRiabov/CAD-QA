@@ -568,22 +568,21 @@ and the step-count quota is an upper bound.
 
 Blocks: task quality, step count, and the choice pool.
 
-### 7. `D7` — How is the multiple-choice pool built?
+### 7. `D7` — Where do the choices come from, and what happens below the floor?
 
-Options: the penultimate answer candidate set; the distinct answers of the
-penultimate set; a sample of the task target category.
+Accepted as `DS-36`.
 
-Recommendation: identity answers use the penultimate answer candidate set,
-because those are the entities the last clue discriminated between. Numeric answers use
-the distinct answers of the penultimate set, which makes the choices comparable
-numbers rather than unrelated measurements.
+Count, labels, uniqueness, leakage, and ordering are already fixed by
+`prompt-content.md` section 5 and PRD Q2: at least five choices, with seven as
+the goal.
 
-Two parts are still open: the exact rendered number of choices, and the padding
-rule when the pool is smaller than the five that validity requires. The earlier
-"at least five distinct values" line was about numeric values, not about the
-number of choices, which is why it read as a separate threshold.
+Recommendation: identity answers draw options from the penultimate answer
+answer candidate set, the entities the last clue discriminated between. Numeric answers
+draw options from the distinct answers of that set, so the options are
+comparable numbers. Below five real options, the task is rejected; options are
+never padded.
 
-Blocks: multiple-choice availability and `04`.
+Blocks: the `03b` choice pool and `04` rendering.
 
 ### 8. `D8` — In what order are quota targets filled, and when is a task accepted?
 
@@ -701,7 +700,7 @@ rates.
 The construction strategy is settled (`D11`): supply-driven with a
 capability-aware deficit loop. The two schema blockers are settled as well:
 `D1` (the equality relation for answer uniqueness) and `D2` (state scope). The
-remaining open decisions are `D6` to `D10`, and the construction grammar can
+remaining open decisions are `D8` to `D10`, and the construction grammar can
 be written with the box-and-hole example as the first golden record.
 
 The concern that the vocabulary may be growing without a stopping rule is

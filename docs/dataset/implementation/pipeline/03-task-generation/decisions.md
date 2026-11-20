@@ -37,7 +37,6 @@ construction questions in `plans/nov-19/03b-task-construction-design.md`:
 
 | Candidate | Question |
 |---|---|
-| `D7` | How is the multiple-choice pool built? |
 | `D8` | In what order are quota targets filled, and when is a task accepted? |
 | `D9` | Is clue operand form a coverage dimension, a balance dimension, or both? |
 | `D10` | What role does clue form play in reporting? |

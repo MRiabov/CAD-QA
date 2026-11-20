@@ -589,3 +589,19 @@ prefix is `DS-`.
   narrow at its position; the conjunction is unchanged. The multiple-choice pool
   stays the canonical penultimate set, so after a shuffle the choices are no
   longer "what the prompt's last clue discriminated between".
+
+## DS-36 — Multiple-choice options come from the penultimate answer candidate set
+
+- **Status:** accepted (2026-11-20).
+- **Context:** `prompt-content.md` fixes the count (at least five, seven as the
+  goal), the labels, uniqueness, leakage, and ordering. It does not say which
+  candidates become options, so a renderer could draw from anywhere in the graph,
+  including entities the last clue already excluded.
+- **Decision:** Identity answers draw options from the penultimate answer
+  candidate set, the entities the last clue discriminated between. Numeric answers
+  draw options from the distinct answers of that set, so the options are
+  comparable numbers. If fewer than five real options exist, the task is
+  rejected; options are never padded.
+- **Consequences:** The option pool is a construction output, not a rendering
+  choice. `04` orders and labels it and must not re-bind or extend it. A task
+  whose penultimate set is smaller than five is a deficit, not a padded task.
