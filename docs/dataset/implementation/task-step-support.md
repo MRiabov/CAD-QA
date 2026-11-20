@@ -6,17 +6,17 @@ to check a release. It is not a pipeline stage and not a generator input.
 ## Role
 
 The **task reasoning step support tables** record which target categories, clue type
-values, answer meanings, and answer formats are structurally feasible at each task
-reasoning step count.
+values, clue operand forms, answer meanings, and answer formats the constructor
+produced at each task reasoning step count over the coverage fixture set.
 
 They exist to check the dataset:
 
-- a feasible value missing from the release is a coverage gap;
-- a value present in the release but marked infeasible is a generator or
+- a supported value missing from the release is a coverage gap;
+- a value present in the release but marked unsupported is a generator or
   specification defect;
 - actual task counts are a separate coverage question.
 
-The tables are derived from the task-definition rules in
+The tables are derived from the constructor, using the rules in
 [`pipeline/03-task-generation/03b-construct-task-definitions.md`](pipeline/03-task-generation/03b-construct-task-definitions.md). They are not
 hand-authored, and `03` does not read them to decide what to attempt.
 
@@ -100,9 +100,9 @@ would change whenever a program was added or removed, which would make coverage
 gaps and specification defects indistinguishable. The pool is used once, when a
 fixture or an expected row is added.
 
-An absent cell is not an observed absence. Every absent cell carries a reason
-code from the closed set below, so a missing fixture cannot hide behind "not
-produced".
+An absent cell means the fixture set produced no valid definition for it; it does
+not prove that no valid definition exists. Every absent cell carries a reason code
+from the closed set below, so an absence is explained rather than left blank.
 
 ## Files
 
@@ -125,7 +125,7 @@ Each file has a versioned envelope and typed rows:
     {
       "task_reasoning_step_count": 1,
       "target_category": "solid_state",
-      "structurally_supported": true,
+      "supported": true,
       "implementation_scope": "P0",
       "reason_code": null
     }
@@ -162,7 +162,8 @@ For each task reasoning step count and dimension:
 1. Read the feasible values from the task reasoning step support table.
 2. Read the values present in the release and their counts.
 3. Report a coverage gap for every feasible value with zero tasks.
-4. Report a specification defect for every released value marked infeasible.
+4. Report a specification defect for every released value the table marks
+   unsupported at that step count.
 5. Report balance against the release targets separately.
 
 The table does not say how many tasks are needed. That belongs to coverage and

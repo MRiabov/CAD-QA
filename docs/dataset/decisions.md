@@ -450,9 +450,9 @@ prefix is `DS-`.
   `03a`/`05` use the tables to check the release.
 - **Consequences:** `03` does not read the task reasoning step support tables as
   data. `03a` calls the same derivation that writes them, so the plan and the QA
-  projection cannot disagree; `05` reads the persisted tables. A feasible value
-  missing from the dataset is a coverage gap; a released value marked infeasible
-  is a specification or generator defect. Dataset quantity remains a separate
+  projection cannot disagree; `05` reads the persisted tables. A supported value
+  missing from the dataset is a coverage gap; a released value the table marks
+  unsupported is a specification or generator defect. Dataset quantity remains a separate
   coverage question.
 
 ## DS-29 — Plan quotas before constructing task definitions
@@ -507,9 +507,10 @@ prefix is `DS-`.
   and has no separate ladder. Task reasoning step count stays the number of clues
   plus the answer step.
 - **Consequences:** `clue_operand_form` belongs to the clue's reference binding,
-  not to the clue, so the property clue type carries none. Coverage is reported
-  over clue type × clue operand form for reference-bearing clues only, and the support
-  table is `clue-operand-form-by-step`. "Stratified sampling" stays reserved for
+  not to the clue, so the property clue type carries none. Coverage is checked per
+  clue operand form for clues that carry a reference; the clue type stays in the
+  per-task profile, so a pair breakdown is derivable. The support table is
+  `clue-operand-form-by-step`. "Stratified sampling" stays reserved for
   dataset-level composition; the frequency target for a clue type is a clue quota
   or clue share.
 
@@ -544,8 +545,9 @@ prefix is `DS-`.
   graphs, so the planner either reverses pipeline stage order or forces a larger
   execution pass. A capability in the pool is also not a constructed task.
 - **Decision:** `03b` constructs tasks supply-driven by default, from the facts a
-  graph actually has. `02c` emits a program capability census as a by-product of graph
-  construction. `03a` and `03c` use that census only for deficits: when a
+  graph actually has. The census is derived from the graph; `DS-43` supersedes
+  the earlier sentence that had `02c` emit it as a by-product. `03a` and `03c` use
+  that census only for deficits: when a
   quota target is underfilled, they query it for capable programs and request
   supplemental programs through the existing slow loop. A cell-level demand query
   is a last resort and carries a `forced` flag and a naturalness check.
@@ -568,8 +570,10 @@ prefix is `DS-`.
   introduces it.
 - **Consequences:** `TaskDefinition` carries `state_scope`, which is `final` in
   P0. The possible-answer set is defined per state scope. A clue that needs
-  another state is rejected rather than resolved by convention. Effect answers
-  that need a second state wait for P2.
+  another state is rejected rather than resolved by convention. An effect answer
+  that reads the bound operation's recorded delta needs no second state, so
+  material-change and topology-change answers are P0. Only an answer that compares
+  two states waits for P2.
 
 ## DS-35 — Canonical clue order is identity-bearing; prompt order is a permutation
 
@@ -650,9 +654,10 @@ prefix is `DS-`.
   operand form profile stays available. Clue operand form is descriptive; it is
   not a difficulty label, and `DS-05` is unchanged.
 - **Consequences:** The release table carries `clue_operand_form_profile`, and `05`
-  reports coverage per `(clue_type, clue_operand_form)`. Benchmark results may
-  name the step counts and clue operand forms they cover, without ranking tasks
-  by clue operand form.
+  checks coverage per clue operand form. The recorded entry keeps the clue type, so a
+  `(clue_type, clue_operand_form)` breakdown is derivable without a second support
+  table. Benchmark results may name the step counts and clue operand forms they
+  cover, without ranking tasks by clue operand form.
 
 ## DS-39 — The CAD graph is an immutable Parquet artifact, not a relational table
 

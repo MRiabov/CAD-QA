@@ -162,10 +162,11 @@ returned. The answer format says "number" or "boolean"; the answer meaning says
 | Topology change | A change in face, edge, or vertex counts. The question declares the category; the answer is the signed delta for that category. | P0 |
 | Validity | Whether a shape is valid. | P2 |
 
-Position and topology change declare a parameter in the question: the point for a
-position and the category for a topology change. The parameter is part of the
-task definition and the answer evidence, not a convention the resolver picks. A
-material change declares no parameter; its sign carries the direction.
+Position, membership, and topology change declare a parameter in the question:
+the point for a position or a membership, and the category for a topology change.
+The parameter is part of the task definition and the answer evidence, not a
+convention the resolver picks. A material change declares no parameter; its sign
+carries the direction.
 
 The answer meaning is not the answer format. A volume can be returned as a
 number; a membership result can be returned as yes or no; an identity is
@@ -272,16 +273,23 @@ and P2 values. For each step count in the release, the dataset must contain:
 - every answer meaning supported at that task reasoning step count;
 - every answer format supported at that task reasoning step count;
 
-A **task reasoning step support table** records which values can occur at each
-step count and why an unsupported value cannot occur there. The five tables are
-derived from the task-definition rules; they are not authored as an independent
-input. They are part of the release documentation and are versioned with the
-generator. "Supported" is a property of the task structure, not of the current
-generator: a value may be marked unsupported only when no valid task can express
-it at that step count. Structural support is separate from implementation
-priority. A value may be structurally supported but deferred to P1 or P2; that
-is not a gap in the current release. A value that is structurally valid, in the
-release implementation scope, and not implemented is a gap.
+A **task reasoning step support table** records which values the constructor
+produced at least one valid definition for at each step count, and a reason when
+it produced none. The five tables are derived from the constructor over the
+coverage fixture set; they are not authored as an independent input, and they are
+not a description of what the task grammar permits. They are part of the release
+documentation and are versioned with the generator.
+
+Support is an observation. A value the constructor can produce but no fixture
+shows is not required by a release, and that is the cost of having one
+implementation instead of a second description of the grammar. The fixture set
+follows the vocabulary: a new value adds a fixture, or a row that names the
+missing capability.
+
+Support is separate from implementation priority. A value deferred to P1 or P2
+has no row in the P0 table, and that is not a gap in the current release. A value
+in the release implementation scope that a fixture supports and the release omits
+is a gap.
 
 Coverage is reported at each task reasoning step count and per dimension. Global
 coverage is the union of the task reasoning step count reports; it does not

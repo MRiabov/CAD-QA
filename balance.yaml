@@ -22,6 +22,9 @@ release:
   tasks_min: 10000
   programs_min: 1000
   built_shape_min_share: 0.95
+  # A floor, not the sum of `task_reasoning_step_share`: the default mix
+  # sums to exactly 0.80, so a mix within tolerance can fall below it.
+  three_or_more_step_min_share: 0.80
   cad_model_max_share: 0.01
   # Absolute share a release may drift from `splits` and
   # `task_reasoning_step_share`. `03a` plans the exact counts; construction

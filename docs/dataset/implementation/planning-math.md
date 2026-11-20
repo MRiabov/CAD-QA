@@ -38,8 +38,10 @@ must appear:
 - answer meaning;
 - answer format.
 
-Support is structural: a value is unsupported only when no valid task can
-express it at that step count.
+Support is observed: a value is supported at a step count when the constructor
+produced a valid definition for it over the coverage fixture set. The table
+records what the constructor did, not what the grammar permits; the trade is in
+[`task-step-support.md`](task-step-support.md).
 
 ## Plan-level targets
 

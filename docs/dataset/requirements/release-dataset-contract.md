@@ -102,7 +102,7 @@ No CAD model and no correct answer is above 1% of tasks.
 | `scoring_rule` | enum `exact`, `numeric_tolerance`, `structured_exact` | yes | How the answer is checked. | `TaskDefinition.scoring_rule` |
 | `answer_schema_version` | string | yes | Version of the answer representation. | `TaskDefinition.answer_schema_version` |
 | `answer_sha256` | string | yes | Hash of the canonical answer and scoring fields. | `TaskDefinition.answer_sha256`, copied |
-| `answer_evidence_json` | string | yes | Canonical JSON answer evidence: measured or derived, references, and rule. | `TaskDefinition.answer_evidence`, copied as canonical text |
+| `answer_evidence_json` | string | yes | Canonical JSON answer evidence: measured or derived, the rule, the references, the answer-equivalent set, and the point probe. | `TaskDefinition.answer_evidence`, copied as canonical text |
 
 The `Carries` column says what the column is, not how it is produced: a column
 either carries a `TaskDefinition` field unchanged or carries a value that `04`

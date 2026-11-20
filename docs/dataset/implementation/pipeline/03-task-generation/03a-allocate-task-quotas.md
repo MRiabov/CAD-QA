@@ -8,10 +8,9 @@ definitions are generated.
 
 ## Input / output
 
-- Input: CAD graphs for the selected program pool, program metadata, the release
-  implementation scope, the balance policy (`balance.yaml`), the current
-  `DeficitLedger` (empty on the first plan), and `ProgramReassignmentRequest`
-  records from `03c`.
+- Input: CAD graphs for the selected program pool, program metadata, the balance
+  policy (`balance.yaml`), the current `DeficitLedger` (empty on the first plan),
+  and `ProgramReassignmentRequest` records from `03c`.
 - Output: `TaskQuotaPlan`.
 
 ## Program capability census
@@ -43,6 +42,7 @@ checking the release. Neither holds balance numbers of its own.
 | `release.splits` | The split shares. |
 | `release.share_tolerance` | The absolute share a release may drift from `release.splits` and `task_reasoning_step_share`; read by `05`. |
 | `release.built_shape_min_share` | The minimum share of tasks with a built shape. |
+| `release.three_or_more_step_min_share` | The floor on the share of tasks that need three or more task reasoning steps; read by `05`. |
 | `release.cad_model_max_share` | The per-CAD-model task cap. |
 | `release.correct_answer_max_share` | The per-answer task cap; read by `05` in P1. |
 | `task_reasoning_step_share` | The task reasoning step mix. |
@@ -163,8 +163,11 @@ independently and leave a residual.
 
 For each task reasoning step count and each share-bearing quota dimension:
 
-- `supported_values(task_reasoning_step_count, quota_dimension)` comes from the task-definition rules in
-  `03b` construct task definitions and the dataset release implementation scope.
+- `supported_values(task_reasoning_step_count, quota_dimension)` is the support-table
+  derivation's output. `03a` calls that derivation in-process; `05` validate and
+  export release reads the tables it writes. There is one derivation, not a
+  scope file plus a grammar model. The derivation takes `implementation_scope`
+  from the requirement marks, so a value above the release scope has no row.
 - `conditional_share(task_reasoning_step_count, quota_dimension, dimension_value)` is the dimension
   value's global share divided by the sum of the global shares of values supported at that task reasoning step count.
   The global quota share is the quota share target for that dimension value. When the target
@@ -228,15 +231,16 @@ occurrence at task reasoning step count 1.
 
 Each quota target records `minimum` and `maximum`. The release-level numbers
 come from `dimensions` in `balance.yaml`; the half and twice bounds are the
-per-step balance rule and stay in the equations.
+per-step balance rule and stay in the equations. A lower bound rounds up and an
+upper bound rounds down, so an accepted count is inside the range in shares too.
 
 - task target category: `minimum = 1`; no task-reasoning-step balance bound; plan maximum
   `floor(dimensions.target_category.max * dataset_release_task_count)`.
-- answer format: `minimum = max(1, floor(0.5 * quota_target_count))`;
-  `maximum = min(ceil(2 * quota_target_count), floor(dimensions.answer_format.max * dataset_release_task_count))`;
+- answer format: `minimum = max(1, ceil(0.5 * quota_target_count))`;
+  `maximum = min(floor(2 * quota_target_count), floor(dimensions.answer_format.max * dataset_release_task_count))`;
   plan minimum `ceil(dimensions.answer_format.min * dataset_release_task_count)`.
-- answer meaning: `minimum = max(1, floor(0.5 * quota_target_count))`;
-  `maximum = min(ceil(2 * quota_target_count), floor(dimensions.answer_meaning.max * dataset_release_task_count))`;
+- answer meaning: `minimum = max(1, ceil(0.5 * quota_target_count))`;
+  `maximum = min(floor(2 * quota_target_count), floor(dimensions.answer_meaning.max * dataset_release_task_count))`;
   plan minimum `ceil(dimensions.answer_meaning.min * dataset_release_task_count)`.
 - clue type: `minimum = 1`;
   `maximum = floor(dimensions.clue_type.max * planned_clue_occurrences[task_reasoning_step_count])`.
