@@ -39,12 +39,12 @@ checking the release. Neither holds balance numbers of its own.
 | Key | Sets |
 |---|---|
 | `release.tasks_min`, `release.programs_min` | The release size floors. |
-| `release.distinct_answer_min` | The distinct-correct-answer floor; read by `05`. |
+| `release.distinct_answer_min` | The distinct-correct-answer floor; read by `05` in P1. |
 | `release.splits` | The split shares. |
 | `release.share_tolerance` | The absolute share a release may drift from `release.splits` and `task_reasoning_step_share`; read by `05`. |
 | `release.built_shape_min_share` | The minimum share of tasks with a built shape. |
 | `release.cad_model_max_share` | The per-CAD-model task cap. |
-| `release.correct_answer_max_share` | The per-answer task cap. |
+| `release.correct_answer_max_share` | The per-answer task cap; read by `05` in P1. |
 | `task_reasoning_step_share` | The task reasoning step mix. |
 | `expansion.rounds`, `expansion.growth_share_per_round` | The `03c` resolve deficits stop rule. |
 | `construction.attempt_multiplier`, `construction.high_rejection_attempt_multiplier` | The construction attempt budgets. |

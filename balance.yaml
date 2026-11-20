@@ -11,7 +11,9 @@
 # above the release scope is ignored here, and a value in scope but absent here
 # takes its dimension defaults.
 #
-# Comments are not data. `# p0` and `# p1` mark where a later split would cut.
+# Comments are not data. `# p0` and `# p1` mark when a number is used, so a
+# later split cuts there. A marker says nothing about when a check blocks:
+# that follows the requirement priority.
 
 version: 1
 
@@ -19,10 +21,8 @@ version: 1
 release:
   tasks_min: 10000
   programs_min: 1000
-  distinct_answer_min: 1000
   built_shape_min_share: 0.95
   cad_model_max_share: 0.01
-  correct_answer_max_share: 0.01
   # Absolute share a release may drift from `splits` and
   # `task_reasoning_step_share`. `03a` plans the exact counts; construction
   # rejections move the release off them.
@@ -31,6 +31,9 @@ release:
     train: 0.70
     validation: 0.15
     test: 0.15
+  # p1
+  distinct_answer_min: 1000
+  correct_answer_max_share: 0.01
 
 # p0
 task_reasoning_step_share:

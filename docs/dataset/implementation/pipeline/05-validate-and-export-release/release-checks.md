@@ -76,6 +76,10 @@ support table does not support.
 | `answer_meaning_coverage` | R-8 | each task reasoning step count | every supported answer meaning appears | enforced |
 | `answer_format_coverage` | R-7 | each task reasoning step count | every supported answer format appears | enforced |
 
+"Supported" means supported by the release implementation scope, as the support
+tables record it. A value deferred to P1 has no row at that step count, and its
+absence is not a gap in a P0 release.
+
 A missing value makes the row a miss. A released value the support table does not
 support at that step count is also a miss: it means the release contains a task
 the specification says cannot exist, which is a defect in the constructor rather
@@ -91,6 +95,7 @@ the step count where it was required.
 | Check | Requirement | Quantity | Bound | First release |
 |---|---|---|---|---|
 | `release_task_count` | PRD §8 | tasks | at least `release.tasks_min` | enforced |
+| `step_count_range` | R-9 | distinct `task_reasoning_step_count` values | exactly 1, 2, 3, 4, and 5 | enforced |
 | `distinct_cad_model_count` | PRD §8, R-10 | distinct `program_id` | at least `release.programs_min` | enforced |
 | `cad_model_share_cap` | R-10 | tasks per `program_id` | at most `release.cad_model_max_share` | deferred |
 | `built_shape_share_floor` | PRD §8, R-4 | tasks with `geometry_required` | at least `release.built_shape_min_share` | enforced |
@@ -105,6 +110,10 @@ the step count where it was required.
 | `distinct_answer_count` | R-11 | distinct correct answers | at least `release.distinct_answer_min` | deferred |
 | `answer_share_cap` | R-11 | tasks per correct answer | at most `release.correct_answer_max_share` | deferred |
 
+The first-release column follows the requirement priority, not the `# p0` and
+`# p1` markers in `balance.yaml`. A marker says when a number is used; a P1
+bound can be planned against in P0 and still be checked only in P1.
+
 `release.share_tolerance` is an absolute share, not a multiple. `03a` plans the
 exact counts, and the release drifts from them because construction rejects
 tasks. One percentage point is the amount of drift a release may show before the
@@ -113,6 +122,10 @@ plan and the release are treated as different plans.
 `warmup_set` is a set comparison, not a percentage. Section 9 of the PRD labels
 the lowest-step tasks as the warmup subset, so the two sets are the same set, and
 a separate 5% check would be a second number for the same fact.
+
+`step_count_range` is a measurement of the release, not of the policy. Without it
+a policy that dropped a step count from the mix would leave no row to fail, and
+the release would silently cover four step counts.
 
 R-9 also says that steps 3 and 4 carry most benchmark tasks, and PRD §8 says at
 least 80% of tasks need three or more steps. Both are sums of `step_share` rows:
