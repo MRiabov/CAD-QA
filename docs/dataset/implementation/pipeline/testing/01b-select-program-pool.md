@@ -11,8 +11,8 @@ asserts the persisted selection artifact read back through the reader `01c` fetc
 program pool uses.
 
 **Given** a `ProgramMetadata` fixture and a `SelectionPolicy` with small numbers,
-so the fixture stays readable: active count 6, reserve 1 to 2, family cap 1,
-collection minimum 2, feature-tag minimum 1, in-scope tier `C`. The rows are:
+so the fixture stays readable: active count 6, reserve 2, family cap 2,
+collection minimum 3, feature-tag minimum 1, in-scope tier `C`. The rows are:
 
 - `ABC-C`: `a1` and `a2` with `void_cut`, `a3` with `void_cut` and `path_curve`,
   `a4` with the same `normalized_source_code_hash` as `a3`, and `a5` with
@@ -27,15 +27,15 @@ collection minimum 2, feature-tag minimum 1, in-scope tier `C`. The rows are:
 
 - `a4` is excluded as `duplicate_hash` and `a3` survives, because `a3` is the
   lexicographically smaller `source_id`;
-- `c2` and `c3` are excluded as `family_cap`;
+- `c3` is excluded as `family_cap`, and `c1` and `c2` survive;
 - `p1` is excluded as `out_of_scope_tier`;
-- `CADEvolve-C-core` reaches 1 active program against a minimum of 2, and the
+- `CADEvolve-C-core` reaches 2 active programs against a minimum of 3, and the
   shortfall is recorded against that collection;
-- active has 6 programs and reserve has 1, they are disjoint, and their union is
-  the eligible set: `a1`, `a2`, `a3`, `a5`, `c1`, `s1`, `s2`;
-- the reserve program is the last of the eligible set under
+- active has 6 programs and reserve has 2, they are disjoint, and their union is
+  the eligible set: `a1`, `a2`, `a3`, `a5`, `c1`, `c2`, `s1`, `s2`;
+- the two reserve programs are the last two of the eligible set under
   `sha256(seed || source_id)`, recomputed by the test, not read from the artifact;
-- the rows reconcile: 10 cache rows equal 6 active, plus 1 reserve, plus 3
+- the rows reconcile: 11 cache rows equal 6 active, plus 2 reserve, plus 3
   exclusions;
 - every selected row carries `tier` and `cadevolve_program_family_id`, and the
   artifact records `policy_version`, `seed`, and the policy it applied;
@@ -46,8 +46,8 @@ collection minimum 2, feature-tag minimum 1, in-scope tier `C`. The rows are:
 both: the rule deduplicates within a collection, never across collections and
 never across the two tiers.
 
-`test_01b_family_cap_and_span` — three rows in one family yield one active
-program, and the two exclusions name the family. A duplicate group whose members
+`test_01b_family_cap_and_span` — four rows in one family yield two active
+programs and two exclusions that name the family. A duplicate group whose members
 carry different families keeps the survivor's family and records the conflict.
 
 `test_01b_tag_minimum_counts_every_tag` — `a3` counts toward both `void_cut` and

@@ -31,7 +31,7 @@ fixture and asserts the persisted program metadata read back through the reader
 - no `program_id`, `program_sha256`, `raw_program_sha256`, or
   `normalization_version` column: program identity arrives at `01d` normalize
   programs;
-- the recorded `cache_revision` and `metadata_schema_version` are the fixture's;
+- the recorded `cache_revision` and `cache_schema_version` are the fixture's;
 - a second read of the same revision is byte-identical.
 
 Keying the comparison by `source_id` rather than by position is deliberate: the
