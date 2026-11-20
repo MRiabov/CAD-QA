@@ -4,8 +4,13 @@
 It records the construction picture and the clue-form proposal from the
 2026-11-19 discussion so the construction grammar can be written next.
 
+**Canonical home:** `docs/dataset/implementation/pipeline/03-task-generation/`.
+This plan is the working record; the module contract and its decisions are the
+authority once written.
+
 **Companion docs:** `plans/nov-19/dataset-kernel-known-issues.md` (KI-DS-01,
-KI-DS-02, KI-DS-03), `docs/dataset/implementation/pipeline/03-task-generation/03b-construct-task-definitions.md`,
+KI-DS-02, KI-DS-03),
+`docs/dataset/implementation/pipeline/03-task-generation/03b-construct-task-definitions.md`,
 and `docs/dataset/requirements/task-structure.md`.
 
 ## Purpose
@@ -439,7 +444,13 @@ confines the demand logic to the deficit path where it belongs.
 Each decision is written so it can be answered on its own. The recommendation is
 a default, not a ruling, and the ID is stable so other documents can refer to it.
 
+Accepted decisions move to `docs/dataset/decisions.md` and are marked here with
+their record ID. The clue-form model is `DS-31`, answer uniqueness is `DS-32`,
+and the construction strategy is `DS-33`.
+
 ### 1. `D1` — What is the equality relation for answer uniqueness?
+
+Accepted as `DS-32`.
 
 Options: entity identity for every answer meaning, or an equality relation
 chosen per answer meaning. Recommendation: per answer meaning, as the table in
@@ -534,6 +545,8 @@ described by its clue form profile, not named by a grade.
 Blocks: PRD section 6, R-9, and benchmark reporting.
 
 ### 11. `D11` — What is the construction strategy?
+
+Accepted as `DS-33`.
 
 Options: supply-driven, full demand-driven, or supply-driven with
 capability-aware deficits. Recommendation: supply-driven with capability-aware

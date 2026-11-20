@@ -487,3 +487,63 @@ prefix is `DS-`.
   `CadFeatureSolidStateEffectDelta`, `CadQuerySelectorResult`, `ast_*` and
   `runtime_*` tables, and the matching hash fields. Every later pipeline stage
   follows the same rule.
+
+## DS-31 — A clue is one narrowing statement, described by clue type and clue operand form
+
+- **Status:** accepted (2026-11-20).
+- **Context:** An earlier draft described each clue by a derivation-depth ladder
+  (`S0`–`S5`) and each answer by a four-level ladder (`A0`–`A3`). Both were
+  invented partitions with no precedent in the prior-art survey. The ladder also
+  implied that one clue could contain several task reasoning steps, which
+  contradicts the rule that a clue is one narrowing statement. The word
+  "stratum" was read as a frequency target, which is a different axis.
+- **Decision:** A clue is one narrowing statement and one task clue step. It is
+  described by its clue type — property, relation, comparison, aggregation, or
+  provenance — and, when it has a reference, by the clue operand form of that
+  reference: `named`, `selected`, `aggregated`, or `cross_state`. A clue with no
+  reference has no operand form. The answer step is described by `answer_meaning`
+  and has no separate ladder. Task reasoning step count stays the number of clues
+  plus the answer step.
+- **Consequences:** `clue_operand_form` belongs to the clue's reference binding,
+  not to the clue, so the property clue type carries none. Coverage is reported
+  over clue type × operand form for reference-bearing clues only, and the support
+  table is `clue-form-by-step`. "Stratified sampling" stays reserved for
+  dataset-level composition; the frequency target for a clue kind is a clue quota
+  or clue share.
+
+## DS-32 — Answer uniqueness compares an answer-equivalent set
+
+- **Status:** accepted (2026-11-20).
+- **Context:** Entity uniqueness and answer uniqueness conflict. A measurement
+  answer can have several entities that all produce the same number, which is
+  answerable; an identity answer cannot, because two entities are two labels.
+  Choosing one rule globally either rejects symmetric measurement tasks or admits
+  ambiguous identity tasks.
+- **Decision:** Answer uniqueness compares every entity in the answer-equivalent
+  set using an equality relation supplied by the answer meaning. Identity answers
+  compare entities; numeric answers compare within `answer_tolerance`; label
+  answers compare labels. The chain search terminates on answer uniqueness, never
+  on a set size of one.
+- **Consequences:** The answer-equivalent set is recorded in the answer evidence.
+  `answer_tolerance` is shared with the separation margin, so a task cannot pass
+  uniqueness and fail separation. An identity answer in multiple-choice format
+  requires a singleton set. `position`, `extent`, and the change answer meanings
+  need their own equality rule before they ship.
+
+## DS-33 — Task generation is supply-driven with capability-aware deficits
+
+- **Status:** accepted (2026-11-20).
+- **Context:** A full demand-driven planner would specify a task cell up front and
+  query a capability index for programs that can support it. The capability
+  census needs the graph, but `01b` selects the program pool before `02` builds
+  graphs, so the planner either reverses pipeline stage order or forces a larger
+  execution pass. A capability in the pool is also not a constructed task.
+- **Decision:** `03b` constructs tasks supply-driven by default, from the facts a
+  graph actually has. `02c` emits a capability census as a by-product of graph
+  construction. `03a` and `03c` use that census only for deficits: when a
+  quota target is underfilled, they query it for capable programs and request
+  supplemental programs through the existing slow loop. A cell-level demand query
+  is a last resort and carries a `forced` flag and a naturalness check.
+- **Consequences:** `01b` stays metadata-based. `capability_deficit` becomes a
+  deficit reason. Forced tasks are confined to the deficit path, where review can
+  see them, and a miss is recorded rather than filled with an unnatural task.
