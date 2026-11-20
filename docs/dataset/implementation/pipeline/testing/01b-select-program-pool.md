@@ -48,8 +48,10 @@ both: the rule deduplicates within a collection, never across collections and
 never across the two tiers.
 
 `test_01b_family_cap_and_span` — four rows in one family yield two active
-programs and two exclusions that name the family. A duplicate group whose members
-carry different families keeps the survivor's family and records the conflict.
+programs and two exclusions that name the family. The family still supplies
+reserve rows, because the cap counts active programs only. A duplicate group
+whose members carry different families keeps the survivor's family and records
+the conflict.
 
 `test_01b_tag_minimum_counts_every_tag` — `a3` counts toward both `void_cut` and
 `path_curve`. A tag with fewer eligible programs than its minimum selects all of

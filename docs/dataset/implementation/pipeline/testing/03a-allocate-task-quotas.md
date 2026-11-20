@@ -50,8 +50,9 @@ step count 3, and one clue operand form at step count 1 and three at step count
 - `per_program_task_quota` is 9, from the second term, because the 1% cap is 10;
 - one named quota target's construction attempt budget is `ceil(target * 1.5)`,
   recomputed by the test;
-- `family_profiles` carries the union of the member programs' capabilities and
-  the summed entity counts, and no census table is written anywhere.
+- `family_profiles` carries the union of the member programs' capabilities, the
+  summed entity counts, the states with a surviving point probe, and the maximum
+  task reasoning step count, and no census table is written anywhere.
 
 The test carries its own `largest_remainder`. A plan that agrees with itself
 through a shared helper proves nothing about the equation.
