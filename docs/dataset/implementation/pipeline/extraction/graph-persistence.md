@@ -23,8 +23,8 @@ Parquet has no `LowCardinality` logical type. The equivalent is dictionary encod
 (`RLE_DICTIONARY`), which is an encoding rather than a logical type. Parquet's
 `ENUM` logical annotation is still a string and carries neither the enum value set nor
 a compact code. Closed enum columns here are `STRING` with a closed value set and
-must use dictionary encoding. This maps to `LowCardinality(String)` in ClickHouse.
-Join keys are UUID, never enum strings.
+must use dictionary encoding. This maps to `LowCardinality(String)` in a
+columnar store that has the type. Join keys are UUID, never enum strings.
 
 ### `nodes.parquet`
 
@@ -227,9 +227,10 @@ EvidenceRef = STRUCT<
 | `node_id`, `relation_id`, `measurement_id`, `from_node_id`, `to_node_id`, `subject_node_id`, `object_node_id` | none; fixed-width UUID | High-cardinality join keys; dictionaries add no value. |
 | `label`, `selector_expression`, `evidence_rule` | plain | High-cardinality text. |
 
-ClickHouse may expose a closed string enum as `LowCardinality(String)`.
-`Enum8` or `Enum16` is optional; it is a ClickHouse storage choice, not part of
-the Parquet contract.
+A columnar store may expose a closed string enum as `LowCardinality(String)`.
+`Enum8` or `Enum16` is optional; it is that store's storage choice, not part of
+the Parquet contract. The graph is served from Parquet and no analytics store is
+chosen; adopting one needs its own decision ([`DS-39`](../../../decisions.md)).
 
 ## Run-level tolerance policy
 

@@ -649,3 +649,39 @@ prefix is `DS-`.
   reports coverage per `(clue_type, clue_operand_form)`. Benchmark results may
   name the step counts and clue forms they cover, without ranking tasks by clue
   form.
+
+## DS-39 — The CAD graph is an immutable Parquet artifact, not a relational table
+
+- **Status:** accepted (2026-11-20).
+- **Context:** `DS-23` makes Parquet the default for many-row artifacts, and
+  `implementation/pipeline/extraction/graph-persistence.md` defines the graph as
+  three Parquet tables. The open question is whether the graph should instead
+  live in a relational database, where foreign keys and joins are native. The
+  access pattern answers it. The graph is written once per program and never
+  mutated, it is read one program at a time, and the interesting queries are
+  traversals over one program's edges rather than joins across programs. A
+  relational store would therefore add a server, a DDL copy of the schema, and a
+  second writer without removing the cost that dominates a read: hydrating rows
+  into program objects. Measured on `runs/current_cadevolve1000_10k_regen_20260613`,
+  1,000 programs produce 677,937 nodes, 20,135,608 relations, and 10,205,884
+  measurements. The Parquet holding them is 163 MB; the same graph as JSON text
+  is 6.7 GB, a 41× ratio driven by repeated relation keys. Reading the heaviest
+  100-program shard through the current JSON-in-Parquet path takes 23.34 s wall
+  and 5.8 GB peak RSS, of which 20.96 s is `json.loads`; the same rows as three
+  typed tables scan in 0.43 s at 519 MB.
+- **Decision:** The CAD graph is stored only as the Parquet tables in
+  `graph-persistence.md`. No relational database is the graph store, and Postgres
+  is rejected for it. Referential integrity stays a builder invariant and a
+  validation gate, not a database constraint. If a relational database is added,
+  it owns control-plane state only: the run registry, manifests, tolerance
+  policy, deficit ledger, failures, and job queue. This decision does not choose
+  an analytics store. DuckDB over the Parquet files is the default for ad-hoc
+  SQL because it adds no service. ClickHouse is not adopted, and would need its
+  own decision backed by a measured scan workload.
+- **Consequences:** `03` reads one program's graph by `program_id`, and the
+  physical partition layout stays an artifact concern in `artifacts.md`. The
+  graph artifact remains the single source of truth, so no schema is duplicated
+  as DDL and the artifact has exactly one writer. A relational store cannot be
+  introduced on the graph path without superseding this decision. The ClickHouse
+  type mapping in `graph-persistence.md` is a compatibility note for a
+  hypothetical loader, not a deployment commitment.
