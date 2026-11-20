@@ -627,7 +627,11 @@ prefix is `DS-`.
   not a good property: it guarantees that each form appears, not that the forms
   are usefully mixed, so a P0 release can concentrate one operand form. P1
   balance is the correction, and until it exists the operand-form distribution is
-  reported but not enforced.
+  reported but not enforced. Severe imbalance promotes the balance target into P0
+  for that release: the P1 balance check is computed and reported without
+  blocking, and a form below a quarter or above four times its conditional share
+  is severe. The release is then rebalanced or the miss is recorded with its
+  reason. The quarter and four-times bounds are provisional.
 
 ## DS-38 — Clue form is reported as a descriptive breakdown, not a difficulty axis
 

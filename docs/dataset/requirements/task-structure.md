@@ -278,6 +278,13 @@ supported form appears, not that the forms are usefully mixed, so a release can
 concentrate one form and still pass. The balance target for clue operand form is
 P1 work.
 
+The balance check for clue operand form is still computed in P0 and reported
+without blocking. If a supported form falls below a quarter or above four times
+its conditional release share, the imbalance is severe and balancing is promoted
+into P0 for that release: the release is rebalanced, or the miss is recorded with
+its reason. The quarter and four-times bounds are provisional and tuned with the
+first release.
+
 The **conditional release share** of a value at a task reasoning step count is
 its share among the values supported at that step count, not its share of the
 whole release. This makes the check possible when a step count supports only

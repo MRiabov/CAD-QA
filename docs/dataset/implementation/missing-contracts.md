@@ -275,7 +275,8 @@ records the reason.
 target: the balance table in `task-structure.md` section 6 has no row for it, and
 the plan-level target table names no share. P1 can therefore ship without a
 balance check, and P0 coverage does not stand in for one: it proves presence,
-not a useful mix.
+not a useful mix. If the P0 diagnostic reports severe imbalance, the target is
+needed for that release rather than P1.
 
 **Recommendation:** add the row when the P1 support grid is measured, using the
 same half-to-two-times conditional share rule as the other dimensions, with the
