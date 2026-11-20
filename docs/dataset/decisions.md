@@ -666,9 +666,10 @@ prefix is `DS-`.
   1,000 programs produce 677,937 nodes, 20,135,608 relations, and 10,205,884
   measurements. The Parquet holding them is 163 MB; the same graph as JSON text
   is 6.7 GB, a 41× ratio driven by repeated relation keys. Reading the heaviest
-  100-program shard through the current JSON-in-Parquet path takes 23.34 s wall
-  and 5.8 GB peak RSS, of which 20.96 s is `json.loads`; the same rows as three
-  typed tables scan in 0.43 s at 519 MB.
+  100-program shard through the current JSON-in-Parquet path takes 21.0 s wall
+  and 5.8 GB peak RSS, almost all of it in `json.loads`; the same rows as three
+  typed tables scan in 0.37 s at 562 MB, a 57× difference.
+  `tools/bench_graph_columnar.py` reproduces both numbers.
 - **Decision:** The CAD graph is stored only as the Parquet tables in
   `graph-persistence.md`. No relational database is the graph store, and Postgres
   is rejected for it. Referential integrity stays a builder invariant and a
