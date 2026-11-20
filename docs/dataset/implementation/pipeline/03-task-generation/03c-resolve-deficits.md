@@ -54,7 +54,8 @@ rounds, stop and record an `AcceptedMiss` for each unfilled quota target.
 
 `AcceptedMiss` records the quota target, the remaining count, the reason, the
 owner, and the plan version. The round count and the growth cap are plan fields,
-not constants in `03c`.
+not constants in `03c`: `03a` allocate task quotas stamps both from `expansion`
+in `balance.yaml`.
 
 ## Deficit classes
 

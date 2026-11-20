@@ -20,6 +20,12 @@ The tables are derived from the task-definition rules in
 [`pipeline/03-task-generation/03b-construct-task-definitions.md`](pipeline/03-task-generation/03b-construct-task-definitions.md). They are not
 hand-authored, and `03` does not read them to decide what to attempt.
 
+The derivation takes `implementation_scope` from the requirement priority
+marks. That derivation is the implementation-scope filter: a value above the
+release scope has no row, so it is neither planned nor accepted. `03a`
+allocate task quotas calls the same derivation, so the plan and these tables
+cannot disagree.
+
 ## Derivation
 
 A task definition is a dependency chain:

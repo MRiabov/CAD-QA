@@ -9,10 +9,51 @@ definitions are generated.
 ## Input / output
 
 - Input: CAD graphs for the selected program pool, the program capability census,
-  program metadata, the release implementation scope, dataset release targets, the
-  current `DeficitLedger` (empty on the first plan), and `ProgramReassignmentRequest`
-  records from `03c`.
+  program metadata, the release implementation scope, the balance policy
+  (`balance.yaml`), the current `DeficitLedger` (empty on the first plan), and
+  `ProgramReassignmentRequest` records from `03c`.
 - Output: `TaskQuotaPlan`.
+
+## Balance policy
+
+Every tunable number in the quota equations is data in the root `balance.yaml`.
+`03a` reads that file; `05` validate and export release reads the same file when
+checking the release. Neither holds balance numbers of its own.
+
+| Key | Sets |
+|---|---|
+| `release.tasks_min`, `release.programs_min` | The release size floors. |
+| `release.splits` | The split shares. |
+| `release.built_shape_min_share` | The minimum share of tasks with a built shape. |
+| `release.cad_model_max_share` | The per-CAD-model task cap. |
+| `release.correct_answer_max_share` | The per-answer task cap. |
+| `task_reasoning_step_share` | The task reasoning step mix. |
+| `expansion.rounds`, `expansion.growth_share_per_round` | The `03c` resolve deficits stop rule. |
+| `construction.attempt_multiplier`, `construction.high_rejection_attempt_multiplier` | The construction attempt budgets. |
+| `dimensions.<dimension>.min`, `.max` | The release-level plan minimum and maximum for one value. |
+| `dimensions.<dimension>.values.<value>` | A per-value override of `min`, `max`, or `target`. |
+| `dimensions.<dimension>.target` | A global share; `equal` is an equal share among the supported values. |
+| `dimensions.clue_operand_form.severe` | The P0 severe-imbalance multiples. |
+
+Load rules:
+
+- Every key is required except `min`, `max`, `target`, and `values`. A missing
+  `min` means no plan minimum, a missing `max` means no cap, and a missing
+  `target` means an equal share among the supported values.
+- An unknown key is an error at every level. A typo must not fall back to a
+  default.
+- `task_reasoning_step_share` covers every task reasoning step count in the
+  release and sums to 1 within `1e-9`. `release.splits` does the same.
+- Every share is in `(0, 1]`, and `min <= max` when both are present.
+- `version` is a positive integer, bumped when any number changes.
+
+The file carries no priority marks. Coverage and scope come from the task
+reasoning step support tables, derived from the requirement marks; this file
+only says how much of a supported value to plan.
+
+No test compares the file to the requirement defaults. A release may depart from
+them deliberately, and the departure is visible in the version and hash that the
+manifest records. The defaults are the starting point, not a second copy.
 
 ## Task quota plan
 
@@ -21,6 +62,7 @@ definitions are generated.
 | Field | Meaning |
 |---|---|
 | `plan_version`, `parent_plan_version`, `seed` | Version, previous version, and deterministic ordering seed. |
+| `balance_policy_version`, `balance_policy_sha256` | The balance policy the plan was computed from. A changed policy produces a new plan version. |
 | `task_reasoning_step_quotas` | Target task count for each task reasoning step count. |
 | `quota_targets` | Quota targets: task reasoning step count, quota dimension, dimension value, minimum, target count, maximum, and priority. |
 | `clue_quotas` | Clue quotas counted over clue occurrences. |
@@ -94,9 +136,10 @@ one integer count per weight, and the counts sum exactly to `total`.
 
 `task_reasoning_step_quota[task_reasoning_step_count] = largest_remainder(dataset_release_task_count, task_reasoning_step_share[task_reasoning_step_count])`.
 
-Use the fixed task reasoning step shares 5%, 15%, 40%, 25%, and 15%. `task_reasoning_step_quota[1]` is the
-warmup quota. Allocate the exact dataset release task count; do not round each task
-reasoning step count independently and leave a residual.
+Use `task_reasoning_step_share` from `balance.yaml`; 5%, 15%, 40%, 25%, and 15%
+is the default. `task_reasoning_step_quota[1]` is the warmup quota. Allocate the
+exact dataset release task count; do not round each task reasoning step count
+independently and leave a residual.
 
 ### Quota target counts
 
@@ -165,17 +208,20 @@ occurrence at task reasoning step count 1.
 
 ### Coverage bounds and plan caps
 
-Each quota target records `minimum` and `maximum`:
+Each quota target records `minimum` and `maximum`. The release-level numbers
+come from `dimensions` in `balance.yaml`; the half and twice bounds are the
+per-step balance rule and stay in the equations.
 
 - task target category: `minimum = 1`; no task-reasoning-step balance bound; plan maximum
-  `floor(0.25 * dataset_release_task_count)`.
+  `floor(dimensions.target_category.max * dataset_release_task_count)`.
 - answer format: `minimum = max(1, floor(0.5 * quota_target_count))`;
-  `maximum = min(ceil(2 * quota_target_count), floor(0.25 * dataset_release_task_count))`;
-  plan minimum `ceil(0.05 * dataset_release_task_count)`.
+  `maximum = min(ceil(2 * quota_target_count), floor(dimensions.answer_format.max * dataset_release_task_count))`;
+  plan minimum `ceil(dimensions.answer_format.min * dataset_release_task_count)`.
 - answer meaning: `minimum = max(1, floor(0.5 * quota_target_count))`;
-  `maximum = min(ceil(2 * quota_target_count), floor(0.10 * dataset_release_task_count))`;
-  plan minimum `ceil(0.01 * dataset_release_task_count)`.
-- clue type: `minimum = 1`; `maximum = floor(0.25 * planned_clue_occurrences[task_reasoning_step_count])`.
+  `maximum = min(ceil(2 * quota_target_count), floor(dimensions.answer_meaning.max * dataset_release_task_count))`;
+  plan minimum `ceil(dimensions.answer_meaning.min * dataset_release_task_count)`.
+- clue type: `minimum = 1`;
+  `maximum = floor(dimensions.clue_type.max * planned_clue_occurrences[task_reasoning_step_count])`.
 
 The target count is the desired count; the minimum and maximum are acceptance
 bounds. When a target count violates a plan cap, move units to values with slack.
@@ -207,8 +253,9 @@ when no probe ran for that family and quota target.
 ### Split and family quotas
 
 `split_task_target = largest_remainder(dataset_release_task_count, split_share)`;
-use split shares 0.70, 0.15, and 0.15. `split_task_target` is a map with one
-count per split, not one scalar. For 10,000 tasks the map is 7,000 / 1,500 / 1,500. For
+use `release.splits` from `balance.yaml`; 0.70, 0.15, and 0.15 is the default.
+`split_task_target` is a map with one count per split, not one scalar. For 10,000
+tasks the map is 7,000 / 1,500 / 1,500. For
 10,001 tasks the exact shares are 7,000.7 / 1,500.15 / 1,500.15; the three floors
 sum to 10,000, so the one remaining task goes to train because it has the largest
 fractional remainder.
@@ -273,8 +320,10 @@ Rejected definitions are expected. A quota target should not receive exactly its
 target count of construction attempts, because every rejection would become a
 deficit.
 
-- Use `1.5` as the default construction attempt multiplier.
-- Use `2.0` for quota targets with a known high rejection rate.
+- Use `construction.attempt_multiplier` from `balance.yaml`; `1.5` is the
+  default.
+- Use `construction.high_rejection_attempt_multiplier` (`2.0`) for quota targets
+  with a known high rejection rate.
 - Construct one whole batch per plan revision. Accepted definitions are capped at
   the target count.
 - Do not top up a quota target incrementally inside the same plan revision. That is more

@@ -306,6 +306,9 @@ only the values it implements.
 Answer format and answer meaning shares are over tasks. Clue type shares are
 over task clues, because one task can contain several task clues.
 
+The numbers in this table are the defaults. The release instance is the root
+`balance.yaml`, which records the policy that produced a release.
+
 Clue operand form is coverage-only in P0. Its P1 balance target is an equal share
 among the supported forms, and the row is in the table above. Coverage-only is a
 concession, not a good property: coverage guarantees that each supported form

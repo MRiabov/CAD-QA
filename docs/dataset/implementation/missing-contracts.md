@@ -13,7 +13,7 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 21 open entries: 17 P0 technical and 4 P1 technical. No product
+There are 19 open entries: 15 P0 technical and 4 P1 technical. No product
 decision remains open, and P2 is empty.
 
 ## Decisions needed from the owner
@@ -30,45 +30,31 @@ None.
 
 Work order:
 
-1. `MC-16` — the scope filter; it decides what `03a` allocate task quotas may
-   plan and `05` validate and export release may accept.
-2. `MC-37` — the definition fields; a definition cannot carry the new decisions
+1. `MC-37` — the definition fields; a definition cannot carry the new decisions
    without them.
-3. `MC-09` — identity and provenance; a definition cannot be persisted or
+2. `MC-09` — identity and provenance; a definition cannot be persisted or
    reproduced without them.
-4. `MC-14` — the failure record; every pipeline stage that rejects writes to it.
-5. `MC-40` — the deficit classes; `03c` resolve deficits cannot route a deficit
+3. `MC-14` — the failure record; every pipeline stage that rejects writes to it.
+4. `MC-40` — the deficit classes; `03c` resolve deficits cannot route a deficit
    without them.
-6. `MC-44` — feasibility derivation; it produces the support tables `MC-13`
+5. `MC-44` — feasibility derivation; it produces the support tables `MC-13`
    checks against.
-7. `MC-48` — support-table ownership; it settles whether `03a` reads the tables
-   or derives them.
-8. `MC-46` — the capability census artifact; `03c` resolve deficits cannot route
+6. `MC-46` — the capability census artifact; `03c` resolve deficits cannot route
    a capability deficit without it.
-9. `MC-25` — the prompt template file; `04` render prompt and choices has
+7. `MC-25` — the prompt template file; `04` render prompt and choices has
    nothing to render from without it.
-10. `MC-11` — the rendering inputs; a prompt cannot be reproduced from the
-    declared input without them.
-11. `MC-12` — the release projection; the release columns have no writer without
-    it.
-12. `MC-13` — the coverage and balance checks; the first release gate.
-13. `MC-15` — multiple-choice fairness; the choice gate.
-14. `MC-38` — the release fields and fifth support file; the consumer contract.
-15. `MC-26` — the manifest and dataset card fields; the release ships both.
-16. `MC-41` — the construction test contract; it locks the invariants the other
+8. `MC-11` — the rendering inputs; a prompt cannot be reproduced from the
+   declared input without them.
+9. `MC-12` — the release projection; the release columns have no writer without
+   it.
+10. `MC-13` — the coverage and balance checks; they compare the release against
+    the support tables and `balance.yaml`.
+11. `MC-15` — multiple-choice fairness; the choice check.
+12. `MC-38` — the release fields and fifth support file; the consumer contract.
+13. `MC-26` — the manifest and dataset card fields; the release ships both.
+14. `MC-41` — the construction test contract; it locks the invariants the other
     entries introduce.
-17. `MC-42` — the golden record; the first end-to-end comparison.
-
-#### MC-16 — Implementation-scope filter
-
-The implementation-scope filter is not machine-readable: a P0/P1/P2 mark per
-quota dimension value, consumed by `03a` allocate task quotas when planning and
-by `05` validate and export release when validating. The marks exist in the
-requirements as prose only, so later-scope values can enter the first release.
-
-**Recommendation:** derive one scope table from the requirement marks and filter
-at plan time; `05` validate and export release then asserts that no later-scope
-value appears, which is a cheaper check than filtering.
+15. `MC-42` — the golden record; the first end-to-end comparison.
 
 #### MC-37 — Definition fields for the new decisions
 
@@ -156,24 +142,6 @@ same cover search as construction, with the graph replaced by the grammar's full
 fact set and the validity rules unchanged, and derive all five tables from that
 one search.
 
-#### MC-48 — Support-table ownership in `03a`
-
-`DS-28` is internally split. Its decision says `03a` allocate task quotas and
-`05` validate and export release use the task reasoning step support tables to
-check the release, but its consequences say `03` does not read them and they are
-not a generator input. `03a` previously used the tables for `supported_values`
-and listed the table version as an immutability input, which follows the
-decision sentence and contradicts the consequence. The current docs follow the
-consequence: `03a` derives `supported_values` from the `03b` construct task
-definitions rules, `05` remains the table reader, and the tables are not a `03a`
-input or immutability key. `MC-44` still tracks the computable derivation.
-
-**Recommendation:** settle the rule in `DS-28` rather than leaving two readings.
-Keep the consequence: `03a` derives supported values from the task-definition
-rules and the implementation scope, and `05` uses the derived tables as the QA
-projection. If `03a` must read the tables directly, say so in `DS-28` and restore
-them as a `03a` input and immutability key.
-
 #### MC-46 — Capability census artifact
 
 The program capability census has a contract in
@@ -240,7 +208,9 @@ floor, target category, answer meaning, answer format, and clue type, plus the
 5–25% answer-format range, the 1–10% answer-meaning range, and the 1% and 25%
 caps. The P1 clue operand form balance target is `MC-45`. `05` validate and
 export release currently checks only that released values appear in the support
-tables, so the first release can pass without meeting R-7–R-10.
+tables, so the first release can pass without meeting R-7–R-10. The numbers now
+live in the root `balance.yaml`, which `05` already validates and records; what
+is missing is the comparison itself.
 
 **Recommendation:** add one check per requirement R-7–R-10 for the first
 release, and R-11–R-12 when their P1 scope ships; each check names the
@@ -391,6 +361,14 @@ when its completion marker and identity match.
 
 ## Closed or merged in the 2026-11-20 pass
 
+- `MC-16` — dissolved. The implementation-scope filter is the support-table
+  derivation: it takes `implementation_scope` from the requirement marks, so a
+  value above the release scope has no row and is neither planned nor accepted.
+  `03a` calls the same derivation, and `05` reads the persisted tables. No
+  separate scope file or filter exists.
+- `MC-48` — resolved in favour of the derivation. `03a` does not read the
+  tables as data; it calls the derivation that writes them, and `DS-28` now says
+  so. The plan and the QA projection cannot disagree.
 - `MC-31` — the slow loop in `03c` resolve deficits includes `01d` normalize
   programs; the flow line in `00` end to end was the defect and is fixed.
 - `MC-17` — reserve rows are fetched but not normalized or graphed; promotion is

@@ -448,7 +448,9 @@ prefix is `DS-`.
   from those rules as a separate QA baseline. They are not a pipeline stage and
   not a generator input; `03a` plans, `03b` constructs, `04` renders, and
   `03a`/`05` use the tables to check the release.
-- **Consequences:** `03` does not read the task reasoning step support tables. A feasible value
+- **Consequences:** `03` does not read the task reasoning step support tables as
+  data. `03a` calls the same derivation that writes them, so the plan and the QA
+  projection cannot disagree; `05` reads the persisted tables. A feasible value
   missing from the dataset is a coverage gap; a released value marked infeasible
   is a specification or generator defect. Dataset quantity remains a separate
   coverage question.

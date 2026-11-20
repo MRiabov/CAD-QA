@@ -10,6 +10,7 @@ this document explains how the constraints combine.
 - The program capability census for each selected program, from `02c`.
 - The release implementation scope, from the product priorities.
 - The task-count targets in the PRD and the release contract.
+- The balance policy in the root `balance.yaml`.
 - The split rule: a CADEvolve program family belongs to one split.
 
 ## Implementation scope
@@ -61,6 +62,12 @@ Answer format and answer meaning shares are over tasks; clue type shares are
 over clues. Task target category is coverage-only at each step count; its 25%
 cap is plan-level. The step count mix is a target, not a hard quota. A miss is
 documented and accepted by the owner.
+
+The table records the default policy. The release instance is the root
+`balance.yaml`, which `03a` allocate task quotas reads when planning and `05`
+validate and export release reads when checking. A release may depart from a
+default; the manifest records the policy version and hash, so the departure is
+visible.
 
 Construction attempt budgets multiply the accepted quota in one batch per plan revision:
 `ceil(quota_target_count * construction_attempt_multiplier)` by default, or `2.0` for

@@ -1,0 +1,78 @@
+# Balance policy for a dataset release.
+#
+# `03a` allocate task quotas reads this file when planning. `05` validate and
+# export release reads the same file when checking the release. The manifest
+# records the version and file hash, so a release names the policy that produced
+# it.
+#
+# This file carries every tunable quota and balance number. It is not a scope:
+# coverage and implementation scope come from the task reasoning step support
+# tables, which are derived from the priority marks in the requirements. A value
+# above the release scope is ignored here, and a value in scope but absent here
+# takes its dimension defaults.
+#
+# Comments are not data. `# p0` and `# p1` mark where a later split would cut.
+
+version: 1
+
+# p0
+release:
+  tasks_min: 10000
+  programs_min: 1000
+  built_shape_min_share: 0.95
+  cad_model_max_share: 0.01
+  correct_answer_max_share: 0.01
+  splits:
+    train: 0.70
+    validation: 0.15
+    test: 0.15
+
+# p0
+task_reasoning_step_share:
+  1: 0.05
+  2: 0.15
+  3: 0.40
+  4: 0.25
+  5: 0.15
+
+# p0
+expansion:
+  rounds: 3
+  growth_share_per_round: 0.20
+
+# p0
+construction:
+  attempt_multiplier: 1.5
+  high_rejection_attempt_multiplier: 2.0
+
+# A dimension may carry `values: {<value>: {min, max, target}}` to override one
+# value. Absent `min`, `max`, and `target` take the dimension meaning above.
+# `target: equal` is an equal share among the supported values.
+# p0
+dimensions:
+  # Over tasks.
+  target_category:
+    max: 0.25
+
+  # Over clue occurrences.
+  clue_type:
+    max: 0.25
+
+  # Over tasks.
+  answer_format:
+    min: 0.05
+    max: 0.25
+
+  # Over tasks. The clue-floor adjustment in `03a` wins over any `target` here.
+  answer_meaning:
+    min: 0.01
+    max: 0.10
+
+  # P0 reports the imbalance and blocks when it is severe. The bounds are
+  # multiples of the conditional share.
+  clue_operand_form:
+    severe:
+      below: 0.25
+      above: 4.0
+    # p1
+    target: equal
