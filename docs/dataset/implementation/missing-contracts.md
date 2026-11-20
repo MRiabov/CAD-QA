@@ -15,7 +15,7 @@ Each section opens with a work order, most unblocking first. The order is
 dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 28 open entries: 19 P0 technical, 8 P1 product, and 1 P1 technical. No
+There are 27 open entries: 18 P0 technical, 8 P1 product, and 1 P1 technical. No
 P0 product decision remains open, and P2 is empty.
 
 ## P0
@@ -28,53 +28,36 @@ None. The last P0 product decision, `MC-39`, is closed below.
 
 Work order:
 
-1. `MC-43` — pair emission; every distance and angle task depends on it.
-2. `MC-35` — the relation payload; a P0 relation clue cannot be checked without
+1. `MC-35` — the relation payload; a P0 relation clue cannot be checked without
    it.
-3. `MC-16` — the scope filter; it decides what `03a` allocate task quotas may
+2. `MC-16` — the scope filter; it decides what `03a` allocate task quotas may
    plan and `05` validate and export release may accept.
-4. `MC-37` — the definition fields; a definition cannot carry the new decisions
+3. `MC-37` — the definition fields; a definition cannot carry the new decisions
    without them.
-5. `MC-47` — the scalar target candidate set; a P0 target category has no
+4. `MC-47` — the scalar target candidate set; a P0 target category has no
    candidates without it.
-6. `MC-09` — identity and provenance; a definition cannot be persisted or
+5. `MC-09` — identity and provenance; a definition cannot be persisted or
    reproduced without them.
-7. `MC-14` — the failure record; every pipeline stage that rejects writes to it.
-8. `MC-46` — the capability census artifact; `03c` resolve deficits cannot route
+6. `MC-14` — the failure record; every pipeline stage that rejects writes to it.
+7. `MC-46` — the capability census artifact; `03c` resolve deficits cannot route
    a capability deficit without it.
-9. `MC-40` — the deficit classes; `03c` resolve deficits cannot route a deficit
+8. `MC-40` — the deficit classes; `03c` resolve deficits cannot route a deficit
    without them.
-10. `MC-44` — feasibility derivation; it produces the support tables `MC-13`
-    checks against.
-11. `MC-25` — the prompt template file; `04` render prompt and choices has
+9. `MC-44` — feasibility derivation; it produces the support tables `MC-13`
+   checks against.
+10. `MC-25` — the prompt template file; `04` render prompt and choices has
     nothing to render from without it.
-12. `MC-11` — the rendering inputs; a prompt cannot be reproduced from the
+11. `MC-11` — the rendering inputs; a prompt cannot be reproduced from the
     declared input without them.
-13. `MC-12` — the release projection; the release columns have no writer without
+12. `MC-12` — the release projection; the release columns have no writer without
     it.
-14. `MC-13` — the coverage and balance checks; the first release gate.
-15. `MC-15` — multiple-choice fairness; the choice gate.
-16. `MC-38` — the release fields and fifth support file; the consumer contract.
-17. `MC-26` — the manifest and dataset card fields; the release ships both.
-18. `MC-41` — the construction test contract; it locks the invariants the other
+13. `MC-13` — the coverage and balance checks; the first release gate.
+14. `MC-15` — multiple-choice fairness; the choice gate.
+15. `MC-38` — the release fields and fifth support file; the consumer contract.
+16. `MC-26` — the manifest and dataset card fields; the release ships both.
+17. `MC-41` — the construction test contract; it locks the invariants the other
     entries introduce.
-19. `MC-42` — the golden record; the first end-to-end comparison.
-
-#### MC-43 — Pair emission in the graph builder
-
-The `02c` build CAD graph builder work for pair emission is missing: the
-derived named-endpoint list per state, the pair rows for named endpoint ×
-candidate endpoints (the `distance_to`, `angle`, `parallel_to`,
-`perpendicular_to`, `coplanar_with`, and `coaxial_with` elements), and rejection
-above `max_state_entities`. Point probes are already written into `02b` execute
-CadQuery and `02c` build CAD graph. `graph-content.md` section 4.1 states the
-requirement; `graph-construction.md` references the rule but does not define
-the named-endpoint derivation, the emitted rows, or the state rejection.
-
-**Recommendation:** build the emitted pairs from the declared endpoint entity
-categories, emit only those rows, and reject the state above the limit rather
-than truncating the emitted pairs. Record the derivation and the entity-count check in
-`graph-construction.md`, not only in the requirement.
+18. `MC-42` — the golden record; the first end-to-end comparison.
 
 #### MC-35 — Relation payload schema
 
@@ -504,6 +487,8 @@ when its completion marker and identity match.
 
 - `MC-31` — the slow loop in `03c` resolve deficits includes `01d` normalize
   programs; the flow line in `00` end to end was the defect and is fixed.
+- `MC-43` — the named-endpoint derivation, the pair rows, and the state-size
+  rejection are written in `graph-construction.md`.
 - `MC-08` — the resolver table is written in `03b` construct task definitions,
   with the angle, position, material-change, and topology-change conventions.
   The dataset card now has to state them for consumers.

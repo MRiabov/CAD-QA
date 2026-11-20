@@ -113,6 +113,53 @@ pair emission rule in [`graph-content.md` §4.1](../../../requirements/graph-con
 A pair that is not emitted produces no row. It is not recorded as missing, and it
 must not be guessed.
 
+### Named endpoints
+
+A named endpoint is derived per solid state from the extraction records. A name
+exists only when it resolves to exactly one entity in the state. Zero matches or
+several matches means the name does not exist, and a pair that needs it is not
+emitted.
+
+| Mechanism | Derivation | Stored name |
+|---|---|---|
+| Face surface kind | The `face_surface_kind` of the face. | The `FaceSurfaceKind` value, for example `cylinder`. |
+| Position | The face whose bounding box touches an extreme of the state bounding box on one program axis. | `min_x`, `max_x`, `min_y`, `max_y`, `min_z`, `max_z`. |
+| Provenance | The face first appears in the state of one operation: its `fingerprint_sha256` is absent from the previous state's entity table. | The operation id. |
+
+The first state has no previous state, so every face in it counts as new. The
+stored name is the graph value. `04` renders prompt wording from it; the graph
+stores no English.
+
+A face can carry several names, and a name can resolve to no face. A name is not
+a relation and creates no row. It is a lookup used by pair emission.
+
+### Pair rows
+
+For each pair relation or pair measurement, take the named endpoints of the state
+and the candidate endpoints of the declared endpoint entity kind in the same
+state, then:
+
+1. drop a pair whose two endpoints are the same entity;
+2. reduce to unordered pairs, so a pair of two named entities appears once;
+3. emit one row per remaining pair, with the endpoints in canonical id order.
+
+The row uses the relation or measurement id from
+[`graph-persistence.md`](graph-persistence.md), which already includes the
+program, the element name, and both endpoints. A measurement row carries the
+value, unit, and tolerance; a relation row carries its evidence.
+
+An empty candidate set emits no rows. It is not an error and not a gap.
+
+### State size
+
+The entity count of a solid state is its faces plus edges plus vertices. Regions
+belong to features, not to the state, and are not counted.
+
+When the count exceeds `max_state_entities`, reject the program: no graph is
+emitted for it, and the failure records the state, the count, and the limit. Do
+not truncate the state and do not emit a partial graph, because a task that
+references the dropped entities would look unanswerable rather than invalid.
+
 ## Measurement construction
 
 Use the measurement catalog in [`graph-persistence.md`](graph-persistence.md).

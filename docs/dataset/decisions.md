@@ -696,7 +696,7 @@ prefix is `DS-`.
   Go and `03` reads them in Go, so the Parquet library decides whether that
   requirement is cheap or a trap. Two pure-Go libraries are viable. In
   `apache/arrow-go`, `parquet/pqarrow/schema.go` maps the Parquet UUID logical
-  type to the `arrow.uuid` extension only when that extension is registered, and
+  column type to the `arrow.uuid` extension only when that extension is registered, and
   otherwise falls back to `FixedSizeBinary(16)`; on write it maps
   `FIXED_SIZE_BINARY` to `FIXED_LEN_BYTE_ARRAY` with no logical type. The
   extension type exists in `arrow/extensions`, but nothing registers it, so the
@@ -727,7 +727,7 @@ prefix is `DS-`.
   and Polars 2.1.0 has no UUID type. Verified on Polars 1.41.0: a UUID column
   reads as `Binary`, and writing it back produces `optional binary` in the
   Parquet schema, so the write drops both the `FIXED_LEN_BYTE_ARRAY(16)` physical
-  type and the UUID logical type, with no error and no change to the values.
+  column type and the UUID logical type, with no error and no change to the values.
   PyArrow does not have this problem. `pq.read_table` returns
   `extension<arrow.uuid>` from a `parquet-go` file that carries no `ARROW:schema`
   metadata, so the Parquet logical type is sufficient. `pq.read_schema` is the
