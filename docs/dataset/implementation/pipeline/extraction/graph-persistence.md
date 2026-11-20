@@ -24,7 +24,7 @@ Parquet has no `LowCardinality` logical type. The equivalent is dictionary encod
 `ENUM` logical annotation is still a string and carries neither the enum value set nor
 a compact code. Closed enum columns here are `STRING` with a closed value set and
 must use dictionary encoding. This maps to `LowCardinality(String)` in a
-columnar store that has the type. Join keys are UUID, never enum strings.
+columnar store that supports the column type. Join keys are UUID, never enum strings.
 
 ### `nodes.parquet`
 

@@ -684,5 +684,5 @@ prefix is `DS-`.
   graph artifact remains the single source of truth, so no schema is duplicated
   as DDL and the artifact has exactly one writer. A relational store cannot be
   introduced on the graph path without superseding this decision. The ClickHouse
-  type mapping in `graph-persistence.md` is a compatibility note for a
+  column type mapping in `graph-persistence.md` is a compatibility note for a
   hypothetical loader, not a deployment commitment.
