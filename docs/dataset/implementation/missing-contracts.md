@@ -5,24 +5,96 @@ Each entry names an absent contract. When the contract is written into its owner
 doc, delete the entry. Open questions remain in
 [`open-questions.md`](open-questions.md).
 
-Entries are grouped by priority, and within a priority by whether closing the
-entry needs a **product decision** — a policy, threshold, or scope choice — or
-only a **technical decision** that engineering can settle from the decisions
-already recorded. Product entries block more than they appear to, because
-writing code cannot close them.
+The **Product** sections are the decisions only the owner can make; they are
+collected as questions at the top. The **Technical** sections are contracts a
+coding agent can close from the decisions already recorded.
 
-Each section opens with a work order, most unblocking first. The order is
-dependency order, not importance: an entry can start once its prerequisite
+Each technical section opens with a work order, most unblocking first. The order
+is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 26 open entries: 17 P0 technical, 8 P1 product, and 1 P1 technical. No
-P0 product decision remains open, and P2 is empty.
+There are 26 open entries: 1 P0 product, 16 P0 technical, 5 P1 product, and 4 P1
+technical. P2 is empty.
+
+## Decisions needed from the owner
+
+These six are the only entries a coding agent cannot close from the recorded
+decisions. Everything else in this file is a technical contract. Each question
+has distinct answers; the recommendation is the default if you do not care.
+
+**MC-47 — Scalar targets in P0.** Should a task target be a scalar value with no
+entity, or is `Scalar value` removed from the P0 scope?
+
+- Keep it: define the scalar candidate set as the measurement instances in the
+  state scope, with narrowing and binding rules.
+- Remove it from P0 and add it back with a contract when a task needs it.
+
+Recommendation: remove it from P0. It is the only target category with no entity
+to bind, and the construction search is entity-based.
+
+**MC-17 — Reserve programs.** Do reserve programs get graphs up front, or only
+when they are promoted?
+
+- Graph only active programs; promotion is a slow-loop request.
+- Graph reserve eagerly so the fast loop can use it.
+
+Recommendation: graph only active programs. It keeps the fast loop free and the
+cost bounded; promotion stays a deliberate decision.
+
+**MC-23 — Expansion budget.** How many expansion rounds and how much pool growth
+before the deficit loop stops?
+
+- Three rounds with pool growth capped at 20%, then accept the miss.
+- No cap; stop only when the release target is met.
+
+Recommendation: the capped version, with the numbers in the task quota plan so
+the stop rule is data.
+
+**MC-45 — Operand form share.** Keep equal share for the first release, or skew
+toward the computation forms now?
+
+- Equal share among the supported forms.
+- Reduce the reference-tracking forms and raise the computation forms.
+
+Recommendation: equal share for the first release, revisited after the reported
+distribution.
+
+**MC-27 — External benchmark.** Which benchmark and revision does R-16 use?
+
+- The released evaluation split at a pinned revision.
+- A third-party benchmark, named with its revision.
+
+Recommendation: the released split, recorded in the manifest.
+
+**MC-28 — Review gate.** Who reviews, and does a failed review block export?
+
+- `05` validate and export release owns a blocking review gate; a failed review
+  rejects the row.
+- Review is advisory and export proceeds.
+
+Recommendation: the blocking gate, because R-17 is P0.
 
 ## P0
 
 ### Product (P0)
 
-None. The last P0 product decision, `MC-39`, is closed below.
+These need the owner. The question is above.
+
+#### MC-47 — Scalar target candidate set
+
+`task-structure.md` makes `Scalar value` a P0 task target category: "a
+measurement or count with no entity chosen as the answer."
+`algorithm/construction.md` defines `possible_answers` as "all entities of the
+target category in the state scope", which has no meaning for a scalar target,
+and `03b` construct task definitions binds a target to "exactly one entity or
+scalar value" without saying how a scalar candidate set is enumerated or
+narrowed. A P0 target category therefore cannot be constructed.
+
+**Recommendation:** remove `Scalar value` from the P0 scope and add it back with
+a candidate-set contract when a task needs it. If the product keeps it, define
+the candidate set as the measurement instances in the state scope (subject
+entity or state, measurement type, and value), define how a clue narrows that
+set, and define target binding and answer evidence for a scalar target.
 
 ### Technical (P0)
 
@@ -32,30 +104,28 @@ Work order:
    plan and `05` validate and export release may accept.
 2. `MC-37` — the definition fields; a definition cannot carry the new decisions
    without them.
-3. `MC-47` — the scalar target candidate set; a P0 target category has no
-   candidates without it.
-4. `MC-09` — identity and provenance; a definition cannot be persisted or
+3. `MC-09` — identity and provenance; a definition cannot be persisted or
    reproduced without them.
-5. `MC-14` — the failure record; every pipeline stage that rejects writes to it.
-6. `MC-46` — the capability census artifact; `03c` resolve deficits cannot route
-   a capability deficit without it.
-7. `MC-40` — the deficit classes; `03c` resolve deficits cannot route a deficit
+4. `MC-14` — the failure record; every pipeline stage that rejects writes to it.
+5. `MC-40` — the deficit classes; `03c` resolve deficits cannot route a deficit
    without them.
-8. `MC-44` — feasibility derivation; it produces the support tables `MC-13`
+6. `MC-44` — feasibility derivation; it produces the support tables `MC-13`
    checks against.
-9. `MC-25` — the prompt template file; `04` render prompt and choices has
+7. `MC-46` — the capability census artifact; `03c` resolve deficits cannot route
+   a capability deficit without it.
+8. `MC-25` — the prompt template file; `04` render prompt and choices has
    nothing to render from without it.
-10. `MC-11` — the rendering inputs; a prompt cannot be reproduced from the
-    declared input without them.
-11. `MC-12` — the release projection; the release columns have no writer without
+9. `MC-11` — the rendering inputs; a prompt cannot be reproduced from the
+   declared input without them.
+10. `MC-12` — the release projection; the release columns have no writer without
     it.
-12. `MC-13` — the coverage and balance checks; the first release gate.
-13. `MC-15` — multiple-choice fairness; the choice gate.
-14. `MC-38` — the release fields and fifth support file; the consumer contract.
-15. `MC-26` — the manifest and dataset card fields; the release ships both.
-16. `MC-41` — the construction test contract; it locks the invariants the other
+11. `MC-13` — the coverage and balance checks; the first release gate.
+12. `MC-15` — multiple-choice fairness; the choice gate.
+13. `MC-38` — the release fields and fifth support file; the consumer contract.
+14. `MC-26` — the manifest and dataset card fields; the release ships both.
+15. `MC-41` — the construction test contract; it locks the invariants the other
     entries introduce.
-17. `MC-42` — the golden record; the first end-to-end comparison.
+16. `MC-42` — the golden record; the first end-to-end comparison.
 
 #### MC-16 — Implementation-scope filter
 
@@ -174,22 +244,6 @@ hash plus census schema version), and format, and add it to the `03a` allocate
 task quotas/`03b` construct task definitions input lists. Decide whether it is a
 fourth graph table or a sidecar artifact; the current "versioned with the graph
 artifact" wording does not say which.
-
-#### MC-47 — Scalar target candidate set
-
-`task-structure.md` makes `Scalar value` a P0 task target category: "a
-measurement or count with no entity chosen as the answer."
-`algorithm/construction.md` defines `possible_answers` as "all entities of the
-target category in the state scope", which has no meaning for a scalar target,
-and `03b` construct task definitions binds a target to "exactly one entity or
-scalar value" without saying how a scalar candidate set is enumerated or
-narrowed. A P0 target category therefore cannot be constructed.
-
-**Recommendation:** define the scalar candidate set as the measurement instances
-in the state scope (subject entity or state, measurement type, and value),
-define how a clue narrows that set, and define target binding and answer
-evidence for a scalar target. If the product does not want scalar targets in P0,
-remove the category from the P0 scope instead of leaving it unconstructible.
 
 #### MC-25 — Prompt template file
 
@@ -316,49 +370,15 @@ the test compares the constructed definition field by field.
 
 ### Product (P1)
 
+These need the owner. The questions are above.
+
 Work order:
 
-1. `MC-22` — geometry-required for 1-step tasks; it changes what the first
-   release counts.
-2. `MC-20` — duplicate normalized text; it can put the same `task_id` in two
-   splits.
-3. `MC-17` — reserve lifecycle; it decides whether the fast loop can promote.
-4. `MC-18` — program-floor backfill; it keeps the program floor after execution
-   failures.
-5. `MC-23` — stop budgets; the deficit loop has no terminating condition without
-   them.
-6. `MC-45` — operand-form balance target; it needs the first release
-   distribution.
-7. `MC-27` — transfer overlap and the external benchmark.
-8. `MC-28` — review and evaluation material.
-
-#### MC-22 — Geometry-required for 1-step tasks
-
-The geometry-required rule for 1-step no-clue tasks is wrong, and the 95%
-aggregate check is missing. The current definition requires a task clue to
-depend on the built shape, so every 1-step task with no clue is marked false
-even when the answer needs geometry — including every 1-step membership task.
-
-**Recommendation:** define `geometry_required` as "the answer cannot be computed
-from the program text alone", which covers the answer step; a 1-step membership
-task then counts as geometry-required and the 95% check applies to all tasks.
-Restate R-4 the same way, or the check measures a different property from the
-requirement.
-
-#### MC-20 — Duplicate normalized text across collections
-
-Duplicate normalized text across collections is unresolved. `01d` normalize
-programs gives identical normalized bytes one `program_id` and says later stages
-must not treat the records as distinct, but `01b` select program pool keeps both
-rows with different families and no pipeline stage enforces the rule. `task_id`
-is keyed on `program_sha256`, so the release can hold two rows with the same
-`task_id` and different splits.
-
-**Recommendation:** keep both selection rows for collection accounting, but
-graph and construct once per `program_id` and use the survivor's family, which
-is the rule `01b` select program pool already applies within a collection. State
-which stage enforces it (`03a` allocate task quotas at graph selection or `03b`
-construct task definitions at construction).
+1. `MC-17` — reserve programs; it decides whether the fast loop can promote.
+2. `MC-23` — the expansion budget; the deficit loop has no stop rule without it.
+3. `MC-45` — the operand form share; it needs the first release distribution.
+4. `MC-27` — the external benchmark; R-16 has no input.
+5. `MC-28` — review and evaluation material; R-17 has no writer.
 
 #### MC-17 — Reserve program lifecycle
 
@@ -374,18 +394,6 @@ allocate task quotas decision that emits a graph request, which is a slow-loop
 cost. The fast loop stays limited to active graphs. If the owner wants reserve
 available to the fast loop, graph reserve eagerly and account for the cost
 instead.
-
-#### MC-18 — Program floor backfill
-
-Program-floor backfill after execution failures is undefined, including the
-post-execution path when the 1,000-program floor is missed. `01c` fetch program
-pool checks the floor before execution; execution failures can still drop the
-usable count below 1,000. It absorbs `MC-19`. A 10k-task release can currently
-ship with fewer than 1,000 usable programs.
-
-**Recommendation:** one backfill loop triggered by the usable-program count:
-promote reserve, graph it, replan; record the count in the deficit ledger so the
-trigger is data, not a manual check.
 
 #### MC-23 — Stop and expansion budgets
 
@@ -447,10 +455,58 @@ instructions derived from the answer columns.
 
 ### Technical (P1)
 
+A coding agent can close these from the recorded decisions.
+
 Work order:
 
-1. `MC-29` — run-level execution contract; retries and cache hits are promised
+1. `MC-18` — program-floor backfill; it keeps the floor after execution
+   failures.
+2. `MC-22` — geometry-required for 1-step tasks; it changes what the first
+   release counts.
+3. `MC-20` — duplicate normalized text; it can put the same `task_id` in two
+   splits.
+4. `MC-29` — run-level execution contract; retries and cache hits are promised
    without it.
+
+#### MC-18 — Program floor backfill
+
+Program-floor backfill after execution failures is undefined, including the
+post-execution path when the 1,000-program floor is missed. `01c` fetch program
+pool checks the floor before execution; execution failures can still drop the
+usable count below 1,000. It absorbs `MC-19`. A 10k-task release can currently
+ship with fewer than 1,000 usable programs.
+
+**Recommendation:** one backfill loop triggered by the usable-program count:
+promote reserve, graph it, replan; record the count in the deficit ledger so the
+trigger is data, not a manual check.
+
+#### MC-22 — Geometry-required for 1-step tasks
+
+The geometry-required rule for 1-step no-clue tasks is wrong, and the 95%
+aggregate check is missing. The current definition requires a task clue to
+depend on the built shape, so every 1-step task with no clue is marked false
+even when the answer needs geometry — including every 1-step membership task.
+
+**Recommendation:** define `geometry_required` as "the answer cannot be computed
+from the program text alone", which covers the answer step; a 1-step membership
+task then counts as geometry-required and the 95% check applies to all tasks.
+Restate R-4 the same way, or the check measures a different property from the
+requirement.
+
+#### MC-20 — Duplicate normalized text across collections
+
+Duplicate normalized text across collections is unresolved. `01d` normalize
+programs gives identical normalized bytes one `program_id` and says later stages
+must not treat the records as distinct, but `01b` select program pool keeps both
+rows with different families and no pipeline stage enforces the rule. `task_id`
+is keyed on `program_sha256`, so the release can hold two rows with the same
+`task_id` and different splits.
+
+**Recommendation:** keep both selection rows for collection accounting, but
+graph and construct once per `program_id` and use the survivor's family, which
+is the rule `01b` select program pool already applies within a collection. State
+which stage enforces it (`03a` allocate task quotas at graph selection or `03b`
+construct task definitions at construction).
 
 #### MC-29 — Run-level execution contract
 
