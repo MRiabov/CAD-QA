@@ -8,3 +8,4 @@ links to its test contract.
 | Contract | Covers |
 |---|---|
 | [`task-step-support.md`](task-step-support.md) | The structural and witness tiers for the task reasoning step support tables. |
+| [`golden-records.md`](golden-records.md) | The versioned golden-record format, the first record, and its comparison rules. |

@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "golden_id": "box-with-hole",
+  "construction": {
+    "constructor_version": "1",
+    "construction_seed": 0,
+    "definition_schema_version": "1",
+    "graph_schema_version": "1"
+  },
+  "program": {
+    "program_id": "cadqaprog:ddb69cf4e22fa6be66766781f6b10e13af8fb9b2c646e17097efdac0e0797392",
+    "program_sha256": "ddb69cf4e22fa6be66766781f6b10e13af8fb9b2c646e17097efdac0e0797392",
+    "text": "import cadquery as cq\n\nresult = (\n    cq.Workplane(\"XY\").box(10, 20, 5).faces(\">Z\").workplane().circle(2).cutBlind(-2)\n)\n"
+  },
+  "task": {
+    "target_category": "edge",
+    "state_scope": "final",
+    "possible_answer_count": 15,
+    "task_reasoning_step_count": 3,
+    "answer_meaning": "length",
+    "native_answer_format": "number",
+    "answer_format": "number",
+    "geometry_required": true
+  },
+  "clues": [
+    {
+      "order": 1,
+      "clue_type": "relation",
+      "clue_operand_form": "named",
+      "statement": "The edge is on the top face of the box.",
+      "subject": {
+        "kind": "target"
+      },
+      "check": {
+        "relation_type": "has_edge",
+        "direction": "object_to_subject",
+        "object": {
+          "kind": "named",
+          "entity": {
+            "category": "face",
+            "filters": {
+              "surface_kind": "plane",
+              "centroid_z": "2.5"
+            }
+          }
+        }
+      },
+      "narrows": {
+        "before": 15,
+        "after": 5
+      }
+    },
+    {
+      "order": 2,
+      "clue_type": "relation",
+      "clue_operand_form": "named",
+      "statement": "The edge is on the cylindrical face of the hole.",
+      "subject": {
+        "kind": "target"
+      },
+      "check": {
+        "relation_type": "has_edge",
+        "direction": "object_to_subject",
+        "object": {
+          "kind": "named",
+          "entity": {
+            "category": "face",
+            "filters": {
+              "surface_kind": "cylinder"
+            }
+          }
+        }
+      },
+      "narrows": {
+        "before": 5,
+        "after": 1
+      }
+    }
+  ],
+  "answer": {
+    "gold_answer": "12.57",
+    "answer_unit": "mm",
+    "tolerance": {
+      "kind": "absolute",
+      "value": 0.005
+    },
+    "scoring_rule": "numeric_tolerance",
+    "answer_schema_version": "1",
+    "answer_evidence": {
+      "evidence_kind": "measured",
+      "evidence_rule": "length",
+      "evidence_refs": [
+        {
+          "kind": "measurement",
+          "subject": {
+            "category": "edge",
+            "filters": {
+              "curve_kind": "circle",
+              "centroid_z": "2.5"
+            }
+          },
+          "measurement": "length"
+        }
+      ],
+      "answer_equivalent_set": [
+        {
+          "subject": {
+            "category": "edge",
+            "filters": {
+              "curve_kind": "circle",
+              "centroid_z": "2.5"
+            }
+          },
+          "answer": "12.57"
+        }
+      ],
+      "point_probe": null
+    }
+  }
+}

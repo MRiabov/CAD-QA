@@ -124,7 +124,10 @@ and the release are reproducible.
 ## Worked example
 
 The box-with-hole program in
-[`plans/nov-19/03b-task-construction-design.md`](../../../../../../plans/nov-19/03b-task-construction-design.md)
-is the first golden record: five edges narrow to two circular edges, then to the
-top one, with clue operand form profile `[(relation, named), (relation, named),
-(comparison, selected)]` and answer meaning length.
+[`golden/box-with-hole.json`](../../testing/golden/box-with-hole.json) is the
+first golden record. The final solid has 15 edges, not 14: the cylindrical face
+carries a periodic seam edge. The top face leaves five edges, and the
+cylindrical face leaves the one edge shared with the top face, so the chain is
+two relation clues plus the length answer. The clue operand form profile is
+`[(relation, named), (relation, named)]`. The record format and comparison rules
+are in [`golden-records.md`](../../testing/golden-records.md).

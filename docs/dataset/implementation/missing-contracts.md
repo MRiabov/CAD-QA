@@ -13,7 +13,7 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 8 open entries: 3 P0 technical and 5 P1 technical. No product
+There are 7 open entries: 2 P0 technical and 5 P1 technical. No product
 decision remains open, and P2 is empty.
 
 ## Decisions needed from the owner
@@ -33,7 +33,6 @@ Work order:
 1. `MC-15` — multiple-choice fairness; the choice check.
 2. `MC-41` — the construction test contract; it locks the invariants the other
    entries introduce.
-3. `MC-42` — the golden record; the first end-to-end comparison.
 
 #### MC-15 — Multiple-choice fairness checks
 
@@ -58,19 +57,8 @@ regression is invisible.
 
 **Recommendation:** one test per invariant, plus a property test that every
 accepted definition passes the validity list, plus one end-to-end test on the
-golden record (after `MC-42` fixes its format).
-
-#### MC-42 — Golden record format
-
-The golden-record file format is not defined for the box-with-hole task.
-`algorithm/construction.md` points at
-`plans/nov-19/03b-task-construction-design.md` as the first golden record, but
-that is a plan document, not a fixed data file. The first end-to-end test needs
-a fixed record to compare against, and an untyped record drifts silently.
-
-**Recommendation:** one versioned JSON file per golden task holding the program,
-the expected canonical clue sequence, and the expected answer with its evidence;
-the test compares the constructed definition field by field.
+golden record in
+[`pipeline/testing/golden-records.md`](pipeline/testing/golden-records.md).
 
 ## P1
 
@@ -164,6 +152,13 @@ when its completion marker and identity match.
 
 ## Closed or merged in the 2026-11-20 pass
 
+- `MC-42` — the golden record is a versioned JSON file per task, defined in
+  `pipeline/testing/golden-records.md` with the program, construction input,
+  task description, canonical clue sequence, answer, and evidence. The first
+  record is `pipeline/testing/golden/box-with-hole.json`; `tests/test_golden_records.py`
+  validates the format. The box-with-hole chain is three steps, not the plan's
+  four: the BRep seam edge changes the counts, and the plan's comparison is
+  redundant.
 - `MC-11` — `04` takes `NormalizedProgram` and `RenderConfig` (the validated
   `PromptTemplateSet` plus the release `RenderSeed`). The task render seed is
   derived from the release seed and `task_id`, and the manifest records the

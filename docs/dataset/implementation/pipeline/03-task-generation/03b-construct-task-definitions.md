@@ -515,4 +515,5 @@ underfilled. Deficits that `03a` reports carry an allocation detail instead, and
 ## Not here
 
 Task quota planning, data expansion, prompt rendering, choice rendering, and
-export.
+export. The construction test contract and the golden record are in
+[`../testing/golden-records.md`](../testing/golden-records.md).
