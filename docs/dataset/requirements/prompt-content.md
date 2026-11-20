@@ -5,7 +5,7 @@ a CAD-QA prompt. It does not define how the prompt is rendered.
 
 ## 1. Prompt parts
 
-A prompt has up to five parts, in this order:
+A prompt has a frame convention line and up to five parts, in this order:
 
 1. **Program text**: the complete CadQuery program, unchanged except for
    normalization.
@@ -21,6 +21,27 @@ The question is only the interrogative sentence. It is not the whole task. The
 task is the program, the task target, the task clues, and the answer.
 
 The prompt does not contain the answer or any hidden identifier.
+
+### 1.1 Frame conventions
+
+Every prompt states the direction convention once, before the program text:
+
+> Directions use the program frame: +x is right, +y is back, +z is up.
+
+The convention is part of the fixed prompt prefix, not a per-task variant. It is
+what makes a directional word in a task clue unambiguous: "top" is the face at
+the maximum z, "front" is the face at the minimum y, and so on.
+
+| Frame name | Word |
+|---|---|
+| `max_x` | right |
+| `min_x` | left |
+| `max_y` | back |
+| `min_y` | front |
+| `max_z` | top |
+| `min_z` | bottom |
+
+The graph stores the frame name; the prompt renders the word from this table.
 
 ## 2. Program text
 
@@ -134,8 +155,8 @@ the answer format.
 | Number | "Return exactly one number. Use <unit>; round to 4 significant figures." |
 | Integer | "Return exactly one integer." |
 | Yes or no | "Return exactly one of `true` or `false`." |
-| 3D coordinate | "Return exactly one coordinate tuple `(x, y, z)` in <frame>; round each value to 4 significant figures." |
-| Bounding box | "Return exactly one bounding box as `{\"min\": [x, y, z], \"max\": [x, y, z]}` in <frame>; round each value to 4 significant figures." |
+| 3D coordinate | "Return exactly one coordinate tuple `(x, y, z)` in the program frame; round each value to 4 significant figures." |
+| Bounding box | "Return exactly one bounding box as `{\"min\": [x, y, z], \"max\": [x, y, z]}` in the program frame; round each value to 4 significant figures." |
 | Structured object | "Return exactly one JSON object with fields <field list>." |
 
 The answer instruction always states the frame when it matters. The default

@@ -9,6 +9,8 @@ and, for multiple choice, the rendered choice set.
 
 - Render the prompt from program text, question, task clues, choices, and answer
   instruction.
+- Prefix the prompt with the frame convention from `prompt-content.md` section
+  1.1. It is fixed, not a per-task variant.
 - Keep the prompt answer-free.
 - Render task clues in the definition's canonical order in P0. A seeded
   permutation that respects reference dependencies is P1; it is recorded as the
