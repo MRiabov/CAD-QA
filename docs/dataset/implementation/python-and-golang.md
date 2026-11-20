@@ -49,6 +49,7 @@ No Go code exists yet, so these rows are decisions rather than observations.
 | Parquet read and write | `pyarrow` (`>=25.0`) | in use |
 | Columnar analysis | `polars` | in use, never on the graph path (`DS-41`) |
 | Typed models | `pydantic` | in use in `train_and_eval` |
+| JSON | `orjson` | decided, not yet in use |
 | Prompt templates | `PyYAML` | in use |
 | CAD execution | `cadquery`, `OCP` | `02b` only |
 | Program AST and tokens | `ast`, `tokenize` | `01d` and `02a` only |
@@ -56,6 +57,11 @@ No Go code exists yet, so these rows are decisions rather than observations.
 `DS-22` limits Python to work that needs Python execution semantics. The table
 lists what that work may import; it is not a general permission for new Python
 code.
+
+JSON is `orjson` in Python and `encoding/json` in Go. `orjson` returns bytes
+and sorts keys with `OPT_SORT_KEYS`; the canonical definition serialization in
+`03b` construct task definitions depends on both. Go disables HTML escaping so
+the two encoders agree on `<`, `>`, and `&`.
 
 ## Parquet at the boundary
 

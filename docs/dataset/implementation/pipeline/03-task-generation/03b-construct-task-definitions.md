@@ -363,9 +363,13 @@ input, so every rule below is part of the contract:
 
 - keys sorted by byte order, so the field table can be reordered without changing
   a hash;
-- UTF-8, no byte-order mark, `,` and `:` with no surrounding space, no trailing
-  newline;
-- non-ASCII characters escaped, so Go and Python produce the same bytes;
+- UTF-8 bytes, no byte-order mark, `,` and `:` with no surrounding space, no
+  trailing newline;
+- non-ASCII characters written as raw UTF-8, not as `\u` escapes. Go disables
+  HTML escaping, which would otherwise write `<`, `>`, and `&` as `\u003c`,
+  `\u003e`, and `\u0026`;
+- a string containing U+2028 or U+2029 is rejected at construction, because Go
+  and Python escape those two characters differently;
 - absent values written as `null`, never omitted;
 - integers written as JSON integers; every other number written as canonical
   decimal text, never as a JSON number;
@@ -385,6 +389,11 @@ exponent's leading zero (`1e-9` against `1e-09`), and on negative zero.
 
 The rule is scoped to the task definition. Graph tables keep native float
 columns: they are measured once, read in bulk, and never hashed.
+
+Python serializes with `orjson` and sorted keys; Go uses `encoding/json` with
+HTML escaping disabled. Because the definition has no float fields, the library
+choice does not change the bytes: only strings, integers, and structure reach
+the hash.
 
 ### Three hashes
 
