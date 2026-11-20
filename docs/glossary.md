@@ -415,6 +415,20 @@ aggregation, or provenance.
 
 ---
 
+### Clue operand form
+
+How a task clue's reference is identified:
+
+- `named` — by its construction or geometry, such as "the cylindrical face";
+- `selected` — by an earlier task clue, such as "the face selected in step 1";
+- `aggregated` — by an extreme, rank, or count over a set;
+- `cross_state` — by a before/after solid state.
+
+A task clue with no reference has no clue operand form. `In code:`
+`clue_operand_form`.
+
+---
+
 ### Measurement scope
 
 The provenance category of a Measurement — the aspect of the CAD program the fact describes.
@@ -654,6 +668,20 @@ input/output contract between `dataset_generation` and `train_and_eval`.
 
 The environment and runner used to evaluate cost-effective LLM models on the benchmark.
 
+### Answer-equivalent set
+
+The entities still possible after the last task clue step. For a measurement
+answer they must all produce the same answer; for an identity answer the set
+holds exactly one entity. `In code:` `answer_equivalent_set`.
+
+---
+
+### Same answer
+
+The comparison used for answer uniqueness: canonical equality at the answer's
+stated precision, which is the same comparison the release grader performs.
+`In code:` `same_answer`.
+
 ---
 
 ## Don't say
@@ -747,6 +775,11 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | split target | Split task target | target of what count? |
 | family capacity | Family task capacity | capacity for what? |
 | step quota | Task reasoning step quota | quota for which step? |
+| clue stratum / clue strata | clue operand form | retired ladder; a clue has one clue type and one operand form |
+| derivation steps | clue operand form | counted internal work, not task reasoning steps |
+| witness set | answer-equivalent set | 'witness' is constraint-solver jargon |
+| separation margin | stated precision | there is no margin; equality is canonical at the stated precision |
+| answer separation | answer equality | separation is the negation of the answer equality |
 
 ---
 

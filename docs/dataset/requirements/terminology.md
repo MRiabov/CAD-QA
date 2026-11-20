@@ -16,6 +16,7 @@ the user-visible outcome.
 | **Task definition** | Internal | The persisted, answer-bearing construction record for one task: target binding, ordered clues, answer step, answer, validity record, and identity. It is not prompt text. |
 | **Question** | Domain | The interrogative sentence in the prompt. It is not the whole task. |
 | **Clue type** | Domain | The category of condition a task clue states: property, relation, comparison, aggregation, or provenance. A chain is a P2 sequence of relation clues, not a clue type. |
+| **Clue operand form** | Domain | How a task clue's reference is identified: `named`, `selected`, `aggregated`, or `cross_state`. A task clue with no reference has none. |
 | **Answer meaning** | Domain | What the answer is about, independent of how it is returned: identity, volume, area, length, distance, angle, count, rank, membership, position, extent, CadQuery workplane state, material change, topology change, or validity. |
 | **CADEvolve program family** | Domain | A stable program family used as the split unit: a CADEvolve generator family or a CADEvolve-predicted ABC/ShapeNet mesh family. P and C versions of one family share a family ID. |
 | **Task reasoning step support table** | Domain | The release artifact that records which dimension values can occur at each task reasoning step count, and why an unsupported value cannot occur there. |
@@ -30,6 +31,7 @@ the user-visible outcome.
 | **Task reasoning step** | Domain | A task clue step or a task answer step. |
 | **Task reasoning step count** | Domain | The number of task reasoning steps a task requires. |
 | **Task solution sequence** | Domain | The ordered task clue steps and task answer step that solve the task. |
+| **Clue form profile** | Internal | The ordered clue type and clue operand form of every clue in one task. `In code:` `clue_form_profile`. |
 | **Answer format** | Domain | The form of the answer: multiple choice, number, integer, yes or no, 3D coordinate, bounding box, or structured object. |
 | **Multiple-choice choices** | Domain | The short list of options shown for a multiple-choice answer. |
 | **Answer instruction** | Domain | The part of the prompt that tells the LLM model which answer format to return and in what syntax. |
@@ -42,9 +44,20 @@ the user-visible outcome.
 | **CAD graph entity** | Internal | One entity in the CAD graph, such as a face, edge, operation, or region. |
 | **CAD graph relation** | Domain | A named link between two CAD graph entities. |
 | **CAD graph measurement** | Domain | A numeric or geometric value about a CAD graph entity or a pair of CAD graph entities. |
+| **Enumeration domain** | Internal | Which entities and which pairs a measurement or relation is emitted for. Per-entity measurements are total over their scope; pair elements need one named entity. |
+| **Named entity** | Internal | An entity a task clue can identify directly, by face surface kind, by position, or by the operation or feature that created it. |
+| **Endpoint entity kind** | Internal | The entity kind a relation or measurement declares at one of its endpoints. It is a per-relation declaration, not the global entity category. |
 | **CAD graph evidence** | Internal | The record of how a CAD graph element (CAD graph relation or CAD graph measurement) was obtained: measured by running CadQuery, or derived by an exact rule, with the rule and references. |
 | **Answer evidence** | Domain | The record of how a task's gold answer was obtained: the referenced CAD graph evidence and the rule that produces the answer. |
+| **Answer-equivalent set** | Internal | The entities still possible after the last task clue step, which must all produce the same answer. `In code:` `answer_equivalent_set`. |
+| **Same answer** | Internal | The comparison used for answer uniqueness: canonical equality at the answer's stated precision. `In code:` `same_answer`. |
+| **Answer uniqueness** | Internal | Every entity in the answer-equivalent set produces the same answer. |
+| **Entity uniqueness** | Internal | The answer-equivalent set holds exactly one entity. |
 | **Validity record** | Internal | The check results that establish a task definition's uniqueness, target binding, clue narrowing, and geometry requirement. It is not answer evidence. |
+| **Capability census** | Internal | The per-program summary of available target categories, clue constructors, clue operand forms, measurements, answer meanings, and maximum task reasoning step count. It is a by-product of graph construction. |
+| **Supply-driven construction** | Internal | Building tasks from the facts one graph has. This is the default construction strategy. |
+| **Demand-driven construction** | Internal | Specifying a task cell first and querying for programs that can support it. It is used only for deficits. |
+| **Forced task** | Internal | A task produced by a cell-level demand query rather than by a natural clue chain, flagged for review. |
 | **Failure tombstone** | Internal | A recorded failed program or operation, with the error and cache key, used for debugging and cache hits. It is not a graph entity and never supports an answer. |
 | **CadQuery program AST extraction result** | Internal | The result of extracting a CadQuery program without running it: operations, CadQuery workplanes, CadQuery profiles, CadQuery paths, CadQuery selectors, and their relationships in the CadQuery program. |
 | **CadQuery program runtime extraction result** | Internal | The result of executing a CadQuery program and extracting Shape snapshots, CAD feature solid state effect deltas, CadQuery selector results, and evidence. |
@@ -56,6 +69,7 @@ the user-visible outcome.
 | **CAD topology entity ID** | Internal | The stable identity of a CAD topology entity within one solid state; `In code:` `entity_id`. |
 | **AST rejection** | Internal | A rejected `02a` CadQuery program with no CadQuery program AST extraction result, distinct from a `02b` failure tombstone. |
 | **Solid state** | Domain | The shape before or after an operation, or the final shape. |
+| **Solid state scope** | Internal | Which solid state a task refers to. `In code:` `state_scope`; P0 tasks use the final solid state. |
 | **Warmup subset** | Domain | The labeled set of 1-step tasks inside the dataset. It is useful for training, not a separate dataset. |
 | **Curriculum** | Domain | The order in which tasks are presented, from lower to higher task reasoning step counts. |
 | **Dataset release** | Domain | An immutable, validated, versioned set of tasks and correct answers. |

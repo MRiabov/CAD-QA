@@ -120,7 +120,9 @@ evidence rather than by argument.
 
 ## Current position
 
-`D4` to `D10` remain open in
-`plans/nov-19/03b-task-construction-design.md`. `D4` (separation margin) is
-next, because `DS-32` already made `answer_tolerance` load-bearing for answer
-uniqueness and separation has to share the same constant.
+`D5` to `D10` remain open in
+`plans/nov-19/03b-task-construction-design.md`. `D3` and `D4` were withdrawn:
+`D3` into graph completeness, and `D4` into the answer equality already defined
+by `DS-32`. Three of the original eleven decisions have dissolved into contracts
+that already existed, which is evidence that the open count is shrinking by
+consolidation rather than by omission.
