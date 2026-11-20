@@ -52,17 +52,18 @@ Work order:
 #### MC-44 — Feasibility derivation
 
 Feasibility derivation is not computable: `task-step-support.md` defines support
-existentially ("there exists a feasible derivation of exactly s steps") and says
-the tables are derived from `03b` construct task definitions, but it gives no
-reachability rule over the clue grammar. Four support tables ship today and a
+existentially ("there exists a feasible derivation of exactly
+`task_reasoning_step_count` steps") and says the tables are derived from `03b`
+construct task definitions, but it gives no reachability rule over the clue
+grammar. Four support tables ship today and a
 fifth is planned (`MC-38`); none has a computable derivation, so their rows are
 assertions rather than computed facts.
 
 **Recommendation:** define feasibility as an existential over the clue grammar,
-not over a concrete graph: a value is supported at step count `s` when a
-symbolic construction can produce a valid definition of exactly `s` steps using
-only that value's allowed clue operand forms and the structural rules in `03b` construct
-task definitions (`selected` needs an earlier clue, `cross_state` is P2,
+not over a concrete graph: a value is supported at a task reasoning step count
+when a symbolic construction can produce a valid definition of exactly that many
+steps using only that value's allowed clue operand forms and the structural rules
+in `03b` construct task definitions (`selected` needs an earlier clue, `cross_state` is P2,
 property has no clue operand form, answer-format compatibility). Implement it as the
 same cover search as construction, with the graph replaced by the grammar's full
 fact set and the validity rules unchanged, and derive all five tables from that

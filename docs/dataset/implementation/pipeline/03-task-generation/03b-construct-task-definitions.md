@@ -230,13 +230,14 @@ a scalar target.
 
 ### Answer equality
 
-`same_answer(a, b)` is the comparison used for answer uniqueness and for scoring
+`same_answer(left_answer, right_answer)` is the comparison used for answer
+uniqueness and for scoring
 (`DS-32`). It is not a margin; it is canonical equality at the answer's stated
 precision.
 
-| Answer meaning | `same_answer(a, b)` |
+| Answer meaning | `same_answer(left_answer, right_answer)` |
 |---|---|
-| identity | `a` is `b` |
+| identity | the two answers are the same entity |
 | volume, area, length, distance, angle | same canonical string at the stated precision |
 | count, rank | same integer |
 | membership | same label: inside, outside, or on the boundary |

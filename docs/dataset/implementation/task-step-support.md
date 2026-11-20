@@ -47,7 +47,8 @@ needs an answer step:
 For a dimension value, support is an existential:
 
 ```text
-support(value, s) = there exists a feasible derivation of exactly s steps
+support(dimension_value, task_reasoning_step_count)
+  = there exists a feasible derivation of exactly task_reasoning_step_count steps
 ```
 
 Dependency depth is a lower bound. A value may have feasible derivations at more
