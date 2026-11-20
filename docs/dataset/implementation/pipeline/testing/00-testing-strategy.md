@@ -56,7 +56,7 @@ are the executable units.
 |---|---|
 | [`00-end-to-end.md`](00-end-to-end.md) | [`../00-end-to-end.md`](../00-end-to-end.md) |
 | [`00-support-tables.md`](00-support-tables.md) | cross-cutting; [`../../task-step-support.md`](../../task-step-support.md) |
-| `01a-read-cadevolve-metadata.md` | [`../01a-read-cadevolve-metadata.md`](../01a-read-cadevolve-metadata.md) |
+| [`01a-read-cadevolve-metadata.md`](01a-read-cadevolve-metadata.md) | [`../01a-read-cadevolve-metadata.md`](../01a-read-cadevolve-metadata.md) |
 | `01b-select-program-pool.md` | [`../01b-select-program-pool.md`](../01b-select-program-pool.md) |
 | `01c-fetch-program-pool.md` | [`../01c-fetch-program-pool.md`](../01c-fetch-program-pool.md) |
 | `01d-normalize-programs.md` | [`../01d-normalize-programs.md`](../01d-normalize-programs.md) |
