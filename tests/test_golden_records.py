@@ -143,7 +143,11 @@ def load_records() -> list[tuple[Path, dict[str, Any]]]:
     assert paths, f"no golden records under {GOLDEN_DIR}"
     records: list[tuple[Path, dict[str, Any]]] = []
     for path in paths:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        text = path.read_text(encoding="utf-8")
+        assert text.endswith("\n"), (
+            f"{path.name}: golden record needs a trailing newline"
+        )
+        data = json.loads(text)
         assert isinstance(data, dict), f"{path.name}: top level is not an object"
         records.append((path, data))
     return records
