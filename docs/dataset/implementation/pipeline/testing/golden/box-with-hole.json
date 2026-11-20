@@ -8,9 +8,9 @@
     "graph_schema_version": "1"
   },
   "program": {
-    "program_id": "cadqaprog:ddb69cf4e22fa6be66766781f6b10e13af8fb9b2c646e17097efdac0e0797392",
-    "program_sha256": "ddb69cf4e22fa6be66766781f6b10e13af8fb9b2c646e17097efdac0e0797392",
-    "text": "import cadquery as cq\n\nresult = (\n    cq.Workplane(\"XY\").box(10, 20, 5).faces(\">Z\").workplane().circle(2).cutBlind(-2)\n)\n"
+    "program_id": "cadqaprog:b406dfd4f70e422e066b9dbf2d1c545d69cb9020a604fcd6872945b57890fb24",
+    "program_sha256": "b406dfd4f70e422e066b9dbf2d1c545d69cb9020a604fcd6872945b57890fb24",
+    "text": "import cadquery as cq\n\nwp = cq.Workplane(\"XY\")\nbox = wp.box(10, 20, 5)\ntop = box.faces(\">Z\")\nplane = top.workplane()\nhole = plane.circle(2)\nresult = hole.cutBlind(-2)\n"
   },
   "task": {
     "target_category": "edge",
