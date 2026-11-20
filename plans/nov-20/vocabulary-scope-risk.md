@@ -85,22 +85,23 @@ not quadratic; breadth-first development of an undocumented vocabulary is.
 
 ## Proposed mitigation
 
-**Freeze the P0 vocabulary to what the Phase 0 slice touches.** Everything else
-is marked `not needed yet` rather than designed. A row reopens only when a slice
-or a quota target requires it.
+**Build the Phase 0 slice first. The release scope stays P0 as the PRD defines
+it.** The slice is a milestone that proves the plumbing end to end; it does not
+redefine what the first release must contain.
 
 The operating rule:
 
-> If a decision does not unblock the Phase 0 slice, defer it. Record the deferral
-> as a state, not as an omission.
+> If a decision does not unblock the next slice, defer it. Record the deferral as
+> a state, not as an omission.
 
 Concretely:
 
-- `graph-content.md`: mark the P1 and P2 rows as deferred rather than designed.
-- distance: ship `minimum_distance` and `centroid_distance`; defer the other
-  procedures until a clue vocabulary needs them.
-- `03-task-generation/decisions.md`: accept module decisions only when a slice
-  or a quota target forces them.
+- `graph-content.md`: keep the P0 rows as P0. The P1 and P2 rows stay deferred as
+  already marked, and no P0 row moves.
+- distance and angle: both are P0 answer meanings in the PRD, so the pair domain
+  (`MC-36`) is on the critical path rather than deferred.
+- `03-task-generation/decisions.md`: accept module decisions when the slice or a
+  P0 requirement forces them.
 
 ## How to test the mitigation
 
