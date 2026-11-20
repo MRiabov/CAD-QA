@@ -34,6 +34,7 @@ results, or a failure tombstone when execution fails.
 - `workplane_frames`: one per workplane-producing operation;
 - `selector_results`: one per evaluated CadQuery selector;
 - `effect_deltas`: before/after state pairs and measured deltas;
+- `point_probes`: one or two classified points per solid state;
 - `final_state_id`;
 - `runtime_extraction_result_sha256`.
 
@@ -64,6 +65,18 @@ Each `CadQuerySelectorResult` contains:
 - `state_id`;
 - `selected_entity_ids`, the stable entity IDs;
 - `count`.
+
+Each `PointProbe` contains:
+
+- `point_probe_id` and `state_id`;
+- `point`, in the program frame;
+- `location`, `inside` or `outside`;
+- `distance_to_surface`, measured to the nearest face;
+- `classifier` and the margin used.
+
+A probe within the clear-case margin is not emitted. The centroid probe is the
+state centroid already measured in the Shape snapshot; the second probe is a seeded
+point in the state bounding box.
 
 Each `CadFeatureSolidStateEffectDelta` contains:
 

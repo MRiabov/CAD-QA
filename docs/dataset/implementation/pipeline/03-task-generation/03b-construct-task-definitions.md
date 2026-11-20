@@ -157,9 +157,10 @@ answer is not valid.
 
 ### Membership answers
 
-A membership answer is computed by `is_inside(solid_state, point)`. The point is a
-coordinate literal in the task definition, stated in the program frame; it is not
-a graph entity. The answer is inside or outside. A point within the geometric
+A membership answer is computed by `is_inside(solid_state, point)`. The point comes
+from a point probe in the graph (`graph-content.md` section 2.1); the task
+definition copies its coordinates and its classification, so `03b` never needs a
+kernel. The answer is inside or outside. A point within the geometric
 clear-case margin of the face surface is not used, because "on the boundary" is a third case
 that the binary answer cannot express. The classification is measured evidence
 and records the point, the solid state hash, and the classifier.

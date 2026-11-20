@@ -70,6 +70,7 @@ the user-visible outcome.
 | **AST rejection** | Internal | A rejected `02a` CadQuery program with no CadQuery program AST extraction result, distinct from a `02b` failure tombstone. |
 | **Solid state** | Domain | The shape before or after an operation, or the final shape. |
 | **Solid state scope** | Internal | Which solid state a task refers to. `In code:` `state_scope`; P0 tasks use the final solid state. |
+| **Point probe** | Internal | A point near a solid state, classified as inside or outside where the shape is available. It supplies the point for a membership answer. |
 | **`is_inside`** | Internal | The predicate that answers a membership question for a point literal and a solid state. It returns inside or outside; boundary points are excluded by tolerance. |
 | **Warmup subset** | Domain | The labeled set of 1-step tasks inside the dataset. It is useful for training, not a separate dataset. |
 | **Curriculum** | Domain | The order in which tasks are presented, from lower to higher task reasoning step counts. |

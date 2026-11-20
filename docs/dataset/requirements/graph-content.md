@@ -43,9 +43,28 @@ The graph contains these entity categories.
 | Region | Material a feature adds or removes. | The feature and the sign of the change. | P0 |
 | CadQuery selector result | The entities a CadQuery selector actually selected. | The CadQuery selector expression and the solid state it ran on. | P1 |
 | Measurement | A numeric or geometric value about an entity or a pair of entities. | The measured entity or pair, and the measurement name. | P0 |
+| Point probe | A point near a solid state, classified as inside or outside. | The solid state and a stable probe index. | P0 |
 
 Every entity belongs to exactly one CadQuery program. An entity without a
 program is not part of a task.
+
+### 2.1 Point probes
+
+A point probe is a point with a classification, produced where the shape is
+available. It exists because a membership answer needs a point that the task
+generator cannot classify without a kernel.
+
+- One or two probes per solid state.
+- The first probe is the state centroid, which is already measured.
+- The second probe is a seeded point inside the state bounding box.
+- A probe within the clear-case margin of a face surface is discarded.
+- Each probe records the point, `inside` or `outside`, the distance to the nearest
+  face surface, and the classifier.
+- A state with no surviving probe supports no membership task. That is a deficit,
+  not a guess.
+
+A point probe is not a task target category in P0. It supplies the point literal
+for a membership answer about the state it belongs to.
 
 ## 3. Relations
 

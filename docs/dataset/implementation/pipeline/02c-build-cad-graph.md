@@ -30,6 +30,9 @@ Every task target, task clue operand, answer value, and piece of answer evidence
 must resolve to a CAD graph element. A missing graph element rejects the task; it
 is not guessed or softened.
 
+Point probes are graph entities. They are copied from the runtime result and
+attached to their solid state; a probe with no state is a graph defect.
+
 ## Language and parallelism
 
 - **Go:** graph assembly and persistence.
