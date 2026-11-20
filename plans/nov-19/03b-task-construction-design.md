@@ -446,7 +446,7 @@ a default, not a ruling, and the ID is stable so other documents can refer to it
 
 Accepted decisions move to `docs/dataset/decisions.md` and are marked here with
 their record ID. The clue-form model is `DS-31`, answer uniqueness is `DS-32`,
-and the construction strategy is `DS-33`.
+the construction strategy is `DS-33`, and state scope is `DS-34`.
 
 ### 1. `D1` — What is the equality relation for answer uniqueness?
 
@@ -461,14 +461,22 @@ Numeric answers use `answer_tolerance`; label answers compare labels.
 Blocks: `TaskDefinition.answer_evidence`, the `answer_equivalent_set` field, the
 validity predicate in `03b`, and the separation margin in `D4`.
 
-### 2. `D2` — Does the question name the solid state?
+### 2. `D2` — Which solid states can a task refer to?
 
-Options: the question names the state, or the first clue names it.
-Recommendation: the question names it, and `TaskDefinition` carries
-`state_scope`. The possible-answer set depends on the state, so a task whose
-state is only implied by a clue has an ambiguous starting set.
+Accepted as `DS-34`.
 
-Blocks: question templates and the possible-answer set.
+Options: the final state only, the final state plus one named intermediate
+state, or a before/after pair. Recommendation: the final state only in P0. A
+named intermediate state arrives in P1, and before/after pairs arrive in P2 with
+the change answer meanings.
+
+The state is bound before the clue chain starts and is named in the prompt
+preamble. A clue cannot introduce it: the possible-answer set must exist before
+the first clue is applied, and a scoping clue would spend a task reasoning step
+on something that does not narrow.
+
+Blocks: `TaskDefinition.state_scope`, question templates, and the
+possible-answer set.
 
 ### 3. `D3` — How is a clue evaluated when a measurement is missing?
 
@@ -601,10 +609,10 @@ answers), a replay test, and one end-to-end test.
 ## Next
 
 The construction strategy is settled (`D11`): supply-driven with a
-capability-aware deficit loop. The two decisions that still block the schema
-are `D1` (the equality relation for answer uniqueness) and `D2` (state scope).
-Once they are settled, the construction grammar can be written with the
-box-and-hole example as the first golden record.
+capability-aware deficit loop. The two schema blockers are settled as well:
+`D1` (the equality relation for answer uniqueness) and `D2` (state scope). The
+remaining open decisions are `D3` to `D10`, and the construction grammar can
+be written with the box-and-hole example as the first golden record.
 
 ## References
 

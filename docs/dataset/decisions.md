@@ -547,3 +547,21 @@ prefix is `DS-`.
 - **Consequences:** `01b` stays metadata-based. `capability_deficit` becomes a
   deficit reason. Forced tasks are confined to the deficit path, where review can
   see them, and a miss is recorded rather than filled with an unnatural task.
+
+## DS-34 — Tasks refer to the final solid state in P0
+
+- **Status:** accepted (2026-11-20).
+- **Context:** A CadQuery program produces a solid state after each solid state
+  producing operation, and topology entities belong to one state. The
+  same face can exist in several states with different measurements, so a task
+  that does not bind a state has no well-defined possible-answer set and its
+  answer can differ between snapshots.
+- **Decision:** P0 tasks refer to the final solid state only. P1 adds one named
+  intermediate state, identified by its producing operation. P2 adds before/after
+  pairs for material-change and topology-change answers. The state is bound
+  before the clue chain starts and is named in the prompt preamble; a clue never
+  introduces it.
+- **Consequences:** `TaskDefinition` carries `state_scope`, which is `final` in
+  P0. The possible-answer set is defined per state scope. A clue that needs
+  another state is rejected rather than resolved by convention. Effect answers
+  that need a second state wait for P2.
