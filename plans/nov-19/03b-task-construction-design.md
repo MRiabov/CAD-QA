@@ -625,14 +625,17 @@ Blocks: coverage, balance, and the support table.
 
 ### 10. `D10` — What role does clue form play in reporting?
 
+Accepted as `DS-38`.
+
 Options: none, step count only; a coverage dimension; a difficulty axis.
 
-Recommendation: a coverage dimension and a reported breakdown, not a difficulty
-axis. `DS-05` stays intact: task reasoning step count remains the length
-measure, and clue form is descriptive.
+Recommendation: a coverage dimension and a per-task descriptive breakdown, not a
+difficulty axis. `DS-05` stays intact: task reasoning step count remains the
+length measure, and clue form is descriptive.
 
-This replaces the earlier framing, "does `DS-05` change?", which was a proposal
-to amend a decision rather than a question about the reporting contract.
+The release reports aggregate coverage per step count, and the per-task
+`clue_form_profile` stays in the definition. Benchmark results may name the step
+counts and clue forms they cover, without ranking tasks by clue form.
 
 Blocks: PRD section 6, R-9, and benchmark reporting.
 
@@ -705,11 +708,11 @@ rates.
 
 ## Next
 
-The construction strategy is settled (`D11`): supply-driven with a
-capability-aware deficit loop. The two schema blockers are settled as well:
-`D1` (the equality relation for answer uniqueness) and `D2` (state scope). The
-remaining open decision is `D10`, and the construction grammar can
-be written with the box-and-hole example as the first golden record.
+All construction decisions are settled. `D1`, `D2`, `D5`, `D6`, `D7`, `D8`,
+`D9`, `D10`, and `D11` are recorded as decisions, `D3` was withdrawn into graph
+completeness, and `D4` was folded into `DS-32`. The construction grammar can now
+be written, starting with `algorithm/clue-grammar.md` and the box-and-hole
+example as the first golden record.
 
 The concern that the vocabulary may be growing without a stopping rule is
 recorded in `plans/nov-20/vocabulary-scope-risk.md`. Its mitigation is to

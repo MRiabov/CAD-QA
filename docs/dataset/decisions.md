@@ -624,3 +624,20 @@ prefix is `DS-`.
   minimum and no balance range in P0. The `clue-form-by-step` support table
   decides which forms are required at each step count. A missing form at a step
   count is a coverage gap, not a balance problem.
+
+## DS-38 — Clue form is reported as a descriptive breakdown, not a difficulty axis
+
+- **Status:** accepted (2026-11-20).
+- **Context:** `DS-05` makes task reasoning step count the only measure of task
+  difficulty, and `DS-37` makes clue operand form a P0 coverage dimension.
+  Coverage alone does not show how the forms combine inside one task, and the
+  per-task clue form profile is already part of the definition.
+- **Decision:** Every task definition records `clue_form_profile`, the ordered
+  clue type and clue operand form of each clue. The release reports aggregate
+  coverage per task reasoning step count, and the clue form profile stays
+  available per task. Clue form is descriptive; it is not a difficulty label, and `DS-05` is
+  unchanged.
+- **Consequences:** The release table carries `clue_form_profile`, and `05`
+  reports coverage per `(clue_type, clue_operand_form)`. Benchmark results may
+  name the step counts and clue forms they cover, without ranking tasks by clue
+  form.

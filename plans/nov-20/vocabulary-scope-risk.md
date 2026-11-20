@@ -120,9 +120,9 @@ evidence rather than by argument.
 
 ## Current position
 
-`D10` remains open in
-`plans/nov-19/03b-task-construction-design.md`. `D3` and `D4` were withdrawn:
-`D3` into graph completeness, and `D4` into the answer equality already defined
-by `DS-32`. Three of the original eleven decisions have dissolved into contracts
-that already existed, which is evidence that the open count is shrinking by
-consolidation rather than by omission.
+No construction decision remains open in
+`plans/nov-19/03b-task-construction-design.md`. `D3` was withdrawn into graph
+completeness, and `D4` was folded into the answer equality defined by `DS-32`.
+Two of the original eleven decisions dissolved into contracts that already
+existed, which is evidence that the open count shrank by consolidation rather
+than by omission.

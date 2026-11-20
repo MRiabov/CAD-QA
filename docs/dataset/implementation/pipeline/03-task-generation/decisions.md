@@ -51,11 +51,6 @@ the document that owns them.
 
 ## Pending
 
-Two module-scoped decisions are accepted. The remaining candidate is the
-construction questions in `plans/nov-19/03b-task-construction-design.md`:
-
-| Candidate | Question |
-|---|---|
-| `D10` | What role does clue form play in reporting? |
-
-Each moves here as an accepted decision once it is answered.
+Two module-scoped decisions are accepted, and no module-scoped question is
+pending. Feature-wide construction decisions live in
+[`../../../decisions.md`](../../../decisions.md).
