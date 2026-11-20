@@ -25,3 +25,15 @@ rows.
 
 The manifest is small control metadata, so it is JSON. It is not the release
 manifest defined in `../../requirements/release-dataset-contract.md`.
+
+## Counts and status
+
+- Selection counts describe the selection artifact: active, reserve, and one
+  count per exclusion reason.
+- Program counts describe the normalized artifact: one count per tier,
+  collection, and `cadevolve_program_family_id`, over normalized rows only.
+- `status` is `complete` when every selection target is met and no rejection is
+  recorded, and `incomplete` otherwise. A shortfall or a rejection makes the
+  dataset `incomplete`; it does not make the manifest unreadable.
+- `created_at` is not an input to any hash. Two runs over the same inputs differ
+  in `created_at` and in nothing else.

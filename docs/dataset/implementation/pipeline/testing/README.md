@@ -19,7 +19,7 @@ assert-from-the-artifact rule, and the test-first order — are in
 | [`01b-select-program-pool.md`](01b-select-program-pool.md) | `01b` select program pool. | draft |
 | [`01c-fetch-program-pool.md`](01c-fetch-program-pool.md) | `01c` fetch program pool. | draft |
 | [`01d-normalize-programs.md`](01d-normalize-programs.md) | `01d` normalize programs. | draft |
-| `01e-write-external-dataset-manifest.md` | `01e` write external dataset manifest. | missing |
+| [`01e-write-external-dataset-manifest.md`](01e-write-external-dataset-manifest.md) | `01e` write external dataset manifest. | draft |
 | `02a-extract-cadquery-ast.md` | `02a` extract CadQuery AST. | missing |
 | [`02b-execute-cadquery.md`](02b-execute-cadquery.md) | `02b` execute CadQuery. | draft |
 | [`02c-build-cad-graph.md`](02c-build-cad-graph.md) | `02c` build CAD graph. | draft |
