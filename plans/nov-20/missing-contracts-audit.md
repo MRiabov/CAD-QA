@@ -2,6 +2,8 @@
 
 **Status:** audit, 2026-11-20. Snapshot: commit `0a3be5c`
 (`docs: assign the release projection to 04 and map every column`).
+**Applied:** `c5535e1`. The findings below are the record; the current state is
+`docs/dataset/implementation/missing-contracts.md`.
 
 **Scope:** the closed entries in
 `docs/dataset/implementation/missing-contracts.md`, plus the contracts they
