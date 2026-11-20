@@ -84,9 +84,12 @@ relation categories.
 | perpendicular_to | Face, edge, or path segment | Face, edge, or path segment | The two are perpendicular within tolerance. | P0 |
 | coplanar_with | Face | Face | The two faces lie in the same plane within tolerance. | P1 |
 | coaxial_with | Edge or path segment | Edge or path segment | The two share an axis within tolerance. | P1 |
-| contains | Solid state or face | Point or entity | The first contains the second. | P0 |
 | intersects | Entity | Entity | The two intersect. | P1 |
 | distance_to | Face, edge, vertex, or solid state | Face, edge, vertex, or solid state | The shortest distance between the two. | P0 |
+
+Point membership is not a relation. It is computed by `is_inside` from a point
+literal and a solid state; see `03b`. Entity containment stays with `has_face`,
+`has_edge`, and `has_vertex`.
 
 ### 3.4 Material change
 
@@ -151,8 +154,7 @@ a volume and a bounding box. A missing row for a per-entity measurement is a
 graph defect, not a data condition.
 
 **Pair measurements and pair relations have one named endpoint.** `distance_to`,
-`angle`, `coplanar_with`, `coaxial_with`, `intersects`, and `contains` apply to
-pairs, and a solid state can hold thousands of pairs. The domain is not the full
+`angle`, `coplanar_with`, `coaxial_with`, and `intersects` apply to pairs, and a solid state can hold thousands of pairs. The domain is not the full
 pair set.
 
 A pair element exists only when at least one endpoint is a **named entity**: an

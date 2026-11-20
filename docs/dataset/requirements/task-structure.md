@@ -129,7 +129,7 @@ returned. The answer format says "number" or "boolean"; the answer meaning says
 | Angle | An angle between faces, edges, or a path tangent. | P0 |
 | Count | A number of entities. | P0 |
 | Rank | A position in an ordered set. | P1 |
-| Membership | Whether a point is inside, outside, or on a boundary. | P0 |
+| Membership | Whether a point is inside the solid state. Points within tolerance of a face surface are not used. | P0 |
 | Position | A point location in space. | P0 |
 | Extent | A minimum and maximum corner. | P0 |
 | CadQuery workplane state | The frame of a CadQuery workplane. | P1 |

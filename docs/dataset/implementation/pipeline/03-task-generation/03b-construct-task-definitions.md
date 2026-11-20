@@ -155,6 +155,15 @@ The answer must be produced by CadQuery execution or by an exact derivation from
 the program and its geometry, with answer evidence. A guessed or approximate
 answer is not valid.
 
+### Membership answers
+
+A membership answer is computed by `is_inside(solid_state, point)`. The point is a
+coordinate literal in the task definition, stated in the program frame; it is not
+a graph entity. The answer is inside or outside. A point within the geometric
+tolerance of the face surface is not used, because "on the boundary" is a third case
+that the binary answer cannot express. The classification is measured evidence
+and records the point, the solid state hash, and the classifier.
+
 ### Answer equality
 
 `same_answer(a, b)` is the comparison used for answer uniqueness and for scoring
