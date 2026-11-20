@@ -13,56 +13,12 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 26 open entries: 17 P0 technical, 5 P1 product, and 4 P1 technical. No
-P0 product decision remains open, and P2 is empty.
+There are 21 open entries: 17 P0 technical and 4 P1 technical. No product
+decision remains open, and P2 is empty.
 
 ## Decisions needed from the owner
 
-These five are the only entries a coding agent cannot close from the recorded
-decisions. Everything else in this file is a technical contract. Each question
-has distinct answers; the recommendation is the default if you do not care.
-
-**MC-17 — Reserve programs.** Do reserve programs get graphs up front, or only
-when they are promoted?
-
-- Graph only active programs; promotion is a slow-loop request.
-- Graph reserve eagerly so the fast loop can use it.
-
-Recommendation: graph only active programs. It keeps the fast loop free and the
-cost bounded; promotion stays a deliberate decision.
-
-**MC-23 — Expansion budget.** How many expansion rounds and how much pool growth
-before the deficit loop stops?
-
-- Three rounds with pool growth capped at 20%, then accept the miss.
-- No cap; stop only when the release target is met.
-
-Recommendation: the capped version, with the numbers in the task quota plan so
-the stop rule is data.
-
-**MC-45 — Clue operand form share.** Keep equal share for the first release, or skew
-toward the computation forms now?
-
-- Equal share among the supported forms.
-- Reduce the reference-tracking forms and raise the computation forms.
-
-Recommendation: equal share for the first release, revisited after the reported
-distribution.
-
-**MC-27 — External benchmark.** Which benchmark and revision does R-16 use?
-
-- The released evaluation split at a pinned revision.
-- A third-party benchmark, named with its revision.
-
-Recommendation: the released split, recorded in the manifest.
-
-**MC-28 — Review gate.** Who reviews, and does a failed review block export?
-
-- `05` validate and export release owns a blocking review gate; a failed review
-  rejects the row.
-- Review is advisory and export proceeds.
-
-Recommendation: the blocking gate, because R-17 is P0.
+None. Every open entry is a technical contract.
 
 ## P0
 
@@ -85,8 +41,8 @@ Work order:
    without them.
 6. `MC-44` — feasibility derivation; it produces the support tables `MC-13`
    checks against.
-7. `MC-48` — support-table ownership; it decides whether `03a` reads the tables
-   or derives supported values from the task-definition rules.
+7. `MC-48` — support-table ownership; it settles whether `03a` reads the tables
+   or derives them.
 8. `MC-46` — the capability census artifact; `03c` resolve deficits cannot route
    a capability deficit without it.
 9. `MC-25` — the prompt template file; `04` render prompt and choices has
@@ -364,92 +320,9 @@ the test compares the constructed definition field by field.
 
 ### Product (P1)
 
-These need the owner. The questions are above.
-
-Work order:
-
-1. `MC-17` — reserve programs; it decides whether the fast loop can promote.
-2. `MC-23` — the expansion budget; the deficit loop has no stop rule without it.
-3. `MC-45` — the clue operand form share; it needs the first release distribution.
-4. `MC-27` — the external benchmark; R-16 has no input.
-5. `MC-28` — review and evaluation material; R-17 has no writer.
-
-#### MC-17 — Reserve program lifecycle
-
-The active and reserve lifecycle is unresolved: whether reserve programs get
-graphs, and whether the fast loop may use them. `01c` fetch program pool loads
-reserve rows, `03a` allocate task quotas says to keep reserve families for `03c`
-resolve deficits, and `03c` resolve deficits says the fast loop uses only graphs
-already in the pool. If reserve is fetched but not graphed, the fast loop cannot
-use it; if it is graphed, the fast loop is no longer free.
-
-**Recommendation:** fetch reserve without graphing; promotion becomes a `03a`
-allocate task quotas decision that emits a graph request, which is a slow-loop
-cost. The fast loop stays limited to active graphs. If the owner wants reserve
-available to the fast loop, graph reserve eagerly and account for the cost
-instead.
-
-#### MC-23 — Stop and expansion budgets
-
-Numeric retry, expansion, and stop budgets are missing. `03c` resolve deficits
-names an expansion budget but gives no number, so the stop rule is not
-computable; a deficit can loop until it is noticed, and the cost of a slow loop
-is unbounded. The `AcceptedMiss` record also has no fields.
-
-**Recommendation:** state the stop rule as a deficit threshold after a fixed
-number of expansion rounds, with a hard cap on pool growth; the numbers belong
-in the task quota plan. Define the `AcceptedMiss` fields (quota target,
-remaining count, reason, owner, plan version) so an accepted miss is data.
-
-#### MC-45 — Clue operand form balance target
-
-`DS-37` defers balance over clue operand form to P1, but no artifact carries the
-target: the balance table in `task-structure.md` section 6 has no row for it,
-and the plan-level target table names no share. P1 can therefore ship without a
-balance check, and P0 coverage does not stand in for one: it proves presence,
-not a useful mix. If the P0 diagnostic reports severe imbalance, the target is
-needed for that release rather than P1.
-
-Equal share is the current target, not a settled one. The forms differ in what
-they demand: a `selected` reference resolves by pointer, a `named` reference
-identifies a described entity, and an `aggregated` reference computes a
-measurement over a set. A later revision may skew the share toward the
-computation forms, and the share must then stay within what the program
-capability census can supply, because a target above supply becomes a deficit
-rather than a mix. That revision waits for measured distributions, so `DS-38`
-stands unchanged: clue operand form is descriptive, not a difficulty axis.
-
-**Recommendation:** keep equal share for the first release, add the row when the
-P1 support grid is measured, and revisit the share after the first release
-reports its clue operand form distribution.
-
-#### MC-27 — Transfer overlap and the external benchmark
-
-Q1 is not reconciled with PRD Q7, and the external benchmark input and revision
-for R-16 are undefined. Q1 asks how the P1 same-CAD-model check works, but PRD
-Q7 already resolves P0 (normalized program text) and P1 (AST-normalized hash
-plus a shape check), so Q1 is stale. Transfer overlap has no input artifact.
-
-**Recommendation:** retire Q1 in favour of PRD Q7's definition and pin the
-external benchmark to one released revision recorded in the manifest. R-16 is
-P1, so the first release only needs the P0 exact-text check that `05` validate
-and export release already performs.
-
-#### MC-28 — Review and evaluation material
-
-Human review and evaluation-material ownership is unassigned. R-17 and section
-11 name artifacts with no pipeline stage and no writer, so the release can ship
-without them. R-17 is P0, and evaluation material is a P0 deliverable.
-
-**Recommendation:** `05` validate and export release owns a review artifact and
-a review gate before export; review does not change a definition, so a failed
-review rejects the row and records the reason. `05` validate and export release
-also owns the evaluation material: a prompt-only view plus the scoring
-instructions derived from the answer columns.
+None.
 
 ### Technical (P1)
-
-A coding agent can close these from the recorded decisions.
 
 Work order:
 
@@ -520,6 +393,15 @@ when its completion marker and identity match.
 
 - `MC-31` — the slow loop in `03c` resolve deficits includes `01d` normalize
   programs; the flow line in `00` end to end was the defect and is fixed.
+- `MC-17` — reserve rows are fetched but not normalized or graphed; promotion is
+  the slow loop, in `01c`, `01d`, and `03c`.
+- `MC-23` — the stop rule is three rounds with a 20% growth cap and an
+  `AcceptedMiss`, in `03c`.
+- `MC-45` — the P1 balance row is an equal share among supported forms, in
+  `task-structure.md`.
+- `MC-27` — Q1 is retired for PRD Q7, and the benchmark is pinned in the
+  manifest, in `05`.
+- `MC-28` — the owner reviews a P0 sample behind a blocking gate, in `05`.
 - `MC-47` — the scalar target is a measurement instance, with the candidate set,
   binding, and identity written in `task-structure.md`, `construction.md`, and
   `03b`.
