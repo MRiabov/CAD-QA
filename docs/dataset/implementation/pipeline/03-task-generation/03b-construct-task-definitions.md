@@ -110,6 +110,21 @@ carries `clue_operand_form` (`DS-31`):
 A clue with no reference has no clue operand form. A property clue that refers to
 another entity is two clues and is split into two list items.
 
+Four rules make a clue type and clue operand form combination impossible, so no
+task uses one:
+
+| Combination | Why it cannot exist |
+|---|---|
+| property with any operand form | A property clue constrains the candidate set directly and has no reference, so it has no operand form. |
+| aggregation with `aggregated` | It is aggregation over an aggregate; it is written as two clues. |
+| `selected` at task reasoning step count 1 | A `selected` reference needs an earlier task clue. |
+| `cross_state` in P0 and P1 | It needs a second solid state, and P0 and P1 use the final state only (`DS-34`). |
+
+The first two are grammar rules and hold for every program. The last two follow
+from the task reasoning step count and the state scope. The support table
+observes which forms the constructor produced, so a combination that cannot exist
+simply has no supported value.
+
 The typed check variants are:
 
 | Clue type | Check fields |
