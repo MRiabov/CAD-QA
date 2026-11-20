@@ -63,6 +63,14 @@ and sorts keys with `OPT_SORT_KEYS`; the canonical definition serialization in
 `03b` construct task definitions depends on both. Go disables HTML escaping so
 the two encoders agree on `<`, `>`, and `&`.
 
+`msgspec` is the other candidate and is faster when decoding straight into typed
+records. It is not chosen: it would add a second typed-record system beside
+Pydantic, and Pydantic v2 already decodes JSON into typed models through
+`pydantic-core`. JSON is not on the bulk path either — the graph and the release
+are Parquet — so this is an API decision, not a performance one. `orjson` does
+one job, and it has no `default` hook, so a caller cannot encode a typed record
+without dumping it through the schema first.
+
 ## Parquet at the boundary
 
 Both languages write the same typed tables. `DS-23` forbids JSON columns, and
