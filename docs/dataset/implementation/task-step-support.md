@@ -106,11 +106,12 @@ produced".
 
 ## Files
 
-The release carries four files under `support/`:
+The release carries five files under `support/`:
 
 ```text
 support/target-category-by-step.json
 support/clue-type-by-step.json
+support/clue-operand-form-by-step.json
 support/answer-meaning-by-step.json
 support/answer-format-by-step.json
 ```
@@ -133,7 +134,7 @@ Each file has a versioned envelope and typed rows:
 ```
 
 The row field is named after the file: `target_category`, `clue_type`,
-`answer_meaning`, or `answer_format`.
+`clue_operand_form`, `answer_meaning`, or `answer_format`.
 
 `reason_code` is a low-cardinality enum, not free text. It is null when the row
 is supported. Unsupported rows use one of:
@@ -146,7 +147,7 @@ is supported. Unsupported rows use one of:
 - `ambiguous_target`;
 - `no_valid_construction`.
 
-The four files are generated from the constructor over the coverage fixture set.
+The five files are generated from the constructor over the coverage fixture set.
 `05` copies them into the release and `manifest.json` records their schema
 versions and hashes.
 

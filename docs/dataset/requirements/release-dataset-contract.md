@@ -37,7 +37,7 @@ A release directory contains:
 | `manifest.json` | Release counts, versions, hashes, split counts, and coverage summaries. | One file. |
 | `dataset-card.md` | Human-readable dataset card: scope, counts, splits, provenance, that `prompt` is the user message, and the answer conventions per answer meaning — the angle convention, the signed material change, the declared position point and topology category, the membership boundary rule, and the answer precision. | One file. |
 | `failures.parquet` | Rejected programs and tasks with reasons. | One per rejection; may be empty. |
-| `support/` | Four task reasoning step support tables: `target-category-by-step.json`, `clue-type-by-step.json`, `answer-meaning-by-step.json`, `answer-format-by-step.json`. | Four files. |
+| `support/` | Five task reasoning step support tables: `target-category-by-step.json`, `clue-type-by-step.json`, `clue-operand-form-by-step.json`, `answer-meaning-by-step.json`, `answer-format-by-step.json`. | Five files. |
 
 `release.parquet` is the release dataset. It contains the gold answer because the
 release is used for training, scoring, and audit. The `prompt` column is the only
@@ -92,6 +92,7 @@ No CAD model and no correct answer is above 1% of tasks.
 | `task_reasoning_step_count` | integer | yes | Number of task clue steps plus the task answer step, if any. |
 | `target_category` | enum | yes | Task target category. |
 | `clue_types` | list of enum | yes | Ordered task clue types; empty for a task with no task clue. |
+| `clue_operand_form_profile` | list of struct `{clue_type, clue_operand_form}` | yes | Ordered clue type and clue operand form of every task clue, one entry per `clue_types` entry. `clue_operand_form` is null for a clue that carries no reference. |
 | `answer_format` | enum | yes | Format the LLM model must return. |
 | `answer_meaning` | enum | yes | What the answer is about. |
 | `geometry_required` | boolean | yes | Whether at least one task clue depends on the built shape. |
@@ -103,7 +104,7 @@ No CAD model and no correct answer is above 1% of tasks.
 | `answer_sha256` | string | yes | Hash of the canonical answer and scoring fields. |
 | `answer_evidence_json` | string | yes | Canonical JSON answer evidence: measured or derived, references, and rule. |
 
-The first fourteen columns identify the task and support selection, review, and
+The first fifteen columns identify the task and support selection, review, and
 reporting. The answer columns hold the gold answer, scoring fields, and answer
 evidence. `prompt` is the only LLM-facing column; every other column stays out
 of the LLM model input.

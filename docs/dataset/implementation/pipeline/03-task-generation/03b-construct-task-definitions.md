@@ -125,8 +125,9 @@ clues.
 
 The definition also records `clue_operand_form_profile`, the ordered
 `(clue_type, clue_operand_form)` pair for every clue. It is derived from
-`task_clues` at construction and never authored separately; `05` recomputes it
-and compares.
+`task_clues` at construction and never authored separately. `05` validate and
+export release checks that its clue types match `clue_types` and uses the forms
+for clue operand form coverage.
 
 A comparison may name both entities or refer to one selected by an earlier task
 clue. The reference must resolve to exactly one entity; otherwise the comparison

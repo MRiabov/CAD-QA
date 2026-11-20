@@ -8,6 +8,14 @@ Consumer contract:
 [`../../requirements/release-dataset-contract.md`](../../requirements/release-dataset-contract.md).
 Artifact ownership: [`../artifacts.md`](../artifacts.md).
 
+## Inputs
+
+- `ReleaseTable` from `04` render prompt and choices.
+- The five task reasoning step support tables.
+- The root `balance.yaml`.
+- The external dataset manifest from `01e` write external dataset manifest.
+- The per-pipeline-stage failure partitions.
+
 ## Scope
 
 - Validate the release table schema and row counts.
@@ -28,8 +36,8 @@ Artifact ownership: [`../artifacts.md`](../artifacts.md).
   (R-17); a failed review blocks the export and records the reason.
 - Write `release.parquet`, `failures.parquet`, `manifest.json`, and
   `dataset-card.md`.
-- Copy the generated task reasoning step support JSON files into `support/` and
-  record their hashes in the manifest.
+- Copy the five task reasoning step support JSON files into `support/` and
+  record their schema versions and hashes in the manifest.
 - Record the prompt template version and `prompts.yaml` hash in the manifest.
 - Record the balance policy version and `balance.yaml` hash in the manifest.
 

@@ -13,7 +13,7 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 13 open entries: 9 P0 technical and 4 P1 technical. No product
+There are 12 open entries: 8 P0 technical and 4 P1 technical. No product
 decision remains open, and P2 is empty.
 
 ## Decisions needed from the owner
@@ -39,11 +39,10 @@ Work order:
 4. `MC-13` — the coverage and balance checks; they compare the release against
    the support tables and `balance.yaml`.
 5. `MC-15` — multiple-choice fairness; the choice check.
-6. `MC-38` — the release fields and fifth support file; the consumer contract.
-7. `MC-26` — the manifest and dataset card fields; the release ships both.
-8. `MC-41` — the construction test contract; it locks the invariants the other
+6. `MC-26` — the manifest and dataset card fields; the release ships both.
+7. `MC-41` — the construction test contract; it locks the invariants the other
    entries introduce.
-9. `MC-42` — the golden record; the first end-to-end comparison.
+8. `MC-42` — the golden record; the first end-to-end comparison.
 
 #### MC-25 — Prompt template file
 
@@ -111,21 +110,6 @@ when a task is built, and reuse it in `05` validate and export release when the
 release is checked; pool size is necessary but not sufficient. Define the typed
 `choice_pool` entry (candidate, distinguishing facts, and P2 error mode) at the
 same time.
-
-#### MC-38 — Release fields and the fifth support file
-
-The release table omits `clue_operand_form_profile`, and
-`clue-operand-form-by-step.json` is absent from the support files. `DS-38` requires the field, and `DS-31` and
-`DS-37` require the fifth support table; the release contract still lists four
-support files. `answer_equivalent_set` belongs inside `answer_evidence_json` under
-`DS-32`, not in a new release column.
-
-**Recommendation:** add `clue_operand_form_profile` to the release table and
-`clue-operand-form-by-step.json` to `support/`; extend the `05` validate and
-export release copy list and the manifest hash record so all five are versioned
-together. Update the "four derived files" wording in `artifacts.md` and
-`task-step-support.md`, and add the support tables to the `05` validate and
-export release input contract.
 
 #### MC-26 — Release manifest and dataset card
 
@@ -243,6 +227,10 @@ when its completion marker and identity match.
 
 ## Closed or merged in the 2026-11-20 pass
 
+- `MC-38` — the release table carries `clue_operand_form_profile`, and
+  `support/` carries five tables including `clue-operand-form-by-step.json`.
+  `04` copies it from the definition, and `05` reads it for clue operand form
+  coverage.
 - `MC-46` — dissolved. The census is a typed function of the graph, not an
   artifact: `03a` derives it and stores the union per family in
   `family_profiles`, `03b` derives it per program, and `03c` reads the plan.

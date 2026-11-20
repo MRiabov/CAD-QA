@@ -20,6 +20,9 @@ and, for multiple choice, the rendered choice set.
 - For P2 multiple choice, render the validated near-miss choice pool produced by
   `03`.
 - Emit dataset release rows with the prompt and answer columns.
+- Copy `clue_operand_form_profile` from the definition. Rendering does not
+  change it, and `05` validate and export release reads it for clue operand
+  form coverage.
 
 ## Prompt copy comes from YAML
 
