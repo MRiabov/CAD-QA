@@ -384,6 +384,21 @@ length. Then:
 
 That is the first schema decision (`D1` below).
 
+### Correction (2026-11-20)
+
+The counts in the table above are not the BRep counts. The final solid has 15
+edges, not 14: the cylindrical face carries a periodic seam edge in addition to
+the two circular edges. Clue 1 leaves five edges, but clue 2 then leaves one
+edge, not two, because only the top circular edge is shared by the top face and
+the cylindrical face. Clue 3 is redundant: after clue 2 the answer is already
+unique, and selecting the top of two equal-length circles would not change a
+length answer. The valid P0 length task is three steps, not four.
+
+The fixed record is
+`docs/dataset/implementation/pipeline/testing/golden/box-with-hole.json`. Its
+format, counts, and comparison rules are in
+`docs/dataset/implementation/pipeline/testing/golden-records.md`.
+
 ## Three uses of the clue operand form profile
 
 ### 1. Generation and quotas
@@ -717,7 +732,9 @@ completeness, and `D4` was folded into `DS-32`. The algorithm is written in
 `03-task-generation/algorithm/construction.md`, the clue model is in `03b`, and
 the program capability census is in
 `03-task-generation/algorithm/program-capability-census.md`.
-The box-and-hole example is the first golden record.
+The box-and-hole example is the first golden record; its fixed form and
+corrected counts are in
+`docs/dataset/implementation/pipeline/testing/golden/box-with-hole.json`.
 
 The concern that the vocabulary may be growing without a stopping rule is
 recorded in `plans/nov-20/vocabulary-scope-risk.md`. Its mitigation is to
