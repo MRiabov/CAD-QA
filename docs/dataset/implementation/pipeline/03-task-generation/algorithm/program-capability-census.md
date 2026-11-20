@@ -26,6 +26,7 @@ grammar permits at a step count. The census answers what one graph offers.
 | `answer_meanings` | Answer meanings the graph can resolve. |
 | `max_task_reasoning_step_count` | Longest chain the graph can support, from the candidate set size. |
 | `entity_counts` | Candidates per target category, used for the scarcity ranking. |
+| `states_with_point_probe` | Solid states with at least one surviving point probe, so a membership task can bind them. |
 
 ## Derivation
 
@@ -45,7 +46,7 @@ grammar permits at a step count. The census answers what one graph offers.
 |---|---|
 | `03a` | Sends quota targets to programs whose census can fill them; ranks by scarcity. |
 | `03b` | Skips clue operand forms the graph cannot build, so a construction attempt is not wasted. |
-| `03c` | Turns an underfilled target into a capability deficit when no active program has the capability. |
+| `03c` | Turns an underfilled target into a `capability_deficit` when no active program has the capability, and escalates a `probe_deficit` only when no program reports `states_with_point_probe > 0`. |
 
 ## Versioning
 

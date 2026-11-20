@@ -477,6 +477,11 @@ A quota target that cannot be filled is recorded in the deficit ledger. `03c`
 decides whether to sample more from existing graphs, use unused or reserve
 programs, request supplemental `01b` selection, or accept the miss.
 
+`03b` records the class when it knows it: `probe_deficit` when the bound state has
+no surviving point probe, and `construction_deficit` when the batch is
+underfilled. Deficits that `03a` reports carry an allocation detail instead, and
+`03c` classifies them.
+
 ## Not here
 
 Task quota planning, data expansion, prompt rendering, choice rendering, and

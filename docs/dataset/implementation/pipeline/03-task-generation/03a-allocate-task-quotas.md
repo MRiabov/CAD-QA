@@ -466,9 +466,13 @@ A quota target enters the deficit ledger when:
 - family quotas or plan caps block it;
 - the requested value is structurally infeasible.
 
-Record the reason code from the allocation pass: `coverage_infeasible`,
+Record the allocation detail from the pass: `coverage_infeasible`,
 `answer_meaning_infeasible`, `cap_conflict`, `split_capacity_short`,
-`family_quota_short`, `quota_target_family_unassigned`, or `family_quota_target_conflict`.
+`family_quota_short`, `quota_target_family_unassigned`, or
+`family_quota_target_conflict`.
+
+The detail says what the allocator hit, not what to do about it. `03c`
+resolve deficits maps it to a `DeficitClass`.
 
 `03c` decides whether to sample more from existing graphs, use unused or reserve
 programs, request a supplemental `01b` selection, or accept the miss.
