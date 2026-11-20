@@ -274,7 +274,8 @@ records the reason.
 `DS-37` defers balance over clue operand form to P1, but no artifact carries the
 target: the balance table in `task-structure.md` section 6 has no row for it, and
 the plan-level target table names no share. P1 can therefore ship without a
-balance check for the dimension.
+balance check, and P0 coverage does not stand in for one: it proves presence,
+not a useful mix.
 
 **Recommendation:** add the row when the P1 support grid is measured, using the
 same half-to-two-times conditional share rule as the other dimensions, with the

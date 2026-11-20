@@ -68,7 +68,9 @@ Plan five separate quota dimensions:
 Four of these carry a share and are allocated by the equations below. Clue
 operand form is coverage-only in P0 (`DS-37`): it has a minimum and no target
 count and no share, because a balance range is vacuous at a step count where a
-form cannot exist. Balance over clue operand form is P1.
+form cannot exist. Balance over clue operand form is P1. This is a P0
+simplification, not a property of the release: coverage guarantees presence, not
+a useful mix, so one form can carry most clues and still pass.
 
 Do not create a full task target category × clue type × answer meaning × answer
 format cross-product. The requirements are independent: coverage and balance at

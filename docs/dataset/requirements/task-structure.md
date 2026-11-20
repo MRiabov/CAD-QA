@@ -272,6 +272,12 @@ only the values it implements.
 Answer format and answer meaning shares are over tasks. Clue type shares are
 over task clues, because one task can contain several task clues.
 
+Clue operand form is a coverage dimension in P0 and has no row in this table.
+That is a concession, not a good property: coverage guarantees that each
+supported form appears, not that the forms are usefully mixed, so a release can
+concentrate one form and still pass. The balance target for clue operand form is
+P1 work.
+
 The **conditional release share** of a value at a task reasoning step count is
 its share among the values supported at that step count, not its share of the
 whole release. This makes the check possible when a step count supports only
