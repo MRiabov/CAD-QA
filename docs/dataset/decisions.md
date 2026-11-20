@@ -562,7 +562,7 @@ prefix is `DS-`.
 - **Decision:** P0 tasks refer to the final solid state only. P1 adds one named
   intermediate state, identified by its producing operation. P2 adds before/after
   pairs for material-change and topology-change answers. The state is bound
-  before the clue chain starts and is named in the prompt preamble; a clue never
+  before the clue chain starts and is named in the system prompt; a clue never
   introduces it.
 - **Consequences:** `TaskDefinition` carries `state_scope`, which is `final` in
   P0. The possible-answer set is defined per state scope. A clue that needs

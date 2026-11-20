@@ -5,7 +5,8 @@ a CAD-QA prompt. It does not define how the prompt is rendered.
 
 ## 1. Prompt parts
 
-A prompt has a frame convention line and up to five parts, in this order:
+The prompt is delivered as the system prompt. It has a frame convention line
+and up to five parts, in this order:
 
 1. **Program text**: the complete CadQuery program, unchanged except for
    normalization.
