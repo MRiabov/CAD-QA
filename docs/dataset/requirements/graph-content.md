@@ -86,7 +86,7 @@ relation categories.
 | coaxial_with | Edge or path segment | Edge or path segment | The two share an axis within tolerance. | P1 |
 | contains | Solid state or face | Point or entity | The first contains the second. | P0 |
 | intersects | Entity | Entity | The two intersect. | P1 |
-| distance_to | Entity | Entity | The shortest distance between the two. | P0 |
+| distance_to | Face, edge, vertex, or solid state | Face, edge, vertex, or solid state | The shortest distance between the two. | P0 |
 
 ### 3.4 Material change
 
@@ -116,7 +116,7 @@ must support at least these.
 | Volume | Solid state, region | Positive for a shape; signed for an effect. | P0 |
 | Area | Face, CadQuery profile, region | Face area and CadQuery profile area are different scopes. | P0 |
 | Length | Edge, path segment | Straight or curve length. | P0 |
-| Distance | Two entities, or an entity and a point | Shortest distance. | P0 |
+| Distance | Two endpoint entities, or one endpoint entity and a point | Shortest distance. | P0 |
 | Angle | Two faces, two edges, or a path tangent | Degrees or radians, stated once. | P0 |
 | Bounding box | Solid state, entity, region | Minimum and maximum corners in the program frame. | P0 |
 | Centroid | Solid state, entity, region | Point in the program frame. | P0 |
@@ -150,20 +150,27 @@ every edge has a length, every path segment has a length, every solid state has
 a volume and a bounding box. A missing row for a per-entity measurement is a
 graph defect, not a data condition.
 
-**Pair measurements and pair relations are anchored.** `distance_to`, `angle`,
-`coplanar_with`, `coaxial_with`, `intersects`, and `contains` apply to pairs, and
-a solid state can hold thousands of pairs. The domain is not the full pair set.
+**Pair measurements and pair relations have one named endpoint.** `distance_to`,
+`angle`, `coplanar_with`, `coaxial_with`, `intersects`, and `contains` apply to
+pairs, and a solid state can hold thousands of pairs. The domain is not the full
+pair set.
 
 A pair element exists only when at least one endpoint is a **named entity**: an
 entity a clue can name directly, by face surface kind, by position, or by
 the operation or feature that created it. "The cylindrical face", "the top face",
-and "the face created by `cutBlind`" are named entities. The domain is then
+and "the face created by `cutBlind`" are named entities.
+
+The other endpoint must be of an **endpoint entity kind** that the relation or
+measurement declares in section 3 or section 4. `coplanar_with` declares faces,
+`coaxial_with` declares edges and path segments, and `angle` declares faces or
+edges. An endpoint entity kind is a per-relation declaration, not the global
+entity category. The domain is then
 
 ```text
-named anchor × candidates of the accepted kinds in the same solid state
+named endpoint × candidate endpoints of the declared endpoint entity kinds
 ```
 
-which is linear in the entity count per anchor, not quadratic.
+which is linear in the entity count per named endpoint, not quadratic.
 
 The rule follows the clue grammar, so the enumeration is not a separate
 vocabulary:
@@ -176,7 +183,7 @@ vocabulary:
 - a `cross_state` reference needs the per-entity values in both states.
 
 A pair outside the domain is not a missing measurement; it is not a candidate.
-The size bound per anchor is part of this contract.
+The size bound per named endpoint is part of this contract.
 
 ## 5. States and timing
 
