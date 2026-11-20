@@ -209,5 +209,5 @@ decision explains why the contract has that shape.
 | [`ast-schema.md`](ast-schema.md) | AST extraction artifact columns, nested models, and CadQuery program AST extraction result hash. |
 | [`runtime-schema.md`](runtime-schema.md) | Runtime artifact columns, nested models, and runtime model hash. |
 | [`graph-construction.md`](graph-construction.md) | Deterministic `02c` mapping from extraction records to CAD graph elements. |
-| [`graph-persistence.md`](graph-persistence.md) | `02c` CAD graph tables, IDs, attributes, enums, tolerances, and evidence payloads. |
+| [`graph-persistence.md`](graph-persistence.md) | `02c` CAD graph tables, IDs, attributes, enums, tolerances, and evidence fields. |
 | [`decisions.md`](decisions.md) | Accepted extraction decisions, rationale, and consequences. |

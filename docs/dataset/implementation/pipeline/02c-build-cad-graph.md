@@ -24,7 +24,7 @@ emit a partial graph.
 | Document | Responsibility |
 |---|---|
 | [`extraction/graph-construction.md`](extraction/graph-construction.md) | Deterministic mapping from extraction records to CAD graph entities, relations, and measurements. |
-| [`extraction/graph-persistence.md`](extraction/graph-persistence.md) | CAD graph tables, IDs, attributes, enums, tolerances, and evidence payloads. |
+| [`extraction/graph-persistence.md`](extraction/graph-persistence.md) | CAD graph tables, IDs, attributes, enums, tolerances, and evidence fields. |
 
 Every task target, task clue operand, answer value, and piece of answer evidence
 must resolve to a CAD graph element. A missing graph element rejects the task; it

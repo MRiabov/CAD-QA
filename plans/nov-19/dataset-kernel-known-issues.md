@@ -415,7 +415,7 @@ This tracker does not duplicate the existing backlog. The mapping is:
 | MC-23 retry and stop budgets | KI-DS-06 |
 | MC-26, MC-28 manifest, dataset card, evaluation material | KI-DS-10, KI-DS-13 |
 | MC-29 run manifest and resume | KI-DS-13 |
-| MC-35 relation payloads | KI-DS-02 |
+| MC-35 relation fields | KI-DS-02 |
 
 ## Suggested order
 

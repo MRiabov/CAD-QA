@@ -3,7 +3,7 @@
 **Parent:** [`02c — Build CAD graph`](../02c-build-cad-graph.md).
 
 **Purpose:** define the persisted CAD graph: its tables, IDs, attributes,
-enums, tolerances, and evidence payloads. The deterministic mapping from
+enums, tolerances, and evidence fields. The deterministic mapping from
 extraction records is in [`graph-construction.md`](graph-construction.md).
 
 ## Graph tables
@@ -61,19 +61,19 @@ columnar store that supports the column type. Join keys are UUID, never enum str
 | `subject_node_id` | `UUID` | not null | Existing `nodes.parquet.node_id`. |
 | `object_node_id` | `UUID` | nullable | Existing `nodes.parquet.node_id`; null for a one-entity measurement. |
 | `measurement_type` | `STRING` enum `MeasurementType` | not null | Measurement category. |
-| `value` | `MeasurementValue` | not null | Typed measurement payload. |
+| `value` | `MeasurementValue` | not null | Typed measurement value. |
 | `unit` | `STRING` enum `MeasurementUnit` | not null | Unit or stated frame; use `unitless` when there is no unit. |
 | `evidence_kind` | `STRING` enum `derived`, `measured` | not null | How the measurement was obtained. |
 | `evidence_rule` | `STRING` | not null | Exact rule or kernel operation used. |
 | `evidence_refs` | `LIST<EvidenceRef>` | not null | References that reproduce the measurement. |
 | `tolerance` | `Tolerance` | nullable | Null means inherit the run tolerance policy; otherwise an override. |
 
-### Measurement payload types
+### Measurement value types
 
 These are closed tagged unions. A row with zero or several non-null groups
 rejects the graph.
 
-| Payload type | Fields |
+| Value type | Fields |
 |---|---|
 | `Point3D` | `x: double`, `y: double`, `z: double` |
 | `Vector3D` | `x: double`, `y: double`, `z: double` |
@@ -251,7 +251,7 @@ remain MC-35, and answer-scoring tolerance remains the task definition's
 
 - `nodes.parquet` is the only table that stores graph entities. `node_type` is
   the closed discriminator; an unknown value rejects the graph.
-- `relations.parquet` stores relations. It stores no graph entity payload.
+- `relations.parquet` stores relations. It stores no graph entity attributes.
 - `measurements.parquet` stores measurements. A measurement is a graph element,
   not a graph entity: it has a `measurement_id` and never a `node_id`.
 - A graph entity never appears as a measurement row, and a measurement never
@@ -424,7 +424,7 @@ of an edge. These names are a graph schema change from an earlier `SurfaceKind`
 - `TolerancePolicy`, `tolerance_policy_version`, and `tolerance_policy_sha256` are present in the run manifest.
 - `Tolerance` obeys its `exact`, `absolute`, and `relative` field rules.
 - A change to a CAD graph entity type, attribute field, measurement type, enum value, or
-  payload field is a `graph_schema_version` change. Readers reject an unknown
+  measurement value field is a `graph_schema_version` change. Readers reject an unknown
   version.
 
 ## Relation identity
@@ -482,7 +482,7 @@ The deterministic node, relation, and measurement mapping is in
   `02a`/`02b` IDs stay strings. Random UUIDv4 is rejected because it would break
   deterministic reruns, cache hits, and duplicate detection.
 
-- **Measurement payload and type catalog.** *Resolved 2026-10-22.* Measurement
+- **Measurement value and type catalog.** *Resolved 2026-10-22.* Measurement
   values are a tagged union of scalar, integer, boolean, point, bounding box,
   bounding-box change, topology delta, and workplane frame. Measurement types are
   the closed catalog above. Tolerances are a run-level `TolerancePolicy` stored

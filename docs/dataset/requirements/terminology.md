@@ -186,6 +186,9 @@ Terms that were replaced because they were not composed from the domain:
 - A pipeline stage is named by number and title, for example `02c` build CAD graph, never by the bare number. Use the document heading as the title.
 - A code label spells out the whole term and never drops a word. The clue
   operand form profile is `clue_operand_form_profile`, not `clue_form_profile`.
+- Use **field** or **column** for typed data. **Payload** is reserved for an
+  opaque blob, such as a vendor response or a control document that cannot be
+  typed. Typed rows have fields, not payloads.
 - A **Shape snapshot** is the runtime capture; a **solid state** is the CAD graph entity. Do not write bare `state`.
 - Use **CAD graph entity** in prose; `node_id` and `nodes.parquet` are code and schema names.
 - **CAD feature solid state effect delta** is the delta record; `feature_application_effect` is a Measurement scope.

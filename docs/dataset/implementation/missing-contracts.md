@@ -28,7 +28,7 @@ None. The last P0 product decision, `MC-39`, is closed below.
 
 Work order:
 
-1. `MC-35` — the relation payload; a P0 relation clue cannot be checked without
+1. `MC-35` — the relation fields; a P0 relation clue cannot be checked without
    it.
 2. `MC-16` — the scope filter; it decides what `03a` allocate task quotas may
    plan and `05` validate and export release may accept.
@@ -59,16 +59,16 @@ Work order:
     entries introduce.
 18. `MC-42` — the golden record; the first end-to-end comparison.
 
-#### MC-35 — Relation payload schema
+#### MC-35 — Relation field schema
 
-The relation payload schema is not specified: the evidence fields per relation,
+The relation field schema is not specified: the evidence fields per relation,
 and the tolerance field for the relations that carry one. The measured-versus-
-derived split is written in `graph-content.md` section 4.3, but the payload that
+derived split is written in `graph-content.md` section 4.3, but the row that
 carries it is not, so a P0 parallel or perpendicular clue cannot be checked
 reproducibly.
 
-**Recommendation:** add `tolerance` and `evidence` to the relation payload in
-`graph-persistence.md`, reusing the `Tolerance` and `EvidenceRef` payloads
+**Recommendation:** add `tolerance` and `evidence` to the relation row in
+`graph-persistence.md`, reusing the `Tolerance` and `EvidenceRef` fields
 already defined for measurements: a derived relation records the rule and its
 references, a measured one records the kernel call. Exclude both fields from
 `relation_id`, as `measurement_id` already excludes value, unit, tolerance, and
@@ -90,15 +90,15 @@ value appears, which is a cheaper check than filtering.
 The `TaskDefinition` fields required by the recorded decisions are absent:
 `state_scope` and `clue_operand_form_profile` are not fields, `answer_parameter` is not
 a field, and `answer_evidence` does not define the `answer_equivalent_set` or
-membership-probe payload. The field table predates `DS-32`, `DS-34`, and
+membership-probe field. The field table predates `DS-32`, `DS-34`, and
 `DS-38`, and `validity` is still a prose field with no typed check-result
-payload.
+field.
 
 **Recommendation:** add `state_scope`, `clue_operand_form_profile`, and
 `answer_parameter` as definition fields; add typed `answer_equivalent_set` and
-membership-probe payloads to `answer_evidence`, with the set holding entity ids
+membership-probe fields to `answer_evidence`, with the set holding entity ids
 and their answers so answer uniqueness can be rechecked from the definition
-alone; and give `validity` a typed check-result payload. `answer_parameter` is
+alone; and give `validity` a typed check-result field. `answer_parameter` is
 the point, direction, or category a parameterized answer declares.
 
 #### MC-09 — Definition identity and provenance
@@ -413,7 +413,7 @@ is unbounded. The `AcceptedMiss` record also has no fields.
 
 **Recommendation:** state the stop rule as a deficit threshold after a fixed
 number of expansion rounds, with a hard cap on pool growth; the numbers belong
-in the task quota plan. Define the `AcceptedMiss` payload (quota target,
+in the task quota plan. Define the `AcceptedMiss` fields (quota target,
 remaining count, reason, owner, plan version) so an accepted miss is data.
 
 #### MC-45 — Clue operand form balance target
