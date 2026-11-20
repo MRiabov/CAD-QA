@@ -1,8 +1,8 @@
 # 03b task construction — working design
 
 **Status:** plan, 2026-11-19. Working design for `03b`; not a specification.
-It records the construction picture and the clue-stratification proposal from
-the 2026-11-19 discussion so the construction grammar can be written next.
+It records the construction picture and the clue-form proposal from the
+2026-11-19 discussion so the construction grammar can be written next.
 
 **Companion docs:** `plans/nov-19/dataset-kernel-known-issues.md` (KI-DS-01,
 KI-DS-02, KI-DS-03), `docs/dataset/implementation/pipeline/03b-construct-task-definitions.md`,
@@ -17,7 +17,8 @@ the working picture:
 
 - a task is a path through a possible-answer set, not a filled template;
 - the clue chain is the primary object, and the target and answer are the leaf;
-- clues are stratified by derivation depth, not by clue type alone;
+- a clue is one narrowing statement, described by its clue type and by how
+  its reference resolves;
 - task construction is a local search, while quota filling is a global
   scheduler.
 
@@ -102,9 +103,9 @@ Validator
   because it owns the release-level counts.
 
 The task quota plan is a shopping list: "I need 40 four-step face-area tasks,
-at each step count a mix of clue strata, and at least one S3 clue in the
-four-step bucket." The synthesizer is a personal shopper per program. It does
-not enumerate the whole task space.
+at each step count a mix of clue forms, and at least one `comparison` clue
+with a `selected` reference in the four-step bucket." The synthesizer is a
+personal shopper per program. It does not enumerate the whole task space.
 
 This also explains why enumerate-and-cut is wrong: the plan is the constraint,
 and the search is local.
@@ -145,87 +146,95 @@ measurement answer, two symmetric faces can both produce the same area; the
 task is still answerable. The final set is a witness set, and the answer
 evidence records it. Identity answers still require one entity.
 
-## Clue stratification
+## Describing a clue
 
-**Terminology.** A **clue stratum** is a subgroup of clues defined by how many
-derivation steps one clue needs. It is a partition, not a frequency. The
-frequency target — how often a clue type or a stratum should appear — is a
-**clue quota** or **clue share**, and it lives in `03a`. "Stratify" is the act
-of sampling within those subgroups.
+A clue is **one narrowing statement** and **one task clue step**. A task is a
+chain of clues. The answer step is separate: it produces the answer, it does not
+narrow.
 
-The unit is a **clue stratum** (plural: strata), not a "difficulty level."
-`DS-05` retired the difficulty label, and the stratum should not bring it back.
+"Stratified sampling" is reserved for dataset-level composition: splitting the
+released tasks into subgroups and drawing from each in proportion to the target
+population. It is not a property of one clue. The frequency target for a given
+clue type is a **clue quota** or **clue share**, and it lives in `03a`.
 
-### Clue type is not a difficulty axis
+### Two axes, one grammar
 
-A property clue can be shallow or deep; a relation clue can be shallow or deep.
-The useful object is a **clue type × clue stratum matrix**:
+A clue has a subject, an optional reference, and a predicate:
 
-| Clue type | S0 | S1 | S2 | S3 | S4 | S5 |
-|---|---|---|---|---|---|---|
-| Property | x | x |  | x | x | x |
-| Relation |  |  | x | x | x | x |
-| Comparison |  |  |  | x | x | x |
-| Aggregation |  |  |  | x | x | x |
-| Provenance | x |  | x | x | x | x |
+```text
+TaskClue = (clue_type, subject_binding, reference_binding | none, predicate)
+```
 
-The marks are illustrative; the support tables derive the real cells.
+- **`clue_type`** is what the clue asserts: property, relation, comparison,
+  aggregation, or provenance. The five clue types are already defined in
+  `requirements/task-structure.md`; this design does not add a sixth.
+- **`clue_operand_form`** is how the clue's reference resolves. It is a property
+  of `reference_binding`, and it is absent when the clue has no reference.
 
-### The ladder
+| Clue operand form | The reference is identified by | Example |
+|---|---|---|
+| `named` | its construction or geometry | "adjacent to the cylindrical face" |
+| `selected` | an entity selected by an earlier clue | "adjacent to the face selected in step 1" |
+| `aggregated` | an extreme, rank, or count over a set | "adjacent to the largest face of the hole" |
+| `cross_state` | a before/after solid state | "created by the operation that removed the most material" |
 
-A clue's stratum is the number of **derivation steps** needed to evaluate it
-against a possible answer, given the bindings available before the clue. One
-derivation step is one of:
+The two axes answer different questions — what is asserted, and what it is
+asserted about — so they are orthogonal wherever a reference exists. They are
+not freely combinable, and the support grid says which cells are real:
 
-- read an attribute (face surface kind, curve kind, `is_closed`, operation kind);
-- read a measurement (area, volume, length, count);
-- traverse one graph relation to another entity;
-- apply one aggregation over a set;
-- apply one arithmetic or geometric derivation (difference, ratio, angle
-  between normals, volume change);
-- cross one solid-state boundary (before/after).
+| Clue type | `named` | `selected` | `aggregated` | `cross_state` |
+|---|---|---|---|---|
+| Property | no reference | redundant | two clues | two clues |
+| Relation | canonical | canonical | needs aggregation | needs cross-state graph |
+| Comparison | canonical | canonical | canonical | needs cross-state graph |
+| Aggregation | canonical | canonical | degenerate | needs cross-state graph |
+| Provenance | canonical | canonical | needs aggregation | canonical |
 
-| Stratum | Name | What the clue needs | Example |
-|---|---|---|---|
-| **S0** | Attribute lookup | One attribute of the named entity | "The face is planar." "The edge is closed." |
-| **S1** | Single measurement | One measurement of the named entity, compared to a literal | "The face area is greater than 50." |
-| **S2** | Relation to a named entity | One relation traversal to another named entity | "The face is adjacent to the cylindrical face." |
-| **S3** | Selection or aggregation | The operand is selected by an earlier clue, or aggregated over a set | "The face is adjacent to the face selected in step 1." "The largest face among the faces adjacent to the cylinder." |
-| **S4** | Derived comparison | A measurement compared to another measurement that is itself selected or derived | "The face has a larger area than the face selected in step 1." "The angle between the two faces is less than 45°." |
-| **S5** | Effect or counterfactual | A before/after state, material change, or topology change | "The operation removed more material than the previous operation." "The face existed before the operation and not after." |
+- **Property has no reference.** "The face is planar" constrains the candidate
+  set directly. "The face selected in step 1 is planar" is redundant, because
+  step 1 already selected it. "The largest face is planar" is aggregation plus
+  property, which `requirements/task-structure.md` already splits into two
+  clues. So the property row carries no operand form.
+- **Aggregation with an `aggregated` reference is degenerate.** It is
+  aggregation over an aggregate, and it is better written as two clues.
 
-The exact weights are a policy; the ordering is what matters. The stratum must
-be computable from the typed clue and its bindings, not assigned by a human.
+Of the twenty nominal cells, about fourteen are meaningful. The support table
+declares the rest rather than letting the grid imply twenty equal buckets.
+
+This also keeps the step count honest: one clue is one step regardless of how
+many graph elements its evaluation reads. Resolving a reference, reading two
+measurements, and comparing them is implementation cost inside one step, not
+extra task reasoning steps.
 
 ### The generation lever
 
-Stratification is not only classification. It is how the generator populates
-the ladder from the same graph facts. The same fact can be expressed at
-different strata by changing the operand binding:
+Clue form is not only a classification. It is how the generator populates the
+grid from the same graph facts, by changing how the reference resolves:
 
-- **S2:** "The face is adjacent to the face created by `cutBlind`."
-- **S3:** "The face is adjacent to the face selected in step 1."
-- **S3:** "The face is adjacent to the largest face created by `cutBlind`."
-- **S4:** "The face is adjacent to the face whose area is largest among the
-  faces created by `cutBlind`."
+- `relation` with a `named` reference: "the face is adjacent to the face
+  created by `cutBlind`."
+- `relation` with a `selected` reference: "the face is adjacent to the face
+  selected in step 1."
+- `relation` with an `aggregated` reference: "the face is adjacent to the
+  largest face created by `cutBlind`."
+- `comparison` with an `aggregated` reference: "the face has a larger area than
+  every other face created by `cutBlind`."
 
-This is the lever that lets the generator hit a target stratum without
-inventing new facts. The clue schema's `BindingRef` (target, earlier result,
-named graph element, literal) is already close to what is needed. The missing
-pieces are the stratum annotation and the aggregation/derived-measurement
-support at the higher strata.
+The clue schema's `BindingRef` (target, earlier result, named graph element,
+literal) is already close to what is needed. The missing pieces are the
+`clue_operand_form` annotation and the aggregation and derived-measurement
+support that the `aggregated` form needs.
 
-### Answer strata
+### The answer is not a separate ladder
 
-Keep the answer step separate from the clue profile. The answer still has its
-own complexity:
+The answer step has its own complexity, but it is already modelled by
+`answer_meaning` in `requirements/task-structure.md`: identity, volume, area,
+length, distance, angle, count, rank, membership, position, extent,
+CadQuery workplane state, material change, topology change, and validity.
 
-| Stratum | Name | Example |
-|---|---|---|
-| **A0** | Identity | Return the multiple-choice label. |
-| **A1** | Single measurement | Volume, area, length, count. |
-| **A2** | Derived measurement | Distance, angle, ratio, bounding box. |
-| **A3** | Effect | Volume change, topology change, material change. |
+An earlier draft added a four-level `A0`–`A3` answer ladder on top of that. It
+duplicated `answer_meaning` and had no precedent in the prior-art survey, so it
+is dropped. The task profile records `answer_meaning` directly.
 
 ### Task profile
 
@@ -233,18 +242,19 @@ A task is described by:
 
 ```text
 step_count = number of clue steps + (answer step ? 1 : 0)
-clue_stratum_profile = [clue 1 stratum, clue 2 stratum, ...]   # one per clue
-max_clue_stratum = max(clue_stratum_profile)
-answer_stratum = one of A0, A1, A2, A3
+clue_form_profile = [(clue type, clue operand form), ...]   # one per clue
+answer_meaning = one of the answer meanings
 ```
 
-The step count remains the chain length. The clue profile is the per-clue
-derivation depth. A four-step task of four S0 clues is not the same benchmark
-item as a two-step task of two S4 clues.
+The step count remains the chain length. The clue form profile describes each
+clue, and the operand form is absent for a clue with no reference. A four-step
+task of four `property` clues is not the same benchmark item as a two-step task
+of two `comparison` clues with `selected` references, even though neither
+number is a difficulty label.
 
 This is the `DS-05` tension. `DS-05` says task reasoning step count is the only
-measure. The proposal is to amend it: step count is the length measure; clue
-stratum is the per-clue measure; neither is a task label. See `D10`.
+measure. The proposal is to amend it: step count is the length measure, clue
+form is the per-clue measure, and neither is a task label. See `D10`.
 
 ## Worked example
 
@@ -261,26 +271,27 @@ result = (
 )
 ```
 
-Task shape: a four-step chain on the final solid, with clue strata
-`[S2, S2, S4]` and answer stratum `A1`. The chain resolves to an edge; the
-answer is its length, as a number.
+Task shape: a four-step chain on the final solid, clue forms
+`[(relation, named), (relation, named), (comparison, selected)]`, answer
+meaning length. The chain resolves to an edge; the answer is its length, as
+a number.
 
 Initial possible-answer set: all edges of the final solid — the box edges plus
 the two circular edges of the hole.
 
 Witness answer: the top circular edge of the hole.
 
-| Step | Clue | Set after | Clue stratum |
-|---|---|---|---|
-| 1 | The edge is adjacent to a planar face. | Many edges | S2 |
-| 2 | The edge is adjacent to the cylindrical face. | 2 circular edges | S2 |
-| 3 | The edge has a larger z-coordinate than the other edge adjacent to the cylindrical face. | 1 edge | S4 |
-| Answer | Return the length. | `12.57` | A1 |
+| Step | Clue | Set after | Clue type | Clue operand form |
+|---|---|---|---|---|
+| 1 | The edge is adjacent to the top face of the box. | 5 edges | Relation | `named` |
+| 2 | The edge is adjacent to the cylindrical face. | 2 circular edges | Relation | `named` |
+| 3 | The edge has a larger z-coordinate than the other edge adjacent to the cylindrical face. | 1 edge | Comparison | `selected` |
+| Answer | Return the length. | `12.57` | none | answer meaning: length |
 
 Each clue narrows. Clue 3 is a comparison whose reference is the other circular
-edge selected by clue 2. The chain is broad-to-narrow. The answer is `2πr`
-rounded to 4 significant figures. The answer evidence points to the edge, the
-measurement, and the rule.
+edge left by clue 2, so its operand form is `selected`, not `named`. The chain
+is broad-to-narrow. The answer is `2πr` rounded to 4 significant figures. The
+answer evidence points to the edge, the measurement, and the rule.
 
 If the hole were a through-hole, both circular edges would have the same
 length. Then:
@@ -291,32 +302,37 @@ length. Then:
 
 That is the first schema decision (`D1` below).
 
-## Three uses of stratification
+## Three uses of the clue profile
 
 ### 1. Generation and quotas
 
-Add `clue_stratum` as a quota dimension. At each step count, require coverage
-of the supported strata and balance them with the conditional release share.
-The plan becomes "40 four-step tasks, at least one S2 and one S3 clue in each,"
-not just "40 four-step tasks." This prevents the generator from hitting the
-step-count mix with five trivial clues.
+Add `clue_operand_form` as a quota dimension. At each step count, require
+coverage of the supported clue forms and balance them with the conditional
+release share. The plan becomes "40 four-step tasks, at least one with a
+`comparison` clue whose reference is `selected`," not just "40 four-step
+tasks." This prevents the generator from hitting the step-count mix with four
+`property` clues.
 
 ### 2. Coverage and balance
 
-Check coverage over `(clue_type, clue_stratum)` cells, not clue type alone.
-Otherwise a dataset can cover every clue type at S0 and claim coverage. A fifth
-support table, `clue-stratum-by-step.json`, records which strata are
-structurally supported at each step count and why not.
+Check coverage over `(clue_type, clue_operand_form)` cells for clues that carry
+a reference, not clue type alone. Otherwise a dataset can cover every clue type
+at `named` references and claim coverage. A support table,
+`clue-form-by-step.json`, records which clue forms are structurally supported at
+each step count and why not. It also records the two known non-cells: the
+property row has no operand form, and `aggregation` with an `aggregated`
+reference is degenerate.
 
 ### 3. Evaluation and splits
 
-Report accuracy by `(step_count, max_clue_stratum)`, not just by step count. An
-LLM model that fails S3 selection is different from one that fails long chains
-of S0 lookups. Stratify the test split so each cell has enough tasks to
-measure; otherwise the per-stratum number is noise.
+Report accuracy by `(step_count, clue_operand_form)` and by
+`(step_count, clue_type)`, not just by step count. An LLM model that fails
+`selected` references is different from one that fails long chains of `named`
+relations. Stratify the test split so each reported cell has enough tasks to
+measure; otherwise the per-cell number is noise.
 
-The warmup subset should be **one step and `max_clue_stratum <= 1`**, not just
-one step. A one-step S3 aggregation is not warmup.
+The warmup subset should be one step with only `named` references, not just one
+step. A one-step `aggregated` clue is not warmup.
 
 ## Construction strategy: supply-driven, capability-aware deficits
 
@@ -344,9 +360,9 @@ What remains is a **capability-aware deficit loop**:
 
 1. `01b` stays metadata-based.
 2. `02c` emits a `ProgramCapabilityProfile` as a by-product of the graph:
-   available target categories, clue constructors, maximum clue stratum per
-   constructor, measurement types, relation types, answer meanings, maximum
-   step count, and entity counts.
+   available target categories, clue constructors, supported clue operand
+   forms per clue type, measurement kinds, relation kinds, answer meanings,
+   maximum step count, and entity counts.
 3. `03b` is supply-driven by default.
 4. `03a` and `03c` use the census for deficits. When a quota target is
    underfilled, query the census for capable programs and request supplemental
@@ -369,26 +385,26 @@ confines the demand logic to the deficit path where it belongs.
 | D6 | What is the minimum narrowing? | One possible answer; at least k | Each non-final clue leaves at least 2–3 possible answers | Task quality, step count |
 | D7 | Where do multiple-choice choices come from? | Penultimate set; sibling measurements | Identity from the penultimate set; numeric only when at least 5 distinct values exist | Multiple-choice availability |
 | D8 | How does the scheduler fill the plan? | Per-cell greedy; global selection | Greedy coverage-first: minimum, then target, then volume | Quota filling, deficits |
-| D9 | How are strata weighted? | Equal; weighted by derivation depth | Equal first, then calibrate against LLM model results | Coverage and balance |
-| D10 | Does `DS-05` change? | Keep step count as the only measure; add clue stratum | Add clue stratum as a second measure; neither is a task label | PRD section 6, R-9, benchmark reporting |
+| D9 | How are clue forms weighted? | Equal; weighted by operand form; calibrated against LLM model results | Equal first, then calibrate against LLM model results | Coverage and balance |
+| D10 | Does `DS-05` change? | Keep step count as the only measure; add clue form as a per-clue measure | Keep step count as the length measure; add clue form as a per-clue measure; neither is a task label | PRD section 6, R-9, benchmark reporting |
 | D11 | What is the construction strategy? | Supply-driven; full demand-driven; supply-driven with capability-aware deficits | Supply-driven with capability-aware deficits | `01b`, `02c`, `03a`, `03b`, `03c` |
 
 ## Proposed document and schema changes
 
 | Change | Owner |
 |---|---|
-| Add the S0–S5 ladder, the A0–A3 answer strata, and the clue type × clue stratum matrix | `requirements/task-structure.md`, or a new `requirements/clue-stratification.md` |
-| Add `clue_stratum` to `TaskClue`; add `clue_stratum_profile`, `max_clue_stratum`, `answer_stratum`, and `state_scope` to `TaskDefinition`; add the derivation rule | `03b` |
-| Add `clue_stratum` as a quota dimension; require coverage at each step count; balance with the conditional share | `03a` |
-| Add `support/clue-stratum-by-step.json` | `05`, task-step support |
-| Add `clue_strata` and `max_clue_stratum` to the release table | release contract, `04` |
-| Check coverage and balance over `(clue_type, clue_stratum)` | `05` |
+| Add the clue grammar and the clue form grid to `requirements/task-structure.md` and `requirements/terminology.md` | `requirements/task-structure.md`, `requirements/terminology.md` |
+| Add `clue_operand_form` to `TaskClue`; add `clue_form_profile` and `state_scope` to `TaskDefinition`; record `answer_meaning` instead of an answer ladder | `03b` |
+| Add `clue_operand_form` as a quota dimension; require coverage at each step count; balance with the conditional share | `03a` |
+| Add `support/clue-form-by-step.json` | `05`, task-step support |
+| Add `clue_form_profile` to the release table | release contract, `04` |
+| Check coverage and balance over `(clue_type, clue_operand_form)` for reference-bearing clues | `05` |
 | Emit `ProgramCapabilityProfile` as a by-product of graph construction | `02c` |
 | Use the census to allocate quota targets to capable families, not to pre-select the pool | `03a` |
 | Add a `capability_deficit` reason and a supplemental-program request path | `03c` |
 | Keep supply-driven construction as the default; add a cell-level demand query only as a fallback with a `forced` flag | `03b` |
-| Add `DS-31`: step count is the chain length; clue stratum is the per-clue derivation depth; neither is a task label | `decisions.md` |
-| State that every benchmark result names the step counts and clue strata it covers | PRD |
+| Add `DS-31`: step count is the chain length; clue operand form describes how a clue's reference resolves; neither is a task label | `decisions.md` |
+| State that every benchmark result names the step counts and clue forms it covers | PRD |
 
 ## Build phases
 
