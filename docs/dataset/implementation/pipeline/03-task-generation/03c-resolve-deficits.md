@@ -43,7 +43,18 @@ quota, or try a different family for a quota target.
 ```
 
 This loop adds programs or families that were not in the current pool. It is the
-only loop that pays fetch, normalization, and execution cost.
+only loop that pays fetch, normalization, and execution cost. Promotion of a
+reserve program is the slow loop: reserve rows have no graph until promotion, and
+the fast loop uses only the graphs of active programs.
+
+## Stop rule
+
+An expansion round adds at most 20% of the current program pool. After three
+rounds, stop and record an `AcceptedMiss` for each unfilled quota target.
+
+`AcceptedMiss` records the quota target, the remaining count, the reason, the
+owner, and the plan version. The round count and the growth cap are plan fields,
+not constants in `03c`.
 
 ## Deficit classes
 

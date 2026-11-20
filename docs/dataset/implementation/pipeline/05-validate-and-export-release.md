@@ -17,7 +17,12 @@ Artifact ownership: [`../artifacts.md`](../artifacts.md).
   table. `03a` assigns the split; `03b` stamps it; `04` carries it.
 - Check released values against the task reasoning step support tables.
 - Check the transfer overlap: exact normalized program text at P0; the P1
-  same-CAD-model check is Q1 below.
+  same-CAD-model check is PRD Q7.
+- Record the external benchmark identity and revision in `manifest.json`. No
+  program from that benchmark appears in training or evaluation (R-16).
+- Write the review artifact and hold the review gate before export. The owner
+  reviews a sample covering every clue type, answer meaning, and answer format
+  (R-17); a failed review blocks the export and records the reason.
 - Write `release.parquet`, `failures.parquet`, `manifest.json`, and
   `dataset-card.md`.
 - Copy the generated task reasoning step support JSON files into `support/` and
@@ -32,10 +37,15 @@ Artifact ownership: [`../artifacts.md`](../artifacts.md).
   writer steps.
 - Parallel validation results are reduced into one summary before export.
 
-## Open questions
+## Review gate
 
-- **Q1** (P1). How is same-CAD-model transfer overlap checked: AST-normalized
-  program hash, CadQuery shape comparison, or both?
+`05` samples the release for review: every clue type, every answer meaning, and
+every answer format appear at least once. The owner reviews the sample for
+wording and answer correctness. The review artifact records the sample, the
+checklist, and the outcome; it is internal and not a release file.
+
+A failed review blocks the export. The release is not written until the review
+passes or the defect is fixed and the sample re-reviewed.
 
 ## Not here
 

@@ -7,7 +7,8 @@ used by graph build, overlap checks, and release grouping.
 
 ## Input / output
 
-- Input: the selected program pool from `01c`.
+- Input: the active rows of the program pool from `01c`. Reserve rows are
+  normalized only when `03a` allocate task quotas promotes them.
 - Output: normalized program records with `program_id`, canonical text,
   normalization version, `program_sha256`, `raw_program_sha256`, and
   `cadevolve_program_family_id`.
