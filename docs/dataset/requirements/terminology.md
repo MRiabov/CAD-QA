@@ -54,7 +54,7 @@ the user-visible outcome.
 | **Answer uniqueness** | Internal | Every entity in the answer-equivalent set produces the same answer. |
 | **Entity uniqueness** | Internal | The answer-equivalent set holds exactly one entity. |
 | **Validity record** | Internal | The check results that establish a task definition's uniqueness, target binding, clue narrowing, and geometry requirement. It is not answer evidence. |
-| **Capability census** | Internal | The per-program summary of available target categories, clue constructors, clue operand forms, measurements, answer meanings, and maximum task reasoning step count. It is a by-product of graph construction. |
+| **Program capability census** | Internal | The per-program summary of available target categories, clue constructors, clue operand forms, measurements, answer meanings, and maximum task reasoning step count. It is a by-product of graph construction. |
 | **Supply-driven construction** | Internal | Building tasks from the facts one graph has. This is the default construction strategy. |
 | **Demand-driven construction** | Internal | Specifying a task cell first and querying for programs that can support it. It is used only for deficits. |
 | **Forced task** | Internal | A task produced by a cell-level demand query rather than by a natural clue chain, flagged for review. |

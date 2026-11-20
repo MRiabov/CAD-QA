@@ -540,7 +540,7 @@ prefix is `DS-`.
   graphs, so the planner either reverses pipeline stage order or forces a larger
   execution pass. A capability in the pool is also not a constructed task.
 - **Decision:** `03b` constructs tasks supply-driven by default, from the facts a
-  graph actually has. `02c` emits a capability census as a by-product of graph
+  graph actually has. `02c` emits a program capability census as a by-product of graph
   construction. `03a` and `03c` use that census only for deficits: when a
   quota target is underfilled, they query it for capable programs and request
   supplemental programs through the existing slow loop. A cell-level demand query

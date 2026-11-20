@@ -9,8 +9,7 @@ and where each contract lives. The sub-step input/output table stays in
 
 Task generation is a module rather than a single step because it owns three
 sub-steps, a search, a validity contract, and a bounded feedback loop. The
-construction algorithm lives in `algorithm/`, the support table contract lives in
-`support/`, and decisions scoped to this module live in `decisions.md`.
+construction algorithm and the program capability census live in `algorithm/`, and decisions scoped to this module live in `decisions.md`.
 
 ## Input
 
@@ -62,7 +61,7 @@ is exhausted, or the remaining miss is accepted and recorded.
 | Doc | Contract |
 |---|---|
 | [`algorithm/construction.md`](algorithm/construction.md) | How a task is found: possible answers, facts, cover search, validity checks, acceptance. |
-| [`support/clue-form-by-step.md`](support/clue-form-by-step.md) | Which clue forms are supported at each task reasoning step count. |
+| [`algorithm/program-capability-census.md`](algorithm/program-capability-census.md) | Per-program summary of the task shapes its graph can support. |
 
 The clue model itself is in
 [`03b-construct-task-definitions.md`](03b-construct-task-definitions.md): the

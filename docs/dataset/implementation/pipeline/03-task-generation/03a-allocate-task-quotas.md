@@ -8,10 +8,10 @@ definitions are generated.
 
 ## Input / output
 
-- Input: CAD graphs for the selected program pool, program metadata, the
-  [task reasoning step support tables](../../task-step-support.md), dataset release
-  targets, the current `DeficitLedger` (empty on the first plan), and
-  `ProgramReassignmentRequest` records from `03c`.
+- Input: CAD graphs for the selected program pool, the program capability census,
+  program metadata, the release implementation scope, dataset release targets, the
+  current `DeficitLedger` (empty on the first plan), and `ProgramReassignmentRequest`
+  records from `03c`.
 - Output: `TaskQuotaPlan`.
 
 ## Task quota plan

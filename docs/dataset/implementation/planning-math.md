@@ -7,7 +7,8 @@ this document explains how the constraints combine.
 ## Inputs
 
 - The task-definition rules from `pipeline/03-task-generation/03b-construct-task-definitions.md`.
-- The [task reasoning step support tables](task-step-support.md) for the release implementation scope.
+- The program capability census for each selected program, from `02c`.
+- The release implementation scope, from the product priorities.
 - The task-count targets in the PRD and the release contract.
 - The split rule: a CADEvolve program family belongs to one split.
 

@@ -429,7 +429,7 @@ A full demand-driven planner was considered and rejected. It would have
 specified a task cell up front, queried a capability index for programs that
 can support it, and synthesized into the cell. The reasons to reject it:
 
-- the capability census needs the graph, but `01b` selects the pool before
+- the program capability census needs the graph, but `01b` selects the pool before
   `02` builds graphs; a pre-selection census reverses pipeline stage order or
   forces a larger execution pass;
 - a capability in the pool is not a constructed task, so the guarantee is
@@ -716,7 +716,8 @@ All construction decisions are settled. `D1`, `D2`, `D5`, `D6`, `D7`, `D8`,
 `D9`, `D10`, and `D11` are recorded as decisions, `D3` was withdrawn into graph
 completeness, and `D4` was folded into `DS-32`. The algorithm is written in
 `03-task-generation/algorithm/construction.md`, the clue model is in `03b`, and
-the support contract is in `03-task-generation/support/clue-form-by-step.md`.
+the program capability census is in
+`03-task-generation/algorithm/program-capability-census.md`.
 The box-and-hole example is the first golden record.
 
 The concern that the vocabulary may be growing without a stopping rule is

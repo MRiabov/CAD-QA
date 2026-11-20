@@ -18,7 +18,8 @@ Construction is a local search over one graph. It never enumerates the task spac
 - one quota target from the `TaskQuotaPlan`, with its task reasoning step count,
   target category, clue type, clue operand form, answer meaning, and answer
   format;
-- the support table from [`../support/clue-form-by-step.md`](../support/clue-form-by-step.md).
+- the program capability census from
+  [`program-capability-census.md`](program-capability-census.md).
 
 ## Step 1 — possible-answer set
 
