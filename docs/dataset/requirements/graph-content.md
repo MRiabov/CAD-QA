@@ -143,14 +143,14 @@ must support at least these.
 | Area | Face, CadQuery profile, region | Face area and CadQuery profile area are different scopes. | P0 |
 | Length | Edge, path segment | Straight or curve length. | P0 |
 | Distance | Two endpoint entities, or one endpoint entity and a point | Shortest distance. | P0 |
-| Angle | Two faces, two edges, or a path tangent | Degrees or radians, stated once. | P0 |
+| Angle | Two faces, two edges, or a path tangent | Two faces: between outward normals, 0–180°. Two edges: acute angle between the lines, 0–90°. Path tangent: between consecutive tangents, 0–180° (P1). Degrees. | P0 |
 | Bounding box | Solid state, entity, region | Minimum and maximum corners in the program frame. | P0 |
 | Centroid | Solid state, entity, region | Point in the program frame. | P0 |
 | Count | Solid state, face, CadQuery selector result | Faces, edges, vertices, selected entities. | P0 |
 | Validity | Solid state | Whether the shape is a valid solid or compound. | P2 |
 | Volume change | Operation | Signed volume added or removed. | P0 |
 | Bounding-box change | Operation | Change caused by the operation. | P1 |
-| Topology change | Operation | Change in face, edge, or vertex counts. | P0 |
+| Topology change | Operation | Signed change in face, edge, or vertex counts; the task declares the category. | P0 |
 | CadQuery workplane frame | CadQuery workplane | Origin, x direction, and normal. | P1 |
 
 Every measurement has:
@@ -216,9 +216,12 @@ There is no cap on pairs per named endpoint: the domain is linear in the entity
 count for each endpoint. A program whose solid state exceeds `max_state_entities`
 is rejected at graph construction rather than truncated, so every accepted graph
 carries its whole pair domain. `max_state_entities` is provisional at 500. It is
-measured from the selected program pool for each implementation scope and
-re-measured when the graph content grows, for example when P1 adds relations and
-states, because a larger graph raises entity counts. It is not fixed once.
+a scope constant: it is measured once, offline, from the selected program pool
+when an implementation scope starts, and recorded with the distribution that
+produced it. Graph construction and planning read the recorded number and never
+recompute it, so the limit is not a per-run cost and a run stays reproducible.
+The constant is revised deliberately when the graph content grows, for example
+when P1 adds relations and states.
 
 A pair outside the domain is not a missing measurement; it is not a candidate.
 

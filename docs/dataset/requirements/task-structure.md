@@ -122,20 +122,25 @@ returned. The answer format says "number" or "boolean"; the answer meaning says
 | Answer meaning | What it describes | Priority |
 |---|---|---|
 | Identity | Which entity is the answer. | P0 |
-| Volume | A volume or volume change. | P0 |
+| Volume | The volume of a shape. | P0 |
 | Area | An area. | P0 |
 | Length | A length. | P0 |
 | Distance | A distance between two entities or a point and an entity. | P0 |
-| Angle | An angle between faces, edges, or a path tangent. | P0 |
+| Angle | An angle between two faces, two edges, or a path tangent. Two faces use outward normals, two edges the acute angle between the lines. | P0 |
 | Count | A number of entities. | P0 |
 | Rank | A position in an ordered set. | P1 |
 | Membership | Whether a point is inside the solid state. Points within tolerance of a face surface are not used. | P0 |
-| Position | A point location in space. | P0 |
+| Position | A point location in space, declared by the question: a face centroid, an edge midpoint, a vertex point, or a solid state centroid. | P0 |
 | Extent | A minimum and maximum corner. | P0 |
 | CadQuery workplane state | The frame of a CadQuery workplane. | P1 |
-| Material change | Material added or removed. | P0 |
-| Topology change | A change in faces, edges, or vertices. | P0 |
+| Material change | Material added or removed, as a signed volume or count. A cut answers negative. | P0 |
+| Topology change | A change in face, edge, or vertex counts. The question declares the category; the answer is the signed delta for that category. | P0 |
 | Validity | Whether a shape is valid. | P2 |
+
+Position and topology change declare a parameter in the question: the point for a
+position and the category for a topology change. The parameter is part of the
+task definition and the answer evidence, not a convention the resolver picks. A
+material change declares no parameter; its sign carries the direction.
 
 The answer meaning is not the answer format. A volume can be returned as a
 number; a membership result can be returned as yes or no; an identity is
@@ -271,6 +276,19 @@ only the values it implements.
 
 Answer format and answer meaning shares are over tasks. Clue type shares are
 over task clues, because one task can contain several task clues.
+
+Clue operand form is a coverage dimension in P0 and has no row in this table.
+That is a concession, not a good property: coverage guarantees that each
+supported form appears, not that the forms are usefully mixed, so a release can
+concentrate one form and still pass. The balance target for clue operand form is
+P1 work.
+
+The balance check for clue operand form is still computed in P0 and reported
+without blocking. If a supported form falls below a quarter or above four times
+its conditional release share, the imbalance is severe and balancing is promoted
+into P0 for that release: the release is rebalanced, or the miss is recorded with
+its reason. The quarter and four-times bounds are provisional and tuned with the
+first release.
 
 The **conditional release share** of a value at a task reasoning step count is
 its share among the values supported at that step count, not its share of the

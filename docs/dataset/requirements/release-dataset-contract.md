@@ -35,7 +35,7 @@ A release directory contains:
 |---|---|---|
 | `release.parquet` | Release table: prompt and answer columns. | One per task. |
 | `manifest.json` | Release counts, versions, hashes, split counts, and coverage summaries. | One file. |
-| `dataset-card.md` | Human-readable dataset card. | One file. |
+| `dataset-card.md` | Human-readable dataset card: scope, counts, splits, provenance, and the answer conventions per answer meaning — the angle convention, the signed material change, the declared position point and topology category, the membership boundary rule, and the answer precision. | One file. |
 | `failures.parquet` | Rejected programs and tasks with reasons. | One per rejection; may be empty. |
 | `support/` | Four task reasoning step support tables: `target-category-by-step.json`, `clue-type-by-step.json`, `answer-meaning-by-step.json`, `answer-format-by-step.json`. | Four files. |
 

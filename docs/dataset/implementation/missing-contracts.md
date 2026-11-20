@@ -11,42 +11,14 @@ only a **technical decision** that engineering can settle from the decisions
 already recorded. Product entries block more than they appear to, because
 writing code cannot close them.
 
-There are 30 open entries: 2 P0 product, 18 P0 technical, 7 P1 product, and 3 P1
-technical. P2 is empty.
+There are 28 open entries: 17 P0 technical, 8 P1 product, and 3 P1 technical. No
+P0 product decision remains open, and P2 is empty.
 
 ## P0
 
 ### Product decisions
 
-#### MC-36 — State entity limit
-
-The `max_state_entities` limit is not finalized. The named-endpoint rule and
-the no-cap policy are written in `graph-content.md`; the limit is provisional at
-500.
-Distance, angle, and the P0 pair relations (`distance_to`, `parallel_to`,
-`perpendicular_to`) are P0 task content, so a pair the graph never enumerated
-makes a P0 task unconstructible, and the failure looks like a construction
-deficit rather than a graph-domain limit.
-
-**Recommendation:** measure entity counts per solid state on the selected P0 pool
-and set the limit at the smallest round number above the 99th percentile; record
-the distribution next to the limit, and re-measure at each later implementation
-scope — P1 adds relations and states, so entity counts rise. The limit is a
-measured quantity per scope, not a constant.
-
-#### MC-39 — Clue operand form coverage minimum
-
-The coverage minimum for clue operand form is not stated. `DS-37` makes it a P0
-coverage dimension, but the allocation equation in `03a` gives the `+1` minimum
-only to target category, answer meaning, answer format, and clue type. `03a` also
-says "allocate the four quota dimensions separately" while listing five, and its
-plan-acceptance list omits clue operand form. Without a number, `03a` cannot
-allocate the dimension at all.
-
-**Recommendation:** extend the `+1` coverage minimum to clue operand form,
-counted over clue occurrences like clue type, because operand form is a property
-of a clue and not of a task. Correct the "four quota dimensions" sentence and the
-plan-acceptance list in the same edit.
+None. The last P0 product decision, `MC-39`, is closed below.
 
 ### Technical decisions
 
@@ -80,34 +52,21 @@ defined for measurements: a derived relation records the rule and its references
 a measured one records the kernel call. Exclude both fields from `relation_id`,
 as `measurement_id` already excludes value, unit, tolerance, and evidence.
 
-#### MC-08 — Answer resolver
-
-The answer resolver is not written: one rule per answer meaning that turns the
-bound target and the answer-equivalent set into the gold answer and its
-evidence. `algorithm/construction.md` calls `answer(candidate)` but never
-defines it; `03b` defines validity and `same_answer` but not the resolver that
-produces the answer it validates.
-
-**Recommendation:** write a resolver table next to the answer-format table in
-`03b`, one row per answer meaning, naming the kernel call or the exact derivation
-and the evidence it records. Settle the two equality gaps in the same table:
-membership `same_answer` lists an `on the boundary` label that the binary
-membership answer cannot produce, and topology-change equality compares "the same
-changed set" without defining it.
-
 #### MC-37 — Definition fields for the new decisions
 
 The `TaskDefinition` fields required by the recorded decisions are absent:
-`state_scope` and `clue_form_profile` are not fields, and `answer_evidence` does
-not define the `answer_equivalent_set` or membership-probe payload. The field
-table predates `DS-32`, `DS-34`, and `DS-38`, and `validity` is still a prose
-field with no typed check-result payload.
+`state_scope` and `clue_form_profile` are not fields, `answer_parameter` is not a
+field, and `answer_evidence` does not define the `answer_equivalent_set` or
+membership-probe payload. The field table predates `DS-32`, `DS-34`, and
+`DS-38`, and `validity` is still a prose field with no typed check-result
+payload.
 
-**Recommendation:** add `state_scope` and `clue_form_profile` as definition
-fields; add typed `answer_equivalent_set` and membership-probe payloads to
-`answer_evidence`, with the set holding entity ids and their answers so answer
-uniqueness can be rechecked from the definition alone; and give `validity` a
-typed check-result payload.
+**Recommendation:** add `state_scope`, `clue_form_profile`, and
+`answer_parameter` as definition fields; add typed `answer_equivalent_set` and
+membership-probe payloads to `answer_evidence`, with the set holding entity ids
+and their answers so answer uniqueness can be rechecked from the definition
+alone; and give `validity` a typed check-result payload. `answer_parameter` is
+the point, direction, or category a parameterized answer declares.
 
 #### MC-09 — Definition identity and provenance
 
@@ -151,14 +110,16 @@ are projections of definition fields.
 #### MC-13 — Release coverage and balance checks
 
 Release coverage and balance checks are missing: step mix, warmup, program floor,
-target category, answer meaning, answer format, clue type, and clue operand form
-balance, plus the 5–25% answer-format range, the 1–10% answer-meaning range, and
-the 1% and 25% caps. `05` currently checks only that released values appear in
-the support tables, so the first release can pass without meeting R-7–R-10.
+target category, answer meaning, answer format, and clue type, plus the P1 clue
+operand form balance target (`MC-45`), the 5–25% answer-format range, the 1–10%
+answer-meaning range, and the 1% and 25% caps. `05` currently checks only that
+released values appear in the support tables, so the first release can pass
+without meeting R-7–R-10.
 
 **Recommendation:** add one check per requirement R-7–R-10 for the first release,
 and R-11–R-12 when their P1 scope ships; each check names the requirement it
-enforces, so a missing check is visible as a missing row.
+enforces, so a missing check is visible as a missing row. Add the clue operand
+form balance check when `MC-45` sets its target.
 
 #### MC-15 — Multiple-choice fairness checks
 
@@ -275,7 +236,7 @@ compatibility). Implement it as the same cover search as construction, with the
 graph replaced by the grammar's full fact set and the validity rules unchanged,
 and derive all five tables from that one search.
 
-#### MC-45 — Capability census artifact
+#### MC-46 — Capability census artifact
 
 The program capability census has a contract in
 `algorithm/program-capability-census.md`, but no artifact or I/O contract. The
@@ -292,7 +253,7 @@ format, and add it to the `03a`/`03b` input lists. Decide whether it is a fourth
 graph table or a sidecar artifact; the current "versioned with the graph
 artifact" wording does not say which.
 
-#### MC-46 — Scalar target candidate set
+#### MC-47 — Scalar target candidate set
 
 `task-structure.md` makes `Scalar value` a P0 task target category: "a
 measurement or count with no entity chosen as the answer."
@@ -342,8 +303,8 @@ trigger is data, not a manual check.
 Duplicate normalized text across collections is unresolved. `01d` gives
 identical normalized bytes one `program_id` and says later stages must not treat
 the records as distinct, but `01b` keeps both rows with different families and no
-pipeline stage enforces the rule. `task_id` is keyed on `program_sha256`, so the release
-can hold two rows with the same `task_id` and different splits.
+pipeline stage enforces the rule. `task_id` is keyed on `program_sha256`, so the
+release can hold two rows with the same `task_id` and different splits.
 
 **Recommendation:** keep both selection rows for collection accounting, but
 graph and construct once per `program_id` and use the survivor's family, which is
@@ -398,6 +359,28 @@ review does not change a definition, so a failed review rejects the row and
 records the reason. `05` also owns the evaluation material: a prompt-only view
 plus the scoring instructions derived from the answer columns.
 
+#### MC-45 — Clue operand form balance target
+
+`DS-37` defers balance over clue operand form to P1, but no artifact carries the
+target: the balance table in `task-structure.md` section 6 has no row for it, and
+the plan-level target table names no share. P1 can therefore ship without a
+balance check, and P0 coverage does not stand in for one: it proves presence,
+not a useful mix. If the P0 diagnostic reports severe imbalance, the target is
+needed for that release rather than P1.
+
+Equal share is the current target, not a settled one. The forms differ in what
+they demand: a `selected` reference resolves by pointer, a `named` reference
+identifies a described entity, and an `aggregated` reference computes a
+measurement over a set. A later revision may skew the share toward the
+computation forms, and the share must then stay within what the program
+capability census can supply, because a target above supply becomes a deficit
+rather than a mix. That revision waits for measured distributions, so `DS-38`
+stands unchanged: clue form is descriptive, not a difficulty axis.
+
+**Recommendation:** keep equal share for the first release, add the row when the
+P1 support grid is measured, and revisit the share after the first release
+reports its operand-form distribution.
+
 ### Technical decisions
 
 #### MC-25 — Prompt template file
@@ -415,9 +398,9 @@ The release manifest and dataset card have a writer (`05`) and the release
 contract lists the manifest fields, but several contents are still unspecified:
 the `release_id` derivation, the `generator_version` value, the upstream
 dataset version value, the external-manifest linkage field, and the
-dataset-card outline. Evaluation material is owned by `MC-28`. `io-contracts.md` also names
-only `ReleaseTable` as the `05` input, although `05` reads the external dataset
-manifest and the support tables.
+dataset-card outline. Evaluation material is owned by `MC-28`. `io-contracts.md`
+also names only `ReleaseTable` as the `05` input, although `05` reads the
+external dataset manifest and the support tables.
 
 **Recommendation:** keep `05` as the owner; add the missing fields to release
 contract section 7 and a dataset-card outline; define `release_id` and
@@ -442,6 +425,15 @@ completion marker and identity match.
 
 - `MC-31` — the slow loop in `03c` includes `01d`; the flow line in `00` was the
   defect and is fixed.
+- `MC-08` — the resolver table is written in `03b`, with the angle, position,
+  material-change, and topology-change conventions. The dataset card now has to
+  state them for consumers.
+- `MC-39` — clue operand form is coverage-only in P0, with one clue occurrence
+  per supported form per step count and no share; `03a` now says so.
+- `MC-36` — the state entity limit is a scope constant measured once per
+  implementation scope, and the rule is written in `graph-content.md` section
+  4.1. The first number is produced when the P0 pool is selected, which is plan
+  work rather than a missing contract.
 - `MC-32` — the external manifest has no link field; the repo-wide link check
   passes.
 - `MC-34` — the implementation README now lists the test contract folder and
