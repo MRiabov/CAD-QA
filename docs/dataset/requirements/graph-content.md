@@ -216,6 +216,24 @@ rejected. The margin rarely binds here, because program dimensions are coarse an
 near-parallel geometry is rare; it exists to catch numerically degenerate
 programs, such as a cut tangent to a face.
 
+### 4.3 Measured and derived evidence
+
+Every relation and measurement records whether it was measured or derived, and
+what produced it.
+
+| Element | Evidence |
+|---|---|
+| `before`, `after`, `creates`, `uses`, `derived_from` | derived from the extraction records |
+| `has_face`, `has_edge`, `has_vertex` | derived from the topology records |
+| `adjacent_to` | derived from the topology records |
+| `parallel_to`, `perpendicular_to`, `coplanar_with`, `coaxial_with` | derived from geometry, with the tolerance from section 4.2 |
+| `distance_to` | measured by the kernel |
+| `adds_material`, `removes_material`, `part_of` | derived from the feature and region records |
+| `is_inside` | measured by the kernel, from the solid state and a point literal |
+
+A derived element names the exact rule and its references. A measured element
+names the kernel call. A value with neither is not CAD graph evidence.
+
 ## 5. States and timing
 
 A program builds a shape over time. The graph must keep the solid states the tasks
