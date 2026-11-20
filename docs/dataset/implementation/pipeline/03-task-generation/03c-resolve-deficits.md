@@ -8,7 +8,8 @@ replanning the current data, or expanding the program pool.
 ## Input / output
 
 - Input: the deficit ledger from `03b`, the current `TaskQuotaPlan`, current family
-  profiles, and program metadata.
+  profiles, program metadata, and the `SelectionPolicy` from `01b` for
+  `usable_floor`.
 - Output: a `ProgramReassignmentRequest`, a `ProgramRequest`, or an accepted miss.
 
 `03c` is a controller, not a terminal reconciliation step. It does not render
@@ -54,8 +55,8 @@ rounds, stop and record an `AcceptedMiss` for each unfilled quota target.
 
 `AcceptedMiss` records the quota target, the remaining count, the reason, the
 owner, and the plan version. The round count and the growth cap are plan fields,
-not constants in `03c`: `03a` allocate task quotas stamps both from `expansion`
-in `balance.yaml`.
+not constants in `03c`: `03a` allocate task quotas stamps `expansion_rounds` and
+`expansion_growth_share_per_round` from `expansion` in `balance.yaml`.
 
 ## Deficit classes
 
@@ -83,6 +84,7 @@ the class. The mapping is:
 | `cap_conflict` | `plan_conflict` |
 | `split_capacity_short`, `family_quota_short`, `family_quota_target_conflict` | `capacity_deficit` |
 | `quota_target_family_unassigned` | `capability_deficit` when no family profile has the capability, otherwise `capacity_deficit` |
+| `program_floor_short` | `capacity_deficit`; promote reserve programs through the slow loop until `policy.usable_floor` is met or the reserve is exhausted |
 
 ### Capability lookup
 

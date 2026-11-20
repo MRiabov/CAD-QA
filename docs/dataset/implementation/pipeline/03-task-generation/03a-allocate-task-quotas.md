@@ -90,7 +90,7 @@ are one number, so the plan cannot promise fewer tasks than the release requires
 | `quota_targets` | Quota targets: task reasoning step count, quota dimension, dimension value, minimum, target count, maximum, and priority. |
 | `clue_quotas` | Clue quotas counted over clue occurrences. |
 | `clue_occurrences` | Planned clue occurrences for each task reasoning step count. |
-| `family_profiles` | The union of the member programs' census capabilities and summed entity counts, states with a surviving point probe, maximum task reasoning step count, split status, family task capacity, and probe success rate per CADEvolve program family. |
+| `family_profiles` | The union of the member programs' census capabilities and summed entity counts, `states_with_point_probe`, `max_task_reasoning_step_count`, split status, family task capacity, and probe success rate per CADEvolve program family. |
 | `family_assignment` | Family to split, task quota, per-task-reasoning-step task quotas, and assigned quota targets. |
 | `construction_attempt_budgets` | One construction batch per quota target and family for the remaining work in this plan revision. |
 | `construction_attempt_multiplier` | Construction attempt multiplier over the accepted quota; default 1.5, or 2.0 for high-rejection quota targets. |
@@ -389,9 +389,10 @@ Build a family profile from the graphs in the selected pool:
 - available clue predicates and relations;
 - available measurements and answer meanings;
 - available answer formats;
-- approximate maximum task reasoning step count;
-- states with at least one surviving point probe, so a membership target has a
-  family to go to;
+- `max_task_reasoning_step_count`, the approximate maximum task reasoning step
+  count;
+- `states_with_point_probe`, the states with at least one surviving point probe,
+  so a membership target has a family to go to;
 - task quota per program and family;
 - probe success rate per family and quota target.
 
