@@ -501,14 +501,14 @@ prefix is `DS-`.
   described by its clue type — property, relation, comparison, aggregation, or
   provenance — and, when it has a reference, by the clue operand form of that
   reference: `named`, `selected`, `aggregated`, or `cross_state`. A clue with no
-  reference has no operand form. The answer step is described by `answer_meaning`
+  reference has no clue operand form. The answer step is described by `answer_meaning`
   and has no separate ladder. Task reasoning step count stays the number of clues
   plus the answer step.
 - **Consequences:** `clue_operand_form` belongs to the clue's reference binding,
   not to the clue, so the property clue type carries none. Coverage is reported
-  over clue type × operand form for reference-bearing clues only, and the support
+  over clue type × clue operand form for reference-bearing clues only, and the support
   table is `clue-operand-form-by-step`. "Stratified sampling" stays reserved for
-  dataset-level composition; the frequency target for a clue kind is a clue quota
+  dataset-level composition; the frequency target for a clue type is a clue quota
   or clue share.
 
 ## DS-32 — Answer uniqueness compares an answer-equivalent set
@@ -613,7 +613,7 @@ prefix is `DS-`.
   requires its share at a task reasoning step count to stay within half to twice
   the conditional release share. Clue operand forms are unevenly available:
   `selected` needs an earlier clue, `cross_state` waits for P2, and five of the
-  twenty nominal clue-form cells are structurally empty. A balance range at a
+  twenty nominal clue type × clue operand form cells are structurally empty. A balance range at a
   step count where a form cannot exist would be vacuous or would force invalid
   tasks.
 - **Decision:** In P0, clue operand form is a coverage dimension: every supported
@@ -625,15 +625,15 @@ prefix is `DS-`.
   decides which forms are required at each step count. A missing form at a step
   count is a coverage gap, not a balance problem. Coverage-only is a concession,
   not a good property: it guarantees that each form appears, not that the forms
-  are usefully mixed, so a P0 release can concentrate one operand form. P1
-  balance is the correction, and until it exists the operand-form distribution is
+  are usefully mixed, so a P0 release can concentrate one clue operand form. P1
+  balance is the correction, and until it exists the clue operand form distribution is
   reported but not enforced. Severe imbalance promotes the balance target into P0
   for that release: the P1 balance check is computed and reported without
   blocking, and a form below a quarter or above four times its conditional share
   is severe. The release is then rebalanced or the miss is recorded with its
   reason. The quarter and four-times bounds are provisional.
 
-## DS-38 — Clue form is reported as a descriptive breakdown, not a difficulty axis
+## DS-38 — Clue operand form is reported as a descriptive breakdown, not a difficulty axis
 
 - **Status:** accepted (2026-11-20).
 - **Context:** `DS-05` makes task reasoning step count the only measure of task
@@ -643,12 +643,12 @@ prefix is `DS-`.
 - **Decision:** Every task definition records `clue_operand_form_profile`, the
   ordered clue type and clue operand form of each clue. The release reports
   aggregate coverage per task reasoning step count, and the per-task clue
-  operand form profile stays available. Clue form is descriptive; it is not a
-  difficulty label, and `DS-05` is unchanged.
+  operand form profile stays available. Clue operand form is descriptive; it is
+  not a difficulty label, and `DS-05` is unchanged.
 - **Consequences:** The release table carries `clue_operand_form_profile`, and `05`
   reports coverage per `(clue_type, clue_operand_form)`. Benchmark results may
-  name the step counts and clue forms they cover, without ranking tasks by clue
-  form.
+  name the step counts and clue operand forms they cover, without ranking tasks
+  by clue operand form.
 
 ## DS-39 — The CAD graph is an immutable Parquet artifact, not a relational table
 

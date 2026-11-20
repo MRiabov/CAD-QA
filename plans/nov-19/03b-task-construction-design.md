@@ -1,7 +1,7 @@
 # 03b task construction — working design
 
 **Status:** plan, 2026-11-19. Working design for `03b`; not a specification.
-It records the construction picture and the clue-form proposal from the
+It records the construction picture and the clue operand form proposal from the
 2026-11-19 discussion so the construction grammar can be written next.
 
 **Canonical home:** `docs/dataset/implementation/pipeline/03-task-generation/`.
@@ -51,7 +51,7 @@ possible_answers
   --clue_2--> narrowed_2
   ...
   --clue_last--> final_set
-  --answer_step--> answer
+  --task_answer_step--> answer
 ```
 
 The constraints are:
@@ -108,7 +108,7 @@ Validator
   because it owns the release-level counts.
 
 The task quota plan is a shopping list: "I need 40 four-step face-area tasks,
-at each step count a mix of clue forms, and at least one `comparison` clue
+at each step count a mix of clue operand forms, and at least one `comparison` clue
 with a `selected` reference in the four-step bucket." The synthesizer is a
 personal shopper per program. It does not enumerate the whole task space.
 
@@ -128,7 +128,7 @@ for each answer_entity in stable_order(possible_answers):
         if not same_answer(answer(candidate), answer(answer_entity))
     }
     facts = true_facts(graph, answer_entity)   # predicates true of answer_entity
-    chain = cover(wrong_answer_candidates, facts, target_depth = step_count - answer_step)
+    chain = cover(wrong_answer_candidates, facts, target_step_count = task_reasoning_step_count - task_answer_step_count)
     if chain is empty: continue
 
     narrowed = apply(chain, possible_answers)
@@ -141,7 +141,7 @@ for each answer_entity in stable_order(possible_answers):
 
 Two details matter.
 
-**`cover(wrong_answer_candidates, facts, target_depth)` is a bounded set-cover search.**
+**`cover(wrong_answer_candidates, facts, target_step_count)` is a bounded set-cover search.**
 Each fact has a precomputed set of possible answers it selects, so applying a
 clue is a set intersection. A greedy cover gives the shortest chain; a less
 greedy cover gives a longer chain. The target step count is therefore a search
@@ -276,7 +276,7 @@ not freely combinable, and the support grid says which cells are real:
   set directly. "The face selected in step 1 is planar" is redundant, because
   step 1 already selected it. "The largest face is planar" is aggregation plus
   property, which `requirements/task-structure.md` already splits into two
-  clues. So the property row carries no operand form.
+  clues. So the property row carries no clue operand form.
 - **Aggregation with an `aggregated` reference is degenerate.** It is
   aggregation over an aggregate, and it is better written as two clues.
 
@@ -290,7 +290,7 @@ extra task reasoning steps.
 
 ### The generation lever
 
-Clue form is not only a classification. It is how the generator populates the
+Clue operand form is not only a classification. It is how the generator populates the
 grid from the same graph facts, by changing how the reference resolves:
 
 - `relation` with a `named` reference: "the face is adjacent to the face
@@ -316,27 +316,27 @@ CadQuery workplane state, material change, topology change, and validity.
 
 An earlier draft added a four-level `A0`–`A3` answer ladder on top of that. It
 duplicated `answer_meaning` and had no precedent in the prior-art survey, so it
-is dropped. The task profile records `answer_meaning` directly.
+is dropped. The task description records `answer_meaning` directly.
 
-### Task profile
+### Task description
 
 A task is described by:
 
 ```text
-step_count = number of clue steps + (answer step ? 1 : 0)
+task_reasoning_step_count = number of task clue steps + (task answer step ? 1 : 0)
 clue_operand_form_profile = [(clue type, clue operand form), ...]   # one per clue
 answer_meaning = one of the answer meanings
 ```
 
 The step count remains the chain length. The clue operand form profile describes each
-clue, and the operand form is absent for a clue with no reference. A four-step
+clue, and the clue operand form is absent for a clue with no reference. A four-step
 task of four `property` clues is not the same benchmark item as a two-step task
 of two `comparison` clues with `selected` references, even though neither
 number is a difficulty label.
 
 This is the `DS-05` tension. `DS-05` says task reasoning step count is the only
-measure. The proposal is to amend it: step count is the length measure, clue
-form is the per-clue measure, and neither is a task label. See `D10`.
+measure. The proposal is to amend it: step count is the length measure, and
+clue operand form is the per-clue measure; neither is a task label. See `D10`.
 
 ## Worked example
 
@@ -353,10 +353,9 @@ result = (
 )
 ```
 
-Task shape: a four-step chain on the final solid, clue forms
-`[(relation, named), (relation, named), (comparison, selected)]`, answer
-meaning length. The chain resolves to an edge; the answer is its length, as
-a number.
+Task description: a four-step chain on the final solid, with clue operand form profile
+`[(relation, named), (relation, named), (comparison, selected)]` and answer meaning length.
+The chain resolves to an edge; the answer is its length, as a number.
 
 Initial possible-answer set: all edges of the final solid — the box edges plus
 the two circular edges of the hole.
@@ -371,7 +370,7 @@ Bound answer entity: the top circular edge of the hole.
 | Answer | Return the length. | `12.57` | none | answer meaning: length |
 
 Each clue narrows. Clue 3 is a comparison whose reference is the other circular
-edge left by clue 2, so its operand form is `selected`, not `named`. The chain
+edge left by clue 2, so its clue operand form is `selected`, not `named`. The chain
 is broad-to-narrow. The answer is `2πr` rounded to 4 significant figures. The
 answer evidence points to the edge, the measurement, and the rule.
 
@@ -385,12 +384,12 @@ length. Then:
 
 That is the first schema decision (`D1` below).
 
-## Three uses of the clue profile
+## Three uses of the clue operand form profile
 
 ### 1. Generation and quotas
 
 Add `clue_operand_form` as a quota dimension. At each step count, require
-coverage of the supported clue forms and balance them with the conditional
+coverage of the supported clue operand forms and balance them with the conditional
 release share. The plan becomes "40 four-step tasks, at least one with a
 `comparison` clue whose reference is `selected`," not just "40 four-step
 tasks." This prevents the generator from hitting the step-count mix with four
@@ -401,15 +400,15 @@ tasks." This prevents the generator from hitting the step-count mix with four
 Check coverage over `(clue_type, clue_operand_form)` cells for clues that carry
 a reference, not clue type alone. Otherwise a dataset can cover every clue type
 at `named` references and claim coverage. A support table,
-`clue-operand-form-by-step.json`, records which clue forms are structurally supported at
+`clue-operand-form-by-step.json`, records which clue operand forms are structurally supported at
 each step count and why not. It also records the two known non-cells: the
-property row has no operand form, and `aggregation` with an `aggregated`
+property row has no clue operand form, and `aggregation` with an `aggregated`
 reference is degenerate.
 
 ### 3. Evaluation and splits
 
-Report accuracy by `(step_count, clue_operand_form)` and by
-`(step_count, clue_type)`, not just by step count. An LLM model that fails
+Report accuracy by `(task_reasoning_step_count, clue_operand_form)` and by
+`(task_reasoning_step_count, clue_type)`, not just by task reasoning step count. An LLM model that fails
 `selected` references is different from one that fails long chains of `named`
 relations. Stratify the test split so each reported cell has enough tasks to
 measure; otherwise the per-cell number is noise.
@@ -442,10 +441,10 @@ can support it, and synthesized into the cell. The reasons to reject it:
 What remains is a **capability-aware deficit loop**:
 
 1. `01b` stays metadata-based.
-2. `02c` emits a `ProgramCapabilityProfile` as a by-product of the graph:
+2. `02c` emits a `ProgramCapabilityCensus` as a by-product of the graph:
    available target categories, clue constructors, supported clue operand
    forms per clue type, measurement kinds, relation kinds, answer meanings,
-   maximum step count, and entity counts.
+   maximum task reasoning step count, and entity counts.
 3. `03b` is supply-driven by default.
 4. `03a` and `03c` use the census for deficits. When a quota target is
    underfilled, query the census for capable programs and request supplemental
@@ -462,7 +461,7 @@ Each decision is written so it can be answered on its own. The recommendation is
 a default, not a ruling, and the ID is stable so other documents can refer to it.
 
 Accepted decisions move to `docs/dataset/decisions.md` and are marked here with
-their record ID. The clue-form model is `DS-31`, answer uniqueness is `DS-32`,
+their record ID. The clue operand form model is `DS-31`, answer uniqueness is `DS-32`,
 the construction strategy is `DS-33`, and state scope is `DS-34`.
 
 ### 1. `D1` — What is the equality relation for answer uniqueness?
@@ -615,7 +614,7 @@ Coverage requires a supported value to appear at all. Balance requires its share
 at a task reasoning step count to stay within half to twice the conditional
 release share. Clue operand forms are unevenly available: `selected` needs an
 earlier clue, `cross_state` waits for P2, and five of the twenty nominal
-clue-form cells are structurally empty.
+clue type × clue operand form cells are structurally empty.
 
 Recommendation: coverage only in P0, balance in P1. A balance range at a step
 count where a form cannot exist would either be vacuous or force invalid tasks,
@@ -623,7 +622,7 @@ and eleven usable cells are too few for proportional targets to mean anything.
 
 Blocks: coverage, balance, and the support table.
 
-### 10. `D10` — What role does clue form play in reporting?
+### 10. `D10` — What role does clue operand form play in reporting?
 
 Accepted as `DS-38`.
 
@@ -631,11 +630,11 @@ Options: none, step count only; a coverage dimension; a difficulty axis.
 
 Recommendation: a coverage dimension and a per-task descriptive breakdown, not a
 difficulty axis. `DS-05` stays intact: task reasoning step count remains the
-length measure, and clue form is descriptive.
+length measure, and clue operand form is descriptive.
 
 The release reports aggregate coverage per step count, and the per-task
 `clue_operand_form_profile` stays in the definition. Benchmark results may name the step
-counts and clue forms they cover, without ranking tasks by clue form.
+counts and clue operand forms they cover, without ranking tasks by clue operand form.
 
 Blocks: PRD section 6, R-9, and benchmark reporting.
 
@@ -653,19 +652,19 @@ Blocks: `01b`, `02c`, `03a`, `03b`, and `03c`.
 
 | Change | Owner |
 |---|---|
-| Add the clue grammar and the clue form grid to `requirements/task-structure.md` and `requirements/terminology.md` | `requirements/task-structure.md`, `requirements/terminology.md` |
+| Add the clue grammar and the clue type × clue operand form grid to `requirements/task-structure.md` and `requirements/terminology.md` | `requirements/task-structure.md`, `requirements/terminology.md` |
 | Add `clue_operand_form` to `TaskClue`; add `clue_operand_form_profile` and `state_scope` to `TaskDefinition`; add `answer_equivalent_set` to the answer evidence; define `answer_unique` over that set with an equality relation per answer meaning; record `answer_meaning` instead of an answer ladder | `03b` |
 | Require a singleton `answer_equivalent_set` for an identity answer in multiple-choice format | `04` |
 | Add `clue_operand_form` as a quota dimension; require coverage at each step count; balance with the conditional share | `03a` |
 | Add `support/clue-operand-form-by-step.json` | `05`, task-step support |
 | Add `clue_operand_form_profile` to the release table | release contract, `04` |
 | Check coverage and balance over `(clue_type, clue_operand_form)` for reference-bearing clues | `05` |
-| Emit `ProgramCapabilityProfile` as a by-product of graph construction | `02c` |
+| Emit `ProgramCapabilityCensus` as a by-product of graph construction | `02c` |
 | Use the census to allocate quota targets to capable families, not to pre-select the pool | `03a` |
 | Add a `capability_deficit` reason and a supplemental-program request path | `03c` |
 | Keep supply-driven construction as the default; add a cell-level demand query only as a fallback with a `forced` flag | `03b` |
 | Add `DS-31`: step count is the chain length; clue operand form describes how a clue's reference resolves; neither is a task label | `decisions.md` |
-| State that every benchmark result names the step counts and clue forms it covers | PRD |
+| State that every benchmark result names the step counts and clue operand forms it covers | PRD |
 
 ## Milestones
 

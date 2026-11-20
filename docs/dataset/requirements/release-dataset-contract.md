@@ -98,7 +98,7 @@ No CAD model and no correct answer is above 1% of tasks.
 | `scoring_rule` | enum `exact`, `numeric_tolerance`, `structured_exact` | yes | How the answer is checked. |
 | `answer_schema_version` | string | yes | Version of the answer representation. |
 | `answer_sha256` | string | yes | Hash of the canonical answer and scoring fields. |
-| `evidence_json` | string | yes | Canonical JSON answer evidence: measured or derived, references, and rule. |
+| `answer_evidence_json` | string | yes | Canonical JSON answer evidence: measured or derived, references, and rule. |
 
 The first fourteen columns identify the task and support selection, review, and
 reporting. The answer columns hold the gold answer, scoring fields, and answer

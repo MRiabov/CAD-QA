@@ -40,7 +40,7 @@ before the deficit loop stops?
 Recommendation: the capped version, with the numbers in the task quota plan so
 the stop rule is data.
 
-**MC-45 — Operand form share.** Keep equal share for the first release, or skew
+**MC-45 — Clue operand form share.** Keep equal share for the first release, or skew
 toward the computation forms now?
 
 - Equal share among the supported forms.
@@ -118,14 +118,14 @@ The `TaskDefinition` fields required by the recorded decisions are absent:
 `state_scope` and `clue_operand_form_profile` are not fields, `answer_parameter` is not
 a field, and `answer_evidence` does not define the `answer_equivalent_set` or
 membership-probe field. The field table predates `DS-32`, `DS-34`, and
-`DS-38`, and `validity` is still a prose field with no typed check-result
+`DS-38`, and `validity_record` is still a prose field with no typed check-result
 field.
 
 **Recommendation:** add `state_scope`, `clue_operand_form_profile`, and
 `answer_parameter` as definition fields; add typed `answer_equivalent_set` and
 membership-probe fields to `answer_evidence`, with the set holding entity ids
 and their answers so answer uniqueness can be rechecked from the definition
-alone; and give `validity` a typed check-result field. `answer_parameter` is
+alone; and give `validity_record` a typed check-result field. `answer_parameter` is
 the point, direction, or category a parameterized answer declares.
 
 #### MC-09 — Definition identity and provenance
@@ -191,9 +191,9 @@ assertions rather than computed facts.
 **Recommendation:** define feasibility as an existential over the clue grammar,
 not over a concrete graph: a value is supported at step count `s` when a
 symbolic construction can produce a valid definition of exactly `s` steps using
-only that value's allowed clue forms and the structural rules in `03b` construct
+only that value's allowed clue operand forms and the structural rules in `03b` construct
 task definitions (`selected` needs an earlier clue, `cross_state` is P2,
-property has no operand form, answer-format compatibility). Implement it as the
+property has no clue operand form, answer-format compatibility). Implement it as the
 same cover search as construction, with the graph replaced by the grammar's full
 fact set and the validity rules unchanged, and derive all five tables from that
 one search.
@@ -245,7 +245,7 @@ the rendering contract for `prompts.yaml`.
 #### MC-12 — Release projection
 
 The `TaskDefinition` to release-table projection is unowned:
-`answer_schema_version`, `answer_sha256`, `prompt_sha256`, `evidence_json`,
+`answer_schema_version`, `answer_sha256`, `prompt_sha256`, `answer_evidence_json`,
 `clue_types`, tolerance, and scoring have no writer. `04` render prompt and
 choices emits release rows and `05` validate and export release checks them, but
 neither owns the field mapping.
@@ -254,7 +254,7 @@ neither owns the field mapping.
 which already emits release rows, and let `05` validate and export release check
 the result; keep the field mapping in the release contract so it is written
 once. `answer_schema_version` and `answer_sha256` are release-only fields, so
-`04` render prompt and choices must compute them; `evidence_json` and
+`04` render prompt and choices must compute them; `answer_evidence_json` and
 `clue_types` are projections of definition fields.
 
 #### MC-13 — Release coverage and balance checks
@@ -289,7 +289,7 @@ same time.
 The release table omits `clue_operand_form_profile`, and
 `clue-operand-form-by-step.json` is absent from the support files. `DS-38` requires the field, and `DS-31` and
 `DS-37` require the fifth support table; the release contract still lists four
-support files. `answer_equivalent_set` belongs inside `evidence_json` under
+support files. `answer_equivalent_set` belongs inside `answer_evidence_json` under
 `DS-32`, not in a new release column.
 
 **Recommendation:** add `clue_operand_form_profile` to the release table and
@@ -350,7 +350,7 @@ Work order:
 
 1. `MC-17` — reserve programs; it decides whether the fast loop can promote.
 2. `MC-23` — the expansion budget; the deficit loop has no stop rule without it.
-3. `MC-45` — the operand form share; it needs the first release distribution.
+3. `MC-45` — the clue operand form share; it needs the first release distribution.
 4. `MC-27` — the external benchmark; R-16 has no input.
 5. `MC-28` — review and evaluation material; R-17 has no writer.
 
@@ -397,11 +397,11 @@ measurement over a set. A later revision may skew the share toward the
 computation forms, and the share must then stay within what the program
 capability census can supply, because a target above supply becomes a deficit
 rather than a mix. That revision waits for measured distributions, so `DS-38`
-stands unchanged: clue form is descriptive, not a difficulty axis.
+stands unchanged: clue operand form is descriptive, not a difficulty axis.
 
 **Recommendation:** keep equal share for the first release, add the row when the
 P1 support grid is measured, and revisit the share after the first release
-reports its operand-form distribution.
+reports its clue operand form distribution.
 
 #### MC-27 — Transfer overlap and the external benchmark
 

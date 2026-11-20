@@ -13,7 +13,7 @@ the user-visible outcome.
 | Term | Scope | Meaning |
 |---|---|---|
 | **Task** | Domain | One dataset instance: a CadQuery program, a task target, a set of task clues, and one answer. Use "dataset task" when it could be confused with an internal task. |
-| **Task definition** | Internal | The persisted, answer-bearing construction record for one task: target binding, ordered clues, answer step, answer, validity record, and identity. It is not prompt text. |
+| **Task definition** | Internal | The persisted, answer-bearing construction record for one task: target binding, ordered task clues, task answer step, answer, validity record, and identity. It is not prompt text. |
 | **Question** | Domain | The interrogative sentence in the prompt. It is not the whole task. |
 | **Clue type** | Domain | The category of condition a task clue states: property, relation, comparison, aggregation, or provenance. A chain is a P2 sequence of relation clues, not a clue type. |
 | **Clue operand form** | Domain | How a task clue's reference is identified: `named`, `selected`, `aggregated`, or `cross_state`. A task clue with no reference has none. |
@@ -22,7 +22,7 @@ the user-visible outcome.
 | **Task reasoning step support table** | Domain | The release artifact that records which dimension values can occur at each task reasoning step count, and why an unsupported value cannot occur there. |
 | **Task reasoning step count coverage** | Internal | Every value supported at a task reasoning step count appears at that count. |
 | **Conditional release share** | Internal | A value's share among the values supported at a task reasoning step count, used as the comparison base for task reasoning step count balance. |
-| **Task reasoning step count balance** | Internal | For clue type, answer meaning, and answer format, a supported value's share at a task reasoning step count is between half and twice its conditional release share. |
+| **Task reasoning step count balance** | Internal | For clue type, clue operand form (P1), answer meaning, and answer format, a supported value's share at a task reasoning step count is between half and twice its conditional release share. |
 | **Task target** | Domain | The entity or value the task asks about. |
 | **Task target category** | Domain | The category of the task target. It is a coverage dimension, not a percentage-balance dimension at each task reasoning step count. |
 | **Task clue** | Domain | One numbered list item in the prompt that states a condition the answer must satisfy. |
@@ -82,7 +82,7 @@ the user-visible outcome.
 | **Task quota** | Internal | A quota counted in tasks. |
 | **Task reasoning step quota** | Internal | The task quota for one task reasoning step count. |
 | **Clue quota** | Internal | A quota counted in task clue occurrences. |
-| **Quota dimension** | Internal | One independent way tasks are counted for coverage and balance: task target category, clue type, answer meaning, or answer format. |
+| **Quota dimension** | Internal | One independent way tasks are counted for coverage and balance: task target category, clue type, clue operand form, answer meaning, or answer format. |
 | **Quota target** | Internal | A count target for one quota dimension value at one task reasoning step count: minimum, target count, and maximum. It is not a task. |
 | **Task quota plan** | Internal | The plan for task quotas, family assignment, split assignment, and construction attempt budgets for one dataset release. |
 | **Deficit ledger** | Internal | The record of accepted and rejected task-definition counts, accepted clue occurrences, and remaining deficits by quota target, family, and task reasoning step count. |
@@ -184,8 +184,8 @@ Terms that were replaced because they were not composed from the domain:
 
 - **CadQuery program AST extraction result** is the `02a` extract CadQuery AST output; **CadQuery program runtime extraction result** is the `02b` execute CadQuery success output.
 - A pipeline stage is named by number and title, for example `02c` build CAD graph, never by the bare number. Use the document heading as the title.
-- A code label spells out the whole term and never drops a word. The clue
-  operand form profile is `clue_operand_form_profile`, not `clue_form_profile`.
+- A code label spells out the whole term and never drops a word. The clue operand
+  form profile is `clue_operand_form_profile`, not `clue_form_profile`.
 - Use **field** or **column** for typed data. **Payload** is reserved for an
   opaque blob, such as a vendor response or a control document that cannot be
   typed. Typed rows have fields, not payloads.

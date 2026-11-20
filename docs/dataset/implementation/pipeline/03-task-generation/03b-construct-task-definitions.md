@@ -3,7 +3,7 @@
 **Parent:** [`03-task-generation.md`](../03-task-generation.md).
 
 **Purpose:** construct persisted task definitions into the task quota plan: task
-target, ordered task clues, answer step, gold answer, validity record, and
+target, ordered task clues, task answer step, gold answer, validity record, and
 canonical identity.
 
 **Input/output contract:** [`io-contracts.md`](../io-contracts.md).
@@ -29,14 +29,14 @@ task. It is not prompt text and not a loose task tuple. It is what `04` renders.
 | `graph_schema_version`, `definition_schema_version` | Versions needed to reproduce the definition. |
 | `target_category` | Task target category from `requirements/task-structure.md`. |
 | `target_binding` | The concrete graph entity or measurement instance the task asks about. |
-| `clues` | Ordered typed task clues. |
-| `answer_meaning`, `answer_step` | What the answer is about and the step that produces it. |
+| `task_clues` | Ordered typed task clues. |
+| `answer_meaning`, `task_answer_step` | What the answer is about and the step that produces it. |
 | `native_answer_format`, `answer_format` | The meaning's native format and the format the prompt will request. |
-| `gold_answer`, `unit`, `tolerance`, `scoring_rule` | Answer data. |
+| `gold_answer`, `answer_unit`, `tolerance`, `scoring_rule` | Answer data. |
 | `answer_evidence` | Measured or derived answer evidence with rule and references. |
 | `choice_pool` | Real answer-space candidates and their distinguishing graph facts, when multiple choice is planned. For P2, it includes validated near-miss choices. |
-| `clue_step_count`, `task_reasoning_step_count` | Step accounting. |
-| `validity` | Uniqueness, final possible-answer count, geometry requirement, and check results. |
+| `task_clue_step_count`, `task_reasoning_step_count` | Step accounting. |
+| `validity_record` | Uniqueness, final possible-answer count, geometry requirement, and check results. |
 | `provenance` | Constructor, sampled parameters, and input versions. |
 
 The definition must be sufficient to reproduce the task without re-running task
@@ -101,7 +101,7 @@ carries `clue_operand_form` (`DS-31`):
 | `aggregated` | an extreme, rank, or count over a set | "adjacent to the largest face of the hole" |
 | `cross_state` | a before/after solid state pair | P2 only |
 
-A clue with no reference has no operand form. A property clue that refers to
+A clue with no reference has no clue operand form. A property clue that refers to
 another entity is two clues and is split into two list items.
 
 The typed check variants are:
@@ -262,7 +262,7 @@ invalid.
 `task_reasoning_step_count` is:
 
 ```text
-clue_step_count + 1 if the task needs an answer step, otherwise clue_step_count
+task_clue_step_count + 1 if the task needs an answer step, otherwise task_clue_step_count
 ```
 
 The lowest step count is 1. There are no 0-step tasks. The graph observation is

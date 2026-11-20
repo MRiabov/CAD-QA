@@ -93,17 +93,17 @@ Each task is a `TaskDefinition` with these fields:
 
 - `target_category`;
 - `target_binding`;
-- ordered `clues`, each a typed `TaskClue` with `clue_type`, `subject`, `check`, and `result`;
-- `answer_meaning`, `answer_step`, `native_answer_format`;
+- ordered `task_clues`, each a typed `TaskClue` with `clue_type`, `subject`, `check`, and `result`;
+- `answer_meaning`, `task_answer_step`, `native_answer_format`;
 - `gold_answer`, `tolerance`, `answer_evidence`;
-- `clue_step_count`, `task_reasoning_step_count`;
+- `task_clue_step_count`, `task_reasoning_step_count`;
 - `validity`, `provenance`.
 
 It also carries one experiment-only field, `gold_query`: the CadQuery code the definition compiles
 to.
 
 **Step accounting** (`task-structure.md` §2.5):
-`task_reasoning_step_count = clue_step_count + 1` when there is an answer step. So:
+`task_reasoning_step_count = task_clue_step_count + 1` when there is an answer step. So:
 
 | Step count | Clue steps | Example |
 |---|---|---|

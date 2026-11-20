@@ -40,14 +40,15 @@ supply every quota target.
 A quota target is a count target for one quota dimension value at one task
 reasoning step count. It is not a complete task. For example, a task with a task
 reasoning step count of 3, task target category `face`, answer meaning `area`,
-answer format `number`, and clue types `relation` and `property` contributes to
-these quota targets:
+answer format `number`, clue types `relation` and `property`, and clue operand
+forms `named` and none contributes to these quota targets:
 
 - `(3, target_category, face)`;
 - `(3, answer_meaning, area)`;
 - `(3, answer_format, number)`;
 - `(3, clue_type, relation)`;
-- `(3, clue_type, property)`.
+- `(3, clue_type, property)`;
+- `(3, clue_operand_form, named)`.
 
 The task is one task, counted in several quota targets. A quota target records:
 
@@ -72,11 +73,12 @@ form cannot exist. Balance over clue operand form is P1. This is a P0
 simplification, not a property of the release: coverage guarantees presence, not
 a useful mix, so one form can carry most clues and still pass.
 
-Do not create a full task target category × clue type × answer meaning × answer
-format cross-product. The requirements are independent: coverage and balance at
-each task reasoning step count, not every joint combination. A task contributes
-to one task target category, one answer format, one answer meaning, one task
-reasoning step count, and one or more clue occurrences.
+Do not create a full task target category × clue type × clue operand form ×
+answer meaning × answer format cross-product. The requirements are independent:
+coverage and balance at each task reasoning step count, not every joint
+combination. A task contributes to one task target category, one answer format,
+one answer meaning, one task reasoning step count, and one or more clue
+occurrences; each task clue with a reference contributes its clue operand form.
 
 Clue quotas are over clue occurrences, because one task has several task clues.
 
@@ -119,8 +121,8 @@ clue occurrence per supported form at each step count where the support table
 marks it feasible.
 
 Allocate the four share-bearing quota dimensions separately. Do not divide `task_reasoning_step_quota` by four
-and do not create a full task target category × clue type × answer meaning ×
-answer format cross-product.
+and do not create a full task target category × clue type × clue operand form ×
+answer meaning × answer format cross-product.
 
 If `supported_value_count` exceeds the available task or clue count, record
 `coverage_infeasible`; do not drop a supported value. A support-table conflict

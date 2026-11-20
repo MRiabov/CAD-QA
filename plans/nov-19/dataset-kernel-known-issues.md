@@ -151,7 +151,7 @@ repeat that with a cleaner schema.
   bounding box; the default values of `TolerancePolicy` (the structure is
   defined, the values are never stated); a `scoring_rule` value for a
   structured answer with numeric tolerance; the canonical JSON rules for
-  `gold_answer_json`, `tolerance_json`, and `evidence_json`.
+  `gold_answer_json`, `tolerance_json`, and `answer_evidence_json`.
 - **Evidence:** `graph-persistence.md` 116–138; `release-dataset-contract.md`
   98 and 126–128. The old kernel used `GEOMETRY_MARGIN_EPSILON = 1e-6`
   (`dataset/query/resolver.py:24`); the new spec has no equivalent.
@@ -302,7 +302,7 @@ repeat that with a cleaner schema.
 - **Severity:** Medium
 - **Owner:** `04`, `05`, release contract
 - **Status:** open
-- **Symptom:** `gold_answer_json`, `tolerance_json`, and `evidence_json` are
+- **Symptom:** `gold_answer_json`, `tolerance_json`, and `answer_evidence_json` are
   “canonical JSON,” but the canonicalization rules live in
   `extraction/canonicalization.md` and are scoped to extraction. The release
   contract has no equivalent. `scoring_rule` offers `exact`,

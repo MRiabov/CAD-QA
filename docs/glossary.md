@@ -775,7 +775,8 @@ cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 | split target | Split task target | target of what count? |
 | family capacity | Family task capacity | capacity for what? |
 | step quota | Task reasoning step quota | quota for which step? |
-| clue stratum / clue strata | clue operand form | retired ladder; a clue has one clue type and one operand form |
+| clue stratum / clue strata | clue operand form | retired ladder; a clue has one clue type and one clue operand form |
+| clue form | clue operand form | drops "operand"; a clue has a clue type and a clue operand form |
 | derivation steps | clue operand form | counted internal work, not task reasoning steps |
 | witness set | answer-equivalent set | 'witness' is constraint-solver jargon |
 | separation margin | stated precision | there is no margin; equality is canonical at the stated precision |

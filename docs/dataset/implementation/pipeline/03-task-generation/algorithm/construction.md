@@ -70,7 +70,7 @@ wrong = {
     other in possible_answers
     if not same_answer(answer(other), answer(witness))
 }
-chain = cover(wrong, facts(witness), target_depth = step_count - answer_step)
+chain = cover(wrong, facts(witness), target_step_count = task_reasoning_step_count - task_answer_step_count)
 ```
 
 - The cover target is the **wrong-answer candidates**, not every other candidate.
@@ -81,7 +81,7 @@ chain = cover(wrong, facts(witness), target_depth = step_count - answer_step)
   longer one.
 - The target step count is a search parameter. If the plan asks for four steps,
   the search looks for a three-clue cover plus the answer step.
-- No cover at the target depth is a deficit for `03a`/`03c`, not a reason to
+- No cover at the target step count is a deficit for `03a`/`03c`, not a reason to
   accept a longer or shorter task.
 
 ## Step 4 — chain order
@@ -126,5 +126,5 @@ and the release are reproducible.
 The box-with-hole program in
 [`plans/nov-19/03b-task-construction-design.md`](../../../../../../plans/nov-19/03b-task-construction-design.md)
 is the first golden record: five edges narrow to two circular edges, then to the
-top one, with clue forms `[(relation, named), (relation, named),
+top one, with clue operand form profile `[(relation, named), (relation, named),
 (comparison, selected)]` and answer meaning length.

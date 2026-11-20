@@ -11,7 +11,7 @@ and a way to test it.
 ## The concern
 
 The dataset generator is engineer-decision-heavy. Every relation, every
-measurement, every clue form, and every chain of them appears to need its own
+measurement, every clue operand form, and every chain of them appears to need its own
 thought, its own contract, and its own validation, because the code has to
 implement it case by case. If that is literally true, the decision count grows
 with the square of the vocabulary, and the project has no natural end.

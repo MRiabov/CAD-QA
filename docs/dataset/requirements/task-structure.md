@@ -92,6 +92,9 @@ must say how it applies to them (for example, "larger than every remaining
 entity") or the task is rejected. The reference does not add a task clue step;
 the comparison is still one task clue.
 
+A task clue with a reference has a **clue operand form**: `named`, `selected`,
+`aggregated`, or `cross_state`. A task clue with no reference has none.
+
 A task clue states one condition. A list item that combines a relation with a
 property is two task clues and is split into two list items.
 
@@ -252,11 +255,13 @@ and P2 values. For each step count in the release, the dataset must contain:
 
 - every task target category supported at that task reasoning step count;
 - every task clue type supported at that task reasoning step count;
+- every clue operand form supported at that task reasoning step count, for task
+  clues that carry a reference;
 - every answer meaning supported at that task reasoning step count;
 - every answer format supported at that task reasoning step count;
 
 A **task reasoning step support table** records which values can occur at each
-step count and why an unsupported value cannot occur there. The four tables are
+step count and why an unsupported value cannot occur there. The five tables are
 derived from the task-definition rules; they are not authored as an independent
 input. They are part of the release documentation and are versioned with the
 generator. "Supported" is a property of the task structure, not of the current
