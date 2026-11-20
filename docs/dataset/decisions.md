@@ -520,15 +520,16 @@ prefix is `DS-`.
   Choosing one rule globally either rejects symmetric measurement tasks or admits
   ambiguous identity tasks.
 - **Decision:** Answer uniqueness compares every entity in the answer-equivalent
-  set using an equality relation supplied by the answer meaning. Identity answers
-  compare entities; numeric answers compare within `answer_tolerance`; label
-  answers compare labels. The chain search terminates on answer uniqueness, never
-  on a set size of one.
+  set using `same_answer`, a relation supplied by the answer meaning and the
+  answer format. Identity answers compare entities; numeric answers compare
+  canonical strings at the stated precision; label answers compare labels. The
+  chain search terminates on answer uniqueness, never on a set size of one.
 - **Consequences:** The answer-equivalent set is recorded in the answer evidence.
-  `answer_tolerance` is shared with the separation margin, so a task cannot pass
-  uniqueness and fail separation. An identity answer in multiple-choice format
-  requires a singleton set. `position`, `extent`, and the change answer meanings
-  need their own equality rule before they ship.
+  `same_answer` is the comparison the release grader performs, so a task cannot
+  pass build-time uniqueness and fail scoring. A comparison clue uses the same
+  precision to decide whether a measured difference is real. An identity answer
+  in multiple-choice format requires a singleton set. `position`, `extent`, and
+  the change answer meanings need their own equality rule before they ship.
 
 ## DS-33 — Task generation is supply-driven with capability-aware deficits
 

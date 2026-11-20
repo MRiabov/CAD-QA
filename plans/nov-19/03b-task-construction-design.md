@@ -59,7 +59,7 @@ The constraints are:
 - every clue strictly shrinks the set:
   `len(narrowed_after) < len(narrowed_before)`;
 - the final set is answer-unique: every remaining possible answer produces the
-  same answer within tolerance;
+  same answer at the stated precision;
 - the answer step produces exactly one answer;
 - the step count is the number of clues plus one when an answer step is
   needed.
@@ -152,7 +152,7 @@ quota target is a deficit.
 measurement answer, two symmetric faces can both produce the same area; the
 task is still answerable. The final set is then the
 **`answer_equivalent_set`**: the entities still possible after the last clue,
-which all produce the same answer within tolerance. The answer evidence
+which all produce the same answer at the stated precision. The answer evidence
 records the whole set, because a record that named one entity would claim the
 prompt had identified it uniquely. An identity answer is the special case
 where the set holds exactly one entity.
@@ -175,7 +175,7 @@ no mode flag. The consequences are placed where they belong:
 | Validity | accept or reject the task | the equality relation |
 | Answer evidence | what to record | the whole `answer_equivalent_set` |
 | Multiple-choice pool | how choices are built | the answer format |
-| Separation | when two measurements differ | the `D4` margin |
+| Comparison clues | whether a measured difference is real | the stated precision |
 | Release reporting | how much symmetry the corpus holds | the answer meaning |
 
 Two consequences are easy to get wrong:
@@ -190,22 +190,30 @@ Two consequences are easy to get wrong:
 
 ### The equality relation
 
-| Answer meaning | `equals(a, b)` | Priority |
+| Answer meaning | `same_answer(a, b)` | Priority |
 |---|---|---|
 | identity | `a` is `b` | P0 |
-| volume, area, length, distance, angle | `abs(a - b) <= answer_tolerance` | P0 |
-| count, rank | `a == b` | P0 |
+| volume, area, length, distance, angle | same canonical string at the stated precision | P0 |
+| count, rank | same integer | P0 |
 | membership | same label: inside, outside, or on the boundary | P0 |
 | validity | same boolean | P0 |
-| position | same point within `answer_tolerance`, component by component | P1 |
-| extent | same minimum and maximum corner within `answer_tolerance` | P1 |
-| CadQuery workplane state | same origin and frame within `answer_tolerance` | P1 |
-| material change | same added and removed volume within `answer_tolerance` | P1 |
+| position | same point at the stated precision, component by component | P1 |
+| extent | same minimum and maximum corner at the stated precision | P1 |
+| CadQuery workplane state | same origin and frame at the stated precision | P1 |
+| material change | same added and removed volume at the stated precision | P1 |
 | topology change | same face, edge, and vertex counts, and the same changed set | P1 |
 
-`answer_tolerance` is the same constant that `D4` uses for the separation
-margin. If the two diverge, a task can pass uniqueness and fail separation, or
-the reverse.
+`same_answer` is the only comparison the build and the grader share. The
+precision comes from the release scoring rule, not from a constant in the task
+generator, so a task cannot be answer-unique at build time and ambiguous at
+scoring time.
+
+| Answer format | Precision used by `same_answer` |
+|---|---|
+| integer, count, rank | exact integer equality |
+| number, coordinate, bounding box | canonical rounding at the stated precision, 4 significant figures by default |
+| yes or no, membership, validity | label equality |
+| structured object | componentwise under the same rules |
 
 `position`, `extent`, and the change meanings are P1 because their equality rule
 needs a decision about component order and about which topology changes count as
@@ -456,10 +464,11 @@ Options: entity identity for every answer meaning, or an equality relation
 chosen per answer meaning. Recommendation: per answer meaning, as the table in
 "The equality relation" above defines. Identity answers use entity identity, so
 a singleton falls out of the general rule rather than being a separate mode.
-Numeric answers use `answer_tolerance`; label answers compare labels.
+Numeric answers compare canonical strings at the stated precision; label
+answers compare labels.
 
-Blocks: `TaskDefinition.answer_evidence`, the `answer_equivalent_set` field, the
-validity predicate in `03b`, and the separation margin in `D4`.
+Blocks: `TaskDefinition.answer_evidence`, the `answer_equivalent_set` field,
+and the validity predicate in `03b`.
 
 ### 2. `D2` — Which solid states can a task refer to?
 
@@ -492,14 +501,19 @@ scope, and a pair element exists only inside the declared enumeration domain.
 
 Tracked as `MC-36` and in `requirements/graph-content.md` section 4.1.
 
-### 4. `D4` — What counts as a separation?
+### 4. `D4` — When do two candidate answers count as different?
 
-Options: any difference, the answer tolerance, or a separate margin.
-Recommendation: one separation margin derived from the answer tolerance. Two
-answers that differ by less than the tolerance are not separated, and the clue
-that would rely on the difference is rejected.
+Folded into `DS-32` on 2026-11-20.
 
-Blocks: uniqueness, tie rejection, and clue validity.
+The question assumed a margin: a distance between two values that the task
+generator chooses. There is no margin. `same_answer` is canonical equality at
+the answer's stated precision, and a different answer is its negation. Answer
+uniqueness is the absence of a different answer among the remaining candidates.
+
+The precision is the release scoring rule, so build-time uniqueness and
+grader-time acceptance cannot disagree. A comparison clue uses the same
+precision to decide whether a measured difference is real rather than float
+noise.
 
 ### 5. `D5` — How are clues ordered?
 
@@ -617,7 +631,7 @@ answers), a replay test, and one end-to-end test.
 The construction strategy is settled (`D11`): supply-driven with a
 capability-aware deficit loop. The two schema blockers are settled as well:
 `D1` (the equality relation for answer uniqueness) and `D2` (state scope). The
-remaining open decisions are `D4` to `D10`, and the construction grammar can
+remaining open decisions are `D5` to `D10`, and the construction grammar can
 be written with the box-and-hole example as the first golden record.
 
 The concern that the vocabulary may be growing without a stopping rule is
