@@ -143,6 +143,8 @@ A task definition is valid only when all of these hold:
 
 - every task clue is satisfied by the bound entities;
 - every task clue narrows the possible answers;
+- every task clue is necessary: removing it leaves at least two distinct answers,
+  or changes the answer;
 - the final possible-answer set contains exactly one answer;
 - the answer step produces exactly one answer;
 - the target binding is unambiguous;
@@ -180,6 +182,10 @@ observation -> clue A -> clue B -> clue C
 
 - If `C` is the target identity: 3 steps.
 - If the task asks for a measurement of `C`: 4 steps.
+
+A clue that can be removed without losing answer uniqueness is redundant, so the
+achievable step count is the number of necessary clues plus the answer step. A
+quota target above that count is a deficit, not a reason to keep a redundant clue.
 
 ## Enumeration and identity
 

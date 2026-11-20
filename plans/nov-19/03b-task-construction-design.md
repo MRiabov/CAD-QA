@@ -123,9 +123,12 @@ For one quota target:
 possible_answers = possible_answers(graph, target_category, state_scope)
 
 for each answer_entity in stable_order(possible_answers):
-    distractors = possible_answers without answer_entity
+    wrong_answer_candidates = {
+        candidate in possible_answers
+        if not same_answer(answer(candidate), answer(answer_entity))
+    }
     facts = true_facts(graph, answer_entity)   # predicates true of answer_entity
-    chain = cover(distractors, facts, target_depth = step_count - answer_step)
+    chain = cover(wrong_answer_candidates, facts, target_depth = step_count - answer_step)
     if chain is empty: continue
 
     narrowed = apply(chain, possible_answers)
@@ -138,13 +141,19 @@ for each answer_entity in stable_order(possible_answers):
 
 Two details matter.
 
-**`cover(distractors, facts, target_depth)` is a bounded set-cover search.**
+**`cover(wrong_answer_candidates, facts, target_depth)` is a bounded set-cover search.**
 Each fact has a precomputed set of possible answers it selects, so applying a
 clue is a set intersection. A greedy cover gives the shortest chain; a less
 greedy cover gives a longer chain. The target step count is therefore a search
 parameter, not an outcome. If the plan asks for a four-step task, the search
 looks for a three-clue cover plus the answer step. If no such cover exists, the
 quota target is a deficit.
+
+The cover target is the set of candidates whose answer differs from the witness
+answer, not every other candidate. Candidates that remain and give the same
+answer are the answer-equivalent set (`DS-32`); they are not wrong-answer
+candidates. The through-hole example depends on this: two circular edges of
+equal length are a valid final set.
 
 ## Uniqueness
 
@@ -532,19 +541,30 @@ The split matters because strict narrowing is order-dependent: a clue that
 narrows in canonical order may not narrow at its presentation position. Validity
 is therefore checked in canonical order only.
 
-### 6. `D6` — How much must a non-final clue narrow the answer set?
+### 6. `D6` — Must every clue be necessary?
 
-Options: any strict decrease; at least two distinct answers remain; at least
-half of the distinct answers remain.
+Accepted as `TG-1`.
 
-The rule is about distinct answers, not candidates. A set of three candidates
-that all produce the same answer is already answer-unique, so every clue after
-it is decorative even though the answer candidate set is still larger than one.
+Options: each clue may leave one answer; every clue must be necessary; every
+non-final clue must leave at least `k` answers.
 
-Recommendation: at least two distinct answers remain after every non-final clue,
-and the final clue reduces the set to one answer. The threshold is a count
-rather than a fraction because the chains are short and a fraction over two
-candidates is not meaningful.
+Recommendation: every clue must be necessary. Removing it must leave at least
+two distinct answers, or change the answer. A clue that can be removed without
+losing answer uniqueness is decoration, even if the chain still narrows at every
+step.
+
+Why the weaker rules fail: "at least two distinct answers remain after every
+non-final clue" constrains only where the chain ends. A middle clue can be
+redundant while every non-final step still leaves two answers. The necessity
+test catches that.
+
+Continuous answers: distinct answers are compared with `same_answer` at the
+stated precision, so continuous values are handled canonically. In practice each
+clue must remove at least one candidate that no other clue removes, so long
+chains over continuous answers need an answer candidate set that shrinks
+gradually.
+Continuous-answer tasks are therefore shorter on average than identity tasks,
+and the step-count quota is an upper bound.
 
 Blocks: task quality, step count, and the choice pool.
 
@@ -558,10 +578,10 @@ because those are the entities the last clue discriminated between. Numeric answ
 the distinct answers of the penultimate set, which makes the choices comparable
 numbers rather than unrelated measurements.
 
-Two parts are still undefined and must be settled with this question: the number
-of choices, and the padding rule when the pool is smaller than that number. The
-earlier "at least five distinct values" threshold was neither justified nor
-connected to a choice count.
+Two parts are still open: the exact rendered number of choices, and the padding
+rule when the pool is smaller than the five that validity requires. The earlier
+"at least five distinct values" line was about numeric values, not about the
+number of choices, which is why it read as a separate threshold.
 
 Blocks: multiple-choice availability and `04`.
 
