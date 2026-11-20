@@ -67,7 +67,7 @@ the user-visible outcome.
 | **CadQuery accessor** | Internal | A CadQuery call that reads or converts existing values without creating geometry. |
 | **CAD topology entity** | Domain | A face, edge, or vertex of a solid state. |
 | **CAD topology entity ID** | Internal | The stable identity of a CAD topology entity within one solid state; `In code:` `entity_id`. |
-| **AST rejection** | Internal | A rejected `02a` CadQuery program with no CadQuery program AST extraction result, distinct from a `02b` failure tombstone. |
+| **AST rejection** | Internal | A rejected `02a` extract CadQuery AST CadQuery program with no CadQuery program AST extraction result, distinct from a `02b` execute CadQuery failure tombstone. |
 | **Solid state** | Domain | The shape before or after an operation, or the final shape. |
 | **Solid state scope** | Internal | Which solid state a task refers to. `In code:` `state_scope`; P0 tasks use the final solid state. |
 | **Point probe** | Internal | A point near a solid state, classified as inside or outside where the shape is available. It supplies the point for a membership answer. |
@@ -181,7 +181,8 @@ Terms that were replaced because they were not composed from the domain:
 
 ## 4. Naming decisions
 
-- **CadQuery program AST extraction result** is the `02a` output; **CadQuery program runtime extraction result** is the `02b` success output.
+- **CadQuery program AST extraction result** is the `02a` extract CadQuery AST output; **CadQuery program runtime extraction result** is the `02b` execute CadQuery success output.
+- A pipeline stage is named by number and title, for example `02c` build CAD graph, never by the bare number. Use the document heading as the title.
 - A **Shape snapshot** is the runtime capture; a **solid state** is the CAD graph entity. Do not write bare `state`.
 - Use **CAD graph entity** in prose; `node_id` and `nodes.parquet` are code and schema names.
 - **CAD feature solid state effect delta** is the delta record; `feature_application_effect` is a Measurement scope.
