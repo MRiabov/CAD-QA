@@ -19,6 +19,7 @@ doc, delete the row. Open questions remain in
 | MC-15 | [`03b`](pipeline/03-task-generation/03b-construct-task-definitions.md), [`05`](pipeline/05-validate-and-export-release.md) | P0 multiple-choice fairness checks: correct choice present, choices unique, same answer space, unit/frame/precision, non-leaking descriptions, deterministic labels. | P0 choices can be invalid even when the choice pool has five entries. |
 | MC-16 | [`03a`](pipeline/03-task-generation/03a-allocate-task-quotas.md), [`03b`](pipeline/03-task-generation/03b-construct-task-definitions.md) | P0/P1/P2 implementation-scope filter for generation and validation. | Later-scope values can enter the first release. |
 | MC-35 | [`02c`](pipeline/02c-build-cad-graph.md) | Relation payloads: tolerance, CAD graph evidence kind/rule/refs per relation type, and which relations are derived rather than measured. | P0 parallel, perpendicular, containment, and intersection clues cannot be checked reproducibly. |
+| MC-36 | [`graph-content.md`](../requirements/graph-content.md), [`graph-construction.md`](pipeline/extraction/graph-construction.md) | Enumeration domain for pair measurements and pair relations: which pairs exist, and the size bound for the default all-pairs domain. | Without it a task can depend on a pair the graph never enumerated, and the failure looks like a missing measurement rather than a missing rule. |
 
 ## P1
 

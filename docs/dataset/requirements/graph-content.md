@@ -140,6 +140,31 @@ evidence is either **measured** by running CadQuery, or **derived** from the
 program text and geometry by an exact rule. A guessed or approximate value is not
 CAD graph evidence and cannot support a benchmark answer.
 
+### 4.1 Enumeration domain
+
+A measurement kind is declared for a scope, not for every member of that scope.
+Two domains exist.
+
+**Per-entity measurements are total over their scope.** Every face has an area,
+every edge has a length, every path segment has a length, every solid state has
+a volume and a bounding box. A missing row for a per-entity measurement is a
+graph defect, not a data condition.
+
+**Pair measurements and pair relations are enumerated over a declared domain.**
+`distance_to`, `angle`, `coplanar_with`, `coaxial_with`, `intersects`, and
+`contains` apply to pairs, and a solid state can hold thousands of pairs. The
+domain says which pairs exist:
+
+- the default is every pair of the accepted entity kinds within one solid
+  state;
+- a narrower domain is stated here, per relation or measurement, with its size
+  bound.
+
+A pair outside the domain is not a missing measurement; it is not a candidate.
+Without a stated domain, a task can depend on a pair that the graph never
+enumerated, and the failure looks like a missing value rather than a missing
+rule.
+
 ## 5. States and timing
 
 A program builds a shape over time. The graph must keep the solid states the tasks
@@ -172,9 +197,13 @@ depends on the failed output is rejected.
    states are distinct; only the P2 `same_as` relation may link them.
 5. No graph element is orphaned.
 6. Every graph element used by a task clue or answer is present.
-7. Every graph element that cannot be measured is recorded as missing, not guessed.
+7. A graph element is either present with a measured or derived value, or
+   outside the declared enumeration domain. A gap is the domain minus the
+   rows, computed by the coverage check; the graph stores no missing-value
+   record.
 8. The graph can answer every task target category, clue type, and answer meaning the dataset claims to support at each task reasoning step count.
-9. A task that needs a missing graph element is rejected, not softened.
+9. A task that needs a graph element outside the declared domain is rejected,
+   not softened.
 
 ## 7. What the graph is not
 

@@ -103,6 +103,17 @@ Create relations in this order; all endpoints must exist.
 Do not create a relation whose endpoint is missing. A missing endpoint rejects
 the graph; it is not dropped.
 
+## Enumeration domain
+
+Per-entity measurements are emitted for every entity in their scope. A missing
+row rejects the graph.
+
+Pair relations and pair measurements are emitted only for a pair inside the
+domain declared in
+[`graph-content.md` §4.1](../../../requirements/graph-content.md#41-enumeration-domain).
+A pair outside the domain produces no row. It is not recorded as missing, and it
+must not be guessed.
+
 ## Measurement construction
 
 Use the measurement catalog in [`graph-persistence.md`](graph-persistence.md).

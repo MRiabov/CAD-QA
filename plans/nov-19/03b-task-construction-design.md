@@ -480,11 +480,17 @@ possible-answer set.
 
 ### 3. `D3` — How is a clue evaluated when a measurement is missing?
 
-Options: unknown counts as false, or the clue is invalid. Recommendation: a clue
-is applicable only when its predicate is total on the current set. Treating
-unknown as false silently removes candidates, which makes the narrowing unsound.
+Withdrawn 2026-11-20.
 
-Blocks: chain search and the rejection reasons.
+The question assumed a template-driven search, where a clue sentence is
+generated first and evaluated afterwards. The construction design enumerates
+facts from the graph, and each fact carries the extension it selects, so an
+unsupported predicate is never attempted and there is no inapplicable clue to
+evaluate. What remains is graph completeness, which is a graph-contract rule
+rather than a clue-evaluation rule: a per-entity measurement is total over its
+scope, and a pair element exists only inside the declared enumeration domain.
+
+Tracked as `MC-36` and in `requirements/graph-content.md` section 4.1.
 
 ### 4. `D4` — What counts as a separation?
 
@@ -611,7 +617,7 @@ answers), a replay test, and one end-to-end test.
 The construction strategy is settled (`D11`): supply-driven with a
 capability-aware deficit loop. The two schema blockers are settled as well:
 `D1` (the equality relation for answer uniqueness) and `D2` (state scope). The
-remaining open decisions are `D3` to `D10`, and the construction grammar can
+remaining open decisions are `D4` to `D10`, and the construction grammar can
 be written with the box-and-hole example as the first golden record.
 
 ## References
