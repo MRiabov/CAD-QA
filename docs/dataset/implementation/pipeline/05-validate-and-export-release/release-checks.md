@@ -156,23 +156,28 @@ block. In P1 both are enforced, and the narrow row implies the wide one.
 
 ## Bound arithmetic
 
-Bounds are compared as exact rationals. A row stores the integer count and the
-integer denominator, and each bound as canonical decimal text, as
-[`03b` construct task definitions](../03-task-generation/03b-construct-task-definitions.md)
-defines it. The comparison multiplies through, so no floating-point value is ever
-compared and a 5% bound on 10,000 tasks is exactly 500.
-
-A per-step lower bound is at least one task:
+Every bound becomes an integer count before anything is compared:
 
 ```text
-minimum_count = max(1, floor(lower_multiple * conditional_release_share * denominator))
-maximum_count = ceil(upper_multiple * conditional_release_share * denominator)
+absolute range: minimum_count = ceil(minimum_share * denominator)
+                maximum_count = floor(maximum_share * denominator)
+per-step range: minimum_count = max(1, floor(0.5 * conditional_release_share * denominator))
+                maximum_count = ceil(2 * conditional_release_share * denominator)
 ```
+
+The clue operand form severe row uses its own multiples in place of 0.5 and 2.
 
 The `max(1, ...)` is the same rule [`task-structure.md`
 section 6](../../../requirements/task-structure.md) states: when half of a
 value's conditional release share is less than one task, one task satisfies the
-lower bound.
+lower bound. `03a` allocate task quotas uses the same floor and ceiling on the
+planned count, so the plan and the check convert a share the same way.
+
+The report stores counts, not shares. A share is a ratio of two integers and its
+decimal expansion can be infinite: three supported values at a step count have a
+conditional release share of one third, and half of one third has no canonical
+decimal text. Counts are exact, and every comparison is integer arithmetic. A
+5% bound on 10,000 tasks is exactly 500.
 
 A step count with zero or one supported value for a dimension has no mix to
 balance. Its per-step rows are `not_applicable`.
@@ -180,12 +185,13 @@ balance. Its per-step rows are `not_applicable`.
 ## When a bound is superseded
 
 A bound is `superseded` when the coverage floor makes it impossible to hold, and
-the release is not at fault. Two tests:
+the release is not at fault. Two tests, both in counts:
 
-- an interval bound: `n * maximum < 1` or `n * minimum > 1`, where `n` is the
-  number of supported values at that scope. Each supported value needs at least
-  one task, and their shares sum to 1, so no assignment exists.
-- a per-step mix: the sum of the per-step lower bounds exceeds the denominator.
+- an interval bound: `n * maximum_count < denominator` or
+  `n * minimum_count > denominator`, where `n` is the number of supported values
+  at that scope. Each supported value needs at least one task, and their counts
+  sum to the denominator, so no assignment exists.
+- a per-step mix: the sum of the `minimum_count` values exceeds the denominator.
 
 This is the conflict [`task-structure.md`
 section 6](../../../requirements/task-structure.md) says is reported rather than
@@ -218,8 +224,8 @@ accepted row:
 | `check` | The check name. |
 | `scope` | `release` or the task reasoning step count. |
 | `value` | The dimension value, when the check is per value. |
-| `observed` | The measured count or share. |
-| `bound` | The bound the count or share missed. |
+| `count`, `denominator` | The measured count and its denominator. |
+| `minimum_count`, `maximum_count` | The bound the count missed. |
 | `reason` | Why the owner accepts it. |
 
 A `deferred` row is present in every release, including the first one, so the
@@ -252,10 +258,12 @@ Balance row:
 | `value` | The dimension value, or the program or answer key for a cap on a high-cardinality quantity. |
 | `count` | The integer count. |
 | `denominator` | The integer denominator. |
-| `conditional_share` | Canonical decimal text, or null when the bound is not relative. |
-| `minimum`, `maximum` | Canonical decimal text, or null when the bound is one-sided. |
+| `minimum_count`, `maximum_count` | The integer bound, or null when the bound is one-sided. |
 | `outcome` | The outcome. |
 | `acceptance` | Null, or the `known_misses` entry that accepts a miss. |
+
+A `deferred` row carries the check, the scope, and the outcome, and measures
+nothing, because the requirement is outside the release implementation scope.
 
 A dimension with a small value set reports every value: task target category,
 answer format, answer meaning, clue type, clue operand form, task reasoning step
