@@ -620,6 +620,11 @@ capability-aware deficit loop. The two schema blockers are settled as well:
 remaining open decisions are `D4` to `D10`, and the construction grammar can
 be written with the box-and-hole example as the first golden record.
 
+The concern that the vocabulary may be growing without a stopping rule is
+recorded in `plans/nov-20/vocabulary-scope-risk.md`. Its mitigation is to
+freeze the P0 vocabulary to what the Phase 0 slice touches and mark every other
+row as deferred.
+
 ## References
 
 - `docs/dataset/implementation/pipeline/03-task-generation/03b-construct-task-definitions.md`
