@@ -53,6 +53,7 @@ not product requirements.
 | [`implementation/task-step-support.md`](implementation/task-step-support.md) | Derived task reasoning step support tables used to check coverage, not generator inputs. |
 | [`implementation/prompt-templates.md`](implementation/prompt-templates.md) | The `prompts.yaml` artifact and its template schema. |
 | [`implementation/python-and-golang.md`](implementation/python-and-golang.md) | The Python and Go language boundary for the dataset generator. |
+| [`implementation/file-trees.md`](implementation/file-trees.md) | Where the replacement generator's code, tests, fixtures, and config live. |
 | [`implementation/open-questions.md`](implementation/open-questions.md) | Centralized inventory of unresolved questions across pipeline docs. |
 | [`implementation/missing-contracts.md`](implementation/missing-contracts.md) | Ephemeral audit backlog of absent contracts by owning doc. |
 
