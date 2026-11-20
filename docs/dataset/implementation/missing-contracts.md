@@ -278,9 +278,18 @@ balance check, and P0 coverage does not stand in for one: it proves presence,
 not a useful mix. If the P0 diagnostic reports severe imbalance, the target is
 needed for that release rather than P1.
 
-**Recommendation:** add the row when the P1 support grid is measured, using the
-same half-to-two-times conditional share rule as the other dimensions, with the
-release share set from the P1 plan.
+Equal share is not the intended target. The forms differ in what they demand: a
+`selected` reference resolves by pointer, a `named` reference requires
+identifying a described entity, and an `aggregated` reference requires computing
+a measurement over a set. The intended direction is to reduce the forms that
+resolve without a geometric computation and raise the ones that require it. The
+ordering and the numbers are not set, and the share must stay within what the
+program capability census can supply, because a target above supply becomes a
+deficit rather than a mix.
+
+**Recommendation:** set the share order first, then take the numbers from the
+program capability census. The equal-share fallback is a placeholder, not the
+target.
 
 ### Technical decisions
 
