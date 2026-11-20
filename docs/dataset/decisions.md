@@ -536,6 +536,8 @@ prefix is `DS-`.
 ## DS-33 — Task generation is supply-driven with capability-aware deficits
 
 - **Status:** accepted (2026-11-20).
+- **Revised by:** `DS-43`; the census is derived from the graph, not emitted by
+  `02c`.
 - **Context:** A full demand-driven planner would specify a task cell up front and
   query a capability index for programs that can support it. The capability
   census needs the graph, but `01b` selects the program pool before `02` builds
@@ -763,3 +765,20 @@ prefix is `DS-`.
   row, so `prompt_sha256` still identifies the dataset content. The frame
   convention and the answer instruction stay inside the user message, because they
   are task context, not harness policy.
+
+## DS-43 — The capability census is derived, not emitted
+
+- **Status:** accepted (2026-11-20).
+- **Context:** `DS-33` said `02c` emits a capability census as a by-product of
+  graph construction. That implied an artifact, and left open whether it was a
+  fourth graph table or a sidecar. The census is a pure function of the graph, so
+  a stored copy can only be stale or redundant. The graph tables are per-entity
+  and the census is per-program, so it also has no existing row to extend.
+- **Decision:** The census is a typed function of the graph, derived on demand. It
+  is not an artifact and has no schema version of its own. `03a` derives it for
+  all active programs and stores the union per family in
+  `TaskQuotaPlan.family_profiles`; `03b` derives it for the program it is
+  constructing; `03c` reads `family_profiles`.
+- **Consequences:** One fewer artifact, schema, and staleness rule, and no change
+  to `io-contracts.md` or `artifacts.md`. The cost is a pass over the graph per
+  plan revision, which is a few seconds and bounded by the revision count.

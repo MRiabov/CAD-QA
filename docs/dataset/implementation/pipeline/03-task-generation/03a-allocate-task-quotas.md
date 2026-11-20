@@ -8,11 +8,23 @@ definitions are generated.
 
 ## Input / output
 
-- Input: CAD graphs for the selected program pool, the program capability census,
-  program metadata, the release implementation scope, the balance policy
-  (`balance.yaml`), the current `DeficitLedger` (empty on the first plan), and
-  `ProgramReassignmentRequest` records from `03c`.
+- Input: CAD graphs for the selected program pool, program metadata, the release
+  implementation scope, the balance policy (`balance.yaml`), the current
+  `DeficitLedger` (empty on the first plan), and `ProgramReassignmentRequest`
+  records from `03c`.
 - Output: `TaskQuotaPlan`.
+
+## Program capability census
+
+`03a` derives the [program capability census](algorithm/program-capability-census.md)
+from the graphs it already reads. The census is not an input and not an artifact:
+it is one function, called here and in `03b` construct task definitions.
+
+For each active program the census answers which target categories, clue
+constructors, clue operand forms, measurements, answer meanings, and point probes
+the graph has. `03a` uses it to assign quota targets and to rank by scarcity, then
+stores the union per family in `family_profiles`. `03c` resolve deficits reads
+that projection instead of deriving the census again.
 
 ## Balance policy
 
@@ -67,7 +79,7 @@ manifest records. The defaults are the starting point, not a second copy.
 | `quota_targets` | Quota targets: task reasoning step count, quota dimension, dimension value, minimum, target count, maximum, and priority. |
 | `clue_quotas` | Clue quotas counted over clue occurrences. |
 | `clue_occurrences` | Planned clue occurrences for each task reasoning step count. |
-| `family_profiles` | Graph capabilities, family task capacity, and probe success rate per CADEvolve program family. |
+| `family_profiles` | The union of the member programs' census capabilities, family task capacity, and probe success rate per CADEvolve program family. |
 | `family_assignment` | Family to split, task quota, per-task-reasoning-step task quotas, and assigned quota targets. |
 | `construction_attempt_budgets` | One construction batch per quota target and family for the remaining work in this plan revision. |
 | `construction_attempt_multiplier` | Construction attempt multiplier over the accepted quota; default 1.5, or 2.0 for high-rejection quota targets. |

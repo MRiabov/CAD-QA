@@ -13,7 +13,7 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 14 open entries: 10 P0 technical and 4 P1 technical. No product
+There are 13 open entries: 9 P0 technical and 4 P1 technical. No product
 decision remains open, and P2 is empty.
 
 ## Decisions needed from the owner
@@ -30,43 +30,20 @@ None.
 
 Work order:
 
-1. `MC-46` — the capability census artifact; `03c` resolve deficits cannot route
-   a capability deficit without it.
-2. `MC-25` — the prompt template file; `04` render prompt and choices has
+1. `MC-25` — the prompt template file; `04` render prompt and choices has
    nothing to render from without it.
-3. `MC-11` — the rendering inputs; a prompt cannot be reproduced from the
+2. `MC-11` — the rendering inputs; a prompt cannot be reproduced from the
    declared input without them.
-4. `MC-12` — the release projection; the release columns have no writer without
+3. `MC-12` — the release projection; the release columns have no writer without
    it.
-5. `MC-13` — the coverage and balance checks; they compare the release against
+4. `MC-13` — the coverage and balance checks; they compare the release against
    the support tables and `balance.yaml`.
-6. `MC-15` — multiple-choice fairness; the choice check.
-7. `MC-38` — the release fields and fifth support file; the consumer contract.
-8. `MC-26` — the manifest and dataset card fields; the release ships both.
-9. `MC-41` — the construction test contract; it locks the invariants the other
+5. `MC-15` — multiple-choice fairness; the choice check.
+6. `MC-38` — the release fields and fifth support file; the consumer contract.
+7. `MC-26` — the manifest and dataset card fields; the release ships both.
+8. `MC-41` — the construction test contract; it locks the invariants the other
    entries introduce.
-10. `MC-42` — the golden record; the first end-to-end comparison.
-
-#### MC-46 — Capability census artifact
-
-The program capability census has a contract in
-`algorithm/program-capability-census.md`, but no artifact or I/O contract. The
-census is emitted by `02c` build CAD graph and consumed by `03a` allocate task
-quotas, `03b` construct task definitions, and `03c` resolve deficits, yet
-`io-contracts.md` lists only `CadGraph` as the `02` execute CadQuery and build
-graph output, `artifacts.md` has no census row, and the module README and `03b`
-construct task definitions input lists omit it even though the `03a` allocate
-task quotas doc names it. `DS-33` makes the census the deficit path's capability
-index, so `03` task generation cannot route a `capability_deficit` without it.
-
-**Recommendation:** add `ProgramCapabilityCensus` to the `02` execute CadQuery
-and build graph output in `io-contracts.md`, add an artifact row in
-`artifacts.md` with writer `02c` build CAD graph, readers `03a` allocate task
-quotas/`03b` construct task definitions/`03c` resolve deficits, identity (graph
-hash plus census schema version), and format, and add it to the `03a` allocate
-task quotas/`03b` construct task definitions input lists. Decide whether it is a
-fourth graph table or a sidecar artifact; the current "versioned with the graph
-artifact" wording does not say which.
+9. `MC-42` — the golden record; the first end-to-end comparison.
 
 #### MC-25 — Prompt template file
 
@@ -266,6 +243,10 @@ when its completion marker and identity match.
 
 ## Closed or merged in the 2026-11-20 pass
 
+- `MC-46` — dissolved. The census is a typed function of the graph, not an
+  artifact: `03a` derives it and stores the union per family in
+  `family_profiles`, `03b` derives it per program, and `03c` reads the plan.
+  `DS-43` supersedes the sentence in `DS-33` that says `02c` emits the census.
 - `MC-44` — feasibility is the constructor's output over a committed coverage
   fixture set, not an abstraction of the grammar. The fixture set and the checked-in
   expected table are in `task-step-support.md`, and the structural and witness

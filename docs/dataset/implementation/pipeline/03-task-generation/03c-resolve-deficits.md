@@ -64,7 +64,7 @@ here: `03b` records a class directly, and `03c` classifies what `03a` reports.
 
 | Class | Meaning | Response |
 |---|---|---|
-| `capability_deficit` | No active program's census has the capability the quota target needs. | Census query, then `ProgramRequest` to `01b`. |
+| `capability_deficit` | No family profile has the capability the quota target needs. | Read `family_profiles` in the plan, then `ProgramRequest` to `01b`. |
 | `probe_deficit` | The bound state has no surviving point probe, so it supports no membership task. | Drop membership for that state and record the deficit. No request. |
 | `capacity_deficit` | A capable program exists, but family quota, split capacity, or assignment leaves no room. | `ProgramReassignmentRequest` to `03a`; `ProgramRequest` only when the split itself is short. |
 | `construction_deficit` | The construction batch was underfilled, or the rejection rate is high. | `ProgramReassignmentRequest` to raise the attempt budget; a persistent high rate is a `03b` fix. |
@@ -82,18 +82,20 @@ the class. The mapping is:
 | `coverage_infeasible`, `answer_meaning_infeasible` | `structural_deficit` |
 | `cap_conflict` | `plan_conflict` |
 | `split_capacity_short`, `family_quota_short`, `family_quota_target_conflict` | `capacity_deficit` |
-| `quota_target_family_unassigned` | `capability_deficit` when no active census has the capability, otherwise `capacity_deficit` |
+| `quota_target_family_unassigned` | `capability_deficit` when no family profile has the capability, otherwise `capacity_deficit` |
 
 ### Capability lookup
 
 `capability_deficit` and `capacity_deficit` differ only in whether the pool has
-the capability, so the census decides:
+the capability, so the family profiles decide:
 
-1. Query every active program's census for the quota target's capability.
-2. At least one program has it: `capacity_deficit`. The graph exists and the
-   plan did not use it.
-3. No program has it: `capability_deficit`. The request carries the missing
-   capability and the census version it was checked against.
+1. Read `family_profiles` in the plan for the quota target's capability. Each
+   entry is the union of its member programs' census capabilities, so a capability
+   absent from every entry is absent from every program.
+2. At least one family has it: `capacity_deficit`. The graph exists and the plan
+   did not use it.
+3. No family has it: `capability_deficit`. The request carries the missing
+   capability and the plan version it was checked against.
 
 The census is a filter, not an oracle. A capability that is present but yields no
 valid task is a `construction_deficit` or a `constructor_deficit`, not a
@@ -104,14 +106,14 @@ valid task is a `construction_deficit` or a `constructor_deficit`, not a
 A missing probe is per state. `03b` records `probe_deficit` and drops membership
 for that state; one state without a probe is not a reason to fetch programs.
 
-`03c` escalates only when no active program's census reports a state with a
-surviving probe. Then every membership quota target is a `capability_deficit`,
-and the request asks for programs whose graphs contain a probe.
+`03c` escalates only when no family profile reports a state with a surviving
+probe. Then every membership quota target is a `capability_deficit`, and the
+request asks for programs whose graphs contain a probe.
 
 A pair that is not emitted is not a deficit class. A pair outside the pair
 emission rule is not a candidate, and a state above `max_state_entities` is
 rejected at graph construction, so neither reaches `03c`. An underfilled pair
-target is classified by the census like any other target.
+target is classified by the family profiles like any other target.
 
 ## ProgramReassignmentRequest
 
