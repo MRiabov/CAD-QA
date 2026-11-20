@@ -155,6 +155,40 @@ The answer must be produced by CadQuery execution or by an exact derivation from
 the program and its geometry, with answer evidence. A guessed or approximate
 answer is not valid.
 
+### Answer resolver
+
+The resolver turns the bound target and the penultimate answer candidate set into
+the gold answer and its evidence:
+
+```text
+resolve_answer(answer_meaning, bound_target, answer_parameter, penultimate_set)
+  -> (gold_answer, answer_evidence)
+```
+
+| Answer meaning | Answer | Evidence |
+|---|---|---|
+| Identity | The entity the whole answer-equivalent set shares. | The set and the binding. |
+| Volume | The volume of the bound solid state. | Kernel volume. |
+| Area | The area of the bound face or profile. | Kernel area. |
+| Length | The length of the bound edge or path segment. | Kernel length. |
+| Distance | The shortest distance between the bound pair, or between the point and the entity. | Kernel distance. |
+| Angle | The graph angle for the pair, with the convention in `graph-content.md`. | Graph measurement. |
+| Count | The number of entities in the bound set. | Set size. |
+| Membership | Inside or outside, from the point probe. | Probe classification. |
+| Position | The declared point: face centroid, edge midpoint, vertex point, or solid state centroid. | Kernel point or graph centroid. |
+| Extent | The minimum and maximum corner of the bounding box in the program frame. | Graph bounding box. |
+| Material change | The signed volume or count the bound operation adds or removes. | Signed volume change or feature count. |
+| Topology change | The signed change in the declared category. | Topology change. |
+
+`answer_parameter` is null for every meaning that declares nothing. It carries
+the point for a position and the category for a topology change. A material
+change declares no parameter: its sign carries the direction, so a cut answers a
+negative number.
+
+P1 and P2 meanings get a row when their implementation scope is built. The
+resolver never guesses: a missing target or a missing graph measurement rejects
+the task rather than producing an approximate answer.
+
 ### Membership answers
 
 A membership answer is computed by `is_inside(solid_state, point)`. The point comes

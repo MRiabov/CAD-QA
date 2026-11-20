@@ -150,7 +150,7 @@ must support at least these.
 | Validity | Solid state | Whether the shape is a valid solid or compound. | P2 |
 | Volume change | Operation | Signed volume added or removed. | P0 |
 | Bounding-box change | Operation | Change caused by the operation. | P1 |
-| Topology change | Operation | Change in face, edge, or vertex counts. | P0 |
+| Topology change | Operation | Signed change in face, edge, or vertex counts; the task declares the category. | P0 |
 | CadQuery workplane frame | CadQuery workplane | Origin, x direction, and normal. | P1 |
 
 Every measurement has:

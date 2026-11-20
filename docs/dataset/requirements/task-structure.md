@@ -122,7 +122,7 @@ returned. The answer format says "number" or "boolean"; the answer meaning says
 | Answer meaning | What it describes | Priority |
 |---|---|---|
 | Identity | Which entity is the answer. | P0 |
-| Volume | A volume or volume change. | P0 |
+| Volume | The volume of a shape. | P0 |
 | Area | An area. | P0 |
 | Length | A length. | P0 |
 | Distance | A distance between two entities or a point and an entity. | P0 |
@@ -133,14 +133,14 @@ returned. The answer format says "number" or "boolean"; the answer meaning says
 | Position | A point location in space, declared by the question: a face centroid, an edge midpoint, a vertex point, or a solid state centroid. | P0 |
 | Extent | A minimum and maximum corner. | P0 |
 | CadQuery workplane state | The frame of a CadQuery workplane. | P1 |
-| Material change | Material added or removed. | P0 |
-| Topology change | A change in faces, edges, or vertices. | P0 |
+| Material change | Material added or removed, as a signed volume or count. A cut answers negative. | P0 |
+| Topology change | A change in face, edge, or vertex counts. The question declares the category; the answer is the signed delta for that category. | P0 |
 | Validity | Whether a shape is valid. | P2 |
 
-Position, material change, and topology change declare a parameter in the
-question: the point for a position, the direction for a material change, and the
-category for a topology change. The parameter is part of the task definition and
-the answer evidence, not a convention the resolver picks.
+Position and topology change declare a parameter in the question: the point for a
+position and the category for a topology change. The parameter is part of the
+task definition and the answer evidence, not a convention the resolver picks. A
+material change declares no parameter; its sign carries the direction.
 
 The answer meaning is not the answer format. A volume can be returned as a
 number; a membership result can be returned as yes or no; an identity is

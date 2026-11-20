@@ -11,7 +11,7 @@ only a **technical decision** that engineering can settle from the decisions
 already recorded. Product entries block more than they appear to, because
 writing code cannot close them.
 
-There are 27 open entries: 16 P0 technical, 8 P1 product, and 3 P1 technical. No
+There are 26 open entries: 15 P0 technical, 8 P1 product, and 3 P1 technical. No
 P0 product decision remains open, and P2 is empty.
 
 ## P0
@@ -45,20 +45,6 @@ reproducibly.
 **Recommendation:** add `tolerance` and `evidence` to the relation payload in
 `graph-persistence.md`, with evidence as a rule plus references for a derived
 relation, or a kernel call for a measured one.
-
-#### MC-08 — Answer resolver
-
-The answer resolver is not written: one rule per answer meaning that turns the
-bound target and the penultimate answer candidate set into the gold answer and
-its evidence. The construction order is in `algorithm/construction.md`, but the
-resolver itself is still prose, and `03b` defines validity without defining the
-thing that produces the answer it validates. The face and edge angle
-conventions and the declared-point rule for position are now written; material
-change and topology change are not.
-
-**Recommendation:** write a resolver table next to the answer-format table in
-`03b`, one row per answer meaning, naming the kernel call or the exact derivation
-and the evidence it records.
 
 #### MC-37 — Definition fields for the new decisions
 
@@ -329,6 +315,9 @@ input hash plus every version that affects the output.
 
 - `MC-31` — the slow loop in `03c` includes `01d`; the flow line in `00` was the
   defect and is fixed.
+- `MC-08` — the resolver table is written in `03b`, with the angle, position,
+  material-change, and topology-change conventions. The dataset card now has to
+  state them for consumers.
 - `MC-39` — clue operand form is coverage-only in P0, with one clue occurrence
   per supported form per step count and no share; `03a` now says so.
 - `MC-36` — the state entity limit is a scope constant measured once per
