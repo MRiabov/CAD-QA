@@ -28,8 +28,8 @@ Coverage and balance checks:
 - Check the release projection: recompute `prompt_sha256` from the `prompt`
   bytes, check `clue_types` against `clue_operand_form_profile`, parse
   `gold_answer_json` according to `answer_format`, and require `tolerance_json`
-  for every non-exact answer. `05` does not recompute `answer_sha256`; the
-  release-table hash covers the answer columns.
+  for every non-exact answer. `05` does not recompute `answer_sha256`;
+  `release_table_sha256` covers the answer columns.
 - Recheck split isolation by CADEvolve program family on the final release
   table. `03a` assigns the split; `03b` stamps it; `04` carries it.
 - Run the coverage and balance checks in
@@ -121,11 +121,13 @@ The manifest fields are in the
 [release contract](../../requirements/release-dataset-contract.md) section 7, and
 the card outline is section 8. `05` owns both.
 
-- Compute `release_id` from the release table content before writing the
-  manifest. It is the release identity, so it is computed once and never
-  patched afterwards.
-- Record `generator_version` as the git commit SHA of the tree that built the
-  release. Refuse to export from a dirty tree, or when the SHA is not readable.
+- Compute `release_id` from the release inputs before writing the manifest. It
+  is the release identity, so it is computed once and never patched afterwards.
+- Record `generator_version` from the generator's declared version constant. It
+  is not derived from git, and a dirty working tree does not block the export.
+- Compute `release_table_sha256` from the finished `release.parquet` file, and
+  record it next to `release_id`. One is the identity, the other is byte
+  integrity, and they change for different reasons.
 - Copy `upstream_dataset_version` and `external_dataset_manifest_sha256` from the
   external dataset manifest. `05` does not reinterpret either value.
 - Write the dataset card from the manifest. Every number in the card is copied,
