@@ -29,9 +29,9 @@ assert-from-the-artifact rule, and the test-first order — are in
 | `04-render-prompt-and-choices.md` | `04` render prompt and choices. | missing |
 | `05-validate-and-export-release.md` | `05` validate and export release. | missing |
 
-A missing row in the table is a missing test, not a pipeline stage without
-tests. The group docs (`01`, `02`, `03`) are overviews; the tests pin the
-sub-stages.
+A name in backticks is a test doc that is not written yet. That is a missing
+test, not a pipeline stage without tests. The group docs (`01`, `02`, `03`) are
+overviews; the tests pin the sub-stages.
 
 ## Fixtures and records
 
