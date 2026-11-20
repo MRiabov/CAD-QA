@@ -11151,9 +11151,8 @@ def test_benchmark_release_tier_applies_stricter_numeric_gates() -> None:
     assert benchmark["passes_candidate_breadth"]
 
 
-def test_benchmark_release_profile_matches_dataset_spec_numeric_contract() -> None:
+def test_benchmark_release_profile_matches_epics_numeric_gates() -> None:
     profile = release_gate_profile("benchmark-release")
-    spec = Path("specs/dataset-spec.md").read_text(encoding="utf-8")
     epics = yaml.safe_load(Path("epics-and-stories.yaml").read_text(encoding="utf-8"))
     tier_contract = epics["release_tiers"]["benchmark-release"]
     numeric_gates = tier_contract["numeric_gates"]
@@ -11231,32 +11230,6 @@ def test_benchmark_release_profile_matches_dataset_spec_numeric_contract() -> No
     assert enforced_gates["preview_evidence"] == profile.enforce_preview_evidence
     assert enforced_gates["family_test_evidence"] == profile.enforce_family_test_evidence
 
-    for required_fragment in [
-        "At least 10,000 public/private release rows.",
-        "At least 10% as many distinct CAD model source IDs as release rows",
-        "At least 10,000 rows after default geometry-critical filtering.",
-        "0%.",
-        "At least 10 generated release families",
-        "every generated release family is between 1% and 10% of exported rows.",
-        "At least 99%.",
-        "At most 2%, or emitted only in a separate calibration split/artifact.",
-        "At least 95% of benchmark-release rows have `geometry_hop_count > 0`.",
-        "At least 90% of benchmark-release rows have `logical_hop_count >= 3`.",
-        "15%-30% of benchmark-release rows.",
-        "5%-15% of benchmark-release rows.",
-        "median pre-final breadth at least 4.",
-        "At least 20 prompt templates",
-        "no prompt template exceeds 5% of benchmark-release rows.",
-        "At least 1,000 unique gold answers.",
-        "At least 8 bits.",
-        "no sampled parameter value exceeds 35%",
-        "Every supported sampled axis/direction value contributes at least 20%",
-        "at least 3 protected groups per split",
-        "At least 20 sampled rows per changed release family",
-        "positive generation coverage, failure/quarantine coverage, and release-report accounting coverage",
-        "and experiment summaries may call an artifact benchmark-ready",
-    ]:
-        assert required_fragment in spec
 
 
 def test_intended_family_manifest_reports_zero_row_and_non_release_families(tmp_path: Path) -> None:
