@@ -125,7 +125,37 @@ def _run_phase(args: argparse.Namespace) -> None:
     print(json.dumps(result, sort_keys=True))
 
 
+_NODE_SCHEMA = {
+    "graph_id": pl.Utf8,
+    "node_id": pl.Utf8,
+    "node_type": pl.Utf8,
+    "label": pl.Utf8,
+    "source_ref": pl.Utf8,
+}
+
+_RELATION_SCHEMA = {
+    "graph_id": pl.Utf8,
+    "source_id": pl.Utf8,
+    "target_id": pl.Utf8,
+    "relation_type": pl.Utf8,
+    "evidence": pl.Utf8,
+}
+
+_MEASUREMENT_SCHEMA = {
+    "graph_id": pl.Utf8,
+    "entity_id": pl.Utf8,
+    "measurement_name": pl.Utf8,
+    "scope": pl.Utf8,
+    "unit": pl.Utf8,
+    "value_float": pl.Float64,
+    "value_kind": pl.Utf8,
+}
+
+
 def _convert_graph_shard(shard: Path, out_dir: Path) -> dict[str, Any]:
+    # Schemas are explicit because Polars infers a column type from the leading
+    # rows. A column that starts with nulls, such as `unit`, infers as Null and
+    # then rejects the first string it meets.
     out_dir.mkdir(parents=True, exist_ok=True)
     node_rows: list[dict[str, Any]] = []
     relation_rows: list[dict[str, Any]] = []
@@ -168,9 +198,9 @@ def _convert_graph_shard(shard: Path, out_dir: Path) -> dict[str, Any]:
                 }
             )
 
-    nodes = pl.DataFrame(node_rows)
-    relations = pl.DataFrame(relation_rows)
-    measurements = pl.DataFrame(measurement_rows)
+    nodes = pl.DataFrame(node_rows, schema=_NODE_SCHEMA)
+    relations = pl.DataFrame(relation_rows, schema=_RELATION_SCHEMA)
+    measurements = pl.DataFrame(measurement_rows, schema=_MEASUREMENT_SCHEMA)
     nodes.write_parquet(out_dir / "nodes.parquet", compression="zstd")
     relations.write_parquet(out_dir / "relations.parquet", compression="zstd")
     measurements.write_parquet(out_dir / "measurements.parquet", compression="zstd")
