@@ -507,7 +507,7 @@ prefix is `DS-`.
 - **Consequences:** `clue_operand_form` belongs to the clue's reference binding,
   not to the clue, so the property clue type carries none. Coverage is reported
   over clue type × operand form for reference-bearing clues only, and the support
-  table is `clue-form-by-step`. "Stratified sampling" stays reserved for
+  table is `clue-operand-form-by-step`. "Stratified sampling" stays reserved for
   dataset-level composition; the frequency target for a clue kind is a clue quota
   or clue share.
 
@@ -621,7 +621,7 @@ prefix is `DS-`.
   Balance over clue operand form is P1, once the support grid is dense enough for
   a proportional target.
 - **Consequences:** `03a` adds clue operand form as a coverage dimension with a
-  minimum and no balance range in P0. The `clue-form-by-step` support table
+  minimum and no balance range in P0. The `clue-operand-form-by-step` support table
   decides which forms are required at each step count. A missing form at a step
   count is a coverage gap, not a balance problem. Coverage-only is a concession,
   not a good property: it guarantees that each form appears, not that the forms
@@ -639,13 +639,13 @@ prefix is `DS-`.
 - **Context:** `DS-05` makes task reasoning step count the only measure of task
   difficulty, and `DS-37` makes clue operand form a P0 coverage dimension.
   Coverage alone does not show how the forms combine inside one task, and the
-  per-task clue form profile is already part of the definition.
-- **Decision:** Every task definition records `clue_form_profile`, the ordered
-  clue type and clue operand form of each clue. The release reports aggregate
-  coverage per task reasoning step count, and the clue form profile stays
-  available per task. Clue form is descriptive; it is not a difficulty label, and `DS-05` is
-  unchanged.
-- **Consequences:** The release table carries `clue_form_profile`, and `05`
+  per-task clue operand form profile is already part of the definition.
+- **Decision:** Every task definition records `clue_operand_form_profile`, the
+  ordered clue type and clue operand form of each clue. The release reports
+  aggregate coverage per task reasoning step count, and the per-task clue
+  operand form profile stays available. Clue form is descriptive; it is not a
+  difficulty label, and `DS-05` is unchanged.
+- **Consequences:** The release table carries `clue_operand_form_profile`, and `05`
   reports coverage per `(clue_type, clue_operand_form)`. Benchmark results may
   name the step counts and clue forms they cover, without ranking tasks by clue
   form.
