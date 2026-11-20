@@ -63,6 +63,22 @@ The cache also has a rare `kernel_vertex_selector` tag. It is diagnostic, not a
 quota: only 89 C records carry it, and requiring a fixed minimum would consume
 almost all of them.
 
+## Exclusions
+
+An exclusion row records the excluded `source_id`, its collection, and one
+reason. The set is closed:
+
+| Reason | Meaning |
+|---|---|
+| `duplicate_hash` | Another record in the same collection has the same `normalized_source_code_hash` and a smaller `source_id`. |
+| `family_cap` | The program's `cadevolve_program_family_id` already holds its two active programs. |
+| `out_of_scope_tier` | The program's tier is not in the selection policy. |
+| `not_selected` | The program is eligible but outside the active and reserve sets. |
+
+The counts reconcile: cache rows equal active, plus reserve, plus exclusions.
+An exclusion is not a failure record; [`failure-record.md`](../failure-record.md)
+says so.
+
 ## Tier derivation
 
 The cache has no `tier` column. Derive it from `source_subtree`:
