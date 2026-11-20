@@ -182,8 +182,18 @@ vocabulary:
   row is needed;
 - a `cross_state` reference needs the per-entity values in both states.
 
+A named endpoint must resolve to exactly one entity in the solid state. It is
+identified by face surface kind, by position, or by the operation or feature that
+created it. Zero matches or several matches means the pair is not emitted, and a
+task clue that needs it is invalid.
+
+There is no cap on pairs per named endpoint: the domain is linear in the entity
+count for each endpoint. A program whose solid state exceeds `max_state_entities`
+is rejected at graph construction rather than truncated, so every accepted graph
+carries its whole pair domain. `max_state_entities` is provisional at 500 and is
+tuned against the program pool.
+
 A pair outside the domain is not a missing measurement; it is not a candidate.
-The size bound per named endpoint is part of this contract.
 
 ## 5. States and timing
 
