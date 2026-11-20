@@ -57,15 +57,24 @@ and never written as a Parquet table.
 - One implementation serves both callers. A second derivation would be a second
   definition of what a graph can support.
 - `03a` derives it for all active programs in one pass and stores the union per
-  family in `TaskQuotaPlan.family_profiles`. That projection is what `03c` reads.
+  family — capabilities and summed entity counts — in
+  `TaskQuotaPlan.family_profiles`. That projection is what `03c` reads.
 - `03b` derives it for one program from the graph it is already reading.
 - Nothing is versioned separately. The census is a function of the graph, so a
   changed graph produces a changed census by construction; there is no copy that
   can go stale.
 
-A full pass over the graph costs a few seconds, and `03a` re-enters once per plan
-revision. That is not enough to justify a separate artifact, schema, and
-staleness rule.
+Derivation is bounded by the graph, not by the plan:
+
+| Event | Graph changed | Census work |
+|---|---|---|
+| First plan | — | One pass over the pool. |
+| Fast-loop replan | No | None. `03a` reads `family_profiles`. |
+| Slow-loop round | At most 20% more programs | One pass over the added programs. |
+
+A replan does not derive the census again, because the graph batch has not
+changed and the family projection is already in the plan. That keeps the cost
+independent of how many replans a run needs.
 
 ## Failure
 

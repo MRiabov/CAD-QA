@@ -780,5 +780,6 @@ prefix is `DS-`.
   `TaskQuotaPlan.family_profiles`; `03b` derives it for the program it is
   constructing; `03c` reads `family_profiles`.
 - **Consequences:** One fewer artifact, schema, and staleness rule, and no change
-  to `io-contracts.md` or `artifacts.md`. The cost is a pass over the graph per
-  plan revision, which is a few seconds and bounded by the revision count.
+  to `io-contracts.md` or `artifacts.md`. The cost is one pass per graph batch plus a
+  pass over the programs a slow-loop round adds. A replan derives nothing, because
+  the graph batch has not changed and `family_profiles` is already in the plan.

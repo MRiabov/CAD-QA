@@ -22,9 +22,13 @@ it is one function, called here and in `03b` construct task definitions.
 
 For each active program the census answers which target categories, clue
 constructors, clue operand forms, measurements, answer meanings, and point probes
-the graph has. `03a` uses it to assign quota targets and to rank by scarcity, then
-stores the union per family in `family_profiles`. `03c` resolve deficits reads
-that projection instead of deriving the census again.
+the graph has. `03a` derives it once per graph batch, stores the union per family
+in `family_profiles`, and assigns quota targets from that projection.
+
+A fast-loop replan does not derive the census again: the graph batch has not
+changed and `family_profiles` is already in the plan. A slow-loop round derives it
+only for the programs the round adds. `03c` resolve deficits reads
+`family_profiles` rather than the census.
 
 ## Balance policy
 
@@ -79,7 +83,7 @@ manifest records. The defaults are the starting point, not a second copy.
 | `quota_targets` | Quota targets: task reasoning step count, quota dimension, dimension value, minimum, target count, maximum, and priority. |
 | `clue_quotas` | Clue quotas counted over clue occurrences. |
 | `clue_occurrences` | Planned clue occurrences for each task reasoning step count. |
-| `family_profiles` | The union of the member programs' census capabilities, family task capacity, and probe success rate per CADEvolve program family. |
+| `family_profiles` | The union of the member programs' census capabilities and summed entity counts, family task capacity, and probe success rate per CADEvolve program family. |
 | `family_assignment` | Family to split, task quota, per-task-reasoning-step task quotas, and assigned quota targets. |
 | `construction_attempt_budgets` | One construction batch per quota target and family for the remaining work in this plan revision. |
 | `construction_attempt_multiplier` | Construction attempt multiplier over the accepted quota; default 1.5, or 2.0 for high-rejection quota targets. |
