@@ -683,6 +683,19 @@ Each phase gets a golden narrowing record, a property test (every accepted task
 is answer-unique, every clue narrows, every clue is true of all final possible
 answers), a replay test, and one end-to-end test.
 
+## Deferred
+
+**Noise (breadth without a decision).** Deferred to P2. The idea is a distractor
+that adds search space without adding a task reasoning step, but it has no
+operational definition yet. The two observable pieces are already governed:
+redundant clues by `TG-1`, wrong choices by `DS-21`. A future proxy is the
+initial answer candidate count, recorded descriptively rather than used as a
+label.
+
+Reopen when review finds tasks that are hard for reasons the step count does not
+explain, or when two tasks with the same step count have very different solve
+rates.
+
 ## Next
 
 The construction strategy is settled (`D11`): supply-driven with a
