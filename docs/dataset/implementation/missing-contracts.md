@@ -278,18 +278,18 @@ balance check, and P0 coverage does not stand in for one: it proves presence,
 not a useful mix. If the P0 diagnostic reports severe imbalance, the target is
 needed for that release rather than P1.
 
-Equal share is not the intended target. The forms differ in what they demand: a
-`selected` reference resolves by pointer, a `named` reference requires
-identifying a described entity, and an `aggregated` reference requires computing
-a measurement over a set. The intended direction is to reduce the forms that
-resolve without a geometric computation and raise the ones that require it. The
-ordering and the numbers are not set, and the share must stay within what the
-program capability census can supply, because a target above supply becomes a
-deficit rather than a mix.
+Equal share is the current target, not a settled one. The forms differ in what
+they demand: a `selected` reference resolves by pointer, a `named` reference
+identifies a described entity, and an `aggregated` reference computes a
+measurement over a set. A later revision may skew the share toward the
+computation forms, and the share must then stay within what the program
+capability census can supply, because a target above supply becomes a deficit
+rather than a mix. That revision waits for measured distributions, so `DS-38`
+stands unchanged: clue form is descriptive, not a difficulty axis.
 
-**Recommendation:** set the share order first, then take the numbers from the
-program capability census. The equal-share fallback is a placeholder, not the
-target.
+**Recommendation:** keep equal share for the first release, add the row when the
+P1 support grid is measured, and revisit the share after the first release
+reports its operand-form distribution.
 
 ### Technical decisions
 
