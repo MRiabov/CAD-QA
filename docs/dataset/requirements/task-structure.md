@@ -52,11 +52,22 @@ The task target is the entity or value the task asks about.
 | Path segment | A segment of a path. | P1 |
 | Region | The material a feature adds, or the material it removes. | P0 |
 | CadQuery selector result | The entities a CadQuery selector actually selected. | P1 |
-| Scalar value | A measurement or count with no entity chosen as the answer. | P0 |
+| Scalar value | A measurement instance whose value is the answer. The subject need not be unique. | P0 |
 
 A task has exactly one task target category. If the answer is a measurement
 taken from an entity, the entity is the task target and the measurement is the
 answer. The task target category is not the answer format.
+
+A scalar target is a measurement instance: a subject, a measurement, and a
+value. The subject may be an entity or a solid state. The candidate set is
+every instance of the declared measurement in the state scope. A task clue
+narrows the instances by constraining the subject or the measurement value. The answer is
+the measurement value, and instances that share it are answer-equivalent, so
+the subject need not resolve to one entity.
+
+A count is a stored measurement such as `face_count`, `edge_count`, or
+`vertex_count` on a solid state. A count over an arbitrary set that is not a
+stored measurement is not a scalar target in P0.
 
 ### 2.2 Task clue
 

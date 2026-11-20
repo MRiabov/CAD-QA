@@ -31,6 +31,16 @@ The state scope is `final` in P0 (`DS-34`). The set is not curated: it is
 whatever the graph holds for that category and state. Breadth is a property of
 the graph, not a construction choice.
 
+For a scalar target, the candidates are measurement instances:
+
+```text
+possible_answers = all (subject, value) instances of the declared measurement
+                   in the state scope
+```
+
+The subject may be an entity or a solid state. The rest of the search is
+unchanged: facts constrain the subject, and `same_answer` compares values.
+
 ## Step 2 — facts and extensions
 
 For one candidate, ask the graph what is true of it:

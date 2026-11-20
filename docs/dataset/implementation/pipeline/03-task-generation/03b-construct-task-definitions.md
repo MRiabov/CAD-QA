@@ -28,7 +28,7 @@ task. It is not prompt text and not a loose task tuple. It is what `04` renders.
 | `split`, `subset` | Split and warmup/main label assigned by `03a`. |
 | `graph_schema_version`, `definition_schema_version` | Versions needed to reproduce the definition. |
 | `target_category` | Task target category from `requirements/task-structure.md`. |
-| `target_binding` | The concrete graph entity or scalar value the task asks about. |
+| `target_binding` | The concrete graph entity or measurement instance the task asks about. |
 | `clues` | Ordered typed task clues. |
 | `answer_meaning`, `answer_step` | What the answer is about and the step that produces it. |
 | `native_answer_format`, `answer_format` | The meaning's native format and the format the prompt will request. |
@@ -62,10 +62,12 @@ The task target is bound in one of two ways:
 - by the ordered task clues, when the first clues narrow the possible answers to
   one target.
 
-The binding must resolve to exactly one entity or scalar value. A task target category
-whose binding is ambiguous is rejected. A task target and an answer measurement
-are different: the target is the entity or value the task asks about; the answer
-meaning says what is reported about it.
+The binding must resolve to exactly one entity or scalar value. A task target
+category whose binding is ambiguous is rejected. For a scalar target, the binding
+is a measurement instance: the subject, the measurement, and its value. The
+subject need not be unique, because the answer is that measurement value. A task
+target and an answer measurement are different: the target is the entity or
+value the task asks about; the answer meaning says what is reported about it.
 
 ## Task clue predicate schema
 
@@ -237,6 +239,7 @@ A task definition is valid only when all of these hold:
   or changes the answer;
 - every predicate a task uses is decided by at least the clear-case margin;
 - the final possible-answer set contains exactly one answer;
+- for a scalar target, every remaining instance has the same value;
 - the answer step produces exactly one answer;
 - the target binding is unambiguous;
 - the program family and split are present;
@@ -290,6 +293,10 @@ Canonical task identity is:
 ```text
 (program_sha256, target binding identity, canonical task clue sequence, answer meaning)
 ```
+
+For a scalar target, the target binding identity is the measurement name. The
+subject is not part of it, because several subjects can share that measurement
+value.
 
 The canonical task clue sequence preserves dependency order and sorts independent
 clues deterministically. The gold answer, answer format, choices, prompt wording,

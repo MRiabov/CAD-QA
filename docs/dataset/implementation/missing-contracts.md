@@ -13,24 +13,14 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 26 open entries: 1 P0 product, 16 P0 technical, 5 P1 product, and 4 P1
-technical. P2 is empty.
+There are 25 open entries: 16 P0 technical, 5 P1 product, and 4 P1 technical. No
+P0 product decision remains open, and P2 is empty.
 
 ## Decisions needed from the owner
 
-These six are the only entries a coding agent cannot close from the recorded
+These five are the only entries a coding agent cannot close from the recorded
 decisions. Everything else in this file is a technical contract. Each question
 has distinct answers; the recommendation is the default if you do not care.
-
-**MC-47 — Scalar targets in P0.** Should a task target be a scalar value with no
-entity, or is `Scalar value` removed from the P0 scope?
-
-- Keep it: define the scalar candidate set as the measurement instances in the
-  state scope, with narrowing and binding rules.
-- Remove it from P0 and add it back with a contract when a task needs it.
-
-Recommendation: remove it from P0. It is the only target category with no entity
-to bind, and the construction search is entity-based.
 
 **MC-17 — Reserve programs.** Do reserve programs get graphs up front, or only
 when they are promoted?
@@ -78,23 +68,7 @@ Recommendation: the blocking gate, because R-17 is P0.
 
 ### Product (P0)
 
-These need the owner. The question is above.
-
-#### MC-47 — Scalar target candidate set
-
-`task-structure.md` makes `Scalar value` a P0 task target category: "a
-measurement or count with no entity chosen as the answer."
-`algorithm/construction.md` defines `possible_answers` as "all entities of the
-target category in the state scope", which has no meaning for a scalar target,
-and `03b` construct task definitions binds a target to "exactly one entity or
-scalar value" without saying how a scalar candidate set is enumerated or
-narrowed. A P0 target category therefore cannot be constructed.
-
-**Recommendation:** remove `Scalar value` from the P0 scope and add it back with
-a candidate-set contract when a task needs it. If the product keeps it, define
-the candidate set as the measurement instances in the state scope (subject
-entity or state, measurement type, and value), define how a clue narrows that
-set, and define target binding and answer evidence for a scalar target.
+None.
 
 ### Technical (P0)
 
@@ -526,6 +500,9 @@ when its completion marker and identity match.
 
 - `MC-31` — the slow loop in `03c` resolve deficits includes `01d` normalize
   programs; the flow line in `00` end to end was the defect and is fixed.
+- `MC-47` — the scalar target is a measurement instance, with the candidate set,
+  binding, and identity written in `task-structure.md`, `construction.md`, and
+  `03b`.
 - `MC-35` — the relation row now carries `tolerance` and CAD graph evidence,
   both excluded from `relation_id`, in `graph-persistence.md`.
 - `MC-43` — the named-endpoint derivation, the pair rows, and the state-size
