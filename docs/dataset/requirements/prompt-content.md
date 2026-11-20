@@ -5,8 +5,8 @@ a CAD-QA prompt. It does not define how the prompt is rendered.
 
 ## 1. Prompt parts
 
-The prompt is delivered as the system prompt. It has a frame convention line
-and up to five parts, in this order:
+The prompt is delivered as the user message. It has a frame convention line and
+up to five parts, in this order:
 
 1. **Program text**: the complete CadQuery program, unchanged except for
    normalization.
@@ -22,6 +22,9 @@ The question is only the interrogative sentence. It is not the whole task. The
 task is the program, the task target, the task clues, and the answer.
 
 The prompt does not contain the answer or any hidden identifier.
+
+The dataset supplies no system prompt. A harness may add one; that is harness
+policy, not dataset content (`DS-42`).
 
 ### 1.1 Frame conventions
 

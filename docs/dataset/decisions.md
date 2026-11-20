@@ -562,7 +562,7 @@ prefix is `DS-`.
 - **Decision:** P0 tasks refer to the final solid state only. P1 adds one named
   intermediate state, identified by its producing operation. P2 adds before/after
   pairs for material-change and topology-change answers. The state is bound
-  before the clue chain starts and is named in the system prompt; a clue never
+  before the clue chain starts and is named in the user prompt; a clue never
   introduces it.
 - **Consequences:** `TaskDefinition` carries `state_scope`, which is `final` in
   P0. The possible-answer set is defined per state scope. A clue that needs
@@ -745,3 +745,21 @@ prefix is `DS-`.
   lost. A test that compares values will not catch it; the check must compare the
   Parquet schema. The Polars limitation is upstream and tracked, not something
   the graph contract works around.
+
+## DS-42 — The dataset prompt is the user message
+
+- **Status:** accepted (2026-11-20).
+- **Context:** The prompt could be delivered as a system prompt. Many training
+  stacks strip or special-case the system role, and a dataset that ships its task
+  as a system prompt trains an LLM model to treat a CAD-QA question as a standing
+  instruction rather than a request. The dataset also should not own harness
+  policy: retry rules, tool access, and answer extraction belong to whoever runs
+  the LLM model.
+- **Decision:** The release `prompt` column is the user message. The dataset
+  supplies no system prompt. A harness may add its own, and the dataset card says
+  that the dataset does not.
+- **Consequences:** Training blindly on the prompt column uses the normal
+  user-turn shape. A harness that adds a system prompt does not change the release
+  row, so `prompt_sha256` still identifies the dataset content. The frame
+  convention and the answer instruction stay inside the user message, because they
+  are task context, not harness policy.
