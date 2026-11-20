@@ -130,4 +130,4 @@ carries a periodic seam edge. The top face leaves five edges, and the
 cylindrical face leaves the one edge shared with the top face, so the chain is
 two relation clues plus the length answer. The clue operand form profile is
 `[(relation, named), (relation, named)]`. The record format and comparison rules
-are in [`golden-records.md`](../../testing/golden-records.md).
+are in [`golden/README.md`](../../testing/golden/README.md).

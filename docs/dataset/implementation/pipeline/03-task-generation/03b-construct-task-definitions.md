@@ -603,5 +603,5 @@ underfilled. Deficits that `03a` reports carry an allocation detail instead, and
 
 Task quota planning, data expansion, prompt rendering, choice rendering, and
 export. The construction test contract is in
-[`../testing/construction-tests.md`](../testing/construction-tests.md), and the
-golden record format is in [`../testing/golden-records.md`](../testing/golden-records.md).
+[`../testing/03b-construct-task-definitions.md`](../testing/03b-construct-task-definitions.md), and the
+golden record format is in [`../testing/golden/README.md`](../testing/golden/README.md).

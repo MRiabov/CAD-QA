@@ -1,12 +1,41 @@
 # Pipeline test contracts
 
-Per-pipeline-stage test contracts and end-to-end tests live here. Each document
-links to its test contract.
+One test contract per pipeline stage, named with the file stem of the doc it
+tests. Contract text stays in its pipeline stage doc; the test doc says what the
+test does and what it must not accept.
+
+The shared rules — the integration level, what is real and what is mocked, the
+assert-from-the-artifact rule, and the test-first order — are in
+[`00-testing-strategy.md`](00-testing-strategy.md).
 
 ## Contracts
 
-| Contract | Covers |
+| Test doc | Pipeline stage | Status |
+|---|---|---|
+| [`00-testing-strategy.md`](00-testing-strategy.md) | The shared rules and the inventory. | draft |
+| [`00-end-to-end.md`](00-end-to-end.md) | The whole chain, `01a` to `05`. | draft |
+| [`00-support-tables.md`](00-support-tables.md) | The support tables, a cross-cutting observation. | draft |
+| `01a-read-cadevolve-metadata.md` | `01a` read CADEvolve metadata. | missing |
+| `01b-select-program-pool.md` | `01b` select program pool. | missing |
+| `01c-fetch-program-pool.md` | `01c` fetch program pool. | missing |
+| `01d-normalize-programs.md` | `01d` normalize programs. | missing |
+| `01e-write-external-dataset-manifest.md` | `01e` write external dataset manifest. | missing |
+| `02a-extract-cadquery-ast.md` | `02a` extract CadQuery AST. | missing |
+| [`02b-execute-cadquery.md`](02b-execute-cadquery.md) | `02b` execute CadQuery. | draft |
+| [`02c-build-cad-graph.md`](02c-build-cad-graph.md) | `02c` build CAD graph. | draft |
+| `03a-allocate-task-quotas.md` | `03a` allocate task quotas. | missing |
+| [`03b-construct-task-definitions.md`](03b-construct-task-definitions.md) | `03b` construct task definitions. | draft |
+| `03c-resolve-deficits.md` | `03c` resolve deficits. | missing |
+| `04-render-prompt-and-choices.md` | `04` render prompt and choices. | missing |
+| `05-validate-and-export-release.md` | `05` validate and export release. | missing |
+
+A missing row in the table is a missing test, not a pipeline stage without
+tests. The group docs (`01`, `02`, `03`) are overviews; the tests pin the
+sub-stages.
+
+## Fixtures and records
+
+| Path | Holds |
 |---|---|
-| [`task-step-support.md`](task-step-support.md) | The structural and witness tiers for the task reasoning step support tables. |
-| [`golden-records.md`](golden-records.md) | The versioned golden-record format, the first record, and its comparison rules. |
-| [`construction-tests.md`](construction-tests.md) | The definition, graph, and end-to-end tiers for construction: the validity record, pair emission, point probes, the clear-case margin, redundant clues, and the golden-record comparison. |
+| [`fixtures/`](fixtures/) | Coverage fixtures and rejection fixtures: programs plus their `program_sha256`. |
+| [`golden/`](golden/) | Golden records: the record format and one pinned construction result. |

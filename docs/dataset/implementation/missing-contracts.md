@@ -123,7 +123,7 @@ when its completion marker and identity match.
 ## Closed or merged in the 2026-11-20 pass
 
 - `MC-41` — the construction test contract is
-  `pipeline/testing/construction-tests.md`: a definition tier that re-evaluates
+  `pipeline/testing/03b-construct-task-definitions.md`: a definition tier that re-evaluates
   every validity rule the definition decides, a graph tier for pair emission,
   point probes, and the clear-case margin, and an end-to-end tier that constructs
   the golden record and compares its counts against the graph. `03b` now names
@@ -138,7 +138,7 @@ when its completion marker and identity match.
   rechecks the pool without parsing the prompt, and a label counts by the answer
   value it denotes. It absorbs `MC-24`.
 - `MC-42` — the golden record is a versioned JSON file per task, defined in
-  `pipeline/testing/golden-records.md` with the program, construction input,
+  `pipeline/testing/golden/README.md` with the program, construction input,
   task description, canonical clue sequence, answer, and evidence. The first
   record is `pipeline/testing/golden/box-with-hole.json`; `tests/test_golden_records.py`
   validates the format. The box-with-hole chain is three steps, not the plan's
@@ -182,7 +182,7 @@ when its completion marker and identity match.
 - `MC-44` — feasibility is the constructor's output over a committed coverage
   fixture set, not an abstraction of the grammar. The contract is written in
   `task-step-support.md`, and the structural and witness tiers are in
-  `pipeline/testing/task-step-support.md`. Fixtures are programs, so no Parquet
+  `pipeline/testing/00-support-tables.md`. Fixtures are programs, so no Parquet
   enters the repository. The fixture programs and `support-table.json` are
   implementation artifacts and do not exist yet.
 - `MC-14` — `failure-record.md` owns the row schema, the dedupe key, the merge,
