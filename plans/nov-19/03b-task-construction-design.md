@@ -143,8 +143,12 @@ quota target is a deficit.
 
 **`answer_unique(narrowed)` is not necessarily "one entity."** For a
 measurement answer, two symmetric faces can both produce the same area; the
-task is still answerable. The final set is a witness set, and the answer
-evidence records it. Identity answers still require one entity.
+task is still answerable. The final set is then the
+**`answer_equivalent_set`**: the entities still possible after the last clue,
+which all produce the same answer within tolerance. The answer evidence
+records the whole set, because a record that named one entity would claim the
+prompt had identified it uniquely. An identity answer is the special case
+where the set holds exactly one entity.
 
 ## Describing a clue
 
@@ -279,7 +283,7 @@ a number.
 Initial possible-answer set: all edges of the final solid — the box edges plus
 the two circular edges of the hole.
 
-Witness answer: the top circular edge of the hole.
+Bound answer entity: the top circular edge of the hole.
 
 | Step | Clue | Set after | Clue type | Clue operand form |
 |---|---|---|---|---|
@@ -298,7 +302,8 @@ length. Then:
 
 - **entity-unique** would require clue 3, making a four-step task;
 - **answer-unique** would stop after clue 2, because both remaining edges give
-  `12.57`, making a three-step task.
+  `12.57`, so the `answer_equivalent_set` holds both of them and the task has
+  three steps.
 
 That is the first schema decision (`D1` below).
 
@@ -384,7 +389,7 @@ Options: entity-unique, answer-unique, or hybrid. Recommendation: hybrid. An
 identity answer needs exactly one entity, because the label is the answer. A
 measurement answer needs one answer value, because two symmetric entities can
 produce the same number and the task is still answerable; the final set becomes
-a witness set recorded in the answer evidence.
+the `answer_equivalent_set` recorded in the answer evidence.
 
 Blocks: `TaskDefinition.target_binding`, `answer_evidence`, and the pool of
 multiple-choice options.
@@ -483,7 +488,7 @@ Blocks: `01b`, `02c`, `03a`, `03b`, and `03c`.
 | Change | Owner |
 |---|---|
 | Add the clue grammar and the clue form grid to `requirements/task-structure.md` and `requirements/terminology.md` | `requirements/task-structure.md`, `requirements/terminology.md` |
-| Add `clue_operand_form` to `TaskClue`; add `clue_form_profile` and `state_scope` to `TaskDefinition`; record `answer_meaning` instead of an answer ladder | `03b` |
+| Add `clue_operand_form` to `TaskClue`; add `clue_form_profile` and `state_scope` to `TaskDefinition`; add `answer_equivalent_set` to the answer evidence; record `answer_meaning` instead of an answer ladder | `03b` |
 | Add `clue_operand_form` as a quota dimension; require coverage at each step count; balance with the conditional share | `03a` |
 | Add `support/clue-form-by-step.json` | `05`, task-step support |
 | Add `clue_form_profile` to the release table | release contract, `04` |
