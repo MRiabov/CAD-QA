@@ -15,7 +15,7 @@ TRANSFORM:
 - mark each fetched row `active` or `reserve`; a reserve row is fetched but not normalized and not graphed
 - mark the row's `delta_id`: null for a row of the original selection, the request ID for a row of a `ProgramSelectionDelta`
 - selected ID missing from the pinned cache → record the ID with the revision and backfill the active slot from reserve in deterministic order
-- fewer than `policy.usable_floor` (1000) active usable programs after backfill → fail the run
+- fewer than `policy.usable_floor` (1000) active rows after backfill → fail the run; the post-execution floor is `03a`'s `program_floor_short` deficit
 - never drop a missing ID silently and never fetch an unpinned revision
 
 WRITE:

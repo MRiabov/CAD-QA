@@ -72,10 +72,10 @@ WRITE:
 
 TRANSFORM:
 
-- valid only when these named checks pass: `clue_satisfied, clue_narrows, clue_necessary` (removing any clue leaves at least two distinct answers or changes the answer), `predicate_margin, answer_equivalence` (every candidate agrees under `same_answer`; identity is a singleton), `scalar_target_agrees` (every remaining instance has the same value), `single_gold_answer, target_binding_unambiguous, family_and_split_present, split_matches_assignment, subset_matches_step_count, answer_evidence_present, choice_pool_valid, definition_unique`; P2 adds `near_miss_valid`
+- valid only when these named checks pass: `clue_satisfied, clue_narrows, clue_necessary` (removing any clue leaves at least two distinct answers or changes the answer), `predicate_margin, answer_equivalence` (every candidate agrees under `same_answer`; identity is a singleton), `scalar_target_agrees` (every remaining instance has the same value), `single_gold_answer, target_binding_unambiguous, family_and_split_present, split_matches_assignment, subset_matches_step_count, answer_evidence_present, choice_pool_valid, geometry_required_recorded, definition_unique`; P2 adds `near_miss_valid`
 - `geometry_required` is recorded as its own field, not a checks entry
 - `validity_record` = `checks` (one entry per named check: name, outcome, detail), `answer_equivalent_size` (entries in `answer_equivalent_set`), and `same_answer_holds` (whether every entry's answer equals the answer value)
-- an accepted definition's `validity_record.checks` carries every named check except `geometry_required`, each with outcome `pass`; a missing check is a defect
+- an accepted definition's `validity_record.checks` carries every named check except `geometry_required_recorded`, each with outcome `pass`; a missing check is a defect
 - an invalid definition writes a failure row naming the failed check, or `no_cover` when the cover search found no chain; the definition does not consume quota and does not reach `04`
 - a state without a surviving probe is a `probe_deficit` in the deficit ledger, not a failure row
 - canonical identity = `(program_sha256, target binding identity, canonical clue sequence, answer_meaning)`; for a scalar target the binding identity is the measurement name
