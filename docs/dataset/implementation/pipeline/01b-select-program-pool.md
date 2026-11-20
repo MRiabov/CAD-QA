@@ -14,6 +14,21 @@ release from the external dataset metadata.
 
 ## Selection policy
 
+`SelectionPolicy` carries every number the selection uses, so a test or a smaller
+run can inject its own:
+
+| Field | Default | Meaning |
+|---|---|---|
+| `scope` | C | In-scope tiers and collections. |
+| `seed` | required | Deterministic ordering seed. |
+| `active_count` | 1,500 | Active programs to select. |
+| `reserve_count` | 300–450 | Reserve programs to select. |
+| `family_cap` | 2 | Active programs per `cadevolve_program_family_id`. |
+| `collection_minimum` | 300 | Active programs per in-scope collection. |
+| `feature_tag_minimum` | 50 | Active programs per required feature tag. |
+| `tag_list` | `void_cut`, `kernel_face_selector`, `kernel_edge_selector`, `profile_polyline`, `path_curve` | Feature tags that carry a minimum. |
+| `usable_floor` | 1,000 | Usable active programs a run needs. |
+
 For P0/P1, the in-scope set is C only: `ABC-C`, `CADEvolve-C-core`, and
 `ShapeNet-C`. P2 adds P as a separately sized pool; this policy applies inside
 each tier pool, not across a combined C+P total.
@@ -24,8 +39,9 @@ Within the in-scope pool:
    deduplicate across collections or across P and C. Within each duplicate group,
    keep the record with the lexicographically smallest `source_id`; record the
    discarded IDs and any family conflict. The survivor's family is used.
-2. Apply the hard family cap: at most two programs per
-   `cadevolve_program_family_id`.
+2. Apply the hard family cap: at most two active programs per
+   `cadevolve_program_family_id`. The cap counts active programs; a family at the
+   cap can still supply reserve rows.
 3. Reserve at least 50 active seats for each required feature tag:
    `void_cut`, `kernel_face_selector`, `kernel_edge_selector`,
    `profile_polyline`, and `path_curve`. A program may satisfy several tags.

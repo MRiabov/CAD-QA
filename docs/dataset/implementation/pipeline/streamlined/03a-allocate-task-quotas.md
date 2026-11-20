@@ -5,7 +5,7 @@
 READ:
 
 - `CadGraph` per active program from `02c`
-- `ProgramMetadata` from `01a`, and `ProgramSelection` from `01b` → `tier`, `cadevolve_program_family_id`
+- `ProgramMetadata` from `01a`, and `ProgramSelection` from `01b` → `tier`, `cadevolve_program_family_id`, `SelectionPolicy`
 - `balance.yaml` → the release policy
 - `DeficitLedger`; empty on the first pass
 - `ProgramReassignmentRequest` from `03c`
@@ -85,7 +85,7 @@ TRANSFORM:
 - `construction_attempt_budget = ceil(family_quota_target_count * construction_attempt_multiplier)`; `1.5` default, `2.0` for a high-rejection target
 - `expansion_rounds = expansion.rounds` and `expansion_growth_share_per_round = expansion.growth_share_per_round` from `balance.yaml`; `03c` reads them from the plan, never from a constant
 - `expansion_tier` = the data tier in use: `C` in P0/P1, `C+P` when the P2 P pool is in use
-- promote a reserve program only by recording it in the plan; the promotion is a slow-loop `ProgramRequest` from `03c`, and the program enters at `01d` normalize because it is already fetched
+- a reserve program is promoted only through the plan: `03a` records the promotion, `03c` issues the slow-loop `ProgramRequest`, and the program enters at `01d` normalize because it is already fetched
 
 WRITE:
 

@@ -2,6 +2,7 @@
 
 > Authoritative: `../04-render-prompt-and-choices.md`
 > Templates: `../../prompt-templates.md`
+> Prompt content: `../../requirements/prompt-content.md`
 
 READ:
 
@@ -14,6 +15,7 @@ READ:
 TRANSFORM:
 
 - validate `prompts.yaml` per the template sub-document: exactly the known top-level, namespace, and template keys; namespaces exactly `dataset` and `evaluation`; a template ID starts with its namespace; no duplicate ID; at least one non-empty string variant; every placeholder used, declared, and typed; every `label.<table>` table present; every required P0 dataset ID present
+- the first line of `dataset.prompt_shell` is the frame convention from the prompt-content sub-document and is the same for every task
 - the file is answer-free and contains no gold answer, hidden identifier, variable name, or step count
 - a missing template ID or an invalid placeholder stops the render before any row is written; it is a release defect, not a task rejection
 - never fall back to a hardcoded string

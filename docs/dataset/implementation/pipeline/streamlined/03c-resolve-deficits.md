@@ -7,6 +7,7 @@ READ:
 - `DeficitLedger` from `03b`
 - `TaskQuotaPlan` → `family_profiles`, `plan_version`, `expansion_tier`, `expansion_rounds`, `expansion_growth_share_per_round`
 - `ProgramMetadata`
+- `SelectionPolicy` → `usable_floor`
 
 TRANSFORM:
 
@@ -26,7 +27,7 @@ TRANSFORM:
 - fast loop: `03a` residual replan → `03b` resume; no fetch, normalize, or execute
 - slow loop: `01b` supplemental selection → `01c` fetch delta → `01d` normalize delta → `02` build graphs for delta → `03a` update family profiles and residual plan → `03b` resume
 - a promoted reserve program enters the slow loop at `01d` normalize; it is already fetched, so it skips `01b` and `01c`
-- an expansion round adds at most 20% of the current program pool; after three rounds stop and record an `AcceptedMiss`
+- an expansion round adds at most `expansion_growth_share_per_round` of the current program pool; after `expansion_rounds` rounds stop and record an `AcceptedMiss`
 - the round count and growth cap come from `expansion` in `balance.yaml`, stamped into the plan by `03a`
 - stop when the deficit is filled, the expansion budget is reached, the deficit is structurally infeasible, or the owner accepts the miss
 - record every request, delta, and accepted miss with its plan version
