@@ -324,11 +324,11 @@ A task is described by:
 
 ```text
 step_count = number of clue steps + (answer step ? 1 : 0)
-clue_form_profile = [(clue type, clue operand form), ...]   # one per clue
+clue_operand_form_profile = [(clue type, clue operand form), ...]   # one per clue
 answer_meaning = one of the answer meanings
 ```
 
-The step count remains the chain length. The clue form profile describes each
+The step count remains the chain length. The clue operand form profile describes each
 clue, and the operand form is absent for a clue with no reference. A four-step
 task of four `property` clues is not the same benchmark item as a two-step task
 of two `comparison` clues with `selected` references, even though neither
@@ -401,7 +401,7 @@ tasks." This prevents the generator from hitting the step-count mix with four
 Check coverage over `(clue_type, clue_operand_form)` cells for clues that carry
 a reference, not clue type alone. Otherwise a dataset can cover every clue type
 at `named` references and claim coverage. A support table,
-`clue-form-by-step.json`, records which clue forms are structurally supported at
+`clue-operand-form-by-step.json`, records which clue forms are structurally supported at
 each step count and why not. It also records the two known non-cells: the
 property row has no operand form, and `aggregation` with an `aggregated`
 reference is degenerate.
@@ -634,7 +634,7 @@ difficulty axis. `DS-05` stays intact: task reasoning step count remains the
 length measure, and clue form is descriptive.
 
 The release reports aggregate coverage per step count, and the per-task
-`clue_form_profile` stays in the definition. Benchmark results may name the step
+`clue_operand_form_profile` stays in the definition. Benchmark results may name the step
 counts and clue forms they cover, without ranking tasks by clue form.
 
 Blocks: PRD section 6, R-9, and benchmark reporting.
@@ -654,11 +654,11 @@ Blocks: `01b`, `02c`, `03a`, `03b`, and `03c`.
 | Change | Owner |
 |---|---|
 | Add the clue grammar and the clue form grid to `requirements/task-structure.md` and `requirements/terminology.md` | `requirements/task-structure.md`, `requirements/terminology.md` |
-| Add `clue_operand_form` to `TaskClue`; add `clue_form_profile` and `state_scope` to `TaskDefinition`; add `answer_equivalent_set` to the answer evidence; define `answer_unique` over that set with an equality relation per answer meaning; record `answer_meaning` instead of an answer ladder | `03b` |
+| Add `clue_operand_form` to `TaskClue`; add `clue_operand_form_profile` and `state_scope` to `TaskDefinition`; add `answer_equivalent_set` to the answer evidence; define `answer_unique` over that set with an equality relation per answer meaning; record `answer_meaning` instead of an answer ladder | `03b` |
 | Require a singleton `answer_equivalent_set` for an identity answer in multiple-choice format | `04` |
 | Add `clue_operand_form` as a quota dimension; require coverage at each step count; balance with the conditional share | `03a` |
-| Add `support/clue-form-by-step.json` | `05`, task-step support |
-| Add `clue_form_profile` to the release table | release contract, `04` |
+| Add `support/clue-operand-form-by-step.json` | `05`, task-step support |
+| Add `clue_operand_form_profile` to the release table | release contract, `04` |
 | Check coverage and balance over `(clue_type, clue_operand_form)` for reference-bearing clues | `05` |
 | Emit `ProgramCapabilityProfile` as a by-product of graph construction | `02c` |
 | Use the census to allocate quota targets to capable families, not to pre-select the pool | `03a` |

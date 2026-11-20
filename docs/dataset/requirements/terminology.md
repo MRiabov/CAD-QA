@@ -31,7 +31,7 @@ the user-visible outcome.
 | **Task reasoning step** | Domain | A task clue step or a task answer step. |
 | **Task reasoning step count** | Domain | The number of task reasoning steps a task requires. |
 | **Task solution sequence** | Domain | The ordered task clue steps and task answer step that solve the task. |
-| **Clue form profile** | Internal | The ordered clue type and clue operand form of every clue in one task. `In code:` `clue_form_profile`. |
+| **Clue operand form profile** | Internal | The ordered clue type and clue operand form of every clue in one task. `In code:` `clue_operand_form_profile`. |
 | **Answer format** | Domain | The form of the answer: multiple choice, number, integer, yes or no, 3D coordinate, bounding box, or structured object. |
 | **Multiple-choice choices** | Domain | The short list of options shown for a multiple-choice answer. |
 | **Answer instruction** | Domain | The part of the prompt that tells the LLM model which answer format to return and in what syntax. |
@@ -184,6 +184,8 @@ Terms that were replaced because they were not composed from the domain:
 
 - **CadQuery program AST extraction result** is the `02a` extract CadQuery AST output; **CadQuery program runtime extraction result** is the `02b` execute CadQuery success output.
 - A pipeline stage is named by number and title, for example `02c` build CAD graph, never by the bare number. Use the document heading as the title.
+- A code label spells out the whole term and never drops a word. The clue
+  operand form profile is `clue_operand_form_profile`, not `clue_form_profile`.
 - A **Shape snapshot** is the runtime capture; a **solid state** is the CAD graph entity. Do not write bare `state`.
 - Use **CAD graph entity** in prose; `node_id` and `nodes.parquet` are code and schema names.
 - **CAD feature solid state effect delta** is the delta record; `feature_application_effect` is a Measurement scope.

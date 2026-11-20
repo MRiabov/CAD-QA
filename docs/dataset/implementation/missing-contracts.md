@@ -88,13 +88,13 @@ value appears, which is a cheaper check than filtering.
 #### MC-37 — Definition fields for the new decisions
 
 The `TaskDefinition` fields required by the recorded decisions are absent:
-`state_scope` and `clue_form_profile` are not fields, `answer_parameter` is not
+`state_scope` and `clue_operand_form_profile` are not fields, `answer_parameter` is not
 a field, and `answer_evidence` does not define the `answer_equivalent_set` or
 membership-probe payload. The field table predates `DS-32`, `DS-34`, and
 `DS-38`, and `validity` is still a prose field with no typed check-result
 payload.
 
-**Recommendation:** add `state_scope`, `clue_form_profile`, and
+**Recommendation:** add `state_scope`, `clue_operand_form_profile`, and
 `answer_parameter` as definition fields; add typed `answer_equivalent_set` and
 membership-probe payloads to `answer_evidence`, with the set holding entity ids
 and their answers so answer uniqueness can be rechecked from the definition
@@ -275,15 +275,15 @@ same time.
 
 #### MC-38 — Release fields and the fifth support file
 
-The release table omits `clue_form_profile`, and `clue-form-by-step.json` is
-absent from the support files. `DS-38` requires the field, and `DS-31` and
+The release table omits `clue_operand_form_profile`, and
+`clue-operand-form-by-step.json` is absent from the support files. `DS-38` requires the field, and `DS-31` and
 `DS-37` require the fifth support table; the release contract still lists four
 support files. `answer_equivalent_set` belongs inside `evidence_json` under
 `DS-32`, not in a new release column.
 
-**Recommendation:** add `clue_form_profile` to the release table and
-`clue-form-by-step.json` to `support/`; extend the `05` validate and export
-release copy list and the manifest hash record so all five are versioned
+**Recommendation:** add `clue_operand_form_profile` to the release table and
+`clue-operand-form-by-step.json` to `support/`; extend the `05` validate and
+export release copy list and the manifest hash record so all five are versioned
 together. Update the "four derived files" wording in `artifacts.md` and
 `task-step-support.md`, and add the support tables to the `05` validate and
 export release input contract.
