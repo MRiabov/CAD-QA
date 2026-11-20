@@ -22,7 +22,8 @@ task. It is not prompt text and not a loose task tuple. It is what `04` renders.
 | Field | Meaning |
 |---|---|
 | `task_id` | `cadqatask:<sha256>` over the canonical task identity. It does not encode the gold answer. |
-| `definition_sha256` | Hash of the canonical task content and the inputs that change it. Assignment and provenance are excluded. |
+| `definition_sha256` | Hash of the canonical task content and the inputs that change it. Assignment is excluded. The provenance block is not hashed as a block, but the provenance inputs that change the content are covered. |
+| `answer_sha256` | Hash of the answer and scoring fields, computed at construction and copied by `04`. It excludes `answer_evidence`. |
 | `program_id`, `program_sha256` | CadQuery program identity. |
 | `cadevolve_program_family_id` | Program family used for split isolation. |
 | `split`, `subset` | Split and warmup/main label assigned by `03a`. |
@@ -33,7 +34,7 @@ task. It is not prompt text and not a loose task tuple. It is what `04` renders.
 | `task_clues` | Ordered typed task clues. |
 | `clue_operand_form_profile` | The ordered `(clue_type, clue_operand_form)` pair for every clue. Derived from `task_clues`. |
 | `answer_meaning`, `task_answer_step` | What the answer is about and the step that produces it. |
-| `answer_parameter` | The point for a position, the category for a topology change, null otherwise. |
+| `answer_parameter` | The point for a position or a membership, the category for a topology change, null otherwise. |
 | `native_answer_format`, `answer_format` | The meaning's native format and the format the prompt will request. |
 | `gold_answer`, `answer_unit`, `tolerance`, `scoring_rule` | Answer data. `gold_answer` and `tolerance` are canonical text, matching the release columns. |
 | `answer_schema_version` | Version of the answer representation: the answer formats, the canonical text rules, and the answer evidence shape. Hashed by `answer_sha256`. |
@@ -194,9 +195,13 @@ resolve_answer(answer_meaning, bound_target, answer_parameter, penultimate_set)
 | Topology change | The signed change in the declared category. | Topology change. |
 
 `answer_parameter` is null for every meaning that declares nothing. It carries
-the point for a position and the category for a topology change. A material
-change declares no parameter: its sign carries the direction, so a cut answers a
-negative number.
+the point for a position or a membership and the category for a topology change.
+A material change declares no parameter: its sign carries the direction, so a cut
+answers a negative number.
+
+The membership point is both the question parameter and the point the probe
+classifies, bound once. `04` renders the question from `answer_parameter`, so it
+does not parse the evidence to find the point.
 
 P1 and P2 meanings get a row when their implementation scope is built. The
 resolver never guesses: a missing target or a missing graph measurement rejects

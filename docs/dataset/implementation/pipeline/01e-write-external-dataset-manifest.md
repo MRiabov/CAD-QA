@@ -24,4 +24,4 @@ rows.
 - rejection counts and reasons.
 
 The manifest is small control metadata, so it is JSON. It is not the release
-manifest defined in `../requirements/release-dataset-contract.md`.
+manifest defined in `../../requirements/release-dataset-contract.md`.

@@ -7,16 +7,19 @@
 
 ## What is proven
 
-The support table claims that a value can appear at a task reasoning step count.
-Two tiers prove different halves of that claim, at different costs.
+The support table is an observation: it records what the constructor produced
+over the coverage fixture set. Two tiers keep it honest at different costs.
 
 | Tier | Proves | Needs CadQuery | Runs |
 |---|---|---|---|
-| Structural | every absent cell has a forbidding rule; every present cell is not forbidden | no | every commit |
-| Witness | every present cell is constructible from a real graph | yes | the generation job |
+| Structural | the table is complete and well-formed | no | every commit |
+| Witness | the table is what the constructor actually produces | yes | the generation job |
 
-A witness proves possible. A rule proves impossible. Neither alone is enough, so
-the table is checked by both.
+The structural tier cannot prove that a value is impossible. Under the observed
+definition nothing forbids a cell, and a reason code explains an absence rather
+than establishing one. The witness tier establishes the table; the structural
+tier makes a witness failure readable, because a missing row is a table defect
+while a present cell no fixture produces is a missing capability.
 
 ## Fixtures
 
@@ -37,24 +40,25 @@ enters the repository, and there is no cache to key or evict.
 ## Expected table
 
 `pipeline/testing/support-table.json` is the checked-in expected table: one row per
-dimension value and task reasoning step count, with `structurally_supported` and
+dimension value and task reasoning step count, with `supported` and
 `reason_code`.
 
-It is reviewed like code. A diff claims that a value became possible or
-impossible, and the reviewer asks which fixture or rule changed.
+It is reviewed like code. A diff claims that a value became supported or
+unsupported, and the reviewer asks which fixture changed.
 
 ## Tier 1 — structural
 
 No fixtures, no geometry. For every row:
 
-- a present cell must not match a forbidding rule;
-- an absent cell must carry a reason code from the closed set in
+- every value of every dimension at every task reasoning step count in the
+  release has a row;
+- an absent cell carries a reason code from the closed set in
   `task-step-support.md`;
-- `implementation_scope` must match the requirement priority marks;
-- the row set must be complete: every value of every dimension at every task
-  reasoning step count in the release.
+- `implementation_scope` matches the requirement priority marks;
+- the five files share one schema version and one row shape.
 
-A forbidden cell marked present, or an absent cell with no reason, fails.
+A missing row, or an absent cell with no reason, fails. A present cell is not
+checked here, because only a fixture can establish one.
 
 ## Tier 2 — witness
 
@@ -66,8 +70,9 @@ A forbidden cell marked present, or an absent cell with no reason, fails.
    expected-present cells.
 
 A cell expected present but not observed names the missing capability and the
-fixtures that were tried. A cell expected absent but observed is a contradiction:
-either the forbidding rule is wrong or a fixture is degenerate.
+fixtures that were tried. A cell expected absent but observed means the table is
+stale: the constructor produced that cell, so the expected table is regenerated
+and reviewed.
 
 ## Fixture growth
 

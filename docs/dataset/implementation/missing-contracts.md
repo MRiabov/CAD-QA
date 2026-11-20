@@ -195,10 +195,11 @@ when its completion marker and identity match.
   `family_profiles`, `03b` derives it per program, and `03c` reads the plan.
   `DS-43` supersedes the sentence in `DS-33` that says `02c` emits the census.
 - `MC-44` — feasibility is the constructor's output over a committed coverage
-  fixture set, not an abstraction of the grammar. The fixture set and the checked-in
-  expected table are in `task-step-support.md`, and the structural and witness
-  tiers are in `pipeline/testing/task-step-support.md`. Fixtures are programs, so
-  no Parquet enters the repository.
+  fixture set, not an abstraction of the grammar. The contract is written in
+  `task-step-support.md`, and the structural and witness tiers are in
+  `pipeline/testing/task-step-support.md`. Fixtures are programs, so no Parquet
+  enters the repository. The fixture programs and `support-table.json` are
+  implementation artifacts and do not exist yet.
 - `MC-14` — `failure-record.md` owns the row schema, the dedupe key, the merge,
   the order, the reconciliation rule, and the aggregation. The record is one
   partition per rejecting pipeline stage, merged by `05`.
@@ -229,8 +230,9 @@ when its completion marker and identity match.
   `AcceptedMiss`, in `03c`.
 - `MC-45` — the P1 balance row is an equal share among supported forms, in
   `task-structure.md`.
-- `MC-27` — Q1 is retired for PRD Q7, and the benchmark is pinned in the
-  manifest, in `05`.
+- `MC-27` — the benchmark is pinned in the manifest, in `05`, and the transfer
+  comparison is PRD Q7. The entry's Q1 reference was a misnumbering; no Q1 was
+  retired.
 - `MC-28` — the owner reviews a P0 sample behind a blocking gate, in `05`.
 - `MC-47` — the scalar target is a measurement instance, with the candidate set,
   binding, and identity written in `task-structure.md`, `construction.md`, and
