@@ -532,51 +532,80 @@ The split matters because strict narrowing is order-dependent: a clue that
 narrows in canonical order may not narrow at its presentation position. Validity
 is therefore checked in canonical order only.
 
-### 6. `D6` — What is the minimum narrowing?
+### 6. `D6` — How much must a non-final clue narrow the answer set?
 
-Options: each clue may leave one possible answer, or each clue must leave at
-least `k`. Recommendation: each non-final clue leaves at least two or three
-possible answers. A clue that jumps straight to one answer makes the rest of the
-chain decorative.
+Options: any strict decrease; at least two distinct answers remain; at least
+half of the distinct answers remain.
 
-Blocks: task quality and step count.
+The rule is about distinct answers, not candidates. A set of three candidates
+that all produce the same answer is already answer-unique, so every clue after
+it is decorative even though the answer candidate set is still larger than one.
 
-### 7. `D7` — Where do multiple-choice choices come from?
+Recommendation: at least two distinct answers remain after every non-final clue,
+and the final clue reduces the set to one answer. The threshold is a count
+rather than a fraction because the chains are short and a fraction over two
+candidates is not meaningful.
 
-Options: the penultimate possible-answer set, or sibling measurements of the
-answer entity. Recommendation: identity answers draw their choices from the
-penultimate set, because those are the entities the last clue discriminated
-between. An identity answer in multiple-choice format also needs a singleton
-final set, since a set of two cannot be expressed as one correct label. Numeric
-answers use sibling measurements only when at least five distinct values exist;
-otherwise the choices are too easy to guess.
+Blocks: task quality, step count, and the choice pool.
 
-Blocks: multiple-choice availability.
+### 7. `D7` — How is the multiple-choice pool built?
 
-### 8. `D8` — How does the scheduler fill the plan?
+Options: the penultimate answer candidate set; the distinct answers of the
+penultimate set; a sample of the task target category.
 
-Options: per-cell greedy, or global selection across cells. Recommendation:
-greedy coverage-first — fill the minimum, then the target, then the volume. This
-matches the priority order already stated in `03a` and keeps the scheduler
-explainable.
+Recommendation: identity answers use the penultimate answer candidate set,
+because those are the entities the last clue discriminated between. Numeric answers use
+the distinct answers of the penultimate set, which makes the choices comparable
+numbers rather than unrelated measurements.
 
-Blocks: quota filling and deficits.
+Two parts are still undefined and must be settled with this question: the number
+of choices, and the padding rule when the pool is smaller than that number. The
+earlier "at least five distinct values" threshold was neither justified nor
+connected to a choice count.
 
-### 9. `D9` — How are clue forms weighted?
+Blocks: multiple-choice availability and `04`.
 
-Options: equal weight, weight by operand form, or calibrate against LLM
-evaluation results. Recommendation: equal weight first, then calibrate against
-LLM evaluation results. Weighting by operand form before there is measurement
-data would encode a guess about difficulty that `DS-05` deliberately removed.
+### 8. `D8` — In what order are quota targets filled, and when is a task accepted?
 
-Blocks: coverage and balance.
+Options: per-target greedy in plan order; scarcity-first across targets; global
+selection over the whole plan.
 
-### 10. `D10` — Does `DS-05` change?
+Recommendation: scarcity-first across targets, which `03a` already requires,
+with greedy acceptance inside each target. A task is accepted when it fills an
+unfilled target and does not push any cell past its maximum; an overfill is
+recorded rather than silently accepted.
 
-Options: keep task reasoning step count as the only measure, or add clue form as
-a per-clue measure. Recommendation: keep step count as the length measure and
-add clue form as a per-clue measure. Neither is a task label; a task is
-described by its clue form profile, not named by a grade.
+The earlier wording said "minimum, then target, then the volume". `03a` defines
+a minimum, a target count, and a maximum for each target, so "volume" was
+undefined.
+
+Blocks: quota filling, overfill handling, and deficits.
+
+### 9. `D9` — Is clue operand form a coverage dimension, a balance dimension, or both?
+
+Options: coverage only; coverage and balance; neither.
+
+`03a` already applies a conditional release share and a half-to-twice range to
+clue type, answer meaning, and answer format. This question asks whether clue
+operand form joins that set.
+
+Recommendation: coverage only in P0, balance in P1. Five of the twenty nominal
+clue-form cells are structurally empty and four more wait for P2, leaving eleven
+usable cells, so a balance range in P0 would create pressure to force tasks into
+cells the graph cannot support.
+
+Blocks: coverage, balance, and the support table.
+
+### 10. `D10` — What role does clue form play in reporting?
+
+Options: none, step count only; a coverage dimension; a difficulty axis.
+
+Recommendation: a coverage dimension and a reported breakdown, not a difficulty
+axis. `DS-05` stays intact: task reasoning step count remains the length
+measure, and clue form is descriptive.
+
+This replaces the earlier framing, "does `DS-05` change?", which was a proposal
+to amend a decision rather than a question about the reporting contract.
 
 Blocks: PRD section 6, R-9, and benchmark reporting.
 
