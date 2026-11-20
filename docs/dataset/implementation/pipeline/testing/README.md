@@ -18,7 +18,7 @@ assert-from-the-artifact rule, and the test-first order — are in
 | [`01a-read-cadevolve-metadata.md`](01a-read-cadevolve-metadata.md) | `01a` read CADEvolve metadata. | draft |
 | [`01b-select-program-pool.md`](01b-select-program-pool.md) | `01b` select program pool. | draft |
 | [`01c-fetch-program-pool.md`](01c-fetch-program-pool.md) | `01c` fetch program pool. | draft |
-| `01d-normalize-programs.md` | `01d` normalize programs. | missing |
+| [`01d-normalize-programs.md`](01d-normalize-programs.md) | `01d` normalize programs. | draft |
 | `01e-write-external-dataset-manifest.md` | `01e` write external dataset manifest. | missing |
 | `02a-extract-cadquery-ast.md` | `02a` extract CadQuery AST. | missing |
 | [`02b-execute-cadquery.md`](02b-execute-cadquery.md) | `02b` execute CadQuery. | draft |

@@ -59,7 +59,7 @@ are the executable units.
 | [`01a-read-cadevolve-metadata.md`](01a-read-cadevolve-metadata.md) | [`../01a-read-cadevolve-metadata.md`](../01a-read-cadevolve-metadata.md) |
 | [`01b-select-program-pool.md`](01b-select-program-pool.md) | [`../01b-select-program-pool.md`](../01b-select-program-pool.md) |
 | [`01c-fetch-program-pool.md`](01c-fetch-program-pool.md) | [`../01c-fetch-program-pool.md`](../01c-fetch-program-pool.md) |
-| `01d-normalize-programs.md` | [`../01d-normalize-programs.md`](../01d-normalize-programs.md) |
+| [`01d-normalize-programs.md`](01d-normalize-programs.md) | [`../01d-normalize-programs.md`](../01d-normalize-programs.md) |
 | `01e-write-external-dataset-manifest.md` | [`../01e-write-external-dataset-manifest.md`](../01e-write-external-dataset-manifest.md) |
 | `02a-extract-cadquery-ast.md` | [`../02a-extract-cadquery-ast.md`](../02a-extract-cadquery-ast.md) |
 | [`02b-execute-cadquery.md`](02b-execute-cadquery.md) | [`../02b-execute-cadquery.md`](../02b-execute-cadquery.md) |
