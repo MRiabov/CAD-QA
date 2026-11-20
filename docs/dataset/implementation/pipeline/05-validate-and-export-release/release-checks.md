@@ -228,9 +228,9 @@ accepted row:
 | `minimum_count`, `maximum_count` | The bound the count missed. |
 | `reason` | Why the owner accepts it. |
 
-A `deferred` row is present in every release, including the first one, so the
-scope boundary is visible. The check list above is the contract. `05` emits one
-row per listed check, and a report that omits one is itself a rejection.
+The check list above is the contract. `05` emits at least one row per listed
+check, so a deferred requirement is visible rather than absent, and a report that
+omits a check is itself a rejection.
 
 ## The report
 
@@ -268,7 +268,7 @@ nothing, because the requirement is outside the release implementation scope.
 A dimension with a small value set reports every value: task target category,
 answer format, answer meaning, clue type, clue operand form, task reasoning step
 count, split, and subset. A cap on a high-cardinality quantity reports the
-extreme share, the program or answer that holds it, and the programs or answers
+extreme count, the program or answer that holds it, and the programs or answers
 over the bound. A program and a correct answer each have at least a thousand
 values, so a row per value would bury the answer in the manifest, and the cap
 only needs the offenders.
