@@ -126,16 +126,21 @@ returned. The answer format says "number" or "boolean"; the answer meaning says
 | Area | An area. | P0 |
 | Length | A length. | P0 |
 | Distance | A distance between two entities or a point and an entity. | P0 |
-| Angle | An angle between faces, edges, or a path tangent. | P0 |
+| Angle | An angle between two faces, two edges, or a path tangent. Two faces use outward normals, two edges the acute angle between the lines. | P0 |
 | Count | A number of entities. | P0 |
 | Rank | A position in an ordered set. | P1 |
 | Membership | Whether a point is inside the solid state. Points within tolerance of a face surface are not used. | P0 |
-| Position | A point location in space. | P0 |
+| Position | A point location in space, declared by the question: a face centroid, an edge midpoint, a vertex point, or a solid state centroid. | P0 |
 | Extent | A minimum and maximum corner. | P0 |
 | CadQuery workplane state | The frame of a CadQuery workplane. | P1 |
 | Material change | Material added or removed. | P0 |
 | Topology change | A change in faces, edges, or vertices. | P0 |
 | Validity | Whether a shape is valid. | P2 |
+
+Position, material change, and topology change declare a parameter in the
+question: the point for a position, the direction for a material change, and the
+category for a topology change. The parameter is part of the task definition and
+the answer evidence, not a convention the resolver picks.
 
 The answer meaning is not the answer format. A volume can be returned as a
 number; a membership result can be returned as yes or no; an identity is

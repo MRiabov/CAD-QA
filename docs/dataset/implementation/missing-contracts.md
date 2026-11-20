@@ -52,7 +52,9 @@ The answer resolver is not written: one rule per answer meaning that turns the
 bound target and the penultimate answer candidate set into the gold answer and
 its evidence. The construction order is in `algorithm/construction.md`, but the
 resolver itself is still prose, and `03b` defines validity without defining the
-thing that produces the answer it validates.
+thing that produces the answer it validates. The face and edge angle
+conventions and the declared-point rule for position are now written; material
+change and topology change are not.
 
 **Recommendation:** write a resolver table next to the answer-format table in
 `03b`, one row per answer meaning, naming the kernel call or the exact derivation
@@ -61,11 +63,12 @@ and the evidence it records.
 #### MC-37 — Definition fields for the new decisions
 
 The `TaskDefinition` fields required by the recorded decisions are absent:
-`state_scope`, `clue_form_profile`, `answer_equivalent_set`, and the membership
-probe. The field table predates `DS-32`, `DS-34`, and `DS-38`, so the definition
-cannot carry what the decisions require.
+`state_scope`, `clue_form_profile`, `answer_equivalent_set`, the membership
+probe, and `answer_parameter` — the point, direction, or category a
+parameterized answer declares. The field table predates `DS-32`, `DS-34`, and
+`DS-38`, so the definition cannot carry what the decisions require.
 
-**Recommendation:** add the four fields, with `answer_equivalent_set` holding
+**Recommendation:** add the five fields, with `answer_equivalent_set` holding
 entity ids and their answers, so answer uniqueness can be rechecked from the
 definition alone.
 

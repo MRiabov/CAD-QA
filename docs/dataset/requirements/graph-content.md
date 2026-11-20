@@ -143,7 +143,7 @@ must support at least these.
 | Area | Face, CadQuery profile, region | Face area and CadQuery profile area are different scopes. | P0 |
 | Length | Edge, path segment | Straight or curve length. | P0 |
 | Distance | Two endpoint entities, or one endpoint entity and a point | Shortest distance. | P0 |
-| Angle | Two faces, two edges, or a path tangent | Degrees or radians, stated once. | P0 |
+| Angle | Two faces, two edges, or a path tangent | Two faces: between outward normals, 0–180°. Two edges: acute angle between the lines, 0–90°. Path tangent: between consecutive tangents, 0–180° (P1). Degrees. | P0 |
 | Bounding box | Solid state, entity, region | Minimum and maximum corners in the program frame. | P0 |
 | Centroid | Solid state, entity, region | Point in the program frame. | P0 |
 | Count | Solid state, face, CadQuery selector result | Faces, edges, vertices, selected entities. | P0 |
