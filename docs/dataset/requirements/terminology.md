@@ -44,9 +44,9 @@ the user-visible outcome.
 | **CAD graph entity** | Internal | One entity in the CAD graph, such as a face, edge, operation, or region. |
 | **CAD graph relation** | Domain | A named link between two CAD graph entities. |
 | **CAD graph measurement** | Domain | A numeric or geometric value about a CAD graph entity or a pair of CAD graph entities. |
-| **Enumeration domain** | Internal | Which entities and which pairs a measurement or relation is emitted for. Per-entity measurements are total over their scope; pair elements need one named entity. |
+| **Emitted elements** | Internal | The entities and pairs a measurement or relation is emitted for. Per-entity measurements are total over their scope; pair elements need one named entity. |
+| **Emitted pairs** | Internal | The pairs a pair measurement or relation is emitted for: one named entity times the candidate endpoints of the declared endpoint entity kind. The count is linear in the entity count, not the full pair set. A pair that is not emitted is not a candidate. |
 | **Named entity** | Internal | An entity a task clue can identify directly, by face surface kind, by position, or by the operation or feature that created it. |
-| **Pair domain** | Internal | The pairs a pair measurement or relation is emitted for: one named entity times the candidate endpoints of the declared endpoint entity kind. It is linear in the entity count, not the full pair set. A pair outside the domain is not a candidate. |
 | **Endpoint entity kind** | Internal | The entity kind a relation or measurement declares at one of its endpoints. It is a per-relation declaration, not the global entity category. |
 | **CAD graph evidence** | Internal | The record of how a CAD graph element (CAD graph relation or CAD graph measurement) was obtained: measured by running CadQuery, or derived by an exact rule, with the rule and references. |
 | **Answer evidence** | Domain | The record of how a task's gold answer was obtained: the referenced CAD graph evidence and the rule that produces the answer. |

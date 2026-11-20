@@ -506,7 +506,7 @@ facts from the graph, and each fact carries the extension it selects, so an
 unsupported predicate is never attempted and there is no inapplicable clue to
 evaluate. What remains is graph completeness, which is a graph-contract rule
 rather than a clue-evaluation rule: a per-entity measurement is total over its
-scope, and a pair element exists only inside the declared enumeration domain.
+scope, and a pair element exists only inside the emitted elements.
 
 Tracked as `MC-36` and in `requirements/graph-content.md` section 4.1.
 

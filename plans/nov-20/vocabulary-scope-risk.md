@@ -98,7 +98,7 @@ Concretely:
 
 - `graph-content.md`: keep the P0 rows as P0. The P1 and P2 rows stay deferred as
   already marked, and no P0 row moves.
-- distance and angle: both are P0 answer meanings in the PRD, so the pair domain
+- distance and angle: both are P0 answer meanings in the PRD, so the emitted pairs
   (`MC-36`) is on the critical path rather than deferred.
 - `03-task-generation/decisions.md`: accept module decisions when a milestone or a
   P0 requirement forces them.
