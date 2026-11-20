@@ -607,16 +607,19 @@ Blocks: quota filling, overfill handling, and deficits.
 
 ### 9. `D9` — Is clue operand form a coverage dimension, a balance dimension, or both?
 
+Accepted as `DS-37`.
+
 Options: coverage only; coverage and balance; neither.
 
-`03a` already applies a conditional release share and a half-to-twice range to
-clue type, answer meaning, and answer format. This question asks whether clue
-operand form joins that set.
+Coverage requires a supported value to appear at all. Balance requires its share
+at a task reasoning step count to stay within half to twice the conditional
+release share. Clue operand forms are unevenly available: `selected` needs an
+earlier clue, `cross_state` waits for P2, and five of the twenty nominal
+clue-form cells are structurally empty.
 
-Recommendation: coverage only in P0, balance in P1. Five of the twenty nominal
-clue-form cells are structurally empty and four more wait for P2, leaving eleven
-usable cells, so a balance range in P0 would create pressure to force tasks into
-cells the graph cannot support.
+Recommendation: coverage only in P0, balance in P1. A balance range at a step
+count where a form cannot exist would either be vacuous or force invalid tasks,
+and eleven usable cells are too few for proportional targets to mean anything.
 
 Blocks: coverage, balance, and the support table.
 
@@ -705,7 +708,7 @@ rates.
 The construction strategy is settled (`D11`): supply-driven with a
 capability-aware deficit loop. The two schema blockers are settled as well:
 `D1` (the equality relation for answer uniqueness) and `D2` (state scope). The
-remaining open decisions are `D9` and `D10`, and the construction grammar can
+remaining open decision is `D10`, and the construction grammar can
 be written with the box-and-hole example as the first golden record.
 
 The concern that the vocabulary may be growing without a stopping rule is

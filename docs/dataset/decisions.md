@@ -605,3 +605,22 @@ prefix is `DS-`.
 - **Consequences:** The option pool is a construction output, not a rendering
   choice. `04` orders and labels it and must not re-bind or extend it. A task
   whose penultimate set is smaller than five is a deficit, not a padded task.
+
+## DS-37 — Clue operand form is a coverage dimension in P0
+
+- **Status:** accepted (2026-11-20).
+- **Context:** Coverage requires a supported value to appear at all; balance
+  requires its share at a task reasoning step count to stay within half to twice
+  the conditional release share. Clue operand forms are unevenly available:
+  `selected` needs an earlier clue, `cross_state` waits for P2, and five of the
+  twenty nominal clue-form cells are structurally empty. A balance range at a
+  step count where a form cannot exist would be vacuous or would force invalid
+  tasks.
+- **Decision:** In P0, clue operand form is a coverage dimension: every supported
+  form appears at each step count where the support table says it is supported.
+  Balance over clue operand form is P1, once the support grid is dense enough for
+  a proportional target.
+- **Consequences:** `03a` adds clue operand form as a coverage dimension with a
+  minimum and no balance range in P0. The `clue-form-by-step` support table
+  decides which forms are required at each step count. A missing form at a step
+  count is a coverage gap, not a balance problem.

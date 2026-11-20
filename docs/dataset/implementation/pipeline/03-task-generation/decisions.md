@@ -51,12 +51,11 @@ the document that owns them.
 
 ## Pending
 
-Two module-scoped decisions are accepted. The remaining candidates are the
+Two module-scoped decisions are accepted. The remaining candidate is the
 construction questions in `plans/nov-19/03b-task-construction-design.md`:
 
 | Candidate | Question |
 |---|---|
-| `D9` | Is clue operand form a coverage dimension, a balance dimension, or both? |
 | `D10` | What role does clue form play in reporting? |
 
 Each moves here as an accepted decision once it is answered.

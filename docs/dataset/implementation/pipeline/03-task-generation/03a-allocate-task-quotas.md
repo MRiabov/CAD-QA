@@ -56,10 +56,12 @@ The task is one task, counted in several quota targets. A quota target records:
 - `maximum`: balance or cap limit;
 - `priority`: coverage first, then balance, then volume.
 
-Plan four separate quota dimensions:
+Plan five separate quota dimensions:
 
 - task target category;
 - clue type;
+- clue operand form, as a coverage dimension in P0 and a balance dimension in
+  P1;
 - answer meaning;
 - answer format.
 
