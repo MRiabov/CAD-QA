@@ -5,39 +5,43 @@ description = "Trace-derived CAD-QA dataset generation and evaluation tools."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "cadquery>=2.7.0",
-    "polars>=1.41.0",
+    "cadquery>=2.8.0",
+    "polars>=2.1.0",
     "pyarrow>=25.0",
     "PyYAML>=6.0",
 ]
 
 [project.optional-dependencies]
-cadquery = ["cadquery>=2.4"]
+cadquery = ["cadquery>=2.8.0"]
 data = [
-    "pandas>=3.0.2",
-    "polars>=1.41.0",
+    "pandas>=3.1",
+    "polars>=2.1.0",
 ]
 dev = [
-    "hypothesis>=6.148.7",
-    "mypy>=1.18.2",
-    "pre-commit>=4.0.0",
-    "pytest>=9.0.3",
-    "pytest-cov>=7.0.0",
+    "hypothesis>=6.170",
+    "mypy>=2.4",
+    "pre-commit>=4.7",
+    "pytest>=9.2",
+    "pytest-cov>=7.1",
     "pytest-xdist>=3.8.0",
-    "ruff>=0.15.12",
-    "rumdl>=0.2.78",
-    "types-PyYAML>=6.0.12.20250915",
+    "ruff>=0.17",
+    "rumdl>=0.3.5",
+    "types-PyYAML>=6.0.12.20261113",
 ]
 experiment = [
-    "hf>=1.12.2",
-    "vastai>=1.0.7",
+    "hf>=1.33",
+    "vastai>=1.11",
 ]
 parquet = ["pyarrow>=25.0"]
+# The upper bounds are unsloth's own caps: unsloth pins torch<2.15,
+# transformers<=5.17, trl<=1.15, and datasets<5. Without them the resolver
+# keeps the newest transformers/trl/datasets and backtracks unsloth by more
+# than a year.
 training = [
-    "datasets>=2.18",
-    "torch>=2.2",
-    "transformers>=4.40",
-    "trl>=0.8",
+    "datasets>=4.7,<5",
+    "torch>=2.14,<2.15",
+    "transformers>=4.40,<=5.17",
+    "trl>=0.8,<=1.15",
     "unsloth",
 ]
 
@@ -57,17 +61,17 @@ pythonpath = ["."]
 
 [dependency-groups]
 dev = [
-    "hypothesis>=6.148.7",
-    "hf>=1.12.2",
-    "mypy>=1.18.2",
-    "pre-commit>=4.0.0",
-    "pytest>=9.0.3",
-    "pytest-cov>=7.0.0",
+    "hypothesis>=6.170",
+    "hf>=1.33",
+    "mypy>=2.4",
+    "pre-commit>=4.7",
+    "pytest>=9.2",
+    "pytest-cov>=7.1",
     "pytest-xdist>=3.8.0",
-    "ruff>=0.15.12",
-    "rumdl>=0.2.78",
-    "types-PyYAML>=6.0.12.20250915",
-    "vastai>=1.0.7",
-    "kaggle>=2.2.4",
-    "pydantic>=2",
+    "ruff>=0.17",
+    "rumdl>=0.3.5",
+    "types-PyYAML>=6.0.12.20261113",
+    "vastai>=1.11",
+    "kaggle>=2.2.5",
+    "pydantic>=2.14",
 ]
