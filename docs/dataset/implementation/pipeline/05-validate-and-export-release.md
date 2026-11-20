@@ -16,6 +16,7 @@ Coverage and balance checks:
 - The five task reasoning step support tables.
 - The root `balance.yaml`.
 - The external dataset manifest from `01e` write external dataset manifest.
+- The pinned external benchmark program set, for the transfer overlap check.
 - The per-pipeline-stage failure partitions.
 
 ## Scope

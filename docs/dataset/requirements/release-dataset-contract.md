@@ -212,6 +212,7 @@ for one row.
 | `generator_version` | The git commit SHA of the tree that built the release. |
 | `upstream_dataset_version` | `cache_revision` from the external dataset manifest, verbatim. |
 | `external_dataset_manifest_sha256` | SHA-256 of the external dataset manifest. |
+| `external_benchmark_id`, `external_benchmark_revision` | The transfer benchmark and its revision (R-16, P1). |
 | `task_count`, `split_counts` | Tasks in the release, and tasks per `split`. |
 | `program_family_count`, `program_family_split_counts` | CADEvolve program families in the release, and per `split`. |
 | `task_reasoning_step_counts` | Tasks per `task_reasoning_step_count`. |

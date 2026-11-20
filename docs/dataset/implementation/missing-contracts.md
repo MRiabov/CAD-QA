@@ -13,7 +13,7 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 8 open entries: 4 P0 technical and 4 P1 technical. No product
+There are 9 open entries: 4 P0 technical and 5 P1 technical. No product
 decision remains open, and P2 is empty.
 
 ## Decisions needed from the owner
@@ -105,6 +105,8 @@ Work order:
    splits.
 4. `MC-29` — run-level execution contract; retries and cache hits are promised
    without it.
+5. `MC-49` — external benchmark program set; the transfer overlap check has no
+   declared input.
 
 #### MC-18 — Program floor backfill
 
@@ -146,6 +148,21 @@ is the rule `01b` select program pool already applies within a collection. State
 which stage enforces it (`03a` allocate task quotas at graph selection or `03b`
 construct task definitions at construction).
 
+#### MC-49 — External benchmark program set
+
+`05` validate and export release records the external benchmark identity and
+revision in the manifest and checks that no benchmark program appears in
+training or evaluation (R-16), but no artifact and no pipeline stage supplies the
+benchmark program set. It is not part of `01` external dataset ETL, and
+`artifacts.md` has no row for it, so the overlap check has no declared input and
+the manifest fields have no declared value. P1 scope.
+
+**Recommendation:** add an external benchmark program set artifact to
+`artifacts.md`, written by the release author, identified by benchmark name,
+revision, and file hash, carrying normalized program text for the P0 overlap
+check and the same-CAD-model comparison for the P1 check. Record its identity
+and hash in the manifest.
+
 #### MC-29 — Run-level execution contract
 
 Run-level execution contracts are missing: the run manifest artifact, completion
@@ -163,10 +180,11 @@ when its completion marker and identity match.
 ## Closed or merged in the 2026-11-20 pass
 
 - `MC-26` — release contract section 7 is a field table with `release_id`,
-  `generator_version`, `upstream_dataset_version`, and the external-manifest hash;
-  `release_id` is `cadqarel:<sha256>` over the canonical release rows in `task_id`
-  order. Section 8 is the dataset card outline, including the answer conventions.
-  `05` owns both and writes the card from the manifest.
+  `generator_version`, `upstream_dataset_version`, the external-manifest hash,
+  and the benchmark identity fields; `release_id` is `cadqarel:<sha256>` over the
+  canonical release rows in `task_id` order. Section 8 is the dataset card
+  outline, including the answer conventions. `05` owns both and writes the card
+  from the manifest. The benchmark program set the fields name is `MC-49`.
 - `MC-12` — `04` render prompt and choices owns the projection, and the release
   contract carries one `Carries` row per column. Answer text is copied, never
   re-serialized; `clue_types` comes from `clue_operand_form_profile`;
