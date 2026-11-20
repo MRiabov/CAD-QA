@@ -730,14 +730,13 @@ prefix is `DS-`.
   column type and the UUID logical type, with no error and no change to the values.
   PyArrow does not have this problem. `pq.read_table` returns
   `extension<arrow.uuid>` from a `parquet-go` file that carries no `ARROW:schema`
-  metadata, so the Parquet logical type is sufficient. `pq.read_schema` is the
-  exception, and only on PyArrow 24.0.0 and earlier: `apache/arrow#48254` tracks
-  it and it was fixed in 25.0.0, and `ParquetFile(...).schema_arrow` is correct
-  on the affected versions.
+  metadata, so the Parquet logical type is sufficient. `pq.read_schema` dropped
+  extension types on PyArrow 24.0.0 and earlier (`apache/arrow#48254`), which the
+  project no longer runs: `pyproject.toml` requires `pyarrow>=25.0`, the release
+  that fixed it.
 - **Decision:** UUID columns are written by Go and read by Go. A Python stage
-  reads them with PyArrow and gets `pa.uuid()`. On PyArrow 24.0.0 and earlier it
-  inspects the schema through `ParquetFile(...).schema_arrow`, not `read_schema`.
-  No Python stage rewrites a graph table, and no Polars job is on the graph path.
+  reads them with PyArrow and gets `pa.uuid()`, from the schema or the table. No
+  Python stage rewrites a graph table, and no Polars job is on the graph path.
 - **Consequences:** `02b` may emit UUID columns from PyArrow and `02c` reads them
   unchanged. A Polars round-trip of a graph table is a defect even when the
   values are correct, because both the physical type and the logical type are

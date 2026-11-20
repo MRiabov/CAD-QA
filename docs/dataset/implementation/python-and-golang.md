@@ -46,7 +46,7 @@ No Go code exists yet, so these rows are decisions rather than observations.
 
 | Need | Library | Status |
 |---|---|---|
-| Parquet read and write | `pyarrow` | in use |
+| Parquet read and write | `pyarrow` (`>=25.0`) | in use |
 | Columnar analysis | `polars` | in use, never on the graph path (`DS-41`) |
 | Typed models | `pydantic` | in use in `train_and_eval` |
 | Prompt templates | `PyYAML` | in use |
@@ -68,9 +68,9 @@ Both languages write the same typed tables. `DS-23` forbids JSON columns, and
 - Go writes UUIDs with `parquet-go`, which maps `uuid.UUID` with no tag.
   `arrow-go` would need the `arrow.uuid` extension registered; it is not adopted.
 - Python reads a Go-written UUID column with PyArrow and gets `pa.uuid()`. The
-  Parquet logical type is enough; no `ARROW:schema` metadata is needed. On
-  PyArrow 24.0.0 and earlier, `read_schema` is the exception
-  (`apache/arrow#48254`, fixed in 25.0.0); use `ParquetFile(...).schema_arrow`.
+  Parquet logical type is enough; no `ARROW:schema` metadata is needed. The floor
+  is PyArrow 25.0.0, where `read_schema` started preserving extension types
+  (`apache/arrow#48254`).
 - Polars has no UUID type (`pola-rs/polars#7175`, open). It reads the column as
   `Binary` and writes it back as `BYTE_ARRAY`, dropping both the physical type and
   the logical type. No Python stage rewrites a graph table.
