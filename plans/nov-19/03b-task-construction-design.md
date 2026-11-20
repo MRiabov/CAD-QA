@@ -141,6 +141,8 @@ parameter, not an outcome. If the plan asks for a four-step task, the search
 looks for a three-clue cover plus the answer step. If no such cover exists, the
 quota target is a deficit.
 
+## Uniqueness
+
 **`answer_unique(narrowed)` is not necessarily "one entity."** For a
 measurement answer, two symmetric faces can both produce the same area; the
 task is still answerable. The final set is then the
@@ -149,6 +151,60 @@ which all produce the same answer within tolerance. The answer evidence
 records the whole set, because a record that named one entity would claim the
 prompt had identified it uniquely. An identity answer is the special case
 where the set holds exactly one entity.
+
+### Where uniqueness is checked
+
+Uniqueness is one predicate, called from one place: task validity.
+
+```text
+answer_unique(narrowed) =
+    every pair (a, b) in answer_equivalent_set satisfies equals(answer_meaning, a, b)
+```
+
+`equals` is supplied by the answer meaning, so there is no second code path and
+no mode flag. The consequences are placed where they belong:
+
+| Place | What it decides | Keyed on |
+|---|---|---|
+| Chain search | when to stop adding clues | the uniqueness predicate |
+| Validity | accept or reject the task | the equality relation |
+| Answer evidence | what to record | the whole `answer_equivalent_set` |
+| Multiple-choice pool | how choices are built | the answer format |
+| Separation | when two measurements differ | the `D4` margin |
+| Release reporting | how much symmetry the corpus holds | the answer meaning |
+
+Two consequences are easy to get wrong:
+
+- **The search stops on `answer_unique`, never on `len(narrowed) == 1`.** Stopping
+  at a singleton makes every task entity-unique by construction and silently
+  removes the symmetric measurement tasks that the rule exists to keep.
+- **The choice pool is keyed on the answer format, not on uniqueness.** An
+  identity answer in multiple-choice format needs a singleton set, because a set
+  of two cannot be expressed as one correct label. A numeric answer in
+  multiple-choice format may keep a larger set.
+
+### The equality relation
+
+| Answer meaning | `equals(a, b)` | Priority |
+|---|---|---|
+| identity | `a` is `b` | P0 |
+| volume, area, length, distance, angle | `abs(a - b) <= answer_tolerance` | P0 |
+| count, rank | `a == b` | P0 |
+| membership | same label: inside, outside, or on the boundary | P0 |
+| validity | same boolean | P0 |
+| position | same point within `answer_tolerance`, component by component | P1 |
+| extent | same minimum and maximum corner within `answer_tolerance` | P1 |
+| CadQuery workplane state | same origin and frame within `answer_tolerance` | P1 |
+| material change | same added and removed volume within `answer_tolerance` | P1 |
+| topology change | same face, edge, and vertex counts, and the same changed set | P1 |
+
+`answer_tolerance` is the same constant that `D4` uses for the separation
+margin. If the two diverge, a task can pass uniqueness and fail separation, or
+the reverse.
+
+`position`, `extent`, and the change meanings are P1 because their equality rule
+needs a decision about component order and about which topology changes count as
+the same. They are left undefined on purpose rather than guessed.
 
 ## Describing a clue
 
@@ -383,16 +439,16 @@ confines the demand logic to the deficit path where it belongs.
 Each decision is written so it can be answered on its own. The recommendation is
 a default, not a ruling, and the ID is stable so other documents can refer to it.
 
-### 1. `D1` — What is the uniqueness unit?
+### 1. `D1` — What is the equality relation for answer uniqueness?
 
-Options: entity-unique, answer-unique, or hybrid. Recommendation: hybrid. An
-identity answer needs exactly one entity, because the label is the answer. A
-measurement answer needs one answer value, because two symmetric entities can
-produce the same number and the task is still answerable; the final set becomes
-the `answer_equivalent_set` recorded in the answer evidence.
+Options: entity identity for every answer meaning, or an equality relation
+chosen per answer meaning. Recommendation: per answer meaning, as the table in
+"The equality relation" above defines. Identity answers use entity identity, so
+a singleton falls out of the general rule rather than being a separate mode.
+Numeric answers use `answer_tolerance`; label answers compare labels.
 
-Blocks: `TaskDefinition.target_binding`, `answer_evidence`, and the pool of
-multiple-choice options.
+Blocks: `TaskDefinition.answer_evidence`, the `answer_equivalent_set` field, the
+validity predicate in `03b`, and the separation margin in `D4`.
 
 ### 2. `D2` — Does the question name the solid state?
 
@@ -443,8 +499,10 @@ Blocks: task quality and step count.
 Options: the penultimate possible-answer set, or sibling measurements of the
 answer entity. Recommendation: identity answers draw their choices from the
 penultimate set, because those are the entities the last clue discriminated
-between. Numeric answers use sibling measurements only when at least five
-distinct values exist; otherwise the choices are too easy to guess.
+between. An identity answer in multiple-choice format also needs a singleton
+final set, since a set of two cannot be expressed as one correct label. Numeric
+answers use sibling measurements only when at least five distinct values exist;
+otherwise the choices are too easy to guess.
 
 Blocks: multiple-choice availability.
 
@@ -488,7 +546,8 @@ Blocks: `01b`, `02c`, `03a`, `03b`, and `03c`.
 | Change | Owner |
 |---|---|
 | Add the clue grammar and the clue form grid to `requirements/task-structure.md` and `requirements/terminology.md` | `requirements/task-structure.md`, `requirements/terminology.md` |
-| Add `clue_operand_form` to `TaskClue`; add `clue_form_profile` and `state_scope` to `TaskDefinition`; add `answer_equivalent_set` to the answer evidence; record `answer_meaning` instead of an answer ladder | `03b` |
+| Add `clue_operand_form` to `TaskClue`; add `clue_form_profile` and `state_scope` to `TaskDefinition`; add `answer_equivalent_set` to the answer evidence; define `answer_unique` over that set with an equality relation per answer meaning; record `answer_meaning` instead of an answer ladder | `03b` |
+| Require a singleton `answer_equivalent_set` for an identity answer in multiple-choice format | `04` |
 | Add `clue_operand_form` as a quota dimension; require coverage at each step count; balance with the conditional share | `03a` |
 | Add `support/clue-form-by-step.json` | `05`, task-step support |
 | Add `clue_form_profile` to the release table | release contract, `04` |
@@ -530,9 +589,9 @@ answers), a replay test, and one end-to-end test.
 
 The construction strategy is settled (`D11`): supply-driven with a
 capability-aware deficit loop. The two decisions that still block the schema
-are `D1` (uniqueness unit) and `D2` (state scope). Once they are settled, the
-construction grammar can be written with the box-and-hole example as the first
-golden record.
+are `D1` (the equality relation for answer uniqueness) and `D2` (state scope).
+Once they are settled, the construction grammar can be written with the
+box-and-hole example as the first golden record.
 
 ## References
 
