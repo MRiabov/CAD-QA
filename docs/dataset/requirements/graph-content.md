@@ -254,7 +254,7 @@ what produced it.
 | `before`, `after`, `creates`, `uses`, `derived_from` | derived from the extraction records |
 | `has_face`, `has_edge`, `has_vertex` | derived from the topology records |
 | `adjacent_to` | derived from the topology records |
-| `parallel_to`, `perpendicular_to`, `coplanar_with`, `coaxial_with` | derived from geometry, with the tolerance from section 4.2 |
+| `parallel_to`, `perpendicular_to`, `coplanar_with`, `coaxial_with`, `angle` | derived from geometry, with the tolerance from section 4.2 |
 | `distance` | measured by the kernel |
 | `adds_material`, `removes_material`, `part_of` | derived from the feature and region records |
 | `is_inside` | measured by the kernel, from the solid state and a point literal |
