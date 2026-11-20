@@ -56,7 +56,7 @@ is exhausted, or the remaining miss is accepted and recorded.
 | [`03c-resolve-deficits.md`](03c-resolve-deficits.md) | Deficit classification, replanning, and program requests. |
 | [`decisions.md`](decisions.md) | Decisions scoped to this module. |
 
-## Algorithm and support
+## Algorithm
 
 | Doc | Contract |
 |---|---|
