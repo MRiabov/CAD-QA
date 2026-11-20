@@ -150,20 +150,33 @@ every edge has a length, every path segment has a length, every solid state has
 a volume and a bounding box. A missing row for a per-entity measurement is a
 graph defect, not a data condition.
 
-**Pair measurements and pair relations are enumerated over a declared domain.**
-`distance_to`, `angle`, `coplanar_with`, `coaxial_with`, `intersects`, and
-`contains` apply to pairs, and a solid state can hold thousands of pairs. The
-domain says which pairs exist:
+**Pair measurements and pair relations are anchored.** `distance_to`, `angle`,
+`coplanar_with`, `coaxial_with`, `intersects`, and `contains` apply to pairs, and
+a solid state can hold thousands of pairs. The domain is not the full pair set.
 
-- the default is every pair of the accepted entity kinds within one solid
-  state;
-- a narrower domain is stated here, per relation or measurement, with its size
-  bound.
+A pair element exists only when at least one endpoint is a **named entity**: an
+entity a clue can name directly, by face surface kind, by position, or by
+the operation or feature that created it. "The cylindrical face", "the top face",
+and "the face created by `cutBlind`" are named entities. The domain is then
+
+```text
+named anchor × candidates of the accepted kinds in the same solid state
+```
+
+which is linear in the entity count per anchor, not quadratic.
+
+The rule follows the clue grammar, so the enumeration is not a separate
+vocabulary:
+
+- a `named` reference needs the pair to exist in the graph, because the clue
+  names one endpoint and the search must know which candidates the pair selects;
+- a `selected` or `aggregated` reference resolves both endpoints at search time,
+  so the comparison is computed from the per-entity measurements and no pair
+  row is needed;
+- a `cross_state` reference needs the per-entity values in both states.
 
 A pair outside the domain is not a missing measurement; it is not a candidate.
-Without a stated domain, a task can depend on a pair that the graph never
-enumerated, and the failure looks like a missing value rather than a missing
-rule.
+The size bound per anchor is part of this contract.
 
 ## 5. States and timing
 
@@ -213,6 +226,13 @@ depends on the failed output is rejected.
 - It is not a place to store guessed measurements.
 - It is not a database of every possible task; it is the graph elements the
   tasks need.
+
+The graph is an index, not a copy of the geometry. It is complete for the
+task vocabulary — every entity, relation, and measurement a supported clue type
+or answer meaning can reference — and incomplete for the geometry itself, which
+stays in the kernel. Values are measured or derived once, at graph build time,
+and stored immutably in the artifact. A task is reproduced from the artifact,
+not by re-running the kernel.
 
 ## 8. Coverage check
 
