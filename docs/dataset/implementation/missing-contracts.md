@@ -11,26 +11,12 @@ only a **technical decision** that engineering can settle from the decisions
 already recorded. Product entries block more than they appear to, because
 writing code cannot close them.
 
-There are 28 open entries: 2 P0 product, 16 P0 technical, 7 P1 product, and 3 P1
+There are 27 open entries: 1 P0 product, 16 P0 technical, 7 P1 product, and 3 P1
 technical. P2 is empty.
 
 ## P0
 
 ### Product decisions
-
-#### MC-36 — State entity limit
-
-The `max_state_entities` limit is not set. The named-endpoint rule and the
-no-cap policy are written in `graph-content.md`; the limit is provisional at 500.
-Distance and angle are P0 answer meanings, so a pair the graph never enumerated
-makes a P0 task unanswerable, and the failure looks like a missing measurement
-rather than a missing rule.
-
-**Recommendation:** measure entity counts once per implementation scope, offline,
-and set the limit at the smallest round number above the 99th percentile; record
-the distribution next to the limit. Graph construction and planning read the
-recorded number and never recompute it. Revise it deliberately when the graph
-content grows — P1 adds relations and states — rather than per run.
 
 #### MC-39 — Clue operand form coverage minimum
 
@@ -327,6 +313,10 @@ input hash plus every version that affects the output.
 
 - `MC-31` — the slow loop in `03c` includes `01d`; the flow line in `00` was the
   defect and is fixed.
+- `MC-36` — the state entity limit is a scope constant measured once per
+  implementation scope, and the rule is written in `graph-content.md` section
+  4.1. The first number is produced when the P0 pool is selected, which is plan
+  work rather than a missing contract.
 - `MC-32` — the external manifest has no link field; the repo-wide link check
   passes.
 - `MC-34` — the implementation README now lists the test contract folder and
