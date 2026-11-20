@@ -18,3 +18,16 @@ Each fixture covers at least one of:
 The graphs are derived by `02a` extract CadQuery AST, `02b` execute CadQuery, and
 `02c` build CAD graph, and written to a temporary directory. No Parquet is
 committed here, and no cache is involved.
+
+## Rejection fixtures
+
+A rejection fixture is the opposite of a coverage fixture: a deliberately
+degenerate program that must be rejected. The two sets are kept apart, so a
+degenerate program cannot make a support-table cell look supported.
+
+A rejection fixture records its expected failure reason. The assertions are in the
+[construction test contract](../construction-tests.md).
+
+The rejection set starts with one program: a cut tangent to a face, for the
+clear-case margin on a predicate. Probe rejection is a unit test on the filter,
+not a program, because a well-formed solid keeps its centroid probe.

@@ -219,9 +219,9 @@ revision, not an in-place edit.
 
 ## 6. Comparison
 
-The construction end-to-end test (`MC-41`) constructs a definition from the
-record's program and task description, using the pinned construction input, and
-compares it field by field:
+The construction end-to-end test in [`construction-tests.md`](construction-tests.md)
+constructs a definition from the record's program and task description, using the
+pinned construction input, and compares it field by field:
 
 - the task description fields in `task`;
 - each clue's `order`, `clue_type`, `clue_operand_form`, `subject`, `check`, and
@@ -301,8 +301,8 @@ tests.
 - the tolerance and scoring rule are consistent with the answer.
 
 It does not prove the record matches the constructor. That is the end-to-end
-test in `MC-41`. It does not prove the counts against the graph. That is the
-same end-to-end test.
+test in [`construction-tests.md`](construction-tests.md). It does not prove the
+counts against the graph. That is the same end-to-end test.
 
 ## 9. What is not here
 
@@ -310,7 +310,6 @@ same end-to-end test.
   [`../03-task-generation/algorithm/construction.md`](../03-task-generation/algorithm/construction.md).
 - The definition schema and validity rules:
   [`../03-task-generation/03b-construct-task-definitions.md`](../03-task-generation/03b-construct-task-definitions.md).
-- The construction test contract: `MC-41` in
-  [`../../missing-contracts.md`](../../missing-contracts.md).
+- The construction test contract: [`construction-tests.md`](construction-tests.md).
 - Release validation:
   [`../05-validate-and-export-release.md`](../05-validate-and-export-release.md).

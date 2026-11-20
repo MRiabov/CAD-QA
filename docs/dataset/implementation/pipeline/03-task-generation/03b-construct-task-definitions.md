@@ -320,32 +320,30 @@ The precision comes from the answer format and the release scoring rule:
 
 ## Validity
 
-A task definition is valid only when all of these hold:
+A task definition is valid only when every rule in this table holds. The check
+name is stable: it is the name the validity record carries.
 
-- every task clue is satisfied by the bound entities;
-- every task clue narrows the possible answers;
-- every task clue is necessary: removing it leaves at least two distinct answers,
-  or changes the answer;
-- every predicate a task uses is decided by at least the clear-case margin;
-- every candidate in the answer-equivalent set produces the same answer under
-  `same_answer`; an identity answer requires a singleton set (`DS-32`);
-- for a scalar target, every remaining instance has the same value;
-- the answer step produces exactly one gold answer;
-- the target binding is unambiguous;
-- the program family and split are present;
-- the split matches the family assignment from `03a`;
-- the subset is consistent with the task reasoning step count;
-- the answer has answer evidence;
-- for multiple choice, the choice pool passes every P0 row of the
-  [multiple-choice check list](#multiple-choice-choices);
-- for P2 multiple choice, every near-miss choice fails a task clue or the answer
-  step, and its `error_mode` is recorded;
-- the task definition is unique under canonical identity;
-- `geometry_required` is recorded: at least one task clue depends on the built
-  shape.
+| Check | Rule |
+|---|---|
+| `clue_satisfied` | Every task clue is satisfied by the bound entities. |
+| `clue_narrows` | Every task clue narrows the possible answers. |
+| `clue_necessary` | Removing any task clue leaves at least two distinct answers, or changes the answer. |
+| `predicate_margin` | Every predicate a task uses is decided by at least the clear-case margin. |
+| `answer_equivalence` | Every candidate in the answer-equivalent set produces the same answer under `same_answer`; an identity answer requires a singleton set (`DS-32`). |
+| `scalar_target_agrees` | For a scalar target, every remaining instance has the same value. |
+| `single_gold_answer` | The answer step produces exactly one gold answer. |
+| `target_binding_unambiguous` | The target binding resolves to exactly one entity or measurement instance. |
+| `family_and_split_present` | The program family and split are present. |
+| `split_matches_assignment` | The split matches the family assignment from `03a`. |
+| `subset_matches_step_count` | The subset is consistent with the task reasoning step count. |
+| `answer_evidence_present` | The answer has answer evidence. |
+| `choice_pool_valid` | For multiple choice, the choice pool passes every P0 row of the [multiple-choice check list](#multiple-choice-choices). |
+| `near_miss_valid` | For P2 multiple choice, every near-miss fails a task clue or the answer step, and its `error_mode` is recorded. |
+| `definition_unique` | The task definition is unique under canonical identity. |
+| `geometry_required_recorded` | `geometry_required` is recorded: at least one task clue depends on the built shape. |
 
-An invalid definition is recorded as a failure with a reason and is not passed to
-`04`. A task with an ambiguous target, an answer-equivalent set that disagrees
+An invalid definition is recorded as a failure naming the failed check and is not
+passed to `04`. A task with an ambiguous target, an answer-equivalent set that disagrees
 under `same_answer`, or an unverifiable answer is invalid.
 
 ### Validity record
@@ -354,12 +352,27 @@ under `same_answer`, or an unverifiable answer is invalid.
 
 | Field | Meaning |
 |---|---|
-| `checks` | One entry per validity rule below: the check name, the outcome, and a detail string. |
+| `checks` | One entry per validity rule in the table above: the check name, the outcome, and a detail string. |
 | `answer_equivalent_size` | The number of entries in `answer_equivalent_set`. |
 | `same_answer_holds` | Whether every entry's answer equals the answer value. |
 
-The check name is a closed set, one name per rule. `geometry_required` is its own
-field rather than a check entry, because `04` copies it to the release row.
+An accepted definition carries every check name except
+`geometry_required_recorded`, each with outcome `pass`. A missing check is a
+defect: it means the constructor did not run the rule.
+`geometry_required_recorded` is a rule but not a `checks` entry, because
+`geometry_required` is its own field and `04` copies it to the release row.
+
+### Failure reasons
+
+`03b` owns the closed reason set the failure record uses:
+
+| Reason | Meaning |
+|---|---|
+| A check name from the table above. | The definition failed that rule. A duplicate is `definition_unique`. |
+| `no_cover` | The cover search found no chain at the target task reasoning step count. |
+
+A state without a surviving probe is not a failure row. No definition was
+attempted, so the state is a `probe_deficit` in the deficit ledger instead.
 
 ## Task reasoning step accounting
 
@@ -574,5 +587,6 @@ underfilled. Deficits that `03a` reports carry an allocation detail instead, and
 ## Not here
 
 Task quota planning, data expansion, prompt rendering, choice rendering, and
-export. The construction test contract and the golden record are in
-[`../testing/golden-records.md`](../testing/golden-records.md).
+export. The construction test contract is in
+[`../testing/construction-tests.md`](../testing/construction-tests.md), and the
+golden record format is in [`../testing/golden-records.md`](../testing/golden-records.md).

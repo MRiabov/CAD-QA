@@ -13,8 +13,8 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 6 open entries: 1 P0 technical and 5 P1 technical. No product
-decision remains open, and P2 is empty.
+There are 5 open entries: all P1 technical. No product decision and no P0
+technical contract remains open, and P2 is empty.
 
 ## Decisions needed from the owner
 
@@ -28,23 +28,7 @@ None.
 
 ### Technical (P0)
 
-Work order:
-
-1. `MC-41` — the construction test contract; it locks the invariants the other
-   entries introduce.
-
-#### MC-41 — Construction test contract
-
-The test contract for the construction invariants is missing: pair-emission
-completeness, `is_inside` reproducibility from a probe, clear-case margin
-rejection, and redundant-clue rejection. The invariants are written, but
-`pipeline/testing/README.md` is a stub and nothing verifies them, so a
-regression is invisible.
-
-**Recommendation:** one test per invariant, plus a property test that every
-accepted definition passes the validity list, plus one end-to-end test on the
-golden record in
-[`pipeline/testing/golden-records.md`](pipeline/testing/golden-records.md).
+None.
 
 ## P1
 
