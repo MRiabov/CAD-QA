@@ -13,7 +13,7 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 12 open entries: 8 P0 technical and 4 P1 technical. No product
+There are 11 open entries: 7 P0 technical and 4 P1 technical. No product
 decision remains open, and P2 is empty.
 
 ## Decisions needed from the owner
@@ -36,13 +36,11 @@ Work order:
    declared input without them.
 3. `MC-12` — the release projection; the release columns have no writer without
    it.
-4. `MC-13` — the coverage and balance checks; they compare the release against
-   the support tables and `balance.yaml`.
-5. `MC-15` — multiple-choice fairness; the choice check.
-6. `MC-26` — the manifest and dataset card fields; the release ships both.
-7. `MC-41` — the construction test contract; it locks the invariants the other
+4. `MC-15` — multiple-choice fairness; the choice check.
+5. `MC-26` — the manifest and dataset card fields; the release ships both.
+6. `MC-41` — the construction test contract; it locks the invariants the other
    entries introduce.
-8. `MC-42` — the golden record; the first end-to-end comparison.
+7. `MC-42` — the golden record; the first end-to-end comparison.
 
 #### MC-25 — Prompt template file
 
@@ -82,22 +80,6 @@ once. `answer_schema_version` and `answer_sha256` are release-only fields, so
 `04` render prompt and choices must compute them; `answer_evidence_json` and
 `clue_types` are projections of definition fields.
 
-#### MC-13 — Release coverage and balance checks
-
-Release coverage and balance checks are missing: step mix, warmup, program
-floor, target category, answer meaning, answer format, and clue type, plus the
-5–25% answer-format range, the 1–10% answer-meaning range, and the 1% and 25%
-caps. The P1 clue operand form balance target is `MC-45`. `05` validate and
-export release currently checks only that released values appear in the support
-tables, so the first release can pass without meeting R-7–R-10. The numbers now
-live in the root `balance.yaml`, which `05` already validates and records; what
-is missing is the comparison itself.
-
-**Recommendation:** add one check per requirement R-7–R-10 for the first
-release, and R-11–R-12 when their P1 scope ships; each check names the
-requirement it enforces, so a missing check is visible as a missing row. Enforce
-the clue operand form balance check when `MC-45` sets its target.
-
 #### MC-15 — Multiple-choice fairness checks
 
 P0 multiple-choice fairness checks are missing: the correct choice is present,
@@ -119,14 +101,12 @@ contents are still unspecified: the `release_id` derivation, the
 `generator_version` value, the upstream dataset version value, the
 external-manifest linkage field, and the dataset-card outline, including the
 answer conventions the card must state. Evaluation material is owned by `MC-28`.
-`io-contracts.md` also names only `ReleaseTable` as the `05` validate and export
-release input, although `05` validate and export release reads the external
-dataset manifest and the support tables.
+`05` validate and export release now lists its inputs, including the external
+dataset manifest and the five support tables.
 
 **Recommendation:** keep `05` validate and export release as the owner; add the
 missing fields to release contract section 7 and a dataset-card outline; define
-`release_id` and `generator_version`; add the external dataset manifest and the
-support tables to the `05` validate and export release input model.
+`release_id` and `generator_version`.
 
 #### MC-41 — Construction test contract
 
@@ -227,6 +207,12 @@ when its completion marker and identity match.
 
 ## Closed or merged in the 2026-11-20 pass
 
+- `MC-13` — `05-validate-and-export-release/release-checks.md` lists one check
+  per requirement statement, with its scope, bound, and first-release
+  disposition.
+  A miss blocks export until the owner accepts it into `known_misses`; a bound
+  that coverage makes impossible is `superseded` rather than a miss. The
+  conditional release share is one implementation, called by `03a` and `05`.
 - `MC-38` — the release table carries `clue_operand_form_profile`, and
   `support/` carries five tables including `clue-operand-form-by-step.json`.
   `04` copies it from the definition, and `05` reads it for clue operand form

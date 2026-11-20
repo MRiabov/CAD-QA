@@ -7,6 +7,8 @@
 Consumer contract:
 [`../../requirements/release-dataset-contract.md`](../../requirements/release-dataset-contract.md).
 Artifact ownership: [`../artifacts.md`](../artifacts.md).
+Coverage and balance checks:
+[`05-validate-and-export-release/release-checks.md`](05-validate-and-export-release/release-checks.md).
 
 ## Inputs
 
@@ -23,10 +25,11 @@ Artifact ownership: [`../artifacts.md`](../artifacts.md).
 - Check `task_id` uniqueness and exactly one answer set per row.
 - Recheck split isolation by CADEvolve program family on the final release
   table. `03a` assigns the split; `03b` stamps it; `04` carries it.
-- Check released values against the task reasoning step support tables.
+- Run the coverage and balance checks in
+  [`05-validate-and-export-release/release-checks.md`](05-validate-and-export-release/release-checks.md)
+  and block the export on a miss the owner has not accepted.
 - Merge the per-pipeline-stage failure partitions and reconcile the counts
   (R-19).
-- Validate the balance policy file and check the release against it.
 - Check the transfer overlap: exact normalized program text at P0; the P1
   same-CAD-model check is PRD Q7.
 - Record the external benchmark identity and revision in `manifest.json`. No
@@ -47,7 +50,9 @@ Artifact ownership: [`../artifacts.md`](../artifacts.md).
 - Independent validation checks are parallel per row, program, or program family.
 - The final release write, manifest assembly, and support-table copy are single
   writer steps.
-- Parallel validation results are reduced into one summary before export.
+- Parallel validation results are reduced into one summary before export, sorted
+  by check name, scope, and value, so the manifest hash does not depend on the
+  parallel schedule.
 
 ## Failure record
 
@@ -68,11 +73,12 @@ row cannot report its own absence.
 not hold balance numbers of its own.
 
 - Validate the file: known keys only, `task_reasoning_step_share` and
-  `release.splits` sum to 1 within `1e-9`, every share in `(0, 1]`, and
-  `min <= max` when both are present.
+  `release.splits` sum to 1 within `1e-9`, every share in `(0, 1]`,
+  `release.share_tolerance` in `[0, 1)`, and `min <= max` when both are present.
 - Record `version` and the file `sha256` in `manifest.json`.
-- Compare the release against the file: coverage against the task reasoning step
-  support tables, balance against the numbers the file names.
+- Compare the release against the file, with the checks in
+  [`05-validate-and-export-release/release-checks.md`](05-validate-and-export-release/release-checks.md).
+  `release.share_tolerance` and `release.distinct_answer_min` are read only here.
 
 A release that departs from the requirement defaults is valid as long as it is
 checked against the policy it names. The manifest makes the departure visible.

@@ -19,9 +19,14 @@ version: 1
 release:
   tasks_min: 10000
   programs_min: 1000
+  distinct_answer_min: 1000
   built_shape_min_share: 0.95
   cad_model_max_share: 0.01
   correct_answer_max_share: 0.01
+  # Absolute share a release may drift from `splits` and
+  # `task_reasoning_step_share`. `03a` plans the exact counts; construction
+  # rejections move the release off them.
+  share_tolerance: 0.01
   splits:
     train: 0.70
     validation: 0.15

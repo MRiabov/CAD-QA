@@ -65,7 +65,7 @@ not product requirements.
 | [`implementation/pipeline/02-execute-cadquery-and-build-graph.md`](implementation/pipeline/02-execute-cadquery-and-build-graph.md) | AST extraction and CadQuery execution → CAD graph. |
 | [`implementation/pipeline/03-task-generation.md`](implementation/pipeline/03-task-generation.md) | Task quota planning, task definitions, deficit resolution, step counts, identity, and gold answers. |
 | [`implementation/pipeline/04-render-prompt-and-choices.md`](implementation/pipeline/04-render-prompt-and-choices.md) | Prompt rendering and multiple-choice choices. |
-| [`implementation/pipeline/05-validate-and-export-release.md`](implementation/pipeline/05-validate-and-export-release.md) | Validation, export, manifest, and dataset card. |
+| [`implementation/pipeline/05-validate-and-export-release.md`](implementation/pipeline/05-validate-and-export-release.md) | Validation, coverage and balance checks, export, manifest, and dataset card. |
 
 ### Feature-wide
 

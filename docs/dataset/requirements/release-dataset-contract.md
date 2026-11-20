@@ -190,7 +190,8 @@ for one row.
 - distinct CAD program count;
 - release-table hash and answer hash summary;
 - prompt template version and `prompts.yaml` hash;
-- coverage and balance summaries;
+- `checks`: one row per coverage and balance check in
+  [`05` validate and export release](../implementation/pipeline/05-validate-and-export-release/release-checks.md);
 - support-table schema versions and hashes;
 - known misses accepted by the owner;
 - failure count.

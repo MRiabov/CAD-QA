@@ -32,14 +32,16 @@ only for the programs the round adds. `03c` resolve deficits reads
 
 ## Balance policy
 
-Every tunable number in the quota equations is data in the root `balance.yaml`.
+Every tunable quota and balance number is data in the root `balance.yaml`.
 `03a` reads that file; `05` validate and export release reads the same file when
 checking the release. Neither holds balance numbers of its own.
 
 | Key | Sets |
 |---|---|
 | `release.tasks_min`, `release.programs_min` | The release size floors. |
+| `release.distinct_answer_min` | The distinct-correct-answer floor; read by `05`. |
 | `release.splits` | The split shares. |
+| `release.share_tolerance` | The absolute share a release may drift from `release.splits` and `task_reasoning_step_share`; read by `05`. |
 | `release.built_shape_min_share` | The minimum share of tasks with a built shape. |
 | `release.cad_model_max_share` | The per-CAD-model task cap. |
 | `release.correct_answer_max_share` | The per-answer task cap. |
