@@ -80,9 +80,9 @@ not a test detail.
 - A fixture is representative, not degenerate. A solid built only to make one
   cell true is not a fixture.
 - The graph is derived, not committed: `02a` extract CadQuery AST, `02b` execute
-  CadQuery, `02c` build CAD graph, cached under `data/` by program hash and
-  versions. No Parquet enters the repository, and a graph schema change
-  regenerates the cache instead of invalidating a binary fixture.
+  CadQuery, `02c` build CAD graph, written to the run's artifact directory. No
+  Parquet enters the repository, so a graph schema change regenerates the graph
+  instead of invalidating a binary fixture.
 
 The fixture set follows the vocabulary, not the cell count. A new value adds
 rows to the table; if no fixture can produce them, the test names the missing

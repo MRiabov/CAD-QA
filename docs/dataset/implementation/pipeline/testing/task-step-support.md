@@ -31,8 +31,8 @@ A fixture is a **program**, not a graph:
   a fixture.
 
 The graph is derived, never committed: `02a` extract CadQuery AST, `02b` execute
-CadQuery, `02c` build CAD graph, cached under `data/` by program hash and
-versions. No Parquet enters the repository.
+CadQuery, `02c` build CAD graph, written to a temporary directory. No Parquet
+enters the repository, and there is no cache to key or evict.
 
 ## Expected table
 
@@ -58,8 +58,8 @@ A forbidden cell marked present, or an absent cell with no reason, fails.
 
 ## Tier 2 — witness
 
-1. Build the graph for each fixture program, using the cached artifact when the
-   program hash and versions match.
+1. Build the graph for each fixture program. Six programs take seconds, so the
+   tier runs without a cache.
 2. Run the constructor over each graph for the cells its census claims.
 3. Record every cell that produced at least one valid task.
 4. Assert that the union of observed cells over the fixture set equals the set of

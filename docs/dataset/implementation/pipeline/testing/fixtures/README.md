@@ -16,4 +16,5 @@ Each fixture covers at least one of:
 - a feature-added region.
 
 The graphs are derived by `02a` extract CadQuery AST, `02b` execute CadQuery, and
-`02c` build CAD graph, and cached under `data/`. No Parquet is committed here.
+`02c` build CAD graph, and written to a temporary directory. No Parquet is
+committed here, and no cache is involved.
