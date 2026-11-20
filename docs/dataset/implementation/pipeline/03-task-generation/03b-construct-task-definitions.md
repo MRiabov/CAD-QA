@@ -39,15 +39,15 @@ task. It is not prompt text and not a loose task tuple. It is what `04` renders.
 | `gold_answer`, `answer_unit`, `tolerance`, `scoring_rule` | Answer data. `gold_answer` and `tolerance` are canonical text, matching the release columns. |
 | `answer_schema_version` | Version of the answer representation: the answer formats, the canonical text rules, and the answer evidence shape. Hashed by `answer_sha256`. |
 | `answer_evidence` | Measured or derived evidence as canonical JSON text: rule, references, the answer-equivalent set, and the point probe. `04` copies it into the release column. |
-| `choice_pool` | Real answer-space candidates and their distinguishing graph facts, when multiple choice is planned. For P2, it includes validated near-miss choices. |
+| `choice_pool` | The ordered, labeled options when multiple choice is planned: label, answer value, distinguishing graph facts, and the P2 error mode. Empty otherwise. |
 | `task_clue_step_count`, `task_reasoning_step_count` | Step accounting. |
 | `geometry_required` | Whether at least one task clue depends on the built shape. |
 | `validity_record` | Typed check results and the answer-uniqueness result. |
 | `provenance` | Constructor version, seed, and input versions. Assignment, not content. |
 
 The definition must be sufficient to reproduce the task without re-running task
-construction. `04` may render text and order the choice pool, but it must not bind
-a new target, compute the answer, or decide validity.
+construction. `04` may render text, but it must not reorder or relabel the choice
+pool, bind a new target, compute the answer, or decide validity.
 
 ## Graph input boundary
 
@@ -110,6 +110,21 @@ carries `clue_operand_form` (`DS-31`):
 A clue with no reference has no clue operand form. A property clue that refers to
 another entity is two clues and is split into two list items.
 
+Four rules make a clue type and clue operand form combination impossible, so no
+task uses one:
+
+| Combination | Why it cannot exist |
+|---|---|
+| property with any operand form | A property clue constrains the candidate set directly and has no reference, so it has no operand form. |
+| aggregation with `aggregated` | It is aggregation over an aggregate; it is written as two clues. |
+| `selected` at task reasoning step count 1 | A `selected` reference needs an earlier task clue. |
+| `cross_state` in P0 and P1 | It needs a second solid state, and P0 and P1 use the final state only (`DS-34`). |
+
+The first two are grammar rules and hold for every program. The last two follow
+from the task reasoning step count and the state scope. The support table
+observes which forms the constructor produced, so a combination that cannot exist
+simply has no supported value.
+
 The typed check variants are:
 
 | Clue type | Check fields |
@@ -160,26 +175,76 @@ the definition carries enough real choices. The native format is still recorded.
 A format that cannot express the meaning is not used; for example, identity is
 not returned as a number and position is not returned as a scalar.
 
-The option pool is a construction output (`DS-36`). Identity answers draw options
+The choice pool is a construction output (`DS-36`). Identity answers draw options
 from the penultimate answer candidate set; numeric answers draw them from the
 distinct answers of that set. Fewer than five real options rejects the task.
-`04` orders and labels the pool and must not re-bind, extend, or pad it.
+`04` renders the pool in the recorded order.
 
 The answer must be produced by CadQuery execution or by an exact derivation from
 the program and its geometry, with answer evidence. A guessed or approximate
 answer is not valid.
 
+### Multiple-choice choices
+
+A pool entry is typed:
+
+| Field | Meaning |
+|---|---|
+| `label` | The position label, `A` to `G`. |
+| `candidate` | The answer value, as canonical text in the same representation as `gold_answer`. |
+| `distinguishing_facts` | The graph facts the choice description is rendered from. |
+| `error_mode` | Why a P2 near-miss is wrong. Null in P0 and P1. |
+
+`03b` orders the pool by a stable hash of `(task_id, candidate)` and assigns
+labels from the fixed alphabet `A` to `G` in that order. The order and the labels
+are therefore construction output: the correct answer is not always in the same
+position, no render step chooses a position, and the pool is hashed with its
+labels.
+
+For a multiple-choice task, `gold_answer` is the label. A label is a position,
+not an answer: the answer value is the `candidate` the label denotes, and
+`answer_evidence` records it. `05` validate and export release counts the
+candidate, not the label, when it counts distinct answers.
+
+The pool checks run at construction, on the pool:
+
+| Check | Holds when |
+|---|---|
+| Pool size | At least five entries and at most seven, because the alphabet ends at `G`. Seven is the goal. |
+| Correct choice | `gold_answer` is one of the pool labels. |
+| Answer space | Every `candidate` is a valid answer under `answer_format`: the same task target category for identity, the same unit and precision for a number, the same frame for a coordinate, and the documented fields for a structured answer. |
+| Distinctness | No two entries hold the same answer under `same_answer`. |
+| Real candidates | Every entry comes from the penultimate answer candidate set. None is padding. |
+| Fact basis | Every entry's `distinguishing_facts` are geometric or construction facts from the graph, not free text. |
+| Fact uniqueness | No two entries share the same `distinguishing_facts`. |
+| Fact cleanliness | No fact is a variable name or an internal identifier, and no fact states the answer value. |
+| Labels | Labels are contiguous from `A`, with no repeat. |
+| P2 near-miss | Every near-miss fails at least one task clue or the answer step, and its `error_mode` is recorded. |
+
+The first nine rows are P0. The P2 row is deferred.
+
+`04` renders the descriptions and checks the rendered choice block: one line per
+pool entry, in the pool's order, with the pool's labels; the description text
+distinct across entries; and no description stating the answer value. A mismatch
+is a defect in the template or the renderer, not a reason to reject the task.
+
+`05` rechecks the released pool in the `choices` column: the entry count, the
+labels, `same_answer` distinctness, that `gold_answer` is one of the labels, and
+that the label's `candidate` is the answer in `answer_evidence`'s
+answer-equivalent set. It does not recheck the construction facts, because the
+release does not carry the graph.
+
 ### Answer resolver
 
 The resolver turns the bound target and the penultimate answer candidate set into
-the gold answer and its evidence:
+the answer value and its evidence:
 
 ```text
 resolve_answer(answer_meaning, bound_target, answer_parameter, penultimate_set)
-  -> (gold_answer, answer_evidence)
+  -> (answer_value, answer_evidence)
 ```
 
-| Answer meaning | Answer | Evidence |
+| Answer meaning | Answer value | Evidence |
 |---|---|---|
 | Identity | The entity the whole answer-equivalent set shares. | The set and the binding. |
 | Volume | The volume of the bound solid state. | Kernel volume. |
@@ -193,6 +258,10 @@ resolve_answer(answer_meaning, bound_target, answer_parameter, penultimate_set)
 | Extent | The minimum and maximum corner of the bounding box in the program frame. | Graph bounding box. |
 | Material change | The signed volume or count the bound operation adds or removes. | Signed volume change or feature count. |
 | Topology change | The signed change in the declared category. | Topology change. |
+
+When the task is multiple choice, `gold_answer` is the pool label whose
+`candidate` equals this answer value, not the answer value itself. The answer
+value stays in `answer_evidence` and in `choice_pool`.
 
 `answer_parameter` is null for every meaning that declares nothing. It carries
 the point for a position or a membership and the category for a topology change.
@@ -230,8 +299,8 @@ and records the point, the solid state hash, and the classifier.
 | `point_probe` | The point, its classification, the solid state reference, and the classifier. Null unless the answer is membership. |
 
 `answer_equivalent_set` is stored so answer uniqueness can be rechecked from the
-definition alone, without the graph. Every entry's answer must equal the gold
-answer under `same_answer`; an identity answer requires exactly one entry. An
+definition alone, without the graph. Every entry's answer must equal the answer
+value under `same_answer`; an identity answer requires exactly one entry. An
 entry's subject is a `node_id` for an entity target and the measurement name for
 a scalar target.
 
@@ -266,31 +335,30 @@ The precision comes from the answer format and the release scoring rule:
 
 ## Validity
 
-A task definition is valid only when all of these hold:
+A task definition is valid only when every rule in this table holds. The check
+name is stable: it is the name the validity record carries.
 
-- every task clue is satisfied by the bound entities;
-- every task clue narrows the possible answers;
-- every task clue is necessary: removing it leaves at least two distinct answers,
-  or changes the answer;
-- every predicate a task uses is decided by at least the clear-case margin;
-- every candidate in the answer-equivalent set produces the same answer under
-  `same_answer`; an identity answer requires a singleton set (`DS-32`);
-- for a scalar target, every remaining instance has the same value;
-- the answer step produces exactly one gold answer;
-- the target binding is unambiguous;
-- the program family and split are present;
-- the split matches the family assignment from `03a`;
-- the subset is consistent with the task reasoning step count;
-- the answer has answer evidence;
-- for multiple choice, the choice pool has at least five real choices;
-- for P2 multiple choice, every near-miss choice fails a task clue or the answer
-  step, and its error mode is recorded;
-- the task definition is unique under canonical identity;
-- `geometry_required` is recorded: at least one task clue depends on the built
-  shape.
+| Check | Rule |
+|---|---|
+| `clue_satisfied` | Every task clue is satisfied by the bound entities. |
+| `clue_narrows` | Every task clue narrows the possible answers. |
+| `clue_necessary` | Removing any task clue leaves at least two distinct answers, or changes the answer. |
+| `predicate_margin` | Every predicate a task uses is decided by at least the clear-case margin. |
+| `answer_equivalence` | Every candidate in the answer-equivalent set produces the same answer under `same_answer`; an identity answer requires a singleton set (`DS-32`). |
+| `scalar_target_agrees` | For a scalar target, every remaining instance has the same value. |
+| `single_gold_answer` | The answer step produces exactly one gold answer. |
+| `target_binding_unambiguous` | The target binding resolves to exactly one entity or measurement instance. |
+| `family_and_split_present` | The program family and split are present. |
+| `split_matches_assignment` | The split matches the family assignment from `03a`. |
+| `subset_matches_step_count` | The subset is consistent with the task reasoning step count. |
+| `answer_evidence_present` | The answer has answer evidence. |
+| `choice_pool_valid` | For multiple choice, the choice pool passes every P0 row of the [multiple-choice check list](#multiple-choice-choices). |
+| `near_miss_valid` | For P2 multiple choice, every near-miss fails a task clue or the answer step, and its `error_mode` is recorded. |
+| `definition_unique` | The task definition is unique under canonical identity. |
+| `geometry_required_recorded` | `geometry_required` is recorded: at least one task clue depends on the built shape. |
 
-An invalid definition is recorded as a failure with a reason and is not passed to
-`04`. A task with an ambiguous target, an answer-equivalent set that disagrees
+An invalid definition is recorded as a failure naming the failed check and is not
+passed to `04`. A task with an ambiguous target, an answer-equivalent set that disagrees
 under `same_answer`, or an unverifiable answer is invalid.
 
 ### Validity record
@@ -299,12 +367,27 @@ under `same_answer`, or an unverifiable answer is invalid.
 
 | Field | Meaning |
 |---|---|
-| `checks` | One entry per validity rule below: the check name, the outcome, and a detail string. |
+| `checks` | One entry per validity rule in the table above: the check name, the outcome, and a detail string. |
 | `answer_equivalent_size` | The number of entries in `answer_equivalent_set`. |
-| `same_answer_holds` | Whether every entry's answer equals the gold answer. |
+| `same_answer_holds` | Whether every entry's answer equals the answer value. |
 
-The check name is a closed set, one name per rule. `geometry_required` is its own
-field rather than a check entry, because `04` copies it to the release row.
+An accepted definition carries every check name except
+`geometry_required_recorded`, each with outcome `pass`. A missing check is a
+defect: it means the constructor did not run the rule.
+`geometry_required_recorded` is a rule but not a `checks` entry, because
+`geometry_required` is its own field and `04` copies it to the release row.
+
+### Failure reasons
+
+`03b` owns the closed reason set the failure record uses:
+
+| Reason | Meaning |
+|---|---|
+| A check name from the table above. | The definition failed that rule. A duplicate is `definition_unique`. |
+| `no_cover` | The cover search found no chain at the target task reasoning step count. |
+
+A state without a surviving probe is not a failure row. No definition was
+attempted, so the state is a `probe_deficit` in the deficit ledger instead.
 
 ## Task reasoning step accounting
 
@@ -425,12 +508,15 @@ changing an accepted definition, so hashing them would invalidate every accepted
 definition on every replan (`TG-3`).
 
 `answer_sha256` covers `gold_answer`, `answer_unit`, `tolerance`,
-`scoring_rule`, and `answer_schema_version`. It excludes `answer_evidence`,
-because evidence is audit data and a change to its representation must not change
-the answer identity. `04` copies the hash; it does not recompute it.
+`scoring_rule`, and `answer_schema_version`. For a multiple-choice task it also
+covers the `candidate` of the entry whose label is `gold_answer`, because a label
+is a position and does not identify the answer on its own. It excludes
+`answer_evidence`, because evidence is audit data and a change to its
+representation must not change the answer identity. `04` copies the hash; it does
+not recompute it.
 
-`04` orders and labels a copy of `choice_pool`. It must not write the order back,
-because the order is part of the hash.
+`choice_pool` is hashed in construction order, labels included. `04` renders that
+order and must not write a new one back.
 
 ### Provenance
 
@@ -479,9 +565,10 @@ They are used to check release coverage in
   - **Recommendation:** start from the correct task solution and apply one
     controlled error: an adjacent entity, the wrong solid state, the wrong
     operation, a swapped comparison, a different measurement, or an off-by-one
-    count. Validate against the graph, then order the choices by a stable hash.
-    For a multi-step task, a near miss should satisfy most task clues and fail at
-    least one. Record the error mode. P0 and P1 do not require this audit.
+    count. Validate against the graph, then add each near miss to the pool before
+    the pool is ordered. For a multi-step task, a near miss should satisfy most
+    task clues and fail at least one. Record its `error_mode`. P0 and P1 do not
+    require this audit.
 
 ## Resolved questions
 
@@ -515,5 +602,6 @@ underfilled. Deficits that `03a` reports carry an allocation detail instead, and
 ## Not here
 
 Task quota planning, data expansion, prompt rendering, choice rendering, and
-export. The construction test contract and the golden record are in
-[`../testing/golden-records.md`](../testing/golden-records.md).
+export. The construction test contract is in
+[`../testing/03b-construct-task-definitions.md`](../testing/03b-construct-task-definitions.md), and the
+golden record format is in [`../testing/golden/README.md`](../testing/golden/README.md).

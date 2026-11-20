@@ -70,6 +70,14 @@ Record a normalization failure as a
 [`failure record`](../failure-record.md) with the subject program, the reason,
 and `source_line` when available. Do not emit a partial normalized program.
 
+The reason set is closed:
+
+| Reason | Meaning |
+|---|---|
+| `invalid_utf8` | The cache text does not decode as UTF-8. |
+| `syntax_error` | The pinned Python `ast` rejects the text. |
+| `format_failure` | The pinned Ruff version fails on the parsed text. |
+
 ## Why it exists
 
 The C tier carries upstream normalization; P does not. Neither is our contract.

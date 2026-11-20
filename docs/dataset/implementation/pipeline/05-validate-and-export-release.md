@@ -15,7 +15,7 @@ Coverage and balance checks:
 - `ReleaseTable` from `04` render prompt and choices.
 - The `RenderConfig` passed to `04` render prompt and choices.
 - The five task reasoning step support tables.
-- The root `balance.yaml`.
+- The root `balance.yaml` and the root `checks.yaml`.
 - The external dataset manifest from `01e` write external dataset manifest.
 - The pinned external benchmark program set, for the transfer overlap check.
 - The per-pipeline-stage failure partitions.
@@ -28,13 +28,18 @@ Coverage and balance checks:
 - Check the release projection: recompute `prompt_sha256` from the `prompt`
   bytes, check `clue_types` against `clue_operand_form_profile`, parse
   `gold_answer_json` according to `answer_format`, and require `tolerance_json`
-  for every non-exact answer. `05` does not recompute `answer_sha256`;
+  for every non-exact answer. For a multiple-choice row, recheck the `choices`
+  pool: at least five entries, labels contiguous from `A` with no repeat, answer
+  values distinct under `same_answer`, `gold_answer_json` one of the labels, and
+  that label's answer value equal to the answer in `answer_evidence_json`'s
+  answer-equivalent set. Every other row has an empty `choices` pool.
+  `05` does not recompute `answer_sha256`;
   `release_table_sha256` covers the answer columns.
 - Recheck split isolation by CADEvolve program family on the final release
   table. `03a` assigns the split; `03b` stamps it; `04` carries it.
-- Run the coverage and balance checks in
+- Run every check listed in the root `checks.yaml`, as the semantics in
   [`05-validate-and-export-release/release-checks.md`](05-validate-and-export-release/release-checks.md)
-  and block the export on a miss the owner has not accepted.
+  define them, and block the export on a miss the owner has not accepted.
 - Merge the per-pipeline-stage failure partitions and reconcile the counts
   (R-19).
 - Check the transfer overlap: exact normalized program text at P0; the P1
@@ -52,7 +57,8 @@ Coverage and balance checks:
   [schema](../prompt-templates.md), then record the prompt template version,
   `prompts.yaml` hash, and `RenderConfig.release_seed` in the manifest. A
   missing, extra, or untyped placeholder blocks the export.
-- Record the balance policy version and `balance.yaml` hash in the manifest.
+- Record the balance policy version and `balance.yaml` hash in the manifest,
+  and the check policy version and `checks.yaml` hash next to them.
 
 ## Language and parallelism
 

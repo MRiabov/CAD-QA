@@ -1,9 +1,13 @@
 # Task reasoning step support table tests
 
-**Parent:** [`README.md`](README.md).
+**Parent:** [`00-testing-strategy.md`](00-testing-strategy.md).
 
 **Contract under test:**
 [`../../task-step-support.md`](../../task-step-support.md).
+
+This is the one cross-cutting test in the directory. The support tables are an
+observation over the fixture set, not the output of one pipeline stage, so this
+contract has no pipeline stage counterpart.
 
 ## What is proven
 

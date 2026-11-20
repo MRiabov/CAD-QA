@@ -155,7 +155,7 @@ versions and hashes.
 
 The structural floor is checked in every run, and the witness check runs in the
 generation job. The two-tier test contract is
-[`pipeline/testing/task-step-support.md`](pipeline/testing/task-step-support.md).
+[`pipeline/testing/00-support-tables.md`](pipeline/testing/00-support-tables.md).
 
 For each task reasoning step count and dimension:
 

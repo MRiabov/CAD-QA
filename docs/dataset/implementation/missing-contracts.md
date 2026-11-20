@@ -13,8 +13,8 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 7 open entries: 2 P0 technical and 5 P1 technical. No product
-decision remains open, and P2 is empty.
+There are 5 open entries: all P1 technical. No product decision and no P0
+technical contract remains open, and P2 is empty.
 
 ## Decisions needed from the owner
 
@@ -28,37 +28,7 @@ None.
 
 ### Technical (P0)
 
-Work order:
-
-1. `MC-15` — multiple-choice fairness; the choice check.
-2. `MC-41` — the construction test contract; it locks the invariants the other
-   entries introduce.
-
-#### MC-15 — Multiple-choice fairness checks
-
-P0 multiple-choice fairness checks are missing: the correct choice is present,
-choices are distinct in the answer space, unit, frame, and precision match,
-descriptions do not leak the answer, and labels are deterministic. A choice pool
-of five entries can still be invalid. It absorbs `MC-24`.
-
-**Recommendation:** write one check list in `03b` construct task definitions
-when a task is built, and reuse it in `05` validate and export release when the
-release is checked; pool size is necessary but not sufficient. Define the typed
-`choice_pool` entry (candidate, distinguishing facts, and P2 error mode) at the
-same time.
-
-#### MC-41 — Construction test contract
-
-The test contract for the construction invariants is missing: pair-emission
-completeness, `is_inside` reproducibility from a probe, clear-case margin
-rejection, and redundant-clue rejection. The invariants are written, but
-`pipeline/testing/README.md` is a stub and nothing verifies them, so a
-regression is invisible.
-
-**Recommendation:** one test per invariant, plus a property test that every
-accepted definition passes the validity list, plus one end-to-end test on the
-golden record in
-[`pipeline/testing/golden-records.md`](pipeline/testing/golden-records.md).
+None.
 
 ## P1
 
@@ -152,8 +122,23 @@ when its completion marker and identity match.
 
 ## Closed or merged in the 2026-11-20 pass
 
+- `MC-41` — the construction test contract is
+  `pipeline/testing/03b-construct-task-definitions.md`: a definition tier that re-evaluates
+  every validity rule the definition decides, a graph tier for pair emission,
+  point probes, and the clear-case margin, and an end-to-end tier that constructs
+  the golden record and compares its counts against the graph. `03b` now names
+  every validity rule and owns its failure reason set, so a skipped rule is a
+  visible defect rather than an absent check. Rejection fixtures are kept apart
+  from coverage fixtures, so a degenerate program cannot make a support-table
+  cell look supported.
+- `MC-15` — multiple choice is checked against a named list of nine P0 rules and
+  one P2 rule. `choice_pool` is typed and labeled at construction, so a label is
+  a position and `gold_answer` is a label before the definition is hashed. The
+  release table carries a `choices` column of label and answer value, so `05`
+  rechecks the pool without parsing the prompt, and a label counts by the answer
+  value it denotes. It absorbs `MC-24`.
 - `MC-42` — the golden record is a versioned JSON file per task, defined in
-  `pipeline/testing/golden-records.md` with the program, construction input,
+  `pipeline/testing/golden/README.md` with the program, construction input,
   task description, canonical clue sequence, answer, and evidence. The first
   record is `pipeline/testing/golden/box-with-hole.json`; `tests/test_golden_records.py`
   validates the format. The box-with-hole chain is three steps, not the plan's
@@ -197,7 +182,7 @@ when its completion marker and identity match.
 - `MC-44` — feasibility is the constructor's output over a committed coverage
   fixture set, not an abstraction of the grammar. The contract is written in
   `task-step-support.md`, and the structural and witness tiers are in
-  `pipeline/testing/task-step-support.md`. Fixtures are programs, so no Parquet
+  `pipeline/testing/00-support-tables.md`. Fixtures are programs, so no Parquet
   enters the repository. The fixture programs and `support-table.json` are
   implementation artifacts and do not exist yet.
 - `MC-14` — `failure-record.md` owns the row schema, the dedupe key, the merge,

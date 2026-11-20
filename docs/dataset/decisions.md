@@ -610,9 +610,11 @@ prefix is `DS-`.
   draw options from the distinct answers of that set, so the options are
   comparable numbers. If fewer than five real options exist, the task is
   rejected; options are never padded.
-- **Consequences:** The option pool is a construction output, not a rendering
-  choice. `04` orders and labels it and must not re-bind or extend it. A task
-  whose penultimate set is smaller than five is a deficit, not a padded task.
+- **Consequences:** The choice pool is a construction output, not a rendering
+  choice: `03b` orders it and assigns its labels, so a multiple-choice task's
+  `gold_answer` is a label before the definition is hashed. `04` renders that
+  order and must not reorder, relabel, re-bind, or extend it. A task whose
+  penultimate set is smaller than five is a deficit, not a padded task.
 
 ## DS-37 — Clue operand form is a coverage dimension in P0
 
@@ -620,10 +622,10 @@ prefix is `DS-`.
 - **Context:** Coverage requires a supported value to appear at all; balance
   requires its share at a task reasoning step count to stay within half to twice
   the conditional release share. Clue operand forms are unevenly available:
-  `selected` needs an earlier clue, `cross_state` waits for P2, and five of the
-  twenty nominal clue type × clue operand form cells are structurally empty. A balance range at a
-  step count where a form cannot exist would be vacuous or would force invalid
-  tasks.
+  `selected` needs an earlier clue, `cross_state` waits for P2, a property clue
+  has no operand form, and an aggregation with an `aggregated` reference is two
+  clues. A balance range at a step count where a form cannot exist would be
+  vacuous or would force invalid tasks.
 - **Decision:** In P0, clue operand form is a coverage dimension: every supported
   form appears at each step count where the support table says it is supported.
   Balance over clue operand form is P1, once the support grid is dense enough for

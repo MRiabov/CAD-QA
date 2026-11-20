@@ -1,0 +1,256 @@
+# Release check policy.
+#
+# `05` validate and export release reads this file, runs every check it lists, and
+# records one or more report rows per check. A check that is not here is not run,
+# and a report row whose check is not here is a defect.
+#
+# The semantics — outcomes, dispositions, bound arithmetic, and the report shape —
+# are in
+# docs/dataset/implementation/pipeline/05-validate-and-export-release/release-checks.md.
+#
+# A bound is a number, or a dotted path into `balance.yaml`. A path that names a
+# mapping is indexed by the dimension value. This file holds no number that
+# `balance.yaml` already owns.
+#
+# Comments are not data.
+
+version: 1
+
+checks:
+  # Coverage: every value the support table supports at a step count appears there.
+  - id: target_category_coverage
+    requirement: [R-8]
+    arithmetic: coverage
+    scope: per_step
+    dimension: target_category
+    disposition: enforced
+
+  - id: clue_type_coverage
+    requirement: [R-8]
+    arithmetic: coverage
+    scope: per_step
+    dimension: clue_type
+    disposition: enforced
+
+  - id: clue_operand_form_coverage
+    requirement: [R-8]
+    arithmetic: coverage
+    scope: per_step
+    dimension: clue_operand_form
+    disposition: enforced
+
+  - id: answer_meaning_coverage
+    requirement: [R-8]
+    arithmetic: coverage
+    scope: per_step
+    dimension: answer_meaning
+    disposition: enforced
+
+  - id: answer_format_coverage
+    requirement: [R-7]
+    arithmetic: coverage
+    scope: per_step
+    dimension: answer_format
+    disposition: enforced
+
+  # Release size and shape.
+  - id: release_task_count
+    requirement: [PRD-8]
+    arithmetic: count_floor
+    scope: release
+    dimension: task_count
+    minimum: release.tasks_min
+    disposition: enforced
+
+  # A policy that dropped a step count from the mix would otherwise leave no row
+  # to fail.
+  - id: step_count_range
+    requirement: [R-9]
+    arithmetic: set_equal
+    scope: release
+    dimension: task_reasoning_step_count
+    values: [1, 2, 3, 4, 5]
+    disposition: enforced
+
+  - id: distinct_cad_model_count
+    requirement: [PRD-8, R-10]
+    arithmetic: count_floor
+    scope: release
+    dimension: program_id
+    minimum: release.programs_min
+    disposition: enforced
+
+  # The cap is the P1 part of R-10. `03a` plans it in P0 to spread tasks; the
+  # release check waits for P1.
+  - id: cad_model_share_cap
+    requirement: [R-10]
+    arithmetic: share_range
+    scope: release
+    dimension: program_id
+    maximum: release.cad_model_max_share
+    disposition: deferred
+
+  - id: built_shape_share_floor
+    requirement: [PRD-8, R-4]
+    arithmetic: share_range
+    scope: release
+    dimension: geometry_required
+    minimum: release.built_shape_min_share
+    disposition: enforced
+
+  - id: split_share
+    requirement: [release-contract-3]
+    arithmetic: share_target
+    scope: release
+    dimension: split
+    target: release.splits
+    tolerance: release.share_tolerance
+    disposition: enforced
+
+  - id: step_share
+    requirement: [R-9, PRD-8]
+    arithmetic: share_target
+    scope: release
+    dimension: task_reasoning_step_count
+    target: task_reasoning_step_share
+    tolerance: release.share_tolerance
+    disposition: enforced
+
+  # A floor, not the sum of the mix: the default mix sums to exactly 0.80, so a
+  # mix within tolerance can fall below it.
+  - id: steps_three_or_more_share
+    requirement: [PRD-8]
+    arithmetic: share_range
+    scope: release
+    dimension: task_reasoning_step_count
+    minimum: release.three_or_more_step_min_share
+    disposition: enforced
+
+  # A set comparison, not a percentage: PRD section 9 labels the lowest-step
+  # tasks as the warmup subset.
+  - id: warmup_set
+    requirement: [R-15]
+    arithmetic: set_equal
+    scope: release
+    dimension: warmup
+    to: one_step_tasks
+    disposition: enforced
+
+  # Answer format, answer meaning, target category, and clue type.
+  - id: answer_format_share_range
+    requirement: [R-7]
+    arithmetic: share_range
+    scope: release
+    dimension: answer_format
+    minimum: dimensions.answer_format.min
+    maximum: dimensions.answer_format.max
+    disposition: enforced
+
+  - id: answer_meaning_share_range
+    requirement: [R-12]
+    arithmetic: share_range
+    scope: release
+    dimension: answer_meaning
+    minimum: dimensions.answer_meaning.min
+    maximum: dimensions.answer_meaning.max
+    disposition: deferred
+
+  - id: target_category_share_cap
+    requirement: [R-12]
+    arithmetic: share_range
+    scope: release
+    dimension: target_category
+    maximum: dimensions.target_category.max
+    disposition: deferred
+
+  - id: clue_type_share_cap
+    requirement: [R-12]
+    arithmetic: share_range
+    scope: release
+    dimension: clue_type
+    maximum: dimensions.clue_type.max
+    disposition: deferred
+
+  # `dimensions.clue_operand_form.target` is `equal`, so the reference share is
+  # one over the number of supported forms.
+  - id: clue_operand_form_release_share
+    requirement: [R-12]
+    arithmetic: relative_range
+    scope: release
+    dimension: clue_operand_form
+    below: 0.5
+    above: 2
+    disposition: deferred
+
+  # Answers.
+  - id: distinct_answer_count
+    requirement: [R-11]
+    arithmetic: count_floor
+    scope: release
+    dimension: correct_answer
+    minimum: release.distinct_answer_min
+    disposition: deferred
+
+  - id: answer_share_cap
+    requirement: [R-11]
+    arithmetic: share_range
+    scope: release
+    dimension: correct_answer
+    maximum: release.correct_answer_max_share
+    disposition: deferred
+
+  # Per-step mixes and caps.
+  - id: answer_format_step_mix
+    requirement: [R-7]
+    arithmetic: relative_range
+    scope: per_step
+    dimension: answer_format
+    below: 0.5
+    above: 2
+    disposition: enforced
+
+  - id: clue_type_step_share_cap
+    requirement: [R-12]
+    arithmetic: share_range
+    scope: per_step
+    dimension: clue_type
+    maximum: dimensions.clue_type.max
+    disposition: deferred
+
+  - id: clue_type_step_mix
+    requirement: [R-12]
+    arithmetic: relative_range
+    scope: per_step
+    dimension: clue_type
+    below: 0.5
+    above: 2
+    disposition: deferred
+
+  - id: answer_meaning_step_mix
+    requirement: [R-12]
+    arithmetic: relative_range
+    scope: per_step
+    dimension: answer_meaning
+    below: 0.5
+    above: 2
+    disposition: deferred
+
+  # `DS-37` makes the wide range the P0 requirement and the narrow range the P1
+  # requirement, so the wide row is enforced and the narrow row is only reported.
+  - id: clue_operand_form_severe_mix
+    requirement: [R-12, DS-37]
+    arithmetic: relative_range
+    scope: per_step
+    dimension: clue_operand_form
+    below: dimensions.clue_operand_form.severe.below
+    above: dimensions.clue_operand_form.severe.above
+    disposition: enforced
+
+  - id: clue_operand_form_step_mix
+    requirement: [R-12]
+    arithmetic: relative_range
+    scope: per_step
+    dimension: clue_operand_form
+    below: 0.5
+    above: 2
+    disposition: reported
