@@ -59,7 +59,8 @@ Only the geometry-classification relations — `parallel_to`,
 `perpendicular_to`, `coplanar_with`, and `coaxial_with` — carry a `tolerance`.
 Every other relation has a null `tolerance`, because it is derived from records
 rather than from a geometric comparison. A null relation `tolerance` inherits
-the run policy entry for its unit, as a measurement does.
+the run policy's `unitless` entry, because a geometric comparison is
+dimensionless.
 
 Every relation carries CAD graph evidence. A derived relation sets
 `evidence_kind` to `derived`, names the exact predicate in `evidence_rule`, and
