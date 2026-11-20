@@ -10,7 +10,8 @@ without downloading program text or executing anything.
 - Input: the `cadevolve_sources.parquet` file from
   [`MRiabov/cadevolve-parquet`](https://huggingface.co/datasets/MRiabov/cadevolve-parquet).
 - Output: program metadata records with path, collection, path family, geometry
-  tags, generator, and upstream hash.
+  tags, generator, and upstream hash, plus the `cache_revision` and
+  `cache_schema_version` they were read at.
 
 The cache is already cleaned: all 1,998,810 rows are `.py` records, all import
 CadQuery, and all have non-empty program text. There is no non-program-record

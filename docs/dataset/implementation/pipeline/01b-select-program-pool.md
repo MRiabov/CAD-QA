@@ -9,8 +9,8 @@ release from the external dataset metadata.
 
 - Input: program metadata records from `01a` plus the selection policy.
 - Output: a Parquet selection artifact with active and reserve program IDs,
-  supplemental deltas, derived `tier`, `cadevolve_program_family_id`, the policy,
-  counts, and exclusions.
+  supplemental deltas, derived `tier`, `cadevolve_program_family_id`,
+  `policy_version`, `seed`, the policy values, counts, and exclusions.
 
 ## Selection policy
 
