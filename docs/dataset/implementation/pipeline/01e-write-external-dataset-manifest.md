@@ -18,7 +18,7 @@ rows.
 - `cache_revision`, `cache_uri`, and `cache_schema_version`;
 - selection policy version, seed, active count, reserve count, and exclusions;
 - counts by tier, collection, and `cadevolve_program_family_id`;
-- normalized program count and distinct program count;
+- normalized program count and distinct `program_id` count;
 - normalization version;
 - input and output hash summary;
 - rejection counts and reasons.

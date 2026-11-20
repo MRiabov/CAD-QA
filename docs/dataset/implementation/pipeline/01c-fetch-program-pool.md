@@ -39,5 +39,7 @@ integrity error, not a normal rejection.
 
 - Record the missing ID with the pinned cache revision.
 - Backfill the active slot from the reserve list in deterministic order.
-- If fewer than 1,000 active programs remain usable, fail the run.
+- If fewer than 1,000 active programs remain usable, fail the run. A run that
+  drops below the floor later, after execution failures, is `03a` allocate task
+  quotas's `program_floor_short` deficit, not a fetch failure.
 - Do not silently drop the ID or fetch from an unpinned revision.
