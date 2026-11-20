@@ -160,7 +160,7 @@ answer is not valid.
 A membership answer is computed by `is_inside(solid_state, point)`. The point is a
 coordinate literal in the task definition, stated in the program frame; it is not
 a graph entity. The answer is inside or outside. A point within the geometric
-tolerance of the face surface is not used, because "on the boundary" is a third case
+clear-case margin of the face surface is not used, because "on the boundary" is a third case
 that the binary answer cannot express. The classification is measured evidence
 and records the point, the solid state hash, and the classifier.
 
@@ -200,6 +200,7 @@ A task definition is valid only when all of these hold:
 - every task clue narrows the possible answers;
 - every task clue is necessary: removing it leaves at least two distinct answers,
   or changes the answer;
+- every predicate a task uses is decided by at least the clear-case margin;
 - the final possible-answer set contains exactly one answer;
 - the answer step produces exactly one answer;
 - the target binding is unambiguous;

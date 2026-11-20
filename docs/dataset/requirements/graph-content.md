@@ -197,6 +197,25 @@ tuned against the program pool.
 
 A pair outside the domain is not a missing measurement; it is not a candidate.
 
+### 4.2 Tolerance
+
+Geometric tolerance classifies a predicate. It is relative to the entity size, and
+the default is `1e-6`.
+
+- It absorbs kernel noise, which is around `1e-9` relative for the geometry this
+  dataset builds, so exact-parallel faces pass.
+- A relation may override it. The override is recorded in the relation evidence
+  with the tolerance and the reason.
+- It is not the answer precision. A numeric answer is scored at the stated
+  precision, four significant figures by default, which is roughly `1e-4`
+  relative.
+
+**Clear-case margin.** A predicate used by a task must be decided by at least
+`100 × geometric_tolerance`, default `1e-4` relative. Below that the task is
+rejected. The margin rarely binds here, because program dimensions are coarse and
+near-parallel geometry is rare; it exists to catch numerically degenerate
+programs, such as a cut tangent to a face.
+
 ## 5. States and timing
 
 A program builds a shape over time. The graph must keep the solid states the tasks
