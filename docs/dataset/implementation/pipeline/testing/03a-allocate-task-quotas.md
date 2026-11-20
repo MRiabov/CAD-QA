@@ -58,8 +58,9 @@ through a shared helper proves nothing about the equation.
 
 `test_03a_one_percent_cap_binds` — 80 programs and 10,000 tasks give
 `per_program_task_quota` 100 from the first term, so the families can carry 8,000
-tasks, and `family_quota_short` is recorded. This is the reason `programs_min` is
-1,000: below 100 programs the 1% cap alone makes the release size unreachable.
+tasks, and `split_capacity_short` and `family_quota_short` are recorded. This is
+the reason `programs_min` is 1,000: below 100 programs the 1% cap alone makes the
+release size unreachable.
 
 `test_03a_census_is_not_re_derived_on_a_fast_replan` — the test mutates the
 graphs after the first plan, then replans in the fast loop. `family_profiles`
