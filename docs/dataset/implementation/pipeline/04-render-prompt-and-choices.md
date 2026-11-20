@@ -10,6 +10,9 @@ and, for multiple choice, the rendered choice set.
 - Render the prompt from program text, question, task clues, choices, and answer
   instruction.
 - Keep the prompt answer-free.
+- Render task clues in the definition's canonical order in P0. A seeded
+  permutation that respects reference dependencies is P1; it is recorded as the
+  render seed, and clue wording uses presentation positions.
 - For multiple choice, order and label the definition's choice pool. Do
   not re-bind entities or recompute answers.
 - For P2 multiple choice, render the validated near-miss choice pool produced by

@@ -199,6 +199,11 @@ clues deterministically. The gold answer, answer format, choices, prompt wording
 and answer instruction are not part of `task_id`; they are part of the definition
 or a later presentation step.
 
+Validity checks and the narrowing record use the canonical sequence. A later
+presentation step may render a permutation that respects reference dependencies;
+the permutation does not change `task_id`, and clue wording uses presentation
+positions.
+
 Definitions with identical canonical identity are duplicates. `03b` keeps one
 and records the duplicate. Invalid definitions go to the failure record and do
 not consume quota.

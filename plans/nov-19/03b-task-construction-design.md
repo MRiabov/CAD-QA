@@ -517,12 +517,20 @@ noise.
 
 ### 5. `D5` — How are clues ordered?
 
-Options: search order, broad-to-narrow, or dependency order. Recommendation:
-topological order, then a broad-to-narrow key — the size of the narrowed set,
-descending, with a stable hash as the tie-break. Dependency order must come
-first, because a clue that refers to an earlier selection cannot precede it.
+Accepted as `DS-35`.
 
-Blocks: comparison references and prompt order.
+Canonical order. Dependency order first, then broad-to-narrow: the size of the
+narrowed set, descending, with a stable hash as the tie-break. This order is
+identity-bearing and is the one validity checks.
+
+Presentation order. The prompt may reorder clues within the dependency
+constraints. P0 renders the canonical order; P1 may render a seeded permutation
+recorded as the render seed, with clue wording that uses presentation positions.
+The multiple-choice pool stays the canonical penultimate set.
+
+The split matters because strict narrowing is order-dependent: a clue that
+narrows in canonical order may not narrow at its presentation position. Validity
+is therefore checked in canonical order only.
 
 ### 6. `D6` — What is the minimum narrowing?
 
@@ -631,7 +639,7 @@ answers), a replay test, and one end-to-end test.
 The construction strategy is settled (`D11`): supply-driven with a
 capability-aware deficit loop. The two schema blockers are settled as well:
 `D1` (the equality relation for answer uniqueness) and `D2` (state scope). The
-remaining open decisions are `D5` to `D10`, and the construction grammar can
+remaining open decisions are `D6` to `D10`, and the construction grammar can
 be written with the box-and-hole example as the first golden record.
 
 The concern that the vocabulary may be growing without a stopping rule is

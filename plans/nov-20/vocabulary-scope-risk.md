@@ -120,7 +120,7 @@ evidence rather than by argument.
 
 ## Current position
 
-`D5` to `D10` remain open in
+`D6` to `D10` remain open in
 `plans/nov-19/03b-task-construction-design.md`. `D3` and `D4` were withdrawn:
 `D3` into graph completeness, and `D4` into the answer equality already defined
 by `DS-32`. Three of the original eleven decisions have dissolved into contracts

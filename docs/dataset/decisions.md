@@ -566,3 +566,26 @@ prefix is `DS-`.
   P0. The possible-answer set is defined per state scope. A clue that needs
   another state is rejected rather than resolved by convention. Effect answers
   that need a second state wait for P2.
+
+## DS-35 — Canonical clue order is identity-bearing; prompt order is a permutation
+
+- **Status:** accepted (2026-11-20).
+- **Context:** Clues are conjunctive conditions on one target, so the prompt can
+  present them in any order that respects references. The construction record
+  needs a stable order, because identity, deduplication, the narrowing record,
+  and the strict-narrowing check all depend on it. Treating the two as one order
+  either freezes the prompt, which leaks that the last clue is the
+  discriminator, or makes identity depend on rendering.
+- **Decision:** The task definition stores a canonical clue order: dependency
+  order first, then broad-to-narrow by the size of the narrowed set, descending,
+  with a stable hash as the tie-break. Validity checks, the narrowing record, and
+  `task_id` use this order. The prompt may render a permutation that respects
+  reference dependencies. P0 renders the canonical order; P1 may render a seeded
+  permutation recorded as the render seed.
+- **Consequences:** The render seed and the presentation order belong to
+  provenance, not to `task_id`. Clue wording uses presentation positions ("the
+  face from clue 2"), never canonical positions. Strict narrowing is checked in
+  canonical order only, so a permuted prompt may contain a clue that does not
+  narrow at its position; the conjunction is unchanged. The multiple-choice pool
+  stays the canonical penultimate set, so after a shuffle the choices are no
+  longer "what the prompt's last clue discriminated between".
