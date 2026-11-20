@@ -255,8 +255,6 @@ difficulty before moving to a higher step count.
 
 ## Code (`experiments/cq_query_scratch/`)
 
-| Module | Responsibility |
-|---|---|
 | Module | Responsibility | Lines (estimate) |
 |---|---|---|
 | `pool.py` | Program pool: `01b`/`01d` rules, the `02a` subset check, old-graph final-face filter. | ~120 |

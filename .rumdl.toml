@@ -7,10 +7,15 @@
 # <!-- dont-say: allow -->, and literal <|tool_call|> tokens), and underscore
 # emphasis ("_offline_"). So MD013 (line length), MD033 (inline HTML), and
 # MD049 (emphasis style) are off.
+#
+# MD076 (blank line between list items) and MD052 (shortcut link references)
+# arrived in rumdl 0.3 and contradict two established conventions here: tight
+# lists with no blank lines between items, and numeric citation markers such as
+# "[11]" in the research notes. Both are off rather than rewriting the docs.
 
 [global]
 flavor = "gfm"
-disable = ["MD013", "MD033", "MD049"]
+disable = ["MD013", "MD033", "MD049", "MD052", "MD076"]
 include = ["docs/**/*.md", "plans/**/*.md"]
 exclude = [
   ".git",
