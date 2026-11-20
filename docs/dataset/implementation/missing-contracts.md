@@ -13,7 +13,7 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 9 open entries: 5 P0 technical and 4 P1 technical. No product
+There are 8 open entries: 4 P0 technical and 4 P1 technical. No product
 decision remains open, and P2 is empty.
 
 ## Decisions needed from the owner
@@ -33,10 +33,9 @@ Work order:
 1. `MC-11` — the rendering inputs; a prompt cannot be reproduced from the
    declared input without them.
 2. `MC-15` — multiple-choice fairness; the choice check.
-3. `MC-26` — the manifest and dataset card fields; the release ships both.
-4. `MC-41` — the construction test contract; it locks the invariants the other
+3. `MC-41` — the construction test contract; it locks the invariants the other
    entries introduce.
-5. `MC-42` — the golden record; the first end-to-end comparison.
+4. `MC-42` — the golden record; the first end-to-end comparison.
 
 #### MC-11 — Rendering inputs
 
@@ -63,21 +62,6 @@ when a task is built, and reuse it in `05` validate and export release when the
 release is checked; pool size is necessary but not sufficient. Define the typed
 `choice_pool` entry (candidate, distinguishing facts, and P2 error mode) at the
 same time.
-
-#### MC-26 — Release manifest and dataset card
-
-The release manifest and dataset card have a writer (`05` validate and export
-release) and the release contract lists the manifest fields, but several
-contents are still unspecified: the `release_id` derivation, the
-`generator_version` value, the upstream dataset version value, the
-external-manifest linkage field, and the dataset-card outline, including the
-answer conventions the card must state. Evaluation material is owned by `MC-28`.
-`05` validate and export release now lists its inputs, including the external
-dataset manifest and the five support tables.
-
-**Recommendation:** keep `05` validate and export release as the owner; add the
-missing fields to release contract section 7 and a dataset-card outline; define
-`release_id` and `generator_version`.
 
 #### MC-41 — Construction test contract
 
@@ -178,6 +162,11 @@ when its completion marker and identity match.
 
 ## Closed or merged in the 2026-11-20 pass
 
+- `MC-26` — release contract section 7 is a field table with `release_id`,
+  `generator_version`, `upstream_dataset_version`, and the external-manifest hash;
+  `release_id` is `cadqarel:<sha256>` over the canonical release rows in `task_id`
+  order. Section 8 is the dataset card outline, including the answer conventions.
+  `05` owns both and writes the card from the manifest.
 - `MC-12` — `04` render prompt and choices owns the projection, and the release
   contract carries one `Carries` row per column. Answer text is copied, never
   re-serialized; `clue_types` comes from `clue_operand_form_profile`;

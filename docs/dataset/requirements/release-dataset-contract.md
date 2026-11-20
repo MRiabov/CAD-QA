@@ -203,26 +203,106 @@ for one row.
 
 `manifest.json` records:
 
-- `release_id`, `schema_version`, `created_at`;
-- `implementation_scope`;
-- `generator_version` and upstream dataset version;
-- task count and split counts;
-- CADEvolve program family count and split counts by program family;
-- task counts by task reasoning step count;
-- warmup task count;
-- distinct CAD program count;
-- release-table hash and answer hash summary;
-- prompt template version and `prompts.yaml` hash;
-- `checks`: one row per coverage and balance check in
-  [`05` validate and export release](../implementation/pipeline/05-validate-and-export-release/release-checks.md);
-- support-table schema versions and hashes;
-- known misses accepted by the owner;
-- failure count.
+| Field | Value |
+|---|---|
+| `release_id` | `cadqarel:<sha256>` over the release table content. |
+| `schema_version` | The manifest schema version. |
+| `created_at` | UTC timestamp of the export. It is not part of `release_id`. |
+| `implementation_scope` | The release implementation scope; `P0` for the first release. |
+| `generator_version` | The git commit SHA of the tree that built the release. |
+| `upstream_dataset_version` | `cache_revision` from the external dataset manifest, verbatim. |
+| `external_dataset_manifest_sha256` | SHA-256 of the external dataset manifest. |
+| `task_count`, `split_counts` | Tasks in the release, and tasks per `split`. |
+| `program_family_count`, `program_family_split_counts` | CADEvolve program families in the release, and per `split`. |
+| `task_reasoning_step_counts` | Tasks per `task_reasoning_step_count`. |
+| `warmup_task_count` | Tasks with `subset = warmup`. |
+| `distinct_cad_model_count` | Distinct `program_id` values. A CAD model is one program. |
+| `answer_set_sha256` | SHA-256 over the sorted distinct correct answers. |
+| `prompt_template_version`, `prompts_yaml_sha256`, `release_seed` | The template set version and file hash, and the seed `04` rendered from. |
+| `balance_policy_version`, `balance_policy_sha256` | The balance policy version and file hash. |
+| `support_table_versions`, `support_table_sha256` | Schema version and file hash of each of the five support tables. |
+| `checks` | One or more rows per coverage and balance check in [`05` validate and export release](../implementation/pipeline/05-validate-and-export-release/release-checks.md). |
+| `known_misses` | The `checks` misses the owner accepted, with their reasons. |
+| `failure_count` | Rows in `failures.parquet`. |
 
 The manifest is not a table. It describes the release and is never passed to
 the LLM model.
 
-## 8. Generation pipeline
+### 7.1 Release identity
+
+`release_id` is `cadqarel:<sha256>` over the release table content: every row
+encoded in canonical form and hashed in `task_id` ascending order.
+
+- The canonical row encoding is the one in
+  [`03b` construct task definitions](../implementation/pipeline/03-task-generation/03b-construct-task-definitions.md).
+  A release row has no float field, so two languages encode it the same way.
+- The encoding is a hash input only. It is never written to disk.
+- Row order is fixed before hashing, so the digest does not depend on the order
+  the writer emitted.
+- The manifest is not part of `release_id`, and neither is `created_at`.
+  Re-exporting the same table keeps the id; a changed table always gets a new
+  one.
+
+A file hash is not used, because two Parquet writers can emit different bytes for
+the same rows, and then the identity would change without the dataset changing.
+A file hash is a transport check a publisher can compute; it is not the identity.
+
+### 7.2 Generator version
+
+`generator_version` is the full git commit SHA of the tree that built the
+release. `05` validate and export release refuses to export from a dirty tree, or
+when the SHA is not readable, because a release without a code version cannot
+satisfy R-18.
+
+The commit identifies the generator as a whole. The component versions stay
+separate, so a mismatch names the component: `constructor_version` on each
+definition, the graph schema version, the prompt template version, and the
+balance policy version.
+
+### 7.3 Answer set summary
+
+`answer_set_sha256` is SHA-256 over the sorted, deduplicated correct answers of
+the release. It uses the same answer identity as the `distinct_answer_count`
+check in `05`: `(answer_format, gold_answer_json, answer_unit)`. Each answer is
+encoded as the canonical JSON array of those three values. The count and the
+digest therefore describe the same set.
+
+It is not a summary of the per-row `answer_sha256` column. That column covers the
+answer and the scoring fields per task; `answer_set_sha256` answers "did the set of
+distinct answers change between two releases" without shipping either table.
+
+## 8. Dataset card
+
+`dataset-card.md` is human-readable. Every number in it is copied from
+`manifest.json`, never recomputed, so the card and the manifest cannot disagree.
+
+| Section | Content |
+|---|---|
+| What this is | The dataset name, `release_id`, implementation scope, task count, and what a task asks for in one paragraph. |
+| What a task is | The prompt parts, the frame convention, and that `prompt` is the user message with no system prompt supplied by the dataset. |
+| Columns | The release table columns, that `prompt` is the only LLM-facing column, and that the answer columns are for training, scoring, and audit. |
+| Counts and splits | Task count, tasks per task reasoning step count, split counts, warmup count, distinct CAD models, and distinct correct answers. Names the test set (R-14). |
+| Answer conventions | The table below. |
+| Provenance | `generator_version`, `upstream_dataset_version`, the selection identity, `balance_policy_version`, `prompt_template_version`, `release_seed`, and the support-table versions. |
+| Known misses | Every entry in `known_misses`, with its reason, or a statement that the release has none. |
+| Regenerating this release | The inputs listed under Provenance, the entry point at [`../implementation/pipeline/00-end-to-end.md`](../implementation/pipeline/00-end-to-end.md), and the step that rebuilds each artifact from them (R-18). |
+
+The frame convention is stated as: `+x` is right, `+y` is back, `+z` is up.
+
+The answer conventions table is required for every answer meaning present in the
+release:
+
+| Convention | The card states |
+|---|---|
+| Angle | Two faces: the angle between the outward normals, 0–180°. Two edges: the acute angle between the lines, 0–90°. Degrees. |
+| Material change | Signed: added material is positive, a cut is negative. |
+| Position | The point the question declares: a face centroid, an edge midpoint, a vertex point, or a solid state centroid. |
+| Topology change | The signed change in the entity category the question declares. |
+| Membership | Inside or outside. A point within the clear-case margin of a face surface is not used, so "on the boundary" is never an answer. |
+| Answer precision | Four significant figures by default. The stated precision is the precision a scorer compares at. |
+| Units | The `answer_unit` column; null means unitless. |
+
+## 9. Generation pipeline
 
 Dataset generation starts at
 [`../implementation/pipeline/00-end-to-end.md`](../implementation/pipeline/00-end-to-end.md).

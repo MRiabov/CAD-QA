@@ -113,6 +113,29 @@ release projection must carry them.
 The pack is internal and not a release file. A failed review blocks the export;
 the defect is fixed and the task re-reviewed.
 
+## Manifest and dataset card
+
+The manifest fields are in the
+[release contract](../../requirements/release-dataset-contract.md) section 7, and
+the card outline is section 8. `05` owns both.
+
+- Compute `release_id` from the release table content before writing the
+  manifest. It is the release identity, so it is computed once and never
+  patched afterwards.
+- Record `generator_version` as the git commit SHA of the tree that built the
+  release. Refuse to export from a dirty tree, or when the SHA is not readable.
+- Copy `upstream_dataset_version` and `external_dataset_manifest_sha256` from the
+  external dataset manifest. `05` does not reinterpret either value.
+- Write the dataset card from the manifest. Every number in the card is copied,
+  so a card that disagrees with the manifest is a defect, not a second opinion.
+  The answer conventions are stated from the resolver rules in `03b` construct
+  task definitions.
+
+The manifest is the marker that the release is complete. `05` writes it last,
+after the checks and the review gate pass, so a release directory without a
+manifest is not a release. Atomic directory replacement is the run-level
+execution contract, not this document.
+
 ## Not here
 
 Task generation, answer resolution, choice generation, and task quota planning.
