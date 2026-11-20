@@ -65,6 +65,11 @@ Plan five separate quota dimensions:
 - answer meaning;
 - answer format.
 
+Four of these carry a share and are allocated by the equations below. Clue
+operand form is coverage-only in P0 (`DS-37`): it has a minimum and no target
+count and no share, because a balance range is vacuous at a step count where a
+form cannot exist. Balance over clue operand form is P1.
+
 Do not create a full task target category × clue type × answer meaning × answer
 format cross-product. The requirements are independent: coverage and balance at
 each task reasoning step count, not every joint combination. A task contributes
@@ -106,9 +111,12 @@ and `supported_value_count` with the number of supported clue types.
 
 The `+1` is the coverage minimum and is taken before the remainder allocation.
 This guarantees at least one task per supported task target category, answer
-meaning, and answer format, and at least one clue occurrence for each supported clue type.
+meaning, and answer format, and at least one clue occurrence for each supported
+clue type. Clue operand form gets the same coverage floor without a share: one
+clue occurrence per supported form at each step count where the support table
+marks it feasible.
 
-Allocate the four quota dimensions separately. Do not divide `task_reasoning_step_quota` by four
+Allocate the four share-bearing quota dimensions separately. Do not divide `task_reasoning_step_quota` by four
 and do not create a full task target category × clue type × answer meaning ×
 answer format cross-product.
 

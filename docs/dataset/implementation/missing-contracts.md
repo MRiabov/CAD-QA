@@ -11,23 +11,14 @@ only a **technical decision** that engineering can settle from the decisions
 already recorded. Product entries block more than they appear to, because
 writing code cannot close them.
 
-There are 27 open entries: 1 P0 product, 16 P0 technical, 7 P1 product, and 3 P1
-technical. P2 is empty.
+There are 27 open entries: 16 P0 technical, 8 P1 product, and 3 P1 technical. No
+P0 product decision remains open, and P2 is empty.
 
 ## P0
 
 ### Product decisions
 
-#### MC-39 — Clue operand form coverage minimum
-
-The coverage minimum for clue operand form is not stated. `DS-37` makes it a P0
-coverage dimension, but the allocation equation in `03a` gives the `+1` minimum
-only to target category, answer meaning, answer format, and clue type. Without a
-number, `03a` cannot allocate the dimension at all.
-
-**Recommendation:** extend the `+1` coverage minimum to clue operand form,
-counted over clue occurrences like clue type, because operand form is a property
-of a clue and not of a task.
+None. The last P0 product decision, `MC-39`, is closed below.
 
 ### Technical decisions
 
@@ -278,6 +269,17 @@ without them.
 review does not change a definition, so a failed review rejects the row and
 records the reason.
 
+#### MC-45 — Clue operand form balance target
+
+`DS-37` defers balance over clue operand form to P1, but no artifact carries the
+target: the balance table in `task-structure.md` section 6 has no row for it, and
+the plan-level target table names no share. P1 can therefore ship without a
+balance check for the dimension.
+
+**Recommendation:** add the row when the P1 support grid is measured, using the
+same half-to-two-times conditional share rule as the other dimensions, with the
+release share set from the P1 plan.
+
 ### Technical decisions
 
 #### MC-25 — Prompt template file
@@ -313,6 +315,8 @@ input hash plus every version that affects the output.
 
 - `MC-31` — the slow loop in `03c` includes `01d`; the flow line in `00` was the
   defect and is fixed.
+- `MC-39` — clue operand form is coverage-only in P0, with one clue occurrence
+  per supported form per step count and no share; `03a` now says so.
 - `MC-36` — the state entity limit is a scope constant measured once per
   implementation scope, and the rule is written in `graph-content.md` section
   4.1. The first number is produced when the P0 pool is selected, which is plan
