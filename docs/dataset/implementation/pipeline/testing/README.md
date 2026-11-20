@@ -26,7 +26,7 @@ assert-from-the-artifact rule, and the test-first order — are in
 | [`03a-allocate-task-quotas.md`](03a-allocate-task-quotas.md) | `03a` allocate task quotas. | draft |
 | [`03b-construct-task-definitions.md`](03b-construct-task-definitions.md) | `03b` construct task definitions. | draft |
 | [`03c-resolve-deficits.md`](03c-resolve-deficits.md) | `03c` resolve deficits. | draft |
-| `04-render-prompt-and-choices.md` | `04` render prompt and choices. | missing |
+| [`04-render-prompt-and-choices.md`](04-render-prompt-and-choices.md) | `04` render prompt and choices. | draft |
 | `05-validate-and-export-release.md` | `05` validate and export release. | missing |
 
 A name in backticks is a test doc that is not written yet. That is a missing

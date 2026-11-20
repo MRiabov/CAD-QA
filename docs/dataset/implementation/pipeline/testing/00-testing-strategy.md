@@ -67,7 +67,7 @@ are the executable units.
 | [`03a-allocate-task-quotas.md`](03a-allocate-task-quotas.md) | [`../03-task-generation/03a-allocate-task-quotas.md`](../03-task-generation/03a-allocate-task-quotas.md) |
 | [`03b-construct-task-definitions.md`](03b-construct-task-definitions.md) | [`../03-task-generation/03b-construct-task-definitions.md`](../03-task-generation/03b-construct-task-definitions.md) |
 | [`03c-resolve-deficits.md`](03c-resolve-deficits.md) | [`../03-task-generation/03c-resolve-deficits.md`](../03-task-generation/03c-resolve-deficits.md) |
-| `04-render-prompt-and-choices.md` | [`../04-render-prompt-and-choices.md`](../04-render-prompt-and-choices.md) |
+| [`04-render-prompt-and-choices.md`](04-render-prompt-and-choices.md) | [`../04-render-prompt-and-choices.md`](../04-render-prompt-and-choices.md) |
 | `05-validate-and-export-release.md` | [`../05-validate-and-export-release.md`](../05-validate-and-export-release.md) |
 
 A name in backticks is a test doc that is not written yet. That is a missing
