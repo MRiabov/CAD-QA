@@ -28,8 +28,9 @@ rather than a missing rule.
 
 **Recommendation:** measure entity counts on the selected P0 pool and set the
 limit at the smallest round number above the 99th percentile; record the
-distribution next to the limit, so a later change is a measurement and not a
-guess.
+distribution next to the limit, and re-measure at each later implementation
+scope — P1 adds relations and states, so entity counts rise. The limit is a
+measured quantity per scope, not a constant.
 
 #### MC-39 — Clue operand form coverage minimum
 

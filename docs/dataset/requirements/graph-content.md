@@ -215,8 +215,10 @@ task clue that needs it is invalid.
 There is no cap on pairs per named endpoint: the domain is linear in the entity
 count for each endpoint. A program whose solid state exceeds `max_state_entities`
 is rejected at graph construction rather than truncated, so every accepted graph
-carries its whole pair domain. `max_state_entities` is provisional at 500 and is
-tuned against the program pool.
+carries its whole pair domain. `max_state_entities` is provisional at 500. It is
+measured from the selected program pool for each implementation scope and
+re-measured when the graph content grows, for example when P1 adds relations and
+states, because a larger graph raises entity counts. It is not fixed once.
 
 A pair outside the domain is not a missing measurement; it is not a candidate.
 
