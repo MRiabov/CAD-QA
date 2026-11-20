@@ -41,7 +41,10 @@ Coverage and balance checks:
   `dataset-card.md`.
 - Copy the five task reasoning step support JSON files into `support/` and
   record their schema versions and hashes in the manifest.
-- Record the prompt template version and `prompts.yaml` hash in the manifest.
+- Confirm the prompt template file validates against its
+  [schema](../prompt-templates.md), then record the prompt template version and
+  `prompts.yaml` hash in the manifest. A missing, extra, or untyped placeholder
+  blocks the export.
 - Record the balance policy version and `balance.yaml` hash in the manifest.
 
 ## Language and parallelism

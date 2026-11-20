@@ -13,7 +13,7 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 11 open entries: 7 P0 technical and 4 P1 technical. No product
+There are 10 open entries: 6 P0 technical and 4 P1 technical. No product
 decision remains open, and P2 is empty.
 
 ## Decisions needed from the owner
@@ -30,35 +30,23 @@ None.
 
 Work order:
 
-1. `MC-25` — the prompt template file; `04` render prompt and choices has
-   nothing to render from without it.
-2. `MC-11` — the rendering inputs; a prompt cannot be reproduced from the
+1. `MC-11` — the rendering inputs; a prompt cannot be reproduced from the
    declared input without them.
-3. `MC-12` — the release projection; the release columns have no writer without
+2. `MC-12` — the release projection; the release columns have no writer without
    it.
-4. `MC-15` — multiple-choice fairness; the choice check.
-5. `MC-26` — the manifest and dataset card fields; the release ships both.
-6. `MC-41` — the construction test contract; it locks the invariants the other
+3. `MC-15` — multiple-choice fairness; the choice check.
+4. `MC-26` — the manifest and dataset card fields; the release ships both.
+5. `MC-41` — the construction test contract; it locks the invariants the other
    entries introduce.
-7. `MC-42` — the golden record; the first end-to-end comparison.
-
-#### MC-25 — Prompt template file
-
-The root `prompts.yaml` file and its schema are absent. `04` render prompt and
-choices reads it, but the file does not exist, so the convention is
-documentation without an artifact.
-
-**Recommendation:** add the file with template id, typed placeholders, and
-dataset and evaluation namespaces; `04` render prompt and choices rejects a
-missing, extra, or untyped placeholder.
+6. `MC-42` — the golden record; the first end-to-end comparison.
 
 #### MC-11 — Rendering inputs
 
 The `04` render prompt and choices input contract omits program text, render
 seed, and template version. `04` render prompt and choices depends on them, but
-`io-contracts.md` names only `TaskDefinition`, so rendering cannot reproduce a
-prompt from the declared input alone. `TaskDefinition` carries `program_id` and
-`program_sha256`, not the program text.
+`io-contracts.md` names only `TaskDefinition` and `PromptTemplateSet`, so
+rendering cannot reproduce a prompt from the declared input alone.
+`TaskDefinition` carries `program_id` and `program_sha256`, not the program text.
 
 **Recommendation:** add the program text (or a `NormalizedProgram` reference),
 the render seed, and the prompt template version to the `04` render prompt and
@@ -207,6 +195,10 @@ when its completion marker and identity match.
 
 ## Closed or merged in the 2026-11-20 pass
 
+- `MC-25` — `prompts.yaml` and its schema are written in `prompt-templates.md`;
+  `tests/test_prompt_templates.py` validates the file. The file carries template
+  IDs, typed placeholders, label tables, and dataset and evaluation namespaces;
+  `04` rejects a missing, extra, or untyped placeholder.
 - `MC-13` — `05-validate-and-export-release/release-checks.md` lists one check
   per requirement statement, with its scope, bound, and first-release
   disposition.

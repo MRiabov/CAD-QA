@@ -19,7 +19,7 @@ this document owns ownership, lifecycle, and format, not field definitions.
 | CadQuery program runtime extraction result | `02b` | `02c` | Program hash, CadQuery/OCP version, and environment | Parquet tables | Either runtime captures or a failure tombstone; no raw BRep. |
 | CAD graph | `02c` | `03` | Program hash, graph schema version, and CadQuery program runtime extraction result hash | Parquet tables | One graph per program. |
 | Task quota plan | `03a` | `03b`, `03c` | Plan version, seed, and balance policy version | Parquet or JSON | Quotas, family profiles, split assignment, and construction attempt budgets. |
-| Prompt templates | Prompt authoring | `04`, evaluation harness | Template version plus file hash | YAML | `prompts.yaml`; all LLM-facing copy, with dataset and evaluation namespaces. |
+| Prompt templates | Prompt authoring | `04`, evaluation harness | Template version plus file hash | YAML | `prompts.yaml`; all LLM-facing copy, with dataset and evaluation namespaces. Schema in [`prompt-templates.md`](prompt-templates.md); a missing, extra, or untyped placeholder is a validation error. |
 | Balance policy | Release authoring | `03a`, `05` | Policy version plus file hash | YAML | `balance.yaml`; every tunable quota and balance number. Not a scope. |
 | Task definition | `03b` | `04` | Canonical task identity plus definition hash | Parquet | Persisted, answer-bearing construction record; invalid definitions are rejected. |
 | Deficit ledger | `03b` | `03a`, `03c` | Plan version plus update sequence | JSON | Accepted and rejected counts and remaining deficits by quota target, family, task reasoning step count, and deficit class. |

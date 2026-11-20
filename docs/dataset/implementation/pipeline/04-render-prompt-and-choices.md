@@ -26,25 +26,40 @@ and, for multiple choice, the rendered choice set.
 
 ## Prompt copy comes from YAML
 
-LLM-facing wording is data, not Go code. Pipeline stage `04` renders from
-`prompts.yaml`; it does not contain hardcoded question, clue, choice, or answer
-instruction strings.
+LLM-facing wording is data, not Go code. Pipeline stage `04` renders from the
+root `prompts.yaml`; it does not contain hardcoded question, clue, choice, or
+answer-instruction strings. The file's schema, template IDs, placeholder forms,
+label tables, and validation rules are in
+[`../prompt-templates.md`](../prompt-templates.md).
 
+- `04` reads the `dataset` namespace. The evaluation harness reads the
+  `evaluation` namespace; the dataset release does not.
 - Templates cover the question, each clue type, choice descriptions, and the
   answer instruction.
-- Each template has a stable ID and typed placeholders. Validation rejects a
-  missing, extra, or untyped placeholder.
+- Each template has a stable ID and typed placeholders. `04` validates the file
+  before rendering. A missing, extra, or untyped placeholder is a release
+  defect, not a task rejection.
 - Template variants are selected deterministically from the template ID and
-  seed, not by an LLM.
+  render seed, not by an LLM.
 - The template version and `prompts.yaml` hash are recorded with the release so
   the rendered prompt is reproducible.
 - The YAML is answer-free. It must not contain gold answers, hidden identifiers,
   or generated answer data.
 - P2 near-miss choice copy uses the same template mechanism.
+- The frame convention is the first line of `dataset.prompt_shell` and matches
+  `prompt-content.md` section 1.1. It is fixed, not a per-task variant.
+- The renderer collapses a run of three or more newlines to two, so an empty
+  `choices` list leaves one blank line before the answer instruction.
 
 Evaluation prompts outside the dataset follow the same rule: they live in
 `prompts.yaml`, not in Python strings. Dataset and evaluation templates use
 separate namespaces in that file.
+
+The prompt template set is an input to `04`; `io-contracts.md` names it
+`PromptTemplateSet`. A missing template ID or an invalid placeholder stops the
+render before any release row is written. `04` renders the question, clues,
+choices, and answer instruction first, then fills `dataset.prompt_shell` with
+those rendered parts.
 
 ## Language and parallelism
 
@@ -59,7 +74,9 @@ separate namespaces in that file.
 Rendering must not reject a task definition. Choice availability, choice
 validity, target ambiguity, answer evidence, and uniqueness are decided in `03`.
 Task quota planning is decided in `03a`. A rejection here is a defect in an earlier
-pipeline stage.
+pipeline stage. A missing template ID or an invalid placeholder is a defect in
+`prompts.yaml`, not a reason to reject a task; `04` stops before writing the
+release.
 
 ## Not here
 

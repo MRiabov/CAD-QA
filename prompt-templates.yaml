@@ -1,3 +1,7 @@
+# Legacy prompt templates for the pre-rebuild pipeline. The new generator's
+# contract is the root `prompts.yaml`; its schema is in
+# `docs/dataset/implementation/prompt-templates.md`.
+
 version: cadqa_prompt_v2
 checklist_template_id: checklist_constraints_v1
 

@@ -1,0 +1,388 @@
+# Prompt templates for the CAD-QA dataset generator.
+#
+# `04` render prompt and choices reads the `dataset` namespace. The evaluation
+# harness reads the `evaluation` namespace. Both namespaces use the same schema;
+# the schema is in `docs/dataset/implementation/prompt-templates.md`.
+#
+# This file is answer-free. It contains no gold answer, answer value, hidden
+# identifier, variable name, or task reasoning step count.
+#
+# A template ID is the key under `templates`. It must start with the namespace
+# name and a dot. `variants` is an ordered list of wording variants; every
+# variant must use exactly the placeholders declared in `placeholders`.
+#
+# Placeholders are written `{{name}}`. Single braces are literal text.
+#
+# Comments do not change rendered copy. A template change that changes rendered
+# copy bumps `version`; a comment-only edit changes the file hash but not
+# `version`. A structural change bumps `schema_version` and `version`.
+#
+# `prompt-templates.yaml` is the legacy artifact of the pre-rebuild pipeline.
+# It is not read by the generator that this file specifies.
+
+schema_version: 1
+version: cadqa_prompt_v3
+
+namespaces:
+  dataset:
+    labels:
+      # Display copy for the target category. The release `target_category`
+      # value stays an enum; this table is the prompt-safe label.
+      target_category:
+        operation: "operation"
+        feature: "feature"
+        solid_state: "solid state"
+        face: "face"
+        edge: "edge"
+        vertex: "vertex"
+        cadquery_profile: "CadQuery profile"
+        cadquery_workplane: "CadQuery workplane"
+        region: "region"
+        scalar_value: "measured value"
+        # p1
+        cadquery_program: "CadQuery program"
+        edge_endpoint: "edge endpoint"
+        path: "path"
+        path_point: "path point"
+        path_segment: "path segment"
+        cadquery_selector_result: "CadQuery selector result"
+
+      # Display copy for a measurement. A graph measurement with no row here is
+      # a render-time validation error, not an underscore-replaced fallback.
+      metric:
+        volume: "volume"
+        area: "area"
+        face_area: "surface area"
+        profile_area: "CadQuery profile area"
+        length: "length"
+        edge_length: "edge length"
+        distance: "distance"
+        angle: "angle"
+        centroid: "centroid"
+        bounding_box: "bounding box"
+        count: "count"
+        face_count: "face count"
+        edge_count: "edge count"
+        vertex_count: "vertex count"
+        selected_count: "number of selected entities"
+        volume_change: "volume change"
+        # p1
+        bounding_box_change: "bounding-box change"
+        topology_change_faces: "face count change"
+        topology_change_edges: "edge count change"
+        topology_change_vertices: "vertex count change"
+        # p1
+        workplane_frame: "CadQuery workplane frame"
+        coordinate_x: "X coordinate"
+        coordinate_y: "Y coordinate"
+        coordinate_z: "Z coordinate"
+        distance_to_origin: "distance to the global origin"
+        midpoint_x: "midpoint X coordinate"
+        midpoint_y: "midpoint Y coordinate"
+        midpoint_z: "midpoint Z coordinate"
+
+      comparator:
+        gt: "greater than"
+        ge: "at least"
+        lt: "less than"
+        le: "at most"
+        eq: "equal to"
+
+      relation:
+        adjacent_to: "adjacent to"
+        parallel_to: "parallel to"
+        perpendicular_to: "perpendicular to"
+        # p1
+        coplanar_with: "coplanar with"
+        coaxial_with: "coaxial with"
+        endpoint_of: "an endpoint of"
+        # p2
+        same_as: "the same as"
+
+      unit:
+        mm: "mm"
+        mm2: "mm^2"
+        mm3: "mm^3"
+        deg: "degrees"
+
+      position_parameter:
+        face_centroid: "face centroid"
+        edge_midpoint: "edge midpoint"
+        vertex_point: "vertex point"
+        solid_state_centroid: "solid state centroid"
+
+      counted_entity:
+        face: "faces"
+        edge: "edges"
+        vertex: "vertices"
+        selected_entity: "selected entities"
+
+      frame:
+        program_frame: "program frame"
+
+      choice_label:
+        A: "A"
+        B: "B"
+        C: "C"
+        D: "D"
+        E: "E"
+        F: "F"
+        G: "G"
+
+    templates:
+      dataset.prompt_shell:
+        variants:
+          - |
+            Directions use the program frame: +x is right, +y is back, +z is up.
+
+            ```python
+            {{program_text}}
+            ```
+
+            {{question}}
+
+            {{clue_list}}
+
+            {{choices}}
+
+            {{answer_instruction}}
+        placeholders:
+          program_text: code
+          question: text
+          clue_list: numbered_list
+          choices: list
+          answer_instruction: text
+
+      dataset.question.identity:
+        variants:
+          - "Which {{target_label}} satisfies these conditions?"
+          - "Which {{target_label}} matches every condition below?"
+        placeholders:
+          target_label: label.target_category
+
+      dataset.question.volume:
+        variants:
+          - "What is the volume of the target {{target_label}}?"
+          - "What volume does the target {{target_label}} enclose?"
+        placeholders:
+          target_label: label.target_category
+
+      dataset.question.area:
+        variants:
+          - "What is the area of the target {{target_label}}?"
+          - "What surface area does the target {{target_label}} have?"
+        placeholders:
+          target_label: label.target_category
+
+      dataset.question.length:
+        variants:
+          - "What is the length of the target {{target_label}}?"
+          - "How long is the target {{target_label}}?"
+        placeholders:
+          target_label: label.target_category
+
+      dataset.question.distance:
+        variants:
+          - "What is the distance between the target {{target_label}} and the {{reference}}?"
+          - "How far is the target {{target_label}} from the {{reference}}?"
+        placeholders:
+          target_label: label.target_category
+          reference: reference
+
+      dataset.question.angle:
+        variants:
+          - "What is the angle between the target {{target_label}} and the {{reference}}?"
+          - "What angle do the target {{target_label}} and the {{reference}} form?"
+        placeholders:
+          target_label: label.target_category
+          reference: reference
+
+      dataset.question.count:
+        variants:
+          - "How many {{counted_label}} are in the target {{target_label}}?"
+          - "What is the number of {{counted_label}} in the target {{target_label}}?"
+        placeholders:
+          counted_label: label.counted_entity
+          target_label: label.target_category
+
+      dataset.question.membership:
+        variants:
+          - "Is the point {{point}} inside the target {{target_label}}?"
+          - "Does the point {{point}} lie inside the target {{target_label}}?"
+        placeholders:
+          point: coordinate
+          target_label: label.target_category
+
+      dataset.question.position:
+        variants:
+          - "What is the {{parameter_label}} of the target {{target_label}}?"
+          - "Give the {{parameter_label}} of the target {{target_label}}."
+        placeholders:
+          parameter_label: label.position_parameter
+          target_label: label.target_category
+
+      dataset.question.extent:
+        variants:
+          - "What is the bounding box of the target {{target_label}}?"
+          - "What are the minimum and maximum corners of the target {{target_label}}?"
+        placeholders:
+          target_label: label.target_category
+
+      dataset.question.material_change:
+        variants:
+          - "What is the signed change in {{change_label}} caused by the target {{target_label}}?"
+          - "What signed change in {{change_label}} does the target {{target_label}} produce?"
+        placeholders:
+          change_label: label.metric
+          target_label: label.target_category
+
+      dataset.question.topology_change:
+        variants:
+          - "What is the signed change in the number of {{category_label_plural}} caused by the target {{target_label}}?"
+          - "What signed change does the target {{target_label}} make to the number of {{category_label_plural}}?"
+        placeholders:
+          category_label_plural: label.counted_entity
+          target_label: label.target_category
+
+      dataset.clue.property.threshold:
+        variants:
+          - "The {{subject}} has a {{measurement_label}} {{comparator_label}} {{value}}."
+          - "The {{measurement_label}} of the {{subject}} is {{comparator_label}} {{value}}."
+          - "The {{subject}} satisfies a {{measurement_label}} that is {{comparator_label}} {{value}}."
+        placeholders:
+          subject: reference
+          measurement_label: label.metric
+          comparator_label: label.comparator
+          value: number
+
+      dataset.clue.property.range:
+        variants:
+          - "The {{subject}} has a {{measurement_label}} between {{range_min}} and {{range_max}}."
+          - "The {{measurement_label}} of the {{subject}} lies between {{range_min}} and {{range_max}}."
+        placeholders:
+          subject: reference
+          measurement_label: label.metric
+          range_min: number
+          range_max: number
+
+      dataset.clue.relation:
+        variants:
+          - "The {{subject}} is {{relation_label}} the {{reference}}."
+        placeholders:
+          subject: reference
+          relation_label: label.relation
+          reference: reference
+
+      dataset.clue.comparison:
+        variants:
+          - "The {{measurement_label}} of the {{subject}} is {{comparator_label}} the {{reference_measurement_label}} of the {{reference}}."
+          - "The {{subject}} has a {{measurement_label}} that is {{comparator_label}} the {{reference_measurement_label}} of the {{reference}}."
+        placeholders:
+          subject: reference
+          measurement_label: label.metric
+          comparator_label: label.comparator
+          reference_measurement_label: label.metric
+          reference: reference
+
+      dataset.clue.provenance.operation:
+        variants:
+          - "The {{subject}} was created by {{operation_label}}."
+          - "The {{subject}} is the result of {{operation_label}}."
+        placeholders:
+          subject: reference
+          operation_label: text
+
+      dataset.clue.provenance.profile:
+        variants:
+          - "The {{subject}} uses {{profile_label}}."
+          - "The {{subject}} is built from {{profile_label}}."
+        placeholders:
+          subject: reference
+          profile_label: text
+
+      dataset.clue.provenance.workplane:
+        variants:
+          - "The {{subject}} sits on {{workplane_label}}."
+          - "The {{subject}} is sketched on {{workplane_label}}."
+        placeholders:
+          subject: reference
+          workplane_label: text
+
+      dataset.choice.description:
+        variants:
+          - "{{label}}. {{description}}"
+          - "{{label}}: {{description}}"
+        placeholders:
+          label: label.choice_label
+          description: text
+
+      dataset.answer_instruction.multiple_choice:
+        variants:
+          - "Return exactly one label from the list above, for example `{{example_label}}`."
+          - "Answer with exactly one label from the list above, such as `{{example_label}}`."
+        placeholders:
+          example_label: label.choice_label
+
+      dataset.answer_instruction.number.with_unit:
+        variants:
+          - "Return exactly one number. Use {{unit_label}}; round to {{precision}} significant figures."
+          - "Return exactly one number in {{unit_label}}, rounded to {{precision}} significant figures."
+        placeholders:
+          unit_label: label.unit
+          precision: integer
+
+      dataset.answer_instruction.number.unitless:
+        variants:
+          - "Return exactly one number; round to {{precision}} significant figures."
+          - "Return exactly one number, rounded to {{precision}} significant figures."
+        placeholders:
+          precision: integer
+
+      dataset.answer_instruction.integer:
+        variants:
+          - "Return exactly one integer."
+          - "Return exactly one whole number."
+        placeholders: {}
+
+      dataset.answer_instruction.boolean:
+        variants:
+          - "Return exactly one of `true` or `false`."
+          - "Return exactly one boolean value, `true` or `false`."
+        placeholders: {}
+
+      dataset.answer_instruction.coordinate:
+        variants:
+          - "Return exactly one coordinate tuple `(x, y, z)` in the {{frame_label}}; round each value to {{precision}} significant figures."
+          - "Return exactly one point as `(x, y, z)` in the {{frame_label}}, with each value rounded to {{precision}} significant figures."
+        placeholders:
+          frame_label: label.frame
+          precision: integer
+
+      dataset.answer_instruction.bounding_box:
+        variants:
+          - |
+            Return exactly one bounding box as `{"min": [x, y, z], "max": [x, y, z]}` in the {{frame_label}}; round each value to {{precision}} significant figures.
+          - |
+            Return exactly one bounding box in the {{frame_label}} as `{"min": [x, y, z], "max": [x, y, z]}`, with each value rounded to {{precision}} significant figures.
+        placeholders:
+          frame_label: label.frame
+          precision: integer
+
+  # The evaluation harness owns this namespace. The dataset release does not
+  # read it; the dataset supplies no system prompt. See section 10 of the
+  # schema.
+  evaluation:
+    labels: {}
+
+    templates:
+      evaluation.system.no_cadquery:
+        variants:
+          - "You are answering a CAD reasoning question from a fixed program. Do not import or call CadQuery, `cq`, OCP, OpenCascade, or any other CAD library. Do not execute the program. Reason from the program text and the question."
+          - "Answer the CAD reasoning question using only the program text and the question. Do not import or call CadQuery, `cq`, OCP, OpenCascade, or any other CAD library, and do not execute the program."
+        placeholders: {}
+
+      evaluation.submission.answer:
+        variants:
+          - "Write exactly one answer in the required format. Do not write more than one answer."
+          - "Submit exactly one answer. A second answer is an error."
+        placeholders: {}

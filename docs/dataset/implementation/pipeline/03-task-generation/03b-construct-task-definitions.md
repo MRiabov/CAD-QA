@@ -440,7 +440,8 @@ that moved:
 | `balance_policy_version` | The balance policy the plan was computed from. |
 
 Rendering provenance — render seed, template version, and `prompts.yaml` hash —
-belongs to `04` render prompt and choices, not to the definition (`DS-35`).
+belongs to `04` render prompt and choices, not to the definition (`DS-35`). The
+template schema is in [`../../prompt-templates.md`](../../prompt-templates.md).
 
 ## Construction attempt budget
 

@@ -102,6 +102,7 @@ All LLM-facing prompt text is data in `prompts.yaml`, not code:
 Go and Python select template IDs and fill typed placeholders. Neither language
 hardcodes prompt copy. The dataset and evaluation sections are separate
 namespaces in the same file. Template changes bump the prompt version and hash.
+The file's schema is in [`prompt-templates.md`](prompt-templates.md).
 
 ## Parallelism
 

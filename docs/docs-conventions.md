@@ -155,6 +155,8 @@ scoped to the module. `pipeline/extraction/` and
 ## Prompt text
 
 All LLM-facing prompt text is data, not code. Put it in the root `prompts.yaml`.
+The file's schema is in
+[`dataset/implementation/prompt-templates.md`](dataset/implementation/prompt-templates.md).
 
 - The dataset and evaluation harnesses use separate namespaces in that file.
 - Code selects template IDs and fills typed placeholders. Go and Python do not
