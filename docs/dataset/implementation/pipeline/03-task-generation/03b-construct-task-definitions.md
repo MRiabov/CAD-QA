@@ -35,7 +35,7 @@ task. It is not prompt text and not a loose task tuple. It is what `04` renders.
 | `answer_meaning`, `task_answer_step` | What the answer is about and the step that produces it. |
 | `answer_parameter` | The point for a position, the category for a topology change, null otherwise. |
 | `native_answer_format`, `answer_format` | The meaning's native format and the format the prompt will request. |
-| `gold_answer`, `answer_unit`, `tolerance`, `scoring_rule` | Answer data. |
+| `gold_answer`, `answer_unit`, `tolerance`, `scoring_rule` | Answer data. `gold_answer` and `tolerance` are canonical text, matching the release columns. |
 | `answer_evidence` | Measured or derived evidence: rule, references, the answer-equivalent set, and the point probe. |
 | `choice_pool` | Real answer-space candidates and their distinguishing graph facts, when multiple choice is planned. For P2, it includes validated near-miss choices. |
 | `task_clue_step_count`, `task_reasoning_step_count` | Step accounting. |
@@ -367,13 +367,24 @@ input, so every rule below is part of the contract:
   newline;
 - non-ASCII characters escaped, so Go and Python produce the same bytes;
 - absent values written as `null`, never omitted;
-- numbers written as the canonical decimal string for the answer format, never
-  as a binary float, because the two languages format floats differently;
+- integers written as JSON integers; every other number written as canonical
+  decimal text, never as a JSON number;
 - UUIDs as lowercase hyphenated text;
 - lists keep their recorded order, and the clue list is the canonical clue
   sequence.
 
 `task_id` and `definition_sha256` are excluded from their own hash input.
+
+The definition has no binary float fields. The answer precision rule already
+produces canonical decimal text, and the release stores the same text in
+`gold_answer_json`, `tolerance_json`, and `answer_evidence_json`. Clue
+thresholds, ranges, points, and choice answers reuse it. The hash therefore
+never formats a float, which is what makes it reproducible across languages:
+Go and Python disagree on `1e17` (`100000000000000000` against `1e+17`), on the
+exponent's leading zero (`1e-9` against `1e-09`), and on negative zero.
+
+The rule is scoped to the task definition. Graph tables keep native float
+columns: they are measured once, read in bulk, and never hashed.
 
 ### Three hashes
 
