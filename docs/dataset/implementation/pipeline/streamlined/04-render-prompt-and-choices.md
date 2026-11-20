@@ -1,8 +1,10 @@
 # 04 render prompt and choices — answer-free release rows
 
 > Authoritative: `../04-render-prompt-and-choices.md`
+> Templates: `../../prompt-templates.md`
 
 READ:
+
 - `TaskDefinition` from `03b`
 - `NormalizedProgram` selected by the definition's `program_sha256`; do not re-normalize or reformat
 - `RenderConfig` → validated `PromptTemplateSet` (template version, file hash) and release `RenderSeed`
@@ -10,17 +12,20 @@ READ:
 ## 1 — Validate the template set
 
 TRANSFORM:
-- validate `prompts.yaml` per `../../prompt-templates.md`: exactly the known top-level, namespace, and template keys; namespaces exactly `dataset` and `evaluation`; a template ID starts with its namespace; no duplicate ID; at least one non-empty string variant; every placeholder used, declared, and typed; every `label.<table>` table present; every required P0 dataset ID present
+
+- validate `prompts.yaml` per the template sub-document: exactly the known top-level, namespace, and template keys; namespaces exactly `dataset` and `evaluation`; a template ID starts with its namespace; no duplicate ID; at least one non-empty string variant; every placeholder used, declared, and typed; every `label.<table>` table present; every required P0 dataset ID present
 - the file is answer-free and contains no gold answer, hidden identifier, variable name, or step count
 - a missing template ID or an invalid placeholder stops the render before any row is written; it is a release defect, not a task rejection
 - never fall back to a hardcoded string
 
 WRITE:
+
 - (none)
 
 ## 2 — Render
 
 TRANSFORM:
+
 - `task_render_seed = derive(release_seed, task_id)`; deterministic and part of the `04` version
 - `variant_index = hash(template_id, task_render_seed) mod len(variants)`
 - select templates by part and definition field:
@@ -40,19 +45,23 @@ TRANSFORM:
 - the prompt is answer-free and uses no variable name; a multiple-choice label is not answer data, because every label appears in the list
 
 WRITE:
+
 - (none)
 
 ## 3 — Project the release row
 
 TRANSFORM:
-- copy definition fields unchanged, including `clue_operand_form_profile`
-- copy the label and the answer value of every choice-pool entry into `choices`; the descriptions stay in the prompt and `distinguishing_facts` stay in the definition
-- derive `clue_types` from `clue_operand_form_profile`, in the same order
-- copy `gold_answer`, `tolerance`, and `answer_evidence` as canonical text; never re-serialize an answer value
+
+- copy definition fields unchanged, including `clue_operand_form_profile`, `answer_schema_version`, and `answer_unit`
+- copy `gold_answer` into `gold_answer_json`, `tolerance` into `tolerance_json`, and `answer_evidence` into `answer_evidence_json` as canonical text; never re-serialize an answer value
 - copy `answer_sha256`; never recompute it
+- copy the label and the answer value of every choice-pool entry into `choices`; the descriptions stay in the prompt and `distinguishing_facts` stay in the definition
+- `choices` is empty for every answer format other than multiple choice
+- derive `clue_types` from `clue_operand_form_profile`, in the same order
 - `prompt_sha256 = SHA-256(prompt UTF-8 bytes)` after rendering
 - one row per `task_id`; rendering does not reject a definition
 - a projection that needs a field the definition lacks is a `03b` defect
 
 WRITE:
-- `ReleaseTable` `(release_id)` → one row per task: `task_id, program_id, program_sha256, cadevolve_program_family_id, split, subset, prompt, prompt_sha256, clue_types, clue_operand_form_profile, target_category, answer_meaning, answer_format, task_reasoning_step_count, geometry_required, gold_answer, answer_unit, tolerance, scoring_rule, answer_evidence, answer_sha256, choices (label, candidate)`
+
+- `ReleaseTable` `(release_id)` → one row per task, in the release contract column order: `task_id, split, subset, prompt, prompt_sha256, program_id, program_sha256, cadevolve_program_family_id, task_reasoning_step_count, target_category, clue_types, clue_operand_form_profile, answer_format, choices (label, candidate), answer_meaning, geometry_required, gold_answer_json, answer_unit, tolerance_json, scoring_rule, answer_schema_version, answer_sha256, answer_evidence_json`

@@ -3,11 +3,13 @@
 > Authoritative: `../03-task-generation/03c-resolve-deficits.md`
 
 READ:
+
 - `DeficitLedger` from `03b`
-- `TaskQuotaPlan` → `family_profiles`, `plan_version`, `expansion_tier`
+- `TaskQuotaPlan` → `family_profiles`, `plan_version`, `expansion_tier`, `expansion_rounds`, `expansion_growth_share_per_round`
 - `ProgramMetadata`
 
 TRANSFORM:
+
 - `03b` records a `DeficitClass` directly; `03c` classifies each `03a` allocation detail by this table:
   - `coverage_infeasible`, `answer_meaning_infeasible` → `structural_deficit`
   - `cap_conflict` → `plan_conflict`
@@ -22,6 +24,7 @@ TRANSFORM:
 - escalation order: `ProgramReassignmentRequest` to `03a`, then `ProgramRequest` to `01b`, then accept the miss
 - fast loop: `03a` residual replan → `03b` resume; no fetch, normalize, or execute
 - slow loop: `01b` supplemental selection → `01c` fetch delta → `01d` normalize delta → `02` build graphs for delta → `03a` update family profiles and residual plan → `03b` resume
+- a promoted reserve program enters the slow loop at `01d` normalize; it is already fetched, so it skips `01b` and `01c`
 - an expansion round adds at most 20% of the current program pool; after three rounds stop and record an `AcceptedMiss`
 - the round count and growth cap come from `expansion` in `balance.yaml`, stamped into the plan by `03a`
 - stop when the deficit is filled, the expansion budget is reached, the deficit is structurally infeasible, or the owner accepts the miss
@@ -29,6 +32,7 @@ TRANSFORM:
 - render nothing and write no release rows
 
 WRITE:
+
 - `ProgramReassignmentRequest` → originating quota target, current family assignment and quota, accepted and remaining counts, unassigned families or unused capacity, requested change, retry budget, plan version
 - `ProgramRequest` → originating quota target, missing graph capability, accepted and remaining counts, useful feature tags, collections or family constraints, `extend | target`, requested program count, maximum graph-build budget, reason, plan version
 - `AcceptedMiss` → quota target, remaining count, reason, owner, plan version

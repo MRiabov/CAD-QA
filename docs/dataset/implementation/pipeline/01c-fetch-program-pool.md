@@ -8,7 +8,8 @@
 
 - Input: the selection artifact from `01b`, including supplemental selection
   deltas, plus the pinned cache revision.
-- Output: a Parquet program pool with fetched rows marked active or reserve.
+- Output: a Parquet program pool with fetched rows marked active or reserve, and
+  with the request ID when a row comes from a supplemental delta.
 
 ## Behavior
 

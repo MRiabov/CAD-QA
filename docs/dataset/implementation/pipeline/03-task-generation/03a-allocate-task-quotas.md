@@ -8,9 +8,10 @@ definitions are generated.
 
 ## Input / output
 
-- Input: CAD graphs for the selected program pool, program metadata, the balance
-  policy (`balance.yaml`), the current `DeficitLedger` (empty on the first plan),
-  and `ProgramReassignmentRequest` records from `03c`.
+- Input: CAD graphs for the selected program pool, `ProgramMetadata` from `01a`
+  and `ProgramSelection` from `01b`, the balance policy (`balance.yaml`), the
+  current `DeficitLedger` (empty on the first plan), and
+  `ProgramReassignmentRequest` records from `03c`.
 - Output: `TaskQuotaPlan`.
 
 ## Program capability census
@@ -75,6 +76,10 @@ manifest records. The defaults are the starting point, not a second copy.
 
 ## Task quota plan
 
+`dataset_release_task_count` is the exact number of tasks the plan allocates. It
+is `release.tasks_min` from `balance.yaml`: the plan total and the release floor
+are one number, so the plan cannot promise fewer tasks than the release requires.
+
 `TaskQuotaPlan` contains:
 
 | Field | Meaning |
@@ -85,11 +90,12 @@ manifest records. The defaults are the starting point, not a second copy.
 | `quota_targets` | Quota targets: task reasoning step count, quota dimension, dimension value, minimum, target count, maximum, and priority. |
 | `clue_quotas` | Clue quotas counted over clue occurrences. |
 | `clue_occurrences` | Planned clue occurrences for each task reasoning step count. |
-| `family_profiles` | The union of the member programs' census capabilities and summed entity counts, family task capacity, and probe success rate per CADEvolve program family. |
+| `family_profiles` | The union of the member programs' census capabilities and summed entity counts, states with a surviving point probe, maximum task reasoning step count, split status, family task capacity, and probe success rate per CADEvolve program family. |
 | `family_assignment` | Family to split, task quota, per-task-reasoning-step task quotas, and assigned quota targets. |
 | `construction_attempt_budgets` | One construction batch per quota target and family for the remaining work in this plan revision. |
 | `construction_attempt_multiplier` | Construction attempt multiplier over the accepted quota; default 1.5, or 2.0 for high-rejection quota targets. |
-| `expansion_tier` | Current data tier before a deficit triggers `03c`. |
+| `expansion_tier`, `expansion_rounds`, `expansion_growth_share_per_round` | Current data tier before a deficit triggers `03c`, and the stop rule stamped from `expansion` in `balance.yaml`. |
+| `subset` | The warmup and main rule: `warmup` at task reasoning step count 1, `main` otherwise. `03b` stamps it on each definition. |
 
 The plan stores absolute targets; accepted and remaining counts live in the
 `DeficitLedger`. The plan is a target; it does not prove that the corpus can
@@ -370,6 +376,8 @@ Build a family profile from the graphs in the selected pool:
 - available measurements and answer meanings;
 - available answer formats;
 - approximate maximum task reasoning step count;
+- states with at least one surviving point probe, so a membership target has a
+  family to go to;
 - task quota per program and family;
 - probe success rate per family and quota target.
 

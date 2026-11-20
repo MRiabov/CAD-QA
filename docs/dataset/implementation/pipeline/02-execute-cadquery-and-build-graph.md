@@ -44,5 +44,6 @@ expensive and cacheable. Graph assembly needs both. CAD graph evidence is part o
 graph assembly, not a separate pipeline stage: a measurement without CAD graph
 evidence is not a graph measurement.
 
-Failures are CadQuery program runtime extraction results, not a pipeline stage. The execution boundary returns
-either snapshots or a failure tombstone.
+A failure is a CadQuery program runtime extraction result, not a separate
+pipeline stage: the execution boundary returns either snapshots or a failure
+tombstone, and `02b` also writes one failure record row for the partition.

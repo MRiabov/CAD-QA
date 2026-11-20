@@ -30,6 +30,9 @@ The DAG of pipeline stages is owned by
 [`../io-contracts.md`](../io-contracts.md); this block is only the sub-step read
 order.
 
+The five task reasoning step support tables are derived from the requirement
+marks outside this folder. `03a` and `05` read them; no sub-step writes them.
+
 ## Canonical per-doc template
 
 Every file uses exactly this shape: one heading per phase, each phase with
@@ -40,16 +43,20 @@ Nothing else.
 # <sub-step> <name> — <subtitle>
 
 > Authoritative: `../<sub-step>-<name>.md`
+> <Sub-document>: `../<path>.md` (only when the executable rule lives there)
 
 ## <phase> — <verb>
 
 READ:
+
 - `<artifact or model>` → `<fields used>`
 
 TRANSFORM:
+
 - `<one deterministic rule per line, with the exact formula or constant>`
 
 WRITE:
+
 - `<artifact>` `(<identity>)` → `<fields>`
 ```
 
@@ -57,15 +64,18 @@ WRITE:
 
 1. **Terse and dry.** Every TRANSFORM line is an imperative with the exact
    formula, threshold, or constant. No hedging, no "should".
-2. **No why.** The single `> Authoritative:` pointer is the only cross-reference.
-   No decision IDs, no status tags, no open or resolved questions.
+2. **No why.** Pointer lines name the authoritative doc and, when the executable
+   rule lives in one of its sub-documents, that sub-document. Nothing else is a
+   cross-reference: no decision IDs, no status tags, no open or resolved
+   questions.
 3. **Names, not definitions.** READ and WRITE name artifacts and models exactly
    as [`../io-contracts.md`](../io-contracts.md) names them. Field names are
    used, never defined.
 4. **One file per sub-step.** `04` and `05` have no sub-steps and are one file
    each.
 5. **Rejection is data.** A TRANSFORM line that rejects names the failure
-   partition it writes. A rejection never crosses a sub-step boundary as an
+   partition it writes, or states that the defect stops the run before the
+   artifact is written. A rejection never crosses a sub-step boundary as an
    exception.
 6. **Deterministic.** Same input and version produce the same artifact bytes.
 

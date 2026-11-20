@@ -52,8 +52,9 @@ equals its `before` count fails the second.
    circular edges' lengths. After the second clue one edge remains, so `before`
    and `after` are both 1 and the definition fails `clue_narrows`. The failure
    names that check, not a generic rejection.
-2. Ask for a four-step length task. Construction yields no accepted definition
-   and one `no_cover` deficit. It does not add a clue to reach the count.
+2. Ask for a four-step length task. Construction yields no accepted definition,
+   one `no_cover` failure row, and a deficit for the unfilled target. It does not
+   add a clue to reach the count.
 
 `test_03b_multiple_choice_pool` — a multiple-choice definition carries a labeled
 pool that passes every P0 row of the check list: five to seven entries, labels

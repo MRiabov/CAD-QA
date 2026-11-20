@@ -33,8 +33,9 @@ collection minimum 3, feature-tag minimum 1, in-scope tier `C`. The rows are:
   shortfall is recorded against that collection;
 - active has 6 programs and reserve has 2, they are disjoint, and their union is
   the eligible set: `a1`, `a2`, `a3`, `a5`, `c1`, `c2`, `s1`, `s2`;
-- the two reserve programs are the last two of the eligible set under
-  `sha256(seed || source_id)`, recomputed by the test, not read from the artifact;
+- within each collection, the reserve programs are the next ones after the active
+  allocation under `sha256(seed || source_id)`, recomputed by the test, not read
+  from the artifact;
 - the rows reconcile: 11 cache rows equal 6 active, plus 2 reserve, plus 3
   exclusions;
 - every selected row carries `tier` and `cadevolve_program_family_id`, and the

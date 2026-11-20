@@ -29,6 +29,7 @@ task. It is not prompt text and not a loose task tuple. It is what `04` renders.
 | `split`, `subset` | Split and warmup/main label assigned by `03a`. |
 | `graph_schema_version`, `definition_schema_version` | Versions needed to reproduce the definition. |
 | `state_scope` | Which solid states the task may refer to. `final` in P0 (`DS-34`). |
+| `possible_answer_count` | The size of the initial possible-answer set for the target category in the state scope, before any task clue narrows it. |
 | `target_category` | Task target category from `requirements/task-structure.md`. |
 | `target_binding` | The concrete graph entity or measurement instance the task asks about. |
 | `task_clues` | Ordered typed task clues. |
@@ -130,7 +131,7 @@ The typed check variants are:
 | Clue type | Check fields |
 |---|---|
 | Property | `measurement`, `comparator`, `threshold` or `range`. |
-| Relation | `relation_type`, `object`. |
+| Relation | `relation_type`, `direction` (`object_to_subject` or `subject_to_object`), `object`. |
 | Comparison | `measurement`, `comparator`, `reference`. |
 | Aggregation | `scope`, `aggregation_kind`, `measurement`, `rank` or extreme. |
 | Provenance | `operation_id`, `profile_id`, or `workplane_id`. |
@@ -494,7 +495,8 @@ the hash.
 | `definition_sha256` | the canonical task content | accepted-definition immutability, duplicate content, reproduction check |
 | `answer_sha256` | the answer and scoring fields | release answer column integrity |
 
-`definition_sha256` covers `state_scope`, `target_binding`, `task_clues`,
+`definition_sha256` covers `state_scope`, `possible_answer_count`,
+`target_binding`, `task_clues`,
 `clue_operand_form_profile`, `answer_meaning`, `answer_parameter`,
 `gold_answer`, `answer_unit`, `tolerance`, `scoring_rule`, `answer_evidence`,
 and `choice_pool` in construction order. It also covers the inputs that change
