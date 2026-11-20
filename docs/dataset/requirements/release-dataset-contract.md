@@ -223,6 +223,7 @@ for one row.
 | `answer_set_sha256` | SHA-256 over the sorted distinct correct answers. |
 | `prompt_template_version`, `prompts_yaml_sha256`, `release_seed` | The template set version and file hash, and the seed `04` rendered from. |
 | `balance_policy_version`, `balance_policy_sha256` | The balance policy version and file hash. |
+| `checks_policy_version`, `checks_policy_sha256` | The check policy version and file hash. |
 | `support_table_versions`, `support_table_sha256` | Schema version and file hash of each of the five support tables. |
 | `checks` | One or more rows per coverage and balance check in [`05` validate and export release](../implementation/pipeline/05-validate-and-export-release/release-checks.md). |
 | `known_misses` | The `checks` misses the owner accepted, with their reasons. |
