@@ -26,11 +26,11 @@ Distance and angle are P0 answer meanings, so a pair the graph never enumerated
 makes a P0 task unanswerable, and the failure looks like a missing measurement
 rather than a missing rule.
 
-**Recommendation:** measure entity counts on the selected P0 pool and set the
-limit at the smallest round number above the 99th percentile; record the
-distribution next to the limit, and re-measure at each later implementation
-scope — P1 adds relations and states, so entity counts rise. The limit is a
-measured quantity per scope, not a constant.
+**Recommendation:** measure entity counts once per implementation scope, offline,
+and set the limit at the smallest round number above the 99th percentile; record
+the distribution next to the limit. Graph construction and planning read the
+recorded number and never recompute it. Revise it deliberately when the graph
+content grows — P1 adds relations and states — rather than per run.
 
 #### MC-39 — Clue operand form coverage minimum
 
