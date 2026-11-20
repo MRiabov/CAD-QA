@@ -75,23 +75,23 @@ Breadth-first design has no feedback signal. It therefore feels unbounded even
 when the underlying structure is linear, and it produces exactly the symptom
 described above: every answer expands the design surface.
 
-A depth-first slice behaves differently. One program, one solid state, one clue,
+A depth-first milestone behaves differently. One program, one solid state, one clue,
 one answer, executed end to end. It produces a checkable number, and it shows
-which parts of the vocabulary the slice actually touched. The other relations
-stop being urgent because nothing in the slice needed them.
+which parts of the vocabulary the milestone actually touched. The other relations
+stop being urgent because nothing in the milestone needed them.
 
 So the concern is probably about **process**, not about the domain. The domain is
 not quadratic; breadth-first development of an undocumented vocabulary is.
 
 ## Proposed mitigation
 
-**Build the Phase 0 slice first. The release scope stays P0 as the PRD defines
-it.** The slice is a milestone that proves the plumbing end to end; it does not
+**Build the plumbing milestone first. The release scope stays P0 as the PRD
+defines it.** The plumbing milestone proves the construction path end to end; it does not
 redefine what the first release must contain.
 
 The operating rule:
 
-> If a decision does not unblock the next slice, defer it. Record the deferral as
+> If a decision does not unblock the next milestone, defer it. Record the deferral as
 > a state, not as an omission.
 
 Concretely:
@@ -100,17 +100,17 @@ Concretely:
   already marked, and no P0 row moves.
 - distance and angle: both are P0 answer meanings in the PRD, so the pair domain
   (`MC-36`) is on the critical path rather than deferred.
-- `03-task-generation/decisions.md`: accept module decisions when the slice or a
+- `03-task-generation/decisions.md`: accept module decisions when a milestone or a
   P0 requirement forces them.
 
 ## How to test the mitigation
 
 The mitigation is falsified if any of these happen:
 
-1. **The slice needs most of the vocabulary.** If Phase 0 alone requires more
+1. **The plumbing milestone needs most of the vocabulary.** If it alone requires more
    than a handful of relations and measurements, the vocabulary was justified
    and the concern was about sequencing, not size.
-2. **The slice exposes a new decision per entity kind.** If every entity
+2. **A milestone exposes a new decision per entity kind.** If every entity
    category needs its own rule for the same question, the per-case class is
    larger than estimated, and the vocabulary should shrink rather than grow.
 3. **Deferred rows keep reopening.** If three different quota targets each need

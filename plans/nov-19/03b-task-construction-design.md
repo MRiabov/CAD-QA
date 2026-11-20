@@ -667,31 +667,35 @@ Blocks: `01b`, `02c`, `03a`, `03b`, and `03c`.
 | Add `DS-31`: step count is the chain length; clue operand form describes how a clue's reference resolves; neither is a task label | `decisions.md` |
 | State that every benchmark result names the step counts and clue forms it covers | PRD |
 
-## Build phases
+## Milestones
 
-**Phase 0 — vertical slice.** One program, final solid state, target = solid
-state, answer = volume, format = number, one step. This proves graph → possible
-answers → answer resolver → `TaskDefinition` → render → release row. No clue
-search yet.
+**Plumbing milestone.** One program, final solid state, target = solid state,
+answer = volume, format = number, one step. This proves graph → possible answers
+→ answer resolver → `TaskDefinition` → render → release row. No clue search yet.
 
-**Phase 1 — the first real search.** Target = face, answer = area, two to three
-steps. Property and relation clues only. Build the narrowing record, the
-uniqueness check, and the multiple-choice pool from the penultimate set.
+**Clue search milestone.** Target = face, answer = area, two to three steps.
+Property and relation clues only. Build the narrowing record, the uniqueness
+check, and the multiple-choice pool from the penultimate set.
 
-**Phase 2 — the full clue vocabulary.** Comparison, aggregation, provenance;
-multiple target categories; distance, angle, region, CadQuery profile (after
-KI-DS-02).
+**Full vocabulary milestone.** Comparison, aggregation, provenance; multiple
+target categories; distance, angle, region, CadQuery profile (after KI-DS-02).
 This is where the graph must supply the primitives.
 
-**Phase 3 — the scheduler.** Quota-aware construction, coverage and balance,
+**Scheduler milestone.** Quota-aware construction, coverage and balance,
 multiple-choice availability, deficits. This is where `03b` meets `03a` and
 `03c`.
 
-**Phase 4 — P2.** Near-miss choices, six or more steps, arbitrary control flow.
+**First release milestone.** Every P0 row in `graph-content.md` and
+`task-structure.md` is constructed, validated, and exported, and coverage and
+balance pass for the implemented scope. This is the release the thesis claim
+rests on.
 
-Each phase gets a golden narrowing record, a property test (every accepted task
-is answer-unique, every clue narrows, every clue is true of all final possible
-answers), a replay test, and one end-to-end test.
+**P2 extras.** Near-miss choices, six or more steps, arbitrary control flow. Not
+a milestone; it must not delay the first release.
+
+Each milestone gets a golden narrowing record, a property test (every accepted
+task is answer-unique, every clue narrows, every clue is true of all final
+possible answers), a replay test, and one end-to-end test.
 
 ## Deferred
 
@@ -717,8 +721,8 @@ The box-and-hole example is the first golden record.
 
 The concern that the vocabulary may be growing without a stopping rule is
 recorded in `plans/nov-20/vocabulary-scope-risk.md`. Its mitigation is to
-freeze the P0 vocabulary to what the Phase 0 slice touches and mark every other
-row as deferred.
+build the plumbing milestone first and keep the release scope at P0, as the PRD
+defines it.
 
 ## References
 
