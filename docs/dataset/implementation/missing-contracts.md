@@ -13,7 +13,7 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 9 open entries: 4 P0 technical and 5 P1 technical. No product
+There are 8 open entries: 3 P0 technical and 5 P1 technical. No product
 decision remains open, and P2 is empty.
 
 ## Decisions needed from the owner
@@ -30,25 +30,10 @@ None.
 
 Work order:
 
-1. `MC-11` — the rendering inputs; a prompt cannot be reproduced from the
-   declared input without them.
-2. `MC-15` — multiple-choice fairness; the choice check.
-3. `MC-41` — the construction test contract; it locks the invariants the other
+1. `MC-15` — multiple-choice fairness; the choice check.
+2. `MC-41` — the construction test contract; it locks the invariants the other
    entries introduce.
-4. `MC-42` — the golden record; the first end-to-end comparison.
-
-#### MC-11 — Rendering inputs
-
-The `04` render prompt and choices input contract omits program text, render
-seed, and template version. `04` render prompt and choices depends on them, but
-`io-contracts.md` names only `TaskDefinition` and `PromptTemplateSet`, so
-rendering cannot reproduce a prompt from the declared input alone.
-`TaskDefinition` carries `program_id` and `program_sha256`, not the program text.
-
-**Recommendation:** add the program text (or a `NormalizedProgram` reference),
-the render seed, and the prompt template version to the `04` render prompt and
-choices row of `io-contracts.md`; `04` render prompt and choices already owns
-the rendering contract for `prompts.yaml`.
+3. `MC-42` — the golden record; the first end-to-end comparison.
 
 #### MC-15 — Multiple-choice fairness checks
 
@@ -179,6 +164,10 @@ when its completion marker and identity match.
 
 ## Closed or merged in the 2026-11-20 pass
 
+- `MC-11` — `04` takes `NormalizedProgram` and `RenderConfig` (the validated
+  `PromptTemplateSet` plus the release `RenderSeed`). The task render seed is
+  derived from the release seed and `task_id`, and the manifest records the
+  release seed with the template version and file hash.
 - `MC-26` — release contract section 7 is a field table with `release_id`,
   `generator_version`, `upstream_dataset_version`, the external-manifest hash,
   and the benchmark identity fields; `release_id` is `cadqarel:<sha256>` over the

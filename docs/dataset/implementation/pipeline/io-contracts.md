@@ -18,8 +18,16 @@ pipeline stage is specified.
 | `01-external-dataset-etl` | Read and normalize the CADEvolve Parquet cache. | CADEvolve Parquet cache | `NormalizedProgram`, `ExternalDatasetManifest` |
 | `02-execute-cadquery-and-build-graph` | Extract AST structure, execute CadQuery, build the graph. | `NormalizedProgram` | `CadGraph` |
 | `03-task-generation` | Plan the release, construct task definitions, resolve deficits by replanning or expanding data. | `CadGraph` | `TaskDefinition` |
-| `04-render-prompt-and-choices` | Render the prompt and choices. | `TaskDefinition`, `PromptTemplateSet` | `ReleaseTable` |
-| `05-validate-and-export-release` | Validate and export the release dataset. | `ReleaseTable` | `ReleaseArtifacts` |
+| `04-render-prompt-and-choices` | Render the prompt and choices. | `TaskDefinition`, `NormalizedProgram`, `RenderConfig` | `ReleaseTable` |
+| `05-validate-and-export-release` | Validate and export the release dataset. | `ReleaseTable`, `RenderConfig` | `ReleaseArtifacts` |
+
+`RenderConfig` is the rendering control input: the validated
+`PromptTemplateSet` and the release `RenderSeed` (a stable integer). It is not an
+artifact; the same value is passed to `04` and `05`.
+
+Pipeline stage rows list the primary typed inputs and outputs. `05` also reads
+the task reasoning step support tables, `balance.yaml`, the external dataset
+manifest, and the failure partitions; its Inputs section lists them.
 
 ## Sub-steps
 
@@ -44,6 +52,11 @@ Sub-steps have their own typed models and I/O tables in their parent document.
   unique, every placeholder is declared with a form, and every variant uses
   exactly the declared placeholders. A missing, extra, or untyped placeholder is
   a release defect.
+- A `RenderConfig` carries the validated `PromptTemplateSet` and the release
+  `RenderSeed`. `04` derives the task render seed from the release seed and
+  `task_id`; the derivation is part of the `04` version, identified by the
+  manifest's `generator_version`. The release manifest records the release seed,
+  the template version, and the template file hash.
 - A `ReleaseTable` has one row per task, an answer-free prompt, and exactly one
   answer set per task. Rendering does not change the task definition.
 - Answer columns never appear in the prompt.

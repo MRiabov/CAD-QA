@@ -13,6 +13,7 @@ Coverage and balance checks:
 ## Inputs
 
 - `ReleaseTable` from `04` render prompt and choices.
+- The `RenderConfig` passed to `04` render prompt and choices.
 - The five task reasoning step support tables.
 - The root `balance.yaml`.
 - The external dataset manifest from `01e` write external dataset manifest.
@@ -48,9 +49,9 @@ Coverage and balance checks:
 - Copy the five task reasoning step support JSON files into `support/` and
   record their schema versions and hashes in the manifest.
 - Confirm the prompt template file validates against its
-  [schema](../prompt-templates.md), then record the prompt template version and
-  `prompts.yaml` hash in the manifest. A missing, extra, or untyped placeholder
-  blocks the export.
+  [schema](../prompt-templates.md), then record the prompt template version,
+  `prompts.yaml` hash, and `RenderConfig.release_seed` in the manifest. A
+  missing, extra, or untyped placeholder blocks the export.
 - Record the balance policy version and `balance.yaml` hash in the manifest.
 
 ## Language and parallelism

@@ -255,10 +255,11 @@ the release `target_category` remains `scalar_value`.
 
 A template has one or more variants. Variants are alternate wording for the same
 template ID and the same placeholders. `04` selects one variant
-deterministically from the template ID and the render seed, for example
-`variant_index = hash(template_id, render_seed) mod len(variants)`. The exact
-hash belongs to `04`; the contract is that the same task and seed always select
-the same variant.
+deterministically from the template ID and the task render seed, for example
+`variant_index = hash(template_id, task_render_seed) mod len(variants)`. The task
+render seed is derived from the release render seed and `task_id`. The exact
+hash belongs to `04`; the contract is that the same task and release seed always
+select the same variant.
 
 Every variant must use exactly the declared placeholders. A variant that drops a
 placeholder is rejected even if another variant uses it: the release must not

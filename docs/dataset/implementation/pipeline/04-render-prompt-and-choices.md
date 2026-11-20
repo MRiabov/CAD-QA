@@ -13,8 +13,8 @@ and, for multiple choice, the rendered choice set.
   1.1. It is fixed, not a per-task variant.
 - Keep the prompt answer-free.
 - Render task clues in the definition's canonical order in P0. A seeded
-  permutation that respects reference dependencies is P1; it is recorded as the
-  render seed, and clue wording uses presentation positions.
+  permutation that respects reference dependencies is P1; it is derived from the
+  task render seed, and clue wording uses presentation positions.
 - For multiple choice, order and label the definition's choice pool. Do
   not re-bind entities or recompute answers.
 - For P2 multiple choice, render the validated near-miss choice pool produced by
@@ -44,6 +44,27 @@ Rendering may not invent a value. A projection that needs a field the definition
 does not carry is a `03b` construct task definitions defect, not a rendering
 decision.
 
+## Rendering inputs
+
+`04` renders one task from three inputs:
+
+| Input | Role |
+|---|---|
+| `TaskDefinition` | The target, canonical clue sequence, answer, answer format, and choice pool. It carries `program_id` and `program_sha256`, not the program text. |
+| `NormalizedProgram` | The canonical program text selected by the definition's `program_sha256`. `04` does not re-normalize or reformat it. |
+| `RenderConfig` | The validated `PromptTemplateSet` (template version and file hash) and the release `RenderSeed` (a stable integer). |
+
+`04` derives the task render seed from `RenderConfig.release_seed` and
+`TaskDefinition.task_id`. The same seed selects the wording variant and, in P1,
+the clue permutation. The derivation is deterministic and part of the `04`
+version; the manifest's `generator_version` identifies it.
+
+`05` validate and export release records the release seed, the template version,
+and the `prompts.yaml` hash in the manifest. The task definition does not carry
+rendering provenance (`DS-35`). The release row carries the rendered `prompt` and
+`prompt_sha256`; it does not carry a separate seed column because the release
+seed plus `task_id` reproduces the task seed.
+
 ## Prompt copy comes from YAML
 
 LLM-facing wording is data, not Go code. Pipeline stage `04` renders from the
@@ -59,10 +80,10 @@ label tables, and validation rules are in
 - Each template has a stable ID and typed placeholders. `04` validates the file
   before rendering. A missing, extra, or untyped placeholder is a release
   defect, not a task rejection.
-- Template variants are selected deterministically from the template ID and
-  render seed, not by an LLM.
-- The template version and `prompts.yaml` hash are recorded with the release so
-  the rendered prompt is reproducible.
+- Template variants are selected deterministically from the template ID and the
+  task render seed, not by an LLM.
+- The template version, `prompts.yaml` hash, and release seed are recorded with
+  the release so the rendered prompt is reproducible.
 - The YAML is answer-free. It must not contain gold answers, hidden identifiers,
   or generated answer data.
 - P2 near-miss choice copy uses the same template mechanism.
@@ -75,8 +96,8 @@ Evaluation prompts outside the dataset follow the same rule: they live in
 `prompts.yaml`, not in Python strings. Dataset and evaluation templates use
 separate namespaces in that file.
 
-The prompt template set is an input to `04`; `io-contracts.md` names it
-`PromptTemplateSet`. A missing template ID or an invalid placeholder stops the
+The prompt template set is part of `RenderConfig`; `io-contracts.md` names the
+input `RenderConfig`. A missing template ID or an invalid placeholder stops the
 render before any release row is written. `04` renders the question, clues,
 choices, and answer instruction first, then fills `dataset.prompt_shell` with
 those rendered parts.

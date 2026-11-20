@@ -13,7 +13,7 @@ this document owns ownership, lifecycle, and format, not field definitions.
 | Program metadata | `01a` | `01b`, `03a` | Cache revision plus metadata schema | Parquet | No program text. |
 | Program selection | `01b` | `01c`, `01e` | Selection policy version plus seed | Parquet | Active and reserve IDs, supplemental deltas, `cadevolve_program_family_id`, counts, and exclusions. |
 | Program pool | `01c` | `01d` | Selection identity plus cache revision | Parquet | Only selected rows, including program text and `cadevolve_program_family_id`. |
-| Normalized program | `01d` | `02a`, `02b` | `program_sha256` plus normalization version | Parquet | Carries `program_id`, `cadevolve_program_family_id`, and canonical text. |
+| Normalized program | `01d` | `02a`, `02b`, `02c`, `04` | `program_sha256` plus normalization version | Parquet | Carries `program_id`, `cadevolve_program_family_id`, and canonical text. |
 | External dataset manifest | `01e` | `05`, dataset card | External dataset version | JSON | Counts, hashes, and rejected records. |
 | CadQuery program AST extraction result | `02a` | `02c` | Program hash plus extractor version | Parquet tables | No geometry measurements. |
 | CadQuery program runtime extraction result | `02b` | `02c` | Program hash, CadQuery/OCP version, and environment | Parquet tables | Either runtime captures or a failure tombstone; no raw BRep. |
