@@ -260,9 +260,11 @@ The policy is part of the graph artifact identity. A change to any tolerance is 
 new policy version and a new graph artifact; it never edits an existing graph.
 Measurement `tolerance` null inherits the policy; a non-null value overrides it.
 
-This policy covers measurement precision only. Relation comparison tolerances
-remain MC-35, and answer-scoring tolerance remains the task definition's
-`Tolerance` and the release `tolerance_json` field.
+This policy covers measurement precision only. A relation row carries its own
+`tolerance` column: null inherits the policy's `unitless` entry, and a non-null
+value overrides it. The relation tolerance is excluded from `relation_id`.
+Answer-scoring tolerance remains the task definition's `Tolerance` and the
+release `tolerance_json` field.
 
 ## Table scope
 

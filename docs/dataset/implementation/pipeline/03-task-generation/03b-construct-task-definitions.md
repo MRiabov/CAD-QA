@@ -36,7 +36,7 @@ task. It is not prompt text and not a loose task tuple. It is what `04` renders.
 | `answer_evidence` | Measured or derived answer evidence with rule and references. |
 | `choice_pool` | Real answer-space candidates and their distinguishing graph facts, when multiple choice is planned. For P2, it includes validated near-miss choices. |
 | `task_clue_step_count`, `task_reasoning_step_count` | Step accounting. |
-| `validity_record` | Uniqueness, final possible-answer count, geometry requirement, and check results. |
+| `validity_record` | Uniqueness, answer-equivalent set and `same_answer` result, geometry requirement, and check results. |
 | `provenance` | Constructor, sampled parameters, and input versions. |
 
 The definition must be sufficient to reproduce the task without re-running task
@@ -238,9 +238,10 @@ A task definition is valid only when all of these hold:
 - every task clue is necessary: removing it leaves at least two distinct answers,
   or changes the answer;
 - every predicate a task uses is decided by at least the clear-case margin;
-- the final possible-answer set contains exactly one answer;
+- every candidate in the answer-equivalent set produces the same answer under
+  `same_answer`; an identity answer requires a singleton set (`DS-32`);
 - for a scalar target, every remaining instance has the same value;
-- the answer step produces exactly one answer;
+- the answer step produces exactly one gold answer;
 - the target binding is unambiguous;
 - the program family and split are present;
 - the split matches the family assignment from `03a`;
@@ -254,8 +255,8 @@ A task definition is valid only when all of these hold:
   shape.
 
 An invalid definition is recorded as a failure with a reason and is not passed to
-`04`. A task with a tie, an ambiguous target, or an unverifiable answer is
-invalid.
+`04`. A task with an ambiguous target, an answer-equivalent set that disagrees
+under `same_answer`, or an unverifiable answer is invalid.
 
 ## Task reasoning step accounting
 
@@ -284,8 +285,10 @@ quota target above that count is a deficit, not a reason to keep a redundant clu
 ## Enumeration and identity
 
 `03b` constructs task definitions from the graph into the task quota plan using typed
-constructors. Construction is deterministic for a given graph, plan version,
-definition-schema version, and seed. Constructor order is stable and recorded in
+constructors. Construction is supply-driven: it builds from the facts the graph
+has and samples them into the quota targets (`DS-33`). A cell-level demand query
+is a deficit-path last resort, not the default. Construction is deterministic for
+a given graph, plan version, definition-schema version, and seed. Constructor order is stable and recorded in
 provenance. A quota target that cannot be filled becomes a deficit for `03c`.
 
 Canonical task identity is:
@@ -298,10 +301,11 @@ For a scalar target, the target binding identity is the measurement name. The
 subject is not part of it, because several subjects can share that measurement
 value.
 
-The canonical task clue sequence preserves dependency order and sorts independent
-clues deterministically. The gold answer, answer format, choices, prompt wording,
-and answer instruction are not part of `task_id`; they are part of the definition
-or a later presentation step.
+The canonical task clue sequence preserves dependency order first, then orders
+independent clues broad-to-narrow by the size of the narrowed set, descending,
+with a stable hash as the tie-break (`DS-35`). The gold answer, answer format,
+choices, prompt wording, and answer instruction are not part of `task_id`; they
+are part of the definition or a later presentation step.
 
 Validity checks and the narrowing record use the canonical sequence. A later
 presentation step may render a permutation that respects reference dependencies;

@@ -85,6 +85,17 @@ Every task clue has one of these clue types:
 | Aggregation | The task target is the extreme, the rank, or the count of a set. | P1 |
 | Provenance | The task target was created by an operation, uses a CadQuery profile, or sits on a CadQuery workplane. | P0 |
 
+A task clue with a reference is also described by its **clue operand form**. A
+task clue with no reference has no operand form. The operand form belongs to the
+reference, not to the clue type, so a property clue carries none.
+
+| Clue operand form | Reference binding | Priority |
+|---|---|---|
+| `named` | A named graph element. | P0 |
+| `selected` | A result of an earlier task clue. | P0 |
+| `aggregated` | An extreme, rank, or count over a set. | P0 |
+| `cross_state` | A before/after solid state pair. | P2 |
+
 A comparison task clue may name both entities, or it may refer to one entity
 selected by an earlier task clue. A reference must resolve to exactly one
 entity. If earlier task clues leave several possible entities, the comparison
@@ -198,6 +209,7 @@ The task's properties are recorded for different reasons:
 |---|---|
 | Task target category | Coverage and release diversity |
 | Task clue type | Coverage and balance |
+| Clue operand form | Coverage in P0; balance target in P1 |
 | Answer meaning | Coverage and balance |
 | Answer format | Coverage and balance |
 | Task reasoning step count | Coverage and mix across task reasoning step counts |
@@ -289,15 +301,16 @@ only the values it implements.
 | Answer format | Every supported format appears. | Between half and twice its conditional release share. | Each format 5-25% of tasks. |
 | Answer meaning | Every supported meaning appears. | Between half and twice its conditional release share. | Each meaning 1-10% of tasks. |
 | Clue type | Every supported clue type appears. | Between half and twice its conditional release share. | No clue type above 25% of task clues. |
+| Clue operand form | Every supported form appears. | Between half and twice its conditional release share. | Equal share among the supported forms. |
 
 Answer format and answer meaning shares are over tasks. Clue type shares are
 over task clues, because one task can contain several task clues.
 
-Clue operand form is a coverage dimension in P0 and has no row in this table.
-That is a concession, not a good property: coverage guarantees that each
-supported form appears, not that the forms are usefully mixed, so a release can
-concentrate one form and still pass. The balance target for clue operand form is
-P1 work.
+Clue operand form is coverage-only in P0. Its P1 balance target is an equal share
+among the supported forms, and the row is in the table above. Coverage-only is a
+concession, not a good property: coverage guarantees that each supported form
+appears, not that the forms are usefully mixed, so a release can concentrate one
+form and still pass.
 
 The balance check for clue operand form is still computed in P0 and reported
 without blocking. If a supported form falls below a quarter or above four times

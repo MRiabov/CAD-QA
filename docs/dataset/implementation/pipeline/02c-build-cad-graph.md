@@ -44,8 +44,9 @@ attached to their solid state; a probe with no state is a graph defect.
 
 The pair is rejected when extraction hashes do not match, a required reference is
 missing, a relation or measurement endpoint does not resolve, an extraction
-schema version is unknown, or a graph ID is not deterministic from its documented
-components.
+schema version is unknown, a graph ID is not deterministic from its documented
+components, or a solid state exceeds the implementation-scope
+`max_state_entities` constant.
 
 ## Not here
 

@@ -232,8 +232,8 @@ the default is `1e-6`.
 
 - It absorbs kernel noise, which is around `1e-9` relative for the geometry this
   dataset builds, so exact-parallel faces pass.
-- A relation may override it. The override is recorded in the relation evidence
-  with the tolerance and the reason.
+- A relation may override it. The override is recorded on the relation row with
+  the tolerance and the reason.
 - It is not the answer precision. A numeric answer is scored at the stated
   precision, four significant figures by default, which is roughly `1e-4`
   relative.

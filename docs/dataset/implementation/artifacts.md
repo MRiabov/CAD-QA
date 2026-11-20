@@ -23,7 +23,7 @@ this document owns ownership, lifecycle, and format, not field definitions.
 | Task definition | `03b` | `04` | Canonical task identity plus definition hash | Parquet | Persisted, answer-bearing construction record; invalid definitions are rejected. |
 | Deficit ledger | `03b` | `03a`, `03c` | Plan version plus update sequence | JSON | Accepted and rejected counts and remaining deficits by quota target, family, and task reasoning step count. |
 | Release table | `04` | `05` | `release_id` | Parquet | One row per task; prompt is answer-free; carries `cadevolve_program_family_id`. |
-| Task reasoning step support tables | Task-step support QA | `03a`, `05`, reviewers | Schema version | JSON | Four derived files used to check coverage; not generator inputs. |
+| Task reasoning step support tables | Task-step support QA | `05`, reviewers | Schema version | JSON | Four derived files used to check coverage; not generator inputs. |
 | Release artifacts | `05` | Dataset consumers | `release_id` | Parquet, JSON, Markdown | `release.parquet`, `failures.parquet`, `manifest.json`, `dataset-card.md`, `support/`. |
 
 `Failures` is a multi-writer record: every pipeline stage appends a failure with

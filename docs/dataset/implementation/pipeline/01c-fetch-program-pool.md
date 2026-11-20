@@ -23,6 +23,13 @@
 - Record selected IDs that are missing from the cache.
 - Do not normalize or execute CadQuery.
 
+## Reserve
+
+Reserve rows are fetched but not normalized and not graphed. A reserve program
+is used only when `03a` allocate task quotas promotes it, which emits a
+`ProgramRequest` through the slow loop in `03c` resolve deficits. Promotion is
+recorded in the plan.
+
 ## Missing IDs
 
 A selected ID that is missing from the pinned cache is a cache revision or

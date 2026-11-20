@@ -67,9 +67,10 @@ Plan five separate quota dimensions:
 - answer format.
 
 Four of these carry a share and are allocated by the equations below. Clue
-operand form is coverage-only in P0 (`DS-37`): it has a minimum and no target
-count and no share, because a balance range is vacuous at a step count where a
-form cannot exist. Balance over clue operand form is P1. This is a P0
+operand form is coverage-only in P0 (`DS-37`): its target count is the coverage
+floor of one clue occurrence per supported form at each step count, and it has no
+balance share, because a balance range is vacuous at a step count where a form
+cannot exist. Balance over clue operand form is P1. This is a P0
 simplification, not a property of the release: coverage guarantees presence, not
 a useful mix, so one form can carry most clues and still pass.
 
@@ -99,10 +100,10 @@ reasoning step count independently and leave a residual.
 
 ### Quota target counts
 
-For each task reasoning step count and quota dimension:
+For each task reasoning step count and each share-bearing quota dimension:
 
-- `supported_values(task_reasoning_step_count, quota_dimension)` comes from the task reasoning step
-  support table and the dataset release implementation scope.
+- `supported_values(task_reasoning_step_count, quota_dimension)` comes from the task-definition rules in
+  `03b` construct task definitions and the dataset release implementation scope.
 - `conditional_share(task_reasoning_step_count, quota_dimension, dimension_value)` is the dimension
   value's global share divided by the sum of the global shares of values supported at that task reasoning step count.
   The global quota share is the quota share target for that dimension value. When the target
@@ -116,16 +117,16 @@ and `supported_value_count` with the number of supported clue types.
 The `+1` is the coverage minimum and is taken before the remainder allocation.
 This guarantees at least one task per supported task target category, answer
 meaning, and answer format, and at least one clue occurrence for each supported
-clue type. Clue operand form gets the same coverage floor without a share: one
-clue occurrence per supported form at each step count where the support table
-marks it feasible.
+clue type. Clue operand form gets the same coverage floor without a share: its
+target count is one clue occurrence per supported form at each step count where
+the task-definition rules mark it feasible.
 
 Allocate the four share-bearing quota dimensions separately. Do not divide `task_reasoning_step_quota` by four
 and do not create a full task target category × clue type × clue operand form ×
 answer meaning × answer format cross-product.
 
 If `supported_value_count` exceeds the available task or clue count, record
-`coverage_infeasible`; do not drop a supported value. A support-table conflict
+`coverage_infeasible`; do not drop a supported value. A feasibility conflict
 cannot be repaired by `03c`.
 
 ### Clue occurrence budget
@@ -255,8 +256,8 @@ The allocator is complete only when all of these hold:
 
 - `task_reasoning_step_quota` sums to `dataset_release_task_count`;
 - every supported value has a target count of at least 1;
-- every answer format, answer meaning, clue type, and task target category is
-  within its bounds, or a conflict is recorded;
+- every answer format, answer meaning, clue type, clue operand form, and task
+  target category is within its bounds, or a conflict is recorded;
 - every family has a split and a task quota no greater than its family task capacity;
 - every quota target has at least one eligible family, or a deficit is recorded;
 - every family target count is independent, and a family's target counts sum to no
@@ -335,10 +336,10 @@ reserves, and recorded misses are sufficient.
 and a `ProgramReassignmentRequest`. It emits a new plan version; it does not
 construct or validate task definitions.
 
-Accepted definitions are immutable while the program, CAD graph, task reasoning
-step support table, and task-definition rule versions are unchanged. If any of
-those inputs changes, accepted definitions from the old inputs are not reused;
-`03a` starts a new plan instead.
+Accepted definitions are immutable while the program, CAD graph, and
+task-definition rule versions are unchanged. If any of those inputs changes,
+accepted definitions from the old inputs are not reused; `03a` starts a new plan
+instead.
 
 The `DeficitLedger` carries accepted and rejected counts by quota target, family,
 and task reasoning step count. A task can contribute to several quota targets, so
@@ -398,10 +399,10 @@ It does not move an accepted task to another family or split. It does not fetch,
 normalize, or execute.
 
 The fast loop keeps the current graphs and recomputes only the residual plan. The
-slow loop adds the new families or programs from `01b`/`01c`/`02`, updates their
-family task capacity and probe success rate, assigns a split to each new family,
-and then recomputes the residual plan. In both loops, `03b` resumes with the new
-plan version and the same `DeficitLedger`; accepted definitions are not
+slow loop adds the new families or programs from `01b`/`01c`/`01d`/`02`, updates
+their family task capacity and probe success rate, assigns a split to each new
+family, and then recomputes the residual plan. In both loops, `03b` resumes with
+the new plan version and the same `DeficitLedger`; accepted definitions are not
 regenerated.
 
 The plan version increments and `parent_plan_version` names the previous version.

@@ -31,6 +31,8 @@ must appear:
 
 - task target category;
 - clue type;
+- clue operand form, for task clues that carry a reference and as a coverage-only
+  dimension in P0;
 - answer meaning;
 - answer format.
 

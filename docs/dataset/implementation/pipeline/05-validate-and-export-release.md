@@ -17,7 +17,12 @@ Artifact ownership: [`../artifacts.md`](../artifacts.md).
   table. `03a` assigns the split; `03b` stamps it; `04` carries it.
 - Check released values against the task reasoning step support tables.
 - Check the transfer overlap: exact normalized program text at P0; the P1
-  same-CAD-model check is Q1 below.
+  same-CAD-model check is PRD Q7.
+- Record the external benchmark identity and revision in `manifest.json`. No
+  program from that benchmark appears in training or evaluation (R-16).
+- Write the visual review pack and hold the review gate before export. The owner
+  reviews a sample covering every clue type, answer meaning, and answer format
+  (R-17); a failed review blocks the export and records the reason.
 - Write `release.parquet`, `failures.parquet`, `manifest.json`, and
   `dataset-card.md`.
 - Copy the generated task reasoning step support JSON files into `support/` and
@@ -32,10 +37,27 @@ Artifact ownership: [`../artifacts.md`](../artifacts.md).
   writer steps.
 - Parallel validation results are reduced into one summary before export.
 
-## Open questions
+## Review gate
 
-- **Q1** (P1). How is same-CAD-model transfer overlap checked: AST-normalized
-  program hash, CadQuery shape comparison, or both?
+`05` writes a visual review pack for a sample of the release. The sample covers
+every clue type, every answer meaning, and every answer format.
+
+Each sampled task carries:
+
+- the prompt text;
+- one render of the final solid state with the target and every clue-bound
+  entity highlighted in a distinct colour and labelled with its clue number;
+- the gold answer.
+
+The reviewer checks that each highlighted entity is the one the clue names, that
+the answer matches the geometry, and that the wording is clear. The render does
+the work that re-deriving the task would otherwise take.
+
+The pack reads the bound entity ids from the release row's evidence, so the
+release projection must carry them.
+
+The pack is internal and not a release file. A failed review blocks the export;
+the defect is fixed and the task re-reviewed.
 
 ## Not here
 
