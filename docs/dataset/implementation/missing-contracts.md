@@ -28,7 +28,7 @@ None. The last P0 product decision, `MC-39`, is closed below.
 
 Work order:
 
-1. `MC-43` — the emitted pairs; every distance and angle task depends on them.
+1. `MC-43` — pair emission; every distance and angle task depends on it.
 2. `MC-35` — the relation payload; a P0 relation clue cannot be checked without
    it.
 3. `MC-16` — the scope filter; it decides what `03a` allocate task quotas may
@@ -60,15 +60,15 @@ Work order:
     entries introduce.
 19. `MC-42` — the golden record; the first end-to-end comparison.
 
-#### MC-43 — Emitted pairs in the graph builder
+#### MC-43 — Pair emission in the graph builder
 
-The `02c` build CAD graph builder work for the emitted pairs is missing: the
+The `02c` build CAD graph builder work for pair emission is missing: the
 derived named-endpoint list per state, the pair rows for named endpoint ×
 candidate endpoints (the `distance_to`, `angle`, `parallel_to`,
 `perpendicular_to`, `coplanar_with`, and `coaxial_with` elements), and rejection
 above `max_state_entities`. Point probes are already written into `02b` execute
 CadQuery and `02c` build CAD graph. `graph-content.md` section 4.1 states the
-requirement; `graph-construction.md` references the emitted pairs but does not define
+requirement; `graph-construction.md` references the rule but does not define
 the named-endpoint derivation, the emitted rows, or the state rejection.
 
 **Recommendation:** build the emitted pairs from the declared endpoint entity
@@ -165,7 +165,7 @@ plan/capacity conflict. There is no separate pair class.
 capability → query the census, then `ProgramRequest`) and `probe_deficit` (no
 surviving probe in the state → drop membership from that state; escalate to
 `capability_deficit` only when no state in the pool has a probe). Record the
-emitted pairs as a graph-construction rule and handle an underfilled pair target
+pair emission rule as a graph-construction rule and handle an underfilled pair target
 through `capability_deficit` or the existing plan/capacity classes, not a new
 pair class.
 
@@ -324,7 +324,7 @@ support tables to the `05` validate and export release input model.
 
 #### MC-41 — Construction test contract
 
-The test contract for the construction invariants is missing: emitted-pair
+The test contract for the construction invariants is missing: pair-emission
 completeness, `is_inside` reproducibility from a probe, clear-case margin
 rejection, and redundant-clue rejection. The invariants are written, but
 `pipeline/testing/README.md` is a stub and nothing verifies them, so a

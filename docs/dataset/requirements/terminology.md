@@ -44,8 +44,8 @@ the user-visible outcome.
 | **CAD graph entity** | Internal | One entity in the CAD graph, such as a face, edge, operation, or region. |
 | **CAD graph relation** | Domain | A named link between two CAD graph entities. |
 | **CAD graph measurement** | Domain | A numeric or geometric value about a CAD graph entity or a pair of CAD graph entities. |
-| **Emitted elements** | Internal | The entities and pairs a measurement or relation is emitted for. Per-entity measurements are total over their scope; pair elements need one named entity. |
-| **Emitted pairs** | Internal | The pairs a pair measurement or relation is emitted for: one named entity times the candidate endpoints of the declared endpoint entity kind. The count is linear in the entity count, not the full pair set. A pair that is not emitted is not a candidate. |
+| **Pair emission rule** | Internal | A pair relation or measurement is emitted only when one endpoint is a named entity and the other is of the declared endpoint entity kind. The rule is declared, not discovered: a pair it does not allow is not a candidate. |
+| **Emitted pairs** | Internal | The pairs one solid state emits under the pair emission rule: one named entity times the candidate endpoints of the declared endpoint entity kind. The count is linear in the entity count, not the full pair set. |
 | **Named entity** | Internal | An entity a task clue can identify directly, by face surface kind, by position, or by the operation or feature that created it. |
 | **Endpoint entity kind** | Internal | The entity kind a relation or measurement declares at one of its endpoints. It is a per-relation declaration, not the global entity category. |
 | **CAD graph evidence** | Internal | The record of how a CAD graph element (CAD graph relation or CAD graph measurement) was obtained: measured by running CadQuery, or derived by an exact rule, with the rule and references. |
