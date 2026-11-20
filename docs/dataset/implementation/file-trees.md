@@ -8,81 +8,85 @@ terms every code name spells out.
 
 ## Rules
 
-1. One folder per sub-step, named after its pipeline stage doc stem. A group
-   (`01`, `02`, `03`) is a parent folder; its sub-steps fan out inside it.
-2. The language of a folder is the language
-   [`python-and-golang.md`](python-and-golang.md) assigns to that sub-step.
-3. A Go folder keeps the stem exactly, and its package name is its pipeline stage
-   title in snake case without the number: `03a-allocate-task-quotas` holds
-   `package allocate_task_quotas`.
-4. A Python folder keeps its pipeline stage number with an `s` prefix, because a
-   Python module name must be an identifier: `s01d_normalize_programs`. The
-   naming map below is the binding.
-5. A shared package spells the whole glossary term: `program_capability_census`,
-   not `census`; `failure_record`, not `failure`.
-6. New generator code never imports `dataset/`. `dataset/` never imports
-   `cadqa_dataset_generator/` or the Go module. See [Old generator](#old-generator).
-7. Tests sit with the code: a `_test.go` file in the Go folder, a
-   `tests/cadqa_dataset_generator/` file for Python.
-8. Artifacts are written under a run directory given on the command line.
+1. **A folder exists only when the language needs one.** A Go package needs a
+   folder; a Python module does not. A Python pipeline stage is one module until
+   it needs a second file, then it becomes a folder with the same name.
+2. **One folder per Go package, named after its pipeline stage doc stem.** No
+   group folders: pipeline stage folders sit flat under `internal/`.
+3. **A shared package is a folder only when two pipeline stages import it.** It
+   spells the whole glossary term: `program-capability-census`, not `census`.
+4. **A Python module for a pipeline stage keeps its pipeline stage number with
+   an `s` prefix**, because a Python module name must be an identifier:
+   `s01d_normalize_programs`.
+5. New generator code never imports `dataset/`. `dataset/` never imports
+   `cadqa_dataset_generator` or the Go module. See [Old generator](#old-generator).
+6. Artifacts are written under a run directory given on the command line.
    `data/` and `runs/` are gitignored; no artifact is committed.
 
 ## Go module
 
 Module path `github.com/MRiabov/CAD-QA/generator`. The module root is
-`generator/`; the repository root is not a Go module.
+`generator/`; the repository root is not a Go module. There is one binary, so
+`main.go` sits at the module root rather than under `cmd/`.
 
 ```text
 generator/
   go.mod
   go.sum
-  cmd/
-    cadqa-dataset-generator/
-      main.go                              the only entry point
+  main.go                                  package main
   internal/
-    shared/
-      dataset_artifact/                    typed Parquet tables, identity, atomic write
-      failure_record/                      failure record row and partition merge
-      balance_policy/                      balance.yaml loader
-      check_policy/                        checks.yaml loader
-      python_worker/                       Python worker process bridge
-    01-external-dataset-etl/               group folder
-      01a-read-cadevolve-metadata/         package read_cadevolve_metadata
-        01a_read_cadevolve_metadata_test.go
-      01b-select-program-pool/             package select_program_pool
-        01b_select_program_pool_test.go
-      01c-fetch-program-pool/              package fetch_program_pool
-        01c_fetch_program_pool_test.go
-      01e-write-external-dataset-manifest/ package write_external_dataset_manifest
-        01e_write_external_dataset_manifest_test.go
-    02-execute-cadquery-and-build-graph/   group folder
-      02c-build-cad-graph/                 package build_cad_graph
-        02c_build_cad_graph_test.go
-    03-task-generation/                    group folder
-      program_capability_census/           package program_capability_census
-        program_capability_census_test.go
-      task_reasoning_step_support_table/   package task_reasoning_step_support_table
-        task_reasoning_step_support_table_test.go
-      03a-allocate-task-quotas/            package allocate_task_quotas
-        03a_allocate_task_quotas_test.go
-      03b-construct-task-definitions/      package construct_task_definitions
-        03b_construct_task_definitions_test.go
-      03c-resolve-deficits/                package resolve_deficits
-        03c_resolve_deficits_test.go
+    shared/                                package shared
+      dataset_artifact.go                  typed Parquet tables, identity, atomic write
+      failure_record.go                    failure record row and partition merge
+      balance_policy.go                    balance.yaml loader
+      check_policy.go                      checks.yaml loader
+      python_worker.go                     Python worker process bridge
+    01a-read-cadevolve-metadata/           package read_cadevolve_metadata
+      read_cadevolve_metadata.go
+      read_cadevolve_metadata_test.go
+    01b-select-program-pool/               package select_program_pool
+      select_program_pool.go
+      select_program_pool_test.go
+    01c-fetch-program-pool/                package fetch_program_pool
+      fetch_program_pool.go
+      fetch_program_pool_test.go
+    01e-write-external-dataset-manifest/   package write_external_dataset_manifest
+      write_external_dataset_manifest.go
+      write_external_dataset_manifest_test.go
+    02c-build-cad-graph/                   package build_cad_graph
+      build_cad_graph.go
+      build_cad_graph_test.go
+    program-capability-census/             package program_capability_census
+      program_capability_census.go
+      program_capability_census_test.go
+    task-reasoning-step-support-table/     package task_reasoning_step_support_table
+      task_reasoning_step_support_table.go
+      task_reasoning_step_support_table_test.go
+    03a-allocate-task-quotas/              package allocate_task_quotas
+      allocate_task_quotas.go
+      allocate_task_quotas_test.go
+    03b-construct-task-definitions/        package construct_task_definitions
+      construct_task_definitions.go
+      construct_task_definitions_test.go
+    03c-resolve-deficits/                  package resolve_deficits
+      resolve_deficits.go
+      resolve_deficits_test.go
     04-render-prompt-and-choices/          package render_prompt_and_choices
-      04_render_prompt_and_choices_test.go
+      render_prompt_and_choices.go
+      render_prompt_and_choices_test.go
     05-validate-and-export-release/        package validate_and_export_release
-      05_validate_and_export_release_test.go
-    end_to_end/                            package end_to_end
+      validate_and_export_release.go
+      validate_and_export_release_test.go
+    end-to-end/                            package end_to_end
       end_to_end_test.go
 ```
 
-A group folder holds only the sub-step folders and a doc comment; it is not a
-package of its own. `program_capability_census/` and
-`task_reasoning_step_support_table/` are the two shared packages inside a group.
-Neither is a pipeline stage: the program capability census is one function of a
-CAD graph, and the task reasoning step support table is an observation over the
-fixture set.
+A pipeline stage package starts as one file and grows files in the same folder;
+a new folder means a new package, not a new file. `shared/` is one package with
+one file per concern, not four packages. `program-capability-census/` and
+`task-reasoning-step-support-table/` are separate packages because two pipeline
+stages import each: `03a` and `03b` share the census, and `03a` and the witness
+test share the support table.
 
 ## Python worker
 
@@ -96,29 +100,36 @@ Parquet paths and a small JSON request.
 cadqa_dataset_generator/
   __init__.py
   cli.py                                   worker entry point, one subcommand per stage
-  s01d_normalize_programs/                 01d normalize programs
+  s01d_normalize_programs.py               01d normalize programs
+  s02a_extract_cadquery_ast.py             02a extract CadQuery AST
+  s02b_execute_cadquery.py                 02b execute CadQuery
+```
+
+Each pipeline stage is one module. When one needs a second file, it becomes a
+folder with the same name and an `__init__.py` that re-exports its entry point:
+
+```text
+  s02b_execute_cadquery/
     __init__.py
-    canonical_text.py                      ast.unparse, ruff format, hashes
-  s02a_extract_cadquery_ast/               02a extract CadQuery AST
-    __init__.py
-    pass_order.py                          the pass order
-    ast_expression_tree.py
-  s02b_execute_cadquery/                   02b execute CadQuery
-    __init__.py
-    child_process.py                       limits, timeout, cache key
+    child_process.py
     shape_snapshots.py
     cad_topology_entities.py
     point_probes.py
 ```
 
+The split above is illustrative, not required. The rule is the trigger, not the
+file names.
+
 ## Tests
+
+Go tests sit in their package folder. Python tests sit flat in `tests/`, like the
+existing suite:
 
 ```text
 tests/
-  cadqa_dataset_generator/
-    test_s01d_normalize_programs.py
-    test_s02a_extract_cadquery_ast.py
-    test_s02b_execute_cadquery.py
+  test_s01d_normalize_programs.py
+  test_s02a_extract_cadquery_ast.py
+  test_s02b_execute_cadquery.py
 ```
 
 A Go test function is the contract name in CamelCase:
@@ -139,15 +150,15 @@ contract owns their path. A test reads them by path; it does not copy them.
 
 ## Naming map
 
-| Pipeline stage doc | Go folder and package | Python folder | Test |
+| Pipeline stage doc | Go folder and package | Python module | Test |
 |---|---|---|---|
 | `01a-read-cadevolve-metadata` | `01a-read-cadevolve-metadata`, `read_cadevolve_metadata` | — | `01a_read_cadevolve_metadata_test.go` |
 | `01b-select-program-pool` | `01b-select-program-pool`, `select_program_pool` | — | `01b_select_program_pool_test.go` |
 | `01c-fetch-program-pool` | `01c-fetch-program-pool`, `fetch_program_pool` | — | `01c_fetch_program_pool_test.go` |
-| `01d-normalize-programs` | — | `s01d_normalize_programs/` | `test_s01d_normalize_programs.py` |
+| `01d-normalize-programs` | — | `s01d_normalize_programs.py` | `test_s01d_normalize_programs.py` |
 | `01e-write-external-dataset-manifest` | `01e-write-external-dataset-manifest`, `write_external_dataset_manifest` | — | `01e_write_external_dataset_manifest_test.go` |
-| `02a-extract-cadquery-ast` | — | `s02a_extract_cadquery_ast/` | `test_s02a_extract_cadquery_ast.py` |
-| `02b-execute-cadquery` | — | `s02b_execute_cadquery/` | `test_s02b_execute_cadquery.py` |
+| `02a-extract-cadquery-ast` | — | `s02a_extract_cadquery_ast.py` | `test_s02a_extract_cadquery_ast.py` |
+| `02b-execute-cadquery` | — | `s02b_execute_cadquery.py` | `test_s02b_execute_cadquery.py` |
 | `02c-build-cad-graph` | `02c-build-cad-graph`, `build_cad_graph` | — | `02c_build_cad_graph_test.go` |
 | `03a-allocate-task-quotas` | `03a-allocate-task-quotas`, `allocate_task_quotas` | — | `03a_allocate_task_quotas_test.go` |
 | `03b-construct-task-definitions` | `03b-construct-task-definitions`, `construct_task_definitions` | — | `03b_construct_task_definitions_test.go` |
@@ -157,19 +168,12 @@ contract owns their path. A test reads them by path; it does not copy them.
 
 ## Bootstrap order
 
-The tree is created in dependency order, so every folder has a test before its
-implementation:
-
-1. `generator/go.mod`, `cmd/cadqa-dataset-generator/`, `shared/dataset_artifact/`,
-   `shared/failure_record/`, `shared/balance_policy/`, `shared/check_policy/`,
-   `shared/python_worker/`.
-2. `01a`, `01b`, `01c`, the Python worker's `cli.py` plus
-   `s01d_normalize_programs/` (`01d`), then `01e`.
-3. `02a`, `02b`, then `02c`.
-4. `program_capability_census/`, `03b`, and
-   `task_reasoning_step_support_table/`, because the support table is what `03a`
-   reads.
-5. `03a`, `03c`, `04`, `05`, `end_to_end`.
+1. `go.mod`, `main.go`, `internal/shared/`.
+2. `01a`, `01b`, `01c`, `s01d_normalize_programs.py`, `01e`.
+3. `s02a_extract_cadquery_ast.py`, `s02b_execute_cadquery.py`, `02c`.
+4. `program-capability-census/`, `03b`, `task-reasoning-step-support-table/`,
+   because the support table is what `03a` reads.
+5. `03a`, `03c`, `04`, `05`, `end-to-end`.
 
 ## Old generator
 
