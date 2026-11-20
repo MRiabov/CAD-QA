@@ -50,6 +50,22 @@ columnar store that supports the column type. Join keys are UUID, never enum str
 | `relation_type` | `STRING` enum from `graph-content.md` | not null | Relation category. |
 | `from_node_id` | `UUID` | not null | Existing `nodes.parquet.node_id`. |
 | `to_node_id` | `UUID` | not null | Existing `nodes.parquet.node_id`. |
+| `tolerance` | `Tolerance` | nullable | Null means inherit the run tolerance policy; otherwise an override. |
+| `evidence_kind` | `STRING` enum `derived`, `measured` | not null | How the relation was obtained. |
+| `evidence_rule` | `STRING` | not null | Exact rule or kernel operation used. |
+| `evidence_refs` | `LIST<EvidenceRef>` | not null | References that reproduce the relation. |
+
+Only the geometry-classification relations — `parallel_to`,
+`perpendicular_to`, `coplanar_with`, and `coaxial_with` — carry a `tolerance`.
+Every other relation has a null `tolerance`, because it is derived from records
+rather than from a geometric comparison. A null relation `tolerance` inherits
+the run policy entry for its unit, as a measurement does.
+
+Every relation carries CAD graph evidence. A derived relation sets
+`evidence_kind` to `derived`, names the exact predicate in `evidence_rule`, and
+lists the graph elements it read in `evidence_refs`; the endpoints are already
+`from_node_id` and `to_node_id`. A measured relation, if one is added, sets
+`evidence_kind` to `measured` and names the kernel call.
 
 ### `measurements.parquet`
 
@@ -298,7 +314,8 @@ null optional component is encoded as the empty component.
 canonical lowercase hyphenated UUID strings when they are used as UUIDv5 name
 components. Measurement identity follows `graph-content.md`: the subject or pair
 plus the measurement name. The measurement value, unit, tolerance, and CAD graph evidence do
-not participate in `measurement_id`.
+not participate in `measurement_id`. The relation tolerance and CAD graph
+evidence do not participate in `relation_id` either.
 
 `node_id` is not parsed. `node_type` and `local_id` are separate columns, so the
 readable identity components remain available for debugging and filtering.

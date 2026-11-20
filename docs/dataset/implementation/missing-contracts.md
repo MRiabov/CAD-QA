@@ -15,7 +15,7 @@ Each section opens with a work order, most unblocking first. The order is
 dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 27 open entries: 18 P0 technical, 8 P1 product, and 1 P1 technical. No
+There are 26 open entries: 17 P0 technical, 8 P1 product, and 1 P1 technical. No
 P0 product decision remains open, and P2 is empty.
 
 ## P0
@@ -28,51 +28,34 @@ None. The last P0 product decision, `MC-39`, is closed below.
 
 Work order:
 
-1. `MC-35` — the relation fields; a P0 relation clue cannot be checked without
-   it.
-2. `MC-16` — the scope filter; it decides what `03a` allocate task quotas may
+1. `MC-16` — the scope filter; it decides what `03a` allocate task quotas may
    plan and `05` validate and export release may accept.
-3. `MC-37` — the definition fields; a definition cannot carry the new decisions
+2. `MC-37` — the definition fields; a definition cannot carry the new decisions
    without them.
-4. `MC-47` — the scalar target candidate set; a P0 target category has no
+3. `MC-47` — the scalar target candidate set; a P0 target category has no
    candidates without it.
-5. `MC-09` — identity and provenance; a definition cannot be persisted or
+4. `MC-09` — identity and provenance; a definition cannot be persisted or
    reproduced without them.
-6. `MC-14` — the failure record; every pipeline stage that rejects writes to it.
-7. `MC-46` — the capability census artifact; `03c` resolve deficits cannot route
+5. `MC-14` — the failure record; every pipeline stage that rejects writes to it.
+6. `MC-46` — the capability census artifact; `03c` resolve deficits cannot route
    a capability deficit without it.
-8. `MC-40` — the deficit classes; `03c` resolve deficits cannot route a deficit
+7. `MC-40` — the deficit classes; `03c` resolve deficits cannot route a deficit
    without them.
-9. `MC-44` — feasibility derivation; it produces the support tables `MC-13`
+8. `MC-44` — feasibility derivation; it produces the support tables `MC-13`
    checks against.
-10. `MC-25` — the prompt template file; `04` render prompt and choices has
-    nothing to render from without it.
-11. `MC-11` — the rendering inputs; a prompt cannot be reproduced from the
+9. `MC-25` — the prompt template file; `04` render prompt and choices has
+   nothing to render from without it.
+10. `MC-11` — the rendering inputs; a prompt cannot be reproduced from the
     declared input without them.
-12. `MC-12` — the release projection; the release columns have no writer without
+11. `MC-12` — the release projection; the release columns have no writer without
     it.
-13. `MC-13` — the coverage and balance checks; the first release gate.
-14. `MC-15` — multiple-choice fairness; the choice gate.
-15. `MC-38` — the release fields and fifth support file; the consumer contract.
-16. `MC-26` — the manifest and dataset card fields; the release ships both.
-17. `MC-41` — the construction test contract; it locks the invariants the other
+12. `MC-13` — the coverage and balance checks; the first release gate.
+13. `MC-15` — multiple-choice fairness; the choice gate.
+14. `MC-38` — the release fields and fifth support file; the consumer contract.
+15. `MC-26` — the manifest and dataset card fields; the release ships both.
+16. `MC-41` — the construction test contract; it locks the invariants the other
     entries introduce.
-18. `MC-42` — the golden record; the first end-to-end comparison.
-
-#### MC-35 — Relation field schema
-
-The relation field schema is not specified: the evidence fields per relation,
-and the tolerance field for the relations that carry one. The measured-versus-
-derived split is written in `graph-content.md` section 4.3, but the row that
-carries it is not, so a P0 parallel or perpendicular clue cannot be checked
-reproducibly.
-
-**Recommendation:** add `tolerance` and `evidence` to the relation row in
-`graph-persistence.md`, reusing the `Tolerance` and `EvidenceRef` fields
-already defined for measurements: a derived relation records the rule and its
-references, a measured one records the kernel call. Exclude both fields from
-`relation_id`, as `measurement_id` already excludes value, unit, tolerance, and
-evidence.
+17. `MC-42` — the golden record; the first end-to-end comparison.
 
 #### MC-16 — Implementation-scope filter
 
@@ -487,6 +470,8 @@ when its completion marker and identity match.
 
 - `MC-31` — the slow loop in `03c` resolve deficits includes `01d` normalize
   programs; the flow line in `00` end to end was the defect and is fixed.
+- `MC-35` — the relation row now carries `tolerance` and CAD graph evidence,
+  both excluded from `relation_id`, in `graph-persistence.md`.
 - `MC-43` — the named-endpoint derivation, the pair rows, and the state-size
   rejection are written in `graph-construction.md`.
 - `MC-08` — the resolver table is written in `03b` construct task definitions,

@@ -103,6 +103,10 @@ Create relations in this order; all endpoints must exist.
 Do not create a relation whose endpoint is missing. A missing endpoint rejects
 the graph; it is not dropped.
 
+Every relation carries CAD graph evidence: `evidence_kind`, `evidence_rule`, and
+`evidence_refs`. A derived relation names the exact rule and the elements it
+read. A relation whose evidence is missing rejects the graph.
+
 ## Emission rules
 
 Per-entity measurements are emitted for every entity in their scope. A missing
