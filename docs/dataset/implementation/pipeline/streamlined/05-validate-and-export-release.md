@@ -7,7 +7,7 @@ READ:
 - `ReleaseTable` from `04`
 - `RenderConfig` from `04` → `PromptTemplateSet`, `release_seed`
 - five task reasoning step support tables
-- `balance.yaml`
+- `balance.yaml` and `checks.yaml`
 - `ExternalDatasetManifest` from `01e`
 - pinned external benchmark program set
 - per-pipeline-stage failure partitions
@@ -16,11 +16,12 @@ READ:
 
 TRANSFORM:
 - validate the release table schema and row counts
-- the prompt is answer-free
+- the prompt is answer-free; a multiple-choice label is not answer data, because the prompt lists every label
 - `task_id` is unique; exactly one answer set per row
 - recompute `prompt_sha256` from the `prompt` bytes
 - `clue_types` has one entry per `clue_operand_form_profile` entry, same order and same clue type
 - parse `gold_answer_json` according to `answer_format`; require `tolerance_json` for every non-exact answer
+- for a multiple-choice row, recheck `choices`: at least five entries, labels contiguous from `A` with no repeat, answer values distinct under `same_answer`, `gold_answer_json` one of the labels, and that label's answer value equal to the answer in `answer_evidence_json`'s answer-equivalent set; every other row has an empty `choices` pool
 - do not recompute `answer_sha256`; `release_table_sha256` covers the answer columns
 - recheck split isolation by `cadevolve_program_family_id` on the final table
 
@@ -31,11 +32,11 @@ WRITE:
 
 TRANSFORM:
 - validate `balance.yaml` with the `03a` rules; `release.share_tolerance` is in `[0, 1)`
-- compute `conditional_release_share(s, d, v)` with the same function `03a` calls; `05` holds no share of its own
-- run every coverage check per task reasoning step count: `target_category_coverage, clue_type_coverage, clue_operand_form_coverage, answer_meaning_coverage, answer_format_coverage`; no whole-release coverage row
-- run every release-level check: `release_task_count, step_count_range, distinct_cad_model_count, cad_model_share_cap, built_shape_share_floor, split_share, step_share, steps_three_or_more_share, warmup_set, answer_format_share_range, answer_meaning_share_range, target_category_share_cap, clue_type_share_cap, clue_operand_form_release_share, distinct_answer_count, answer_share_cap`
-- run every per-step check: `answer_format_step_mix, clue_type_step_share_cap, clue_type_step_mix, answer_meaning_step_mix, clue_operand_form_severe_mix, clue_operand_form_step_mix`
-- convert every bound to an integer count: `minimum_count = ceil(minimum_share * denominator)`, `maximum_count = floor(maximum_share * denominator)`; per-step `minimum_count = max(1, ceil(0.5 * conditional_release_share * denominator))`, `maximum_count = floor(2 * conditional_release_share * denominator)`; the severe row uses its own multiples
+- validate `checks.yaml`: an unknown field, an unknown `arithmetic`, a duplicate `id`, or a bound reference that does not resolve in `balance.yaml` stops the export before any check runs
+- `reference_share(scope, dimension, value) = policy_share(value) / sum(policy_share(x) for x in supported_values(scope, dimension))`; scope is a task reasoning step count or `release`; `05` holds no share of its own
+- run every check listed in `checks.yaml` with the arithmetic semantics in `release-checks.md`: `coverage, count_floor, share_range, relative_range, share_target, set_equal`; a check not in the file is not run, and a report row whose check is not in the file is a defect
+- coverage rows carry supported, observed, missing, and unexpected values; there is no whole-release coverage row for a dimension
+- convert every bound to an integer count: `share_range` → `minimum_count = ceil(minimum_share * denominator)`, `maximum_count = floor(maximum_share * denominator)`; `relative_range` → `minimum_count = max(1, ceil(below * reference_share * denominator))`, `maximum_count = floor(above * reference_share * denominator)`; `share_target` → `minimum_count = ceil((target - tolerance) * denominator)`, `maximum_count = floor((target + tolerance) * denominator)`
 - outcome is `pass | miss | superseded | not_applicable | deferred`; disposition is `enforced | reported | deferred`
 - an `enforced` miss blocks the export until the owner accepts it and it is recorded in `known_misses`; a `reported` miss never blocks; a `deferred` row measures nothing
 - a `superseded` row is recorded and does not block; it is not a known miss
@@ -75,7 +76,7 @@ TRANSFORM:
 - `release_table_sha256` from the finished `release.parquet`
 - `generator_version` from the declared version constant; not derived from git
 - copy `upstream_dataset_version` and `external_dataset_manifest_sha256` from the external dataset manifest
-- record `balance.yaml` version and SHA-256
+- record `balance_policy_version`, `balance_policy_sha256`, `checks_policy_version`, and `checks_policy_sha256`
 - record prompt template version, `prompts.yaml` SHA-256, and `RenderConfig.release_seed`
 - copy the five support JSON files and record their schema versions and hashes
 - transfer overlap: exact normalized program text at P0; record the benchmark identity and revision

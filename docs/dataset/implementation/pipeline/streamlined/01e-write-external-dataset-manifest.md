@@ -9,10 +9,13 @@ READ:
 - pinned cache → revision, URI, schema version
 
 TRANSFORM:
-- count programs by `tier`, `source_collection`, and `cadevolve_program_family_id`
+- selection counts: active, reserve, and one count per exclusion reason
+- program counts: one per `tier`, `source_collection`, and `cadevolve_program_family_id`, over normalized rows only
 - count normalized programs and distinct `program_id`
 - summarize input and output hashes
 - sum rejection counts by reason from the `01d` partition
+- `status = complete` when every selection target is met and no rejection is recorded, else `incomplete`
+- `created_at` is not an input to any hash; two runs over the same inputs differ only in `created_at`
 - write no release rows and no release manifest
 
 WRITE:

@@ -46,4 +46,6 @@ TRANSFORM:
 
 WRITE:
 - program selection Parquet `(selection policy version, seed)` → active IDs, reserve IDs, supplemental deltas, `tier`, `cadevolve_program_family_id`, policy, seed, collection counts, family counts, exclusions
+- exclusion rows `(source_id)` → `source_id, source_collection, reason`; `reason` is one of `duplicate_hash, family_cap, out_of_scope_tier, not_selected`
+- counts reconcile: cache rows = active + reserve + exclusions; an exclusion is not a failure record
 - the original selection is immutable; a delta is additive

@@ -34,9 +34,10 @@ TRANSFORM:
 - render the question, the numbered clue list, the choice list, and the answer instruction first; fill `dataset.prompt_shell` in this order: frame line, program text, question, clue list, choice list, answer instruction
 - render clues in canonical order in P0; P1 applies a seeded permutation that respects reference dependencies, and clue wording uses presentation positions
 - the frame line is the fixed first line of `dataset.prompt_shell`; it is not a per-task variant
-- multiple choice: order and label `choice_pool`; never re-bind an entity or recompute an answer
+- multiple choice: render `choice_pool` in its recorded order with its recorded labels; never reorder, relabel, re-bind an entity, or recompute an answer
+- the rendered choice block has one line per pool entry, in pool order, with pool labels; a mismatch stops the render before any row is written; never reorder, relabel, or drop an entry to make it fit
 - collapse a run of three or more newlines to two, so an empty choice list leaves one blank line before the answer instruction
-- the prompt is answer-free and uses no variable name
+- the prompt is answer-free and uses no variable name; a multiple-choice label is not answer data, because every label appears in the list
 
 WRITE:
 - (none)
@@ -45,6 +46,7 @@ WRITE:
 
 TRANSFORM:
 - copy definition fields unchanged, including `clue_operand_form_profile`
+- copy the label and the answer value of every choice-pool entry into `choices`; the descriptions stay in the prompt and `distinguishing_facts` stay in the definition
 - derive `clue_types` from `clue_operand_form_profile`, in the same order
 - copy `gold_answer`, `tolerance`, and `answer_evidence` as canonical text; never re-serialize an answer value
 - copy `answer_sha256`; never recompute it
@@ -53,4 +55,4 @@ TRANSFORM:
 - a projection that needs a field the definition lacks is a `03b` defect
 
 WRITE:
-- `ReleaseTable` `(release_id)` → one row per task: `task_id, program_id, program_sha256, cadevolve_program_family_id, split, subset, prompt, prompt_sha256, clue_types, clue_operand_form_profile, target_category, answer_meaning, answer_format, task_reasoning_step_count, geometry_required, gold_answer, answer_unit, tolerance, scoring_rule, answer_evidence, answer_sha256`
+- `ReleaseTable` `(release_id)` → one row per task: `task_id, program_id, program_sha256, cadevolve_program_family_id, split, subset, prompt, prompt_sha256, clue_types, clue_operand_form_profile, target_category, answer_meaning, answer_format, task_reasoning_step_count, geometry_required, gold_answer, answer_unit, tolerance, scoring_rule, answer_evidence, answer_sha256, choices (label, candidate)`
