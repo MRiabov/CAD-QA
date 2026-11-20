@@ -375,19 +375,108 @@ confines the demand logic to the deficit path where it belongs.
 
 ## Open decisions
 
-| ID | Decision | Options | Recommendation | Blocks |
-|---|---|---|---|---|
-| D1 | What is the uniqueness unit? | Entity-unique; answer-unique; hybrid | Hybrid: identity is entity-unique, measurement is answer-unique with a witness set | `TaskDefinition.target_binding`, `answer_evidence`, choice pool |
-| D2 | Does the question name the solid state? | Question names it; first clue names it | Question names it; add `state_scope` to `TaskDefinition` | Question templates, possible-answer set |
-| D3 | How is a clue evaluated when a measurement is missing? | Unknown means false; clue is invalid | Clue is applicable only when the predicate is total on the current set | Chain search, rejection reasons |
-| D4 | What counts as a separation? | Any difference; answer tolerance; separate margin | One separation margin derived from the answer tolerance | Uniqueness, tie rejection, clue validity |
-| D5 | How are clues ordered? | Search order; broad-to-narrow; dependency order | Topological order with a broad-to-narrow key: the size of the narrowed set, descending, then hash | Comparison references, prompt order |
-| D6 | What is the minimum narrowing? | One possible answer; at least k | Each non-final clue leaves at least 2–3 possible answers | Task quality, step count |
-| D7 | Where do multiple-choice choices come from? | Penultimate set; sibling measurements | Identity from the penultimate set; numeric only when at least 5 distinct values exist | Multiple-choice availability |
-| D8 | How does the scheduler fill the plan? | Per-cell greedy; global selection | Greedy coverage-first: minimum, then target, then volume | Quota filling, deficits |
-| D9 | How are clue forms weighted? | Equal; weighted by operand form; calibrated against LLM model results | Equal first, then calibrate against LLM model results | Coverage and balance |
-| D10 | Does `DS-05` change? | Keep step count as the only measure; add clue form as a per-clue measure | Keep step count as the length measure; add clue form as a per-clue measure; neither is a task label | PRD section 6, R-9, benchmark reporting |
-| D11 | What is the construction strategy? | Supply-driven; full demand-driven; supply-driven with capability-aware deficits | Supply-driven with capability-aware deficits | `01b`, `02c`, `03a`, `03b`, `03c` |
+Each decision is written so it can be answered on its own. The recommendation is
+a default, not a ruling, and the ID is stable so other documents can refer to it.
+
+### 1. `D1` — What is the uniqueness unit?
+
+Options: entity-unique, answer-unique, or hybrid. Recommendation: hybrid. An
+identity answer needs exactly one entity, because the label is the answer. A
+measurement answer needs one answer value, because two symmetric entities can
+produce the same number and the task is still answerable; the final set becomes
+a witness set recorded in the answer evidence.
+
+Blocks: `TaskDefinition.target_binding`, `answer_evidence`, and the pool of
+multiple-choice options.
+
+### 2. `D2` — Does the question name the solid state?
+
+Options: the question names the state, or the first clue names it.
+Recommendation: the question names it, and `TaskDefinition` carries
+`state_scope`. The possible-answer set depends on the state, so a task whose
+state is only implied by a clue has an ambiguous starting set.
+
+Blocks: question templates and the possible-answer set.
+
+### 3. `D3` — How is a clue evaluated when a measurement is missing?
+
+Options: unknown counts as false, or the clue is invalid. Recommendation: a clue
+is applicable only when its predicate is total on the current set. Treating
+unknown as false silently removes candidates, which makes the narrowing unsound.
+
+Blocks: chain search and the rejection reasons.
+
+### 4. `D4` — What counts as a separation?
+
+Options: any difference, the answer tolerance, or a separate margin.
+Recommendation: one separation margin derived from the answer tolerance. Two
+answers that differ by less than the tolerance are not separated, and the clue
+that would rely on the difference is rejected.
+
+Blocks: uniqueness, tie rejection, and clue validity.
+
+### 5. `D5` — How are clues ordered?
+
+Options: search order, broad-to-narrow, or dependency order. Recommendation:
+topological order, then a broad-to-narrow key — the size of the narrowed set,
+descending, with a stable hash as the tie-break. Dependency order must come
+first, because a clue that refers to an earlier selection cannot precede it.
+
+Blocks: comparison references and prompt order.
+
+### 6. `D6` — What is the minimum narrowing?
+
+Options: each clue may leave one possible answer, or each clue must leave at
+least `k`. Recommendation: each non-final clue leaves at least two or three
+possible answers. A clue that jumps straight to one answer makes the rest of the
+chain decorative.
+
+Blocks: task quality and step count.
+
+### 7. `D7` — Where do multiple-choice choices come from?
+
+Options: the penultimate possible-answer set, or sibling measurements of the
+answer entity. Recommendation: identity answers draw their choices from the
+penultimate set, because those are the entities the last clue discriminated
+between. Numeric answers use sibling measurements only when at least five
+distinct values exist; otherwise the choices are too easy to guess.
+
+Blocks: multiple-choice availability.
+
+### 8. `D8` — How does the scheduler fill the plan?
+
+Options: per-cell greedy, or global selection across cells. Recommendation:
+greedy coverage-first — fill the minimum, then the target, then the volume. This
+matches the priority order already stated in `03a` and keeps the scheduler
+explainable.
+
+Blocks: quota filling and deficits.
+
+### 9. `D9` — How are clue forms weighted?
+
+Options: equal weight, weight by operand form, or calibrate against LLM
+evaluation results. Recommendation: equal weight first, then calibrate against
+LLM evaluation results. Weighting by operand form before there is measurement
+data would encode a guess about difficulty that `DS-05` deliberately removed.
+
+Blocks: coverage and balance.
+
+### 10. `D10` — Does `DS-05` change?
+
+Options: keep task reasoning step count as the only measure, or add clue form as
+a per-clue measure. Recommendation: keep step count as the length measure and
+add clue form as a per-clue measure. Neither is a task label; a task is
+described by its clue form profile, not named by a grade.
+
+Blocks: PRD section 6, R-9, and benchmark reporting.
+
+### 11. `D11` — What is the construction strategy?
+
+Options: supply-driven, full demand-driven, or supply-driven with
+capability-aware deficits. Recommendation: supply-driven with capability-aware
+deficits. The reasons are recorded in the construction strategy section above.
+
+Blocks: `01b`, `02c`, `03a`, `03b`, and `03c`.
 
 ## Proposed document and schema changes
 
