@@ -12,8 +12,8 @@ already recorded. Product entries block more than they appear to, because
 writing code cannot close them.
 
 Each section opens with a work order, most unblocking first. The order is
-dependency order, not importance: an entry can start once its prerequisite lands,
-and the tests run alongside the milestone they cover.
+dependency order, not importance: an entry can start once its prerequisite
+lands, and the tests run alongside the milestone they cover.
 
 There are 26 open entries: 17 P0 technical, 8 P1 product, and 1 P1 technical. No
 P0 product decision remains open, and P2 is empty.
@@ -28,35 +28,48 @@ None. The last P0 product decision, `MC-39`, is closed below.
 
 Work order:
 
-1. `MC-43` — the pair domain; every distance and angle task depends on it.
-2. `MC-35` — the relation payload; a P0 relation clue cannot be checked without it.
-3. `MC-16` — the scope filter; it decides what `03a` may plan and `05` may accept.
-4. `MC-37` — the definition fields; a definition cannot carry the new decisions without them.
-5. `MC-09` — identity and provenance; a definition cannot be persisted or reproduced without them.
-6. `MC-14` — the failure record; every pipeline stage that rejects writes to it.
-7. `MC-40` — the deficit classes; `03c` cannot route a deficit without them.
-8. `MC-44` — feasibility derivation; it produces the support tables `MC-13` checks against.
-9. `MC-25` — the prompt template file; `04` has nothing to render from without it.
-10. `MC-11` — the rendering inputs; a prompt cannot be reproduced from the declared input without them.
-11. `MC-12` — the release projection; the release columns have no writer without it.
-12. `MC-13` — the coverage and balance checks; the first release gate.
-13. `MC-15` — multiple-choice fairness; the choice gate.
-14. `MC-38` — the release fields and fifth support file; the consumer contract.
-15. `MC-26` — the manifest and dataset card fields; the release ships both.
-16. `MC-41` — the construction test contract; it locks the invariants the other entries introduce.
-17. `MC-42` — the golden record; the first end-to-end comparison.
+1. 1. `MC-43` — the pair domain; every distance and angle task depends on it.
+2. 2. `MC-35` — the relation payload; a P0 relation clue cannot be checked
+   without it.
+3. 3. `MC-16` — the scope filter; it decides what `03a` allocate task quotas may
+   plan and `05` validate and export release may accept.
+4. 4. `MC-37` — the definition fields; a definition cannot carry the new
+   decisions without them.
+5. 5. `MC-09` — identity and provenance; a definition cannot be persisted or
+   reproduced without them.
+6. 6. `MC-14` — the failure record; every pipeline stage that rejects writes to
+   it.
+7. 7. `MC-40` — the deficit classes; `03c` resolve deficits cannot route a
+   deficit without them.
+8. 8. `MC-44` — feasibility derivation; it produces the support tables `MC-13`
+   checks against.
+9. 9. `MC-25` — the prompt template file; `04` render prompt and choices has
+   nothing to render from without it.
+10. 10. `MC-11` — the rendering inputs; a prompt cannot be reproduced from the
+    declared input without them.
+11. 11. `MC-12` — the release projection; the release columns have no writer
+    without it.
+12. 12. `MC-13` — the coverage and balance checks; the first release gate.
+13. 13. `MC-15` — multiple-choice fairness; the choice gate.
+14. 14. `MC-38` — the release fields and fifth support file; the consumer
+    contract.
+15. 15. `MC-26` — the manifest and dataset card fields; the release ships both.
+16. 16. `MC-41` — the construction test contract; it locks the invariants the
+    other entries introduce.
+17. 17. `MC-42` — the golden record; the first end-to-end comparison.
 
 #### MC-43 — Pair domain in the graph builder
 
-The `02c` builder work for the pair domain is missing: the derived
-named-endpoint list per state, `distance_to` rows for named endpoint × candidate
-endpoints, and rejection above `max_state_entities`. Point probes are already
-written into `02b` and `02c`. The requirement is written in `graph-content.md`
-section 4.1; the builder contract does not mention it.
+The `02c` build CAD graph builder work for the pair domain is missing: the
+derived named-endpoint list per state, `distance_to` rows for named endpoint ×
+candidate endpoints, and rejection above `max_state_entities`. Point probes are
+already written into `02b` execute CadQuery and `02c` build CAD graph. The
+requirement is written in `graph-content.md` section 4.1; the builder contract
+does not mention it.
 
 **Recommendation:** build the pair domain from the declared endpoint entity
-categories, emit only those rows, and reject the state above the limit rather than
-truncating the domain.
+categories, emit only those rows, and reject the state above the limit rather
+than truncating the domain.
 
 #### MC-35 — Relation payload schema
 
@@ -73,13 +86,13 @@ relation, or a kernel call for a measured one.
 #### MC-16 — Implementation-scope filter
 
 The implementation-scope filter is not machine-readable: a P0/P1/P2 mark per
-quota dimension value, consumed by `03a` at plan time and by `05` at release.
-The marks exist in the requirements as prose only, so later-scope values can
-enter the first release.
+quota dimension value, consumed by `03a` allocate task quotas when planning and
+by `05` validate and export release when validating. The marks exist in the
+requirements as prose only, so later-scope values can enter the first release.
 
 **Recommendation:** derive one scope table from the requirement marks and filter
-at plan time; `05` then asserts that no later-scope value appears, which is a
-cheaper check than filtering.
+at plan time; `05` validate and export release then asserts that no later-scope
+value appears, which is a cheaper check than filtering.
 
 #### MC-37 — Definition fields for the new decisions
 
@@ -107,9 +120,9 @@ the changed input.
 
 #### MC-14 — Failure record schema
 
-The `failures.parquet` schema is not specified: columns, identity, dedupe, order,
-merge from parallel writers, and aggregation. R-19 is not enforceable, and
-parallel failure records cannot be combined safely.
+The `failures.parquet` schema is not specified: columns, identity, dedupe,
+order, merge from parallel writers, and aggregation. R-19 is not enforceable,
+and parallel failure records cannot be combined safely.
 
 **Recommendation:** one row per rejection with pipeline stage, input identity,
 reason code, detail, and `task_id`; dedupe on the tuple of pipeline stage, input
@@ -118,8 +131,9 @@ identity, `task_id`, and reason; sort by pipeline stage then identity.
 #### MC-40 — Deficit classes
 
 Deficit classes are missing for a missing capability, a pair outside the domain,
-and a missing point probe. `03c` predates `DS-33` and `MC-36`, so each would be
-classified as a construction underfill and sent to the wrong loop.
+and a missing point probe. `03c` resolve deficits predates `DS-33` and `MC-36`,
+so each would be classified as a construction underfill and sent to the wrong
+loop.
 
 **Recommendation:** add `capability_deficit` (no active program has it →
 `ProgramRequest`), `pair_domain_deficit` (the state exceeds the entity limit →
@@ -130,8 +144,8 @@ from that state).
 
 Feasibility derivation is not defined: how a support table decides that a
 dimension value is feasible at a task reasoning step count, as reachability over
-the clue grammar. Five support tables ship with no derivation rule, so their rows
-are assertions rather than computed facts.
+the clue grammar. Five support tables ship with no derivation rule, so their
+rows are assertions rather than computed facts.
 
 **Recommendation:** define feasibility as the same cover search as construction
 against a symbolic graph where every capability is present; derive all five
@@ -139,40 +153,45 @@ tables from that one search.
 
 #### MC-25 — Prompt template file
 
-The root `prompts.yaml` file and its schema are absent. `04` renders from it, but
-the file does not exist, so the convention is documentation without an artifact.
+The root `prompts.yaml` file and its schema are absent. `04` render prompt and
+choices reads it, but the file does not exist, so the convention is
+documentation without an artifact.
 
 **Recommendation:** add the file with template id, typed placeholders, and
-dataset and evaluation namespaces; `04` rejects a missing, extra, or untyped
-placeholder.
+dataset and evaluation namespaces; `04` render prompt and choices rejects a
+missing, extra, or untyped placeholder.
 
 #### MC-11 — Rendering inputs
 
-The `04` input contract omits program text, render seed, and template version.
-`04` renders from them, but `io-contracts.md` names only `TaskDefinition`, so
-rendering cannot reproduce a prompt from the declared input alone.
+The `04` render prompt and choices input contract omits program text, render
+seed, and template version. `04` render prompt and choices depends on them, but
+`io-contracts.md` names only `TaskDefinition`, so rendering cannot reproduce a
+prompt from the declared input alone.
 
-**Recommendation:** add the three fields to the `04` row of `io-contracts.md`;
-`04` already owns the `prompts.yaml` contract.
+**Recommendation:** add the three fields to the `04` render prompt and choices
+row of `io-contracts.md`; `04` render prompt and choices already owns the
+`prompts.yaml` contract.
 
 #### MC-12 — Release projection
 
 The `TaskDefinition` to release-table projection is unowned:
 `answer_schema_version`, `answer_sha256`, `prompt_sha256`, `evidence_json`,
-`clue_types`, tolerance, and scoring have no writer. `04` emits release rows and
-`05` validates them, but neither owns the field mapping.
+`clue_types`, tolerance, and scoring have no writer. `04` render prompt and
+choices emits release rows and `05` validate and export release validates them,
+but neither owns the field mapping.
 
-**Recommendation:** assign the projection to `04`, which already emits release
-rows, and let `05` validate the result; keep the field mapping in the release
-contract so it is written once.
+**Recommendation:** assign the projection to `04` render prompt and choices,
+which already emits release rows, and let `05` validate and export release check
+the result; keep the field mapping in the release contract so it is written
+once.
 
 #### MC-13 — Release coverage and balance checks
 
-Release coverage and balance checks are missing: step mix, warmup, program floor,
-target category, answer meaning, answer format, clue type, and clue operand form
-balance, plus the 1% and 25% caps. `05` currently checks only that released
-values appear in the support tables, so the first release can pass without
-meeting R-7–R-12.
+Release coverage and balance checks are missing: step mix, warmup, program
+floor, target category, answer meaning, answer format, clue type, and clue
+operand form balance, plus the 1% and 25% caps. `05` validate and export release
+currently checks only that released values appear in the support tables, so the
+first release can pass without meeting R-7–R-12.
 
 **Recommendation:** add one check per requirement R-7–R-12, each naming the
 requirement it enforces, so a missing check is visible as a missing row.
@@ -184,8 +203,9 @@ choices are distinct in the answer space, unit, frame, and precision match,
 descriptions do not leak the answer, and labels are deterministic. A choice pool
 of five entries can still be invalid. It absorbs `MC-24`.
 
-**Recommendation:** write one check list in `03b` at construction and reuse it
-in `05` at release; pool size is necessary but not sufficient.
+**Recommendation:** write one check list in `03b` construct task definitions
+when a task is built, and reuse it in `05` validate and export release when the
+release is checked; pool size is necessary but not sufficient.
 
 #### MC-38 — Release fields and the fifth support file
 
@@ -194,7 +214,8 @@ The release table omits `clue_form_profile` and `answer_equivalent_set`, and
 require the fields, and the release contract lists four support files.
 
 **Recommendation:** add the two fields and the fifth file, then extend the `05`
-copy list and the manifest hash record so all five are versioned together.
+validate and export release copy list and the manifest hash record so all five
+are versioned together.
 
 #### MC-26 — Release manifest and dataset card
 
@@ -204,9 +225,9 @@ version, upstream version, and external-manifest linkage; the card needs its
 sections and the answer conventions. Evaluation material is tracked separately
 in `MC-28`.
 
-**Recommendation:** `05` owns both; take the field list from the release
-contract and record the generator version, upstream version, and external
-manifest hash in `manifest.json`.
+**Recommendation:** `05` validate and export release owns both; take the field
+list from the release contract and record the generator version, upstream
+version, and external manifest hash in `manifest.json`.
 
 #### MC-41 — Construction test contract
 
@@ -235,21 +256,26 @@ test compares the constructed definition field by field.
 
 Work order:
 
-1. `MC-22` — geometry-required for 1-step tasks; it changes what the first release counts.
-2. `MC-20` — duplicate normalized text; it can put the same `task_id` in two splits.
-3. `MC-17` — reserve lifecycle; it decides whether the fast loop can promote.
-4. `MC-18` — program-floor backfill; it keeps the program floor after execution failures.
-5. `MC-23` — stop budgets; the deficit loop has no terminating condition without them.
-6. `MC-45` — operand-form balance target; it needs the first release distribution.
-7. `MC-27` — transfer overlap and the external benchmark.
-8. `MC-28` — review and evaluation material.
+1. 1. `MC-22` — geometry-required for 1-step tasks; it changes what the first
+   release counts.
+2. 2. `MC-20` — duplicate normalized text; it can put the same `task_id` in two
+   splits.
+3. 3. `MC-17` — reserve lifecycle; it decides whether the fast loop can promote.
+4. 4. `MC-18` — program-floor backfill; it keeps the program floor after
+   execution failures.
+5. 5. `MC-23` — stop budgets; the deficit loop has no terminating condition
+   without them.
+6. 6. `MC-45` — operand-form balance target; it needs the first release
+   distribution.
+7. 7. `MC-27` — transfer overlap and the external benchmark.
+8. 8. `MC-28` — review and evaluation material.
 
 #### MC-22 — Geometry-required for 1-step tasks
 
 The geometry-required rule for 1-step no-clue tasks is wrong, and the 95%
-aggregate check is missing. The current definition requires a task clue to depend
-on the built shape, so every 1-step task is marked false even when the answer
-needs geometry — which is every membership task.
+aggregate check is missing. The current definition requires a task clue to
+depend on the built shape, so every 1-step task is marked false even when the
+answer needs geometry — which is every membership task.
 
 **Recommendation:** define `geometry_required` as "the answer cannot be computed
 from the program text alone", which covers the answer step; a 1-step membership
@@ -257,24 +283,26 @@ task then counts as geometry-required and the 95% check applies to all tasks.
 
 #### MC-20 — Duplicate normalized text across collections
 
-Duplicate normalized text across collections is unresolved. `01d` gives
-identical normalized bytes one `program_id`, `01b` keeps both rows with
-different families, and `task_id` is keyed on `program_sha256`, so the release
-can hold two rows with the same `task_id` and different splits.
+Duplicate normalized text across collections is unresolved. `01d` normalize
+programs gives identical normalized bytes one `program_id`, `01b` select program
+pool keeps both rows with different families, and `task_id` is keyed on
+`program_sha256`, so the release can hold two rows with the same `task_id` and
+different splits.
 
 **Recommendation:** keep both selection rows for collection accounting, but
-graph and construct once per `program_id` and use the survivor's family, which is
-the rule `01b` already applies within a collection.
+graph and construct once per `program_id` and use the survivor's family, which
+is the rule `01b` select program pool already applies within a collection.
 
 #### MC-17 — Reserve program lifecycle
 
 The active and reserve lifecycle is unresolved: whether reserve programs get
-graphs, and whether the fast loop may use them. `01c` fetches reserve rows and
-`03c` claims the fast loop needs no new data, which cannot both hold.
+graphs, and whether the fast loop may use them. `01c` fetch program pool loads
+reserve rows and `03c` resolve deficits claims the fast loop needs no new data,
+which cannot both hold.
 
 **Recommendation:** fetch reserve without graphing; promotion becomes a `03a`
-decision that emits a graph request, so the fast loop can promote and the slow
-loop still pays for new data.
+allocate task quotas decision that emits a graph request, so the fast loop can
+promote and the slow loop still pays for new data.
 
 #### MC-18 — Program floor backfill
 
@@ -288,19 +316,19 @@ trigger is data, not a manual check.
 
 #### MC-23 — Stop and expansion budgets
 
-Numeric retry, expansion, and stop budgets are missing. `03c` has no computable
-stop rule, so a deficit can loop until it is noticed, and the cost of a slow loop
-is unbounded.
+Numeric retry, expansion, and stop budgets are missing. `03c` resolve deficits
+has no computable stop rule, so a deficit can loop until it is noticed, and the
+cost of a slow loop is unbounded.
 
 **Recommendation:** state the stop rule as a deficit threshold after a fixed
-number of expansion rounds, with a hard cap on pool growth; the numbers belong in
-the task quota plan.
+number of expansion rounds, with a hard cap on pool growth; the numbers belong
+in the task quota plan.
 
 #### MC-45 — Clue operand form balance target
 
 `DS-37` defers balance over clue operand form to P1, but no artifact carries the
-target: the balance table in `task-structure.md` section 6 has no row for it, and
-the plan-level target table names no share. P1 can therefore ship without a
+target: the balance table in `task-structure.md` section 6 has no row for it,
+and the plan-level target table names no share. P1 can therefore ship without a
 balance check, and P0 coverage does not stand in for one: it proves presence,
 not a useful mix. If the P0 diagnostic reports severe imbalance, the target is
 needed for that release rather than P1.
@@ -332,15 +360,16 @@ Human review and evaluation-material ownership is unassigned. R-17 and section
 11 name artifacts with no pipeline stage and no writer, so the release can ship
 without them.
 
-**Recommendation:** `05` owns a review artifact and a review gate before export;
-review does not change a definition, so a failed review rejects the row and
-records the reason.
+**Recommendation:** `05` validate and export release owns a review artifact and
+a review gate before export; review does not change a definition, so a failed
+review rejects the row and records the reason.
 
 ### Technical (P1)
 
 Work order:
 
-1. `MC-29` — run-level execution contract; retries and cache hits are promised without it.
+1. 1. `MC-29` — run-level execution contract; retries and cache hits are
+   promised without it.
 
 #### MC-29 — Run-level execution contract
 
@@ -354,22 +383,23 @@ input hash plus every version that affects the output.
 
 ## Closed or merged in the 2026-11-20 pass
 
-- `MC-31` — the slow loop in `03c` includes `01d`; the flow line in `00` was the
-  defect and is fixed.
-- `MC-08` — the resolver table is written in `03b`, with the angle, position,
-  material-change, and topology-change conventions. The dataset card now has to
-  state them for consumers.
-- `MC-39` — clue operand form is coverage-only in P0, with one clue occurrence
-  per supported form per step count and no share; `03a` now says so.
-- `MC-36` — the state entity limit is a scope constant measured once per
+- - `MC-31` — the slow loop in `03c` resolve deficits includes `01d` normalize
+  programs; the flow line in `00` end to end was the defect and is fixed.
+- - `MC-08` — the resolver table is written in `03b` construct task definitions,
+  with the angle, position, material-change, and topology-change conventions.
+  The dataset card now has to state them for consumers.
+- - `MC-39` — clue operand form is coverage-only in P0, with one clue occurrence
+  per supported form per step count and no share; `03a` allocate task quotas now
+  says so.
+- - `MC-36` — the state entity limit is a scope constant measured once per
   implementation scope, and the rule is written in `graph-content.md` section
   4.1. The first number is produced when the P0 pool is selected, which is plan
   work rather than a missing contract.
-- `MC-32` — the external manifest has no link field; the repo-wide link check
+- - `MC-32` — the external manifest has no link field; the repo-wide link check
   passes.
-- `MC-34` — the implementation README now lists the test contract folder and
+- - `MC-34` — the implementation README now lists the test contract folder and
   the streamlined folder.
-- `MC-19` — merged into `MC-18`; both named the same backfill path.
-- `MC-24` — merged into `MC-15`; both named multiple-choice fairness.
-- `MC-10` — merged into `MC-09`; identity and provenance are one
+- - `MC-19` — merged into `MC-18`; both named the same backfill path.
+- - `MC-24` — merged into `MC-15`; both named multiple-choice fairness.
+- - `MC-10` — merged into `MC-09`; identity and provenance are one
   reproducibility contract.
