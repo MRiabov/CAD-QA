@@ -23,7 +23,7 @@ assert-from-the-artifact rule, and the test-first order — are in
 | [`02a-extract-cadquery-ast.md`](02a-extract-cadquery-ast.md) | `02a` extract CadQuery AST. | draft |
 | [`02b-execute-cadquery.md`](02b-execute-cadquery.md) | `02b` execute CadQuery. | draft |
 | [`02c-build-cad-graph.md`](02c-build-cad-graph.md) | `02c` build CAD graph. | draft |
-| `03a-allocate-task-quotas.md` | `03a` allocate task quotas. | missing |
+| [`03a-allocate-task-quotas.md`](03a-allocate-task-quotas.md) | `03a` allocate task quotas. | draft |
 | [`03b-construct-task-definitions.md`](03b-construct-task-definitions.md) | `03b` construct task definitions. | draft |
 | `03c-resolve-deficits.md` | `03c` resolve deficits. | missing |
 | `04-render-prompt-and-choices.md` | `04` render prompt and choices. | missing |
