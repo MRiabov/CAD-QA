@@ -45,23 +45,30 @@ nobody planned for.
 | Task reasoning step count | `task_reasoning_step_count` | task | tasks | `task_reasoning_step_count` |
 | Built shape | `geometry_required` | task | tasks | `geometry_required` |
 | CAD model | `program_id` | task | tasks | `program_id` |
-| Correct answer | `correct_answer` | task | tasks | `answer_format`, `gold_answer_json`, `answer_unit` |
+| Correct answer | `correct_answer` | task | tasks | `answer_format`, `gold_answer_json` or `choices`, `answer_unit` |
 | Clue type | `clue_type` | clue occurrence | clue occurrences | `clue_types` |
 | Clue operand form | `clue_operand_form` | clue occurrence that carries a reference | clue occurrences that carry a reference | `clue_operand_form_profile` |
 | Warmup | `warmup` | task | — | `subset` |
 | Split | `split` | task | tasks | `split` |
 | Release task count | `task_count` | task | — | one row per task |
 
-Four of these need a word of explanation.
+Five of these need a word of explanation.
 
 **A CAD model is a `program_id`.** One CadQuery program builds one shape, and the
 release contract and `03a` both count distinct programs, so the two numbers are
 the same number.
 
-**A correct answer is `(answer_format, gold_answer_json, answer_unit)`.** It is
-deliberately coarser than `answer_sha256`, which also covers the scoring fields.
-Two tasks that ask for the same number with different tolerances have the same
-correct answer, and R-11 is about the answer, not about the tolerance.
+**A correct answer is `(answer_format, gold_answer_json, answer_unit)`, except for
+multiple choice.** It is deliberately coarser than `answer_sha256`, which also
+covers the scoring fields. Two tasks that ask for the same number with different
+tolerances have the same correct answer, and R-11 is about the answer, not about
+the tolerance.
+
+**A multiple-choice answer is counted by its answer value.** A label is a
+position, not an answer: counting labels would collapse thousands of tasks into
+seven values. The counted answer of a multiple-choice task is the `candidate` of
+the entry whose label is `gold_answer_json`, read from `choices`. Every other
+answer format counts `gold_answer_json` directly.
 
 **A clue operand form is counted only on clues that carry a reference.** A clue
 with no reference has no form (`03b` construct task definitions), so it is not in
@@ -306,7 +313,9 @@ release produce the same report.
 
 ## Not here
 
-- Multiple-choice fairness: the choice checks.
+- Multiple-choice fairness: the construction checks are in [`03b` construct task
+  definitions](../03-task-generation/03b-construct-task-definitions.md), and
+  the released pool recheck is in `05` validate and export release.
 - Release table schema, prompt answer-freedom, `task_id` uniqueness, and split
   isolation: `05` validate and export release.
 - Failure record reconciliation and the review gate: `05` validate and export

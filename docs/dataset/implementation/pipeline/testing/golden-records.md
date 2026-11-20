@@ -135,6 +135,7 @@ direction is `object_to_subject`.
 | Key | Type | Meaning |
 |---|---|---|
 | `gold_answer` | string | Canonical text; the same text `TaskDefinition.gold_answer` holds. |
+| `choices` | list of struct `{label, candidate}`, both strings | The multiple-choice pool; empty unless the answer format is multiple choice. |
 | `answer_unit` | string or null | `mm` or null. |
 | `tolerance` | object or null | Decoded tolerance; null for an exact answer. |
 | `scoring_rule` | string | `exact`, `numeric_tolerance`, or `structured_exact`. |
@@ -157,7 +158,7 @@ comparing.
 
 Every `answer_equivalent_set` entry has exactly `subject` and `answer`. The
 `subject` is an entity descriptor; the `answer` is canonical text. The set is
-non-empty, every entry gives the gold answer under `same_answer`, and an
+non-empty, every entry gives the answer value under `same_answer`, and an
 identity answer requires exactly one entry (`DS-32`).
 
 ## 4. Entity descriptors

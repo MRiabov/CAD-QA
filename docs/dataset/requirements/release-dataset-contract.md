@@ -94,6 +94,7 @@ No CAD model and no correct answer is above 1% of tasks.
 | `clue_types` | list of enum | yes | Ordered task clue types; empty for a task with no task clue. | The clue type sequence of `clue_operand_form_profile` |
 | `clue_operand_form_profile` | list of struct `{clue_type, clue_operand_form}` | yes | Ordered clue type and clue operand form of every task clue, one entry per `clue_types` entry. `clue_operand_form` is null for a clue that carries no reference. | `TaskDefinition.clue_operand_form_profile` |
 | `answer_format` | enum | yes | Format the LLM model must return. | `TaskDefinition.answer_format` |
+| `choices` | list of struct `{label, candidate}`, both strings | yes | The multiple-choice pool: the position label and the answer value it denotes, as canonical text. Empty for every other answer format. | `TaskDefinition.choice_pool`, label and answer value |
 | `answer_meaning` | enum | yes | What the answer is about. | `TaskDefinition.answer_meaning` |
 | `geometry_required` | boolean | yes | Whether at least one task clue depends on the built shape. | `TaskDefinition.geometry_required` |
 | `gold_answer_json` | string | yes | Canonical JSON for the gold answer. | `TaskDefinition.gold_answer`, copied as canonical text |
@@ -105,9 +106,9 @@ No CAD model and no correct answer is above 1% of tasks.
 | `answer_evidence_json` | string | yes | Canonical JSON answer evidence: measured or derived, the rule, the references, the answer-equivalent set, and the point probe. | `TaskDefinition.answer_evidence`, copied as canonical text |
 
 The `Carries` column says what the column is, not how it is produced: a column
-either carries a `TaskDefinition` field unchanged or carries a value that `04`
-render prompt and choices computes from the definition. `04` writes every column
-of the release table.
+carries a `TaskDefinition` field unchanged, the part of a field the release
+needs, or a value that `04` render prompt and choices computes from the
+definition. `04` writes every column of the release table.
 
 `04` copies the answer text and never re-serializes it. `03b` construct task
 definitions already wrote `gold_answer`, `tolerance`, and `answer_evidence` as
@@ -123,10 +124,10 @@ corrupted after it is written.
 normalization and no added trailing newline. A consumer that normalizes the
 prompt before hashing it gets a different value.
 
-The first fifteen columns identify the task and support selection, review, and
-reporting. The answer columns hold the gold answer, scoring fields, and answer
-evidence. `prompt` is the only LLM-facing column; every other column stays out
-of the LLM model input.
+The columns before `gold_answer_json` identify the task, the answer space, and
+the fields selection, review, and reporting need. The answer columns hold the
+gold answer, scoring fields, and answer evidence. `prompt` is the only
+LLM-facing column; every other column stays out of the LLM model input.
 
 `answer_sha256` is computed by
 [`03b` construct task definitions](../implementation/pipeline/03-task-generation/03b-construct-task-definitions.md)
@@ -138,17 +139,27 @@ a changed answer column and two serializers that drifted. `release_table_sha256`
 protects the exported bytes, and `answer_sha256` identifies the answer across
 releases.
 
-Question text, task clues, choices, and the answer instruction are not
-duplicated as separate columns. They are part of `prompt`, which is the exact
+Question text, task clues, choice descriptions, and the answer instruction are
+not duplicated as separate columns. They are part of `prompt`, which is the exact
 LLM model input. A structured prompt record can be regenerated for audit if
-needed.
+needed. The `choices` column is not a copy of the rendered choices: it holds the
+label and the answer value, which the prompt does not state.
 
-The `prompt` column is answer-free. It must not contain the gold answer, content
-derived from the answer, hidden entity identifiers, or scoring data.
+A label is a position, not an answer. For a multiple-choice row, `gold_answer_json`
+is the label the LLM model must return, and `choices` maps every label to the
+answer value it denotes, so the answer value stays recoverable from the release.
+The distinguishing facts a description is rendered from stay in the task
+definition, because the release does not need them.
+
+The `prompt` column is answer-free. It must not contain the answer value the label
+denotes, content derived from that answer value, hidden entity identifiers, or
+scoring data. A multiple-choice label is not answer data: the prompt lists every
+label, and which one is correct is not stated.
 
 `gold_answer_json` is parsed according to `answer_format`:
 
-- multiple choice: the chosen label, as a JSON string;
+- multiple choice: the chosen label, as a JSON string. The label's answer value is
+  in `choices`;
 - number: a JSON number;
 - integer: a JSON integer;
 - yes or no: a JSON boolean;

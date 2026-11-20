@@ -102,7 +102,7 @@ its own:
 | narrowing | every clue reduces the answer candidate set |
 | necessity | removing any clue leaves at least two distinct answers (`TG-1`) |
 | answer uniqueness | every remaining candidate gives the same answer (`DS-32`) |
-| choice pool | at least five real options for multiple choice (`DS-36`) |
+| choice pool | every P0 row of the multiple-choice check list (`DS-36`) |
 | step count | the number of necessary clues plus the answer step matches the target |
 
 A chain that fails a check is recorded with its reason. It is not repaired by

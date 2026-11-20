@@ -28,7 +28,12 @@ Coverage and balance checks:
 - Check the release projection: recompute `prompt_sha256` from the `prompt`
   bytes, check `clue_types` against `clue_operand_form_profile`, parse
   `gold_answer_json` according to `answer_format`, and require `tolerance_json`
-  for every non-exact answer. `05` does not recompute `answer_sha256`;
+  for every non-exact answer. For a multiple-choice row, recheck the `choices`
+  pool: at least five entries, labels contiguous from `A` with no repeat, answer
+  values distinct under `same_answer`, `gold_answer_json` one of the labels, and
+  that label's answer value equal to the answer in `answer_evidence_json`'s
+  answer-equivalent set. Every other row has an empty `choices` pool.
+  `05` does not recompute `answer_sha256`;
   `release_table_sha256` covers the answer columns.
 - Recheck split isolation by CADEvolve program family on the final release
   table. `03a` assigns the split; `03b` stamps it; `04` carries it.

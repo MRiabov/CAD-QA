@@ -15,8 +15,8 @@ and, for multiple choice, the rendered choice set.
 - Render task clues in the definition's canonical order in P0. A seeded
   permutation that respects reference dependencies is P1; it is derived from the
   task render seed, and clue wording uses presentation positions.
-- For multiple choice, order and label the definition's choice pool. Do
-  not re-bind entities or recompute answers.
+- For multiple choice, render the definition's labeled choice pool in its
+  recorded order. Do not reorder, relabel, re-bind, or recompute.
 - For P2 multiple choice, render the validated near-miss choice pool produced by
   `03`.
 - Emit dataset release rows with the prompt and answer columns.
@@ -30,6 +30,9 @@ column, so it is written once.
 
 - Copy the definition fields unchanged, including `clue_operand_form_profile`,
   which `05` validate and export release reads for clue operand form coverage.
+- Copy the label and the answer value of every choice-pool entry into the
+  `choices` column. The descriptions stay in the prompt, and the distinguishing
+  facts stay in the definition, because the release needs neither.
 - Copy the answer text. `gold_answer`, `tolerance`, and `answer_evidence` are
   already canonical text from `03b` construct task definitions, and `04` never
   re-serializes an answer value.
@@ -50,7 +53,7 @@ decision.
 
 | Input | Role |
 |---|---|
-| `TaskDefinition` | The target, canonical clue sequence, answer, answer format, and choice pool. It carries `program_id` and `program_sha256`, not the program text. |
+| `TaskDefinition` | The target, canonical clue sequence, answer, answer format, and labeled choice pool. It carries `program_id` and `program_sha256`, not the program text. |
 | `NormalizedProgram` | The canonical program text selected by the definition's `program_sha256`. `04` does not re-normalize or reformat it. |
 | `RenderConfig` | The validated `PromptTemplateSet` (template version and file hash) and the release `RenderSeed` (a stable integer). |
 
@@ -118,6 +121,11 @@ Task quota planning is decided in `03a`. A rejection here is a defect in an earl
 pipeline stage. A missing template ID or an invalid placeholder is a defect in
 `prompts.yaml`, not a reason to reject a task; `04` stops before writing the
 release.
+
+A rendered choice block must have one line per pool entry, in the pool's order,
+with the pool's labels. A block that does not is a defect in the template or the
+renderer, and `04` stops before writing the release. It does not reorder, relabel,
+or drop an entry to make the block fit.
 
 ## Not here
 

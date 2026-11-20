@@ -13,7 +13,7 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 7 open entries: 2 P0 technical and 5 P1 technical. No product
+There are 6 open entries: 1 P0 technical and 5 P1 technical. No product
 decision remains open, and P2 is empty.
 
 ## Decisions needed from the owner
@@ -30,22 +30,8 @@ None.
 
 Work order:
 
-1. `MC-15` — multiple-choice fairness; the choice check.
-2. `MC-41` — the construction test contract; it locks the invariants the other
+1. `MC-41` — the construction test contract; it locks the invariants the other
    entries introduce.
-
-#### MC-15 — Multiple-choice fairness checks
-
-P0 multiple-choice fairness checks are missing: the correct choice is present,
-choices are distinct in the answer space, unit, frame, and precision match,
-descriptions do not leak the answer, and labels are deterministic. A choice pool
-of five entries can still be invalid. It absorbs `MC-24`.
-
-**Recommendation:** write one check list in `03b` construct task definitions
-when a task is built, and reuse it in `05` validate and export release when the
-release is checked; pool size is necessary but not sufficient. Define the typed
-`choice_pool` entry (candidate, distinguishing facts, and P2 error mode) at the
-same time.
 
 #### MC-41 — Construction test contract
 

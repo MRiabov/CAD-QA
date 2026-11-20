@@ -169,7 +169,8 @@ It never gives the answer, and it never explains how to find the task target.
 
 ## 7. What the prompt must not contain
 
-- The correct answer.
+- The correct answer, meaning the answer value. A multiple-choice label is not
+  answer data: every label appears in the list.
 - Any answer data or hidden field.
 - Internal identifiers.
 - The number of task reasoning steps.

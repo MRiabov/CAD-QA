@@ -610,9 +610,11 @@ prefix is `DS-`.
   draw options from the distinct answers of that set, so the options are
   comparable numbers. If fewer than five real options exist, the task is
   rejected; options are never padded.
-- **Consequences:** The option pool is a construction output, not a rendering
-  choice. `04` orders and labels it and must not re-bind or extend it. A task
-  whose penultimate set is smaller than five is a deficit, not a padded task.
+- **Consequences:** The choice pool is a construction output, not a rendering
+  choice: `03b` orders it and assigns its labels, so a multiple-choice task's
+  `gold_answer` is a label before the definition is hashed. `04` renders that
+  order and must not reorder, relabel, re-bind, or extend it. A task whose
+  penultimate set is smaller than five is a deficit, not a padded task.
 
 ## DS-37 — Clue operand form is a coverage dimension in P0
 
