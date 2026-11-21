@@ -362,7 +362,9 @@ Rules:
 - **Folder fan-out CI is P2** — a "no directory > ~10 entries" check, ratcheted down, built
   only if the tree actually needs it.
 - File length: aim small and split by responsibility. The 800-line rule is advisory here
-  ("to hell with 800 lines"), not blocking.
+  ("to hell with 800 lines"), not blocking. **Superseded 2026-11-21:** the repository gate
+  is `tools/ci_cd/file-length` (warn above 800, fail above 1,200); see
+  [`docs/dataset/implementation/file-trees.md`](../../docs/dataset/implementation/file-trees.md#file-length).
 - Coupling is one-way: `train_and_eval/` consumes `dataset/` outputs through the documented
   rows I/O contract (the Dataset file + answer contract) only; `dataset/` never imports
   `train_and_eval/`.

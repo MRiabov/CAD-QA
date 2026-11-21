@@ -1,0 +1,183 @@
+"""File-length gate for CAD-QA files.
+
+Run it as ``tools/ci_cd/file-length`` (or
+``uv run python tools/ci_cd/check_file_length.py``). The rule lives in
+``docs/dataset/implementation/file-trees.md``: a file over 800 physical lines
+is a warning, and a file over 1,200 lines fails the check. The scan covers
+``.go``, ``.md``, ``.py``, ``.yaml``, and ``.yml`` files under the repository
+root; caches, build output, run data, vendored agent skills, and worktrees are
+skipped.
+
+``EXEMPTIONS`` is the escape hatch for generated code. Every entry carries a
+written reason; it is not a way to keep a file that grew past the ceiling.
+"""
+
+from __future__ import annotations
+
+import argparse
+import logging
+import os
+from collections.abc import Sequence
+from enum import StrEnum
+from pathlib import Path
+
+from pydantic import BaseModel, ConfigDict, Field
+
+logger = logging.getLogger("cadqa.check_file_length")
+
+REPO = Path(__file__).resolve().parents[2]
+WARN_LINES = 800
+MAX_LINES = 1200
+SCAN_SUFFIXES = frozenset({".go", ".md", ".py", ".yaml", ".yml"})
+SKIP_DIRS = frozenset(
+    {
+        ".agents",
+        ".git",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".venv",
+        ".worktrees",
+        "__pycache__",
+        "_archive",
+        "_audit",
+        "data",
+        "dist",
+        "node_modules",
+        "runs",
+    }
+)
+
+
+class Severity(StrEnum):
+    WARNING = "warning"
+    ERROR = "error"
+
+
+class Exemption(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    path: str = Field(min_length=1, description="Repository-relative path or glob.")
+    reason: str = Field(min_length=1)
+
+
+EXEMPTIONS: tuple[Exemption, ...] = ()
+
+
+class Finding(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    path: Path
+    lines: int = Field(ge=0)
+    severity: Severity
+
+
+class Report(BaseModel):
+    checked: int = Field(ge=0)
+    findings: list[Finding] = Field(default_factory=list)
+
+    @property
+    def errors(self) -> list[Finding]:
+        return [f for f in self.findings if f.severity is Severity.ERROR]
+
+    @property
+    def warnings(self) -> list[Finding]:
+        return [f for f in self.findings if f.severity is Severity.WARNING]
+
+
+def count_lines(path: Path) -> int:
+    """Count physical lines, including a final line without a newline."""
+    data = path.read_bytes()
+    if not data:
+        return 0
+    return data.count(b"\n") + (0 if data.endswith(b"\n") else 1)
+
+
+def iter_files(root: Path) -> list[Path]:
+    files: list[Path] = []
+    for directory, dirnames, filenames in os.walk(root):
+        dirnames[:] = sorted(name for name in dirnames if name not in SKIP_DIRS)
+        for name in sorted(filenames):
+            path = Path(directory) / name
+            if path.suffix in SCAN_SUFFIXES:
+                files.append(path)
+    return files
+
+
+def is_exempt(relative: Path, exemptions: Sequence[Exemption]) -> bool:
+    text = relative.as_posix()
+    return any(Path(text).match(entry.path) for entry in exemptions)
+
+
+def scan(
+    root: Path = REPO,
+    *,
+    warn: int = WARN_LINES,
+    max_lines: int = MAX_LINES,
+    exemptions: Sequence[Exemption] = EXEMPTIONS,
+) -> Report:
+    if warn >= max_lines:
+        raise ValueError(f"warn limit {warn} must be below ceiling {max_lines}")
+    files = iter_files(root)
+    findings: list[Finding] = []
+    for path in files:
+        relative = path.relative_to(root)
+        if is_exempt(relative, exemptions):
+            continue
+        lines = count_lines(path)
+        if lines > max_lines:
+            findings.append(
+                Finding(path=relative, lines=lines, severity=Severity.ERROR)
+            )
+        elif lines > warn:
+            findings.append(
+                Finding(path=relative, lines=lines, severity=Severity.WARNING)
+            )
+    findings.sort(key=lambda finding: (-finding.lines, str(finding.path)))
+    return Report(checked=len(files), findings=findings)
+
+
+def main(argv: list[str] | None = None) -> int:
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    parser = argparse.ArgumentParser(
+        description="Fail on code modules over the line-length ceiling."
+    )
+    parser.add_argument("--root", type=Path, default=REPO)
+    parser.add_argument("--quiet", action="store_true")
+    args = parser.parse_args(argv)
+
+    report = scan(args.root)
+    for finding in report.findings:
+        if finding.severity is Severity.ERROR:
+            logger.error(
+                "%s: %d lines > %d-line ceiling; split the file",
+                finding.path,
+                finding.lines,
+                MAX_LINES,
+            )
+        else:
+            logger.warning(
+                "%s: %d lines > %d-line warning; split it by responsibility",
+                finding.path,
+                finding.lines,
+                WARN_LINES,
+            )
+
+    if report.errors:
+        logger.error(
+            "check_file_length: %d file(s) over %d lines",
+            len(report.errors),
+            MAX_LINES,
+        )
+        return 1
+    if not args.quiet:
+        logger.info(
+            "check_file_length: %d file(s) checked, %d warning(s)",
+            report.checked,
+            len(report.warnings),
+        )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

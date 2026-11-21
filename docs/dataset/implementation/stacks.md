@@ -26,12 +26,17 @@ wired and what is still a TODO.
 | Python | `ruff check --fix` | wired |
 | Python | `pyrefly check` | wired on the manual stage; promote to pre-commit when the old tree is removed |
 | Lockfile | `uv lock --check` | wired |
+| Repository | `file-length` (warn above 800 lines, fail above 1,200) | wired |
 | Go | `gofumpt` | `missing` — TODO; `generator/` exists, so this can be wired |
 | Go | `goimports` | `missing` — TODO; `generator/` exists, so this can be wired |
 | Go | `golangci-lint` | `missing` — TODO; `generator/` exists, so this can be wired |
 
 `pytest` is not a pre-commit hook. It stays the test gate, because running the
 full suite on every commit is slower than the commit cycle allows.
+
+The file-length hook is a whole-repository scan, so it runs when a `.go` or
+`.py` file changes. Its policy is in
+[`file-trees.md`](file-trees.md#file-length).
 
 Run the hooks through `uv run pre-commit`. The pyrefly hook uses
 `language: system`, so it resolves the project environment instead of installing

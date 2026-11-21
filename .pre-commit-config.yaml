@@ -9,6 +9,10 @@
 # TODO(go): add gofumpt, goimports, and golangci-lint; generator/ exists, so they
 # can be wired. The hook set and its status are declared in
 # docs/dataset/implementation/stacks.md#pre-commit.
+#
+# Vendored agent skills under .agents/ are third-party material, so every hook
+# excludes them.
+exclude: ^\.agents/
 repos:
   - repo: https://github.com/rvben/rumdl-pre-commit
     rev: v0.3.5
@@ -38,7 +42,15 @@ repos:
         language: system
         pass_filenames: false
         files: ^(pyproject\.toml|uv\.lock)$
-      # Whole-repository scan (~1s), so it runs only when a scanned file changes.
+      # Both are whole-repository scans (~1s), so each runs only when a scanned
+      # file changes.
+      - id: file-length
+        name: File length (warn 800, fail 1,200)
+        entry: tools/ci_cd/file-length
+        language: system
+        pass_filenames: false
+        verbose: true
+        files: \.(go|md|py|ya?ml)$
       - id: dont-say
         name: Don't-say terms
         entry: tools/ci_cd/dont-say --ratchet tools/ci_cd/dont_say_baseline.txt

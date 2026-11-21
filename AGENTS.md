@@ -45,6 +45,7 @@ Run from the repository root unless stated:
 (cd generator && go test -count=1 ./...)
 uv run pytest -q
 uv run rumdl check docs
+tools/ci_cd/file-length
 tools/ci_cd/dont-say --ratchet tools/ci_cd/dont_say_baseline.txt
 uv run pre-commit run --all-files   # after `uv run pre-commit install`
 ```
@@ -52,6 +53,10 @@ uv run pre-commit run --all-files   # after `uv run pre-commit install`
 `go test -count=1` disables the test cache because the policy-loader tests read
 the root `balance.yaml` and `checks.yaml` by path. `tests/` holds the document,
 contract, and golden-record tests; Go packages keep their tests beside the code.
+
+The file-length gate warns above 800 lines and exits non-zero above 1,200; its
+policy is in
+[`docs/dataset/implementation/file-trees.md`](docs/dataset/implementation/file-trees.md#file-length).
 
 The Don't-say ratchet only improves. A change that lowers the hit count must
 lower `tools/ci_cd/dont_say_baseline.txt` in the same commit; never raise the

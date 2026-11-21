@@ -24,6 +24,19 @@ terms every code name spells out.
 6. Artifacts are written under a run directory given on the command line.
    `data/` and `runs/` are gitignored; no artifact is committed.
 
+## File length
+
+A file stays under 800 lines. A file over 800 lines is a warning: split it by
+responsibility. A file over 1,200 lines fails the `file-length` pre-commit hook.
+The hook scans `.go`, `.md`, `.py`, `.yaml`, and `.yml` files across the
+repository and counts physical lines; caches, `data/`, `runs/`, `dist/`,
+`_archive/`, `.agents/`, and worktrees are skipped. Run it directly with
+`tools/ci_cd/file-length`.
+
+`tools/ci_cd/check_file_length.py` holds the exemption list. An entry names a
+path or glob and a written reason, and it is for generated code only; a file
+that grew past the ceiling is split, not exempted.
+
 `internal/run/` is the orchestrator, not a pipeline stage package; it is the one
 exception to rule 2. It owns the run lock, pipeline stage selection, and the exit
 codes, and it calls the shared cache, manifest, and writer. A pipeline stage
