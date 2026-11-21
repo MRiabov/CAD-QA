@@ -25,6 +25,7 @@ between pipeline stages is
 | [`prompt-templates.md`](prompt-templates.md) | The root `prompts.yaml` artifact and its schema: template IDs, typed placeholders, label tables, variants, and validation. |
 | [`python-and-golang.md`](python-and-golang.md) | The Python and Go language boundary. |
 | [`file-trees.md`](file-trees.md) | Where the replacement generator's code, tests, fixtures, and config live. |
+| [`stacks.md`](stacks.md) | Declared Python and Go toolchains and libraries. |
 | [`open-questions.md`](open-questions.md) | Centralized inventory of unresolved questions across pipeline docs. |
 | [`missing-contracts.md`](missing-contracts.md) | Ephemeral audit backlog of absent contracts by priority and decision owner. |
 | [`pipeline/testing/`](pipeline/testing/README.md) | Per-pipeline-stage test contracts and end-to-end tests. |

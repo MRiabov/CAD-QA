@@ -21,8 +21,8 @@ data = [
 ]
 dev = [
     "hypothesis>=6.170",
-    "mypy>=2.4",
     "pre-commit>=4.7",
+    "pyrefly>=1.4",
     "pytest>=9.2",
     "pytest-cov>=7.1",
     "pytest-xdist>=3.8.0",
@@ -58,12 +58,16 @@ packages = ["cadqa_dataset_generator"]
 testpaths = ["tests"]
 pythonpath = ["."]
 
+[tool.pyrefly]
+preset = "strict"
+python-version = "3.12"
+
 [dependency-groups]
 dev = [
     "hypothesis>=6.170",
     "hf>=1.33",
-    "mypy>=2.4",
     "pre-commit>=4.7",
+    "pyrefly>=1.4",
     "pytest>=9.2",
     "pytest-cov>=7.1",
     "pytest-xdist>=3.8.0",

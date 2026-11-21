@@ -347,7 +347,8 @@ prefix is `DS-`.
   Python program normalization. The CLI, orchestration, manifests, graph
   assembly, task enumeration, prompt and choice rendering, task quota planning,
   validation, and export are Go. The boundary is defined in
-  `implementation/python-and-golang.md`.
+  `implementation/python-and-golang.md`; the declared libraries and toolchains
+  are in `implementation/stacks.md`.
 - **Consequences:** The Go entry point invokes Python workers through typed,
   versioned artifacts. Go code does not import CadQuery or OCP. Python code does
   not own release state. New Python code outside the allowed list needs a
@@ -863,3 +864,52 @@ prefix is `DS-`.
 - **Consequences:** A policy file with an unknown key is a load error, not a
   silently ignored setting. Python keeps `PyYAML` for `prompts.yaml`; the two
   languages do not share a YAML loader.
+
+## DS-47 — Go uses the standard CLI and a strict lint stack
+
+- **Status:** accepted (2026-11-20; renumbered 2026-11-21 when `main` claimed
+  `DS-44` and `DS-45`).
+- **Context:** `DS-22` makes Go the default and `stacks.md` declares its
+  libraries. The generator has one command with one subcommand per pipeline stage
+  and a few global flags; it does not need generated shell completion or a nested
+  command tree. YAML decoding is decided separately in `DS-46`, which `main`
+  accepted with the first Go package, so this decision does not restate it. The
+  owner prefers the strictest linters that are fast and can rewrite files, as
+  `ruff` and `rumdl` do for Python and Markdown.
+- **Decision:** The Go module is `github.com/MRiabov/CAD-QA/generator` on Go
+  1.27.4, the latest stable release. The CLI uses the standard `flag` package with
+  one `flag.FlagSet` per pipeline stage and no third-party CLI framework.
+  Formatting is `gofumpt` and `goimports`; linting and static analysis are
+  `golangci-lint`, configured with `staticcheck`, `govet`, `errcheck`, `revive`,
+  `gocritic`, `errorlint`, `nilerr`, `exhaustive`, `prealloc`, `unparam`,
+  `unused`, `ineffassign`, `misspell`, `forbidigo`, and `depguard`.
+- **Consequences:** A CLI framework returns only if nested subcommands or
+  generated completion become a real requirement. `go vet` runs through
+  `golangci-lint`, so a separate vet invocation is optional. Tool versions are
+  pinned with `go.mod` `tool` directives. The Go hooks are declared in
+  `stacks.md` but not yet wired in `.pre-commit-config.yaml`; that is a recorded
+  gap, not a decision.
+
+## DS-48 — Python type checking uses Pyrefly
+
+- **Status:** accepted (2026-11-20; renumbered 2026-11-21 when `main` claimed
+  `DS-44` and `DS-45`).
+- **Context:** `pyproject.toml` declared mypy, but no mypy configuration or hook
+  existed, and the owner prefers the fast Rust type checkers. `ty` is still beta
+  and uses `0.0.x` versioning; `pyrefly` is stable at 1.x, understands Pydantic,
+  and ships an official pre-commit hook. Pyrefly recommends `preset = "strict"`
+  for most projects. `preset = "all"` enables every error kind, including new and
+  low-signal checks, and is an audit mode rather than a default; on the old tree
+  it reports 7,750 findings against 379 under `strict`. The old tree is
+  superseded, but that is not a reason to adopt an unrecommended preset.
+- **Decision:** Python type checking uses `pyrefly` with `preset = "strict"` and
+  `python-version = "3.12"` in `pyproject.toml`. Mypy is removed from the dev
+  dependencies. The pre-commit hook is installed on the manual stage until the
+  old tree is removed; removing its `stages` line promotes it to a blocking
+  hook.
+- **Consequences:** `uv run pyrefly check` is the static-check command. New
+  Python code is checked against the strict preset when the hook runs, but a
+  finding does not block a commit until the manual stage is promoted.
+  `preset = "all"` remains available as a one-off audit, not the project setting.
+  `ty` returns if Pyrefly's diagnostics or performance become a measured
+  problem.

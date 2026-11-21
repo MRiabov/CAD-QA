@@ -253,6 +253,11 @@ P0/P1 commitment.
   `docs/` and `plans/`). Run `uv run rumdl check` to report, or
   `uv run rumdl fmt` to fix. Wired into pre-commit (`.pre-commit-config.yaml`); enable it
   once with `uv run pre-commit install`.
+- **Python and Go hooks.** `ruff format` and `ruff check --fix` are wired.
+  `pyrefly` is wired on the manual stage until the old Python tree is removed. The Go
+  hooks (`gofumpt`, `goimports`, `golangci-lint`) are declared as TODOs in
+  [`dataset/implementation/stacks.md`](dataset/implementation/stacks.md#pre-commit);
+  `generator/` exists, but the hooks are not wired yet.
 - **Not implemented yet:** the docs-structure / decisions linters, and CI wiring. See
   `development-plan.md`.
 

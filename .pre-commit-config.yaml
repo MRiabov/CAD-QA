@@ -3,6 +3,12 @@
 #
 # The rumdl hook lints Markdown against .rumdl.toml and fails on violations;
 # add `args: [--fix]` (or use the `rumdl-fmt` hook) to rewrite files in place.
+#
+# Pyrefly runs on the manual stage until the old Python tree is removed.
+# Remove the `stages` line to make it a blocking pre-commit hook.
+# TODO(go): add gofumpt, goimports, and golangci-lint; generator/ exists, so they
+# can be wired. The hook set and its status are declared in
+# docs/dataset/implementation/stacks.md#pre-commit.
 repos:
   - repo: https://github.com/rvben/rumdl-pre-commit
     rev: v0.3.5
@@ -10,8 +16,28 @@ repos:
       - id: rumdl
         args: [--config=.rumdl.toml]
         files: ^(docs/|plans/)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.6
+    hooks:
+      - id: ruff-format
+      - id: ruff-check
+        args: [--fix]
+  - repo: https://github.com/facebook/pyrefly-pre-commit
+    rev: 1.4.1
+    hooks:
+      - id: pyrefly-check
+        name: Pyrefly (type checking)
+        pass_filenames: false
+        language: system
+        stages: [manual]
   - repo: local
     hooks:
+      - id: uv-lock
+        name: uv lock --check
+        entry: uv lock --check
+        language: system
+        pass_filenames: false
+        files: ^(pyproject\.toml|uv\.lock)$
       # Whole-repository scan (~1s), so it runs only when a scanned file changes.
       - id: dont-say
         name: Don't-say terms

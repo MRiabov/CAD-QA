@@ -25,53 +25,27 @@ of these exceptions.
 Pipeline stage contracts are language-agnostic. The language boundary does not
 change their models.
 
-## Libraries
+## Libraries and toolchains
 
-One library per job. A second Parquet or UUID library is a defect, not a
-preference.
+The concrete Python and Go libraries, toolchain versions, and open library
+questions are in [`stacks.md`](stacks.md). This document decides which language
+owns work, not which library it imports.
 
-### Go
+`DS-22` limits Python to work that needs Python execution semantics. The stack
+document lists what that work may import; it is not a general permission for new
+Python code.
 
-| Need | Library | Status |
-|---|---|---|
-| Parquet read and write | `github.com/parquet-go/parquet-go` | decided, `DS-40` |
-| Graph-local IDs | `github.com/google/uuid` | decided, `DS-40` |
-| YAML policy files | `gopkg.in/yaml.v3` | decided, `DS-46` |
-| Logging | `log/slog` | standard library |
-| CLI, processes, cancellation | `flag`, `os/exec`, `context` | standard library |
+The Go module and its shared package exist under `generator/`; pipeline stage
+code lands one pipeline stage at a time. Go reads the YAML policy files
+(`balance.yaml`, `checks.yaml`, `tolerance.yaml`) with `gopkg.in/yaml.v3`
+(`DS-46`); Python keeps `PyYAML` for `prompts.yaml`.
 
-No other Go dependency is decided. Add one with a decision, not with an import.
-The Go module and the shared package exist; pipeline stage code lands one
-pipeline stage at a time.
+## JSON at the boundary
 
-### Python
-
-| Need | Library | Status |
-|---|---|---|
-| Parquet read and write | `pyarrow` (`>=25.0`) | in use |
-| Columnar analysis | `polars` | in use, never on the graph path (`DS-41`) |
-| Typed models | `pydantic` | in use in `train_and_eval` |
-| JSON | `orjson` | decided, not yet in use |
-| Prompt templates | `PyYAML` | in use |
-| CAD execution | `cadquery`, `OCP` | `02b` only |
-| Program AST and tokens | `ast`, `tokenize` | `01d` and `02a` only |
-
-`DS-22` limits Python to work that needs Python execution semantics. The table
-lists what that work may import; it is not a general permission for new Python
-code.
-
-JSON is `orjson` in Python and `encoding/json` in Go. `orjson` returns bytes
-and sorts keys with `OPT_SORT_KEYS`; the canonical definition serialization in
-`03b` construct task definitions depends on both. Go disables HTML escaping so
-the two encoders agree on `<`, `>`, and `&`.
-
-`msgspec` is the other candidate and is faster when decoding straight into typed
-records. It is not chosen: it would add a second typed-record system beside
-Pydantic, and Pydantic v2 already decodes JSON into typed models through
-`pydantic-core`. JSON is not on the bulk path either — the graph and the release
-are Parquet — so this is an API decision, not a performance one. `orjson` does
-one job, and it has no `default` hook, so a caller cannot encode a typed record
-without dumping it through the schema first.
+The encoders are `orjson` in Python and `encoding/json` in Go; both are declared
+in [`stacks.md`](stacks.md). Both languages produce the same canonical
+definition bytes for `03b` construct task definitions: sorted keys, raw UTF-8, no
+HTML escaping, and no binary floats. `03b` owns the exact serialization rule.
 
 ## Parquet at the boundary
 
