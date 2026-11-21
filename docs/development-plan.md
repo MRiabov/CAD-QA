@@ -19,6 +19,11 @@ BenchCAD (H3, P1); and, as a P2 stretch, a tuned model that beats its teacher on
 - Every result names its environment pin, seed, dataset revision, and exact command.
 - Every LLM model call records reasoning, output, and tool call distinctly.
 
+**Phases and priorities are different axes.** `Phase 0`–`Phase 6` are the
+schedule. `P0`–`P2` are requirement scopes; in the dataset they are also the
+implementation order (`DS-18`), and the generator's work items are numbered by
+them (`P0-W1` and so on). They are different number spaces.
+
 ## Phase 0 — Trust audit (no GPU) [P0]
 
 Establish what the code actually does, so later numbers are trustworthy. The owner-facing
@@ -61,21 +66,15 @@ Phase 3 design.
 **Pass condition:** immutable test set with group-safe splits; the `benchmark-release` report's failing
 gates are recorded as known limitations.
 
-Phase 1 is built in seven sub-phases. The detail, the contract mapping, and the
-exit criteria are in
+Phase 1 implements the dataset requirement scope in priority order. The ordered
+work lists, exit criteria, and the requirement-to-item mapping are in
 [`plans/nov-21/dataset-implementation-plan.md`](../plans/nov-21/dataset-implementation-plan.md).
 
-| Sub-phase | Completes |
-|---|---|
-| `Phase 1a` | Contract close-out: the four contracts that must exist before code. |
-| `Phase 1b` | Walking skeleton: one program produces one release row through every pipeline stage. |
-| `Phase 1c` | Extraction and execution depth: AST, CadQuery runtime, CAD graph, capability census. |
-| `Phase 1d` | Task construction depth: clue search and the P0 vocabulary. |
-| `Phase 1e` | Quotas and deficits: `03a` and `03c`. |
-| `Phase 1f` | Rendering, validation, and the release-facing contracts: `04`, `05`, the grader, the review pack. |
-| `Phase 1g` | First real release. |
-
-`Phase 1c` and `Phase 1d` run concurrently.
+- The `P0` list ends with the first real release: task reasoning steps 1–5, the
+  P0 vocabulary, and the P0 checks.
+- The `P1` list adds the 6–10 tiers behind the section 6.1 release gate, the
+  transfer benchmark set, cumulative split preservation, the P1 balance bounds,
+  and publication.
 
 ## Phase 2 — Refresh baselines [P1; `no_tools`/`cadquery` P2]
 

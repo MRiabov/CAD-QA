@@ -684,8 +684,9 @@ Blocks: `01b`, `02c`, `03a`, `03b`, and `03c`.
 ## Milestones
 
 These are `03b-M1`–`03b-M5`: milestones local to `03b`. They are not project
-phases. The build order, and where each of these lands, is
-[`plans/nov-21/dataset-implementation-plan.md`](../../plans/nov-21/dataset-implementation-plan.md#phases).
+phases and not `P0` work items. The build order, and where each of these lands,
+is
+[`plans/nov-21/dataset-implementation-plan.md`](../../plans/nov-21/dataset-implementation-plan.md#p0-work-list).
 
 **`03b-M1` — plumbing.** One program, final solid state, target = solid state,
 answer = volume, format = number, one step. This proves graph → possible answers
