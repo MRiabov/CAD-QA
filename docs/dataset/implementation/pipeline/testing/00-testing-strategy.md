@@ -113,6 +113,12 @@ uv run pytest -q
 files by path. A pipeline stage is accepted only when its contract test and the
 end-to-end test pass.
 
+A component's tests live with the language that implements it: Go stages in
+`go test`, the `01d`/`02a`/`02b` Python workers and the repository tools in
+pytest. Root policy data is checked where its loader lives, so `checks.yaml`,
+`balance.yaml`, and `tolerance.yaml` are Go tests; `prompts.yaml` and the golden
+records move to Go when `04` and `03b` land.
+
 ## What this does not prove
 
 - That the release is balanced. That is the check policy in
