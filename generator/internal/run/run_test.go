@@ -5,6 +5,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -198,5 +199,68 @@ func TestSplitForce(t *testing.T) {
 	got := splitForce("01a-read-cadevolve-metadata, 02b-execute-cadquery")
 	if len(got) != 2 || got[0] != "01a-read-cadevolve-metadata" || got[1] != "02b-execute-cadquery" {
 		t.Fatalf("splitForce = %v", got)
+	}
+}
+
+func TestStageConcurrencyCapsShardedStages(t *testing.T) {
+	options := RunOptions{Jobs: 8, ShardCount: 3}
+	if got := options.StageConcurrency("01d-normalize-programs"); got != 3 {
+		t.Fatalf("01d concurrency = %d, want 3", got)
+	}
+	if got := options.StageConcurrency("01c-fetch-program-pool"); got != 8 {
+		t.Fatalf("01c concurrency = %d, want 8", got)
+	}
+}
+
+func TestStageConcurrencyUsesCPUWhenJobsIsZero(t *testing.T) {
+	options := RunOptions{ShardCount: 16}
+	if got := options.StageConcurrency("01c-fetch-program-pool"); got != runtime.NumCPU() {
+		t.Fatalf("01c concurrency = %d, want %d", got, runtime.NumCPU())
+	}
+}
+
+func TestMemoryBoundJobs(t *testing.T) {
+	const (
+		gib = int64(1 << 30)
+		mib = int64(1 << 20)
+	)
+	if got := MemoryBoundJobs(16*gib, 2*gib, 451*mib); got != 6 {
+		t.Fatalf("memory-bound jobs = %d, want 6", got)
+	}
+	if got := MemoryBoundJobs(1*gib, 2*gib, 451*mib); got != 0 {
+		t.Fatalf("memory-bound jobs = %d, want 0", got)
+	}
+}
+
+func TestRunRejectsInvalidShardCount(t *testing.T) {
+	args := append(baseRunArgs(), "--shard-count", "0")
+	var stdout, stderr bytes.Buffer
+	code := Main(context.Background(), args, &stdout, &stderr)
+	if code != ExitUsage {
+		t.Fatalf("exit code = %d, want %d", code, ExitUsage)
+	}
+	if !strings.Contains(stderr.String(), "--shard-count") {
+		t.Fatalf("stderr = %q", stderr.String())
+	}
+}
+
+func TestRunRejectsNegativeJobs(t *testing.T) {
+	args := append(baseRunArgs(), "--jobs", "-1")
+	var stdout, stderr bytes.Buffer
+	code := Main(context.Background(), args, &stdout, &stderr)
+	if code != ExitUsage {
+		t.Fatalf("exit code = %d, want %d", code, ExitUsage)
+	}
+	if !strings.Contains(stderr.String(), "--jobs") {
+		t.Fatalf("stderr = %q", stderr.String())
+	}
+}
+
+func TestRunAcceptsJobsAndShardCount(t *testing.T) {
+	args := append(fullRunArgs(), "--jobs", "2", "--shard-count", "4")
+	var stdout, stderr bytes.Buffer
+	code := Main(context.Background(), args, &stdout, &stderr)
+	if code != ExitBlocked {
+		t.Fatalf("exit code = %d, want %d (stderr: %s)", code, ExitBlocked, stderr.String())
 	}
 }

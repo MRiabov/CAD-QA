@@ -13,6 +13,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"slices"
 	"strings"
 	"time"
@@ -29,6 +30,10 @@ const (
 	ExitUsage       = 2
 	ExitInterrupted = 130
 )
+
+// DefaultShardCount is the journal shard count used when --shard-count is not
+// set. A sharded pipeline stage runs at most one pass per shard.
+const DefaultShardCount = 16
 
 // SelectablePipelineStages is the linear pass. 03c resolve deficits is a
 // controller inside 03 and is not selected by --from or --to.
@@ -62,6 +67,18 @@ var AllPipelineStages = []string{
 	"03c-resolve-deficits",
 	"04-render-prompt-and-choices",
 	"05-validate-and-export-release",
+}
+
+// ShardedPipelineStages are the pipeline stages whose pass is one journal
+// shard. A sharded stage runs at most one pass per shard, so the journal shard
+// count is also its concurrency ceiling.
+var ShardedPipelineStages = map[string]bool{
+	"01d-normalize-programs":         true,
+	"02a-extract-cadquery-ast":       true,
+	"02b-execute-cadquery":           true,
+	"02c-build-cad-graph":            true,
+	"03b-construct-task-definitions": true,
+	"04-render-prompt-and-choices":   true,
 }
 
 // Scope is the declared implementation scope.
@@ -105,6 +122,7 @@ type RunOptions struct {
 	To                        string
 	Force                     []string
 	Jobs                      int
+	ShardCount                int
 	FlushInterval             time.Duration
 	FlushRows                 int64
 	CacheDir                  string
@@ -249,6 +267,9 @@ func (o RunOptions) Validate() error {
 	if o.Jobs < 0 {
 		return &UsageError{Message: fmt.Sprintf("--jobs is %d, minimum is 0", o.Jobs)}
 	}
+	if o.ShardCount < 1 {
+		return &UsageError{Message: fmt.Sprintf("--shard-count is %d, minimum is 1", o.ShardCount)}
+	}
 	if o.FlushInterval <= 0 {
 		return &UsageError{Message: fmt.Sprintf("--flush-interval is %s, must be positive", o.FlushInterval)}
 	}
@@ -263,6 +284,39 @@ func (o RunOptions) Validate() error {
 		}
 	}
 	return nil
+}
+
+// StageConcurrency returns the number of concurrent passes for one pipeline
+// stage. A non-positive Jobs selects the host's logical CPU count. A sharded
+// stage is capped by the journal shard count. The 02b caller applies
+// MemoryBoundJobs as an additional cap.
+func (o RunOptions) StageConcurrency(stage string) int {
+	jobs := o.Jobs
+	if jobs <= 0 {
+		jobs = runtime.NumCPU()
+	}
+	shardCount := o.ShardCount
+	if shardCount <= 0 {
+		shardCount = DefaultShardCount
+	}
+	if ShardedPipelineStages[stage] && shardCount < jobs {
+		jobs = shardCount
+	}
+	return jobs
+}
+
+// MemoryBoundJobs returns how many 02b children fit in available memory:
+// floor(available / (memory_limit + worker_resident)). A zero result means no
+// child fits; the caller blocks instead of starting the stage.
+func MemoryBoundJobs(availableMemory, memoryLimit, workerResident int64) int {
+	if availableMemory <= 0 {
+		return 0
+	}
+	perChild := memoryLimit + workerResident
+	if perChild <= 0 {
+		return 0
+	}
+	return int(availableMemory / perChild)
 }
 
 // Selects reports whether the run range includes one selectable stage.
@@ -338,6 +392,8 @@ func runCommand(ctx context.Context, args []string, stderr io.Writer) int {
 		Checks:          "checks.yaml",
 		Prompts:         "prompts.yaml",
 		TolerancePolicy: "tolerance.yaml",
+		Jobs:            runtime.NumCPU(),
+		ShardCount:      DefaultShardCount,
 		FlushInterval:   30 * time.Second,
 		FlushRows:       10000,
 		LogLevel:        LogLevelInfo,
@@ -364,7 +420,8 @@ func runCommand(ctx context.Context, args []string, stderr io.Writer) int {
 	flags.StringVar(&options.From, "from", "", "first pipeline stage doc stem")
 	flags.StringVar(&options.To, "to", "", "last pipeline stage doc stem")
 	flags.StringVar(&force, "force", "", "comma-separated pipeline stage stems or all")
-	flags.IntVar(&options.Jobs, "jobs", 0, "worker count; 0 selects the memory-bounded default")
+	flags.IntVar(&options.Jobs, "jobs", options.Jobs, "maximum concurrent passes")
+	flags.IntVar(&options.ShardCount, "shard-count", options.ShardCount, "journal shards; a sharded pipeline stage runs at most one pass per shard")
 	flags.DurationVar(&options.FlushInterval, "flush-interval", options.FlushInterval, "maximum interval between Parquet commits")
 	flags.Int64Var(&options.FlushRows, "flush-rows", options.FlushRows, "maximum rows between Parquet commits")
 	flags.StringVar(&options.CacheDir, "cache-dir", "", "shared cache directory")
