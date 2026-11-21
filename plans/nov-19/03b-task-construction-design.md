@@ -683,6 +683,11 @@ Blocks: `01b`, `02c`, `03a`, `03b`, and `03c`.
 
 ## Milestones
 
+These are **construction milestones**: the internal development sequence of
+`03b`. They are not the generator milestones. The generator build order, and
+where each of these lands, is
+[`plans/nov-21/dataset-implementation-plan.md`](../../plans/nov-21/dataset-implementation-plan.md#milestones).
+
 **Plumbing milestone.** One program, final solid state, target = solid state,
 answer = volume, format = number, one step. This proves graph → possible answers
 → answer resolver → `TaskDefinition` → render → release row. No clue search yet.

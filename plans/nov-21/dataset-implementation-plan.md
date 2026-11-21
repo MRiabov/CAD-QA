@@ -58,6 +58,20 @@ from a handful of programs.
 `M2` and `M3` are the only concurrent pair. Start `M2` first and `M3` roughly a
 week later, so `02c`'s schema is real before `03b` depends on it.
 
+`M#` is a **generator milestone**: one checkpoint in building the generator. The
+five **construction milestones** in
+[`plans/nov-19/03b-task-construction-design.md`](../nov-19/03b-task-construction-design.md#milestones)
+are a separate, finer series inside `03b`, and the plan names them explicitly
+where it schedules them:
+
+| Construction milestone | Lands in |
+|---|---|
+| plumbing | `M1` |
+| clue search | `M3` |
+| full vocabulary | `M3` |
+| scheduler | `M3` → `M4` |
+| first release | `M5` → `M6` |
+
 ## Owner verification points
 
 The owner is not in the loop for code, extraction correctness, or graph content;
@@ -157,7 +171,7 @@ to change.
   `docs/dataset/implementation/pipeline/testing/golden/box-with-hole.json`.
 - `03a` emits a one-cell plan, typed from its own doc even though the allocation
   is trivial.
-- `03b` is the plumbing milestone from
+- `03b` lands the plumbing construction milestone from
   `plans/nov-19/03b-task-construction-design.md`: final solid state target,
   volume answer, number format, one step, no clue search.
 - `04` renders from `prompts.yaml`; `05` exports `release.parquet`,
@@ -213,8 +227,9 @@ Started roughly a week after `M2`.
   family, task reasoning step count), one program pass per revision with the
   census from the plan, and count-based cover-search scope constants. These rules
   are what keep a 10,000-task release from becoming 10^5 cover searches.
-- The clue-search milestone, then the full P0 vocabulary: comparison,
-  aggregation, provenance, multiple target categories, distance, angle, region.
+- The clue-search construction milestone, then the full-vocabulary construction
+  milestone: comparison, aggregation, provenance, multiple target categories,
+  distance, angle, region.
 - Golden records per task shape, and the property tests: every accepted task is
   answer-unique under `DA-4`'s predicate, every clue narrows, and every clue is
   true of all final possible answers.
@@ -235,6 +250,9 @@ must do, and whether the vocabulary needs to shrink.
 - `03c`: the seven deficit classes, the fast loop (`03a` → `03b`), the slow loop
   (`01b` → `01c` → `01d` → `02` → `03a` → `03b`), the three-round 20% stop rule,
   and the deficit ledger.
+
+This is the scheduler construction milestone from the `03b` design doc, where
+`03b` meets `03a` and `03c`.
 
 **Pass condition.** A planned release over the real pool with counts reconciled
 at every pipeline stage, a deficit ledger, and one exercised slow-loop round.
