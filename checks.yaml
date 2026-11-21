@@ -63,14 +63,23 @@ checks:
     disposition: enforced
 
   # A policy that dropped a step count from the mix would otherwise leave no row
-  # to fail.
-  - id: step_count_range
+  # to fail. The P0 range is enforced; the P1 6-10 range is reported, because a
+  # fallback release stops at 5 when the 6-10 gate has not passed.
+  - id: step_count_range_p0
     requirement: [R-9]
     arithmetic: set_equal
     scope: release
     dimension: task_reasoning_step_count
     values: [1, 2, 3, 4, 5]
     disposition: enforced
+
+  - id: step_count_range_p1
+    requirement: [R-9]
+    arithmetic: set_equal
+    scope: release
+    dimension: task_reasoning_step_count
+    values: [6, 7, 8, 9, 10]
+    disposition: reported
 
   - id: distinct_cad_model_count
     requirement: [PRD-8, R-10]
@@ -107,6 +116,9 @@ checks:
     tolerance: release.share_tolerance
     disposition: enforced
 
+  # A P0-only fallback release sets `task_reasoning_step_share` to the
+  # `task_reasoning_step_share_p0_fallback` values; the manifest records the
+  # policy version that produced it.
   - id: step_share
     requirement: [R-9, PRD-8]
     arithmetic: share_target
@@ -116,8 +128,8 @@ checks:
     tolerance: release.share_tolerance
     disposition: enforced
 
-  # A floor, not the sum of the mix: the default mix sums to exactly 0.80, so a
-  # mix within tolerance can fall below it.
+  # A floor, not the sum of the mix: the default mix sums to 0.85, leaving five
+  # points of headroom above this floor.
   - id: steps_three_or_more_share
     requirement: [PRD-8]
     arithmetic: share_range

@@ -133,9 +133,10 @@ priming, not a generation capability. Must not leak the CAD-QA held-out programs
 
 The CAD-QA task itself: a CAD-QA dataset row → a rule-rendered prompt plus a typed `submit_*`
 answer with hop reasoning. This is the comprehension corpus and the dataset contribution; there is
-no external equivalent. Its rows carry a **hop tier** (release hops `{2,3,4,5}`; synthesis floors at
-`hop≥2`); the first run uses the low-hop end only, and later tiers are added through the measured
-advancement gate in `fine-tuning/data.md` §4.1, not by ordering a static dataset. Row generation is
+no external equivalent. Its rows carry a **hop tier** (release hops `{1..10}`; 1-step is the warmup,
+2–5 are main, and 6–10 are P1 gated); the first run uses the low-hop end only, and later tiers are
+added through the measured advancement gate in `fine-tuning/data.md` §4.1 and the 6–10 pilot, not by
+ordering a static dataset. Row generation is
 planned and owned in `../../dataset/`; the agent training trace distillation is `fine-tuning/pipeline/02-teacher-sampling.md`.
 
 | Dataset | Status |
@@ -147,7 +148,8 @@ planned and owned in `../../dataset/`; the agent training trace distillation is 
 A **Mixed training dataset** is `{dataset role → weight}`. Its recipe and weights are owned by
 `fine-tuning/data.md` §3; the two (provisional) names are `mixed_dataset_general_and_easy_cadqa`
 (first run: 70% general / 30% low-hop `learn_the_cadqa_task`) and `mixed_dataset_full_cadqa_training`
-(primary: 50/50, the task share covering the release hop tiers `{2,3,4,5}`).
+(primary: 50/50, the task share covering the release hop tiers `{1..10}`; 6–10 are added only after
+the 6–10 release gate).
 
 ## Evaluation datasets
 

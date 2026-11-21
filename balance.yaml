@@ -22,8 +22,8 @@ release:
   tasks_min: 10000
   programs_min: 1000
   built_shape_min_share: 0.95
-  # A floor, not the sum of `task_reasoning_step_share`: the default mix
-  # sums to exactly 0.80, so a mix within tolerance can fall below it.
+  # A floor, not the sum of `task_reasoning_step_share`: the default mix sums
+  # to 0.85, leaving five points of headroom above this floor.
   three_or_more_step_min_share: 0.80
   cad_model_max_share: 0.01
   # Absolute share a release may drift from `splits` and
@@ -39,7 +39,26 @@ release:
   correct_answer_max_share: 0.01
 
 # p0
+# The thesis mix. The 6-10 tail is P1: when the 6-10 gate is closed, the release
+# policy replaces this mapping with the `task_reasoning_step_share_p0_fallback`
+# values and bumps `version`.
 task_reasoning_step_share:
+  1: 0.05
+  2: 0.10
+  3: 0.30
+  4: 0.25
+  5: 0.15
+  # p1
+  6: 0.07
+  7: 0.04
+  8: 0.02
+  9: 0.01
+  10: 0.01
+
+# p0
+# The 1-5 mix used when the 6-10 gate has not passed. It is the previous
+# default, kept so a fallback release is still balanced.
+task_reasoning_step_share_p0_fallback:
   1: 0.05
   2: 0.15
   3: 0.40

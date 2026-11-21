@@ -192,6 +192,11 @@ answer step. For example:
 The step count is computed from the actual task solution sequence, not from a
 label. The lowest step count in the release is 1; there are no 0-step tasks.
 
+The thesis release targets step counts 1 through 10. Steps 1 through 5 are P0;
+steps 6 through 10 are P1 and enter the release only when the 6–10 release gate in the
+dataset PRD section 6.1 passes. If the release gate fails, the release is 1 through 5
+and every result names that range.
+
 ## 3. There are no task types or task patterns
 
 The dataset is not organized into task families, task types, or task patterns.

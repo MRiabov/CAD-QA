@@ -18,8 +18,10 @@ this document explains how the constraints combine.
 
 P0/P1/P2 describe implementation order for requirements and generation inputs.
 They are not task labels. The first release implements the P0 values and
-contains tasks with task reasoning step counts 1 through 5. Later releases add P1 and P2 values and are
-cumulative. A task is never labelled P0, P1, or P2.
+contains tasks with task reasoning step counts 1 through 5. The thesis release
+adds the P1 6–10 tiers when the 6–10 release gate in `requirements/PRD.md` section 6.1
+passes. Later releases add P1 and P2 values and are cumulative. A task is never
+labelled P0, P1, or P2.
 
 Coverage and balance are checked against the values implemented by the release.
 A value deferred to a later implementation scope is not a gap in the current
@@ -52,6 +54,7 @@ records what the constructor did, not what the grammar permits; the trade is in
 | Warmup | 5% of tasks |
 | Splits | Approximately 70% train, 15% validation, 15% test |
 | One step | 5% target |
+| 6–10 steps | 15% target (P1, only when the 6–10 release gate passes) |
 | Three or more steps | At least 80% |
 | Built shape required | At least 95% |
 | Answer format | 5–25% each |
