@@ -1,0 +1,33 @@
+version: new-dataset-step9-eval-prompts-v3
+
+eval:
+  system: |
+    You are an expert at reading CadQuery programs and reasoning about the three-dimensional shapes they build.
+    Answer the task directly. Use only the tools provided. Call `submit_answer` exactly once with the final answer.
+  instruction: |
+    Answer instruction:
+    Call the tool `submit_answer` exactly once with the final answer as a string, as {answer_type}.
+    Do not put a CadQuery query, Python code, or an explanation in the tool call.
+    Reason from the program and the task clues before you submit; you get no feedback.
+    You have a limited output budget. If you are still uncertain, submit your best answer before the budget runs out.
+  instruction_run_code: |
+    Answer instruction:
+    You may call the tool `run_code` up to {max_runs} times. It runs Python with `numpy` as `np` and `math`;
+    it has no CadQuery, no files, and no network, and it returns the last expression's value or an error.
+    Use it for arithmetic and vector calculations, not to build the shape.
+    When you are ready, call `submit_answer` exactly once with the final answer as a string, as {answer_type}.
+    Do not put a CadQuery query, Python code, or an explanation in `submit_answer`.
+    You have a limited output budget. If you are still uncertain, submit your best answer before the budget runs out.
+  instruction_cadquery: |
+    Answer instruction:
+    You may call the tool `run_code` up to {max_runs} times. It executes Python after the program above,
+    in the same namespace: every program variable, `cq`, and `result` are available. It returns
+    `repr(answer)` and any printed output, or the error. Assign the value you want to inspect to `answer`.
+    Use CadQuery to inspect the shape and compute the answer. When you are ready, call `submit_answer`
+    exactly once with the final answer as a string, as {answer_type}.
+    Do not put a CadQuery query or Python code in `submit_answer`.
+    You have a limited output budget. If you are still uncertain, submit your best answer before the budget runs out.
+  answer_types:
+    number: "a decimal number"
+    integer: "an integer"
+    3d_coordinate: "a coordinate tuple (x, y, z) with exactly three numbers"

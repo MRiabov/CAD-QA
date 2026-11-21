@@ -1,0 +1,88 @@
+version: cq-query-scratch-prompts-v1
+
+dataset:
+  task_intro: |
+    CadQuery program:
+
+    ```python
+    {program_text}```
+
+    Task:
+  segment_anchor: "Clues {first}-{last} identify one {category} of the final shape; call it {category} {label}."
+  segment_target: "Clues {first}-{last} identify the target: one {category} of the final shape."
+  segment_set: "Clues {first}-{last} describe a set of {plural} of the final shape."
+  clue_line: "{order}. {text}"
+
+  clues:
+    geom_kind: "The {category} is {kind_word}."
+    axis_parallel_face: "The face's normal is parallel to the {axis} axis."
+    axis_parallel_edge: "The edge is parallel to the {axis} axis."
+    axis_perpendicular_face: "The face's normal is perpendicular to the {axis} axis."
+    axis_perpendicular_edge: "The edge is perpendicular to the {axis} axis."
+    axis_facing: "The face's normal points in the {sign}{axis} direction."
+    threshold: "The {category}'s {measure} is {comparator} {threshold}."
+    extreme: "Among the {plural} that satisfy the previous clues of this group, the {category} has the {extreme} {measure}."
+    created_by: "The face was created by the `{method}` operation on line {line} (assigned to `{var}`)."
+    adjacent_to_anchor: "The face is adjacent to face {anchor}."
+    parallel_to_anchor: "The {category} is parallel to {anchor_category} {anchor}."
+    perpendicular_to_anchor: "The {category} is perpendicular to {anchor_category} {anchor}."
+    edge_of_anchor_face: "The edge is one of the edges of face {anchor}."
+    vertex_of_anchor_face: "The vertex is one of the vertices of face {anchor}."
+    face_has_anchor_edge: "The face has edge {anchor} as one of its edges."
+    shares_vertex_with_anchor: "The edge shares a vertex with edge {anchor}."
+    endpoint_of_anchor_edge: "The vertex is a vertex of edge {anchor}."
+    edge_has_anchor_vertex: "The edge has vertex {anchor} as one of its vertices."
+    face_has_anchor_vertex: "The face has vertex {anchor} as one of its vertices."
+    compare_to_anchor: "The {category}'s {measure} is {comparator} that of {anchor_category} {anchor}."
+
+  answers:
+    final_volume: "Report the volume of the final shape."
+    final_surface_area: "Report the total surface area of the final shape."
+    final_center: "Report the center of mass of the final shape."
+    final_face_count: "Report the number of faces of the final shape."
+    final_edge_count: "Report the number of edges of the final shape."
+    state_volume: "Report the volume of the shape produced by the `{method}` operation on line {line} (assigned to `{var}`)."
+    operation_volume_change: "Report the change in volume caused by the `{method}` operation on line {line} (assigned to `{var}`): the volume of the shape it produces minus the volume of the solid it modified."
+    operation_face_count_change: "Report the change in the number of faces caused by the `{method}` operation on line {line} (assigned to `{var}`): the face count of the shape it produces minus the face count of the solid it modified."
+    entity_area: "Report the area of the target face."
+    entity_length: "Report the length of the target edge."
+    entity_radius: "Report the radius of the target edge."
+    entity_center: "Report the center of mass of the target {category}."
+    distance_to_anchor: "Report the distance between the centers of mass of the target {category} and {anchor_category} {anchor}."
+    set_count: "Report how many {plural} satisfy clues {first}-{last}."
+
+  definitions_header: "Definitions:"
+  definitions:
+    final_shape: "- The final shape is the single solid `result.val()`. Faces, edges, and vertices are those of the final shape."
+    center_of_mass: "- Center of mass is CadQuery's `Center()`."
+    kinds: "- Surface and curve types are CadQuery `geomType()` values: planar = PLANE, cylindrical = CYLINDER, conical = CONE, spherical = SPHERE, toroidal = TORUS, a spline surface = BSPLINE; straight = LINE, circular = CIRCLE (arcs included), elliptical = ELLIPSE, a spline curve = BSPLINE."
+    direction: "- A face's normal is defined only for planar faces (`normalAt()`); an edge's direction only for straight edges. Parallel / perpendicular means the angle between the normals or directions is within 0.1 degrees of 0 / 90 degrees. Points in the +Z direction means within 0.1 degrees of +Z."
+    adjacent: "- Two faces are adjacent when they share at least one edge."
+    comparison: "- Larger / smaller / longer / shorter than a reference value v means by more than 1e-3 * max(1, |v|)."
+    modified_solid: "- The solid an operation modified is the solid its input workplane operates on (what `findSolid()` on that input returns), or none if there is no solid."
+    created_by: "- A face of the final shape was created by the operation on line N when it matches a face of the shape that line N produces and matches no face of the solid that operation modified. Two faces match when their centers of mass are within 1e-5 and their areas differ by at most 1e-6 * max(1, area)."
+
+eval:
+  system: |
+    You are an expert CadQuery engineer. You answer questions about CadQuery programs by writing a short CadQuery query that computes the answer with the CAD kernel.
+  instruction: |
+    Answer instruction:
+    Call the tool `submit_query` exactly once with Python code. The code runs after the program above, in the same namespace: every program variable, `cq`, and `result` are available. It must assign the answer to a variable named `answer`, as {answer_type}. Compute the answer with CadQuery; do not hard-code it. You cannot run code and you get no feedback.
+  instruction_agentic: |
+    Answer instruction:
+    You have two tools. `run_query` executes Python code after the program above, in the same namespace (every program variable, `cq`, and `result` are available), and returns `repr(answer)` (any type) plus anything printed, or the error. You may call it up to {max_runs} times to test and check your query. When you are confident, call `submit_query` exactly once with your final code; it must assign the answer to `answer`, as {answer_type}. Compute the answer with CadQuery; do not hard-code a value you saw in a `run_query` result.
+    Use the tools only to compute with CadQuery on this program. Do not try to escape or inspect the execution environment: no file, network, process, environment-variable, or interpreter-internals access. Such code is refused.
+  answer_types:
+    number: "a float"
+    integer: "an int"
+    3d_coordinate: "a tuple of three floats (x, y, z)"
+  cheat_sheet: |
+    CadQuery reference:
+    - `shape = result.val()` is a `cq.Solid` (or `cq.Compound`). `shape.Faces()`, `shape.Edges()`, `shape.Vertices()` list its entities; `face.Edges()`, `face.Vertices()`, `edge.Vertices()` list sub-entities.
+    - `face.geomType()` returns "PLANE", "CYLINDER", ...; `edge.geomType()` returns "LINE", "CIRCLE", ...
+    - `face.Area()`, `edge.Length()`, `edge.radius()` (circles), `shape.Volume()`, `shape.Area()`.
+    - `x.Center()` is the center of mass as a `cq.Vector`; vectors have `.x`, `.y`, `.z`, `.toTuple()`, `.Length`, `.dot(other)`, `.normalized()`, and support `a - b`.
+    - `face.normalAt()` is the normal at the face center; `edge.startPoint()`, `edge.endPoint()`.
+    - `a.isSame(b)` tests whether two entities are the same topological entity.
+    - `wp.findSolid()` returns the solid a workplane chain operates on (raises ValueError if there is none); `wp.val()` returns a workplane's first object.
+    - Workplane selector strings such as `faces(">Z")`, `edges("|Z")`, `edges("%CIRCLE")` are available but optional.

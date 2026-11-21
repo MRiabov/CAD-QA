@@ -172,7 +172,7 @@ The experiment adds one rule: the `gold_query`, executed in a fresh child proces
 
 ## Rendering (`04` rules)
 
-- **Prompt copy.** All wording lives in `experiments/cq_query_scratch/prompts.yaml`, with
+- **Prompt copy.** All wording lives in `experiments/old/cq_query_scratch/prompts.yaml`, with
   separate `dataset` and `eval` namespaces, stable template IDs, and typed placeholders. Template
   variants are chosen by `sha256(template_id || seed)`. The YAML hash is recorded in the run
   manifest.
@@ -253,7 +253,7 @@ difficulty before moving to a higher step count.
   At this rate the work takes roughly 1–2 hours, and it runs in the background.
 - Monitor long runs every 3–5 minutes.
 
-## Code (`experiments/cq_query_scratch/`)
+## Code (`experiments/old/cq_query_scratch/`)
 
 | Module | Responsibility | Lines (estimate) |
 |---|---|---|

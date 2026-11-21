@@ -33,16 +33,16 @@ The retained experiments ask two planning questions:
 Build the comprehensive ontology clue preview:
 
 ```bash
-uv run python experiments/multi_hop_qa_mock/build_comprehensive_ontology_preview.py \
-  --output-dir experiments/multi_hop_qa_mock/preview
+uv run python experiments/old/multi_hop_qa_mock/build_comprehensive_ontology_preview.py \
+  --output-dir experiments/old/multi_hop_qa_mock/preview
 ```
 
 Build the non-feature relation gap survey:
 
 ```bash
-uv run python experiments/multi_hop_qa_mock/survey_non_feature_relation_gaps.py \
+uv run python experiments/old/multi_hop_qa_mock/survey_non_feature_relation_gaps.py \
   --sources-jsonl data/cadqa_cadevolve_rc_10/sources.jsonl \
-  --output-dir experiments/multi_hop_qa_mock/preview \
+  --output-dir experiments/old/multi_hop_qa_mock/preview \
   --source-count 10 \
   --entities-per-source 5
 ```

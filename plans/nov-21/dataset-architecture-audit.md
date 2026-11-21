@@ -166,9 +166,10 @@ language boundary.
 Define the sample size and selection rule. “A sample covering every clue type,
 answer meaning, and answer format” is not a sampling contract.
 
-The unmerged `docs-visual-review-pack` branch adds a renderer deferral, but it
-does not add the missing release columns or the graph input. It reduces the
-renderer question; it does not close the data path.
+The `docs-visual-review-pack` work landed on 2026-11-21 as
+`scripts/manual-verification/README.md`; its renderer deferral is superseded by
+`devtools/review-pack.md`. It reduces the renderer question; it does not close
+the data path.
 
 ## `DA-4` — Answer equality versus scoring tolerance
 
@@ -419,7 +420,7 @@ glossary.
 
 - `.worktrees/run-contract` is at `76e56c5` with no changes yet. `DA-1` is the
   contract it should write.
-- Branch `docs-visual-review-pack` has an unmerged deferral for the renderer.
+- `docs-visual-review-pack` landed on 2026-11-21 (`scripts/manual-verification/`).
   It reduces the `DA-3` renderer question but does not add the missing release
   columns or the graph input.
 - The other worktrees at the snapshot are unrelated to these findings.

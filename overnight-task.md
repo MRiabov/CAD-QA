@@ -85,7 +85,7 @@ Required documentation direction:
 >- Multi-Hop CAD-QA is the high-hop, obfuscated, distractor-gated subset.
   explicit note: Let me define this better: see BrowseComp dataset, and see https://huggingface.co/papers/2507.02592
 
-In addition, we have *already detailed well in experiments/multi_hop_qa_mock" In particular, /home/maksym/Work/proj/Problemologist/CAD-QA/experiments/multi_hop_qa_mock/preview/comprehensive_ontology_preview.md and the script that generated it defined more or less how I want the features to look like. I have also reviewed and corrected that experiment doc in a few places too.
+In addition, we have *already detailed well in experiments/old/multi_hop_qa_mock" In particular, /home/maksym/Work/proj/Problemologist/CAD-QA/experiments/old/multi_hop_qa_mock/preview/comprehensive_ontology_preview.md and the script that generated it defined more or less how I want the features to look like. I have also reviewed and corrected that experiment doc in a few places too.
 
 ### Documents To Rewrite Or Replace
 

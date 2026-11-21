@@ -11,8 +11,9 @@
 # docs/dataset/implementation/stacks.md#pre-commit.
 #
 # Vendored agent skills under .agents/ are third-party material, so every hook
-# excludes them.
-exclude: ^\.agents/
+# excludes them. experiments/old/ is archived experiment code: it is kept to
+# re-read and re-run old runs, so the formatters and linters leave it alone.
+exclude: ^(\.agents/|experiments/old/)
 repos:
   - repo: https://github.com/rvben/rumdl-pre-commit
     rev: v0.3.5
