@@ -61,10 +61,21 @@ Phase 3 design.
 **Pass condition:** immutable test set with group-safe splits; the `benchmark-release` report's failing
 gates are recorded as known limitations.
 
-The generator build order behind this phase is
-[`plans/nov-21/dataset-implementation-plan.md`](../plans/nov-21/dataset-implementation-plan.md):
-a walking skeleton through every pipeline stage, then `02` and `03b` depth in
-parallel, then quotas, release checks, and the first real release.
+Phase 1 is built in seven sub-phases. The detail, the contract mapping, and the
+exit criteria are in
+[`plans/nov-21/dataset-implementation-plan.md`](../plans/nov-21/dataset-implementation-plan.md).
+
+| Sub-phase | Completes |
+|---|---|
+| `Phase 1a` | Contract close-out: the four contracts that must exist before code. |
+| `Phase 1b` | Walking skeleton: one program produces one release row through every pipeline stage. |
+| `Phase 1c` | Extraction and execution depth: AST, CadQuery runtime, CAD graph, capability census. |
+| `Phase 1d` | Task construction depth: clue search and the P0 vocabulary. |
+| `Phase 1e` | Quotas and deficits: `03a` and `03c`. |
+| `Phase 1f` | Rendering, validation, and the release-facing contracts: `04`, `05`, the grader, the review pack. |
+| `Phase 1g` | First real release. |
+
+`Phase 1c` and `Phase 1d` run concurrently.
 
 ## Phase 2 — Refresh baselines [P1; `no_tools`/`cadquery` P2]
 

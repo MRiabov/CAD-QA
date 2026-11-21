@@ -683,28 +683,27 @@ Blocks: `01b`, `02c`, `03a`, `03b`, and `03c`.
 
 ## Milestones
 
-These are **construction milestones**: the internal development sequence of
-`03b`. They are not the generator milestones. The generator build order, and
-where each of these lands, is
-[`plans/nov-21/dataset-implementation-plan.md`](../../plans/nov-21/dataset-implementation-plan.md#milestones).
+These are `03b-M1`–`03b-M5`: milestones local to `03b`. They are not project
+phases. The build order, and where each of these lands, is
+[`plans/nov-21/dataset-implementation-plan.md`](../../plans/nov-21/dataset-implementation-plan.md#phases).
 
-**Plumbing milestone.** One program, final solid state, target = solid state,
+**`03b-M1` — plumbing.** One program, final solid state, target = solid state,
 answer = volume, format = number, one step. This proves graph → possible answers
 → answer resolver → `TaskDefinition` → render → release row. No clue search yet.
 
-**Clue search milestone.** Target = face, answer = area, two to three steps.
+**`03b-M2` — clue search.** Target = face, answer = area, two to three steps.
 Property and relation clues only. Build the narrowing record, the uniqueness
 check, and the multiple-choice pool from the penultimate set.
 
-**Full vocabulary milestone.** Comparison, aggregation, provenance; multiple
+**`03b-M3` — full vocabulary.** Comparison, aggregation, provenance; multiple
 target categories; distance, angle, region, CadQuery profile (after KI-DS-02).
 This is where the graph must supply the primitives.
 
-**Scheduler milestone.** Quota-aware construction, coverage and balance,
+**`03b-M4` — scheduler.** Quota-aware construction, coverage and balance,
 multiple-choice availability, deficits. This is where `03b` meets `03a` and
 `03c`.
 
-**First release milestone.** Every P0 row in `graph-content.md` and
+**`03b-M5` — first release.** Every P0 row in `graph-content.md` and
 `task-structure.md` is constructed, validated, and exported, and coverage and
 balance pass for the implemented scope. This is the release the thesis claim
 rests on.
