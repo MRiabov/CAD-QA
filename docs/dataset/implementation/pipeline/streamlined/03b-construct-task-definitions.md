@@ -1,6 +1,6 @@
 # 03b construct task definitions — answer-bearing records
 
-> Authoritative: `../03-task-generation/03b-construct-task-definitions.md`
+> Authoritative: `../03-task-generation/03b-construct-task-definitions/README.md`
 
 READ:
 

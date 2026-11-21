@@ -1,6 +1,6 @@
 # 03a allocate task quotas — plan quantities and families
 
-> Authoritative: `../03-task-generation/03a-allocate-task-quotas.md`
+> Authoritative: `../03-task-generation/03a-allocate-task-quotas/README.md`
 
 READ:
 

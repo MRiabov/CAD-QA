@@ -443,7 +443,7 @@ citation keys and never change meaning.
   generated, the task is rejected.
 - **Consequences:** P0 and P1 can ship without the near-miss audit. P2 adds the
   error-mode catalog, choice audit, and review. The open question is Q6 in
-  `implementation/pipeline/03-task-generation/03b-construct-task-definitions.md` until P2 is implemented.
+  `implementation/pipeline/03-task-generation/03b-construct-task-definitions/README.md` until P2 is implemented.
 
 ## DS-REQ-26 — The thesis release ladder is 1–10; 6–10 is P1 and gated
 

@@ -8,8 +8,10 @@ and where each contract lives. The sub-step input/output table stays in
 [`../03-task-generation.md`](../03-task-generation.md).
 
 Task generation is a module rather than a single step because it owns three
-sub-steps, a search, a validity contract, and a bounded feedback loop. The
-construction algorithm and the program capability census live in `algorithm/`, and decisions scoped to this module live in `decisions.md`.
+sub-steps, a search, a validity contract, and a bounded feedback loop. `03a` and
+`03b` are folders: each holds the contract for its pipeline stage in `README.md` and its
+sub-documents under lettered names (`a-`, `b-`, `c-`). The capability census
+lives in `algorithm/`, and decisions scoped to this module live in `decisions.md`.
 
 ## Input
 
@@ -51,8 +53,15 @@ is exhausted, or the remaining miss is accepted and recorded.
 
 | Doc | Contract |
 |---|---|
-| [`03a-allocate-task-quotas.md`](03a-allocate-task-quotas.md) | Quota allocation to families, splits, and attempt budgets. |
-| [`03b-construct-task-definitions.md`](03b-construct-task-definitions.md) | Task validity, identity, step accounting, and attempt budgets. |
+| [`03a-allocate-task-quotas/README.md`](03a-allocate-task-quotas/README.md) | Quota allocation to families, splits, and attempt budgets. |
+| [`03a-allocate-task-quotas/a-support-derivation.md`](03a-allocate-task-quotas/a-support-derivation.md) | The support-table derivation and the program capability census. |
+| [`03a-allocate-task-quotas/b-balance.md`](03a-allocate-task-quotas/b-balance.md) | The balance policy and the conditional share. |
+| [`03a-allocate-task-quotas/c-quota-allocation.md`](03a-allocate-task-quotas/c-quota-allocation.md) | The plan, quota targets, allocation equations, family assignment, and attempt budgets. |
+| [`03a-allocate-task-quotas/d-replan.md`](03a-allocate-task-quotas/d-replan.md) | Residual replanning and the deficit details `03a` records. |
+| [`03b-construct-task-definitions/README.md`](03b-construct-task-definitions/README.md) | Task validity, identity, step accounting, and attempt budgets. |
+| [`03b-construct-task-definitions/a-construction.md`](03b-construct-task-definitions/a-construction.md) | Graph boundary, target binding, clue schema, validity, and the search algorithm. |
+| [`03b-construct-task-definitions/b-answer-semantics.md`](03b-construct-task-definitions/b-answer-semantics.md) | Answer step, format, multiple-choice pool, resolver, evidence, and equality. |
+| [`03b-construct-task-definitions/c-definition-identity.md`](03b-construct-task-definitions/c-definition-identity.md) | Canonical order, serialization, the three hashes, and provenance. |
 | [`03c-resolve-deficits.md`](03c-resolve-deficits.md) | Deficit classification, replanning, and program requests. |
 | [`decisions.md`](decisions.md) | Decisions scoped to this module. |
 
@@ -60,11 +69,10 @@ is exhausted, or the remaining miss is accepted and recorded.
 
 | Doc | Contract |
 |---|---|
-| [`algorithm/construction.md`](algorithm/construction.md) | How a task is found: possible answers, facts, cover search, validity checks, acceptance. |
 | [`algorithm/program-capability-census.md`](algorithm/program-capability-census.md) | Per-program summary of the task shapes its graph can support. |
 
 The clue model itself is in
-[`03b-construct-task-definitions.md`](03b-construct-task-definitions.md): the
-clue types, the reference binding, and the clue operand form. The vocabulary is
-owned by `docs/dataset/requirements/task-structure.md`; this module references it
-and does not restate it.
+[`03b-construct-task-definitions/README.md`](03b-construct-task-definitions/README.md):
+the clue types, the reference binding, and the clue operand form. The vocabulary
+is owned by `docs/dataset/requirements/task-structure.md`; this module references
+it and does not restate it.

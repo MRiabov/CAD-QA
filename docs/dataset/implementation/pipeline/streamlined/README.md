@@ -96,8 +96,8 @@ WRITE:
 | [`02a-extract-cadquery-ast.md`](02a-extract-cadquery-ast.md) | `02a` extract AST | [`../02a-extract-cadquery-ast.md`](../02a-extract-cadquery-ast.md) |
 | [`02b-execute-cadquery.md`](02b-execute-cadquery.md) | `02b` execute CadQuery | [`../02b-execute-cadquery.md`](../02b-execute-cadquery.md) |
 | [`02c-build-cad-graph.md`](02c-build-cad-graph.md) | `02c` build graph | [`../02c-build-cad-graph.md`](../02c-build-cad-graph.md) |
-| [`03a-allocate-task-quotas.md`](03a-allocate-task-quotas.md) | `03a` allocate quotas | [`../03-task-generation/03a-allocate-task-quotas.md`](../03-task-generation/03a-allocate-task-quotas.md) |
-| [`03b-construct-task-definitions.md`](03b-construct-task-definitions.md) | `03b` construct definitions | [`../03-task-generation/03b-construct-task-definitions.md`](../03-task-generation/03b-construct-task-definitions.md) |
+| [`03a-allocate-task-quotas.md`](03a-allocate-task-quotas.md) | `03a` allocate quotas | [`../03-task-generation/03a-allocate-task-quotas/README.md`](../03-task-generation/03a-allocate-task-quotas/README.md) |
+| [`03b-construct-task-definitions.md`](03b-construct-task-definitions.md) | `03b` construct definitions | [`../03-task-generation/03b-construct-task-definitions/README.md`](../03-task-generation/03b-construct-task-definitions/README.md) |
 | [`03c-resolve-deficits.md`](03c-resolve-deficits.md) | `03c` resolve deficits | [`../03-task-generation/03c-resolve-deficits.md`](../03-task-generation/03c-resolve-deficits.md) |
 | [`04-render-prompt-and-choices.md`](04-render-prompt-and-choices.md) | `04` render | [`../04-render-prompt-and-choices.md`](../04-render-prompt-and-choices.md) |
 | [`05-validate-and-export-release.md`](05-validate-and-export-release.md) | `05` validate and export | [`../05-validate-and-export-release.md`](../05-validate-and-export-release.md) |

@@ -91,10 +91,17 @@ generator/
       task_reasoning_step_support_table.go
       task_reasoning_step_support_table_test.go
     03a-allocate-task-quotas/              package allocate_task_quotas
-      allocate_task_quotas.go
+      allocate_task_quotas.go              entry point
+      support_derivation.go                a-support-derivation.md
+      balance.go                           b-balance.md
+      quota_allocation.go                  c-quota-allocation.md
+      replan.go                            d-replan.md
       allocate_task_quotas_test.go
     03b-construct-task-definitions/        package construct_task_definitions
-      construct_task_definitions.go
+      construct_task_definitions.go        entry point
+      construction.go                      a-construction.md
+      answer_semantics.go                  b-answer-semantics.md
+      definition_identity.go               c-definition-identity.md
       construct_task_definitions_test.go
     03c-resolve-deficits/                  package resolve_deficits
       resolve_deficits.go
@@ -115,6 +122,13 @@ one file per concern, not one package per file. `program-capability-census/` and
 `task-reasoning-step-support-table/` are separate packages because two pipeline
 stages import each: `03a` and `03b` share the census, and `03a` and the witness
 test share the support table.
+
+The `03a` and `03b` doc folders mirror the Go package folders. Each doc
+sub-document has a same-named Go file: `a-support-derivation.md` becomes
+`support_derivation.go`, `b-balance.md` becomes `balance.go`, and so on. The
+folder `README.md` is the contract for pipeline stage `03a` or `03b`; the package entry file
+(`allocate_task_quotas.go`, `construct_task_definitions.go`) is the code entry
+point. `03` is Go-only, so these folders have no Python counterpart.
 
 `internal/run/` is the only orchestrator. A pipeline stage package does not own
 the run lock, pipeline stage completion markers, or the shared cache. The run

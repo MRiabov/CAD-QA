@@ -6,7 +6,7 @@ this document explains how the constraints combine.
 
 ## Inputs
 
-- The task-definition rules from `pipeline/03-task-generation/03b-construct-task-definitions.md`.
+- The task-definition rules from `pipeline/03-task-generation/03b-construct-task-definitions/README.md`.
 - The program capability census for each selected program, derived from its
   CAD graph.
 - The release implementation scope, from the product priorities.
@@ -89,7 +89,7 @@ At each step count, a value is checked against its conditional release share,
 within half to twice that share. The conditional share is allocated from the
 global targets before task construction, then filled from available data; the
 plan is in
-[`pipeline/03-task-generation/03a-allocate-task-quotas.md`](pipeline/03-task-generation/03a-allocate-task-quotas.md).
+[`pipeline/03-task-generation/03a-allocate-task-quotas/README.md`](pipeline/03-task-generation/03a-allocate-task-quotas/README.md).
 The release-side check, including the clue operand form exception and the
 superseded outcome, is in
 [`pipeline/05-validate-and-export-release/release-checks.md`](pipeline/05-validate-and-export-release/release-checks.md).

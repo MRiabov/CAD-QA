@@ -194,7 +194,7 @@ gold answer, scoring fields, and answer evidence. `prompt` is the only
 LLM-facing column; every other column stays out of the LLM model input.
 
 `answer_sha256` is computed by
-[`03b` construct task definitions](../implementation/pipeline/03-task-generation/03b-construct-task-definitions.md)
+[`03b` construct task definitions](../implementation/pipeline/03-task-generation/03b-construct-task-definitions/README.md)
 from the definition's answer and scoring fields, and copied by `04` render
 prompt and choices. Export does not recompute it. The hash covers a fixed set of answer
 fields in a canonical form, so recomputing it in `04` would be a second

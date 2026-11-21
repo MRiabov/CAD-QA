@@ -3,7 +3,7 @@
 **Parent:** [`00-testing-strategy.md`](00-testing-strategy.md).
 
 **Contract under test:**
-[`../03-task-generation/03a-allocate-task-quotas.md`](../03-task-generation/03a-allocate-task-quotas.md),
+[`../03-task-generation/03a-allocate-task-quotas/README.md`](../03-task-generation/03a-allocate-task-quotas/README.md),
 with the balance policy in the root `balance.yaml` and the census in
 [`../03-task-generation/algorithm/program-capability-census.md`](../03-task-generation/algorithm/program-capability-census.md).
 

@@ -17,7 +17,7 @@ They exist to check the dataset:
 - actual task counts are a separate coverage question.
 
 The tables are derived from the constructor, using the rules in
-[`pipeline/03-task-generation/03b-construct-task-definitions.md`](pipeline/03-task-generation/03b-construct-task-definitions.md). They are not
+[`pipeline/03-task-generation/03b-construct-task-definitions/README.md`](pipeline/03-task-generation/03b-construct-task-definitions/README.md). They are not
 hand-authored, and `03` does not read them to decide what to attempt.
 
 The derivation takes `implementation_scope` from the requirement priority

@@ -310,9 +310,9 @@ counts against the graph. That is the same end-to-end test.
 ## 9. What is not here
 
 - The construction algorithm:
-  [`../03-task-generation/algorithm/construction.md`](../../03-task-generation/algorithm/construction.md).
+  [`../03-task-generation/03b-construct-task-definitions/a-construction.md`](../../03-task-generation/03b-construct-task-definitions/a-construction.md).
 - The definition schema and validity rules:
-  [`../03-task-generation/03b-construct-task-definitions.md`](../../03-task-generation/03b-construct-task-definitions.md).
+  [`../03-task-generation/03b-construct-task-definitions/README.md`](../../03-task-generation/03b-construct-task-definitions/README.md).
 - The construction test contract: [`03b-construct-task-definitions.md`](../03b-construct-task-definitions.md).
 - Release validation:
   [`../05-validate-and-export-release.md`](../../05-validate-and-export-release.md).

@@ -314,7 +314,7 @@ release produce the same report.
 ## Not here
 
 - Multiple-choice fairness: the construction checks are in [`03b` construct task
-  definitions](../03-task-generation/03b-construct-task-definitions.md), and
+  definitions](../03-task-generation/03b-construct-task-definitions/README.md), and
   the released pool recheck is in `05` validate and export release.
 - Release table schema, prompt answer-freedom, `task_id` uniqueness, and split
   isolation: `05` validate and export release.

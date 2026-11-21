@@ -246,5 +246,5 @@ Before a prompt is accepted:
 
 The generation and validation rule for P2 near-miss choices belongs to pipeline stage
 `03`; it is tracked as Q6 in
-[`../implementation/pipeline/03-task-generation/03b-construct-task-definitions.md`](../implementation/pipeline/03-task-generation.md).
+[`../implementation/pipeline/03-task-generation/03b-construct-task-definitions/README.md`](../implementation/pipeline/03-task-generation.md).
 P0 and P1 require real, unique, non-leaking choices.

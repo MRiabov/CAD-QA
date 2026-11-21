@@ -3,9 +3,9 @@
 **Parent:** [`00-testing-strategy.md`](00-testing-strategy.md).
 
 **Contract under test:**
-[`../03-task-generation/03b-construct-task-definitions.md`](../03-task-generation/03b-construct-task-definitions.md),
+[`../03-task-generation/03b-construct-task-definitions/README.md`](../03-task-generation/03b-construct-task-definitions/README.md),
 with the search in
-[`../03-task-generation/algorithm/construction.md`](../03-task-generation/algorithm/construction.md).
+[`../03-task-generation/03b-construct-task-definitions/a-construction.md`](../03-task-generation/03b-construct-task-definitions/a-construction.md).
 
 ## Happy-path integration test (test-first, adversarial)
 

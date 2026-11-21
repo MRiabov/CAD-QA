@@ -9,8 +9,8 @@ program data when the plan has deficits.
 
 | Sub-step | Responsibility | Doc |
 |---|---|---|
-| `03a` | Allocate task quotas and quota targets to families; assign splits and construction attempt budgets. | [`03a-allocate-task-quotas.md`](03-task-generation/03a-allocate-task-quotas.md) |
-| `03b` | Construct and validate task definitions into the plan. | [`03b-construct-task-definitions.md`](03-task-generation/03b-construct-task-definitions.md) |
+| `03a` | Allocate task quotas and quota targets to families; assign splits and construction attempt budgets. | [`03a-allocate-task-quotas/README.md`](03-task-generation/03a-allocate-task-quotas/README.md) |
+| `03b` | Construct and validate task definitions into the plan. | [`03b-construct-task-definitions/README.md`](03-task-generation/03b-construct-task-definitions/README.md) |
 | `03c` | Resolve deficits by replanning or expanding program data. | [`03c-resolve-deficits.md`](03-task-generation/03c-resolve-deficits.md) |
 
 ## Sub-step contracts
@@ -62,7 +62,7 @@ space.
 
 The persisted `TaskDefinition` record, target binding, clue predicates, answer
 resolution, validity, and canonical identity are defined in
-[`03b-construct-task-definitions.md`](03-task-generation/03b-construct-task-definitions.md).
+[`03b-construct-task-definitions/README.md`](03-task-generation/03b-construct-task-definitions/README.md).
 
 ## Not here
 
