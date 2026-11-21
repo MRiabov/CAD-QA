@@ -13,6 +13,11 @@ without downloading program text or executing anything.
   tags, generator, and upstream hash, plus the `cache_revision` and
   `cache_schema_version` they were read at.
 
+The run manifest declares the expected external dataset revision. `01a` verifies
+the observed `cache_revision` against it; a mismatch stops the run before any
+part is written. See
+[`../run-contract.md`](../run-contract.md#2-run-identity-and-the-run-manifest).
+
 The cache is already cleaned: all 1,998,810 rows are `.py` records, all import
 CadQuery, and all have non-empty program text. There is no non-program-record
 filter to apply, and no program-size cutoff: the corpus executed without

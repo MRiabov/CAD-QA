@@ -18,10 +18,16 @@ terms every code name spells out.
 4. **A Python module for a pipeline stage keeps its pipeline stage number with
    an `s` prefix**, because a Python module name must be an identifier:
    `s01d_normalize_programs`.
-5. New generator code never imports `dataset/`. `dataset/` never imports
-   `cadqa_dataset_generator` or the Go module. See [Old generator](#old-generator).
+5. The pre-rebuild generator and harness are deleted; see
+   [Deleted generator](#deleted-generator). New code does not resurrect their
+   modules.
 6. Artifacts are written under a run directory given on the command line.
    `data/` and `runs/` are gitignored; no artifact is committed.
+
+`internal/run/` is the orchestrator, not a pipeline stage package; it is the one
+exception to rule 2. It owns the run lock, pipeline stage selection, and the exit
+codes, and it calls the shared cache, manifest, and writer. A pipeline stage
+package never imports it.
 
 ## Go module
 
@@ -35,8 +41,15 @@ generator/
   go.sum
   main.go                                  package main
   internal/
+    run/                                   package run
+      run.go                               orchestrator, run directory allocation, pipeline stage selection, exit codes
+      run_test.go
     shared/                                package shared
-      dataset_artifact.go                  typed Parquet tables, identity, atomic write
+      dataset_artifact.go                  typed Parquet tables and identity
+      parquet_writer.go                    async immutable Parquet part writer
+      run_manifest.go                      RunRequest, RunManifest, run_id
+      run_state.go                         run lock, pipeline stage marker, part scan
+      cache_index.go                       content-addressed shared cache
       failure_record.go                    failure record row and partition merge
       balance_policy.go                    balance.yaml loader
       check_policy.go                      checks.yaml loader
@@ -83,10 +96,15 @@ generator/
 
 A pipeline stage package starts as one file and grows files in the same folder;
 a new folder means a new package, not a new file. `shared/` is one package with
-one file per concern, not four packages. `program-capability-census/` and
+one file per concern, not one package per file. `program-capability-census/` and
 `task-reasoning-step-support-table/` are separate packages because two pipeline
 stages import each: `03a` and `03b` share the census, and `03a` and the witness
 test share the support table.
+
+`internal/run/` is the only orchestrator. A pipeline stage package does not own
+the run lock, pipeline stage completion markers, or the shared cache. The run
+directory layout and the part, flush, and resume rules are in
+[`run-contract.md`](run-contract.md).
 
 ## Python worker
 
@@ -100,6 +118,7 @@ Parquet paths and a small JSON request.
 cadqa_dataset_generator/
   __init__.py
   cli.py                                   worker entry point, one subcommand per stage
+  parquet_writer.py                        async immutable Parquet part writer
   s01d_normalize_programs.py               01d normalize programs
   s02a_extract_cadquery_ast.py             02a extract CadQuery AST
   s02b_execute_cadquery.py                 02b execute CadQuery
@@ -142,8 +161,8 @@ A Go test function is the contract name in CamelCase:
 |---|---|---|
 | `docs/dataset/implementation/pipeline/testing/fixtures/` | Coverage and rejection programs with `program_sha256`. | The test contract. |
 | `docs/dataset/implementation/pipeline/testing/golden/` | Golden records. | The record format. |
-| `balance.yaml`, `checks.yaml`, `prompts.yaml` | Balance policy, check policy, prompt copy. | The docs that define each. |
-| `data/`, `runs/` | Run output. Gitignored. | The run. |
+| `balance.yaml`, `checks.yaml`, `prompts.yaml`, `tolerance.yaml` | Balance policy, check policy, prompt copy, and measurement tolerance policy. | The docs that define each. |
+| `data/`, `runs/` | Run output: `runs/run<NNNN>/` and `runs/cache/`. Gitignored. | The run. |
 
 Fixtures stay in the docs tree because they are reviewed like code and the test
 contract owns their path. A test reads them by path; it does not copy them.
@@ -166,33 +185,46 @@ contract owns their path. A test reads them by path; it does not copy them.
 | `04-render-prompt-and-choices` | `04-render-prompt-and-choices`, `render_prompt_and_choices` | — | `04_render_prompt_and_choices_test.go` |
 | `05-validate-and-export-release` | `05-validate-and-export-release`, `validate_and_export_release` | — | `05_validate_and_export_release_test.go` |
 
+The run contract is cross-cutting; its Go package is `internal/run`, and its
+test contract is
+[`pipeline/testing/00-run-contract.md`](pipeline/testing/00-run-contract.md).
+
 ## Bootstrap order
 
-1. `go.mod`, `main.go`, `internal/shared/`.
+1. `go.mod`, `main.go`, `internal/run/`, and `internal/shared/`, including
+   `run_manifest.go`, `run_state.go`, `cache_index.go`, and
+   `parquet_writer.go`.
 2. `01a`, `01b`, `01c`, `s01d_normalize_programs.py`, `01e`.
 3. `s02a_extract_cadquery_ast.py`, `s02b_execute_cadquery.py`, `02c`.
 4. `program-capability-census/`, `03b`, `task-reasoning-step-support-table/`,
    because the support table is what `03a` reads.
 5. `03a`, `03c`, `04`, `05`, `end-to-end`.
 
-## Old generator
+## Deleted generator
 
-`dataset/` is the pre-rebuild generator. It is kept for now, and the tag
-`before-throwing-out-the-existing-dataset-generator` preserves it in history.
+`dataset/` was the pre-rebuild generator, and `train_and_eval/` was its training
+and evaluation stack. Both were deleted on 2026-11-21. The tag
+`before-deleting-the-old-generator-and-harness` preserves them in history.
 
-It cannot be deleted yet: `train_and_eval/` imports `dataset.cli`, `dataset.io`,
-`dataset.release.*`, `dataset.query.*`, `dataset.ontology.*`, and
-`dataset.source`; two scripts under `tools/` import a subset of them; and
-`tests/test_graph_first_pipeline.py` imports `dataset.harbor` and
-`dataset.prompts.*` as well. Deleting the package breaks the training and
-evaluation harness before the replacement can produce a dataset release.
+They were deleted rather than migrated for two reasons:
 
-The package is deleted when all of these hold:
+- their release validator rejected rows their own materializer produced, so the
+  tests encoded a contract that no longer held;
+- the release contract in
+  [`../requirements/release-dataset-contract.md`](../requirements/release-dataset-contract.md)
+  removed the two-file row views that the evaluation stack was built on, and the
+  prompt no longer has a tool-call round trip.
 
-- the replacement writes a dataset release with `05`;
-- `train_and_eval/` imports no `dataset.*` module;
-- `tools/analyze_release_gate_feasibility.py` and
-  `tools/verify_cadevolve_parquet_parity.py` are migrated or removed.
+The tests and tools that only served them were deleted with them:
+`tests/test_graph_first_pipeline.py`, `tests/test_operation_extraction.py`,
+`tests/test_void_region_policy.py`,
+`tools/analyze_release_gate_feasibility.py`,
+`tools/verify_cadevolve_parquet_parity.py`, `tools/dataset_explorer.py`, and
+`tools/bench_graph_columnar.py`.
 
-Until then, `dataset/` is not extended: no new feature work, only fixes that keep
-the existing dataset release reproducible.
+`docs/train-and-eval/` is kept for the training stack rewrite. It describes the
+deleted stack and does not describe code that exists.
+
+New generator code never imports the deleted modules, because they no longer
+exist; a change that needs a helper from them reimplements it against the
+current contract instead.

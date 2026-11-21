@@ -14,6 +14,7 @@ assert-from-the-artifact rule, and the test-first order — are in
 |---|---|---|
 | [`00-testing-strategy.md`](00-testing-strategy.md) | The shared rules and the inventory. | draft |
 | [`00-end-to-end.md`](00-end-to-end.md) | The whole chain, `01a` to `05`. | draft |
+| [`00-run-contract.md`](00-run-contract.md) | The run manifest, Parquet parts, resume, cache, and exit codes, a cross-cutting contract. | draft |
 | [`00-support-tables.md`](00-support-tables.md) | The support tables, a cross-cutting observation. | draft |
 | [`01a-read-cadevolve-metadata.md`](01a-read-cadevolve-metadata.md) | `01a` read CADEvolve metadata. | draft |
 | [`01b-select-program-pool.md`](01b-select-program-pool.md) | `01b` select program pool. | draft |

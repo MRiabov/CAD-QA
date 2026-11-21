@@ -3,6 +3,7 @@
 > Authoritative: `../05-validate-and-export-release.md`
 > Checks: `../05-validate-and-export-release/release-checks.md`
 > Templates: `../../prompt-templates.md`
+> Run contract: `../../run-contract.md`
 
 READ:
 
@@ -102,4 +103,5 @@ WRITE:
 
 - `release.parquet`, `failures.parquet`, `manifest.json`, `dataset-card.md`, `support/target-category-by-step.json`, `support/clue-type-by-step.json`, `support/clue-operand-form-by-step.json`, `support/answer-meaning-by-step.json`, `support/answer-format-by-step.json`
 - `ReleaseArtifacts` `(release_id)`
+- write the release into `release/.tmp-<release_id>/` and rename it to `release/<release_id>/`; replace `release/current` by an atomic symlink rename
 - failure partition `05_validate_and_export_release`

@@ -647,19 +647,22 @@ definitions.
 
 ### dataset_generation
 
-The code package that builds the benchmark. `In code:` `dataset/`.
+The code that builds the benchmark. `In code:` `generator/` for the Go pipeline
+stages and `cadqa_dataset_generator/` for the Python pipeline stages.
 
 ---
 
 ### train_and_eval
 
-The code package for training and evaluation.
+The training and evaluation stack. The previous package was deleted on
+2026-11-21 and is preserved by the tag
+`before-deleting-the-old-generator-and-harness`; the stack is being rebuilt.
 
 ---
 
 ### Dataset file
 
-The file holding the CAD-QA dataset rows (`rows.parquet`); the
+The file holding the CAD-QA dataset rows (`release.parquet`); the
 input/output contract between `dataset_generation` and `train_and_eval`.
 
 ---
@@ -688,7 +691,7 @@ stated precision, which is the same comparison the release grader performs.
 
 A ratchet: entries are removed only when the term is engineered out of the docs and code.
 A docs sweep replaces each don't-say usage with its Say term until the checkers are green.
-A `(home)` annotation allows the token under that tree (`dataset`, `train_and_eval`, `tools`,
+A `(home)` annotation allows the token under that tree (`cadqa_dataset_generator`, `tools`,
 …), for identifiers documented as `In code:`; the checker's `ALLOWLIST` exempts
 cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
 

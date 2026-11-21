@@ -28,7 +28,7 @@ logger = logging.getLogger("cadqa.check_dont_say")
 
 REPO = Path(__file__).resolve().parents[1]
 DONT_SAY_HEADING = "## Don't say"
-SCAN_ROOTS = ("docs", "dataset", "train_and_eval", "tools", "plans")
+SCAN_ROOTS = ("docs", "cadqa_dataset_generator", "tools", "plans")
 SCAN_SUFFIXES = frozenset({".md", ".py", ".tex"})
 SKIP_DIRS = frozenset(
     {
@@ -68,9 +68,9 @@ IDENTIFIER_SEGMENT = re.compile(r"[A-Z]+(?=[A-Z][a-z])|[A-Z]?[a-z]+|[A-Z]+|\d+")
 SAY_SEPARATORS = (" / ", ";", ",", " or ", ": ")
 
 HOMES: dict[str, tuple[str, ...]] = {
+    # The dataset term's home is the dataset docs tree, ``docs/dataset/``.
     "dataset": ("dataset",),
-    "dataset_generation": ("dataset",),
-    "train_and_eval": ("train_and_eval",),
+    "dataset_generation": ("cadqa_dataset_generator",),
     "docs": ("docs",),
     "tools": ("tools",),
 }

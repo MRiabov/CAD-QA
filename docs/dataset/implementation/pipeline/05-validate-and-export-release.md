@@ -19,6 +19,8 @@ Coverage and balance checks:
 - The external dataset manifest from `01e` write external dataset manifest.
 - The pinned external benchmark program set, for the transfer overlap check.
 - The per-pipeline-stage failure partitions.
+- The run manifest, for the generator version, the release seed, the policy
+  versions and hashes, and the tolerance policy hash.
 
 ## Scope
 
@@ -146,8 +148,14 @@ the card outline is section 8. `05` owns both.
 
 The manifest is the marker that the release is complete. `05` writes it last,
 after the checks and the review gate pass, so a release directory without a
-manifest is not a release. Atomic directory replacement is the run-level
-execution contract, not this document.
+manifest is not a release. The run-level execution contract — the run manifest,
+Parquet parts, pipeline stage completion markers, resume, and atomic directory
+replacement — is [`../run-contract.md`](../run-contract.md). `05` writes the
+release into `release/.tmp-<release_id>/` and renames it to
+`release/<release_id>/`; `release/current` is replaced by an atomic symlink
+rename. The orchestrator writes the `05` pipeline stage completion marker after
+the release directory is durable. A failed export leaves the previous `current`
+and no visible `release.parquet` in a new release directory.
 
 ## Not here
 

@@ -508,7 +508,7 @@ only the dataset:
 
 ## Resolved questions
 
-- **Q7.** *(2026-10-19; superseded 2026-11-21 by DS-44)* The hop ladder is `{1..10}`: 1-step is the
+- **Q7.** *(2026-10-19; superseded 2026-11-21 by DS-45)* The hop ladder is `{1..10}`: 1-step is the
   warmup, 2–5 are main, and 6–10 are P1 gated by the synthesis pilot and manual review. 0-step is not
   used. The old `{2,3,4,5}` ladder and the non-release 0/1 slice are retired. Within-run ordering is not
   used (§4).

@@ -6,7 +6,9 @@ READ:
 
 - `NormalizedProgram` → `program_id, program_sha256, canonical_text`
 - `CadQueryAstExtractionResult` → `ast_extraction_result_sha256`, operations
-- cache → result for the computed cache key, when present
+- cache → committed result for the computed cache key, when present; the cache
+  location and resume rule are in
+  [`../../run-contract.md`](../../run-contract.md#8-cache)
 
 ## 1 — Execute and capture
 
@@ -31,6 +33,8 @@ WRITE:
 
 - `CadQueryRuntimeExtractionSuccess` `(cache_key)` → `program_id, program_sha256, ast_extraction_result_sha256, environment record, operation_recordings, shape_snapshots, workplane_frames, selector_results, effect_deltas, point_probes, final_state_id, runtime_extraction_result_sha256`
 - `runtime_*` Parquet tables
+- one runtime result per program in `parts/<program_sha256>.parquet`; a committed
+  result, including a tombstone, is not recomputed unless forced
 
 ## 2 — Failure tombstone
 
