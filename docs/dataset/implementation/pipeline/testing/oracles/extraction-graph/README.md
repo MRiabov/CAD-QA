@@ -210,7 +210,7 @@ An exclusion records a group the human decided is not expected, with the reason:
 {
   "kind": "relation",
   "local_id": null,
-  "reason": "selector relations need 02b selector results; added when the stage lands"
+  "reason": "selector relations need 02b selector results; added when `02b` lands"
 }
 ```
 

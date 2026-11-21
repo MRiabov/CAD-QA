@@ -65,4 +65,4 @@ filter, and the three failure tombstones before `02b` exists.
 - That the graph is correct. That is
   [`02c-build-cad-graph.md`](02c-build-cad-graph.md).
 - That a membership answer is valid. That is
-  [`03b-construct-task-definitions.md`](03b-construct-task-definitions.md).
+  [`03b-construct-task-definitions.md`](03-task-generation/03b-construct-task-definitions/README.md).

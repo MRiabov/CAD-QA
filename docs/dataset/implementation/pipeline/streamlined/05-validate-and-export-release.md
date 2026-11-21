@@ -1,9 +1,12 @@
 # 05 validate and export release — consumer artifacts
 
 > Authoritative: `../05-validate-and-export-release.md`
-> Checks: `../05-validate-and-export-release/release-checks.md`
+> Models: `models/05-validate-and-export-release.md`
 > Templates: `../../prompt-templates.md`
 > Run contract: `../../run-contract.md`
+
+This pipeline stage mirrors the authoritative `05` file and folder. The flow for this pipeline stage is here; the
+coverage and balance arithmetic is in [`release-checks.md`](05-validate-and-export-release/release-checks.md).
 
 READ:
 
@@ -12,8 +15,17 @@ READ:
 - five task reasoning step support tables
 - `balance.yaml` and `checks.yaml`
 - `ExternalDatasetManifest` from `01e`
+- `GraphCompletenessReport` per program from `02c` → `disposition`, missing, orphan, and unclassified counts
 - pinned external benchmark program set
-- per-pipeline-stage failure partitions
+- failure partitions for each pipeline stage
+- the run manifest and the review ledger
+
+WRITE:
+
+- `release.parquet`, `failures.parquet`, `manifest.json`, `dataset-card.md`, `support/target-category-by-step.json`, `support/clue-type-by-step.json`, `support/clue-operand-form-by-step.json`, `support/answer-meaning-by-step.json`, `support/answer-format-by-step.json`
+- `ReleaseArtifacts` `(release_id)`
+- write the release into `release/.tmp-<release_id>/` and rename it to `release/<release_id>/`; replace `release/current` by an atomic symlink rename
+- failure partition `05_validate_and_export_release`
 
 ## 1 — Validate the release table
 
@@ -40,15 +52,9 @@ TRANSFORM:
 - validate `balance.yaml` with the `03a` rules; `release.share_tolerance` is in `[0, 1)`
 - `release.distinct_answer_min` is read only here, for the P1 distinct-answer check
 - validate `checks.yaml`: an unknown field, an unknown `arithmetic`, a duplicate `id`, or a bound reference that does not resolve in `balance.yaml` stops the export before any check runs
-- `reference_share(scope, dimension, value) = policy_share(value) / sum(policy_share(x) for x in supported_values(scope, dimension))`; scope is a task reasoning step count or `release`; `05` holds no share of its own
-- run every check listed in `checks.yaml` with the arithmetic semantics in `release-checks.md`: `coverage, count_floor, share_range, relative_range, share_target, set_equal`; a check not in the file is not run, and a report row whose check is not in the file is a defect
-- coverage rows carry supported, observed, missing, and unexpected values; there is no whole-release coverage row for a dimension
-- convert every bound to an integer count: `share_range` → `minimum_count = ceil(minimum_share * denominator)`, `maximum_count = floor(maximum_share * denominator)`; `relative_range` → `minimum_count = max(1, ceil(below * reference_share * denominator))`, `maximum_count = floor(above * reference_share * denominator)`; `share_target` → `minimum_count = ceil((target - tolerance) * denominator)`, `maximum_count = floor((target + tolerance) * denominator)`
-- outcome is `pass | miss | superseded | not_applicable | deferred`; disposition is `enforced | reported | deferred`
-- an `enforced` miss blocks the export until the owner accepts it and it is recorded in `known_misses`; a `reported` miss never blocks; a `deferred` row measures nothing
-- a `superseded` row is recorded and does not block; it is not a known miss
-- emit at least one row per listed check; a report that omits a check is a rejection
-- sort every report row by check name, scope, and value before writing the manifest, so the hash does not depend on the parallel schedule
+- aggregate the `GraphCompletenessReport` set into one `graph_completeness` check row; a non-zero missing, orphan, or unclassified count is an enforced miss
+- run every check listed in `checks.yaml` with the arithmetic semantics in [`release-checks.md`](05-validate-and-export-release/release-checks.md); a check not in the file is not run, and a report row whose check is not in the file is a defect
+- `05` holds no share of its own
 - never drop a task to make a share fit
 
 WRITE:
@@ -73,9 +79,9 @@ WRITE:
 
 TRANSFORM:
 
-- write a visual review pack for a sample covering every clue type, every answer meaning, every answer format, and every task reasoning step count in the release, up to 10; for 6–10, review at least 30 tasks per tier or every task if fewer
+- require a current `pass` in the review ledger for every required sampling cell; a `defect` or a missing cell blocks the export
+- the sample covers every clue type, every answer meaning, every answer format, and every task reasoning step count in the release, up to 10; for 6–10, review at least 30 tasks per tier or every task if fewer
 - each sampled task carries the prompt, one render of the final solid state with the target and every clue-bound entity highlighted in a distinct colour and labelled with its clue number, and the gold answer
-- a failed review blocks the export and records the reason; the defect is fixed and the task re-reviewed
 - the pack is internal and is not a release file
 
 WRITE:
@@ -101,7 +107,6 @@ TRANSFORM:
 
 WRITE:
 
-- `release.parquet`, `failures.parquet`, `manifest.json`, `dataset-card.md`, `support/target-category-by-step.json`, `support/clue-type-by-step.json`, `support/clue-operand-form-by-step.json`, `support/answer-meaning-by-step.json`, `support/answer-format-by-step.json`
-- `ReleaseArtifacts` `(release_id)`
-- write the release into `release/.tmp-<release_id>/` and rename it to `release/<release_id>/`; replace `release/current` by an atomic symlink rename
-- failure partition `05_validate_and_export_release`
+- `ReleaseArtifacts` `(release_id)` → `release.parquet`, `failures.parquet`, `manifest.json`, `dataset-card.md`, `support/`
+- `ReleaseManifest` → the fields above
+- the release directory is staged and renamed; `release/current` is replaced atomically

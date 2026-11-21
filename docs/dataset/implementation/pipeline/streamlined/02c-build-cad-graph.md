@@ -3,6 +3,7 @@
 > Authoritative: `../02c-build-cad-graph.md`
 > Construction: `../extraction/graph-construction.md`
 > Persistence: `../extraction/graph-persistence.md`
+> Models: `models/02c-build-cad-graph.md`
 
 READ:
 

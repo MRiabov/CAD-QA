@@ -1,18 +1,16 @@
-# 03b construct task definitions — adversarial integration test (TDD)
+# 03b/a construction — test contract
 
-**Parent:** [`00-testing-strategy.md`](00-testing-strategy.md).
+**Parent:** [`README.md`](README.md).
 
 **Contract under test:**
-[`../03-task-generation/03b-construct-task-definitions/README.md`](../03-task-generation/03b-construct-task-definitions/README.md),
-with the search in
-[`../03-task-generation/03b-construct-task-definitions/a-construction.md`](../03-task-generation/03b-construct-task-definitions/a-construction.md).
+[`../../../03-task-generation/03b-construct-task-definitions/a-construction.md`](../../../03-task-generation/03b-construct-task-definitions/a-construction.md).
 
 ## Happy-path integration test (test-first, adversarial)
 
 `test_03b_golden_record` — constructs a definition from
-[`golden/box-with-hole.json`](golden/box-with-hole.json) with its pinned
-construction input, and compares it per
-[`golden/README.md`](golden/README.md).
+[`../../golden/box-with-hole.json`](../../golden/box-with-hole.json) with its
+pinned construction input, and compares it per
+[`../../golden/README.md`](../../golden/README.md).
 
 **Given** the box-with-hole graph and the pinned `constructor_version`,
 `construction_seed`, and schema versions from the record.
@@ -37,7 +35,7 @@ of target-category entities in the final state, and each clue's `before` and
 prove.
 
 `test_03b_validity_record_is_complete` — for every accepted definition over the
-coverage fixtures in [`fixtures/`](fixtures/),
+coverage fixtures in [`../../fixtures/`](../../fixtures/),
 `validity_record.checks` carries every named rule except
 `geometry_required_recorded`, each with outcome `pass`, and an independent
 evaluation of every rule the definition decides agrees with the record.
@@ -56,35 +54,22 @@ equals its `before` count fails the second.
    one `no_cover` failure row, and a deficit for the unfilled target. It does not
    add a clue to reach the count.
 
-`test_03b_multiple_choice_pool` — a multiple-choice definition carries a labeled
-pool that passes every P0 row of the check list: five to seven entries, labels
-contiguous from `A`, answer values distinct under `same_answer`, the correct
-label present, and descriptions rendered from distinct facts. A pool of five that
-repeats an answer value is rejected, not trimmed to four.
-
 **TDD pin:** pins the golden record, the validity record's closed set, the
-redundant-clue rejection, and the choice pool before `03b` exists.
+redundant-clue rejection, and the no-cover deficit before `03b` exists.
 
 ## Failure-mode tests
 
 - `test_03b_probe_deficit` — a state with no surviving point probe yields a
   `probe_deficit` and no membership task, and writes no failure row, because no
   definition was attempted.
-- `test_03b_duplicate_definition` — a second definition with the same canonical
-  identity is recorded as `definition_unique` and does not consume quota.
-- `test_03b_answer_uniqueness` — an answer-equivalent set that disagrees under
-  `same_answer` is rejected, and an identity answer with two entries is rejected
-  (`DS-REQ-15`).
-- `test_03b_definition_immutable` — a re-run with the same input versions
-  produces a byte-identical definition and `definition_sha256`; a changed
-  `plan_version` does not change either.
 - `test_03b_target_ambiguity` — a target that resolves to two entities is
   rejected as `target_binding_unambiguous`.
+- `test_03b_construction_budget_exhausted` — a search that hits a cost constant
+  records `construction_deficit` with detail `construction_budget`, writes no
+  failure row, and does not retry inside the same plan revision.
 
 ## What this does not prove
 
-- That the prompt renders. That is
-  `04-render-prompt-and-choices.md`.
-- That the release is balanced. That is
-  `05-validate-and-export-release.md`.
-- That a value is supported. That is [`00-support-tables.md`](00-support-tables.md).
+- That the answer value is right. That is [`b-answer-semantics.md`](b-answer-semantics.md).
+- That the definition is unique. That is
+  [`c-definition-identity.md`](c-definition-identity.md).

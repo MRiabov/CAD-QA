@@ -2,6 +2,7 @@
 
 > Authoritative: `../02a-extract-cadquery-ast.md`
 > Algorithm: `../extraction/ast/algorithm/pipeline.md`
+> Models: `models/02-execute-cadquery-and-build-graph.md`
 
 READ:
 

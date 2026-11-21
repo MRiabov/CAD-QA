@@ -17,6 +17,7 @@ Coverage and balance checks:
 - The five task reasoning step support tables.
 - The root `balance.yaml` and the root `checks.yaml`.
 - The external dataset manifest from `01e` write external dataset manifest.
+- The per-program `GraphCompletenessReport` set from `02c` build CAD graph.
 - The pinned external benchmark program set, for the transfer overlap check.
 - The per-pipeline-stage failure partitions.
 - The run manifest, for the generator version, the release seed, the policy
@@ -43,6 +44,8 @@ Coverage and balance checks:
 - Run every check listed in the root `checks.yaml`, as the semantics in
   [`05-validate-and-export-release/release-checks.md`](05-validate-and-export-release/release-checks.md)
   define them, and block the export on a miss the owner has not accepted.
+- Aggregate the `GraphCompletenessReport` set into the `graph_completeness`
+  check. A non-zero missing, orphan, or unclassified count is an enforced miss.
 - Merge the per-pipeline-stage failure partitions and reconcile the counts
   (R-19).
 - Check the transfer overlap: exact normalized program text at P0; the P1

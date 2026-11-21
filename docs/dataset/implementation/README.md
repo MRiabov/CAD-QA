@@ -31,6 +31,7 @@ between pipeline stages is
 | [`missing-contracts.md`](missing-contracts.md) | Ephemeral audit backlog of absent contracts by priority and decision owner. |
 | [`pipeline/testing/`](pipeline/testing/README.md) | Per-pipeline-stage test contracts and end-to-end tests. |
 | [`pipeline/streamlined/`](pipeline/streamlined/README.md) | Executable "what" docs, without rationale. |
+| [`pipeline/streamlined/models/`](pipeline/streamlined/models/README.md) | Typed model declarations, ownership, and a pipeline stage boundary audit. |
 | [`devtools/`](devtools/README.md) | Developer tools that are not pipeline stages: manual verification, the review pack and its ledger, benchmarks, and doc checkers. |
 
 ## What belongs here

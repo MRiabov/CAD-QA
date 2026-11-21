@@ -274,6 +274,11 @@ P0/P1 commitment.
   `docs/` and `plans/`). Run `uv run rumdl check` to report, or
   `uv run rumdl fmt` to fix. Wired into pre-commit (`.pre-commit-config.yaml`); enable it
   once with `uv run pre-commit install`.
+- **Doc mirror: a script, not a test.** `tools/ci_cd/check-doc-mirror` requires
+  every pipeline stage/sub-step contract doc to have the same relative path under
+  `streamlined/` and `testing/`. `decisions.md`, `algorithm/`, and `extraction/`
+  are exempt; `streamlined/models/`, `testing/00-*.md`, and the test-data folders
+  are allowed additions. It runs in the CI quality job and as a pre-commit hook.
 - **Python and Go hooks.** `ruff format` and `ruff check --fix` are wired.
   `pyrefly` is wired on the manual stage until the old Python tree is removed. The Go
   hooks (`gofumpt`, `goimports`, `golangci-lint`) are declared as TODOs in

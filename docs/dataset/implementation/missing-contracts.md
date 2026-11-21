@@ -110,7 +110,7 @@ and hash in the manifest.
 ## Closed or merged in the 2026-11-20 pass
 
 - `MC-41` — the construction test contract is
-  `pipeline/testing/03b-construct-task-definitions.md`: a definition tier that re-evaluates
+  `pipeline/testing/03-task-generation/03b-construct-task-definitions/README.md`: a definition tier that re-evaluates
   every validity rule the definition decides, a graph tier for pair emission,
   point probes, and the clear-case margin, and an end-to-end tier that constructs
   the golden record and compares its counts against the graph. `03b` now names

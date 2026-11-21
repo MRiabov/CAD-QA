@@ -97,5 +97,5 @@ pool, bind a new target, compute the answer, or decide validity.
 
 Task quota planning, data expansion, prompt rendering, choice rendering, and
 export. The construction test contract is in
-[`../testing/03b-construct-task-definitions.md`](../../testing/03b-construct-task-definitions.md), and the
-golden record format is in [`../testing/golden/README.md`](../../testing/golden/README.md).
+[`../../testing/03-task-generation/03b-construct-task-definitions/README.md`](../../testing/03-task-generation/03b-construct-task-definitions/README.md), and the
+golden record format is in [`../../testing/golden/README.md`](../../testing/golden/README.md).

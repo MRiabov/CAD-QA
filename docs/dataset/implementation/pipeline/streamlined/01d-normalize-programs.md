@@ -4,7 +4,7 @@
 
 READ:
 
-- active rows of `ProgramPool` → program text, `program_id`, `cadevolve_program_family_id`
+- active rows of `ProgramPool` → program text, `cadevolve_program_family_id`; `program_id` is derived from `program_sha256`
 
 TRANSFORM:
 

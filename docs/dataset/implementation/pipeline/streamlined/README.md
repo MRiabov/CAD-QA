@@ -10,6 +10,24 @@
 > If this folder and an authoritative doc disagree, the authoritative doc wins,
 > and the disagreement is a bug.
 
+## Mirror rule
+
+This folder mirrors the authoritative `../` folder structure exactly. A pipeline stage that is a folder there is a folder here, and its lettered sub-documents
+have the same names:
+
+```text
+pipeline/03-task-generation/03a-allocate-task-quotas/README.md
+pipeline/03-task-generation/03a-allocate-task-quotas/a-support-derivation.md
+streamlined/03-task-generation/03a-allocate-task-quotas/README.md
+streamlined/03-task-generation/03a-allocate-task-quotas/a-support-derivation.md
+```
+
+`tools/ci_cd/check-doc-mirror` enforces the rule for both `streamlined/` and
+[`../testing/`](../testing/). `decisions.md`, `algorithm/`, and `extraction/`
+are excluded: they own rationale and field mechanics, not a pipeline stage contract.
+`models/` is an addition, not a mirror: it owns the typed model declarations
+that pipeline stage docs reference.
+
 ## Execution order
 
 ```text
@@ -27,34 +45,43 @@
 ```
 
 The DAG of pipeline stages is owned by
-[`../io-contracts.md`](../io-contracts.md); this block is only the sub-step read
-order.
+[`../io-contracts.md`](../io-contracts.md); [`00-end-to-end.md`](00-end-to-end.md)
+is its executable form. A run is incremental; the run manifest, Parquet parts,
+flush rule, cache, and resume rule are in
+[`../../run-contract.md`](../../run-contract.md).
 
-A run is incremental. The run manifest, Parquet parts, flush rule, cache, and
-resume rule are in [`../../run-contract.md`](../../run-contract.md); a
-sub-step's WRITE block names its durable part, and a rerun reads the committed
-parts before computing.
+## Models
 
-The five task reasoning step support tables are derived from the requirement
-marks outside this folder. `03a` and `05` read them; no sub-step writes them.
+Every typed model in the DAG is declared once under [`models/`](models/README.md),
+in the language that owns it: Go structs for Go pipeline stages and Pydantic classes for
+the Python worker pipeline stages. The declaration carries the field set, the owner, the
+producer, and the consumers. A pipeline stage doc names a typed model and its fields; it never
+redefines them.
+
+The typed model files are the hand-checked boundary audit: a READ that names a field
+must find it on the typed model the producer writes, and a WRITE must name a field the
+typed model declares. A field or typed model that no declaration carries is a missing
+contract, not a free choice.
 
 ## Canonical per-doc template
 
 Every file uses exactly this shape: one heading per phase, each phase with
 exactly three labelled blocks. A single-phase step uses the blocks at top level.
-Nothing else.
+A folder's `README.md` states the boundary for its pipeline stage and links its sub-documents;
+the sub-documents carry the phases. Nothing else.
 
 ```markdown
 # <sub-step> <name> — <subtitle>
 
-> Authoritative: `../<sub-step>-<name>.md`
-> <Sub-document>: `../<path>.md` (only when the executable rule lives there)
+> Authoritative: `../../<sub-step>-<name>.md`
+> <Sub-document>: `../../<path>.md` (only when the executable rule lives there)
+> Models: `models/<stage>.md`
 
 ## <phase> — <verb>
 
 READ:
 
-- `<artifact or model>` → `<fields used>`
+- `<artifact or typed model>` → `<fields used>`
 
 TRANSFORM:
 
@@ -69,15 +96,16 @@ WRITE:
 
 1. **Terse and dry.** Every TRANSFORM line is an imperative with the exact
    formula, threshold, or constant. No hedging, no "should".
-2. **No why.** Pointer lines name the authoritative doc and, when the executable
-   rule lives in one of its sub-documents, that sub-document. Nothing else is a
+2. **No why.** Pointer lines name the authoritative doc, the sub-document when
+   the executable rule lives there, and the typed model file. Nothing else is a
    cross-reference: no decision IDs, no status tags, no open or resolved
    questions.
-3. **Names, not definitions.** READ and WRITE name artifacts and models exactly
-   as [`../io-contracts.md`](../io-contracts.md) names them. Field names are
-   used, never defined.
-4. **One file per sub-step.** `04` and `05` have no sub-steps and are one file
-   each.
+3. **Names and declared typed models.** READ and WRITE name artifacts and typed models
+   exactly as [`../io-contracts.md`](../io-contracts.md) and
+   [`models/`](models/README.md) name them. Field names are used, never defined.
+4. **One file per sub-document.** `04` has no sub-documents and is one file.
+   `03a`, `03b`, and `05` are folders whose sub-documents match the
+   authoritative folder.
 5. **Rejection is data.** A TRANSFORM line that rejects names the failure
    partition it writes, or states that the defect stops the run before the
    artifact is written. A rejection never crosses a sub-step boundary as an
@@ -88,6 +116,7 @@ WRITE:
 
 | Doc | Sub-step | Authoritative |
 |---|---|---|
+| [`00-end-to-end.md`](00-end-to-end.md) | The whole DAG. | [`../00-end-to-end.md`](../00-end-to-end.md) |
 | [`01a-read-cadevolve-metadata.md`](01a-read-cadevolve-metadata.md) | `01a` read metadata | [`../01a-read-cadevolve-metadata.md`](../01a-read-cadevolve-metadata.md) |
 | [`01b-select-program-pool.md`](01b-select-program-pool.md) | `01b` select pool | [`../01b-select-program-pool.md`](../01b-select-program-pool.md) |
 | [`01c-fetch-program-pool.md`](01c-fetch-program-pool.md) | `01c` fetch pool | [`../01c-fetch-program-pool.md`](../01c-fetch-program-pool.md) |
@@ -96,8 +125,21 @@ WRITE:
 | [`02a-extract-cadquery-ast.md`](02a-extract-cadquery-ast.md) | `02a` extract AST | [`../02a-extract-cadquery-ast.md`](../02a-extract-cadquery-ast.md) |
 | [`02b-execute-cadquery.md`](02b-execute-cadquery.md) | `02b` execute CadQuery | [`../02b-execute-cadquery.md`](../02b-execute-cadquery.md) |
 | [`02c-build-cad-graph.md`](02c-build-cad-graph.md) | `02c` build graph | [`../02c-build-cad-graph.md`](../02c-build-cad-graph.md) |
-| [`03a-allocate-task-quotas.md`](03a-allocate-task-quotas.md) | `03a` allocate quotas | [`../03-task-generation/03a-allocate-task-quotas/README.md`](../03-task-generation/03a-allocate-task-quotas/README.md) |
-| [`03b-construct-task-definitions.md`](03b-construct-task-definitions.md) | `03b` construct definitions | [`../03-task-generation/03b-construct-task-definitions/README.md`](../03-task-generation/03b-construct-task-definitions/README.md) |
-| [`03c-resolve-deficits.md`](03c-resolve-deficits.md) | `03c` resolve deficits | [`../03-task-generation/03c-resolve-deficits.md`](../03-task-generation/03c-resolve-deficits.md) |
+| [`03-task-generation/03a-allocate-task-quotas/README.md`](03-task-generation/03a-allocate-task-quotas/README.md) | `03a` allocate quotas | [`../03-task-generation/03a-allocate-task-quotas/README.md`](../03-task-generation/03a-allocate-task-quotas/README.md) |
+| [`03-task-generation/03b-construct-task-definitions/README.md`](03-task-generation/03b-construct-task-definitions/README.md) | `03b` construct definitions | [`../03-task-generation/03b-construct-task-definitions/README.md`](../03-task-generation/03b-construct-task-definitions/README.md) |
+| [`03-task-generation/03c-resolve-deficits.md`](03-task-generation/03c-resolve-deficits.md) | `03c` resolve deficits | [`../03-task-generation/03c-resolve-deficits.md`](../03-task-generation/03c-resolve-deficits.md) |
 | [`04-render-prompt-and-choices.md`](04-render-prompt-and-choices.md) | `04` render | [`../04-render-prompt-and-choices.md`](../04-render-prompt-and-choices.md) |
 | [`05-validate-and-export-release.md`](05-validate-and-export-release.md) | `05` validate and export | [`../05-validate-and-export-release.md`](../05-validate-and-export-release.md) |
+
+## Typed model declarations
+
+| Doc | Pipeline stage |
+|---|---|
+| [`models/README.md`](models/README.md) | Registry, ownership, and boundary audit. |
+| [`models/01-external-dataset-etl.md`](models/01-external-dataset-etl.md) | `01` typed models. |
+| [`models/02-execute-cadquery-and-build-graph.md`](models/02-execute-cadquery-and-build-graph.md) | `02a` and `02b` typed models. |
+| [`models/02c-build-cad-graph.md`](models/02c-build-cad-graph.md) | `02c` typed models. |
+| [`models/03-task-generation.md`](models/03-task-generation.md) | `03` typed models. |
+| [`models/04-render-prompt-and-choices.md`](models/04-render-prompt-and-choices.md) | `04` typed models. |
+| [`models/05-validate-and-export-release.md`](models/05-validate-and-export-release.md) | `05` typed models. |
+| [`models/cross-cutting.md`](models/cross-cutting.md) | Failure record, run manifest, pipeline stage marker, tolerance policy. |

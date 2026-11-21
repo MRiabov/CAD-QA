@@ -16,7 +16,8 @@ lives in `algorithm/`, and decisions scoped to this module live in `decisions.md
 ## Input
 
 - `CadGraph` from `02c`, one per active program;
-- `ProgramMetadata` from `01b`, including family, split, and program tier;
+- `ProgramMetadata` from `01a`;
+- `ProgramSelection` from `01b`, including family, split, and program tier;
 - dataset release targets from the release contract;
 - the release implementation scope;
 - `DeficitLedger` from the previous pass, empty on the first pass;

@@ -1,11 +1,9 @@
-# 03a allocate task quotas — adversarial integration test (TDD)
+# 03a/c quota allocation — test contract
 
-**Parent:** [`00-testing-strategy.md`](00-testing-strategy.md).
+**Parent:** [`README.md`](README.md).
 
 **Contract under test:**
-[`../03-task-generation/03a-allocate-task-quotas/README.md`](../03-task-generation/03a-allocate-task-quotas/README.md),
-with the balance policy in the root `balance.yaml` and the census in
-[`../03-task-generation/algorithm/program-capability-census.md`](../03-task-generation/algorithm/program-capability-census.md).
+[`../../../03-task-generation/03a-allocate-task-quotas/c-quota-allocation.md`](../../../03-task-generation/03a-allocate-task-quotas/c-quota-allocation.md).
 
 ## Happy-path integration test (test-first, adversarial)
 
@@ -63,23 +61,13 @@ tasks, and `split_capacity_short` and `family_quota_short` are recorded. This is
 the reason `programs_min` is 1,000: below 100 programs the 1% cap alone makes the
 release size unreachable.
 
-`test_03a_census_is_not_re_derived_on_a_fast_replan` — the test mutates the
-graphs after the first plan, then replans in the fast loop. `family_profiles`
-keeps its first values, because the graph batch did not change. A slow round that
-adds one program to one new family adds only that family's profile and leaves the
-others byte-identical.
-
-`test_03a_replan_keeps_accepted_work` — a replan from a ledger with 40 accepted
-identity tasks produces a new plan whose identity target is unchanged, whose
-remaining target is `max(0, new - accepted)`, and whose budget is computed from
-the remaining count. `parent_plan_version` names the previous version, every new
-absolute target is at least the accepted count, and a family with accepted tasks
-keeps its split.
+`test_03a_deterministic` — the same seed and policy produce a byte-identical
+plan; a changed seed changes the tie-breaks and therefore the plan.
 
 **TDD pin:** pins the step quotas, the identity adjustment and its clue
 occurrences, the coverage floor of one, the operand-form coverage rule, the
-bound rounding, the split targets, the 1% cap, and the census reuse before `03a`
-exists.
+bound rounding, the split targets, the 1% cap, and the attempt budget before
+`03a` exists.
 
 ## Failure-mode tests
 
@@ -92,18 +80,10 @@ exists.
   family across splits.
 - `test_03a_quota_target_family_unassigned` — a quota target that no family in
   the split supports records `quota_target_family_unassigned`.
-- `test_03a_unknown_policy_key` — a misspelled key in the policy fixture fails the
-  plan and names the key; it does not fall back to a default.
-- `test_03a_policy_drives_the_plan` — changing one number in the policy fixture
-  changes the plan, and changing the policy version changes the plan version and
-  the recorded policy hash. No test compares the fixture to the shipped defaults.
-- `test_03a_deterministic` — the same seed and policy produce a byte-identical
-  plan; a changed seed changes the tie-breaks and therefore the plan.
 
 ## What this does not prove
 
+- That a replan preserves accepted work. That is
+  [`d-replan.md`](d-replan.md).
 - That a task can be constructed. That is
-  [`03b-construct-task-definitions.md`](03b-construct-task-definitions.md).
-- That a deficit can be resolved. That is `03c-resolve-deficits.md`.
-- That the release is balanced. That is
-  `05-validate-and-export-release.md`.
+  [`../03b-construct-task-definitions/README.md`](../03b-construct-task-definitions/README.md).

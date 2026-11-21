@@ -71,6 +71,6 @@ equality, and the state-size rejection before `02c` exists.
 ## What this does not prove
 
 - That a task exists for the graph. That is
-  [`03b-construct-task-definitions.md`](03b-construct-task-definitions.md).
+  [`03b-construct-task-definitions.md`](03-task-generation/03b-construct-task-definitions/README.md).
 - That the support table is complete. That is
   [`00-support-tables.md`](00-support-tables.md).

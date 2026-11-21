@@ -46,7 +46,7 @@ graph offers.
 | Consumer | Use |
 |---|---|
 | `03a` | Derives it for every active program to assign quota targets and rank by scarcity, then stores the per-program census in `program_census` and the union per family in `family_profiles`. |
-| `03b` | Reads its program's census from the plan and skips clue operand forms the graph cannot build; it re-derives only when the entry is absent or its graph hash differs. |
+| `03b` | Reads its program's census from the plan and skips clue operand forms the graph cannot build; it re-derives only when the entry is absent or its `graph_identity_sha256` differs. |
 | `03c` | Reads `family_profiles` in the plan; it does not derive the census. |
 
 ## Ownership
@@ -58,15 +58,15 @@ and never written as a Parquet table.
   definition of what a graph can support.
 - `03a` derives it for all active programs in one pass and stores two
   projections in the plan: the per-program census in `program_census`, keyed by
-  `program_sha256` and the graph part hash, and the union per family — capabilities
+  `program_sha256` and `graph_identity_sha256`, and the union per family — capabilities
   and summed entity counts — in `TaskQuotaPlan.family_profiles`. That family
   projection is what `03c` reads.
 - `03b` reads its program's entry from `program_census` instead of deriving it a
-  second time. It re-derives only when the entry is absent or its graph hash does
+  second time. It re-derives only when the entry is absent or its `graph_identity_sha256` does
   not match the graph it is reading.
 - Nothing is versioned separately. The census is a function of the graph, so a
   changed graph produces a changed census by construction; the plan entry is
-  keyed by the graph hash, so a stale copy cannot be used.
+  keyed by `graph_identity_sha256`, so a stale copy cannot be used.
 
 Derivation is bounded by the graph, not by the plan:
 

@@ -1,13 +1,17 @@
 # 05 validate and export release — adversarial integration test (TDD)
 
-**Parent:** [`00-testing-strategy.md`](00-testing-strategy.md).
+**Parent:** [`../00-testing-strategy.md`](00-testing-strategy.md).
 
-**Contract under test:** [`../05-validate-and-export-release.md`](../05-validate-and-export-release.md),
+**Contract under test:**
+[`../../05-validate-and-export-release.md`](../05-validate-and-export-release.md),
 with the checks in
-[`../05-validate-and-export-release/release-checks.md`](../05-validate-and-export-release/release-checks.md),
+[`../../05-validate-and-export-release/release-checks.md`](../05-validate-and-export-release/release-checks.md),
 the columns in
-[`../../../requirements/release-dataset-contract.md`](../../../requirements/release-dataset-contract.md),
-and the merge rules in [`../../failure-record.md`](../../failure-record.md).
+[`../../../../requirements/release-dataset-contract.md`](../../../requirements/release-dataset-contract.md),
+and the merge rules in [`../../../failure-record.md`](../../failure-record.md).
+
+This folder mirrors the authoritative `05` folder. The test contract for this pipeline stage is here; the
+coverage and balance check tests are in [`release-checks.md`](05-validate-and-export-release/release-checks.md).
 
 ## Happy-path integration test (test-first, adversarial)
 
@@ -52,15 +56,6 @@ support tables, a fixed generator version, and the three failure partitions.
 - `manifest.json` is the last file written, so a directory without it is not a
   release.
 
-`test_05_check_outcomes` — the three fixture checks produce `pass`, `miss` with
-disposition `reported`, and `not_applicable`, and the export proceeds. An
-enforced miss blocks it, and the manifest is not written. The test reads the
-outcome and disposition from the manifest, not from a log.
-
-`test_05_known_miss` — an enforced miss listed in `known_misses` proceeds and the
-manifest carries the accepted reason. The same release without the entry blocks
-and names the check.
-
 `test_05_multiple_choice_pool` — five doctored pools each block and name the
 check: a repeated answer value under `same_answer`, a gap in the labels, a label
 outside `A` to `G`, a gold label absent from the pool, and a correct label whose
@@ -97,7 +92,7 @@ sorted check rows, and the manifest-last rule before `05` exists.
 ## What this does not prove
 
 - That the prompt renders correctly. That is
-  [`04-render-prompt-and-choices.md`](04-render-prompt-and-choices.md).
+  [`../04-render-prompt-and-choices.md`](../04-render-prompt-and-choices.md).
 - That the plan is balanced. That is
-  [`03a-allocate-task-quotas.md`](03a-allocate-task-quotas.md).
+  [`../03-task-generation/03a-allocate-task-quotas/README.md`](../03-task-generation/03a-allocate-task-quotas/README.md).
 - That the release trains well. That is a training experiment.

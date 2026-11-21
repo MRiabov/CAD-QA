@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Doc-mirror gate. Checks that streamlined/ and testing/ mirror the pipeline
+# stage docs. It reads the whole docs tree, so it takes well under a second;
+# run it from anywhere. See docs/dataset/implementation/pipeline/streamlined/README.md.
+#
+# Usage: tools/ci_cd/check-doc-mirror [--quiet]
+set -euo pipefail
+cd "$(dirname "$0")/../.."
+exec uv run python tools/ci_cd/check_doc_mirror.py "$@"

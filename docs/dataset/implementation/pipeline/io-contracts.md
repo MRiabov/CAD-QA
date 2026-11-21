@@ -5,11 +5,12 @@ between pipeline stages. Pipeline stage docs describe why and how; they do not r
 these interfaces. If a pipeline stage doc disagrees with this file, this file wins.
 
 This file covers stage boundaries only. Sub-step boundaries are owned by the
-parent document, which defines the sub-step models and artifacts without
+parent document, which defines the sub-step typed models and artifacts without
 restating the parent interface.
 
-Typed model names are provisional. Their fields are defined when the owning
-pipeline stage is specified.
+Typed model names are declared with their fields in
+[`streamlined/models/`](streamlined/models/README.md). This file owns the boundary between pipeline stages; the typed model
+declarations own the field set.
 
 ## Stages
 
@@ -38,6 +39,7 @@ manifest, and the failure partitions; its Inputs section lists them.
 | `03` | `03a` allocate task quotas, `03b` construct task definitions, `03c` resolve deficits by replanning or expanding data. |
 
 Sub-steps have their own typed models and I/O tables in their parent document.
+Their field sets are declared in [`streamlined/models/`](streamlined/models/README.md).
 
 ## Contract invariants
 

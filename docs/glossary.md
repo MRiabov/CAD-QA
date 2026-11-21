@@ -755,7 +755,7 @@ cross-cutting phrases. Enforced by `tools/ci_cd/check_dont_say.py`.
 | CAD feature effect delta | CAD feature solid state effect delta | qualify the changed object |
 | entity fingerprint | CAD topology entity ID | fingerprint is an implementation detail |
 | trace (bare) | CadQuery program runtime extraction result / agent training trace / answer candidate set trace | overloaded across concepts |
-| model (bare) | CAD model / LLM model / base LLM model / LLM adapter / merged LLM model | geometry vs language model vs weights/adapter/served endpoint |
+| model (bare) | CAD model / LLM model / base LLM model / LLM adapter / merged LLM model / typed model / typed models | geometry vs language model vs weights/adapter/served endpoint |
 | node (bare) | CAD graph entity / code node | ambiguous between graph and code |
 | stage (bare) | Training stage / pipeline stage | which stage? qualify it |
 | surface (bare) | scope / interface | imprecise metaphor; name the scope or interface |

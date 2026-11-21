@@ -1,6 +1,7 @@
 # 02b execute CadQuery — runtime captures or tombstone
 
 > Authoritative: `../02b-execute-cadquery.md`
+> Models: `models/02-execute-cadquery-and-build-graph.md`
 
 READ:
 

@@ -28,7 +28,7 @@ only be tested by mocking its own storage, the storage contract is wrong.
 
 ## Assert from the artifact
 
-Every test reads its result back the way the next stage reads it: the Parquet
+Every test reads its result back the way the next pipeline stage reads it: the Parquet
 table through the same reader, not the in-memory struct. A test that checks the
 in-memory value can pass while the production read path is broken.
 
@@ -47,9 +47,9 @@ fixture, the invocation, and the assertion.
 A test that cannot be written from the contract is a missing contract, not a
 testing problem. Name the sentence that is missing.
 
-## One doc per stage
+## One doc per pipeline stage
 
-The group docs (`01`, `02`, `03`) are overviews. Tests pin the sub-stages, which
+The group docs (`01`, `02`, `03`) are overviews. Tests pin the sub-steps, which
 are the executable units.
 
 | Test doc | Pipeline stage contract |
@@ -65,9 +65,9 @@ are the executable units.
 | [`02a-extract-cadquery-ast.md`](02a-extract-cadquery-ast.md) | [`../02a-extract-cadquery-ast.md`](../02a-extract-cadquery-ast.md) |
 | [`02b-execute-cadquery.md`](02b-execute-cadquery.md) | [`../02b-execute-cadquery.md`](../02b-execute-cadquery.md) |
 | [`02c-build-cad-graph.md`](02c-build-cad-graph.md) | [`../02c-build-cad-graph.md`](../02c-build-cad-graph.md) |
-| [`03a-allocate-task-quotas.md`](03a-allocate-task-quotas.md) | [`../03-task-generation/03a-allocate-task-quotas/README.md`](../03-task-generation/03a-allocate-task-quotas/README.md) |
-| [`03b-construct-task-definitions.md`](03b-construct-task-definitions.md) | [`../03-task-generation/03b-construct-task-definitions/README.md`](../03-task-generation/03b-construct-task-definitions/README.md) |
-| [`03c-resolve-deficits.md`](03c-resolve-deficits.md) | [`../03-task-generation/03c-resolve-deficits.md`](../03-task-generation/03c-resolve-deficits.md) |
+| [`03-task-generation/03a-allocate-task-quotas/README.md`](03-task-generation/03a-allocate-task-quotas/README.md) | [`../03-task-generation/03a-allocate-task-quotas/README.md`](../03-task-generation/03a-allocate-task-quotas/README.md) |
+| [`03-task-generation/03b-construct-task-definitions/README.md`](03-task-generation/03b-construct-task-definitions/README.md) | [`../03-task-generation/03b-construct-task-definitions/README.md`](../03-task-generation/03b-construct-task-definitions/README.md) |
+| [`03-task-generation/03c-resolve-deficits.md`](03-task-generation/03c-resolve-deficits.md) | [`../03-task-generation/03c-resolve-deficits.md`](../03-task-generation/03c-resolve-deficits.md) |
 | [`04-render-prompt-and-choices.md`](04-render-prompt-and-choices.md) | [`../04-render-prompt-and-choices.md`](../04-render-prompt-and-choices.md) |
 | [`05-validate-and-export-release.md`](05-validate-and-export-release.md) | [`../05-validate-and-export-release.md`](../05-validate-and-export-release.md) |
 
@@ -78,6 +78,27 @@ pipeline stage without tests.
 observation over the fixture set, not a pipeline stage output. `00-run-contract.md`
 is the other: the run manifest, Parquet parts, resume rule, and exit codes span
 every pipeline stage.
+
+## Typed model and structure checks
+
+Two contracts are checked outside pytest, because they read the whole docs tree
+rather than a changed test:
+
+- **Folder mirror.** `tools/ci_cd/check-doc-mirror` requires the same relative
+  path under `streamlined/` and `testing/` for every pipeline stage and sub-step
+  contract doc. `decisions.md`, `algorithm/`, and `extraction/` are exempt. It
+  runs in the `quality-and-plan` CI job and as a pre-commit hook.
+- **Typed model declarations.** Every typed model is declared once in
+  [`../streamlined/models/`](../streamlined/models/README.md). The declaration is
+  hand-checked against pipeline stage docs and the streamlined READ/WRITE
+  blocks; the result is in
+  [`../streamlined/models/README.md#audit-result`](../streamlined/models/README.md#audit-result).
+  The mechanical check is [the declaration test](00-declaration-audit.md),
+  `draft`. The declaration files are fenced `go` or `python`, so the check can
+  parse the fields.
+
+A test that needs a field the declaration does not carry is a missing contract,
+not a test problem.
 
 ## Fixtures
 
@@ -113,7 +134,7 @@ uv run pytest -q
 files by path. A pipeline stage is accepted only when its contract test and the
 end-to-end test pass.
 
-A component's tests live with the language that implements it: Go stages in
+A component's tests live with the language that implements it: Go pipeline stages in
 `go test`, the `01d`/`02a`/`02b` Python workers and the repository tools in
 pytest. Root policy data is checked where its loader lives, so `checks.yaml`,
 `balance.yaml`, and `tolerance.yaml` are Go tests; `prompts.yaml` and the golden

@@ -79,7 +79,7 @@ variant, and the newline rule before `04` exists.
 ## What this does not prove
 
 - That the definition is valid. That is
-  [`03b-construct-task-definitions.md`](03b-construct-task-definitions.md).
+  [`03b-construct-task-definitions.md`](03-task-generation/03b-construct-task-definitions/README.md).
 - That the release passes its checks. That is
   `05-validate-and-export-release.md`.
 - That the wording is good. That is the review gate.

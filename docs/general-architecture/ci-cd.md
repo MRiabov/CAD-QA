@@ -41,16 +41,19 @@ than the changed lines, and it computes the plan.
    `docs`, `plans`, `contracts`, `cadqa_dataset_generator`, `generator`,
    `tests`, and `tools`. The check runs `tools/dont-say-go` through the Go
    toolchain, so the job installs Go before it runs.
-3. **Plan.** `tools/ci_plan.py` reads the diff and writes the `go` and `python`
+3. **Doc mirror.** `tools/ci_cd/check_doc_mirror.py` requires the same relative
+   path under `streamlined/` and `testing/` for every pipeline stage and sub-step
+   contract doc.
+4. **Plan.** `tools/ci_plan.py` reads the diff and writes the `go` and `python`
    outputs.
 
-The job does not install the project environment. `rumdl` runs through `uvx`
-and the two Python checks run through
-`uv run --isolated --no-project --with 'pydantic>=2.14'`, so the job installs a
-few megabytes of tools instead of the project environment.
+The job does not install the project environment. `rumdl` runs through `uvx`,
+the Don't-say check runs through the Go toolchain, and the remaining Python
+checks run through `uv run --isolated --no-project --with 'pydantic>=2.14'`, so
+the job installs a few megabytes of tools instead of the project environment.
 
-The job is a dependency of both suites. A red Markdown or Don't-say check stops
-the suites before they spend runner minutes; that is deliberate.
+The job is a dependency of both suites. A red Markdown, Don't-say, or doc-mirror
+check stops the suites before they spend runner minutes; that is deliberate.
 
 ## The plan
 

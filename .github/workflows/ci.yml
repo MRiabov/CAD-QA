@@ -72,6 +72,11 @@ jobs:
           uv run --isolated --no-project --with 'pydantic>=2.14' --with pytest \
             python -m pytest -q tests/test_check_dont_say.py
 
+      - name: Doc mirror
+        run: |
+          uv run --isolated --no-project --with 'pydantic>=2.14' \
+            python tools/ci_cd/check_doc_mirror.py
+
       - name: Plan the suites
         id: plan
         env:

@@ -2,7 +2,7 @@
 
 > Authoritative: `../04-render-prompt-and-choices.md`
 > Templates: `../../prompt-templates.md`
-> Prompt content: `../../requirements/prompt-content.md`
+> Prompt content: `../../../requirements/prompt-content.md`
 
 READ:
 

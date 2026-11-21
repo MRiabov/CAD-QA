@@ -1,11 +1,11 @@
 # 03c resolve deficits — adversarial integration test (TDD)
 
-**Parent:** [`00-testing-strategy.md`](00-testing-strategy.md).
+**Parent:** [`00-testing-strategy.md`](../00-testing-strategy.md).
 
 **Contract under test:**
-[`../03-task-generation/03c-resolve-deficits.md`](../03-task-generation/03c-resolve-deficits.md),
+[`../03-task-generation/03c-resolve-deficits.md`](../../03-task-generation/03c-resolve-deficits.md),
 with the deficit classes in
-[`../03-task-generation/README.md`](../03-task-generation/README.md).
+[`../03-task-generation/README.md`](../../03-task-generation/README.md).
 
 ## Happy-path integration test (test-first, adversarial)
 
@@ -93,7 +93,7 @@ rule, the escalation order, and the round budget before `03c` exists.
 ## What this does not prove
 
 - That the residual plan is right. That is
-  [`03a-allocate-task-quotas.md`](03a-allocate-task-quotas.md).
+  [`03a-allocate-task-quotas.md`](03a-allocate-task-quotas/README.md).
 - That a definition can be constructed. That is
-  [`03b-construct-task-definitions.md`](03b-construct-task-definitions.md).
+  [`03b-construct-task-definitions.md`](03b-construct-task-definitions/README.md).
 - That the release is complete. That is `05-validate-and-export-release.md`.

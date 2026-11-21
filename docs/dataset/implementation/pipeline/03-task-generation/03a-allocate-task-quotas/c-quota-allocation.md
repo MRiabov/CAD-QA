@@ -18,7 +18,7 @@ are one number, so the plan cannot promise fewer tasks than the release requires
 | `quota_targets` | Quota targets: task reasoning step count, quota dimension, dimension value, minimum, target count, maximum, and priority. |
 | `clue_quotas` | Clue quotas counted over clue occurrences. |
 | `clue_occurrences` | Planned clue occurrences for each task reasoning step count. |
-| `program_census` | The census of each active program, keyed by `program_sha256` and the graph part hash, so `03b` reads it instead of deriving it again. |
+| `program_census` | The census of each active program, keyed by `program_sha256` and `graph_identity_sha256`, so `03b` reads it instead of deriving it again. |
 | `family_profiles` | The union of the member programs' census capabilities and summed entity counts, `states_with_point_probe`, `max_task_reasoning_step_count`, split status, family task capacity, and probe success rate per CADEvolve program family. |
 | `family_assignment` | Family to split, task quota, per-task-reasoning-step task quotas, and assigned quota targets. |
 | `construction_attempt_budgets` | One construction batch per family and task reasoning step count for the remaining work in this plan revision. |

@@ -16,7 +16,7 @@ release never contains it. It is test data with a reviewed diff.
 
 ## Why there are many
 
-Different stages answer different questions, so each has its own oracle kind:
+Different pipeline stages answer different questions, so each has its own oracle kind:
 
 | Oracle kind | Pins | Independent expectation | Owner |
 |---|---|---|---|
@@ -44,7 +44,7 @@ versioned by `schema_version` in each file.
 
 - **Reviewed like code.** A diff that adds, removes, or changes an expectation is
   a claim. The reviewer asks which upstream record establishes it. Do not edit an
-  oracle to make a failing stage pass without a contract change.
+  oracle to make a failing pipeline stage pass without a contract change.
 - **Environment-pinned.** An oracle records the versions that produced it. A
   version change makes it `stale`, and it is re-derived and re-verified, not
   silently reused.
@@ -60,7 +60,7 @@ versioned by `schema_version` in each file.
 |---|---|---|
 | [`fixtures/`](../fixtures/) | coverage and rejection programs | the pinned corpus |
 | [`golden/`](../golden/) | pinned construction results | the construction contract |
-| `oracles/` | pinned stage outputs | the kernel, the program text, and a human |
+| `oracles/` | pinned pipeline stage outputs | the kernel, the program text, and a human |
 
 A golden record pins what `03b` should construct. An oracle pins what an earlier
 pipeline stage should have produced. They are different artifacts and different

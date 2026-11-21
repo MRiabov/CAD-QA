@@ -46,6 +46,7 @@ Run from the repository root unless stated:
 uv run pytest -q
 uv run rumdl check docs
 tools/ci_cd/file-length
+tools/ci_cd/check-doc-mirror
 tools/ci_cd/dont-say --ratchet tools/ci_cd/dont_say_baseline.txt \
   --names-ratchet tools/ci_cd/dont_say_names_baseline.txt
 uv run pre-commit run --all-files   # after `uv run pre-commit install`
@@ -58,6 +59,10 @@ contract, and golden-record tests; Go packages keep their tests beside the code.
 The file-length gate warns above 800 lines and exits non-zero above 1,200; its
 policy is in
 [`docs/dataset/implementation/file-trees.md`](docs/dataset/implementation/file-trees.md#file-length).
+
+The doc-mirror gate requires every pipeline stage/sub-step contract doc to have
+the same relative path under `docs/dataset/implementation/pipeline/streamlined/`
+and `docs/dataset/implementation/pipeline/testing/`.
 
 The Don't-say ratchet only improves. A change that lowers the hit count must
 lower `tools/ci_cd/dont_say_baseline.txt` in the same commit; never raise the

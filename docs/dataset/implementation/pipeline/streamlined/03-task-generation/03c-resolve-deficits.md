@@ -1,6 +1,7 @@
 # 03c resolve deficits — cheapest effective loop
 
-> Authoritative: `../03-task-generation/03c-resolve-deficits.md`
+> Authoritative: `../../03-task-generation/03c-resolve-deficits.md`
+> Models: `../models/03-task-generation.md`
 
 READ:
 

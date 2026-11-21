@@ -82,7 +82,8 @@ graph.
 
 ## What is not here
 
-- Field definitions and pipeline stage input/output models: `pipeline/io-contracts.md`.
+- Field definitions: `pipeline/streamlined/models/`; pipeline stage input/output
+  typed models: `pipeline/io-contracts.md`.
 - Release columns and consumer rules: `../requirements/release-dataset-contract.md`.
 - Table DDL and graph partitioning: `pipeline/extraction/graph-persistence.md`.
 - Run directory layout and part paths: [`run-contract.md`](run-contract.md).
