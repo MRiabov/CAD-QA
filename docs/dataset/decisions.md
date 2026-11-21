@@ -721,7 +721,11 @@ prefix is `DS-`.
   `github.com/parquet-go/parquet-go`, and carries graph-local IDs as `uuid.UUID`
   from `github.com/google/uuid`. `arrow-go` is not adopted. It returns only if a
   measured need for Arrow compute appears, and then the UUID extension must be
-  registered and every UUID field typed as that extension.
+  registered and every UUID field typed as that extension. The
+  standard-library `uuid` added in Go 1.27 is not a substitute: `parquet-go`
+  maps only `github.com/google/uuid.UUID` to the Parquet UUID logical type, and
+  the standard package has no name-based (v5) constructor for the deterministic
+  `failure_id` in `failure-record.md`.
 - **Consequences:** The Go schema is a struct with `parquet` tags, where `dict`,
   `optional`, `zstd`, and `list` express the encoding requirements in
   `graph-persistence.md`. Graph tables are read by streaming through
@@ -885,8 +889,10 @@ prefix is `DS-`.
   `unused`, `ineffassign`, `misspell`, `forbidigo`, and `depguard`.
 - **Consequences:** A CLI framework returns only if nested subcommands or
   generated completion become a real requirement. `go vet` runs through
-  `golangci-lint`, so a separate vet invocation is optional. Tool versions are
-  pinned with `go.mod` `tool` directives. The Go hooks are declared in
+  `golangci-lint`, so a separate vet invocation is optional; `go test` also runs
+  the `stdversion` vet check on Go 1.27, so a standard-library symbol newer than
+  the `go` directive fails both gates. Tool versions are pinned with `go.mod`
+  `tool` directives. The Go hooks are declared in
   `stacks.md` but not yet wired in `.pre-commit-config.yaml`; that is a recorded
   gap, not a decision.
 

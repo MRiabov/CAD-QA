@@ -45,7 +45,10 @@ code lands one pipeline stage at a time. Go reads the YAML policy files
 The encoders are `orjson` in Python and `encoding/json` in Go; both are declared
 in [`stacks.md`](stacks.md). Both languages produce the same canonical
 definition bytes for `03b` construct task definitions: sorted keys, raw UTF-8, no
-HTML escaping, and no binary floats. `03b` owns the exact serialization rule.
+HTML escaping, and no binary floats. `03b` owns the exact serialization rule. Go
+stays on the `encoding/json` v1 API: the `encoding/json/v2` package sorts object
+keys only when `Deterministic(true)` is set, so the sorted-key rule would become
+an option every encoder call must remember.
 
 ## Parquet at the boundary
 

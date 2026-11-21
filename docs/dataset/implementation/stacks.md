@@ -41,13 +41,15 @@ a second copy of the checker.
 
 **Toolchain:** Go 1.27.4, the latest stable release at 2026-11-20, and module
 `github.com/MRiabov/CAD-QA/generator`. `go.mod` lives at `generator/go.mod`. The
-`go` command owns builds and tests; formatting and linting are in the table.
+`go` command owns builds and tests; formatting and linting are in the table. A
+host `go` older than the `go` directive downloads the declared toolchain, so
+`GOTOOLCHAIN=local` requires 1.27.4 to be installed.
 
 | Need | Choice | Status |
 |---|---|---|
 | Parquet read and write | `github.com/parquet-go/parquet-go` | decided, `DS-40` |
-| Graph-local IDs | `github.com/google/uuid` | decided, `DS-40` |
-| JSON | `encoding/json` | standard library; HTML escaping disabled |
+| Graph-local IDs | `github.com/google/uuid` | decided, `DS-40`; stdlib `uuid` not adopted |
+| JSON | `encoding/json` | standard library v1 API; HTML escaping disabled |
 | Logging | `log/slog` | standard library |
 | Processes and cancellation | `os/exec`, `context` | standard library |
 | CLI parsing and subcommands | `flag` | standard library; no third-party framework |
@@ -60,6 +62,18 @@ a second copy of the checker.
 records the UUID reason. Graph tables are read by streaming through
 `parquet.GenericReader`; `parquet.ReadFile` is not used on them.
 
+The standard-library `uuid` added in Go 1.27 is not adopted. `parquet-go` maps
+only `github.com/google/uuid.UUID` to the Parquet UUID logical type, so the
+standard type would silently lose the annotation `DS-41` protects. The standard
+package also has no name-based (v5) constructor, and `failure_id` is
+`uuid5(namespace, key)` per `failure-record.md`.
+
+`encoding/json` stays on the v1 API. On Go 1.27 the v1 package is backed by the
+v2 implementation with v1 semantics, so existing behavior is preserved.
+`encoding/json/v2` sorts object keys only when `Deterministic(true)` is set,
+while the canonical JSON rule in `python-and-golang.md` relies on sorted keys by
+default; migrating would require that option at every encoder call.
+
 `flag` is enough for one subcommand per pipeline stage plus a few global flags.
 A third-party CLI framework would add help and completion machinery the
 generator does not use. `gopkg.in/yaml.v3` is the only YAML library in the Go
@@ -68,7 +82,9 @@ is a load error, then validate the typed policy. Python keeps `PyYAML` for
 `prompts.yaml`. `golangci-lint` is the single lint entry point and includes
 `staticcheck`, `govet`, `errcheck`, `revive`, `gocritic`, and the other strict
 checks listed in `DS-47`; `--fix` applies the auto-fixable findings. `gofumpt`
-and `goimports` are the formatters.
+and `goimports` are the formatters. On Go 1.27, `go test` also runs the
+`stdversion` vet check, which reports standard-library symbols newer than the
+`go` directive; it complements `golangci-lint` rather than replacing it.
 
 The Go entry point is the only CLI. Python workers run as subprocesses, so Python
 needs no CLI framework.
