@@ -10,3 +10,12 @@ repos:
       - id: rumdl
         args: [--config=.rumdl.toml]
         files: ^(docs/|plans/)
+  - repo: local
+    hooks:
+      # Whole-repository scan (~1s), so it runs only when a scanned file changes.
+      - id: dont-say
+        name: Don't-say terms
+        entry: tools/dont-say --ratchet tools/dont_say_baseline.txt
+        language: system
+        pass_filenames: false
+        files: ^(docs|dataset|train_and_eval|tools|plans)/.*\.(md|py|tex)$

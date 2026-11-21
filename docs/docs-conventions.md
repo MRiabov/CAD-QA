@@ -229,20 +229,22 @@ P0/P1 commitment.
 
 ## Lint, format, ratchets
 
-- **Don't-say checker: implemented and enforced.** `tools/check_dont_say.py` reads the
-  `## Don't say` table from `glossary.md` and fails on banned terms across docs and code
-  (Markdown, LaTeX, and Python).
+- **Don't-say checker: a script, not a test.** `tools/dont-say` reads the `## Don't say`
+  table from `glossary.md` and fails on banned terms across docs and code (Markdown,
+  LaTeX, and Python). It scans the whole repository (about a second), so it runs as a
+  pre-commit hook and never from pytest: a test would make every test run pay for the
+  scan.
   A `(home)` annotation exempts a tree, `ALLOWLIST` exempts cross-cutting phrases, and the
   `dont-say: allow` / `dont-say: home` markers exempt a line/file. In code, comments and
   docstrings are matched as prose, and multi-word identifier name variants are matched. Run
-  `uv run python tools/check_dont_say.py`.
+  `tools/dont-say`, or `tools/dont-say --ratchet tools/dont_say_baseline.txt` to enforce
+  the ratchet.
 - **Clean code: P2.** `--identifiers` additionally matches banned terms inside code
   identifier names; `tools/dont_say_identifiers_baseline.txt` is the accepted count
   (`development-plan.md` Phase 6). Visibility/ratchet only, not P0/P1.
 - **Ratchets only improve.** `tools/dont_say_baseline.txt` holds the accepted count; the
-  checker fails if hits rise, or fall without the baseline being lowered. Enforced by
-  `tests/test_dont_say_ratchet.py` (the test gate). The sweep is tracked in
-  `_audit/dont-say-worklist.md`.
+  checker fails if hits rise, or fall without the baseline being lowered. The `dont-say`
+  pre-commit hook enforces it. The sweep is tracked in `_audit/dont-say-worklist.md`.
 - **Markdown formatter: `rumdl`.** `.rumdl.toml` is the committed config (GFM flavor;
   `MD013` line length and `MD033` inline HTML off, matching the docs' style; scoped to
   `docs/` and `plans/`). Run `uv run rumdl check` to report, or

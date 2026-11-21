@@ -1,5 +1,7 @@
-#!/usr/bin/env python3
 """Don't-say checker for CAD-QA docs and code.
+
+Run it as ``tools/dont-say`` (or ``uv run python tools/check_dont_say.py``); it
+is a whole-repository scan, so it is a script rather than a pytest test.
 
 Reads the ``## Don't say`` table from ``docs/glossary.md`` and fails when a
 banned term appears in a scanned doc or code file (``.md``, ``.tex``, ``.py``).
@@ -49,7 +51,6 @@ SKIP_FILES = frozenset(
         "glossary.md",
         "check_dont_say.py",
         "test_check_dont_say.py",
-        "test_dont_say_ratchet.py",
         "dont_say_baseline.txt",
     }
 )

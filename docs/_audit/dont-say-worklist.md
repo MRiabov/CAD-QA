@@ -4,8 +4,13 @@
 linted. Regenerate:
 
 ```bash
-uv run python tools/check_dont_say.py --quiet
+tools/dont-say --quiet
 ```
+
+As of 2026-11-21 the checker reports **177 hits** against a baseline re-pinned at 177:
+103 in `plans/` (dated decision records) and 74 in `docs/`. The 2026-10-21 baseline of 107
+went stale while the docs tree was restructured, and the pytest ratchet was red from
+2026-11-20 until the check moved to the `dont-say` pre-commit hook.
 
 As of 2026-10-08 the checker reports **358 hits**, all in `docs/`. Code is clean: the
 identifier-shaped Don't-says that appear in code (`OntologyGraph`, `entity_id`,
@@ -25,8 +30,9 @@ adding the bare `kind`/`type` bans).
 - **Code**: identifier-shaped tokens only (snake/kebab/Pascal/camel); bare words are
   prose-only, so legit string values like `"selector"` are not flagged.
 - **Ratchet**: `tools/dont_say_baseline.txt` holds the accepted count; the checker fails if
-  hits rise, or if they fall without the baseline being lowered. Enforced by
-  `tests/test_dont_say_ratchet.py`.
+  hits rise, or if they fall without the baseline being lowered. Enforced by the
+  `dont-say` pre-commit hook (`tools/dont-say`), not by pytest: the check is a
+  whole-repository scan, so a test would pay for it on every test run.
 
 ## By Don't-say term
 
