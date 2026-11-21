@@ -57,3 +57,9 @@ repos:
         language: system
         pass_filenames: false
         files: ^(docs|dataset|train_and_eval|tools|plans)/.*\.(md|py|tex)$
+      - id: worker-contracts
+        name: Worker contract schemas and Go structs
+        entry: tools/ci_cd/check-worker-contracts
+        language: system
+        pass_filenames: false
+        files: ^(contracts/|cadqa_dataset_generator/contracts\.py|generator/internal/shared/(generate\.go|s01d_normalize_programs_contract\.go)|tools/contracts/)

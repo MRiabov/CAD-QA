@@ -4,21 +4,27 @@ The Go orchestrator starts one long-lived worker per pipeline stage:
 
     python -m cadqa_dataset_generator.worker <pipeline_stage>
 
-The worker imports its pipeline stage module, calls its optional ``preload()`` hook, and
-writes one ready document to standard output:
+The worker imports its pipeline stage module, calls its optional ``preload()``
+hook, and writes one ready document to standard output:
 
-    {"ok": true, "result": {"ready": true}}
+    {"ok": true, "protocol_version": 1, "result": {"ready": true}}
 
 It then serves newline-delimited JSON requests: one JSON request document per
 line on standard input, one JSON response document per line on standard output:
 
-    {"ok": true, "result": ...}
-    {"ok": false, "error": {"code": "...", "message": "..."}}
+    {"ok": true, "protocol_version": 1, "result": ...}
+    {"ok": false, "protocol_version": 1, "error": {"code": "...", "message": "..."}}
 
 A handled pipeline stage rejection is data, not a process exit. Exit code 0
 means the worker reached EOF or was closed cleanly. Exit code 1 means the
-worker could not start its pipeline stage. Logs go to standard error so standard output
-stays one JSON document per line.
+worker could not start its pipeline stage. Logs go to standard error so
+standard output stays one JSON document per line.
+
+A pipeline stage with an entry in
+:data:`cadqa_dataset_generator.contracts.STAGE_CONTRACTS` validates its request
+and result against the typed model before and after the runner.
+A pipeline stage without a contract keeps the free-form dict path until its
+contract lands.
 """
 
 from __future__ import annotations
@@ -30,14 +36,20 @@ from collections.abc import Callable, Sequence
 from typing import Any
 
 import orjson
-from pydantic import BaseModel, Field
+from pydantic import ValidationError
 
 from cadqa_dataset_generator import StageNotImplemented
+from cadqa_dataset_generator.contracts import (
+    STAGE_CONTRACTS,
+    WORKER_PROTOCOL_VERSION,
+    WorkerError,
+    WorkerResponse,
+)
 
-StageRunner = Callable[[dict[str, Any]], dict[str, Any]]
+StageRunner = Callable[[Any], Any]
 
-# TODO(bootstrap): replace the freeform request and result dicts with typed
-# pipeline stage models as each pipeline stage lands.
+# TODO(bootstrap): remove the free-form fallback as each remaining
+# pipeline stage gets an entry in STAGE_CONTRACTS.
 
 # Wire pipeline stage name -> module that implements it. The module name is `s` + name.
 # The wire name is the snake-case pipeline stage name used by the failure record.
@@ -46,21 +58,6 @@ STAGE_MODULES: dict[str, str] = {
     "02a_extract_cadquery_ast": "cadqa_dataset_generator.s02a_extract_cadquery_ast",
     "02b_execute_cadquery": "cadqa_dataset_generator.s02b_execute_cadquery",
 }
-
-
-class WorkerError(BaseModel):
-    """A structured worker error returned as data."""
-
-    code: str = Field(min_length=1, max_length=100)
-    message: str = Field(min_length=1, max_length=2000)
-
-
-class WorkerResponse(BaseModel):
-    """The one JSON document a worker writes for one request."""
-
-    ok: bool
-    result: dict[str, Any] | None = None
-    error: WorkerError | None = None
 
 
 def stage_names() -> list[str]:
@@ -90,36 +87,83 @@ def preload_stage(stage: str) -> None:
 
 
 def _failure(code: str, message: str) -> WorkerResponse:
-    return WorkerResponse(ok=False, error=WorkerError(code=code, message=message))
+    return WorkerResponse(
+        ok=False,
+        protocol_version=WORKER_PROTOCOL_VERSION,
+        error=WorkerError(code=code, message=message),
+    )
 
 
-def handle(stage: str, request: dict[str, Any]) -> WorkerResponse:
+def _typed_request(stage: str, request: dict[str, Any]) -> Any:
+    """Validate a request when a pipeline stage has a contract, else pass it through."""
+
+    contract = STAGE_CONTRACTS.get(stage)
+    if contract is None:
+        return request
+    return contract.request.model_validate(request)
+
+
+def _typed_result(stage: str, result: Any) -> dict[str, Any]:
+    """Validate a result when a pipeline stage has a contract, else require a JSON object."""
+
+    contract = STAGE_CONTRACTS.get(stage)
+    if contract is None:
+        if not isinstance(result, dict):
+            raise TypeError(
+                f"pipeline stage {stage} returned {type(result).__name__}, want dict"
+            )
+        return result
+    typed = contract.result.model_validate(result)
+    return typed.model_dump(mode="json")
+
+
+def handle(
+    stage: str,
+    request: dict[str, Any],
+    runner: StageRunner | None = None,
+) -> WorkerResponse:
     """Dispatch one request and convert pipeline stage failures to data."""
 
-    try:
-        runner = resolve_stage(stage)
-    except KeyError:
-        expected = ", ".join(stage_names())
-        return _failure(
-            "unknown_stage",
-            f"unknown stage {stage!r}; expected one of {expected}",
-        )
-    except (ImportError, TypeError) as exc:
-        return _failure("stage_unavailable", str(exc))
+    if runner is None:
+        try:
+            runner = resolve_stage(stage)
+        except KeyError:
+            expected = ", ".join(stage_names())
+            return _failure(
+                "unknown_stage",
+                f"unknown stage {stage!r}; expected one of {expected}",
+            )
+        except (ImportError, TypeError) as exc:
+            return _failure("stage_unavailable", str(exc))
 
     try:
-        result = runner(request)
+        typed_request = _typed_request(stage, request)
+    except ValidationError as exc:
+        return _failure("invalid_request", str(exc))
+
+    try:
+        result = runner(typed_request)
     except StageNotImplemented as exc:
         return _failure("stage_not_implemented", str(exc))
     except Exception as exc:  # noqa: BLE001 - the worker boundary converts failures to data
         return _failure("stage_failed", f"{type(exc).__name__}: {exc}")
 
-    if not isinstance(result, dict):
-        return _failure(
-            "invalid_result",
-            f"pipeline stage {stage} returned {type(result).__name__}, want dict",
-        )
-    return WorkerResponse(ok=True, result=result)
+    try:
+        typed_result = _typed_result(stage, result)
+    except (ValidationError, TypeError) as exc:
+        return _failure("invalid_result", str(exc))
+
+    return WorkerResponse(
+        ok=True,
+        protocol_version=WORKER_PROTOCOL_VERSION,
+        result=typed_result,
+    )
+
+
+def _document(response: WorkerResponse) -> dict[str, Any]:
+    """Return the wire document, omitting the outcome field that does not apply."""
+
+    return response.model_dump(mode="json", exclude_none=True)
 
 
 def _write_document(document: dict[str, Any]) -> None:
@@ -132,32 +176,44 @@ def _serve(stage: str) -> int:
     """Preload one pipeline stage, signal ready, and serve requests until EOF."""
 
     try:
-        resolve_stage(stage)
+        runner = resolve_stage(stage)
     except KeyError:
         expected = ", ".join(stage_names())
         _write_document(
-            _failure(
-                "unknown_stage",
-                f"unknown stage {stage!r}; expected one of {expected}",
-            ).model_dump(mode="json")
+            _document(
+                _failure(
+                    "unknown_stage",
+                    f"unknown stage {stage!r}; expected one of {expected}",
+                )
+            )
         )
         return 1
     except (ImportError, TypeError) as exc:
-        _write_document(_failure("stage_unavailable", str(exc)).model_dump(mode="json"))
+        _write_document(_document(_failure("stage_unavailable", str(exc))))
         return 1
 
     try:
         preload_stage(stage)
     except Exception as exc:  # noqa: BLE001 - a preload failure is a pipeline stage failure
         _write_document(
-            _failure(
-                "stage_unavailable",
-                f"{type(exc).__name__}: {exc}",
-            ).model_dump(mode="json")
+            _document(
+                _failure(
+                    "stage_unavailable",
+                    f"{type(exc).__name__}: {exc}",
+                )
+            )
         )
         return 1
 
-    _write_document({"ok": True, "result": {"ready": True}})
+    _write_document(
+        _document(
+            WorkerResponse(
+                ok=True,
+                protocol_version=WORKER_PROTOCOL_VERSION,
+                result={"ready": True},
+            )
+        )
+    )
 
     for line in sys.stdin.buffer:
         if not line.strip():
@@ -169,8 +225,8 @@ def _serve(stage: str) -> int:
         except (orjson.JSONDecodeError, TypeError) as exc:
             response = _failure("invalid_request", str(exc))
         else:
-            response = handle(stage, request)
-        _write_document(response.model_dump(mode="json"))
+            response = handle(stage, request, runner)
+        _write_document(_document(response))
 
     return 0
 
@@ -191,7 +247,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.list_stages:
-        _write_document({"stages": stage_names()})
+        _write_document(
+            {
+                "protocol_version": WORKER_PROTOCOL_VERSION,
+                "stages": stage_names(),
+            }
+        )
         return 0
     if args.stage is None:
         parser.error("a pipeline stage is required unless --list-stages is given")

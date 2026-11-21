@@ -322,3 +322,34 @@ grouping is editorial; the numbers are the citation keys and never change meanin
 - **Consequences:** Ctrl-C can take up to 30 seconds but loses no completed
   work. A second Ctrl-C is immediate. A crash still loses only the units in the
   queue or in flight; the committed parts are valid.
+
+## DS-ADR-13 — The worker protocol is a checked-in JSON Schema with generated Go structs
+
+- **Status:** accepted (2026-11-21).
+- **Context:** The Go orchestrator and the Python worker exchange small JSON
+  control documents over standard input and standard output. Before this
+  decision, each side hand-wrote the envelope, and the per-pipeline-stage
+  payloads were free-form dicts; nothing checked that the two definitions
+  agreed. The boundary is not HTTP, so an OpenAPI document would describe a
+  transport the worker does not use.
+- **Decision:** The JSON Schema files under `contracts/worker/v1/` are the
+  language-neutral contract for the worker protocol. Pydantic classes in
+  `cadqa_dataset_generator/contracts.py` are the executable authoring form, and
+  `tools/contracts/export_worker_schemas.py` exports the schemas
+  deterministically. Go structs are generated from the schema by
+  `go-jsonschema`, pinned in `generator/internal/shared/generate.go`, and
+  checked in. The envelope stays hand-written on both sides; the
+  per-pipeline-stage payloads are generated. `WORKER_PROTOCOL_VERSION` in
+  Python and `WorkerProtocolVersion` in Go are checked on the ready document,
+  every response, and `--list-stages`. `tools/ci_cd/check-worker-contracts`
+  runs in pre-commit when the contract files change; it exports with `--check`,
+  regenerates the Go structs, and fails on a diff. A breaking wire change is a
+  new `contracts/worker/v2/` directory and a protocol version bump; additive
+  fields stay in `v1`.
+- **Consequences:** One definition per document, so a change that is not
+  exported or regenerated fails a check instead of drifting silently. Go structs
+  are generated, not hand-maintained, while Python keeps Pydantic validation.
+  The contract is JSON, not Parquet; bulk data remains Parquet (`DS-ADR-03`). No
+  OpenAPI or HTTP dependency is added. A new pipeline stage contract is a schema
+  file, an exporter entry, a Go generation line, and a fixture; models are still
+  derived one pipeline stage at a time.

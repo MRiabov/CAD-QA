@@ -7,14 +7,18 @@ request boundary, and the failure partition are fixed first. See
 
 from __future__ import annotations
 
-from typing import Any
-
 from cadqa_dataset_generator import StageNotImplemented
+from cadqa_dataset_generator.contracts import (
+    S01dNormalizeProgramsRequest,
+    S01dNormalizeProgramsResult,
+)
 
 STAGE = "01d_normalize_programs"
 
 
-def run(request: dict[str, Any]) -> dict[str, Any]:
+def run(
+    request: S01dNormalizeProgramsRequest,
+) -> S01dNormalizeProgramsResult:
     """Normalize selected programs and write the normalized program artifact."""
 
     # TODO(01d): decode UTF-8, parse with the pinned ast, unparse, format

@@ -1,0 +1,92 @@
+{
+  "$defs": {
+    "S01dNormalizeProgramsRequest": {
+      "additionalProperties": false,
+      "description": "The 01d request: which program pool parts to normalize and where to write.",
+      "properties": {
+        "output_directory": {
+          "minLength": 1,
+          "title": "Output Directory",
+          "type": "string"
+        },
+        "program_pool_part_paths": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Program Pool Part Paths",
+          "type": "array"
+        },
+        "shard_index": {
+          "minimum": 0,
+          "title": "Shard Index",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "program_pool_part_paths",
+        "output_directory",
+        "shard_index"
+      ],
+      "title": "S01dNormalizeProgramsRequest",
+      "type": "object"
+    },
+    "S01dNormalizeProgramsResult": {
+      "additionalProperties": false,
+      "description": "The 01d result: the written parts, their counts, and the normalization version.",
+      "properties": {
+        "failure_count": {
+          "minimum": 0,
+          "title": "Failure Count",
+          "type": "integer"
+        },
+        "failure_part_path": {
+          "minLength": 1,
+          "title": "Failure Part Path",
+          "type": "string"
+        },
+        "normalization_version": {
+          "minLength": 1,
+          "title": "Normalization Version",
+          "type": "string"
+        },
+        "normalized_count": {
+          "minimum": 0,
+          "title": "Normalized Count",
+          "type": "integer"
+        },
+        "normalized_part_path": {
+          "minLength": 1,
+          "title": "Normalized Part Path",
+          "type": "string"
+        }
+      },
+      "required": [
+        "normalized_part_path",
+        "failure_part_path",
+        "normalized_count",
+        "failure_count",
+        "normalization_version"
+      ],
+      "title": "S01dNormalizeProgramsResult",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/MRiabov/CAD-QA/contracts/worker/v1/s01d_normalize_programs.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "The 01d request and result pair, exported as one JSON Schema document.",
+  "properties": {
+    "request": {
+      "$ref": "#/$defs/S01dNormalizeProgramsRequest"
+    },
+    "result": {
+      "$ref": "#/$defs/S01dNormalizeProgramsResult"
+    }
+  },
+  "required": [
+    "request",
+    "result"
+  ],
+  "title": "S01dNormalizeProgramsContract",
+  "type": "object"
+}

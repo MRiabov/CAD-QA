@@ -15,6 +15,10 @@ import (
 )
 
 const (
+	// WorkerProtocolVersion is the wire version of the JSON request and response
+	// documents. It must match WORKER_PROTOCOL_VERSION in
+	// cadqa_dataset_generator/contracts.py; the contract test checks both sides.
+	WorkerProtocolVersion = 1
 	// DefaultWorkerRequestLimit bounds how many requests one worker serves
 	// before it is replaced. A pipeline stage can override it from its
 	// execution environment.
@@ -85,9 +89,10 @@ func (e *WorkerError) Error() string {
 }
 
 type workerEnvelope struct {
-	OK     bool            `json:"ok"`
-	Result json.RawMessage `json:"result"`
-	Error  *WorkerError    `json:"error"`
+	OK              bool            `json:"ok"`
+	ProtocolVersion int             `json:"protocol_version"`
+	Result          json.RawMessage `json:"result"`
+	Error           *WorkerError    `json:"error"`
 }
 
 // Start launches the worker and waits for its ready document. The context
@@ -157,6 +162,13 @@ func (w *PythonWorker) waitReadyLocked() error {
 		w.stopLocked()
 		return fmt.Errorf("python worker %s: ready: %w (stderr: %s)", w.Stage, err, stderr)
 	}
+	if envelope.ProtocolVersion != WorkerProtocolVersion {
+		w.stopLocked()
+		return fmt.Errorf(
+			"python worker %s: protocol version %d, want %d",
+			w.Stage, envelope.ProtocolVersion, WorkerProtocolVersion,
+		)
+	}
 	if !envelope.OK {
 		w.stopLocked()
 		if envelope.Error != nil {
@@ -216,6 +228,13 @@ func (w *PythonWorker) Run(ctx context.Context, request any, response any) error
 			stderr := w.log.String()
 			w.stopLocked()
 			return fmt.Errorf("python worker %s: response: %w (stderr: %s)", w.Stage, result.err, stderr)
+		}
+		if result.envelope.ProtocolVersion != WorkerProtocolVersion {
+			w.stopLocked()
+			return fmt.Errorf(
+				"python worker %s: protocol version %d, want %d",
+				w.Stage, result.envelope.ProtocolVersion, WorkerProtocolVersion,
+			)
 		}
 		if !result.envelope.OK {
 			if result.envelope.Error != nil {
@@ -282,10 +301,17 @@ func (w *PythonWorker) ListStages(ctx context.Context) ([]string, error) {
 	}
 
 	var document struct {
-		Stages []string `json:"stages"`
+		ProtocolVersion int      `json:"protocol_version"`
+		Stages          []string `json:"stages"`
 	}
 	if err := json.Unmarshal(stdout.Bytes(), &document); err != nil {
 		return nil, fmt.Errorf("decode python worker stage list: %w", err)
+	}
+	if document.ProtocolVersion != WorkerProtocolVersion {
+		return nil, fmt.Errorf(
+			"python worker protocol version %d, want %d",
+			document.ProtocolVersion, WorkerProtocolVersion,
+		)
 	}
 	return document.Stages, nil
 }

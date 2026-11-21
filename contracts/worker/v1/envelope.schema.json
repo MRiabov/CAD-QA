@@ -1,0 +1,73 @@
+{
+  "$defs": {
+    "WorkerError": {
+      "additionalProperties": false,
+      "description": "A structured worker error returned as data.",
+      "properties": {
+        "code": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "WorkerError",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/MRiabov/CAD-QA/contracts/worker/v1/envelope.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "The one JSON document a worker writes to standard output.\n\nA response is either a success carrying ``result`` or a failure carrying\n``error``. The validator keeps the two shapes from being mixed.",
+  "properties": {
+    "error": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/WorkerError"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "ok": {
+      "title": "Ok",
+      "type": "boolean"
+    },
+    "protocol_version": {
+      "minimum": 1,
+      "title": "Protocol Version",
+      "type": "integer"
+    },
+    "result": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Result"
+    }
+  },
+  "required": [
+    "ok",
+    "protocol_version"
+  ],
+  "title": "WorkerResponse",
+  "type": "object"
+}

@@ -67,6 +67,8 @@ generator/
       balance_policy.go                    balance.yaml loader
       check_policy.go                      checks.yaml loader
       python_worker.go                     Python worker process bridge
+      generate.go                          go:generate for the worker contract structs
+      s01d_normalize_programs_contract.go  generated 01d request and result structs
     01a-read-cadevolve-metadata/           package read_cadevolve_metadata
       read_cadevolve_metadata.go
       read_cadevolve_metadata_test.go
@@ -130,6 +132,7 @@ Parquet paths and a small JSON request.
 ```text
 cadqa_dataset_generator/
   __init__.py
+  contracts.py                             JSON worker protocol contracts
   worker.py                                worker entry point, one stage per process
   parquet_writer.py                        async immutable Parquet part writer
   s01d_normalize_programs.py               01d normalize programs
@@ -168,6 +171,17 @@ A Go test function is the contract name in CamelCase:
 `test_01a_metadata_happy_path_adversarial` becomes
 `Test01aMetadataHappyPathAdversarial`.
 
+## Contracts
+
+The worker protocol contract is checked in as JSON Schema; the Go structs are
+generated from it. Pipeline stage docs own the field meaning (`DS-ADR-13`).
+
+```text
+contracts/worker/v1/
+  envelope.schema.json                 worker response envelope
+  s01d_normalize_programs.schema.json  01d request and result
+```
+
 ## Fixtures and config
 
 | Path | Holds | Owner |
@@ -191,6 +205,8 @@ not imported by it.
 tools/manual-verification/
   render_task.py                           one release row's render plus its printed card
   build_extraction_oracle.py               derive a proposed extraction-graph oracle from a program
+tools/contracts/
+  export_worker_schemas.py                 export the worker JSON Schema from Pydantic
 ```
 
 `render_task.py` is planned; `build_extraction_oracle.py` exists and writes a

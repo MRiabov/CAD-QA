@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func pythonWorkerForTest(t *testing.T) *PythonWorker {
+func pythonWorkerForStage(t *testing.T, stage string) *PythonWorker {
 	t.Helper()
 
 	root := repositoryRoot(t)
@@ -15,11 +15,16 @@ func pythonWorkerForTest(t *testing.T) *PythonWorker {
 	if _, err := exec.LookPath(python); err != nil {
 		t.Skipf("python interpreter %q is not available: %v", python, err)
 	}
-	worker := NewPythonWorker("01d_normalize_programs")
+	worker := NewPythonWorker(stage)
 	worker.Python = python
 	worker.Dir = root
 	worker.Env = []string{"PYTHONPATH=" + root}
 	return worker
+}
+
+func pythonWorkerForTest(t *testing.T) *PythonWorker {
+	t.Helper()
+	return pythonWorkerForStage(t, "01d_normalize_programs")
 }
 
 func startWorker(t *testing.T, worker *PythonWorker) {
@@ -56,7 +61,8 @@ func TestPythonWorkerListsStages(t *testing.T) {
 }
 
 func TestPythonWorkerReturnsStageNotImplemented(t *testing.T) {
-	worker := pythonWorkerForTest(t)
+	// 02a has no typed contract yet, so it exercises the free-form path.
+	worker := pythonWorkerForStage(t, "02a_extract_cadquery_ast")
 	startWorker(t, worker)
 
 	var response map[string]any

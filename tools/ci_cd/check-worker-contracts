@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Check that the worker contract schemas and the generated Go structs are
+# current. The exporter is deterministic; `go generate` is the single source of
+# the generator command, so this script does not repeat its flags.
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$repo_root"
+
+uv run python tools/contracts/export_worker_schemas.py --check
+
+(cd generator && go generate ./internal/shared)
+git diff --exit-code -- generator/internal/shared/s01d_normalize_programs_contract.go

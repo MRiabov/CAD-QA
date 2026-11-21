@@ -116,7 +116,7 @@ The worker imports its pipeline stage module and calls the module's optional
 to standard output:
 
 ```json
-{"ok": true, "result": {"ready": true}}
+{"ok": true, "protocol_version": 1, "result": {"ready": true}}
 ```
 
 The orchestrator waits for the ready document before it sends the first request.
@@ -129,8 +129,9 @@ number of active shards.
 After the ready document, the worker serves newline-delimited JSON: one request
 document per line on standard input, one response document per line on standard
 output, one request at a time. A response is either
-`{"ok": true, "result": ...}` or
-`{"ok": false, "error": {"code": "...", "message": "..."}}`. A handled
+`{"ok": true, "protocol_version": 1, "result": ...}` or
+`{"ok": false, "protocol_version": 1, "error": {"code": "...", "message": "..."}}`.
+A handled
 pipeline stage rejection is data and does not stop the worker. A crash writes a traceback
 to standard error and no response; the orchestrator replaces the worker. Logs go
 to standard error so standard output stays one JSON document per line.
@@ -145,4 +146,32 @@ per-program rejection.
 The wire name is the snake-case pipeline stage name used by the failure record,
 such as `01d_normalize_programs`; the worker maps it to the
 `s<pipeline_stage>` module. `--list-stages` is a one-shot discovery command and
-returns `{"stages": [...]}`.
+returns `{"protocol_version": 1, "stages": [...]}`; the orchestrator rejects a
+worker whose version differs.
+
+### Worker contract schema
+
+The JSON documents are defined once, in JSON Schema 2020-12 under
+`contracts/worker/v1/`. The envelope is `envelope.schema.json`; each typed
+pipeline stage has one `<pipeline-stage>.schema.json` holding its request and
+result definitions.
+
+- `cadqa_dataset_generator/contracts.py` is the executable authoring form. The
+  Pydantic classes validate a request before a pipeline stage runs and a result
+  before the worker writes it.
+- `tools/contracts/export_worker_schemas.py` exports the checked-in schemas from
+  those classes. `--check` fails when a schema is stale.
+- `go-jsonschema` generates the Go structs from the same schema. The generator
+  command is pinned in `generator/internal/shared/generate.go`; the output is
+  checked in, so a normal build does not run the generator.
+- `tools/ci_cd/check-worker-contracts` runs the exporter check and the Go
+  generation, and fails when either output differs from the checked-in file.
+- The envelope stays hand-written in both languages because it is small and
+  stable; the per-pipeline-stage payloads are generated.
+
+`01d` normalize programs is the first typed pipeline stage. `02a` and `02b`
+keep the free-form dict path until their contracts land. Adding a
+pipeline stage contract is a schema file, an exporter entry, a generation
+line, and a fixture; it does not change the Parquet boundary (`DS-ADR-03`). A
+breaking wire change creates `contracts/worker/v2/` and bumps
+`WORKER_PROTOCOL_VERSION`.

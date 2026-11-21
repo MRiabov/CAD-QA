@@ -60,6 +60,7 @@ host `go` older than the `go` directive downloads the declared toolchain, so
 | Processes and cancellation | `os/exec`, `context` | standard library |
 | CLI parsing and subcommands | `flag` | standard library; no third-party framework |
 | YAML policy files (`balance.yaml`, `checks.yaml`, `tolerance.yaml`) | `gopkg.in/yaml.v3` | decided, `STK-2` |
+| Worker contract structs | `github.com/atombender/go-jsonschema` | generated from `contracts/worker/v1/`, `DS-ADR-13` |
 | Formatting | `gofumpt`, `goimports` | decided, `STK-3` |
 | Linting and static analysis | `golangci-lint` | decided, `STK-3` |
 | Tests | `testing` | standard library |
@@ -91,6 +92,11 @@ checks listed in `STK-3`; `--fix` applies the auto-fixable findings. `gofumpt`
 and `goimports` are the formatters. On Go 1.27, `go test` also runs the
 `stdversion` vet check, which reports standard-library symbols newer than the
 `go` directive; it complements `golangci-lint` rather than replacing it.
+
+`go-jsonschema` is the only code generator. It reads the checked-in worker JSON
+Schema and writes the Go structs; the generator version is pinned in
+`generator/internal/shared/generate.go`, and the output is checked in, so a
+normal build does not run the generator. `DS-ADR-13` owns the contract rule.
 
 The Go entry point is the only CLI. Python workers run as subprocesses, so Python
 needs no CLI framework.

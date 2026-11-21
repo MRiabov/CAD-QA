@@ -159,9 +159,9 @@ to change.
   `ErrNotImplemented` returns.
 - Unit identity follows `DS-ADR-07`: content, not assignment. A `03b` unit is keyed
   by the program and the graph identity, and the `03a` plan is not an input.
-- Replace the freeform `dict` request and response in
-  `cadqa_dataset_generator/cli.py` with typed per-pipeline-stage models as each
-  pipeline stage lands. Do not design all pipeline stages' models up front.
+- Replace the remaining freeform `dict` request and response in
+  `cadqa_dataset_generator/worker.py` with typed per-pipeline-stage models as
+  each pipeline stage lands. Do not design all pipeline stages' models up front.
 
 **Pipeline stages.**
 
@@ -412,7 +412,7 @@ The scaffold is nearly complete and green (`go test ./...` three packages,
   exit codes, usage;
 - `generator/internal/shared/` — typed artifact tables, the failure record and
   its merge, the `balance.yaml` and `checks.yaml` loaders, the worker bridge;
-- `cadqa_dataset_generator/cli.py` — the worker protocol and dispatch;
+- `cadqa_dataset_generator/worker.py` — the worker protocol and dispatch;
   `s01d`, `s02a`, `s02b` are stubs that raise `StageNotImplemented`;
 - the test contracts for every pipeline stage, the golden record, `prompts.yaml`, and
   `tolerance.yaml`;
