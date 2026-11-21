@@ -13,7 +13,7 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 3 open entries: all P1 technical. No product decision and no P0
+There are 2 open entries: all P1 technical. No product decision and no P0
 technical contract remains open, and P2 is empty.
 
 ## Decisions needed from the owner
@@ -42,9 +42,7 @@ Work order:
 
 1. `MC-22` — geometry-required for 1-step tasks; it changes what the first
    release counts.
-2. `MC-29` — run-level execution contract; retries and cache hits are promised
-   without it.
-3. `MC-49` — external benchmark program set; the transfer overlap check has no
+2. `MC-49` — external benchmark program set; the transfer overlap check has no
    declared input.
 
 #### MC-22 — Geometry-required for 1-step tasks
@@ -75,19 +73,25 @@ revision, and file hash, carrying normalized program text for the P0 overlap
 check and the same-CAD-model comparison for the P1 check. Record its identity
 and hash in the manifest.
 
-#### MC-29 — Run-level execution contract
+## Closed in the 2026-11-21 run-contract pass
 
-Run-level execution contracts are missing: the run manifest artifact, completion
-markers, cache lookup, atomic writes, and resume semantics. The run-level graph
-tolerance policy content is specified in `graph-persistence.md`, but the run
-manifest that hosts it is not an artifact in `artifacts.md`. Retries and cache
-hits are promised without the surrounding contract.
-
-**Recommendation:** put the run contract in `artifacts.md`: one run manifest
-with the tolerance policy and its hash, one completion marker per artifact,
-write to a temporary path then rename, and a cache key of input hash plus every
-version that affects the output. State the resume rule: skip an artifact only
-when its completion marker and identity match.
+- `MC-29` — the run-level execution contract is
+  [`run-contract.md`](run-contract.md). A run is one durable directory with a
+  `run.json` manifest: `run_id`, generator and component versions, policy file
+  hashes, and the run-level `TolerancePolicy`. New runs are allocated as
+  `<runs_root>/run<NNNN>`; the number is local and excluded from `run_id`, and
+  `generator list` reads the manifests in order. Each pipeline stage commits
+  immutable Parquet parts as units complete; the part is the unit's completion
+  marker, and resume reads the committed parts and skips completed units. Bulk
+  state is Parquet; JSON is limited to the run manifest, pipeline stage
+  completion markers, the deficit ledger, and other small or rare control
+  documents. A unit is flushed when it completes, or at most every 30 seconds,
+  asynchronously through one writer per pipeline stage. The contract also defines
+  the shared cache, the run lock, the command-line interface, the exit codes, and
+  partial-run cleanup. The run manifest and pipeline stage completion markers
+  are rows in [`artifacts.md`](artifacts.md); the contract is its own document
+  because it is larger than the artifact table, and `artifacts.md` keeps the
+  ownership and format rows.
 
 ## Closed in the 2026-11-20 streamlined pass
 

@@ -1,0 +1,44 @@
+# Run-level measurement tolerance policy.
+#
+# `02c` build CAD graph reads this file through the run manifest. The policy is
+# resolved once per run, not per program and not per measurement. Every graph
+# artifact in the run uses the same policy.
+#
+# The shape is the `TolerancePolicy` model in
+# docs/dataset/implementation/pipeline/extraction/graph-persistence.md. The run
+# manifest records `tolerance_policy_version`, the canonical policy hash, and
+# this file's hash. A change to any entry is a new policy version and a new graph
+# artifact identity.
+#
+# A measurement `tolerance` of null inherits the entry for its unit. A non-null
+# value overrides it. `unitless` covers counts and validity. Answer-scoring
+# tolerance is separate and belongs to the task definition and the release
+# `tolerance_json` field.
+#
+# The values are the default for the first run. Changing one is a policy version
+# change and a new graph artifact identity. A relative entry is a fraction of the
+# compared value; an absolute entry carries the entry's unit. `exact` has no
+# value.
+#
+# Comments are not data.
+
+version: 1
+
+policy:
+  millimetre:
+    kind: relative
+    value: 1.0e-6
+  square_millimetre:
+    kind: relative
+    value: 1.0e-6
+  cubic_millimetre:
+    kind: relative
+    value: 1.0e-6
+  degree:
+    kind: absolute
+    value: 1.0e-4
+  radian:
+    kind: absolute
+    value: 1.0e-6
+  unitless:
+    kind: exact

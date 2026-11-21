@@ -9,10 +9,15 @@ definitions are generated.
 ## Input / output
 
 - Input: CAD graphs for the selected program pool, `ProgramMetadata` from `01a`
-  and `ProgramSelection` from `01b`, the balance policy (`balance.yaml`), the
-  current `DeficitLedger` (empty on the first plan), and
-  `ProgramReassignmentRequest` records from `03c`.
+  and `ProgramSelection` from `01b`, the task reasoning step support tables, the
+  balance policy (`balance.yaml`), the current `DeficitLedger` (empty on the
+  first plan), and `ProgramReassignmentRequest` records from `03c`.
 - Output: `TaskQuotaPlan`.
+
+The plan's `seed` is the run's `plan_seed`; the run manifest records it. A plan
+revision is a new Parquet part keyed by `plan_version`, and resume reads the
+current revision. See
+[`../../run-contract.md`](../../run-contract.md#4-incremental-parquet-persistence).
 
 ## Program capability census
 

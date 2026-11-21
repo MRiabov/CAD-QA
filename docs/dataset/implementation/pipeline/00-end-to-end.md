@@ -18,9 +18,16 @@ artifacts with different failure modes and caching behavior:
 - planning and validation operate on the whole release.
 
 Splitting these into pipeline stages gives each artifact a typed contract,
-isolates failures, and makes retries and cache hits possible. Pipeline stage
+isolates failures, and makes retries and cache hits possible under the
+[run contract](../run-contract.md). Pipeline stage
 boundaries are derived from the current artifacts, not from the archived
 generator.
+
+A run is incremental. Each pipeline stage commits immutable Parquet parts as
+units complete, and a rerun resumes from them. The run manifest fixes the
+inputs, component versions, policy hashes, and the run-level tolerance policy;
+a changed input or version is a new run directory. The run contract is
+[`../run-contract.md`](../run-contract.md).
 
 ## Stages
 
@@ -49,6 +56,7 @@ CADEvolve Parquet cache
 
 - Artifact ownership: [`../artifacts.md`](../artifacts.md).
 - Planning math: [`../planning-math.md`](../planning-math.md).
+- Run contract: [`../run-contract.md`](../run-contract.md).
 
 ## What is not here
 

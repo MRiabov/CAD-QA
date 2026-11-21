@@ -790,3 +790,42 @@ prefix is `DS-`.
   to `io-contracts.md` or `artifacts.md`. The cost is one pass per graph batch plus a
   pass over the programs a slow-loop round adds. A replan derives nothing, because
   the graph batch has not changed and `family_profiles` is already in the plan.
+
+## DS-44 — A run is incremental and resumable per unit
+
+- **Status:** accepted (2026-11-21).
+- **Context:** `05` validate and export release said atomic directory replacement
+  was the run-level execution contract, but no such document existed.
+  `graph-persistence.md` required the tolerance policy to live in the run
+  manifest, and `failure-record.md` said the run manifest records versions, but
+  `artifacts.md` had no run-manifest row. `02b` execute CadQuery defined a cache
+  key without a cache location, a lookup rule, or a resume rule. The cost is not
+  theoretical: with 1,500 active programs, 30 seconds per execution, and about
+  20,000 relations per program, an interrupted run without resume recomputes
+  hours of work. The alternative was a per-unit JSON checkpoint, but `DS-39`
+  measured JSON text at 41x the Parquet size and 57x the read time for the CAD
+  graph. A JSON progress file per unit would repeat that mistake at a smaller
+  scale.
+- **Decision:** A run is one durable directory with a `run.json` manifest that
+  records `run_id`, generator and component versions, policy file hashes, and
+  the run-level `TolerancePolicy`. New runs are allocated as
+  `<runs_root>/run<NNNN>`, zero-padded to four digits; the number is local and
+  excluded from `run_id`. A rerun with the same `run_id` reuses the lowest
+  matching directory unless `--new-run` is given. Each pipeline stage commits
+  immutable Parquet parts as units complete; the part is the unit's completion
+  marker, and resume reads the committed parts and skips completed units. A unit
+  is flushed when it completes, or at most every 30 seconds, asynchronously
+  through one writer per pipeline stage. A completed unit is not recomputed
+  unless it is forced. A forced recompute must be byte-identical; a difference
+  is a defect. Bulk state is Parquet; JSON is limited to the run manifest,
+  pipeline stage completion markers, the deficit ledger, and other small or rare
+  control documents. The contract also owns the shared cache, the run lock, the
+  command-line interface, the exit codes, and partial-run cleanup.
+- **Consequences:** A partial run is readable and resumable; a crash loses only
+  the units still in the writer queue. A changed input, component version, or
+  policy is a new run directory, not an edit. A corrupt part is an integrity
+  error with an explicit `--force` recovery, not a silent recompute. Downstream
+  identity includes the upstream part hashes, so a changed program invalidates
+  only that program's downstream units. The run manifest and pipeline stage completion
+  markers are artifacts in `artifacts.md`; the full contract is
+  `implementation/run-contract.md`.

@@ -23,6 +23,11 @@ terms every code name spells out.
 6. Artifacts are written under a run directory given on the command line.
    `data/` and `runs/` are gitignored; no artifact is committed.
 
+`internal/run/` is the orchestrator, not a pipeline stage package; it is the one
+exception to rule 2. It owns the run lock, pipeline stage selection, and the exit
+codes, and it calls the shared cache, manifest, and writer. A pipeline stage
+package never imports it.
+
 ## Go module
 
 Module path `github.com/MRiabov/CAD-QA/generator`. The module root is
@@ -35,8 +40,15 @@ generator/
   go.sum
   main.go                                  package main
   internal/
+    run/                                   package run
+      run.go                               orchestrator, run directory allocation, pipeline stage selection, exit codes
+      run_test.go
     shared/                                package shared
-      dataset_artifact.go                  typed Parquet tables, identity, atomic write
+      dataset_artifact.go                  typed Parquet tables and identity
+      parquet_writer.go                    async immutable Parquet part writer
+      run_manifest.go                      RunRequest, RunManifest, run_id
+      run_state.go                         run lock, pipeline stage marker, part scan
+      cache_index.go                       content-addressed shared cache
       failure_record.go                    failure record row and partition merge
       balance_policy.go                    balance.yaml loader
       check_policy.go                      checks.yaml loader
@@ -83,10 +95,15 @@ generator/
 
 A pipeline stage package starts as one file and grows files in the same folder;
 a new folder means a new package, not a new file. `shared/` is one package with
-one file per concern, not four packages. `program-capability-census/` and
+one file per concern, not one package per file. `program-capability-census/` and
 `task-reasoning-step-support-table/` are separate packages because two pipeline
 stages import each: `03a` and `03b` share the census, and `03a` and the witness
 test share the support table.
+
+`internal/run/` is the only orchestrator. A pipeline stage package does not own
+the run lock, pipeline stage completion markers, or the shared cache. The run
+directory layout and the part, flush, and resume rules are in
+[`run-contract.md`](run-contract.md).
 
 ## Python worker
 
@@ -100,6 +117,7 @@ Parquet paths and a small JSON request.
 cadqa_dataset_generator/
   __init__.py
   cli.py                                   worker entry point, one subcommand per stage
+  parquet_writer.py                        async immutable Parquet part writer
   s01d_normalize_programs.py               01d normalize programs
   s02a_extract_cadquery_ast.py             02a extract CadQuery AST
   s02b_execute_cadquery.py                 02b execute CadQuery
@@ -142,8 +160,8 @@ A Go test function is the contract name in CamelCase:
 |---|---|---|
 | `docs/dataset/implementation/pipeline/testing/fixtures/` | Coverage and rejection programs with `program_sha256`. | The test contract. |
 | `docs/dataset/implementation/pipeline/testing/golden/` | Golden records. | The record format. |
-| `balance.yaml`, `checks.yaml`, `prompts.yaml` | Balance policy, check policy, prompt copy. | The docs that define each. |
-| `data/`, `runs/` | Run output. Gitignored. | The run. |
+| `balance.yaml`, `checks.yaml`, `prompts.yaml`, `tolerance.yaml` | Balance policy, check policy, prompt copy, and measurement tolerance policy. | The docs that define each. |
+| `data/`, `runs/` | Run output: `runs/run<NNNN>/` and `runs/cache/`. Gitignored. | The run. |
 
 Fixtures stay in the docs tree because they are reviewed like code and the test
 contract owns their path. A test reads them by path; it does not copy them.
@@ -166,9 +184,15 @@ contract owns their path. A test reads them by path; it does not copy them.
 | `04-render-prompt-and-choices` | `04-render-prompt-and-choices`, `render_prompt_and_choices` | — | `04_render_prompt_and_choices_test.go` |
 | `05-validate-and-export-release` | `05-validate-and-export-release`, `validate_and_export_release` | — | `05_validate_and_export_release_test.go` |
 
+The run contract is cross-cutting; its Go package is `internal/run`, and its
+test contract is
+[`pipeline/testing/00-run-contract.md`](pipeline/testing/00-run-contract.md).
+
 ## Bootstrap order
 
-1. `go.mod`, `main.go`, `internal/shared/`.
+1. `go.mod`, `main.go`, `internal/run/`, and `internal/shared/`, including
+   `run_manifest.go`, `run_state.go`, `cache_index.go`, and
+   `parquet_writer.go`.
 2. `01a`, `01b`, `01c`, `s01d_normalize_programs.py`, `01e`.
 3. `s02a_extract_cadquery_ast.py`, `s02b_execute_cadquery.py`, `02c`.
 4. `program-capability-census/`, `03b`, `task-reasoning-step-support-table/`,

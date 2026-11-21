@@ -30,6 +30,11 @@ The DAG of pipeline stages is owned by
 [`../io-contracts.md`](../io-contracts.md); this block is only the sub-step read
 order.
 
+A run is incremental. The run manifest, Parquet parts, flush rule, cache, and
+resume rule are in [`../../run-contract.md`](../../run-contract.md); a
+sub-step's WRITE block names its durable part, and a rerun reads the committed
+parts before computing.
+
 The five task reasoning step support tables are derived from the requirement
 marks outside this folder. `03a` and `05` read them; no sub-step writes them.
 

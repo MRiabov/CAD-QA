@@ -14,6 +14,11 @@ canonical identity.
   (empty on the first run).
 - Output: `TaskDefinition` records and the updated `DeficitLedger`.
 
+The records are Parquet parts keyed by program. Resume reads the committed parts
+and skips a `task_id` that is already present; a rejected `task_id` is in the
+failure partition and is also skipped. The persistence and resume rules are in
+[`../../run-contract.md`](../../run-contract.md#4-incremental-parquet-persistence).
+
 ## Task definition
 
 A `TaskDefinition` is the complete, answer-bearing construction record for one
@@ -541,10 +546,12 @@ schema is in [`../../prompt-templates.md`](../../prompt-templates.md).
 ## Construction attempt budget
 
 Use the plan's `construction_attempt_budgets`. `03a` computes each from the
-remaining target count. On resume, use the accepted count in the `DeficitLedger`
-and construct only the remaining target count. Accepted definitions are not
-regenerated or revalidated while the input versions are unchanged. It does not top up a quota target incrementally within
-the same plan revision.
+remaining target count. On resume, reconcile the `DeficitLedger` accepted counts
+from the committed `TaskDefinition` parts, then construct only the remaining
+target count. A `task_id` already present in the parts or the failure partition
+is skipped. Accepted definitions are not regenerated or revalidated while the
+input versions are unchanged. It does not top up a quota target incrementally
+within the same plan revision.
 
 The batch is one iteration and is parallelizable. Extra accepted definitions
 become reserve; they are not dataset release rows. Track accepted and rejected counts per quota target, family, and rejection reason. A high rejection rate is a constructor or validity signal; it
