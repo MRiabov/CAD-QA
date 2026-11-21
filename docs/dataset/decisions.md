@@ -809,4 +809,5 @@ prefix is `DS-`.
   references are superseded. The test split must report per-tier counts at
   6–10. The 6–10 cells are small, so per-tier significance is reported only
   when the cell is large enough; otherwise the paper reports the pooled 6–10
-  slice.
+  slice. The general review gate (R-17) covers every tier 1–10; the 6–10
+  sample is at least 30 tasks per tier, or every task if fewer.

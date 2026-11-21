@@ -72,7 +72,7 @@ WRITE:
 
 TRANSFORM:
 
-- write a visual review pack for a sample covering every clue type, every answer meaning, and every answer format
+- write a visual review pack for a sample covering every clue type, every answer meaning, every answer format, and every task reasoning step count 1–10; for 6–10, review at least 30 tasks per tier or every task if fewer
 - each sampled task carries the prompt, one render of the final solid state with the target and every clue-bound entity highlighted in a distinct colour and labelled with its clue number, and the gold answer
 - a failed review blocks the export and records the reason; the defect is fixed and the task re-reviewed
 - the pack is internal and is not a release file
