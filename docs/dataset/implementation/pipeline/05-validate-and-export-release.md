@@ -21,6 +21,7 @@ Coverage and balance checks:
 - The per-pipeline-stage failure partitions.
 - The run manifest, for the generator version, the release seed, the policy
   versions and hashes, and the tolerance policy hash.
+- The review ledger from the [review pack](../devtools/review-pack.md).
 
 ## Scope
 
@@ -48,9 +49,9 @@ Coverage and balance checks:
   same-CAD-model check is PRD Q7.
 - Record the external benchmark identity and revision in `manifest.json`. No
   program from that benchmark appears in training or evaluation (R-16).
-- Write the visual review pack and hold the review gate before export. The owner
-  reviews a sample covering every clue type, answer meaning, and answer format
-  (R-17); a failed review blocks the export and records the reason.
+- Hold the review gate before export against the review ledger (R-17): every
+  required sampling cell needs a current pass, and a gap or a failed review
+  blocks the export.
 - Write `release.parquet`, `failures.parquet`, `manifest.json`, and
   `dataset-card.md`.
 - Copy the five task reasoning step support JSON files into `support/` and
@@ -103,11 +104,14 @@ checked against the policy it names. The manifest makes the departure visible.
 
 ## Review gate
 
-`05` writes a visual review pack for a sample of the release. The sample covers
-every clue type, every answer meaning, every answer format, and every task
-reasoning step count in the release, up to 10. For 6–10, the sample is at least 30 tasks per tier,
-or every task if the tier has fewer; that is the same review the dataset PRD
-section 6.1 release gate requires.
+The [review pack](../devtools/review-pack.md) renders a sample and writes the
+review ledger. `05` reads the ledger and never renders.
+
+The sample is the cross product of clue type, answer meaning, answer format, and
+task reasoning step count, restricted to the cells the support tables support and
+the release contains. Steps 6–10 use at least 30 tasks per tier, or every task if
+the tier has fewer; that is the same review the dataset PRD section 6.1
+release gate requires.
 
 Each sampled task carries:
 
@@ -120,11 +124,10 @@ The reviewer checks that each highlighted entity is the one the clue names, that
 the answer matches the geometry, and that the wording is clear. The render does
 the work that re-deriving the task would otherwise take.
 
-The pack reads the bound entity ids from the release row's evidence, so the
-release projection must carry them.
-
-The pack is internal and not a release file. A failed review blocks the export;
-the defect is fixed and the task re-reviewed.
+`05` blocks the export unless every required cell has a current `pass` whose
+`(definition_sha256, prompt_sha256)` matches the release row. A `defect` blocks
+until the task is re-reviewed. The ledger is internal and is not a consumer
+artifact.
 
 ## Manifest and dataset card
 
@@ -139,6 +142,9 @@ the card outline is section 8. `05` owns both.
 - Compute `release_table_sha256` from the finished `release.parquet` file, and
   record it next to `release_id`. One is the identity, the other is byte
   integrity, and they change for different reasons.
+- Record `review_ledger_sha256` from the review ledger. The ledger is excluded
+  from the `release_id` inputs: it is review provenance, not a generation input,
+  so re-reviewing a release does not change its identity.
 - Copy `upstream_dataset_version` and `external_dataset_manifest_sha256` from the
   external dataset manifest. `05` does not reinterpret either value.
 - Write the dataset card from the manifest. Every number in the card is copied,

@@ -1,6 +1,6 @@
 """Don't-say checker for CAD-QA docs and code.
 
-Run it as ``tools/dont-say`` (or ``uv run python tools/check_dont_say.py``); it
+Run it as ``tools/ci_cd/dont-say`` (or ``uv run python tools/ci_cd/check_dont_say.py``); it
 is a whole-repository scan, so it is a script rather than a pytest test.
 
 Reads the ``## Don't say`` table from ``docs/glossary.md`` and fails when a
@@ -28,7 +28,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 logger = logging.getLogger("cadqa.check_dont_say")
 
-REPO = Path(__file__).resolve().parents[1]
+REPO = Path(__file__).resolve().parents[2]
 DONT_SAY_HEADING = "## Don't say"
 SCAN_ROOTS = ("docs", "cadqa_dataset_generator", "tools", "plans")
 SCAN_SUFFIXES = frozenset({".md", ".py", ".tex"})

@@ -69,7 +69,7 @@ tools/                Repository checks
 cd generator && go test -count=1 ./...
 uv run pytest -q
 uv run rumdl check docs
-uv run python tools/check_dont_say.py --ratchet tools/dont_say_baseline.txt
+uv run python tools/ci_cd/check_dont_say.py --ratchet tools/ci_cd/dont_say_baseline.txt
 ```
 
 `go test -count=1` disables Go's test cache because the policy-loader tests read

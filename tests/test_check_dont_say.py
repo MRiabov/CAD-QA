@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from tools.check_dont_say import (
+from tools.ci_cd.check_dont_say import (
     Rule,
     collect_hits,
     covering_phrases,

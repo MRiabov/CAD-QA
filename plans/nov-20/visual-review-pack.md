@@ -1,7 +1,13 @@
 # Visual review pack
 
-**Status:** deferred, 2026-11-20. The review contract is in `05`; the renderer
-lands after the first release. This is not a decision.
+**Status:** superseded, 2026-11-21. The tool contract is
+[`docs/dataset/implementation/devtools/review-pack.md`](../../docs/dataset/implementation/devtools/review-pack.md);
+the review gate rule is in `05`. This file is kept as plan history.
+
+The 2026-11-20 plan deferred the renderer and named
+`tools/dataset_explorer.py` as its base. That file was deleted with the
+pre-rebuild generator, so the replacement is new code against the current
+contracts.
 
 **Related:**
 `docs/dataset/implementation/pipeline/05-validate-and-export-release.md`,

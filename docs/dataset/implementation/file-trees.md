@@ -167,6 +167,23 @@ A Go test function is the contract name in CamelCase:
 Fixtures stay in the docs tree because they are reviewed like code and the test
 contract owns their path. A test reads them by path; it does not copy them.
 
+## Tools and manual verification
+
+Tools that are not pipeline stages are documented in
+[`devtools/`](devtools/README.md). Their code is not part of the generator and is
+not imported by it.
+
+```text
+tools/manual-verification/
+  render_task.py                           one release row's render plus its printed card
+```
+
+`render_task.py` is planned; it does not exist yet.
+
+A tool that becomes load-bearing moves into the package and gets a test contract.
+The review pack and its ledger are the first manual verification tool; see
+[`devtools/review-pack.md`](devtools/review-pack.md).
+
 ## Naming map
 
 | Pipeline stage doc | Go folder and package | Python module | Test |

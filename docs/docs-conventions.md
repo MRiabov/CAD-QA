@@ -229,7 +229,7 @@ P0/P1 commitment.
 
 ## Lint, format, ratchets
 
-- **Don't-say checker: a script, not a test.** `tools/dont-say` reads the `## Don't say`
+- **Don't-say checker: a script, not a test.** `tools/ci_cd/dont-say` reads the `## Don't say`
   table from `glossary.md` and fails on banned terms across docs and code (Markdown,
   LaTeX, and Python). It scans the whole repository (about a second), so it runs as a
   pre-commit hook and never from pytest: a test would make every test run pay for the
@@ -237,15 +237,15 @@ P0/P1 commitment.
   A `(home)` annotation exempts a tree, `ALLOWLIST` exempts cross-cutting phrases, and the
   `dont-say: allow` / `dont-say: home` markers exempt a line/file. In code, comments and
   docstrings are matched as prose, and multi-word identifier name variants are matched. Run
-  `tools/dont-say`, or `tools/dont-say --ratchet tools/dont_say_baseline.txt` to enforce
+  `tools/ci_cd/dont-say`, or `tools/ci_cd/dont-say --ratchet tools/ci_cd/dont_say_baseline.txt` to enforce
   the ratchet.
 - **Naming checks: deferred.** The checker covers prose; class, function, variable,
   file, and folder names are not checked yet. The plan, including why a hand-written
   Go lexer was rejected, is `plans/nov-21/dont-say-naming-check.md`.
 - **Clean code: P2.** `--identifiers` additionally matches banned terms inside code
-  identifier names; `tools/dont_say_identifiers_baseline.txt` is the accepted count
+  identifier names; `tools/ci_cd/dont_say_identifiers_baseline.txt` is the accepted count
   (`development-plan.md` Phase 6). Visibility/ratchet only, not P0/P1.
-- **Ratchets only improve.** `tools/dont_say_baseline.txt` holds the accepted count; the
+- **Ratchets only improve.** `tools/ci_cd/dont_say_baseline.txt` holds the accepted count; the
   checker fails if hits rise, or fall without the baseline being lowered. The `dont-say`
   pre-commit hook enforces it. The sweep is tracked in `_audit/dont-say-worklist.md`.
 - **Markdown formatter: `rumdl`.** `.rumdl.toml` is the committed config (GFM flavor;

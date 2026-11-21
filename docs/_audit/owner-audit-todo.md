@@ -52,7 +52,7 @@ Legend: `[ ]` todo · `[x]` done · `(D#)` links a decision in
 - [ ] D0 Owner term review in progress — see `term-audit.md` (working rename list).
 - [ ] D1 Define the terms in `glossary.md` → "Proposed additions".
 - [ ] D2 Legacy-term audit: sweep all docs replacing Don't-say usage with the Say term
-      until the checker is green. Checker now exists (`tools/check_dont_say.py`); first run
+      until the checker is green. Checker now exists (`tools/ci_cd/check_dont_say.py`); first run
       = 447 hits, see `dont-say-worklist.md`.
 
 ## E. Dataset

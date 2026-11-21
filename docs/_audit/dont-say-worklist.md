@@ -4,7 +4,7 @@
 linted. Regenerate:
 
 ```bash
-tools/dont-say --quiet
+tools/ci_cd/dont-say --quiet
 ```
 
 As of 2026-11-21 the checker reports **177 hits** against a baseline re-pinned at 177:
@@ -23,15 +23,15 @@ adding the bare `kind`/`type` bans).
 
 - **`(home)` annotation** on a Don't-say term exempts it under that tree (`cad_qa`,
   `train_and_eval`, `tools`, `docs`, `dataset_generation`, `fine_tuning`).
-- **`ALLOWLIST`** in `tools/check_dont_say.py` exempts cross-cutting phrases
+- **`ALLOWLIST`** in `tools/ci_cd/check_dont_say.py` exempts cross-cutting phrases
   (`open-source`, `source of truth`, …).
 - **`<!-- dont-say: allow -->`** exempts a line; `# dont-say: home` exempts a code file.
 - **Say-term covering**: a Say term covers its own Don't-say tokens.
 - **Code**: identifier-shaped tokens only (snake/kebab/Pascal/camel); bare words are
   prose-only, so legit string values like `"selector"` are not flagged.
-- **Ratchet**: `tools/dont_say_baseline.txt` holds the accepted count; the checker fails if
+- **Ratchet**: `tools/ci_cd/dont_say_baseline.txt` holds the accepted count; the checker fails if
   hits rise, or if they fall without the baseline being lowered. Enforced by the
-  `dont-say` pre-commit hook (`tools/dont-say`), not by pytest: the check is a
+  `dont-say` pre-commit hook (`tools/ci_cd/dont-say`), not by pytest: the check is a
   whole-repository scan, so a test would pay for it on every test run.
 
 ## By Don't-say term

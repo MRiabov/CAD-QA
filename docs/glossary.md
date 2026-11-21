@@ -693,7 +693,7 @@ A ratchet: entries are removed only when the term is engineered out of the docs 
 A docs sweep replaces each don't-say usage with its Say term until the checkers are green.
 A `(home)` annotation allows the token under that tree (`cadqa_dataset_generator`, `tools`,
 …), for identifiers documented as `In code:`; the checker's `ALLOWLIST` exempts
-cross-cutting phrases. Enforced by `tools/check_dont_say.py`.
+cross-cutting phrases. Enforced by `tools/ci_cd/check_dont_say.py`.
 
 | Don't say | Say | Why |
 |---|---|---|
