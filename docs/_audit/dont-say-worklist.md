@@ -7,10 +7,10 @@ linted. Regenerate:
 tools/ci_cd/dont-say --quiet
 ```
 
-As of 2026-11-21 the checker reports **177 hits** against a baseline re-pinned at 177:
-103 in `plans/` (dated decision records) and 74 in `docs/`. The 2026-10-21 baseline of 107
-went stale while the docs tree was restructured, and the pytest ratchet was red from
-2026-11-20 until the check moved to the `dont-say` pre-commit hook.
+As of 2026-11-21 the checker reports **53 hits**, all in `docs/train-and-eval/`. Dated plans
+and audits, and the verbatim supervisor correspondence, carry `dont-say: allow-file` and are
+excluded as historical records. `docs/train-and-eval/` is stale design input for the deleted
+training stack and stays in the baseline until the rewrite replaces it.
 
 As of 2026-10-08 the checker reports **358 hits**, all in `docs/`. Code is clean: the
 identifier-shaped Don't-says that appear in code (`OntologyGraph`, `entity_id`,
@@ -25,7 +25,9 @@ adding the bare `kind`/`type` bans).
   `train_and_eval`, `tools`, `docs`, `dataset_generation`, `fine_tuning`).
 - **`ALLOWLIST`** in `tools/ci_cd/check_dont_say.py` exempts cross-cutting phrases
   (`open-source`, `source of truth`, …).
-- **`<!-- dont-say: allow -->`** exempts a line; `# dont-say: home` exempts a code file.
+- **`<!-- dont-say: allow -->`** exempts a line; `<!-- dont-say: allow-file -->` in the
+  file header exempts a historical record or verbatim text; `# dont-say: home` exempts a code
+  file.
 - **Say-term covering**: a Say term covers its own Don't-say tokens.
 - **Code**: identifier-shaped tokens only (snake/kebab/Pascal/camel); bare words are
   prose-only, so legit string values like `"selector"` are not flagged.

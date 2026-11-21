@@ -249,10 +249,11 @@ P0/P1 commitment.
   pre-commit hook and never from pytest: a test would make every test run pay for the
   scan.
   A `(home)` annotation exempts a tree, `ALLOWLIST` exempts cross-cutting phrases, and the
-  `dont-say: allow` / `dont-say: home` markers exempt a line/file. In code, comments and
-  docstrings are matched as prose, and multi-word identifier name variants are matched. Run
-  `tools/ci_cd/dont-say`, or `tools/ci_cd/dont-say --ratchet tools/ci_cd/dont_say_baseline.txt` to enforce
-  the ratchet.
+  `dont-say: allow` marker exempts one line. A comment line in the first ten lines that
+  begins `dont-say: allow-file` exempts the whole file; use it only for historical records
+  and verbatim external text. In code, comments and docstrings are matched as prose, and
+  multi-word identifier name variants are matched. Run `tools/ci_cd/dont-say`, or
+  `tools/ci_cd/dont-say --ratchet tools/ci_cd/dont_say_baseline.txt` to enforce the ratchet.
 - **Naming checks: deferred.** The checker covers prose; class, function, variable,
   file, and folder names are not checked yet. The plan, including why a hand-written
   Go lexer was rejected, is `plans/nov-21/dont-say-naming-check.md`.
@@ -261,7 +262,10 @@ P0/P1 commitment.
   (`development-plan.md` Phase 6). Visibility/ratchet only, not P0/P1.
 - **Ratchets only improve.** `tools/ci_cd/dont_say_baseline.txt` holds the accepted count; the
   checker fails if hits rise, or fall without the baseline being lowered. The `dont-say`
-  pre-commit hook enforces it. The sweep is tracked in `_audit/dont-say-worklist.md`.
+  pre-commit hook enforces it. Dated plans and audits are historical records and carry
+  `dont-say: allow-file`; they are not rewritten. `docs/train-and-eval/` is stale design input
+  for the deleted training stack, so its hits stay in the baseline until the rewrite replaces
+  it; they are not live debt. The sweep is tracked in `_audit/dont-say-worklist.md`.
 - **Markdown formatter: `rumdl`.** `.rumdl.toml` is the committed config (GFM flavor;
   `MD013` line length and `MD033` inline HTML off, matching the docs' style; scoped to
   `docs/` and `plans/`). Run `uv run rumdl check` to report, or

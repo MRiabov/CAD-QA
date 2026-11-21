@@ -44,7 +44,7 @@ The first record is [`golden/box-with-hole.json`](box-with-hole.json).
 
 The top-level mapping has exactly seven keys:
 
-| Key | Type | Meaning |
+| Key | Field type | Meaning |
 |---|---|---|
 | `schema_version` | integer | Record format version. Bumped when the record shape changes. |
 | `golden_id` | string | Stable slug; matches the file stem. |
@@ -59,7 +59,7 @@ error, not a silently ignored field.
 
 ### 3.1 `construction`
 
-| Key | Type | Meaning |
+| Key | Field type | Meaning |
 |---|---|---|
 | `constructor_version` | string | The typed constructor set that produced the definition. |
 | `construction_seed` | integer | The seed the constructor sampled with. |
@@ -72,7 +72,7 @@ construction content, not the runtime hash.
 
 ### 3.2 `program`
 
-| Key | Type | Meaning |
+| Key | Field type | Meaning |
 |---|---|---|
 | `program_id` | string | `cadqaprog:<program_sha256>`. |
 | `program_sha256` | string | SHA-256 over the canonical text bytes. |
@@ -84,7 +84,7 @@ fails.
 
 ### 3.3 `task`
 
-| Key | Type | Meaning |
+| Key | Field type | Meaning |
 |---|---|---|
 | `target_category` | string | The task target category. Values are the snake-case code identifiers for the approved terms in [`../../../../requirements/task-structure.md`](../../../../requirements/task-structure.md). |
 | `state_scope` | string | `final` in P0 (`DS-REQ-08`). |
@@ -101,10 +101,10 @@ choice, which is a presentation wrapper valid for every answer meaning.
 ### 3.4 `clues`
 
 One entry per clue, in canonical order. The record does not carry a separate
-`clue_operand_form_profile`: the ordered `clue_operand_form` values are the
-profile, so the two cannot disagree.
+`clue_operand_form_profile`: the ordered `clue_operand_form` values define it,
+so the two cannot disagree.
 
-| Key | Type | Meaning |
+| Key | Field type | Meaning |
 |---|---|---|
 | `order` | integer | 1-based canonical position. |
 | `clue_type` | string | `property`, `relation`, `comparison`, `aggregation`, or `provenance`. |
@@ -132,7 +132,7 @@ direction is `object_to_subject`.
 
 ### 3.5 `answer`
 
-| Key | Type | Meaning |
+| Key | Field type | Meaning |
 |---|---|---|
 | `gold_answer` | string | Canonical text; the same text `TaskDefinition.gold_answer` holds. |
 | `choices` | list of struct `{label, candidate}`, both strings | The multiple-choice pool; empty unless the answer format is multiple choice. |
@@ -148,7 +148,7 @@ comparing.
 
 `answer_evidence` has exactly five keys:
 
-| Key | Type | Meaning |
+| Key | Field type | Meaning |
 |---|---|---|
 | `evidence_kind` | string | `measured` or `derived`. |
 | `evidence_rule` | string | The resolver rule that produced the answer. |
@@ -163,7 +163,7 @@ identity answer requires exactly one entry (`DS-REQ-15`).
 
 ## 4. Entity descriptors
 
-The record never stores a node ID. A graph entity is written as a descriptor:
+The record never stores a CAD graph entity ID. A graph entity is written as a descriptor:
 
 ```json
 {
@@ -193,7 +193,7 @@ matches or several matches is a record defect, not a reason to pick one. The
 end-to-end test resolves the descriptor and compares the resolved entity, so a
 change to an entity ID does not change the record.
 
-Descriptors are used because a node ID is an implementation detail. A record
+Descriptors are used because a CAD graph entity ID is an implementation detail. A record
 that stored one would fail on a harmless ID change and would not explain which
 entity it meant.
 
@@ -230,7 +230,7 @@ pinned construction input, and compares it field by field:
   `answer_schema_version`, and `answer_evidence`.
 
 The test compares a descriptor by resolving it against the graph and comparing
-the resolved entity's canonical identity. It does not compare a node ID.
+the resolved entity's canonical identity. It does not compare a CAD graph entity ID.
 
 The test ignores fields that are not construction content:
 

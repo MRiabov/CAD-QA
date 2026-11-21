@@ -1,4 +1,5 @@
 # Research idea: `opendfm` — STEP manufacturability analysis and manufacturability-constrained CAD
+<!-- dont-say: allow-file: dated record; findings are quoted and not rewritten -->
 
 **Status:** idea, unscreened, 2026-10-26. This is not a plan, and it makes no novelty or
 feasibility claim. It records an idea for later evaluation; no prior-art or tooling scan has

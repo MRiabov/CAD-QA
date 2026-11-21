@@ -1,4 +1,5 @@
 # Scratch experiment: can a frontier LLM model write CadQuery queries, by task reasoning step count?
+<!-- dont-say: allow-file: dated record; findings are quoted and not rewritten -->
 
 **Status:** plan, 2026-10-22. This is a disposable experiment, not a dataset release. It answers
 one question: does the kernel-query pivot (`docs/dataset/requirements/PRD.md`, KI1) have headroom?

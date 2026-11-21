@@ -1,4 +1,5 @@
 # Paper promise audit — 2026-11-21
+<!-- dont-say: allow-file: point-in-time audit; findings are quoted and not rewritten -->
 
 **Status:** audit, 2026-11-21. Snapshot: `c8fa379` (`docs: add dataset
 architecture audit (#2)`).

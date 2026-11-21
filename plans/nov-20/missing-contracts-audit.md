@@ -1,4 +1,5 @@
 # Missing-contracts audit — 2026-11-20 pass
+<!-- dont-say: allow-file: point-in-time audit; findings are quoted and not rewritten -->
 
 **Status:** audit, 2026-11-20. Snapshot: commit `0a3be5c`
 (`docs: assign the release projection to 04 and map every column`).
