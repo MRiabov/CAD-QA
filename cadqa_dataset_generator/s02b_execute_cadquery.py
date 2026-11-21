@@ -14,6 +14,13 @@ from cadqa_dataset_generator import StageNotImplemented
 STAGE = "02b_execute_cadquery"
 
 
+def preload() -> None:
+    """Import CadQuery and OCP once per worker before the first request."""
+
+    import cadquery  # noqa: F401
+    import OCP  # noqa: F401
+
+
 def run(request: dict[str, Any]) -> dict[str, Any]:
     """Execute one normalized program and write runtime captures or a tombstone."""
 

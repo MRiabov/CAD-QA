@@ -14,10 +14,10 @@ results, or a failure tombstone when execution fails.
 
 ## Execution boundary
 
-- Run each program in a fresh child process forked from a worker that has
-  already imported CadQuery and OCP. This is process isolation for crash cleanup
-  and resource control, not a security sandbox; the library import is worker
-  startup, not per-program work. See
+- Run each program in a fresh child process forked from a worker whose
+  `preload()` hook has imported CadQuery and OCP. This is process isolation for
+  crash cleanup and resource control, not a security sandbox; the library import
+  is worker startup, not per-program work. See
   [`extraction/cadquery/algorithm/runtime.md`](extraction/cadquery/algorithm/runtime.md#execution-boundary).
 - The preload exists because the CadQuery/OCP import costs 2.1–2.8 s and about
   450 MiB of resident memory on the reference host. Measure it once per

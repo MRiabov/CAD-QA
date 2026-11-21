@@ -130,7 +130,7 @@ Parquet paths and a small JSON request.
 ```text
 cadqa_dataset_generator/
   __init__.py
-  cli.py                                   worker entry point, one subcommand per stage
+  worker.py                                worker entry point, one stage per process
   parquet_writer.py                        async immutable Parquet part writer
   s01d_normalize_programs.py               01d normalize programs
   s02a_extract_cadquery_ast.py             02a extract CadQuery AST

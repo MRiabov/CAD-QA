@@ -106,30 +106,43 @@ Python code outside this list needs a decision.
 The Go orchestrator starts a bounded pool of Python workers once per
 pipeline stage, not one process per request. The pool size is a pipeline stage's
 concurrency bound from [`run-contract.md`](run-contract.md#45-concurrency). Each
-worker is started as `<python> -m cadqa_dataset_generator.cli <pipeline_stage>`,
-then handles one request at a time: one JSON request document on standard input,
-one JSON response document on standard output, repeated until the orchestrator
-closes the pool.
-The wire name is the snake-case pipeline stage name used by the failure record,
-such as `01d_normalize_programs`; the worker maps it to the
-`s<pipeline_stage>` module.
+worker is started as
+`<python> -m cadqa_dataset_generator.worker <pipeline_stage>` and stays alive
+until the orchestrator closes the pool, the worker crashes, or it reaches
+`worker_request_limit` requests.
 
-A worker is replaced after a crash and after `worker_request_limit` requests,
-whichever comes first. `worker_request_limit` is a pipeline-stage constant; it
-bounds the damage from a leaked kernel object or slow memory growth without
-paying an interpreter start per program. A worker that cannot start or cannot
-import its pipeline stage's libraries is a pipeline stage failure, not a
+The worker imports its pipeline stage module and calls the module's optional
+`preload()` hook before it accepts requests. It then writes one ready document
+to standard output:
+
+```json
+{"ok": true, "result": {"ready": true}}
+```
+
+The orchestrator waits for the ready document before it sends the first request.
+For `02b`, `preload()` imports CadQuery and OCP once; the 30-second execution
+clock starts at the child's ready signal, not at worker start. The child is a
+fresh address space; the preload is not repeated. A worker has one child in
+flight at a time; with a shard pass, the number of concurrent children is the
+number of active shards.
+
+After the ready document, the worker serves newline-delimited JSON: one request
+document per line on standard input, one response document per line on standard
+output, one request at a time. A response is either
+`{"ok": true, "result": ...}` or
+`{"ok": false, "error": {"code": "...", "message": "..."}}`. A handled
+pipeline stage rejection is data and does not stop the worker. A crash writes a traceback
+to standard error and no response; the orchestrator replaces the worker. Logs go
+to standard error so standard output stays one JSON document per line.
+
+A worker is replaced after a crash, a request timeout, or `worker_request_limit`
+requests, whichever comes first. `worker_request_limit` is a pipeline-stage
+constant; it bounds the damage from a leaked kernel object or slow memory growth
+without paying an interpreter start per program. A worker that cannot start or
+cannot import its pipeline stage's libraries is a pipeline stage failure, not a
 per-program rejection.
 
-For `02b` execute CadQuery, the worker preloads CadQuery and OCP before it
-accepts requests and forks a child process per program. The child is a fresh
-address space; the preload is not repeated. A worker has one child in flight at
-a time; with a shard pass, the number of concurrent children is the number of
-active shards.
-
-A response is either `{"ok": true, "result": ...}` or
-`{"ok": false, "error": {"code": "...", "message": "..."}}`. Exit code 0 means
-the worker handled the request, including a pipeline stage rejection returned as
-data. Exit code 1 means the request could not be handled. A crash writes a
-traceback to standard error and no response. Logs go to standard error so
-standard output stays one JSON document.
+The wire name is the snake-case pipeline stage name used by the failure record,
+such as `01d_normalize_programs`; the worker maps it to the
+`s<pipeline_stage>` module. `--list-stages` is a one-shot discovery command and
+returns `{"stages": [...]}`.
