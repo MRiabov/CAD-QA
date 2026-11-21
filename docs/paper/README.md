@@ -15,6 +15,9 @@ proposal that the code, dataset, and fine-tuning work implement.
   parity, or regenerate the `.md` with pandoc.
 - `CA2Img-GanttChart-mermaid.png` — the project-plan Gantt figure embedded by
   the manuscript.
+- `supervisor-email-thread.md` — the supervisor correspondence (Raza Abidi) on
+  the project's direction, from the September–October 2026 proposal thread
+  through the November 2026 scope decisions.
 
 ## Parity check
 
