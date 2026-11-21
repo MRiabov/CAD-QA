@@ -30,8 +30,8 @@ support tables, a fixed generator version, and the three failure partitions.
   and no `prompt` contains its gold answer value;
 - `clue_types` equals the clue type sequence of `clue_operand_form_profile`;
 - every multiple-choice row has at least five entries, labels contiguous from
-  `A`, answer values distinct under `same_answer`, `gold_answer_json` among the
-  labels, and that label's answer value equal to the answer in the evidence set;
+  `A`, answer values distinct under `same_answer`, `gold_answer.label` among the
+  labels, and that label's answer value equal to `answer_evidence.answer_equivalent_answer`;
 - every other row has an empty `choices` pool;
 - each CADEvolve program family appears in exactly one split;
 - `failures.parquet` groups by `failure_id`, sums `occurrence_count`, keeps the

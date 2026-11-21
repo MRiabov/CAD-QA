@@ -117,12 +117,25 @@ Python code outside this list needs a decision.
 
 ## Worker protocol
 
-The Go orchestrator starts a Python worker as
-`<python> -m cadqa_dataset_generator.cli <pipeline_stage>`, writes one JSON
-request document to standard input, and reads one JSON response document from
-standard output. The wire name is the snake-case pipeline stage name used by the
-failure record, such as `01d_normalize_programs`; the worker maps it to the
+The Go orchestrator starts a bounded pool of Python workers once per
+pipeline stage, not one process per request. Each worker is started as
+`<python> -m cadqa_dataset_generator.cli <pipeline_stage>`, then handles many
+requests: one JSON request document on standard input, one JSON response
+document on standard output, repeated until the orchestrator closes the pool.
+The wire name is the snake-case pipeline stage name used by the failure record,
+such as `01d_normalize_programs`; the worker maps it to the
 `s<pipeline_stage>` module.
+
+A worker is replaced after a crash and after `worker_request_limit` requests,
+whichever comes first. `worker_request_limit` is a pipeline-stage constant; it
+bounds the damage from a leaked kernel object or slow memory growth without
+paying an interpreter start per program. A worker that cannot start or cannot
+import its pipeline stage's libraries is a pipeline stage failure, not a
+per-program rejection.
+
+For `02b` execute CadQuery, the worker preloads CadQuery and OCP before it
+accepts requests and forks a child process per program. The child is a fresh
+address space; the preload is not repeated.
 
 A response is either `{"ok": true, "result": ...}` or
 `{"ok": false, "error": {"code": "...", "message": "..."}}`. Exit code 0 means

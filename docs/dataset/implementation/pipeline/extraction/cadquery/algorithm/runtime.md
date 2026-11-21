@@ -8,25 +8,38 @@ capture rules, and failure boundary.
 
 ## Execution boundary
 
-- Run one accepted program in a fresh child Python process.
-- Set `PYTHONHASHSEED=0`; do not share CadQuery or OCP state between programs.
-- Apply 30 seconds wall clock and 2 GiB address space by default.
+- Run one accepted program in a fresh child process forked from a worker that
+  has already imported CadQuery and OCP. The child is a fresh address space; the
+  interpreter start and the library import are amortized across programs. Never
+  execute two programs in one child.
+- The worker preloads CadQuery and OCP once, with `PYTHONHASHSEED=0` set before
+  the preload. A forked child inherits the preloaded modules, and a program still
+  cannot observe another program's CadQuery or OCP state.
+- Apply 30 seconds wall clock and 2 GiB address space to the child by default.
+  The wall clock starts when the child signals that the program is about to
+  execute, not when the process is created; import time is worker startup, not
+  execution time.
 - Pin CadQuery, OCP, Python, and the extractor version in the environment record.
 - Kill the child on timeout and record `timeout`.
 - Record `memory` when the address-space limit is reached.
 - Do not persist kernel handles, BRep objects, or raw shape files.
 
 The child returns only the typed runtime records defined here. A crash or
-uncaught exception becomes a failure tombstone.
+uncaught exception becomes a failure tombstone. A worker that cannot preload its
+libraries is a pipeline stage failure, not a per-program rejection.
 
 ## Parent/child protocol
 
-The parent creates a per-program temporary directory and passes its path to the
-child. The child writes the runtime tables from [`../../artifacts.md`](../../artifacts.md)
-there and exits zero only after all tables are closed. The parent reads nothing
-until the child exits, then validates the status, schema, and hashes. A non-zero
-exit without a failure table becomes an `internal` failure; the parent keeps only
-the last 4 KiB of stderr for diagnosis and never trusts it as a result.
+The parent creates the per-program part directory as `<target>.tmp-<uuid>` and
+passes its path to the child. The child writes the runtime tables from
+[`../../artifacts.md`](../../artifacts.md) there and exits zero only after all
+tables are closed. The parent reads nothing until the child exits, then validates
+the status, schema, row counts, and hashes, and commits the directory with the
+rename and directory fsync in
+[`../../../../run-contract.md`](../../../../run-contract.md#41-write-rule). It
+does not re-encode the tables. A non-zero exit without a failure table becomes an
+`internal` failure; the parent keeps only the last 4 KiB of stderr for diagnosis
+and never trusts it as a result.
 
 The child must not write to stdout as a result channel. Diagnostic prints are
 not part of the extraction contract and may be discarded.

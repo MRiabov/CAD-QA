@@ -17,7 +17,7 @@ program data when the plan has deficits.
 
 | Sub-step | Input model | Output model | Persisted artifact |
 |---|---|---|---|
-| `03a` | `CadGraph`, `ProgramMetadata`, dataset release targets, `DeficitLedger`, `ProgramReassignmentRequest` | `TaskQuotaPlan` | Task quota plan Parquet or JSON. |
+| `03a` | `CadGraph`, `ProgramMetadata`, dataset release targets, `DeficitLedger`, `ProgramReassignmentRequest` | `TaskQuotaPlan` | Task quota plan Parquet. |
 | `03b` | `CadGraph`, `TaskQuotaPlan`, `DeficitLedger` | `TaskDefinition`, `DeficitLedger` | Task definitions Parquet and failure records. |
 | `03c` | `DeficitLedger`, `TaskQuotaPlan`, family profiles, `ProgramMetadata` | `ProgramReassignmentRequest`, `ProgramRequest`, or `AcceptedMiss` | Control records. |
 
@@ -43,9 +43,9 @@ is accepted and recorded.
 - **Go:** `03a`, `03b`, `03c`; no Python is needed after graph construction.
 - `03a` task-quota allocation is a global allocation and is not parallelizable.
   Family profile building may be parallel per family, with one merge step.
-- `03b` task-definition construction is parallel per program, family, and quota
-  quota target. Each batch is independent; accepted definitions are merged with
-  deterministic ordering.
+- `03b` task-definition construction is parallel per program. One pass loads the
+  program's graph and census once and fills every quota target assigned to it;
+  accepted definitions are merged with deterministic ordering.
 - `03c` is a serial controller. Its delegated `01b`/`01c`/`01d`/`02` work is
   parallel inside those stages.
 

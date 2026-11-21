@@ -24,20 +24,39 @@ it is the resumable state of the run.
   produces. The unit is a CadQuery program for most pipeline stages and a task
   for `03b` construct task definitions and `04` render prompt and choices. Each
   pipeline stage doc names its unit.
+- A **pass** is the scheduling group the orchestrator runs together. A pass is
+  one program for `01d` through `02c`, one program and plan revision for `03b`,
+  and one program for `04`. A pass loads its program's inputs once and produces
+  every unit assigned to it; the unit stays the resume granularity.
+- A **shard** is the deterministic set of units that share one Parquet part. A
+  unit belongs to `sha256(pass_key) mod journal_shard_count`, so shard membership
+  depends on the key and the run-level shard count, never on wall-clock time or
+  on which units happen to finish together. The pass key is `raw_program_sha256`
+  for `01d` and `program_sha256` for every other stage, so all tasks of one
+  program land in one shard. The default `journal_shard_count` is 16, and a shard
+  with no units is not written.
 - A completed unit is not recomputed unless it is forced. A partially completed
   pipeline stage resumes from the units already committed.
-- The durable state of a unit is its **Parquet part**: the rows the unit
-  produced, written to an immutable file. The part is the completion marker.
-  There is no per-unit JSON checkpoint.
+- The durable state of a unit is its row in a **Parquet part**: the shard's rows,
+  written to an immutable file. The part is the completion marker for the units
+  whose rows it holds. There is no per-unit JSON checkpoint.
+- A pipeline stage whose unit is as long as the flush interval uses one unit per
+  part. `02b` execute CadQuery is that pipeline stage: a unit is 30 seconds and
+  the default flush interval is 30 seconds.
+- Unit independence: one unit's failure never fails its shard or the other units
+  in it. The writer commits the units that succeeded and the failure partition
+  records the rest.
 - Bulk state is Parquet. JSON is limited to the run manifest, pipeline stage
   completion markers, the deficit ledger, and other small or rare control
   documents. `DS-39` measured the CAD graph as 163 MB in Parquet and 6.7 GB as
   JSON text, a 41x size ratio, and a 57x read-time difference on a 100-program
   shard. That measurement is why per-unit state is Parquet and why JSON is not
   used for progress.
-- A run is deterministic: the same inputs and versions produce byte-identical
-  parts and the same `run_id`. A forced recompute that produces different bytes
-  is a defect, not a new result.
+- A run is deterministic: the same inputs, versions, and `journal_shard_count`
+  produce byte-identical parts and the same `run_id`. A flush may write an
+  incomplete shard; the complete shard replaces it, so the final part set is
+  deterministic. A forced recompute that produces different bytes is a defect,
+  not a new result.
 
 The reason is cost. With 1,500 active programs, 30 seconds per execution, and
 about 20,000 relations per program, an interrupted run without a resume rule
@@ -69,13 +88,20 @@ run directory and recomputes only the `02b` units whose environment changed.
 | `selection` | struct | `SelectionPolicy` values, including `seed`, and `policy_sha256`. |
 | `plan_seed` | integer | Deterministic seed for `03a` allocate task quotas. |
 | `release_seed` | integer | `RenderConfig.release_seed` for `04` render prompt and choices. |
+| `journal_shard_count` | integer | Number of journal shards. A unit belongs to `sha256(pass_key) mod journal_shard_count`. Part of `run_id`; changing it is a new run. |
 | `external_benchmark` | struct, nullable | `id`, `revision`, and `program_set_sha256`. Required when `05` validate and export release runs; `MC-49` owns the program set. |
 | `component_versions` | struct | `metadata_reader`, `selection`, `fetcher`, `normalization`, `external_dataset_manifest_schema`, `ast_extractor`, `runtime_extractor`, `canonicalization`, `graph_builder`, `planner`, `constructor`, `deficit_controller`, `renderer`, `exporter`, `graph_schema`, `task_definition_schema`, `release_schema`, `cadquery`, `ocp`, `python`, and `go`. |
-| `execution_environment` | struct | `platform`, `timeout_seconds`, and `memory_limit_bytes`; the `02b` execute CadQuery environment record. Recorded for audit; enters the `02b` unit identity, not `run_id`. |
+| `execution_environment` | struct | The `02b` execute CadQuery environment record: `os_arch` (for example `linux/amd64`), `timeout_seconds`, `memory_limit_bytes`, `worker_preload` (boolean), and `worker_request_limit`. It never contains a hostname, PID, container ID, kernel version, CPU model, or timestamp. Recorded for audit; enters the `02b` unit identity, not `run_id`. |
 | `tolerance_policy` | `TolerancePolicy` | The six entries defined in `graph-persistence.md`. |
 | `tolerance_policy_version` | integer | Policy version. |
 | `tolerance_policy_sha256` | string | Hash of the canonical `TolerancePolicy` object. |
 | `policy_files` | struct | `balance`, `checks`, and `prompts`, each `{version, sha256}`, and `tolerance`, `{sha256}`. The hash is the file hash; the version is the file's declared version. The tolerance policy version is the top-level `tolerance_policy_version`. |
+
+`execution_environment` names an environment *class*, not a machine. Two hosts
+with the same `os_arch`, Python, CadQuery, and OCP versions, limits, and preload
+setting produce the same record, so a resume on another host reuses every `02b`
+unit. A host-specific value in the record would invalidate all executions on a
+move; it is a contract violation, not a tuning choice.
 
 `run.json` is the only JSON document the orchestrator writes before the first
 pipeline stage. It is small and rare, which is the exception that keeps JSON
@@ -133,20 +159,21 @@ the run directories.
     parts/part-<sequence>-<sha256>.parquet
     stage.json
   01d-normalize-programs/
-    parts/<program_sha256>.parquet
+    parts/shard-<nn>-<sha256>.parquet
     stage.json
   01e-write-external-dataset-manifest/
     external-dataset-manifest.json
     stage.json
   02a-extract-cadquery-ast/
-    parts/<program_sha256>.parquet
+    parts/shard-<nn>-<sha256>.parquet
     stage.json
   02b-execute-cadquery/
-    parts/<program_sha256>.parquet
+    parts/<program_sha256>/
+      runtime_*.parquet
     failures/<program_sha256>.parquet
     stage.json
   02c-build-cad-graph/
-    parts/<program_sha256>/
+    parts/shard-<nn>-<sha256>/
       nodes.parquet
       relations.parquet
       measurements.parquet
@@ -155,12 +182,12 @@ the run directories.
     parts/task-quota-plan-<plan_version>.parquet
     stage.json
   03b-construct-task-definitions/
-    parts/<program_sha256>.parquet
-    failures/<program_sha256>.parquet
+    parts/shard-<nn>-<sequence>-<sha256>.parquet
+    failures/shard-<nn>-<sequence>-<sha256>.parquet
     deficit-ledger.json
     stage.json
   04-render-prompt-and-choices/
-    parts/<program_sha256>.parquet
+    parts/shard-<nn>-<sequence>-<sha256>.parquet
     stage.json
   05-validate-and-export-release/
     failures/part-<sequence>-<sha256>.parquet
@@ -211,21 +238,28 @@ A part's Parquet key-value metadata carries:
 | Key | Meaning |
 |---|---|
 | `cadqa.pipeline_stage` | Pipeline stage doc stem. |
-| `cadqa.unit_key` | Unit identity, such as `cadqaprog:<sha256>` or a batch key. |
-| `cadqa.artifact_identity_sha256` | Hash of the unit's input hashes, component versions, and policy hashes. |
+| `cadqa.shard` | Shard number and count, for example `07-of-16`; absent for a one-unit part. |
+| `cadqa.unit_key` | Unit key when the part holds one unit (`02b`); absent for a sharded part. |
+| `cadqa.artifact_identity_sha256` | Hash of the sorted unit identities in the part. |
 | `cadqa.schema_version` | Schema version of the part. |
 | `cadqa.generator_version` | Declared generator version. |
-| `cadqa.complete` | `true` when every row of the unit is present; `false` for an intermediate flush of a multi-row unit. |
+| `cadqa.complete` | `true` when the part holds every row it was written for; `false` for an intermediate flush. For a rewritten shard that means every unit of the shard; for an append-only `03b` or `04` part it means every row of that revision segment. |
 
-A per-program part is replaced on recompute: write the new part, commit it,
-then remove the superseded part after the completion marker names
-the new part set. A crash between the new part and the removal leaves a stale
-part that the next run ignores by identity and removes.
+A shard is a container, not a transaction. Its rows carry the unit key
+(`program_sha256` or `task_id`) and the unit's content identity, so a reader
+recovers units without a side index. A rewritten shard is replaced on recompute:
+write the new part, commit it, then remove the superseded part after the
+completion marker names the new part set. A crash between the new part and the removal leaves a
+stale part that the next run ignores by identity and removes.
 
-A per-program part for `03b` or `04` may be flushed before every task in the
-program is done. The rows present are committed and complete; `cadqa.complete`
-is `false` until the last task is written. Resume reads the rows and collects
-the `task_id` values already present.
+A shard may be flushed before every unit in it is done. The rows present are
+committed and complete for their units; `cadqa.complete` is `false` until the last
+row the part was written for is present. A later revision of `03b` or `04`
+appends a new part with a sequence suffix instead of rewriting an earlier part,
+because accepted rows are immutable and a replan must not rewrite them. Resume
+unions the parts and deduplicates by unit key, requiring the content identity to
+agree. A shard is complete when every unit of it is present in the union of its
+parts, not in any single part.
 
 ### 4.2 Flush rule
 
@@ -240,16 +274,23 @@ contract violation, not a performance tuning choice.
 | `01a` read CADEvolve metadata | cache read | `parts/program-metadata.parquet` | single write | Pipeline stage completion marker |
 | `01b` select program pool | selection call | `parts/program-selection-<delta_id>.parquet` | single write per selection call | `delta_id` |
 | `01c` fetch program pool | fetch batch | `parts/part-<sequence>-<sha256>.parquet` | per batch, at most 30 seconds | `program_id` rows |
-| `01d` normalize programs | program | `parts/<program_sha256>.parquet` | per program | `program_sha256` |
+| `01d` normalize programs | program | `parts/shard-<nn>-<sha256>.parquet`, many programs per file with a `raw_program_sha256` column | per shard, at most 30 seconds | `raw_program_sha256` rows |
 | `01e` write external dataset manifest | manifest | `external-dataset-manifest.json` | single write | Pipeline stage completion marker |
-| `02a` extract CadQuery AST | program | `parts/<program_sha256>.parquet` | per program | `program_sha256` |
-| `02b` execute CadQuery | program | `parts/<program_sha256>.parquet` | per program | `program_sha256` |
-| `02c` build CAD graph | program | `parts/<program_sha256>/` | per program | `program_sha256` |
+| `02a` extract CadQuery AST | program | `parts/shard-<nn>-<sha256>.parquet`, many programs per file with a `program_sha256` column | per shard, at most 30 seconds | `program_sha256` rows |
+| `02b` execute CadQuery | program | `parts/<program_sha256>/`, the runtime tables | per program | `program_sha256` |
+| `02c` build CAD graph | program | `parts/shard-<nn>-<sha256>/`, many programs per shard with a `program_id` column | per shard, at most 30 seconds | `program_id` rows |
 | `03a` allocate task quotas | plan revision | `parts/task-quota-plan-<plan_version>.parquet` | single write per revision | `plan_version` |
-| `03b` construct task definitions | task | `parts/<program_sha256>.parquet` and `failures/<program_sha256>.parquet`, many task rows per program file | per task batch, at most 30 seconds | `task_id` |
+| `03b` construct task definitions | task | `parts/shard-<nn>-<sequence>-<sha256>.parquet` and `failures/shard-<nn>-<sequence>-<sha256>.parquet`, many task rows per file | per shard, at most 30 seconds | `task_id` rows |
 | `03c` resolve deficits | control decision | no data artifact; `03b`'s deficit ledger | per decision | Plan version and accepted counts |
-| `04` render prompt and choices | task | `parts/<program_sha256>.parquet`, many task rows per program file | per task batch, at most 30 seconds | `task_id` |
+| `04` render prompt and choices | task | `parts/shard-<nn>-<sequence>-<sha256>.parquet`, many task rows per file | per shard, at most 30 seconds | `task_id` rows |
 | `05` validate and export release | release | `release/<release_id>/` | single writer, staged directory | `release_id` |
+
+`01d`, `02a`, `02c`, `03b`, and `04` write shard parts. `01d`, `02a`, and `02c`
+rewrite the shard; `03b` and `04` append a part per revision. `02b` writes one
+part per program because one execution is as long as the flush interval; a shard
+would lose a whole execution on a crash. A crash in a sharded stage loses at most
+the rows not yet flushed, which the flush interval already bounds. `01c` and `05`
+keep their batch and release layouts.
 
 A rejecting pipeline stage writes its failure rows to `failures/` with the same
 flush rule. A failure row is a completed unit: resume does not retry it. The
@@ -273,6 +314,32 @@ parts are valid.
 The Go writer is a goroutine in `internal/shared/parquet_writer.go`. The Python
 writer is a thread in `cadqa_dataset_generator/parquet_writer.py`. Both use the
 same rule; the language boundary does not change it.
+
+### 4.4 Unit independence
+
+A shard is a container, not a transaction. One unit's failure never fails its
+shard or the other units in it.
+
+- A rejected unit writes a failure row and no success row. The writer continues
+  with the remaining units and commits the shard.
+- A unit that raises an exception or panics is recovered at the unit boundary and
+  recorded as an `internal` failure. It does not unwind the shard.
+- A unit that crashes a worker becomes a failure tombstone for that unit; the
+  worker is replaced and the shard continues.
+- A shard with no successful rows is not written. Its failure rows are the
+  completion marker for its units.
+- Resume reads success and failure parts together, so a failed unit is not
+  retried and a successful unit is not recomputed because a sibling failed.
+- A process-level failure, such as an OOM kill or `SIGKILL`, loses only the
+  unflushed rows of the in-flight shards. Committed parts are valid and resume
+  continues; it is not a unit failure and it does not fail the run.
+- A corrupt shard is the only failure that spans units. It is an integrity error
+  with a `--force` recovery, and its blast radius is that shard.
+
+Unit independence is about a unit's data and execution. A defect in a
+pipeline stage — an invalid template, a missing component, a writer that cannot
+commit — is not a unit failure and stops that pipeline stage, because continuing
+would write an incomplete artifact under a valid identity.
 
 ## 5. Pipeline stage completion marker
 
@@ -315,19 +382,42 @@ cache key is its unit identity; its composition is in
 [`pipeline/extraction/cadquery/algorithm/runtime.md`](pipeline/extraction/cadquery/algorithm/runtime.md#cadquery-program-runtime-extraction-result-identity)
 and is not repeated here.
 
+### Content identity and assignment
+
+A unit identity covers the inputs that determine the rows the unit produces. It
+does not cover the scheduling inputs that decide *which* units a revision works
+on. The plan's targets, the plan version, the deficit ledger, and the family
+assignment decide the work list; they are not content. Hashing them into a unit
+identity makes a replan invalidate every accepted row, which is the cost `03c`
+exists to avoid.
+
+For `03b` and `04`, the unit is one task and the identity is row-level:
+
+- `03b`: `(program_sha256, graph_identity_sha256, task_definition_schema,
+  constructor, construction_seed, quota_target_key)`. `quota_target_key` names
+  the target the batch was filling; the same task reached through another target
+  is the same row and is deduplicated by `task_id`.
+- `04`: `(definition_sha256, prompt template version, prompts.yaml hash,
+  release_seed, release_schema, renderer)`.
+
+The `03a` plan part hash is not an input to either. A replan changes the work
+list and leaves every accepted row valid. Shard membership is not an identity
+input: a shard's hash changes when a sibling unit changes, so downstream identity
+uses the unit's content identity, never the shard file hash.
+
 | Pipeline stage | Identity inputs |
 |---|---|
 | `01a` | External dataset revision, cache schema version, `metadata_reader` version. |
 | `01b` | `01a` part hash, canonical `SelectionPolicy` hash (including `seed`), `selection` version. |
 | `01c` | `01b` selection part hash, external dataset revision, `fetcher` version. |
-| `01d` | `01c` pool part hash for the program, `normalization` version. |
-| `01e` | `01a` part hash, `01c` pool part hash, `01d` part hashes, `external_dataset_manifest_schema` version. |
-| `02a` | `01d` part hash for the program, `ast_extractor` version, `canonicalization` version. |
+| `01d` | `raw_program_sha256` of the fetched text, `normalization` version. |
+| `01e` | `01a` part hash, `01c` pool part hash, `01d` shard hashes, `external_dataset_manifest_schema` version. |
+| `02a` | `program_sha256`, `ast_extractor` version, `canonicalization` version. |
 | `02b` | The cache key in `runtime.md`: program hash, AST extraction result hash, extractor, AST extraction, runtime, and canonicalization versions, Python, CadQuery, and OCP versions, timeout, memory limit, and execution environment identifier. |
-| `02c` | `02a` part hash, `02b` part hash, `graph_schema` version, `graph_builder` version, tolerance policy hash. |
+| `02c` | `ast_extraction_result_sha256`, `runtime_extraction_result_sha256`, `graph_schema` version, `graph_builder` version, tolerance policy hash, `implementation_scope`. The tuple is stored as the program's `graph_identity_sha256`. |
 | `03a` | `02c` pipeline stage parts hash, `01a` metadata part hash, `01b` selection part hash, support table versions and hashes, balance policy hash, current `DeficitLedger` hash, parent plan hash, `plan_seed`, `planner` version. |
-| `03b` | `03a` plan part hash, `02c` part hash for the program, `task_definition_schema` version, `constructor` version. |
-| `04` | `01d` part hash for the program, `03b` part hash for the program, prompt template version, `prompts.yaml` hash, `release_seed`, `release_schema` version, `renderer` version. |
+| `03b` | `program_sha256`, `graph_identity_sha256`, `task_definition_schema` version, `constructor` version, `construction_seed`, `quota_target_key`. The `03a` plan part hash is a work-list input, not identity. |
+| `04` | `definition_sha256`, prompt template version, `prompts.yaml` hash, `release_seed`, `release_schema` version, `renderer` version. |
 | `05` | `04` pipeline stage parts hash, `01d`, `02a`, `02b`, `02c`, and `03b` failure parts hashes, `01e` external dataset manifest hash, support table versions and hashes, prompt template version, `prompts.yaml` hash, balance policy hash, checks policy hash, external benchmark hash, `release_schema` version, `exporter` version. |
 
 A changed input for one program invalidates that program's downstream per-program
@@ -349,16 +439,23 @@ The resume rule is:
       `parts_sha256` matches, skip that pipeline stage unless it is forced.
    3. Otherwise read every committed part through the reader the next pipeline stage
       uses, and collect the completed unit keys from the success parts and
-      the failure parts.
-   4. For each unit in its work list, skip it when its key is
-      present with a matching `artifact_identity_sha256`; otherwise compute it
-      and enqueue its rows for the writer.
+      the failure parts. A sharded part contributes one key per row of its unit
+      key column; a one-unit part contributes its unit key. A part is complete
+      when `cadqa.complete` is true; a partial part is read and completed.
+   4. For each unit in its work list, skip it when its key is present and its
+      content identity agrees: the unit's `artifact_identity_sha256` for a
+      one-unit part, or the row's content identity for a sharded part. Otherwise
+      compute it and enqueue its rows for the writer.
    5. Drain the writer and write `stage.json`.
 5. Release the lock and print the summary.
 
-A unit whose part identity does not match the current identity is stale and is
-recomputed. A part that fails to parse, or whose metadata is missing, is an
-integrity error: the run exits 1, names the file, and leaves the recovery to
+A unit whose identity does not match the current identity is stale and is
+recomputed. A shard is rewritten when any of its units is recomputed. For a
+row-level unit (`03b`, `04`), staleness is per row: a `task_id` whose stored
+content hash disagrees with the current computation is an integrity error, not a
+silent rewrite, because accepted content is immutable. A part that fails to
+parse, or whose metadata is missing, is an integrity error:
+the run exits 1, names the file, and leaves the recovery to
 `--force <pipeline stage>`. A corrupt part is replaced; a valid part is compared
 byte for byte.
 
@@ -381,12 +478,16 @@ A shared cache is optional and is enabled by default at `<runs_root>/cache`;
 - Lookup order is the run part, then the cache. A cache hit copies or hardlinks
   the files into the run directory and is logged. A hit must be byte-identical
   to a fresh computation; the test asserts it.
-- A unit is written to the cache after its run part is committed. A cache write
+- A part is written to the cache after its run part is committed. A cache write
   failure is a warning, not a run failure.
 - A cache entry is immutable. A corrupt entry is removed and recomputed; the
   warning names the entry.
 - The cache is not part of `run_id` or `release_id`. It is an optimization, and
   a cache miss is not a failure.
+- A sharded stage caches at shard granularity. The key is the part's
+  `artifact_identity_sha256`: the unit identity for a one-unit part, the sorted
+  shard identity for a sharded part. A hit requires the same complete shard
+  composition; a partial shard is not cached until it is complete.
 
 `02b` execute CadQuery caches a failure tombstone like a success result; a
 tombstone is a result for the same cache key.
@@ -426,9 +527,10 @@ generator list [--runs-root <path>]
 | `--from` | no | first incomplete | First pipeline stage doc stem. |
 | `--to` | no | last | Last pipeline stage doc stem. |
 | `--force` | no | none | Comma-separated pipeline stage stems or `all`. |
-| `--jobs` | no | `min(NumCPU, available_memory / per_worker_memory)` | Worker count. |
+| `--jobs` | no | `min(NumCPU, floor(available_memory / (memory_limit_bytes + worker_resident_bytes)))` | Worker count. `worker_resident_bytes` is measured once at startup by loading one preloaded worker; it is a scheduling input and never enters `execution_environment` or a unit identity. |
 | `--flush-interval` | no | `30s` | Maximum interval between Parquet commits. |
 | `--flush-rows` | no | `10000` | Maximum rows between Parquet commits. |
+| `--shard-count` | no | `16` | Journal shards. A unit belongs to `sha256(pass_key) mod shard_count`. Recorded in `run.json` as `journal_shard_count`; part of `run_id`. |
 | `--cache-dir` | no | `<runs_root>/cache` | Shared cache directory. |
 | `--no-cache` | no | false | Disable the shared cache. |
 | `--log-level` | no | `info` | `debug`, `info`, `warn`, or `error`. |
@@ -460,8 +562,9 @@ and the canonical hash.
 ### 9.2 `status`
 
 `status` reads the run directory and prints the `run_id`, each pipeline stage's
-complete or partial state, the unit counts, the failure counts, and the current
-`release_id`. It takes no lock and is safe while a run is active.
+complete or partial state, the unit counts from the part key columns, the failure
+counts, and the current `release_id`. It takes no lock and is safe while a run is
+active.
 
 ### 9.3 `list`
 
@@ -487,7 +590,8 @@ lock.
 The binary logs with `log/slog` as JSON to standard error. It emits one line per
 pipeline stage start, skip, and finish; per unit start, skip, finish, and
 rejection; per flush; per cache hit and miss; and a final summary. Fields are
-`run_id`, `pipeline_stage`, `unit_key`, `event`, `duration_ms`, and `row_count`.
+`run_id`, `pipeline_stage`, `shard`, `unit_key`, `event`, `duration_ms`, and
+`row_count`.
 There is no per-row log. The log is not an artifact.
 
 ## 10. Run lock and partial-run cleanup
@@ -512,10 +616,11 @@ It never removes a committed part, a failure part, or a pipeline stage marker.
 A committed part without a marker is valid partial progress; a marker without
 its parts is an integrity error.
 
-`--force <pipeline stage>` recomputes every unit of that pipeline stage. For each
-unit, it writes the new part to a temp path and compares it with the committed
+`--force <pipeline stage>` recomputes every unit of that pipeline stage. It
+writes the replacement parts to temp paths and compares each with the committed
 part: an identical part is kept, a different part aborts the force with exit 1
-and leaves the committed part in place, and a corrupt part is replaced. The
+and leaves the committed part in place, and a corrupt part is replaced. A
+row-level stage compares its rows by `task_id` and content hash. The
 pipeline stage marker is rewritten after the force. A forced pipeline stage's
 failure partition is replaced, because the previous attempt's rejections no
 longer describe the current output. Force is a repair and determinism check, not
@@ -541,7 +646,7 @@ bytes. `policy_files.tolerance.sha256` is the file hash. A change to any entry i
 a new policy version, a new `tolerance_policy_sha256`, and a new graph artifact
 identity. A measurement `tolerance` of null inherits the policy entry for its
 unit; a non-null value overrides it. Answer-scoring tolerance is separate and
-belongs to the task definition and the release `tolerance_json` field.
+belongs to the task definition and the release `tolerance` field.
 
 The file has this shape:
 

@@ -17,8 +17,8 @@ this document owns ownership, lifecycle, and format, not field definitions.
 | External dataset manifest | `01e` | `05`, dataset card | External dataset version | JSON | Counts, hashes, and rejected records. |
 | CadQuery program AST extraction result | `02a` | `02c` | Program hash plus extractor version | Parquet tables | No geometry measurements. |
 | CadQuery program runtime extraction result | `02b` | `02c` | Program hash, CadQuery/OCP version, and environment | Parquet tables | Either runtime captures or a failure tombstone; no raw BRep. |
-| CAD graph | `02c` | `03` | Program hash, graph schema version, and CadQuery program runtime extraction result hash | Parquet tables | One graph per program. |
-| Task quota plan | `03a` | `03b`, `03c` | Plan version, seed, and balance policy version | Parquet or JSON | Quotas, family profiles, split assignment, and construction attempt budgets. |
+| CAD graph | `02c` | `03` | `graph_identity_sha256` (program hash, AST and runtime result hashes, graph schema, builder, tolerance policy, implementation scope) | Parquet tables | One graph per program, in a deterministic shard. |
+| Task quota plan | `03a` | `03b`, `03c` | Plan version, seed, and balance policy version | Parquet | Quotas, per-program census, family profiles, split assignment, and construction attempt budgets. |
 | Prompt templates | Prompt authoring | `04`, evaluation harness | Template version plus file hash | YAML | `prompts.yaml`; all LLM-facing copy, with dataset and evaluation namespaces. Schema in [`prompt-templates.md`](prompt-templates.md); a missing, extra, or untyped placeholder is a validation error. |
 | Balance policy | Release authoring | `03a`, `05` | Policy version plus file hash | YAML | `balance.yaml`; every tunable quota and balance number. Not a scope. |
 | Check policy | Release authoring | `05` | Policy version plus file hash | YAML | `checks.yaml`; the release checks `05` runs. Not a scope. |
@@ -57,7 +57,7 @@ graph.
   be typed.
 - JSONL is an optional inspection export, never a pipeline stage or release
   contract.
-- Large tables are partitioned by program or release where useful.
+- Large tables are partitioned into deterministic shards; the release is one file.
 - The schema version is recorded in Parquet metadata and the manifest.
 - JSON parsing is not used on a bulk data path.
 

@@ -14,9 +14,9 @@ canonical identity.
   (empty on the first run).
 - Output: `TaskDefinition` records and the updated `DeficitLedger`.
 
-The records are Parquet parts keyed by program. Resume reads the committed parts
-and skips a `task_id` that is already present; a rejected `task_id` is in the
-failure partition and is also skipped. The persistence and resume rules are in
+The records are Parquet shard parts. Resume reads the committed parts and skips a
+`task_id` that is already present; a rejected `task_id` is in the failure
+partition and is also skipped. The persistence and resume rules are in
 [`../../run-contract.md`](../../run-contract.md#4-incremental-parquet-persistence).
 
 ## Task definition
@@ -42,9 +42,9 @@ task. It is not prompt text and not a loose task tuple. It is what `04` renders.
 | `answer_meaning`, `task_answer_step` | What the answer is about and the step that produces it. |
 | `answer_parameter` | The point for a position or a membership, the category for a topology change, null otherwise. |
 | `native_answer_format`, `answer_format` | The meaning's native format and the format the prompt will request. |
-| `gold_answer`, `answer_unit`, `tolerance`, `scoring_rule` | Answer data. `gold_answer` and `tolerance` are canonical text, matching the release columns. |
+| `gold_answer`, `answer_unit`, `tolerance`, `scoring_rule` | Answer data. `gold_answer` is an `AnswerValue` and `tolerance` is a `Tolerance`; both use canonical decimal text for numbers and match the release columns. |
 | `answer_schema_version` | Version of the answer representation: the answer formats, the canonical text rules, and the answer evidence shape. Hashed by `answer_sha256`. |
-| `answer_evidence` | Measured or derived evidence as canonical JSON text: rule, references, the answer-equivalent set, and the point probe. `04` copies it into the release column. |
+| `answer_evidence` | Typed `AnswerEvidence`: rule, references, the answer-equivalent count and shared answer, and the point probe. The full set stays in the definition; `04` copies the count and shared answer into the release column. |
 | `choice_pool` | The ordered, labeled options when multiple choice is planned: label, answer value, distinguishing graph facts, and the P2 error mode. Empty otherwise. |
 | `task_clue_step_count`, `task_reasoning_step_count` | Step accounting. |
 | `geometry_required` | Whether at least one task clue depends on the built shape. |
@@ -294,7 +294,7 @@ and records the point, the solid state hash, and the classifier.
 
 ### Answer evidence
 
-`answer_evidence` is one typed record, persisted as canonical JSON text:
+`answer_evidence` is one typed record:
 
 | Field | Meaning |
 |---|---|
@@ -305,7 +305,8 @@ and records the point, the solid state hash, and the classifier.
 | `point_probe` | The point, its classification, the solid state reference, and the classifier. Null unless the answer is membership. |
 
 `answer_equivalent_set` is stored so answer uniqueness can be rechecked from the
-definition alone, without the graph. Every entry's answer must equal the answer
+definition alone, without the graph. The release does not carry the full set; it
+carries `answer_equivalent_count` and `answer_equivalent_answer`. Every entry's answer must equal the answer
 value under `same_answer`; an identity answer requires exactly one entry. An
 entry's subject is a `node_id` for an entity target and the measurement name for
 a scalar target.
@@ -391,6 +392,7 @@ defect: it means the constructor did not run the rule.
 |---|---|
 | A check name from the table above. | The definition failed that rule. A duplicate is `definition_unique`. |
 | `no_cover` | The cover search found no chain at the target task reasoning step count. |
+| `internal` | The constructor raised an unexpected exception or panic. |
 
 A state without a surviving probe is not a failure row. No definition was
 attempted, so the state is a `probe_deficit` in the deficit ledger instead.
@@ -477,8 +479,8 @@ input, so every rule below is part of the contract:
 `task_id` and `definition_sha256` are excluded from their own hash input.
 
 The definition has no binary float fields. The answer precision rule already
-produces canonical decimal text, and the release stores the same text in
-`gold_answer_json`, `tolerance_json`, and `answer_evidence_json`. Clue
+produces canonical decimal text, and the release stores the same `number_text`
+and `value_text` fields. Clue
 thresholds, ranges, points, and choice answers reuse it. The hash therefore
 never formats a float, which is what makes it reproducible across languages:
 Go and Python disagree on `1e17` (`100000000000000000` against `1e+17`), on the
@@ -505,7 +507,7 @@ the hash.
 `clue_operand_form_profile`, `answer_meaning`, `answer_parameter`,
 `gold_answer`, `answer_unit`, `tolerance`, `scoring_rule`, `answer_evidence`,
 and `choice_pool` in construction order. It also covers the inputs that change
-that content: `program_sha256`, `graph_schema_version`,
+that content: `program_sha256`, `graph_identity_sha256`, `graph_schema_version`,
 `runtime_extraction_sha256`, `constructor_version`, `definition_schema_version`,
 and `construction_seed`.
 
@@ -533,6 +535,7 @@ that moved:
 | Field | Meaning |
 |---|---|
 | `runtime_extraction_sha256` | The CadQuery program runtime extraction result the graph was built from. |
+| `graph_identity_sha256` | The `02c` unit identity for the program: the AST result, runtime result, graph schema, builder, tolerance policy, and implementation scope. |
 | `constructor_version` | The typed constructor set that produced the definition. |
 | `construction_seed` | The seed the constructor sampled with. |
 | `plan_version` | The `TaskQuotaPlan` that assigned the quota target. |
@@ -545,20 +548,29 @@ schema is in [`../../prompt-templates.md`](../../prompt-templates.md).
 
 ## Construction attempt budget
 
-Use the plan's `construction_attempt_budgets`. `03a` computes each from the
-remaining target count. On resume, reconcile the `DeficitLedger` accepted counts
+Use the plan's `construction_attempt_budgets`. Each entry is one batch for a
+family and task reasoning step count; `03a` computes it from the remaining step
+quota. On resume, reconcile the `DeficitLedger` accepted counts
 from the committed `TaskDefinition` parts, then construct only the remaining
 target count. A `task_id` already present in the parts or the failure partition
-is skipped. Accepted definitions are not regenerated or revalidated while the
+is skipped when its `definition_sha256` agrees; a disagreement is an integrity
+error. A later revision appends a new shard part instead of rewriting an accepted
+one, and the plan version is not part of the row identity. Accepted definitions are not regenerated or revalidated while the
 input versions are unchanged. It does not top up a quota target incrementally
 within the same plan revision.
 
-The batch is one iteration and is parallelizable. Extra accepted definitions
-become reserve; they are not dataset release rows. Track accepted and rejected counts per quota target, family, and rejection reason. A high rejection rate is a constructor or validity signal; it
-is not automatically a reason to expand the program pool.
+A batch is one program pass at one task reasoning step count: the graph and
+census are loaded once and every target assigned to the program at that step count
+is filled from the same pass.
+Passes are parallel across programs. Extra accepted definitions become reserve;
+they are not dataset release rows. Track accepted and rejected counts per quota
+target, family, step count, and rejection reason. A high rejection rate is a
+constructor or validity signal; it is not automatically a reason to expand the
+program pool.
 
-An underfilled quota target is a deficit for `03c` after the batch, not a reason to loop
-inside `03b`.
+An underfilled quota target is a deficit for `03c` after the batch, not a reason
+to loop inside `03b`. A batch that exhausts its cost budget records
+`construction_deficit` with detail `construction_budget`.
 
 ## Relationship to task reasoning step support
 
@@ -605,8 +617,9 @@ programs, request supplemental `01b` selection, or accept the miss.
 
 `03b` records the class when it knows it: `probe_deficit` when the bound state has
 no surviving point probe, and `construction_deficit` when the batch is
-underfilled. Deficits that `03a` reports carry an allocation detail instead, and
-`03c` classifies them.
+underfilled. A search that exhausts its cost budget records `construction_deficit`
+with detail `construction_budget`. Deficits that `03a` reports carry an allocation
+detail instead, and `03c` classifies them.
 
 ## Not here
 

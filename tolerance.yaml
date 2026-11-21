@@ -13,7 +13,7 @@
 # A measurement `tolerance` of null inherits the entry for its unit. A non-null
 # value overrides it. `unitless` covers counts and validity. Answer-scoring
 # tolerance is separate and belongs to the task definition and the release
-# `tolerance_json` field.
+# `tolerance` field.
 #
 # The values are the default for the first run. Changing one is a policy version
 # change and a new graph artifact identity. A relative entry is a fraction of the

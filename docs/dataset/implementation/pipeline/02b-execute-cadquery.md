@@ -14,13 +14,21 @@ results, or a failure tombstone when execution fails.
 
 ## Execution boundary
 
-- Run each program in a child Python process. This is process isolation for
-  crash cleanup and resource control, not a security sandbox.
+- Run each program in a fresh child process forked from a worker that has
+  already imported CadQuery and OCP. This is process isolation for crash cleanup
+  and resource control, not a security sandbox; the library import is worker
+  startup, not per-program work. See
+  [`extraction/cadquery/algorithm/runtime.md`](extraction/cadquery/algorithm/runtime.md#execution-boundary).
+- The preload exists because the CadQuery/OCP import costs 2.1–2.8 s and about
+  450 MiB of resident memory on the reference host. Measure it once per
+  implementation scope and record it with the run; do not re-measure it per
+  program.
 - Treat CADEvolve programs as trusted build inputs; do not add a network,
   filesystem, or prompt-injection boundary.
 - Pin the CadQuery and OCP versions and record them in the result.
 - Use stable defaults: 30 seconds wall clock and 2 GiB address space per child
-  process. A changed limit is a new execution environment and a new cache key.
+  process, measured from the child's ready signal. A changed limit is a new
+  execution environment and a new cache key.
 - Kill the child on timeout and record a `timeout` failure. A memory-limit failure
   records a `memory` failure.
 - Execute only the accepted AST subset from `02a`.
@@ -50,8 +58,9 @@ Each `ShapeSnapshot` contains:
 - `entity_table_ref`, the canonical entity table for this state.
 
 The entity table carries one row per face, edge, and vertex with a stable
-`entity_id`. The ID is a hash of `state_id`, entity category, and a canonical
-geometric fingerprint:
+`entity_id` and its `fingerprint_sha256`. The ID is a hash of `state_id`, entity
+category, and the canonical geometric fingerprint; `fingerprint_sha256` is the
+hash of that fingerprint:
 
 - vertex: point;
 - edge: endpoints and length;

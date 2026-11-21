@@ -180,6 +180,14 @@ apply to pairs, and a solid state can hold thousands of pairs. A pair element is
 emitted only when at least one endpoint is a **named entity** and the other is of
 the declared **endpoint entity kind**. The emitted pairs are not the full pair set.
 
+**Pair emission is state-scoped.** Pair rows are emitted only for the solid
+states a task can bind in the release implementation scope: the final state in
+P0; the final state and the one named intermediate state in P1; both states of a
+declared pair in P2 (`DS-34`). Per-entity measurements, containment relations,
+and effect measurements stay total over every state, because the topology-change
+answers read them. A pair row for a state the scope cannot bind is not emitted;
+it is not a missing measurement.
+
 A named entity is one a clue can name directly: by face surface kind, by
 position, or by the operation or feature that created it. "The cylindrical face",
 "the top face", and "the face created by `cutBlind`" are named entities.

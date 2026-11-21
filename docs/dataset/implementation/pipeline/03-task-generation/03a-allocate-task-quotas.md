@@ -27,13 +27,15 @@ it is one function, called here and in `03b` construct task definitions.
 
 For each active program the census answers which target categories, clue
 constructors, clue operand forms, measurements, answer meanings, and point probes
-the graph has. `03a` derives it once per graph batch, stores the union per family
-in `family_profiles`, and assigns quota targets from that projection.
+the graph has. `03a` derives it once per graph batch, stores the per-program
+census in `program_census` and the union per family in `family_profiles`, and
+assigns quota targets from that projection. `03b` reads the program's entry
+rather than deriving the census again.
 
 A fast-loop replan does not derive the census again: the graph batch has not
-changed and `family_profiles` is already in the plan. A slow-loop round derives it
-only for the programs the round adds. `03c` resolve deficits reads
-`family_profiles` rather than the census.
+changed and both `program_census` and `family_profiles` are already in the plan. A
+slow-loop round derives it only for the programs the round adds. `03c` resolve
+deficits reads `family_profiles` rather than the census.
 
 ## Balance policy
 
@@ -99,10 +101,11 @@ are one number, so the plan cannot promise fewer tasks than the release requires
 | `quota_targets` | Quota targets: task reasoning step count, quota dimension, dimension value, minimum, target count, maximum, and priority. |
 | `clue_quotas` | Clue quotas counted over clue occurrences. |
 | `clue_occurrences` | Planned clue occurrences for each task reasoning step count. |
+| `program_census` | The census of each active program, keyed by `program_sha256` and the graph part hash, so `03b` reads it instead of deriving it again. |
 | `family_profiles` | The union of the member programs' census capabilities and summed entity counts, `states_with_point_probe`, `max_task_reasoning_step_count`, split status, family task capacity, and probe success rate per CADEvolve program family. |
 | `family_assignment` | Family to split, task quota, per-task-reasoning-step task quotas, and assigned quota targets. |
-| `construction_attempt_budgets` | One construction batch per quota target and family for the remaining work in this plan revision. |
-| `construction_attempt_multiplier` | Construction attempt multiplier over the accepted quota; default 1.5, or 2.0 for high-rejection quota targets. |
+| `construction_attempt_budgets` | One construction batch per family and task reasoning step count for the remaining work in this plan revision. |
+| `construction_attempt_multiplier` | Construction attempt multiplier over the family's task reasoning step quota; default 1.5, or 2.0 for a high-rejection family and step count. |
 | `expansion_tier`, `expansion_rounds`, `expansion_growth_share_per_round` | Current data tier before a deficit triggers `03c`, and the stop rule stamped from `expansion` in `balance.yaml`. |
 | `subset` | The warmup and main rule: `warmup` at task reasoning step count 1, `main` otherwise. `03b` stamps it on each definition. |
 
@@ -350,7 +353,9 @@ targets. If a family's target counts sum to more than `family_task_reasoning_ste
 the smallest over-allocation to a family with slack in the same quota target. If no family has
 slack, record `family_quota_target_conflict`.
 
-Set each construction attempt budget to `ceil(family_quota_target_count * construction_attempt_multiplier)`.
+Set each construction attempt budget with the family-and-step formula in
+[Construction attempt budgets](#construction-attempt-budgets); do not size it
+from a single quota target.
 
 ### Plan acceptance
 
@@ -371,26 +376,32 @@ valid-task set.
 
 ## Construction attempt budgets
 
-Rejected definitions are expected. A quota target should not receive exactly its
-target count of construction attempts, because every rejection would become a
-deficit.
+Rejected definitions are expected. A batch should not receive exactly the number
+of definitions it needs, because every rejection would become a deficit.
+
+The budget is per CADEvolve program family and task reasoning step count, not per
+quota target. One accepted definition fills several quota targets at once, so a
+per-target budget would provision the same definition several times.
 
 - Use `construction.attempt_multiplier` from `balance.yaml`; `1.5` is the
   default.
-- Use `construction.high_rejection_attempt_multiplier` (`2.0`) for quota targets
-  with a known high rejection rate.
-- Construct one whole batch per plan revision. Accepted definitions are capped at
-  the target count.
-- Do not top up a quota target incrementally inside the same plan revision. That is more
-  coordination work than constructing the batch and accepting the result.
-- Track accepted and rejected counts per quota target and family.
+- Use `construction.high_rejection_attempt_multiplier` (`2.0`) for a
+  `(family, task reasoning step count)` pair with a known high rejection rate.
+- `attempt_budget[family][step] = ceil(remaining_family_task_reasoning_step_quota[family][step] * construction_attempt_multiplier)`.
+- Construct one whole batch per family and step count per plan revision. Accepted
+  definitions are capped at the family's task reasoning step quota.
+- Do not top up a quota target incrementally inside the same plan revision.
+- Track accepted and rejected counts per quota target, family, step count, and
+  rejection reason; a single acceptance decrements every target it fills.
 - Treat a high rejection rate as a constructor or validity issue before treating
   it as a data-supply issue.
 
-The batch is parallelizable across programs, families, and quota targets. The
-multiplier is a starting policy, not a guarantee. Sampling remains iterative at the
-plan level: a batch is one iteration, and `03c` may trigger another revision. A
-quota target still becomes a deficit if its batch is underfilled.
+A batch is one program pass at one task reasoning step count: the program's graph
+and census are loaded once and every target assigned to it at that step count is
+filled from that pass (see `03b`). Passes are parallel across programs, not across quota targets. The
+multiplier is a starting policy, not a guarantee. Sampling remains iterative at
+the plan level: a batch is one iteration, and `03c` may trigger another revision.
+A quota target still becomes a deficit if its batch is underfilled.
 
 ## Family profiles
 
@@ -448,6 +459,12 @@ task-definition rule versions are unchanged. If any of those inputs changes,
 accepted definitions from the old inputs are not reused; `03a` starts a new plan
 instead.
 
+A plan revision is a work-list input to `03b`, not part of an accepted
+definition's identity. A new plan version does not invalidate accepted
+definitions: `03b` skips their `task_id`s and constructs only the remaining
+work. The identity rule is in
+[`../../run-contract.md`](../../run-contract.md#6-pipeline-stage-identity).
+
 The `DeficitLedger` carries accepted and rejected counts by quota target, family,
 and task reasoning step count. A task can contribute to several quota targets, so
 accepted quota-target counts are independent and must not be added together.
@@ -472,7 +489,7 @@ For each new absolute target, compute the remaining amount:
 
 `remaining_clue_occurrence_count = max(0, planned_clue_occurrences - accepted_clue_occurrence_count)`
 
-`remaining_construction_attempt_budget = ceil(remaining_quota_target_count * construction_attempt_multiplier)`
+`remaining_construction_attempt_budget = ceil(remaining_family_task_reasoning_step_quota * construction_attempt_multiplier)`
 
 `construction_attempt_budgets` in the new plan use these remaining amounts.
 Accepted definitions are not retried.

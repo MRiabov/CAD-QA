@@ -11,8 +11,8 @@ extraction records is in [`graph-construction.md`](graph-construction.md).
 `CadGraph` is three logical Parquet tables: `nodes.parquet`,
 `relations.parquet`, and `measurements.parquet`. The graph for one program is
 the subset of rows whose `program_id` matches; the tables are one logical table
-each, stored as Parquet parts keyed by program. A program's rows are a partition,
-not a separate table. Every row carries `program_id` and `graph_schema_version`.
+each, stored as Parquet shard parts. A program's rows are a partition within a
+shard, not a separate table. Every row carries `program_id` and `graph_schema_version`.
 `graph_schema_version` is constant across the artifact. Physical partitioning and
 file paths are artifact concerns in [`../../artifacts.md`](../../artifacts.md);
 the part layout and resume rule are in
@@ -65,6 +65,8 @@ rather than from a geometric comparison. A null relation `tolerance` inherits
 the run policy's `unitless` entry, because a geometric comparison is
 dimensionless.
 
+A panic in one program's graph assembly is recovered at the program boundary and
+recorded as an `internal` failure for that program; it does not stop the shard.
 Every relation carries CAD graph evidence. A derived relation sets
 `evidence_kind` to `derived`, names the exact predicate in `evidence_rule`, and
 lists the graph elements it read in `evidence_refs`; the endpoints are already
@@ -157,7 +159,7 @@ A measurement `tolerance` of null inherits the policy entry for its
 through the `unitless` policy. A literal length may carry an `exact` override.
 
 Answer-scoring tolerance is not this tolerance type. It belongs to the task definition and
-the release `tolerance_json` field.
+the release `tolerance` field.
 
 #### CAD graph evidence references
 
@@ -270,7 +272,7 @@ This policy covers measurement precision only. A relation row carries its own
 `tolerance` column: null inherits the policy's `unitless` entry, and a non-null
 value overrides it. The relation tolerance is excluded from `relation_id`.
 Answer-scoring tolerance remains the task definition's `Tolerance` and the
-release `tolerance_json` field.
+release `tolerance` field.
 
 ## Table scope
 
@@ -371,7 +373,7 @@ count is a non-negative 64-bit integer.
 
 | `node_type` | Attributes struct | Fields |
 |---|---|---|
-| `cadquery_program` | `CadQueryProgramAttributes` | `program_sha256: Sha256`, `normalization_version: str`, `extractor_version: str`, `runtime_extraction_result_sha256: Sha256` |
+| `cadquery_program` | `CadQueryProgramAttributes` | `program_sha256: Sha256`, `normalization_version: str`, `extractor_version: str`, `runtime_extraction_result_sha256: Sha256`, `graph_identity_sha256: Sha256` |
 | `operation` | `OperationAttributes` | `operation_kind: OperationKind`, `method: str`, `order: int`, `source_line: int`, `result_var: str \| None` |
 | `feature` | `FeatureAttributes` | `feature_kind: FeatureKind` |
 | `solid_state` | `SolidStateAttributes` | `sequence_index: int`, `is_final: bool`, `is_solid: bool`, `shape_hash: Sha256 \| None` |
@@ -417,12 +419,19 @@ of an edge. These names are a graph schema change from an earlier `SurfaceKind`
   counts, distances, angles, bounding boxes, validity, and volume changes are
   measurements, not attributes.
 - `fingerprint_sha256` is the SHA-256 of the canonical geometric fingerprint that
-  `02b` uses to derive `entity_id`. It is an audit value, not a measurement. When
-  `02b` provides only `entity_id`, `02c` recomputes the hash from the canonical
-  entity table. A mismatch between the attribute hash, the entity table, and
+  `02b` uses to derive `entity_id`. `02b` emits it with `entity_id`; `02c` copies
+  it. It is an audit value, not a measurement. `02c` recomputes it only under
+  `--force`, and a mismatch between the attribute hash, the entity table, and
   `entity_id` rejects the graph.
-- `runtime_extraction_result_sha256` is computed by `02c` over the canonical runtime
-  extraction result from `02b`.
+- `runtime_extraction_result_sha256` is produced by `02b` and copied by `02c`.
+  `02c` verifies it under `--force`; it does not recompute it on the normal
+  path.
+- `graph_identity_sha256` is the `02c` unit identity for the program:
+  `(ast_extraction_result_sha256, runtime_extraction_result_sha256,
+  graph_schema_version, graph_builder version, tolerance policy hash,
+  implementation_scope)`. It is the per-program identity downstream stages use,
+  so a shard file hash never leaks into `03b`'s identity. It is not a hash of the
+  graph rows and never hashes a float.
 - `shape_hash` is the shape identity hash from `02b`. It is not a measurement.
 - `is_final` is true for exactly one solid-state CAD graph entity when the graph has at
   least one solid state.
@@ -447,6 +456,8 @@ of an edge. These names are a graph schema change from an earlier `SurfaceKind`
   non-null group matching their `kind`.
 - `measurement_type` determines the measurement value kind and `unit` through the catalog;
   a mismatch rejects the graph.
+- Every `cadquery_program` CAD graph entity carries `graph_identity_sha256`, and
+  it equals the `02c` unit identity recomputed from the program's inputs.
 - `TolerancePolicy`, `tolerance_policy_version`, and `tolerance_policy_sha256` are present in the run manifest, as
   [`../../run-contract.md`](../../run-contract.md#2-run-identity-and-the-run-manifest)
   requires.

@@ -913,3 +913,185 @@ prefix is `DS-`.
   `preset = "all"` remains available as a one-off audit, not the project setting.
   `ty` returns if Pyrefly's diagnostics or performance become a measured
   problem.
+
+## DS-49 — CadQuery execution amortizes the library import
+
+- **Status:** accepted (2026-11-21).
+- **Context:** `runtime.md` required a fresh child Python process per program, and
+  the worker protocol started a Python process per request. Measured on the
+  reference host, `import cadquery` costs 2.1–2.8 s and 451 MiB of resident
+  memory. At 1,500 active programs that is 50–70 minutes of CPU spent before any
+  geometry is evaluated, 7–9% of every 30-second execution budget, and a resident
+  set that caps `--jobs` on a memory-limited host. Process isolation is the
+  requirement; a fresh interpreter is not.
+- **Decision:** `02b` execute CadQuery runs in a long-lived worker that imports
+  CadQuery and OCP once, and forks a fresh child process per program. The child
+  is a fresh address space, so no CadQuery or OCP state crosses programs. The
+  30-second limit starts at the child's ready signal, not at process creation.
+  The Go orchestrator runs a bounded worker pool per pipeline stage, not one
+  process per request. `execution_environment` records only the environment class
+  (`os_arch`, limits, preload setting, worker request limit), never host identity.
+- **Consequences:** `02b` pays the import once per worker instead of once per
+  program. A worker is replaced after a crash or after its request limit, so a
+  leak is bounded. A cross-machine resume is a cache hit when the environment
+  class matches. The import cost and the preloaded resident set are measured once
+  per implementation scope and recorded with the run, not recomputed per program.
+
+## DS-50 — Unit identity is content; the plan is a work list
+
+- **Status:** accepted (2026-11-21).
+- **Context:** `run-contract.md` put the `03a` plan part hash in every `03b` unit
+  identity and the `03b` part hash in every `04` unit identity. A plan revision
+  therefore changed every identity, while `03a`/`03b` promised that accepted
+  definitions survive a replan and `03b` skipped their `task_id`s. The two rules
+  contradicted each other: one rebuilt all 10,000 definitions and prompts on
+  every fast-loop replan, the other appended rows under a stale identity. The
+  same mistake appeared at smaller scale in `01c`/`01d`, where a batch part hash
+  named a per-program identity, and in one-row Parquet parts for cheap
+  per-program units.
+- **Decision:** A unit identity covers the inputs that determine its rows.
+  Scheduling inputs — plan targets, plan version, deficit ledger, family
+  assignment — are not identity. For `03b` and `04` the unit is a task and
+  identity is row-level; a later revision appends a part
+  (`<program_sha256>-<sequence>.parquet`) and resume deduplicates by `task_id`
+  with a matching content hash. `01d` is keyed by `raw_program_sha256`, `02a` by
+  `program_sha256`, and neither by a batch part hash. `01d` and `02a` batch many
+  programs per part because a unit is milliseconds; `02b` and `02c` keep one part
+  per program because a unit is an execution.
+- **Consequences:** A replan changes the work list and nothing else, so the fast
+  loop is actually cheap. An appended row never rewrites an accepted one. A
+  changed graph invalidates that program's downstream units, not every unit of
+  `03b`. A batched part can lose at most a batch of cheap work on a crash. The
+  cost is a sequence suffix in the part name and a row-level dedupe step on
+  resume.
+
+## DS-51 — One construction pass per program, budgeted per family and step
+
+- **Status:** accepted (2026-11-21).
+- **Context:** `03a` budgeted `ceil(target_count * 1.5)` construction attempts for
+  every quota target, while one accepted definition fills several targets. The
+  budgets therefore summed to roughly 1.2–1.5 × 10^5 attempts for a 10^4-task
+  release. `03-task-generation.md` also made construction parallel per quota
+  target, which invites a graph re-read per target, and `03a` and `03b` each
+  derived the capability census. The cover search had no bound beyond
+  `max_state_entities`, which bounds one input, not the search.
+- **Decision:** Construction is one pass per program and plan revision: load the
+  graph and census once and fill every target assigned to the program at that
+  step count. The attempt budget is per `(family, task reasoning step count)` and
+  is `ceil(family_task_reasoning_step_quota * construction_attempt_multiplier)`;
+  one acceptance decrements every target it fills. The plan carries the
+  per-program census (`program_census`) and `03b` reads it. The cover search runs
+  under count-based scope constants (`max_construction_candidates`,
+  `max_construction_facts`, `max_cover_expansions`, `max_validity_rechecks`), and
+  exhaustion is a `construction_deficit` with detail `construction_budget`. The
+  constants are part of `constructor_version`.
+- **Consequences:** A 10,000-task release budgets on the order of 20,000–30,000
+  attempts instead of 1.2 × 10^5. Each program graph is read once per revision.
+  The census is derived once per graph version. The search has a deterministic
+  bound, so a pathological graph becomes a recorded deficit rather than an
+  unbounded run. A budget change is a new `constructor_version`, so it cannot
+  silently change an accepted definition.
+
+## DS-52 — Pair rows are state-scoped
+
+- **Status:** accepted (2026-11-21).
+- **Context:** The pair emission rule made pair rows linear in the entity count
+  per named endpoint, but it applied to every solid state. `DS-34` binds a P0
+  task to the final state and a P1 task to one named intermediate state, so pair
+  rows for the other states were written, sorted, hashed, read by `03`, and never
+  used. In the measured 1,000-program artifact, 82% of 20.1M relations were
+  pairwise comparisons and there were 2,310 solid states, so the unused share is
+  large.
+- **Decision:** Pair relations and pair measurements are emitted only for the
+  solid states the release implementation scope can bind: the final state in P0,
+  the final and one named intermediate state in P1, and both states of a declared
+  pair in P2. Per-entity measurements, containment relations, and effect
+  measurements stay total over every state.
+- **Consequences:** The dominant relation mass drops by roughly the number of
+  unbindable states per program, and `02c` writes and `03` reads less.
+  `implementation_scope` enters the `02c` identity so a cached graph cannot be
+  reused across scopes with a different row set. A P1 or P2 release that binds
+  more states emits more pair rows; that is a scope change, not a schema change.
+
+## DS-53 — Answer columns are typed; the release carries a bounded evidence summary
+
+- **Status:** accepted (2026-11-21).
+- **Context:** The release stored `gold_answer_json`, `tolerance_json`, and
+  `answer_evidence_json` as canonical JSON text, and `05` parsed them per row.
+  `DS-23` bans per-row JSON on bulk paths, and `DS-39` measured JSON text at 41x
+  the Parquet size and 57x the read time. `answer_evidence` also carried the full
+  answer-equivalent set, which can hold one entry per candidate (up to
+  `max_state_entities`), so "small enough to keep with the task" was an
+  assumption, not a bound.
+- **Decision:** The answer columns are typed Parquet structs: `AnswerValue` (a
+  tagged union with canonical decimal text for numbers), `Tolerance`, and
+  `AnswerEvidence`. The release carries the answer-equivalent count and the
+  shared answer, not the full set; the full set stays in the task definition.
+  `structured` is the only JSON text, for the CadQuery workplane-state answer, and
+  `answer_schema_version` versions its shape.
+- **Consequences:** `05` validates typed fields instead of parsing JSON, and a
+  release row cannot grow with the candidate count. `04` copies typed values and
+  never serializes an answer. The canonical text for numbers is unchanged, so Go
+  and Python still agree byte for byte. A consumer that read the old JSON columns
+  is unaffected because no release has been published.
+
+## DS-54 — 02b emits the extraction hashes; 02c copies them
+
+- **Status:** accepted (2026-11-21).
+- **Context:** `graph-persistence.md` let `02c` recompute `fingerprint_sha256`
+  from the canonical entity table and `runtime_extraction_result_sha256` over the
+  whole runtime result. `02b` had already derived both: `entity_id` is a hash of
+  the fingerprint, and the success result carries
+  `runtime_extraction_result_sha256`. Recomputing put a second implementation of
+  the same canonical hash in Go, and the contract made a mismatch a graph
+  rejection.
+- **Decision:** `02b` emits `fingerprint_sha256` with `entity_id` and carries
+  `runtime_extraction_result_sha256`; `02c` copies both. `02c` recomputes them
+  only under `--force`, where a mismatch rejects the graph.
+- **Consequences:** The normal path has one implementation of each hash, in the
+  process that has the kernel values. A determinism bug is caught by the force
+  check rather than by two implementations that can drift.
+
+## DS-55 — The run journal is fixed shards, not one file per unit or per stage
+
+- **Status:** accepted (2026-11-21).
+- **Context:** The run contract wrote one Parquet part per unit. For 1,500
+  programs that is 1,500 files per program stage and 4,500 files for the
+  three-table graph, about 9,000 files per run, each with footer and page
+  overhead. The graph is 163 KB per program, so a per-program part is mostly
+  metadata. One file per stage is not an option either: Parquet is immutable, a
+  run is 12.5 hours of execution, and rewriting a 245 MB graph file on every
+  flush is O(n²). Batching by flush time is also wrong: the part boundaries would
+  depend on machine speed, which contradicts the byte-identical rerun rule.
+- **Decision:** A part is a fixed shard: a unit belongs to
+  `sha256(pass_key) mod journal_shard_count` (default 16), so membership is a
+  function of the key and the run-level count. A shard is written as an
+  incomplete part at the flush interval and replaced by the complete shard. `02b`
+  keeps one unit per part because a unit is 30 seconds. `01d`, `02a`, `02c`,
+  `03b`, and `04` shard. A shard's rows carry the unit key and content identity,
+  and downstream identity uses the unit identity, never the shard hash.
+- **Consequences:** A 1,500-program run writes about 16 parts per stage instead of
+  1,500, and the graph writes 16 directories instead of 4,500 files. A crash
+  loses at most the unflushed rows of a shard; `02b` still loses at most one
+  execution. A shard rewrite on recompute is 16 MB for the graph, not 245 MB. The
+  shard count is part of `run_id`, so a different layout is a new run.
+
+## DS-56 — A unit failure never fails its shard
+
+- **Status:** accepted (2026-11-21).
+- **Context:** Sharding introduced a container that holds many units. If the
+  writer treated the shard as a transaction, one rejected program or task would
+  discard the successful units in the shard, and a single bad program could block
+  a hundred others. The failure record already makes a rejection data, but the
+  persistence rule did not say what happens to the siblings.
+- **Decision:** A shard is a container, not a transaction. A rejected unit writes
+  a failure row and no success row; the writer continues and commits the shard. A
+  unit that crashes a worker becomes a failure tombstone; the worker is replaced.
+  A shard with no successful rows is not written, and its failure rows are the
+  completion marker. Resume reads success and failure parts together, so a failed
+  unit is not retried and a successful sibling is not recomputed. A corrupt shard
+  is the only failure that spans units, and its blast radius is that shard.
+- **Consequences:** One program cannot fail its shard, its batch, or the run. The
+  failure partition is the only per-unit negative state, and it is already the
+  R-19 record. A corrupt shard is an integrity error with `--force` recovery, not
+  a data condition.

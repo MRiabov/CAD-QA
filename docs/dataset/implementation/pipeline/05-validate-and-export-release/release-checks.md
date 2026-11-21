@@ -45,7 +45,7 @@ nobody planned for.
 | Task reasoning step count | `task_reasoning_step_count` | task | tasks | `task_reasoning_step_count` |
 | Built shape | `geometry_required` | task | tasks | `geometry_required` |
 | CAD model | `program_id` | task | tasks | `program_id` |
-| Correct answer | `correct_answer` | task | tasks | `answer_format`, `gold_answer_json` or `choices`, `answer_unit` |
+| Correct answer | `correct_answer` | task | tasks | `answer_format`, `gold_answer` or `choices`, `answer_unit` |
 | Clue type | `clue_type` | clue occurrence | clue occurrences | `clue_types` |
 | Clue operand form | `clue_operand_form` | clue occurrence that carries a reference | clue occurrences that carry a reference | `clue_operand_form_profile` |
 | Warmup | `warmup` | task | — | `subset` |
@@ -58,8 +58,8 @@ Five of these need a word of explanation.
 release contract and `03a` both count distinct programs, so the two numbers are
 the same number.
 
-**A correct answer is `(answer_format, gold_answer_json, answer_unit)`, except for
-multiple choice.** It is deliberately coarser than `answer_sha256`, which also
+**A correct answer is `(answer_format, gold_answer, answer_unit)`, with
+`gold_answer` in its canonical text form, except for multiple choice.** It is deliberately coarser than `answer_sha256`, which also
 covers the scoring fields. Two tasks that ask for the same number with different
 tolerances have the same correct answer, and R-11 is about the answer, not about
 the tolerance.
@@ -67,8 +67,8 @@ the tolerance.
 **A multiple-choice answer is counted by its answer value.** A label is a
 position, not an answer: counting labels would collapse thousands of tasks into
 seven values. The counted answer of a multiple-choice task is the `candidate` of
-the entry whose label is `gold_answer_json`, read from `choices`. Every other
-answer format counts `gold_answer_json` directly.
+the entry whose label is `gold_answer.label`, read from `choices`. Every other
+answer format counts `gold_answer` directly.
 
 **A clue operand form is counted only on clues that carry a reference.** A clue
 with no reference has no form (`03b` construct task definitions), so it is not in

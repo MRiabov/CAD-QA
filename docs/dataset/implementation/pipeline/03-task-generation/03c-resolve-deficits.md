@@ -68,7 +68,7 @@ here: `03b` records a class directly, and `03c` classifies what `03a` reports.
 | `capability_deficit` | No family profile has the capability the quota target needs. | Read `family_profiles` in the plan, then `ProgramRequest` to `01b`. |
 | `probe_deficit` | The bound state has no surviving point probe, so it supports no membership task. | Drop membership for that state and record the deficit. No request. |
 | `capacity_deficit` | A capable program exists, but family quota, split capacity, or assignment leaves no room. | `ProgramReassignmentRequest` to `03a`; `ProgramRequest` only when the split itself is short. |
-| `construction_deficit` | The construction batch was underfilled, or the rejection rate is high. | `ProgramReassignmentRequest` to raise the attempt budget; a persistent high rate is a `03b` fix. |
+| `construction_deficit` | The construction batch was underfilled, the rejection rate is high, or a search exhausted its cost budget (`construction_budget`). | `ProgramReassignmentRequest` to raise the attempt or cost budget; a persistent high rate is a `03b` fix. |
 | `constructor_deficit` | The constructor cannot express the target at all. | Fix `03b`; neither loop helps. |
 | `plan_conflict` | A plan cap or bound blocks the target. | Reconcile the plan; expanding data will not remove the cap. |
 | `structural_deficit` | No valid task can express the target at that task reasoning step count. | Fix the plan or the task-definition rules. |

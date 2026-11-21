@@ -33,9 +33,9 @@ column, so it is written once.
 - Copy the label and the answer value of every choice-pool entry into the
   `choices` column. The descriptions stay in the prompt, and the distinguishing
   facts stay in the definition, because the release needs neither.
-- Copy the answer text. `gold_answer`, `tolerance`, and `answer_evidence` are
-  already canonical text from `03b` construct task definitions, and `04` never
-  re-serializes an answer value.
+- Copy the typed answer value, tolerance, and answer evidence. `03b` construct
+  task definitions already produced them, and `04` never re-serializes or
+  recomputes an answer value.
 - Compute `prompt_sha256` over the `prompt` UTF-8 bytes after rendering.
 - Derive `clue_types` from `clue_operand_form_profile`, so the two columns cannot
   disagree.
@@ -49,7 +49,8 @@ decision.
 
 ## Rendering inputs
 
-`04` renders one task from three inputs:
+`04` renders one task from three inputs. It runs one pass per program: it loads
+the program text and its definitions once, renders every task, and flushes.
 
 | Input | Role |
 |---|---|
@@ -112,10 +113,12 @@ those rendered parts.
   has no shared mutable state.
 - The release table has one deterministic writer. Parallel output is merged by
   `task_id`.
-- The release table is committed as Parquet parts keyed by program. A task batch
-  is flushed at most every 30 seconds or every `flush_rows` rows, whichever
-  comes first. Resume reads the committed parts and skips a `task_id` that is
-  already present. The flush, persistence, and resume rules are in
+- The release table is committed as deterministic shard parts. A shard is
+  flushed at most every 30 seconds or every `flush_rows` rows, whichever comes
+  first. Resume reads the committed parts and skips a `task_id` that is already
+  present with the same content hash. A later render revision appends a part
+  instead of rewriting an accepted one. The flush, persistence, and resume rules
+  are in
   [`../run-contract.md`](../run-contract.md#4-incremental-parquet-persistence).
 
 ## No rejection
@@ -126,6 +129,10 @@ Task quota planning is decided in `03a`. A rejection here is a defect in an earl
 pipeline stage. A missing template ID or an invalid placeholder is a defect in
 `prompts.yaml`, not a reason to reject a task; `04` stops before writing the
 release.
+
+A panic or an unreadable template is a defect in this pipeline stage, not a task
+rejection: `04` stops before writing the release, because continuing would write a
+partial release under a valid identity.
 
 A rendered choice block must have one line per pool entry, in the pool's order,
 with the pool's labels. A block that does not is a defect in the template or the

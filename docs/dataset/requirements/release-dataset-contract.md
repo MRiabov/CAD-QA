@@ -49,8 +49,9 @@ may add one (`DS-42`).
 
 Parquet is canonical. JSONL is an optional export for inspection; it is not a
 second release format. Structured fields with a fixed schema use nested Parquet
-column types; fields whose shape depends on an enum or version remain canonical JSON
-strings.
+column types, including the answer value, tolerance, and answer evidence.
+Canonical JSON text is limited to an opaque payload that has no typed schema; in
+P0 that is the `structured` CadQuery workplane-state answer only.
 
 ## 3. Row count
 
@@ -79,6 +80,69 @@ No CAD model and no correct answer is above 1% of tasks.
 
 `release.parquet` has one row per task.
 
+### Answer value schema
+
+The answer columns are typed Parquet structs, not JSON text. A tagged union
+carries exactly one non-null group matching `kind`, the same pattern the CAD
+graph uses for `MeasurementValue`. `Point3D`, `BoundingBox`, and `EvidenceRef`
+are the structs from the CAD graph schema.
+
+```text
+AnswerValue = STRUCT<
+  kind: STRING,
+  label: STRING | NULL,
+  number_text: STRING | NULL,
+  integer: INT64 | NULL,
+  boolean: BOOLEAN | NULL,
+  point: Point3D | NULL,
+  bounding_box: BoundingBox | NULL,
+  structured: STRING | NULL
+>
+
+Tolerance = STRUCT<
+  kind: STRING,
+  value_text: STRING | NULL,
+  unit: STRING | NULL
+>
+
+AnswerEvidence = STRUCT<
+  evidence_kind: STRING,
+  evidence_rule: STRING,
+  evidence_refs: LIST<EvidenceRef>,
+  answer_equivalent_count: INT64,
+  answer_equivalent_answer: AnswerValue,
+  point_probe: STRUCT<
+    point: Point3D,
+    location: STRING,
+    distance_to_surface: STRING,
+    classifier: STRING,
+    margin: STRING
+  > | NULL
+>
+```
+
+`AnswerValueKind`: `label`, `number`, `integer`, `boolean`, `point`,
+`bounding_box`, `structured`.
+
+- `label` is a multiple-choice position, `A` to `G`.
+- `number` carries `number_text`, canonical decimal text. It is text, not a
+  binary float, so Go and Python cannot disagree on formatting.
+- `integer` carries `integer`; `boolean` carries `boolean`.
+- `point` carries `point`; `bounding_box` carries `bounding_box`.
+- `structured` carries `structured`, canonical JSON text for the
+  CadQuery workplane-state answer. It is the only JSON text in the answer
+  columns, and its shape is versioned by `answer_schema_version`.
+
+`ToleranceKind`: `exact`, `absolute`, `relative`. `exact` has null `value_text`
+and null `unit`; `absolute` carries `value_text` and a unit; `relative` carries
+`value_text` and null `unit`.
+
+`AnswerEvidence` carries the rule and references, the number of entries in the
+answer-equivalent set, and the shared answer value. It does not carry the full
+set: the set can hold one entry per candidate, so its size is bounded only by
+`max_state_entities`. The full set stays in the task definition, and `05` reads
+it from there when it needs to recheck uniqueness.
+
 | Column | Format | Required | Meaning | Carries |
 |---|---|---|---|---|
 | `task_id` | string | yes | Stable release key. It must not encode the answer. | `TaskDefinition.task_id` |
@@ -97,22 +161,22 @@ No CAD model and no correct answer is above 1% of tasks.
 | `choices` | list of struct `{label, candidate}`, both strings | yes | The multiple-choice pool: the position label and the answer value it denotes, as canonical text. Empty for every other answer format. | `TaskDefinition.choice_pool`, label and answer value |
 | `answer_meaning` | enum | yes | What the answer is about. | `TaskDefinition.answer_meaning` |
 | `geometry_required` | boolean | yes | Whether at least one task clue depends on the built shape. | `TaskDefinition.geometry_required` |
-| `gold_answer_json` | string | yes | Canonical JSON for the gold answer. | `TaskDefinition.gold_answer`, copied as canonical text |
+| `gold_answer` | `AnswerValue` struct | yes | The gold answer, tagged by `kind`. | `TaskDefinition.gold_answer` |
 | `answer_unit` | string or null | yes | Unit; null means unitless. | `TaskDefinition.answer_unit` |
-| `tolerance_json` | string or null | yes | Canonical JSON tolerance; null means exact. | `TaskDefinition.tolerance`, copied as canonical text |
+| `tolerance` | `Tolerance` struct or null | yes | Answer tolerance; null means exact. | `TaskDefinition.tolerance` |
 | `scoring_rule` | enum `exact`, `numeric_tolerance`, `structured_exact` | yes | How the answer is checked. | `TaskDefinition.scoring_rule` |
 | `answer_schema_version` | string | yes | Version of the answer representation. | `TaskDefinition.answer_schema_version` |
 | `answer_sha256` | string | yes | Hash of the canonical answer and scoring fields. | `TaskDefinition.answer_sha256`, copied |
-| `answer_evidence_json` | string | yes | Canonical JSON answer evidence: measured or derived, the rule, the references, the answer-equivalent set, and the point probe. | `TaskDefinition.answer_evidence`, copied as canonical text |
+| `answer_evidence` | `AnswerEvidence` struct | yes | Measured or derived evidence: the rule, references, the answer-equivalent count and shared answer, and the point probe. | `TaskDefinition.answer_evidence`, with the full set removed |
 
 The `Carries` column says what the column is, not how it is produced: a column
 carries a `TaskDefinition` field unchanged, the part of a field the release
 needs, or a value that `04` render prompt and choices computes from the
 definition. `04` writes every column of the release table.
 
-`04` copies the answer text and never re-serializes it. `03b` construct task
-definitions already wrote `gold_answer`, `tolerance`, and `answer_evidence` as
-canonical text, and a second serializer could reorder keys or format a number
+`04` copies the typed answer value, tolerance, and answer evidence unchanged and
+never re-serializes or recomputes an answer value. `03b` construct task
+definitions already produced them, and a second serializer could format a number
 differently. `04` has no serializer for an answer value.
 
 `clue_types` is the clue type sequence of `clue_operand_form_profile`, not a
@@ -124,7 +188,7 @@ corrupted after it is written.
 normalization and no added trailing newline. A consumer that normalizes the
 prompt before hashing it gets a different value.
 
-The columns before `gold_answer_json` identify the task, the answer space, and
+The columns before `gold_answer` identify the task, the answer space, and
 the fields selection, review, and reporting need. The answer columns hold the
 gold answer, scoring fields, and answer evidence. `prompt` is the only
 LLM-facing column; every other column stays out of the LLM model input.
@@ -145,9 +209,10 @@ LLM model input. A structured prompt record can be regenerated for audit if
 needed. The `choices` column is not a copy of the rendered choices: it holds the
 label and the answer value, which the prompt does not state.
 
-A label is a position, not an answer. For a multiple-choice row, `gold_answer_json`
-is the label the LLM model must return, and `choices` maps every label to the
-answer value it denotes, so the answer value stays recoverable from the release.
+A label is a position, not an answer. For a multiple-choice row,
+`gold_answer.label` is the label the LLM model must return, and `choices` maps
+every label to the answer value it denotes, so the answer value stays recoverable
+from the release.
 The distinguishing facts a description is rendered from stay in the task
 definition, because the release does not need them.
 
@@ -156,29 +221,30 @@ denotes, content derived from that answer value, hidden entity identifiers, or
 scoring data. A multiple-choice label is not answer data: the prompt lists every
 label, and which one is correct is not stated.
 
-`gold_answer_json` is parsed according to `answer_format`:
+`gold_answer` is checked against `answer_format`:
 
-- multiple choice: the chosen label, as a JSON string. The label's answer value is
-  in `choices`;
-- number: a JSON number;
-- integer: a JSON integer;
-- yes or no: a JSON boolean;
-- 3D coordinate: a JSON array of three numbers;
-- bounding box: a JSON object with `min` and `max` arrays;
-- structured object: a JSON object with the documented fields.
+- multiple choice: `kind` is `label`, and `label` is the chosen label. The label's
+  answer value is in `choices`;
+- number: `kind` is `number`, and `number_text` is canonical decimal text;
+- integer: `kind` is `integer`;
+- yes or no: `kind` is `boolean`;
+- 3D coordinate: `kind` is `point`;
+- bounding box: `kind` is `bounding_box`;
+- structured object: `kind` is `structured`, with canonical JSON text.
 
 Tolerance is explicit for every non-exact answer. This avoids relying on a
 reader to infer the last stated place. For a numeric answer, a typical tolerance
-is `{"kind": "absolute", "value": 0.005}`.
+is `{kind: absolute, value_text: "0.005"}`.
 P2 choice audit: P2 implementation adds `choice_audit_json` for
 multiple-choice tasks. It records the correct label, each distractor's error
 mode, and which task clue or answer step it fails. The P0 and P1 scopes do not require this
 column.
 
 Answer evidence is nested in the answer columns because the first release has
-10,000 tasks and the answer evidence is small enough to keep with the task. Split
-answer evidence into a separate table only if a row becomes too large to scan or
-transport.
+10,000 tasks. The release carries the set's size and shared answer, not the full
+answer-equivalent set, so a row cannot grow with the candidate count. The full
+set stays in the task definition; split it into a separate table only if a
+consumer needs it in bulk.
 
 ## 5. Who consumes it
 
@@ -292,8 +358,9 @@ test commit look like a new generator, which is the wrong trade for a dataset.
 
 `answer_set_sha256` is SHA-256 over the sorted, deduplicated correct answers of
 the release. It uses the same answer identity as the `distinct_answer_count`
-check in `05`: `(answer_format, gold_answer_json, answer_unit)`. Each answer is
-encoded as the canonical JSON array of those three values. The count and the
+check in `05`: `(answer_format, gold_answer, answer_unit)`. Each answer is
+encoded as the canonical JSON array of those three values, with `gold_answer` in
+its canonical text form. The count and the
 digest therefore describe the same set.
 
 It is not a summary of the per-row `answer_sha256` column. That column covers the

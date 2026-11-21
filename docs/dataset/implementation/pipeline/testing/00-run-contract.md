@@ -93,10 +93,10 @@ is 2, and `SIGINT` is 130.
 the unit counts, the failure counts, and the current `release_id`. It
 reads the run directory while a run is active and takes no lock.
 
-**TDD pin:** pins the run manifest, the per-unit Parquet part as the completion
-marker, the 30-second flush rule, asynchronous persistence, the resume rule, the
-force rule, the run lock, and the exit codes before the `internal/run` package
-exists.
+**TDD pin:** pins the run manifest, the shard Parquet part as the completion
+marker, the 30-second flush rule, unit independence, asynchronous persistence,
+the resume rule, the force rule, the run lock, and the exit codes before the
+`internal/run` package exists.
 
 ## Failure-mode tests
 
@@ -113,6 +113,11 @@ exists.
 - `test_run_contract_cache_hit_is_byte_identical` — a new run directory with the
   same inputs reads the shared cache, writes the same part bytes, and executes
   no child process for a cache-hit unit.
+- `test_run_contract_unit_independence` — a shard with one rejected unit commits
+  the successful units and the failure row, sets `cadqa.complete=true`, and
+  resume does not retry the rejected unit or recompute a successful sibling. A
+  shard whose units all fail writes no success part and its failure rows are the
+  completion marker.
 - `test_run_contract_tolerance_policy` — a `tolerance.yaml` missing a unit, naming
   an unknown unit, giving an `absolute` entry no unit, giving a `relative` entry a
   unit, or giving an `exact` entry a value each exit 2 before any pipeline stage

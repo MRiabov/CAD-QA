@@ -119,7 +119,9 @@ must not be guessed.
 
 ### Named endpoints
 
-A named endpoint is derived per solid state from the extraction records. A name
+A named endpoint is derived per bindable solid state from the extraction
+records. A state outside the release implementation scope emits no pair rows
+(`graph-content.md` §4.1). A name
 exists only when it resolves to exactly one entity in the state. Zero matches or
 several matches means the name does not exist, and a pair that needs it is not
 emitted.
@@ -139,9 +141,9 @@ a relation and creates no row. It is a lookup used by pair emission.
 
 ### Pair rows
 
-For each pair relation or pair measurement, take the named endpoints of the state
-and the candidate endpoints of the declared endpoint entity kind in the same
-state, then:
+For each pair relation or pair measurement, take the named endpoints of a
+bindable state and the candidate endpoints of the declared endpoint entity kind
+in the same state, then:
 
 1. drop a pair whose two endpoints are the same entity;
 2. reduce to unordered pairs, so a pair of two named entities appears once;

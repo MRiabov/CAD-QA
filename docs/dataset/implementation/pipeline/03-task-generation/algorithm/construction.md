@@ -83,6 +83,8 @@ chain = cover(wrong, facts(witness), target_step_count = task_reasoning_step_cou
   the search looks for a three-clue cover plus the answer step.
 - No cover at the target step count is a deficit for `03a`/`03c`, not a reason to
   accept a longer or shorter task.
+- The search runs under the [cost budget](#cost-budget); exhausting it is a
+  deficit, not a reason to search longer.
 
 ## Step 4 — chain order
 
@@ -113,6 +115,37 @@ adding or dropping clues silently: a shorter valid task is a different task.
 Construction proposes; the scheduler disposes. The quota scheduler accepts a
 definition only when it fills an unfilled target and does not push any cell past
 its maximum (`TG-2`). Overfill is rejected and recorded.
+
+## Cost budget
+
+The search is bounded by counts, not by `max_state_entities` alone. The constants
+are implementation-scope constants like `max_state_entities`: they are measured
+once from the selected pool, recorded with the distribution that produced them,
+and read by construction rather than recomputed per run.
+
+| Constant | Meaning | Provisional default |
+|---|---|---|
+| `max_construction_candidates` | Candidate witnesses examined per attempt. | 200 |
+| `max_construction_facts` | Facts considered per candidate. | 64 |
+| `max_cover_expansions` | Set intersections the cover search may evaluate per attempt. | 20,000 |
+| `max_validity_rechecks` | Clue-removal rechecks the validity gates may run per chain. | 64 |
+
+When a budget is exhausted the attempt stops and the batch records a
+`construction_deficit` with detail `construction_budget` for the targets it could
+not fill. It is not a failure row, and it is not retried inside the same plan
+revision; `03c` may move the target to a family with a smaller candidate set,
+raise the budget in a new revision, or accept the miss.
+
+Every limit is a count, so the search stays deterministic. A wall-clock deadline
+would make the accepted task set depend on machine load, which contradicts the
+byte-identical rerun rule in `run-contract.md`. The constants are part of
+`constructor_version`: changing one changes the definitions it can produce and
+invalidates them.
+
+The deficit ledger records attempt counts, not wall-clock milliseconds, for the
+same reason: the ledger is an input to the plan identity, and timing would make a
+rerun non-deterministic. The cost constants are measured offline, once per
+implementation scope.
 
 ## Determinism
 

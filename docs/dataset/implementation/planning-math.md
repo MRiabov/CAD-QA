@@ -75,11 +75,13 @@ validate and export release reads when checking. A release may depart from a
 default; the manifest records the policy version and hash, so the departure is
 visible.
 
-Construction attempt budgets multiply the accepted quota in one batch per plan revision:
-`ceil(quota_target_count * construction_attempt_multiplier)` by default, or `2.0` for
-quota targets with a high rejection rate.
-Rejections consume construction attempts, not dataset release rows. An underfilled batch is a
-deficit; there is no per-quota-target top-up loop inside one plan revision.
+Construction attempt budgets multiply the family's per-step task quota in one
+batch per plan revision:
+`ceil(family_task_reasoning_step_quota[family][step] * construction_attempt_multiplier)`
+by default, or `2.0` for a family and step count with a high rejection rate.
+Rejections consume construction attempts, not dataset release rows. An
+underfilled batch is a deficit; there is no per-quota-target top-up loop inside
+one plan revision.
 
 ## Per-step balance
 

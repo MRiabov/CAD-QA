@@ -16,6 +16,8 @@ the partitions into `failures.parquet`.
 
 A rejection is data, not an exception across a pipeline stage boundary. A
 pipeline stage that cannot process an input records the rejection and continues.
+A rejection never fails its shard or the other units in it: the writer commits the
+units that succeeded and the failure partition records the rest.
 
 ## What is a rejection
 

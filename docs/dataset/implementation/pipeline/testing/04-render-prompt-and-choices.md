@@ -30,17 +30,17 @@ labels, and placeholders are all declared.
 - `choices` is empty, because the answer format is a number;
 - `clue_types` is the clue type sequence of `clue_operand_form_profile`, so the
   two columns cannot disagree;
-- `gold_answer_json`, `tolerance_json`, `answer_evidence_json`, and
-  `answer_sha256` equal the definition's canonical text byte for byte. The
-  fixture writes its tolerance with keys in an order and a number form a
-  serializer would change, so a re-serialization fails here;
+- `gold_answer`, `tolerance`, `answer_evidence`, and `answer_sha256` equal the
+  definition's typed values byte for byte after canonical encoding. The fixture
+  writes its tolerance with a number form a serializer would change, so a
+  re-serialization fails here;
 - `answer_schema_version` and `answer_unit` are copied unchanged;
 - every column the release contract marks required is present, and no column is
   invented.
 
 `test_04_multiple_choice_pool` — a five-entry pool renders five choice lines in
 the pool's recorded order with its labels `A` to `E`, the `choices` column holds
-one `{label, candidate}` per entry in the same order, and `gold_answer_json` is
+one `{label, candidate}` per entry in the same order, and `gold_answer.label` is
 the correct label. The gold label appears exactly once in `prompt`, in its own
 choice line, and nothing marks it as correct. A pool that is reordered, relabelled,
 or trimmed fails.
