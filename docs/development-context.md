@@ -4,6 +4,12 @@
 proven, what is assumed, and what is missing. Everything is either evidence or explicitly
 marked (`[unknown]`, `[unverified — needs <env>]`, `[assumed]`).
 
+**Superseded for code layout.** The pre-rebuild generator (`dataset/`) and the training
+and evaluation stack (`train_and_eval/`) were deleted on 2026-11-21 and are preserved by
+the tag `before-deleting-the-old-generator-and-harness`. The component list below
+describes them as they were on 2026-10-07. The replacement is specified in
+[`dataset/implementation/`](dataset/implementation/).
+
 ## Repo identity
 
 - Remote: `https://github.com/MRiabov/CAD-QA.git`.
