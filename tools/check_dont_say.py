@@ -65,6 +65,10 @@ LATEX_COMMENT = re.compile(r"(?<!\\)%")
 LATEX_TEXT_TT = re.compile(r"\\texttt\{[^}]*\}")
 LATEX_VERB = re.compile(r"\\verb(.)(.*?)\1")
 IDENTIFIER_SEGMENT = re.compile(r"[A-Z]+(?=[A-Z][a-z])|[A-Z]?[a-z]+|[A-Z]+|\d+")
+TOKEN = re.compile(r"[a-z0-9_]+")
+# Fields that hold statements. A docstring owner (module, class, def) can only be
+# reached through these, so the docstring walk never has to visit expressions.
+STATEMENT_FIELDS = ("body", "orelse", "finalbody", "handlers", "cases")
 SAY_SEPARATORS = (" / ", ";", ",", " or ", ": ")
 
 HOMES: dict[str, tuple[str, ...]] = {
@@ -175,8 +179,9 @@ class Rule(BaseModel):
     pattern: re.Pattern[str]
     identifiers: tuple[re.Pattern[str], ...] = ()
     homes: tuple[str, ...] = ()
-    covers: tuple[str, ...] = ()
+    allowed: tuple[str, ...] = ()
     bare: bool = False
+    keys: tuple[str, ...] = Field(default=())
 
     @classmethod
     def build(cls, raw: str, say: str, why: str = "") -> Rule:
@@ -185,6 +190,9 @@ class Rule(BaseModel):
             re.compile(r"\b" + re.escape(variant) + r"\b")
             for variant in identifier_variants(phrase)
         )
+        keys = rule_keys(phrase)
+        if not keys:
+            raise ValueError(f"Don't-say phrase has no word token: {phrase!r}")
         return cls(
             phrase=phrase,
             say=say,
@@ -192,8 +200,9 @@ class Rule(BaseModel):
             pattern=compile_phrase(phrase),
             identifiers=identifiers,
             homes=home_prefixes(parentheticals(raw)),
-            covers=tuple(covering_phrases(say)),
+            allowed=tuple(covering_phrases(say)) + ALLOWLIST,
             bare=any(part.lower() == "bare" for part in parentheticals(raw)),
+            keys=keys,
         )
 
 
@@ -204,6 +213,43 @@ class Hit(BaseModel):
     line: int = Field(ge=1)
     rule: Rule
     text: str = Field(min_length=1)
+
+
+class RuleIndex(BaseModel):
+    """Rules that apply to one file, bucketed by a word each rule must contain.
+
+    ``blocked_by_home`` and the bucket build run once per file instead of once
+    per rule per line. ``candidates`` is a superset of the rules that can match
+    the line: a pattern needs every word of its phrase, so a rule whose words
+    are absent cannot match. The exact pattern still decides.
+    """
+
+    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+
+    rules: tuple[Rule, ...]
+    buckets: dict[str, tuple[Rule, ...]]
+
+    @classmethod
+    def build(cls, rules: list[Rule], path: Path) -> RuleIndex:
+        applicable = tuple(rule for rule in rules if not blocked_by_home(rule, path))
+        buckets: dict[str, list[Rule]] = {}
+        for rule in applicable:
+            for key in rule.keys:
+                buckets.setdefault(key, []).append(rule)
+        return cls(
+            rules=applicable,
+            buckets={key: tuple(bucket) for key, bucket in buckets.items()},
+        )
+
+    def candidates(self, lower: str) -> tuple[Rule, ...]:
+        found: list[Rule] = []
+        seen: set[str] = set()
+        for token in TOKEN.findall(lower):
+            for rule in self.buckets.get(token, ()):
+                if rule.phrase not in seen:
+                    seen.add(rule.phrase)
+                    found.append(rule)
+        return tuple(found)
 
 
 def compile_phrase(phrase: str) -> re.Pattern[str]:
@@ -228,6 +274,23 @@ def identifier_variants(phrase: str) -> list[str]:
         if variant and variant not in variants:
             variants.append(variant)
     return variants
+
+
+def rule_keys(phrase: str) -> tuple[str, ...]:
+    """Words that must be on a line before the rule's patterns can match it.
+
+    A pattern needs every word of its phrase, and an identifier pattern needs
+    its snake, kebab, Pascal, or camel variant; a line with none of those words
+    cannot match. The check is a superset filter, so the exact pattern still
+    decides whether the line is a hit.
+    """
+
+    texts = [phrase, *identifier_variants(phrase)]
+    return tuple(
+        dict.fromkeys(
+            token for text in texts for token in TOKEN.findall(text.lower())
+        )
+    )
 
 
 def parentheticals(raw: str) -> list[str]:
@@ -419,27 +482,30 @@ def code_prose_lines(text: str) -> list[tuple[int, str]]:
         tree = ast.parse(text)
     except SyntaxError:
         return prose
-    for node in ast.walk(tree):
-        if not isinstance(
+    stack: list[ast.AST] = [tree]
+    while stack:
+        node = stack.pop()
+        if isinstance(
             node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)
         ):
-            continue
-        body = getattr(node, "body", [])
-        if not body:
-            continue
-        first = body[0]
-        if not (
-            isinstance(first, ast.Expr)
-            and isinstance(first.value, ast.Constant)
-            and isinstance(first.value.value, str)
-        ):
-            continue
-        start = first.lineno
-        end = getattr(first, "end_lineno", start)
-        for line_no in range(start, end + 1):
-            if 1 <= line_no <= len(lines):
-                prose.append((line_no, lines[line_no - 1]))
-    return prose
+            body = getattr(node, "body", [])
+            if body:
+                first = body[0]
+                if (
+                    isinstance(first, ast.Expr)
+                    and isinstance(first.value, ast.Constant)
+                    and isinstance(first.value.value, str)
+                ):
+                    start = first.lineno
+                    end = getattr(first, "end_lineno", start)
+                    for line_no in range(start, end + 1):
+                        if 1 <= line_no <= len(lines):
+                            prose.append((line_no, lines[line_no - 1]))
+        for field in STATEMENT_FIELDS:
+            children = getattr(node, field, None)
+            if children:
+                stack.extend(children)
+    return sorted(prose)
 
 
 def code_identifier_lines(text: str) -> list[tuple[int, str]]:
@@ -481,6 +547,7 @@ def _scan_code(
 ) -> list[Hit]:
     if HOME_MARKER.search(text):
         return []
+    index = RuleIndex.build(rules, path)
     hits: list[Hit] = []
     seen: set[tuple[int, str]] = set()
 
@@ -501,9 +568,7 @@ def _scan_code(
         for line_no, name in code_identifier_lines(text):
             if line_no in allowed_lines:
                 continue
-            for rule in rules:
-                if blocked_by_home(rule, path):
-                    continue
+            for rule in index.rules:
                 if identifier_match(name, rule):
                     record(line_no, name, rule)
     else:
@@ -511,15 +576,15 @@ def _scan_code(
             if ALLOW_MARKER.search(line) or ALLOW_LINE.search(line):
                 continue
             lower = line.lower()
-            for rule in rules:
-                if blocked_by_home(rule, path) or not rule.identifiers:
+            for rule in index.candidates(lower):
+                if not rule.identifiers:
                     continue
                 if matched_line(
                     rule.identifiers,
                     line,
                     lower,
                     [],
-                    rule.covers + ALLOWLIST,
+                    rule.allowed,
                     bare=rule.bare,
                 ):
                     record(line_no, line, rule)
@@ -527,15 +592,13 @@ def _scan_code(
         if ALLOW_MARKER.search(segment) or ALLOW_LINE.search(segment):
             continue
         lower = segment.lower()
-        for rule in rules:
-            if blocked_by_home(rule, path):
-                continue
+        for rule in index.candidates(lower):
             if matched_line(
                 (rule.pattern,),
                 segment,
                 lower,
                 [],
-                rule.covers + ALLOWLIST,
+                rule.allowed,
                 bare=rule.bare,
             ):
                 record(line_no, segment, rule)
@@ -544,6 +607,7 @@ def _scan_code(
 
 def _scan_markdown(path: Path, text: str, rules: list[Rule]) -> list[Hit]:
     latex = path.suffix == ".tex"
+    index = RuleIndex.build(rules, path)
     hits: list[Hit] = []
     in_fence = False
     in_verbatim = False
@@ -565,19 +629,21 @@ def _scan_markdown(path: Path, text: str, rules: list[Rule]) -> list[Hit]:
         if ALLOW_MARKER.search(line) or ALLOW_LINE.search(line):
             continue
         lower = probe.lower()
-        spans = [(m.start(), m.end()) for m in INLINE_CODE.finditer(probe)]
+        spans = (
+            [(m.start(), m.end()) for m in INLINE_CODE.finditer(probe)]
+            if "`" in probe
+            else []
+        )
         if latex:
             spans += [(m.start(), m.end()) for m in LATEX_TEXT_TT.finditer(probe)]
             spans += [(m.start(), m.end()) for m in LATEX_VERB.finditer(probe)]
-        for rule in rules:
-            if blocked_by_home(rule, path):
-                continue
+        for rule in index.candidates(lower):
             if matched_line(
                 (rule.pattern,),
                 probe,
                 lower,
                 spans,
-                rule.covers + ALLOWLIST,
+                rule.allowed,
                 bare=rule.bare,
             ):
                 hits.append(
