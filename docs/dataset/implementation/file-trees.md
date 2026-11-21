@@ -208,6 +208,10 @@ test contract is
 
 ## Bootstrap order
 
+The milestone order is owned by
+[`plans/nov-21/dataset-implementation-plan.md`](../../../plans/nov-21/dataset-implementation-plan.md).
+This section is the file and package bootstrap order within those milestones.
+
 1. `go.mod`, `main.go`, `internal/run/`, and `internal/shared/`, including
    `run_manifest.go`, `run_state.go`, `cache_index.go`, and
    `parquet_writer.go`.

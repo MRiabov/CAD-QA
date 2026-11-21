@@ -61,6 +61,11 @@ Phase 3 design.
 **Pass condition:** immutable test set with group-safe splits; the `benchmark-release` report's failing
 gates are recorded as known limitations.
 
+The generator build order behind this phase is
+[`plans/nov-21/dataset-implementation-plan.md`](../plans/nov-21/dataset-implementation-plan.md):
+a walking skeleton through every pipeline stage, then `02` and `03b` depth in
+parallel, then quotas, release checks, and the first real release.
+
 ## Phase 2 — Refresh baselines [P1; `no_tools`/`cadquery` P2]
 
 Run cost-effective models on the primary `numpy` harness over the hard slice; log every
