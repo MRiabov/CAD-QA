@@ -103,7 +103,7 @@ checked against the policy it names. The manifest makes the departure visible.
 
 `05` writes a visual review pack for a sample of the release. The sample covers
 every clue type, every answer meaning, every answer format, and every task
-reasoning step count 1–10. For 6–10, the sample is at least 30 tasks per tier,
+reasoning step count in the release, up to 10. For 6–10, the sample is at least 30 tasks per tier,
 or every task if the tier has fewer; that is the same review the dataset PRD
 section 6.1 release gate requires.
 

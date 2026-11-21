@@ -18,7 +18,7 @@ The renderer does the work that re-deriving the task would otherwise take. The
 reviewer checks that each highlight is the entity the clue names, that the answer
 matches the geometry, and that the wording is clear.
 
-The sample covers every task reasoning step count 1–10. For 6–10, it uses at
+The sample covers every task reasoning step count in the release, up to 10. For 6–10, it uses at
 least 30 tasks per tier, or every task if the tier has fewer; that is the same
 review the dataset PRD section 6.1 release gate requires.
 

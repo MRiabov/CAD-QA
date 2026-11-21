@@ -284,7 +284,7 @@ to a later implementation scope is not a coverage gap in the current release.
 
 | ID | Requirement | How the user can tell |
 |---|---|---|
-| **R-17** | A careful human can understand every task. | Sampled tasks covering every clue type, answer meaning, answer format, and task reasoning step count 1–10 are reviewed before a dataset release; unclear wording is a defect. The 6–10 tiers use the stricter sample in section 6.1. |
+| **R-17** | A careful human can understand every task. | Sampled tasks covering every clue type, answer meaning, answer format, and every task reasoning step count in the release, up to 10, are reviewed before a dataset release; unclear wording is a defect. The 6–10 tiers use the stricter sample in section 6.1. |
 | **R-18** | The dataset can be reproduced. | The same programs and the same generator version produce the same dataset; the dataset card documents versions, settings, and how to regenerate it. |
 | **R-19** | Nothing disappears silently. | Every rejected program or task is reported with a reason, and the counts add up. |
 | **R-20** (P2) | The dataset can grow without breaking users. | New tasks, clue types, or answer meanings can be added without changing the release dataset layout or the evaluation interface. |
