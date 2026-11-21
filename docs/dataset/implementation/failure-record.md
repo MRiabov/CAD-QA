@@ -77,7 +77,9 @@ are unambiguous without a discriminator column.
 
 `failure_id` is `uuid5(namespace, key)` over the canonical JSON of the dedupe
 key, using the serialization rules in `03b` construct task definitions. That
-keeps it identical across Python and Go.
+keeps it identical across Python and Go. The namespace is the UUID v5 of
+`https://github.com/MRiabov/CAD-QA/failure-record` under the URL namespace, so
+both languages compute the same ID without sharing a constant.
 
 ## Dedupe key
 

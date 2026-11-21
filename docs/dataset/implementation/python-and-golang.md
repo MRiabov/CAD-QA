@@ -36,11 +36,13 @@ preference.
 |---|---|---|
 | Parquet read and write | `github.com/parquet-go/parquet-go` | decided, `DS-40` |
 | Graph-local IDs | `github.com/google/uuid` | decided, `DS-40` |
+| YAML policy files | `gopkg.in/yaml.v3` | decided, `DS-46` |
 | Logging | `log/slog` | standard library |
 | CLI, processes, cancellation | `flag`, `os/exec`, `context` | standard library |
 
 No other Go dependency is decided. Add one with a decision, not with an import.
-No Go code exists yet, so these rows are decisions rather than observations.
+The Go module and the shared package exist; pipeline stage code lands one
+pipeline stage at a time.
 
 ### Python
 
@@ -138,3 +140,19 @@ versioned Parquet tables; small control documents may use JSON. Go and Python do
 not share process memory. Go code
 does not import CadQuery or OCP. Python code does not own release state. New
 Python code outside this list needs a decision.
+
+## Worker protocol
+
+The Go orchestrator starts a Python worker as
+`<python> -m cadqa_dataset_generator.cli <pipeline_stage>`, writes one JSON
+request document to standard input, and reads one JSON response document from
+standard output. The wire name is the snake-case pipeline stage name used by the
+failure record, such as `01d_normalize_programs`; the worker maps it to the
+`s<pipeline_stage>` module.
+
+A response is either `{"ok": true, "result": ...}` or
+`{"ok": false, "error": {"code": "...", "message": "..."}}`. Exit code 0 means
+the worker handled the request, including a pipeline stage rejection returned as
+data. Exit code 1 means the request could not be handled. A crash writes a
+traceback to standard error and no response. Logs go to standard error so
+standard output stays one JSON document.

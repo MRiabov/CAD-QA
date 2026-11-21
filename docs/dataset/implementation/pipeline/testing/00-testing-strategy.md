@@ -101,9 +101,17 @@ the real chain.
 
 ## Running
 
-No harness exists yet: there is no Go module and no test runner. The first
-pipeline stage implementation brings one. Until then a test doc is a contract,
-and no pipeline stage is accepted without a passing test.
+The Go module and the Python worker package exist. Run both suites from the
+repository root:
+
+```bash
+cd generator && go test -count=1 ./...
+uv run pytest -q
+```
+
+`go test -count=1` disables the Go test cache because tests read root policy
+files by path. A pipeline stage is accepted only when its contract test and the
+end-to-end test pass.
 
 ## What this does not prove
 

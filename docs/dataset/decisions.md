@@ -850,3 +850,16 @@ prefix is `DS-`.
   when the cell is large enough; otherwise the paper reports the pooled 6–10
   slice. The general review gate (R-17) covers every tier 1–10; the 6–10
   sample is at least 30 tasks per tier, or every task if fewer.
+
+## DS-46 — Go reads YAML policy files with gopkg.in/yaml.v3
+
+- **Status:** accepted (2026-11-21).
+- **Context:** `balance.yaml`, `checks.yaml`, and `tolerance.yaml` are YAML and
+  are read by Go pipeline stages. Go has no standard-library YAML decoder, and
+  `python-and-golang.md` requires a decision before adding a Go dependency.
+- **Decision:** Go reads and validates YAML policy files with
+  `gopkg.in/yaml.v3`. It is the only YAML library in the Go module. A loader
+  rejects unknown fields, then validates the typed policy.
+- **Consequences:** A policy file with an unknown key is a load error, not a
+  silently ignored setting. Python keeps `PyYAML` for `prompts.yaml`; the two
+  languages do not share a YAML loader.
