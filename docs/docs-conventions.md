@@ -239,6 +239,9 @@ P0/P1 commitment.
   docstrings are matched as prose, and multi-word identifier name variants are matched. Run
   `tools/dont-say`, or `tools/dont-say --ratchet tools/dont_say_baseline.txt` to enforce
   the ratchet.
+- **Naming checks: deferred.** The checker covers prose; class, function, variable,
+  file, and folder names are not checked yet. The plan, including why a hand-written
+  Go lexer was rejected, is `plans/nov-21/dont-say-naming-check.md`.
 - **Clean code: P2.** `--identifiers` additionally matches banned terms inside code
   identifier names; `tools/dont_say_identifiers_baseline.txt` is the accepted count
   (`development-plan.md` Phase 6). Visibility/ratchet only, not P0/P1.
