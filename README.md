@@ -57,6 +57,7 @@ checks.yaml           Release check policy
 prompts.yaml          Prompt copy
 generator/            Go module: CLI, orchestrator, shared code, pipeline stage packages
 cadqa_dataset_generator/   Python worker package (skeleton; stages land one per pipeline stage)
+docs/general-architecture/  Cross-cutting engineering contracts (CI/CD)
 docs/dataset/         The dataset design: requirements, implementation, decisions
 docs/train-and-eval/  Training and evaluation design (superseded, kept for the rewrite)
 tests/                Document, contract, and golden-record tests
@@ -71,6 +72,11 @@ uv run pytest -q
 uv run rumdl check docs
 uv run python tools/ci_cd/check_dont_say.py --ratchet tools/ci_cd/dont_say_baseline.txt
 ```
+
+CI runs these incrementally: a `quality-and-plan` job always runs the Markdown
+and Don't-say checks, then starts only the suites the change can reach. See
+[`docs/general-architecture/ci-cd.md`](docs/general-architecture/ci-cd.md) for
+the path mapping, the caches, and the runtime budget.
 
 `go test -count=1` disables Go's test cache because the policy-loader tests read
 the root `balance.yaml` and `checks.yaml` by path.

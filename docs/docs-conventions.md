@@ -30,6 +30,9 @@ docs/
   glossary.md                   # canonical terms + Don't-say (ratchet)
   development-context.md        # history + as-of snapshot (proven vs assumed)
   development-plan.md           # phased route to completion
+  general-architecture/
+    README.md                   # router: cross-cutting engineering contracts
+    ci-cd.md                    # CI triggers, quality-and-plan, suites, caches
   prior-art.md                  # mined open-source training/RL/data pipelines
   research/
     README.md                   # external study notes + citations
@@ -269,8 +272,8 @@ P0/P1 commitment.
   hooks (`gofumpt`, `goimports`, `golangci-lint`) are declared as TODOs in
   [`dataset/implementation/stacks.md`](dataset/implementation/stacks.md#pre-commit);
   `generator/` exists, but the hooks are not wired yet.
-- **Not implemented yet:** the docs-structure / decisions linters, and CI wiring. See
-  `development-plan.md`.
+- **Not implemented yet:** the docs-structure / decisions linters. CI is defined in
+  [`general-architecture/ci-cd.md`](general-architecture/ci-cd.md).
 
 ## Experiment records
 

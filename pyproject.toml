@@ -5,7 +5,6 @@ description = "Trace-derived CAD-QA dataset generation and evaluation tools."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "cadquery>=2.8.0",
     "orjson>=3.10",
     "polars>=2.1.0",
     "pyarrow>=25.0",
@@ -14,6 +13,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# The CAD kernel is an extra: only pipeline stage 02b imports it, and the
+# default install (worker, CLI, tests) does not need it.
 cadquery = ["cadquery>=2.8.0"]
 data = [
     "pandas>=3.1",
@@ -63,7 +64,15 @@ preset = "strict"
 python-version = "3.12"
 
 [dependency-groups]
+# The Python test suite's runtime. CI installs this group without the local
+# development toolchain, so pytest does not drag in the experiment drivers.
+test = ["pytest>=9.2"]
+# The Go bridge test starts the Python worker as a child process. This group is
+# the worker's import surface, not the full pipeline environment, so the Go CI
+# job does not install CadQuery and OCP.
+worker-bridge = ["orjson>=3.10", "pydantic>=2.14"]
 dev = [
+    { include-group = "test" },
     "hypothesis>=6.170",
     "hf>=1.33",
     "pre-commit>=4.7",

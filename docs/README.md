@@ -16,13 +16,14 @@ procedural CAD programs (CadQuery), and a small-LLM-model fine-tuning effort on 
    defined here.
 4. **`development-context.md`** — where the project actually is today, and its history.
 5. **`development-plan.md`** — the phased route to completion.
-6. **`prior-art.md`** — mined open-source training/RL/data pipelines.
-7. **`research/`** — external study notes and citations for related work.
-8. **`dataset/requirements/PRD.md`** — what the replacement dataset generator must produce. The old pipeline docs are archived.
-9. **`dataset/implementation/`** — implementation docs for the dataset generator, including the generation pipeline.
-10. **`train-and-eval/datasets.md`** — the dataset → DatasetRole assignment.
-11. **`train-and-eval/fine-tuning/`** — the training pipeline.
-12. **`train-and-eval/evaluation/`** — harnesses and baselines.
+6. **`general-architecture/`** — cross-cutting engineering contracts, starting with CI/CD.
+7. **`prior-art.md`** — mined open-source training/RL/data pipelines.
+8. **`research/`** — external study notes and citations for related work.
+9. **`dataset/requirements/PRD.md`** — what the replacement dataset generator must produce. The old pipeline docs are archived.
+10. **`dataset/implementation/`** — implementation docs for the dataset generator, including the generation pipeline.
+11. **`train-and-eval/datasets.md`** — the dataset → DatasetRole assignment.
+12. **`train-and-eval/fine-tuning/`** — the training pipeline.
+13. **`train-and-eval/evaluation/`** — harnesses and baselines.
 
 ## Canonical references
 
@@ -33,6 +34,7 @@ procedural CAD programs (CadQuery), and a small-LLM-model fine-tuning effort on 
 | What a term means | `glossary.md` |
 | What is true right now | `development-context.md` |
 | What happens next | `development-plan.md` |
+| What CI runs, and when | `general-architecture/ci-cd.md` |
 | What the dataset generator must produce | `dataset/requirements/PRD.md` |
 | How the release dataset is laid out | `dataset/requirements/release-dataset-contract.md` |
 | How the release dataset is produced | `dataset/implementation/pipeline/00-end-to-end.md` |
