@@ -2,10 +2,11 @@ package shared
 
 import (
 	"bytes"
+	"cmp"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sort"
+	"slices"
 	"unicode/utf8"
 
 	"github.com/google/uuid"
@@ -174,9 +175,7 @@ func MergeFailureRecords(records []FailureRecord) ([]FailureRecord, error) {
 	for _, record := range merged {
 		result = append(result, record)
 	}
-	sort.Slice(result, func(left, right int) bool {
-		return failureLess(result[left], result[right])
-	})
+	slices.SortFunc(result, compareFailureRecords)
 	return result, nil
 }
 
@@ -206,23 +205,24 @@ func sameFailureColumns(left, right FailureRecord) bool {
 		equalPointer(left.SourceSpan, right.SourceSpan)
 }
 
-func failureLess(left, right FailureRecord) bool {
-	if left.PipelineStage != right.PipelineStage {
-		return left.PipelineStage < right.PipelineStage
+func compareFailureRecords(left, right FailureRecord) int {
+	if order := cmp.Compare(left.PipelineStage, right.PipelineStage); order != 0 {
+		return order
 	}
-	if left.ProgramID != right.ProgramID {
-		return left.ProgramID < right.ProgramID
+	if order := cmp.Compare(left.ProgramID, right.ProgramID); order != 0 {
+		return order
 	}
-	if left.TaskID == nil && right.TaskID != nil {
-		return true
+	switch {
+	case left.TaskID == nil && right.TaskID != nil:
+		return -1
+	case left.TaskID != nil && right.TaskID == nil:
+		return 1
+	case left.TaskID != nil && right.TaskID != nil:
+		if order := cmp.Compare(*left.TaskID, *right.TaskID); order != 0 {
+			return order
+		}
 	}
-	if left.TaskID != nil && right.TaskID == nil {
-		return false
-	}
-	if left.TaskID != nil && *left.TaskID != *right.TaskID {
-		return *left.TaskID < *right.TaskID
-	}
-	return left.ReasonCode < right.ReasonCode
+	return cmp.Compare(left.ReasonCode, right.ReasonCode)
 }
 
 func equalPointer[T comparable](left, right *T) bool {

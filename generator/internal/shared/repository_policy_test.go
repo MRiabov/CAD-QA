@@ -205,7 +205,7 @@ func readYAMLMapping(t *testing.T, path string) map[string]any {
 
 // resolveYAMLPath walks a dotted path through nested mappings.
 func resolveYAMLPath(node any, path string) (any, bool) {
-	for _, part := range strings.Split(path, ".") {
+	for part := range strings.SplitSeq(path, ".") {
 		mapping, ok := node.(map[string]any)
 		if !ok {
 			return nil, false

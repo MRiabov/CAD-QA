@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/parquet-go/parquet-go"
@@ -62,7 +62,7 @@ func (i ArtifactIdentity) Key() string {
 	for name := range i.Inputs {
 		names = append(names, name)
 	}
-	sort.Strings(names)
+	slices.Sort(names)
 
 	pairs := make([]string, 0, len(names))
 	for _, name := range names {

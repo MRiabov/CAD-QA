@@ -3,6 +3,7 @@ package shared
 import (
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 
 	"gopkg.in/yaml.v3"
@@ -142,10 +143,8 @@ func (c ReleaseCheck) validate() error {
 	if len(c.Requirement) == 0 {
 		return fmt.Errorf("check %q: requirement is empty", c.ID)
 	}
-	for _, requirement := range c.Requirement {
-		if requirement == "" {
-			return fmt.Errorf("check %q: requirement entry is empty", c.ID)
-		}
+	if slices.Contains(c.Requirement, "") {
+		return fmt.Errorf("check %q: requirement entry is empty", c.ID)
 	}
 	switch c.Arithmetic {
 	case CheckArithmeticCoverage,

@@ -13,6 +13,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 )
@@ -313,10 +314,8 @@ func (o RunOptions) validateForce() error {
 		return nil
 	}
 	if len(o.Force) > 1 {
-		for _, stage := range o.Force {
-			if stage == "all" {
-				return &UsageError{Message: "--force all cannot be combined with other stages"}
-			}
+		if slices.Contains(o.Force, "all") {
+			return &UsageError{Message: "--force all cannot be combined with other stages"}
 		}
 	}
 	for _, stage := range o.Force {
@@ -460,13 +459,11 @@ func parseFlags(flags *flag.FlagSet, args []string) int {
 }
 
 func reportError(err error, stderr io.Writer) int {
-	var usage *UsageError
-	if errors.As(err, &usage) {
+	if usage, ok := errors.AsType[*UsageError](err); ok {
 		fmt.Fprintln(stderr, usage)
 		return ExitUsage
 	}
-	var blocked *BlockedError
-	if errors.As(err, &blocked) {
+	if blocked, ok := errors.AsType[*BlockedError](err); ok {
 		fmt.Fprintln(stderr, blocked)
 		return ExitBlocked
 	}
