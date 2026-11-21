@@ -203,21 +203,42 @@ is a count of the task solution sequence, not a score or a label.
   entry point (P0).
 - **2 to 5 steps**: the main benchmark range (P0). The LLM model must combine
   task clues about geometry, relationships, measurements, or operations.
-- **6 or more steps**: optional future work (P2).
+- **6 to 10 steps**: the hard benchmark range (P1). These tasks use the same
+  task structure and validity rules as the main range, with a longer clue chain.
+  They enter the thesis release only when the 6–10 release gate in section 6.1 passes.
 
-P2 inputs are deferred to later implementation; a task that uses one is part of a
-later release, not a different task label.
+There is no 0-step task. A direct lookup is a 1-step task with an answer step,
+not a task with no reasoning step.
 
 The task reasoning step count comes from the task solution sequence defined in
 [`task-structure.md`](task-structure.md), not from the number of sentences in
 the prompt. A task that looks long but can be answered from a variable name or
 an operation order does not have a high step count.
 
-The first benchmark dataset release covers steps 1 through 5. Step 1 forms the
-labeled warmup subset and is also useful training material. Steps 2 through 5
-carry the main benchmark claim. Every benchmark result must name the task
-reasoning step counts it covers, so a result that includes warmup tasks is not
-mistaken for a result on steps 2 through 5 alone.
+The thesis release targets steps 1 through 10. Steps 1 through 5 are P0; steps
+6 through 10 are P1. Step 1 forms the labeled warmup subset and is also useful
+training material. Steps 2 through 5 carry the main P0 benchmark claim; steps 6
+through 10 carry the hard-slice P1 claim. If the 6–10 release gate fails, the release is
+1 through 5 and every result names that range; the paper must not claim 1–10.
+
+### 6.1 Release gate for 6–10 steps
+
+A 6–10 tier enters the release only when all of the following hold:
+
+- the synthesis pilot produces at least one valid definition at that step count;
+- the task has at least two real candidates before the final selection, and the
+  final selection is not a formality;
+- the definition passes the same uniqueness, answer-equivalence, and
+  no-leakage rules as a 1–5 task;
+- a manual review of at least 30 tasks at that step count confirms the clue
+  chain, the answer, and the absence of ambiguity; if the tier has fewer than
+  30 tasks, every task is reviewed;
+- the test split contains at least one task at that step count, and the release
+  report states the per-tier test count. A tier with no test row is not a
+  benchmark cell.
+
+If a tier fails the release gate, the release reports the highest contiguous tier that
+passed and does not claim the failed tier. The fallback is 1–5.
 
 ---
 
@@ -245,7 +266,7 @@ to a later implementation scope is not a coverage gap in the current release.
 |---|---|---|
 | **R-7** | The dataset balances answer formats at every task reasoning step count. | Every answer format in section 5 appears at every task reasoning step count where it is supported. No format is more than twice or less than half its share among the formats supported at that task reasoning step count. Over the release, each format is between 5% and 25% of tasks. |
 | **R-8** | The dataset covers all target categories, clue types, clue operand forms, and answer meanings. | Every task target category, clue type, clue operand form, and answer meaning supported at a task reasoning step count appears at that task reasoning step count. A value that is valid, implemented by the release, and missing is a gap; the task reasoning step support tables record which values cannot occur at that step count and why. |
-| **R-9** | The dataset covers the full task reasoning step count range. | Steps 1 through 5 all appear in the target mix in section 8, with steps 3 and 4 carrying most benchmark tasks. |
+| **R-9** | The dataset covers the full task reasoning step count range. | Steps 1 through 5 all appear in the target mix in section 8, with steps 3 and 4 carrying most benchmark tasks. Steps 6 through 10 appear only when the 6–10 release gate in section 6.1 passes; the release report names the range it covers. |
 | **R-10** | The dataset is diverse. | It draws from at least one thousand distinct CAD models (P0). No single CAD model is above 1% of tasks (P1). |
 | **R-11** (P1) | The dataset has varied answers. | At least one thousand different correct answers appear, and no correct answer is above 1% of tasks. |
 | **R-12** (P1) | The dataset is balanced at every task reasoning step count. | No clue type is above 25% of clues at a task reasoning step count or over the release, and no clue type is more than twice or less than half its share among the clue types supported at a task reasoning step count. Every answer meaning is between 1% and 10% over the release, and no answer meaning is more than twice or less than half its share among the meanings supported at a task reasoning step count. No task target category is above 25% of the release. In P1, clue operand form is balanced at an equal share among the supported forms. |
@@ -263,7 +284,7 @@ to a later implementation scope is not a coverage gap in the current release.
 
 | ID | Requirement | How the user can tell |
 |---|---|---|
-| **R-17** | A careful human can understand every task. | Sampled tasks covering every clue type, answer meaning, and answer format are reviewed before a dataset release; unclear wording is a defect. |
+| **R-17** | A careful human can understand every task. | Sampled tasks covering every clue type, answer meaning, answer format, and every task reasoning step count in the release, up to 10, are reviewed before a dataset release; unclear wording is a defect. The 6–10 tiers use the stricter sample in section 6.1. |
 | **R-18** | The dataset can be reproduced. | The same programs and the same generator version produce the same dataset; the dataset card documents versions, settings, and how to regenerate it. |
 | **R-19** | Nothing disappears silently. | Every rejected program or task is reported with a reason, and the counts add up. |
 | **R-20** (P2) | The dataset can grow without breaking users. | New tasks, clue types, or answer meanings can be added without changing the release dataset layout or the evaluation interface. |
@@ -274,9 +295,10 @@ to a later implementation scope is not a coverage gap in the current release.
 
 ## 8. Size and mix of the benchmark dataset release
 
-The first benchmark dataset release implements the P0 requirements and must contain at least
-ten thousand tasks and meet the following targets at their stated priorities.
-Priority in this table is implementation order, not a task label.
+The first benchmark dataset release implements the P0 requirements and, when the
+6–10 release gate passes, the P1 6–10 tiers. It must contain at least ten thousand tasks
+and meet the following targets at their stated priorities. Priority in this
+table is implementation order, not a task label.
 
 | Property | Target | Priority |
 |---|---|---|
@@ -292,7 +314,7 @@ Priority in this table is implementation order, not a task label.
 | Clue type balance | No clue type above 25% of clues at a task reasoning step count or over the release; mix at each task reasoning step count within the tolerance in `task-structure.md` | P1 |
 | Answer meaning coverage | Every supported meaning at every task reasoning step count | P0 |
 | Answer meaning balance | Each 1-10% over the release; mix at each task reasoning step count within the tolerance in `task-structure.md` | P1 |
-| Task reasoning step count | Target mix: 1 step 5%, 2 15%, 3 40%, 4 25%, 5 15% | P0 |
+| Task reasoning step count | Target mix: 1 step 5%, 2 10%, 3 30%, 4 25%, 5 15%, 6 7%, 7 4%, 8 2%, 9 1%, 10 1% | P0 for 1–5; P1 for 6–10, gated by section 6.1 |
 | Tasks that require the built shape | At least 95% | P0 |
 | Tasks needing at least three steps | At least 80% | P0 |
 | Multiple-choice choices | At least five; aim for seven | P0 |

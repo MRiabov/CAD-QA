@@ -52,6 +52,7 @@ checking the release. Neither holds balance numbers of its own.
 | `release.cad_model_max_share` | The per-CAD-model task cap. |
 | `release.correct_answer_max_share` | The per-answer task cap; read by `05` in P1. |
 | `task_reasoning_step_share` | The task reasoning step mix. |
+| `task_reasoning_step_share_p0_fallback` | The 1–5 mix used when the 6–10 release gate has not passed. |
 | `expansion.rounds`, `expansion.growth_share_per_round` | The `03c` resolve deficits stop rule. |
 | `construction.attempt_multiplier`, `construction.high_rejection_attempt_multiplier` | The construction attempt budgets. |
 | `dimensions.<dimension>.min`, `.max` | The release-level plan minimum and maximum for one value. |
@@ -67,12 +68,15 @@ Load rules:
 - An unknown key is an error at every level. A typo must not fall back to a
   default.
 - `task_reasoning_step_share` covers every task reasoning step count in the
-  release and sums to 1 within `1e-9`. `release.splits` does the same.
+  thesis release and sums to 1 within `1e-9`. `task_reasoning_step_share_p0_fallback`
+  covers 1–5 and sums to 1; it is the policy used when the 6–10 release gate has not
+  passed. `release.splits` does the same.
 - Every share is in `(0, 1]`, and `min <= max` when both are present.
 - `version` is a positive integer, bumped when any number changes.
 
-The file carries no priority marks. Coverage and scope come from the task
-reasoning step support tables, derived from the requirement marks; this file
+The file carries no priority field. The `# p0` and `# p1` comments are for the
+owner and are not data. Coverage and scope come from the task reasoning step
+support tables, derived from the requirement marks; this file
 only says how much of a supported value to plan.
 
 No test compares the file to the requirement defaults. A release may depart from
@@ -165,10 +169,14 @@ one integer count per weight, and the counts sum exactly to `total`.
 
 `task_reasoning_step_quota[task_reasoning_step_count] = largest_remainder(dataset_release_task_count, task_reasoning_step_share[task_reasoning_step_count])`.
 
-Use `task_reasoning_step_share` from `balance.yaml`; 5%, 15%, 40%, 25%, and 15%
-is the default. `task_reasoning_step_quota[1]` is the warmup quota. Allocate the
-exact dataset release task count; do not round each task reasoning step count
-independently and leave a residual.
+Use `task_reasoning_step_share` from `balance.yaml`; 5%, 10%, 30%, 25%, 15%, 7%,
+4%, 2%, 1%, and 1% is the default. The 6–10 tail is P1 and is used only when the
+6–10 release gate in `requirements/PRD.md` section 6.1 passes. When the release gate is closed, the
+release policy sets `task_reasoning_step_share` to the
+`task_reasoning_step_share_p0_fallback` values and bumps `version`.
+`task_reasoning_step_quota[1]` is the warmup quota. Allocate the exact dataset
+release task count; do not round each task reasoning step count independently
+and leave a residual.
 
 ### Quota target counts
 

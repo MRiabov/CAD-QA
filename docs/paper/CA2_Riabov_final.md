@@ -14,7 +14,7 @@ comprehending a complex CAD model --- finding relationships between boolean
 operations, faces, vertices and edges, computing their volume, span or
 location. Questions range from simple lookups to challenging high reasoning hop
 questions with rich distractors, requiring chains of complex and correct reasoning.
-We evaluate open-source LLMs in three harnesses --- without tools, with a NumPy shell, and with full CadQuery access --- measuring accuracy by reasoning hop count, task family, and LLM harness mode.
+We evaluate open-source LLMs in three harnesses --- without tools, with a NumPy shell, and with full CadQuery access --- measuring accuracy by reasoning step count, clue type and relation family, and LLM harness mode.
 Expected contribution: a benchmark exposing
 the multi-hop geometry reasoning gap in current Large Language Models
 
@@ -126,7 +126,7 @@ Table 1 compares CAD-QA with the closest prior work. The differentiators are rea
 | SiT-Bench (Guo et al., 2026) | spatial intelligence | scene text → answer | accuracy | — | no |
 | Real-3DQA (Ma et al., 2026) | 3D spatial relations | scene text → answer | accuracy | — | no |
 | BenchCAD (Zhang et al., 2026) | generation, edit, numeric QA | image / CadQuery code → program / number | IoU, ratio accuracy | 1–2 | no |
-| **CAD-QA (ours)** | code-only geometry reasoning | CadQuery code → structured answer | exact match | **0–10** | hop curriculum + critical path |
+| **CAD-QA (ours)** | code-only geometry reasoning | CadQuery code → structured answer | exact match | **1–10** | hop curriculum + critical path |
 
 Table 1: Comparison of related CAD and geometry-reasoning benchmarks.
 
@@ -212,16 +212,25 @@ When multiple objects are resolved (e.g., 8 vertices at the same Z height (a fla
 
 The goal is to create an exhaustive CAD ontology extraction from which a set of truly complex reasoning questions can be derived.
 
-We classify complexity by the number of reasoning hops:
+We classify complexity by task reasoning step count; we use "hop" for the same
+count. There is no 0-step task: a direct lookup is one answer step.
 
-- 0 hops: direct code lookup or mathematical lookup ("what's the length of `box1`?": 10).
-- 1 hop: resolve one entity and read or calculate one metric ("A sphere has a center rightmost to some box with parameters (1,2,3). What is the label of the sphere operation?": `sphere1`)
-- 2 hops: traverse one relation and read or compare a metric. (as above, but with added reasoning hops)
-- 3~10 hops: BrowseComp (Wei et al., 2025)-style rows where obfuscated, distractor-rich questions and code require a successful answer to identify and calculate a number of variables.
+- 1 step: one task answer step about a directly identified target, such as a
+  direct code or mathematical lookup ("what's the length of `box1`?": 10).
+- 2 steps: one task clue step plus the answer step. For example, resolve one
+  entity from a relation and then read or calculate one metric ("A sphere has a
+  center rightmost to some box with parameters (1,2,3). What is the label of the
+  sphere operation?": `sphere1`).
+- 3–5 steps: the main benchmark range. The LLM model traverses several
+  relations, compares metrics, and then answers.
+- 6–10 steps: hard rows where obfuscated, distractor-rich questions and code
+  require a successful answer to identify and calculate a number of variables.
+  These are P1: they enter the thesis release only after a synthesis pilot and
+  manual review; if the release gate fails, the release and every result are 1–5.
 
 ### 3.2 Measuring complexity
 
-Constrained by token costs, we avoid using frontier models, and instead benchmark our dataset on cost-effective (10-100x cheaper) models such as `deepseek-v4-flash`, `xiaomi-mimo-v2.5`, `NVidia NemoTron` super and other models for evaluation. We target at most 30% pass rate by these models; with task families being equally distributed in solve rates.
+Constrained by token costs, we avoid using frontier models, and instead benchmark our dataset on cost-effective (10-100x cheaper) models such as `deepseek-v4-flash`, `xiaomi-mimo-v2.5`, `NVidia NemoTron` super and other models for evaluation. We target at most 30% pass rate by these models; with clue types and relation families represented across the solve-rate report.
 
 ### 3.3 Improving models and proving learning
 

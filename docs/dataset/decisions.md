@@ -829,3 +829,24 @@ prefix is `DS-`.
   only that program's downstream units. The run manifest and pipeline stage completion
   markers are artifacts in `artifacts.md`; the full contract is
   `implementation/run-contract.md`.
+
+## DS-45 — The thesis release ladder is 1–10; 6–10 is P1 and gated
+
+- **Status:** accepted (2026-11-21).
+- **Context:** The pre-rebuild ladder was `{2,3,4,5}` because synthesis floored at
+  2. The paper promises up to ten hops, and the owner wants the thesis release
+  to reach ten. The dataset PRD already makes 1-step the warmup and drops
+  0-step. A flat P2 for 6–10 would make the paper's 1–10 claim false.
+- **Decision:** The thesis release targets task reasoning step counts 1 through
+  10. Steps 1–5 are P0. Steps 6–10 are P1, not P2: they are part of the thesis
+  release only when a synthesis pilot and a manual review pass the 6–10 release gate in
+  `requirements/PRD.md` section 6.1. If the release gate fails, the release is 1–5 and
+  every result names that range; the paper must not claim 1–10. There is no
+  0-step task.
+- **Consequences:** `balance.yaml` carries a 1–10 mix with a 6–10 tail and a
+  P0-only fallback mix. The training docs' floor at hop 2 and the `{2,3,4,5}`
+  references are superseded. The test split must report per-tier counts at
+  6–10. The 6–10 cells are small, so per-tier significance is reported only
+  when the cell is large enough; otherwise the paper reports the pooled 6–10
+  slice. The general review gate (R-17) covers every tier 1–10; the 6–10
+  sample is at least 30 tasks per tier, or every task if fewer.

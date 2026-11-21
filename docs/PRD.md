@@ -47,13 +47,23 @@ Full statements, designs, and confound controls: `train-and-eval/fine-tuning/tra
 re-measuring the base, the cost-effective baselines, and 2–3 current frontier LLM models on it. The
 10% → 50–70% estimate in the Evaluation contract is a planning estimate, not a pre-registered target.
 
+In this table, a hop is one task reasoning step; the dataset docs use the full
+term.
+
 | Slice | Base | Target |
 |---|---|---|
-| 2-hop (lowest release tier) | `[to measure]` | `[to measure]` |
-| 3-hop (headline hard slice) | `[to measure]` | `[to measure]` |
-| 4-hop | `[to measure]` | `[to measure]` |
-| 5-hop | `[to measure]` | `[to measure]` |
-| 0/1-hop | not generated (synthesis floors at `hop≥2`) | — |
+| 1-hop (warmup, P0) | `[to measure]` | `[to measure]` |
+| 2-hop (lowest main tier, P0) | `[to measure]` | `[to measure]` |
+| 3-hop (headline hard slice, P0) | `[to measure]` | `[to measure]` |
+| 4-hop (P0) | `[to measure]` | `[to measure]` |
+| 5-hop (P0) | `[to measure]` | `[to measure]` |
+| 6–10-hop (P1, gated) | `[to measure if the 6–10 release gate passes]` | `[to measure]` |
+| 0-hop | not used (DS-11) | — |
+
+The 6–10 tiers are part of the thesis release target, but they are P1: they
+enter the release only after the synthesis pilot and manual review in the
+dataset PRD section 6.1 pass. If the release gate fails, the release and every result
+are 1–5.
 
 **Minimum vs strong.** Minimum (a dataset paper): a valid immutable instrument, baselines that fail,
 and a graph-derived LLM model that improves the held-out split. Strong: the gain reaches an independent
@@ -69,7 +79,8 @@ RL-readiness gate), not a separate claim; conciseness is deferred to future work
 - A synthetic dataset, and an open method for building it, that drives mathematical
   reasoning over a CAD ontology (vertices, faces, selectors, boolean operations).
 - The dataset exposes the critical reasoning path, so it can also train conciseness.
-- A release-hop tiered set (`{2,3,4,5}`) for gated training.
+- A release-hop tiered set (`{1..10}`; `{1..5}` P0, `{6..10}` P1 and gated) for
+  gated training.
 - Empirical: graph-derived supervision improves a small LLM model's benchmark accuracy.
 
 ## Deliverables

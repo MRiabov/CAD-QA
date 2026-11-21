@@ -223,10 +223,12 @@ and the code/config commit.
   row, holding the general mix, task prompt set, and loss-bearing token budget fixed. At freeze, choose
   the largest release tier with `n >= 500`; if the hard tier is smaller, pool the top two tiers and name
   that pooled tier in the pre-registration. No best-slice or best-checkpoint selection. Report the risk
-  difference in percentage points with a 95% paired CI, raw and chance-corrected. On the frozen resplit
-  the test split has hop 2: 35, hop 3: 252, hop 4: 374, hop 5: 93; **no single hop reaches 500**.
-  Pre-register **pooled hop 3+4 (626 test rows)** as the primary tier; hop 4+5 is only 467 and does not
-  meet the floor. The `n >= 500` rule is conditional on the frozen `eval` test split; if a different split
+  difference in percentage points with a 95% paired CI, raw and chance-corrected. Read the per-hop test
+  counts from the immutable manifest, not from an old split: the 1–10 mix is 1:5%, 2:10%, 3:30%, 4:25%,
+  5:15%, 6:7%, 7:4%, 8:2%, 9:1%, 10:1%, and 6–10 are present only when the 6–10 release gate passes. At 15% test, no
+  single 6–10 tier is likely to reach 500. Pre-register a pooled hard tier (for example 6–10, or 5–10
+  if the lower tiers are too small) and report the pooled MDE; do not choose the pool after seeing
+  results. The `n >= 500` rule is conditional on the frozen `eval` test split; if a different split
   leaves fewer rows, generate more `eval` rows **before** the freeze or pre-register the pooled tier and
   the recomputed MDE. Never move `sft_train`/`rl_train` rows into `eval` after seeing results.
 - **Secondary H2.** CAD-QA reasoning vs Base and vs **Format-only** (the task + format + reasoning
@@ -299,8 +301,8 @@ group-disjoint from `sft_train` at the source-program/counterfactual-group level
 DD-12 protected-group level. The SFT mix is built only from `sft_train`, and the gate is run only on
 `rl_train`. At 10k rows the 70/15/15 target is ~7,000 SFT / 1,500 RL / 1,500 eval, split into ~750
 validation + ~750 test; the exact counts are frozen in `split_manifest.json`. All counts
-below are read from that manifest; the 1,159/708 values are the current candidate and are replaced if the
-manifest differs. The pre-resplit release was 54 validation / 205 test; the row-weighted re-split yields
+below are read from that manifest; the 1,159/708 values are an older candidate and are replaced by the
+frozen 1–10 release. The pre-resplit release was 54 validation / 205 test; the row-weighted re-split yields
 748 validation / 754 test (and ~7,000/1,500 SFT/RL). Freeze that re-exported revision before the primary
 run; the old 54/205 split is stale.
 
