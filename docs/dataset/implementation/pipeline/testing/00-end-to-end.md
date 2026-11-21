@@ -17,7 +17,8 @@ for the `01c` fetch that replace the network. Nothing else is mocked: CadQuery
 and OCP execute, the graph is built, definitions are constructed, prompts are
 rendered, and the release is exported.
 
-**When** the chain runs once with a fixed `release_seed`.
+**When** the chain runs once with a fixed `release_seed` in a temporary runs
+root; it allocates `run0001`.
 
 **Then** assert:
 
@@ -38,8 +39,13 @@ rendered, and the release is exported.
   hash, the release seed, and the support-table schema versions and hashes;
 - `release.parquet`, `failures.parquet`, `manifest.json`, and `dataset-card.md`
   are all written, and `support/` holds the five tables;
-- a second run with the same inputs writes byte-identical `release.parquet` and
-  the same `release_id`.
+- `run0001/run.json` exists, its `run_number` is 1, and its `run_id` recomputes
+  from the canonical manifest body without the `run_id`, `run_number`, and
+  `execution_environment` fields;
+- a second run with the same inputs and the same runs root reuses `run0001`,
+  writes byte-identical `release.parquet` and the same `release_id`, executes no
+  unit, writes no part, and leaves every pipeline stage completion marker
+  unchanged.
 
 **TDD pin:** pins the chain's count reconciliation, the golden definition in the
 release, split isolation, and the manifest fields before any pipeline stage
@@ -54,6 +60,10 @@ exists.
   manifest carries the reason.
 - `test_pipeline_no_partial_release` — a failure in `05` leaves no
   `release.parquet` behind, only the failure partition.
+- `test_pipeline_resume_after_interrupt` — a `SIGINT` after a fixed number of
+  `02b` units leaves committed parts and no `02b` pipeline stage completion
+  marker. The next run executes only the remaining programs and completes the
+  release. The execution counter proves the completed units were not retried.
 
 ## What this does not prove
 

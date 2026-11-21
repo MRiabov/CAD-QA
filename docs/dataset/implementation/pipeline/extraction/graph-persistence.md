@@ -10,10 +10,13 @@ extraction records is in [`graph-construction.md`](graph-construction.md).
 
 `CadGraph` is three logical Parquet tables: `nodes.parquet`,
 `relations.parquet`, and `measurements.parquet`. The graph for one program is
-the subset of rows whose `program_id` matches; the tables are not duplicated per
-program. Every row carries `program_id` and `graph_schema_version`.
+the subset of rows whose `program_id` matches; the tables are one logical table
+each, stored as Parquet parts keyed by program. A program's rows are a partition,
+not a separate table. Every row carries `program_id` and `graph_schema_version`.
 `graph_schema_version` is constant across the artifact. Physical partitioning and
-file paths are artifact concerns in [`../../artifacts.md`](../../artifacts.md).
+file paths are artifact concerns in [`../../artifacts.md`](../../artifacts.md);
+the part layout and resume rule are in
+[`../../run-contract.md`](../../run-contract.md#3-run-directory).
 
 Parquet and Arrow types are used, not a SQL dialect. `UUID` is
 `FIXED_LEN_BYTE_ARRAY(16)` with the UUID logical type. `STRING` is UTF-8. `LIST<T>`
@@ -147,7 +150,9 @@ unitless.
 `TolerancePolicy` is resolved once per run, not per measurement and not per
 program. It is stored once in the run manifest with `tolerance_policy_version`
 and `tolerance_policy_sha256`; every graph artifact in the run reads the same
-policy. A measurement `tolerance` of null inherits the policy entry for its
+policy. The run manifest is defined in
+[`../../run-contract.md`](../../run-contract.md#2-run-identity-and-the-run-manifest).
+A measurement `tolerance` of null inherits the policy entry for its
 `unit`; a non-null value overrides it. Counts and validity are exact by default
 through the `unitless` policy. A literal length may carry an `exact` override.
 
@@ -254,7 +259,8 @@ chosen; adopting one needs its own decision ([`DS-39`](../../../decisions.md)).
 `TolerancePolicy` is resolved once per run. It is not derived per program and is
 not stored on each measurement. The run manifest carries the policy,
 `tolerance_policy_version`, and `tolerance_policy_sha256`; every graph artifact in
-the run references the same policy.
+the run references the same policy. The manifest and the policy file are in
+[`../../run-contract.md`](../../run-contract.md#11-tolerance-policy).
 
 The policy is part of the graph artifact identity. A change to any tolerance is a
 new policy version and a new graph artifact; it never edits an existing graph.
@@ -441,7 +447,9 @@ of an edge. These names are a graph schema change from an earlier `SurfaceKind`
   non-null group matching their `kind`.
 - `measurement_type` determines the measurement value kind and `unit` through the catalog;
   a mismatch rejects the graph.
-- `TolerancePolicy`, `tolerance_policy_version`, and `tolerance_policy_sha256` are present in the run manifest.
+- `TolerancePolicy`, `tolerance_policy_version`, and `tolerance_policy_sha256` are present in the run manifest, as
+  [`../../run-contract.md`](../../run-contract.md#2-run-identity-and-the-run-manifest)
+  requires.
 - `Tolerance` obeys its `exact`, `absolute`, and `relative` field rules.
 - A change to a CAD graph entity type, attribute field, measurement type, enum value, or
   measurement value field is a `graph_schema_version` change. Readers reject an unknown

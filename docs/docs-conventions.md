@@ -149,7 +149,7 @@ scoped to the module. `pipeline/extraction/` and
   (`01-source-ingestion.md`, `01a-…`, `04c-…`).
 - Headings are part of the interface. Rename them deliberately; anchors are referenced
   elsewhere.
-- Code package directories use underscores (`dataset`, `train_and_eval`) because
+- Code package directories use underscores (`cadqa_dataset_generator`) because
   they are Python imports. Hyphens are for docs only (`docs/train-and-eval/`).
 
 ## Prompt text

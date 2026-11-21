@@ -55,6 +55,7 @@ are the executable units.
 | Test doc | Pipeline stage contract |
 |---|---|
 | [`00-end-to-end.md`](00-end-to-end.md) | [`../00-end-to-end.md`](../00-end-to-end.md) |
+| [`00-run-contract.md`](00-run-contract.md) | cross-cutting; [`../../run-contract.md`](../../run-contract.md) |
 | [`00-support-tables.md`](00-support-tables.md) | cross-cutting; [`../../task-step-support.md`](../../task-step-support.md) |
 | [`01a-read-cadevolve-metadata.md`](01a-read-cadevolve-metadata.md) | [`../01a-read-cadevolve-metadata.md`](../01a-read-cadevolve-metadata.md) |
 | [`01b-select-program-pool.md`](01b-select-program-pool.md) | [`../01b-select-program-pool.md`](../01b-select-program-pool.md) |
@@ -73,8 +74,10 @@ are the executable units.
 Every doc in this table is written. A missing row would be a missing test, not a
 pipeline stage without tests.
 
-`00-support-tables.md` is the one cross-cutting test: the support tables are an
-observation over the fixture set, not a pipeline stage output.
+`00-support-tables.md` is one cross-cutting test: the support tables are an
+observation over the fixture set, not a pipeline stage output. `00-run-contract.md`
+is the other: the run manifest, Parquet parts, resume rule, and exit codes span
+every pipeline stage.
 
 ## Fixtures
 
@@ -98,9 +101,17 @@ the real chain.
 
 ## Running
 
-No harness exists yet: there is no Go module and no test runner. The first
-pipeline stage implementation brings one. Until then a test doc is a contract,
-and no pipeline stage is accepted without a passing test.
+The Go module and the Python worker package exist. Run both suites from the
+repository root:
+
+```bash
+cd generator && go test -count=1 ./...
+uv run pytest -q
+```
+
+`go test -count=1` disables the Go test cache because tests read root policy
+files by path. A pipeline stage is accepted only when its contract test and the
+end-to-end test pass.
 
 ## What this does not prove
 

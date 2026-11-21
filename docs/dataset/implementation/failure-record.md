@@ -77,7 +77,9 @@ are unambiguous without a discriminator column.
 
 `failure_id` is `uuid5(namespace, key)` over the canonical JSON of the dedupe
 key, using the serialization rules in `03b` construct task definitions. That
-keeps it identical across Python and Go.
+keeps it identical across Python and Go. The namespace is the UUID v5 of
+`https://github.com/MRiabov/CAD-QA/failure-record` under the URL namespace, so
+both languages compute the same ID without sharing a constant.
 
 ## Dedupe key
 
@@ -94,14 +96,30 @@ new row.
 
 ## No run state in a row
 
-A row carries no timestamp, host, attempt index, or stage version. Those make the
+A row carries no timestamp, host, attempt index, or pipeline stage version. Those make the
 export non-reproducible and the dedupe unstable. The run manifest records the
-versions for the whole run, and `occurrence_count` carries the repetition.
+versions for the whole run; see
+[`run-contract.md`](run-contract.md#2-run-identity-and-the-run-manifest).
+`occurrence_count` carries the repetition.
+
+## Persistence and resume
+
+A rejecting pipeline stage writes its failure rows as Parquet parts under
+`failures/`, with the same flush rule as its success parts: after each rejected
+unit, or at most every 30 seconds. A failure row is a completed unit. Resume
+reads the failure parts and does not retry the unit.
+
+`occurrence_count` increases only when the unit is attempted again, which
+happens only under `--force`. A forced pipeline stage replaces its failure
+partition, because the previous attempt's rejections no longer describe the
+current output. The append-only rule in this document applies within one
+attempt. The persistence, flush, cache, and resume rules are in
+[`run-contract.md`](run-contract.md#4-incremental-parquet-persistence).
 
 ## Merge and order
 
-Each pipeline stage appends to its own partition and never rewrites it. `05`
-merges:
+Each pipeline stage writes its own partition and never rewrites it within one
+attempt. `05` merges:
 
 1. group rows by `failure_id`;
 2. sum `occurrence_count`;

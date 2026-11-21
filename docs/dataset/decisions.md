@@ -790,3 +790,76 @@ prefix is `DS-`.
   to `io-contracts.md` or `artifacts.md`. The cost is one pass per graph batch plus a
   pass over the programs a slow-loop round adds. A replan derives nothing, because
   the graph batch has not changed and `family_profiles` is already in the plan.
+
+## DS-44 — A run is incremental and resumable per unit
+
+- **Status:** accepted (2026-11-21).
+- **Context:** `05` validate and export release said atomic directory replacement
+  was the run-level execution contract, but no such document existed.
+  `graph-persistence.md` required the tolerance policy to live in the run
+  manifest, and `failure-record.md` said the run manifest records versions, but
+  `artifacts.md` had no run-manifest row. `02b` execute CadQuery defined a cache
+  key without a cache location, a lookup rule, or a resume rule. The cost is not
+  theoretical: with 1,500 active programs, 30 seconds per execution, and about
+  20,000 relations per program, an interrupted run without resume recomputes
+  hours of work. The alternative was a per-unit JSON checkpoint, but `DS-39`
+  measured JSON text at 41x the Parquet size and 57x the read time for the CAD
+  graph. A JSON progress file per unit would repeat that mistake at a smaller
+  scale.
+- **Decision:** A run is one durable directory with a `run.json` manifest that
+  records `run_id`, generator and component versions, policy file hashes, and
+  the run-level `TolerancePolicy`. New runs are allocated as
+  `<runs_root>/run<NNNN>`, zero-padded to four digits; the number is local and
+  excluded from `run_id`. A rerun with the same `run_id` reuses the lowest
+  matching directory unless `--new-run` is given. Each pipeline stage commits
+  immutable Parquet parts as units complete; the part is the unit's completion
+  marker, and resume reads the committed parts and skips completed units. A unit
+  is flushed when it completes, or at most every 30 seconds, asynchronously
+  through one writer per pipeline stage. A completed unit is not recomputed
+  unless it is forced. A forced recompute must be byte-identical; a difference
+  is a defect. Bulk state is Parquet; JSON is limited to the run manifest,
+  pipeline stage completion markers, the deficit ledger, and other small or rare
+  control documents. The contract also owns the shared cache, the run lock, the
+  command-line interface, the exit codes, and partial-run cleanup.
+- **Consequences:** A partial run is readable and resumable; a crash loses only
+  the units still in the writer queue. A changed input, component version, or
+  policy is a new run directory, not an edit. A corrupt part is an integrity
+  error with an explicit `--force` recovery, not a silent recompute. Downstream
+  identity includes the upstream part hashes, so a changed program invalidates
+  only that program's downstream units. The run manifest and pipeline stage completion
+  markers are artifacts in `artifacts.md`; the full contract is
+  `implementation/run-contract.md`.
+
+## DS-45 — The thesis release ladder is 1–10; 6–10 is P1 and gated
+
+- **Status:** accepted (2026-11-21).
+- **Context:** The pre-rebuild ladder was `{2,3,4,5}` because synthesis floored at
+  2. The paper promises up to ten hops, and the owner wants the thesis release
+  to reach ten. The dataset PRD already makes 1-step the warmup and drops
+  0-step. A flat P2 for 6–10 would make the paper's 1–10 claim false.
+- **Decision:** The thesis release targets task reasoning step counts 1 through
+  10. Steps 1–5 are P0. Steps 6–10 are P1, not P2: they are part of the thesis
+  release only when a synthesis pilot and a manual review pass the 6–10 release gate in
+  `requirements/PRD.md` section 6.1. If the release gate fails, the release is 1–5 and
+  every result names that range; the paper must not claim 1–10. There is no
+  0-step task.
+- **Consequences:** `balance.yaml` carries a 1–10 mix with a 6–10 tail and a
+  P0-only fallback mix. The training docs' floor at hop 2 and the `{2,3,4,5}`
+  references are superseded. The test split must report per-tier counts at
+  6–10. The 6–10 cells are small, so per-tier significance is reported only
+  when the cell is large enough; otherwise the paper reports the pooled 6–10
+  slice. The general review gate (R-17) covers every tier 1–10; the 6–10
+  sample is at least 30 tasks per tier, or every task if fewer.
+
+## DS-46 — Go reads YAML policy files with gopkg.in/yaml.v3
+
+- **Status:** accepted (2026-11-21).
+- **Context:** `balance.yaml`, `checks.yaml`, and `tolerance.yaml` are YAML and
+  are read by Go pipeline stages. Go has no standard-library YAML decoder, and
+  `python-and-golang.md` requires a decision before adding a Go dependency.
+- **Decision:** Go reads and validates YAML policy files with
+  `gopkg.in/yaml.v3`. It is the only YAML library in the Go module. A loader
+  rejects unknown fields, then validates the typed policy.
+- **Consequences:** A policy file with an unknown key is a load error, not a
+  silently ignored setting. Python keeps `PyYAML` for `prompts.yaml`; the two
+  languages do not share a YAML loader.

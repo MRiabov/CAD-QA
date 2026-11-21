@@ -4,7 +4,9 @@ __pycache__/
 .ruff_cache/
 .mypy_cache/
 .venv/
+.worktrees/
 data/
 runs/
 .cache/
 .reasonix/
+generator/generator

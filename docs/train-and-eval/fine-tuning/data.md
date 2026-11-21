@@ -219,13 +219,13 @@ found to be clean and non-overlapping.
 | Mix | Role weights | Purpose |
 |---|---|---|
 | `mixed_dataset_general_and_easy_cadqa` (first run) | 70% general (⅓ coding agent, ⅓ 3D math, ⅓ text2CAD + edits), 30% low-hop `learn_the_cadqa_task` (rejection-sampled) | first run: format + easy task, cheapest signal |
-| `mixed_dataset_full_cadqa_training` (primary) | 50% general (same thirds), 50% `learn_the_cadqa_task` (release hop tiers) | test H2, the thesis number; **no separate `emit_our_tool_call_format`** — the format is carried by `learn_the_cadqa_task`. The task share covers the release hops `{2,3,4,5}`; later tiers are added through the measured advancement gate (§4.1), not by within-run ordering |
+| `mixed_dataset_full_cadqa_training` (primary) | 50% general (same thirds), 50% `learn_the_cadqa_task` (release hop tiers) | test H2, the thesis number; **no separate `emit_our_tool_call_format`** — the format is carried by `learn_the_cadqa_task`. The task share covers the release hops `{1..10}`; 1-step is the warmup, 2–5 are main, and 6–10 are added only through the measured advancement gate (§4.1) and the 6–10 pilot, not by within-run ordering |
 
 Both mixes are built **only from `sft_train`** (§5). `rl_train` rows are excluded from every SFT mix and
 `eval` rows are never trained on; the role percentages are shares of `sft_train`, not of the full release.
-The graph-first release has no 0/1-hop rows: the first run's low-hop end is **hop 2 only** (552 rows; 457
-in `sft_train`), so the 30% task share is capped at 457 if hop-2-only. A non-release 0/1 warmup slice is
-separate (§5).
+The graph-first release has a 1-step warmup, 2–5 main rows, and 6–10 P1 hard rows; 6–10 enter only
+after the 6–10 release gate. The first run's low-hop end is the 1-step warmup and hop 2; read the
+exact counts from the manifest, not from a hardcoded old split.
 
 Rationale and tradeoffs:
 
@@ -301,7 +301,7 @@ the mechanics (epochs, mixing implementation).
 - **Two training phases.** SFT runs as **phase 1 (refocus on coding + easy tasks)**: the base already
   trains on code, so coding/Python is not new — phase 1 refocuses it (`expose_general_python_code`),
   adds a little text-to-CadQuery (`expose_cadquery_programs`), and carries a simple slice of our tasks
-  (e.g. hop 2, the lowest release tier, `learn_the_cadqa_task`); then **phase 2 (CAD-QA task + preserve)**: CAD is new, so
+  (e.g. hop 1 warmup and hop 2, the lowest main tier, `learn_the_cadqa_task`); then **phase 2 (CAD-QA task + preserve)**: CAD is new, so
   `mixed_dataset_full_cadqa_training` adds `learn_the_cadqa_task` + CAD at scale, with
   the general tasks (`preserve_general_math_and_code_reasoning`, `expose_*`) as the anchor.
   Shape and rationale: `system.md` §2; eval cadence: `../evaluation/plan.md` §6.
@@ -311,9 +311,8 @@ the mechanics (epochs, mixing implementation).
   format gate before either phase.
 - **Tier-gated inclusion, not within-run ordering.** Under TRL SFT with a shuffled single epoch, ordering
   a static dataset is a no-op. Include a hop tier's `learn_the_cadqa_task` rows only after §4.1's measured
-  advancement gate, and keep the ladder to the release hops `{2,3,4,5}` — synthesis floors at `hop≥2`
-  (`../../_archive/dataset-pre-rebuild-2026-10-21/pipeline/04-query-synthesis-resolver.md` Q1), so 0/1 are not generatable. Do not
-  front-load the hard slice.
+  advancement gate, and keep the ladder to the release hops `{1..10}` — 1-step is the warmup, 2–5 are
+  main, and 6–10 are P1 gated. Do not front-load the hard slice.
 - **The general tasks are interleaved, not appended.** Keep the general-task share in every phase, so
   general ability is anchored throughout, not restored at the end.
 - **Cap `preserve_general_math_and_code_reasoning` early.** Per prior-art ref [9], do not let teacher reasoning dominate
@@ -379,13 +378,10 @@ mechanism differs by training stage:
   the 10k pool as approximately **7,000 `sft_train` / 1,500 `rl_train` / 1,500 `eval`** (the eval pool
   splits into ~750 validation + ~750 test; read the exact counts from the manifest). Freeze that
   re-exported revision before the teacher pass; the old 54/205 split is stale.
-- **0/1-hop warmup slice (non-release).** The graph-first release has no 0/1-hop rows; the resolver floors
-  at `hop >= 2` and the lowest release tier is hop 2 (552 rows; 457 in `sft_train`). For the 2.6B model's
-  initial CadQuery/task-shape warmup and cheap CAD-QA smoke runs, use a **non-release warmup slice** of
-  0/1-hop or synthetic syntax/representation examples (legacy 0/1 rows re-verified, or synthetic examples
-  from `expose_cadquery_programs`). It is not benchmark data, is excluded from H2/H3 evaluation, is
-  group-disjoint and contamination-checked, and is recorded in the manifest. See
-  `../../_archive/dataset-pre-rebuild-2026-10-21/known-major-issues.md` M10.
+- **1-step warmup slice (release).** The graph-first release includes the 1-step warmup. For the 2.6B
+  LLM model's initial CadQuery/task-shape warmup and cheap CAD-QA smoke runs, use that release slice; the old
+  non-release 0/1 slice is retired. 0-step is not used. The 1-step rows are group-disjoint and
+  contamination-checked like the rest of the release, and their counts are recorded in the manifest.
 - **Contamination policy.** `sft_train`, `rl_train`, and `eval` must be disjoint at the group level;
   any eval row in `sft_train` or `rl_train` is a hard failure, as is any `rl_train` row in the SFT mix.
   CAD-QA held-out rows and the evaluation datasets are hard-excluded. The mechanics (quality gate,
@@ -427,9 +423,9 @@ only the dataset:
   **regenerated** (the current release is superseded) — pin the regenerated revision.
 - **Contract:** each example is a `TrainingExample` with `dataset_role=learn_the_cadqa_task`, `answer_format` set,
   `reasoning_hop_count` set, and (once rendered) a `submit_*` tool call.
-- **Tier gating.** Rows carry a release hop tier (`{2,3,4,5}`): the first run uses the low-hop end, the
-  primary covers the release tiers, and later tiers are added through §4.1's gate — not by ordering a
-  static dataset.
+- **Tier gating.** Rows carry a release hop tier (`{1..10}`): the first run uses the low-hop end, the
+  primary covers the release tiers, and 6–10 are added through §4.1's advancement gate and the 6–10 pilot — not by
+  ordering a static dataset.
 - **Coverage requirement:** every **task combination** (Answer format × Reasoning hop count × relation
   family × measurement scope; each task family) must have at least one agent training trace, because a
   combination the teacher never produces cannot be learned (the `json`/`number` zero-coverage defect in
@@ -512,10 +508,10 @@ only the dataset:
 
 ## Resolved questions
 
-- **Q7.** *(2026-10-19)* The hop ladder is `{2,3,4,5}`, not `0→1→2→3→5`: synthesis floors at
-  `hop≥2`, so no release 0- or 1-hop families exist (`../../_archive/dataset-pre-rebuild-2026-10-21/pipeline/04-query-synthesis-resolver.md`
-  Q1), and the release tiers are `{2,3,4,5}`. Hop 4 is included; hop 1 is not a gap to fill. Within-run
-  ordering is not used (§4).
+- **Q7.** *(2026-10-19; superseded 2026-11-21 by DS-45)* The hop ladder is `{1..10}`: 1-step is the
+  warmup, 2–5 are main, and 6–10 are P1 gated by the synthesis pilot and manual review. 0-step is not
+  used. The old `{2,3,4,5}` ladder and the non-release 0/1 slice are retired. Within-run ordering is not
+  used (§4).
 
 - **Q4.** *(2026-10-09)* What provides `preserve_prior_capabilities` (the anti-forgetting role)?
   Answered by FT-D18: the role was dropped; there is no dedicated replay role, and the diverse

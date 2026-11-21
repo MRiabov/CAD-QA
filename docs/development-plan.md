@@ -52,8 +52,9 @@ Phase 3 design.
   a prerequisite for the first SFT; the 1,445-row release is superseded. (A public benchmark-release
   claim still follows the release requirements in `docs/dataset/requirements/PRD.md`.)
 - Build and freeze the held-out test; assert no train/test row or CadQuery program overlap.
-- Close the 0-hop/1-hop synthesis gap if needed; the working ladder is `{2,3,4,5}`, with generated
-  6–10 tiers admissible only if the selection pilot supports them (evaluation plan §5.1).
+- Close the 1-step synthesis gap and run the 6–10 pilot. The release ladder is
+  `{1..10}`: 1–5 P0, 6–10 P1 gated by the selection pilot and manual review
+  (dataset PRD §6.1). 0-step is not used.
 - Fix `json`/`number` teacher coverage.
 - Publish with tagged revision hashes.
 
@@ -75,9 +76,10 @@ Design first (FT-D11 plus `train-and-eval/fine-tuning/pipeline/00-overview.md`):
 - format via constrained decoding where possible;
 - prompt-masked SFT, bounded epochs, if SFT is used;
 - on-policy reasoning (student rejection sampling and/or GRPO) with shaped reward, release-hop
-  `{2,3,4,5}` tier gating, entropy monitoring, and checkpoints.
+  `{1..10}` tier gating (1–5 P0, 6–10 P1), entropy monitoring, and checkpoints.
 
-Pilot on the lowest release tier (hop 2) before scaling. **Pass condition:** full held-out-test number;
+Pilot on the lowest main tiers (hops 1–2) before scaling; the 6–10 tiers need
+their own pilot and manual review before they enter the release. **Pass condition:** full held-out-test number;
 improvement over base and baselines; H3 transfer reported.
 
 ## Phase 4 — Evaluation and analysis [core P0; `no_tools`/`cadquery` P2]

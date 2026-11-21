@@ -126,11 +126,11 @@ Each step below has a pass condition; do not start the next until the previous p
    Pass condition: the benchmark accuracy moves. This proves the whole narrow-task loop
    data → train → merge → export → eval.
 3. **Swap in our data (`mixed_dataset_general_and_easy_cadqa`).** Replace the cookbook dataset
-   with our first-run rows (general tasks + hop-2 `learn_the_cadqa_task`) in Liquid's `messages`
-   format (built by the data doc), keep the cookbook config and hyperparameters, and run the
-   evaluation doc's `emit_our_tool_call_format` evaluation dataset. Pass condition: H1. The release
-   has no 0/1-hop rows, so use the **non-release 0/1 warmup slice** (`data.md` §5) for the first
-   CadQuery/task-shape exposure and smoke runs; it is not H1/H2 data.
+   with our first-run rows (general tasks + 1-step warmup and hop-2 `learn_the_cadqa_task`) in
+   Liquid's `messages` format (built by the data doc), keep the cookbook config and hyperparameters,
+   and run the evaluation doc's `emit_our_tool_call_format` evaluation dataset. Pass condition: H1.
+   The release includes the 1-step warmup, so use that for the first CadQuery/task-shape exposure and
+   smoke runs; the old non-release 0/1 slice is retired.
 4. **Only if H1 holds**, expand to `mixed_dataset_full_cadqa_training` and the release-hop tiers of
    `learn_the_cadqa_task`.
 

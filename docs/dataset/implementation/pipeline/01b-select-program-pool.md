@@ -12,6 +12,11 @@ release from the external dataset metadata.
   supplemental deltas, derived `tier`, `cadevolve_program_family_id`,
   `policy_version`, `seed`, the policy values, counts, and exclusions.
 
+The run manifest records the `SelectionPolicy` values, its canonical hash, and
+the seed. A changed policy or seed changes `run_id` and requires a new run
+directory. See
+[`../run-contract.md`](../run-contract.md#2-run-identity-and-the-run-manifest).
+
 ## Selection policy
 
 `SelectionPolicy` carries every number the selection uses, so a test or a smaller

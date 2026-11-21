@@ -149,10 +149,10 @@ collapse ("RL squeezes, SFT expands", ref [7]).
 1. **Phase 1 — refocus on coding (plus easy tasks).** The base LLM model is already trained on code,
    so coding/Python is not new — it is just not its focus. Phase 1 refocuses it on a **general mix**
    (⅓ coding agent, ⅓ 3D math, ⅓ text2CAD + edits) and carries a **simple slice of our own tasks**
-   (e.g. hop 2, the lowest release tier, `learn_the_cadqa_task`) as a safety net.
+   (e.g. hop 1 warmup and hop 2, the lowest main tier, `learn_the_cadqa_task`) as a safety net.
 2. **Phase 2 — the CAD-QA task (new domain) + preserve.** CAD is very likely new to the base LLM model, and our
    CAD-QA dataset certainly is. Phase 2 fine-tunes on `learn_the_cadqa_task` at scale — the remaining
-   release hops (`{3,4,5}`, added through the §4.1 advancement gate) — alongside the general mix, with **no separate
+   release hops (`{3..10}`; 6–10 are added only after the 6–10 release gate and through the §4.1 advancement gate) — alongside the general mix, with **no separate
    `emit_our_tool_call_format`** (the format comes with the task), and
    shifts the objective from *eliciting* reasoning to *preserving* it (`preserve_general_math_and_code_reasoning`,
    `expose_*`).

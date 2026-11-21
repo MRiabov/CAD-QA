@@ -112,6 +112,11 @@ those rendered parts.
   has no shared mutable state.
 - The release table has one deterministic writer. Parallel output is merged by
   `task_id`.
+- The release table is committed as Parquet parts keyed by program. A task batch
+  is flushed at most every 30 seconds or every `flush_rows` rows, whichever
+  comes first. Resume reads the committed parts and skips a `task_id` that is
+  already present. The flush, persistence, and resume rules are in
+  [`../run-contract.md`](../run-contract.md#4-incremental-parquet-persistence).
 
 ## No rejection
 

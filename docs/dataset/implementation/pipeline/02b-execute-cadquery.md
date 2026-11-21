@@ -2,6 +2,8 @@
 
 **Parent:** [`02-execute-cadquery-and-build-graph.md`](02-execute-cadquery-and-build-graph.md).
 
+**Execution and resume:** [`../run-contract.md`](../run-contract.md).
+
 **Purpose:** run the normalized program and capture shape snapshots and selector
 results, or a failure tombstone when execution fails.
 
@@ -120,6 +122,11 @@ The cache key includes the normalized program hash, `ast_extraction_result_sha25
 extractor and canonicalization versions, CadQuery and OCP versions, the execution
 environment, timeout, and memory limit. A failure tombstone is reusable for the
 same key. A change to the CadQuery program AST extraction result or canonicalization is a cache miss.
+
+The cache location, lookup, and resume rule are in
+[`../run-contract.md`](../run-contract.md#8-cache). The run directory stores
+one runtime result per program; a committed result, including a failure
+tombstone, is not recomputed unless it is forced.
 
 ## Resolved questions
 
