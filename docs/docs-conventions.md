@@ -244,24 +244,31 @@ P0/P1 commitment.
 ## Lint, format, ratchets
 
 - **Don't-say checker: a script, not a test.** `tools/ci_cd/dont-say` reads the `## Don't say`
-  table from `glossary.md` and fails on banned terms across docs and code (Markdown,
-  LaTeX, and Python). It scans the whole repository (about a second), so it runs as a
-  pre-commit hook and never from pytest: a test would make every test run pay for the
-  scan.
+  table from `glossary.md` and fails on banned terms across docs, code, and JSON contracts
+  (Markdown, LaTeX, Python, Go, JSON). It scans the whole repository (about a second), so it
+  runs as a pre-commit hook and never from pytest: a test would make every test run pay for
+  the scan.
   A `(home)` annotation exempts a tree, `ALLOWLIST` exempts cross-cutting phrases, and the
-  `dont-say: allow` / `dont-say: home` markers exempt a line/file. In code, comments and
-  docstrings are matched as prose, and multi-word identifier name variants are matched. Run
-  `tools/ci_cd/dont-say`, or `tools/ci_cd/dont-say --ratchet tools/ci_cd/dont_say_baseline.txt` to enforce
-  the ratchet.
-- **Naming checks: deferred.** The checker covers prose; class, function, variable,
-  file, and folder names are not checked yet. The plan, including why a hand-written
-  Go lexer was rejected, is `plans/nov-21/dont-say-naming-check.md`.
-- **Clean code: P2.** `--identifiers` additionally matches banned terms inside code
-  identifier names; `tools/ci_cd/dont_say_identifiers_baseline.txt` is the accepted count
-  (`development-plan.md` Phase 6). Visibility/ratchet only, not P0/P1.
-- **Ratchets only improve.** `tools/ci_cd/dont_say_baseline.txt` holds the accepted count; the
-  checker fails if hits rise, or fall without the baseline being lowered. The `dont-say`
-  pre-commit hook enforces it. The sweep is tracked in `_audit/dont-say-worklist.md`.
+  `dont-say: allow` / `dont-say: home` markers exempt a line/file. In Python and Go,
+  comments and docstrings are matched as prose, and every declared name is matched as a
+  name: class, function, method, parameter, variable, field, declared type, constant,
+  file, and folder. JSON checks `description` and `title` as prose, and property, definition, enum,
+  and const values as names; schema vocabulary is not a CAD-QA name. Run
+  `tools/ci_cd/dont-say`, or `tools/ci_cd/dont-say --ratchet tools/ci_cd/dont_say_baseline.txt
+  --names-ratchet tools/ci_cd/dont_say_names_baseline.txt` to enforce both ratchets.
+- **Name matching.** A name matches when the rule's words appear as consecutive segments, so
+  `query_program`, `QueryProgram`, and `query-program` all match `query program`. A bare term
+  is allowed when a preceding segment qualifies it (`clue_type`); a leading verb does not
+  qualify it (`get_type` is a hit). Go syntax comes from `tools/dont-say-go`, which uses
+  `go/parser`; the checker never guesses at Go comments or literals. The plan that rejected
+  a hand-written Go lexer is `plans/nov-21/dont-say-naming-check.md`.
+- **Clean code: P2.** The checker enforces the name ratchet now; the naming sweep itself is
+  tracked in `development-plan.md` Phase 6 and is visibility only, not P0/P1.
+- **Two ratchets.** `dont_say_baseline.txt` counts prose hits and
+  `dont_say_names_baseline.txt` counts declared-name hits. The checker fails if either count
+  rises, or if it falls without the baseline being lowered in the same commit. The
+  `dont-say` pre-commit hook enforces both. The sweep is tracked in
+  `_audit/dont-say-worklist.md`.
 - **Markdown formatter: `rumdl`.** `.rumdl.toml` is the committed config (GFM flavor;
   `MD013` line length and `MD033` inline HTML off, matching the docs' style; scoped to
   `docs/` and `plans/`). Run `uv run rumdl check` to report, or

@@ -53,11 +53,11 @@ repos:
         verbose: true
         files: \.(go|md|py|ya?ml)$
       - id: dont-say
-        name: Don't-say terms
-        entry: tools/ci_cd/dont-say --ratchet tools/ci_cd/dont_say_baseline.txt
+        name: Don't-say terms (prose and declared names)
+        entry: tools/ci_cd/dont-say --ratchet tools/ci_cd/dont_say_baseline.txt --names-ratchet tools/ci_cd/dont_say_names_baseline.txt
         language: system
         pass_filenames: false
-        files: ^(docs|dataset|train_and_eval|tools|plans)/.*\.(md|py|tex)$
+        files: ^(cadqa_dataset_generator|contracts|docs|generator|plans|tests|tools)/.*\.(go|json|md|py|tex)$
       - id: worker-contracts
         name: Worker contract schemas and Go structs
         entry: tools/ci_cd/check-worker-contracts

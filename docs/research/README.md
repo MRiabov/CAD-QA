@@ -56,7 +56,7 @@ The `Ref` column matches the numbered references in `../prior-art.md`.
 | [21] | `[preprint]` | Online difficulty filtering for reasoning-oriented RLVR | arXiv (2025) | `2025-online-difficulty-filtering-rlvr.md` | reward variance = learnability; keep the ~0.25–0.75 RL-eligible pass rate |
 | [22] | `[preprint]` | Rollout pass-rate control for binary-reward RL | arXiv (2026) | `2026-rollout-pass-rate-control.md` | 50% pass rate maximizes signal; skewed groups are weak |
 | [23] | `[preprint]` | DAPO: decoupled clip and dynamic sampling | arXiv (2025) | `2025-dapo-decoupled-clip-dynamic-sampling.md` | drop all-pass/all-fail groups; entropy and overlong shaping |
-| [24] | `[preprint]` | Where the reward scorer fails: category-level audit of RLVR reward signals | arXiv (2026) | `2026-where-the-verifier-fails.md` | scorer self-agreement as low as 53.8%; audit before RL |
+| [24] | `[preprint]` | Where the reward scorer fails: category-level audit of RLVR reward signals | arXiv (2026) | `2026-where-the-query-verifier-fails.md` | scorer self-agreement as low as 53.8%; audit before RL |
 | [25] | `[preprint]` | Finetuning with sampling: SFT learns better than you think | arXiv (2026) | `2026-finetuning-with-sampling.md` | sampling SFT can beat on-policy RL on generalization and retention |
 | [26] | `[peer-reviewed]` | BREAD: branched rollouts bridge SFT and RL | NeurIPS 2025 | `2025-bread-branched-rollouts.md` | SFT+RL fails when traces are too hard or rewards too sparse |
 | [27] | `[workshop]` | Preventing process-reward hacking on verifiable rewards | AAMAS 2026 | `2026-prm-reward-hacking-aamas.md` | dense reward terms are hacked unless optimality-preserving |

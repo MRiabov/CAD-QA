@@ -50,8 +50,8 @@ def response_of(result: subprocess.CompletedProcess[str]) -> dict[str, Any]:
 
 
 def resolver(runner: Callable[..., Any]) -> Callable[[str], Callable[..., Any]]:
-    def resolve(stage: str) -> Callable[..., Any]:
-        del stage
+    def resolve(pipeline_stage: str) -> Callable[..., Any]:
+        del pipeline_stage
         return runner
 
     return resolve
@@ -166,7 +166,7 @@ def test_handle_success(monkeypatch: pytest.MonkeyPatch) -> None:
     def runner(request: dict[str, Any]) -> dict[str, Any]:
         return {"echo": request["value"]}
 
-    monkeypatch.setattr(worker, "resolve_stage", resolver(runner))
+    monkeypatch.setattr(worker, "resolve_pipeline_stage", resolver(runner))
 
     response = worker.handle("02a_extract_cadquery_ast", {"value": 3})
 
@@ -180,7 +180,7 @@ def test_handle_stage_failure(monkeypatch: pytest.MonkeyPatch) -> None:
         del request
         raise ValueError("bad input")
 
-    monkeypatch.setattr(worker, "resolve_stage", resolver(runner))
+    monkeypatch.setattr(worker, "resolve_pipeline_stage", resolver(runner))
 
     response = worker.handle("02a_extract_cadquery_ast", {})
 
@@ -195,7 +195,7 @@ def test_handle_invalid_result(monkeypatch: pytest.MonkeyPatch) -> None:
         del request
         return [1, 2]
 
-    monkeypatch.setattr(worker, "resolve_stage", resolver(runner))
+    monkeypatch.setattr(worker, "resolve_pipeline_stage", resolver(runner))
 
     response = worker.handle("02a_extract_cadquery_ast", {})
 
@@ -225,7 +225,7 @@ def test_handle_rejects_invalid_typed_result(monkeypatch: pytest.MonkeyPatch) ->
         del request
         return {}
 
-    monkeypatch.setattr(worker, "resolve_stage", resolver(runner))
+    monkeypatch.setattr(worker, "resolve_pipeline_stage", resolver(runner))
 
     response = worker.handle("01d_normalize_programs", S01D_REQUEST)
 
@@ -239,7 +239,7 @@ def test_handle_accepts_typed_result(monkeypatch: pytest.MonkeyPatch) -> None:
         assert request.shard_index == 0
         return S01D_RESULT
 
-    monkeypatch.setattr(worker, "resolve_stage", resolver(runner))
+    monkeypatch.setattr(worker, "resolve_pipeline_stage", resolver(runner))
 
     response = worker.handle("01d_normalize_programs", S01D_REQUEST)
 

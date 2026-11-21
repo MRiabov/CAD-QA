@@ -37,8 +37,10 @@ The concurrency group is keyed on the pull request number or the ref, with
 than the changed lines, and it computes the plan.
 
 1. **Markdown.** `rumdl check docs plans` against `.rumdl.toml`.
-2. **Don't-say terms.** The ratchet over `docs`, `plans`,
-   `cadqa_dataset_generator`, and `tools`.
+2. **Don't-say terms.** Two ratchets, prose and declared names, over
+   `docs`, `plans`, `contracts`, `cadqa_dataset_generator`, `generator`,
+   `tests`, and `tools`. The check runs `tools/dont-say-go` through the Go
+   toolchain, so the job installs Go before it runs.
 3. **Plan.** `tools/ci_plan.py` reads the diff and writes the `go` and `python`
    outputs.
 
@@ -59,6 +61,7 @@ reach. The script is the executable plan; the table explains the intent.
 |---|---|---|---|
 | `generator/**` | yes | no | Go module. |
 | `cadqa_dataset_generator/**` | yes | yes | Python worker; the Go bridge test starts it. |
+| `contracts/**` | yes | yes | Worker contract documents; the Python validator and the generated Go types both read them. |
 | `tests/**`, `tools/**` | no | yes | pytest and the tools it imports. |
 | `docs/dataset/implementation/pipeline/testing/**` | no | yes | Golden records and fixtures are read by pytest. |
 | `docs/**`, `plans/**`, `specs/**`, `experiments/**`, `.agents/**` | no | no | The quality job still runs the docs checks. |
@@ -223,7 +226,9 @@ require all three.
 uv run pytest -q
 cd generator && go test -count=1 ./...
 uv run rumdl check docs plans
-uv run python tools/ci_cd/check_dont_say.py --ratchet tools/ci_cd/dont_say_baseline.txt
+uv run python tools/ci_cd/check_dont_say.py \
+  --ratchet tools/ci_cd/dont_say_baseline.txt \
+  --names-ratchet tools/ci_cd/dont_say_names_baseline.txt
 uv run python tools/ci_plan.py --base origin/main --head HEAD
 ```
 

@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func pythonWorkerForStage(t *testing.T, stage string) *PythonWorker {
+func pythonWorkerForPipelineStage(t *testing.T, pipelineStage string) *PythonWorker {
 	t.Helper()
 
 	root := repositoryRoot(t)
@@ -15,7 +15,7 @@ func pythonWorkerForStage(t *testing.T, stage string) *PythonWorker {
 	if _, err := exec.LookPath(python); err != nil {
 		t.Skipf("python interpreter %q is not available: %v", python, err)
 	}
-	worker := NewPythonWorker(stage)
+	worker := NewPythonWorker(pipelineStage)
 	worker.Python = python
 	worker.Dir = root
 	worker.Env = []string{"PYTHONPATH=" + root}
@@ -24,7 +24,7 @@ func pythonWorkerForStage(t *testing.T, stage string) *PythonWorker {
 
 func pythonWorkerForTest(t *testing.T) *PythonWorker {
 	t.Helper()
-	return pythonWorkerForStage(t, "01d_normalize_programs")
+	return pythonWorkerForPipelineStage(t, "01d_normalize_programs")
 }
 
 func startWorker(t *testing.T, worker *PythonWorker) {
@@ -48,21 +48,21 @@ func TestPythonWorkerListsStages(t *testing.T) {
 		"02a_extract_cadquery_ast": false,
 		"02b_execute_cadquery":     false,
 	}
-	for _, stage := range stages {
-		if _, ok := want[stage]; ok {
-			want[stage] = true
+	for _, pipelineStage := range stages {
+		if _, ok := want[pipelineStage]; ok {
+			want[pipelineStage] = true
 		}
 	}
-	for stage, found := range want {
+	for pipelineStage, found := range want {
 		if !found {
-			t.Fatalf("stage %q is missing from %v", stage, stages)
+			t.Fatalf("stage %q is missing from %v", pipelineStage, stages)
 		}
 	}
 }
 
-func TestPythonWorkerReturnsStageNotImplemented(t *testing.T) {
+func TestPythonWorkerReturnsPipelineStageNotImplemented(t *testing.T) {
 	// 02a has no typed contract yet, so it exercises the free-form path.
-	worker := pythonWorkerForStage(t, "02a_extract_cadquery_ast")
+	worker := pythonWorkerForPipelineStage(t, "02a_extract_cadquery_ast")
 	startWorker(t, worker)
 
 	var response map[string]any
@@ -82,7 +82,7 @@ func TestPythonWorkerReturnsStageNotImplemented(t *testing.T) {
 
 func TestPythonWorkerReturnsUnknownStage(t *testing.T) {
 	worker := pythonWorkerForTest(t)
-	worker.Stage = "99-not-a-stage"
+	worker.PipelineStage = "99-not-a-stage"
 
 	err := worker.Start(context.Background())
 	var workerError *WorkerError

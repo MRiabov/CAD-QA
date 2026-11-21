@@ -46,7 +46,8 @@ Run from the repository root unless stated:
 uv run pytest -q
 uv run rumdl check docs
 tools/ci_cd/file-length
-tools/ci_cd/dont-say --ratchet tools/ci_cd/dont_say_baseline.txt
+tools/ci_cd/dont-say --ratchet tools/ci_cd/dont_say_baseline.txt \
+  --names-ratchet tools/ci_cd/dont_say_names_baseline.txt
 uv run pre-commit run --all-files   # after `uv run pre-commit install`
 ```
 

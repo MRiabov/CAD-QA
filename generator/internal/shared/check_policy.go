@@ -70,11 +70,11 @@ type Bound struct {
 }
 
 // UnmarshalYAML accepts one scalar and preserves its text.
-func (b *Bound) UnmarshalYAML(node *yaml.Node) error {
-	if node.Kind != yaml.ScalarNode {
-		return fmt.Errorf("bound must be a scalar, got %s", node.Tag)
+func (b *Bound) UnmarshalYAML(yamlNode *yaml.Node) error {
+	if yamlNode.Kind != yaml.ScalarNode {
+		return fmt.Errorf("bound must be a scalar, got %s", yamlNode.Tag)
 	}
-	b.Raw = node.Value
+	b.Raw = yamlNode.Value
 	return nil
 }
 

@@ -69,9 +69,9 @@ var AllPipelineStages = []string{
 	"05-validate-and-export-release",
 }
 
-// ShardedPipelineStages are the pipeline stages whose pass is one journal
-// shard. A sharded stage runs at most one pass per shard, so the journal shard
-// count is also its concurrency ceiling.
+// ShardedPipelineStages are pipeline stages whose pass is one journal
+// shard. A sharded pipeline stage runs at most one pass per shard, so the
+// journal shard count is also its concurrency ceiling.
 var ShardedPipelineStages = map[string]bool{
 	"01d-normalize-programs":         true,
 	"02a-extract-cadquery-ast":       true,
@@ -150,7 +150,8 @@ func (e *BlockedError) Error() string {
 	return e.Message
 }
 
-// ErrNotImplemented marks scaffolded orchestration that has no stage logic yet.
+// ErrNotImplemented marks scaffolded orchestration that has no pipeline stage
+// logic yet.
 var ErrNotImplemented = errors.New("run orchestration is not implemented yet")
 
 // Main runs the generator command line and returns the process exit code.
@@ -183,12 +184,12 @@ func Main(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	}
 }
 
-// Run executes one run. It is the orchestrator entry point; stage execution
-// lands one pipeline stage at a time.
+// Run executes one run. It is the orchestrator entry point; pipeline stage
+// execution lands one pipeline stage at a time.
 //
 // TODO(bootstrap): implement run directory allocation, run.json, the run lock,
-// stage selection, and the stage loop. This function is the only place a stage
-// package is called from.
+// pipeline stage selection, and the loop that runs them. This function is the
+// only place a pipeline stage package is called from.
 func Run(ctx context.Context, options RunOptions) error {
 	_ = ctx
 	_ = options
@@ -197,8 +198,8 @@ func Run(ctx context.Context, options RunOptions) error {
 
 // Status prints one run's state.
 //
-// TODO(bootstrap): read run.json, stage markers, part counts, failure counts,
-// and the current release_id.
+// TODO(bootstrap): read run.json, pipeline stage markers, part counts, failure
+// counts, and the current release_id.
 func Status(ctx context.Context, runDir string, output io.Writer) error {
 	_ = ctx
 	_ = runDir
@@ -286,11 +287,11 @@ func (o RunOptions) Validate() error {
 	return nil
 }
 
-// StageConcurrency returns the number of concurrent passes for one pipeline
-// stage. A non-positive Jobs selects the host's logical CPU count. A sharded
-// stage is capped by the journal shard count. The 02b caller applies
-// MemoryBoundJobs as an additional cap.
-func (o RunOptions) StageConcurrency(stage string) int {
+// PipelineStageConcurrency returns the number of concurrent passes for one
+// pipeline stage. A non-positive Jobs selects the host's logical CPU count. A
+// sharded pipeline stage is capped by the journal shard count. The 02b caller
+// applies MemoryBoundJobs as an additional cap.
+func (o RunOptions) PipelineStageConcurrency(pipelineStage string) int {
 	jobs := o.Jobs
 	if jobs <= 0 {
 		jobs = runtime.NumCPU()
@@ -299,7 +300,7 @@ func (o RunOptions) StageConcurrency(stage string) int {
 	if shardCount <= 0 {
 		shardCount = DefaultShardCount
 	}
-	if ShardedPipelineStages[stage] && shardCount < jobs {
+	if ShardedPipelineStages[pipelineStage] && shardCount < jobs {
 		jobs = shardCount
 	}
 	return jobs
@@ -307,7 +308,7 @@ func (o RunOptions) StageConcurrency(stage string) int {
 
 // MemoryBoundJobs returns how many 02b children fit in available memory:
 // floor(available / (memory_limit + worker_resident)). A zero result means no
-// child fits; the caller blocks instead of starting the stage.
+// child fits; the caller blocks instead of starting a pipeline stage.
 func MemoryBoundJobs(availableMemory, memoryLimit, workerResident int64) int {
 	if availableMemory <= 0 {
 		return 0
@@ -319,8 +320,8 @@ func MemoryBoundJobs(availableMemory, memoryLimit, workerResident int64) int {
 	return int(availableMemory / perChild)
 }
 
-// Selects reports whether the run range includes one selectable stage.
-func (o RunOptions) Selects(stage string) bool {
+// Selects reports whether the run range includes one selectable pipeline stage.
+func (o RunOptions) Selects(pipelineStage string) bool {
 	from := o.From
 	if from == "" {
 		from = SelectablePipelineStages[0]
@@ -332,11 +333,11 @@ func (o RunOptions) Selects(stage string) bool {
 
 	fromIndex, fromOK := selectableIndex(from)
 	toIndex, toOK := selectableIndex(to)
-	stageIndex, stageOK := selectableIndex(stage)
-	if !fromOK || !toOK || !stageOK {
+	pipelineStageIndex, pipelineStageOK := selectableIndex(pipelineStage)
+	if !fromOK || !toOK || !pipelineStageOK {
 		return false
 	}
-	return stageIndex >= fromIndex && stageIndex <= toIndex
+	return pipelineStageIndex >= fromIndex && pipelineStageIndex <= toIndex
 }
 
 func (o RunOptions) validateRange() error {
@@ -372,12 +373,12 @@ func (o RunOptions) validateForce() error {
 			return &UsageError{Message: "--force all cannot be combined with other stages"}
 		}
 	}
-	for _, stage := range o.Force {
-		if stage == "all" {
+	for _, pipelineStage := range o.Force {
+		if pipelineStage == "all" {
 			continue
 		}
-		if _, ok := allIndex(stage); !ok {
-			return &UsageError{Message: fmt.Sprintf("--force names unknown pipeline stage %q", stage)}
+		if _, ok := allIndex(pipelineStage); !ok {
+			return &UsageError{Message: fmt.Sprintf("--force names unknown pipeline stage %q", pipelineStage)}
 		}
 	}
 	return nil
@@ -537,28 +538,28 @@ func splitForce(value string) []string {
 		return nil
 	}
 	parts := strings.Split(value, ",")
-	stages := make([]string, 0, len(parts))
+	pipelineStages := make([]string, 0, len(parts))
 	for _, part := range parts {
-		stage := strings.TrimSpace(part)
-		if stage != "" {
-			stages = append(stages, stage)
+		pipelineStage := strings.TrimSpace(part)
+		if pipelineStage != "" {
+			pipelineStages = append(pipelineStages, pipelineStage)
 		}
 	}
-	return stages
+	return pipelineStages
 }
 
-func selectableIndex(stage string) (int, bool) {
+func selectableIndex(pipelineStage string) (int, bool) {
 	for index, candidate := range SelectablePipelineStages {
-		if candidate == stage {
+		if candidate == pipelineStage {
 			return index, true
 		}
 	}
 	return 0, false
 }
 
-func allIndex(stage string) (int, bool) {
+func allIndex(pipelineStage string) (int, bool) {
 	for index, candidate := range AllPipelineStages {
-		if candidate == stage {
+		if candidate == pipelineStage {
 			return index, true
 		}
 	}

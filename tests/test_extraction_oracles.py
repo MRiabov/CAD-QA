@@ -23,7 +23,7 @@ SCHEMA_DIR = Path(__file__).resolve().parents[1] / "tools" / "manual-verificatio
 sys.path.insert(0, str(SCHEMA_DIR))
 
 from extraction_oracle_schema import (
-    NodeKind,
+    CadGraphEntityKind,
     Oracle,
     OracleKind,
     OracleScope,
@@ -72,7 +72,7 @@ def test_oracle_model() -> None:
 
         covers = oracle.covers
         for name, values in (
-            ("node_kinds", covers.node_kinds),
+            ("entity_kinds", covers.entity_kinds),
             ("relation_kinds", covers.relation_kinds),
             ("measurement_kinds", covers.measurement_kinds),
         ):
@@ -82,15 +82,17 @@ def test_oracle_model() -> None:
             )
 
         expected = oracle.expected
-        assert {node.kind for node in expected.nodes} <= set(covers.node_kinds), (
-            f"{path.name}: a node kind is missing from covers.node_kinds"
-        )
-        assert {relation.kind for relation in expected.relations} <= set(
+        assert {entity.entity_kind for entity in expected.entities} <= set(
+            covers.entity_kinds
+        ), f"{path.name}: an entity kind is missing from covers.entity_kinds"
+        assert {relation.relation_kind for relation in expected.relations} <= set(
             covers.relation_kinds
         ), f"{path.name}: a relation kind is missing from covers.relation_kinds"
-        assert {measurement.kind for measurement in expected.measurements} <= set(
-            covers.measurement_kinds
-        ), f"{path.name}: a measurement kind is missing from covers.measurement_kinds"
+        assert {
+            measurement.measurement_kind for measurement in expected.measurements
+        } <= set(covers.measurement_kinds), (
+            f"{path.name}: a measurement kind is missing from covers.measurement_kinds"
+        )
 
 
 def test_oracle_program_identity() -> None:
@@ -119,7 +121,7 @@ def test_oracle_program_identity() -> None:
 def test_oracle_references_resolve() -> None:
     for path, oracle in load_oracles():
         expected = oracle.expected
-        local_ids = [node.local_id for node in expected.nodes]
+        local_ids = [entity.local_id for entity in expected.entities]
         assert len(local_ids) == len(set(local_ids)), f"{path.name}: duplicate local_id"
         known = set(local_ids)
 
@@ -140,8 +142,8 @@ def test_oracle_references_resolve() -> None:
 def test_oracle_descriptors_are_unique() -> None:
     for path, oracle in load_oracles():
         keys = Counter(
-            (node.kind, node.descriptor.model_dump_json())
-            for node in oracle.expected.nodes
+            (entity.entity_kind, entity.descriptor.model_dump_json())
+            for entity in oracle.expected.entities
         )
         collisions = [key for key, count in keys.items() if count > 1]
         assert not collisions, (
@@ -149,9 +151,9 @@ def test_oracle_descriptors_are_unique() -> None:
         )
 
 
-def test_oracle_node_kinds_are_closed() -> None:
+def test_oracle_entity_kinds_are_closed() -> None:
     for path, oracle in load_oracles():
-        for node in oracle.expected.nodes:
-            assert isinstance(node.kind, NodeKind), (
-                f"{path.name}: node {node.local_id!r} has an unknown kind"
+        for entity in oracle.expected.entities:
+            assert isinstance(entity.entity_kind, CadGraphEntityKind), (
+                f"{path.name}: entity {entity.local_id!r} has an unknown kind"
             )

@@ -34,5 +34,5 @@ a dense heuristic reward (here, a process-reward scorer). It extends Generalized
 
 ## Related
 
-- `2026-where-the-verifier-fails.md`
+- `2026-where-the-query-verifier-fails.md`
 - `2026-gradient-fingerprints-reward-hacking.md`

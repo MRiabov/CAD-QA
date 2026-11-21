@@ -87,6 +87,9 @@ def suites_for(path: str) -> frozenset[Suite] | None:
         case _ if path.startswith("cadqa_dataset_generator/"):
             # The Go bridge test starts the Python worker as a child process.
             return frozenset({Suite.GO, Suite.PYTHON})
+        case _ if path.startswith("contracts/"):
+            # The Python validator and the generated Go types both read these.
+            return frozenset({Suite.GO, Suite.PYTHON})
         case _ if path.startswith(("tests/", "tools/")):
             return frozenset({Suite.PYTHON})
         case _ if path.startswith("docs/dataset/implementation/pipeline/testing/"):

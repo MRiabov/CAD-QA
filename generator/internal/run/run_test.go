@@ -150,9 +150,9 @@ func TestSelects(t *testing.T) {
 		"04-render-prompt-and-choices":   false,
 		"03c-resolve-deficits":           false,
 	}
-	for stage, want := range cases {
-		if got := options.Selects(stage); got != want {
-			t.Errorf("Selects(%q) = %v, want %v", stage, got, want)
+	for pipelineStage, want := range cases {
+		if got := options.Selects(pipelineStage); got != want {
+			t.Errorf("Selects(%q) = %v, want %v", pipelineStage, got, want)
 		}
 	}
 }
@@ -202,19 +202,19 @@ func TestSplitForce(t *testing.T) {
 	}
 }
 
-func TestStageConcurrencyCapsShardedStages(t *testing.T) {
+func TestPipelineStageConcurrencyCapsShardedStages(t *testing.T) {
 	options := RunOptions{Jobs: 8, ShardCount: 3}
-	if got := options.StageConcurrency("01d-normalize-programs"); got != 3 {
+	if got := options.PipelineStageConcurrency("01d-normalize-programs"); got != 3 {
 		t.Fatalf("01d concurrency = %d, want 3", got)
 	}
-	if got := options.StageConcurrency("01c-fetch-program-pool"); got != 8 {
+	if got := options.PipelineStageConcurrency("01c-fetch-program-pool"); got != 8 {
 		t.Fatalf("01c concurrency = %d, want 8", got)
 	}
 }
 
-func TestStageConcurrencyUsesCPUWhenJobsIsZero(t *testing.T) {
+func TestPipelineStageConcurrencyUsesCPUWhenJobsIsZero(t *testing.T) {
 	options := RunOptions{ShardCount: 16}
-	if got := options.StageConcurrency("01c-fetch-program-pool"); got != runtime.NumCPU() {
+	if got := options.PipelineStageConcurrency("01c-fetch-program-pool"); got != runtime.NumCPU() {
 		t.Fatalf("01c concurrency = %d, want %d", got, runtime.NumCPU())
 	}
 }

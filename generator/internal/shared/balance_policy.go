@@ -25,8 +25,9 @@ type BalancePolicy struct {
 	Version                int                  `yaml:"version"`
 	Release                ReleaseBalancePolicy `yaml:"release"`
 	TaskReasoningStepShare map[int]float64      `yaml:"task_reasoning_step_share"`
-	// TODO(bootstrap): the 6-10 gate selects this fallback mix. 03a must
-	// choose between the two maps from the gate result, not read only one.
+	// TODO(bootstrap): the 6-10 quality gate selects this fallback mix. 03a
+	// must choose between the two maps from the quality gate result, not read
+	// only one.
 	TaskReasoningStepShareP0Fallback map[int]float64                   `yaml:"task_reasoning_step_share_p0_fallback"`
 	Expansion                        ExpansionBalancePolicy            `yaml:"expansion"`
 	Construction                     ConstructionBalancePolicy         `yaml:"construction"`
@@ -88,17 +89,17 @@ type DimensionTarget struct {
 }
 
 // UnmarshalYAML accepts `equal` or a number.
-func (t *DimensionTarget) UnmarshalYAML(node *yaml.Node) error {
-	if node.Kind != yaml.ScalarNode {
-		return fmt.Errorf("target must be a scalar, got %s", node.Tag)
+func (t *DimensionTarget) UnmarshalYAML(yamlNode *yaml.Node) error {
+	if yamlNode.Kind != yaml.ScalarNode {
+		return fmt.Errorf("target must be a scalar, got %s", yamlNode.Tag)
 	}
-	if node.Value == "equal" {
+	if yamlNode.Value == "equal" {
 		t.Equal = true
 		t.Share = 0
 		return nil
 	}
 	var share float64
-	if err := node.Decode(&share); err != nil {
+	if err := yamlNode.Decode(&share); err != nil {
 		return fmt.Errorf("target must be `equal` or a number: %w", err)
 	}
 	t.Equal = false

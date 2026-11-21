@@ -40,5 +40,5 @@ the detector to guide rejection fine-tuning.
 
 ## Related
 
-- `2026-where-the-verifier-fails.md`
+- `2026-where-the-query-verifier-fails.md`
 - `2026-prm-reward-hacking-aamas.md`

@@ -27,7 +27,8 @@ const (
 	workerLogLines            = 20
 )
 
-// PythonWorker is one long-lived Python stage worker. It starts once, serves
+// PythonWorker is one long-lived Python pipeline stage worker. It starts once,
+// serves
 // newline-delimited JSON requests, and is replaced after a crash, a request
 // timeout, or RequestLimit requests. Bulk data crosses the boundary as Parquet
 // paths; only the small control request and response cross standard input and
@@ -38,9 +39,9 @@ type PythonWorker struct {
 	Python string
 	// Module is the worker module. It defaults to cadqa_dataset_generator.worker.
 	Module string
-	// Stage is the pipeline stage this worker serves. It is fixed for the
-	// worker's lifetime.
-	Stage string
+	// PipelineStage names which pipeline stage this worker serves. It is fixed
+	// for the worker's lifetime.
+	PipelineStage string
 	// Dir is the child working directory. Empty means the current directory.
 	Dir string
 	// Env is appended to the parent environment.
@@ -63,21 +64,21 @@ type PythonWorker struct {
 
 // NewPythonWorker returns a worker for one pipeline stage, configured from the
 // environment.
-func NewPythonWorker(stage string) *PythonWorker {
+func NewPythonWorker(pipelineStage string) *PythonWorker {
 	python := os.Getenv("CADQA_PYTHON")
 	if python == "" {
 		python = "python3"
 	}
 	return &PythonWorker{
-		Python:       python,
-		Module:       "cadqa_dataset_generator.worker",
-		Stage:        stage,
-		RequestLimit: DefaultWorkerRequestLimit,
+		Python:        python,
+		Module:        "cadqa_dataset_generator.worker",
+		PipelineStage: pipelineStage,
+		RequestLimit:  DefaultWorkerRequestLimit,
 	}
 }
 
 // WorkerError is the structured error a Python worker returns when it handled
-// the request but the stage failed.
+// the request but a pipeline stage failed.
 type WorkerError struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
@@ -108,7 +109,7 @@ func (w *PythonWorker) startLocked() error {
 	if w.started {
 		return nil
 	}
-	if w.Stage == "" {
+	if w.PipelineStage == "" {
 		return fmt.Errorf("python worker: stage is required")
 	}
 
@@ -116,27 +117,27 @@ func (w *PythonWorker) startLocked() error {
 	if lifetime == nil {
 		lifetime = context.Background()
 	}
-	command := exec.CommandContext(lifetime, w.python(), "-m", w.module(), w.Stage)
+	command := exec.CommandContext(lifetime, w.python(), "-m", w.module(), w.PipelineStage)
 	command.Dir = w.Dir
 	command.Env = append(os.Environ(), w.Env...)
 
 	stdin, err := command.StdinPipe()
 	if err != nil {
-		return fmt.Errorf("python worker %s: stdin: %w", w.Stage, err)
+		return fmt.Errorf("python worker %s: stdin: %w", w.PipelineStage, err)
 	}
 	stdout, err := command.StdoutPipe()
 	if err != nil {
 		_ = stdin.Close()
-		return fmt.Errorf("python worker %s: stdout: %w", w.Stage, err)
+		return fmt.Errorf("python worker %s: stdout: %w", w.PipelineStage, err)
 	}
 	stderr, err := command.StderrPipe()
 	if err != nil {
 		_ = stdin.Close()
-		return fmt.Errorf("python worker %s: stderr: %w", w.Stage, err)
+		return fmt.Errorf("python worker %s: stderr: %w", w.PipelineStage, err)
 	}
 	if err := command.Start(); err != nil {
 		_ = stdin.Close()
-		return fmt.Errorf("python worker %s: start: %w", w.Stage, err)
+		return fmt.Errorf("python worker %s: start: %w", w.PipelineStage, err)
 	}
 
 	log := &workerLog{}
@@ -160,28 +161,28 @@ func (w *PythonWorker) waitReadyLocked() error {
 	if err := w.stdout.Decode(&envelope); err != nil {
 		stderr := w.log.String()
 		w.stopLocked()
-		return fmt.Errorf("python worker %s: ready: %w (stderr: %s)", w.Stage, err, stderr)
+		return fmt.Errorf("python worker %s: ready: %w (stderr: %s)", w.PipelineStage, err, stderr)
 	}
 	if envelope.ProtocolVersion != WorkerProtocolVersion {
 		w.stopLocked()
 		return fmt.Errorf(
 			"python worker %s: protocol version %d, want %d",
-			w.Stage, envelope.ProtocolVersion, WorkerProtocolVersion,
+			w.PipelineStage, envelope.ProtocolVersion, WorkerProtocolVersion,
 		)
 	}
 	if !envelope.OK {
 		w.stopLocked()
 		if envelope.Error != nil {
-			return fmt.Errorf("python worker %s: %w", w.Stage, envelope.Error)
+			return fmt.Errorf("python worker %s: %w", w.PipelineStage, envelope.Error)
 		}
-		return fmt.Errorf("python worker %s: not ready", w.Stage)
+		return fmt.Errorf("python worker %s: not ready", w.PipelineStage)
 	}
 	var ready struct {
 		Ready bool `json:"ready"`
 	}
 	if len(envelope.Result) == 0 || json.Unmarshal(envelope.Result, &ready) != nil || !ready.Ready {
 		w.stopLocked()
-		return fmt.Errorf("python worker %s: did not signal ready", w.Stage)
+		return fmt.Errorf("python worker %s: did not signal ready", w.PipelineStage)
 	}
 	return nil
 }
@@ -199,7 +200,7 @@ func (w *PythonWorker) Run(ctx context.Context, request any, response any) error
 	if err := w.encoder.Encode(request); err != nil {
 		stderr := w.log.String()
 		w.stopLocked()
-		return fmt.Errorf("python worker %s: encode request: %w (stderr: %s)", w.Stage, err, stderr)
+		return fmt.Errorf("python worker %s: encode request: %w (stderr: %s)", w.PipelineStage, err, stderr)
 	}
 
 	type decoded struct {
@@ -218,7 +219,7 @@ func (w *PythonWorker) Run(ctx context.Context, request any, response any) error
 	case <-ctx.Done():
 		stderr := w.log.String()
 		w.stopLocked()
-		return fmt.Errorf("python worker %s: %w (stderr: %s)", w.Stage, ctx.Err(), stderr)
+		return fmt.Errorf("python worker %s: %w (stderr: %s)", w.PipelineStage, ctx.Err(), stderr)
 	case result := <-received:
 		w.requests++
 		if w.RequestLimit > 0 && w.requests >= w.RequestLimit {
@@ -227,29 +228,29 @@ func (w *PythonWorker) Run(ctx context.Context, request any, response any) error
 		if result.err != nil {
 			stderr := w.log.String()
 			w.stopLocked()
-			return fmt.Errorf("python worker %s: response: %w (stderr: %s)", w.Stage, result.err, stderr)
+			return fmt.Errorf("python worker %s: response: %w (stderr: %s)", w.PipelineStage, result.err, stderr)
 		}
 		if result.envelope.ProtocolVersion != WorkerProtocolVersion {
 			w.stopLocked()
 			return fmt.Errorf(
 				"python worker %s: protocol version %d, want %d",
-				w.Stage, result.envelope.ProtocolVersion, WorkerProtocolVersion,
+				w.PipelineStage, result.envelope.ProtocolVersion, WorkerProtocolVersion,
 			)
 		}
 		if !result.envelope.OK {
 			if result.envelope.Error != nil {
-				return fmt.Errorf("python worker %s: %w", w.Stage, result.envelope.Error)
+				return fmt.Errorf("python worker %s: %w", w.PipelineStage, result.envelope.Error)
 			}
-			return fmt.Errorf("python worker %s: failed without an error document", w.Stage)
+			return fmt.Errorf("python worker %s: failed without an error document", w.PipelineStage)
 		}
 		if response == nil {
 			return nil
 		}
 		if len(result.envelope.Result) == 0 || string(result.envelope.Result) == "null" {
-			return fmt.Errorf("python worker %s: returned no result", w.Stage)
+			return fmt.Errorf("python worker %s: returned no result", w.PipelineStage)
 		}
 		if err := json.Unmarshal(result.envelope.Result, response); err != nil {
-			return fmt.Errorf("python worker %s: decode result: %w", w.Stage, err)
+			return fmt.Errorf("python worker %s: decode result: %w", w.PipelineStage, err)
 		}
 		return nil
 	}

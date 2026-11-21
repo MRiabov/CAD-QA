@@ -7,13 +7,13 @@ request boundary, and the failure partition are fixed first. See
 
 from __future__ import annotations
 
-from cadqa_dataset_generator import StageNotImplemented
+from cadqa_dataset_generator import PipelineStageNotImplemented
 from cadqa_dataset_generator.contracts import (
     S01dNormalizeProgramsRequest,
     S01dNormalizeProgramsResult,
 )
 
-STAGE = "01d_normalize_programs"
+PIPELINE_STAGE = "01d_normalize_programs"
 
 
 def run(
@@ -24,4 +24,4 @@ def run(
     # TODO(01d): decode UTF-8, parse with the pinned ast, unparse, format
     # with the pinned Ruff version, hash, and write the normalized program table.
     del request
-    raise StageNotImplemented(STAGE)
+    raise PipelineStageNotImplemented(PIPELINE_STAGE)

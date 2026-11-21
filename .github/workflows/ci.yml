@@ -43,6 +43,10 @@ jobs:
             .github/workflows/ci.yml
           cache-python: true
 
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: tools/dont-say-go/go.mod
+
       - name: Markdown
         run: |
           uvx --python "$(cat .python-version)" \
@@ -52,7 +56,21 @@ jobs:
         run: |
           uv run --isolated --no-project --with 'pydantic>=2.14' \
             python tools/ci_cd/check_dont_say.py \
-            --ratchet tools/ci_cd/dont_say_baseline.txt
+            --ratchet tools/ci_cd/dont_say_baseline.txt \
+            --names-ratchet tools/ci_cd/dont_say_names_baseline.txt
+
+      - name: Don't-say Go extractor
+        working-directory: tools/dont-say-go
+        run: |
+          go vet ./...
+          go test -count=1 ./...
+
+      - name: Don't-say checker tests
+        env:
+          PYTHONPATH: .
+        run: |
+          uv run --isolated --no-project --with 'pydantic>=2.14' --with pytest \
+            python -m pytest -q tests/test_check_dont_say.py
 
       - name: Plan the suites
         id: plan

@@ -9,9 +9,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from cadqa_dataset_generator import StageNotImplemented
+from cadqa_dataset_generator import PipelineStageNotImplemented
 
-STAGE = "02b_execute_cadquery"
+PIPELINE_STAGE = "02b_execute_cadquery"
 
 
 def preload() -> None:
@@ -27,4 +27,4 @@ def run(request: dict[str, Any]) -> dict[str, Any]:
     # TODO(02b): run the program in the child process, capture runtime
     # entities and probes, and write captures or a failure tombstone.
     del request
-    raise StageNotImplemented(STAGE)
+    raise PipelineStageNotImplemented(PIPELINE_STAGE)

@@ -8,9 +8,9 @@ Parquet paths and a small JSON request. One module lands per pipeline stage; see
 from __future__ import annotations
 
 
-class StageNotImplemented(RuntimeError):
+class PipelineStageNotImplemented(RuntimeError):
     """Raised when a pipeline stage module exists but has no implementation yet."""
 
-    def __init__(self, stage: str) -> None:
-        super().__init__(f"pipeline stage {stage} is not implemented yet")
-        self.stage = stage
+    def __init__(self, pipeline_stage: str) -> None:
+        super().__init__(f"pipeline stage {pipeline_stage} is not implemented yet")
+        self.pipeline_stage = pipeline_stage

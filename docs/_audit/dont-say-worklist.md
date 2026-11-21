@@ -7,30 +7,30 @@ linted. Regenerate:
 tools/ci_cd/dont-say --quiet
 ```
 
-As of 2026-11-21 the checker reports **177 hits** against a baseline re-pinned at 177:
-103 in `plans/` (dated decision records) and 74 in `docs/`. The 2026-10-21 baseline of 107
-went stale while the docs tree was restructured, and the pytest ratchet was red from
-2026-11-20 until the check moved to the `dont-say` pre-commit hook.
-
-As of 2026-10-08 the checker reports **358 hits**, all in `docs/`. Code is clean: the
-identifier-shaped Don't-says that appear in code (`OntologyGraph`, `entity_id`,
-`QueryProgram`, `hop_count`, `void_region`, `difficulty_bucket`, …) are documented
-`In code:` names and are exempted per tree with `(cad_qa)`-style annotations. 447 → 357
-(after skipping inline/fenced code) → 353 (after the `(home)` annotations) → 361 (after
-adding the bare `kind`/`type` bans).
+As of 2026-11-21 the checker reports **206 prose hits** and **0 declared-name hits**.
+Every prose hit sits in `plans/` (dated decision records) or `docs/`; the code, the
+contracts, and the tooling are clean. The name ratchet replaced the old `--identifiers`
+count of 5,339: that count matched every identifier occurrence, while the name ratchet
+matches only declarations (class, function, method, parameter, variable, field, type,
+constant, file, folder) and skips attribute reads.
 
 ## Mechanism (ported from product-launch / placis)
 
 - **`(home)` annotation** on a Don't-say term exempts it under that tree (`cad_qa`,
   `train_and_eval`, `tools`, `docs`, `dataset_generation`, `fine_tuning`).
-- **`ALLOWLIST`** in `tools/ci_cd/check_dont_say.py` exempts cross-cutting phrases
+- **`ALLOWLIST`** in `tools/ci_cd/dont_say_rules.py` exempts cross-cutting phrases
   (`open-source`, `source of truth`, …).
 - **`<!-- dont-say: allow -->`** exempts a line; `# dont-say: home` exempts a code file.
 - **Say-term covering**: a Say term covers its own Don't-say tokens.
-- **Code**: identifier-shaped tokens only (snake/kebab/Pascal/camel); bare words are
-  prose-only, so legit string values like `"selector"` are not flagged.
-- **Ratchet**: `tools/ci_cd/dont_say_baseline.txt` holds the accepted count; the checker fails if
-  hits rise, or if they fall without the baseline being lowered. Enforced by the
+- **Code**: every declared name, matched by word segments (snake/kebab/Pascal/camel), so
+  `query_program`, `QueryProgram`, and `query-program` all match. Bare terms need a
+  qualifier (`clue_type` is clean, `get_type` is a hit). Attribute reads and string
+  values are not names, so `token.type` and `"selector"` are not flagged.
+- **Go**: syntax comes from `tools/dont-say-go` (`go/parser`), which also reports comment
+  lines as prose. The checker never guesses at Go syntax.
+- **Ratchets**: `tools/ci_cd/dont_say_baseline.txt` counts prose hits and
+  `tools/ci_cd/dont_say_names_baseline.txt` counts declared-name hits; the checker fails if
+  either rises, or if either falls without the baseline being lowered. Enforced by the
   `dont-say` pre-commit hook (`tools/ci_cd/dont-say`), not by pytest: the check is a
   whole-repository scan, so a test would pay for it on every test run.
 

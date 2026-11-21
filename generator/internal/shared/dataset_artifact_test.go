@@ -9,9 +9,9 @@ import (
 )
 
 type artifactTestRow struct {
-	ID   uuid.UUID   `parquet:"id"`
-	Name string      `parquet:"name"`
-	Span *SourceSpan `parquet:"span,optional"`
+	ID   uuid.UUID    `parquet:"id"`
+	Name string       `parquet:"name"`
+	Span *ProgramSpan `parquet:"span,optional"`
 }
 
 func TestArtifactIdentityKeySortsInputs(t *testing.T) {
@@ -62,7 +62,7 @@ func TestWriteParquetAtomicRoundTrip(t *testing.T) {
 		{
 			ID:   uuid.MustParse("11111111-1111-5111-8111-111111111111"),
 			Name: "one",
-			Span: &SourceSpan{StartColumn: 1, EndColumn: 4},
+			Span: &ProgramSpan{StartColumn: 1, EndColumn: 4},
 		},
 		{
 			ID:   uuid.MustParse("22222222-2222-5222-8222-222222222222"),

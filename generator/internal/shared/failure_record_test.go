@@ -9,16 +9,16 @@ import (
 func testFailureRecord() FailureRecord {
 	taskID := "cadqatask:one"
 	inputSHA := "abc123"
-	sourceLine := int64(7)
+	programLine := int64(7)
 	record := FailureRecord{
-		PipelineStage:   Stage01dNormalizePrograms,
+		PipelineStage:   PipelineStage01dNormalizePrograms,
 		ProgramID:       "cadqaprog:one",
 		TaskID:          &taskID,
 		InputSHA256:     &inputSHA,
 		ReasonCode:      "syntax_error",
 		Detail:          "unexpected token",
-		SourceLine:      &sourceLine,
-		SourceSpan:      &SourceSpan{StartColumn: 3, EndColumn: 9},
+		ProgramLine:     &programLine,
+		ProgramSpan:     &ProgramSpan{StartColumn: 3, EndColumn: 9},
 		OccurrenceCount: 1,
 	}
 	if err := record.AssignFailureID(); err != nil {
@@ -91,7 +91,7 @@ func TestMergeFailureRecordsSumsOccurrencesAndSorts(t *testing.T) {
 
 	otherTaskID := "cadqatask:zero"
 	other := FailureRecord{
-		PipelineStage:   Stage02aExtractCadqueryAst,
+		PipelineStage:   PipelineStage02aExtractCadqueryAst,
 		ProgramID:       "cadqaprog:zero",
 		TaskID:          &otherTaskID,
 		ReasonCode:      "unsupported_call",
@@ -103,7 +103,7 @@ func TestMergeFailureRecordsSumsOccurrencesAndSorts(t *testing.T) {
 	}
 
 	programOnly := FailureRecord{
-		PipelineStage:   Stage02aExtractCadqueryAst,
+		PipelineStage:   PipelineStage02aExtractCadqueryAst,
 		ProgramID:       "cadqaprog:zero",
 		ReasonCode:      "parse_failure",
 		Detail:          "ast parse failed",
@@ -164,7 +164,7 @@ func TestFailureRecordValidate(t *testing.T) {
 	}
 
 	badSpan := valid
-	badSpan.SourceSpan = &SourceSpan{StartColumn: 9, EndColumn: 3}
+	badSpan.ProgramSpan = &ProgramSpan{StartColumn: 9, EndColumn: 3}
 	if err := badSpan.Validate(); err == nil {
 		t.Fatal("record with a reversed source span was accepted")
 	}
@@ -196,8 +196,8 @@ func TestFailureRecordParquetRoundTrip(t *testing.T) {
 	if read[0].PipelineStage != records[0].PipelineStage {
 		t.Fatalf("pipeline stage = %q, want %q", read[0].PipelineStage, records[0].PipelineStage)
 	}
-	if read[0].SourceSpan == nil || *read[0].SourceSpan != *records[0].SourceSpan {
-		t.Fatalf("source span = %+v, want %+v", read[0].SourceSpan, records[0].SourceSpan)
+	if read[0].ProgramSpan == nil || *read[0].ProgramSpan != *records[0].ProgramSpan {
+		t.Fatalf("source span = %+v, want %+v", read[0].ProgramSpan, records[0].ProgramSpan)
 	}
 }
 

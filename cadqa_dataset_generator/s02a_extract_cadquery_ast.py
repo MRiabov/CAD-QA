@@ -9,9 +9,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from cadqa_dataset_generator import StageNotImplemented
+from cadqa_dataset_generator import PipelineStageNotImplemented
 
-STAGE = "02a_extract_cadquery_ast"
+PIPELINE_STAGE = "02a_extract_cadquery_ast"
 
 
 def run(request: dict[str, Any]) -> dict[str, Any]:
@@ -20,4 +20,4 @@ def run(request: dict[str, Any]) -> dict[str, Any]:
     # TODO(02a): read the pinned Python AST, apply the allowlist, and write
     # the typed AST extraction tables.
     del request
-    raise StageNotImplemented(STAGE)
+    raise PipelineStageNotImplemented(PIPELINE_STAGE)

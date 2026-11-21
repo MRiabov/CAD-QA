@@ -1,7 +1,8 @@
 """Contract tests for the JSON documents shared with the Go orchestrator.
 
 The checked-in schemas are the language-neutral form of the Pydantic models.
-These tests fail when a model changes without a matching schema export, and they
+These tests fail when a contract model changes without a matching schema export,
+and they
 pin the envelope invariant that a response carries either a result or an error.
 """
 

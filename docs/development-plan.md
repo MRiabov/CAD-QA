@@ -109,11 +109,17 @@ as the thesis validation appendix.
 
 ## Phase 6 — Clean code [P2]
 
-Rename code identifiers to match the glossary. `uv run python tools/ci_cd/check_dont_say.py
---identifiers` reports the name collisions, and `tools/ci_cd/dont_say_identifiers_baseline.txt`
-holds the accepted count (**5,339** across 64 files — mostly `type`, `clause`, `source`,
-`node`, `selector`) to ratchet to zero. Deferred: it is a large mechanical rename, much of it
-inside the immutable `dataset/`.
+Declared names match the glossary. The checker reports them by default, and
+`tools/ci_cd/dont_say_names_baseline.txt` is at **0**: a new incomplete name fails the
+check rather than joining a backlog.
+
+```bash
+uv run python tools/ci_cd/check_dont_say.py \
+  --ratchet tools/ci_cd/dont_say_baseline.txt \
+  --names-ratchet tools/ci_cd/dont_say_names_baseline.txt
+```
+
+The remaining prose hits are the docs sweep, tracked in `_audit/dont-say-worklist.md`.
 
 ## Cross-cutting rules
 

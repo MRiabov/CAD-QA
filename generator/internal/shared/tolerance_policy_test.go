@@ -30,8 +30,8 @@ var toleranceKinds = map[string]bool{
 }
 
 type toleranceEntry struct {
-	Kind  string   `yaml:"kind"`
-	Value *float64 `yaml:"value"`
+	ToleranceKind string   `yaml:"kind"`
+	Value         *float64 `yaml:"value"`
 }
 
 type tolerancePolicy struct {
@@ -65,17 +65,17 @@ func TestTolerancePolicy(t *testing.T) {
 		if !toleranceUnits[unit] {
 			t.Errorf("unknown unit %q", unit)
 		}
-		if !toleranceKinds[entry.Kind] {
-			t.Errorf("%s: unknown kind %q", unit, entry.Kind)
+		if !toleranceKinds[entry.ToleranceKind] {
+			t.Errorf("%s: unknown kind %q", unit, entry.ToleranceKind)
 		}
-		if entry.Kind == "exact" {
+		if entry.ToleranceKind == "exact" {
 			if entry.Value != nil {
 				t.Errorf("%s: exact must not carry a value", unit)
 			}
 			continue
 		}
 		if entry.Value == nil {
-			t.Errorf("%s: %s needs a value", unit, entry.Kind)
+			t.Errorf("%s: %s needs a value", unit, entry.ToleranceKind)
 			continue
 		}
 		if *entry.Value < 0 {
@@ -88,7 +88,7 @@ func TestTolerancePolicy(t *testing.T) {
 			t.Errorf("policy is missing unit %q", unit)
 		}
 	}
-	if policy.Policy["unitless"].Kind != "exact" {
-		t.Errorf("unitless kind = %q, want exact", policy.Policy["unitless"].Kind)
+	if policy.Policy["unitless"].ToleranceKind != "exact" {
+		t.Errorf("unitless kind = %q, want exact", policy.Policy["unitless"].ToleranceKind)
 	}
 }

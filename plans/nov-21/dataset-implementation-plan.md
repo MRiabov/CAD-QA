@@ -413,7 +413,7 @@ The scaffold is nearly complete and green (`go test ./...` three packages,
 - `generator/internal/shared/` — typed artifact tables, the failure record and
   its merge, the `balance.yaml` and `checks.yaml` loaders, the worker bridge;
 - `cadqa_dataset_generator/worker.py` — the worker protocol and dispatch;
-  `s01d`, `s02a`, `s02b` are stubs that raise `StageNotImplemented`;
+  `s01d`, `s02a`, `s02b` are stubs that raise `PipelineStageNotImplemented`;
 - the test contracts for every pipeline stage, the golden record, `prompts.yaml`, and
   `tolerance.yaml`;
 - the graph completeness contract, the extraction-graph oracle format and two

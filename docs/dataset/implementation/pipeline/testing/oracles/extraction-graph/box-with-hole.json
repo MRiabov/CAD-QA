@@ -21,10 +21,1372 @@
     "tolerance_policy_sha256": null
   },
   "expected": {
-    "nodes": [
+    "relations": [
+      {
+        "from_local_id": "operation:000",
+        "to_local_id": "operation:001",
+        "evidence_rule": "operation_order",
+        "relation_kind": "before"
+      },
+      {
+        "from_local_id": "operation:001",
+        "to_local_id": "operation:000",
+        "evidence_rule": "operation_order",
+        "relation_kind": "after"
+      },
+      {
+        "from_local_id": "operation:001",
+        "to_local_id": "operation:002",
+        "evidence_rule": "operation_order",
+        "relation_kind": "before"
+      },
+      {
+        "from_local_id": "operation:002",
+        "to_local_id": "operation:001",
+        "evidence_rule": "operation_order",
+        "relation_kind": "after"
+      },
+      {
+        "from_local_id": "operation:002",
+        "to_local_id": "operation:003",
+        "evidence_rule": "operation_order",
+        "relation_kind": "before"
+      },
+      {
+        "from_local_id": "operation:003",
+        "to_local_id": "operation:002",
+        "evidence_rule": "operation_order",
+        "relation_kind": "after"
+      },
+      {
+        "from_local_id": "operation:003",
+        "to_local_id": "operation:004",
+        "evidence_rule": "operation_order",
+        "relation_kind": "before"
+      },
+      {
+        "from_local_id": "operation:004",
+        "to_local_id": "operation:003",
+        "evidence_rule": "operation_order",
+        "relation_kind": "after"
+      },
+      {
+        "from_local_id": "operation:004",
+        "to_local_id": "operation:005",
+        "evidence_rule": "operation_order",
+        "relation_kind": "before"
+      },
+      {
+        "from_local_id": "operation:005",
+        "to_local_id": "operation:004",
+        "evidence_rule": "operation_order",
+        "relation_kind": "after"
+      },
+      {
+        "from_local_id": "operation:001",
+        "to_local_id": "feature:001",
+        "evidence_rule": "solid_state_producing_operation",
+        "relation_kind": "creates"
+      },
+      {
+        "from_local_id": "feature:001",
+        "to_local_id": "region:001:added",
+        "evidence_rule": "feature_kind",
+        "relation_kind": "adds_material"
+      },
+      {
+        "from_local_id": "region:001:added",
+        "to_local_id": "feature:001",
+        "evidence_rule": "region_derivation",
+        "relation_kind": "part_of"
+      },
+      {
+        "from_local_id": "operation:005",
+        "to_local_id": "feature:005",
+        "evidence_rule": "solid_state_producing_operation",
+        "relation_kind": "creates"
+      },
+      {
+        "from_local_id": "operation:005",
+        "to_local_id": "state:005",
+        "evidence_rule": "captured_state",
+        "relation_kind": "creates"
+      },
+      {
+        "from_local_id": "feature:005",
+        "to_local_id": "region:005:removed",
+        "evidence_rule": "feature_kind",
+        "relation_kind": "removes_material"
+      },
+      {
+        "from_local_id": "region:005:removed",
+        "to_local_id": "feature:005",
+        "evidence_rule": "region_derivation",
+        "relation_kind": "part_of"
+      },
+      {
+        "from_local_id": "state:005",
+        "to_local_id": "face:000",
+        "evidence_rule": "state_entity_table",
+        "relation_kind": "has_face"
+      },
+      {
+        "from_local_id": "state:005",
+        "to_local_id": "face:001",
+        "evidence_rule": "state_entity_table",
+        "relation_kind": "has_face"
+      },
+      {
+        "from_local_id": "state:005",
+        "to_local_id": "face:002",
+        "evidence_rule": "state_entity_table",
+        "relation_kind": "has_face"
+      },
+      {
+        "from_local_id": "state:005",
+        "to_local_id": "face:003",
+        "evidence_rule": "state_entity_table",
+        "relation_kind": "has_face"
+      },
+      {
+        "from_local_id": "state:005",
+        "to_local_id": "face:004",
+        "evidence_rule": "state_entity_table",
+        "relation_kind": "has_face"
+      },
+      {
+        "from_local_id": "state:005",
+        "to_local_id": "face:005",
+        "evidence_rule": "state_entity_table",
+        "relation_kind": "has_face"
+      },
+      {
+        "from_local_id": "state:005",
+        "to_local_id": "face:006",
+        "evidence_rule": "state_entity_table",
+        "relation_kind": "has_face"
+      },
+      {
+        "from_local_id": "state:005",
+        "to_local_id": "face:007",
+        "evidence_rule": "state_entity_table",
+        "relation_kind": "has_face"
+      },
+      {
+        "from_local_id": "face:000",
+        "to_local_id": "edge:000",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:000",
+        "to_local_id": "edge:001",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:000",
+        "to_local_id": "edge:002",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:000",
+        "to_local_id": "edge:003",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:001",
+        "to_local_id": "edge:004",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:001",
+        "to_local_id": "edge:005",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:001",
+        "to_local_id": "edge:006",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:001",
+        "to_local_id": "edge:000",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:002",
+        "to_local_id": "edge:001",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:002",
+        "to_local_id": "edge:007",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:002",
+        "to_local_id": "edge:006",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:002",
+        "to_local_id": "edge:008",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:002",
+        "to_local_id": "edge:009",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:003",
+        "to_local_id": "edge:010",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:003",
+        "to_local_id": "edge:011",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:003",
+        "to_local_id": "edge:007",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:003",
+        "to_local_id": "edge:002",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:004",
+        "to_local_id": "edge:003",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:004",
+        "to_local_id": "edge:010",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:004",
+        "to_local_id": "edge:012",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:004",
+        "to_local_id": "edge:004",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:005",
+        "to_local_id": "edge:005",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:005",
+        "to_local_id": "edge:008",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:005",
+        "to_local_id": "edge:011",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:005",
+        "to_local_id": "edge:012",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:006",
+        "to_local_id": "edge:013",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:006",
+        "to_local_id": "edge:009",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:006",
+        "to_local_id": "edge:014",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:007",
+        "to_local_id": "edge:014",
+        "evidence_rule": "face_has_edge",
+        "relation_kind": "has_edge"
+      },
+      {
+        "from_local_id": "face:000",
+        "to_local_id": "face:001",
+        "evidence_rule": "face_adjacent_to_face",
+        "relation_kind": "adjacent_to"
+      },
+      {
+        "from_local_id": "face:000",
+        "to_local_id": "face:002",
+        "evidence_rule": "face_adjacent_to_face",
+        "relation_kind": "adjacent_to"
+      },
+      {
+        "from_local_id": "face:000",
+        "to_local_id": "face:003",
+        "evidence_rule": "face_adjacent_to_face",
+        "relation_kind": "adjacent_to"
+      },
+      {
+        "from_local_id": "face:000",
+        "to_local_id": "face:004",
+        "evidence_rule": "face_adjacent_to_face",
+        "relation_kind": "adjacent_to"
+      },
+      {
+        "from_local_id": "face:001",
+        "to_local_id": "face:004",
+        "evidence_rule": "face_adjacent_to_face",
+        "relation_kind": "adjacent_to"
+      },
+      {
+        "from_local_id": "face:001",
+        "to_local_id": "face:005",
+        "evidence_rule": "face_adjacent_to_face",
+        "relation_kind": "adjacent_to"
+      },
+      {
+        "from_local_id": "face:001",
+        "to_local_id": "face:002",
+        "evidence_rule": "face_adjacent_to_face",
+        "relation_kind": "adjacent_to"
+      },
+      {
+        "from_local_id": "face:002",
+        "to_local_id": "face:003",
+        "evidence_rule": "face_adjacent_to_face",
+        "relation_kind": "adjacent_to"
+      },
+      {
+        "from_local_id": "face:002",
+        "to_local_id": "face:005",
+        "evidence_rule": "face_adjacent_to_face",
+        "relation_kind": "adjacent_to"
+      },
+      {
+        "from_local_id": "face:002",
+        "to_local_id": "face:006",
+        "evidence_rule": "face_adjacent_to_face",
+        "relation_kind": "adjacent_to"
+      },
+      {
+        "from_local_id": "face:003",
+        "to_local_id": "face:004",
+        "evidence_rule": "face_adjacent_to_face",
+        "relation_kind": "adjacent_to"
+      },
+      {
+        "from_local_id": "face:003",
+        "to_local_id": "face:005",
+        "evidence_rule": "face_adjacent_to_face",
+        "relation_kind": "adjacent_to"
+      },
+      {
+        "from_local_id": "face:004",
+        "to_local_id": "face:005",
+        "evidence_rule": "face_adjacent_to_face",
+        "relation_kind": "adjacent_to"
+      },
+      {
+        "from_local_id": "face:006",
+        "to_local_id": "face:007",
+        "evidence_rule": "face_adjacent_to_face",
+        "relation_kind": "adjacent_to"
+      },
+      {
+        "from_local_id": "edge:000",
+        "to_local_id": "vertex:000",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "edge:000",
+        "to_local_id": "vertex:001",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "endpoint:000:start",
+        "to_local_id": "edge:000",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "endpoint:000:end",
+        "to_local_id": "edge:000",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "edge:001",
+        "to_local_id": "vertex:002",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "edge:001",
+        "to_local_id": "vertex:000",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "endpoint:001:start",
+        "to_local_id": "edge:001",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "endpoint:001:end",
+        "to_local_id": "edge:001",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "edge:002",
+        "to_local_id": "vertex:002",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "edge:002",
+        "to_local_id": "vertex:003",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "endpoint:002:start",
+        "to_local_id": "edge:002",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "endpoint:002:end",
+        "to_local_id": "edge:002",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "edge:003",
+        "to_local_id": "vertex:003",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "edge:003",
+        "to_local_id": "vertex:001",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "endpoint:003:start",
+        "to_local_id": "edge:003",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "endpoint:003:end",
+        "to_local_id": "edge:003",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "edge:004",
+        "to_local_id": "vertex:004",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "edge:004",
+        "to_local_id": "vertex:001",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "endpoint:004:start",
+        "to_local_id": "edge:004",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "endpoint:004:end",
+        "to_local_id": "edge:004",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "edge:005",
+        "to_local_id": "vertex:005",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "edge:005",
+        "to_local_id": "vertex:004",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "endpoint:005:start",
+        "to_local_id": "edge:005",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "endpoint:005:end",
+        "to_local_id": "edge:005",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "edge:006",
+        "to_local_id": "vertex:005",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "edge:006",
+        "to_local_id": "vertex:000",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "endpoint:006:start",
+        "to_local_id": "edge:006",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "endpoint:006:end",
+        "to_local_id": "edge:006",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "edge:007",
+        "to_local_id": "vertex:006",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "edge:007",
+        "to_local_id": "vertex:002",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "endpoint:007:start",
+        "to_local_id": "edge:007",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "endpoint:007:end",
+        "to_local_id": "edge:007",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "edge:008",
+        "to_local_id": "vertex:006",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "edge:008",
+        "to_local_id": "vertex:005",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "endpoint:008:start",
+        "to_local_id": "edge:008",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "endpoint:008:end",
+        "to_local_id": "edge:008",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "edge:009",
+        "to_local_id": "vertex:007",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "endpoint:009:start",
+        "to_local_id": "edge:009",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "endpoint:009:end",
+        "to_local_id": "edge:009",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "edge:010",
+        "to_local_id": "vertex:008",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "edge:010",
+        "to_local_id": "vertex:003",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "endpoint:010:start",
+        "to_local_id": "edge:010",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "endpoint:010:end",
+        "to_local_id": "edge:010",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "edge:011",
+        "to_local_id": "vertex:006",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "edge:011",
+        "to_local_id": "vertex:008",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "endpoint:011:start",
+        "to_local_id": "edge:011",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "endpoint:011:end",
+        "to_local_id": "edge:011",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "edge:012",
+        "to_local_id": "vertex:008",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "edge:012",
+        "to_local_id": "vertex:004",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "endpoint:012:start",
+        "to_local_id": "edge:012",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "endpoint:012:end",
+        "to_local_id": "edge:012",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "edge:013",
+        "to_local_id": "vertex:007",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "edge:013",
+        "to_local_id": "vertex:009",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "endpoint:013:start",
+        "to_local_id": "edge:013",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "endpoint:013:end",
+        "to_local_id": "edge:013",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "edge:014",
+        "to_local_id": "vertex:009",
+        "evidence_rule": "edge_has_vertex",
+        "relation_kind": "has_vertex"
+      },
+      {
+        "from_local_id": "endpoint:014:start",
+        "to_local_id": "edge:014",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      },
+      {
+        "from_local_id": "endpoint:014:end",
+        "to_local_id": "edge:014",
+        "evidence_rule": "edge_endpoint",
+        "relation_kind": "endpoint_of"
+      }
+    ],
+    "measurements": [
+      {
+        "subject_local_id": "face:000",
+        "value": "100",
+        "unit": "square_millimetre",
+        "tolerance": null,
+        "measurement_kind": "area"
+      },
+      {
+        "subject_local_id": "face:000",
+        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"-5\",\"y\":\"10\",\"z\":\"2.5\"}}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "bounding_box"
+      },
+      {
+        "subject_local_id": "face:000",
+        "value": "{\"x\":\"-5\",\"y\":\"0\",\"z\":\"0\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "face:001",
+        "value": "50",
+        "unit": "square_millimetre",
+        "tolerance": null,
+        "measurement_kind": "area"
+      },
+      {
+        "subject_local_id": "face:001",
+        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"5\",\"y\":\"-10\",\"z\":\"2.5\"}}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "bounding_box"
+      },
+      {
+        "subject_local_id": "face:001",
+        "value": "{\"x\":\"0\",\"y\":\"-10\",\"z\":\"0\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "face:002",
+        "value": "187.433629386",
+        "unit": "square_millimetre",
+        "tolerance": null,
+        "measurement_kind": "area"
+      },
+      {
+        "subject_local_id": "face:002",
+        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"2.5\"},\"max\":{\"x\":\"5\",\"y\":\"10\",\"z\":\"2.5\"}}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "bounding_box"
+      },
+      {
+        "subject_local_id": "face:002",
+        "value": "{\"x\":\"0\",\"y\":\"0\",\"z\":\"2.5\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "face:003",
+        "value": "50",
+        "unit": "square_millimetre",
+        "tolerance": null,
+        "measurement_kind": "area"
+      },
+      {
+        "subject_local_id": "face:003",
+        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"5\",\"y\":\"10\",\"z\":\"2.5\"}}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "bounding_box"
+      },
+      {
+        "subject_local_id": "face:003",
+        "value": "{\"x\":\"0\",\"y\":\"10\",\"z\":\"0\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "face:004",
+        "value": "200",
+        "unit": "square_millimetre",
+        "tolerance": null,
+        "measurement_kind": "area"
+      },
+      {
+        "subject_local_id": "face:004",
+        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"5\",\"y\":\"10\",\"z\":\"-2.5\"}}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "bounding_box"
+      },
+      {
+        "subject_local_id": "face:004",
+        "value": "{\"x\":\"0\",\"y\":\"0\",\"z\":\"-2.5\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "face:005",
+        "value": "100",
+        "unit": "square_millimetre",
+        "tolerance": null,
+        "measurement_kind": "area"
+      },
+      {
+        "subject_local_id": "face:005",
+        "value": "{\"min\":{\"x\":\"5\",\"y\":\"-10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"5\",\"y\":\"10\",\"z\":\"2.5\"}}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "bounding_box"
+      },
+      {
+        "subject_local_id": "face:005",
+        "value": "{\"x\":\"5\",\"y\":\"0\",\"z\":\"0\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "face:006",
+        "value": "25.132741229",
+        "unit": "square_millimetre",
+        "tolerance": null,
+        "measurement_kind": "area"
+      },
+      {
+        "subject_local_id": "face:006",
+        "value": "{\"min\":{\"x\":\"-2\",\"y\":\"-2\",\"z\":\"0.5\"},\"max\":{\"x\":\"2\",\"y\":\"2\",\"z\":\"2.5\"}}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "bounding_box"
+      },
+      {
+        "subject_local_id": "face:006",
+        "value": "{\"x\":\"0\",\"y\":\"0\",\"z\":\"1.5\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "face:007",
+        "value": "12.566370614",
+        "unit": "square_millimetre",
+        "tolerance": null,
+        "measurement_kind": "area"
+      },
+      {
+        "subject_local_id": "face:007",
+        "value": "{\"min\":{\"x\":\"-2\",\"y\":\"-2\",\"z\":\"0.5\"},\"max\":{\"x\":\"2\",\"y\":\"2\",\"z\":\"0.5\"}}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "bounding_box"
+      },
+      {
+        "subject_local_id": "face:007",
+        "value": "{\"x\":\"0\",\"y\":\"0\",\"z\":\"0.5\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "edge:000",
+        "value": "5",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "length"
+      },
+      {
+        "subject_local_id": "edge:000",
+        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"2.5\"}}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "bounding_box"
+      },
+      {
+        "subject_local_id": "edge:000",
+        "value": "{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"0\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "edge:001",
+        "value": "20",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "length"
+      },
+      {
+        "subject_local_id": "edge:001",
+        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"2.5\"},\"max\":{\"x\":\"-5\",\"y\":\"10\",\"z\":\"2.5\"}}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "bounding_box"
+      },
+      {
+        "subject_local_id": "edge:001",
+        "value": "{\"x\":\"-5\",\"y\":\"0\",\"z\":\"2.5\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "edge:002",
+        "value": "5",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "length"
+      },
+      {
+        "subject_local_id": "edge:002",
+        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"-5\",\"y\":\"10\",\"z\":\"2.5\"}}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "bounding_box"
+      },
+      {
+        "subject_local_id": "edge:002",
+        "value": "{\"x\":\"-5\",\"y\":\"10\",\"z\":\"0\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "edge:003",
+        "value": "20",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "length"
+      },
+      {
+        "subject_local_id": "edge:003",
+        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"-5\",\"y\":\"10\",\"z\":\"-2.5\"}}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "bounding_box"
+      },
+      {
+        "subject_local_id": "edge:003",
+        "value": "{\"x\":\"-5\",\"y\":\"0\",\"z\":\"-2.5\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "edge:004",
+        "value": "10",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "length"
+      },
+      {
+        "subject_local_id": "edge:004",
+        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"5\",\"y\":\"-10\",\"z\":\"-2.5\"}}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "bounding_box"
+      },
+      {
+        "subject_local_id": "edge:004",
+        "value": "{\"x\":\"0\",\"y\":\"-10\",\"z\":\"-2.5\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "edge:005",
+        "value": "5",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "length"
+      },
+      {
+        "subject_local_id": "edge:005",
+        "value": "{\"min\":{\"x\":\"5\",\"y\":\"-10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"5\",\"y\":\"-10\",\"z\":\"2.5\"}}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "bounding_box"
+      },
+      {
+        "subject_local_id": "edge:005",
+        "value": "{\"x\":\"5\",\"y\":\"-10\",\"z\":\"0\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "edge:006",
+        "value": "10",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "length"
+      },
+      {
+        "subject_local_id": "edge:006",
+        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"2.5\"},\"max\":{\"x\":\"5\",\"y\":\"-10\",\"z\":\"2.5\"}}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "bounding_box"
+      },
+      {
+        "subject_local_id": "edge:006",
+        "value": "{\"x\":\"0\",\"y\":\"-10\",\"z\":\"2.5\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "edge:007",
+        "value": "10",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "length"
+      },
+      {
+        "subject_local_id": "edge:007",
+        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"10\",\"z\":\"2.5\"},\"max\":{\"x\":\"5\",\"y\":\"10\",\"z\":\"2.5\"}}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "bounding_box"
+      },
+      {
+        "subject_local_id": "edge:007",
+        "value": "{\"x\":\"0\",\"y\":\"10\",\"z\":\"2.5\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "edge:008",
+        "value": "20",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "length"
+      },
+      {
+        "subject_local_id": "edge:008",
+        "value": "{\"min\":{\"x\":\"5\",\"y\":\"-10\",\"z\":\"2.5\"},\"max\":{\"x\":\"5\",\"y\":\"10\",\"z\":\"2.5\"}}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "bounding_box"
+      },
+      {
+        "subject_local_id": "edge:008",
+        "value": "{\"x\":\"5\",\"y\":\"0\",\"z\":\"2.5\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "edge:009",
+        "value": "12.566370614",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "length"
+      },
+      {
+        "subject_local_id": "edge:009",
+        "value": "{\"min\":{\"x\":\"-2\",\"y\":\"-2\",\"z\":\"2.5\"},\"max\":{\"x\":\"2\",\"y\":\"2\",\"z\":\"2.5\"}}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "bounding_box"
+      },
+      {
+        "subject_local_id": "edge:009",
+        "value": "{\"x\":\"0\",\"y\":\"0\",\"z\":\"2.5\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "edge:010",
+        "value": "10",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "length"
+      },
+      {
+        "subject_local_id": "edge:010",
+        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"5\",\"y\":\"10\",\"z\":\"-2.5\"}}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "bounding_box"
+      },
+      {
+        "subject_local_id": "edge:010",
+        "value": "{\"x\":\"0\",\"y\":\"10\",\"z\":\"-2.5\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "edge:011",
+        "value": "5",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "length"
+      },
+      {
+        "subject_local_id": "edge:011",
+        "value": "{\"min\":{\"x\":\"5\",\"y\":\"10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"5\",\"y\":\"10\",\"z\":\"2.5\"}}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "bounding_box"
+      },
+      {
+        "subject_local_id": "edge:011",
+        "value": "{\"x\":\"5\",\"y\":\"10\",\"z\":\"0\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "edge:012",
+        "value": "20",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "length"
+      },
+      {
+        "subject_local_id": "edge:012",
+        "value": "{\"min\":{\"x\":\"5\",\"y\":\"-10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"5\",\"y\":\"10\",\"z\":\"-2.5\"}}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "bounding_box"
+      },
+      {
+        "subject_local_id": "edge:012",
+        "value": "{\"x\":\"5\",\"y\":\"0\",\"z\":\"-2.5\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "edge:013",
+        "value": "2",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "length"
+      },
+      {
+        "subject_local_id": "edge:013",
+        "value": "{\"min\":{\"x\":\"2\",\"y\":\"0\",\"z\":\"0.5\"},\"max\":{\"x\":\"2\",\"y\":\"0\",\"z\":\"2.5\"}}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "bounding_box"
+      },
+      {
+        "subject_local_id": "edge:013",
+        "value": "{\"x\":\"2\",\"y\":\"0\",\"z\":\"1.5\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "edge:014",
+        "value": "12.566370614",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "length"
+      },
+      {
+        "subject_local_id": "edge:014",
+        "value": "{\"min\":{\"x\":\"-2\",\"y\":\"-2\",\"z\":\"0.5\"},\"max\":{\"x\":\"2\",\"y\":\"2\",\"z\":\"0.5\"}}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "bounding_box"
+      },
+      {
+        "subject_local_id": "edge:014",
+        "value": "{\"x\":\"0\",\"y\":\"0\",\"z\":\"0.5\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "vertex:000",
+        "value": "{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"2.5\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "vertex:001",
+        "value": "{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"-2.5\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "vertex:002",
+        "value": "{\"x\":\"-5\",\"y\":\"10\",\"z\":\"2.5\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "vertex:003",
+        "value": "{\"x\":\"-5\",\"y\":\"10\",\"z\":\"-2.5\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "vertex:004",
+        "value": "{\"x\":\"5\",\"y\":\"-10\",\"z\":\"-2.5\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "vertex:005",
+        "value": "{\"x\":\"5\",\"y\":\"-10\",\"z\":\"2.5\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "vertex:006",
+        "value": "{\"x\":\"5\",\"y\":\"10\",\"z\":\"2.5\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "vertex:007",
+        "value": "{\"x\":\"2\",\"y\":\"0\",\"z\":\"2.5\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "vertex:008",
+        "value": "{\"x\":\"5\",\"y\":\"10\",\"z\":\"-2.5\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "vertex:009",
+        "value": "{\"x\":\"2\",\"y\":\"0\",\"z\":\"0.5\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "state:005",
+        "value": "974.867258771",
+        "unit": "cubic_millimetre",
+        "tolerance": null,
+        "measurement_kind": "volume"
+      },
+      {
+        "subject_local_id": "state:005",
+        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"5\",\"y\":\"10\",\"z\":\"2.5\"}}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "bounding_box"
+      },
+      {
+        "subject_local_id": "state:005",
+        "value": "{\"x\":\"0\",\"y\":\"0\",\"z\":\"-0.038671021\"}",
+        "unit": "millimetre",
+        "tolerance": null,
+        "measurement_kind": "centroid"
+      },
+      {
+        "subject_local_id": "state:005",
+        "value": "8",
+        "unit": "unitless",
+        "tolerance": null,
+        "measurement_kind": "face_count"
+      },
+      {
+        "subject_local_id": "state:005",
+        "value": "15",
+        "unit": "unitless",
+        "tolerance": null,
+        "measurement_kind": "edge_count"
+      },
+      {
+        "subject_local_id": "state:005",
+        "value": "10",
+        "unit": "unitless",
+        "tolerance": null,
+        "measurement_kind": "vertex_count"
+      },
+      {
+        "subject_local_id": "state:005",
+        "value": "true",
+        "unit": "unitless",
+        "tolerance": null,
+        "measurement_kind": "validity"
+      }
+    ],
+    "capabilities": [],
+    "entities": [
       {
         "local_id": "program",
-        "kind": "cadquery_program",
         "descriptor": {
           "category": "cadquery_program",
           "filters": {
@@ -33,11 +1395,11 @@
         },
         "attributes": {
           "normalization_version": "1"
-        }
+        },
+        "entity_kind": "cadquery_program"
       },
       {
         "local_id": "operation:000",
-        "kind": "operation",
         "descriptor": {
           "category": "operation",
           "filters": {
@@ -48,11 +1410,11 @@
         "attributes": {
           "operation_kind": "workplane",
           "result_var": "wp"
-        }
+        },
+        "entity_kind": "operation"
       },
       {
         "local_id": "operation:001",
-        "kind": "operation",
         "descriptor": {
           "category": "operation",
           "filters": {
@@ -63,11 +1425,11 @@
         "attributes": {
           "operation_kind": "solid",
           "result_var": "box"
-        }
+        },
+        "entity_kind": "operation"
       },
       {
         "local_id": "operation:002",
-        "kind": "operation",
         "descriptor": {
           "category": "operation",
           "filters": {
@@ -78,11 +1440,11 @@
         "attributes": {
           "operation_kind": "cadquery_selector",
           "result_var": "top"
-        }
+        },
+        "entity_kind": "operation"
       },
       {
         "local_id": "operation:003",
-        "kind": "operation",
         "descriptor": {
           "category": "operation",
           "filters": {
@@ -93,11 +1455,11 @@
         "attributes": {
           "operation_kind": "workplane",
           "result_var": "plane"
-        }
+        },
+        "entity_kind": "operation"
       },
       {
         "local_id": "operation:004",
-        "kind": "operation",
         "descriptor": {
           "category": "operation",
           "filters": {
@@ -108,11 +1470,11 @@
         "attributes": {
           "operation_kind": "sketch",
           "result_var": "hole"
-        }
+        },
+        "entity_kind": "operation"
       },
       {
         "local_id": "operation:005",
-        "kind": "operation",
         "descriptor": {
           "category": "operation",
           "filters": {
@@ -123,11 +1485,11 @@
         "attributes": {
           "operation_kind": "modifier",
           "result_var": "result"
-        }
+        },
+        "entity_kind": "operation"
       },
       {
         "local_id": "feature:001",
-        "kind": "feature",
         "descriptor": {
           "category": "feature",
           "filters": {
@@ -137,11 +1499,11 @@
         },
         "attributes": {
           "feature_kind": "add_material"
-        }
+        },
+        "entity_kind": "feature"
       },
       {
         "local_id": "region:001:added",
-        "kind": "region",
         "descriptor": {
           "category": "region",
           "filters": {
@@ -151,11 +1513,11 @@
         },
         "attributes": {
           "region_sign": "added"
-        }
+        },
+        "entity_kind": "region"
       },
       {
         "local_id": "feature:005",
-        "kind": "feature",
         "descriptor": {
           "category": "feature",
           "filters": {
@@ -165,11 +1527,11 @@
         },
         "attributes": {
           "feature_kind": "remove_material"
-        }
+        },
+        "entity_kind": "feature"
       },
       {
         "local_id": "region:005:removed",
-        "kind": "region",
         "descriptor": {
           "category": "region",
           "filters": {
@@ -179,11 +1541,11 @@
         },
         "attributes": {
           "region_sign": "removed"
-        }
+        },
+        "entity_kind": "region"
       },
       {
         "local_id": "state:005",
-        "kind": "solid_state",
         "descriptor": {
           "category": "solid_state",
           "filters": {
@@ -193,11 +1555,11 @@
         },
         "attributes": {
           "is_final": "true"
-        }
+        },
+        "entity_kind": "solid_state"
       },
       {
         "local_id": "face:000",
-        "kind": "face",
         "descriptor": {
           "category": "face",
           "filters": {
@@ -210,11 +1572,11 @@
         },
         "attributes": {
           "face_surface_kind": "plane"
-        }
+        },
+        "entity_kind": "face"
       },
       {
         "local_id": "face:001",
-        "kind": "face",
         "descriptor": {
           "category": "face",
           "filters": {
@@ -227,11 +1589,11 @@
         },
         "attributes": {
           "face_surface_kind": "plane"
-        }
+        },
+        "entity_kind": "face"
       },
       {
         "local_id": "face:002",
-        "kind": "face",
         "descriptor": {
           "category": "face",
           "filters": {
@@ -244,11 +1606,11 @@
         },
         "attributes": {
           "face_surface_kind": "plane"
-        }
+        },
+        "entity_kind": "face"
       },
       {
         "local_id": "face:003",
-        "kind": "face",
         "descriptor": {
           "category": "face",
           "filters": {
@@ -261,11 +1623,11 @@
         },
         "attributes": {
           "face_surface_kind": "plane"
-        }
+        },
+        "entity_kind": "face"
       },
       {
         "local_id": "face:004",
-        "kind": "face",
         "descriptor": {
           "category": "face",
           "filters": {
@@ -278,11 +1640,11 @@
         },
         "attributes": {
           "face_surface_kind": "plane"
-        }
+        },
+        "entity_kind": "face"
       },
       {
         "local_id": "face:005",
-        "kind": "face",
         "descriptor": {
           "category": "face",
           "filters": {
@@ -295,11 +1657,11 @@
         },
         "attributes": {
           "face_surface_kind": "plane"
-        }
+        },
+        "entity_kind": "face"
       },
       {
         "local_id": "face:006",
-        "kind": "face",
         "descriptor": {
           "category": "face",
           "filters": {
@@ -312,11 +1674,11 @@
         },
         "attributes": {
           "face_surface_kind": "cylinder"
-        }
+        },
+        "entity_kind": "face"
       },
       {
         "local_id": "face:007",
-        "kind": "face",
         "descriptor": {
           "category": "face",
           "filters": {
@@ -329,11 +1691,11 @@
         },
         "attributes": {
           "face_surface_kind": "plane"
-        }
+        },
+        "entity_kind": "face"
       },
       {
         "local_id": "edge:000",
-        "kind": "edge",
         "descriptor": {
           "category": "edge",
           "filters": {
@@ -346,11 +1708,11 @@
         },
         "attributes": {
           "edge_curve_kind": "line"
-        }
+        },
+        "entity_kind": "edge"
       },
       {
         "local_id": "edge:001",
-        "kind": "edge",
         "descriptor": {
           "category": "edge",
           "filters": {
@@ -363,11 +1725,11 @@
         },
         "attributes": {
           "edge_curve_kind": "line"
-        }
+        },
+        "entity_kind": "edge"
       },
       {
         "local_id": "edge:002",
-        "kind": "edge",
         "descriptor": {
           "category": "edge",
           "filters": {
@@ -380,11 +1742,11 @@
         },
         "attributes": {
           "edge_curve_kind": "line"
-        }
+        },
+        "entity_kind": "edge"
       },
       {
         "local_id": "edge:003",
-        "kind": "edge",
         "descriptor": {
           "category": "edge",
           "filters": {
@@ -397,11 +1759,11 @@
         },
         "attributes": {
           "edge_curve_kind": "line"
-        }
+        },
+        "entity_kind": "edge"
       },
       {
         "local_id": "edge:004",
-        "kind": "edge",
         "descriptor": {
           "category": "edge",
           "filters": {
@@ -414,11 +1776,11 @@
         },
         "attributes": {
           "edge_curve_kind": "line"
-        }
+        },
+        "entity_kind": "edge"
       },
       {
         "local_id": "edge:005",
-        "kind": "edge",
         "descriptor": {
           "category": "edge",
           "filters": {
@@ -431,11 +1793,11 @@
         },
         "attributes": {
           "edge_curve_kind": "line"
-        }
+        },
+        "entity_kind": "edge"
       },
       {
         "local_id": "edge:006",
-        "kind": "edge",
         "descriptor": {
           "category": "edge",
           "filters": {
@@ -448,11 +1810,11 @@
         },
         "attributes": {
           "edge_curve_kind": "line"
-        }
+        },
+        "entity_kind": "edge"
       },
       {
         "local_id": "edge:007",
-        "kind": "edge",
         "descriptor": {
           "category": "edge",
           "filters": {
@@ -465,11 +1827,11 @@
         },
         "attributes": {
           "edge_curve_kind": "line"
-        }
+        },
+        "entity_kind": "edge"
       },
       {
         "local_id": "edge:008",
-        "kind": "edge",
         "descriptor": {
           "category": "edge",
           "filters": {
@@ -482,11 +1844,11 @@
         },
         "attributes": {
           "edge_curve_kind": "line"
-        }
+        },
+        "entity_kind": "edge"
       },
       {
         "local_id": "edge:009",
-        "kind": "edge",
         "descriptor": {
           "category": "edge",
           "filters": {
@@ -499,11 +1861,11 @@
         },
         "attributes": {
           "edge_curve_kind": "circle"
-        }
+        },
+        "entity_kind": "edge"
       },
       {
         "local_id": "edge:010",
-        "kind": "edge",
         "descriptor": {
           "category": "edge",
           "filters": {
@@ -516,11 +1878,11 @@
         },
         "attributes": {
           "edge_curve_kind": "line"
-        }
+        },
+        "entity_kind": "edge"
       },
       {
         "local_id": "edge:011",
-        "kind": "edge",
         "descriptor": {
           "category": "edge",
           "filters": {
@@ -533,11 +1895,11 @@
         },
         "attributes": {
           "edge_curve_kind": "line"
-        }
+        },
+        "entity_kind": "edge"
       },
       {
         "local_id": "edge:012",
-        "kind": "edge",
         "descriptor": {
           "category": "edge",
           "filters": {
@@ -550,11 +1912,11 @@
         },
         "attributes": {
           "edge_curve_kind": "line"
-        }
+        },
+        "entity_kind": "edge"
       },
       {
         "local_id": "edge:013",
-        "kind": "edge",
         "descriptor": {
           "category": "edge",
           "filters": {
@@ -567,11 +1929,11 @@
         },
         "attributes": {
           "edge_curve_kind": "line"
-        }
+        },
+        "entity_kind": "edge"
       },
       {
         "local_id": "edge:014",
-        "kind": "edge",
         "descriptor": {
           "category": "edge",
           "filters": {
@@ -584,11 +1946,11 @@
         },
         "attributes": {
           "edge_curve_kind": "circle"
-        }
+        },
+        "entity_kind": "edge"
       },
       {
         "local_id": "vertex:000",
-        "kind": "vertex",
         "descriptor": {
           "category": "vertex",
           "filters": {
@@ -597,11 +1959,11 @@
             "centroid_z": "2.5"
           }
         },
-        "attributes": {}
+        "attributes": {},
+        "entity_kind": "vertex"
       },
       {
         "local_id": "vertex:001",
-        "kind": "vertex",
         "descriptor": {
           "category": "vertex",
           "filters": {
@@ -610,11 +1972,11 @@
             "centroid_z": "-2.5"
           }
         },
-        "attributes": {}
+        "attributes": {},
+        "entity_kind": "vertex"
       },
       {
         "local_id": "vertex:002",
-        "kind": "vertex",
         "descriptor": {
           "category": "vertex",
           "filters": {
@@ -623,11 +1985,11 @@
             "centroid_z": "2.5"
           }
         },
-        "attributes": {}
+        "attributes": {},
+        "entity_kind": "vertex"
       },
       {
         "local_id": "vertex:003",
-        "kind": "vertex",
         "descriptor": {
           "category": "vertex",
           "filters": {
@@ -636,11 +1998,11 @@
             "centroid_z": "-2.5"
           }
         },
-        "attributes": {}
+        "attributes": {},
+        "entity_kind": "vertex"
       },
       {
         "local_id": "vertex:004",
-        "kind": "vertex",
         "descriptor": {
           "category": "vertex",
           "filters": {
@@ -649,11 +2011,11 @@
             "centroid_z": "-2.5"
           }
         },
-        "attributes": {}
+        "attributes": {},
+        "entity_kind": "vertex"
       },
       {
         "local_id": "vertex:005",
-        "kind": "vertex",
         "descriptor": {
           "category": "vertex",
           "filters": {
@@ -662,11 +2024,11 @@
             "centroid_z": "2.5"
           }
         },
-        "attributes": {}
+        "attributes": {},
+        "entity_kind": "vertex"
       },
       {
         "local_id": "vertex:006",
-        "kind": "vertex",
         "descriptor": {
           "category": "vertex",
           "filters": {
@@ -675,11 +2037,11 @@
             "centroid_z": "2.5"
           }
         },
-        "attributes": {}
+        "attributes": {},
+        "entity_kind": "vertex"
       },
       {
         "local_id": "vertex:007",
-        "kind": "vertex",
         "descriptor": {
           "category": "vertex",
           "filters": {
@@ -688,11 +2050,11 @@
             "centroid_z": "2.5"
           }
         },
-        "attributes": {}
+        "attributes": {},
+        "entity_kind": "vertex"
       },
       {
         "local_id": "vertex:008",
-        "kind": "vertex",
         "descriptor": {
           "category": "vertex",
           "filters": {
@@ -701,11 +2063,11 @@
             "centroid_z": "-2.5"
           }
         },
-        "attributes": {}
+        "attributes": {},
+        "entity_kind": "vertex"
       },
       {
         "local_id": "vertex:009",
-        "kind": "vertex",
         "descriptor": {
           "category": "vertex",
           "filters": {
@@ -714,11 +2076,11 @@
             "centroid_z": "0.5"
           }
         },
-        "attributes": {}
+        "attributes": {},
+        "entity_kind": "vertex"
       },
       {
         "local_id": "endpoint:000:start",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -728,11 +2090,11 @@
         },
         "attributes": {
           "end": "start"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:000:end",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -742,11 +2104,11 @@
         },
         "attributes": {
           "end": "end"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:001:start",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -756,11 +2118,11 @@
         },
         "attributes": {
           "end": "start"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:001:end",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -770,11 +2132,11 @@
         },
         "attributes": {
           "end": "end"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:002:start",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -784,11 +2146,11 @@
         },
         "attributes": {
           "end": "start"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:002:end",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -798,11 +2160,11 @@
         },
         "attributes": {
           "end": "end"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:003:start",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -812,11 +2174,11 @@
         },
         "attributes": {
           "end": "start"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:003:end",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -826,11 +2188,11 @@
         },
         "attributes": {
           "end": "end"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:004:start",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -840,11 +2202,11 @@
         },
         "attributes": {
           "end": "start"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:004:end",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -854,11 +2216,11 @@
         },
         "attributes": {
           "end": "end"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:005:start",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -868,11 +2230,11 @@
         },
         "attributes": {
           "end": "start"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:005:end",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -882,11 +2244,11 @@
         },
         "attributes": {
           "end": "end"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:006:start",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -896,11 +2258,11 @@
         },
         "attributes": {
           "end": "start"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:006:end",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -910,11 +2272,11 @@
         },
         "attributes": {
           "end": "end"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:007:start",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -924,11 +2286,11 @@
         },
         "attributes": {
           "end": "start"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:007:end",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -938,11 +2300,11 @@
         },
         "attributes": {
           "end": "end"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:008:start",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -952,11 +2314,11 @@
         },
         "attributes": {
           "end": "start"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:008:end",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -966,11 +2328,11 @@
         },
         "attributes": {
           "end": "end"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:009:start",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -980,11 +2342,11 @@
         },
         "attributes": {
           "end": "start"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:009:end",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -994,11 +2356,11 @@
         },
         "attributes": {
           "end": "end"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:010:start",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -1008,11 +2370,11 @@
         },
         "attributes": {
           "end": "start"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:010:end",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -1022,11 +2384,11 @@
         },
         "attributes": {
           "end": "end"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:011:start",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -1036,11 +2398,11 @@
         },
         "attributes": {
           "end": "start"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:011:end",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -1050,11 +2412,11 @@
         },
         "attributes": {
           "end": "end"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:012:start",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -1064,11 +2426,11 @@
         },
         "attributes": {
           "end": "start"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:012:end",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -1078,11 +2440,11 @@
         },
         "attributes": {
           "end": "end"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:013:start",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -1092,11 +2454,11 @@
         },
         "attributes": {
           "end": "start"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:013:end",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -1106,11 +2468,11 @@
         },
         "attributes": {
           "end": "end"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:014:start",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -1120,11 +2482,11 @@
         },
         "attributes": {
           "end": "start"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       },
       {
         "local_id": "endpoint:014:end",
-        "kind": "edge_endpoint",
         "descriptor": {
           "category": "edge_endpoint",
           "filters": {
@@ -1134,1385 +2496,12 @@
         },
         "attributes": {
           "end": "end"
-        }
+        },
+        "entity_kind": "edge_endpoint"
       }
-    ],
-    "relations": [
-      {
-        "kind": "before",
-        "from_local_id": "operation:000",
-        "to_local_id": "operation:001",
-        "evidence_rule": "operation_order"
-      },
-      {
-        "kind": "after",
-        "from_local_id": "operation:001",
-        "to_local_id": "operation:000",
-        "evidence_rule": "operation_order"
-      },
-      {
-        "kind": "before",
-        "from_local_id": "operation:001",
-        "to_local_id": "operation:002",
-        "evidence_rule": "operation_order"
-      },
-      {
-        "kind": "after",
-        "from_local_id": "operation:002",
-        "to_local_id": "operation:001",
-        "evidence_rule": "operation_order"
-      },
-      {
-        "kind": "before",
-        "from_local_id": "operation:002",
-        "to_local_id": "operation:003",
-        "evidence_rule": "operation_order"
-      },
-      {
-        "kind": "after",
-        "from_local_id": "operation:003",
-        "to_local_id": "operation:002",
-        "evidence_rule": "operation_order"
-      },
-      {
-        "kind": "before",
-        "from_local_id": "operation:003",
-        "to_local_id": "operation:004",
-        "evidence_rule": "operation_order"
-      },
-      {
-        "kind": "after",
-        "from_local_id": "operation:004",
-        "to_local_id": "operation:003",
-        "evidence_rule": "operation_order"
-      },
-      {
-        "kind": "before",
-        "from_local_id": "operation:004",
-        "to_local_id": "operation:005",
-        "evidence_rule": "operation_order"
-      },
-      {
-        "kind": "after",
-        "from_local_id": "operation:005",
-        "to_local_id": "operation:004",
-        "evidence_rule": "operation_order"
-      },
-      {
-        "kind": "creates",
-        "from_local_id": "operation:001",
-        "to_local_id": "feature:001",
-        "evidence_rule": "solid_state_producing_operation"
-      },
-      {
-        "kind": "adds_material",
-        "from_local_id": "feature:001",
-        "to_local_id": "region:001:added",
-        "evidence_rule": "feature_kind"
-      },
-      {
-        "kind": "part_of",
-        "from_local_id": "region:001:added",
-        "to_local_id": "feature:001",
-        "evidence_rule": "region_derivation"
-      },
-      {
-        "kind": "creates",
-        "from_local_id": "operation:005",
-        "to_local_id": "feature:005",
-        "evidence_rule": "solid_state_producing_operation"
-      },
-      {
-        "kind": "creates",
-        "from_local_id": "operation:005",
-        "to_local_id": "state:005",
-        "evidence_rule": "captured_state"
-      },
-      {
-        "kind": "removes_material",
-        "from_local_id": "feature:005",
-        "to_local_id": "region:005:removed",
-        "evidence_rule": "feature_kind"
-      },
-      {
-        "kind": "part_of",
-        "from_local_id": "region:005:removed",
-        "to_local_id": "feature:005",
-        "evidence_rule": "region_derivation"
-      },
-      {
-        "kind": "has_face",
-        "from_local_id": "state:005",
-        "to_local_id": "face:000",
-        "evidence_rule": "state_entity_table"
-      },
-      {
-        "kind": "has_face",
-        "from_local_id": "state:005",
-        "to_local_id": "face:001",
-        "evidence_rule": "state_entity_table"
-      },
-      {
-        "kind": "has_face",
-        "from_local_id": "state:005",
-        "to_local_id": "face:002",
-        "evidence_rule": "state_entity_table"
-      },
-      {
-        "kind": "has_face",
-        "from_local_id": "state:005",
-        "to_local_id": "face:003",
-        "evidence_rule": "state_entity_table"
-      },
-      {
-        "kind": "has_face",
-        "from_local_id": "state:005",
-        "to_local_id": "face:004",
-        "evidence_rule": "state_entity_table"
-      },
-      {
-        "kind": "has_face",
-        "from_local_id": "state:005",
-        "to_local_id": "face:005",
-        "evidence_rule": "state_entity_table"
-      },
-      {
-        "kind": "has_face",
-        "from_local_id": "state:005",
-        "to_local_id": "face:006",
-        "evidence_rule": "state_entity_table"
-      },
-      {
-        "kind": "has_face",
-        "from_local_id": "state:005",
-        "to_local_id": "face:007",
-        "evidence_rule": "state_entity_table"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:000",
-        "to_local_id": "edge:000",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:000",
-        "to_local_id": "edge:001",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:000",
-        "to_local_id": "edge:002",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:000",
-        "to_local_id": "edge:003",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:001",
-        "to_local_id": "edge:004",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:001",
-        "to_local_id": "edge:005",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:001",
-        "to_local_id": "edge:006",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:001",
-        "to_local_id": "edge:000",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:002",
-        "to_local_id": "edge:001",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:002",
-        "to_local_id": "edge:007",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:002",
-        "to_local_id": "edge:006",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:002",
-        "to_local_id": "edge:008",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:002",
-        "to_local_id": "edge:009",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:003",
-        "to_local_id": "edge:010",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:003",
-        "to_local_id": "edge:011",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:003",
-        "to_local_id": "edge:007",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:003",
-        "to_local_id": "edge:002",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:004",
-        "to_local_id": "edge:003",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:004",
-        "to_local_id": "edge:010",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:004",
-        "to_local_id": "edge:012",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:004",
-        "to_local_id": "edge:004",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:005",
-        "to_local_id": "edge:005",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:005",
-        "to_local_id": "edge:008",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:005",
-        "to_local_id": "edge:011",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:005",
-        "to_local_id": "edge:012",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:006",
-        "to_local_id": "edge:013",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:006",
-        "to_local_id": "edge:009",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:006",
-        "to_local_id": "edge:014",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "has_edge",
-        "from_local_id": "face:007",
-        "to_local_id": "edge:014",
-        "evidence_rule": "face_has_edge"
-      },
-      {
-        "kind": "adjacent_to",
-        "from_local_id": "face:000",
-        "to_local_id": "face:001",
-        "evidence_rule": "face_adjacent_to_face"
-      },
-      {
-        "kind": "adjacent_to",
-        "from_local_id": "face:000",
-        "to_local_id": "face:002",
-        "evidence_rule": "face_adjacent_to_face"
-      },
-      {
-        "kind": "adjacent_to",
-        "from_local_id": "face:000",
-        "to_local_id": "face:003",
-        "evidence_rule": "face_adjacent_to_face"
-      },
-      {
-        "kind": "adjacent_to",
-        "from_local_id": "face:000",
-        "to_local_id": "face:004",
-        "evidence_rule": "face_adjacent_to_face"
-      },
-      {
-        "kind": "adjacent_to",
-        "from_local_id": "face:001",
-        "to_local_id": "face:004",
-        "evidence_rule": "face_adjacent_to_face"
-      },
-      {
-        "kind": "adjacent_to",
-        "from_local_id": "face:001",
-        "to_local_id": "face:005",
-        "evidence_rule": "face_adjacent_to_face"
-      },
-      {
-        "kind": "adjacent_to",
-        "from_local_id": "face:001",
-        "to_local_id": "face:002",
-        "evidence_rule": "face_adjacent_to_face"
-      },
-      {
-        "kind": "adjacent_to",
-        "from_local_id": "face:002",
-        "to_local_id": "face:003",
-        "evidence_rule": "face_adjacent_to_face"
-      },
-      {
-        "kind": "adjacent_to",
-        "from_local_id": "face:002",
-        "to_local_id": "face:005",
-        "evidence_rule": "face_adjacent_to_face"
-      },
-      {
-        "kind": "adjacent_to",
-        "from_local_id": "face:002",
-        "to_local_id": "face:006",
-        "evidence_rule": "face_adjacent_to_face"
-      },
-      {
-        "kind": "adjacent_to",
-        "from_local_id": "face:003",
-        "to_local_id": "face:004",
-        "evidence_rule": "face_adjacent_to_face"
-      },
-      {
-        "kind": "adjacent_to",
-        "from_local_id": "face:003",
-        "to_local_id": "face:005",
-        "evidence_rule": "face_adjacent_to_face"
-      },
-      {
-        "kind": "adjacent_to",
-        "from_local_id": "face:004",
-        "to_local_id": "face:005",
-        "evidence_rule": "face_adjacent_to_face"
-      },
-      {
-        "kind": "adjacent_to",
-        "from_local_id": "face:006",
-        "to_local_id": "face:007",
-        "evidence_rule": "face_adjacent_to_face"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:000",
-        "to_local_id": "vertex:000",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:000",
-        "to_local_id": "vertex:001",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:000:start",
-        "to_local_id": "edge:000",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:000:end",
-        "to_local_id": "edge:000",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:001",
-        "to_local_id": "vertex:002",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:001",
-        "to_local_id": "vertex:000",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:001:start",
-        "to_local_id": "edge:001",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:001:end",
-        "to_local_id": "edge:001",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:002",
-        "to_local_id": "vertex:002",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:002",
-        "to_local_id": "vertex:003",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:002:start",
-        "to_local_id": "edge:002",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:002:end",
-        "to_local_id": "edge:002",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:003",
-        "to_local_id": "vertex:003",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:003",
-        "to_local_id": "vertex:001",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:003:start",
-        "to_local_id": "edge:003",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:003:end",
-        "to_local_id": "edge:003",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:004",
-        "to_local_id": "vertex:004",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:004",
-        "to_local_id": "vertex:001",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:004:start",
-        "to_local_id": "edge:004",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:004:end",
-        "to_local_id": "edge:004",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:005",
-        "to_local_id": "vertex:005",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:005",
-        "to_local_id": "vertex:004",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:005:start",
-        "to_local_id": "edge:005",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:005:end",
-        "to_local_id": "edge:005",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:006",
-        "to_local_id": "vertex:005",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:006",
-        "to_local_id": "vertex:000",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:006:start",
-        "to_local_id": "edge:006",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:006:end",
-        "to_local_id": "edge:006",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:007",
-        "to_local_id": "vertex:006",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:007",
-        "to_local_id": "vertex:002",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:007:start",
-        "to_local_id": "edge:007",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:007:end",
-        "to_local_id": "edge:007",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:008",
-        "to_local_id": "vertex:006",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:008",
-        "to_local_id": "vertex:005",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:008:start",
-        "to_local_id": "edge:008",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:008:end",
-        "to_local_id": "edge:008",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:009",
-        "to_local_id": "vertex:007",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:009:start",
-        "to_local_id": "edge:009",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:009:end",
-        "to_local_id": "edge:009",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:010",
-        "to_local_id": "vertex:008",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:010",
-        "to_local_id": "vertex:003",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:010:start",
-        "to_local_id": "edge:010",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:010:end",
-        "to_local_id": "edge:010",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:011",
-        "to_local_id": "vertex:006",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:011",
-        "to_local_id": "vertex:008",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:011:start",
-        "to_local_id": "edge:011",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:011:end",
-        "to_local_id": "edge:011",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:012",
-        "to_local_id": "vertex:008",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:012",
-        "to_local_id": "vertex:004",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:012:start",
-        "to_local_id": "edge:012",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:012:end",
-        "to_local_id": "edge:012",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:013",
-        "to_local_id": "vertex:007",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:013",
-        "to_local_id": "vertex:009",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:013:start",
-        "to_local_id": "edge:013",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:013:end",
-        "to_local_id": "edge:013",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "has_vertex",
-        "from_local_id": "edge:014",
-        "to_local_id": "vertex:009",
-        "evidence_rule": "edge_has_vertex"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:014:start",
-        "to_local_id": "edge:014",
-        "evidence_rule": "edge_endpoint"
-      },
-      {
-        "kind": "endpoint_of",
-        "from_local_id": "endpoint:014:end",
-        "to_local_id": "edge:014",
-        "evidence_rule": "edge_endpoint"
-      }
-    ],
-    "measurements": [
-      {
-        "kind": "area",
-        "subject_local_id": "face:000",
-        "value": "100",
-        "unit": "square_millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "bounding_box",
-        "subject_local_id": "face:000",
-        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"-5\",\"y\":\"10\",\"z\":\"2.5\"}}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "face:000",
-        "value": "{\"x\":\"-5\",\"y\":\"0\",\"z\":\"0\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "area",
-        "subject_local_id": "face:001",
-        "value": "50",
-        "unit": "square_millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "bounding_box",
-        "subject_local_id": "face:001",
-        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"5\",\"y\":\"-10\",\"z\":\"2.5\"}}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "face:001",
-        "value": "{\"x\":\"0\",\"y\":\"-10\",\"z\":\"0\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "area",
-        "subject_local_id": "face:002",
-        "value": "187.433629386",
-        "unit": "square_millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "bounding_box",
-        "subject_local_id": "face:002",
-        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"2.5\"},\"max\":{\"x\":\"5\",\"y\":\"10\",\"z\":\"2.5\"}}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "face:002",
-        "value": "{\"x\":\"0\",\"y\":\"0\",\"z\":\"2.5\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "area",
-        "subject_local_id": "face:003",
-        "value": "50",
-        "unit": "square_millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "bounding_box",
-        "subject_local_id": "face:003",
-        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"5\",\"y\":\"10\",\"z\":\"2.5\"}}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "face:003",
-        "value": "{\"x\":\"0\",\"y\":\"10\",\"z\":\"0\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "area",
-        "subject_local_id": "face:004",
-        "value": "200",
-        "unit": "square_millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "bounding_box",
-        "subject_local_id": "face:004",
-        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"5\",\"y\":\"10\",\"z\":\"-2.5\"}}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "face:004",
-        "value": "{\"x\":\"0\",\"y\":\"0\",\"z\":\"-2.5\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "area",
-        "subject_local_id": "face:005",
-        "value": "100",
-        "unit": "square_millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "bounding_box",
-        "subject_local_id": "face:005",
-        "value": "{\"min\":{\"x\":\"5\",\"y\":\"-10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"5\",\"y\":\"10\",\"z\":\"2.5\"}}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "face:005",
-        "value": "{\"x\":\"5\",\"y\":\"0\",\"z\":\"0\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "area",
-        "subject_local_id": "face:006",
-        "value": "25.132741229",
-        "unit": "square_millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "bounding_box",
-        "subject_local_id": "face:006",
-        "value": "{\"min\":{\"x\":\"-2\",\"y\":\"-2\",\"z\":\"0.5\"},\"max\":{\"x\":\"2\",\"y\":\"2\",\"z\":\"2.5\"}}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "face:006",
-        "value": "{\"x\":\"0\",\"y\":\"0\",\"z\":\"1.5\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "area",
-        "subject_local_id": "face:007",
-        "value": "12.566370614",
-        "unit": "square_millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "bounding_box",
-        "subject_local_id": "face:007",
-        "value": "{\"min\":{\"x\":\"-2\",\"y\":\"-2\",\"z\":\"0.5\"},\"max\":{\"x\":\"2\",\"y\":\"2\",\"z\":\"0.5\"}}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "face:007",
-        "value": "{\"x\":\"0\",\"y\":\"0\",\"z\":\"0.5\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "length",
-        "subject_local_id": "edge:000",
-        "value": "5",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "bounding_box",
-        "subject_local_id": "edge:000",
-        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"2.5\"}}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "edge:000",
-        "value": "{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"0\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "length",
-        "subject_local_id": "edge:001",
-        "value": "20",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "bounding_box",
-        "subject_local_id": "edge:001",
-        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"2.5\"},\"max\":{\"x\":\"-5\",\"y\":\"10\",\"z\":\"2.5\"}}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "edge:001",
-        "value": "{\"x\":\"-5\",\"y\":\"0\",\"z\":\"2.5\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "length",
-        "subject_local_id": "edge:002",
-        "value": "5",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "bounding_box",
-        "subject_local_id": "edge:002",
-        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"-5\",\"y\":\"10\",\"z\":\"2.5\"}}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "edge:002",
-        "value": "{\"x\":\"-5\",\"y\":\"10\",\"z\":\"0\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "length",
-        "subject_local_id": "edge:003",
-        "value": "20",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "bounding_box",
-        "subject_local_id": "edge:003",
-        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"-5\",\"y\":\"10\",\"z\":\"-2.5\"}}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "edge:003",
-        "value": "{\"x\":\"-5\",\"y\":\"0\",\"z\":\"-2.5\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "length",
-        "subject_local_id": "edge:004",
-        "value": "10",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "bounding_box",
-        "subject_local_id": "edge:004",
-        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"5\",\"y\":\"-10\",\"z\":\"-2.5\"}}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "edge:004",
-        "value": "{\"x\":\"0\",\"y\":\"-10\",\"z\":\"-2.5\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "length",
-        "subject_local_id": "edge:005",
-        "value": "5",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "bounding_box",
-        "subject_local_id": "edge:005",
-        "value": "{\"min\":{\"x\":\"5\",\"y\":\"-10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"5\",\"y\":\"-10\",\"z\":\"2.5\"}}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "edge:005",
-        "value": "{\"x\":\"5\",\"y\":\"-10\",\"z\":\"0\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "length",
-        "subject_local_id": "edge:006",
-        "value": "10",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "bounding_box",
-        "subject_local_id": "edge:006",
-        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"2.5\"},\"max\":{\"x\":\"5\",\"y\":\"-10\",\"z\":\"2.5\"}}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "edge:006",
-        "value": "{\"x\":\"0\",\"y\":\"-10\",\"z\":\"2.5\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "length",
-        "subject_local_id": "edge:007",
-        "value": "10",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "bounding_box",
-        "subject_local_id": "edge:007",
-        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"10\",\"z\":\"2.5\"},\"max\":{\"x\":\"5\",\"y\":\"10\",\"z\":\"2.5\"}}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "edge:007",
-        "value": "{\"x\":\"0\",\"y\":\"10\",\"z\":\"2.5\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "length",
-        "subject_local_id": "edge:008",
-        "value": "20",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "bounding_box",
-        "subject_local_id": "edge:008",
-        "value": "{\"min\":{\"x\":\"5\",\"y\":\"-10\",\"z\":\"2.5\"},\"max\":{\"x\":\"5\",\"y\":\"10\",\"z\":\"2.5\"}}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "edge:008",
-        "value": "{\"x\":\"5\",\"y\":\"0\",\"z\":\"2.5\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "length",
-        "subject_local_id": "edge:009",
-        "value": "12.566370614",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "bounding_box",
-        "subject_local_id": "edge:009",
-        "value": "{\"min\":{\"x\":\"-2\",\"y\":\"-2\",\"z\":\"2.5\"},\"max\":{\"x\":\"2\",\"y\":\"2\",\"z\":\"2.5\"}}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "edge:009",
-        "value": "{\"x\":\"0\",\"y\":\"0\",\"z\":\"2.5\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "length",
-        "subject_local_id": "edge:010",
-        "value": "10",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "bounding_box",
-        "subject_local_id": "edge:010",
-        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"5\",\"y\":\"10\",\"z\":\"-2.5\"}}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "edge:010",
-        "value": "{\"x\":\"0\",\"y\":\"10\",\"z\":\"-2.5\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "length",
-        "subject_local_id": "edge:011",
-        "value": "5",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "bounding_box",
-        "subject_local_id": "edge:011",
-        "value": "{\"min\":{\"x\":\"5\",\"y\":\"10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"5\",\"y\":\"10\",\"z\":\"2.5\"}}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "edge:011",
-        "value": "{\"x\":\"5\",\"y\":\"10\",\"z\":\"0\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "length",
-        "subject_local_id": "edge:012",
-        "value": "20",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "bounding_box",
-        "subject_local_id": "edge:012",
-        "value": "{\"min\":{\"x\":\"5\",\"y\":\"-10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"5\",\"y\":\"10\",\"z\":\"-2.5\"}}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "edge:012",
-        "value": "{\"x\":\"5\",\"y\":\"0\",\"z\":\"-2.5\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "length",
-        "subject_local_id": "edge:013",
-        "value": "2",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "bounding_box",
-        "subject_local_id": "edge:013",
-        "value": "{\"min\":{\"x\":\"2\",\"y\":\"0\",\"z\":\"0.5\"},\"max\":{\"x\":\"2\",\"y\":\"0\",\"z\":\"2.5\"}}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "edge:013",
-        "value": "{\"x\":\"2\",\"y\":\"0\",\"z\":\"1.5\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "length",
-        "subject_local_id": "edge:014",
-        "value": "12.566370614",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "bounding_box",
-        "subject_local_id": "edge:014",
-        "value": "{\"min\":{\"x\":\"-2\",\"y\":\"-2\",\"z\":\"0.5\"},\"max\":{\"x\":\"2\",\"y\":\"2\",\"z\":\"0.5\"}}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "edge:014",
-        "value": "{\"x\":\"0\",\"y\":\"0\",\"z\":\"0.5\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "vertex:000",
-        "value": "{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"2.5\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "vertex:001",
-        "value": "{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"-2.5\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "vertex:002",
-        "value": "{\"x\":\"-5\",\"y\":\"10\",\"z\":\"2.5\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "vertex:003",
-        "value": "{\"x\":\"-5\",\"y\":\"10\",\"z\":\"-2.5\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "vertex:004",
-        "value": "{\"x\":\"5\",\"y\":\"-10\",\"z\":\"-2.5\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "vertex:005",
-        "value": "{\"x\":\"5\",\"y\":\"-10\",\"z\":\"2.5\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "vertex:006",
-        "value": "{\"x\":\"5\",\"y\":\"10\",\"z\":\"2.5\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "vertex:007",
-        "value": "{\"x\":\"2\",\"y\":\"0\",\"z\":\"2.5\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "vertex:008",
-        "value": "{\"x\":\"5\",\"y\":\"10\",\"z\":\"-2.5\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "vertex:009",
-        "value": "{\"x\":\"2\",\"y\":\"0\",\"z\":\"0.5\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "volume",
-        "subject_local_id": "state:005",
-        "value": "974.867258771",
-        "unit": "cubic_millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "bounding_box",
-        "subject_local_id": "state:005",
-        "value": "{\"min\":{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"-2.5\"},\"max\":{\"x\":\"5\",\"y\":\"10\",\"z\":\"2.5\"}}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "centroid",
-        "subject_local_id": "state:005",
-        "value": "{\"x\":\"0\",\"y\":\"0\",\"z\":\"-0.038671021\"}",
-        "unit": "millimetre",
-        "tolerance": null
-      },
-      {
-        "kind": "face_count",
-        "subject_local_id": "state:005",
-        "value": "8",
-        "unit": "unitless",
-        "tolerance": null
-      },
-      {
-        "kind": "edge_count",
-        "subject_local_id": "state:005",
-        "value": "15",
-        "unit": "unitless",
-        "tolerance": null
-      },
-      {
-        "kind": "vertex_count",
-        "subject_local_id": "state:005",
-        "value": "10",
-        "unit": "unitless",
-        "tolerance": null
-      },
-      {
-        "kind": "validity",
-        "subject_local_id": "state:005",
-        "value": "true",
-        "unit": "unitless",
-        "tolerance": null
-      }
-    ],
-    "capabilities": []
+    ]
   },
   "covers": {
-    "node_kinds": [
-      "cadquery_program",
-      "edge",
-      "edge_endpoint",
-      "face",
-      "feature",
-      "operation",
-      "region",
-      "solid_state",
-      "vertex"
-    ],
     "relation_kinds": [
       "adds_material",
       "adjacent_to",
@@ -2536,43 +2525,54 @@
       "validity",
       "vertex_count",
       "volume"
+    ],
+    "entity_kinds": [
+      "cadquery_program",
+      "edge",
+      "edge_endpoint",
+      "face",
+      "feature",
+      "operation",
+      "region",
+      "solid_state",
+      "vertex"
     ]
   },
   "excluded": [
     {
-      "kind": "state",
       "local_id": null,
-      "reason": "intermediate states are outside schema_version 1 final-state scope"
+      "reason": "intermediate states are outside schema_version 1 final-state scope",
+      "exclusion_kind": "state"
     },
     {
-      "kind": "node",
       "local_id": null,
-      "reason": "profiles, paths, workplanes and selector results are outside schema_version 1 incidence scope"
+      "reason": "profiles, paths, workplanes and selector results are outside schema_version 1 incidence scope",
+      "exclusion_kind": "node"
     },
     {
-      "kind": "relation",
       "local_id": null,
-      "reason": "uses, derived_from, selected_from and selected_by need 02a and 02b records; added when those stages land"
+      "reason": "uses, derived_from, selected_from and selected_by need 02a and 02b records; added when those stages land",
+      "exclusion_kind": "relation"
     },
     {
-      "kind": "measurement",
       "local_id": null,
-      "reason": "effect measurements need 02b effect capture; added when that stage lands"
+      "reason": "effect measurements need 02b effect capture; added when that stage lands",
+      "exclusion_kind": "measurement"
     },
     {
-      "kind": "node",
       "local_id": null,
-      "reason": "point probes are outside schema_version 1 final-state topology scope"
+      "reason": "point probes are outside schema_version 1 final-state topology scope",
+      "exclusion_kind": "node"
     },
     {
-      "kind": "relation",
       "local_id": null,
-      "reason": "pair relations and has_point_probe are outside schema_version 1 scope"
+      "reason": "pair relations and has_point_probe are outside schema_version 1 scope",
+      "exclusion_kind": "relation"
     },
     {
-      "kind": "measurement",
       "local_id": null,
-      "reason": "pair measurements and point-probe measurements are outside schema_version 1 scope"
+      "reason": "pair measurements and point-probe measurements are outside schema_version 1 scope",
+      "exclusion_kind": "measurement"
     }
   ],
   "notes": [

@@ -99,12 +99,12 @@ class _UniqueKeyLoader(yaml.SafeLoader):
 
 def _construct_mapping(
     loader: _UniqueKeyLoader,
-    node: yaml.MappingNode,
+    yaml_node: yaml.MappingNode,
     deep: bool = False,
 ) -> dict[Any, Any]:
-    loader.flatten_mapping(node)
+    loader.flatten_mapping(yaml_node)
     mapping: dict[Any, Any] = {}
-    for key_node, value_node in node.value:
+    for key_node, value_node in yaml_node.value:
         key = loader.construct_object(key_node, deep=deep)
         if key in mapping:
             raise ValueError(f"duplicate key {key!r}")

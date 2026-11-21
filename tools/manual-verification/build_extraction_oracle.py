@@ -29,6 +29,8 @@ from cadquery_method_specs import METHOD_SPECS
 from extraction_oracle_schema import (
     AttributeName,
     BoundingBox,
+    CadGraphEntity,
+    CadGraphEntityKind,
     Covers,
     Descriptor,
     Environment,
@@ -39,8 +41,6 @@ from extraction_oracle_schema import (
     Measurement,
     MeasurementKind,
     MethodSpec,
-    Node,
-    NodeKind,
     Oracle,
     OracleKind,
     OracleScope,
@@ -211,16 +211,16 @@ def build_oracle(slug: str, text: str) -> Oracle:
         raise ValueError("program produced no solid state")
     final_assignment, final_shape = states[-1]
 
-    nodes: list[Node] = []
+    entities: list[CadGraphEntity] = []
     relations: list[Relation] = []
     measurements: list[Measurement] = []
 
-    nodes.append(
-        Node(
+    entities.append(
+        CadGraphEntity(
             local_id="program",
-            kind=NodeKind.CADQUERY_PROGRAM,
+            entity_kind=CadGraphEntityKind.CADQUERY_PROGRAM,
             descriptor=Descriptor(
-                category=NodeKind.CADQUERY_PROGRAM,
+                category=CadGraphEntityKind.CADQUERY_PROGRAM,
                 filters={"program_sha256": program_sha256},
             ),
             attributes={AttributeName.NORMALIZATION_VERSION: "1"},
@@ -231,12 +231,12 @@ def build_oracle(slug: str, text: str) -> Oracle:
     for assignment in assignments:
         local_id = f"operation:{assignment.order:03d}"
         operation_local[assignment.order] = local_id
-        nodes.append(
-            Node(
+        entities.append(
+            CadGraphEntity(
                 local_id=local_id,
-                kind=NodeKind.OPERATION,
+                entity_kind=CadGraphEntityKind.OPERATION,
                 descriptor=Descriptor(
-                    category=NodeKind.OPERATION,
+                    category=CadGraphEntityKind.OPERATION,
                     filters={
                         FilterName.ORDER: str(assignment.order),
                         FilterName.METHOD: assignment.method,
@@ -259,12 +259,12 @@ def build_oracle(slug: str, text: str) -> Oracle:
             raise ValueError(f"state-producing {assignment.method} has no feature kind")
         local_id = f"feature:{assignment.order:03d}"
         feature_local[assignment.order] = local_id
-        nodes.append(
-            Node(
+        entities.append(
+            CadGraphEntity(
                 local_id=local_id,
-                kind=NodeKind.FEATURE,
+                entity_kind=CadGraphEntityKind.FEATURE,
                 descriptor=Descriptor(
-                    category=NodeKind.FEATURE,
+                    category=CadGraphEntityKind.FEATURE,
                     filters={
                         FilterName.OPERATION_ORDER: str(assignment.order),
                         FilterName.FEATURE_KIND: feature_kind.value,
@@ -283,12 +283,12 @@ def build_oracle(slug: str, text: str) -> Oracle:
             sign = "removed" if feature_kind == FeatureKind.REMOVE_MATERIAL else "added"
             region_id = f"region:{assignment.order:03d}:{sign}"
             region_local[assignment.order] = region_id
-            nodes.append(
-                Node(
+            entities.append(
+                CadGraphEntity(
                     local_id=region_id,
-                    kind=NodeKind.REGION,
+                    entity_kind=CadGraphEntityKind.REGION,
                     descriptor=Descriptor(
-                        category=NodeKind.REGION,
+                        category=CadGraphEntityKind.REGION,
                         filters={
                             FilterName.FEATURE_OPERATION_ORDER: str(assignment.order),
                             FilterName.REGION_SIGN: sign,
@@ -299,12 +299,12 @@ def build_oracle(slug: str, text: str) -> Oracle:
             )
 
     state_id = f"state:{final_assignment.order:03d}"
-    nodes.append(
-        Node(
+    entities.append(
+        CadGraphEntity(
             local_id=state_id,
-            kind=NodeKind.SOLID_STATE,
+            entity_kind=CadGraphEntityKind.SOLID_STATE,
             descriptor=Descriptor(
-                category=NodeKind.SOLID_STATE,
+                category=CadGraphEntityKind.SOLID_STATE,
                 filters={
                     FilterName.OPERATION_ORDER: str(final_assignment.order),
                     FilterName.IS_FINAL: "true",
@@ -317,7 +317,7 @@ def build_oracle(slug: str, text: str) -> Oracle:
     for previous, current in pairwise(assignments):
         relations.append(
             Relation(
-                kind=RelationKind.BEFORE,
+                relation_kind=RelationKind.BEFORE,
                 from_local_id=operation_local[previous.order],
                 to_local_id=operation_local[current.order],
                 evidence_rule="operation_order",
@@ -325,7 +325,7 @@ def build_oracle(slug: str, text: str) -> Oracle:
         )
         relations.append(
             Relation(
-                kind=RelationKind.AFTER,
+                relation_kind=RelationKind.AFTER,
                 from_local_id=operation_local[current.order],
                 to_local_id=operation_local[previous.order],
                 evidence_rule="operation_order",
@@ -336,7 +336,7 @@ def build_oracle(slug: str, text: str) -> Oracle:
         if assignment.order in feature_local:
             relations.append(
                 Relation(
-                    kind=RelationKind.CREATES,
+                    relation_kind=RelationKind.CREATES,
                     from_local_id=operation_local[assignment.order],
                     to_local_id=feature_local[assignment.order],
                     evidence_rule="solid_state_producing_operation",
@@ -345,7 +345,7 @@ def build_oracle(slug: str, text: str) -> Oracle:
         if assignment.order == final_assignment.order:
             relations.append(
                 Relation(
-                    kind=RelationKind.CREATES,
+                    relation_kind=RelationKind.CREATES,
                     from_local_id=operation_local[assignment.order],
                     to_local_id=state_id,
                     evidence_rule="captured_state",
@@ -359,7 +359,7 @@ def build_oracle(slug: str, text: str) -> Oracle:
             )
             relations.append(
                 Relation(
-                    kind=relation_kind,
+                    relation_kind=relation_kind,
                     from_local_id=feature_local[assignment.order],
                     to_local_id=region_local[assignment.order],
                     evidence_rule="feature_kind",
@@ -367,7 +367,7 @@ def build_oracle(slug: str, text: str) -> Oracle:
             )
             relations.append(
                 Relation(
-                    kind=RelationKind.PART_OF,
+                    relation_kind=RelationKind.PART_OF,
                     from_local_id=region_local[assignment.order],
                     to_local_id=feature_local[assignment.order],
                     evidence_rule="region_derivation",
@@ -381,14 +381,14 @@ def build_oracle(slug: str, text: str) -> Oracle:
     for index, face in enumerate(final_shape.Faces()):
         local_id = f"face:{index:03d}"
         face_local.append(local_id)
-        nodes.append(
-            Node(
+        entities.append(
+            CadGraphEntity(
                 local_id=local_id,
-                kind=NodeKind.FACE,
+                entity_kind=CadGraphEntityKind.FACE,
                 descriptor=Descriptor(
-                    category=NodeKind.FACE,
+                    category=CadGraphEntityKind.FACE,
                     filters={
-                        FilterName.SURFACE_KIND: face.geomType().lower(),
+                        FilterName.GEOMETRY_SURFACE_KIND: face.geomType().lower(),
                         FilterName.AREA: canonical_decimal(face.Area()),
                         **centroid_filters(face.Center().toTuple()),
                     },
@@ -398,7 +398,7 @@ def build_oracle(slug: str, text: str) -> Oracle:
         )
         relations.append(
             Relation(
-                kind=RelationKind.HAS_FACE,
+                relation_kind=RelationKind.HAS_FACE,
                 from_local_id=state_id,
                 to_local_id=local_id,
                 evidence_rule="state_entity_table",
@@ -407,19 +407,19 @@ def build_oracle(slug: str, text: str) -> Oracle:
         measurements.extend(
             [
                 Measurement(
-                    kind=MeasurementKind.AREA,
+                    measurement_kind=MeasurementKind.AREA,
                     subject_local_id=local_id,
                     value=canonical_decimal(face.Area()),
                     unit="square_millimetre",
                 ),
                 Measurement(
-                    kind=MeasurementKind.BOUNDING_BOX,
+                    measurement_kind=MeasurementKind.BOUNDING_BOX,
                     subject_local_id=local_id,
                     value=bbox_json(face),
                     unit="millimetre",
                 ),
                 Measurement(
-                    kind=MeasurementKind.CENTROID,
+                    measurement_kind=MeasurementKind.CENTROID,
                     subject_local_id=local_id,
                     value=point_json(face.Center().toTuple()),
                     unit="millimetre",
@@ -430,12 +430,12 @@ def build_oracle(slug: str, text: str) -> Oracle:
     for index, edge in enumerate(final_shape.Edges()):
         local_id = f"edge:{index:03d}"
         edge_local.append(local_id)
-        nodes.append(
-            Node(
+        entities.append(
+            CadGraphEntity(
                 local_id=local_id,
-                kind=NodeKind.EDGE,
+                entity_kind=CadGraphEntityKind.EDGE,
                 descriptor=Descriptor(
-                    category=NodeKind.EDGE,
+                    category=CadGraphEntityKind.EDGE,
                     filters={
                         FilterName.CURVE_KIND: edge.geomType().lower(),
                         FilterName.LENGTH: canonical_decimal(edge.Length()),
@@ -448,19 +448,19 @@ def build_oracle(slug: str, text: str) -> Oracle:
         measurements.extend(
             [
                 Measurement(
-                    kind=MeasurementKind.LENGTH,
+                    measurement_kind=MeasurementKind.LENGTH,
                     subject_local_id=local_id,
                     value=canonical_decimal(edge.Length()),
                     unit="millimetre",
                 ),
                 Measurement(
-                    kind=MeasurementKind.BOUNDING_BOX,
+                    measurement_kind=MeasurementKind.BOUNDING_BOX,
                     subject_local_id=local_id,
                     value=bbox_json(edge),
                     unit="millimetre",
                 ),
                 Measurement(
-                    kind=MeasurementKind.CENTROID,
+                    measurement_kind=MeasurementKind.CENTROID,
                     subject_local_id=local_id,
                     value=point_json(edge.Center().toTuple()),
                     unit="millimetre",
@@ -471,12 +471,12 @@ def build_oracle(slug: str, text: str) -> Oracle:
     for index, vertex in enumerate(final_shape.Vertices()):
         local_id = f"vertex:{index:03d}"
         vertex_local.append(local_id)
-        nodes.append(
-            Node(
+        entities.append(
+            CadGraphEntity(
                 local_id=local_id,
-                kind=NodeKind.VERTEX,
+                entity_kind=CadGraphEntityKind.VERTEX,
                 descriptor=Descriptor(
-                    category=NodeKind.VERTEX,
+                    category=CadGraphEntityKind.VERTEX,
                     filters=centroid_filters(vertex.toTuple()),
                 ),
                 attributes={},
@@ -484,7 +484,7 @@ def build_oracle(slug: str, text: str) -> Oracle:
         )
         measurements.append(
             Measurement(
-                kind=MeasurementKind.CENTROID,
+                measurement_kind=MeasurementKind.CENTROID,
                 subject_local_id=local_id,
                 value=point_json(vertex.toTuple()),
                 unit="millimetre",
@@ -499,7 +499,7 @@ def build_oracle(slug: str, text: str) -> Oracle:
             face_by_edge[key].append(face_local[face_index])
             relations.append(
                 Relation(
-                    kind=RelationKind.HAS_EDGE,
+                    relation_kind=RelationKind.HAS_EDGE,
                     from_local_id=face_local[face_index],
                     to_local_id=edge_local[_edge_index(edge, final_shape)],
                     evidence_rule="face_has_edge",
@@ -518,7 +518,7 @@ def build_oracle(slug: str, text: str) -> Oracle:
                 seen_pairs.add(pair)
                 relations.append(
                     Relation(
-                        kind=RelationKind.ADJACENT_TO,
+                        relation_kind=RelationKind.ADJACENT_TO,
                         from_local_id=left,
                         to_local_id=right,
                         evidence_rule="face_adjacent_to_face",
@@ -531,7 +531,7 @@ def build_oracle(slug: str, text: str) -> Oracle:
         for vertex in edge.Vertices():
             relations.append(
                 Relation(
-                    kind=RelationKind.HAS_VERTEX,
+                    relation_kind=RelationKind.HAS_VERTEX,
                     from_local_id=local_id,
                     to_local_id=vertex_local[_vertex_index(vertex, final_shape)],
                     evidence_rule="edge_has_vertex",
@@ -539,12 +539,12 @@ def build_oracle(slug: str, text: str) -> Oracle:
             )
         for end, position in (("start", edge.startPoint()), ("end", edge.endPoint())):
             endpoint_id = f"endpoint:{index:03d}:{end}"
-            nodes.append(
-                Node(
+            entities.append(
+                CadGraphEntity(
                     local_id=endpoint_id,
-                    kind=NodeKind.EDGE_ENDPOINT,
+                    entity_kind=CadGraphEntityKind.EDGE_ENDPOINT,
                     descriptor=Descriptor(
-                        category=NodeKind.EDGE_ENDPOINT,
+                        category=CadGraphEntityKind.EDGE_ENDPOINT,
                         filters={
                             FilterName.EDGE_LOCAL_ID: local_id,
                             FilterName.END: end,
@@ -555,7 +555,7 @@ def build_oracle(slug: str, text: str) -> Oracle:
             )
             relations.append(
                 Relation(
-                    kind=RelationKind.ENDPOINT_OF,
+                    relation_kind=RelationKind.ENDPOINT_OF,
                     from_local_id=endpoint_id,
                     to_local_id=local_id,
                     evidence_rule="edge_endpoint",
@@ -565,43 +565,43 @@ def build_oracle(slug: str, text: str) -> Oracle:
     measurements.extend(
         [
             Measurement(
-                kind=MeasurementKind.VOLUME,
+                measurement_kind=MeasurementKind.VOLUME,
                 subject_local_id=state_id,
                 value=canonical_decimal(final_shape.Volume()),
                 unit="cubic_millimetre",
             ),
             Measurement(
-                kind=MeasurementKind.BOUNDING_BOX,
+                measurement_kind=MeasurementKind.BOUNDING_BOX,
                 subject_local_id=state_id,
                 value=bbox_json(final_shape),
                 unit="millimetre",
             ),
             Measurement(
-                kind=MeasurementKind.CENTROID,
+                measurement_kind=MeasurementKind.CENTROID,
                 subject_local_id=state_id,
                 value=point_json(final_shape.Center().toTuple()),
                 unit="millimetre",
             ),
             Measurement(
-                kind=MeasurementKind.FACE_COUNT,
+                measurement_kind=MeasurementKind.FACE_COUNT,
                 subject_local_id=state_id,
                 value=str(len(face_local)),
                 unit="unitless",
             ),
             Measurement(
-                kind=MeasurementKind.EDGE_COUNT,
+                measurement_kind=MeasurementKind.EDGE_COUNT,
                 subject_local_id=state_id,
                 value=str(len(edge_local)),
                 unit="unitless",
             ),
             Measurement(
-                kind=MeasurementKind.VERTEX_COUNT,
+                measurement_kind=MeasurementKind.VERTEX_COUNT,
                 subject_local_id=state_id,
                 value=str(len(vertex_local)),
                 unit="unitless",
             ),
             Measurement(
-                kind=MeasurementKind.VALIDITY,
+                measurement_kind=MeasurementKind.VALIDITY,
                 subject_local_id=state_id,
                 value="true" if final_shape.isValid() else "false",
                 unit="unitless",
@@ -610,9 +610,11 @@ def build_oracle(slug: str, text: str) -> Oracle:
     )
 
     covers = Covers(
-        node_kinds=sorted({node.kind for node in nodes}),
-        relation_kinds=sorted({relation.kind for relation in relations}),
-        measurement_kinds=sorted({measurement.kind for measurement in measurements}),
+        entity_kinds=sorted({entity.entity_kind for entity in entities}),
+        relation_kinds=sorted({relation.relation_kind for relation in relations}),
+        measurement_kinds=sorted(
+            {measurement.measurement_kind for measurement in measurements}
+        ),
     )
 
     return Oracle(
@@ -641,7 +643,7 @@ def build_oracle(slug: str, text: str) -> Oracle:
             tolerance_policy_sha256=None,
         ),
         expected=Expected(
-            nodes=nodes,
+            entities=entities,
             relations=relations,
             measurements=measurements,
             capabilities=[],
@@ -649,37 +651,37 @@ def build_oracle(slug: str, text: str) -> Oracle:
         covers=covers,
         excluded=[
             Exclusion(
-                kind="state",
+                exclusion_kind="state",
                 local_id=None,
                 reason="intermediate states are outside schema_version 1 final-state scope",
             ),
             Exclusion(
-                kind="node",
+                exclusion_kind="node",
                 local_id=None,
                 reason="profiles, paths, workplanes and selector results are outside schema_version 1 incidence scope",
             ),
             Exclusion(
-                kind="relation",
+                exclusion_kind="relation",
                 local_id=None,
                 reason="uses, derived_from, selected_from and selected_by need 02a and 02b records; added when those stages land",
             ),
             Exclusion(
-                kind="measurement",
+                exclusion_kind="measurement",
                 local_id=None,
                 reason="effect measurements need 02b effect capture; added when that stage lands",
             ),
             Exclusion(
-                kind="node",
+                exclusion_kind="node",
                 local_id=None,
                 reason="point probes are outside schema_version 1 final-state topology scope",
             ),
             Exclusion(
-                kind="relation",
+                exclusion_kind="relation",
                 local_id=None,
                 reason="pair relations and has_point_probe are outside schema_version 1 scope",
             ),
             Exclusion(
-                kind="measurement",
+                exclusion_kind="measurement",
                 local_id=None,
                 reason="pair measurements and point-probe measurements are outside schema_version 1 scope",
             ),
@@ -723,7 +725,7 @@ def main() -> int:
     )
     print(f"wrote {args.out}")
     print(
-        f"nodes={len(oracle.expected.nodes)} relations={len(oracle.expected.relations)} measurements={len(oracle.expected.measurements)}"
+        f"entities={len(oracle.expected.entities)} relations={len(oracle.expected.relations)} measurements={len(oracle.expected.measurements)}"
     )
     return 0
 

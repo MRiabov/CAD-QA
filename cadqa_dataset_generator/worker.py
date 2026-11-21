@@ -21,7 +21,7 @@ worker could not start its pipeline stage. Logs go to standard error so
 standard output stays one JSON document per line.
 
 A pipeline stage with an entry in
-:data:`cadqa_dataset_generator.contracts.STAGE_CONTRACTS` validates its request
+:data:`cadqa_dataset_generator.contracts.PIPELINE_STAGE_CONTRACTS` validates its request
 and result against the typed model before and after the runner.
 A pipeline stage without a contract keeps the free-form dict path until its
 contract lands.
@@ -38,38 +38,38 @@ from typing import Any
 import orjson
 from pydantic import ValidationError
 
-from cadqa_dataset_generator import StageNotImplemented
+from cadqa_dataset_generator import PipelineStageNotImplemented
 from cadqa_dataset_generator.contracts import (
-    STAGE_CONTRACTS,
+    PIPELINE_STAGE_CONTRACTS,
     WORKER_PROTOCOL_VERSION,
     WorkerError,
     WorkerResponse,
 )
 
-StageRunner = Callable[[Any], Any]
+PipelineStageRunner = Callable[[Any], Any]
 
 # TODO(bootstrap): remove the free-form fallback as each remaining
-# pipeline stage gets an entry in STAGE_CONTRACTS.
+# pipeline stage gets an entry in PIPELINE_STAGE_CONTRACTS.
 
 # Wire pipeline stage name -> module that implements it. The module name is `s` + name.
 # The wire name is the snake-case pipeline stage name used by the failure record.
-STAGE_MODULES: dict[str, str] = {
+PIPELINE_STAGE_MODULES: dict[str, str] = {
     "01d_normalize_programs": "cadqa_dataset_generator.s01d_normalize_programs",
     "02a_extract_cadquery_ast": "cadqa_dataset_generator.s02a_extract_cadquery_ast",
     "02b_execute_cadquery": "cadqa_dataset_generator.s02b_execute_cadquery",
 }
 
 
-def stage_names() -> list[str]:
+def pipeline_stage_names() -> list[str]:
     """Return the dispatchable stage names in stable order."""
 
-    return sorted(STAGE_MODULES)
+    return sorted(PIPELINE_STAGE_MODULES)
 
 
-def resolve_stage(stage: str) -> StageRunner:
+def resolve_pipeline_stage(pipeline_stage: str) -> PipelineStageRunner:
     """Import the module for one pipeline stage and return its ``run`` function."""
 
-    module_name = STAGE_MODULES[stage]
+    module_name = PIPELINE_STAGE_MODULES[pipeline_stage]
     module = importlib.import_module(module_name)
     runner = getattr(module, "run", None)
     if runner is None or not callable(runner):
@@ -77,10 +77,10 @@ def resolve_stage(stage: str) -> StageRunner:
     return runner
 
 
-def preload_stage(stage: str) -> None:
+def preload_pipeline_stage(pipeline_stage: str) -> None:
     """Import a pipeline stage module and call its optional ``preload`` hook."""
 
-    module = importlib.import_module(STAGE_MODULES[stage])
+    module = importlib.import_module(PIPELINE_STAGE_MODULES[pipeline_stage])
     preload = getattr(module, "preload", None)
     if callable(preload):
         preload()
@@ -94,23 +94,23 @@ def _failure(code: str, message: str) -> WorkerResponse:
     )
 
 
-def _typed_request(stage: str, request: dict[str, Any]) -> Any:
+def _typed_request(pipeline_stage: str, request: dict[str, Any]) -> Any:
     """Validate a request when a pipeline stage has a contract, else pass it through."""
 
-    contract = STAGE_CONTRACTS.get(stage)
+    contract = PIPELINE_STAGE_CONTRACTS.get(pipeline_stage)
     if contract is None:
         return request
     return contract.request.model_validate(request)
 
 
-def _typed_result(stage: str, result: Any) -> dict[str, Any]:
+def _typed_result(pipeline_stage: str, result: Any) -> dict[str, Any]:
     """Validate a result when a pipeline stage has a contract, else require a JSON object."""
 
-    contract = STAGE_CONTRACTS.get(stage)
+    contract = PIPELINE_STAGE_CONTRACTS.get(pipeline_stage)
     if contract is None:
         if not isinstance(result, dict):
             raise TypeError(
-                f"pipeline stage {stage} returned {type(result).__name__}, want dict"
+                f"pipeline stage {pipeline_stage} returned {type(result).__name__}, want dict"
             )
         return result
     typed = contract.result.model_validate(result)
@@ -118,38 +118,38 @@ def _typed_result(stage: str, result: Any) -> dict[str, Any]:
 
 
 def handle(
-    stage: str,
+    pipeline_stage: str,
     request: dict[str, Any],
-    runner: StageRunner | None = None,
+    runner: PipelineStageRunner | None = None,
 ) -> WorkerResponse:
     """Dispatch one request and convert pipeline stage failures to data."""
 
     if runner is None:
         try:
-            runner = resolve_stage(stage)
+            runner = resolve_pipeline_stage(pipeline_stage)
         except KeyError:
-            expected = ", ".join(stage_names())
+            expected = ", ".join(pipeline_stage_names())
             return _failure(
                 "unknown_stage",
-                f"unknown stage {stage!r}; expected one of {expected}",
+                f"unknown stage {pipeline_stage!r}; expected one of {expected}",
             )
         except (ImportError, TypeError) as exc:
             return _failure("stage_unavailable", str(exc))
 
     try:
-        typed_request = _typed_request(stage, request)
+        typed_request = _typed_request(pipeline_stage, request)
     except ValidationError as exc:
         return _failure("invalid_request", str(exc))
 
     try:
         result = runner(typed_request)
-    except StageNotImplemented as exc:
+    except PipelineStageNotImplemented as exc:
         return _failure("stage_not_implemented", str(exc))
     except Exception as exc:  # noqa: BLE001 - the worker boundary converts failures to data
         return _failure("stage_failed", f"{type(exc).__name__}: {exc}")
 
     try:
-        typed_result = _typed_result(stage, result)
+        typed_result = _typed_result(pipeline_stage, result)
     except (ValidationError, TypeError) as exc:
         return _failure("invalid_result", str(exc))
 
@@ -172,18 +172,18 @@ def _write_document(document: dict[str, Any]) -> None:
     sys.stdout.buffer.flush()
 
 
-def _serve(stage: str) -> int:
+def _serve(pipeline_stage: str) -> int:
     """Preload one pipeline stage, signal ready, and serve requests until EOF."""
 
     try:
-        runner = resolve_stage(stage)
+        runner = resolve_pipeline_stage(pipeline_stage)
     except KeyError:
-        expected = ", ".join(stage_names())
+        expected = ", ".join(pipeline_stage_names())
         _write_document(
             _document(
                 _failure(
                     "unknown_stage",
-                    f"unknown stage {stage!r}; expected one of {expected}",
+                    f"unknown stage {pipeline_stage!r}; expected one of {expected}",
                 )
             )
         )
@@ -193,7 +193,7 @@ def _serve(stage: str) -> int:
         return 1
 
     try:
-        preload_stage(stage)
+        preload_pipeline_stage(pipeline_stage)
     except Exception as exc:  # noqa: BLE001 - a preload failure is a pipeline stage failure
         _write_document(
             _document(
@@ -225,7 +225,7 @@ def _serve(stage: str) -> int:
         except (orjson.JSONDecodeError, TypeError) as exc:
             response = _failure("invalid_request", str(exc))
         else:
-            response = handle(stage, request, runner)
+            response = handle(pipeline_stage, request, runner)
         _write_document(_document(response))
 
     return 0
@@ -238,7 +238,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         prog="cadqa_dataset_generator.worker",
         description="Run one CAD-QA dataset generator Python stage worker.",
     )
-    parser.add_argument("stage", nargs="?", help="pipeline stage to serve")
+    parser.add_argument("pipeline_stage", nargs="?", help="pipeline stage to serve")
     parser.add_argument(
         "--list-stages",
         action="store_true",
@@ -250,14 +250,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         _write_document(
             {
                 "protocol_version": WORKER_PROTOCOL_VERSION,
-                "stages": stage_names(),
+                "stages": pipeline_stage_names(),
             }
         )
         return 0
-    if args.stage is None:
+    if args.pipeline_stage is None:
         parser.error("a pipeline stage is required unless --list-stages is given")
 
-    return _serve(args.stage)
+    return _serve(args.pipeline_stage)
 
 
 if __name__ == "__main__":

@@ -64,8 +64,8 @@ second list, so a new reason is added in one place.
 | `input_sha256` | string | yes | The hash a pipeline stage uses for the input: `program_sha256`, `definition_sha256`, or `answer_sha256`. |
 | `reason_code` | string | no | One member of the rejecting pipeline stage's reason set. |
 | `detail` | string | no | Deterministic message, at most 500 characters. |
-| `source_line` | integer | yes | Program line, when known. |
-| `source_span` | struct | yes | Start and end column, when known. |
+| `program_line` | integer | yes | Program line, when known. |
+| `program_span` | struct | yes | Start and end column, when known. |
 | `occurrence_count` | integer | no | How many times this exact rejection occurred. At least 1. |
 
 The subject is the task when `task_id` is set, and the program otherwise. Every
@@ -89,8 +89,8 @@ both languages compute the same ID without sharing a constant.
 (pipeline_stage, program_id, task_id, input_sha256, reason_code)
 ```
 
-Two rejections with the same key are the same rejection. `detail`, `source_line`,
-and `source_span` are not in the key because they are a function of the key: the
+Two rejections with the same key are the same rejection. `detail`, `program_line`,
+and `program_span` are not in the key because they are a function of the key: the
 same input rejected for the same reason in the same pipeline stage produces the
 same
 message. A merge that finds two different details for one key is a defect, not a

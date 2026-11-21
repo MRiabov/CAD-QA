@@ -17,12 +17,12 @@ import (
 type PipelineStage string
 
 const (
-	Stage01dNormalizePrograms        PipelineStage = "01d_normalize_programs"
-	Stage02aExtractCadqueryAst       PipelineStage = "02a_extract_cadquery_ast"
-	Stage02bExecuteCadquery          PipelineStage = "02b_execute_cadquery"
-	Stage02cBuildCadGraph            PipelineStage = "02c_build_cad_graph"
-	Stage03bConstructTaskDefinitions PipelineStage = "03b_construct_task_definitions"
-	Stage05ValidateAndExportRelease  PipelineStage = "05_validate_and_export_release"
+	PipelineStage01dNormalizePrograms        PipelineStage = "01d_normalize_programs"
+	PipelineStage02aExtractCadqueryAst       PipelineStage = "02a_extract_cadquery_ast"
+	PipelineStage02bExecuteCadquery          PipelineStage = "02b_execute_cadquery"
+	PipelineStage02cBuildCadGraph            PipelineStage = "02c_build_cad_graph"
+	PipelineStage03bConstructTaskDefinitions PipelineStage = "03b_construct_task_definitions"
+	PipelineStage05ValidateAndExportRelease  PipelineStage = "05_validate_and_export_release"
 )
 
 // FailureRecordNamespace is the UUID v5 namespace for failure_id values. It is
@@ -33,14 +33,14 @@ var FailureRecordNamespace = uuid.NewSHA1(
 	[]byte("https://github.com/MRiabov/CAD-QA/failure-record"),
 )
 
-// SourceSpan is the optional start and end column of a rejected program input.
-type SourceSpan struct {
+// ProgramSpan is the optional start and end column of a rejected program input.
+type ProgramSpan struct {
 	StartColumn int64 `parquet:"start_column"`
 	EndColumn   int64 `parquet:"end_column"`
 }
 
 // FailureRecord is one row of a pipeline stage failure partition. A rejection
-// is data, not an exception: a stage records the row and continues.
+// is data, not an exception: a pipeline stage records the row and continues.
 type FailureRecord struct {
 	FailureID       uuid.UUID     `parquet:"failure_id"`
 	PipelineStage   PipelineStage `parquet:"pipeline_stage"`
@@ -49,8 +49,8 @@ type FailureRecord struct {
 	InputSHA256     *string       `parquet:"input_sha256,optional"`
 	ReasonCode      string        `parquet:"reason_code"`
 	Detail          string        `parquet:"detail"`
-	SourceLine      *int64        `parquet:"source_line,optional"`
-	SourceSpan      *SourceSpan   `parquet:"source_span,optional"`
+	ProgramLine     *int64        `parquet:"program_line,optional"`
+	ProgramSpan     *ProgramSpan  `parquet:"program_span,optional"`
 	OccurrenceCount int64         `parquet:"occurrence_count"`
 }
 
@@ -137,14 +137,14 @@ func (r FailureRecord) Validate() error {
 	if r.InputSHA256 != nil && *r.InputSHA256 == "" {
 		return errors.New("failure record: input_sha256 is set but empty")
 	}
-	if r.SourceLine != nil && *r.SourceLine < 1 {
-		return fmt.Errorf("failure record: source_line is %d, minimum is 1", *r.SourceLine)
+	if r.ProgramLine != nil && *r.ProgramLine < 1 {
+		return fmt.Errorf("failure record: program_line is %d, minimum is 1", *r.ProgramLine)
 	}
-	if r.SourceSpan != nil && r.SourceSpan.StartColumn > r.SourceSpan.EndColumn {
+	if r.ProgramSpan != nil && r.ProgramSpan.StartColumn > r.ProgramSpan.EndColumn {
 		return fmt.Errorf(
 			"failure record: source span starts at %d and ends at %d",
-			r.SourceSpan.StartColumn,
-			r.SourceSpan.EndColumn,
+			r.ProgramSpan.StartColumn,
+			r.ProgramSpan.EndColumn,
 		)
 	}
 	return nil
@@ -181,12 +181,12 @@ func MergeFailureRecords(records []FailureRecord) ([]FailureRecord, error) {
 
 func (s PipelineStage) valid() bool {
 	switch s {
-	case Stage01dNormalizePrograms,
-		Stage02aExtractCadqueryAst,
-		Stage02bExecuteCadquery,
-		Stage02cBuildCadGraph,
-		Stage03bConstructTaskDefinitions,
-		Stage05ValidateAndExportRelease:
+	case PipelineStage01dNormalizePrograms,
+		PipelineStage02aExtractCadqueryAst,
+		PipelineStage02bExecuteCadquery,
+		PipelineStage02cBuildCadGraph,
+		PipelineStage03bConstructTaskDefinitions,
+		PipelineStage05ValidateAndExportRelease:
 		return true
 	default:
 		return false
@@ -201,8 +201,8 @@ func sameFailureColumns(left, right FailureRecord) bool {
 		equalPointer(left.InputSHA256, right.InputSHA256) &&
 		left.ReasonCode == right.ReasonCode &&
 		left.Detail == right.Detail &&
-		equalPointer(left.SourceLine, right.SourceLine) &&
-		equalPointer(left.SourceSpan, right.SourceSpan)
+		equalPointer(left.ProgramLine, right.ProgramLine) &&
+		equalPointer(left.ProgramSpan, right.ProgramSpan)
 }
 
 func compareFailureRecords(left, right FailureRecord) int {

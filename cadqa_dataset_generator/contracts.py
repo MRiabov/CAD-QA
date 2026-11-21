@@ -92,7 +92,7 @@ class S01dNormalizeProgramsContract(BaseModel):
     result: S01dNormalizeProgramsResult
 
 
-class StageContract(NamedTuple):
+class PipelineStageContract(NamedTuple):
     """The request and result models for one pipeline stage."""
 
     request: type[BaseModel]
@@ -102,8 +102,8 @@ class StageContract(NamedTuple):
 # Only pipeline stages with a typed contract appear here. A pipeline stage
 # without an entry keeps the bootstrap free-form dict path until its contract
 # lands.
-STAGE_CONTRACTS: dict[str, StageContract] = {
-    "01d_normalize_programs": StageContract(
+PIPELINE_STAGE_CONTRACTS: dict[str, PipelineStageContract] = {
+    "01d_normalize_programs": PipelineStageContract(
         request=S01dNormalizeProgramsRequest,
         result=S01dNormalizeProgramsResult,
     ),

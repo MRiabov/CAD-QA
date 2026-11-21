@@ -25,10 +25,10 @@ SCHEMA_ROOT = REPO / "contracts" / "worker" / "v1"
 SCHEMA_URI_ROOT = "https://github.com/MRiabov/CAD-QA/contracts/worker/v1"
 
 
-def render_schema(stem: str, model: type) -> str:
+def render_schema(stem: str, contract_model: type) -> str:
     """Return the canonical JSON text for one contract schema."""
 
-    schema: dict[str, Any] = model.model_json_schema(mode="validation")
+    schema: dict[str, Any] = contract_model.model_json_schema(mode="validation")
     schema = {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "$id": f"{SCHEMA_URI_ROOT}/{stem}.schema.json",

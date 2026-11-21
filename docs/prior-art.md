@@ -364,7 +364,7 @@ reference never stands alone for a load-bearing claim.
     `research/2025-dapo-decoupled-clip-dynamic-sampling.md`.
 24. Xin, E. (2026) 'Where the Verifier Fails: A Category-Level Audit of Reward Signals in RLVR', <!-- dont-say: allow -->
     arXiv:2609.01354. `arxiv.org/abs/2609.01354`. `[preprint]`. Note:
-    `research/2026-where-the-verifier-fails.md`.
+    `research/2026-where-the-query-verifier-fails.md`.
 25. (2026) 'Finetuning with Sampling: SFT Learns Better Than You Think', arXiv:2610.02140.
     `arxiv.org/html/2610.02140`. `[preprint]`. Note: `research/2026-finetuning-with-sampling.md`.
 26. (2025) 'BREAD: Branched Rollouts from Expert Anchors Bridge SFT & RL for Reasoning', NeurIPS

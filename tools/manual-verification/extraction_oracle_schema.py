@@ -12,7 +12,7 @@ from enum import StrEnum
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class _Model(BaseModel):
+class _OracleModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
@@ -30,7 +30,7 @@ class VerificationStatus(StrEnum):
     STALE = "stale"
 
 
-class NodeKind(StrEnum):
+class CadGraphEntityKind(StrEnum):
     CADQUERY_PROGRAM = "cadquery_program"
     OPERATION = "operation"
     FEATURE = "feature"
@@ -81,7 +81,7 @@ class MeasurementKind(StrEnum):
     BOUNDING_BOX = "bounding_box"
     CENTROID = "centroid"
     PROBE_POINT = "probe_point"
-    DISTANCE_TO_SURFACE = "distance_to_surface"
+    DISTANCE_TO_GEOMETRY_SURFACE = "distance_to_surface"
     FACE_COUNT = "face_count"
     EDGE_COUNT = "edge_count"
     VERTEX_COUNT = "vertex_count"
@@ -90,11 +90,11 @@ class MeasurementKind(StrEnum):
     VOLUME_CHANGE = "volume_change"
     BOUNDING_BOX_CHANGE = "bounding_box_change"
     TOPOLOGY_CHANGE = "topology_change"
-    WORKPLANE_FRAME = "workplane_frame"
+    CADQUERY_WORKPLANE_FRAME = "workplane_frame"
 
 
 class OperationKind(StrEnum):
-    WORKPLANE = "workplane"
+    CADQUERY_WORKPLANE = "workplane"
     SKETCH = "sketch"
     PATH = "path"
     SOLID = "solid"
@@ -134,7 +134,7 @@ class FilterName(StrEnum):
     OPERATION_ORDER = "operation_order"
     FEATURE_KIND = "feature_kind"
     IS_FINAL = "is_final"
-    SURFACE_KIND = "surface_kind"
+    GEOMETRY_SURFACE_KIND = "surface_kind"
     CURVE_KIND = "curve_kind"
     AREA = "area"
     LENGTH = "length"
@@ -159,91 +159,91 @@ class AttributeName(StrEnum):
     END = "end"
 
 
-class Point3D(_Model):
+class Point3D(_OracleModel):
     x: str
     y: str
     z: str
 
 
-class BoundingBox(_Model):
+class BoundingBox(_OracleModel):
     min: Point3D
     max: Point3D
 
 
-class Verification(_Model):
+class Verification(_OracleModel):
     status: VerificationStatus = VerificationStatus.PROPOSED
     verified_by: str | None = Field(default=None, min_length=1, max_length=200)
     verified_at: str | None = Field(default=None, min_length=1, max_length=40)
     rationale: str = Field(min_length=1, max_length=2000)
 
 
-class Program(_Model):
+class Program(_OracleModel):
     program_id: str = Field(pattern=r"^cadqaprog:[0-9a-f]{64}$")
     program_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     text: str = Field(min_length=1)
 
 
-class Environment(_Model):
+class Environment(_OracleModel):
     cadquery_version: str = Field(min_length=1, max_length=50)
     ocp_version: str = Field(min_length=1, max_length=50)
     tolerance_policy_version: str = Field(min_length=1, max_length=50)
     tolerance_policy_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
 
 
-class Descriptor(_Model):
-    category: NodeKind
+class Descriptor(_OracleModel):
+    category: CadGraphEntityKind
     filters: dict[FilterName, str] = Field(default_factory=dict)
 
 
-class Node(_Model):
+class CadGraphEntity(_OracleModel):
     local_id: str = Field(min_length=1, max_length=200)
-    kind: NodeKind
+    entity_kind: CadGraphEntityKind
     descriptor: Descriptor
     attributes: dict[AttributeName, str] = Field(default_factory=dict)
 
 
-class Relation(_Model):
-    kind: RelationKind
+class Relation(_OracleModel):
+    relation_kind: RelationKind
     from_local_id: str = Field(min_length=1, max_length=200)
     to_local_id: str = Field(min_length=1, max_length=200)
     evidence_rule: str = Field(min_length=1, max_length=100)
 
 
-class Measurement(_Model):
-    kind: MeasurementKind
+class Measurement(_OracleModel):
+    measurement_kind: MeasurementKind
     subject_local_id: str = Field(min_length=1, max_length=200)
     value: str = Field(min_length=1)
     unit: str | None = Field(default=None, max_length=30)
     tolerance: str | None = Field(default=None, max_length=50)
 
 
-class Capability(_Model):
+class Capability(_OracleModel):
     target_category: str = Field(min_length=1, max_length=50)
     clue_type: str = Field(min_length=1, max_length=50)
     clue_operand_form: str | None = Field(default=None, max_length=50)
     answer_meaning: str = Field(min_length=1, max_length=50)
 
 
-class Expected(_Model):
-    nodes: list[Node]
+class Expected(_OracleModel):
+    entities: list[CadGraphEntity]
     relations: list[Relation]
     measurements: list[Measurement]
     capabilities: list[Capability]
 
 
-class Covers(_Model):
-    node_kinds: list[NodeKind]
+class Covers(_OracleModel):
+    entity_kinds: list[CadGraphEntityKind]
     relation_kinds: list[RelationKind]
     measurement_kinds: list[MeasurementKind]
 
 
-class Exclusion(_Model):
-    kind: str = Field(min_length=1, max_length=30)
+class Exclusion(_OracleModel):
+    exclusion_kind: str = Field(min_length=1, max_length=30)
     local_id: str | None = Field(default=None, max_length=200)
     reason: str = Field(min_length=1, max_length=500)
 
 
-class Oracle(_Model):
+class Oracle(_OracleModel):
     schema_version: int = Field(ge=1)
     oracle_kind: OracleKind
     slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
@@ -257,7 +257,7 @@ class Oracle(_Model):
     notes: list[str] = Field(default_factory=list)
 
 
-class MethodSpec(_Model):
+class MethodSpec(_OracleModel):
     operation_kind: OperationKind
     feature_kind: FeatureKind | None = None
     solid_kind: SolidKind | None = None
