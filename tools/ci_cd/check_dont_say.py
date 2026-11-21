@@ -7,8 +7,10 @@ Reads the ``## Don't say`` table from ``docs/glossary.md`` and fails when a
 banned term appears in a scanned doc or code file (``.md``, ``.tex``, ``.py``).
 A Say term covers its own
 Don't-say tokens; a ``(home)`` annotation allows the token under that tree; the
-allowlist and ``dont-say: allow`` / ``dont-say: home`` markers exempt specific
-text. A ``(bare)`` annotation bans only the unqualified word: ``clue type`` and
+allowlist and ``dont-say: allow`` / ``dont-say: allow-file`` /
+``dont-say: home`` markers exempt specific text. ``allow-file`` must be a
+comment line in the first ten lines and exempts the whole file. A ``(bare)``
+annotation bans only the unqualified word: ``clue type`` and
 ``CAD ontology`` are allowed, while ``the type`` is still a hit. In code, comments and docstrings are matched as prose, and multi-word
 identifier variants are matched as identifiers; bare identifier names are not
 matched. ``--ratchet`` enforces that the hit count never rises.
@@ -55,6 +57,10 @@ SKIP_FILES = frozenset(
     }
 )
 ALLOW_MARKER = re.compile(r"dont-say:\s*allow", re.IGNORECASE)
+ALLOW_FILE_MARKER = re.compile(
+    r"^\s*(?:<!--|%|#)\s*dont-say:\s*allow-file\b", re.IGNORECASE | re.MULTILINE
+)
+FILE_MARKER_SCAN_LINES = 10
 HOME_MARKER = re.compile(r"dont-say:\s*home", re.IGNORECASE)
 ALLOW_LINE = re.compile(r"don'?t say|do not say|never say|banned:", re.IGNORECASE)
 CODE_FENCE = re.compile(r"^\s*(```|~~~)")
@@ -538,6 +544,9 @@ def scan_file(
     path: Path, rules: list[Rule], *, identifiers: bool = False
 ) -> list[Hit]:
     text = path.read_text(encoding="utf-8")
+    header = "\n".join(text.splitlines()[:FILE_MARKER_SCAN_LINES])
+    if ALLOW_FILE_MARKER.search(header):
+        return []
     if path.suffix == ".py":
         return _scan_code(path, text, rules, identifiers=identifiers)
     return _scan_markdown(path, text, rules)
