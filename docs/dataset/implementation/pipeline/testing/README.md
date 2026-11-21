@@ -40,3 +40,4 @@ assert-from-the-artifact rule, and the test-first order — are in
 |---|---|
 | [`fixtures/`](fixtures/) | Coverage fixtures and rejection fixtures: programs plus their `program_sha256`. |
 | [`golden/`](golden/) | Golden records: the record format and one pinned construction result. |
+| [`oracles/`](oracles/) | Oracles: pinned stage outputs, one directory per oracle kind. |

@@ -41,6 +41,7 @@ The graph contains these entity categories.
 | Path point | A point on a path. | The path and a stable point identity. | P1 |
 | Path segment | A segment of a path. | The path and a stable segment identity. | P1 |
 | Region | Material a feature adds or removes. | The feature and the sign of the change. | P0 |
+| Point probe | A classified point near a solid state. | The solid state and a stable probe index. | P0 |
 | CadQuery selector result | The entities a CadQuery selector actually selected. | The CadQuery selector expression and the solid state it ran on. | P1 |
 | Measurement | A numeric or geometric value about an entity or a pair of entities. | The measured entity or pair, and the measurement name. | P0 |
 | Point probe | A point near a solid state, classified as inside or outside. | The solid state and a stable probe index. | P0 |
@@ -65,6 +66,11 @@ generator cannot classify without a kernel.
 
 A point probe is not a task target category in P0. It supplies the point literal
 for a membership answer about the state it belongs to.
+
+Persisted, a probe is a `point_probe` graph entity with a `has_point_probe`
+relation from its solid state. Its point and distance are the `probe_point` and
+`distance_to_surface` measurements; `is_inside` and `classifier` are attributes.
+The runtime table is `runtime_point_probes`.
 
 ## 3. Relations
 
@@ -92,6 +98,7 @@ relation categories.
 | has_edge | Face | Edge | The face contains the edge. | P0 |
 | has_vertex | Edge | Vertex | The edge contains the vertex. | P0 |
 | adjacent_to | Face | Face | The faces share an edge. | P0 |
+| has_point_probe | Solid state | Point probe | The solid state owns the probe. | P0 |
 | endpoint_of | Edge endpoint | Edge | The endpoint is one end of the edge. | P1 |
 | same_as | Face or edge or vertex | Same category | Two records describe the same entity across two solid states. | P2 |
 
@@ -145,6 +152,8 @@ must support at least these.
 | Angle | Two faces, two edges, or a path tangent | Two faces: between outward normals, 0–180°. Two edges: acute angle between the lines, 0–90°. Path tangent: between consecutive tangents, 0–180° (P1). Degrees. | P0 |
 | Bounding box | Solid state, entity, region | Minimum and maximum corners in the program frame. | P0 |
 | Centroid | Solid state, entity, region | Point in the program frame. | P0 |
+| Probe point | Point probe | The probe point in the program frame. | P0 |
+| Distance to a face surface | Point probe | Distance from the probe point to the nearest face surface. | P0 |
 | Count | Solid state, face, CadQuery selector result | Faces, edges, vertices, selected entities. | P0 |
 | Validity | Solid state | Whether the shape is a valid solid or compound. | P2 |
 | Volume change | Operation | Signed volume added or removed. | P0 |

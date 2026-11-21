@@ -48,6 +48,13 @@ schema version is unknown, a graph ID is not deterministic from its documented
 components, or a solid state exceeds the implementation-scope
 `max_state_entities` constant.
 
+## Completeness
+
+Rejection is not completeness. A graph that builds without a dangling endpoint can
+still be missing a required node, relation, or measurement. The expected set, its
+sources, and the per-program completeness report are defined in
+[`extraction/graph-completeness.md`](extraction/graph-completeness.md).
+
 ## Not here
 
 AST extraction and CadQuery execution (`02a`/`02b`), task construction (`03`),

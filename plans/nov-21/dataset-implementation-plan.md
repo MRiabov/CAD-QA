@@ -78,10 +78,10 @@ later, so `02c`'s schema is real before `03b` depends on it.
 |---|---|---|---|
 | `P0-W1` | — | Contract close-out: the decisions that must exist before code | The owner docs named in [P0-W1](#p0-w1--contract-close-out) carry the new rules; no code |
 | `P0-W2` | R-18, R-19 | Walking skeleton: one program → one release row | `test_pipeline_end_to_end` green on the fixture pool; a rerun is a no-op with byte-identical output |
-| `P0-W3` | R-1, R-4 | Extraction and execution depth: AST, CadQuery runtime, CAD graph, census | Validation and persistence tests green on the real pool; failures reconcile; time and memory per program recorded |
+| `P0-W3` | R-1, R-4, R-19 | Extraction and execution depth: AST, CadQuery runtime, CAD graph, census, completeness, and the verified oracle set | Validation and persistence tests green on the real pool; failures reconcile; no unexplained missing or orphan row; every must-extract capability has a verified oracle; time and memory per program recorded |
 | `P0-W4` | R-1–R-9, R-15 | Construction depth: clue search and the P0 vocabulary | Golden records match; property tests hold; yield per program measured on real graphs |
 | `P0-W5` | R-7–R-10, R-13, R-15 | Quotas and deficits: `03a` and `03c` | A planned release over the real pool with reconciled counts and a deficit ledger |
-| `P0-W6` | R-1–R-10, R-13, R-14, R-17–R-19 | Rendering, validation, and the release contracts: `04`, `05`, the grader, the review pack | A release built from the real pool, validated, with every miss recorded as a `known_miss` |
+| `P0-W6` | R-1–R-10, R-13, R-14, R-17–R-19 | Rendering, validation, and the release contracts: `04`, `05`, the grader, the review pack and its absence frames | A release built from the real pool, validated, with every miss recorded as a `known_miss` |
 | `P0-W7` | R-14, R-17–R-19 | First real `P0` release | Tagged release revision and run manifest; `docs/development-plan.md` Phase 2 can start |
 
 The five `03b` construction milestones in
@@ -108,6 +108,9 @@ the code that would otherwise encode the wrong answer is `P0-W2` or `P0-W3` work
 | `DA-7` — the R-5 shortcut-resistance proxy, or its re-scope | `03b`, `checks.yaml`, `prompt-content.md` | R-5 is P0 and no construction rule or check measures it |
 | `DA-13` / `MC-44` — support-table derivation and fixtures | `task-step-support.md`, `testing/00-support-tables.md` | `03a` cannot run without the derivation; the fixtures are programs, so they are `P0-W3` work |
 | `DA-5` — `release_id` inputs | `release-dataset-contract.md`, `artifacts.md` | The manifest writer in `P0-W2` should record the final field set |
+| Review frames: absence and residual, ledgers scoped to a pipeline stage | `devtools/review-pack.md`, `05` | The merged pack samples release rows only; partial extraction loss and unknown unknowns have no review frame |
+| Failure disposition: `by_design`, `corpus_defect`, `extractor_gap` | `failure-record.md`, `validation.md` | Every rejection is equally legitimate today, so an extractor gap is indistinguishable from a corpus limitation |
+| Extraction capability coverage check | `checks.yaml`, `release-checks.md` | A must-extract capability with zero accepted graphs is a silent deficit, not a release failure |
 
 The performance findings `PA-1`–`PA-14` are closed in `ef3ac58`: `DS-49` to
 `DS-56` and the run-contract rewrite carry them. Their implementation is `P0-W2`,
@@ -115,6 +118,8 @@ The performance findings `PA-1`–`PA-14` are closed in `ef3ac58`: `DS-49` to
 
 Already closed: `DA-1` by `run-contract.md`, and `DA-3`'s data path by the
 review-pack ledger in `01578d8`; the renderer is `P0-W6` code, not a `P0-W1` gap.
+The graph completeness contract and the extraction-graph oracle format are
+written; their implementation and the verified oracle set are `P0-W3` work.
 
 Deferred, and deliberately not closed in `P0-W1`:
 
@@ -164,6 +169,13 @@ to change.
   `data/cadevolve_sources.parquet`.
 - `02a`/`02b`/`02c` on the program in
   `docs/dataset/implementation/pipeline/testing/golden/box-with-hole.json`.
+- `02c` writes the `GraphCompletenessReport` for the box-with-hole program from
+  [`extraction/graph-completeness.md`](../../docs/dataset/implementation/pipeline/extraction/graph-completeness.md);
+  the expected set comes from the upstream extraction records and the contract
+  rules, not from the graph. The oracle set calibrates those rules.
+- Verify the two extraction-graph oracles (`box-with-hole`, `rotated-box`) from
+  `proposed` to `verified`; the builder and the records are checked in under
+  [`testing/oracles/extraction-graph/`](../../docs/dataset/implementation/pipeline/testing/oracles/extraction-graph/).
 - `03a` emits a one-cell plan, typed from its own doc even though the allocation
   is trivial.
 - `03b` lands the plumbing milestone (`03b-M1`) from
@@ -206,13 +218,25 @@ Started first of the two concurrent tracks.
   (`DS-50`).
 - Resolve the `02b` point-probe scope: P0 binds one solid state per task, so
   decide whether probes follow the same rule before the graph is measured.
+- The completeness contract: the expected-relation table and the per-program
+  `GraphCompletenessReport` with missing, orphan, and unclassified counts. The
+  production check is projection-only; the kernel oracle stays a dev-mode
+  calibration path, not a pipeline stage.
+- The extraction-graph oracle set: one program per must-extract capability cell,
+  plus the hard-geometry classes (rotated, tangent, thin wall, multi-solid, seam,
+  spline). Each record is human-verified before it gates a release.
+- The rejection contact sheet and the absence review: every rejected program gets
+  an oracle render, its failure reason, and a disposition.
+- The residual random sample: programs drawn uniformly from the pinned pool, sized
+  by the `3/p` rule, run through the oracle differential.
 
 **Pass condition.** The extraction validation and graph persistence tests pass
 on a 100-program slice and then the full active pool; every program either has a
 graph or one failure row and the counts reconcile; per-program wall clock, CPU,
 and peak memory are recorded; the graph report is comparable to the pre-rebuild
 measurements (677,937 CAD graph entities and 20,135,608 CAD graph relations for
-1,000 programs).
+1,000 programs); the completeness report has no unexplained missing, orphan, or
+unclassified row, and every must-extract capability has a verified oracle.
 
 ## P0-W4 — `03b` depth
 
@@ -263,6 +287,11 @@ at every pipeline stage, a deficit ledger, and one exercised slow-loop round.
   [`devtools/review-pack.md`](../../docs/dataset/implementation/devtools/review-pack.md);
   `tools/manual-verification/render_task.py` and the ledger already exist from
   `P0-W2`.
+- The review pack's absence and residual frames, and the release gate that
+  requires every upstream stage ledger to be clean, so an open extraction gap
+  blocks export even when the release rows look complete.
+- The `extraction_capability_coverage` check: a must-extract capability with zero
+  accepted graphs fails the release.
 - The evaluation material and grader (`DA-2`), including the prompt-only view,
   answer parsing per format, and the tolerance semantics from `DA-4`.
 
@@ -327,18 +356,24 @@ planning defect, not a scheduling choice.
 
 ## Owner verification points
 
-The owner is not in the loop for code, extraction correctness, or graph content;
-the tests own those. The owner is in the loop for three judgements: whether a
-task reads as a question a careful person can answer, whether the answer is the
-right answer, and whether a miss is acceptable.
+The owner is not in the loop for code or mechanical checks; the tests own those.
+The owner is in the loop for four judgements: whether the extraction checker is
+trustworthy on the verified oracle set, whether a task reads as a question a
+careful person can answer, whether the answer is the right answer, and whether a
+miss is acceptable. The first judgement is new: the checker cannot certify
+itself, so a human verifies the oracle set that calibrates it, not every program.
+[`manual-verification-protocol.md`](manual-verification-protocol.md) turns these
+points into passes and names the seams they do not cover.
 
 | Work item | What the owner verifies | Artifact | Time |
 |---|---|---|---|
 | `P0-W2` | The skeleton row: does the prompt read as a question, and is the answer defensible? This is the first point at which the wording pipeline can be judged. | `render_task.py` on the skeleton row, plus a `pass` or `defect` row in the review ledger | ~15 min |
-| `P0-W3` (optional) | Three to five program renders: is each highlighted entity the one a clue would name? This catches semantic drift in CAD graph entity binding that a test cannot see. | one program render per spot-checked program | ~30 min |
+| `P0-W2` | The box-with-hole extraction-graph oracle: do the nodes, incidence relations, and measurements match the program? Set `verified` and name the reviewer. | `oracles/extraction-graph/box-with-hole.json` | ~30 min |
+| `P0-W3` | The rotated-box oracle and the first capability-cell oracles; the completeness report exceptions; the rejection contact sheet. This is the check that a supported capability did not silently disappear. | oracle records, completeness report, contact sheet | ~2–3 h |
 | `P0-W4` | The quality gate before scale: 15–30 constructed definitions on real graphs, across clue types and answer meanings, plus the yield number. This is where ambiguous wording is cheapest to fix. | a `render_task.py` sample and the yield report | ~1–2 h |
 | `P0-W5` | The deficit ledger: accept or reject each miss and each expansion round. `known_misses` is an owner decision. | deficit ledger and plan | ~30 min |
 | `P0-W6` | The blocking review gate: every required sampling cell has a current `pass`; a `defect` blocks the export. Dataset card sign-off. | review pack and ledger | per the sampling matrix |
+| `P0-W6` | The absence and residual frames: is each absence legitimate, and does the random pool sample contain an unexplained miss? | absence and residual ledgers | per the sampling policy |
 | `P0-W7` | Release sign-off: manifest, dataset card, `known_misses`, `release_id`. | release directory | ~1 h |
 | `P1-W1` | The PRD section 6.1 release gate per tier: 30 tasks reviewed, or every task. | review pack and ledger | per tier |
 
@@ -351,7 +386,9 @@ right answer, and whether a miss is acceptable.
   first-release fallback in
   [`devtools/review-pack.md`](../../docs/dataset/implementation/devtools/review-pack.md);
   the sampled pack with the full matrix lands in `P0-W6`.
-- `P0-W3` needs no owner review unless the spot check shows drift.
+- `P0-W3`'s oracle review is not a spot check of every program: it is the
+  calibration set. A verified oracle the checker disagrees with is a checker
+  defect; a `proposed` oracle nobody verified is not evidence.
 
 ## Related plans
 
@@ -368,7 +405,7 @@ right answer, and whether a miss is acceptable.
 ## What is already done
 
 The scaffold is nearly complete and green (`go test ./...` three packages,
-`uv run pytest` 42 tests):
+`uv run pytest` 47 tests):
 
 - `generator/main.go`, `generator/internal/run/run.go` — flags, pipeline stage selection,
   exit codes, usage;
@@ -377,7 +414,9 @@ The scaffold is nearly complete and green (`go test ./...` three packages,
 - `cadqa_dataset_generator/cli.py` — the worker protocol and dispatch;
   `s01d`, `s02a`, `s02b` are stubs that raise `StageNotImplemented`;
 - the test contracts for every pipeline stage, the golden record, `prompts.yaml`, and
-  `tolerance.yaml`.
+  `tolerance.yaml`;
+- the graph completeness contract, the extraction-graph oracle format and two
+  `proposed` records, and the oracle builder.
 
 So `P0-W2` is not "initialise everything"; it is the run-contract code half plus
 one thin body per stage. Do not stub `03`–`05` beyond what `P0-W2` needs: a stub
@@ -412,6 +451,9 @@ the run manifest or the work-item note.
 | Per-program execution wall clock and peak memory | `P0-W3` | The full pool does not fit the available machine time |
 | `03b` attempts per accepted task | `P0-W4` | It exceeds the `DS-51` budget |
 | Construction limits (candidates, facts, expansions, rechecks) | `P0-W4` | The measured pass cannot fill the quota targets within them |
+| Verified extraction-graph oracles | `P0-W3` | A must-extract capability has no verified oracle, or a verified oracle fails |
+| Completeness report on the 100-program slice | `P0-W3` | A missing, orphan, or unclassified row has no disposition |
+| Rejection contact sheet coverage | `P0-W3` | A rejected program has no oracle render or no disposition |
 | Time from a program change to a new reviewable row | `P0-W6` | It requires a full corpus rerun (`R-21`) |
 | Import cost as a share of the execution budget | `P0-W3` | It stays at 7–9% per program after `DS-49` |
 | P0 requirement coverage | `P0-W1` | A P0 requirement has no work item in the coverage table |

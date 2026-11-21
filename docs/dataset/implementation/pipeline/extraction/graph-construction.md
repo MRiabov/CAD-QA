@@ -37,6 +37,7 @@ rules in [`graph-persistence.md`](graph-persistence.md).
 | `cadquery_path_segment` | `<path_local_id>:<ordinal>` | Path segment in the AST extraction result. |
 | `region` | `<feature_local_id>:added` or `:removed` | Feature effect region. |
 | `cadquery_selector_result` | `selector_result_id` | CadQuery selector result from the runtime extraction result. |
+| `point_probe` | `probe_id` | Runtime point probe. |
 
 An alias has no CAD graph entity. It is consumed when resolving the target binding.
 
@@ -62,6 +63,9 @@ An alias has no CAD graph entity. It is consumed when resolving the target bindi
    - `modify` operations create no region.
    A first state with no before state creates only the region implied by its
    AST feature kind.
+8. Create one `point_probe` CAD graph entity for every runtime point probe. Copy
+   the probe index, classification, and classifier; attach the probe point and
+   distance as measurements.
 
 ## Relation construction
 
@@ -93,6 +97,7 @@ Create relations in this order; all endpoints must exist.
 - `selected_from` from a CadQuery selector result to its state.
 - `selected_by` from every selected face, edge, or vertex to its CadQuery
   CadQuery selector result.
+- `has_point_probe` from a solid state to every point probe of that state.
 
 ### Material change
 
@@ -141,6 +146,10 @@ a relation and creates no row. It is a lookup used by pair emission.
 
 ### Pair rows
 
+The P0 pair kinds are the relations `parallel_to` and `perpendicular_to` and the
+measurements `distance` and `angle`. P1 adds `coplanar_with` and `coaxial_with`.
+A pair kind outside this list is not emitted.
+
 For each pair relation or pair measurement, take the named endpoints of a
 bindable state and the candidate endpoints of the declared endpoint entity kind
 in the same state, then:
@@ -186,6 +195,7 @@ From the CadQuery program runtime extraction result:
 - edge: `length`, `bounding_box`, `centroid`;
 - vertex: `centroid`;
 - CadQuery selector result: `selected_count`;
+- point probe: `probe_point`, `distance_to_surface`;
 - CadQuery workplane: `workplane_frame`;
 - CAD feature solid state effect delta: `volume_change`, `bounding_box_change`, `topology_change`.
 
@@ -234,6 +244,7 @@ Reject before writing when:
 - an AST operation has no runtime recording;
 - a solid state producing operation has no state or effect;
 - a CadQuery selector result has no state or a selected ID outside that state;
+- a point probe has no state, or its probe index is not 0 or 1;
 - a CadQuery workplane frame has no AST record;
 - a measurement or relation endpoint is missing;
 - a relation carries a non-null `tolerance` outside the geometry-classification

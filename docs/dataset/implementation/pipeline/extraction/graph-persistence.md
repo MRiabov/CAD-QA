@@ -122,6 +122,8 @@ rejects the graph.
 | `angle` | `scalar` | `degree` or `radian` | `face`, `edge`, `cadquery_path_segment` | same category, or null for a path tangent |
 | `bounding_box` | `bounding_box` | `millimetre` | `solid_state`, `face`, `edge`, `vertex`, `region` | null |
 | `centroid` | `point` | `millimetre` | `solid_state`, `face`, `edge`, `vertex`, `region` | null |
+| `probe_point` | `point` | `millimetre` | `point_probe` | null |
+| `distance_to_surface` | `scalar` | `millimetre` | `point_probe` | null |
 | `face_count` | `integer` | `unitless` | `solid_state` | null |
 | `edge_count` | `integer` | `unitless` | `solid_state`, `face` | null |
 | `vertex_count` | `integer` | `unitless` | `solid_state`, `face` | null |
@@ -187,6 +189,7 @@ NodeAttributes = STRUCT<
   operation: OperationAttributes | NULL,
   feature: FeatureAttributes | NULL,
   solid_state: SolidStateAttributes | NULL,
+  point_probe: PointProbeAttributes | NULL,
   face: FaceAttributes | NULL,
   edge: EdgeAttributes | NULL,
   vertex: VertexAttributes | NULL,
@@ -362,6 +365,7 @@ operation. `index` and `sequence_index` are zero-based. `source_line` is one-bas
 | `cadquery_path_segment` | `{path_local_id}:{ordinal}` | null | creating operation of the path |
 | `region` | `{feature_local_id}:{added\|removed}` | state after the feature | creating operation of the feature |
 | `cadquery_selector_result` | `selector_result_id` from `02b` | selected state | evaluated operation |
+| `point_probe` | `probe_id` from `02b` | probed solid state | producing operation of that state |
 
 ## CAD graph entity attributes
 
@@ -377,6 +381,7 @@ count is a non-negative 64-bit integer.
 | `operation` | `OperationAttributes` | `operation_kind: OperationKind`, `method: str`, `order: int`, `source_line: int`, `result_var: str \| None` |
 | `feature` | `FeatureAttributes` | `feature_kind: FeatureKind` |
 | `solid_state` | `SolidStateAttributes` | `sequence_index: int`, `is_final: bool`, `is_solid: bool`, `shape_hash: Sha256 \| None` |
+| `point_probe` | `PointProbeAttributes` | `probe_index: int`, `is_inside: bool`, `classifier: ProbeClassifier` |
 | `face` | `FaceAttributes` | `fingerprint_sha256: Sha256`, `face_surface_kind: FaceSurfaceKind` |
 | `edge` | `EdgeAttributes` | `fingerprint_sha256: Sha256`, `edge_curve_kind: EdgeCurveKind`, `is_closed: bool` |
 | `vertex` | `VertexAttributes` | `fingerprint_sha256: Sha256` |
@@ -398,6 +403,7 @@ count is a non-negative 64-bit integer.
 | `FaceSurfaceKind` | `plane`, `cylinder`, `cone`, `sphere`, `torus`, `bspline`, `other` |
 | `EdgeCurveKind` | `line`, `circle`, `ellipse`, `hyperbola`, `parabola`, `bspline`, `other` |
 | `EdgeEnd` | `start`, `end` |
+| `ProbeClassifier` | `is_inside` |
 | `ProfileKind` | `rectangle`, `circle`, `ellipse`, `polygon`, `slot`, `other` |
 | `WorkplaneKind` | `named`, `custom`, `face` |
 | `NamedPlane` | `xy`, `yz`, `xz` |

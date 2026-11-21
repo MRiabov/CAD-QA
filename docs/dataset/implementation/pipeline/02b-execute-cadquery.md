@@ -52,7 +52,8 @@ results, or a failure tombstone when execution fails.
 - `workplane_frames`: one per workplane-producing operation;
 - `selector_results`: one per evaluated CadQuery selector;
 - `effect_deltas`: before/after state pairs and measured deltas;
-- `point_probes`: one or two classified points per solid state;
+- `point_probes`: one or two classified points per solid state, written as
+  `runtime_point_probes`;
 - `final_state_id`;
 - `runtime_extraction_result_sha256`.
 

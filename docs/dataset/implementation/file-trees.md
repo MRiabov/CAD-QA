@@ -174,6 +174,7 @@ A Go test function is the contract name in CamelCase:
 |---|---|---|
 | `docs/dataset/implementation/pipeline/testing/fixtures/` | Coverage and rejection programs with `program_sha256`. | The test contract. |
 | `docs/dataset/implementation/pipeline/testing/golden/` | Golden records. | The record format. |
+| `docs/dataset/implementation/pipeline/testing/oracles/` | Oracles: pinned stage outputs, one directory per oracle kind. | The oracle format. |
 | `balance.yaml`, `checks.yaml`, `prompts.yaml`, `tolerance.yaml` | Balance policy, check policy, prompt copy, and measurement tolerance policy. | The docs that define each. |
 | `data/`, `runs/` | Run output: `runs/run<NNNN>/` and `runs/cache/`. Gitignored. | The run. |
 
@@ -189,9 +190,11 @@ not imported by it.
 ```text
 tools/manual-verification/
   render_task.py                           one release row's render plus its printed card
+  build_extraction_oracle.py               derive a proposed extraction-graph oracle from a program
 ```
 
-`render_task.py` is planned; it does not exist yet.
+`render_task.py` is planned; `build_extraction_oracle.py` exists and writes a
+`proposed` oracle for a human to verify.
 
 A tool that becomes load-bearing moves into the package and gets a test contract.
 The review pack and its ledger are the first manual verification tool; see

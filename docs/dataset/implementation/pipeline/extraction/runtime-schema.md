@@ -120,6 +120,22 @@ Every AST call operation has exactly one row.
 | `count` | `INT64` | not null | Selected count. |
 | `source_span` | `SourceSpan` | not null | Evaluating call span. |
 
+## `runtime_point_probes`
+
+| Column | Parquet value category | Null | Meaning |
+|---|---|---|---|
+| `probe_id` | `STRING` | not null | `probe:<state_id>:<probe_index>`. |
+| `state_id` | `STRING` | not null | State the probe classifies. |
+| `probe_index` | `INT64` | not null | 0 for the centroid probe, 1 for the seeded probe. |
+| `point` | `Point3D` | not null | Probe point. |
+| `is_inside` | `BOOLEAN` | not null | `is_inside(state, point)` classification. |
+| `distance_to_surface` | `DOUBLE` | not null | Distance to the nearest face surface. |
+| `classifier` | `STRING` enum `is_inside` | not null | Classifier that produced the label. |
+| `source_span` | `SourceSpan` | null | Producing assignment span, when known. |
+
+A state has at most two rows. A state with no surviving row supports no
+membership task; that is a deficit, not a missing row.
+
 ## `runtime_effects`
 
 | Column | Parquet value category | Null | Meaning |
