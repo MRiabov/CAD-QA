@@ -4,8 +4,7 @@ Run it as ``tools/dont-say`` (or ``uv run python tools/check_dont_say.py``); it
 is a whole-repository scan, so it is a script rather than a pytest test.
 
 Reads the ``## Don't say`` table from ``docs/glossary.md`` and fails when a
-banned term appears in a scanned doc or code file (``.md``, ``.tex``, ``.py``,
-``.go``).
+banned term appears in a scanned doc or code file (``.md``, ``.tex``, ``.py``).
 A Say term covers its own
 Don't-say tokens; a ``(home)`` annotation allows the token under that tree; the
 allowlist and ``dont-say: allow`` / ``dont-say: home`` markers exempt specific
@@ -23,7 +22,6 @@ import io
 import logging
 import re
 import tokenize
-from collections.abc import Iterator
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -32,8 +30,8 @@ logger = logging.getLogger("cadqa.check_dont_say")
 
 REPO = Path(__file__).resolve().parents[1]
 DONT_SAY_HEADING = "## Don't say"
-SCAN_ROOTS = ("docs", "dataset", "generator", "train_and_eval", "tools", "plans")
-SCAN_SUFFIXES = frozenset({".go", ".md", ".py", ".tex"})
+SCAN_ROOTS = ("docs", "dataset", "train_and_eval", "tools", "plans")
+SCAN_SUFFIXES = frozenset({".md", ".py", ".tex"})
 SKIP_DIRS = frozenset(
     {
         ".git",
@@ -46,7 +44,6 @@ SKIP_DIRS = frozenset(
         "dist",
         "node_modules",
         "runs",
-        "vendor",
     }
 )
 SKIP_FILES = frozenset(
@@ -70,7 +67,6 @@ LATEX_TEXT_TT = re.compile(r"\\texttt\{[^}]*\}")
 LATEX_VERB = re.compile(r"\\verb(.)(.*?)\1")
 IDENTIFIER_SEGMENT = re.compile(r"[A-Z]+(?=[A-Z][a-z])|[A-Z]?[a-z]+|[A-Z]+|\d+")
 TOKEN = re.compile(r"[a-z0-9_]+")
-GO_IDENTIFIER = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 # Fields that hold statements. A docstring owner (module, class, def) can only be
 # reached through these, so the docstring walk never has to visit expressions.
 STATEMENT_FIELDS = ("body", "orelse", "finalbody", "handlers", "cases")
@@ -526,98 +522,6 @@ def code_identifier_lines(text: str) -> list[tuple[int, str]]:
     return names
 
 
-def _go_spans(text: str) -> Iterator[tuple[str, int, int, int]]:
-    """Yield ``(kind, start, end, line_number)`` for Go comments and literals.
-
-    ``kind`` is ``comment`` for ``//`` and ``/* */`` and ``literal`` for
-    interpreted strings, raw strings, and runes. Only those spans matter here,
-    so the scan does not tokenize the rest of the language.
-    """
-
-    index = 0
-    line_no = 1
-    size = len(text)
-    while index < size:
-        char = text[index]
-        if char == "\n":
-            line_no += 1
-            index += 1
-            continue
-        if char == "/" and index + 1 < size:
-            if text[index + 1] == "/":
-                end = text.find("\n", index)
-                if end < 0:
-                    end = size
-                yield "comment", index, end, line_no
-                index = end
-                continue
-            if text[index + 1] == "*":
-                close = text.find("*/", index + 2)
-                end = size if close < 0 else close + 2
-                yield "comment", index, end, line_no
-                line_no += text.count("\n", index, end)
-                index = end
-                continue
-        if char in {'"', "'"}:
-            end = _go_quoted_end(text, index, char)
-            yield "literal", index, end, line_no
-            index = end
-            continue
-        if char == "`":
-            close = text.find("`", index + 1)
-            end = size if close < 0 else close + 1
-            yield "literal", index, end, line_no
-            line_no += text.count("\n", index, end)
-            index = end
-            continue
-        index += 1
-
-
-def _go_quoted_end(text: str, start: int, quote: str) -> int:
-    index = start + 1
-    size = len(text)
-    while index < size:
-        char = text[index]
-        if char == "\\":
-            index += 2
-            continue
-        if char == quote:
-            return index + 1
-        index += 1
-    return size
-
-
-def go_prose_lines(text: str) -> list[tuple[int, str]]:
-    """Return ``(line_number, text)`` for comments in Go source."""
-
-    prose: list[tuple[int, str]] = []
-    for kind, start, end, line_no in _go_spans(text):
-        if kind != "comment":
-            continue
-        for offset, segment in enumerate(text[start:end].splitlines()):
-            prose.append((line_no + offset, segment))
-    return sorted(prose)
-
-
-def go_identifier_lines(text: str) -> list[tuple[int, str]]:
-    """Return ``(line_number, name)`` for Go identifier tokens."""
-
-    masked = list(text)
-    for _kind, start, end, _line_no in _go_spans(text):
-        for index in range(start, end):
-            if masked[index] != "\n":
-                masked[index] = " "
-    source = "".join(masked)
-    names: list[tuple[int, str]] = []
-    line_no = 1
-    last = 0
-    for match in GO_IDENTIFIER.finditer(source):
-        line_no += source.count("\n", last, match.start())
-        last = match.start()
-        names.append((line_no, match.group()))
-    return names
-
-
 def identifier_match(name: str, rule: Rule) -> bool:
     """True when the rule's words appear as a whole name segment run in ``name``."""
 
@@ -634,7 +538,7 @@ def scan_file(
     path: Path, rules: list[Rule], *, identifiers: bool = False
 ) -> list[Hit]:
     text = path.read_text(encoding="utf-8")
-    if path.suffix in {".go", ".py"}:
+    if path.suffix == ".py":
         return _scan_code(path, text, rules, identifiers=identifiers)
     return _scan_markdown(path, text, rules)
 
@@ -644,7 +548,6 @@ def _scan_code(
 ) -> list[Hit]:
     if HOME_MARKER.search(text):
         return []
-    go = path.suffix == ".go"
     index = RuleIndex.build(rules, path)
     hits: list[Hit] = []
     seen: set[tuple[int, str]] = set()
@@ -663,8 +566,7 @@ def _scan_code(
             for line_no, line in enumerate(text.splitlines(), start=1)
             if ALLOW_MARKER.search(line) or ALLOW_LINE.search(line)
         }
-        names = go_identifier_lines(text) if go else code_identifier_lines(text)
-        for line_no, name in names:
+        for line_no, name in code_identifier_lines(text):
             if line_no in allowed_lines:
                 continue
             for rule in index.rules:
@@ -687,8 +589,7 @@ def _scan_code(
                     bare=rule.bare,
                 ):
                     record(line_no, line, rule)
-    prose = go_prose_lines(text) if go else code_prose_lines(text)
-    for line_no, segment in prose:
+    for line_no, segment in code_prose_lines(text):
         if ALLOW_MARKER.search(segment) or ALLOW_LINE.search(segment):
             continue
         lower = segment.lower()
@@ -785,12 +686,6 @@ def format_hit(hit: Hit) -> str:
     )
 
 
-def default_roots() -> list[str]:
-    """The scan roots that exist today; ``generator/`` arrives with the Go module."""
-
-    return [str(REPO / root) for root in SCAN_ROOTS if (REPO / root).is_dir()]
-
-
 def iter_files(roots: list[str]) -> list[Path]:
     files: list[Path] = []
     for root in roots:
@@ -837,7 +732,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--glossary", type=Path, default=REPO / "docs/glossary.md")
     parser.add_argument(
-        "--roots", nargs="+", default=default_roots()
+        "--roots", nargs="+", default=[str(REPO / root) for root in SCAN_ROOTS]
     )
     parser.add_argument(
         "--ratchet", type=Path, help="baseline hit-count file to enforce"

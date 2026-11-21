@@ -231,13 +231,12 @@ P0/P1 commitment.
 
 - **Don't-say checker: a script, not a test.** `tools/dont-say` reads the `## Don't say`
   table from `glossary.md` and fails on banned terms across docs and code (Markdown,
-  LaTeX, Python, and Go). It scans the whole repository (about a second), so it runs as a
+  LaTeX, and Python). It scans the whole repository (about a second), so it runs as a
   pre-commit hook and never from pytest: a test would make every test run pay for the
   scan.
   A `(home)` annotation exempts a tree, `ALLOWLIST` exempts cross-cutting phrases, and the
   `dont-say: allow` / `dont-say: home` markers exempt a line/file. In code, comments and
-  docstrings are matched as prose, and multi-word identifier name variants are matched;
-  Go comments and identifiers get the same treatment. Run
+  docstrings are matched as prose, and multi-word identifier name variants are matched. Run
   `tools/dont-say`, or `tools/dont-say --ratchet tools/dont_say_baseline.txt` to enforce
   the ratchet.
 - **Clean code: P2.** `--identifiers` additionally matches banned terms inside code

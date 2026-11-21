@@ -18,4 +18,4 @@ repos:
         entry: tools/dont-say --ratchet tools/dont_say_baseline.txt
         language: system
         pass_filenames: false
-        files: ^(docs|dataset|generator|train_and_eval|tools|plans)/.*\.(md|py|tex|go)$
+        files: ^(docs|dataset|train_and_eval|tools|plans)/.*\.(md|py|tex)$
