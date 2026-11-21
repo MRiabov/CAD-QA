@@ -43,9 +43,11 @@ is accepted and recorded.
 - **Go:** `03a`, `03b`, `03c`; no Python is needed after graph construction.
 - `03a` task-quota allocation is a global allocation and is not parallelizable.
   Family profile building may be parallel per family, with one merge step.
-- `03b` task-definition construction is parallel per program. One pass loads the
-  program's graph and census once and fills every quota target assigned to it;
-  accepted definitions are merged with deterministic ordering.
+- `03b` task-definition construction is parallel per shard. A pass processes the
+  programs of its shard one at a time in stable `program_sha256` order; the
+  pass loads each program's graph and census once and fills every quota target
+  assigned to that program. Accepted definitions are merged with deterministic
+  ordering.
 - `03c` is a serial controller. Its delegated `01b`/`01c`/`01d`/`02` work is
   parallel inside those stages.
 

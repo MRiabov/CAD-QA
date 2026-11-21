@@ -66,7 +66,8 @@ Coverage and balance checks:
 ## Language and parallelism
 
 - **Go:** validation, manifest, and export.
-- Independent validation checks are parallel per row, program, or program family.
+- Independent validation checks are parallel per row, program, or program family,
+  up to `--jobs`.
 - The final release write, manifest assembly, and support-table copy are single
   writer steps.
 - Parallel validation results are reduced into one summary before export, sorted

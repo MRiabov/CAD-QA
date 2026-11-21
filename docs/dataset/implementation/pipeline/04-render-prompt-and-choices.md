@@ -109,12 +109,13 @@ those rendered parts.
 ## Language and parallelism
 
 - **Go:** prompt and choice rendering.
-- Rendering is parallel per task; a task definition is immutable and rendering
-  has no shared mutable state.
-- The release table has one deterministic writer. Parallel output is merged by
+- Rendering is parallel per shard. A pass processes the programs of its shard one
+  at a time in stable `program_sha256` order; a task definition is immutable and
+  rendering has no shared mutable state.
+- The release table has one deterministic writer. The writer merges rows by
   `task_id`.
 - The release table is committed as deterministic shard parts. A shard is
-  flushed at most every 30 seconds or every `flush_rows` rows, whichever comes
+  flushed at most every 30 seconds or every `--flush-rows` rows, whichever comes
   first. Resume reads the committed parts and skips a `task_id` that is already
   present with the same content hash. A later render revision appends a part
   instead of rewriting an accepted one. The flush, persistence, and resume rules

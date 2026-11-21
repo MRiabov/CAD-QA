@@ -30,12 +30,21 @@ artifact crosses each sub-step boundary.
 
 - **Python:** `02a` AST extraction and `02b` CadQuery execution.
 - **Go:** `02c` graph construction.
-- Each program runs `02a → 02b → 02c` in order; different programs run in
-  parallel. The three sub-steps are not independent parallel steps.
-- `02b` uses a bounded process pool because CadQuery/OCP execution is memory
-  heavy. Do not oversubscribe it.
+- Pipeline stage 02 is one fused pipeline: for each program, `02a`, then `02b`, then
+  `02c`, before the next program in the shard starts. The three sub-steps are
+  not independent parallel steps.
+- The pass is the shard ([`run-contract.md`](../run-contract.md#45-concurrency)).
+  A pass processes the programs of its shard one at a time in stable
+  `program_sha256` order; the number of concurrent shards is a pipeline stage's
+  concurrency bound, and `02b` adds the memory cap.
+- `02b` forks one child at a time per active shard. The memory bound is per
+  active shard, so the number of concurrent children is the number of active
+  shards. Do not oversubscribe it.
 - Parallel graph outputs are merged by `program_id`; graph construction does not
   mutate shared state.
+- The per-sub-step parts and `stage.json` markers remain. A sub-step marker is
+  written when every shard has finished that sub-step; a default resume skips
+  `02a` for a program whose `02a` is complete.
 
 ## Why three steps
 

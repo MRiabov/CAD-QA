@@ -32,11 +32,12 @@ artifact crosses each sub-step boundary.
 
 - **Go:** `01a`, `01b`, `01c`, `01e`.
 - **Python:** `01d` only, because normalization needs the Python tokenizer and AST.
-- `01a` metadata reading is parallel over row groups or shards.
-- `01c` fetching is parallel over selected IDs or range reads.
-- `01d` normalization is parallel per program through a Python worker pool.
+- `01a` metadata reading is parallel over row groups or shards, up to `--jobs`.
+- `01c` fetching is parallel over selected IDs or range reads, up to `--jobs`.
+- `01d` normalization is parallel per shard, one program at a time through a
+  Python worker pool, up to `--jobs`.
 - `01b` selection and `01e` manifest writing are global reductions with a single
-  writer; they are not clearly parallelizable.
+  writer; they are not parallel.
 - Parallel outputs are merged by stable program ID.
 
 ## Dataset semantics

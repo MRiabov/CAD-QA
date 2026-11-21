@@ -820,8 +820,10 @@ prefix is `DS-`.
   immutable Parquet parts as units complete; the part is the unit's completion
   marker, and resume reads the committed parts and skips completed units. A unit
   is flushed when it completes, or at most every 30 seconds, asynchronously
-  through one writer per pipeline stage. A completed unit is not recomputed
-  unless it is forced. A forced recompute must be byte-identical; a difference
+  through one writer per pipeline stage; a sharded stage flushes its shard at
+  the interval or `--flush-rows`, not per unit (`DS-57`). A completed unit is
+  not recomputed unless it is forced. A forced recompute must be byte-identical;
+  a difference
   is a defect. Bulk state is Parquet; JSON is limited to the run manifest,
   pipeline stage completion markers, the deficit ledger, and other small or rare
   control documents. The contract also owns the shared cache, the run lock, the
@@ -1101,3 +1103,77 @@ prefix is `DS-`.
   failure partition is the only per-unit negative state, and it is already the
   R-19 record. A corrupt shard is an integrity error with `--force` recovery, not
   a data condition.
+
+## DS-57 — Concurrency is a bound per pipeline stage, not one global worker count
+
+- **Status:** accepted (2026-11-21).
+- **Context:** Concurrency rules were spread across `python-and-golang.md`,
+  `run-contract.md#43-async-writer`, and `DS-49`/`DS-55`/`DS-56`. `--jobs`
+  defaulted to `02b`'s memory formula and applied it to every pipeline stage, so
+  a memory-limited host throttled cheap CPU pipeline stages to the number of
+  CadQuery children it could hold. `run-contract.md#43-async-writer` also said
+  the writer flushes on the unit boundary, while
+  `run-contract.md#42-flush-rule` and `DS-55` flush a sharded part at the
+  interval; per-unit flushes would rewrite a 16 MB shard for every program and
+  reintroduce the cost `DS-55` removed. The pass was a program, but the shard
+  is the persistence container, and the two were not tied together.
+- **Decision:** A pass is the scheduling group; for a sharded pipeline stage
+  (`01d`, `02a`–`02c`, `03b`, `04`) it is one shard. The orchestrator runs at
+  most `--jobs` passes, `--jobs` defaults to the host's logical CPU count, a
+  sharded pipeline stage is also capped by `journal_shard_count`, and `02b`
+  adds the memory cap. The writer commits at a pipeline stage's flush trigger:
+  a one-unit-per-part pipeline stage (`02b`) at the unit boundary, a sharded
+  pipeline stage at `--flush-interval` or `--flush-rows`, never per unit. A
+  complete part is written in a pipeline stage's stable sort order; an
+  intermediate flush may be in completion order. Cache writes are hardlinks
+  when possible, otherwise copies off the writer's critical path. `SIGINT`
+  waits for in-flight units up to their timeout (`DS-59`).
+- **Consequences:** Cheap pipeline stages no longer inherit `02b`'s memory cap.
+  The shard count is both a persistence and a concurrency knob; raising it for
+  more concurrency changes `run_id`. One pass owner per shard removes
+  cross-worker write coordination. The per-unit flush is limited to `02b`, so
+  a sharded pipeline stage does not reintroduce the O(n²) shard rewrite. The
+  complete-shard sort keeps byte-identical final parts; an intermediate part
+  may differ, which the contract already allows because the complete part
+  replaces it.
+
+## DS-58 — Pipeline stage 02 fuses 02a, 02b, and 02c per program within a shard
+
+- **Status:** accepted (2026-11-21).
+- **Context:** `pipeline/02-execute-cadquery-and-build-graph.md` said "each
+  program runs `02a → 02b → 02c` in order; different programs run in parallel",
+  while `run-contract.md` gave each sub-step its own directory, `stage.json`,
+  and CLI stem, which reads as three global barriers. The reader could not tell
+  whether pipeline stage 02 was one fused pipeline or three sequential
+  pipeline stages, and the concurrency answer differs.
+- **Decision:** Pipeline stage 02 is one fused pipeline. A shard pass processes
+  its programs one at a time in stable `program_sha256` order; each program
+  runs `02a`, then `02b`, then `02c`, before the next program starts. The
+  per-sub-step directories, parts, and `stage.json` markers remain for resume:
+  a sub-step marker is written when every shard has finished that sub-step, and
+  a default resume skips `02a` for a program whose `02a` is complete. `02b`
+  forks one child at a time per active shard.
+- **Consequences:** A program's text, AST, and runtime result stay hot across
+  the three sub-steps. The number of concurrent `02b` children is the number
+  of active shards, not the number of programs. The tail is the slowest shard,
+  not the slowest program; with many programs per shard the difference is
+  small. A shard's sub-step outputs have one producer, so the writer needs no
+  cross-worker merge for the shard.
+
+## DS-59 — SIGINT drains in-flight units before exit
+
+- **Status:** accepted (2026-11-21).
+- **Context:** `run-contract.md#43-async-writer` said "stops scheduling new
+  units, drains the queue", but a producer could push after the drain, and the
+  text did not say whether an in-flight child or worker was waited for or
+  killed. That is a lost-work or hung-process ambiguity.
+- **Decision:** On `SIGINT`, the orchestrator stops scheduling new passes, lets
+  each in-flight unit finish up to the flush interval (30 seconds), or the
+  unit's execution timeout for `02b`, then kills any remaining child or worker.
+  It closes the queue, drains it, commits the last parts, writes that
+  pipeline stage's completion marker only when every unit is done, releases
+  the run lock, and exits 130. A second `SIGINT` cancels the wait and exits 130 after
+  committing what is already queued.
+- **Consequences:** Ctrl-C can take up to 30 seconds but loses no completed
+  work. A second Ctrl-C is immediate. A crash still loses only the units in the
+  queue or in flight; the committed parts are valid.

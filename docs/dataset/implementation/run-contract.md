@@ -24,10 +24,14 @@ it is the resumable state of the run.
   produces. The unit is a CadQuery program for most pipeline stages and a task
   for `03b` construct task definitions and `04` render prompt and choices. Each
   pipeline stage doc names its unit.
-- A **pass** is the scheduling group the orchestrator runs together. A pass is
-  one program for `01d` through `02c`, one program and plan revision for `03b`,
-  and one program for `04`. A pass loads its program's inputs once and produces
-  every unit assigned to it; the unit stays the resume granularity.
+- A **pass** is the scheduling group the orchestrator runs together. For a
+  sharded pipeline stage (`01d`, `02a`–`02c`, `03b`, `04`) the pass is one
+  shard. For the non-sharded stages the pass is a pipeline stage's natural
+  batch: one metadata read for `01a`, one selection call for `01b`, one fetch
+  batch for `01c`, one manifest for `01e`, one plan revision for `03a`, one
+  control decision for `03c`, and one release for `05`. A pass processes its
+  units one at a time in stable unit-key order; the unit stays the resume
+  granularity.
 - A **shard** is the deterministic set of units that share one Parquet part. A
   unit belongs to `sha256(pass_key) mod journal_shard_count`, so shard membership
   depends on the key and the run-level shard count, never on wall-clock time or
@@ -55,8 +59,9 @@ it is the resumable state of the run.
 - A run is deterministic: the same inputs, versions, and `journal_shard_count`
   produce byte-identical parts and the same `run_id`. A flush may write an
   incomplete shard; the complete shard replaces it, so the final part set is
-  deterministic. A forced recompute that produces different bytes is a defect,
-  not a new result.
+  deterministic. The complete part is written in a pipeline stage's stable sort order
+  (§4.1); an intermediate flush may be in completion order. A forced recompute
+  that produces different bytes is a defect, not a new result.
 
 The reason is cost. With 1,500 active programs, 30 seconds per execution, and
 about 20,000 relations per program, an interrupted run without a resume rule
@@ -261,13 +266,21 @@ unions the parts and deduplicates by unit key, requiring the content identity to
 agree. A shard is complete when every unit of it is present in the union of its
 parts, not in any single part.
 
+The complete part is written in a pipeline stage's stable sort order. An intermediate
+flush may be in completion order, because the complete part replaces it. For an
+append-only `03b` or `04` part, the sort order applies within the revision
+segment; a reader sorts the union of the segments.
+
 ### 4.2 Flush rule
 
-A pipeline stage flushes after each unit when the unit is expensive, and
-otherwise at most every 30 seconds or every `flush_rows` rows, whichever comes
-first. The default `--flush-interval` is 30 seconds and the default
-`--flush-rows` is 10,000. A pipeline stage that holds rows for minutes is a
-contract violation, not a performance tuning choice.
+A pipeline stage flushes after each unit only when the unit is as long as the
+flush interval and the unit is its own part; `02b` execute CadQuery is that
+pipeline stage. Every other pipeline stage flushes at most every
+`--flush-interval` or every `--flush-rows` rows, whichever comes first. A
+sharded pipeline stage rewrites its shard part at that cadence; it never
+rewrites a shard per unit. The default `--flush-interval` is 30 seconds and the
+default `--flush-rows` is 10,000. A pipeline stage that holds rows for minutes
+is a contract violation, not a performance tuning choice.
 
 | Pipeline stage | Unit | Durable part | Flush trigger | Resume key |
 |---|---|---|---|---|
@@ -300,16 +313,24 @@ failure partition is owned by [`failure-record.md`](failure-record.md).
 
 Each pipeline stage has one writer for its output directory. Compute workers put
 completed units on a bounded queue; the writer owns the temp file, the fsync,
-the rename, and the directory fsync. The queue is bounded at twice the worker
+the rename, and the directory fsync. The queue is bounded at twice the pass
 count. A producer waits only when the queue is full; that is the backpressure
-rule, and it is the only place persistence blocks computation.
+rule, and it is the only place persistence blocks computation. Because a shard
+has one pass owner (§4.5), the writer does not coordinate two producers for one
+shard.
 
-The writer flushes on the unit boundary or the flush interval, whichever comes
-first. It does not hold a transaction across units. On `SIGINT`, the orchestrator
-stops scheduling new units, drains the queue, commits the last parts, writes the
-pipeline stage completion marker when every unit is done, releases the run lock,
-and exits 130. A crash loses only the units still in the queue; the committed
-parts are valid.
+The writer commits at a pipeline stage's flush trigger (§4.2), not on every
+unit. A one-unit-per-part pipeline stage (`02b`) commits at the unit boundary
+because the unit is the part. It does not hold a transaction across units. On
+`SIGINT`, the orchestrator stops scheduling new passes, lets each in-flight
+unit finish up to the flush interval (30 seconds), or the unit's execution
+timeout for `02b`, then kills any remaining child or worker. It closes the
+queue, drains it, commits the last parts, writes the completion marker of a
+pipeline stage only when every unit is done, releases the run lock, and exits
+130. A
+second `SIGINT` cancels the wait and exits 130 after committing what is already
+queued. A crash loses only the units still in the
+queue or in flight; the committed parts are valid.
 
 The Go writer is a goroutine in `internal/shared/parquet_writer.go`. The Python
 writer is a thread in `cadqa_dataset_generator/parquet_writer.py`. Both use the
@@ -340,6 +361,49 @@ Unit independence is about a unit's data and execution. A defect in a
 pipeline stage — an invalid template, a missing component, a writer that cannot
 commit — is not a unit failure and stops that pipeline stage, because continuing
 would write an incomplete artifact under a valid identity.
+
+### 4.5 Concurrency
+
+The orchestrator runs at most `--jobs` passes at a time. `--jobs` defaults to the
+host's logical CPU count. A sharded pipeline stage is also capped by
+`journal_shard_count`, because one pass owns one shard. `02b` execute CadQuery
+adds a memory cap: the number of active passes is at most
+`floor(available_memory / (memory_limit_bytes + worker_resident_bytes))`, where
+`worker_resident_bytes` is measured once at startup by loading one preloaded
+worker. That value is a scheduling input; it never enters
+`execution_environment` or a unit identity.
+
+| Pipeline stage | Pass | Concurrency |
+|---|---|---|
+| `01a` read CADEvolve metadata | metadata read | one pass; row-group reads inside the pass use up to `--jobs` workers |
+| `01b` select program pool | selection call | one pass (global reduction) |
+| `01c` fetch program pool | fetch batch | up to `--jobs` in-flight fetches |
+| `01d` normalize programs | shard | up to `min(--jobs, journal_shard_count)` passes |
+| `01e` write external dataset manifest | manifest | one pass (single writer) |
+| `02a`–`02c` execute CadQuery and build graph | shard | up to `min(--jobs, journal_shard_count)` passes; `02b` adds the memory cap |
+| `03a` allocate task quotas | plan revision | one pass (global allocation); family profiles may run per family |
+| `03b` construct task definitions | shard | up to `min(--jobs, journal_shard_count)` passes |
+| `03c` resolve deficits | control decision | one pass (serial controller) |
+| `04` render prompt and choices | shard | up to `min(--jobs, journal_shard_count)` passes |
+| `05` validate and export release | release | validation checks use up to `--jobs`; the release write is one pass |
+
+A pass processes its units one at a time in stable unit-key order. A sharded
+pass processes the units of its shard and does not move to another shard. The
+intra-pass parallel axis named in the table (`01a` row groups, `01c` range reads,
+`03a` family profiles, `05` validation checks) shares the same `--jobs` bound; it
+does not multiply it.
+
+For `01d` through `02c`, a pass processes one program at a time. Pipeline stage
+`02` runs `02a`, then `02b`, then `02c` for that program before it starts the
+next program in the shard (`DS-58`). `03b` processes one program and plan
+revision at a time
+and emits the task rows of that program. `04` processes one program at a time
+and emits the task rows of that program.
+
+A shard has one pass owner at a time. The owner produces the shard's rows, and
+the writer is the only committer. `02b` has one child in flight per active shard;
+the memory cap is per active pass, so the number of concurrent children is the
+number of active shards.
 
 ## 5. Pipeline stage completion marker
 
@@ -479,6 +543,8 @@ A shared cache is optional and is enabled by default at `<runs_root>/cache`;
   the files into the run directory and is logged. A hit must be byte-identical
   to a fresh computation; the test asserts it.
 - A part is written to the cache after its run part is committed. A cache write
+  is a hardlink when the cache and run directory are on the same filesystem;
+  otherwise it is a copy performed off the writer's critical path. A cache write
   failure is a warning, not a run failure.
 - A cache entry is immutable. A corrupt entry is removed and recomputed; the
   warning names the entry.
@@ -527,10 +593,10 @@ generator list [--runs-root <path>]
 | `--from` | no | first incomplete | First pipeline stage doc stem. |
 | `--to` | no | last | Last pipeline stage doc stem. |
 | `--force` | no | none | Comma-separated pipeline stage stems or `all`. |
-| `--jobs` | no | `min(NumCPU, floor(available_memory / (memory_limit_bytes + worker_resident_bytes)))` | Worker count. `worker_resident_bytes` is measured once at startup by loading one preloaded worker; it is a scheduling input and never enters `execution_environment` or a unit identity. |
+| `--jobs` | no | `NumCPU` | Maximum concurrent passes. A sharded stage is also capped by `journal_shard_count`. `02b` execute CadQuery adds the cap `floor(available_memory / (memory_limit_bytes + worker_resident_bytes))`; `worker_resident_bytes` is measured once at startup by loading one preloaded worker and is a scheduling input, never enters `execution_environment` or a unit identity. |
 | `--flush-interval` | no | `30s` | Maximum interval between Parquet commits. |
 | `--flush-rows` | no | `10000` | Maximum rows between Parquet commits. |
-| `--shard-count` | no | `16` | Journal shards. A unit belongs to `sha256(pass_key) mod shard_count`. Recorded in `run.json` as `journal_shard_count`; part of `run_id`. |
+| `--shard-count` | no | `16` | Journal shards. A unit belongs to `sha256(pass_key) mod shard_count`. A sharded stage runs at most one pass per shard, so this is also its concurrency ceiling. Recorded in `run.json` as `journal_shard_count`; part of `run_id`. |
 | `--cache-dir` | no | `<runs_root>/cache` | Shared cache directory. |
 | `--no-cache` | no | false | Disable the shared cache. |
 | `--log-level` | no | `info` | `debug`, `info`, `warn`, or `error`. |

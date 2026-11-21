@@ -88,27 +88,10 @@ The file's schema is in [`prompt-templates.md`](prompt-templates.md).
 The Go entry point owns orchestration and worker pools. Python work runs in
 separate processes; it is never loaded into the Go process.
 
-Clearly parallel per program:
-
-- `01c` fetch;
-- `01d` normalize;
-- `02a` AST extraction;
-- `02b` CadQuery execution, bounded by OCP memory;
-- `02c` graph construction;
-- `03b` task-definition construction;
-- `04` prompt and choice rendering.
-
-Global or mostly serial:
-
-- `01b` selection, because quotas and caps are global;
-- `01e` external manifest writing;
-- `03a` task quota planning;
-- `03c` deficit control loop;
-- `05` final export, manifest assembly, and support-table copy.
-
-`05` may run validation checks in parallel, but the release write is single
-writer. Parallel output is always merged by a stable key so reruns are
-deterministic.
+The concurrency contract for pipeline stages — which pipeline stages run in
+parallel, the pass for each, and the `--jobs` bound — is in
+[`run-contract.md`](run-contract.md#45-concurrency). This section records only
+the language boundary; it does not repeat that table.
 
 ## Process boundary
 
@@ -121,10 +104,12 @@ Python code outside this list needs a decision.
 ## Worker protocol
 
 The Go orchestrator starts a bounded pool of Python workers once per
-pipeline stage, not one process per request. Each worker is started as
-`<python> -m cadqa_dataset_generator.cli <pipeline_stage>`, then handles many
-requests: one JSON request document on standard input, one JSON response
-document on standard output, repeated until the orchestrator closes the pool.
+pipeline stage, not one process per request. The pool size is a pipeline stage's
+concurrency bound from [`run-contract.md`](run-contract.md#45-concurrency). Each
+worker is started as `<python> -m cadqa_dataset_generator.cli <pipeline_stage>`,
+then handles one request at a time: one JSON request document on standard input,
+one JSON response document on standard output, repeated until the orchestrator
+closes the pool.
 The wire name is the snake-case pipeline stage name used by the failure record,
 such as `01d_normalize_programs`; the worker maps it to the
 `s<pipeline_stage>` module.
@@ -138,7 +123,9 @@ per-program rejection.
 
 For `02b` execute CadQuery, the worker preloads CadQuery and OCP before it
 accepts requests and forks a child process per program. The child is a fresh
-address space; the preload is not repeated.
+address space; the preload is not repeated. A worker has one child in flight at
+a time; with a shard pass, the number of concurrent children is the number of
+active shards.
 
 A response is either `{"ok": true, "result": ...}` or
 `{"ok": false, "error": {"code": "...", "message": "..."}}`. Exit code 0 means

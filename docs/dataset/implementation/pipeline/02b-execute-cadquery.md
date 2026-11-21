@@ -26,11 +26,19 @@ results, or a failure tombstone when execution fails.
 - Treat CADEvolve programs as trusted build inputs; do not add a network,
   filesystem, or prompt-injection boundary.
 - Pin the CadQuery and OCP versions and record them in the result.
-- Use stable defaults: 30 seconds wall clock and 2 GiB address space per child
-  process, measured from the child's ready signal. A changed limit is a new
-  execution environment and a new cache key.
+- Use stable defaults: 30 seconds wall clock and a 2 GiB address-space budget
+  per child process. The 30-second clock starts at the child's ready signal. The
+  memory budget is above the preloaded baseline: measure the preloaded worker's
+  address space once and add the 2 GiB budget, so the preload is not charged
+  twice. A changed limit is a new execution environment and a new cache key.
+- A child that does not signal ready within 10 seconds is killed and recorded as
+  an `internal` failure. The ready timeout is a fixed constant, outside the
+  30-second execution budget.
 - Kill the child on timeout and record a `timeout` failure. A memory-limit failure
   records a `memory` failure.
+- A worker has one child in flight at a time. With a shard pass, the number of
+  concurrent children is the number of active shards
+  ([`run-contract.md`](../run-contract.md#45-concurrency)).
 - Execute only the accepted AST subset from `02a`.
 - Execute top-level statements in program order.
 
