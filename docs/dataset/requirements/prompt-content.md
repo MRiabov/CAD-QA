@@ -24,7 +24,7 @@ task is the program, the task target, the task clues, and the answer.
 The prompt does not contain the answer or any hidden identifier.
 
 The dataset supplies no system prompt. A harness may add one; that is harness
-policy, not dataset content (`DS-42`).
+policy, not dataset content (`DS-REQ-24`).
 
 ### 1.1 Frame conventions
 

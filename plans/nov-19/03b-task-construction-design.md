@@ -8,8 +8,8 @@ It records the construction picture and the clue operand form proposal from the
 This plan is the working record; the module contract and its decisions are the
 authority once written.
 
-**Companion docs:** `plans/nov-19/dataset-kernel-known-issues.md` (KI-DS-01,
-KI-DS-02, KI-DS-03),
+**Companion docs:** `plans/nov-19/dataset-kernel-known-issues.md` (KI-DS-REQ-01,
+KI-DS-REQ-02, KI-DS-REQ-03),
 `docs/dataset/implementation/pipeline/03-task-generation/03b-construct-task-definitions.md`,
 and `docs/dataset/requirements/task-structure.md`.
 
@@ -17,7 +17,7 @@ and `docs/dataset/requirements/task-structure.md`.
 
 `03b` currently defines `TaskDefinition` fields, the clue predicate schema,
 validity predicates, step accounting, canonical identity, and attempt budgets.
-It does not define the construction algorithm (KI-DS-01). This document fixes
+It does not define the construction algorithm (KI-DS-REQ-01). This document fixes
 the working picture:
 
 - a task is a path through a possible-answer set, not a filled template;
@@ -151,7 +151,7 @@ quota target is a deficit.
 
 The cover target is the set of candidates whose answer differs from the witness
 answer, not every other candidate. Candidates that remain and give the same
-answer are the answer-equivalent set (`DS-32`); they are not wrong-answer
+answer are the answer-equivalent set (`DS-REQ-15`); they are not wrong-answer
 candidates. The through-hole example depends on this: two circular edges of
 equal length are a valid final set.
 
@@ -334,7 +334,7 @@ task of four `property` clues is not the same benchmark item as a two-step task
 of two `comparison` clues with `selected` references, even though neither
 number is a difficulty label.
 
-This is the `DS-05` tension. `DS-05` says task reasoning step count is the only
+This is the `DS-REQ-16` tension. `DS-REQ-16` says task reasoning step count is the only
 measure. The proposal is to amend it: step count is the length measure, and
 clue operand form is the per-clue measure; neither is a task label. See `D10`.
 
@@ -476,12 +476,12 @@ Each decision is written so it can be answered on its own. The recommendation is
 a default, not a ruling, and the ID is stable so other documents can refer to it.
 
 Accepted decisions move to `docs/dataset/decisions.md` and are marked here with
-their record ID. The clue operand form model is `DS-31`, answer uniqueness is `DS-32`,
-the construction strategy is `DS-33`, and state scope is `DS-34`.
+their record ID. The clue operand form model is `DS-REQ-04`, answer uniqueness is `DS-REQ-15`,
+the construction strategy is `TG-6`, and state scope is `DS-REQ-08`.
 
 ### 1. `D1` — What is the equality relation for answer uniqueness?
 
-Accepted as `DS-32`.
+Accepted as `DS-REQ-15`.
 
 Options: entity identity for every answer meaning, or an equality relation
 chosen per answer meaning. Recommendation: per answer meaning, as the table in
@@ -495,7 +495,7 @@ and the validity predicate in `03b`.
 
 ### 2. `D2` — Which solid states can a task refer to?
 
-Accepted as `DS-34`.
+Accepted as `DS-REQ-08`.
 
 Options: the final state only, the final state plus one named intermediate
 state, or a before/after pair. Recommendation: the final state only in P0. A
@@ -526,7 +526,7 @@ Tracked as `MC-36` and in `requirements/graph-content.md` section 4.1.
 
 ### 4. `D4` — When do two candidate answers count as different?
 
-Folded into `DS-32` on 2026-11-20.
+Folded into `DS-REQ-15` on 2026-11-20.
 
 The question assumed a margin: a distance between two values that the task
 generator chooses. There is no margin. `same_answer` is canonical equality at
@@ -540,7 +540,7 @@ noise.
 
 ### 5. `D5` — How are clues ordered?
 
-Accepted as `DS-35`.
+Accepted as `TG-7`.
 
 Canonical order. Dependency order first, then broad-to-narrow: the size of the
 narrowed set, descending, with a stable hash as the tie-break. This order is
@@ -584,7 +584,7 @@ Blocks: task quality, step count, and the choice pool.
 
 ### 7. `D7` — Where do the choices come from, and what happens below the floor?
 
-Accepted as `DS-36`.
+Accepted as `TG-8`.
 
 Count, labels, uniqueness, leakage, and ordering are already fixed by
 `prompt-content.md` section 5 and PRD Q2: at least five choices, with seven as
@@ -621,7 +621,7 @@ Blocks: quota filling, overfill handling, and deficits.
 
 ### 9. `D9` — Is clue operand form a coverage dimension, a balance dimension, or both?
 
-Accepted as `DS-37`.
+Accepted as `DS-REQ-18`.
 
 Options: coverage only; coverage and balance; neither.
 
@@ -639,12 +639,12 @@ Blocks: coverage, balance, and the support table.
 
 ### 10. `D10` — What role does clue operand form play in reporting?
 
-Accepted as `DS-38`.
+Accepted as `DS-REQ-19`.
 
 Options: none, step count only; a coverage dimension; a difficulty axis.
 
 Recommendation: a coverage dimension and a per-task descriptive breakdown, not a
-difficulty axis. `DS-05` stays intact: task reasoning step count remains the
+difficulty axis. `DS-REQ-16` stays intact: task reasoning step count remains the
 length measure, and clue operand form is descriptive.
 
 The release reports aggregate coverage per step count, and the per-task
@@ -655,7 +655,7 @@ Blocks: PRD section 6, R-9, and benchmark reporting.
 
 ### 11. `D11` — What is the construction strategy?
 
-Accepted as `DS-33`.
+Accepted as `TG-6`.
 
 Options: supply-driven, full demand-driven, or supply-driven with
 capability-aware deficits. Recommendation: supply-driven with capability-aware
@@ -678,7 +678,7 @@ Blocks: `01b`, `02c`, `03a`, `03b`, and `03c`.
 | Use the census to allocate quota targets to capable families, not to pre-select the pool | `03a` |
 | Add a `capability_deficit` reason and a supplemental-program request path | `03c` |
 | Keep supply-driven construction as the default; add a cell-level demand query only as a fallback with a `forced` flag | `03b` |
-| Add `DS-31`: step count is the chain length; clue operand form describes how a clue's reference resolves; neither is a task label | `decisions.md` |
+| Add `DS-REQ-04`: step count is the chain length; clue operand form describes how a clue's reference resolves; neither is a task label | `decisions.md` |
 | State that every benchmark result names the step counts and clue operand forms it covers | PRD |
 
 ## Milestones
@@ -697,7 +697,7 @@ Property and relation clues only. Build the narrowing record, the uniqueness
 check, and the multiple-choice pool from the penultimate set.
 
 **`03b-M3` — full vocabulary.** Comparison, aggregation, provenance; multiple
-target categories; distance, angle, region, CadQuery profile (after KI-DS-02).
+target categories; distance, angle, region, CadQuery profile (after KI-DS-REQ-02).
 This is where the graph must supply the primitives.
 
 **`03b-M4` — scheduler.** Quota-aware construction, coverage and balance,
@@ -721,7 +721,7 @@ possible answers), a replay test, and one end-to-end test.
 **Noise (breadth without a decision).** Deferred to P2. The idea is a distractor
 that adds search space without adding a task reasoning step, but it has no
 operational definition yet. The two observable pieces are already governed:
-redundant clues by `TG-1`, wrong choices by `DS-21`. A future proxy is the
+redundant clues by `TG-1`, wrong choices by `DS-REQ-25`. A future proxy is the
 initial answer candidate count, recorded descriptively rather than used as a
 label.
 
@@ -733,7 +733,7 @@ rates.
 
 All construction decisions are settled. `D1`, `D2`, `D5`, `D6`, `D7`, `D8`,
 `D9`, `D10`, and `D11` are recorded as decisions, `D3` was withdrawn into graph
-completeness, and `D4` was folded into `DS-32`. The algorithm is written in
+completeness, and `D4` was folded into `DS-REQ-15`. The algorithm is written in
 `03-task-generation/algorithm/construction.md`, the clue model is in `03b`, and
 the program capability census is in
 `03-task-generation/algorithm/program-capability-census.md`.

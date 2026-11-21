@@ -87,7 +87,7 @@ fails.
 | Key | Type | Meaning |
 |---|---|---|
 | `target_category` | string | The task target category. Values are the snake-case code identifiers for the approved terms in [`../../../../requirements/task-structure.md`](../../../../requirements/task-structure.md). |
-| `state_scope` | string | `final` in P0 (`DS-34`). |
+| `state_scope` | string | `final` in P0 (`DS-REQ-08`). |
 | `possible_answer_count` | integer | Size of the initial possible-answer set for the target category in the state scope. |
 | `task_reasoning_step_count` | integer | Clue steps plus the answer step, if any. |
 | `answer_meaning` | string | What the answer is about, from `03b`. |
@@ -159,7 +159,7 @@ comparing.
 Every `answer_equivalent_set` entry has exactly `subject` and `answer`. The
 `subject` is an entity descriptor; the `answer` is canonical text. The set is
 non-empty, every entry gives the answer value under `same_answer`, and an
-identity answer requires exactly one entry (`DS-32`).
+identity answer requires exactly one entry (`DS-REQ-15`).
 
 ## 4. Entity descriptors
 
@@ -285,7 +285,7 @@ circular edges. That count is wrong for the BRep. The plan's third clue is also
 redundant. After clue 2 only one edge remains, so the comparison cannot narrow.
 Even in the plan's idealized two-circle set, both circles have the same length,
 so selecting the top one would not change the answer. The valid P0 length task
-is three steps, not four. `DS-32` still holds: the answer-equivalent set is a
+is three steps, not four. `DS-REQ-15` still holds: the answer-equivalent set is a
 singleton here, and the general rule is tested by the construction property
 tests.
 

@@ -45,7 +45,7 @@ LLM-facing column; the evaluation harness selects that column and does not pass
 the answer columns to the LLM model.
 
 `prompt` is the user message. The dataset supplies no system prompt; a harness
-may add one (`DS-42`).
+may add one (`DS-REQ-24`).
 
 Parquet is canonical. JSONL is an optional export for inspection; it is not a
 second release format. Structured fields with a fixed schema use nested Parquet

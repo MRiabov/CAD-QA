@@ -3,8 +3,9 @@
 **Status:** draft, 2026-10-21. This directory states how the generator satisfies
 the dataset requirements. It is not a product requirement.
 
-The requirements are in [`../requirements/`](../requirements/). Feature-wide
-decisions are in [`../decisions.md`](../decisions.md).
+The requirements are in [`../requirements/`](../requirements/). Requirements-level
+decisions are in [`../requirements/decisions.md`](../requirements/decisions.md);
+implementation decisions that span pipeline stages are in [`decisions.md`](decisions.md).
 
 ## Pipeline
 
@@ -39,7 +40,7 @@ between pipeline stages is
 - artifact, planning-math, and language-boundary explanations shared across
   pipeline stages;
 - execution, graph-building, and release-building details;
-- code and schema naming under [`DS-30`](../decisions.md).
+- code and schema naming under [`TERM-2`](../requirements/terminology.md#4-naming-decisions).
 
 ## What does not belong here
 

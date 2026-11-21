@@ -257,7 +257,7 @@ EvidenceRef = STRUCT<
 A columnar store may expose a closed string enum as `LowCardinality(String)`.
 `Enum8` or `Enum16` is optional; it is that store's storage choice, not part of
 the Parquet contract. The graph is served from Parquet and no analytics store is
-chosen; adopting one needs its own decision ([`DS-39`](../../../decisions.md)).
+chosen; adopting one needs its own decision ([`DS-ADR-04`](../../decisions.md)).
 
 ## Run-level tolerance policy
 

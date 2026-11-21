@@ -191,7 +191,7 @@ The outcomes table at `release-checks.md:206-212` has only `pass`, `miss`,
 `superseded`, `not_applicable`, and `deferred`, and `:214` says "Every in-scope
 miss blocks until the owner accepts it."
 
-`DS-37` and `task-structure.md:318-323` say the narrow clue-operand-form check
+`DS-REQ-18` and `task-structure.md:318-323` say the narrow clue-operand-form check
 is computed and reported **without blocking**. There is no outcome that
 represents a computed, non-blocking miss. A row that is `reported` and fails
 cannot be represented: `miss` would block, and `deferred` would deny that the
@@ -284,7 +284,7 @@ the 80% target as an accepted miss when it is not met), and give
 `supported_values` "from the task reasoning step support tables", and that
 `03a` and `05` both call it.
 
-`docs/dataset/decisions.md:451-453` (`DS-28`) says `03a` does **not** read the
+`docs/dataset/decisions.md:451-453` (`TG-4`) says `03a` does **not** read the
 tables as data; it calls the derivation that writes them. `03a:166-167` says
 supported values come from the `03b` rules and the release implementation
 scope. `03a:11-14` still lists "the release implementation scope" as an input.
@@ -348,14 +348,14 @@ the target to the first-release distribution. One of the two docs is wrong.
 `05` reading it for clue operand form coverage. That is true:
 `release-checks.md:75` checks every supported **form**.
 
-But `decisions.md:511-512` (`DS-31`) says "Coverage is reported over clue type
+But `decisions.md:511-512` (`DS-REQ-04`) says "Coverage is reported over clue type
 × clue operand form for reference-bearing clues only", and `decisions.md:652-653`
-(`DS-38`) says "`05` reports coverage per `(clue_type, clue_operand_form)`".
+(`DS-REQ-19`) says "`05` reports coverage per `(clue_type, clue_operand_form)`".
 The support table stores one `clue_operand_form` per row
 (`task-step-support.md:136-137`), with no clue type.
 
 **Disposition:** add the pair breakdown to the report (the release data has it
-in `clue_operand_form_profile`), or restate `DS-31` and `DS-38` to say the
+in `clue_operand_form_profile`), or restate `DS-REQ-04` and `DS-REQ-19` to say the
 check is per form and the pair is descriptive.
 
 ### `MC-09` — the provenance sentence is wrong
@@ -375,7 +375,7 @@ old finding is fixed by `0a3be5c`.
 
 `03a:11-14` lists "the release implementation scope" as an input, and
 `03a:166-167` says supported values come from the `03b` rules and that scope.
-`DS-28:451-453` and `task-step-support.md:23-27` say the support-table
+`TG-4:451-453` and `task-step-support.md:23-27` say the support-table
 derivation is the scope filter and `03a` calls it. `03a` never says it calls
 the derivation.
 
@@ -399,10 +399,10 @@ incomplete.
 point probe. This matters because `05`'s review pack reads bound entity ids
 from the evidence (`05-validate-and-export-release.md:110-111`).
 
-### `MC-46` — `DS-33` still contains the superseded sentence
+### `MC-46` — `TG-6` still contains the superseded sentence
 
-`DS-43` says the census is derived, and `DS-33` has a `Revised by: DS-43`
-header. But `DS-33`'s decision body still says "`02c` emits a program capability
+`TG-9` says the census is derived, and `TG-6` has a `Revised by: TG-9`
+header. But `TG-6`'s decision body still says "`02c` emits a program capability
 census as a by-product of graph construction" (`decisions.md:547`).
 
 The decisions document says an accepted decision is not silently rewritten, and
@@ -410,7 +410,7 @@ a change marks the old one superseded, so this is allowed by convention. It is
 still a trap for a reader who reads the body and not the header.
 
 **Disposition:** either leave it (the header is the convention) or add a
-one-line note in the body pointing at `DS-43`. No contract change is needed.
+one-line note in the body pointing at `TG-9`. No contract change is needed.
 
 ## Clean
 
@@ -463,7 +463,7 @@ statement elsewhere:
 Two notes:
 
 1. The P0 template set includes `dataset.question.material_change` and
-   `dataset.question.topology_change`, but `DS-34` says effect answers that
+   `dataset.question.topology_change`, but `DS-REQ-08` says effect answers that
    need a second state wait for P2 (`decisions.md:564-572`). The templates are
    harmless, but the validator's "required P0 IDs" will require copy no P0 task
    can use.
@@ -521,11 +521,11 @@ No dangling references remain outside the backlog.
 2. Fix `MC-13`: add a `reported` outcome or a `blocking` flag; reverse the
    per-step `floor`/`ceil`; decide R-10's priority; add the 80% check or record
    it as an accepted miss; reconcile the `conditional_release_share` input with
-   `DS-28` and `03a`; give `step_count_range` a report row.
+   `TG-4` and `03a`; give `step_count_range` a report row.
 3. Add `answer_sha256` to the `TaskDefinition` field table (`MC-12`).
 4. Restate `PRD.md` R-12 or change the clue-operand-form target (`MC-45`).
-5. Add the `(clue_type, clue_operand_form)` breakdown or restate `DS-31` and
-   `DS-38` (`MC-38`).
+5. Add the `(clue_type, clue_operand_form)` breakdown or restate `DS-REQ-04` and
+   `DS-REQ-19` (`MC-38`).
 6. Fix the `03b:25` provenance sentence (`MC-09`), and make `03a` say it calls
    the support-table derivation (`MC-16` / `MC-48`).
 7. Update `MC-11` to drop the template-version clause.

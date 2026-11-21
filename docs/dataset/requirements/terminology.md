@@ -215,6 +215,44 @@ Clue type, answer meaning, and answer format are balanced at each task reasoning
 step count and over the release, using the conditional release share. A value
 may not be concentrated at one task reasoning step count.
 
+### TERM-1 — Domain terms may appear in the PRD; internal terms may not
+
+- **Status:** accepted (2026-10-21).
+- **Context:** The PRD must be product-facing, but coverage and balance logic
+  needs internal vocabulary. Mixing the two leaks generator mechanics into the
+  product contract.
+- **Decision:** The terminology document marks each term as **domain** or
+  **internal**. Domain terms may appear in the PRD. Internal terms must not;
+  product text uses the domain term or describes the user-visible outcome.
+  `task reasoning step`, `task reasoning step count`, `task clue step`, and `task
+  answer step` are domain terms. `task reasoning step count coverage`,
+  `task reasoning step count balance`, and `conditional release share` are
+  internal terms.
+- **Consequences:** The PRD uses task reasoning step count. Technical documents
+  may use the internal terms. The terminology is still a proposal; it has not
+  been merged into `docs/glossary.md`.
+
+### TERM-2 — Code and schema names mirror approved terms
+
+- **Status:** accepted (2026-10-22).
+- **Context:** The dataset generator is greenfield and docs-only. An implementation that
+  invents a synonym for a glossary term creates a second vocabulary, and
+  persisted names are expensive to change later. Extraction had inherited
+  `Static*` and `Execution*` names from an earlier implementation choice.
+- **Decision:** Every pipeline stage uses the approved glossary term, or its
+  documented `In code:` identifier, for class, function, artifact, table, field,
+  and hash names. Do not retain a synonym from an earlier implementation.
+  Preserve the term's qualifiers and do not introduce a new short form. If an
+  approved term changes, rename the affected names in the same change and bump
+  the affected schema version when the artifact schema changes.
+- **Consequences:** Extraction is the first application: `Static*`, `static_*`,
+  and `Execution*` are retired, and extraction uses
+  `CadQueryAstExtractionResult`, `Ast*`, `CadQueryRuntimeExtractionResult`,
+  `CadQueryRuntimeExtractionSuccess`, `FailureTombstone`,
+  `CadFeatureSolidStateEffectDelta`, `CadQuerySelectorResult`, `ast_*` and
+  `runtime_*` tables, and the matching hash fields. Every later pipeline stage
+  follows the same rule.
+
 ## 5. Terms to avoid
 
 These words caused ambiguity in the previous documentation:

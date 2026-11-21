@@ -58,7 +58,7 @@ term.
 | 4-hop (P0) | `[to measure]` | `[to measure]` |
 | 5-hop (P0) | `[to measure]` | `[to measure]` |
 | 6–10-hop (P1, gated) | `[to measure if the 6–10 release gate passes]` | `[to measure]` |
-| 0-hop | not used (DS-11) | — |
+| 0-hop | not used (DS-REQ-11) | — |
 
 The 6–10 tiers are part of the thesis release target, but they are P1: they
 enter the release only after the synthesis pilot and manual review in the

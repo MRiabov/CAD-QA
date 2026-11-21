@@ -45,7 +45,7 @@ Bulk run state is Parquet. A pipeline stage commits one immutable Parquet part
 per unit, and the part is the unit's completion marker;
 [`run-contract.md`](run-contract.md) owns the persistence, flush, cache, and
 resume rules. JSON is limited to the run manifest, pipeline stage completion
-markers, the deficit ledger, and other small or rare control documents. `DS-39`
+markers, the deficit ledger, and other small or rare control documents. `DS-ADR-04`
 measured JSON text at 41x the Parquet size and 57x the read time for the CAD
 graph.
 

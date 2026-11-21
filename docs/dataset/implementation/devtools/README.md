@@ -19,7 +19,8 @@ contract; it does not stay here.
 - pipeline stage behaviour and I/O contracts: [`../pipeline/`](../pipeline/);
 - release artifacts and their columns:
   [`../../requirements/release-dataset-contract.md`](../../requirements/release-dataset-contract.md);
-- decisions: [`../../decisions.md`](../../decisions.md).
+- requirements-level decisions: [`../../requirements/decisions.md`](../../requirements/decisions.md);
+- implementation decisions that span pipeline stages: [`../decisions.md`](../decisions.md).
 
 ## Conventions
 

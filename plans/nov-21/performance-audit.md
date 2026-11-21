@@ -31,7 +31,7 @@ in the contracts, not in the code.
   `artifacts.md`, `planning-math.md`, `task-step-support.md`,
   `failure-record.md`, `missing-contracts.md`, and `decisions.md`.
 - Cross-checked the cost claims against the numbers the docs already publish
-  (`DS-39`, `DS-40`, `DS-44`) and against the measured artifact in
+  (`DS-ADR-04`, `STK-1`, `DS-ADR-06`) and against the measured artifact in
   `runs/current_cadevolve1000_10k_regen_20260613`.
 - Measured the CadQuery/OCP import cost on this host (section "Measurement
   log"), because several findings turn on it.
@@ -225,17 +225,17 @@ revision is the floor; state it.
 
 **Evidence:** `implementation/pipeline/03-task-generation/algorithm/program-capability-census.md:48`
 (`03a` derives it for every active program) and its Consumers table (`03b`
-derives it for the program it is constructing); `DS-43`.
+derives it for the program it is constructing); `TG-9`.
 
 **Why it bites.** The census is one pass over a graph, and it is run twice: once
-by `03a` over the whole pool, once by `03b` per program. `DS-43` is right that a
+by `03a` over the whole pool, once by `03b` per program. `TG-9` is right that a
 stored census can go stale and that one implementation must serve both callers,
 but "derived on demand" was read as "derived again by every caller".
 
 **Recommendation.** Keep the one function and let `03a` persist the per-program
 census in the plan part (not only the per-family union), then have `03b` read
 its program's entry and re-derive only when the entry is absent or its graph
-hash does not match. That keeps `DS-43`'s no-staleness rule — the entry is keyed
+hash does not match. That keeps `TG-9`'s no-staleness rule — the entry is keyed
 by the graph hash — while removing a second pass. If the plan part is judged too
 large, persist the census as a per-program sidecar keyed by `program_sha256`;
 either way it is derived once per graph version.
@@ -246,7 +246,7 @@ either way it is derived once per graph version.
 
 **Evidence:** `requirements/graph-content.md` §4.1 (pair emission rule);
 `implementation/pipeline/extraction/graph-construction.md` ("take the named
-endpoints of the state"); `DS-34` (P0 tasks refer to the final solid state only;
+endpoints of the state"); `DS-REQ-08` (P0 tasks refer to the final solid state only;
 P1 adds one named intermediate state).
 
 **Measured context.** In
@@ -270,7 +270,7 @@ mass, and a matching share of the `02c` write and the `03` read.
 **Recommendation.** Make pair emission state-scoped by implementation scope:
 final state only in P0; final plus the one named intermediate state in P1.
 Per-entity rows, containment rows, and effect measurements stay total over all
-states, because `DS-34` and the topology-change answers need them. This is a
+states, because `DS-REQ-08` and the topology-change answers need them. This is a
 requirement-level sentence in `graph-content.md` §4.1, not an implementation
 tuning knob, and it changes `graph_schema_version` semantics — decide it now,
 before any graph is written.
@@ -311,7 +311,7 @@ which are milliseconds each, not 100 executions.
 `03b` (`answer_equivalent_set` is "one entry per remaining candidate");
 `05` re-parses `gold_answer_json` and `answer_evidence_json` per row;
 `implementation/artifacts.md:53,60` ("not one JSON string per row", "JSON parsing
-is not used on a bulk data path"); `DS-23`; `DS-39` (41× size, 57× read).
+is not used on a bulk data path"); `DS-ADR-03`; `DS-ADR-04` (41× size, 57× read).
 
 **Why it bites.** Two separate problems. First, a policy inconsistency: the docs
 ban per-row JSON on bulk paths and then put three JSON columns in the release
@@ -437,9 +437,9 @@ expensive possible mistake in the resume rule.
 
 Do not re-open these; they are the reason the audit is short.
 
-- **Parquet everywhere, with measurements.** `DS-23`, `DS-39`, `DS-40` reject
+- **Parquet everywhere, with measurements.** `DS-ADR-03`, `DS-ADR-04`, `STK-1` reject
   JSON rows and a relational graph store with numbers, not taste, and
-  `DS-40` already chooses streaming reads over whole-table materialization.
+  `STK-1` already chooses streaming reads over whole-table materialization.
 - **Column projection and row-group/shard reads** in `01a`, and reserve rows
   fetched but not normalized in `01c`.
 - **No full enumeration** of the task space (`03`), a bounded 20%/3-round
@@ -447,12 +447,12 @@ Do not re-open these; they are the reason the audit is short.
 - **One derivation, two readers** for the conditional share and the support
   tables, so `03a` and `05` cannot disagree.
 - **A run is incremental** with atomic parts, a shared cache, and hardlinked
-  cache hits (`DS-44`).
+  cache hits (`DS-ADR-06`).
 - **The pair emission rule** is already linear per named endpoint; `PA-7` asks
   only for state scope on top of it.
 - **Tolerance resolved once per run**, not per measurement.
 - **Dictionary encoding** for closed enums, fixed-width UUID keys, and native
-  UUID logical types (`DS-41`).
+  UUID logical types (`DS-ADR-05`).
 
 ## Cost budget
 

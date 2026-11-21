@@ -26,7 +26,7 @@ to converge: answering one question produces two more.
    became a family of procedures. `contains` still carries the defect that
    `distance_to` had.
 2. **No cost signal.** Every decision looks equally load-bearing while it is
-   being written, so the schedule is a guess. `DS-31` (clue model) and `D6`
+   being written, so the schedule is a guess. `DS-REQ-04` (clue model) and `D6`
    (minimum narrowing) are not the same size of decision, but the record gives
    them the same weight.
 3. **The documents are becoming the deliverable.** The dataset does not exist
@@ -124,7 +124,7 @@ evidence rather than by argument.
 
 No construction decision remains open in
 `plans/nov-19/03b-task-construction-design.md`. `D3` was withdrawn into graph
-completeness, and `D4` was folded into the answer equality defined by `DS-32`.
+completeness, and `D4` was folded into the answer equality defined by `DS-REQ-15`.
 Two of the original eleven decisions dissolved into contracts that already
 existed, which is evidence that the open count shrank by consolidation rather
 than by omission.

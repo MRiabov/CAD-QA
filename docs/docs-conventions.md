@@ -38,8 +38,10 @@ docs/
     cadedit/PRD.md              # only if CADEditQA is active (P2)
   dataset/
     README.md
-    requirements.md             # intended-vs-verified summary
-    decisions.md                # local decisions (ADR format)
+    requirements/               # PRD, task structure, prompt, release, terminology
+      decisions.md              # requirements decisions (DS-REQ-*)
+    implementation/
+      decisions.md              # implementation decisions that span pipeline stages (DS-ADR-*)
     pipeline/
       00-overview.md            # DAG + stage IO contract
       NN[a-z]-<slug>.md         # 01-source-ingestion.md, 01a-…, 04c-…
@@ -136,9 +138,18 @@ scoped to the module. `pipeline/extraction/` and
 - Record each decision at the **narrowest scope that owns it**, in this order:
   1. **Step-local** — in that step doc's `## Local decisions` (the file you are editing),
      e.g. `pipeline/02-trace-snapshot.md#local-decisions`.
-  2. **Feature-wide** — in the feature's `decisions.md` (`dataset/`, `train-and-eval/fine-tuning/`), for
-     logic that spans the feature's stages; e.g. `train-and-eval/fine-tuning/decisions.md#ft-d01`.
-  3. **Cross-cutting/plan** — D1–D14 stay in the plan / `development-plan.md`.
+  2. **Module-local** — in a module folder's `decisions.md`, for logic scoped to that
+     module; e.g. `pipeline/03-task-generation/decisions.md#tg-1`.
+  3. **Feature-wide** — in the feature's `decisions.md`, for logic that spans the
+     feature's stages. A feature may have one file per layer:
+     `dataset/requirements/decisions.md` (`DS-REQ-*`, what the dataset is) and
+     `dataset/implementation/decisions.md` (`DS-ADR-*`, how the generator is built);
+     `train-and-eval/fine-tuning/decisions.md` (`FT-D*`).
+  4. **Cross-cutting/plan** — D1–D14 stay in the plan / `development-plan.md`.
+- Prefix a decision ID by its scope (`DS-REQ`, `DS-ADR`, `TG`, `EX`, `STK`, `ETL`,
+  `TERM`, `FT-D`). An ID is unique within its scope and is the citation key; it
+  never changes meaning. Feature-level IDs are zero-padded (`DS-REQ-01`), local
+  IDs are not (`TG-4`).
 - Format: `Status` / `Context` / `Decision` / `Consequences`. There is no central
   `docs/adr/` folder.
 - Decisions are forward-looking: record decisions made, not archaeology.

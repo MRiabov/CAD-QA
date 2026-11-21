@@ -52,7 +52,7 @@ it is the resumable state of the run.
   records the rest.
 - Bulk state is Parquet. JSON is limited to the run manifest, pipeline stage
   completion markers, the deficit ledger, and other small or rare control
-  documents. `DS-39` measured the CAD graph as 163 MB in Parquet and 6.7 GB as
+  documents. `DS-ADR-04` measured the CAD graph as 163 MB in Parquet and 6.7 GB as
   JSON text, a 41x size ratio, and a 57x read-time difference on a 100-program
   shard. That measurement is why per-unit state is Parquet and why JSON is not
   used for progress.
@@ -395,7 +395,7 @@ does not multiply it.
 
 For `01d` through `02c`, a pass processes one program at a time. Pipeline stage
 `02` runs `02a`, then `02b`, then `02c` for that program before it starts the
-next program in the shard (`DS-58`). `03b` processes one program and plan
+next program in the shard (`DS-ADR-11`). `03b` processes one program and plan
 revision at a time
 and emits the task rows of that program. `04` processes one program at a time
 and emits the task rows of that program.
@@ -432,7 +432,7 @@ and resume reads its parts.
 
 The marker is JSON because it is one file per pipeline stage that writes an artifact. It is
 not per-unit state; a per-unit JSON checkpoint would repeat the mistake that
-`DS-39` measured.
+`DS-ADR-04` measured.
 
 ## 6. Pipeline stage identity
 

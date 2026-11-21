@@ -67,7 +67,7 @@ baseline to make a check pass.
 Go is the default. Python is allowed only for work that needs Python execution
 semantics or a Python-only CAD library: `01d` normalize programs, `02a` extract
 CadQuery AST, and `02b` execute CadQuery. Convenience is not a reason to choose
-Python. New Python code needs a decision in `docs/dataset/decisions.md`.
+Python. New Python code needs a decision in `docs/dataset/implementation/decisions.md`.
 
 Go and Python share no process memory. Bulk data crosses the boundary as typed
 Parquet tables; small control documents may be JSON. Go code does not import
@@ -76,11 +76,11 @@ CadQuery or OCP. Python code does not own release state.
 ## Contracts that are easy to break
 
 - **Parquet is typed.** A struct, list, or tagged union is a Parquet struct,
-  list, or nullable group, never a JSON string (`DS-23`). A new JSON column
+  list, or nullable group, never a JSON string (`DS-ADR-03`). A new JSON column
   needs a stated reason.
 - **UUIDs use the Parquet UUID logical type.** Go writes `uuid.UUID` with
   `parquet-go`; PyArrow reads it as `pa.uuid()`. Polars never rewrites a graph
-  table because it drops the logical type (`DS-41`).
+  table because it drops the logical type (`DS-ADR-05`).
 - **Bulk state is Parquet; JSON is control only.** The run manifest, pipeline stage
   completion markers, and the deficit ledger are the JSON exceptions.
 - **A rerun is deterministic.** The same inputs, versions, and
@@ -96,14 +96,15 @@ CadQuery or OCP. Python code does not own release state.
 
 - Read `docs/docs-conventions.md` before adding or editing a doc.
 - One fact has one home. Link the decision; do not copy the rationale.
-- Decisions live at the narrowest scope: step doc, then feature
-  `decisions.md`, then `docs/development-plan.md`. There is no central
-  `docs/adr/`.
+- Decisions live at the narrowest scope: step doc, then module
+  `decisions.md`, then the feature layer (`dataset/requirements/decisions.md`
+  for `DS-REQ-*`, `dataset/implementation/decisions.md` for `DS-ADR-*`), then
+  `docs/development-plan.md`. There is no central `docs/adr/`.
 - Cite by anchor or `path::symbol`, never by line number.
 - Mark unverified claims with a status tag (`exists`, `missing`, `stale`,
   `[unverified — needs <env>]`, `[unknown]`). A status moves up only when a
   check passes.
-- `P0`, `P1`, and `P2` are implementation order, not task labels (`DS-18`). A
+- `P0`, `P1`, and `P2` are implementation order, not task labels (`DS-ADR-01`). A
   task is never labelled with a priority, and no release column records one.
 
 ## Repository workflow

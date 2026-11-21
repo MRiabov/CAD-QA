@@ -247,10 +247,10 @@ checks:
     above: 2
     disposition: deferred
 
-  # `DS-37` makes the wide range the P0 requirement and the narrow range the P1
+  # `DS-REQ-18` makes the wide range the P0 requirement and the narrow range the P1
   # requirement, so the wide row is enforced and the narrow row is only reported.
   - id: clue_operand_form_severe_mix
-    requirement: [R-12, DS-37]
+    requirement: [R-12, DS-REQ-18]
     arithmetic: relative_range
     scope: per_step
     dimension: clue_operand_form

@@ -127,7 +127,7 @@ the run report before the pass.
 | Pair rows per named endpoint | The pair emission rule is linear; a quadratic or zero count is a bug |
 | Support-table cells with zero accepted graphs | The capability that disappeared |
 | Construction yield per program and per family | Whether 10,000 tasks are reachable |
-| Wall clock, CPU, peak memory per program; import cost share | The `DS-49` budget and the 7–9% import target |
+| Wall clock, CPU, peak memory per program; import cost share | The `EX-22` budget and the 7–9% import target |
 | Review-ledger cells still `pending` | The release gate's real state |
 
 Then spot-check, not audit:

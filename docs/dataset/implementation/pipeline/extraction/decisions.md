@@ -284,6 +284,46 @@ schema makes state, entity, evidence, and hash inputs unambiguous.
 **Consequence:** Runtime rows are Parquet tables, not JSON payloads. A schema
 change bumps `runtime_schema_version`.
 
+## EX-22 — CadQuery execution amortizes the library import
+
+- **Status:** accepted (2026-11-21).
+- **Context:** `runtime.md` required a fresh child Python process per program, and
+  the worker protocol started a Python process per request. Measured on the
+  reference host, `import cadquery` costs 2.1–2.8 s and 451 MiB of resident
+  memory. At 1,500 active programs that is 50–70 minutes of CPU spent before any
+  geometry is evaluated, 7–9% of every 30-second execution budget, and a resident
+  set that caps `--jobs` on a memory-limited host. Process isolation is the
+  requirement; a fresh interpreter is not.
+- **Decision:** `02b` execute CadQuery runs in a long-lived worker that imports
+  CadQuery and OCP once, and forks a fresh child process per program. The child
+  is a fresh address space, so no CadQuery or OCP state crosses programs. The
+  30-second limit starts at the child's ready signal, not at process creation.
+  The Go orchestrator runs a bounded worker pool per pipeline stage, not one
+  process per request. `execution_environment` records only the environment class
+  (`os_arch`, limits, preload setting, worker request limit), never host identity.
+- **Consequences:** `02b` pays the import once per worker instead of once per
+  program. A worker is replaced after a crash or after its request limit, so a
+  leak is bounded. A cross-machine resume is a cache hit when the environment
+  class matches. The import cost and the preloaded resident set are measured once
+  per implementation scope and recorded with the run, not recomputed per program.
+
+## EX-23 — 02b emits the extraction hashes; 02c copies them
+
+- **Status:** accepted (2026-11-21).
+- **Context:** `graph-persistence.md` let `02c` recompute `fingerprint_sha256`
+  from the canonical entity table and `runtime_extraction_result_sha256` over the
+  whole runtime result. `02b` had already derived both: `entity_id` is a hash of
+  the fingerprint, and the success result carries
+  `runtime_extraction_result_sha256`. Recomputing put a second implementation of
+  the same canonical hash in Go, and the contract made a mismatch a graph
+  rejection.
+- **Decision:** `02b` emits `fingerprint_sha256` with `entity_id` and carries
+  `runtime_extraction_result_sha256`; `02c` copies both. `02c` recomputes them
+  only under `--force`, where a mismatch rejects the graph.
+- **Consequences:** The normal path has one implementation of each hash, in the
+  process that has the kernel values. A determinism bug is caught by the force
+  check rather than by two implementations that can drift.
+
 ## Superseded decisions
 
 None.

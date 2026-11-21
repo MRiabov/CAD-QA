@@ -70,11 +70,15 @@ not product requirements.
 | [`implementation/pipeline/04-render-prompt-and-choices.md`](implementation/pipeline/04-render-prompt-and-choices.md) | Prompt rendering and multiple-choice choices. |
 | [`implementation/pipeline/05-validate-and-export-release.md`](implementation/pipeline/05-validate-and-export-release.md) | Validation, coverage and balance checks, export, manifest, and dataset card. |
 
-### Feature-wide
+### Decisions
+
+Decisions live at the narrowest scope that owns them.
 
 | Document | What it defines |
 |---|---|
-| [`decisions.md`](decisions.md) | Feature-wide dataset decisions in ADR format. |
+| [`requirements/decisions.md`](requirements/decisions.md) | Requirements-level decisions (`DS-REQ-*`): what the dataset and its task unit are. |
+| [`implementation/decisions.md`](implementation/decisions.md) | Implementation decisions that span pipeline stages (`DS-ADR-*`): language, storage, the run model. |
+| [`implementation/pipeline/`](implementation/pipeline/00-end-to-end.md) | Step-local decisions in each step doc's `## Local decisions`, and module decisions in a module's `decisions.md`. |
 
 ## Relation to the project PRD
 

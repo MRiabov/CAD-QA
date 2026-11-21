@@ -2,7 +2,7 @@
 
 **Parent:** [`../README.md`](../README.md).
 
-**Status:** draft, 2026-11-20. Fills the construction gap `KI-DS-01`: `03b` defines
+**Status:** draft, 2026-11-20. Fills the construction gap `KI-DS-REQ-01`: `03b` defines
 what a valid task is, and this document defines how one is found.
 
 ## Purpose
@@ -27,7 +27,7 @@ Construction is a local search over one graph. It never enumerates the task spac
 possible_answers = all entities of the target category in the state scope
 ```
 
-The state scope is `final` in P0 (`DS-34`). The set is not curated: it is
+The state scope is `final` in P0 (`DS-REQ-08`). The set is not curated: it is
 whatever the graph holds for that category and state. Breadth is a property of
 the graph, not a construction choice.
 
@@ -75,7 +75,7 @@ chain = cover(wrong, facts(witness), target_step_count = task_reasoning_step_cou
 
 - The cover target is the **wrong-answer candidates**, not every other candidate.
   Candidates that remain and give the same answer are the answer-equivalent set
-  (`DS-32`).
+  (`DS-REQ-15`).
 - `cover` is a bounded set-cover search. Applying a fact is a set intersection,
   so a greedy cover gives the shortest chain and a less greedy cover gives a
   longer one.
@@ -89,7 +89,7 @@ chain = cover(wrong, facts(witness), target_step_count = task_reasoning_step_cou
 ## Step 4 — chain order
 
 Order the chosen clues by dependency first, then broad-to-narrow: the size of the
-narrowed set, descending, with a stable hash as the tie-break (`DS-35`). This is
+narrowed set, descending, with a stable hash as the tie-break (`TG-7`). This is
 the canonical order. It is identity-bearing, and validity is checked against it.
 A presentation permutation is a later rendering step.
 
@@ -103,8 +103,8 @@ its own:
 |---|---|
 | narrowing | every clue reduces the answer candidate set |
 | necessity | removing any clue leaves at least two distinct answers (`TG-1`) |
-| answer uniqueness | every remaining candidate gives the same answer (`DS-32`) |
-| choice pool | every P0 row of the multiple-choice check list (`DS-36`) |
+| answer uniqueness | every remaining candidate gives the same answer (`DS-REQ-15`) |
+| choice pool | every P0 row of the multiple-choice check list (`TG-8`) |
 | step count | the number of necessary clues plus the answer step matches the target |
 
 A chain that fails a check is recorded with its reason. It is not repaired by

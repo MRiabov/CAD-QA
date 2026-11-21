@@ -117,7 +117,7 @@ validation stops the export before any check runs.
 
 The requirement sources are `R-4`, `R-7`, `R-8`, `R-9`, `R-10`, `R-11`, `R-12`,
 `R-15`, `PRD-8` for the PRD section 8 target table, `release-contract-3` for the
-release contract's row-count table, and `DS-37`.
+release contract's row-count table, and `DS-REQ-18`.
 
 ### Bound references
 
@@ -184,7 +184,7 @@ costs:
 | `reported` | Is recorded and does not block. |
 | `deferred` | Does not occur; the row's outcome is `deferred`. |
 
-`reported` exists for the rows `DS-37` makes non-blocking: the narrow clue
+`reported` exists for the rows `DS-REQ-18` makes non-blocking: the narrow clue
 operand form mix is computed and reported in P0 so the imbalance is visible, and
 only the wide range can block. A `reported` miss is not a known miss, because
 there is nothing to accept.

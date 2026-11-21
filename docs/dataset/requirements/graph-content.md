@@ -192,7 +192,7 @@ the declared **endpoint entity kind**. The emitted pairs are not the full pair s
 **Pair emission is state-scoped.** Pair rows are emitted only for the solid
 states a task can bind in the release implementation scope: the final state in
 P0; the final state and the one named intermediate state in P1; both states of a
-declared pair in P2 (`DS-34`). Per-entity measurements, containment relations,
+declared pair in P2 (`DS-REQ-08`). Per-entity measurements, containment relations,
 and effect measurements stay total over every state, because the topology-change
 answers read them. A pair row for a state the scope cannot bind is not emitted;
 it is not a missing measurement.

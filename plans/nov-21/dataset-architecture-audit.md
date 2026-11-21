@@ -173,14 +173,14 @@ renderer question; it does not close the data path.
 ## `DA-4` — Answer equality versus scoring tolerance
 
 **Evidence:** `pipeline/03-task-generation/03b-construct-task-definitions.md:315-335`;
-`decisions.md` `DS-32` and `DS-14`;
+`decisions.md` `DS-REQ-15` and `DS-REQ-14`;
 `requirements/release-dataset-contract.md:170-172`;
 `requirements/terminology.md:54`.
 
 **What the docs say.** `03b` defines `same_answer` as canonical equality at the
-answer's stated precision. `DS-32` says it is “the comparison the release grader
+answer's stated precision. `DS-REQ-15` says it is “the comparison the release grader
 performs, so a task cannot pass build-time uniqueness and fail scoring.” The
-release carries `scoring_rule` and `tolerance_json`, and `DS-14` says grading
+release carries `scoring_rule` and `tolerance_json`, and `DS-REQ-14` says grading
 uses half a unit in the last stated place unless the task states another
 tolerance. Those are different predicates.
 
@@ -275,7 +275,7 @@ alone.” `checks.yaml` has no R-5 row. `03b` has no validity rule for shortcut
 resistance. `geometry_required` is a clue-based flag, and `MC-22` already shows
 that flag is wrong for one-step tasks.
 
-**Why it is a gap.** Removing variable names from the prompt (`DS-15`) does not
+**Why it is a gap.** Removing variable names from the prompt (`DS-REQ-05`) does not
 stop a model from using literal arguments or operation order. The dataset cannot
 claim R-5 while no construction rule or release check measures it.
 
@@ -373,7 +373,7 @@ distinct-answer check.
 
 ### `DA-13` — Support-table contradiction and missing bootstrap
 
-`DS-28` and `MC-48` say `03a` calls the support-table derivation. `file-trees.md`
+`TG-4` and `MC-48` say `03a` calls the support-table derivation. `file-trees.md`
 lines 174-175 and `streamlined/README.md` lines 33-34 say `03a` reads the
 tables. The fixtures and `support-table.json` do not exist yet (`MC-44`), so
 `03a` cannot run.
@@ -404,9 +404,9 @@ text alone”.
 
 ### `DA-16` — Stale terminology statements
 
-`DS-08` says the terminology “is still a proposal”; the terminology document is
+`TERM-1` says the terminology “is still a proposal”; the terminology document is
 approved. The terminology table says the program capability census “is a
-by-product of graph construction”; `DS-43` says it is derived, not emitted.
+by-product of graph construction”; `TG-9` says it is derived, not emitted.
 These are small, but code names follow the glossary, so stale text can produce a
 stale name.
 

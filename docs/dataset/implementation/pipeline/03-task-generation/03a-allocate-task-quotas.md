@@ -145,7 +145,7 @@ Plan five separate quota dimensions:
 - answer format.
 
 Four of these carry a share and are allocated by the equations below. Clue
-operand form is coverage-only in P0 (`DS-37`): its target count is the coverage
+operand form is coverage-only in P0 (`DS-REQ-18`): its target count is the coverage
 floor of one clue occurrence per supported form at each step count, and it has no
 balance share, because a balance range is vacuous at a step count where a form
 cannot exist. Balance over clue operand form is P1. This is a P0

@@ -43,7 +43,7 @@ procedural CAD programs (CadQuery), and a small-LLM-model fine-tuning effort on 
 | Which dataset serves which role | `train-and-eval/datasets.md` |
 | Paper citations and study notes | `research/` |
 | Past experiments | `experiments/` |
-| Decisions | `train-and-eval/fine-tuning/decisions.md`; `dataset/decisions.md` |
+| Decisions | `train-and-eval/fine-tuning/decisions.md`; `dataset/requirements/decisions.md`; `dataset/implementation/decisions.md` |
 | The written paper | `paper/CA2_Riabov_final.md` (with `paper/CA2_Riabov_final.tex`) |
 
 ## Conventions in one line

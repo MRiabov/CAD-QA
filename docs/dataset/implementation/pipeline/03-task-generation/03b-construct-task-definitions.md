@@ -33,7 +33,7 @@ task. It is not prompt text and not a loose task tuple. It is what `04` renders.
 | `cadevolve_program_family_id` | Program family used for split isolation. |
 | `split`, `subset` | Split and warmup/main label assigned by `03a`. |
 | `graph_schema_version`, `definition_schema_version` | Versions needed to reproduce the definition. |
-| `state_scope` | Which solid states the task may refer to. `final` in P0 (`DS-34`). |
+| `state_scope` | Which solid states the task may refer to. `final` in P0 (`DS-REQ-08`). |
 | `possible_answer_count` | The size of the initial possible-answer set for the target category in the state scope, before any task clue narrows it. |
 | `target_category` | Task target category from `requirements/task-structure.md`. |
 | `target_binding` | The concrete graph entity or measurement instance the task asks about. |
@@ -104,7 +104,7 @@ A `BindingRef` is one of:
 - a literal value.
 
 When a clue has a reference binding other than the task target, the binding
-carries `clue_operand_form` (`DS-31`):
+carries `clue_operand_form` (`DS-REQ-04`):
 
 | Clue operand form | Binding | Example |
 |---|---|---|
@@ -124,7 +124,7 @@ task uses one:
 | property with any operand form | A property clue constrains the candidate set directly and has no reference, so it has no operand form. |
 | aggregation with `aggregated` | It is aggregation over an aggregate; it is written as two clues. |
 | `selected` at task reasoning step count 1 | A `selected` reference needs an earlier task clue. |
-| `cross_state` in P0 and P1 | It needs a second solid state, and P0 and P1 use the final state only (`DS-34`). |
+| `cross_state` in P0 and P1 | It needs a second solid state, and P0 and P1 use the final state only (`DS-REQ-08`). |
 
 The first two are grammar rules and hold for every program. The last two follow
 from the task reasoning step count and the state scope. The support table
@@ -181,7 +181,7 @@ the definition carries enough real choices. The native format is still recorded.
 A format that cannot express the meaning is not used; for example, identity is
 not returned as a number and position is not returned as a scalar.
 
-The choice pool is a construction output (`DS-36`). Identity answers draw options
+The choice pool is a construction output (`TG-8`). Identity answers draw options
 from the penultimate answer candidate set; numeric answers draw them from the
 distinct answers of that set. Fewer than five real options rejects the task.
 `04` renders the pool in the recorded order.
@@ -315,7 +315,7 @@ a scalar target.
 
 `same_answer(left_answer, right_answer)` is the comparison used for answer
 uniqueness and for scoring
-(`DS-32`). It is not a margin; it is canonical equality at the answer's stated
+(`DS-REQ-15`). It is not a margin; it is canonical equality at the answer's stated
 precision.
 
 | Answer meaning | `same_answer(left_answer, right_answer)` |
@@ -351,7 +351,7 @@ name is stable: it is the name the validity record carries.
 | `clue_narrows` | Every task clue narrows the possible answers. |
 | `clue_necessary` | Removing any task clue leaves at least two distinct answers, or changes the answer. |
 | `predicate_margin` | Every predicate a task uses is decided by at least the clear-case margin. |
-| `answer_equivalence` | Every candidate in the answer-equivalent set produces the same answer under `same_answer`; an identity answer requires a singleton set (`DS-32`). |
+| `answer_equivalence` | Every candidate in the answer-equivalent set produces the same answer under `same_answer`; an identity answer requires a singleton set (`DS-REQ-15`). |
 | `scalar_target_agrees` | For a scalar target, every remaining instance has the same value. |
 | `single_gold_answer` | The answer step produces exactly one gold answer. |
 | `target_binding_unambiguous` | The target binding resolves to exactly one entity or measurement instance. |
@@ -425,7 +425,7 @@ quota target above that count is a deficit, not a reason to keep a redundant clu
 
 `03b` constructs task definitions from the graph into the task quota plan using typed
 constructors. Construction is supply-driven: it builds from the facts the graph
-has and samples them into the quota targets (`DS-33`). A cell-level demand query
+has and samples them into the quota targets (`TG-6`). A cell-level demand query
 is a deficit-path last resort, not the default. Construction is deterministic for
 a given graph, plan version, definition-schema version, and seed. Constructor
 order is stable and fixed by `constructor_version`. A quota target that cannot be filled becomes a deficit for `03c`.
@@ -442,7 +442,7 @@ value.
 
 The canonical task clue sequence preserves dependency order first, then orders
 independent clues broad-to-narrow by the size of the narrowed set, descending,
-with a stable hash as the tie-break (`DS-35`). The gold answer, answer format,
+with a stable hash as the tie-break (`TG-7`). The gold answer, answer format,
 choices, prompt wording, and answer instruction are not part of `task_id`; they
 are part of the definition or a later presentation step.
 
@@ -542,7 +542,7 @@ that moved:
 | `balance_policy_version` | The balance policy the plan was computed from. |
 
 Rendering provenance — render seed, template version, and `prompts.yaml` hash —
-belongs to `04` render prompt and choices, not to the definition (`DS-35`). `05`
+belongs to `04` render prompt and choices, not to the definition (`TG-7`). `05`
 validate and export release records those values in the manifest. The template
 schema is in [`../../prompt-templates.md`](../../prompt-templates.md).
 

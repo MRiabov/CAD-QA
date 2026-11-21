@@ -2,7 +2,7 @@
 
 **Status:** draft, 2026-10-21. This document defines the language boundary for
 the dataset generator. The decision is recorded in
-[`../decisions.md`](../decisions.md) DS-22.
+[`decisions.md`](decisions.md) DS-ADR-02.
 
 ## Default
 
@@ -31,14 +31,14 @@ The concrete Python and Go libraries, toolchain versions, and open library
 questions are in [`stacks.md`](stacks.md). This document decides which language
 owns work, not which library it imports.
 
-`DS-22` limits Python to work that needs Python execution semantics. The stack
+`DS-ADR-02` limits Python to work that needs Python execution semantics. The stack
 document lists what that work may import; it is not a general permission for new
 Python code.
 
 The Go module and its shared package exist under `generator/`; pipeline stage
 code lands one pipeline stage at a time. Go reads the YAML policy files
 (`balance.yaml`, `checks.yaml`, `tolerance.yaml`) with `gopkg.in/yaml.v3`
-(`DS-46`); Python keeps `PyYAML` for `prompts.yaml`.
+(`STK-2`); Python keeps `PyYAML` for `prompts.yaml`.
 
 ## JSON at the boundary
 
@@ -52,7 +52,7 @@ an option every encoder call must remember.
 
 ## Parquet at the boundary
 
-Both languages write the same typed tables. `DS-23` forbids JSON columns, and
+Both languages write the same typed tables. `DS-ADR-03` forbids JSON columns, and
 `graph-persistence.md` defines the graph tables.
 
 - Columns are typed. A struct, list, or tagged union is a Parquet struct, list,

@@ -165,7 +165,7 @@ and hash in the manifest.
 - `MC-46` — dissolved. The census is a typed function of the graph, not an
   artifact: `03a` derives it and stores the union per family in
   `family_profiles`, `03b` derives it per program, and `03c` reads the plan.
-  `DS-43` supersedes the sentence in `DS-33` that says `02c` emits the census.
+  `TG-9` supersedes the sentence in `TG-6` that says `02c` emits the census.
 - `MC-44` — feasibility is the constructor's output over a committed coverage
   fixture set, not an abstraction of the grammar. The contract is written in
   `task-step-support.md`, and the structural and witness tiers are in
@@ -192,7 +192,7 @@ and hash in the manifest.
   `03a` calls the same derivation, and `05` reads the persisted tables. No
   separate scope file or filter exists.
 - `MC-48` — resolved in favour of the derivation. `03a` does not read the
-  tables as data; it calls the derivation that writes them, and `DS-28` now says
+  tables as data; it calls the derivation that writes them, and `TG-4` now says
   so. The plan and the QA projection cannot disagree.
 - `MC-31` — the slow loop in `03c` resolve deficits includes `01d` normalize
   programs; the flow line in `00` end to end was the defect and is fixed.

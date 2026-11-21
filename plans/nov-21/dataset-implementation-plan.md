@@ -21,7 +21,7 @@ pre-implementation order is about documents, not code.
 
 `P0`, `P1`, and `P2` are the requirement scopes in
 [`PRD.md` section 8](../../docs/dataset/requirements/PRD.md#8-size-and-mix-of-the-benchmark-dataset-release)
-and [`DS-18`](../../docs/dataset/decisions.md#ds-18--p0p1p2-are-implementation-order-not-task-labels):
+and [`DS-ADR-01`](../../docs/dataset/implementation/decisions.md#ds-adr-01--p0p1p2-are-implementation-order-not-task-labels):
 implementation order for requirements and generation inputs. This plan is keyed
 by them and by nothing else.
 
@@ -103,7 +103,7 @@ the code that would otherwise encode the wrong answer is `P0-W2` or `P0-W3` work
 
 | Item | Owner | Why it cannot wait |
 |---|---|---|
-| `DA-4` / `MC-53` — one answer-equivalence relation | `03b`, `DS-32`, `release-dataset-contract.md` | `03b` uniqueness and the grader must be the same predicate, or a task passes construction and fails scoring |
+| `DA-4` / `MC-53` — one answer-equivalence relation | `03b`, `DS-REQ-15`, `release-dataset-contract.md` | `03b` uniqueness and the grader must be the same predicate, or a task passes construction and fails scoring |
 | `MC-22` / `DA-15` — `geometry_required` for one-step tasks | `03b`, `checks.yaml`, `task-structure.md` | Changes what `03a` plans and what `05`'s 95% check counts |
 | `DA-7` — the R-5 shortcut-resistance proxy, or its re-scope | `03b`, `checks.yaml`, `prompt-content.md` | R-5 is P0 and no construction rule or check measures it |
 | `DA-13` / `MC-44` — support-table derivation and fixtures | `task-step-support.md`, `testing/00-support-tables.md` | `03a` cannot run without the derivation; the fixtures are programs, so they are `P0-W3` work |
@@ -112,8 +112,8 @@ the code that would otherwise encode the wrong answer is `P0-W2` or `P0-W3` work
 | Failure disposition: `by_design`, `corpus_defect`, `extractor_gap` | `failure-record.md`, `validation.md` | Every rejection is equally legitimate today, so an extractor gap is indistinguishable from a corpus limitation |
 | Extraction capability coverage check | `checks.yaml`, `release-checks.md` | A must-extract capability with zero accepted graphs is a silent deficit, not a release failure |
 
-The performance findings `PA-1`–`PA-14` are closed in `ef3ac58`: `DS-49` to
-`DS-56` and the run-contract rewrite carry them. Their implementation is `P0-W2`,
+The performance findings `PA-1`–`PA-14` are closed in `ef3ac58`: `EX-22` to
+`DS-ADR-09` and the run-contract rewrite carry them. Their implementation is `P0-W2`,
 `P0-W3`, and `P0-W4` work; the plan schedules that work, not the decision.
 
 Already closed: `DA-1` by `run-contract.md`, and `DA-3`'s data path by the
@@ -130,8 +130,8 @@ Deferred, and deliberately not closed in `P0-W1`:
 | `DA-8` family-to-split registry | `P0-W6` writer, `P1-W3` reader | The writer must exist before the first release; only the second release reads it |
 | `DA-9` license and attribution | `P1-W4` | Publication blocker, not a first-release blocker |
 | `MC-49` external benchmark program set | `P1-W2` | R-16 is P1; `05` owns the overlap check and the manifest fields |
-| Construction cost constants | `P0-W4` | `DS-51` sets the budget and cover-search rules; the provisional numbers need one measured pass over the pool |
-| `02b` point-probe state scope | `P0-W3` | `ef3ac58` records that P0 binds one solid state but `02b` still probes every state; resolve it with the `DS-52` rule |
+| Construction cost constants | `P0-W4` | `TG-10` sets the budget and cover-search rules; the provisional numbers need one measured pass over the pool |
+| `02b` point-probe state scope | `P0-W3` | `ef3ac58` records that P0 binds one solid state but `02b` still probes every state; resolve it with the `DS-REQ-10` rule |
 | Release answer column review | `P0-W6` | `ef3ac58` makes the answer columns typed consumer-facing Parquet; confirm them before the first published release |
 
 The rule this table encodes: **if a decision does not unblock the next work
@@ -149,15 +149,15 @@ to change.
 - Implement the run-contract code half that is documented but absent:
   `internal/shared/run_manifest.go`, `run_state.go` (lock, pipeline stage markers, part
   scan), `cache_index.go`, `parquet_writer.go`.
-- The writer is the sharded part writer from `DS-50`: a unit belongs to
+- The writer is the sharded part writer from `DS-ADR-07`: a unit belongs to
   `sha256(pass_key) mod journal_shard_count`, the default is 16, and
   `journal_shard_count` is part of `run_id`. `02b` stays one unit per part.
-- A shard is a container, not a transaction (`DS-56`): a rejection, timeout, or
+- A shard is a container, not a transaction (`DS-ADR-09`): a rejection, timeout, or
   crash is a failure row for that unit and the shard commits the rest; a shard
   with no successes writes no part.
 - Implement `internal/run` `Run`, `Status`, and `List`, replacing the
   `ErrNotImplemented` returns.
-- Unit identity follows `DS-50`: content, not assignment. A `03b` unit is keyed
+- Unit identity follows `DS-ADR-07`: content, not assignment. A `03b` unit is keyed
   by the program and the graph identity, and the `03a` plan is not an input.
 - Replace the freeform `dict` request and response in
   `cadqa_dataset_generator/cli.py` with typed per-pipeline-stage models as each
@@ -208,14 +208,14 @@ Started first of the two concurrent tracks.
   CadQuery selector, CadQuery workplane, CadQuery profile, solid, and expression
   features.
 - `02b`: the long-lived worker that preloads CadQuery/OCP and forks a child per
-  program (`DS-49`), runtime capture, topology, states, point probes, tolerance
+  program (`EX-22`), runtime capture, topology, states, point probes, tolerance
   handling, and failure tombstones. The child writes under `.tmp-` and the parent
   validates and renames; the 30-second limit starts at the child's ready signal.
 - `02c`: graph construction and persistence, bindable-state pair emission and
-  `implementation_scope` in the graph identity (`DS-52`), the capability census,
-  and the fingerprint copy instead of a recompute (`DS-55`).
+  `implementation_scope` in the graph identity (`DS-REQ-10`), the capability census,
+  and the fingerprint copy instead of a recompute (`DS-ADR-08`).
 - Shard parts for `01d`, `02a`, and `02c`; `02b` stays one unit per part
-  (`DS-50`).
+  (`DS-ADR-07`).
 - Resolve the `02b` point-probe scope: P0 binds one solid state per task, so
   decide whether probes follow the same rule before the graph is measured.
 - The completeness contract: the expected-relation table and the per-program
@@ -242,7 +242,7 @@ unclassified row, and every must-extract capability has a verified oracle.
 
 Started roughly a week after `P0-W3`.
 
-- The `DS-51` construction rules first: one attempt budget per (CADEvolve program
+- The `TG-10` construction rules first: one attempt budget per (CADEvolve program
   family, task reasoning step count), one program pass per revision with the
   census from the plan, and count-based cover-search scope constants. These rules
   are what keep a 10,000-task release from becoming 10^5 cover searches.
@@ -400,7 +400,8 @@ points into passes and names the seams they do not cover.
 | [`plans/nov-21/dataset-architecture-audit.md`](dataset-architecture-audit.md) | The `DA-*` findings this plan schedules. |
 | [`plans/nov-21/performance-audit.md`](performance-audit.md) | The `PA-*` findings, closed in `ef3ac58`. |
 | [`docs/dataset/implementation/missing-contracts.md`](../../docs/dataset/implementation/missing-contracts.md) | The live `MC-*` backlog. |
-| [`docs/dataset/decisions.md`](../../docs/dataset/decisions.md) | The `DS-*` decisions every work item implements. |
+| [`docs/dataset/requirements/decisions.md`](../../docs/dataset/requirements/decisions.md) | The `DS-REQ-*` decisions every work item implements. |
+| [`docs/dataset/implementation/decisions.md`](../../docs/dataset/implementation/decisions.md) | The `DS-ADR-*` decisions every work item implements. |
 
 ## What is already done
 
@@ -429,7 +430,7 @@ package that guesses its typed models is a second schema to maintain.
 - **Do not build `05`'s full check suite before `03b`.** The `superseded` bound
   logic exists because construction can make a bound impossible; the checks and
   the constructor are tuned together.
-- **Do not fix `graph_schema_version` before `DS-52` is implemented.** A schema
+- **Do not fix `graph_schema_version` before `DS-REQ-10` is implemented.** A schema
   change after `P0-W3` invalidates every graph and every `03b` unit.
 - **Do not design all typed models in one pass.** The docs own the models; the
   code derives them one pipeline stage at a time.
@@ -449,11 +450,11 @@ the run manifest or the work-item note.
 |---|---|---|
 | Tasks per program on real graphs | `P0-W4` | The yield cannot reach 10,000 tasks within the 20%/3-round expansion |
 | Per-program execution wall clock and peak memory | `P0-W3` | The full pool does not fit the available machine time |
-| `03b` attempts per accepted task | `P0-W4` | It exceeds the `DS-51` budget |
+| `03b` attempts per accepted task | `P0-W4` | It exceeds the `TG-10` budget |
 | Construction limits (candidates, facts, expansions, rechecks) | `P0-W4` | The measured pass cannot fill the quota targets within them |
 | Verified extraction-graph oracles | `P0-W3` | A must-extract capability has no verified oracle, or a verified oracle fails |
 | Completeness report on the 100-program slice | `P0-W3` | A missing, orphan, or unclassified row has no disposition |
 | Rejection contact sheet coverage | `P0-W3` | A rejected program has no oracle render or no disposition |
 | Time from a program change to a new reviewable row | `P0-W6` | It requires a full corpus rerun (`R-21`) |
-| Import cost as a share of the execution budget | `P0-W3` | It stays at 7–9% per program after `DS-49` |
+| Import cost as a share of the execution budget | `P0-W3` | It stays at 7–9% per program after `EX-22` |
 | P0 requirement coverage | `P0-W1` | A P0 requirement has no work item in the coverage table |

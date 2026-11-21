@@ -21,7 +21,7 @@ BenchCAD (H3, P1); and, as a P2 stretch, a tuned model that beats its teacher on
 
 **Phases and priorities are different axes.** `Phase 0`–`Phase 6` are the
 schedule. `P0`–`P2` are requirement scopes; in the dataset they are also the
-implementation order (`DS-18`), and the generator's work items are numbered by
+implementation order (`DS-ADR-01`), and the generator's work items are numbered by
 them (`P0-W1` and so on). They are different number spaces.
 
 ## Phase 0 — Trust audit (no GPU) [P0]

@@ -18,7 +18,7 @@ The file has two namespaces:
   `TaskDefinition` into a release row. `03b` construct task definitions does not
   read it: the definition carries typed facts, not sentences.
 - `evaluation`: read by the evaluation harness. The dataset release does not read
-  it. The dataset supplies no system prompt (`DS-42`); the evaluation harness may
+  it. The dataset supplies no system prompt (`DS-REQ-24`); the evaluation harness may
   add its own copy from this namespace.
 
 The file is answer-free. It contains no gold answer, answer value, hidden
@@ -28,9 +28,10 @@ release checks the rendered prompt against the same rule.
 The file is data, not code. A wording change edits this file and bumps its
 `version`; it does not edit Go or Python.
 
-The relevant decisions are `DS-15` (no variable names), `DS-35` (canonical clue
-order and presentation order), and `DS-42` (the prompt is the user message), in
-[`../decisions.md`](../decisions.md).
+The relevant decisions are `DS-REQ-05` (no variable names), `TG-7` (canonical clue
+order and presentation order), and `DS-REQ-24` (the prompt is the user message), in
+[`../requirements/decisions.md`](../requirements/decisions.md) and
+[`pipeline/03-task-generation/decisions.md`](pipeline/03-task-generation/decisions.md).
 
 The legacy root `prompt-templates.yaml` belongs to the pre-rebuild pipeline. It
 is not an alias for this file and is not part of this contract.
@@ -172,7 +173,7 @@ A `reference` value is a bare noun phrase such as `target face` or
 phrase from the `BindingRef` in the task definition and the clue operand form
 (`named`, `selected`, `aggregated`, or `cross_state`). It uses the presentation
 position, not the canonical position, when it says "the face from clue 2"
-(`DS-35`). The template never builds a reference from a graph identifier.
+(`TG-7`). The template never builds a reference from a graph identifier.
 
 ## 5. Label tables
 
@@ -319,7 +320,7 @@ three values together make a prompt reproducible.
 
 The evaluation namespace follows the same schema, validation, and answer-free
 rule. It is not part of the dataset release. The dataset supplies no system
-prompt (`DS-42`); the evaluation harness may add one from
+prompt (`DS-REQ-24`); the evaluation harness may add one from
 `evaluation.system.no_cadquery`, and it may add a submission instruction from
 `evaluation.submission.answer`.
 

@@ -65,7 +65,7 @@ version; the manifest's `generator_version` identifies it.
 
 `05` validate and export release records the release seed, the template version,
 and the `prompts.yaml` hash in the manifest. The task definition does not carry
-rendering provenance (`DS-35`). The release row carries the rendered `prompt` and
+rendering provenance (`TG-7`). The release row carries the rendered `prompt` and
 `prompt_sha256`; it does not carry a separate seed column because the release
 seed plus `task_id` reproduces the task seed.
 

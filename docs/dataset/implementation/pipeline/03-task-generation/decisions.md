@@ -9,9 +9,12 @@ decision here explains why the module contract has its current shape; the
 contract remains normative. An accepted decision is not silently rewritten. A
 change adds a new decision and marks the old one superseded.
 
-Decisions that span stages belong in [`../../../decisions.md`](../../../decisions.md)
-instead, and unanswered questions belong in the `## Open questions` section of
-the document that owns them.
+Requirements-level decisions belong in
+[`../../../requirements/decisions.md`](../../../requirements/decisions.md) and
+implementation decisions that span pipeline stages in
+[`../../../implementation/decisions.md`](../../../implementation/decisions.md).
+Unanswered questions belong in the `## Open questions` section of the document
+that owns them.
 
 ## TG-1 — Every task clue must be necessary
 
@@ -71,8 +74,150 @@ the document that owns them.
   provenance block names which. Assignment changes are visible in the plan and
   the release row, not in the definition hash.
 
+## TG-4 — `03` writes task definitions; task reasoning step support tables are a QA projection
+
+- **Status:** accepted (2026-10-21).
+- **Context:** The task reasoning step support tables had become a hand-authored
+  generator input and crowded out the actual task-definition contract. That
+  inverted the source of truth: a value is feasible because the task rules can
+  construct it, not because a support row allows it.
+- **Decision:** `03` defines task definitions and emits persisted
+  `TaskDefinition` records. The task reasoning step support tables are derived
+  from those rules as a separate QA baseline. They are not a pipeline stage and
+  not a generator input; `03a` plans, `03b` constructs, `04` renders, and
+  `03a`/`05` use the tables to check the release.
+- **Consequences:** `03` does not read the task reasoning step support tables as
+  data. `03a` calls the same derivation that writes them, so the plan and the QA
+  projection cannot disagree; `05` reads the persisted tables. A supported value
+  missing from the dataset is a coverage gap; a released value the table marks
+  unsupported is a specification or generator defect. Dataset quantity remains a separate
+  coverage question.
+
+## TG-5 — Plan quotas before constructing task definitions
+
+- **Status:** accepted (2026-10-21).
+- **Context:** The valid-task set is combinatorial. Enumerating every task and
+  selecting afterward wastes work and can exceed any practical budget.
+- **Decision:** Plan task quotas first with independent quota targets, family
+  profiles, split assignment, and attempt budgets. Construct and sample task
+  definitions into that plan. Use `03c` to replan or expand the program data when quotas
+  cannot be filled.
+- **Consequences:** There is no separate post-construction release-selection
+  pipeline stage. `03c` is a bounded loop back through supplemental `01b` selection,
+  `01c`/`01d` delta processing, `02` graph building, and an updated plan.
+  Deficits are recorded and either filled or accepted.
+
+## TG-6 — Task generation is supply-driven with capability-aware deficits
+
+- **Status:** accepted (2026-11-20).
+- **Revised by:** `TG-9`; the census is derived from the graph, not emitted by
+  `02c`.
+- **Context:** A full demand-driven planner would specify a task cell up front and
+  query a capability index for programs that can support it. The capability
+  census needs the graph, but `01b` selects the program pool before `02` builds
+  graphs, so the planner either reverses pipeline stage order or forces a larger
+  execution pass. A capability in the pool is also not a constructed task.
+- **Decision:** `03b` constructs tasks supply-driven by default, from the facts a
+  graph actually has. The census is derived from the graph; `TG-9` supersedes
+  the earlier sentence that had `02c` emit it as a by-product. `03a` and `03c` use
+  that census only for deficits: when a
+  quota target is underfilled, they query it for capable programs and request
+  supplemental programs through the existing slow loop. A cell-level demand query
+  is a last resort and carries a `forced` flag and a naturalness check.
+- **Consequences:** `01b` stays metadata-based. `capability_deficit` becomes a
+  deficit reason. Forced tasks are confined to the deficit path, where review can
+  see them, and a miss is recorded rather than filled with an unnatural task.
+
+## TG-7 — Canonical clue order is identity-bearing; prompt order is a permutation
+
+- **Status:** accepted (2026-11-20).
+- **Context:** Clues are conjunctive conditions on one target, so the prompt can
+  present them in any order that respects references. The construction record
+  needs a stable order, because identity, deduplication, the narrowing record,
+  and the strict-narrowing check all depend on it. Treating the two as one order
+  either freezes the prompt, which leaks that the last clue is the
+  discriminator, or makes identity depend on rendering.
+- **Decision:** The task definition stores a canonical clue order: dependency
+  order first, then broad-to-narrow by the size of the narrowed set, descending,
+  with a stable hash as the tie-break. Validity checks, the narrowing record, and
+  `task_id` use this order. The prompt may render a permutation that respects
+  reference dependencies. P0 renders the canonical order; P1 may render a seeded
+  permutation recorded as the render seed.
+- **Consequences:** The render seed and the presentation order belong to
+  provenance, not to `task_id`. Clue wording uses presentation positions ("the
+  face from clue 2"), never canonical positions. Strict narrowing is checked in
+  canonical order only, so a permuted prompt may contain a clue that does not
+  narrow at its position; the conjunction is unchanged. The multiple-choice pool
+  stays the canonical penultimate set, so after a shuffle the choices are no
+  longer "what the prompt's last clue discriminated between".
+
+## TG-8 — Multiple-choice options come from the penultimate answer candidate set
+
+- **Status:** accepted (2026-11-20).
+- **Context:** `prompt-content.md` fixes the count (at least five, seven as the
+  goal), the labels, uniqueness, leakage, and ordering. It does not say which
+  candidates become options, so a renderer could draw from anywhere in the graph,
+  including entities the last clue already excluded.
+- **Decision:** Identity answers draw options from the penultimate answer
+  candidate set, the entities the last clue discriminated between. Numeric answers
+  draw options from the distinct answers of that set, so the options are
+  comparable numbers. If fewer than five real options exist, the task is
+  rejected; options are never padded.
+- **Consequences:** The choice pool is a construction output, not a rendering
+  choice: `03b` orders it and assigns its labels, so a multiple-choice task's
+  `gold_answer` is a label before the definition is hashed. `04` renders that
+  order and must not reorder, relabel, re-bind, or extend it. A task whose
+  penultimate set is smaller than five is a deficit, not a padded task.
+
+## TG-9 — The capability census is derived, not emitted
+
+- **Status:** accepted (2026-11-20).
+- **Context:** `TG-6` said `02c` emits a capability census as a by-product of
+  graph construction. That implied an artifact, and left open whether it was a
+  fourth graph table or a sidecar. The census is a pure function of the graph, so
+  a stored copy can only be stale or redundant. The graph tables are per-entity
+  and the census is per-program, so it also has no existing row to extend.
+- **Decision:** The census is a typed function of the graph, derived on demand. It
+  is not an artifact and has no schema version of its own. `03a` derives it for
+  all active programs and stores the union per family in
+  `TaskQuotaPlan.family_profiles`; `03b` derives it for the program it is
+  constructing; `03c` reads `family_profiles`.
+- **Consequences:** One fewer artifact, schema, and staleness rule, and no change
+  to `io-contracts.md` or `artifacts.md`. The cost is one pass per graph batch plus a
+  pass over the programs a slow-loop round adds. A replan derives nothing, because
+  the graph batch has not changed and `family_profiles` is already in the plan.
+
+## TG-10 — One construction pass per program, budgeted per family and step
+
+- **Status:** accepted (2026-11-21).
+- **Context:** `03a` budgeted `ceil(target_count * 1.5)` construction attempts for
+  every quota target, while one accepted definition fills several targets. The
+  budgets therefore summed to roughly 1.2–1.5 × 10^5 attempts for a 10^4-task
+  release. `03-task-generation.md` also made construction parallel per quota
+  target, which invites a graph re-read per target, and `03a` and `03b` each
+  derived the capability census. The cover search had no bound beyond
+  `max_state_entities`, which bounds one input, not the search.
+- **Decision:** Construction is one pass per program and plan revision: load the
+  graph and census once and fill every target assigned to the program at that
+  step count. The attempt budget is per `(family, task reasoning step count)` and
+  is `ceil(family_task_reasoning_step_quota * construction_attempt_multiplier)`;
+  one acceptance decrements every target it fills. The plan carries the
+  per-program census (`program_census`) and `03b` reads it. The cover search runs
+  under count-based scope constants (`max_construction_candidates`,
+  `max_construction_facts`, `max_cover_expansions`, `max_validity_rechecks`), and
+  exhaustion is a `construction_deficit` with detail `construction_budget`. The
+  constants are part of `constructor_version`.
+- **Consequences:** A 10,000-task release budgets on the order of 20,000–30,000
+  attempts instead of 1.2 × 10^5. Each program graph is read once per revision.
+  The census is derived once per graph version. The search has a deterministic
+  bound, so a pathological graph becomes a recorded deficit rather than an
+  unbounded run. A budget change is a new `constructor_version`, so it cannot
+  silently change an accepted definition.
+
 ## Pending
 
-Three module-scoped decisions are accepted, and no module-scoped question is
-pending. Feature-wide construction decisions live in
-[`../../../decisions.md`](../../../decisions.md).
+Ten module-scoped decisions are accepted, and no module-scoped question is
+pending. Requirements-level decisions live in
+[`../../../requirements/decisions.md`](../../../requirements/decisions.md);
+implementation decisions that span pipeline stages live in
+[`../../../implementation/decisions.md`](../../../implementation/decisions.md).

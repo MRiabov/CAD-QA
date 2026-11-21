@@ -45,7 +45,7 @@ var checkDimensions = map[string]bool{
 }
 
 var checkRequirements = map[string]bool{
-	"DS-37":              true,
+	"DS-REQ-18":          true,
 	"PRD-8":              true,
 	"R-4":                true,
 	"R-7":                true,

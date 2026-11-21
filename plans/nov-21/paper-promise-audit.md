@@ -42,12 +42,12 @@ family and measurement scope, but the release contract carries neither field.
 |---|---|---|---|---|---|
 | 1 | Dataset built from CadQuery/CADEvolve programs; AST plus runtime extraction; offline precomputed tabular release | 12–16, 137–178 | Yes, P0 (`PRD.md:9–12, 105–112`; dataset PRD 92–100) | Yes (`graph-content.md`, `release-dataset-contract.md`) | Aligned |
 | 2 | Questions about faces, edges, vertices, boolean operations, volume, span, location | 12–16, 197–213 | Yes (`dataset PRD:27–40`) | Yes (`task-structure.md:38–56, 147–163`) | Aligned |
-| 3 | 0–10 reasoning hops; 0/1/2/3–10 taxonomy | 107, 129, 215–220 | No: release is 1–5 P0, 6+ P2; 0/1 not generated (`PRD.md:56, 72`; dataset PRD 195–220) | No: no 0-step; release floors at 2 (`task-structure.md:193`; `DS-11`; `data.md:382–388`) | Contradicted |
-| 4 | Rich distractors | 15–16, 220 | Only P2 near-miss (`dataset PRD:188–191`; `DS-21`) | P0 requires real candidates, not padding (`prompt-content.md:141–149`) | Partial |
+| 3 | 0–10 reasoning hops; 0/1/2/3–10 taxonomy | 107, 129, 215–220 | No: release is 1–5 P0, 6+ P2; 0/1 not generated (`PRD.md:56, 72`; dataset PRD 195–220) | No: no 0-step; release floors at 2 (`task-structure.md:193`; `DS-REQ-11`; `data.md:382–388`) | Contradicted |
+| 4 | Rich distractors | 15–16, 220 | Only P2 near-miss (`dataset PRD:188–191`; `DS-REQ-25`) | P0 requires real candidates, not padding (`prompt-content.md:141–149`) | Partial |
 | 5 | Three harnesses: `no_tools`, `numpy`, `cadquery` | 17, 248–264 | `numpy` P0; `no_tools` and `cadquery` P2 (`PRD.md:90–93`) | `numpy` exists; `no_tools` exists; `cadquery` missing (`harness.md:59–80, 162–179`) | Partial |
 | 6 | Harbor/TerminalBench environments; answers submitted as files | 264 | Not in PRD; Harbor deferred P2 (`harness.md:3–5, 98–119, 154–160`) | Harbor exists but is unverified and deferred | Partial |
-| 7 | Accuracy by hop, task family, and harness mode | 17 | Hop, relation family, measurement scope; no task family (`PRD.md:99–101`) | No task families (`task-structure.md:195–205`; `DS-03`) | Contradicted |
-| 8 | Entity-reference answers (`wp3`, `feature:wp3`, …) | 182–184 | No: the variable-name answer format is removed (`dataset PRD:170–191`; `DS-15`) | Identity answers are multiple choice (`task-structure.md:149, 174`; `DS-15`) | Contradicted |
+| 7 | Accuracy by hop, task family, and harness mode | 17 | Hop, relation family, measurement scope; no task family (`PRD.md:99–101`) | No task families (`task-structure.md:195–205`; `DS-REQ-03`) | Contradicted |
+| 8 | Entity-reference answers (`wp3`, `feature:wp3`, …) | 182–184 | No: the variable-name answer format is removed (`dataset PRD:170–191`; `DS-REQ-05`) | Identity answers are multiple choice (`task-structure.md:149, 174`; `DS-REQ-05`) | Contradicted |
 | 9 | Enum answers: coordinate frames, `inside`/`outside`/`on_boundary`/`ambiguous`, selector labels | 191–193 | No separate enum format; membership is yes/no; boundary and ambiguity are excluded (`dataset PRD:170–191`; `task-structure.md:157`; `release-dataset-contract.md:330`) | Workplane state is P1 structured object; selector result is P1 | Contradicted |
 | 10 | Structured JSON: bounding box and workplane-state snapshot | 194–195 | Bounding box P0; workplane state P1 (`task-structure.md:134, 160`) | Bounding box P0; structured object P1 | Partial |
 | 11 | Validity booleans | 190 | Validity P2 (`task-structure.md:163`) | P2 | Partial |
@@ -73,7 +73,7 @@ from the one the current docs specify.
 - **"Questions range from simple lookups to challenging high reasoning hop
   questions with rich distractors"** (`paper:15–16`). The release is 1–5 task
   reasoning steps (P0), 6+ is P2, and rich near-miss distractors are P2
-  (`dataset PRD:195–220, 311–329`; `DS-21`). The 0-hop and 1-hop tiers are not
+  (`dataset PRD:195–220, 311–329`; `DS-REQ-25`). The 0-hop and 1-hop tiers are not
   generated for the release: the project PRD says "0/1-hop — not generated
   (synthesis floors at `hop≥2`)" (`PRD.md:56`), and the training docs say the
   graph-first release has no 0/1-hop rows (`data.md:382–388`).
@@ -83,7 +83,7 @@ from the one the current docs specify.
 - **"measuring accuracy by reasoning hop count, task family, and LLM harness
   mode"** (`paper:17`). The PRD measures by hop, relation family, and
   measurement scope (`PRD.md:99–101`). The dataset explicitly has no task
-  families (`task-structure.md:195–205`; `DS-03`). "Task family" is still an
+  families (`task-structure.md:195–205`; `DS-REQ-03`). "Task family" is still an
   undefined proposed term (`glossary.md:790`).
 
 The abstract's "multi-hop geometry reasoning gap" claim is aligned. The scope
@@ -100,7 +100,7 @@ comparison table says `0–10` (`paper:129`).
 (`dataset PRD:195–220`). The project PRD's release ladder is `{2,3,4,5}` and says
 0/1-hop is not generated (`PRD.md:56, 72`). The task structure says the lowest
 step count is 1 and there are no 0-step tasks (`task-structure.md:193`), and
-`DS-11` records dropping 0-step tasks. The development plan keeps `{2,3,4,5}` as
+`DS-REQ-11` records dropping 0-step tasks. The development plan keeps `{2,3,4,5}` as
 the working ladder and admits 6–10 only if a selection pilot supports it
 (`development-plan.md:55`). The training docs state the release has no 0/1-hop
 rows and the resolver floors at 2 (`data.md:382–388`).
@@ -142,7 +142,7 @@ and `selector:sel_all_faces_all` (`paper:182–184`); enums for coordinate frame
 point membership including `on_boundary` and `ambiguous`, and selector labels
 (`paper:191–193`); validity booleans (`paper:190`).
 
-**Docs:** `DS-15` removes the variable-name answer format and makes identity
+**Docs:** `DS-REQ-05` removes the variable-name answer format and makes identity
 answers multiple choice (`decisions.md:218–231`). The answer-format table has
 multiple choice, number, integer, yes/no, 3D coordinate, bounding box, and
 structured object (`task-structure.md:127–135`). Identity is returned as a
@@ -205,7 +205,7 @@ work.
 (`paper:220`).
 
 **Docs:** P0 and P1 require real candidates, not padding; plausible near-miss
-distractors are P2 (`DS-21`; `dataset PRD:188–191`; `prompt-content.md:141–149`).
+distractors are P2 (`DS-REQ-25`; `dataset PRD:188–191`; `prompt-content.md:141–149`).
 The multiple-choice check requires at least five real candidates from the
 penultimate answer set (`03b-construct-task-definitions.md:209–223`), but not
 examiner-style near misses.
@@ -222,7 +222,7 @@ are P2" or make near-miss distractors a P0 requirement, which is a larger change
 equally distributed in solve rates" (`paper:224`).
 
 **Docs:** the dataset does not use task families, task types, or task patterns
-(`task-structure.md:195–205`; `DS-03`). The PRD metrics are accuracy by hop,
+(`task-structure.md:195–205`; `DS-REQ-03`). The PRD metrics are accuracy by hop,
 relation family, and measurement scope (`PRD.md:99–101`). "Task family" is still
 an undefined proposed addition in the glossary (`glossary.md:790`).
 
@@ -342,7 +342,7 @@ make them P1/P2 or defer them.
 | 6–10 hops | P2/aspirational; depends on a selection pilot | `dataset PRD:206`; `development-plan.md:55` |
 | `no_tools` and `cadquery` harnesses | P2; `cadquery` unimplemented | `PRD.md:90–93`; `harness.md:59–80` |
 | Harbor/TerminalBench | Deferred P2; end-to-end unverified | `harness.md:3–5, 154–160` |
-| Near-miss distractors | P2 | `DS-21` |
+| Near-miss distractors | P2 | `DS-REQ-25` |
 | Workplane-state answer | P1 structured object | `task-structure.md:160` |
 | Validity answer | P2 | `task-structure.md:163` |
 | Aggregation/rank classifiers | P1 | `task-structure.md:85, 156` |

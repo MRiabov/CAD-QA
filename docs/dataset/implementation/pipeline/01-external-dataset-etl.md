@@ -96,6 +96,72 @@ canonicalization. Neither is our contract. Program identity, overlap checks, and
 reproducibility depend on our own canonical text and normalization version. The
 step may be close to a no-op for C records; it is still a real contract boundary.
 
+## Local decisions
+
+### ETL-1 — Start from the prepared CADEvolve Parquet cache
+
+- **Status:** accepted (2026-10-21).
+- **Context:** The raw CADEvolve release is a 4.7 GB tar archive. A prepared
+  Parquet cache is published at `MRiabov/cadevolve-parquet`, contains the same
+  program records in typed columns, and is about 508 MB. Archive extraction and
+  row parsing are avoidable work.
+- **Decision:** `01a` reads metadata from `cadevolve_sources.parquet` from
+  `MRiabov/cadevolve-parquet`; `01b` selects the program pool; `01c` fetches only
+  the selected rows; `01d` applies our own normalization version and program
+  hash. The cache commit and conversion version are recorded in the external
+  dataset manifest. The tar archive and JSONL are not primary inputs; they are
+  provenance checks only.
+- **Consequences:** No archive extraction in the normal path. The cache schema
+  is part of the external input contract. A cache change is a new external
+  dataset version, not an in-place update. Program identity remains ours.
+
+### ETL-2 — CADEvolve P and C are separate program populations
+
+- **Status:** accepted (2026-10-21).
+- **Context:** CADEvolve-3L is a three-tier corpus. G contains parametric
+  generators, P contains executable programs with arbitrary code style, and C
+  contains canonicalized, centered, scaled, and binarized programs used for
+  training. P and C have no program-hash overlap.
+- **Decision:** The dataset treats P and C as separate program populations.
+  P0 and P1 use C only; P2 adds P. `01b` never deduplicates P against C or
+  assumes one is a duplicate. G is not ingested. The program pool records the
+  tier mix.
+- **Consequences:** Prompt style and geometry scale depend on the tier. C is
+  canonical and normalized; P preserves arbitrary style and original pose/scale.
+  Counts from P and C are not additive as if they were the same programs.
+
+### ETL-3 — Split by CADEvolve program family
+
+- **Status:** accepted (2026-10-21).
+- **Context:** Splitting by CadQuery program is not enough. Different programs
+  sampled from one CADEvolve generator share a code template and parameter
+  family; P and C versions of one mesh or generator are also related. A
+  program-level split can put near-duplicates in both training and evaluation.
+- **Decision:** Split by `cadevolve_program_family_id`. For CADEvolve core, the
+  family is the generator family taken from the path. For CADEvolve-predicted
+  ABC/ShapeNet, the family is the mesh family. P and C versions of one family
+  share an ID. Assign train, validation, and test at the family level; every
+  task inherits the family split. The release table records
+  `cadevolve_program_family_id`.
+- **Consequences:** Split isolation is stricter than program isolation. Split
+  sizes are balanced by family size, not program count. Unmatched P/C families
+  become their own families. The cache's `generator_id` column is not the
+  generator identity; derive the family from the CADEvolve `path_family` cache
+  column.
+
+### ETL-4 — P2 adds P for scale variation
+
+- **Status:** accepted (2026-10-21).
+- **Context:** C canonicalization scales the longest bounding-box side to 200
+  units, so C programs do not vary in absolute scale. P preserves the original
+  pose and scale and uses arbitrary code style.
+- **Decision:** P0 and P1 use C only. P2 adds P. P and C versions of one
+  generator or mesh family share a program family ID, so P2 cannot split
+  them across train and test.
+- **Consequences:** P0/P1 keep canonical prompts and simpler normalization. P2
+  gains absolute scale variation and arbitrary code style. The CADEvolve program
+  family mapping must cover both tiers before P2 is built.
+
 ## Not here
 
 This pipeline stage does not build graphs, enumerate tasks, or write dataset release rows.

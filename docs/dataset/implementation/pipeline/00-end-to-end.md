@@ -63,6 +63,7 @@ CADEvolve Parquet cache
 - Product requirements: [`../../requirements/PRD.md`](../../requirements/PRD.md).
 - Consumer columns and row counts:
   [`../../requirements/release-dataset-contract.md`](../../requirements/release-dataset-contract.md).
-- Feature-wide decisions: [`../../decisions.md`](../../decisions.md).
+- Requirements-level decisions: [`../../requirements/decisions.md`](../../requirements/decisions.md).
+- Implementation decisions that span pipeline stages: [`../decisions.md`](../decisions.md).
 - The archived generator:
   `docs/_archive/dataset-pre-rebuild-2026-10-21/`.

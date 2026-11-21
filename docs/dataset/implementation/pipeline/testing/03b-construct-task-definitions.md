@@ -74,7 +74,7 @@ redundant-clue rejection, and the choice pool before `03b` exists.
   identity is recorded as `definition_unique` and does not consume quota.
 - `test_03b_answer_uniqueness` — an answer-equivalent set that disagrees under
   `same_answer` is rejected, and an identity answer with two entries is rejected
-  (`DS-32`).
+  (`DS-REQ-15`).
 - `test_03b_definition_immutable` — a re-run with the same input versions
   produces a byte-identical definition and `definition_sha256`; a changed
   `plan_version` does not change either.

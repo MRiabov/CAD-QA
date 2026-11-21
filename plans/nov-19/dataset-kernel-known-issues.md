@@ -65,24 +65,24 @@ repeat that with a cleaner schema.
 
 | ID | Issue | Severity | Owner | Status |
 |---|---|---|---|---|
-| KI-DS-01 | `03b` has no construction grammar | Blocker | `03b` | open |
-| KI-DS-02 | `02c` does not build P0 answer primitives | Blocker | `02c`, `graph-content` | open |
-| KI-DS-03 | No geometry-semantics bridge for tolerance, equality, units, and frame | Blocker | `graph-persistence`, `03b`, release contract | open |
-| KI-DS-04 | State capture uses `val()` and silently drops solids; invalid solids are accepted | High | `02b` | open |
-| KI-DS-05 | Determinism is asserted but not gated | High | `02b`, `05` | open |
-| KI-DS-06 | Quota capacity formula and expansion loop contradict | High | `03a`, `01b`, `03c` | open |
-| KI-DS-07 | Dimension coupling makes the quota plan infeasible | High | `03a`, `03b` | open |
-| KI-DS-08 | `geometry_required` definition and the 95% target do not close | High | `03b`, `05` | open |
-| KI-DS-09 | Family derivation fallback can leak across splits | High | `01b` | open |
-| KI-DS-10 | Release answer canonicalization and scoring are incomplete | Medium | `04`, `05`, release contract | open |
-| KI-DS-11 | Task identity excludes the answer, allowing cross-release answer drift | Medium | `03b` | open |
-| KI-DS-12 | `TaskDefinition` has no prompt-safe entity description | Medium | `03b`, `04` | open |
-| KI-DS-13 | Failure accounting and run lifecycle are unowned | Medium | `05`, `00` | open |
-| KI-DS-14 | No preflight corpus census or yield budget | High | `01b`, `02`, `03a` | open |
+| KI-DS-REQ-01 | `03b` has no construction grammar | Blocker | `03b` | open |
+| KI-DS-REQ-02 | `02c` does not build P0 answer primitives | Blocker | `02c`, `graph-content` | open |
+| KI-DS-REQ-03 | No geometry-semantics bridge for tolerance, equality, units, and frame | Blocker | `graph-persistence`, `03b`, release contract | open |
+| KI-DS-REQ-17 | State capture uses `val()` and silently drops solids; invalid solids are accepted | High | `02b` | open |
+| KI-DS-REQ-16 | Determinism is asserted but not gated | High | `02b`, `05` | open |
+| KI-DS-REQ-12 | Quota capacity formula and expansion loop contradict | High | `03a`, `01b`, `03c` | open |
+| KI-DS-REQ-13 | Dimension coupling makes the quota plan infeasible | High | `03a`, `03b` | open |
+| KI-TERM-1 | `geometry_required` definition and the 95% target do not close | High | `03b`, `05` | open |
+| KI-DS-REQ-27 | Family derivation fallback can leak across splits | High | `01b` | open |
+| KI-DS-REQ-28 | Release answer canonicalization and scoring are incomplete | Medium | `04`, `05`, release contract | open |
+| KI-DS-REQ-11 | Task identity excludes the answer, allowing cross-release answer drift | Medium | `03b` | open |
+| KI-DS-REQ-21 | `TaskDefinition` has no prompt-safe entity description | Medium | `03b`, `04` | open |
+| KI-DS-REQ-22 | Failure accounting and run lifecycle are unowned | Medium | `05`, `00` | open |
+| KI-DS-REQ-14 | No preflight corpus census or yield budget | High | `01b`, `02`, `03a` | open |
 
 ## Issues
 
-### KI-DS-01 — `03b` has no construction grammar
+### KI-DS-REQ-01 — `03b` has no construction grammar
 
 - **Severity:** Blocker
 - **Owner:** `03b`
@@ -107,7 +107,7 @@ repeat that with a cleaner schema.
   the answer resolver, the uniqueness decision, and the rejection path. A
   fixture test reproduces the same answer candidate set trace byte-for-byte.
 
-### KI-DS-02 — `02c` does not build P0 answer primitives
+### KI-DS-REQ-02 — `02c` does not build P0 answer primitives
 
 - **Severity:** Blocker
 - **Owner:** `02c`, `graph-content`
@@ -134,7 +134,7 @@ repeat that with a cleaner schema.
   kernel call, subject, object, evidence rule, and tolerance. A fixture graph
   for one program contains at least one row of every P0 type.
 
-### KI-DS-03 — No geometry-semantics bridge for tolerance, equality, units, and frame
+### KI-DS-REQ-03 — No geometry-semantics bridge for tolerance, equality, units, and frame
 
 - **Severity:** Blocker
 - **Owner:** `graph-persistence`, `03b`, release contract
@@ -144,7 +144,7 @@ repeat that with a cleaner schema.
   (`canonicalization.md` 17–27, 57–105); a run-level `TolerancePolicy` for
   measurement and relation comparisons (`graph-persistence.md` 116–138); and
   4 significant figures with half-a-unit-in-the-last-place for gold answers
-  (DS-14, release contract 126–128). No rule connects them.
+  (DS-REQ-14, release contract 126–128). No rule connects them.
 - **Missing:** the definition of a tie and a near-tie; the margin used to
   reject a near-tie; how a threshold clue is evaluated when the measurement is
   within tolerance of the threshold; per-component tolerance for a 3D coordinate or
@@ -164,7 +164,7 @@ repeat that with a cleaner schema.
   fixture test shows a clean tie is rejected, a near-tie inside the margin is
   rejected, and a value just outside the margin is accepted.
 
-### KI-DS-04 — State capture uses `val()` and silently drops solids; invalid solids are accepted
+### KI-DS-REQ-17 — State capture uses `val()` and silently drops solids; invalid solids are accepted
 
 - **Severity:** High
 - **Owner:** `02b`
@@ -189,7 +189,7 @@ repeat that with a cleaner schema.
   an invalid state non-release-ready. Tests cover a multi-object `Workplane`,
   an empty `Workplane`, and an invalid solid.
 
-### KI-DS-05 — Determinism is asserted but not gated
+### KI-DS-REQ-16 — Determinism is asserted but not gated
 
 - **Severity:** High
 - **Owner:** `02b`, `05`
@@ -207,7 +207,7 @@ repeat that with a cleaner schema.
   same program set twice and compare `runtime_extraction_result_sha256`, graph
   hashes, and the release hash; fail on mismatch.
 
-### KI-DS-06 — Quota capacity formula and expansion loop contradict
+### KI-DS-REQ-12 — Quota capacity formula and expansion loop contradict
 
 - **Severity:** High
 - **Owner:** `03a`, `01b`, `03c`
@@ -227,10 +227,10 @@ repeat that with a cleaner schema.
   The engine can declare a quota short even when the corpus could supply it.
 - **Closure test:** separate the capacity ceiling (the 1% cap) from the
   allocation target (the average needed); reconcile the hard cap with
-  supplemental selection; add a preflight census (KI-DS-14) and a backfill
+  supplemental selection; add a preflight census (KI-DS-REQ-14) and a backfill
   contract.
 
-### KI-DS-07 — Dimension coupling makes the quota plan infeasible
+### KI-DS-REQ-13 — Dimension coupling makes the quota plan infeasible
 
 - **Severity:** High
 - **Owner:** `03a`, `03b`
@@ -259,7 +259,7 @@ repeat that with a cleaner schema.
   in `03a`; a worked allocation at step count 1 that satisfies both balance
   rules.
 
-### KI-DS-08 — `geometry_required` definition and the 95% target do not close
+### KI-TERM-1 — `geometry_required` definition and the 95% target do not close
 
 - **Severity:** High
 - **Owner:** `03b`, `05`
@@ -280,7 +280,7 @@ repeat that with a cleaner schema.
   aggregate check to `05`; add a fixture that fails when the share is below
   95%.
 
-### KI-DS-09 — Family derivation fallback can leak across splits
+### KI-DS-REQ-27 — Family derivation fallback can leak across splits
 
 - **Severity:** High
 - **Owner:** `01b`
@@ -297,7 +297,7 @@ repeat that with a cleaner schema.
   all to one family; reconcile duplicate normalized text before split
   assignment; a synthetic duplicate pair must never land in two splits.
 
-### KI-DS-10 — Release answer canonicalization and scoring are incomplete
+### KI-DS-REQ-28 — Release answer canonicalization and scoring are incomplete
 
 - **Severity:** Medium
 - **Owner:** `04`, `05`, release contract
@@ -320,7 +320,7 @@ repeat that with a cleaner schema.
   format; a fixture that scores a correct, a near-miss, and a malformed
   answer.
 
-### KI-DS-11 — Task identity excludes the answer, allowing cross-release answer drift
+### KI-DS-REQ-11 — Task identity excludes the answer, allowing cross-release answer drift
 
 - **Severity:** Medium
 - **Owner:** `03b`
@@ -338,12 +338,12 @@ repeat that with a cleaner schema.
   `03b` and the release contract; add a manifest check that an existing
   `task_id` has the same `answer_sha256` across releases.
 
-### KI-DS-12 — `TaskDefinition` has no prompt-safe entity description
+### KI-DS-REQ-21 — `TaskDefinition` has no prompt-safe entity description
 
 - **Severity:** Medium
 - **Owner:** `03b`, `04`
 - **Status:** open
-- **Symptom:** DS-15 forbids variable names in task text and choices. The
+- **Symptom:** DS-REQ-05 forbids variable names in task text and choices. The
   graph has a `label` field, but it is “a display string; not used for
   identity or binding” and is not specified as prompt-safe
   (`graph-persistence.md` 264–265). `03b`’s `choice_pool` carries
@@ -352,13 +352,13 @@ repeat that with a cleaner schema.
 - **Why it kills the engine:** a provenance clue such as “the operation that
   cut the cylindrical hole” needs a description of the bound operation. If
   the definition carries only an operation ID and a variable name, `04` either
-  renders the variable name (violating DS-15 and R-6) or invents a
+  renders the variable name (violating DS-REQ-05 and R-6) or invents a
   description (violating the `04` boundary).
 - **Closure test:** add a prompt-safe description or a stable description
   reference to every bound entity in `TaskDefinition`; add a render test that
   no variable name or internal identifier appears in any prompt.
 
-### KI-DS-13 — Failure accounting and run lifecycle are unowned
+### KI-DS-REQ-22 — Failure accounting and run lifecycle are unowned
 
 - **Severity:** Medium
 - **Owner:** `05`, `00`
@@ -377,7 +377,7 @@ repeat that with a cleaner schema.
   markers and atomic writes; a `05` coverage/balance gate with a fixture that
   fails on a missing value and on a cap violation.
 
-### KI-DS-14 — No preflight corpus census or yield budget
+### KI-DS-REQ-14 — No preflight corpus census or yield budget
 
 - **Severity:** High
 - **Owner:** `01b`, `02`, `03a`
@@ -390,7 +390,7 @@ repeat that with a cleaner schema.
 - **Why it kills the engine:** the first time the engine learns its yield is
   after building 1,500 graphs. If AST, execution, graph, or construction yield
   is below the implicit 33% failure budget, the release cannot hit its targets,
-  and the only recovery path is the cap-conflicted slow loop (KI-DS-06).
+  and the only recovery path is the cap-conflicted slow loop (KI-DS-REQ-12).
 - **Closure test:** run a census on the selected pool and record, per stage,
   the accepted and rejected counts by reason; record tasks per program and
   per family; use the census to size the pool and set the attempt budgets; add
@@ -403,36 +403,36 @@ This tracker does not duplicate the existing backlog. The mapping is:
 
 | Existing item | Covered here |
 |---|---|
-| MC-08 construction grammar | KI-DS-01 |
-| MC-09, MC-10 identity and provenance | KI-DS-01, KI-DS-05 |
-| MC-11, MC-12 `04` input and release projection | KI-DS-12, KI-DS-10 |
-| MC-13 release coverage and balance | KI-DS-08, KI-DS-10, KI-DS-13 |
-| MC-14 `failures.parquet` | KI-DS-13 |
-| MC-15, MC-24 multiple-choice fairness | KI-DS-07 |
-| MC-18, MC-19 program-floor backfill | KI-DS-06, KI-DS-14 |
-| MC-20 duplicate/family reconciliation | KI-DS-09 |
-| MC-22 geometry-required rule | KI-DS-08 |
-| MC-23 retry and stop budgets | KI-DS-06 |
-| MC-26, MC-28 manifest, dataset card, evaluation material | KI-DS-10, KI-DS-13 |
-| MC-29 run manifest and resume | KI-DS-13 |
-| MC-35 relation fields | KI-DS-02 |
+| MC-08 construction grammar | KI-DS-REQ-01 |
+| MC-09, MC-10 identity and provenance | KI-DS-REQ-01, KI-DS-REQ-16 |
+| MC-11, MC-12 `04` input and release projection | KI-DS-REQ-21, KI-DS-REQ-28 |
+| MC-13 release coverage and balance | KI-TERM-1, KI-DS-REQ-28, KI-DS-REQ-22 |
+| MC-14 `failures.parquet` | KI-DS-REQ-22 |
+| MC-15, MC-24 multiple-choice fairness | KI-DS-REQ-13 |
+| MC-18, MC-19 program-floor backfill | KI-DS-REQ-12, KI-DS-REQ-14 |
+| MC-20 duplicate/family reconciliation | KI-DS-REQ-27 |
+| MC-22 geometry-required rule | KI-TERM-1 |
+| MC-23 retry and stop budgets | KI-DS-REQ-12 |
+| MC-26, MC-28 manifest, dataset card, evaluation material | KI-DS-REQ-28, KI-DS-REQ-22 |
+| MC-29 run manifest and resume | KI-DS-REQ-22 |
+| MC-35 relation fields | KI-DS-REQ-02 |
 
 ## Suggested order
 
-**Batch A — unblock construction.** KI-DS-01, KI-DS-02, KI-DS-03. These three
+**Batch A — unblock construction.** KI-DS-REQ-01, KI-DS-REQ-02, KI-DS-REQ-03. These three
 decide whether a task can be constructed at all and whether its answer is
 well-defined. Nothing else is testable until they are written.
 
-**Batch B — stop silent corruption.** KI-DS-04, KI-DS-05, KI-DS-08. These are
+**Batch B — stop silent corruption.** KI-DS-REQ-17, KI-DS-REQ-16, KI-TERM-1. These are
 small, local fixes with high value: they prevent wrong golds and unreproducible
 runs.
 
-**Batch C — make the plan honest.** KI-DS-06, KI-DS-07, KI-DS-09, KI-DS-14.
+**Batch C — make the plan honest.** KI-DS-REQ-12, KI-DS-REQ-13, KI-DS-REQ-27, KI-DS-REQ-14.
 These decide whether the engine can hit its targets and whether the split is
 real.
 
-**Batch D — close the release contracts.** KI-DS-10, KI-DS-11, KI-DS-12,
-KI-DS-13. These are needed before a consumer can score, reproduce, or audit the
+**Batch D — close the release contracts.** KI-DS-REQ-28, KI-DS-REQ-11, KI-DS-REQ-21,
+KI-DS-REQ-22. These are needed before a consumer can score, reproduce, or audit the
 release.
 
 ## What is not an issue
