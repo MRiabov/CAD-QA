@@ -249,12 +249,14 @@ P0/P1 commitment.
   runs as a pre-commit hook and never from pytest: a test would make every test run pay for
   the scan.
   A `(home)` annotation exempts a tree, `ALLOWLIST` exempts cross-cutting phrases, and the
-  `dont-say: allow` / `dont-say: home` markers exempt a line/file. In Python and Go,
-  comments and docstrings are matched as prose, and every declared name is matched as a
-  name: class, function, method, parameter, variable, field, declared type, constant,
-  file, and folder. JSON checks `description` and `title` as prose, and property, definition, enum,
-  and const values as names; schema vocabulary is not a CAD-QA name. Run
-  `tools/ci_cd/dont-say`, or `tools/ci_cd/dont-say --ratchet tools/ci_cd/dont_say_baseline.txt
+  `dont-say: allow` marker exempts one line. A comment line in the first ten lines that
+  begins `dont-say: allow-file` exempts the whole file; use it only for historical records
+  and verbatim external text. In Python and Go, comments and docstrings are matched as prose,
+  and every declared name is matched as a name: class, function, method, parameter, variable,
+  field, declared type, constant, file, and folder. JSON checks `description` and `title` as
+  prose, and property, definition, enum, and const values as names; schema vocabulary is not
+  a CAD-QA name. Run `tools/ci_cd/dont-say`, or
+  `tools/ci_cd/dont-say --ratchet tools/ci_cd/dont_say_baseline.txt
   --names-ratchet tools/ci_cd/dont_say_names_baseline.txt` to enforce both ratchets.
 - **Name matching.** A name matches when the rule's words appear as consecutive segments, so
   `query_program`, `QueryProgram`, and `query-program` all match `query program`. A bare term
@@ -267,8 +269,10 @@ P0/P1 commitment.
 - **Two ratchets.** `dont_say_baseline.txt` counts prose hits and
   `dont_say_names_baseline.txt` counts declared-name hits. The checker fails if either count
   rises, or if it falls without the baseline being lowered in the same commit. The
-  `dont-say` pre-commit hook enforces both. The sweep is tracked in
-  `_audit/dont-say-worklist.md`.
+  `dont-say` pre-commit hook enforces both. Dated plans and audits are historical records and
+  carry `dont-say: allow-file`; they are not rewritten. `docs/train-and-eval/` is stale design
+  input for the deleted training stack, so its hits stay in the baseline until the rewrite
+  replaces it; they are not live debt. The sweep is tracked in `_audit/dont-say-worklist.md`.
 - **Markdown formatter: `rumdl`.** `.rumdl.toml` is the committed config (GFM flavor;
   `MD013` line length and `MD033` inline HTML off, matching the docs' style; scoped to
   `docs/` and `plans/`). Run `uv run rumdl check` to report, or

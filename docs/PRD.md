@@ -29,7 +29,7 @@ Secondary:
 **Objective.** Close the multi-hop CAD-reasoning gap for small LLM models on an immutable, tiered,
 verifiable slice, relative to base and cost-effective baselines (H2, P0) — and show that the
 capability transfers to an independent benchmark (H3, P1). As a P2 stretch, test whether the tuned
-model surpasses its teacher on the same harness.
+LLM model surpasses its teacher on the same harness.
 
 **Hypotheses (H1–H4), by role and priority:**
 
@@ -104,7 +104,7 @@ RL-readiness gate), not a separate claim; conciseness is deferred to future work
   a single correct tool call suffices) are upper bounds, not the primary score.
 - **Planning estimates (not success criteria).** Cost-effective models are expected around ≤30%; the
   small trained model is expected to move from roughly 10% to 50–70%. This is an educated guess used
-  to size the experiment: measure the base rate on the frozen slice first (a small-model run via
+  to size the experiment: measure the base rate on the immutable slice first (a small LLM model run via
   OpenRouter or manual inference is enough), then set the success threshold. Do not treat 50–70% as a
   pre-registered target.
 - **Metrics.** Accuracy; invalid-output rate; missing-response rate; accuracy by hop slice,

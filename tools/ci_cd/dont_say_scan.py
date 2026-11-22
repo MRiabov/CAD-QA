@@ -62,6 +62,10 @@ SKIP_FILES = frozenset(
     }
 )
 ALLOW_MARKER = re.compile(r"dont-say:\s*allow", re.IGNORECASE)
+ALLOW_FILE_MARKER = re.compile(
+    r"^\s*(?:<!--|%|#)\s*dont-say:\s*allow-file\b", re.IGNORECASE | re.MULTILINE
+)
+FILE_MARKER_SCAN_LINES = 10
 HOME_MARKER = re.compile(r"dont-say:\s*home", re.IGNORECASE)
 ALLOW_LINE = re.compile(r"don'?t say|do not say|never say|banned:", re.IGNORECASE)
 CODE_FENCE = re.compile(r"^\s*(```|~~~)")
@@ -118,12 +122,21 @@ def code_prose_lines(text: str) -> list[tuple[int, str]]:
     return sorted(prose)
 
 
+def allows_file(text: str) -> bool:
+    """True when a comment line in the first ten lines exempts the whole file."""
+
+    header = "\n".join(text.splitlines()[:FILE_MARKER_SCAN_LINES])
+    return bool(ALLOW_FILE_MARKER.search(header))
+
+
 def scan_file(
     path: Path, rules: list[Rule], *, go: dict[Path, list[Declaration]] | None = None
 ) -> list[Hit]:
     """Scan one file's prose. Names are scanned separately, in ``scan_names``."""
 
     text = path.read_text(encoding="utf-8")
+    if allows_file(text):
+        return []
     match path.suffix:
         case ".py":
             return _scan_python_prose(path, text, rules)
@@ -217,6 +230,8 @@ def scan_names(
     """Scan the names a file declares, and its own file and folder names."""
 
     if HOME_MARKER.search(text):
+        return []
+    if allows_file(text):
         return []
     index = RuleIndex.build(rules, path)
     if not index.rules:

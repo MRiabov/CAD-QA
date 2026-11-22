@@ -143,6 +143,46 @@ def test_allow_marker_exempts_line(tmp_path: Path) -> None:
     assert scan_file(doc, rules) == []
 
 
+def test_allow_marker_does_not_exempt_other_lines(tmp_path: Path) -> None:
+    rules = parse_rules(GLOSSARY)
+    doc = tmp_path / "doc.md"
+    doc.write_text(
+        "the source <!-- dont-say: allow -->\nthe source\n", encoding="utf-8"
+    )
+    hits = scan_file(doc, rules)
+    assert [hit.line for hit in hits] == [2]
+
+
+def test_allow_file_marker_exempts_whole_file(tmp_path: Path) -> None:
+    rules = parse_rules(GLOSSARY)
+    doc = tmp_path / "doc.md"
+    doc.write_text(
+        "<!-- dont-say: allow-file: verbatim transcript -->\nthe source\n",
+        encoding="utf-8",
+    )
+    assert scan_file(doc, rules) == []
+
+
+def test_allow_file_marker_must_be_a_comment_line(tmp_path: Path) -> None:
+    rules = parse_rules(GLOSSARY)
+    doc = tmp_path / "doc.md"
+    doc.write_text(
+        "Document `dont-say: allow-file` in prose.\nthe source\n", encoding="utf-8"
+    )
+    hits = scan_file(doc, rules)
+    assert [hit.line for hit in hits] == [2]
+
+
+def test_allow_file_marker_is_ignored_below_the_header(tmp_path: Path) -> None:
+    rules = parse_rules(GLOSSARY)
+    doc = tmp_path / "doc.md"
+    doc.write_text(
+        "\n" * 10 + "<!-- dont-say: allow-file -->\nthe source\n", encoding="utf-8"
+    )
+    hits = scan_file(doc, rules)
+    assert [hit.line for hit in hits] == [12]
+
+
 def test_iter_files_skips_archive_and_glossary(tmp_path: Path) -> None:
     write_glossary(tmp_path)
     (tmp_path / "doc.md").write_text("hi\n", encoding="utf-8")

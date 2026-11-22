@@ -1,4 +1,5 @@
 # Dataset architecture audit — 2026-11-21
+<!-- dont-say: allow-file: point-in-time audit; findings are quoted and not rewritten -->
 
 **Status:** audit, 2026-11-21. Snapshot: commit `76e56c5` (`docs: flatten the
 implementation tree and name stages after the docs`).

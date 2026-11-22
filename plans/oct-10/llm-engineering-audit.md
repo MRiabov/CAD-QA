@@ -1,4 +1,5 @@
 # LLM training-engineering audit
+<!-- dont-say: allow-file: dated record; findings are quoted and not rewritten -->
 
 **Status:** active, 2026-10-10; status pass 2026-10-19. Point-in-time review of the Phase 3
 fine-tuning/evaluation docs under `docs/train-and-eval/`. Findings only: no design was changed by the

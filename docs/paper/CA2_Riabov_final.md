@@ -240,8 +240,8 @@ After proving that the environment works and is correct through the API, we will
 do CAD reconstruction. E.g. an LLM model like Gemma4-E2B or Qwen3.5-2B will be used
 owing to us attempting to save on compute expenses. If base models of this size
 can solve these tasks at around 10%, that is a useful baseline. We treat 10% and 50–70% as
-**planning estimates, not pre-registered targets**: the base rate is measured on the frozen slice
-first (a small-model run through OpenRouter or manual inference is sufficient), and the success
+**planning estimates, not pre-registered targets**: the base rate is measured on the immutable slice
+first (a small LLM model run through OpenRouter or manual inference is sufficient), and the success
 threshold is set from that measurement. The primary result (P0) is a substantial,
 uncertainty-quantified improvement over the base and the format-only/answer-only controls on CAD-QA.
 The transfer result (P1) is a percentage-point improvement on BenchCAD `qa_code` against no-CAD-QA

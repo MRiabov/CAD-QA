@@ -1,4 +1,5 @@
 # Supervisor email thread
+<!-- dont-say: allow-file: verbatim correspondence; quotes are not ours to edit -->
 
 Email correspondence between Maksym Riabov and his academic supervisor,
 SM Raza Abidi (PhD), about the CAD-QA master's project.

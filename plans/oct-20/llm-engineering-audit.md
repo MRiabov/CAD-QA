@@ -1,4 +1,5 @@
 # LLM training-engineering audit — second pass
+<!-- dont-say: allow-file: dated record; findings are quoted and not rewritten -->
 
 **Status:** active, 2026-10-20. Second-pass review of the Phase 3 fine-tuning/evaluation docs. The
 first-pass review is [`../oct-10/llm-engineering-audit.md`](../oct-10/llm-engineering-audit.md)
