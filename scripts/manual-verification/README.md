@@ -13,8 +13,10 @@ into the package and gets a test.
 
 ## Conventions
 
-- One file per check, named `<verb>_<object>.py` (`render_task.py`).
-- Run it by hand: `uv run python scripts/manual-verification/<name>.py --help`.
+- One entry point per check, named `<verb>_<object>.py` (`task_browser.py`). A
+  shared module or a frontend folder beside it is allowed when the check needs
+  one.
+- Run it by hand: `uv run python tools/manual-verification/<name>.py --help`.
 - Take the dataset path and the row selector as arguments; never hardcode a run.
 - Write output under `runs/manual_verification/<name>/`, which git ignores.
 - Print the inputs next to the output path. A render without the prompt it came
@@ -25,9 +27,10 @@ into the package and gets a test.
 
 | Script | What it shows | Status |
 |---|---|---|
-| `render_task.py` | One release row's program rendered from its final solid state, with the prompt, gold answer, and clue bindings printed beside it. | `missing` |
+| `tools/manual-verification/task_browser.py` | A whole release table: filter and open tasks with an interactive 3D view. | `available` |
 
-`render_task.py` is the first-release fallback for the
+`task_browser.py` is the first-release fallback for the
 [visual review pack](../../docs/dataset/implementation/devtools/review-pack.md):
-it renders the solid state, and the reviewer reads the task from the printed
-card.
+it lists, filters, and opens tasks with an interactive 3D view, and the detail
+panel holds the prompt and gold answer. Its contract is
+[`task-browser.md`](../../docs/dataset/implementation/devtools/task-browser.md).

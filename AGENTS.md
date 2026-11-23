@@ -15,6 +15,7 @@ the repository's contracts; every fact it names has its home in `docs/`.
 | Which language owns which work | [`docs/dataset/implementation/python-and-golang.md`](docs/dataset/implementation/python-and-golang.md) |
 | Run, CLI, and exit codes | [`docs/dataset/implementation/run-contract.md`](docs/dataset/implementation/run-contract.md) |
 | Code layout | [`docs/dataset/implementation/file-trees.md`](docs/dataset/implementation/file-trees.md) |
+| Developer tools | [`docs/dataset/implementation/devtools/README.md`](docs/dataset/implementation/devtools/README.md) |
 | What to build next | [`plans/nov-21/dataset-implementation-plan.md`](plans/nov-21/dataset-implementation-plan.md) |
 
 ## Current state

@@ -217,18 +217,23 @@ not imported by it.
 
 ```text
 tools/manual-verification/
-  render_task.py                           one release row's render plus its printed card
+  task_browser.py                          local JSON API over one release table
+  task_release.py                          release row types, program execution, task summaries
+  task_scene.py                            typed scene payload and CadQuery tessellation
+  task-browser/                            Vite+ frontend: task list, 3D stage, detail panel
   build_extraction_oracle.py               derive a proposed extraction-graph oracle from a program
 tools/contracts/
   export_worker_schemas.py                 export the worker JSON Schema from Pydantic
 ```
 
-`render_task.py` is planned; `build_extraction_oracle.py` exists and writes a
-`proposed` oracle for a human to verify.
+`task_browser.py`, `task_release.py`, `task_scene.py`, and `task-browser/`
+exist; `build_extraction_oracle.py` exists and writes a `proposed` oracle for a
+human to verify.
 
 A tool that becomes load-bearing moves into the package and gets a test contract.
-The review pack and its ledger are the first manual verification tool; see
-[`devtools/review-pack.md`](devtools/review-pack.md).
+The task browser is the first available manual verification tool; see
+[`devtools/task-browser.md`](devtools/task-browser.md). The review pack and its
+ledger are planned; see [`devtools/review-pack.md`](devtools/review-pack.md).
 
 ## Naming map
 

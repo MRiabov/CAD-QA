@@ -112,12 +112,14 @@ re-reviewing a release does not change its identity.
 
 ## First-release fallback
 
-Until the pack exists, a per-program render of the final solid state plus the
-prompt and answer text is enough to review one task. That is
-`tools/manual-verification/render_task.py`, under the manual verification
-convention in [`README.md`](README.md#manual-verification). The reviewer flags
-tasks that need a closer look in the same ledger, with `verdict` and
-`defect_note`.
+Until the pack exists, a task browser over the release table plus the prompt and
+answer text is enough to review tasks. That is
+`tools/manual-verification/task_browser.py` with the Vite+ app in
+`tools/manual-verification/task-browser/`, under the manual verification
+convention in [`README.md`](README.md#manual-verification); it lists, filters,
+and opens tasks with an interactive 3D view and writes no static projection.
+The reviewer flags tasks that need a closer look in the same ledger, with
+`verdict` and `defect_note`.
 
 ## What this does not prove
 

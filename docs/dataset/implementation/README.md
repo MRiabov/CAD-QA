@@ -32,7 +32,7 @@ between pipeline stages is
 | [`pipeline/testing/`](pipeline/testing/README.md) | Per-pipeline-stage test contracts and end-to-end tests. |
 | [`pipeline/streamlined/`](pipeline/streamlined/README.md) | Executable "what" docs, without rationale. |
 | [`pipeline/streamlined/models/`](pipeline/streamlined/models/README.md) | Typed model declarations, ownership, and a pipeline stage boundary audit. |
-| [`devtools/`](devtools/README.md) | Developer tools that are not pipeline stages: manual verification, the review pack and its ledger, benchmarks, and doc checkers. |
+| [`devtools/`](devtools/README.md) | Developer tools that are not pipeline stages: the task browser, the review pack and its ledger, benchmarks, and doc checkers. |
 
 ## What belongs here
 

@@ -183,7 +183,7 @@ to change.
   volume answer, number format, one step, no clue search.
 - `04` renders from `prompts.yaml`; `05` exports `release.parquet`,
   `failures.parquet`, `manifest.json`, the dataset card, and `support/`.
-- `tools/manual-verification/render_task.py` renders the skeleton row: the final
+- `tools/manual-verification/task_browser.py` opens the skeleton row: the final
   solid state, the prompt text, and the gold answer. It is the owner's first
   verification point and the same tool serves `P0-W4`.
 
@@ -285,7 +285,7 @@ at every pipeline stage, a deficit ledger, and one exercised slow-loop round.
   the dataset card, and the answer-column review.
 - The review-pack renderer and its sampled matrix, per
   [`devtools/review-pack.md`](../../docs/dataset/implementation/devtools/review-pack.md);
-  `tools/manual-verification/render_task.py` and the ledger already exist from
+  `tools/manual-verification/task_browser.py` and the ledger already exist from
   `P0-W2`.
 - The review pack's absence and residual frames, and the release gate that
   requires every upstream stage ledger to be clean, so an open extraction gap
@@ -367,10 +367,10 @@ points into passes and names the seams they do not cover.
 
 | Work item | What the owner verifies | Artifact | Time |
 |---|---|---|---|
-| `P0-W2` | The skeleton row: does the prompt read as a question, and is the answer defensible? This is the first point at which the wording pipeline can be judged. | `render_task.py` on the skeleton row, plus a `pass` or `defect` row in the review ledger | ~15 min |
+| `P0-W2` | The skeleton row: does the prompt read as a question, and is the answer defensible? This is the first point at which the wording pipeline can be judged. | the task browser on the skeleton row, plus a `pass` or `defect` row in the review ledger | ~15 min |
 | `P0-W2` | The box-with-hole extraction-graph oracle: do the nodes, incidence relations, and measurements match the program? Set `verified` and name the reviewer. | `oracles/extraction-graph/box-with-hole.json` | ~30 min |
 | `P0-W3` | The rotated-box oracle and the first capability-cell oracles; the completeness report exceptions; the rejection contact sheet. This is the check that a supported capability did not silently disappear. | oracle records, completeness report, contact sheet | ~2–3 h |
-| `P0-W4` | The quality gate before scale: 15–30 constructed definitions on real graphs, across clue types and answer meanings, plus the yield number. This is where ambiguous wording is cheapest to fix. | a `render_task.py` sample and the yield report | ~1–2 h |
+| `P0-W4` | The quality gate before scale: 15–30 constructed definitions on real graphs, across clue types and answer meanings, plus the yield number. This is where ambiguous wording is cheapest to fix. | a task browser sample and the yield report | ~1–2 h |
 | `P0-W5` | The deficit ledger: accept or reject each miss and each expansion round. `known_misses` is an owner decision. | deficit ledger and plan | ~30 min |
 | `P0-W6` | The blocking review gate: every required sampling cell has a current `pass`; a `defect` blocks the export. Dataset card sign-off. | review pack and ledger | per the sampling matrix |
 | `P0-W6` | The absence and residual frames: is each absence legitimate, and does the random pool sample contain an unexplained miss? | absence and residual ledgers | per the sampling policy |
@@ -382,7 +382,7 @@ points into passes and names the seams they do not cover.
   wording review to `P0-W6`: a defect there costs a re-render, a new
   `prompt_sha256`, and a fresh review of that cell.
 - The review ledger is written from `P0-W2` on, so no owner judgement is
-  throwaway. `tools/manual-verification/render_task.py` and the ledger are the
+  throwaway. `tools/manual-verification/task_browser.py` and the ledger are the
   first-release fallback in
   [`devtools/review-pack.md`](../../docs/dataset/implementation/devtools/review-pack.md);
   the sampled pack with the full matrix lands in `P0-W6`.

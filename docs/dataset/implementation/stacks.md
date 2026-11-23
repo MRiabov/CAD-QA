@@ -131,6 +131,23 @@ a typed record without dumping it through the schema first.
 (`DS-ADR-05`). `pyarrow` reads a Go-written UUID column as `pa.uuid()` from the
 Parquet logical type.
 
+## Frontend devtool
+
+**Toolchain:** `Node.js` 24 and pnpm, driven through Vite+ (`vp`). The task
+browser is the only browser app: React and TypeScript for the UI, three.js for
+the 3D view.
+`pnpm-lock.yaml` is committed; `node_modules/` and `dist/` are ignored. The app
+lives in `tools/manual-verification/task-browser/`; the generator does not import
+it. The contract is [`devtools/task-browser.md`](devtools/task-browser.md), and
+the workflow is the `vite-plus` skill.
+
+| Need | Choice | Status |
+|---|---|---|
+| Dev server, check, build | Vite+ (`vp`) | in use in `task-browser/` |
+| UI | React (`>=19`) with TypeScript | in use |
+| 3D view | three.js | in use |
+| Package manager | pnpm | in use; `pnpm-lock.yaml` is committed |
+
 ## Current gaps
 
 - The Go hooks (`gofumpt`, `goimports`, `golangci-lint`) are declared here but
@@ -238,6 +255,23 @@ Parquet logical type.
   `preset = "all"` remains available as a one-off audit, not the project setting.
   `ty` returns if Pyrefly's diagnostics or performance become a measured
   problem.
+
+### STK-5 — The task browser uses Vite+ with React and three.js
+
+- **Status:** accepted (2026-11-23).
+- **Context:** the task browser is the only browser app. It needs a task list,
+  filters, a detail panel, and an interactive 3D view over a release table. The
+  generator never imports it, so the choice is a devtool decision, not a pipeline
+  stack decision.
+- **Decision:** use Vite+ (`vp`) for dev, check, and build; React and TypeScript
+  for the UI; three.js for the 3D view. The app lives in
+  `tools/manual-verification/task-browser/`; `pnpm-lock.yaml` is committed and
+  `node_modules/` and `dist/` are ignored. The API stays on the Python
+  standard-library HTTP server, so the devtool adds no Python dependency.
+- **Consequences:** `vp check` and `vp build` are the app's gates; the Vite+
+  workflow is the `vite-plus` skill. The API serves the built `dist/` at its own
+  origin, and the Vite dev server proxies `/api` to it. The three.js chunk is
+  large; code-splitting the 3D view is optional.
 
 ## Open questions
 

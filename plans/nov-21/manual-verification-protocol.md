@@ -200,7 +200,7 @@ them in the owner documents before the corresponding pass is evidence.
 | 4 | “Must-extract capability cell” is undefined | The phrase appears only in the plan; no enumeration or derivation exists | The `P0-W3` pass condition cannot be evaluated |
 | 5 | The new P0 contracts are scheduled but unwritten | Absence and residual frames, pipeline-stage-scoped ledgers, failure disposition, and `extraction_capability_coverage` exist only in the plan; `failure-record.md` has no disposition column; `checks.yaml` has no such check; `missing-contracts.md` says no P0 contract is open | `P0-W1` claims a close-out that the owner docs do not contain |
 | 6 | The kernel-oracle capture check has no contract | The plan names it; `graph-completeness.md` now scopes it to dev-mode calibration | Production is projection-only, so this is not a release blocker; the dev-mode path still needs a tolerance rule before it is evidence |
-| 7 | The oracle review is not executable in its stated time | Each record is ~2,600 lines of JSON; there is no summary sheet and no render; `render_task.py` is planned | A 30-minute human review of raw JSON is a rubber stamp |
+| 7 | The oracle review is not executable in its stated time | Each record is ~2,600 lines of JSON; there is no summary sheet and no oracle render; the task browser renders release tasks, not oracle records | A 30-minute human review of raw JSON is a rubber stamp |
 | 8 | No negative control is scheduled | The owner table lists reviews, not mutations | Every green check is unproven until Pass 0 runs |
 
 ## Additions to the owner verification table
