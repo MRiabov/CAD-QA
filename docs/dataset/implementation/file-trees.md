@@ -22,8 +22,10 @@ Those are separate trees with separate owners.
 1. **A folder exists only when the language needs one.** A Go package needs a
    folder; a Python module does not. A Python pipeline stage is one module until
    it needs a second file, then it becomes a folder with the same name.
-2. **One folder per Go package, named after its pipeline stage doc stem.** No
-   group folders: pipeline stage folders sit flat under `internal/`.
+2. **One folder per Go package, named after its pipeline stage doc stem.** A
+   pipeline stage package sits under `internal/stages/`. A pipeline stage with
+   several Go sub-steps gets a group folder named after its pipeline stage doc
+   stem; the group keeps `internal/stages/` within the fanout limit.
 3. **A shared package is a folder only when two pipeline stages import it.** It
    spells the whole glossary term: `program-capability-census`, not `census`.
 4. **A Python module for a pipeline stage keeps its pipeline stage number with
@@ -45,11 +47,20 @@ Those are separate trees with separate owners.
    800-line warning splits by responsibility; the split files keep the
    sub-document prefix or a responsibility name. The doc-to-file map is a
    minimum, not a ceiling.
+9. **A tracked directory has at most 10 immediate subdirectories.** The
+   repository root has at most 15. An explicit exception names a path, a limit
+   above 10 and at most 15, and a reason. Only subdirectories that contain a
+   tracked file count; files do not. The check is
+   `tools/ci_cd/check_fanout.py`.
 
 There is no code `pipeline/` folder. `docs/dataset/implementation/pipeline/` is
-the contract tree; Go pipeline stage packages sit flat under `generator/internal/`
-as rule 2 says. A `generator/internal/pipeline/` group folder is not part of
-this layout; adding one replaces rule 2 and moves every pipeline stage folder.
+the contract tree; Go pipeline stage packages sit under
+`generator/internal/stages/`. A pipeline stage with several Go sub-steps gets a
+group folder named after its pipeline stage doc stem
+(`01-external-dataset-etl/`, `03-task-generation/`); a pipeline stage with one
+Go sub-step is the package itself (`02c-build-cad-graph/`,
+`04-render-prompt-and-choices/`, `05-validate-and-export-release/`). A
+`generator/internal/pipeline/` folder is not part of this layout.
 
 ## File length
 
@@ -64,12 +75,26 @@ repository and counts physical lines; caches, `data/`, `runs/`, `dist/`,
 path or glob and a written reason, and it is for generated code only; a file
 that grew past the ceiling is split, not exempted.
 
-`internal/run/` is the orchestrator, not a pipeline stage package; it is the one
-exception to rule 2. It owns the run lock, pipeline stage selection, the
-command-line interface, and the exit codes, and it calls the shared cache,
-manifest, and writer. A pipeline stage package never imports it. The
-orchestrator is already several concerns in one command, so the package starts
-with the files below rather than one growing `run.go`.
+`internal/run/` is the orchestrator, not a pipeline stage package. It owns the
+run lock, pipeline stage selection, the command-line interface, and the exit
+codes, and it calls the shared cache, manifest, and writer. A pipeline stage
+package never imports it. The orchestrator is already several concerns in one
+command, so the package starts with the files below rather than one growing
+`run.go`.
+
+## Directory fanout
+
+A tracked directory has at most 10 immediate subdirectories. The repository
+root has at most 15. An explicit exception names a path, a limit above 10 and
+at most 15, and a reason; the exception list is in
+`tools/ci_cd/check_fanout.py`. Files do not count: the fanout is the number of
+immediate subdirectories that contain at least one tracked file.
+
+The check is `tools/ci_cd/check_fanout.py`, wired into the `fanout`
+pre-commit hook and the `quality-and-plan` CI job. The planned tree below
+fits: `internal/` has five children, `internal/stages/` has five, and
+`internal/stages/03-task-generation/` has five. The repository root currently
+has 11 tracked children, within its 15 limit.
 
 ## Go module
 
@@ -122,60 +147,63 @@ generator/
       python_worker.go                     Python worker process bridge
       generate.go                          go:generate for the worker contract structs
       s01d_normalize_programs_contract.go  generated 01d request and result structs
-    01a-read-cadevolve-metadata/           package read_cadevolve_metadata
-      read_cadevolve_metadata.go
-      read_cadevolve_metadata_test.go
-    01b-select-program-pool/               package select_program_pool
-      select_program_pool.go
-      select_program_pool_test.go
-    01c-fetch-program-pool/                package fetch_program_pool
-      fetch_program_pool.go
-      fetch_program_pool_test.go
-    01e-write-external-dataset-manifest/   package write_external_dataset_manifest
-      write_external_dataset_manifest.go
-      write_external_dataset_manifest_test.go
-    02c-build-cad-graph/                   package build_cad_graph
-      build_cad_graph.go                   entry point
-      graph_construction.go                a-construction.md
-      graph_persistence.go                 graph-persistence.md
-      graph_completeness.go                graph-completeness.md
-      build_cad_graph_test.go
-    program-capability-census/             package program_capability_census
-      program_capability_census.go
-      program_capability_census_test.go
-    task-reasoning-step-support-table/     package task_reasoning_step_support_table
-      task_reasoning_step_support_table.go
-      reference_share.go                   the conditional release share 03a and 05 both call
-      task_reasoning_step_support_table_test.go
-      witness_test.go
-    03a-allocate-task-quotas/              package allocate_task_quotas
-      allocate_task_quotas.go              entry point
-      support_derivation.go                a-support-derivation.md
-      balance.go                           b-balance.md
-      quota_allocation.go                  c-quota-allocation.md
-      replan.go                            d-replan.md
-      allocate_task_quotas_test.go
-    03b-construct-task-definitions/        package construct_task_definitions
-      construct_task_definitions.go        entry point
-      construction.go                      a-construction.md
-      answer_semantics.go                  b-answer-semantics.md
-      definition_identity.go               c-definition-identity.md
-      construct_task_definitions_test.go
-    03c-resolve-deficits/                  package resolve_deficits
-      resolve_deficits.go
-      resolve_deficits_test.go
-    04-render-prompt-and-choices/          package render_prompt_and_choices
-      render_prompt_and_choices.go
-      render_prompt_and_choices_test.go
-    05-validate-and-export-release/        package validate_and_export_release
-      validate_and_export_release.go       entry point
-      release_checks.go                    release-checks.md
-      manifest.go                          release manifest and `release_id`
-      dataset_card.go                      dataset card
-      release_writer.go                    staged release directory and `current`
-      failure_merge.go                     failure partition merge and reconciliation
-      review_gate.go                       review ledger and sampling matrix
-      validate_and_export_release_test.go
+    stages/                                Go pipeline stage packages
+      01-external-dataset-etl/
+        01a-read-cadevolve-metadata/       package read_cadevolve_metadata
+          read_cadevolve_metadata.go
+          read_cadevolve_metadata_test.go
+        01b-select-program-pool/           package select_program_pool
+          select_program_pool.go
+          select_program_pool_test.go
+        01c-fetch-program-pool/            package fetch_program_pool
+          fetch_program_pool.go
+          fetch_program_pool_test.go
+        01e-write-external-dataset-manifest/  package write_external_dataset_manifest
+          write_external_dataset_manifest.go
+          write_external_dataset_manifest_test.go
+      02c-build-cad-graph/                 package build_cad_graph
+        build_cad_graph.go                 entry point
+        graph_construction.go              a-construction.md
+        graph_persistence.go               graph-persistence.md
+        graph_completeness.go              graph-completeness.md
+        build_cad_graph_test.go
+      03-task-generation/
+        program-capability-census/         package program_capability_census
+          program_capability_census.go
+          program_capability_census_test.go
+        task-reasoning-step-support-table/ package task_reasoning_step_support_table
+          task_reasoning_step_support_table.go
+          reference_share.go               the conditional release share 03a and 05 both call
+          task_reasoning_step_support_table_test.go
+          witness_test.go
+        03a-allocate-task-quotas/          package allocate_task_quotas
+          allocate_task_quotas.go          entry point
+          support_derivation.go            a-support-derivation.md
+          balance.go                       b-balance.md
+          quota_allocation.go              c-quota-allocation.md
+          replan.go                        d-replan.md
+          allocate_task_quotas_test.go
+        03b-construct-task-definitions/    package construct_task_definitions
+          construct_task_definitions.go    entry point
+          construction.go                  a-construction.md
+          answer_semantics.go              b-answer-semantics.md
+          definition_identity.go           c-definition-identity.md
+          construct_task_definitions_test.go
+        03c-resolve-deficits/              package resolve_deficits
+          resolve_deficits.go
+          resolve_deficits_test.go
+      04-render-prompt-and-choices/        package render_prompt_and_choices
+        render_prompt_and_choices.go
+        render_prompt_and_choices_test.go
+      05-validate-and-export-release/      package validate_and_export_release
+        validate_and_export_release.go     entry point
+        release_checks.go                  release-checks.md
+        manifest.go                        release manifest and `release_id`
+        dataset_card.go                    dataset card
+        release_writer.go                  staged release directory and `current`
+        failure_merge.go                   failure partition merge and reconciliation
+        review_gate.go                     review ledger and sampling matrix
+        validate_and_export_release_test.go
     end-to-end/                            package end_to_end
       end_to_end_test.go
   python/                                  Python worker package
@@ -191,20 +219,23 @@ generator/
       s02b_execute_cadquery.py             02b execute CadQuery
 ```
 
-A pipeline stage package starts as one file and grows files in the same folder;
-a new folder means a new package, not a new file. `shared/` is one package with
-one file per concern, not one package per file. `iocontracts/` is one package
-because every pipeline stage imports it; it is a sibling of `shared/` because a
-subpackage would make `shared/` a group folder.
+A pipeline stage package starts as one file inside its group under
+`internal/stages/` and grows files in the same folder; a new folder means a new
+package, not a new file. `shared/` is one package with one file per concern,
+not one package per file. `iocontracts/` is one package because every pipeline stage
+imports it; it is a sibling of `shared/` because a subpackage would make
+`shared/` a group folder.
 
 `program-capability-census/` and `task-reasoning-step-support-table/` are
-separate packages because two pipeline stages import each: `03a` and `03b`
-share the program capability census, and `03a` and the witness test share the
-support table. `reference_share.go` is in the support-table package because the
-conditional release share is a function of the supported value set; `05` calls
-it against the persisted tables, and `03a` calls it in-process.
+separate packages under `internal/stages/03-task-generation/` because two
+pipeline stages import each: `03a` and `03b` share the program capability
+census, and `03a` and the witness test share the support table.
+`reference_share.go` is in the support-table package because the conditional
+release share is a function of the supported value set; `05` calls it against
+the persisted tables, and `03a` calls it in-process.
 
-The `03a`, `03b`, `02c`, and `05` doc folders mirror the Go package folders.
+The `03a`, `03b`, `02c`, and `05` doc folders mirror the Go package folders
+under `internal/stages/`.
 Each doc sub-document has at least one same-named Go file:
 `a-support-derivation.md` becomes `support_derivation.go`, `b-balance.md`
 becomes `balance.go`, `graph-completeness.md` becomes `graph_completeness.go`,
@@ -407,19 +438,19 @@ release, or the first release becomes the migration.
 
 | Pipeline stage doc | Go folder and package | Python module | Test |
 |---|---|---|---|
-| `01a-read-cadevolve-metadata` | `01a-read-cadevolve-metadata`, `read_cadevolve_metadata` | — | `01a_read_cadevolve_metadata_test.go` |
-| `01b-select-program-pool` | `01b-select-program-pool`, `select_program_pool` | — | `01b_select_program_pool_test.go` |
-| `01c-fetch-program-pool` | `01c-fetch-program-pool`, `fetch_program_pool` | — | `01c_fetch_program_pool_test.go` |
+| `01a-read-cadevolve-metadata` | `stages/01-external-dataset-etl/01a-read-cadevolve-metadata`, `read_cadevolve_metadata` | — | `01a_read_cadevolve_metadata_test.go` |
+| `01b-select-program-pool` | `stages/01-external-dataset-etl/01b-select-program-pool`, `select_program_pool` | — | `01b_select_program_pool_test.go` |
+| `01c-fetch-program-pool` | `stages/01-external-dataset-etl/01c-fetch-program-pool`, `fetch_program_pool` | — | `01c_fetch_program_pool_test.go` |
 | `01d-normalize-programs` | — | `s01d_normalize_programs.py` | `test_s01d_normalize_programs.py` |
-| `01e-write-external-dataset-manifest` | `01e-write-external-dataset-manifest`, `write_external_dataset_manifest` | — | `01e_write_external_dataset_manifest_test.go` |
+| `01e-write-external-dataset-manifest` | `stages/01-external-dataset-etl/01e-write-external-dataset-manifest`, `write_external_dataset_manifest` | — | `01e_write_external_dataset_manifest_test.go` |
 | `02a-extract-cadquery-ast` | — | `s02a_extract_cadquery_ast.py` | `test_s02a_extract_cadquery_ast.py` |
 | `02b-execute-cadquery` | — | `s02b_execute_cadquery.py` | `test_s02b_execute_cadquery.py` |
-| `02c-build-cad-graph` | `02c-build-cad-graph`, `build_cad_graph` | — | `02c_build_cad_graph_test.go` |
-| `03a-allocate-task-quotas` | `03a-allocate-task-quotas`, `allocate_task_quotas` | — | `03a_allocate_task_quotas_test.go` |
-| `03b-construct-task-definitions` | `03b-construct-task-definitions`, `construct_task_definitions` | — | `03b_construct_task_definitions_test.go` |
-| `03c-resolve-deficits` | `03c-resolve-deficits`, `resolve_deficits` | — | `03c_resolve_deficits_test.go` |
-| `04-render-prompt-and-choices` | `04-render-prompt-and-choices`, `render_prompt_and_choices` | — | `04_render_prompt_and_choices_test.go` |
-| `05-validate-and-export-release` | `05-validate-and-export-release`, `validate_and_export_release` | — | `05_validate_and_export_release_test.go` |
+| `02c-build-cad-graph` | `stages/02c-build-cad-graph`, `build_cad_graph` | — | `02c_build_cad_graph_test.go` |
+| `03a-allocate-task-quotas` | `stages/03-task-generation/03a-allocate-task-quotas`, `allocate_task_quotas` | — | `03a_allocate_task_quotas_test.go` |
+| `03b-construct-task-definitions` | `stages/03-task-generation/03b-construct-task-definitions`, `construct_task_definitions` | — | `03b_construct_task_definitions_test.go` |
+| `03c-resolve-deficits` | `stages/03-task-generation/03c-resolve-deficits`, `resolve_deficits` | — | `03c_resolve_deficits_test.go` |
+| `04-render-prompt-and-choices` | `stages/04-render-prompt-and-choices`, `render_prompt_and_choices` | — | `04_render_prompt_and_choices_test.go` |
+| `05-validate-and-export-release` | `stages/05-validate-and-export-release`, `validate_and_export_release` | — | `05_validate_and_export_release_test.go` |
 
 The run contract is cross-cutting; its Go package is `internal/run`, and its
 test contract is
@@ -437,13 +468,16 @@ This section is the file and package bootstrap order within those work items.
    `internal/iocontracts/`, including `run_manifest.go`, `run_state.go`,
    `cache_index.go`, `parquet_writer.go`, `tolerance_policy.go`,
    `prompt_templates.go`, and `selection_policy.go`.
-2. `01a`, `01b`, `01c`, `s01d_normalize_programs.py`, `01e`.
-3. `s02a_extract_cadquery_ast.py`, `s02b_execute_cadquery.py`, `02c` with
-   `graph_construction.go`, `graph_persistence.go`, and
-   `graph_completeness.go`.
-4. `program-capability-census/`, `03b`, `task-reasoning-step-support-table/`
-   with `reference_share.go`, because the support table is what `03a` reads.
-5. `03a`, `03c`, `04`, `05`, `end-to-end`.
+2. `stages/01-external-dataset-etl/` with `01a`, `01b`, `01c`, `01e`;
+   `s01d_normalize_programs.py` is the Python sub-step.
+3. `s02a_extract_cadquery_ast.py`, `s02b_execute_cadquery.py`,
+   `stages/02c-build-cad-graph/` with `graph_construction.go`,
+   `graph_persistence.go`, and `graph_completeness.go`.
+4. `stages/03-task-generation/program-capability-census/`, `03b`,
+   `stages/03-task-generation/task-reasoning-step-support-table/` with
+   `reference_share.go`, because the support table is what `03a` reads.
+5. `03a`, `03c`, `04`, `05`, `end-to-end`, all under `internal/stages/` except
+   `end-to-end`.
 6. `render_task.py`, `run_report.py`, `review_pack.py`,
    `rejection_contact_sheet.py`, and `residual_sample.py`, as the owner
    verification points need them.

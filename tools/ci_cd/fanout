@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Check the directory fanout of the tracked tree.
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$repo_root"
+
+exec uv run python tools/ci_cd/check_fanout.py "$@"

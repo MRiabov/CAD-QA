@@ -44,7 +44,11 @@ than the changed lines, and it computes the plan.
 3. **Doc mirror.** `tools/ci_cd/check_doc_mirror.py` requires the same relative
    path under `streamlined/` and `testing/` for every pipeline stage and sub-step
    contract doc.
-4. **Plan.** `tools/ci_plan.py` reads the diff and writes the `go` and `python`
+4. **Directory fanout.** `tools/ci_cd/check_fanout.py` requires every tracked
+   directory to have at most 10 immediate subdirectories; the repository root
+   has 15. The rule and its exception list are in
+   [`file-trees.md`](../dataset/implementation/file-trees.md#directory-fanout).
+5. **Plan.** `tools/ci_plan.py` reads the diff and writes the `go` and `python`
    outputs.
 
 The job does not install the project environment. `rumdl` runs through `uvx`,
@@ -229,6 +233,7 @@ require all three.
 uv run pytest -q
 cd generator && go test -count=1 ./...
 uv run rumdl check docs plans
+uv run python tools/ci_cd/check_fanout.py
 uv run python tools/ci_cd/check_dont_say.py \
   --ratchet tools/ci_cd/dont_say_baseline.txt \
   --names-ratchet tools/ci_cd/dont_say_names_baseline.txt

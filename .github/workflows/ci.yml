@@ -77,6 +77,11 @@ jobs:
           uv run --isolated --no-project --with 'pydantic>=2.14' \
             python tools/ci_cd/check_doc_mirror.py
 
+      - name: Directory fanout
+        run: |
+          uv run --isolated --no-project --with 'pydantic>=2.14' \
+            python tools/ci_cd/check_fanout.py
+
       - name: Plan the suites
         id: plan
         env:

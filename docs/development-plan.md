@@ -37,12 +37,14 @@ checklist is `_audit/owner-audit-todo.md` (group C); the program is `plans/oct-8
 
 **Pass condition:** every load-bearing component is `verified` or explicitly `blocked`.
 
-## Phase 0a — Repo restructure (mechanical) [P1; fan-out P2]
+## Phase 0a — Repo restructure (mechanical) [P1; fan-out implemented]
 
 **Done (2026-10-08).** `cad_qa/` is renamed to `dataset/` (generation only), and all
 training/evaluation logic — `cad_qa/evaluation/` → `train_and_eval/grading/`, the eval CLI,
 and the Harbor runner/grader — lives in `train_and_eval/`. The two packages are coupled only
-by the rows IO contract. Folder fan-out CI is P2.
+by the rows IO contract. Folder fan-out CI is implemented in
+`tools/ci_cd/check_fanout.py` and wired into pre-commit and the
+`quality-and-plan` CI job.
 
 ## Phase 0b — Prior-art code mining [P1]
 
