@@ -156,7 +156,7 @@ The JSON documents are defined once, in JSON Schema 2020-12 under
 pipeline stage has one `<pipeline-stage>.schema.json` holding its request and
 result definitions.
 
-- `cadqa_dataset_generator/contracts.py` is the executable authoring form. The
+- `generator/python/cadqa_dataset_generator/contracts.py` is the executable authoring form. The
   Pydantic classes validate a request before a pipeline stage runs and a result
   before the worker writes it.
 - `tools/contracts/export_worker_schemas.py` exports the checked-in schemas from

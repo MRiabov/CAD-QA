@@ -15,7 +15,7 @@ from tools.ci_plan import JobPlan, Suite, changed_paths, plan, suites_for
     ("path", "expected"),
     [
         ("generator/main.go", {Suite.GO}),
-        ("cadqa_dataset_generator/cli.py", {Suite.GO, Suite.PYTHON}),
+        ("generator/python/cadqa_dataset_generator/worker.py", {Suite.GO, Suite.PYTHON}),
         ("contracts/worker/v1/envelope.schema.json", {Suite.GO, Suite.PYTHON}),
         ("tests/test_worker_cli.py", {Suite.PYTHON}),
         ("tools/ci_cd/check_dont_say.py", {Suite.PYTHON}),

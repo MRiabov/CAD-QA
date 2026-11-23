@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os/exec"
+	"path/filepath"
 	"testing"
 )
 
@@ -18,7 +19,7 @@ func pythonWorkerForPipelineStage(t *testing.T, pipelineStage string) *PythonWor
 	worker := NewPythonWorker(pipelineStage)
 	worker.Python = python
 	worker.Dir = root
-	worker.Env = []string{"PYTHONPATH=" + root}
+	worker.Env = []string{"PYTHONPATH=" + filepath.Join(root, "generator", "python")}
 	return worker
 }
 

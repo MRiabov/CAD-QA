@@ -22,7 +22,7 @@ SAY_SEPARATORS = (" / ", ";", ",", " or ", ": ")
 HOMES: dict[str, tuple[str, ...]] = {
     # The dataset term's home is the dataset docs tree, ``docs/dataset/``.
     "dataset": ("dataset",),
-    "dataset_generation": ("cadqa_dataset_generator",),
+    "dataset_generation": ("generator/python",),
     "docs": ("docs",),
     "tools": ("tools",),
 }

@@ -38,9 +38,9 @@ than the changed lines, and it computes the plan.
 
 1. **Markdown.** `rumdl check docs plans` against `.rumdl.toml`.
 2. **Don't-say terms.** Two ratchets, prose and declared names, over
-   `docs`, `plans`, `contracts`, `cadqa_dataset_generator`, `generator`,
-   `tests`, and `tools`. The check runs `tools/dont-say-go` through the Go
-   toolchain, so the job installs Go before it runs.
+   `docs`, `plans`, `contracts`, `generator`, `tests`, and `tools`. The check
+   runs `tools/dont-say-go` through the Go toolchain, so the job installs Go
+   before it runs.
 3. **Doc mirror.** `tools/ci_cd/check_doc_mirror.py` requires the same relative
    path under `streamlined/` and `testing/` for every pipeline stage and sub-step
    contract doc.
@@ -62,8 +62,8 @@ reach. The script is the executable plan; the table explains the intent.
 
 | Changed path | Go | Python | Why |
 |---|---|---|---|
+| `generator/python/**` | yes | yes | Python worker; the Go bridge test starts it. |
 | `generator/**` | yes | no | Go module. |
-| `cadqa_dataset_generator/**` | yes | yes | Python worker; the Go bridge test starts it. |
 | `contracts/**` | yes | yes | Worker contract documents; the Python validator and the generated Go types both read them. |
 | `tests/**`, `tools/**` | no | yes | pytest and the tools it imports. |
 | `docs/dataset/implementation/pipeline/testing/**` | no | yes | Golden records and fixtures are read by pytest. |
@@ -109,7 +109,7 @@ track those reads. The build cache still works.
 
 The Go job installs the `worker-bridge` dependency group, not the full
 environment. `generator/internal/shared/python_worker_test.go` starts
-`cadqa_dataset_generator.cli` as a child process, and that worker imports only
+`cadqa_dataset_generator.worker` as a child process, and that worker imports only
 `orjson` and `pydantic`. The group is 8 MB; the full environment is 2.3 GB.
 
 ### Python
@@ -347,10 +347,10 @@ Revisit when 26.04 is validated.
   concurrent; the current code is not. (Current: no, add it when `internal/run`
   starts goroutines.)
 - **Q3.** Python lint is not wired. `ruff check` fails on one tracked file
-  (`cadqa_dataset_generator/cli.py`, TRY004) and `ruff format --check` wants
-  three files; `mypy` fails on the gitignored `runs/` tree and on the
-  `tools/ci_cd/check_dont_say.py` module name. Wire it into the quality job after the
-  tree is clean.
+  (`generator/python/cadqa_dataset_generator/worker.py`, TRY004) and
+  `ruff format --check` wants three files; `mypy` fails on the gitignored
+  `runs/` tree and on the `tools/ci_cd/check_dont_say.py` module name. Wire it
+  into the quality job after the tree is clean.
 - **Q4.** Should `README.md` and the other root Markdown files be linted?
   `rumdl`'s include is `docs/` and `plans/` only.
 - **Q5.** Workflow lint is not wired.

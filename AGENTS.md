@@ -30,7 +30,7 @@ The replacement is:
 
 - `generator/` — Go module `github.com/MRiabov/CAD-QA/generator`: CLI,
   orchestrator, shared code, and one package per Go pipeline stage.
-- `cadqa_dataset_generator/` — Python worker package: the JSON worker protocol
+- `generator/python/cadqa_dataset_generator/` — Python worker package: the JSON worker protocol
   and one module per Python pipeline stage.
 
 `docs/train-and-eval/` describes the deleted training stack. Treat it as design

@@ -334,7 +334,7 @@ grouping is editorial; the numbers are the citation keys and never change meanin
   transport the worker does not use.
 - **Decision:** The JSON Schema files under `contracts/worker/v1/` are the
   language-neutral contract for the worker protocol. Pydantic classes in
-  `cadqa_dataset_generator/contracts.py` are the executable authoring form, and
+  `generator/python/cadqa_dataset_generator/contracts.py` are the executable authoring form, and
   `tools/contracts/export_worker_schemas.py` exports the schemas
   deterministically. Go structs are generated from the schema by
   `go-jsonschema`, pinned in `generator/internal/shared/generate.go`, and

@@ -333,7 +333,7 @@ queued. A crash loses only the units still in the
 queue or in flight; the committed parts are valid.
 
 The Go writer is a goroutine in `internal/shared/parquet_writer.go`. The Python
-writer is a thread in `cadqa_dataset_generator/parquet_writer.py`. Both use the
+writer is a thread in `generator/python/cadqa_dataset_generator/parquet_writer.py`. Both use the
 same rule; the language boundary does not change it.
 
 ### 4.4 Unit independence

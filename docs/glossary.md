@@ -648,7 +648,7 @@ definitions.
 ### dataset_generation
 
 The code that builds the benchmark. `In code:` `generator/` for the Go pipeline
-stages and `cadqa_dataset_generator/` for the Python pipeline stages.
+stages and `generator/python/cadqa_dataset_generator/` for the Python pipeline stages.
 
 ---
 
@@ -691,7 +691,7 @@ stated precision, which is the same comparison the release grader performs.
 
 A ratchet: entries are removed only when the term is engineered out of the docs and code.
 A docs sweep replaces each don't-say usage with its Say term until the checkers are green.
-A `(home)` annotation allows the token under that tree (`cadqa_dataset_generator`, `tools`,
+A `(home)` annotation allows the token under that tree (`generator/python`, `tools`,
 …), for identifiers documented as `In code:`; the checker's `ALLOWLIST` exempts
 cross-cutting phrases. Enforced by `tools/ci_cd/check_dont_say.py`.
 

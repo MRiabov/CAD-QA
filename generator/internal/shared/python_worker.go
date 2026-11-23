@@ -17,7 +17,7 @@ import (
 const (
 	// WorkerProtocolVersion is the wire version of the JSON request and response
 	// documents. It must match WORKER_PROTOCOL_VERSION in
-	// cadqa_dataset_generator/contracts.py; the contract test checks both sides.
+	// generator/python/cadqa_dataset_generator/contracts.py; the contract test checks both sides.
 	WorkerProtocolVersion = 1
 	// DefaultWorkerRequestLimit bounds how many requests one worker serves
 	// before it is replaced. A pipeline stage can override it from its

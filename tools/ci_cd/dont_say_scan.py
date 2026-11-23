@@ -30,7 +30,6 @@ from tools.ci_cd.dont_say_rules import Hit, Rule, RuleIndex, matched_line, name_
 logger = logging.getLogger("cadqa.dont_say_scan")
 
 SCAN_ROOTS = (
-    "cadqa_dataset_generator",
     "contracts",
     "docs",
     "generator",

@@ -64,10 +64,10 @@ repos:
         entry: tools/ci_cd/dont-say --ratchet tools/ci_cd/dont_say_baseline.txt --names-ratchet tools/ci_cd/dont_say_names_baseline.txt
         language: system
         pass_filenames: false
-        files: ^(cadqa_dataset_generator|contracts|docs|generator|plans|tests|tools)/.*\.(go|json|md|py|tex)$
+        files: ^(contracts|docs|generator|plans|tests|tools)/.*\.(go|json|md|py|tex)$
       - id: worker-contracts
         name: Worker contract schemas and Go structs
         entry: tools/ci_cd/check-worker-contracts
         language: system
         pass_filenames: false
-        files: ^(contracts/|cadqa_dataset_generator/contracts\.py|generator/internal/shared/(generate\.go|s01d_normalize_programs_contract\.go)|tools/contracts/)
+        files: ^(contracts/|generator/python/cadqa_dataset_generator/contracts\.py|generator/internal/shared/(generate\.go|s01d_normalize_programs_contract\.go)|tools/contracts/)

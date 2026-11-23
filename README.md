@@ -29,7 +29,7 @@ The replacement is specified and scaffolded:
 | `docs/dataset/implementation/pipeline/streamlined/` | One executable "what to do" doc per pipeline stage. |
 | `docs/dataset/implementation/pipeline/testing/` | One integration test contract per pipeline stage, plus fixtures and golden records. |
 | `generator/` | Go module: CLI, run-contract flags and exit codes, shared Parquet/policy/worker code. |
-| `cadqa_dataset_generator/` | Python worker package: JSON worker protocol and one module per Python pipeline stage. |
+| `generator/python/cadqa_dataset_generator/` | Python worker package: JSON worker protocol and one module per Python pipeline stage. |
 
 The Go module and the Python worker package build and test. `generator run`
 validates its flags and returns the run-contract exit codes; run orchestration
@@ -56,7 +56,7 @@ balance.yaml          Balance policy for task quotas
 checks.yaml           Release check policy
 prompts.yaml          Prompt copy
 generator/            Go module: CLI, orchestrator, shared code, pipeline stage packages
-cadqa_dataset_generator/   Python worker package (skeleton; stages land one per pipeline stage)
+generator/python/cadqa_dataset_generator/   Python worker package (skeleton; stages land one per pipeline stage)
 docs/general-architecture/  Cross-cutting engineering contracts (CI/CD)
 docs/dataset/         The dataset design: requirements, implementation, decisions
 docs/train-and-eval/  Training and evaluation design (superseded, kept for the rewrite)

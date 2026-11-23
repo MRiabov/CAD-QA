@@ -114,7 +114,7 @@ formatted with `rumdl`; pre-commit runs the checks.
 | Parquet read and write | `pyarrow` (`>=25.0`) | in use |
 | Columnar analysis | `polars` (`>=2.1.0`) | in use, never on the graph path (`DS-ADR-05`) |
 | Typed models | `pydantic` (`>=2.14`) | in use in `cadqa_dataset_generator` and `tools` |
-| JSON | `orjson` with `OPT_SORT_KEYS` | in use in `cadqa_dataset_generator/worker.py` |
+| JSON | `orjson` with `OPT_SORT_KEYS` | in use in `generator/python/cadqa_dataset_generator/worker.py` |
 | YAML | `PyYAML` (`>=6.0`) | in use |
 | CAD execution | `cadquery` (`>=2.8.0`), `OCP` | `02b` only |
 | Program AST and tokens | `ast`, `tokenize` | `01d` and `02a` only |
