@@ -42,6 +42,15 @@ a test that no doc describes. If the doc is silent, raise the question with the
 owner and settle it in the doc before writing code; silence is not a licence to
 decide in code.
 
+Then the worked examples, then the generator. With the docs settled, design the
+gold task matrix by hand before implementing the pipeline stage that must
+produce it: tasks covering every clue type and answer meaning the release ships,
+at a few reasoning-step counts, each with its answer and a plain-CadQuery query
+that reproduces that answer. A missing combination is a work item, not a silent
+absence; a contract that cannot yield an adequate hand-built task is the defect,
+and the disagreement is cheaper to find there than in a finished run
+([`testing/oracles/README.md`](docs/dataset/implementation/pipeline/testing/oracles/README.md#what-an-oracle-is)).
+
 Because that contract is generally followed, the docs carry the answers and the
 expected contract. Read the relevant docs before the code: the step doc, its
 module `decisions.md`, the IO contract in `pipeline/00-overview.md`, and
