@@ -97,7 +97,7 @@ jobs:
           HEAD_SHA: ${{ github.sha }}
         run: |
           uv run --isolated --no-project --with 'pydantic>=2.14' \
-            python tools/ci_plan.py \
+            python -m tools.ci_cd.ci_plan \
             --base "$BASE_SHA" \
             --head "$HEAD_SHA" \
             --github-output

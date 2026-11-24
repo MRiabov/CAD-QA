@@ -53,7 +53,7 @@ than the changed lines, and it computes the plan.
    `tests/manual_verification/`, and a Go test only beside a non-test `.go`
    file. The rule is in
    [`python-and-golang.md#tests`](../dataset/implementation/python-and-golang.md#tests).
-6. **Plan.** `tools/ci_plan.py` reads the diff and writes the `go` and `python`
+6. **Plan.** `tools/ci_cd/ci_plan.py` reads the diff and writes the `go` and `python`
    outputs.
 
 The job does not install the project environment. `rumdl` runs through `uvx`,
@@ -67,7 +67,7 @@ is deliberate.
 
 ## The plan
 
-`tools/ci_plan.py` classifies the changed paths into the test suites they can
+`tools/ci_cd/ci_plan.py` classifies the changed paths into the test suites they can
 reach. The script is the executable plan; the table explains the intent.
 
 | Changed path | Go | Python | Why |
@@ -92,7 +92,7 @@ that cannot be read wakes every suite. Skipping a suite that should have run is
 the expensive mistake; running one that need not have is the cheap one. A new
 top-level path therefore costs a full run until the table learns about it.
 
-The classifier is tested in `tests/test_ci_plan.py`, including the unknown-path
+The classifier is tested in `tests/ci_cd/test_ci_plan.py`, including the unknown-path
 and empty-diff cases. That is the part a glob filter cannot express: an
 unmatched path would silently skip every suite.
 
@@ -244,7 +244,7 @@ uv run python -m tools.ci_cd.check_test_ownership
 uv run python tools/ci_cd/check_dont_say.py \
   --ratchet tools/ci_cd/dont_say_baseline.txt \
   --names-ratchet tools/ci_cd/dont_say_names_baseline.txt
-uv run python tools/ci_plan.py --base origin/main --head HEAD
+uv run python -m tools.ci_cd.ci_plan --base origin/main --head HEAD
 ```
 
 The pre-commit hooks cover the Markdown and Don't-say checks. The last command
@@ -285,7 +285,7 @@ of checks plus setup, and it buys the single status and the plan.
 filter silently selects no suite. A new top-level directory would then pass CI
 without either suite running.
 
-**Decision.** `tools/ci_plan.py` classifies paths with a typed `JobPlan` and a
+**Decision.** `tools/ci_cd/ci_plan.py` classifies paths with a typed `JobPlan` and a
 `match` table. An unknown path, an empty diff, or an unreadable diff returns the
 all-true plan.
 

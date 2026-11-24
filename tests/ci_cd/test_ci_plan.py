@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from tools.ci_plan import JobPlan, Suite, changed_paths, plan, suites_for
+from tools.ci_cd.ci_plan import JobPlan, Suite, changed_paths, plan, suites_for
 
 
 @pytest.mark.parametrize(
@@ -77,7 +77,7 @@ def test_go_only_diff_skips_python() -> None:
 
 
 def test_python_only_diff_skips_go() -> None:
-    assert plan(["tests/test_ci_plan.py"]) == JobPlan(go=False, python=True)
+    assert plan(["tests/ci_cd/test_ci_plan.py"]) == JobPlan(go=False, python=True)
 
 
 def test_unknown_base_or_head_is_unknown() -> None:
