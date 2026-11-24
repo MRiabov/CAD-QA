@@ -70,7 +70,7 @@ jobs:
           PYTHONPATH: .
         run: |
           uv run --isolated --no-project --with 'pydantic>=2.14' --with pytest \
-            python -m pytest -q tests/test_check_dont_say.py
+            python -m pytest -q tests/ci_cd/test_check_dont_say.py
 
       - name: Doc mirror
         run: |
@@ -80,7 +80,12 @@ jobs:
       - name: Directory fanout
         run: |
           uv run --isolated --no-project --with 'pydantic>=2.14' \
-            python tools/ci_cd/check_fanout.py
+            python -m tools.ci_cd.check_fanout
+
+      - name: Test ownership
+        run: |
+          uv run --isolated --no-project --with 'pydantic>=2.14' \
+            python -m tools.ci_cd.check_test_ownership
 
       - name: Plan the suites
         id: plan

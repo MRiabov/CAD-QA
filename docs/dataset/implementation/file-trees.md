@@ -109,6 +109,11 @@ generator/
   go.mod
   go.sum
   main.go                                  package main
+  config/                                  generator inputs, read by path
+    balance.yaml
+    checks.yaml
+    tolerance.yaml
+    prompts.yaml
   internal/
     iocontracts/                           package iocontracts
       program.go                           ProgramMetadata, SelectionPolicy, ProgramSelection, ProgramPool, NormalizedProgram, ExternalDatasetManifest
@@ -296,41 +301,52 @@ file names.
 
 ## Tests
 
-Go tests sit in their package folder. Python tests sit flat in `tests/`, like the
-existing suite:
+Go tests sit in their package folder, because Go requires it. Python tests sit
+in the suite that owns them: the worker beside its package, the repo tooling
+under root `tests/`:
 
 ```text
-tests/
+generator/python/tests/
   test_worker.py
   test_worker_contracts.py
   test_s01d_normalize_programs.py
   test_s02a_extract_cadquery_ast.py
   test_s02b_execute_cadquery.py
-  test_golden_records.py
-  test_extraction_oracles.py
-  test_prompt_templates.py
-  test_models_declaration.py
-  test_support_tables.py
-  test_check_doc_mirror.py
-  test_check_dont_say.py
-  test_check_file_length.py
-  test_ci_plan.py
+tests/                    repo tooling only; no files directly here
+  ci_cd/
+    test_check_doc_mirror.py
+    test_check_dont_say.py
+    test_check_file_length.py
+    test_check_fanout.py
+    test_check_test_ownership.py
+    test_ci_plan.py
+  manual_verification/
+    test_task_browser.py
 ```
 
-`test_prompt_templates.py` is Python while the prompt file is authored and the
-evaluation namespace is tested. When `04` lands, the dataset-namespace
-validation moves to `generator/internal/shared/prompt_templates_test.go`; the
-evaluation-namespace test stays Python. `test_models_declaration.py` implements
-[`pipeline/testing/00-declaration-audit.md`](pipeline/testing/00-declaration-audit.md);
-`test_support_tables.py` is the structural tier of
-[`pipeline/testing/00-support-tables.md`](pipeline/testing/00-support-tables.md).
+Root `tests/` mirrors the tooling under `tools/`: one subdirectory per tooling
+family, and no file directly in `tests/`. A test for a Go pipeline stage, a
+Parquet table, an oracle, a golden record, a release artifact, or the prompt-template
+contract is a Go test in the owning package. When the check needs CadQuery or OCP,
+the Go test starts the Python worker or tool and asserts on its output.
+
+`tools/ci_cd/check-test-ownership` enforces the layout: a Python test outside
+these roots, any file directly in `tests/`, or a Go test with no non-test `.go`
+sibling fails the check.
+
+`prompts.yaml` has one loader, the Go `04` loader; its test is
+`generator/internal/shared/prompt_templates_test.go` (`missing` until `04`
+lands). There is no Python prompt validator.
+`test_models_declaration.py` implements
+[`pipeline/testing/00-declaration-audit.md`](pipeline/testing/00-declaration-audit.md)
+and is a docs quality gate, not a pipeline test.
 
 The cross-cutting test contracts have one home each:
 
 | Test contract | Test home |
 |---|---|
 | [`00-run-contract.md`](pipeline/testing/00-run-contract.md) | `generator/internal/run/*_test.go` |
-| [`00-support-tables.md`](pipeline/testing/00-support-tables.md) | `generator/internal/task-reasoning-step-support-table/witness_test.go` and `tests/test_support_tables.py` |
+| [`00-support-tables.md`](pipeline/testing/00-support-tables.md) | `generator/internal/stages/03-task-generation/task-reasoning-step-support-table/witness_test.go` |
 | [`00-declaration-audit.md`](pipeline/testing/00-declaration-audit.md) | `tests/test_models_declaration.py` |
 | [`00-end-to-end.md`](pipeline/testing/00-end-to-end.md) | `generator/internal/end-to-end/end_to_end_test.go` |
 
@@ -364,8 +380,11 @@ Parquet artifact models; `iocontracts/` holds the Parquet and in-memory models.
 | `docs/dataset/implementation/pipeline/testing/golden/` | Golden records. | The record format. |
 | `docs/dataset/implementation/pipeline/testing/oracles/` | Oracles: pinned stage outputs, one directory per oracle kind. | The oracle format. |
 | `docs/dataset/implementation/pipeline/testing/support-table.json` | Checked-in expected support table, one row per dimension value and task reasoning step count. | [`task-step-support.md`](task-step-support.md) and [`testing/00-support-tables.md`](pipeline/testing/00-support-tables.md). |
-| `balance.yaml`, `checks.yaml`, `prompts.yaml`, `tolerance.yaml` | Balance policy, check policy, prompt copy, and measurement tolerance policy. | The docs that define each. |
 | `data/`, `runs/` | Run output: `runs/run<NNNN>/`, `runs/cache/`, and `runs/manual_verification/<tool>/`. Gitignored. | The run. |
+
+Generator inputs (`balance.yaml`, `checks.yaml`, `tolerance.yaml`, and
+`prompts.yaml`) live in `generator/config/`; see the Go module tree above. They
+are read by path and recorded by hash, not embedded in the binary.
 
 Fixtures stay in the docs tree because they are reviewed like code and the test
 contract owns their path. A test reads them by path; it does not copy them.

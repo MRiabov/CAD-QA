@@ -7,8 +7,8 @@ import (
 )
 
 // repositoryRoot walks up from the test working directory until it finds the
-// repository's pyproject.toml. Tests read the real root policy files; they do
-// not copy them.
+// repository's pyproject.toml. Tests that need the repository root, such as the
+// Python bridge, use it; policy tests use moduleRoot.
 func repositoryRoot(t *testing.T) string {
 	t.Helper()
 
@@ -23,6 +23,28 @@ func repositoryRoot(t *testing.T) string {
 		parent := filepath.Dir(dir)
 		if parent == dir {
 			t.Fatal("repository root not found from test working directory")
+		}
+		dir = parent
+	}
+}
+
+// moduleRoot walks up from the test working directory until it finds the Go
+// module's go.mod. The generator inputs live in <module>/config, so policy tests
+// do not depend on the repository root or on a Python file.
+func moduleRoot(t *testing.T) string {
+	t.Helper()
+
+	dir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("get working directory: %v", err)
+	}
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			t.Fatal("module root not found from test working directory")
 		}
 		dir = parent
 	}

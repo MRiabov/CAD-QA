@@ -7,19 +7,20 @@ above 10 and at most 15, and a reason.
 
 Run from the repository root:
 
-    uv run python tools/ci_cd/check_fanout.py
+    tools/ci_cd/fanout
 """
 
 from __future__ import annotations
 
 import argparse
-import subprocess
 import sys
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
+
+from tools.ci_cd.tracked_tree import tracked_paths
 
 DEFAULT_LIMIT = 10
 ROOT_LIMIT = 15
@@ -50,18 +51,6 @@ class FanoutViolation(BaseModel):
 # Add an exception only for a directory that genuinely needs the extra
 # subdirectories. The limit is 11-15; the reason is reviewed with the code.
 EXCEPTIONS: dict[str, FanoutException] = {}
-
-
-def tracked_paths(root: Path) -> list[str]:
-    """Return the repository-relative paths of every tracked file."""
-
-    result = subprocess.run(
-        ["git", "-C", str(root), "ls-files"],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    return [line for line in result.stdout.splitlines() if line]
 
 
 def build_children(paths: Sequence[str]) -> dict[str, set[str]]:

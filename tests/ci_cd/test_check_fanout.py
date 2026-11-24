@@ -83,7 +83,7 @@ def test_exception_limit_is_bounded() -> None:
 
 
 def test_repository_fanout() -> None:
-    root = Path(__file__).resolve().parents[1]
+    root = Path(__file__).resolve().parents[2]
 
     paths = tracked_paths(root)
 
@@ -92,7 +92,7 @@ def test_repository_fanout() -> None:
 
 
 def test_planned_file_tree_fanout() -> None:
-    root = Path(__file__).resolve().parents[1]
+    root = Path(__file__).resolve().parents[2]
     text = (root / "docs/dataset/implementation/file-trees.md").read_text(
         encoding="utf-8"
     )

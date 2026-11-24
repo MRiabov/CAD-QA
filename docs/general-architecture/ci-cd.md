@@ -48,7 +48,12 @@ than the changed lines, and it computes the plan.
    directory to have at most 10 immediate subdirectories; the repository root
    has 15. The rule and its exception list are in
    [`file-trees.md`](../dataset/implementation/file-trees.md#directory-fanout).
-5. **Plan.** `tools/ci_plan.py` reads the diff and writes the `go` and `python`
+5. **Test ownership.** `tools/ci_cd/check_test_ownership.py` admits a Python
+   test only under `generator/python/tests/`, `tests/ci_cd/`, or
+   `tests/manual_verification/`, and a Go test only beside a non-test `.go`
+   file. The rule is in
+   [`python-and-golang.md#tests`](../dataset/implementation/python-and-golang.md#tests).
+6. **Plan.** `tools/ci_plan.py` reads the diff and writes the `go` and `python`
    outputs.
 
 The job does not install the project environment. `rumdl` runs through `uvx`,
@@ -56,8 +61,9 @@ the Don't-say check runs through the Go toolchain, and the remaining Python
 checks run through `uv run --isolated --no-project --with 'pydantic>=2.14'`, so
 the job installs a few megabytes of tools instead of the project environment.
 
-The job is a dependency of both suites. A red Markdown, Don't-say, or doc-mirror
-check stops the suites before they spend runner minutes; that is deliberate.
+The job is a dependency of both suites. A red Markdown, Don't-say, doc-mirror,
+or test-ownership check stops the suites before they spend runner minutes; that
+is deliberate.
 
 ## The plan
 
@@ -66,15 +72,15 @@ reach. The script is the executable plan; the table explains the intent.
 
 | Changed path | Go | Python | Why |
 |---|---|---|---|
-| `generator/python/**` | yes | yes | Python worker; the Go bridge test starts it. |
+| `generator/python/**` | yes | yes | Python worker; the Go bridge test starts it, and `generator/python/tests/` covers the worker. |
 | `generator/**` | yes | no | Go module. |
 | `contracts/**` | yes | yes | Worker contract documents; the Python validator and the generated Go types both read them. |
-| `tests/**`, `tools/**` | no | yes | pytest and the tools it imports. |
-| `docs/dataset/implementation/pipeline/testing/**` | no | yes | Golden records and fixtures are read by pytest. |
+| `tests/**` | no | yes | Root tests: the CI/CD gates. |
+| `tools/**` | no | yes | Python CI gates and devtools, and their tests. |
+| `docs/dataset/implementation/pipeline/testing/**` | yes | no | Oracle and golden records are read by Go stage tests. |
 | `docs/**`, `plans/**`, `specs/**`, `experiments/**`, `.agents/**` | no | no | The quality job still runs the docs checks. |
-| Root Markdown and root data files, `.gitignore`, `.rumdl.toml`, `.pre-commit-config.yaml` | no | no | The quality job still runs. |
-| `balance.yaml`, `checks.yaml`, `tolerance.yaml` | yes | no | Go policy tests read them. |
-| `prompts.yaml`, `prompt-templates.yaml` | yes | yes | Go policy and run tests; Python template tests. |
+| Root Markdown files, `.gitignore`, `.rumdl.toml`, `.pre-commit-config.yaml` | no | no | The quality job still runs. |
+| `generator/config/**` | yes | no | Generator policy and prompt inputs; the Go loaders and their tests read them. |
 | `pyproject.toml`, `uv.lock`, `.python-version` | yes | yes | Both environments. |
 | `.github/workflows/**` | yes | yes | The CI definition. |
 | Unknown, empty, or unreadable diff | yes | yes | Fail open. |
@@ -108,7 +114,7 @@ go test -count=1 ./...
 ```
 
 `-count=1` is deliberate. The policy tests read `balance.yaml`, `checks.yaml`,
-and `tolerance.yaml` from the repository root, and Go's test cache does not
+and `tolerance.yaml` from `generator/config/`, and Go's test cache does not
 track those reads. The build cache still works.
 
 The Go job installs the `worker-bridge` dependency group, not the full
@@ -233,7 +239,8 @@ require all three.
 uv run pytest -q
 cd generator && go test -count=1 ./...
 uv run rumdl check docs plans
-uv run python tools/ci_cd/check_fanout.py
+uv run python -m tools.ci_cd.check_fanout
+uv run python -m tools.ci_cd.check_test_ownership
 uv run python tools/ci_cd/check_dont_say.py \
   --ratchet tools/ci_cd/dont_say_baseline.txt \
   --names-ratchet tools/ci_cd/dont_say_names_baseline.txt

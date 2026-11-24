@@ -583,10 +583,10 @@ generator list [--runs-root <path>]
 | `--plan-seed` | yes | — | Deterministic task quota plan seed. |
 | `--release-seed` | yes | — | `RenderConfig.release_seed`. |
 | `--scope` | no | `p0` | `p0`, `p1`, or `p2`. |
-| `--balance` | no | `balance.yaml` | Balance policy file. |
-| `--checks` | no | `checks.yaml` | Check policy file. |
-| `--prompts` | no | `prompts.yaml` | Prompt template file. |
-| `--tolerance-policy` | no | `tolerance.yaml` | Tolerance policy file. |
+| `--balance` | no | `generator/config/balance.yaml` | Balance policy file. |
+| `--checks` | no | `generator/config/checks.yaml` | Check policy file. |
+| `--prompts` | no | `generator/config/prompts.yaml` | Prompt template file. |
+| `--tolerance-policy` | no | `generator/config/tolerance.yaml` | Tolerance policy file. |
 | `--external-benchmark` | conditional | — | Pinned external benchmark program set. Required when `--to` includes `05`. |
 | `--external-benchmark-id` | conditional | — | Benchmark name. Required with `--external-benchmark`. |
 | `--external-benchmark-revision` | conditional | — | Benchmark revision. Required with `--external-benchmark`. |
@@ -703,7 +703,7 @@ visible `release.parquet` in a new release directory.
 The run manifest carries the `TolerancePolicy` defined in
 [`pipeline/extraction/graph-persistence.md`](pipeline/extraction/graph-persistence.md#tolerance):
 `millimetre`, `square_millimetre`, `cubic_millimetre`, `degree`, `radian`, and
-`unitless`. The policy is read from the root `tolerance.yaml`, validated, and
+`unitless`. The policy is read from `generator/config/tolerance.yaml`, validated, and
 copied into the manifest with `tolerance_policy_version` and
 `tolerance_policy_sha256`.
 

@@ -56,7 +56,7 @@ build-backend = "hatchling.build"
 packages = ["generator/python/cadqa_dataset_generator"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "generator/python/tests"]
 pythonpath = ["generator/python", "."]
 
 [tool.pyrefly]

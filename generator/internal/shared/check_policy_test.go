@@ -7,8 +7,8 @@ import (
 )
 
 func TestLoadCheckPolicy(t *testing.T) {
-	root := repositoryRoot(t)
-	policy, err := LoadCheckPolicy(filepath.Join(root, "checks.yaml"))
+	root := moduleRoot(t)
+	policy, err := LoadCheckPolicy(filepath.Join(root, "config", "checks.yaml"))
 	if err != nil {
 		t.Fatalf("load check policy: %v", err)
 	}

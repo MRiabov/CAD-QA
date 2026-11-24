@@ -4,7 +4,7 @@
 
 **Contract under test:**
 [`../../../03-task-generation/03a-allocate-task-quotas/README.md`](../../../03-task-generation/03a-allocate-task-quotas/README.md),
-with the balance policy in the root `balance.yaml` and the census in
+with the balance policy in `generator/config/balance.yaml` and the census in
 [`../../../03-task-generation/algorithm/program-capability-census.md`](../../../03-task-generation/algorithm/program-capability-census.md).
 
 This folder mirrors the authoritative `03a` folder. The test contract for this pipeline stage is here; the

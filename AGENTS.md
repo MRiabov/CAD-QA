@@ -88,6 +88,7 @@ uv run pytest -q
 uv run rumdl check docs
 tools/ci_cd/file-length
 tools/ci_cd/fanout
+tools/ci_cd/check-test-ownership
 tools/ci_cd/check-doc-mirror
 tools/ci_cd/dont-say --ratchet tools/ci_cd/dont_say_baseline.txt \
   --names-ratchet tools/ci_cd/dont_say_names_baseline.txt
@@ -95,8 +96,10 @@ uv run pre-commit run --all-files   # after `uv run pre-commit install`
 ```
 
 `go test -count=1` disables the test cache because the policy-loader tests read
-the root `balance.yaml` and `checks.yaml` by path. `tests/` holds the document,
-contract, and golden-record tests; Go packages keep their tests beside the code.
+`generator/config/balance.yaml` and `generator/config/checks.yaml` by path.
+Root `tests/` holds only the CI/CD gate tests; the Python worker and devtool
+tests sit beside their Python
+code (see [Tests](#tests)).
 
 The file-length gate warns above 800 lines and exits non-zero above 1,200; its
 policy is in
@@ -121,6 +124,30 @@ Go and Python share no process memory. Bulk data crosses the boundary as typed
 Parquet tables; small control documents may be JSON. Go code does not import
 CadQuery or OCP. Python code does not own release state.
 
+## Tests
+
+Go is the default test language, and a Go test sits beside its package
+(`generator/**/x_test.go`). It owns every Go pipeline stage, Parquet table,
+oracle, golden record, and release artifact contract.
+
+Python tests cover Python code only, in the suite that owns it:
+
+- `generator/python/tests/` — the worker protocol and the `01d`/`02a`/`02b`
+  modules under `generator/python/cadqa_dataset_generator/`. No other pipeline
+  stage is tested in Python.
+- `tests/ci_cd/` — the `tools/ci_cd/` gates.
+- `tests/manual_verification/` — the Python devtools in
+  `tools/manual-verification/`; the task browser's frontend behaviour belongs to
+  the browser's own toolchain.
+
+Root `tests/` holds no files directly: one subdirectory per repo tooling family.
+No pipeline-stage, artifact-contract, oracle, golden-record, release, or
+prompt-template test is Python; `prompts.yaml` is validated by the Go `04` loader test. A
+test for a Go-owned contract is a Go test in its package. When it needs
+CadQuery, OCP, or PyArrow, it starts the Python worker or tool and owns the
+assertion. "It needs CadQuery" does not make a pytest file. The full rule is in
+[`docs/dataset/implementation/python-and-golang.md#tests`](docs/dataset/implementation/python-and-golang.md#tests).
+
 ## Contracts that are easy to break
 
 - **Parquet is typed.** A struct, list, or tagged union is a Parquet struct,
@@ -134,7 +161,8 @@ CadQuery or OCP. Python code does not own release state.
 - **A rerun is deterministic.** The same inputs, versions, and
   `journal_shard_count` produce byte-identical parts and the same `run_id`. A
   forced recompute that produces different bytes is a defect.
-- **Prompt text is data.** Every LLM-facing string lives in `prompts.yaml`.
+- **Prompt text is data.** Every LLM-facing string lives in
+  `generator/config/prompts.yaml`.
   Code selects a template ID and fills typed placeholders; neither language
   hardcodes prompt copy. A template change bumps the prompt version and hash.
 - **Failures are rows.** A rejected program or task becomes a failure record,

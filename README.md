@@ -52,15 +52,13 @@ for the rewrite and does not describe code that exists.
 ## Repository layout
 
 ```text
-balance.yaml          Balance policy for task quotas
-checks.yaml           Release check policy
-prompts.yaml          Prompt copy
 generator/            Go module: CLI, orchestrator, shared code, pipeline stage packages
+generator/config/     Generator inputs: balance, checks, tolerance, and prompt copy
 generator/python/cadqa_dataset_generator/   Python worker package (skeleton; stages land one per pipeline stage)
 docs/general-architecture/  Cross-cutting engineering contracts (CI/CD)
 docs/dataset/         The dataset design: requirements, implementation, decisions
 docs/train-and-eval/  Training and evaluation design (superseded, kept for the rewrite)
-tests/                Document, contract, and golden-record tests
+tests/                Repository tooling tests: CI gates and devtools
 tools/                Repository checks
 ```
 
@@ -70,7 +68,8 @@ tools/                Repository checks
 cd generator && go test -count=1 ./...
 uv run pytest -q
 uv run rumdl check docs
-uv run python tools/ci_cd/check_fanout.py
+uv run python -m tools.ci_cd.check_fanout
+uv run python -m tools.ci_cd.check_test_ownership
 uv run python tools/ci_cd/check_dont_say.py --ratchet tools/ci_cd/dont_say_baseline.txt \
   --names-ratchet tools/ci_cd/dont_say_names_baseline.txt
 ```
@@ -81,4 +80,5 @@ and Don't-say checks, then starts only the suites the change can reach. See
 the path mapping, the caches, and the runtime budget.
 
 `go test -count=1` disables Go's test cache because the policy-loader tests read
-the root `balance.yaml` and `checks.yaml` by path.
+`generator/config/balance.yaml` and `generator/config/checks.yaml` by
+path.

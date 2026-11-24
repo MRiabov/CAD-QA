@@ -49,8 +49,9 @@ pipeline/testing/oracles/extraction-graph/<slug>.json
 The top-level mapping has ten required keys, plus an optional `notes` list.
 Unknown keys are rejected at every level. The executable form of this section is
 the Pydantic schema in `tools/manual-verification/extraction_oracle_schema.py`;
-the test parses every record with it, so a field this document omits or renames
-fails the test.
+the `02c` Go test parses every record with it (`missing` — the former Python
+validator `tests/test_extraction_oracles.py` was removed because `02c` is a Go
+pipeline stage; the Go test lands with the graph builder).
 
 | Key | Value shape | Meaning |
 |---|---|---|

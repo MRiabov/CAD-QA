@@ -15,7 +15,7 @@ Coverage and balance checks:
 - `ReleaseTable` from `04` render prompt and choices.
 - The `RenderConfig` passed to `04` render prompt and choices.
 - The five task reasoning step support tables.
-- The root `balance.yaml` and the root `checks.yaml`.
+- `generator/config/balance.yaml` and `generator/config/checks.yaml`.
 - The external dataset manifest from `01e` write external dataset manifest.
 - The per-program `GraphCompletenessReport` set from `02c` build CAD graph.
 - The pinned external benchmark program set, for the transfer overlap check.
@@ -41,7 +41,7 @@ Coverage and balance checks:
   `release_table_sha256` covers the answer columns.
 - Recheck split isolation by CADEvolve program family on the final release
   table. `03a` assigns the split; `03b` stamps it; `04` carries it.
-- Run every check listed in the root `checks.yaml`, as the semantics in
+- Run every check listed in `generator/config/checks.yaml`, as the semantics in
   [`05-validate-and-export-release/release-checks.md`](05-validate-and-export-release/release-checks.md)
   define them, and block the export on a miss the owner has not accepted.
 - Aggregate the `GraphCompletenessReport` set into the `graph_completeness`
@@ -92,7 +92,7 @@ row cannot report its own absence.
 
 ## Balance policy
 
-`05` reads the same root `balance.yaml` as `03a` allocate task quotas. It does
+`05` reads the same `generator/config/balance.yaml` as `03a` allocate task quotas. It does
 not hold balance numbers of its own.
 
 - Validate the file: known keys only, `task_reasoning_step_share` and

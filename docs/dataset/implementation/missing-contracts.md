@@ -127,10 +127,10 @@ and hash in the manifest.
 - `MC-42` — the golden record is a versioned JSON file per task, defined in
   `pipeline/testing/golden/README.md` with the program, construction input,
   task description, canonical clue sequence, answer, and evidence. The first
-  record is `pipeline/testing/golden/box-with-hole.json`; `tests/test_golden_records.py`
-  validates the format. The box-with-hole chain is three steps, not the plan's
-  four: the BRep seam edge changes the counts, and the plan's comparison is
-  redundant.
+  record is `pipeline/testing/golden/box-with-hole.json`; the `03b` Go test
+  validates the format (`missing` until the constructor lands). The box-with-hole
+  chain is three steps, not the plan's four: the BRep seam edge changes the
+  counts, and the plan's comparison is redundant.
 - `MC-11` — `04` takes `NormalizedProgram` and `RenderConfig` (the validated
   `PromptTemplateSet` plus the release `RenderSeed`). The task render seed is
   derived from the release seed and `task_id`, and the manifest records the
@@ -149,7 +149,8 @@ and hash in the manifest.
   not recomputed. `answer_schema_version` is now a `TaskDefinition` field, which
   `answer_sha256` already hashed.
 - `MC-25` — `prompts.yaml` and its schema are written in `prompt-templates.md`;
-  `tests/test_prompt_templates.py` validates the file. The file carries template
+  the Go `04` loader test validates the file (`missing` until `04` lands, and
+  there is no Python prompt-template contract). The file carries template
   IDs, typed placeholders, label tables, and dataset and evaluation namespaces;
   `04` rejects a missing, extra, or untyped placeholder.
 - `MC-13` — `05-validate-and-export-release/release-checks.md` lists one check

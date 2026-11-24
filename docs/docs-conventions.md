@@ -168,7 +168,7 @@ scoped to the module. `pipeline/extraction/` and
 
 ## Prompt text
 
-All LLM-facing prompt text is data, not code. Put it in the root `prompts.yaml`.
+All LLM-facing prompt text is data, not code. Put it in `generator/config/prompts.yaml`.
 The file's schema is in
 [`dataset/implementation/prompt-templates.md`](dataset/implementation/prompt-templates.md).
 

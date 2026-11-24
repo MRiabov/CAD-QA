@@ -85,8 +85,9 @@ default; migrating would require that option at every encoder call.
 A third-party CLI framework would add help and completion machinery the
 generator does not use. `gopkg.in/yaml.v3` is the only YAML library in the Go
 module (`STK-2`); the policy loaders call `KnownFields(true)` so an unknown key
-is a load error, then validate the typed policy. Python keeps `PyYAML` for
-`prompts.yaml`. `golangci-lint` is the single lint entry point and includes
+is a load error, then validate the typed policy. Python keeps `PyYAML` for the
+evaluation namespace; the dataset namespace and the prompt-template contract are Go-owned.
+`golangci-lint` is the single lint entry point and includes
 `staticcheck`, `govet`, `errcheck`, `revive`, `gocritic`, and the other strict
 checks listed in `STK-3`; `--fix` applies the auto-fixable findings. `gofumpt`
 and `goimports` are the formatters. On Go 1.27, `go test` also runs the
@@ -198,12 +199,13 @@ the workflow is the `vite-plus` skill.
 - **Context:** `balance.yaml`, `checks.yaml`, and `tolerance.yaml` are YAML and
   are read by Go pipeline stages. Go has no standard-library YAML decoder, and
   `python-and-golang.md` requires a decision before adding a Go dependency.
-- **Decision:** Go reads and validates YAML policy files with
-  `gopkg.in/yaml.v3`. It is the only YAML library in the Go module. A loader
+- **Decision:** Go reads and validates the YAML policy files in
+  `generator/config/` with `gopkg.in/yaml.v3`. It is the only YAML library in the Go module. A loader
   rejects unknown fields, then validates the typed policy.
 - **Consequences:** A policy file with an unknown key is a load error, not a
-  silently ignored setting. Python keeps `PyYAML` for `prompts.yaml`; the two
-  languages do not share a YAML loader.
+  silently ignored setting. Python keeps `PyYAML` for the evaluation namespace;
+  the dataset namespace and the prompt-template contract are Go-owned, so the two languages
+  do not share a YAML loader or a second prompt-template contract.
 
 ### STK-3 — Go uses the standard CLI and a strict lint stack
 

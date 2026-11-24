@@ -25,6 +25,37 @@ of these exceptions.
 Pipeline stage contracts are language-agnostic. The language boundary does not
 change their models.
 
+## Tests
+
+The language boundary also decides where a test lives. Go is the default test
+language, and a Go test sits beside its package (`generator/**/x_test.go`). It
+owns every Go pipeline stage, Parquet table, oracle, golden record, and release
+artifact contract. A Go test may start a Python worker or run a Python tool when
+the check needs CadQuery, OCP, or PyArrow; the Go test still owns the assertion
+and the pass/fail signal.
+
+Python tests cover only Python code, in the suite that owns it:
+
+- `generator/python/tests/` — the worker protocol and the `01d`/`02a`/`02b`
+  modules under `generator/python/cadqa_dataset_generator/`.
+- `tests/ci_cd/` — the `tools/ci_cd/` gates.
+- `tests/manual_verification/` — the Python devtools in
+  `tools/manual-verification/`; the task browser's frontend behaviour belongs
+  to its own toolchain.
+
+Root `tests/` holds no files directly: one subdirectory per repo tooling family.
+No pipeline-stage, artifact-contract, oracle, golden-record, release, or
+prompt-template test is Python. `prompts.yaml` is validated by the Go `04` loader test, not
+by a second Python copy of the template contract.
+
+A test for a contract owned by a Go pipeline stage is a Go test. "It needs
+CadQuery" is a reason for the Go test to call a Python tool or worker, not a
+reason for a pytest file.
+
+`tools/ci_cd/check-test-ownership` enforces the roots: it refuses a Python test
+outside them, any file directly in `tests/`, and a Go test with no non-test
+`.go` sibling. Archived experiments under `experiments/old/` are exempt.
+
 ## Libraries and toolchains
 
 The concrete Python and Go libraries, toolchain versions, and open library
@@ -36,9 +67,10 @@ document lists what that work may import; it is not a general permission for new
 Python code.
 
 The Go module and its shared package exist under `generator/`; pipeline stage
-code lands one pipeline stage at a time. Go reads the YAML policy files
+code lands one pipeline stage at a time. Go reads the YAML policy files in `generator/config/`
 (`balance.yaml`, `checks.yaml`, `tolerance.yaml`) with `gopkg.in/yaml.v3`
-(`STK-2`); Python keeps `PyYAML` for `prompts.yaml`.
+(`STK-2`); the dataset namespace and the prompt-template contract of `prompts.yaml` are
+Go-owned, and Python keeps `PyYAML` for the evaluation namespace only.
 
 ## JSON at the boundary
 

@@ -14,7 +14,6 @@ from collections.abc import Callable
 from typing import Any
 
 import pytest
-
 from cadqa_dataset_generator import worker
 
 S01D_REQUEST: dict[str, Any] = {

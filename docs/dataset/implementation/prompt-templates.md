@@ -1,6 +1,6 @@
 # Prompt templates
 
-**Status:** draft, 2026-11-20. This document defines the root `prompts.yaml`
+**Status:** draft, 2026-11-20. This document defines `generator/config/prompts.yaml`
 artifact and the schema that `04` render prompt and choices validates. It is the
 contract for prompt authors, `04`, and the evaluation harness.
 
@@ -33,8 +33,9 @@ order and presentation order), and `DS-REQ-24` (the prompt is the user message),
 [`../requirements/decisions.md`](../requirements/decisions.md) and
 [`pipeline/03-task-generation/decisions.md`](pipeline/03-task-generation/decisions.md).
 
-The legacy root `prompt-templates.yaml` belongs to the pre-rebuild pipeline. It
-is not an alias for this file and is not part of this contract.
+The legacy root `prompt-templates.yaml` belonged to the pre-rebuild pipeline and
+was deleted on 2026-11-24. It was not an alias for this file and is not part of
+this contract.
 
 ## 2. File shape
 
@@ -342,7 +343,8 @@ To add a P0 template:
 4. Add the required ID to the validator's required list if the template is part
    of the P0 contract.
 5. Bump `version`.
-6. Run `tests/test_prompt_templates.py` and the docs checks.
+6. Run the Go prompt-template loader test and the docs checks. That test is
+   `missing` until `04` lands; there is no Python prompt validator.
 
 To change wording, edit an existing variant or add a new one; do not add a new
 template ID for the same prompt part. To change the prompt layout, edit

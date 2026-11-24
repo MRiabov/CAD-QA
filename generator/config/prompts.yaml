@@ -16,9 +16,6 @@
 # Comments do not change rendered copy. A template change that changes rendered
 # copy bumps `version`; a comment-only edit changes the file hash but not
 # `version`. A structural change bumps `schema_version` and `version`.
-#
-# `prompt-templates.yaml` is the legacy artifact of the pre-rebuild pipeline.
-# It is not read by the generator that this file specifies.
 
 schema_version: 1
 version: cadqa_prompt_v3

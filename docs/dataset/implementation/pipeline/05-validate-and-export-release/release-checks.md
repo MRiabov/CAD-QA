@@ -81,8 +81,8 @@ is a check like any other, not a special case in the export code.
 
 ## The check policy file
 
-The check list is data in the root
-[`checks.yaml`](../../../../../checks.yaml). `05` reads it, runs every check it
+The check list is data in
+[`generator/config/checks.yaml`](../../../../../generator/config/checks.yaml). `05` reads it, runs every check it
 lists, and records one or more report rows per check. `manifest.json` records the
 file version and hash, so a release names the check list it was measured against.
 

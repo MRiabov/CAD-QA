@@ -7,8 +7,8 @@ import (
 )
 
 func TestLoadBalancePolicy(t *testing.T) {
-	root := repositoryRoot(t)
-	policy, err := LoadBalancePolicy(filepath.Join(root, "balance.yaml"))
+	root := moduleRoot(t)
+	policy, err := LoadBalancePolicy(filepath.Join(root, "config", "balance.yaml"))
 	if err != nil {
 		t.Fatalf("load balance policy: %v", err)
 	}

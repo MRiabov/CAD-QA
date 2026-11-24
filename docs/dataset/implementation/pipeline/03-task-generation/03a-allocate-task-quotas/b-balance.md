@@ -4,7 +4,7 @@
 
 ## Balance policy
 
-Every tunable quota and balance number is data in the root `balance.yaml`.
+Every tunable quota and balance number is data in `generator/config/balance.yaml`.
 `03a` reads that file; `05` validate and export release reads the same file when
 checking the release. Neither holds balance numbers of its own.
 

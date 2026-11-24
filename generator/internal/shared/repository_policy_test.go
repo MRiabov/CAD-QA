@@ -92,7 +92,7 @@ func namedBounds(check ReleaseCheck) map[string]*Bound {
 func loadRootCheckPolicy(t *testing.T) CheckPolicy {
 	t.Helper()
 
-	policy, err := LoadCheckPolicy(filepath.Join(repositoryRoot(t), "checks.yaml"))
+	policy, err := LoadCheckPolicy(filepath.Join(moduleRoot(t), "config", "checks.yaml"))
 	if err != nil {
 		t.Fatalf("load check policy: %v", err)
 	}
@@ -167,9 +167,9 @@ func TestCheckPolicyCitations(t *testing.T) {
 // that is not a number is a dotted path into balance.yaml. The loader checks one
 // file at a time, so only this test can see both.
 func TestCheckBoundsResolveAgainstBalance(t *testing.T) {
-	root := repositoryRoot(t)
+	root := moduleRoot(t)
 	policy := loadRootCheckPolicy(t)
-	balance := readYAMLMapping(t, filepath.Join(root, "balance.yaml"))
+	balance := readYAMLMapping(t, filepath.Join(root, "config", "balance.yaml"))
 
 	resolved := 0
 	for _, check := range policy.Checks {

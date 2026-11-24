@@ -23,7 +23,7 @@ between pipeline stages is
 | [`task-step-support.md`](task-step-support.md) | Derived task reasoning step support tables used for coverage checks. |
 | [`failure-record.md`](failure-record.md) | The row schema for a rejected program or task, and the rules that merge it. |
 | [`run-contract.md`](run-contract.md) | The run manifest, incremental Parquet persistence, pipeline stage completion markers, cache, resume, command-line interface, and exit codes. |
-| [`prompt-templates.md`](prompt-templates.md) | The root `prompts.yaml` artifact and its schema: template IDs, typed placeholders, label tables, variants, and validation. |
+| [`prompt-templates.md`](prompt-templates.md) | The `generator/config/prompts.yaml` artifact and its schema: template IDs, typed placeholders, label tables, variants, and validation. |
 | [`python-and-golang.md`](python-and-golang.md) | The Python and Go language boundary. |
 | [`file-trees.md`](file-trees.md) | Where the replacement generator's code, tests, fixtures, and config live. |
 | [`stacks.md`](stacks.md) | Declared Python and Go toolchains and libraries. |

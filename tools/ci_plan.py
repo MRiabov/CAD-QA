@@ -42,11 +42,8 @@ class JobPlan(BaseModel):
 
 # A path maps to the suites it can reach. Paths not listed here are unknown and
 # wake every suite; keep this table in step with the CI contract.
-GO_ONLY_PATHS = frozenset({"balance.yaml", "checks.yaml", "tolerance.yaml"})
 BOTH_PATHS = frozenset(
     {
-        "prompts.yaml",
-        "prompt-templates.yaml",
         "pyproject.toml",
         "uv.lock",
         ".python-version",
@@ -64,10 +61,7 @@ QUALITY_ONLY_PATHS = frozenset(
     {
         ".gitignore",
         "README.md",
-        "epics-and-stories.md",
-        "epics-and-stories.yaml",
         "human-paper-spec.md",
-        "overnight-task.md",
         ".rumdl.toml",
         ".pre-commit-config.yaml",
     }
@@ -93,14 +87,12 @@ def suites_for(path: str) -> frozenset[Suite] | None:
         case _ if path.startswith(("tests/", "tools/")):
             return frozenset({Suite.PYTHON})
         case _ if path.startswith("docs/dataset/implementation/pipeline/testing/"):
-            # Golden records and fixtures are read by the Python tests.
-            return frozenset({Suite.PYTHON})
+            # Oracle and golden records are read by the Go stage tests.
+            return frozenset({Suite.GO})
         case _ if path.startswith(QUALITY_ONLY_PREFIXES):
             return frozenset()
         case _ if path.startswith(".github/workflows/"):
             return frozenset({Suite.GO, Suite.PYTHON})
-        case _ if path in GO_ONLY_PATHS:
-            return frozenset({Suite.GO})
         case _ if path in BOTH_PATHS:
             return frozenset({Suite.GO, Suite.PYTHON})
         case _ if path in QUALITY_ONLY_PATHS:

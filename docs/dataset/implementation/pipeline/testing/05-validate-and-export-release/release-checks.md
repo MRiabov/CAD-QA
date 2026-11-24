@@ -4,7 +4,7 @@
 
 **Contract under test:**
 [`../../05-validate-and-export-release/release-checks.md`](../../05-validate-and-export-release/release-checks.md),
-with the policy in the root `checks.yaml` and `balance.yaml`.
+with the policy in `generator/config/checks.yaml` and `generator/config/balance.yaml`.
 
 ## Tests
 

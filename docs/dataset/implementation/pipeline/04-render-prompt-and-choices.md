@@ -72,7 +72,7 @@ seed plus `task_id` reproduces the task seed.
 ## Prompt copy comes from YAML
 
 LLM-facing wording is data, not Go code. Pipeline stage `04` renders from the
-root `prompts.yaml`; it does not contain hardcoded question, clue, choice, or
+`generator/config/prompts.yaml`; it does not contain hardcoded question, clue, choice, or
 answer-instruction strings. The file's schema, template IDs, placeholder forms,
 label tables, and validation rules are in
 [`../prompt-templates.md`](../prompt-templates.md).

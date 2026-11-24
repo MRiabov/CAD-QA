@@ -11,8 +11,6 @@ from __future__ import annotations
 import json
 
 import pytest
-from pydantic import ValidationError
-
 from cadqa_dataset_generator.contracts import (
     SCHEMA_MODELS,
     WORKER_PROTOCOL_VERSION,
@@ -22,6 +20,8 @@ from cadqa_dataset_generator.contracts import (
     WorkerError,
     WorkerResponse,
 )
+from pydantic import ValidationError
+
 from tools.contracts.export_worker_schemas import REPO, render_schema, schema_paths
 
 REQUEST = {

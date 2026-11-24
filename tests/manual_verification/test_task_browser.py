@@ -13,7 +13,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-TOOLS = Path(__file__).resolve().parents[1] / "tools" / "manual-verification"
+TOOLS = Path(__file__).resolve().parents[2] / "tools" / "manual-verification"
 sys.path.insert(0, str(TOOLS))
 
 from task_browser import ReleaseIndex, build_handler

@@ -291,7 +291,9 @@ tests.
 
 ## 8. What the test proves
 
-`tests/test_golden_records.py` proves:
+**Status:** `missing`. The former Python validator `tests/test_golden_records.py`
+was removed because `03b` is a Go pipeline stage. The `03b` Go test lands with the
+constructor and proves:
 
 - every record is discoverable and its `golden_id` matches the file stem;
 - the record has exactly the documented keys; a misspelled or extra field

@@ -11,7 +11,7 @@ this document explains how the constraints combine.
   CAD graph.
 - The release implementation scope, from the product priorities.
 - The task-count targets in the PRD and the release contract.
-- The balance policy in the root `balance.yaml`.
+- The balance policy in `generator/config/balance.yaml`.
 - The split rule: a CADEvolve program family belongs to one split.
 
 ## Implementation scope

@@ -40,7 +40,7 @@ type tolerancePolicy struct {
 }
 
 func TestTolerancePolicy(t *testing.T) {
-	path := filepath.Join(repositoryRoot(t), "tolerance.yaml")
+	path := filepath.Join(moduleRoot(t), "config", "tolerance.yaml")
 	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("read %s: %v", path, err)

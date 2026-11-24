@@ -5,4 +5,4 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$repo_root"
 
-exec uv run python tools/ci_cd/check_fanout.py "$@"
+exec uv run python -m tools.ci_cd.check_fanout "$@"

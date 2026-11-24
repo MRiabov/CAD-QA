@@ -26,6 +26,16 @@ typed models, and the graph.
 A unit test on an internal function is not a substitute. If a pipeline stage can
 only be tested by mocking its own storage, the storage contract is wrong.
 
+## Test homes
+
+The language boundary decides the home
+([`../../python-and-golang.md#tests`](../../python-and-golang.md#tests)). In
+short: a Go test sits beside its package and owns every Go pipeline stage,
+Parquet table, oracle, golden record, release contract, and the `prompts.yaml`
+contract; `generator/python/tests/` covers the worker; root `tests/ci_cd/` and
+`tests/manual_verification/` cover the Python repo tooling. A Go test that needs
+CadQuery or OCP starts the Python worker or tool and asserts on its output.
+
 ## Assert from the artifact
 
 Every test reads its result back the way the next pipeline stage reads it: the Parquet
@@ -130,15 +140,15 @@ cd generator && go test -count=1 ./...
 uv run pytest -q
 ```
 
-`go test -count=1` disables the Go test cache because tests read root policy
-files by path. A pipeline stage is accepted only when its contract test and the
-end-to-end test pass.
+`go test -count=1` disables the Go test cache because tests read the policy files
+in `generator/config/` by path. A pipeline stage is accepted only when its contract test and the
+end-to-end test pass; both are Go tests.
 
-A component's tests live with the language that implements it: Go pipeline stages in
-`go test`, the `01d`/`02a`/`02b` Python workers and the repository tools in
-pytest. Root policy data is checked where its loader lives, so `checks.yaml`,
-`balance.yaml`, and `tolerance.yaml` are Go tests; `prompts.yaml` and the golden
-records move to Go when `04` and `03b` land.
+`uv run pytest -q` discovers the two Python roots through `testpaths`: root
+`tests/` for the repo tooling suites and `generator/python/tests/` for the
+worker. Root policy data is checked where its loader lives, so `checks.yaml`,
+`balance.yaml`, `tolerance.yaml`, and `prompts.yaml` are Go tests; the golden
+records are a `03b` Go test.
 
 ## What this does not prove
 
