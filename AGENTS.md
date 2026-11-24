@@ -18,6 +18,22 @@ the repository's contracts; every fact it names has its home in `docs/`.
 | Developer tools | [`docs/dataset/implementation/devtools/README.md`](docs/dataset/implementation/devtools/README.md) |
 | What to build next | [`plans/nov-21/dataset-implementation-plan.md`](plans/nov-21/dataset-implementation-plan.md) |
 
+## Docs first
+
+This repository is docs-first: a behaviour is written down before it is
+implemented. New work starts as a doc change — the step doc, the
+`00-overview.md` IO contract, and the decision it rests on — and the code
+follows that doc. The docs take precedence over the code: they record what
+should exist, not what happens to be there
+([`docs/docs-conventions.md`](docs/docs-conventions.md#writing-method)).
+
+Because that contract is generally followed, the docs carry the answers and the
+expected contract. Read the relevant docs before the code: the step doc, its
+module `decisions.md`, the IO contract in `pipeline/00-overview.md`, and
+`glossary.md` for the terms. Read code afterwards, to see where and how the doc
+is implemented. Code that contradicts its doc is a defect to record, not newer
+truth to imitate.
+
 ## Current state
 
 The pre-rebuild generator (`dataset/`) and its training and evaluation stack
