@@ -18,14 +18,29 @@ the repository's contracts; every fact it names has its home in `docs/`.
 | Developer tools | [`docs/dataset/implementation/devtools/README.md`](docs/dataset/implementation/devtools/README.md) |
 | What to build next | [`plans/nov-21/dataset-implementation-plan.md`](plans/nov-21/dataset-implementation-plan.md) |
 
-## Docs first
+## Docs first (blocks implementation)
 
-This repository is docs-first: a behaviour is written down before it is
-implemented. New work starts as a doc change — the step doc, the
-`00-overview.md` IO contract, and the decision it rests on — and the code
-follows that doc. The docs take precedence over the code: they record what
-should exist, not what happens to be there
+This repository is documentation-first: a behaviour is written down before it
+is implemented, and missing or ill-defined docs block the implementation rather
+than being written up afterwards. The docs take precedence over the code: they
+record what should exist, not what happens to be there
 ([`docs/docs-conventions.md`](docs/docs-conventions.md#writing-method)).
+
+Every changeset starts in canonical `docs/`, not only in `plans/`:
+
+- A new or changed pipeline stage or sub-step starts as its step doc, with its
+  input and output in `pipeline/00-overview.md` and a `Verification` command
+  that would make it `verified`.
+- The doc mirror exists before the code: the same relative path under
+  `pipeline/streamlined/` and `pipeline/testing/`, the test doc naming what must
+  be verified.
+- The decision the change rests on is recorded at its narrowest scope, and every
+  new term is in `glossary.md`.
+
+Implement only what those docs name. Do not invent a field, a pipeline stage, or
+a test that no doc describes. If the doc is silent, raise the question with the
+owner and settle it in the doc before writing code; silence is not a licence to
+decide in code.
 
 Because that contract is generally followed, the docs carry the answers and the
 expected contract. Read the relevant docs before the code: the step doc, its
