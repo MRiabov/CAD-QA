@@ -19,7 +19,7 @@ typed models, and the graph.
 | Real | Mocked |
 |---|---|
 | CadQuery and OCP execution | The CADEvolve dataset download in `01c` fetch program pool. |
-| Parquet read and write | The pinned external benchmark program set, once `MC-49` lands. |
+| Parquet read and write | The pinned external benchmark program set (`P1-W2`). |
 | The code of every pipeline stage | — |
 | The CAD graph and the release table | — |
 

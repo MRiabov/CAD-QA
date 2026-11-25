@@ -69,8 +69,8 @@ def write_release(path: Path) -> None:
     tolerance = pa.struct(
         [("kind", pa.string()), ("value_text", pa.string()), ("unit", pa.string())]
     )
-    clue_operand = pa.struct(
-        [("clue_type", pa.string()), ("clue_operand_form", pa.string())]
+    clue_reduction = pa.struct(
+        [("clue_type", pa.string()), ("clue_reduction_form", pa.string())]
     )
     choice = pa.struct([("label", pa.string()), ("candidate", pa.string())])
     table = pa.table(
@@ -86,8 +86,8 @@ def write_release(path: Path) -> None:
             "task_reasoning_step_count": [1, 2, 3],
             "target_category": [task[3] for task in TASKS],
             "clue_types": pa.array([[]] * 3, type=pa.list_(pa.string())),
-            "clue_operand_form_profile": pa.array(
-                [[]] * 3, type=pa.list_(clue_operand)
+            "clue_reduction_form_profile": pa.array(
+                [[]] * 3, type=pa.list_(clue_reduction)
             ),
             "answer_format": ["number"] * 3,
             "answer_meaning": [task[4] for task in TASKS],

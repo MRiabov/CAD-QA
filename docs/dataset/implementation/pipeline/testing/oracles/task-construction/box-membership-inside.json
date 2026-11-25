@@ -31,8 +31,8 @@
     "possible_answer_count": 1,
     "task_reasoning_step_count": 1,
     "answer_meaning": "membership",
-    "native_answer_format": "yes_no",
-    "answer_format": "yes_no",
+    "native_answer_format": "boolean",
+    "answer_format": "boolean",
     "geometry_required": true,
     "uniqueness": "The final solid state is the only solid state in the final scope."
   },
@@ -100,7 +100,7 @@
     "clue_types": [],
     "clue_reduction_forms": [],
     "answer_meaning": "membership",
-    "answer_format": "yes_no",
+    "answer_format": "boolean",
     "task_reasoning_step_count": 1
   },
   "excluded": [

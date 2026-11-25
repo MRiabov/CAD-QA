@@ -80,11 +80,22 @@ const (
 type TargetCategory string
 
 const (
-	TargetSolidState TargetCategory = "solid_state"
-	TargetFace       TargetCategory = "face"
-	TargetEdge       TargetCategory = "edge"
-	TargetVertex     TargetCategory = "vertex"
-	TargetScalar     TargetCategory = "scalar"
+	TargetCadQueryProgram        TargetCategory = "cadquery_program"
+	TargetOperation              TargetCategory = "operation"
+	TargetFeature                TargetCategory = "feature"
+	TargetSolidState             TargetCategory = "solid_state"
+	TargetFace                   TargetCategory = "face"
+	TargetEdge                   TargetCategory = "edge"
+	TargetVertex                 TargetCategory = "vertex"
+	TargetEdgeEndpoint           TargetCategory = "edge_endpoint"
+	TargetCadQueryProfile        TargetCategory = "cadquery_profile"
+	TargetCadQueryWorkplane      TargetCategory = "cadquery_workplane"
+	TargetPath                   TargetCategory = "path"
+	TargetPathPoint              TargetCategory = "path_point"
+	TargetPathSegment            TargetCategory = "path_segment"
+	TargetRegion                 TargetCategory = "region"
+	TargetCadQuerySelectorResult TargetCategory = "cadquery_selector_result"
+	TargetScalarValue            TargetCategory = "scalar_value"
 )
 
 type ClueType string

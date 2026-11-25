@@ -8,8 +8,10 @@ queries pass. Every record was rebuilt against the 2026-11-24 requirement
 revisions — categorical features and the measured direction, one-condition
 references, the clue reduction form rename, the provenance workplane removal,
 and the pair-angle relation — and validates against `schema_version` 3. The
-owner reviewed and accepted the current set of thirteen records on 2026-11-25,
-so those records are `verified`; a record added later starts as `proposed`.
+owner reviewed and accepted the set on 2026-11-25. The later center-naming and
+distance-copy change altered two questions, so eleven records are `verified` and
+`box-with-hole-top-face-centroid` and `box-top-bottom-distance` are `proposed`
+until they are re-verified; a record added later also starts as `proposed`.
 
 ## 1. What a task-construction oracle is
 
@@ -103,12 +105,13 @@ recorded stdout is a defect.
 | `cadquery_version`, `ocp_version`, `python_version` | The versions that produced the record. |
 | `oracle_tool_version` | The prelude and gold-query check version. Bumped when the prelude, or the rule that turns a run into a recorded result, changes. |
 
-A CadQuery, OCP, or tool-version change makes every record `stale`. Re-run the
-gold-query verifier, review the diff, and set `proposed` again until a human approves it.
-How the gold-query verifier schedules records is not part of this version: it
-runs the same
-per-record script, so batching those scripts into one process does not bump
-`oracle_tool_version`.
+A CadQuery, OCP, or tool-version change invalidates the recorded check. Re-run
+the gold-query verifier; `--write` stamps the new environment and reopens a
+`verified` record as `proposed`, so review the diff and accept it again. A
+record whose contract moved, rather than only its environment, is marked
+`stale` before re-derivation. How the gold-query verifier schedules records is
+not part of this version: it runs the same per-record script, so batching those
+scripts into one process does not bump `oracle_tool_version`.
 
 ### 3.3 `program`
 
@@ -160,7 +163,7 @@ A property check is one of two shapes, discriminated by `property_shape`:
 
 | `property_shape` | Keys | Meaning |
 |---|---|---|
-| `measurement` | `measurement`, `comparator`, and `threshold` or `range_min`/`range_max`; `axis` when the measurement is `angle` | A measured value. A direction is the `angle` measurement against the named program axis. |
+| `measurement` | `measurement`, `comparator`, and `threshold` or `range_min`/`range_max`; `axis` when the measurement is `angle` | A measured value. The comparator is a `label.comparator` key (`eq`, `gt`, `ge`, `lt`, `le`); `between` marks a range. A direction is the `angle` measurement against the named program axis. |
 | `categorical_feature` | `feature`, `value` | Equality on a face's categorical feature: `face_surface_kind` or `position`. |
 
 A relation check is one of two shapes, discriminated by `relation_shape`:
@@ -261,7 +264,7 @@ membership, the category for a topology change", and is null otherwise.
 | Parameter kind | Carries | Why |
 |---|---|---|
 | `membership_point` | The point the probe classifies. | The point is the question parameter and the probe input, bound once. |
-| `position_point` | The point kind (`face_centroid`, `edge_midpoint`, `vertex_point`, `state_centroid`). | The coordinates are the answer. Storing them in the parameter would render the answer into the prompt. |
+| `position_point` | The point kind (`face_centroid`, `edge_midpoint`, `vertex_point`, `region_centroid`, `solid_state_centroid`). | The coordinates are the answer. Storing them in the parameter would render the answer into the prompt. |
 | `distance_reference` | The second entity of the pair. | A distance has two endpoints; the target names one, the parameter names the other. |
 | `angle_reference` | The second entity of the pair. | An angle has two entities; the target names one, the parameter names the other. |
 | `topology_category` | `face`, `edge`, or `vertex`. | The question declares which count changes. |

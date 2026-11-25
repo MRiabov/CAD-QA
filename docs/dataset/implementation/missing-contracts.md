@@ -15,7 +15,8 @@ lands, and the tests run alongside the milestone they cover.
 
 There are 2 open entries: two P0 technical contracts. P1 and P2 are empty. They
 were scheduled as `P0-W1` items and are not written into their owner docs yet.
-`MC-63`, `MC-65`, and `MC-66` closed on 2026-11-25; `MC-64` and `MC-67` remain.
+`MC-22`, `MC-49`, `MC-50`, `MC-63`, `MC-65`, and `MC-66` closed on
+2026-11-25; `MC-64` and `MC-67` remain.
 
 ## Decisions needed from the owner
 

@@ -90,10 +90,11 @@ prompt rendering, and release validation.
 
 ## Open questions
 
-- **Q1.** Is `angle` between two edges or along a path tangent emitted at all?
-  `graph-content.md` §4 declares both as P0 angle kinds, but no reference class
-  names an edge: the three classes are face surface kind, face position, and face
-  provenance. A dense pair kind is emitted only from a reference class, so no
-  such row is produced. Either the P0 priority in that row is wrong, or an edge
-  reference class is missing and an edge needs a stored direction, since
-  `EdgeAttributes` carries only its curve kind and whether it is closed.
+- **Q1.** Is `angle` between two edges emitted at all? `graph-content.md` §4
+  declares the two-edge angle at P0 (the path-tangent angle is P1), but no
+  reference class names an edge: the three classes are face surface kind, face
+  position, and face provenance. A dense pair kind is emitted only from a
+  reference class, so no such row is produced. Either the P0 priority in that row
+  is wrong, or an edge reference class is missing and an edge needs a stored
+  direction, since `EdgeAttributes` carries only its curve kind and whether it is
+  closed.

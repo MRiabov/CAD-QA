@@ -218,7 +218,7 @@ class Measurement(_OracleModel):
 class Capability(_OracleModel):
     target_category: str = Field(min_length=1, max_length=50)
     clue_type: str = Field(min_length=1, max_length=50)
-    clue_operand_form: str | None = Field(default=None, max_length=50)
+    clue_reduction_form: str | None = Field(default=None, max_length=50)
     answer_meaning: str = Field(min_length=1, max_length=50)
 
 

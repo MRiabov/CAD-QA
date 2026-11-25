@@ -46,7 +46,7 @@
         "predicate_kind": "relation",
         "relation_shape": "angle",
         "measurement": "angle",
-        "comparator": "equals",
+        "comparator": "eq",
         "threshold": "180",
         "object": {
           "category": "face",

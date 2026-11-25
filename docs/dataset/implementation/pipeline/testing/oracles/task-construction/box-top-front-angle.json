@@ -46,7 +46,7 @@
         "predicate_kind": "property",
         "property_shape": "measurement",
         "measurement": "angle",
-        "comparator": "less_than",
+        "comparator": "lt",
         "axis": "+z",
         "threshold": "1",
         "range_min": null,

@@ -69,6 +69,14 @@ def copy_record(tmp_path: Path, slug: str = "box-volume") -> Path:
     return target
 
 
+def test_every_checked_in_record_loads() -> None:
+    records = load_oracles(ORACLES)
+
+    assert {oracle.slug for _, oracle in records} == {
+        path.stem for path in ORACLES.glob("*.json")
+    }
+
+
 def test_a_batch_runs_every_script_in_one_child(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

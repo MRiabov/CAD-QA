@@ -147,10 +147,10 @@ class AnswerFormat(StrEnum):
     MULTIPLE_CHOICE = "multiple_choice"
     NUMBER = "number"
     INTEGER = "integer"
-    YES_NO = "yes_no"
+    BOOLEAN = "boolean"
     COORDINATE = "coordinate"
     BOUNDING_BOX = "bounding_box"
-    STRUCTURED_OBJECT = "structured_object"
+    STRUCTURED = "structured"
 
 
 class ValueKind(StrEnum):
@@ -188,11 +188,11 @@ class EvidenceKind(StrEnum):
 
 
 class Comparator(StrEnum):
-    EQUALS = "equals"
-    GREATER_THAN = "greater_than"
-    GREATER_OR_EQUAL = "greater_or_equal"
-    LESS_THAN = "less_than"
-    LESS_OR_EQUAL = "less_or_equal"
+    EQ = "eq"
+    GT = "gt"
+    GE = "ge"
+    LT = "lt"
+    LE = "le"
     BETWEEN = "between"
 
 
@@ -226,7 +226,8 @@ class PositionPointKind(StrEnum):
     FACE_CENTROID = "face_centroid"
     EDGE_MIDPOINT = "edge_midpoint"
     VERTEX_POINT = "vertex_point"
-    STATE_CENTROID = "state_centroid"
+    REGION_CENTROID = "region_centroid"
+    SOLID_STATE_CENTROID = "solid_state_centroid"
 
 
 class TopologyCategory(StrEnum):
@@ -605,11 +606,11 @@ NATIVE_FORMAT: dict[AnswerMeaning, set[AnswerFormat]] = {
     AnswerMeaning.ANGLE: {AnswerFormat.NUMBER},
     AnswerMeaning.COUNT: {AnswerFormat.INTEGER},
     AnswerMeaning.RANK: {AnswerFormat.INTEGER},
-    AnswerMeaning.MEMBERSHIP: {AnswerFormat.YES_NO},
-    AnswerMeaning.VALIDITY: {AnswerFormat.YES_NO},
+    AnswerMeaning.MEMBERSHIP: {AnswerFormat.BOOLEAN},
+    AnswerMeaning.VALIDITY: {AnswerFormat.BOOLEAN},
     AnswerMeaning.POSITION: {AnswerFormat.COORDINATE},
     AnswerMeaning.EXTENT: {AnswerFormat.BOUNDING_BOX},
-    AnswerMeaning.CADQUERY_WORKPLANE_STATE: {AnswerFormat.STRUCTURED_OBJECT},
+    AnswerMeaning.CADQUERY_WORKPLANE_STATE: {AnswerFormat.STRUCTURED},
     AnswerMeaning.MATERIAL_CHANGE: {AnswerFormat.NUMBER, AnswerFormat.INTEGER},
     AnswerMeaning.TOPOLOGY_CHANGE: {AnswerFormat.INTEGER},
 }
@@ -618,10 +619,10 @@ FORMAT_TO_VALUE_KIND: dict[AnswerFormat, ValueKind] = {
     AnswerFormat.MULTIPLE_CHOICE: ValueKind.LABEL,
     AnswerFormat.NUMBER: ValueKind.NUMBER,
     AnswerFormat.INTEGER: ValueKind.INTEGER,
-    AnswerFormat.YES_NO: ValueKind.BOOLEAN,
+    AnswerFormat.BOOLEAN: ValueKind.BOOLEAN,
     AnswerFormat.COORDINATE: ValueKind.POINT,
     AnswerFormat.BOUNDING_BOX: ValueKind.BOUNDING_BOX,
-    AnswerFormat.STRUCTURED_OBJECT: ValueKind.STRUCTURED,
+    AnswerFormat.STRUCTURED: ValueKind.STRUCTURED,
 }
 
 

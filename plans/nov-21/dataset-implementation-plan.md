@@ -1,6 +1,6 @@
 # Dataset implementation plan — 2026-11-21
 
-**Status:** working plan, updated 2026-11-25 against commit `059e8fb`.
+**Status:** working plan, updated 2026-11-25 against commit `ca7ef60`.
 
 This document owns the order in which the replacement dataset generator is
 built, keyed by the requirement scope each work item implements. It does not own
@@ -320,11 +320,12 @@ in [`prompt-examples.md`](../../docs/dataset/requirements/views/prompt-examples.
 [`reference-forms.md`](../../docs/dataset/requirements/views/reference-forms.md#p0),
 and the clue strings in
 [`clue-list.md`](../../docs/dataset/requirements/views/clue-list.md#p0). Thirteen
-of the cases also have an executable record under
+cases also have an executable record under
 [`oracles/task-construction/`](../../docs/dataset/implementation/pipeline/testing/oracles/task-construction/README.md),
-with a gold query that runs without generator code. `03b` matches the records by
-answer, clue chain, and evidence, and treats an approved worked example as the
-gold for a cell with no record. §9 of the oracle README counts records only; it
+with a gold query that runs without generator code; eleven are `verified` and two
+returned to `proposed` after the copy change, as the oracle README records.
+`03b` matches the records by answer, clue chain, and evidence, and treats an
+approved worked example as the gold for a cell with no record. §9 of the oracle README counts records only; it
 is reworded when `03b` lands so a missing record does not read as a missing
 vocabulary cell.
 

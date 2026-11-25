@@ -43,6 +43,7 @@ and how the three content layers project onto each other — is
 | [`requirements/shortcut-resistance.md`](requirements/shortcut-resistance.md) | The P1 R-5 construction gate: the answer dependency chain, verdicts, threshold, cost, and what the check does not prove. |
 | [`requirements/views/clue-list.md`](requirements/views/clue-list.md) | Derived view: every string a task clue can show the LLM model, and what each one removes. |
 | [`requirements/views/reference-forms.md`](requirements/views/reference-forms.md) | Derived view: every thing a prompt can mention, the phrases that name it, and the case that has no phrase yet. |
+| [`requirements/views/prompt-examples.md`](requirements/views/prompt-examples.md) | Derived view: eight complete prompts as `04` renders them, for reading the text end to end. |
 | [`requirements/views/capability-coverage.md`](requirements/views/capability-coverage.md) | Derived view: what each P0 capability can be asked about, and which capabilities no task reads yet. |
 | [`requirements/views/shortcut-resistance.md`](requirements/views/shortcut-resistance.md) | Derived view: worked examples of the shortcut-resistance verdicts. |
 | [`requirements/graph-content.md`](requirements/graph-content.md) | The graph elements the tasks rely on: graph entities, relations, measurements, states, CAD graph evidence, and P0/P1/P2 implementation order. |

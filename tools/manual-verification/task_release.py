@@ -100,13 +100,13 @@ class Choice(BaseModel):
     candidate: str
 
 
-class ClueOperandForm(BaseModel):
-    """One clue's clue type and clue operand form."""
+class ClueReductionForm(BaseModel):
+    """One clue's clue type and clue reduction form."""
 
     model_config = ConfigDict(extra="ignore")
 
     clue_type: str
-    clue_operand_form: str | None = None
+    clue_reduction_form: str | None = None
 
 
 class ReleaseRow(BaseModel):
@@ -125,7 +125,7 @@ class ReleaseRow(BaseModel):
     task_reasoning_step_count: int = Field(ge=0)
     target_category: str = Field(min_length=1)
     clue_types: list[str] = Field(default_factory=list)
-    clue_operand_form_profile: list[ClueOperandForm] = Field(default_factory=list)
+    clue_reduction_form_profile: list[ClueReductionForm] = Field(default_factory=list)
     answer_format: str = Field(min_length=1)
     answer_meaning: str = Field(min_length=1)
     geometry_required: bool

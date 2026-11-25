@@ -64,8 +64,9 @@ The layers are not equal when they disagree.
 1. `graph-content.md`, `task-structure.md`, `prompt-content.md`, and
    `shortcut-resistance.md` are the requirements. They record what the dataset
    must be.
-2. `clue-list.md`, `reference-forms.md`, and `views/shortcut-resistance.md` are
-   derived from them. If one of them disagrees with a requirement, the
+2. The views under `views/` — `clue-list.md`, `reference-forms.md`,
+   `prompt-examples.md`, `capability-coverage.md`, and `shortcut-resistance.md` —
+   are derived from them. If one of them disagrees with a requirement, the
    requirement is right.
 3. `implementation/` describes how the generator satisfies the requirements. An
    implementation doc that disagrees with a requirement is a defect to record,
