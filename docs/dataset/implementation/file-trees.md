@@ -417,8 +417,8 @@ tools/manual-verification/
   cadquery_method_specs.py                 exists; the method table the oracle builder diffs against the allowlist
   extraction_oracle_schema.py              exists; the Pydantic schema for an oracle record
   task_oracle_schema.py                    exists; the task-construction oracle schema
-  task_oracle_runner.py                    exists; runs one oracle's gold query
-  verify_task_oracles.py                   exists; verifies every task-construction oracle against its gold query
+  task_oracle_runner.py                    exists; runs a batch of gold queries in one process
+  verify_task_oracles.py                   exists; checks, records, and accepts task-construction oracles
   render_task.py                           planned; one release row's render plus its printed card
   review_pack.py                           planned; `pack generate` and `pack record` from devtools/review-pack.md
   run_report.py                            planned; batch counts, distributions, timings, and pending review cells
@@ -431,9 +431,9 @@ tools/contracts/
 `task_browser.py`, `task_release.py`, `task_oracles.py`, `task_scene.py`, and
 `task-browser/` exist; `build_extraction_oracle.py` exists and writes a
 `proposed` oracle for a
-human to verify. `verify_task_oracles.py` runs every task-construction oracle's
-gold query and records the environment and the observed output; the records are
-in
+human to verify. `verify_task_oracles.py` checks every task-construction oracle's
+gold query in one batch, records the environment and the observed output, and
+records a human acceptance; the records are in
 [`pipeline/testing/oracles/task-construction/`](pipeline/testing/oracles/task-construction/README.md).
 `render_task.py` is the first-release fallback and the
 `P0-W2`/`P0-W4` review tool. `review_pack.py` is the sampled matrix that gates

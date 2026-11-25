@@ -101,10 +101,14 @@ recorded stdout is a defect.
 | Key | Meaning |
 |---|---|
 | `cadquery_version`, `ocp_version`, `python_version` | The versions that produced the record. |
-| `oracle_tool_version` | The gold-query verifier and prelude version. Bumped when either changes. |
+| `oracle_tool_version` | The prelude and gold-query check version. Bumped when the prelude, or the rule that turns a run into a recorded result, changes. |
 
 A CadQuery, OCP, or tool-version change makes every record `stale`. Re-run the
 gold-query verifier, review the diff, and set `proposed` again until a human approves it.
+How the gold-query verifier schedules records is not part of this version: it
+runs the same
+per-record script, so batching those scripts into one process does not bump
+`oracle_tool_version`.
 
 ### 3.3 `program`
 
@@ -288,25 +292,46 @@ release; the oracle is the place the choice is pinned.
    contract. Do not derive them from the constructor.
 3. Write the gold query. It must use plain CadQuery and OCP, not the graph and
    not constructor code.
-4. Run the gold-query verifier:
+4. Check the gold query:
 
    ```bash
    uv run python tools/manual-verification/verify_task_oracles.py --record <slug>
    ```
 
+   The check runs every selected record in one Python process, so CadQuery is
+   imported once for the batch instead of once per record
+   ([devtools conventions](../../../../devtools/README.md#conventions)). A query
+   that exits non-zero, prints more or fewer than one non-empty line, or prints
+   anything other than `expected_stdout` fails, and a failing check writes
+   nothing.
 5. Record the check:
 
    ```bash
    uv run python tools/manual-verification/verify_task_oracles.py --record <slug> --write
    ```
 
-   `--write` records the environment and the observed stdout. It never changes
-   the answer; a query that prints something else is a failure.
+   `--write` records the environment, the observed stdout, and the date on the
+   records that pass, and rewrites only the files whose bytes change. It never
+   changes the answer; a query that prints something else is a failure.
 6. Read the record as a reviewer: is the task unambiguous, is the clue chain
    true, is the answer the one a careful human would give? The
    [task browser](../../../../devtools/task-browser.md#gold-oracles) opens every
    record with its program render, answer, clue chain, gold query, coverage, and
-   exclusions. Set `verified` and name yourself only when the answer is yes.
+   exclusions. Accept the record when the answer is yes:
+
+   ```bash
+   uv run python tools/manual-verification/verify_task_oracles.py --record <slug> \
+     --accept --by <your name>
+   ```
+
+   `--accept` writes `verified`, `verified_by`, and `verified_at` and runs no
+   gold query, so acceptance costs one kernel import for the version stamp
+   rather than one per record. It refuses a record whose
+   gold-query check is not `passed`, whose recorded stdout differs from
+   `expected_stdout`, or whose recorded environment differs from the current one;
+   those need a `--write` first. It does not rewrite `rationale`: that sentence
+   is the reviewer's argument for the record, not a restatement of the audit
+   fields. Edit it in the same commit when it still says the review is pending.
 
 ## 7. What the test proves
 

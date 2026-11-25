@@ -37,6 +37,17 @@ contract; it does not stay here.
   replaced.
 - The tool prints the inputs it used next to the output path. A render without
   the prompt it came from is not verifiable.
+- A tool that runs CadQuery over many items executes them in one process and
+  imports the kernel once. A cold `import cadquery` costs seconds and hundreds
+  of megabytes ([measurement
+  log](../../../../plans/nov-21/performance-audit.md#measurement-log)), while a
+  hand-written oracle query's geometry costs a fraction of a second, so one
+  process per item pays that import once per item for no gain. Keep items
+  isolated by giving each a fresh namespace and catching its failure as a row,
+  and enforce the per-item deadline from the parent. The trade-off is that a
+  program that corrupts the interpreter can affect the items after it:
+  acceptable for checked-in, reviewed test data, not for generated programs,
+  which run in the `02b` worker.
 
 ## Manual verification
 

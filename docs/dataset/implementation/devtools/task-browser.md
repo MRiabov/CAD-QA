@@ -166,7 +166,7 @@ state, and checks that the answer is the one a careful human would give, that
 the clue chain is true, narrowing, and necessary, and that the coverage cell is
 the one intended. The reviewer then follows the record procedure in
 [`task-construction/README.md`](../pipeline/testing/oracles/task-construction/README.md#6-how-to-add-a-record)
-to record the check and set `verified`.
+to check, record, and accept the record.
 
 ## What this does not prove
 
