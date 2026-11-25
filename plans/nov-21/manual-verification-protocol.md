@@ -174,7 +174,7 @@ conventions match the actual answers.
 | R-2 exactly one answer | Pass 1, uniqueness rule | rejection counts for ambiguity |
 | R-3 multiple choice fair | Pass 4, one MC row | choice-pool size and label distribution |
 | R-4 95% built shape | Pass 1, answer-from-text test | `built_shape_share_floor` |
-| R-5 no trivial shortcuts | Pass 1, try variable names and literals | `DA-7` proxy, if defined |
+| R-5 no trivial shortcuts | P1 — read the `03b` rejection count against [`views/shortcut-resistance.md`](../../docs/dataset/requirements/views/shortcut-resistance.md) | `shortcut_resistance` rejects; the P0 release makes no claim |
 | R-6 no answer leakage | Pass 1, read the prompt | answer-in-prompt check |
 | R-7 answer formats | one row per format | per-step format mix |
 | R-8 coverage | support table against the release | coverage checks |
@@ -212,6 +212,7 @@ them in the owner documents before the corresponding pass is evidence.
 | `P0-W3` | Pass 3 on the 100-program slice: the distribution report and ten failures | run report | ~1–2 h |
 | `P0-W6` | Pass 0 on the release checks, Pass 4 consumer read-back | mutation log and five-row trace | ~1 h |
 | `P0-W7` | Pass 3 on the full pool, Pass 4 on the release | run report and release trace | ~2 h |
+| `P1-W5` | The shortcut-resistance view — reviewed 2026-11-25; re-check if the threshold or topology list changes | [`views/shortcut-resistance.md`](../../docs/dataset/requirements/views/shortcut-resistance.md) | ~30 min |
 
 ## What not to verify manually
 

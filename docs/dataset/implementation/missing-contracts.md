@@ -13,43 +13,20 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 3 open entries: one P0 product decision and two P0 technical
-contracts. P1 and P2 are empty. They were scheduled as `P0-W1` items and none is
-written into its owner doc yet. `MC-66` closed on 2026-11-25; `MC-63`, `MC-64`,
-and `MC-65` remain.
+There are 2 open entries: two P0 technical contracts. P1 and P2 are empty. They
+were scheduled as `P0-W1` items and none is written into its owner doc yet.
+`MC-63` and `MC-66` closed on 2026-11-25; `MC-64` and `MC-65` remain.
 
 ## Decisions needed from the owner
 
-R-5 (`MC-63`): write a measurable shortcut-resistance proxy with a check, or
-re-scope R-5 out of the P0 claim? The entry and its two options are below.
+None.
 
 ## P0
 
 ### Product (P0)
 
-#### MC-63 — R-5 has no mechanism
-
-[`PRD.md`](../requirements/PRD.md) R-5 is P0, but
-[`release-checks.yaml`](../../../generator/config/release-checks.yaml) has no shortcut row,
-`03b`'s
-[`a-construction.md`](pipeline/03-task-generation/03b-construct-task-definitions/a-construction.md)
-has no validity rule, and [`prompt-content.md`](../requirements/prompt-content.md)
-enforces only `DS-REQ-05` (no variable names), which does not stop an LLM model
-from using literal arguments or operation order. The `MC-22` closure points at a
-baseline report that does not exist in the current tree; the only baselines doc
-is the `stale` `docs/train-and-eval/evaluation/baselines.md` from the deleted
-stack, so that closure removed the entry without leaving a measurement behind.
-
-**Recommendation:** no recommendation certain. The audit offers two options and
-the owner picks before `P0-W4`. Option one is a construction rule, recorded per
-task: at least one clue or the answer step depends on a measurement not fixed by
-a literal or by operation order, with a `release-checks.yaml` row over the recorded
-result. Option two is a re-scope to the Phase 2 evaluation baseline report in
-[`docs/development-plan.md`](../../development-plan.md#phase-2--refresh-baselines-p1-no_toolscadquery-p2),
-which removes R-5 from the P0 release claim. The first keeps R-5 in P0 but has
-to be true of one-step volume and count tasks as well, not only tasks whose
-answer is a measurement; the second leaves those tasks in the release without a
-shortcut claim.
+None. `MC-63` closed by re-scoping R-5 to P1; see
+[`requirements/shortcut-resistance.md`](../requirements/shortcut-resistance.md).
 
 ### Technical (P0)
 
@@ -139,6 +116,20 @@ closed in the 2026-11-25 benchmark-program-set pass.
   audit over the same set. The release manifest records the identity, revision,
   split, and hash as validation provenance excluded from `release_id`. The
   decision is `DS-ADR-16`.
+
+## Closed in the 2026-11-25 shortcut-resistance pass
+
+- `MC-63` — R-5 is re-scoped to P1 and measured by a `03b` quality gate, not a
+  release check. `shortcut_resistance` resolves the answer dependency chain from
+  the CAD graph, records the operation count and topology flag, and rejects a
+  shape-required definition whose chain is below `dependency_operation_min` with
+  no topology dependency. An unresolved chain is `unknown` and also rejects. The
+  quality gate stores no chain, adds no `TaskDefinition` or release column, and does not
+  build a symbolic CAD engine. The P0 release makes no R-5 claim; the Phase 2
+  baseline measures the LLM-model consequence. `P1-W5` owns the implementation; the
+  requirement is [`requirements/shortcut-resistance.md`](../requirements/shortcut-resistance.md)
+  and the worked examples are
+  [`requirements/views/shortcut-resistance.md`](../requirements/views/shortcut-resistance.md).
 
 ## Closed in the 2026-11-25 geometry-required pass
 

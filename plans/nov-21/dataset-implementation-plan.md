@@ -101,12 +101,12 @@ are local to `03b` and are numbered `03b-M1`–`03b-M5`:
 No code. Each item is a small edit to one owner document, scheduled here because
 the code that would otherwise encode the wrong answer is `P0-W2` or `P0-W3` work.
 
-Three items remain open. `DA-4`, `DA-15`, `DA-13`, and `DA-5` closed between the
-audit and 2026-11-25 and are listed below the table.
+Two items remain open. `DA-4`, `DA-15`, `DA-13`, and `DA-5` closed between the
+audit and 2026-11-25 and are listed below the table; `DA-7` / `MC-63` closed by
+re-scoping R-5 to P1, and `MC-66` closed by the must-extract capability set.
 
 | Item | Owner | Why it cannot wait |
 |---|---|---|
-| `DA-7` / `MC-63` — the R-5 shortcut-resistance proxy, or its re-scope | `03b`, `release-checks.yaml`, `prompt-content.md`, `docs/development-plan.md` | R-5 is P0 and no construction rule or release check measures it. The documented candidate is the Phase 2 baseline report, and a re-scope is a decision, not silence |
 | `MC-64` — review frames: absence and residual, ledgers scoped to a pipeline stage | `devtools/review-pack.md`, `05` | The merged pack samples release rows only; partial extraction loss and unknown unknowns have no review frame. `file-trees.md` names the two tools and not the ledger cells |
 | `MC-65` — failure disposition: `by_design`, `corpus_defect`, `extractor_gap` | `failure-record.md`, `extraction/validation.md` | Every rejection is equally legitimate today. `graph-completeness.md` classifies a missing graph row, but the failure record has no disposition column, so a rejected program still cannot be classified |
 
@@ -122,6 +122,10 @@ Closed since the audit's `P0-W1` table:
 - `MC-22` / `DA-15` — `geometry_required` is derived from the answer meaning and
   the clue type in `a-construction.md`; `release-checks.yaml` selects `value: true` in
   `built_shape_share_floor`, so the 95% floor is executable.
+- `DA-7` / `MC-63` — R-5 is re-scoped to P1. `03b` runs the P1
+  `shortcut_resistance` quality gate over the answer dependency chain; the
+  requirement is [`requirements/shortcut-resistance.md`](../../docs/dataset/requirements/shortcut-resistance.md)
+  and the implementation is `P1-W5`. The P0 release makes no R-5 claim.
 - `DA-13` / `MC-44` — the support-table derivation is written in
   `task-step-support.md` and `testing/00-support-tables.md`. The coverage
   fixtures are programs, so they are `P0-W3` artifacts, not a missing contract.
@@ -389,6 +393,7 @@ project plan, not this one.
 | `P1-W2` | R-16 | External benchmark program set and the transfer overlap check (`MC-49`) |
 | `P1-W3` | R-11, R-12 | Cumulative releases (PRD section 10): honour the family-to-split registry, and add the P1 balance bounds (no CAD model above 1%, no clue type above 25%, answer-meaning shares, at least 1,000 distinct answers) |
 | `P1-W4` | R-18 | License and attribution (`DA-9`), and the public dataset card and tagged revision |
+| `P1-W5` | R-5 | `03b` R-5 quality gate: the standalone answer-dependency-chain function, the `shortcut_resistance` validity rule, and the P1 rejection count. Last P1 item; it may move to P2 if the graph parts are not retained or the threshold check is not worth its cost |
 
 `P1-W1` reuses `P0-W4`'s constructor and `P0-W6`'s checks; it is a scope extension,
 not a rewrite. A tier that fails its release gate is reported as not covered, and the
@@ -415,7 +420,6 @@ planning defect, not a scheduling choice.
 | R-2 exactly one correct answer | `P0-W4`, `P0-W6` |
 | R-3 multiple choice is fair | `P0-W4`, `P0-W6` |
 | R-4 at least 95% require the built shape | `P0-W1`, `P0-W3`, `P0-W4`, `P0-W6` |
-| R-5 no trivial shortcuts | `P0-W1`, `P0-W4`, `P0-W6` |
 | R-6 no answer leakage | `P0-W4`, `P0-W6` |
 | R-7 answer-format coverage and balance | `P0-W4`, `P0-W5`, `P0-W6` |
 | R-8 coverage of categories, clue types, forms, meanings | `P0-W4`, `P0-W5`, `P0-W6` |

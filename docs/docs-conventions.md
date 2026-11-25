@@ -42,7 +42,7 @@ docs/
   dataset/
     README.md
     requirements/               # PRD, task structure, prompt, release, terminology
-      views/                    # derived views for review: clue list, reference forms, prompt examples
+      views/                    # derived views for review: clue list, reference forms, prompt examples, shortcut resistance
       decisions.md              # requirements decisions (DS-REQ-*)
     implementation/
       decisions.md              # implementation decisions that span pipeline stages (DS-ADR-*)

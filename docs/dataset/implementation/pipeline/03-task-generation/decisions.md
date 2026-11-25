@@ -232,9 +232,33 @@ that owns them.
   is the stable hash order, so the projection is deterministic and part of
   `constructor_version`.
 
+## TG-12 — R-5 is a P1 quality gate, not a symbolic engine
+
+- **Status:** accepted (2026-11-25).
+- **Context:** R-5 was P0 and phrased as LLM-model behaviour. A per-task check of
+  whether an answer is text-derivable would need closed forms for booleans,
+  CadQuery selectors, and topology, which is a symbolic CAD kernel. The CAD graph already
+  records the operation that produced each entity and the state chain, so the
+  answer's dependency depth is available without a second geometry engine. The
+  check must reject before the definition is persisted; an audit after `03b`
+  would persist a task it already knows is shortcut-prone.
+- **Decision:** `03b` runs a P1 `shortcut_resistance` validity rule. It calls the
+  standalone `evaluate_shortcut_resistance(definition, graph, policy)` function
+  in `shortcut_resistance.go`. The function resolves the answer dependency chain
+  from the graph, records the operation count and topology flag, and returns
+  `pass`, `fail`, `not_applicable`, or `unknown`. `fail` and `unknown` reject a
+  shape-required definition; the failure row names the check and carries the
+  count, the topology flag, and the reason. No chain is stored and CadQuery is
+  not executed. A P0 run does not evaluate the rule.
+- **Consequences:** A shortcut-prone definition is a failure row, not a
+  `TaskDefinition`. The release schema and the release-check policy are unchanged. The P1
+  release report counts the rejections and records the threshold and topology
+  list. The function stays in `03b` until a second consumer appears; only then
+  does it move to a shared package.
+
 ## Pending
 
-Ten module-scoped decisions are accepted, and no module-scoped question is
+The module-scoped decisions are accepted, and no module-scoped question is
 pending. Requirements-level decisions live in
 [`../../../requirements/decisions.md`](../../../requirements/decisions.md);
 implementation decisions that span pipeline stages live in

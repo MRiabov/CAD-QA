@@ -856,7 +856,7 @@ cross-cutting phrases. Enforced by `tools/ci_cd/check_dont_say.py`.
 Terms the specs use that still need a definition; each is added only with owner approval.
 task family · intended family · answer contract · answer spec · sampled parameters ·
 evidence tier · prompt template · clue map · release-ready · split / split group ·
-geometry-critical · geometry-hop-positive · shortcut resistance · stop gate · candidate
+geometry-critical · geometry-hop-positive · shortcut resistance · answer dependency chain · stop gate · candidate
 label · source variable · path point / path segment / edge endpoint · tool declaration ·
 native tool-call format · curriculum · compaction · held-out row · tool-valid · baseline ·
 grader · harness (the runner, distinct from **LLM harness mode**) · Harbor task ·

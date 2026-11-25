@@ -38,7 +38,8 @@ prove.
 coverage fixtures in [`../../fixtures/`](../../fixtures/),
 `validity_record.checks` carries every named rule except
 `geometry_required_recorded`, each with outcome `pass`, and an independent
-evaluation of every rule the definition decides agrees with the record.
+evaluation of every rule the definition decides agrees with the record. In a P1
+run the set also includes `shortcut_resistance`; a P0 run has no such entry.
 
 Two failures are distinguished. A constructor that skips `clue_narrows` fails the
 first assertion. A constructor that records a pass for a clue whose `after` count
@@ -51,6 +52,22 @@ solution sequence and the stored value equals the recomputed value. The
 [`box-membership-inside.json`](../../oracles/task-construction/box-membership-inside.json))
 are true; a task whose only clues are provenance and whose answer is an identity
 is false. A stored value that disagrees fails `geometry_required_recorded`.
+
+`test_03b_shortcut_resistance` — P1 only. The constructor calls the standalone
+`evaluate_shortcut_resistance` and records one validity check:
+
+- a one-operation box volume fails `shortcut_resistance` and writes a failure
+  row; the definition is not persisted;
+- a three-operation chain passes, and its detail carries the operation count and
+  the topology flag;
+- a face count after a cut passes through the topology dependency;
+- a task with `geometry_required = false` records `not_applicable`;
+- a subject whose graph provenance cannot resolve records `unknown`, and the
+  definition is rejected.
+
+The test recomputes the dependency count from the fixture graph and asserts the
+validity detail. It also asserts that no dependency chain or operation-id list is
+stored. A P0 run records no `shortcut_resistance` entry.
 
 `test_03b_redundant_clue_rejected` — two assertions on the same program:
 

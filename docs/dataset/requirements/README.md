@@ -24,10 +24,12 @@ The supporting documents are not a fourth layer.
 | [`terminology.md`](terminology.md) | The words. A term is defined here or in the glossary, not in a layer document. |
 | [`decisions.md`](decisions.md) | Requirements decisions (`DS-REQ-*`). |
 | [`release-dataset-contract.md`](release-dataset-contract.md) | The consumer contract for the release table. |
+| [`shortcut-resistance.md`](shortcut-resistance.md) | The P1 R-5 construction gate: the answer dependency chain, the verdicts, the threshold, the storage cost, and what the check does not prove. |
 | [`views/clue-list.md`](views/clue-list.md) | A derived view of the strings a task clue renders to. It owns no rule and no open question. |
 | [`views/reference-forms.md`](views/reference-forms.md) | A derived view of the phrases that name a thing in a prompt. It owns no rule and no open question. |
 | [`views/prompt-examples.md`](views/prompt-examples.md) | Eight complete prompts with their answers, for reading the rendered text end to end. It owns no rule and no open question. |
 | [`views/capability-coverage.md`](views/capability-coverage.md) | A derived view of what each P0 capability can be asked about and which capabilities no task reads yet. It owns no rule and no open question. |
+| [`views/shortcut-resistance.md`](views/shortcut-resistance.md) | A derived view of the shortcut-resistance check with worked examples. It owns no rule and no open question. |
 
 The views are split by release scope: P0 first, then P1, then P2 where they have
 content. A form that does not exist at a scope is marked `missing`.
@@ -59,10 +61,12 @@ renderer labels a value no graph row carries.
 
 The layers are not equal when they disagree.
 
-1. `graph-content.md`, `task-structure.md`, and `prompt-content.md` are the
-   requirements. They record what the dataset must be.
-2. `clue-list.md` and `reference-forms.md` are derived from them. If one of
-   them disagrees with a requirement, the requirement is right.
+1. `graph-content.md`, `task-structure.md`, `prompt-content.md`, and
+   `shortcut-resistance.md` are the requirements. They record what the dataset
+   must be.
+2. `clue-list.md`, `reference-forms.md`, and `views/shortcut-resistance.md` are
+   derived from them. If one of them disagrees with a requirement, the
+   requirement is right.
 3. `implementation/` describes how the generator satisfies the requirements. An
    implementation doc that disagrees with a requirement is a defect to record,
    not newer truth to copy.

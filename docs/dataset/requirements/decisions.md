@@ -729,4 +729,27 @@ citation keys and never change meaning.
   `requirements/task-structure.md` and this file define the target; `03a`
   defines planning and `03b` defines construction.
 
+## DS-REQ-38 — R-5 is a P1 quality gate
+
+- **Status:** accepted (2026-11-25).
+- **Context:** R-5 was P0 but was phrased as LLM-model behaviour, and neither a
+  construction rule nor a release check measured it. A per-task quality gate over the
+  text-only derivability of an answer would need closed forms for booleans,
+  CadQuery selectors, and topology, which is a symbolic CAD kernel. The CAD graph already
+  records the operation that produced each entity and the state chain, so the
+  answer's dependency depth is available without a second geometry engine.
+- **Decision:** R-5 is P1. `03b` runs a `shortcut_resistance` quality gate on a
+  shape-required definition. The quality gate resolves the answer dependency chain from
+  the graph, records its operation count and topology dependency, and rejects a
+  definition whose chain is below `dependency_operation_min` with no topology
+  dependency. An unresolved chain is `unknown` and rejects. The check is one
+  small validity detail per definition; it does not store the chain. The P0
+  release does not run the quality gate and makes no R-5 claim. The Phase 2 baseline
+  measures the LLM-model consequence.
+- **Consequences:** A task that fails the quality gate is a failure row, not a
+  `TaskDefinition`; the constructor does not persist it. The release schema and the release-check policy are unchanged. The P1 release report counts the rejections and
+  records the threshold and topology list. The quality gate is a conservative floor: a
+  multi-operation closed form can pass, which the report states rather than
+  hides.
+
 ---

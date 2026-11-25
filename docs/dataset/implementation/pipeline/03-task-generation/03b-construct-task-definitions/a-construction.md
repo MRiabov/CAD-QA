@@ -129,7 +129,8 @@ leaves the faces that lie in that extreme plane, however many there are.
 ## Validity
 
 A task definition is valid only when every rule in this table holds. The check
-name is stable: it is the name the validity record carries.
+name is stable: it is the name the validity record carries. A rule marked P1 is
+evaluated only in a P1 run; a P0 run records no entry for it.
 
 | Check | Rule |
 |---|---|
@@ -149,6 +150,7 @@ name is stable: it is the name the validity record carries.
 | `near_miss_valid` | For P2 multiple choice, every near-miss fails a task clue or the answer step, and its `error_mode` is recorded. |
 | `definition_unique` | The task definition is unique under canonical identity. |
 | `geometry_required_recorded` | `geometry_required` is computed as [Geometry requirement](#geometry-requirement) defines, and the stored value equals the computed value. |
+| `shortcut_resistance` | P1: the answer dependency chain is evaluated as [Shortcut resistance](#shortcut-resistance) defines; a shape-required definition with `fail` or `unknown` is invalid. |
 
 The capability table above is a vocabulary-level test, not a per-definition
 validity check; the per-definition rule remains `clue_narrows`.
@@ -172,6 +174,9 @@ An accepted definition carries every check name except
 defect: it means the constructor did not run the rule.
 `geometry_required_recorded` is a rule but not a `checks` entry, because
 `geometry_required` is its own field and `04` copies it to the release row.
+A P0 run also omits the P1 `shortcut_resistance` check; a P1 run carries it as a
+normal check, with the dependency operation count, the topology flag, and the
+reason in its detail.
 
 ### Failure reasons
 
@@ -237,6 +242,35 @@ and counts against R-4.
 flag. Because it is derived from `task_clues`, `answer_meaning`, and
 `answer_evidence`, `geometry_required` is not a separate input to
 `definition_sha256`.
+
+## Shortcut resistance
+
+R-5 is P1. The `shortcut_resistance` validity rule calls the standalone
+`evaluate_shortcut_resistance` function over the definition's answer evidence
+and the `CadGraph`. The requirement, the answer dependency chain, the topology
+class, the verdicts, and the policy are in
+[`shortcut-resistance.md`](../../../../requirements/shortcut-resistance.md).
+
+The function returns the dependency operation count, the topology flag, the
+verdict, and a short reason. It does not execute CadQuery, does not interpret
+the program AST, and does not store the chain. It lives in the `03b` package as
+`shortcut_resistance.go`; it moves to a shared package only when a second
+consumer appears.
+
+A P0 run does not evaluate the rule and records no entry. A P1 run evaluates it:
+
+- `not_applicable` when `geometry_required` is false;
+- `pass` when the chain has at least `dependency_operation_min` operations or a
+  topology dependency;
+- `fail` when the chain is below `dependency_operation_min` and has no topology
+  dependency;
+- `unknown` when the subject or chain cannot be resolved, or the chain exceeds
+  `max_dependency_operations`.
+
+`fail` and `unknown` reject the definition. The failure row names
+`shortcut_resistance` and carries the count, the topology flag, and the reason.
+The definition is not passed to `04`. The P1 release report counts the
+rejections; the accepted set is all-pass by construction.
 
 ## Construction attempt budget
 

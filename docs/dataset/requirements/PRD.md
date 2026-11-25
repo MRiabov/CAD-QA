@@ -256,8 +256,14 @@ passed and does not claim the failed tier. The fallback is 1–5.
 | **R-2** | Every task has exactly one correct answer. | Ambiguous tasks and tasks with ties are rejected. |
 | **R-3** | Multiple-choice tasks are fair. | The correct answer is present; there are enough choices that guessing does not look competitive; choices are real candidates from the construction; choices do not give the answer away. |
 | **R-4** | At least 95% of benchmark tasks require reasoning about the actual shape. | At least one task reasoning step (a task clue step or the task answer step) depends on the geometry or topology the program builds, not only on the text of the program. |
-| **R-5** | Trivial shortcuts do not win on shape-required tasks. | For a task that requires the built shape, an LLM model cannot answer by reading variable names, literal arguments, or operation order alone. |
+| **R-5** (P1) | Trivial shortcuts do not win on shape-required tasks. | For a task that requires the built shape, the gold answer does not rest on a single operation's stated value or on operation order. The P1 R-5 quality gate rejects a definition that fails this condition, and the P1 release report states the rejection count. |
 | **R-6** | Answers are not leaked. | The prompt never contains the answer or hidden identifiers. |
+
+R-5 is P1. The P0 release makes no shortcut-resistance claim. The P1 quality gate in `03b` rejects a shape-required definition whose answer dependency chain
+is too short. See [`shortcut-resistance.md`](shortcut-resistance.md) for the
+check and [`views/shortcut-resistance.md`](views/shortcut-resistance.md) for
+worked examples. The LLM-model consequence is in
+[`development-plan.md`](../../development-plan.md#phase-2--refresh-baselines-p1-no_toolscadquery-p2).
 
 ### 7.2 Coverage and balance
 

@@ -48,8 +48,14 @@ task. It is not prompt text and not a loose task tuple. It is what `04` renders.
 | `choice_pool` | The ordered, labeled options when multiple choice is planned: label, answer value, distinguishing graph facts, and the P2 error mode. Empty otherwise. |
 | `task_clue_step_count`, `task_reasoning_step_count` | Step accounting. |
 | `geometry_required` | Whether at least one task reasoning step (a task clue step or the task answer step) depends on the built shape. Derived from the solution sequence in [`a-construction.md#geometry-requirement`](a-construction.md#geometry-requirement). |
-| `validity_record` | Typed check results and the answer-uniqueness result. |
+| `validity_record` | Typed check results and the answer-uniqueness result. A P1 `shortcut_resistance` entry carries the dependency operation count, the topology flag, the verdict, and the reason; no dependency chain is stored. |
 | `provenance` | Constructor version, seed, and input versions. Assignment, not content. |
+
+The P1 R-5 quality gate is defined in
+[`a-construction.md#shortcut-resistance`](a-construction.md#shortcut-resistance);
+its requirement is
+[`requirements/shortcut-resistance.md`](../../../../requirements/shortcut-resistance.md).
+A P0 run records no `shortcut_resistance` entry.
 
 The definition must be sufficient to reproduce the task without re-running task
 construction. `04` may render text, but it must not reorder or relabel the choice

@@ -82,7 +82,9 @@ work lists, exit criteria, and the requirement-to-item mapping are in
 
 Run cost-effective models on the primary `numpy` harness over the hard slice; log every
 call; grade with the audited grader. Re-run or retire the stale shortcut baselines. See
-`train-and-eval/evaluation/baselines.md`.
+`train-and-eval/evaluation/baselines.md`. This is the LLM-model R-5 claim; the
+dataset-side floor is the P1 `03b` R-5 quality gate in
+[`plans/nov-21/dataset-implementation-plan.md`](../plans/nov-21/dataset-implementation-plan.md#p1-work-list).
 
 **Pass condition:** baseline tables reproducible; grader verified; outputs archived.
 

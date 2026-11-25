@@ -193,7 +193,9 @@ generator/
           construction.go                  a-construction.md
           answer_semantics.go              b-answer-semantics.md
           definition_identity.go           c-definition-identity.md
+          shortcut_resistance.go           P1 quality gate; no stored chain
           construct_task_definitions_test.go
+          shortcut_resistance_test.go      P1 gate unit test
         03c-resolve-deficits/              package resolve_deficits
           resolve_deficits.go
           resolve_deficits_test.go
