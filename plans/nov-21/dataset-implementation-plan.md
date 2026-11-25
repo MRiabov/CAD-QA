@@ -111,8 +111,7 @@ re-scoping R-5 to P1, `MC-66` closed by the must-extract capability set, and
 | Item | Owner | Why it cannot wait |
 |---|---|---|
 | `MC-64` — review frames: absence and residual, ledgers scoped to a pipeline stage | `devtools/review-pack.md`, `05` | The merged pack samples release rows only; partial extraction loss and unknown unknowns have no review frame. `file-trees.md` names the two tools and not the ledger cells |
-| `MC-67` — pair distance: endpoint kinds and the `02b` capture | `graph-content.md`, `02b-execute-cadquery.md`, `graph-completeness.md` | `distance` declares no endpoint entity kinds and no pipeline stage computes it,
-  so the `measurement:distance@pair` capability cannot be realized |
+| `MC-67` — pair distance: endpoint kinds and the `02b` capture | `graph-content.md`, `02b-execute-cadquery.md`, `graph-completeness.md` | `distance` declares no endpoint entity kinds and no pipeline stage computes it, so the `measurement:distance@pair` capability cannot be realized |
 
 Closed since the audit's `P0-W1` table:
 
