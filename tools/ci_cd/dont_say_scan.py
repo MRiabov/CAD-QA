@@ -39,18 +39,26 @@ SCAN_ROOTS = (
     "tests",
     "tools",
 )
-# External study notes quote other fields' vocabulary verbatim (set cover,
-# psychometrics, RL), so the project glossary does not apply to them. They are
-# still scanned by rumdl and the documentation gates.
-SKIP_PATH_SUFFIX = ("docs", "research")
+# Two trees are written in someone else's vocabulary, so the project glossary
+# does not apply to them: external study notes quote other fields' terms
+# verbatim (set cover, psychometrics, RL), and the paper draft reports the
+# field's results in its own language before the project's terms are imposed on
+# it. Both are still scanned by rumdl and the documentation gates.
+SKIP_TREES = (
+    ("docs", "paper"),
+    ("docs", "research"),
+)
 
 
 def in_skipped_tree(candidate: Path) -> bool:
     parts = candidate.resolve().parts
     return any(
-        parts[index : index + len(SKIP_PATH_SUFFIX)] == SKIP_PATH_SUFFIX
-        for index in range(len(parts) - len(SKIP_PATH_SUFFIX) + 1)
+        parts[index : index + len(tree)] == tree
+        for tree in SKIP_TREES
+        for index in range(len(parts) - len(tree) + 1)
     )
+
+
 SCAN_SUFFIXES = frozenset({".go", ".json", ".md", ".py", ".tex"})
 SKIP_DIRS = frozenset(
     {

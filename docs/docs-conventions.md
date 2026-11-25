@@ -254,9 +254,10 @@ P0/P1 commitment.
   only with a delimiter of the same character and at least the same length, so a `python`
   block quoted inside a longer `text` block is never read as prose. A comment line in the
   first ten lines that begins `dont-say: allow-file` exempts the whole file; use it only for
-  historical records and verbatim external text. In Python and Go, comments and docstrings are
-  matched as prose,
-  and every declared name is matched as a name: class, function, method, parameter, variable,
+  historical records and verbatim external text. Two trees are skipped whole because they are
+  written in the vocabulary of their sources rather than the project's: `research/` (external
+  study notes) and `paper/` (the manuscript draft).
+  In Python and Go, comments and docstrings are matched as prose, and every declared name is matched as a name: class, function, method, parameter, variable,
   field, declared type, constant, file, and folder. JSON checks `description` and `title` as
   prose, and property, definition, enum, and const values as names; schema vocabulary is not
   a CAD-QA name. Run `tools/ci_cd/dont-say`, or

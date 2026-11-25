@@ -194,13 +194,20 @@ def test_iter_files_skips_archive_and_glossary(tmp_path: Path) -> None:
     assert collect_hits([str(tmp_path)], parse_rules(GLOSSARY)) == []
 
 
-def test_iter_files_skips_docs_research(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "tree",
+    [("docs", "research", "reports"), ("docs", "paper")],
+    ids=["research", "paper"],
+)
+def test_iter_files_skips_external_vocabulary_trees(
+    tmp_path: Path, tree: tuple[str, ...]
+) -> None:
     write_glossary(tmp_path)
     docs = tmp_path / "docs"
-    research = docs / "research" / "reports"
-    research.mkdir(parents=True)
+    skipped = docs.joinpath(*tree[1:])
+    skipped.mkdir(parents=True)
     (docs / "kept.md").write_text("the source\n", encoding="utf-8")
-    (research / "note.md").write_text("the source\n", encoding="utf-8")
+    (skipped / "note.md").write_text("the source\n", encoding="utf-8")
     found = {path.name for path in iter_files([str(tmp_path)])}
     assert found == {"kept.md"}
     hits = collect_hits([str(tmp_path)], parse_rules(GLOSSARY))
