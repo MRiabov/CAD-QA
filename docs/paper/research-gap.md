@@ -55,8 +55,9 @@ repository's own research notes in `docs/research/`.
 **Catalogue.** 24 in-window benchmarks and datasets and 6 evaluation-protocol or
 metric proposals were read closely enough to record task shape, reasoning depth,
 answer format and grading, alongside a 40-row evidence table of geometry-native
-work. The notes behind this document are in
-`research_notes/CAD AI state of the art/`.
+work. The committed synthesis behind this document is
+`docs/research/reports/2026-cad-ai-sota-scan.md`; the per-paper evidence notes are local
+working material and are not committed.
 
 **Found after the scan.** `brep-bench` (`brepbench.org`, GitHub repo created
 29 October 2026) was surfaced after the automated sweep and is recorded here as

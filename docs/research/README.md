@@ -76,3 +76,13 @@ The `Ref` column matches the numbered references in `../prior-art.md`.
 | [33] | `[preprint]` | BenchCAD: programmatic CAD benchmark and its Code QA overlap | arXiv (2026) | `papers/cad/2026-benchcad.md` | Code QA overlaps CAD-QA; generation tasks saturating, comprehension gap narrowing |
 | — | `[vendor]` | liquid-finetune: evaluation, async eval, rollouts | GitHub README (2026) | `papers/fine-tuning/2026-liquid-finetune.md` | `evals:` + custom metrics; async eval without blocking training; vLLM rollouts |
 | — | `[vendor]` | LFM2.5-DSpark: separate draft speculator for speculative decoding | Liquid AI blog / vLLM docs (2026) | `papers/fine-tuning/2026-lfm2.5-dspark.md` | no built-in MTP; spec decode is lossless and serving-only |
+
+## Synthesis reports
+
+`reports/` holds notes that draw on many studies rather than documenting one. They are exempt
+from the project glossary, because they quote the vocabulary of the fields they summarise.
+
+| Date | Report | File | What it covers |
+|---|---|---|---|
+| 2026-11-25 | AI for CAD: state of the art, August–November 2026 | `reports/2026-cad-ai-sota-scan.md` | 199-paper scan: volume, theme mix, evaluation critique, industry |
+| 2026-11-19 | Set cover already solves the clue chain | `reports/2026-cad-task-synthesis-prior-art.md` | prior art for the clue-chain construction engine |

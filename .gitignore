@@ -10,3 +10,7 @@ runs/
 .cache/
 .reasonix/
 generator/generator
+
+# local research artifacts
+/reports/
+/research_notes/
