@@ -53,21 +53,21 @@ the graph has it.
 |---|---|---|
 | solid state | `volume` | Volume |
 | solid state | `bounding_box` | Extent |
-| solid state | `centroid` | Position |
+| solid state | `centroid` | Position: the center of mass |
 | solid state | `face_count`, `edge_count`, `vertex_count` | Count |
 | face | `area` | Area |
 | face | `bounding_box` | Extent |
-| face | `centroid` | Position, and the comparison clue on a centroid coordinate |
+| face | `centroid` | Position: the area centroid, and the comparison clue on a centroid coordinate |
 | face | `edge_count`, `vertex_count` | Count |
 | edge | `length` | Length |
 | edge | `bounding_box` | Extent |
-| edge | `centroid` | Position: the midpoint only for a straight edge |
+| edge | `centroid` | Position: the length centroid, the midpoint only for a straight edge |
 | vertex | `centroid` | Position: the vertex point |
 | CadQuery profile | `area` | Area |
 | region | `volume` | Volume; target only |
 | region | `area` | Area; target only |
 | region | `bounding_box` | Extent; target only |
-| region | `centroid` | Position; target only |
+| region | `centroid` | Position: the center of mass; target only |
 | point probe | `probe_point` | Membership: the point literal |
 | point probe | `distance_to_face_surface` | none: the clear-case margin evidence |
 | operation | `volume_change` | Material change |
@@ -77,6 +77,14 @@ the graph has it.
 
 P1 rows are not listed: `selected_count`, `workplane_frame`,
 `bounding_box_change`, `perimeter`, and the path measurements.
+
+`centroid` is the measure-weighted center; for a solid state or region the
+volume centroid is the center of mass under uniform density. The center of the
+bounding box is the midpoint of `bounding_box`, an exact derivation and a
+different point; no answer meaning reads it, so a prompt that asks for a center
+names which one. `distance` on a pair is the shortest distance between the two
+entities' geometry, at their closest points, not the distance between their
+centroids.
 
 ## P0 relations
 
@@ -121,6 +129,10 @@ P1 rows are not listed: `selected_count`, `workplane_frame`,
   construction is `03b` work.
 - `distance_to_face_surface` is evidence, not an answer: membership reads its
   point, not its distance.
+- `distance` on a pair is the closest-point distance (above), but the requirement
+  does not declare which entity kinds it pairs and no pipeline stage produces the
+  rows yet
+  (`MC-67`). A pair-distance question cannot be built until both land.
 - `derived_from`, `part_of`, `adds_material`, `removes_material`, and the
   CadQuery workplane `uses` have no clue. Material change reads the operation's volume
   change, so the region relations stay graph facts for now.

@@ -13,9 +13,9 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There is 1 open entry: one P0 technical contract. P1 and P2 are empty. It was
-scheduled as a `P0-W1` item and is not written into its owner doc yet. `MC-63`,
-`MC-65`, and `MC-66` closed on 2026-11-25; `MC-64` remains.
+There are 2 open entries: two P0 technical contracts. P1 and P2 are empty. They
+were scheduled as `P0-W1` items and are not written into their owner docs yet.
+`MC-63`, `MC-65`, and `MC-66` closed on 2026-11-25; `MC-64` and `MC-67` remain.
 
 ## Decisions needed from the owner
 
@@ -32,8 +32,39 @@ None. `MC-63` closed by re-scoping R-5 to P1; see
 
 Work order:
 
-1. `MC-64` — the absence and residual review frames; the review gate in `P0-W6`
+1. `MC-67` — pair distance has no endpoint kinds and no producer; `02b` writes
+   the rows from `P0-W3` on.
+2. `MC-64` — the absence and residual review frames; the review gate in `P0-W6`
    consumes them.
+
+#### MC-67 — Pair distance declares no endpoint kinds and has no producer
+
+[`graph-content.md`](../requirements/graph-content.md) §4 declares `distance` for
+"two endpoint entities", and
+the measurement type catalog in
+[`graph-persistence.md`](pipeline/extraction/graph-persistence.md) allows
+`graph entity` on both sides. The dense emission rule in §4.1 emits
+`reference class × candidate endpoints of the declared endpoint entity kind`, and
+`angle` names faces or edges; `distance` names no endpoint entity kind, so the
+candidate set cannot be enumerated.
+
+The measurement also has no producer.
+[`graph-completeness.md`](pipeline/extraction/graph-completeness.md#5-measurement-completeness)
+calls `distance` a kernel measurement, but `02b`'s success result carries no pair
+distances and `02c` is Go and does not import CadQuery
+([`python-and-golang.md`](python-and-golang.md)). A release fails
+`extraction_capability_coverage` on `measurement:distance@pair` with no
+pipeline stage able to satisfy it.
+
+**Recommendation:** capture the dense pair distances in `02b`, while CadQuery is
+already imported and warm (`EX-22`); the entity tables and the face attributes
+that draw a reference class exist there, and `02c` copies the rows. Declare the
+entity kinds `distance` applies to in `graph-content.md` §4.1 (face and edge,
+matching `angle`), and record the capture cost against the `DS-ADR-15` 30-second
+execution budget in `P0-W3`. A class over `max_anchor_class_size` emits no rows, as
+the dense rule already says. If the budget does not hold, narrowing `distance` to
+the pairs derivable exactly in Go from stored geometry is a requirement change,
+not a silent omission.
 
 #### MC-64 — The review gate has no absence or residual frame
 

@@ -3,10 +3,10 @@
   "oracle_kind": "task-construction",
   "slug": "box-with-hole-top-face-centroid",
   "verification": {
-    "status": "verified",
-    "verified_by": "MRiabov",
-    "verified_at": "2026-11-25",
-    "rationale": "The task description and answer were written by hand. The gold query executes the program with plain CadQuery and prints the answer; it does not use the CAD graph or the constructor. Rebuilt 2026-11-25 against the settled clue-reduction-form, categorical-feature, and measured-direction contract. Owner accepted this record after reviewing the current set in the task browser on 2026-11-25.",
+    "status": "proposed",
+    "verified_by": null,
+    "verified_at": null,
+    "rationale": "The task description and answer were written by hand. The gold query executes the program with plain CadQuery and prints the answer; it does not use the CAD graph or the constructor. Rebuilt 2026-11-25 against the settled clue-reduction-form, categorical-feature, and measured-direction contract. The 2026-11-25 center-naming pass changed the question copy to name the area centroid, so this record needs owner re-verification in the task browser.",
     "gold_query": {
       "status": "passed",
       "stdout": "{\"x\":\"0\",\"y\":\"0\",\"z\":\"2.5\"}",
@@ -26,7 +26,7 @@
   },
   "task": {
     "target_category": "face",
-    "question": "What is the face centroid of the target face?",
+    "question": "What is the area centroid of the target face?",
     "state_scope": "final",
     "possible_answer_count": 8,
     "task_reasoning_step_count": 2,
@@ -121,6 +121,7 @@
   },
   "excluded": [],
   "notes": [
-    "The top annular face centroid is on the z axis."
+    "The top annular face centroid is on the z axis.",
+    "The centroid is the area centroid of the face, not the center of its bounding box."
   ]
 }

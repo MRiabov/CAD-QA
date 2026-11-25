@@ -198,11 +198,11 @@ must support at least these.
 | Area | Face, CadQuery profile, region | Face area and CadQuery profile area are different scopes. | P0 |
 | Perimeter | CadQuery profile | The length of the closed boundary. It describes a CadQuery profile of any outline, including one whose outline has no noun. | P1 |
 | Length | Edge, path segment | Straight or curve length. | P0 |
-| Distance | Two endpoint entities, or one endpoint entity and a point | Shortest distance. | P0 |
+| Distance | Two endpoint entities, or one endpoint entity and a point | The shortest distance between the two entities' geometry, which is the distance between their closest points, or from the point to the nearest point of the entity. 0 when they touch or intersect. Not the distance between centroids. | P0 |
 | Angle | Two planar faces, two edges, a path tangent, or a planar face and a program axis | Two faces: between outward normals, 0–180°. Two edges: acute angle between the lines, 0–90°. A face and an axis: between the outward normal and the directed axis, 0–180°, because +z and -z are different labels. Path tangent: between consecutive tangents, 0–180° (P1). Degrees. | P0 |
 | Outward normal | Planar face | The unit direction that points out of the solid, in the program frame. A direction, not a category and not a number. | P0 |
 | Bounding box | Solid state, face, edge, region | The axis-aligned minimum and maximum corners in the program frame. A point has no extent to report, so a vertex has none. | P0 |
-| Centroid | Solid state, entity, region | Point in the program frame. | P0 |
+| Centroid | Solid state, face, edge, vertex, region | The measure-weighted center of the entity: the volume centroid of a solid state or region, which is its center of mass under uniform density; the area centroid of a face; the length centroid of an edge; and the point itself for a vertex. Not the center of the bounding box. | P0 |
 | Centroid coordinate | Solid state, entity, region | The X, Y, or Z component of the centroid in the program frame. | P0 |
 | Probe point | Point probe | The probe point in the program frame. | P0 |
 | Distance to a face surface | Point probe | Distance from the probe point to the nearest face surface. | P0 |
@@ -216,6 +216,12 @@ must support at least these.
 A pair angle between two faces or two edges is the measurement a pair-angle clue
 or an angle answer reads. "Parallel" and "perpendicular" are renderings of 0 or
 180 and 90 degrees, not separate measurements.
+
+The center of a bounding box is the midpoint of its minimum and maximum corners.
+It is an exact derivation from `Bounding box`, so it is not stored as a
+measurement of its own, and it is a different point from `Centroid`. A prompt
+that asks for a center names which one: the center of mass or the center of the
+bounding box.
 
 Every measurement has:
 

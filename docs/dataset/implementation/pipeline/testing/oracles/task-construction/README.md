@@ -344,8 +344,8 @@ only valid reading of the task; that is the owner review.
 | [`box-membership-outside`](box-membership-outside.json) | Is the point `(1, 1, 3)` inside the target solid state? | `false` |
 | [`box-extent`](box-extent.json) | What is the bounding box of the target solid state? | `(-5, -10, -2.5)`–`(5, 10, 2.5)` |
 | [`box-with-hole-top-face-area`](box-with-hole-top-face-area.json) | What is the area of the target face? | `187.4` |
-| [`box-with-hole-top-face-centroid`](box-with-hole-top-face-centroid.json) | What is the face centroid of the target face? | `(0, 0, 2.5)` |
-| [`box-top-bottom-distance`](box-top-bottom-distance.json) | What is the distance between the target face and the face touching the bottom of the axis-aligned bounding box? | `5` |
+| [`box-with-hole-top-face-centroid`](box-with-hole-top-face-centroid.json) | What is the area centroid of the target face? | `(0, 0, 2.5)` |
+| [`box-top-bottom-distance`](box-top-bottom-distance.json) | What is the shortest distance between the target face and the face touching the bottom of the axis-aligned bounding box? | `5` |
 | [`box-top-front-angle`](box-top-front-angle.json) | What is the angle between the target face and the face touching the front of the axis-aligned bounding box? | `90` |
 | [`box-bottom-face-area-by-angle`](box-bottom-face-area-by-angle.json) | What is the area of the target face? | `200` |
 | [`box-with-hole-edge-length`](box-with-hole-edge-length.json) | What is the length of the target edge? | `12.57` |
@@ -363,11 +363,11 @@ work item before the release claims that cell.
 | Volume | Number | `box-volume` | Covered |
 | Area | Number | `box-with-hole-top-face-area` | Covered |
 | Length | Number | `box-with-hole-edge-length` | Covered |
-| Distance | Number | `box-top-bottom-distance` | Covered |
+| Distance | Number | `box-top-bottom-distance` | Covered; re-verification pending after the distance copy change |
 | Angle | Number | `box-top-front-angle` | Covered |
 | Count | Integer | `box-face-count` | Covered |
 | Membership | Yes or no | `box-membership-inside`, `box-membership-outside` | Covered, both labels |
-| Position | 3D coordinate | `box-with-hole-top-face-centroid` | Covered |
+| Position | 3D coordinate | `box-with-hole-top-face-centroid` | Covered; re-verification pending after the center-naming copy change |
 | Extent | Bounding box | `box-extent` | Covered |
 | Material change | Number | `box-with-hole-material-change` | Covered |
 | Topology change | Integer | `box-with-hole-topology-change` | Covered |

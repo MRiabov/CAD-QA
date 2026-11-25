@@ -18,7 +18,7 @@
 # `version`. A structural change bumps `schema_version` and `version`.
 
 schema_version: 2
-version: cadqa_prompt_v10
+version: cadqa_prompt_v12
 
 namespaces:
   dataset:
@@ -108,11 +108,11 @@ namespaces:
         deg: "degrees"
 
       position_parameter:
-        face_centroid: "face centroid"
-        edge_midpoint: "edge midpoint"
-        vertex_point: "vertex point"
-        region_centroid: "region centroid"
-        solid_state_centroid: "solid state centroid"
+        face_centroid: "area centroid"
+        edge_midpoint: "midpoint"
+        vertex_point: "position"
+        region_centroid: "center of mass"
+        solid_state_centroid: "center of mass"
 
       counted_entity:
         face: "faces"
@@ -213,8 +213,8 @@ namespaces:
 
       dataset.question.distance:
         variants:
-          - "What is the distance between the target {{target_label}} and {{reference}}?"
-          - "How far is the target {{target_label}} from {{reference}}?"
+          - "What is the shortest distance between the target {{target_label}} and {{reference}}?"
+          - "What is the shortest distance from the target {{target_label}} to {{reference}}?"
         placeholders:
           target_label: label.target_category
           reference: reference

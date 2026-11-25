@@ -106,7 +106,7 @@ resolve_answer(answer_meaning, bound_target, answer_parameter, penultimate_set)
 | Angle | The graph angle for the pair, with the convention in `graph-content.md`. | Graph measurement. |
 | Count | The number of entities in the bound set. | Set size. |
 | Membership | Inside or outside, from the point probe. | Probe classification. |
-| Position | The declared point: face centroid, edge midpoint, vertex point, or solid state centroid. | Kernel point or graph centroid. |
+| Position | The declared point: face area centroid, edge midpoint, vertex point, region center of mass, or solid state center of mass. | Kernel point or graph centroid. |
 | Extent | The minimum and maximum corner of the bounding box in the program frame. | Graph bounding box. |
 | Material change | The signed volume or count the bound operation adds or removes. | Signed volume change or feature count. |
 | Topology change | The signed change in the declared category. | Topology change. |

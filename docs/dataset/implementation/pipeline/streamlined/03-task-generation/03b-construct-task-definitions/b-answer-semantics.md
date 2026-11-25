@@ -47,7 +47,7 @@ TRANSFORM:
 - count → the size of the bound set
 - membership → `is_inside(solid_state, point)` from the point probe; answer is inside or outside; a point within the clear-case margin is not used; evidence = the point, its classification, the solid state, the distance to the nearest face, the classifier, and the margin; `answer_parameter` is that same probe point, bound once, and `04` renders the question from it
 - material change → the signed volume or count the bound operation adds or removes; a cut answers a negative number; `answer_parameter` is null
-- position → the declared point (face centroid, edge midpoint, vertex point, or state centroid)
+- position → the declared point (face area centroid, edge midpoint, vertex point, region center of mass, or state center of mass)
 - extent → minimum and maximum corner of the bounding box in the program frame
 - topology change → the signed change in the declared category
 - when the task is multiple choice, `gold_answer` is the pool label whose `candidate` equals `answer_value`; the answer value stays in `answer_evidence` and `choice_pool`

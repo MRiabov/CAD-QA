@@ -153,7 +153,7 @@ hole = plane.circle(2)
 result = hole.cutBlind(-2)
 ```
 
-What is the face centroid of the target face?
+What is the area centroid of the target face?
 
 1. The target face touches the front of the axis-aligned bounding box.
 

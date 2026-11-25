@@ -399,8 +399,9 @@ release:
 | Convention | The card states |
 |---|---|
 | Angle | Two faces: the angle between the outward normals, 0–180°. Two edges: the acute angle between the lines, 0–90°. Degrees. Parallel and perpendicular are renderings of 0 or 180° and 90°, not separate values. |
+| Distance | The shortest distance between the two entities' geometry, at their closest points, or from the point to the nearest point of the entity. Millimetres; 0 when they touch or intersect. Never the distance between centroids. |
 | Material change | Signed: added material is positive, a cut is negative. |
-| Position | The point the question declares: a face centroid, an edge midpoint, a vertex point, or a solid state centroid. |
+| Position | The point the question declares: a face area centroid, an edge midpoint, a vertex point, a region center of mass, or a solid state center of mass. A centroid is the measure-weighted center: the volume centroid (the center of mass under uniform density) for a solid state or region, the area centroid for a face, the length centroid for an edge, and the point for a vertex. The center of the bounding box is a different point and is never this answer. |
 | Topology change | The signed change in the entity category the question declares. |
 | Membership | Inside or outside. A point within the clear-case margin of a face surface is not used, so "on the boundary" is never an answer. |
 | Answer precision | Four significant figures by default. The stated precision is the precision a scorer compares at. |

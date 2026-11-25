@@ -3,10 +3,10 @@
   "oracle_kind": "task-construction",
   "slug": "box-top-bottom-distance",
   "verification": {
-    "status": "verified",
-    "verified_by": "MRiabov",
-    "verified_at": "2026-11-25",
-    "rationale": "The task description and answer were written by hand. The gold query executes the program with plain CadQuery and prints the answer; it does not use the CAD graph or the constructor. Rebuilt 2026-11-25 against the settled clue-reduction-form, categorical-feature, and measured-direction contract. Owner accepted this record after reviewing the current set in the task browser on 2026-11-25.",
+    "status": "proposed",
+    "verified_by": null,
+    "verified_at": null,
+    "rationale": "The task description and answer were written by hand. The gold query executes the program with plain CadQuery and prints the answer; it does not use the CAD graph or the constructor. Rebuilt 2026-11-25 against the settled clue-reduction-form, categorical-feature, and measured-direction contract. The 2026-11-25 distance-copy change made the question say shortest distance at the closest points, so this record needs owner re-verification in the task browser.",
     "gold_query": {
       "status": "passed",
       "stdout": "5",
@@ -26,7 +26,7 @@
   },
   "task": {
     "target_category": "face",
-    "question": "What is the distance between the target face and the face touching the bottom of the axis-aligned bounding box?",
+    "question": "What is the shortest distance between the target face and the face touching the bottom of the axis-aligned bounding box?",
     "state_scope": "final",
     "possible_answer_count": 6,
     "task_reasoning_step_count": 2,
