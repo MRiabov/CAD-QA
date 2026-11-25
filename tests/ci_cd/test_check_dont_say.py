@@ -194,6 +194,19 @@ def test_iter_files_skips_archive_and_glossary(tmp_path: Path) -> None:
     assert collect_hits([str(tmp_path)], parse_rules(GLOSSARY)) == []
 
 
+def test_iter_files_skips_docs_research(tmp_path: Path) -> None:
+    write_glossary(tmp_path)
+    docs = tmp_path / "docs"
+    research = docs / "research" / "reports"
+    research.mkdir(parents=True)
+    (docs / "kept.md").write_text("the source\n", encoding="utf-8")
+    (research / "note.md").write_text("the source\n", encoding="utf-8")
+    found = {path.name for path in iter_files([str(tmp_path)])}
+    assert found == {"kept.md"}
+    hits = collect_hits([str(tmp_path)], parse_rules(GLOSSARY))
+    assert [hit.path.name for hit in hits] == ["kept.md"]
+
+
 def test_rule_builds_word_boundary_pattern() -> None:
     rule = Rule.build("source", "CadQuery program")
     assert rule.pattern.search("the source") is not None

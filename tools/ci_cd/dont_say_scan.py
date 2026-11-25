@@ -39,6 +39,18 @@ SCAN_ROOTS = (
     "tests",
     "tools",
 )
+# External study notes quote other fields' vocabulary verbatim (set cover,
+# psychometrics, RL), so the project glossary does not apply to them. They are
+# still scanned by rumdl and the documentation gates.
+SKIP_PATH_SUFFIX = ("docs", "research")
+
+
+def in_skipped_tree(candidate: Path) -> bool:
+    parts = candidate.resolve().parts
+    return any(
+        parts[index : index + len(SKIP_PATH_SUFFIX)] == SKIP_PATH_SUFFIX
+        for index in range(len(parts) - len(SKIP_PATH_SUFFIX) + 1)
+    )
 SCAN_SUFFIXES = frozenset({".go", ".json", ".md", ".py", ".tex"})
 SKIP_DIRS = frozenset(
     {
@@ -372,6 +384,8 @@ def iter_files(roots: list[str]) -> list[Path]:
                 continue
             if SKIP_DIRS.intersection(candidate.relative_to(path).parts):
                 continue
+            if in_skipped_tree(candidate):
+                continue
             files.append(candidate)
     return files
 
@@ -388,6 +402,8 @@ def iter_folders(roots: list[str]) -> list[Path]:
             if not candidate.is_dir():
                 continue
             if SKIP_DIRS.intersection(candidate.relative_to(path).parts):
+                continue
+            if in_skipped_tree(candidate):
                 continue
             folders.append(candidate)
     return folders
