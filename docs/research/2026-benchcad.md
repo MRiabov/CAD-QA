@@ -1,7 +1,24 @@
 # BenchCAD: programmatic CAD benchmark and its Code QA overlap (2026)
 
 **Status:** external study note, not our result. Added 2026-10-09 to record the BenchCAD task
-suite, its frontier scores, its overlap with CAD-QA, and the timing consequence.
+suite, its frontier scores, its overlap with CAD-QA, and the timing consequence. Re-checked
+2026-11-25.
+
+### Currency of the Code QA scores (re-checked 2026-11-25)
+
+- The Code QA rows are unchanged: 14 entries on the 1.0 board, every one `tested: 2026-05`.
+  Best total is still Gemini 3.1 Pro at 0.838; Spatial Reasoning is still 0.537 (Gemini) to
+  0.731 (GPT-5.3); the blank-code baseline is still 0.42.
+- BenchCAD moved its frontier to the 2.x line. 2.1 shipped 2026-10-19 (blog 2026-11-05) as six
+  reconstruction tasks over 100 held-out Core cases with an agentic harness. It contains no
+  numeric Code QA, and its scores are explicitly **not comparable** with 2.0 or 2.1-beta.
+- The 1.0 Vision2Code board does have newer entries (released and tested 2026-09/10, including
+  provider-reported `IoU · tools` rows). That movement is generation and agentic tool use, not
+  comprehension; do not read it as a Code QA refresh.
+- Consequence: every Code QA number below is `[stale — last tested 2026-05]` for a
+  current-frontier claim. Before the paper quotes a gap, re-run the official `qa_code` split with
+  a current model under the same no-kernel setting. Until then, write "as last measured in May
+  2026".
 
 ## Citation
 
@@ -104,7 +121,7 @@ targets.
   plotted as one comparable curve with the re-graded 0.27–0.29.
 - Code Edit: best headroom-normalised accuracy 0.865 (GPT-5.3); no-change baseline 0.0.
 
-### BenchCAD 2.0 (reconstruction-only, 2026-09)
+### BenchCAD 2.0 and 2.1 (reconstruction-only, 2026-09/10)
 
 BenchCAD 2.0 (`github.com/BenchCAD-org/benchcad-2`, "2.0-preview", repo created 2026-09-11) is
 six **reconstruction** tasks (T1–T6), each scored by execution with no LLM judge: T1 drawing →
@@ -116,8 +133,14 @@ assembly; T6 PCB renders → terminal-net graph. Headlines: `part_v1 = 0.5·iou_
 works in a sandbox for 30 rounds per case, with `export`, `export_part`, `use_part`,
 `submit_assembly`, and `crop`; a 300-family held-out set stays private.
 
-**Why it does not change the overlap.** 2.0 is generation/reconstruction only — it adds
-assemblies and PCB wiring, not comprehension. It carries no numeric-QA or multi-hop task, so the
+**2.1 (2026-10-19).** Keeps the same six reconstruction tasks and case files, raises the standard
+harness to 60 rounds and 500k output tokens with reasoning carried across rounds, and adds a
+customized-harness track (Claude Code, Codex). The 2.1 blog is 2026-11-05; best standard score
+reported is 0.754 (Claude Fable 5.2), best customized 0.875 (an unreleased OpenAI model scored
+with the 2.0 scorer). 2.1 scores are explicitly not comparable with 2.0. No Code QA.
+
+**Why it does not change the overlap.** 2.0 and 2.1 are generation/reconstruction only — they add
+assemblies and PCB wiring, not comprehension. Neither carries a numeric-QA or multi-hop task, so the
 closest BenchCAD task to CAD-QA remains 1.0 Code QA. It matters as context: the benchmark's
 center of gravity is reconstruction and assemblies, which leaves multi-hop comprehension as the
 unoccupied corner.

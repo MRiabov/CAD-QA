@@ -13,6 +13,12 @@ proposal that the code, dataset, and fine-tuning work implement.
   (same prose, same Harvard reference list; only section-number prefixes and
   quote glyphs differ). Edit the `.tex` first, then bring the `.md` back into
   parity, or regenerate the `.md` with pandoc.
+- `CAD-QA_report.md` — working scaffold for the MSc Research Project Report,
+  following the NCI report template's section order (title page, abstract,
+  introduction, related work, methodology, design, implementation, evaluation,
+  conclusion, references). Sections are bullet-point outline notes inside HTML
+  comments, not prose, and the header records the 4,000–6,000 word target
+  (6,000 maximum).
 - `CA2Img-GanttChart-mermaid.png` — the project-plan Gantt figure embedded by
   the manuscript.
 - `supervisor-email-thread.md` — the supervisor correspondence (Raza Abidi) on
