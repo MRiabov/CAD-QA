@@ -98,7 +98,7 @@ alone is not disqualifying — `xLAM/APIGen` is still the canonical reference an
   SFT+LoRA, mixture-first plan and H1. **Caveat (contamination):** the Qwen3 base likely saw these
   public corpora in post-training (zero-shot xLAM is 66–78%), so the in-distribution magnitudes are
   upper bounds and the `emit_our_tool_call_format` evaluation dataset must not be a held-out slice of them — see
-  `../../research/2026-sft-vs-rl-tool-calling.md` and the evaluation plan §6.
+  `../../research/papers/tool-calling/2026-sft-vs-rl-tool-calling.md` and the evaluation plan §6.
 - ACL 2026 "Skill-Aware Data Selection and Fine-Tuning for Data-Efficient Reasoning Distillation":
   1,000 selected traces beat random SFT from a 100K corpus. Supports small, quality-filtered sets.
 

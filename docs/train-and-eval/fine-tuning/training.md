@@ -267,7 +267,7 @@ a bigger card.
   but still contends, so prefer `reserved` on a second GPU/B300 for reported runs. **Async eval does not
   buy a higher cadence:** the budget is the evaluation plan's (`../evaluation/plan.md` §6) — 64 rows at
   most once per epoch, only for epochs ≥250 steps, capped at 3/phase; full validation at phase end; one
-  final test. See `../../research/2026-liquid-finetune.md`.
+  final test. See `../../research/papers/fine-tuning/2026-liquid-finetune.md`.
 
 ### 5.3 Cost estimate
 

@@ -245,7 +245,7 @@ multiturn block, so the whole loop stays in one stack on Modal.
 ### BenchCAD and the CAD benchmark saturation (2026)
 
 **Status:** recorded 2026-10-09 from the public BenchCAD leaderboard and task docs. Detail and
-citations: `research/2026-benchcad.md` (ref [33]).
+citations: `research/papers/cad/2026-benchcad.md` (ref [33]).
 
 BenchCAD (Zhang et al., 2026) has two lines on 17,900 execution-verified CadQuery programs,
 graded deterministically with no LLM judge: **1.0** (four tasks, including the **Code QA**
@@ -280,119 +280,119 @@ reference never stands alone for a load-bearing claim.
 1. distil labs (2025) 'We Benchmarked 12 Small Language Models Across 8 Tasks to Find the Best
    Base LLM Model for Fine-Tuning', *distil labs blog*, 10 December.
    `distillabs.ai/blog/we-benchmarked-12-small-language-models-across-8-tasks`. `[vendor]`.
-   Note: `research/2025-distil-labs-12-small-models-fine-tuning.md`.
+   Note: `research/papers/fine-tuning/2025-distil-labs-12-small-models-fine-tuning.md`.
 2. distil labs (2026) 'What Small `Language Model` Is Best for Fine-Tuning', *distil labs
    blog*, 16 March. `distillabs.ai/blog/what-small-language-model-is-best-for-fine-tuning`.
-   `[vendor]`. Note: `research/2026-distil-labs-15-small-models-fine-tuning.md`.
+   `[vendor]`. Note: `research/papers/fine-tuning/2026-distil-labs-15-small-models-fine-tuning.md`.
 3. distil labs (2026) 'Does `Base-Model` Accuracy Predict Fine-Tuned Performance: A Mid-Size
    MoE Benchmark', *distil labs blog*, 16 July.
    `distillabs.ai/blog/does-base-model-accuracy-predict-fine-tuned-performance`. `[vendor]`.
-   Note: `research/2026-distil-labs-base-vs-tuned-moe.md`.
+   Note: `research/papers/fine-tuning/2026-distil-labs-base-vs-tuned-moe.md`.
 4. distil labs (2026) 'Qwen vs Llama vs Gemma for Tool Calling', *distil labs learn*, 2
    August. `distillabs.ai/learn/qwen-vs-llama-vs-gemma-for-tool-calling`. `[vendor]`. Note:
-   `research/2026-distil-labs-tool-calling-families.md`.
+   `research/papers/tool-calling/2026-distil-labs-tool-calling-families.md`.
 5. Yang, E.X. (2026) 'Phi-4-Mini vs Gemma 4 vs Qwen3-4B: Tool Calling', *ert.as*, 10 May,
    updated 7 August. `ertas.ai/blog/on-device-tool-calling-2026-qwen3-gemma4-phi4`. `[vendor]`.
-   Note: `research/2026-ertas-on-device-tool-calling.md`.
+   Note: `research/papers/tool-calling/2026-ertas-on-device-tool-calling.md`.
 6. Jhandi, P., Kazi, O., Subramanian, S. and Sendas, N. (2026) 'Small Language Models for
    Efficient Agentic Tool Calling: Outperforming Large Models with Targeted Fine-tuning',
    arXiv:2512.15943; AAAI 2026 workshop. `arxiv.org/abs/2512.15943`. `[workshop]`. Note:
-   `research/2026-slm-agentic-tool-calling.md`.
+   `research/papers/tool-calling/2026-slm-agentic-tool-calling.md`.
 7. Matsutani, K., Takashiro, S., Minegishi, G., Kojima, T., Iwasawa, Y. and Matsuo, Y. (2026)
    'RL Squeezes, SFT Expands: A Comparative Study of Reasoning LLMs', ICLR 2026.
    arXiv:2509.21128. `arxiv.org/abs/2509.21128`. `[peer-reviewed]`. Note:
-   `research/2026-rl-squeezes-sft-expands.md`.
+   `research/papers/rl/2026-rl-squeezes-sft-expands.md`.
 8. He, C., Zhang, R., Wang, Z. and Li, X. (2026) 'Learning What to Learn: Stage-Specific Data <!-- dont-say: allow -->
    Sets for SFT-then-RL in Small `Language Model` Reasoning', arXiv:2606.04466.
-   `arxiv.org/abs/2606.04466`. `[preprint]`. Note: `research/2026-learning-what-to-learn.md`.
+   `arxiv.org/abs/2606.04466`. `[preprint]`. Note: `research/papers/rl/2026-learning-what-to-learn.md`.
 9. Kaur, S., Ri, N., He, Y., Fowl, L.H. and Arora, S. (2026) 'Rethinking On-Policy
    Self-Distillation for Thinking Models', ICML 2026 FoGen workshop.
    `openreview.net/forum?id=VhCJItwQHn`. `[workshop]`. Note:
-   `research/2026-privileged-on-policy-distillation.md`.
+   `research/papers/rl/2026-privileged-on-policy-distillation.md`.
 10. Luo, S., Zhu, Z., Yuan, Y., Yang, Y., Shan, L. and Wu, Y. (2025) 'GeoGramBench:
     Benchmarking the Geometric Program Reasoning in Modern LLMs', arXiv:2505.17653.
     `arxiv.org/abs/2505.17653`. `[preprint]`. Note:
-    `research/2025-geogrambench-program-to-geometry.md`.
+    `research/papers/cad/2025-geogrambench-program-to-geometry.md`.
 11. Kienle, C. et al. (2024) 'QueryCAD: Grounded Question Answering for CAD Models',
     arXiv:2409.08704. `arxiv.org/abs/2409.08704`. `[preprint]`. Note:
-    `research/2024-querycad-cad-question-answering.md`.
+    `research/papers/cad/2024-querycad-cad-question-answering.md`.
 12. Abdullaeva, I., Vasiliuk, A., Goncharova, E., Rahmatullaev, T., Ivan, Z., Kurkin, M. and
     Kuznetsov, A. (2026) 'NoReGeo: Non-Reasoning Geometry Benchmark', *Proceedings of the AAAI
     Conference on Artificial Intelligence*, 40(23), pp. 18901–18909. doi:
     `10.1609/aaai.v40i23.38960`. `[peer-reviewed]`. Note:
-    `research/2026-noregeo-non-reasoning-geometry-benchmark.md`.
+    `research/papers/cad/2026-noregeo-non-reasoning-geometry-benchmark.md`.
 13. Lin, H., Huang, B., Ye, H., Chen, Q., Wang, Z., Li, S., Ma, J., Wan, X., Zou, J. and
     Liang, Y. (2024) 'Selecting Large `Language Model` to Fine-tune via Rectified Scaling Law',
     ICML 2024. arXiv:2402.02314. `arxiv.org/abs/2402.02314`. `[peer-reviewed]`. Note:
-    `research/2024-selecting-llm-to-finetune-rectified-scaling-law.md`.
+    `research/papers/fine-tuning/2024-selecting-llm-to-finetune-rectified-scaling-law.md`.
 14. Choshen, L., Venezian, E., Don-Yehia, S., Slonim, N. and Katz, Y. (2022) 'Where to start?
     Analyzing the potential value of intermediate models', arXiv:2211.00107.
     `arxiv.org/abs/2211.00107`. `[preprint]`. Note:
-    `research/2022-where-to-start-intermediate-models.md`.
+    `research/papers/fine-tuning/2022-where-to-start-intermediate-models.md`.
 15. Zeng, H., Hui, K., Zhuang, H., Qin, Z., Yue, Z., Zamani, H. and Alon, D. (2025) 'Can
     Pre-training Indicators Reliably Predict Fine-tuning Outcomes of LLMs?', arXiv:2504.12491.
     `arxiv.org/abs/2504.12491`. `[preprint]`. Note:
-    `research/2025-pretraining-indicators-finetuning-outcomes.md`.
+    `research/papers/fine-tuning/2025-pretraining-indicators-finetuning-outcomes.md`.
 16. Kavathekar, I., Donakanti, R., Kumaraguru, P. and Vaidhyanathan, K. (2025) 'Small Models,
     Big Tasks: An Exploratory Empirical Study on Small Language Models for Function Calling',
     EASE 2025. doi: `10.1145/3756681.3757001`; arXiv:2504.19277. `arxiv.org/abs/2504.19277`.
-    `[peer-reviewed]`. Note: `research/2025-small-models-big-tasks-function-calling.md`.
+    `[peer-reviewed]`. Note: `research/papers/tool-calling/2025-small-models-big-tasks-function-calling.md`.
 17. Patil, S.G., Mao, H., Ji, C.C.-J., Yan, F., Suresh, V., Stoica, I. and Gonzalez, J.E.
     (2025) 'The Berkeley Function Calling Leaderboard (BFCL): From Tool Use to Agentic
     Evaluation of Large Language Models', ICML 2025. `gorilla.cs.berkeley.edu/leaderboard`.
-    `[peer-reviewed]`. Note: `research/2025-berkeley-function-calling-leaderboard.md`.
+    `[peer-reviewed]`. Note: `research/papers/tool-calling/2025-berkeley-function-calling-leaderboard.md`.
 18. Haque, M.A., Rahman, F., Gupta, K.D., Shujaee, K. and George, R. (2025) 'TinyLLM:
     Evaluation and Optimization of Small Language Models for Agentic Tasks on Edge Devices',
     arXiv:2511.22138. `arxiv.org/abs/2511.22138`. `[preprint]`. Note:
-    `research/2025-tinyllm-agentic-edge.md`.
+    `research/papers/tool-calling/2025-tinyllm-agentic-edge.md`.
 19. Laskar, M.T.R., Fu, X.-Y. and Shashi Bhushan, T.N. (2026) 'SFT or RL for Tool-Calling Agents?
     A Controlled Study Across Data, Method, and Scale', arXiv:2609.17848.
     `arxiv.org/abs/2609.17848`. `[preprint]`. Note:
-    `research/2026-sft-vs-rl-tool-calling.md`.
+    `research/papers/tool-calling/2026-sft-vs-rl-tool-calling.md`.
 20. (2026) 'A Learning-Rate-Gated Failure of GRPO in a Small Language and Vision-Language Model <!-- dont-say: allow -->
     Web Agent: A Controlled Null and Its Mechanism', arXiv:2607.12640.
     `arxiv.org/html/2607.12640v1`. `[preprint]`. Note:
-    `research/2026-grpo-null-web-agent.md`.
+    `research/papers/agents/2026-grpo-null-web-agent.md`.
 21. (2025) 'Online Difficulty Filtering for Reasoning Oriented Reinforcement Learning',
     arXiv:2504.03380. `arxiv.org/html/2504.03380v2`. `[preprint]`. Note:
-    `research/2025-online-difficulty-filtering-rlvr.md`.
+    `research/papers/rl/2025-online-difficulty-filtering-rlvr.md`.
 22. (2026) 'Rollout Pass-Rate Control: Steering Binary-Reward RL Toward Its Most Informative
     Regime', arXiv:2605.05112. `arxiv.org/pdf/2605.05112`. `[preprint]`. Note:
-    `research/2026-rollout-pass-rate-control.md`.
+    `research/papers/rl/2026-rollout-pass-rate-control.md`.
 23. Yu, Q. et al. (2025) 'DAPO: An Open-Source LLM Reinforcement Learning System at Scale',
     arXiv:2503.14476. `arxiv.org/abs/2503.14476`. `[preprint]`. Note:
-    `research/2025-dapo-decoupled-clip-dynamic-sampling.md`.
+    `research/papers/rl/2025-dapo-decoupled-clip-dynamic-sampling.md`.
 24. Xin, E. (2026) 'Where the Verifier Fails: A Category-Level Audit of Reward Signals in RLVR', <!-- dont-say: allow -->
     arXiv:2609.01354. `arxiv.org/abs/2609.01354`. `[preprint]`. Note:
-    `research/2026-where-the-query-verifier-fails.md`.
+    `research/papers/evaluation/2026-where-the-query-verifier-fails.md`.
 25. (2026) 'Finetuning with Sampling: SFT Learns Better Than You Think', arXiv:2610.02140.
-    `arxiv.org/html/2610.02140`. `[preprint]`. Note: `research/2026-finetuning-with-sampling.md`.
+    `arxiv.org/html/2610.02140`. `[preprint]`. Note: `research/papers/fine-tuning/2026-finetuning-with-sampling.md`.
 26. (2025) 'BREAD: Branched Rollouts from Expert Anchors Bridge SFT & RL for Reasoning', NeurIPS
     2025 poster 118358; OpenReview `forum?id=NUDaln2vCe`. `[peer-reviewed]`. Note:
-    `research/2025-bread-branched-rollouts.md`.
+    `research/papers/rl/2025-bread-branched-rollouts.md`.
 27. Forbes, G.C., Villalobos-Arias, L., Wang, J., Jhala, A. and Roberts, D.L. (2026) 'Preventing
     Process Reward Model Hacking When Training Large Language Models on Verifiable Rewards', <!-- dont-say: allow -->
     AAMAS 2026 (extended abstract). doi: `10.65109/BWFN6920`. `[workshop]`. Note:
-    `research/2026-prm-reward-hacking-aamas.md`.
+    `research/papers/evaluation/2026-prm-reward-hacking-aamas.md`.
 28. Wang, S., Pham, Q.H., Yin, F., Wang, X., Chen, J.Q., Durrett, G. and Ye, X. (2026) 'Detecting
     and Suppressing Reward Hacking with Gradient Fingerprints', COLM 2026. arXiv:2604.16242.
     `arxiv.org/pdf/2604.16242`. `[peer-reviewed]`. Note:
-    `research/2026-gradient-fingerprints-reward-hacking.md`.
+    `research/papers/evaluation/2026-gradient-fingerprints-reward-hacking.md`.
 29. (2025) 'Towards Reliable Benchmarking: A Contamination Free, Controllable Evaluation Framework
     for Multi-step LLM Function Calling', arXiv:2509.26553; ICLR 2026.
     `arxiv.org/html/2509.26553v2`. `[peer-reviewed]`. Note:
-    `research/2025-contamination-free-function-calling-eval.md`.
+    `research/papers/evaluation/2025-contamination-free-function-calling-eval.md`.
 30. (2025) 'Scaling Environments for LLM Agents in the Era of Learning from Interaction: A Survey',
     arXiv:2511.09586. `arxiv.org/html/2511.09586v1`. `[preprint]`. Note:
-    `research/2025-scaling-environments-llm-agents.md`.
+    `research/papers/agents/2025-scaling-environments-llm-agents.md`.
 31. (2025) 'RLVE: Scaling Up Reinforcement Learning for Language Models with Adaptive Verifiable
     Environments', arXiv:2511.07317. `arxiv.org/html/2511.07317v1`. `[preprint]`. Note:
-    `research/2025-rlve-adaptive-verifiable-environments.md`.
+    `research/papers/rl/2025-rlve-adaptive-verifiable-environments.md`.
 32. (2026) 'Endless Terminals', arXiv:2601.16443. Cited by the environment-scaling survey [30].
-    `[preprint]`. Note: `research/2026-endless-terminals-warm-start.md`.
+    `[preprint]`. Note: `research/papers/agents/2026-endless-terminals-warm-start.md`.
 33. Zhang, H., Liu, K., Chen, M., Li, L., Yang, S., Peng, C. and Chen, H. (2026) 'BenchCAD: A
     Comprehensive, Industry-Standard Benchmark for Programmatic CAD', arXiv:2605.10865.
-    `arxiv.org/abs/2605.10865`. `[preprint]`. Note: `research/2026-benchcad.md`.
+    `arxiv.org/abs/2605.10865`. `[preprint]`. Note: `research/papers/cad/2026-benchcad.md`.
 
 ## Resolved questions
 

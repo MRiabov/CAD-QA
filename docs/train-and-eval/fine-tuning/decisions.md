@@ -148,8 +148,8 @@ whose rationale was not recoverable.
     post-training loop without a second RL framework. See
     `system.md`.
 - Detail: [`../../prior-art.md`](../../prior-art.md) (LFM2.5 finding), research notes
-  `../../research/2026-distil-labs-15-small-models-fine-tuning.md` and
-  `../../research/2026-distil-labs-tool-calling-families.md`.
+  `../../research/papers/fine-tuning/2026-distil-labs-15-small-models-fine-tuning.md` and
+  `../../research/papers/tool-calling/2026-distil-labs-tool-calling-families.md`.
 
 ## FT-D12 — The Phase 3 rewrite retains only the loader and the typed tool contract
 
@@ -361,7 +361,7 @@ whose rationale was not recoverable.
     fallback (FT-D11). Detail: `pipeline/07-serving.md`, `training.md` §5.
   - The public fine-tuning stack (`liquid-finetune`/LEAP) has **no DSpark/speculator support**
     (checked 2026-10-09), so we could not train a drafter matched to our fine-tuned LLM model with it anyway.
-- Detail: `../../research/2026-lfm2.5-dspark.md`.
+- Detail: `../../research/papers/fine-tuning/2026-lfm2.5-dspark.md`.
 
 ## FT-D23 — Release the adapter; Transformers is the reference runtime
 

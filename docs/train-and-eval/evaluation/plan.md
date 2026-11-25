@@ -154,7 +154,7 @@ Two rules:
 
 | Role | Benchmark | In → output | Modality | Tier |
 |---|---|---|---|---|
-| Means | BenchCAD `qa_code` (`../../research/2026-benchcad.md`, ref [33]) | CadQuery program + numeric question → number | text-in | **P0** |
+| Means | BenchCAD `qa_code` (`../../research/papers/cad/2026-benchcad.md`, ref [33]) | CadQuery program + numeric question → number | text-in | **P0** |
 | End | BenchCAD `edit_code` T4/T5 | instruction + program → edited program | code-in | P1 |
 | End | `Text2CAD-Bench` (arXiv:2605.18430) | text → CadQuery program | text-in | P1, reachability-gated |
 | End / defect | `Text-to-CadQuery` (arXiv:2505.06507); `CAD-Editor` (ICML 2025) | text → CadQuery program; text edit | text-in | P1 |
@@ -431,7 +431,7 @@ the one-scorer rule, and the `eval` pool) and **D-B1**–**D-B3** (baselines). T
 - **Q4.** *(2026-10-09)* Liquid Finetune runs `evals:` with pluggable metrics (the Evaluation Guide) and a
   standalone `eval` subcommand writing `results.json`; wire our exact-match scorer as a custom metric, or
   grade its generations offline. `async_eval` runs evals without blocking training.
-  (`../../research/2026-liquid-finetune.md`.)
+  (`../../research/papers/fine-tuning/2026-liquid-finetune.md`.)
 
 ---
 

@@ -4,7 +4,7 @@
 suite, its frontier scores, its overlap with CAD-QA, and the timing consequence. Re-checked
 2026-11-25.
 
-### Currency of the Code QA scores (re-checked 2026-11-25)
+## Currency of the Code QA scores (re-checked 2026-11-25)
 
 - The Code QA rows are unchanged: 14 entries on the 1.0 board, every one `tested: 2026-05`.
   Best total is still Gemini 3.1 Pro at 0.838; Spatial Reasoning is still 0.537 (Gemini) to
