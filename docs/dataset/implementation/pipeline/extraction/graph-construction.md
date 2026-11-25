@@ -122,49 +122,60 @@ pair emission rule in [`graph-content.md` §4.1](../../../requirements/graph-con
 A pair that is not emitted produces no row. It is not recorded as missing, and it
 must not be guessed.
 
-### Named endpoints
+### Reference classes
 
-A face label is derived per bindable solid state from the extraction records. A
-state outside the release implementation scope emits no pair rows
-(`graph-content.md` §4.1). A label is stored per face; a label may select no face
-or several faces. A named endpoint is a label that resolves to exactly one face
-in the state. Zero matches or several matches means the label is not a named
-endpoint for pair emission; clue evaluation still sees the set.
+A reference class is derived per bindable solid state from the extraction
+records. A state outside the release implementation scope emits no pair rows
+(`graph-content.md` §4.1). A class is the set of faces in one state that share
+one label of one mechanism; it is derived whole and never reduced to a member.
 
-| Mechanism | Derivation | Stored name |
+| Mechanism | Derivation | Stored label |
 |---|---|---|
 | Face surface kind | The `face_surface_kind` of the face. | The `FaceSurfaceKind` value, for example `cylinder`. |
 | Position | Every face that lies in an extreme plane of the state bounding box: all its points share that extreme's coordinate on one program axis. A face whose extent merely spans the extreme does not lie in the plane. | `min_x`, `max_x`, `min_y`, `max_y`, `min_z`, `max_z`; a face carries every extreme plane it lies in. |
 | Provenance | The face first appears in the state of one operation: its `fingerprint_sha256` is absent from the previous state's entity table. | The operation id. |
 
-The first state has no previous state, so every face in it counts as new. The
-stored label is the graph value. `04` renders prompt wording from it; the graph
-stores no English.
+The first state has no previous state, so every face in it counts as new. A
+face carries one label per mechanism; a reference class is the set of faces that
+share a label. The stored label is the graph value. `04` renders prompt wording
+from it; the graph stores no English.
 
-The outward normal is a face attribute, not a named endpoint: a planar face
+The outward normal is a face attribute, not a reference class: a planar face
 stores the unit direction that points out of the solid. It is a continuous
 vector, so no orientation label is derived from it and no axis is stored. A clue
 about direction measures the angle between that vector and the axis the clue
 names. It is a clue condition, not a pair endpoint. A pair angle between two
 faces or two edges is a pair measurement, not a relation.
 
-A face can carry several labels, and a label can select no face or several faces.
-A label is not a relation and creates no row. Pair emission uses only a label that
-selects exactly one face; clue evaluation uses the set.
+A face can carry several labels, and a label may select no face or several faces.
+A label is not a relation and creates no row. Pair emission emits a reference
+class whole when its member count is within `max_anchor_class_size`; clue
+evaluation reads the set in every case.
 
 ### Pair rows
 
-The P0 pair kinds are the measurements `distance` and `angle`. P1 adds the
-relations `coplanar_with` and `coaxial_with`. A pair kind outside this list is
-not emitted.
+The P0 pair kinds are the dense measurements `distance` and `angle`. The P1
+pair kinds are the sparse relations `coplanar_with` and `coaxial_with`.
+`adjacent_to` is sparse by the same rule and is created from the topology
+records, so it needs no separate emission step and no reference class. Any other
+pair kind is not emitted.
 
-For each pair relation or pair measurement, take the named endpoints of a
-bindable state and the candidate endpoints of the declared endpoint entity kind
-in the same state, then:
+A sparse pair kind is emitted for every true pair of the declared endpoint
+entity kinds in a bindable state, with the endpoints in canonical id order. A
+dense pair kind is emitted for each reference class in a bindable state whose member count is at
+most `max_anchor_class_size`, times the candidate endpoints of the declared
+endpoint entity kind in the same state; then:
 
 1. drop a pair whose two endpoints are the same entity;
-2. reduce to unordered pairs, so a pair of two named entities appears once;
+2. reduce to unordered pairs, so a pair of two class members appears once;
 3. emit one row per remaining pair, with the endpoints in canonical id order.
+
+A reference class over `max_anchor_class_size` emits no rows of a dense kind. The
+class is not reduced: a partial class would make a clue's truth depend on which
+members were dropped, because an absent pair row is indistinguishable from a pair
+that does not hold. The omission is not written as a row, because the member
+count and the constant reproduce it; a task clue that needs the class is rejected
+at `03b` with that reason.
 
 The row uses the relation or measurement id from
 [`graph-persistence.md`](graph-persistence.md), which already includes the
@@ -174,7 +185,8 @@ evidence. The relation `tolerance` is null unless the relation is
 `coplanar_with` or `coaxial_with`, as
 [`graph-persistence.md`](graph-persistence.md) defines.
 
-An empty candidate set emits no rows. It is not an error and not a gap.
+An empty candidate set emits no rows. So does a reference class over
+`max_anchor_class_size`. Neither is an error and neither is a gap.
 
 ### State size
 
@@ -188,6 +200,10 @@ references the dropped entities would look unanswerable rather than invalid.
 `max_state_entities` is the implementation-scope constant defined in
 [`graph-content.md` §4.1](../../../requirements/graph-content.md#41-emission-rules);
 read the recorded number and do not recompute it per run.
+
+A reference class over `max_anchor_class_size` does not reject the program. It
+emits no dense pair rows, and a clue that needs it is rejected at construction.
+Only the state entity count rejects a program.
 
 ## Measurement construction
 

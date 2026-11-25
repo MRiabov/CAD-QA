@@ -44,9 +44,9 @@ the user-visible outcome.
 | **CAD graph entity** | Internal | One entity in the CAD graph, such as a face, edge, operation, or region. |
 | **CAD graph relation** | Domain | A named link between two CAD graph entities. |
 | **CAD graph measurement** | Domain | A numeric or geometric value about a CAD graph entity or a pair of CAD graph entities. |
-| **Pair emission rule** | Internal | A pair relation or measurement is emitted only when one endpoint is a named entity and the other is of the declared endpoint entity kind. The rule is declared, not discovered: a pair it does not allow is not a candidate. |
-| **Emitted pairs** | Internal | The pairs one solid state emits under the pair emission rule: one named entity times the candidate endpoints of the declared endpoint entity kind. The count is linear in the entity count, not the full pair set. |
-| **Named entity** | Internal | An entity a task clue can identify directly, by face surface kind, by position, or by the operation or feature that created it. Marked for demolition; see [`graph-content.md`](graph-content.md) section 4.1. |
+| **Reference class** | Internal | The set of graph entities one clue reference names directly: all faces of one face surface kind, all faces lying in one bounding-box extreme plane, or all faces one operation created. It is derived from the face attributes, not chosen, and a clue reads it existentially. |
+| **Pair emission rule** | Internal | A sparse pair kind is emitted for every true pair. A dense pair kind is emitted for every member of a reference class with at most `max_anchor_class_size` members, times the candidate endpoints of the declared endpoint entity kind. A class is emitted whole or not at all. |
+| **Emitted pairs** | Internal | The pairs one solid state emits under the pair emission rule: every true pair for a sparse kind, and each in-bound reference class times the candidate endpoints of the declared endpoint entity kind for a dense kind. |
 | **Endpoint entity kind** | Internal | The entity kind a relation or measurement declares at one of its endpoints. It is a per-relation declaration, not the global entity category. |
 | **CAD graph evidence** | Internal | The record of how a CAD graph element (CAD graph relation or CAD graph measurement) was obtained: measured by running CadQuery, or derived by an exact rule, with the rule and references. |
 | **Answer evidence** | Domain | The record of how a task's gold answer was obtained: the referenced CAD graph evidence and the rule that produces the answer. |

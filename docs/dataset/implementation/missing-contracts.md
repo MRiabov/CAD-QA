@@ -13,8 +13,8 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 3 open entries: one P0 technical and two P1 technical. No product
-decision remains open, and P2 is empty.
+There are 2 open entries: both P1 technical. No product decision remains open,
+and P0 is empty.
 
 ## Decisions needed from the owner
 
@@ -28,30 +28,7 @@ None.
 
 ### Technical (P0)
 
-Work order:
-
-1. `MC-50` — a reference is a set, and the models carry one entity.
-
-#### MC-50 — A reference is a set, and `BindingRef` carries one entity
-
-`task-structure.md` `DS-REQ-04` and the 2026-11-24 revision make a clue reference
-a set reduced from the entities of the graph, read existentially. The typed
-models still carry `BindingRef.NodeID`, one entity, and the four reduction forms
-mix a filter (`filtered`), an earlier set (`selected_in_earlier_clue`), a
-reducer (`aggregated`), and a scope (`cross_state`), so no single field can hold
-a reference.
-
-**Recommendation:** define the reference as a set expression on `BindingRef`: a
-target category, the predicates that reduce it, the reduction form, the
-aggregation detail when the form is `aggregated`, and the state scope when it is
-`cross_state`. `clue_reduction_form_profile` stays the flat four-value enum for
-the release table.
-
-The same conflict sits in pair emission: `graph-content.md` requires a named
-endpoint to resolve to exactly one entity, so a pair row exists for one anchor
-only, and a reference set with several members cannot read a pair measurement.
-Decide whether pair rows are emitted per member of the anchor set, and record the
-answer in `graph-content.md` section 4.
+None. `MC-50` closed in the 2026-11-25 pair-emission pass.
 
 ## P1
 
@@ -95,6 +72,22 @@ the manifest fields have no declared value. P1 scope.
 revision, and file hash, carrying normalized program text for the P0 overlap
 check and the same-CAD-model comparison for the P1 check. Record its identity
 and hash in the manifest.
+
+## Closed in the 2026-11-25 pair-emission pass
+
+- `MC-50` — a reference is a set, and pair emission emits every member of a
+  reference class up to one bound. `DS-REQ-37` states the rule:
+  `graph-content.md` §4.1 splits pair kinds into sparse (every true pair, no
+  reference restriction) and dense (each reference class within
+  `max_anchor_class_size`), emits a class whole or not at all, and records the
+  constant as a reference-vocabulary bound measured from the pool, provisionally
+  8. `named entity` is retired in favour of **reference class**. `BindingRef`
+  carries the set expression — category, the one condition the phrase names, the
+  reduction form, the aggregation, and the state scope — and not a resolved
+  entity, so a definition's identity does not depend on the graph's entities. The
+  same pass marks `DS-ADR-04`'s graph size figures stale, requires dictionary
+  encoding on the endpoint columns, fixes the pair-row sort order, and records
+  the per-program assembly representation as `DS-ADR-14`.
 
 ## Closed in the 2026-11-21 run-contract pass
 

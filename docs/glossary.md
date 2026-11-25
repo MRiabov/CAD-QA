@@ -436,6 +436,18 @@ See [`dataset/requirements/views/clue-list.md`](dataset/requirements/views/clue-
 
 ---
 
+### Reference class
+
+The set of graph entities one clue reference names directly: all faces of one
+surface kind, all faces lying in one bounding-box extreme plane, or all faces one
+operation created. A reference phrase names one condition, so a class is drawn by
+one attribute and derived from the graph, not chosen. A class may hold no entity,
+one, or several, and a task clue reads it existentially: the clue holds when at
+least one member satisfies it. Pair emission emits every member of a class up to
+`max_anchor_class_size`. `In code:` `reference_class`.
+
+---
+
 ### Clue reduction form
 
 How a task clue's reference set is reduced from the entities of the graph:

@@ -66,6 +66,12 @@ carries `clue_reduction_form` (`DS-REQ-04`):
 
 A reference is a set, read existentially (`DS-REQ-29`).
 
+The binding records the expression, not its members: the entity category, the one
+condition the reference phrase names, the reduction form, and the aggregation or
+state scope that form needs. The resolved set is evaluation state, carried in the
+clue result as evidence, so a definition's identity does not depend on which
+entities a graph happened to contain.
+
 A clue with no reference has no clue reduction form. A property clue that refers to
 another entity is two clues and is split into two list items.
 

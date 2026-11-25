@@ -240,21 +240,19 @@ every edge has a length, every path segment has a length, every solid state has
 a volume and a bounding box. A missing row for a per-entity measurement is a
 graph defect, not a data condition.
 
-**Pair emission rule.** `distance`, `angle` between two entities,
-`coplanar_with`, and `coaxial_with` apply to pairs, and a solid state can hold
-thousands of pairs. A pair row relates two entities; each side is an
-**endpoint**. A pair element is emitted only when
-one endpoint is a **named entity** and the other is of the declared **endpoint
-entity kind**. The emitted pairs are not the full pair set.
+**Pair kinds are sparse or dense.** `distance`, `angle` between two entities,
+`coplanar_with`, and `coaxial_with` apply to pairs. A pair row relates two
+entities; each side is an **endpoint**. What bounds the rows depends on the pair kind.
 
-The term **named entity** is marked for demolition and stays an open question.
-The word `named` was retired from the clue vocabulary on 2026-11-24, because a
-clue reference is a set reduced by conditions, not a lookup of a pre-registered
-name (`DS-REQ-04`). This term survived that rename and means the same thing. It
-is kept only because the emission rule needs a word for the one endpoint a clue
-narrows to. Unless an argument for keeping it appears, the term is retired and
-the rule is stated without a name: the endpoint a clue narrows to, times the
-candidates of the declared endpoint entity kind.
+A **sparse pair kind** holds for some pairs only: `adjacent_to`, and the P1
+`coplanar_with` and `coaxial_with`. Its rows are bounded by the topology and by
+the coplanar and coaxial groups, not by the entity product, so every true pair is
+emitted and no reference restriction applies.
+
+A **dense pair kind** holds for every pair of its declared endpoint kinds:
+`distance`, and `angle` between two planar faces. Its rows are the product of the
+sets on its two sides, so it is emitted over a **reference class** under the
+bound below. The emitted pairs are not the full pair set.
 
 **Pair emission is state-scoped.** Pair rows are emitted only for the solid
 states a task can bind in the release implementation scope: the final state in
@@ -264,14 +262,16 @@ and effect measurements stay total over every state, because the topology-change
 answers read them. A pair row for a state the scope cannot bind is not emitted;
 it is not a missing measurement.
 
-A named entity is one a clue can identify directly: by face surface kind, by
-position, or by the operation or feature that created it. "A cylindrical face",
-"a face touching the top of the axis-aligned bounding box", and "a face created
-by a `cutBlind` operation" are named entities. The operation label is a graph
-label for pair emission; the clue grammar has no reference phrase for a face
-created by an operation ([`reference-forms.md`](views/reference-forms.md#a-face)
-section A face). The term is marked for demolition, as above; until it is
-replaced, this is its meaning.
+A **reference class** is the set of entities a `filtered` clue reference names:
+all faces of one face surface kind, all faces lying in one bounding-box extreme
+plane, or all faces one operation created. A reference phrase names one condition
+(`DS-REQ-31`), so a class is drawn by one attribute, and the class is derived
+from the face attributes of section 2.1 rather than chosen. The operation class
+is a graph label: the clue grammar has no reference phrase for a face created by
+an operation ([`reference-forms.md`](views/reference-forms.md#a-face) section A
+face). A class may hold no entity, one, or several; a task clue reads it
+existentially (`DS-REQ-29`). The other reduction forms produce their set without
+a class, and need no pair row.
 
 The other endpoint must be of an **endpoint entity kind** that the relation or
 measurement declares in section 3 or section 4. `coplanar_with` declares faces,
@@ -279,37 +279,43 @@ measurement declares in section 3 or section 4. `coplanar_with` declares faces,
 edges. An endpoint entity kind is a per-relation declaration, not the global
 entity category.
 
-The emitted pairs for one solid state are then
+The emitted pairs for one dense kind in one solid state are then
 
 ```text
-named endpoint × candidate endpoints of the declared endpoint entity kinds
+reference class × candidate endpoints of the declared endpoint entity kind
 ```
 
-which is linear in the entity count per named endpoint, not quadratic.
+for each class whose member count is at most `max_anchor_class_size`. The count
+is bounded by that constant times the candidate count, and the constant is what
+keeps it there.
 
 The rule follows the clue grammar, so the enumeration is not a separate
 vocabulary:
 
-- a `filtered` reference needs the pair to exist in the graph, because the clue
-  names one endpoint and the search must know which candidates the pair selects;
+- a `filtered` reference needs the pair rows, because the clue names a class and
+  the search must know which candidates those rows select;
 - a `selected_in_earlier_clue` or `aggregated` reference resolves both endpoints at search time,
   so the comparison is computed from the per-entity measurements and no pair
   row is needed;
 - a `cross_state` reference needs the per-entity values in both states.
 
-A named endpoint must resolve to exactly one entity in the solid state. Zero
-matches or several matches means the pair is not emitted, and a task clue that
-needs it is invalid.
+A class is emitted whole or not at all. Truncating a class would make a clue's
+truth depend on which members were dropped, because an absent pair row is
+indistinguishable from a pair that does not hold. A class over the bound emits no
+rows of a dense kind; the omission is a graph data condition, not a defect, and a
+task clue that needs it is rejected with that reason.
 
-There is no cap on pairs per named endpoint: the number of emitted pairs is
-linear in the entity count for each endpoint. A program whose solid state exceeds
-`max_state_entities` is rejected at graph construction rather than truncated, so
-every accepted graph carries all of its emitted pairs. `max_state_entities` is
-provisional at 500. It is a scope constant: it is measured once, offline, from
-the selected program pool when an implementation scope starts, and recorded with
-the distribution that produced it. Graph construction and planning read the
-recorded number and never recompute it, so the limit is not a per-run cost and a
-run stays reproducible. The constant is revised deliberately when the graph
+`max_anchor_class_size` is provisional at 8. Both it and `max_state_entities` are
+implementation-scope constants. Each is measured once, offline, from the selected
+program pool when an implementation scope starts, and recorded with the
+distribution that produced it. Graph construction and planning read the recorded
+numbers and never recompute them, so a limit is not a per-run cost and a run stays
+reproducible. `max_anchor_class_size` bounds the reference vocabulary — the widest
+class one reference phrase may still name — not storage; its value comes from the
+observed size distribution of the reference classes in the pool, not from a byte
+budget. `max_state_entities` is provisional at 500 and rejects the program at
+graph construction rather than truncating it, so every accepted graph carries all
+of its emitted pairs. Both constants are revised deliberately when the graph
 content grows, for example when P1 adds relations and states.
 
 A pair that is not emitted is not a missing measurement; it is not a candidate.

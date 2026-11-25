@@ -40,7 +40,7 @@ of them. The origins split by when they run:
 |---|---|---|---|
 | `contract_rule` | the row the graph must contain for an entity kind | every CAD graph entity, relation, and measurement | every program |
 | `upstream_record` | AST and runtime extraction rows | operations, features, states, profiles, paths, workplanes, selectors, effects | every program |
-| `emission_rule` | pair rows from the entity tables and the named endpoints | pair relations and pair measurements | every program |
+| `emission_rule` | pair rows from the entity tables and the reference classes | pair relations and pair measurements | every program |
 | `kernel_oracle` | geometry and incidence measured by plain CadQuery and OCP, without instrumentation | calibration of the rule table, and the optional residual differential | development and sampled runs only |
 
 **Production check.** The report compares the persisted graph with the upstream
@@ -149,16 +149,18 @@ run on a sample. A count is compared exactly.
 
 The expected pair set is the emission rule applied to the state:
 
-1. take the named endpoints and the candidate endpoints of the declared
+1. take the reference classes and the candidate endpoints of the declared
    CAD graph entity kind in the same state;
-2. cross product;
+2. cross product, for a sparse kind over the true pairs only;
 3. drop a pair whose two endpoints are the same entity;
 4. reduce to unordered pairs;
 5. order the endpoints canonically.
 
 `expected_source = emission_rule`. A pair the rule does not emit is not expected.
 A pair the rule emits and the graph lacks is missing. The checker compares sets,
-not counts: an extra pair is an orphan.
+not counts: an extra pair is an orphan. A dense kind is expected only from a
+reference class whose member count is within `max_anchor_class_size`; a wider
+class contributes nothing to the expected set and is not a missing row.
 
 ## 7. Soundness
 

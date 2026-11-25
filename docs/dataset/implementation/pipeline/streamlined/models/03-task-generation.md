@@ -353,11 +353,19 @@ type TaskClue struct {
 }
 
 type BindingRef struct { // exactly one group is non-null, matching Kind
-	Kind        string     `parquet:"kind"` // "target" | "earlier_clue" | "filtered" | "literal"
-	ClueID      *string    `parquet:"clue_id"`
-	NodeID      *uuid.UUID `parquet:"node_id"` // one entity only; a filtered reference is a set, see `MC-50`
-	MeasurementName *string `parquet:"measurement_name"`
-	Literal     *string    `parquet:"literal"`
+	Kind              string          `parquet:"kind"` // "target" | "earlier_clue" | "filtered" | "literal"
+	ClueReductionForm *string         `parquet:"clue_reduction_form"` // filtered | selected_in_earlier_clue | aggregated | cross_state
+	ClueID            *string         `parquet:"clue_id"`             // earlier_clue: the clue whose set this reads
+	Category          *string         `parquet:"category"`            // filtered: the graph entity category the class is drawn from
+	FaceSurfaceKind   *string         `parquet:"face_surface_kind"`   // filtered: a FaceSurfaceKind value
+	Position          *string         `parquet:"position"`            // filtered: a frame extreme, min_x … max_z
+	Provenance        *string         `parquet:"provenance_operation_id"` // filtered: the operation that created the entity
+	Axis              *string         `parquet:"axis"`                // filtered: the program axis a direction condition names
+	Predicate         *PropertyCheck  `parquet:"predicate"`           // filtered: the measured-value condition, when the phrase states one
+	Aggregation       *AggregationCheck `parquet:"aggregation"`       // aggregated: the extreme or rank that reduces the set
+	StateScope        *string         `parquet:"state_scope"`         // cross_state: the state pair the set is read in
+	MeasurementName   *string         `parquet:"measurement_name"`    // target: the measured property the answer reads
+	Literal           *string         `parquet:"literal"`             // literal: a value, not an entity set
 }
 
 type ClueCheck struct { // exactly one group is non-null; Property/Categorical and Relation/AngleRelation are the two shapes of their clue type

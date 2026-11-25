@@ -91,7 +91,12 @@ grouping is editorial; the numbers are the citation keys and never change meanin
   100-program shard through the current JSON-in-Parquet path takes 21.0 s wall
   and 5.8 GB peak RSS, almost all of it in `json.loads`; the same rows as three
   typed tables scan in 0.37 s at 562 MB, a 57× difference.
-  `tools/bench_graph_columnar.py` reproduces both numbers.
+  `tools/bench_graph_columnar.py` reproduces both numbers. **Stale (2026-11-25):**
+  these figures predate the UUID endpoint columns of `DS-ADR-05`. Twenty million
+  relation rows carry 48 bytes of UUID each, so the declared schema cannot
+  produce 163 MB of tables; the measurement was taken on a layout with compact
+  integer node ids. The figures are not a size budget for the current artifact,
+  and are re-measured before they are quoted.
 - **Decision:** The CAD graph is stored only as the Parquet tables in
   `graph-persistence.md`. No relational database is the graph store, and Postgres
   is rejected for it. Referential integrity stays a builder invariant and a
@@ -353,3 +358,28 @@ grouping is editorial; the numbers are the citation keys and never change meanin
   OpenAPI or HTTP dependency is added. A new pipeline stage contract is a schema
   file, an exporter entry, a Go generation line, and a fixture; models are still
   derived one pipeline stage at a time.
+
+## DS-ADR-14 — A pipeline stage holds one program by column and by handle
+
+- **Status:** accepted (2026-11-25).
+- **Context:** `02c` assembles one program's graph in parallel with the other
+  programs, and `03b` reads one program's rows to evaluate clues. Both
+  materialize the same three tables. A hydrated row object holds two or three
+  `uuid.UUID` endpoints at 16 bytes each, repeated once per reference, plus a
+  string header and a slice header for each evidence field. The distinct identity
+  set of one program is a few hundred values, so most of those bytes are repeated
+  identity and per-row headers rather than information. None of it is visible
+  outside the process.
+- **Decision:** A pipeline stage that assembles or traverses one program's graph
+  works on columns, not on a slice of row objects. It keeps one handle table per program
+  (`node_id` to a dense index), stores adjacency as CSR (`offsets` plus
+  `neighbours`), and produces `uuid.UUID` only when writing Parquet or when a
+  boundary type requires an id. The representation is internal: it changes no
+  artifact, no schema, and no `graph_schema_version`. `uuid.UUID` remains the
+  persisted identity (`DS-ADR-05`).
+- **Consequences:** The per-program working set is a few dense arrays instead of
+  tens of thousands of row objects, and a traversal is an offset lookup instead
+  of a map hash over 16 bytes. No compact integer identity enters the artifact: a
+  per-state integer key would need a deterministic assignment, a lookup table in
+  every reader, and would compete with the identity `DS-ADR-05` defines, in
+  exchange for about one byte per row over Parquet's native dictionary encoding.

@@ -153,10 +153,10 @@ citation keys and never change meaning.
   operand form" is retired.
 - **Consequences:** The article follows the set: `a` for a condition, `the` plus a
   plural for an earlier clue, and `the` for a description only when it selects
-  exactly one element of its category in the program. `BindingRef` cannot carry a
-  set yet (`MC-50`). Pair emission still ties each pair row to one anchor
-  endpoint, so a set-valued reference cannot read a pair measurement until that
-  is settled (`MC-50`).
+  exactly one element of its category in the program. The typed binding carries
+  the set expression, not a resolved entity (`MC-50`). Pair emission emits every
+  member of a reference class up to one bound, so a set-valued reference reads a
+  pair measurement (`DS-REQ-37`).
 
 ## DS-REQ-30 — A face direction is continuous; the graph stores the outward normal
 
@@ -299,6 +299,42 @@ citation keys and never change meaning.
 
 ---
 
+## DS-REQ-37 — A pair is emitted for every member of a reference class, up to one bound
+
+- **Status:** accepted (2026-11-25). Closes `MC-50` and the pair-emission half of
+  `DS-REQ-29`.
+- **Context:** `DS-REQ-29` makes a clue reference a set read existentially, but
+  the pair emission rule still required one endpoint to resolve to exactly one
+  entity. A reference set with two members could therefore read no pair
+  measurement, which is the case `DS-REQ-04` was revised to allow. Three
+  responses were available: emit the product for every member (unbounded),
+  refuse a set-valued reference over a pair measurement (narrows the grammar
+  `DS-REQ-29` had just widened), or emit it up to a bound.
+- **Decision:** Pair kinds split by density. A sparse kind (`adjacent_to`, and
+  the P1 `coplanar_with` and `coaxial_with`) holds for some pairs only, so every
+  true pair is emitted with no reference restriction. A dense kind (`distance`,
+  and `angle` between two planar faces) holds for every pair of its declared
+  endpoint kinds, so it is emitted over a **reference class** — the set one clue
+  reference names directly — for each class with at most
+  `max_anchor_class_size` members. A class is emitted whole or not at all; an
+  over-bound class emits no rows and is a graph data condition, not a defect. A
+  task clue that needs an over-bound class is rejected with that reason. The
+  constant is provisional at 8, and it is an implementation-scope constant
+  measured once from the selected pool's reference-class size distribution and
+  recorded with it, in the same way as `max_state_entities`. It bounds the
+  reference vocabulary, not storage.
+- **Consequences:** `graph-content.md` §4.1 states the bound and withdraws the
+  claim that emitted pairs are linear in the entity count; `named entity` is
+  retired in favour of **reference class**. The count is bounded by the constant
+  times the candidate endpoints, not by the entity count alone, so the constant
+  is the cost control. Truncating a class is excluded on correctness, not on
+  cost: an absent pair row is indistinguishable from a pair that does not hold,
+  so a partial class would make a clue's truth depend on which members were
+  dropped. A complete program keeps all of its emitted pairs, because the
+  entity-count constant still rejects an oversized state at graph construction.
+
+---
+
 ## DS-REQ-08 — Tasks refer to the final solid state in P0
 
 - **Status:** accepted (2026-11-20).
@@ -340,8 +376,9 @@ citation keys and never change meaning.
 ## DS-REQ-10 — Pair rows are state-scoped
 
 - **Status:** accepted (2026-11-21).
-- **Context:** The pair emission rule made pair rows linear in the entity count
-  per named endpoint, but it applied to every solid state. `DS-REQ-08` binds a P0
+- **Context:** The pair emission rule made pair rows a product of one endpoint
+  set and the entity count, but it applied to every solid state. `DS-REQ-08`
+  binds a P0
   task to the final state and a P1 task to one named intermediate state, so pair
   rows for the other states were written, sorted, hashed, read by `03`, and never
   used. In the measured 1,000-program artifact, 82% of 20.1M relations were

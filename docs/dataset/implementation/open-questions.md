@@ -10,7 +10,7 @@ owning document. Absent contracts are tracked separately in
 |---|---|---|---|
 | [`02a`](pipeline/02a-extract-cadquery-ast.md) | — | P2 | Should P2 support arbitrary Python control flow in P-tier programs, or keep the canonical-flat restriction and reject non-flat programs? |
 | [`03b`](pipeline/03-task-generation/03b-construct-task-definitions/README.md) | Q6 | P2 | How are plausible, deterministic near-miss choices generated and validated? |
-| [`graph-content.md`](../requirements/graph-content.md#41-emission-rules) | — | P1 | Is `named entity` retired? The word `named` left the clue vocabulary on 2026-11-24, and the term survives only in the pair emission rule. It is marked for demolition unless an argument for keeping it appears. |
+| [`02c`](pipeline/02c-build-cad-graph.md#open-questions) | Q1 | P1 | Is `angle` between two edges or along a path tangent emitted at all? No reference class names an edge, so the emission rule produces no such row, while `graph-content.md` §4 declares both as P0 angle kinds. |
 | [`task-structure.md`](../requirements/task-structure.md#8-open-questions) | — | P1 | Is a count a clue at all? It removes no candidate on its own, so it may belong to the answer meaning rather than to a clue. |
 | [`task-structure.md`](../requirements/task-structure.md#8-open-questions) | — | P1 | Which direction words may a rank clue use, and does a set need a stated order before it can be ranked? |
 | [`task-structure.md`](../requirements/task-structure.md#8-open-questions) | — | P1 | May a provenance clue point at a second set, or is it always one operation or CadQuery profile? |

@@ -37,21 +37,26 @@ real `02b` result and asserts the persisted tables read back through the reader
 P1 pair relation, in the state, recompute the expected pair set from the entity
 tables:
 
-1. derive the named endpoints of the state — face surface kind, position, and
+1. derive the reference classes of the state — face surface kind, position, and
    provenance — and the candidate endpoints of the declared endpoint entity
    category;
-2. compute the cross product, drop a pair whose two endpoints are the same
-   entity, and reduce to unordered pairs;
-3. compare with the emitted rows as a set, with the endpoints in canonical id
+2. for a sparse kind, take every true pair; for a dense kind, take the cross
+   product of each class within `max_anchor_class_size` and the candidates;
+3. drop a pair whose two endpoints are the same entity, and reduce to unordered
+   pairs;
+4. compare with the emitted rows as a set, with the endpoints in canonical id
    order.
 
 A missing pair fails. So does an extra pair: it is a predicate the graph does not
 support, and a clue built from it would be a fact about nothing.
 
-Two edge cases are asserted separately. A name that resolves to zero entities
-emits no pair, and so does a name that resolves to several. The test names a
-face surface kind the program does not have, and a position name two faces share.
-Both names exist only as a lookup, so neither creates a pair row.
+Three edge cases are asserted separately. A class with no member emits no pair. A
+class with several members within the bound emits its whole cross product: that
+is the case the single-endpoint rule used to drop, and it is why the bound
+exists. A class over the bound emits no pair row for a dense kind and does not
+reject the program; the test reads the recorded constant, asserts the absence,
+and asserts that the clue which needs the class fails at `03b` with the bound as
+its reason.
 
 `test_02c_state_size_rejection` — a program whose state exceeds
 `max_state_entities` is rejected with the state, the count, and the limit, and no
@@ -65,7 +70,7 @@ equality, and the state-size rejection before `02c` exists.
 
 - `test_02c_missing_per_entity_measurement` — a missing area or length rejects the
   graph. It is a graph defect, not a data condition.
-- `test_02c_unresolvable_named_endpoint` — covered by the pair test above, and
+- `test_02c_over_bound_reference_class` — covered by the pair test above, and
   asserted on the row count, not on a warning.
 - `test_02c_tolerance_override_recorded` — a relation with an overridden tolerance
   carries the tolerance and the reason on its row.

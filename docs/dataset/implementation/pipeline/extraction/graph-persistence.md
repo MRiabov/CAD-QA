@@ -251,13 +251,27 @@ EvidenceRef = STRUCT<
 | `node_type`, `relation_type`, `measurement_type`, `evidence_kind`, `unit`, `MeasurementValue.kind`, `Tolerance.kind`, `EvidenceRef.kind` | dictionary (`RLE_DICTIONARY`) required | Closed low-cardinality enums. |
 | `graph_schema_version` | dictionary required | Repeated low-cardinality value. |
 | `program_id`, `state_id`, `operation_id` | dictionary recommended | Repeated within a program's row groups. |
-| `node_id`, `relation_id`, `measurement_id`, `from_node_id`, `to_node_id`, `subject_node_id`, `object_node_id` | none; fixed-width UUID | High-cardinality join keys; dictionaries add no value. |
+| `node_id`, `relation_id`, `measurement_id` | none; fixed-width UUID | Identity columns. Each value is one row's own key: it is read and compared as an id, so a dictionary index would add a decode step and save nothing. |
+| `from_node_id`, `to_node_id`, `subject_node_id`, `object_node_id` | dictionary (`RLE_DICTIONARY`) required | Endpoint columns. A column chunk holds one program with at most `max_state_entities` entities, so the dictionary has a few hundred entries and the index is about nine bits against sixteen bytes. |
 | `label`, `selector_expression`, `evidence_rule` | plain | High-cardinality text. |
 
 A columnar store may expose a closed string enum as `LowCardinality(String)`.
 `Enum8` or `Enum16` is optional; it is that store's storage choice, not part of
 the Parquet contract. The graph is served from Parquet and no analytics store is
 chosen; adopting one needs its own decision ([`DS-ADR-04`](../../decisions.md)).
+
+### Row order
+
+A complete part is written in a stable sort order, as
+[`run-contract.md`](../../run-contract.md#3-run-directory) requires. The order is
+`(program_id, relation_type, from_node_id, to_node_id)` for `relations.parquet`
+and `(program_id, state_id, subject_node_id, object_node_id, measurement_type)`
+for `measurements.parquet`, comparing the id bytes rather than a derived index.
+
+The leading endpoint therefore repeats across a run of rows, so its dictionary
+index is a run and the trailing endpoint delta-encodes within it. A reader that
+needs another order applies its own, because the sort is a storage property and
+not part of the row contract.
 
 ## Run-level tolerance policy
 

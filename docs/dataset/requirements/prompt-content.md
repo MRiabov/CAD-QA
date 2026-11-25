@@ -273,8 +273,8 @@ It never gives the answer, and it never explains how to find the task target.
 - A task clue that is not in the hidden task solution sequence.
 - A description of the graph or the generator.
 - A hint that identifies the correct multiple-choice choice.
-- A named entity that does not appear in the program or cannot be identified
-  from it.
+- An entity reference that does not appear in the program or cannot be
+  identified from it.
 
 ## 8. Worked example
 
