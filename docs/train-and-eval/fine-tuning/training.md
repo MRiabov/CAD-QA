@@ -320,10 +320,16 @@ Sources: `docs.liquid.ai/examples/customize-models/home-assistant`, `docs.liquid
 - Config-first:
 
   ```python
-  JobConfig(project_name, model_name="LFM2.5-1.2B-Instruct", training_type="sft",
+  JobConfig(
+      project_name,
+      model_name="LFM2.5-1.2B-Instruct",
+      training_type="sft",
       dataset=DatasetConfig(path=..., type="sft", limit=..., test_size=0.1),
-      training_config=TrainingConfig(extends="DEFAULT_SFT"),  # inherit optimizer/LR/schedule/batch
-      peft_config=PeftConfig(extends="DEFAULT_LORA", use_peft=True))
+      training_config=TrainingConfig(
+          extends="DEFAULT_SFT"
+      ),  # inherit optimizer/LR/schedule/batch
+      peft_config=PeftConfig(extends="DEFAULT_LORA", use_peft=True),
+  )
   ```
 
   Run via `run_config(job)` or `liquid-finetune job_configs/sft_example.yaml`.

@@ -97,9 +97,7 @@ class Fence(BaseModel):
         """
 
         delimiter = line.strip()
-        return len(delimiter) >= self.length and delimiter == self.char * len(
-            delimiter
-        )
+        return len(delimiter) >= self.length and delimiter == self.char * len(delimiter)
 
 
 def opening_fence(line: str) -> Fence | None:
@@ -114,7 +112,6 @@ def opening_fence(line: str) -> Fence | None:
         # inline code at the start of a line.
         return None
     return Fence(char=delimiter[0], length=len(delimiter))
-
 
 
 def code_prose_lines(text: str) -> list[tuple[int, str]]:

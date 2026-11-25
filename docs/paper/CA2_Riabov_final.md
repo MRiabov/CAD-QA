@@ -143,15 +143,16 @@ Code sample:
 
 ```py
 import cadquery as cq
+
 wp1 = cq.Workplane("XY")
-wp2 = wp1.circle(2)           # cylinder circle
-wp3 = wp2.extrude(5)          # cylinder extrusion
-wp4 = cq.Workplane(           # define a point to build from
+wp2 = wp1.circle(2)  # cylinder circle
+wp3 = wp2.extrude(5)  # cylinder extrusion
+wp4 = cq.Workplane(  # define a point to build from
     cq.Plane(origin=cq.Vector(0, 0, 10))
 )
-wp5 = wp4.rect(4, 3)          # make a rectangle
-wp6 = wp5.extrude(2)          # extrude a box
-result = wp3.union(wp6)       # combined solid
+wp5 = wp4.rect(4, 3)  # make a rectangle
+wp6 = wp5.extrude(2)  # extrude a box
+result = wp3.union(wp6)  # combined solid
 ```
 
 From this we derive a graph such as:

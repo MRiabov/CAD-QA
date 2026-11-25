@@ -344,12 +344,7 @@ Program:
 
 ```python
 result = (
-    cq.Workplane("XY")
-    .box(10, 20, 5)
-    .faces(">Z")
-    .workplane()
-    .circle(2)
-    .cutBlind(-2)
+    cq.Workplane("XY").box(10, 20, 5).faces(">Z").workplane().circle(2).cutBlind(-2)
 )
 ```
 

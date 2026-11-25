@@ -63,7 +63,13 @@ result = wp38
 We need to identify the coordinate frame or workplane name established by feature `wp23`. In the script, `wp23` is defined as:
 
 ```python
-wp23 = cq.Workplane(cq.Plane(origin=cq.Vector(28, 85, 18), xDir=cq.Vector(3, -1, 0), normal=cq.Vector(1, 3, 0)))
+wp23 = cq.Workplane(
+    cq.Plane(
+        origin=cq.Vector(28, 85, 18),
+        xDir=cq.Vector(3, -1, 0),
+        normal=cq.Vector(1, 3, 0),
+    )
+)
 ```
 
 This is an explicit plane definition, not a named standard plane (like XY, YZ, XZ, front, back, etc.). So the answer should be the string representation of that plane. Among the choices, there is an option: `cq.Plane(origin=cq.Vector(28, 85, 18), xDir=cq.Vector(3, -1, 0), normal=cq.Vector(1, 3, 0))`. That matches exactly.
