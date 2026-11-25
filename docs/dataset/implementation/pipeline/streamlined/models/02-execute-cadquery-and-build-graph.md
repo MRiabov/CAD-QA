@@ -445,8 +445,9 @@ class PointProbe(BaseModel):
     probe_index: int = Field(ge=0, le=1)
     point: Point3D
     is_inside: bool
-    distance_to_surface: float = Field(ge=0)
+    distance_to_face_surface: float = Field(ge=0)
     classifier: ProbeClassifier
+    margin: float = Field(ge=0)
     source_span: SourceSpan | None = None
 
 

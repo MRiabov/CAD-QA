@@ -25,7 +25,7 @@ checking the release. Neither holds balance numbers of its own.
 | `dimensions.<dimension>.min`, `.max` | The release-level plan minimum and maximum for one value. |
 | `dimensions.<dimension>.values.<value>` | A per-value override of `min`, `max`, or `target`. |
 | `dimensions.<dimension>.target` | A global share; `equal` is an equal share among the supported values. |
-| `dimensions.clue_operand_form.severe` | The P0 severe-imbalance multiples. |
+| `dimensions.clue_reduction_form.severe` | The P0 severe-imbalance multiples. |
 
 Load rules:
 

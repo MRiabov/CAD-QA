@@ -100,7 +100,7 @@ dimensions:
 
   # P0 reports the imbalance and blocks when it is severe. The bounds are
   # multiples of the conditional share.
-  clue_operand_form:
+  clue_reduction_form:
     severe:
       below: 0.25
       above: 4.0

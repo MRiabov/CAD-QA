@@ -12,7 +12,7 @@ phase tests are the lettered sub-documents.
 
 | Doc | Test contract |
 |---|---|
-| [`a-construction.md`](a-construction.md) | Golden record, validity record, redundant clues, probe deficits, target ambiguity. |
+| [`a-construction.md`](a-construction.md) | Golden record, validity record, redundant clues, probe deficits, target ambiguity, answer groups, prompt identity, the necessary-clue bound, and one-pass answer projection. |
 | [`b-answer-semantics.md`](b-answer-semantics.md) | Answer resolution, choice pool, answer uniqueness. |
 | [`c-definition-identity.md`](c-definition-identity.md) | Duplicate identity and definition immutability. |
 
@@ -21,6 +21,19 @@ pipeline stage-level happy path: it reads the persisted `TaskDefinition` back th
 reader `04` uses and compares it per
 [`../../golden/README.md`](../../golden/README.md).
 
+## Task-construction oracles
+
+The hand-authored gold set in
+[`../../oracles/task-construction/`](../../oracles/task-construction/) is the
+independent happy path. Each record carries a task description, a gold answer,
+and a gold query that reproduces the answer with plain CadQuery. When `03b`
+lands, the test constructs each oracle's task from its program and task
+description and compares the answer, the clue chain, and the evidence.
+
+A mismatch is a defect in the graph, the constructor, or the contract. It is not
+a reason to edit the oracle. A `proposed` oracle is a warning; a `verified`
+oracle gates the milestone.
+
 ## What this does not prove
 
 - That the prompt renders. That is
@@ -28,3 +41,5 @@ reader `04` uses and compares it per
 - That the release is balanced. That is
   [`../../05-validate-and-export-release.md`](../../05-validate-and-export-release.md).
 - That a value is supported. That is [`../../00-support-tables.md`](../../00-support-tables.md).
+- That every release row is true. The task-construction oracles pin the
+  supported vocabulary, and the review gate samples the release.

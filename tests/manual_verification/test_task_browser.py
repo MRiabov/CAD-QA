@@ -16,8 +16,9 @@ import pytest
 TOOLS = Path(__file__).resolve().parents[2] / "tools" / "manual-verification"
 sys.path.insert(0, str(TOOLS))
 
-from task_browser import ReleaseIndex, build_handler
-from task_release import prompt_preview
+from task_browser import TaskIndex, build_handler
+from task_oracles import load_oracle_rows
+from task_release import load_release_rows, prompt_preview
 from task_scene import PrimitiveKind
 
 PROGRAM = """import cadquery as cq
@@ -108,15 +109,27 @@ def write_release(path: Path) -> None:
     pq.write_table(table, path)
 
 
+ORACLES = (
+    Path(__file__).resolve().parents[2]
+    / "docs"
+    / "dataset"
+    / "implementation"
+    / "pipeline"
+    / "testing"
+    / "oracles"
+    / "task-construction"
+)
+
+
 @pytest.fixture()
-def index(tmp_path: Path) -> ReleaseIndex:
+def index(tmp_path: Path) -> TaskIndex:
     table = tmp_path / "release.parquet"
     write_release(table)
-    return ReleaseIndex(table, tmp_path / "cache")
+    return TaskIndex(load_release_rows(table), tmp_path / "cache", "release")
 
 
 @pytest.fixture()
-def origin(tmp_path: Path, index: ReleaseIndex) -> str:
+def origin(tmp_path: Path, index: TaskIndex) -> str:
     dist = tmp_path / "dist"
     server = ThreadingHTTPServer(("127.0.0.1", 0), build_handler(index, dist))
     thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -146,7 +159,7 @@ def test_prompt_preview_strips_the_program_fence() -> None:
     assert "import cadquery" not in preview
 
 
-def test_page_filters_and_paginates(index: ReleaseIndex) -> None:
+def test_page_filters_and_paginates(index: TaskIndex) -> None:
     page = index.page(
         offset=0,
         limit=2,
@@ -205,14 +218,14 @@ def test_page_filters_and_paginates(index: ReleaseIndex) -> None:
     }
 
 
-def test_detail_has_program_and_diagnostics(index: ReleaseIndex) -> None:
+def test_detail_has_program_and_diagnostics(index: TaskIndex) -> None:
     task = index.detail("cadqatask:aaa")
     assert task.answer == "1000 mm"
     assert "result = cq.Workplane" in task.program
     assert {entry.label for entry in task.diagnostics} >= {"task_id", "tolerance"}
 
 
-def test_scene_is_cached_by_program(index: ReleaseIndex, tmp_path: Path) -> None:
+def test_scene_is_cached_by_program(index: TaskIndex, tmp_path: Path) -> None:
     pytest.importorskip("cadquery")
     first = index.scene("cadqatask:aaa")
     second = index.scene("cadqatask:bbb")
@@ -258,7 +271,7 @@ def test_static_fallback_names_the_build_step(origin: str) -> None:
     assert "pnpm build" in page
 
 
-def test_static_serves_the_built_index(tmp_path: Path, index: ReleaseIndex) -> None:
+def test_static_serves_the_built_index(tmp_path: Path, index: TaskIndex) -> None:
     dist = tmp_path / "dist"
     dist.mkdir()
     (dist / "index.html").write_text(
@@ -278,3 +291,49 @@ def test_static_serves_the_built_index(tmp_path: Path, index: ReleaseIndex) -> N
         server.shutdown()
         server.server_close()
         thread.join(timeout=5)
+
+
+def test_gold_index_serves_the_checked_in_records(tmp_path: Path) -> None:
+    index = TaskIndex(load_oracle_rows(ORACLES), tmp_path / "cache", "gold")
+
+    assert index.facets.input_kind == "gold"
+    assert index.facets.task_count == 13
+    assert index.facets.splits == ["gold"]
+    assert index.facets.subsets == ["oracle"]
+
+    detail = index.detail("box-with-hole-topology-change")
+    assert detail.prompt is None
+    assert detail.answer == "2"
+    assert detail.oracle is not None
+    assert detail.oracle.verification.status.value == "verified"
+    assert detail.oracle.gold_query.expected_stdout == "2"
+    assert detail.oracle.task.target_category.value == "operation"
+    assert (
+        detail.oracle.task.question == "How many faces does the cutBlind operation add?"
+    )
+
+    page = index.page(
+        offset=0,
+        limit=50,
+        search="topology",
+        split="",
+        subset="",
+        target_category="",
+        answer_meaning="",
+        order="file",
+        seed="0",
+    )
+    assert [task.task_id for task in page.tasks] == ["box-with-hole-topology-change"]
+    assert page.tasks[0].preview == "How many faces does the cutBlind operation add?"
+
+
+def test_gold_scene_renders_the_program(tmp_path: Path) -> None:
+    pytest.importorskip("cadquery")
+    index = TaskIndex(load_oracle_rows(ORACLES), tmp_path / "cache", "gold")
+
+    first = index.scene("box-volume")
+    second = index.scene("box-face-count")
+
+    assert first.triangle_count > 0
+    assert first.parts[0].positions == second.parts[0].positions
+    assert len(list((tmp_path / "cache").glob("*.json"))) == 1

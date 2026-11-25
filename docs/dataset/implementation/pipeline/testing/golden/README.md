@@ -3,7 +3,11 @@
 **Parent:** [`README.md`](README.md).
 
 **Status:** draft, 2026-11-20. Defines the fixed golden-record file format for
-task construction and the first record. It closes `MC-42`.
+task construction and the first record. It closes `MC-42`. The first record
+predates the 2026-11-24 requirement revisions (the reduction-form rename,
+categorical features, and one-condition references); it keeps the old
+`clue_operand_form` field names and `named` and `selected` values until `03b`
+rebuilds it.
 
 ## 1. What a golden record is
 
@@ -114,12 +118,13 @@ so the two cannot disagree.
 | `check` | object | The typed check from `03b`. |
 | `narrows` | object | `before` and `after` possible-answer counts. |
 
-The `check` shape follows the clue type in `03b`. A relation clue carries
-`relation_type` and `object`; a property clue carries `measurement`,
-`comparator`, and `threshold` or `range`; a comparison clue carries
-`measurement`, `comparator`, and `reference`.
+The `check` shape follows the clue type in `03b`. A named relation clue carries
+`relation_type`, `direction`, and `object`; an angle relation clue carries the
+`angle` measurement, `comparator`, `threshold`, and `object`; a property clue
+carries `measurement`, `comparator`, and `threshold` or `range`; a comparison
+clue carries `measurement`, `comparator`, and `reference`.
 
-A relation clue also carries a `direction` when the graph relation is
+A named relation clue also carries a `direction` when the graph relation is
 directional:
 
 | Value | Meaning |
@@ -128,7 +133,8 @@ directional:
 | `object_to_subject` | The graph relation runs from the check object to the clue subject. |
 
 The first record uses `has_edge`, which runs from a face to an edge, so its
-direction is `object_to_subject`.
+direction is `object_to_subject`. An angle relation is symmetric, so it carries
+no direction.
 
 ### 3.5 `answer`
 

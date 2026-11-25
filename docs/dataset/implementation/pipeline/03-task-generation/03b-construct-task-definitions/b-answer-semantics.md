@@ -131,7 +131,7 @@ the task rather than producing an approximate answer.
 ### Membership answers
 
 A membership answer is computed by `is_inside(solid_state, point)`. The point comes
-from a point probe in the graph (`graph-content.md` section 2.1); the task
+from a point probe in the graph (`graph-content.md` section 2.2); the task
 definition copies its coordinates and its classification, so `03b` never needs a
 kernel. The answer is inside or outside. A point within the geometric
 clear-case margin of the face surface is not used, because "on the boundary" is a third case
@@ -148,7 +148,7 @@ and records the point, the solid state hash, and the classifier.
 | `evidence_rule` | The rule that produced the answer. |
 | `evidence_refs` | The graph entity, relation, and measurement references the rule used. |
 | `answer_equivalent_set` | The final possible-answer set: one entry per remaining candidate, with its subject and its answer. |
-| `point_probe` | The point, its classification, the solid state reference, and the classifier. Null unless the answer is membership. |
+| `point_probe` | The point, its classification, the solid state reference, the distance to the nearest face, the classifier, and the margin it was tested against. Null unless the answer is membership. |
 
 `answer_equivalent_set` is stored so answer uniqueness can be rechecked from the
 definition alone, without the graph. The release does not carry the full set; it
@@ -169,7 +169,7 @@ precision.
 | identity | the two answers are the same entity |
 | volume, area, length, distance, angle | same canonical string at the stated precision |
 | count, rank | same integer |
-| membership | same label: inside, outside, or on the boundary |
+| membership | same label: inside or outside |
 | validity | same boolean |
 | position | same point at the stated precision, component by component |
 | extent | same minimum and maximum corner at the stated precision |

@@ -19,7 +19,7 @@ TRANSFORM:
 - for each step count `s` and share-bearing dimension `d`:
   - `quota_target_count(s, d, v) = 1 + largest_remainder(task_reasoning_step_quota[s] - supported_value_count, conditional_share(s, d, v))`
   - for clue type, replace `task_reasoning_step_quota[s]` with `planned_clue_occurrences[s]` and `supported_value_count` with the supported clue type count
-- clue operand form is coverage-only in P0: one clue occurrence per supported form at each feasible step count, no share
+- clue reduction form is coverage-only in P0: one clue occurrence per supported form at each feasible step count, no share
 - `baseline_clue_occurrences[s] = task_reasoning_step_quota[s] * (s - 1)`
 - `identity_floor = 1` when identity is supported, else 0; `clue_floor = max(0, supported_clue_count - baseline_clue_occurrences[s])`
 - `identity_tasks[s] = max(quota_target_count(s, answer_meaning, identity), identity_floor, clue_floor)`; set the identity target count to it
@@ -61,7 +61,10 @@ TRANSFORM:
 - `split_capacity[split] = sum(family_task_capacity)`; zero or below target → `split_capacity_short`
 - `family_task_quota = largest_remainder(split_task_target[split], family_task_capacity)`, capped by each capacity; total short → `family_quota_short`
 - `family_task_reasoning_step_quota[f] = largest_remainder(family_task_quota[f], task_reasoning_step_quota)`, capped by `family_task_quota[f]`
-- per step, dimension, and target: eligible families have the capability and `family_task_reasoning_step_quota[f][s] > 0`
+- per step, dimension, and target: eligible families have the capability, a
+  member program whose census `max_task_reasoning_step_count` for the target
+  category and answer meaning is at least `s`, and
+  `family_task_reasoning_step_quota[f][s] > 0`
 - `family_quota_target_probe_success_rate` uses the same smoothed ratio, `1.0` when no probe ran for that family and target
 - `family_quota_target_weight = family_task_reasoning_step_quota[f][s] * family_quota_target_probe_success_rate`
 - `family_quota_target_count = largest_remainder(quota_target_count, family_quota_target_weight)`; no eligible family → `quota_target_family_unassigned`

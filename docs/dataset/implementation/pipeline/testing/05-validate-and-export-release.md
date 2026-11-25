@@ -32,7 +32,7 @@ support tables, a fixed generator version, and the three failure partitions.
   unique `task_id`;
 - `prompt_sha256` matches the test's recomputation from `prompt` for every row,
   and no `prompt` contains its gold answer value;
-- `clue_types` equals the clue type sequence of `clue_operand_form_profile`;
+- `clue_types` equals the clue type sequence of `clue_reduction_form_profile`;
 - every multiple-choice row has at least five entries, labels contiguous from
   `A`, answer values distinct under `same_answer`, `gold_answer.label` among the
   labels, and that label's answer value equal to `answer_evidence.answer_equivalent_answer`;
@@ -76,7 +76,7 @@ sorted check rows, and the manifest-last rule before `05` exists.
 
 ## Failure-mode tests
 
-- `test_05_missing_column` — a release table without `clue_operand_form_profile`
+- `test_05_missing_column` — a release table without `clue_reduction_form_profile`
   blocks and names the column; no manifest is written.
 - `test_05_count_mismatch` — a step with 10 entering, 8 leaving, and 1 failure
   blocks and names the step and the three counts, because a failure row cannot

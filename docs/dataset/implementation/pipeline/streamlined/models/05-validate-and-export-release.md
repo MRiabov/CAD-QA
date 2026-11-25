@@ -117,6 +117,6 @@ type SupportedValue struct {
 ```
 
 The five tables are `target-category-by-step.json`, `clue-type-by-step.json`,
-`clue-operand-form-by-step.json`, `answer-meaning-by-step.json`, and
+`clue-reduction-form-by-step.json`, `answer-meaning-by-step.json`, and
 `answer-format-by-step.json`. They are derived by the support-table derivation
 and are not generator inputs.

@@ -16,13 +16,13 @@ the user-visible outcome.
 | **Task definition** | Internal | The persisted, answer-bearing construction record for one task: target binding, ordered task clues, task answer step, answer, validity record, and identity. It is not prompt text. |
 | **Question** | Domain | The interrogative sentence in the prompt. It is not the whole task. |
 | **Clue type** | Domain | The category of condition a task clue states: property, relation, comparison, aggregation, or provenance. A chain is a P2 sequence of relation clues, not a clue type. |
-| **Clue operand form** | Domain | How a task clue's reference is identified: `named`, `selected`, `aggregated`, or `cross_state`. A task clue with no reference has none. |
+| **Clue reduction form** | Domain | How a task clue's reference set is reduced from the entities of the graph: `filtered`, `selected_in_earlier_clue`, `aggregated`, or `cross_state`. A task clue with no reference has none. |
 | **Answer meaning** | Domain | What the answer is about, independent of how it is returned: identity, volume, area, length, distance, angle, count, rank, membership, position, extent, CadQuery workplane state, material change, topology change, or validity. |
 | **CADEvolve program family** | Domain | A stable program family used as the split unit: a CADEvolve generator family or a CADEvolve-predicted ABC/ShapeNet mesh family. P and C versions of one family share a family ID. |
 | **Task reasoning step support table** | Domain | The release artifact that records which dimension values can occur at each task reasoning step count, and why an unsupported value cannot occur there. |
 | **Task reasoning step count coverage** | Internal | Every value supported at a task reasoning step count appears at that count. |
 | **Conditional release share** | Internal | A value's share among the values supported at a task reasoning step count, used as the comparison base for task reasoning step count balance. |
-| **Task reasoning step count balance** | Internal | For clue type, clue operand form (P1), answer meaning, and answer format, a supported value's share at a task reasoning step count is between half and twice its conditional release share. |
+| **Task reasoning step count balance** | Internal | For clue type, clue reduction form (P1), answer meaning, and answer format, a supported value's share at a task reasoning step count is between half and twice its conditional release share. |
 | **Task target** | Domain | The entity or value the task asks about. |
 | **Task target category** | Domain | The category of the task target. It is a coverage dimension, not a percentage-balance dimension at each task reasoning step count. |
 | **Task clue** | Domain | One numbered list item in the prompt that states a condition the answer must satisfy. |
@@ -31,7 +31,7 @@ the user-visible outcome.
 | **Task reasoning step** | Domain | A task clue step or a task answer step. |
 | **Task reasoning step count** | Domain | The number of task reasoning steps a task requires. |
 | **Task solution sequence** | Domain | The ordered task clue steps and task answer step that solve the task. |
-| **Clue operand form profile** | Internal | The ordered clue type and clue operand form of every clue in one task. `In code:` `clue_operand_form_profile`. |
+| **Clue reduction form profile** | Internal | The ordered clue type and clue reduction form of every clue in one task. `In code:` `clue_reduction_form_profile`. |
 | **Answer format** | Domain | The form of the answer: multiple choice, number, integer, yes or no, 3D coordinate, bounding box, or structured object. |
 | **Multiple-choice choices** | Domain | The short list of options shown for a multiple-choice answer. |
 | **Answer instruction** | Domain | The part of the prompt that tells the LLM model which answer format to return and in what syntax. |
@@ -46,7 +46,7 @@ the user-visible outcome.
 | **CAD graph measurement** | Domain | A numeric or geometric value about a CAD graph entity or a pair of CAD graph entities. |
 | **Pair emission rule** | Internal | A pair relation or measurement is emitted only when one endpoint is a named entity and the other is of the declared endpoint entity kind. The rule is declared, not discovered: a pair it does not allow is not a candidate. |
 | **Emitted pairs** | Internal | The pairs one solid state emits under the pair emission rule: one named entity times the candidate endpoints of the declared endpoint entity kind. The count is linear in the entity count, not the full pair set. |
-| **Named entity** | Internal | An entity a task clue can identify directly, by face surface kind, by position, or by the operation or feature that created it. |
+| **Named entity** | Internal | An entity a task clue can identify directly, by face surface kind, by position, or by the operation or feature that created it. Marked for demolition; see [`graph-content.md`](graph-content.md) section 4.1. |
 | **Endpoint entity kind** | Internal | The entity kind a relation or measurement declares at one of its endpoints. It is a per-relation declaration, not the global entity category. |
 | **CAD graph evidence** | Internal | The record of how a CAD graph element (CAD graph relation or CAD graph measurement) was obtained: measured by running CadQuery, or derived by an exact rule, with the rule and references. |
 | **Answer evidence** | Domain | The record of how a task's gold answer was obtained: the referenced CAD graph evidence and the rule that produces the answer. |
@@ -55,7 +55,7 @@ the user-visible outcome.
 | **Answer uniqueness** | Internal | Every entity in the answer-equivalent set produces the same answer. |
 | **Entity uniqueness** | Internal | The answer-equivalent set holds exactly one entity. |
 | **Validity record** | Internal | The check results that establish a task definition's uniqueness, target binding, clue narrowing, and geometry requirement. It is not answer evidence. |
-| **Program capability census** | Internal | The per-program summary of available target categories, clue constructors, clue operand forms, measurements, answer meanings, and maximum task reasoning step count. It is a by-product of graph construction. |
+| **Program capability census** | Internal | The per-program summary of available target categories, clue constructors, clue reduction forms, measurements, answer meanings, and maximum task reasoning step count. It is a by-product of graph construction. |
 | **Supply-driven construction** | Internal | Building tasks from the facts one graph has. This is the default construction strategy. |
 | **Demand-driven construction** | Internal | Specifying a task cell first and querying for programs that can support it. It is used only for deficits. |
 | **Forced task** | Internal | A task produced by a cell-level demand query rather than by a natural clue chain, flagged for review. |
@@ -83,7 +83,7 @@ the user-visible outcome.
 | **Task quota** | Internal | A quota counted in tasks. |
 | **Task reasoning step quota** | Internal | The task quota for one task reasoning step count. |
 | **Clue quota** | Internal | A quota counted in task clue occurrences. |
-| **Quota dimension** | Internal | One independent way tasks are counted for coverage and balance: task target category, clue type, clue operand form, answer meaning, or answer format. |
+| **Quota dimension** | Internal | One independent way tasks are counted for coverage and balance: task target category, clue type, clue reduction form, answer meaning, or answer format. |
 | **Quota target** | Internal | A count target for one quota dimension value at one task reasoning step count: minimum, target count, and maximum. It is not a task. |
 | **Task quota plan** | Internal | The plan for task quotas, family assignment, split assignment, and construction attempt budgets for one dataset release. |
 | **Deficit ledger** | Internal | The record of accepted and rejected task-definition counts, accepted clue occurrences, and remaining deficits by quota target, family, and task reasoning step count. |
@@ -185,8 +185,8 @@ Terms that were replaced because they were not composed from the domain:
 
 - **CadQuery program AST extraction result** is the `02a` extract CadQuery AST output; **CadQuery program runtime extraction result** is the `02b` execute CadQuery success output.
 - A pipeline stage is named by number and title, for example `02c` build CAD graph, never by the bare number. Use the document heading as the title.
-- A code label spells out the whole term and never drops a word. The clue operand
-  form profile is `clue_operand_form_profile`, not `clue_form_profile`.
+- A code label spells out the whole term and never drops a word. The clue reduction
+  form profile is `clue_reduction_form_profile`, not `clue_form_profile`.
 - Use **field** or **column** for typed data. **Payload** is reserved for an
   opaque blob, such as a vendor response or a control document that cannot be
   typed. Typed rows have fields, not payloads.
@@ -200,8 +200,8 @@ Terms that were replaced because they were not composed from the domain:
 - The step that produces the answer is a **task answer step**.
 - The ordered steps that solve the task are the **task solution sequence**.
 - The form of the answer is the **answer format**.
-- Target category and clue operand form are **coverage** dimensions in P0; clue
-  operand form gains a balance target in P1. Clue type, answer meaning, and
+- Target category and clue reduction form are **coverage** dimensions in P0; clue
+  reduction form gains a balance target in P1. Clue type, answer meaning, and
   answer format are **coverage and balance** dimensions. Task reasoning step
   count uses the target mix.
 

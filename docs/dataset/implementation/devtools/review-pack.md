@@ -123,7 +123,8 @@ The reviewer flags tasks that need a closer look in the same ledger, with
 
 ## What this does not prove
 
-- that the answer is true; the answer checks are in
-  [`../pipeline/03-task-generation/03b-construct-task-definitions/README.md`](../pipeline/03-task-generation/03b-construct-task-definitions/README.md);
+- that every answer is true; the
+  [task-construction oracles](../pipeline/testing/oracles/task-construction/README.md)
+  pin the supported cases and `03b` checks them, and the review gate is a sample;
 - that the sample is representative beyond the matrix;
 - that the reviewer is independent of the release author.

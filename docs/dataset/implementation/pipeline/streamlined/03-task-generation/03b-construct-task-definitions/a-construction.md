@@ -13,13 +13,14 @@ READ:
 
 TRANSFORM:
 
-- for one quota target, `possible_answers` = all entities of the target category in `state_scope`; `state_scope = final` in P0; for a scalar target, the candidates are `(subject, value)` measurement instances of the declared measurement
+- for one quota target, `possible_answers` = all entities of the target category in `state_scope`; `state_scope = final` in P0; a scalar target is deferred and no P0 task uses one
+- project candidate rows once per pass: stable row order, fact bitsets, and the canonical answer plus its `same_answer` group for each answer meaning in the plan; never recompute `answer(candidate)` inside the witness or cover loop
 - `facts(candidate)` = the true facts of the graph, each with the candidate set it selects; a fact exists only when the graph asserts it and its measurement is present, so an unsupported predicate is never attempted
-- for each candidate as witness, `wrong` = the candidates whose answer differs under `same_answer`; `chain = cover(wrong, facts(witness), target_step_count = task_reasoning_step_count - task_answer_step)`; a bounded set-cover search, never an enumeration
+- for each candidate as witness, `wrong` = the rows outside the witness's answer group; `chain = cover(wrong, facts(witness), target_step_count = task_reasoning_step_count - task_answer_step)`; a bounded set-cover search, never an enumeration
 - order the chain by dependency first, then narrowed-set size descending, tie-break by stable hash; this canonical order is identity-bearing and validity is checked against it
 - no cover at the target step count writes one `no_cover` failure row and leaves the target as a deficit for `03a`/`03c`; never accept a longer or shorter task
 - construction is deterministic for the graph, plan version, definition-schema version, and seed; candidate order, fact order, tie-breaks, and the cover search are fixed by `constructor_version`
-- skip a clue operand form the census does not support before any construction attempt
+- skip a clue reduction form the census does not support before any construction attempt
 - the search is bounded by `max_construction_candidates`, `max_construction_facts`, `max_cover_expansions`, and `max_validity_rechecks`; exhausting a budget records `construction_deficit` with detail `construction_budget`, not a failure row
 - every limit is a count; no wall-clock deadline
 
@@ -31,18 +32,20 @@ WRITE:
 
 TRANSFORM:
 
-- bind the target directly when the category has exactly one instance, otherwise by the ordered clues; the binding resolves to exactly one entity or one measurement instance
-- a scalar target binds a measurement instance: subject, measurement, value; the subject need not be unique
+- bind the target directly when the category has exactly one instance, otherwise by the ordered clues; the binding resolves to exactly one entity
+- a value answer binds the entity the clues end on; the answer-equivalent set may hold several equal-answer entities, and the kept definition binds the first witness in stable candidate order (`DS-REQ-15`, `DS-REQ-35`); a scalar target is deferred
 - build each clue as one typed predicate: `clue_id, order, clue_type, subject, check, result`; clue types are `property, relation, comparison, aggregation, provenance`
-- check fields by clue type: property `measurement, comparator, threshold | range`; relation `relation_type, direction, object`; comparison `measurement, comparator, reference`; aggregation `scope, aggregation_kind, measurement, rank | extreme`; provenance `operation_id | profile_id | workplane_id`
-- a clue with a reference binding other than the task target carries `clue_operand_form`: `named, selected, aggregated, or cross_state`; a clue with no reference has no form
-- no task uses these combinations: property with any operand form; aggregation with `aggregated`; `selected` at step count 1; `cross_state` in P0 and P1
+- check fields by clue type: property is either a measurement (`measurement, comparator, threshold | range`) or a categorical feature (`feature, value` from face surface kind or position); a direction is the `angle` measurement against a program axis; relation `relation_type, direction, object` or `angle, comparator, threshold, object`; comparison `measurement, comparator, reference`; aggregation `scope, aggregation_kind, measurement, rank | extreme`; provenance `operation_id | profile_id`
+- position is set-valued: every face touching a bounding-box extreme, and several faces may share one
+- a clue kind needs a capability witness: set-narrowing (a case leaving at least two), computed selection (input at least two, selection one), or it is a global identity name and inadmissible; a pre-registered unique name is not a clue
+- a clue with a reference binding other than the task target carries `clue_reduction_form`: `filtered, selected_in_earlier_clue, aggregated, or cross_state`; a clue with no reference has no form
+- no task uses these combinations: property with any reduction form; aggregation with `aggregated`; `selected_in_earlier_clue` at step count 1; `cross_state` in P0 and P1
 - a list item that states two conditions is two clues; a property clue that refers to another entity is two clues
 - every clue narrows the possible answers: `after < before`; a clue that does not narrow rejects the definition
-- derive `clue_operand_form_profile` as the ordered `(clue_type, clue_operand_form)` pair for every clue; never author it separately
-- every target, clue operand, answer value, and answer evidence resolves to a graph entity, relation, or measurement; a missing element rejects the definition
+- derive `clue_reduction_form_profile` as the ordered `(clue_type, clue_reduction_form)` pair for every clue; never author it separately
+- every target, clue reference, answer value, and answer evidence resolves to a graph entity, relation, or measurement; a missing element rejects the definition
 - `possible_answer_count` = the size of `possible_answers` for the target category and `state_scope`, before any clue narrows it
-- `task_clue_step_count` = number of clues; `task_reasoning_step_count = task_clue_step_count + 1` when an answer step exists, otherwise `task_clue_step_count`; the minimum is 1
+- `task_clue_step_count` = number of clues; `task_reasoning_step_count = task_clue_step_count + 1` when an answer step exists, otherwise `task_clue_step_count`; the minimum is 1 and the maximum is 10 (value answer: at most 9 clues; identity answer: at most 10)
 - `subset = warmup` when `task_reasoning_step_count = 1`, else `main`; `subset_matches_step_count` rechecks it
 
 WRITE:
@@ -58,8 +61,9 @@ TRANSFORM:
 - `validity_record` = `checks` (one entry per named check: name, outcome, detail), `answer_equivalent_size` (entries in `answer_equivalent_set`), and `same_answer_holds` (whether every entry's answer equals the answer value)
 - an accepted definition's `validity_record.checks` carries every named check except `geometry_required_recorded`, each with outcome `pass`; a missing check is a defect
 - an invalid definition writes a failure row naming the failed check, or `no_cover` when the cover search found no chain; the definition does not consume quota and does not reach `04`
+- a definition whose prompt identity (program, target category, canonical clue sequence, answer meaning, answer format, choice pool) is already accepted is a `prompt_unique` duplicate and is not accepted; a prompt identity whose gold answers disagree is `prompt_ambiguous` and none of its definitions is accepted (`DS-REQ-35`)
 - a state without a surviving probe is a `probe_deficit` in the deficit ledger, not a failure row
-- the failure reason set is closed: a check name from this section, `no_cover`, or `internal`
+- the failure reason set is closed: a check name from this section, `no_cover`, `prompt_ambiguous`, or `internal`
 
 WRITE:
 

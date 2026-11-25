@@ -32,7 +32,7 @@ var requiredBounds = map[CheckArithmetic][]string{
 var checkDimensions = map[string]bool{
 	"answer_format":             true,
 	"answer_meaning":            true,
-	"clue_operand_form":         true,
+	"clue_reduction_form":       true,
 	"clue_type":                 true,
 	"correct_answer":            true,
 	"geometry_required":         true,

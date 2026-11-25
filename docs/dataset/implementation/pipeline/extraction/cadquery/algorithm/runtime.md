@@ -254,6 +254,33 @@ A failed operation produces no effect. A solid state producing operation with a
 receiver state but no after state is a failure; the recorder does not silently
 drop the state.
 
+## Point probes
+
+For every solid state, emit at most one probe per index, `0` then `1`. Both are
+classified with `shape.isInside(point, geometric_tolerance × d)` on the recorded
+point; `distance_to_face_surface` is the kernel distance from that point to the
+nearest face. A probe whose `distance_to_face_surface` is below the clear-case margin
+is not emitted.
+
+- `margin = 100 × geometric_tolerance × d`, with `geometric_tolerance` the
+  default `1e-6` and `d` the length of the state's bounding-box diagonal. A point
+  has no size, so the state supplies the scale.
+- Probe 0 is the state centroid, rounded to the probe grid.
+- Probe 1 is drawn from the state surface: tessellate the shape at the sampling
+  tolerance `0.1` mm, choose one triangle with probability proportional to its
+  area, choose a point uniformly inside it, and add an offset whose x, y, and z
+  components are each drawn from `U(-1, 1)` mm in the program frame.
+- Round the point to the probe grid, `0.1` mm on each axis, before classifying
+  it. The grid is a stated constant, not derived from the shape: the point the
+  prompt renders is the point the kernel classified.
+- Probe 1 is redrawn, up to 32 attempts, until it clears the margin. When probe
+  0 survives, it is also redrawn until its label differs from probe 0's label.
+  Attempt `k` uses `blake2b` over the UTF-8 fields `program_sha256`, `state_id`,
+  `probe_index`, and `k`, joined by NUL bytes, as its seed, so the same program
+  and state produce the same probes on every run.
+- The offset limit and the attempt limit are scope constants. A state whose
+  draws exhaust them has no probe 1; that is a probe deficit, not a failure row.
+
 ## Entity tables
 
 For each state:

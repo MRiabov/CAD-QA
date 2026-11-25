@@ -17,8 +17,8 @@
 # copy bumps `version`; a comment-only edit changes the file hash but not
 # `version`. A structural change bumps `schema_version` and `version`.
 
-schema_version: 1
-version: cadqa_prompt_v3
+schema_version: 2
+version: cadqa_prompt_v10
 
 namespaces:
   dataset:
@@ -56,6 +56,9 @@ namespaces:
         distance: "distance"
         angle: "angle"
         centroid: "centroid"
+        centroid_x: "centroid X coordinate"
+        centroid_y: "centroid Y coordinate"
+        centroid_z: "centroid Z coordinate"
         bounding_box: "bounding box"
         count: "count"
         face_count: "face count"
@@ -87,8 +90,10 @@ namespaces:
 
       relation:
         adjacent_to: "adjacent to"
-        parallel_to: "parallel to"
-        perpendicular_to: "perpendicular to"
+        # Containment, read with the task target on the contained side:
+        # "The target edge is an edge of a cylindrical face."
+        has_edge: "an edge of"
+        has_vertex: "an endpoint of"
         # p1
         coplanar_with: "coplanar with"
         coaxial_with: "coaxial with"
@@ -116,6 +121,33 @@ namespaces:
 
       frame:
         program_frame: "program frame"
+
+      # Added in schema version 2. `other` is absent on purpose: it has no
+      # adjective, so a surface-kind clue or reference that would name it is a
+      # render-time validation error rather than "an other surface".
+      face_surface_kind:
+        plane: "planar"
+        cylinder: "cylindrical"
+        cone: "conical"
+        sphere: "spherical"
+        torus: "toroidal"
+        bspline: "B-spline"
+
+      axis:
+        "+x": "+x"
+        "-x": "-x"
+        "+y": "+y"
+        "-y": "-y"
+        "+z": "+z"
+        "-z": "-z"
+
+      frame_position:
+        min_x: "left"
+        max_x: "right"
+        min_y: "front"
+        max_y: "back"
+        min_z: "bottom"
+        max_z: "top"
 
       choice_label:
         A: "A"
@@ -180,16 +212,16 @@ namespaces:
 
       dataset.question.distance:
         variants:
-          - "What is the distance between the target {{target_label}} and the {{reference}}?"
-          - "How far is the target {{target_label}} from the {{reference}}?"
+          - "What is the distance between the target {{target_label}} and {{reference}}?"
+          - "How far is the target {{target_label}} from {{reference}}?"
         placeholders:
           target_label: label.target_category
           reference: reference
 
       dataset.question.angle:
         variants:
-          - "What is the angle between the target {{target_label}} and the {{reference}}?"
-          - "What angle do the target {{target_label}} and the {{reference}} form?"
+          - "What is the angle between the target {{target_label}} and {{reference}}?"
+          - "What angle do the target {{target_label}} and {{reference}} form?"
         placeholders:
           target_label: label.target_category
           reference: reference
@@ -243,19 +275,45 @@ namespaces:
 
       dataset.clue.property.threshold:
         variants:
-          - "The {{subject}} has a {{measurement_label}} {{comparator_label}} {{value}}."
-          - "The {{measurement_label}} of the {{subject}} is {{comparator_label}} {{value}}."
-          - "The {{subject}} satisfies a {{measurement_label}} that is {{comparator_label}} {{value}}."
+          - "{{subject}} has a {{measurement_label}} {{comparator_label}} {{value}}."
+          - "The {{measurement_label}} of {{subject}} is {{comparator_label}} {{value}}."
+          - "{{subject}} satisfies a {{measurement_label}} that is {{comparator_label}} {{value}}."
         placeholders:
           subject: reference
           measurement_label: label.metric
           comparator_label: label.comparator
           value: number
 
+      dataset.clue.property.face_surface_kind:
+        variants:
+          - "{{subject}} is {{surface_kind_label}}."
+          - "{{subject}} has a {{surface_kind_label}} surface."
+        placeholders:
+          subject: reference
+          surface_kind_label: label.face_surface_kind
+
+      dataset.clue.property.direction:
+        variants:
+          - "The angle between the outward normal of {{subject}} and {{axis_label}} is {{comparator_label}} {{value}} degrees."
+          - "The outward normal of {{subject}} is {{comparator_label}} {{value}} degrees from {{axis_label}}."
+        placeholders:
+          subject: reference
+          axis_label: label.axis
+          comparator_label: label.comparator
+          value: number
+
+      dataset.clue.property.position:
+        variants:
+          - "{{subject}} touches the {{position_label}} of the axis-aligned bounding box."
+          - "{{subject}} is at the {{position_label}} of the axis-aligned bounding box."
+        placeholders:
+          subject: reference
+          position_label: label.frame_position
+
       dataset.clue.property.range:
         variants:
-          - "The {{subject}} has a {{measurement_label}} between {{range_min}} and {{range_max}}."
-          - "The {{measurement_label}} of the {{subject}} lies between {{range_min}} and {{range_max}}."
+          - "{{subject}} has a {{measurement_label}} between {{range_min}} and {{range_max}}."
+          - "The {{measurement_label}} of {{subject}} lies between {{range_min}} and {{range_max}}."
         placeholders:
           subject: reference
           measurement_label: label.metric
@@ -264,16 +322,26 @@ namespaces:
 
       dataset.clue.relation:
         variants:
-          - "The {{subject}} is {{relation_label}} the {{reference}}."
+          - "{{subject}} is {{relation_label}} {{reference}}."
         placeholders:
           subject: reference
           relation_label: label.relation
           reference: reference
 
+      dataset.clue.relation.angle:
+        variants:
+          - "The angle between {{subject}} and {{reference}} is {{comparator_label}} {{value}} degrees."
+          - "Measured in degrees, the angle between {{subject}} and {{reference}} is {{comparator_label}} {{value}}."
+        placeholders:
+          subject: reference
+          reference: reference
+          comparator_label: label.comparator
+          value: number
+
       dataset.clue.comparison:
         variants:
-          - "The {{measurement_label}} of the {{subject}} is {{comparator_label}} the {{reference_measurement_label}} of the {{reference}}."
-          - "The {{subject}} has a {{measurement_label}} that is {{comparator_label}} the {{reference_measurement_label}} of the {{reference}}."
+          - "The {{measurement_label}} of {{subject}} is {{comparator_label}} the {{reference_measurement_label}} of {{reference}}."
+          - "{{subject}} has a {{measurement_label}} that is {{comparator_label}} the {{reference_measurement_label}} of {{reference}}."
         placeholders:
           subject: reference
           measurement_label: label.metric
@@ -283,27 +351,19 @@ namespaces:
 
       dataset.clue.provenance.operation:
         variants:
-          - "The {{subject}} was created by {{operation_label}}."
-          - "The {{subject}} is the result of {{operation_label}}."
+          - "{{subject}} was created by {{operation_label}}."
+          - "{{subject}} is the result of {{operation_label}}."
         placeholders:
           subject: reference
           operation_label: text
 
       dataset.clue.provenance.profile:
         variants:
-          - "The {{subject}} uses {{profile_label}}."
-          - "The {{subject}} is built from {{profile_label}}."
+          - "{{subject}} uses {{profile_label}}."
+          - "{{subject}} is built from {{profile_label}}."
         placeholders:
           subject: reference
           profile_label: text
-
-      dataset.clue.provenance.workplane:
-        variants:
-          - "The {{subject}} sits on {{workplane_label}}."
-          - "The {{subject}} is sketched on {{workplane_label}}."
-        placeholders:
-          subject: reference
-          workplane_label: text
 
       dataset.choice.description:
         variants:

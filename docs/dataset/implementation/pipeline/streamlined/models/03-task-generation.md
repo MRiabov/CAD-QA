@@ -29,7 +29,7 @@ type QuotaDimension string
 const (
 	DimensionTargetCategory  QuotaDimension = "target_category"
 	DimensionClueType        QuotaDimension = "clue_type"
-	DimensionClueOperandForm QuotaDimension = "clue_operand_form"
+	DimensionClueReductionForm QuotaDimension = "clue_reduction_form"
 	DimensionAnswerMeaning   QuotaDimension = "answer_meaning"
 	DimensionAnswerFormat    QuotaDimension = "answer_format"
 )
@@ -97,13 +97,13 @@ const (
 	ClueProvenance ClueType = "provenance"
 )
 
-type ClueOperandForm string
+type ClueReductionForm string
 
 const (
-	OperandNamed      ClueOperandForm = "named"
-	OperandSelected   ClueOperandForm = "selected"
-	OperandAggregated ClueOperandForm = "aggregated"
-	OperandCrossState ClueOperandForm = "cross_state"
+	ReductionFiltered              ClueReductionForm = "filtered"
+	ReductionSelectedInEarlierClue ClueReductionForm = "selected_in_earlier_clue"
+	ReductionAggregated            ClueReductionForm = "aggregated"
+	ReductionCrossState            ClueReductionForm = "cross_state"
 )
 
 type AnswerMeaning string
@@ -166,17 +166,23 @@ const (
 type ProgramCapabilityCensus struct {
 	TargetCategories           []TargetCategory                  `parquet:"target_categories"`
 	ClueConstructors           []ClueConstructor                 `parquet:"clue_constructors"`
-	ClueOperandForms           map[ClueType][]ClueOperandForm    `parquet:"clue_operand_forms"`
+	ClueReductionForms           map[ClueType][]ClueReductionForm    `parquet:"clue_reduction_forms"`
 	Measurements               map[string][]string               `parquet:"measurements"`
 	AnswerMeanings             []AnswerMeaning                   `parquet:"answer_meanings"`
-	MaxTaskReasoningStepCount  int                               `parquet:"max_task_reasoning_step_count"`
+	MaxTaskReasoningStepCount  []TaskStepBound                   `parquet:"max_task_reasoning_step_count"`
 	EntityCounts               map[TargetCategory]int            `parquet:"entity_counts"`
 	StatesWithPointProbe       int                               `parquet:"states_with_point_probe"`
 }
 
+type TaskStepBound struct {
+	TargetCategory TargetCategory `parquet:"target_category"`
+	AnswerMeaning  AnswerMeaning  `parquet:"answer_meaning"`
+	MaxSteps       int            `parquet:"max_steps"`
+}
+
 type ClueConstructor struct {
 	ClueType      ClueType    `parquet:"clue_type"`
-	RelationType  *string     `parquet:"relation_type"`
+	RelationType  *string     `parquet:"relation_type"` // null for an angle relation
 	Measurement   *string     `parquet:"measurement"`
 }
 
@@ -186,11 +192,11 @@ type FamilyProfile struct {
 	Split                      *Split                          `parquet:"split"`
 	TargetCategories           []TargetCategory                `parquet:"target_categories"`
 	ClueConstructors           []ClueConstructor               `parquet:"clue_constructors"`
-	ClueOperandForms           map[ClueType][]ClueOperandForm  `parquet:"clue_operand_forms"`
+	ClueReductionForms           map[ClueType][]ClueReductionForm  `parquet:"clue_reduction_forms"`
 	Measurements               map[string][]string             `parquet:"measurements"`
 	AnswerMeanings             []AnswerMeaning                 `parquet:"answer_meanings"`
 	AnswerFormats              []AnswerFormat                  `parquet:"answer_formats"`
-	MaxTaskReasoningStepCount  int                             `parquet:"max_task_reasoning_step_count"`
+	MaxTaskReasoningStepCount  []TaskStepBound                 `parquet:"max_task_reasoning_step_count"`
 	StatesWithPointProbe       int                             `parquet:"states_with_point_probe"`
 	EntityCounts               map[TargetCategory]int          `parquet:"entity_counts"`
 	TaskQuotaPerProgram        int                             `parquet:"task_quota_per_program"`
@@ -311,7 +317,7 @@ type TaskDefinition struct { // Parquet
 	TargetCategory             TargetCategory            `parquet:"target_category"`
 	TargetBinding              TargetBinding             `parquet:"target_binding"`
 	TaskClues                  []TaskClue                `parquet:"task_clues"`
-	ClueOperandFormProfile     []ClueOperandFormEntry    `parquet:"clue_operand_form_profile"`
+	ClueReductionFormProfile     []ClueReductionFormEntry    `parquet:"clue_reduction_form_profile"`
 	AnswerMeaning              AnswerMeaning             `parquet:"answer_meaning"`
 	TaskAnswerStep             int                       `parquet:"task_answer_step"`
 	AnswerParameter            *AnswerParameter          `parquet:"answer_parameter"`
@@ -347,19 +353,21 @@ type TaskClue struct {
 }
 
 type BindingRef struct { // exactly one group is non-null, matching Kind
-	Kind        string     `parquet:"kind"` // "target" | "earlier_clue" | "named" | "literal"
+	Kind        string     `parquet:"kind"` // "target" | "earlier_clue" | "filtered" | "literal"
 	ClueID      *string    `parquet:"clue_id"`
-	NodeID      *uuid.UUID `parquet:"node_id"`
+	NodeID      *uuid.UUID `parquet:"node_id"` // one entity only; a filtered reference is a set, see `MC-50`
 	MeasurementName *string `parquet:"measurement_name"`
 	Literal     *string    `parquet:"literal"`
 }
 
-type ClueCheck struct { // exactly one group is non-null, matching ClueType
-	Property    *PropertyCheck    `parquet:"property"`
-	Relation    *RelationCheck    `parquet:"relation"`
-	Comparison  *ComparisonCheck  `parquet:"comparison"`
-	Aggregation *AggregationCheck `parquet:"aggregation"`
-	Provenance  *ProvenanceCheck  `parquet:"provenance"`
+type ClueCheck struct { // exactly one group is non-null; Property/Categorical and Relation/AngleRelation are the two shapes of their clue type
+	Property      *PropertyCheck      `parquet:"property"`
+	Categorical   *CategoricalCheck   `parquet:"categorical"`
+	Relation      *RelationCheck      `parquet:"relation"`
+	AngleRelation *AngleRelationCheck `parquet:"angle_relation"`
+	Comparison    *ComparisonCheck    `parquet:"comparison"`
+	Aggregation   *AggregationCheck   `parquet:"aggregation"`
+	Provenance    *ProvenanceCheck    `parquet:"provenance"`
 }
 
 type PropertyCheck struct {
@@ -367,6 +375,11 @@ type PropertyCheck struct {
 	Comparator  string     `parquet:"comparator"`
 	Threshold   *string    `parquet:"threshold"`
 	Range       *ValueRange `parquet:"range"`
+}
+
+type CategoricalCheck struct {
+	Feature string `parquet:"feature"` // "face_surface_kind" | "position"
+	Value   string `parquet:"value"`
 }
 
 type ValueRange struct {
@@ -378,6 +391,13 @@ type RelationCheck struct {
 	RelationType string      `parquet:"relation_type"`
 	Direction    string      `parquet:"direction"` // "object_to_subject" | "subject_to_object"
 	Object       BindingRef  `parquet:"object"`
+}
+
+type AngleRelationCheck struct {
+	Measurement string     `parquet:"measurement"` // "angle"
+	Comparator  string     `parquet:"comparator"`
+	Threshold   string     `parquet:"threshold"`
+	Object      BindingRef `parquet:"object"`
 }
 
 type ComparisonCheck struct {
@@ -397,20 +417,19 @@ type AggregationCheck struct {
 type ProvenanceCheck struct { // exactly one group is non-null
 	OperationID *string `parquet:"operation_id"`
 	ProfileID   *string `parquet:"profile_id"`
-	WorkplaneID *string `parquet:"workplane_id"`
 }
 
 type ClueResult struct {
 	BeforeCount     int                `parquet:"before_count"`
 	AfterCount      int                `parquet:"after_count"`
 	BoundEntities   []uuid.UUID        `parquet:"bound_entities"`
-	ClueOperandForm *ClueOperandForm   `parquet:"clue_operand_form"`
+	ClueReductionForm *ClueReductionForm   `parquet:"clue_reduction_form"`
 	EvidenceRefs    []EvidenceRef      `parquet:"evidence_refs"`
 }
 
-type ClueOperandFormEntry struct {
+type ClueReductionFormEntry struct {
 	ClueType        ClueType         `parquet:"clue_type"`
-	ClueOperandForm *ClueOperandForm `parquet:"clue_operand_form"`
+	ClueReductionForm *ClueReductionForm `parquet:"clue_reduction_form"`
 }
 ```
 
@@ -454,7 +473,7 @@ type AnswerEquivalentEntry struct {
 type AnswerPointProbe struct {
 	Point            Point3D `parquet:"point"`
 	Location         string  `parquet:"location"` // "inside" | "outside"
-	DistanceToSurface string `parquet:"distance_to_surface"`
+	DistanceToFaceSurface string `parquet:"distance_to_face_surface"`
 	Classifier       string  `parquet:"classifier"`
 	Margin           string  `parquet:"margin"`
 }

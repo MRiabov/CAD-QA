@@ -28,8 +28,8 @@ in the
 [release contract](../../requirements/release-dataset-contract.md), one row per
 column, so it is written once.
 
-- Copy the definition fields unchanged, including `clue_operand_form_profile`,
-  which `05` validate and export release reads for clue operand form coverage.
+- Copy the definition fields unchanged, including `clue_reduction_form_profile`,
+  which `05` validate and export release reads for clue reduction form coverage.
 - Copy the label and the answer value of every choice-pool entry into the
   `choices` column. The descriptions stay in the prompt, and the distinguishing
   facts stay in the definition, because the release needs neither.
@@ -37,7 +37,7 @@ column, so it is written once.
   task definitions already produced them, and `04` never re-serializes or
   recomputes an answer value.
 - Compute `prompt_sha256` over the `prompt` UTF-8 bytes after rendering.
-- Derive `clue_types` from `clue_operand_form_profile`, so the two columns cannot
+- Derive `clue_types` from `clue_reduction_form_profile`, so the two columns cannot
   disagree.
 - Copy `answer_sha256`. Do not recompute it: it covers a fixed set of answer
   fields in a canonical form, and a second implementation would make a mismatch

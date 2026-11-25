@@ -1,9 +1,11 @@
 """Release-table types and CadQuery execution for the task browser.
 
 The browser reads the documented release columns, extracts the program from the
-prompt's Python fence, and executes it to tessellate the final solid state. It
-imports CadQuery lazily, so the typed models and the HTTP API load without the
-CAD kernel.
+prompt's Python fence, and executes it to tessellate the final solid state. The
+row type the browser indexes is shared with the gold-oracle input in
+``task_oracles.py``; a gold record has no prompt, so its ``prompt`` is null and
+its ``oracle`` is the record. This module imports CadQuery lazily, so the typed
+models and the HTTP API load without the CAD kernel.
 
 This is a manual-verification devtool. The generator never imports it.
 """
@@ -18,6 +20,7 @@ from typing import Any
 
 import pyarrow.parquet as pq
 from pydantic import BaseModel, ConfigDict, Field
+from task_oracle_schema import TaskOracle
 
 PYTHON_FENCE = re.compile(r"```python\n(?P<code>.*?)\n```", re.DOTALL)
 FENCE = re.compile(r"```python\n.*?\n```", re.DOTALL)
@@ -143,20 +146,48 @@ class DiagnosticEntry(BaseModel):
     value: str = Field(min_length=1, max_length=500)
 
 
+class TaskRow(BaseModel):
+    """One task the browser shows, from a release table or a gold record.
+
+    The program is already extracted, so the index does not care which input a
+    row came from. A release row carries the prompt; a gold row carries the
+    record and has no prompt.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    task_id: str = Field(min_length=1)
+    split: str = Field(min_length=1)
+    subset: str = Field(min_length=1)
+    target_category: str = Field(min_length=1)
+    answer_format: str = Field(min_length=1)
+    answer_meaning: str = Field(min_length=1)
+    answer: str = Field(min_length=1)
+    preview: str = Field(min_length=1)
+    task_reasoning_step_count: int = Field(ge=0)
+    program_id: str = Field(min_length=1)
+    program_sha256: str = Field(min_length=64, max_length=64)
+    program: str = Field(min_length=1)
+    prompt: str | None = Field(default=None)
+    choices: list[Choice] = Field(default_factory=list)
+    diagnostics: list[DiagnosticEntry] = Field(default_factory=list)
+    oracle: TaskOracle | None = Field(default=None)
+
+
 class TaskSummary(BaseModel):
     """One row of the task list."""
 
     model_config = ConfigDict(extra="forbid")
 
     task_id: str = Field(min_length=1)
-    split: Split
-    subset: Subset
+    split: str = Field(min_length=1)
+    subset: str = Field(min_length=1)
     target_category: str = Field(min_length=1)
     answer_meaning: str = Field(min_length=1)
     answer: str = Field(min_length=1)
     task_reasoning_step_count: int = Field(ge=0)
     program_id: str = Field(min_length=1)
-    prompt_preview: str = Field(min_length=1, max_length=240)
+    preview: str = Field(min_length=1, max_length=240)
 
 
 class TaskDetail(BaseModel):
@@ -165,16 +196,17 @@ class TaskDetail(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     task_id: str = Field(min_length=1)
-    split: Split
-    subset: Subset
+    split: str = Field(min_length=1)
+    subset: str = Field(min_length=1)
     target_category: str = Field(min_length=1)
     answer_format: str = Field(min_length=1)
     answer_meaning: str = Field(min_length=1)
     answer: str = Field(min_length=1)
-    prompt: str = Field(min_length=1)
+    prompt: str | None = Field(default=None)
     program: str = Field(min_length=1)
     choices: list[Choice] = Field(default_factory=list)
     diagnostics: list[DiagnosticEntry] = Field(default_factory=list)
+    oracle: TaskOracle | None = Field(default=None)
 
 
 class Facets(BaseModel):
@@ -183,6 +215,7 @@ class Facets(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     task_count: int = Field(ge=0)
+    input_kind: str = Field(default="release", min_length=1)
     splits: list[str] = Field(default_factory=list)
     subsets: list[str] = Field(default_factory=list)
     target_categories: list[str] = Field(default_factory=list)
@@ -341,7 +374,35 @@ def diagnostics(row: ReleaseRow) -> tuple[DiagnosticEntry, ...]:
     )
 
 
-def summary(row: ReleaseRow) -> TaskSummary:
+def load_release_rows(table_path: Path) -> list[TaskRow]:
+    """Read a release table as browser rows."""
+
+    return [to_task_row(row) for row in load_rows(table_path)]
+
+
+def to_task_row(row: ReleaseRow) -> TaskRow:
+    """Extract the program and the detail payload from a release row."""
+
+    return TaskRow(
+        task_id=row.task_id,
+        split=row.split.value,
+        subset=row.subset.value,
+        target_category=row.target_category,
+        answer_format=row.answer_format,
+        answer_meaning=row.answer_meaning,
+        answer=answer_text(row),
+        preview=prompt_preview(row.prompt),
+        task_reasoning_step_count=row.task_reasoning_step_count,
+        program_id=row.program_id,
+        program_sha256=row.program_sha256,
+        program=program_text(row.prompt),
+        prompt=row.prompt,
+        choices=row.choices,
+        diagnostics=list(diagnostics(row)),
+    )
+
+
+def summary(row: TaskRow) -> TaskSummary:
     """One list row for the browser."""
 
     return TaskSummary(
@@ -350,14 +411,14 @@ def summary(row: ReleaseRow) -> TaskSummary:
         subset=row.subset,
         target_category=row.target_category,
         answer_meaning=row.answer_meaning,
-        answer=answer_text(row),
+        answer=row.answer,
         task_reasoning_step_count=row.task_reasoning_step_count,
         program_id=row.program_id,
-        prompt_preview=prompt_preview(row.prompt),
+        preview=row.preview,
     )
 
 
-def detail(row: ReleaseRow) -> TaskDetail:
+def detail(row: TaskRow) -> TaskDetail:
     """The detail payload for one task."""
 
     return TaskDetail(
@@ -367,9 +428,10 @@ def detail(row: ReleaseRow) -> TaskDetail:
         target_category=row.target_category,
         answer_format=row.answer_format,
         answer_meaning=row.answer_meaning,
-        answer=answer_text(row),
+        answer=row.answer,
         prompt=row.prompt,
-        program=program_text(row.prompt),
+        program=row.program,
         choices=row.choices,
-        diagnostics=list(diagnostics(row)),
+        diagnostics=row.diagnostics,
+        oracle=row.oracle,
     )

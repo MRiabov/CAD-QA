@@ -45,7 +45,7 @@ TRANSFORM:
 - volume → kernel volume of the bound solid state; area → kernel area of the bound face or profile; length → kernel length of the bound edge or path segment; distance → shortest kernel distance between the bound pair, or between the point and the entity; evidence = the kernel measurement
 - angle → the graph angle for the pair; evidence = the graph measurement
 - count → the size of the bound set
-- membership → `is_inside(solid_state, point)` from the point probe; answer is inside or outside; a point within the clear-case margin is not used; evidence = the point, its classification, the solid state, and the classifier; `answer_parameter` is that same probe point, bound once, and `04` renders the question from it
+- membership → `is_inside(solid_state, point)` from the point probe; answer is inside or outside; a point within the clear-case margin is not used; evidence = the point, its classification, the solid state, the distance to the nearest face, the classifier, and the margin; `answer_parameter` is that same probe point, bound once, and `04` renders the question from it
 - material change → the signed volume or count the bound operation adds or removes; a cut answers a negative number; `answer_parameter` is null
 - position → the declared point (face centroid, edge midpoint, vertex point, or state centroid)
 - extent → minimum and maximum corner of the bounding box in the program frame

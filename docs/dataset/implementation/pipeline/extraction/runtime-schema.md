@@ -126,11 +126,12 @@ Every AST call operation has exactly one row.
 |---|---|---|---|
 | `probe_id` | `STRING` | not null | `probe:<state_id>:<probe_index>`. |
 | `state_id` | `STRING` | not null | State the probe classifies. |
-| `probe_index` | `INT64` | not null | 0 for the centroid probe, 1 for the seeded probe. |
-| `point` | `Point3D` | not null | Probe point. |
+| `probe_index` | `INT64` | not null | 0 for the centroid probe, 1 for the probe drawn next to a face surface. |
+| `point` | `Point3D` | not null | Probe point, on the 0.1 mm grid. |
 | `is_inside` | `BOOLEAN` | not null | `is_inside(state, point)` classification. |
-| `distance_to_surface` | `DOUBLE` | not null | Distance to the nearest face surface. |
+| `distance_to_face_surface` | `DOUBLE` | not null | Distance to the nearest face surface. |
 | `classifier` | `STRING` enum `is_inside` | not null | Classifier that produced the label. |
+| `margin` | `DOUBLE` | not null | Clear-case margin the probe was tested against, `100 × geometric_tolerance × d`. |
 | `source_span` | `SourceSpan` | null | Producing assignment span, when known. |
 
 A state has at most two rows. A state with no surviving row supports no

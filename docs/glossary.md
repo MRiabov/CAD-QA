@@ -197,6 +197,17 @@ A face, edge, or vertex of a solid state.
 
 ---
 
+### CAD graph categorical feature
+
+A closed value on a CAD graph entity that a task clue compares for equality,
+rather than a number compared with a comparator. The P0 categorical features are
+face surface kind (`plane`, `cylinder`, …) and position (the axis-aligned
+bounding-box extremes a face touches). A direction is not a categorical feature:
+the outward normal is continuous, and a clue about it is a measurement. Position is set-valued, because several coplanar faces may touch one
+extreme. `In code:` the property clue's categorical check.
+
+---
+
 ### CAD-QA dataset row
 
 One task instance — a single record in the dataset file holding every field: the
@@ -257,7 +268,8 @@ The record of how the answer candidate set narrows to the gold answer.
 
 ### Gold answer
 
-The verifier-backed correct answer for a CAD-QA dataset row.
+The correct answer for a CAD-QA dataset row, produced by CadQuery or an exact
+rule and recorded with answer evidence (`DS-REQ-13`).
 
 ---
 
@@ -415,17 +427,26 @@ aggregation, or provenance.
 
 ---
 
-### Clue operand form
+### Clue predicate
 
-How a task clue's reference is identified:
+The one condition a task clue states, read against the task target or a reference
+set: a measurement with a comparator, a categorical feature with equality, a
+relation, a comparison, an aggregation, or a provenance fact. It is not a name.
+See [`dataset/requirements/views/clue-list.md`](dataset/requirements/views/clue-list.md).
 
-- `named` — by its construction or geometry, such as "the cylindrical face";
-- `selected` — by an earlier task clue, such as "the face selected in step 1";
-- `aggregated` — by an extreme, rank, or count over a set;
-- `cross_state` — by a before/after solid state.
+---
 
-A task clue with no reference has no clue operand form. `In code:`
-`clue_operand_form`.
+### Clue reduction form
+
+How a task clue's reference set is reduced from the entities of the graph:
+
+- `filtered` — the entities of a category that satisfy conditions, such as "a cylindrical face";
+- `selected_in_earlier_clue` — the set an earlier task clue bound, such as "the faces from clue 1";
+- `aggregated` — a set reduced to one entity by an extreme or rank;
+- `cross_state` — the before/after solid state pair.
+
+A task clue with no reference has no clue reduction form. `In code:`
+`clue_reduction_form`.
 
 ---
 
@@ -687,6 +708,15 @@ stated precision, which is the same comparison the release grader performs.
 
 ---
 
+### Prompt identity
+
+The fields that decide whether two definitions render one task: the CadQuery
+program, target category, canonical task clue sequence, answer meaning, answer
+format, and choice pool. Two definitions that agree on all of them keep one; a
+group whose gold answers disagree is a `prompt_ambiguous` defect (`DS-REQ-35`).
+
+---
+
 ## Don't say
 
 A ratchet: entries are removed only when the term is engineered out of the docs and code.
@@ -778,12 +808,13 @@ cross-cutting phrases. Enforced by `tools/ci_cd/check_dont_say.py`.
 | split target | Split task target | target of what count? |
 | family capacity | Family task capacity | capacity for what? |
 | step quota | Task reasoning step quota | quota for which step? |
-| clue stratum / clue strata | clue operand form | retired ladder; a clue has one clue type and one clue operand form |
-| clue form | clue operand form | drops "operand"; a clue has a clue type and a clue operand form |
-| derivation steps | clue operand form | counted internal work, not task reasoning steps |
+| clue stratum / clue strata | clue reduction form | retired ladder; a clue has one clue type and one clue reduction form |
+| clue form | clue reduction form | drops "operand"; a clue has a clue type and a clue reduction form |
+| derivation steps | clue reduction form | counted internal work, not task reasoning steps |
 | witness set | answer-equivalent set | 'witness' is constraint-solver jargon |
 | separation margin | stated precision | there is no margin; equality is canonical at the stated precision |
 | answer separation | answer equality | separation is the negation of the answer equality |
+| specimen | prompt example | metaphor; not a CAD-QA term, and a physical test piece in CAD |
 
 ---
 
@@ -796,4 +827,5 @@ geometry-critical · geometry-hop-positive · shortcut resistance · stop gate �
 label · source variable · path point / path segment / edge endpoint · tool declaration ·
 native tool-call format · curriculum · compaction · held-out row · tool-valid · baseline ·
 grader · harness (the runner, distinct from **LLM harness mode**) · Harbor task ·
-slice (rc10 / release10k / clean-100) · tool-assisted upper bound.
+slice (rc10 / release10k / clean-100) · tool-assisted upper bound · reference form ·
+gold query (the task-construction oracle query, distinct from **Gold query program**).

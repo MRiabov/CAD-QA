@@ -1,15 +1,19 @@
-"""Local task browser for one release table.
+"""Local task browser over one task-row schema.
 
 The browser serves the JSON API the Vite+ app in ``task-browser/`` reads, and
 serves the built app when ``task-browser/dist`` exists. It reads one
-``release.parquet``, paginates the task list, and tessellates a task's final
-solid state on demand. One tessellation is cached per program, so tasks that
-share a program share a scene.
+``release.parquet`` or the checked-in task-construction oracles, maps both into
+one ``TaskRow``, paginates the task list, and tessellates a task's final solid
+state on demand. One tessellation is cached per program, so tasks that share a
+program share a scene.
 
 Run the API and the Vite dev server separately while developing::
 
     uv run python tools/manual-verification/task_browser.py \
         --release runs/run0001/05-validate-and-export-release/current
+
+    uv run python tools/manual-verification/task_browser.py \
+        --oracles docs/dataset/implementation/pipeline/testing/oracles/task-construction
 
     cd tools/manual-verification/task-browser && pnpm dev
 
@@ -35,14 +39,15 @@ from pathlib import Path
 from typing import Any, override
 from urllib.parse import parse_qs, unquote, urlparse
 
+from task_oracles import load_oracle_rows
 from task_release import (
     Facets,
     TaskDetail,
     TaskPage,
+    TaskRow,
     detail,
     execute_program,
-    load_rows,
-    program_text,
+    load_release_rows,
     release_table_path,
     summary,
 )
@@ -70,19 +75,24 @@ class BadRequest(ValueError):
     """A request parameter is outside its allowed form."""
 
 
-class ReleaseIndex:
-    """One release table, its task list, and its scene cache."""
+class TaskIndex:
+    """One row input, its task list, and its scene cache.
 
-    def __init__(self, table_path: Path, cache_dir: Path) -> None:
-        self.table_path = table_path
+    Both inputs map into ``TaskRow``, so the index and the frontend see one
+    schema. A gold row has no prompt and carries the record for the detail
+    panel.
+    """
+
+    def __init__(self, rows: list[TaskRow], cache_dir: Path, input_kind: str) -> None:
+        self.rows = rows
         self.cache_dir = cache_dir
-        self.rows = load_rows(table_path)
-        self.by_id = {row.task_id: row for row in self.rows}
+        self.by_id = {row.task_id: row for row in rows}
         self.scene_lock = threading.Lock()
         self.facets = Facets(
             task_count=len(self.rows),
-            splits=sorted({str(row.split) for row in self.rows}),
-            subsets=sorted({str(row.subset) for row in self.rows}),
+            input_kind=input_kind,
+            splits=sorted({row.split for row in self.rows}),
+            subsets=sorted({row.subset for row in self.rows}),
             target_categories=sorted({row.target_category for row in self.rows}),
             answer_meanings=sorted({row.answer_meaning for row in self.rows}),
         )
@@ -108,9 +118,13 @@ class ReleaseIndex:
             rows = [
                 row
                 for row in rows
-                if needle in row.prompt.lower()
-                or needle in row.task_id.lower()
+                if needle in row.task_id.lower()
                 or needle in row.program_id.lower()
+                or needle in row.target_category.lower()
+                or needle in row.answer_meaning.lower()
+                or needle in row.answer.lower()
+                or needle in row.preview.lower()
+                or (row.prompt is not None and needle in row.prompt.lower())
             ]
         if split:
             rows = [row for row in rows if row.split == split]
@@ -156,7 +170,7 @@ class ReleaseIndex:
                 return ScenePayload.model_validate_json(
                     cache_path.read_text(encoding="utf-8")
                 )
-            shape = execute_program(program_text(row.prompt))
+            shape = execute_program(row.program)
             payload = scene_from_shape(shape)
             cache_path.parent.mkdir(parents=True, exist_ok=True)
             temporary = cache_path.with_suffix(".tmp")
@@ -181,7 +195,7 @@ class TaskBrowserHandler(BaseHTTPRequestHandler):
     """The JSON API and the static app."""
 
     server_version = "CADQATaskBrowser/1"
-    index: ReleaseIndex
+    index: TaskIndex
     web_dist: Path
 
     def do_GET(self) -> None:
@@ -272,8 +286,8 @@ class TaskBrowserHandler(BaseHTTPRequestHandler):
         LOGGER.info("%s - %s", self.address_string(), format % args)
 
 
-def build_handler(index: ReleaseIndex, web_dist: Path) -> type[TaskBrowserHandler]:
-    """Bind one release index and web build to a handler class."""
+def build_handler(index: TaskIndex, web_dist: Path) -> type[TaskBrowserHandler]:
+    """Bind one task index and web build to a handler class."""
 
     return type(
         "BoundTaskBrowserHandler",
@@ -284,11 +298,16 @@ def build_handler(index: ReleaseIndex, web_dist: Path) -> type[TaskBrowserHandle
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
+    inputs = parser.add_mutually_exclusive_group(required=True)
+    inputs.add_argument(
         "--release",
-        required=True,
         type=Path,
         help="release directory, current symlink, or release.parquet",
+    )
+    inputs.add_argument(
+        "--oracles",
+        type=Path,
+        help="directory of task-construction gold records",
     )
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8765)
@@ -313,15 +332,24 @@ def main(argv: list[str] | None = None) -> int:
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
-    table_path = release_table_path(args.release)
-    index = ReleaseIndex(table_path, args.cache_dir)
+    if args.oracles is not None:
+        rows = load_oracle_rows(args.oracles)
+        index = TaskIndex(rows, args.cache_dir, input_kind="gold")
+        input_line = f"Gold oracles: {args.oracles}"
+        title = "CAD-QA gold oracle review"
+    else:
+        table_path = release_table_path(args.release)
+        rows = load_release_rows(table_path)
+        index = TaskIndex(rows, args.cache_dir, input_kind="release")
+        input_line = f"Release table: {table_path}"
+        title = "CAD-QA task browser"
     server = ThreadingHTTPServer(
         (args.host, args.port), build_handler(index, args.web_dist)
     )
     url = f"http://{args.host}:{server.server_port}"
     built = "built" if args.web_dist.is_dir() else "not built; run pnpm build"
-    print(f"Serving CAD-QA task browser at {url}")
-    print(f"Release table: {table_path}")
+    print(f"Serving {title} at {url}")
+    print(input_line)
     print(f"Rows: {len(index.rows)}")
     print(f"Scene cache: {args.cache_dir}")
     print(f"Web app: {args.web_dist} ({built})")

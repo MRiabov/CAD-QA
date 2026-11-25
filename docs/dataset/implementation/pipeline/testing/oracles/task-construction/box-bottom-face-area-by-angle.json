@@ -1,0 +1,124 @@
+{
+  "schema_version": 3,
+  "oracle_kind": "task-construction",
+  "slug": "box-bottom-face-area-by-angle",
+  "verification": {
+    "status": "verified",
+    "verified_by": "MRiabov",
+    "verified_at": "2026-11-25",
+    "rationale": "The task description and answer were written by hand. The gold query executes the program with plain CadQuery and prints the answer; it does not use the CAD graph or the constructor. The pair-angle clue is the continuous replacement for the retired parallel relation: it states 180 degrees to the top face and leaves the bottom face. Owner accepted this record after reviewing the current set in the task browser on 2026-11-25.",
+    "gold_query": {
+      "status": "passed",
+      "stdout": "200",
+      "checked_at": "2026-11-25"
+    }
+  },
+  "environment": {
+    "cadquery_version": "2.8.0",
+    "ocp_version": "7.9.3.1",
+    "python_version": "3.12.13",
+    "oracle_tool_version": "1"
+  },
+  "program": {
+    "program_id": "cadqaprog:c68e7eeee7b9f5c26a3e418976cd6f2056a636742379d3cafaf2bfda433316e3",
+    "program_sha256": "c68e7eeee7b9f5c26a3e418976cd6f2056a636742379d3cafaf2bfda433316e3",
+    "text": "import cadquery as cq\n\nresult = cq.Workplane(\"XY\").box(10, 20, 5)\n"
+  },
+  "task": {
+    "target_category": "face",
+    "question": "What is the area of the target face?",
+    "state_scope": "final",
+    "possible_answer_count": 6,
+    "task_reasoning_step_count": 2,
+    "answer_meaning": "area",
+    "native_answer_format": "number",
+    "answer_format": "number",
+    "geometry_required": true,
+    "uniqueness": "The pair-angle clue leaves the bottom face, the only face at 180 degrees to the top face."
+  },
+  "clues": [
+    {
+      "order": 1,
+      "clue_type": "relation",
+      "clue_reduction_form": "filtered",
+      "statement": "The angle between the target face and the face touching the top of the axis-aligned bounding box is 180 degrees.",
+      "check": {
+        "predicate_kind": "relation",
+        "relation_shape": "angle",
+        "measurement": "angle",
+        "comparator": "equals",
+        "threshold": "180",
+        "object": {
+          "category": "face",
+          "filters": {
+            "position": "max_z"
+          }
+        }
+      },
+      "narrows": {
+        "before": 6,
+        "after": 1
+      }
+    }
+  ],
+  "answer": {
+    "value_kind": "number",
+    "value": "200",
+    "unit": "square_millimetre",
+    "tolerance": {
+      "tolerance_kind": "absolute",
+      "value_text": "0.5"
+    },
+    "scoring_rule": "numeric_tolerance",
+    "parameter": null,
+    "point_probe": null,
+    "evidence_kind": "measured",
+    "evidence_rule": "area",
+    "evidence_refs": [
+      {
+        "reference_kind": "measurement",
+        "subject": {
+          "category": "face",
+          "filters": {
+            "position": "min_z"
+          }
+        },
+        "object": null,
+        "measurement": "area"
+      }
+    ],
+    "answer_equivalent_set": [
+      {
+        "subject": {
+          "category": "face",
+          "filters": {
+            "position": "min_z"
+          }
+        },
+        "value": "200"
+      }
+    ]
+  },
+  "gold_query": {
+    "language": "python",
+    "code": "print(canon(result.faces(\"<Z\").val().Area()))",
+    "expected_stdout": "200",
+    "sha256": "2376a90ac00b578c93a702f11185652f2b69dcdc5a77dc0a853704abca2bd29e"
+  },
+  "covers": {
+    "target_category": "face",
+    "clue_types": [
+      "relation"
+    ],
+    "clue_reduction_forms": [
+      "filtered"
+    ],
+    "answer_meaning": "area",
+    "answer_format": "number",
+    "task_reasoning_step_count": 2
+  },
+  "excluded": [],
+  "notes": [
+    "The top face is at 0 degrees to itself, the bottom face at 180 degrees, and the four side faces at 90 degrees. The 180-degree clue leaves the bottom face alone."
+  ]
+}

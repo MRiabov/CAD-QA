@@ -19,8 +19,8 @@ that repeats an answer value is rejected, not trimmed to four.
 
 `test_03b_membership_uses_the_probe` — a membership task's `answer_parameter` is
 the probe point, the answer is the probe classification, and the evidence
-carries the point, the solid state, and the classifier. A point inside the
-clear-case margin is not used.
+carries the point, the solid state, the distance to the nearest face, the
+classifier, and the margin. A point inside the clear-case margin is not used.
 
 `test_03b_same_answer_precision` — a number answer at 4 significant figures
 compares equal only at that precision; a coordinate compares componentwise; a

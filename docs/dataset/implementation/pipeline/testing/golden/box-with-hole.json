@@ -32,6 +32,7 @@
         "kind": "target"
       },
       "check": {
+        "relation_shape": "named",
         "relation_type": "has_edge",
         "direction": "object_to_subject",
         "object": {
@@ -59,6 +60,7 @@
         "kind": "target"
       },
       "check": {
+        "relation_shape": "named",
         "relation_type": "has_edge",
         "direction": "object_to_subject",
         "object": {

@@ -7,7 +7,7 @@ and the search that satisfies it.
 
 ## Graph input boundary
 
-`03b` reads the CAD graph and the `TaskQuotaPlan`. Every task target, clue operand,
+`03b` reads the CAD graph and the `TaskQuotaPlan`. Every task target, clue reference,
 answer value, and piece of answer evidence must resolve to a graph entity, a
 graph relation, or a measurement. A task definition that needs a missing graph element
 is rejected; it is not softened or filled with program-text heuristics.
@@ -24,12 +24,13 @@ The task target is bound in one of two ways:
 - by the ordered task clues, when the first clues narrow the possible answers to
   one target.
 
-The binding must resolve to exactly one entity or scalar value. A task target
-category whose binding is ambiguous is rejected. For a scalar target, the binding
-is a measurement instance: the subject, the measurement, and its value. The
-subject need not be unique, because the answer is that measurement value. A task
-target and an answer measurement are different: the target is the entity or
-value the task asks about; the answer meaning says what is reported about it.
+The binding must resolve to exactly one entity. A value answer binds the entity
+the clue chain ends on; the answer-equivalent set may hold several entities that
+share that answer value (`DS-REQ-15`), and the kept definition binds the first
+witness in stable candidate order (`DS-REQ-35`). A scalar target is a measurement
+instance, but no P0 task uses one. A task target and an answer measurement are
+different: the target is the entity the task asks about; the answer meaning says
+what is reported about it.
 
 ## Task clue predicate schema
 
@@ -50,61 +51,74 @@ A `BindingRef` is one of:
 
 - the task target;
 - a result of an earlier task clue;
-- a named graph element;
+- a filtered set of graph entities;
 - a literal value.
 
 When a clue has a reference binding other than the task target, the binding
-carries `clue_operand_form` (`DS-REQ-04`):
+carries `clue_reduction_form` (`DS-REQ-04`):
 
-| Clue operand form | Binding | Example |
+| Clue reduction form | Reference | Example |
 |---|---|---|
-| `named` | a named graph element | "adjacent to the cylindrical face" |
-| `selected` | a result of an earlier task clue | "adjacent to the face selected in step 1" |
-| `aggregated` | an extreme, rank, or count over a set | "adjacent to the largest face of the hole" |
-| `cross_state` | a before/after solid state pair | P2 only |
+| `filtered` | the entities of a category that satisfy conditions | "adjacent to a cylindrical face" |
+| `selected_in_earlier_clue` | the set an earlier task clue bound | "adjacent to the faces from clue 1" |
+| `aggregated` | a set reduced to one entity by an extreme or rank | "adjacent to the largest of the faces from clue 1" |
+| `cross_state` | the before/after solid state pair | P2 only |
 
-A clue with no reference has no clue operand form. A property clue that refers to
+A reference is a set, read existentially (`DS-REQ-29`).
+
+A clue with no reference has no clue reduction form. A property clue that refers to
 another entity is two clues and is split into two list items.
 
-Four rules make a clue type and clue operand form combination impossible, so no
-task uses one:
-
-| Combination | Why it cannot exist |
-|---|---|
-| property with any operand form | A property clue constrains the candidate set directly and has no reference, so it has no operand form. |
-| aggregation with `aggregated` | It is aggregation over an aggregate; it is written as two clues. |
-| `selected` at task reasoning step count 1 | A `selected` reference needs an earlier task clue. |
-| `cross_state` in P0 and P1 | It needs a second solid state, and P0 and P1 use the final state only (`DS-REQ-08`). |
-
-The first two are grammar rules and hold for every program. The last two follow
-from the task reasoning step count and the state scope. The support table
-observes which forms the constructor produced, so a combination that cannot exist
-simply has no supported value.
+Which clue type and reduction form combinations can exist is
+[`task-structure.md` section 2.2](../../../../requirements/task-structure.md);
+the constructor never emits one of them. The support table observes which forms
+it did produce, so a combination that cannot exist simply has no supported
+value.
 
 The typed check variants are:
 
 | Clue type | Check fields |
 |---|---|
-| Property | `measurement`, `comparator`, `threshold` or `range`. |
-| Relation | `relation_type`, `direction` (`object_to_subject` or `subject_to_object`), `object`. |
+| Property | `measurement`, `comparator`, `threshold` or `range`; or `feature`, `value` for a categorical feature (face surface kind, position). A direction is the `angle` measurement against a program axis. |
+| Relation | `relation_type`, `direction` (`object_to_subject` or `subject_to_object`), `object`; or the `angle` measurement, `comparator`, `threshold`, `object`. |
 | Comparison | `measurement`, `comparator`, `reference`. |
 | Aggregation | `scope`, `aggregation_kind`, `measurement`, `rank` or extreme. |
-| Provenance | `operation_id`, `profile_id`, or `workplane_id`. |
+| Provenance | `operation_id` or `profile_id`. |
 
-Every task clue must narrow the possible answers: its `after` count is smaller
-than its `before` count. A clue that does not narrow is not a task clue step and
-the definition is rejected. A list item that states two conditions is two task
-clues.
+Every task clue records `before_count` and `after_count`, and the definition is
+rejected when `after` is not smaller than `before` (`clue_narrows`).
+[`task-structure.md` section 2.2](../../../../requirements/task-structure.md)
+defines when a condition is a clue at all.
 
-The definition also records `clue_operand_form_profile`, the ordered
-`(clue_type, clue_operand_form)` pair for every clue. It is derived from
+The definition also records `clue_reduction_form_profile`, the ordered
+`(clue_type, clue_reduction_form)` pair for every clue. It is derived from
 `task_clues` at construction and never authored separately. `05` validate and
 export release checks that its clue types match `clue_types` and uses the forms
-for clue operand form coverage.
+for clue reduction form coverage.
 
-A comparison may name both entities or refer to one selected by an earlier task
-clue. The reference must resolve to exactly one entity; otherwise the comparison
-needs an explicit aggregation or the task is rejected.
+A comparison may name both entities or refer to a set bound by an earlier task
+clue. The reference is a set; the comparison is read existentially unless it says
+"every remaining entity".
+
+## Clue capability
+
+A clue kind is admissible only when one graph case proves it can narrow a set:
+
+| Case | Witness the test must find |
+|---|---|
+| Set-narrowing: property measurement, property categorical feature, relation, comparison, provenance | a graph where the clue leaves at least two candidates; in a task it may leave two or more when non-final, or one when final |
+| Computed selection: rank, extreme | a graph where the input set has at least two candidates and the selection leaves one |
+| Global identity name | no witness: the result does not depend on the candidate set, so the clue is inadmissible |
+
+A pre-registered unique name is not a clue. Direct target binding by a category
+with one instance (the final solid state, a lone operation) is allowed, but it is
+sparse and it is not a clue.
+
+Position is set-valued: a face records every bounding-box extreme plane it lies
+in, and several faces may lie in the same extreme plane. A position clue therefore
+leaves the faces that lie in that extreme plane, however many there are.
+
+`test_03b_clue_capability` is the parametric test; it lands with the constructor.
 
 ## Validity
 
@@ -129,6 +143,9 @@ name is stable: it is the name the validity record carries.
 | `near_miss_valid` | For P2 multiple choice, every near-miss fails a task clue or the answer step, and its `error_mode` is recorded. |
 | `definition_unique` | The task definition is unique under canonical identity. |
 | `geometry_required_recorded` | `geometry_required` is recorded: at least one task clue depends on the built shape. |
+
+The capability table above is a vocabulary-level test, not a per-definition
+validity check; the per-definition rule remains `clue_narrows`.
 
 An invalid definition is recorded as a failure naming the failed check and is not
 passed to `04`. A task with an ambiguous target, an answer-equivalent set that disagrees
@@ -158,6 +175,7 @@ defect: it means the constructor did not run the rule.
 |---|---|
 | A check name from the table above. | The definition failed that rule. A duplicate is `definition_unique`. |
 | `no_cover` | The cover search found no chain at the target task reasoning step count. |
+| `prompt_ambiguous` | Two definitions share a prompt identity but disagree on the gold answer. |
 | `internal` | The constructor raised an unexpected exception or panic. |
 
 A state without a surviving probe is not a failure row. No definition was
@@ -186,6 +204,8 @@ observation -> clue A -> clue B -> clue C
 A clue that can be removed without losing answer uniqueness is redundant, so the
 achievable step count is the number of necessary clues plus the answer step. A
 quota target above that count is a deficit, not a reason to keep a redundant clue.
+`task_reasoning_step_count` is at most 10; a value answer has at most 9 clue
+steps, an identity answer at most 10.
 
 ## Construction attempt budget
 
@@ -247,10 +267,22 @@ Construction is a local search over one graph. It never enumerates the task spac
 
 - one `CadGraph` from `02c`;
 - one quota target from the `TaskQuotaPlan`, with its task reasoning step count,
-  target category, clue type, clue operand form, answer meaning, and answer
+  target category, clue type, clue reduction form, answer meaning, and answer
   format;
 - the program capability census from
   [`program-capability-census.md`](../algorithm/program-capability-census.md).
+
+### Pass structure
+
+One pass projects the candidate rows once: a stable row order, the entity
+descriptor, the fact bitsets, and, for each answer meaning in the plan, the
+canonical answer and its `same_answer` group. The witness loop and the cover
+search read masks over the same rows: a fact applies as an intersection, the
+wrong-answer set is the rows outside the witness's answer group, `clue_narrows`
+is a count comparison, and answer uniqueness and necessity are group counts over
+the surviving mask. `answer(candidate)` is projected once per pass; it is never
+recomputed inside the witness or cover loop. The cost is linear in candidates per
+answer meaning, and the [Cost budget](#cost-budget) is unchanged.
 
 ### Step 1 — possible-answer set
 
@@ -262,15 +294,9 @@ The state scope is `final` in P0 (`DS-REQ-08`). The set is not curated: it is
 whatever the graph holds for that category and state. Breadth is a property of
 the graph, not a construction choice.
 
-For a scalar target, the candidates are measurement instances:
-
-```text
-possible_answers = all (subject, value) instances of the declared measurement
-                   in the state scope
-```
-
-The subject may be an entity or a solid state. The rest of the search is
-unchanged: facts constrain the subject, and `same_answer` compares values.
+A scalar target is deferred; no P0 task uses one. The rest of the search is
+unchanged: facts constrain the candidate entity, and `same_answer` compares
+answers.
 
 ### Step 2 — facts and extensions
 
@@ -337,6 +363,14 @@ Construction proposes; the scheduler disposes. The quota scheduler accepts a
 definition only when it fills an unfilled target and does not push any cell past
 its maximum (`TG-2`). Overfill is rejected and recorded.
 
+Before acceptance, `03b` groups definitions by prompt identity (`DS-REQ-35` in
+[`requirements/decisions.md`](../../../../requirements/decisions.md)): program,
+target category, canonical clue sequence, answer meaning, answer format, and
+choice pool. A group whose definitions agree on the gold answer keeps one, chosen
+by stable candidate order; the others are `prompt_unique` duplicates and are not
+accepted. A group whose gold answers disagree is `prompt_ambiguous`, and the pass
+accepts none of them.
+
 ### Cost budget
 
 The search is bounded by counts, not by `max_state_entities` alone. The constants
@@ -380,8 +414,10 @@ and the release are reproducible.
 The box-with-hole program in
 [`golden/box-with-hole.json`](../../testing/golden/box-with-hole.json) is the
 first golden record. The final solid has 15 edges, not 14: the cylindrical face
-carries a periodic seam edge. The top face leaves five edges, and the
-cylindrical face leaves the one edge shared with the top face, so the chain is
-two relation clues plus the length answer. The clue operand form profile is
-`[(relation, named), (relation, named)]`. The record format and comparison rules
-are in [`golden/README.md`](../../testing/golden/README.md).
+carries a periodic seam edge. The face touching the top of the axis-aligned
+bounding box leaves five edges, and the cylindrical face leaves the one edge
+shared with that face, so the chain is two relation clues plus the length answer.
+The clue reduction form profile is
+`[(relation, filtered), (relation, filtered)]`. The checked-in record still spells
+that form `named` until the rebuild. The record format and comparison rules are in
+[`golden/README.md`](../../testing/golden/README.md).

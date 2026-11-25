@@ -102,15 +102,20 @@ export default function App() {
     };
   }, [activeId]);
 
+  const gold = facets?.input_kind === "gold";
+  const title = gold ? "CAD-QA gold oracle review" : "CAD-QA task browser";
+  const countLabel =
+    facets === null
+      ? "loading…"
+      : gold
+        ? `${facets.task_count} gold ${facets.task_count === 1 ? "record" : "records"}`
+        : `${facets.task_count} ${facets.task_count === 1 ? "task" : "tasks"}`;
+
   return (
     <div className="app">
       <header className="topbar">
-        <h1>CAD-QA task browser</h1>
-        <span className="topbar-meta">
-          {facets === null
-            ? "loading…"
-            : `${facets.task_count} ${facets.task_count === 1 ? "task" : "tasks"}`}
-        </span>
+        <h1>{title}</h1>
+        <span className="topbar-meta">{countLabel}</span>
       </header>
       {error === null ? null : <div className="error-banner">{error}</div>}
       <main className="layout">

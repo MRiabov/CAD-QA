@@ -57,6 +57,6 @@ replaces the task browser when the sampling matrix lands.
 
 | Tool | What it does | Status |
 |---|---|---|
-| [`task-browser.md`](task-browser.md) | Lists, filters, and opens release tasks with an interactive 3D view. | `available` |
+| [`task-browser.md`](task-browser.md) | Lists, filters, and opens release tasks or gold oracles with an interactive 3D view. | `available` |
 | [`review-pack.md`](review-pack.md) | Renders sampled release tasks and writes the review ledger that gates export. | `planned` |
 | Don't-say checker | Enforces the glossary's Don't-say table and the identifier renames. | `available`; see [`../../../docs-conventions.md`](../../../docs-conventions.md) |

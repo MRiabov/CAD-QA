@@ -20,7 +20,10 @@ real `02b` result and asserts the persisted tables read back through the reader
 **Then** assert the persisted graph:
 
 - one entity row per face, edge, and vertex, with the category and the
-  measurements `graph-content.md` section 2 declares;
+  attributes and measurements `graph-content.md` sections 2 and 4 declare;
+- every face carries its `face_surface_kind`, its `position` set (every
+  bounding-box extreme plane it lies in), and its `outward_normal`, which is null
+  exactly when the face is not planar;
 - `has_face`, `has_edge`, and `has_vertex` derived from the topology records, and
   `adjacent_to` derived from shared topology;
 - per-entity measurements total over their scope: every face has an area, every
@@ -30,8 +33,9 @@ real `02b` result and asserts the persisted tables read back through the reader
 - every relation and measurement row carries CAD graph evidence: `derived` with
   its rule and references, or `measured` with the kernel call.
 
-`test_02c_pair_emission_completeness` — for every pair relation and pair
-measurement in the state, recompute the expected pair set from the entity tables:
+`test_02c_pair_emission_completeness` — for every pair measurement, and every
+P1 pair relation, in the state, recompute the expected pair set from the entity
+tables:
 
 1. derive the named endpoints of the state — face surface kind, position, and
    provenance — and the candidate endpoints of the declared endpoint entity

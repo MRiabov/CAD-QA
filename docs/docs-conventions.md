@@ -42,6 +42,7 @@ docs/
   dataset/
     README.md
     requirements/               # PRD, task structure, prompt, release, terminology
+      views/                    # derived views for review: clue list, reference forms, prompt examples
       decisions.md              # requirements decisions (DS-REQ-*)
     implementation/
       decisions.md              # implementation decisions that span pipeline stages (DS-ADR-*)
@@ -249,9 +250,12 @@ P0/P1 commitment.
   runs as a pre-commit hook and never from pytest: a test would make every test run pay for
   the scan.
   A `(home)` annotation exempts a tree, `ALLOWLIST` exempts cross-cutting phrases, and the
-  `dont-say: allow` marker exempts one line. A comment line in the first ten lines that
-  begins `dont-say: allow-file` exempts the whole file; use it only for historical records
-  and verbatim external text. In Python and Go, comments and docstrings are matched as prose,
+  `dont-say: allow` marker exempts one line. A fenced block is skipped whole; a fence closes
+  only with a delimiter of the same character and at least the same length, so a `python`
+  block quoted inside a longer `text` block is never read as prose. A comment line in the
+  first ten lines that begins `dont-say: allow-file` exempts the whole file; use it only for
+  historical records and verbatim external text. In Python and Go, comments and docstrings are
+  matched as prose,
   and every declared name is matched as a name: class, function, method, parameter, variable,
   field, declared type, constant, file, and folder. JSON checks `description` and `title` as
   prose, and property, definition, enum, and const values as names; schema vocabulary is not

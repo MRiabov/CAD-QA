@@ -74,6 +74,6 @@ is exhausted, or the remaining miss is accepted and recorded.
 
 The clue model itself is in
 [`03b-construct-task-definitions/README.md`](03b-construct-task-definitions/README.md):
-the clue types, the reference binding, and the clue operand form. The vocabulary
+the clue types, the reference binding, and the clue reduction form. The vocabulary
 is owned by `docs/dataset/requirements/task-structure.md`; this module references
 it and does not restate it.

@@ -1,0 +1,119 @@
+{
+  "schema_version": 3,
+  "oracle_kind": "task-construction",
+  "slug": "box-with-hole-top-face-area",
+  "verification": {
+    "status": "verified",
+    "verified_by": "MRiabov",
+    "verified_at": "2026-11-25",
+    "rationale": "The task description and answer were written by hand. The gold query executes the program with plain CadQuery and prints the answer; it does not use the CAD graph or the constructor. Rebuilt 2026-11-25 against the settled clue-reduction-form, categorical-feature, and measured-direction contract. Owner accepted this record after reviewing the current set in the task browser on 2026-11-25.",
+    "gold_query": {
+      "status": "passed",
+      "stdout": "187.4",
+      "checked_at": "2026-11-25"
+    }
+  },
+  "environment": {
+    "cadquery_version": "2.8.0",
+    "ocp_version": "7.9.3.1",
+    "python_version": "3.12.13",
+    "oracle_tool_version": "1"
+  },
+  "program": {
+    "program_id": "cadqaprog:b406dfd4f70e422e066b9dbf2d1c545d69cb9020a604fcd6872945b57890fb24",
+    "program_sha256": "b406dfd4f70e422e066b9dbf2d1c545d69cb9020a604fcd6872945b57890fb24",
+    "text": "import cadquery as cq\n\nwp = cq.Workplane(\"XY\")\nbox = wp.box(10, 20, 5)\ntop = box.faces(\">Z\")\nplane = top.workplane()\nhole = plane.circle(2)\nresult = hole.cutBlind(-2)\n"
+  },
+  "task": {
+    "target_category": "face",
+    "question": "What is the area of the target face?",
+    "state_scope": "final",
+    "possible_answer_count": 8,
+    "task_reasoning_step_count": 2,
+    "answer_meaning": "area",
+    "native_answer_format": "number",
+    "answer_format": "number",
+    "geometry_required": true,
+    "uniqueness": "The area range leaves the top annular face alone; the answer-equivalent set is a singleton."
+  },
+  "clues": [
+    {
+      "order": 1,
+      "clue_type": "property",
+      "clue_reduction_form": null,
+      "statement": "The target face has an area between 150 and 190.",
+      "check": {
+        "predicate_kind": "property",
+        "property_shape": "measurement",
+        "measurement": "area",
+        "comparator": "between",
+        "axis": null,
+        "threshold": null,
+        "range_min": "150",
+        "range_max": "190"
+      },
+      "narrows": {
+        "before": 8,
+        "after": 1
+      }
+    }
+  ],
+  "answer": {
+    "value_kind": "number",
+    "value": "187.4",
+    "unit": "square_millimetre",
+    "tolerance": {
+      "tolerance_kind": "absolute",
+      "value_text": "0.05"
+    },
+    "scoring_rule": "numeric_tolerance",
+    "parameter": null,
+    "point_probe": null,
+    "evidence_kind": "measured",
+    "evidence_rule": "area",
+    "evidence_refs": [
+      {
+        "reference_kind": "measurement",
+        "subject": {
+          "category": "face",
+          "filters": {
+            "position": "max_z"
+          }
+        },
+        "object": null,
+        "measurement": "area"
+      }
+    ],
+    "answer_equivalent_set": [
+      {
+        "subject": {
+          "category": "face",
+          "filters": {
+            "position": "max_z"
+          }
+        },
+        "value": "187.4"
+      }
+    ]
+  },
+  "gold_query": {
+    "language": "python",
+    "code": "print(canon(result.faces(\">Z\").val().Area()))",
+    "expected_stdout": "187.4",
+    "sha256": "b556cba484a9e25606b76bc9da4745e53bc815e1b819755fbd3528a7741a60fe"
+  },
+  "covers": {
+    "target_category": "face",
+    "clue_types": [
+      "property"
+    ],
+    "clue_reduction_forms": [],
+    "answer_meaning": "area",
+    "answer_format": "number",
+    "task_reasoning_step_count": 2
+  },
+  "excluded": [],
+  "notes": [
+    "The top face is an annulus: the 10 x 20 face minus the 2 mm hole."
+  ]
+}

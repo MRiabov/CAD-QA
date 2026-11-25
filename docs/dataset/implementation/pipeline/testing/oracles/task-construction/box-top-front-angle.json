@@ -1,0 +1,138 @@
+{
+  "schema_version": 3,
+  "oracle_kind": "task-construction",
+  "slug": "box-top-front-angle",
+  "verification": {
+    "status": "verified",
+    "verified_by": "MRiabov",
+    "verified_at": "2026-11-25",
+    "rationale": "The task description and answer were written by hand. The gold query executes the program with plain CadQuery and prints the answer; it does not use the CAD graph or the constructor. Rebuilt 2026-11-25 against the settled clue-reduction-form, categorical-feature, and measured-direction contract. Owner accepted this record after reviewing the current set in the task browser on 2026-11-25.",
+    "gold_query": {
+      "status": "passed",
+      "stdout": "90",
+      "checked_at": "2026-11-25"
+    }
+  },
+  "environment": {
+    "cadquery_version": "2.8.0",
+    "ocp_version": "7.9.3.1",
+    "python_version": "3.12.13",
+    "oracle_tool_version": "1"
+  },
+  "program": {
+    "program_id": "cadqaprog:c68e7eeee7b9f5c26a3e418976cd6f2056a636742379d3cafaf2bfda433316e3",
+    "program_sha256": "c68e7eeee7b9f5c26a3e418976cd6f2056a636742379d3cafaf2bfda433316e3",
+    "text": "import cadquery as cq\n\nresult = cq.Workplane(\"XY\").box(10, 20, 5)\n"
+  },
+  "task": {
+    "target_category": "face",
+    "question": "What is the angle between the target face and the face touching the front of the axis-aligned bounding box?",
+    "state_scope": "final",
+    "possible_answer_count": 6,
+    "task_reasoning_step_count": 2,
+    "answer_meaning": "angle",
+    "native_answer_format": "number",
+    "answer_format": "number",
+    "geometry_required": true,
+    "uniqueness": "The direction clue leaves the top face, and the front face is the only face touching the front of the axis-aligned bounding box."
+  },
+  "clues": [
+    {
+      "order": 1,
+      "clue_type": "property",
+      "clue_reduction_form": null,
+      "statement": "The angle between the outward normal of the target face and +z is less than 1 degree.",
+      "check": {
+        "predicate_kind": "property",
+        "property_shape": "measurement",
+        "measurement": "angle",
+        "comparator": "less_than",
+        "axis": "+z",
+        "threshold": "1",
+        "range_min": null,
+        "range_max": null
+      },
+      "narrows": {
+        "before": 6,
+        "after": 1
+      }
+    }
+  ],
+  "answer": {
+    "value_kind": "number",
+    "value": "90",
+    "unit": "degree",
+    "tolerance": {
+      "tolerance_kind": "absolute",
+      "value_text": "0.5"
+    },
+    "scoring_rule": "numeric_tolerance",
+    "parameter": {
+      "parameter_kind": "angle_reference",
+      "subject": {
+        "category": "face",
+        "filters": {
+          "position": "min_y"
+        }
+      }
+    },
+    "point_probe": null,
+    "evidence_kind": "measured",
+    "evidence_rule": "angle",
+    "evidence_refs": [
+      {
+        "reference_kind": "measurement",
+        "subject": {
+          "category": "face",
+          "filters": {
+            "position": "max_z"
+          }
+        },
+        "object": null,
+        "measurement": "angle"
+      },
+      {
+        "reference_kind": "node",
+        "subject": {
+          "category": "face",
+          "filters": {
+            "position": "min_y"
+          }
+        },
+        "object": null,
+        "measurement": null
+      }
+    ],
+    "answer_equivalent_set": [
+      {
+        "subject": {
+          "category": "face",
+          "filters": {
+            "position": "max_z"
+          }
+        },
+        "value": "90"
+      }
+    ]
+  },
+  "gold_query": {
+    "language": "python",
+    "code": "top_normal = result.faces(\">Z\").val().normalAt()\nfront_normal = result.faces(\"<Y\").val().normalAt()\ncosine = max(-1.0, min(1.0, top_normal.dot(front_normal)))\nprint(canon(math.degrees(math.acos(cosine))))",
+    "expected_stdout": "90",
+    "sha256": "d73b6f8ad77cbdcc1256211b4f69ab66285d5b00c6f1c334d86e26b495cd785a"
+  },
+  "covers": {
+    "target_category": "face",
+    "clue_types": [
+      "property"
+    ],
+    "clue_reduction_forms": [],
+    "answer_meaning": "angle",
+    "answer_format": "number",
+    "task_reasoning_step_count": 2
+  },
+  "excluded": [],
+  "notes": [
+    "The top and front faces meet at 90 degrees."
+  ]
+}

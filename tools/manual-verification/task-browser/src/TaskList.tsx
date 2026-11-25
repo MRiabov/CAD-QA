@@ -55,22 +55,26 @@ export function TaskList({
         <input
           className="search"
           type="search"
-          placeholder="Search prompts, answers, IDs"
+          placeholder="Search previews, answers, IDs"
           value={query.search}
           onChange={(event) => update({ search: event.target.value, offset: 0 })}
         />
-        <Select
-          label="Split"
-          value={query.split}
-          values={facets?.splits ?? []}
-          onChange={(split) => update({ split, offset: 0 })}
-        />
-        <Select
-          label="Subset"
-          value={query.subset}
-          values={facets?.subsets ?? []}
-          onChange={(subset) => update({ subset, offset: 0 })}
-        />
+        {(facets?.splits.length ?? 0) < 2 ? null : (
+          <Select
+            label="Split"
+            value={query.split}
+            values={facets?.splits ?? []}
+            onChange={(split) => update({ split, offset: 0 })}
+          />
+        )}
+        {(facets?.subsets.length ?? 0) < 2 ? null : (
+          <Select
+            label="Subset"
+            value={query.subset}
+            values={facets?.subsets ?? []}
+            onChange={(subset) => update({ subset, offset: 0 })}
+          />
+        )}
         <Select
           label="Target"
           value={query.targetCategory}
@@ -120,10 +124,11 @@ export function TaskList({
             onClick={() => onSelect(task.task_id)}
           >
             <span className="task-card-meta">
-              {task.split} · {task.subset} · {task.target_category} ·{" "}
-              {task.task_reasoning_step_count} steps
+              {facets?.input_kind === "gold"
+                ? `${task.target_category} · ${task.task_reasoning_step_count} ${task.task_reasoning_step_count === 1 ? "step" : "steps"}`
+                : `${task.split} · ${task.subset} · ${task.target_category} · ${task.task_reasoning_step_count} ${task.task_reasoning_step_count === 1 ? "step" : "steps"}`}
             </span>
-            <span className="task-card-prompt">{task.prompt_preview}</span>
+            <span className="task-card-prompt">{task.preview}</span>
             <span className="task-card-answer">{task.answer}</span>
           </button>
         ))}

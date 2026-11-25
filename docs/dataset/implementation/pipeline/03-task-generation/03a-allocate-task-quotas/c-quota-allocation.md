@@ -19,7 +19,7 @@ are one number, so the plan cannot promise fewer tasks than the release requires
 | `clue_quotas` | Clue quotas counted over clue occurrences. |
 | `clue_occurrences` | Planned clue occurrences for each task reasoning step count. |
 | `program_census` | The census of each active program, keyed by `program_sha256` and `graph_identity_sha256`, so `03b` reads it instead of deriving it again. |
-| `family_profiles` | The union of the member programs' census capabilities and summed entity counts, `states_with_point_probe`, `max_task_reasoning_step_count`, split status, family task capacity, and probe success rate per CADEvolve program family. |
+| `family_profiles` | The union of the member programs' census capabilities and summed entity counts, `states_with_point_probe`, the per-category-and-answer-meaning `max_task_reasoning_step_count` bounds, split status, family task capacity, and probe success rate per CADEvolve program family. |
 | `family_assignment` | Family to split, task quota, per-task-reasoning-step task quotas, and assigned quota targets. |
 | `construction_attempt_budgets` | One construction batch per family and task reasoning step count for the remaining work in this plan revision. |
 | `construction_attempt_multiplier` | Construction attempt multiplier over the family's task reasoning step quota; default 1.5, or 2.0 for a high-rejection family and step count. |
@@ -35,15 +35,15 @@ supply every quota target.
 A quota target is a count target for one quota dimension value at one task
 reasoning step count. It is not a complete task. For example, a task with a task
 reasoning step count of 3, task target category `face`, answer meaning `area`,
-answer format `number`, clue types `relation` and `property`, and clue operand
-forms `named` and none contributes to these quota targets:
+answer format `number`, clue types `relation` and `property`, and clue reduction
+forms `filtered` and none contributes to these quota targets:
 
 - `(3, target_category, face)`;
 - `(3, answer_meaning, area)`;
 - `(3, answer_format, number)`;
 - `(3, clue_type, relation)`;
 - `(3, clue_type, property)`;
-- `(3, clue_operand_form, named)`.
+- `(3, clue_reduction_form, filtered)`.
 
 The task is one task, counted in several quota targets. A quota target records:
 
@@ -56,25 +56,25 @@ Plan five separate quota dimensions:
 
 - task target category;
 - clue type;
-- clue operand form, as a coverage dimension in P0 and a balance dimension in
+- clue reduction form, as a coverage dimension in P0 and a balance dimension in
   P1;
 - answer meaning;
 - answer format.
 
 Four of these carry a share and are allocated by the equations below. Clue
-operand form is coverage-only in P0 (`DS-REQ-18`): its target count is the coverage
+reduction form is coverage-only in P0 (`DS-REQ-18`): its target count is the coverage
 floor of one clue occurrence per supported form at each step count, and it has no
 balance share, because a balance range is vacuous at a step count where a form
-cannot exist. Balance over clue operand form is P1. This is a P0
+cannot exist. Balance over clue reduction form is P1. This is a P0
 simplification, not a property of the release: coverage guarantees presence, not
 a useful mix, so one form can carry most clues and still pass.
 
-Do not create a full task target category × clue type × clue operand form ×
+Do not create a full task target category × clue type × clue reduction form ×
 answer meaning × answer format cross-product. The requirements are independent:
 coverage and balance at each task reasoning step count, not every joint
 combination. A task contributes to one task target category, one answer format,
 one answer meaning, one task reasoning step count, and one or more clue
-occurrences; each task clue with a reference contributes its clue operand form.
+occurrences; each task clue with a reference contributes its clue reduction form.
 
 Clue quotas are over clue occurrences, because one task has several task clues.
 
@@ -115,12 +115,12 @@ and `supported_value_count` with the number of supported clue types.
 The `+1` is the coverage minimum and is taken before the remainder allocation.
 This guarantees at least one task per supported task target category, answer
 meaning, and answer format, and at least one clue occurrence for each supported
-clue type. Clue operand form gets the same coverage floor without a share: its
+clue type. Clue reduction form gets the same coverage floor without a share: its
 target count is one clue occurrence per supported form at each step count where
 the task-definition rules mark it feasible.
 
 Allocate the four share-bearing quota dimensions separately. Do not divide `task_reasoning_step_quota` by four
-and do not create a full task target category × clue type × clue operand form ×
+and do not create a full task target category × clue type × clue reduction form ×
 answer meaning × answer format cross-product.
 
 If `supported_value_count` exceeds the available task or clue count, record
@@ -252,7 +252,9 @@ capped by `family_task_quota[family]`. The per-task-reasoning-step quotas sum to
 
 For each task reasoning step count, quota dimension, and quota target:
 
-1. Find families in the split that have the quota target capability and
+1. Find families in the split that have the quota target capability, a member
+   program whose census `max_task_reasoning_step_count` for the target category
+   and answer meaning is at least `task_reasoning_step_count`, and
    `family_task_reasoning_step_quota[family][task_reasoning_step_count] > 0`.
 2. Set `family_quota_target_weight = family_task_reasoning_step_quota[family][task_reasoning_step_count] * family_quota_target_probe_success_rate`.
 3. Set `family_quota_target_count = largest_remainder(quota_target_count, family_quota_target_weight)`.
@@ -275,7 +277,7 @@ The allocator is complete only when all of these hold:
 
 - `task_reasoning_step_quota` sums to `dataset_release_task_count`;
 - every supported value has a target count of at least 1;
-- every answer format, answer meaning, clue type, clue operand form, and task
+- every answer format, answer meaning, clue type, clue reduction form, and task
   target category is within its bounds, or a conflict is recorded;
 - every family has a split and a task quota no greater than its family task capacity;
 - every quota target has at least one eligible family, or a deficit is recorded;
@@ -325,8 +327,8 @@ Build a family profile from the graphs in the selected pool:
 - available clue predicates and relations;
 - available measurements and answer meanings;
 - available answer formats;
-- `max_task_reasoning_step_count`, the approximate maximum task reasoning step
-  count;
+- `max_task_reasoning_step_count`, the maximum task reasoning step count per
+  target category and answer meaning;
 - `states_with_point_probe`, the states with at least one surviving point probe,
   so a membership target has a family to go to;
 - task quota per program and family;

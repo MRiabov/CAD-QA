@@ -107,8 +107,6 @@ data or oracle that supplies the endpoints.
 | `has_vertex` | edge | vertex | one per `edge_has_vertex` topology record | `graph-construction.md` §Topology | runtime topology record |
 | `adjacent_to` | face | face | one per `face_adjacent_to_face` topology record | `graph-construction.md` §Topology | runtime topology record |
 | `has_point_probe` | solid_state | point_probe | one per runtime point probe | `graph-construction.md` §Point probes | runtime point probe |
-| `parallel_to` | face, edge, cadquery_path_segment | same category | one per emitted pair | `graph-content.md` §3.3 | derived geometry |
-| `perpendicular_to` | face, edge, cadquery_path_segment | same category | one per emitted pair | `graph-content.md` §3.3 | derived geometry |
 | `coplanar_with` (P1) | face | face | one per emitted pair | `graph-content.md` §3.3 | derived geometry |
 | `coaxial_with` (P1) | edge, cadquery_path_segment | same category | one per emitted pair | `graph-content.md` §3.3 | derived geometry |
 | `endpoint_of` | edge_endpoint | edge | one per endpoint | `graph-construction.md` §Topology | runtime edge endpoint |
@@ -122,6 +120,9 @@ data or oracle that supplies the endpoints.
 canonical; the checker compares the unordered set. Rows marked (P1) are reported
 but not enforced in a P0 release.
 
+Parallelism and perpendicularity are not relation kinds. The graph stores the
+`Angle` measurement, and the pair measurement row in section 5 covers it.
+
 ## 5. Measurement completeness
 
 | Subject | Measurements | Origin |
@@ -130,7 +131,7 @@ but not enforced in a P0 release.
 | `face` | `area`, `bounding_box`, `centroid` | runtime entity measurement |
 | `edge` | `length`, `bounding_box`, `centroid` | runtime entity measurement |
 | `vertex` | `centroid` | runtime entity measurement |
-| `point_probe` | `probe_point`, `distance_to_surface` | runtime point probe |
+| `point_probe` | `probe_point`, `distance_to_face_surface` | runtime point probe |
 | `cadquery_selector_result` | `selected_count` | runtime selector result |
 | `cadquery_workplane` | `workplane_frame` | runtime frame capture |
 | feature effect | `volume_change`, `bounding_box_change`, `topology_change` | runtime effect delta |

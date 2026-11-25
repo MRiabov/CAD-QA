@@ -13,8 +13,8 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 2 open entries: all P1 technical. No product decision and no P0
-technical contract remains open, and P2 is empty.
+There are 3 open entries: one P0 technical and two P1 technical. No product
+decision remains open, and P2 is empty.
 
 ## Decisions needed from the owner
 
@@ -28,7 +28,30 @@ None.
 
 ### Technical (P0)
 
-None.
+Work order:
+
+1. `MC-50` — a reference is a set, and the models carry one entity.
+
+#### MC-50 — A reference is a set, and `BindingRef` carries one entity
+
+`task-structure.md` `DS-REQ-04` and the 2026-11-24 revision make a clue reference
+a set reduced from the entities of the graph, read existentially. The typed
+models still carry `BindingRef.NodeID`, one entity, and the four reduction forms
+mix a filter (`filtered`), an earlier set (`selected_in_earlier_clue`), a
+reducer (`aggregated`), and a scope (`cross_state`), so no single field can hold
+a reference.
+
+**Recommendation:** define the reference as a set expression on `BindingRef`: a
+target category, the predicates that reduce it, the reduction form, the
+aggregation detail when the form is `aggregated`, and the state scope when it is
+`cross_state`. `clue_reduction_form_profile` stays the flat four-value enum for
+the release table.
+
+The same conflict sits in pair emission: `graph-content.md` requires a named
+endpoint to resolve to exactly one entity, so a pair row exists for one anchor
+only, and a reference set with several members cannot read a pair measurement.
+Decide whether pair rows are emitted per member of the anchor set, and record the
+answer in `graph-content.md` section 4.
 
 ## P1
 
@@ -144,7 +167,7 @@ and hash in the manifest.
   from the manifest. The benchmark program set the fields name is `MC-49`.
 - `MC-12` — `04` render prompt and choices owns the projection, and the release
   contract carries one `Carries` row per column. Answer text is copied, never
-  re-serialized; `clue_types` comes from `clue_operand_form_profile`;
+  re-serialized; `clue_types` comes from `clue_reduction_form_profile`;
   `prompt_sha256` is over the `prompt` UTF-8 bytes; `answer_sha256` is copied and
   not recomputed. `answer_schema_version` is now a `TaskDefinition` field, which
   `answer_sha256` already hashed.
@@ -159,9 +182,9 @@ and hash in the manifest.
   A miss blocks export until the owner accepts it into `known_misses`; a bound
   that coverage makes impossible is `superseded` rather than a miss. The
   conditional release share is one implementation, called by `03a` and `05`.
-- `MC-38` — the release table carries `clue_operand_form_profile`, and
-  `support/` carries five tables including `clue-operand-form-by-step.json`.
-  `04` copies it from the definition, and `05` reads it for clue operand form
+- `MC-38` — the release table carries `clue_reduction_form_profile`, and
+  `support/` carries five tables including `clue-reduction-form-by-step.json`.
+  `04` copies it from the definition, and `05` reads it for clue reduction form
   coverage.
 - `MC-46` — dissolved. The census is a typed function of the graph, not an
   artifact: `03a` derives it and stores the union per family in
@@ -181,7 +204,7 @@ and hash in the manifest.
   census decides between a capability and a capacity deficit. A probe deficit
   stays local to its state; a pair that is not emitted is not a class.
 - `MC-37` — the definition fields are written: `state_scope`,
-  `clue_operand_form_profile`, `answer_parameter`, and `geometry_required` are
+  `clue_reduction_form_profile`, `answer_parameter`, and `geometry_required` are
   fields; `answer_evidence` carries `answer_equivalent_set` and `point_probe`;
   `validity_record` is typed.
 - `MC-09` — canonical JSON, three hash inputs, and the provenance block are
@@ -207,9 +230,9 @@ and hash in the manifest.
   comparison is PRD Q7. The entry's Q1 reference was a misnumbering; no Q1 was
   retired.
 - `MC-28` — the owner reviews a P0 sample behind a blocking gate, in `05`.
-- `MC-47` — the scalar target is a measurement instance, with the candidate set,
-  binding, and identity written in `task-structure.md`, `construction.md`, and
-  `03b`.
+- `MC-47` — a scalar target is defined as a measurement instance but is deferred;
+  a measurement of an entity records the entity as the target, in
+  `task-structure.md` and `03b`.
 - `MC-35` — the relation row now carries `tolerance` and CAD graph evidence,
   both excluded from `relation_id`, in `graph-persistence.md`.
 - `MC-43` — the named-endpoint derivation, the pair rows, and the state-size
@@ -217,7 +240,7 @@ and hash in the manifest.
 - `MC-08` — the resolver table is written in `03b` construct task definitions,
   with the angle, position, material-change, and topology-change conventions.
   The dataset card now has to state them for consumers.
-- `MC-39` — clue operand form is coverage-only in P0, with one clue occurrence
+- `MC-39` — clue reduction form is coverage-only in P0, with one clue occurrence
   per supported form per step count and no share; `03a` allocate task quotas now
   says so.
 - `MC-36` — the state entity limit is a scope constant measured once per

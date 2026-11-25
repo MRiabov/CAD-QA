@@ -47,7 +47,7 @@ nobody planned for.
 | CAD model | `program_id` | task | tasks | `program_id` |
 | Correct answer | `correct_answer` | task | tasks | `answer_format`, `gold_answer` or `choices`, `answer_unit` |
 | Clue type | `clue_type` | clue occurrence | clue occurrences | `clue_types` |
-| Clue operand form | `clue_operand_form` | clue occurrence that carries a reference | clue occurrences that carry a reference | `clue_operand_form_profile` |
+| Clue reduction form | `clue_reduction_form` | clue occurrence that carries a reference | clue occurrences that carry a reference | `clue_reduction_form_profile` |
 | Warmup | `warmup` | task | — | `subset` |
 | Split | `split` | task | tasks | `split` |
 | Release task count | `task_count` | task | — | one row per task |
@@ -70,9 +70,9 @@ seven values. The counted answer of a multiple-choice task is the `candidate` of
 the entry whose label is `gold_answer.label`, read from `choices`. Every other
 answer format counts `gold_answer` directly.
 
-**A clue operand form is counted only on clues that carry a reference.** A clue
+**A clue reduction form is counted only on clues that carry a reference.** A clue
 with no reference has no form (`03b` construct task definitions), so it is not in
-the denominator. `05` checks first that `clue_operand_form_profile` has one entry
+the denominator. `05` checks first that `clue_reduction_form_profile` has one entry
 per `clue_types` entry, in the same order with the same clue type. That is part
 of release table schema validation, so the two columns cannot disagree.
 
@@ -185,7 +185,7 @@ costs:
 | `deferred` | Does not occur; the row's outcome is `deferred`. |
 
 `reported` exists for the rows `DS-REQ-18` makes non-blocking: the narrow clue
-operand form mix is computed and reported in P0 so the imbalance is visible, and
+reduction form mix is computed and reported in P0 so the imbalance is visible, and
 only the wide range can block. A `reported` miss is not a known miss, because
 there is nothing to accept.
 
@@ -301,7 +301,7 @@ A `deferred` row carries the check, the scope, and the outcome, and measures
 nothing, because the requirement is outside the release implementation scope.
 
 A dimension with a small value set reports every value: task target category,
-answer format, answer meaning, clue type, clue operand form, task reasoning step
+answer format, answer meaning, clue type, clue reduction form, task reasoning step
 count, split, and subset. A cap on a high-cardinality quantity reports the
 extreme count, the program or answer that holds it, and the programs or answers
 over the bound. A program and a correct answer each have at least a thousand

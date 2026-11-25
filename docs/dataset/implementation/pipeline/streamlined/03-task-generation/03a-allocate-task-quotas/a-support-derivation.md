@@ -16,7 +16,7 @@ READ:
 
 TRANSFORM:
 
-- derive the program capability census from each active graph: available target categories, clue constructors, clue operand forms, measurements, answer meanings, point probes, `max_task_reasoning_step_count`, and `entity_counts`
+- derive the program capability census from each active graph: available target categories, clue constructors, clue reduction forms, measurements, answer meanings, point probes, `max_task_reasoning_step_count`, and `entity_counts`
 - store the per-program census in `TaskQuotaPlan.program_census`, keyed by `program_sha256` and `graph_identity_sha256`
 - store per family the union of member capabilities, summed entity counts, `states_with_point_probe`, `max_task_reasoning_step_count`, split status, `family_task_capacity`, and `family_probe_success_rate`
 - a fast-loop replan reuses `family_profiles` and `program_census`; a slow-loop round derives the census only for the added programs

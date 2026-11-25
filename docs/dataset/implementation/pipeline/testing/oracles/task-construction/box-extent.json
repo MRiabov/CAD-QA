@@ -1,0 +1,123 @@
+{
+  "schema_version": 3,
+  "oracle_kind": "task-construction",
+  "slug": "box-extent",
+  "verification": {
+    "status": "verified",
+    "verified_by": "MRiabov",
+    "verified_at": "2026-11-25",
+    "rationale": "The task description and answer were written by hand. The gold query executes the program with plain CadQuery and prints the answer; it does not use the CAD graph or the constructor. Rebuilt 2026-11-25 against the settled clue-reduction-form, categorical-feature, and measured-direction contract. Owner accepted this record after reviewing the current set in the task browser on 2026-11-25.",
+    "gold_query": {
+      "status": "passed",
+      "stdout": "{\"max\":{\"x\":\"5\",\"y\":\"10\",\"z\":\"2.5\"},\"min\":{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"-2.5\"}}",
+      "checked_at": "2026-11-25"
+    }
+  },
+  "environment": {
+    "cadquery_version": "2.8.0",
+    "ocp_version": "7.9.3.1",
+    "python_version": "3.12.13",
+    "oracle_tool_version": "1"
+  },
+  "program": {
+    "program_id": "cadqaprog:c68e7eeee7b9f5c26a3e418976cd6f2056a636742379d3cafaf2bfda433316e3",
+    "program_sha256": "c68e7eeee7b9f5c26a3e418976cd6f2056a636742379d3cafaf2bfda433316e3",
+    "text": "import cadquery as cq\n\nresult = cq.Workplane(\"XY\").box(10, 20, 5)\n"
+  },
+  "task": {
+    "target_category": "solid_state",
+    "question": "What is the bounding box of the target solid state?",
+    "state_scope": "final",
+    "possible_answer_count": 1,
+    "task_reasoning_step_count": 1,
+    "answer_meaning": "extent",
+    "native_answer_format": "bounding_box",
+    "answer_format": "bounding_box",
+    "geometry_required": true,
+    "uniqueness": "The final solid state is the only solid state in the final scope."
+  },
+  "clues": [],
+  "answer": {
+    "value_kind": "bounding_box",
+    "value": {
+      "min": {
+        "x": "-5",
+        "y": "-10",
+        "z": "-2.5"
+      },
+      "max": {
+        "x": "5",
+        "y": "10",
+        "z": "2.5"
+      }
+    },
+    "unit": "millimetre",
+    "tolerance": {
+      "tolerance_kind": "absolute",
+      "value_text": "0.05"
+    },
+    "scoring_rule": "numeric_tolerance",
+    "parameter": null,
+    "point_probe": null,
+    "evidence_kind": "measured",
+    "evidence_rule": "bounding_box",
+    "evidence_refs": [
+      {
+        "reference_kind": "measurement",
+        "subject": {
+          "category": "solid_state",
+          "filters": {
+            "is_final": "true"
+          }
+        },
+        "object": null,
+        "measurement": "bounding_box"
+      }
+    ],
+    "answer_equivalent_set": [
+      {
+        "subject": {
+          "category": "solid_state",
+          "filters": {
+            "is_final": "true"
+          }
+        },
+        "value": {
+          "min": {
+            "x": "-5",
+            "y": "-10",
+            "z": "-2.5"
+          },
+          "max": {
+            "x": "5",
+            "y": "10",
+            "z": "2.5"
+          }
+        }
+      }
+    ]
+  },
+  "gold_query": {
+    "language": "python",
+    "code": "bb = result.val().BoundingBox()\nprint(\n    json.dumps(\n        {\n            \"min\": {\"x\": canon(bb.xmin), \"y\": canon(bb.ymin), \"z\": canon(bb.zmin)},\n            \"max\": {\"x\": canon(bb.xmax), \"y\": canon(bb.ymax), \"z\": canon(bb.zmax)},\n        },\n        sort_keys=True,\n        separators=(\",\", \":\"),\n    )\n)",
+    "expected_stdout": "{\"max\":{\"x\":\"5\",\"y\":\"10\",\"z\":\"2.5\"},\"min\":{\"x\":\"-5\",\"y\":\"-10\",\"z\":\"-2.5\"}}",
+    "sha256": "e93f3b7c65e4ff7ffb37c531d4c667384ca6b33b1a9fae70dc57dd63f8aa3e65"
+  },
+  "covers": {
+    "target_category": "solid_state",
+    "clue_types": [],
+    "clue_reduction_forms": [],
+    "answer_meaning": "extent",
+    "answer_format": "bounding_box",
+    "task_reasoning_step_count": 1
+  },
+  "excluded": [
+    {
+      "exclusion_kind": "clue_chain",
+      "reason": "The question identifies the target directly; a one-step task has no clue."
+    }
+  ],
+  "notes": [
+    "The box is centred at the origin."
+  ]
+}

@@ -4,6 +4,12 @@
 must contain for a task to be answerable. It does not define storage or
 code.
 
+This document owns the graph vocabulary: the entity, relation, and measurement
+categories, and the closed value sets they use. [`task-structure.md`](task-structure.md)
+owns which of them a task may use and how an answer meaning reads them;
+[`prompt-content.md`](prompt-content.md) owns the words. Neither document repeats
+these tables.
+
 ## 1. Purpose
 
 The graph is the answerable representation of a CadQuery program. Every task clue in a prompt
@@ -43,13 +49,39 @@ The graph contains these entity categories.
 | Region | Material a feature adds or removes. | The feature and the sign of the change. | P0 |
 | Point probe | A classified point near a solid state. | The solid state and a stable probe index. | P0 |
 | CadQuery selector result | The entities a CadQuery selector actually selected. | The CadQuery selector expression and the solid state it ran on. | P1 |
-| Measurement | A numeric or geometric value about an entity or a pair of entities. | The measured entity or pair, and the measurement name. | P0 |
-| Point probe | A point near a solid state, classified as inside or outside. | The solid state and a stable probe index. | P0 |
+
+A CadQuery workplane is a frame, not a shape: an origin, an x direction, and a
+normal. The shape an operation produces is a solid state. The two are separate
+entities even when one operation creates both.
 
 Every entity belongs to exactly one CadQuery program. An entity without a
 program is not part of a task.
 
-### 2.1 Point probes
+Measurements are not entities. They are defined in section 4.
+
+### 2.1 Face attributes
+
+A face carries two categorical attributes beyond its identity:
+
+| Attribute | Values | Meaning |
+|---|---|---|
+| Face surface kind | `plane`, `cylinder`, `cone`, `sphere`, `torus`, `bspline`, `other` | The geometric surface of the face. |
+| Position | `min_x`, `max_x`, `min_y`, `max_y`, `min_z`, `max_z` | Every axis-aligned bounding-box extreme plane of the solid state that the face lies in. A face lies in the plane when all its points share that coordinate; a face that only spans the extreme, such as a side face that reaches the top, does not. |
+
+A face also carries an **outward normal**: for a planar face, the unit direction
+pointing out of the solid, in the program frame. It is a continuous direction,
+stored as a vector. There is no orientation category and no closed set of axes: a
+prompt that says "faces +z" and a prompt that says "30 degrees from +z" read the
+same vector, and the wording is a choice at render time. A curved face has no
+single normal and carries no value.
+
+The position is a set, not a unique name. A face may touch several extremes, and
+several faces may touch the same extreme; coplanar faces are the common case.
+
+The graph stores labels and directions, not English. `04` renders the prompt
+wording.
+
+### 2.2 Point probes
 
 A point probe is a point with a classification, produced where the shape is
 available. It exists because a membership answer needs a point that the task
@@ -57,10 +89,17 @@ generator cannot classify without a kernel.
 
 - One or two probes per solid state.
 - The first probe is the state centroid, which is already measured.
-- The second probe is a seeded point inside the state bounding box.
-- A probe within the clear-case margin of a face surface is discarded.
+- The second probe is a seeded point next to the state surface, on either side
+  of it. It is not confined to the bounding box.
+- A probe within the clear-case margin of a face surface is discarded. For a
+  probe the margin is relative to the state, not to an entity: it is
+  `100 × geometric_tolerance × d`, with `d` the bounding-box diagonal, because a
+  point has no size of its own.
 - Each probe records the point, `inside` or `outside`, the distance to the nearest
-  face surface, and the classifier.
+  face surface, the classifier, and the margin it was tested against.
+- The first and second probes carry opposite labels when both survive, so a
+  state supports both membership answers. The sampler in
+  `extraction/cadquery/algorithm/runtime.md#point-probes` states the draw.
 - A state with no surviving probe supports no membership task. That is a deficit,
   not a guess.
 
@@ -69,8 +108,8 @@ for a membership answer about the state it belongs to.
 
 Persisted, a probe is a `point_probe` graph entity with a `has_point_probe`
 relation from its solid state. Its point and distance are the `probe_point` and
-`distance_to_surface` measurements; `is_inside` and `classifier` are attributes.
-The runtime table is `runtime_point_probes`.
+`distance_to_face_surface` measurements; `is_inside` and `classifier` are attributes.
+Storage and table names belong to the `02c` build CAD graph contract, not here.
 
 ## 3. Relations
 
@@ -90,6 +129,11 @@ relation categories.
 | derived_from | CadQuery profile | CadQuery workplane | The CadQuery profile is drawn on the CadQuery workplane. | P0 |
 | derived_from | Path point or segment | Path | The point or segment belongs to the path. | P1 |
 
+These relations are read from the program text and the construction record, not
+from the shape: the face a `cutBlind` call created is known from the operation,
+and its area is a separate measurement. A clue that uses one of them needs the
+program; it does not need the geometry.
+
 ### 3.2 Topology
 
 | Relation | From | To | Meaning | Priority |
@@ -106,10 +150,15 @@ relation categories.
 
 | Relation | From | To | Meaning | Priority |
 |---|---|---|---|---|
-| parallel_to | Face, edge, or path segment | Face, edge, or path segment | The two are parallel within tolerance. | P0 |
-| perpendicular_to | Face, edge, or path segment | Face, edge, or path segment | The two are perpendicular within tolerance. | P0 |
 | coplanar_with | Face | Face | The two faces lie in the same plane within tolerance. | P1 |
 | coaxial_with | Edge or path segment | Edge or path segment | The two share an axis within tolerance. | P1 |
+
+Parallelism and perpendicularity are not relations. The graph stores the `Angle`
+measurement: parallel is 0 degrees, or 180 degrees for two faces whose outward
+normals point opposite ways, and perpendicular is 90 degrees. "Parallel" and
+"perpendicular" are render-time wording for those values. `coplanar_with` and
+`coaxial_with` stay relations because neither reduces to one angle: coplanar is a
+parallel pair at zero plane distance, and coaxial is two collinear axes.
 
 Point membership is not a relation. It is computed by `is_inside` from a point
 literal and a solid state; see `03b`. Entity containment stays with `has_face`,
@@ -147,11 +196,14 @@ must support at least these.
 |---|---|---|---|
 | Volume | Solid state, region | Positive for a shape; signed for an effect. | P0 |
 | Area | Face, CadQuery profile, region | Face area and CadQuery profile area are different scopes. | P0 |
+| Perimeter | CadQuery profile | The length of the closed boundary. It describes a CadQuery profile of any outline, including one whose outline has no noun. | P1 |
 | Length | Edge, path segment | Straight or curve length. | P0 |
 | Distance | Two endpoint entities, or one endpoint entity and a point | Shortest distance. | P0 |
-| Angle | Two faces, two edges, or a path tangent | Two faces: between outward normals, 0–180°. Two edges: acute angle between the lines, 0–90°. Path tangent: between consecutive tangents, 0–180° (P1). Degrees. | P0 |
-| Bounding box | Solid state, entity, region | Minimum and maximum corners in the program frame. | P0 |
+| Angle | Two planar faces, two edges, a path tangent, or a planar face and a program axis | Two faces: between outward normals, 0–180°. Two edges: acute angle between the lines, 0–90°. A face and an axis: between the outward normal and the directed axis, 0–180°, because +z and -z are different labels. Path tangent: between consecutive tangents, 0–180° (P1). Degrees. | P0 |
+| Outward normal | Planar face | The unit direction that points out of the solid, in the program frame. A direction, not a category and not a number. | P0 |
+| Bounding box | Solid state, entity, region | The axis-aligned minimum and maximum corners in the program frame. | P0 |
 | Centroid | Solid state, entity, region | Point in the program frame. | P0 |
+| Centroid coordinate | Solid state, entity, region | The X, Y, or Z component of the centroid in the program frame. | P0 |
 | Probe point | Point probe | The probe point in the program frame. | P0 |
 | Distance to a face surface | Point probe | Distance from the probe point to the nearest face surface. | P0 |
 | Count | Solid state, face, CadQuery selector result | Faces, edges, vertices, selected entities. | P0 |
@@ -160,6 +212,10 @@ must support at least these.
 | Bounding-box change | Operation | Change caused by the operation. | P1 |
 | Topology change | Operation | Signed change in face, edge, or vertex counts; the task declares the category. | P0 |
 | CadQuery workplane frame | CadQuery workplane | Origin, x direction, and normal. | P1 |
+
+A pair angle between two faces or two edges is the measurement a pair-angle clue
+or an angle answer reads. "Parallel" and "perpendicular" are renderings of 0 or
+180 and 90 degrees, not separate measurements.
 
 Every measurement has:
 
@@ -184,10 +240,21 @@ every edge has a length, every path segment has a length, every solid state has
 a volume and a bounding box. A missing row for a per-entity measurement is a
 graph defect, not a data condition.
 
-**Pair emission rule.** `distance`, `angle`, `coplanar_with`, and `coaxial_with`
-apply to pairs, and a solid state can hold thousands of pairs. A pair element is
-emitted only when at least one endpoint is a **named entity** and the other is of
-the declared **endpoint entity kind**. The emitted pairs are not the full pair set.
+**Pair emission rule.** `distance`, `angle` between two entities,
+`coplanar_with`, and `coaxial_with` apply to pairs, and a solid state can hold
+thousands of pairs. A pair row relates two entities; each side is an
+**endpoint**. A pair element is emitted only when
+one endpoint is a **named entity** and the other is of the declared **endpoint
+entity kind**. The emitted pairs are not the full pair set.
+
+The term **named entity** is marked for demolition and stays an open question.
+The word `named` was retired from the clue vocabulary on 2026-11-24, because a
+clue reference is a set reduced by conditions, not a lookup of a pre-registered
+name (`DS-REQ-04`). This term survived that rename and means the same thing. It
+is kept only because the emission rule needs a word for the one endpoint a clue
+narrows to. Unless an argument for keeping it appears, the term is retired and
+the rule is stated without a name: the endpoint a clue narrows to, times the
+candidates of the declared endpoint entity kind.
 
 **Pair emission is state-scoped.** Pair rows are emitted only for the solid
 states a task can bind in the release implementation scope: the final state in
@@ -197,9 +264,14 @@ and effect measurements stay total over every state, because the topology-change
 answers read them. A pair row for a state the scope cannot bind is not emitted;
 it is not a missing measurement.
 
-A named entity is one a clue can name directly: by face surface kind, by
-position, or by the operation or feature that created it. "The cylindrical face",
-"the top face", and "the face created by `cutBlind`" are named entities.
+A named entity is one a clue can identify directly: by face surface kind, by
+position, or by the operation or feature that created it. "A cylindrical face",
+"a face touching the top of the axis-aligned bounding box", and "a face created
+by a `cutBlind` operation" are named entities. The operation label is a graph
+label for pair emission; the clue grammar has no reference phrase for a face
+created by an operation ([`reference-forms.md`](views/reference-forms.md#a-face)
+section A face). The term is marked for demolition, as above; until it is
+replaced, this is its meaning.
 
 The other endpoint must be of an **endpoint entity kind** that the relation or
 measurement declares in section 3 or section 4. `coplanar_with` declares faces,
@@ -218,9 +290,9 @@ which is linear in the entity count per named endpoint, not quadratic.
 The rule follows the clue grammar, so the enumeration is not a separate
 vocabulary:
 
-- a `named` reference needs the pair to exist in the graph, because the clue
+- a `filtered` reference needs the pair to exist in the graph, because the clue
   names one endpoint and the search must know which candidates the pair selects;
-- a `selected` or `aggregated` reference resolves both endpoints at search time,
+- a `selected_in_earlier_clue` or `aggregated` reference resolves both endpoints at search time,
   so the comparison is computed from the per-entity measurements and no pair
   row is needed;
 - a `cross_state` reference needs the per-entity values in both states.
@@ -248,9 +320,9 @@ Geometric tolerance classifies a predicate. It is relative to the entity size, a
 the default is `1e-6`.
 
 - It absorbs kernel noise, which is around `1e-9` relative for the geometry this
-  dataset builds, so exact-parallel faces pass.
-- A relation may override it. The override is recorded on the relation row with
-  the tolerance and the reason.
+  dataset builds, so a zero angle between exact-parallel faces passes.
+- A relation or pair measurement may override it. The override is recorded on the
+  row with the tolerance and the reason.
 - It is not the answer precision. A numeric answer is scored at the stated
   precision, four significant figures by default, which is roughly `1e-4`
   relative.
@@ -271,7 +343,7 @@ what produced it.
 | `before`, `after`, `creates`, `uses`, `derived_from` | derived from the extraction records |
 | `has_face`, `has_edge`, `has_vertex` | derived from the topology records |
 | `adjacent_to` | derived from the topology records |
-| `parallel_to`, `perpendicular_to`, `coplanar_with`, `coaxial_with`, `angle` | derived from geometry, with the tolerance from section 4.2 |
+| `coplanar_with`, `coaxial_with`, `angle` | derived from geometry, with the tolerance from section 4.2 |
 | `distance` | measured by the kernel |
 | `adds_material`, `removes_material`, `part_of` | derived from the feature and region records |
 | `is_inside` | measured by the kernel, from the solid state and a point literal |
@@ -356,6 +428,8 @@ category, clue type, and answer meaning.
 
 The graph implementation questions are in
 [`../implementation/pipeline/02c-build-cad-graph.md`](../implementation/pipeline/02c-build-cad-graph.md).
+They are questions about how to satisfy this document, not a second requirement;
+where an answer and this document disagree, this document is right.
 Q1 and Q4 are resolved below.
 
 ## 10. Resolved questions
@@ -368,6 +442,12 @@ Q1 and Q4 are resolved below.
   face keeps its area and normal after a fillet but gets a new kernel ID; a
   confident fingerprint may support a P2 `same_as` link. P0 and P1 work that
   needs cross-state identity is not generated.
+
+- **Q5.** *Resolved 2026-11-24.* Keep a solid state per solid-producing
+  operation. An effect is a difference between the state before an operation and
+  the state after it, and attribution compares consecutive states, so both are
+  needed and both are stored. Dropping the snapshots would save storage, not
+  reasoning, and would remove the P1 intermediate state.
 
 - **Q4.** *Resolved 2026-10-21.* Record a failure tombstone for a failed
   operation. Do not create measurements, answers, or tasks from the failed

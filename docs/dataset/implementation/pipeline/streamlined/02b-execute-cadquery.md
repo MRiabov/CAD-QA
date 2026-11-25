@@ -26,7 +26,7 @@ TRANSFORM:
 - two entities in one state with the same fingerprint → `fingerprint_collision`; reject the program
 - capture one `CadQuerySelectorResult` per evaluated selector: `selector_result_id, selector_id, state_id, selected_entity_ids, count`; zero matches is success; a CadQuery selector exception rejects the program
 - capture one `CadFeatureSolidStateEffectDelta` per operation: `operation_id, before_state_id, after_state_id, volume change, bounding-box change, topology counts`
-- capture one or two `PointProbe` per solid state: `point_probe_id, state_id, point, location (inside | outside), distance_to_surface, classifier, margin`; the centroid probe plus a seeded point in the state bounding box; do not emit a probe within the clear-case margin
+- capture one or two `PointProbe` per solid state: `point_probe_id, state_id, point, location (inside | outside), distance_to_face_surface, classifier, margin`; the centroid probe plus a seeded point next to the state surface on either side, with the first and second probes carrying opposite labels when both survive; do not emit a probe within the clear-case margin; never confine a probe to the bounding box
 - set `final_state_id`
 - never persist raw kernel handles or BRep
 

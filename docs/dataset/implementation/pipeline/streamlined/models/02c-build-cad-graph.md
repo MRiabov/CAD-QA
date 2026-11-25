@@ -55,8 +55,6 @@ const (
 	RelAddsMaterial      RelationType = "adds_material"
 	RelRemovesMaterial   RelationType = "removes_material"
 	RelPartOf            RelationType = "part_of"
-	RelParallelTo        RelationType = "parallel_to"
-	RelPerpendicularTo   RelationType = "perpendicular_to"
 	RelCoplanarWith      RelationType = "coplanar_with"
 	RelCoaxialWith       RelationType = "coaxial_with"
 )
@@ -72,7 +70,7 @@ const (
 	MeasureBoundingBox      MeasurementType = "bounding_box"
 	MeasureCentroid         MeasurementType = "centroid"
 	MeasureProbePoint       MeasurementType = "probe_point"
-	MeasureDistanceToSurface MeasurementType = "distance_to_surface"
+	MeasureDistanceToFaceSurface MeasurementType = "distance_to_face_surface"
 	MeasureFaceCount        MeasurementType = "face_count"
 	MeasureEdgeCount        MeasurementType = "edge_count"
 	MeasureVertexCount      MeasurementType = "vertex_count"
@@ -149,6 +147,17 @@ const (
 	SurfaceTorus    FaceSurfaceKind = "torus"
 	SurfaceBSpline  FaceSurfaceKind = "bspline"
 	SurfaceOther    FaceSurfaceKind = "other"
+)
+
+type FramePosition string
+
+const (
+	PositionMinX FramePosition = "min_x"
+	PositionMaxX FramePosition = "max_x"
+	PositionMinY FramePosition = "min_y"
+	PositionMaxY FramePosition = "max_y"
+	PositionMinZ FramePosition = "min_z"
+	PositionMaxZ FramePosition = "max_z"
 )
 
 type EdgeCurveKind string
@@ -297,11 +306,14 @@ type PointProbeAttributes struct {
 	ProbeIndex  int             `parquet:"probe_index"`
 	IsInside    bool            `parquet:"is_inside"`
 	Classifier  ProbeClassifier `parquet:"classifier"`
+	Margin      float64         `parquet:"margin"`
 }
 
 type FaceAttributes struct {
-	FingerprintSHA256 string `parquet:"fingerprint_sha256"`
-	FaceSurfaceKind   FaceSurfaceKind `parquet:"face_surface_kind"`
+	FingerprintSHA256 string           `parquet:"fingerprint_sha256"`
+	FaceSurfaceKind   FaceSurfaceKind  `parquet:"face_surface_kind"`
+	OutwardNormal     *Vector3D        `parquet:"outward_normal"` // planar faces only; a direction, not a category
+	Position          []FramePosition  `parquet:"position"`
 }
 
 type EdgeAttributes struct {
@@ -552,5 +564,4 @@ type GraphCompletenessReport struct { // written by 02c next to the graph
 ```
 
 Graph-local IDs are deterministic UUIDv5 values. `Tolerance` on a relation is
-null unless the relation is one of `parallel_to`, `perpendicular_to`,
-`coplanar_with`, or `coaxial_with`.
+null unless the relation is `coplanar_with` or `coaxial_with`.

@@ -32,13 +32,19 @@ the reader `02c` build CAD graph uses.
 
 `test_02b_point_probes_are_reproducible` — for every `point_probes` row, recompute
 `is_inside(state, point)` and compare the classification, and recompute
-`distance_to_surface` within kernel noise. The first probe of each state is the
-state centroid, and there are one or two probes per state.
+`distance_to_face_surface` within kernel noise. The first probe of each state is
+the Shape snapshot centroid on the 0.1 mm grid. The second probe is at most
+`sqrt(3) × 1`
+mm plus one grid step from the nearest face and may lie outside the bounding box.
+When both probes survive they carry opposite labels. Running the same program
+twice produces the same two points, because the draw is seeded from
+`program_sha256`, `state_id`, and `probe_index`.
 
 A probe within the clear-case margin is absent. The test feeds the probe filter
-constructed rows below, at, and above the margin and asserts only the rows above
-survive. It does not need a degenerate program: a well-formed solid keeps its
-centroid probe, so no realistic program reaches zero probes.
+constructed rows below, at, and above `100 × 1e-6 × d`, `d` the bounding-box
+diagonal, and asserts only the rows above survive. It does not need a degenerate
+program: a well-formed solid keeps its centroid probe, so no realistic program
+reaches zero probes.
 
 `test_02b_failure_tombstones` — a program that raises, one that exceeds the 30
 second wall clock, and one that exceeds 2 GiB each produce a failure tombstone

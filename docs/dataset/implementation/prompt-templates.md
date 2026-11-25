@@ -42,8 +42,8 @@ this contract.
 A minimal file looks like this:
 
 ```yaml
-schema_version: 1
-version: cadqa_prompt_v3
+schema_version: 2
+version: cadqa_prompt_v10
 
 namespaces:
   dataset:
@@ -147,8 +147,8 @@ The placeholder forms are:
 | `number` | a finite number | Formatted at the task's stated precision. |
 | `integer` | an integer | Formatted as a decimal integer. |
 | `boolean` | a boolean | Rendered as `true` or `false`. |
-| `coordinate` | three finite numbers | Rendered as `(x, y, z)` in the program frame. |
-| `reference` | a binding reference plus its clue operand form | Rendered as a bare noun phrase such as `target face`, `cylindrical face`, or `face from clue 2`. |
+| `coordinate` | three finite numbers, each with its recorded canonical decimal text | Rendered as `(x, y, z)` in the program frame. A probe point is inserted from its recorded text and is never re-rounded, so the prompt shows the point the kernel classified. |
+| `reference` | a binding reference plus its clue reduction form | Rendered as a bare noun phrase such as `target face`, `cylindrical face`, or `faces from clue 2`. |
 | `list` | an ordered list of rendered strings | One item per line, with no added marker. |
 | `numbered_list` | an ordered list of rendered strings | One item per line, prefixed `1.`, `2.`, and so on. |
 | `code` | program text | Inserted verbatim. The template supplies the fenced block and language tag. |
@@ -166,15 +166,46 @@ name, a relation name, a comparator, a unit, and a target category are
 `label.<table>`.
 
 A `text` placeholder that names an entity is a full noun phrase with its
-determiner, for example `the cut operation` or `the XY CadQuery workplane`.
+determiner, for example `the box operation` or `the circular CadQuery profile`.
 `03b` supplies the prompt-safe description; `04` does not invent one.
 
-A `reference` value is a bare noun phrase such as `target face` or
-`face from clue 2`; the template supplies the determiner. The renderer builds the
-phrase from the `BindingRef` in the task definition and the clue operand form
-(`named`, `selected`, `aggregated`, or `cross_state`). It uses the presentation
-position, not the canonical position, when it says "the face from clue 2"
-(`TG-7`). The template never builds a reference from a graph identifier.
+The determiner follows what the description selects. It is definite only when the
+description selects exactly one element of that category in the program, as one
+`box` call makes `the box operation` unique. A description that can select
+several is indefinite, as two `cutBlind` calls make `a cutBlind operation`; a
+description that selects several and must mean all of them is plural.
+
+A `reference` value is a full noun phrase with the determiner the rule chose, so
+a template never adds an article before `{{subject}}` or `{{reference}}`. The
+renderer builds it from the `BindingRef` and the clue reduction form (`filtered`,
+`selected_in_earlier_clue`, `aggregated`, or `cross_state`). It chooses `the`
+when the condition selects exactly one element of the category in the program, and
+`a` when it selects several; a set bound by an earlier clue is plural. A clue
+sentence begins with its subject, so the renderer capitalizes the first character
+of the rendered sentence. The allowed forms are:
+
+- `target <category>` for the task target;
+- `<face surface kind> <category>`, such as `cylindrical face`;
+- `<category> facing <axis>`, such as `face facing +z`, for a face whose outward
+  normal is along that axis;
+- `<category> whose outward normal is <comparator> <value> degrees of <axis>`,
+  such as `face whose outward normal is within 45 degrees of +z`;
+- `<category> whose <metric> is <comparator> <value>`, such as
+  `face whose area is greater than 10`;
+- `<category> touching the <position> of the axis-aligned bounding box`, such as
+  `face touching the top of the axis-aligned bounding box`;
+- `<categories> from clue N` for an earlier clue's result;
+- `the <extreme> of the faces from clue N`, such as
+  `the largest of the faces from clue 1`, for an `aggregated` face reference
+  (P1).
+
+A filtered reference is a set, and its article follows the set size: `the` for
+one element ("the cylindrical face" when the program has one), `a` for several
+("a face facing +z" when several do). A set bound by an earlier clue is plural
+("the faces from clue 1"). It uses the presentation position,
+not the canonical position, for that plural (`TG-7`). A reference never uses a
+position as a proper noun ("the top face"); the touching form above is the
+condition. The template never builds a reference from a graph identifier.
 
 ## 5. Label tables
 
@@ -188,13 +219,16 @@ The P0 label tables are:
 | Table | Key examples | Used by |
 |---|---|---|
 | `target_category` | `face`, `edge`, `solid_state`, `operation` | `label.target_category` |
-| `metric` | `volume`, `face_area`, `distance`, `face_count` | `label.metric` |
+| `metric` | `volume`, `face_area`, `distance`, `face_count`, `centroid_x` | `label.metric` |
 | `comparator` | `gt`, `ge`, `lt`, `le`, `eq` | `label.comparator` |
-| `relation` | `parallel_to`, `adjacent_to`, `perpendicular_to` | `label.relation` |
+| `relation` | `adjacent_to`, `has_edge`, `has_vertex` | `label.relation` |
 | `unit` | `mm`, `mm2`, `mm3`, `deg` | `label.unit` |
 | `position_parameter` | `face_centroid`, `edge_midpoint`, `vertex_point`, `solid_state_centroid` | `label.position_parameter` |
 | `counted_entity` | `face`, `edge`, `vertex`, `selected_entity` | `label.counted_entity` |
 | `frame` | `program_frame` | `label.frame` |
+| `face_surface_kind` | `plane`, `cylinder`, `cone` | `label.face_surface_kind` |
+| `axis` | `+x`, `-x`, `+y`, `-y`, `+z`, `-z` | `label.axis` |
+| `frame_position` | `min_x`…`max_z` | `label.frame_position` |
 | `choice_label` | `A`, `B`, `C` | `label.choice_label` |
 
 A label table is not a vocabulary of allowed graph values. The CAD graph owns
@@ -202,8 +236,12 @@ that vocabulary. The table is the display layer: a value with no row is a
 validation error at render time, so a new measurement or relation cannot
 silently fall back to an underscore-replaced identifier.
 
-The label tables are a closed set in schema version 1. A new table is a schema
-change: bump `schema_version` and `version`, and add the renderer support.
+The label tables are a closed set. Schema version 2 added
+`face_surface_kind`, `axis`, and `frame_position`, and `prompts.yaml` declares
+them. One value has no label on purpose: `face_surface_kind` has no `other`,
+because the face surface kind has no adjective, and a task that would name an
+`other` face is a render-time task defect. A new table is a schema change: bump
+`schema_version` and `version`, and add the renderer support.
 
 ## 6. Templates and selection
 
@@ -216,11 +254,14 @@ field. The selection is deterministic; it does not use an LLM.
 | Question | `dataset.question.<answer_meaning>` | `answer_meaning` from the definition. |
 | Property clue, threshold | `dataset.clue.property.threshold` | `clue_type=property`, check has `threshold`. |
 | Property clue, range | `dataset.clue.property.range` | `clue_type=property`, check has `range`. |
-| Relation clue | `dataset.clue.relation` | `clue_type=relation`. |
+| Property clue, face surface kind | `dataset.clue.property.face_surface_kind` | `clue_type=property`, check is a categorical feature `face_surface_kind`. |
+| Property clue, direction | `dataset.clue.property.direction` | `clue_type=property`, check is an `angle` measurement against a program axis. |
+| Property clue, position | `dataset.clue.property.position` | `clue_type=property`, check is a categorical feature `position`. |
+| Relation clue, angle | `dataset.clue.relation.angle` | `clue_type=relation`, check is an `angle` measurement. |
+| Relation clue, named | `dataset.clue.relation` | `clue_type=relation`, check is a named relation. |
 | Comparison clue | `dataset.clue.comparison` | `clue_type=comparison`. |
 | Provenance clue, operation | `dataset.clue.provenance.operation` | `clue_type=provenance`, check has `operation_id`. |
 | Provenance clue, CadQuery profile | `dataset.clue.provenance.profile` | `clue_type=provenance`, check has `profile_id`. |
-| Provenance clue, CadQuery workplane | `dataset.clue.provenance.workplane` | `clue_type=provenance`, check has `workplane_id`. |
 | Choice description | `dataset.choice.description` | `answer_format=multiple_choice`; once per choice. |
 | Answer instruction, multiple choice | `dataset.answer_instruction.multiple_choice` | `answer_format=multiple_choice`. |
 | Answer instruction, number with a unit | `dataset.answer_instruction.number.with_unit` | `answer_format=number` and `answer_unit` is not null. |
@@ -237,10 +278,17 @@ The P0 question IDs are `identity`, `volume`, `area`, `length`, `distance`,
 `topology_change`. A later-priority answer meaning adds its question ID when its
 scope ships; it does not reuse another meaning's template.
 
-The P1 aggregation clue templates (`dataset.clue.aggregation.extreme`,
-`dataset.clue.aggregation.rank`, and `dataset.clue.aggregation.count`) and the P2
-validity question (`dataset.question.validity`) are added when their scope ships.
-The schema does not change; only the template set and `version` do.
+The three property templates above (face surface kind, direction, position) and
+the three label tables they use are schema version 2, and `prompts.yaml` ships
+them. The pair-angle relation template `dataset.clue.relation.angle` is added
+with `cadqa_prompt_v10`; it uses `label.comparator` and `reference`, so the
+schema does not change. The P1 aggregation
+clue templates (`dataset.clue.aggregation.extreme` and
+`dataset.clue.aggregation.rank`) and the P2 validity question
+(`dataset.question.validity`) are added when their scope ships. A count is an
+answer meaning, not a clue, while `task-structure.md` section 8 leaves that
+question open; it gets a clue template only if the question resolves in its
+favour. The schema does not change; only the template set and `version` do.
 
 The prompt shell is the only template that contains `code`, `list`, and
 `numbered_list` placeholders for the whole prompt. It places the frame convention,

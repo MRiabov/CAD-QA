@@ -1,0 +1,126 @@
+{
+  "schema_version": 3,
+  "oracle_kind": "task-construction",
+  "slug": "box-with-hole-top-face-centroid",
+  "verification": {
+    "status": "verified",
+    "verified_by": "MRiabov",
+    "verified_at": "2026-11-25",
+    "rationale": "The task description and answer were written by hand. The gold query executes the program with plain CadQuery and prints the answer; it does not use the CAD graph or the constructor. Rebuilt 2026-11-25 against the settled clue-reduction-form, categorical-feature, and measured-direction contract. Owner accepted this record after reviewing the current set in the task browser on 2026-11-25.",
+    "gold_query": {
+      "status": "passed",
+      "stdout": "{\"x\":\"0\",\"y\":\"0\",\"z\":\"2.5\"}",
+      "checked_at": "2026-11-25"
+    }
+  },
+  "environment": {
+    "cadquery_version": "2.8.0",
+    "ocp_version": "7.9.3.1",
+    "python_version": "3.12.13",
+    "oracle_tool_version": "1"
+  },
+  "program": {
+    "program_id": "cadqaprog:b406dfd4f70e422e066b9dbf2d1c545d69cb9020a604fcd6872945b57890fb24",
+    "program_sha256": "b406dfd4f70e422e066b9dbf2d1c545d69cb9020a604fcd6872945b57890fb24",
+    "text": "import cadquery as cq\n\nwp = cq.Workplane(\"XY\")\nbox = wp.box(10, 20, 5)\ntop = box.faces(\">Z\")\nplane = top.workplane()\nhole = plane.circle(2)\nresult = hole.cutBlind(-2)\n"
+  },
+  "task": {
+    "target_category": "face",
+    "question": "What is the face centroid of the target face?",
+    "state_scope": "final",
+    "possible_answer_count": 8,
+    "task_reasoning_step_count": 2,
+    "answer_meaning": "position",
+    "native_answer_format": "coordinate",
+    "answer_format": "coordinate",
+    "geometry_required": true,
+    "uniqueness": "The position clue leaves the top annular face alone; the answer-equivalent set is a singleton."
+  },
+  "clues": [
+    {
+      "order": 1,
+      "clue_type": "property",
+      "clue_reduction_form": null,
+      "statement": "The target face touches the top of the axis-aligned bounding box.",
+      "check": {
+        "predicate_kind": "property",
+        "property_shape": "categorical_feature",
+        "feature": "position",
+        "value": "max_z"
+      },
+      "narrows": {
+        "before": 8,
+        "after": 1
+      }
+    }
+  ],
+  "answer": {
+    "value_kind": "point",
+    "value": {
+      "x": "0",
+      "y": "0",
+      "z": "2.5"
+    },
+    "unit": "millimetre",
+    "tolerance": {
+      "tolerance_kind": "absolute",
+      "value_text": "0.05"
+    },
+    "scoring_rule": "numeric_tolerance",
+    "parameter": {
+      "parameter_kind": "position_point",
+      "point_kind": "face_centroid"
+    },
+    "point_probe": null,
+    "evidence_kind": "measured",
+    "evidence_rule": "centroid",
+    "evidence_refs": [
+      {
+        "reference_kind": "measurement",
+        "subject": {
+          "category": "face",
+          "filters": {
+            "position": "max_z"
+          }
+        },
+        "object": null,
+        "measurement": "centroid"
+      }
+    ],
+    "answer_equivalent_set": [
+      {
+        "subject": {
+          "category": "face",
+          "filters": {
+            "position": "max_z"
+          }
+        },
+        "value": {
+          "x": "0",
+          "y": "0",
+          "z": "2.5"
+        }
+      }
+    ]
+  },
+  "gold_query": {
+    "language": "python",
+    "code": "centre = result.faces(\">Z\").val().Center()\nprint(\n    json.dumps(\n        {\"x\": canon(centre.x), \"y\": canon(centre.y), \"z\": canon(centre.z)},\n        sort_keys=True,\n        separators=(\",\", \":\"),\n    )\n)",
+    "expected_stdout": "{\"x\":\"0\",\"y\":\"0\",\"z\":\"2.5\"}",
+    "sha256": "0c532d2e9d61f49c663f793b23b3d65b5ee897c666e00a6191ee84d3f12bc720"
+  },
+  "covers": {
+    "target_category": "face",
+    "clue_types": [
+      "property"
+    ],
+    "clue_reduction_forms": [],
+    "answer_meaning": "position",
+    "answer_format": "coordinate",
+    "task_reasoning_step_count": 2
+  },
+  "excluded": [],
+  "notes": [
+    "The top annular face centroid is on the z axis."
+  ]
+}

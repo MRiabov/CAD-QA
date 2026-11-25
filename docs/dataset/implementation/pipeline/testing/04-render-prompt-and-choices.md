@@ -28,7 +28,7 @@ labels, and placeholders are all declared.
 - `prompt_sha256` equals the SHA-256 the test recomputes over the `prompt` UTF-8
   bytes, with no trailing newline added;
 - `choices` is empty, because the answer format is a number;
-- `clue_types` is the clue type sequence of `clue_operand_form_profile`, so the
+- `clue_types` is the clue type sequence of `clue_reduction_form_profile`, so the
   two columns cannot disagree;
 - `gold_answer`, `tolerance`, `answer_evidence`, and `answer_sha256` equal the
   definition's typed values byte for byte after canonical encoding. The fixture

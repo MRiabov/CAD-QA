@@ -1,0 +1,134 @@
+{
+  "schema_version": 3,
+  "oracle_kind": "task-construction",
+  "slug": "box-top-bottom-distance",
+  "verification": {
+    "status": "verified",
+    "verified_by": "MRiabov",
+    "verified_at": "2026-11-25",
+    "rationale": "The task description and answer were written by hand. The gold query executes the program with plain CadQuery and prints the answer; it does not use the CAD graph or the constructor. Rebuilt 2026-11-25 against the settled clue-reduction-form, categorical-feature, and measured-direction contract. Owner accepted this record after reviewing the current set in the task browser on 2026-11-25.",
+    "gold_query": {
+      "status": "passed",
+      "stdout": "5",
+      "checked_at": "2026-11-25"
+    }
+  },
+  "environment": {
+    "cadquery_version": "2.8.0",
+    "ocp_version": "7.9.3.1",
+    "python_version": "3.12.13",
+    "oracle_tool_version": "1"
+  },
+  "program": {
+    "program_id": "cadqaprog:c68e7eeee7b9f5c26a3e418976cd6f2056a636742379d3cafaf2bfda433316e3",
+    "program_sha256": "c68e7eeee7b9f5c26a3e418976cd6f2056a636742379d3cafaf2bfda433316e3",
+    "text": "import cadquery as cq\n\nresult = cq.Workplane(\"XY\").box(10, 20, 5)\n"
+  },
+  "task": {
+    "target_category": "face",
+    "question": "What is the distance between the target face and the face touching the bottom of the axis-aligned bounding box?",
+    "state_scope": "final",
+    "possible_answer_count": 6,
+    "task_reasoning_step_count": 2,
+    "answer_meaning": "distance",
+    "native_answer_format": "number",
+    "answer_format": "number",
+    "geometry_required": true,
+    "uniqueness": "The position clue leaves the top face, and the bottom face is the only face touching the bottom of the axis-aligned bounding box."
+  },
+  "clues": [
+    {
+      "order": 1,
+      "clue_type": "property",
+      "clue_reduction_form": null,
+      "statement": "The target face touches the top of the axis-aligned bounding box.",
+      "check": {
+        "predicate_kind": "property",
+        "property_shape": "categorical_feature",
+        "feature": "position",
+        "value": "max_z"
+      },
+      "narrows": {
+        "before": 6,
+        "after": 1
+      }
+    }
+  ],
+  "answer": {
+    "value_kind": "number",
+    "value": "5",
+    "unit": "millimetre",
+    "tolerance": {
+      "tolerance_kind": "absolute",
+      "value_text": "0.5"
+    },
+    "scoring_rule": "numeric_tolerance",
+    "parameter": {
+      "parameter_kind": "distance_reference",
+      "subject": {
+        "category": "face",
+        "filters": {
+          "position": "min_z"
+        }
+      }
+    },
+    "point_probe": null,
+    "evidence_kind": "measured",
+    "evidence_rule": "distance",
+    "evidence_refs": [
+      {
+        "reference_kind": "measurement",
+        "subject": {
+          "category": "face",
+          "filters": {
+            "position": "max_z"
+          }
+        },
+        "object": null,
+        "measurement": "distance"
+      },
+      {
+        "reference_kind": "node",
+        "subject": {
+          "category": "face",
+          "filters": {
+            "position": "min_z"
+          }
+        },
+        "object": null,
+        "measurement": null
+      }
+    ],
+    "answer_equivalent_set": [
+      {
+        "subject": {
+          "category": "face",
+          "filters": {
+            "position": "max_z"
+          }
+        },
+        "value": "5"
+      }
+    ]
+  },
+  "gold_query": {
+    "language": "python",
+    "code": "print(canon(result.faces(\">Z\").val().distance(result.faces(\"<Z\").val())))",
+    "expected_stdout": "5",
+    "sha256": "c36f266ca174160bf1a97e68cb93d18931cdf16073763337e96700475fa6978b"
+  },
+  "covers": {
+    "target_category": "face",
+    "clue_types": [
+      "property"
+    ],
+    "clue_reduction_forms": [],
+    "answer_meaning": "distance",
+    "answer_format": "number",
+    "task_reasoning_step_count": 2
+  },
+  "excluded": [],
+  "notes": [
+    "The top and bottom faces are 5 mm apart; the bottom face is at 180 degrees to the top face."
+  ]
+}

@@ -35,7 +35,7 @@ must appear:
 
 - task target category;
 - clue type;
-- clue operand form, for task clues that carry a reference and as a coverage-only
+- clue reduction form, for task clues that carry a reference and as a coverage-only
   dimension in P0;
 - answer meaning;
 - answer format.
@@ -90,7 +90,7 @@ within half to twice that share. The conditional share is allocated from the
 global targets before task construction, then filled from available data; the
 plan is in
 [`pipeline/03-task-generation/03a-allocate-task-quotas/README.md`](pipeline/03-task-generation/03a-allocate-task-quotas/README.md).
-The release-side check, including the clue operand form exception and the
+The release-side check, including the clue reduction form exception and the
 superseded outcome, is in
 [`pipeline/05-validate-and-export-release/release-checks.md`](pipeline/05-validate-and-export-release/release-checks.md).
 

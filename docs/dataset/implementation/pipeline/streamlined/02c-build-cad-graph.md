@@ -17,7 +17,7 @@ TRANSFORM:
 - map extraction records to graph entities, relations, and measurements per the construction sub-document
 - attach every point probe to its solid state; a probe with no state is a graph defect
 - assign graph IDs deterministically from their documented components
-- every task-facing target, clue operand, answer value, and answer evidence resolves to a graph element; a missing element rejects the pair
+- every task-facing target, clue reference, answer value, and answer evidence resolves to a graph element; a missing element rejects the pair
 - attach CAD graph evidence to every relation and measurement: `measured` with the kernel call, or `derived` with the rule and its references; a relation or measurement with neither rejects the pair
 - carry the tolerance and the reason on a relation whose tolerance is overridden
 - use the tables, IDs, attributes, enums, and evidence fields in the persistence sub-document

@@ -10,7 +10,7 @@ degenerate.
 Each fixture covers at least one of:
 
 - several solid states, for provenance and effect answers;
-- a pair relation, for `distance` and `angle`;
+- a pair measurement, for `distance` and `angle`;
 - a CadQuery profile;
 - a CadQuery workplane;
 - a feature-added region.

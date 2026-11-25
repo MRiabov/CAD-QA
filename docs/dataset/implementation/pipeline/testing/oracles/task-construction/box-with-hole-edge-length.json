@@ -1,0 +1,151 @@
+{
+  "schema_version": 3,
+  "oracle_kind": "task-construction",
+  "slug": "box-with-hole-edge-length",
+  "verification": {
+    "status": "verified",
+    "verified_by": "MRiabov",
+    "verified_at": "2026-11-25",
+    "rationale": "The task description and answer were written by hand. The gold query executes the program with plain CadQuery and prints the answer; it does not use the CAD graph or the constructor. Rebuilt 2026-11-25 against the settled clue-reduction-form, categorical-feature, and measured-direction contract. Owner accepted this record after reviewing the current set in the task browser on 2026-11-25.",
+    "gold_query": {
+      "status": "passed",
+      "stdout": "12.57",
+      "checked_at": "2026-11-25"
+    }
+  },
+  "environment": {
+    "cadquery_version": "2.8.0",
+    "ocp_version": "7.9.3.1",
+    "python_version": "3.12.13",
+    "oracle_tool_version": "1"
+  },
+  "program": {
+    "program_id": "cadqaprog:b406dfd4f70e422e066b9dbf2d1c545d69cb9020a604fcd6872945b57890fb24",
+    "program_sha256": "b406dfd4f70e422e066b9dbf2d1c545d69cb9020a604fcd6872945b57890fb24",
+    "text": "import cadquery as cq\n\nwp = cq.Workplane(\"XY\")\nbox = wp.box(10, 20, 5)\ntop = box.faces(\">Z\")\nplane = top.workplane()\nhole = plane.circle(2)\nresult = hole.cutBlind(-2)\n"
+  },
+  "task": {
+    "target_category": "edge",
+    "question": "What is the length of the target edge?",
+    "state_scope": "final",
+    "possible_answer_count": 15,
+    "task_reasoning_step_count": 3,
+    "answer_meaning": "length",
+    "native_answer_format": "number",
+    "answer_format": "number",
+    "geometry_required": true,
+    "uniqueness": "Only the top circular edge is shared by the top annular face and the cylindrical face."
+  },
+  "clues": [
+    {
+      "order": 1,
+      "clue_type": "relation",
+      "clue_reduction_form": "filtered",
+      "statement": "The target edge is an edge of the face touching the top of the axis-aligned bounding box.",
+      "check": {
+        "predicate_kind": "relation",
+        "relation_shape": "named",
+        "relation_type": "has_edge",
+        "direction": "object_to_subject",
+        "object": {
+          "category": "face",
+          "filters": {
+            "position": "max_z"
+          }
+        }
+      },
+      "narrows": {
+        "before": 15,
+        "after": 5
+      }
+    },
+    {
+      "order": 2,
+      "clue_type": "relation",
+      "clue_reduction_form": "filtered",
+      "statement": "The target edge is an edge of the cylindrical face.",
+      "check": {
+        "predicate_kind": "relation",
+        "relation_shape": "named",
+        "relation_type": "has_edge",
+        "direction": "object_to_subject",
+        "object": {
+          "category": "face",
+          "filters": {
+            "surface_kind": "cylinder"
+          }
+        }
+      },
+      "narrows": {
+        "before": 5,
+        "after": 1
+      }
+    }
+  ],
+  "answer": {
+    "value_kind": "number",
+    "value": "12.57",
+    "unit": "millimetre",
+    "tolerance": {
+      "tolerance_kind": "absolute",
+      "value_text": "0.005"
+    },
+    "scoring_rule": "numeric_tolerance",
+    "parameter": null,
+    "point_probe": null,
+    "evidence_kind": "measured",
+    "evidence_rule": "length",
+    "evidence_refs": [
+      {
+        "reference_kind": "measurement",
+        "subject": {
+          "category": "edge",
+          "filters": {
+            "curve_kind": "circle",
+            "centroid_z": "2.5"
+          }
+        },
+        "object": null,
+        "measurement": "length"
+      }
+    ],
+    "answer_equivalent_set": [
+      {
+        "subject": {
+          "category": "edge",
+          "filters": {
+            "curve_kind": "circle",
+            "centroid_z": "2.5"
+          }
+        },
+        "value": "12.57"
+      }
+    ]
+  },
+  "gold_query": {
+    "language": "python",
+    "code": "circles = result.edges(\"%CIRCLE\").vals()\ntop_circle = max(circles, key=lambda edge: edge.Center().z)\nprint(canon(top_circle.Length()))",
+    "expected_stdout": "12.57",
+    "sha256": "7c4b502f3f66ad3f09e27f6856a995152a3432baebe22b0e62948f2fda2b6fc5"
+  },
+  "covers": {
+    "target_category": "edge",
+    "clue_types": [
+      "relation",
+      "relation"
+    ],
+    "clue_reduction_forms": [
+      "filtered",
+      "filtered"
+    ],
+    "answer_meaning": "length",
+    "answer_format": "number",
+    "task_reasoning_step_count": 3
+  },
+  "excluded": [],
+  "notes": [
+    "The final solid has 15 edges: the cylindrical face carries a periodic seam edge.",
+    "The top circular edge is the only edge shared by the top annular face and the cylindrical face.",
+    "The length is 2 * pi * 2 = 12.566... -> 12.57."
+  ]
+}

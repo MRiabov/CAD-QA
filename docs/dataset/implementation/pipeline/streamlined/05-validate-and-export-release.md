@@ -22,7 +22,7 @@ READ:
 
 WRITE:
 
-- `release.parquet`, `failures.parquet`, `manifest.json`, `dataset-card.md`, `support/target-category-by-step.json`, `support/clue-type-by-step.json`, `support/clue-operand-form-by-step.json`, `support/answer-meaning-by-step.json`, `support/answer-format-by-step.json`
+- `release.parquet`, `failures.parquet`, `manifest.json`, `dataset-card.md`, `support/target-category-by-step.json`, `support/clue-type-by-step.json`, `support/clue-reduction-form-by-step.json`, `support/answer-meaning-by-step.json`, `support/answer-format-by-step.json`
 - `ReleaseArtifacts` `(release_id)`
 - write the release into `release/.tmp-<release_id>/` and rename it to `release/<release_id>/`; replace `release/current` by an atomic symlink rename
 - failure partition `05_validate_and_export_release`
@@ -35,7 +35,7 @@ TRANSFORM:
 - the prompt is answer-free; a multiple-choice label is not answer data, because the prompt lists every label
 - `task_id` is unique; exactly one answer set per row
 - recompute `prompt_sha256` from the `prompt` bytes
-- `clue_types` has one entry per `clue_operand_form_profile` entry, same order and same clue type
+- `clue_types` has one entry per `clue_reduction_form_profile` entry, same order and same clue type
 - check `gold_answer` against `answer_format`; require `tolerance` for every non-exact answer
 - for a multiple-choice row, recheck `choices`: at least five entries, labels contiguous from `A` with no repeat, answer values distinct under `same_answer`, `gold_answer.label` one of the labels, and that label's answer value equal to `answer_evidence.answer_equivalent_answer`; every other row has an empty `choices` pool
 - do not recompute `answer_sha256`; `release_table_sha256` covers the answer columns

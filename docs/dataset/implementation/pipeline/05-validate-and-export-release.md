@@ -30,7 +30,7 @@ Coverage and balance checks:
 - Check that the prompt is answer-free.
 - Check `task_id` uniqueness and exactly one answer set per row.
 - Check the release projection: recompute `prompt_sha256` from the `prompt`
-  bytes, check `clue_types` against `clue_operand_form_profile`, check
+  bytes, check `clue_types` against `clue_reduction_form_profile`, check
   `gold_answer` against `answer_format`, and require `tolerance` for every
   non-exact answer. For a multiple-choice row, recheck the `choices` pool: at
   least five entries, labels contiguous from `A` with no repeat, answer values

@@ -3,6 +3,12 @@
 **Status:** draft, 2026-10-21. This document defines how a CAD-QA task is
 described. It replaces the flat task list in the PRD.
 
+This document owns the task vocabulary and the task-level reading of the graph.
+The graph entity, relation, and measurement kinds are defined in
+[`graph-content.md`](graph-content.md); this document does not repeat their
+closed value sets. The prompt that renders a task is defined in
+[`prompt-content.md`](prompt-content.md).
+
 A **task** is one dataset instance: a CadQuery program, a task target, a set of
 task clues, and one answer. A **question** is only the interrogative sentence in
 the prompt; it is not the whole task.
@@ -54,9 +60,25 @@ The task target is the entity or value the task asks about.
 | CadQuery selector result | The entities a CadQuery selector actually selected. | P1 |
 | Scalar value | A measurement instance whose value is the answer. The subject need not be unique. | P0 |
 
+The `Priority` column is the priority of a category as a task target. It is not
+the graph-input priority in [`graph-content.md`](graph-content.md) section 2: a
+CadQuery program is a P0 graph input because every graph entity belongs to one,
+and a P1 task target because a question about a whole program ships later.
+
 A task has exactly one task target category. If the answer is a measurement
 taken from an entity, the entity is the task target and the measurement is the
 answer. The task target category is not the answer format.
+
+In P0 a value answer records the entity as the target. The answer-equivalent set
+may hold several entities that share that answer value (`DS-REQ-15`), and the kept
+definition binds the first witness in stable candidate order (`DS-REQ-35`). The
+scalar value row is defined but no P0 task uses it: a scalar target is deferred
+until a question names a measurement whose subject is not an entity category.
+
+A state that an earlier operation produced is not a candidate. The candidate set
+is the entities of the target category in the bound state scope, and `DS-REQ-08`
+fixes that scope: the final state in P0, one named intermediate state in P1, the
+pair in P2. A task never chooses among the states the program passed through.
 
 A scalar target is a measurement instance: a subject, a measurement, and a
 value. The subject may be an entity or a solid state. The candidate set is
@@ -79,42 +101,108 @@ Every task clue has one of these clue types:
 
 | Task clue type | What it says | Priority |
 |---|---|---|
-| Property | The task target has a property or measurement with a stated value or range. | P0 |
-| Relation | The task target stands in a named relation to another entity. | P0 |
+| Property | The task target has a measurement with a stated value or range, or a categorical feature with a stated value. | P0 |
+| Relation | The task target stands in a named relation to another entity, or in a measured angle to one. | P0 |
 | Comparison | The task target's measurement compares to a reference measurement. | P0 |
-| Aggregation | The task target is the extreme, the rank, or the count of a set. | P1 |
-| Provenance | The task target was created by an operation, uses a CadQuery profile, or sits on a CadQuery workplane. | P0 |
+| Aggregation | The task target is the extreme or the rank of a set. | P1 |
+| Provenance | The task target was created by an operation or uses a CadQuery profile. | P0 |
 
-A task clue with a reference is also described by its **clue operand form**. A
-task clue with no reference has no operand form. The operand form belongs to the
-reference, not to the clue type, so a property clue carries none.
+A property clue has one of two shapes:
 
-| Clue operand form | Reference binding | Priority |
+- a **measurement** — a number with a unit, compared with a comparator: area,
+  length, distance, angle, count, volume, volume change, topology change, a
+  centroid coordinate, or perimeter (P1). A direction is measured as the angle
+  between the outward normal and a program axis; it is not a categorical value;
+- a **categorical feature** — a closed value compared for equality. Both
+  categorical features apply to a face. Their values and meanings are defined in
+  [`graph-content.md`](graph-content.md) section 2.1 and are not repeated here:
+  the face surface kind, and the position as the bounding-box extremes the face
+  touches. Position is set-valued, because several coplanar faces may touch one
+  extreme. A direction is not a categorical feature; it is measured above.
+
+A relation clue has one of two shapes:
+
+- a **named relation** — a relation from [`graph-content.md`](graph-content.md)
+  section 3, such as `adjacent_to` or `has_edge`;
+- a **measured angle** — the `Angle` measurement between the target and a
+  reference, with a comparator and a threshold. Parallel and perpendicular are
+  renderings of 0 or 180 degrees and 90 degrees, not separate relations.
+
+A measured-angle relation is one condition, not a relation combined with a
+property.
+
+A task clue narrows through geometry or through an earlier task clue. It does not
+resolve its target by a pre-registered unique name whose result is independent of
+the candidate set; that is a lookup, not a reasoning step. A computed selection,
+such as the third from the left or the largest, may leave one entity because the
+one is derived from the set.
+
+A task clue with a reference is also described by its **clue reduction form**:
+how the reference set is reduced from the entities of the graph. A clue with no
+reference has no form; a property clue is one, because it is about the target
+alone.
+
+| Clue reduction form | Reference | Priority |
 |---|---|---|
-| `named` | A named graph element. | P0 |
-| `selected` | A result of an earlier task clue. | P0 |
-| `aggregated` | An extreme, rank, or count over a set. | P0 |
-| `cross_state` | A before/after solid state pair. | P2 |
+| `filtered` | The entities of a category that satisfy conditions. | P0 |
+| `selected_in_earlier_clue` | The set an earlier task clue bound. | P0 |
+| `aggregated` | A set reduced to one entity by an extreme or rank. | P1 |
+| `cross_state` | The before/after solid state pair. | P2 |
 
-A comparison task clue may name both entities, or it may refer to one entity
-selected by an earlier task clue. A reference must resolve to exactly one
-entity. If earlier task clues leave several possible entities, the comparison
-must say how it applies to them (for example, "larger than every remaining
-entity") or the task is rejected. The reference does not add a task clue step;
-the comparison is still one task clue.
+All four reduce a set; none creates one. The reference is a set, not a single
+entity. A relation or comparison is true when at least one member of the
+reference set satisfies it; a clue states "every" only when it says so. The
+reference does not add a task clue step; the clue stays one task clue.
 
-A task clue with a reference has a **clue operand form**: `named`, `selected`,
-`aggregated`, or `cross_state`. A task clue with no reference has none.
+Not every clue type can carry every reduction form. These combinations cannot
+exist, so no task uses one:
 
-A task clue states one condition. A list item that combines a relation with a
-property is two task clues and is split into two list items.
+| Combination | Why it cannot exist |
+|---|---|
+| property with any form | A property clue is about the target alone and has no reference. |
+| aggregation with `aggregated` | That is an aggregation over an aggregate, and it is written as two clues. |
+| `selected_in_earlier_clue` at task reasoning step count 1 | It needs an earlier task clue. |
+| `cross_state` in P0 and P1 | It needs a second solid state, and P0 and P1 use the final state only (`DS-REQ-08`). |
+
+A comparison task clue may filter both entities, or it may refer to a set bound
+by an earlier task clue. If the reference set has several members, the clue is
+read existentially unless it says "every remaining entity".
+
+A task clue states one condition. A list item that combines a named relation
+with a property is two task clues and is split into two list items; a
+measured-angle relation is already one condition.
 
 A chain is not a task clue type. It is a P2 implementation of an ordered
 sequence of relation task clues: each relation is one task clue and one task
 clue step.
 
-A task clue narrows the set of possible answers. The canonical term for the
-condition is **task clue**.
+A task clue narrows the set of possible answers: it leaves fewer candidates than
+it found. A condition that does not narrow is not a task clue. The canonical term
+for the condition is **task clue**.
+
+Narrowing is local to the clue's position in the chain and does not make the clue
+necessary. Every task clue must also be **necessary**: removing it and running the
+remaining clues in order must leave at least two distinct answers, or change the
+answer (`DS-REQ-34`). Distinct answers are compared with `same_answer` at the
+task's precision (`DS-REQ-15`), so an answer-equivalent set is one answer and not
+two. A clue that passes neither test is redundant: the task is shortened by
+dropping it, never kept at its length to reach a task reasoning step count.
+Removing a clue that a later clue refers to by `selected_in_earlier_clue` changes
+that reference set, which is the case the "or change the answer" half covers.
+
+A necessary clue needs a wrong answer that survives every other clue; otherwise
+removing the clue already leaves one answer. In a chain whose references are
+conditions, each clue step therefore consumes one distinct wrong answer. A
+candidate set with `m` distinct answers supports at most `m - 1` clue steps, and
+`m` task reasoning steps when the answer is a value. A later clue that refers to
+an earlier clue's set is the exception: removing the clue changes that set, and
+the "or change the answer" half applies.
+
+In P0 that set is the task target, and a task has one. A later scope may let a
+clue narrow a set that is not the target: the clue already records the set it
+narrowed and how far it narrowed it, and the prompt already has a phrase for the
+set a clue left ("the faces from clue 2"), so that scope adds a binding rather
+than a new clue contract.
 
 A task may also need a **task answer step** after the task target is identified,
 such as reporting the volume of the selected solid state. A task answer step is
@@ -151,7 +239,7 @@ returned. The answer format says "number" or "boolean"; the answer meaning says
 | Area | An area. | P0 |
 | Length | A length. | P0 |
 | Distance | A distance between two entities or a point and an entity. | P0 |
-| Angle | An angle between two faces, two edges, or a path tangent. Two faces use outward normals, two edges the acute angle between the lines. | P0 |
+| Angle | An angle between two faces, two edges, a path tangent, or a planar face and a program axis. Two faces use outward normals, two edges the acute angle between the lines. | P0 |
 | Count | A number of entities. | P0 |
 | Rank | A position in an ordered set. | P1 |
 | Membership | Whether a point is inside the solid state. Points within tolerance of a face surface are not used. | P0 |
@@ -172,6 +260,37 @@ The answer meaning is not the answer format. A volume can be returned as a
 number; a membership result can be returned as yes or no; an identity is
 returned as a multiple-choice label; a position can be
 returned as a 3D coordinate; an extent can be returned as a bounding box.
+
+#### 2.4.1 Answer meaning and the graph
+
+An answer meaning is not a graph measurement; it is the task-level reading of
+one. The graph element that supplies each meaning is fixed here so the two
+vocabularies cannot drift. The measurement definitions are in
+[`graph-content.md`](graph-content.md) section 4.
+
+| Answer meaning | Graph element | Declared parameter |
+|---|---|---|
+| Identity | The task target binding. | none |
+| Volume | `Volume` of a solid state or region. | none |
+| Area | `Area` of a face, CadQuery profile, or region. | none |
+| Length | `Length` of an edge or path segment. | none |
+| Distance | `Distance` between two entities or an entity and a point. | none |
+| Angle | `Angle`. | none |
+| Count | `Count`, or a stored count such as `face_count`. | the counted entity kind |
+| Rank | Derived by the task: the ordinal of the target in a reference set ordered by one measurement and direction. It is not a stored measurement. | the ordering measurement and direction |
+| Membership | The `is_inside` predicate on a solid state. | the point or point probe |
+| Position | `Centroid` of the task target entity or solid state. | face centroid, edge midpoint, vertex point, or solid state centroid |
+| Extent | `Bounding box`. | none |
+| CadQuery workplane state | `CadQuery workplane frame`. | none |
+| Material change | `Volume change`. | none; the sign carries add or remove |
+| Topology change | `Topology change`. | face, edge, or vertex |
+| Validity | `Validity`. | none |
+
+Two rows are not yet fully supported. `Rank` orders a reference set, but the
+ordering measurement and the direction words are an open question in section 8.
+`Position` on an edge reads the edge centroid, which is the midpoint only for a
+straight edge; a Position answer that needs the midpoint of a curved edge is not
+generated until the graph stores that midpoint.
 
 ### 2.5 Task reasoning step count
 
@@ -215,7 +334,7 @@ The task's properties are recorded for different reasons:
 |---|---|
 | Task target category | Coverage and release diversity |
 | Task clue type | Coverage and balance |
-| Clue operand form | Coverage in P0; balance target in P1 |
+| Clue reduction form | Coverage in P0; balance target in P1 |
 | Answer meaning | Coverage and balance |
 | Answer format | Coverage and balance |
 | Task reasoning step count | Coverage and mix across task reasoning step counts |
@@ -249,21 +368,20 @@ For example, a measure task is described like this:
 
 ```text
 Task target: a face of the final solid state.
-Task clue 1: the face is parallel to a named CadQuery workplane.
-Task clue 2: the face is adjacent to the face created by a named operation.
-Task clue 3: among the faces that satisfy task clues 1 and 2, the face with the
-            largest area.
-Answer: the area of the selected face, as a number.
+Task clue 1: the target face is adjacent to a face facing +z.
+Task clue 2: the angle between the target face and a face facing +x is 90 degrees.
+Task clue 3: among the faces that satisfy task clues 1 and 2, the largest.
+Answer: the area of the target face, as a number.
 Task reasoning step count: 4 (three task clue steps and one task answer step).
-Uniqueness: exactly one face satisfies task clues 1 and 2, and the largest area is
+Uniqueness: the three task clues leave exactly one face, and the largest area is
             achieved by exactly one of them. Otherwise the task is rejected.
 Geometry requirement: every task clue depends on the built shape, not only on
                     the program text.
 ```
 
-This is a task description, not an example. The named CadQuery workplane, the
-named operation, and the area value are chosen when a task is built. A task
-that does not satisfy the uniqueness rule is not generated.
+This is a task description, not an example. The directions, the face
+descriptions, and the area value are chosen when a task is built. A task that
+does not satisfy the uniqueness rule is not generated.
 
 ## 5. Coverage
 
@@ -273,7 +391,7 @@ and P2 values. For each step count in the release, the dataset must contain:
 
 - every task target category supported at that task reasoning step count;
 - every task clue type supported at that task reasoning step count;
-- every clue operand form supported at that task reasoning step count, for task
+- every clue reduction form supported at that task reasoning step count, for task
   clues that carry a reference;
 - every answer meaning supported at that task reasoning step count;
 - every answer format supported at that task reasoning step count;
@@ -314,7 +432,7 @@ only the values it implements.
 | Answer format | Every supported format appears. | Between half and twice its conditional release share. | Each format 5-25% of tasks. |
 | Answer meaning | Every supported meaning appears. | Between half and twice its conditional release share. | Each meaning 1-10% of tasks. |
 | Clue type | Every supported clue type appears. | Between half and twice its conditional release share. | No clue type above 25% of task clues. |
-| Clue operand form | Every supported form appears. | Between half and twice its conditional release share. | Equal share among the supported forms. |
+| Clue reduction form | Every supported form appears. | Between half and twice its conditional release share. | Equal share among the supported forms. |
 
 Answer format and answer meaning shares are over tasks. Clue type shares are
 over task clues, because one task can contain several task clues.
@@ -322,13 +440,13 @@ over task clues, because one task can contain several task clues.
 The numbers in this table are the defaults. The release instance is the root
 `balance.yaml`, which records the policy that produced a release.
 
-Clue operand form is coverage-only in P0. Its P1 balance target is an equal share
+Clue reduction form is coverage-only in P0. Its P1 balance target is an equal share
 among the supported forms, and the row is in the table above. Coverage-only is a
 concession, not a good property: coverage guarantees that each supported form
 appears, not that the forms are usefully mixed, so a release can concentrate one
 form and still pass.
 
-The balance check for clue operand form is still computed in P0 and reported
+The balance check for clue reduction form is still computed in P0 and reported
 without blocking. If a supported form falls below a quarter or above four times
 its conditional release share, the imbalance is severe and balancing is promoted
 into P0 for that release: the release is rebalanced, or the miss is recorded with
@@ -368,25 +486,77 @@ affected values; it is not resolved by silently dropping coverage.
 Those are properties of a task. A task must state the task target, task clues,
 answer format, answer meaning, and task reasoning step count that tie them together.
 
-## 8. Resolved questions
+## 8. Open questions
+
+- **Is a count a clue?** A count removes no candidate on its own, so it may be an
+  answer meaning rather than a clue. Until the question is resolved, a count is
+  an answer step and not a task clue, and `clue-list.md` has no count row.
+- **Which direction words may a rank clue use?** A rank needs a stated order.
+  The ordering measurement and the direction words are not yet defined. Until
+  they are, a P1 rank task is not generated.
+- **May a provenance clue point at a second set?** A provenance clue names one
+  operation or one CadQuery profile. Whether it may name a reference set is open.
+- **May a task narrow more than one set?** Today a task has one target, and every
+  clue narrows it, so a reference is either a single condition or an earlier state
+  of that target. The previous generator built tasks with two narrowed sets, the
+  target candidates and a reference entity, joined by a distance or a rank:
+  `parameterized_<target>_reference_<reference kind>_distance` and
+  `..._spatial_relation_chain_extreme` in
+  [`../../_archive/implementation_status.md`](../../_archive/implementation_status.md).
+  One step narrowed one set to fewer candidates; the join was a later step that
+  referenced both. Restoring it needs a step that binds a set, a later step that
+  references it, and a reducer relative to it. The shape to prefer is a wrapper
+  around a step, so a multi-step reference does not reopen every clue contract.
+  Deferred: P1 or P2, undecided. Until it is decided, no task binds a second set,
+  and a reference states one condition (`prompt-content.md` section 4.2).
+- **Is `cadquery_workplane` a task target category in the first release?** As a
+  target it supports an identity answer, which is a multiple-choice label, or the
+  `CadQuery workplane state` answer at P1: an origin, an x direction, and a
+  normal that the program already states. Neither one reads the built shape, so
+  the task is close to reading comprehension and counts against `R-4`. A frame
+  derived from a face could carry a shape condition, but no phrase names one, and
+  a named frame is the program's frame in almost every case, so naming it selects
+  everything.
+
+  The fair answers are about the frame: where its origin lies, how its normal is
+  oriented, and how far it sits from another frame. None is expressible today.
+  `CadQuery workplane state` carries the origin and the normal but is P1 and has
+  no question template. `Position` has no CadQuery workplane origin parameter.
+  `Angle`
+  covers two faces, two edges, a path tangent, or a planar face and a program
+  axis, and no CadQuery workplane scope, so an orientation reads as nothing: the
+  normal is a direction, and no answer meaning states a direction.
+
+  Every one of those reads the frame the program declares rather than the built
+  shape, unless the frame is derived from a face.
+
+  Until the question is resolved, the row keeps its P0 priority and no task uses
+  it.
+
+## 9. Resolved questions
 
 - **Q1.** *Resolved 2026-10-21: Option C.* A comparison task clue may name both
-  entities or refer to an entity selected by an earlier task clue. Every
-  referenced entity is either named in the program or already in the set of
-  possible answers. A reference to an earlier selected entity must resolve to
-  exactly one entity. If the earlier clue leaves several, the comparison must
-  state an explicit aggregation, or the task is rejected. Prefer the reference
-  form for multi-step tasks and the named form for a self-contained one-step
-  task. This is the same composition pattern as BrowseComp: a later step can
-  build on an earlier result without restating it.
+  entities or refer to a set bound by an earlier task clue. Every reference set
+  is either filtered from the graph or already bound by an earlier clue. A
+  reference is a set; the clue holds when at least one member of it satisfies
+  the comparison, and it states "every" only when it says so. Prefer a reference
+  to an earlier clue for multi-step tasks and a filtered reference for a
+  self-contained one-step task. This is the same composition pattern as
+  BrowseComp: a later step can build on an earlier result without restating it.
 
   ```text
-  The area of the face created by `cutBlind` is larger than the area of the
-  face created by `box`.
+  The area of a face facing +z is larger than the area of a face facing -z.
   ```
 
   ```text
-  1. The selected face is the face created by `cutBlind`.
-  2. The task target is adjacent to the selected face and has a larger area
-     than the selected face.
+  1. The target face is a face facing +z.
+  2. The area of the target face is larger than the area of every other face
+     from clue 1.
   ```
+
+- **Q2.** *Resolved 2026-11-25: record the entity.* A task that measures an
+  entity records the entity as the target. The answer-equivalent set may hold
+  several equal-answer entities, and the kept definition binds the first witness
+  in stable candidate order (`DS-REQ-35`). A scalar target is defined but
+  deferred; no P0 task uses it. This keeps the prompt label on the entity
+  category and avoids a target kind that changes the release schema.

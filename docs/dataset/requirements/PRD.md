@@ -143,7 +143,7 @@ meanings, answer formats, task reasoning step count rules, and the precise descr
 A task is described by its task target, task clues, answer format, answer
 meaning, and task reasoning step count. The dataset does not use task families,
 task types, or task patterns. Target category is a coverage dimension. Clue
-operand form is a coverage dimension in P0 and gains a balance target in P1.
+reduction form is a coverage dimension in P0 and gains a balance target in P1.
 Clue type, answer meaning, and answer format are coverage and balance
 dimensions. Task reasoning step count has a coverage and target-mix requirement.
 
@@ -152,7 +152,7 @@ whole release. A value that appears only at one task reasoning step count does n
 cover the other task reasoning step counts, and a global target may not be met
 by concentrating a value at one task reasoning step count. Target category has no percentage target at
 each task reasoning step count; it has coverage at each task reasoning step count and a release-level
-diversity cap. Clue operand form is coverage-only in P0: it has no percentage
+diversity cap. Clue reduction form is coverage-only in P0: it has no percentage
 target at each task reasoning step count, and its P1 balance target is set from
 the first release distribution.
 
@@ -168,6 +168,10 @@ may be added if they follow the structure and meet the same quality rules.
 ## 5. Answer formats
 
 The dataset must support all of the following answer formats at the priority shown.
+The answer-format definition is in [`task-structure.md`](task-structure.md)
+section 2.3; the choices, the wording, and the answer-instruction syntax are in
+[`prompt-content.md`](prompt-content.md) sections 5 and 6. This table states the
+product requirement.
 
 | Answer format | What the user sees | Requirements | Priority |
 |---|---|---|---|
@@ -265,11 +269,11 @@ to a later implementation scope is not a coverage gap in the current release.
 | ID | Requirement | How the user can tell |
 |---|---|---|
 | **R-7** | The dataset balances answer formats at every task reasoning step count. | Every answer format in section 5 appears at every task reasoning step count where it is supported. No format is more than twice or less than half its share among the formats supported at that task reasoning step count. Over the release, each format is between 5% and 25% of tasks. |
-| **R-8** | The dataset covers all target categories, clue types, clue operand forms, and answer meanings. | Every task target category, clue type, clue operand form, and answer meaning supported at a task reasoning step count appears at that task reasoning step count. A value that is valid, implemented by the release, and missing is a gap; the task reasoning step support tables record which values cannot occur at that step count and why. |
+| **R-8** | The dataset covers all target categories, clue types, clue reduction forms, and answer meanings. | Every task target category, clue type, clue reduction form, and answer meaning supported at a task reasoning step count appears at that task reasoning step count. A value that is valid, implemented by the release, and missing is a gap; the task reasoning step support tables record which values cannot occur at that step count and why. |
 | **R-9** | The dataset covers the full task reasoning step count range. | Steps 1 through 5 all appear in the target mix in section 8, with steps 3 and 4 carrying most benchmark tasks. Steps 6 through 10 appear only when the 6–10 release gate in section 6.1 passes; the release report names the range it covers. |
 | **R-10** | The dataset is diverse. | It draws from at least one thousand distinct CAD models (P0). No single CAD model is above 1% of tasks (P1). |
 | **R-11** (P1) | The dataset has varied answers. | At least one thousand different correct answers appear, and no correct answer is above 1% of tasks. |
-| **R-12** (P1) | The dataset is balanced at every task reasoning step count. | No clue type is above 25% of clues at a task reasoning step count or over the release, and no clue type is more than twice or less than half its share among the clue types supported at a task reasoning step count. Every answer meaning is between 1% and 10% over the release, and no answer meaning is more than twice or less than half its share among the meanings supported at a task reasoning step count. No task target category is above 25% of the release. In P1, clue operand form is balanced at an equal share among the supported forms. |
+| **R-12** (P1) | The dataset is balanced at every task reasoning step count. | No clue type is above 25% of clues at a task reasoning step count or over the release, and no clue type is more than twice or less than half its share among the clue types supported at a task reasoning step count. Every answer meaning is between 1% and 10% over the release, and no answer meaning is more than twice or less than half its share among the meanings supported at a task reasoning step count. No task target category is above 25% of the release. In P1, clue reduction form is balanced at an equal share among the supported forms. |
 
 ### 7.3 Splits and reuse
 
@@ -310,7 +314,7 @@ table is implementation order, not a task label.
 | Answer format coverage | Every supported format at every task reasoning step count | P0 |
 | Answer format balance | Each 5-25% over the release; mix at each task reasoning step count within the tolerance in `task-structure.md` | P0 |
 | Clue type coverage | Every supported clue type at every task reasoning step count | P0 |
-| Clue operand form coverage | Every supported form at every task reasoning step count, for task clues that carry a reference | P0 |
+| Clue reduction form coverage | Every supported form at every task reasoning step count, for task clues that carry a reference | P0 |
 | Clue type balance | No clue type above 25% of clues at a task reasoning step count or over the release; mix at each task reasoning step count within the tolerance in `task-structure.md` | P1 |
 | Answer meaning coverage | Every supported meaning at every task reasoning step count | P0 |
 | Answer meaning balance | Each 1-10% over the release; mix at each task reasoning step count within the tolerance in `task-structure.md` | P1 |
@@ -383,7 +387,7 @@ change.
 | Validation dataset | Tasks and correct answers for tuning. | P0 |
 | Test dataset | Held-out tasks and correct answers for the final result. | P0 |
 | Warmup subset | Labeled 1-step tasks for warmup. | P0 |
-| Task reasoning step support tables | Which target categories, clue types, clue operand forms, answer meanings, and answer formats are supported at each task reasoning step count and implementation scope, and why not. | P0 |
+| Task reasoning step support tables | Which target categories, clue types, clue reduction forms, answer meanings, and answer formats are supported at each task reasoning step count and implementation scope, and why not. | P0 |
 | Dataset card | A plain description of what the dataset contains, how it was made, what it is for, and what it is not for. | P0 |
 | Evaluation material | The correct answers and instructions needed to score an LLM model. | P0 |
 | Documentation | How to reproduce the dataset release and how to review it. | P1 |
@@ -394,7 +398,7 @@ change.
 
 The dataset is done when:
 
-1. a small sample produces every task target category, clue type, clue operand
+1. a small sample produces every task target category, clue type, clue reduction
    form, answer meaning, and answer format supported in the P0 implementation
    scope at every task reasoning step count where that value is structurally
    supported;
@@ -405,7 +409,7 @@ The dataset is done when:
 4. a labeled warmup subset exists;
 5. training, validation, and test sets do not share a CAD model;
 6. a reviewer can read sampled tasks covering every task reasoning step count,
-   task target category, clue type, clue operand form, answer meaning, and answer
+   task target category, clue type, clue reduction form, answer meaning, and answer
    format supported in the released dataset and understand them without asking
    what they mean;
 7. the answers can be checked without an LLM in the loop;
@@ -461,9 +465,9 @@ The dataset is done when:
 - **Q5** (P1). *Resolved 2026-10-21.* Yes. Every answer format must reach five
   percent; a balanced and diverse dataset is the default.
 - **Q6** (P1). *Resolved 2026-10-21.* Coverage is at each task reasoning step
-  count for target categories, clue types, clue operand forms, answer meanings,
+  count for target categories, clue types, clue reduction forms, answer meanings,
   and answer formats. Balance is at each task reasoning step count and over the
-  release for clue types, answer meanings, and answer formats. Clue operand form
+  release for clue types, answer meanings, and answer formats. Clue reduction form
   is coverage-only in P0 and gains a balance target in P1. Target category is
   coverage-only at each task reasoning step count, with a release cap. Task
   reasoning step count uses the target mix in section 8.

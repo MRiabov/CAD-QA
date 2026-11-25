@@ -47,15 +47,15 @@ func TestLoadBalancePolicy(t *testing.T) {
 		t.Fatalf("expansion.rounds = %d, want 3", policy.Expansion.Rounds)
 	}
 
-	operandForm, ok := policy.Dimensions["clue_operand_form"]
+	reductionForm, ok := policy.Dimensions["clue_reduction_form"]
 	if !ok {
-		t.Fatal("clue_operand_form dimension is missing")
+		t.Fatal("clue_reduction_form dimension is missing")
 	}
-	if operandForm.Target == nil || !operandForm.Target.Equal {
-		t.Fatalf("clue_operand_form target = %+v, want equal", operandForm.Target)
+	if reductionForm.Target == nil || !reductionForm.Target.Equal {
+		t.Fatalf("clue_reduction_form target = %+v, want equal", reductionForm.Target)
 	}
-	if operandForm.Severe == nil || operandForm.Severe.Above != 4.0 {
-		t.Fatalf("clue_operand_form severe = %+v, want above 4.0", operandForm.Severe)
+	if reductionForm.Severe == nil || reductionForm.Severe.Above != 4.0 {
+		t.Fatalf("clue_reduction_form severe = %+v, want above 4.0", reductionForm.Severe)
 	}
 }
 

@@ -36,9 +36,9 @@ task. It is not prompt text and not a loose task tuple. It is what `04` renders.
 | `state_scope` | Which solid states the task may refer to. `final` in P0 (`DS-REQ-08`). |
 | `possible_answer_count` | The size of the initial possible-answer set for the target category in the state scope, before any task clue narrows it. |
 | `target_category` | Task target category from `requirements/task-structure.md`. |
-| `target_binding` | The concrete graph entity or measurement instance the task asks about. |
+| `target_binding` | The concrete graph entity the task asks about. P0 binds an entity; a scalar measurement-instance binding is deferred. |
 | `task_clues` | Ordered typed task clues. |
-| `clue_operand_form_profile` | The ordered `(clue_type, clue_operand_form)` pair for every clue. Derived from `task_clues`. |
+| `clue_reduction_form_profile` | The ordered `(clue_type, clue_reduction_form)` pair for every clue. Derived from `task_clues`. |
 | `answer_meaning`, `task_answer_step` | What the answer is about and the step that produces it. |
 | `answer_parameter` | The point for a position or a membership, the category for a topology change, null otherwise. |
 | `native_answer_format`, `answer_format` | The meaning's native format and the format the prompt will request. |

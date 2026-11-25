@@ -216,6 +216,59 @@ def test_fenced_block_is_skipped(tmp_path: Path) -> None:
     assert scan_file(doc, rules) == []
 
 
+def test_nested_fence_content_is_skipped(tmp_path: Path) -> None:
+    rules = parse_rules(GLOSSARY)
+    doc = tmp_path / "doc.md"
+    doc.write_text(
+        "````text\n"
+        "\n"
+        "the prompt\n"
+        "\n"
+        "```python\n"
+        'result = f("the source")\n'
+        "```\n"
+        "\n"
+        "more prompt\n"
+        "````\n"
+        "\n"
+        "the source\n",
+        encoding="utf-8",
+    )
+    hits = scan_file(doc, rules)
+    assert [hit.line for hit in hits] == [12]
+
+
+def test_fence_closes_only_with_a_long_enough_delimiter(tmp_path: Path) -> None:
+    rules = parse_rules(GLOSSARY)
+    doc = tmp_path / "doc.md"
+    doc.write_text(
+        "````text\nthe source\n```\nthe source\n````\nthe source\n", encoding="utf-8"
+    )
+    hits = scan_file(doc, rules)
+    assert [hit.line for hit in hits] == [6]
+
+
+def test_tilde_fence_ignores_backtick_delimiters(tmp_path: Path) -> None:
+    rules = parse_rules(GLOSSARY)
+    doc = tmp_path / "doc.md"
+    doc.write_text(
+        "~~~text\nthe source\n```\nthe source\n~~~~~\nthe source\n", encoding="utf-8"
+    )
+    hits = scan_file(doc, rules)
+    assert [hit.line for hit in hits] == [6]
+
+
+def test_a_fence_line_carrying_a_backtick_is_prose(tmp_path: Path) -> None:
+    rules = parse_rules(GLOSSARY)
+    doc = tmp_path / "doc.md"
+    doc.write_text(
+        "```text``` renders a fenced block with the source.\nthe source\n",
+        encoding="utf-8",
+    )
+    hits = scan_file(doc, rules)
+    assert [hit.line for hit in hits] == [1, 2]
+
+
 def test_comment_prose_is_scanned_in_code(tmp_path: Path) -> None:
     rules = parse_rules(GLOSSARY)
     code = tmp_path / "mod.py"

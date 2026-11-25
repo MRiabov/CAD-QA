@@ -124,31 +124,39 @@ must not be guessed.
 
 ### Named endpoints
 
-A named endpoint is derived per bindable solid state from the extraction
-records. A state outside the release implementation scope emits no pair rows
-(`graph-content.md` §4.1). A name
-exists only when it resolves to exactly one entity in the state. Zero matches or
-several matches means the name does not exist, and a pair that needs it is not
-emitted.
+A face label is derived per bindable solid state from the extraction records. A
+state outside the release implementation scope emits no pair rows
+(`graph-content.md` §4.1). A label is stored per face; a label may select no face
+or several faces. A named endpoint is a label that resolves to exactly one face
+in the state. Zero matches or several matches means the label is not a named
+endpoint for pair emission; clue evaluation still sees the set.
 
 | Mechanism | Derivation | Stored name |
 |---|---|---|
 | Face surface kind | The `face_surface_kind` of the face. | The `FaceSurfaceKind` value, for example `cylinder`. |
-| Position | The face whose bounding box touches an extreme of the state bounding box on one program axis. | `min_x`, `max_x`, `min_y`, `max_y`, `min_z`, `max_z`. |
+| Position | Every face that lies in an extreme plane of the state bounding box: all its points share that extreme's coordinate on one program axis. A face whose extent merely spans the extreme does not lie in the plane. | `min_x`, `max_x`, `min_y`, `max_y`, `min_z`, `max_z`; a face carries every extreme plane it lies in. |
 | Provenance | The face first appears in the state of one operation: its `fingerprint_sha256` is absent from the previous state's entity table. | The operation id. |
 
 The first state has no previous state, so every face in it counts as new. The
-stored name is the graph value. `04` renders prompt wording from it; the graph
+stored label is the graph value. `04` renders prompt wording from it; the graph
 stores no English.
 
-A face can carry several names, and a name can resolve to no face. A name is not
-a relation and creates no row. It is a lookup used by pair emission.
+The outward normal is a face attribute, not a named endpoint: a planar face
+stores the unit direction that points out of the solid. It is a continuous
+vector, so no orientation label is derived from it and no axis is stored. A clue
+about direction measures the angle between that vector and the axis the clue
+names. It is a clue condition, not a pair endpoint. A pair angle between two
+faces or two edges is a pair measurement, not a relation.
+
+A face can carry several labels, and a label can select no face or several faces.
+A label is not a relation and creates no row. Pair emission uses only a label that
+selects exactly one face; clue evaluation uses the set.
 
 ### Pair rows
 
-The P0 pair kinds are the relations `parallel_to` and `perpendicular_to` and the
-measurements `distance` and `angle`. P1 adds `coplanar_with` and `coaxial_with`.
-A pair kind outside this list is not emitted.
+The P0 pair kinds are the measurements `distance` and `angle`. P1 adds the
+relations `coplanar_with` and `coaxial_with`. A pair kind outside this list is
+not emitted.
 
 For each pair relation or pair measurement, take the named endpoints of a
 bindable state and the candidate endpoints of the declared endpoint entity kind
@@ -162,9 +170,9 @@ The row uses the relation or measurement id from
 [`graph-persistence.md`](graph-persistence.md), which already includes the
 program, the element name, and both endpoints. A measurement row carries the
 value, unit, and tolerance; a relation row carries its `tolerance` and CAD graph
-evidence. The relation `tolerance` is null unless the relation is a
-geometry-classification relation, as [`graph-persistence.md`](graph-persistence.md)
-defines.
+evidence. The relation `tolerance` is null unless the relation is
+`coplanar_with` or `coaxial_with`, as
+[`graph-persistence.md`](graph-persistence.md) defines.
 
 An empty candidate set emits no rows. It is not an error and not a gap.
 
@@ -195,7 +203,7 @@ From the CadQuery program runtime extraction result:
 - edge: `length`, `bounding_box`, `centroid`;
 - vertex: `centroid`;
 - CadQuery selector result: `selected_count`;
-- point probe: `probe_point`, `distance_to_surface`;
+- point probe: `probe_point`, `distance_to_face_surface`;
 - CadQuery workplane: `workplane_frame`;
 - CAD feature solid state effect delta: `volume_change`, `bounding_box_change`, `topology_change`.
 

@@ -9,7 +9,7 @@
 
 The census is one summary per program of the task shapes its graph can support.
 It lets `03a` send quota targets to programs that can fill them, and lets `03b`
-skip clue operand forms this graph cannot build, before any construction attempt.
+skip clue reduction forms this graph cannot build, before any construction attempt.
 
 It is not a release artifact and not a pipeline artifact. The release
 feasibility tables ([`task-step-support.md`](../../../task-step-support.md))
@@ -22,10 +22,10 @@ graph offers.
 |---|---|
 | `target_categories` | Entity kinds present in the state that a task can target. |
 | `clue_constructors` | Relations and measurements that can become a clue. |
-| `clue_operand_forms` | Per clue type, the forms the graph can resolve. |
+| `clue_reduction_forms` | Per clue type, the forms the graph can resolve. |
 | `measurements` | Measurement kinds present, per scope. |
 | `answer_meanings` | Answer meanings the graph can resolve. |
-| `max_task_reasoning_step_count` | Longest chain the graph can support, from the candidate set size. |
+| `max_task_reasoning_step_count` | Per target category and answer meaning, the longest chain the graph can support. An identity answer uses the candidate count; a value answer uses the number of distinct answers under `same_answer`; both cap at 10. |
 | `entity_counts` | Candidates per target category, used for the scarcity ranking. |
 | `states_with_point_probe` | Solid states with at least one surviving point probe, so a membership task can bind them. |
 
@@ -33,9 +33,14 @@ graph offers.
 
 - Per-entity measurements are total over their scope, so a measurement capability
   is present when the entity kind is present.
+- `max_task_reasoning_step_count[target_category][answer_meaning]` follows the
+  necessary-clue bound in `task-structure.md` section 2.2. A value answer with
+  `m` distinct answers supports at most `m` task reasoning steps; an identity
+  answer supports at most its candidate count. Both cap at the release maximum
+  of 10.
 - Pair elements exist only for the pairs the pair emission rule allows
   (`graph-content.md` section 4.1).
-- Structural rules: the property clue type has no clue operand form; `selected` needs
+- Structural rules: the property clue type has no clue reduction form; `selected_in_earlier_clue` needs
   an earlier clue, so it is absent at step count 1; `aggregation` with an
   `aggregated` reference is degenerate; `cross_state` is P2.
 - A capability is present only when the graph asserts the relation or
@@ -45,8 +50,8 @@ graph offers.
 
 | Consumer | Use |
 |---|---|
-| `03a` | Derives it for every active program to assign quota targets and rank by scarcity, then stores the per-program census in `program_census` and the union per family in `family_profiles`. |
-| `03b` | Reads its program's census from the plan and skips clue operand forms the graph cannot build; it re-derives only when the entry is absent or its `graph_identity_sha256` differs. |
+| `03a` | Derives it for every active program to assign quota targets and rank by scarcity, then stores the per-program census in `program_census` and the union per family in `family_profiles`. It never assigns a quota target above the program's `max_task_reasoning_step_count` for that target category and answer meaning. |
+| `03b` | Reads its program's census from the plan and skips clue reduction forms the graph cannot build; it re-derives only when the entry is absent or its `graph_identity_sha256` differs. |
 | `03c` | Reads `family_profiles` in the plan; it does not derive the census. |
 
 ## Ownership

@@ -21,6 +21,10 @@ For a scalar target, the target binding identity is the measurement name. The
 subject is not part of it, because several subjects can share that measurement
 value.
 
+`task_id` remains binding-specific: two equal-answer witnesses with the same
+canonical clue sequence are different definitions. Construction keeps one by
+prompt identity (`DS-REQ-35`), so the release does not carry both.
+
 The canonical task clue sequence preserves dependency order first, then orders
 independent clues broad-to-narrow by the size of the narrowed set, descending,
 with a stable hash as the tie-break (`TG-7`). The gold answer, answer format,
@@ -85,7 +89,7 @@ the hash.
 
 `definition_sha256` covers `state_scope`, `possible_answer_count`,
 `target_binding`, `task_clues`,
-`clue_operand_form_profile`, `answer_meaning`, `answer_parameter`,
+`clue_reduction_form_profile`, `answer_meaning`, `answer_parameter`,
 `gold_answer`, `answer_unit`, `tolerance`, `scoring_rule`, `answer_evidence`,
 and `choice_pool` in construction order. It also covers the inputs that change
 that content: `program_sha256`, `graph_identity_sha256`, `graph_schema_version`,

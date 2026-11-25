@@ -17,7 +17,7 @@ step shares 0.25, 0.25, and 0.50, split shares 0.70, 0.15, and 0.15, answer
 meaning shares 0.20 for identity, 0.50 for length, and 0.30 for area, and caps
 wide enough to be feasible. The support-table fixture marks two task target
 categories, two answer formats, three answer meanings, and three clue types at
-step count 3, and one clue operand form at step count 1 and three at step count
+step count 3, and one clue reduction form at step count 1 and three at step count
 3. The graphs support every value the fixture marks.
 
 **When** `03a` plans with a fixed seed.
@@ -33,8 +33,8 @@ step count 3, and one clue operand form at step count 1 and three at step count
 - the three clue types share 1,100 clue occurrences, and the split is the one the
   test recomputes with its own `largest_remainder`, not one read back from the
   plan;
-- each clue operand form has a target count of 1 at every step count where it is
-  marked, and no share is computed for it: operand form is coverage-only in P0;
+- each clue reduction form has a target count of 1 at every step count where it is
+  marked, and no share is computed for it: reduction form is coverage-only in P0;
 - a value the support fixture does not mark at a step count has no quota target
   at that step count;
 - every quota target's `minimum` and `maximum` follow the documented rounding: a
@@ -65,7 +65,7 @@ release size unreachable.
 plan; a changed seed changes the tie-breaks and therefore the plan.
 
 **TDD pin:** pins the step quotas, the identity adjustment and its clue
-occurrences, the coverage floor of one, the operand-form coverage rule, the
+occurrences, the coverage floor of one, the reduction-form coverage rule, the
 bound rounding, the split targets, the 1% cap, and the attempt budget before
 `03a` exists.
 
@@ -80,6 +80,11 @@ bound rounding, the split targets, the 1% cap, and the attempt budget before
   family across splits.
 - `test_03a_quota_target_family_unassigned` — a quota target that no family in
   the split supports records `quota_target_family_unassigned`.
+- `test_03a_step_bound_routing` — a program whose census
+  `max_task_reasoning_step_count` for a target category and answer meaning is
+  below a target's step count is not eligible for that target. When no program
+  supports the step count, the plan records `coverage_infeasible` instead of
+  assigning an attempt that cannot succeed.
 
 ## What this does not prove
 

@@ -58,8 +58,8 @@ columnar store that supports the column type. Join keys are UUID, never enum str
 | `evidence_rule` | `STRING` | not null | Exact rule or kernel operation used. |
 | `evidence_refs` | `LIST<EvidenceRef>` | not null | References that reproduce the relation. |
 
-Only the geometry-classification relations — `parallel_to`,
-`perpendicular_to`, `coplanar_with`, and `coaxial_with` — carry a `tolerance`.
+Only the geometry-classification relations — `coplanar_with` and
+`coaxial_with` — carry a `tolerance`.
 Every other relation has a null `tolerance`, because it is derived from records
 rather than from a geometric comparison. A null relation `tolerance` inherits
 the run policy's `unitless` entry, because a geometric comparison is
@@ -123,7 +123,7 @@ rejects the graph.
 | `bounding_box` | `bounding_box` | `millimetre` | `solid_state`, `face`, `edge`, `vertex`, `region` | null |
 | `centroid` | `point` | `millimetre` | `solid_state`, `face`, `edge`, `vertex`, `region` | null |
 | `probe_point` | `point` | `millimetre` | `point_probe` | null |
-| `distance_to_surface` | `scalar` | `millimetre` | `point_probe` | null |
+| `distance_to_face_surface` | `scalar` | `millimetre` | `point_probe` | null |
 | `face_count` | `integer` | `unitless` | `solid_state` | null |
 | `edge_count` | `integer` | `unitless` | `solid_state`, `face` | null |
 | `vertex_count` | `integer` | `unitless` | `solid_state`, `face` | null |
@@ -381,8 +381,8 @@ count is a non-negative 64-bit integer.
 | `operation` | `OperationAttributes` | `operation_kind: OperationKind`, `method: str`, `order: int`, `source_line: int`, `result_var: str \| None` |
 | `feature` | `FeatureAttributes` | `feature_kind: FeatureKind` |
 | `solid_state` | `SolidStateAttributes` | `sequence_index: int`, `is_final: bool`, `is_solid: bool`, `shape_hash: Sha256 \| None` |
-| `point_probe` | `PointProbeAttributes` | `probe_index: int`, `is_inside: bool`, `classifier: ProbeClassifier` |
-| `face` | `FaceAttributes` | `fingerprint_sha256: Sha256`, `face_surface_kind: FaceSurfaceKind` |
+| `point_probe` | `PointProbeAttributes` | `probe_index: int`, `is_inside: bool`, `classifier: ProbeClassifier`, `margin: float` |
+| `face` | `FaceAttributes` | `fingerprint_sha256: Sha256`, `face_surface_kind: FaceSurfaceKind`, `outward_normal: Vector3D \| None`, `position: LIST<FramePosition>` |
 | `edge` | `EdgeAttributes` | `fingerprint_sha256: Sha256`, `edge_curve_kind: EdgeCurveKind`, `is_closed: bool` |
 | `vertex` | `VertexAttributes` | `fingerprint_sha256: Sha256` |
 | `edge_endpoint` | `EdgeEndpointAttributes` | `end: EdgeEnd` |
@@ -401,6 +401,7 @@ count is a non-negative 64-bit integer.
 | `OperationKind` | `workplane`, `sketch`, `path`, `solid`, `cadquery_selector`, `boolean`, `assembly`, `modifier`, `transform`, `accessor` |
 | `FeatureKind` | `add_material`, `remove_material`, `modify`, `construction` |
 | `FaceSurfaceKind` | `plane`, `cylinder`, `cone`, `sphere`, `torus`, `bspline`, `other` |
+| `FramePosition` | `min_x`, `max_x`, `min_y`, `max_y`, `min_z`, `max_z` |
 | `EdgeCurveKind` | `line`, `circle`, `ellipse`, `hyperbola`, `parabola`, `bspline`, `other` |
 | `EdgeEnd` | `start`, `end` |
 | `ProbeClassifier` | `is_inside` |
@@ -443,6 +444,11 @@ of an edge. These names are a graph schema change from an earlier `SurfaceKind`
   least one solid state.
 - `is_closed` is the closed flag reported by the origin graph entity. `02c` does not
   recompute it from geometry.
+- `outward_normal` is null when the face is not planar; otherwise it is the unit
+  direction that points out of the solid. It is a continuous vector, not one of
+  six axes; a prompt renders the axis wording from it.
+- `position` is a list: a face carries every bounding-box extreme plane it lies
+  in, and several faces may carry the same extreme plane.
 - `result_var` is internal provenance. It is never rendered into a prompt.
 - A null optional field means the measurement value is absent. Empty strings and sentinel
   values such as `-1` are invalid.

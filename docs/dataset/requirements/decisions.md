@@ -56,9 +56,9 @@ citation keys and never change meaning.
   a flat label list. A new combination of dimensions does not require a new code
   path.
 
-## DS-REQ-04 — A clue is one narrowing statement, described by clue type and clue operand form
+## DS-REQ-04 — A clue is one narrowing statement, described by clue type and clue reduction form
 
-- **Status:** accepted (2026-11-20).
+- **Status:** accepted (2026-11-20); renamed 2026-11-24.
 - **Context:** An earlier draft described each clue by a derivation-depth ladder
   (`S0`–`S5`) and each answer by a four-level ladder (`A0`–`A3`). Both were
   invented partitions with no precedent in the prior-art survey. The ladder also
@@ -67,16 +67,19 @@ citation keys and never change meaning.
   "stratum" was read as a frequency target, which is a different axis.
 - **Decision:** A clue is one narrowing statement and one task clue step. It is
   described by its clue type — property, relation, comparison, aggregation, or
-  provenance — and, when it has a reference, by the clue operand form of that
-  reference: `named`, `selected`, `aggregated`, or `cross_state`. A clue with no
-  reference has no clue operand form. The answer step is described by `answer_meaning`
+  provenance — and, when it has a reference, by the clue reduction form of that
+  reference: `filtered`, `selected_in_earlier_clue`, `aggregated`, or `cross_state`. A clue with no
+  reference has no clue reduction form. The 2026-11-24 revision is `DS-REQ-29`:
+  the term is `clue reduction form`, the values are `filtered`,
+  `selected_in_earlier_clue`, `aggregated`, and `cross_state`, and a reference is
+  a set. The answer step is described by `answer_meaning`
   and has no separate ladder. Task reasoning step count stays the number of clues
   plus the answer step.
-- **Consequences:** `clue_operand_form` belongs to the clue's reference binding,
+- **Consequences:** `clue_reduction_form` belongs to the clue's reference binding,
   not to the clue, so the property clue type carries none. Coverage is checked per
-  clue operand form for clues that carry a reference; the clue type stays in the
+  clue reduction form for clues that carry a reference; the clue type stays in the
   per-task profile, so a pair breakdown is derivable. The support table is
-  `clue-operand-form-by-step`. "Stratified sampling" stays reserved for
+  `clue-reduction-form-by-step`. "Stratified sampling" stays reserved for
   dataset-level composition; the frequency target for a clue type is a clue quota
   or clue share.
 
@@ -112,21 +115,187 @@ citation keys and never change meaning.
 
 ## DS-REQ-07 — Comparison clues may name an entity or reuse one selected earlier
 
-- **Status:** accepted (2026-10-21).
+- **Status:** accepted (2026-10-21); revised 2026-11-24.
 - **Context:** `requirements/task-structure.md` Q1 asked whether a comparison task clue must
   name both entities. BrowseComp-style composition lets a later step use a
   result from an earlier step, and the dataset needs the same freedom without
   ambiguous references.
 - **Decision:** A comparison task clue may name both entities or refer to one
-  entity selected by an earlier task clue. Every reference is either named in
-  the program or selected earlier. A reference must resolve to exactly one
-  entity; if earlier clues leave several, the clue needs an explicit aggregation
-  or the task is rejected. The reference does not add a task reasoning step.
+  entity selected by an earlier task clue. Every reference is either filtered
+  from the graph or selected earlier. The rule that a reference must resolve to
+  exactly one entity is superseded by `DS-REQ-29` (2026-11-24). The reference
+  does not add a task reasoning step.
 - **Consequences:** A task is evaluated over one CAD graph per program. The
   per-task evaluation carries the current set of possible answers and bindings
   for entities selected by earlier clues. It does not need one graph per clue or
   one graph per solid state; earlier and later solid states and their
   relationships already live in the same graph.
+
+---
+
+## DS-REQ-29 — A clue reference is a set, reduced from the graph
+
+- **Status:** accepted (2026-11-24). Supersedes the uniqueness rule of `DS-REQ-07`
+  and the enum labels of `DS-REQ-04`.
+- **Context:** A clue reference was a named graph element that had to resolve to
+  exactly one entity. That made the vocabulary a list of names ("the cylindrical
+  face") and made every condition ambiguous once it held for more than one
+  entity: two faces can face +z, and a program can call `cutBlind` twice. The
+  word "operand" described a lookup, which a condition is not.
+- **Decision:** Every clue reference is a set of graph entities reduced by the
+  clue: `filtered` (the entities of a category that satisfy conditions),
+  `selected_in_earlier_clue` (the set an earlier clue left), `aggregated` (a set
+  reduced to one member by an extreme or rank), or `cross_state` (the
+  before/after state pair, P2). All four reduce a set; none creates one. A
+  relation or comparison is true when at least one member of the reference set
+  satisfies it; "every" is stated and never implied. Only the task target binding
+  resolves to exactly one entity. The field is `clue_reduction_form`; "clue
+  operand form" is retired.
+- **Consequences:** The article follows the set: `a` for a condition, `the` plus a
+  plural for an earlier clue, and `the` for a description only when it selects
+  exactly one element of its category in the program. `BindingRef` cannot carry a
+  set yet (`MC-50`). Pair emission still ties each pair row to one anchor
+  endpoint, so a set-valued reference cannot read a pair measurement until that
+  is settled (`MC-50`).
+
+## DS-REQ-30 — A face direction is continuous; the graph stores the outward normal
+
+- **Status:** accepted (2026-11-24).
+- **Context:** Orientation was a six-value categorical feature. A face normal is a
+  direction, so the label needed a tolerance and a rule for a normal that follows
+  no axis, and neither was written: a face at 45 degrees had no defined value.
+- **Decision:** A planar face carries its outward normal as a unit vector in the
+  program frame. There is no orientation category and no closed set of axes. A
+  clue about direction measures the angle between that vector and the axis it
+  names, and states the number; "faces +z" is a rendering of a zero angle. The
+  `Angle` measurement applies to a planar face and a directed program axis,
+  0–180 degrees: the axis is named +z or -z, so an acute angle to the line would
+  make both faces read as zero.
+- **Consequences:** `OrientationAxis` is removed from the graph and
+  `FaceAttributes` carries `outward_normal`. The categorical features are the
+  face surface kind and position only. `dataset.clue.property.orientation` and
+  `label.orientation` become `dataset.clue.property.direction` and `label.axis`.
+
+## DS-REQ-31 — A clue reference states one condition
+
+- **Status:** accepted (2026-11-24).
+- **Context:** A reference is a set reduced from the graph (`DS-REQ-29`), and the
+  prompt has to name that set in one noun phrase. The previous generator narrowed
+  a reference through two steps of its own, as in the
+  `parameterized_<target>_reference_<kind>_distance` families, which needs a
+  second bound set and a wrapper around it.
+- **Decision:** A reference phrase states exactly one condition, chosen from the
+  following: the face surface kind, the position, a direction, a measured value,
+  or an earlier clue. A referenced entity that needs two conditions is out of P0
+  scope, and a task that narrows more than one set is deferred.
+- **Consequences:** A measured direction ("within 45 degrees of +z") and a
+  measured value ("whose area is greater than 10") are reference forms. The
+  threshold is the narrowing strength and sits between two candidate values at
+  least the clear-case margin from each. A centroid coordinate is a measured
+  value with its own metric label (`centroid_x`, `centroid_y`, `centroid_z`), so
+  it is a P0 reference form. An extreme or rank is not; it belongs to the P1
+  aggregation scope.
+
+## DS-REQ-32 — The provenance clue does not name a CadQuery workplane
+
+- **Status:** accepted (2026-11-24).
+- **Context:** The provenance clue could say the task target is built on a named
+  CadQuery workplane. A program has one CadQuery workplane in practice, so the
+  clue selected the whole body and narrowed nothing. A frame derived from a face,
+  which is the common interesting case, has no phrase, and a custom frame has
+  none either. The same reasoning applies to a reference and to an operation
+  description: "the cutBlind operation on the XY CadQuery workplane" does not
+  select an operation when the program has one frame.
+- **Decision:** No prompt text names a CadQuery workplane: not a clue, not a
+  reference, and not part of an operation description. It stays a graph entity
+  and a P1 answer, the `CadQuery workplane state`.
+- **Consequences:** `dataset.clue.provenance.workplane` is removed and
+  `prompts.yaml` moves to `cadqa_prompt_v4`. `reference-forms.md` section
+  [A CadQuery workplane](views/reference-forms.md#a-cadquery-workplane) states
+  that no reference form exists, and `prompt-content.md` section 4 no longer
+  offers a CadQuery workplane as a way to select an operation. `uses` and
+  `derived_from` stay in the graph. Whether a CadQuery workplane is a task target
+  category remains open in `task-structure.md` section 8.
+
+## DS-REQ-33 — A probe is a point next to the state, on either side
+
+- **Status:** accepted (2026-11-25).
+- **Context:** The second probe was "a seeded point inside the state bounding
+  box" (`graph-content.md` §2.2). That names a region, not a procedure: it does
+  not say how the point is drawn, what seed it uses, or what the clear-case
+  margin is relative to. It also hides `false` for a convex state, because every
+  point in the bounding box is inside or on the face surface. A membership answer
+  whose second label cannot occur is not covered.
+- **Decision:** A probe is a point next to the solid state's face surface, on either
+  side, not a point in its bounding box. Probe 0 is the state centroid; probe 1
+  is drawn from the tessellated surface and offset by up to 1 mm on each axis.
+  Both are quantised to a 0.1 mm grid before classification, so the point the
+  prompt shows is the point the kernel classified. When probe 0 survives, probe 1
+  is redrawn until its label differs from probe 0's, so a state supplies one
+  `inside` and one `outside` probe. The clear-case margin for a probe is
+  `100 × geometric_tolerance × d`, `d` the state's bounding-box diagonal, because
+  a point has no size of its own. The draw is seeded from `program_sha256`,
+  `state_id`, and `probe_index`, so a rerun is byte-identical.
+- **Consequences:** A state with positive volume supports both membership
+  answers, so the membership cell is reachable on a plain box and no void is
+  needed. `runtime_point_probes` carries the margin each probe was tested
+  against. The sampler procedure is in
+  `extraction/cadquery/algorithm/runtime.md`; `graph-content.md` §2.2 and the
+  `02b` contract state the contract, not the draw.
+
+## DS-REQ-34 — Every task clue must be necessary
+
+- **Status:** accepted (2026-11-25).
+- **Context:** "A clue narrows" is a local condition: the set after the clue is
+  smaller than the set before it. A chain of locally narrowing clues can still be
+  longer than the reasoning it encodes, because a later clue can imply an earlier
+  one. On a box, "the area of the target face is less than the area of the face
+  touching the bottom" (6 → 4) followed by "the target face touches the left of
+  the bounding box" (4 → 1) leaves the same answer as the position clue alone, so
+  the comparison costs a reasoning step and removes nothing. A rule that only
+  constrains the final clue, "every non-final clue leaves at least two answers",
+  passes that chain.
+- **Decision:** Every task clue must be necessary. Removing it and running the
+  remaining clues in order must leave at least two distinct answers, or change the
+  answer, compared with `same_answer` at the task's precision (`DS-REQ-15`). A clue
+  that passes neither test is redundant: it is dropped and the task shortened, or
+  the chain is rejected; it is never kept to reach a task reasoning step count. The
+  achievable step count of a chain is its number of necessary clues plus the
+  answer step.
+- **Consequences:** The validity record carries the check as `clue_necessary`
+  beside `clue_narrows` (`TG-1`), and a definition that fails either is a failure
+  row. A clue chain over a continuous answer needs a candidate set that shrinks
+  gradually, so those chains are shorter on average than identity chains. A gold
+  record and a prompt example are checked the same way: an example whose clue can
+  be dropped is a defect in the example, not a shape of task.
+
+## DS-REQ-36 — Parallel and perpendicular are renderings of the angle
+
+- **Status:** accepted (2026-11-25).
+- **Context:** `DS-REQ-30` made a face direction continuous: the graph stores an
+  outward normal and a direction clue measures the angle to a named axis. Two
+  relations survived that sweep, `parallel_to` and `perpendicular_to`, and they
+  restate the `Angle` measurement at 0 or 180 degrees and at 90 degrees. They
+  also disagree with `graph-content.md` §4.1, whose pair emission rule lists
+  `distance`, `angle`, `coplanar_with`, and `coaxial_with` and omits both. A
+  discrete relation makes the graph decide "parallel" at build time, with a
+  tolerance, when the prompt can state the number instead.
+- **Decision:** The graph stores the `Angle` measurement, not a parallel or
+  perpendicular relation. Parallel is 0 degrees, or 180 degrees for two faces
+  whose outward normals point opposite ways; perpendicular is 90 degrees.
+  "Parallel" and "perpendicular" are render-time wording for those values, not
+  graph values. A relation clue may state the angle between the task target and
+  a reference, with a comparator and a threshold, so entity-to-entity direction
+  stays expressible without a discrete relation. The face–face convention stays
+  the angle between outward normals, 0–180 degrees.
+- **Consequences:** `parallel_to` and `perpendicular_to` leave
+  `graph-content.md` §3.3 and the P0 pair kinds; the P0 pair kinds are `distance`
+  and `angle`. `coplanar_with` and `coaxial_with` stay P1 relations because
+  neither reduces to one angle. `RelationType` loses both values in the graph,
+  the prompt label table, and the oracle schemas. The prompt template
+  `dataset.clue.relation.angle` renders the pair-angle clue, and `prompts.yaml`
+  moves to `cadqa_prompt_v10`. A renderer may still say "parallel" or
+  "perpendicular" for 0/180 or 90, but the clue and the answer carry the number.
 
 ---
 
@@ -191,16 +360,21 @@ citation keys and never change meaning.
 
 ## DS-REQ-11 — Drop 0-step tasks
 
-- **Status:** accepted (2026-10-21).
+- **Status:** accepted (2026-10-21); the 0-clue 1-step form confirmed by the
+  owner 2026-11-25.
 - **Context:** The previous docs allowed a task with no task clue step and no
   task answer step, so the lowest step count bucket was ambiguous and could be
   read as "no clue."
 - **Decision:** Every task has at least one task reasoning step. The lowest step
   count in the release is 1. The warmup subset is the 1-step tasks. There is no
-  0-step category.
+  0-step category. The owner accepts a task with **no task clue** when its one
+  task reasoning step is the answer step and the question identifies the target
+  directly. This 0-clue 1-step form is settled and is not reopened.
 - **Consequences:** The step-count target mix starts at 1 step (5%). The PRD no
   longer defines or generates 0-step tasks. The warmup subset is still the
-  1-step bucket at 5% of the release.
+  1-step bucket at 5% of the release. A 0-clue 1-step task starts with
+  `possible_answer_count = 1`; it is not evidence that a clue is optional when
+  the target category has more than one instance.
 
 ---
 
@@ -265,19 +439,43 @@ citation keys and never change meaning.
   in multiple-choice format requires a singleton set. `position`, `extent`, and
   the change answer meanings need their own equality rule before they ship.
 
+## DS-REQ-35 — One task per prompt identity
+
+- **Status:** accepted (2026-11-25).
+- **Context:** `DS-REQ-15` allows a value answer to leave several entities that
+  share the answer. Two such witnesses can satisfy the same canonical clue
+  sequence, so they render the same question, clues, and answer, while `task_id`
+  differs only by the bound entity. The release would carry two rows for one
+  task and repeat the prompt.
+- **Decision:** Two definitions share a **prompt identity** when they agree on
+  `program_sha256`, target category, canonical task clue sequence, answer
+  meaning, answer format, and choice pool. Construction groups definitions by
+  prompt identity before acceptance. A group that agrees on the gold answer keeps
+  one definition, chosen by stable candidate order, and records the others as
+  `prompt_unique` duplicates; a duplicate is not accepted and does not consume
+  quota. A group whose definitions disagree on the gold answer is a
+  `prompt_ambiguous` defect, and the pass accepts none of them. The kept
+  definition's answer-equivalent set still holds every equal-answer candidate.
+- **Consequences:** A release row has a distinct prompt identity, so the release
+  cannot repeat a prompt. `task_id` stays binding-specific, so resume and the
+  definition-integrity rule are unchanged. A duplicate is a construction
+  output, not a failure row.
+
 ## DS-REQ-16 — Task reasoning step count is the only measure
 
 - **Status:** accepted (2026-10-21).
 - **Context:** The previous step-count targets were mathematically inconsistent,
   and the earlier "difficulty level" label was ambiguous about what is counted.
 - **Decision:** A **task reasoning step** is either a task clue step or a task
-  answer step. **Task reasoning step count** is the number of task reasoning steps.
-  The target mix is: 1 step 5%, 2 steps 15%, 3 steps 40%, 4 steps 25%, and 5
-  steps 15%. At least 80% of the release needs three or more task reasoning
-  steps. One-step tasks form the labeled warmup subset.
+  answer step. **Task reasoning step count** is the number of task reasoning
+  steps, and it is at most 10. The target mix for steps 1 through 10 is 5%, 10%,
+  30%, 25%, 15%, 7%, 4%, 2%, 1%, and 1%. At least 80% of the release needs three
+  or more task reasoning steps. One-step tasks form the labeled warmup subset. A
+  value answer has at most 9 task clue steps; an identity answer has at most 10.
 - **Consequences:** A 10,000-task release contains about 500 warmup tasks and
-  8,000 tasks at three or more steps. Product text says "task reasoning step
-  count," not "difficulty level" or "reasoning depth."
+  8,500 tasks at three or more steps. Steps 6 through 10 are P1 and ship only
+  through the 6–10 release gate (`PRD.md` section 6.1). Product text says "task
+  reasoning step count," not "difficulty level" or "reasoning depth."
 
 ## DS-REQ-17 — Check coverage and balance at every task reasoning step count
 
@@ -297,50 +495,50 @@ citation keys and never change meaning.
   category stays coverage-only at each task reasoning step count, with a
   release-level cap.
 
-## DS-REQ-18 — Clue operand form is a coverage dimension in P0
+## DS-REQ-18 — Clue reduction form is a coverage dimension in P0
 
 - **Status:** accepted (2026-11-20).
 - **Context:** Coverage requires a supported value to appear at all; balance
   requires its share at a task reasoning step count to stay within half to twice
-  the conditional release share. Clue operand forms are unevenly available:
-  `selected` needs an earlier clue, `cross_state` waits for P2, a property clue
-  has no operand form, and an aggregation with an `aggregated` reference is two
+  the conditional release share. Clue reduction forms are unevenly available:
+  `selected_in_earlier_clue` needs an earlier clue, `cross_state` waits for P2, a property clue
+  has no reduction form, and an aggregation with an `aggregated` reference is two
   clues. A balance range at a step count where a form cannot exist would be
   vacuous or would force invalid tasks.
-- **Decision:** In P0, clue operand form is a coverage dimension: every supported
+- **Decision:** In P0, clue reduction form is a coverage dimension: every supported
   form appears at each step count where the support table says it is supported.
-  Balance over clue operand form is P1, once the support grid is dense enough for
+  Balance over clue reduction form is P1, once the support grid is dense enough for
   a proportional target.
-- **Consequences:** `03a` adds clue operand form as a coverage dimension with a
-  minimum and no balance range in P0. The `clue-operand-form-by-step` support table
+- **Consequences:** `03a` adds clue reduction form as a coverage dimension with a
+  minimum and no balance range in P0. The `clue-reduction-form-by-step` support table
   decides which forms are required at each step count. A missing form at a step
   count is a coverage gap, not a balance problem. Coverage-only is a concession,
   not a good property: it guarantees that each form appears, not that the forms
-  are usefully mixed, so a P0 release can concentrate one clue operand form. P1
-  balance is the correction, and until it exists the clue operand form distribution is
+  are usefully mixed, so a P0 release can concentrate one clue reduction form. P1
+  balance is the correction, and until it exists the clue reduction form distribution is
   reported but not enforced. Severe imbalance promotes the balance target into P0
   for that release: the P1 balance check is computed and reported without
   blocking, and a form below a quarter or above four times its conditional share
   is severe. The release is then rebalanced or the miss is recorded with its
   reason. The quarter and four-times bounds are provisional.
 
-## DS-REQ-19 — Clue operand form is reported as a descriptive breakdown, not a difficulty axis
+## DS-REQ-19 — Clue reduction form is reported as a descriptive breakdown, not a difficulty axis
 
 - **Status:** accepted (2026-11-20).
 - **Context:** `DS-REQ-16` makes task reasoning step count the only measure of task
-  difficulty, and `DS-REQ-18` makes clue operand form a P0 coverage dimension.
+  difficulty, and `DS-REQ-18` makes clue reduction form a P0 coverage dimension.
   Coverage alone does not show how the forms combine inside one task, and the
-  per-task clue operand form profile is already part of the definition.
-- **Decision:** Every task definition records `clue_operand_form_profile`, the
-  ordered clue type and clue operand form of each clue. The release reports
+  per-task clue reduction form profile is already part of the definition.
+- **Decision:** Every task definition records `clue_reduction_form_profile`, the
+  ordered clue type and clue reduction form of each clue. The release reports
   aggregate coverage per task reasoning step count, and the per-task clue
-  operand form profile stays available. Clue operand form is descriptive; it is
+  reduction form profile stays available. Clue reduction form is descriptive; it is
   not a difficulty label, and `DS-REQ-16` is unchanged.
-- **Consequences:** The release table carries `clue_operand_form_profile`, and `05`
-  checks coverage per clue operand form. The recorded entry keeps the clue type, so a
-  `(clue_type, clue_operand_form)` breakdown is derivable without a second support
-  table. Benchmark results may name the step counts and clue operand forms they
-  cover, without ranking tasks by clue operand form.
+- **Consequences:** The release table carries `clue_reduction_form_profile`, and `05`
+  checks coverage per clue reduction form. The recorded entry keeps the clue type, so a
+  `(clue_type, clue_reduction_form)` breakdown is derivable without a second support
+  table. Benchmark results may name the step counts and clue reduction forms they
+  cover, without ranking tasks by clue reduction form.
 
 ## DS-REQ-20 — A release dataset is one table
 

@@ -21,11 +21,12 @@ Different pipeline stages answer different questions, so each has its own oracle
 | Oracle kind | Pins | Independent expectation | Owner |
 |---|---|---|---|
 | [`extraction-graph/`](extraction-graph/) | the CAD graph for one program | plain CadQuery and OCP, plus the program text | `02c` |
-| `task-construction/` | the task definitions a graph supports | the construction contract and a human reading | `03b` |
+| [`task-construction/`](task-construction/) | one hand-authored gold task and its answer | a gold query executed with plain CadQuery, plus a human reading | `03b` |
 | `prompt-render/` | the rendered prompt and choices | the prompt contract and a human reading | `04` |
 
-Only `extraction-graph` exists. An oracle kind is added when its pipeline stage
-has a checker and a human-verified sample, not before.
+`extraction-graph` and `task-construction` exist. An oracle kind is added when
+its pipeline stage has a checker; a record gates a release only when a human
+verifies it.
 
 ## Naming and layout
 
@@ -48,11 +49,14 @@ versioned by `schema_version` in each file.
 - **Environment-pinned.** An oracle records the versions that produced it. A
   version change makes it `stale`, and it is re-derived and re-verified, not
   silently reused.
-- **Status is explicit.** `proposed` means machine-derived and not yet approved.
+- **Status is explicit.** `proposed` means machine-checked and not yet approved.
   `verified` means a named human approved it. `stale` means the environment or
   contract moved. A `proposed` oracle cannot gate a release.
 - **Machine proposes, human disposes.** Derive the expectation from the
-  independent record, then verify it. Do not author a graph by hand.
+  independent record when the oracle kind is machine-derived. A hand-authored
+  oracle kind, such as task-construction, writes the expectation by hand and
+  proves it with the independent query. Then verify it. Do not author a graph by
+  hand.
 
 ## Relationship to the other test data
 
@@ -62,6 +66,8 @@ versioned by `schema_version` in each file.
 | [`golden/`](../golden/) | pinned construction results | the construction contract |
 | `oracles/` | pinned pipeline stage outputs | the kernel, the program text, and a human |
 
-A golden record pins what `03b` should construct. An oracle pins what an earlier
-pipeline stage should have produced. They are different artifacts and different
-owners; do not overload the word "golden."
+A golden record pins what `03b` did construct, so a change is visible. A
+[task-construction oracle](task-construction/) pins what it should construct,
+written by hand and proved by a gold query. An extraction-graph oracle pins what
+an earlier pipeline stage should have produced. They are different artifacts and
+different owners; do not overload the word "golden."

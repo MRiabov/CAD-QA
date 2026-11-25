@@ -1,0 +1,101 @@
+{
+  "schema_version": 3,
+  "oracle_kind": "task-construction",
+  "slug": "box-volume",
+  "verification": {
+    "status": "verified",
+    "verified_by": "MRiabov",
+    "verified_at": "2026-11-25",
+    "rationale": "The task description and answer were written by hand. The gold query executes the program with plain CadQuery and prints the answer; it does not use the CAD graph or the constructor. Rebuilt 2026-11-25 against the settled clue-reduction-form, categorical-feature, and measured-direction contract. Owner accepted this record after reviewing the current set in the task browser on 2026-11-25.",
+    "gold_query": {
+      "status": "passed",
+      "stdout": "1000",
+      "checked_at": "2026-11-25"
+    }
+  },
+  "environment": {
+    "cadquery_version": "2.8.0",
+    "ocp_version": "7.9.3.1",
+    "python_version": "3.12.13",
+    "oracle_tool_version": "1"
+  },
+  "program": {
+    "program_id": "cadqaprog:c68e7eeee7b9f5c26a3e418976cd6f2056a636742379d3cafaf2bfda433316e3",
+    "program_sha256": "c68e7eeee7b9f5c26a3e418976cd6f2056a636742379d3cafaf2bfda433316e3",
+    "text": "import cadquery as cq\n\nresult = cq.Workplane(\"XY\").box(10, 20, 5)\n"
+  },
+  "task": {
+    "target_category": "solid_state",
+    "question": "What is the volume of the target solid state?",
+    "state_scope": "final",
+    "possible_answer_count": 1,
+    "task_reasoning_step_count": 1,
+    "answer_meaning": "volume",
+    "native_answer_format": "number",
+    "answer_format": "number",
+    "geometry_required": true,
+    "uniqueness": "The final solid state is the only solid state in the final scope."
+  },
+  "clues": [],
+  "answer": {
+    "value_kind": "number",
+    "value": "1000",
+    "unit": "cubic_millimetre",
+    "tolerance": {
+      "tolerance_kind": "absolute",
+      "value_text": "0.5"
+    },
+    "scoring_rule": "numeric_tolerance",
+    "parameter": null,
+    "point_probe": null,
+    "evidence_kind": "measured",
+    "evidence_rule": "volume",
+    "evidence_refs": [
+      {
+        "reference_kind": "measurement",
+        "subject": {
+          "category": "solid_state",
+          "filters": {
+            "is_final": "true"
+          }
+        },
+        "object": null,
+        "measurement": "volume"
+      }
+    ],
+    "answer_equivalent_set": [
+      {
+        "subject": {
+          "category": "solid_state",
+          "filters": {
+            "is_final": "true"
+          }
+        },
+        "value": "1000"
+      }
+    ]
+  },
+  "gold_query": {
+    "language": "python",
+    "code": "print(canon(result.val().Volume()))",
+    "expected_stdout": "1000",
+    "sha256": "b9e71967c0546822bd353537d2e18d43d51fcfe9ff934ce8124f6811a06a523d"
+  },
+  "covers": {
+    "target_category": "solid_state",
+    "clue_types": [],
+    "clue_reduction_forms": [],
+    "answer_meaning": "volume",
+    "answer_format": "number",
+    "task_reasoning_step_count": 1
+  },
+  "excluded": [
+    {
+      "exclusion_kind": "clue_chain",
+      "reason": "The question identifies the target directly; a one-step task has no clue."
+    }
+  ],
+  "notes": [
+    "The gold query prints the kernel volume of the 10 x 20 x 5 box."
+  ]
+}

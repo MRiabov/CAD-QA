@@ -1,0 +1,102 @@
+{
+  "schema_version": 3,
+  "oracle_kind": "task-construction",
+  "slug": "box-with-hole-material-change",
+  "verification": {
+    "status": "verified",
+    "verified_by": "MRiabov",
+    "verified_at": "2026-11-25",
+    "rationale": "The task description and answer were written by hand. The gold query executes the program with plain CadQuery and prints the answer; it does not use the CAD graph or the constructor. Rebuilt 2026-11-25 against the settled clue-reduction-form, categorical-feature, and measured-direction contract. Owner accepted this record after reviewing the current set in the task browser on 2026-11-25.",
+    "gold_query": {
+      "status": "passed",
+      "stdout": "-25.13",
+      "checked_at": "2026-11-25"
+    }
+  },
+  "environment": {
+    "cadquery_version": "2.8.0",
+    "ocp_version": "7.9.3.1",
+    "python_version": "3.12.13",
+    "oracle_tool_version": "1"
+  },
+  "program": {
+    "program_id": "cadqaprog:b406dfd4f70e422e066b9dbf2d1c545d69cb9020a604fcd6872945b57890fb24",
+    "program_sha256": "b406dfd4f70e422e066b9dbf2d1c545d69cb9020a604fcd6872945b57890fb24",
+    "text": "import cadquery as cq\n\nwp = cq.Workplane(\"XY\")\nbox = wp.box(10, 20, 5)\ntop = box.faces(\">Z\")\nplane = top.workplane()\nhole = plane.circle(2)\nresult = hole.cutBlind(-2)\n"
+  },
+  "task": {
+    "target_category": "operation",
+    "question": "What volume does the cutBlind operation remove?",
+    "state_scope": "final",
+    "possible_answer_count": 1,
+    "task_reasoning_step_count": 1,
+    "answer_meaning": "material_change",
+    "native_answer_format": "number",
+    "answer_format": "number",
+    "geometry_required": true,
+    "uniqueness": "The program has one cutBlind operation."
+  },
+  "clues": [],
+  "answer": {
+    "value_kind": "number",
+    "value": "-25.13",
+    "unit": "cubic_millimetre",
+    "tolerance": {
+      "tolerance_kind": "absolute",
+      "value_text": "0.005"
+    },
+    "scoring_rule": "numeric_tolerance",
+    "parameter": null,
+    "point_probe": null,
+    "evidence_kind": "measured",
+    "evidence_rule": "volume_change",
+    "evidence_refs": [
+      {
+        "reference_kind": "measurement",
+        "subject": {
+          "category": "operation",
+          "filters": {
+            "method": "cutBlind"
+          }
+        },
+        "object": null,
+        "measurement": "volume_change"
+      }
+    ],
+    "answer_equivalent_set": [
+      {
+        "subject": {
+          "category": "operation",
+          "filters": {
+            "method": "cutBlind"
+          }
+        },
+        "value": "-25.13"
+      }
+    ]
+  },
+  "gold_query": {
+    "language": "python",
+    "code": "print(canon(-(box.val().Volume() - result.val().Volume())))",
+    "expected_stdout": "-25.13",
+    "sha256": "d020280a4d7ad31b711ad20623df1a1fbaec2dd1877d519ec42637957499e6f6"
+  },
+  "covers": {
+    "target_category": "operation",
+    "clue_types": [],
+    "clue_reduction_forms": [],
+    "answer_meaning": "material_change",
+    "answer_format": "number",
+    "task_reasoning_step_count": 1
+  },
+  "excluded": [
+    {
+      "exclusion_kind": "clue_chain",
+      "reason": "The question identifies the target directly; a one-step task has no clue."
+    }
+  ],
+  "notes": [
+    "A cut removes material, so the signed volume change is negative.",
+    "The removed volume is pi * 2^2 * 2 = 25.132... -> -25.13."
+  ]
+}

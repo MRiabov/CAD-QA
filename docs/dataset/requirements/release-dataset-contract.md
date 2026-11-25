@@ -37,7 +37,7 @@ A release directory contains:
 | `manifest.json` | Release counts, versions, hashes, split counts, and coverage summaries. | One file. |
 | `dataset-card.md` | Human-readable dataset card: scope, counts, splits, provenance, that `prompt` is the user message, and the answer conventions per answer meaning — the angle convention, the signed material change, the declared position point and topology category, the membership boundary rule, and the answer precision. | One file. |
 | `failures.parquet` | Rejected programs and tasks with reasons. | One per rejection; may be empty. |
-| `support/` | Five task reasoning step support tables: `target-category-by-step.json`, `clue-type-by-step.json`, `clue-operand-form-by-step.json`, `answer-meaning-by-step.json`, `answer-format-by-step.json`. | Five files. |
+| `support/` | Five task reasoning step support tables: `target-category-by-step.json`, `clue-type-by-step.json`, `clue-reduction-form-by-step.json`, `answer-meaning-by-step.json`, `answer-format-by-step.json`. | Five files. |
 
 `release.parquet` is the release dataset. It contains the gold answer because the
 release is used for training, scoring, and audit. The `prompt` column is the only
@@ -114,7 +114,7 @@ AnswerEvidence = STRUCT<
   point_probe: STRUCT<
     point: Point3D,
     location: STRING,
-    distance_to_surface: STRING,
+    distance_to_face_surface: STRING,
     classifier: STRING,
     margin: STRING
   > | NULL
@@ -155,8 +155,8 @@ it from there when it needs to recheck uniqueness.
 | `cadevolve_program_family_id` | string | yes | Stable program family used as the split unit: a CADEvolve generator family or a CADEvolve-predicted ABC/ShapeNet mesh family. | `TaskDefinition.cadevolve_program_family_id` |
 | `task_reasoning_step_count` | integer | yes | Number of task clue steps plus the task answer step, if any. | `TaskDefinition.task_reasoning_step_count` |
 | `target_category` | enum | yes | Task target category. | `TaskDefinition.target_category` |
-| `clue_types` | list of enum | yes | Ordered task clue types; empty for a task with no task clue. | The clue type sequence of `clue_operand_form_profile` |
-| `clue_operand_form_profile` | list of struct `{clue_type, clue_operand_form}` | yes | Ordered clue type and clue operand form of every task clue, one entry per `clue_types` entry. `clue_operand_form` is null for a clue that carries no reference. | `TaskDefinition.clue_operand_form_profile` |
+| `clue_types` | list of enum | yes | Ordered task clue types; empty for a task with no task clue. | The clue type sequence of `clue_reduction_form_profile` |
+| `clue_reduction_form_profile` | list of struct `{clue_type, clue_reduction_form}` | yes | Ordered clue type and clue reduction form of every task clue, one entry per `clue_types` entry. `clue_reduction_form` is null for a clue that carries no reference. | `TaskDefinition.clue_reduction_form_profile` |
 | `answer_format` | enum | yes | Format the LLM model must return. | `TaskDefinition.answer_format` |
 | `choices` | list of struct `{label, candidate}`, both strings | yes | The multiple-choice pool: the position label and the answer value it denotes, as canonical text. Empty for every other answer format. | `TaskDefinition.choice_pool`, label and answer value |
 | `answer_meaning` | enum | yes | What the answer is about. | `TaskDefinition.answer_meaning` |
@@ -179,7 +179,7 @@ never re-serializes or recomputes an answer value. `03b` construct task
 definitions already produced them, and a second serializer could format a number
 differently. `04` has no serializer for an answer value.
 
-`clue_types` is the clue type sequence of `clue_operand_form_profile`, not a
+`clue_types` is the clue type sequence of `clue_reduction_form_profile`, not a
 second derivation from `task_clues`. The two columns then cannot disagree, and
 `05` validate and export release still checks them, because a release file can be
 corrupted after it is written.
@@ -390,7 +390,7 @@ release:
 
 | Convention | The card states |
 |---|---|
-| Angle | Two faces: the angle between the outward normals, 0–180°. Two edges: the acute angle between the lines, 0–90°. Degrees. |
+| Angle | Two faces: the angle between the outward normals, 0–180°. Two edges: the acute angle between the lines, 0–90°. Degrees. Parallel and perpendicular are renderings of 0 or 180° and 90°, not separate values. |
 | Material change | Signed: added material is positive, a cut is negative. |
 | Position | The point the question declares: a face centroid, an edge midpoint, a vertex point, or a solid state centroid. |
 | Topology change | The signed change in the entity category the question declares. |

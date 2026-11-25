@@ -32,11 +32,11 @@ checks:
     dimension: clue_type
     disposition: enforced
 
-  - id: clue_operand_form_coverage
+  - id: clue_reduction_form_coverage
     requirement: [R-8]
     arithmetic: coverage
     scope: per_step
-    dimension: clue_operand_form
+    dimension: clue_reduction_form
     disposition: enforced
 
   - id: answer_meaning_coverage
@@ -183,13 +183,13 @@ checks:
     maximum: dimensions.clue_type.max
     disposition: deferred
 
-  # `dimensions.clue_operand_form.target` is `equal`, so the reference share is
+  # `dimensions.clue_reduction_form.target` is `equal`, so the reference share is
   # one over the number of supported forms.
-  - id: clue_operand_form_release_share
+  - id: clue_reduction_form_release_share
     requirement: [R-12]
     arithmetic: relative_range
     scope: release
-    dimension: clue_operand_form
+    dimension: clue_reduction_form
     below: 0.5
     above: 2
     disposition: deferred
@@ -249,20 +249,20 @@ checks:
 
   # `DS-REQ-18` makes the wide range the P0 requirement and the narrow range the P1
   # requirement, so the wide row is enforced and the narrow row is only reported.
-  - id: clue_operand_form_severe_mix
+  - id: clue_reduction_form_severe_mix
     requirement: [R-12, DS-REQ-18]
     arithmetic: relative_range
     scope: per_step
-    dimension: clue_operand_form
-    below: dimensions.clue_operand_form.severe.below
-    above: dimensions.clue_operand_form.severe.above
+    dimension: clue_reduction_form
+    below: dimensions.clue_reduction_form.severe.below
+    above: dimensions.clue_reduction_form.severe.above
     disposition: enforced
 
-  - id: clue_operand_form_step_mix
+  - id: clue_reduction_form_step_mix
     requirement: [R-12]
     arithmetic: relative_range
     scope: per_step
-    dimension: clue_operand_form
+    dimension: clue_reduction_form
     below: 0.5
     above: 2
     disposition: reported

@@ -214,6 +214,24 @@ that owns them.
   unbounded run. A budget change is a new `constructor_version`, so it cannot
   silently change an accepted definition.
 
+## TG-11 — One pass projects candidate answers once
+
+- **Status:** accepted (2026-11-25).
+- **Context:** The cover search compares every candidate's answer with the
+  witness. Resolving the answer per comparison turns one pass into quadratic
+  graph reads, and `DS-REQ-15` allows several candidates to share one answer, so
+  the comparison is needed for every candidate. `DS-REQ-35` also needs one
+  definition per prompt identity.
+- **Decision:** A pass projects the candidate rows once: stable row order, fact
+  bitsets, and, for each answer meaning in the plan, the canonical answer and its
+  `same_answer` group. The witness loop and the cover search read masks over the
+  same rows; answer uniqueness and clue necessity are group counts over the
+  surviving mask. The pass dedups accepted definitions by prompt identity.
+- **Consequences:** Answer resolution is linear in candidates per answer meaning;
+  `max_cover_expansions` remains the only super-linear bound. Candidate row order
+  is the stable hash order, so the projection is deterministic and part of
+  `constructor_version`.
+
 ## Pending
 
 Ten module-scoped decisions are accepted, and no module-scoped question is

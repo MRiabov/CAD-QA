@@ -146,7 +146,7 @@ A capability entry names a task shape the final graph can support:
 |---|---|---|
 | `target_category` | string | The task target category. |
 | `clue_type` | string | The clue type. |
-| `clue_operand_form` | string or null | The operand form, null when the clue carries no reference. |
+| `clue_reduction_form` | string or null | The reduction form, null when the clue carries no reference. |
 | `answer_meaning` | string | The answer meaning. |
 
 The list is a lower bound: it records capabilities a human confirmed, not the

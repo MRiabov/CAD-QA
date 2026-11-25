@@ -312,6 +312,9 @@ generator/python/tests/
   test_s01d_normalize_programs.py
   test_s02a_extract_cadquery_ast.py
   test_s02b_execute_cadquery.py
+```
+
+```text
 tests/                    repo tooling only; no files directly here
   ci_cd/
     test_check_doc_mirror.py
@@ -326,9 +329,10 @@ tests/                    repo tooling only; no files directly here
 
 Root `tests/` mirrors the tooling under `tools/`: one subdirectory per tooling
 family, and no file directly in `tests/`. A test for a Go pipeline stage, a
-Parquet table, an oracle, a golden record, a release artifact, or the prompt-template
-contract is a Go test in the owning package. When the check needs CadQuery or OCP,
-the Go test starts the Python worker or tool and asserts on its output.
+Parquet table, an oracle, a golden record, a release artifact, or the
+prompt-template contract is a Go test in the owning package. When the check
+needs CadQuery or OCP, the Go test starts the Python worker or tool and asserts
+on its output.
 
 `tools/ci_cd/check-test-ownership` enforces the layout: a Python test outside
 these roots, any file directly in `tests/`, or a Go test with no non-test `.go`
@@ -402,13 +406,17 @@ not imported by it.
 
 ```text
 tools/manual-verification/
-  task_browser.py                          exists; local JSON API over one release table
-  task_release.py                          exists; release row types, program execution, task summaries
+  task_browser.py                          exists; local JSON API over one release table or one gold-oracle directory
+  task_release.py                          exists; release rows, the shared row type, and program execution
+  task_oracles.py                          exists; loads gold records as browser rows
   task_scene.py                            exists; typed scene payload and CadQuery tessellation
   task-browser/                            exists; Vite+ frontend: task list, 3D stage, detail panel
   build_extraction_oracle.py               exists; derives a proposed extraction-graph oracle from a program
   cadquery_method_specs.py                 exists; the method table the oracle builder diffs against the allowlist
   extraction_oracle_schema.py              exists; the Pydantic schema for an oracle record
+  task_oracle_schema.py                    exists; the task-construction oracle schema
+  task_oracle_runner.py                    exists; runs one oracle's gold query
+  verify_task_oracles.py                   exists; verifies every task-construction oracle against its gold query
   render_task.py                           planned; one release row's render plus its printed card
   review_pack.py                           planned; `pack generate` and `pack record` from devtools/review-pack.md
   run_report.py                            planned; batch counts, distributions, timings, and pending review cells
@@ -418,9 +426,14 @@ tools/contracts/
   export_worker_schemas.py                 exists; exports the worker JSON Schema from Pydantic
 ```
 
-`task_browser.py`, `task_release.py`, `task_scene.py`, and `task-browser/`
-exist; `build_extraction_oracle.py` exists and writes a `proposed` oracle for a
-human to verify. `render_task.py` is the first-release fallback and the
+`task_browser.py`, `task_release.py`, `task_oracles.py`, `task_scene.py`, and
+`task-browser/` exist; `build_extraction_oracle.py` exists and writes a
+`proposed` oracle for a
+human to verify. `verify_task_oracles.py` runs every task-construction oracle's
+gold query and records the environment and the observed output; the records are
+in
+[`pipeline/testing/oracles/task-construction/`](pipeline/testing/oracles/task-construction/README.md).
+`render_task.py` is the first-release fallback and the
 `P0-W2`/`P0-W4` review tool. `review_pack.py` is the sampled matrix that gates
 export. `run_report.py` is the report the
 [manual-verification protocol](../../../plans/nov-21/manual-verification-protocol.md)

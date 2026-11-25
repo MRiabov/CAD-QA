@@ -13,6 +13,8 @@ import re
 import tokenize
 from pathlib import Path
 
+from pydantic import BaseModel, Field
+
 from tools.ci_cd.dont_say_names import (
     Declaration,
     Fragment,
@@ -67,7 +69,7 @@ ALLOW_FILE_MARKER = re.compile(
 FILE_MARKER_SCAN_LINES = 10
 HOME_MARKER = re.compile(r"dont-say:\s*home", re.IGNORECASE)
 ALLOW_LINE = re.compile(r"don'?t say|do not say|never say|banned:", re.IGNORECASE)
-CODE_FENCE = re.compile(r"^\s*(```|~~~)")
+CODE_FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 INLINE_CODE = re.compile(r"`[^`]*`")
 LATEX_VERBATIM = re.compile(
     r"\\(?:begin|end)\{(?:verbatim|Verbatim|lstlisting|minted)\}"
@@ -78,6 +80,41 @@ LATEX_VERB = re.compile(r"\\verb(.)(.*?)\1")
 # Fields that hold statements. A docstring owner (module, class, def) can only be
 # reached through these, so the docstring walk never has to visit expressions.
 STATEMENT_FIELDS = ("body", "orelse", "finalbody", "handlers", "cases")
+
+
+class Fence(BaseModel):
+    """An open code fence: its delimiter character and its run length."""
+
+    char: str = Field(min_length=1, max_length=1)
+    length: int = Field(ge=3)
+
+    def closes(self, line: str) -> bool:
+        """True when ``line`` is this fence's closing delimiter.
+
+        A closing delimiter repeats the opening character at least as many
+        times as the opener and carries no info string, so a shorter delimiter
+        inside a longer fence is content.
+        """
+
+        delimiter = line.strip()
+        return len(delimiter) >= self.length and delimiter == self.char * len(
+            delimiter
+        )
+
+
+def opening_fence(line: str) -> Fence | None:
+    """Return the fence ``line`` opens; None for prose and for closing lines."""
+
+    match = CODE_FENCE.match(line)
+    if match is None:
+        return None
+    delimiter, info = match.group(1), match.group(2)
+    if delimiter[0] == "`" and "`" in info:
+        # A backtick fence's info string cannot hold a backtick, so this is
+        # inline code at the start of a line.
+        return None
+    return Fence(char=delimiter[0], length=len(delimiter))
+
 
 
 def code_prose_lines(text: str) -> list[tuple[int, str]]:
@@ -277,7 +314,7 @@ def _scan_markdown(path: Path, text: str, rules: list[Rule]) -> list[Hit]:
     latex = path.suffix == ".tex"
     index = RuleIndex.build(rules, path)
     hits: list[Hit] = []
-    in_fence = False
+    fence: Fence | None = None
     in_verbatim = False
     for line_no, line in enumerate(text.splitlines(), start=1):
         if latex:
@@ -288,10 +325,13 @@ def _scan_markdown(path: Path, text: str, rules: list[Rule]) -> list[Hit]:
                 continue
             probe = LATEX_COMMENT.split(line, 1)[0]
         else:
-            if CODE_FENCE.match(line):
-                in_fence = not in_fence
+            if fence is not None:
+                if fence.closes(line):
+                    fence = None
                 continue
-            if in_fence:
+            opened = opening_fence(line)
+            if opened is not None:
+                fence = opened
                 continue
             probe = line
         if ALLOW_MARKER.search(line) or ALLOW_LINE.search(line):

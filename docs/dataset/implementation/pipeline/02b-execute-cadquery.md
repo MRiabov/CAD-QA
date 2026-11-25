@@ -91,12 +91,15 @@ Each `PointProbe` contains:
 - `point_probe_id` and `state_id`;
 - `point`, in the program frame;
 - `location`, `inside` or `outside`;
-- `distance_to_surface`, measured to the nearest face;
-- `classifier` and the margin used.
+- `distance_to_face_surface`, measured to the nearest face;
+- `classifier` and the `margin` the probe was tested against.
 
 A probe within the clear-case margin is not emitted. The centroid probe is the
-state centroid already measured in the Shape snapshot; the second probe is a seeded
-point in the state bounding box.
+state centroid already measured in the Shape snapshot, rounded to the probe grid.
+The second probe is a seeded point next to the state surface, on either side of
+it, drawn by the algorithm in
+[`extraction/cadquery/algorithm/runtime.md#point-probes`](extraction/cadquery/algorithm/runtime.md#point-probes).
+Neither probe is confined to the bounding box.
 
 Each `CadFeatureSolidStateEffectDelta` contains:
 

@@ -9,7 +9,7 @@ from the graphs it already reads. The census is not an input and not an artifact
 it is one function, called here and in `03b` construct task definitions.
 
 For each active program the census answers which target categories, clue
-constructors, clue operand forms, measurements, answer meanings, and point probes
+constructors, clue reduction forms, measurements, answer meanings, and point probes
 the graph has. `03a` derives it once per graph batch, stores the per-program
 census in `program_census` and the union per family in `family_profiles`, and
 assigns quota targets from that projection. `03b` reads the program's entry

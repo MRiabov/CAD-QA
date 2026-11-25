@@ -1,0 +1,98 @@
+{
+  "schema_version": 3,
+  "oracle_kind": "task-construction",
+  "slug": "box-face-count",
+  "verification": {
+    "status": "verified",
+    "verified_by": "MRiabov",
+    "verified_at": "2026-11-25",
+    "rationale": "The task description and answer were written by hand. The gold query executes the program with plain CadQuery and prints the answer; it does not use the CAD graph or the constructor. Rebuilt 2026-11-25 against the settled clue-reduction-form, categorical-feature, and measured-direction contract. Owner accepted this record after reviewing the current set in the task browser on 2026-11-25.",
+    "gold_query": {
+      "status": "passed",
+      "stdout": "6",
+      "checked_at": "2026-11-25"
+    }
+  },
+  "environment": {
+    "cadquery_version": "2.8.0",
+    "ocp_version": "7.9.3.1",
+    "python_version": "3.12.13",
+    "oracle_tool_version": "1"
+  },
+  "program": {
+    "program_id": "cadqaprog:c68e7eeee7b9f5c26a3e418976cd6f2056a636742379d3cafaf2bfda433316e3",
+    "program_sha256": "c68e7eeee7b9f5c26a3e418976cd6f2056a636742379d3cafaf2bfda433316e3",
+    "text": "import cadquery as cq\n\nresult = cq.Workplane(\"XY\").box(10, 20, 5)\n"
+  },
+  "task": {
+    "target_category": "solid_state",
+    "question": "How many faces does the target solid state have?",
+    "state_scope": "final",
+    "possible_answer_count": 1,
+    "task_reasoning_step_count": 1,
+    "answer_meaning": "count",
+    "native_answer_format": "integer",
+    "answer_format": "integer",
+    "geometry_required": true,
+    "uniqueness": "The final solid state is the only solid state in the final scope."
+  },
+  "clues": [],
+  "answer": {
+    "value_kind": "integer",
+    "value": 6,
+    "unit": "unitless",
+    "tolerance": null,
+    "scoring_rule": "exact",
+    "parameter": null,
+    "point_probe": null,
+    "evidence_kind": "measured",
+    "evidence_rule": "face_count",
+    "evidence_refs": [
+      {
+        "reference_kind": "measurement",
+        "subject": {
+          "category": "solid_state",
+          "filters": {
+            "is_final": "true"
+          }
+        },
+        "object": null,
+        "measurement": "face_count"
+      }
+    ],
+    "answer_equivalent_set": [
+      {
+        "subject": {
+          "category": "solid_state",
+          "filters": {
+            "is_final": "true"
+          }
+        },
+        "value": 6
+      }
+    ]
+  },
+  "gold_query": {
+    "language": "python",
+    "code": "print(len(result.val().Faces()))",
+    "expected_stdout": "6",
+    "sha256": "70db5a6112da7e039c5a2ae085bf17a14f9959f4b89ef0204bc4b61d2d086a7a"
+  },
+  "covers": {
+    "target_category": "solid_state",
+    "clue_types": [],
+    "clue_reduction_forms": [],
+    "answer_meaning": "count",
+    "answer_format": "integer",
+    "task_reasoning_step_count": 1
+  },
+  "excluded": [
+    {
+      "exclusion_kind": "clue_chain",
+      "reason": "The question identifies the target directly; a one-step task has no clue."
+    }
+  ],
+  "notes": [
+    "The final box has six faces."
+  ]
+}

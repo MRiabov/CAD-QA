@@ -76,7 +76,7 @@ type ReleaseRow struct {
 	TaskReasoningStepCount   int             `parquet:"task_reasoning_step_count"`
 	TargetCategory           TargetCategory  `parquet:"target_category"`
 	ClueTypes                []ClueType      `parquet:"clue_types"`
-	ClueOperandFormProfile   []ClueOperandFormEntry `parquet:"clue_operand_form_profile"`
+	ClueReductionFormProfile   []ClueReductionFormEntry `parquet:"clue_reduction_form_profile"`
 	AnswerFormat             AnswerFormat    `parquet:"answer_format"`
 	Choices                  []ReleaseChoice `parquet:"choices"`
 	AnswerMeaning            AnswerMeaning   `parquet:"answer_meaning"`
@@ -106,7 +106,7 @@ type ReleaseAnswerEvidence struct { // the release carries the count, not the fu
 ```
 
 `AnswerValue`, `AnswerTolerance`, `AnswerEvidence`, `ClueType`,
-`ClueOperandFormEntry`, `TargetCategory`, `AnswerFormat`, `AnswerMeaning`, and
+`ClueReductionFormEntry`, `TargetCategory`, `AnswerFormat`, `AnswerMeaning`, and
 `ScoringRule` are declared once in
 [`03-task-generation.md`](03-task-generation.md). `04` copies them; it does not
 redefine or re-serialize an answer value.

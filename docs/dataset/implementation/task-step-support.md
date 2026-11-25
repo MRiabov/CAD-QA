@@ -6,7 +6,7 @@ to check a release. It is not a pipeline stage and not a generator input.
 ## Role
 
 The **task reasoning step support tables** record which target categories, clue type
-values, clue operand forms, answer meanings, and answer formats the constructor
+values, clue reduction forms, answer meanings, and answer formats the constructor
 produced at each task reasoning step count over the coverage fixture set.
 
 They exist to check the dataset:
@@ -111,7 +111,7 @@ The release carries five files under `support/`:
 ```text
 support/target-category-by-step.json
 support/clue-type-by-step.json
-support/clue-operand-form-by-step.json
+support/clue-reduction-form-by-step.json
 support/answer-meaning-by-step.json
 support/answer-format-by-step.json
 ```
@@ -134,7 +134,7 @@ Each file has a versioned envelope and typed rows:
 ```
 
 The row field is named after the file: `target_category`, `clue_type`,
-`clue_operand_form`, `answer_meaning`, or `answer_format`.
+`clue_reduction_form`, `answer_meaning`, or `answer_format`.
 
 `reason_code` is a low-cardinality enum, not free text. It is null when the row
 is supported. Unsupported rows use one of:

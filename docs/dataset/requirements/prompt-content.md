@@ -3,6 +3,11 @@
 **Status:** draft, 2026-10-21. This document defines what the LLM model sees in
 a CAD-QA prompt. It does not define how the prompt is rendered.
 
+This document owns the prompt surface. The task dimensions it renders are
+defined in [`task-structure.md`](task-structure.md); the graph values it words
+are defined in [`graph-content.md`](graph-content.md). It links to both and does
+not repeat their closed value sets.
+
 ## 1. Prompt parts
 
 The prompt is delivered as the user message. It has a frame convention line and
@@ -18,8 +23,8 @@ up to five parts, in this order:
 5. **Answer instruction**: the required answer format and an exact example of
    its syntax.
 
-The question is only the interrogative sentence. It is not the whole task. The
-task is the program, the task target, the task clues, and the answer.
+The question is only the interrogative sentence; the task that contains it is
+defined in [`task-structure.md`](task-structure.md).
 
 The prompt does not contain the answer or any hidden identifier.
 
@@ -34,7 +39,9 @@ Every prompt states the direction convention once, before the program text:
 
 The convention is part of the fixed prompt prefix, not a per-task variant. It is
 what makes a directional word in a task clue unambiguous: "top" is the face at
-the maximum z, "front" is the face at the minimum y, and so on.
+the maximum z, "front" is the face at the minimum y, and so on. The words name
+the extremes of the axis-aligned bounding box of the solid state, never a part
+name and never a sorted-by-area rank.
 
 | Frame name | Word |
 |---|---|
@@ -68,9 +75,9 @@ and does not narrow the candidates.
 
 Examples of a question:
 
-- "What is the volume of the final solid?"
-- "What is the volume of material removed by an operation?"
-- "What is the CadQuery workplane used by an operation?"
+- "What is the volume of the target solid state?"
+- "What is the signed change in volume caused by the target operation?"
+- "Which CadQuery workplane satisfies these conditions?"
 
 The question is not a task clue. It tells the LLM model what task target
 category the answer is about and what to answer.
@@ -87,7 +94,9 @@ prose paragraphs.
    split it into two task clues.
 2. Task clues are ordered from broad to narrow. The order is the intended
    reasoning order. They are presented as a numbered list; the number is
-   presentation, not a task reasoning step count.
+   presentation, not a task reasoning step count. Every clue must also be
+   necessary, so a later clue may not make an earlier one redundant
+   (`task-structure.md` §2.2).
 3. Each task clue must be checkable against the program and the shape it
    builds.
 4. Each task clue must be understandable without internal terms.
@@ -103,22 +112,108 @@ prose paragraphs.
    builds, not to its variable name.
 10. If the answer is a measurement of the task target, do not write that
     measurement as a task clue. Put it in the answer instruction.
+11. A clue states a number without a unit when the answer instruction supplies
+    one; an angle clue says degrees.
 
 ### 4.2 Task clue types
 
+The clue types and their meanings are defined in
+[`task-structure.md`](task-structure.md) section 2.2. This table gives the
+wording for each clue type; it does not redefine them.
+
 | Clue type | Wording pattern |
 |---|---|
-| Property | "The task target has a <measurement> <comparison> <value>." |
-| Relation | "The task target is <relation> <other entity>." |
-| Comparison | "The task target's <measurement> is <comparison> the <measurement> of <reference>." |
-| Aggregation | "Among the task targets that satisfy the previous task clues, choose the one with the <extreme> <measurement>." |
+| Property, measurement | "The task target has a <measurement> <comparison> <value>." |
+| Property, measurement range | "The task target has a <measurement> between <min> and <max>." |
+| Property, direction | "The angle between the outward normal of the task target and <axis> is <comparison> <value> degrees." |
+| Property, categorical feature | "The task target is <face surface kind>." / "The task target touches the <position> of the axis-aligned bounding box." |
+| Relation, named | "The task target is <relation> <other entity>." |
+| Relation, angle | "The angle between the task target and <reference> is <comparison> <value> degrees." |
+| Comparison | "The <measurement> of the task target is <comparison> the <measurement> of <reference>." |
+| Aggregation | "Among the remaining <categories>, choose the one with the <extreme> <measurement>." |
 | Provenance | "The task target was created by <operation>." or "The task target uses <CadQuery profile>." |
 
-A chain is not a clue type. It is a P2 sequence of relation clues: each relation
-is its own numbered list item and one task clue step.
+A relation clue is a named relation or a measured angle. The measured-angle form
+states the number; "parallel" and "perpendicular" are renderings of 0 or 180 and
+90 degrees and are not separate relations.
+
+A containment clue reads with the task target on the contained side: "The target
+edge is an edge of a cylindrical face", or "The target vertex is an endpoint of
+an edge whose length is greater than 10". The opposite direction, with the
+container as the target, carries the same information and is a wording gap, not a
+different clue: the relation is written "The task target is <relation> the
+<other entity>", so its relation phrase is adjectival or prepositional
+("adjacent to", "an edge of"). From the container side containment is a verb
+("contains"), and that sentence has no frame yet.
+
+A chain is a P2 sequence of relation clues: each relation is its own numbered
+list item and one task clue step. The sequence rule is in `task-structure.md`.
 
 The placeholders are filled with real entities and measurements when a task is
 built. A task clue is never a template with placeholder text left in it.
+
+A categorical feature clue states equality, not a comparison. Position is
+set-valued: "touches the top of the axis-aligned bounding box" is true of every
+face that lies in that extreme plane, however many there are. The phrase names the
+bounding box every time; "the top" alone reads as a part name. A direction is not
+a categorical feature: the outward normal is continuous, so the clue measures the
+angle to the axis it names and states the number.
+
+A clue does not name a specific entity as "the top face"; a reference names a set
+by a condition ("a face facing +z", "a cylindrical face") or by an earlier clue
+("the faces from clue 1"). A direction condition reads "facing <axis>" when the
+angle is zero, and names the angle when it is not. A pair-angle relation names
+the angle too; the renderer may use "parallel" or "perpendicular" when the angle
+is 0, 180, or 90 degrees.
+
+A reference may also state one measurement condition: "a face whose area is
+greater than 10", or an angle: "a face whose outward normal is within 45 degrees
+of +z". Exactly one condition is allowed, because a reference is one statement
+and must be unambiguous on its own. A referenced entity that needs two
+conditions, and so two steps of its own, is out of P0 scope; it is the multi-set
+question in `task-structure.md` section 8.
+
+A reference may also be an `aggregated` reduction of an earlier set of faces:
+"the largest of the faces from clue 1" (P1). It is one reference, not a second
+condition.
+
+A threshold is the narrowing strength, not a tolerance around an exact match. For
+the angle, one degree selects the faces that really face that axis, 45 degrees
+selects a cone of them, and 90 degrees selects every planar face and is therefore
+not a clue. A threshold sits between two candidate values, at least the
+clear-case margin from each (`graph-content.md` section 4.2).
+
+Every rendered noun phrase takes its determiner from what its description
+selects in the program: `the` for exactly one element, `a` for a condition that
+selects several, and the plural for a set bound by an earlier clue. No template
+supplies an article.
+
+An operation, CadQuery profile, or CadQuery workplane description takes `the`
+only when it selects exactly one element of its category in the program. Two
+`cutBlind` calls make `a cutBlind operation` correct and `the cutBlind operation`
+ambiguous; two circles do the same to `the circular CadQuery profile`. Repeats
+are common: several boxes, several holes, several cuts, several CadQuery profiles.
+
+When the description alone does not select one, it has two ways out. It stays
+indefinite, which narrows to every element that any match produced ("created by a
+cutBlind operation", "built from a circular CadQuery profile"). Or it selects one by a
+condition the LLM model can read: a stated argument ("the cutBlind operation with
+depth 2") or its place in the program ("the cutBlind operation that appears last
+in the program"). A description that cannot
+select one is not used: the LLM model cannot tell which entity the clue means, so
+the clue is unanswerable even though the definition points at one entity.
+
+A description of a CadQuery profile names the CadQuery profile kind: circular,
+rectangular, elliptical, polygonal, or slot. Every other 2D boundary has the
+CadQuery profile kind `other`, which has no noun, so a clue that would have to
+name it is not built; the constructor measures it instead: area in P0, and
+perimeter in P1.
+
+A prompt does not describe a CadQuery workplane. A program builds on one named
+CadQuery workplane in almost every case, so a phrase that names it selects the
+whole program and narrows nothing; a face-derived or custom frame has no phrase at
+all. A CadQuery workplane stays a graph entity and a P1 answer; whether it is a
+task target category is open in `task-structure.md` section 8.
 
 ## 5. Multiple-choice choices
 
@@ -191,41 +286,30 @@ Program:
 ```python
 import cadquery as cq
 
-wp = cq.Workplane("XY")
-box = wp.box(10, 20, 5)
-top = box.faces(">Z")
-plane = top.workplane()
-hole = plane.circle(2)
-result = hole.cutBlind(-2)
+result = cq.Workplane("XY").cylinder(2, 2)
 ```
 
 Prompt:
 
 ````text
-Given the CadQuery script below, answer the question by reasoning about the
-CAD construction.
+Directions use the program frame: +x is right, +y is back, +z is up.
 
     import cadquery as cq
 
-    wp = cq.Workplane("XY")
-    box = wp.box(10, 20, 5)
-    top = box.faces(">Z")
-    plane = top.workplane()
-    hole = plane.circle(2)
-    result = hole.cutBlind(-2)
+    result = cq.Workplane("XY").cylinder(2, 2)
 
-What is the volume of material removed by an operation?
+What is the volume of the target solid state?
 
-1. The operation cut the cylindrical hole.
-
-Return exactly one number, rounded to 4 significant figures.
+Return exactly one number. Use mm^3; round to 4 significant figures.
 ````
 
-Answer: `25.13` (the volume of a cylinder of radius 2 and cut depth 2, rounded to 4 significant figures).
+Answer: `25.13` (a cylinder of radius 2 and height 2 has volume 8π, rounded to 4
+significant figures).
 
 The question names the task target category and asks for the measurement. The
-task clue names the operation. The answer instruction asks for the number. The
-prompt does not say "the answer is 8 pi".
+program has one solid state producing operation, so the question identifies the
+final solid state directly and the task has no task clue. The answer instruction
+asks for the number. The prompt does not say "the answer is 8 pi".
 
 ## 9. Review checklist
 
@@ -244,7 +328,9 @@ Before a prompt is accepted:
 
 ## 10. P2 near-miss implementation
 
-The generation and validation rule for P2 near-miss choices belongs to pipeline stage
-`03`; it is tracked as Q6 in
+The requirement for P2 near-miss choices is section 5. The generation and
+validation mechanism is an implementation question in pipeline stage `03`,
+tracked as Q6 in
 [`../implementation/pipeline/03-task-generation/03b-construct-task-definitions/README.md`](../implementation/pipeline/03-task-generation.md).
-P0 and P1 require real, unique, non-leaking choices.
+A mechanism that cannot meet section 5 is an implementation defect; it does not
+relax the requirement. P0 and P1 require real, unique, non-leaking choices.
