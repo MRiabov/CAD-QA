@@ -146,7 +146,7 @@ end-to-end test pass; both are Go tests.
 
 `uv run pytest -q` discovers the two Python roots through `testpaths`: root
 `tests/` for the repo tooling suites and `generator/python/tests/` for the
-worker. Root policy data is checked where its loader lives, so `checks.yaml`,
+worker. Root policy data is checked where its loader lives, so `release-checks.yaml`,
 `balance.yaml`, `tolerance.yaml`, and `prompts.yaml` are Go tests; the golden
 records are a `03b` Go test.
 

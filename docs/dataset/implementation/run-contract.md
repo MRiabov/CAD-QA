@@ -584,7 +584,7 @@ generator list [--runs-root <path>]
 | `--release-seed` | yes | — | `RenderConfig.release_seed`. |
 | `--scope` | no | `p0` | `p0`, `p1`, or `p2`. |
 | `--balance` | no | `generator/config/balance.yaml` | Balance policy file. |
-| `--checks` | no | `generator/config/checks.yaml` | Check policy file. |
+| `--checks` | no | `generator/config/release-checks.yaml` | Check policy file. |
 | `--prompts` | no | `generator/config/prompts.yaml` | Prompt template file. |
 | `--tolerance-policy` | no | `generator/config/tolerance.yaml` | Tolerance policy file. |
 | `--external-benchmark` | conditional | — | Pinned external benchmark program set. Required when `--to` includes `05`. |

@@ -68,7 +68,7 @@ Python code.
 
 The Go module and its shared package exist under `generator/`; pipeline stage
 code lands one pipeline stage at a time. Go reads the YAML policy files in `generator/config/`
-(`balance.yaml`, `checks.yaml`, `tolerance.yaml`) with `gopkg.in/yaml.v3`
+(`balance.yaml`, `release-checks.yaml`, `tolerance.yaml`) with `gopkg.in/yaml.v3`
 (`STK-2`); the dataset namespace and the prompt-template contract of `prompts.yaml` are
 Go-owned, and Python keeps `PyYAML` for the evaluation namespace only.
 

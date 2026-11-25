@@ -72,7 +72,7 @@ identities do not change. A doctored `02b` part makes the force abort with exit
 the force succeeds.
 
 `test_run_contract_manifest_mismatch` — resuming `run0001` with `--run-dir` and
-a changed `checks.yaml` changes `checks_policy_sha256`; the run exits 1 before
+a changed `release-checks.yaml` changes `checks_policy_sha256`; the run exits 1 before
 any pipeline stage, names the field, and writes no part. A changed
 `release_seed` does the same. Without `--run-dir`, the same changed input
 allocates a new run directory instead of resuming `run0001`.

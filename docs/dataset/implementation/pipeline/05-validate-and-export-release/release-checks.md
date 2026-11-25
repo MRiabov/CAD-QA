@@ -82,7 +82,7 @@ is a check like any other, not a special case in the export code.
 ## The check policy file
 
 The check list is data in
-[`generator/config/checks.yaml`](../../../../../generator/config/checks.yaml). `05` reads it, runs every check it
+[`generator/config/release-checks.yaml`](../../../../../generator/config/release-checks.yaml). `05` reads it, runs every check it
 lists, and records one or more report rows per check. `manifest.json` records the
 file version and hash, so a release names the check list it was measured against.
 
@@ -127,7 +127,7 @@ A bound field is a number, or a dotted path into `balance.yaml`. A path that
 names a mapping is indexed by the dimension value: `task_reasoning_step_share`
 resolves per task reasoning step count and `release.splits` per split.
 
-`checks.yaml` holds no number that `balance.yaml` already owns. The multiples
+`release-checks.yaml` holds no number that `balance.yaml` already owns. The multiples
 `0.5` and `2` are the per-step balance rule, and they stay in the check file
 because they are the rule, not a policy setting.
 
@@ -334,7 +334,7 @@ release produce the same report.
 - Release table schema, prompt answer-freedom, `task_id` uniqueness, and split
   isolation: `05` validate and export release.
 - The transfer overlap check (R-16): `05` validate and export release. It is a
-  validity check, not a coverage or balance check, so it has no `checks.yaml`
+  validity check, not a coverage or balance check, so it has no `release-checks.yaml`
   row and no accepted miss.
 - Failure record reconciliation and the review gate: `05` validate and export
   release.

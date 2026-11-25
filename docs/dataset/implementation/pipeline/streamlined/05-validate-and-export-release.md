@@ -13,7 +13,7 @@ READ:
 - `ReleaseTable` from `04`
 - `RenderConfig` passed to `04` and `05` → `PromptTemplateSet`, `release_seed`
 - five task reasoning step support tables
-- `balance.yaml` and `checks.yaml`
+- `balance.yaml` and `release-checks.yaml`
 - `ExternalDatasetManifest` from `01e`
 - `GraphCompletenessReport` per program from `02c` → `disposition`, missing, orphan, and unclassified counts
 - `ExternalBenchmarkProgramSet` from the release author: benchmark name, revision, declared split, normalization version, file hash, and one row per benchmark program with `normalized_program_text`, `program_sha256`, and the P1 `ast_normalized_sha256` and `final_shape_hash`
@@ -51,9 +51,9 @@ TRANSFORM:
 
 - validate `balance.yaml` with the `03a` rules; `release.share_tolerance` is in `[0, 1)`
 - `release.distinct_answer_min` is read only here, for the P1 distinct-answer check
-- validate `checks.yaml`: an unknown field, an unknown `arithmetic`, a duplicate `id`, or a bound reference that does not resolve in `balance.yaml` stops the export before any check runs
+- validate `release-checks.yaml`: an unknown field, an unknown `arithmetic`, a duplicate `id`, or a bound reference that does not resolve in `balance.yaml` stops the export before any check runs
 - aggregate the `GraphCompletenessReport` set into one `graph_completeness` check row; a non-zero missing, orphan, or unclassified count is an enforced miss
-- run every check listed in `checks.yaml` with the arithmetic semantics in [`release-checks.md`](05-validate-and-export-release/release-checks.md); a check not in the file is not run, and a report row whose check is not in the file is a defect
+- run every check listed in `release-checks.yaml` with the arithmetic semantics in [`release-checks.md`](05-validate-and-export-release/release-checks.md); a check not in the file is not run, and a report row whose check is not in the file is a defect
 - `05` holds no share of its own
 - never drop a task to make a share fit
 

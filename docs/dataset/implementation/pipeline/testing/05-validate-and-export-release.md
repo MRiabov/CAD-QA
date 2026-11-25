@@ -20,7 +20,7 @@ and asserts the artifacts read back the way a dataset consumer reads them.
 
 **Given** a release table of 12 tasks from 4 programs in 3 families, with 10 in
 train, 1 in validation, and 1 in test, and at least one row per answer format. A
-`checks.yaml` fixture names three checks: one enforced and passing, one reported
+`release-checks.yaml` fixture names three checks: one enforced and passing, one reported
 and missing, and one not applicable. An external dataset manifest, the five
 support tables, a fixed generator version, and the three failure partitions.
 
@@ -70,7 +70,7 @@ value disagrees with the evidence set.
 serializer in `05` would break the first assertion.
 
 `test_05_release_id_is_stable` — a re-export over the same inputs keeps
-`release_id` and changes only `created_at`; a changed `checks.yaml` version
+`release_id` and changes only `created_at`; a changed `release-checks.yaml` version
 changes the recorded checks policy version and hash but not `release_id`. The
 test recomputes the id from the documented inputs.
 

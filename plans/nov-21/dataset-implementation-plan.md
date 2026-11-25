@@ -106,10 +106,10 @@ audit and 2026-11-25 and are listed below the table.
 
 | Item | Owner | Why it cannot wait |
 |---|---|---|
-| `DA-7` / `MC-63` — the R-5 shortcut-resistance proxy, or its re-scope | `03b`, `checks.yaml`, `prompt-content.md`, `docs/development-plan.md` | R-5 is P0 and no construction rule or release check measures it. The documented candidate is the Phase 2 baseline report, and a re-scope is a decision, not silence |
+| `DA-7` / `MC-63` — the R-5 shortcut-resistance proxy, or its re-scope | `03b`, `release-checks.yaml`, `prompt-content.md`, `docs/development-plan.md` | R-5 is P0 and no construction rule or release check measures it. The documented candidate is the Phase 2 baseline report, and a re-scope is a decision, not silence |
 | `MC-64` — review frames: absence and residual, ledgers scoped to a pipeline stage | `devtools/review-pack.md`, `05` | The merged pack samples release rows only; partial extraction loss and unknown unknowns have no review frame. `file-trees.md` names the two tools and not the ledger cells |
 | `MC-65` — failure disposition: `by_design`, `corpus_defect`, `extractor_gap` | `failure-record.md`, `extraction/validation.md` | Every rejection is equally legitimate today. `graph-completeness.md` classifies a missing graph row, but the failure record has no disposition column, so a rejected program still cannot be classified |
-| `MC-66` — extraction capability coverage check | `checks.yaml`, `release-checks.md`, `03a/a-support-derivation.md` | A must-extract capability with zero accepted graphs is a silent deficit: it has no support-table row, so the coverage checks read it as not applicable, and the census plus `capability_deficit` do not block export |
+| `MC-66` — extraction capability coverage check | `release-checks.yaml`, `release-checks.md`, `03a/a-support-derivation.md` | A must-extract capability with zero accepted graphs is a silent deficit: it has no support-table row, so the coverage checks read it as not applicable, and the census plus `capability_deficit` do not block export |
 
 Closed since the audit's `P0-W1` table:
 
@@ -117,7 +117,7 @@ Closed since the audit's `P0-W1` table:
   and the grader's comparison, and `b-answer-semantics.md` rechecks the
   answer-equivalent set against it.
 - `MC-22` / `DA-15` — `geometry_required` is derived from the answer meaning and
-  the clue type in `a-construction.md`; `checks.yaml` selects `value: true` in
+  the clue type in `a-construction.md`; `release-checks.yaml` selects `value: true` in
   `built_shape_share_floor`, so the 95% floor is executable.
 - `DA-13` / `MC-44` — the support-table derivation is written in
   `task-step-support.md` and `testing/00-support-tables.md`. The coverage
@@ -482,7 +482,7 @@ The scaffold is green (`(cd generator && go test -count=1 ./...)`, `uv run pytes
 - `generator/main.go`, `generator/internal/run/run.go` — flags, pipeline stage selection,
   exit codes, usage;
 - `generator/internal/shared/` — typed artifact tables, the failure record and
-  its merge, the `balance.yaml` and `checks.yaml` loaders, the worker bridge, and
+  its merge, the `balance.yaml` and `release-checks.yaml` loaders, the worker bridge, and
   the checked-in worker JSON Schema;
 - `generator/python/cadqa_dataset_generator/worker.py` — the worker protocol and dispatch;
   `s01d`, `s02a`, `s02b` raise `PipelineStageNotImplemented`;

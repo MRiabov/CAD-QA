@@ -80,5 +80,5 @@ and Don't-say checks, then starts only the suites the change can reach. See
 the path mapping, the caches, and the runtime budget.
 
 `go test -count=1` disables Go's test cache because the policy-loader tests read
-`generator/config/balance.yaml` and `generator/config/checks.yaml` by
+`generator/config/balance.yaml` and `generator/config/release-checks.yaml` by
 path.

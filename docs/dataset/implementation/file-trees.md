@@ -111,7 +111,7 @@ generator/
   main.go                                  package main
   config/                                  generator inputs, read by path
     balance.yaml
-    checks.yaml
+    release-checks.yaml
     tolerance.yaml
     prompts.yaml
   internal/
@@ -145,7 +145,7 @@ generator/
       cache_index.go                       content-addressed shared cache
       failure_record.go                    failure record row and partition merge
       balance_policy.go                    balance.yaml loader
-      check_policy.go                      checks.yaml loader
+      check_policy.go                      release-checks.yaml loader
       tolerance_policy.go                  tolerance.yaml loader and validation
       prompt_templates.go                  prompts.yaml loader and validation for 04
       selection_policy.go                  selection policy file loader
@@ -386,7 +386,7 @@ Parquet artifact models; `iocontracts/` holds the Parquet and in-memory models.
 | `docs/dataset/implementation/pipeline/testing/support-table.json` | Checked-in expected support table, one row per dimension value and task reasoning step count. | [`task-step-support.md`](task-step-support.md) and [`testing/00-support-tables.md`](pipeline/testing/00-support-tables.md). |
 | `data/`, `runs/` | Run output: `runs/run<NNNN>/`, `runs/cache/`, and `runs/manual_verification/<tool>/`. Gitignored. | The run. |
 
-Generator inputs (`balance.yaml`, `checks.yaml`, `tolerance.yaml`, and
+Generator inputs (`balance.yaml`, `release-checks.yaml`, `tolerance.yaml`, and
 `prompts.yaml`) live in `generator/config/`; see the Go module tree above. They
 are read by path and recorded by hash, not embedded in the binary.
 

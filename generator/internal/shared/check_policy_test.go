@@ -8,7 +8,7 @@ import (
 
 func TestLoadCheckPolicy(t *testing.T) {
 	root := moduleRoot(t)
-	policy, err := LoadCheckPolicy(filepath.Join(root, "config", "checks.yaml"))
+	policy, err := LoadCheckPolicy(filepath.Join(root, "config", "release-checks.yaml"))
 	if err != nil {
 		t.Fatalf("load check policy: %v", err)
 	}
@@ -53,7 +53,7 @@ func TestLoadCheckPolicy(t *testing.T) {
 }
 
 func TestLoadCheckPolicyRejectsUnknownField(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "checks.yaml")
+	path := filepath.Join(t.TempDir(), "release-checks.yaml")
 	document := "version: 1\nunknown_field: true\n"
 	if err := os.WriteFile(path, []byte(document), 0o644); err != nil {
 		t.Fatalf("write policy: %v", err)

@@ -9,7 +9,7 @@ authoritative. The findings are pinned to the snapshot above; if `main` has
 moved, re-check the owner files named in each finding before acting on it.
 
 **Scope:** `docs/dataset/` — the requirements, the implementation docs, the
-feature-wide decisions, and the root `balance.yaml`, `checks.yaml`, and
+feature-wide decisions, and the root `balance.yaml`, `release-checks.yaml`, and
 `prompts.yaml`. The audit is read-only; no owner document was changed.
 
 **Question:** before implementation starts, are there major architectural
@@ -142,7 +142,7 @@ unowned.
 final solid state with the target and every clue-bound entity highlighted in a
 distinct colour and labelled with its clue number. Its declared inputs are
 `ReleaseTable`, `RenderConfig`, the support tables, `balance.yaml`,
-`checks.yaml`, the external manifest, the benchmark set, and the failure
+`release-checks.yaml`, the external manifest, the benchmark set, and the failure
 partitions. It does not receive the CAD graph, the `TaskDefinition`s, or the
 normalized program text. `05` is Go; the renderer is a Python/CadQuery job.
 
@@ -241,7 +241,7 @@ graph builder version, not only `graph_schema_version`.
 
 ## `DA-6` — The test split has no guarantees
 
-**Evidence:** `checks.yaml` (only `scope: release` and `scope: per_step`);
+**Evidence:** `release-checks.yaml` (only `scope: release` and `scope: per_step`);
 `pipeline/05-validate-and-export-release/release-checks.md:109-111`;
 `requirements/release-dataset-contract.md:229-231`;
 `requirements/PRD.md:335-347`.
@@ -266,14 +266,14 @@ benchmark claim and the checks measure different things.
 
 ## `DA-7` — R-5 has no mechanism
 
-**Evidence:** `requirements/PRD.md:234`; `checks.yaml` has no R-5 row;
+**Evidence:** `requirements/PRD.md:234`; `release-checks.yaml` has no R-5 row;
 `pipeline/03-task-generation/03b-construct-task-definitions.md:342-359`;
 `requirements/prompt-content.md:170-183`.
 
 **What the docs say.** R-5 is P0: “Trivial shortcuts do not win on
 shape-required tasks. For a task that requires the built shape, an LLM model
 cannot answer by reading variable names, literal arguments, or operation order
-alone.” `checks.yaml` has no R-5 row. `03b` has no validity rule for shortcut
+alone.” `release-checks.yaml` has no R-5 row. `03b` has no validity rule for shortcut
 resistance. `geometry_required` is a clue-based flag, and `MC-22` already shows
 that flag is wrong for one-step tasks.
 

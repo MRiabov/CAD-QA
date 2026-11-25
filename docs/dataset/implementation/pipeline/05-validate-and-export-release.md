@@ -15,7 +15,7 @@ Coverage and balance checks:
 - `ReleaseTable` from `04` render prompt and choices.
 - The `RenderConfig` passed to `04` render prompt and choices.
 - The five task reasoning step support tables.
-- `generator/config/balance.yaml` and `generator/config/checks.yaml`.
+- `generator/config/balance.yaml` and `generator/config/release-checks.yaml`.
 - The external dataset manifest from `01e` write external dataset manifest.
 - The per-program `GraphCompletenessReport` set from `02c` build CAD graph.
 - The `ExternalBenchmarkProgramSet` from the release author, for the transfer
@@ -45,7 +45,7 @@ Coverage and balance checks:
   `release_table_sha256` covers the answer columns.
 - Recheck split isolation by CADEvolve program family on the final release
   table. `03a` assigns the split; `03b` stamps it; `04` carries it.
-- Run every check listed in `generator/config/checks.yaml`, as the semantics in
+- Run every check listed in `generator/config/release-checks.yaml`, as the semantics in
   [`05-validate-and-export-release/release-checks.md`](05-validate-and-export-release/release-checks.md)
   define them, and block the export on a miss the owner has not accepted.
 - Aggregate the `GraphCompletenessReport` set into the `graph_completeness`
@@ -74,7 +74,7 @@ Coverage and balance checks:
   `prompts.yaml` hash, and `RenderConfig.release_seed` in the manifest. A
   missing, extra, or untyped placeholder blocks the export.
 - Record the balance policy version and `balance.yaml` hash in the manifest,
-  and the check policy version and `checks.yaml` hash next to them.
+  and the check policy version and `release-checks.yaml` hash next to them.
 
 ## Language and parallelism
 

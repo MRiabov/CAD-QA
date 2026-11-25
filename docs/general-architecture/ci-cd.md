@@ -113,7 +113,7 @@ go vet ./...
 go test -count=1 ./...
 ```
 
-`-count=1` is deliberate. The policy tests read `balance.yaml`, `checks.yaml`,
+`-count=1` is deliberate. The policy tests read `balance.yaml`, `release-checks.yaml`,
 and `tolerance.yaml` from `generator/config/`, and Go's test cache does not
 track those reads. The build cache still works.
 

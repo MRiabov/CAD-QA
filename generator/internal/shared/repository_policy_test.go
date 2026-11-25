@@ -98,7 +98,7 @@ func namedBounds(check ReleaseCheck) map[string]*Bound {
 func loadRootCheckPolicy(t *testing.T) CheckPolicy {
 	t.Helper()
 
-	policy, err := LoadCheckPolicy(filepath.Join(moduleRoot(t), "config", "checks.yaml"))
+	policy, err := LoadCheckPolicy(filepath.Join(moduleRoot(t), "config", "release-checks.yaml"))
 	if err != nil {
 		t.Fatalf("load check policy: %v", err)
 	}

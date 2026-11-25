@@ -31,7 +31,7 @@ re-scope R-5 out of the P0 claim? The entry and its two options are below.
 #### MC-63 — R-5 has no mechanism
 
 [`PRD.md`](../requirements/PRD.md) R-5 is P0, but
-[`checks.yaml`](../../../generator/config/checks.yaml) has no shortcut row,
+[`release-checks.yaml`](../../../generator/config/release-checks.yaml) has no shortcut row,
 `03b`'s
 [`a-construction.md`](pipeline/03-task-generation/03b-construct-task-definitions/a-construction.md)
 has no validity rule, and [`prompt-content.md`](../requirements/prompt-content.md)
@@ -44,7 +44,7 @@ stack, so that closure removed the entry without leaving a measurement behind.
 **Recommendation:** no recommendation certain. The audit offers two options and
 the owner picks before `P0-W4`. Option one is a construction rule, recorded per
 task: at least one clue or the answer step depends on a measurement not fixed by
-a literal or by operation order, with a `checks.yaml` row over the recorded
+a literal or by operation order, with a `release-checks.yaml` row over the recorded
 result. Option two is a re-scope to the Phase 2 evaluation baseline report in
 [`docs/development-plan.md`](../../development-plan.md#phase-2--refresh-baselines-p1-no_toolscadquery-p2),
 which removes R-5 from the P0 release claim. The first keeps R-5 in P0 but has
@@ -85,7 +85,7 @@ capture. `05` counts by disposition during reconciliation, and the Go
 #### MC-66 — `extraction_capability_coverage` has no check and no cell set
 
 The check is absent from
-[`checks.yaml`](../../../generator/config/checks.yaml) and from
+[`release-checks.yaml`](../../../generator/config/release-checks.yaml) and from
 [`release-checks.md`](pipeline/05-validate-and-export-release/release-checks.md).
 "Must-extract capability cell" appears only in the plan and in
 [`manual-verification-protocol.md`](../../../plans/nov-21/manual-verification-protocol.md#seams-this-worktree-leaves-open)
@@ -97,7 +97,7 @@ checks read it as `not_applicable`.
 **Recommendation:** derive the must-extract cell set from the extraction
 contract's capability list, not from the observed census, and write it as a
 typed set in `extraction/validation.md`. Add `extraction_capability_coverage` to
-`checks.yaml` as a `set_equal` check over that set against the capabilities with
+`release-checks.yaml` as a `set_equal` check over that set against the capabilities with
 at least one accepted graph, and make a missing cell an enforced miss that
 blocks export in `release-checks.md`. The census and `capability_deficit` stay a
 quota-planning tool and do not substitute for the release check.

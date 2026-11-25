@@ -39,7 +39,7 @@ const (
 	CheckDispositionReported CheckDisposition = "reported"
 )
 
-// CheckPolicy is the typed root checks.yaml document.
+// CheckPolicy is the typed root release-checks.yaml document.
 type CheckPolicy struct {
 	Version int            `yaml:"version"`
 	Checks  []ReleaseCheck `yaml:"checks"`
@@ -98,7 +98,7 @@ func (b Bound) Number() (float64, error) {
 	return value, nil
 }
 
-// LoadCheckPolicy reads and validates one checks.yaml file. Unknown fields are
+// LoadCheckPolicy reads and validates one release-checks.yaml file. Unknown fields are
 // a load error, not a silently ignored check setting.
 func LoadCheckPolicy(path string) (CheckPolicy, error) {
 	file, err := os.Open(path)

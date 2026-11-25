@@ -31,7 +31,7 @@ from tools.ci_cd.ci_plan import JobPlan, Suite, changed_paths, plan, suites_for
         ("docs/glossary.md", set()),
         ("plans/nov-21/ci-contract.md", set()),
         ("generator/config/balance.yaml", {Suite.GO}),
-        ("generator/config/checks.yaml", {Suite.GO}),
+        ("generator/config/release-checks.yaml", {Suite.GO}),
         ("generator/config/tolerance.yaml", {Suite.GO}),
         ("generator/config/prompts.yaml", {Suite.GO}),
         ("pyproject.toml", {Suite.GO, Suite.PYTHON}),

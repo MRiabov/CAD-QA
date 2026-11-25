@@ -128,7 +128,7 @@ type KnownMiss struct {
 }
 ```
 
-A report row whose check is not listed in `checks.yaml` is a defect. The rows
+A report row whose check is not listed in `release-checks.yaml` is a defect. The rows
 are sorted by check name, scope, and value before the manifest is written.
 
 ## SupportTable

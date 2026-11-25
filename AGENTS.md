@@ -97,7 +97,7 @@ uv run pre-commit run --all-files   # after `uv run pre-commit install`
 ```
 
 `go test -count=1` disables the test cache because the policy-loader tests read
-`generator/config/balance.yaml` and `generator/config/checks.yaml` by path.
+`generator/config/balance.yaml` and `generator/config/release-checks.yaml` by path.
 Root `tests/` holds only the CI/CD gate tests; the Python worker and devtool
 tests sit beside their Python
 code (see [Tests](#tests)).

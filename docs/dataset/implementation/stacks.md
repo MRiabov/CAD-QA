@@ -59,7 +59,7 @@ host `go` older than the `go` directive downloads the declared toolchain, so
 | Logging | `log/slog` | standard library |
 | Processes and cancellation | `os/exec`, `context` | standard library |
 | CLI parsing and subcommands | `flag` | standard library; no third-party framework |
-| YAML policy files (`balance.yaml`, `checks.yaml`, `tolerance.yaml`) | `gopkg.in/yaml.v3` | decided, `STK-2` |
+| YAML policy files (`balance.yaml`, `release-checks.yaml`, `tolerance.yaml`) | `gopkg.in/yaml.v3` | decided, `STK-2` |
 | Worker contract structs | `github.com/atombender/go-jsonschema` | generated from `contracts/worker/v1/`, `DS-ADR-13` |
 | Formatting | `gofumpt`, `goimports` | decided, `STK-3` |
 | Linting and static analysis | `golangci-lint` | decided, `STK-3` |
@@ -196,7 +196,7 @@ the workflow is the `vite-plus` skill.
 ### STK-2 — Go reads YAML policy files with gopkg.in/yaml.v3
 
 - **Status:** accepted (2026-11-21).
-- **Context:** `balance.yaml`, `checks.yaml`, and `tolerance.yaml` are YAML and
+- **Context:** `balance.yaml`, `release-checks.yaml`, and `tolerance.yaml` are YAML and
   are read by Go pipeline stages. Go has no standard-library YAML decoder, and
   `python-and-golang.md` requires a decision before adding a Go dependency.
 - **Decision:** Go reads and validates the YAML policy files in

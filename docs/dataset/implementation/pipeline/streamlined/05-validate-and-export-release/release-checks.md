@@ -7,14 +7,14 @@
 
 READ:
 
-- `checks.yaml` → the ordered check list, each check's `id`, `arithmetic`, `scope`, `dimension`, `value`, `minimum_value`, bounds, disposition, and `known_misses`
+- `release-checks.yaml` → the ordered check list, each check's `id`, `arithmetic`, `scope`, `dimension`, `value`, `minimum_value`, bounds, disposition, and `known_misses`
 - `balance.yaml` → `dimensions`, `release.splits`, `release.share_tolerance`
 - the support-table derivation → `supported_values`
 - `ReleaseTable` → observed counts
 
 TRANSFORM:
 
-- validate `checks.yaml` before any check runs: known fields, known `arithmetic`, unique `id`, and every bound reference resolves in `balance.yaml`
+- validate `release-checks.yaml` before any check runs: known fields, known `arithmetic`, unique `id`, and every bound reference resolves in `balance.yaml`
 - `reference_share(scope, dimension, value) = policy_share(value) / sum(policy_share(x) for x in supported_values(scope, dimension))`; scope is a task reasoning step count or `release`
 - `05` holds no share of its own
 - run exactly the checks in the file; a check not in the file is not run, and a report row whose check is not in the file is a defect

@@ -391,7 +391,7 @@ func runCommand(ctx context.Context, args []string, stderr io.Writer) int {
 		RunsRoot:        "runs",
 		Scope:           ScopeP0,
 		Balance:         "generator/config/balance.yaml",
-		Checks:          "generator/config/checks.yaml",
+		Checks:          "generator/config/release-checks.yaml",
 		Prompts:         "generator/config/prompts.yaml",
 		TolerancePolicy: "generator/config/tolerance.yaml",
 		Jobs:            runtime.NumCPU(),

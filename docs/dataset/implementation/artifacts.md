@@ -22,7 +22,7 @@ this document owns ownership, lifecycle, and format, not field definitions.
 | Task quota plan | `03a` | `03b`, `03c` | Plan version, seed, and balance policy version | Parquet | Quotas, per-program census, family profiles, split assignment, and construction attempt budgets. |
 | Prompt templates | Prompt authoring | `04`, evaluation harness | Template version plus file hash | YAML | `generator/config/prompts.yaml`; all LLM-facing copy, with dataset and evaluation namespaces. Schema in [`prompt-templates.md`](prompt-templates.md); a missing, extra, or untyped placeholder is a validation error. |
 | Balance policy | Release authoring | `03a`, `05` | Policy version plus file hash | YAML | `generator/config/balance.yaml`; every tunable quota and balance number. Not a scope. |
-| Check policy | Release authoring | `05` | Policy version plus file hash | YAML | `generator/config/checks.yaml`; the release checks `05` runs. Not a scope. |
+| Check policy | Release authoring | `05` | Policy version plus file hash | YAML | `generator/config/release-checks.yaml`; the release checks `05` runs. Not a scope. |
 | Task definition | `03b` | `04` | Canonical task identity plus definition hash | Parquet | Persisted, answer-bearing construction record; invalid definitions are rejected. |
 | Deficit ledger | `03b` | `03a`, `03c` | Plan version plus update sequence | JSON | Accepted and rejected counts and remaining deficits by quota target, family, task reasoning step count, and deficit class. |
 | Release table | `04` | `05` | `release_id` | Parquet | One row per task; prompt is answer-free; carries `cadevolve_program_family_id` and the labeled choice pool. |
