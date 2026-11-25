@@ -35,7 +35,7 @@ One tool, two outputs.
 | Output | Content | Lifecycle |
 |---|---|---|
 | `runs/manual_verification/review_pack/<release_id>/` | one render per sampled task and an `index.parquet` of task, hashes, render path, and matrix cell | regenerable; not a release file |
-| `runs/manual_verification/review_pack/<release_id>/review-ledger.parquet` | one row per verdict | append-only; the tool's output |
+| `runs/manual_verification/review_pack/<release_id>/review-ledger.parquet` | one row per verdict | append-only; the task browser writes the same file before the pack exists |
 
 The tool writes both. `05` reads the ledger, copies it into the release
 directory as a control document, and never renders.
@@ -118,8 +118,9 @@ answer text is enough to review tasks. That is
 `tools/manual-verification/task-browser/`, under the manual verification
 convention in [`README.md`](README.md#manual-verification); it lists, filters,
 and opens tasks with an interactive 3D view and writes no static projection.
-The reviewer flags tasks that need a closer look in the same ledger, with
-`verdict` and `defect_note`.
+The reviewer records `pass` or `defect` with the browser's approval action,
+which appends to the same ledger; `pack generate` reuses that writer and adds
+the renders, the index, and the `pending` rows.
 
 ## What this does not prove
 

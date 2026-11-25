@@ -455,7 +455,7 @@ artifact.
 |---|---|---|
 | `family_split_registry` | `missing`; `DA-8` records that [`artifacts.md`](artifacts.md) has no row. | Add the artifact row first. `05` writes it after a release; `03a` reads the previous release's registry. Choose whether it is a release control document or a run-level artifact, and record its hash in the release manifest. |
 | `run_report` | `missing`; the manual-verification protocol and [`graph-completeness.md`](pipeline/extraction/graph-completeness.md#8-report) both refer to it. | Choose `generator report` or `tools/manual-verification/run_report.py`. It is evidence, not a release file. |
-| Review ledger | `exists` in [`artifacts.md`](artifacts.md); the tool has no code home. | `review_pack.py` writes it under `runs/manual_verification/review_pack/<release_id>/`; `05` copies it into the release and records `review_ledger_sha256`. |
+| Review ledger | `exists` in [`artifacts.md`](artifacts.md); `tools/manual-verification/task_browser.py` writes it from `P0-W2`, and `review_pack.py` reuses the writer from `P0-W6`. | Both write `runs/manual_verification/review_pack/<release_id>/review-ledger.parquet`; `05` copies it into the release and records `review_ledger_sha256`. |
 | Evaluation material and grader | Out of scope for this tree. | [`docs/train-and-eval/`](../../train-and-eval/) owns the harness, grader, prompt-only view, answer parsing, and scoring. `04` only renders the release prompt. |
 
 `family_split_registry` is the durable

@@ -1,6 +1,6 @@
 # Dataset implementation plan — 2026-11-21
 
-**Status:** working plan, updated 2026-11-21 against commit `ef3ac58`.
+**Status:** working plan, updated 2026-11-25 against commit `059e8fb`.
 
 This document owns the order in which the replacement dataset generator is
 built, keyed by the requirement scope each work item implements. It does not own
@@ -101,23 +101,44 @@ are local to `03b` and are numbered `03b-M1`–`03b-M5`:
 No code. Each item is a small edit to one owner document, scheduled here because
 the code that would otherwise encode the wrong answer is `P0-W2` or `P0-W3` work.
 
+Four items remain open. `DA-4`, `DA-15`, `DA-13`, and `DA-5` closed between the
+audit and 2026-11-25 and are listed below the table.
+
 | Item | Owner | Why it cannot wait |
 |---|---|---|
-| `DA-4` / `MC-53` — one answer-equivalence relation | `03b`, `DS-REQ-15`, `release-dataset-contract.md` | `03b` uniqueness and the grader must be the same predicate, or a task passes construction and fails scoring |
-| `MC-22` / `DA-15` — `geometry_required` for one-step tasks | `03b`, `checks.yaml`, `task-structure.md` | Changes what `03a` plans and what `05`'s 95% check counts |
-| `DA-7` — the R-5 shortcut-resistance proxy, or its re-scope | `03b`, `checks.yaml`, `prompt-content.md` | R-5 is P0 and no construction rule or check measures it |
-| `DA-13` / `MC-44` — support-table derivation and fixtures | `task-step-support.md`, `testing/00-support-tables.md` | `03a` cannot run without the derivation; the fixtures are programs, so they are `P0-W3` work |
-| `DA-5` — `release_id` inputs | `release-dataset-contract.md`, `artifacts.md` | The manifest writer in `P0-W2` should record the final field set |
-| Review frames: absence and residual, ledgers scoped to a pipeline stage | `devtools/review-pack.md`, `05` | The merged pack samples release rows only; partial extraction loss and unknown unknowns have no review frame |
-| Failure disposition: `by_design`, `corpus_defect`, `extractor_gap` | `failure-record.md`, `validation.md` | Every rejection is equally legitimate today, so an extractor gap is indistinguishable from a corpus limitation |
-| Extraction capability coverage check | `checks.yaml`, `release-checks.md` | A must-extract capability with zero accepted graphs is a silent deficit, not a release failure |
+| `DA-7` / `MC-63` — the R-5 shortcut-resistance proxy, or its re-scope | `03b`, `checks.yaml`, `prompt-content.md`, `docs/development-plan.md` | R-5 is P0 and no construction rule or release check measures it. The documented candidate is the Phase 2 baseline report, and a re-scope is a decision, not silence |
+| `MC-64` — review frames: absence and residual, ledgers scoped to a pipeline stage | `devtools/review-pack.md`, `05` | The merged pack samples release rows only; partial extraction loss and unknown unknowns have no review frame. `file-trees.md` names the two tools and not the ledger cells |
+| `MC-65` — failure disposition: `by_design`, `corpus_defect`, `extractor_gap` | `failure-record.md`, `extraction/validation.md` | Every rejection is equally legitimate today. `graph-completeness.md` classifies a missing graph row, but the failure record has no disposition column, so a rejected program still cannot be classified |
+| `MC-66` — extraction capability coverage check | `checks.yaml`, `release-checks.md`, `03a/a-support-derivation.md` | A must-extract capability with zero accepted graphs is a silent deficit: it has no support-table row, so the coverage checks read it as not applicable, and the census plus `capability_deficit` do not block export |
+
+Closed since the audit's `P0-W1` table:
+
+- `DA-4` / `MC-53` — `DS-REQ-15` makes `same_answer` the construction comparison
+  and the grader's comparison, and `b-answer-semantics.md` rechecks the
+  answer-equivalent set against it.
+- `MC-22` / `DA-15` — `geometry_required` is derived from the answer meaning and
+  the clue type in `a-construction.md`; `checks.yaml` selects `value: true` in
+  `built_shape_share_floor`, so the 95% floor is executable.
+- `DA-13` / `MC-44` — the support-table derivation is written in
+  `task-step-support.md` and `testing/00-support-tables.md`. The coverage
+  fixtures are programs, so they are `P0-W3` artifacts, not a missing contract.
+- `DA-5` — the `release_id` inputs are the table in
+  `release-dataset-contract.md` §7.1, so the `P0-W2` manifest writer records the
+  final field set.
+- `MC-50` — closed in `30c66b5`; pair emission is bounded per reference class
+  (`DS-REQ-37`), which schedules `02c` and `03b` work in `P0-W3` and `P0-W4`.
+- `MC-49` / `DS-ADR-16` — closed in `059e8fb`; the P0 exact-text overlap check
+  belongs to `05` in `P0-W6`.
+- `DS-ADR-15` — `982423e` makes run wall time a CadQuery-execution budget; the
+  `P0-W3` measurement certifies it.
 
 The performance findings `PA-1`–`PA-14` are closed in `ef3ac58`: `EX-22` to
 `DS-ADR-09` and the run-contract rewrite carry them. Their implementation is `P0-W2`,
 `P0-W3`, and `P0-W4` work; the plan schedules that work, not the decision.
 
-Already closed: `DA-1` by `run-contract.md`, and `DA-3`'s data path by the
-review-pack ledger in `01578d8`; the renderer is `P0-W6` code, not a `P0-W1` gap.
+Closed before the audit list was written: `DA-1` by `run-contract.md`, and
+`DA-3`'s data path by the review-pack ledger in `01578d8`; the renderer is
+`P0-W6` code, not a `P0-W1` gap.
 The graph completeness contract and the extraction-graph oracle format are
 written; their implementation and the verified oracle set are `P0-W3` work.
 
@@ -129,7 +150,7 @@ Deferred, and deliberately not closed in `P0-W1`:
 | `DA-6` per-split coverage and balance | `P0-W6` | The checks are `05` code and their bounds depend on what `03b` can construct |
 | `DA-8` family-to-split registry | `P0-W6` writer, `P1-W3` reader | The writer must exist before the first release; only the second release reads it |
 | `DA-9` license and attribution | `P1-W4` | Publication blocker, not a first-release blocker |
-| `MC-49` external benchmark program set | `P1-W2` | R-16 is P1; `05` owns the overlap check and the manifest fields |
+| `MC-49` external benchmark program set (the artifact, not its contract) | `P1-W2` | R-16 is P1; `05` owns the P0 overlap check and the manifest fields |
 | Construction cost constants | `P0-W4` | `TG-10` sets the budget and cover-search rules; the provisional numbers need one measured pass over the pool |
 | `02b` point-probe state scope | `P0-W3` | `ef3ac58` records that P0 binds one solid state but `02b` still probes every state; resolve it with the `DS-REQ-10` rule |
 | Release answer column review | `P0-W6` | `ef3ac58` makes the answer columns typed consumer-facing Parquet; confirm them before the first published release |
@@ -185,13 +206,43 @@ to change.
   `failures.parquet`, `manifest.json`, the dataset card, and `support/`.
 - `tools/manual-verification/task_browser.py` opens the skeleton row: the final
   solid state, the prompt text, and the gold answer. It is the owner's first
-  verification point and the same tool serves `P0-W4`.
+  verification point and the same tool serves `P0-W4`. Its approval action
+  appends the verdict to the review ledger at the `review-pack.md` path; that is
+  an edit to the existing browser, and the schema is the one `P0-W6`'s pack
+  consumes.
 
 **Pass condition.** `test_pipeline_end_to_end` from
 `testing/00-end-to-end.md` is written from its contract and green on the fixture
 pool; a second run with the same inputs executes no unit, writes no part, and
 produces byte-identical `release.parquet`; `generator status` reports the
 completion marker and part counts for each pipeline stage.
+
+**Scope, and what replaces it.** The skeleton is deliberately thin. Each thin
+part has an owner later in the plan; a skeleton behaviour that is not in this
+table is part of the contract and is not replaced later.
+
+| Skeleton behaviour | Replaced by | Failure if left |
+|---|---|---|
+| `01` runs on a three-program fixture pool | `P0-W3` full pool | the fixture hides fetch, selection, and normalization failures |
+| `03a` emits a one-cell plan | `P0-W5` quota allocation | the typed plan bakes in one cell and one program |
+| `03b-M1`: final solid state, volume answer, number format, one step | `P0-W4` `03b-M2`/`M3` | the constructor grows a path that the `box-volume` oracle later disagrees with |
+| `05` exports without the full check suite | `P0-W6` P0 checks and `known_misses` | the partial export becomes the release contract |
+| One `GraphCompletenessReport`, for `box-with-hole` | `P0-W3` whole pool | the report shape is the acceptance gate, and it is untested on hard geometry |
+| `02b` binds one solid state; the point-probe scope is unresolved | `P0-W3` `DS-REQ-10` rule | changing it later invalidates every graph and every `03b` unit |
+| No family-to-split registry | `P0-W6` writer, `P1-W3` reader | the first release becomes the migration |
+| No review pack, only `task_browser` and the review ledger | `P0-W6` sampled matrix | the ledger schema changes after rows exist |
+| No graph persistence tuning; one part per `02b` unit | contract, not a shortcut (`DS-ADR-07`/`DS-ADR-09`) | none; this one is not replaced |
+
+**Contract conflict to settle before the first commit.** `P0-W2`'s `03b` scope
+is `03b-M1` (one step, volume, no clue search), but `test_pipeline_end_to_end`
+in [`testing/00-end-to-end.md`](../../docs/dataset/implementation/pipeline/testing/00-end-to-end.md)
+asserts that the golden record's definition appears in the release, and
+[`golden/box-with-hole.json`](../../docs/dataset/implementation/pipeline/testing/golden/box-with-hole.json)
+is a three-step edge-length task. The test cannot be green on a one-step
+constructor as written. Either the skeleton asserts a one-step `box-volume`
+golden and `box-with-hole` moves to `P0-W4`, or the skeleton's single row is the
+box-with-hole chain. The first keeps `03b-M1` honest and is the smaller scope;
+the test doc owns the answer and must say which before `P0-W2` is marked green.
 
 **Why first.** Artifact identities, the Parquet schema across the Go/Python
 boundary, the worker protocol, resume, and failure reconciliation are the
@@ -213,7 +264,9 @@ Started first of the two concurrent tracks.
   validates and renames; the 30-second limit starts at the child's ready signal.
 - `02c`: graph construction and persistence, bindable-state pair emission and
   `implementation_scope` in the graph identity (`DS-REQ-10`), the capability census,
-  and the fingerprint copy instead of a recompute (`DS-ADR-08`).
+  the fingerprint copy instead of a recompute (`DS-ADR-08`), and the pair-emission
+  bound per reference class (`DS-REQ-37`, `MC-50`): a dense class is emitted
+  whole or not at all, and the bound is measured from the pool.
 - Shard parts for `01d`, `02a`, and `02c`; `02b` stays one unit per part
   (`DS-ADR-07`).
 - Resolve the `02b` point-probe scope: P0 binds one solid state per task, so
@@ -232,8 +285,9 @@ Started first of the two concurrent tracks.
 
 **Pass condition.** The extraction validation and graph persistence tests pass
 on a 100-program slice and then the full active pool; every program either has a
-graph or one failure row and the counts reconcile; per-program wall clock, CPU,
-and peak memory are recorded; the graph report is comparable to the pre-rebuild
+graph or one failure row and the counts reconcile; per-program CadQuery-execution
+wall clock is reported against the `DS-ADR-15` budget with import time separate,
+and CPU and peak memory are recorded; the graph report is comparable to the pre-rebuild
 measurements (677,937 CAD graph entities and 20,135,608 CAD graph relations for
 1,000 programs); the completeness report has no unexplained missing, orphan, or
 unclassified row, and every must-extract capability has a verified oracle.
@@ -242,16 +296,32 @@ unclassified row, and every must-extract capability has a verified oracle.
 
 Started roughly a week after `P0-W3`.
 
+**Input: the gold matrix is complete.** The owner approved the hand-authored set
+on 2026-11-25, and it is recorded outside the oracle files: the eight P0 prompts
+in [`prompt-examples.md`](../../docs/dataset/requirements/views/prompt-examples.md#p0)
+(including the comparison and provenance clue types), every P0 reference form in
+[`reference-forms.md`](../../docs/dataset/requirements/views/reference-forms.md#p0),
+and the clue strings in
+[`clue-list.md`](../../docs/dataset/requirements/views/clue-list.md#p0). Thirteen
+of the cases also have an executable record under
+[`oracles/task-construction/`](../../docs/dataset/implementation/pipeline/testing/oracles/task-construction/README.md),
+with a gold query that runs without generator code. `03b` matches the records by
+answer, clue chain, and evidence, and treats an approved worked example as the
+gold for a cell with no record. §9 of the oracle README counts records only; it
+is reworded when `03b` lands so a missing record does not read as a missing
+vocabulary cell.
+
 - The `TG-10` construction rules first: one attempt budget per (CADEvolve program
   family, task reasoning step count), one program pass per revision with the
   census from the plan, and count-based cover-search scope constants. These rules
   are what keep a 10,000-task release from becoming 10^5 cover searches.
 - The clue-search milestone (`03b-M2`), then the full-vocabulary milestone
-  (`03b-M3`): comparison, aggregation, provenance, multiple target categories,
-  distance, angle, region. This is the P0 vocabulary; the P2 extras stay out.
+  (`03b-M3`): comparison, provenance, multiple target categories, distance,
+  angle, region. This is the P0 vocabulary; aggregation is P1 and the P2 extras
+  stay out.
 - Golden records per task shape, and the property tests: every accepted task is
-  answer-unique under `DA-4`'s predicate, every clue narrows, and every clue is
-  true of all final possible answers.
+  answer-unique under the `same_answer` predicate (`DS-REQ-15`), every clue
+  narrows, and every clue is true of all final possible answers.
 - The multiple-choice pool from the penultimate answer candidate set, under
   `MC-15`.
 - `DA-7`'s R-5 proxy as a construction rule, if `P0-W1` defined one.
@@ -282,11 +352,12 @@ at every pipeline stage, a deficit ledger, and one exercised slow-loop round.
 - `04`: the full projection, choices, and the evaluation-namespace prompt.
 - `05`: the P0 release checks, including per-split coverage and balance
   (`DA-6`), `release_id` (`DA-5`), the family-to-split registry writer (`DA-8`),
-  the dataset card, and the answer-column review.
+  the P0 exact-text overlap check against the external benchmark program set
+  (`MC-49`, `DS-ADR-16`), the dataset card, and the answer-column review.
 - The review-pack renderer and its sampled matrix, per
   [`devtools/review-pack.md`](../../docs/dataset/implementation/devtools/review-pack.md);
-  `tools/manual-verification/task_browser.py` and the ledger already exist from
-  `P0-W2`.
+  the browser and its ledger write already exist from `P0-W2`, and the pack adds
+  `generate`, the renders, the `pending` rows, and the matrix.
 - The review pack's absence and residual frames, and the release gate that
   requires every upstream stage ledger to be clean, so an open extraction gap
   blocks export even when the release rows look complete.
@@ -381,8 +452,9 @@ points into passes and names the seams they do not cover.
   while the prompt copy and the constructor are still moving. Do not defer
   wording review to `P0-W6`: a defect there costs a re-render, a new
   `prompt_sha256`, and a fresh review of that cell.
-- The review ledger is written from `P0-W2` on, so no owner judgement is
-  throwaway. `tools/manual-verification/task_browser.py` and the ledger are the
+- The review ledger is written from `P0-W2` on by the task browser's approval
+  action, so no owner judgement is throwaway.
+  `tools/manual-verification/task_browser.py` and the ledger are the
   first-release fallback in
   [`devtools/review-pack.md`](../../docs/dataset/implementation/devtools/review-pack.md);
   the sampled pack with the full matrix lands in `P0-W6`.
@@ -405,19 +477,21 @@ points into passes and names the seams they do not cover.
 
 ## What is already done
 
-The scaffold is nearly complete and green (`go test ./...` three packages,
-`uv run pytest` 47 tests):
+The scaffold is green (`(cd generator && go test -count=1 ./...)`, `uv run pytest`):
 
 - `generator/main.go`, `generator/internal/run/run.go` — flags, pipeline stage selection,
   exit codes, usage;
 - `generator/internal/shared/` — typed artifact tables, the failure record and
-  its merge, the `balance.yaml` and `checks.yaml` loaders, the worker bridge;
+  its merge, the `balance.yaml` and `checks.yaml` loaders, the worker bridge, and
+  the checked-in worker JSON Schema;
 - `generator/python/cadqa_dataset_generator/worker.py` — the worker protocol and dispatch;
-  `s01d`, `s02a`, `s02b` are stubs that raise `PipelineStageNotImplemented`;
+  `s01d`, `s02a`, `s02b` raise `PipelineStageNotImplemented`;
 - the test contracts for every pipeline stage, the golden record, `prompts.yaml`, and
   `tolerance.yaml`;
 - the graph completeness contract, the extraction-graph oracle format and two
-  `proposed` records, and the oracle builder.
+  `proposed` records, the oracle builder, and the task-construction oracle set
+  with its schema, runner, and verifier;
+- `tools/manual-verification/task_browser.py` and the task browser frontend.
 
 So `P0-W2` is not "initialise everything"; it is the run-contract code half plus
 one thin body per stage. Do not stub `03`–`05` beyond what `P0-W2` needs: a stub
@@ -440,6 +514,10 @@ package that guesses its typed models is a second schema to maintain.
   P1 balance bounds wait for the P0 release; only the family-to-split registry
   writer is early, because the first release would otherwise become the
   migration.
+- **Do not read `missing-contracts.md` as the status of `P0-W1`.** It is
+  explicitly ephemeral and tracks the entries someone remembered to file. The
+  four open `P0-W1` items now have `MC-63`–`MC-66` rows, but the owner doc named
+  in the `P0-W1` table is still the only evidence that the contract exists.
 
 ## Quality gates
 

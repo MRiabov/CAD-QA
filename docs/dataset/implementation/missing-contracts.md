@@ -1,8 +1,8 @@
 # Missing contracts
 
-**Status:** ephemeral audit backlog, 2026-11-20. This is not a source of truth.
-Each entry names an absent contract. When the contract is written into its owner
-doc, delete the entry. Open questions remain in
+**Status:** ephemeral audit backlog, 2026-11-20; reopened 2026-11-25. This is
+not a source of truth. Each entry names an absent contract. When the contract is
+written into its owner doc, delete the entry. Open questions remain in
 [`open-questions.md`](open-questions.md).
 
 The **Product** sections are the decisions only the owner can make; they are
@@ -13,21 +13,114 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-No open entry remains. No product decision remains open, and P0 is empty.
+There are 4 open entries: one P0 product decision and three P0 technical
+contracts. P1 and P2 are empty. The four were scheduled as `P0-W1` items and
+never written into their owner docs; none had an `MC-*` row, so the earlier
+"No open entry remains" sentence was about the `MC-*` file and not about
+`P0-W1`.
 
 ## Decisions needed from the owner
 
-None.
+R-5 (`MC-63`): write a measurable shortcut-resistance proxy with a check, or
+re-scope R-5 out of the P0 claim? The entry and its two options are below.
 
 ## P0
 
 ### Product (P0)
 
-None.
+#### MC-63 — R-5 has no mechanism
+
+[`PRD.md`](../requirements/PRD.md) R-5 is P0, but
+[`checks.yaml`](../../../generator/config/checks.yaml) has no shortcut row,
+`03b`'s
+[`a-construction.md`](pipeline/03-task-generation/03b-construct-task-definitions/a-construction.md)
+has no validity rule, and [`prompt-content.md`](../requirements/prompt-content.md)
+enforces only `DS-REQ-05` (no variable names), which does not stop an LLM model
+from using literal arguments or operation order. The `MC-22` closure points at a
+baseline report that does not exist in the current tree; the only baselines doc
+is the `stale` `docs/train-and-eval/evaluation/baselines.md` from the deleted
+stack, so that closure removed the entry without leaving a measurement behind.
+
+**Recommendation:** no recommendation certain. The audit offers two options and
+the owner picks before `P0-W4`. Option one is a construction rule, recorded per
+task: at least one clue or the answer step depends on a measurement not fixed by
+a literal or by operation order, with a `checks.yaml` row over the recorded
+result. Option two is a re-scope to the Phase 2 evaluation baseline report in
+[`docs/development-plan.md`](../../development-plan.md#phase-2--refresh-baselines-p1-no_toolscadquery-p2),
+which removes R-5 from the P0 release claim. The first keeps R-5 in P0 but has
+to be true of one-step volume and count tasks as well, not only tasks whose
+answer is a measurement; the second leaves those tasks in the release without a
+shortcut claim.
 
 ### Technical (P0)
 
-None. `MC-50` closed in the 2026-11-25 pair-emission pass.
+Work order:
+
+1. `MC-65` — a rejection has no disposition; `02a`/`02b`/`02c` write rejection
+   rows from `P0-W3` on.
+2. `MC-66` — the must-extract cell set and its coverage check; the `P0-W3` pass
+   condition names the check and the cell set is its prerequisite.
+3. `MC-64` — the absence and residual review frames; the review gate in `P0-W6`
+   consumes them.
+
+#### MC-65 — A rejection has no disposition
+
+The [`failure-record.md`](failure-record.md) row carries no
+`by_design | corpus_defect | extractor_gap` column, and the reason sets in
+[`extraction/validation.md`](pipeline/extraction/validation.md) do not supply
+one. `CompletenessDisposition` in
+[`graph-completeness.md`](pipeline/extraction/graph-completeness.md) is the
+nearest pattern, but it classifies a missing graph row on an accepted graph, not
+a rejected program, so an extractor gap is still indistinguishable from a
+corpus limitation.
+
+**Recommendation:** add a typed `disposition` column to the failure record, and
+make each rejecting stage's closed reason set name the disposition its reasons
+carry. `by_design` is a rejection the contract intends at the declared scope;
+`corpus_defect` is invalid CadQuery program or a runtime result the contract
+excludes; `extractor_gap` is a supported construct the extractor failed to
+capture. `05` counts by disposition during reconciliation, and the Go
+`FailureRecord` struct and its merge test follow the column.
+
+#### MC-66 — `extraction_capability_coverage` has no check and no cell set
+
+The check is absent from
+[`checks.yaml`](../../../generator/config/checks.yaml) and from
+[`release-checks.md`](pipeline/05-validate-and-export-release/release-checks.md).
+"Must-extract capability cell" appears only in the plan and in
+[`manual-verification-protocol.md`](../../../plans/nov-21/manual-verification-protocol.md#seams-this-worktree-leaves-open)
+seam 4; no enumeration or derivation exists. The census and
+`capability_deficit` path are a deficit ledger, not a release gate: a capability
+absent from every accepted graph has no support-table row, so the coverage
+checks read it as `not_applicable`.
+
+**Recommendation:** derive the must-extract cell set from the extraction
+contract's capability list, not from the observed census, and write it as a
+typed set in `extraction/validation.md`. Add `extraction_capability_coverage` to
+`checks.yaml` as a `set_equal` check over that set against the capabilities with
+at least one accepted graph, and make a missing cell an enforced miss that
+blocks export in `release-checks.md`. The census and `capability_deficit` stay a
+quota-planning tool and do not substitute for the release check.
+
+#### MC-64 — The review gate has no absence or residual frame
+
+The ledger in [`devtools/review-pack.md`](devtools/review-pack.md) samples
+release rows and is keyed `(task_id, definition_sha256, prompt_sha256)`, one
+verdict per rendered task. There is no frame for "was each absent program or
+capability legitimately absent", no uniform draw from the pinned pool at the
+`3/p` size, and no ledger scoped to an upstream pipeline stage; `05` checks only
+the sampling matrix. `rejection_contact_sheet.py` and `residual_sample.py` are
+planned in [`file-trees.md`](file-trees.md#tools-and-manual-verification) and
+write no ledger cell.
+
+**Recommendation:** add two ledgers to `review-pack.md`. The absence ledger has
+one row per absent program or capability, keyed by the upstream pipeline stage
+and the subject identity, with a disposition and the evidence that supports it.
+The residual ledger has one row per program drawn uniformly from the pinned
+pool, with the sample size the `3/p` rule sets and the oracle-differential
+result. `05`'s review gate requires the absence ledger to account for every
+upstream stage deficit and the residual sample to meet its size, and the
+manifest records both hashes.
 
 ## P1
 

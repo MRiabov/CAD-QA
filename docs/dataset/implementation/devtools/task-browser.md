@@ -2,7 +2,8 @@
 
 **Status:** available, 2026-11-23. The first owner-review tool for a whole
 release table or the checked-in gold task oracles: a task list, a filter bar,
-and an interactive 3D view.
+and an interactive 3D view. The release-row approval action and its ledger
+write are `planned` for `P0-W2`; gold mode stays read-only.
 
 `tools/manual-verification/task_browser.py` serves a local JSON API over one
 release `release.parquet` or one directory of
@@ -65,10 +66,27 @@ checked-in gold records. Gold rows take their split and subset from the input
 
 ## Outputs
 
-The tool writes no release file. It caches one tessellation per program under
+The tool writes no release file. It writes the [review
+ledger](review-pack.md#review-ledger) for a release row the reviewer approves or
+rejects, at
+`runs/manual_verification/review_pack/<release_id>/review-ledger.parquet`; the
+path is the [review pack](review-pack.md) contract's, and `--review-ledger`
+overrides it. `--reviewer` names the reviewer and defaults to the local user.
+
+It caches one tessellation per program under
 `runs/manual_verification/task_browser/cache/<program_sha256>-v1.json`, so tasks
 that share a program share a scene. `node_modules/` and `dist/` are ignored; the
 frontend code and `pnpm-lock.yaml` are checked in.
+
+## Review ledger
+
+The approval action appends the row the [review pack](review-pack.md#review-ledger)
+defines: `task_id`, `definition_sha256`, `prompt_sha256`, `verdict`, `reviewer`,
+`reviewed_at`, `defect_note`, and `render_sha256`. The key is
+`(task_id, definition_sha256, prompt_sha256)`; a later row with the same key
+supersedes an earlier one, and `pending` never satisfies the review gate. The
+browser writes release rows only; a gold record's verification stays in its JSON
+record.
 
 ## API
 
@@ -78,6 +96,8 @@ frontend code and `pnpm-lock.yaml` are checked in.
 | `GET /api/tasks?offset=&limit=&search=&split=&subset=&target_category=&answer_meaning=&order=&seed=` | One page of task summaries. `order=random` with a `seed` is stable. |
 | `GET /api/tasks/<task_id>` | Prompt (null for a gold row), program, answer, choices, diagnostics, and the gold record. |
 | `GET /api/tasks/<task_id>/scene` | Tessellated triangles and line segments, bounds, legend, and counts. |
+| `GET /api/reviews?task_id=` | The latest verdict for the task, or none. |
+| `POST /api/reviews` | Appends one ledger row; the body carries `task_id`, `verdict`, `defect_note`, and optionally `render_sha256`. |
 
 `limit` is capped at 200. The scene is cached by `program_sha256` and
 `scene_version`, so a change to the tessellation invalidates it.
@@ -94,7 +114,9 @@ narrows the target before seeing the answer. Panel open state lives in the
 detail pane, so a panel the reviewer opened stays open when they switch tasks.
 The `Full prompt` panel is the release prompt for a release row; a gold record
 has no `04` render, so it assembles the record as one plain block: the program
-in a Python fence, the question, and the clue statements. The program and gold
+in a Python fence, the question, and the clue statements. A release row's
+detail pane carries the approval control: `pass` and `defect`, a note required
+on `defect`, and the task's latest verdict. The program and gold
 query are syntax-highlighted with `prism-react-renderer`. The 3D view uses
 three.js `OrbitControls` with `Z` up, so the view matches the program frame, and
 a corner `ViewHelper` shows the axes.
@@ -105,9 +127,11 @@ when they are added.
 
 ## Gold oracles
 
-It is read-only. It writes no record and changes no verification status; the
-reviewer edits the JSON through the documented procedure in
+Gold mode is read-only. It writes no record and changes no verification status;
+the reviewer edits the JSON through the documented procedure in
 [`task-construction/README.md`](../pipeline/testing/oracles/task-construction/README.md).
+The approval action above applies to release rows, not to a record's
+`verification` block.
 
 The gold set has no rendered prompt. Each record carries a hand-authored
 `question`, which is the list preview and the first block of the `Task` group.
@@ -133,8 +157,9 @@ way it renders a release program.
 
 The reviewer filters to a slice, opens a task, reads the prompt, orbits the
 final solid state, and checks that the gold answer is defensible and that the
-prompt names the entity the answer measures. A defect is recorded in the review
-ledger with the task and the note.
+prompt names the entity the answer measures. The verdict is recorded with the
+approval control, which appends `pass` or `defect` (with the note) to the review
+ledger.
 
 In gold mode the reviewer opens each record, orbits the program's final solid
 state, and checks that the answer is the one a careful human would give, that

@@ -50,13 +50,13 @@ this answer match the geometry. An automated check cannot make that judgement.
 - A script that becomes load-bearing moves into the package and gets a test.
 
 The first available manual verification tool is the
-[task browser](task-browser.md). The [review pack](review-pack.md) is planned and
-replaces the task browser when the sampling matrix lands.
+[task browser](task-browser.md). The [review pack](review-pack.md) is planned; it
+adds the sampled matrix and reuses the browser's ledger writer.
 
 ## Tools
 
 | Tool | What it does | Status |
 |---|---|---|
-| [`task-browser.md`](task-browser.md) | Lists, filters, and opens release tasks or gold oracles with an interactive 3D view. | `available` |
-| [`review-pack.md`](review-pack.md) | Renders sampled release tasks and writes the review ledger that gates export. | `planned` |
+| [`task-browser.md`](task-browser.md) | Lists, filters, and opens release tasks or gold oracles, and records a release row's verdict in the review ledger. | `available`; approval `planned` |
+| [`review-pack.md`](review-pack.md) | Renders sampled release tasks, writes the `pending` ledger rows, and gates export on the ledger. | `planned` |
 | Don't-say checker | Enforces the glossary's Don't-say table and the identifier renames. | `available`; see [`../../../docs-conventions.md`](../../../docs-conventions.md) |
