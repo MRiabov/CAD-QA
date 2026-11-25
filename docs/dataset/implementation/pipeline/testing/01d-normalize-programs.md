@@ -42,7 +42,8 @@ extract CadQuery AST uses.
 - `messy`, `messy_reformatted`, and `canonical` share one `program_id`, all three
   rows are written, and one of the duplicates is recorded against the other;
 - `broken` and `binary` have no normalized row, and each has one failure record
-  naming `syntax_error` with a `source_line` and `invalid_utf8` without one.
+  naming `syntax_error` with a `program_line` and `invalid_utf8` without one;
+  both rows carry disposition `corpus_defect`.
 
 `test_01d_canonical_text_is_idempotent` — normalizing `canonical` a second time
 returns the same bytes and the same `program_id`. Without this, `program_sha256`

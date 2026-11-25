@@ -16,6 +16,7 @@ func testFailureRecord() FailureRecord {
 		TaskID:          &taskID,
 		InputSHA256:     &inputSHA,
 		ReasonCode:      "syntax_error",
+		Disposition:     FailureDispositionCorpusDefect,
 		Detail:          "unexpected token",
 		ProgramLine:     &programLine,
 		ProgramSpan:     &ProgramSpan{StartColumn: 3, EndColumn: 9},
@@ -49,6 +50,17 @@ func TestFailureIDIsDeterministicVersion5(t *testing.T) {
 	if changed.FailureID == first.FailureID {
 		t.Fatal("failure id did not change with the reason code")
 	}
+
+	// Disposition is a function of the reason code, so it is not part of the
+	// dedupe key and must not move the identity.
+	redescribed := testFailureRecord()
+	redescribed.Disposition = FailureDispositionExtractorGap
+	if err := redescribed.AssignFailureID(); err != nil {
+		t.Fatalf("assign redescribed failure id: %v", err)
+	}
+	if redescribed.FailureID != first.FailureID {
+		t.Fatal("failure id changed with the disposition")
+	}
 }
 
 func TestFailureDedupeKeyCanonicalJSONIsSorted(t *testing.T) {
@@ -80,6 +92,9 @@ func TestFailureDedupeKeyCanonicalJSONIsSorted(t *testing.T) {
 	if strings.ContainsAny(text, " \n") {
 		t.Fatalf("canonical json %s contains whitespace", text)
 	}
+	if strings.Contains(text, `"disposition"`) {
+		t.Fatalf("canonical json %s contains the non-key disposition", text)
+	}
 }
 
 func TestMergeFailureRecordsSumsOccurrencesAndSorts(t *testing.T) {
@@ -95,6 +110,7 @@ func TestMergeFailureRecordsSumsOccurrencesAndSorts(t *testing.T) {
 		ProgramID:       "cadqaprog:zero",
 		TaskID:          &otherTaskID,
 		ReasonCode:      "unsupported_call",
+		Disposition:     FailureDispositionByDesign,
 		Detail:          "call is outside the allowlist",
 		OccurrenceCount: 1,
 	}
@@ -106,6 +122,7 @@ func TestMergeFailureRecordsSumsOccurrencesAndSorts(t *testing.T) {
 		PipelineStage:   PipelineStage02aExtractCadqueryAst,
 		ProgramID:       "cadqaprog:zero",
 		ReasonCode:      "parse_failure",
+		Disposition:     FailureDispositionCorpusDefect,
 		Detail:          "ast parse failed",
 		OccurrenceCount: 1,
 	}
@@ -145,6 +162,17 @@ func TestMergeFailureRecordsRejectsDisagreeingColumns(t *testing.T) {
 	}
 }
 
+func TestMergeFailureRecordsRejectsDisagreeingDisposition(t *testing.T) {
+	first := testFailureRecord()
+	second := testFailureRecord()
+	second.Disposition = FailureDispositionExtractorGap
+
+	_, err := MergeFailureRecords([]FailureRecord{first, second})
+	if err == nil {
+		t.Fatal("expected a disagreeing-disposition error")
+	}
+}
+
 func TestFailureRecordValidate(t *testing.T) {
 	valid := testFailureRecord()
 	if err := valid.Validate(); err != nil {
@@ -163,10 +191,50 @@ func TestFailureRecordValidate(t *testing.T) {
 		t.Fatal("record with a zero occurrence count was accepted")
 	}
 
+	unknownDisposition := valid
+	unknownDisposition.Disposition = "scope_exclusion"
+	if err := unknownDisposition.Validate(); err == nil {
+		t.Fatal("record with an unknown disposition was accepted")
+	}
+
+	emptyDisposition := valid
+	emptyDisposition.Disposition = ""
+	if err := emptyDisposition.Validate(); err == nil {
+		t.Fatal("record with an empty disposition was accepted")
+	}
+
 	badSpan := valid
 	badSpan.ProgramSpan = &ProgramSpan{StartColumn: 9, EndColumn: 3}
 	if err := badSpan.Validate(); err == nil {
 		t.Fatal("record with a reversed source span was accepted")
+	}
+}
+
+func TestFailureDispositionValid(t *testing.T) {
+	for _, disposition := range []FailureDisposition{
+		FailureDispositionByDesign,
+		FailureDispositionCorpusDefect,
+		FailureDispositionExtractorGap,
+	} {
+		if !disposition.valid() {
+			t.Fatalf("documented disposition %q is not valid", disposition)
+		}
+	}
+	if FailureDisposition("scope_exclusion").valid() {
+		t.Fatal("an undocumented disposition is valid")
+	}
+}
+
+func TestFailureDispositionValues(t *testing.T) {
+	cases := map[FailureDisposition]string{
+		FailureDispositionByDesign:     "by_design",
+		FailureDispositionCorpusDefect: "corpus_defect",
+		FailureDispositionExtractorGap: "extractor_gap",
+	}
+	for disposition, want := range cases {
+		if string(disposition) != want {
+			t.Fatalf("disposition value = %q, want %q", disposition, want)
+		}
 	}
 }
 
@@ -195,6 +263,9 @@ func TestFailureRecordParquetRoundTrip(t *testing.T) {
 	}
 	if read[0].PipelineStage != records[0].PipelineStage {
 		t.Fatalf("pipeline stage = %q, want %q", read[0].PipelineStage, records[0].PipelineStage)
+	}
+	if read[0].Disposition != records[0].Disposition {
+		t.Fatalf("disposition = %q, want %q", read[0].Disposition, records[0].Disposition)
 	}
 	if read[0].ProgramSpan == nil || *read[0].ProgramSpan != *records[0].ProgramSpan {
 		t.Fatalf("source span = %+v, want %+v", read[0].ProgramSpan, records[0].ProgramSpan)

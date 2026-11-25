@@ -19,7 +19,7 @@ TRANSFORM:
 - `raw_program_sha256` = SHA-256 over the original selected text; provenance only
 - `normalization_version` pins the Python version and `ast.unparse` behavior, the Ruff version, the Ruff config hash, and the algorithm version
 - identical normalized bytes → identical `program_id`; record the duplicate
-- a rejection writes a failure row with reason `invalid_utf8 | syntax_error | format_failure`, the subject program, and `source_line` when known; never emit a partial program
+- a rejection writes a failure row with reason `invalid_utf8 | syntax_error | format_failure`, the reason's disposition from `../01d-normalize-programs.md#failures`, the subject program, and `program_line` when known; never emit a partial program
 - reserve rows are not normalized until `03a` promotes them
 
 WRITE:

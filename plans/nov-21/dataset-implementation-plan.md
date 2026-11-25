@@ -98,17 +98,19 @@ are local to `03b` and are numbered `03b-M1`–`03b-M5`:
 
 ## P0-W1 — contract close-out
 
-No code. Each item is a small edit to one owner document, scheduled here because
-the code that would otherwise encode the wrong answer is `P0-W2` or `P0-W3` work.
+Nearly no code. Each item is a small edit to one owner document, scheduled here
+because the code that would otherwise encode the wrong answer is `P0-W2` or
+`P0-W3` work. The shared `FailureRecord` struct follows a contract change in
+the same change, as `MC-65` did with its disposition column.
 
-Two items remain open. `DA-4`, `DA-15`, `DA-13`, and `DA-5` closed between the
+One item remains open. `DA-4`, `DA-15`, `DA-13`, and `DA-5` closed between the
 audit and 2026-11-25 and are listed below the table; `DA-7` / `MC-63` closed by
-re-scoping R-5 to P1, and `MC-66` closed by the must-extract capability set.
+re-scoping R-5 to P1, `MC-66` closed by the must-extract capability set, and
+`MC-65` closed by the failure disposition.
 
 | Item | Owner | Why it cannot wait |
 |---|---|---|
 | `MC-64` — review frames: absence and residual, ledgers scoped to a pipeline stage | `devtools/review-pack.md`, `05` | The merged pack samples release rows only; partial extraction loss and unknown unknowns have no review frame. `file-trees.md` names the two tools and not the ledger cells |
-| `MC-65` — failure disposition: `by_design`, `corpus_defect`, `extractor_gap` | `failure-record.md`, `extraction/validation.md` | Every rejection is equally legitimate today. `graph-completeness.md` classifies a missing graph row, but the failure record has no disposition column, so a rejected program still cannot be classified |
 
 Closed since the audit's `P0-W1` table:
 
@@ -116,6 +118,11 @@ Closed since the audit's `P0-W1` table:
   `MustExtractCapability` in `extraction/validation.md` is the closed P0 cell
   set, and `extraction_capability_coverage` blocks the export when a declared
   cell has no accepted graph. The `P0-W3` pass condition can be evaluated.
+- `MC-65` — `FailureDisposition` is the closed `by_design`, `corpus_defect`,
+  `extractor_gap` set in `failure-record.md`; every rejecting pipeline stage's
+  reason set names the disposition its reasons carry, `05` counts by disposition
+  during reconciliation, and the Go `FailureRecord` struct and its merge test
+  carry the column. The decision is `DS-ADR-17`.
 - `DA-4` / `MC-53` — `DS-REQ-15` makes `same_answer` the construction comparison
   and the grader's comparison, and `b-answer-semantics.md` rechecks the
   answer-equivalent set against it.
@@ -523,7 +530,7 @@ package that guesses its typed models is a second schema to maintain.
   migration.
 - **Do not read `missing-contracts.md` as the status of `P0-W1`.** It is
   explicitly ephemeral and tracks the entries someone remembered to file. The
-  three open `P0-W1` items carry `MC-63`–`MC-65`; the owner doc named in the
+  one remaining open `P0-W1` item is `MC-64`; the owner doc named in the
   `P0-W1` table is still the only evidence that the contract exists.
 
 ## Quality gates

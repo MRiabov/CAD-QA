@@ -39,10 +39,11 @@ support tables, a fixed generator version, and the three failure partitions.
 - every other row has an empty `choices` pool;
 - each CADEvolve program family appears in exactly one split;
 - `failures.parquet` groups by `failure_id`, sums `occurrence_count`, keeps the
-  other columns equal, and is sorted by pipeline stage, program, task, and
-  reason;
+  other columns including `disposition` equal, and is sorted by pipeline stage,
+  program, task, and reason;
 - the counts reconcile at every chain step: the count entering equals the count
-  leaving plus the failures recorded there;
+  leaving plus the failures recorded there, and the step reports those failures
+  by disposition;
 - `manifest.json` carries `release_id` as `cadqarel:<sha256>` over the release
   inputs, `release_table_sha256` over the finished file bytes, the declared
   `generator_version`, `upstream_dataset_version` and

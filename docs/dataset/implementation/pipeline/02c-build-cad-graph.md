@@ -33,6 +33,9 @@ is not guessed or softened.
 Point probes are graph entities. They are copied from the runtime result and
 attached to their solid state; a probe with no state is a graph defect.
 
+A missing graph element for a task-facing reference is `extractor_gap`: the
+graph builder failed to assemble an element the extraction contract supports.
+
 ## Language and parallelism
 
 - **Go:** graph assembly and persistence.
@@ -46,7 +49,14 @@ The pair is rejected when extraction hashes do not match, a required reference i
 missing, a relation or measurement endpoint does not resolve, an extraction
 schema version is unknown, a graph ID is not deterministic from its documented
 components, or a solid state exceeds the implementation-scope
-`max_state_entities` constant.
+`max_state_entities` constant. A rejection writes a failure row with the reason
+and its disposition.
+
+Every rejection in this boundary is `extractor_gap` except the
+`max_state_entities` bound, which is `by_design`. A correct extractor reproduces
+the same pair, so a hash, reference, endpoint, schema, or determinism failure is
+a graph assembly defect. The entity bound is a declared scope limit: the program
+is valid at a wider scope and the contract intends the rejection.
 
 A reference class over `max_anchor_class_size` does not reject the program: it
 emits no dense pair rows, and a task clue that needs it is rejected at

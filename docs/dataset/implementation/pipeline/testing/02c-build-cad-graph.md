@@ -60,9 +60,9 @@ and asserts that the clue which needs the class fails at `03b` with the bound as
 its reason.
 
 `test_02c_state_size_rejection` — a program whose state exceeds
-`max_state_entities` is rejected with the state, the count, and the limit, and no
-partial graph is written. The limit is read from the recorded scope constant, not
-recomputed.
+`max_state_entities` is rejected with the state, the count, the limit, and
+disposition `by_design`; no partial graph is written. The limit is read from the
+recorded scope constant, not recomputed.
 
 `test_02c_report_rows_are_capability_cells` — every `GraphCompletenessReport`
 row carries the identity the

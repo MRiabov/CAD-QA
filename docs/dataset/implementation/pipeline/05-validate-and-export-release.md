@@ -94,14 +94,18 @@ Coverage and balance checks:
 
 Each rejecting stage appends to its own failure partition. `05` merges them into
 `failures.parquet`: group by `failure_id`, sum `occurrence_count`, require the
-other columns to agree, and sort by pipeline stage, program, task, and reason.
-The schema
-and the merge rules are in [`../failure-record.md`](../failure-record.md).
+other columns including `disposition` to agree, and sort by pipeline stage,
+program, task, and reason. The schema and the merge rules are in
+[`../failure-record.md`](../failure-record.md).
+
+`05`'s own closed reason set is the validation rule that rejected the row, plus
+`internal`. A rule rejection is `by_design`: the contract intends to reject a row
+that fails a declared release rule. An `internal` failure is `extractor_gap`.
 
 `05` also reconciles the counts. For each chain step, the count entering the step
-must equal the count leaving it plus the failures recorded at that step. A
-mismatch blocks the export and names the step and the counts, because a failure
-row cannot report its own absence.
+must equal the count leaving it plus the failures recorded at that step, counted
+by `disposition`. A mismatch blocks the export and names the step and the counts,
+because a failure row cannot report its own absence.
 
 ## Balance policy
 

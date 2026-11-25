@@ -27,12 +27,35 @@ program.
 | Final state | The last assignment is `result`; it is a call or alias that can produce or copy a value. |
 
 An AST rejection is a [`failure record`](../../failure-record.md) with the
-subject program, `pipeline_stage` `02a_extract_cadquery_ast`, and
-`reason_code` from this set: `syntax`, `import`, `module_shape`,
-`assignment_shape`, `unsupported_expression`, `unsupported_call`,
-`chained_call`, `unknown_method`, `unresolved_name`, `duplicate_target`,
-`missing_result`, `invalid_id`, `invalid_reference`, or `internal`. It sets
-`source_line` and `source_span` when known.
+subject program, `pipeline_stage` `02a_extract_cadquery_ast`, and a
+`reason_code` from this closed set. The row carries the reason's disposition. It
+sets `program_line` and `program_span` when known.
+
+| Reason | Disposition | Meaning |
+|---|---|---|
+| `syntax` | `corpus_defect` | The text does not parse as Python. |
+| `import` | `by_design` | The program does not carry exactly one `import cadquery as cq`. |
+| `module_shape` | `by_design` | A statement other than a top-level assignment appears. |
+| `assignment_shape` | `by_design` | A target, starred argument, or call form the contract rejects. |
+| `unsupported_expression` | `by_design` | A valid expression form outside the accepted subset. |
+| `unsupported_call` | `by_design` | A valid call outside the accepted subset. |
+| `chained_call` | `by_design` | More than one CadQuery call in one assignment. |
+| `unknown_method` | `corpus_defect` | A method not in the CadQuery vocabulary. |
+| `unresolved_name` | `corpus_defect` | A receiver or input variable is not defined earlier. |
+| `duplicate_target` | `by_design` | A target is rebound. |
+| `missing_result` | `by_design` | The final assignment is not `result`. |
+| `invalid_id` | `extractor_gap` | An ID the extractor assigns is duplicated or malformed. |
+| `invalid_reference` | `extractor_gap` | An extractor record references a record the extractor did not emit. |
+| `internal` | `extractor_gap` | The extractor raised or failed unexpectedly. |
+
+`syntax`, `unresolved_name`, and `unknown_method` reject a program that is not
+valid Python or not valid CadQuery. `unsupported_expression`, `unsupported_call`,
+and `chained_call` are the declared-scope exclusions: the input is valid at a
+wider scope and the contract intends the rejection. The remaining program-shape
+reasons reject a valid Python program that does not follow the contract's module
+or assignment shape, which the contract also intends at the declared scope. The
+last three reject the extractor's own output or behavior. A known CadQuery method
+excluded by scope is `unsupported_call`, not `unknown_method`.
 
 An AST rejection emits no operations, aliases, workplanes, profiles, paths,
 selectors, or diagnostics that consumers could mistake for a CadQuery program AST extraction result.
@@ -71,26 +94,38 @@ selectors, or diagnostics that consumers could mistake for a CadQuery program AS
 - the CadQuery program AST extraction result hash or CadQuery program runtime extraction result hash does not match the artifact;
 - a CAD topology entity ID hash does not match its fingerprint fields.
 
+Every cross-check reason is `extractor_gap`: both inputs already passed their
+own validation, so a failed cross-check or graph assembly invariant is a
+generator defect, not a property of the corpus.
+
 This is a rejection, not a partial graph. `02c` does not repair, interpolate, or
 drop a subset of the records.
 
 ## Runtime error kinds
 
-| Error kind | Cause |
-|---|---|
-| `timeout` | Child exceeded the wall-clock limit. |
-| `memory` | Child hit the address-space limit. |
-| `cadquery_exception` | CadQuery/OCP raised during execution. |
-| `recorder` | The recorder itself failed or returned an invalid value. |
-| `result_kind` | A runtime value did not classify into an allowed kind. |
-| `non_solid_result` | A solid state producing operation returned no solid. |
-| `missing_state` | A CadQuery selector or effect needs a receiver state that does not exist. |
-| `missing_shape` | A later operation uses a null shape binding. |
-| `unmapped_entity` | A selected value has no entity row in the current state. |
-| `fingerprint_collision` | Two entities in one state and category have the same fingerprint. |
-| `no_state` | A successful program produced no solid state. |
-| `geometry_capture` | A required kernel classification or measurement call failed. |
-| `internal` | An extractor bug or unexpected process failure. |
+A runtime rejection is a [`failure record`](../../failure-record.md) with the
+subject program, `pipeline_stage` `02b_execute_cadquery`, and an `error_kind`
+from this closed set. The row carries the error kind's disposition.
+
+| Error kind | Disposition | Cause |
+|---|---|---|
+| `timeout` | `corpus_defect` | Child exceeded the wall-clock limit. |
+| `memory` | `corpus_defect` | Child hit the address-space limit. |
+| `cadquery_exception` | `corpus_defect` | CadQuery/OCP raised during execution. |
+| `recorder` | `extractor_gap` | The recorder itself failed or returned an invalid value. |
+| `result_kind` | `corpus_defect` | A runtime value did not classify into an allowed kind. |
+| `non_solid_result` | `corpus_defect` | A solid state producing operation returned no solid. |
+| `missing_state` | `extractor_gap` | A CadQuery selector or effect needs a receiver state that does not exist. |
+| `missing_shape` | `corpus_defect` | A later operation uses a null shape binding. |
+| `unmapped_entity` | `extractor_gap` | A selected value has no entity row in the current state. |
+| `fingerprint_collision` | `extractor_gap` | Two entities in one state and category have the same fingerprint. |
+| `no_state` | `corpus_defect` | A successful program produced no solid state. |
+| `geometry_capture` | `corpus_defect` | A required kernel classification or measurement call failed. |
+| `internal` | `extractor_gap` | An extractor bug or unexpected process failure. |
+
+A kernel failure is a property of the program's geometry, so `cadquery_exception`
+and `geometry_capture` are `corpus_defect`. A capture, bookkeeping, or identity
+failure is `extractor_gap`.
 
 ## Failure precedence
 
@@ -128,6 +163,12 @@ These are validation failures, not deferred features:
 - arbitrary control flow;
 - runtime argument capture;
 - graph IDs or UUIDv4 in extraction records.
+
+The disposition of a rejection caused by one of these exclusions follows the
+reason table: a valid construct excluded by scope is `by_design`, while
+`combineSolids` is `corpus_defect` because it is not a CadQuery 2.7 method
+(`EX-5`), and a graph ID or UUIDv4 in an extraction record is `extractor_gap`
+because the record must not carry one.
 
 ## The must-extract capability set
 

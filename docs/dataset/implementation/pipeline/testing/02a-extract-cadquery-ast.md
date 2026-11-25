@@ -83,8 +83,9 @@ before `02a` exists.
   unknown method reports `syntax`, following the documented order rather than
   the order of discovery.
 - `test_02a_failure_record` — the rejection carries `pipeline_stage`
-  `02a_extract_cadquery_ast`, the reason code from the closed set,
-  `source_line` and `source_span`, and the same `failure_id` on a re-run.
+  `02a_extract_cadquery_ast`, the reason code from the closed set, the reason's
+  `disposition`, `program_line` and `program_span`, and the same `failure_id` on
+  a re-run.
 - `test_02a_unknown_method_is_not_a_partial_extraction` — one allowlisted call
   before one unknown call yields no operations, not the first one.
 

@@ -17,13 +17,13 @@ TRANSFORM:
 - map extraction records to graph entities, relations, and measurements per the construction sub-document
 - attach every point probe to its solid state; a probe with no state is a graph defect
 - assign graph IDs deterministically from their documented components
-- every task-facing target, clue reference, answer value, and answer evidence resolves to a graph element; a missing element rejects the pair
+- every task-facing target, clue reference, answer value, and answer evidence resolves to a graph element; a missing element rejects the pair with `extractor_gap`
 - attach CAD graph evidence to every relation and measurement: `measured` with the kernel call, or `derived` with the rule and its references; a relation or measurement with neither rejects the pair
 - carry the tolerance and the reason on a relation whose tolerance is overridden
 - use the tables, IDs, attributes, enums, and evidence fields in the persistence sub-document
-- reject on a missing required reference, an unresolved relation or measurement endpoint, an unknown extraction schema version, a non-deterministic graph ID, or a solid state above `max_state_entities`; a reference class above `max_anchor_class_size` emits no dense pair rows and does not reject the pair
+- reject on a missing required reference, an unresolved relation or measurement endpoint, an unknown extraction schema version, a non-deterministic graph ID, or a solid state above `max_state_entities`; every such rejection is `extractor_gap` except the state entity bound, which is `by_design`; a reference class above `max_anchor_class_size` emits no dense pair rows and does not reject the pair
 - emit every true pair for a sparse pair kind, and every member of a reference class within the bound for a dense kind, per `DS-REQ-37`
-- reject the pair when an AST operation has no recording, a recording has no AST operation, a state ID does not match its producing operation, a CadQuery selector ID does not match the AST extraction result, a selected entity is missing from the state, a solid state producing operation has no effect, the final state differs from the last state in operation order, or an entity ID hash does not match its fingerprint fields
+- reject the pair when an AST operation has no recording, a recording has no AST operation, a state ID does not match its producing operation, a CadQuery selector ID does not match the AST extraction result, a selected entity is missing from the state, a solid state producing operation has no effect, the final state differs from the last state in operation order, or an entity ID hash does not match its fingerprint fields; every such rejection is `extractor_gap`
 - emit one complete graph per program or reject the pair; never a partial graph
 - do not construct tasks and do not render prompts
 

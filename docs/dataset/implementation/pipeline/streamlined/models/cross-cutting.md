@@ -40,17 +40,31 @@ const (
 ## FailureRecord (Parquet)
 
 ```go
+type ProgramSpan struct {
+	StartColumn int64 `parquet:"start_column"`
+	EndColumn   int64 `parquet:"end_column"`
+}
+
+type FailureDisposition string
+
+const (
+	FailureDispositionByDesign     FailureDisposition = "by_design"
+	FailureDispositionCorpusDefect FailureDisposition = "corpus_defect"
+	FailureDispositionExtractorGap FailureDisposition = "extractor_gap"
+)
+
 type FailureRecord struct {
-	FailureID       uuid.UUID   `parquet:"failure_id"`        // UUIDv5 of the dedupe key
-	PipelineStage   PipelineStage `parquet:"pipeline_stage"`
-	ProgramID       string      `parquet:"program_id"`
-	TaskID          *string     `parquet:"task_id"`
-	InputSHA256     *Sha256     `parquet:"input_sha256"`
-	ReasonCode      string      `parquet:"reason_code"`
-	Detail          string      `parquet:"detail"`            // at most 500 characters, deterministic
-	SourceLine      *int        `parquet:"source_line"`
-	SourceSpan      *SourceSpan `parquet:"source_span"`
-	OccurrenceCount int         `parquet:"occurrence_count"`  // at least 1
+	FailureID       uuid.UUID           `parquet:"failure_id"`        // UUIDv5 of the dedupe key
+	PipelineStage   PipelineStage       `parquet:"pipeline_stage"`
+	ProgramID       string              `parquet:"program_id"`
+	TaskID          *string             `parquet:"task_id"`
+	InputSHA256     *Sha256             `parquet:"input_sha256"`
+	ReasonCode      string              `parquet:"reason_code"`
+	Disposition     FailureDisposition  `parquet:"disposition"`
+	Detail          string              `parquet:"detail"`            // at most 500 characters, deterministic
+	ProgramLine     *int                `parquet:"program_line"`
+	ProgramSpan     *ProgramSpan        `parquet:"program_span"`
+	OccurrenceCount int                 `parquet:"occurrence_count"`  // at least 1
 }
 ```
 
@@ -59,6 +73,11 @@ reason_code)`. `failure_id` is `uuid5(namespace, canonical JSON of the key)`; th
 namespace is the UUIDv5 of `https://github.com/MRiabov/CAD-QA/failure-record`
 under the URL namespace. A row carries no timestamp, host, attempt index, or
 pipeline stage version.
+
+`disposition` is a function of `(pipeline_stage, reason_code)`, so it is not part
+of the dedupe key. The rejecting stage's closed reason set names the disposition
+each reason carries; the closed set and the merge rule are in
+[`failure-record.md`](../../../failure-record.md#failure-disposition).
 
 ## RunManifest (JSON)
 

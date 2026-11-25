@@ -13,9 +13,9 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 2 open entries: two P0 technical contracts. P1 and P2 are empty. They
-were scheduled as `P0-W1` items and none is written into its owner doc yet.
-`MC-63` and `MC-66` closed on 2026-11-25; `MC-64` and `MC-65` remain.
+There is 1 open entry: one P0 technical contract. P1 and P2 are empty. It was
+scheduled as a `P0-W1` item and is not written into its owner doc yet. `MC-63`,
+`MC-65`, and `MC-66` closed on 2026-11-25; `MC-64` remains.
 
 ## Decisions needed from the owner
 
@@ -32,29 +32,8 @@ None. `MC-63` closed by re-scoping R-5 to P1; see
 
 Work order:
 
-1. `MC-65` — a rejection has no disposition; `02a`/`02b`/`02c` write rejection
-   rows from `P0-W3` on.
-2. `MC-64` — the absence and residual review frames; the review gate in `P0-W6`
+1. `MC-64` — the absence and residual review frames; the review gate in `P0-W6`
    consumes them.
-
-#### MC-65 — A rejection has no disposition
-
-The [`failure-record.md`](failure-record.md) row carries no
-`by_design | corpus_defect | extractor_gap` column, and the reason sets in
-[`extraction/validation.md`](pipeline/extraction/validation.md) do not supply
-one. `CompletenessDisposition` in
-[`graph-completeness.md`](pipeline/extraction/graph-completeness.md) is the
-nearest pattern, but it classifies a missing graph row on an accepted graph, not
-a rejected program, so an extractor gap is still indistinguishable from a
-corpus limitation.
-
-**Recommendation:** add a typed `disposition` column to the failure record, and
-make each rejecting stage's closed reason set name the disposition its reasons
-carry. `by_design` is a rejection the contract intends at the declared scope;
-`corpus_defect` is invalid CadQuery program or a runtime result the contract
-excludes; `extractor_gap` is a supported construct the extractor failed to
-capture. `05` counts by disposition during reconciliation, and the Go
-`FailureRecord` struct and its merge test follow the column.
 
 #### MC-64 — The review gate has no absence or residual frame
 
@@ -86,6 +65,29 @@ None.
 
 None. `MC-22` closed in the 2026-11-25 geometry-required pass and `MC-49`
 closed in the 2026-11-25 benchmark-program-set pass.
+
+## Closed in the 2026-11-25 failure-disposition pass
+
+- `MC-65` — a rejection carries a typed `FailureDisposition` in
+  [`failure-record.md`](failure-record.md#failure-disposition): `by_design` is a
+  rejection the contract intends at the declared scope, `corpus_defect` is
+  invalid CadQuery program or a runtime result the contract excludes, and
+  `extractor_gap` is a supported construct a pipeline stage failed to capture.
+  Every rejecting pipeline stage's closed reason set names the disposition its
+  reasons carry:
+  `01d` in [`01d-normalize-programs.md`](pipeline/01d-normalize-programs.md#failures),
+  `02a`/`02b`/`02c` in
+  [`extraction/validation.md`](pipeline/extraction/validation.md#ast-validation)
+  and [`02c-build-cad-graph.md`](pipeline/02c-build-cad-graph.md#failure-boundary),
+  `03b` in
+  [`a-construction.md`](pipeline/03-task-generation/03b-construct-task-definitions/a-construction.md#failure-reasons),
+  and `05` in
+  [`05-validate-and-export-release.md`](pipeline/05-validate-and-export-release.md#failure-record).
+  The disposition is a function of `(pipeline_stage, reason_code)`, so it stays
+  out of the dedupe key and the merge requires it to agree. `05` counts by
+  disposition during reconciliation and aggregation, and the Go `FailureRecord`
+  struct, validation, merge comparison, and Parquet round trip carry the column.
+  The decision is `DS-ADR-17`.
 
 ## Closed in the 2026-11-25 extraction-capability-coverage pass
 

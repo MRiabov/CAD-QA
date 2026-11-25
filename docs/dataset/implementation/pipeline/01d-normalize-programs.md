@@ -68,15 +68,17 @@ identities.
 
 Record a normalization failure as a
 [`failure record`](../failure-record.md) with the subject program, the reason,
-and `source_line` when available. Do not emit a partial normalized program.
+its disposition, and `program_line` and `program_span` when available. Do not
+emit a partial normalized program.
 
-The reason set is closed:
+The reason set is closed, and each reason names the `FailureDisposition` it
+carries:
 
-| Reason | Meaning |
-|---|---|
-| `invalid_utf8` | The cache text does not decode as UTF-8. |
-| `syntax_error` | The pinned Python `ast` rejects the text. |
-| `format_failure` | The pinned Ruff version fails on the parsed text. |
+| Reason | Disposition | Meaning |
+|---|---|---|
+| `invalid_utf8` | `corpus_defect` | The cache text does not decode as UTF-8. |
+| `syntax_error` | `corpus_defect` | The pinned Python `ast` rejects the text. |
+| `format_failure` | `extractor_gap` | The pinned Ruff version fails on the parsed text. |
 
 ## Why it exists
 

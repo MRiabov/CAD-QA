@@ -25,6 +25,23 @@ const (
 	PipelineStage05ValidateAndExportRelease  PipelineStage = "05_validate_and_export_release"
 )
 
+// FailureDisposition is the closed set that says why a rejection is legitimate.
+// It is a function of the PipelineStage value and the reason code: a rejecting
+// pipeline stage's closed reason set names the disposition its reasons carry.
+type FailureDisposition string
+
+const (
+	// FailureDispositionByDesign is a rejection the contract intends at the
+	// declared scope.
+	FailureDispositionByDesign FailureDisposition = "by_design"
+	// FailureDispositionCorpusDefect is an invalid CadQuery program or a
+	// runtime result the contract excludes.
+	FailureDispositionCorpusDefect FailureDisposition = "corpus_defect"
+	// FailureDispositionExtractorGap is a supported construct a pipeline stage
+	// failed to capture or process.
+	FailureDispositionExtractorGap FailureDisposition = "extractor_gap"
+)
+
 // FailureRecordNamespace is the UUID v5 namespace for failure_id values. It is
 // derived from a fixed project URL so both languages compute the same ID
 // without sharing a magic constant.
@@ -42,16 +59,17 @@ type ProgramSpan struct {
 // FailureRecord is one row of a pipeline stage failure partition. A rejection
 // is data, not an exception: a pipeline stage records the row and continues.
 type FailureRecord struct {
-	FailureID       uuid.UUID     `parquet:"failure_id"`
-	PipelineStage   PipelineStage `parquet:"pipeline_stage"`
-	ProgramID       string        `parquet:"program_id"`
-	TaskID          *string       `parquet:"task_id,optional"`
-	InputSHA256     *string       `parquet:"input_sha256,optional"`
-	ReasonCode      string        `parquet:"reason_code"`
-	Detail          string        `parquet:"detail"`
-	ProgramLine     *int64        `parquet:"program_line,optional"`
-	ProgramSpan     *ProgramSpan  `parquet:"program_span,optional"`
-	OccurrenceCount int64         `parquet:"occurrence_count"`
+	FailureID       uuid.UUID          `parquet:"failure_id"`
+	PipelineStage   PipelineStage      `parquet:"pipeline_stage"`
+	ProgramID       string             `parquet:"program_id"`
+	TaskID          *string            `parquet:"task_id,optional"`
+	InputSHA256     *string            `parquet:"input_sha256,optional"`
+	ReasonCode      string             `parquet:"reason_code"`
+	Disposition     FailureDisposition `parquet:"disposition"`
+	Detail          string             `parquet:"detail"`
+	ProgramLine     *int64             `parquet:"program_line,optional"`
+	ProgramSpan     *ProgramSpan       `parquet:"program_span,optional"`
+	OccurrenceCount int64              `parquet:"occurrence_count"`
 }
 
 // FailureDedupeKey is the identity of a rejection. Two rows with the same key
@@ -121,6 +139,9 @@ func (r FailureRecord) Validate() error {
 	}
 	if r.ReasonCode == "" {
 		return errors.New("failure record: reason_code is empty")
+	}
+	if !r.Disposition.valid() {
+		return fmt.Errorf("failure record: unknown disposition %q", r.Disposition)
 	}
 	if r.Detail == "" {
 		return errors.New("failure record: detail is empty")
@@ -193,6 +214,17 @@ func (s PipelineStage) valid() bool {
 	}
 }
 
+func (d FailureDisposition) valid() bool {
+	switch d {
+	case FailureDispositionByDesign,
+		FailureDispositionCorpusDefect,
+		FailureDispositionExtractorGap:
+		return true
+	default:
+		return false
+	}
+}
+
 func sameFailureColumns(left, right FailureRecord) bool {
 	return left.FailureID == right.FailureID &&
 		left.PipelineStage == right.PipelineStage &&
@@ -200,6 +232,7 @@ func sameFailureColumns(left, right FailureRecord) bool {
 		equalPointer(left.TaskID, right.TaskID) &&
 		equalPointer(left.InputSHA256, right.InputSHA256) &&
 		left.ReasonCode == right.ReasonCode &&
+		left.Disposition == right.Disposition &&
 		left.Detail == right.Detail &&
 		equalPointer(left.ProgramLine, right.ProgramLine) &&
 		equalPointer(left.ProgramSpan, right.ProgramSpan)

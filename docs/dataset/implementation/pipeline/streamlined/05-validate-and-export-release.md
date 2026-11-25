@@ -65,11 +65,12 @@ WRITE:
 
 TRANSFORM:
 
-- merge failure partitions: group by `failure_id`, sum `occurrence_count`, require every other column to agree, sort by `pipeline_stage`, `program_id`, `task_id` (nulls first), `reason_code`
+- merge failure partitions: group by `failure_id`, sum `occurrence_count`, require every other column including `disposition` to agree, sort by `pipeline_stage`, `program_id`, `task_id` (nulls first), `reason_code`
 - a disagreement on a non-key column blocks the export
-- reconcile each chain: entering count = leaving count + failures at that step; programs = selected, fetched, normalized, AST accepted, runtime accepted, graphed; tasks = attempted, constructed, rendered, exported
+- reconcile each chain: entering count = leaving count + failures at that step, counted by `disposition`; programs = selected, fetched, normalized, AST accepted, runtime accepted, graphed; tasks = attempted, constructed, rendered, exported
 - a mismatch blocks the export and names the step and counts
-- aggregate rejection counts from `failures.parquet` by pipeline stage and reason, separately for programs and tasks
+- aggregate rejection counts from `failures.parquet` by pipeline stage, reason, and disposition, separately for programs and tasks
+- `05`'s own reason set is the validation rule that rejected the row, plus `internal`; a rule rejection is `by_design` and `internal` is `extractor_gap`
 
 WRITE:
 

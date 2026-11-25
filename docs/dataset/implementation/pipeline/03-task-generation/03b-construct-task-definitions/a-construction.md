@@ -180,14 +180,19 @@ reason in its detail.
 
 ### Failure reasons
 
-`03b` owns the closed reason set the failure record uses:
+`03b` owns the closed reason set the failure record uses. Each reason names the
+`FailureDisposition` it carries:
 
-| Reason | Meaning |
-|---|---|
-| A check name from the table above. | The definition failed that rule. A duplicate is `definition_unique`. |
-| `no_cover` | The cover search found no chain at the target task reasoning step count. |
-| `prompt_ambiguous` | Two definitions share a prompt identity but disagree on the gold answer. |
-| `internal` | The constructor raised an unexpected exception or panic. |
+| Reason | Disposition | Meaning |
+|---|---|---|
+| A check name from the table above. | `by_design` | The definition failed that rule. A duplicate is `definition_unique`. |
+| `no_cover` | `by_design` | The cover search found no chain at the target task reasoning step count. |
+| `prompt_ambiguous` | `by_design` | Two definitions share a prompt identity but disagree on the gold answer. |
+| `internal` | `extractor_gap` | The constructor raised an unexpected exception or panic. |
+
+A definition that fails a declared validity rule is a legitimate rejection: the
+contract intends it. An `internal` failure is a constructor defect, not a
+property of the program or the definition.
 
 A state without a surviving probe is not a failure row. No definition was
 attempted, so the state is a `probe_deficit` in the deficit ledger instead.

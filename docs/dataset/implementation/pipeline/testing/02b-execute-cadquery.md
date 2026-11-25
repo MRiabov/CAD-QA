@@ -59,7 +59,8 @@ filter, and the three failure tombstones before `02b` exists.
 - `test_02b_rejects_unaccepted_ast` — a statement outside the accepted `02a`
   subset is not executed, and the failure names the statement.
 - `test_02b_entity_id_collision` — two entities in one state with the same
-  fingerprint reject the program as ambiguous topology, and no result is written.
+  fingerprint reject the program as ambiguous topology with disposition
+  `extractor_gap`, and no result is written.
 - `test_02b_no_partial_state` — a crash in the middle of the program leaves no
   `shape_snapshots` row for the incomplete state.
 - `test_02b_version_pin` — a changed CadQuery or OCP version changes the

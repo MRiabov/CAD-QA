@@ -457,3 +457,33 @@ grouping is editorial; the numbers are the citation keys and never change meanin
   and version. Re-running a generation with a different benchmark set produces
   the same `release_id` and a different `run_id`, which is the intended split
   between release identity and run identity.
+
+## DS-ADR-17 — A failure record carries a disposition, not only a reason
+
+- **Status:** accepted (2026-11-25).
+- **Context:** Every rejection was equally legitimate. The reason code said what
+  rule failed, but not whether the contract intended the rejection at the
+  declared scope, the program was invalid, or the generator failed on a
+  supported construct. `CompletenessDisposition` classifies a missing graph row
+  on an accepted graph, not a rejected program, so a scope exclusion and an
+  extractor gap were indistinguishable in `failures.parquet` and in the
+  reconciliation counts.
+- **Decision:** The failure record gains a typed `FailureDisposition` column
+  with the closed set `by_design`, `corpus_defect`, and `extractor_gap`. Each
+  rejecting pipeline stage's closed reason set names the disposition its
+  reasons carry, so the disposition is a function of
+  `(pipeline_stage, reason_code)` and is not part of the dedupe key. A merge
+  requires the column to agree, like every other non-key column. `05` counts the
+  rejections at each reconciliation step by disposition and records the counts
+  in the manifest. The decision is recorded in
+  [`failure-record.md`](failure-record.md#failure-disposition); the reason
+  mappings are in each pipeline stage's owner document, led by
+  [`extraction/validation.md`](pipeline/extraction/validation.md#ast-validation).
+- **Consequences:** A clean run records no `extractor_gap`; a `by_design`
+  rejection is scope attrition and is not a defect. The column adds no artifact
+  and no run state: it is one enum in every failure partition and in
+  `failures.parquet`, and it is derived from the reason rather than authored.
+  A new reason without a disposition is a contract gap, and a reason whose
+  disposition changes is a contract change, not a runtime choice. The Go
+  `FailureRecord` struct, its validation, its merge comparison, and its Parquet
+  round trip carry the column; no second reason list is introduced.

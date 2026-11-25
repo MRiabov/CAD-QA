@@ -1,7 +1,7 @@
 # Failure record
 
-**Status:** draft, 2026-11-20. Owns the row schema for a rejected program or
-task.
+**Status:** draft, 2026-11-20; failure disposition added 2026-11-25. Owns the
+row schema for a rejected program or task.
 
 **Parent:** [`artifacts.md`](artifacts.md).
 
@@ -18,6 +18,11 @@ A rejection is data, not an exception across a pipeline stage boundary. A
 pipeline stage that cannot process an input records the rejection and continues.
 A rejection never fails its shard or the other units in it: the writer commits the
 units that succeeded and the failure partition records the rest.
+
+Every row carries a `disposition` that says why the rejection is legitimate: the
+contract intended it at the declared scope, the input is a corpus defect, or a
+pipeline stage failed on a supported construct. The disposition is what
+separates expected scope attrition from a defect in the generator.
 
 ## What is a rejection
 
@@ -50,8 +55,9 @@ These are not rejections and get no row:
 `04` render prompt and choices does not write a row, because rendering must not
 reject a definition.
 
-Each pipeline stage owns its closed reason set. This document does not define a
-second list, so a new reason is added in one place.
+Each pipeline stage owns its closed reason set. Each reason in that set names
+the `FailureDisposition` it carries. This document does not define a second
+reason list, so a new reason and its disposition are added in one place.
 
 ## Row
 
@@ -63,6 +69,7 @@ second list, so a new reason is added in one place.
 | `task_id` | string | yes | The task, when the subject is a task. |
 | `input_sha256` | string | yes | The hash a pipeline stage uses for the input: `program_sha256`, `definition_sha256`, or `answer_sha256`. |
 | `reason_code` | string | no | One member of the rejecting pipeline stage's reason set. |
+| `disposition` | enum | no | One member of `FailureDisposition`, named by `reason_code`. |
 | `detail` | string | no | Deterministic message, at most 500 characters. |
 | `program_line` | integer | yes | Program line, when known. |
 | `program_span` | struct | yes | Start and end column, when known. |
@@ -77,6 +84,25 @@ are unambiguous without a discriminator column.
 `02c_build_cad_graph`, `03b_construct_task_definitions`, and
 `05_validate_and_export_release`.
 
+## Failure disposition
+
+`FailureDisposition` is the closed set that says why a rejection is legitimate:
+
+| Disposition | Meaning |
+|---|---|
+| `by_design` | The contract intends the rejection at the declared scope. The input is valid at a wider scope, or the declared scope of a pipeline stage excludes it: a chained CadQuery call, a `wires` or `solids` CadQuery selector, a module shape the contract excludes, a definition that fails a declared validity rule, or a solid state above `max_state_entities`. |
+| `corpus_defect` | The input is an invalid CadQuery program, or a runtime result the contract excludes: a syntax error, a method that is not CadQuery, a CadQuery exception, a timeout, or a non-solid result. |
+| `extractor_gap` | The input is a supported construct a pipeline stage failed to capture or process: an internal error, a recorder failure, an unmapped entity, or a graph assembly invariant that a correct extractor would satisfy. |
+
+A disposition is a function of `(pipeline_stage, reason_code)`: the rejecting
+pipeline stage's reason set names the disposition each reason carries, so it is
+not part of the dedupe key. Two rows that share a key but disagree on
+`disposition` are a defect that blocks the merge, like any other non-key column.
+
+`extractor_gap` is a defect in the generator, not a property of the corpus. A
+clean run records none, and `05` counts it separately from the two legitimate
+dispositions so a scope exclusion is never read as an extractor failure.
+
 `failure_id` is `uuid5(namespace, key)` over the canonical JSON of the dedupe
 key, using the serialization rules in `03b` construct task definitions. That
 keeps it identical across Python and Go. The namespace is the UUID v5 of
@@ -89,12 +115,12 @@ both languages compute the same ID without sharing a constant.
 (pipeline_stage, program_id, task_id, input_sha256, reason_code)
 ```
 
-Two rejections with the same key are the same rejection. `detail`, `program_line`,
-and `program_span` are not in the key because they are a function of the key: the
-same input rejected for the same reason in the same pipeline stage produces the
-same
-message. A merge that finds two different details for one key is a defect, not a
-new row.
+Two rejections with the same key are the same rejection. `detail`, `disposition`,
+`program_line`, and `program_span` are not in the key because they are a
+function of the key: the same input rejected for the same reason in the same
+pipeline stage produces the same message and the same disposition. A merge that
+finds two different details or dispositions for one key is a defect, not a new
+row.
 
 ## No run state in a row
 
@@ -125,7 +151,8 @@ attempt. `05` merges:
 
 1. group rows by `failure_id`;
 2. sum `occurrence_count`;
-3. require every other column to agree, and fail the export when it does not;
+3. require every other column, including `disposition`, to agree, and fail the
+   export when it does not;
 4. sort by `pipeline_stage`, then `program_id`, then `task_id` with nulls first,
    then `reason_code`.
 
@@ -143,13 +170,15 @@ step.
 | Tasks | attempted, constructed, rendered, exported |
 
 A mismatch blocks the export and names the step, the entering count, the leaving
-count, and the recorded rejections. `05` cannot write a row for its own missing
-rows, so the mismatch is reported in the export failure instead.
+count, and the recorded rejections. `05` reports the recorded rejections at each
+step split by `disposition`, so the reconciliation shows how much of the loss is
+`by_design`, how much is `corpus_defect`, and how much is `extractor_gap`. `05`
+cannot write a row for its own missing rows, so the mismatch is reported in the
+export failure instead.
 
 ## Aggregation
 
 `05` records the rejection counts in `manifest.json`, summed from
-`occurrence_count`, by pipeline stage and reason, separately for programs and
-tasks. The
-counts are computed from `failures.parquet`, so the manifest cannot disagree with
-the file.
+`occurrence_count`, by pipeline stage, reason, and disposition, separately for
+programs and tasks. The counts are computed from `failures.parquet`, so the
+manifest cannot disagree with the file.

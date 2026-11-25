@@ -65,7 +65,7 @@ TRANSFORM:
 - an invalid definition writes a failure row naming the failed check, or `no_cover` when the cover search found no chain; the definition does not consume quota and does not reach `04`
 - a definition whose prompt identity (program, target category, canonical clue sequence, answer meaning, answer format, choice pool) is already accepted is a `prompt_unique` duplicate and is not accepted; a prompt identity whose gold answers disagree is `prompt_ambiguous` and none of its definitions is accepted (`DS-REQ-35`)
 - a state without a surviving probe is a `probe_deficit` in the deficit ledger, not a failure row
-- the failure reason set is closed: a check name from this section, `no_cover`, `prompt_ambiguous`, or `internal`
+- the failure reason set is closed: a check name from this section, `no_cover`, `prompt_ambiguous`, or `internal`; a check name, `no_cover`, or `prompt_ambiguous` is `by_design`, and `internal` is `extractor_gap`
 
 WRITE:
 

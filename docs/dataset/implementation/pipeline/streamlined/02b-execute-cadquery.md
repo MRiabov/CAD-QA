@@ -42,7 +42,7 @@ WRITE:
 TRANSFORM:
 
 - on failure emit `FailureTombstone`: `program_id, program_sha256, operation_id when known, error_kind, message, source_line when known, source_span when known, environment record, cache_key`
-- `error_kind` is one of `timeout, memory, cadquery_exception, recorder, result_kind, non_solid_result, missing_state, missing_shape, unmapped_entity, fingerprint_collision, no_state, geometry_capture, internal`
+- `error_kind` is one of `timeout, memory, cadquery_exception, recorder, result_kind, non_solid_result, missing_state, missing_shape, unmapped_entity, fingerprint_collision, no_state, geometry_capture, internal`; the failure row carries that error kind's disposition from `../extraction/validation.md`
 - a failed result is never passed to graph assembly as a measurable state
 - a tombstone is reusable for the same cache key
 

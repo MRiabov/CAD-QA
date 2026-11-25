@@ -20,7 +20,7 @@ TRANSFORM:
 - record one `AstOperation` per call assignment: `operation_id, order, source_line, source_span, result_var, method, operation_kind, receiver, receiver_var, args, kwargs, input_vars, is_state_producing, feature_kind, solid_kind`; `operation_id = op:<order:06d>`
 - record one `AstAlias` per non-call assignment: `alias_id, alias_kind, order, source_line, result_var, target_var, target_expression, source_span`; an alias consumes an assignment index and no operation ID
 - record a CadQuery selector written as a string, as an implicit no-argument call, or as a `cq.NearestToPointSelector` call; do not resolve a CadQuery selector to an entity
-- reject the whole program on the first failed validation with a reason from `syntax, import, module_shape, assignment_shape, unsupported_expression, unsupported_call, chained_call, unknown_method, unresolved_name, duplicate_target, missing_result, invalid_id, invalid_reference, internal`; the result is never partial
+- reject the whole program on the first failed validation with a reason from `syntax, import, module_shape, assignment_shape, unsupported_expression, unsupported_call, chained_call, unknown_method, unresolved_name, duplicate_target, missing_result, invalid_id, invalid_reference, internal`; the row carries that reason's disposition from `../extraction/validation.md`; the result is never partial
 - report the earliest failure in this order: syntax and module shape; import; assignment shape and chained calls; unknown method and unsupported expression; unresolved name and duplicate target; missing final `result`; AST reference and ID validation
 - do not execute CadQuery and do not produce geometry measurements
 
