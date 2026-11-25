@@ -333,6 +333,9 @@ release produce the same report.
   the released pool recheck is in `05` validate and export release.
 - Release table schema, prompt answer-freedom, `task_id` uniqueness, and split
   isolation: `05` validate and export release.
+- The transfer overlap check (R-16): `05` validate and export release. It is a
+  validity check, not a coverage or balance check, so it has no `checks.yaml`
+  row and no accepted miss.
 - Failure record reconciliation and the review gate: `05` validate and export
   release.
 - The allocation equations: `03a` allocate task quotas.

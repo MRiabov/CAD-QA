@@ -425,3 +425,35 @@ grouping is editorial; the numbers are the citation keys and never change meanin
   (`DS-ADR-11`), and the replan path. The admission rule's `available_memory`
   input is `[missing]` a definition and has no reserve for the orchestrator; that
   is a scheduling gap, not a reason to change the graph.
+
+## DS-ADR-16 — The external benchmark program set is a pinned external input, not a pipeline stage
+
+- **Status:** accepted (2026-11-25).
+- **Context:** `05` checks that no transfer-benchmark program appears in training
+  or evaluation (R-16) and records the benchmark identity, but no artifact or
+  pipeline stage supplied the program set. The set cannot come from `01`
+  external dataset ETL: it is an evaluation target, not a training support
+  dataset, and its normalization must match the release's `01d` output or the
+  exact-text comparison is meaningless. The P1 same-CAD-model check needs AST
+  normalization and a CadQuery shape hash, which `05` (Go) cannot compute.
+- **Decision:** The external benchmark program set is a Parquet artifact written
+  by the release author, one row per program in the declared benchmark split,
+  typed as `ExternalBenchmarkProgramSet`. It carries canonical text and
+  `program_sha256` from the pinned `01d` normalization and, at P1, the
+  AST-normalized hash and final shape hash from the `02a`/`02b` extraction. It
+  is not a pipeline stage output and is not committed. The run manifest pins its
+  path, name, revision, split, and file hash; the release manifest records the
+  identity fields as validation provenance. The P0 overlap check compares
+  `program_sha256` and blocks the export. The P1 same-CAD-model comparison (PRD
+  Q7 Option B) reads the CAD graph and the runtime extraction, so it is a
+  separate P1 audit, not a `05` check; the set carries the reference-side
+  `ast_normalized_sha256` and `final_shape_hash` for it. A P0 miss blocks export
+  and is never accepted into `known_misses`. The benchmark fields are excluded
+  from `release_id` and included in `run_id`.
+- **Consequences:** `05` runs no CadQuery and needs no Python worker. The P1
+  audit reads the release graph and the set's precomputed reference hashes, so
+  it does not re-execute the benchmark. The release author owns split
+  completeness and the normalization-version match, which `05` audits by hash
+  and version. Re-running a generation with a different benchmark set produces
+  the same `release_id` and a different `run_id`, which is the intended split
+  between release identity and run identity.

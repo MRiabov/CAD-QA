@@ -15,6 +15,7 @@ this document owns ownership, lifecycle, and format, not field definitions.
 | Program pool | `01c` | `01d` | Selection identity plus cache revision | Parquet | Only selected rows, including program text and `cadevolve_program_family_id`. |
 | Normalized program | `01d` | `02a`, `02b`, `02c`, `04` | `program_sha256` plus normalization version | Parquet | Carries `program_id`, `cadevolve_program_family_id`, and canonical text. |
 | External dataset manifest | `01e` | `05`, dataset card | External dataset version | JSON | Counts, hashes, and rejected records. |
+| External benchmark program set | Release authoring | `05` | Benchmark name, revision, split, normalization version, and file hash | Parquet | One row per program in the declared benchmark split: canonical text from the `01d` normalization, `program_sha256`, and the P1 AST-normalized and final shape hashes. An external input built by the release author, not a pipeline stage output; not committed. |
 | CadQuery program AST extraction result | `02a` | `02c` | Program hash plus extractor version | Parquet tables | No geometry measurements. |
 | CadQuery program runtime extraction result | `02b` | `02c` | Program hash, CadQuery/OCP version, and environment | Parquet tables | Either runtime captures or a failure tombstone; no raw BRep. |
 | CAD graph | `02c` | `03` | `graph_identity_sha256` (program hash, AST and runtime result hashes, graph schema, builder, tolerance policy, implementation scope) | Parquet tables | One graph per program, in a deterministic shard. |

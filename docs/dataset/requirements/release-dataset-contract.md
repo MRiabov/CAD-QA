@@ -291,7 +291,8 @@ for one row.
 | `upstream_dataset_version` | `cache_revision` from the external dataset manifest, verbatim. |
 | `external_dataset_manifest_sha256` | SHA-256 of the external dataset manifest. |
 | `release_table_sha256` | SHA-256 of the `release.parquet` file bytes. |
-| `external_benchmark_id`, `external_benchmark_revision` | The transfer benchmark and its revision (R-16, P1). |
+| `external_benchmark_id`, `external_benchmark_revision`, `external_benchmark_split` | The transfer benchmark, its revision, and the declared split (R-16). |
+| `external_benchmark_program_set_sha256` | SHA-256 of the external benchmark program set file. |
 | `task_count`, `split_counts` | Tasks in the release, and tasks per `split`. |
 | `program_family_count`, `program_family_split_counts` | CADEvolve program families in the release, and per `split`. |
 | `task_reasoning_step_counts` | Tasks per `task_reasoning_step_count`. |
@@ -325,6 +326,13 @@ inputs:
 
 The same inputs give the same id, so two runs of the same generation are the same
 release. `created_at` is not an input, so re-exporting a generation keeps its id.
+
+The external benchmark fields are not identity inputs. They are validation
+provenance: the benchmark set changes no release row, only whether the transfer
+overlap check passes. `05` records them in the manifest and excludes them from
+`release_id`, as it does `review_ledger_sha256`. The run manifest pins them
+because they are declared run inputs, so they are part of `run_id`
+([`run-contract.md`](../implementation/run-contract.md#2-run-identity-and-the-run-manifest)).
 
 The id names the generation, not the bytes. A table that differs while every
 input matches is a generator defect: the fix is a `generator_version` bump, not a

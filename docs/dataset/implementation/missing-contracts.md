@@ -13,12 +13,11 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There is 1 open entry: P1 technical. No product decision remains open, and P0
-is empty.
+No open entry remains. No product decision remains open, and P0 is empty.
 
 ## Decisions needed from the owner
 
-None. Every open entry is a technical contract.
+None.
 
 ## P0
 
@@ -38,25 +37,21 @@ None.
 
 ### Technical (P1)
 
-Work order:
+None. `MC-22` closed in the 2026-11-25 geometry-required pass and `MC-49`
+closed in the 2026-11-25 benchmark-program-set pass.
 
-1. `MC-49` — external benchmark program set; the transfer overlap check has no
-   declared input.
+## Closed in the 2026-11-25 benchmark-program-set pass
 
-#### MC-49 — External benchmark program set
-
-`05` validate and export release records the external benchmark identity and
-revision in the manifest and checks that no benchmark program appears in
-training or evaluation (R-16), but no artifact and no pipeline stage supplies the
-benchmark program set. It is not part of `01` external dataset ETL, and
-`artifacts.md` has no row for it, so the overlap check has no declared input and
-the manifest fields have no declared value. P1 scope.
-
-**Recommendation:** add an external benchmark program set artifact to
-`artifacts.md`, written by the release author, identified by benchmark name,
-revision, and file hash, carrying normalized program text for the P0 overlap
-check and the same-CAD-model comparison for the P1 check. Record its identity
-and hash in the manifest.
+- `MC-49` — the external benchmark program set is an artifact in
+  [`artifacts.md`](artifacts.md), written by the release author and identified by
+  benchmark name, revision, split, normalization version, and file hash. Its
+  typed declaration is `ExternalBenchmarkProgramSet` in
+  [`05` validate and export release](pipeline/streamlined/models/05-validate-and-export-release.md#externalbenchmarkprogramset-parquet).
+  `05` validates it against the run manifest's `external_benchmark` and blocks
+  the P0 exact-text overlap; the P1 same-CAD-model comparison is a graph-reading
+  audit over the same set. The release manifest records the identity, revision,
+  split, and hash as validation provenance excluded from `release_id`. The
+  decision is `DS-ADR-16`.
 
 ## Closed in the 2026-11-25 geometry-required pass
 

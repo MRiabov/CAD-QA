@@ -94,8 +94,8 @@ run directory and recomputes only the `02b` units whose environment changed.
 | `plan_seed` | integer | Deterministic seed for `03a` allocate task quotas. |
 | `release_seed` | integer | `RenderConfig.release_seed` for `04` render prompt and choices. |
 | `journal_shard_count` | integer | Number of journal shards. A unit belongs to `sha256(pass_key) mod journal_shard_count`. Part of `run_id`; changing it is a new run. |
-| `external_benchmark` | struct, nullable | `id`, `revision`, and `program_set_sha256`. Required when `05` validate and export release runs; `MC-49` owns the program set. |
-| `component_versions` | struct | `metadata_reader`, `selection`, `fetcher`, `normalization`, `external_dataset_manifest_schema`, `ast_extractor`, `runtime_extractor`, `canonicalization`, `graph_builder`, `planner`, `constructor`, `deficit_controller`, `renderer`, `exporter`, `graph_schema`, `task_definition_schema`, `release_schema`, `cadquery`, `ocp`, `python`, and `go`. |
+| `external_benchmark` | struct, nullable | `uri`, `id`, `revision`, `split`, and `program_set_sha256`. Required when `05` validate and export release runs. `program_set_sha256` is the SHA-256 of the file bytes. The artifact contract is in `05` validate and export release. |
+| `component_versions` | struct | `metadata_reader`, `selection`, `fetcher`, `normalization`, `external_dataset_manifest_schema`, `external_benchmark_program_set_schema`, `ast_extractor`, `runtime_extractor`, `canonicalization`, `graph_builder`, `planner`, `constructor`, `deficit_controller`, `renderer`, `exporter`, `graph_schema`, `task_definition_schema`, `release_schema`, `cadquery`, `ocp`, `python`, and `go`. |
 | `execution_environment` | struct | The `02b` execute CadQuery environment record: `os_arch` (for example `linux/amd64`), `timeout_seconds`, `memory_limit_bytes`, `worker_preload` (boolean), and `worker_request_limit`. It never contains a hostname, PID, container ID, kernel version, CPU model, or timestamp. Recorded for audit; enters the `02b` unit identity, not `run_id`. |
 | `tolerance_policy` | `TolerancePolicy` | The six entries defined in `graph-persistence.md`. |
 | `tolerance_policy_version` | integer | Policy version. |
@@ -590,6 +590,7 @@ generator list [--runs-root <path>]
 | `--external-benchmark` | conditional | — | Pinned external benchmark program set. Required when `--to` includes `05`. |
 | `--external-benchmark-id` | conditional | — | Benchmark name. Required with `--external-benchmark`. |
 | `--external-benchmark-revision` | conditional | — | Benchmark revision. Required with `--external-benchmark`. |
+| `--external-benchmark-split` | conditional | — | Declared benchmark split. Required with `--external-benchmark`. |
 | `--from` | no | first incomplete | First pipeline stage doc stem. |
 | `--to` | no | last | Last pipeline stage doc stem. |
 | `--force` | no | none | Comma-separated pipeline stage stems or `all`. |
@@ -624,6 +625,12 @@ stages it names under the same resume rules.
 [`01b` select program pool](pipeline/01b-select-program-pool.md#selection-policy);
 an unknown field is a usage error. The manifest records the effective values
 and the canonical hash.
+
+`--external-benchmark` names a Parquet program set, not a config file. At run
+start the orchestrator hashes its bytes and records `external_benchmark` with
+the URI, name, revision, split, and hash in `run.json`. `05` re-reads that path
+and rejects a file whose hash differs, so a resume cannot silently check
+against a different set.
 
 ### 9.2 `status`
 

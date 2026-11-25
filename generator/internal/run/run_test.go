@@ -26,6 +26,7 @@ func fullRunArgs() []string {
 		"--external-benchmark", "bench",
 		"--external-benchmark-id", "bench-id",
 		"--external-benchmark-revision", "bench-rev",
+		"--external-benchmark-split", "bench-split",
 	)
 }
 
@@ -108,6 +109,28 @@ func TestRunRequiresExternalBenchmarkForRelease(t *testing.T) {
 		t.Fatalf("exit code = %d, want %d (stderr: %s)", code, ExitUsage, stderr.String())
 	}
 	if !strings.Contains(stderr.String(), "--external-benchmark") {
+		t.Fatalf("stderr = %q", stderr.String())
+	}
+}
+
+func TestRunRequiresExternalBenchmarkSplitForRelease(t *testing.T) {
+	args := []string{
+		"run",
+		"--external-dataset", "cache",
+		"--external-dataset-revision", "rev",
+		"--selection-policy", "selection.yaml",
+		"--plan-seed", "1",
+		"--release-seed", "2",
+		"--external-benchmark", "bench",
+		"--external-benchmark-id", "bench-id",
+		"--external-benchmark-revision", "bench-rev",
+	}
+	var stdout, stderr bytes.Buffer
+	code := Main(context.Background(), args, &stdout, &stderr)
+	if code != ExitUsage {
+		t.Fatalf("exit code = %d, want %d (stderr: %s)", code, ExitUsage, stderr.String())
+	}
+	if !strings.Contains(stderr.String(), "--external-benchmark-split") {
 		t.Fatalf("stderr = %q", stderr.String())
 	}
 }

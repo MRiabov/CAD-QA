@@ -16,7 +16,7 @@ READ:
 - `balance.yaml` and `checks.yaml`
 - `ExternalDatasetManifest` from `01e`
 - `GraphCompletenessReport` per program from `02c` → `disposition`, missing, orphan, and unclassified counts
-- pinned external benchmark program set
+- `ExternalBenchmarkProgramSet` from the release author: benchmark name, revision, declared split, normalization version, file hash, and one row per benchmark program with `normalized_program_text`, `program_sha256`, and the P1 `ast_normalized_sha256` and `final_shape_hash`
 - failure partitions for each pipeline stage
 - the run manifest and the review ledger
 
@@ -100,10 +100,12 @@ TRANSFORM:
 - record `balance_policy_version`, `balance_policy_sha256`, `checks_policy_version`, and `checks_policy_sha256`
 - record prompt template version, `prompts.yaml` SHA-256, and `RenderConfig.release_seed`
 - copy the five support JSON files and record their schema versions and hashes
-- transfer overlap: exact normalized program text at P0; record the benchmark identity and revision
+- validate the benchmark set against the run manifest: file hash equals `external_benchmark.program_set_sha256`, the schema version equals `component_versions.external_benchmark_program_set_schema`, every row names the declared split, and every row carries `component_versions.normalization`; a mismatch is an input error
+- transfer overlap (R-16): a release row whose `program_sha256` is in the set blocks; name the benchmark program and the release tasks; never accept a miss into `known_misses`. The P1 same-CAD-model comparison is a graph-reading audit, not part of `05`; the set carries `ast_normalized_sha256` and `final_shape_hash` for it.
+- record the benchmark identity, revision, split, and program-set hash as validation provenance, excluded from `release_id`
 - write the dataset card from the manifest; every number is copied
 - write `manifest.json` last, after the checks and the review gate pass
-- `manifest.json` fields, per the release contract section 7: `release_id`, `schema_version`, `created_at`, `implementation_scope`, `generator_version`, `upstream_dataset_version`, `external_dataset_manifest_sha256`, `release_table_sha256`, `external_benchmark_id`, `external_benchmark_revision`, `task_count`, `split_counts`, `program_family_count`, `program_family_split_counts`, `task_reasoning_step_counts`, `warmup_task_count`, `distinct_cad_model_count`, `answer_set_sha256`, `prompt_template_version`, `prompts_yaml_sha256`, `release_seed`, `balance_policy_version`, `balance_policy_sha256`, `checks_policy_version`, `checks_policy_sha256`, `support_table_versions`, `support_table_sha256`, `checks`, `known_misses`, `failure_count`
+- `manifest.json` fields, per the release contract section 7: `release_id`, `schema_version`, `created_at`, `implementation_scope`, `generator_version`, `upstream_dataset_version`, `external_dataset_manifest_sha256`, `release_table_sha256`, `external_benchmark_id`, `external_benchmark_revision`, `external_benchmark_split`, `external_benchmark_program_set_sha256`, `task_count`, `split_counts`, `program_family_count`, `program_family_split_counts`, `task_reasoning_step_counts`, `warmup_task_count`, `distinct_cad_model_count`, `answer_set_sha256`, `prompt_template_version`, `prompts_yaml_sha256`, `release_seed`, `balance_policy_version`, `balance_policy_sha256`, `checks_policy_version`, `checks_policy_sha256`, `support_table_versions`, `support_table_sha256`, `checks`, `known_misses`, `failure_count`
 
 WRITE:
 

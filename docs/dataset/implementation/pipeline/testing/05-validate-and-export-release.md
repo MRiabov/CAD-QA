@@ -49,6 +49,9 @@ support tables, a fixed generator version, and the three failure partitions.
   `external_dataset_manifest_sha256` copied verbatim, the balance and check
   policy versions and hashes, the prompt template version and `prompts.yaml`
   hash, the release seed, and the support table versions and hashes;
+- the manifest records the benchmark identity, revision, split, and
+  program-set hash, and its `release_id` does not change when only the benchmark
+  set changes;
 - the manifest's `checks` rows are sorted by check name, scope, and value, so a
   different parallel schedule produces the same bytes;
 - `support/` holds the five files byte-identical to their inputs;
@@ -68,7 +71,8 @@ serializer in `05` would break the first assertion.
 
 `test_05_release_id_is_stable` — a re-export over the same inputs keeps
 `release_id` and changes only `created_at`; a changed `checks.yaml` version
-changes `release_id`. The test recomputes the id from the documented inputs.
+changes the recorded checks policy version and hash but not `release_id`. The
+test recomputes the id from the documented inputs.
 
 **TDD pin:** pins the projection rechecks, the choice-pool recheck, split
 isolation, the failure merge, the count reconciliation, the manifest fields, the
@@ -81,8 +85,13 @@ sorted check rows, and the manifest-last rule before `05` exists.
 - `test_05_count_mismatch` — a step with 10 entering, 8 leaving, and 1 failure
   blocks and names the step and the three counts, because a failure row cannot
   report its own absence.
-- `test_05_transfer_overlap` — a benchmark program's exact normalized text in the
-  release blocks; the same family with different text does not.
+- `test_05_transfer_overlap_p0` — a benchmark program's exact normalized text in
+  the release blocks, naming the benchmark program and the release tasks; the
+  same family with different text does not block.
+- `test_05_benchmark_set_mismatch` — a file whose hash differs from
+  `external_benchmark.program_set_sha256`, a schema-version mismatch, a split
+  other than the declared one, and a normalization-version mismatch each block
+  as an input error before the check runs; no manifest is written.
 - `test_05_review_gate` — a review sample missing one answer format blocks, and a
   failed review records its reason and blocks. The pack is not a release file.
 - `test_05_no_partial_release` — a block after `release.parquet` is written leaves
@@ -96,3 +105,6 @@ sorted check rows, and the manifest-last rule before `05` exists.
 - That the plan is balanced. That is
   [`../03-task-generation/03a-allocate-task-quotas/README.md`](../03-task-generation/03a-allocate-task-quotas/README.md).
 - That the release trains well. That is a training experiment.
+- That the P1 same-CAD-model audit finds every equivalent program. It reads the
+  CAD graph, so it is not part of `05`; `05` proves only the P0 exact-text
+  overlap.

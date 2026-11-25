@@ -95,8 +95,10 @@ type SelectionRef struct {
 }
 
 type ExternalBenchmark struct {
-	ID              string `json:"id"`
-	Revision        string `json:"revision"`
+	URI              string `json:"uri"`
+	ID               string `json:"id"`
+	Revision         string `json:"revision"`
+	Split            string `json:"split"`
 	ProgramSetSHA256 Sha256 `json:"program_set_sha256"`
 }
 
@@ -106,6 +108,7 @@ type ComponentVersions struct {
 	Fetcher                  string `json:"fetcher"`
 	Normalization            string `json:"normalization"`
 	ExternalDatasetManifestSchema string `json:"external_dataset_manifest_schema"`
+	ExternalBenchmarkProgramSetSchema string `json:"external_benchmark_program_set_schema"`
 	ASTExtractor             string `json:"ast_extractor"`
 	RuntimeExtractor         string `json:"runtime_extractor"`
 	Canonicalization         string `json:"canonicalization"`

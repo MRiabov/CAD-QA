@@ -118,6 +118,7 @@ type RunOptions struct {
 	ExternalBenchmark         string
 	ExternalBenchmarkID       string
 	ExternalBenchmarkRevision string
+	ExternalBenchmarkSplit    string
 	From                      string
 	To                        string
 	Force                     []string
@@ -278,9 +279,9 @@ func (o RunOptions) Validate() error {
 		return &UsageError{Message: fmt.Sprintf("--flush-rows is %d, minimum is 1", o.FlushRows)}
 	}
 	if o.Selects("05-validate-and-export-release") {
-		if o.ExternalBenchmark == "" || o.ExternalBenchmarkID == "" || o.ExternalBenchmarkRevision == "" {
+		if o.ExternalBenchmark == "" || o.ExternalBenchmarkID == "" || o.ExternalBenchmarkRevision == "" || o.ExternalBenchmarkSplit == "" {
 			return &UsageError{
-				Message: "--external-benchmark, --external-benchmark-id, and --external-benchmark-revision are required when the range includes 05-validate-and-export-release",
+				Message: "--external-benchmark, --external-benchmark-id, --external-benchmark-revision, and --external-benchmark-split are required when the range includes 05-validate-and-export-release",
 			}
 		}
 	}
@@ -418,6 +419,7 @@ func runCommand(ctx context.Context, args []string, stderr io.Writer) int {
 	flags.StringVar(&options.ExternalBenchmark, "external-benchmark", "", "pinned external benchmark program set")
 	flags.StringVar(&options.ExternalBenchmarkID, "external-benchmark-id", "", "benchmark name")
 	flags.StringVar(&options.ExternalBenchmarkRevision, "external-benchmark-revision", "", "benchmark revision")
+	flags.StringVar(&options.ExternalBenchmarkSplit, "external-benchmark-split", "", "declared benchmark split")
 	flags.StringVar(&options.From, "from", "", "first pipeline stage doc stem")
 	flags.StringVar(&options.To, "to", "", "last pipeline stage doc stem")
 	flags.StringVar(&force, "force", "", "comma-separated pipeline stage stems or all")

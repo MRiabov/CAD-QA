@@ -387,6 +387,16 @@ license and a pinned revision. `Distinct from:` **Mixed training dataset** (buil
 
 ---
 
+### External benchmark program set
+
+The pinned corpus of one external transfer benchmark split, one row per benchmark program,
+carrying canonical program text from the `01d` normalization, `program_sha256`, and the P1
+same-CAD-model hashes. The release author supplies it; it is an external input, not a pipeline
+stage output. `Distinct from:` **External dataset** (support data for training, never an
+evaluation target).
+
+---
+
 ### Mixed training dataset
 
 The materialized set of training rows for one run: **External dataset** sources blended at fixed

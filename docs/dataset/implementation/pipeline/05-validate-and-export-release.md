@@ -18,7 +18,11 @@ Coverage and balance checks:
 - `generator/config/balance.yaml` and `generator/config/checks.yaml`.
 - The external dataset manifest from `01e` write external dataset manifest.
 - The per-program `GraphCompletenessReport` set from `02c` build CAD graph.
-- The pinned external benchmark program set, for the transfer overlap check.
+- The `ExternalBenchmarkProgramSet` from the release author, for the transfer
+  overlap check. It is pinned by benchmark name, revision, split, normalization
+  version, and file hash; the typed declaration is in
+  [`streamlined/models/05-validate-and-export-release.md`](streamlined/models/05-validate-and-export-release.md),
+  and the artifact row is in [`../artifacts.md`](../artifacts.md).
 - The per-pipeline-stage failure partitions.
 - The run manifest, for the generator version, the release seed, the policy
   versions and hashes, and the tolerance policy hash.
@@ -48,10 +52,16 @@ Coverage and balance checks:
   check. A non-zero missing, orphan, or unclassified count is an enforced miss.
 - Merge the per-pipeline-stage failure partitions and reconcile the counts
   (R-19).
-- Check the transfer overlap: exact normalized program text at P0; the P1
-  same-CAD-model check is PRD Q7.
-- Record the external benchmark identity and revision in `manifest.json`. No
-  program from that benchmark appears in training or evaluation (R-16).
+- Check the transfer overlap against the `ExternalBenchmarkProgramSet` (R-16).
+  At P0, a release row whose `program_sha256` appears in the set is a blocking
+  miss, and a miss names the benchmark program and the release tasks. The P1
+  same-CAD-model comparison (PRD Q7 Option B) is not part of `05`: it reads the
+  CAD graph and the runtime extraction, which `05` does not, so it runs as a P1
+  audit over the release table, the graph, and the set. The check is a validity
+  check, not a policy check: it is never accepted into `known_misses`.
+- Record the benchmark identity, revision, split, and program-set hash in
+  `manifest.json`. `05` validates the set it reads against the run manifest
+  before it runs the check.
 - Hold the review gate before export against the review ledger (R-17): every
   required sampling cell needs a current pass, and a gap or a failed review
   blocks the export.
@@ -133,6 +143,34 @@ the work that re-deriving the task would otherwise take.
 until the task is re-reviewed. The ledger is internal and is not a consumer
 artifact.
 
+## External benchmark program set
+
+The benchmark program set is an external input. It is not an artifact of `01`
+external dataset ETL and it is not a pipeline stage output. The release author
+builds it from the benchmark's declared split with the pinned `01d`
+normalization, and at P1 with the `02a` and `02b` extraction, so its hashes are
+comparable to the release. The P1 columns are the reference-side evidence for
+the same-CAD-model audit, so the audit does not re-normalize or re-execute the
+benchmark. The built file is not committed; the `--external-benchmark` flag
+supplies its path, and the orchestrator records the URI and the SHA-256 of its
+bytes in the run manifest.
+
+`05` validates the set before the check:
+
+- the file hash equals `external_benchmark.program_set_sha256`;
+- the file's schema version equals
+  `component_versions.external_benchmark_program_set_schema`;
+- every row names the declared split;
+- every row carries the same normalization version as
+  `component_versions.normalization` in the run manifest.
+
+A mismatch is an input error, not a miss: the pinned input is not the input the
+run names. The set must cover its declared split completely; that is the
+release author's obligation, and the identity, revision, split, and hash in the
+manifest make it auditable. A benchmark program that cannot be normalized is
+not dropped from the set, because a partially covered set cannot support the
+R-16 claim.
+
 ## Manifest and dataset card
 
 The manifest fields are in the
@@ -149,6 +187,12 @@ the card outline is section 8. `05` owns both.
 - Record `review_ledger_sha256` from the review ledger. The ledger is excluded
   from the `release_id` inputs: it is review provenance, not a generation input,
   so re-reviewing a release does not change its identity.
+- Record `external_benchmark_id`, `external_benchmark_revision`,
+  `external_benchmark_split`, and `external_benchmark_program_set_sha256` from
+  the validated set and the run manifest. They are validation provenance, not
+  generation inputs, so they are excluded from `release_id` like
+  `review_ledger_sha256`. A different set is a different declared run input and
+  changes `run_id` (`run-contract.md`), not the release identity.
 - Copy `upstream_dataset_version` and `external_dataset_manifest_sha256` from the
   external dataset manifest. `05` does not reinterpret either value.
 - Write the dataset card from the manifest. Every number in the card is copied,

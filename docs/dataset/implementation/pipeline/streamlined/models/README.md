@@ -57,7 +57,7 @@ cross-boundary audit: a read outside it is a boundary defect, not an optimizatio
 | `03b` | `CadGraph`, `TaskQuotaPlan` (with `QuotaTarget`, `ProgramCapabilityCensus`), `DeficitLedger` | `TaskDefinition`, `DeficitLedger` | `ReleaseTable`, `RenderConfig` |
 | `03c` | `DeficitLedger`, `TaskQuotaPlan`, `ProgramMetadata`, `SelectionPolicy` | `ProgramReassignmentRequest`, `ProgramRequest`, `AcceptedMiss` | `TaskDefinition`, `ReleaseTable` |
 | `04` | `TaskDefinition`, `NormalizedProgram`, `RenderConfig` | `ReleaseTable` | `CadGraph`, `TaskQuotaPlan`, failure partitions |
-| `05` | `ReleaseTable`, `RenderConfig`, policy files, support tables, `GraphCompletenessReport`, failure partitions, `ExternalDatasetManifest`, run manifest, review ledger | `ReleaseArtifacts` | `CadGraph`, `TaskDefinition`, `TaskQuotaPlan` |
+| `05` | `ReleaseTable`, `RenderConfig`, policy files, support tables, `GraphCompletenessReport`, failure partitions, `ExternalDatasetManifest`, `ExternalBenchmarkProgramSet`, run manifest, review ledger | `ReleaseArtifacts` | `CadGraph`, `TaskDefinition`, `TaskQuotaPlan` |
 
 `05` reads `answer_evidence` only through the release row. It does not read the
 task definition: the release carries the answer-equivalent count and shared
