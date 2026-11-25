@@ -255,7 +255,7 @@ passed and does not claim the failed tier. The fallback is 1–5.
 | **R-1** | Every answer is correct. | The answer is produced by running the CadQuery program or derived by an exact rule, and recorded with answer evidence. No LLM writes or judges the answer. |
 | **R-2** | Every task has exactly one correct answer. | Ambiguous tasks and tasks with ties are rejected. |
 | **R-3** | Multiple-choice tasks are fair. | The correct answer is present; there are enough choices that guessing does not look competitive; choices are real candidates from the construction; choices do not give the answer away. |
-| **R-4** | At least 95% of benchmark tasks require reasoning about the actual shape. | At least one task clue depends on the geometry or topology the program builds, not only on the text of the program. |
+| **R-4** | At least 95% of benchmark tasks require reasoning about the actual shape. | At least one task reasoning step (a task clue step or the task answer step) depends on the geometry or topology the program builds, not only on the text of the program. |
 | **R-5** | Trivial shortcuts do not win on shape-required tasks. | For a task that requires the built shape, an LLM model cannot answer by reading variable names, literal arguments, or operation order alone. |
 | **R-6** | Answers are not leaked. | The prompt never contains the answer or hidden identifiers. |
 

@@ -44,6 +44,14 @@ Two failures are distinguished. A constructor that skips `clue_narrows` fails th
 first assertion. A constructor that records a pass for a clue whose `after` count
 equals its `before` count fails the second.
 
+`test_03b_geometry_required` — `geometry_required` is recomputed from the
+solution sequence and the stored value equals the recomputed value. The
+0-clue 1-step volume and membership records
+([`box-volume.json`](../../oracles/task-construction/box-volume.json),
+[`box-membership-inside.json`](../../oracles/task-construction/box-membership-inside.json))
+are true; a task whose only clues are provenance and whose answer is an identity
+is false. A stored value that disagrees fails `geometry_required_recorded`.
+
 `test_03b_redundant_clue_rejected` — two assertions on the same program:
 
 1. Append the plan's third clue for the box with a hole, a comparison of the two

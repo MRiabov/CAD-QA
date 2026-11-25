@@ -108,6 +108,8 @@ artifact, not a table in this document and a second table in code.
 | `arithmetic` | The arithmetic. One of `coverage`, `count_floor`, `share_range`, `relative_range`, `share_target`, `set_equal`. |
 | `scope` | `release`, or `per_step` for one row per task reasoning step count. |
 | `dimension` | The counted quantity, from the table above. |
+| `value` | For `share_range`, the one dimension value the check measures. |
+| `minimum_value` | For `share_range`, the smallest dimension value in a cumulative share. |
 | `disposition` | `enforced`, `reported`, or `deferred`. |
 | bounds | The fields the `arithmetic` needs. |
 
@@ -142,6 +144,16 @@ because they are the rule, not a policy setting.
 
 `to: one_step_tasks` compares the warmup set with the tasks that have one task
 reasoning step. It is the only derived set.
+
+### Selecting the measured value
+
+A `share_range` check measures the share of the denominator whose dimension
+value is selected. `value` selects one value: `value: true` on
+`geometry_required` measures the share of tasks that require the built shape.
+`minimum_value` selects that value and every larger value: `minimum_value: 3` on
+`task_reasoning_step_count` measures the share of tasks with at least three
+task reasoning steps. With neither, the check measures every supported value and
+emits one row per value. A check sets at most one of the two.
 
 ## Coverage
 
@@ -296,6 +308,9 @@ Balance row:
 | `minimum_count`, `maximum_count` | The integer bound, or null when the bound is one-sided. |
 | `outcome` | The outcome. |
 | `disposition` | What a miss costs. |
+
+A cumulative `share_range` row (`minimum_value`) records that bound as its
+`value`, so the row names the cumulative set it measured.
 
 A `deferred` row carries the check, the scope, and the outcome, and measures
 nothing, because the requirement is outside the release implementation scope.

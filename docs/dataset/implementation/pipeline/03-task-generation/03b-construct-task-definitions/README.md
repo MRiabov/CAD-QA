@@ -47,7 +47,7 @@ task. It is not prompt text and not a loose task tuple. It is what `04` renders.
 | `answer_evidence` | Typed `AnswerEvidence`: rule, references, the answer-equivalent count and shared answer, and the point probe. The full set stays in the definition; `04` copies the count and shared answer into the release column. |
 | `choice_pool` | The ordered, labeled options when multiple choice is planned: label, answer value, distinguishing graph facts, and the P2 error mode. Empty otherwise. |
 | `task_clue_step_count`, `task_reasoning_step_count` | Step accounting. |
-| `geometry_required` | Whether at least one task clue depends on the built shape. |
+| `geometry_required` | Whether at least one task reasoning step (a task clue step or the task answer step) depends on the built shape. Derived from the solution sequence in [`a-construction.md#geometry-requirement`](a-construction.md#geometry-requirement). |
 | `validity_record` | Typed check results and the answer-uniqueness result. |
 | `provenance` | Constructor version, seed, and input versions. Assignment, not content. |
 

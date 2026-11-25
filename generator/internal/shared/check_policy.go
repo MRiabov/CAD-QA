@@ -2,6 +2,7 @@ package shared
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"slices"
 	"strconv"
@@ -46,22 +47,26 @@ type CheckPolicy struct {
 
 // ReleaseCheck is one row of the release check policy. A bound is a number or
 // a dotted path into balance.yaml; Bound preserves the raw scalar so the
-// evaluator can resolve it against the balance policy.
+// evaluator can resolve it against the balance policy. Value and MinimumValue
+// select the dimension value a share_range check measures; they are not balance
+// paths.
 type ReleaseCheck struct {
-	ID          string           `yaml:"id"`
-	Requirement []string         `yaml:"requirement"`
-	Arithmetic  CheckArithmetic  `yaml:"arithmetic"`
-	Scope       CheckScope       `yaml:"scope"`
-	Dimension   string           `yaml:"dimension"`
-	Minimum     *Bound           `yaml:"minimum"`
-	Maximum     *Bound           `yaml:"maximum"`
-	Target      *Bound           `yaml:"target"`
-	Tolerance   *Bound           `yaml:"tolerance"`
-	To          *string          `yaml:"to"`
-	Values      []Bound          `yaml:"values"`
-	Below       *Bound           `yaml:"below"`
-	Above       *Bound           `yaml:"above"`
-	Disposition CheckDisposition `yaml:"disposition"`
+	ID           string           `yaml:"id"`
+	Requirement  []string         `yaml:"requirement"`
+	Arithmetic   CheckArithmetic  `yaml:"arithmetic"`
+	Scope        CheckScope       `yaml:"scope"`
+	Dimension    string           `yaml:"dimension"`
+	Value        *Bound           `yaml:"value"`
+	MinimumValue *Bound           `yaml:"minimum_value"`
+	Minimum      *Bound           `yaml:"minimum"`
+	Maximum      *Bound           `yaml:"maximum"`
+	Target       *Bound           `yaml:"target"`
+	Tolerance    *Bound           `yaml:"tolerance"`
+	To           *string          `yaml:"to"`
+	Values       []Bound          `yaml:"values"`
+	Below        *Bound           `yaml:"below"`
+	Above        *Bound           `yaml:"above"`
+	Disposition  CheckDisposition `yaml:"disposition"`
 }
 
 // Bound is a numeric literal or a dotted path into balance.yaml.
@@ -169,17 +174,47 @@ func (c ReleaseCheck) validate() error {
 	default:
 		return fmt.Errorf("check %q: unknown disposition %q", c.ID, c.Disposition)
 	}
+	if err := c.validateMeasuredValue(); err != nil {
+		return err
+	}
 	return c.validateBounds()
+}
+
+// validateMeasuredValue checks the two fields that narrow a share_range check
+// to one dimension value or a cumulative tail of them.
+func (c ReleaseCheck) validateMeasuredValue() error {
+	if c.Value == nil && c.MinimumValue == nil {
+		return nil
+	}
+	if c.Arithmetic != CheckArithmeticShareRange {
+		return fmt.Errorf("check %q: value and minimum_value select a share_range value", c.ID)
+	}
+	if c.Value != nil && c.MinimumValue != nil {
+		return fmt.Errorf("check %q: set at most one of value and minimum_value", c.ID)
+	}
+	if c.MinimumValue == nil {
+		return nil
+	}
+	number, err := c.MinimumValue.Number()
+	if err != nil {
+		return fmt.Errorf("check %q: minimum_value: %w", c.ID, err)
+	}
+	if math.Trunc(number) != number {
+		return fmt.Errorf("check %q: minimum_value %q is not an integer", c.ID, c.MinimumValue.Raw)
+	}
+	return nil
 }
 
 func (c ReleaseCheck) validateBounds() error {
 	for name, bound := range map[string]*Bound{
-		"minimum":   c.Minimum,
-		"maximum":   c.Maximum,
-		"target":    c.Target,
-		"tolerance": c.Tolerance,
-		"below":     c.Below,
-		"above":     c.Above,
+		"value":         c.Value,
+		"minimum_value": c.MinimumValue,
+		"minimum":       c.Minimum,
+		"maximum":       c.Maximum,
+		"target":        c.Target,
+		"tolerance":     c.Tolerance,
+		"below":         c.Below,
+		"above":         c.Above,
 	} {
 		if bound != nil && bound.Raw == "" {
 			return fmt.Errorf("check %q: %s is empty", c.ID, name)

@@ -80,6 +80,61 @@ func TestCheckPolicyRejectsDuplicateIDs(t *testing.T) {
 	}
 }
 
+func TestLoadCheckPolicySelectors(t *testing.T) {
+	policy := loadRootCheckPolicy(t)
+	byID := make(map[string]ReleaseCheck, len(policy.Checks))
+	for _, check := range policy.Checks {
+		byID[check.ID] = check
+	}
+
+	builtShape, ok := byID["built_shape_share_floor"]
+	if !ok {
+		t.Fatal("built_shape_share_floor check is missing")
+	}
+	if builtShape.Value == nil || builtShape.Value.Raw != "true" {
+		t.Fatalf("built_shape_share_floor value = %+v, want true", builtShape.Value)
+	}
+
+	stepThree, ok := byID["steps_three_or_more_share"]
+	if !ok {
+		t.Fatal("steps_three_or_more_share check is missing")
+	}
+	if stepThree.MinimumValue == nil || stepThree.MinimumValue.Raw != "3" {
+		t.Fatalf("steps_three_or_more_share minimum_value = %+v, want 3", stepThree.MinimumValue)
+	}
+}
+
+func TestCheckPolicyRejectsTwoSelectors(t *testing.T) {
+	check := ReleaseCheck{
+		Arithmetic:   CheckArithmeticShareRange,
+		Value:        &Bound{Raw: "true"},
+		MinimumValue: &Bound{Raw: "3"},
+	}
+	if err := check.validateMeasuredValue(); err == nil {
+		t.Fatal("value and minimum_value were accepted together")
+	}
+}
+
+func TestCheckPolicyRejectsNonIntegerMinimumValue(t *testing.T) {
+	check := ReleaseCheck{
+		Arithmetic:   CheckArithmeticShareRange,
+		MinimumValue: &Bound{Raw: "3.5"},
+	}
+	if err := check.validateMeasuredValue(); err == nil {
+		t.Fatal("non-integer minimum_value was accepted")
+	}
+}
+
+func TestCheckPolicyRejectsSelectorOnOtherArithmetic(t *testing.T) {
+	check := ReleaseCheck{
+		Arithmetic: CheckArithmeticCoverage,
+		Value:      &Bound{Raw: "true"},
+	}
+	if err := check.validateMeasuredValue(); err == nil {
+		t.Fatal("value was accepted on a coverage check")
+	}
+}
+
 func TestBoundNumber(t *testing.T) {
 	bound := Bound{Raw: "0.25"}
 	value, err := bound.Number()

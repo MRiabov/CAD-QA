@@ -13,8 +13,8 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 2 open entries: both P1 technical. No product decision remains open,
-and P0 is empty.
+There is 1 open entry: P1 technical. No product decision remains open, and P0
+is empty.
 
 ## Decisions needed from the owner
 
@@ -40,23 +40,8 @@ None.
 
 Work order:
 
-1. `MC-22` — geometry-required for 1-step tasks; it changes what the first
-   release counts.
-2. `MC-49` — external benchmark program set; the transfer overlap check has no
+1. `MC-49` — external benchmark program set; the transfer overlap check has no
    declared input.
-
-#### MC-22 — Geometry-required for 1-step tasks
-
-The geometry-required rule for 1-step no-clue tasks is wrong, and the 95%
-aggregate check is missing. The current definition requires a task clue to
-depend on the built shape, so every 1-step task with no clue is marked false
-even when the answer needs geometry — including every 1-step membership task.
-
-**Recommendation:** define `geometry_required` as "the answer cannot be computed
-from the program text alone", which covers the answer step; a 1-step membership
-task then counts as geometry-required and the 95% check applies to all tasks.
-Restate R-4 the same way, or the check measures a different property from the
-requirement.
 
 #### MC-49 — External benchmark program set
 
@@ -72,6 +57,23 @@ the manifest fields have no declared value. P1 scope.
 revision, and file hash, carrying normalized program text for the P0 overlap
 check and the same-CAD-model comparison for the P1 check. Record its identity
 and hash in the manifest.
+
+## Closed in the 2026-11-25 geometry-required pass
+
+- `MC-22` — `geometry_required` is "at least one task reasoning step (a task
+  clue step or the task answer step) depends on the built shape". The clue-only
+  definition was false for a 0-clue 1-step task, contradicting the accepted
+  `box-volume` and `box-membership-inside` records. `R-4` is restated the same
+  way. `03b` derives the flag from `answer_meaning` and `clue_type`: an answer
+  step reads the built shape for every meaning except `Identity` and
+  `CadQuery workplane state`, and a clue step reads it for every clue type
+  except `provenance`.
+  `geometry_required_recorded` checks the stored flag against that derivation.
+  The 95% floor is executable: `built_shape_share_floor` selects `value: true`,
+  and the policy schema now defines `value` and `minimum_value`; the sibling
+  `steps_three_or_more_share` selects `minimum_value: 3`. `box-volume` stays true
+  under this dependency rule; shortcut resistance is R-5 and is measured by the
+  baseline report, not by this field.
 
 ## Closed in the 2026-11-25 pair-emission pass
 

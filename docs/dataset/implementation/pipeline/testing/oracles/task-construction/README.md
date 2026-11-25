@@ -129,7 +129,7 @@ the same namespace and uses the final solid bound to `result`.
 | `answer_meaning` | What the answer is about. |
 | `native_answer_format` | The meaning's native format. |
 | `answer_format` | The format the prompt requests. |
-| `geometry_required` | Whether the answer needs the built shape. |
+| `geometry_required` | Whether at least one task reasoning step (a clue step or the answer step) depends on the built shape. |
 | `uniqueness` | The rule that makes the target and the answer unique. |
 
 `possible_answer_count` is the full target-category set in the state scope when

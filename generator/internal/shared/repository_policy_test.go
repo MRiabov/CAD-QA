@@ -16,7 +16,7 @@ import (
 var allowedBounds = map[CheckArithmetic]map[string]bool{
 	CheckArithmeticCoverage:      {},
 	CheckArithmeticCountFloor:    {"minimum": true},
-	CheckArithmeticShareRange:    {"minimum": true, "maximum": true},
+	CheckArithmeticShareRange:    {"value": true, "minimum_value": true, "minimum": true, "maximum": true},
 	CheckArithmeticRelativeRange: {"below": true, "above": true},
 	CheckArithmeticShareTarget:   {"target": true, "tolerance": true},
 	CheckArithmeticSetEqual:      {"values": true, "to": true},
@@ -67,6 +67,12 @@ func presentBounds(check ReleaseCheck) map[string]bool {
 		if bound != nil {
 			present[name] = true
 		}
+	}
+	if check.Value != nil {
+		present["value"] = true
+	}
+	if check.MinimumValue != nil {
+		present["minimum_value"] = true
 	}
 	if len(check.Values) > 0 {
 		present["values"] = true
@@ -120,6 +126,9 @@ func TestCheckPolicyBoundVocabulary(t *testing.T) {
 		case CheckArithmeticShareRange:
 			if len(present) == 0 {
 				t.Errorf("check %q: a share range needs a bound", check.ID)
+			}
+			if check.Value != nil && check.MinimumValue != nil {
+				t.Errorf("check %q: set at most one of value and minimum_value", check.ID)
 			}
 		case CheckArithmeticSetEqual:
 			hasValues := present["values"]

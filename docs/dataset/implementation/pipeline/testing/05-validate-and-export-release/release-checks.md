@@ -27,6 +27,11 @@ the upper bound down, `relative_range` uses
 `max(1, ceil(below * reference_share * denominator))`, and `share_target` uses
 the target plus or minus the tolerance. The test recomputes the counts itself.
 
+`test_05_check_selector` — a `share_range` check with `value: true` measures the
+share of the true value, and one with `minimum_value: 3` measures the cumulative
+share at or above 3; neither emits one row per value. A check that sets both, or
+sets either on another arithmetic, fails policy validation.
+
 `test_05_coverage_rows` — a coverage row carries supported, observed, missing,
 and unexpected values, and there is no whole-release coverage row for a
 dimension.

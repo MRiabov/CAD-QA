@@ -12,6 +12,9 @@
 # mapping is indexed by the dimension value. This file holds no number that
 # `balance.yaml` already owns.
 #
+# `value` and `minimum_value` select the dimension value a `share_range` check
+# measures; they are not bounds and not balance paths.
+#
 # Comments are not data.
 
 version: 1
@@ -104,6 +107,7 @@ checks:
     arithmetic: share_range
     scope: release
     dimension: geometry_required
+    value: true
     minimum: release.built_shape_min_share
     disposition: enforced
 
@@ -135,6 +139,7 @@ checks:
     arithmetic: share_range
     scope: release
     dimension: task_reasoning_step_count
+    minimum_value: 3
     minimum: release.three_or_more_step_min_share
     disposition: enforced
 

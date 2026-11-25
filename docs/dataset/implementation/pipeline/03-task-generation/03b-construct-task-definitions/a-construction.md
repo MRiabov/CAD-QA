@@ -148,7 +148,7 @@ name is stable: it is the name the validity record carries.
 | `choice_pool_valid` | For multiple choice, the choice pool passes every P0 row of the [multiple-choice check list](b-answer-semantics.md#multiple-choice-choices). |
 | `near_miss_valid` | For P2 multiple choice, every near-miss fails a task clue or the answer step, and its `error_mode` is recorded. |
 | `definition_unique` | The task definition is unique under canonical identity. |
-| `geometry_required_recorded` | `geometry_required` is recorded: at least one task clue depends on the built shape. |
+| `geometry_required_recorded` | `geometry_required` is computed as [Geometry requirement](#geometry-requirement) defines, and the stored value equals the computed value. |
 
 The capability table above is a vocabulary-level test, not a per-definition
 validity check; the per-definition rule remains `clue_narrows`.
@@ -212,6 +212,31 @@ achievable step count is the number of necessary clues plus the answer step. A
 quota target above that count is a deficit, not a reason to keep a redundant clue.
 `task_reasoning_step_count` is at most 10; a value answer has at most 9 clue
 steps, an identity answer at most 10.
+
+## Geometry requirement
+
+`geometry_required` is true when at least one task reasoning step depends on the
+built shape: a task clue step or the task answer step reads a property of the
+built shape rather than a value the program states. The constructor computes it
+from the solution sequence; it is not authored.
+
+- An answer step depends on the built shape for every answer meaning except
+  `Identity` and `CadQuery workplane state`. An identity answer is the entity
+  the answer-equivalent set shares, and a CadQuery workplane state is the frame
+  the program states; neither reads the built shape.
+- A clue step depends on the built shape for every clue type except `provenance`.
+  A provenance clue names an operation or profile in the program.
+
+A 1-step task with no task clue has only its answer step, so it is true when that
+step reads the built shape. The box-volume and box-membership records are the
+examples: the volume and the point probe are properties of the built solid. A
+task whose only clues are provenance and whose answer is an identity is false,
+and counts against R-4.
+
+`geometry_required_recorded` passes when the stored flag equals the computed
+flag. Because it is derived from `task_clues`, `answer_meaning`, and
+`answer_evidence`, `geometry_required` is not a separate input to
+`definition_sha256`.
 
 ## Construction attempt budget
 

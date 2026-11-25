@@ -7,7 +7,7 @@
 
 READ:
 
-- `checks.yaml` → the ordered check list, each check's `id`, `arithmetic`, `scope`, `dimension`, `value`, bounds, disposition, and `known_misses`
+- `checks.yaml` → the ordered check list, each check's `id`, `arithmetic`, `scope`, `dimension`, `value`, `minimum_value`, bounds, disposition, and `known_misses`
 - `balance.yaml` → `dimensions`, `release.splits`, `release.share_tolerance`
 - the support-table derivation → `supported_values`
 - `ReleaseTable` → observed counts
@@ -36,6 +36,7 @@ TRANSFORM:
 - `coverage`: the observed value set equals the supported value set
 - `count_floor`: the observed count is at least the bound
 - `share_range`: `minimum_count = ceil(minimum_share * denominator)`, `maximum_count = floor(maximum_share * denominator)`
+- `share_range` selects the measured value: `value` selects one value, `minimum_value` selects that value and every larger value, neither emits one row per value; at most one is set
 - `relative_range`: `minimum_count = max(1, ceil(below * reference_share * denominator))`, `maximum_count = floor(above * reference_share * denominator)`
 - `share_target`: `minimum_count = ceil((target - tolerance) * denominator)`, `maximum_count = floor((target + tolerance) * denominator)`
 - `set_equal`: the observed value set equals the declared set

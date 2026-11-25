@@ -97,7 +97,7 @@ fails.
 | `answer_meaning` | string | What the answer is about, from `03b`. |
 | `native_answer_format` | string | The answer meaning's native format. |
 | `answer_format` | string | The format the prompt requests. |
-| `geometry_required` | boolean | Whether at least one clue depends on the built shape. |
+| `geometry_required` | boolean | Whether at least one task reasoning step depends on the built shape. |
 
 `answer_format` equals `native_answer_format` unless the task uses multiple
 choice, which is a presentation wrapper valid for every answer meaning.

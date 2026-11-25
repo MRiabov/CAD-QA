@@ -160,7 +160,7 @@ it from there when it needs to recheck uniqueness.
 | `answer_format` | enum | yes | Format the LLM model must return. | `TaskDefinition.answer_format` |
 | `choices` | list of struct `{label, candidate}`, both strings | yes | The multiple-choice pool: the position label and the answer value it denotes, as canonical text. Empty for every other answer format. | `TaskDefinition.choice_pool`, label and answer value |
 | `answer_meaning` | enum | yes | What the answer is about. | `TaskDefinition.answer_meaning` |
-| `geometry_required` | boolean | yes | Whether at least one task clue depends on the built shape. | `TaskDefinition.geometry_required` |
+| `geometry_required` | boolean | yes | Whether at least one task reasoning step (a task clue step or the task answer step) depends on the built shape. | `TaskDefinition.geometry_required` |
 | `gold_answer` | `AnswerValue` struct | yes | The gold answer, tagged by `kind`. | `TaskDefinition.gold_answer` |
 | `answer_unit` | string or null | yes | Unit; null means unitless. | `TaskDefinition.answer_unit` |
 | `tolerance` | `Tolerance` struct or null | yes | Answer tolerance; null means exact. | `TaskDefinition.tolerance` |

@@ -375,7 +375,8 @@ Answer: the area of the target face, as a number.
 Task reasoning step count: 4 (three task clue steps and one task answer step).
 Uniqueness: the three task clues leave exactly one face, and the largest area is
             achieved by exactly one of them. Otherwise the task is rejected.
-Geometry requirement: every task clue depends on the built shape, not only on
+Geometry requirement: at least one task reasoning step (a task clue step or the
+                    task answer step) depends on the built shape, not only on
                     the program text.
 ```
 
