@@ -43,7 +43,7 @@ The question names the category and the answer meaning, and states no condition.
 | Feature | the target feature | Which feature satisfies these conditions? |
 
 Vertex, CadQuery profile, CadQuery workplane, Region, and Feature are P0 and have
-no task yet; the task-construction coverage view records those gaps.
+no task yet; [`capability-coverage.md`](capability-coverage.md) records those gaps.
 
 An identity answer is a multiple-choice label, so an operation target is
 answered by choosing a label; a CadQuery workplane target, if it ships, is too.
@@ -142,6 +142,9 @@ category in section 2.1; if it ships, its target phrase is
 | Thing | Phrase | Example | Usable when |
 |---|---|---|---|
 | Region | — | — | `missing`: no reference phrase, so a clue cannot name one |
+
+A region is a target only. A question can ask for its volume, area, bounding box,
+or centroid, and no P0 clue can narrow it.
 
 ### A point
 

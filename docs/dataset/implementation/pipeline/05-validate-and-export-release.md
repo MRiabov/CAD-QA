@@ -50,6 +50,9 @@ Coverage and balance checks:
   define them, and block the export on a miss the owner has not accepted.
 - Aggregate the `GraphCompletenessReport` set into the `graph_completeness`
   check. A non-zero missing, orphan, or unclassified count is an enforced miss.
+  The same set is the observed side of `extraction_capability_coverage`, which
+  blocks the export when a declared P0 extraction capability has no accepted
+  graph.
 - Merge the per-pipeline-stage failure partitions and reconcile the counts
   (R-19).
 - Check the transfer overlap against the `ExternalBenchmarkProgramSet` (R-16).

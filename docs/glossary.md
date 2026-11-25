@@ -137,6 +137,17 @@ entities.
 
 ---
 
+### Must-extract capability cell
+
+One P0 row the extraction contract requires some accepted CAD graph to carry: an
+entity kind, a relation with its two endpoint kinds, or a measurement with its
+subject. The set is declared from the contract, not observed from a corpus, so a
+capability no accepted graph realizes is a miss rather than a scope decision.
+`In code:` `MustExtractCapability`. `Distinct from:` the program capability
+census, which records what one graph offers.
+
+---
+
 ### CadQuery selector
 
 A CadQuery expression that picks topology entities (for example `.faces(">Z")`).

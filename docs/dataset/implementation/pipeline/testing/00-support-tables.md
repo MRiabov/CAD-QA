@@ -90,4 +90,7 @@ fixture set follows the vocabulary, not the cell count.
 - That the pool has enough instances. That is a coverage question in `05`
   validate and export release.
 - That a value appears in a particular release. That is the coverage check.
+- That an in-scope capability is realized by at least one accepted graph. That is
+  `extraction_capability_coverage`: this table records what the fixture set can
+  construct, and a fixture graph that lost a capability reads as unsupported here.
 - That a task is natural or well worded. That is the review gate.

@@ -128,17 +128,26 @@ Parallelism and perpendicularity are not relation kinds. The graph stores the
 | Subject | Measurements | Origin |
 |---|---|---|
 | `solid_state` | `volume`, `bounding_box`, `centroid`, `face_count`, `edge_count`, `vertex_count`, `validity` | runtime state measurement |
-| `face` | `area`, `bounding_box`, `centroid` | runtime entity measurement |
+| `face` | `area`, `bounding_box`, `centroid`, `edge_count`, `vertex_count` | runtime entity measurement |
 | `edge` | `length`, `bounding_box`, `centroid` | runtime entity measurement |
 | `vertex` | `centroid` | runtime entity measurement |
+| `cadquery_profile` | `area` | derived from the CadQuery profile's sketch arguments by an exact rule |
+| `region` | `volume`, `area`, `bounding_box`, `centroid` | region derivation |
 | `point_probe` | `probe_point`, `distance_to_face_surface` | runtime point probe |
 | `cadquery_selector_result` | `selected_count` | runtime selector result |
 | `cadquery_workplane` | `workplane_frame` | runtime frame capture |
-| feature effect | `volume_change`, `bounding_box_change`, `topology_change` | runtime effect delta |
-| pair | `distance`, `angle` | kernel measurement for `distance`; derived geometry for `angle` |
+| `operation` | `volume_change`, `bounding_box_change`, `topology_change` | runtime effect delta |
+| `pair` | `distance`, `angle` | kernel measurement for `distance`; derived geometry for `angle` |
+
+The subject for an effect delta is `operation`: the effect belongs to the
+operation that produced it, and the measurement type catalog in
+[`graph-persistence.md`](graph-persistence.md) names `operation` as the
+subject.
 
 The P0 measurement set includes `distance` and `angle`. `workplane_frame` and
-`bounding_box_change` are P1; a P0 report lists them but does not enforce them.
+`bounding_box_change` are P1, and `validity` is P2; a P0 report lists them but
+does not enforce them. A `region` and a `cadquery_profile` are P0 graph entities,
+so their measurements are enforced in P0.
 
 A per-entity measurement is total over its scope. A missing row is a defect, not
 a data condition. A measurement value is compared with the runtime record; the
@@ -196,6 +205,22 @@ A `RelationCompleteness` row carries `relation_kind`, `subject_kind`,
 `orphan_count`, `unclassified_count`, `expected_source`, `actual_source`, and
 the missing and orphan endpoint pairs with their evidence.
 
+A `NodeCompleteness` row carries `node_kind`, `expected_count`, `actual_count`,
+`missing_count`, `orphan_count`, `expected_source`, and `actual_source`. A
+`MeasurementCompleteness` row carries `subject_kind`, `measurement_kind`,
+`expected_count`, `actual_count`, `missing_count`, `orphan_count`,
+`expected_source`, and `actual_source`; `subject_kind` is a graph entity kind or
+`pair`.
+
+The row identity is the
+[must-extract capability cell](validation.md#the-must-extract-capability-set)
+identity: `entity:<node_kind>` for a CAD graph entity row,
+`relation:<relation_kind>@<subject_kind>-><object_kind>` for a relation row, and
+`measurement:<measurement_kind>@<subject_kind>` for a measurement row. `05`
+reads `actual_count` from these rows to prove that at least one accepted graph
+realizes each declared capability: a cell with `actual_count > 0` in any one
+report is covered.
+
 `actual_source` is always `graph_artifact`. In a production report,
 `expected_source` is `contract_rule`, `upstream_record`, or `emission_rule`.
 `kernel_oracle` appears only in a calibration report, which the production DAG
@@ -233,6 +258,11 @@ does not replace the report.
 ## 10. What this does not prove
 
 - That the graph supports a task. That is the capability census and `03b`.
+- That every declared capability is realized somewhere in the pool. A per-program
+  report is complete when the expected rows for that program exist; a capability
+  the contract declares and no program builds needs the pool-level
+  `extraction_capability_coverage` check
+  ([`validation.md`](validation.md#coverage)), which reads this report set.
 - That the contract's rule set is complete. That is the extraction-graph oracle
   set in [`../testing/oracles/extraction-graph/`](../testing/oracles/extraction-graph/)
   and the residual corpus sample.

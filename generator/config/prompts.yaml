@@ -111,6 +111,7 @@ namespaces:
         face_centroid: "face centroid"
         edge_midpoint: "edge midpoint"
         vertex_point: "vertex point"
+        region_centroid: "region centroid"
         solid_state_centroid: "solid state centroid"
 
       counted_entity:

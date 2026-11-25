@@ -27,8 +27,9 @@ real `02b` result and asserts the persisted tables read back through the reader
 - `has_face`, `has_edge`, and `has_vertex` derived from the topology records, and
   `adjacent_to` derived from shared topology;
 - per-entity measurements total over their scope: every face has an area, every
-  edge a length, every path segment a length, and every solid state a volume and
-  a bounding box;
+  edge a length, every path segment a length, every vertex a centroid and a
+  bounding box, every CadQuery profile an area, every region a volume, an area, a
+  bounding box, and a centroid, and every solid state a volume and a bounding box;
 - the final state's 15 edges are all present, including the seam edge;
 - every relation and measurement row carries CAD graph evidence: `derived` with
   its rule and references, or `measured` with the kernel call.
@@ -63,6 +64,17 @@ its reason.
 partial graph is written. The limit is read from the recorded scope constant, not
 recomputed.
 
+`test_02c_report_rows_are_capability_cells` — every `GraphCompletenessReport`
+row carries the identity the
+[must-extract capability set](../extraction/validation.md#the-must-extract-capability-set)
+uses: `entity:<node_kind>`,
+`relation:<relation_kind>@<subject_kind>-><object_kind>`, and
+`measurement:<measurement_kind>@<subject_kind>`. A program that realizes a
+declared cell reports `actual_count > 0` for it, and a realized cell outside the
+declared set is reported with its own identity rather than folded into another
+row. A row kind the set cannot name is a contract gap, so the test fails rather
+than recording an unclassified row.
+
 **TDD pin:** pins the seam edge as a graph entity, the pair emission rule as a set
 equality, and the state-size rejection before `02c` exists.
 
@@ -81,5 +93,7 @@ equality, and the state-size rejection before `02c` exists.
 
 - That a task exists for the graph. That is
   [`03b-construct-task-definitions.md`](03-task-generation/03b-construct-task-definitions/README.md).
+- That every declared capability is realized somewhere in the pool. That is
+  [`05`'s `extraction_capability_coverage`](../05-validate-and-export-release/release-checks.md#extraction-capability-coverage).
 - That the support table is complete. That is
   [`00-support-tables.md`](00-support-tables.md).

@@ -56,6 +56,18 @@ checks:
     dimension: answer_format
     disposition: enforced
 
+  # Extraction capability coverage: every P0 capability cell the extraction
+  # contract declares is realized by at least one accepted graph. The declared
+  # set is contract data, not the observed census; a missing cell is a capability
+  # that disappeared rather than a value the grammar cannot produce.
+  - id: extraction_capability_coverage
+    requirement: [R-19]
+    arithmetic: set_equal
+    scope: release
+    dimension: extraction_capability
+    to: must_extract_capabilities
+    disposition: enforced
+
   # Release size and shape.
   - id: release_task_count
     requirement: [PRD-8]

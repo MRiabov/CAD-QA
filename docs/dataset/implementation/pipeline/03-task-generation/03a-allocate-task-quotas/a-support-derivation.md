@@ -32,3 +32,22 @@ in [`../../../task-step-support.md`](../../../task-step-support.md).
   derivation, not a scope file plus a grammar model. The derivation takes
   `implementation_scope` from the requirement marks, so a value above the
   release scope has no row.
+
+## What the census cannot see
+
+The census answers what one accepted graph offers. A capability the extraction
+contract declares and no accepted graph realizes has no census entry, so it also
+has no quota target and no support-table row: the constructor produces no
+definition for it, the support table marks that dimension value unsupported with
+`no_valid_construction`, and the per-step coverage checks read it as
+`not_applicable`. The plan and the release then agree, and both are wrong.
+
+That loss is not this derivation's to catch. `implementation_scope` comes from the
+requirement marks, not from the graphs, so a value inside the scope stays in the
+derivation even when the corpus never produces it. The release gate is
+`extraction_capability_coverage`
+([`release-checks.md`](../../05-validate-and-export-release/release-checks.md#extraction-capability-coverage)),
+which compares the contract's declared capability cells with the cells the
+accepted graphs realize. `no_valid_construction` does not distinguish a grammar
+limit from a graph capability no fixture carries; that distinction belongs to the
+capability set, not to a support-table reason code.

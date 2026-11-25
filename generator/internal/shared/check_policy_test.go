@@ -104,6 +104,41 @@ func TestLoadCheckPolicySelectors(t *testing.T) {
 	}
 }
 
+// TestLoadCheckPolicyExtractionCapabilityCoverage pins the check that makes a
+// declared extraction capability with no accepted graph a blocking miss.
+func TestLoadCheckPolicyExtractionCapabilityCoverage(t *testing.T) {
+	policy := loadRootCheckPolicy(t)
+
+	var coverage *ReleaseCheck
+	for index := range policy.Checks {
+		if policy.Checks[index].ID == "extraction_capability_coverage" {
+			coverage = &policy.Checks[index]
+			break
+		}
+	}
+	if coverage == nil {
+		t.Fatal("extraction_capability_coverage check is missing")
+	}
+	if coverage.Arithmetic != CheckArithmeticSetEqual {
+		t.Fatalf("arithmetic = %q, want set_equal", coverage.Arithmetic)
+	}
+	if coverage.Scope != CheckScopeRelease {
+		t.Fatalf("scope = %q, want release", coverage.Scope)
+	}
+	if coverage.Dimension != "extraction_capability" {
+		t.Fatalf("dimension = %q, want extraction_capability", coverage.Dimension)
+	}
+	if coverage.To == nil || *coverage.To != "must_extract_capabilities" {
+		t.Fatalf("to = %v, want must_extract_capabilities", coverage.To)
+	}
+	if coverage.Disposition != CheckDispositionEnforced {
+		t.Fatalf("disposition = %q, want enforced", coverage.Disposition)
+	}
+	if len(coverage.Requirement) != 1 || coverage.Requirement[0] != "R-19" {
+		t.Fatalf("requirement = %v, want [R-19]", coverage.Requirement)
+	}
+}
+
 func TestCheckPolicyRejectsTwoSelectors(t *testing.T) {
 	check := ReleaseCheck{
 		Arithmetic:   CheckArithmeticShareRange,

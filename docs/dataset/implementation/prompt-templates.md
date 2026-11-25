@@ -223,7 +223,7 @@ The P0 label tables are:
 | `comparator` | `gt`, `ge`, `lt`, `le`, `eq` | `label.comparator` |
 | `relation` | `adjacent_to`, `has_edge`, `has_vertex` | `label.relation` |
 | `unit` | `mm`, `mm2`, `mm3`, `deg` | `label.unit` |
-| `position_parameter` | `face_centroid`, `edge_midpoint`, `vertex_point`, `solid_state_centroid` | `label.position_parameter` |
+| `position_parameter` | `face_centroid`, `edge_midpoint`, `vertex_point`, `region_centroid`, `solid_state_centroid` | `label.position_parameter` |
 | `counted_entity` | `face`, `edge`, `vertex`, `selected_entity` | `label.counted_entity` |
 | `frame` | `program_frame` | `label.frame` |
 | `face_surface_kind` | `plane`, `cylinder`, `cone` | `label.face_surface_kind` |

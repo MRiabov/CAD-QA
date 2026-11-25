@@ -24,6 +24,7 @@ TRANSFORM:
 - `03c` reads `family_profiles`, never `program_census`
 - `supported_values(s, d)` is the support-table derivation's output, filtered by `implementation_scope`; `03a` calls the derivation in-process and does not read the support tables as data
 - a value above the release scope has no supported row
+- an in-scope value keeps its row even when no accepted graph realizes its capability; the census and `family_profiles` record what the graphs offer and are not the release gate for the missing capability
 - a capability is present only when the graph asserts the relation or measurement and its evidence is present
 - pair elements exist only for the pairs the pair emission rule allows
 

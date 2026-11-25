@@ -201,7 +201,7 @@ must support at least these.
 | Distance | Two endpoint entities, or one endpoint entity and a point | Shortest distance. | P0 |
 | Angle | Two planar faces, two edges, a path tangent, or a planar face and a program axis | Two faces: between outward normals, 0–180°. Two edges: acute angle between the lines, 0–90°. A face and an axis: between the outward normal and the directed axis, 0–180°, because +z and -z are different labels. Path tangent: between consecutive tangents, 0–180° (P1). Degrees. | P0 |
 | Outward normal | Planar face | The unit direction that points out of the solid, in the program frame. A direction, not a category and not a number. | P0 |
-| Bounding box | Solid state, entity, region | The axis-aligned minimum and maximum corners in the program frame. | P0 |
+| Bounding box | Solid state, face, edge, region | The axis-aligned minimum and maximum corners in the program frame. A point has no extent to report, so a vertex has none. | P0 |
 | Centroid | Solid state, entity, region | Point in the program frame. | P0 |
 | Centroid coordinate | Solid state, entity, region | The X, Y, or Z component of the centroid in the program frame. | P0 |
 | Probe point | Point probe | The probe point in the program frame. | P0 |

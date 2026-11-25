@@ -101,7 +101,7 @@ are local to `03b` and are numbered `03b-M1`–`03b-M5`:
 No code. Each item is a small edit to one owner document, scheduled here because
 the code that would otherwise encode the wrong answer is `P0-W2` or `P0-W3` work.
 
-Four items remain open. `DA-4`, `DA-15`, `DA-13`, and `DA-5` closed between the
+Three items remain open. `DA-4`, `DA-15`, `DA-13`, and `DA-5` closed between the
 audit and 2026-11-25 and are listed below the table.
 
 | Item | Owner | Why it cannot wait |
@@ -109,10 +109,13 @@ audit and 2026-11-25 and are listed below the table.
 | `DA-7` / `MC-63` — the R-5 shortcut-resistance proxy, or its re-scope | `03b`, `release-checks.yaml`, `prompt-content.md`, `docs/development-plan.md` | R-5 is P0 and no construction rule or release check measures it. The documented candidate is the Phase 2 baseline report, and a re-scope is a decision, not silence |
 | `MC-64` — review frames: absence and residual, ledgers scoped to a pipeline stage | `devtools/review-pack.md`, `05` | The merged pack samples release rows only; partial extraction loss and unknown unknowns have no review frame. `file-trees.md` names the two tools and not the ledger cells |
 | `MC-65` — failure disposition: `by_design`, `corpus_defect`, `extractor_gap` | `failure-record.md`, `extraction/validation.md` | Every rejection is equally legitimate today. `graph-completeness.md` classifies a missing graph row, but the failure record has no disposition column, so a rejected program still cannot be classified |
-| `MC-66` — extraction capability coverage check | `release-checks.yaml`, `release-checks.md`, `03a/a-support-derivation.md` | A must-extract capability with zero accepted graphs is a silent deficit: it has no support-table row, so the coverage checks read it as not applicable, and the census plus `capability_deficit` do not block export |
 
 Closed since the audit's `P0-W1` table:
 
+- `MC-66` — the must-extract capability set and its release check are written:
+  `MustExtractCapability` in `extraction/validation.md` is the closed P0 cell
+  set, and `extraction_capability_coverage` blocks the export when a declared
+  cell has no accepted graph. The `P0-W3` pass condition can be evaluated.
 - `DA-4` / `MC-53` — `DS-REQ-15` makes `same_answer` the construction comparison
   and the grader's comparison, and `b-answer-semantics.md` rechecks the
   answer-equivalent set against it.
@@ -516,8 +519,8 @@ package that guesses its typed models is a second schema to maintain.
   migration.
 - **Do not read `missing-contracts.md` as the status of `P0-W1`.** It is
   explicitly ephemeral and tracks the entries someone remembered to file. The
-  four open `P0-W1` items now have `MC-63`–`MC-66` rows, but the owner doc named
-  in the `P0-W1` table is still the only evidence that the contract exists.
+  three open `P0-W1` items carry `MC-63`–`MC-65`; the owner doc named in the
+  `P0-W1` table is still the only evidence that the contract exists.
 
 ## Quality gates
 

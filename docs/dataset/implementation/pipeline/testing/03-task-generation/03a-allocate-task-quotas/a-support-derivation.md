@@ -25,6 +25,12 @@ entry is not used.
 scope, not a scope file or a second grammar typed model. A value above the release
 scope has no quota target.
 
+`test_03a_scope_outlives_the_corpus` — an in-scope value whose capability no
+accepted graph realizes keeps its supported row and its quota target. The census
+and `family_profiles` record the capability as absent, and the missing cell is
+the `05` `extraction_capability_coverage` miss, not a `03a` decision. The test
+pins that `03a` does not narrow the scope to what the graphs happen to offer.
+
 **TDD pin:** pins census reuse, the graph-hash key, and the single support
 derivation before `03a` exists.
 

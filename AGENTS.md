@@ -172,6 +172,10 @@ assertion. "It needs CadQuery" does not make a pytest file. The full rule is in
 ## Documentation rules
 
 - Read `docs/docs-conventions.md` before adding or editing a doc.
+- The owner reviews `docs/dataset/requirements/views/`, not the requirement
+  tables. A change the owner must approve — a new capability, measurement,
+  clue string, or reference form — lands in a view in the same change; a rule
+  the views do not project is unreviewed.
 - One fact has one home. Link the decision; do not copy the rationale.
 - Decisions live at the narrowest scope: step doc, then module
   `decisions.md`, then the feature layer (`dataset/requirements/decisions.md`

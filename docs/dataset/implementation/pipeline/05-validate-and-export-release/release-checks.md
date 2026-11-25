@@ -51,8 +51,16 @@ nobody planned for.
 | Warmup | `warmup` | task | — | `subset` |
 | Split | `split` | task | tasks | `split` |
 | Release task count | `task_count` | task | — | one row per task |
+| Extraction capability | `extraction_capability` | capability cell | — | the `GraphCompletenessReport` set |
 
-Five of these need a word of explanation.
+Six of these need a word of explanation.
+
+**Extraction capability is not read from the release table.** It is the only
+release-scope check whose observed side is the accepted graphs: the release can
+carry every task the constructor can build and still be missing a capability the
+extraction contract declares. Its declared set, cell identity, and coverage rule
+are in
+[`extraction/validation.md`](../extraction/validation.md#the-must-extract-capability-set).
 
 **A CAD model is a `program_id`.** One CadQuery program builds one shape, and the
 release contract and `03a` both count distinct programs, so the two numbers are
@@ -118,8 +126,9 @@ bound reference that does not resolve in `balance.yaml`. A policy that fails
 validation stops the export before any check runs.
 
 The requirement sources are `R-4`, `R-7`, `R-8`, `R-9`, `R-10`, `R-11`, `R-12`,
-`R-15`, `PRD-8` for the PRD section 8 target table, `release-contract-3` for the
-release contract's row-count table, and `DS-REQ-18`.
+`R-15`, `R-19` for extraction capability coverage, `PRD-8` for the PRD section 8
+target table, `release-contract-3` for the release contract's row-count table,
+and `DS-REQ-18`.
 
 ### Bound references
 
@@ -142,8 +151,11 @@ because they are the rule, not a policy setting.
 | `share_target` | `target`, `tolerance` | The share is within `tolerance` of `target`. |
 | `set_equal` | `values` or `to` | The observed value set equals the listed values, or the named derived set. |
 
-`to: one_step_tasks` compares the warmup set with the tasks that have one task
-reasoning step. It is the only derived set.
+`to` names a derived set. `to: one_step_tasks` compares the warmup set with the
+tasks that have one task reasoning step. `to: must_extract_capabilities` compares
+the declared capability set with the declared cells at least one accepted graph
+realizes; [extraction capability coverage](#extraction-capability-coverage)
+defines both sides.
 
 ### Selecting the measured value
 
@@ -173,9 +185,43 @@ nothing to cover, and its row is `not_applicable`.
 
 There is no whole-release coverage row for a dimension. Global coverage is the
 union of the per-step rows, and a union row would let a value pass globally while
-missing at the step count where it was required. The two release-scope
-`set_equal` checks are the exception, because they are about the release as a
-whole rather than about a dimension's values.
+missing at the step count where it was required. The release-scope `set_equal`
+checks are the exception, because they are about the release as a whole rather
+than about a dimension's values.
+
+## Extraction capability coverage
+
+`extraction_capability_coverage` is the release-scope check that the extraction
+contract's P0 capability list is realized. Its two sides are:
+
+- **declared** — `MustExtractCapability`, the closed set in
+  [`extraction/validation.md`](../extraction/validation.md#the-must-extract-capability-set).
+  It comes from the P0 marks of the entity, relation, and measurement vocabulary,
+  not from a graph, the census, or an earlier release.
+- **observed** — the declared cells that at least one accepted program's
+  `GraphCompletenessReport` carries with `actual_count > 0`
+  ([`extraction/graph-completeness.md`](../extraction/graph-completeness.md#8-report)).
+  `05` already reads that report set for `graph_completeness`.
+
+Both sides are drawn from the declared set, so `set_equal` is exactly the
+coverage requirement: a cell present in `declared` and absent from `observed` is a
+miss. A realized P1 cell is outside both sides and is never an `unexpected`
+value. The report row is the coverage/set_equal row, with `supported` carrying
+the declared cells and `unexpected` empty.
+
+The check exists because no support-table check can see this loss. A capability
+missing from every accepted graph is missing from the fixture graphs too, so the
+constructor produces no definition for it, the support table records that
+dimension value as unsupported, and every per-step `coverage` row reads it as
+`not_applicable`. The census and `capability_deficit` are quota-planning tools
+over the same graphs and cannot substitute: they read the capability as absent,
+not as a miss.
+
+A miss is `enforced` and blocks the export. The one acceptance path is
+`known_misses`, with the reason naming whether the capability is an extractor gap
+or a corpus gap. Removing the cell from the declared set is a contract change to
+[`extraction/validation.md`](../extraction/validation.md#the-must-extract-capability-set),
+not a release decision.
 
 ## Outcomes and dispositions
 

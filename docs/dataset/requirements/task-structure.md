@@ -243,7 +243,7 @@ returned. The answer format says "number" or "boolean"; the answer meaning says
 | Count | A number of entities. | P0 |
 | Rank | A position in an ordered set. | P1 |
 | Membership | Whether a point is inside the solid state. Points within tolerance of a face surface are not used. | P0 |
-| Position | A point location in space, declared by the question: a face centroid, an edge midpoint, a vertex point, or a solid state centroid. | P0 |
+| Position | A point location in space, declared by the question: a face centroid, an edge midpoint, a vertex point, a region centroid, or a solid state centroid. | P0 |
 | Extent | A minimum and maximum corner. | P0 |
 | CadQuery workplane state | The frame of a CadQuery workplane. | P1 |
 | Material change | Material added or removed, as a signed volume or count. A cut answers negative. | P0 |
@@ -279,7 +279,7 @@ vocabularies cannot drift. The measurement definitions are in
 | Count | `Count`, or a stored count such as `face_count`. | the counted entity kind |
 | Rank | Derived by the task: the ordinal of the target in a reference set ordered by one measurement and direction. It is not a stored measurement. | the ordering measurement and direction |
 | Membership | The `is_inside` predicate on a solid state. | the point or point probe |
-| Position | `Centroid` of the task target entity or solid state. | face centroid, edge midpoint, vertex point, or solid state centroid |
+| Position | `Centroid` of the task target entity or solid state. | face centroid, edge midpoint, vertex point, region centroid, or solid state centroid |
 | Extent | `Bounding box`. | none |
 | CadQuery workplane state | `CadQuery workplane frame`. | none |
 | Material change | `Volume change`. | none; the sign carries add or remove |

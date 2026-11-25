@@ -324,6 +324,31 @@ change bumps `runtime_schema_version`.
   process that has the kernel values. A determinism bug is caught by the force
   check rather than by two implementations that can drift.
 
+## EX-24 — Capability coverage is a release check over the contract set
+
+- **Status:** accepted (2026-11-25).
+- **Context:** A capability the extraction contract declares and no accepted
+  graph realizes was invisible. The completeness report is per program, so it
+  passes when each program has the rows that program implies; the census is a
+  function of the accepted graphs, so it records the capability as absent; the
+  support tables are derived over fixtures, so that dimension value is
+  unsupported with `no_valid_construction`. Every reader agreed and the dataset
+  shrank silently.
+- **Decision:** the extraction contract declares `MustExtractCapability`, the
+  closed set of P0 capability cells, in
+  [`validation.md`](validation.md#the-must-extract-capability-set). A cell is
+  covered when at least one accepted program's `GraphCompletenessReport` carries
+  it with `actual_count > 0`. `05` runs `extraction_capability_coverage` as an
+  enforced `set_equal` check over the declared set and the realized declared
+  cells, and blocks the export on a miss.
+- **Consequences:** the declared side comes from the P0 marks of the vocabulary,
+  not from a graph, so a capability cannot be removed by the corpus. Both sides
+  of the comparison come from the declared set, so a realized P1 cell is not an
+  unexpected value. The census and `capability_deficit` stay quota planning.
+  Adding a P0 capability now adds a cell, a completeness row, and an
+  extraction-graph oracle; removing one is a contract change, not a release
+  decision.
+
 ## Superseded decisions
 
 None.

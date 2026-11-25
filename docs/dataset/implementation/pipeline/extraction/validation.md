@@ -128,3 +128,99 @@ These are validation failures, not deferred features:
 - arbitrary control flow;
 - runtime argument capture;
 - graph IDs or UUIDv4 in extraction records.
+
+## The must-extract capability set
+
+The P0 exclusions above say what a program may not contain. This section says
+what the accepted set must carry: a capability the contract declares and no
+accepted graph realizes is a loss, not a scope decision.
+
+A **must-extract capability cell** is one graph row identity the extraction
+contract declares at P0. It is written in the same shape the
+[completeness report](graph-completeness.md#8-report) proves it with, so the
+declaration and the observation are one identity:
+
+| Cell kind | Cell identity | Example |
+|---|---|---|
+| Entity | `entity:<node_type>` | `entity:point_probe` |
+| Relation | `relation:<relation_type>@<from_node_type>-><to_node_type>` | `relation:has_point_probe@solid_state->point_probe` |
+| Measurement | `measurement:<measurement_type>@<subject_node_type>` | `measurement:probe_point@point_probe` |
+
+`MustExtractCapability` is this closed set. It is the P0 subset of the entity,
+relation, and measurement vocabularies in
+[`graph-completeness.md` §3](graph-completeness.md#3-cad-graph-entity-completeness),
+[§4](graph-completeness.md#4-relation-completeness), and
+[§5](graph-completeness.md#5-measurement-completeness), with the scope from
+[`graph-content.md`](../../../requirements/graph-content.md). A relation cell
+names its two endpoint kinds because `creates` and `uses` each have several; a
+measurement cell names its subject, and `pair` is the subject of a pair
+measurement.
+
+Entity cells:
+
+- `entity:cadquery_program`, `entity:operation`, `entity:feature`,
+  `entity:solid_state`, `entity:face`, `entity:edge`, `entity:vertex`,
+  `entity:cadquery_profile`, `entity:cadquery_workplane`, `entity:region`,
+  `entity:point_probe`.
+
+Relation cells:
+
+- `relation:before@operation->operation`,
+  `relation:after@operation->operation`,
+  `relation:creates@operation->feature`,
+  `relation:creates@operation->solid_state`,
+  `relation:uses@feature->cadquery_profile`,
+  `relation:uses@feature->cadquery_workplane`,
+  `relation:derived_from@cadquery_profile->cadquery_workplane`,
+  `relation:has_face@solid_state->face`,
+  `relation:has_edge@face->edge`,
+  `relation:has_vertex@edge->vertex`,
+  `relation:adjacent_to@face->face`,
+  `relation:has_point_probe@solid_state->point_probe`,
+  `relation:adds_material@feature->region`,
+  `relation:removes_material@feature->region`,
+  `relation:part_of@region->feature`.
+
+Measurement cells:
+
+- `measurement:volume@solid_state`, `measurement:volume@region`,
+  `measurement:area@face`, `measurement:area@cadquery_profile`,
+  `measurement:area@region`, `measurement:bounding_box@solid_state`,
+  `measurement:bounding_box@face`, `measurement:bounding_box@edge`,
+  `measurement:bounding_box@region`,
+  `measurement:centroid@solid_state`, `measurement:centroid@face`,
+  `measurement:centroid@edge`, `measurement:centroid@vertex`,
+  `measurement:centroid@region`, `measurement:length@edge`,
+  `measurement:face_count@solid_state`, `measurement:edge_count@solid_state`,
+  `measurement:vertex_count@solid_state`, `measurement:edge_count@face`,
+  `measurement:vertex_count@face`, `measurement:probe_point@point_probe`,
+  `measurement:distance_to_face_surface@point_probe`,
+  `measurement:volume_change@operation`,
+  `measurement:topology_change@operation`, `measurement:distance@pair`,
+  `measurement:angle@pair`.
+
+A P1 or P2 vocabulary row is not a cell. A release may still realize one, and a
+realized P1 cell is not an error: coverage compares the declared set with the
+declared cells that were realized, so a row outside the set cannot appear as an
+unexpected value.
+
+### Coverage
+
+A declared cell is **covered** when at least one accepted program's
+`GraphCompletenessReport` carries that cell with `actual_count > 0`. A declared
+cell with no coverage over the accepted set is a miss of the
+`extraction_capability_coverage` release check
+([`release-checks.md`](../05-validate-and-export-release/release-checks.md#extraction-capability-coverage)),
+which blocks the export until the gap is fixed or the owner accepts the miss.
+
+Coverage is a release gate, not a rejection rule. It rejects no program and
+writes no failure row. It also does not read the capability census: the census is
+a function of the graphs a run accepted, so a capability missing from every graph
+is missing from the census too, and a quota plan or support table built on it
+reads the capability as absent rather than as a miss. The contract list is the
+independent side.
+
+The set is written above and implemented as data, not parsed from these tables at
+run time. A change to a P0 row of the completeness tables changes this list in
+the same change; an unlisted P0 capability is a contract gap, not a silent
+absence.

@@ -42,6 +42,7 @@ and how the three content layers project onto each other — is
 | [`requirements/prompt-content.md`](requirements/prompt-content.md) | What the LLM model sees: program text, question, task clues, choices, and answer instruction. |
 | [`requirements/views/clue-list.md`](requirements/views/clue-list.md) | Derived view: every string a task clue can show the LLM model, and what each one removes. |
 | [`requirements/views/reference-forms.md`](requirements/views/reference-forms.md) | Derived view: every thing a prompt can mention, the phrases that name it, and the case that has no phrase yet. |
+| [`requirements/views/capability-coverage.md`](requirements/views/capability-coverage.md) | Derived view: what each P0 capability can be asked about, and which capabilities no task reads yet. |
 | [`requirements/graph-content.md`](requirements/graph-content.md) | The graph elements the tasks rely on: graph entities, relations, measurements, states, CAD graph evidence, and P0/P1/P2 implementation order. |
 | [`requirements/terminology.md`](requirements/terminology.md) | Proposed terms, replacements for old terms, and naming decisions that still need owner approval. |
 | [`requirements/release-dataset-contract.md`](requirements/release-dataset-contract.md) | Consumer contract: release artifacts, row counts, release table columns, and why one table is enough. |

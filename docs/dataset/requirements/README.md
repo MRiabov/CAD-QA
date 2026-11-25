@@ -27,9 +27,14 @@ The supporting documents are not a fourth layer.
 | [`views/clue-list.md`](views/clue-list.md) | A derived view of the strings a task clue renders to. It owns no rule and no open question. |
 | [`views/reference-forms.md`](views/reference-forms.md) | A derived view of the phrases that name a thing in a prompt. It owns no rule and no open question. |
 | [`views/prompt-examples.md`](views/prompt-examples.md) | Eight complete prompts with their answers, for reading the rendered text end to end. It owns no rule and no open question. |
+| [`views/capability-coverage.md`](views/capability-coverage.md) | A derived view of what each P0 capability can be asked about and which capabilities no task reads yet. It owns no rule and no open question. |
 
-The three views are split by release scope: P0 first, then P1, then P2 where they
-have content. A form that does not exist at a scope is marked `missing`.
+The views are split by release scope: P0 first, then P1, then P2 where they have
+content. A form that does not exist at a scope is marked `missing`.
+
+The owner reviews the views, not the requirement tables. A new capability,
+measurement, clue string, or reference form appears in a view in the same
+change; a rule no view projects is unreviewed.
 
 ## The projection rule
 

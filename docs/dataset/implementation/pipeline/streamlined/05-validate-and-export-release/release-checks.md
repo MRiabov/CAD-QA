@@ -19,6 +19,7 @@ TRANSFORM:
 - `05` holds no share of its own
 - run exactly the checks in the file; a check not in the file is not run, and a report row whose check is not in the file is a defect
 - coverage rows carry supported, observed, missing, and unexpected values; there is no whole-release coverage row for a dimension
+- `extraction_capability_coverage` is the exception to "observed comes from the release table": its observed side is the declared capability cells with `actual_count > 0` in at least one `GraphCompletenessReport`, and both sides are drawn from the declared set so `unexpected` is empty
 - outcome is `pass | miss | superseded | not_applicable | deferred`; disposition is `enforced | reported | deferred`
 - an `enforced` miss blocks the export until the owner accepts it and it is recorded in `known_misses`; a `reported` miss never blocks; a `deferred` row measures nothing
 - a `superseded` row is recorded and does not block; it is not a known miss

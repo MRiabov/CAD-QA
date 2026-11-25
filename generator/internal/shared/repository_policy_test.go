@@ -35,6 +35,7 @@ var checkDimensions = map[string]bool{
 	"clue_reduction_form":       true,
 	"clue_type":                 true,
 	"correct_answer":            true,
+	"extraction_capability":     true,
 	"geometry_required":         true,
 	"program_id":                true,
 	"split":                     true,
@@ -55,10 +56,14 @@ var checkRequirements = map[string]bool{
 	"R-11":               true,
 	"R-12":               true,
 	"R-15":               true,
+	"R-19":               true,
 	"release-contract-3": true,
 }
 
-var derivedSets = map[string]bool{"one_step_tasks": true}
+var derivedSets = map[string]bool{
+	"must_extract_capabilities": true,
+	"one_step_tasks":            true,
+}
 
 // presentBounds names the bound fields a check sets, including values and to.
 func presentBounds(check ReleaseCheck) map[string]bool {

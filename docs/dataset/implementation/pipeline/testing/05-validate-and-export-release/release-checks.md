@@ -13,6 +13,13 @@ disposition `reported`, and `not_applicable`, and the export proceeds. An
 enforced miss blocks it, and the manifest is not written. The test reads the
 outcome and disposition from the manifest, not from a log.
 
+`test_05_extraction_capability_coverage` — a declared capability cell with
+`actual_count == 0` in every accepted `GraphCompletenessReport` is an enforced
+miss that blocks the export and names the cell. The same release with a report
+that realizes the cell passes. A realized P1 cell is not an `unexpected` value,
+because both sides of the set comparison come from
+[`extraction/validation.md`](../../extraction/validation.md#the-must-extract-capability-set).
+
 `test_05_known_miss` — an enforced miss listed in `known_misses` proceeds and the
 manifest carries the accepted reason. The same release without the entry blocks
 and names the check.
