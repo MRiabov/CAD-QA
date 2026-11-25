@@ -58,6 +58,12 @@ answer format and grading, alongside a 40-row evidence table of geometry-native
 work. The notes behind this document are in
 `research_notes/CAD AI state of the art/`.
 
+**Found after the scan.** `brep-bench` (`brepbench.org`, GitHub repo created
+29 October 2026) was surfaced after the automated sweep and is recorded here as
+a late-window reference. Its case count, tolerances and grading rules are taken
+from the site and README, retrieved 25 November 2026; it is a community
+benchmark, not a peer-reviewed paper.
+
 **Phrase checks, used only as a signal, never as proof.**
 
 - A whole-corpus search for `"CAD question answering"`, `"CAD VQA"` and
@@ -83,7 +89,7 @@ term-matched on the mechanical sense or explicitly filtered.
 | Gap | Who is working on it | Evidence it is open | Verdict |
 |---|---|---|---|
 | **G1** Generation fidelity | The largest stream: roughly 63 text-to-CAD and program-synthesis papers in the window (3.2× the 2024 window), plus agentic reconstruction | Scores still move, but several splits are near ceiling and the metrics are contested | Crowded; not a gap |
-| **G2** B-rep validity and representation | GraphCAD, UniBRep, canonical region graphs, equivariant encoders | Reported validity is 80–97% on incomparable splits, and the validity check itself is broken | Open, but a methods and metric gap; not an instrument this project can build |
+| **G2** B-rep validity and representation | GraphCAD, UniBRep, canonical region graphs, equivariant encoders, brep-bench | Reported validity is 80–97% on incomparable splits, and kernel self-checks did not certify until brep-bench measured exported solids independently | Open, but a methods and metric gap; not an instrument this project can build |
 | **G3** Editing and design history | 3DCodeEdit, HistCAD, AutoTimeline, CAD-Editor | 37% instruction-guided success; 29% industrial edit prediction | Real and measured, but needs kernel or serialized history; P1 extension, not P0 |
 | **G4** Learned constraint solving | Nobody in the window | No paper proposes a learned or hybrid solver; systems reward or call the kernel's solver | The largest unclaimed prize, and out of scope for a dataset paper |
 | **G5** Evaluation of evaluation | Nobody in the window | No survey or audit of CAD evaluation; no contamination audit; no held-out test server | Real meta-gap; would be a different thesis |
@@ -102,6 +108,17 @@ two non-homeomorphic realizations (DOI `10.5281/zenodo.24203268`). That
 undercuts every "96% valid" claim, but it does not produce a comprehension
 instrument, and building one would require a geometry kernel rather than a
 generator.
+
+One counter-movement arrived late in the window. **brep-bench**
+(`brepbench.org`, first public 29 October 2026, code at
+`github.com/bmander/brep-bench`) is an independent board of 300+ modelling cases
+that grades the exported STEP file's solid rather than the kernel's own report:
+volume, area, centroid and inertia within 1e-6 relative of a closed form, with a
+refusal ranked above a wrong answer. It is the closest thing to a validity
+oracle for B-rep kernels, and it shows the measurement problem is solvable. It
+does not close G2 for this project: it grades hand-written kernel runners, not
+LLM-generated B-reps, and it has no task, no gold answer over a program, and no
+comprehension construct.
 
 **G3 is the best argument that G6 matters.** Instruction-guided editing fails at
 roughly one in three, industrial edit prediction at 29%, and GUI work at 17.5%.

@@ -90,6 +90,7 @@ RELATED WORK: bullets only; write the prose from these
 - Limitation: they evaluate the produced shape or program, not an LLM model's understanding of an existing program.
 - The metric critique belongs here as the bridge to our construct: DrawScore (2611.24681) proves IoU/Chamfer/F-score weight a local error as s^(k+q), so a 0.9 mm bolt-hole shift leaves F-score at 100%; RealCAD (2608.30617) shows DeepCAD parameter accuracy can be earned from value priors (+7.49/+14.73 pp without an mCD gain, with a higher invalid ratio). A high reconstruction score therefore says little about entity-level understanding.
 - Do not conflate reconstruction accuracy with comprehension accuracy: different construct, different metric.
+- If a reviewer challenges the word "valid", point to brep-bench (brepbench.org, first public 29 Oct 2026): 300+ cases across 15+ kernels, grading the exported STEP solid by volume, area, centroid and inertia at 1e-6, with a refusal ranked above a wrong answer. It is a community benchmark, not peer-reviewed, and it grades kernels rather than LLM models; it does not settle the metric question for generated B-reps.
 - Naming caution: several 2026 papers reuse "CAD" in the title with different constructs (generation, reconstruction, editing, agentic authoring). State which construct each cited work measures.
 -->
 
