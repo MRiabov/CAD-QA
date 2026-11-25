@@ -383,3 +383,45 @@ grouping is editorial; the numbers are the citation keys and never change meanin
   per-state integer key would need a deterministic assignment, a lookup table in
   every reader, and would compete with the identity `DS-ADR-05` defines, in
   exchange for about one byte per row over Parquet's native dictionary encoding.
+
+## DS-ADR-15 — Run wall time is CadQuery execution, not graph work
+
+- **Status:** accepted (2026-11-25).
+- **Context:** A run computes one CadQuery execution per program in `02b`, under
+  a 30-second timeout and one child per active shard
+  ([`02b-execute-cadquery.md#execution-boundary`](pipeline/02b-execute-cadquery.md#execution-boundary)).
+  Concurrency is `min(--jobs, journal_shard_count, floor(available_memory /
+  (memory_limit_bytes + worker_resident_bytes)))`
+  ([`run-contract.md#45-concurrency`](run-contract.md#45-concurrency)). For 1,000
+  programs at the 30-second timeout and 16 active children the bound is about 31
+  minutes; 1,500 programs is about 47 minutes; a host that admits 6 children
+  takes about 83 minutes for 1,000 programs and 2.1 hours for 1,500. `02c` build
+  CAD graph, `03b` construct task definitions, `04` render prompt and choices,
+  and `05` validate and export release are estimated at about a minute together
+  `[unverified — needs a measured run]`. `02b` executes the selected CadQuery
+  programs, so no generator change can shorten an execution; the only levers are
+  concurrency, the per-child limit, and the cache. The typed graph, the UUID
+  logical type, dictionary encoding, and the column handles of `DS-ADR-14` serve
+  correctness, determinism, artifact size, and scan cost. They do not move run
+  wall time materially.
+- **Decision:** Run wall time is bounded by `N_programs × (t_02a + t_02b + t_02c)
+  / concurrency`, where concurrency is the bound above, and `02b` owns it. A
+  change to `02c`, `03b`, `04`, `05`, the graph schema, an ID width, or an
+  in-process graph representation is not justified by run wall time. Once `02b`
+  is cached, `03a`–`05` are the whole cost of a replan; that is the only place
+  where pipeline work is a performance concern, and a change there must cite a
+  measured improvement. A performance proposal names the bound it moves, the
+  unit, and the measured or derived number. A proposal that does not is moot:
+  raise it to the owner as a question; do not implement it. Optimizing `02b` is
+  scheduling only — concurrency, `journal_shard_count`, the per-child limit, and
+  the cache hit rate — and a changed per-child limit is a new execution
+  environment and a new `02b` cache key.
+- **Consequences:** Agents cite this decision and raise a graph-representation or
+  ID-width performance concern to the owner instead of implementing it. Capacity
+  planning reads the documented constants; the bound above is arithmetic from the
+  timeout and the admission rule, not a benchmark. The dataset generator's
+  optimization work is the cache and resume rule (`DS-ADR-06`, `DS-ADR-08`), the
+  concurrency bound per pipeline stage (`DS-ADR-10`), the fused `02a`–`02c` pass
+  (`DS-ADR-11`), and the replan path. The admission rule's `available_memory`
+  input is `[missing]` a definition and has no reserve for the orchestrator; that
+  is a scheduling gap, not a reason to change the graph.
