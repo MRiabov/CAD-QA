@@ -200,7 +200,7 @@ We construct the dataset across multiple axes:
 We will evaluate models on completion of the tasks under varying tasks, depths and harnesses, reporting:
 
 - Cost in tokens and quantity of tool calls spent per evaluation,
-- Correctness per model
+- Correctness
 
 <!--
 METHODOLOGY: the scientific procedure, not the software
@@ -217,7 +217,8 @@ METHODOLOGY: the scientific procedure, not the software
 
 ### 3.1 Research design and hypotheses
 
-
+Our hypotheses are:
+H1. There are limits in which models would show reasoning gaps; different per harness.
 
 <!--
 - One instrument, several studies: benchmark validity, baseline measurement, fine-tuning ablation, external transfer.
