@@ -19,7 +19,9 @@ HOW TO USE THESE ANNOTATIONS
 
 ## Abstract
 
-LLMs are becoming quite strong in CAD, with yet open, training-ready datasets focus on reconstruction. No training-ready datasets focused on deep reasoning of LLMs on complex, messy shapes exists. We present a dataset allowing to train foundational capabilities of CAD-specific reasoning -
+LLMs are becoming notably strong in CAD reconstruction, with open, training-ready datasets focus on reconstruction, engineering standard following and editing. However, no training-ready datasets focused on deep reasoning of LLMs on complex, messy shapes exists. We present a large dataset allowing to train foundational capabilities of LLMs on deep geometric reasoning, generated and validated through a CAD kernel, not requiring expensive expert validation. To aid in efficient training of LLMs on our dataset, a critical path allowing validated step-by-step solution is presented. We show that frontier models are only 50-80% successful without too assistance, showing headroom in geometrical reasoning. We open-source the dataset at https://huggingface.co/MRiabov/
+
+[to be revised]
 <!--
 ABSTRACT (write last, 200–250 words, no citations)
 - Keep the CA2 arc (winter/spring 2026): assistant → comprehension failure (invalid geometry, overlaps) → question-answering dataset from CadQuery programs → simple lookups to high-step questions with distractors → three harnesses → accuracy by task reasoning step, clue type, relation family and LLM harness mode → contribution. The 2026 evidence updates the middle of that arc; it does not replace it.
@@ -40,6 +42,35 @@ ABSTRACT (write last, 200–250 words, no citations)
 -->
 
 ## 1. Introduction
+
+AI for CAD starts seeing a surge in industry in Q3 2026, with reconstruction capabilities being near-saturated on complex benchmarks [Benchcad 1.0]. Foundational, large datasets including recent in 2026 such as CADEvolve (Elistratov et al., 2026), CADENA (https://arxiv.org/abs/2608.00799), Zero-To-CAD focus on image- and Text-to-CAD reconstruction, training on which mostly saturated the reconstruction benchmarks, however CAD editing is still consistently less than a half successful [citation*S* required]. Existing datasets also measure QA answering on CAD, in particular answering about engineering standards following (engineering standard e.g. ISO) from CadQuery code [benchcad citation?], however, they are simple, rudimentary question answering, requiring only a lookup or knowledge of a particular standard and not deep geometrical reasoning. 
+
+---
+[Insert a few justifying statements on why the dataset is necessary]
+---
+
+Our primary research question:
+
+- How can we improve the raw capability of an LLM model to comprehend the geometry resulting from CAD code?
+
+Secondary:
+
+- How can we increase the efficiency of geometrical reasoning of LLMs? [NOTE: I'm unsure this is a good RQ to state as I won't train a model]
+[TODO. Ideas: 
+efficiency - directly addressed by building a graph and allowing training on it]
+
+Or objectives are:
+
+- To create a dataset that allows higher correctness on deep, complex CAD reasoning tasks.
+- To create a dataset that is easy to train efficient reasoning on.
+
+We will structure our work as follows:
+1. Related work with go over the recent contributions, in particular the state of the art in 3d applications and where they currently fall short, as well as foundational datasets.
+2. Research methodology will go over the [.] 
+3. Design specification will go over what the dataset is expected to be and the dataset validity procedures that are in place; it will also go over evaluation procedures
+4. Implementation will brief the implementation structure of the dataset,
+5. Evaluation will focus on evaluating the state of the art and showing deficiencies of existing models,
+6. Conclusion and Future Work will go will show the future work.
 
 <!--
 INTRODUCTION: what the reader must believe by the end
@@ -64,6 +95,11 @@ INTRODUCTION: what the reader must believe by the end
 -->
 
 ## 2. Related Work
+
+LLMs in CAD has seen a surge in research and industry results in Q2 and Q3, producing 2x more literature than Q3 a year ago in the same field. In q3, 19# papers were produced, with 45% focusing on generation, 20% on agent tool-use, ~20% focusing on application and ~9% of evaluation or foundational datasets. 
+
+
+
 
 <!--
 RELATED WORK: bullets only; write the prose from these
@@ -121,7 +157,7 @@ RELATED WORK: bullets only; write the prose from these
 - Why procedural programs are the right substrate: gold answers can be computed by executing the program and reading the built shape; no human annotation is needed.
 - The substrate is now contested in a useful way: 2026 work shows B-rep encoders "collapse catastrophically" when the same solid is re-partitioned (2609.11573), so a program text is not the same object as a B-rep representation. Our gold is program-derived and execution-checked, which sidesteps the representation-luck problem; say that if a reviewer asks.
 - Limitation: program quality varies; execution failures and degenerate shapes are expected and must be recorded as rows, not exceptions. The 2026 scan also finds no new ABC or MFCAD++ release, so shared-split and contamination risk persist.
-- Contamination is a named risk, not a footnote: BenchCAD's 17,900-program base overlaps the public CadQuery corpus, so any transfer evaluation on BenchCAD qa_code must exclude its families from every training arm (docs/research/2026-benchcad.md).
+- Contamination is a named risk, not a footnote: BenchCAD's 17,900-program base overlaps the public CadQuery corpus, so any transfer evaluation on BenchCAD qa_code must exclude its families from every training arm (docs/research/papers/cad/2026-benchcad.md).
 - Do not describe CADEvolve as "the" corpus; it is the selected one, and the generator method should be corpus-agnostic.
 -->
 
@@ -152,6 +188,20 @@ RELATED WORK: bullets only; write the prose from these
 
 ## 3. Research Methodology
 
+Much like software engineering, being proficient in one area, such as SQL queries, doesn't mean an agent is proficient in machine learning; or being proficient in Python, an agent isn't proficient in Rust. Similarly, CAD requires understanding of numerous operations and relations, and underexposure to some will lead to knowledge gaps as highlighted by CADEvolve (an early 2026 paper) (Elistratov, 2026), where agents were not proficient on everything but modelling with boxes. As such, we construct a wide variety of tasks as well as compositions and report success rates on them separately.
+
+We construct the dataset across multiple axes:
+
+- Tasks - what tasks in particular do models fail on?
+- Depth - when tasks, geometrical complexity is composed, what is the reasoning depth a model solve reliably?
+- Harnesses - given different tools available to the agent (no tools, numpy, CadQuery), how does being able to verify, and with which tools, does success rate increase?
+- Models - we will evaluate a number of models to ensure fairness of evaluation. 
+
+We will evaluate models on completion of the tasks under varying tasks, depths and harnesses, reporting:
+
+- Cost in tokens and quantity of tool calls spent per evaluation,
+- Correctness per model
+
 <!--
 METHODOLOGY: the scientific procedure, not the software
 - Design: instrument-building plus a controlled training experiment (design science + pre-registered analysis).
@@ -166,6 +216,8 @@ METHODOLOGY: the scientific procedure, not the software
 -->
 
 ### 3.1 Research design and hypotheses
+
+
 
 <!--
 - One instrument, several studies: benchmark validity, baseline measurement, fine-tuning ablation, external transfer.
