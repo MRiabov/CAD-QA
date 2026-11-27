@@ -1,8 +1,10 @@
 # CI/CD contract
 
-**Status:** active — initial version, 2026-11-21. The workflow in
-`.github/workflows/ci.yml` exists; it has not run on GitHub yet (`exists`, not
-`verified`).
+**Status:** active — initial version, 2026-11-21; cache pins corrected
+2026-11-27. The workflow in `.github/workflows/ci.yml` exists. The first two
+pushes to `main` (2026-11-21 and 2026-11-25) failed before any job started
+because `astral-sh/setup-uv@v10` does not resolve; the pin is now `v10.4.0`.
+The first green run is still needed (`exists`, not `verified`).
 
 ## Purpose
 
@@ -41,25 +43,31 @@ than the changed lines, and it computes the plan.
    `docs`, `plans`, `contracts`, `generator`, `tests`, and `tools`. The check
    runs `tools/dont-say-go` through the Go toolchain, so the job installs Go
    before it runs.
-3. **Doc mirror.** `tools/ci_cd/check_doc_mirror.py` requires the same relative
+3. **Don't-say Go extractor.** `go vet ./...` and `go test -count=1 ./...` in
+   `tools/dont-say-go`, so the syntax helper the checker shells out to is itself
+   tested.
+4. **Don't-say checker tests.** `tests/ci_cd/test_check_dont_say.py` through
+   `pytest`, so the policy and the ratchet behaviour are tested.
+5. **Doc mirror.** `tools/ci_cd/check_doc_mirror.py` requires the same relative
    path under `streamlined/` and `testing/` for every pipeline stage and sub-step
    contract doc.
-4. **Directory fanout.** `tools/ci_cd/check_fanout.py` requires every tracked
+6. **Directory fanout.** `tools/ci_cd/check_fanout.py` requires every tracked
    directory to have at most 10 immediate subdirectories; the repository root
    has 15. The rule and its exception list are in
    [`file-trees.md`](../dataset/implementation/file-trees.md#directory-fanout).
-5. **Test ownership.** `tools/ci_cd/check_test_ownership.py` admits a Python
+7. **Test ownership.** `tools/ci_cd/check_test_ownership.py` admits a Python
    test only under `generator/python/tests/`, `tests/ci_cd/`, or
    `tests/manual_verification/`, and a Go test only beside a non-test `.go`
    file. The rule is in
    [`python-and-golang.md#tests`](../dataset/implementation/python-and-golang.md#tests).
-6. **Plan.** `tools/ci_cd/ci_plan.py` reads the diff and writes the `go` and `python`
+8. **Plan.** `tools/ci_cd/ci_plan.py` reads the diff and writes the `go` and `python`
    outputs.
 
 The job does not install the project environment. `rumdl` runs through `uvx`,
 the Don't-say check runs through the Go toolchain, and the remaining Python
-checks run through `uv run --isolated --no-project --with 'pydantic>=2.14'`, so
-the job installs a few megabytes of tools instead of the project environment.
+checks run through `uv run --isolated --no-project --with 'pydantic>=2.14'`
+(plus `--with pytest` for the checker tests), so the job installs a few
+megabytes of tools instead of the project environment.
 
 The job is a dependency of both suites. A red Markdown, Don't-say, doc-mirror,
 or test-ownership check stops the suites before they spend runner minutes; that
@@ -202,12 +210,19 @@ suffix prevents that race.
 `.python-version` is the one home for that version.
 
 The cache is branch-scoped: a pull request restores from the base branch but
-writes its own entry. The caches here are small enough that no cache-warm
-workflow is part of this contract.
+writes its own entry. GitHub's default cache limit is 10 GB per repository,
+and an entry not accessed for 7 days is evicted; both can be raised, and
+storage above the default is billed. The uv and Go caches here are far below
+that, so no pruning, cache-warm workflow, or cache-limit check is part of this
+contract.
 
-`actions/setup-go` caches the module cache and the build cache, keyed on
-`generator/go.sum`. A cold build cache compiles the Parquet dependency tree
-(about 22 s locally); a warm one runs the suite in about 1 s.
+`actions/setup-go` caches the module cache and the build cache. In the `go` job
+the key is `generator/go.sum`; a cold build cache compiles the Parquet
+dependency tree (about 22 s locally), and a warm one runs the suite in about
+1 s. In `quality-and-plan` the key is `tools/dont-say-go/go.mod`, because that
+helper is its own module and the repository has no root `go.mod` for the
+action's default to find. The helper has no external modules, so its key
+changes only with its Go directive.
 
 Not cached: `runs/`, `data/`, other gitignored runtime state, test results, and
 the `.venv`. The uv cache is the shared layer.
@@ -356,6 +371,21 @@ changed the installed toolchains between runs.
 
 **Consequences.** A runner upgrade is a deliberate change with a visible diff.
 Revisit when 26.04 is validated.
+
+### CI-D7 — Pin `setup-uv` to an exact tag
+
+**Status:** accepted, 2026-11-27.
+
+**Context.** `astral-sh/setup-uv` publishes a floating major tag for v7 but not
+for v10: `refs/tags/v10` does not exist. The first two CI runs failed at
+"Set up job" with `Unable to resolve action astral-sh/setup-uv@v10`.
+
+**Decision.** Pin `astral-sh/setup-uv@v10.4.0`, the latest release, in all
+three jobs. A version bump is a visible diff, like the runner image.
+
+**Consequences.** The workflow does not follow setup-uv major releases
+automatically; each bump is a deliberate change. Action upgrades stay manual
+until a dependency-update bot is added.
 
 ## Open questions
 

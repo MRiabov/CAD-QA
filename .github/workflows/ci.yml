@@ -30,7 +30,8 @@ jobs:
           # the history that contains both.
           fetch-depth: 0
 
-      - uses: astral-sh/setup-uv@v10
+      # v10 has no floating major tag; pin the exact release (CI-D7).
+      - uses: astral-sh/setup-uv@v10.4.0
         with:
           enable-cache: true
           cache-suffix: quality
@@ -46,6 +47,9 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: tools/dont-say-go/go.mod
+          # The default looks for a root go.mod, which this repository does not
+          # have. The helper is its own module, so key its build cache on that.
+          cache-dependency-path: tools/dont-say-go/go.mod
 
       - name: Markdown
         run: |
@@ -119,7 +123,8 @@ jobs:
           go-version-file: generator/go.mod
           cache-dependency-path: generator/go.sum
 
-      - uses: astral-sh/setup-uv@v10
+      # v10 has no floating major tag; pin the exact release (CI-D7).
+      - uses: astral-sh/setup-uv@v10.4.0
         with:
           enable-cache: true
           cache-suffix: worker-bridge
@@ -156,7 +161,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: astral-sh/setup-uv@v10
+      # v10 has no floating major tag; pin the exact release (CI-D7).
+      - uses: astral-sh/setup-uv@v10.4.0
         with:
           enable-cache: true
           cache-suffix: tests
